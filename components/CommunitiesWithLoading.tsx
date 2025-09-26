@@ -23,6 +23,15 @@ interface Community {
   image_url?: string | null
   logo_url?: string | null
   banner_url?: string | null
+  sponsors?: Array<{
+    id: string
+    company_name: string
+    logo_url: string | null
+    total_sponsored: number
+    verified_brand: boolean
+  }>
+  total_sponsored?: number
+  active_needs?: number
 }
 
 interface CommunitiesWithLoadingProps {
@@ -234,10 +243,63 @@ export default function CommunitiesWithLoading({ initialCommunities }: Communiti
                             )}
                           </div>
                         )}
+
+                        {/* Brand Sponsors Section */}
+                        {community.sponsors && community.sponsors.length > 0 && (
+                          <div className="mt-4 pt-3 border-t border-slate-100">
+                            <div className="text-xs text-slate-500 mb-2">Sponsored by</div>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                {community.sponsors.slice(0, 3).map(sponsor => (
+                                  <div 
+                                    key={sponsor.id}
+                                    className="relative group"
+                                    title={`${sponsor.company_name} - $${sponsor.total_sponsored.toLocaleString()} sponsored`}
+                                  >
+                                    {sponsor.logo_url ? (
+                                      <img 
+                                        src={sponsor.logo_url} 
+                                        alt={sponsor.company_name}
+                                        className="w-8 h-8 rounded object-cover border border-slate-200"
+                                      />
+                                    ) : (
+                                      <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
+                                        <span className="text-blue-600 text-xs">🏢</span>
+                                      </div>
+                                    )}
+                                    {sponsor.verified_brand && (
+                                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full flex items-center justify-center">
+                                        <span className="text-white text-xs">✓</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                                {community.sponsors.length > 3 && (
+                                  <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-xs text-slate-500">
+                                    +{community.sponsors.length - 3}
+                                  </div>
+                                )}
+                              </div>
+                              {community.total_sponsored && (
+                                <div className="text-xs font-bold text-green-600">
+                                  ${community.total_sponsored.toLocaleString()}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
 
+                      {/* Community Stats */}
                       <div className="flex items-center justify-between text-xs text-slate-500 pt-4 border-t border-slate-200">
-                        <span>Created {new Date(community.created_at).toLocaleDateString()}</span>
+                        <div className="flex items-center gap-3">
+                          <span>Created {new Date(community.created_at).toLocaleDateString()}</span>
+                          {community.active_needs && community.active_needs > 0 && (
+                            <span className="text-orange-600 font-medium">
+                              {community.active_needs} active need{community.active_needs !== 1 ? 's' : ''}
+                            </span>
+                          )}
+                        </div>
                         <span className="text-teal-600 font-medium flex items-center gap-1">
                           Explore <span className="transition-transform group-hover:translate-x-1">→</span>
                         </span>

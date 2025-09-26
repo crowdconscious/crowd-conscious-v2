@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabaseClient } from '@/lib/supabase-client'
 import { AnimatedCard, AnimatedButton } from '@/components/ui/UIComponents'
+import ProfilePictureUpload from '@/components/ProfilePictureUpload'
 
 interface SettingsClientProps {
   user: any
@@ -31,7 +32,12 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
   const [profileData, setProfileData] = useState({
     full_name: profile?.full_name || '',
     bio: profile?.bio || '',
-    location: profile?.location || ''
+    location: profile?.location || '',
+    company_name: profile?.company_name || '',
+    company_description: profile?.company_description || '',
+    company_website: profile?.company_website || '',
+    industry: profile?.industry || '',
+    company_size: profile?.company_size || ''
   })
   const [isLoading, setIsLoading] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
@@ -198,13 +204,25 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
       }
 
       // Update profile data
+      const profileUpdate: any = {
+        bio: profileData.bio,
+        location: profileData.location
+      }
+
+      // Add appropriate fields based on user type
+      if (profile?.user_type === 'brand') {
+        profileUpdate.company_name = profileData.company_name
+        profileUpdate.company_description = profileData.bio // Using bio field for company description
+        profileUpdate.company_website = profileData.company_website
+        profileUpdate.industry = profileData.industry
+        profileUpdate.company_size = profileData.company_size
+      } else {
+        profileUpdate.full_name = profileData.full_name
+      }
+
       const { error: profileError } = await supabaseClient
         .from('profiles')
-        .update({
-          full_name: profileData.full_name,
-          bio: profileData.bio,
-          location: profileData.location
-        })
+        .update(profileUpdate)
         .eq('id', user.id)
 
       if (profileError) {
@@ -269,22 +287,46 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
         )}
       </div>
 
+      {/* Profile Picture/Logo Upload */}
+      <div>
+        <h2 className="text-2xl font-bold text-slate-900 mb-6">
+          {profile?.user_type === 'brand' ? 'Brand Logo' : 'Profile Picture'}
+        </h2>
+        
+        <AnimatedCard className="p-6">
+          <ProfilePictureUpload
+            userId={user.id}
+            currentImage={profile?.user_type === 'brand' ? profile?.logo_url : profile?.avatar_url}
+            userType={profile?.user_type === 'brand' ? 'brand' : 'user'}
+            onUploadComplete={(url) => {
+              // Update will be handled by the component itself
+              window.location.reload() // Simple refresh to show updated image
+            }}
+          />
+        </AnimatedCard>
+      </div>
+
       {/* Profile Settings */}
       <div>
-        <h2 className="text-2xl font-bold text-slate-900 mb-6">Profile Information</h2>
+        <h2 className="text-2xl font-bold text-slate-900 mb-6">
+          {profile?.user_type === 'brand' ? 'Brand Information' : 'Profile Information'}
+        </h2>
         
         <AnimatedCard className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
-                Full Name
+                {profile?.user_type === 'brand' ? 'Company Name' : 'Full Name'}
               </label>
               <input
                 type="text"
-                value={profileData.full_name}
-                onChange={(e) => handleProfileChange('full_name', e.target.value)}
+                value={profile?.user_type === 'brand' ? profileData.company_name : profileData.full_name}
+                onChange={(e) => handleProfileChange(
+                  profile?.user_type === 'brand' ? 'company_name' : 'full_name', 
+                  e.target.value
+                )}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                placeholder="Enter your full name"
+                placeholder={profile?.user_type === 'brand' ? 'Enter company name' : 'Enter your full name'}
               />
             </div>
 
@@ -314,9 +356,58 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
               />
             </div>
 
+            {/* Brand-specific fields */}
+            {profile?.user_type === 'brand' && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Industry
+                  </label>
+                  <input
+                    type="text"
+                    value={profileData.industry}
+                    onChange={(e) => handleProfileChange('industry', e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                    placeholder="e.g., Technology, Healthcare, Finance"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Company Size
+                  </label>
+                  <select
+                    value={profileData.company_size}
+                    onChange={(e) => handleProfileChange('company_size', e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  >
+                    <option value="">Select size</option>
+                    <option value="startup">Startup (1-10 employees)</option>
+                    <option value="small">Small (11-50 employees)</option>
+                    <option value="medium">Medium (51-200 employees)</option>
+                    <option value="large">Large (201-1000 employees)</option>
+                    <option value="enterprise">Enterprise (1000+ employees)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Company Website
+                  </label>
+                  <input
+                    type="url"
+                    value={profileData.company_website}
+                    onChange={(e) => handleProfileChange('company_website', e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                    placeholder="https://yourcompany.com"
+                  />
+                </div>
+              </>
+            )}
+
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-slate-700 mb-2">
-                Bio
+                {profile?.user_type === 'brand' ? 'Company Description' : 'Bio'}
               </label>
               <textarea
                 value={profileData.bio}
