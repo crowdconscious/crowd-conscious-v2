@@ -53,33 +53,58 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
   // Apply theme immediately when changed
   useEffect(() => {
     const applyTheme = () => {
-      // Always remove dark class first
+      console.log('Applying theme:', settings.theme)
+      
+      // FORCE remove all dark mode classes and attributes
       document.documentElement.classList.remove('dark')
       document.documentElement.removeAttribute('data-theme')
       
+      // Force reset background to ensure we start clean
+      document.body.style.background = ''
+      document.documentElement.style.background = ''
+      
       if (settings.theme === 'dark') {
+        console.log('Setting dark mode')
         document.documentElement.classList.add('dark')
         document.documentElement.setAttribute('data-theme', 'dark')
         document.documentElement.style.colorScheme = 'dark'
       } else if (settings.theme === 'light') {
+        console.log('Setting light mode')
+        // Explicitly ensure light mode
         document.documentElement.style.colorScheme = 'light'
+        // Force reload CSS variables
+        document.documentElement.style.setProperty('--background', '#ffffff')
+        document.documentElement.style.setProperty('--foreground', '#090909')
       } else {
         // System theme
+        console.log('Setting system theme')
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-        if (prefersDark) {
+        if (prefersDark && settings.theme === 'system') {
           document.documentElement.classList.add('dark')
           document.documentElement.setAttribute('data-theme', 'dark')
           document.documentElement.style.colorScheme = 'dark'
         } else {
           document.documentElement.style.colorScheme = 'light'
+          document.documentElement.style.setProperty('--background', '#ffffff')
+          document.documentElement.style.setProperty('--foreground', '#090909')
         }
       }
+      
+      console.log('Theme applied. Classes:', document.documentElement.className)
+      console.log('Color scheme:', document.documentElement.style.colorScheme)
     }
 
     // Only apply theme if settings is initialized
     if (settings.theme) {
       applyTheme()
       localStorage.setItem('theme', settings.theme)
+      
+      // Force a page refresh after theme change to ensure CSS is properly applied
+      setTimeout(() => {
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('storage'))
+        }
+      }, 100)
     }
 
     // Listen for system theme changes

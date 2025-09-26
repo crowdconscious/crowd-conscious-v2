@@ -82,34 +82,10 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* Legacy dark mode colors */
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --input-background: #1f2937;
-    --input-foreground: #f9fafb;
-    --input-border: #374151;
-    --muted: #9ca3af;
-    --muted-foreground: #d1d5db;
+/* Dark mode is now ONLY applied when .dark class or [data-theme="dark"] is present */
 
-    /* Dark Mode Color Overrides */
-    --color-neutral-0: #030712;
-    --color-neutral-50: #111827;
-    --color-neutral-100: #1f2937;
-    --color-neutral-200: #374151;
-    --color-neutral-300: #4b5563;
-    --color-neutral-400: #6b7280;
-    --color-neutral-500: #9ca3af;
-    --color-neutral-600: #d1d5db;
-    --color-neutral-700: #e5e7eb;
-    --color-neutral-800: #f3f4f6;
-    --color-neutral-900: #f9fafb;
-    --color-neutral-950: #ffffff;
-  }
-}
-
-/* Manual dark mode toggle */
+/* Dark mode toggle - applied only with .dark class or [data-theme="dark"] */
+.dark,
 [data-theme="dark"] {
   --background: #0a0a0a;
   --foreground: #ededed;
