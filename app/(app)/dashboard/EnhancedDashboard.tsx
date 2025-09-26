@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { AnimatedCard, AnimatedButton } from '@/components/ui/UIComponents'
+import ImpactDashboard from './ImpactDashboard'
+import { XPProgressBar, AchievementsGrid, CommunityLeaderboard, WeeklyChallenge } from '@/components/GamificationSystem'
 
 interface UserStats {
   id: string
@@ -192,6 +194,7 @@ function WeeklyChallengeDisplay() {
 
 export default function EnhancedDashboard({ user, initialUserStats }: EnhancedDashboardProps) {
   const [userStats] = useState<UserStats | null>(initialUserStats)
+  const [activeTab, setActiveTab] = useState<'overview' | 'impact' | 'gamification'>('overview')
 
   const getTimeOfDayMessage = (): string => {
     const hour = new Date().getHours()

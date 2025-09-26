@@ -320,12 +320,31 @@ export default function ContentList({ communityId, userRole }: ContentListProps)
                 </div>
               )}
 
-              {/* Footer */}
-              <div className="flex items-center justify-between text-xs text-slate-500 mt-4 pt-3 border-t border-slate-100">
-                <span>
-                  By {item.profiles?.full_name || item.profiles?.email || 'Unknown'}
-                </span>
-                <span>{formatDate(item.created_at)}</span>
+              {/* Actions */}
+              <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-100">
+                <div className="flex items-center gap-3">
+                  <Link
+                    href={`/communities/${communityId}/content/${item.id}`}
+                    className="flex items-center gap-1 text-teal-600 hover:text-teal-700 text-sm font-medium transition-colors"
+                  >
+                    <span>💬</span>
+                    <span>Discussion</span>
+                  </Link>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${window.location.origin}/communities/${communityId}/content/${item.id}`)
+                      // Could add toast notification here
+                    }}
+                    className="flex items-center gap-1 text-slate-500 hover:text-slate-700 text-sm font-medium transition-colors"
+                  >
+                    <span>📤</span>
+                    <span>Share</span>
+                  </button>
+                </div>
+                <div className="text-xs text-slate-500">
+                  <div>By {item.profiles?.full_name || item.profiles?.email || 'Unknown'}</div>
+                  <div>{formatDate(item.created_at)}</div>
+                </div>
               </div>
             </div>
           ))}

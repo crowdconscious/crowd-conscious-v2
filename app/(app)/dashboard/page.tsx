@@ -1,7 +1,7 @@
 import { getCurrentUser } from '../../../lib/auth-server'
 import { supabase } from '../../../lib/supabase'
 import { redirect } from 'next/navigation'
-import EnhancedDashboard from './EnhancedDashboard'
+import NewEnhancedDashboard from './NewEnhancedDashboard'
 
 interface UserStats {
   id: string
@@ -63,5 +63,5 @@ export default async function DashboardPage() {
 
   const userStats = await getUserStats(user.id)
 
-  return <EnhancedDashboard user={user} initialUserStats={userStats} />
+  return <NewEnhancedDashboard user={user} initialUserStats={userStats} />
 }
