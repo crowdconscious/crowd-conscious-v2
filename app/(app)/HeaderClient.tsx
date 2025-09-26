@@ -125,31 +125,29 @@ export default function HeaderClient({ user }: HeaderClientProps) {
 
           {/* User Controls */}
           <div className="flex items-center gap-4">
-            {/* User Type Toggle */}
-            {(canAccessBrand || activeUserType === 'brand') && (
-              <div className="hidden md:flex items-center bg-slate-100 dark:bg-slate-700 rounded-lg p-1">
-                <button
-                  onClick={() => handleUserTypeToggle('user')}
-                  className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${
-                    activeUserType === 'user'
-                      ? 'bg-white dark:bg-slate-600 text-teal-600 shadow-sm'
-                      : 'text-slate-600 dark:text-slate-300 hover:text-teal-600'
-                  }`}
-                >
-                  👤 User
-                </button>
-                <button
-                  onClick={() => handleUserTypeToggle('brand')}
-                  className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${
-                    activeUserType === 'brand'
-                      ? 'bg-white dark:bg-slate-600 text-teal-600 shadow-sm'
-                      : 'text-slate-600 dark:text-slate-300 hover:text-teal-600'
-                  }`}
-                >
-                  🏢 Brand
-                </button>
-              </div>
-            )}
+            {/* User Type Toggle - Show for ALL users */}
+            <div className="hidden md:flex items-center bg-slate-100 dark:bg-slate-700 rounded-lg p-1">
+              <button
+                onClick={() => handleUserTypeToggle('user')}
+                className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${
+                  activeUserType === 'user'
+                    ? 'bg-white dark:bg-slate-600 text-teal-600 shadow-sm'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-teal-600'
+                }`}
+              >
+                👤 User
+              </button>
+              <button
+                onClick={() => handleUserTypeToggle('brand')}
+                className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${
+                  activeUserType === 'brand'
+                    ? 'bg-white dark:bg-slate-600 text-teal-600 shadow-sm'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-teal-600'
+                }`}
+              >
+                🏢 Brand
+              </button>
+            </div>
 
             {/* User Menu */}
             <div className="flex items-center gap-3">

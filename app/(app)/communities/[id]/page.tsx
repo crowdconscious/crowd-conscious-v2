@@ -3,8 +3,7 @@ import { supabase } from '../../../../lib/supabase'
 import { notFound } from 'next/navigation'
 // @ts-ignore
 import JoinCommunityButton from './JoinCommunityButton'
-// @ts-ignore
-import ContentList from './ContentList'
+import CommunityTabs from './CommunityTabs'
 import Link from 'next/link'
 
 interface Community {
@@ -230,27 +229,12 @@ export default async function CommunityDetailPage({
 
       {/* Navigation Tabs */}
       <div className="bg-white rounded-lg shadow-sm border border-slate-200">
-        <div className="border-b border-slate-200">
-          <nav className="flex space-x-8 px-6">
-            <div className="py-4 text-slate-500">
-              Members
-            </div>
-            <div className="py-4 border-b-2 border-teal-500 text-teal-600 font-medium">
-              Content
-            </div>
-            <div className="py-4 text-slate-500 cursor-not-allowed">
-              Impact (Coming Soon)
-            </div>
-          </nav>
-        </div>
-
-        {/* Content List */}
-        <div className="p-6">
-          <ContentList 
-            communityId={community.id} 
-            userRole={userMembership?.role || null}
-          />
-        </div>
+        {/* Community Tabs */}
+        <CommunityTabs 
+          communityId={community.id}
+          memberCount={community.member_count}
+          userRole={userMembership?.role || null}
+        />
       </div>
 
 
