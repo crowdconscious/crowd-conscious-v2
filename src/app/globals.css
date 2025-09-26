@@ -82,7 +82,31 @@
   --font-mono: var(--font-geist-mono);
 }
 
-/* Dark mode is now ONLY applied when .dark class or [data-theme="dark"] is present */
+/* FORCE LIGHT MODE BY DEFAULT - Dark mode disabled unless explicitly enabled */
+
+/* Force light mode on all elements */
+*, *::before, *::after {
+  color-scheme: light !important;
+}
+
+/* Force root to light mode */
+:root {
+  color-scheme: light !important;
+  background: #ffffff !important;
+  color: #090909 !important;
+}
+
+/* Override any dark mode that might be applied */
+html {
+  color-scheme: light !important;
+  background: #ffffff !important;
+  color: #090909 !important;
+}
+
+body {
+  background: #ffffff !important;
+  color: #090909 !important;
+}
 
 /* Dark mode toggle - applied only with .dark class or [data-theme="dark"] */
 .dark,

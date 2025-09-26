@@ -25,10 +25,45 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <script src="/theme-init.js" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  // Force light mode immediately
+                  document.documentElement.classList.remove('dark');
+                  document.documentElement.removeAttribute('data-theme');
+                  document.documentElement.style.colorScheme = 'light';
+                  
+                  // Set CSS variables for light mode
+                  const root = document.documentElement;
+                  root.style.setProperty('--background', '#ffffff');
+                  root.style.setProperty('--foreground', '#090909');
+                  root.style.setProperty('--input-background', '#ffffff');
+                  root.style.setProperty('--input-foreground', '#020101');
+                  root.style.setProperty('--input-border', '#d1d5db');
+                  root.style.setProperty('--muted', '#374151');
+                  root.style.setProperty('--muted-foreground', '#1f2937');
+                  
+                  // Only apply dark mode if explicitly set
+                  const savedTheme = localStorage.getItem('theme');
+                  if (savedTheme === 'dark') {
+                    root.classList.add('dark');
+                    root.setAttribute('data-theme', 'dark');
+                    root.style.colorScheme = 'dark';
+                  }
+                  
+                  console.log('Theme initialized:', savedTheme || 'light');
+                } catch (e) {
+                  console.error('Theme init error:', e);
+                }
+              })();
+            `
+          }}
+        />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white text-slate-900`}
       >
         {children}
       </body>
