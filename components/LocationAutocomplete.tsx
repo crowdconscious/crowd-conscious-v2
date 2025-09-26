@@ -48,28 +48,57 @@ export default function LocationAutocomplete({
     setIsLoading(true)
     try {
       // Using Nominatim API (free, no API key required)
+      // Adding more headers and better CORS handling
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?` +
         `q=${encodeURIComponent(searchQuery)}&` +
         `format=json&` +
         `addressdetails=1&` +
         `limit=5&` +
-        `countrycodes=us,mx,ca`, // Focus on North America
+        `countrycodes=us,mx,ca&` + // Focus on North America
+        `accept-language=en`, // Request English results
         {
+          method: 'GET',
           headers: {
-            'User-Agent': 'CrowdConscious/1.0' // Required by Nominatim
-          }
+            'User-Agent': 'CrowdConscious/1.0 (https://crowdconscious.org)', // Required by Nominatim
+            'Accept': 'application/json',
+            'Accept-Language': 'en-US,en;q=0.9'
+          },
+          mode: 'cors'
         }
       )
       
-      if (!response.ok) throw new Error('Search failed')
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
       
       const data = await response.json()
+      
+      if (!Array.isArray(data)) {
+        throw new Error('Invalid response format')
+      }
+      
       setResults(data)
       setShowResults(true)
     } catch (error) {
       console.error('Location search error:', error)
-      setResults([])
+      
+      // Fallback: show basic location suggestions
+      const fallbackResults = [
+        {
+          place_id: 'fallback-1',
+          display_name: `${searchQuery} (search failed - type manually)`,
+          lat: '0',
+          lon: '0',
+          address: {
+            city: searchQuery,
+            country: 'Unknown'
+          }
+        }
+      ]
+      
+      setResults(fallbackResults)
+      setShowResults(true)
     } finally {
       setIsLoading(false)
     }

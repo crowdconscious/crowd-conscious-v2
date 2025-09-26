@@ -38,27 +38,64 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
 
   // Apply theme immediately when changed
   useEffect(() => {
-    if (settings.theme === 'dark') {
-      document.documentElement.classList.add('dark')
-    } else if (settings.theme === 'light') {
-      document.documentElement.classList.remove('dark')
-    } else {
-      // System theme
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-      if (prefersDark) {
+    const applyTheme = () => {
+      if (settings.theme === 'dark') {
         document.documentElement.classList.add('dark')
-      } else {
+        document.documentElement.style.colorScheme = 'dark'
+      } else if (settings.theme === 'light') {
         document.documentElement.classList.remove('dark')
+        document.documentElement.style.colorScheme = 'light'
+      } else {
+        // System theme
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (prefersDark) {
+          document.documentElement.classList.add('dark')
+          document.documentElement.style.colorScheme = 'dark'
+        } else {
+          document.documentElement.classList.remove('dark')
+          document.documentElement.style.colorScheme = 'light'
+        }
       }
     }
 
+    applyTheme()
     // Store theme preference
     localStorage.setItem('theme', settings.theme)
+
+    // Listen for system theme changes
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    const handleSystemThemeChange = () => {
+      if (settings.theme === 'system') {
+        applyTheme()
+      }
+    }
+
+    mediaQuery.addEventListener('change', handleSystemThemeChange)
+    return () => mediaQuery.removeEventListener('change', handleSystemThemeChange)
   }, [settings.theme])
+
+  // Load saved theme on mount
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme')
+    if (savedTheme && ['light', 'dark', 'system'].includes(savedTheme)) {
+      setSettings(prev => ({ ...prev, theme: savedTheme as any }))
+    }
+  }, [])
 
   const handleSettingsChange = (key: string, value: any) => {
     setSettings({ ...settings, [key]: value })
     setHasChanges(true)
+    
+    // Apply changes immediately for better UX
+    if (key === 'language') {
+      localStorage.setItem('language', value)
+      // You could trigger a page refresh here if needed for full translation
+      // window.location.reload()
+    }
+    
+    if (key === 'currency') {
+      localStorage.setItem('currency', value)
+    }
   }
 
   const handleProfileChange = (key: string, value: string) => {

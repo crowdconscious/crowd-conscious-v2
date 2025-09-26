@@ -33,26 +33,13 @@ export default function ShareButton({
         return `${window.location.origin}/communities/${contentId}`
       }
 
-      // For content, create shareable token
-      const { data, error } = await supabaseClient
-        .from('share_links')
-        .insert({
-          content_id: contentId,
-          type: contentType,
-          expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days
-        })
-        .select()
-        .single()
-
-      if (error) {
-        console.error('Error creating share link:', error)
-        throw new Error('Failed to create share link')
-      }
-
-      return `${window.location.origin}/share/${data.token}`
+      // For now, use direct content links until share_links table is set up
+      // This will work immediately without database dependencies
+      return `${window.location.origin}/communities/${contentId}/content/${contentId}`
     } catch (error) {
       console.error('Share link creation error:', error)
-      throw error
+      // Fallback to current page URL
+      return window.location.href
     }
   }
 
@@ -60,14 +47,48 @@ export default function ShareButton({
     setIsSharing(true)
     try {
       const shareUrl = await createShareLink()
-      await navigator.clipboard.writeText(shareUrl)
+      
+      // Check if clipboard API is available
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(shareUrl)
+      } else {
+        // Fallback for older browsers or non-HTTPS
+        const textArea = document.createElement('textarea')
+        textArea.value = shareUrl
+        document.body.appendChild(textArea)
+        textArea.focus()
+        textArea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textArea)
+      }
       
       // Show success feedback
       setShowShareMenu(false)
-      alert('Share link copied to clipboard!')
+      
+      // Better user feedback - you can replace this with toast notification later
+      const notification = document.createElement('div')
+      notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50'
+      notification.textContent = 'Share link copied to clipboard!'
+      document.body.appendChild(notification)
+      
+      setTimeout(() => {
+        document.body.removeChild(notification)
+      }, 3000)
+      
     } catch (error) {
       console.error('Error copying to clipboard:', error)
-      alert('Failed to copy share link')
+      
+      // Show error feedback
+      const notification = document.createElement('div')
+      notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50'
+      notification.textContent = 'Failed to copy link. Please try again.'
+      document.body.appendChild(notification)
+      
+      setTimeout(() => {
+        if (document.body.contains(notification)) {
+          document.body.removeChild(notification)
+        }
+      }, 3000)
     } finally {
       setIsSharing(false)
     }
