@@ -1,10 +1,10 @@
 import { Resend } from 'resend'
 
 if (!process.env.RESEND_API_KEY) {
-  throw new Error('RESEND_API_KEY is not set in environment variables')
+  console.warn('RESEND_API_KEY is not set - email functionality will be disabled')
 }
 
-export const resend = new Resend(process.env.RESEND_API_KEY)
+export const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 
 const FROM_EMAIL = 'Crowd Conscious <noreply@your-domain.com>' // Update with your domain
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
@@ -166,6 +166,11 @@ export async function sendEmail(
   from: string = FROM_EMAIL
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    if (!resend) {
+      console.error('Resend not configured - email not sent')
+      return { success: false, error: 'Email service not configured' }
+    }
+
     const { data, error } = await resend.emails.send({
       from,
       to: [to],

@@ -22,19 +22,47 @@ export async function POST(request: NextRequest) {
 
     const { communityId, action, notes } = await request.json()
 
-    if (!communityId || !action || !['approve', 'reject'].includes(action)) {
+    if (!communityId || !action || !['approve', 'reject', 'suspend', 'delete'].includes(action)) {
       return NextResponse.json({ error: 'Invalid parameters' }, { status: 400 })
     }
 
-    // Update community moderation status
+    let updateData: any = {
+      moderated_by: user.id,
+      moderated_at: new Date().toISOString(),
+      moderation_notes: notes || null
+    }
+
+    let actionType = ''
+    let message = ''
+
+    switch (action) {
+      case 'approve':
+        updateData.moderation_status = 'approved'
+        actionType = 'approve_community'
+        message = 'Community approved successfully'
+        break
+      case 'reject':
+        updateData.moderation_status = 'rejected'
+        actionType = 'reject_community'
+        message = 'Community rejected'
+        break
+      case 'suspend':
+        updateData.moderation_status = 'suspended'
+        actionType = 'suspend_community'
+        message = 'Community suspended'
+        break
+      case 'delete':
+        // For delete, we'll soft delete by marking it as deleted
+        updateData.moderation_status = 'deleted'
+        actionType = 'delete_community'
+        message = 'Community deleted'
+        break
+    }
+
+    // Update community status
     const { error: updateError } = await supabase
       .from('communities')
-      .update({
-        moderation_status: action === 'approve' ? 'approved' : 'rejected',
-        moderated_by: user.id,
-        moderated_at: new Date().toISOString(),
-        moderation_notes: notes || null
-      })
+      .update(updateData)
       .eq('id', communityId)
 
     if (updateError) {
@@ -47,13 +75,14 @@ export async function POST(request: NextRequest) {
       .from('admin_actions')
       .insert({
         admin_id: user.id,
-        action_type: action === 'approve' ? 'approve_community' : 'reject_community',
+        action_type: actionType,
         target_type: 'community',
         target_id: communityId,
-        details: { notes }
+        details: { notes, action }
       })
+      .catch(err => console.log('Admin action logging failed:', err)) // Don't fail if logging fails
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true, message })
   } catch (error) {
     console.error('Community moderation error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

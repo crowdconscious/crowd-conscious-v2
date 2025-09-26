@@ -35,7 +35,7 @@ export default function AdminDashboardClient({
   const [activeTab, setActiveTab] = useState<'overview' | 'communities' | 'sponsorships' | 'users' | 'settings'>('overview')
   const [editingSettings, setEditingSettings] = useState<{[key: string]: string}>({})
 
-  const handleCommunityAction = async (communityId: string, action: 'approve' | 'reject', notes?: string) => {
+  const handleCommunityAction = async (communityId: string, action: 'approve' | 'reject' | 'suspend' | 'delete', notes?: string) => {
     try {
       const response = await fetch('/api/admin/moderate-community', {
         method: 'POST',
@@ -43,10 +43,13 @@ export default function AdminDashboardClient({
         body: JSON.stringify({ communityId, action, notes })
       })
 
+      const result = await response.json()
+
       if (response.ok) {
+        alert(result.message || 'Community action completed successfully!')
         window.location.reload() // Simple refresh for now
       } else {
-        alert('Failed to moderate community')
+        alert(result.error || 'Failed to moderate community')
       }
     } catch (error) {
       console.error('Error moderating community:', error)
@@ -238,9 +241,13 @@ export default function AdminDashboardClient({
                           ? 'bg-orange-100 text-orange-800'
                           : community.moderation_status === 'approved'
                           ? 'bg-green-100 text-green-800'
+                          : community.moderation_status === 'suspended'
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : community.moderation_status === 'deleted'
+                          ? 'bg-gray-100 text-gray-800'
                           : 'bg-red-100 text-red-800'
                       }`}>
-                        {community.moderation_status}
+                        {community.moderation_status || 'approved'}
                       </span>
                     </div>
                     <p className="text-slate-700 mb-3 line-clamp-2">{community.description}</p>
@@ -250,28 +257,78 @@ export default function AdminDashboardClient({
                     </div>
                   </div>
                   
-                  {community.moderation_status === 'pending' && (
-                    <div className="flex gap-2 ml-4">
-                      <AnimatedButton
-                        size="sm"
-                        onClick={() => handleCommunityAction(community.id, 'approve')}
-                        className="bg-green-600 hover:bg-green-700"
-                      >
-                        Approve
-                      </AnimatedButton>
-                      <AnimatedButton
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => {
-                          const notes = prompt('Rejection reason (optional):')
-                          handleCommunityAction(community.id, 'reject', notes || undefined)
-                        }}
-                        className="text-red-600 hover:bg-red-50"
-                      >
-                        Reject
-                      </AnimatedButton>
-                    </div>
-                  )}
+              <div className="flex gap-2 ml-4">
+                {community.moderation_status === 'pending' && (
+                  <>
+                    <AnimatedButton
+                      size="sm"
+                      onClick={() => handleCommunityAction(community.id, 'approve')}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      Approve
+                    </AnimatedButton>
+                    <AnimatedButton
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        const notes = prompt('Rejection reason (optional):')
+                        handleCommunityAction(community.id, 'reject', notes || undefined)
+                      }}
+                      className="text-red-600 hover:bg-red-50"
+                    >
+                      Reject
+                    </AnimatedButton>
+                  </>
+                )}
+                
+                {/* Admin actions for all communities */}
+                {community.moderation_status !== 'suspended' && community.moderation_status !== 'deleted' && (
+                  <>
+                    <AnimatedButton
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        const reason = prompt('Suspension reason:')
+                        if (reason && confirm(`Are you sure you want to suspend "${community.name}"?`)) {
+                          handleCommunityAction(community.id, 'suspend', reason)
+                        }
+                      }}
+                      className="text-orange-600 hover:bg-orange-50"
+                    >
+                      Suspend
+                    </AnimatedButton>
+                    
+                    <AnimatedButton
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        const reason = prompt('Deletion reason (this action cannot be undone):')
+                        if (reason && confirm(`Are you sure you want to DELETE "${community.name}"? This cannot be undone!`)) {
+                          handleCommunityAction(community.id, 'delete', reason)
+                        }
+                      }}
+                      className="text-red-600 hover:bg-red-50"
+                    >
+                      Delete
+                    </AnimatedButton>
+                  </>
+                )}
+                
+                {/* Restore option for suspended communities */}
+                {community.moderation_status === 'suspended' && (
+                  <AnimatedButton
+                    size="sm"
+                    onClick={() => {
+                      if (confirm(`Restore "${community.name}" to approved status?`)) {
+                        handleCommunityAction(community.id, 'approve', 'Community restored from suspension')
+                      }
+                    }}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    Restore
+                  </AnimatedButton>
+                )}
+              </div>
                 </div>
               </AnimatedCard>
             ))}
