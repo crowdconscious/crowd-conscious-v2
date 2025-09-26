@@ -251,8 +251,8 @@ export default function NewEnhancedDashboard({ user, initialUserStats }: Enhance
 
           {activeTab === 'gamification' && (
             <div className="space-y-8">
-              <XPProgressBar currentXP={userStats.total_xp} level={userStats.level} />
-              <WeeklyChallenge userId={user.id} userStats={userStats} />
+              <XPProgressBar userStats={userStats} />
+              <WeeklyChallenge />
               <AchievementsGrid userStats={userStats} />
               <CommunityLeaderboard />
             </div>
