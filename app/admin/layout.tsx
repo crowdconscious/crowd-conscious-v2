@@ -44,6 +44,12 @@ export default async function AdminLayout({
           <div className="flex items-center gap-4">
             <span className="text-red-100 text-sm">Logged in as Admin</span>
             <a 
+              href="/admin/test-systems" 
+              className="bg-yellow-600 hover:bg-yellow-500 px-3 py-1 rounded text-sm transition-colors"
+            >
+              🧪 Test Systems
+            </a>
+            <a 
               href="/dashboard" 
               className="bg-red-500 hover:bg-red-400 px-3 py-1 rounded text-sm transition-colors"
             >

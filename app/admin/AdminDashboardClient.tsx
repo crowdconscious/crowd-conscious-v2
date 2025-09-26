@@ -18,6 +18,7 @@ interface DetailedData {
   recentCommunities: any[]
   recentSponsorships: any[]
   platformSettings: any[]
+  recentUsers: any[]
 }
 
 interface AdminDashboardClientProps {
@@ -32,6 +33,7 @@ export default function AdminDashboardClient({
   detailedData 
 }: AdminDashboardClientProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'communities' | 'sponsorships' | 'users' | 'settings'>('overview')
+  const [editingSettings, setEditingSettings] = useState<{[key: string]: string}>({})
 
   const handleCommunityAction = async (communityId: string, action: 'approve' | 'reject', notes?: string) => {
     try {
@@ -87,6 +89,31 @@ export default function AdminDashboardClient({
     } catch (error) {
       console.error('Error moderating user:', error)
       alert('Error moderating user')
+    }
+  }
+
+  const handleUpdateSetting = async (settingKey: string, value: string) => {
+    try {
+      const response = await fetch('/api/admin/update-setting', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ settingKey, value })
+      })
+
+      if (response.ok) {
+        alert('Setting updated successfully!')
+        setEditingSettings(prev => {
+          const newSettings = { ...prev }
+          delete newSettings[settingKey]
+          return newSettings
+        })
+        window.location.reload()
+      } else {
+        alert('Failed to update setting')
+      }
+    } catch (error) {
+      console.error('Error updating setting:', error)
+      alert('Error updating setting')
     }
   }
 
@@ -327,6 +354,87 @@ export default function AdminDashboardClient({
         </div>
       )}
 
+      {/* Users Tab */}
+      {activeTab === 'users' && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-slate-900">User Management</h2>
+            <div className="text-sm text-slate-600">
+              {stats.totalUsers} total users • {stats.suspendedUsers} suspended
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {detailedData.recentUsers.map(user => (
+              <AnimatedCard key={user.id} className="p-6">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="text-lg font-semibold text-slate-900">
+                        {user.full_name || user.company_name || user.email}
+                      </h3>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        user.user_type === 'admin' 
+                          ? 'bg-red-100 text-red-800'
+                          : user.user_type === 'brand'
+                          ? 'bg-blue-100 text-blue-800'
+                          : 'bg-green-100 text-green-800'
+                      }`}>
+                        {user.user_type || 'user'}
+                      </span>
+                      {user.suspended && (
+                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                          Suspended
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-slate-700 mb-2">
+                      <strong>Email:</strong> {user.email}
+                    </p>
+                    {user.company_name && (
+                      <p className="text-slate-700 mb-2">
+                        <strong>Company:</strong> {user.company_name}
+                      </p>
+                    )}
+                    <div className="text-sm text-slate-500">
+                      Joined: {new Date(user.created_at).toLocaleDateString()}
+                    </div>
+                  </div>
+                  
+                  {user.user_type !== 'admin' && (
+                    <div className="flex gap-2 ml-4">
+                      {user.suspended ? (
+                        <AnimatedButton
+                          size="sm"
+                          onClick={() => handleUserSuspension(user.id, 'unsuspend')}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          Unsuspend
+                        </AnimatedButton>
+                      ) : (
+                        <AnimatedButton
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            const reason = prompt('Suspension reason:')
+                            if (reason) {
+                              handleUserSuspension(user.id, 'suspend', reason)
+                            }
+                          }}
+                          className="text-red-600 hover:bg-red-50"
+                        >
+                          Suspend
+                        </AnimatedButton>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </AnimatedCard>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Settings Tab */}
       {activeTab === 'settings' && (
         <div className="space-y-6">
@@ -342,11 +450,18 @@ export default function AdminDashboardClient({
                 <div className="flex items-center gap-3">
                   <input
                     type="text"
-                    defaultValue={setting.setting_value}
-                    className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm"
-                    disabled // Make editable later with update API
+                    value={editingSettings[setting.setting_key] !== undefined ? editingSettings[setting.setting_key] : setting.setting_value}
+                    onChange={(e) => setEditingSettings(prev => ({
+                      ...prev,
+                      [setting.setting_key]: e.target.value
+                    }))}
+                    className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500"
                   />
-                  <AnimatedButton size="sm" disabled>
+                  <AnimatedButton 
+                    size="sm" 
+                    onClick={() => handleUpdateSetting(setting.setting_key, editingSettings[setting.setting_key] || setting.setting_value)}
+                    disabled={editingSettings[setting.setting_key] === undefined || editingSettings[setting.setting_key] === setting.setting_value}
+                  >
                     Update
                   </AnimatedButton>
                 </div>

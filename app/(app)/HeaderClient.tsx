@@ -120,6 +120,15 @@ export default function HeaderClient({ user }: HeaderClientProps) {
               >
                 Discover
               </Link>
+              {/* Admin Link */}
+              {userProfile?.user_type === 'admin' && (
+                <Link 
+                  href="/admin" 
+                  className="bg-red-600 text-white px-3 py-1 rounded-md text-sm font-medium hover:bg-red-700 transition-colors"
+                >
+                  ⚠️ Admin
+                </Link>
+              )}
             </nav>
           </div>
 

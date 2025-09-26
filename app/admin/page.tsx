@@ -3,11 +3,11 @@ import { supabase } from '@/lib/supabase'
 import AdminDashboardClient from './AdminDashboardClient'
 
 async function getAdminStats() {
-  // Get pending communities
+  // Get pending communities (use approved as default since moderation_status might not exist yet)
   const { count: pendingCommunities } = await supabase
     .from('communities')
     .select('id', { count: 'exact' })
-    .eq('moderation_status', 'pending')
+    .or('moderation_status.eq.pending,moderation_status.is.null')
 
   // Get pending sponsorships that need review
   const { count: pendingSponsorships } = await supabase
@@ -27,8 +27,8 @@ async function getAdminStats() {
     .select('id', { count: 'exact' })
     .eq('suspended', true)
 
-  // Get recent admin actions
-  const { data: recentActions } = await supabase
+  // Get recent admin actions (table might not exist yet)
+  const { data: recentActions, error: actionsError } = await supabase
     .from('admin_actions')
     .select(`
       id,
@@ -44,6 +44,11 @@ async function getAdminStats() {
     `)
     .order('created_at', { ascending: false })
     .limit(10)
+
+  // If admin_actions table doesn't exist, continue without it
+  if (actionsError) {
+    console.log('Admin actions table not found, continuing without it')
+  }
 
   // Get platform metrics
   const { count: totalCommunities } = await supabase
@@ -83,14 +88,13 @@ async function getDetailedData() {
       name,
       description,
       created_at,
-      moderation_status,
       profiles:creator_id (
         full_name,
         email
       )
     `)
     .order('created_at', { ascending: false })
-    .limit(5)
+    .limit(10)
 
   // Get recent sponsorships for review
   const { data: recentSponsorships } = await supabase
@@ -116,16 +120,40 @@ async function getDetailedData() {
     .order('created_at', { ascending: false })
     .limit(5)
 
-  // Get platform settings
-  const { data: platformSettings } = await supabase
+  // Get platform settings (table might not exist yet)
+  const { data: platformSettings, error: settingsError } = await supabase
     .from('platform_settings')
     .select('*')
     .order('setting_key')
 
+  // If platform_settings table doesn't exist, provide defaults
+  const defaultSettings = settingsError ? [
+    { id: '1', setting_key: 'platform_fee_percentage', setting_value: '15', description: 'Platform fee percentage for sponsorships' },
+    { id: '2', setting_key: 'auto_approve_communities', setting_value: 'false', description: 'Whether to auto-approve new communities' },
+    { id: '3', setting_key: 'min_sponsorship_amount', setting_value: '50', description: 'Minimum sponsorship amount in USD' },
+    { id: '4', setting_key: 'max_sponsorship_amount', setting_value: '10000', description: 'Maximum sponsorship amount in USD' }
+  ] : platformSettings
+
+  // Get users for user management
+  const { data: recentUsers } = await supabase
+    .from('profiles')
+    .select(`
+      id,
+      email,
+      full_name,
+      user_type,
+      suspended,
+      created_at,
+      company_name
+    `)
+    .order('created_at', { ascending: false })
+    .limit(20)
+
   return {
     recentCommunities: recentCommunities || [],
     recentSponsorships: recentSponsorships || [],
-    platformSettings: platformSettings || []
+    platformSettings: defaultSettings || [],
+    recentUsers: recentUsers || []
   }
 }
 
