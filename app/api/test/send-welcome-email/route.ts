@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth-server'
 import { supabase } from '@/lib/supabase'
-import { sendWelcomeEmail } from '@/lib/resend'
+import { sendWelcomeEmail } from '@/lib/email-simple'
 
 export async function POST(request: NextRequest) {
   try {

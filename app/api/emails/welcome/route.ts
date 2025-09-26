@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { sendWelcomeEmail } from '@/lib/resend'
+import { sendWelcomeEmail } from '@/lib/email-simple'
 
 export async function POST(request: NextRequest) {
   try {
