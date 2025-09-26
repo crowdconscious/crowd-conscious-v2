@@ -36,31 +36,51 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
   const [isLoading, setIsLoading] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
 
+  // Load saved settings on mount
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme') || 'light'
+    const savedLanguage = localStorage.getItem('language') || 'en'
+    const savedCurrency = localStorage.getItem('currency') || 'USD'
+    
+    setSettings(prev => ({ 
+      ...prev, 
+      theme: savedTheme as any,
+      language: savedLanguage as any,
+      currency: savedCurrency as any
+    }))
+  }, [])
+
   // Apply theme immediately when changed
   useEffect(() => {
     const applyTheme = () => {
+      // Always remove dark class first
+      document.documentElement.classList.remove('dark')
+      document.documentElement.removeAttribute('data-theme')
+      
       if (settings.theme === 'dark') {
         document.documentElement.classList.add('dark')
+        document.documentElement.setAttribute('data-theme', 'dark')
         document.documentElement.style.colorScheme = 'dark'
       } else if (settings.theme === 'light') {
-        document.documentElement.classList.remove('dark')
         document.documentElement.style.colorScheme = 'light'
       } else {
         // System theme
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
         if (prefersDark) {
           document.documentElement.classList.add('dark')
+          document.documentElement.setAttribute('data-theme', 'dark')
           document.documentElement.style.colorScheme = 'dark'
         } else {
-          document.documentElement.classList.remove('dark')
           document.documentElement.style.colorScheme = 'light'
         }
       }
     }
 
-    applyTheme()
-    // Store theme preference
-    localStorage.setItem('theme', settings.theme)
+    // Only apply theme if settings is initialized
+    if (settings.theme) {
+      applyTheme()
+      localStorage.setItem('theme', settings.theme)
+    }
 
     // Listen for system theme changes
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
@@ -73,14 +93,6 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
     mediaQuery.addEventListener('change', handleSystemThemeChange)
     return () => mediaQuery.removeEventListener('change', handleSystemThemeChange)
   }, [settings.theme])
-
-  // Load saved theme on mount
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme')
-    if (savedTheme && ['light', 'dark', 'system'].includes(savedTheme)) {
-      setSettings(prev => ({ ...prev, theme: savedTheme as any }))
-    }
-  }, [])
 
   const handleSettingsChange = (key: string, value: any) => {
     setSettings({ ...settings, [key]: value })
@@ -106,30 +118,103 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
   const saveSettings = async () => {
     setIsLoading(true)
     try {
-      // Update user settings
-      const { error: settingsError } = await supabaseClient
+      console.log('Saving settings:', settings)
+      console.log('Saving profile:', profileData)
+
+      // First, try to get existing user settings
+      const { data: existingSettings } = await supabaseClient
         .from('user_settings')
-        .upsert({
-          user_id: user.id,
-          ...settings,
-          updated_at: new Date().toISOString()
-        })
+        .select('*')
+        .eq('user_id', user.id)
+        .single()
 
-      if (settingsError) throw settingsError
+      let settingsError = null
 
-      // Update profile
+      if (existingSettings) {
+        // Update existing settings
+        const { error } = await supabaseClient
+          .from('user_settings')
+          .update({
+            theme: settings.theme,
+            language: settings.language,
+            currency: settings.currency,
+            email_notifications: settings.email_notifications,
+            push_notifications: settings.push_notifications,
+            marketing_emails: settings.marketing_emails,
+            privacy_level: settings.privacy_level,
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', user.id)
+        
+        settingsError = error
+      } else {
+        // Insert new settings
+        const { error } = await supabaseClient
+          .from('user_settings')
+          .insert({
+            user_id: user.id,
+            theme: settings.theme,
+            language: settings.language,
+            currency: settings.currency,
+            email_notifications: settings.email_notifications,
+            push_notifications: settings.push_notifications,
+            marketing_emails: settings.marketing_emails,
+            privacy_level: settings.privacy_level,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+        
+        settingsError = error
+      }
+
+      if (settingsError) {
+        console.error('Settings error:', settingsError)
+        throw settingsError
+      }
+
+      // Update profile data
       const { error: profileError } = await supabaseClient
         .from('profiles')
-        .update(profileData)
+        .update({
+          full_name: profileData.full_name,
+          bio: profileData.bio,
+          location: profileData.location
+        })
         .eq('id', user.id)
 
-      if (profileError) throw profileError
+      if (profileError) {
+        console.error('Profile error:', profileError)
+        throw profileError
+      }
 
       setHasChanges(false)
-      alert('Settings saved successfully!')
+      
+      // Show success notification
+      const notification = document.createElement('div')
+      notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50'
+      notification.textContent = '✅ Settings saved successfully!'
+      document.body.appendChild(notification)
+      
+      setTimeout(() => {
+        if (document.body.contains(notification)) {
+          document.body.removeChild(notification)
+        }
+      }, 3000)
+
     } catch (error) {
       console.error('Error saving settings:', error)
-      alert('Failed to save settings')
+      
+      // Show error notification
+      const notification = document.createElement('div')
+      notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50'
+      notification.textContent = '❌ Failed to save settings. Please try again.'
+      document.body.appendChild(notification)
+      
+      setTimeout(() => {
+        if (document.body.contains(notification)) {
+          document.body.removeChild(notification)
+        }
+      }, 3000)
     } finally {
       setIsLoading(false)
     }

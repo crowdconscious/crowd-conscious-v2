@@ -38,7 +38,7 @@ export default function LocationAutocomplete({
   const debounceRef = useRef<NodeJS.Timeout>()
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // Search using Nominatim (OpenStreetMap) - free alternative to Google Places
+  // Search using our API route to avoid CORS issues
   const searchLocations = async (searchQuery: string) => {
     if (searchQuery.length < 3) {
       setResults([])
@@ -47,32 +47,26 @@ export default function LocationAutocomplete({
 
     setIsLoading(true)
     try {
-      // Using Nominatim API (free, no API key required)
-      // Adding more headers and better CORS handling
+      // Use our API route to proxy the request
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?` +
-        `q=${encodeURIComponent(searchQuery)}&` +
-        `format=json&` +
-        `addressdetails=1&` +
-        `limit=5&` +
-        `countrycodes=us,mx,ca&` + // Focus on North America
-        `accept-language=en`, // Request English results
+        `/api/locations/search?q=${encodeURIComponent(searchQuery)}`,
         {
           method: 'GET',
           headers: {
-            'User-Agent': 'CrowdConscious/1.0 (https://crowdconscious.org)', // Required by Nominatim
             'Accept': 'application/json',
-            'Accept-Language': 'en-US,en;q=0.9'
-          },
-          mode: 'cors'
+          }
         }
       )
       
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        throw new Error(`API error: ${response.status}`)
       }
       
       const data = await response.json()
+      
+      if (data.error) {
+        throw new Error(data.error)
+      }
       
       if (!Array.isArray(data)) {
         throw new Error('Invalid response format')
@@ -83,16 +77,16 @@ export default function LocationAutocomplete({
     } catch (error) {
       console.error('Location search error:', error)
       
-      // Fallback: show basic location suggestions
+      // Fallback: show manual entry option
       const fallbackResults = [
         {
           place_id: 'fallback-1',
-          display_name: `${searchQuery} (search failed - type manually)`,
+          display_name: `${searchQuery} (type manually - search unavailable)`,
           lat: '0',
           lon: '0',
           address: {
             city: searchQuery,
-            country: 'Unknown'
+            country: 'Manual Entry'
           }
         }
       ]
