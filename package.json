@@ -8,6 +8,8 @@
     "start": "next start"
   },
   "dependencies": {
+    "@stripe/react-stripe-js": "^4.0.2",
+    "@stripe/stripe-js": "^7.9.0",
     "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.57.4",
@@ -21,6 +23,7 @@
     "react-dom": "19.1.0",
     "react-hook-form": "^7.63.0",
     "recharts": "^3.2.1",
+    "resend": "^6.1.0",
     "stripe": "^18.5.0",
     "tailwind-merge": "^3.3.1",
     "zod": "^4.1.11"

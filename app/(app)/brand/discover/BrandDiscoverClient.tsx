@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { AnimatedCard, AnimatedButton } from '@/components/ui/UIComponents'
 import { supabaseClient } from '@/lib/supabase-client'
 
@@ -59,6 +60,7 @@ export default function BrandDiscoverClient({
   userType, 
   discoverData 
 }: BrandDiscoverClientProps) {
+  const router = useRouter()
   const [activeFilter, setActiveFilter] = useState<string>('all')
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('')
@@ -136,6 +138,24 @@ export default function BrandDiscoverClient({
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-8">
+      {/* Navigation */}
+      <div className="flex items-center justify-between mb-6">
+        <AnimatedButton
+          onClick={() => router.back()}
+          variant="ghost"
+          size="sm"
+          className="flex items-center gap-2 text-slate-600 hover:text-teal-600"
+        >
+          <span>←</span>
+          <span>Go Back</span>
+        </AnimatedButton>
+        <Link href={userType === 'brand' ? '/brand/dashboard' : '/dashboard'}>
+          <AnimatedButton variant="ghost" size="sm" className="text-slate-600 hover:text-teal-600">
+            Dashboard
+          </AnimatedButton>
+        </Link>
+      </div>
+
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-500 to-teal-500 text-white rounded-xl p-8">
         <h1 className="text-3xl font-bold mb-2">Discover Sponsorship Opportunities</h1>
