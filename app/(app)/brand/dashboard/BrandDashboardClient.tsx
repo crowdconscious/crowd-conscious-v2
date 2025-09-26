@@ -82,7 +82,7 @@ export default function BrandDashboardClient({
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-8">
       {/* Brand Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl p-8">
+      <div className="bg-gradient-to-r from-blue-500 to-teal-500 text-white rounded-xl p-8">
         <div className="flex items-center gap-6">
           {brandProfile.logo_url ? (
             <img 
@@ -123,7 +123,7 @@ export default function BrandDashboardClient({
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex space-x-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg overflow-x-auto">
+      <div className="flex space-x-1 bg-slate-50 p-1 rounded-lg overflow-x-auto border border-slate-200">
         {[
           { key: 'overview', label: 'Overview', icon: '📊' },
           { key: 'opportunities', label: 'Opportunities', icon: '🎯' },
@@ -135,8 +135,8 @@ export default function BrandDashboardClient({
             onClick={() => setActiveTab(tab.key as any)}
             className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all whitespace-nowrap ${
               activeTab === tab.key
-                ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-blue-600'
+                ? 'bg-white text-blue-600 shadow-sm'
+                : 'text-slate-600 hover:text-blue-600'
             }`}
           >
             <span>{tab.icon}</span>
@@ -296,8 +296,8 @@ export default function BrandDashboardClient({
               <p className="text-slate-600 mb-4">
                 Check back later for new sponsorship opportunities or explore communities to find needs.
               </p>
-              <Link href="/communities">
-                <AnimatedButton>Explore Communities</AnimatedButton>
+              <Link href="/brand/discover">
+                <AnimatedButton>Discover Sponsorship Opportunities</AnimatedButton>
               </Link>
             </AnimatedCard>
           )}
@@ -368,9 +368,11 @@ export default function BrandDashboardClient({
               <p className="text-slate-600 mb-4">
                 Start by exploring sponsorship opportunities and applying to sponsor community needs.
               </p>
-              <AnimatedButton onClick={() => setActiveTab('opportunities')}>
-                View Opportunities
-              </AnimatedButton>
+              <Link href="/brand/discover">
+                <AnimatedButton>
+                  Discover More Opportunities
+                </AnimatedButton>
+              </Link>
             </AnimatedCard>
           )}
         </div>
@@ -417,9 +419,11 @@ export default function BrandDashboardClient({
               <p className="text-slate-600 mb-4">
                 Your sponsored projects will appear here once they're funded and completed.
               </p>
-              <AnimatedButton onClick={() => setActiveTab('opportunities')}>
-                Start Sponsoring
-              </AnimatedButton>
+              <Link href="/brand/discover">
+                <AnimatedButton>
+                  Start Sponsoring
+                </AnimatedButton>
+              </Link>
             </AnimatedCard>
           )}
         </div>

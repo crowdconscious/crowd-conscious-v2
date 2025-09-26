@@ -108,10 +108,10 @@ export default function HeaderClient({ user }: HeaderClientProps) {
               </Link>
               {activeUserType === 'brand' && (
                 <Link 
-                  href="/brand/sponsorships" 
+                  href="/brand/discover" 
                   className="text-slate-600 dark:text-slate-300 hover:text-teal-600 font-medium"
                 >
-                  Sponsorships
+                  Discover Needs
                 </Link>
               )}
               <Link 

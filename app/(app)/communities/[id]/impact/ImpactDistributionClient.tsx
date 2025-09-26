@@ -145,7 +145,7 @@ export default function ImpactDistributionClient({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-teal-600 to-blue-600 text-white rounded-xl p-6">
+      <div className="bg-gradient-to-r from-teal-500 to-blue-500 text-white rounded-xl p-6">
         <h1 className="text-2xl font-bold mb-2">{impactData.community.name} Impact Dashboard</h1>
         <p className="text-teal-100">
           Track community impact distribution and member contributions
@@ -153,7 +153,7 @@ export default function ImpactDistributionClient({
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex space-x-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+      <div className="flex space-x-1 bg-slate-50 p-1 rounded-lg border border-slate-200">
         {[
           { key: 'overview', label: 'Overview', icon: '📊' },
           { key: 'distribution', label: 'Distribution', icon: '📈' },
@@ -164,8 +164,8 @@ export default function ImpactDistributionClient({
             onClick={() => setActiveTab(tab.key as any)}
             className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all ${
               activeTab === tab.key
-                ? 'bg-white dark:bg-slate-700 text-teal-600 shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-teal-600'
+                ? 'bg-white text-teal-600 shadow-sm'
+                : 'text-slate-600 hover:text-teal-600'
             }`}
           >
             <span>{tab.icon}</span>
