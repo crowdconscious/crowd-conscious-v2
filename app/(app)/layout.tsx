@@ -1,6 +1,6 @@
 import { getCurrentUser } from '../../lib/auth-server'
 import { redirect } from 'next/navigation'
-import MobileNavigation from '../../components/MobileNavigation'
+import MobileNavigation from '@/components/MobileNavigation'
 
 export default async function AppLayout({
   children,
