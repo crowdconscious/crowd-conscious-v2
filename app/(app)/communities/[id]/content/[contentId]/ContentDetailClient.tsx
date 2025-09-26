@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { supabaseClient } from '@/lib/supabase-client'
 import { CommentsSection } from '@/components/DiscussionSystem'
 import { AnimatedButton, AnimatedCard } from '@/components/ui/UIComponents'
+import ShareButton from '@/components/ShareButton'
+import DashboardNavigation from '@/components/DashboardNavigation'
 
 interface Content {
   id: string
@@ -35,41 +37,6 @@ interface ContentDetailClientProps {
 
 export default function ContentDetailClient({ content, user, communityId }: ContentDetailClientProps) {
   const router = useRouter()
-  const [sharing, setSharing] = useState(false)
-
-  const handleShare = async () => {
-    setSharing(true)
-    try {
-      // Create a shareable link
-      const { data, error } = await supabaseClient
-        .from('share_links')
-        .insert({
-          content_id: content.id,
-          type: content.type || 'post',
-          expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days
-        })
-        .select()
-        .single()
-
-      if (error) {
-        console.error('Error creating share link:', error)
-        alert('Failed to create share link')
-        return
-      }
-
-      const shareUrl = `${window.location.origin}/share/${data.token}`
-      
-      // Copy to clipboard
-      await navigator.clipboard.writeText(shareUrl)
-      alert('Share link copied to clipboard!')
-      
-    } catch (error) {
-      console.error('Error sharing:', error)
-      alert('Failed to share content')
-    } finally {
-      setSharing(false)
-    }
-  }
 
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -94,6 +61,8 @@ export default function ContentDetailClient({ content, user, communityId }: Cont
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-8">
+      <DashboardNavigation customBackPath={`/communities/${communityId}`} customBackLabel="Back to Community" />
+      
       {/* Content Header */}
       <AnimatedCard>
         <div className="flex items-start justify-between mb-6">
@@ -111,14 +80,14 @@ export default function ContentDetailClient({ content, user, communityId }: Cont
             <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(content.status)}`}>
               {content.status}
             </span>
-            <AnimatedButton
-              onClick={handleShare}
+            <ShareButton
+              contentId={content.id}
+              contentType={content.type}
+              title={content.title}
+              description={content.description || undefined}
               variant="secondary"
               size="sm"
-              loading={sharing}
-            >
-              📤 Share
-            </AnimatedButton>
+            />
           </div>
         </div>
 
