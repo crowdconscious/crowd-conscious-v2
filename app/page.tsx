@@ -9,6 +9,8 @@ const CommunityCarousel = dynamic(() => import('./components/landing/CommunityCa
 const ImpactCounters = dynamic(() => import('./components/landing/ImpactCounters'))
 const CompletedNeeds = dynamic(() => import('./components/landing/CompletedNeeds'))
 const SocialProof = dynamic(() => import('./components/landing/SocialProof'))
+const Footer = dynamic(() => import('../components/Footer'))
+const CookieConsent = dynamic(() => import('../components/CookieConsent'))
 
 interface Community {
   id: string
@@ -186,9 +188,10 @@ export default async function LandingPage() {
   ])
 
   return (
-    <main className="min-h-screen overflow-x-hidden">
-      {/* Navigation */}
-      <Navigation />
+    <div className="min-h-screen overflow-x-hidden">
+      <main>
+        {/* Navigation */}
+        <Navigation />
       
       {/* Animated Hero Section */}
       <AnimatedHero impactStats={impactStats} />
@@ -255,6 +258,13 @@ export default async function LandingPage() {
           </div>
         </div>
       </section>
-    </main>
+      </main>
+
+    {/* Footer */}
+    <Footer />
+
+    {/* Cookie Consent Banner */}
+    <CookieConsent />
+  </div>
   )
 }

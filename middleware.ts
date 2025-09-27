@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { performanceMonitor, ErrorTracker } from './lib/monitoring'
 
 export function middleware(request: NextRequest) {
   const startTime = Date.now()
@@ -13,21 +12,14 @@ export function middleware(request: NextRequest) {
   response.headers.set('x-request-start', startTime.toString())
   response.headers.set('x-pathname', pathname)
 
-  // Track API requests
+  // Track API requests (simplified for now)
   if (pathname.startsWith('/api/')) {
     const endTime = Date.now()
     const duration = endTime - startTime
     
-    // Track API performance
-    performanceMonitor.trackAPIResponse(pathname, duration, response.status)
-
     // Log slow requests
     if (duration > 3000) {
-      ErrorTracker.captureMessage(`Slow API request: ${pathname}`, 'warning', {
-        duration,
-        method: request.method,
-        userAgent: request.headers.get('user-agent')
-      })
+      console.warn(`Slow API request: ${pathname} took ${duration}ms`)
     }
   }
 
