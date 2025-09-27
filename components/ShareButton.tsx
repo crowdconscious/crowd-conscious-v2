@@ -159,7 +159,7 @@ export default function ShareButton({
     <div className={`relative ${className}`}>
       <AnimatedButton
         onClick={() => {
-          if (navigator.share && /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+          if (typeof navigator.share === 'function' && /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
             shareNative()
           } else {
             setShowShareMenu(!showShareMenu)

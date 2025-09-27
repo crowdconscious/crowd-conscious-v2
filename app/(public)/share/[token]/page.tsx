@@ -59,7 +59,7 @@ async function getSharedContent(token: string): Promise<ShareLink | null> {
   }
 
   // Check if link has expired
-  if (new Date(data.expires_at) < new Date()) {
+  if (new Date((data as any)?.expires_at) < new Date()) {
     return null
   }
 

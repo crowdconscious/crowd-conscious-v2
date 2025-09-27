@@ -2,11 +2,18 @@
 
 import { useEffect } from 'react'
 import { usePathname } from 'next/navigation'
-import { useMonitoring, ErrorTracker } from '@/lib/monitoring'
+import { ErrorTracker } from '@/lib/monitoring-simple'
 
 export default function AnalyticsTracker() {
   const pathname = usePathname()
-  const { trackPageView, trackUserAction } = useMonitoring()
+  
+  const trackPageView = (page: string) => {
+    console.log(`Page view: ${page}`)
+  }
+  
+  const trackUserAction = (action: string, metadata?: Record<string, any>) => {
+    console.log(`User action: ${action}`, metadata)
+  }
 
   useEffect(() => {
     // Track page view
@@ -70,7 +77,8 @@ export default function AnalyticsTracker() {
 
     // Cleanup
     return () => {
-      finishTracking()
+      // TODO: Fix monitoring implementation
+      // finishTracking()
       window.removeEventListener('error', handleError)
       window.removeEventListener('unhandledrejection', handleUnhandledRejection)
       document.removeEventListener('click', trackClick)

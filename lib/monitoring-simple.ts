@@ -57,7 +57,7 @@ export class ErrorTracker {
   }
 
   static captureMessage(message: string, level: string = 'info', context?: Record<string, any>) {
-    console[level as keyof Console](message, context)
+    (console as any)[level](message, context)
   }
 
   static setUserContext(userId: string, userType: string) {

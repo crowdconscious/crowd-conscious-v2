@@ -22,7 +22,7 @@ async function getTrendingCommunities() {
   }
 
   // Calculate activity score and sort by it
-  const communitiesWithActivity = (data || []).map(community => {
+  const communitiesWithActivity = (data || []).map((community: any) => {
     const recentContent = community.community_content?.length || 0
     const activityScore = (community.member_count * 0.7) + (recentContent * 0.3)
     return { ...community, activityScore, recentContent }
@@ -156,7 +156,7 @@ export default async function DiscoverPage() {
                   {/* Core Values */}
                   {community.core_values?.length > 0 && (
                     <div className="flex flex-wrap gap-1 mb-4">
-                      {community.core_values.slice(0, 2).map((value, index) => {
+                      {community.core_values.slice(0, 2).map((value: any, index: number) => {
                         const getValueColor = (val: string) => {
                           const lowerVal = val.toLowerCase()
                           if (lowerVal.includes('air') || lowerVal.includes('climate')) return 'bg-sky-100 text-sky-700'
@@ -213,7 +213,7 @@ export default async function DiscoverPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {newCommunities.map((community) => (
+          {newCommunities.map((community: any) => (
             <AnimatedCard key={community.id} hover>
               <Link href={`/communities/${community.id}`}>
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 h-full">
@@ -252,7 +252,7 @@ export default async function DiscoverPage() {
 
                   {community.core_values?.length > 0 && (
                     <div className="flex flex-wrap gap-1">
-                      {community.core_values.slice(0, 3).map((value, index) => (
+                      {community.core_values.slice(0, 3).map((value: any, index: number) => (
                         <span 
                           key={index}
                           className="text-xs px-2 py-1 bg-teal-100 text-teal-700 rounded-full font-medium"
@@ -279,7 +279,7 @@ export default async function DiscoverPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {featuredCommunities.map((community) => (
+          {featuredCommunities.map((community: any) => (
             <AnimatedCard key={community.id} hover>
               <Link href={`/communities/${community.id}`}>
                 <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl border-2 border-yellow-200 p-6 h-full relative overflow-hidden">

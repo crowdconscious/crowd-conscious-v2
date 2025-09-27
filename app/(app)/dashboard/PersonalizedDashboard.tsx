@@ -508,7 +508,7 @@ export default function PersonalizedDashboard({ user, userCommunities }: Persona
                 {quickActions
                   .sort((a, b) => {
                     const priorityOrder = { high: 3, medium: 2, low: 1 }
-                    return priorityOrder[b.priority] - priorityOrder[a.priority]
+                    return (priorityOrder as any)[b.priority] - (priorityOrder as any)[a.priority]
                   })
                   .map((action, index) => (
                     <div

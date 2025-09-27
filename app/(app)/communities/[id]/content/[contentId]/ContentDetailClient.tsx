@@ -136,7 +136,7 @@ export default function ContentDetailClient({ content, user, communityId }: Cont
       {user && (
         <CommentsSection
           contentId={content.id}
-          userId={user.id}
+          currentUserId={(user as any).id}
         />
       )}
 

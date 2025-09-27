@@ -47,8 +47,8 @@ async function checkUserPermissions(communityId: string, userId: string): Promis
   if (error) return { canAccess: false, role: null }
   
   // Only founders and admins can access settings, but only founders can upload media
-  const canAccess = data.role === 'founder' || data.role === 'admin'
-  return { canAccess, role: data.role }
+  const canAccess = (data as any)?.role === 'founder' || (data as any)?.role === 'admin'
+  return { canAccess, role: (data as any)?.role }
 }
 
 export default async function CommunitySettingsPage({ params }: CommunitySettingsPageProps) {
@@ -65,7 +65,7 @@ export default async function CommunitySettingsPage({ params }: CommunitySetting
   }
 
   // Check if user has permission to edit community settings
-  const { canAccess, role } = await checkUserPermissions(community.id, user.id)
+  const { canAccess, role } = await checkUserPermissions(community.id, (user as any).id)
   if (!canAccess) {
     redirect(`/communities/${community.id}`)
   }

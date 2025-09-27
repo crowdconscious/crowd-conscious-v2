@@ -69,7 +69,7 @@ async function testImageUpload() {
   input.accept = 'image/*'
   
   input.onchange = async (e) => {
-    const file = e.target.files[0]
+    const file = (e.target as HTMLInputElement).files?.[0]
     if (!file) return
     
     console.log('📁 Selected file:', file.name, file.size, 'bytes', file.type)
@@ -110,7 +110,7 @@ async function testImageUpload() {
 }
 
 // Export for manual testing
-window.testRawUpload = testRawUpload
-window.testImageUpload = testImageUpload
+;(window as any).testRawUpload = testRawUpload
+;(window as any).testImageUpload = testImageUpload
 
 console.log('🔧 Upload test functions loaded. Run testRawUpload() or testImageUpload() in console.')

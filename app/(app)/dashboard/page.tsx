@@ -61,7 +61,7 @@ export default async function DashboardPage() {
     redirect('/login')
   }
 
-  const userStats = await getUserStats(user.id)
+  const userStats = await getUserStats((user as any).id)
 
   return <NewEnhancedDashboard user={user} initialUserStats={userStats} />
 }

@@ -92,10 +92,10 @@ export default function ImpactDashboard({ userId }: ImpactDashboardProps) {
       const userCommunities = userStatsResponse.data || []
 
       // Calculate totals
-      const totalFunding = content.reduce((sum, item) => sum + (item.current_funding || 0), 0)
+      const totalFunding = content.reduce((sum, item: any) => sum + (item.current_funding || 0), 0)
       
       // Content by type
-      const contentByType = content.reduce((acc: any, item) => {
+      const contentByType = content.reduce((acc: any, item: any) => {
         acc[item.type] = (acc[item.type] || 0) + 1
         return acc
       }, {})
@@ -128,8 +128,8 @@ export default function ImpactDashboard({ userId }: ImpactDashboardProps) {
 
       const topCommunities = communities
         .slice(0, 5)
-        .map(community => ({
-          name: 'Community ' + community.id.slice(-4),
+        .map((community: any) => ({
+          name: 'Community ' + community.id?.slice(-4),
           impact_score: Math.floor(Math.random() * 100) + 50,
           member_count: community.member_count,
           content_count: Math.floor(Math.random() * 20) + 5
@@ -367,7 +367,7 @@ export default function ImpactDashboard({ userId }: ImpactDashboardProps) {
                 outerRadius={80}
                 fill="#8884d8"
                 dataKey="count"
-                label={({ type, percentage }) => `${type} (${percentage.toFixed(1)}%)`}
+                label={({ type, percentage }: any) => `${type} (${percentage?.toFixed(1)}%)`}
               >
                 {metrics.content_by_type.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

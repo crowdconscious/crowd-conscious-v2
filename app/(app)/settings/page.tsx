@@ -49,8 +49,8 @@ export default async function SettingsPage() {
   }
 
   const [userSettings, profile] = await Promise.all([
-    getUserSettings(user.id),
-    getProfile(user.id)
+    getUserSettings((user as any).id),
+    getProfile((user as any).id)
   ])
 
   return (

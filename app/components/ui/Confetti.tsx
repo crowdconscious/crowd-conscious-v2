@@ -23,7 +23,7 @@ interface ConfettiProps {
   onComplete?: () => void
 }
 
-export default function Confetti({ 
+export function Confetti({ 
   trigger, 
   duration = 3000, 
   particleCount = 50,

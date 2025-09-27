@@ -42,19 +42,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Sponsorship not found' }, { status: 404 })
     }
 
-    if (sponsorship.status !== 'approved') {
+    if ((sponsorship as any).status !== 'approved') {
       return NextResponse.json({ error: 'Sponsorship not approved' }, { status: 400 })
     }
 
     // Send approval email to brand
-    const brandName = sponsorship.profiles.company_name || sponsorship.profiles.full_name
+    const brandName = (sponsorship as any).profiles.company_name || (sponsorship as any).profiles.full_name
     const success = await sendSponsorshipApprovalEmail(
-      sponsorship.profiles.email,
+      (sponsorship as any).profiles.email,
       brandName,
-      sponsorship.community_content.title,
-      sponsorship.amount,
-      sponsorship.community_content.communities.name,
-      sponsorship.id
+      (sponsorship as any).community_content.title,
+      (sponsorship as any).amount,
+      (sponsorship as any).community_content.communities.name,
+      (sponsorship as any).id
     )
 
     if (!success) {

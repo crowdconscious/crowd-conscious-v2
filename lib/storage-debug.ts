@@ -68,9 +68,9 @@ export async function debugUploadImage(file: File, bucket: string, path: string)
       console.error('❌ DEBUG: Upload error details:', {
         error,
         message: error.message,
-        details: error.details,
-        hint: error.hint,
-        code: error.code
+        details: (error as any).details,
+        hint: (error as any).hint,
+        code: (error as any).code
       })
       throw new Error(`Upload failed: ${error.message}`)
     }

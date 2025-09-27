@@ -47,7 +47,7 @@ export default function CommunityTabs({ communityId, memberCount, userRole }: Co
       {/* Tab Content */}
       <div className="p-6">
         {activeTab === 'content' && (
-          <ContentList communityId={communityId} userRole={userRole} />
+          <ContentList communityId={communityId} userRole={userRole || null} />
         )}
         
         {activeTab === 'members' && (

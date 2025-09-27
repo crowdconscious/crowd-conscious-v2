@@ -14,7 +14,7 @@ interface BottomSheetProps {
   className?: string
 }
 
-export default function BottomSheet({
+export function BottomSheet({
   isOpen,
   onClose,
   title,

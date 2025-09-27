@@ -65,7 +65,7 @@ async function getAdminStats() {
     .select('amount')
     .eq('status', 'paid')
 
-  const totalFundingAmount = totalFunding?.reduce((sum, s) => sum + s.amount, 0) || 0
+  const totalFundingAmount = totalFunding?.reduce((sum, s: any) => sum + s.amount, 0) || 0
 
   return {
     pendingCommunities: pendingCommunities || 0,

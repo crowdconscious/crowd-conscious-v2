@@ -11,7 +11,7 @@ async function checkAdminAccess(userId: string) {
     .eq('id', userId)
     .single()
 
-  return profile?.user_type === 'admin'
+  return (profile as any)?.user_type === 'admin'
 }
 
 async function getMetricsData() {
@@ -41,7 +41,7 @@ async function getMetricsData() {
       .gte('created_at', sevenDaysAgo.toISOString())
 
     const totalPayments = allPayments?.length || 0
-    const successfulPayments = allPayments?.filter(p => p.status === 'paid').length || 0
+    const successfulPayments = allPayments?.filter((p: any) => p.status === 'paid').length || 0
     const paymentSuccessRate = totalPayments > 0 ? (successfulPayments / totalPayments) * 100 : 100
 
     // Community growth
@@ -77,7 +77,7 @@ async function getMetricsData() {
       .select('amount')
       .eq('status', 'paid')
 
-    const totalFunding = fundingData?.reduce((sum, item) => sum + (item.amount || 0), 0) || 0
+    const totalFunding = fundingData?.reduce((sum, item: any) => sum + (item.amount || 0), 0) || 0
 
     return {
       realtime: {
@@ -113,7 +113,7 @@ export default async function MetricsPage() {
     redirect('/login')
   }
 
-  const isAdmin = await checkAdminAccess(user.id)
+  const isAdmin = await checkAdminAccess((user as any).id)
   if (!isAdmin) {
     redirect('/dashboard')
   }

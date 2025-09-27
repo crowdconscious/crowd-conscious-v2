@@ -10,7 +10,7 @@ async function checkAdminAccess(userId: string) {
     .eq('id', userId)
     .single()
 
-  return profile?.user_type === 'admin'
+  return (profile as any)?.user_type === 'admin'
 }
 
 export default async function EmailTemplatesPage() {
@@ -20,7 +20,7 @@ export default async function EmailTemplatesPage() {
     redirect('/login')
   }
 
-  const isAdmin = await checkAdminAccess(user.id)
+  const isAdmin = await checkAdminAccess((user as any).id)
   if (!isAdmin) {
     redirect('/dashboard')
   }

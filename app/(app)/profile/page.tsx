@@ -100,10 +100,10 @@ export default async function ProfilePage() {
   }
 
   const [profile, userCommunities, impactStats, userSettings] = await Promise.all([
-    getProfile(user.id),
-    getUserCommunities(user.id),
-    getUserImpactStats(user.id),
-    getUserSettings(user.id)
+    getProfile((user as any).id),
+    getUserCommunities((user as any).id),
+    getUserImpactStats((user as any).id),
+    getUserSettings((user as any).id)
   ])
 
   return (

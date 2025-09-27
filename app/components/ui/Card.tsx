@@ -6,7 +6,7 @@ interface CardProps
     CardVariants {
   children: React.ReactNode
   hover?: boolean
-  as?: keyof JSX.IntrinsicElements
+  as?: any
 }
 
 const Card = React.forwardRef<HTMLDivElement, CardProps>(

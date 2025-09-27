@@ -117,10 +117,10 @@ async function getCommunityStats(communityId: string) {
 
   const stats = {
     total_content: contentStats?.length || 0,
-    needs: contentStats?.filter(c => c.type === 'need').length || 0,
-    events: contentStats?.filter(c => c.type === 'event').length || 0,
-    polls: contentStats?.filter(c => c.type === 'poll').length || 0,
-    challenges: contentStats?.filter(c => c.type === 'challenge').length || 0,
+    needs: contentStats?.filter((c: any) => c.type === 'need').length || 0,
+    events: contentStats?.filter((c: any) => c.type === 'event').length || 0,
+    polls: contentStats?.filter((c: any) => c.type === 'poll').length || 0,
+    challenges: contentStats?.filter((c: any) => c.type === 'challenge').length || 0,
   }
 
   return stats
@@ -152,10 +152,10 @@ export default async function CommunityDetailPage({
   }
 
   const members = await getCommunityMembers(community.id)
-  const userMembership = user ? await checkUserMembership(community.id, user.id) : null
+  const userMembership = user ? await checkUserMembership(community.id, (user as any).id) : null
 
   const roleOrder = { founder: 0, admin: 1, member: 2 }
-  const sortedMembers = members.sort((a: any, b: any) => roleOrder[a.role] - roleOrder[b.role])
+  const sortedMembers = members.sort((a: any, b: any) => (roleOrder as any)[a.role] - (roleOrder as any)[b.role])
 
   return (
     <div className="space-y-8">
@@ -176,7 +176,7 @@ export default async function CommunityDetailPage({
                 {user && !userMembership && (
                   <JoinCommunityButton 
                     communityId={community.id} 
-                    userId={user.id}
+                    userId={(user as any).id}
                   />
                 )}
                 
@@ -184,11 +184,11 @@ export default async function CommunityDetailPage({
                   <>
                     <div className="flex items-center gap-2 bg-green-50 text-green-700 px-3 py-2 rounded-lg border border-green-200">
                       <span>✓</span>
-                      <span className="capitalize font-medium">{userMembership.role}</span>
+                      <span className="capitalize font-medium">{(userMembership as any)?.role}</span>
                     </div>
                     
                     {/* Settings button for admins/founders */}
-                    {(userMembership.role === 'founder' || userMembership.role === 'admin') && (
+                    {((userMembership as any)?.role === 'founder' || (userMembership as any)?.role === 'admin') && (
                       <Link
                         href={`/communities/${community.id}/settings`}
                         className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg border border-slate-200 transition-colors"
@@ -233,7 +233,7 @@ export default async function CommunityDetailPage({
         <CommunityTabs 
           communityId={community.id}
           memberCount={community.member_count}
-          userRole={userMembership?.role || null}
+          userRole={(userMembership as any)?.role || null}
         />
       </div>
 

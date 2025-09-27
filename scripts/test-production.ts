@@ -471,7 +471,7 @@ class ProductionTester {
           const isWorking = response.ok && response.headers.get('content-type')?.includes('text/html')
           results.push({ template, working: isWorking, status: response.status })
         } catch (error) {
-          results.push({ template, working: false, error: error.message })
+          results.push({ template, working: false, error: (error as any).message || 'Unknown error' })
         }
       }
 
@@ -881,4 +881,5 @@ if (require.main === module) {
   main()
 }
 
-export { ProductionTester, TestResult, TestReport }
+export { ProductionTester }
+export type { TestResult, TestReport }

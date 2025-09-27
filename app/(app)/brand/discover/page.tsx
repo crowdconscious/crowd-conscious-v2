@@ -134,7 +134,7 @@ export default async function BrandDiscoverPage() {
   const { data: profile } = await supabase
     .from('profiles')
     .select('user_type')
-    .eq('id', user.id)
+    .eq('id', (user as any).id)
     .single()
 
   const discoverData = await getBrandDiscoverData()
@@ -142,7 +142,7 @@ export default async function BrandDiscoverPage() {
   return (
     <BrandDiscoverClient 
       user={user} 
-      userType={profile?.user_type || 'user'}
+      userType={(profile as any)?.user_type || 'user'}
       discoverData={discoverData}
     />
   )

@@ -155,7 +155,7 @@ export default async function EnhancedCommunityDetailPage({
 
   // Sort members by role priority
   const roleOrder = { founder: 0, admin: 1, member: 2 }
-  const sortedMembers = members.sort((a: any, b: any) => roleOrder[a.role] - roleOrder[b.role])
+  const sortedMembers = members.sort((a: any, b: any) => (roleOrder as any)[a.role] - (roleOrder as any)[b.role])
 
   // Add engagement metrics to content (simulated for demo)
   const enhancedContent = content.map(item => ({

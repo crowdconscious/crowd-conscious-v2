@@ -155,7 +155,7 @@ export function ShareButton({ shareData }: { shareData: ShareData }) {
               </div>
 
               {/* Native Share (mobile) */}
-              {navigator.share && (
+              {typeof navigator.share === 'function' && (
                 <AnimatedButton
                   onClick={shareNative}
                   variant="primary"

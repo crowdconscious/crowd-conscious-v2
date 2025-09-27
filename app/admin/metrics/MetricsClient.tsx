@@ -242,7 +242,7 @@ export default function MetricsClient({ metricsData }: { metricsData: MetricsDat
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }: any) => `${name} ${(percent * 100).toFixed(0)}%`}
                 >
                   {contentTypeData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -307,7 +307,7 @@ export default function MetricsClient({ metricsData }: { metricsData: MetricsDat
               {metricsData.realtime.paymentSuccessRate >= 95 ? '✅' : '❌'}
             </div>
             <div className="text-sm text-slate-600 mt-2">Payment Health</div>
-            <div className="text-xs text-slate-500">Target: >95%</div>
+            <div className="text-xs text-slate-500">Target: {'>'} 95%</div>
           </div>
 
           <div className="text-center">

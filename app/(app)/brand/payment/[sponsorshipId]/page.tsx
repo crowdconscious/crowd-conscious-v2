@@ -51,18 +51,18 @@ export default async function PaymentPage({ params }: PaymentPageProps) {
     redirect('/login')
   }
 
-  const sponsorship = await getSponsorshipForPayment(params.sponsorshipId, user.id)
+  const sponsorship = await getSponsorshipForPayment(params.sponsorshipId, (user as any).id)
 
   if (!sponsorship) {
     notFound()
   }
 
   // Check if sponsorship is in correct state for payment
-  if (sponsorship.status === 'paid') {
+  if ((sponsorship as any)?.status === 'paid') {
     redirect('/brand/dashboard?message=already-paid')
   }
 
-  if (sponsorship.status !== 'approved') {
+  if ((sponsorship as any)?.status !== 'approved') {
     redirect('/brand/dashboard?message=not-approved')
   }
 

@@ -49,7 +49,7 @@ export function ToastProvider({ children }: ToastProviderProps) {
 
     setToasts((prev) => [...prev, newToast])
 
-    if (newToast.duration > 0) {
+    if (newToast.duration && newToast.duration > 0) {
       setTimeout(() => {
         removeToast(id)
       }, newToast.duration)

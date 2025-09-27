@@ -55,7 +55,7 @@ export async function sendWelcomeEmail(
   userName: string,
   userType: 'user' | 'brand' = 'user'
 ) {
-  const html = renderWelcomeEmail({
+  const html = await renderWelcomeEmail({
     userName,
     userType,
     initialXP: userType === 'user' ? 25 : undefined
@@ -96,7 +96,7 @@ export async function sendMonthlyImpactReport(
     }>
   }
 ) {
-  const html = renderMonthlyImpactReport(data)
+  const html = await renderMonthlyImpactReport(data)
   const subject = `📊 Your ${data.month} ${data.year} Impact Report - ${data.stats.xpEarned} XP Earned!`
 
   return sendEmailWithTemplate(userEmail, subject, html)
@@ -116,7 +116,7 @@ export async function sendSponsorshipNotification(
     sponsorshipId: string
   }
 ) {
-  const html = renderSponsorshipNotification(data)
+  const html = await renderSponsorshipNotification(data)
   const subject = `🎯 New Sponsorship Opportunity: ${data.needTitle}`
 
   return sendEmailWithTemplate(brandEmail, subject, html)
@@ -135,7 +135,7 @@ export async function sendSponsorshipApproval(
     sponsorshipId: string
   }
 ) {
-  const html = renderSponsorshipNotification({
+  const html = await renderSponsorshipNotification({
     ...data,
     isApproval: true
   })
@@ -163,7 +163,7 @@ export async function sendAchievementNotification(
     badgeImageUrl?: string
   }
 ) {
-  const html = renderAchievementUnlocked(data)
+  const html = await renderAchievementUnlocked(data)
   const subject = `🎉 Achievement Unlocked: ${data.achievementTitle}! (+${data.xpGained} XP)`
 
   return sendEmailWithTemplate(userEmail, subject, html)

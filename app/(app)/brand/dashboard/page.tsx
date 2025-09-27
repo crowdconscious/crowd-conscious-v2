@@ -127,7 +127,7 @@ export default async function BrandDashboardPage() {
     redirect('/login')
   }
 
-  const dashboardData = await getBrandDashboardData(user.id)
+  const dashboardData = await getBrandDashboardData((user as any).id)
 
   if (!dashboardData) {
     // User is not a brand, redirect to user dashboard

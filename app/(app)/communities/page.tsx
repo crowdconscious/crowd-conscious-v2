@@ -54,7 +54,7 @@ async function getAllCommunities(): Promise<Community[]> {
             verified_brand
           )
         `)
-        .eq('community_id', community.id)
+        .eq('community_id', (community as any).id)
         .eq('is_active', true)
         .order('total_sponsored', { ascending: false })
         .limit(5)
@@ -63,22 +63,22 @@ async function getAllCommunities(): Promise<Community[]> {
       const { count: activeNeeds } = await supabase
         .from('community_content')
         .select('id', { count: 'exact' })
-        .eq('community_id', community.id)
+        .eq('community_id', (community as any).id)
         .eq('type', 'need')
         .in('status', ['voting', 'approved'])
 
-      const sponsors = relationships?.map(rel => ({
-        id: rel.profiles.id,
-        company_name: rel.profiles.company_name || rel.profiles.full_name,
-        logo_url: rel.profiles.logo_url,
+      const sponsors = relationships?.map((rel: any) => ({
+        id: rel.profiles?.id,
+        company_name: rel.profiles?.company_name || rel.profiles?.full_name,
+        logo_url: rel.profiles?.logo_url,
         total_sponsored: rel.total_sponsored,
-        verified_brand: rel.profiles.verified_brand
+        verified_brand: rel.profiles?.verified_brand
       })) || []
 
-      const totalSponsored = relationships?.reduce((sum, rel) => sum + rel.total_sponsored, 0) || 0
+      const totalSponsored = relationships?.reduce((sum, rel: any) => sum + rel.total_sponsored, 0) || 0
 
       return {
-        ...community,
+        ...(community as any),
         sponsors,
         total_sponsored: totalSponsored,
         active_needs: activeNeeds || 0

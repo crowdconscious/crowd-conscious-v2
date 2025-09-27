@@ -348,7 +348,7 @@ export class DatabaseTestHelper {
         .limit(1)
 
       // If we get a permissions error, RLS is working
-      return error?.code === 'PGRST301' || error?.message?.includes('permission')
+      return !!(error?.code === 'PGRST301' || error?.message?.includes('permission'))
     } catch {
       return true // Assume RLS is enabled if there's an error
     }
@@ -363,7 +363,6 @@ export class HttpTestHelper {
   ): Promise<{ status: number; ok: boolean; data?: any; error?: string }> {
     try {
       const response = await fetch(url, {
-        timeout: 10000, // 10 second timeout
         ...options
       })
 
@@ -486,12 +485,4 @@ export class TestResultHelper {
   }
 }
 
-// Export all utilities
-export {
-  TestDataGenerator,
-  PerformanceMeasurer,
-  TestValidators,
-  DatabaseTestHelper,
-  HttpTestHelper,
-  TestResultHelper
-}
+// All utilities are already exported as classes above

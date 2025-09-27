@@ -287,10 +287,10 @@ export const useKeyboardShortcuts = (shortcuts: Record<string, () => void>) => {
       } else if (key === 'escape') {
         event.preventDefault()
         shortcuts['escape']?.()
-      } else if (event.code === 'ArrowLeft' && !event.target?.tagName?.match(/INPUT|TEXTAREA/)) {
+      } else if (event.code === 'ArrowLeft' && !(event.target as any)?.tagName?.match(/INPUT|TEXTAREA/)) {
         event.preventDefault()
         shortcuts['arrowleft']?.()
-      } else if (event.code === 'ArrowRight' && !event.target?.tagName?.match(/INPUT|TEXTAREA/)) {
+      } else if (event.code === 'ArrowRight' && !(event.target as any)?.tagName?.match(/INPUT|TEXTAREA/)) {
         event.preventDefault()
         shortcuts['arrowright']?.()
       }

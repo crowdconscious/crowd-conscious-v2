@@ -73,11 +73,11 @@ async function getEnhancedCommunities(): Promise<Community[]> {
         const { data: contentData } = await supabase
           .from('community_content')
           .select('type')
-          .eq('community_id', community.id)
+          .eq('community_id', (community as any).id)
           .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
 
         return {
-          ...community,
+          ...(community as any),
           recent_activity: {
             type: 'content',
             count: contentData?.length || 0
@@ -118,7 +118,7 @@ async function getCompletedNeeds(): Promise<CompletedNeed[]> {
       return []
     }
 
-    return (data || []).map(item => ({
+    return (data || []).map((item: any) => ({
       id: item.id,
       title: item.title,
       description: item.description,
@@ -143,7 +143,7 @@ async function getImpactStats(): Promise<ImpactStats> {
       .eq('type', 'need')
       .not('current_funding', 'is', null)
 
-    const totalFundsRaised = fundingData?.reduce((sum, item) => sum + (item.current_funding || 0), 0) || 0
+    const totalFundsRaised = fundingData?.reduce((sum, item: any) => sum + (item.current_funding || 0), 0) || 0
 
     // Get active communities count
     const { count: activeCommunities } = await supabase

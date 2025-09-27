@@ -91,7 +91,7 @@ async function getCommunityImpactData(communityId: string) {
       )
     `)
     .eq('status', 'paid')
-    .in('content_id', completedContent?.map(c => c.id) || [])
+    .in('content_id', completedContent?.map((c: any) => c.id) || [])
 
   return {
     community,
@@ -111,7 +111,7 @@ export default async function CommunityImpactPage({ params }: CommunityImpactPag
 
   const impactData = await getCommunityImpactData(params.id)
 
-  if (!impactData.community) {
+  if (!impactData?.community) {
     return <div>Community not found.</div>
   }
 
@@ -125,7 +125,7 @@ export default async function CommunityImpactPage({ params }: CommunityImpactPag
       <ImpactDistributionClient 
         communityId={params.id}
         user={user}
-        impactData={impactData}
+        impactData={impactData as any}
       />
     </div>
   )

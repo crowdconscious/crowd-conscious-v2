@@ -18,7 +18,7 @@ interface SwipeableTabsProps {
   className?: string
 }
 
-export default function SwipeableTabs({
+export function SwipeableTabs({
   tabs,
   defaultTab,
   onTabChange,
@@ -233,5 +233,4 @@ export default function SwipeableTabs({
   )
 }
 
-export { SwipeableTabs }
 export type { Tab }

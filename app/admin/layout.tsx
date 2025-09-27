@@ -9,7 +9,7 @@ async function checkAdminAccess(userId: string) {
     .eq('id', userId)
     .single()
 
-  return profile?.user_type === 'admin' && !profile?.suspended
+  return (profile as any)?.user_type === 'admin' && !(profile as any)?.suspended
 }
 
 export default async function AdminLayout({
@@ -23,7 +23,7 @@ export default async function AdminLayout({
     redirect('/login')
   }
 
-  const hasAdminAccess = await checkAdminAccess(user.id)
+  const hasAdminAccess = await checkAdminAccess((user as any).id)
 
   if (!hasAdminAccess) {
     redirect('/dashboard?error=unauthorized')
