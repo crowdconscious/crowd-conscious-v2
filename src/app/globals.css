@@ -1,4 +1,6 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
   /* Legacy colors for compatibility */
@@ -75,12 +77,6 @@
   --color-neutral-950: #030712;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
 
 /* FORCE LIGHT MODE BY DEFAULT - Dark mode disabled unless explicitly enabled */
 
