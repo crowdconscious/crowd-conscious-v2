@@ -133,7 +133,7 @@ function WeeklyChallengeDisplay() {
     title: 'Democracy Week',
     description: 'Cast 10 votes this week to earn bonus XP',
     icon: '🗳️',
-    progress: 3,
+    progress: 0, // Will be updated with real user progress
     target: 10,
     reward_xp: 200
   }

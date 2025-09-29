@@ -22,22 +22,6 @@ interface UserStats {
 }
 
 async function getUserStats(userId: string): Promise<UserStats | null> {
-  // For now, return mock data since gamification tables may not exist yet
-  const mockStats: UserStats = {
-    id: 'mock-id',
-    user_id: userId,
-    total_xp: 150,
-    level: 2,
-    current_streak: 3,
-    longest_streak: 7,
-    last_activity: new Date().toISOString(),
-    votes_cast: 5,
-    content_created: 2,
-    events_attended: 1,
-    comments_posted: 8,
-    achievements_unlocked: ['first_vote', 'content_creator']
-  }
-
   try {
     const { data, error } = await supabase
       .from('user_stats')
@@ -45,15 +29,45 @@ async function getUserStats(userId: string): Promise<UserStats | null> {
       .eq('user_id', userId)
       .single()
 
-    if (error && error.code !== 'PGRST116') {
-      console.log('Using mock stats, user_stats table may not exist yet')
-      return mockStats
+    if (error && error.code === 'PGRST116') {
+      // No record found, create initial user stats
+      const initialStats = {
+        user_id: userId,
+        total_xp: 0,
+        level: 1,
+        current_streak: 0,
+        longest_streak: 0,
+        last_activity: new Date().toISOString(),
+        votes_cast: 0,
+        content_created: 0,
+        events_attended: 0,
+        comments_posted: 0,
+        achievements_unlocked: []
+      }
+
+      const { data: newStats, error: insertError } = await supabase
+        .from('user_stats')
+        .insert(initialStats)
+        .select()
+        .single()
+
+      if (insertError) {
+        console.error('Error creating user stats:', insertError)
+        return null
+      }
+
+      return newStats
     }
 
-    return data || mockStats
+    if (error) {
+      console.error('Error fetching user stats:', error)
+      return null
+    }
+
+    return data
   } catch (error) {
-    console.log('Using mock stats, user_stats table may not exist yet')
-    return mockStats
+    console.error('Error in getUserStats:', error)
+    return null
   }
 }
 

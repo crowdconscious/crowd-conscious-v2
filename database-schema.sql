@@ -278,19 +278,5 @@ CREATE TRIGGER voting_weight_trigger
   FOR EACH ROW EXECUTE FUNCTION set_voting_weight();
 
 -- =====================================================
--- SAMPLE DATA (for testing)
+-- SAMPLE DATA REMOVED - Use real user-generated content only
 -- =====================================================
-
--- Insert sample communities (optional)
-INSERT INTO communities (name, slug, description, core_values, address, creator_id)
-VALUES 
-  ('EcoWarriors NYC', 'ecowarriors-nyc', 'Fighting for cleaner air and water in New York City', 
-   ARRAY['Environmental Justice', 'Community Action', 'Transparency'], 
-   'New York, NY', '00000000-0000-0000-0000-000000000000'),
-  ('Green Austin', 'green-austin', 'Sustainable living initiatives in Austin', 
-   ARRAY['Zero Waste', 'Solar Energy', 'Local Food'], 
-   'Austin, TX', '00000000-0000-0000-0000-000000000000'),
-  ('Clean Water LA', 'clean-water-la', 'Ensuring clean drinking water for all LA residents', 
-   ARRAY['Water Rights', 'Health Equity', 'Civic Engagement'], 
-   'Los Angeles, CA', '00000000-0000-0000-0000-000000000000')
-ON CONFLICT (name) DO NOTHING;
