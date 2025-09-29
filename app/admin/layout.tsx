@@ -3,13 +3,29 @@ import { supabase } from '@/lib/supabase'
 import { redirect } from 'next/navigation'
 
 async function checkAdminAccess(userId: string) {
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('user_type, admin_level, suspended')
-    .eq('id', userId)
-    .single()
+  try {
+    console.log('🔍 Checking admin access for user:', userId)
+    
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('user_type')
+      .eq('id', userId)
+      .single()
 
-  return (profile as any)?.user_type === 'admin' && !(profile as any)?.suspended
+    if (error) {
+      console.error('❌ Error fetching profile for admin check:', error)
+      return false
+    }
+
+    console.log('👤 User profile:', profile)
+    const isAdmin = (profile as any)?.user_type === 'admin'
+    console.log('🛡️ Is admin:', isAdmin)
+    
+    return isAdmin
+  } catch (error) {
+    console.error('💥 Admin check failed:', error)
+    return false
+  }
 }
 
 export default async function AdminLayout({

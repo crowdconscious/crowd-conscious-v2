@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { generateShareableUrl } from '../../lib/media'
 
 interface ShareButtonProps {
@@ -20,11 +20,18 @@ export default function ShareButton({
 }: ShareButtonProps) {
   const [showOptions, setShowOptions] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [shareUrl, setShareUrl] = useState('')
 
-  // Temporary fix: use direct content URL instead of share token
-  const shareUrl = `${window.location.origin}/communities/${contentId}`
+  // Set share URL only on client side to avoid server/client mismatch
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setShareUrl(`${window.location.origin}/communities/${contentId}`)
+    }
+  }, [contentId])
 
   const handleCopyLink = async () => {
+    if (!shareUrl) return
+    
     try {
       await navigator.clipboard.writeText(shareUrl)
       setCopied(true)

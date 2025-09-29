@@ -2,6 +2,7 @@ import { getCurrentUser } from '../../../../../lib/auth-server'
 import { supabase } from '../../../../../lib/supabase'
 import { notFound, redirect } from 'next/navigation'
 import CommunityMediaSettings from './CommunityMediaSettings'
+import CommunityBasicSettings from './CommunityBasicSettings'
 
 interface CommunitySettingsPageProps {
   params: Promise<{
@@ -113,74 +114,7 @@ export default async function CommunitySettingsPage({ params }: CommunitySetting
       )}
 
       {/* Basic Info Settings */}
-      <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
-        <h2 className="text-xl font-semibold text-slate-900 mb-4">Basic Information</h2>
-        
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Community Name
-            </label>
-            <input
-              type="text"
-              defaultValue={community.name}
-              className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
-              placeholder="Enter community name"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Description
-            </label>
-            <textarea
-              rows={4}
-              defaultValue={community.description || ''}
-              className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none resize-none"
-              placeholder="Describe your community's mission and goals..."
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Address / Location
-            </label>
-            <input
-              type="text"
-              defaultValue={community.address || ''}
-              className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
-              placeholder="Enter community location"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Core Values
-            </label>
-            <div className="flex flex-wrap gap-2 mb-3">
-              {community.core_values.map((value, index) => (
-                <span 
-                  key={index}
-                  className="bg-teal-100 text-teal-700 px-3 py-1 rounded-full text-sm font-medium"
-                >
-                  {value}
-                </span>
-              ))}
-            </div>
-            <input
-              type="text"
-              className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
-              placeholder="Add a new core value and press Enter"
-            />
-          </div>
-        </div>
-        
-        <div className="flex justify-end mt-6">
-          <button className="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
-            Save Basic Info
-          </button>
-        </div>
-      </div>
+      <CommunityBasicSettings community={community} />
     </div>
   )
 }
