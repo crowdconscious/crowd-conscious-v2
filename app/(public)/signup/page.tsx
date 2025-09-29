@@ -37,7 +37,7 @@ export default function SignUpPage() {
       } else if (data.user) {
         // Try to create profile manually if trigger didn't work
         try {
-          const { error: profileError } = await supabase
+          const { error: profileError } = await (supabase as any)
             .from('profiles')
             .insert({
               id: data.user.id,

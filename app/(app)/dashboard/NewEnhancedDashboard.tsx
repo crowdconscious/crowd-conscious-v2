@@ -24,9 +24,10 @@ interface UserStats {
 interface EnhancedDashboardProps {
   user: any
   initialUserStats: UserStats | null
+  userCommunities: any[]
 }
 
-export default function NewEnhancedDashboard({ user, initialUserStats }: EnhancedDashboardProps) {
+export default function NewEnhancedDashboard({ user, initialUserStats, userCommunities }: EnhancedDashboardProps) {
   const [userStats] = useState<UserStats | null>(initialUserStats)
   const [activeTab, setActiveTab] = useState<'overview' | 'impact' | 'gamification'>('overview')
 

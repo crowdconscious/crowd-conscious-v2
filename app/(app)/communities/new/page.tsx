@@ -65,27 +65,31 @@ export default function CreateCommunityPage() {
 
       const slug = generateSlug(formData.name)
       
-      // TODO: Implement community creation - temporarily disabled for deployment
-      console.log('Creating community:', {
-        name: formData.name.trim(),
-        slug: slug,
-        description: formData.description.trim(),
-        address: formData.address.trim(),
-        core_values: filledValues,
-        creator_id: (user as any).id
+      // Create the community via API
+      const response = await fetch('/api/communities', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name.trim(),
+          slug: slug,
+          description: formData.description.trim(),
+          address: formData.address.trim(),
+          core_values: filledValues
+        })
       })
-      
-      const data = { id: 'temp-id', slug }
-      const error = null
 
-      if (error) {
-        // Error handling temporarily disabled
-        setMessage('Error creating community. Please try again.')
+      const result = await response.json()
+
+      if (!response.ok) {
+        console.error('Community creation error:', result.error)
+        setMessage(result.error || 'Error creating community. Please try again.')
       } else {
-        // TODO: Also add the creator as a founder member - temporarily disabled
-        console.log('Adding founder member:', { community_id: data.id, user_id: (user as any).id })
-
-        router.push(`/communities/${data.id}`)
+        setMessage('Community created successfully!')
+        setTimeout(() => {
+          router.push(`/communities/${result.data.id}`)
+        }, 1000)
       }
     } catch (error) {
       setMessage('An unexpected error occurred')

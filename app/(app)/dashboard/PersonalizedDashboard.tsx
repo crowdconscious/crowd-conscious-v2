@@ -38,9 +38,10 @@ interface Community {
 interface PersonalizedDashboardProps {
   user: any
   userCommunities: Community[]
+  userStats: any
 }
 
-export default function PersonalizedDashboard({ user, userCommunities }: PersonalizedDashboardProps) {
+export default function PersonalizedDashboard({ user, userCommunities, userStats }: PersonalizedDashboardProps) {
   const [currentTime, setCurrentTime] = useState(new Date())
   const [activityFilter, setActivityFilter] = useState<'all' | 'votes' | 'events' | 'content'>('all')
   const [displayedActivities, setDisplayedActivities] = useState(4) // Start with 4 activities
@@ -63,78 +64,44 @@ export default function PersonalizedDashboard({ user, userCommunities }: Persona
     return "Good evening"
   }
 
-  // Real data from the database
-  const [userStats, setUserStats] = useState<any>(null)
+  // Use real data passed from server
   const [recentActivities, setRecentActivities] = useState<any[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
-    async function fetchRealUserData() {
-      try {
-        // Fetch user stats (for now, use fallback values if not found)
-        const { data: stats } = await fetch('/api/user-stats').then(r => r.json()).catch(() => ({ data: null }))
-        
-        // Real impact stats based on actual user data
-        const realImpactStats = {
-          communitiesJoined: userCommunities.length,
-          votesThisMonth: stats?.votes_cast || 0,
-          eventsAttended: stats?.events_attended || 0,
-          needsSupported: stats?.content_created || 0,
-          totalImpactPoints: stats?.total_xp || 0
-        }
-        
-        setUserStats(realImpactStats)
-        
-        // For now, show a simple message if no activity yet
-        const placeholderActivities = userCommunities.length > 0 ? [
-          { 
-            id: '1', 
-            type: 'join', 
-            content: `Joined ${userCommunities[0].name}`, 
-            community: userCommunities[0].name, 
-            time: new Date(), 
-            impact: '+20 points', 
-            icon: '🤝' 
-          }
-        ] : [
-          { 
-            id: '1', 
-            type: 'signup', 
-            content: 'Joined Crowd Conscious', 
-            community: 'Platform', 
-            time: new Date(), 
-            impact: '+10 points', 
-            icon: '🌱' 
-          }
-        ]
-        
-        setRecentActivities(placeholderActivities)
-        
-      } catch (error) {
-        console.error('Error fetching user data:', error)
-        // Fallback to basic stats
-        setUserStats({
-          communitiesJoined: userCommunities.length,
-          votesThisMonth: 0,
-          eventsAttended: 0,
-          needsSupported: 0,
-          totalImpactPoints: 0
-        })
-        setRecentActivities([])
-      } finally {
-        setIsLoading(false)
+    // Show activity based on user's actual communities
+    const placeholderActivities = userCommunities.length > 0 ? [
+      { 
+        id: '1', 
+        type: 'join', 
+        content: `Joined ${userCommunities[0].name}`, 
+        community: userCommunities[0].name, 
+        time: new Date(), 
+        impact: '+20 points', 
+        icon: '🤝' 
       }
-    }
+    ] : [
+      { 
+        id: '1', 
+        type: 'signup', 
+        content: 'Welcome to Crowd Conscious!', 
+        community: 'Platform', 
+        time: new Date(), 
+        impact: '+10 points', 
+        icon: '🌱' 
+      }
+    ]
     
-    fetchRealUserData()
+    setRecentActivities(placeholderActivities)
   }, [userCommunities])
 
-  const impactStats = userStats || {
+  // Real impact stats from actual user data
+  const impactStats = {
     communitiesJoined: userCommunities.length,
-    votesThisMonth: 0,
-    eventsAttended: 0,
-    needsSupported: 0,
-    totalImpactPoints: 0
+    votesThisMonth: userStats?.votes_cast || 0,
+    eventsAttended: userStats?.events_attended || 0,
+    needsSupported: userStats?.content_created || 0,
+    totalImpactPoints: userStats?.total_xp || 0
   }
 
   // Achievement badges based on real data

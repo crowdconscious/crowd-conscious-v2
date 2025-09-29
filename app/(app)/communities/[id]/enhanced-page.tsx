@@ -79,7 +79,7 @@ async function getCommunityMembers(communityId: string): Promise<Member[]> {
     return []
   }
 
-  return (data as Member[]) || []
+  return (data as any) || []
 }
 
 async function getCommunityContent(communityId: string): Promise<ContentItem[]> {

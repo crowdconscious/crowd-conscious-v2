@@ -143,7 +143,7 @@ export default async function BrandDiscoverPage() {
     <BrandDiscoverClient 
       user={user} 
       userType={(profile as any)?.user_type || 'user'}
-      discoverData={discoverData}
+      discoverData={discoverData as any}
     />
   )
 }
