@@ -3,6 +3,9 @@ import { supabase } from '@/lib/supabase'
 import { redirect } from 'next/navigation'
 import BrandDashboardClient from './BrandDashboardClient'
 
+// Force dynamic rendering due to authentication checks
+export const dynamic = 'force-dynamic'
+
 async function getBrandDashboardData(userId: string) {
   // Get brand profile
   const { data: brandProfile } = await supabase

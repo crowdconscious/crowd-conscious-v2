@@ -13,8 +13,8 @@ import {
   FundingProgress,
   ToastProvider,
   useToast,
-  Confetti,
-  useConfetti,
+  // Confetti,
+  // useConfetti,
   SwipeableTabs
 } from '../components/ui'
 
@@ -215,11 +215,11 @@ function MobileInteractionsDemo() {
 }
 
 function VisualFeedbackDemo() {
-  const { fire: fireConfetti } = useConfetti()
+  // const { fire: fireConfetti } = useConfetti()
   const { addToast } = useToast()
 
   const triggerSuccess = () => {
-    fireConfetti()
+    // fireConfetti()
     addToast({
       type: 'success',
       title: 'Success!',

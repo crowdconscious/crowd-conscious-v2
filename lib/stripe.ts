@@ -1,13 +1,18 @@
 import Stripe from 'stripe'
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('STRIPE_SECRET_KEY is not set in environment variables')
+// Make Stripe optional for development/deployment
+let stripe: Stripe | null = null
+
+if (process.env.STRIPE_SECRET_KEY) {
+  stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2025-08-27.basil',
+    typescript: true,
+  })
+} else {
+  console.warn('STRIPE_SECRET_KEY is not set - Stripe functionality disabled')
 }
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2025-08-27.basil',
-  typescript: true,
-})
+export { stripe }
 
 // Platform fee configuration (15% as per rebuild strategy)
 export const PLATFORM_FEE_PERCENTAGE = 15 // 15%
@@ -28,6 +33,10 @@ export async function createSponsorshipPaymentIntent(
   communityId: string,
   contentId: string
 ) {
+  if (!stripe) {
+    throw new Error('Stripe is not configured - payment functionality disabled')
+  }
+
   const amountCents = Math.round(amount * 100) // Convert to cents
   const platformFeeCents = calculatePlatformFee(amountCents)
   const netAmountCents = amountCents - platformFeeCents
@@ -67,6 +76,10 @@ export async function handleStripeWebhook(
   payload: string,
   signature: string
 ): Promise<{ success: boolean; type?: string; data?: any }> {
+  if (!stripe) {
+    throw new Error('Stripe is not configured - webhook functionality disabled')
+  }
+
   if (!process.env.STRIPE_WEBHOOK_SECRET) {
     throw new Error('STRIPE_WEBHOOK_SECRET is not set')
   }

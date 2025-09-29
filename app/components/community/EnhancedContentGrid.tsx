@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Badge, FundingProgress } from '../ui'
 import { cn } from '@/lib/design-system'
-import { useConfetti } from '../ui/Confetti'
+// import { useConfetti } from '../ui/Confetti'
 import { useToast } from '../ui/Toast'
 
 interface ContentItem {
@@ -42,7 +42,7 @@ export default function EnhancedContentGrid({
   const [sortBy, setSortBy] = useState<'newest' | 'popular' | 'progress'>('newest')
   const [columns, setColumns] = useState(3)
   const gridRef = useRef<HTMLDivElement>(null)
-  const { fire: fireConfetti } = useConfetti()
+  // const { fire: fireConfetti } = useConfetti()
   const { addToast } = useToast()
 
   // Responsive columns
@@ -126,7 +126,7 @@ export default function EnhancedContentGrid({
 
   const handleQuickAction = (actionType: string, contentId: string) => {
     // Show success feedback
-    fireConfetti()
+    // fireConfetti()
     addToast({
       type: 'success',
       title: `${actionType} successful!`,

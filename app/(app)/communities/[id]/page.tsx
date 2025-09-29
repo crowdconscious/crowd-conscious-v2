@@ -6,6 +6,9 @@ import JoinCommunityButton from './JoinCommunityButton'
 import CommunityTabs from './CommunityTabs'
 import Link from 'next/link'
 
+// Force dynamic rendering due to authentication checks
+export const dynamic = 'force-dynamic'
+
 interface Community {
   id: string
   name: string

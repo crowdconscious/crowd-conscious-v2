@@ -5,8 +5,8 @@ export * from './Badge'
 export * from './Progress'
 export * from './Skeleton'
 export * from './Toast'
-export * from './Confetti'
-export * from './BottomSheet'
+// export * from './Confetti'
+// export * from './BottomSheet'
 export * from './SwipeableTabs'
 
 // Re-export design system utilities

@@ -3,6 +3,9 @@ import { supabase } from '../../../lib/supabase'
 import { redirect } from 'next/navigation'
 import NewEnhancedDashboard from './NewEnhancedDashboard'
 
+// Force dynamic rendering due to authentication checks
+export const dynamic = 'force-dynamic'
+
 interface UserStats {
   id: string
   user_id: string

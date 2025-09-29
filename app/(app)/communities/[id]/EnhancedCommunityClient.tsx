@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation'
 import ImmersiveHeader from '../../../components/community/ImmersiveHeader'
 import EnhancedContentGrid from '../../../components/community/EnhancedContentGrid'
 import { ToastProvider, useToast } from '../../../components/ui/Toast'
-import { Confetti, useConfetti } from '../../../components/ui/Confetti'
-import { BottomSheet, useBottomSheet } from '../../../components/ui/BottomSheet'
+//import { Confetti, useConfetti } from '../../../components/ui/Confetti'
+//import { BottomSheet, useBottomSheet } from '../../../components/ui/BottomSheet'
 import { SwipeableTabs } from '../../../components/ui/SwipeableTabs'
 import { Button } from '../../../components/ui/Button'
 import { Badge } from '../../../components/ui/Badge'
@@ -84,8 +84,8 @@ function EnhancedCommunityContent({
   const router = useRouter()
   const supabase = createClientAuth()
   const { addToast } = useToast()
-  const { trigger: confettiTrigger, fire: fireConfetti } = useConfetti()
-  const contentSheet = useBottomSheet()
+  // const { trigger: confettiTrigger, fire: fireConfetti } = useConfetti()
+  // const contentSheet = useBottomSheet()
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Pull to refresh functionality
@@ -123,7 +123,7 @@ function EnhancedCommunityContent({
       // TODO: Implement community joining - temporarily disabled for deployment
       console.log('Joining community:', { communityId: community.id, userId: currentUser.id })
 
-      fireConfetti()
+      // fireConfetti()
       addToast({
         type: 'success',
         title: 'Welcome to the community!',
@@ -162,7 +162,7 @@ function EnhancedCommunityContent({
       description: `Your ${actionType.toLowerCase()} has been saved.`,
     })
 
-    fireConfetti()
+    // fireConfetti()
   }
 
   // Handle content creation
@@ -178,7 +178,8 @@ function EnhancedCommunityContent({
 
     // On mobile, open bottom sheet; on desktop, navigate
     if (window.innerWidth < 768) {
-      contentSheet.open()
+      // contentSheet.open()
+      router.push(`/communities/${community.id}/content/new`)
     } else {
       router.push(`/communities/${community.id}/content/new`)
     }
@@ -321,8 +322,9 @@ function EnhancedCommunityContent({
         </div>
       )}
 
-      {/* Confetti */}
-      <Confetti trigger={confettiTrigger} />
+     
+      {/* Confetti - Temporarily disabled for deployment */}
+      {/* <Confetti trigger={confettiTrigger} /> */}
 
       {/* Immersive Header */}
       <ImmersiveHeader
@@ -391,7 +393,8 @@ function EnhancedCommunityContent({
         />
       </div>
 
-      {/* Mobile Content Creation Bottom Sheet */}
+       {/* Mobile Content Creation Bottom Sheet - Temporarily disabled for deployment */}
+      {/* 
       <BottomSheet
         isOpen={contentSheet.isOpen}
         onClose={contentSheet.close}
@@ -452,6 +455,7 @@ function EnhancedCommunityContent({
           </div>
         </div>
       </BottomSheet>
+      */}
 
       {/* Navigation */}
       <div className="max-w-6xl mx-auto px-6 py-4">
