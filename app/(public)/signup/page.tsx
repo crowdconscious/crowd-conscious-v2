@@ -35,10 +35,29 @@ export default function SignUpPage() {
       if (error) {
         setMessage(error.message)
       } else if (data.user) {
+        // Try to create profile manually if trigger didn't work
+        try {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert({
+              id: data.user.id,
+              email: data.user.email,
+              full_name: fullName,
+              user_type: 'user'
+            })
+          
+          if (profileError) {
+            console.log('Profile creation error (might be expected if trigger worked):', profileError)
+          }
+        } catch (profileErr) {
+          console.log('Profile creation attempt failed (might be expected):', profileErr)
+        }
+        
         setMessage('Check your email for the confirmation link!')
       }
     } catch (error) {
-      setMessage('An unexpected error occurred')
+      console.error('Signup error:', error)
+      setMessage('Database error saving new user')
     } finally {
       setLoading(false)
     }
