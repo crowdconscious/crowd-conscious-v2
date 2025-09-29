@@ -21,7 +21,8 @@ export default function ShareButton({
   const [showOptions, setShowOptions] = useState(false)
   const [copied, setCopied] = useState(false)
 
-  const shareUrl = generateShareableUrl(contentId, contentType)
+  // Temporary fix: use direct content URL instead of share token
+  const shareUrl = `${window.location.origin}/communities/${contentId}`
 
   const handleCopyLink = async () => {
     try {

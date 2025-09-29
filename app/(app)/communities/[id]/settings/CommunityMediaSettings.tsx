@@ -35,8 +35,21 @@ export default function CommunityMediaSettings({ community }: CommunityMediaSett
   const updateCommunityMedia = async (field: string, url: string) => {
     setIsUpdating(true)
     try {
-      // TODO: Implement community media update - temporarily disabled for deployment
-      console.log('Updating community media:', { field, url, communityId: community.id })
+      // Update community media in database
+      const response = await fetch(`/api/communities/${community.id}/media-update`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          field,
+          url
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update community media')
+      }
 
       setCurrentMedia(prev => ({ ...prev, [field]: url }))
       setUploadStatus({

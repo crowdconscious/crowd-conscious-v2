@@ -185,8 +185,8 @@ export function getOptimizedImageUrl(
  * This will be used for external sharing
  */
 export function generateShareableUrl(contentId: string, contentType: string): string {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-  return `${baseUrl}/share/${contentType}/${contentId}`
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
+  return `${baseUrl}/share/${contentId}`
 }
 
 /**
