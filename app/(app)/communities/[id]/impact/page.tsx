@@ -4,9 +4,9 @@ import DashboardNavigation from '@/components/DashboardNavigation'
 import ImpactDistributionClient from './ImpactDistributionClient'
 
 interface CommunityImpactPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 async function getCommunityImpactData(communityId: string) {
@@ -109,7 +109,8 @@ export default async function CommunityImpactPage({ params }: CommunityImpactPag
     return <div>Please log in to view impact data.</div>
   }
 
-  const impactData = await getCommunityImpactData(params.id)
+  const { id } = await params
+  const impactData = await getCommunityImpactData(id)
 
   if (!impactData?.community) {
     return <div>Community not found.</div>
@@ -118,12 +119,12 @@ export default async function CommunityImpactPage({ params }: CommunityImpactPag
   return (
     <div className="space-y-8">
       <DashboardNavigation 
-        customBackPath={`/communities/${params.id}`} 
+        customBackPath={`/communities/${id}`} 
         customBackLabel="Back to Community" 
       />
 
       <ImpactDistributionClient 
-        communityId={params.id}
+        communityId={id}
         user={user}
         impactData={impactData as any}
       />

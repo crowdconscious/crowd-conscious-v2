@@ -4,9 +4,9 @@ import { notFound, redirect } from 'next/navigation'
 import PaymentClient from './PaymentClient'
 
 interface PaymentPageProps {
-  params: {
+  params: Promise<{
     sponsorshipId: string
-  }
+  }>
 }
 
 async function getSponsorshipForPayment(sponsorshipId: string, userId: string) {
@@ -51,7 +51,8 @@ export default async function PaymentPage({ params }: PaymentPageProps) {
     redirect('/login')
   }
 
-  const sponsorship = await getSponsorshipForPayment(params.sponsorshipId, (user as any).id)
+  const { sponsorshipId } = await params
+  const sponsorship = await getSponsorshipForPayment(sponsorshipId, (user as any).id)
 
   if (!sponsorship) {
     notFound()
