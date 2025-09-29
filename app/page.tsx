@@ -47,6 +47,8 @@ interface ImpactStats {
 
 async function getEnhancedCommunities(): Promise<Community[]> {
   try {
+    console.log('🔍 Fetching communities for landing page...')
+    
     const { data, error } = await supabase
       .from('communities')
       .select(`
@@ -59,11 +61,18 @@ async function getEnhancedCommunities(): Promise<Community[]> {
         core_values,
         created_at
       `)
-      .order('member_count', { ascending: false })
+      .order('created_at', { ascending: false })
       .limit(8)
 
     if (error) {
-      console.error('Error fetching communities:', error)
+      console.error('❌ Error fetching communities:', error)
+      return []
+    }
+
+    console.log(`✅ Found ${data?.length || 0} communities`)
+
+    if (!data || data.length === 0) {
+      console.log('📝 No communities found in database')
       return []
     }
 
@@ -86,9 +95,10 @@ async function getEnhancedCommunities(): Promise<Community[]> {
       })
     )
 
+    console.log('🎯 Communities with activity:', communitiesWithActivity.map(c => ({ name: c.name, activity: c.recent_activity?.count })))
     return communitiesWithActivity
   } catch (error) {
-    console.error('Database connection error:', error)
+    console.error('💥 Database connection error:', error)
     return []
   }
 }
@@ -136,6 +146,8 @@ async function getCompletedNeeds(): Promise<CompletedNeed[]> {
 
 async function getImpactStats(): Promise<ImpactStats> {
   try {
+    console.log('📊 Fetching impact stats for landing page...')
+    
     // Get total funding
     const { data: fundingData } = await supabase
       .from('community_content')
@@ -162,14 +174,22 @@ async function getImpactStats(): Promise<ImpactStats> {
       .from('community_members')
       .select('*', { count: 'exact', head: true })
 
-    return {
+    // Get total users (for broader impact)
+    const { count: totalUsers } = await supabase
+      .from('profiles')
+      .select('*', { count: 'exact', head: true })
+
+    const stats = {
       total_funds_raised: totalFundsRaised,
       active_communities: activeCommunities || 0,
       needs_fulfilled: needsFulfilled || 0,
-      total_members: totalMembers || 0
+      total_members: totalMembers || totalUsers || 0 // Fallback to total users if no members
     }
+
+    console.log('✅ Impact stats:', stats)
+    return stats
   } catch (error) {
-    console.error('Error fetching impact stats:', error)
+    console.error('❌ Error fetching impact stats:', error)
     return {
       total_funds_raised: 0,
       active_communities: 0,
