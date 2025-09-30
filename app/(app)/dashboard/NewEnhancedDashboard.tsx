@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { AnimatedCard, AnimatedButton } from '@/components/ui/UIComponents'
 import ImpactDashboard from './ImpactDashboard'
 import { XPProgressBar, AchievementsGrid, CommunityLeaderboard, WeeklyChallenge } from '@/components/GamificationSystem'
+import DashboardCalendar from '@/components/DashboardCalendar'
 
 interface UserStats {
   id: string
@@ -130,6 +131,16 @@ export default function NewEnhancedDashboard({ user, initialUserStats, userCommu
               }`}
             >
               🏆 Achievements & XP
+            </button>
+            <button
+              onClick={() => setActiveTab('calendar')}
+              className={`py-4 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === 'calendar'
+                  ? 'border-teal-500 text-teal-600'
+                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+              }`}
+            >
+              📅 Calendar
             </button>
           </nav>
         </div>
@@ -257,6 +268,10 @@ export default function NewEnhancedDashboard({ user, initialUserStats, userCommu
               <AchievementsGrid userStats={userStats} />
               <CommunityLeaderboard />
             </div>
+          )}
+
+          {activeTab === 'calendar' && (
+            <DashboardCalendar userId={user.id} />
           )}
         </div>
       </div>

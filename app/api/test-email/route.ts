@@ -80,15 +80,16 @@ export async function POST(request: NextRequest) {
         )
     }
 
-    if (result) {
+    if (result === true || (result && result.success)) {
       return NextResponse.json({
         success: true,
         message: `${emailType} email sent successfully to ${email}`,
         timestamp: new Date().toISOString()
       })
     } else {
+      const errorMessage = (result && result.error) || 'Failed to send email'
       return NextResponse.json(
-        { error: 'Failed to send email' },
+        { error: errorMessage },
         { status: 500 }
       )
     }
