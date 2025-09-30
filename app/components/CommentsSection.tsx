@@ -40,8 +40,19 @@ export default function CommentsSection({ contentId, contentType }: CommentsSect
   }, [contentId])
 
   const getCurrentUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    setUser(user)
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser()
+      if (error) {
+        console.error('Error getting user:', error)
+        setUser(null)
+      } else {
+        console.log('Current user in comments:', user)
+        setUser(user)
+      }
+    } catch (error) {
+      console.error('Error in getCurrentUser:', error)
+      setUser(null)
+    }
   }
 
   const fetchComments = async () => {

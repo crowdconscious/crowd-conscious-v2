@@ -125,15 +125,8 @@ async function deleteCommunity(supabase: any, communityId: string, communityName
   
   if (error) throw error
 
-  // Log the deletion
-  await supabase.from('audit_logs').insert({
-    action: 'delete_community',
-    target_type: 'community',
-    target_id: communityId,
-    target_name: communityName,
-    performed_by: adminId,
-    details: { reason: 'Admin approved deletion request' }
-  })
+  // TODO: Add audit logging when audit_logs table is created
+  console.log(`Community deleted: ${communityName} (ID: ${communityId}) by admin: ${adminId}`)
 }
 
 async function deleteUser(supabase: any, userId: string, userName: string, adminId: string) {
@@ -162,15 +155,8 @@ async function deleteUser(supabase: any, userId: string, userName: string, admin
   // Note: The actual auth user deletion should be done through Supabase Auth Admin API
   // This requires additional setup and is not included here for security reasons
 
-  // Log the deletion
-  await supabase.from('audit_logs').insert({
-    action: 'delete_user',
-    target_type: 'user',
-    target_id: userId,
-    target_name: userName,
-    performed_by: adminId,
-    details: { reason: 'Admin approved deletion request' }
-  })
+  // TODO: Add audit logging when audit_logs table is created
+  console.log(`User deleted: ${userName} (ID: ${userId}) by admin: ${adminId}`)
 }
 
 async function deleteContent(supabase: any, contentId: string, contentTitle: string, adminId: string) {
@@ -190,13 +176,6 @@ async function deleteContent(supabase: any, contentId: string, contentTitle: str
   
   if (error) throw error
 
-  // Log the deletion
-  await supabase.from('audit_logs').insert({
-    action: 'delete_content',
-    target_type: 'content',
-    target_id: contentId,
-    target_name: contentTitle,
-    performed_by: adminId,
-    details: { reason: 'Admin approved deletion request' }
-  })
+  // TODO: Add audit logging when audit_logs table is created
+  console.log(`Content deleted: ${contentTitle} (ID: ${contentId}) by admin: ${adminId}`)
 }
