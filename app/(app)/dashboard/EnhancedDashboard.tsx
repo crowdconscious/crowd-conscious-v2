@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { AnimatedCard, AnimatedButton } from '@/components/ui/UIComponents'
 import ImpactDashboard from './ImpactDashboard'
 import { XPProgressBar, AchievementsGrid, CommunityLeaderboard, WeeklyChallenge } from '@/components/GamificationSystem'
-import DashboardCalendar from '@/components/DashboardCalendar'
+import DashboardCalendar from '../../components/DashboardCalendar'
 
 interface UserStats {
   id: string
