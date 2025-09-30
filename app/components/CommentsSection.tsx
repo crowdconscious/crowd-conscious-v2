@@ -21,9 +21,10 @@ interface Comment {
 interface CommentsSectionProps {
   contentId: string
   contentType: 'poll' | 'event' | 'need' | 'challenge'
+  initialUser?: any // User data passed from server component
 }
 
-export default function CommentsSection({ contentId, contentType }: CommentsSectionProps) {
+export default function CommentsSection({ contentId, contentType, initialUser }: CommentsSectionProps) {
   const [comments, setComments] = useState<Comment[]>([])
   const [newComment, setNewComment] = useState('')
   const [replyingTo, setReplyingTo] = useState<string | null>(null)
@@ -36,7 +37,14 @@ export default function CommentsSection({ contentId, contentType }: CommentsSect
 
   useEffect(() => {
     fetchComments()
-    getCurrentUser()
+    
+    // Use initialUser if provided, otherwise get from auth
+    if (initialUser) {
+      console.log('✅ Using initialUser from server:', initialUser.email)
+      setUser(initialUser)
+    } else {
+      getCurrentUser()
+    }
     
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -45,7 +53,7 @@ export default function CommentsSection({ contentId, contentType }: CommentsSect
     })
 
     return () => subscription.unsubscribe()
-  }, [contentId])
+  }, [contentId, initialUser])
 
   const getCurrentUser = async () => {
     try {

@@ -152,7 +152,11 @@ export default async function ContentDetailPage({ params }: ContentDetailPagePro
         {/* Comments Section */}
         <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
           <h2 className="text-xl font-semibold text-slate-900 mb-6">💬 Discussion</h2>
-          <CommentsSection contentId={content.id} contentType={content.type} />
+          <CommentsSection 
+            contentId={content.id} 
+            contentType={content.type}
+            initialUser={user}
+          />
         </div>
       </div>
     </div>
