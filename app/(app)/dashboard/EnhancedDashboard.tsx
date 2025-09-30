@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { AnimatedCard, AnimatedButton } from '@/components/ui/UIComponents'
 import ImpactDashboard from './ImpactDashboard'
 import { XPProgressBar, AchievementsGrid, CommunityLeaderboard, WeeklyChallenge } from '@/components/GamificationSystem'
+import DashboardCalendar from '@/components/DashboardCalendar'
 
 interface UserStats {
   id: string
@@ -307,6 +308,9 @@ export default function EnhancedDashboard({ user, initialUserStats }: EnhancedDa
 
       {/* Achievements */}
       <AchievementsDisplay userStats={userStats} />
+
+      {/* Calendar Section */}
+      <DashboardCalendar userId={user.id} />
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

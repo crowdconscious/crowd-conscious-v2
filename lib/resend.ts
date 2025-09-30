@@ -6,7 +6,7 @@ if (!process.env.RESEND_API_KEY) {
 
 export const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 
-const FROM_EMAIL = 'Crowd Conscious <noreply@your-domain.com>' // Update with your domain
+const FROM_EMAIL = 'Crowd Conscious <onboarding@resend.dev>' // Using Resend's default domain
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
 // Email templates
