@@ -6,7 +6,7 @@ if (!process.env.RESEND_API_KEY) {
 
 export const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 
-const FROM_EMAIL = 'Crowd Conscious <onboarding@resend.dev>' // Using Resend's default domain
+const FROM_EMAIL = 'Crowd Conscious <comunidad@crowdconscious.app>' // Using verified domain
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
 // Email templates
@@ -31,7 +31,8 @@ export const emailTemplates = {
             <li>📊 Track measurable impact</li>
           </ul>
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${APP_URL}/communities" style="background: #14b8a6; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Discover Communities</a>
+            <a href="${APP_URL}/login" style="background: #14b8a6; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; margin-right: 10px; box-shadow: 0 4px 14px rgba(20, 184, 166, 0.3);">🚀 Login to Dashboard</a>
+            <a href="${APP_URL}/communities" style="background: #6366f1; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; margin-left: 10px; box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);">🌍 Browse Communities</a>
           </div>
         </div>
       </div>

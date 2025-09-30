@@ -25,7 +25,10 @@ export default function ShareButton({
   // Set share URL only on client side to avoid server/client mismatch
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      setShareUrl(`${window.location.origin}/communities/${contentId}`)
+      // Get current community ID from URL
+      const pathParts = window.location.pathname.split('/')
+      const communityId = pathParts[2] // /communities/[id]/...
+      setShareUrl(`${window.location.origin}/communities/${communityId}/content/${contentId}`)
     }
   }, [contentId])
 

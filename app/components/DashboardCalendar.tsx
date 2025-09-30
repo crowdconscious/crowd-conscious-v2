@@ -34,27 +34,34 @@ export default function DashboardCalendar({ userId }: DashboardCalendarProps) {
   const fetchCalendarEvents = async () => {
     try {
       setLoading(true)
+      console.log('🗓️ Fetching calendar events for user:', userId)
       
       // Get start and end of current month
       const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
       const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0)
       
       // Fetch events from communities user is a member of
-      const { data: userCommunities } = await supabase
+      const { data: userCommunities, error: communitiesError } = await supabase
         .from('community_members')
         .select('community_id')
         .eq('user_id', userId)
 
-      if (!userCommunities || userCommunities.length === 0) {
-        setEvents([])
-        setLoading(false)
-        return
+      if (communitiesError) {
+        console.error('❌ Error fetching user communities:', communitiesError)
       }
 
-      const communityIds = userCommunities.map(c => c.community_id)
+      console.log('👥 User communities:', userCommunities)
 
-      // Fetch events
-      const { data: eventData } = await supabase
+      // If user has no communities, still show public events
+      const communityIds = userCommunities?.map(c => c.community_id) || []
+      
+      // Always try to fetch some events, even if user has no communities
+      if (communityIds.length === 0) {
+        console.log('📝 User has no communities, fetching all public events')
+      }
+
+      // Fetch events - more robust query
+      let eventQuery = supabase
         .from('community_content')
         .select(`
           id,
@@ -62,21 +69,38 @@ export default function DashboardCalendar({ userId }: DashboardCalendarProps) {
           data,
           type,
           voting_deadline,
+          community_id,
           communities:community_id (
             id,
             name
           )
         `)
-        .in('community_id', communityIds)
         .in('type', ['event', 'poll', 'need'])
-        .gte('data->>date', startOfMonth.toISOString().split('T')[0])
-        .lte('data->>date', endOfMonth.toISOString().split('T')[0])
+
+      // Filter by communities if user has any, otherwise show all
+      if (communityIds.length > 0) {
+        eventQuery = eventQuery.in('community_id', communityIds)
+      }
+
+      const { data: eventData, error: eventError } = await eventQuery
+
+      if (eventError) {
+        console.error('❌ Error fetching events:', eventError)
+      }
+
+      console.log('📅 Raw event data:', eventData)
 
       // Fetch user's event registrations
-      const { data: registrations } = await supabase
+      const { data: registrations, error: registrationsError } = await supabase
         .from('event_registrations')
         .select('content_id')
         .eq('user_id', userId)
+
+      if (registrationsError) {
+        console.error('❌ Error fetching registrations:', registrationsError)
+      }
+
+      console.log('📝 User registrations:', registrations)
 
       const registeredEventIds = new Set(registrations?.map(r => r.content_id) || [])
 
@@ -85,18 +109,25 @@ export default function DashboardCalendar({ userId }: DashboardCalendarProps) {
 
       eventData?.forEach(item => {
         const itemData = item.data || {}
+        console.log('🔍 Processing item:', item.title, 'Type:', item.type, 'Data:', itemData)
         
-        if (item.type === 'event' && itemData.date) {
-          calendarEvents.push({
-            id: item.id,
-            title: item.title,
-            date: itemData.date,
-            time: itemData.time,
-            type: 'event',
-            community_name: (item.communities as any).name,
-            community_id: (item.communities as any).id,
-            status: registeredEventIds.has(item.id) ? 'registered' : 'not_registered'
-          })
+        if (item.type === 'event') {
+          // More flexible date handling
+          const eventDate = itemData.date || itemData.event_date || itemData.start_date
+          if (eventDate) {
+            calendarEvents.push({
+              id: item.id,
+              title: item.title,
+              date: eventDate,
+              time: itemData.time || itemData.start_time,
+              type: 'event',
+              community_name: (item.communities as any)?.name || 'Unknown Community',
+              community_id: item.community_id,
+              status: registeredEventIds.has(item.id) ? 'registered' : 'not_registered'
+            })
+          } else {
+            console.log('⚠️ Event missing date:', item.title)
+          }
         }
 
         // Add voting deadlines
@@ -120,9 +151,17 @@ export default function DashboardCalendar({ userId }: DashboardCalendarProps) {
         }
       })
 
+      console.log('✅ Processed calendar events:', calendarEvents.length, 'events')
+      console.log('📊 Events by type:', {
+        events: calendarEvents.filter(e => e.type === 'event').length,
+        deadlines: calendarEvents.filter(e => e.type === 'deadline').length,
+        registered: calendarEvents.filter(e => e.status === 'registered').length
+      })
+
       setEvents(calendarEvents)
     } catch (error) {
-      console.error('Error fetching calendar events:', error)
+      console.error('❌ Error fetching calendar events:', error)
+      setEvents([]) // Set empty array on error
     } finally {
       setLoading(false)
     }
