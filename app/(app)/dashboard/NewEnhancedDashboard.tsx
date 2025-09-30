@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { AnimatedCard, AnimatedButton } from '@/components/ui/UIComponents'
 import ImpactDashboard from './ImpactDashboard'
 import { XPProgressBar, AchievementsGrid, CommunityLeaderboard, WeeklyChallenge } from '@/components/GamificationSystem'
-import DashboardCalendar from '@/components/DashboardCalendar'
+import DashboardCalendar from '../../components/DashboardCalendar'
 
 interface UserStats {
   id: string
@@ -30,7 +30,7 @@ interface EnhancedDashboardProps {
 
 export default function NewEnhancedDashboard({ user, initialUserStats, userCommunities }: EnhancedDashboardProps) {
   const [userStats] = useState<UserStats | null>(initialUserStats)
-  const [activeTab, setActiveTab] = useState<'overview' | 'impact' | 'gamification'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'impact' | 'gamification' | 'calendar'>('overview')
 
   const getTimeOfDayMessage = (): string => {
     const hour = new Date().getHours()
