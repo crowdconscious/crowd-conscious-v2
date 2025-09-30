@@ -37,20 +37,41 @@ export default function CommentsSection({ contentId, contentType }: CommentsSect
   useEffect(() => {
     fetchComments()
     getCurrentUser()
+    
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('🔄 Auth state changed:', event, session?.user?.email || 'No user')
+      setUser(session?.user || null)
+    })
+
+    return () => subscription.unsubscribe()
   }, [contentId])
 
   const getCurrentUser = async () => {
     try {
+      console.log('🔍 CommentsSection: Checking authentication...')
+      
+      // Try getting user from current session first
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      if (sessionError) {
+        console.error('❌ Error getting session:', sessionError)
+      } else if (session?.user) {
+        console.log('✅ User from session:', `${session.user.email} (${session.user.id})`)
+        setUser(session.user)
+        return
+      }
+      
+      // Fallback to getUser
       const { data: { user }, error } = await supabase.auth.getUser()
       if (error) {
-        console.error('Error getting user:', error)
+        console.error('❌ Error getting user:', error)
         setUser(null)
       } else {
-        console.log('Current user in comments:', user)
+        console.log('✅ Current user in comments:', user ? `${user.email} (${user.id})` : 'No user')
         setUser(user)
       }
     } catch (error) {
-      console.error('Error in getCurrentUser:', error)
+      console.error('💥 Error in getCurrentUser:', error)
       setUser(null)
     }
   }
