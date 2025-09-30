@@ -1,7 +1,7 @@
 'use client'
 
-import { motion, useAnimationControls } from 'framer-motion'
-import { useEffect, useState } from 'react'
+import { motion, useAnimationControls, PanInfo } from 'framer-motion'
+import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 
 interface Community {
@@ -26,24 +26,98 @@ interface CommunityCarouselProps {
 export default function CommunityCarousel({ communities }: CommunityCarouselProps) {
   const controls = useAnimationControls()
   const [isPaused, setIsPaused] = useState(false)
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
   
+  // Calculate how many cards fit in viewport (responsive)
+  const [cardsPerView, setCardsPerView] = useState(3)
+  
+  useEffect(() => {
+    const updateCardsPerView = () => {
+      if (typeof window !== 'undefined') {
+        if (window.innerWidth < 640) setCardsPerView(1)      // mobile
+        else if (window.innerWidth < 1024) setCardsPerView(2) // tablet  
+        else setCardsPerView(3)                               // desktop
+      }
+    }
+    
+    updateCardsPerView()
+    window.addEventListener('resize', updateCardsPerView)
+    return () => window.removeEventListener('resize', updateCardsPerView)
+  }, [])
+
   // Create duplicated array for infinite scroll
   const duplicatedCommunities = [...communities, ...communities, ...communities]
+  const cardWidth = 320 // 80 * 4 (w-80 = 320px)
+  const cardGap = 24 // space-x-6 = 24px
+  const totalCardWidth = cardWidth + cardGap
 
+  // Auto-scroll functionality
   useEffect(() => {
-    if (!isPaused && communities.length > 0) {
-      controls.start({
-        x: [0, -100 * communities.length / 3],
-        transition: {
-          duration: 30,
-          ease: 'linear',
-          repeat: Infinity,
-        },
-      })
-    } else {
-      controls.stop()
+    if (!isPaused && !isDragging && communities.length > 0) {
+      const interval = setInterval(() => {
+        setCurrentIndex(prev => {
+          const maxIndex = communities.length - 1
+          return prev >= maxIndex ? 0 : prev + 1
+        })
+      }, 4000) // Change slide every 4 seconds
+      
+      return () => clearInterval(interval)
     }
-  }, [controls, isPaused, communities.length])
+  }, [isPaused, isDragging, communities.length])
+
+  // Update position based on currentIndex
+  useEffect(() => {
+    if (!isDragging) {
+      const targetX = -(currentIndex * totalCardWidth)
+      controls.start({
+        x: targetX,
+        transition: { duration: 0.5, ease: 'easeInOut' }
+      })
+    }
+  }, [currentIndex, controls, isDragging, totalCardWidth])
+
+  const handlePanStart = () => {
+    setIsDragging(true)
+    setIsPaused(true)
+  }
+
+  const handlePanEnd = (event: any, info: PanInfo) => {
+    setIsDragging(false)
+    
+    const threshold = 50 // minimum drag distance to trigger slide change
+    const maxIndex = communities.length - 1
+    
+    if (info.offset.x > threshold && currentIndex > 0) {
+      // Dragged right - go to previous
+      setCurrentIndex(prev => prev - 1)
+    } else if (info.offset.x < -threshold && currentIndex < maxIndex) {
+      // Dragged left - go to next
+      setCurrentIndex(prev => prev + 1)
+    }
+    
+    // Resume auto-scroll after a delay
+    setTimeout(() => setIsPaused(false), 3000)
+  }
+
+  const goToSlide = (index: number) => {
+    setCurrentIndex(index)
+    setIsPaused(true)
+    setTimeout(() => setIsPaused(false), 5000)
+  }
+
+  const goToPrevious = () => {
+    setCurrentIndex(prev => prev > 0 ? prev - 1 : communities.length - 1)
+    setIsPaused(true)
+    setTimeout(() => setIsPaused(false), 3000)
+  }
+
+  const goToNext = () => {
+    setCurrentIndex(prev => prev < communities.length - 1 ? prev + 1 : 0)
+    setIsPaused(true)
+    setTimeout(() => setIsPaused(false), 3000)
+  }
 
   if (communities.length === 0) {
     return (
@@ -66,19 +140,47 @@ export default function CommunityCarousel({ communities }: CommunityCarouselProp
   }
 
   return (
-    <div className="relative overflow-hidden">
-      {/* Fade edges */}
-      <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-white to-transparent z-10" />
-      <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-white to-transparent z-10" />
-      
-      <motion.div
-        className="flex space-x-6"
-        animate={controls}
-        onMouseEnter={() => setIsPaused(true)}
-        onMouseLeave={() => setIsPaused(false)}
-        style={{ width: `${duplicatedCommunities.length * 320}px` }}
-      >
-        {duplicatedCommunities.map((community, index) => (
+    <div className="relative">
+      {/* Navigation Controls */}
+      {communities.length > 1 && (
+        <>
+          <button
+            onClick={goToPrevious}
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-white/90 hover:bg-white shadow-lg rounded-full p-3 transition-all duration-200 hover:scale-110"
+            aria-label="Previous communities"
+          >
+            <svg className="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          
+          <button
+            onClick={goToNext}
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-white/90 hover:bg-white shadow-lg rounded-full p-3 transition-all duration-200 hover:scale-110"
+            aria-label="Next communities"
+          >
+            <svg className="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </>
+      )}
+
+      {/* Carousel Container */}
+      <div className="overflow-hidden" ref={containerRef}>
+        <motion.div
+          className="flex space-x-6"
+          animate={controls}
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+          onPanStart={handlePanStart}
+          onPanEnd={handlePanEnd}
+          drag="x"
+          dragConstraints={{ left: -(communities.length - 1) * totalCardWidth, right: 0 }}
+          dragElastic={0.1}
+          style={{ width: `${communities.length * totalCardWidth}px` }}
+        >
+        {communities.map((community, index) => (
           <motion.div
             key={`${community.id}-${index}`}
             className="flex-shrink-0 w-80"
@@ -160,7 +262,26 @@ export default function CommunityCarousel({ communities }: CommunityCarouselProp
             </Link>
           </motion.div>
         ))}
-      </motion.div>
+        </motion.div>
+      </div>
+
+      {/* Pagination Dots */}
+      {communities.length > 1 && (
+        <div className="flex justify-center mt-8 space-x-2">
+          {communities.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => goToSlide(index)}
+              className={`w-3 h-3 rounded-full transition-all duration-200 ${
+                index === currentIndex 
+                  ? 'bg-teal-500 scale-125' 
+                  : 'bg-slate-300 hover:bg-slate-400'
+              }`}
+              aria-label={`Go to community ${index + 1}`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
