@@ -48,6 +48,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ 
       comments: structuredComments,
       count: comments?.length || 0 
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, must-revalidate',
+        'Pragma': 'no-cache'
+      }
     })
 
   } catch (error) {

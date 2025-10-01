@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
 import CommentsSection from '../../../../../components/CommentsSection'
 import ShareButton from '../../../../../components/ShareButton'
+import ContentModerationButtons from './ContentModerationButtons'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
@@ -40,11 +41,26 @@ async function getContentDetail(contentId: string) {
   return data
 }
 
+async function checkUserMembership(communityId: string, userId: string) {
+  const { data, error } = await supabase
+    .from('community_members')
+    .select('role')
+    .eq('community_id', communityId)
+    .eq('user_id', userId)
+    .single()
+
+  if (error) return null
+  return data
+}
+
 export default async function ContentDetailPage({ params }: ContentDetailPageProps) {
   const user = await getCurrentUser()
   const { id: communityId, contentId } = await params
 
-  const content = await getContentDetail(contentId)
+  const [content, userMembership] = await Promise.all([
+    getContentDetail(contentId),
+    user ? checkUserMembership(communityId, (user as any).id) : null
+  ])
 
   if (!content) {
     notFound()
@@ -90,12 +106,21 @@ export default async function ContentDetailPage({ params }: ContentDetailPagePro
               </div>
             </div>
             
-            <ShareButton
-              contentId={content.id}
-              contentType={content.type as any}
-              title={content.title}
-              description={content.description}
-            />
+            <div className="flex items-center gap-2">
+              <ShareButton
+                contentId={content.id}
+                contentType={content.type as any}
+                title={content.title}
+                description={content.description}
+              />
+              <ContentModerationButtons
+                contentId={content.id}
+                contentTitle={content.title}
+                communityId={communityId}
+                userType={user?.user_type || 'user'}
+                userRole={userMembership?.role || null}
+              />
+            </div>
           </div>
 
           <h1 className="text-2xl font-bold text-slate-900 mb-3">{content.title}</h1>

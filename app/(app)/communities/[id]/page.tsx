@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 // @ts-ignore
 import JoinCommunityButton from './JoinCommunityButton'
 import CommunityTabs from './CommunityTabs'
+import AdminModerationButtons from './AdminModerationButtons'
 import Link from 'next/link'
 
 // Force dynamic rendering due to authentication checks
@@ -224,9 +225,19 @@ export default async function CommunityDetailPage({
         </div>
 
         {/* Stats */}
-        <div className="flex items-center gap-6 text-sm text-slate-600">
-          <span>{community.member_count} member{community.member_count !== 1 ? 's' : ''}</span>
-          <span>Created {new Date(community.created_at).toLocaleDateString()}</span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-6 text-sm text-slate-600">
+            <span>{community.member_count} member{community.member_count !== 1 ? 's' : ''}</span>
+            <span>Created {new Date(community.created_at).toLocaleDateString()}</span>
+          </div>
+          
+          {/* Admin Moderation Buttons */}
+          <AdminModerationButtons
+            communityId={community.id}
+            communityName={community.name}
+            userType={user?.user_type || 'user'}
+            userRole={userMembership?.role || null}
+          />
         </div>
       </div>
 

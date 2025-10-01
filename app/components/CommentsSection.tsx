@@ -49,7 +49,10 @@ export default function CommentsSection({ contentId, contentType, initialUser }:
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('🔄 Auth state changed:', event, session?.user?.email || 'No user')
-      setUser(session?.user || null)
+      // Only update if we don't have initialUser or if session is null
+      if (!initialUser || !session) {
+        setUser(session?.user || null)
+      }
     })
 
     return () => subscription.unsubscribe()
@@ -63,7 +66,11 @@ export default function CommentsSection({ contentId, contentType, initialUser }:
       const { data: { session }, error: sessionError } = await supabase.auth.getSession()
       if (sessionError) {
         console.error('❌ Error getting session:', sessionError)
-      } else if (session?.user) {
+        setUser(null)
+        return
+      }
+      
+      if (session?.user) {
         console.log('✅ User from session:', `${session.user.email} (${session.user.id})`)
         setUser(session.user)
         return

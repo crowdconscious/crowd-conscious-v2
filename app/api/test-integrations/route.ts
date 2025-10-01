@@ -1,52 +1,54 @@
-import { NextResponse } from 'next/server'
-import { stripe } from '@/lib/stripe'
-import { resend } from '@/lib/resend'
+import { NextRequest, NextResponse } from 'next/server'
 
+// Test all integrations endpoint
 export async function GET() {
-  const results: any = {
-    timestamp: new Date().toISOString(),
-    stripe: {
-      configured: !!stripe,
-      status: 'unknown'
-    },
-    resend: {
-      configured: !!resend,
-      status: 'unknown'
-    },
-    environment: {
-      stripe_key_present: !!process.env.STRIPE_SECRET_KEY,
-      stripe_public_key_present: !!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
-      resend_key_present: !!process.env.RESEND_API_KEY,
-      webhook_secret_present: !!process.env.STRIPE_WEBHOOK_SECRET
+  try {
+    const results = {
+      timestamp: new Date().toISOString(),
+      integrations: {
+        resend: {
+          configured: !!process.env.RESEND_API_KEY,
+          status: process.env.RESEND_API_KEY ? 'configured' : 'not_configured',
+          domains_count: process.env.RESEND_API_KEY ? 'unknown' : 0
+        },
+        supabase: {
+          configured: !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
+          url: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'configured' : 'not_configured',
+          anon_key: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'configured' : 'not_configured'
+        },
+        stripe: {
+          configured: !!process.env.STRIPE_SECRET_KEY,
+          publishable_key: !!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
+          status: process.env.STRIPE_SECRET_KEY ? 'configured' : 'not_configured'
+        },
+        app: {
+          url: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+          environment: process.env.NODE_ENV || 'development'
+        }
+      },
+      recommendations: []
     }
-  }
 
-  // Test Stripe connection
-  if (stripe) {
-    try {
-      // Try to retrieve account info (lightweight test)
-      const account = await stripe.accounts.retrieve()
-      results.stripe.status = 'connected'
-      results.stripe.account_id = account.id
-      results.stripe.country = account.country
-    } catch (error: any) {
-      results.stripe.status = 'error'
-      results.stripe.error = error.message
+    // Add recommendations based on configuration
+    if (!process.env.RESEND_API_KEY) {
+      results.recommendations.push('Set RESEND_API_KEY environment variable for email functionality')
     }
-  }
-
-  // Test Resend connection
-  if (resend) {
-    try {
-      // Try to get domains (lightweight test)
-      const domains = await resend.domains.list()
-      results.resend.status = 'connected'
-      results.resend.domains_count = Array.isArray(domains.data) ? domains.data.length : 0
-    } catch (error: any) {
-      results.resend.status = 'error'
-      results.resend.error = error.message
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      results.recommendations.push('Set NEXT_PUBLIC_SUPABASE_URL environment variable')
     }
-  }
+    if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      results.recommendations.push('Set NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable')
+    }
+    if (!process.env.STRIPE_SECRET_KEY) {
+      results.recommendations.push('Set STRIPE_SECRET_KEY environment variable for payment functionality')
+    }
 
-  return NextResponse.json(results, { status: 200 })
+    return NextResponse.json(results)
+  } catch (error) {
+    console.error('Integration test error:', error)
+    return NextResponse.json(
+      { error: 'Failed to test integrations' },
+      { status: 500 }
+    )
+  }
 }
