@@ -38,21 +38,13 @@ export default function CommentsSection({ contentId, contentType, initialUser }:
   useEffect(() => {
     fetchComments()
     
-    // Use initialUser if provided, otherwise get from auth
-    if (initialUser) {
-      console.log('✅ Using initialUser from server:', initialUser.email)
-      setUser(initialUser)
-    } else {
-      getCurrentUser()
-    }
+    // Always check client-side auth for reliability
+    getCurrentUser()
     
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('🔄 Auth state changed:', event, session?.user?.email || 'No user')
-      // Only update if we don't have initialUser or if session is null
-      if (!initialUser || !session) {
-        setUser(session?.user || null)
-      }
+      setUser(session?.user || null)
     })
 
     // Set up real-time subscription for new comments
@@ -80,7 +72,7 @@ export default function CommentsSection({ contentId, contentType, initialUser }:
       subscription.unsubscribe()
       supabase.removeChannel(commentsChannel)
     }
-  }, [contentId, initialUser])
+  }, [contentId])
 
   const getCurrentUser = async () => {
     try {
