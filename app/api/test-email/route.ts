@@ -17,11 +17,13 @@ export async function POST(request: NextRequest) {
 
     switch (type) {
       case 'welcome':
-        result = await sendWelcomeEmail(email, name || 'Test User', 'user')
+        const welcomeSuccess = await sendWelcomeEmail(email, name || 'Test User', 'user')
+        result = { success: welcomeSuccess }
         break
 
       case 'welcome-brand':
-        result = await sendWelcomeEmail(email, name || 'Test Company', 'brand')
+        const brandSuccess = await sendWelcomeEmail(email, name || 'Test Company', 'brand')
+        result = { success: brandSuccess }
         break
 
       case 'sponsorship':
@@ -31,7 +33,7 @@ export async function POST(request: NextRequest) {
           amount: 2500,
           communityName: 'Green Valley Community'
         }
-        result = await sendSponsorshipApprovalEmail(
+        const sponsorshipSuccess = await sendSponsorshipApprovalEmail(
           email,
           sponsorshipData.brandName,
           sponsorshipData.needTitle,
@@ -39,6 +41,7 @@ export async function POST(request: NextRequest) {
           sponsorshipData.communityName,
           'test-sponsorship-id'
         )
+        result = { success: sponsorshipSuccess }
         break
 
       case 'custom':
