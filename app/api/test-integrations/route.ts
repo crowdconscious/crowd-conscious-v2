@@ -26,7 +26,7 @@ export async function GET() {
           environment: process.env.NODE_ENV || 'development'
         }
       },
-      recommendations: []
+      recommendations: [] as string[]
     }
 
     // Add recommendations based on configuration
