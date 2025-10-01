@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClientAuth } from '@/lib/auth'
 
 interface PollOption {
@@ -27,6 +27,30 @@ export default function PollVoting({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const supabase = createClientAuth()
+
+  // Set up real-time subscription for poll vote updates
+  useEffect(() => {
+    const channel = supabase
+      .channel(`poll_votes_${contentId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'poll_votes',
+          filter: `content_id=eq.${contentId}`
+        },
+        (payload) => {
+          console.log('🗳️ Real-time vote update:', payload)
+          onVoteUpdate() // Refresh poll data
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [contentId, onVoteUpdate])
 
   const hasVoted = userVote && userVote.length > 0
   const userVotedOptionId = hasVoted ? userVote[0].poll_option_id : null

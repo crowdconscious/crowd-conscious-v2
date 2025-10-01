@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClientAuth } from '@/lib/auth'
 
 interface EventRegistration {
@@ -42,6 +42,30 @@ export default function EventRSVP({
   const activeRegistrations = eventRegistrations.filter(r => r.status === 'registered').length
   const isFull = maxParticipants && activeRegistrations >= maxParticipants
   const isEventPast = eventDate && new Date(eventDate) < new Date()
+
+  // Set up real-time subscription for event registration updates
+  useEffect(() => {
+    const channel = supabase
+      .channel(`event_registrations_${contentId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'event_registrations',
+          filter: `content_id=eq.${contentId}`
+        },
+        (payload) => {
+          console.log('📅 Real-time RSVP update:', payload)
+          onUpdate() // Refresh event data
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [contentId, onUpdate])
 
   const handleRSVP = async (action: 'register' | 'cancel') => {
     setLoading(true)

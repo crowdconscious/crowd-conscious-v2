@@ -55,7 +55,31 @@ export default function CommentsSection({ contentId, contentType, initialUser }:
       }
     })
 
-    return () => subscription.unsubscribe()
+    // Set up real-time subscription for new comments
+    const commentsChannel = supabase
+      .channel(`comments_${contentId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
+          schema: 'public',
+          table: 'comments',
+          filter: `content_id=eq.${contentId}`
+        },
+        (payload) => {
+          console.log('💬 Real-time comment update:', payload)
+          // Refresh comments when any change occurs
+          fetchComments()
+        }
+      )
+      .subscribe((status) => {
+        console.log('📡 Comments subscription status:', status)
+      })
+
+    return () => {
+      subscription.unsubscribe()
+      supabase.removeChannel(commentsChannel)
+    }
   }, [contentId, initialUser])
 
   const getCurrentUser = async () => {

@@ -69,6 +69,33 @@ export default function ContentList({ communityId, userRole }: ContentListProps)
 
   useEffect(() => {
     fetchContent()
+
+    // Set up real-time subscription for content changes
+    const channel = supabase
+      .channel(`community_content_${communityId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
+          schema: 'public',
+          table: 'community_content',
+          filter: `community_id=eq.${communityId}`
+        },
+        (payload) => {
+          console.log('🔄 Real-time content update:', payload)
+          // Refresh content when any change occurs
+          fetchContent()
+        }
+      )
+      .subscribe((status) => {
+        console.log('📡 Real-time subscription status:', status)
+      })
+
+    // Cleanup subscription on unmount
+    return () => {
+      console.log('🔌 Unsubscribing from real-time updates')
+      supabase.removeChannel(channel)
+    }
   }, [communityId, filter])
 
   const fetchContent = async () => {
