@@ -40,14 +40,16 @@ export async function POST(request: NextRequest) {
       const { sponsorshipId, sponsorType, brandName, taxReceipt } = session.metadata || {}
 
       if (sponsorshipId) {
+        const updateData: any = {
+          status: 'paid',
+          stripe_session_id: session.id,
+          stripe_payment_intent: session.payment_intent,
+          paid_at: new Date().toISOString()
+        }
+        
         const { error } = await supabase
           .from('sponsorships')
-          .update({
-            status: 'paid',
-            stripe_session_id: session.id,
-            stripe_payment_intent: session.payment_intent,
-            paid_at: new Date().toISOString()
-          })
+          .update(updateData)
           .eq('id', sponsorshipId)
 
         if (error) {

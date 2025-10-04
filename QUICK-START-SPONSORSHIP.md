@@ -3,17 +3,21 @@
 ## ⚡ 3-Step Setup (15 minutes)
 
 ### 1️⃣ Run SQL Migrations (5 min)
+
 Open Supabase SQL Editor and run:
 
 **Migration 1**: `sql-migrations/simplify-remove-brand-type.sql`
+
 - Adds sponsor fields to sponsorships table
 - Creates trusted_brands view
 
 **Migration 2**: `sql-migrations/create-sponsor-logos-bucket.sql`
+
 - Creates sponsor-logos storage bucket
 - Sets up RLS policies
 
 ### 2️⃣ Configure Stripe (5 min)
+
 Add to Vercel Environment Variables:
 
 ```bash
@@ -26,6 +30,7 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
 **Events**: `checkout.session.completed`, `payment_intent.succeeded`, `payment_intent.payment_failed`
 
 ### 3️⃣ Test (5 min)
+
 1. Go to any community content
 2. Click "Sponsor This Need"
 3. Choose Individual or Business
@@ -36,11 +41,11 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
 
 ## 📊 Sponsor Tiers
 
-| Tier | Amount | Benefits |
-|------|--------|----------|
-| 🥉 Bronze | $1-999 MXN | Name recognition |
+| Tier      | Amount           | Benefits                      |
+| --------- | ---------------- | ----------------------------- |
+| 🥉 Bronze | $1-999 MXN       | Name recognition              |
 | 🥈 Silver | $1,000-4,999 MXN | Logo display + impact reports |
-| 🥇 Gold | $5,000+ MXN | Prominent logo + website link |
+| 🥇 Gold   | $5,000+ MXN      | Prominent logo + website link |
 
 ---
 

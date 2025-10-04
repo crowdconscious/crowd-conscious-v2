@@ -162,7 +162,7 @@ export default function SponsorshipCheckout({
       }
 
       // Create sponsorship record
-      const sponsorshipData = {
+      const sponsorshipData: any = {
         content_id: contentId,
         sponsor_id: user.id,
         amount: formData.amount,
