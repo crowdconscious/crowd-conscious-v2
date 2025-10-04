@@ -190,13 +190,14 @@ export default function SponsorshipCheckout({
         .single()
 
       if (sponsorError) throw sponsorError
+      if (!sponsorship) throw new Error('Failed to create sponsorship')
 
       // Redirect to Stripe checkout
       const response = await fetch('/api/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          sponsorshipId: sponsorship.id,
+          sponsorshipId: (sponsorship as any).id,
           amount: formData.amount,
           contentTitle,
           communityName,
