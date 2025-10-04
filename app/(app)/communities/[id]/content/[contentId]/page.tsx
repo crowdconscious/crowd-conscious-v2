@@ -174,6 +174,70 @@ export default async function ContentDetailPage({ params }: ContentDetailPagePro
           </div>
         </div>
 
+        {/* SPONSORSHIP SECTION - Only for needs with funding goals */}
+        {content.type === 'need' && content.funding_goal && (
+          <div className="bg-gradient-to-br from-teal-50 via-blue-50 to-purple-50 rounded-xl shadow-lg border-2 border-teal-200 p-8 mb-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900 mb-2 flex items-center gap-2">
+                  💝 Support This Need
+                </h2>
+                <p className="text-slate-600">
+                  Help make this happen through sponsorship - Individual or Business
+                </p>
+              </div>
+              <div className="text-right">
+                <div className="text-3xl font-bold text-teal-600">
+                  ${(content.current_funding || 0).toLocaleString()} MXN
+                </div>
+                <div className="text-sm text-slate-600">
+                  of ${content.funding_goal.toLocaleString()} MXN goal
+                </div>
+                <div className="text-xs text-slate-500 mt-1">
+                  {Math.round((content.current_funding || 0) / content.funding_goal * 100)}% funded
+                </div>
+              </div>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="w-full bg-slate-200 rounded-full h-4 mb-6 shadow-inner">
+              <div 
+                className="bg-gradient-to-r from-teal-500 via-blue-500 to-purple-500 h-4 rounded-full transition-all duration-500 shadow-md"
+                style={{ 
+                  width: `${Math.min((content.current_funding || 0) / content.funding_goal * 100, 100)}%` 
+                }}
+              />
+            </div>
+
+            {/* Sponsor Tiers Preview */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="bg-white/80 backdrop-blur rounded-lg p-4 border border-orange-200">
+                <div className="text-orange-600 font-semibold mb-1">🥉 Bronze ($1-999)</div>
+                <div className="text-xs text-slate-600">Name recognition</div>
+              </div>
+              <div className="bg-white/80 backdrop-blur rounded-lg p-4 border border-slate-300">
+                <div className="text-slate-600 font-semibold mb-1">🥈 Silver ($1,000-4,999)</div>
+                <div className="text-xs text-slate-600">Logo display + reports</div>
+              </div>
+              <div className="bg-white/80 backdrop-blur rounded-lg p-4 border border-yellow-300">
+                <div className="text-yellow-600 font-semibold mb-1">🥇 Gold ($5,000+)</div>
+                <div className="text-xs text-slate-600">Prominent logo + website link</div>
+              </div>
+            </div>
+
+            {/* CTA Button */}
+            <Link href={`/communities/${communityId}/content/${content.id}/sponsor`}>
+              <button className="w-full bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 text-white font-bold text-lg py-4 px-8 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-[1.02]">
+                💳 Sponsor This Need Now
+              </button>
+            </Link>
+
+            <p className="text-xs text-center text-slate-500 mt-4">
+              Secure payment via Stripe • Tax receipts available for businesses
+            </p>
+          </div>
+        )}
+
         {/* Comments Section */}
         <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
           <h2 className="text-xl font-semibold text-slate-900 mb-6">💬 Discussion</h2>

@@ -221,6 +221,15 @@ export default function ContentList({ communityId, userRole }: ContentListProps)
     return new Date(deadline) < new Date()
   }
 
+  // Filter content based on selected filter
+  const filteredContent = content.filter(item => {
+    if (filter === 'all') return true
+    if (filter === 'sponsorable') {
+      return item.type === 'need' && item.funding_goal && (item.current_funding || 0) < item.funding_goal
+    }
+    return item.type === filter
+  })
+
   if (loading) {
     return <div className="text-center py-8">Loading content...</div>
   }
@@ -228,21 +237,24 @@ export default function ContentList({ communityId, userRole }: ContentListProps)
   return (
     <div className="space-y-6">
       {/* Filter Tabs */}
-      <div className="flex space-x-1 bg-slate-100 p-1 rounded-lg">
+      <div className="flex flex-wrap gap-2 bg-slate-100 p-2 rounded-lg">
         {[
-          { key: 'all', label: 'All' },
-          { key: 'need', label: 'Needs' },
-          { key: 'event', label: 'Events' },
-          { key: 'challenge', label: 'Challenges' },
-          { key: 'poll', label: 'Polls' }
-        ].map(({ key, label }) => (
+          { key: 'all', label: 'All', icon: '📋' },
+          { key: 'need', label: 'Needs', icon: '💡' },
+          { key: 'sponsorable', label: '💝 Needs Sponsorship', icon: '💰' },
+          { key: 'event', label: 'Events', icon: '📅' },
+          { key: 'challenge', label: 'Challenges', icon: '🏆' },
+          { key: 'poll', label: 'Polls', icon: '🗳️' }
+        ].map(({ key, label, icon }) => (
           <button
             key={key}
             onClick={() => setFilter(key)}
-            className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+            className={`flex-1 min-w-[100px] py-2 px-3 rounded-md text-sm font-medium transition-colors ${
               filter === key
-                ? 'bg-white text-slate-900 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900'
+                ? key === 'sponsorable'
+                  ? 'bg-gradient-to-r from-teal-600 to-blue-600 text-white shadow-md'
+                  : 'bg-white text-slate-900 shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
             }`}
           >
             {label}
@@ -254,7 +266,7 @@ export default function ContentList({ communityId, userRole }: ContentListProps)
       {userRole && (
         <div className="flex justify-between items-center">
           <h3 className="text-lg font-semibold text-slate-900">
-            Community Content ({content.length})
+            Community Content ({filteredContent.length} {filter !== 'all' ? `of ${content.length}` : ''})
           </h3>
           <Link
             href={`/communities/${communityId}/content/new`}
@@ -266,9 +278,9 @@ export default function ContentList({ communityId, userRole }: ContentListProps)
       )}
 
       {/* Content Grid */}
-      {content.length > 0 ? (
+      {filteredContent.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {content.map((item) => (
+          {filteredContent.map((item) => (
             <div
               key={item.id}
               className="bg-white border border-slate-200 rounded-lg p-4 hover:shadow-sm transition-shadow"
@@ -292,6 +304,30 @@ export default function ContentList({ communityId, userRole }: ContentListProps)
               <p className="text-sm text-slate-600 mb-4 line-clamp-2">
                 {item.description}
               </p>
+
+              {/* Funding Progress for Needs - SPONSOR BUTTON */}
+              {item.type === 'need' && item.funding_goal && (
+                <div className="mb-4 p-3 bg-gradient-to-br from-teal-50 to-blue-50 rounded-lg border border-teal-200">
+                  <div className="flex justify-between text-xs text-slate-700 font-medium mb-2">
+                    <span>💰 ${(item.current_funding || 0).toLocaleString()} raised</span>
+                    <span>Goal: ${item.funding_goal.toLocaleString()}</span>
+                  </div>
+                  <div className="w-full bg-slate-200 rounded-full h-2 mb-3">
+                    <div 
+                      className="bg-gradient-to-r from-teal-500 to-blue-500 h-2 rounded-full transition-all"
+                      style={{ 
+                        width: `${Math.min((item.current_funding || 0) / item.funding_goal * 100, 100)}%` 
+                      }}
+                    />
+                  </div>
+                  <Link 
+                    href={`/communities/${communityId}/content/${item.id}`}
+                    className="block w-full text-center bg-teal-600 hover:bg-teal-700 text-white text-sm font-semibold py-2 px-4 rounded-lg transition-colors"
+                  >
+                    💝 Sponsor This Need
+                  </Link>
+                </div>
+              )}
 
               {/* Enhanced Type-Specific Content */}
               {item.type === 'need' && (
