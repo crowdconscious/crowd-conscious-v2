@@ -2,9 +2,20 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-08-27.basil'
-})
+// Initialize Stripe lazily to avoid build-time errors
+let stripe: Stripe | null = null
+
+function getStripe(): Stripe {
+  if (!stripe) {
+    if (!process.env.STRIPE_SECRET_KEY) {
+      throw new Error('STRIPE_SECRET_KEY is not set')
+    }
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: '2025-08-27.basil'
+    })
+  }
+  return stripe
+}
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -24,7 +35,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Retrieve session from Stripe
-    const session = await stripe.checkout.sessions.retrieve(sessionId)
+    const stripeClient = getStripe()
+    const session = await stripeClient.checkout.sessions.retrieve(sessionId)
 
     if (session.payment_status !== 'paid') {
       return NextResponse.json(
