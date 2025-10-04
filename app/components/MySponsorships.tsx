@@ -54,7 +54,7 @@ export default function MySponsorships({ userId }: { userId: string }) {
         }
       }))
 
-      setSponsors(transformedData)
+      setSponsorships(transformedData)
     } catch (error) {
       console.error('Error fetching sponsorships:', error)
     } finally {
