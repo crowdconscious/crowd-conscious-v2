@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase'
+import { createClientAuth } from '@/lib/auth'
 
 interface Comment {
   id: string
@@ -33,7 +33,7 @@ export default function CommentsSection({ contentId, contentType, initialUser }:
   const [submitting, setSubmitting] = useState(false)
   const [user, setUser] = useState<any>(null)
 
-  // supabase is already imported
+  const supabase = createClientAuth()
 
   useEffect(() => {
     fetchComments()

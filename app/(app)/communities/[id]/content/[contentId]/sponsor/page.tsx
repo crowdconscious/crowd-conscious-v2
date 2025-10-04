@@ -1,7 +1,7 @@
 import { getCurrentUser } from '@/lib/auth-server'
 import { supabase } from '@/lib/supabase'
 import { notFound, redirect } from 'next/navigation'
-import SponsorshipCheckout from '@/app/components/SponsorshipCheckout'
+import SponsorCheckoutClient from './SponsorCheckoutClient'
 
 export const dynamic = 'force-dynamic'
 
@@ -45,18 +45,12 @@ export default async function SponsorPage({ params }: SponsorPageProps) {
   }
 
   return (
-    <SponsorshipCheckout
+    <SponsorCheckoutClient
       contentId={content.id}
       contentTitle={content.title}
       fundingGoal={content.funding_goal}
       currentFunding={content.current_funding || 0}
       communityName={(content.communities as any)?.name || 'Community'}
-      onSuccess={() => {
-        // Redirect handled by checkout component
-      }}
-      onCancel={() => {
-        // Redirect handled by browser
-      }}
     />
   )
 }
