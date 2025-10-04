@@ -17,10 +17,21 @@ function getStripe(): Stripe {
   return stripe
 }
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+// Initialize Supabase lazily to avoid build-time errors
+let supabase: ReturnType<typeof createClient> | null = null
+
+function getSupabase() {
+  if (!supabase) {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error('Supabase environment variables are not set')
+    }
+    supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    )
+  }
+  return supabase
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -55,7 +66,8 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const { data: sponsorship, error } = await supabase
+    const supabaseClient = getSupabase()
+    const { data: sponsorship, error } = await supabaseClient
       .from('sponsorships')
       .select('*')
       .eq('id', sponsorshipId)

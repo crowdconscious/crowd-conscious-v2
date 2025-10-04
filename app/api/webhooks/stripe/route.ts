@@ -17,10 +17,21 @@ function getStripe(): Stripe {
   return stripe
 }
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+// Initialize Supabase lazily to avoid build-time errors
+let supabase: ReturnType<typeof createClient> | null = null
+
+function getSupabase() {
+  if (!supabase) {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error('Supabase environment variables are not set')
+    }
+    supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    )
+  }
+  return supabase
+}
 
 export async function POST(request: NextRequest) {
   const body = await request.text()
@@ -59,7 +70,8 @@ export async function POST(request: NextRequest) {
           paid_at: new Date().toISOString()
         }
         
-        const { error } = await supabase
+        const supabaseClient = getSupabase()
+        const { error } = await (supabaseClient as any)
           .from('sponsorships')
           .update(updateData)
           .eq('id', sponsorshipId)
@@ -74,7 +86,7 @@ export async function POST(request: NextRequest) {
 
         // Refresh materialized view for trusted brands
         if (sponsorType === 'business' && brandName) {
-          await supabase.rpc('refresh_trusted_brands')
+          await supabaseClient.rpc('refresh_trusted_brands')
         }
 
         // Send confirmation email (implement later)
