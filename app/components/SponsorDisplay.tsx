@@ -43,10 +43,11 @@ export default function SponsorDisplay({ contentId, showAll = false }: SponsorDi
 
       if (error) throw error
 
-      setSponsors(data || [])
+      const sponsors = (data || []) as Sponsor[]
+      setSponsors(sponsors)
       
       // Calculate total
-      const total = (data || []).reduce((sum, s) => sum + (s.amount || 0), 0)
+      const total = sponsors.reduce((sum, s) => sum + (s.amount || 0), 0)
       setTotalAmount(total)
     } catch (error) {
       console.error('Error fetching sponsors:', error)
