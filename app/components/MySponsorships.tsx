@@ -46,7 +46,7 @@ export default function MySponsorships({ userId }: { userId: string }) {
       if (error) throw error
 
       // Transform data to include community name
-      const transformedData = (data || []).map((s: any) => ({
+      const transformedData: Sponsorship[] = (data || []).map((s: any) => ({
         ...s,
         content: {
           title: s.content?.title || 'Unknown Content',
