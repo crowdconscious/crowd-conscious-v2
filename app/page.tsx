@@ -9,6 +9,7 @@ const CommunityCarousel = dynamic(() => import('./components/landing/CommunityCa
 const ImpactCounters = dynamic(() => import('./components/landing/ImpactCounters'))
 const CompletedNeeds = dynamic(() => import('./components/landing/CompletedNeeds'))
 const SocialProof = dynamic(() => import('./components/landing/SocialProof'))
+const TrustedBrands = dynamic(() => import('../components/TrustedBrands'))
 const Footer = dynamic(() => import('../components/Footer'))
 const CookieConsent = dynamic(() => import('../components/CookieConsent'))
 
@@ -251,6 +252,9 @@ export default async function LandingPage() {
 
       {/* Social Proof & Stats */}
       <SocialProof stats={impactStats} />
+
+      {/* Trusted Brands Section */}
+      <TrustedBrands />
 
       {/* Call to Action */}
       <section className="py-20 bg-gradient-to-r from-teal-600 via-teal-700 to-purple-700">

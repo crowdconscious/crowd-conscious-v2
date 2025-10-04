@@ -1,6 +1,6 @@
 import { supabaseClient } from './supabase-client'
 
-export type StorageBucket = 'community-images' | 'content-media' | 'profile-pictures'
+export type StorageBucket = 'community-images' | 'content-media' | 'profile-pictures' | 'sponsor-logos'
 
 export interface UploadOptions {
   maxSizeMB?: number
@@ -218,4 +218,45 @@ export function getOptimizedImageUrl(
   // In the future, you could add image transformation parameters
   // based on your storage provider's capabilities
   return publicUrl
+}
+
+/**
+ * Upload sponsor logo with specific requirements
+ * - Max 2MB
+ * - Creates thumbnail version
+ * - Returns public URL
+ */
+export async function uploadSponsorLogo(
+  file: File,
+  userId: string
+): Promise<{ success: boolean; url?: string; error?: string }> {
+  try {
+    // Validate file
+    if (!file.type.startsWith('image/')) {
+      return { success: false, error: 'File must be an image' }
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      return { success: false, error: 'Logo must be less than 2MB' }
+    }
+
+    // Compress image to create thumbnail
+    const compressedFile = await compressImage(file, 0.85)
+
+    // Upload to sponsor-logos bucket
+    const path = `${userId}`
+    const url = await uploadImage(compressedFile, 'sponsor-logos', path, {
+      maxSizeMB: 2,
+      allowedTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml'],
+      quality: 0.85
+    })
+
+    return { success: true, url }
+  } catch (error) {
+    console.error('Sponsor logo upload error:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to upload logo'
+    }
+  }
 }

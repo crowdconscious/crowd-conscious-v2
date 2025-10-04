@@ -1,109 +1,93 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { headers } from 'next/headers'
-import { supabase } from '@/lib/supabase'
-import { handleStripeWebhook } from '@/lib/stripe'
+import Stripe from 'stripe'
+import { createClient } from '@supabase/supabase-js'
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2025-08-27.basil'
+})
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 export async function POST(request: NextRequest) {
+  const body = await request.text()
+  const signature = request.headers.get('stripe-signature')!
+
+  let event: Stripe.Event
+
   try {
-    const body = await request.text()
-    const headersList = await headers()
-    const signature = headersList.get('stripe-signature')
-
-    if (!signature) {
-      return NextResponse.json({ error: 'No signature' }, { status: 400 })
-    }
-
-    const webhookResult = await handleStripeWebhook(body, signature)
-
-    if (!webhookResult.success) {
-      return NextResponse.json({ error: 'Webhook verification failed' }, { status: 400 })
-    }
-
-    // Handle payment success
-    if (webhookResult.type === 'payment_succeeded' && webhookResult.data) {
-      const { paymentIntentId, amount, metadata } = webhookResult.data
-      const { sponsorshipId, contentId, communityId } = metadata
-
-      // Update sponsorship status to paid
-      // TODO: Fix type issues with sponsorships table
-      const { error: sponsorshipError } = null as any
-      /* await supabase
-        .from('sponsorships')
-        .update({
-          status: 'paid',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', sponsorshipId)
-        .eq('stripe_payment_intent', paymentIntentId) */
-
-      if (sponsorshipError) {
-        console.error('Error updating sponsorship status:', sponsorshipError)
-        return NextResponse.json({ error: 'Failed to update sponsorship' }, { status: 500 })
-      }
-
-      // Update community content funding
-      const sponsorshipAmount = amount / 100 // Convert cents to dollars
-      // TODO: Fix type issues with increment_funding RPC
-      const { error: contentError } = null as any
-      /* await supabase
-        .rpc('increment_funding', {
-          content_id: contentId,
-          amount: sponsorshipAmount
-        }) */
-
-      if (contentError) {
-        console.error('Error updating content funding:', contentError)
-        // Don't fail the webhook, but log the error
-      }
-
-      // Check if funding goal is reached and update status
-      const { data: content } = await supabase
-        .from('community_content')
-        .select('funding_goal, current_funding')
-        .eq('id', contentId)
-        .single()
-
-      if (content && (content as any).current_funding >= (content as any).funding_goal) {
-        // TODO: Fix type issues with community_content table
-        /* await supabase
-          .from('community_content')
-          .update({ status: 'completed' })
-          .eq('id', contentId) */
-      }
-
-      console.log(`Payment succeeded for sponsorship ${sponsorshipId}`)
-    }
-
-    // Handle payment failure
-    if (webhookResult.type === 'payment_failed' && webhookResult.data) {
-      const { paymentIntentId, metadata } = webhookResult.data
-      const { sponsorshipId } = metadata
-
-      // Update sponsorship status back to approved
-      // TODO: Fix type issues with sponsorships table
-      /* await supabase
-        .from('sponsorships')
-        .update({
-          status: 'approved',
-          stripe_payment_intent: null
-        })
-        .eq('id', sponsorshipId)
-        .eq('stripe_payment_intent', paymentIntentId) */
-
-      console.log(`Payment failed for sponsorship ${sponsorshipId}`)
-    }
-
-    return NextResponse.json({ received: true })
-
-  } catch (error) {
-    console.error('Webhook error:', error)
-    return NextResponse.json({ error: 'Webhook error' }, { status: 500 })
+    event = stripe.webhooks.constructEvent(
+      body,
+      signature,
+      process.env.STRIPE_WEBHOOK_SECRET!
+    )
+  } catch (err: any) {
+    console.error('Webhook signature verification failed:', err.message)
+    return NextResponse.json(
+      { error: `Webhook Error: ${err.message}` },
+      { status: 400 }
+    )
   }
+
+  // Handle the event
+  switch (event.type) {
+    case 'checkout.session.completed':
+      const session = event.data.object as Stripe.Checkout.Session
+
+      // Update sponsorship record
+      const { sponsorshipId, sponsorType, brandName, taxReceipt } = session.metadata || {}
+
+      if (sponsorshipId) {
+        const { error } = await supabase
+          .from('sponsorships')
+          .update({
+            status: 'paid',
+            stripe_session_id: session.id,
+            stripe_payment_intent: session.payment_intent,
+            paid_at: new Date().toISOString()
+          })
+          .eq('id', sponsorshipId)
+
+        if (error) {
+          console.error('Failed to update sponsorship:', error)
+          return NextResponse.json(
+            { error: 'Failed to update sponsorship' },
+            { status: 500 }
+          )
+        }
+
+        // Refresh materialized view for trusted brands
+        if (sponsorType === 'business' && brandName) {
+          await supabase.rpc('refresh_trusted_brands')
+        }
+
+        // Send confirmation email (implement later)
+        // await sendSponsorshipConfirmationEmail(...)
+
+        console.log('✅ Sponsorship updated:', sponsorshipId)
+      }
+      break
+
+    case 'payment_intent.succeeded':
+      console.log('💰 Payment succeeded:', event.data.object.id)
+      break
+
+    case 'payment_intent.payment_failed':
+      console.log('❌ Payment failed:', event.data.object.id)
+      break
+
+    default:
+      console.log(`Unhandled event type: ${event.type}`)
+  }
+
+  return NextResponse.json({ received: true })
 }
 
 // Disable body parsing for webhooks
 export const config = {
   api: {
-    bodyParser: false,
-  },
+    bodyParser: false
+  }
 }
