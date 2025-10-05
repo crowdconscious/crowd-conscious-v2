@@ -17,12 +17,16 @@ ADD COLUMN IF NOT EXISTS brand_website TEXT,
 ADD COLUMN IF NOT EXISTS tax_id TEXT,
 ADD COLUMN IF NOT EXISTS display_name TEXT,
 ADD COLUMN IF NOT EXISTS sponsor_email TEXT,
-ADD COLUMN IF NOT EXISTS sponsor_phone TEXT;
+ADD COLUMN IF NOT EXISTS sponsor_phone TEXT,
+ADD COLUMN IF NOT EXISTS message TEXT,
+ADD COLUMN IF NOT EXISTS anonymous BOOLEAN DEFAULT false;
 
--- Add helpful comment
+-- Add helpful comments
 COMMENT ON COLUMN sponsorships.sponsor_type IS 'Individual or business sponsorship';
 COMMENT ON COLUMN sponsorships.brand_name IS 'Business name if sponsor_type is business';
 COMMENT ON COLUMN sponsorships.display_name IS 'Public display name for sponsor';
+COMMENT ON COLUMN sponsorships.message IS 'Optional message from sponsor to community';
+COMMENT ON COLUMN sponsorships.anonymous IS 'Whether sponsor wants to remain anonymous';
 
 -- Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_sponsorships_brand_name 
