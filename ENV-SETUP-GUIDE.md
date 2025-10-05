@@ -3,11 +3,13 @@
 ## 🚨 CRITICAL: Are You Testing Locally or on Production?
 
 ### If Testing on **crowdconscious.app** (Production):
+
 ✅ Your Vercel env vars are set correctly  
 ✅ Just wait for deployment to complete  
 ✅ Clear your browser cache and try again
 
 ### If Testing on **localhost:3000** (Local Development):
+
 ❌ You need to add Stripe keys to your **local** `.env.local` file  
 ❌ Vercel env vars don't apply to local development
 
@@ -16,12 +18,14 @@
 ## 📝 Setup Local Environment Variables
 
 ### Step 1: Open Your `.env.local` File
+
 ```bash
 cd /Users/franciscoblockstrand/Desktop/crowd-conscious-v2
 nano .env.local
 ```
 
 ### Step 2: Add These Lines
+
 ```bash
 # Stripe Keys (Get from https://dashboard.stripe.com/test/apikeys)
 STRIPE_SECRET_KEY=sk_test_YOUR_KEY_HERE
@@ -41,12 +45,14 @@ RESEND_API_KEY=re_YOUR_KEY_HERE
 ```
 
 ### Step 3: Get Your Stripe Keys
+
 1. Go to: https://dashboard.stripe.com/test/apikeys
 2. Copy **Secret key** (starts with `sk_test_`)
 3. Copy **Publishable key** (starts with `pk_test_`)
 4. For webhook secret, see below
 
 ### Step 4: Restart Your Dev Server
+
 ```bash
 # Stop the current server (Ctrl+C)
 npm run dev
@@ -70,11 +76,13 @@ npm run dev
 ## 🔍 How to Check Which Environment You're On
 
 ### Production (Vercel):
+
 - URL: `https://crowdconscious.app`
 - Uses: Vercel environment variables ✅
 - Your Stripe keys: Already configured ✅
 
 ### Local Development:
+
 - URL: `http://localhost:3000`
 - Uses: `.env.local` file ❌
 - Your Stripe keys: Need to be added manually
@@ -84,12 +92,14 @@ npm run dev
 ## ⚡ Quick Commands
 
 ### Check if .env.local has Stripe keys:
+
 ```bash
 cd /Users/franciscoblockstrand/Desktop/crowd-conscious-v2
 grep STRIPE .env.local
 ```
 
 ### Add Stripe keys quickly:
+
 ```bash
 echo "STRIPE_SECRET_KEY=sk_test_YOUR_KEY" >> .env.local
 echo "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_YOUR_KEY" >> .env.local
@@ -97,6 +107,7 @@ echo "STRIPE_WEBHOOK_SECRET=whsec_YOUR_SECRET" >> .env.local
 ```
 
 ### Restart dev server:
+
 ```bash
 npm run dev
 ```
@@ -106,11 +117,13 @@ npm run dev
 ## 🎯 Recommended Approach
 
 ### For Quick Testing (Recommended):
+
 1. **Test on production**: https://crowdconscious.app
 2. No local setup needed
 3. Your Stripe keys already work there
 
 ### For Local Development:
+
 1. Add Stripe keys to `.env.local`
 2. Restart dev server
 3. Test on `localhost:3000`
@@ -120,18 +133,21 @@ npm run dev
 ## 🐛 Still Not Working?
 
 ### Check Vercel Deployment Status:
+
 ```bash
 # Go to: https://vercel.com/francisco-blockstrands-projects/crowd-conscious-platform
 # Look for: "Ready" status on latest deployment
 ```
 
 ### Check Browser Console:
+
 1. Open browser DevTools (F12)
 2. Go to Console tab
 3. Look for any errors
 4. Share them with me
 
 ### Check Vercel Function Logs:
+
 1. Go to Vercel dashboard
 2. Click on latest deployment
 3. Click "Functions" tab
@@ -143,12 +159,14 @@ npm run dev
 ## 📋 Checklist
 
 **For Production Testing:**
+
 - [ ] Vercel deployment shows "Ready"
 - [ ] All env vars visible in Vercel settings
 - [ ] Testing on https://crowdconscious.app (not localhost)
 - [ ] Browser cache cleared
 
 **For Local Testing:**
+
 - [ ] `.env.local` file exists
 - [ ] Stripe keys added to `.env.local`
 - [ ] Dev server restarted after adding keys
@@ -165,7 +183,8 @@ npm run dev
 
 ---
 
-**Bottom Line**: 
+**Bottom Line**:
+
 - **Production** = Uses Vercel env vars (already set ✅)
 - **Local** = Uses `.env.local` file (needs Stripe keys ❌)
 

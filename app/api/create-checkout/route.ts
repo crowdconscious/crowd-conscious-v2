@@ -18,6 +18,13 @@ function getStripe(): Stripe {
 
 export async function POST(request: NextRequest) {
   try {
+    // Debug logging
+    console.log('🔍 Environment check:', {
+      hasStripeKey: !!process.env.STRIPE_SECRET_KEY,
+      keyPrefix: process.env.STRIPE_SECRET_KEY?.substring(0, 7),
+      nodeEnv: process.env.NODE_ENV
+    })
+
     const {
       sponsorshipId,
       amount,
