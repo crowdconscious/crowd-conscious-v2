@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import MobileNavigation from '@/components/MobileNavigation'
 import HeaderClient from './HeaderClient'
 import Footer from '@/components/Footer'
+import StreakTracker from './StreakTracker'
 
 export default async function AppLayout({
   children,
@@ -17,6 +18,9 @@ export default async function AppLayout({
 
   return (
     <div className="min-h-screen bg-white text-slate-900 transition-colors" style={{backgroundColor: '#ffffff', color: '#090909'}}>
+      {/* Track daily streaks and award XP */}
+      <StreakTracker />
+      
       {/* Enhanced header with notifications and search */}
       <HeaderClient user={user} />
 
