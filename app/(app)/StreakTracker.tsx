@@ -26,6 +26,7 @@ export default function StreakTracker() {
         if (!user) return
         
         // Call the streak update function
+        // @ts-ignore - RPC function not yet in generated types
         const { error } = await supabase.rpc('update_user_streak', { 
           p_user_id: user.id 
         })
