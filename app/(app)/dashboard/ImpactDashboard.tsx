@@ -124,7 +124,7 @@ export default function ImpactDashboard({ userId }: ImpactDashboardProps) {
       
       // Sort by month order
       const monthOrder = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-      fundingByMonth.sort((a, b) => monthOrder.indexOf(a.month) - monthOrder.indexOf(b.month))
+      fundingByMonth.sort((a: any, b: any) => monthOrder.indexOf(a.month) - monthOrder.indexOf(b.month))
 
       // Calculate real community growth by month
       const communityGrowth = communities
@@ -145,7 +145,7 @@ export default function ImpactDashboard({ userId }: ImpactDashboardProps) {
           return acc
         }, [] as Array<{month: string, communities: number, members: number}>)
       
-      communityGrowth.sort((a, b) => monthOrder.indexOf(a.month) - monthOrder.indexOf(b.month))
+      communityGrowth.sort((a: any, b: any) => monthOrder.indexOf(a.month) - monthOrder.indexOf(b.month))
 
       // Get real top communities (assuming name is available)
       const topCommunities = await Promise.all(

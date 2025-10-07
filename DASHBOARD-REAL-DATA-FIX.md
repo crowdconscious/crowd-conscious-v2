@@ -3,12 +3,14 @@
 ## 🚨 Problems Identified
 
 ### Issue 1: Mock Data in Dashboard
+
 - Dashboard was showing hardcoded/random values
 - Not pulling from `user_stats` table
 - Not pulling from `community_members` table
 - Charts showing fake data
 
 ### Issue 2: Communities Joined = 0
+
 - Even though user joined communities, dashboard showed 0
 - Query was returning empty array instead of fetching real data
 
@@ -19,6 +21,7 @@
 ### File 1: `app/(app)/dashboard/page.tsx`
 
 #### Before:
+
 ```typescript
 async function getUserStats(userId: string) {
   return {
@@ -26,46 +29,48 @@ async function getUserStats(userId: string) {
     total_xp: 0,
     level: 1,
     // ...
-  }
+  };
 }
 
 async function getUserCommunities(userId: string) {
-  return [] // Always empty!
+  return []; // Always empty!
 }
 ```
 
 #### After:
+
 ```typescript
 async function getUserStats(userId: string) {
   // Query user_stats table
   const { data } = await supabase
-    .from('user_stats')
-    .select('*')
-    .eq('user_id', userId)
-    .single()
-  
+    .from("user_stats")
+    .select("*")
+    .eq("user_id", userId)
+    .single();
+
   // Auto-create if doesn't exist
   if (error) {
-    await supabase.from('user_stats').insert({ userId })
+    await supabase.from("user_stats").insert({ userId });
   }
-  
-  return data // Real data!
+
+  return data; // Real data!
 }
 
 async function getUserCommunities(userId: string) {
   // Query community_members with JOIN to communities
   const { data } = await supabase
-    .from('community_members')
-    .select('*, communities(*)')
-    .eq('user_id', userId)
-  
-  return data.map(m => m.communities) // Real communities!
+    .from("community_members")
+    .select("*, communities(*)")
+    .eq("user_id", userId);
+
+  return data.map((m) => m.communities); // Real communities!
 }
 ```
 
 ### File 2: `app/(app)/dashboard/ImpactDashboard.tsx`
 
 #### Before (Lines 111-150):
+
 ```typescript
 // Mock data for charts
 const fundingByMonth = [
@@ -84,6 +89,7 @@ personal_impact: {
 ```
 
 #### After:
+
 ```typescript
 // Calculate real funding from database
 const fundingByMonth = content
@@ -114,24 +120,26 @@ personal_impact: {
 ## 📊 What Now Shows Real Data
 
 ### Dashboard Stats:
-| Stat | Before | After |
-|------|--------|-------|
-| Communities Joined | Always 0 | Real count from `community_members` |
-| Content Created | Random | Real from `user_stats.content_created` |
-| Votes Cast | Random | Real from `user_stats.votes_cast` |
-| Events Attended | Random | Real from `user_stats.events_attended` |
-| Total Contribution | Random | Real from `user_stats.total_xp` |
-| Level | Hardcoded 1 | Real from `user_stats.level` |
-| Total XP | Hardcoded 0 | Real from `user_stats.total_xp` |
-| Current Streak | Hardcoded 0 | Real from `user_stats.current_streak` |
+
+| Stat               | Before      | After                                  |
+| ------------------ | ----------- | -------------------------------------- |
+| Communities Joined | Always 0    | Real count from `community_members`    |
+| Content Created    | Random      | Real from `user_stats.content_created` |
+| Votes Cast         | Random      | Real from `user_stats.votes_cast`      |
+| Events Attended    | Random      | Real from `user_stats.events_attended` |
+| Total Contribution | Random      | Real from `user_stats.total_xp`        |
+| Level              | Hardcoded 1 | Real from `user_stats.level`           |
+| Total XP           | Hardcoded 0 | Real from `user_stats.total_xp`        |
+| Current Streak     | Hardcoded 0 | Real from `user_stats.current_streak`  |
 
 ### Charts:
-| Chart | Before | After |
-|-------|--------|-------|
-| Funding Over Time | Fake amounts | Calculated from `community_content.current_funding` |
-| Community Growth | Fake numbers | Calculated from `communities.created_at` |
-| Content Distribution | Real percentages | Real percentages (was already correct) |
-| Top Communities | Fake scores | Real member + content counts |
+
+| Chart                | Before           | After                                               |
+| -------------------- | ---------------- | --------------------------------------------------- |
+| Funding Over Time    | Fake amounts     | Calculated from `community_content.current_funding` |
+| Community Growth     | Fake numbers     | Calculated from `communities.created_at`            |
+| Content Distribution | Real percentages | Real percentages (was already correct)              |
+| Top Communities      | Fake scores      | Real member + content counts                        |
 
 ---
 
@@ -141,7 +149,6 @@ The dashboard is now correctly querying the database, but you'll see zeros becau
 
 1. **`user_stats` table doesn't exist yet** (or is empty)
    - Need to run: `sql-migrations/gamification-and-comments.sql`
-   
 2. **Triggers haven't been created** (no automatic XP tracking)
    - Need to run: `sql-migrations/complete-gamification-triggers.sql`
 
@@ -185,12 +192,12 @@ In Supabase:
 SELECT * FROM user_stats WHERE user_id = 'your-user-id';
 
 -- Check XP transactions
-SELECT * FROM xp_transactions 
-WHERE user_id = 'your-user-id' 
+SELECT * FROM xp_transactions
+WHERE user_id = 'your-user-id'
 ORDER BY created_at DESC;
 
 -- Check communities joined
-SELECT COUNT(*) FROM community_members 
+SELECT COUNT(*) FROM community_members
 WHERE user_id = 'your-user-id';
 ```
 
@@ -199,6 +206,7 @@ WHERE user_id = 'your-user-id';
 ## 📋 Expected Behavior After Migrations
 
 ### Before Migrations:
+
 ```
 Dashboard shows:
 - Communities Joined: 0 (even if you joined)
@@ -211,6 +219,7 @@ Reason: user_stats table empty, no triggers active
 ```
 
 ### After Migrations:
+
 ```
 Dashboard shows:
 - Communities Joined: Real count (queries community_members)
@@ -227,28 +236,35 @@ All data auto-updates from triggers! ✅
 ## 🔍 How to Debug if Data Still Wrong
 
 ### Check 1: User Stats Exist?
+
 ```sql
 SELECT * FROM user_stats WHERE user_id = 'your-user-id';
 ```
+
 - If empty → Trigger not created or not fired
 - If exists → Check values match your actions
 
 ### Check 2: Triggers Installed?
+
 ```sql
-SELECT trigger_name, event_object_table 
+SELECT trigger_name, event_object_table
 FROM information_schema.triggers
 WHERE trigger_name LIKE '%xp%';
 ```
+
 - Should see: `trigger_vote_xp`, `trigger_content_xp`, `trigger_comment_xp`
 
 ### Check 3: Community Memberships Exist?
+
 ```sql
 SELECT * FROM community_members WHERE user_id = 'your-user-id';
 ```
+
 - If empty → You haven't joined any communities yet
 - If exists → Dashboard should show the count
 
 ### Check 4: Browser Cache?
+
 - Hard refresh: Ctrl+Shift+R (Windows) or Cmd+Shift+R (Mac)
 - Or open in incognito window
 
@@ -257,6 +273,7 @@ SELECT * FROM community_members WHERE user_id = 'your-user-id';
 ## 🎉 Summary
 
 **Fixed:**
+
 - ✅ Dashboard queries real `user_stats` table
 - ✅ Dashboard queries real `community_members` table
 - ✅ Charts calculate from real database data
@@ -264,10 +281,12 @@ SELECT * FROM community_members WHERE user_id = 'your-user-id';
 - ✅ No more mock/random values
 
 **Deployed:**
+
 - ✅ Changes pushed to GitHub
 - ✅ Vercel auto-deploying
 
 **To Activate:**
+
 - ⏳ Run 3 SQL migrations in Supabase
 - ⏳ Perform actions to populate data
 - ⏳ Watch dashboard update in real-time!
