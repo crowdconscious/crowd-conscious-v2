@@ -79,7 +79,7 @@ export default function ImpactDashboard({ userId }: ImpactDashboardProps) {
         membersResponse,
         userStatsResponse
       ] = await Promise.all([
-        supabaseClient.from('communities').select('id, created_at, member_count'),
+        supabaseClient.from('communities').select('id, name, created_at, member_count'),
         supabaseClient.from('community_content').select('id, type, funding_goal, current_funding, created_at'),
         supabaseClient.from('community_members').select('id, community_id, created_at'),
         supabaseClient.from('community_members').select('*').eq('user_id', userId)
@@ -147,7 +147,7 @@ export default function ImpactDashboard({ userId }: ImpactDashboardProps) {
       
       communityGrowth.sort((a: any, b: any) => monthOrder.indexOf(a.month) - monthOrder.indexOf(b.month))
 
-      // Get real top communities (assuming name is available)
+      // Get real top communities with actual names
       const topCommunities = await Promise.all(
         communities.slice(0, 5).map(async (community: any) => {
           const { data: commContent } = await supabaseClient
@@ -156,7 +156,7 @@ export default function ImpactDashboard({ userId }: ImpactDashboardProps) {
             .eq('community_id', community.id)
           
           return {
-            name: 'Community ' + community.id?.slice(-4),
+            name: community.name || `Community ${community.id?.slice(-4)}`,
             impact_score: (community.member_count || 0) + (commContent?.length || 0) * 5,
             member_count: community.member_count || 0,
             content_count: commContent?.length || 0
