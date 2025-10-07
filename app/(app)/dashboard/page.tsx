@@ -23,22 +23,41 @@ interface UserStats {
 
 async function getUserStats(userId: string): Promise<UserStats | null> {
   try {
-    // For now, return basic stats structure to avoid TypeScript issues
-    // The real data will be fetched client-side via API
-    return {
-      id: 'temp-id',
-      user_id: userId,
-      total_xp: 0,
-      level: 1,
-      current_streak: 0,
-      longest_streak: 0,
-      last_activity: new Date().toISOString(),
-      votes_cast: 0,
-      content_created: 0,
-      events_attended: 0,
-      comments_posted: 0,
-      achievements_unlocked: []
+    // Fetch real user stats from database
+    const { data, error } = await supabase
+      .from('user_stats')
+      .select('*')
+      .eq('user_id', userId)
+      .single()
+
+    if (error) {
+      console.error('Error fetching user stats:', error)
+      // If no stats exist yet, create default stats
+      const { data: newStats, error: insertError } = await supabase
+        .from('user_stats')
+        .insert({
+          user_id: userId,
+          total_xp: 0,
+          level: 1,
+          current_streak: 0,
+          longest_streak: 0,
+          votes_cast: 0,
+          content_created: 0,
+          events_attended: 0,
+          comments_posted: 0,
+          achievements_unlocked: []
+        })
+        .select()
+        .single()
+
+      if (insertError) {
+        console.error('Error creating user stats:', insertError)
+        return null
+      }
+      return newStats as UserStats
     }
+
+    return data as UserStats
   } catch (error) {
     console.error('Error in getUserStats:', error)
     return null
@@ -47,9 +66,30 @@ async function getUserStats(userId: string): Promise<UserStats | null> {
 
 async function getUserCommunities(userId: string) {
   try {
-    // For now, return empty array to avoid TypeScript issues
-    // Will be populated with real data once user creates/joins communities
-    return []
+    // Fetch communities the user is a member of
+    const { data, error } = await supabase
+      .from('community_members')
+      .select(`
+        *,
+        communities (
+          id,
+          name,
+          slug,
+          description,
+          image_url,
+          member_count,
+          created_at
+        )
+      `)
+      .eq('user_id', userId)
+
+    if (error) {
+      console.error('Error fetching user communities:', error)
+      return []
+    }
+
+    // Extract the community data from the joined result
+    return (data || []).map((membership: any) => membership.communities).filter(Boolean)
   } catch (error) {
     console.error('Error fetching user communities:', error)
     return []

@@ -107,33 +107,69 @@ export default function ImpactDashboard({ userId }: ImpactDashboardProps) {
         percentage: totalContent > 0 ? ((count as number) / totalContent) * 100 : 0
       }))
 
-      // Mock data for charts (in real app, calculate from actual data)
-      const fundingByMonth = [
-        { month: 'Jan', amount: 15420 },
-        { month: 'Feb', amount: 23100 },
-        { month: 'Mar', amount: 18750 },
-        { month: 'Apr', amount: 31200 },
-        { month: 'May', amount: 27600 },
-        { month: 'Jun', amount: 34500 }
-      ]
+      // Calculate real funding by month from database
+      const fundingByMonth = content
+        .filter((item: any) => item.current_funding > 0)
+        .reduce((acc: any, item: any) => {
+          const date = new Date(item.created_at)
+          const monthKey = date.toLocaleString('en-US', { month: 'short' })
+          const existing = acc.find((m: any) => m.month === monthKey)
+          if (existing) {
+            existing.amount += item.current_funding
+          } else {
+            acc.push({ month: monthKey, amount: item.current_funding })
+          }
+          return acc
+        }, [] as Array<{month: string, amount: number}>)
+      
+      // Sort by month order
+      const monthOrder = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+      fundingByMonth.sort((a, b) => monthOrder.indexOf(a.month) - monthOrder.indexOf(b.month))
 
-      const communityGrowth = [
-        { month: 'Jan', communities: 12, members: 284 },
-        { month: 'Feb', communities: 15, members: 367 },
-        { month: 'Mar', communities: 18, members: 445 },
-        { month: 'Apr', communities: 23, members: 592 },
-        { month: 'May', communities: 27, members: 734 },
-        { month: 'Jun', communities: 32, members: 896 }
-      ]
+      // Calculate real community growth by month
+      const communityGrowth = communities
+        .reduce((acc: any, comm: any) => {
+          const date = new Date(comm.created_at)
+          const monthKey = date.toLocaleString('en-US', { month: 'short' })
+          const existing = acc.find((m: any) => m.month === monthKey)
+          if (existing) {
+            existing.communities += 1
+            existing.members += comm.member_count || 0
+          } else {
+            acc.push({ 
+              month: monthKey, 
+              communities: 1, 
+              members: comm.member_count || 0 
+            })
+          }
+          return acc
+        }, [] as Array<{month: string, communities: number, members: number}>)
+      
+      communityGrowth.sort((a, b) => monthOrder.indexOf(a.month) - monthOrder.indexOf(b.month))
 
-      const topCommunities = communities
-        .slice(0, 5)
-        .map((community: any) => ({
-          name: 'Community ' + community.id?.slice(-4),
-          impact_score: Math.floor(Math.random() * 100) + 50,
-          member_count: community.member_count,
-          content_count: Math.floor(Math.random() * 20) + 5
-        }))
+      // Get real top communities (assuming name is available)
+      const topCommunities = await Promise.all(
+        communities.slice(0, 5).map(async (community: any) => {
+          const { data: commContent } = await supabaseClient
+            .from('community_content')
+            .select('id')
+            .eq('community_id', community.id)
+          
+          return {
+            name: 'Community ' + community.id?.slice(-4),
+            impact_score: (community.member_count || 0) + (commContent?.length || 0) * 5,
+            member_count: community.member_count || 0,
+            content_count: commContent?.length || 0
+          }
+        })
+      )
+
+      // Fetch real user stats from user_stats table
+      const { data: userStats } = await supabaseClient
+        .from('user_stats')
+        .select('*')
+        .eq('user_id', userId)
+        .single()
 
       setMetrics({
         total_communities: communities.length,
@@ -141,15 +177,15 @@ export default function ImpactDashboard({ userId }: ImpactDashboardProps) {
         total_funding_raised: totalFunding,
         total_participants: members.length,
         content_by_type: contentTypeData,
-        funding_by_month: fundingByMonth,
-        community_growth: communityGrowth,
+        funding_by_month: fundingByMonth.length > 0 ? fundingByMonth : [{ month: new Date().toLocaleString('en-US', { month: 'short' }), amount: 0 }],
+        community_growth: communityGrowth.length > 0 ? communityGrowth : [{ month: new Date().toLocaleString('en-US', { month: 'short' }), communities: 0, members: 0 }],
         top_communities: topCommunities,
         personal_impact: {
           communities_joined: userCommunities.length,
-          content_created: Math.floor(Math.random() * 10) + 2,
-          votes_cast: Math.floor(Math.random() * 25) + 5,
-          events_attended: Math.floor(Math.random() * 8) + 1,
-          total_contribution: Math.floor(Math.random() * 500) + 100
+          content_created: userStats?.content_created || 0,
+          votes_cast: userStats?.votes_cast || 0,
+          events_attended: userStats?.events_attended || 0,
+          total_contribution: userStats?.total_xp || 0
         }
       })
     } catch (error) {
