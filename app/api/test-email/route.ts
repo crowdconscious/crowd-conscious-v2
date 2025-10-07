@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { sendEmail, emailTemplates, sendWelcomeEmail, sendSponsorshipApprovalEmail } from '@/lib/email-simple'
+import { sendEmail, emailTemplates, sendWelcomeEmail, sendSponsorshipApprovalEmail } from '@/lib/resend'
 
 // Test email endpoint
 export async function POST(request: NextRequest) {

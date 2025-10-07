@@ -24,7 +24,7 @@ export async function sendEmail(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Crowd Conscious <noreply@your-domain.com>', // Update with your domain
+        from: 'Crowd Conscious <comunidad@crowdconscious.app>',
         to: [to],
         subject: template.subject,
         html: template.html,

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth-server'
 import { supabase } from '@/lib/supabase'
-import { sendSponsorshipApprovalEmail } from '@/lib/email-simple'
+import { sendSponsorshipApprovalEmail } from '@/lib/resend'
 
 export async function POST(request: NextRequest) {
   try {

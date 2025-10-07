@@ -3,6 +3,7 @@
 ## Problem
 
 Emails are showing "domain not confirmed" error in Resend, even though:
+
 - ✅ Resend API key is configured
 - ✅ Domain `crowdconscious.app` is confirmed in Resend dashboard
 
@@ -75,21 +76,25 @@ https://dnschecker.org/
 ### Where to Add DNS Records:
 
 **GoDaddy**:
+
 1. Go to Domain Settings → DNS Management
 2. Add Custom Records (TXT, MX)
 3. Wait 1-24 hours for propagation
 
 **Cloudflare**:
+
 1. Go to DNS → Records
 2. Add records (TXT, MX)
 3. Wait 5-60 minutes for propagation
 
 **Namecheap**:
+
 1. Domain List → Manage → Advanced DNS
 2. Add records
 3. Wait 30 minutes
 
 **Vercel Domains**:
+
 1. Domain Settings → DNS Records
 2. Add records
 3. Instant (but verify in Resend)
@@ -103,7 +108,7 @@ https://dnschecker.org/
 **File**: `lib/resend.ts` (Line 9)
 
 ```typescript
-const FROM_EMAIL = 'Crowd Conscious <comunidad@crowdconscious.app>'
+const FROM_EMAIL = "Crowd Conscious <comunidad@crowdconscious.app>";
 ```
 
 This is correct! ✅
@@ -123,7 +128,7 @@ While waiting for DNS verification, use Resend's onboarding email:
 
 ```typescript
 // TEMPORARY FIX - Use Resend's verified email
-const FROM_EMAIL = 'Crowd Conscious <onboarding@resend.dev>'
+const FROM_EMAIL = "Crowd Conscious <onboarding@resend.dev>";
 ```
 
 **Note**: This only works in development! For production, you MUST verify your domain.
@@ -148,6 +153,7 @@ NEXT_PUBLIC_APP_URL=https://crowdconscious.app
 ```
 
 Then restart your dev server:
+
 ```bash
 npm run dev
 ```
@@ -161,40 +167,43 @@ npm run dev
 Create `app/api/test-email/route.ts`:
 
 ```typescript
-import { NextResponse } from 'next/server'
-import { resend, emailTemplates } from '@/lib/resend'
+import { NextResponse } from "next/server";
+import { resend, emailTemplates } from "@/lib/resend";
 
 export async function GET() {
   try {
     if (!resend) {
-      return NextResponse.json({ 
-        error: 'Resend not configured - check RESEND_API_KEY' 
-      }, { status: 500 })
+      return NextResponse.json(
+        {
+          error: "Resend not configured - check RESEND_API_KEY",
+        },
+        { status: 500 }
+      );
     }
 
     // Send test email
     const { data, error } = await resend.emails.send({
-      from: 'Crowd Conscious <comunidad@crowdconscious.app>',
-      to: ['YOUR_EMAIL_HERE'], // ⚠️ Replace with your email
-      subject: 'Test Email from Crowd Conscious',
+      from: "Crowd Conscious <comunidad@crowdconscious.app>",
+      to: ["YOUR_EMAIL_HERE"], // ⚠️ Replace with your email
+      subject: "Test Email from Crowd Conscious",
       html: `
         <h1>Test Email</h1>
         <p>If you received this, your email system is working!</p>
         <p>Sent from: comunidad@crowdconscious.app</p>
-      `
-    })
+      `,
+    });
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Email sent successfully!',
-      emailId: data?.id 
-    })
+    return NextResponse.json({
+      success: true,
+      message: "Email sent successfully!",
+      emailId: data?.id,
+    });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 ```
@@ -202,6 +211,7 @@ export async function GET() {
 **Test**: Visit `https://crowdconscious.app/api/test-email`
 
 **Expected Response**:
+
 ```json
 {
   "success": true,
@@ -211,11 +221,13 @@ export async function GET() {
 ```
 
 **If Error**:
+
 ```json
 {
   "error": "Domain not verified"
 }
 ```
+
 → Follow DNS setup steps above
 
 ---
@@ -237,6 +249,7 @@ curl -X POST 'https://api.resend.com/emails' \
 ```
 
 **Expected Response**:
+
 ```json
 {
   "id": "abc123...",
@@ -246,11 +259,13 @@ curl -X POST 'https://api.resend.com/emails' \
 ```
 
 **If Error**:
+
 ```json
 {
   "message": "Domain not verified"
 }
 ```
+
 → DNS not configured correctly
 
 ---
@@ -262,6 +277,7 @@ curl -X POST 'https://api.resend.com/emails' \
 **Cause**: DNS records not set up or still propagating
 
 **Solution**:
+
 1. Check DNS records in your registrar
 2. Copy exact values from Resend dashboard
 3. Wait 24-48 hours for DNS propagation
@@ -272,6 +288,7 @@ curl -X POST 'https://api.resend.com/emails' \
 **Cause**: Environment variable missing
 
 **Solution**:
+
 1. Add to Vercel: Settings → Environment Variables
 2. Add to `.env.local` for local dev
 3. Redeploy on Vercel
@@ -281,6 +298,7 @@ curl -X POST 'https://api.resend.com/emails' \
 **Cause**: Using unverified email address
 
 **Solution**:
+
 - Only use `comunidad@crowdconscious.app` after domain is verified
 - Or use `onboarding@resend.dev` for testing
 
@@ -289,6 +307,7 @@ curl -X POST 'https://api.resend.com/emails' \
 **Cause**: Missing SPF/DKIM records
 
 **Solution**:
+
 - Add all DNS records from Resend
 - Especially the TXT records for SPF and DKIM
 - Wait for DNS propagation
@@ -300,6 +319,7 @@ curl -X POST 'https://api.resend.com/emails' \
 All email references in the codebase now use `comunidad@crowdconscious.app`:
 
 ### Files Updated:
+
 - ✅ `lib/resend.ts` - FROM_EMAIL (already correct)
 - ✅ `app/sponsorship/success/page.tsx` - Support link
 - ✅ `app/sponsorship/cancelled/page.tsx` - Support link
@@ -326,6 +346,7 @@ All email references in the codebase now use `comunidad@crowdconscious.app`:
 - [ ] Test email sent successfully
 
 **After all checked**:
+
 - Wait 10-30 minutes for final propagation
 - Test with `/api/test-email` route
 - Check Resend logs for delivery status
@@ -438,24 +459,27 @@ Value: v=DMARC1; p=none; rua=mailto:comunidad@crowdconscious.app
 ## Summary
 
 **Current State**:
+
 - ✅ Code configured correctly (`comunidad@crowdconscious.app`)
 - ✅ All email references updated
 - ⏳ Waiting for DNS verification in Resend
 
 **Action Required**:
+
 1. Add DNS records to domain registrar (from Resend dashboard)
 2. Wait 1-24 hours for verification
 3. Test with `/api/test-email` route
 4. Monitor Resend logs for delivery
 
 **Temporary Workaround** (while waiting):
+
 - Use `onboarding@resend.dev` in `lib/resend.ts`
 - This works immediately but only in dev/testing
 
 **Production Ready** (after DNS verified):
+
 - All emails will send from `comunidad@crowdconscious.app`
 - Professional, branded email address
 - Full delivery tracking in Resend dashboard
 
 **The code is ready! Just need DNS records to be verified.** 📧✅
-
