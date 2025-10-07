@@ -21,7 +21,7 @@ interface UserStats {
   achievements_unlocked: string[]
 }
 
-async function getUserStats(userId: string): Promise<UserStats | null> {
+async function getUserStats(userId: string): Promise<UserStats> {
   try {
     // Fetch real user stats from database
     const { data, error } = await supabase
@@ -31,36 +31,68 @@ async function getUserStats(userId: string): Promise<UserStats | null> {
       .single()
 
     if (error) {
-      console.error('Error fetching user stats:', error)
-      // If no stats exist yet, create default stats
-      const { data: newStats, error: insertError } = await supabase
-        .from('user_stats')
-        .insert({
-          user_id: userId,
-          total_xp: 0,
-          level: 1,
-          current_streak: 0,
-          longest_streak: 0,
-          votes_cast: 0,
-          content_created: 0,
-          events_attended: 0,
-          comments_posted: 0,
-          achievements_unlocked: []
-        })
-        .select()
-        .single()
+      console.log('⚠️ user_stats table not accessible:', error.message)
+      
+      // Try to create stats if table exists but record doesn't
+      if (error.code === 'PGRST116') { // Record not found
+        const { data: newStats, error: insertError } = await supabase
+          .from('user_stats')
+          .insert({
+            user_id: userId,
+            total_xp: 0,
+            level: 1,
+            current_streak: 0,
+            longest_streak: 0,
+            votes_cast: 0,
+            content_created: 0,
+            events_attended: 0,
+            comments_posted: 0,
+            achievements_unlocked: []
+          })
+          .select()
+          .single()
 
-      if (insertError) {
-        console.error('Error creating user stats:', insertError)
-        return null
+        if (!insertError && newStats) {
+          return newStats as UserStats
+        }
       }
-      return newStats as UserStats
+      
+      // If table doesn't exist or insert failed, return default stats
+      console.log('📊 Returning default stats (run SQL migrations to enable gamification)')
+      return {
+        id: 'temp-' + userId,
+        user_id: userId,
+        total_xp: 0,
+        level: 1,
+        current_streak: 0,
+        longest_streak: 0,
+        last_activity: new Date().toISOString(),
+        votes_cast: 0,
+        content_created: 0,
+        events_attended: 0,
+        comments_posted: 0,
+        achievements_unlocked: []
+      }
     }
 
     return data as UserStats
   } catch (error) {
-    console.error('Error in getUserStats:', error)
-    return null
+    console.error('❌ Error in getUserStats:', error)
+    // Always return default stats instead of null
+    return {
+      id: 'temp-' + userId,
+      user_id: userId,
+      total_xp: 0,
+      level: 1,
+      current_streak: 0,
+      longest_streak: 0,
+      last_activity: new Date().toISOString(),
+      votes_cast: 0,
+      content_created: 0,
+      events_attended: 0,
+      comments_posted: 0,
+      achievements_unlocked: []
+    }
   }
 }
 
