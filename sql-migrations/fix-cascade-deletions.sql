@@ -219,6 +219,7 @@ END $$;
 DO $$ 
 BEGIN
   IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'notifications') THEN
+    -- Handle user_id foreign key
     ALTER TABLE notifications 
     DROP CONSTRAINT IF EXISTS notifications_user_id_fkey;
 
@@ -228,15 +229,21 @@ BEGIN
     REFERENCES profiles(id) 
     ON DELETE CASCADE;
 
-    -- Community ID might be nullable
-    ALTER TABLE notifications 
-    DROP CONSTRAINT IF EXISTS notifications_community_id_fkey;
+    -- Handle community_id foreign key ONLY if column exists
+    IF EXISTS (
+      SELECT FROM information_schema.columns 
+      WHERE table_name = 'notifications' 
+      AND column_name = 'community_id'
+    ) THEN
+      ALTER TABLE notifications 
+      DROP CONSTRAINT IF EXISTS notifications_community_id_fkey;
 
-    ALTER TABLE notifications
-    ADD CONSTRAINT notifications_community_id_fkey 
-    FOREIGN KEY (community_id) 
-    REFERENCES communities(id) 
-    ON DELETE CASCADE;
+      ALTER TABLE notifications
+      ADD CONSTRAINT notifications_community_id_fkey 
+      FOREIGN KEY (community_id) 
+      REFERENCES communities(id) 
+      ON DELETE CASCADE;
+    END IF;
   END IF;
 END $$;
 
