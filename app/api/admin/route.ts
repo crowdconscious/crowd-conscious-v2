@@ -52,27 +52,36 @@ export async function DELETE(request: NextRequest) {
     if (type === 'community') {
       // Check admin permissions
       const isAdmin = await checkAdminPermission(user)
+      console.log('🔍 Delete community - Admin check:', { 
+        userId: (user as any).id, 
+        userType: (user as any).user_type,
+        isAdmin 
+      })
+      
       if (!isAdmin) {
         return NextResponse.json(
-          { error: 'Admin permissions required' },
+          { error: 'Admin permissions required. Your user_type must be "admin".' },
           { status: 403 }
         )
       }
 
       // Delete community and all related data
-      const { error: deleteError } = await supabase
+      console.log('🗑️ Attempting to delete community:', id)
+      const { error: deleteError, data } = await supabase
         .from('communities')
         .delete()
         .eq('id', id)
+        .select()
 
       if (deleteError) {
-        console.error('Error deleting community:', deleteError)
+        console.error('❌ Error deleting community:', deleteError)
         return NextResponse.json(
-          { error: 'Failed to delete community' },
+          { error: `Failed to delete community: ${deleteError.message}` },
           { status: 500 }
         )
       }
 
+      console.log('✅ Community deleted successfully:', data)
       return NextResponse.json({ 
         success: true, 
         message: 'Community deleted successfully' 
@@ -96,6 +105,15 @@ export async function DELETE(request: NextRequest) {
       // Check if user is admin or community admin
       const isAdmin = await checkAdminPermission(user)
       const isCommunityAdmin = await checkCommunityAdminPermission(content.community_id, (user as any).id)
+      
+      console.log('🔍 Delete content - Permission check:', { 
+        userId: (user as any).id,
+        userType: (user as any).user_type,
+        contentId: id,
+        communityId: content.community_id,
+        isAdmin,
+        isCommunityAdmin
+      })
 
       if (!isAdmin && !isCommunityAdmin) {
         return NextResponse.json(
@@ -105,19 +123,22 @@ export async function DELETE(request: NextRequest) {
       }
 
       // Delete content
-      const { error: deleteError } = await supabase
+      console.log('🗑️ Attempting to delete content:', id)
+      const { error: deleteError, data } = await supabase
         .from('community_content')
         .delete()
         .eq('id', id)
+        .select()
 
       if (deleteError) {
-        console.error('Error deleting content:', deleteError)
+        console.error('❌ Error deleting content:', deleteError)
         return NextResponse.json(
-          { error: 'Failed to delete content' },
+          { error: `Failed to delete content: ${deleteError.message}` },
           { status: 500 }
         )
       }
 
+      console.log('✅ Content deleted successfully:', data)
       return NextResponse.json({ 
         success: true, 
         message: 'Content deleted successfully' 
