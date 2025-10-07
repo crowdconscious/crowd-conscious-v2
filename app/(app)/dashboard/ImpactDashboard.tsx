@@ -171,6 +171,9 @@ export default function ImpactDashboard({ userId }: ImpactDashboardProps) {
         .eq('user_id', userId)
         .single()
 
+      // Cast to any to avoid TypeScript errors before SQL migrations run
+      const stats = userStats as any
+
       setMetrics({
         total_communities: communities.length,
         total_content: content.length,
@@ -182,10 +185,10 @@ export default function ImpactDashboard({ userId }: ImpactDashboardProps) {
         top_communities: topCommunities,
         personal_impact: {
           communities_joined: userCommunities.length,
-          content_created: userStats?.content_created || 0,
-          votes_cast: userStats?.votes_cast || 0,
-          events_attended: userStats?.events_attended || 0,
-          total_contribution: userStats?.total_xp || 0
+          content_created: stats?.content_created || 0,
+          votes_cast: stats?.votes_cast || 0,
+          events_attended: stats?.events_attended || 0,
+          total_contribution: stats?.total_xp || 0
         }
       })
     } catch (error) {
