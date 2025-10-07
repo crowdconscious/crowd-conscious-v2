@@ -33,7 +33,14 @@ export default function SignUpPage() {
       })
 
       if (error) {
-        setMessage(error.message)
+        // Better error messages for common issues
+        if (error.message.includes('already registered')) {
+          setMessage('This email is already registered. Please sign in instead.')
+        } else if (error.message.includes('duplicate')) {
+          setMessage('An account with this email already exists. Please sign in.')
+        } else {
+          setMessage(error.message)
+        }
       } else if (data.user) {
         // Try to create profile manually if trigger didn't work
         try {
@@ -48,16 +55,45 @@ export default function SignUpPage() {
           
           if (profileError) {
             console.log('Profile creation error (might be expected if trigger worked):', profileError)
+            // If it's a duplicate error, it's actually OK - the trigger already created it
+            if (!profileError.message?.includes('duplicate')) {
+              setMessage('Account created but profile setup incomplete. Please contact support.')
+              return
+            }
           }
-        } catch (profileErr) {
-          console.log('Profile creation attempt failed (might be expected):', profileErr)
+        } catch (profileErr: any) {
+          console.log('Profile creation attempt failed:', profileErr)
+          // Check if it's a duplicate error - that's actually fine
+          if (!profileErr?.message?.includes('duplicate')) {
+            setMessage('Account created but profile setup incomplete. Please contact support at comunidad@crowdconscious.app')
+            return
+          }
         }
         
-        setMessage('Check your email for the confirmation link!')
+        setMessage('✅ Account created! Check your email for the confirmation link.')
+        
+        // Try to send welcome email
+        try {
+          await fetch('/api/emails/welcome', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: data.user.email,
+              name: fullName
+            })
+          })
+        } catch (emailErr) {
+          console.log('Welcome email failed:', emailErr)
+          // Don't show error to user - account creation succeeded
+        }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Signup error:', error)
-      setMessage('Database error saving new user')
+      if (error?.message?.includes('duplicate') || error?.message?.includes('already exists')) {
+        setMessage('This email is already registered. Please sign in or use a different email.')
+      } else {
+        setMessage('Error creating account. Please try again or contact support.')
+      }
     } finally {
       setLoading(false)
     }
