@@ -74,7 +74,7 @@ export default function SponsorshipCancelledPage() {
         <div className="mt-6 text-center text-sm text-slate-600">
           <p>
             Need help?{' '}
-            <a href="mailto:support@crowdconscious.app" className="text-teal-600 hover:underline">
+            <a href="mailto:comunidad@crowdconscious.app" className="text-teal-600 hover:underline">
               Contact Support
             </a>
           </p>

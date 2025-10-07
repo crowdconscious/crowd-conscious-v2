@@ -150,12 +150,12 @@ export default function Footer() {
             <h3 className="font-semibold text-white mb-4">{content[language].support}</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <a href="mailto:help@crowdconscious.mx" className="text-slate-300 hover:text-teal-400 transition-colors">
+                <a href="mailto:comunidad@crowdconscious.app" className="text-slate-300 hover:text-teal-400 transition-colors">
                   {content[language].help}
                 </a>
               </li>
               <li>
-                <a href="mailto:contact@crowdconscious.mx" className="text-slate-300 hover:text-teal-400 transition-colors">
+                <a href="mailto:comunidad@crowdconscious.app" className="text-slate-300 hover:text-teal-400 transition-colors">
                   {content[language].contact}
                 </a>
               </li>

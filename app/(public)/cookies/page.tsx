@@ -50,7 +50,7 @@ export default function CookiesPage() {
         },
         {
           title: "10. Contacto",
-          content: "Para preguntas sobre cookies o para ejercer sus derechos, contáctenos en: cookies@crowdconscious.mx"
+          content: "Para preguntas sobre cookies o para ejercer sus derechos, contáctenos en: comunidad@crowdconscious.app"
         }
       ]
     },
@@ -96,7 +96,7 @@ export default function CookiesPage() {
         },
         {
           title: "10. Contact",
-          content: "For questions about cookies or to exercise your rights, contact us at: cookies@crowdconscious.mx"
+          content: "For questions about cookies or to exercise your rights, contact us at: comunidad@crowdconscious.app"
         }
       ]
     }

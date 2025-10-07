@@ -196,8 +196,8 @@ function SponsorshipSuccessContent() {
         <div className="mt-6 text-center text-sm text-slate-600">
           <p>
             Questions? Contact us at{' '}
-            <a href="mailto:support@crowdconscious.app" className="text-teal-600 hover:underline">
-              support@crowdconscious.app
+            <a href="mailto:comunidad@crowdconscious.app" className="text-teal-600 hover:underline">
+              comunidad@crowdconscious.app
             </a>
           </p>
         </div>

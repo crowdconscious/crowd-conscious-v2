@@ -34,7 +34,7 @@ export default function PrivacyPage() {
         },
         {
           title: "6. Derechos ARCO",
-          content: "Usted tiene derecho a: (a) Acceso: conocer qué datos tenemos sobre usted, (b) Rectificación: corregir datos inexactos, (c) Cancelación: solicitar eliminación de datos, (d) Oposición: oponerse al tratamiento. Para ejercer estos derechos, contáctenos en: privacy@crowdconscious.mx"
+          content: "Usted tiene derecho a: (a) Acceso: conocer qué datos tenemos sobre usted, (b) Rectificación: corregir datos inexactos, (c) Cancelación: solicitar eliminación de datos, (d) Oposición: oponerse al tratamiento. Para ejercer estos derechos, contáctenos en: comunidad@crowdconscious.app"
         },
         {
           title: "7. Seguridad de Datos",
@@ -54,7 +54,7 @@ export default function PrivacyPage() {
         },
         {
           title: "11. Contacto",
-          content: "Para preguntas sobre este aviso de privacidad o ejercer sus derechos ARCO, contáctenos en: privacy@crowdconscious.mx"
+          content: "Para preguntas sobre este aviso de privacidad o ejercer sus derechos ARCO, contáctenos en: comunidad@crowdconscious.app"
         }
       ]
     },
@@ -84,7 +84,7 @@ export default function PrivacyPage() {
         },
         {
           title: "6. ARCO Rights",
-          content: "You have the right to: (a) Access: know what data we have about you, (b) Rectification: correct inaccurate data, (c) Cancellation: request data deletion, (d) Opposition: oppose data processing. To exercise these rights, contact us at: privacy@crowdconscious.mx"
+          content: "You have the right to: (a) Access: know what data we have about you, (b) Rectification: correct inaccurate data, (c) Cancellation: request data deletion, (d) Opposition: oppose data processing. To exercise these rights, contact us at: comunidad@crowdconscious.app"
         },
         {
           title: "7. Data Security",
@@ -104,7 +104,7 @@ export default function PrivacyPage() {
         },
         {
           title: "11. Contact",
-          content: "For questions about this privacy notice or to exercise your ARCO rights, contact us at: privacy@crowdconscious.mx"
+          content: "For questions about this privacy notice or to exercise your ARCO rights, contact us at: comunidad@crowdconscious.app"
         }
       ]
     }

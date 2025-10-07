@@ -58,7 +58,7 @@ export default function TermsPage() {
         },
         {
           title: "12. Contacto",
-          content: "Para preguntas sobre estos términos, contáctanos en: legal@crowdconscious.mx"
+          content: "Para preguntas sobre estos términos, contáctanos en: comunidad@crowdconscious.app"
         }
       ]
     },
@@ -112,7 +112,7 @@ export default function TermsPage() {
         },
         {
           title: "12. Contact",
-          content: "For questions about these terms, contact us at: legal@crowdconscious.mx"
+          content: "For questions about these terms, contact us at: comunidad@crowdconscious.app"
         }
       ]
     }
