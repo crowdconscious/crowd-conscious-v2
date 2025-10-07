@@ -17,12 +17,13 @@ export async function POST(request: NextRequest) {
 
     switch (type) {
       case 'welcome':
-        const welcomeSuccess = await sendWelcomeEmail(email, name || 'Test User', 'user')
+        const welcomeSuccess = await sendWelcomeEmail(email, name || 'Test User')
         result = { success: welcomeSuccess }
         break
 
       case 'welcome-brand':
-        const brandSuccess = await sendWelcomeEmail(email, name || 'Test Company', 'brand')
+        // Brand welcome removed - redirect to regular welcome
+        const brandSuccess = await sendWelcomeEmail(email, name || 'Test Company')
         result = { success: brandSuccess }
         break
 
