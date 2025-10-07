@@ -75,31 +75,6 @@ export const emailTemplates = {
     `
   }),
 
-  welcomeBrand: (companyName: string): EmailTemplate => ({
-    subject: 'Welcome to Crowd Conscious - Brand Partnership! 🏢',
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <div style="background: linear-gradient(135deg, #3b82f6, #8b5cf6); padding: 40px 20px; text-align: center; border-radius: 10px 10px 0 0;">
-          <h1 style="color: white; margin: 0; font-size: 28px;">Welcome ${companyName}! 🏢</h1>
-        </div>
-        <div style="padding: 30px 20px; background: #f8fafc; border-radius: 0 0 10px 10px;">
-          <p style="color: #475569; line-height: 1.6;">
-            Thank you for joining Crowd Conscious as a brand partner. You're now ready to discover meaningful community needs to sponsor and create measurable social impact.
-          </p>
-          <h3 style="color: #1e293b;">Brand Features:</h3>
-          <ul style="color: #475569; line-height: 1.8;">
-            <li>🎯 Discover curated sponsorship opportunities</li>
-            <li>📊 Track real impact metrics</li>
-            <li>🤝 Build authentic community relationships</li>
-            <li>⭐ Gain verified brand recognition</li>
-          </ul>
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${APP_URL}/brand/discover" style="background: #3b82f6; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Discover Opportunities</a>
-          </div>
-        </div>
-      </div>
-    `
-  }),
 
   sponsorshipApproved: (brandName: string, needTitle: string, amount: number, communityName: string, paymentUrl: string): EmailTemplate => ({
     subject: `Your sponsorship application has been approved! 🎉`,
@@ -165,16 +140,12 @@ export const emailTemplates = {
   })
 }
 
-// Send welcome email based on user type
+// Send welcome email
 export async function sendWelcomeEmail(
   email: string, 
-  name: string, 
-  userType: 'user' | 'brand' = 'user'
+  name: string
 ): Promise<boolean> {
-  const template = userType === 'brand' 
-    ? emailTemplates.welcomeBrand(name)
-    : emailTemplates.welcomeUser(name)
-  
+  const template = emailTemplates.welcomeUser(name)
   const result = await sendEmail(email, template)
   return result.success
 }

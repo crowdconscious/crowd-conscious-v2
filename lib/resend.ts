@@ -39,27 +39,39 @@ export const emailTemplates = {
     `
   }),
 
-  welcomeBrand: (companyName: string) => ({
-    subject: 'Welcome to Crowd Conscious - Brand Partnership! 🏢',
+  eventRegistration: (userName: string, eventTitle: string, eventDate: string, eventLocation: string, communityName: string, eventUrl: string) => ({
+    subject: `You're registered for ${eventTitle}! 📅`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <div style="background: linear-gradient(135deg, #3b82f6, #8b5cf6); padding: 40px 20px; text-align: center; border-radius: 10px 10px 0 0;">
-          <h1 style="color: white; margin: 0; font-size: 28px;">Welcome ${companyName}! 🏢</h1>
+        <div style="background: linear-gradient(135deg, #f59e0b, #14b8a6); padding: 40px 20px; text-align: center; border-radius: 10px 10px 0 0;">
+          <h1 style="color: white; margin: 0; font-size: 28px;">You're All Set! 🎉</h1>
         </div>
         <div style="padding: 30px 20px; background: #f8fafc; border-radius: 0 0 10px 10px;">
+          <p style="color: #475569; line-height: 1.6;">Hi ${userName}!</p>
           <p style="color: #475569; line-height: 1.6;">
-            Thank you for joining Crowd Conscious as a brand partner. You're now ready to discover meaningful community needs to sponsor and create measurable social impact.
+            Great news! You're registered for <strong>${eventTitle}</strong> hosted by ${communityName}.
           </p>
-          <h3 style="color: #1e293b;">Brand Features:</h3>
-          <ul style="color: #475569; line-height: 1.8;">
-            <li>🎯 Discover curated sponsorship opportunities</li>
-            <li>📊 Track real impact metrics</li>
-            <li>🤝 Build authentic community relationships</li>
-            <li>⭐ Gain verified brand recognition</li>
-          </ul>
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${APP_URL}/brand/discover" style="background: #3b82f6; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Discover Opportunities</a>
+          <div style="background: white; padding: 25px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #f59e0b;">
+            <h3 style="margin-top: 0; color: #1e293b;">📅 Event Details:</h3>
+            <p style="margin: 10px 0; color: #475569;"><strong>Event:</strong> ${eventTitle}</p>
+            <p style="margin: 10px 0; color: #475569;"><strong>Date:</strong> ${eventDate}</p>
+            <p style="margin: 10px 0; color: #475569;"><strong>Location:</strong> ${eventLocation}</p>
+            <p style="margin: 10px 0; color: #475569;"><strong>Community:</strong> ${communityName}</p>
           </div>
+          <p style="color: #475569; line-height: 1.6;">
+            We're excited to see you there! This event is a great opportunity to connect with your community and create real impact together.
+          </p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${eventUrl}" style="background: #f59e0b; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);">View Event Details</a>
+          </div>
+          <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <p style="margin: 0; color: #92400e; font-size: 14px;">
+              <strong>💡 Tip:</strong> Add this event to your calendar and invite friends to join you!
+            </p>
+          </div>
+          <p style="color: #6b7280; font-size: 14px; text-align: center; margin-top: 20px;">
+            Questions? Contact us at <a href="mailto:comunidad@crowdconscious.app" style="color: #14b8a6;">comunidad@crowdconscious.app</a>
+          </p>
         </div>
       </div>
     `
@@ -99,38 +111,103 @@ export const emailTemplates = {
   }),
 
   monthlyImpactReport: (userName: string, stats: any) => ({
-    subject: `Your Monthly Impact Report 📊`,
+    subject: `Your Monthly Impact Report - ${stats.month || 'This Month'} 📊`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: linear-gradient(135deg, #8b5cf6, #14b8a6); padding: 40px 20px; text-align: center; border-radius: 10px 10px 0 0;">
           <h1 style="color: white; margin: 0; font-size: 28px;">Your Monthly Impact 📊</h1>
+          <p style="color: #e0e7ff; margin: 10px 0 0 0;">${stats.month || 'This Month'}</p>
         </div>
         <div style="padding: 30px 20px; background: #f8fafc; border-radius: 0 0 10px 10px;">
-          <p style="color: #475569; line-height: 1.6;">Hi ${userName}!</p>
+          <p style="color: #475569; line-height: 1.6;">Hi ${userName}! 👋</p>
           <p style="color: #475569; line-height: 1.6;">
-            Here's a summary of your impact this month through the Crowd Conscious platform.
+            Here's your monthly impact summary. Together, we're creating real change in our communities!
           </p>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 25px 0;">
-            <div style="background: white; padding: 20px; border-radius: 8px; text-align: center;">
-              <div style="font-size: 24px; font-weight: bold; color: #3b82f6;">${stats.communitiesJoined || 0}</div>
-              <div style="color: #6b7280; font-size: 14px;">Communities Joined</div>
-            </div>
-            <div style="background: white; padding: 20px; border-radius: 8px; text-align: center;">
-              <div style="font-size: 24px; font-weight: bold; color: #10b981;">${stats.contentCreated || 0}</div>
-              <div style="color: #6b7280; font-size: 14px;">Needs Created</div>
-            </div>
-            <div style="background: white; padding: 20px; border-radius: 8px; text-align: center;">
-              <div style="font-size: 24px; font-weight: bold; color: #f59e0b;">${stats.votesCount || 0}</div>
-              <div style="color: #6b7280; font-size: 14px;">Votes Cast</div>
-            </div>
-            <div style="background: white; padding: 20px; border-radius: 8px; text-align: center;">
-              <div style="font-size: 24px; font-weight: bold; color: #8b5cf6;">$${stats.impactContributed || 0}</div>
-              <div style="color: #6b7280; font-size: 14px;">Impact Value</div>
+          
+          <!-- Gamification Stats -->
+          <div style="background: linear-gradient(135deg, #6366f1, #8b5cf6); padding: 20px; border-radius: 8px; margin: 25px 0; text-align: center;">
+            <div style="color: white; font-size: 18px; margin-bottom: 10px;">🎮 Your Level & XP</div>
+            <div style="display: flex; justify-content: center; gap: 30px;">
+              <div>
+                <div style="font-size: 32px; font-weight: bold; color: white;">${stats.level || 1}</div>
+                <div style="color: #e0e7ff; font-size: 14px;">Level</div>
+              </div>
+              <div>
+                <div style="font-size: 32px; font-weight: bold; color: white;">${stats.totalXP || 0}</div>
+                <div style="color: #e0e7ff; font-size: 14px;">Total XP</div>
+              </div>
+              <div>
+                <div style="font-size: 32px; font-weight: bold; color: white;">${stats.currentStreak || 0}</div>
+                <div style="color: #e0e7ff; font-size: 14px;">Day Streak 🔥</div>
+              </div>
             </div>
           </div>
+
+          <!-- Activity Stats -->
+          <h3 style="color: #1e293b; margin-top: 25px;">Your Activity This Month:</h3>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0;">
+            <div style="background: white; padding: 20px; border-radius: 8px; text-align: center; border: 2px solid #e2e8f0;">
+              <div style="font-size: 28px; font-weight: bold; color: #3b82f6;">${stats.communitiesJoined || 0}</div>
+              <div style="color: #6b7280; font-size: 14px; margin-top: 5px;">Communities Joined</div>
+            </div>
+            <div style="background: white; padding: 20px; border-radius: 8px; text-align: center; border: 2px solid #e2e8f0;">
+              <div style="font-size: 28px; font-weight: bold; color: #10b981;">${stats.contentCreated || 0}</div>
+              <div style="color: #6b7280; font-size: 14px; margin-top: 5px;">Content Created</div>
+            </div>
+            <div style="background: white; padding: 20px; border-radius: 8px; text-align: center; border: 2px solid #e2e8f0;">
+              <div style="font-size: 28px; font-weight: bold; color: #f59e0b;">${stats.votesCount || 0}</div>
+              <div style="color: #6b7280; font-size: 14px; margin-top: 5px;">Votes Cast</div>
+            </div>
+            <div style="background: white; padding: 20px; border-radius: 8px; text-align: center; border: 2px solid #e2e8f0;">
+              <div style="font-size: 28px; font-weight: bold; color: #ec4899;">${stats.eventsAttended || 0}</div>
+              <div style="color: #6b7280; font-size: 14px; margin-top: 5px;">Events Attended</div>
+            </div>
+            <div style="background: white; padding: 20px; border-radius: 8px; text-align: center; border: 2px solid #e2e8f0;">
+              <div style="font-size: 28px; font-weight: bold; color: #14b8a6;">${stats.commentsPosted || 0}</div>
+              <div style="color: #6b7280; font-size: 14px; margin-top: 5px;">Comments Posted</div>
+            </div>
+            <div style="background: white; padding: 20px; border-radius: 8px; text-align: center; border: 2px solid #e2e8f0;">
+              <div style="font-size: 28px; font-weight: bold; color: #8b5cf6;">$${stats.impactContributed || 0}</div>
+              <div style="color: #6b7280; font-size: 14px; margin-top: 5px;">Impact Value</div>
+            </div>
+          </div>
+
+          <!-- Achievements -->
+          ${stats.newAchievements && stats.newAchievements.length > 0 ? `
+          <div style="background: #fef3c7; padding: 20px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #f59e0b;">
+            <h3 style="margin-top: 0; color: #92400e;">🏆 New Achievements Unlocked!</h3>
+            <ul style="margin: 10px 0; padding-left: 20px; color: #78350f;">
+              ${stats.newAchievements.map((achievement: string) => `<li style="margin: 5px 0;">${achievement}</li>`).join('')}
+            </ul>
+          </div>
+          ` : ''}
+
+          <!-- Impact Metrics -->
+          ${stats.impactMetrics ? `
+          <div style="background: white; padding: 20px; border-radius: 8px; margin: 25px 0; border: 2px solid #14b8a6;">
+            <h3 style="margin-top: 0; color: #1e293b;">🌱 Environmental Impact</h3>
+            <div style="color: #475569; line-height: 1.8;">
+              <p style="margin: 8px 0;">♻️ <strong>Zero Waste:</strong> ${stats.impactMetrics.zeroWaste || 0} units</p>
+              <p style="margin: 8px 0;">🌬️ <strong>Clean Air:</strong> ${stats.impactMetrics.cleanAir || 0} units</p>
+              <p style="margin: 8px 0;">💧 <strong>Clean Water:</strong> ${stats.impactMetrics.cleanWater || 0} units</p>
+              <p style="margin: 8px 0;">🏙️ <strong>Safe Cities:</strong> ${stats.impactMetrics.safeCities || 0} units</p>
+            </div>
+          </div>
+          ` : ''}
+
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${APP_URL}/dashboard" style="background: #8b5cf6; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">View Full Dashboard</a>
+            <a href="${APP_URL}/dashboard" style="background: linear-gradient(135deg, #8b5cf6, #14b8a6); color: white; padding: 15px 35px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; box-shadow: 0 4px 14px rgba(139, 92, 246, 0.3);">View Full Dashboard</a>
           </div>
+
+          <div style="background: #f1f5f9; padding: 20px; border-radius: 8px; margin: 25px 0; text-align: center;">
+            <p style="margin: 0; color: #475569; font-size: 14px;">
+              <strong>Keep up the amazing work!</strong> Every action you take creates real impact in your community. 💚
+            </p>
+          </div>
+
+          <p style="color: #6b7280; font-size: 12px; text-align: center; margin-top: 20px;">
+            Questions? Contact us at <a href="mailto:comunidad@crowdconscious.app" style="color: #14b8a6;">comunidad@crowdconscious.app</a>
+          </p>
         </div>
       </div>
     `
@@ -192,16 +269,35 @@ export async function sendEmail(
   }
 }
 
-// Send welcome email based on user type
+// Send welcome email
 export async function sendWelcomeEmail(
   email: string, 
-  name: string, 
-  userType: 'user' | 'brand' = 'user'
+  name: string
 ): Promise<boolean> {
-  const template = userType === 'brand' 
-    ? emailTemplates.welcomeBrand(name)
-    : emailTemplates.welcomeUser(name)
-  
+  const template = emailTemplates.welcomeUser(name)
+  const result = await sendEmail(email, template)
+  return result.success
+}
+
+// Send event registration confirmation
+export async function sendEventRegistrationEmail(
+  email: string,
+  userName: string,
+  eventTitle: string,
+  eventDate: string,
+  eventLocation: string,
+  communityName: string,
+  eventId: string
+): Promise<boolean> {
+  const eventUrl = `${process.env.NEXT_PUBLIC_APP_URL}/communities/${eventId}`
+  const template = emailTemplates.eventRegistration(
+    userName,
+    eventTitle,
+    eventDate,
+    eventLocation,
+    communityName,
+    eventUrl
+  )
   const result = await sendEmail(email, template)
   return result.success
 }
