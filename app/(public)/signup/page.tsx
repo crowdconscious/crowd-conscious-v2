@@ -89,10 +89,19 @@ export default function SignUpPage() {
       }
     } catch (error: any) {
       console.error('Signup error:', error)
+      console.error('Error details:', {
+        message: error?.message,
+        code: error?.code,
+        details: error?.details,
+        hint: error?.hint
+      })
+      
       if (error?.message?.includes('duplicate') || error?.message?.includes('already exists')) {
         setMessage('This email is already registered. Please sign in or use a different email.')
       } else {
-        setMessage('Error creating account. Please try again or contact support.')
+        // Show the actual error in development
+        const errorMsg = error?.message || error?.toString() || 'Unknown error'
+        setMessage(`Error: ${errorMsg}. Check console for details.`)
       }
     } finally {
       setLoading(false)
