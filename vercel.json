@@ -10,6 +10,16 @@
       "maxDuration": 30
     }
   },
+  "crons": [
+    {
+      "path": "/api/cron/monthly-impact",
+      "schedule": "0 9 1 * *"
+    },
+    {
+      "path": "/api/cron/challenge-reminders",
+      "schedule": "0 8 * * *"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",

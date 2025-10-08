@@ -1,0 +1,116 @@
+import { NextResponse } from 'next/server'
+import { createServerAuth } from '@/lib/auth-server'
+import { sendEmail, emailTemplates } from '@/lib/resend'
+
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+
+export async function GET(request: Request) {
+  // Verify cron secret to prevent unauthorized access
+  const authHeader = request.headers.get('authorization')
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  try {
+    const supabase = await createServerAuth()
+    
+    // Get all users
+    const { data: users, error: usersError } = await (supabase as any)
+      .from('profiles')
+      .select('id, email, full_name')
+    
+    if (usersError || !users) {
+      console.error('Error fetching users:', usersError)
+      return NextResponse.json({ error: 'No users found' }, { status: 404 })
+    }
+
+    const results = []
+    const lastMonth = new Date()
+    lastMonth.setMonth(lastMonth.getMonth() - 1)
+
+    // Send email to each user with their personalized stats
+    for (const user of users) {
+      try {
+        // Get user stats
+        const { data: userStats } = await (supabase as any)
+          .from('user_stats')
+          .select('*')
+          .eq('user_id', user.id)
+          .single()
+
+        // Get user's communities
+        const { data: memberships } = await (supabase as any)
+          .from('community_members')
+          .select('community_id')
+          .eq('user_id', user.id)
+
+        // Get user's XP transactions from last month
+        const { data: xpTransactions } = await (supabase as any)
+          .from('xp_transactions')
+          .select('*')
+          .eq('user_id', user.id)
+          .gte('created_at', lastMonth.toISOString())
+
+        // Calculate monthly stats
+        const monthlyXP = xpTransactions?.reduce((sum: number, t: any) => sum + t.xp_amount, 0) || 0
+
+        // Get new achievements
+        const { data: achievements } = await (supabase as any)
+          .from('user_achievements')
+          .select('achievement_id')
+          .eq('user_id', user.id)
+          .gte('earned_at', lastMonth.toISOString())
+
+        // Count activities by type
+        const activityCounts = {
+          communities_joined: memberships?.length || 0,
+          content_created: xpTransactions?.filter((t: any) => t.action_type === 'content_create').length || 0,
+          votes_cast: xpTransactions?.filter((t: any) => t.action_type === 'vote').length || 0,
+          events_attended: xpTransactions?.filter((t: any) => t.action_type === 'event_attend').length || 0,
+          comments_made: xpTransactions?.filter((t: any) => t.action_type === 'comment').length || 0
+        }
+
+        // Calculate environmental impact
+        const environmentalImpact = {
+          co2_reduced: Math.round((monthlyXP / 10) * 100) / 100,
+          waste_diverted: Math.round((monthlyXP / 15) * 100) / 100,
+          trees_planted: Math.floor(monthlyXP / 100)
+        }
+
+        const monthlyImpactEmail = emailTemplates.monthlyImpactReport(
+          user.full_name || 'Community Member',
+          {
+            level: userStats?.level || 1,
+            current_xp: userStats?.current_xp || 0,
+            total_xp: userStats?.total_xp || 0,
+            streak: userStats?.current_streak || 0,
+            next_level_xp: ((userStats?.level || 1) + 1) * 1000
+          },
+          activityCounts,
+          achievements?.length || 0,
+          environmentalImpact
+        )
+
+        await sendEmail(user.email, monthlyImpactEmail)
+        results.push({ user: user.email, status: 'sent' })
+        
+        console.log(`✅ Sent monthly impact email to ${user.email}`)
+      } catch (error: any) {
+        console.error(`❌ Failed to send to ${user.email}:`, error)
+        results.push({ user: user.email, status: 'failed', error: error.message })
+      }
+    }
+
+    return NextResponse.json({ 
+      success: true, 
+      sent: results.filter(r => r.status === 'sent').length,
+      failed: results.filter(r => r.status === 'failed').length,
+      results 
+    })
+  } catch (error: any) {
+    console.error('Cron job error:', error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+}
+
