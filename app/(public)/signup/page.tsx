@@ -21,6 +21,10 @@ export default function SignUpPage() {
     setMessage('')
 
     try {
+      console.log('🚀 Starting signup process...')
+      console.log('Email:', email)
+      console.log('Full name:', fullName)
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -32,7 +36,10 @@ export default function SignUpPage() {
         }
       })
 
+      console.log('📦 Signup response:', { data, error })
+
       if (error) {
+        console.error('❌ Signup error:', error)
         // Better error messages for common issues
         if (error.message.includes('already registered')) {
           setMessage('This email is already registered. Please sign in instead.')
@@ -42,32 +49,53 @@ export default function SignUpPage() {
           setMessage(error.message)
         }
       } else if (data.user) {
-        // Try to create profile manually if trigger didn't work
-        try {
-          const { error: profileError } = await (supabase as any)
-            .from('profiles')
-            .insert({
-              id: data.user.id,
-              email: data.user.email,
-              full_name: fullName,
-              user_type: 'user'
-            })
-          
-          if (profileError) {
-            console.log('Profile creation error (might be expected if trigger worked):', profileError)
-            // If it's a duplicate error, it's actually OK - the trigger already created it
-            if (!profileError.message?.includes('duplicate')) {
-              setMessage('Account created but profile setup incomplete. Please contact support.')
+        console.log('✅ User created in auth.users:', data.user.id)
+        
+        // Check if profile was created by trigger
+        console.log('🔍 Checking if profile exists...')
+        const { data: existingProfile, error: checkError } = await (supabase as any)
+          .from('profiles')
+          .select('*')
+          .eq('id', data.user.id)
+          .single()
+        
+        console.log('Profile check result:', { existingProfile, checkError })
+        
+        if (!existingProfile) {
+          console.log('⚠️ Profile not found - creating manually...')
+          // Try to create profile manually if trigger didn't work
+          try {
+            const { data: newProfile, error: profileError } = await (supabase as any)
+              .from('profiles')
+              .insert({
+                id: data.user.id,
+                email: data.user.email,
+                full_name: fullName,
+                user_type: 'user'
+              })
+              .select()
+              .single()
+            
+            if (profileError) {
+              console.error('❌ Profile creation error:', profileError)
+              // If it's a duplicate error, it's actually OK - the trigger already created it
+              if (!profileError.message?.includes('duplicate')) {
+                setMessage(`Profile creation failed: ${profileError.message}`)
+                return
+              }
+            } else {
+              console.log('✅ Profile created manually:', newProfile)
+            }
+          } catch (profileErr: any) {
+            console.error('❌ Profile creation exception:', profileErr)
+            // Check if it's a duplicate error - that's actually fine
+            if (!profileErr?.message?.includes('duplicate')) {
+              setMessage(`Error: ${profileErr.message}`)
               return
             }
           }
-        } catch (profileErr: any) {
-          console.log('Profile creation attempt failed:', profileErr)
-          // Check if it's a duplicate error - that's actually fine
-          if (!profileErr?.message?.includes('duplicate')) {
-            setMessage('Account created but profile setup incomplete. Please contact support at comunidad@crowdconscious.app')
-            return
-          }
+        } else {
+          console.log('✅ Profile already exists (trigger worked!):', existingProfile)
         }
         
         setMessage('✅ Account created! Check your email for the confirmation link.')
