@@ -62,34 +62,37 @@ export async function GET(request: Request) {
           .eq('user_id', user.id)
           .gte('earned_at', lastMonth.toISOString())
 
-        // Count activities by type
-        const activityCounts = {
-          communities_joined: memberships?.length || 0,
-          content_created: xpTransactions?.filter((t: any) => t.action_type === 'content_create').length || 0,
-          votes_cast: xpTransactions?.filter((t: any) => t.action_type === 'vote').length || 0,
-          events_attended: xpTransactions?.filter((t: any) => t.action_type === 'event_attend').length || 0,
-          comments_made: xpTransactions?.filter((t: any) => t.action_type === 'comment').length || 0
-        }
-
-        // Calculate environmental impact
-        const environmentalImpact = {
-          co2_reduced: Math.round((monthlyXP / 10) * 100) / 100,
-          waste_diverted: Math.round((monthlyXP / 15) * 100) / 100,
-          trees_planted: Math.floor(monthlyXP / 100)
+        // Combine all data into single stats object
+        const stats = {
+          // Gamification stats
+          level: userStats?.level || 1,
+          totalXP: userStats?.total_xp || 0,
+          currentStreak: userStats?.current_streak || 0,
+          
+          // Activity counts
+          communitiesJoined: memberships?.length || 0,
+          contentCreated: xpTransactions?.filter((t: any) => t.action_type === 'content_create').length || 0,
+          votesCount: xpTransactions?.filter((t: any) => t.action_type === 'vote').length || 0,
+          eventsAttended: xpTransactions?.filter((t: any) => t.action_type === 'event_attend').length || 0,
+          commentsPosted: xpTransactions?.filter((t: any) => t.action_type === 'comment').length || 0,
+          impactContributed: 0, // Can calculate from sponsorships later
+          
+          // New achievements (would need to query achievement names)
+          newAchievements: achievements && achievements.length > 0 ? 
+            Array(achievements.length).fill('New Achievement Unlocked!') : [],
+          
+          // Environmental impact metrics
+          impactMetrics: {
+            zeroWaste: Math.round((monthlyXP / 10) * 100) / 100,
+            cleanAir: Math.round((monthlyXP / 15) * 100) / 100,
+            cleanWater: Math.round((monthlyXP / 12) * 100) / 100,
+            safeCities: Math.floor(monthlyXP / 100)
+          }
         }
 
         const monthlyImpactEmail = emailTemplates.monthlyImpactReport(
           user.full_name || 'Community Member',
-          {
-            level: userStats?.level || 1,
-            current_xp: userStats?.current_xp || 0,
-            total_xp: userStats?.total_xp || 0,
-            streak: userStats?.current_streak || 0,
-            next_level_xp: ((userStats?.level || 1) + 1) * 1000
-          },
-          activityCounts,
-          achievements?.length || 0,
-          environmentalImpact
+          stats
         )
 
         await sendEmail(user.email, monthlyImpactEmail)
