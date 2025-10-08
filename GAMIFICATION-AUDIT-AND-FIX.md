@@ -393,7 +393,8 @@ Make sure these components are visible:
 
 ## 📝 Complete SQL Fix File
 
-I'll create a file with ALL missing triggers: `sql-migrations/complete-gamification-triggers.sql`
+I'll create a file with ALL missing triggers: `
+sql-migrations/complete-gamification-triggers.sql`
 
 ---
 
