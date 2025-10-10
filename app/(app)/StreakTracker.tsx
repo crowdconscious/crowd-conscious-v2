@@ -45,6 +45,7 @@ export default function StreakTracker() {
           setTimeout(() => reject(new Error('Streak update timeout')), 5000)
         )
         
+        // @ts-expect-error - RPC function not in generated types yet
         const streakPromise = supabase.rpc('update_user_streak', { 
           p_user_id: user.id 
         })
