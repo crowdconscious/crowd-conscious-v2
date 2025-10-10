@@ -30,18 +30,40 @@ function LoginForm() {
     setMessage('')
 
     try {
+      console.log('🔐 Starting sign in process...')
+      console.log('📧 Email:', email)
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
+      console.log('📦 Sign in response:', { 
+        hasUser: !!data.user, 
+        hasError: !!error,
+        errorMessage: error?.message 
+      })
+
       if (error) {
+        console.error('❌ Sign in error:', error)
         setMessage(error.message)
       } else if (data.user) {
-        router.push('/dashboard')
+        console.log('✅ Sign in successful, user:', data.user.id)
+        console.log('✅ Session established:', !!data.session)
+        console.log('🔄 Redirecting to dashboard...')
+        
+        // Use window.location for hard navigation to ensure session is properly set
+        // This forces a server round-trip which ensures getCurrentUser() sees the session
+        window.location.href = '/dashboard'
       }
-    } catch (error) {
-      setMessage('An unexpected error occurred')
+    } catch (error: any) {
+      console.error('💥 Unexpected error during sign in:', error)
+      console.error('Error details:', {
+        message: error?.message,
+        stack: error?.stack,
+        type: typeof error
+      })
+      setMessage(`An unexpected error occurred: ${error?.message || 'Unknown error'}`)
     } finally {
       setLoading(false)
     }

@@ -29,8 +29,8 @@ export default function ShareButton({
       const pathParts = window.location.pathname.split('/')
       const communityId = pathParts[2] // /communities/[id]/...
       
-      // Use the production domain for sharing
-      const baseUrl = 'https://crowd-conscious-platform-rasv09idr.vercel.app'
+      // Use the environment variable or fallback to current origin
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
       setShareUrl(`${baseUrl}/communities/${communityId}/content/${contentId}`)
     }
   }, [contentId])

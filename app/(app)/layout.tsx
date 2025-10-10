@@ -10,11 +10,15 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode
 }) {
+  console.log('🔍 AppLayout: Checking user authentication...')
   const user = await getCurrentUser()
 
   if (!user) {
+    console.log('❌ AppLayout: No user found, redirecting to login')
     redirect('/login')
   }
+
+  console.log('✅ AppLayout: User authenticated:', user.id)
 
   return (
     <div className="min-h-screen bg-white text-slate-900 transition-colors" style={{backgroundColor: '#ffffff', color: '#090909'}}>

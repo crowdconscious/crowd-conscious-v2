@@ -22,8 +22,9 @@ export default function SignUpPage() {
 
     try {
       console.log('🚀 Starting signup process...')
-      console.log('Email:', email)
-      console.log('Full name:', fullName)
+      console.log('📧 Email:', email)
+      console.log('👤 Full name:', fullName)
+      console.log('🔗 Redirect URL:', `${window.location.origin}/auth/callback`)
       
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -36,7 +37,12 @@ export default function SignUpPage() {
         }
       })
 
-      console.log('📦 Signup response:', { data, error })
+      console.log('📦 Signup response:', { 
+        hasUser: !!data?.user, 
+        hasSession: !!data?.session,
+        hasError: !!error,
+        errorMessage: error?.message
+      })
 
       if (error) {
         console.error('❌ Signup error:', error)
