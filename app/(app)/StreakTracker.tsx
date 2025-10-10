@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { createClientAuth } from '@/lib/auth'
 
 /**
@@ -17,33 +17,66 @@ import { createClientAuth } from '@/lib/auth'
  * - Resets streak if user missed a day
  */
 export default function StreakTracker() {
+  const [hasTracked, setHasTracked] = useState(false)
+  
   useEffect(() => {
+    // Only run once per session
+    if (hasTracked) return
+    
     const trackStreak = async () => {
       try {
         const supabase = createClientAuth()
-        const { data: { user } } = await supabase.auth.getUser()
+        const { data: { user }, error: authError } = await supabase.auth.getUser()
         
-        if (!user) return
+        if (authError) {
+          console.warn('⚠️ Streak tracker: Auth error:', authError.message)
+          return
+        }
         
-        // Call the streak update function
-        // @ts-ignore - RPC function not yet in generated types
-        const { error } = await supabase.rpc('update_user_streak', { 
+        if (!user) {
+          console.warn('⚠️ Streak tracker: No user found')
+          return
+        }
+        
+        console.log('🔄 Tracking daily streak for user:', user.id)
+        
+        // Call the streak update function with timeout
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Streak update timeout')), 5000)
+        )
+        
+        const streakPromise = supabase.rpc('update_user_streak', { 
           p_user_id: user.id 
         })
         
+        const { error } = await Promise.race([streakPromise, timeoutPromise]) as any
+        
         if (error) {
-          console.error('Error updating streak:', error)
+          // Check if it's a "function does not exist" error
+          if (error.code === '42883' || error.message?.includes('does not exist')) {
+            console.warn('⚠️ Streak tracker: Database function not yet created. Run gamification migrations.')
+          } else {
+            console.error('❌ Error updating streak:', error)
+          }
         } else {
-          console.log('✅ Daily streak tracked')
+          console.log('✅ Daily streak tracked successfully')
         }
-      } catch (error) {
-        console.error('Error in streak tracker:', error)
+        
+        setHasTracked(true)
+      } catch (error: any) {
+        if (error.message === 'Streak update timeout') {
+          console.warn('⚠️ Streak update timed out - continuing anyway')
+        } else {
+          console.error('💥 Error in streak tracker:', error)
+        }
+        setHasTracked(true) // Mark as tracked even on error to prevent retries
       }
     }
     
-    // Track streak on mount
-    trackStreak()
-  }, []) // Empty dependency array = runs once per session
+    // Small delay to let auth settle
+    const timer = setTimeout(trackStreak, 1000)
+    return () => clearTimeout(timer)
+  }, [hasTracked])
 
   // This component doesn't render anything
   return null

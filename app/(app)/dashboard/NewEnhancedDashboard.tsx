@@ -31,8 +31,15 @@ interface EnhancedDashboardProps {
 export default function NewEnhancedDashboard({ user, initialUserStats, userCommunities }: EnhancedDashboardProps) {
   const [userStats] = useState<UserStats | null>(initialUserStats)
   const [activeTab, setActiveTab] = useState<'overview' | 'impact' | 'gamification' | 'calendar'>('overview')
+  const [mounted, setMounted] = useState(false)
+
+  // Prevent hydration mismatch by only showing time-based content after mount
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const getTimeOfDayMessage = (): string => {
+    if (!mounted) return 'Hello' // Default for SSR
     const hour = new Date().getHours()
     if (hour < 12) return 'Good morning'
     if (hour < 17) return 'Good afternoon'
