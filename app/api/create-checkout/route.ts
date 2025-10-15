@@ -30,6 +30,7 @@ export async function POST(request: NextRequest) {
       amount,
       contentTitle,
       communityName,
+      communityId,
       sponsorType,
       brandName,
       email,
@@ -44,9 +45,49 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create Stripe checkout session
     const stripeClient = getStripe()
-    const session = await stripeClient.checkout.sessions.create({
+    
+    // Calculate platform fee (15%)
+    const platformFeeAmount = Math.round(amount * 0.15 * 100) // 15% in cents
+    const founderAmount = (amount * 100) - platformFeeAmount // 85% in cents
+    
+    console.log('💰 Payment split:', {
+      totalAmount: amount * 100,
+      platformFee: platformFeeAmount,
+      founderAmount: founderAmount
+    })
+
+    // Get community founder's Stripe Connect account (if exists)
+    let connectedAccountId: string | null = null
+    if (communityId) {
+      try {
+        const { createClient } = await import('@supabase/supabase-js')
+        const supabase = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!
+        )
+        
+        const { data: community } = await supabase
+          .from('communities')
+          .select('stripe_account_id, created_by, profiles!communities_created_by_fkey(stripe_connect_id, stripe_onboarding_complete)')
+          .eq('id', communityId)
+          .single()
+        
+        const founderProfile: any = (community as any)?.profiles
+        if (founderProfile?.stripe_connect_id && founderProfile?.stripe_onboarding_complete) {
+          connectedAccountId = founderProfile.stripe_connect_id
+          console.log('✅ Found connected account for founder:', connectedAccountId)
+        } else {
+          console.log('⚠️ Founder has not completed Stripe Connect onboarding')
+        }
+      } catch (error) {
+        console.error('⚠️ Error fetching community Stripe account:', error)
+        // Continue without Connect - platform gets full amount
+      }
+    }
+
+    // Create checkout session with or without Connect
+    const sessionConfig: Stripe.Checkout.SessionCreateParams = {
       payment_method_types: ['card'],
       line_items: [
         {
@@ -55,7 +96,7 @@ export async function POST(request: NextRequest) {
             product_data: {
               name: `Sponsorship: ${contentTitle}`,
               description: `Support for ${communityName}`,
-              images: ['https://crowdconscious.app/images/logo.png'] // Add your logo URL
+              images: ['https://crowdconscious.app/images/logo.png']
             },
             unit_amount: amount * 100 // Convert to cents
           },
@@ -72,7 +113,11 @@ export async function POST(request: NextRequest) {
         brandName: brandName || '',
         taxReceipt: taxReceipt ? 'yes' : 'no',
         contentTitle,
-        communityName
+        communityName,
+        communityId: communityId || '',
+        platformFeeAmount: (platformFeeAmount / 100).toString(),
+        founderAmount: (founderAmount / 100).toString(),
+        connectedAccountId: connectedAccountId || ''
       },
       // Enable tax ID collection for Mexican businesses
       ...(taxReceipt && {
@@ -80,7 +125,22 @@ export async function POST(request: NextRequest) {
           enabled: true
         }
       })
-    })
+    }
+
+    // If founder has Connect account, use application fee
+    if (connectedAccountId) {
+      sessionConfig.payment_intent_data = {
+        application_fee_amount: platformFeeAmount,
+        transfer_data: {
+          destination: connectedAccountId,
+        },
+      }
+      console.log('✅ Using Stripe Connect with application fee')
+    } else {
+      console.log('⚠️ No Connect account - platform receives full amount')
+    }
+
+    const session = await stripeClient.checkout.sessions.create(sessionConfig)
 
     return NextResponse.json({ url: session.url })
   } catch (error: any) {

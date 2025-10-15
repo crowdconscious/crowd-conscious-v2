@@ -101,13 +101,24 @@ export async function POST(request: NextRequest) {
       })
 
       // Update sponsorship record
-      const { sponsorshipId, sponsorType, brandName, taxReceipt } = session.metadata || {}
+      const { 
+        sponsorshipId, 
+        sponsorType, 
+        brandName, 
+        taxReceipt,
+        platformFeeAmount,
+        founderAmount,
+        connectedAccountId
+      } = session.metadata || {}
       
       console.log('📝 Session metadata:', {
         sponsorshipId,
         sponsorType,
         brandName,
-        taxReceipt
+        taxReceipt,
+        platformFeeAmount,
+        founderAmount,
+        hasConnectedAccount: !!connectedAccountId
       })
 
       if (sponsorshipId) {
@@ -117,7 +128,28 @@ export async function POST(request: NextRequest) {
           status: 'paid',
           stripe_session_id: session.id,
           stripe_payment_intent: session.payment_intent,
-          paid_at: new Date().toISOString()
+          paid_at: new Date().toISOString(),
+          platform_fee_amount: platformFeeAmount ? parseFloat(platformFeeAmount) : null,
+          founder_amount: founderAmount ? parseFloat(founderAmount) : null
+        }
+        
+        // If payment was made via Connect, get the transfer ID
+        if (connectedAccountId && session.payment_intent) {
+          try {
+            const stripeClient = getStripe()
+            const paymentIntent = await stripeClient.paymentIntents.retrieve(
+              session.payment_intent as string,
+              { expand: ['transfer_data'] }
+            )
+            
+            if (paymentIntent.transfer_data?.destination) {
+              updateData.stripe_transfer_id = paymentIntent.transfer_data.destination
+              console.log('✅ Found transfer ID:', updateData.stripe_transfer_id)
+            }
+          } catch (transferError) {
+            console.error('⚠️ Error retrieving transfer data:', transferError)
+            // Continue anyway - not critical
+          }
         }
         
         const supabaseClient = getSupabase()
@@ -141,6 +173,15 @@ export async function POST(request: NextRequest) {
         }
 
         console.log('✅ Sponsorship updated successfully:', sponsorshipId)
+        
+        if (connectedAccountId) {
+          console.log('💰 Payment split:', {
+            total: session.amount_total,
+            platformFee: platformFeeAmount,
+            founderPayout: founderAmount,
+            destination: connectedAccountId
+          })
+        }
 
         // Refresh materialized view for trusted brands
         if (sponsorType === 'business' && brandName) {
