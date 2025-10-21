@@ -42,24 +42,20 @@ export default function PublicNeedSupport({
 
     try {
       // Create support offer record
-      // TODO: Fix type issues with external_responses table
-      const { error } = null as any
-      /* await supabase
+      const { error } = await supabase
         .from('external_responses')
         .insert({
           content_id: contentId,
           response_type: 'need_support',
           response_data: {
             support_type: supportType,
-            name: name,
-            email: email,
-            phone: phone,
             amount: supportType === 'financial' ? parseFloat(amount) : null,
             description: description
           },
           respondent_email: email,
-          respondent_name: name
-        }) */
+          respondent_name: name,
+          respondent_phone: phone
+        })
 
       if (error) {
         console.error('Error submitting support offer:', error)

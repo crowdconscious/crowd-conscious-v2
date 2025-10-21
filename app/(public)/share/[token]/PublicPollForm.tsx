@@ -53,37 +53,52 @@ export default function PublicPollForm({ contentId }: PublicPollFormProps) {
     setMessage('')
 
     try {
+      // Check if email has already voted
+      const { data: existingResponse } = await supabase
+        .from('external_responses')
+        .select('id')
+        .eq('content_id', contentId)
+        .eq('response_type', 'poll_vote')
+        .eq('respondent_email', email)
+        .maybeSingle()
+
+      if (existingResponse) {
+        setMessage('This email has already voted on this poll.')
+        setLoading(false)
+        return
+      }
+
       // Create external response record
-      // TODO: Fix type issues with external_responses table
-      const { error } = null as any
-      /* await supabase
+      const { error: responseError } = await supabase
         .from('external_responses')
         .insert({
           content_id: contentId,
           response_type: 'poll_vote',
           response_data: {
-            poll_option_id: selectedOption,
-            name: name,
-            email: email
+            poll_option_id: selectedOption
           },
           respondent_email: email,
           respondent_name: name
-        }) */
+        })
 
-      if (error) {
-        console.error('Error submitting poll response:', error)
+      if (responseError) {
+        console.error('Error submitting poll response:', responseError)
         setMessage('Failed to submit your vote. Please try again.')
+        setLoading(false)
         return
       }
 
       // Update poll option vote count
       const selectedOptionData = options.find(opt => opt.id === selectedOption)
       if (selectedOptionData) {
-        // TODO: Fix type issues with poll_options table
-        /* await supabase
+        const { error: updateError } = await supabase
           .from('poll_options')
           .update({ vote_count: selectedOptionData.vote_count + 1 })
-          .eq('id', selectedOption) */
+          .eq('id', selectedOption)
+
+        if (updateError) {
+          console.error('Error updating vote count:', updateError)
+        }
       }
 
       setSubmitted(true)

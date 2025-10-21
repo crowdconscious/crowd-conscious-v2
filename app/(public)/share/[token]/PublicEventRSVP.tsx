@@ -92,9 +92,19 @@ export default function PublicEventRSVP({ contentId }: PublicEventRSVPProps) {
       }
 
       // Create RSVP record
-      // TODO: Insert RSVP response - temporarily disabled for deployment
-      console.log('RSVP submission:', { contentId, name, email, phone, message })
-      const error = null
+      const { error } = await supabase
+        .from('external_responses')
+        .insert({
+          content_id: contentId,
+          response_type: 'event_rsvp',
+          response_data: {
+            phone: phone,
+            message: message
+          },
+          respondent_email: email,
+          respondent_name: name,
+          respondent_phone: phone
+        })
 
       if (error) {
         console.error('Error submitting RSVP:', error)
