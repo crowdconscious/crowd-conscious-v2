@@ -51,6 +51,7 @@ export default async function SponsorPage({ params }: SponsorPageProps) {
       fundingGoal={content.funding_goal}
       currentFunding={content.current_funding || 0}
       communityName={(content.communities as any)?.name || 'Community'}
+      communityId={communityId}
     />
   )
 }

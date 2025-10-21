@@ -10,6 +10,7 @@ interface SponsorshipCheckoutProps {
   fundingGoal: number
   currentFunding: number
   communityName: string
+  communityId?: string
   onSuccess?: () => void
   onCancel?: () => void
 }
@@ -49,6 +50,7 @@ export default function SponsorshipCheckout({
   fundingGoal,
   currentFunding,
   communityName,
+  communityId,
   onSuccess,
   onCancel
 }: SponsorshipCheckoutProps) {
@@ -257,8 +259,12 @@ export default function SponsorshipCheckout({
         if (onSuccess) {
           onSuccess()
         } else {
-          // Redirect to content page
-          window.location.href = `/communities/${(content as any)?.community_id || communityId}/content/${contentId}`
+          // Redirect to content page or dashboard if community ID not available
+          if (communityId) {
+            window.location.href = `/communities/${communityId}/content/${contentId}`
+          } else {
+            window.location.href = '/dashboard'
+          }
         }
       }
 
@@ -461,10 +467,11 @@ export default function SponsorshipCheckout({
 
           {/* Sponsor Type Selection - Only for Financial Support */}
           {formData.support_type === 'financial' && (
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-3">
-              Sponsor As
-            </label>
+          <>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-3">
+                Sponsor As
+              </label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <button
                 type="button"
@@ -502,120 +509,119 @@ export default function SponsorshipCheckout({
                 </div>
               </button>
             </div>
-          </div>
-
-          {/* Individual Fields */}
-          {formData.sponsor_type === 'individual' && (
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Display Name (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={formData.display_name}
-                  onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
-                  placeholder="How should we recognize you?"
-                />
-                <p className="text-xs text-slate-500 mt-1">
-                  Leave blank to use your profile name
-                </p>
-              </div>
             </div>
-          )}
 
-          {/* Business Fields */}
-          {formData.sponsor_type === 'business' && (
-            <div className="space-y-4 bg-slate-50 p-4 rounded-lg">
-              <h3 className="font-semibold text-slate-900">Business Information</h3>
-              
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Company Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={formData.brand_name}
-                  onChange={(e) => setFormData({ ...formData, brand_name: e.target.value })}
-                  required
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
-                  placeholder="Your Company Name"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Company Logo {formData.amount >= 1000 && <span className="text-teal-600">(Recommended for Silver+)</span>}
-                </label>
-                <div className="flex items-start gap-4">
-                  {logoPreview && (
-                    <img 
-                      src={logoPreview} 
-                      alt="Logo preview" 
-                      className="w-24 h-24 object-contain border-2 border-slate-200 rounded-lg"
-                    />
-                  )}
-                  <div className="flex-1">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleLogoUpload}
-                      className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100"
-                    />
-                    <p className="text-xs text-slate-500 mt-1">
-                      PNG, JPG or SVG. Max 2MB. Square format recommended.
-                    </p>
-                  </div>
+            {/* Individual Fields */}
+            {formData.sponsor_type === 'individual' && (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Display Name (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.display_name}
+                    onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                    placeholder="How should we recognize you?"
+                  />
+                  <p className="text-xs text-slate-500 mt-1">
+                    Leave blank to use your profile name
+                  </p>
                 </div>
               </div>
+            )}
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Website
-                </label>
-                <input
-                  type="url"
-                  value={formData.brand_website}
-                  onChange={(e) => setFormData({ ...formData, brand_website: e.target.value })}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
-                  placeholder="https://yourcompany.com"
-                />
+            {/* Business Fields */}
+            {formData.sponsor_type === 'business' && (
+              <div className="space-y-4 bg-slate-50 p-4 rounded-lg">
+                <h3 className="font-semibold text-slate-900">Business Information</h3>
+                
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Company Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.brand_name}
+                    onChange={(e) => setFormData({ ...formData, brand_name: e.target.value })}
+                    required
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                    placeholder="Your Company Name"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Company Logo {formData.amount >= 1000 && <span className="text-teal-600">(Recommended for Silver+)</span>}
+                  </label>
+                  <div className="flex items-start gap-4">
+                    {logoPreview && (
+                      <img 
+                        src={logoPreview} 
+                        alt="Logo preview" 
+                        className="w-24 h-24 object-contain border-2 border-slate-200 rounded-lg"
+                      />
+                    )}
+                    <div className="flex-1">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleLogoUpload}
+                        className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100"
+                      />
+                      <p className="text-xs text-slate-500 mt-1">
+                        PNG, JPG or SVG. Max 2MB. Square format recommended.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Website
+                  </label>
+                  <input
+                    type="url"
+                    value={formData.brand_website}
+                    onChange={(e) => setFormData({ ...formData, brand_website: e.target.value })}
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                    placeholder="https://yourcompany.com"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    RFC / Tax ID (For CFDI Invoice)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.tax_id}
+                    onChange={(e) => setFormData({ ...formData, tax_id: e.target.value.toUpperCase() })}
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                    placeholder="XAXX010101000"
+                    maxLength={13}
+                  />
+                  <p className="text-xs text-slate-500 mt-1">
+                    Required for tax deductible receipt (Mexican businesses)
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="tax_receipt"
+                    checked={formData.tax_receipt}
+                    onChange={(e) => setFormData({ ...formData, tax_receipt: e.target.checked })}
+                    className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"
+                  />
+                  <label htmlFor="tax_receipt" className="text-sm text-slate-700">
+                    I need a tax deductible receipt (CFDI)
+                  </label>
+                </div>
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  RFC / Tax ID (For CFDI Invoice)
-                </label>
-                <input
-                  type="text"
-                  value={formData.tax_id}
-                  onChange={(e) => setFormData({ ...formData, tax_id: e.target.value.toUpperCase() })}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
-                  placeholder="XAXX010101000"
-                  maxLength={13}
-                />
-                <p className="text-xs text-slate-500 mt-1">
-                  Required for tax deductible receipt (Mexican businesses)
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="tax_receipt"
-                  checked={formData.tax_receipt}
-                  onChange={(e) => setFormData({ ...formData, tax_receipt: e.target.checked })}
-                  className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"
-                />
-                <label htmlFor="tax_receipt" className="text-sm text-slate-700">
-                  I need a tax deductible receipt (CFDI)
-                </label>
-              </div>
-            </div>
-          )}
-
-          </div>
+            )}
+          </>
           )}
 
           {/* Contact Information */}

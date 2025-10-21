@@ -8,6 +8,7 @@ interface SponsorCheckoutClientProps {
   fundingGoal: number
   currentFunding: number
   communityName: string
+  communityId?: string
 }
 
 export default function SponsorCheckoutClient(props: SponsorCheckoutClientProps) {
