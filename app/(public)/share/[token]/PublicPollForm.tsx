@@ -27,18 +27,35 @@ export default function PublicPollForm({ contentId }: PublicPollFormProps) {
   }, [contentId])
 
   const fetchPollOptions = async () => {
+    await fetchPollOptionsWithExternalVotes()
+  }
+
+  const fetchPollOptionsWithExternalVotes = async () => {
+    // Use RPC to get poll results with total votes (authenticated + external)
     const { data, error } = await supabase
-      .from('poll_options')
-      .select('*')
-      .eq('content_id', contentId)
-      .order('created_at', { ascending: true })
+      .rpc('get_poll_results', { content_uuid: contentId })
 
     if (error) {
-      console.error('Error fetching poll options:', error)
+      console.error('Error fetching poll results:', error)
+      // Fallback to direct query if RPC fails
+      const { data: fallbackData } = await supabase
+        .from('poll_options')
+        .select('*')
+        .eq('content_id', contentId)
+        .order('created_at', { ascending: true })
+      setOptions(fallbackData || [])
       return
     }
 
-    setOptions(data || [])
+    // Map RPC results to expected format
+    const mappedOptions = (data || []).map((opt: any) => ({
+      id: opt.option_id,
+      option_text: opt.option_text,
+      vote_count: opt.vote_count || 0,
+      created_at: opt.created_at
+    }))
+
+    setOptions(mappedOptions)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -88,24 +105,11 @@ export default function PublicPollForm({ contentId }: PublicPollFormProps) {
         return
       }
 
-      // Update poll option vote count
-      const selectedOptionData = options.find(opt => opt.id === selectedOption)
-      if (selectedOptionData) {
-        const { error: updateError } = await supabase
-          .from('poll_options')
-          .update({ vote_count: selectedOptionData.vote_count + 1 })
-          .eq('id', selectedOption)
-
-        if (updateError) {
-          console.error('Error updating vote count:', updateError)
-        }
-      }
-
       setSubmitted(true)
       setMessage('Thank you for your vote! Your response has been recorded.')
       
-      // Refresh options to show updated counts
-      fetchPollOptions()
+      // Refresh options to show updated counts (with external votes)
+      await fetchPollOptionsWithExternalVotes()
     } catch (error) {
       console.error('Submission error:', error)
       setMessage('An unexpected error occurred. Please try again.')

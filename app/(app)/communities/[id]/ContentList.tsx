@@ -72,7 +72,7 @@ export default function ContentList({ communityId, userRole }: ContentListProps)
     fetchContent()
 
     // Set up real-time subscription for content changes
-    const channel = supabase
+    const contentChannel = supabase
       .channel(`community_content_${communityId}`)
       .on(
         'postgres_changes',
@@ -89,13 +89,34 @@ export default function ContentList({ communityId, userRole }: ContentListProps)
         }
       )
       .subscribe((status) => {
-        console.log('📡 Real-time subscription status:', status)
+        console.log('📡 Content subscription status:', status)
       })
 
-    // Cleanup subscription on unmount
+    // Also subscribe to external_responses to show external votes in real-time
+    const externalChannel = supabase
+      .channel(`external_responses_${communityId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'external_responses'
+        },
+        (payload) => {
+          console.log('🗳️ External response received:', payload)
+          // Refresh content to show updated vote counts
+          fetchContent()
+        }
+      )
+      .subscribe((status) => {
+        console.log('📡 External responses subscription status:', status)
+      })
+
+    // Cleanup subscriptions on unmount
     return () => {
       console.log('🔌 Unsubscribing from real-time updates')
-      supabase.removeChannel(channel)
+      supabase.removeChannel(contentChannel)
+      supabase.removeChannel(externalChannel)
     }
   }, [communityId, filter])
 
@@ -142,12 +163,30 @@ export default function ContentList({ communityId, userRole }: ContentListProps)
             }
             
             if (item.type === 'poll') {
-              const { data: options } = await (supabase as any)
-                .from('poll_options')
-                .select('id, option_text, vote_count')
-                .eq('content_id', item.id)
-                .order('order_index')
-              enhancedItem.poll_options = options || []
+              // Use RPC to get poll results with total votes (authenticated + external)
+              const { data: options, error: pollError } = await (supabase as any)
+                .rpc('get_poll_results', { content_uuid: item.id })
+              
+              if (pollError) {
+                console.error('Error fetching poll results:', pollError)
+                // Fallback to direct query if RPC fails
+                const { data: fallbackOptions } = await (supabase as any)
+                  .from('poll_options')
+                  .select('id, option_text, vote_count, created_at')
+                  .eq('content_id', item.id)
+                  .order('created_at')
+                enhancedItem.poll_options = (fallbackOptions || []).map((opt: any) => ({
+                  id: opt.id,
+                  option_text: opt.option_text,
+                  vote_count: opt.vote_count || 0
+                }))
+              } else {
+                enhancedItem.poll_options = (options || []).map((opt: any) => ({
+                  id: opt.option_id,
+                  option_text: opt.option_text,
+                  vote_count: opt.vote_count || 0
+                }))
+              }
               
               // Check if user has voted
               if (user) {
