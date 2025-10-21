@@ -112,8 +112,28 @@ export default function PublicEventRSVP({ contentId }: PublicEventRSVPProps) {
         return
       }
 
+      // Send confirmation email
+      try {
+        await fetch('/api/external-response/confirm-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email,
+            name,
+            responseType: 'event_rsvp',
+            contentTitle: title,
+            contentType: 'event',
+            eventDate: data?.date ? new Date(data.date).toLocaleDateString() : 'TBD',
+            eventLocation: data?.location || 'Location TBD'
+          })
+        })
+      } catch (emailError) {
+        console.error('Failed to send confirmation email:', emailError)
+        // Don't fail the submission if email fails
+      }
+
       setSubmitted(true)
-      setResponseMessage('Thank you for your RSVP! Your registration has been confirmed.')
+      setResponseMessage('Thank you for your RSVP! Your registration has been confirmed. Check your email for details.')
       
       // Refresh event details to show updated registration count
       fetchEventDetails()

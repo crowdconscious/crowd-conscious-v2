@@ -63,8 +63,27 @@ export default function PublicNeedSupport({
         return
       }
 
+      // Send confirmation email
+      try {
+        await fetch('/api/external-response/confirm-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email,
+            name,
+            responseType: 'need_support',
+            contentTitle: title,
+            contentType: 'need',
+            supportType: supportType
+          })
+        })
+      } catch (emailError) {
+        console.error('Failed to send confirmation email:', emailError)
+        // Don't fail the submission if email fails
+      }
+
       setSubmitted(true)
-      setMessage('Thank you for your support offer! The community organizers will contact you soon.')
+      setMessage('Thank you for your support offer! The community organizers will contact you soon. Check your email for confirmation.')
     } catch (error) {
       console.error('Support submission error:', error)
       setMessage('An unexpected error occurred. Please try again.')

@@ -105,8 +105,28 @@ export default function PublicPollForm({ contentId }: PublicPollFormProps) {
         return
       }
 
+      // Send confirmation email
+      try {
+        const selectedOptionData = options.find(opt => opt.id === selectedOption)
+        await fetch('/api/external-response/confirm-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email,
+            name,
+            responseType: 'poll_vote',
+            contentTitle: title,
+            contentType: 'poll',
+            pollOption: selectedOptionData?.option_text
+          })
+        })
+      } catch (emailError) {
+        console.error('Failed to send confirmation email:', emailError)
+        // Don't fail the submission if email fails
+      }
+
       setSubmitted(true)
-      setMessage('Thank you for your vote! Your response has been recorded.')
+      setMessage('Thank you for your vote! Your response has been recorded. Check your email for confirmation.')
       
       // Refresh options to show updated counts (with external votes)
       await fetchPollOptionsWithExternalVotes()

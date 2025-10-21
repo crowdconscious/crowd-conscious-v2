@@ -15,6 +15,7 @@ interface SponsorshipCheckoutProps {
 }
 
 interface SponsorshipFormData {
+  support_type: 'financial' | 'volunteer' | 'resources' // NEW: Support type
   amount: number
   sponsor_type: 'individual' | 'business'
   
@@ -36,6 +37,10 @@ interface SponsorshipFormData {
   message: string
   anonymous: boolean
   tax_receipt: boolean
+  
+  // Volunteer/Resources fields
+  volunteer_skills?: string
+  resource_description?: string
 }
 
 export default function SponsorshipCheckout({
@@ -48,6 +53,7 @@ export default function SponsorshipCheckout({
   onCancel
 }: SponsorshipCheckoutProps) {
   const [formData, setFormData] = useState<SponsorshipFormData>({
+    support_type: 'financial',
     amount: 1000,
     sponsor_type: 'individual',
     display_name: '',
@@ -58,7 +64,9 @@ export default function SponsorshipCheckout({
     phone: '',
     message: '',
     anonymous: false,
-    tax_receipt: false
+    tax_receipt: false,
+    volunteer_skills: '',
+    resource_description: ''
   })
 
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
@@ -165,21 +173,29 @@ export default function SponsorshipCheckout({
       const sponsorshipData: any = {
         content_id: contentId,
         sponsor_id: user.id,
-        amount: formData.amount,
-        status: 'pending',
+        amount: formData.support_type === 'financial' ? formData.amount : 0, // 0 for non-financial support
+        status: 'approved', // Changed from 'pending' to 'approved' for direct support
         sponsor_type: formData.sponsor_type,
+        support_type: formData.support_type, // NEW: Track support type
         display_name: formData.sponsor_type === 'individual' 
           ? formData.display_name 
           : formData.brand_name,
         sponsor_email: formData.email,
         sponsor_phone: formData.phone,
         message: formData.message,
-        // Business fields
-        ...(formData.sponsor_type === 'business' && {
+        // Business fields (for financial support)
+        ...(formData.sponsor_type === 'business' && formData.support_type === 'financial' && {
           brand_name: formData.brand_name,
           brand_logo_url: logoUrl,
           brand_website: formData.brand_website,
           tax_id: formData.tax_id
+        }),
+        // Volunteer/Resources fields
+        ...(formData.support_type === 'volunteer' && {
+          volunteer_skills: formData.volunteer_skills
+        }),
+        ...(formData.support_type === 'resources' && {
+          resource_description: formData.resource_description
         })
       }
 
@@ -192,28 +208,59 @@ export default function SponsorshipCheckout({
       if (sponsorError) throw sponsorError
       if (!sponsorship) throw new Error('Failed to create sponsorship')
 
-      // Redirect to Stripe checkout
-      const response = await fetch('/api/create-checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sponsorshipId: (sponsorship as any).id,
-          amount: formData.amount,
-          contentTitle,
-          communityName,
-          sponsorType: formData.sponsor_type,
-          brandName: formData.brand_name,
-          email: formData.email,
-          taxReceipt: formData.tax_receipt
+      // Send confirmation email
+      try {
+        await fetch('/api/support/confirm-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: formData.email,
+            supportType: formData.support_type,
+            contentTitle,
+            communityName,
+            displayName: formData.display_name || formData.brand_name,
+            amount: formData.support_type === 'financial' ? formData.amount : undefined,
+            skills: formData.volunteer_skills,
+            resources: formData.resource_description
+          })
         })
-      })
+      } catch (emailError) {
+        console.error('Failed to send confirmation email:', emailError)
+        // Don't fail the whole process if email fails
+      }
 
-      const { url, error: checkoutError } = await response.json()
-      
-      if (checkoutError) throw new Error(checkoutError)
-      
-      // Redirect to Stripe
-      window.location.href = url
+      // For financial support, redirect to Stripe checkout
+      if (formData.support_type === 'financial') {
+        const response = await fetch('/api/create-checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sponsorshipId: (sponsorship as any).id,
+            amount: formData.amount,
+            contentTitle,
+            communityName,
+            sponsorType: formData.sponsor_type,
+            brandName: formData.brand_name,
+            email: formData.email,
+            taxReceipt: formData.tax_receipt
+          })
+        })
+
+        const { url, error: checkoutError } = await response.json()
+        
+        if (checkoutError) throw new Error(checkoutError)
+        
+        // Redirect to Stripe
+        window.location.href = url
+      } else {
+        // For volunteer/resources, show success and call onSuccess
+        if (onSuccess) {
+          onSuccess()
+        } else {
+          // Redirect to content page
+          window.location.href = `/communities/${(content as any)?.community_id || communityId}/content/${contentId}`
+        }
+      }
 
     } catch (err: any) {
       console.error('Sponsorship error:', err)
@@ -249,11 +296,74 @@ export default function SponsorshipCheckout({
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Amount Selection */}
+          {/* Support Type Selection */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-3">
-              Sponsorship Amount (MXN)
+              How would you like to support this need? *
             </label>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, support_type: 'financial' })}
+                className={`p-4 rounded-lg border-2 text-left transition-all ${
+                  formData.support_type === 'financial'
+                    ? 'border-teal-600 bg-teal-50'
+                    : 'border-slate-200 hover:border-teal-300'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="text-3xl">💰</div>
+                  <div>
+                    <div className="font-semibold text-slate-900">Financial Support</div>
+                    <div className="text-sm text-slate-600">Make a monetary contribution</div>
+                  </div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, support_type: 'volunteer' })}
+                className={`p-4 rounded-lg border-2 text-left transition-all ${
+                  formData.support_type === 'volunteer'
+                    ? 'border-teal-600 bg-teal-50'
+                    : 'border-slate-200 hover:border-teal-300'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="text-3xl">🙋</div>
+                  <div>
+                    <div className="font-semibold text-slate-900">Volunteer Time</div>
+                    <div className="text-sm text-slate-600">Offer your skills & time</div>
+                  </div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, support_type: 'resources' })}
+                className={`p-4 rounded-lg border-2 text-left transition-all ${
+                  formData.support_type === 'resources'
+                    ? 'border-teal-600 bg-teal-50'
+                    : 'border-slate-200 hover:border-teal-300'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="text-3xl">📦</div>
+                  <div>
+                    <div className="font-semibold text-slate-900">Provide Resources</div>
+                    <div className="text-sm text-slate-600">Donate materials or equipment</div>
+                  </div>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* Amount Selection - Only for Financial Support */}
+          {formData.support_type === 'financial' && (
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-3">
+                Sponsorship Amount (MXN)
+              </label>
             <div className="grid grid-cols-3 md:grid-cols-5 gap-3 mb-3">
               {suggestedAmounts.map((amount) => (
                 <button
@@ -281,20 +391,75 @@ export default function SponsorshipCheckout({
             />
           </div>
 
-          {/* Sponsor Tier Display */}
-          <div className={`p-4 rounded-lg border-2 ${tier.color}`}>
-            <h3 className="font-semibold mb-2">{tier.name}</h3>
-            <ul className="text-sm space-y-1">
-              {tier.benefits.map((benefit, i) => (
-                <li key={i} className="flex items-center gap-2">
-                  <span className="text-teal-600">✓</span>
-                  {benefit}
-                </li>
-              ))}
-            </ul>
+            {/* Sponsor Tier Display */}
+            <div className={`p-4 rounded-lg border-2 ${tier.color}`}>
+              <h3 className="font-semibold mb-2">{tier.name}</h3>
+              <ul className="text-sm space-y-1">
+                {tier.benefits.map((benefit, i) => (
+                  <li key={i} className="flex items-center gap-2">
+                    <span className="text-teal-600">✓</span>
+                    {benefit}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
+          )}
 
-          {/* Sponsor Type Selection */}
+          {/* Volunteer Skills - Only for Volunteer Support */}
+          {formData.support_type === 'volunteer' && (
+            <div className="bg-teal-50 p-6 rounded-lg border-2 border-teal-200">
+              <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                <span className="text-2xl">🙋</span>
+                Volunteer Information
+              </h3>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  What skills or time can you offer? *
+                </label>
+                <textarea
+                  value={formData.volunteer_skills}
+                  onChange={(e) => setFormData({ ...formData, volunteer_skills: e.target.value })}
+                  rows={4}
+                  required={formData.support_type === 'volunteer'}
+                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  placeholder="Describe your skills, availability, and how you'd like to help..."
+                />
+                <p className="text-xs text-slate-600 mt-2">
+                  Example: "I'm a carpenter available weekends" or "I can help with event planning, 5 hours/week"
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Resources Description - Only for Resources Support */}
+          {formData.support_type === 'resources' && (
+            <div className="bg-purple-50 p-6 rounded-lg border-2 border-purple-200">
+              <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                <span className="text-2xl">📦</span>
+                Resource Information
+              </h3>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  What resources can you provide? *
+                </label>
+                <textarea
+                  value={formData.resource_description}
+                  onChange={(e) => setFormData({ ...formData, resource_description: e.target.value })}
+                  rows={4}
+                  required={formData.support_type === 'resources'}
+                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  placeholder="Describe the materials, equipment, or resources you can donate..."
+                />
+                <p className="text-xs text-slate-600 mt-2">
+                  Example: "10 bags of cement" or "Van for transportation" or "20 shovels and tools"
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Sponsor Type Selection - Only for Financial Support */}
+          {formData.support_type === 'financial' && (
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-3">
               Sponsor As
@@ -449,6 +614,9 @@ export default function SponsorshipCheckout({
             </div>
           )}
 
+          </div>
+          )}
+
           {/* Contact Information */}
           <div className="space-y-4">
             <h3 className="font-semibold text-slate-900">Contact Information</h3>
@@ -554,10 +722,18 @@ export default function SponsorshipCheckout({
             </button>
             <button
               type="submit"
-              disabled={loading || uploadingLogo || (formData.sponsor_type === 'business' && !formData.brand_name)}
+              disabled={loading || uploadingLogo || (formData.sponsor_type === 'business' && formData.support_type === 'financial' && !formData.brand_name)}
               className="flex-1 px-6 py-3 bg-teal-600 hover:bg-teal-700 disabled:bg-slate-400 text-white font-semibold rounded-lg transition-colors"
             >
-              {uploadingLogo ? 'Uploading Logo...' : loading ? 'Processing...' : `Sponsor $${formData.amount.toLocaleString()} MXN`}
+              {uploadingLogo 
+                ? 'Uploading Logo...' 
+                : loading 
+                  ? 'Processing...' 
+                  : formData.support_type === 'financial'
+                    ? `Sponsor $${formData.amount.toLocaleString()} MXN`
+                    : formData.support_type === 'volunteer'
+                      ? 'Offer to Volunteer'
+                      : 'Offer Resources'}
             </button>
           </div>
         </form>
