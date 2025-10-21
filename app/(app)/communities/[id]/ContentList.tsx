@@ -6,6 +6,7 @@ import Link from 'next/link'
 import PollVoting from './content/components/PollVoting'
 import EventRSVP from './content/components/EventRSVP'
 import NeedActivities from './content/components/NeedActivities'
+import ShareButton from '@/app/components/ShareButton'
 
 interface Content {
   id: string
@@ -393,16 +394,12 @@ export default function ContentList({ communityId, userRole }: ContentListProps)
                     <span>💬</span>
                     <span>Discussion</span>
                   </Link>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(`${window.location.origin}/communities/${communityId}/content/${item.id}`)
-                      // Could add toast notification here
-                    }}
-                    className="flex items-center gap-1 text-slate-500 hover:text-slate-700 text-sm font-medium transition-colors"
-                  >
-                    <span>📤</span>
-                    <span>Share</span>
-                  </button>
+                  <ShareButton
+                    contentId={item.id}
+                    contentType={item.type}
+                    title={item.title}
+                    description={item.description || undefined}
+                  />
                 </div>
                 <div className="text-xs text-slate-500">
                   <div>By {item.profiles?.full_name || item.profiles?.email || 'Unknown'}</div>
