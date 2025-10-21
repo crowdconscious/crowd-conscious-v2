@@ -360,50 +360,51 @@ export default function SponsorshipCheckout({
 
           {/* Amount Selection - Only for Financial Support */}
           {formData.support_type === 'financial' && (
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-3">
-                Sponsorship Amount (MXN)
-              </label>
-            <div className="grid grid-cols-3 md:grid-cols-5 gap-3 mb-3">
-              {suggestedAmounts.map((amount) => (
-                <button
-                  key={amount}
-                  type="button"
-                  onClick={() => setFormData({ ...formData, amount })}
-                  className={`py-3 px-4 rounded-lg border-2 font-medium transition-all ${
-                    formData.amount === amount
-                      ? 'border-teal-600 bg-teal-50 text-teal-700'
-                      : 'border-slate-200 hover:border-teal-300'
-                  }`}
-                >
-                  ${amount.toLocaleString()}
-                </button>
-              ))}
-            </div>
-            <input
-              type="number"
-              value={formData.amount}
-              onChange={(e) => setFormData({ ...formData, amount: parseInt(e.target.value) || 0 })}
-              min="100"
-              step="100"
-              className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-              placeholder="Custom amount"
-            />
-          </div>
+            <>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-3">
+                  Sponsorship Amount (MXN)
+                </label>
+                <div className="grid grid-cols-3 md:grid-cols-5 gap-3 mb-3">
+                  {suggestedAmounts.map((amount) => (
+                    <button
+                      key={amount}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, amount })}
+                      className={`py-3 px-4 rounded-lg border-2 font-medium transition-all ${
+                        formData.amount === amount
+                          ? 'border-teal-600 bg-teal-50 text-teal-700'
+                          : 'border-slate-200 hover:border-teal-300'
+                      }`}
+                    >
+                      ${amount.toLocaleString()}
+                    </button>
+                  ))}
+                </div>
+                <input
+                  type="number"
+                  value={formData.amount}
+                  onChange={(e) => setFormData({ ...formData, amount: parseInt(e.target.value) || 0 })}
+                  min="100"
+                  step="100"
+                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  placeholder="Custom amount"
+                />
+              </div>
 
-            {/* Sponsor Tier Display */}
-            <div className={`p-4 rounded-lg border-2 ${tier.color}`}>
-              <h3 className="font-semibold mb-2">{tier.name}</h3>
-              <ul className="text-sm space-y-1">
-                {tier.benefits.map((benefit, i) => (
-                  <li key={i} className="flex items-center gap-2">
-                    <span className="text-teal-600">✓</span>
-                    {benefit}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
+              {/* Sponsor Tier Display */}
+              <div className={`p-4 rounded-lg border-2 ${tier.color}`}>
+                <h3 className="font-semibold mb-2">{tier.name}</h3>
+                <ul className="text-sm space-y-1">
+                  {tier.benefits.map((benefit, i) => (
+                    <li key={i} className="flex items-center gap-2">
+                      <span className="text-teal-600">✓</span>
+                      {benefit}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </>
           )}
 
           {/* Volunteer Skills - Only for Volunteer Support */}
