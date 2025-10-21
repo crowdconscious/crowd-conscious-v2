@@ -11,9 +11,10 @@ interface PollOption {
 
 interface PublicPollFormProps {
   contentId: string
+  title: string
 }
 
-export default function PublicPollForm({ contentId }: PublicPollFormProps) {
+export default function PublicPollForm({ contentId, title }: PublicPollFormProps) {
   const [options, setOptions] = useState<PollOption[]>([])
   const [selectedOption, setSelectedOption] = useState<string>('')
   const [email, setEmail] = useState('')

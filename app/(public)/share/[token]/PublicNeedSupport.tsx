@@ -5,12 +5,14 @@ import { supabase } from '../../../../lib/supabase'
 
 interface PublicNeedSupportProps {
   contentId: string
+  title: string
   fundingGoal: number | null
   currentFunding: number
 }
 
 export default function PublicNeedSupport({ 
-  contentId, 
+  contentId,
+  title,
   fundingGoal, 
   currentFunding 
 }: PublicNeedSupportProps) {

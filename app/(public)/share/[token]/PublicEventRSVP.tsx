@@ -13,9 +13,11 @@ interface EventDetails {
 
 interface PublicEventRSVPProps {
   contentId: string
+  title: string
+  data?: any
 }
 
-export default function PublicEventRSVP({ contentId }: PublicEventRSVPProps) {
+export default function PublicEventRSVP({ contentId, title, data }: PublicEventRSVPProps) {
   const [eventDetails, setEventDetails] = useState<EventDetails | null>(null)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')

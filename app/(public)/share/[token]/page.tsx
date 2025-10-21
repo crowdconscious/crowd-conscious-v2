@@ -243,16 +243,24 @@ export default async function SharedContentPage({
 
           {/* Type-specific interaction forms */}
           {content.type === 'poll' && (
-            <PublicPollForm contentId={content.id} />
+            <PublicPollForm 
+              contentId={content.id}
+              title={content.title}
+            />
           )}
 
           {content.type === 'event' && (
-            <PublicEventRSVP contentId={content.id} />
+            <PublicEventRSVP 
+              contentId={content.id}
+              title={content.title}
+              data={(content as any).data}
+            />
           )}
 
           {content.type === 'need' && (
             <PublicNeedSupport 
               contentId={content.id}
+              title={content.title}
               fundingGoal={content.funding_goal}
               currentFunding={content.current_funding}
             />
