@@ -198,8 +198,48 @@ export async function POST(request: NextRequest) {
         // await sendSponsorshipConfirmationEmail(...)
 
         console.log('🎉 Webhook processing completed successfully')
+      } else if (session.metadata?.type === 'treasury_donation') {
+        // Handle treasury donation
+        console.log('💰 Processing treasury donation')
+        const { community_id, donor_id, donor_email, donor_name, amount } = session.metadata
+        
+        if (community_id && amount) {
+          try {
+            const supabaseClient = getSupabase()
+            
+            // Add donation to treasury using RPC function
+            const { data, error } = await supabaseClient.rpc('add_treasury_donation', {
+              p_community_id: community_id,
+              p_amount: parseFloat(amount),
+              p_donor_id: donor_id || null,
+              p_donor_email: donor_email || session.customer_email || null,
+              p_donor_name: donor_name || null,
+              p_stripe_payment_intent_id: session.payment_intent as string || null,
+              p_description: `Donation to community pool via Stripe`
+            })
+            
+            if (error) {
+              console.error('❌ Failed to add treasury donation:', error)
+              return NextResponse.json(
+                { error: 'Failed to add treasury donation' },
+                { status: 500 }
+              )
+            }
+            
+            console.log('✅ Treasury donation added successfully:', data)
+            console.log('🎉 Treasury webhook processing completed successfully')
+          } catch (treasuryError) {
+            console.error('❌ Treasury donation error:', treasuryError)
+            return NextResponse.json(
+              { error: 'Treasury donation processing failed' },
+              { status: 500 }
+            )
+          }
+        } else {
+          console.warn('⚠️ Missing required metadata for treasury donation')
+        }
       } else {
-        console.warn('⚠️ No sponsorshipId in metadata')
+        console.warn('⚠️ No sponsorshipId in metadata and not a treasury donation')
       }
       break
 

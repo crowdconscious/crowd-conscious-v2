@@ -479,6 +479,120 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
         </div>
       </div>
 
+      {/* Payment Settings */}
+      <div>
+        <h2 className="text-2xl font-bold text-slate-900 mb-6">💳 Payment Settings</h2>
+        
+        <AnimatedCard className="p-6">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <span className="text-xl">💰</span>
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-slate-900 mb-2">Stripe Connect - Receive Payments</h3>
+              <p className="text-slate-600 text-sm mb-4">
+                Connect your Stripe account to receive 85% of sponsorship payments directly to your bank account. Required if you're a community creator accepting sponsorships.
+              </p>
+              
+              {profile?.stripe_charges_enabled ? (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-green-600">
+                    <span>✅</span>
+                    <span className="font-medium">Payments Enabled</span>
+                  </div>
+                  <p className="text-sm text-slate-600">
+                    You're all set to receive payments! Future sponsorships will automatically transfer 85% to your connected account.
+                  </p>
+                  <div className="flex gap-3">
+                    <AnimatedButton
+                      onClick={() => window.location.href = '/dashboard/payments'}
+                      variant="secondary"
+                      size="sm"
+                    >
+                      View Dashboard
+                    </AnimatedButton>
+                    <AnimatedButton
+                      onClick={async () => {
+                        try {
+                          const response = await fetch('/api/stripe/connect/onboard', {
+                            method: 'POST'
+                          })
+                          const data = await response.json()
+                          if (data.url) {
+                            window.location.href = data.url
+                          }
+                        } catch (error) {
+                          console.error('Failed to start onboarding:', error)
+                        }
+                      }}
+                      variant="ghost"
+                      size="sm"
+                    >
+                      Update Account
+                    </AnimatedButton>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {profile?.stripe_connect_id ? (
+                    <>
+                      <div className="flex items-center gap-2 text-amber-600">
+                        <span>⏳</span>
+                        <span className="font-medium">Onboarding In Progress</span>
+                      </div>
+                      <p className="text-sm text-slate-600">
+                        Complete your Stripe Connect onboarding to start receiving payments.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-2 text-slate-600">
+                        <span>💡</span>
+                        <span className="font-medium">Not Connected</span>
+                      </div>
+                      <p className="text-sm text-slate-600">
+                        Connect your Stripe account to receive sponsorship payments.
+                      </p>
+                    </>
+                  )}
+                  <AnimatedButton
+                    onClick={async () => {
+                      setIsLoading(true)
+                      try {
+                        const response = await fetch('/api/stripe/connect/onboard', {
+                          method: 'POST'
+                        })
+                        const data = await response.json()
+                        if (data.url) {
+                          window.location.href = data.url
+                        } else {
+                          alert('Failed to start onboarding. Please try again.')
+                        }
+                      } catch (error) {
+                        console.error('Failed to start onboarding:', error)
+                        alert('Failed to start onboarding. Please try again.')
+                      } finally {
+                        setIsLoading(false)
+                      }
+                    }}
+                    variant="primary"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? 'Loading...' : profile?.stripe_connect_id ? 'Continue Onboarding' : 'Connect Stripe Account'}
+                  </AnimatedButton>
+                </div>
+              )}
+              
+              <div className="mt-4 pt-4 border-t border-slate-200">
+                <p className="text-xs text-slate-500">
+                  💡 How it works: When someone sponsors your community's content, 85% goes directly to your bank account and 15% covers platform fees. Payouts typically arrive within 2-7 business days.
+                </p>
+              </div>
+            </div>
+          </div>
+        </AnimatedCard>
+      </div>
+
       {/* Notifications */}
       <div>
         <h2 className="text-2xl font-bold text-slate-900 mb-6">Notifications</h2>

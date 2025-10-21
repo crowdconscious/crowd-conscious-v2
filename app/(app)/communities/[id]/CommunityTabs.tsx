@@ -3,15 +3,17 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import ContentList from './ContentList'
+import CommunityTreasury from './CommunityTreasury'
 
 interface CommunityTabsProps {
   communityId: string
+  communityName?: string
   memberCount: number
   userRole?: string | null
 }
 
-export default function CommunityTabs({ communityId, memberCount, userRole }: CommunityTabsProps) {
-  const [activeTab, setActiveTab] = useState<'content' | 'members' | 'impact'>('content')
+export default function CommunityTabs({ communityId, communityName, memberCount, userRole }: CommunityTabsProps) {
+  const [activeTab, setActiveTab] = useState<'content' | 'pool' | 'members' | 'impact'>('content')
 
   return (
     <div>
@@ -32,6 +34,17 @@ export default function CommunityTabs({ communityId, memberCount, userRole }: Co
             Content
           </button>
           <button
+            onClick={() => setActiveTab('pool')}
+            className={`py-4 transition-colors flex items-center gap-2 ${
+              activeTab === 'pool'
+                ? 'text-teal-600 border-b-2 border-teal-600 font-medium'
+                : 'text-slate-600 hover:text-teal-600'
+            }`}
+          >
+            <span>💰</span>
+            <span>Community Pool</span>
+          </button>
+          <button
             onClick={() => setActiveTab('impact')}
             className={`py-4 transition-colors ${
               activeTab === 'impact'
@@ -48,6 +61,14 @@ export default function CommunityTabs({ communityId, memberCount, userRole }: Co
       <div className="p-6">
         {activeTab === 'content' && (
           <ContentList communityId={communityId} userRole={userRole || null} />
+        )}
+        
+        {activeTab === 'pool' && (
+          <CommunityTreasury 
+            communityId={communityId}
+            communityName={communityName || 'Community'}
+            userRole={userRole || undefined}
+          />
         )}
         
         {activeTab === 'members' && (

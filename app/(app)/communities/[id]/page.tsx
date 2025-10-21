@@ -246,6 +246,7 @@ export default async function CommunityDetailPage({
         {/* Community Tabs */}
         <CommunityTabs 
           communityId={community.id}
+          communityName={community.name}
           memberCount={community.member_count}
           userRole={(userMembership as any)?.role || null}
         />
