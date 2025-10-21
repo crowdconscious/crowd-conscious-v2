@@ -208,7 +208,7 @@ export async function POST(request: NextRequest) {
             const supabaseClient = getSupabase()
             
             // Add donation to treasury using RPC function
-            const { data, error } = await supabaseClient.rpc('add_treasury_donation', {
+            const { data, error } = await (supabaseClient as any).rpc('add_treasury_donation', {
               p_community_id: community_id,
               p_amount: parseFloat(amount),
               p_donor_id: donor_id || null,

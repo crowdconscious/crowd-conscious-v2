@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Use SQL function to spend from treasury
-    const { data, error } = await supabase.rpc('spend_from_treasury', {
+    const { data, error } = await (supabase as any).rpc('spend_from_treasury', {
       p_community_id: communityId,
       p_amount: amount,
       p_sponsored_content_id: contentId,

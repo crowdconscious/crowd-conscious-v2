@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get treasury stats using RPC
-    const { data, error } = await supabase.rpc('get_treasury_stats', {
+    const { data, error } = await (supabase as any).rpc('get_treasury_stats', {
       p_community_id: communityId,
     })
 
