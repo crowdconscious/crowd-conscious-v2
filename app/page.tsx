@@ -13,6 +13,9 @@ const TrustedBrands = dynamic(() => import('../components/TrustedBrands'))
 const Footer = dynamic(() => import('../components/Footer'))
 const CookieConsent = dynamic(() => import('../components/CookieConsent'))
 
+// Revalidate this page every 60 seconds to show fresh data
+export const revalidate = 60
+
 interface Community {
   id: string
   name: string
