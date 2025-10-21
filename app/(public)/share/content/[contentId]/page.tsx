@@ -289,16 +289,24 @@ export default async function PublicContentPage({
             {/* Type-specific interaction forms */}
             <div className="mt-8">
               {content.type === 'poll' && (
-                <PublicPollForm contentId={content.id} />
+                <PublicPollForm 
+                  contentId={content.id}
+                  title={content.title}
+                />
               )}
 
               {content.type === 'event' && (
-                <PublicEventRSVP contentId={content.id} />
+                <PublicEventRSVP 
+                  contentId={content.id}
+                  title={content.title}
+                  data={(content as any).data}
+                />
               )}
 
               {content.type === 'need' && (
                 <PublicNeedSupport 
                   contentId={content.id}
+                  title={content.title}
                   fundingGoal={content.funding_goal}
                   currentFunding={content.current_funding}
                 />
