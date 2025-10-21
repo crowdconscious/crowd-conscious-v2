@@ -44,6 +44,14 @@ export default async function SponsorPage({ params }: SponsorPageProps) {
     notFound()
   }
 
+  // Get user's role in the community
+  const { data: membership } = await supabase
+    .from('community_members')
+    .select('role')
+    .eq('community_id', communityId)
+    .eq('user_id', (user as any).id)
+    .single()
+
   return (
     <SponsorCheckoutClient
       contentId={content.id}
@@ -52,6 +60,7 @@ export default async function SponsorPage({ params }: SponsorPageProps) {
       currentFunding={content.current_funding || 0}
       communityName={(content.communities as any)?.name || 'Community'}
       communityId={communityId}
+      userRole={membership?.role || null}
     />
   )
 }

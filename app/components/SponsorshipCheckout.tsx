@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClientAuth } from '@/lib/auth'
 import { uploadSponsorLogo } from '@/lib/storage'
 
@@ -11,6 +11,7 @@ interface SponsorshipCheckoutProps {
   currentFunding: number
   communityName: string
   communityId?: string
+  userRole?: string | null
   onSuccess?: () => void
   onCancel?: () => void
 }
@@ -51,6 +52,7 @@ export default function SponsorshipCheckout({
   currentFunding,
   communityName,
   communityId,
+  userRole,
   onSuccess,
   onCancel
 }: SponsorshipCheckoutProps) {
@@ -75,8 +77,38 @@ export default function SponsorshipCheckout({
   const [loading, setLoading] = useState(false)
   const [uploadingLogo, setUploadingLogo] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  
+  // Pool funding states
+  const [usePoolFunds, setUsePoolFunds] = useState(false)
+  const [poolBalance, setPoolBalance] = useState<number>(0)
+  const [loadingPool, setLoadingPool] = useState(false)
 
   const supabase = createClientAuth()
+  const isAdmin = userRole === 'admin' || userRole === 'moderator'
+  
+  // Fetch pool balance if user is admin
+  useEffect(() => {
+    if (isAdmin && communityId) {
+      fetchPoolBalance()
+    }
+  }, [isAdmin, communityId])
+  
+  const fetchPoolBalance = async () => {
+    if (!communityId) return
+    
+    setLoadingPool(true)
+    try {
+      const response = await fetch(`/api/treasury/stats?communityId=${communityId}`)
+      if (response.ok) {
+        const data = await response.json()
+        setPoolBalance(data.balance || 0)
+      }
+    } catch (error) {
+      console.error('Error fetching pool balance:', error)
+    } finally {
+      setLoadingPool(false)
+    }
+  }
 
   // Predefined amounts in MXN
   const suggestedAmounts = [500, 1000, 2500, 5000, 10000]
@@ -231,29 +263,61 @@ export default function SponsorshipCheckout({
         // Don't fail the whole process if email fails
       }
 
-      // For financial support, redirect to Stripe checkout
+      // For financial support, either use pool funds or redirect to Stripe checkout
       if (formData.support_type === 'financial') {
-        const response = await fetch('/api/create-checkout', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            sponsorshipId: (sponsorship as any).id,
-            amount: formData.amount,
-            contentTitle,
-            communityName,
-            sponsorType: formData.sponsor_type,
-            brandName: formData.brand_name,
-            email: formData.email,
-            taxReceipt: formData.tax_receipt
+        if (usePoolFunds && communityId) {
+          // Use community pool funds
+          const poolResponse = await fetch('/api/treasury/spend', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              communityId,
+              contentId,
+              amount: formData.amount,
+              sponsorshipId: (sponsorship as any).id,
+              description: `Community pool sponsorship for ${contentTitle}`
+            })
           })
-        })
+          
+          if (!poolResponse.ok) {
+            const poolError = await poolResponse.json()
+            throw new Error(poolError.error || 'Failed to use pool funds')
+          }
+          
+          // Success! Show success message and redirect
+          if (onSuccess) {
+            onSuccess()
+          } else {
+            if (communityId) {
+              window.location.href = `/communities/${communityId}/content/${contentId}?pool_sponsor_success=true`
+            } else {
+              window.location.href = '/dashboard'
+            }
+          }
+        } else {
+          // Normal Stripe checkout
+          const response = await fetch('/api/create-checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              sponsorshipId: (sponsorship as any).id,
+              amount: formData.amount,
+              contentTitle,
+              communityName,
+              sponsorType: formData.sponsor_type,
+              brandName: formData.brand_name,
+              email: formData.email,
+              taxReceipt: formData.tax_receipt
+            })
+          })
 
-        const { url, error: checkoutError } = await response.json()
-        
-        if (checkoutError) throw new Error(checkoutError)
-        
-        // Redirect to Stripe
-        window.location.href = url
+          const { url, error: checkoutError } = await response.json()
+          
+          if (checkoutError) throw new Error(checkoutError)
+          
+          // Redirect to Stripe
+          window.location.href = url
+        }
       } else {
         // For volunteer/resources, show success and call onSuccess
         if (onSuccess) {
@@ -397,6 +461,60 @@ export default function SponsorshipCheckout({
                   placeholder="Custom amount"
                 />
               </div>
+
+              {/* Pool Funding Option - Only for Admins with sufficient balance */}
+              {isAdmin && communityId && !loadingPool && (
+                <div className={`p-4 rounded-lg border-2 ${
+                  poolBalance >= formData.amount 
+                    ? 'border-green-300 bg-green-50' 
+                    : 'border-amber-300 bg-amber-50'
+                }`}>
+                  <div className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      id="usePoolFunds"
+                      checked={usePoolFunds}
+                      onChange={(e) => setUsePoolFunds(e.target.checked)}
+                      disabled={poolBalance < formData.amount}
+                      className="mt-1 w-5 h-5 text-green-600 border-green-300 rounded focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                    <div className="flex-1">
+                      <label 
+                        htmlFor="usePoolFunds" 
+                        className={`font-semibold flex items-center gap-2 ${
+                          poolBalance >= formData.amount 
+                            ? 'text-green-900' 
+                            : 'text-amber-900'
+                        }`}
+                      >
+                        <span>💰</span>
+                        <span>Use Community Pool Funds</span>
+                      </label>
+                      <p className={`text-sm mt-1 ${
+                        poolBalance >= formData.amount 
+                          ? 'text-green-700' 
+                          : 'text-amber-700'
+                      }`}>
+                        Available balance: <strong>${poolBalance.toLocaleString()} MXN</strong>
+                      </p>
+                      {poolBalance >= formData.amount ? (
+                        <p className="text-xs text-green-600 mt-2">
+                          ✅ Sufficient funds available. This sponsorship will be paid from the community pool - no personal payment required!
+                        </p>
+                      ) : (
+                        <p className="text-xs text-amber-600 mt-2">
+                          ⚠️ Insufficient pool balance. Need ${(formData.amount - poolBalance).toLocaleString()} MXN more. Members can donate to the pool first.
+                        </p>
+                      )}
+                      {usePoolFunds && (
+                        <p className="text-xs text-slate-600 mt-2 italic">
+                          Note: The community will be credited for this sponsorship. All members will be able to see this in the treasury transactions.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Sponsor Tier Display */}
               <div className={`p-4 rounded-lg border-2 ${tier.color}`}>
