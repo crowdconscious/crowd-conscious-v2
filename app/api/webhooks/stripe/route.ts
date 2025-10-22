@@ -108,7 +108,9 @@ export async function POST(request: NextRequest) {
         taxReceipt,
         platformFeeAmount,
         founderAmount,
-        connectedAccountId
+        connectedAccountId,
+        coverPlatformFee,
+        originalSponsorshipAmount
       } = session.metadata || {}
       
       console.log('📝 Session metadata:', {
@@ -118,7 +120,9 @@ export async function POST(request: NextRequest) {
         taxReceipt,
         platformFeeAmount,
         founderAmount,
-        hasConnectedAccount: !!connectedAccountId
+        hasConnectedAccount: !!connectedAccountId,
+        coverPlatformFee: coverPlatformFee === 'yes',
+        originalSponsorshipAmount
       })
 
       if (sponsorshipId) {
@@ -179,8 +183,15 @@ export async function POST(request: NextRequest) {
             total: session.amount_total,
             platformFee: platformFeeAmount,
             founderPayout: founderAmount,
-            destination: connectedAccountId
+            destination: connectedAccountId,
+            feeCoveredBySponsor: coverPlatformFee === 'yes',
+            originalAmount: originalSponsorshipAmount
           })
+        }
+        
+        // Log extra generosity if platform fee was covered
+        if (coverPlatformFee === 'yes') {
+          console.log('💚 Generous sponsor covered the platform fee! Creator receives 100% of sponsorship amount.')
         }
 
         // Refresh materialized view for trusted brands

@@ -82,6 +82,9 @@ export default function SponsorshipCheckout({
   const [usePoolFunds, setUsePoolFunds] = useState(false)
   const [poolBalance, setPoolBalance] = useState<number>(0)
   const [loadingPool, setLoadingPool] = useState(false)
+  
+  // Platform fee coverage
+  const [coverPlatformFee, setCoverPlatformFee] = useState(true) // Default to checked for psychology
 
   const supabase = createClientAuth()
   const isAdmin = userRole === 'admin' || userRole === 'moderator'
@@ -307,7 +310,8 @@ export default function SponsorshipCheckout({
               sponsorType: formData.sponsor_type,
               brandName: formData.brand_name,
               email: formData.email,
-              taxReceipt: formData.tax_receipt
+              taxReceipt: formData.tax_receipt,
+              coverPlatformFee // NEW: Pass fee coverage preference
             })
           })
 
@@ -510,6 +514,73 @@ export default function SponsorshipCheckout({
                         <p className="text-xs text-slate-600 mt-2 italic">
                           Note: The community will be credited for this sponsorship. All members will be able to see this in the treasury transactions.
                         </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Payment Breakdown & Platform Fee Coverage */}
+              {!usePoolFunds && (
+                <div className="bg-gradient-to-br from-slate-50 to-blue-50 p-6 rounded-xl border-2 border-slate-200 space-y-4">
+                  <h3 className="font-semibold text-slate-900 text-lg">💳 Payment Breakdown</h3>
+                  
+                  {/* Amounts */}
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between items-center py-2 border-b border-slate-200">
+                      <span className="text-slate-700">Sponsorship amount:</span>
+                      <span className="font-semibold text-slate-900">${formData.amount.toLocaleString()} MXN</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-slate-200">
+                      <span className="text-slate-700">Platform operations (15%):</span>
+                      <span className="font-semibold text-slate-900">${Math.round(formData.amount * 0.15).toLocaleString()} MXN</span>
+                    </div>
+                  </div>
+
+                  {/* Cover Platform Fee Checkbox */}
+                  <div className="bg-white p-4 rounded-lg border-2 border-teal-300 hover:border-teal-400 transition-colors">
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        id="coverPlatformFee"
+                        checked={coverPlatformFee}
+                        onChange={(e) => setCoverPlatformFee(e.target.checked)}
+                        className="mt-1 w-5 h-5 text-teal-600 border-teal-300 rounded focus:ring-teal-500"
+                      />
+                      <div className="flex-1">
+                        <label 
+                          htmlFor="coverPlatformFee" 
+                          className="font-semibold text-teal-900 cursor-pointer flex items-center gap-2"
+                        >
+                          <span>✓</span>
+                          <span>Cover platform fee so 100% goes to the community</span>
+                        </label>
+                        <p className="text-xs text-teal-700 mt-1">
+                          Help us keep the platform running while ensuring creators receive the full sponsorship amount
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Total Amount */}
+                  <div className="pt-4 border-t-2 border-slate-300">
+                    <div className="flex justify-between items-center">
+                      <span className="text-lg font-bold text-slate-900">Your total:</span>
+                      <span className="text-2xl font-bold text-teal-600">
+                        ${(coverPlatformFee ? Math.round(formData.amount * 1.15) : formData.amount).toLocaleString()} MXN
+                      </span>
+                    </div>
+                    <div className="text-sm text-slate-600 mt-2">
+                      {coverPlatformFee ? (
+                        <span className="flex items-center gap-2">
+                          <span className="text-green-600">💚</span>
+                          <span>Community receives <strong className="text-green-700">${formData.amount.toLocaleString()} MXN</strong> (100% of sponsorship)</span>
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-2">
+                          <span>💙</span>
+                          <span>Community receives <strong className="text-slate-700">${Math.round(formData.amount * 0.85).toLocaleString()} MXN</strong> (85% of sponsorship)</span>
+                        </span>
                       )}
                     </div>
                   </div>

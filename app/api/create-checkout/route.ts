@@ -34,7 +34,8 @@ export async function POST(request: NextRequest) {
       sponsorType,
       brandName,
       email,
-      taxReceipt
+      taxReceipt,
+      coverPlatformFee = false // NEW: Whether sponsor covers platform fee
     } = await request.json()
 
     // Validate required fields
@@ -47,14 +48,29 @@ export async function POST(request: NextRequest) {
 
     const stripeClient = getStripe()
     
-    // Calculate platform fee (15%)
-    const platformFeeAmount = Math.round(amount * 0.15 * 100) // 15% in cents
-    const founderAmount = (amount * 100) - platformFeeAmount // 85% in cents
+    // Calculate amounts based on whether sponsor covers platform fee
+    let totalChargeAmount: number // What the sponsor pays (in cents)
+    let platformFeeAmount: number // Platform's cut (in cents)
+    let founderAmount: number // What creator receives (in cents)
+    
+    if (coverPlatformFee) {
+      // Sponsor covers the fee: They pay 115%, creator gets 100%
+      totalChargeAmount = Math.round(amount * 1.15 * 100) // Sponsor pays 115%
+      platformFeeAmount = Math.round(amount * 0.15 * 100) // Platform gets 15% of original
+      founderAmount = amount * 100 // Creator gets 100% of original amount
+    } else {
+      // Standard split: They pay 100%, creator gets 85%
+      totalChargeAmount = amount * 100 // Sponsor pays 100%
+      platformFeeAmount = Math.round(amount * 0.15 * 100) // Platform gets 15%
+      founderAmount = totalChargeAmount - platformFeeAmount // Creator gets 85%
+    }
     
     console.log('💰 Payment split:', {
-      totalAmount: amount * 100,
+      coverPlatformFee,
+      totalChargeAmount,
       platformFee: platformFeeAmount,
-      founderAmount: founderAmount
+      founderAmount: founderAmount,
+      sponsorshipAmount: amount * 100
     })
 
     // Get community founder's Stripe Connect account (if exists)
@@ -95,10 +111,12 @@ export async function POST(request: NextRequest) {
             currency: 'mxn',
             product_data: {
               name: `Sponsorship: ${contentTitle}`,
-              description: `Support for ${communityName}`,
+              description: coverPlatformFee 
+                ? `Support for ${communityName} (+ platform fee covered)` 
+                : `Support for ${communityName}`,
               images: ['https://crowdconscious.app/images/logo.png']
             },
-            unit_amount: amount * 100 // Convert to cents
+            unit_amount: totalChargeAmount // Charge the calculated total
           },
           quantity: 1
         }
@@ -117,7 +135,9 @@ export async function POST(request: NextRequest) {
         communityId: communityId || '',
         platformFeeAmount: (platformFeeAmount / 100).toString(),
         founderAmount: (founderAmount / 100).toString(),
-        connectedAccountId: connectedAccountId || ''
+        connectedAccountId: connectedAccountId || '',
+        coverPlatformFee: coverPlatformFee ? 'yes' : 'no', // Track if fee was covered
+        originalSponsorshipAmount: amount.toString() // Original amount before fee
       },
       // Enable tax ID collection for Mexican businesses
       ...(taxReceipt && {
