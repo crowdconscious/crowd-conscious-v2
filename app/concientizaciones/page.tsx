@@ -337,7 +337,7 @@ export default function ConcientizacionesLanding() {
               </button>
             </div>
             <Link
-              href="/corporate/signup"
+              href="/signup-corporate"
               className="text-slate-600 hover:text-teal-600 font-medium"
             >
               {language === 'es' ? 'Crear Cuenta' : 'Sign Up'}
@@ -361,7 +361,7 @@ export default function ConcientizacionesLanding() {
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/corporate/signup"
+              href="/signup-corporate"
               className="bg-gradient-to-r from-teal-600 to-purple-600 text-white px-8 py-4 rounded-xl font-bold text-lg hover:scale-105 transition-transform shadow-xl"
             >
               {currentContent.hero.ctaPrimary}
@@ -465,7 +465,7 @@ export default function ConcientizacionesLanding() {
                 </ul>
                 
                 <Link
-                  href="/corporate/signup"
+                  href="/signup-corporate"
                   className={`block text-center px-6 py-3 rounded-lg font-bold transition-colors ${
                     program.recommended
                       ? 'bg-gradient-to-r from-teal-600 to-purple-600 text-white hover:scale-105'
