@@ -14,7 +14,7 @@ export default async function CorporateDashboard() {
   // Get profile and corporate account
   const { data: profile } = await supabase
     .from('profiles')
-    .select('corporate_account_id')
+    .select('corporate_account_id, full_name')
     .eq('id', user.id)
     .single()
 
