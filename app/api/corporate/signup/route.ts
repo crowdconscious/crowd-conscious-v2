@@ -88,25 +88,28 @@ export async function POST(req: NextRequest) {
 
     const tierDetails = programDetails[programTier as keyof typeof programDetails]
 
-    // Create corporate account with minimal required fields
-    // Only include fields that definitely exist in the database
-    const insertData: any = {
-      company_name: companyName,
-      program_tier: programTier,
-      employee_limit: tierDetails.employee_limit,
-      admin_user_id: userId,
-    }
-
-    // Add optional fields if they exist in your schema
-    // If these cause errors, comment them out
-    if (industry) insertData.industry = industry
-    if (employeeCount) insertData.employee_count = parseInt(employeeCount)
-    if (address) insertData.address = address
-    if (phone) insertData.phone = phone
-
+    // Create corporate account - matches exact database schema
     const { data: corporateAccount, error: corporateError } = await supabaseAdmin
       .from('corporate_accounts')
-      .insert(insertData)
+      .insert({
+        company_name: companyName,
+        industry: industry || null,
+        employee_count: employeeCount ? parseInt(employeeCount) : null,
+        address: address || null,
+        program_tier: programTier,
+        program_start_date: new Date().toISOString(),
+        program_end_date: new Date(
+          Date.now() + tierDetails.duration_months * 30 * 24 * 60 * 60 * 1000
+        ).toISOString(),
+        employee_limit: tierDetails.employee_limit,
+        modules_included: tierDetails.modules,
+        certification_status: 'not_started',
+        total_paid: 0,
+        community_credits_balance: 0,
+        admin_user_id: userId,
+        hr_contact_email: email,
+        billing_email: email,
+      })
       .select()
       .single()
 
