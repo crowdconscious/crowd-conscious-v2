@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { Users, BookOpen, Award, TrendingUp, Plus, AlertCircle } from 'lucide-react'
 
 export default async function CorporateDashboard() {
-  const supabase = createClient()
+  const supabase = await createClient()
   
   const { data: { user } } = await supabase.auth.getUser()
   

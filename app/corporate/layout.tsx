@@ -8,7 +8,7 @@ export default async function CorporateLayout({
 }: {
   children: React.ReactNode
 }) {
-  const supabase = createClient()
+  const supabase = await createClient()
   
   // Check authentication
   const { data: { user } } = await supabase.auth.getUser()
