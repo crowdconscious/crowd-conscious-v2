@@ -88,20 +88,11 @@ export async function POST(req: NextRequest) {
 
     const tierDetails = programDetails[programTier as keyof typeof programDetails]
 
-    // Create company slug
-    const companySlug = companyName
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '')
-
     // Create corporate account
     const { data: corporateAccount, error: corporateError } = await supabaseAdmin
       .from('corporate_accounts')
       .insert({
         company_name: companyName,
-        company_slug: companySlug,
         industry,
         employee_count: parseInt(employeeCount),
         address,

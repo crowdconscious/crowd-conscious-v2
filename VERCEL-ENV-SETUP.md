@@ -9,9 +9,10 @@ For the corporate signup to work, you need to add the following environment vari
 This is the **service role key** (not the anon key) that allows admin operations like creating users.
 
 **How to find it:**
+
 1. Go to your Supabase project dashboard
 2. Click **Settings** (gear icon in sidebar)
-3. Click **API** 
+3. Click **API**
 4. Scroll down to **Project API keys**
 5. Copy the **`service_role`** key (NOT the `anon` key)
 
@@ -28,8 +29,8 @@ This is the **service role key** (not the anon key) that allows admin operations
 3. Go to **Settings** → **Environment Variables**
 4. Add the following:
 
-| Name | Value | Environments |
-|------|-------|--------------|
+| Name                        | Value                                | Environments                     |
+| --------------------------- | ------------------------------------ | -------------------------------- |
 | `SUPABASE_SERVICE_ROLE_KEY` | `eyJhbGc...` (your service role key) | Production, Preview, Development |
 
 5. Click **Save**
@@ -93,14 +94,17 @@ RESEND_API_KEY=re_...
 ## Troubleshooting
 
 ### "Missing Supabase environment variables" error
+
 - **Cause:** `SUPABASE_SERVICE_ROLE_KEY` is not set in Vercel
 - **Fix:** Follow the steps above to add it
 
 ### "Invalid API key" error
+
 - **Cause:** You might have copied the wrong key (anon instead of service_role)
 - **Fix:** Double-check you copied the **service_role** key from Supabase
 
 ### Changes not taking effect
+
 - **Cause:** Need to redeploy after adding environment variables
 - **Fix:** Go to Vercel → Deployments → click "..." on latest → Redeploy
 
@@ -116,4 +120,3 @@ RESEND_API_KEY=re_...
 ---
 
 **Once you add the environment variable and redeploy, the corporate signup will work!** 🚀
-
