@@ -109,21 +109,33 @@ export default function ProposalPage() {
   }
 
   useEffect(() => {
-    // Fetch proposal data from API
+    // Fetch proposal data from localStorage first, then API
     const fetchProposal = async () => {
       try {
-        // In real implementation, fetch from /api/assessment/[id]
-        // For now, get from localStorage or API
+        // Try localStorage first
+        if (typeof window !== 'undefined') {
+          const stored = localStorage.getItem(`proposal_${params.id}`)
+          if (stored) {
+            const data = JSON.parse(stored)
+            setProposalData(data)
+            setSelectedModules(data.modules)
+            setCustomPrice(data.pricing.basePrice)
+            setLoading(false)
+            return
+          }
+        }
+
+        // Fallback to API if localStorage doesn't have it
         const response = await fetch(`/api/assessment/${params.id}`)
-        const data = await response.json()
-        
-        setProposalData(data)
-        setSelectedModules(data.modules)
-        setCustomPrice(data.pricing.basePrice)
+        if (response.ok) {
+          const data = await response.json()
+          setProposalData(data)
+          setSelectedModules(data.modules)
+          setCustomPrice(data.pricing.basePrice)
+        }
         setLoading(false)
       } catch (error) {
         console.error('Error fetching proposal:', error)
-        // Fallback for demo purposes
         setLoading(false)
       }
     }

@@ -101,6 +101,11 @@ export default function AssessmentPage() {
         throw new Error(data.error || 'Error al procesar evaluación')
       }
 
+      // Store data in localStorage as backup
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`proposal_${data.assessment_id}`, JSON.stringify(data))
+      }
+
       // Redirect to personalized proposal
       router.push(`/proposal/${data.assessment_id}`)
     } catch (error: any) {
