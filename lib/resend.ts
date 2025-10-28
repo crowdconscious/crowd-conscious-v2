@@ -234,7 +234,151 @@ export const emailTemplates = {
         </div>
       </div>
     `
-  })
+  }),
+
+  assessmentQuote: (params: {
+    companyName: string
+    contactName: string
+    contactEmail: string
+    roi: {
+      totalSavings: number
+      breakdown: {
+        energy: number
+        water: number
+        waste: number
+        productivity: number
+      }
+    }
+    modules: string[]
+    pricing: {
+      tier: string
+      basePrice: number
+      employeeLimit: number
+    }
+    proposalUrl: string
+  }) => {
+    const { companyName, contactName, roi, modules, pricing, proposalUrl } = params
+    
+    const moduleNames: Record<string, string> = {
+      clean_air: '🌬️ Aire Limpio',
+      clean_water: '💧 Agua Limpia',
+      safe_cities: '🏙️ Ciudades Seguras',
+      zero_waste: '♻️ Cero Residuos',
+      fair_trade: '🤝 Comercio Justo',
+      integration: '🎉 Integración & Impacto',
+    }
+
+    const formatMoney = (amount: number) => {
+      return new Intl.NumberFormat('es-MX', {
+        style: 'currency',
+        currency: 'MXN',
+        minimumFractionDigits: 0,
+      }).format(amount)
+    }
+
+    return {
+      subject: `${companyName} - Tu Propuesta Personalizada de Concientizaciones 🌱`,
+      html: `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #f8fafc;">
+          <div style="background: linear-gradient(135deg, #0f766e 0%, #7c3aed 100%); padding: 40px 20px; text-align: center;">
+            <div style="font-size: 32px; font-weight: bold; color: #ffffff; margin-bottom: 10px;">Crowd Conscious</div>
+            <div style="color: rgba(255, 255, 255, 0.9); font-size: 18px;">Concientizaciones</div>
+          </div>
+
+          <div style="padding: 40px 30px; background: #ffffff;">
+            <h1 style="font-size: 24px; font-weight: bold; color: #0f172a; margin-bottom: 20px;">¡Hola ${contactName}! 👋</h1>
+
+            <p style="font-size: 16px; line-height: 1.8; color: #475569;">
+              Gracias por completar la evaluación para <strong>${companyName}</strong>.
+            </p>
+
+            <p style="font-size: 16px; line-height: 1.8; color: #475569;">
+              Basado en tus respuestas, hemos creado un programa personalizado que puede generar un impacto significativo en tu empresa:
+            </p>
+
+            <div style="background: linear-gradient(135deg, #0f766e 0%, #7c3aed 100%); border-radius: 16px; padding: 30px; margin: 30px 0; text-align: center;">
+              <div style="color: rgba(255, 255, 255, 0.9); font-size: 14px; margin-bottom: 10px;">Ahorro Anual Proyectado</div>
+              <div style="color: #ffffff; font-size: 48px; font-weight: bold; margin: 10px 0;">${formatMoney(roi.totalSavings)}</div>
+              <div style="color: rgba(255, 255, 255, 0.8); font-size: 14px; margin-top: 10px;">+ Beneficios intangibles en reputación y ESG</div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 30px 0;">
+              ${roi.breakdown.energy > 0 ? `
+              <div style="background-color: #f1f5f9; border-radius: 12px; padding: 20px; text-align: center;">
+                <div style="color: #64748b; font-size: 12px; margin-bottom: 5px;">⚡ Energía</div>
+                <div style="color: #0f766e; font-size: 24px; font-weight: bold;">${formatMoney(roi.breakdown.energy)}</div>
+              </div>
+              ` : ''}
+              ${roi.breakdown.water > 0 ? `
+              <div style="background-color: #f1f5f9; border-radius: 12px; padding: 20px; text-align: center;">
+                <div style="color: #64748b; font-size: 12px; margin-bottom: 5px;">💧 Agua</div>
+                <div style="color: #0f766e; font-size: 24px; font-weight: bold;">${formatMoney(roi.breakdown.water)}</div>
+              </div>
+              ` : ''}
+              ${roi.breakdown.waste > 0 ? `
+              <div style="background-color: #f1f5f9; border-radius: 12px; padding: 20px; text-align: center;">
+                <div style="color: #64748b; font-size: 12px; margin-bottom: 5px;">🗑️ Residuos</div>
+                <div style="color: #0f766e; font-size: 24px; font-weight: bold;">${formatMoney(roi.breakdown.waste)}</div>
+              </div>
+              ` : ''}
+              ${roi.breakdown.productivity > 0 ? `
+              <div style="background-color: #f1f5f9; border-radius: 12px; padding: 20px; text-align: center;">
+                <div style="color: #64748b; font-size: 12px; margin-bottom: 5px;">😊 Productividad</div>
+                <div style="color: #0f766e; font-size: 24px; font-weight: bold;">${formatMoney(roi.breakdown.productivity)}</div>
+              </div>
+              ` : ''}
+            </div>
+
+            <h2 style="color: #0f172a; font-size: 22px; margin-top: 40px;">📚 Módulos Recomendados</h2>
+
+            <div style="margin: 20px 0;">
+              ${modules.map(moduleId => `
+                <div style="background-color: #f0fdfa; border: 2px solid #99f6e4; border-radius: 12px; padding: 15px; margin-bottom: 10px;">
+                  <strong>${moduleNames[moduleId]}</strong>
+                </div>
+              `).join('')}
+            </div>
+
+            <div style="background-color: #faf5ff; border: 2px solid #e9d5ff; border-radius: 16px; padding: 25px; margin: 30px 0;">
+              <div style="color: #7c3aed; font-size: 14px; font-weight: 600; text-transform: uppercase; margin-bottom: 10px;">Programa ${pricing.tier}</div>
+              <div style="color: #581c87; font-size: 36px; font-weight: bold; margin: 10px 0;">${formatMoney(pricing.basePrice)}</div>
+              <div style="color: #64748b; font-size: 14px; line-height: 1.8;">
+                ✓ Hasta ${pricing.employeeLimit} empleados<br />
+                ✓ ${modules.length} módulos incluidos<br />
+                ✓ Dashboard de impacto en tiempo real<br />
+                ✓ Certificación para empleados<br />
+                ✓ Acceso a comunidad principal
+              </div>
+            </div>
+
+            <div style="text-align: center; margin: 40px 0;">
+              <a href="${proposalUrl}" style="display: inline-block; background: linear-gradient(135deg, #0f766e 0%, #7c3aed 100%); color: #ffffff; text-decoration: none; padding: 18px 40px; border-radius: 12px; font-weight: bold; font-size: 18px;">
+                Ver Mi Propuesta Completa
+              </a>
+            </div>
+
+            <div style="background-color: #ecfdf5; border: 2px solid #6ee7b7; border-radius: 12px; padding: 20px; margin-top: 30px;">
+              <div style="font-size: 18px; font-weight: bold; color: #047857; margin-bottom: 10px;">🎁 ¡Prueba Gratis!</div>
+              <p style="color: #065f46; font-size: 14px; margin: 0;">
+                Accede al <strong>Módulo 1 completo sin costo</strong>. Sin tarjeta de crédito, sin compromiso.
+              </p>
+            </div>
+          </div>
+
+          <div style="background-color: #f8fafc; padding: 30px; text-align: center; color: #64748b; font-size: 14px;">
+            <p><strong>¿Tienes preguntas?</strong></p>
+            <p>
+              Responde a este email o contáctanos:<br />
+              <a href="mailto:comunidad@crowdconscious.app" style="color: #0f766e;">comunidad@crowdconscious.app</a>
+            </p>
+            <p style="margin-top: 20px; font-size: 12px; color: #94a3b8;">
+              © 2025 Crowd Conscious. Transformando empresas en fuerzas comunitarias.
+            </p>
+          </div>
+        </div>
+      `
+    }
+  }
 }
 
 // Send email function with error handling
@@ -331,6 +475,32 @@ export async function sendMonthlyReport(
   stats: any
 ): Promise<boolean> {
   const template = emailTemplates.monthlyImpactReport(userName, stats)
+  const result = await sendEmail(email, template)
+  return result.success
+}
+
+// Send assessment quote email
+export async function sendAssessmentQuoteEmail(
+  email: string,
+  companyName: string,
+  contactName: string,
+  roi: any,
+  modules: string[],
+  pricing: any,
+  assessmentId: string
+): Promise<boolean> {
+  const proposalUrl = `${APP_URL}/proposal/${assessmentId}`
+  
+  const template = emailTemplates.assessmentQuote({
+    companyName,
+    contactName,
+    contactEmail: email,
+    roi,
+    modules,
+    pricing,
+    proposalUrl,
+  })
+  
   const result = await sendEmail(email, template)
   return result.success
 }

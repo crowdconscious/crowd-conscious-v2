@@ -259,6 +259,104 @@ export default async function LandingPage() {
       {/* Trusted Brands Section */}
       <TrustedBrands />
 
+      {/* Corporate Training Section */}
+      <section className="py-20 bg-gradient-to-br from-slate-900 to-purple-900 relative overflow-hidden">
+        {/* Background decoration */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-teal-500 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-500 rounded-full blur-3xl"></div>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 relative z-10">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            {/* Left: Content */}
+            <div>
+              <div className="inline-block bg-gradient-to-r from-teal-400 to-purple-400 text-slate-900 text-sm font-bold px-4 py-2 rounded-full mb-6">
+                Para Empresas 🏢
+              </div>
+              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+                Concientizaciones
+              </h2>
+              <p className="text-xl text-slate-300 mb-6">
+                Transforma a tus empleados en agentes de cambio. Programas corporativos de capacitación que generan impacto medible en tu empresa y comunidad.
+              </p>
+              
+              <div className="space-y-4 mb-8">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-r from-teal-500 to-purple-500 rounded-lg flex items-center justify-center">
+                    <span className="text-white text-lg">✓</span>
+                  </div>
+                  <div>
+                    <h3 className="text-white font-bold">Capacitación Story-Driven</h3>
+                    <p className="text-slate-400">Módulos narrativos que enganchan y educan</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-r from-teal-500 to-purple-500 rounded-lg flex items-center justify-center">
+                    <span className="text-white text-lg">✓</span>
+                  </div>
+                  <div>
+                    <h3 className="text-white font-bold">ROI Medible</h3>
+                    <p className="text-slate-400">Ahorro real en energía, agua y residuos</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-r from-teal-500 to-purple-500 rounded-lg flex items-center justify-center">
+                    <span className="text-white text-lg">✓</span>
+                  </div>
+                  <div>
+                    <h3 className="text-white font-bold">Certificación ESG</h3>
+                    <p className="text-slate-400">Cumple con estándares ambientales</p>
+                  </div>
+                </div>
+              </div>
+
+              <Link 
+                href="/concientizaciones" 
+                className="inline-block bg-gradient-to-r from-teal-500 to-purple-500 text-white font-bold py-4 px-8 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl shadow-xl"
+              >
+                Descubre Concientizaciones →
+              </Link>
+            </div>
+
+            {/* Right: Stats/Features */}
+            <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8">
+              <h3 className="text-2xl font-bold text-white mb-6">Impacto Empresarial</h3>
+              
+              <div className="grid grid-cols-2 gap-6">
+                <div className="bg-gradient-to-br from-teal-500/20 to-teal-600/20 rounded-xl p-6 border border-teal-400/30">
+                  <div className="text-4xl font-bold text-teal-300 mb-2">$125K</div>
+                  <div className="text-sm text-slate-300">Ahorro promedio anual</div>
+                </div>
+
+                <div className="bg-gradient-to-br from-purple-500/20 to-purple-600/20 rounded-xl p-6 border border-purple-400/30">
+                  <div className="text-4xl font-bold text-purple-300 mb-2">6</div>
+                  <div className="text-sm text-slate-300">Módulos especializados</div>
+                </div>
+
+                <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/20 rounded-xl p-6 border border-blue-400/30">
+                  <div className="text-4xl font-bold text-blue-300 mb-2">100+</div>
+                  <div className="text-sm text-slate-300">Empleados por programa</div>
+                </div>
+
+                <div className="bg-gradient-to-br from-pink-500/20 to-pink-600/20 rounded-xl p-6 border border-pink-400/30">
+                  <div className="text-4xl font-bold text-pink-300 mb-2">75%</div>
+                  <div className="text-sm text-slate-300">Tasa de certificación</div>
+                </div>
+              </div>
+
+              <div className="mt-6 p-4 bg-gradient-to-r from-teal-500/10 to-purple-500/10 border border-teal-400/20 rounded-lg">
+                <p className="text-sm text-slate-300 text-center">
+                  🎁 <strong className="text-white">Módulo de prueba gratis</strong> - Sin compromiso
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Call to Action */}
       <section className="py-20 bg-gradient-to-r from-teal-600 via-teal-700 to-purple-700">
         <div className="max-w-4xl mx-auto text-center px-4">

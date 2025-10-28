@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { sendAssessmentQuoteEmail } from '@/lib/resend'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -245,6 +246,23 @@ export async function POST(req: NextRequest) {
     } catch (dbError) {
       // Table might not exist yet, that's okay
       console.log('DB save skipped (table may not exist):', dbError)
+    }
+
+    // Send assessment quote email
+    try {
+      await sendAssessmentQuoteEmail(
+        formData.email,
+        formData.companyName,
+        formData.fullName,
+        roi,
+        recommendedModules,
+        pricing,
+        assessment.id
+      )
+      console.log('Assessment quote email sent to:', formData.email)
+    } catch (emailError) {
+      // Don't fail the request if email fails
+      console.error('Failed to send assessment email:', emailError)
     }
 
     // Return assessment ID and calculated data

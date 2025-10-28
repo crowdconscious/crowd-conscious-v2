@@ -33,8 +33,25 @@ export async function GET(request: NextRequest) {
 
       if (data.user) {
         console.log('✅ Session exchanged successfully, user:', data.user.id)
-        console.log('🔄 Redirecting to dashboard...')
-        // Successfully authenticated, redirect to dashboard
+        
+        // Check if user is a corporate admin
+        try {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('corporate_account_id')
+            .eq('id', data.user.id)
+            .single()
+          
+          if (profile?.corporate_account_id) {
+            console.log('🏢 Corporate user detected, redirecting to corporate dashboard')
+            return NextResponse.redirect(new URL('/corporate/dashboard', request.url))
+          }
+        } catch (profileError) {
+          console.log('⚠️ Could not check corporate status:', profileError)
+        }
+        
+        console.log('🔄 Regular user, redirecting to dashboard...')
+        // Regular user, redirect to standard dashboard
         return NextResponse.redirect(new URL('/dashboard', request.url))
       }
     } catch (error: any) {
