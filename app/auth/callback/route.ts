@@ -34,17 +34,23 @@ export async function GET(request: NextRequest) {
       if (data.user) {
         console.log('✅ Session exchanged successfully, user:', data.user.id)
         
-        // Check if user is a corporate admin
+        // Check user type and corporate role
         try {
           const { data: profile } = await supabase
             .from('profiles')
-            .select('corporate_account_id')
+            .select('corporate_account_id, corporate_role, is_corporate_user')
             .eq('id', data.user.id)
             .single()
           
-          if (profile?.corporate_account_id) {
-            console.log('🏢 Corporate user detected, redirecting to corporate dashboard')
-            return NextResponse.redirect(new URL('/corporate/dashboard', request.url))
+          if (profile?.is_corporate_user && profile?.corporate_account_id) {
+            // Corporate user - check role
+            if (profile.corporate_role === 'admin') {
+              console.log('🏢 Corporate admin detected, redirecting to corporate dashboard')
+              return NextResponse.redirect(new URL('/corporate/dashboard', request.url))
+            } else if (profile.corporate_role === 'employee') {
+              console.log('👤 Corporate employee detected, redirecting to employee portal')
+              return NextResponse.redirect(new URL('/employee/dashboard', request.url))
+            }
           }
         } catch (profileError) {
           console.log('⚠️ Could not check corporate status:', profileError)

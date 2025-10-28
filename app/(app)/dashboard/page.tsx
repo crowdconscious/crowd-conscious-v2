@@ -138,5 +138,23 @@ export default async function DashboardPage() {
   const userStats = await getUserStats((user as any).id)
   const userCommunities = await getUserCommunities((user as any).id)
 
-  return <NewEnhancedDashboard user={user} initialUserStats={userStats} userCommunities={userCommunities} />
+  // Check if user is corporate (admin or employee)
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('is_corporate_user, corporate_role, corporate_account_id, corporate_accounts(company_name)')
+    .eq('id', (user as any).id)
+    .single()
+
+  const corporateInfo = profile?.is_corporate_user ? {
+    role: profile.corporate_role,
+    accountId: profile.corporate_account_id,
+    companyName: (profile as any).corporate_accounts?.company_name
+  } : null
+
+  return <NewEnhancedDashboard 
+    user={user} 
+    initialUserStats={userStats} 
+    userCommunities={userCommunities}
+    corporateInfo={corporateInfo}
+  />
 }

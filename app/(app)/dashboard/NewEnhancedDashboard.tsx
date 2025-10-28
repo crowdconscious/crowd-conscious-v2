@@ -26,9 +26,14 @@ interface EnhancedDashboardProps {
   user: any
   initialUserStats: UserStats | null
   userCommunities: any[]
+  corporateInfo?: {
+    role: string
+    accountId: string
+    companyName?: string
+  } | null
 }
 
-export default function NewEnhancedDashboard({ user, initialUserStats, userCommunities }: EnhancedDashboardProps) {
+export default function NewEnhancedDashboard({ user, initialUserStats, userCommunities, corporateInfo }: EnhancedDashboardProps) {
   const [userStats] = useState<UserStats | null>(initialUserStats)
   const [activeTab, setActiveTab] = useState<'overview' | 'impact' | 'gamification' | 'calendar'>('overview')
   const [mounted, setMounted] = useState(false)
@@ -61,6 +66,37 @@ export default function NewEnhancedDashboard({ user, initialUserStats, userCommu
 
   return (
     <div className="space-y-8">
+      {/* Corporate Portal Banner */}
+      {corporateInfo && (
+        <div className="bg-gradient-to-r from-purple-600 to-teal-600 text-white rounded-xl p-6 relative overflow-hidden shadow-xl">
+          <div className="absolute inset-0 opacity-20">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full blur-3xl" />
+          </div>
+          <div className="relative z-10 flex items-center justify-between">
+            <div>
+              <div className="text-sm font-medium text-purple-100 mb-1">
+                {corporateInfo.role === 'admin' ? '🏢 Portal Corporativo' : '📚 Mi Capacitación'}
+              </div>
+              <h2 className="text-2xl font-bold mb-2">
+                {corporateInfo.role === 'admin' ? 'Panel de Administración' : 'Concientizaciones'}
+              </h2>
+              <p className="text-white/90">
+                {corporateInfo.role === 'admin' 
+                  ? `Gestiona tu programa en ${corporateInfo.companyName || 'tu empresa'}`
+                  : `Continúa tu capacitación en ${corporateInfo.companyName || 'tu empresa'}`
+                }
+              </p>
+            </div>
+            <Link
+              href={corporateInfo.role === 'admin' ? '/corporate/dashboard' : '/employee/dashboard'}
+              className="bg-white text-purple-600 px-6 py-3 rounded-lg font-bold hover:scale-105 transition-transform shadow-lg whitespace-nowrap"
+            >
+              {corporateInfo.role === 'admin' ? 'Ver Dashboard →' : 'Ver Mis Cursos →'}
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* Welcome Section */}
       <div className="bg-gradient-to-r from-teal-600 via-teal-700 to-purple-700 text-white rounded-xl p-8 relative overflow-hidden">
         <div className="absolute inset-0 bg-black/10" />

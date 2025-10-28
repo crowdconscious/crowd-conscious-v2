@@ -47,31 +47,7 @@ BEGIN
     50,
     'completo',
     NOW(),
-    NOW() + INTERVAL '6 months',
-    6,
-    100,
-    ARRAY['clean_air', 'clean_water', 'safe_cities', 'zero_waste', 'fair_trade', 'integration'],
-    'active',
-    'in_progress',
-    125000.00,
-    10000.00,
-    v_user_id
-  )
-  RETURNING id INTO v_corporate_id;
 
-  -- Update your profile to be corporate admin
-  UPDATE profiles 
-  SET 
-    is_corporate_user = true,
-    corporate_account_id = v_corporate_id,
-    corporate_role = 'admin'
-  WHERE id = v_user_id;
-
-  -- Show success message
-  RAISE NOTICE 'SUCCESS! Corporate account created with ID: %', v_corporate_id;
-  RAISE NOTICE 'You are now a corporate admin. Go to /corporate/dashboard';
-  
-END $$;
 
 -- Verify it worked:
 SELECT 

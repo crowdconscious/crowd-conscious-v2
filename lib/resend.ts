@@ -504,3 +504,83 @@ export async function sendAssessmentQuoteEmail(
   const result = await sendEmail(email, template)
   return result.success
 }
+
+// Send employee invitation email
+export async function sendEmployeeInvitationEmail(
+  email: string,
+  companyName: string,
+  invitedByName: string,
+  invitationToken: string
+): Promise<boolean> {
+  const invitationUrl = `${APP_URL}/employee/accept-invitation?token=${invitationToken}`
+  
+  const template = {
+    subject: `${companyName} te invita a Concientizaciones 🌱`,
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #f8fafc;">
+        <div style="background: linear-gradient(135deg, #0f766e 0%, #7c3aed 100%); padding: 40px 20px; text-align: center;">
+          <div style="font-size: 32px; font-weight: bold; color: #ffffff; margin-bottom: 10px;">Crowd Conscious</div>
+          <div style="color: rgba(255, 255, 255, 0.9); font-size: 18px;">Concientizaciones</div>
+        </div>
+
+        <div style="padding: 40px 30px; background: #ffffff;">
+          <h1 style="font-size: 24px; font-weight: bold; color: #0f172a; margin-bottom: 20px;">¡Te han invitado! 🎉</h1>
+
+          <p style="font-size: 16px; line-height: 1.8; color: #475569;">
+            <strong>${invitedByName}</strong> de <strong>${companyName}</strong> te ha invitado a unirte a su programa de capacitación Concientizaciones.
+          </p>
+
+          <div style="background: linear-gradient(135deg, #ecfdf5 0%, #f0f9ff 100%); border-left: 4px solid #0f766e; border-radius: 8px; padding: 20px; margin: 30px 0;">
+            <h3 style="margin-top: 0; color: #0f172a; font-size: 18px;">¿Qué es Concientizaciones?</h3>
+            <p style="color: #475569; font-size: 14px; line-height: 1.6; margin-bottom: 0;">
+              Un programa de capacitación story-driven que te convierte en agente de cambio. Aprende sobre:
+            </p>
+            <ul style="color: #475569; font-size: 14px; line-height: 1.8;">
+              <li>🌬️ <strong>Aire Limpio:</strong> Calidad del aire y emisiones</li>
+              <li>💧 <strong>Agua Limpia:</strong> Conservación y filtración</li>
+              <li>🏙️ <strong>Ciudades Seguras:</strong> Espacios públicos</li>
+              <li>♻️ <strong>Cero Residuos:</strong> Economía circular</li>
+              <li>🤝 <strong>Comercio Justo:</strong> Compras locales</li>
+            </ul>
+          </div>
+
+          <div style="background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 8px; padding: 20px; margin: 30px 0;">
+            <h3 style="margin-top: 0; color: #92400e; font-size: 18px;">🎁 ¿Qué obtendrás?</h3>
+            <ul style="color: #78350f; font-size: 14px; line-height: 1.8; margin-bottom: 0;">
+              <li>✅ Acceso a módulos interactivos de capacitación</li>
+              <li>✅ Certificación al completar el programa</li>
+              <li>✅ Acceso a la comunidad principal al graduarte</li>
+              <li>✅ Oportunidad de crear impacto real en tu comunidad</li>
+            </ul>
+          </div>
+
+          <div style="text-align: center; margin: 40px 0;">
+            <a href="${invitationUrl}" style="display: inline-block; background: linear-gradient(135deg, #0f766e 0%, #7c3aed 100%); color: #ffffff; text-decoration: none; padding: 18px 40px; border-radius: 12px; font-weight: bold; font-size: 18px; box-shadow: 0 4px 14px rgba(15, 118, 110, 0.4);">
+              Aceptar Invitación →
+            </a>
+          </div>
+
+          <div style="background: #f1f5f9; border-radius: 8px; padding: 15px; margin-top: 30px;">
+            <p style="color: #64748b; font-size: 13px; margin: 0; text-align: center;">
+              Esta invitación expira en 7 días. Si no solicitaste este acceso, puedes ignorar este email.
+            </p>
+          </div>
+        </div>
+
+        <div style="background-color: #f8fafc; padding: 30px; text-align: center; color: #64748b; font-size: 14px;">
+          <p><strong>¿Tienes preguntas?</strong></p>
+          <p>
+            Responde a este email o contáctanos:<br />
+            <a href="mailto:comunidad@crowdconscious.app" style="color: #0f766e;">comunidad@crowdconscious.app</a>
+          </p>
+          <p style="margin-top: 20px; font-size: 12px; color: #94a3b8;">
+            © 2025 Crowd Conscious. Transformando empresas en fuerzas comunitarias.
+          </p>
+        </div>
+      </div>
+    `
+  }
+  
+  const result = await sendEmail(email, template)
+  return result.success
+}
