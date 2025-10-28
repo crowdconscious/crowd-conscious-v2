@@ -57,12 +57,12 @@ export default function EmployeesPage() {
         .eq('id', user.id)
         .single()
 
-      if (!profile?.corporate_account_id || profile.corporate_role !== 'admin') {
+      if (!profile?.corporate_account_id || (profile as any).corporate_role !== 'admin') {
         router.push('/dashboard')
         return
       }
 
-      setCorporateAccountId(profile.corporate_account_id)
+      setCorporateAccountId(profile.corporate_account_id as string)
 
       // Load employees
       const { data: employeesData } = await supabase
