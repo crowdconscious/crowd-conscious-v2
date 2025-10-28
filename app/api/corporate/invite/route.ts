@@ -174,7 +174,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       invited: results.length,
-      errors: errors.length,
+      errorCount: errors.length,
       results,
       errors
     })
