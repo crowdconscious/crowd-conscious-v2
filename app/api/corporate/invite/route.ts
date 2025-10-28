@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
         // Check if already invited or registered
         const { data: existingInvite } = await supabaseAdmin
           .from('employee_invitations')
-          .select('id, status')
+          .select('id, status, full_name')
           .eq('corporate_account_id', corporate_account_id)
           .eq('email', email)
           .single()

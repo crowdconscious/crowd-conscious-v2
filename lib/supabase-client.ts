@@ -9,5 +9,8 @@ export const createSupabaseClient = () => {
   )
 }
 
+// Alias for consistency
+export const createClient = createSupabaseClient
+
 // Pre-configured client for immediate use
 export const supabaseClient = createSupabaseClient()
