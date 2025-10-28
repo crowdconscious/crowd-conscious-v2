@@ -51,18 +51,20 @@ export default function EmployeesPage() {
       setUserId(user.id)
 
       // Get profile
-      const { data: profile } = await supabase
+      const { data: profileData } = await supabase
         .from('profiles')
         .select('corporate_account_id, corporate_role')
         .eq('id', user.id)
         .single()
 
-      if (!profile?.corporate_account_id || (profile as any).corporate_role !== 'admin') {
+      const profile = profileData as any
+
+      if (!profile?.corporate_account_id || profile.corporate_role !== 'admin') {
         router.push('/dashboard')
         return
       }
 
-      setCorporateAccountId(profile.corporate_account_id as string)
+      setCorporateAccountId(profile.corporate_account_id)
 
       // Load employees
       const { data: employeesData } = await supabase
