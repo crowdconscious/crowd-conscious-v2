@@ -155,11 +155,16 @@ export async function POST(request: NextRequest) {
           results.push({ email, status: 'invited' })
 
           // Log activity
-          await supabaseAdmin.rpc('log_corporate_activity', {
-            p_corporate_account_id: corporate_account_id,
-            p_action_type: 'employee_invited',
-            p_action_details: { email, invited_by: invited_by_id }
-          }).catch(() => {}) // Ignore logging errors
+          try {
+            await supabaseAdmin.rpc('log_corporate_activity', {
+              p_corporate_account_id: corporate_account_id,
+              p_action_type: 'employee_invited',
+              p_action_details: { email, invited_by: invited_by_id }
+            })
+          } catch (logError) {
+            // Ignore logging errors
+            console.log('Activity log skipped:', logError)
+          }
         }
       } catch (error: any) {
         errors.push({ email, error: error.message })
