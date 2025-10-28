@@ -336,12 +336,20 @@ export default function ConcientizacionesLanding() {
                 🇺🇸 EN
               </button>
             </div>
-            <Link
-              href="/signup-corporate"
-              className="text-slate-600 hover:text-teal-600 font-medium"
-            >
-              {language === 'es' ? 'Crear Cuenta' : 'Sign Up'}
-            </Link>
+            <div className="flex items-center gap-4">
+              <Link
+                href="/login"
+                className="text-slate-600 hover:text-teal-600 font-medium"
+              >
+                {language === 'es' ? 'Iniciar Sesión' : 'Sign In'}
+              </Link>
+              <Link
+                href="/assessment"
+                className="bg-gradient-to-r from-teal-600 to-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:scale-105 transition-transform"
+              >
+                {language === 'es' ? 'Evaluación Gratuita' : 'Free Assessment'}
+              </Link>
+            </div>
           </div>
         </div>
       </header>
@@ -361,10 +369,10 @@ export default function ConcientizacionesLanding() {
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/signup-corporate"
+              href="/assessment"
               className="bg-gradient-to-r from-teal-600 to-purple-600 text-white px-8 py-4 rounded-xl font-bold text-lg hover:scale-105 transition-transform shadow-xl"
             >
-              {currentContent.hero.ctaPrimary}
+              {language === 'es' ? 'Comenzar Evaluación Gratuita' : 'Start Free Assessment'}
             </Link>
             <Link
               href="#how-it-works"
@@ -465,14 +473,14 @@ export default function ConcientizacionesLanding() {
                 </ul>
                 
                 <Link
-                  href="/signup-corporate"
+                  href="/assessment"
                   className={`block text-center px-6 py-3 rounded-lg font-bold transition-colors ${
                     program.recommended
                       ? 'bg-gradient-to-r from-teal-600 to-purple-600 text-white hover:scale-105'
                       : 'border-2 border-slate-300 text-slate-700 hover:border-teal-600 hover:text-teal-600'
                   }`}
                 >
-                  {language === 'es' ? 'Empezar' : 'Get Started'}
+                  {language === 'es' ? 'Ver Mi Propuesta' : 'See My Proposal'}
                 </Link>
               </div>
             ))}
