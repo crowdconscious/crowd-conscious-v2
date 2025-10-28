@@ -88,7 +88,7 @@ export default function NewEnhancedDashboard({ user, initialUserStats, userCommu
               </p>
             </div>
             <Link
-              href={corporateInfo.role === 'admin' ? '/corporate/dashboard' : '/employee/dashboard'}
+              href={corporateInfo.role === 'admin' ? '/corporate/dashboard' : '/employee-portal/dashboard'}
               className="bg-white text-purple-600 px-6 py-3 rounded-lg font-bold hover:scale-105 transition-transform shadow-lg whitespace-nowrap"
             >
               {corporateInfo.role === 'admin' ? 'Ver Dashboard →' : 'Ver Mis Cursos →'}

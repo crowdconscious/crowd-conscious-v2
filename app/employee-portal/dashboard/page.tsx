@@ -233,7 +233,7 @@ export default async function EmployeeDashboard() {
                         <div className="text-xs text-slate-500">Progreso</div>
                       </div>
                       <Link
-                        href={`/employee/courses/${enrollment.module_id}`}
+                        href={`/employee-portal/courses/${enrollment.module_id}`}
                         className="bg-gradient-to-r from-teal-600 to-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:scale-105 transition-transform"
                       >
                         {enrollment.status === 'completed' ? 'Revisar' :
@@ -278,7 +278,7 @@ export default async function EmployeeDashboard() {
                 Ahora puedes acceder a la comunidad principal y patrocinar necesidades locales.
               </p>
               <Link
-                href="/employee/certifications"
+                href="/employee-portal/certifications"
                 className="inline-block mt-3 text-sm font-medium text-green-700 hover:text-green-900"
               >
                 Ver mis certificaciones →

@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
               return NextResponse.redirect(new URL('/corporate/dashboard', request.url))
             } else if (profile.corporate_role === 'employee') {
               console.log('👤 Corporate employee detected, redirecting to employee portal')
-              return NextResponse.redirect(new URL('/employee/dashboard', request.url))
+              return NextResponse.redirect(new URL('/employee-portal/dashboard', request.url))
             }
           }
         } catch (profileError) {

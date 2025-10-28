@@ -46,10 +46,10 @@ export default async function EmployeeLayout({
   const isGraduated = certifications && certifications.length > 0
 
   const navigation = [
-    { name: 'Mi Progreso', href: '/employee/dashboard', icon: Home },
-    { name: 'Cursos', href: '/employee/courses', icon: BookOpen },
-    { name: 'Certificaciones', href: '/employee/certifications', icon: Award },
-    { name: 'Mi Impacto', href: '/employee/impact', icon: TrendingUp },
+    { name: 'Mi Progreso', href: '/employee-portal/dashboard', icon: Home },
+    { name: 'Cursos', href: '/employee-portal/courses', icon: BookOpen },
+    { name: 'Certificaciones', href: '/employee-portal/certifications', icon: Award },
+    { name: 'Mi Impacto', href: '/employee-portal/impact', icon: TrendingUp },
   ]
 
   return (
@@ -58,7 +58,7 @@ export default async function EmployeeLayout({
       <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
-            <Link href="/employee/dashboard" className="flex items-center gap-3">
+            <Link href="/employee-portal/dashboard" className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-purple-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold">CC</span>
               </div>

@@ -512,7 +512,7 @@ export async function sendEmployeeInvitationEmail(
   invitedByName: string,
   invitationToken: string
 ): Promise<boolean> {
-  const invitationUrl = `${APP_URL}/employee/accept-invitation?token=${invitationToken}`
+  const invitationUrl = `${APP_URL}/employee-portal/accept-invitation?token=${invitationToken}`
   
   const template = {
     subject: `${companyName} te invita a Concientizaciones 🌱`,
