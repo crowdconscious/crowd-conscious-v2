@@ -74,7 +74,8 @@ export default function EmployeesPage() {
         .eq('is_corporate_user', true)
         .order('created_at', { ascending: false })
 
-      setEmployees((employeesData || []).map(e => ({ ...e, status: 'active' as const })))
+      const employees = (employeesData as any) || []
+      setEmployees(employees.map((e: any) => ({ ...e, status: 'active' as const })))
 
       // Load invitations
       await loadInvitations(profile.corporate_account_id)
