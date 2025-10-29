@@ -14,7 +14,6 @@ WHERE email = 'tjockis88@hotmail.com';
 SELECT 
   ca.id,
   ca.company_name,
-  ca.status,
   ca.admin_user_id
 FROM corporate_accounts ca
 WHERE ca.id IN (
