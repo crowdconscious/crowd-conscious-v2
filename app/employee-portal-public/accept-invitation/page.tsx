@@ -74,6 +74,7 @@ function AcceptInvitationContent() {
     setError('')
 
     try {
+      // Step 1: Create account
       const response = await fetch('/api/corporate/accept-invitation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -94,10 +95,28 @@ function AcceptInvitationContent() {
 
       setSuccess(true)
       
-      // Redirect to login after 2 seconds
+      // Step 2: Auto-login the user
+      const { createClient } = await import('@/lib/supabase-client')
+      const supabase = createClient()
+      
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: invitation.email,
+        password: formData.password
+      })
+
+      if (signInError) {
+        console.error('Auto-login error:', signInError)
+        // Fallback to manual login
+        setTimeout(() => {
+          router.push('/login?message=account_created')
+        }, 2000)
+        return
+      }
+
+      // Step 3: Redirect to employee portal
       setTimeout(() => {
-        router.push('/login?message=account_created')
-      }, 2000)
+        router.push('/employee-portal/dashboard')
+      }, 1500)
 
     } catch (err: any) {
       setError('Error al procesar solicitud')
@@ -151,10 +170,10 @@ function AcceptInvitationContent() {
               <CheckCircle className="w-8 h-8 text-green-600" />
             </div>
             <h2 className="text-2xl font-bold text-slate-900 mb-3">
-              ¡Cuenta Creada! 🎉
+              ¡Bienvenido! 🎉
             </h2>
             <p className="text-slate-600 mb-6">
-              Tu cuenta ha sido creada exitosamente. Redirigiendo a inicio de sesión...
+              Tu cuenta ha sido creada y ya estás dentro. Redirigiendo a tu portal de aprendizaje...
             </p>
             <Loader className="w-6 h-6 text-teal-600 animate-spin mx-auto" />
           </div>

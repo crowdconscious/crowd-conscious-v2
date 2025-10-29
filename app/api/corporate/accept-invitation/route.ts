@@ -78,19 +78,27 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Update profile with corporate info
+    // Wait a moment for profile trigger to create the profile
+    await new Promise(resolve => setTimeout(resolve, 500))
+
+    // Upsert profile with corporate info (in case trigger hasn't run yet)
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
-      .update({
+      .upsert({
+        id: authData.user.id,
         full_name: full_name || invitation.full_name || invitation.email.split('@')[0],
+        email: invitation.email,
         corporate_account_id: invitation.corporate_account_id,
         corporate_role: 'employee',
-        is_corporate_user: true
+        is_corporate_user: true,
+        created_at: new Date().toISOString()
+      }, {
+        onConflict: 'id'
       })
-      .eq('id', authData.user.id)
 
     if (profileError) {
       console.error('Profile error:', profileError)
+      // Don't fail the entire operation if profile update fails
     }
 
     // Auto-enroll in modules
