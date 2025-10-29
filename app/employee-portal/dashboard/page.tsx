@@ -18,10 +18,19 @@ export default async function EmployeeDashboard() {
     .eq('id', user.id)
     .single()
 
-  // Get enrollments
+  // Get enrollments with course details
   const { data: enrollments } = await supabase
     .from('course_enrollments')
-    .select('*')
+    .select(`
+      *,
+      course:courses(
+        id,
+        title,
+        description,
+        core_value,
+        slug
+      )
+    `)
     .eq('employee_id', user.id)
     .order('created_at', { ascending: false })
 
@@ -202,11 +211,16 @@ export default async function EmployeeDashboard() {
         
         {enrollments && enrollments.length > 0 ? (
           <div className="space-y-4">
-            {enrollments.map((enrollment) => {
-              const info = moduleInfo[enrollment.module_id] || {
-                name: enrollment.module_id,
+            {enrollments.map((enrollment: any) => {
+              // Get course info from the joined data or fallback to moduleInfo
+              const courseData = enrollment.course
+              const coreValue = courseData?.core_value || 'unknown'
+              const info = moduleInfo[coreValue] || {
+                name: courseData?.title || 'Módulo de capacitación',
                 icon: '📚',
-                description: 'Módulo de capacitación'
+                description: courseData?.description || 'Módulo de capacitación',
+                color: 'from-blue-500 to-cyan-600',
+                available: coreValue === 'clean_air' // Only clean_air is available
               }
               
               return (
@@ -245,13 +259,13 @@ export default async function EmployeeDashboard() {
                         <div className="text-xs text-slate-500">Progreso</div>
                       </div>
                       <Link
-                        href={info.available ? `/employee-portal/modules/${enrollment.module_id}` : '#'}
+                        href={info.available ? `/employee-portal/modules/${coreValue}` : '#'}
                         className={`${info.available ? 'bg-gradient-to-r from-teal-600 to-purple-600 text-white hover:scale-105' : 'bg-slate-300 text-slate-500 cursor-not-allowed'} px-6 py-2 rounded-lg font-medium transition-transform`}
                       >
                         {info.available ? (
                           enrollment.status === 'completed' ? 'Revisar' :
                           enrollment.status === 'in_progress' ? 'Continuar' :
-                          'Comenzar'
+                          'Empezar Ahora'
                         ) : 'Próximamente'}
                       </Link>
                     </div>
