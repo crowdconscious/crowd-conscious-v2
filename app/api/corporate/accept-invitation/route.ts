@@ -101,14 +101,30 @@ export async function POST(request: NextRequest) {
       // Don't fail the entire operation if profile update fails
     }
 
-    // Auto-enroll in modules
+    // Auto-enroll in Clean Air course
     try {
-      await supabaseAdmin.rpc('auto_enroll_employee', {
-        p_employee_id: authData.user.id,
-        p_corporate_account_id: invitation.corporate_account_id
-      })
+      const cleanAirCourseId = 'a1a1a1a1-1111-1111-1111-111111111111'
+      
+      await supabaseAdmin
+        .from('course_enrollments')
+        .insert({
+          employee_id: authData.user.id,
+          corporate_account_id: invitation.corporate_account_id,
+          course_id: cleanAirCourseId,
+          assigned_at: new Date().toISOString(),
+          mandatory: true,
+          status: 'not_started',
+          completion_percentage: 0,
+          modules_completed: 0,
+          started_at: new Date().toISOString(),
+          last_accessed_at: new Date().toISOString(),
+          xp_earned: 0
+        })
+      
+      console.log('Employee auto-enrolled in Clean Air course')
     } catch (enrollError) {
       console.error('Auto-enroll error:', enrollError)
+      // Don't fail the whole process if enrollment fails
     }
 
     // Mark invitation as accepted
