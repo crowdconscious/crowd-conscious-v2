@@ -24,7 +24,7 @@ BEGIN
   SELECT corporate_account_id INTO v_corporate_account_id
   FROM employee_invitations
   WHERE email = v_email
-  ORDER BY invited_at DESC
+  ORDER BY sent_at DESC
   LIMIT 1;
 
   IF v_corporate_account_id IS NULL THEN
