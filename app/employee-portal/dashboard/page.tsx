@@ -38,36 +38,48 @@ export default async function EmployeeDashboard() {
     .select('*')
     .eq('employee_id', user.id)
 
-  const moduleInfo: Record<string, { name: string; icon: string; description: string }> = {
+  const moduleInfo: Record<string, { name: string; icon: string; description: string; color: string; available: boolean }> = {
     clean_air: {
-      name: 'Aire Limpio',
+      name: 'Aire Limpio para Todos',
       icon: '🌬️',
-      description: 'Calidad del aire y emisiones'
+      description: 'Aprende a crear espacios con aire limpio y saludable',
+      color: 'from-sky-500 to-blue-600',
+      available: true // This module is fully built
     },
     clean_water: {
       name: 'Agua Limpia',
       icon: '💧',
-      description: 'Conservación y filtración'
+      description: 'Conservación y filtración del agua',
+      color: 'from-blue-500 to-cyan-600',
+      available: false // Coming soon
     },
     safe_cities: {
       name: 'Ciudades Seguras',
       icon: '🏙️',
-      description: 'Espacios públicos seguros'
+      description: 'Creando espacios públicos seguros',
+      color: 'from-purple-500 to-pink-600',
+      available: false
     },
     zero_waste: {
       name: 'Cero Residuos',
       icon: '♻️',
-      description: 'Economía circular'
+      description: 'Economía circular en acción',
+      color: 'from-green-500 to-emerald-600',
+      available: false
     },
     fair_trade: {
       name: 'Comercio Justo',
       icon: '🤝',
-      description: 'Compras locales justas'
+      description: 'Compras locales y justas',
+      color: 'from-orange-500 to-red-600',
+      available: false
     },
     integration: {
-      name: 'Integración',
+      name: 'Integración Comunitaria',
       icon: '🎉',
-      description: 'Impacto y celebración'
+      description: 'Celebrando el impacto colectivo',
+      color: 'from-pink-500 to-purple-600',
+      available: false
     }
   }
 
@@ -233,12 +245,14 @@ export default async function EmployeeDashboard() {
                         <div className="text-xs text-slate-500">Progreso</div>
                       </div>
                       <Link
-                        href={`/employee-portal/courses/${enrollment.module_id}`}
-                        className="bg-gradient-to-r from-teal-600 to-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:scale-105 transition-transform"
+                        href={info.available ? `/employee-portal/modules/${enrollment.module_id}` : '#'}
+                        className={`${info.available ? 'bg-gradient-to-r from-teal-600 to-purple-600 text-white hover:scale-105' : 'bg-slate-300 text-slate-500 cursor-not-allowed'} px-6 py-2 rounded-lg font-medium transition-transform`}
                       >
-                        {enrollment.status === 'completed' ? 'Revisar' :
-                         enrollment.status === 'in_progress' ? 'Continuar' :
-                         'Comenzar'}
+                        {info.available ? (
+                          enrollment.status === 'completed' ? 'Revisar' :
+                          enrollment.status === 'in_progress' ? 'Continuar' :
+                          'Comenzar'
+                        ) : 'Próximamente'}
                       </Link>
                     </div>
                   </div>

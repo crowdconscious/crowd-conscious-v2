@@ -11,6 +11,7 @@ This guide will help you test all the corporate features we just built.
 ### **Option A: Use SQL (Fastest for Testing)**
 
 1. **Check your current status:**
+
    ```sql
    -- Open: CHECK-MY-CORPORATE-STATUS.sql
    -- Replace 'YOUR_EMAIL@example.com' with your actual email
@@ -18,6 +19,7 @@ This guide will help you test all the corporate features we just built.
    ```
 
 2. **Convert to corporate admin:**
+
    ```sql
    -- Open: MAKE-ME-CORPORATE-ADMIN.sql
    -- Replace 'YOUR_EMAIL@example.com' with your actual email (appears twice)
@@ -49,14 +51,15 @@ This guide will help you test all the corporate features we just built.
 ### **If you're redirected to `/dashboard` instead:**
 
 **Troubleshooting:**
+
 ```sql
 -- Run this to verify your profile was updated:
-SELECT 
-  email, 
-  is_corporate_user, 
-  corporate_role, 
-  corporate_account_id 
-FROM profiles 
+SELECT
+  email,
+  is_corporate_user,
+  corporate_role,
+  corporate_account_id
+FROM profiles
 WHERE email = 'YOUR_EMAIL@example.com';
 
 -- Should show:
@@ -66,6 +69,7 @@ WHERE email = 'YOUR_EMAIL@example.com';
 ```
 
 **If still not working:**
+
 1. Clear browser cache
 2. Sign out completely
 3. Sign back in
@@ -88,13 +92,13 @@ WHERE email = 'YOUR_EMAIL@example.com';
 
 ✅ Success message appears  
 ✅ Employee appears in "Pending Invitations" list  
-✅ Email is sent to the employee's inbox  
+✅ Email is sent to the employee's inbox
 
 ### **Check the Email:**
 
 📧 Subject: `Invitación a Concientizaciones`  
 📧 From: Crowd Conscious  
-📧 Contains: Company name, invitation link  
+📧 Contains: Company name, invitation link
 
 ---
 
@@ -118,7 +122,7 @@ WHERE email = 'YOUR_EMAIL@example.com';
 
 ✅ Success message: "¡Cuenta Creada! 🎉"  
 ✅ Auto-redirect to `/login` after 2 seconds  
-✅ New profile created with `corporate_role = 'employee'`  
+✅ New profile created with `corporate_role = 'employee'`
 
 ---
 
@@ -132,7 +136,7 @@ WHERE email = 'YOUR_EMAIL@example.com';
 
 ### **Test as Corporate Employee:**
 
-1. Sign out  
+1. Sign out
 2. Sign in with the employee email you just created
 3. **Should redirect to:** `/employee-portal/dashboard`
 
@@ -169,6 +173,7 @@ WHERE email = 'YOUR_EMAIL@example.com';
 ## ✅ Feature Checklist
 
 ### **Corporate Dashboard:**
+
 - [ ] Can access `/corporate/dashboard` as admin
 - [ ] Displays company information correctly
 - [ ] Shows employee count
@@ -176,6 +181,7 @@ WHERE email = 'YOUR_EMAIL@example.com';
 - [ ] Can navigate between tabs
 
 ### **Employee Management:**
+
 - [ ] Can send invitations from corporate dashboard
 - [ ] Invitations appear in "Pending" list
 - [ ] Email is sent to invited employee
@@ -183,6 +189,7 @@ WHERE email = 'YOUR_EMAIL@example.com';
 - [ ] Status badges display correctly
 
 ### **Employee Invitation Acceptance:**
+
 - [ ] Invitation link works
 - [ ] Token validation works
 - [ ] Expired tokens are rejected (after 7 days)
@@ -191,6 +198,7 @@ WHERE email = 'YOUR_EMAIL@example.com';
 - [ ] Profile is linked to corporate account
 
 ### **Authentication & Redirects:**
+
 - [ ] Corporate admin → `/corporate/dashboard`
 - [ ] Corporate employee → `/employee-portal/dashboard`
 - [ ] Regular user → `/dashboard`
@@ -198,6 +206,7 @@ WHERE email = 'YOUR_EMAIL@example.com';
 - [ ] Banner links work correctly
 
 ### **Employee Portal:**
+
 - [ ] Can access `/employee-portal/dashboard` as employee
 - [ ] Shows company name
 - [ ] Shows enrolled modules
@@ -211,6 +220,7 @@ WHERE email = 'YOUR_EMAIL@example.com';
 ### **Issue: Can't access corporate dashboard**
 
 **Solution:**
+
 ```sql
 -- Verify your profile has the correct flags:
 SELECT * FROM profiles WHERE email = 'YOUR_EMAIL@example.com';
@@ -222,12 +232,14 @@ SELECT * FROM profiles WHERE email = 'YOUR_EMAIL@example.com';
 ### **Issue: Invitation email not received**
 
 **Check:**
+
 1. Verify `RESEND_API_KEY` is set in Vercel environment variables
 2. Check Resend dashboard for email logs
 3. Check spam/junk folder
 4. Verify email address is correct
 
 **Debug:**
+
 ```bash
 # Check server logs in Vercel for email sending errors
 # Look for: "Assessment quote email sent to: ..."
@@ -238,6 +250,7 @@ SELECT * FROM profiles WHERE email = 'YOUR_EMAIL@example.com';
 **Tokens expire after 7 days.**
 
 **Solution:**
+
 ```sql
 -- Re-send invitation (delete old one first):
 DELETE FROM employee_invitations WHERE email = 'employee@example.com';
@@ -248,13 +261,14 @@ DELETE FROM employee_invitations WHERE email = 'employee@example.com';
 ### **Issue: Employee can't access employee portal**
 
 **Verify:**
+
 ```sql
-SELECT 
-  email, 
-  is_corporate_user, 
-  corporate_role, 
-  corporate_account_id 
-FROM profiles 
+SELECT
+  email,
+  is_corporate_user,
+  corporate_role,
+  corporate_account_id
+FROM profiles
 WHERE email = 'employee@example.com';
 
 -- Should show:
@@ -268,8 +282,9 @@ WHERE email = 'employee@example.com';
 ## 📊 Database Verification Queries
 
 ### **View all corporate accounts:**
+
 ```sql
-SELECT 
+SELECT
   id,
   company_name,
   program_tier,
@@ -281,8 +296,9 @@ ORDER BY created_at DESC;
 ```
 
 ### **View all corporate users:**
+
 ```sql
-SELECT 
+SELECT
   p.email,
   p.full_name,
   p.corporate_role,
@@ -294,8 +310,9 @@ ORDER BY p.created_at DESC;
 ```
 
 ### **View all invitations:**
+
 ```sql
-SELECT 
+SELECT
   ei.email,
   ei.full_name,
   ei.status,
@@ -308,8 +325,9 @@ ORDER BY ei.created_at DESC;
 ```
 
 ### **View course enrollments:**
+
 ```sql
-SELECT 
+SELECT
   ce.id,
   p.email,
   cm.title as module_name,
@@ -336,7 +354,7 @@ ORDER BY ce.created_at DESC;
 ✅ Employees can access employee portal  
 ✅ Smart redirects work for all user types  
 ✅ Corporate banner shows in main app  
-✅ Can switch between portals seamlessly  
+✅ Can switch between portals seamlessly
 
 ---
 
@@ -348,6 +366,7 @@ ORDER BY ce.created_at DESC;
 - **Type Safety:** Type assertions used temporarily (regenerate types after testing)
 
 **Next Phase Preview:**
+
 - Phase 2: Course content & module delivery
 - Phase 3: Progress tracking & certifications
 - Phase 4: Impact metrics & reporting
@@ -357,6 +376,7 @@ ORDER BY ce.created_at DESC;
 ## 🚀 Ready to Test?
 
 **Start here:**
+
 1. Run `CHECK-MY-CORPORATE-STATUS.sql` to see your current status
 2. If not a corporate admin, run `MAKE-ME-CORPORATE-ADMIN.sql`
 3. Sign out and back in
@@ -368,4 +388,3 @@ ORDER BY ce.created_at DESC;
 ---
 
 **Happy Testing! 🎊**
-
