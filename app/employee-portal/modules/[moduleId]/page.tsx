@@ -6,9 +6,10 @@ import Link from 'next/link'
 import { ArrowLeft, Play, CheckCircle, Lock, Clock, Award, TrendingUp } from 'lucide-react'
 import { cleanAirModule, getModuleProgress } from '@/app/lib/course-content/clean-air-module'
 
-export default function ModuleOverviewPage({ params }: { params: { moduleId: string } }) {
+export default function ModuleOverviewPage({ params }: { params: Promise<{ moduleId: string }> }) {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
+  const [moduleId, setModuleId] = useState<string>('')
   const [completedLessons, setCompletedLessons] = useState<string[]>([])
   const [progress, setProgress] = useState({
     percentage: 0,
@@ -22,13 +23,16 @@ export default function ModuleOverviewPage({ params }: { params: { moduleId: str
   const module = cleanAirModule
 
   useEffect(() => {
-    loadProgress()
+    params.then((p) => {
+      setModuleId(p.moduleId)
+      loadProgress(p.moduleId)
+    })
   }, [])
 
-  const loadProgress = async () => {
+  const loadProgress = async (modId: string) => {
     try {
       // Fetch user's progress for this module
-      const response = await fetch(`/api/corporate/progress/module/${params.moduleId}`)
+      const response = await fetch(`/api/corporate/progress/module/${modId}`)
       const data = await response.json()
       
       if (data.completedLessons) {
@@ -144,7 +148,7 @@ export default function ModuleOverviewPage({ params }: { params: { moduleId: str
                 </div>
               </div>
               <Link
-                href={`/employee-portal/modules/${params.moduleId}/lessons/${nextLesson.id}`}
+                href={`/employee-portal/modules/${moduleId}/lessons/${nextLesson.id}`}
                 className="bg-white text-teal-600 px-8 py-4 rounded-xl font-bold text-lg hover:scale-105 transition-transform shadow-lg flex items-center gap-2"
               >
                 <Play className="w-5 h-5" />
@@ -259,7 +263,7 @@ export default function ModuleOverviewPage({ params }: { params: { moduleId: str
                       {/* Action Button */}
                       {isUnlocked ? (
                         <Link
-                          href={`/employee-portal/modules/${params.moduleId}/lessons/${lesson.id}`}
+                          href={`/employee-portal/modules/${moduleId}/lessons/${lesson.id}`}
                           className={`inline-block px-6 py-2 rounded-lg font-medium transition-all ${
                             isCurrent
                               ? 'bg-gradient-to-r from-teal-600 to-purple-600 text-white hover:scale-105 shadow-md'
@@ -293,7 +297,7 @@ export default function ModuleOverviewPage({ params }: { params: { moduleId: str
               Has completado el módulo y ganado {progress.xpEarned} XP
             </p>
             <Link
-              href={`/employee-portal/modules/${params.moduleId}/certificate`}
+              href={`/employee-portal/modules/${moduleId}/certificate`}
               className="inline-block bg-white text-orange-600 px-8 py-4 rounded-xl font-bold text-lg hover:scale-105 transition-transform shadow-lg"
             >
               Ver Mi Certificado

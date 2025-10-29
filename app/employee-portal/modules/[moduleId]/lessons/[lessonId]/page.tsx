@@ -9,7 +9,7 @@ import { cleanAirModule, getLessonById } from '@/app/lib/course-content/clean-ai
 export default function LessonPage({ 
   params 
 }: { 
-  params: { moduleId: string; lessonId: string } 
+  params: Promise<{ moduleId: string; lessonId: string }> 
 }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -17,9 +17,20 @@ export default function LessonPage({
   const [showActivity, setShowActivity] = useState(false)
   const [activityCompleted, setActivityCompleted] = useState(false)
   const [activityData, setActivityData] = useState<any>({})
+  const [moduleId, setModuleId] = useState<string>('')
+  const [lessonId, setLessonId] = useState<string>('')
+  const [lesson, setLesson] = useState<any>(null)
 
-  const lesson = getLessonById(params.moduleId, params.lessonId)
   const module = cleanAirModule
+
+  useEffect(() => {
+    params.then((p) => {
+      setModuleId(p.moduleId)
+      setLessonId(p.lessonId)
+      const lessonData = getLessonById(p.moduleId, p.lessonId)
+      setLesson(lessonData)
+    })
+  }, [])
 
   if (!lesson) {
     return (
@@ -41,8 +52,8 @@ export default function LessonPage({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          moduleId: params.moduleId,
-          lessonId: params.lessonId,
+          moduleId,
+          lessonId,
           xpEarned: lesson.xpReward,
           activityData
         })
@@ -50,14 +61,14 @@ export default function LessonPage({
 
       if (response.ok) {
         // Find next lesson
-        const currentIndex = module.lessons.findIndex(l => l.id === params.lessonId)
+        const currentIndex = module.lessons.findIndex(l => l.id === lessonId)
         const nextLesson = module.lessons[currentIndex + 1]
 
         if (nextLesson) {
-          router.push(`/employee-portal/modules/${params.moduleId}/lessons/${nextLesson.id}`)
+          router.push(`/employee-portal/modules/${moduleId}/lessons/${nextLesson.id}`)
         } else {
           // Module completed
-          router.push(`/employee-portal/modules/${params.moduleId}`)
+          router.push(`/employee-portal/modules/${moduleId}`)
         }
       }
     } catch (error) {
@@ -72,7 +83,7 @@ export default function LessonPage({
       <div className={`bg-gradient-to-r ${module.color} text-white py-8 px-4`}>
         <div className="max-w-4xl mx-auto">
           <Link 
-            href={`/employee-portal/modules/${params.moduleId}`}
+            href={moduleId ? `/employee-portal/modules/${moduleId}` : '/employee-portal/dashboard'}
             className="inline-flex items-center gap-2 text-white/90 hover:text-white mb-4 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -121,7 +132,7 @@ export default function LessonPage({
 
           {/* Main Content */}
           <div className="space-y-4 mb-6">
-            {lesson.story.mainContent.map((paragraph, index) => (
+            {lesson.story.mainContent.map((paragraph: string, index: number) => (
               <p key={index} className="text-slate-700 leading-relaxed whitespace-pre-line">
                 {paragraph}
               </p>
@@ -159,7 +170,7 @@ export default function LessonPage({
           <div className="mb-6">
             <h3 className="font-bold text-slate-900 mb-4">Puntos Clave:</h3>
             <ul className="space-y-3">
-              {lesson.learning.keyPoints.map((point, index) => (
+              {lesson.learning.keyPoints.map((point: string, index: number) => (
                 <li key={index} className="flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
                   <span className="text-slate-700">{point}</span>
@@ -172,7 +183,7 @@ export default function LessonPage({
           <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-6 mb-6">
             <h3 className="font-bold text-blue-900 mb-4">💡 ¿Sabías Que...?</h3>
             <ul className="space-y-2">
-              {lesson.learning.didYouKnow.map((fact, index) => (
+              {lesson.learning.didYouKnow.map((fact: string, index: number) => (
                 <li key={index} className="text-blue-800">{fact}</li>
               ))}
             </ul>
@@ -213,7 +224,7 @@ export default function LessonPage({
               {/* Activity Content - Reflection Prompts */}
               {lesson.activity.reflectionPrompts && (
                 <div className="space-y-4">
-                  {lesson.activity.reflectionPrompts.map((prompt, index) => (
+                  {lesson.activity.reflectionPrompts.map((prompt: string, index: number) => (
                     <div key={index} className="border-2 border-slate-200 rounded-xl p-4">
                       <label className="block text-sm font-medium text-slate-700 mb-2">
                         {prompt}
@@ -234,7 +245,7 @@ export default function LessonPage({
               {/* Calculator Inputs */}
               {lesson.activity.calculatorInputs && (
                 <div className="space-y-4">
-                  {lesson.activity.calculatorInputs.map((input, index) => (
+                  {lesson.activity.calculatorInputs.map((input: any, index: number) => (
                     <div key={index} className="border-2 border-slate-200 rounded-xl p-4">
                       <label className="block text-sm font-medium text-slate-700 mb-2">
                         {input.label}
@@ -314,7 +325,7 @@ export default function LessonPage({
           <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
             <h2 className="text-2xl font-bold text-slate-900 mb-6">Recursos Adicionales</h2>
             <div className="grid gap-4">
-              {lesson.resources.map((resource, index) => (
+              {lesson.resources.map((resource: any, index: number) => (
                 <a
                   key={index}
                   href={resource.url}
@@ -341,7 +352,7 @@ export default function LessonPage({
         <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
           <h2 className="text-2xl font-bold text-slate-900 mb-6">Próximos Pasos</h2>
           <ul className="space-y-3">
-            {lesson.nextSteps.map((step, index) => (
+            {lesson.nextSteps.map((step: string, index: number) => (
               <li key={index} className="flex items-start gap-3">
                 <div className="w-6 h-6 bg-teal-100 text-teal-700 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-sm">
                   {index + 1}

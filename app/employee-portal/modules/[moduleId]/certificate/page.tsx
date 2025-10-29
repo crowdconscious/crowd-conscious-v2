@@ -5,9 +5,10 @@ import Link from 'next/link'
 import { Award, Download, Share2, ArrowLeft } from 'lucide-react'
 import { cleanAirModule } from '@/app/lib/course-content/clean-air-module'
 
-export default function CertificatePage({ params }: { params: { moduleId: string } }) {
+export default function CertificatePage({ params }: { params: Promise<{ moduleId: string }> }) {
   const [userData, setUserData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [moduleId, setModuleId] = useState<string>('')
 
   const module = cleanAirModule
   const today = new Date().toLocaleDateString('es-MX', {
@@ -17,7 +18,10 @@ export default function CertificatePage({ params }: { params: { moduleId: string
   })
 
   useEffect(() => {
-    loadData()
+    params.then((p) => {
+      setModuleId(p.moduleId)
+      loadData()
+    })
   }, [])
 
   const loadData = async () => {
@@ -47,7 +51,7 @@ export default function CertificatePage({ params }: { params: { moduleId: string
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <Link 
-          href={`/employee-portal/modules/${params.moduleId}`}
+          href={moduleId ? `/employee-portal/modules/${moduleId}` : '/employee-portal/dashboard'}
           className="inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 mb-8 transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
