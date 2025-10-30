@@ -139,17 +139,23 @@ export default async function DashboardPage() {
   const userCommunities = await getUserCommunities((user as any).id)
 
   // Check if user is corporate (admin or employee)
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('is_corporate_user, corporate_role, corporate_account_id, corporate_accounts(company_name)')
     .eq('id', (user as any).id)
     .single()
+
+  console.log('🔍 Corporate check for user:', (user as any).email)
+  console.log('📋 Profile data:', JSON.stringify(profile, null, 2))
+  console.log('❌ Profile error:', profileError)
 
   const corporateInfo = profile?.is_corporate_user ? {
     role: profile.corporate_role,
     accountId: profile.corporate_account_id,
     companyName: (profile as any).corporate_accounts?.company_name
   } : null
+
+  console.log('🏢 Corporate info:', JSON.stringify(corporateInfo, null, 2))
 
   return <NewEnhancedDashboard 
     user={user} 
