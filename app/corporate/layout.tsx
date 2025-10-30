@@ -63,6 +63,12 @@ export default async function CorporateLayout({
             </Link>
 
             <div className="flex items-center gap-4">
+              <Link
+                href="/dashboard"
+                className="text-sm bg-gradient-to-r from-teal-600 to-purple-600 text-white px-4 py-2 rounded-lg hover:scale-105 transition-transform font-medium"
+              >
+                🌍 Ir a Comunidad
+              </Link>
               <div className="text-sm text-slate-600">
                 {profile?.full_name || profile?.email}
               </div>

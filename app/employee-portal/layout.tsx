@@ -71,14 +71,13 @@ export default async function EmployeeLayout({
             </Link>
 
             <div className="flex items-center gap-4">
-              {isGraduated && (
-                <Link
-                  href="/dashboard"
-                  className="text-sm bg-gradient-to-r from-teal-600 to-purple-600 text-white px-4 py-2 rounded-lg hover:scale-105 transition-transform"
-                >
-                  🎓 Ir a Comunidad
-                </Link>
-              )}
+              <Link
+                href="/dashboard"
+                className="text-sm bg-gradient-to-r from-teal-600 to-purple-600 text-white px-4 py-2 rounded-lg hover:scale-105 transition-transform font-medium"
+                title={isGraduated ? "Accede a la comunidad principal" : "Explora la plataforma comunitaria"}
+              >
+                {isGraduated ? '🎓 Ir a Comunidad' : '🌍 Ver Comunidad'}
+              </Link>
               <div className="text-sm text-slate-600">
                 {profile?.full_name || profile?.email}
               </div>
