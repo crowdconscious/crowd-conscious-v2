@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase-server'
 import Link from 'next/link'
 import { Users, BookOpen, Award, TrendingUp, Plus, AlertCircle } from 'lucide-react'
+import SelfEnrollButton from '@/components/SelfEnrollButton'
 
 export default async function CorporateDashboard() {
   const supabase = await createClient()
@@ -48,6 +49,13 @@ export default async function CorporateDashboard() {
     .from('certifications')
     .select('*', { count: 'exact', head: true })
     .eq('corporate_account_id', profile?.corporate_account_id)
+
+  // Check if admin is enrolled in courses (NEW)
+  const { data: adminEnrollment } = await supabase
+    .from('course_enrollments')
+    .select('*, course:courses(title, core_value)')
+    .eq('employee_id', user.id)
+    .single()
 
   const stats = [
     {
@@ -136,6 +144,39 @@ export default async function CorporateDashboard() {
         </div>
       ) : (
         <>
+          {/* Admin's Own Progress (if enrolled) */}
+          {adminEnrollment && (
+            <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl shadow-lg p-6 text-white">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-bold mb-1">Tu Progreso Personal</h3>
+                  <p className="text-purple-100 text-sm">Lidera con el ejemplo - estás tomando el curso</p>
+                </div>
+                <BookOpen className="w-10 h-10 opacity-20" />
+              </div>
+              <div className="grid md:grid-cols-3 gap-4">
+                <div className="bg-white/10 backdrop-blur rounded-lg p-4">
+                  <div className="text-3xl font-bold mb-1">{adminEnrollment.completion_percentage || 0}%</div>
+                  <div className="text-sm text-purple-100">Completado</div>
+                </div>
+                <div className="bg-white/10 backdrop-blur rounded-lg p-4">
+                  <div className="text-3xl font-bold mb-1">{adminEnrollment.modules_completed || 0}/3</div>
+                  <div className="text-sm text-purple-100">Lecciones</div>
+                </div>
+                <div className="bg-white/10 backdrop-blur rounded-lg p-4">
+                  <div className="text-3xl font-bold mb-1">{adminEnrollment.xp_earned || 0}</div>
+                  <div className="text-sm text-purple-100">XP Ganado</div>
+                </div>
+              </div>
+              <Link
+                href="/employee-portal/dashboard"
+                className="mt-4 block w-full bg-white text-purple-600 text-center py-3 rounded-lg font-bold hover:scale-105 transition-transform"
+              >
+                Continuar Mi Capacitación →
+              </Link>
+            </div>
+          )}
+
           {/* Stats Grid */}
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {stats.map((stat) => {
@@ -202,17 +243,25 @@ export default async function CorporateDashboard() {
                 <div className="text-sm text-slate-500">Ver impacto y ahorros</div>
               </Link>
 
-              <Link
-                href="/concientizaciones"
-                className="p-4 border-2 border-purple-300 rounded-lg bg-gradient-to-br from-purple-50 to-pink-50 hover:border-purple-500 hover:shadow-lg transition-all group"
-              >
-                <BookOpen className="w-8 h-8 text-purple-500 group-hover:text-purple-600 mb-2" />
-                <div className="font-medium text-slate-900 flex items-center gap-1">
-                  Explorar Marketplace
-                  <span className="text-xs bg-purple-600 text-white px-1.5 py-0.5 rounded-full">NUEVO</span>
-                </div>
-                <div className="text-sm text-purple-700">Agregar más módulos</div>
-              </Link>
+              {/* Show self-enroll button if admin is not enrolled, otherwise show marketplace */}
+              {!adminEnrollment ? (
+                <SelfEnrollButton 
+                  courseId="a1a1a1a1-1111-1111-1111-111111111111" 
+                  courseName="Aire Limpio" 
+                />
+              ) : (
+                <Link
+                  href="/concientizaciones"
+                  className="p-4 border-2 border-purple-300 rounded-lg bg-gradient-to-br from-purple-50 to-pink-50 hover:border-purple-500 hover:shadow-lg transition-all group"
+                >
+                  <BookOpen className="w-8 h-8 text-purple-500 group-hover:text-purple-600 mb-2" />
+                  <div className="font-medium text-slate-900 flex items-center gap-1">
+                    Explorar Marketplace
+                    <span className="text-xs bg-purple-600 text-white px-1.5 py-0.5 rounded-full">NUEVO</span>
+                  </div>
+                  <div className="text-sm text-purple-700">Agregar más módulos</div>
+                </Link>
+              )}
             </div>
           </div>
 
