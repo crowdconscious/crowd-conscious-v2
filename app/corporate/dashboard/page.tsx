@@ -233,6 +233,82 @@ export default async function CorporateDashboard() {
               </div>
             </div>
           </div>
+
+          {/* Explore Modules Section */}
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                  Explorar Más Módulos
+                  <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded-full">PREVIEW</span>
+                </h3>
+                <p className="text-sm text-slate-600 mt-1">
+                  Amplía tu programa con módulos adicionales del marketplace
+                </p>
+              </div>
+              <Link
+                href="/concientizaciones"
+                className="text-teal-600 hover:text-teal-700 font-medium text-sm"
+              >
+                Ver Todos →
+              </Link>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-4">
+              {[
+                { 
+                  icon: '🌱', 
+                  name: 'Biodiversidad Urbana', 
+                  desc: 'Jardines y espacios verdes',
+                  price: '$18,000 MXN',
+                  badge: 'Nuevo'
+                },
+                { 
+                  icon: '📊', 
+                  name: 'Reportes ESG', 
+                  desc: 'Métricas y cumplimiento',
+                  price: '$18,000 MXN',
+                  badge: 'Popular'
+                },
+                { 
+                  icon: '💡', 
+                  name: 'Innovación Verde', 
+                  desc: 'Ideas de empleados',
+                  price: '$18,000 MXN',
+                  badge: 'Recomendado'
+                },
+              ].map((module, i) => (
+                <div
+                  key={i}
+                  className="border-2 border-slate-200 rounded-xl p-4 hover:border-purple-400 hover:bg-purple-50 transition-all cursor-pointer group"
+                >
+                  <div className="text-4xl mb-3">{module.icon}</div>
+                  <div className="flex items-start justify-between mb-2">
+                    <h4 className="font-bold text-slate-900 text-sm group-hover:text-purple-700">
+                      {module.name}
+                    </h4>
+                    <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full font-medium">
+                      {module.badge}
+                    </span>
+                  </div>
+                  <p className="text-sm text-slate-600 mb-3">{module.desc}</p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-slate-900">{module.price}</span>
+                    <span className="text-xs text-teal-600 font-medium group-hover:text-teal-700">
+                      Ver detalles →
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200">
+              <p className="text-sm text-purple-900">
+                <strong>💡 Próximamente:</strong> Marketplace completo donde podrás explorar módulos creados por comunidades 
+                reales con filtros por industria, precio y calificaciones. ¡Mantente atento!
+              </p>
+            </div>
+          </div>
         </>
       )}
 
