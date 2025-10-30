@@ -40,7 +40,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Already enrolled' }, { status: 400 })
     }
 
-    // Create enrollment
+    // Create enrollment (using only columns that exist)
     const { data: enrollment, error: enrollmentError } = await supabase
       .from('course_enrollments')
       .insert({
@@ -48,8 +48,9 @@ export async function POST(req: Request) {
         corporate_account_id: profile.corporate_account_id,
         course_id: courseId,
         status: 'not_started',
-        enrolled_at: new Date().toISOString(),
-        last_accessed_at: new Date().toISOString(),
+        completion_percentage: 0,
+        modules_completed: 0,
+        xp_earned: 0,
       })
       .select()
       .single()
