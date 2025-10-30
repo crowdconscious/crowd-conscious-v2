@@ -1,15 +1,43 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { supabaseClient } from '@/lib/supabase-client'
 
 export default function MobileNavigation() {
   const pathname = usePathname()
+  const [corporateLink, setCorporateLink] = useState('/concientizaciones')
+  
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const { data: { user } } = await supabaseClient.auth.getUser()
+        if (!user) return
+
+        const { data: profile } = await supabaseClient
+          .from('profiles')
+          .select('is_corporate_user, corporate_role')
+          .eq('id', user.id)
+          .single()
+
+        if (profile?.is_corporate_user && profile?.corporate_role === 'admin') {
+          setCorporateLink('/corporate/dashboard')
+        } else if (profile?.is_corporate_user && profile?.corporate_role === 'employee') {
+          setCorporateLink('/employee-portal/dashboard')
+        }
+      } catch (error) {
+        console.error('Error fetching profile:', error)
+      }
+    }
+
+    fetchUserProfile()
+  }, [])
   
   const navItems = [
     { path: '/dashboard', icon: '🏠', label: 'Home' },
     { path: '/communities', icon: '🌍', label: 'Communities' },
-    { path: '/concientizaciones', icon: '🎓', label: 'Training' },
+    { path: corporateLink, icon: '🎓', label: 'Training' },
     { path: '/profile', icon: '👤', label: 'Profile' }
   ]
   

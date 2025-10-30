@@ -223,7 +223,9 @@ export default function NewEnhancedDashboard({ user, initialUserStats, userCommu
                       title: 'Corporate Training',
                       description: 'Transform your team with impact',
                       icon: '🎓',
-                      href: '/concientizaciones',
+                      href: corporateInfo 
+                        ? (corporateInfo.role === 'admin' ? '/corporate/dashboard' : '/employee-portal/dashboard')
+                        : '/concientizaciones',
                       badge: corporateInfo ? '✓ Active' : 'NEW',
                       color: 'from-purple-500 to-pink-500'
                     }

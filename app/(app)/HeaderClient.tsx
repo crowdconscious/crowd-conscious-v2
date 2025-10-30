@@ -81,7 +81,13 @@ export default function HeaderClient({ user }: HeaderClientProps) {
                 Discover
               </Link>
               <Link 
-                href="/concientizaciones" 
+                href={
+                  userProfile?.is_corporate_user && userProfile?.corporate_role === 'admin'
+                    ? '/corporate/dashboard'
+                    : userProfile?.is_corporate_user && userProfile?.corporate_role === 'employee'
+                    ? '/employee-portal/dashboard'
+                    : '/concientizaciones'
+                }
                 className="text-slate-600 dark:text-slate-300 hover:text-purple-600 font-medium flex items-center gap-1"
               >
                 🎓 Corporate Training
