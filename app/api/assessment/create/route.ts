@@ -146,13 +146,13 @@ function recommendModules(formData: any) {
   // Return recommended tier based on budget and goals
   let recommendedModules = []
   if (formData.budgetRange === '<50k' || formData.employeeCount === '10-30') {
-    // Programa Inicial: Top 3 modules
+    // Starter Bundle: Top 3 modules
     recommendedModules = sortedModules.slice(0, 3)
   } else if (formData.budgetRange === '500k+' || formData.goals.length >= 5) {
-    // Programa Elite: All 6 modules
+    // Enterprise Bundle: All 6 modules
     recommendedModules = sortedModules
   } else {
-    // Programa Completo: Top 5 modules + integration
+    // Impact Bundle: Top 5 modules + integration
     recommendedModules = sortedModules.slice(0, 5)
     if (!recommendedModules.find(m => m.id === 'integration')) {
       recommendedModules.push(allModules.find(m => m.id === 'integration')!)
@@ -162,36 +162,55 @@ function recommendModules(formData: any) {
   return recommendedModules.map(m => m.id)
 }
 
-// Pricing calculator
+// Pricing calculator (New Modular Model)
 function calculatePricing(formData: any, recommendedModules: string[]) {
   const employeeCount = parseInt(formData.employeeCount.split('-')[0]) || 50
   const moduleCount = recommendedModules.length
   
   let basePrice = 0
   let tier = ''
+  let employeeLimit = 50
   
-  if (moduleCount <= 3 && employeeCount <= 30) {
-    tier = 'inicial'
-    basePrice = 45000
-  } else if (moduleCount >= 6 || employeeCount > 100) {
-    tier = 'elite'
-    basePrice = 350000
+  // Calculate employee packs needed (each pack = 50 employees)
+  const employeePacks = Math.ceil(employeeCount / 50)
+  const employeeMultiplier = employeePacks > 1 ? (1 + (employeePacks - 1) * 0.44) : 1 // 18k base, +8k per additional pack
+  
+  // Determine tier based on module count and employee count
+  if (moduleCount <= 3) {
+    tier = 'starter'
+    // Starter Bundle: 3 modules for $45,000 (50 employees)
+    basePrice = 45000 * employeeMultiplier
+    employeeLimit = employeePacks * 50
+  } else if (moduleCount >= 6) {
+    if (employeeCount > 100) {
+      tier = 'enterprise'
+      // Enterprise: Custom pricing starting at $150,000
+      basePrice = 150000 + (employeePacks - 2) * 15000 // Scaling discount
+      employeeLimit = 999 // Unlimited
+    } else {
+      tier = 'impact'
+      // Impact Bundle: 6 modules for $85,000 (100 employees)
+      basePrice = 85000
+      if (employeeCount <= 50) {
+        basePrice = 70000 // Slight discount for fewer employees
+      }
+      employeeLimit = 100
+    }
   } else {
-    tier = 'completo'
-    basePrice = 125000
-  }
-
-  // Adjust for employee count
-  if (employeeCount > 100 && tier !== 'elite') {
-    basePrice *= 1.5
+    // 4-5 modules - between starter and impact
+    tier = 'impact'
+    basePrice = 65000 * employeeMultiplier
+    employeeLimit = employeePacks * 50
   }
 
   return {
     tier,
     basePrice: Math.round(basePrice),
     pricePerModule: Math.round(basePrice / moduleCount),
+    pricePerEmployee: Math.round(basePrice / employeeCount),
     moduleCount,
-    employeeLimit: tier === 'inicial' ? 30 : tier === 'completo' ? 100 : 999,
+    employeeLimit,
+    savings: tier === 'starter' ? 9000 : tier === 'impact' ? 23000 : tier === 'enterprise' ? 50000 : 0,
   }
 }
 

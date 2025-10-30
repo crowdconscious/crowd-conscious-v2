@@ -174,7 +174,7 @@ export default async function CorporateDashboard() {
           {/* Quick Actions */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
             <h3 className="text-lg font-bold text-slate-900 mb-4">Acciones Rápidas</h3>
-            <div className="grid md:grid-cols-3 gap-4">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
               <Link
                 href="/corporate/employees"
                 className="p-4 border-2 border-slate-200 rounded-lg hover:border-teal-600 hover:bg-teal-50 transition-colors group"
@@ -200,6 +200,18 @@ export default async function CorporateDashboard() {
                 <Award className="w-8 h-8 text-slate-400 group-hover:text-green-600 mb-2" />
                 <div className="font-medium text-slate-900">Métricas de Impacto</div>
                 <div className="text-sm text-slate-500">Ver impacto y ahorros</div>
+              </Link>
+
+              <Link
+                href="/concientizaciones"
+                className="p-4 border-2 border-purple-300 rounded-lg bg-gradient-to-br from-purple-50 to-pink-50 hover:border-purple-500 hover:shadow-lg transition-all group"
+              >
+                <BookOpen className="w-8 h-8 text-purple-500 group-hover:text-purple-600 mb-2" />
+                <div className="font-medium text-slate-900 flex items-center gap-1">
+                  Explorar Marketplace
+                  <span className="text-xs bg-purple-600 text-white px-1.5 py-0.5 rounded-full">NUEVO</span>
+                </div>
+                <div className="text-sm text-purple-700">Agregar más módulos</div>
               </Link>
             </div>
           </div>

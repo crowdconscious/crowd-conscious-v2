@@ -8,8 +8,8 @@ export default function MobileNavigation() {
   
   const navItems = [
     { path: '/dashboard', icon: '🏠', label: 'Home' },
-    { path: '/discover', icon: '🔍', label: 'Discover' },
     { path: '/communities', icon: '🌍', label: 'Communities' },
+    { path: '/concientizaciones', icon: '🎓', label: 'Training' },
     { path: '/profile', icon: '👤', label: 'Profile' }
   ]
   

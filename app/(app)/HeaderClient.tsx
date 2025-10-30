@@ -80,6 +80,12 @@ export default function HeaderClient({ user }: HeaderClientProps) {
               >
                 Discover
               </Link>
+              <Link 
+                href="/concientizaciones" 
+                className="text-slate-600 dark:text-slate-300 hover:text-purple-600 font-medium flex items-center gap-1"
+              >
+                🎓 Corporate Training
+              </Link>
               {/* Admin Link */}
               {userProfile?.user_type === 'admin' && (
                 <Link 

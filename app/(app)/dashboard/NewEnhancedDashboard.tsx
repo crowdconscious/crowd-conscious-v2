@@ -195,7 +195,7 @@ export default function NewEnhancedDashboard({ user, initialUserStats, userCommu
               {/* Quick Actions Grid */}
               <div>
                 <h2 className="text-xl font-semibold text-slate-900 mb-6">⚡ Quick Actions</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   {[
                     {
                       title: 'Browse Communities',
@@ -218,6 +218,14 @@ export default function NewEnhancedDashboard({ user, initialUserStats, userCommu
                       icon: '🔥',
                       href: '/discover',
                       color: 'from-orange-500 to-red-500'
+                    },
+                    {
+                      title: 'Corporate Training',
+                      description: 'Transform your team with impact',
+                      icon: '🎓',
+                      href: '/concientizaciones',
+                      badge: corporateInfo ? '✓ Active' : 'NEW',
+                      color: 'from-purple-500 to-pink-500'
                     }
                   ].map((action) => (
                     <Link key={action.title} href={action.href}>

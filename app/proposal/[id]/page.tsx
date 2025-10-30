@@ -171,6 +171,15 @@ export default function ProposalPage() {
     }).format(amount)
   }
 
+  const getTierName = (tier: string) => {
+    const tierNames: Record<string, string> = {
+      'starter': '🌱 Starter Bundle',
+      'impact': '🌍 Impact Bundle',
+      'enterprise': '🚀 Enterprise Bundle',
+    }
+    return tierNames[tier] || tier
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-teal-50 via-white to-purple-50 flex items-center justify-center">
@@ -373,7 +382,7 @@ export default function ProposalPage() {
                 </div>
                 <div className="flex justify-between items-center py-3 border-b border-slate-200">
                   <span className="text-slate-600">Programa:</span>
-                  <span className="font-bold text-slate-900 capitalize">{proposalData.pricing.tier}</span>
+                  <span className="font-bold text-slate-900">{getTierName(proposalData.pricing.tier)}</span>
                 </div>
                 <div className="flex justify-between items-center py-3 border-b border-slate-200">
                   <span className="text-slate-600">Empleados permitidos:</span>
