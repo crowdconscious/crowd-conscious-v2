@@ -11,101 +11,63 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { moduleId, lessonId, xpEarned, activityData } = body
+    const { moduleId, lessonId, xpEarned } = body
 
-    // Get user's profile
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('training_xp, training_level, corporate_account_id')
-      .eq('id', user.id)
+    console.log('Complete lesson request:', { userId: user.id, moduleId, lessonId, xpEarned })
+
+    // Get the Clean Air course ID
+    const cleanAirCourseId = 'a1a1a1a1-1111-1111-1111-111111111111'
+
+    // Get enrollment
+    const { data: enrollment, error: enrollmentError } = await supabase
+      .from('course_enrollments')
+      .select('*')
+      .eq('employee_id', user.id)
+      .eq('course_id', cleanAirCourseId)
       .single()
 
-    // Check if lesson already completed
-    const { data: existing } = await supabase
-      .from('module_progress')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('module_id', moduleId)
-      .eq('lesson_id', lessonId)
-      .eq('status', 'completed')
-      .single()
-
-    if (existing) {
-      return NextResponse.json({ 
-        success: true, 
-        message: 'Lesson already completed' 
-      })
+    if (enrollmentError || !enrollment) {
+      console.error('Enrollment not found:', enrollmentError)
+      return NextResponse.json({ error: 'Enrollment not found' }, { status: 404 })
     }
 
-    // Record lesson completion
-    const { error: progressError } = await supabase
-      .from('module_progress')
-      .insert({
-        user_id: user.id,
-        module_id: moduleId,
-        lesson_id: lessonId,
-        corporate_account_id: profile?.corporate_account_id,
-        status: 'completed',
-        completion_percentage: 100,
-        xp_earned: xpEarned,
-        activity_data: activityData
-      })
-
-    if (progressError) {
-      console.error('Error saving progress:', progressError)
-      return NextResponse.json({ error: 'Failed to save progress' }, { status: 500 })
-    }
-
-    // Update user's XP and level
-    const currentXP = profile?.training_xp || 0
-    const newXP = currentXP + xpEarned
-    const newLevel = Math.floor(newXP / 1000) + 1 // Every 1000 XP = 1 level
-
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .update({
-        training_xp: newXP,
-        training_level: newLevel
-      })
-      .eq('id', user.id)
-
-    if (profileError) {
-      console.error('Error updating profile XP:', profileError)
-    }
-
-    // Check if module is now complete
-    const { data: allProgress } = await supabase
-      .from('module_progress')
-      .select('lesson_id')
-      .eq('user_id', user.id)
-      .eq('module_id', moduleId)
-      .eq('status', 'completed')
-
-    const completedLessons = allProgress?.length || 0
-    
-    // For clean_air module, there are 3 lessons
+    // Track completed lessons (simplified - just count)
+    const currentCompleted = enrollment.modules_completed || 0
+    const newCompleted = currentCompleted + 1
     const totalLessons = 3
-    const moduleComplete = completedLessons >= totalLessons
+    const newPercentage = Math.round((newCompleted / totalLessons) * 100)
+    const moduleComplete = newCompleted >= totalLessons
+    const currentXP = enrollment.xp_earned || 0
+    const newXP = currentXP + (xpEarned || 250)
 
-    if (moduleComplete) {
-      // Update course_enrollments to mark module as completed
-      await supabase
-        .from('course_enrollments')
-        .update({
-          status: 'completed',
-          completion_percentage: 100,
-          completed_at: new Date().toISOString()
-        })
-        .eq('user_id', user.id)
-        .eq('module_id', moduleId)
+    // Update enrollment
+    const { error: updateError } = await supabase
+      .from('course_enrollments')
+      .update({
+        modules_completed: newCompleted,
+        completion_percentage: newPercentage,
+        xp_earned: newXP,
+        status: moduleComplete ? 'completed' : 'in_progress',
+        completed_at: moduleComplete ? new Date().toISOString() : null,
+        last_accessed_at: new Date().toISOString()
+      })
+      .eq('employee_id', user.id)
+      .eq('course_id', cleanAirCourseId)
+
+    if (updateError) {
+      console.error('Error updating enrollment:', updateError)
+      return NextResponse.json({ error: 'Failed to update progress' }, { status: 500 })
     }
+
+    console.log('✅ Lesson completed:', { newCompleted, newPercentage, newXP, moduleComplete })
 
     return NextResponse.json({
       success: true,
-      xpEarned,
+      xpEarned: xpEarned || 250,
       newXP,
-      newLevel,
-      moduleComplete
+      moduleComplete,
+      completedLessons: newCompleted,
+      completionPercentage: newPercentage
     })
 
   } catch (error) {

@@ -15,24 +15,37 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get user's completed lessons for this module
-    const { data: progress, error } = await supabase
-      .from('module_progress')
-      .select('lesson_id, completed_at, xp_earned')
-      .eq('user_id', user.id)
-      .eq('module_id', moduleId)
-      .eq('status', 'completed')
+    // Get the Clean Air course enrollment
+    const cleanAirCourseId = 'a1a1a1a1-1111-1111-1111-111111111111'
+    
+    const { data: enrollment, error } = await supabase
+      .from('course_enrollments')
+      .select('modules_completed, xp_earned, completion_percentage')
+      .eq('employee_id', user.id)
+      .eq('course_id', cleanAirCourseId)
+      .single()
 
-    if (error) {
-      console.error('Error fetching progress:', error)
+    if (error || !enrollment) {
+      console.log('No enrollment found for user:', user.id)
       return NextResponse.json({ completedLessons: [] })
     }
 
-    const completedLessons = progress?.map(p => p.lesson_id) || []
+    // Map modules_completed count to lesson IDs
+    const lessonIds = [
+      'lesson-1-marias-awakening',
+      'lesson-2-the-investigation', 
+      'lesson-3-the-commitment'
+    ]
+    
+    const completedCount = enrollment.modules_completed || 0
+    const completedLessons = lessonIds.slice(0, completedCount)
+
+    console.log('Progress for', moduleId, ':', { completedCount, completedLessons })
 
     return NextResponse.json({
       completedLessons,
-      progress: progress || []
+      xpEarned: enrollment.xp_earned || 0,
+      completionPercentage: enrollment.completion_percentage || 0
     })
 
   } catch (error) {
