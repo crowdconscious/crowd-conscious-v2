@@ -15,11 +15,13 @@ export default function MobileNavigation() {
         const { data: { user } } = await supabaseClient.auth.getUser()
         if (!user) return
 
-        const { data: profile } = await supabaseClient
+        const { data: profileData } = await supabaseClient
           .from('profiles')
           .select('is_corporate_user, corporate_role')
           .eq('id', user.id)
           .single()
+
+        const profile = profileData as any
 
         if (profile?.is_corporate_user && profile?.corporate_role === 'admin') {
           setCorporateLink('/corporate/dashboard')
