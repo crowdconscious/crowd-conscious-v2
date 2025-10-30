@@ -149,12 +149,16 @@ export default async function DashboardPage() {
   console.log('📋 Profile data:', JSON.stringify(profile, null, 2))
   console.log('❌ Profile error:', profileError)
 
-  const corporateInfo = profile?.is_corporate_user ? {
+  // Handle both boolean and string "true" for is_corporate_user
+  const isCorporateUser = profile?.is_corporate_user === true || profile?.is_corporate_user === 'true'
+  
+  const corporateInfo = isCorporateUser ? {
     role: profile.corporate_role,
     accountId: profile.corporate_account_id,
     companyName: (profile as any).corporate_accounts?.company_name
   } : null
 
+  console.log('🏢 Is Corporate User?:', isCorporateUser)
   console.log('🏢 Corporate info:', JSON.stringify(corporateInfo, null, 2))
 
   return <NewEnhancedDashboard 
