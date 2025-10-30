@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Building2, Users, TrendingUp, Award, Settings, FileText } from 'lucide-react'
+import SignOutButton from '@/components/SignOutButton'
 
 export default async function CorporateLayout({
   children,
@@ -72,14 +73,8 @@ export default async function CorporateLayout({
               <div className="text-sm text-slate-600">
                 {profile?.full_name || profile?.email}
               </div>
-              <Link
-                href="/api/auth/signout"
-                className="text-sm text-slate-600 hover:text-teal-600"
-              >
-                Cerrar Sesión
-              </Link>
-            </div>
-          </div>
+              <SignOutButton />
+            </div>          </div>
         </div>
       </header>
 

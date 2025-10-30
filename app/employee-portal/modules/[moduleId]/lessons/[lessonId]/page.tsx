@@ -20,6 +20,7 @@ export default function LessonPage({
   const [moduleId, setModuleId] = useState<string>('')
   const [lessonId, setLessonId] = useState<string>('')
   const [lesson, setLesson] = useState<any>(null)
+  const [startTime] = useState(Date.now()) // Track when lesson started
 
   const module = cleanAirModule
 
@@ -55,7 +56,8 @@ export default function LessonPage({
           moduleId,
           lessonId,
           xpEarned: lesson.xpReward,
-          activityData
+          responses: activityData, // Send activity data as responses
+          timeSpent: Math.floor((Date.now() - startTime) / 60000) // Calculate time spent in minutes
         })
       })
 

@@ -11,9 +11,9 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { moduleId, lessonId, xpEarned } = body
+    const { moduleId, lessonId, xpEarned, responses, reflection, actionItems, timeSpent } = body
 
-    console.log('Complete lesson request:', { userId: user.id, moduleId, lessonId, xpEarned })
+    console.log('Complete lesson request:', { userId: user.id, moduleId, lessonId, xpEarned, hasResponses: !!responses })
 
     // Get the Clean Air course ID
     const cleanAirCourseId = 'a1a1a1a1-1111-1111-1111-111111111111'
@@ -57,6 +57,38 @@ export async function POST(req: NextRequest) {
     if (updateError) {
       console.error('Error updating enrollment:', updateError)
       return NextResponse.json({ error: 'Failed to update progress' }, { status: 500 })
+    }
+
+    // Store lesson responses if provided
+    if (responses) {
+      try {
+        const { error: responseError } = await supabase
+          .from('lesson_responses')
+          .upsert({
+            employee_id: user.id,
+            corporate_account_id: enrollment.corporate_account_id,
+            course_id: cleanAirCourseId,
+            module_id: moduleId,
+            lesson_id: lessonId,
+            responses: responses,
+            reflection: reflection || null,
+            action_items: actionItems || null,
+            time_spent_minutes: timeSpent || null,
+            completed_at: new Date().toISOString()
+          }, {
+            onConflict: 'employee_id,course_id,module_id,lesson_id'
+          })
+
+        if (responseError) {
+          console.error('Error storing lesson responses:', responseError)
+          // Don't fail the request if response storage fails
+        } else {
+          console.log('✅ Lesson responses stored')
+        }
+      } catch (responseStoreError) {
+        console.error('Error storing responses:', responseStoreError)
+        // Continue even if response storage fails
+      }
     }
 
     console.log('✅ Lesson completed:', { newCompleted, newPercentage, newXP, moduleComplete })
