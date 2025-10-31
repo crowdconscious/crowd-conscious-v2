@@ -121,37 +121,29 @@ export default async function EmployeeDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Welcome Header */}
+      {/* Welcome Header - Mobile Friendly */}
       <div>
-        <h1 className="text-3xl font-bold text-slate-900">
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
           ¡Hola, {profile?.full_name?.split(' ')[0] || 'Empleado'}! 👋
         </h1>
-        <p className="text-slate-600 mt-1">
+        <p className="text-slate-600 mt-1 text-sm sm:text-base">
           Continúa tu camino hacia la certificación
         </p>
       </div>
 
-      {/* Overall Progress */}
-      <div className="bg-gradient-to-br from-teal-50 to-purple-50 rounded-xl border-2 border-teal-200 p-6">
+      {/* Overall Progress - Mobile Optimized */}
+      <div className="bg-gradient-to-br from-teal-50 to-purple-50 rounded-xl border-2 border-teal-200 p-4 sm:p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <div className="text-sm font-medium text-slate-600">Progreso General</div>
-            <div className="text-3xl font-bold text-teal-900">{averageProgress}%</div>
+            <div className="text-xs sm:text-sm font-medium text-slate-600">Progreso General</div>
+            <div className="text-2xl sm:text-3xl font-bold text-teal-900">{averageProgress}%</div>
           </div>
-          <div className="w-20 h-20 relative">
-            <svg className="w-20 h-20 transform -rotate-90">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 relative flex-shrink-0">
+            {/* Desktop SVG - hidden on mobile */}
+            <svg className="hidden sm:block w-20 h-20 transform -rotate-90">
+              <circle cx="40" cy="40" r="36" stroke="#e5e7eb" strokeWidth="8" fill="none" />
               <circle
-                cx="40"
-                cy="40"
-                r="36"
-                stroke="#e5e7eb"
-                strokeWidth="8"
-                fill="none"
-              />
-              <circle
-                cx="40"
-                cy="40"
-                r="36"
+                cx="40" cy="40" r="36"
                 stroke="url(#gradient)"
                 strokeWidth="8"
                 fill="none"
@@ -165,21 +157,39 @@ export default async function EmployeeDashboard() {
                 </linearGradient>
               </defs>
             </svg>
+            {/* Mobile SVG - smaller */}
+            <svg className="sm:hidden w-16 h-16 transform -rotate-90">
+              <circle cx="32" cy="32" r="28" stroke="#e5e7eb" strokeWidth="6" fill="none" />
+              <circle
+                cx="32" cy="32" r="28"
+                stroke="url(#gradient-mobile)"
+                strokeWidth="6"
+                fill="none"
+                strokeDasharray={`${averageProgress * 1.76} 176`}
+                strokeLinecap="round"
+              />
+              <defs>
+                <linearGradient id="gradient-mobile" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#0f766e" />
+                  <stop offset="100%" stopColor="#7c3aed" />
+                </linearGradient>
+              </defs>
+            </svg>
           </div>
         </div>
-        <div className="w-full bg-slate-200 rounded-full h-3">
+        <div className="w-full bg-slate-200 rounded-full h-2 sm:h-3">
           <div 
-            className="bg-gradient-to-r from-teal-600 to-purple-600 h-3 rounded-full transition-all duration-500"
+            className="bg-gradient-to-r from-teal-600 to-purple-600 h-2 sm:h-3 rounded-full transition-all duration-500"
             style={{ width: `${averageProgress}%` }}
           />
         </div>
-        <p className="text-sm text-slate-600 mt-2">
+        <p className="text-xs sm:text-sm text-slate-600 mt-2">
           {completedModules} de {totalModules} módulos completados
         </p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid md:grid-cols-4 gap-6">
+      {/* Stats Grid - Mobile Optimized */}
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
         {stats.map((stat) => {
           const Icon = stat.icon
           const colorClasses = {
@@ -190,27 +200,27 @@ export default async function EmployeeDashboard() {
           }
           
           return (
-            <div key={stat.name} className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className={`w-12 h-12 bg-gradient-to-br ${colorClasses[stat.color as keyof typeof colorClasses]} rounded-lg flex items-center justify-center`}>
-                  <Icon className="w-6 h-6 text-white" />
+            <div key={stat.name} className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6">
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <div className={`w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br ${colorClasses[stat.color as keyof typeof colorClasses]} rounded-lg flex items-center justify-center flex-shrink-0`}>
+                  <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
               </div>
-              <div className="text-3xl font-bold text-slate-900 mb-1">
+              <div className="text-2xl sm:text-3xl font-bold text-slate-900 mb-1">
                 {stat.value}
               </div>
-              <div className="text-sm text-slate-600">{stat.name}</div>
+              <div className="text-xs sm:text-sm text-slate-600">{stat.name}</div>
             </div>
           )
         })}
       </div>
 
-      {/* My Courses */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-        <h3 className="text-lg font-bold text-slate-900 mb-4">Mis Módulos</h3>
+      {/* My Courses - Mobile Optimized */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6">
+        <h3 className="text-base sm:text-lg font-bold text-slate-900 mb-4">Mis Módulos</h3>
         
         {enrollments && enrollments.length > 0 ? (
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {enrollments.map((enrollment: any) => {
               // Get course info from the joined data or fallback to moduleInfo
               const courseData = enrollment.course
@@ -226,33 +236,41 @@ export default async function EmployeeDashboard() {
               return (
                 <div 
                   key={enrollment.id}
-                  className="border-2 border-slate-200 rounded-lg p-4 hover:border-teal-300 transition-colors"
+                  className="border-2 border-slate-200 rounded-lg p-3 sm:p-4 hover:border-teal-300 transition-colors"
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="text-4xl">{info.icon}</div>
-                      <div>
-                        <h4 className="font-bold text-slate-900">{info.name}</h4>
-                        <p className="text-sm text-slate-600">{info.description}</p>
-                        <div className="flex items-center gap-2 mt-2">
-                          <div className="px-2 py-1 rounded-full text-xs font-medium capitalize
-                            {enrollment.status === 'completed' ? 'bg-green-100 text-green-700' : 
-                             enrollment.status === 'in_progress' ? 'bg-purple-100 text-purple-700' : 
-                             'bg-slate-100 text-slate-700'}
-                          ">
+                  {/* Mobile: Stack vertically, Desktop: Side by side */}
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
+                    <div className="flex items-start gap-3 sm:gap-4">
+                      <div className="text-3xl sm:text-4xl flex-shrink-0">{info.icon}</div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-bold text-slate-900 text-sm sm:text-base truncate">{info.name}</h4>
+                        <p className="text-xs sm:text-sm text-slate-600 line-clamp-1 sm:line-clamp-none">{info.description}</p>
+                        <div className="flex items-center gap-2 mt-2 flex-wrap">
+                          <div className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${
+                            enrollment.status === 'completed' ? 'bg-green-100 text-green-700' : 
+                            enrollment.status === 'in_progress' ? 'bg-purple-100 text-purple-700' : 
+                            'bg-slate-100 text-slate-700'
+                          }`}>
                             {enrollment.status === 'completed' ? '✓ Completado' :
                              enrollment.status === 'in_progress' ? 'En Progreso' :
                              'No Iniciado'}
                           </div>
-                          <div className="text-sm text-slate-500">
+                          <div className="text-xs sm:text-sm text-slate-500">
                             {enrollment.completion_percentage}% completado
                           </div>
                         </div>
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-4">
-                      <div className="text-center">
+                    {/* Mobile: Full width button, Desktop: Inline */}
+                    <div className="flex items-center gap-3 sm:gap-4 justify-between sm:justify-end">
+                      <div className="text-center sm:hidden">
+                        <div className="text-xl font-bold text-slate-900">
+                          {enrollment.completion_percentage}%
+                        </div>
+                        <div className="text-xs text-slate-500">Progreso</div>
+                      </div>
+                      <div className="hidden sm:block text-center">
                         <div className="text-2xl font-bold text-slate-900">
                           {enrollment.completion_percentage}%
                         </div>
@@ -260,19 +278,19 @@ export default async function EmployeeDashboard() {
                       </div>
                       <Link
                         href={info.available ? `/employee-portal/modules/${coreValue}` : '#'}
-                        className={`${info.available ? 'bg-gradient-to-r from-teal-600 to-purple-600 text-white hover:scale-105' : 'bg-slate-300 text-slate-500 cursor-not-allowed'} px-6 py-2 rounded-lg font-medium transition-transform`}
+                        className={`${info.available ? 'bg-gradient-to-r from-teal-600 to-purple-600 text-white hover:scale-105' : 'bg-slate-300 text-slate-500 cursor-not-allowed'} px-4 sm:px-6 py-2 rounded-lg font-medium transition-transform text-sm sm:text-base whitespace-nowrap min-h-[44px] flex items-center justify-center`}
                       >
                         {info.available ? (
                           enrollment.status === 'completed' ? 'Revisar' :
                           enrollment.status === 'in_progress' ? 'Continuar' :
-                          'Empezar Ahora'
-                        ) : 'Próximamente'}
+                          'Empezar'
+                        ) : 'Pronto'}
                       </Link>
                     </div>
                   </div>
                   
                   {/* Progress Bar */}
-                  <div className="mt-4 w-full bg-slate-200 rounded-full h-2">
+                  <div className="mt-3 sm:mt-4 w-full bg-slate-200 rounded-full h-2">
                     <div 
                       className="bg-gradient-to-r from-teal-600 to-purple-600 h-2 rounded-full transition-all duration-500"
                       style={{ width: `${enrollment.completion_percentage}%` }}
@@ -283,31 +301,31 @@ export default async function EmployeeDashboard() {
             })}
           </div>
         ) : (
-          <div className="text-center py-12 text-slate-600">
-            <BookOpen className="w-16 h-16 mx-auto text-slate-400 mb-4" />
-            <p>No tienes módulos asignados aún.</p>
-            <p className="text-sm">Contacta a tu administrador.</p>
+          <div className="text-center py-8 sm:py-12 text-slate-600">
+            <BookOpen className="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-slate-400 mb-4" />
+            <p className="text-sm sm:text-base">No tienes módulos asignados aún.</p>
+            <p className="text-xs sm:text-sm">Contacta a tu administrador.</p>
           </div>
         )}
       </div>
 
-      {/* Certifications */}
+      {/* Certifications - Mobile Optimized */}
       {certifications && certifications.length > 0 && (
-        <div className="bg-gradient-to-br from-green-50 to-teal-50 rounded-xl border-2 border-green-200 p-6">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-teal-600 rounded-full flex items-center justify-center">
-              <Award className="w-8 h-8 text-white" />
+        <div className="bg-gradient-to-br from-green-50 to-teal-50 rounded-xl border-2 border-green-200 p-4 sm:p-6">
+          <div className="flex items-start gap-3 sm:gap-4">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-green-500 to-teal-600 rounded-full flex items-center justify-center flex-shrink-0">
+              <Award className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
             </div>
-            <div>
-              <h3 className="text-xl font-bold text-green-900">
+            <div className="flex-1 min-w-0">
+              <h3 className="text-base sm:text-xl font-bold text-green-900">
                 ¡Felicidades! Has obtenido {certifications.length} certificación{certifications.length > 1 ? 'es' : ''}
               </h3>
-              <p className="text-sm text-slate-600 mt-1">
+              <p className="text-xs sm:text-sm text-slate-600 mt-1">
                 Ahora puedes acceder a la comunidad principal y patrocinar necesidades locales.
               </p>
               <Link
                 href="/employee-portal/certifications"
-                className="inline-block mt-3 text-sm font-medium text-green-700 hover:text-green-900"
+                className="inline-block mt-2 sm:mt-3 text-xs sm:text-sm font-medium text-green-700 hover:text-green-900 min-h-[44px] flex items-center"
               >
                 Ver mis certificaciones →
               </Link>
