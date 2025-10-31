@@ -12,6 +12,7 @@ import {
   ReflectionJournal,
   ImpactComparison
 } from '@/components/module-tools'
+import ToolModal from './ToolModal'
 
 export default function LessonPage({ 
   params 
@@ -30,6 +31,8 @@ export default function LessonPage({
   const [startTime] = useState(Date.now()) // Track when lesson started
   const [uploadedFiles, setUploadedFiles] = useState<any[]>([])
   const [impactData, setImpactData] = useState<any>(null)
+  const [toolModalOpen, setToolModalOpen] = useState(false)
+  const [currentTool, setCurrentTool] = useState<{ type: string; title: string } | null>(null)
 
   const module = cleanAirModule
 
@@ -89,6 +92,18 @@ export default function LessonPage({
       console.error('Error uploading evidence:', error)
       return []
     }
+  }
+
+  // Handle tool resource clicks
+  const handleToolClick = (resource: any) => {
+    // Check if this is a tool resource (type === 'tool' or url starts with 'tool:')
+    if (resource.type === 'tool' || resource.url?.startsWith('tool:')) {
+      const toolType = resource.url?.replace('tool:', '') || 'unknown'
+      setCurrentTool({ type: toolType, title: resource.title })
+      setToolModalOpen(true)
+      return true
+    }
+    return false
   }
 
   useEffect(() => {
@@ -419,25 +434,51 @@ export default function LessonPage({
           <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 mb-4 sm:mb-6 md:mb-8">
             <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-900 mb-4 sm:mb-6">Recursos Adicionales</h2>
             <div className="grid gap-3 sm:gap-4">
-              {lesson.resources.map((resource: any, index: number) => (
-                <a
-                  key={index}
-                  href={resource.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-between p-3 sm:p-4 border-2 border-slate-200 rounded-lg sm:rounded-xl hover:border-teal-500 hover:bg-teal-50 transition-all group min-h-[60px]"
-                >
-                  <div className="flex-1 min-w-0 pr-2">
-                    <div className="font-medium text-slate-900 group-hover:text-teal-700 text-sm sm:text-base truncate">
-                      {resource.title}
+              {lesson.resources.map((resource: any, index: number) => {
+                const isTool = resource.type === 'tool' || resource.url?.startsWith('tool:')
+                
+                if (isTool) {
+                  return (
+                    <button
+                      key={index}
+                      onClick={() => handleToolClick(resource)}
+                      className="flex items-center justify-between p-3 sm:p-4 border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg sm:rounded-xl hover:border-purple-600 hover:shadow-lg transition-all group min-h-[60px] text-left w-full"
+                    >
+                      <div className="flex-1 min-w-0 pr-2">
+                        <div className="font-medium text-slate-900 group-hover:text-purple-700 text-sm sm:text-base truncate">
+                          {resource.title}
+                        </div>
+                        <div className="text-xs sm:text-sm text-purple-600 capitalize font-medium">
+                          🛠️ {resource.type}
+                        </div>
+                      </div>
+                      <div className="w-8 h-8 bg-purple-600 text-white rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <span className="text-lg">→</span>
+                      </div>
+                    </button>
+                  )
+                }
+                
+                return (
+                  <a
+                    key={index}
+                    href={resource.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between p-3 sm:p-4 border-2 border-slate-200 rounded-lg sm:rounded-xl hover:border-teal-500 hover:bg-teal-50 transition-all group min-h-[60px]"
+                  >
+                    <div className="flex-1 min-w-0 pr-2">
+                      <div className="font-medium text-slate-900 group-hover:text-teal-700 text-sm sm:text-base truncate">
+                        {resource.title}
+                      </div>
+                      <div className="text-xs sm:text-sm text-slate-600 capitalize">
+                        {resource.type}
+                      </div>
                     </div>
-                    <div className="text-xs sm:text-sm text-slate-600 capitalize">
-                      {resource.type}
-                    </div>
-                  </div>
-                  <ExternalLink className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 group-hover:text-teal-600 flex-shrink-0" />
-                </a>
-              ))}
+                    <ExternalLink className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 group-hover:text-teal-600 flex-shrink-0" />
+                  </a>
+                )
+              })}
             </div>
           </div>
         )}
@@ -487,6 +528,24 @@ export default function LessonPage({
           )}
         </div>
       </div>
+
+      {/* Tool Modal */}
+      {toolModalOpen && currentTool && (
+        <ToolModal
+          toolType={currentTool.type}
+          toolTitle={currentTool.title}
+          onClose={() => {
+            setToolModalOpen(false)
+            setCurrentTool(null)
+          }}
+          onDataCapture={(data) => {
+            // Save the tool data
+            saveActivityData(currentTool.type, data)
+            setActivityData((prev: any) => ({ ...prev, [currentTool.type]: data }))
+            console.log('Tool data captured:', data)
+          }}
+        />
+      )}
     </div>
   )
 }

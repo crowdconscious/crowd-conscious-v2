@@ -217,8 +217,13 @@ export const cleanAirModule: Module = {
           url: 'https://www.epa.gov/indoor-air-quality-iaq'
         },
         {
-          title: 'Monitor de Calidad del Aire en Tiempo Real',
+          title: 'Evaluación de Calidad del Aire',
           type: 'tool',
+          url: 'tool:air_quality_assessment'
+        },
+        {
+          title: 'Monitor de Calidad del Aire en Tiempo Real',
+          type: 'article',
           url: 'https://aqicn.org/map/mexico/'
         }
       ],
@@ -334,7 +339,7 @@ export const cleanAirModule: Module = {
         {
           title: 'Calculadora ROI de Calidad de Aire',
           type: 'tool',
-          url: '#' // Would link to custom calculator
+          url: 'tool:air_quality_roi'
         }
       ],
       
@@ -452,12 +457,17 @@ export const cleanAirModule: Module = {
       
       resources: [
         {
-          title: 'Template: Plan de Implementación 90 Días',
+          title: 'Calculadora de Impacto de Aire Limpio',
           type: 'tool',
-          url: '#' // Would link to downloadable template
+          url: 'tool:air_quality_impact'
         },
         {
-          title: 'Calculadora de Impacto: Tu Huella de Aire Limpio',
+          title: 'Sube Evidencia de tu Proyecto',
+          type: 'tool',
+          url: 'tool:evidence_uploader'
+        },
+        {
+          title: 'Template: Plan de Implementación 90 Días',
           type: 'tool',
           url: '#' // Would link to impact calculator
         },
