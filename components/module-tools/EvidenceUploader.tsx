@@ -30,6 +30,7 @@ export default function EvidenceUploader({
 }: EvidenceUploaderProps) {
   const [files, setFiles] = useState<UploadedFile[]>([])
   const [uploading, setUploading] = useState(false)
+  const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -70,16 +71,31 @@ export default function EvidenceUploader({
 
     const newFiles = [...files, ...validFiles]
     setFiles(newFiles)
-
-    // Notify parent component
-    if (onUpload) {
-      onUpload(newFiles)
-    }
+    setSaved(false) // Mark as unsaved when new files are added
 
     // Reset input
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
+  }
+
+  const handleSave = () => {
+    if (files.length === 0) {
+      setError('Agrega al menos una imagen antes de guardar')
+      return
+    }
+
+    setUploading(true)
+    
+    // Simulate upload (in real app, this would upload to server)
+    setTimeout(() => {
+      if (onUpload) {
+        onUpload(files)
+      }
+      setSaved(true)
+      setUploading(false)
+      setError(null)
+    }, 500)
   }
 
   const createPreview = (file: File): Promise<string> => {
@@ -93,9 +109,7 @@ export default function EvidenceUploader({
   const removeFile = (id: string) => {
     const newFiles = files.filter(f => f.id !== id)
     setFiles(newFiles)
-    if (onUpload) {
-      onUpload(newFiles)
-    }
+    setSaved(false) // Mark as unsaved when files are removed
     setError(null)
   }
 
@@ -155,10 +169,10 @@ export default function EvidenceUploader({
 
         {/* File Previews */}
         {files.length > 0 && (
-          <div className="space-y-2 sm:space-y-3">
+          <div className="space-y-3 sm:space-y-4">
             <div className="flex items-center gap-2 text-xs sm:text-sm text-purple-900 font-medium">
               <CheckCircle className="w-4 h-4 text-purple-600" />
-              {files.length} imagen{files.length > 1 ? 'es' : ''} lista{files.length > 1 ? 's' : ''}
+              {files.length} imagen{files.length > 1 ? 'es' : ''} lista{files.length > 1 ? 's' : ''} para subir
             </div>
             
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
@@ -187,6 +201,46 @@ export default function EvidenceUploader({
                 </div>
               ))}
             </div>
+
+            {/* Save Button */}
+            <button
+              onClick={handleSave}
+              disabled={uploading || saved}
+              className={`w-full py-3 sm:py-4 rounded-lg sm:rounded-xl font-bold text-sm sm:text-base transition-all flex items-center justify-center gap-2 ${
+                saved
+                  ? 'bg-green-600 text-white cursor-default'
+                  : uploading
+                  ? 'bg-purple-400 text-white cursor-wait'
+                  : 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:scale-105 shadow-lg'
+              }`}
+            >
+              {uploading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Guardando...</span>
+                </>
+              ) : saved ? (
+                <>
+                  <CheckCircle className="w-5 h-5" />
+                  <span>✅ Evidencia Guardada</span>
+                </>
+              ) : (
+                <>
+                  <Upload className="w-5 h-5" />
+                  <span>Guardar Evidencia</span>
+                </>
+              )}
+            </button>
+
+            {saved && (
+              <div className="bg-green-50 border-2 border-green-200 rounded-lg p-3 text-xs sm:text-sm text-green-800 flex items-start gap-2">
+                <CheckCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-green-600" />
+                <span>
+                  <strong>¡Perfecto!</strong> Tus imágenes han sido guardadas exitosamente. 
+                  Estas fotos serán visibles en el reporte de tu empresa.
+                </span>
+              </div>
+            )}
           </div>
         )}
 

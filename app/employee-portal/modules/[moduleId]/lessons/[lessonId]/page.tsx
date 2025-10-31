@@ -148,26 +148,53 @@ export default function LessonPage({
         console.log('✅ Lesson completed:', data)
         
         // Find next lesson
-        const currentIndex = module.lessons.findIndex(l => l.id === lessonId)
+        const currentIndex = module.lessons.findIndex((l: any) => l.id === lessonId)
         const nextLesson = module.lessons[currentIndex + 1]
+
+        // Show success message briefly
+        const successMsg = data.moduleComplete 
+          ? '🎉 ¡Módulo Completado! Redirigiendo...' 
+          : `✅ Lección completada! +${data.xpEarned || 0} XP`
+        
+        // Create a temporary success alert
+        const successDiv = document.createElement('div')
+        successDiv.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3 animate-fade-in'
+        successDiv.innerHTML = `
+          <span class="text-2xl">${data.moduleComplete ? '🎉' : '✅'}</span>
+          <span class="font-bold">${successMsg}</span>
+        `
+        document.body.appendChild(successDiv)
+        
+        setTimeout(() => {
+          successDiv.remove()
+        }, 2000)
 
         // Force refresh to update progress across the app
         router.refresh()
 
-        if (nextLesson) {
-          router.push(`/employee-portal/modules/${moduleId}/lessons/${nextLesson.id}`)
-        } else {
-          // Module completed
-          router.push(`/employee-portal/modules/${moduleId}`)
-        }
+        // Wait a moment for the success message, then navigate
+        setTimeout(() => {
+          if (nextLesson) {
+            router.push(`/employee-portal/modules/${moduleId}/lessons/${nextLesson.id}`)
+          } else {
+            // Module completed - go to module overview or dashboard
+            router.push(`/employee-portal/modules/${moduleId}`)
+          }
+        }, 1500)
       } else {
         const error = await response.json()
         console.error('❌ Failed to complete lesson:', error)
-        alert(`Error: ${error.error || 'No se pudo completar la lección'}`)
+        console.error('Response status:', response.status)
+        console.error('Error details:', error)
+        
+        // Show more detailed error
+        const errorMsg = error.error || error.details?.message || 'No se pudo completar la lección'
+        alert(`Error: ${errorMsg}\n\nPor favor intenta de nuevo o contacta soporte.`)
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error completing lesson:', error)
-      alert('Error al completar la lección. Por favor intenta de nuevo.')
+      console.error('Error stack:', error.stack)
+      alert(`Error al completar la lección: ${error.message}\n\nPor favor intenta de nuevo.`)
     }
     setCompleting(false)
   }
