@@ -31,20 +31,46 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Enrollment not found' }, { status: 404 })
     }
 
-    // Track completed lessons (simplified - just count)
-    const currentCompleted = enrollment.modules_completed || 0
-    const newCompleted = currentCompleted + 1
+    // Track completed lessons - check if already completed this specific lesson
+    const { data: existingResponse } = await supabase
+      .from('lesson_responses')
+      .select('id')
+      .eq('employee_id', user.id)
+      .eq('course_id', cleanAirCourseId)
+      .eq('module_id', moduleId)
+      .eq('lesson_id', lessonId)
+      .single()
+
+    const isNewCompletion = !existingResponse
+    
+    // Get all unique completed lessons for this course
+    const { data: allCompletedLessons } = await supabase
+      .from('lesson_responses')
+      .select('lesson_id')
+      .eq('employee_id', user.id)
+      .eq('course_id', cleanAirCourseId)
+    
+    const uniqueLessons = new Set(allCompletedLessons?.map(r => r.lesson_id) || [])
+    if (isNewCompletion) {
+      uniqueLessons.add(lessonId) // Add current lesson if it's new
+    }
+    
+    const currentCompleted = uniqueLessons.size
     const totalLessons = 3
-    const newPercentage = Math.round((newCompleted / totalLessons) * 100)
-    const moduleComplete = newCompleted >= totalLessons
+    const newPercentage = Math.round((currentCompleted / totalLessons) * 100)
+    const moduleComplete = currentCompleted >= totalLessons
+    
+    // Only award XP if this is a new completion
     const currentXP = enrollment.xp_earned || 0
-    const newXP = currentXP + (xpEarned || 250)
+    const newXP = isNewCompletion ? currentXP + (xpEarned || 250) : currentXP
 
     // Update enrollment (without last_accessed_at which doesn't exist)
     console.log('🔄 Updating enrollment:', {
       employee_id: user.id,
       course_id: cleanAirCourseId,
-      modules_completed: newCompleted,
+      lesson_id: lessonId,
+      is_new_completion: isNewCompletion,
+      unique_lessons_completed: currentCompleted,
       completion_percentage: newPercentage,
       xp_earned: newXP,
       status: moduleComplete ? 'completed' : 'in_progress'
@@ -53,7 +79,7 @@ export async function POST(req: NextRequest) {
     const { data: updateData, error: updateError } = await supabase
       .from('course_enrollments')
       .update({
-        modules_completed: newCompleted,
+        modules_completed: currentCompleted,
         completion_percentage: newPercentage,
         xp_earned: newXP,
         status: moduleComplete ? 'completed' : 'in_progress',
@@ -102,14 +128,21 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    console.log('✅ Lesson completed:', { newCompleted, newPercentage, newXP, moduleComplete })
+    console.log('✅ Lesson completed:', { 
+      isNewCompletion, 
+      uniqueLessonsCompleted: currentCompleted, 
+      newPercentage, 
+      newXP, 
+      moduleComplete 
+    })
 
     return NextResponse.json({
       success: true,
-      xpEarned: xpEarned || 250,
+      isNewCompletion,
+      xpEarned: isNewCompletion ? (xpEarned || 250) : 0,
       newXP,
       moduleComplete,
-      completedLessons: newCompleted,
+      completedLessons: currentCompleted,
       completionPercentage: newPercentage
     })
 
