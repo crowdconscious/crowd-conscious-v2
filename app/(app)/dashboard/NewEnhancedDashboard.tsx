@@ -37,20 +37,17 @@ export default function NewEnhancedDashboard({ user, initialUserStats, userCommu
   const [userStats] = useState<UserStats | null>(initialUserStats)
   const [activeTab, setActiveTab] = useState<'overview' | 'impact' | 'gamification' | 'calendar'>('overview')
   const [mounted, setMounted] = useState(false)
-  const [corporateLink, setCorporateLink] = useState('/concientizaciones')
 
-  // Check corporate status client-side for accurate routing
+  // Calculate corporate link directly from corporateInfo
+  const corporateLink = corporateInfo 
+    ? (corporateInfo.role === 'admin' ? '/corporate/dashboard' : '/employee-portal/dashboard')
+    : '/concientizaciones'
+
+  // Debug logging
   useEffect(() => {
-    const checkCorporateStatus = async () => {
-      if (corporateInfo) {
-        // Use server-provided corporateInfo if available
-        setCorporateLink(
-          corporateInfo.role === 'admin' ? '/corporate/dashboard' : '/employee-portal/dashboard'
-        )
-      }
-    }
-    checkCorporateStatus()
-  }, [corporateInfo])
+    console.log('🏢 NewEnhancedDashboard - corporateInfo:', corporateInfo)
+    console.log('🔗 Calculated corporateLink:', corporateLink)
+  }, [corporateInfo, corporateLink])
 
   // Prevent hydration mismatch by only showing time-based content after mount
   useEffect(() => {
