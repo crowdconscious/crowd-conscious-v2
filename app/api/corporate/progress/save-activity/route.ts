@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/supabase-server'
+import { createClient } from '@/lib/supabase-server'
 
 // Save activity data from reusable tools (calculators, evidence, reflections, etc.)
 export async function POST(request: Request) {
   try {
-    const supabase = createServerClient()
+    const supabase = await createClient()
     const { data: { user }, error: userError } = await supabase.auth.getUser()
 
     if (userError || !user) {
@@ -178,7 +178,7 @@ export async function POST(request: Request) {
 // Get saved activity data for a lesson
 export async function GET(request: Request) {
   try {
-    const supabase = createServerClient()
+    const supabase = await createClient()
     const { data: { user }, error: userError } = await supabase.auth.getUser()
 
     if (userError || !user) {
