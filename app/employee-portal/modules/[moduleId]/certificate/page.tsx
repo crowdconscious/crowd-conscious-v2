@@ -1,38 +1,77 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Award, Download, Share2, ArrowLeft } from 'lucide-react'
+import { Download, Share2, Award, CheckCircle, Twitter, Linkedin, Facebook, Copy, ArrowLeft } from 'lucide-react'
 import { cleanAirModule } from '@/app/lib/course-content/clean-air-module'
 
 export default function CertificatePage({ params }: { params: Promise<{ moduleId: string }> }) {
-  const [userData, setUserData] = useState<any>(null)
+  const router = useRouter()
+  const certificateRef = useRef<HTMLDivElement>(null)
   const [loading, setLoading] = useState(true)
   const [moduleId, setModuleId] = useState<string>('')
+  const [certificate, setCertificate] = useState<any>(null)
+  const [copied, setCopied] = useState(false)
 
   const module = cleanAirModule
-  const today = new Date().toLocaleDateString('es-MX', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  })
 
   useEffect(() => {
     params.then((p) => {
       setModuleId(p.moduleId)
-      loadData()
+      loadCertificate(p.moduleId)
     })
   }, [])
 
-  const loadData = async () => {
-    // In a real implementation, fetch user data and verification
-    // For now, using placeholder
-    setUserData({
-      name: 'Nombre del Empleado',
-      completedAt: today,
-      certificateId: `CC-${Date.now()}`
-    })
-    setLoading(false)
+  const loadCertificate = async (modId: string) => {
+    try {
+      // For now, fetch the latest certificate for this module
+      // In production, you'd fetch based on moduleId
+      const response = await fetch('/api/certificates/latest')
+      if (response.ok) {
+        const data = await response.json()
+        setCertificate(data)
+      }
+      setLoading(false)
+    } catch (error) {
+      console.error('Error loading certificate:', error)
+      setLoading(false)
+    }
+  }
+
+  const downloadCertificate = () => {
+    // TODO: Implement PDF download
+    // For now, we'll use the print dialog
+    window.print()
+  }
+
+  const shareCertificate = (platform: string) => {
+    const text = `¡Acabo de completar el módulo "${module.title}" en Crowd Conscious! 🎓🌱`
+    const url = window.location.origin + `/certificates/${certificate?.verificationCode}`
+
+    let shareUrl = ''
+    switch (platform) {
+      case 'twitter':
+        shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`
+        break
+      case 'linkedin':
+        shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`
+        break
+      case 'facebook':
+        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`
+        break
+    }
+
+    if (shareUrl) {
+      window.open(shareUrl, '_blank', 'width=600,height=400')
+    }
+  }
+
+  const copyLink = () => {
+    const url = window.location.origin + `/certificates/${certificate?.verificationCode}`
+    navigator.clipboard.writeText(url)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
 
   if (loading) {
@@ -47,114 +86,208 @@ export default function CertificatePage({ params }: { params: Promise<{ moduleId
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-12 px-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <Link 
-          href={moduleId ? `/employee-portal/modules/${moduleId}` : '/employee-portal/dashboard'}
-          className="inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 mb-8 transition-colors"
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-yellow-400 via-orange-500 to-pink-600 text-white py-8 px-4 shadow-xl print:hidden">
+        <div className="max-w-4xl mx-auto">
+          <Link 
+            href="/employee-portal/dashboard"
+            className="inline-flex items-center gap-2 text-white/90 hover:text-white mb-4 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Volver al Portal
+          </Link>
+
+          <div className="text-center">
+            <Award className="w-16 h-16 mx-auto mb-4" />
+            <h1 className="text-4xl font-bold mb-2">¡Felicidades! 🎉</h1>
+            <p className="text-xl text-white/90">
+              Has completado exitosamente el módulo
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Certificate */}
+      <div className="max-w-4xl mx-auto px-4 py-8 sm:py-12">
+        {/* Action Buttons */}
+        <div className="flex flex-wrap gap-3 sm:gap-4 justify-center mb-8 print:hidden">
+          <button
+            onClick={downloadCertificate}
+            className="flex items-center gap-2 bg-gradient-to-r from-teal-600 to-teal-700 text-white px-6 py-3 rounded-xl font-bold hover:scale-105 transition-transform shadow-lg"
+          >
+            <Download className="w-5 h-5" />
+            <span className="hidden sm:inline">Descargar</span>
+            <span className="sm:hidden">PDF</span>
+          </button>
+
+          <button
+            onClick={copyLink}
+            className="flex items-center gap-2 bg-slate-600 text-white px-6 py-3 rounded-xl font-bold hover:scale-105 transition-transform shadow-lg"
+          >
+            {copied ? (
+              <>
+                <CheckCircle className="w-5 h-5" />
+                <span>¡Copiado!</span>
+              </>
+            ) : (
+              <>
+                <Copy className="w-5 h-5" />
+                <span>Copiar Link</span>
+              </>
+            )}
+          </button>
+
+          <div className="flex gap-2">
+            <button
+              onClick={() => shareCertificate('twitter')}
+              className="flex items-center gap-2 bg-blue-500 text-white px-4 py-3 rounded-xl font-bold hover:scale-105 transition-transform shadow-lg"
+              title="Compartir en Twitter"
+            >
+              <Twitter className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => shareCertificate('linkedin')}
+              className="flex items-center gap-2 bg-blue-700 text-white px-4 py-3 rounded-xl font-bold hover:scale-105 transition-transform shadow-lg"
+              title="Compartir en LinkedIn"
+            >
+              <Linkedin className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => shareCertificate('facebook')}
+              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-xl font-bold hover:scale-105 transition-transform shadow-lg"
+              title="Compartir en Facebook"
+            >
+              <Facebook className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Certificate Card */}
+        <div
+          ref={certificateRef}
+          className="bg-white rounded-2xl shadow-2xl overflow-hidden border-8 border-gradient-to-r from-yellow-400 to-orange-500"
+          style={{ borderImage: 'linear-gradient(to right, #facc15, #f97316) 1' }}
         >
-          <ArrowLeft className="w-5 h-5" />
-          Volver al Módulo
-        </Link>
-
-        {/* Certificate */}
-        <div className="bg-white rounded-2xl shadow-2xl p-12 border-8 border-double border-yellow-500 relative overflow-hidden">
-          {/* Decorative Elements */}
-          <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-teal-400/20 to-purple-400/20 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
-          <div className="absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-full translate-x-1/2 translate-y-1/2"></div>
-
-          {/* Content */}
-          <div className="relative z-10 text-center">
-            {/* Logo */}
-            <div className="w-20 h-20 bg-gradient-to-br from-teal-500 to-purple-600 rounded-xl flex items-center justify-center mx-auto mb-6">
-              <span className="text-white font-bold text-3xl">CC</span>
+          {/* Certificate Content */}
+          <div className="p-8 sm:p-12 md:p-16 bg-gradient-to-br from-white via-yellow-50 to-orange-50">
+            {/* Header */}
+            <div className="text-center mb-8">
+              <div className="flex items-center justify-center gap-3 mb-4">
+                <div className="text-5xl sm:text-6xl">🌱</div>
+                <div className="text-left">
+                  <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Crowd Conscious</h2>
+                  <p className="text-sm sm:text-base text-slate-600">Plataforma de Impacto Social</p>
+                </div>
+              </div>
+              <div className="h-1 w-32 bg-gradient-to-r from-teal-600 to-purple-600 mx-auto rounded-full"></div>
             </div>
 
-            <h1 className="text-4xl font-bold text-slate-900 mb-2">
-              Certificado de Finalización
-            </h1>
-            <p className="text-lg text-slate-600 mb-8">Crowd Conscious - Concientizaciones</p>
-
-            <div className="my-12">
-              <p className="text-slate-600 mb-4">Este certificado se otorga a</p>
-              <h2 className="text-5xl font-bold bg-gradient-to-r from-teal-600 to-purple-600 bg-clip-text text-transparent mb-6">
-                {userData.name}
+            {/* Certificate Text */}
+            <div className="text-center mb-8">
+              <p className="text-lg sm:text-xl text-slate-700 mb-6">
+                Este certificado es otorgado a
+              </p>
+              <h1 className="text-3xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-purple-600 mb-6">
+                {certificate?.employeeName || 'Cargando...'}
+              </h1>
+              <p className="text-base sm:text-lg text-slate-700 mb-4">
+                de la empresa
+              </p>
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-8">
+                {certificate?.companyName || 'Cargando...'}
               </h2>
-              <p className="text-slate-600 mb-4">por completar exitosamente el módulo</p>
-              <h3 className="text-3xl font-bold text-slate-900 mb-8">
-                {module.icon} {module.title}
+              <p className="text-base sm:text-lg text-slate-700 mb-4">
+                por completar exitosamente el módulo
+              </p>
+              <h3 className="text-2xl sm:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-purple-600 mb-6">
+                {module.title}
               </h3>
             </div>
 
-            {/* Module Details */}
-            <div className="bg-gradient-to-r from-teal-50 to-purple-50 rounded-xl p-6 mb-8 max-w-2xl mx-auto">
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div>
-                  <div className="text-2xl font-bold text-teal-700">{module.totalLessons}</div>
-                  <div className="text-sm text-slate-600">Lecciones</div>
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-4 mb-8 max-w-md mx-auto">
+              <div className="text-center p-3 sm:p-4 bg-white rounded-xl shadow-sm">
+                <div className="text-2xl sm:text-3xl font-bold text-teal-600">{module.lessons.length}</div>
+                <div className="text-xs sm:text-sm text-slate-600">Lecciones</div>
+              </div>
+              <div className="text-center p-3 sm:p-4 bg-white rounded-xl shadow-sm">
+                <div className="text-2xl sm:text-3xl font-bold text-purple-600">{certificate?.xpEarned || 750}</div>
+                <div className="text-xs sm:text-sm text-slate-600">XP Ganados</div>
+              </div>
+              <div className="text-center p-3 sm:p-4 bg-white rounded-xl shadow-sm">
+                <div className="text-2xl sm:text-3xl font-bold text-orange-600">{module.duration}</div>
+                <div className="text-xs sm:text-sm text-slate-600">Duración</div>
+              </div>
+            </div>
+
+            {/* Signature Line */}
+            <div className="border-t-2 border-slate-300 pt-6 mt-8">
+              <div className="grid sm:grid-cols-2 gap-6 sm:gap-8 max-w-xl mx-auto">
+                <div className="text-center">
+                  <div className="h-px bg-slate-400 mb-2"></div>
+                  <p className="text-sm font-semibold text-slate-700">Francisco Blockstrand</p>
+                  <p className="text-xs text-slate-500">Fundador, Crowd Conscious</p>
                 </div>
-                <div>
-                  <div className="text-2xl font-bold text-purple-700">{module.totalXP} XP</div>
-                  <div className="text-sm text-slate-600">Ganados</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-pink-700">{module.duration}</div>
-                  <div className="text-sm text-slate-600">Completados</div>
+                <div className="text-center">
+                  <div className="h-px bg-slate-400 mb-2"></div>
+                  <p className="text-sm font-semibold text-slate-700">{new Date(certificate?.issuedAt || Date.now()).toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                  <p className="text-xs text-slate-500">Fecha de Emisión</p>
                 </div>
               </div>
             </div>
 
-            {/* Certification Badge */}
-            <div className="inline-flex items-center gap-3 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-8 py-4 rounded-full font-bold text-lg mb-8">
-              <Award className="w-6 h-6" />
-              {module.certificationTitle}
-            </div>
-
-            {/* Date and ID */}
-            <div className="text-sm text-slate-600 space-y-1">
-              <p>Fecha de finalización: {userData.completedAt}</p>
-              <p>ID del certificado: {userData.certificateId}</p>
+            {/* Verification Code */}
+            <div className="text-center mt-8 pt-6 border-t border-slate-200">
+              <p className="text-xs text-slate-500 mb-1">Código de Verificación</p>
+              <p className="text-sm font-mono font-bold text-slate-700 tracking-wider">
+                {certificate?.verificationCode || 'XXXXXX'}
+              </p>
+              <p className="text-xs text-slate-400 mt-1">
+                Verifica en: crowdconscious.app/verify
+              </p>
             </div>
           </div>
-        </div>
 
-        {/* Actions */}
-        <div className="flex items-center justify-center gap-4 mt-8">
-          <button className="flex items-center gap-2 bg-gradient-to-r from-teal-600 to-purple-600 text-white px-8 py-4 rounded-xl font-bold hover:scale-105 transition-transform">
-            <Download className="w-5 h-5" />
-            Descargar PDF
-          </button>
-          <button className="flex items-center gap-2 bg-white text-slate-700 border-2 border-slate-300 px-8 py-4 rounded-xl font-bold hover:border-teal-500 transition-colors">
-            <Share2 className="w-5 h-5" />
-            Compartir
-          </button>
+          {/* Decorative Border */}
+          <div className="h-4 bg-gradient-to-r from-yellow-400 via-orange-500 to-pink-600"></div>
         </div>
 
         {/* Next Steps */}
-        <div className="bg-gradient-to-r from-teal-600 to-purple-600 rounded-2xl p-8 mt-8 text-center text-white">
-          <h2 className="text-2xl font-bold mb-4">🎉 ¡Felicidades por tu logro!</h2>
-          <p className="text-white/90 mb-6">
-            Has demostrado tu compromiso con crear un impacto positivo. Ahora puedes acceder 
-            a la comunidad principal y comenzar a patrocinar necesidades locales.
-          </p>
-          <div className="flex gap-4 justify-center">
-            <Link
-              href="/employee-portal/dashboard"
-              className="bg-white text-teal-600 px-6 py-3 rounded-lg font-bold hover:scale-105 transition-transform"
-            >
-              Volver al Portal
-            </Link>
-            <Link
-              href="/dashboard"
-              className="bg-white/20 backdrop-blur-sm text-white border-2 border-white px-6 py-3 rounded-lg font-bold hover:bg-white/30 transition-colors"
-            >
-              Ir a la Comunidad →
-            </Link>
-          </div>
+        <div className="mt-8 bg-white rounded-xl shadow-lg p-6 sm:p-8 print:hidden">
+          <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4">🎯 Próximos Pasos</h3>
+          <ul className="space-y-3">
+            <li className="flex items-start gap-3">
+              <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium text-slate-900">Comparte tu logro</p>
+                <p className="text-sm text-slate-600">Usa los botones de arriba para compartir tu certificado en redes sociales</p>
+              </div>
+            </li>
+            <li className="flex items-start gap-3">
+              <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium text-slate-900">Continúa aprendiendo</p>
+                <p className="text-sm text-slate-600">Explora más módulos disponibles en tu programa</p>
+              </div>
+            </li>
+            <li className="flex items-start gap-3">
+              <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium text-slate-900">Aplica lo aprendido</p>
+                <p className="text-sm text-slate-600">Implementa los proyectos y herramientas en tu lugar de trabajo</p>
+              </div>
+            </li>
+          </ul>
+
+          <Link
+            href="/employee-portal/dashboard"
+            className="mt-6 w-full block text-center bg-gradient-to-r from-teal-600 to-purple-600 text-white py-3 rounded-xl font-bold hover:scale-105 transition-transform shadow-lg"
+          >
+            Volver al Portal
+          </Link>
         </div>
       </div>
     </div>
   )
 }
-

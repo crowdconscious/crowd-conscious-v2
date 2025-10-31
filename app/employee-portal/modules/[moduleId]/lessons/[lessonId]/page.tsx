@@ -151,9 +151,32 @@ export default function LessonPage({
         const currentIndex = module.lessons.findIndex((l: any) => l.id === lessonId)
         const nextLesson = module.lessons[currentIndex + 1]
 
+        // If module complete, generate certificate
+        if (data.moduleComplete) {
+          try {
+            const certResponse = await fetch('/api/certificates/generate', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                moduleId,
+                moduleName: module.title,
+                xpEarned: data.totalXP || lesson.xpReward
+              })
+            })
+
+            if (certResponse.ok) {
+              const certData = await certResponse.json()
+              console.log('🎓 Certificate generated:', certData)
+            }
+          } catch (certError) {
+            console.error('Certificate generation failed:', certError)
+            // Don't block completion if certificate fails
+          }
+        }
+
         // Show success message briefly
         const successMsg = data.moduleComplete 
-          ? '🎉 ¡Módulo Completado! Redirigiendo...' 
+          ? '🎉 ¡Módulo Completado! Generando certificado...' 
           : `✅ Lección completada! +${data.xpEarned || 0} XP`
         
         // Create a temporary success alert
@@ -167,7 +190,7 @@ export default function LessonPage({
         
         setTimeout(() => {
           successDiv.remove()
-        }, 2000)
+        }, 2500)
 
         // Force refresh to update progress across the app
         router.refresh()
@@ -177,10 +200,10 @@ export default function LessonPage({
           if (nextLesson) {
             router.push(`/employee-portal/modules/${moduleId}/lessons/${nextLesson.id}`)
           } else {
-            // Module completed - go to module overview or dashboard
-            router.push(`/employee-portal/modules/${moduleId}`)
+            // Module completed - go to certificate page
+            router.push(`/employee-portal/modules/${moduleId}/certificate`)
           }
-        }, 1500)
+        }, 2000)
       } else {
         const error = await response.json()
         console.error('❌ Failed to complete lesson:', error)
