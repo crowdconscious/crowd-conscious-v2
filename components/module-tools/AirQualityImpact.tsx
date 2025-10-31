@@ -18,7 +18,7 @@ interface ImpactResult {
     lifeYearsGained: number
     respiratoryIssuesAvoided: number
     asthmaReductionPercent: number
-    heartDisease ReductionPercent: number
+    heartDiseaseReductionPercent: number
   }
   equivalents: {
     smokingCigarettes: number
