@@ -51,72 +51,73 @@ export default async function ProgressPage() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
+      {/* Page Header - Mobile Friendly */}
       <div>
-        <h1 className="text-3xl font-bold text-slate-900">Progreso Detallado</h1>
-        <p className="text-slate-600 mt-1">Monitorea el avance de tus empleados en tiempo real</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Progreso Detallado</h1>
+        <p className="text-slate-600 mt-1 text-sm sm:text-base">Monitorea el avance de tus empleados en tiempo real</p>
       </div>
 
-      {/* Summary Stats */}
-      <div className="grid md:grid-cols-5 gap-4">
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-          <Users className="w-8 h-8 text-teal-600 mb-2" />
-          <div className="text-3xl font-bold text-slate-900">{totalEmployees}</div>
-          <div className="text-sm text-slate-600">Empleados Activos</div>
+      {/* Summary Stats - Mobile Optimized */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6">
+          <Users className="w-6 h-6 sm:w-8 sm:h-8 text-teal-600 mb-2" />
+          <div className="text-2xl sm:text-3xl font-bold text-slate-900">{totalEmployees}</div>
+          <div className="text-xs sm:text-sm text-slate-600">Empleados Activos</div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-          <BookOpen className="w-8 h-8 text-blue-600 mb-2" />
-          <div className="text-3xl font-bold text-slate-900">{totalEnrollments}</div>
-          <div className="text-sm text-slate-600">Cursos Asignados</div>
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6">
+          <BookOpen className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600 mb-2" />
+          <div className="text-2xl sm:text-3xl font-bold text-slate-900">{totalEnrollments}</div>
+          <div className="text-xs sm:text-sm text-slate-600">Cursos Asignados</div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-          <CheckCircle className="w-8 h-8 text-green-600 mb-2" />
-          <div className="text-3xl font-bold text-slate-900">{completedEnrollments}</div>
-          <div className="text-sm text-slate-600">Cursos Completados</div>
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6">
+          <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-green-600 mb-2" />
+          <div className="text-2xl sm:text-3xl font-bold text-slate-900">{completedEnrollments}</div>
+          <div className="text-xs sm:text-sm text-slate-600">Cursos Completados</div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-          <TrendingUp className="w-8 h-8 text-purple-600 mb-2" />
-          <div className="text-3xl font-bold text-slate-900">{avgCompletion}%</div>
-          <div className="text-sm text-slate-600">Progreso Promedio</div>
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6">
+          <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600 mb-2" />
+          <div className="text-2xl sm:text-3xl font-bold text-slate-900">{avgCompletion}%</div>
+          <div className="text-xs sm:text-sm text-slate-600">Progreso Promedio</div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-          <Clock className="w-8 h-8 text-orange-600 mb-2" />
-          <div className="text-3xl font-bold text-slate-900">{Math.round(totalTimeSpent / 60)}h</div>
-          <div className="text-sm text-slate-600">Tiempo Total</div>
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6 col-span-2 sm:col-span-1">
+          <Clock className="w-6 h-6 sm:w-8 sm:h-8 text-orange-600 mb-2" />
+          <div className="text-2xl sm:text-3xl font-bold text-slate-900">{Math.round(totalTimeSpent / 60)}h</div>
+          <div className="text-xs sm:text-sm text-slate-600">Tiempo Total</div>
         </div>
       </div>
 
-      {/* Employee Progress Table */}
+      {/* Employee Progress Table - Mobile Optimized */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="p-6 border-b border-slate-200">
-          <h2 className="text-xl font-bold text-slate-900">Progreso por Empleado</h2>
+        <div className="p-4 sm:p-6 border-b border-slate-200">
+          <h2 className="text-lg sm:text-xl font-bold text-slate-900">Progreso por Empleado</h2>
+          <p className="text-xs text-slate-500 mt-1 sm:hidden">← Desliza para ver más →</p>
         </div>
 
         {enrollments.length === 0 ? (
-          <div className="p-12 text-center text-slate-600">
-            <BookOpen className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-            <p>No hay empleados inscritos todavía</p>
-            <Link href="/corporate/employees" className="text-teal-600 hover:text-teal-700 mt-2 inline-block">
+          <div className="p-8 sm:p-12 text-center text-slate-600">
+            <BookOpen className="w-12 h-12 sm:w-16 sm:h-16 text-slate-300 mx-auto mb-4" />
+            <p className="text-sm sm:text-base">No hay empleados inscritos todavía</p>
+            <Link href="/corporate/employees" className="text-teal-600 hover:text-teal-700 mt-2 inline-block text-sm sm:text-base">
               Invitar empleados →
             </Link>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
+          <div className="overflow-x-auto -mx-px">
+            <table className="w-full min-w-[800px]">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th className="text-left p-4 font-medium text-slate-700">Empleado</th>
-                  <th className="text-left p-4 font-medium text-slate-700">Curso</th>
-                  <th className="text-center p-4 font-medium text-slate-700">Progreso</th>
-                  <th className="text-center p-4 font-medium text-slate-700">Estado</th>
-                  <th className="text-center p-4 font-medium text-slate-700">Lecciones</th>
-                  <th className="text-center p-4 font-medium text-slate-700">XP</th>
-                  <th className="text-center p-4 font-medium text-slate-700">Última Actividad</th>
-                  <th className="text-center p-4 font-medium text-slate-700">Acciones</th>
+                  <th className="text-left p-3 sm:p-4 font-medium text-slate-700 text-xs sm:text-sm whitespace-nowrap">Empleado</th>
+                  <th className="text-left p-3 sm:p-4 font-medium text-slate-700 text-xs sm:text-sm whitespace-nowrap">Curso</th>
+                  <th className="text-center p-3 sm:p-4 font-medium text-slate-700 text-xs sm:text-sm whitespace-nowrap">Progreso</th>
+                  <th className="text-center p-3 sm:p-4 font-medium text-slate-700 text-xs sm:text-sm whitespace-nowrap">Estado</th>
+                  <th className="text-center p-3 sm:p-4 font-medium text-slate-700 text-xs sm:text-sm whitespace-nowrap">Lecciones</th>
+                  <th className="text-center p-3 sm:p-4 font-medium text-slate-700 text-xs sm:text-sm whitespace-nowrap">XP</th>
+                  <th className="text-center p-3 sm:p-4 font-medium text-slate-700 text-xs sm:text-sm whitespace-nowrap">Última Actividad</th>
+                  <th className="text-center p-3 sm:p-4 font-medium text-slate-700 text-xs sm:text-sm whitespace-nowrap">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
