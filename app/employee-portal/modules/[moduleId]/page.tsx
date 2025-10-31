@@ -29,6 +29,19 @@ export default function ModuleOverviewPage({ params }: { params: Promise<{ modul
     })
   }, [])
 
+  // Reload progress when returning to this page
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && moduleId) {
+        console.log('🔄 Page visible again - refreshing progress')
+        loadProgress(moduleId)
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [moduleId])
+
   const loadProgress = async (modId: string) => {
     try {
       // Fetch user's progress for this module

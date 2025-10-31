@@ -20,27 +20,45 @@ export async function GET(
     
     const { data: enrollment, error } = await supabase
       .from('course_enrollments')
-      .select('modules_completed, xp_earned, completion_percentage')
+      .select('xp_earned, completion_percentage')
       .eq('employee_id', user.id)
       .eq('course_id', cleanAirCourseId)
       .single()
 
     if (error || !enrollment) {
       console.log('No enrollment found for user:', user.id)
-      return NextResponse.json({ completedLessons: [] })
+      return NextResponse.json({ 
+        completedLessons: [],
+        xpEarned: 0,
+        completionPercentage: 0
+      })
     }
 
-    // Map modules_completed count to lesson IDs
-    const lessonIds = [
-      'lesson-1-marias-awakening',
-      'lesson-2-the-investigation', 
-      'lesson-3-the-commitment'
-    ]
-    
-    const completedCount = enrollment.modules_completed || 0
-    const completedLessons = lessonIds.slice(0, completedCount)
+    // Fetch actual completed lessons from lesson_responses table
+    const { data: responses, error: responsesError } = await supabase
+      .from('lesson_responses')
+      .select('lesson_id')
+      .eq('employee_id', user.id)
+      .eq('course_id', cleanAirCourseId)
+      .eq('module_id', moduleId)
 
-    console.log('Progress for', moduleId, ':', { completedCount, completedLessons })
+    if (responsesError) {
+      console.error('Error fetching lesson responses:', responsesError)
+      return NextResponse.json({
+        completedLessons: [],
+        xpEarned: enrollment.xp_earned || 0,
+        completionPercentage: enrollment.completion_percentage || 0
+      })
+    }
+
+    // Get unique lesson IDs
+    const completedLessons = [...new Set(responses?.map(r => r.lesson_id) || [])]
+
+    console.log('✅ Progress for', moduleId, ':', { 
+      completedLessons,
+      xpEarned: enrollment.xp_earned,
+      completionPercentage: enrollment.completion_percentage
+    })
 
     return NextResponse.json({
       completedLessons,
