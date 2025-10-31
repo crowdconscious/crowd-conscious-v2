@@ -327,9 +327,9 @@ export const cleanAirModule: Module = {
       
       resources: [
         {
-          title: 'Top 10 Plantas Purificadoras (NASA Study)',
-          type: 'infographic',
-          url: 'https://www.nasa.gov/references/air-purifying-plants/'
+          title: 'Las mejores plantas que purifican el aire en tu hogar',
+          type: 'article',
+          url: 'https://www.admagazine.com/editors-pick/plantas-purifican-aire-hogar-20181024-4751-articulos'
         },
         {
           title: 'Calculadora ROI de Calidad de Aire',
