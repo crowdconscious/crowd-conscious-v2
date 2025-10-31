@@ -296,7 +296,7 @@ export default async function CorporateDashboard() {
                 </p>
               </div>
               <Link
-                href="/concientizaciones"
+                href="/marketplace"
                 className="text-teal-600 hover:text-teal-700 font-medium text-sm"
               >
                 Ver Todos →
@@ -327,9 +327,10 @@ export default async function CorporateDashboard() {
                   badge: 'Recomendado'
                 },
               ].map((module, i) => (
-                <div
+                <Link
                   key={i}
-                  className="border-2 border-slate-200 rounded-xl p-4 hover:border-purple-400 hover:bg-purple-50 transition-all cursor-pointer group"
+                  href="/marketplace"
+                  className="border-2 border-slate-200 rounded-xl p-4 hover:border-purple-400 hover:bg-purple-50 transition-all cursor-pointer group block"
                 >
                   <div className="text-4xl mb-3">{module.icon}</div>
                   <div className="flex items-start justify-between mb-2">
@@ -347,7 +348,7 @@ export default async function CorporateDashboard() {
                       Ver detalles →
                     </span>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
 

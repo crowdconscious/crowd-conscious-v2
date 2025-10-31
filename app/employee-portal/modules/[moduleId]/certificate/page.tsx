@@ -250,9 +250,9 @@ export default function CertificatePage({ params }: { params: Promise<{ moduleId
           {/* Certificate Content */}
           <div className="p-8 sm:p-12 md:p-16 bg-gradient-to-br from-white via-yellow-50 to-orange-50">
             {/* Header */}
-            <div className="text-center mb-8">
-              <div className="flex items-center justify-center gap-4 mb-4">
-                <div className="relative w-16 h-16 sm:w-20 sm:h-20">
+            <div className="mb-8">
+              <div className="flex items-start gap-4 mb-6">
+                <div className="relative w-24 h-24 sm:w-32 sm:h-32">
                   <Image
                     src="/images/logo.png"
                     alt="Crowd Conscious Logo"
@@ -260,12 +260,12 @@ export default function CertificatePage({ params }: { params: Promise<{ moduleId
                     className="object-contain"
                   />
                 </div>
-                <div className="text-left">
-                  <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Crowd Conscious</h2>
-                  <p className="text-sm sm:text-base text-slate-600">Plataforma de Impacto Social</p>
+                <div className="text-left flex-1">
+                  <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">Crowd Conscious</h2>
+                  <p className="text-base sm:text-lg text-slate-600">Plataforma de Impacto Social</p>
                 </div>
               </div>
-              <div className="h-1 w-32 bg-gradient-to-r from-teal-600 to-purple-600 mx-auto rounded-full"></div>
+              <div className="h-1 w-full bg-gradient-to-r from-teal-600 to-purple-600 rounded-full"></div>
             </div>
 
             {/* Certificate Text */}
