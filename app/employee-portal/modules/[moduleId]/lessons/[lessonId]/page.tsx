@@ -62,9 +62,15 @@ export default function LessonPage({
       })
 
       if (response.ok) {
+        const data = await response.json()
+        console.log('✅ Lesson completed:', data)
+        
         // Find next lesson
         const currentIndex = module.lessons.findIndex(l => l.id === lessonId)
         const nextLesson = module.lessons[currentIndex + 1]
+
+        // Force refresh to update progress across the app
+        router.refresh()
 
         if (nextLesson) {
           router.push(`/employee-portal/modules/${moduleId}/lessons/${nextLesson.id}`)
@@ -72,9 +78,14 @@ export default function LessonPage({
           // Module completed
           router.push(`/employee-portal/modules/${moduleId}`)
         }
+      } else {
+        const error = await response.json()
+        console.error('❌ Failed to complete lesson:', error)
+        alert(`Error: ${error.error || 'No se pudo completar la lección'}`)
       }
     } catch (error) {
-      console.error('Error completing lesson:', error)
+      console.error('❌ Error completing lesson:', error)
+      alert('Error al completar la lección. Por favor intenta de nuevo.')
     }
     setCompleting(false)
   }

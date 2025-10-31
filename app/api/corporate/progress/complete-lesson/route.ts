@@ -41,7 +41,16 @@ export async function POST(req: NextRequest) {
     const newXP = currentXP + (xpEarned || 250)
 
     // Update enrollment (without last_accessed_at which doesn't exist)
-    const { error: updateError } = await supabase
+    console.log('🔄 Updating enrollment:', {
+      employee_id: user.id,
+      course_id: cleanAirCourseId,
+      modules_completed: newCompleted,
+      completion_percentage: newPercentage,
+      xp_earned: newXP,
+      status: moduleComplete ? 'completed' : 'in_progress'
+    })
+
+    const { data: updateData, error: updateError } = await supabase
       .from('course_enrollments')
       .update({
         modules_completed: newCompleted,
@@ -52,11 +61,14 @@ export async function POST(req: NextRequest) {
       })
       .eq('employee_id', user.id)
       .eq('course_id', cleanAirCourseId)
+      .select()
 
     if (updateError) {
-      console.error('Error updating enrollment:', updateError)
-      return NextResponse.json({ error: 'Failed to update progress' }, { status: 500 })
+      console.error('❌ Error updating enrollment:', updateError)
+      return NextResponse.json({ error: 'Failed to update progress', details: updateError }, { status: 500 })
     }
+
+    console.log('✅ Update successful:', updateData)
 
     // Store lesson responses if provided
     if (responses) {
