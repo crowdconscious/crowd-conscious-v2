@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Building2, Users, TrendingUp, Award, Settings, FileText } from 'lucide-react'
+import { Building2, Users, TrendingUp, Award, Settings, FileText, BadgeCheck } from 'lucide-react'
 import SignOutButton from '@/components/SignOutButton'
 
 export default async function CorporateLayout({
@@ -42,6 +42,7 @@ export default async function CorporateLayout({
     { name: 'Empleados', href: '/corporate/employees', icon: Users },
     { name: 'Progreso', href: '/corporate/progress', icon: FileText },
     { name: 'Impacto', href: '/corporate/impact', icon: Award },
+    { name: 'Certificados', href: '/corporate/certificates', icon: BadgeCheck },
     { name: 'Configuración', href: '/corporate/settings', icon: Settings },
   ]
 
