@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Download, Share2, Award, CheckCircle, Twitter, Linkedin, Facebook, Copy, ArrowLeft } from 'lucide-react'
+import Image from 'next/image'
+import { Download, Share2, Award, CheckCircle, Twitter, Linkedin, Facebook, Copy, ArrowLeft, Instagram } from 'lucide-react'
 import { cleanAirModule } from '@/app/lib/course-content/clean-air-module'
 
 export default function CertificatePage({ params }: { params: Promise<{ moduleId: string }> }) {
@@ -39,15 +40,52 @@ export default function CertificatePage({ params }: { params: Promise<{ moduleId
     }
   }
 
-  const downloadCertificate = () => {
-    // TODO: Implement PDF download
-    // For now, we'll use the print dialog
-    window.print()
+  const downloadCertificate = async () => {
+    if (!certificateRef.current) return
+
+    try {
+      // Dynamically import html2canvas (client-side only)
+      const html2canvas = (await import('html2canvas')).default
+      
+      // Capture the certificate div as canvas
+      const canvas = await html2canvas(certificateRef.current, {
+        scale: 2, // Higher quality
+        backgroundColor: '#ffffff',
+        logging: false,
+        useCORS: true
+      })
+
+      // Convert to blob and download
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob)
+          const link = document.createElement('a')
+          link.href = url
+          link.download = `certificado-${module.title.toLowerCase().replace(/\s+/g, '-')}.png`
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+          URL.revokeObjectURL(url)
+        }
+      })
+    } catch (error) {
+      console.error('Error downloading certificate:', error)
+      // Fallback to print dialog
+      window.print()
+    }
   }
 
-  const shareCertificate = (platform: string) => {
+  const shareCertificate = async (platform: string) => {
     const text = `¡Acabo de completar el módulo "${module.title}" en Crowd Conscious! 🎓🌱`
     const url = window.location.origin + `/certificates/${certificate?.verificationCode}`
+
+    if (platform === 'instagram') {
+      // For Instagram Stories, generate and download the certificate image
+      // Users can then manually upload to Instagram Stories
+      await downloadCertificateForIG()
+      alert('📸 Imagen guardada! Ahora puedes subirla a tu Historia de Instagram.\n\nTip: Abre Instagram → Tu Historia → Selecciona la imagen descargada')
+      return
+    }
 
     let shareUrl = ''
     switch (platform) {
@@ -64,6 +102,39 @@ export default function CertificatePage({ params }: { params: Promise<{ moduleId
 
     if (shareUrl) {
       window.open(shareUrl, '_blank', 'width=600,height=400')
+    }
+  }
+
+  const downloadCertificateForIG = async () => {
+    if (!certificateRef.current) return
+
+    try {
+      const html2canvas = (await import('html2canvas')).default
+      
+      // Create Instagram Story sized image (1080x1920)
+      const canvas = await html2canvas(certificateRef.current, {
+        scale: 2,
+        backgroundColor: '#ffffff',
+        logging: false,
+        useCORS: true,
+        width: 1080,
+        height: 1920
+      })
+
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob)
+          const link = document.createElement('a')
+          link.href = url
+          link.download = `certificado-ig-story-${Date.now()}.png`
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+          URL.revokeObjectURL(url)
+        }
+      })
+    } catch (error) {
+      console.error('Error generating IG image:', error)
     }
   }
 
@@ -160,6 +231,13 @@ export default function CertificatePage({ params }: { params: Promise<{ moduleId
             >
               <Facebook className="w-5 h-5" />
             </button>
+            <button
+              onClick={() => shareCertificate('instagram')}
+              className="flex items-center gap-2 bg-gradient-to-br from-purple-600 via-pink-600 to-orange-500 text-white px-4 py-3 rounded-xl font-bold hover:scale-105 transition-transform shadow-lg"
+              title="Compartir en Instagram Stories"
+            >
+              <Instagram className="w-5 h-5" />
+            </button>
           </div>
         </div>
 
@@ -173,8 +251,15 @@ export default function CertificatePage({ params }: { params: Promise<{ moduleId
           <div className="p-8 sm:p-12 md:p-16 bg-gradient-to-br from-white via-yellow-50 to-orange-50">
             {/* Header */}
             <div className="text-center mb-8">
-              <div className="flex items-center justify-center gap-3 mb-4">
-                <div className="text-5xl sm:text-6xl">🌱</div>
+              <div className="flex items-center justify-center gap-4 mb-4">
+                <div className="relative w-16 h-16 sm:w-20 sm:h-20">
+                  <Image
+                    src="/images/logo.png"
+                    alt="Crowd Conscious Logo"
+                    fill
+                    className="object-contain"
+                  />
+                </div>
                 <div className="text-left">
                   <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Crowd Conscious</h2>
                   <p className="text-sm sm:text-base text-slate-600">Plataforma de Impacto Social</p>
