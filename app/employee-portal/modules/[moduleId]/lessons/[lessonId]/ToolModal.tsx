@@ -26,15 +26,7 @@ export default function ToolModal({ toolType, toolTitle, onClose, onDataCapture 
       case 'air_quality_assessment':
         return (
           <AirQualityAssessment
-            inputs={[
-              { id: 'ventilation', label: '¿Hay buena ventilación?', type: 'yes_no' },
-              { id: 'occupancy', label: 'Densidad de ocupación', type: 'dropdown', options: ['Baja', 'Media', 'Alta'] },
-              { id: 'emissions', label: '¿Hay fuentes de emisión?', type: 'yes_no' },
-              { id: 'outdoor_air', label: 'Calidad del aire exterior', type: 'dropdown', options: ['Buena', 'Moderada', 'Mala'] },
-              { id: 'hvac', label: '¿Sistema HVAC con filtros?', type: 'yes_no' },
-              { id: 'plants', label: '¿Hay plantas?', type: 'yes_no' }
-            ]}
-            onCalculate={(data) => {
+            onComplete={(data) => {
               if (onDataCapture) onDataCapture(data)
             }}
           />
