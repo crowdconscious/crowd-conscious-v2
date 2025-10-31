@@ -86,7 +86,7 @@ export default function ToolModal({ toolType, toolTitle, onClose, onDataCapture 
               '¿Cómo aplicarás esto en tu trabajo?',
               '¿Qué retos anticipas?'
             ]}
-            onReflect={(data) => {
+            onSave={(data) => {
               if (onDataCapture) onDataCapture(data)
             }}
           />
