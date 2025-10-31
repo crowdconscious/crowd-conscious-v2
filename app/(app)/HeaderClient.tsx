@@ -82,9 +82,10 @@ export default function HeaderClient({ user }: HeaderClientProps) {
               </Link>
               <Link 
                 href={
-                  userProfile?.is_corporate_user && userProfile?.corporate_role === 'admin'
+                  // Handle both boolean true and string "true" for is_corporate_user
+                  (userProfile?.is_corporate_user === true || userProfile?.is_corporate_user === 'true') && userProfile?.corporate_role === 'admin'
                     ? '/corporate/dashboard'
-                    : userProfile?.is_corporate_user && userProfile?.corporate_role === 'employee'
+                    : (userProfile?.is_corporate_user === true || userProfile?.is_corporate_user === 'true') && userProfile?.corporate_role === 'employee'
                     ? '/employee-portal/dashboard'
                     : '/concientizaciones'
                 }

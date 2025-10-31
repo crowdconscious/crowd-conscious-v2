@@ -25,8 +25,8 @@ export default async function EmployeeLayout({
     .eq('id', user.id)
     .single()
 
-  // Check if employee
-  if (!profile?.is_corporate_user || profile?.corporate_role !== 'employee') {
+  // Check if employee OR admin (admins can take courses too!)
+  if (!profile?.is_corporate_user || (profile?.corporate_role !== 'employee' && profile?.corporate_role !== 'admin')) {
     redirect('/dashboard')
   }
 

@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     const currentXP = enrollment.xp_earned || 0
     const newXP = currentXP + (xpEarned || 250)
 
-    // Update enrollment
+    // Update enrollment (without last_accessed_at which doesn't exist)
     const { error: updateError } = await supabase
       .from('course_enrollments')
       .update({
@@ -48,8 +48,7 @@ export async function POST(req: NextRequest) {
         completion_percentage: newPercentage,
         xp_earned: newXP,
         status: moduleComplete ? 'completed' : 'in_progress',
-        completed_at: moduleComplete ? new Date().toISOString() : null,
-        last_accessed_at: new Date().toISOString()
+        completed_at: moduleComplete ? new Date().toISOString() : null
       })
       .eq('employee_id', user.id)
       .eq('course_id', cleanAirCourseId)

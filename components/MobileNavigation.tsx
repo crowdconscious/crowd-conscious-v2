@@ -23,9 +23,12 @@ export default function MobileNavigation() {
 
         const profile = profileData as any
 
-        if (profile?.is_corporate_user && profile?.corporate_role === 'admin') {
+        // Handle both boolean true and string "true" for is_corporate_user
+        const isCorporate = profile?.is_corporate_user === true || profile?.is_corporate_user === 'true'
+        
+        if (isCorporate && profile?.corporate_role === 'admin') {
           setCorporateLink('/corporate/dashboard')
-        } else if (profile?.is_corporate_user && profile?.corporate_role === 'employee') {
+        } else if (isCorporate && profile?.corporate_role === 'employee') {
           setCorporateLink('/employee-portal/dashboard')
         }
       } catch (error) {
