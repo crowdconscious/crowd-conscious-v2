@@ -6,6 +6,7 @@ import { AnimatedCard, AnimatedButton } from '@/components/ui/UIComponents'
 import ImpactDashboard from './ImpactDashboard'
 import { XPProgressBar, AchievementsGrid, CommunityLeaderboard, WeeklyChallenge } from '@/components/GamificationSystem'
 import DashboardCalendar from '../../components/DashboardCalendar'
+import CorporateTrainingCard from '@/components/CorporateTrainingCard'
 
 interface UserStats {
   id: string
@@ -37,17 +38,6 @@ export default function NewEnhancedDashboard({ user, initialUserStats, userCommu
   const [userStats] = useState<UserStats | null>(initialUserStats)
   const [activeTab, setActiveTab] = useState<'overview' | 'impact' | 'gamification' | 'calendar'>('overview')
   const [mounted, setMounted] = useState(false)
-
-  // Calculate corporate link directly from corporateInfo
-  const corporateLink = corporateInfo 
-    ? (corporateInfo.role === 'admin' ? '/corporate/dashboard' : '/employee-portal/dashboard')
-    : '/concientizaciones'
-
-  // Debug logging
-  useEffect(() => {
-    console.log('🏢 NewEnhancedDashboard - corporateInfo:', corporateInfo)
-    console.log('🔗 Calculated corporateLink:', corporateLink)
-  }, [corporateInfo, corporateLink])
 
   // Prevent hydration mismatch by only showing time-based content after mount
   useEffect(() => {
@@ -229,14 +219,6 @@ export default function NewEnhancedDashboard({ user, initialUserStats, userCommu
                       icon: '🔥',
                       href: '/discover',
                       color: 'from-orange-500 to-red-500'
-                    },
-                    {
-                      title: 'Corporate Training',
-                      description: 'Transform your team with impact',
-                      icon: '🎓',
-                      href: corporateLink,
-                      badge: corporateInfo ? '✓ Active' : 'NEW',
-                      color: 'from-purple-500 to-pink-500'
                     }
                   ].map((action) => (
                     <Link key={action.title} href={action.href}>
@@ -257,6 +239,9 @@ export default function NewEnhancedDashboard({ user, initialUserStats, userCommu
                       </AnimatedCard>
                     </Link>
                   ))}
+                  
+                  {/* Corporate Training Card - Client-side routing for accurate role detection */}
+                  <CorporateTrainingCard initialCorporateInfo={corporateInfo} />
                 </div>
               </div>
 
