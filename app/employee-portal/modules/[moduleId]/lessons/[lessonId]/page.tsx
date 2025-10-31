@@ -312,12 +312,26 @@ export default function LessonPage({
                 </div>
               )}
 
-              <button
-                onClick={() => setActivityCompleted(true)}
-                className="w-full bg-green-600 text-white py-4 rounded-xl font-bold text-lg hover:scale-105 transition-transform mt-6"
-              >
-                Completar Actividad
-              </button>
+              {!activityCompleted ? (
+                <button
+                  onClick={() => {
+                    setActivityCompleted(true)
+                    // Scroll to complete lesson button
+                    setTimeout(() => {
+                      const completeLessonButton = document.querySelector('[data-complete-lesson]')
+                      completeLessonButton?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                    }, 100)
+                  }}
+                  className="w-full bg-green-600 text-white py-4 rounded-xl font-bold text-lg hover:scale-105 transition-transform mt-6"
+                >
+                  Completar Actividad
+                </button>
+              ) : (
+                <div className="w-full bg-teal-50 border-2 border-teal-500 text-teal-700 py-4 rounded-xl font-bold text-lg mt-6 flex items-center justify-center gap-2">
+                  <CheckCircle className="w-6 h-6" />
+                  ¡Actividad Completada! Ahora completa la lección abajo ↓
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -375,6 +389,7 @@ export default function LessonPage({
           <button
             onClick={completeLesson}
             disabled={completing || (!activityCompleted && showActivity)}
+            data-complete-lesson
             className="bg-white text-teal-600 px-8 py-4 rounded-xl font-bold text-lg hover:scale-105 transition-transform disabled:opacity-50 disabled:hover:scale-100 shadow-lg flex items-center gap-2 mx-auto"
           >
             {completing ? (
