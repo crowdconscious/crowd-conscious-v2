@@ -5,6 +5,13 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, ArrowRight, CheckCircle, Award, Lightbulb, BookOpen, Target, ExternalLink } from 'lucide-react'
 import { cleanAirModule, getLessonById } from '@/app/lib/course-content/clean-air-module'
+import {
+  CarbonCalculator,
+  CostCalculator,
+  EvidenceUploader,
+  ReflectionJournal,
+  ImpactComparison
+} from '@/components/module-tools'
 
 export default function LessonPage({ 
   params 
@@ -21,8 +28,68 @@ export default function LessonPage({
   const [lessonId, setLessonId] = useState<string>('')
   const [lesson, setLesson] = useState<any>(null)
   const [startTime] = useState(Date.now()) // Track when lesson started
+  const [uploadedFiles, setUploadedFiles] = useState<any[]>([])
+  const [impactData, setImpactData] = useState<any>(null)
 
   const module = cleanAirModule
+
+  const cleanAirCourseId = 'a1a1a1a1-1111-1111-1111-111111111111' // Clean Air course ID
+
+  // Save activity data to database
+  const saveActivityData = async (activityType: string, data: any) => {
+    try {
+      const response = await fetch('/api/corporate/progress/save-activity', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          courseId: cleanAirCourseId,
+          moduleId,
+          lessonId,
+          activityType,
+          activityData: data
+        })
+      })
+
+      if (!response.ok) {
+        console.error('Failed to save activity data')
+      } else {
+        console.log(`✅ ${activityType} data saved`)
+      }
+    } catch (error) {
+      console.error(`Error saving ${activityType} data:`, error)
+    }
+  }
+
+  // Upload evidence images
+  const uploadEvidence = async (files: any[]) => {
+    try {
+      const formData = new FormData()
+      formData.append('courseId', cleanAirCourseId)
+      formData.append('moduleId', moduleId)
+      formData.append('lessonId', lessonId)
+
+      files.forEach(fileData => {
+        formData.append('files', fileData.file)
+      })
+
+      const response = await fetch('/api/corporate/progress/upload-evidence', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        console.log('✅ Evidence uploaded:', result.uploadedUrls)
+        return result.uploadedUrls
+      } else {
+        console.error('Failed to upload evidence')
+        return []
+      }
+    } catch (error) {
+      console.error('Error uploading evidence:', error)
+      return []
+    }
+  }
 
   useEffect(() => {
     params.then((p) => {
