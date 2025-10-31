@@ -229,7 +229,7 @@ export default async function SettingsPage() {
 
           <div className="mt-6">
             <Link
-              href="/concientizaciones"
+              href="/marketplace"
               className="inline-flex items-center gap-2 text-teal-600 hover:text-teal-700 font-medium"
             >
               <ExternalLink className="w-4 h-4" />

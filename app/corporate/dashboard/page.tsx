@@ -251,7 +251,7 @@ export default async function CorporateDashboard() {
                 />
               ) : (
                 <Link
-                  href="/concientizaciones"
+                  href="/marketplace"
                   className="p-4 border-2 border-purple-300 rounded-lg bg-gradient-to-br from-purple-50 to-pink-50 hover:border-purple-500 hover:shadow-lg transition-all group"
                 >
                   <BookOpen className="w-8 h-8 text-purple-500 group-hover:text-purple-600 mb-2" />
