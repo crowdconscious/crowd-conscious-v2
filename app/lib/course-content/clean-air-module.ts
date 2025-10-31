@@ -468,8 +468,8 @@ export const cleanAirModule: Module = {
         },
         {
           title: 'Template: Plan de Implementación 90 Días',
-          type: 'tool',
-          url: '#' // Would link to impact calculator
+          type: 'article',
+          url: 'https://docs.google.com/document/d/1aBcDeFgHiJkLmNoPqRsTuVwXyZ1234567890/edit' // Placeholder - replace with actual template
         },
         {
           title: 'Comunidad Aire Limpio México',
