@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { supabaseClient } from '@/lib/supabase-client'
 import { AnimatedCard, AnimatedButton } from '@/components/ui/UIComponents'
+import { Wallet, TrendingUp, DollarSign, Package } from 'lucide-react'
 
 interface ProfileClientProps {
   user: any
@@ -11,6 +12,26 @@ interface ProfileClientProps {
   userCommunities: any[]
   impactStats: any
   userSettings: any
+}
+
+interface CreatorWallet {
+  id: string
+  balance: number
+  currency: string
+  status: string
+  recentTransactions: Array<{
+    id: string
+    type: 'credit' | 'debit'
+    amount: number
+    source: string
+    description: string
+    created_at: string
+  }>
+  moduleRevenue?: {
+    total: number
+    moduleCount: number
+    salesCount: number
+  }
 }
 
 export default function ProfileClient({ 
@@ -22,6 +43,8 @@ export default function ProfileClient({
 }: ProfileClientProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [walletData, setWalletData] = useState<CreatorWallet | null>(null)
+  const [loadingWallet, setLoadingWallet] = useState(true)
   const [editData, setEditData] = useState({
     full_name: profile?.full_name || '',
     bio: profile?.bio || '',
@@ -32,6 +55,54 @@ export default function ProfileClient({
     instagram: profile?.instagram || '',
     is_public: profile?.is_public ?? true
   })
+
+  // Fetch creator wallet on mount
+  useEffect(() => {
+    fetchCreatorWallet()
+  }, [user?.id])
+
+  const fetchCreatorWallet = async () => {
+    if (!user?.id) return
+    
+    try {
+      // Get or create wallet for this user
+      const createResponse = await fetch('/api/wallets/user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id })
+      })
+      
+      if (createResponse.ok) {
+        const { wallet } = await createResponse.json()
+        
+        // Fetch full wallet details
+        const detailsResponse = await fetch(`/api/wallets/${wallet.id}`)
+        if (detailsResponse.ok) {
+          const walletDetails = await detailsResponse.json()
+          setWalletData(walletDetails)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching creator wallet:', error)
+    } finally {
+      setLoadingWallet(false)
+    }
+  }
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('es-MX', {
+      style: 'currency',
+      currency: 'MXN'
+    }).format(amount)
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('es-MX', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    })
+  }
 
   const handleSaveProfile = async () => {
     setIsLoading(true)
@@ -334,6 +405,135 @@ export default function ProfileClient({
             </AnimatedButton>
           </div>
         </AnimatedCard>
+      )}
+
+      {/* Creator Wallet */}
+      {!loadingWallet && walletData && walletData.balance > 0 && (
+        <div>
+          <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+            <Wallet className="w-7 h-7 text-purple-600" />
+            Creator Wallet
+          </h2>
+
+          <AnimatedCard className="bg-gradient-to-br from-purple-50 via-pink-50 to-purple-50 border-2 border-purple-200">
+            <div className="p-6">
+              <div className="flex items-start justify-between mb-6">
+                <div>
+                  <p className="text-sm font-medium text-purple-700 mb-1">Total Creator Earnings</p>
+                  <p className="text-4xl font-bold text-purple-900">{formatCurrency(walletData.balance)}</p>
+                  <p className="text-xs text-purple-600 mt-1">
+                    {walletData.currency} • {walletData.status === 'active' ? '✅ Active' : '⚠️ ' + walletData.status}
+                  </p>
+                </div>
+
+                {walletData.moduleRevenue && walletData.moduleRevenue.total > 0 && (
+                  <div className="text-right bg-white/60 rounded-lg p-3">
+                    <p className="text-xs text-purple-600 mb-1 flex items-center gap-1 justify-end">
+                      <TrendingUp className="w-3 h-3" />
+                      Module Sales
+                    </p>
+                    <p className="text-xl font-bold text-purple-900">{formatCurrency(walletData.moduleRevenue.total)}</p>
+                    <p className="text-xs text-purple-600 mt-1">
+                      {walletData.moduleRevenue.salesCount} sales • {walletData.moduleRevenue.moduleCount} modules
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Creator Stats */}
+              {walletData.moduleRevenue && (
+                <div className="grid grid-cols-3 gap-4 mb-6">
+                  <div className="bg-white/60 rounded-lg p-3">
+                    <div className="flex items-center gap-2">
+                      <Package className="w-5 h-5 text-purple-600" />
+                      <div>
+                        <p className="text-xs text-slate-600">Modules</p>
+                        <p className="text-xl font-bold text-slate-900">{walletData.moduleRevenue.moduleCount}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-white/60 rounded-lg p-3">
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="w-5 h-5 text-purple-600" />
+                      <div>
+                        <p className="text-xs text-slate-600">Sales</p>
+                        <p className="text-xl font-bold text-slate-900">{walletData.moduleRevenue.salesCount}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-white/60 rounded-lg p-3">
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="w-5 h-5 text-purple-600" />
+                      <div>
+                        <p className="text-xs text-slate-600">Avg/Sale</p>
+                        <p className="text-xl font-bold text-slate-900">
+                          {formatCurrency(walletData.moduleRevenue.total / walletData.moduleRevenue.salesCount)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Info Box */}
+              <div className="bg-purple-100 border border-purple-200 rounded-lg p-4">
+                <p className="text-sm font-semibold text-purple-900 mb-2 flex items-center gap-2">
+                  <span>💰</span>
+                  <span>How Creator Earnings Work</span>
+                </p>
+                <p className="text-xs text-purple-700 mb-2">
+                  You receive <strong>20% of all module sales</strong> from courses you create. When a corporation purchases your module:
+                </p>
+                <ul className="text-xs text-purple-700 space-y-1 ml-4">
+                  <li>• 50% goes to the community wallet</li>
+                  <li>• 30% goes to platform operations</li>
+                  <li>• 20% goes to you (the creator)</li>
+                </ul>
+                <p className="text-xs text-purple-600 mt-2 italic">
+                  All transactions are transparent and recorded in your wallet history.
+                </p>
+              </div>
+
+              {/* Recent Transactions */}
+              {walletData.recentTransactions && walletData.recentTransactions.length > 0 && (
+                <div className="mt-6">
+                  <h4 className="font-semibold text-slate-900 mb-3 text-sm">Recent Transactions</h4>
+                  <div className="space-y-2">
+                    {walletData.recentTransactions.slice(0, 5).map((tx) => (
+                      <div
+                        key={tx.id}
+                        className="flex items-center justify-between p-3 bg-white/60 rounded-lg hover:bg-white/80 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                            tx.type === 'credit' ? 'bg-green-100' : 'bg-red-100'
+                          }`}>
+                            <span className="text-sm">
+                              {tx.type === 'credit' ? '💰' : '💸'}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="text-xs font-medium text-slate-900">
+                              {tx.description}
+                            </p>
+                            <p className="text-xs text-slate-500">{formatDate(tx.created_at)}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className={`text-sm font-semibold ${
+                            tx.type === 'credit' ? 'text-green-600' : 'text-red-600'
+                          }`}>
+                            {tx.type === 'credit' ? '+' : '-'}{formatCurrency(tx.amount)}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </AnimatedCard>
+        </div>
       )}
 
       {/* My Communities */}
