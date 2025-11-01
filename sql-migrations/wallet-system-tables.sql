@@ -203,7 +203,7 @@ CREATE POLICY "Community admins can view their module sales" ON module_sales
   USING (
     module_id IN (
       SELECT m.id FROM marketplace_modules m
-      JOIN communities c ON m.community_id = c.id
+      JOIN communities c ON m.creator_community_id = c.id
       WHERE c.admin_id = auth.uid()
     )
   );
@@ -213,7 +213,7 @@ CREATE POLICY "Creators can view their module sales" ON module_sales
   FOR SELECT
   USING (
     module_id IN (
-      SELECT id FROM marketplace_modules WHERE created_by = auth.uid()
+      SELECT id FROM marketplace_modules WHERE creator_user_id = auth.uid()
     )
   );
 
@@ -357,8 +357,8 @@ BEGIN
   END IF;
   
   -- Get or create wallets
-  v_community_wallet_id := get_or_create_wallet('community', v_module.community_id);
-  v_creator_wallet_id := get_or_create_wallet('user', v_module.created_by);
+  v_community_wallet_id := get_or_create_wallet('community', v_module.creator_community_id);
+  v_creator_wallet_id := get_or_create_wallet('user', v_module.creator_user_id);
   v_platform_wallet_id := get_or_create_wallet('platform', NULL);
   
   -- Create sale record
