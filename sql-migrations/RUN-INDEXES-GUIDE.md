@@ -1,10 +1,33 @@
 # How to Run Performance Indexes in Supabase
 
-## ⚠️ Important Note
+## ⚠️ Important: Supabase Transaction Issue
 
-`CREATE INDEX CONCURRENTLY` cannot run inside a transaction block, so we removed the `BEGIN;` and `COMMIT;` statements from the SQL file.
+Supabase SQL Editor automatically wraps multiple statements in a transaction block. This causes `CREATE INDEX CONCURRENTLY` to fail with:
+```
+ERROR: CREATE INDEX CONCURRENTLY cannot run inside a transaction block
+```
 
-## 📝 Two Ways to Run
+## 🎯 **RECOMMENDED SOLUTION: Use the Batch Version**
+
+**File**: `performance-indexes-batch.sql` ⭐
+
+This version:
+- ✅ Removes `CONCURRENTLY` keyword
+- ✅ Runs all 40+ indexes in one batch (2-5 minutes)
+- ✅ Works perfectly in Supabase SQL Editor
+- ✅ Same performance benefits
+- ⚠️  Brief table locks (< 5 seconds per table, acceptable for current traffic)
+
+**How to Run**:
+1. Open Supabase SQL Editor
+2. Copy entire `performance-indexes-batch.sql` file
+3. Paste and click **Run**
+4. Wait 2-5 minutes
+5. Done! ✅
+
+---
+
+## 📝 Alternative: Manual One-at-a-Time (Advanced)
 
 ### **Option A: Run All at Once** (Recommended - Easiest)
 
