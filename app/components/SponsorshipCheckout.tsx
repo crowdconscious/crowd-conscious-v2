@@ -492,7 +492,7 @@ export default function SponsorshipCheckout({
                         }`}
                       >
                         <span>💰</span>
-                        <span>Use Community Pool Funds</span>
+                        <span>Use Community Wallet Funds</span>
                       </label>
                       <p className={`text-sm mt-1 ${
                         poolBalance >= formData.amount 
@@ -503,16 +503,16 @@ export default function SponsorshipCheckout({
                       </p>
                       {poolBalance >= formData.amount ? (
                         <p className="text-xs text-green-600 mt-2">
-                          ✅ Sufficient funds available. This sponsorship will be paid from the community pool - no personal payment required!
+                          ✅ Sufficient funds available. This sponsorship will be paid from the community wallet - no personal payment required!
                         </p>
                       ) : (
                         <p className="text-xs text-amber-600 mt-2">
-                          ⚠️ Insufficient pool balance. Need ${(formData.amount - poolBalance).toLocaleString()} MXN more. Members can donate to the pool first.
+                          ⚠️ Insufficient wallet balance. Need ${(formData.amount - poolBalance).toLocaleString()} MXN more. Members can donate to the wallet first.
                         </p>
                       )}
                       {usePoolFunds && (
                         <p className="text-xs text-slate-600 mt-2 italic">
-                          Note: The community will be credited for this sponsorship. All members will be able to see this in the treasury transactions.
+                          Note: The community will be credited for this sponsorship. All members will be able to see this in the wallet transactions.
                         </p>
                       )}
                     </div>

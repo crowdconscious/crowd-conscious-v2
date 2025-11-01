@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { AnimatedCard, AnimatedButton } from '@/components/ui/UIComponents'
+import { Wallet, TrendingUp, DollarSign } from 'lucide-react'
 
 interface CommunityTreasuryProps {
   communityId: string
@@ -26,12 +27,33 @@ interface TreasuryStats {
   userRole?: string
 }
 
+interface WalletData {
+  id: string
+  balance: number
+  currency: string
+  status: string
+  recentTransactions: Array<{
+    id: string
+    type: 'credit' | 'debit'
+    amount: number
+    source: string
+    description: string
+    created_at: string
+  }>
+  moduleRevenue?: {
+    total: number
+    moduleCount: number
+    salesCount: number
+  }
+}
+
 export default function CommunityTreasury({
   communityId,
   communityName,
   userRole
 }: CommunityTreasuryProps) {
   const [stats, setStats] = useState<TreasuryStats | null>(null)
+  const [walletData, setWalletData] = useState<WalletData | null>(null)
   const [loading, setLoading] = useState(true)
   const [donationAmount, setDonationAmount] = useState<string>('')
   const [donating, setDonating] = useState(false)
@@ -39,6 +61,7 @@ export default function CommunityTreasury({
 
   useEffect(() => {
     fetchTreasuryStats()
+    fetchWalletData()
   }, [communityId])
 
   const fetchTreasuryStats = async () => {
@@ -52,6 +75,30 @@ export default function CommunityTreasury({
       console.error('Error fetching treasury stats:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchWalletData = async () => {
+    try {
+      // Get or create wallet for this community
+      const createResponse = await fetch('/api/wallets/community', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ communityId })
+      })
+      
+      if (createResponse.ok) {
+        const { wallet } = await createResponse.json()
+        
+        // Fetch full wallet details
+        const detailsResponse = await fetch(`/api/wallets/${wallet.id}`)
+        if (detailsResponse.ok) {
+          const walletDetails = await detailsResponse.json()
+          setWalletData(walletDetails)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching wallet data:', error)
     }
   }
 
@@ -129,56 +176,111 @@ export default function CommunityTreasury({
     <div className="space-y-6">
       {/* Treasury Header */}
       <div>
-        <h2 className="text-2xl font-bold text-slate-900 mb-2">💰 Community Pool</h2>
+        <h2 className="text-2xl font-bold text-slate-900 mb-2 flex items-center gap-2">
+          <Wallet className="w-7 h-7 text-teal-600" />
+          Community Wallet
+        </h2>
         <p className="text-slate-600">
-          A shared fund that members contribute to. The community can use these funds to sponsor needs and initiatives.
+          Unified wallet combining donations, sponsorships, and module sales revenue. Use these funds to sponsor community needs and grow your impact.
         </p>
       </div>
 
-      {/* Balance Card */}
-      <AnimatedCard className="bg-gradient-to-br from-green-50 to-teal-50 border-2 border-green-200">
+      {/* Wallet Balance Overview */}
+      {walletData && (
+        <AnimatedCard className="bg-gradient-to-br from-teal-50 via-green-50 to-teal-50 border-2 border-teal-200">
+          <div className="p-6">
+            <div className="flex items-start justify-between mb-6">
+              <div>
+                <p className="text-sm font-medium text-teal-700 mb-1">Total Wallet Balance</p>
+                <p className="text-4xl font-bold text-teal-900">{formatCurrency(walletData.balance)}</p>
+                <p className="text-xs text-teal-600 mt-1">
+                  {walletData.currency} • {walletData.status === 'active' ? '✅ Active' : '⚠️ ' + walletData.status}
+                </p>
+              </div>
+              {walletData.moduleRevenue && walletData.moduleRevenue.total > 0 && (
+                <div className="text-right bg-white/60 rounded-lg p-3">
+                  <p className="text-xs text-teal-600 mb-1">Module Sales Revenue</p>
+                  <p className="text-xl font-bold text-teal-900">{formatCurrency(walletData.moduleRevenue.total)}</p>
+                  <p className="text-xs text-teal-600 mt-1">
+                    {walletData.moduleRevenue.salesCount} sales • {walletData.moduleRevenue.moduleCount} modules
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="bg-white/60 rounded-lg p-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">💝</span>
+                  <div>
+                    <p className="text-sm text-slate-600">Donations</p>
+                    <p className="text-xl font-bold text-slate-900">{stats.donation_count}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white/60 rounded-lg p-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">🎯</span>
+                  <div>
+                    <p className="text-sm text-slate-600">Sponsorships</p>
+                    <p className="text-xl font-bold text-slate-900">{stats.sponsorship_count}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Legacy Balance Card (if wallet not loaded yet) */}
+      {!walletData && (
+        <AnimatedCard className="bg-gradient-to-br from-green-50 to-teal-50 border-2 border-green-200">
+          <div className="p-6">
+            <div className="flex items-start justify-between mb-6">
+              <div>
+                <p className="text-sm font-medium text-green-700 mb-1">Current Balance</p>
+                <p className="text-4xl font-bold text-green-900">{formatCurrency(stats.balance)}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-green-600 mb-1">Total Donated</p>
+                <p className="text-lg font-semibold text-green-800">{formatCurrency(stats.total_donations)}</p>
+                <p className="text-xs text-green-600 mt-2">Total Spent</p>
+                <p className="text-lg font-semibold text-green-800">{formatCurrency(stats.total_spent)}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="bg-white/60 rounded-lg p-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">💝</span>
+                  <div>
+                    <p className="text-sm text-slate-600">Donations</p>
+                    <p className="text-xl font-bold text-slate-900">{stats.donation_count}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white/60 rounded-lg p-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">🎯</span>
+                  <div>
+                    <p className="text-sm text-slate-600">Sponsorships</p>
+                    <p className="text-xl font-bold text-slate-900">{stats.sponsorship_count}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </AnimatedCard>
+      )}
+
+      {/* Donate Button */}
+      <AnimatedCard>
         <div className="p-6">
-          <div className="flex items-start justify-between mb-6">
-            <div>
-              <p className="text-sm font-medium text-green-700 mb-1">Current Pool Balance</p>
-              <p className="text-4xl font-bold text-green-900">{formatCurrency(stats.balance)}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-xs text-green-600 mb-1">Total Donated</p>
-              <p className="text-lg font-semibold text-green-800">{formatCurrency(stats.total_donations)}</p>
-              <p className="text-xs text-green-600 mt-2">Total Spent</p>
-              <p className="text-lg font-semibold text-green-800">{formatCurrency(stats.total_spent)}</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <div className="bg-white/60 rounded-lg p-3">
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">💝</span>
-                <div>
-                  <p className="text-sm text-slate-600">Donations</p>
-                  <p className="text-xl font-bold text-slate-900">{stats.donation_count}</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white/60 rounded-lg p-3">
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">🎯</span>
-                <div>
-                  <p className="text-sm text-slate-600">Sponsorships</p>
-                  <p className="text-xl font-bold text-slate-900">{stats.sponsorship_count}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
           {!showDonateForm ? (
             <AnimatedButton
               onClick={() => setShowDonateForm(true)}
               variant="primary"
-              className="w-full bg-green-600 hover:bg-green-700"
+              className="w-full bg-teal-600 hover:bg-teal-700"
             >
-              💸 Donate to Community Pool
+              💸 Donate to Community Wallet
             </AnimatedButton>
           ) : (
             <div className="space-y-4 bg-white rounded-lg p-4">
@@ -232,7 +334,7 @@ export default function CommunityTreasury({
               </div>
 
               <p className="text-xs text-slate-500">
-                💡 Your donation will be added to the community pool and can be used to sponsor community needs and initiatives.
+                💡 Your donation will be added to the community wallet and can be used to sponsor community needs and initiatives.
               </p>
             </div>
           )}
@@ -250,10 +352,10 @@ export default function CommunityTreasury({
               <div className="flex-1">
                 <h3 className="font-semibold text-amber-900 mb-1">Admin Controls</h3>
                 <p className="text-sm text-amber-700 mb-3">
-                  As a community admin, you can use pool funds to sponsor needs on behalf of the community.
+                  As a community admin, you can use wallet funds to sponsor needs on behalf of the community.
                 </p>
                 <p className="text-xs text-amber-600">
-                  💡 When sponsoring a need, you'll have the option to use funds from the community pool instead of personal payment.
+                  💡 When sponsoring a need, you'll have the option to use funds from the community wallet instead of personal payment.
                 </p>
               </div>
             </div>
@@ -309,25 +411,45 @@ export default function CommunityTreasury({
       {/* How It Works */}
       <AnimatedCard className="bg-slate-50">
         <div className="p-6">
-          <h3 className="font-semibold text-slate-900 mb-3">❓ How the Community Pool Works</h3>
+          <h3 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
+            <span>❓</span>
+            <span>How the Community Wallet Works</span>
+          </h3>
           <div className="space-y-2 text-sm text-slate-600">
             <div className="flex gap-2">
               <span>1️⃣</span>
-              <p><strong>Members donate</strong> to build a shared fund for the community</p>
+              <p><strong>Multiple revenue streams</strong> - donations, sponsorships, and module sales</p>
             </div>
             <div className="flex gap-2">
               <span>2️⃣</span>
-              <p><strong>Pool grows</strong> through collective contributions</p>
+              <p><strong>Unified balance</strong> - all funds in one secure wallet</p>
             </div>
             <div className="flex gap-2">
               <span>3️⃣</span>
-              <p><strong>Community decides</strong> which needs to sponsor using the pool</p>
+              <p><strong>Community control</strong> - admins decide how to use funds</p>
             </div>
             <div className="flex gap-2">
               <span>4️⃣</span>
-              <p><strong>Impact multiplies</strong> through collective action</p>
+              <p><strong>Transparent tracking</strong> - every transaction is recorded</p>
+            </div>
+            <div className="flex gap-2">
+              <span>5️⃣</span>
+              <p><strong>Impact amplification</strong> - funds power real community projects</p>
             </div>
           </div>
+
+          {walletData && walletData.moduleRevenue && walletData.moduleRevenue.total > 0 && (
+            <div className="mt-4 p-3 bg-teal-100 border border-teal-200 rounded-lg">
+              <p className="text-sm font-semibold text-teal-900 mb-1 flex items-center gap-2">
+                <TrendingUp className="w-4 h-4" />
+                Module Creator Earnings
+              </p>
+              <p className="text-xs text-teal-700">
+                This community has earned {formatCurrency(walletData.moduleRevenue.total)} from {walletData.moduleRevenue.salesCount} module sales. 
+                These funds can be reinvested into more community projects, creating a sustainable impact cycle.
+              </p>
+            </div>
+          )}
         </div>
       </AnimatedCard>
     </div>

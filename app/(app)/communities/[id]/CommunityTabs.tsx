@@ -42,7 +42,7 @@ export default function CommunityTabs({ communityId, communityName, memberCount,
             }`}
           >
             <span>💰</span>
-            <span>Community Pool</span>
+            <span>Community Wallet</span>
           </button>
           <button
             onClick={() => setActiveTab('impact')}
