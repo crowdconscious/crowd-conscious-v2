@@ -55,7 +55,7 @@ CREATE POLICY "Super admins can view all wallets" ON wallets
   USING (
     EXISTS (
       SELECT 1 FROM profiles
-      WHERE id = auth.uid() AND role = 'super_admin'
+      WHERE id = auth.uid() AND user_type = 'admin'
     )
   );
 
@@ -130,7 +130,7 @@ CREATE POLICY "Super admins can view all transactions" ON wallet_transactions
   USING (
     EXISTS (
       SELECT 1 FROM profiles
-      WHERE id = auth.uid() AND role = 'super_admin'
+      WHERE id = auth.uid() AND user_type = 'admin'
     )
   );
 
@@ -225,7 +225,7 @@ CREATE POLICY "Super admins can view all sales" ON module_sales
   USING (
     EXISTS (
       SELECT 1 FROM profiles
-      WHERE id = auth.uid() AND role = 'super_admin'
+      WHERE id = auth.uid() AND user_type = 'admin'
     )
   );
 
@@ -292,7 +292,7 @@ CREATE POLICY "Super admins can view all withdrawals" ON withdrawal_requests
   USING (
     EXISTS (
       SELECT 1 FROM profiles
-      WHERE id = auth.uid() AND role = 'super_admin'
+      WHERE id = auth.uid() AND user_type = 'admin'
     )
   );
 
