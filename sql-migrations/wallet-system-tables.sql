@@ -36,7 +36,7 @@ CREATE POLICY "Community admins can view their wallet" ON wallets
   USING (
     owner_type = 'community' 
     AND owner_id IN (
-      SELECT community_id FROM communities
+      SELECT id FROM communities
       WHERE admin_id = auth.uid()
     )
   );
