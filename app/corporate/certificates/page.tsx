@@ -35,11 +35,28 @@ export default function CorporateCertificatesPage() {
     try {
       const html2canvas = (await import('html2canvas')).default
       
+      // Wait for all images to load
+      const images = certificateRef.current.getElementsByTagName('img')
+      await Promise.all(
+        Array.from(images).map((img) => {
+          if (img.complete) return Promise.resolve()
+          return new Promise((resolve, reject) => {
+            img.onload = resolve
+            img.onerror = reject
+            if (!img.src) {
+              reject(new Error('No image src'))
+            }
+          })
+        })
+      )
+      
       const canvas = await html2canvas(certificateRef.current, {
         scale: 2,
         backgroundColor: '#ffffff',
         logging: false,
-        useCORS: true
+        useCORS: true,
+        allowTaint: true,
+        imageTimeout: 0,
       })
 
       canvas.toBlob((blob) => {

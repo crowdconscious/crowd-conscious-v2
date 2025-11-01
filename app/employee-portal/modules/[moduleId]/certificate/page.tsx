@@ -47,12 +47,30 @@ export default function CertificatePage({ params }: { params: Promise<{ moduleId
       // Dynamically import html2canvas (client-side only)
       const html2canvas = (await import('html2canvas')).default
       
+      // Wait for all images to load
+      const images = certificateRef.current.getElementsByTagName('img')
+      await Promise.all(
+        Array.from(images).map((img) => {
+          if (img.complete) return Promise.resolve()
+          return new Promise((resolve, reject) => {
+            img.onload = resolve
+            img.onerror = reject
+            // Force reload if needed
+            if (!img.src) {
+              reject(new Error('No image src'))
+            }
+          })
+        })
+      )
+      
       // Capture the certificate div as canvas
       const canvas = await html2canvas(certificateRef.current, {
         scale: 2, // Higher quality
         backgroundColor: '#ffffff',
         logging: false,
-        useCORS: true
+        useCORS: true,
+        allowTaint: true, // Allow cross-origin images
+        imageTimeout: 0, // Don't timeout on images
       })
 
       // Convert to blob and download
@@ -111,12 +129,29 @@ export default function CertificatePage({ params }: { params: Promise<{ moduleId
     try {
       const html2canvas = (await import('html2canvas')).default
       
+      // Wait for all images to load
+      const images = certificateRef.current.getElementsByTagName('img')
+      await Promise.all(
+        Array.from(images).map((img) => {
+          if (img.complete) return Promise.resolve()
+          return new Promise((resolve, reject) => {
+            img.onload = resolve
+            img.onerror = reject
+            if (!img.src) {
+              reject(new Error('No image src'))
+            }
+          })
+        })
+      )
+      
       // Create Instagram Story sized image (1080x1920)
       const canvas = await html2canvas(certificateRef.current, {
         scale: 2,
         backgroundColor: '#ffffff',
         logging: false,
         useCORS: true,
+        allowTaint: true,
+        imageTimeout: 0,
         width: 1080,
         height: 1920
       })
