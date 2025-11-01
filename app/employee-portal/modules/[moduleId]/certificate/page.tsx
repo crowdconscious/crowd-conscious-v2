@@ -251,18 +251,14 @@ export default function CertificatePage({ params }: { params: Promise<{ moduleId
           <div className="p-8 sm:p-12 md:p-16 bg-gradient-to-br from-white via-yellow-50 to-orange-50">
             {/* Header */}
             <div className="mb-8">
-              <div className="flex items-start gap-4 mb-6">
-                <div className="relative w-24 h-24 sm:w-32 sm:h-32">
+              <div className="flex justify-center mb-6">
+                <div className="relative w-40 h-40 sm:w-48 sm:h-48">
                   <Image
                     src="/images/logo.png"
-                    alt="Crowd Conscious Logo"
+                    alt="Crowd Conscious"
                     fill
                     className="object-contain"
                   />
-                </div>
-                <div className="text-left flex-1">
-                  <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">Crowd Conscious</h2>
-                  <p className="text-base sm:text-lg text-slate-600">Plataforma de Impacto Social</p>
                 </div>
               </div>
               <div className="h-1 w-full bg-gradient-to-r from-teal-600 to-purple-600 rounded-full"></div>
