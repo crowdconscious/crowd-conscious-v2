@@ -37,7 +37,7 @@ CREATE POLICY "Community admins can view their wallet" ON wallets
     owner_type = 'community' 
     AND owner_id IN (
       SELECT id FROM communities
-      WHERE admin_id = auth.uid()
+      WHERE creator_id = auth.uid()
     )
   );
 
@@ -120,7 +120,7 @@ CREATE POLICY "Community admins can view community transactions" ON wallet_trans
     wallet_id IN (
       SELECT w.id FROM wallets w
       JOIN communities c ON w.owner_id = c.id
-      WHERE w.owner_type = 'community' AND c.admin_id = auth.uid()
+      WHERE w.owner_type = 'community' AND c.creator_id = auth.uid()
     )
   );
 
@@ -193,7 +193,9 @@ CREATE POLICY "Corporate admins can view their sales" ON module_sales
   FOR SELECT
   USING (
     corporate_account_id IN (
-      SELECT id FROM corporate_accounts WHERE admin_id = auth.uid()
+      SELECT corporate_account_id FROM profiles 
+      WHERE id = auth.uid() 
+      AND corporate_role = 'admin'
     )
   );
 
@@ -204,7 +206,7 @@ CREATE POLICY "Community admins can view their module sales" ON module_sales
     module_id IN (
       SELECT m.id FROM marketplace_modules m
       JOIN communities c ON m.creator_community_id = c.id
-      WHERE c.admin_id = auth.uid()
+      WHERE c.creator_id = auth.uid()
     )
   );
 
