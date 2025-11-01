@@ -5,6 +5,7 @@
 We have **TWO interconnected platforms** that need seamless integration:
 
 ### **Platform 1: Community Impact Platform** (Main App)
+
 - **URL**: `crowdconscious.app/communities/[id]`
 - **Purpose**: Communities create real-world projects, share needs, get sponsorships
 - **Users**: Community members, volunteers, donors
@@ -17,6 +18,7 @@ We have **TWO interconnected platforms** that need seamless integration:
   - Content feed
 
 ### **Platform 2: Corporate Training (Concientizaciones)**
+
 - **URL**: `crowdconscious.app/concientizaciones` or `crowdconscious.app/corporate`
 - **Purpose**: Companies buy training modules, employees learn, communities get paid
 - **Users**: Corporate admins, employees
@@ -45,6 +47,7 @@ Platform Split:
 ### **What We Need:**
 
 #### **1. Community Wallet** (50% revenue share)
+
 - **Purpose**: Receives revenue from module sales created by that community
 - **Uses**:
   - Fund local needs in community platform
@@ -55,6 +58,7 @@ Platform Split:
 - **Current State**: ✅ We have `community_pool` but it's for sponsorships, not module sales
 
 #### **2. Creator Wallet** (20% revenue share)
+
 - **Purpose**: Individual creators earn from modules they build
 - **Users**: Community members who created modules
 - **Uses**:
@@ -64,6 +68,7 @@ Platform Split:
 - **Current State**: ❌ Not implemented
 
 #### **3. Platform Treasury** (30% revenue)
+
 - **Purpose**: Platform operating costs, marketing, support
 - **Access**: Super admins only
 - **Current State**: ❌ Not implemented
@@ -122,6 +127,7 @@ CREATE TABLE module_sales (
 ## 🎨 **MODULE BUILDER PLACEMENT**
 
 ### **Current State:**
+
 - Module builder at: `/creator/module-builder`
 - Creator application at: `/creator/apply`
 
@@ -144,6 +150,7 @@ CREATE TABLE module_sales (
 ```
 
 **Why this works:**
+
 - Modules are created BY communities
 - Community gets 50% revenue → needs wallet in same place
 - Admins see all community assets in one dashboard
@@ -162,6 +169,7 @@ CREATE TABLE module_sales (
 ```
 
 **Problems:**
+
 - Separates community from content creation
 - Doesn't reflect the community-first model
 - Creators don't see their community impact
@@ -173,6 +181,7 @@ CREATE TABLE module_sales (
 ### **1. Community Platform → Module Creation**
 
 **Flow:**
+
 1. Community admin goes to community dashboard
 2. Clicks "Create Module" (requires approval first)
 3. Uses module builder to create content
@@ -183,6 +192,7 @@ CREATE TABLE module_sales (
 ### **2. Corporate Platform → Marketplace → Community Revenue**
 
 **Flow:**
+
 1. Corporate admin browses marketplace
 2. Purchases module (e.g., "Clean Air" by "Colonia Verde")
 3. Payment processed:
@@ -203,11 +213,13 @@ CREATE TABLE module_sales (
 **Current**: Sponsorships go to "community pool" (abstract concept)
 
 **Proposed**: Community wallet has REAL balance from:
+
 - Needs sponsorships (existing)
 - Module sales revenue (NEW)
 - Donations (existing)
 
 **Usage**:
+
 - Fund needs (already have this)
 - Withdraw to bank (NEW - for paying facilitators, supplies)
 - Invest in content creation (NEW - pay designers, videographers)
@@ -217,6 +229,7 @@ CREATE TABLE module_sales (
 ## 🎯 **SUPER ADMIN DASHBOARD CONNECTION**
 
 ### **What Exists:**
+
 You mentioned you already have a super admin dashboard.
 
 ### **What Needs to Connect:**
@@ -245,6 +258,7 @@ You mentioned you already have a super admin dashboard.
 ## 📊 **IMPLEMENTATION ROADMAP**
 
 ### **Phase 1: Wallet Infrastructure** (2-3 days)
+
 - [ ] Create `wallets` table
 - [ ] Create `wallet_transactions` table
 - [ ] Create `module_sales` table
@@ -255,12 +269,14 @@ You mentioned you already have a super admin dashboard.
 - [ ] Create Wallet UI component (reusable)
 
 ### **Phase 2: Move Module Builder to Community Dashboard** (1-2 days)
+
 - [ ] Move `/creator/module-builder` → `/communities/[id]/admin-panel/modules/create`
 - [ ] Add "Modules" tab to community admin dashboard
 - [ ] Show modules created by this community
 - [ ] Show earnings from each module
 
 ### **Phase 3: Connect Marketplace to Wallets** (2-3 days)
+
 - [ ] When module purchased → create `module_sales` record
 - [ ] Split payment into 3 wallet transactions:
   - Credit community wallet (50%)
@@ -270,12 +286,14 @@ You mentioned you already have a super admin dashboard.
 - [ ] Show revenue in creator's personal wallet
 
 ### **Phase 4: Super Admin Integration** (1-2 days)
+
 - [ ] Add "Corporate Accounts" section to super admin
 - [ ] Add "Marketplace" section to super admin
 - [ ] Add "Wallets" overview to super admin
 - [ ] Show all transactions, sales, revenue splits
 
 ### **Phase 5: Withdrawal System** (Optional, Future)
+
 - [ ] Stripe Connect or PayPal integration
 - [ ] KYC/verification for withdrawals
 - [ ] Payout schedule (monthly, on-demand)
@@ -330,28 +348,38 @@ You mentioned you already have a super admin dashboard.
 ## ⚡ **CRITICAL DECISIONS NEEDED**
 
 ### **1. Module Builder Location**
+
 **Option A**: Community dashboard (`/communities/[id]/admin-panel/modules`)
 **Option B**: Separate creator portal (`/creator/dashboard`)
 
 **Recommendation**: **Option A** - aligns with "communities create modules" vision
 
 ### **2. Wallet Visibility**
+
 **Community Wallet**: Should all community members see balance?
+
 - **Proposal**: Admins see full details, members see total only
 
 **Creator Wallet**: Private or community-visible?
+
 - **Proposal**: Private to creator, but community admins see aggregated creator earnings
 
 ### **3. Revenue Split Flexibility**
+
 Should the 30/50/20 split be configurable per module?
+
 - **Proposal**: Start fixed, allow custom splits later (e.g., 25/60/15 for certain categories)
 
 ### **4. Withdrawal Minimums**
+
 Prevent micro-withdrawals that cost more in fees
+
 - **Proposal**: Minimum $500 MXN withdrawal, monthly payout schedule
 
 ### **5. Creator Application Flow**
+
 Currently at `/creator/apply`. Should this be:
+
 - **Option A**: Community admin applies on behalf of community
 - **Option B**: Individual applies, then chooses their community
 - **Recommendation**: **Option A** - community-first model
@@ -385,4 +413,3 @@ This isn't just about payments. It's about:
 ---
 
 _Ready to build? Let's start with Phase 1: Wallet Infrastructure._
-
