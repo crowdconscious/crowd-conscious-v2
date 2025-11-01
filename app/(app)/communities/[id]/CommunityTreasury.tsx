@@ -224,11 +224,12 @@ export default function CommunityTreasury({
                   <div>
                     <p className="text-sm text-slate-600">Sponsorships</p>
                     <p className="text-xl font-bold text-slate-900">{stats.sponsorship_count}</p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </AnimatedCard>
       )}
 
       {/* Legacy Balance Card (if wallet not loaded yet) */}
@@ -264,6 +265,7 @@ export default function CommunityTreasury({
                   <div>
                     <p className="text-sm text-slate-600">Sponsorships</p>
                     <p className="text-xl font-bold text-slate-900">{stats.sponsorship_count}</p>
+                  </div>
                 </div>
               </div>
             </div>
