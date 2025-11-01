@@ -162,21 +162,28 @@ END $$;
 
 -- Show all indexes that were created
 SELECT 
-    tablename,
-    indexname,
-    pg_size_pretty(pg_relation_size(indexrelid)) as index_size
-FROM pg_stat_user_indexes
-WHERE schemaname = 'public'
-AND indexrelname LIKE 'idx_%'
-ORDER BY tablename, indexname;
+    schemaname,
+    t.relname as tablename,
+    i.relname as indexname,
+    pg_size_pretty(pg_relation_size(i.oid)) as index_size
+FROM pg_class t
+JOIN pg_index ix ON t.oid = ix.indrelid
+JOIN pg_class i ON i.oid = ix.indexrelid
+LEFT JOIN pg_namespace n ON n.oid = i.relnamespace
+WHERE n.nspname = 'public'
+AND i.relname LIKE 'idx_%'
+ORDER BY t.relname, i.relname;
 
 -- Summary
 SELECT 
     COUNT(*) as total_indexes,
-    pg_size_pretty(SUM(pg_relation_size(indexrelid))) as total_size
-FROM pg_stat_user_indexes
-WHERE schemaname = 'public'
-AND indexrelname LIKE 'idx_%';
+    pg_size_pretty(SUM(pg_relation_size(i.oid))) as total_size
+FROM pg_class t
+JOIN pg_index ix ON t.oid = ix.indrelid
+JOIN pg_class i ON i.oid = ix.indexrelid
+LEFT JOIN pg_namespace n ON n.oid = i.relnamespace
+WHERE n.nspname = 'public'
+AND i.relname LIKE 'idx_%';
 
 -- ============================================
 -- NOTES
