@@ -1,4 +1,5 @@
 # Crowd Conscious - Comprehensive Platform Guide
+
 **Version: 2.0 | Last Updated: November 1, 2025**
 
 ---
@@ -25,6 +26,7 @@
 ### **Core Value Proposition**
 
 We operate as a **two-sided marketplace** that:
+
 1. **Empowers communities** to create sustainability training modules based on real-world expertise
 2. **Enables corporations** to purchase modular training that directly funds community projects
 3. **Creates a virtuous cycle** where training revenue flows back to neighborhoods for project implementation
@@ -62,12 +64,14 @@ We operate as a **two-sided marketplace** that:
 **2025-2027 Roadmap**:
 
 **Phase 1: Foundation** ✅ COMPLETE
+
 - Community platform with needs, events, polls, challenges
 - Sponsorship system with payment processing
 - Impact metrics tracking
 - User authentication and profiles
 
 **Phase 2: Corporate Training (Current)** 🔄 IN PROGRESS
+
 - Corporate accounts and employee management
 - Module-based training system
 - Progress tracking and gamification (XP, levels)
@@ -75,6 +79,7 @@ We operate as a **two-sided marketplace** that:
 - Employee and corporate dashboards
 
 **Phase 3: Marketplace & Revenue** 🚀 STARTING
+
 - Wallet system for revenue distribution
 - Module creation tools for communities
 - Creator application workflow
@@ -82,6 +87,7 @@ We operate as a **two-sided marketplace** that:
 - Marketplace browse and purchase
 
 **Phase 4: Scale** 📈 PLANNED (2026)
+
 - API integrations for HR systems
 - Custom module development
 - Mobile apps (iOS/Android)
@@ -90,17 +96,17 @@ We operate as a **two-sided marketplace** that:
 
 ### **Tech Stack**
 
-| Layer | Technology | Purpose |
-|-------|-----------|---------|
-| **Frontend** | Next.js 15, React 18, TypeScript | Server components, static generation |
-| **Styling** | Tailwind CSS, Lucide Icons | Responsive design, mobile-optimized |
-| **Backend** | Next.js API Routes, Server Actions | Serverless functions |
-| **Database** | Supabase (PostgreSQL) | Real-time, RLS policies |
-| **Auth** | Supabase Auth | Email/password, OAuth |
-| **Payments** | Stripe | Sponsorships, corporate subscriptions |
-| **Email** | Resend | Transactional emails |
-| **Storage** | Supabase Storage | Images, documents, certificates |
-| **Deployment** | Vercel | Edge network, auto-scaling |
+| Layer          | Technology                         | Purpose                               |
+| -------------- | ---------------------------------- | ------------------------------------- |
+| **Frontend**   | Next.js 15, React 18, TypeScript   | Server components, static generation  |
+| **Styling**    | Tailwind CSS, Lucide Icons         | Responsive design, mobile-optimized   |
+| **Backend**    | Next.js API Routes, Server Actions | Serverless functions                  |
+| **Database**   | Supabase (PostgreSQL)              | Real-time, RLS policies               |
+| **Auth**       | Supabase Auth                      | Email/password, OAuth                 |
+| **Payments**   | Stripe                             | Sponsorships, corporate subscriptions |
+| **Email**      | Resend                             | Transactional emails                  |
+| **Storage**    | Supabase Storage                   | Images, documents, certificates       |
+| **Deployment** | Vercel                             | Edge network, auto-scaling            |
 
 ### **Architecture Principles**
 
@@ -118,6 +124,7 @@ We operate as a **two-sided marketplace** that:
 ### **Core Tables (Community Platform)**
 
 #### **1. profiles**
+
 ```sql
 id                  UUID PRIMARY KEY    -- Links to auth.users
 email               TEXT
@@ -137,6 +144,7 @@ created_at          TIMESTAMP
 **Purpose**: Extended user profiles linking to Supabase Auth
 
 **RLS Policies**:
+
 - ✅ Anyone can view profiles
 - ✅ Users can update own profile
 - ✅ Users can insert own profile on signup
@@ -144,6 +152,7 @@ created_at          TIMESTAMP
 ---
 
 #### **2. communities**
+
 ```sql
 id              UUID PRIMARY KEY
 name            TEXT UNIQUE NOT NULL
@@ -161,6 +170,7 @@ created_at      TIMESTAMP
 **Purpose**: Community organizations and neighborhoods
 
 **Core Values**:
+
 - clean_air
 - clean_water
 - safe_cities
@@ -169,6 +179,7 @@ created_at      TIMESTAMP
 - biodiversity
 
 **RLS Policies**:
+
 - ✅ Anyone can view communities
 - ✅ Authenticated users can create
 - ✅ Creators can update their own
@@ -176,6 +187,7 @@ created_at      TIMESTAMP
 ---
 
 #### **3. community_members**
+
 ```sql
 id              UUID PRIMARY KEY
 community_id    UUID REFERENCES communities(id)
@@ -189,17 +201,20 @@ UNIQUE(community_id, user_id)
 **Purpose**: Track community membership and roles
 
 **Voting Power**:
+
 - Founder: 3 votes
 - Admin: 2 votes
 - Member: 1 vote
 
 **Triggers**:
+
 - Auto-updates `communities.member_count` on INSERT/DELETE
 - Auto-sets `voting_power` based on role
 
 ---
 
 #### **4. community_content**
+
 ```sql
 id              UUID PRIMARY KEY
 community_id    UUID REFERENCES communities(id)
@@ -219,6 +234,7 @@ created_at      TIMESTAMP
 **Purpose**: Flexible content system for all community activities
 
 **Content Types**:
+
 1. **Need**: Community requests (funding, volunteers, supplies)
 2. **Event**: Gatherings, workshops, activities
 3. **Challenge**: Community competitions and goals
@@ -227,6 +243,7 @@ created_at      TIMESTAMP
 ---
 
 #### **5. votes**
+
 ```sql
 id          UUID PRIMARY KEY
 content_id  UUID REFERENCES community_content(id)
@@ -242,6 +259,7 @@ UNIQUE(content_id, user_id)
 ---
 
 #### **6. sponsorships**
+
 ```sql
 id                      UUID PRIMARY KEY
 content_id              UUID REFERENCES community_content(id)
@@ -257,6 +275,7 @@ created_at              TIMESTAMP
 **Purpose**: Brand sponsorships of community needs
 
 **Flow**:
+
 1. Brand creates sponsorship (status: 'pending')
 2. Community approves (approved_by_community: true)
 3. Payment processed via Stripe
@@ -266,6 +285,7 @@ created_at              TIMESTAMP
 ---
 
 #### **7. impact_metrics**
+
 ```sql
 id            UUID PRIMARY KEY
 community_id  UUID REFERENCES communities(id)
@@ -282,6 +302,7 @@ created_at    TIMESTAMP
 ---
 
 #### **8. share_links**
+
 ```sql
 id          UUID PRIMARY KEY
 token       TEXT UNIQUE DEFAULT gen_random_uuid()
@@ -298,6 +319,7 @@ created_at  TIMESTAMP
 ### **Corporate Training Tables**
 
 #### **9. corporate_accounts**
+
 ```sql
 id                  UUID PRIMARY KEY
 company_name        TEXT NOT NULL
@@ -318,6 +340,7 @@ created_at          TIMESTAMP
 **Purpose**: Corporate client accounts
 
 **Program Tiers**:
+
 - **Inicial** (3 modules): $45,000 MXN
 - **Completo** (6 modules): $85,000 MXN ⭐ Recommended
 - **Elite** (unlimited): Custom pricing
@@ -325,6 +348,7 @@ created_at          TIMESTAMP
 ---
 
 #### **10. employee_invitations**
+
 ```sql
 id                      UUID PRIMARY KEY
 corporate_account_id    UUID REFERENCES corporate_accounts(id)
@@ -344,6 +368,7 @@ UNIQUE(corporate_account_id, email)
 ---
 
 #### **11. course_enrollments**
+
 ```sql
 id                      UUID PRIMARY KEY
 employee_id             UUID REFERENCES auth.users(id)
@@ -365,6 +390,7 @@ UNIQUE(employee_id, module_id)
 **Purpose**: Track employee training progress
 
 **XP System**:
+
 - Lesson completion: 10-20 XP
 - Module completion: Bonus XP
 - Levels: Every 100 XP = 1 level
@@ -372,6 +398,7 @@ UNIQUE(employee_id, module_id)
 ---
 
 #### **12. lesson_responses**
+
 ```sql
 id                      UUID PRIMARY KEY
 employee_id             UUID REFERENCES auth.users(id)
@@ -386,6 +413,7 @@ completed_at            TIMESTAMP
 **Purpose**: Store employee lesson completion and tool responses
 
 **Captured Data**:
+
 - Reflection journal entries
 - Calculator results
 - Assessment responses
@@ -395,6 +423,7 @@ completed_at            TIMESTAMP
 ---
 
 #### **13. certifications**
+
 ```sql
 id                      UUID PRIMARY KEY
 employee_id             UUID REFERENCES auth.users(id)
@@ -412,6 +441,7 @@ verification_code       TEXT UNIQUE         -- 12-char code for public verificat
 **Purpose**: Digital certificates for employees and companies
 
 **Types**:
+
 1. **Module Completion**: Issued per module completed
 2. **Conscious Company**: Issued to corporations
 
@@ -420,6 +450,7 @@ verification_code       TEXT UNIQUE         -- 12-char code for public verificat
 ---
 
 #### **14. project_submissions**
+
 ```sql
 id                      UUID PRIMARY KEY
 employee_id             UUID REFERENCES auth.users(id)
@@ -442,6 +473,7 @@ feedback                TEXT
 ---
 
 #### **15. corporate_activity_log**
+
 ```sql
 id                      UUID PRIMARY KEY
 corporate_account_id    UUID REFERENCES corporate_accounts(id)
@@ -460,6 +492,7 @@ created_at              TIMESTAMP
 ### **Marketplace Tables**
 
 #### **16. marketplace_modules**
+
 ```sql
 id                      UUID PRIMARY KEY
 title                   TEXT NOT NULL
@@ -494,6 +527,7 @@ published_at            TIMESTAMP
 **Purpose**: Community-created training modules for sale
 
 **Pricing Example**:
+
 - Base (50 employees): $18,000 MXN
 - +50 employees: +$8,000 MXN
 - 100 employees: $26,000 MXN
@@ -502,6 +536,7 @@ published_at            TIMESTAMP
 ---
 
 #### **17. module_lessons**
+
 ```sql
 id                  UUID PRIMARY KEY
 module_id           UUID REFERENCES marketplace_modules(id)
@@ -527,6 +562,7 @@ UNIQUE(module_id, lesson_order)
 **Purpose**: Individual lessons within modules
 
 **Story-Driven Structure**:
+
 ```json
 {
   "introduction": "Hook the learner",
@@ -539,6 +575,7 @@ UNIQUE(module_id, lesson_order)
 ---
 
 #### **18. creator_applications**
+
 ```sql
 id                      UUID PRIMARY KEY
 applicant_user_id       UUID REFERENCES auth.users(id)
@@ -562,6 +599,7 @@ reviewed_at             TIMESTAMP
 **Purpose**: Application workflow for community creators
 
 **Application Flow**:
+
 1. Community applies (status: 'pending')
 2. Admin reviews application
 3. Approved → Access to module builder
@@ -571,6 +609,7 @@ reviewed_at             TIMESTAMP
 ---
 
 #### **19. module_reviews**
+
 ```sql
 id                  UUID PRIMARY KEY
 module_id           UUID REFERENCES marketplace_modules(id)
@@ -589,6 +628,7 @@ created_at          TIMESTAMP
 ---
 
 #### **20. revenue_transactions**
+
 ```sql
 id                  UUID PRIMARY KEY
 module_id           UUID REFERENCES marketplace_modules(id)
@@ -609,6 +649,7 @@ transaction_date    TIMESTAMP
 ### **Wallet System Tables**
 
 #### **21. wallets**
+
 ```sql
 id          UUID PRIMARY KEY
 owner_type  TEXT NOT NULL               -- 'community', 'user', 'platform'
@@ -624,13 +665,31 @@ UNIQUE(owner_type, owner_id)
 **Purpose**: Store balances for revenue distribution
 
 **Wallet Types**:
+
 1. **Community**: Receives 50% of module sales
 2. **User** (Creator): Receives 20% of module sales
 3. **Platform**: Receives 30% of module sales
 
+**Status**: ✅ **LIVE** - Integrated in production (Nov 2025)
+
+**Features**:
+
+- Auto-creation on first transaction
+- Real-time balance updates
+- Multi-currency support (MXN default)
+- Status management (active/frozen/closed)
+- Unique constraint per owner
+
+**UI Integration**:
+
+- Community wallets: `/communities/[id]` → "Community Wallet" tab
+- Creator wallets: `/profile` → "Creator Wallet" section (if balance > 0)
+- Admin overview: `/admin` → "Wallets & Treasury" tab (coming soon)
+
 ---
 
 #### **22. wallet_transactions**
+
 ```sql
 id                      UUID PRIMARY KEY
 wallet_id               UUID REFERENCES wallets(id)
@@ -650,9 +709,32 @@ processed_at            TIMESTAMP
 
 **Purpose**: Full audit trail of all wallet activity
 
+**Transaction Types**:
+
+- **Credit**: Money added to wallet (module sales, donations)
+- **Debit**: Money removed from wallet (withdrawals, transfers)
+
+**Sources**:
+
+- `module_sale` - Revenue from marketplace module purchase
+- `need_sponsorship` - Sponsorship of community need (legacy)
+- `withdrawal` - Payout to bank account (future)
+- `donation` - Direct donation to community
+
+**Status**: ✅ **LIVE** - All transactions logged automatically
+
+**Features**:
+
+- Immutable audit trail
+- Balance snapshots (before/after)
+- Related transaction linking
+- Metadata for custom data
+- Status tracking (pending/completed/failed)
+
 ---
 
 #### **23. module_sales**
+
 ```sql
 id                              UUID PRIMARY KEY
 module_id                       UUID REFERENCES marketplace_modules(id)
@@ -676,6 +758,7 @@ purchased_at                    TIMESTAMP
 **Purpose**: Track revenue splits from module purchases
 
 **Revenue Distribution**:
+
 ```
 $18,000 MXN module sale
 ├─ Platform (30%): $5,400
@@ -683,9 +766,30 @@ $18,000 MXN module sale
 └─ Creator (20%): $3,600 (or 0% if donated)
 ```
 
+**Status**: ✅ **LIVE** - Automated via `process_module_sale()` function
+
+**Process Flow**:
+
+1. Corporate admin purchases module from marketplace
+2. Stripe processes payment
+3. `process_module_sale()` RPC function executes
+4. Revenue automatically split to 3 wallets
+5. Wallet balances updated
+6. Transactions logged
+7. Module stats updated
+
+**Features**:
+
+- Automatic revenue splitting
+- Creator donation option (give 20% to community)
+- Full transaction tracking
+- Payment method logging (Stripe, bank transfer)
+- Status management (pending/completed/refunded)
+
 ---
 
 #### **24. withdrawal_requests**
+
 ```sql
 id                  UUID PRIMARY KEY
 wallet_id           UUID REFERENCES wallets(id)
@@ -711,6 +815,7 @@ completed_at        TIMESTAMP
 ### **1. Community Platform**
 
 #### **Communities Dashboard**
+
 - **Path**: `/communities`
 - **Features**:
   - Browse all communities
@@ -719,16 +824,35 @@ completed_at        TIMESTAMP
   - View community stats (members, needs, impact)
 
 #### **Individual Community Page**
+
 - **Path**: `/communities/[id]`
 - **Tabs**:
   1. **Members**: List of all members with roles
   2. **Content**: Needs, events, challenges, polls
-  3. **Community Pool**: Wallet balance, transactions
+  3. **Community Wallet** ✅: Unified wallet balance, transactions, module revenue
   4. **Impact**: Verified metrics and achievements
+
+#### **Community Wallet** ✅ NEW (Nov 2025)
+
+- **Path**: `/communities/[id]` → "Community Wallet" tab
+- **Replaces**: "Community Pool" (renamed for clarity)
+- **Features**:
+  - **Unified Balance**: Shows total from all sources
+    - Donations from members
+    - Sponsorships (85% after platform fee)
+    - Module sales revenue (50% of sales)
+  - **Module Revenue Badge**: Displays if community has created modules
+  - **Transaction History**: Last 20 transactions with filtering
+  - **Donation Interface**: Quick donate with preset amounts
+  - **Admin Controls**: Use wallet funds to sponsor needs
+  - **How It Works**: Educational section about revenue streams
+
+**Status**: ✅ LIVE - Fully integrated and working
 
 #### **Content Types**:
 
 **A. Needs (Funding Requests)**
+
 ```typescript
 {
   type: 'need',
@@ -744,6 +868,7 @@ completed_at        TIMESTAMP
 ```
 
 **B. Events**
+
 ```typescript
 {
   type: 'event',
@@ -757,6 +882,7 @@ completed_at        TIMESTAMP
 ```
 
 **C. Challenges**
+
 ```typescript
 {
   type: 'challenge',
@@ -770,6 +896,7 @@ completed_at        TIMESTAMP
 ```
 
 **D. Polls**
+
 ```typescript
 {
   type: 'poll',
@@ -785,6 +912,7 @@ completed_at        TIMESTAMP
 ### **2. Corporate Training (Concientizaciones)**
 
 #### **Landing Page**
+
 - **Path**: `/concientizaciones`
 - **Features**:
   - Hero section with value proposition
@@ -795,6 +923,7 @@ completed_at        TIMESTAMP
   - CTA to sign up
 
 #### **Corporate Signup**
+
 - **Path**: `/signup-corporate`
 - **Flow**:
   1. Company information
@@ -804,6 +933,7 @@ completed_at        TIMESTAMP
   5. Auto-enrollment in modules
 
 #### **Corporate Admin Dashboard**
+
 - **Path**: `/corporate/dashboard`
 - **Sections**:
   1. **Overview**:
@@ -826,6 +956,7 @@ completed_at        TIMESTAMP
      - "Ver Todos" → `/marketplace`
 
 #### **Employee Management**
+
 - **Path**: `/corporate/employees`
 - **Features**:
   - Employee list with stats
@@ -835,6 +966,7 @@ completed_at        TIMESTAMP
   - Remove employees
 
 #### **Progress Tracking**
+
 - **Path**: `/corporate/progress`
 - **Views**:
   - Overall completion percentage
@@ -845,6 +977,7 @@ completed_at        TIMESTAMP
   - Completion trends (chart)
 
 #### **Impact Dashboard**
+
 - **Path**: `/corporate/impact`
 - **Metrics**:
   - CO₂ equivalent reduced
@@ -855,6 +988,7 @@ completed_at        TIMESTAMP
   - ESG report generation
 
 #### **Corporate Certificates**
+
 - **Path**: `/corporate/certificates`
 - **Features**:
   - "Conscious Company" badge
@@ -865,6 +999,7 @@ completed_at        TIMESTAMP
   - Download as PNG
 
 #### **Settings**
+
 - **Path**: `/corporate/settings`
 - **Options**:
   - Company profile
@@ -879,6 +1014,7 @@ completed_at        TIMESTAMP
 ### **3. Employee Portal**
 
 #### **Employee Dashboard**
+
 - **Path**: `/employee-portal/dashboard`
 - **Sections**:
   1. **Welcome Banner**:
@@ -901,6 +1037,7 @@ completed_at        TIMESTAMP
      - Deadlines (if any)
 
 #### **Courses Page**
+
 - **Path**: `/employee-portal/courses`
 - **Features**:
   - All enrolled modules
@@ -913,6 +1050,7 @@ completed_at        TIMESTAMP
     - "Continue" button
 
 #### **Module Overview**
+
 - **Path**: `/employee-portal/modules/[moduleId]`
 - **Sections**:
   1. **Header**:
@@ -932,6 +1070,7 @@ completed_at        TIMESTAMP
      - "Start" or "Continue" buttons
 
 #### **Lesson Viewer**
+
 - **Path**: `/employee-portal/modules/[moduleId]/lessons/[lessonId]`
 - **Layout**:
   - **Sidebar** (Desktop):
@@ -1000,6 +1139,7 @@ completed_at        TIMESTAMP
    - Links to `project_submissions`
 
 #### **Certifications**
+
 - **Path**: `/employee-portal/certifications`
 - **Features**:
   - Grid of earned certificates
@@ -1015,6 +1155,7 @@ completed_at        TIMESTAMP
     - "View" button
 
 #### **Certificate View**
+
 - **Path**: `/employee-portal/modules/[moduleId]/certificate`
 - **Features**:
   - Beautiful certificate design
@@ -1030,6 +1171,7 @@ completed_at        TIMESTAMP
     - Share to social media (Twitter, LinkedIn, Facebook, Instagram Stories)
 
 #### **Impact Dashboard**
+
 - **Path**: `/employee-portal/impact`
 - **Sections**:
   1. **Gamification**:
@@ -1054,9 +1196,60 @@ completed_at        TIMESTAMP
 
 ---
 
-### **4. Marketplace**
+### **4. User Profiles & Creator Wallet** ✅ NEW (Nov 2025)
+
+#### **User Profile Page**
+
+- **Path**: `/profile`
+- **Sections**:
+  1. **Profile Header**:
+     - Avatar
+     - Full name
+     - Email
+     - Bio
+     - Location
+     - Social links (Twitter, LinkedIn, Instagram, website)
+     - Edit profile button
+  2. **Creator Wallet** ✅ (Conditional - Only if balance > 0):
+     - **Total Creator Earnings**: Large balance display
+     - **Module Stats Grid**:
+       - Modules created
+       - Total sales
+       - Average per sale
+     - **Module Revenue Details**: If user has created modules
+       - Total revenue from module sales
+       - Sales count
+       - Module count
+     - **How It Works**: Educational info box
+       - 20% creator share explained
+       - 50% community share
+       - 30% platform fee
+     - **Recent Transactions**: Last 5 wallet transactions
+       - Credit/debit indicators
+       - Descriptions
+       - Dates and amounts
+
+  3. **My Communities**: Grid of all communities user has joined
+  4. **Impact Stats**: Personal contribution metrics (if available)
+  5. **Activity Feed**: Recent actions (coming soon)
+
+**Creator Wallet Features**:
+
+- **Auto-Detection**: Only shows for users who have created and sold modules
+- **Purple Gradient Design**: Distinct from community wallet (teal)
+- **Real-time Balance**: Fetched from `/api/wallets/user`
+- **Transaction History**: Full audit trail
+- **Transparent Revenue**: Shows exactly how much earned per module
+- **Educational**: Explains platform economics
+
+**Status**: ✅ LIVE - Fully integrated and working
+
+---
+
+### **5. Marketplace**
 
 #### **Browse Page**
+
 - **Path**: `/marketplace`
 - **Features**:
   - **Filters**:
@@ -1081,6 +1274,7 @@ completed_at        TIMESTAMP
     - "Ver Detalles" button
 
 #### **Module Detail Page**
+
 - **Path**: `/marketplace/[id]`
 - **Sections**:
   1. **Header**:
@@ -1113,9 +1307,10 @@ completed_at        TIMESTAMP
 
 ---
 
-### **5. Module Builder (Community Creator Tool)**
+### **6. Module Builder (Community Creator Tool)**
 
 #### **Creator Application**
+
 - **Path**: `/creator/apply`
 - **Steps**:
   1. **Personal Info**:
@@ -1144,6 +1339,7 @@ completed_at        TIMESTAMP
      - Motivation
 
 #### **Module Builder**
+
 - **Path**: `/creator/module-builder` (Future: `/communities/[id]/admin-panel/modules/create`)
 - **Features**:
   - Drag-and-drop lesson ordering
@@ -1163,9 +1359,10 @@ completed_at        TIMESTAMP
 
 ---
 
-### **6. Admin Dashboard**
+### **7. Admin Dashboard**
 
 #### **Overview Tab**
+
 - **Path**: `/admin` (Tab: Overview)
 - **Stats Cards**:
   - Total communities
@@ -1177,6 +1374,7 @@ completed_at        TIMESTAMP
   - Recent user signups
 
 #### **Corporate Training Tab**
+
 - **Path**: `/admin` (Tab: Corporate Training)
 - **Coming Soon**:
   - List of all corporate accounts
@@ -1186,6 +1384,7 @@ completed_at        TIMESTAMP
   - Revenue from training sales
 
 #### **Marketplace Tab**
+
 - **Path**: `/admin` (Tab: Marketplace)
 - **Coming Soon**:
   - All published modules
@@ -1196,6 +1395,7 @@ completed_at        TIMESTAMP
   - Creator approval workflow
 
 #### **Wallets & Treasury Tab**
+
 - **Path**: `/admin` (Tab: Wallets & Treasury)
 - **Coming Soon**:
   - Platform treasury balance
@@ -1208,9 +1408,10 @@ completed_at        TIMESTAMP
 
 ---
 
-### **7. Certificate Verification**
+### **8. Certificate Verification**
 
 #### **Public Verification Page**
+
 - **Path**: `/verify/[code]`
 - **Features**:
   - Certificate details:
@@ -1296,11 +1497,13 @@ Public (Not authenticated)
 ### **Supabase Auth Integration**
 
 **Providers**:
+
 - ✅ Email/Password
 - ✅ Magic Link (Future)
 - ⚠️ OAuth (Google, Facebook) - Planned
 
 **Session Management**:
+
 - Server-side session cookies
 - `createClient()` from `@/lib/supabase-server`
 - Middleware checks auth status
@@ -1311,21 +1514,25 @@ Public (Not authenticated)
 All tables have RLS enabled. Key policies:
 
 **Public Read**:
+
 - `communities`, `community_content`, `profiles`, `votes`, `sponsorships`, `impact_metrics`, `share_links`
 
 **Authenticated Write**:
+
 - Users can create own profile
 - Users can create communities (as creator)
 - Users can join communities
 - Community members can create content
 
 **Role-Based Access**:
+
 - Only community founders/admins can approve sponsorships
 - Only corporate admins can invite employees
 - Only super admins can see all wallets
 - Only content creators can create share links
 
 **Data Isolation**:
+
 - Employees see only their own progress
 - Corporate admins see only their company data
 - Community admins see only their community data
@@ -1337,6 +1544,7 @@ All tables have RLS enabled. Key policies:
 ### **Stripe Integration**
 
 **Sponsorships** (Community Platform):
+
 ```typescript
 POST /api/create-checkout
 → Stripe Checkout Session
@@ -1348,6 +1556,7 @@ POST /api/create-checkout
 ```
 
 **Corporate Subscriptions** (Future):
+
 ```typescript
 POST /api/corporate/signup
 → Create corporate_account
@@ -1357,6 +1566,7 @@ POST /api/corporate/signup
 ```
 
 **Marketplace Purchases** (Phase 3):
+
 ```typescript
 POST /api/marketplace/purchase
 → Stripe Payment Intent
@@ -1384,11 +1594,13 @@ CALL process_module_sale(
 ```
 
 **Creator Donation Option**:
+
 - Creator can donate their 20% to community
 - Increases community share from 50% to 70%
 - Strengthens community-first model
 
 **Withdrawal Flow** (Future - Phase 5):
+
 1. User requests withdrawal (min: $500 MXN)
 2. Admin reviews request
 3. Stripe Connect payout
@@ -1440,6 +1652,7 @@ CALL process_module_sale(
    - Content: Congrats, certificate link, share buttons
 
 **Cron Jobs** (Vercel Cron - Future):
+
 - `api/cron/monthly-impact`: Send monthly reports
 - `api/cron/event-reminders`: Remind about upcoming events
 - `api/cron/challenge-reminders`: Remind about challenge deadlines
@@ -1451,6 +1664,7 @@ CALL process_module_sale(
 ### **Vercel Configuration**
 
 **Build Settings**:
+
 ```json
 {
   "buildCommand": "npm run build",
@@ -1482,6 +1696,7 @@ NEXT_PUBLIC_API_URL=https://crowdconscious.app/api
 ```
 
 **Deployment Checklist**:
+
 - [x] Environment variables set in Vercel
 - [x] Database migrations run in Supabase
 - [x] RLS policies enabled
@@ -1499,12 +1714,14 @@ NEXT_PUBLIC_API_URL=https://crowdconscious.app/api
 ### **Current Metrics**
 
 **Database**:
+
 - Tables: 24
 - Indexes: 50+
 - RLS Policies: 60+
 - Storage Buckets: 3 (avatars, content-images, evidence-uploads)
 
 **API Endpoints**: 70+
+
 - Community: 15
 - Corporate: 20
 - Marketplace: 10
@@ -1514,6 +1731,7 @@ NEXT_PUBLIC_API_URL=https://crowdconscious.app/api
 - Misc: 5
 
 **Pages**: 45+
+
 - Public: 10
 - Community: 8
 - Corporate: 6
@@ -1526,31 +1744,57 @@ NEXT_PUBLIC_API_URL=https://crowdconscious.app/api
 
 ## 🎯 Next Steps & Roadmap
 
-### **Immediate Priorities** (November 2025)
+### **✅ RECENTLY COMPLETED** (November 1-2, 2025)
 
-1. **Complete Wallet System**:
+1. **Wallet System Integration** ✅:
+   - ✅ Database tables (wallets, wallet_transactions, module_sales, withdrawal_requests)
+   - ✅ API endpoints (4 routes: community, user, details, transactions)
+   - ✅ UI components (WalletCard reusable component)
+   - ✅ Connected marketplace purchases to revenue splits
+   - ✅ Automated 30/50/20 split via `process_module_sale()` function
+   - ✅ Community Wallet integration (renamed from "Pool")
+   - ✅ Creator Wallet in user profiles
+   - ✅ Transaction logging and audit trail
+   - ✅ Stripe payment integration
+
+   **Status**: 70% Complete - Core functionality LIVE
+
+2. **Certificate System** ✅:
+   - ✅ Module completion certificates
+   - ✅ Corporate "Conscious Company" badges
+   - ✅ Certificate verification page
+   - ✅ Social sharing (Twitter, LinkedIn, Facebook, Instagram)
+   - ✅ PNG download with logo
+
+   **Status**: 100% Complete - Fully operational
+
+3. **Bug Fixes** ✅:
+   - ✅ Progress tracking accuracy
+   - ✅ Lesson completion logging
+   - ✅ Module overview status updates
+   - ✅ Marketplace routing
+   - ✅ Mobile optimization (lesson viewer)
+   - ✅ Certificate logo display
+
+### **Immediate Priorities** (November 2025 - Remaining 30%)
+
+1. **Complete Wallet System** (3 tasks remaining):
    - ✅ Database tables
    - ✅ API endpoints
    - ✅ UI components
-   - ⏳ Connect marketplace purchases
-   - ⏳ Test revenue splits
+   - ✅ Connect marketplace purchases
+   - ✅ Community wallet UI
+   - ✅ Creator wallet UI
+   - ⏳ Admin treasury dashboard (3-4 hours)
+   - ⏳ Module earnings display in community dashboard (2-3 hours)
+   - ⏳ Move module builder to community panel (4-5 hours)
 
-2. **Move Module Builder**:
-   - ⏳ Relocate to `/communities/[id]/admin-panel/modules`
-   - ⏳ Integrate wallet display
-   - ⏳ Show module earnings
-
-3. **Performance Optimization**:
+2. **Performance Optimization**:
+   - ✅ Database indexes created
+   - ✅ Vercel Analytics installed
    - ⏳ Code splitting
    - ⏳ Image optimization
-   - ⏳ Database query optimization
    - ⏳ Caching strategy
-
-4. **Bug Fixes**:
-   - ⏳ Test all user flows
-   - ⏳ Fix any routing issues
-   - ⏳ Ensure mobile responsiveness
-   - ⏳ Test on multiple devices
 
 ### **Short Term** (December 2025 - January 2026)
 
@@ -1627,7 +1871,6 @@ Crowd Conscious is a comprehensive platform that bridges the gap between corpora
 
 ---
 
-*Last Updated: November 1, 2025*
-*Version: 2.0*
-*Maintainer: Francisco Blockstrand (francisco@crowdconscious.app)*
-
+_Last Updated: November 1, 2025_
+_Version: 2.0_
+_Maintainer: Francisco Blockstrand (francisco@crowdconscious.app)_
