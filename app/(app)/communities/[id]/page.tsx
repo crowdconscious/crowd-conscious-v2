@@ -162,112 +162,137 @@ export default async function CommunityDetailPage({
   const sortedMembers = members.sort((a: any, b: any) => (roleOrder as any)[a.role] - (roleOrder as any)[b.role])
 
   return (
-    <div className="space-y-8">
-      {/* Community Header */}
-      <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex-1">
-                <h1 className="text-3xl font-bold text-slate-900 mb-2">{community.name}</h1>
-                {community.address && (
-                  <p className="text-slate-600 flex items-center gap-2">
-                    <span>📍</span>
-                    {community.address}
-                  </p>
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+      {/* Hero Banner Section */}
+      <div className="relative bg-gradient-to-r from-teal-600 via-teal-700 to-teal-800 text-white overflow-hidden">
+        {/* Decorative Background */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-teal-300 rounded-full blur-3xl"></div>
+        </div>
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            {/* Community Info */}
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-3">
+                <h1 className="text-4xl md:text-5xl font-bold">{community.name}</h1>
+                {userMembership && (
+                  <span className="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium border border-white/30">
+                    ✓ {(userMembership as any)?.role}
+                  </span>
                 )}
               </div>
               
-              <div className="flex items-center gap-3">
-                {user && !userMembership && (
-                  <JoinCommunityButton 
-                    communityId={community.id} 
-                    userId={(user as any).id}
-                  />
-                )}
-                
-                {userMembership && (
-                  <>
-                    <div className="flex items-center gap-2 bg-green-50 text-green-700 px-3 py-2 rounded-lg border border-green-200">
-                      <span>✓</span>
-                      <span className="capitalize font-medium">{(userMembership as any)?.role}</span>
-                    </div>
-                    
-                    {/* Settings button for admins/founders */}
-                    {((userMembership as any)?.role === 'founder' || (userMembership as any)?.role === 'admin') && (
-                      <Link
-                        href={`/communities/${community.id}/settings`}
-                        className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg border border-slate-200 transition-colors"
-                        title="Community Settings"
-                      >
-                        <span>⚙️</span>
-                        <span className="hidden sm:inline">Settings</span>
-                      </Link>
-                    )}
-                  </>
-                )}
+              {community.address && (
+                <p className="text-teal-100 flex items-center gap-2 mb-4">
+                  <span>📍</span>
+                  <span className="text-lg">{community.address}</span>
+                </p>
+              )}
+              
+              <p className="text-teal-50 text-lg max-w-2xl mb-6">{community.description}</p>
+              
+              {/* Core Values Pills */}
+              <div className="flex flex-wrap gap-2">
+                {community.core_values.map((value, index) => (
+                  <span 
+                    key={index}
+                    className="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-medium border border-white/30"
+                  >
+                    {value}
+                  </span>
+                ))}
               </div>
             </div>
 
-        <p className="text-slate-700 mb-6">{community.description}</p>
+            {/* Action Buttons */}
+            <div className="flex flex-col gap-3">
+              {user && !userMembership && (
+                <JoinCommunityButton 
+                  communityId={community.id} 
+                  userId={(user as any).id}
+                />
+              )}
+              
+              {userMembership && ((userMembership as any)?.role === 'founder' || (userMembership as any)?.role === 'admin') && (
+                <Link
+                  href={`/communities/${community.id}/settings`}
+                  className="flex items-center justify-center gap-2 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-6 py-3 rounded-xl border border-white/30 transition-all duration-300 font-medium"
+                >
+                  <span>⚙️</span>
+                  <span>Settings</span>
+                </Link>
+              )}
+            </div>
+          </div>
 
-        {/* Core Values */}
-        <div className="mb-6">
-          <h3 className="text-sm font-medium text-slate-700 mb-3">Core Values</h3>
-          <div className="flex flex-wrap gap-2">
-            {community.core_values.map((value, index) => (
-              <span 
-                key={index}
-                className="bg-teal-100 text-teal-700 px-3 py-1 rounded-full text-sm font-medium"
-              >
-                {value}
-              </span>
-            ))}
+          {/* Stats Bar */}
+          <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+              <div className="text-3xl font-bold">{community.member_count}</div>
+              <div className="text-teal-100 text-sm">Members</div>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+              <div className="text-3xl font-bold">{community.core_values.length}</div>
+              <div className="text-teal-100 text-sm">Core Values</div>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+              <div className="text-3xl font-bold">
+                {new Date(community.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+              </div>
+              <div className="text-teal-100 text-sm">Est.</div>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+              <div className="text-3xl font-bold">✨</div>
+              <div className="text-teal-100 text-sm">Active</div>
+            </div>
           </div>
         </div>
+      </div>
 
-        {/* Stats */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-6 text-sm text-slate-600">
-            <span>{community.member_count} member{community.member_count !== 1 ? 's' : ''}</span>
-            <span>Created {new Date(community.created_at).toLocaleDateString()}</span>
-          </div>
-          
-          {/* Admin Moderation Buttons */}
-          <AdminModerationButtons
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Navigation Tabs */}
+        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+          <CommunityTabs 
             communityId={community.id}
             communityName={community.name}
-            userType={user?.user_type || 'user'}
-            userRole={userMembership?.role || null}
+            memberCount={community.member_count}
+            userRole={(userMembership as any)?.role || null}
           />
         </div>
-      </div>
 
-      {/* Navigation Tabs */}
-      <div className="bg-white rounded-lg shadow-sm border border-slate-200">
-        {/* Community Tabs */}
-        <CommunityTabs 
-          communityId={community.id}
-          communityName={community.name}
-          memberCount={community.member_count}
-          userRole={(userMembership as any)?.role || null}
-        />
-      </div>
+        {/* Admin Moderation (if applicable) */}
+        {user && (user.user_type === 'admin' || (userMembership && ((userMembership as any)?.role === 'founder' || (userMembership as any)?.role === 'admin'))) && (
+          <div className="mt-6">
+            <AdminModerationButtons
+              communityId={community.id}
+              communityName={community.name}
+              userType={user?.user_type || 'user'}
+              userRole={userMembership?.role || null}
+            />
+          </div>
+        )}
 
-
-      {/* Back Navigation */}
-      <div className="flex justify-between items-center">
-        <Link
-          href="/communities"
-          className="text-slate-600 hover:text-slate-900 font-medium"
-        >
-          ← Back to Communities
-        </Link>
-        
-        <Link
-          href="/dashboard"
-          className="text-slate-600 hover:text-slate-900 font-medium"
-        >
-          Dashboard
-        </Link>
+        {/* Quick Navigation */}
+        <div className="mt-8 flex flex-wrap gap-4">
+          <Link
+            href="/communities"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-white hover:bg-slate-50 text-slate-700 rounded-xl border border-slate-200 transition-colors font-medium"
+          >
+            <span>←</span>
+            <span>Back to Communities</span>
+          </Link>
+          
+          <Link
+            href="/communities"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white rounded-xl transition-colors font-medium"
+          >
+            <span>🏠</span>
+            <span>Dashboard</span>
+          </Link>
+        </div>
       </div>
     </div>
   )
