@@ -74,7 +74,7 @@ export default function ProfilePictureUpload({
 
       // Update user profile in database
       const columnName = userType === 'brand' ? 'logo_url' : 'avatar_url'
-      const { error: updateError } = await supabaseClient
+      const { error: updateError } = await (supabaseClient as any)
         .from('profiles')
         .update({ [columnName]: publicUrl })
         .eq('id', userId)
