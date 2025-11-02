@@ -216,13 +216,22 @@ export default async function CommunityDetailPage({
               )}
               
               {userMembership && ((userMembership as any)?.role === 'founder' || (userMembership as any)?.role === 'admin') && (
-                <Link
-                  href={`/communities/${community.id}/settings`}
-                  className="flex items-center justify-center gap-2 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-6 py-3 rounded-xl border border-white/30 transition-all duration-300 font-medium"
-                >
-                  <span>⚙️</span>
-                  <span>Settings</span>
-                </Link>
+                <>
+                  <Link
+                    href={`/communities/${community.id}/modules`}
+                    className="flex items-center justify-center gap-2 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-6 py-3 rounded-xl border border-white/30 transition-all duration-300 font-medium"
+                  >
+                    <span>📚</span>
+                    <span>Módulos</span>
+                  </Link>
+                  <Link
+                    href={`/communities/${community.id}/settings`}
+                    className="flex items-center justify-center gap-2 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-6 py-3 rounded-xl border border-white/30 transition-all duration-300 font-medium"
+                  >
+                    <span>⚙️</span>
+                    <span>Settings</span>
+                  </Link>
+                </>
               )}
             </div>
           </div>
