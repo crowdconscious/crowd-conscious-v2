@@ -21,7 +21,7 @@ export default function JoinCommunityButton({ communityId, userId }: JoinCommuni
 
     try {
       // Insert membership into community_members table
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('community_members')
         .insert({
           community_id: communityId,
