@@ -163,7 +163,7 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
 
       if (existingSettings) {
         // Update existing settings
-        const { error } = await supabaseClient
+        const { error } = await (supabaseClient as any)
           .from('user_settings')
           .update(settings)
           .eq('user_id', user.id)
@@ -171,7 +171,7 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
         settingsError = error
       } else {
         // Insert new settings
-        const { error } = await supabaseClient
+        const { error } = await (supabaseClient as any)
           .from('user_settings')
           .insert({
             user_id: user.id,
@@ -204,7 +204,7 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
       }
 
       // Update profile in database
-      const { error: profileError } = await supabaseClient
+      const { error: profileError } = await (supabaseClient as any)
         .from('profiles')
         .update(profileUpdate)
         .eq('id', user.id)
