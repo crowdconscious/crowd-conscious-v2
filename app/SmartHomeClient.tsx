@@ -30,7 +30,7 @@ export default function SmartHomeClient() {
         }
 
         // Get user profile to check role
-        const { data: profile, error: profileError } = await supabase
+        const { data: profile, error: profileError } = await (supabase as any)
           .from('profiles')
           .select('is_corporate_user, corporate_role')
           .eq('id', user.id)
