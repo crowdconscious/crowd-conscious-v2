@@ -163,15 +163,20 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
 
       if (existingSettings) {
         // Update existing settings
-        // TODO: Update user settings - temporarily disabled for deployment
-        console.log('Updating settings for user:', (user as any).id, settings)
+        const { error } = await supabaseClient
+          .from('user_settings')
+          .update(settings)
+          .eq('user_id', user.id)
         
-        settingsError = null
+        settingsError = error
       } else {
         // Insert new settings
-        // TODO: Insert new settings - temporarily disabled for deployment
-        console.log('Creating settings for user:', (user as any).id, settings)
-        const error = null
+        const { error } = await supabaseClient
+          .from('user_settings')
+          .insert({
+            user_id: user.id,
+            ...settings
+          })
         
         settingsError = error
       }
@@ -198,10 +203,16 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
         profileUpdate.full_name = profileData.full_name
       }
 
-      // TODO: Update profile - temporarily disabled for deployment
-      console.log('Updating profile for user:', (user as any).id, profileUpdate)
-      
-      const profileError = null
+      // Update profile in database
+      const { error: profileError } = await supabaseClient
+        .from('profiles')
+        .update(profileUpdate)
+        .eq('id', user.id)
+
+      if (profileError) {
+        console.error('Profile error:', profileError)
+        throw profileError
+      }
 
       setHasChanges(false)
       

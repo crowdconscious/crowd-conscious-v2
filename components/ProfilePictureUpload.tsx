@@ -72,14 +72,17 @@ export default function ProfilePictureUpload({
 
       const publicUrl = urlData.publicUrl
 
-      // Update user profile
-      // TODO: Fix type issues with profiles table
-      /* const { error: updateError } = await supabaseClient
+      // Update user profile in database
+      const columnName = userType === 'brand' ? 'logo_url' : 'avatar_url'
+      const { error: updateError } = await supabaseClient
         .from('profiles')
         .update({ [columnName]: publicUrl })
         .eq('id', userId)
 
-      if (updateError) throw updateError */
+      if (updateError) {
+        console.error('Error updating profile:', updateError)
+        throw new Error(`Failed to update profile: ${updateError.message}`)
+      }
 
       // Delete old image if it exists
       if (currentImage && currentImage.includes(bucketName)) {
