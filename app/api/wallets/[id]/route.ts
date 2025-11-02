@@ -72,19 +72,28 @@ export async function GET(
           sum + parseFloat(sale.community_share || '0'), 0
         )
         
-        // Get unique module count
-        const uniqueModules = new Set(moduleSales.map(sale => sale.marketplace_modules?.id).filter(Boolean))
+        // Get unique module count - marketplace_modules is an array, take first item
+        const uniqueModules = new Set(
+          moduleSales
+            .map(sale => Array.isArray(sale.marketplace_modules) ? sale.marketplace_modules[0]?.id : sale.marketplace_modules?.id)
+            .filter(Boolean)
+        )
         
         moduleRevenue = {
           total: totalRevenue,
           moduleCount: uniqueModules.size,
           salesCount: moduleSales.length,
-          recentSales: moduleSales.slice(0, 5).map(sale => ({
-            id: sale.id,
-            amount: parseFloat(sale.community_share || '0'),
-            module: sale.marketplace_modules,
-            date: sale.purchased_at
-          }))
+          recentSales: moduleSales.slice(0, 5).map(sale => {
+            const module = Array.isArray(sale.marketplace_modules) 
+              ? sale.marketplace_modules[0] 
+              : sale.marketplace_modules
+            return {
+              id: sale.id,
+              amount: parseFloat(sale.community_share || '0'),
+              module: module,
+              date: sale.purchased_at
+            }
+          })
         }
       }
     }
