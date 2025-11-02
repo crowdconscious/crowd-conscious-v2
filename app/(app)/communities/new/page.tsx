@@ -6,25 +6,20 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import LocationAutocomplete from '@/components/LocationAutocomplete'
 import DashboardNavigation from '@/components/DashboardNavigation'
+import CoreValuesSelector from '@/components/CoreValuesSelector'
 
 export default function CreateCommunityPage() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     address: '',
-    coreValues: ['', '', '']
+    coreValues: [] as string[]  // Changed to empty array for dropdown
   })
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   
   const router = useRouter()
   const supabase = createClientAuth()
-
-  const updateCoreValue = (index: number, value: string) => {
-    const newValues = [...formData.coreValues]
-    newValues[index] = value
-    setFormData({ ...formData, coreValues: newValues })
-  }
 
   const generateSlug = (name: string) => {
     return name
@@ -47,9 +42,9 @@ export default function CreateCommunityPage() {
       return
     }
 
-    const filledValues = formData.coreValues.filter(v => v.trim())
-    if (filledValues.length < 3) {
-      setMessage('Please provide at least 3 core values')
+    // Core values are already IDs from the selector
+    if (formData.coreValues.length < 3) {
+      setMessage('Please select at least 3 core values')
       setLoading(false)
       return
     }
@@ -76,7 +71,7 @@ export default function CreateCommunityPage() {
           slug: slug,
           description: formData.description.trim(),
           address: formData.address.trim(),
-          core_values: filledValues
+          core_values: formData.coreValues // Already array of IDs
         })
       })
 
@@ -164,30 +159,11 @@ export default function CreateCommunityPage() {
         </div>
 
         {/* Core Values */}
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
-            Core Values * (minimum 3)
-          </label>
-          <div className="space-y-3">
-            {formData.coreValues.map((value, index) => (
-              <input
-                key={index}
-                type="text"
-                value={value}
-                onChange={(e) => updateCoreValue(index, e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                placeholder={
-                  index === 0 ? "e.g., Environmental Justice" :
-                  index === 1 ? "e.g., Community Action" :
-                  "e.g., Transparency"
-                }
-              />
-            ))}
-          </div>
-          <p className="text-sm text-slate-500 mt-2">
-            These values will guide your community's decisions and attract like-minded members.
-          </p>
-        </div>
+        <CoreValuesSelector
+          selected={formData.coreValues}
+          onChange={(values) => setFormData({ ...formData, coreValues: values })}
+          minRequired={3}
+        />
 
         {message && (
           <div className={`p-3 rounded-lg text-sm ${

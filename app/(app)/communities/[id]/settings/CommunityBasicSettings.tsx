@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import CoreValuesSelector from '@/components/CoreValuesSelector'
 
 interface Community {
   id: string
@@ -21,8 +22,7 @@ export default function CommunityBasicSettings({ community }: CommunityBasicSett
     address: community.address || ''
   })
   const [coreValues, setCoreValues] = useState(community.core_values)
-  const [newValue, setNewValue] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -31,20 +31,6 @@ export default function CommunityBasicSettings({ community }: CommunityBasicSett
       ...prev,
       [name]: value
     }))
-  }
-
-  const handleAddCoreValue = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && newValue.trim()) {
-      e.preventDefault()
-      if (coreValues.length < 10 && !coreValues.includes(newValue.trim())) {
-        setCoreValues(prev => [...prev, newValue.trim()])
-        setNewValue('')
-      }
-    }
-  }
-
-  const removeCoreValue = (index: number) => {
-    setCoreValues(prev => prev.filter((_, i) => i !== index))
   }
 
   const handleSave = async (e: React.FormEvent) => {
@@ -152,39 +138,12 @@ export default function CommunityBasicSettings({ community }: CommunityBasicSett
               />
             </div>
             
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Core Values ({coreValues.length}/10)
-              </label>
-              <div className="flex flex-wrap gap-2 mb-3">
-                {coreValues.map((value, index) => (
-                  <span 
-                    key={index}
-                    className="bg-teal-100 text-teal-700 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2"
-                  >
-                    {value}
-                    <button
-                      type="button"
-                      onClick={() => removeCoreValue(index)}
-                      className="text-teal-600 hover:text-teal-800 ml-1"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-              <input
-                type="text"
-                value={newValue}
-                onChange={(e) => setNewValue(e.target.value)}
-                onKeyDown={handleAddCoreValue}
-                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
-                placeholder="Add a new core value and press Enter"
-              />
-              <p className="text-xs text-slate-500 mt-1">
-                Minimum 3 values required. Click × to remove values.
-              </p>
-            </div>
+            {/* Core Values Selector */}
+            <CoreValuesSelector
+              selected={coreValues}
+              onChange={setCoreValues}
+              minRequired={3}
+            />
           </div>
           
           <div className="flex justify-end mt-6">
