@@ -20,12 +20,35 @@ export default function JoinCommunityButton({ communityId, userId }: JoinCommuni
     setMessage('')
 
     try {
-      // TODO: Implement community joining - temporarily disabled for deployment
-      console.log('Joining community:', { communityId, userId })
+      // Insert membership into community_members table
+      const { data, error } = await supabase
+        .from('community_members')
+        .insert({
+          community_id: communityId,
+          user_id: userId,
+          role: 'member',  // Default role
+          voting_power: 1  // Default voting power for members
+        })
+        .select()
+        .single()
+
+      if (error) {
+        // Check if already a member
+        if (error.code === '23505') { // Unique constraint violation
+          setMessage('You are already a member of this community')
+        } else {
+          console.error('Error joining community:', error)
+          setMessage('Error: ' + error.message)
+        }
+        return
+      }
       
       setMessage('Successfully joined the community!')
+      
       // Refresh the page to show updated membership status
-      router.refresh()
+      setTimeout(() => {
+        router.refresh()
+      }, 1000)
     } catch (error) {
       setMessage('An unexpected error occurred')
       console.error('Join community exception:', error)

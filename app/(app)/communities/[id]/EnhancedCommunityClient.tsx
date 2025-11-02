@@ -120,8 +120,37 @@ function EnhancedCommunityContent({
     setJoinLoading(true)
     
     try {
-      // TODO: Implement community joining - temporarily disabled for deployment
-      console.log('Joining community:', { communityId: community.id, userId: currentUser.id })
+      // Insert membership into community_members table
+      const { data, error } = await supabase
+        .from('community_members')
+        .insert({
+          community_id: community.id,
+          user_id: currentUser.id,
+          role: 'member',  // Default role
+          voting_power: 1  // Default voting power for members
+        })
+        .select()
+        .single()
+
+      if (error) {
+        // Check if already a member
+        if (error.code === '23505') { // Unique constraint violation
+          addToast({
+            type: 'info',
+            title: 'Already a member',
+            description: 'You are already part of this community.',
+          })
+        } else {
+          console.error('Error joining community:', error)
+          addToast({
+            type: 'error',
+            title: 'Failed to join community',
+            description: error.message || 'Please try again later.',
+          })
+        }
+        setJoinLoading(false)
+        return
+      }
 
       // fireConfetti()
       addToast({
@@ -131,7 +160,10 @@ function EnhancedCommunityContent({
         duration: 5000
       })
 
-      router.refresh()
+      // Refresh after short delay to show success message
+      setTimeout(() => {
+        router.refresh()
+      }, 1500)
     } catch (error) {
       console.error('Error joining community:', error)
       addToast({
@@ -139,7 +171,6 @@ function EnhancedCommunityContent({
         title: 'Failed to join community',
         description: 'Please try again later.',
       })
-    } finally {
       setJoinLoading(false)
     }
   }
