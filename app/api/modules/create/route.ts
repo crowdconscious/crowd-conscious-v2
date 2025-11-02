@@ -179,7 +179,7 @@ export async function POST(request: Request) {
                       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
                         <div>
                           <div class="label">Valor Central</div>
-                          <div class="value">${coreValue.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</div>
+                          <div class="value">${coreValue.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}</div>
                         </div>
                         <div>
                           <div class="label">Nivel</div>
