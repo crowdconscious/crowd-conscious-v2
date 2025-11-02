@@ -3,6 +3,7 @@ import Link from 'next/link'
 import dynamic from 'next/dynamic'
 
 // Dynamic imports for client components (without ssr: false for Next.js 15 compatibility)
+const SmartHomeClient = dynamic(() => import('./SmartHomeClient'))
 const Navigation = dynamic(() => import('./components/Navigation'))
 const AnimatedHero = dynamic(() => import('./components/landing/AnimatedHero'))
 const CommunityCarousel = dynamic(() => import('./components/landing/CommunityCarousel'))
@@ -213,6 +214,9 @@ export default async function LandingPage() {
 
   return (
     <div className="min-h-screen overflow-x-hidden">
+      {/* Smart redirect for logged-in users */}
+      <SmartHomeClient />
+      
       <main>
         {/* Navigation */}
         <Navigation />
