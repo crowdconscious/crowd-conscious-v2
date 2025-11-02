@@ -453,23 +453,324 @@ function MarketplaceTab() {
 
 // Wallets Tab
 function WalletsTab() {
+  const [walletsData, setWalletsData] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetchWalletsData()
+  }, [])
+
+  const fetchWalletsData = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/admin/wallets')
+      const data = await response.json()
+
+      if (response.ok) {
+        setWalletsData(data)
+      } else {
+        setError(data.error || 'Failed to fetch wallets data')
+      }
+    } catch (error) {
+      console.error('Error fetching wallets:', error)
+      setError('Failed to fetch wallets data')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('es-MX', {
+      style: 'currency',
+      currency: 'MXN'
+    }).format(amount)
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString('es-MX', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-lg shadow-sm p-8">
+        <div className="animate-pulse space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="h-32 bg-slate-200 rounded-lg"></div>
+            ))}
+          </div>
+          <div className="h-96 bg-slate-200 rounded-lg"></div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white rounded-lg shadow-sm p-8">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-red-800 mb-2">Error</h3>
+          <p className="text-red-600">{error}</p>
+          <button
+            onClick={fetchWalletsData}
+            className="mt-4 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  const stats = walletsData?.stats || {}
+
   return (
-    <div className="bg-white rounded-lg shadow-sm p-8">
-      <div className="text-center py-12">
-        <Wallet className="w-16 h-16 text-green-600 mx-auto mb-4" />
-        <h2 className="text-2xl font-bold text-slate-900 mb-2">Wallets & Treasury Management</h2>
-        <p className="text-slate-600 mb-6">Track all wallets, transactions, and revenue distribution</p>
-        <div className="bg-green-50 rounded-lg p-6 max-w-2xl mx-auto text-left">
-          <h3 className="font-bold text-green-900 mb-3">Coming Soon:</h3>
-          <ul className="space-y-2 text-green-800">
-            <li>• Platform treasury balance</li>
-            <li>• All community wallets</li>
-            <li>• All creator wallets</li>
-            <li>• Transaction history</li>
-            <li>• Withdrawal requests</li>
-            <li>• Revenue split analytics</li>
-            <li>• Payout management</li>
-          </ul>
+    <div className="space-y-8">
+      {/* Stats Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg">
+          <div className="flex items-center justify-between mb-2">
+            <Wallet className="w-8 h-8 opacity-80" />
+            <span className="text-green-100 text-sm">Total Revenue</span>
+          </div>
+          <h3 className="text-3xl font-bold">{formatCurrency(stats.totalRevenue || 0)}</h3>
+          <p className="text-green-100 text-sm mt-1">All wallets combined</p>
+        </div>
+
+        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg">
+          <div className="flex items-center justify-between mb-2">
+            <Building2 className="w-8 h-8 opacity-80" />
+            <span className="text-purple-100 text-sm">Platform Treasury</span>
+          </div>
+          <h3 className="text-3xl font-bold">{formatCurrency(stats.totalPlatformBalance || 0)}</h3>
+          <p className="text-purple-100 text-sm mt-1">30% of sales</p>
+        </div>
+
+        <div className="bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl p-6 text-white shadow-lg">
+          <div className="flex items-center justify-between mb-2">
+            <Users className="w-8 h-8 opacity-80" />
+            <span className="text-teal-100 text-sm">Community Wallets</span>
+          </div>
+          <h3 className="text-3xl font-bold">{formatCurrency(stats.totalCommunityBalance || 0)}</h3>
+          <p className="text-teal-100 text-sm mt-1">50% of sales</p>
+        </div>
+
+        <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-6 text-white shadow-lg">
+          <div className="flex items-center justify-between mb-2">
+            <FileText className="w-8 h-8 opacity-80" />
+            <span className="text-orange-100 text-sm">Creator Wallets</span>
+          </div>
+          <h3 className="text-3xl font-bold">{formatCurrency(stats.totalCreatorBalance || 0)}</h3>
+          <p className="text-orange-100 text-sm mt-1">20% of sales</p>
+        </div>
+      </div>
+
+      {/* Secondary Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white rounded-lg p-6 shadow-sm border border-slate-200">
+          <h4 className="text-sm font-medium text-slate-600 mb-2">Total Sales</h4>
+          <p className="text-2xl font-bold text-slate-900">{stats.totalSales || 0}</p>
+          <p className="text-sm text-slate-500 mt-1">Module purchases</p>
+        </div>
+
+        <div className="bg-white rounded-lg p-6 shadow-sm border border-slate-200">
+          <h4 className="text-sm font-medium text-slate-600 mb-2">Total Transactions</h4>
+          <p className="text-2xl font-bold text-slate-900">{stats.totalTransactions || 0}</p>
+          <p className="text-sm text-slate-500 mt-1">All wallet activity</p>
+        </div>
+
+        <div className="bg-white rounded-lg p-6 shadow-sm border border-slate-200">
+          <h4 className="text-sm font-medium text-slate-600 mb-2">Avg Sale Amount</h4>
+          <p className="text-2xl font-bold text-slate-900">{formatCurrency(stats.averageSaleAmount || 0)}</p>
+          <p className="text-sm text-slate-500 mt-1">Per module</p>
+        </div>
+      </div>
+
+      {/* Wallets Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Community Wallets */}
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200">
+          <div className="p-6 border-b border-slate-200">
+            <h3 className="text-lg font-bold text-slate-900">Community Wallets</h3>
+            <p className="text-sm text-slate-600 mt-1">
+              {walletsData?.communityWallets?.length || 0} communities with active wallets
+            </p>
+          </div>
+          <div className="p-6 max-h-96 overflow-y-auto">
+            {walletsData?.communityWallets?.length === 0 ? (
+              <p className="text-slate-500 text-center py-8">No community wallets yet</p>
+            ) : (
+              <div className="space-y-3">
+                {walletsData?.communityWallets?.map((wallet: any) => (
+                  <div key={wallet.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
+                    <div className="flex-1">
+                      <h4 className="font-medium text-slate-900">{wallet.community?.name || 'Unknown Community'}</h4>
+                      <p className="text-sm text-slate-500">
+                        {wallet.community?.member_count || 0} members • Wallet ID: {wallet.id.slice(0, 8)}...
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-teal-600">{formatCurrency(wallet.balance)}</p>
+                      <p className="text-xs text-slate-500">{wallet.status}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Creator Wallets */}
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200">
+          <div className="p-6 border-b border-slate-200">
+            <h3 className="text-lg font-bold text-slate-900">Creator Wallets</h3>
+            <p className="text-sm text-slate-600 mt-1">
+              {walletsData?.creatorWallets?.length || 0} creators with active wallets
+            </p>
+          </div>
+          <div className="p-6 max-h-96 overflow-y-auto">
+            {walletsData?.creatorWallets?.length === 0 ? (
+              <p className="text-slate-500 text-center py-8">No creator wallets yet</p>
+            ) : (
+              <div className="space-y-3">
+                {walletsData?.creatorWallets?.map((wallet: any) => (
+                  <div key={wallet.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
+                    <div className="flex-1">
+                      <h4 className="font-medium text-slate-900">{wallet.user?.full_name || 'Unknown User'}</h4>
+                      <p className="text-sm text-slate-500">
+                        {wallet.user?.email || 'No email'} • Wallet ID: {wallet.id.slice(0, 8)}...
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-orange-600">{formatCurrency(wallet.balance)}</p>
+                      <p className="text-xs text-slate-500">{wallet.status}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Transactions */}
+      <div className="bg-white rounded-lg shadow-sm border border-slate-200">
+        <div className="p-6 border-b border-slate-200">
+          <h3 className="text-lg font-bold text-slate-900">Recent Transactions</h3>
+          <p className="text-sm text-slate-600 mt-1">Last 50 wallet transactions</p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-slate-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Date</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Type</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Source</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Description</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">Amount</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200">
+              {walletsData?.recentTransactions?.slice(0, 20).map((tx: any) => (
+                <tr key={tx.id} className="hover:bg-slate-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                    {formatDate(tx.created_at)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      tx.type === 'credit' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    }`}>
+                      {tx.type}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                    {tx.source}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-slate-600 max-w-xs truncate">
+                    {tx.description || 'No description'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-medium">
+                    <span className={tx.type === 'credit' ? 'text-green-600' : 'text-red-600'}>
+                      {tx.type === 'credit' ? '+' : '-'}{formatCurrency(tx.amount)}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      tx.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                      tx.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-slate-100 text-slate-800'
+                    }`}>
+                      {tx.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Recent Module Sales */}
+      <div className="bg-white rounded-lg shadow-sm border border-slate-200">
+        <div className="p-6 border-b border-slate-200">
+          <h3 className="text-lg font-bold text-slate-900">Recent Module Sales</h3>
+          <p className="text-sm text-slate-600 mt-1">Last 20 marketplace purchases</p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-slate-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Date</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Module</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">Total</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">Platform (30%)</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">Community (50%)</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">Creator (20%)</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200">
+              {walletsData?.moduleSales?.map((sale: any) => (
+                <tr key={sale.id} className="hover:bg-slate-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                    {formatDate(sale.purchased_at)}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-slate-900 font-medium max-w-xs truncate">
+                    {sale.marketplace_modules?.title || 'Unknown Module'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-bold text-slate-900">
+                    {formatCurrency(sale.total_amount)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-purple-600">
+                    {formatCurrency(sale.platform_fee)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-teal-600">
+                    {formatCurrency(sale.community_share)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-orange-600">
+                    {formatCurrency(sale.creator_share)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      sale.status === 'completed' ? 'bg-green-100 text-green-800' :
+                      sale.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-slate-100 text-slate-800'
+                    }`}>
+                      {sale.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
