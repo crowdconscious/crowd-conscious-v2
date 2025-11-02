@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { createClientAuth } from '@/lib/auth'
 import Link from 'next/link'
 import { Wallet, ShoppingCart, Building2, Users, FileText, Home } from 'lucide-react'
+import MarketplaceReviewTab from './MarketplaceReviewTab'
 
 interface AdminData {
   communities: Array<{
@@ -228,7 +229,7 @@ export default function AdminDashboardClient() {
           />
         )}
         {activeTab === 'corporate' && <CorporateTab />}
-        {activeTab === 'marketplace' && <MarketplaceTab />}
+        {activeTab === 'marketplace' && <MarketplaceReviewTab />}
         {activeTab === 'wallets' && <WalletsTab />}
       </div>
     </div>
@@ -428,28 +429,7 @@ function CorporateTab() {
 }
 
 // Marketplace Tab
-function MarketplaceTab() {
-  return (
-    <div className="bg-white rounded-lg shadow-sm p-8">
-      <div className="text-center py-12">
-        <ShoppingCart className="w-16 h-16 text-orange-600 mx-auto mb-4" />
-        <h2 className="text-2xl font-bold text-slate-900 mb-2">Marketplace Management</h2>
-        <p className="text-slate-600 mb-6">Manage modules, creator applications, and sales</p>
-        <div className="bg-orange-50 rounded-lg p-6 max-w-2xl mx-auto text-left">
-          <h3 className="font-bold text-orange-900 mb-3">Coming Soon:</h3>
-          <ul className="space-y-2 text-orange-800">
-            <li>• All published modules</li>
-            <li>• Pending creator applications</li>
-            <li>• Module sales dashboard</li>
-            <li>• Revenue analytics</li>
-            <li>• Module performance metrics</li>
-            <li>• Creator approval workflow</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  )
-}
+// MarketplaceTab is now imported from MarketplaceReviewTab.tsx
 
 // Wallets Tab
 function WalletsTab() {
