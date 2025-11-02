@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, Trash2, GripVertical, Save, Eye, Upload, Sparkles, BookOpen, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
+import ModuleThumbnailUpload from './ModuleThumbnailUpload'
 
 // Available tools that creators can integrate
 const AVAILABLE_TOOLS = [
@@ -493,17 +494,15 @@ export default function ModuleBuilderClient({
                 </div>
               </div>
 
-              {/* Thumbnail */}
+              {/* Thumbnail Upload */}
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  URL de Miniatura (Opcional)
+                  Miniatura del Módulo (Opcional)
                 </label>
-                <input
-                  type="text"
-                  value={module.thumbnailUrl}
-                  onChange={(e) => setModule({ ...module, thumbnailUrl: e.target.value })}
-                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-purple-600 focus:outline-none"
-                  placeholder="https://..."
+                <ModuleThumbnailUpload
+                  currentUrl={module.thumbnailUrl}
+                  onUploadComplete={(url) => setModule({ ...module, thumbnailUrl: url })}
+                  userId={userId}
                 />
               </div>
             </div>
