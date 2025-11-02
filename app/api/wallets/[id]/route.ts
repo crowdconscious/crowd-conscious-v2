@@ -48,9 +48,57 @@ export async function GET(
       console.error('Error fetching transactions:', transError)
     }
 
+    // If this is a community wallet, fetch module revenue stats
+    let moduleRevenue = null
+    if (wallet.owner_type === 'community' && wallet.owner_id) {
+      const { data: moduleSales, error: salesError } = await supabase
+        .from('module_sales')
+        .select(`
+          id,
+          total_amount,
+          community_share,
+          purchased_at,
+          marketplace_modules (
+            id,
+            title,
+            slug
+          )
+        `)
+        .eq('marketplace_modules.creator_community_id', wallet.owner_id)
+        .order('purchased_at', { ascending: false })
+
+      if (!salesError && moduleSales) {
+        const totalRevenue = moduleSales.reduce((sum, sale) => 
+          sum + parseFloat(sale.community_share || '0'), 0
+        )
+        
+        // Get unique module count
+        const uniqueModules = new Set(moduleSales.map(sale => sale.marketplace_modules?.id).filter(Boolean))
+        
+        moduleRevenue = {
+          total: totalRevenue,
+          moduleCount: uniqueModules.size,
+          salesCount: moduleSales.length,
+          recentSales: moduleSales.slice(0, 5).map(sale => ({
+            id: sale.id,
+            amount: parseFloat(sale.community_share || '0'),
+            module: sale.marketplace_modules,
+            date: sale.purchased_at
+          }))
+        }
+      }
+    }
+
     return NextResponse.json({
-      wallet,
-      recentTransactions: transactions || []
+      ...wallet,
+      balance: parseFloat(wallet.balance || '0'),
+      recentTransactions: (transactions || []).map(t => ({
+        ...t,
+        amount: parseFloat(t.amount || '0'),
+        balance_before: parseFloat(t.balance_before || '0'),
+        balance_after: parseFloat(t.balance_after || '0')
+      })),
+      moduleRevenue
     })
   } catch (error) {
     console.error('Error in GET /api/wallets/[id]:', error)
