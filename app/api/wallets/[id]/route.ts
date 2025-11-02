@@ -51,7 +51,7 @@ export async function GET(
     // If this is a community wallet, fetch module revenue stats
     let moduleRevenue = null
     if (wallet.owner_type === 'community' && wallet.owner_id) {
-      const { data: moduleSales, error: salesError } = await supabase
+      const { data: moduleSales, error: salesError } = await (supabase as any)
         .from('module_sales')
         .select(`
           id,
@@ -68,14 +68,14 @@ export async function GET(
         .order('purchased_at', { ascending: false })
 
       if (!salesError && moduleSales) {
-        const totalRevenue = moduleSales.reduce((sum, sale) => 
+        const totalRevenue = moduleSales.reduce((sum: number, sale: any) => 
           sum + parseFloat(sale.community_share || '0'), 0
         )
         
         // Get unique module count - marketplace_modules is an array, take first item
         const uniqueModules = new Set(
           moduleSales
-            .map(sale => Array.isArray(sale.marketplace_modules) ? sale.marketplace_modules[0]?.id : sale.marketplace_modules?.id)
+            .map((sale: any) => Array.isArray(sale.marketplace_modules) ? sale.marketplace_modules[0]?.id : sale.marketplace_modules?.id)
             .filter(Boolean)
         )
         
@@ -83,7 +83,7 @@ export async function GET(
           total: totalRevenue,
           moduleCount: uniqueModules.size,
           salesCount: moduleSales.length,
-          recentSales: moduleSales.slice(0, 5).map(sale => {
+          recentSales: moduleSales.slice(0, 5).map((sale: any) => {
             const module = Array.isArray(sale.marketplace_modules) 
               ? sale.marketplace_modules[0] 
               : sale.marketplace_modules
