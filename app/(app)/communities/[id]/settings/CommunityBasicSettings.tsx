@@ -35,12 +35,12 @@ export default function CommunityBasicSettings({ community }: CommunityBasicSett
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
+    setLoading(true)
     setMessage('')
 
     if (coreValues.length < 3) {
       setMessage('Please add at least 3 core values')
-      setIsLoading(false)
+      setLoading(false)
       return
     }
 
@@ -75,7 +75,7 @@ export default function CommunityBasicSettings({ community }: CommunityBasicSett
       console.error('Error updating community:', error)
       setMessage('❌ Failed to update community. Please try again.')
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
