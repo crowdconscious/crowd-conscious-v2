@@ -188,16 +188,16 @@ BEGIN
 
   RAISE NOTICE 'Template module lessons created successfully';
 
-  -- Verify the template module
-  SELECT 
-    id,
-    title,
-    is_template,
-    is_platform_module,
-    status,
-    lesson_count
-  FROM marketplace_modules
-  WHERE is_template = TRUE;
-
 END $$;
+
+-- Verify the template module (run after the DO block)
+SELECT 
+  id,
+  title,
+  is_template,
+  is_platform_module,
+  status,
+  lesson_count
+FROM marketplace_modules
+WHERE is_template = TRUE;
 
