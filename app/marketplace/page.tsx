@@ -137,6 +137,26 @@ export default function MarketplacePage() {
   const [selectedDifficulty, setSelectedDifficulty] = useState('all')
   const [sortBy, setSortBy] = useState('popular')
   const [showFilters, setShowFilters] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  // Fetch real modules from database
+  useEffect(() => {
+    async function fetchModules() {
+      try {
+        const response = await fetch('/api/marketplace/modules')
+        if (response.ok) {
+          const data = await response.json()
+          setModules(data.modules)
+          setFilteredModules(data.modules)
+        }
+      } catch (error) {
+        console.error('Error fetching modules:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchModules()
+  }, [])
 
   // Filter and sort logic
   useEffect(() => {
@@ -365,7 +385,15 @@ export default function MarketplacePage() {
             </div>
 
             {/* Module Grid */}
-            {filteredModules.length === 0 ? (
+            {loading ? (
+              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center">
+                <div className="text-6xl mb-4">⏳</div>
+                <h3 className="text-xl font-bold text-slate-900 mb-2">Cargando módulos...</h3>
+                <p className="text-slate-600">
+                  Estamos preparando el contenido para ti
+                </p>
+              </div>
+            ) : filteredModules.length === 0 ? (
               <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center">
                 <div className="text-6xl mb-4">🔍</div>
                 <h3 className="text-xl font-bold text-slate-900 mb-2">No se encontraron módulos</h3>
