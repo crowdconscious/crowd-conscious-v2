@@ -4,16 +4,32 @@ import { getCurrentUser } from '@/lib/auth-server'
 
 export async function POST(request: Request) {
   try {
-    const user = await getCurrentUser()
+    const supabase = await createClient()
     
-    if (!user || user.user_type !== 'admin') {
+    // Check if user is admin via profiles table
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Unauthorized - Not logged in' },
+        { status: 401 }
+      )
+    }
+
+    // Check if user is admin in profiles table
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('user_type')
+      .eq('id', user.id)
+      .single()
+    
+    if (!profile || profile.user_type !== 'admin') {
       return NextResponse.json(
         { error: 'Unauthorized - Admin access required' },
         { status: 401 }
       )
     }
 
-    const supabase = await createClient()
     const body = await request.json()
 
     const {
