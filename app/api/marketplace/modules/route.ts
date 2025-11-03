@@ -1,10 +1,22 @@
-import { createClient } from '@/lib/supabase-server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
 export async function GET() {
   try {
-    const supabase = await createClient()
+    // Use service role key to bypass RLS for public marketplace view
+    const supabase = createAdminClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    )
 
+    console.log('🔍 API: Starting module fetch...')
+    
     // Fetch all published modules
     const { data: modules, error } = await supabase
       .from('marketplace_modules')
@@ -33,9 +45,18 @@ export async function GET() {
       .order('created_at', { ascending: false })
 
     if (error) {
-      console.error('Error fetching modules:', error)
-      return NextResponse.json({ error: 'Failed to fetch modules' }, { status: 500 })
+      console.error('❌ API: Supabase error:', error)
+      console.error('Error code:', error.code)
+      console.error('Error message:', error.message)
+      console.error('Error details:', error.details)
+      return NextResponse.json({ 
+        error: 'Failed to fetch modules',
+        details: error.message,
+        code: error.code
+      }, { status: 500 })
     }
+
+    console.log('✅ API: Modules fetched:', modules?.length || 0)
 
     // Transform to match frontend format
     const transformedModules = (modules || []).map((module: any) => ({
