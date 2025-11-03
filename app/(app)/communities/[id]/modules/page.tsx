@@ -96,13 +96,22 @@ export default async function CommunityModulesPage({ params }: PageProps) {
               </h1>
               <p className="text-slate-600 mt-1">Administra los cursos creados por tu comunidad</p>
             </div>
-            <Link
-              href={`/communities/${communityId}/modules/create`}
-              className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-medium hover:scale-105 transition-transform flex items-center gap-2 shadow-lg"
-            >
-              <Plus className="w-5 h-5" />
-              Crear Nuevo Módulo
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link
+                href={`/communities/${communityId}/modules/templates`}
+                className="px-6 py-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl font-medium transition-all flex items-center gap-2"
+              >
+                <span>📚</span>
+                Ver Plantillas
+              </Link>
+              <Link
+                href={`/communities/${communityId}/modules/create`}
+                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-medium hover:scale-105 transition-transform flex items-center gap-2 shadow-lg"
+              >
+                <Plus className="w-5 h-5" />
+                Crear Nuevo Módulo
+              </Link>
+            </div>
           </div>
 
           {/* Stats Overview */}
