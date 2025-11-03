@@ -61,6 +61,13 @@ export async function POST(request: Request) {
       .replace(/-+/g, '-')
       .trim()
 
+    // Fetch community name for creator_name
+    const { data: communityData } = await supabase
+      .from('communities')
+      .select('name')
+      .eq('id', communityId)
+      .single()
+
     // Create the module
     const { data: module, error: moduleError } = await (supabase as any)
       .from('marketplace_modules')
@@ -70,7 +77,7 @@ export async function POST(request: Request) {
         slug: `${slug}-${Date.now()}`, // Add timestamp to ensure uniqueness
         creator_community_id: communityId,
         creator_user_id: userId,
-        creator_name: membership.role === 'founder' ? 'Community Founder' : 'Community Admin',
+        creator_name: communityData?.name || 'Community',
         core_value: coreValue,
         difficulty_level: difficulty,
         estimated_duration_hours: estimatedHours,
@@ -90,8 +97,9 @@ export async function POST(request: Request) {
 
     if (moduleError) {
       console.error('Error creating module:', moduleError)
+      console.error('Module data:', { title, description, slug, communityId, userId })
       return NextResponse.json(
-        { error: 'Failed to create module', details: moduleError.message },
+        { error: 'Failed to create module', details: moduleError.message, code: moduleError.code },
         { status: 500 }
       )
     }
@@ -141,7 +149,7 @@ export async function POST(request: Request) {
           .single()
 
         await resend.emails.send({
-          from: 'Crowd Conscious <notificaciones@crowdconscious.app>',
+          from: 'Crowd Conscious <comunidad@crowdconscious.app>',
           to: 'comunidad@crowdconscious.app',
           subject: `🎓 Nuevo Módulo para Revisión: ${title}`,
           html: `

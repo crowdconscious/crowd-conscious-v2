@@ -70,7 +70,7 @@ export async function POST(request: Request) {
       if (creatorEmail) {
         if (action === 'approve') {
           await resend.emails.send({
-            from: 'Crowd Conscious <notificaciones@crowdconscious.app>',
+            from: 'Crowd Conscious <comunidad@crowdconscious.app>',
             to: creatorEmail,
             subject: `🎉 ¡Tu módulo "${module.title}" ha sido aprobado!`,
             html: `
@@ -157,7 +157,7 @@ export async function POST(request: Request) {
         } else {
           // Rejection email
           await resend.emails.send({
-            from: 'Crowd Conscious <notificaciones@crowdconscious.app>',
+            from: 'Crowd Conscious <comunidad@crowdconscious.app>',
             to: creatorEmail,
             subject: `📝 Tu módulo "${module.title}" requiere ajustes`,
             html: `
