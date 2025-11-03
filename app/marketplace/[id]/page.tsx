@@ -181,6 +181,35 @@ export default function ModuleDetailPage({ params }: { params: Promise<{ id: str
     setTimeout(() => setShowAddToCart(false), 3000)
   }
 
+  const handleShare = async () => {
+    const shareData = {
+      title: module.title,
+      text: `${module.description}\n\n💰 Desde $${(module.price / 1000).toFixed(0)}k MXN\n⭐ ${module.rating} estrellas\n👥 ${module.enrollments} inscritos`,
+      url: window.location.href
+    }
+
+    try {
+      // Try native share API first (mobile)
+      if (navigator.share) {
+        await navigator.share(shareData)
+        console.log('✅ Shared successfully')
+      } else {
+        // Fallback: Copy to clipboard
+        await navigator.clipboard.writeText(window.location.href)
+        alert('✅ Link copiado al portapapeles! Compártelo con tu equipo.')
+      }
+    } catch (error) {
+      console.error('Error sharing:', error)
+      // Final fallback: Copy to clipboard
+      try {
+        await navigator.clipboard.writeText(window.location.href)
+        alert('✅ Link copiado al portapapeles! Compártelo con tu equipo.')
+      } catch (clipboardError) {
+        console.error('Clipboard error:', clipboardError)
+      }
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       {/* Header */}
@@ -474,7 +503,11 @@ export default function ModuleDetailPage({ params }: { params: Promise<{ id: str
               <div className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-2xl p-6 text-center">
                 <h3 className="font-bold text-slate-900 mb-2">¿Te gusta este módulo?</h3>
                 <p className="text-sm text-slate-600 mb-4">Compártelo con tu equipo</p>
-                <button className="w-full bg-white border-2 border-purple-600 text-purple-600 px-4 py-2 rounded-lg font-medium hover:bg-purple-50 transition-colors">
+                <button 
+                  onClick={handleShare}
+                  className="w-full bg-white border-2 border-purple-600 text-purple-600 px-4 py-2 rounded-lg font-medium hover:bg-purple-50 transition-colors flex items-center justify-center gap-2"
+                >
+                  <span>📤</span>
                   Compartir
                 </button>
               </div>
