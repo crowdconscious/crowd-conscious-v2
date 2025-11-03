@@ -8,8 +8,28 @@ import {
   Award, BookOpen, Target, Sparkles, ShoppingCart, Download 
 } from 'lucide-react'
 
-// Mock module data - will be replaced with API call
-const getModuleById = (id: string) => {
+// Fetch module data from API
+const getModuleById = async (id: string) => {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'}/api/marketplace/modules/${id}`, {
+      cache: 'no-store'
+    })
+    
+    if (!response.ok) {
+      console.error('Failed to fetch module:', response.status)
+      return null
+    }
+    
+    const data = await response.json()
+    return data.module
+  } catch (error) {
+    console.error('Error fetching module:', error)
+    return null
+  }
+}
+
+// Old mock data - keeping for reference
+const OLD_getModuleById = (id: string) => {
   const modules: any = {
     '1': {
       id: '1',
@@ -99,13 +119,31 @@ const getModuleById = (id: string) => {
 export default function ModuleDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const [module, setModule] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
   const [employeeCount, setEmployeeCount] = useState(50)
   const [showAddToCart, setShowAddToCart] = useState(false)
 
   useEffect(() => {
-    const moduleData = getModuleById(id)
-    setModule(moduleData)
+    async function fetchModule() {
+      setLoading(true)
+      const moduleData = await getModuleById(id)
+      setModule(moduleData)
+      setLoading(false)
+    }
+    fetchModule()
   }, [id])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4 animate-pulse">⏳</div>
+          <h1 className="text-2xl font-bold text-slate-900 mb-2">Cargando módulo...</h1>
+          <p className="text-slate-600">Estamos preparando el contenido para ti</p>
+        </div>
+      </div>
+    )
+  }
 
   if (!module) {
     return (
