@@ -1,0 +1,212 @@
+{
+  "template": {
+    "title": "🎓 Plantilla: Cómo Construir un Módulo Efectivo",
+    "description": "Esta es una plantilla de ejemplo que muestra cómo estructurar un módulo de capacitación efectivo. Úsala como guía para crear tu propio contenido. Incluye ejemplos de cada tipo de lección, integración de herramientas, y mejores prácticas de diseño instruccional.",
+    "coreValue": "clean_air",
+    "difficulty": "beginner",
+    "estimatedHours": 3,
+    "xpReward": 100,
+    "thumbnailUrl": null,
+    "industryTags": ["template", "education", "onboarding"],
+    "basePriceMxn": 0,
+    "pricePer50": 0,
+    "isTemplate": true,
+    "lessons": [
+      {
+        "title": "Introducción: Qué Hace un Buen Módulo",
+        "description": "Aprende los principios fundamentales de un módulo de capacitación efectivo",
+        "estimatedMinutes": 30,
+        "xpReward": 10,
+        "storyContent": {
+          "introduction": "Imagina que estás enseñando algo importante a un colega. ¿Cómo lo harías memorable? ¿Cómo te asegurarías de que realmente aprenda?",
+          "mainContent": [
+            "Un buen módulo cuenta una historia",
+            "Conecta teoría con práctica",
+            "Incluye actividades interactivas",
+            "Proporciona ejemplos del mundo real"
+          ],
+          "conclusion": "Tu módulo debe ser una experiencia de aprendizaje, no solo información."
+        },
+        "learningObjectives": [
+          "Comprender los 4 pilares de un módulo efectivo",
+          "Identificar elementos clave de diseño instruccional",
+          "Reconocer la importancia del storytelling en capacitación"
+        ],
+        "keyPoints": [
+          "💡 NARRATIVA: Usa historias para conectar emocionalmente",
+          "🎯 OBJETIVOS: Define claramente qué aprenderán",
+          "🛠️ PRÁCTICA: Incluye actividades hands-on",
+          "📊 MEDICIÓN: Evalúa el aprendizaje con herramientas"
+        ],
+        "didYouKnow": [
+          "Las personas retienen 65% de información cuando se presenta en forma de historia vs 10% con datos puros",
+          "Módulos con actividades interactivas tienen 3x mayor tasa de completación"
+        ],
+        "realWorldExample": "Ejemplo: En lugar de decir 'La contaminación es mala', cuenta la historia de María que nota el aire gris afectando la salud de su hija. Esto crea conexión emocional y contexto.",
+        "activityType": "reading",
+        "toolsUsed": [],
+        "resources": [
+          {
+            "title": "Guía de Diseño Instruccional",
+            "url": "#",
+            "description": "Documento interno con mejores prácticas"
+          }
+        ],
+        "nextSteps": [
+          "Piensa en una historia real de tu comunidad",
+          "Identifica el problema que tu módulo resolverá",
+          "Define 3-5 objetivos de aprendizaje claros"
+        ]
+      },
+      {
+        "title": "Estructurando tus Lecciones",
+        "description": "Aprende la anatomía de una lección bien diseñada",
+        "estimatedMinutes": 45,
+        "xpReward": 15,
+        "storyContent": {
+          "introduction": "Cada lección es como un capítulo de un libro. Debe tener inicio, desarrollo y cierre.",
+          "mainContent": [
+            "INICIO: Engancha con una pregunta o historia",
+            "DESARROLLO: Presenta conceptos con ejemplos",
+            "CIERRE: Resume y conecta con la siguiente lección"
+          ]
+        },
+        "learningObjectives": [
+          "Estructurar una lección con inicio-desarrollo-cierre",
+          "Escribir objetivos de aprendizaje medibles",
+          "Seleccionar el tipo de actividad apropiado"
+        ],
+        "keyPoints": [
+          "📝 TÍTULO: Claro y descriptivo (max 60 caracteres)",
+          "⏱️ DURACIÓN: 30-60 minutos por lección (ideal)",
+          "🎯 OBJETIVOS: 3-5 objetivos específicos y medibles",
+          "💬 PUNTOS CLAVE: 4-6 takeaways concretos",
+          "🤔 ¿SABÍAS QUÉ?: 2-3 datos sorprendentes",
+          "🌍 EJEMPLO REAL: Caso de éxito verificable"
+        ],
+        "didYouKnow": [
+          "La duración óptima de una lección es 45 minutos - después la atención decae",
+          "Incluir 'Did You Know' aumenta engagement 40%"
+        ],
+        "realWorldExample": "Ejemplo de estructura:\n\nTÍTULO: 'Midiendo tu Huella de Carbono'\nOBJETIVO: Calcular emisiones Scope 1 y 2\nCONTENIDO: Explicación de Scopes + Fórmulas\nACTIVIDAD: Calculadora de carbono\nCIERRE: 'Ahora conoces tu baseline. En la siguiente lección, aprenderás a reducirlo.'",
+        "activityType": "reading",
+        "toolsUsed": [],
+        "resources": [],
+        "nextSteps": [
+          "Crea un outline de tus lecciones",
+          "Escribe objetivos para cada una",
+          "Estima duración realista"
+        ]
+      },
+      {
+        "title": "Integrando Herramientas Interactivas",
+        "description": "Aprende a usar las 8 herramientas disponibles en la plataforma",
+        "estimatedMinutes": 60,
+        "xpReward": 20,
+        "learningObjectives": [
+          "Conocer las 8 herramientas disponibles",
+          "Seleccionar la herramienta apropiada para cada objetivo",
+          "Integrar herramientas en el flujo de la lección"
+        ],
+        "keyPoints": [
+          "📓 REFLECTION JOURNAL: Para reflexiones personales y compromisos",
+          "🧮 CALCULADORAS: Para ROI, huella de carbono, ahorros, impacto",
+          "📋 ASSESSMENTS: Para evaluaciones y diagnósticos",
+          "📸 EVIDENCE UPLOADER: Para documentar implementaciones",
+          "📅 IMPLEMENTATION PLAN: Para planes de acción 90 días"
+        ],
+        "didYouKnow": [
+          "Módulos con 3+ herramientas tienen 85% tasa de completación vs 60% sin herramientas",
+          "La herramienta más usada es el Reflection Journal (aparece en 90% de módulos exitosos)"
+        ],
+        "realWorldExample": "EJEMPLO DE USO:\n\nLección 1: Assessment (diagnóstico inicial)\nLección 2: Calculadora (medir impacto actual)\nLección 3: ROI Calculator (justificar inversión)\nLección 4: Implementation Plan (planificar acción)\nLección 5: Reflection Journal (compromisos)\nLección 6: Evidence Uploader (documentar progreso)",
+        "activityType": "interactive",
+        "toolsUsed": ["tool:reflection_journal"],
+        "resources": [
+          {
+            "title": "Usa el Reflection Journal aquí mismo",
+            "url": "tool:reflection_journal",
+            "description": "Prueba la herramienta para familiarizarte"
+          }
+        ],
+        "nextSteps": [
+          "Identifica qué herramientas usarás en cada lección",
+          "Asegúrate de incluir al menos 3 herramientas diferentes",
+          "Termina siempre con Reflection Journal"
+        ]
+      },
+      {
+        "title": "Escribiendo Contenido Atractivo",
+        "description": "Técnicas de escritura para mantener el interés del alumno",
+        "estimatedMinutes": 45,
+        "xpReward": 15,
+        "learningObjectives": [
+          "Escribir en tono conversacional y accesible",
+          "Usar storytelling efectivamente",
+          "Balancear teoría y práctica"
+        ],
+        "keyPoints": [
+          "✍️ USA VOZ ACTIVA: 'Calcula tu huella' vs 'La huella debe ser calculada'",
+          "👥 HABLA DIRECTO: Usa 'tú' y 'tu empresa', no 'las empresas'",
+          "📖 CUENTA HISTORIAS: Personajes reales, situaciones concretas",
+          "🔢 DATOS ESPECÍFICOS: '38% de reducción' vs 'reducción significativa'",
+          "🌎 CONTEXTO LOCAL: Ejemplos de México, empresas conocidas",
+          "💰 MUESTRA ROI: Siempre incluye beneficio económico"
+        ],
+        "didYouKnow": [
+          "Contenido en 2da persona ('tú') aumenta engagement 30%",
+          "Incluir costos en MXN aumenta credibilidad 50% con audiencia mexicana"
+        ],
+        "realWorldExample": "❌ MAL: 'Las emisiones de CO2 deben ser reducidas mediante la implementación de estrategias de eficiencia energética.'\n\n✅ BIEN: 'Tu empresa puede reducir emisiones de CO2 hasta 40% con cambios simples como usar iluminación LED y optimizar rutas de entrega. Grupo Bimbo ahorró $2.8M MXN al año haciendo esto.'",
+        "activityType": "reading",
+        "toolsUsed": [],
+        "resources": [],
+        "nextSteps": [
+          "Revisa tu contenido y elimina jerga técnica innecesaria",
+          "Agrega al menos un caso de éxito mexicano por lección",
+          "Incluye cifras en MXN para todos los costos/ahorros"
+        ]
+      },
+      {
+        "title": "Preparando para Revisión",
+        "description": "Checklist final antes de enviar tu módulo",
+        "estimatedMinutes": 30,
+        "xpReward": 15,
+        "learningObjectives": [
+          "Completar checklist de calidad",
+          "Entender criterios de aprobación",
+          "Preparar para feedback constructivo"
+        ],
+        "keyPoints": [
+          "✅ CONTENIDO: Mínimo 5 lecciones, máximo 15",
+          "✅ DURACIÓN: 6-12 horas totales",
+          "✅ HERRAMIENTAS: Mínimo 3 herramientas integradas",
+          "✅ EJEMPLOS: Al menos 1 caso real por lección",
+          "✅ OBJETIVOS: Claros y medibles en cada lección",
+          "✅ PRECIO: Basado en valor y duración ($15,000-25,000 MXN típico)"
+        ],
+        "didYouKnow": [
+          "Módulos con thumbnail personalizado tienen 3x más clics",
+          "Tiempo promedio de revisión: 2-3 días hábiles"
+        ],
+        "realWorldExample": "CHECKLIST DE APROBACIÓN:\n\n1. ¿Tu módulo resuelve un problema real?\n2. ¿Incluye ejemplos verificables?\n3. ¿Las herramientas están bien integradas?\n4. ¿El contenido es original (no copiado)?\n5. ¿La gramática y ortografía son correctas?\n6. ¿El precio es justo para el valor ofrecido?\n7. ¿Tienes thumbnail de alta calidad?\n\nSi respondiste SÍ a todo, ¡estás listo!",
+        "activityType": "reflection",
+        "toolsUsed": ["tool:reflection_journal"],
+        "resources": [
+          {
+            "title": "Reflexiona sobre tu módulo",
+            "url": "tool:reflection_journal",
+            "description": "¿Qué hace único a tu módulo? ¿Por qué una empresa debería comprarlo?"
+          }
+        ],
+        "nextSteps": [
+          "Completa el checklist de calidad",
+          "Crea o selecciona un thumbnail atractivo",
+          "Haz una última revisión de ortografía",
+          "¡Envía para revisión con confianza!"
+        ]
+      }
+    ]
+  }
+}
+
