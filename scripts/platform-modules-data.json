@@ -1,0 +1,370 @@
+{
+  "modules": [
+    {
+      "title": "Aire Limpio: El Despertar Corporativo",
+      "description": "Descubre cómo tu empresa puede mejorar la calidad del aire, reducir emisiones y crear un impacto positivo en la salud de empleados y comunidades. Aprende estrategias prácticas para medir, reducir y reportar tu huella de carbono.",
+      "coreValue": "clean_air",
+      "difficulty": "beginner",
+      "estimatedHours": 8,
+      "xpReward": 200,
+      "thumbnailUrl": null,
+      "industryTags": ["manufacturing", "logistics", "services", "retail"],
+      "basePriceMxn": 18000,
+      "pricePer50": 8000,
+      "lessons": [
+        {
+          "title": "El Impacto Invisible",
+          "description": "Comprende qué es la calidad del aire y cómo afecta a tu empresa y comunidad",
+          "estimatedMinutes": 45,
+          "xpReward": 15,
+          "learningObjectives": [
+            "Identificar los principales contaminantes del aire (PM2.5, PM10, CO2, VOCs)",
+            "Comprender los estándares de calidad del aire de la OMS",
+            "Reconocer el impacto de la mala calidad del aire en salud y productividad"
+          ],
+          "keyPoints": [
+            "PM2.5 es el contaminante más peligroso para la salud humana",
+            "La mala calidad del aire reduce la productividad laboral hasta 10%",
+            "México City promedia 25-30 µg/m³, por encima del límite seguro de 12 µg/m³"
+          ],
+          "didYouKnow": [
+            "La contaminación del aire causa 7 millones de muertes prematuras al año globalmente",
+            "Mejorar la calidad del aire interior puede aumentar la productividad cognitiva hasta 11%"
+          ],
+          "realWorldExample": "Grupo Bimbo redujo sus emisiones PM2.5 en 38% en instalaciones urbanas, ahorrando $2.8M MXN anuales en costos de combustible.",
+          "activityType": "assessment",
+          "toolsUsed": ["tool:air_quality_assessment"],
+          "resources": [
+            {
+              "title": "Estándares de Calidad del Aire - OMS",
+              "url": "https://www.who.int/news-room/fact-sheets/detail/ambient-(outdoor)-air-quality-and-health"
+            }
+          ]
+        },
+        {
+          "title": "Identificando Fuentes de Emisión",
+          "description": "Mapea las fuentes de contaminación en tu empresa",
+          "estimatedMinutes": 60,
+          "xpReward": 20,
+          "learningObjectives": [
+            "Identificar fuentes de emisión directas (Scope 1)",
+            "Identificar fuentes de emisión indirectas (Scope 2)",
+            "Crear un inventario de emisiones básico"
+          ],
+          "keyPoints": [
+            "Transporte y logística son típicamente la mayor fuente de emisiones",
+            "La electricidad de la red mexicana es 75% de combustibles fósiles",
+            "Pequeños cambios en operaciones pueden reducir emisiones 20-30%"
+          ],
+          "activityType": "calculator",
+          "toolsUsed": ["tool:carbon_footprint"],
+          "resources": []
+        },
+        {
+          "title": "Calculando el ROI de Aire Limpio",
+          "description": "Descubre el retorno de inversión de mejorar la calidad del aire",
+          "estimatedMinutes": 45,
+          "xpReward": 15,
+          "learningObjectives": [
+            "Calcular ahorros por reducción de ausentismo",
+            "Estimar ahorros energéticos",
+            "Proyectar retorno de inversión"
+          ],
+          "keyPoints": [
+            "Mejor calidad del aire reduce ausentismo 15-25%",
+            "Eficiencia energética ahorra 10-40% en costos",
+            "ROI típico: 18-36 meses"
+          ],
+          "activityType": "calculator",
+          "toolsUsed": ["tool:air_quality_roi"],
+          "resources": []
+        },
+        {
+          "title": "Plan de Acción 90 Días",
+          "description": "Crea tu plan de implementación",
+          "estimatedMinutes": 60,
+          "xpReward": 25,
+          "learningObjectives": [
+            "Diseñar un plan de acción realista",
+            "Establecer métricas y KPIs",
+            "Asignar responsabilidades"
+          ],
+          "keyPoints": [
+            "Comienza con victorias rápidas (quick wins)",
+            "Mide progreso mensualmente",
+            "Comunica resultados a stakeholders"
+          ],
+          "activityType": "planning",
+          "toolsUsed": ["tool:implementation_plan"],
+          "resources": []
+        },
+        {
+          "title": "Reflexión y Compromiso",
+          "description": "Reflexiona sobre tu aprendizaje y comprométete a la acción",
+          "estimatedMinutes": 30,
+          "xpReward": 15,
+          "learningObjectives": [
+            "Reflexionar sobre insights clave",
+            "Comprometerse a acciones específicas",
+            "Compartir aprendizajes con el equipo"
+          ],
+          "keyPoints": [
+            "El cambio comienza con un primer paso",
+            "La consistencia es más importante que la perfección",
+            "Cada acción cuenta"
+          ],
+          "activityType": "reflection",
+          "toolsUsed": ["tool:reflection_journal"],
+          "resources": []
+        }
+      ]
+    },
+    {
+      "title": "Agua Limpia: Gestión Inteligente del Recurso",
+      "description": "Aprende a medir, reducir y optimizar el consumo de agua en tu empresa. Descubre estrategias probadas para ahorrar costos, cumplir regulaciones y proteger este recurso vital.",
+      "coreValue": "clean_water",
+      "difficulty": "beginner",
+      "estimatedHours": 8,
+      "xpReward": 200,
+      "thumbnailUrl": null,
+      "industryTags": ["manufacturing", "hospitality", "food_beverage", "agriculture"],
+      "basePriceMxn": 18000,
+      "pricePer50": 8000,
+      "lessons": [
+        {
+          "title": "El Agua en tu Empresa",
+          "description": "Comprende el uso y impacto del agua en operaciones corporativas",
+          "estimatedMinutes": 45,
+          "xpReward": 15,
+          "learningObjectives": [
+            "Identificar puntos de consumo de agua",
+            "Comprender el costo real del agua",
+            "Reconocer riesgos de escasez hídrica"
+          ],
+          "keyPoints": [
+            "El agua representa 2-8% de costos operativos",
+            "México enfrenta estrés hídrico en 70% del territorio",
+            "Empresas pueden reducir consumo 30-50% con medidas simples"
+          ],
+          "didYouKnow": [
+            "Una fuga de 1mm puede desperdiciar 30,000 litros al mes",
+            "El agua reciclada puede cubrir 40-60% de necesidades industriales"
+          ],
+          "activityType": "assessment",
+          "toolsUsed": ["tool:reflection_journal"],
+          "resources": []
+        },
+        {
+          "title": "Midiendo tu Huella Hídrica",
+          "description": "Calcula el consumo de agua directo e indirecto",
+          "estimatedMinutes": 60,
+          "xpReward": 20,
+          "learningObjectives": [
+            "Calcular huella hídrica azul (consumo directo)",
+            "Estimar huella hídrica gris (contaminación)",
+            "Identificar oportunidades de reducción"
+          ],
+          "keyPoints": [
+            "Huella hídrica incluye agua directa, indirecta y virtual",
+            "Producción de 1 kg de carne requiere 15,000 litros de agua",
+            "Manufactura usa 10-100 litros por unidad producida"
+          ],
+          "activityType": "calculator",
+          "toolsUsed": ["tool:cost_savings"],
+          "resources": []
+        },
+        {
+          "title": "Estrategias de Ahorro",
+          "description": "Implementa medidas prácticas para reducir consumo",
+          "estimatedMinutes": 60,
+          "xpReward": 20,
+          "learningObjectives": [
+            "Identificar fugas y desperdicios",
+            "Implementar sistemas de reciclaje",
+            "Optimizar procesos industriales"
+          ],
+          "keyPoints": [
+            "Auditoría de agua identifica 20-40% de ahorros potenciales",
+            "Sistemas de reciclaje tienen ROI de 2-4 años",
+            "Tecnología de bajo flujo reduce consumo 30-50%"
+          ],
+          "activityType": "planning",
+          "toolsUsed": ["tool:implementation_plan"],
+          "resources": []
+        },
+        {
+          "title": "Calidad y Tratamiento",
+          "description": "Gestiona la calidad del agua y tratamiento de aguas residuales",
+          "estimatedMinutes": 45,
+          "xpReward": 15,
+          "learningObjectives": [
+            "Comprender estándares de calidad del agua",
+            "Conocer opciones de tratamiento",
+            "Cumplir con regulaciones ambientales"
+          ],
+          "keyPoints": [
+            "NOM-001-SEMARNAT regula descargas en México",
+            "Tratamiento in-situ puede reducir costos 40%",
+            "Agua tratada puede reutilizarse para riego y limpieza"
+          ],
+          "activityType": "reading",
+          "toolsUsed": [],
+          "resources": []
+        },
+        {
+          "title": "Plan de Gestión Hídrica",
+          "description": "Crea tu estrategia integral de gestión del agua",
+          "estimatedMinutes": 60,
+          "xpReward": 25,
+          "learningObjectives": [
+            "Diseñar plan de gestión hídrica",
+            "Establecer metas de reducción",
+            "Implementar monitoreo continuo"
+          ],
+          "keyPoints": [
+            "Metas SMART aumentan probabilidad de éxito 70%",
+            "Monitoreo en tiempo real detecta problemas inmediatamente",
+            "Comunicación interna es clave para el cambio cultural"
+          ],
+          "activityType": "planning",
+          "toolsUsed": ["tool:implementation_plan", "tool:reflection_journal"],
+          "resources": []
+        }
+      ]
+    },
+    {
+      "title": "Cero Residuos: Economía Circular en Acción",
+      "description": "Transforma residuos en recursos. Aprende a implementar estrategias de economía circular que reducen costos, generan ingresos y minimizan el impacto ambiental de tu empresa.",
+      "coreValue": "zero_waste",
+      "difficulty": "intermediate",
+      "estimatedHours": 10,
+      "xpReward": 250,
+      "thumbnailUrl": null,
+      "industryTags": ["manufacturing", "retail", "hospitality", "food_beverage"],
+      "basePriceMxn": 18000,
+      "pricePer50": 8000,
+      "lessons": [
+        {
+          "title": "De Lineal a Circular",
+          "description": "Comprende los principios de la economía circular",
+          "estimatedMinutes": 45,
+          "xpReward": 15,
+          "learningObjectives": [
+            "Diferenciar economía lineal vs circular",
+            "Identificar oportunidades de circularidad",
+            "Comprender el valor de los residuos"
+          ],
+          "keyPoints": [
+            "Economía lineal: extraer-producir-desechar",
+            "Economía circular: reducir-reutilizar-reciclar-regenerar",
+            "Residuos de una empresa son materia prima de otra"
+          ],
+          "didYouKnow": [
+            "México genera 120,000 toneladas de residuos al día",
+            "Solo 11% de residuos se reciclan en México",
+            "Economía circular podría generar $4.5 billones USD globalmente para 2030"
+          ],
+          "activityType": "reading",
+          "toolsUsed": [],
+          "resources": []
+        },
+        {
+          "title": "Auditoría de Residuos",
+          "description": "Identifica y clasifica los residuos de tu empresa",
+          "estimatedMinutes": 60,
+          "xpReward": 20,
+          "learningObjectives": [
+            "Realizar auditoría de residuos",
+            "Clasificar residuos por tipo y peligrosidad",
+            "Calcular costos de disposición"
+          ],
+          "keyPoints": [
+            "Auditoría revela 30-50% de residuos son reciclables",
+            "Costo promedio de disposición: $800-2,000 MXN/tonelada",
+            "Residuos orgánicos representan 40-50% del total"
+          ],
+          "activityType": "assessment",
+          "toolsUsed": ["tool:reflection_journal"],
+          "resources": []
+        },
+        {
+          "title": "Estrategias de Reducción",
+          "description": "Implementa las 5 R's: Rechazar, Reducir, Reutilizar, Reciclar, Regenerar",
+          "estimatedMinutes": 60,
+          "xpReward": 20,
+          "learningObjectives": [
+            "Aplicar jerarquía de gestión de residuos",
+            "Diseñar estrategias de reducción en origen",
+            "Identificar oportunidades de reutilización"
+          ],
+          "keyPoints": [
+            "Reducir en origen es 10x más efectivo que reciclar",
+            "Reutilización ahorra 60-80% vs comprar nuevo",
+            "Compostaje reduce residuos orgánicos 90%"
+          ],
+          "activityType": "planning",
+          "toolsUsed": ["tool:implementation_plan"],
+          "resources": []
+        },
+        {
+          "title": "Reciclaje y Valorización",
+          "description": "Convierte residuos en recursos valiosos",
+          "estimatedMinutes": 60,
+          "xpReward": 20,
+          "learningObjectives": [
+            "Establecer programas de reciclaje efectivos",
+            "Identificar mercados para materiales reciclables",
+            "Calcular ingresos potenciales"
+          ],
+          "keyPoints": [
+            "Cartón reciclado genera $1,500-2,500 MXN/tonelada",
+            "Plástico PET: $3,000-5,000 MXN/tonelada",
+            "Metales ferrosos: $2,000-4,000 MXN/tonelada"
+          ],
+          "activityType": "calculator",
+          "toolsUsed": ["tool:cost_savings"],
+          "resources": []
+        },
+        {
+          "title": "Compostaje Corporativo",
+          "description": "Transforma residuos orgánicos en composta",
+          "estimatedMinutes": 45,
+          "xpReward": 15,
+          "learningObjectives": [
+            "Comprender proceso de compostaje",
+            "Diseñar sistema de compostaje in-situ",
+            "Calcular beneficios económicos y ambientales"
+          ],
+          "keyPoints": [
+            "Compostaje reduce 40-50% de residuos totales",
+            "Composta vale $500-1,500 MXN/tonelada",
+            "ROI típico: 12-24 meses"
+          ],
+          "activityType": "reading",
+          "toolsUsed": [],
+          "resources": []
+        },
+        {
+          "title": "Plan Cero Residuos",
+          "description": "Diseña tu estrategia integral hacia cero residuos",
+          "estimatedMinutes": 75,
+          "xpReward": 30,
+          "learningObjectives": [
+            "Establecer meta de cero residuos",
+            "Diseñar plan de implementación por fases",
+            "Definir métricas y KPIs"
+          ],
+          "keyPoints": [
+            "Meta realista: 90% desvío de relleno sanitario",
+            "Implementación por fases aumenta éxito 80%",
+            "Certificación Cero Residuos mejora reputación corporativa"
+          ],
+          "activityType": "planning",
+          "toolsUsed": ["tool:implementation_plan", "tool:reflection_journal"],
+          "resources": []
+        }
+      ]
+    }
+  ]
+}
+
