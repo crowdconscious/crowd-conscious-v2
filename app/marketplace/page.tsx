@@ -143,14 +143,25 @@ export default function MarketplacePage() {
   useEffect(() => {
     async function fetchModules() {
       try {
+        console.log('🔍 Fetching modules from API...')
         const response = await fetch('/api/marketplace/modules')
+        console.log('📡 Response status:', response.status)
+        
         if (response.ok) {
           const data = await response.json()
+          console.log('✅ Modules fetched:', data.modules?.length || 0)
+          console.log('📦 First module:', data.modules?.[0])
           setModules(data.modules)
           setFilteredModules(data.modules)
+        } else {
+          console.error('❌ Failed to fetch modules, status:', response.status)
+          console.log('Using fallback mock data')
+          // Keep mock data as fallback
         }
       } catch (error) {
-        console.error('Error fetching modules:', error)
+        console.error('💥 Error fetching modules:', error)
+        console.log('Using fallback mock data')
+        // Keep mock data as fallback
       } finally {
         setLoading(false)
       }
