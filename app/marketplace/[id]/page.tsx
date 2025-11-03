@@ -11,19 +11,26 @@ import {
 // Fetch module data from API
 const getModuleById = async (id: string) => {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'}/api/marketplace/modules/${id}`, {
+    console.log('🔍 Fetching module:', id)
+    // Use relative URL to avoid CORS issues
+    const response = await fetch(`/api/marketplace/modules/${id}`, {
       cache: 'no-store'
     })
     
+    console.log('📡 Response status:', response.status)
+    
     if (!response.ok) {
-      console.error('Failed to fetch module:', response.status)
+      console.error('❌ Failed to fetch module:', response.status)
+      const errorText = await response.text()
+      console.error('Error details:', errorText)
       return null
     }
     
     const data = await response.json()
+    console.log('✅ Module fetched:', data.module?.title)
     return data.module
   } catch (error) {
-    console.error('Error fetching module:', error)
+    console.error('💥 Error fetching module:', error)
     return null
   }
 }
