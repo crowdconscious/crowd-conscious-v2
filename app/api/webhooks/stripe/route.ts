@@ -98,7 +98,7 @@ async function handleModulePurchase(session: Stripe.Checkout.Session) {
 
       // 3. Enroll all employees in the module
       if (employees && employees.length > 0) {
-        const enrollments = employees.map(employee => ({
+        const enrollments = employees.map((employee: any) => ({
           employee_id: employee.id,
           corporate_account_id: corporate_account_id,
           module_id: module_id,
@@ -110,7 +110,7 @@ async function handleModulePurchase(session: Stripe.Checkout.Session) {
           last_activity_at: new Date().toISOString()
         }))
 
-        const { error: enrollError } = await supabaseClient
+        const { error: enrollError } = await (supabaseClient as any)
           .from('course_enrollments')
           .upsert(enrollments, {
             onConflict: 'employee_id,module_id',
