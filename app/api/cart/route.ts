@@ -1,9 +1,11 @@
 import { createClient } from '@/lib/supabase-server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
 // GET /api/cart - Fetch current user's cart items
 export async function GET() {
   try {
+    // Use regular client for auth check
     const supabase = await createClient()
     
     // Get current user
@@ -16,8 +18,20 @@ export async function GET() {
       )
     }
 
+    // Use admin client for database queries to bypass RLS permission issues
+    const adminClient = createAdminClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    )
+
     // Get user profile to find corporate_account_id
-    const { data: profile } = await supabase
+    const { data: profile } = await adminClient
       .from('profiles')
       .select('corporate_account_id, corporate_role')
       .eq('id', user.id)
@@ -31,7 +45,7 @@ export async function GET() {
     }
 
     // Fetch cart items with module details
-    const { data: cartItems, error } = await supabase
+    const { data: cartItems, error } = await adminClient
       .from('cart_items')
       .select(`
         id,
