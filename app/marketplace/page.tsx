@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Search, Filter, Star, Clock, Users, TrendingUp, Sparkles, ChevronDown } from 'lucide-react'
+import CartButton from '../components/cart/CartButton'
 
 const CORE_VALUES = [
   { id: 'all', name: 'Todos', icon: '🌟', color: 'from-slate-500 to-slate-600' },
@@ -540,6 +541,9 @@ export default function MarketplacePage() {
           </Link>
         </div>
       </div>
+
+      {/* Floating Cart Button */}
+      <CartButton />
     </div>
   )
 }

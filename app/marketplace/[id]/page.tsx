@@ -7,6 +7,7 @@ import {
   ArrowLeft, Star, Users, Clock, TrendingUp, CheckCircle, 
   Award, BookOpen, Target, Sparkles, ShoppingCart, Download 
 } from 'lucide-react'
+import CartButton from '../../components/cart/CartButton'
 
 // Fetch module data from API
 const getModuleById = async (id: string) => {
@@ -175,10 +176,42 @@ export default function ModuleDetailPage({ params }: { params: Promise<{ id: str
     return Math.round(calculatePrice() / employeeCount)
   }
 
-  const handleAddToCart = () => {
-    console.log('Add to cart:', { moduleId: module.id, employeeCount, totalPrice: calculatePrice() })
-    setShowAddToCart(true)
-    setTimeout(() => setShowAddToCart(false), 3000)
+  const [addingToCart, setAddingToCart] = useState(false)
+
+  const handleAddToCart = async () => {
+    setAddingToCart(true)
+
+    try {
+      const response = await fetch('/api/cart/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          moduleId: module.id,
+          employeeCount: employeeCount
+        })
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setShowAddToCart(true)
+        setTimeout(() => setShowAddToCart(false), 3000)
+        console.log('✅ Added to cart:', data)
+      } else {
+        if (response.status === 401 || response.status === 403) {
+          alert('Por favor inicia sesión como administrador corporativo para agregar al carrito.')
+        } else if (data.error?.includes('already owned')) {
+          alert('Tu empresa ya posee este módulo.')
+        } else {
+          alert(data.error || 'Error al agregar al carrito')
+        }
+      }
+    } catch (error) {
+      console.error('Error adding to cart:', error)
+      alert('Error de conexión. Por favor intenta de nuevo.')
+    } finally {
+      setAddingToCart(false)
+    }
   }
 
   const handleShare = async () => {
@@ -312,13 +345,23 @@ export default function ModuleDetailPage({ params }: { params: Promise<{ id: str
 
                 {/* CTA Buttons */}
                 <div className="space-y-3">
-                  <button
-                    onClick={handleAddToCart}
-                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 rounded-xl font-bold text-lg hover:scale-105 transition-transform shadow-lg flex items-center justify-center gap-2"
-                  >
-                    <ShoppingCart className="w-5 h-5" />
-                    Agregar al Carrito
-                  </button>
+                <button
+                  onClick={handleAddToCart}
+                  disabled={addingToCart}
+                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 rounded-xl font-bold text-lg hover:scale-105 transition-transform shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {addingToCart ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Agregando...
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingCart className="w-5 h-5" />
+                      Agregar al Carrito
+                    </>
+                  )}
+                </button>
                   <Link
                     href="/assessment"
                     className="block w-full bg-white border-2 border-purple-600 text-purple-600 py-4 rounded-xl font-bold text-center hover:bg-purple-50 transition-colors"
@@ -515,6 +558,9 @@ export default function ModuleDetailPage({ params }: { params: Promise<{ id: str
           </div>
         </div>
       </div>
+
+      {/* Floating Cart Button */}
+      <CartButton />
     </div>
   )
 }
