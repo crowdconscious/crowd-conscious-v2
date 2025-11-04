@@ -1,9 +1,11 @@
 import { createClient } from '@/lib/supabase-server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
 // DELETE /api/cart/clear - Clear entire cart
 export async function DELETE() {
   try {
+    // Use regular client for auth check
     const supabase = await createClient()
     
     // Get current user
@@ -16,8 +18,20 @@ export async function DELETE() {
       )
     }
 
+    // Use admin client for database queries to bypass RLS
+    const adminClient = createAdminClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    )
+
     // Get user profile
-    const { data: profile } = await supabase
+    const { data: profile } = await adminClient
       .from('profiles')
       .select('corporate_account_id, corporate_role')
       .eq('id', user.id)
@@ -31,7 +45,7 @@ export async function DELETE() {
     }
 
     // Delete all cart items for this corporate account
-    const { error: deleteError } = await supabase
+    const { error: deleteError } = await adminClient
       .from('cart_items')
       .delete()
       .eq('corporate_account_id', profile.corporate_account_id)

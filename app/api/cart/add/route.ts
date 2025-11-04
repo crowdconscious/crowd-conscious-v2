@@ -1,9 +1,11 @@
 import { createClient } from '@/lib/supabase-server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
 // POST /api/cart/add - Add module to cart
 export async function POST(request: Request) {
   try {
+    // Use regular client for auth check
     const supabase = await createClient()
     
     // Get current user
@@ -16,8 +18,20 @@ export async function POST(request: Request) {
       )
     }
 
+    // Use admin client for database queries to bypass RLS
+    const adminClient = createAdminClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    )
+
     // Get user profile
-    const { data: profile } = await supabase
+    const { data: profile } = await adminClient
       .from('profiles')
       .select('corporate_account_id, corporate_role')
       .eq('id', user.id)
@@ -49,13 +63,14 @@ export async function POST(request: Request) {
     }
 
     // Fetch module details to get current price
-    const { data: module, error: moduleError } = await supabase
+    const { data: module, error: moduleError } = await adminClient
       .from('marketplace_modules')
       .select('id, title, base_price_mxn, price_per_50_employees, status')
       .eq('id', moduleId)
       .single()
 
     if (moduleError || !module) {
+      console.error('Error fetching module:', moduleError)
       return NextResponse.json(
         { error: 'Module not found' },
         { status: 404 }
@@ -70,7 +85,7 @@ export async function POST(request: Request) {
     }
 
     // Check if module is already owned by this corporate account
-    const { data: existingEnrollment } = await supabase
+    const { data: existingEnrollment } = await adminClient
       .from('course_enrollments')
       .select('id')
       .eq('corporate_account_id', profile.corporate_account_id)
@@ -90,7 +105,7 @@ export async function POST(request: Request) {
     const totalPrice = module.base_price_mxn + ((packs - 1) * module.price_per_50_employees)
 
     // Check if item already in cart (update instead of insert)
-    const { data: existingItem } = await supabase
+    const { data: existingItem } = await adminClient
       .from('cart_items')
       .select('id')
       .eq('corporate_account_id', profile.corporate_account_id)
@@ -99,7 +114,7 @@ export async function POST(request: Request) {
 
     if (existingItem) {
       // Update existing cart item
-      const { data: updatedItem, error: updateError } = await supabase
+      const { data: updatedItem, error: updateError } = await adminClient
         .from('cart_items')
         .update({
           employee_count: employeeCount,
@@ -124,7 +139,7 @@ export async function POST(request: Request) {
       })
     } else {
       // Insert new cart item
-      const { data: newItem, error: insertError } = await supabase
+      const { data: newItem, error: insertError } = await adminClient
         .from('cart_items')
         .insert({
           corporate_account_id: profile.corporate_account_id,

@@ -1,9 +1,11 @@
 import { createClient } from '@/lib/supabase-server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
 // PUT /api/cart/update - Update employee count for cart item
 export async function PUT(request: Request) {
   try {
+    // Use regular client for auth check
     const supabase = await createClient()
     
     // Get current user
@@ -16,8 +18,20 @@ export async function PUT(request: Request) {
       )
     }
 
+    // Use admin client for database queries to bypass RLS
+    const adminClient = createAdminClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    )
+
     // Get user profile
-    const { data: profile } = await supabase
+    const { data: profile } = await adminClient
       .from('profiles')
       .select('corporate_account_id, corporate_role')
       .eq('id', user.id)
@@ -49,7 +63,7 @@ export async function PUT(request: Request) {
     }
 
     // Fetch cart item to verify ownership and get module details
-    const { data: cartItem, error: fetchError } = await supabase
+    const { data: cartItem, error: fetchError } = await adminClient
       .from('cart_items')
       .select(`
         id,
@@ -64,6 +78,7 @@ export async function PUT(request: Request) {
       .single()
 
     if (fetchError || !cartItem) {
+      console.error('Error fetching cart item:', fetchError)
       return NextResponse.json(
         { error: 'Cart item not found' },
         { status: 404 }
@@ -84,7 +99,7 @@ export async function PUT(request: Request) {
     const totalPrice = module.base_price_mxn + ((packs - 1) * module.price_per_50_employees)
 
     // Update cart item
-    const { data: updatedItem, error: updateError } = await supabase
+    const { data: updatedItem, error: updateError } = await adminClient
       .from('cart_items')
       .update({
         employee_count: employeeCount,
