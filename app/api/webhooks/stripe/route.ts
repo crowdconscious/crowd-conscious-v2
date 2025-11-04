@@ -67,7 +67,7 @@ async function handleModulePurchase(session: Stripe.Checkout.Session) {
       console.log(`📚 Processing module: ${module_id}, employees: ${employee_count}, price: ${price}`)
 
       // 1. Call process_module_sale() RPC function for revenue distribution
-      const { data: saleData, error: saleError } = await supabaseClient.rpc('process_module_sale', {
+      const { data: saleData, error: saleError } = await (supabaseClient as any).rpc('process_module_sale', {
         p_module_id: module_id,
         p_corporate_account_id: corporate_account_id,
         p_total_amount: parseFloat(price),
