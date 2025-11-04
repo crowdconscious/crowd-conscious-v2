@@ -265,9 +265,9 @@ export default function ModuleDetailPage({ params }: { params: Promise<{ id: str
             {/* Left: Module Info */}
             <div className="lg:col-span-2">
               <div className="flex items-center gap-3 mb-4">
-                <span className="text-4xl">{module.coreValueIcon}</span>
+                <span className="text-4xl">{module.coreValueIcon || '🌟'}</span>
                 <span className="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium">
-                  {module.coreValueName}
+                  {module.coreValueName || 'Sostenibilidad'}
                 </span>
                 {module.featured && (
                   <span className="bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-sm font-bold flex items-center gap-1">
@@ -284,30 +284,30 @@ export default function ModuleDetailPage({ params }: { params: Promise<{ id: str
               <div className="flex flex-wrap gap-6">
                 <div className="flex items-center gap-2">
                   <Star className="w-5 h-5 fill-current text-yellow-300" />
-                  <span className="font-bold">{module.rating}</span>
-                  <span className="text-white/80">({module.reviewCount} reseñas)</span>
+                  <span className="font-bold">{module.rating || 4.8}</span>
+                  <span className="text-white/80">({module.reviewCount || 0} reseñas)</span>
                 </div>
                 <div className="flex items-center gap-2 text-white/90">
                   <Users className="w-5 h-5" />
-                  <span>{module.enrollments.toLocaleString()} inscritos</span>
+                  <span>{(module.enrollments || 0).toLocaleString()} inscritos</span>
                 </div>
                 <div className="flex items-center gap-2 text-white/90">
                   <Clock className="w-5 h-5" />
-                  <span>{module.duration} horas</span>
+                  <span>{module.duration || 0} horas</span>
                 </div>
                 <div className="flex items-center gap-2 text-white/90">
                   <BookOpen className="w-5 h-5" />
-                  <span>{module.lessonCount} lecciones</span>
+                  <span>{module.lessonCount || 0} lecciones</span>
                 </div>
               </div>
 
               {/* Creator */}
               <div className="mt-6 bg-white/10 backdrop-blur-sm rounded-xl p-4">
                 <div className="flex items-center gap-3">
-                  <span className="text-3xl">{module.creatorAvatar}</span>
+                  <span className="text-3xl">{module.creatorAvatar || '🏢'}</span>
                   <div>
                     <div className="font-medium">Creado por</div>
-                    <div className="text-lg font-bold">{module.creator}</div>
+                    <div className="text-lg font-bold">{module.creator || 'Crowd Conscious'}</div>
                   </div>
                 </div>
               </div>
@@ -422,6 +422,7 @@ export default function ModuleDetailPage({ params }: { params: Promise<{ id: str
             </div>
 
             {/* What You'll Learn */}
+            {module.whatYouLearn && module.whatYouLearn.length > 0 && (
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
               <h2 className="text-2xl font-bold text-slate-900 mb-6">¿Qué aprenderás?</h2>
               <div className="grid sm:grid-cols-2 gap-4">
@@ -433,8 +434,10 @@ export default function ModuleDetailPage({ params }: { params: Promise<{ id: str
                 ))}
               </div>
             </div>
+            )}
 
             {/* Curriculum */}
+            {module.curriculum && module.curriculum.length > 0 && (
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
               <h2 className="text-2xl font-bold text-slate-900 mb-6">Contenido del curso</h2>
               <div className="space-y-4">
@@ -460,6 +463,7 @@ export default function ModuleDetailPage({ params }: { params: Promise<{ id: str
                         </div>
                       </div>
                     </div>
+                    {lesson.topics && lesson.topics.length > 0 && (
                     <div className="flex flex-wrap gap-2">
                       {lesson.topics.map((topic: string, topicIndex: number) => (
                         <span key={topicIndex} className="text-xs bg-purple-100 text-purple-700 px-3 py-1 rounded-full">
@@ -467,12 +471,15 @@ export default function ModuleDetailPage({ params }: { params: Promise<{ id: str
                         </span>
                       ))}
                     </div>
+                    )}
                   </div>
                 ))}
               </div>
             </div>
+            )}
 
             {/* Outcomes */}
+            {module.outcomes && module.outcomes.length > 0 && (
             <div className="bg-gradient-to-br from-green-50 to-teal-50 border-2 border-green-200 rounded-2xl p-8">
               <h2 className="text-2xl font-bold text-slate-900 mb-6">Resultados esperados</h2>
               <div className="space-y-3">
@@ -484,8 +491,10 @@ export default function ModuleDetailPage({ params }: { params: Promise<{ id: str
                 ))}
               </div>
             </div>
+            )}
 
             {/* Testimonials */}
+            {module.testimonials && module.testimonials.length > 0 && (
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
               <h2 className="text-2xl font-bold text-slate-900 mb-6">Lo que dicen nuestros clientes</h2>
               <div className="space-y-6">
@@ -508,12 +517,14 @@ export default function ModuleDetailPage({ params }: { params: Promise<{ id: str
                 ))}
               </div>
             </div>
+            )}
           </div>
 
           {/* Right Column: Sidebar */}
           <div className="lg:col-span-1">
             <div className="sticky top-24 space-y-6">
               {/* Tools Included */}
+              {module.toolsIncluded && module.toolsIncluded.length > 0 && (
               <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                 <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
                   <Sparkles className="w-5 h-5 text-purple-600" />
@@ -528,18 +539,19 @@ export default function ModuleDetailPage({ params }: { params: Promise<{ id: str
                   ))}
                 </ul>
               </div>
+              )}
 
               {/* Creator Info */}
               <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                 <h3 className="font-bold text-slate-900 mb-4">Sobre el creador</h3>
                 <div className="flex items-center gap-3 mb-4">
-                  <span className="text-4xl">{module.creatorAvatar}</span>
+                  <span className="text-4xl">{module.creatorAvatar || '🏢'}</span>
                   <div>
-                    <div className="font-bold text-slate-900">{module.creator}</div>
+                    <div className="font-bold text-slate-900">{module.creator || 'Crowd Conscious'}</div>
                     <div className="text-sm text-slate-600">Comunidad verificada</div>
                   </div>
                 </div>
-                <p className="text-sm text-slate-700">{module.creatorBio}</p>
+                <p className="text-sm text-slate-700">{module.creatorBio || 'Comunidad comprometida con la sostenibilidad'}</p>
               </div>
 
               {/* Share */}
