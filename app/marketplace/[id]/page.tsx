@@ -215,6 +215,9 @@ export default function ModuleDetailPage({ params }: { params: Promise<{ id: str
   }
 
   const handleShare = async () => {
+    // Only access window on client side
+    if (typeof window === 'undefined') return
+    
     const shareData = {
       title: module.title,
       text: `${module.description}\n\n💰 Desde $${(module.price / 1000).toFixed(0)}k MXN\n⭐ ${module.rating} estrellas\n👥 ${module.enrollments} inscritos`,

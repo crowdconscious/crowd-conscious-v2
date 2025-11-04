@@ -16,9 +16,16 @@ export default function CartButton() {
       if (response.ok) {
         const data = await response.json()
         setItemCount(data.summary.item_count || 0)
+      } else if (response.status === 401 || response.status === 403) {
+        // User not logged in or not a corporate admin - this is OK, just show 0
+        setItemCount(0)
+      } else {
+        console.error('Error fetching cart:', response.status)
+        setItemCount(0)
       }
     } catch (error) {
       console.error('Error fetching cart count:', error)
+      setItemCount(0)
     } finally {
       setIsLoading(false)
     }
