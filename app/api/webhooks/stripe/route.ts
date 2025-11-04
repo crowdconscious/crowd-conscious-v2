@@ -33,6 +33,116 @@ function getSupabase() {
   return supabase
 }
 
+// Handle module purchase after successful payment
+async function handleModulePurchase(session: Stripe.Checkout.Session) {
+  try {
+    const supabaseClient = getSupabase()
+    const {
+      corporate_account_id,
+      user_id,
+      company_name,
+      cart_items,
+      total_amount
+    } = session.metadata || {}
+
+    console.log('📦 Module purchase metadata:', {
+      corporate_account_id,
+      user_id,
+      company_name,
+      cart_items: cart_items?.substring(0, 100),
+      total_amount
+    })
+
+    if (!corporate_account_id || !cart_items) {
+      console.error('❌ Missing required metadata for module purchase')
+      return
+    }
+
+    const cartItemsData = JSON.parse(cart_items)
+
+    // Process each module in the cart
+    for (const item of cartItemsData) {
+      const { module_id, employee_count, price } = item
+
+      console.log(`📚 Processing module: ${module_id}, employees: ${employee_count}, price: ${price}`)
+
+      // 1. Call process_module_sale() RPC function for revenue distribution
+      const { data: saleData, error: saleError } = await supabaseClient.rpc('process_module_sale', {
+        p_module_id: module_id,
+        p_corporate_account_id: corporate_account_id,
+        p_total_amount: parseFloat(price),
+        p_creator_donates: false
+      })
+
+      if (saleError) {
+        console.error('❌ Error processing module sale:', saleError)
+        // Continue with next module even if this one fails
+        continue
+      }
+
+      console.log('✅ Module sale processed:', saleData)
+
+      // 2. Fetch all employees for this corporate account
+      const { data: employees, error: employeesError } = await supabaseClient
+        .from('profiles')
+        .select('id')
+        .eq('corporate_account_id', corporate_account_id)
+        .eq('is_corporate_user', true)
+
+      if (employeesError) {
+        console.error('❌ Error fetching employees:', employeesError)
+        continue
+      }
+
+      console.log(`👥 Found ${employees?.length || 0} employees to enroll`)
+
+      // 3. Enroll all employees in the module
+      if (employees && employees.length > 0) {
+        const enrollments = employees.map(employee => ({
+          employee_id: employee.id,
+          corporate_account_id: corporate_account_id,
+          module_id: module_id,
+          module_name: '', // Will be filled by trigger
+          status: 'not_started',
+          completion_percentage: 0,
+          started_at: null,
+          completed_at: null,
+          last_activity_at: new Date().toISOString()
+        }))
+
+        const { error: enrollError } = await supabaseClient
+          .from('course_enrollments')
+          .upsert(enrollments, {
+            onConflict: 'employee_id,module_id',
+            ignoreDuplicates: true
+          })
+
+        if (enrollError) {
+          console.error('❌ Error enrolling employees:', enrollError)
+        } else {
+          console.log(`✅ Enrolled ${employees.length} employees in module ${module_id}`)
+        }
+      }
+    }
+
+    // 4. Clear the cart
+    const { error: clearCartError } = await supabaseClient
+      .from('cart_items')
+      .delete()
+      .eq('corporate_account_id', corporate_account_id)
+
+    if (clearCartError) {
+      console.error('❌ Error clearing cart:', clearCartError)
+    } else {
+      console.log('✅ Cart cleared')
+    }
+
+    console.log('🎉 Module purchase completed successfully')
+  } catch (error) {
+    console.error('💥 Error in handleModulePurchase:', error)
+  }
+}
+
 export async function POST(request: NextRequest) {
   console.log('🔔 Stripe webhook received')
   console.log('🔍 Environment check:', {
@@ -100,7 +210,16 @@ export async function POST(request: NextRequest) {
         customerEmail: session.customer_email
       })
 
-      // Update sponsorship record
+      // Check if this is a module purchase
+      const { type: purchaseType } = session.metadata || {}
+      
+      if (purchaseType === 'module_purchase') {
+        console.log('📚 Processing module purchase...')
+        await handleModulePurchase(session)
+        break
+      }
+
+      // Otherwise, handle as sponsorship (legacy flow)
       const { 
         sponsorshipId, 
         sponsorType, 
