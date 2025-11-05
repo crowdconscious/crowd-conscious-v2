@@ -38,38 +38,42 @@ async function handleModulePurchase(session: Stripe.Checkout.Session) {
   try {
     const supabaseClient = getSupabase()
     const {
-      corporate_account_id,
+      purchase_type, // NEW: 'individual' or 'corporate'
       user_id,
+      corporate_account_id,
       company_name,
       cart_items,
       total_amount
     } = session.metadata || {}
 
     console.log('📦 Module purchase metadata:', {
-      corporate_account_id,
+      purchase_type,
       user_id,
+      corporate_account_id,
       company_name,
       cart_items: cart_items?.substring(0, 100),
       total_amount
     })
 
-    if (!corporate_account_id || !cart_items) {
+    // Validate required metadata
+    if (!user_id || !cart_items || !purchase_type) {
       console.error('❌ Missing required metadata for module purchase')
       return
     }
 
     const cartItemsData = JSON.parse(cart_items)
+    const isIndividual = purchase_type === 'individual'
 
     // Process each module in the cart
     for (const item of cartItemsData) {
       const { module_id, employee_count, price } = item
 
-      console.log(`📚 Processing module: ${module_id}, employees: ${employee_count}, price: ${price}`)
+      console.log(`📚 Processing module: ${module_id}, type: ${purchase_type}, count: ${employee_count}, price: ${price}`)
 
       // 1. Call process_module_sale() RPC function for revenue distribution
       const { data: saleData, error: saleError } = await (supabaseClient as any).rpc('process_module_sale', {
         p_module_id: module_id,
-        p_corporate_account_id: corporate_account_id,
+        p_corporate_account_id: corporate_account_id || null,
         p_total_amount: parseFloat(price),
         p_creator_donates: false
       })
@@ -82,54 +86,85 @@ async function handleModulePurchase(session: Stripe.Checkout.Session) {
 
       console.log('✅ Module sale processed:', saleData)
 
-      // 2. Fetch all employees for this corporate account
-      const { data: employees, error: employeesError } = await supabaseClient
-        .from('profiles')
-        .select('id')
-        .eq('corporate_account_id', corporate_account_id)
-        .eq('is_corporate_user', true)
+      // 2. Create enrollments based on purchase type
+      if (isIndividual) {
+        // INDIVIDUAL PURCHASE: Enroll just the user
+        console.log(`👤 Enrolling individual user: ${user_id}`)
 
-      if (employeesError) {
-        console.error('❌ Error fetching employees:', employeesError)
-        continue
-      }
-
-      console.log(`👥 Found ${employees?.length || 0} employees to enroll`)
-
-      // 3. Enroll all employees in the module
-      if (employees && employees.length > 0) {
-        const enrollments = employees.map((employee: any) => ({
-          employee_id: employee.id,
-          corporate_account_id: corporate_account_id,
-          module_id: module_id,
-          module_name: '', // Will be filled by trigger
-          status: 'not_started',
-          completion_percentage: 0,
-          started_at: null,
-          completed_at: null,
-          last_activity_at: new Date().toISOString()
-        }))
-
-        const { error: enrollError } = await (supabaseClient as any)
+        const { error: enrollError } = await supabaseClient
           .from('course_enrollments')
-          .upsert(enrollments, {
-            onConflict: 'employee_id,module_id',
-            ignoreDuplicates: true
+          .insert({
+            user_id: user_id,
+            corporate_account_id: null,
+            module_id: module_id,
+            purchase_type: 'individual',
+            purchased_at: new Date().toISOString(),
+            purchase_price_snapshot: parseFloat(price),
+            progress_percentage: 0,
+            completed: false
           })
 
         if (enrollError) {
-          console.error('❌ Error enrolling employees:', enrollError)
+          console.error('❌ Error enrolling individual user:', enrollError)
         } else {
-          console.log(`✅ Enrolled ${employees.length} employees in module ${module_id}`)
+          console.log(`✅ Enrolled individual user in module ${module_id}`)
+        }
+      } else {
+        // CORPORATE PURCHASE: Enroll all employees
+        console.log(`🏢 Enrolling corporate employees for account: ${corporate_account_id}`)
+
+        // Fetch all employees for this corporate account
+        const { data: employees, error: employeesError } = await supabaseClient
+          .from('profiles')
+          .select('id')
+          .eq('corporate_account_id', corporate_account_id)
+          .eq('is_corporate_user', true)
+
+        if (employeesError) {
+          console.error('❌ Error fetching employees:', employeesError)
+          continue
+        }
+
+        console.log(`👥 Found ${employees?.length || 0} employees to enroll`)
+
+        if (employees && employees.length > 0) {
+          const enrollments = employees.map((employee: any) => ({
+            user_id: employee.id, // Using user_id (renamed from employee_id in Phase 2)
+            corporate_account_id: corporate_account_id,
+            module_id: module_id,
+            purchase_type: 'corporate',
+            purchased_at: new Date().toISOString(),
+            purchase_price_snapshot: parseFloat(price),
+            progress_percentage: 0,
+            completed: false
+          }))
+
+          const { error: enrollError } = await supabaseClient
+            .from('course_enrollments')
+            .upsert(enrollments, {
+              onConflict: 'user_id,module_id',
+              ignoreDuplicates: true
+            })
+
+          if (enrollError) {
+            console.error('❌ Error enrolling employees:', enrollError)
+          } else {
+            console.log(`✅ Enrolled ${employees.length} employees in module ${module_id}`)
+          }
         }
       }
     }
 
-    // 4. Clear the cart
-    const { error: clearCartError } = await supabaseClient
-      .from('cart_items')
-      .delete()
-      .eq('corporate_account_id', corporate_account_id)
+    // 3. Clear the cart (based on purchase type)
+    let clearCartQuery = supabaseClient.from('cart_items').delete()
+
+    if (isIndividual) {
+      clearCartQuery = clearCartQuery.eq('user_id', user_id)
+    } else {
+      clearCartQuery = clearCartQuery.eq('corporate_account_id', corporate_account_id!)
+    }
+
+    const { error: clearCartError } = await clearCartQuery
 
     if (clearCartError) {
       console.error('❌ Error clearing cart:', clearCartError)
@@ -137,7 +172,7 @@ async function handleModulePurchase(session: Stripe.Checkout.Session) {
       console.log('✅ Cart cleared')
     }
 
-    console.log('🎉 Module purchase completed successfully')
+    console.log(`🎉 ${isIndividual ? 'Individual' : 'Corporate'} module purchase completed successfully`)
   } catch (error) {
     console.error('💥 Error in handleModulePurchase:', error)
   }

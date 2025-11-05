@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase-server'
-import { NextResponse } from 'next/server'
+import { createAdminClient } from '@/lib/supabase-admin'
+import { ApiResponse } from '@/lib/api-responses'
 import Stripe from 'stripe'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -9,48 +10,45 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 // POST /api/cart/checkout - Create Stripe checkout session
 export async function POST() {
   try {
+    // Auth check
     const supabase = await createClient()
-    
-    // Get current user
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized - Please log in' },
-        { status: 401 }
-      )
+      return ApiResponse.unauthorized()
     }
 
-    // Get user profile
-    const { data: profile } = await supabase
+    // Use admin client to bypass RLS
+    const adminClient = createAdminClient()
+
+    // Get user profile to determine user type
+    const { data: profile } = await adminClient
       .from('profiles')
       .select('corporate_account_id, corporate_role, email, full_name')
       .eq('id', user.id)
       .single()
 
-    if (!profile?.corporate_account_id || profile?.corporate_role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Only corporate admins can checkout' },
-        { status: 403 }
-      )
-    }
+    // Determine if user is corporate admin or individual
+    const isCorporate = profile?.corporate_role === 'admin' && profile?.corporate_account_id
 
-    // Get corporate account details
-    const { data: corporateAccount } = await supabase
-      .from('corporate_accounts')
-      .select('company_name, id')
-      .eq('id', profile.corporate_account_id)
-      .single()
-
-    if (!corporateAccount) {
-      return NextResponse.json(
-        { error: 'Corporate account not found' },
-        { status: 404 }
-      )
+    // Get corporate account details (if corporate)
+    let corporateAccount = null
+    if (isCorporate) {
+      const { data } = await adminClient
+        .from('corporate_accounts')
+        .select('company_name, id')
+        .eq('id', profile.corporate_account_id!)
+        .single()
+      
+      corporateAccount = data
+      
+      if (!corporateAccount) {
+        return ApiResponse.notFound('Corporate account')
+      }
     }
 
     // Fetch cart items with module details
-    const { data: cartItems, error: cartError } = await supabase
+    let cartQuery = adminClient
       .from('cart_items')
       .select(`
         id,
@@ -66,41 +64,43 @@ export async function POST() {
           price_per_50_employees
         )
       `)
-      .eq('corporate_account_id', profile.corporate_account_id)
+
+    // Filter by owner type
+    if (isCorporate) {
+      cartQuery = cartQuery.eq('corporate_account_id', profile.corporate_account_id!)
+    } else {
+      cartQuery = cartQuery.eq('user_id', user.id)
+    }
+
+    const { data: cartItems, error: cartError } = await cartQuery
 
     if (cartError || !cartItems || cartItems.length === 0) {
-      return NextResponse.json(
-        { error: 'Cart is empty or failed to fetch' },
-        { status: 400 }
-      )
+      return ApiResponse.badRequest('Cart is empty or failed to fetch')
     }
 
     // Calculate line items for Stripe
     const lineItems = cartItems.map((item: any) => {
       const module = item.marketplace_modules
-      const packs = Math.ceil(item.employee_count / 50)
-      const totalPrice = module.base_price_mxn + ((packs - 1) * module.price_per_50_employees)
+      const description = isCorporate
+        ? `${item.employee_count} empleado${item.employee_count > 1 ? 's' : ''} - ${module.description?.substring(0, 100) || ''}`
+        : `Acceso personal - ${module.description?.substring(0, 100) || ''}`
 
       return {
         price_data: {
           currency: 'mxn',
           product_data: {
             name: module.title,
-            description: `${item.employee_count} empleados - ${module.description?.substring(0, 100) || ''}`,
+            description,
             images: module.thumbnail_url ? [module.thumbnail_url] : []
           },
-          unit_amount: Math.round(totalPrice * 100) // Convert to cents
+          unit_amount: Math.round(item.price_snapshot * 100) // Use price_snapshot (already calculated)
         },
         quantity: 1
       }
     })
 
-    // Calculate total
-    const totalAmount = cartItems.reduce((sum: number, item: any) => {
-      const module = item.marketplace_modules
-      const packs = Math.ceil(item.employee_count / 50)
-      return sum + (module.base_price_mxn + ((packs - 1) * module.price_per_50_employees))
-    }, 0)
+    // Calculate total from price_snapshot
+    const totalAmount = cartItems.reduce((sum: number, item: any) => sum + item.price_snapshot, 0)
 
     // Prepare metadata for webhook
     const cartMetadata = cartItems.map((item: any) => ({
@@ -113,30 +113,28 @@ export async function POST() {
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       line_items: lineItems,
-      customer_email: profile.email || user.email,
-      client_reference_id: profile.corporate_account_id,
+      customer_email: profile?.email || user.email,
+      client_reference_id: isCorporate ? profile.corporate_account_id : user.id,
       metadata: {
         type: 'module_purchase',
-        corporate_account_id: profile.corporate_account_id,
         user_id: user.id,
-        company_name: corporateAccount.company_name,
+        purchase_type: isCorporate ? 'corporate' : 'individual', // NEW: Critical for webhook!
+        corporate_account_id: isCorporate ? profile.corporate_account_id : null,
+        company_name: corporateAccount?.company_name || null,
         cart_items: JSON.stringify(cartMetadata),
         total_amount: totalAmount.toString()
       },
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/corporate/dashboard?purchase=success`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/corporate/checkout?cancelled=true`
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?purchase=success`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/marketplace?cancelled=true`
     })
 
-    return NextResponse.json({
+    return ApiResponse.ok({
       url: session.url,
       sessionId: session.id
     })
   } catch (error: any) {
     console.error('Error creating checkout session:', error)
-    return NextResponse.json(
-      { error: 'Failed to create checkout session', details: error.message },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Failed to create checkout session', error.message)
   }
 }
 
