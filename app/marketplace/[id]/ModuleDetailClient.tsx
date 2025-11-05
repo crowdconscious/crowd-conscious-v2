@@ -1,25 +1,46 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { 
   ArrowLeft, Star, Users, Clock, TrendingUp, CheckCircle, 
   Award, BookOpen, Target, Sparkles, ShoppingCart 
 } from 'lucide-react'
 import CartButton from '../../components/cart/CartButton'
+import { useUser } from '@/app/contexts/UserContext'
 
 interface ModuleDetailClientProps {
   module: any
 }
 
 export default function ModuleDetailClient({ module }: ModuleDetailClientProps) {
-  const [employeeCount, setEmployeeCount] = useState(50)
+  const { user, profile } = useUser()
+  
+  // Determine if user is corporate admin
+  const isCorporate = profile?.corporate_role === 'admin' && profile?.corporate_account_id
+  
+  // Set initial employee count based on user type
+  const [employeeCount, setEmployeeCount] = useState(isCorporate ? 50 : 1)
   const [showAddToCart, setShowAddToCart] = useState(false)
   const [addingToCart, setAddingToCart] = useState(false)
 
+  // Calculate price using Phase 1 pricing logic
   const calculatePrice = () => {
+    // Individual pricing (1 person)
+    if (employeeCount === 1) {
+      return module.individual_price_mxn || Math.round(module.base_price_mxn / 50)
+    }
+    
+    // Team pricing (2-20 people)
+    if (employeeCount <= 20) {
+      const pricePerPerson = Math.round(module.base_price_mxn / 50)
+      const discount = module.team_discount_percent || 10
+      return Math.round(pricePerPerson * employeeCount * (100 - discount) / 100)
+    }
+    
+    // Corporate pricing (50+ people, pack-based)
     const packs = Math.ceil(employeeCount / 50)
-    return module.price * packs
+    return module.base_price_mxn + ((packs - 1) * module.price_per_50_employees)
   }
 
   const calculatePricePerEmployee = () => {
@@ -165,31 +186,46 @@ export default function ModuleDetailClient({ module }: ModuleDetailClientProps) 
             <div className="lg:col-span-1">
               <div className="bg-white rounded-2xl shadow-2xl p-6 sticky top-24">
                 <div className="text-center mb-6">
-                  <div className="text-4xl font-bold text-slate-900 mb-1">
-                    ${(calculatePrice() / 1000).toFixed(0)}k MXN
-                  </div>
-                  <div className="text-sm text-slate-600">
-                    ${calculatePricePerEmployee()} MXN por empleado
-                  </div>
+                  {employeeCount === 1 ? (
+                    <>
+                      <div className="text-4xl font-bold text-slate-900 mb-1">
+                        ${calculatePrice().toLocaleString()} MXN
+                      </div>
+                      <div className="text-sm text-slate-600">
+                        Acceso personal
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-4xl font-bold text-slate-900 mb-1">
+                        ${(calculatePrice() / 1000).toFixed(0)}k MXN
+                      </div>
+                      <div className="text-sm text-slate-600">
+                        ${calculatePricePerEmployee()} MXN por empleado
+                      </div>
+                    </>
+                  )}
                 </div>
 
-                {/* Employee Count Selector */}
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Número de Empleados
-                  </label>
-                  <input
-                    type="number"
-                    value={employeeCount}
-                    onChange={(e) => setEmployeeCount(Math.max(1, parseInt(e.target.value) || 1))}
-                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-purple-600 focus:outline-none text-center text-lg font-bold"
-                    min="1"
-                    step="1"
-                  />
-                  <div className="text-xs text-slate-500 mt-2 text-center">
-                    {Math.ceil(employeeCount / 50)} paquete(s) de 50 empleados
+                {/* Employee Count Selector - Only for corporate users */}
+                {isCorporate && (
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Número de Empleados
+                    </label>
+                    <input
+                      type="number"
+                      value={employeeCount}
+                      onChange={(e) => setEmployeeCount(Math.max(1, parseInt(e.target.value) || 1))}
+                      className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-purple-600 focus:outline-none text-center text-lg font-bold"
+                      min="1"
+                      step="1"
+                    />
+                    <div className="text-xs text-slate-500 mt-2 text-center">
+                      {Math.ceil(employeeCount / 50)} paquete(s) de 50 empleados
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* CTA Buttons */}
                 <div className="space-y-3">

@@ -76,8 +76,17 @@ export async function GET(
       enrollments: module.enrollment_count || 0,
       duration: module.estimated_duration_hours,
       lessonCount: module.lesson_count || module.lessons?.length || 0,
+      
+      // Pricing data (Phase 1 - Universal Marketplace)
+      base_price_mxn: module.base_price_mxn,
+      price_per_50_employees: module.price_per_50_employees,
+      individual_price_mxn: module.individual_price_mxn,
+      team_discount_percent: module.team_discount_percent || 10,
+      
+      // Legacy fields (for backwards compatibility)
       price: module.base_price_mxn,
       pricePerEmployee: Math.round(module.base_price_mxn / 50),
+      
       featured: module.featured,
       isPlatformModule: module.is_platform_module,
       thumbnailUrl: module.thumbnail_url,
