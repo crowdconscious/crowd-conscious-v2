@@ -181,39 +181,60 @@ SET purchase_type = 'corporate'
 WHERE purchase_type IS NULL OR purchase_type = 'corporate';
 
 -- ============================================================================
--- STEP 9: Create view for user dashboard
+-- STEP 9: Create view for user dashboard (DYNAMIC)
 -- ============================================================================
 -- Unified view for all user types to see their modules
+-- This dynamically checks which column name exists (employee_id vs user_id)
 
-CREATE OR REPLACE VIEW user_enrolled_modules AS
-SELECT 
-  e.id AS enrollment_id,
-  e.user_id,
-  e.module_id,
-  e.corporate_account_id,
-  e.purchase_type,
-  e.created_at AS enrollment_date,
-  e.purchased_at,
-  e.completion_percentage AS progress,
-  CASE WHEN e.status = 'completed' THEN true ELSE false END AS completed,
-  e.completed_at AS completion_date,
-  NULL::TEXT AS certificate_url, -- Will be added later when certification system is integrated
-  e.module_name AS module_title,
-  NULL::TEXT AS module_description, -- module_id is TEXT, not UUID reference
-  NULL::TEXT AS thumbnail_url,
-  NULL::INTEGER AS estimated_duration_hours,
-  NULL::TEXT AS difficulty_level,
-  NULL::TEXT AS core_value,
-  CASE 
-    WHEN e.corporate_account_id IS NOT NULL THEN 'corporate'
-    ELSE 'individual'
-  END AS access_type,
-  e.status,
-  e.time_spent_minutes
-FROM course_enrollments e;
+DO $$
+DECLARE
+  user_col_name TEXT;
+BEGIN
+  -- Check which column exists
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'course_enrollments' AND column_name = 'user_id'
+  ) THEN
+    user_col_name := 'user_id';
+  ELSE
+    user_col_name := 'employee_id';
+  END IF;
+
+  -- Create view with correct column name
+  EXECUTE format('
+    CREATE OR REPLACE VIEW user_enrolled_modules AS
+    SELECT 
+      e.id AS enrollment_id,
+      e.%I AS user_id,
+      e.module_id,
+      e.corporate_account_id,
+      COALESCE(e.purchase_type, ''corporate'') AS purchase_type,
+      e.created_at AS enrollment_date,
+      e.purchased_at,
+      COALESCE(e.completion_percentage, 0) AS progress,
+      CASE WHEN e.status = ''completed'' THEN true ELSE false END AS completed,
+      e.completed_at AS completion_date,
+      NULL::TEXT AS certificate_url,
+      COALESCE(e.module_name, ''Unknown Module'') AS module_title,
+      NULL::TEXT AS module_description,
+      NULL::TEXT AS thumbnail_url,
+      NULL::INTEGER AS estimated_duration_hours,
+      NULL::TEXT AS difficulty_level,
+      NULL::TEXT AS core_value,
+      CASE 
+        WHEN e.corporate_account_id IS NOT NULL THEN ''corporate''
+        ELSE ''individual''
+      END AS access_type,
+      COALESCE(e.status, ''not_started'') AS status,
+      COALESCE(e.time_spent_minutes, 0) AS time_spent_minutes
+    FROM course_enrollments e
+  ', user_col_name);
+
+  RAISE NOTICE 'Created user_enrolled_modules view using column: %', user_col_name;
+END $$;
 
 COMMENT ON VIEW user_enrolled_modules IS
-'Unified view of all user enrollments (individual + corporate). Note: module_id is TEXT, not a foreign key to marketplace_modules';
+'Unified view of all user enrollments (individual + corporate). Dynamically handles employee_id/user_id column.';
 
 -- Grant access to authenticated users
 GRANT SELECT ON user_enrolled_modules TO authenticated;
