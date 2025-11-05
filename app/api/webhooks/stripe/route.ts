@@ -92,19 +92,18 @@ async function handleModulePurchase(session: Stripe.Checkout.Session) {
         // INDIVIDUAL PURCHASE: Enroll just the user
         console.log(`👤 Enrolling individual user: ${user_id}`)
 
-        const enrollmentData: Database['public']['Tables']['course_enrollments']['Insert'] = {
+        const enrollmentData = {
           user_id: user_id,
           corporate_account_id: null,
           module_id: module_id,
-          purchase_type: 'individual' as const,
+          purchase_type: 'individual',
           purchased_at: new Date().toISOString(),
           purchase_price_snapshot: parseFloat(price),
           progress_percentage: 0,
           completed: false
         }
 
-        // @ts-ignore - Type inference issue with Supabase client in build environment
-        const { error: enrollError } = await supabaseClient
+        const { error: enrollError } = await (supabaseClient as any)
           .from('course_enrollments')
           .insert(enrollmentData)
 
@@ -132,19 +131,18 @@ async function handleModulePurchase(session: Stripe.Checkout.Session) {
         console.log(`👥 Found ${employees?.length || 0} employees to enroll`)
 
         if (employees && employees.length > 0) {
-          const enrollments: Database['public']['Tables']['course_enrollments']['Insert'][] = employees.map((employee: any) => ({
+          const enrollments = employees.map((employee: any) => ({
             user_id: employee.id, // Using user_id (renamed from employee_id in Phase 2)
             corporate_account_id: corporate_account_id,
             module_id: module_id,
-            purchase_type: 'corporate' as const,
+            purchase_type: 'corporate',
             purchased_at: new Date().toISOString(),
             purchase_price_snapshot: parseFloat(price),
             progress_percentage: 0,
             completed: false
           }))
 
-          // @ts-ignore - Type inference issue with Supabase client in build environment
-          const { error: enrollError } = await supabaseClient
+          const { error: enrollError } = await (supabaseClient as any)
             .from('course_enrollments')
             .upsert(enrollments, {
               onConflict: 'user_id,module_id',
