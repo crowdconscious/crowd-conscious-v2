@@ -31,7 +31,7 @@ export default function Footer() {
       careers: "Carreras",
       description: "Conectando comunidades con marcas para crear impacto social y ambiental medible.",
       rights: "Todos los derechos reservados.",
-      platformFee: "Comisión de plataforma: 15% en todas las transacciones",
+      platformFee: "Modelo de ingresos: 30% plataforma, 50% comunidad, 20% creador en módulos educativos",
       madeIn: "Hecho con ❤️ en México"
     },
     en: {
@@ -52,7 +52,7 @@ export default function Footer() {
       careers: "Careers",
       description: "Connecting communities with brands to create measurable social and environmental impact.",
       rights: "All rights reserved.",
-      platformFee: "Platform fee: 15% on all transactions",
+      platformFee: "Revenue model: 30% platform, 50% community, 20% creator on educational modules",
       madeIn: "Made with ❤️ in Mexico"
     }
   }

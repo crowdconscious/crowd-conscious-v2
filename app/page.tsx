@@ -227,6 +227,96 @@ export default async function LandingPage() {
       {/* Live Impact Counters */}
       <ImpactCounters stats={impactStats} />
 
+      {/* Mission & How It Works */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6">
+              How Crowd Conscious Works
+            </h2>
+            <p className="text-xl text-slate-600 max-w-3xl mx-auto">
+              We connect communities with the resources and learning tools they need to create measurable impact
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 mb-16">
+            {/* Community Impact Platform */}
+            <div className="bg-gradient-to-br from-teal-50 to-teal-100 rounded-2xl p-8 border-2 border-teal-200">
+              <div className="w-14 h-14 bg-teal-600 rounded-xl flex items-center justify-center mb-4">
+                <span className="text-2xl">🌍</span>
+              </div>
+              <h3 className="text-2xl font-bold text-slate-900 mb-3">Community Platform</h3>
+              <p className="text-slate-700 mb-4">
+                Communities post needs, receive sponsorships, and track their impact with transparent governance.
+              </p>
+              <ul className="space-y-2 text-sm text-slate-600">
+                <li className="flex items-center gap-2">
+                  <span className="text-teal-600">✓</span> Post community needs
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-teal-600">✓</span> Receive brand sponsorships
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-teal-600">✓</span> Transparent voting system
+                </li>
+              </ul>
+            </div>
+
+            {/* Learning Marketplace */}
+            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-8 border-2 border-purple-200">
+              <div className="w-14 h-14 bg-purple-600 rounded-xl flex items-center justify-center mb-4">
+                <span className="text-2xl">📚</span>
+              </div>
+              <h3 className="text-2xl font-bold text-slate-900 mb-3">Learn & Earn</h3>
+              <p className="text-slate-700 mb-4">
+                Individuals and organizations access educational modules created by communities, creating a sustainable revenue stream.
+              </p>
+              <ul className="space-y-2 text-sm text-slate-600">
+                <li className="flex items-center gap-2">
+                  <span className="text-purple-600">✓</span> Browse educational modules
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-purple-600">✓</span> Learn from real communities
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-purple-600">✓</span> Earn certificates
+                </li>
+              </ul>
+            </div>
+
+            {/* Creator Economy */}
+            <div className="bg-gradient-to-br from-pink-50 to-pink-100 rounded-2xl p-8 border-2 border-pink-200">
+              <div className="w-14 h-14 bg-pink-600 rounded-xl flex items-center justify-center mb-4">
+                <span className="text-2xl">💰</span>
+              </div>
+              <h3 className="text-2xl font-bold text-slate-900 mb-3">Creator Economy</h3>
+              <p className="text-slate-700 mb-4">
+                Communities monetize their knowledge by creating educational content, with revenue split transparently.
+              </p>
+              <ul className="space-y-2 text-sm text-slate-600">
+                <li className="flex items-center gap-2">
+                  <span className="text-pink-600">✓</span> 50% to community wallet
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-pink-600">✓</span> 20% to individual creator
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-pink-600">✓</span> 30% platform sustainability
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Vision Statement */}
+          <div className="bg-gradient-to-r from-teal-600 to-purple-600 rounded-3xl p-8 md:p-12 text-white text-center">
+            <h3 className="text-3xl md:text-4xl font-bold mb-4">Our Vision</h3>
+            <p className="text-xl text-teal-100 max-w-3xl mx-auto leading-relaxed">
+              Transform how companies and communities create lasting social impact by connecting organizational learning with grassroots action. Every training dollar becomes sustainable funding for real community change.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Active Communities Carousel */}
       <section className="py-20 bg-gradient-to-b from-white to-slate-50">
         <div className="max-w-7xl mx-auto px-4">
