@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 
 // Initialize Stripe lazily to avoid build-time errors
@@ -19,9 +19,9 @@ function getStripe(): Stripe {
 }
 
 // Initialize Supabase lazily to avoid build-time errors
-let supabase: ReturnType<typeof createClient<Database>> | null = null
+let supabase: SupabaseClient<Database> | null = null
 
-function getSupabase() {
+function getSupabase(): SupabaseClient<Database> {
   if (!supabase) {
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
       throw new Error('Supabase environment variables are not set')
