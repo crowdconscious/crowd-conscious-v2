@@ -1550,6 +1550,7 @@ Based on our Phase 1 implementation experience, here are critical lessons to avo
 **Problem**: Supabase client losing Database schema types in lazy initialization or different build environments.
 
 **Symptom**:
+
 ```
 Type error: No overload matches this call.
 Argument of type 'X' is not assignable to parameter of type 'never'.
@@ -1558,38 +1559,41 @@ Argument of type 'X' is not assignable to parameter of type 'never'.
 **Solutions (in order of preference)**:
 
 1. **Cast the entire Supabase client as `any` for insert/upsert operations**:
+
    ```typescript
    // Works reliably across all build environments
-   await (supabaseClient as any)
-     .from('course_enrollments')
-     .insert(data)
+   await (supabaseClient as any).from("course_enrollments").insert(data);
    ```
 
 2. **Explicitly type data before insert** (less reliable):
+
    ```typescript
-   const enrollmentData: Database['public']['Tables']['course_enrollments']['Insert'] = {
-     user_id: user_id,
-     module_id: module_id,
-     // ... rest of data
-   }
-   
-   await supabaseClient.from('course_enrollments').insert(enrollmentData)
+   const enrollmentData: Database["public"]["Tables"]["course_enrollments"]["Insert"] =
+     {
+       user_id: user_id,
+       module_id: module_id,
+       // ... rest of data
+     };
+
+   await supabaseClient.from("course_enrollments").insert(enrollmentData);
    ```
 
 3. **Ensure Database type is imported and applied to client**:
+
    ```typescript
-   import { SupabaseClient } from '@supabase/supabase-js'
-   import type { Database } from '@/types/database'
-   
-   let supabase: SupabaseClient<Database> | null = null
-   
+   import { SupabaseClient } from "@supabase/supabase-js";
+   import type { Database } from "@/types/database";
+
+   let supabase: SupabaseClient<Database> | null = null;
+
    function getSupabase(): SupabaseClient<Database> {
      // ... initialization
-     return supabase
+     return supabase;
    }
    ```
 
 **❌ What DOESN'T Work**:
+
 - `@ts-ignore` comments (Next.js may strip these during build)
 - Type assertions on individual fields
 - Assuming local types work the same in Vercel's build environment
@@ -1603,6 +1607,7 @@ Argument of type 'X' is not assignable to parameter of type 'never'.
 **Symptom**: All tables resolve to `never` type, causing widespread type errors.
 
 **Example of BAD indentation**:
+
 ```typescript
 export interface Database {
   public: {
@@ -1619,6 +1624,7 @@ export interface Database {
 ```
 
 **Correct indentation**:
+
 ```typescript
 export interface Database {
   public: {
@@ -1635,6 +1641,7 @@ export interface Database {
 ```
 
 **Best Practice**:
+
 - Use a formatter (Prettier) with consistent settings
 - Regenerate types from Supabase CLI when adding tables:
   ```bash
@@ -1647,13 +1654,16 @@ export interface Database {
 
 **Problem**: Adding new database tables but forgetting to update `types/database.ts`.
 
-**Symptom**: 
+**Symptom**:
+
 ```
 Property 'table_name' does not exist on type 'Database["public"]["Tables"]'
 ```
 
 **Solution**:
+
 1. After running SQL migrations in Supabase, ALWAYS regenerate types:
+
    ```bash
    npx supabase gen types typescript --project-id YOUR_PROJECT_ID > types/database.ts
    ```
@@ -1667,26 +1677,29 @@ Property 'table_name' does not exist on type 'Database["public"]["Tables"]'
 #### **Issue 4: `as any` Type Assertions**
 
 **When to Use**:
+
 - ✅ Supabase operations where type inference fails in build
 - ✅ Quick fixes for deployment blockers
 - ✅ Webhook handlers with dynamic data
 
 **When NOT to Use**:
+
 - ❌ Business logic calculations
 - ❌ Data validation
 - ❌ Public API responses
 - ❌ As a permanent solution (document with TODO to fix properly)
 
 **Best Practice**:
+
 ```typescript
 // ✅ GOOD: Explain why, add TODO
 // TODO: Remove 'as any' once Supabase types are fixed in build
 const { error } = await (supabaseClient as any)
-  .from('course_enrollments')
-  .insert(enrollmentData)
+  .from("course_enrollments")
+  .insert(enrollmentData);
 
 // ❌ BAD: Silent type bypassing
-const result = await (client as any).from('table').select()
+const result = await (client as any).from("table").select();
 ```
 
 ---
@@ -1696,17 +1709,19 @@ const result = await (client as any).from('table').select()
 Based on our cart/checkout implementation:
 
 1. **Always validate user type early**:
+
    ```typescript
-   const { user } = await supabase.auth.getUser()
-   if (!user) return ApiResponse.unauthorized()
-   
+   const { user } = await supabase.auth.getUser();
+   if (!user) return ApiResponse.unauthorized();
+
    const { data: profile } = await adminClient
-     .from('profiles')
-     .select('corporate_account_id, corporate_role')
-     .eq('id', user.id)
-     .single()
-   
-   const isCorporate = profile?.corporate_role === 'admin' && profile?.corporate_account_id
+     .from("profiles")
+     .select("corporate_account_id, corporate_role")
+     .eq("id", user.id)
+     .single();
+
+   const isCorporate =
+     profile?.corporate_role === "admin" && profile?.corporate_account_id;
    ```
 
 2. **Use shared utilities** (DRY principle):
@@ -1715,14 +1730,15 @@ Based on our cart/checkout implementation:
    - `lib/pricing.ts` - Price calculations
 
 3. **Never expose service role key to client**:
+
    ```typescript
    // ❌ NEVER do this
-   const client = createClient(url, process.env.SUPABASE_SERVICE_ROLE_KEY)
-   
+   const client = createClient(url, process.env.SUPABASE_SERVICE_ROLE_KEY);
+
    // ✅ Only in API routes (server-side)
    // app/api/*/route.ts
-   import { createAdminClient } from '@/lib/supabase-admin'
-   const adminClient = createAdminClient() // Safe!
+   import { createAdminClient } from "@/lib/supabase-admin";
+   const adminClient = createAdminClient(); // Safe!
    ```
 
 4. **Always include metadata in Stripe sessions**:
@@ -1740,10 +1756,11 @@ Based on our cart/checkout implementation:
 ### **Frontend Best Practices**
 
 1. **Adapt UI to user type**:
+
    ```typescript
    const { user, profile } = useUser()
    const isCorporate = profile?.corporate_role === 'admin'
-   
+
    return (
      <>
        {isCorporate ? (
@@ -1756,6 +1773,7 @@ Based on our cart/checkout implementation:
    ```
 
 2. **Use optimistic UI updates**:
+
    ```typescript
    const handleAddToCart = async () => {
      setLoading(true) // Show loading immediately
@@ -1776,11 +1794,11 @@ Based on our cart/checkout implementation:
    if (response.ok) {
      // Success
    } else if (response.status === 401) {
-     alert('Please log in')
+     alert("Please log in");
    } else if (response.status === 409) {
-     alert('Already owned')
+     alert("Already owned");
    } else {
-     alert(data.error || 'Unknown error')
+     alert(data.error || "Unknown error");
    }
    ```
 

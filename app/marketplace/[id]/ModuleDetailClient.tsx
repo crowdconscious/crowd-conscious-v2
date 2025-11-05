@@ -7,20 +7,53 @@ import {
   Award, BookOpen, Target, Sparkles, ShoppingCart 
 } from 'lucide-react'
 import CartButton from '../../components/cart/CartButton'
-import { useUser } from '@/app/contexts/UserContext'
+import { createClient } from '@/lib/supabase-client'
 
 interface ModuleDetailClientProps {
   module: any
 }
 
 export default function ModuleDetailClient({ module }: ModuleDetailClientProps) {
-  const { user, profile } = useUser()
+  const [user, setUser] = useState<any>(null)
+  const [profile, setProfile] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  
+  // Fetch user and profile data
+  useEffect(() => {
+    async function fetchUserData() {
+      const supabase = createClient()
+      
+      const { data: { user: currentUser } } = await supabase.auth.getUser()
+      setUser(currentUser)
+      
+      if (currentUser) {
+        const { data: userProfile } = await supabase
+          .from('profiles')
+          .select('corporate_account_id, corporate_role')
+          .eq('id', currentUser.id)
+          .single()
+        
+        setProfile(userProfile)
+      }
+      
+      setLoading(false)
+    }
+    
+    fetchUserData()
+  }, [])
   
   // Determine if user is corporate admin
   const isCorporate = profile?.corporate_role === 'admin' && profile?.corporate_account_id
   
   // Set initial employee count based on user type
   const [employeeCount, setEmployeeCount] = useState(isCorporate ? 50 : 1)
+  
+  // Update employee count when user type is determined
+  useEffect(() => {
+    if (!loading) {
+      setEmployeeCount(isCorporate ? 50 : 1)
+    }
+  }, [isCorporate, loading])
   const [showAddToCart, setShowAddToCart] = useState(false)
   const [addingToCart, setAddingToCart] = useState(false)
 
