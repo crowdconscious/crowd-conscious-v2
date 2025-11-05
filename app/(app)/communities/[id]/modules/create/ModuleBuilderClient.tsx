@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, Trash2, GripVertical, Save, Eye, Upload, Sparkles, BookOpen, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
@@ -94,6 +94,72 @@ export default function ModuleBuilderClient({
   const [saving, setSaving] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
+  
+  // Template state
+  const [templates, setTemplates] = useState<any[]>([])
+  const [loadingTemplates, setLoadingTemplates] = useState(true)
+  const [showTemplates, setShowTemplates] = useState(true)
+
+  // Fetch templates on mount
+  useEffect(() => {
+    async function fetchTemplates() {
+      try {
+        const response = await fetch('/api/marketplace/templates')
+        const data = await response.json()
+        
+        if (response.ok) {
+          setTemplates(data.templates || [])
+          console.log('✅ Loaded', data.count, 'template(s)')
+        } else {
+          console.error('❌ Failed to load templates:', data.error)
+        }
+      } catch (error) {
+        console.error('💥 Error fetching templates:', error)
+      } finally {
+        setLoadingTemplates(false)
+      }
+    }
+    
+    fetchTemplates()
+  }, [])
+
+  // Function to use a template
+  const useTemplate = (template: any) => {
+    const mappedLessons = (template.lessons || [])
+      .sort((a: any, b: any) => a.lesson_number - b.lesson_number)
+      .map((lesson: any) => ({
+        id: `lesson-${Date.now()}-${Math.random()}`,
+        title: lesson.title || '',
+        description: lesson.content || '',
+        estimatedMinutes: lesson.estimated_minutes || 30,
+        xpReward: lesson.xp_reward || 250,
+        storyIntro: '',
+        keyPoints: lesson.key_points || [''],
+        activityType: 'reflection',
+        toolsUsed: [],
+        resources: []
+      }))
+
+    setModule({
+      title: `${template.title} - Mi Versión`,
+      description: template.description || '',
+      coreValue: template.core_value || 'clean_air',
+      difficulty: template.difficulty_level || 'beginner',
+      estimatedHours: template.estimated_duration_hours || 8,
+      xpReward: template.xp_reward || 1000,
+      thumbnailUrl: '',
+      industryTags: [],
+      basePriceMxn: template.base_price_mxn || 5000,
+      pricePer50: template.price_per_50_employees || 4000,
+      lessons: mappedLessons
+    })
+    
+    setShowTemplates(false)
+    setMessage({ type: 'success', text: `Plantilla "${template.title}" cargada! Personaliza el contenido.` })
+    
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   const addLesson = () => {
     const newLesson: Lesson = {
@@ -345,6 +411,63 @@ export default function ModuleBuilderClient({
         {currentStep === 'info' && (
           <div className="bg-white rounded-2xl shadow-xl p-8 space-y-6">
             <h2 className="text-2xl font-bold text-slate-900 mb-6">Información del Módulo</h2>
+
+            {/* Templates Section */}
+            {showTemplates && !loadingTemplates && templates.length > 0 && (
+              <div className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-xl p-6 mb-8">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-6 h-6 text-purple-600" />
+                    <h3 className="text-xl font-bold text-purple-900">
+                      🚀 Comenzar con Plantilla
+                    </h3>
+                  </div>
+                  <button
+                    onClick={() => setShowTemplates(false)}
+                    className="text-sm text-slate-600 hover:text-slate-900"
+                  >
+                    Crear desde cero →
+                  </button>
+                </div>
+                
+                <p className="text-slate-700 mb-4">
+                  Usa una plantilla pre-construida para acelerar la creación y seguir mejores prácticas
+                </p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {templates.map((template) => (
+                    <button
+                      key={template.id}
+                      onClick={() => useTemplate(template)}
+                      className="bg-white border-2 border-purple-300 hover:border-purple-500 rounded-lg p-4 text-left transition-all hover:shadow-lg hover:scale-105"
+                    >
+                      <div className="font-bold text-purple-900 mb-1">
+                        {template.title}
+                      </div>
+                      <div className="text-sm text-slate-600 mb-2 line-clamp-2">
+                        {template.description?.substring(0, 100)}...
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-slate-500">
+                        <span>📚 {template.lessons?.length || 0} lecciones</span>
+                        <span>⏱️ {template.estimated_duration_hours}h</span>
+                        <span>⚡ {template.xp_reward} XP</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {!showTemplates && templates.length > 0 && (
+              <div className="text-center mb-4">
+                <button
+                  onClick={() => setShowTemplates(true)}
+                  className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+                >
+                  ← Volver a plantillas
+                </button>
+              </div>
+            )}
 
             <div className="grid md:grid-cols-2 gap-6">
               {/* Title */}
