@@ -100,10 +100,10 @@ export default function ModuleDetailClient({ module }: ModuleDetailClientProps) 
         setTimeout(() => setShowAddToCart(false), 3000)
         console.log('✅ Added to cart:', data)
       } else {
-        if (response.status === 401 || response.status === 403) {
-          alert('Por favor inicia sesión como administrador corporativo para agregar al carrito.')
-        } else if (data.error?.includes('already owned')) {
-          alert('Tu empresa ya posee este módulo.')
+        if (response.status === 401) {
+          alert('Por favor inicia sesión para agregar al carrito.')
+        } else if (data.error?.includes('already owned') || data.error?.includes('You already own')) {
+          alert('Ya posees este módulo.')
         } else {
           alert(data.error || 'Error al agregar al carrito')
         }
