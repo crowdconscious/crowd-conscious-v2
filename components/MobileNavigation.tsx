@@ -8,12 +8,19 @@ import { supabaseClient } from '@/lib/supabase-client'
 export default function MobileNavigation() {
   const pathname = usePathname()
   const [corporateLink, setCorporateLink] = useState('/concientizaciones')
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
   
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
         const { data: { user } } = await supabaseClient.auth.getUser()
-        if (!user) return
+        
+        if (!user) {
+          setIsLoggedIn(false)
+          return
+        }
+
+        setIsLoggedIn(true)
 
         const { data: profileData } = await supabaseClient
           .from('profiles')
@@ -30,6 +37,9 @@ export default function MobileNavigation() {
           setCorporateLink('/corporate/dashboard')
         } else if (isCorporate && profile?.corporate_role === 'employee') {
           setCorporateLink('/employee-portal/dashboard')
+        } else {
+          // Logged-in individual users go to marketplace
+          setCorporateLink('/marketplace')
         }
       } catch (error) {
         console.error('Error fetching profile:', error)

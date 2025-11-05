@@ -85,6 +85,53 @@ export interface Database {
           created_at?: string
         }
       }
+      course_enrollments: {
+        Row: {
+          id: string
+          user_id: string
+          corporate_account_id: string | null
+          module_id: string
+          purchase_type: 'individual' | 'corporate' | 'team' | 'enterprise' | 'gift'
+          purchased_at: string | null
+          purchase_price_snapshot: number | null
+          progress_percentage: number
+          completed: boolean
+          completion_date: string | null
+          certificate_url: string | null
+          enrolled_at: string
+          last_accessed_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          corporate_account_id?: string | null
+          module_id: string
+          purchase_type?: 'individual' | 'corporate' | 'team' | 'enterprise' | 'gift'
+          purchased_at?: string | null
+          purchase_price_snapshot?: number | null
+          progress_percentage?: number
+          completed?: boolean
+          completion_date?: string | null
+          certificate_url?: string | null
+          enrolled_at?: string
+          last_accessed_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          corporate_account_id?: string | null
+          module_id?: string
+          purchase_type?: 'individual' | 'corporate' | 'team' | 'enterprise' | 'gift'
+          purchased_at?: string | null
+          purchase_price_snapshot?: number | null
+          progress_percentage?: number
+          completed?: boolean
+          completion_date?: string | null
+          certificate_url?: string | null
+          enrolled_at?: string
+          last_accessed_at?: string | null
+        }
+      }
       community_members: {
         Row: {
           id: string

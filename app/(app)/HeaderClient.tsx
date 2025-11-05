@@ -87,11 +87,13 @@ export default function HeaderClient({ user }: HeaderClientProps) {
                     ? '/corporate/dashboard'
                     : (userProfile?.is_corporate_user === true || userProfile?.is_corporate_user === 'true') && userProfile?.corporate_role === 'employee'
                     ? '/employee-portal/dashboard'
-                    : '/concientizaciones'
+                    : user
+                    ? '/marketplace'  // Logged-in users go directly to marketplace
+                    : '/concientizaciones'  // Visitors see landing page
                 }
                 className="text-slate-600 dark:text-slate-300 hover:text-purple-600 font-medium flex items-center gap-1"
               >
-                🎓 Corporate Training
+                {user ? '📚 Learn & Earn' : '🎓 Corporate Training'}
               </Link>
               {/* Admin Link */}
               {userProfile?.user_type === 'admin' && (

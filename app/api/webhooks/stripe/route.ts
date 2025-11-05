@@ -102,7 +102,7 @@ async function handleModulePurchase(session: Stripe.Checkout.Session) {
             purchase_price_snapshot: parseFloat(price),
             progress_percentage: 0,
             completed: false
-          } as any) // Type assertion: DB types not yet regenerated after Phase 2 migration
+          })
 
         if (enrollError) {
           console.error('❌ Error enrolling individual user:', enrollError)
@@ -141,7 +141,7 @@ async function handleModulePurchase(session: Stripe.Checkout.Session) {
 
           const { error: enrollError } = await supabaseClient
             .from('course_enrollments')
-            .upsert(enrollments as any, { // Type assertion: DB types not yet regenerated after Phase 2 migration
+            .upsert(enrollments, {
               onConflict: 'user_id,module_id',
               ignoreDuplicates: true
             })
