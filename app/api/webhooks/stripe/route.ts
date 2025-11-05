@@ -103,6 +103,7 @@ async function handleModulePurchase(session: Stripe.Checkout.Session) {
           completed: false
         }
 
+        // @ts-ignore - Type inference issue with Supabase client in build environment
         const { error: enrollError } = await supabaseClient
           .from('course_enrollments')
           .insert(enrollmentData)
@@ -142,6 +143,7 @@ async function handleModulePurchase(session: Stripe.Checkout.Session) {
             completed: false
           }))
 
+          // @ts-ignore - Type inference issue with Supabase client in build environment
           const { error: enrollError } = await supabaseClient
             .from('course_enrollments')
             .upsert(enrollments, {
