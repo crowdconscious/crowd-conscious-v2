@@ -181,41 +181,58 @@ SET purchase_type = 'corporate'
 WHERE purchase_type IS NULL OR purchase_type = 'corporate';
 
 -- ============================================================================
--- STEP 9: Create view for user dashboard (DYNAMIC)
+-- STEP 9: Create view for user dashboard (FULLY DYNAMIC)
 -- ============================================================================
--- Unified view for all user types to see their modules
--- This dynamically checks which column name exists (employee_id vs user_id)
+-- Unified view that adapts to whatever columns actually exist
 
 DO $$
 DECLARE
-  user_col_name TEXT;
+  user_col TEXT;
+  module_id_col TEXT;
+  module_name_col TEXT;
+  status_col TEXT;
+  completion_col TEXT;
+  purchase_type_col TEXT;
+  purchased_at_col TEXT;
+  time_spent_col TEXT;
+  view_sql TEXT;
 BEGIN
-  -- Check which column exists
-  IF EXISTS (
-    SELECT 1 FROM information_schema.columns 
-    WHERE table_name = 'course_enrollments' AND column_name = 'user_id'
-  ) THEN
-    user_col_name := 'user_id';
-  ELSE
-    user_col_name := 'employee_id';
-  END IF;
+  -- Detect which columns exist
+  SELECT 
+    CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'course_enrollments' AND column_name = 'user_id') 
+      THEN 'user_id' ELSE 'employee_id' END,
+    CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'course_enrollments' AND column_name = 'module_id') 
+      THEN 'module_id' ELSE NULL END,
+    CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'course_enrollments' AND column_name = 'module_name') 
+      THEN 'module_name' ELSE NULL END,
+    CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'course_enrollments' AND column_name = 'status') 
+      THEN 'status' ELSE NULL END,
+    CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'course_enrollments' AND column_name = 'completion_percentage') 
+      THEN 'completion_percentage' ELSE NULL END,
+    CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'course_enrollments' AND column_name = 'purchase_type') 
+      THEN 'purchase_type' ELSE NULL END,
+    CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'course_enrollments' AND column_name = 'purchased_at') 
+      THEN 'purchased_at' ELSE NULL END,
+    CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'course_enrollments' AND column_name = 'time_spent_minutes') 
+      THEN 'time_spent_minutes' ELSE NULL END
+  INTO user_col, module_id_col, module_name_col, status_col, completion_col, purchase_type_col, purchased_at_col, time_spent_col;
 
-  -- Create view with correct column name
-  EXECUTE format('
+  -- Build view SQL dynamically based on what exists
+  view_sql := format('
     CREATE OR REPLACE VIEW user_enrolled_modules AS
     SELECT 
       e.id AS enrollment_id,
       e.%I AS user_id,
-      e.module_id,
+      %s AS module_id,
       e.corporate_account_id,
-      COALESCE(e.purchase_type, ''corporate'') AS purchase_type,
+      %s AS purchase_type,
       e.created_at AS enrollment_date,
-      e.purchased_at,
-      COALESCE(e.completion_percentage, 0) AS progress,
-      CASE WHEN e.status = ''completed'' THEN true ELSE false END AS completed,
+      %s AS purchased_at,
+      %s AS progress,
+      %s AS completed,
       e.completed_at AS completion_date,
       NULL::TEXT AS certificate_url,
-      COALESCE(e.module_name, ''Unknown Module'') AS module_title,
+      %s AS module_title,
       NULL::TEXT AS module_description,
       NULL::TEXT AS thumbnail_url,
       NULL::INTEGER AS estimated_duration_hours,
@@ -225,16 +242,29 @@ BEGIN
         WHEN e.corporate_account_id IS NOT NULL THEN ''corporate''
         ELSE ''individual''
       END AS access_type,
-      COALESCE(e.status, ''not_started'') AS status,
-      COALESCE(e.time_spent_minutes, 0) AS time_spent_minutes
+      %s AS status,
+      %s AS time_spent_minutes
     FROM course_enrollments e
-  ', user_col_name);
+  ',
+    user_col,
+    COALESCE('e.' || module_id_col, 'NULL::TEXT'),
+    COALESCE('COALESCE(e.' || purchase_type_col || ', ''corporate'')', '''corporate'''),
+    COALESCE('e.' || purchased_at_col, 'NULL::TIMESTAMPTZ'),
+    COALESCE('COALESCE(e.' || completion_col || ', 0)', '0'),
+    COALESCE('CASE WHEN e.' || status_col || ' = ''completed'' THEN true ELSE false END', 'false'),
+    COALESCE('COALESCE(e.' || module_name_col || ', ''Unknown Module'')', '''Unknown Module'''),
+    COALESCE('COALESCE(e.' || status_col || ', ''not_started'')', '''not_started'''),
+    COALESCE('COALESCE(e.' || time_spent_col || ', 0)', '0')
+  );
 
-  RAISE NOTICE 'Created user_enrolled_modules view using column: %', user_col_name;
+  EXECUTE view_sql;
+
+  RAISE NOTICE 'Created user_enrolled_modules view with detected columns';
+  RAISE NOTICE 'User column: %, Module ID: %, Module Name: %', user_col, module_id_col, module_name_col;
 END $$;
 
 COMMENT ON VIEW user_enrolled_modules IS
-'Unified view of all user enrollments (individual + corporate). Dynamically handles employee_id/user_id column.';
+'Unified view of all user enrollments. Dynamically adapts to available columns in course_enrollments table.';
 
 -- Grant access to authenticated users
 GRANT SELECT ON user_enrolled_modules TO authenticated;
