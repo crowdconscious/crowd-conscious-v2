@@ -35,8 +35,8 @@ export interface Database {
           created_at?: string
         }
       }
-        communities: {
-          Row: {
+      communities: {
+        Row: {
             id: string
             name: string
             slug: string
