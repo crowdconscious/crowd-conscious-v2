@@ -42,10 +42,17 @@ BEGIN
     SELECT 1 FROM information_schema.columns 
     WHERE table_name = 'course_enrollments' AND column_name = 'employee_id'
   ) THEN
+    -- Drop existing indexes that reference employee_id
+    DROP INDEX IF EXISTS idx_enrollments_employee;
+    
+    -- Rename the column
     ALTER TABLE course_enrollments
     RENAME COLUMN employee_id TO user_id;
     
-    RAISE NOTICE 'Renamed employee_id to user_id';
+    -- Recreate index with new column name
+    CREATE INDEX IF NOT EXISTS idx_enrollments_user ON course_enrollments(user_id);
+    
+    RAISE NOTICE 'Renamed employee_id to user_id and updated indexes';
   ELSE
     RAISE NOTICE 'Column employee_id does not exist or already renamed';
   END IF;
@@ -185,28 +192,28 @@ SELECT
   e.module_id,
   e.corporate_account_id,
   e.purchase_type,
-  e.enrollment_date,
+  e.created_at AS enrollment_date,
   e.purchased_at,
-  e.progress,
-  e.completed,
-  e.completion_date,
-  e.certificate_url,
-  m.title AS module_title,
-  m.description AS module_description,
-  m.thumbnail_url,
-  m.estimated_duration_hours,
-  m.difficulty_level,
-  m.core_value,
+  e.completion_percentage AS progress,
+  CASE WHEN e.status = 'completed' THEN true ELSE false END AS completed,
+  e.completed_at AS completion_date,
+  NULL::TEXT AS certificate_url, -- Will be added later when certification system is integrated
+  e.module_name AS module_title,
+  NULL::TEXT AS module_description, -- module_id is TEXT, not UUID reference
+  NULL::TEXT AS thumbnail_url,
+  NULL::INTEGER AS estimated_duration_hours,
+  NULL::TEXT AS difficulty_level,
+  NULL::TEXT AS core_value,
   CASE 
     WHEN e.corporate_account_id IS NOT NULL THEN 'corporate'
     ELSE 'individual'
-  END AS access_type
-FROM course_enrollments e
-JOIN marketplace_modules m ON e.module_id = m.id
-WHERE m.status = 'published';
+  END AS access_type,
+  e.status,
+  e.time_spent_minutes
+FROM course_enrollments e;
 
 COMMENT ON VIEW user_enrolled_modules IS
-'Unified view of all user enrollments (individual + corporate) with module details';
+'Unified view of all user enrollments (individual + corporate). Note: module_id is TEXT, not a foreign key to marketplace_modules';
 
 -- Grant access to authenticated users
 GRANT SELECT ON user_enrolled_modules TO authenticated;
