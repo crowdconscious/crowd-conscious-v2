@@ -1580,11 +1580,330 @@ When reviews are created, updated, or deleted.
 
 ---
 
+## 📖 **Course Architecture & Learning Design Philosophy**
+
+### **Overview**
+
+Crowd Conscious courses are **story-driven, emotionally engaging, and action-oriented**. Every module follows a narrative arc with recurring characters, real-world scenarios, and interactive challenges that drive measurable impact.
+
+### **Quality Standards**
+
+All platform modules must meet these standards:
+
+✅ **Story-Driven Learning**: Characters, conflict, resolution  
+✅ **Multi-Sensory Content**: Video, audio, interactive tools, photo challenges  
+✅ **Adaptive Storytelling**: Content adapts based on industry, location, company size  
+✅ **Real-World Activities**: Every lesson includes actionable mini-projects  
+✅ **Community Integration**: Lessons connect workplace learning to neighborhood impact  
+✅ **Emotional Connection**: Users should feel empathy, urgency, and hope  
+✅ **Measurable Outcomes**: Every module produces documented results  
+
+---
+
+### **The Master Story: "The Factory Next Door"**
+
+All modules are chapters in an overarching narrative that follows these characters:
+
+#### **Recurring Characters**
+
+1. **María** - Factory employee, single mother  
+   - Perspective: Worker seeing impact on family and neighborhood
+   - Arc: From passive worker to community catalyst
+
+2. **Don Roberto** - Neighbor, retired teacher  
+   - Perspective: Community elder witnessing change
+   - Arc: From skeptical observer to active supporter
+
+3. **Carlos** - New sustainability manager  
+   - Perspective: Corporate leadership learning to balance business and impact
+   - Arc: From numbers-focused to people-focused leader
+
+4. **Lupita** - Local shop owner  
+   - Perspective: Small business affected by corporate neighbors
+   - Arc: From struggling entrepreneur to partnership beneficiary
+
+5. **The Factory** - Personified as a character  
+   - Perspective: The organization itself "waking up"
+   - Arc: From invisible polluter to community partner
+
+#### **Narrative Structure Per Module**
+
+Each module follows this arc:
+
+```
+ACT 1: The Problem (Lessons 1-2)
+- Character discovers an issue affecting them personally
+- Emotional hook: Health, safety, money, or relationships at stake
+- Interactive: Users audit their own workplace/neighborhood
+
+ACT 2: Understanding & Solutions (Lessons 3-4)
+- Character learns root causes and potential solutions
+- Expert insights presented through character dialogue
+- Interactive: Users calculate ROI, map systems, interview neighbors
+
+ACT 3: Action & Impact (Lesson 5)
+- Character implements solutions with community
+- Measurable results shown
+- Interactive: Users commit to specific actions with timelines
+
+EPILOGUE: Progress Check-In (After 30 days)
+- Follow-up notification shows characters' progress
+- Users share their own progress
+- Unlock next module chapter
+```
+
+---
+
+### **Adaptive Storytelling System**
+
+Content adapts based on company profile:
+
+#### **Industry Adaptations**
+
+**Manufacturing/Factory** (Default):
+- María works on production line
+- Focus: Emissions, waste, worker safety
+- Neighbors: Affected by noise, air quality, truck traffic
+
+**Office Building**:
+- María becomes accountant/office worker
+- Focus: Energy use, e-waste, commuting
+- Neighbors: Affected by parking, lunch waste
+
+**Restaurant/Retail**:
+- María is server/cashier
+- Focus: Food waste, packaging, grease disposal
+- Neighbors: Affected by trash, delivery trucks
+
+**Construction**:
+- María is site manager
+- Focus: Material waste, dust, noise
+- Neighbors: Affected by construction debris, safety
+
+#### **Location Adaptations**
+
+**Urban**: Dense neighborhood, air quality focus  
+**Suburban**: Commute focus, water runoff  
+**Rural**: Land use, agricultural impact
+
+#### **Size Adaptations**
+
+**Micro (1-10 employees)**: Personal responsibility stories  
+**Small (11-50)**: Team collaboration stories  
+**Medium (51-200)**: Department coordination stories  
+**Large (200+)**: Cross-functional transformation stories
+
+---
+
+### **Interactive Elements (Required Per Lesson)**
+
+Every lesson must include **at least 3** of these:
+
+1. **Measurement Activities**
+   - Air quality monitoring
+   - Water usage audits
+   - Waste stream mapping
+   - Energy consumption tracking
+
+2. **Calculation Tools**
+   - Carbon footprint calculator
+   - Cost savings projector
+   - ROI estimator
+   - Impact multiplier
+
+3. **Photo Challenges**
+   - "Spot the emissions"
+   - "Find the waste"
+   - "Map the dark spots"
+   - Before/after documentation
+
+4. **Community Engagement**
+   - Neighbor interview templates
+   - Anonymous surveys
+   - WhatsApp group creation
+   - Joint planning sessions
+
+5. **Design Thinking**
+   - Problem mapping exercises
+   - Solution brainstorming prompts
+   - Prototype testing frameworks
+   - Iteration worksheets
+
+6. **Gamification**
+   - Points for completing activities
+   - Badges for milestones
+   - Leaderboards (company vs company)
+   - Team challenges
+
+---
+
+### **Mini-Projects (Deliverables)**
+
+Each module requires **3-5 mini-projects** that produce tangible outputs:
+
+**Examples**:
+- Install air quality monitoring station
+- Create water-saving device inventory
+- Design safe route map with neighbors
+- Launch waste exchange program
+- Pilot local supplier program
+
+**Deliverable Format**:
+- Photos/videos of implementation
+- Before/after measurements
+- Cost analysis
+- Community feedback
+- Timeline for scaling
+
+---
+
+### **Certification Requirements**
+
+Courses lead to **verified certification** at 3 levels:
+
+#### **Conscious Participant** (Bronze)
+- ✅ Complete 3 modules
+- ✅ 50% employee participation
+- ✅ 1 project implemented
+- ✅ Impact documented
+- ⏱️ Timeline: 3 months
+
+#### **Conscious Contributor** (Silver)
+- ✅ Complete 5 modules
+- ✅ 75% employee participation
+- ✅ 3 projects implemented
+- ✅ 2 community partnerships formed
+- ✅ 10% measurable reduction (emissions, waste, etc.)
+- ⏱️ Timeline: 6 months
+
+#### **Conscious Leader** (Gold)
+- ✅ All 6 modules completed
+- ✅ 90% employee participation
+- ✅ 5+ projects implemented
+- ✅ Verified community impact
+- ✅ Continuous improvement program
+- ⏱️ Timeline: 12 months
+
+---
+
+### **Content Production Standards**
+
+#### **Story Content**
+
+Each lesson's story section must include:
+
+```json
+{
+  "story_content": {
+    "opening": "Character-driven scene (200-300 words)",
+    "conflict": "Problem introduced with emotional stakes",
+    "dialogue": [
+      "Character quotes that reveal information naturally",
+      "3-5 exchanges per lesson"
+    ],
+    "resolution_preview": "Hint at solution without spoiling",
+    "cliffhanger": "Hook for next lesson"
+  }
+}
+```
+
+#### **Learning Content**
+
+```json
+{
+  "learning_objectives": [
+    "Specific, measurable objective 1",
+    "Specific, measurable objective 2"
+  ],
+  "key_points": [
+    "Core concept 1 with data/statistic",
+    "Core concept 2 with real example",
+    "Core concept 3 with local context"
+  ],
+  "did_you_know": [
+    "Surprising fact that creates urgency",
+    "Local statistic that makes it personal",
+    "Success story that inspires hope"
+  ],
+  "real_world_example": {
+    "company": "Named Mexican company",
+    "challenge": "Specific problem they faced",
+    "solution": "What they implemented",
+    "results": "Measurable outcomes with numbers",
+    "source": "Verifiable citation"
+  }
+}
+```
+
+#### **Activity Content**
+
+```json
+{
+  "activity_type": "audit | calculation | photo_challenge | interview | design | commitment",
+  "activity_config": {
+    "title": "Clear, action-oriented title",
+    "instructions": [
+      "Step 1: Specific action",
+      "Step 2: Specific action",
+      "Step 3: Specific action"
+    ],
+    "required_evidence": ["Photo", "Measurement", "Document"],
+    "time_estimate": "15-30 minutes",
+    "tools_needed": ["Phone camera", "Calculator", "Notepad"],
+    "success_criteria": "What completion looks like"
+  },
+  "activity_required": true,
+  "reflection_prompts": [
+    "What surprised you most?",
+    "What's one action you can take this week?",
+    "Who else needs to be involved?"
+  ]
+}
+```
+
+---
+
+### **Technical Implementation in Database**
+
+All content should be stored in `module_lessons` with:
+
+- `story_content` (JSONB) - Full narrative with characters
+- `learning_objectives` (ARRAY) - Specific learning goals
+- `key_points` (ARRAY) - Core concepts
+- `did_you_know` (ARRAY) - Engaging facts
+- `real_world_example` (TEXT) - Case study
+- `activity_type` (TEXT) - Type of interaction
+- `activity_config` (JSONB) - Full activity structure
+- `tools_used` (ARRAY) - Interactive tools/calculators
+- `resources` (JSONB) - Downloads, links, templates
+- `next_steps` (ARRAY) - Actions after completing lesson
+
+---
+
+### **Quality Assurance Checklist**
+
+Before publishing any module, verify:
+
+- [ ] Story introduces conflict in first 2 minutes
+- [ ] Characters have distinct voices and motivations
+- [ ] Every lesson has emotional moment (hope, urgency, empathy)
+- [ ] At least 3 interactive elements per lesson
+- [ ] All statistics cited with sources
+- [ ] Activities produce measurable deliverables
+- [ ] Content adapts to at least 3 industry types
+- [ ] Community integration is clear and actionable
+- [ ] Success stories are real and verifiable
+- [ ] Next steps are specific with timelines
+- [ ] XP rewards align with effort required
+- [ ] Mobile-friendly (all content works on phone)
+
+---
+
 ## 📚 **Platform Modules (6 Core Modules)**
 
 ### **Overview**
 
-Crowd Conscious offers **6 professionally-developed platform modules** covering core sustainability and social impact topics. These modules serve as templates and benchmarks for community-created content.
+Crowd Conscious offers **6 professionally-developed platform modules** covering core sustainability and social impact topics. These modules serve as templates and benchmarks for community-created content. **All modules follow the story-driven architecture defined above.**
 
 ### **Module Catalog**
 
