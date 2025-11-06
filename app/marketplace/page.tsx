@@ -45,6 +45,7 @@ const MOCK_MODULES = [
     enrollments: 1250,
     duration: 8,
     price: 18000,
+    individualPrice: 360,
     featured: true,
     thumbnailUrl: null
   },
@@ -61,6 +62,7 @@ const MOCK_MODULES = [
     enrollments: 890,
     duration: 6,
     price: 18000,
+    individualPrice: 360,
     featured: true,
     thumbnailUrl: null
   },
@@ -77,6 +79,7 @@ const MOCK_MODULES = [
     enrollments: 650,
     duration: 10,
     price: 18000,
+    individualPrice: 360,
     featured: false,
     thumbnailUrl: null
   },
@@ -93,6 +96,7 @@ const MOCK_MODULES = [
     enrollments: 420,
     duration: 12,
     price: 18000,
+    individualPrice: 360,
     featured: false,
     thumbnailUrl: null
   },
