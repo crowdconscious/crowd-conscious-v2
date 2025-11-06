@@ -197,7 +197,7 @@ export async function GET(request: NextRequest) {
       
       supabase
         .from('profiles')
-        .select('id, email, full_name, user_type, created_at')
+        .select('id, full_name, user_type, created_at')
         .order('created_at', { ascending: false })
         .limit(50)
     ])

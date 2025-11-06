@@ -26,7 +26,7 @@ interface AdminData {
   }>
   users: Array<{
     id: string
-    email: string
+    email?: string
     full_name: string
     user_type: string
     created_at: string
