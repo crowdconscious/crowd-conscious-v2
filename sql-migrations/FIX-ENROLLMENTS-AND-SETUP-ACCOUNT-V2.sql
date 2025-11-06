@@ -1,10 +1,7 @@
 -- =====================================================
--- FIX ENROLLMENTS SCHEMA & SETUP FRANCISCO'S ACCOUNT
+-- FIX ENROLLMENTS SCHEMA & SETUP FRANCISCO'S ACCOUNT (V2)
 -- =====================================================
--- This script:
--- 1. Adds module_id column to course_enrollments
--- 2. Creates corporate account for Francisco
--- 3. Enrolls him in all marketplace modules
+-- Handles duplicate admin users and existing constraints
 -- =====================================================
 
 -- STEP 1: Add module_id column if it doesn't exist
@@ -24,7 +21,7 @@ BEGIN
   END IF;
 END $$;
 
--- STEP 2: Ensure corporate_accounts table exists and has correct structure
+-- STEP 2: Ensure corporate_accounts table exists
 CREATE TABLE IF NOT EXISTS corporate_accounts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   company_name TEXT NOT NULL,
@@ -35,20 +32,53 @@ CREATE TABLE IF NOT EXISTS corporate_accounts (
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Add unique constraint on admin_user_id if it doesn't exist
+-- STEP 3: Clean up duplicate admin users (keep the most recent one)
 DO $$
+DECLARE
+  v_duplicate_count INTEGER;
 BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint 
-    WHERE conname = 'unique_admin_user'
-  ) THEN
-    ALTER TABLE corporate_accounts 
-    ADD CONSTRAINT unique_admin_user UNIQUE(admin_user_id);
-    RAISE NOTICE '✅ Added unique constraint on admin_user_id';
+  -- Find duplicates and delete all but the most recent
+  WITH duplicates AS (
+    SELECT 
+      admin_user_id,
+      id,
+      ROW_NUMBER() OVER (PARTITION BY admin_user_id ORDER BY created_at DESC) as rn
+    FROM corporate_accounts
+    WHERE admin_user_id IS NOT NULL
+  )
+  DELETE FROM corporate_accounts
+  WHERE id IN (
+    SELECT id FROM duplicates WHERE rn > 1
+  );
+
+  GET DIAGNOSTICS v_duplicate_count = ROW_COUNT;
+  
+  IF v_duplicate_count > 0 THEN
+    RAISE NOTICE '✅ Removed % duplicate corporate account(s)', v_duplicate_count;
+  ELSE
+    RAISE NOTICE 'ℹ️  No duplicate corporate accounts found';
   END IF;
 END $$;
 
--- STEP 3: Add corporate fields to profiles if missing
+-- STEP 4: Add unique constraint (safe now that duplicates are removed)
+DO $$
+BEGIN
+  -- Drop constraint if it exists (to ensure clean state)
+  IF EXISTS (
+    SELECT 1 FROM pg_constraint 
+    WHERE conname = 'unique_admin_user'
+  ) THEN
+    ALTER TABLE corporate_accounts DROP CONSTRAINT unique_admin_user;
+    RAISE NOTICE 'ℹ️  Dropped existing unique_admin_user constraint';
+  END IF;
+
+  -- Add it fresh
+  ALTER TABLE corporate_accounts 
+  ADD CONSTRAINT unique_admin_user UNIQUE(admin_user_id);
+  RAISE NOTICE '✅ Added unique constraint on admin_user_id';
+END $$;
+
+-- STEP 5: Add corporate fields to profiles if missing
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -78,7 +108,7 @@ BEGIN
   END IF;
 END $$;
 
--- STEP 4: Setup Francisco's corporate account and enroll in all modules
+-- STEP 6: Setup Francisco's corporate account and enroll in all modules
 DO $$
 DECLARE
   v_user_id UUID;
