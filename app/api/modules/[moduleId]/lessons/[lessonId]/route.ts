@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerAuth } from '@/lib/auth-server'
+import { createClient } from '@supabase/supabase-js'
 
 // Disable caching - always fetch fresh lesson data
 export const dynamic = 'force-dynamic'
@@ -11,9 +11,20 @@ export async function GET(
 ) {
   try {
     const { moduleId, lessonId } = await context.params
-    const supabase = await createServerAuth()
+    
+    // Use admin client to bypass RLS
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    )
 
-    console.log(`🔍 Fetching lesson: module=${moduleId}, lesson=${lessonId}`)
+    console.log(`🔍 API: Fetching lesson: module=${moduleId}, lesson=${lessonId}`)
 
     // Fetch the lesson from database
     const { data: lesson, error } = await supabase
@@ -36,10 +47,12 @@ export async function GET(
       .single()
 
     if (error || !lesson) {
-      console.error('❌ Lesson not found:', error)
+      console.error('❌ API: Lesson not found:', error)
+      console.error('❌ API: Searched for moduleId:', moduleId, 'lessonId:', lessonId)
       return NextResponse.json({ 
         error: 'Lesson not found',
-        details: error?.message 
+        details: error?.message,
+        searched: { moduleId, lessonId }
       }, { status: 404 })
     }
 
@@ -103,12 +116,14 @@ export async function GET(
       quiz: lesson.quiz_questions || null
     }
 
+    console.log('✅ API: Lesson fetched successfully:', lesson.title)
     return NextResponse.json({ lesson: transformedLesson, module })
 
   } catch (error) {
-    console.error('❌ API error:', error)
+    console.error('❌ API: Critical error in lesson fetch:', error)
     return NextResponse.json({ 
-      error: 'Failed to fetch lesson' 
+      error: 'Failed to fetch lesson',
+      details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 })
   }
 }
