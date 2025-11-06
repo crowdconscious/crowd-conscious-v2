@@ -1,6 +1,10 @@
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
+// Disable caching - always fetch fresh module data
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export async function GET() {
   try {
     // Use service role key to bypass RLS for public marketplace view
