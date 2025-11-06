@@ -45,13 +45,13 @@ export default function ModuleDetailClient({ module }: ModuleDetailClientProps) 
   // Determine if user is corporate admin
   const isCorporate = profile?.corporate_role === 'admin' && profile?.corporate_account_id
   
-  // Set initial employee count based on user type
-  const [employeeCount, setEmployeeCount] = useState(isCorporate ? 50 : 1)
+  // Set initial employee count based on user type - ALWAYS DEFAULT TO 1
+  const [employeeCount, setEmployeeCount] = useState(1)
   
   // Update employee count when user type is determined
   useEffect(() => {
     if (!loading) {
-      setEmployeeCount(isCorporate ? 50 : 1)
+      setEmployeeCount(1) // Always start at 1
     }
   }, [isCorporate, loading])
   const [showAddToCart, setShowAddToCart] = useState(false)

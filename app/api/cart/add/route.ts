@@ -29,7 +29,7 @@ export async function POST(request: Request) {
 
     // Parse request body
     const body = await request.json()
-    const { moduleId, employeeCount = (isCorporate ? 50 : 1) } = body
+    const { moduleId, employeeCount = 1 } = body // DEFAULT TO 1 ALWAYS
 
     // Validation
     if (!moduleId) {

@@ -502,10 +502,10 @@ export default function MarketplacePage() {
                           <div>
                             <div className="text-sm text-slate-600">Desde</div>
                             <div className="text-2xl font-bold text-slate-900">
-                              ${(module.price / 1000).toFixed(0)}k
+                              ${module.individualPrice || 360}
                               <span className="text-sm text-slate-600 font-normal"> MXN</span>
                             </div>
-                            <div className="text-xs text-slate-500">50 empleados</div>
+                            <div className="text-xs text-slate-500">por persona</div>
                           </div>
                           <Link
                             href={`/marketplace/${module.id}`}
