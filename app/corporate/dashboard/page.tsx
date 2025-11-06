@@ -49,28 +49,30 @@ export default async function CorporateDashboard() {
     .select('*', { count: 'exact', head: true })
     .eq('corporate_account_id', profile?.corporate_account_id)
 
-  // Get admin's enrolled modules - use same query as stats
+  // Get user's enrolled modules - SIMPLE: if user has enrollments, show them
   const { data: rawEnrollments } = await supabase
     .from('course_enrollments')
     .select('*')
-    .eq('corporate_account_id', profile?.corporate_account_id)
     .eq('user_id', user.id)
     .not('module_id', 'is', null)
 
   // Get module details separately
-  let adminEnrollments: any[] = []
+  let userEnrollments: any[] = []
   if (rawEnrollments && rawEnrollments.length > 0) {
-    const moduleIds = rawEnrollments.map(e => e.module_id)
-    const { data: modules } = await supabase
-      .from('marketplace_modules')
-      .select('id, title, slug, thumbnail_url, difficulty_level, estimated_duration_hours')
-      .in('id', moduleIds)
+    const moduleIds = rawEnrollments.map(e => e.module_id).filter(Boolean) // Remove nulls
+    
+    if (moduleIds.length > 0) {
+      const { data: modules } = await supabase
+        .from('marketplace_modules')
+        .select('id, title, slug, thumbnail_url, difficulty_level, estimated_duration_hours')
+        .in('id', moduleIds)
 
-    // Combine enrollments with module data
-    adminEnrollments = rawEnrollments.map(enrollment => ({
-      ...enrollment,
-      marketplace_modules: modules?.find(m => m.id === enrollment.module_id) || null
-    })).filter(e => e.marketplace_modules !== null)
+      // Combine enrollments with module data
+      userEnrollments = rawEnrollments.map(enrollment => ({
+        ...enrollment,
+        marketplace_modules: modules?.find(m => m.id === enrollment.module_id) || null
+      })).filter(e => e.marketplace_modules !== null)
+    }
   }
 
   const stats = [
@@ -128,21 +130,21 @@ export default async function CorporateDashboard() {
         </Link>
       </div>
 
-      {/* Admin's Enrolled Courses - ALWAYS show if admin has enrollments */}
-      {adminEnrollments && adminEnrollments.length > 0 ? (
+      {/* User's Enrolled Courses - Show to EVERYONE with enrollments */}
+      {userEnrollments && userEnrollments.length > 0 ? (
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-lg sm:text-xl font-bold text-slate-900">Mis Cursos</h3>
               <p className="text-sm text-slate-600 mt-1">
-                Tienes {adminEnrollments.length} módulo{adminEnrollments.length !== 1 ? 's' : ''} disponible{adminEnrollments.length !== 1 ? 's' : ''}
+                Tienes {userEnrollments.length} módulo{userEnrollments.length !== 1 ? 's' : ''} disponible{userEnrollments.length !== 1 ? 's' : ''}
               </p>
             </div>
             <BookOpen className="w-8 h-8 text-purple-500" />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {adminEnrollments.map((enrollment: any) => {
+            {userEnrollments.map((enrollment: any) => {
               const module = enrollment.marketplace_modules
               const progress = enrollment.completion_percentage || 0
               const isCompleted = enrollment.status === 'completed'
@@ -315,19 +317,19 @@ export default async function CorporateDashboard() {
 
               {/* Link to take courses as learner */}
               <Link
-                href={(adminEnrollments && adminEnrollments.length > 0 && adminEnrollments[0].marketplace_modules) 
-                  ? `/marketplace/${adminEnrollments[0].marketplace_modules.slug || adminEnrollments[0].marketplace_modules.id}` 
+                href={(userEnrollments && userEnrollments.length > 0 && userEnrollments[0].marketplace_modules) 
+                  ? `/marketplace/${userEnrollments[0].marketplace_modules.slug || userEnrollments[0].marketplace_modules.id}` 
                   : "/marketplace"}
                 className="p-4 border-2 border-purple-300 rounded-lg bg-gradient-to-br from-purple-50 to-pink-50 hover:border-purple-500 hover:shadow-lg transition-all group min-h-[100px] flex flex-col"
               >
                 <BookOpen className="w-7 h-7 sm:w-8 sm:h-8 text-purple-500 group-hover:text-purple-600 mb-2" />
                 <div className="font-medium text-slate-900 text-sm sm:text-base flex items-center gap-1">
-                  {(adminEnrollments && adminEnrollments.length > 0) ? 'Tomar el Curso' : 'Explorar Marketplace'}
+                  {(userEnrollments && userEnrollments.length > 0) ? 'Tomar el Curso' : 'Explorar Marketplace'}
                   <span className="text-xs bg-purple-600 text-white px-1.5 py-0.5 rounded-full">TÚ</span>
                 </div>
                 <div className="text-xs sm:text-sm text-purple-700 mt-1">
-                  {(adminEnrollments && adminEnrollments.length > 0 && adminEnrollments[0].marketplace_modules) 
-                    ? `Inscríbete en ${adminEnrollments[0].marketplace_modules.title}`
+                  {(userEnrollments && userEnrollments.length > 0 && userEnrollments[0].marketplace_modules) 
+                    ? `Inscríbete en ${userEnrollments[0].marketplace_modules.title}`
                     : 'Agregar más módulos'}
                 </div>
               </Link>
