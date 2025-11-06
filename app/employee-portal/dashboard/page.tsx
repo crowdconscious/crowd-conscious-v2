@@ -18,12 +18,12 @@ export default async function EmployeeDashboard() {
     .eq('id', user.id)
     .single()
 
-  // Get enrollments with course details
+  // Get enrollments with module details
   const { data: enrollments } = await supabase
     .from('course_enrollments')
     .select(`
       *,
-      course:courses(
+      module:marketplace_modules(
         id,
         title,
         description,
@@ -31,14 +31,14 @@ export default async function EmployeeDashboard() {
         slug
       )
     `)
-    .eq('employee_id', user.id)
-    .order('created_at', { ascending: false })
+    .eq('user_id', user.id)
+    .order('enrolled_at', { ascending: false })
 
   const totalModules = enrollments?.length || 0
-  const completedModules = enrollments?.filter(e => e.status === 'completed').length || 0
-  const inProgressModules = enrollments?.filter(e => e.status === 'in_progress').length || 0
+  const completedModules = enrollments?.filter(e => e.completed).length || 0
+  const inProgressModules = enrollments?.filter(e => !e.completed && (e.progress_percentage || 0) > 0).length || 0
   const averageProgress = totalModules > 0
-    ? Math.round(enrollments!.reduce((sum, e) => sum + (e.completion_percentage || 0), 0) / totalModules)
+    ? Math.round(enrollments!.reduce((sum, e) => sum + (e.progress_percentage || 0), 0) / totalModules)
     : 0
 
   // Get certifications
@@ -222,15 +222,15 @@ export default async function EmployeeDashboard() {
         {enrollments && enrollments.length > 0 ? (
           <div className="space-y-3 sm:space-y-4">
             {enrollments.map((enrollment: any) => {
-              // Get course info from the joined data or fallback to moduleInfo
-              const courseData = enrollment.course
-              const coreValue = courseData?.core_value || 'unknown'
+              // Get module info from the joined data or fallback to moduleInfo
+              const moduleData = enrollment.module
+              const coreValue = moduleData?.core_value || 'unknown'
               const info = moduleInfo[coreValue] || {
-                name: courseData?.title || 'Módulo de capacitación',
+                name: moduleData?.title || 'Módulo de capacitación',
                 icon: '📚',
-                description: courseData?.description || 'Módulo de capacitación',
+                description: moduleData?.description || 'Módulo de capacitación',
                 color: 'from-blue-500 to-cyan-600',
-                available: coreValue === 'clean_air' // Only clean_air is available
+                available: true // All modules with lessons are available
               }
               
               return (
@@ -247,16 +247,16 @@ export default async function EmployeeDashboard() {
                         <p className="text-xs sm:text-sm text-slate-600 line-clamp-1 sm:line-clamp-none">{info.description}</p>
                         <div className="flex items-center gap-2 mt-2 flex-wrap">
                           <div className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${
-                            enrollment.status === 'completed' ? 'bg-green-100 text-green-700' : 
-                            enrollment.status === 'in_progress' ? 'bg-purple-100 text-purple-700' : 
+                            enrollment.completed ? 'bg-green-100 text-green-700' : 
+                            (enrollment.progress_percentage || 0) > 0 ? 'bg-purple-100 text-purple-700' : 
                             'bg-slate-100 text-slate-700'
                           }`}>
-                            {enrollment.status === 'completed' ? '✓ Completado' :
-                             enrollment.status === 'in_progress' ? 'En Progreso' :
+                            {enrollment.completed ? '✓ Completado' :
+                             (enrollment.progress_percentage || 0) > 0 ? 'En Progreso' :
                              'No Iniciado'}
                           </div>
                           <div className="text-xs sm:text-sm text-slate-500">
-                            {enrollment.completion_percentage}% completado
+                            {enrollment.progress_percentage || 0}% completado
                           </div>
                         </div>
                       </div>
@@ -266,23 +266,23 @@ export default async function EmployeeDashboard() {
                     <div className="flex items-center gap-3 sm:gap-4 justify-between sm:justify-end">
                       <div className="text-center sm:hidden">
                         <div className="text-xl font-bold text-slate-900">
-                          {enrollment.completion_percentage}%
+                          {enrollment.progress_percentage || 0}%
                         </div>
                         <div className="text-xs text-slate-500">Progreso</div>
                       </div>
                       <div className="hidden sm:block text-center">
                         <div className="text-2xl font-bold text-slate-900">
-                          {enrollment.completion_percentage}%
+                          {enrollment.progress_percentage || 0}%
                         </div>
                         <div className="text-xs text-slate-500">Progreso</div>
                       </div>
                       <Link
-                        href={info.available ? `/employee-portal/modules/${coreValue}` : '#'}
-                        className={`${info.available ? 'bg-gradient-to-r from-teal-600 to-purple-600 text-white hover:scale-105' : 'bg-slate-300 text-slate-500 cursor-not-allowed'} px-4 sm:px-6 py-2 rounded-lg font-medium transition-transform text-sm sm:text-base whitespace-nowrap min-h-[44px] flex items-center justify-center`}
+                        href={info.available && moduleData?.id ? `/employee-portal/modules/${moduleData.id}` : '#'}
+                        className={`${info.available && moduleData?.id ? 'bg-gradient-to-r from-teal-600 to-purple-600 text-white hover:scale-105' : 'bg-slate-300 text-slate-500 cursor-not-allowed'} px-4 sm:px-6 py-2 rounded-lg font-medium transition-transform text-sm sm:text-base whitespace-nowrap min-h-[44px] flex items-center justify-center`}
                       >
-                        {info.available ? (
-                          enrollment.status === 'completed' ? 'Revisar' :
-                          enrollment.status === 'in_progress' ? 'Continuar' :
+                        {info.available && moduleData?.id ? (
+                          enrollment.completed ? 'Revisar' :
+                          enrollment.progress_percentage > 0 ? 'Continuar' :
                           'Empezar'
                         ) : 'Pronto'}
                       </Link>
@@ -293,7 +293,7 @@ export default async function EmployeeDashboard() {
                   <div className="mt-3 sm:mt-4 w-full bg-slate-200 rounded-full h-2">
                     <div 
                       className="bg-gradient-to-r from-teal-600 to-purple-600 h-2 rounded-full transition-all duration-500"
-                      style={{ width: `${enrollment.completion_percentage}%` }}
+                      style={{ width: `${enrollment.progress_percentage || 0}%` }}
                     />
                   </div>
                 </div>
