@@ -1,0 +1,111 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { createServerAuth } from '@/lib/auth-server'
+
+export async function GET(
+  request: NextRequest,
+  context: { params: Promise<{ moduleId: string; lessonId: string }> }
+) {
+  try {
+    const { moduleId, lessonId } = await context.params
+    const supabase = await createServerAuth()
+
+    console.log(`🔍 Fetching lesson: module=${moduleId}, lesson=${lessonId}`)
+
+    // Fetch the lesson from database
+    const { data: lesson, error } = await supabase
+      .from('module_lessons')
+      .select(`
+        id,
+        module_id,
+        lesson_order,
+        title,
+        description,
+        content,
+        estimated_minutes,
+        xp_reward,
+        key_points,
+        quiz_questions,
+        resources
+      `)
+      .eq('module_id', moduleId)
+      .eq('id', lessonId)
+      .single()
+
+    if (error || !lesson) {
+      console.error('❌ Lesson not found:', error)
+      return NextResponse.json({ 
+        error: 'Lesson not found',
+        details: error?.message 
+      }, { status: 404 })
+    }
+
+    // Get module info
+    const { data: module } = await supabase
+      .from('marketplace_modules')
+      .select('id, title, slug, lesson_count')
+      .eq('id', moduleId)
+      .single()
+
+    // Transform to match frontend format
+    const transformedLesson = {
+      id: lesson.id,
+      lessonNumber: lesson.lesson_order,
+      totalLessons: module?.lesson_count || 0,
+      title: lesson.title,
+      description: lesson.description,
+      duration: `${lesson.estimated_minutes} min`,
+      xpReward: lesson.xp_reward,
+      
+      // Story section (simplified for now)
+      story: {
+        introduction: lesson.description || '',
+        mainContent: [lesson.content || 'Contenido del curso disponible próximamente'],
+        conclusion: 'Completa esta lección para continuar tu aprendizaje',
+        characterInsight: 'Reflexiona sobre cómo aplicar estos conceptos en tu organización'
+      },
+      
+      // Learning section
+      learning: {
+        keyPoints: lesson.key_points || [],
+        didYouKnow: [
+          'Este módulo ha sido desarrollado por expertos en la materia',
+          'Incluye casos de estudio reales de empresas mexicanas'
+        ],
+        realWorldExample: 'Empresas líderes han implementado estos principios con resultados medibles'
+      },
+      
+      // Activity section
+      activity: {
+        title: 'Actividad Práctica',
+        description: 'Completa esta actividad para aplicar lo aprendido',
+        reflectionPrompts: [
+          '¿Cómo puedes aplicar estos conceptos en tu organización?',
+          '¿Qué obstáculos podrías enfrentar y cómo los superarías?',
+          '¿Qué recursos necesitarías para implementar estos cambios?'
+        ]
+      },
+      
+      // Resources
+      resources: lesson.resources || [],
+      
+      // Next steps
+      nextSteps: [
+        'Revisa los recursos adicionales proporcionados',
+        'Discute estos conceptos con tu equipo',
+        'Identifica una acción concreta que puedas tomar esta semana'
+      ],
+      
+      // Quiz if available
+      quiz: lesson.quiz_questions || null
+    }
+
+    return NextResponse.json({ lesson: transformedLesson, module })
+
+  } catch (error) {
+    console.error('❌ API error:', error)
+    return NextResponse.json({ 
+      error: 'Failed to fetch lesson' 
+    }, { status: 500 })
+  }
+}
+

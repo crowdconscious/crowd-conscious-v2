@@ -34,9 +34,9 @@ export default function LessonPage({
   const [toolModalOpen, setToolModalOpen] = useState(false)
   const [currentTool, setCurrentTool] = useState<{ type: string; title: string } | null>(null)
 
-  const module = cleanAirModule
+  const [module, setModule] = useState<any>(null)
 
-  const cleanAirCourseId = 'a1a1a1a1-1111-1111-1111-111111111111' // Clean Air course ID
+  const cleanAirCourseId = 'a1a1a1a1-1111-1111-1111-111111111111' // Clean Air course ID (legacy)
 
   // Save activity data to database
   const saveActivityData = async (activityType: string, data: any) => {
@@ -107,19 +107,57 @@ export default function LessonPage({
   }
 
   useEffect(() => {
-    params.then((p) => {
-      setModuleId(p.moduleId)
-      setLessonId(p.lessonId)
-      const lessonData = getLessonById(p.moduleId, p.lessonId)
-      setLesson(lessonData)
-    })
+    const fetchLesson = async () => {
+      try {
+        const p = await params
+        setModuleId(p.moduleId)
+        setLessonId(p.lessonId)
+        
+        console.log(`🔍 Fetching lesson: ${p.moduleId}/${p.lessonId}`)
+        
+        // Fetch from database API
+        const response = await fetch(`/api/modules/${p.moduleId}/lessons/${p.lessonId}`)
+        
+        if (response.ok) {
+          const data = await response.json()
+          console.log('✅ Lesson data:', data)
+          setLesson(data.lesson)
+          setModule(data.module || { title: 'Módulo', totalLessons: 1, color: 'from-teal-600 to-blue-700' })
+        } else {
+          console.error('❌ Failed to fetch lesson:', response.status)
+          // Fallback to static content if API fails
+          const lessonData = getLessonById(p.moduleId, p.lessonId)
+          if (lessonData) {
+            setLesson(lessonData)
+            setModule(cleanAirModule)
+          }
+        }
+      } catch (error) {
+        console.error('❌ Error fetching lesson:', error)
+        // Fallback to static content
+        try {
+          const p = await params
+          const lessonData = getLessonById(p.moduleId, p.lessonId)
+          if (lessonData) {
+            setLesson(lessonData)
+            setModule(cleanAirModule)
+          }
+        } catch (fallbackError) {
+          console.error('❌ Fallback also failed:', fallbackError)
+        }
+      }
+    }
+    
+    fetchLesson()
   }, [])
 
-  if (!lesson) {
+  if (!lesson || !module) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-slate-900 mb-2">Lección no encontrada</h1>
+          <div className="animate-spin w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+          <h1 className="text-2xl font-bold text-slate-900 mb-2">Cargando lección...</h1>
+          <p className="text-slate-600 mb-4">Si esto toma mucho tiempo, intenta recargar la página</p>
           <Link href="/employee-portal/dashboard" className="text-teal-600 hover:text-teal-700">
             Volver al portal
           </Link>
@@ -225,7 +263,7 @@ export default function LessonPage({
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       {/* Header - Mobile Optimized */}
-      <div className={`bg-gradient-to-r ${module.color} text-white py-4 sm:py-6 md:py-8 px-4`}>
+      <div className={`bg-gradient-to-r ${module.color || 'from-teal-600 to-blue-700'} text-white py-4 sm:py-6 md:py-8 px-4`}>
         <div className="max-w-4xl mx-auto">
           <Link 
             href={moduleId ? `/employee-portal/modules/${moduleId}` : '/employee-portal/dashboard'}
