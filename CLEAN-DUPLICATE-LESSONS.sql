@@ -9,12 +9,13 @@ BEGIN
   RAISE NOTICE '🧹 Starting duplicate lesson cleanup...';
 END $$;
 
--- Delete duplicate lessons, keeping the one with the smallest ID (oldest)
+-- Delete duplicate lessons, keeping only one per (module_id, lesson_order)
 DELETE FROM module_lessons
-WHERE id NOT IN (
-  SELECT MIN(id)
-  FROM module_lessons
-  GROUP BY module_id, lesson_order
+WHERE id IN (
+  SELECT l2.id
+  FROM module_lessons l1
+  JOIN module_lessons l2 ON l1.module_id = l2.module_id AND l1.lesson_order = l2.lesson_order
+  WHERE l1.id < l2.id
 );
 
 DO $$
