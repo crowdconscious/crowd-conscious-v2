@@ -4,24 +4,26 @@
 -- Run this in Supabase SQL Editor
 -- =====================================================
 
--- STEP 1: Create corporate_accounts table if it doesn't exist
-CREATE TABLE IF NOT EXISTS corporate_accounts (
+-- STEP 1: Drop existing table if it has issues, then recreate
+DROP TABLE IF EXISTS corporate_accounts CASCADE;
+
+CREATE TABLE corporate_accounts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   company_name TEXT NOT NULL,
   industry TEXT,
   employee_count INTEGER DEFAULT 0,
-  admin_user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  admin_user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   
   -- Metadata
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW(),
   
   -- Ensure one account per admin
-  UNIQUE(admin_user_id)
+  CONSTRAINT unique_admin_user UNIQUE(admin_user_id)
 );
 
 -- Add index
-CREATE INDEX IF NOT EXISTS idx_corporate_accounts_admin 
+CREATE INDEX idx_corporate_accounts_admin 
 ON corporate_accounts(admin_user_id);
 
 -- STEP 2: Add corporate fields to profiles if they don't exist
@@ -61,27 +63,27 @@ BEGIN
   END IF;
 END $$;
 
--- STEP 3: Setup YOUR demo corporate account
--- ⚠️ REPLACE 'your-email@example.com' with your actual email in the DO block below
+-- STEP 3: Setup demo corporate account for francisco@crowdconscious.app
 DO $$
 DECLARE
   v_user_id UUID;
   v_corporate_account_id UUID;
   v_module_record RECORD;
-  v_enrollment_count INTEGER := 0;
+  v_total_modules INTEGER := 0;
+  v_enrolled_count INTEGER := 0;
 BEGIN
-  -- Get your user ID
+  -- Get Francisco's user ID
   SELECT id INTO v_user_id
   FROM auth.users
-  WHERE email = 'your-email@example.com';  -- ⚠️ REPLACE THIS WITH YOUR EMAIL!
+  WHERE email = 'francisco@crowdconscious.app';
 
   IF v_user_id IS NULL THEN
-    RAISE EXCEPTION 'User not found! Please replace your-email@example.com with your actual email in the script (line 77).';
+    RAISE EXCEPTION 'User francisco@crowdconscious.app not found! Please check the email address.';
   END IF;
 
   RAISE NOTICE '✅ Found user: %', v_user_id;
 
-  -- Create or update corporate account
+  -- Create corporate account
   INSERT INTO corporate_accounts (
     company_name,
     industry,
@@ -95,10 +97,6 @@ BEGIN
     v_user_id,
     NOW()
   )
-  ON CONFLICT (admin_user_id) DO UPDATE
-    SET company_name = 'Crowd Conscious Demo Team',
-        employee_count = 100,
-        updated_at = NOW()
   RETURNING id INTO v_corporate_account_id;
 
   RAISE NOTICE '✅ Corporate account created: %', v_corporate_account_id;
@@ -113,44 +111,57 @@ BEGIN
 
   RAISE NOTICE '✅ Updated profile to corporate admin';
 
+  -- Count total published modules
+  SELECT COUNT(*) INTO v_total_modules
+  FROM marketplace_modules 
+  WHERE status = 'published';
+
+  RAISE NOTICE '📊 Found % published module(s)', v_total_modules;
+
   -- Enroll in ALL published modules
   FOR v_module_record IN 
     SELECT id, title, base_price_mxn 
     FROM marketplace_modules 
     WHERE status = 'published'
+    ORDER BY title
   LOOP
-    INSERT INTO course_enrollments (
-      user_id,
-      corporate_account_id,
-      module_id,
-      purchase_type,
-      purchased_at,
-      purchase_price_snapshot,
-      progress_percentage,
-      completed,
-      enrolled_at
-    ) VALUES (
-      v_user_id,
-      v_corporate_account_id,
-      v_module_record.id,
-      'corporate',
-      NOW(),
-      v_module_record.base_price_mxn,
-      0,
-      false,
-      NOW()
-    )
-    ON CONFLICT (user_id, module_id) DO NOTHING;
-
-    GET DIAGNOSTICS v_enrollment_count = ROW_COUNT;
-    
-    IF v_enrollment_count > 0 THEN
+    BEGIN
+      INSERT INTO course_enrollments (
+        user_id,
+        corporate_account_id,
+        module_id,
+        purchase_type,
+        purchased_at,
+        purchase_price_snapshot,
+        progress_percentage,
+        completed,
+        enrolled_at
+      ) VALUES (
+        v_user_id,
+        v_corporate_account_id,
+        v_module_record.id,
+        'corporate',
+        NOW(),
+        v_module_record.base_price_mxn,
+        0,
+        false,
+        NOW()
+      );
+      
+      v_enrolled_count := v_enrolled_count + 1;
       RAISE NOTICE '  📚 Enrolled in: %', v_module_record.title;
-    END IF;
+      
+    EXCEPTION 
+      WHEN unique_violation THEN
+        RAISE NOTICE '  ⏭️  Already enrolled in: %', v_module_record.title;
+    END;
   END LOOP;
 
+  RAISE NOTICE '';
   RAISE NOTICE '🎉 Setup complete!';
+  RAISE NOTICE '📊 Enrolled in % out of % published modules', v_enrolled_count, v_total_modules;
   RAISE NOTICE '🎯 Access your corporate dashboard at /corporate/dashboard';
+  RAISE NOTICE '💼 You can now invite employees and manage your team';
 
 END $$;
 
@@ -159,29 +170,22 @@ END $$;
 -- Run these after the script completes to verify everything worked
 -- =====================================================
 
--- Check corporate_accounts table exists and has data
+-- Check corporate_accounts table
 SELECT 
-  'corporate_accounts' as table_name,
-  COUNT(*) as row_count
-FROM corporate_accounts;
-
--- Check your corporate account
--- ⚠️ REPLACE 'your-email@example.com' with your actual email
-SELECT 
-  'Your Corporate Account' as info,
+  'Corporate Account Info' as section,
   ca.id,
   ca.company_name,
   ca.employee_count,
+  ca.industry,
   ca.created_at,
   au.email as admin_email
 FROM corporate_accounts ca
 JOIN auth.users au ON ca.admin_user_id = au.id
-WHERE au.email = 'your-email@example.com';  -- ⚠️ REPLACE THIS!
+WHERE au.email = 'francisco@crowdconscious.app';
 
--- Check your profile
--- ⚠️ REPLACE 'your-email@example.com' with your actual email
+-- Check profile
 SELECT 
-  'Your Profile' as info,
+  'Profile Info' as section,
   p.id,
   p.full_name,
   au.email,
@@ -190,28 +194,27 @@ SELECT
   p.corporate_account_id
 FROM profiles p
 JOIN auth.users au ON p.id = au.id
-WHERE au.email = 'your-email@example.com';  -- ⚠️ REPLACE THIS!
+WHERE au.email = 'francisco@crowdconscious.app';
 
--- Check your enrollments
--- ⚠️ REPLACE 'your-email@example.com' with your actual email
+-- Check enrollment summary
 SELECT 
-  'Your Enrollments' as info,
+  'Enrollment Summary' as section,
   COUNT(*) as total_modules,
   COUNT(CASE WHEN ce.progress_percentage > 0 THEN 1 END) as started_modules,
   COUNT(CASE WHEN ce.completed = true THEN 1 END) as completed_modules
 FROM course_enrollments ce
 JOIN auth.users au ON ce.user_id = au.id
-WHERE au.email = 'your-email@example.com';  -- ⚠️ REPLACE THIS!
+WHERE au.email = 'francisco@crowdconscious.app';
 
--- List all your enrolled modules
--- ⚠️ REPLACE 'your-email@example.com' with your actual email
+-- List all enrolled modules
 SELECT 
   mm.title as module_title,
+  mm.difficulty_level,
   ce.purchase_type,
   ce.progress_percentage,
   ce.enrolled_at
 FROM course_enrollments ce
 JOIN marketplace_modules mm ON ce.module_id = mm.id
 JOIN auth.users au ON ce.user_id = au.id
-WHERE au.email = 'your-email@example.com'  -- ⚠️ REPLACE THIS!
+WHERE au.email = 'francisco@crowdconscious.app'
 ORDER BY ce.enrolled_at DESC;
