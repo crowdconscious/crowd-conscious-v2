@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase-server'
 import Link from 'next/link'
 import { Users, BookOpen, Award, TrendingUp, Plus, AlertCircle } from 'lucide-react'
-import SelfEnrollButton from '@/components/SelfEnrollButton'
 
 export default async function CorporateDashboard() {
   const supabase = await createClient()
@@ -50,12 +49,22 @@ export default async function CorporateDashboard() {
     .select('*', { count: 'exact', head: true })
     .eq('corporate_account_id', profile?.corporate_account_id)
 
-  // Check if admin is enrolled in courses (NEW)
-  const { data: adminEnrollment } = await supabase
+  // Get admin's enrolled modules (NEW - using module_id)
+  const { data: adminEnrollments } = await supabase
     .from('course_enrollments')
-    .select('*, course:courses(title, core_value)')
-    .eq('employee_id', user.id)
-    .single()
+    .select(`
+      *,
+      module:marketplace_modules(
+        id,
+        title,
+        slug,
+        thumbnail_url,
+        difficulty_level,
+        estimated_duration_hours
+      )
+    `)
+    .eq('user_id', user.id)
+    .not('module_id', 'is', null)
 
   const stats = [
     {
@@ -144,36 +153,86 @@ export default async function CorporateDashboard() {
         </div>
       ) : (
         <>
-          {/* Admin's Own Progress (if enrolled) - Mobile Optimized */}
-          {adminEnrollment && (
-            <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl shadow-lg p-4 sm:p-6 text-white">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <h3 className="text-base sm:text-lg font-bold mb-1">Tu Progreso Personal</h3>
-                  <p className="text-purple-100 text-xs sm:text-sm">Lidera con el ejemplo - estás tomando el curso</p>
+          {/* Admin's Enrolled Courses */}
+          {adminEnrollments && adminEnrollments.length > 0 && (
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-lg sm:text-xl font-bold text-slate-900">Mis Cursos</h3>
+                  <p className="text-sm text-slate-600 mt-1">
+                    Tienes {adminEnrollments.length} módulo{adminEnrollments.length !== 1 ? 's' : ''} disponible{adminEnrollments.length !== 1 ? 's' : ''}
+                  </p>
                 </div>
-                <BookOpen className="w-8 h-8 sm:w-10 sm:h-10 opacity-20 flex-shrink-0" />
+                <BookOpen className="w-8 h-8 text-purple-500" />
               </div>
-              <div className="grid grid-cols-3 gap-2 sm:gap-4">
-                <div className="bg-white/10 backdrop-blur rounded-lg p-2 sm:p-4">
-                  <div className="text-xl sm:text-3xl font-bold mb-1">{adminEnrollment.completion_percentage || 0}%</div>
-                  <div className="text-xs sm:text-sm text-purple-100">Completado</div>
-                </div>
-                <div className="bg-white/10 backdrop-blur rounded-lg p-2 sm:p-4">
-                  <div className="text-xl sm:text-3xl font-bold mb-1">{adminEnrollment.modules_completed || 0}/3</div>
-                  <div className="text-xs sm:text-sm text-purple-100">Lecciones</div>
-                </div>
-                <div className="bg-white/10 backdrop-blur rounded-lg p-2 sm:p-4">
-                  <div className="text-xl sm:text-3xl font-bold mb-1">{adminEnrollment.xp_earned || 0}</div>
-                  <div className="text-xs sm:text-sm text-purple-100">XP Ganado</div>
-                </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {adminEnrollments.map((enrollment: any) => {
+                  const module = enrollment.module
+                  const progress = enrollment.completion_percentage || 0
+                  const isCompleted = enrollment.status === 'completed'
+                  
+                  return (
+                    <Link
+                      key={enrollment.id}
+                      href={`/marketplace/${module.slug || module.id}`}
+                      className="group border-2 border-slate-200 rounded-xl p-4 hover:border-purple-500 hover:shadow-lg transition-all bg-white"
+                    >
+                      {/* Thumbnail */}
+                      {module.thumbnail_url ? (
+                        <div className="w-full h-32 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg mb-3 overflow-hidden">
+                          <img 
+                            src={module.thumbnail_url} 
+                            alt={module.title}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-full h-32 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg mb-3 flex items-center justify-center">
+                          <BookOpen className="w-12 h-12 text-purple-400" />
+                        </div>
+                      )}
+
+                      {/* Title & Status */}
+                      <h4 className="font-bold text-slate-900 mb-2 line-clamp-2 group-hover:text-purple-600 transition-colors">
+                        {module.title}
+                      </h4>
+
+                      {/* Progress Bar */}
+                      <div className="mb-3">
+                        <div className="flex items-center justify-between text-xs text-slate-600 mb-1">
+                          <span>Progreso</span>
+                          <span className="font-bold">{progress}%</span>
+                        </div>
+                        <div className="w-full bg-slate-200 rounded-full h-2">
+                          <div 
+                            className={`h-2 rounded-full transition-all ${
+                              isCompleted ? 'bg-green-500' : 'bg-purple-500'
+                            }`}
+                            style={{ width: `${progress}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* CTA */}
+                      <div className="flex items-center justify-between">
+                        <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                          isCompleted 
+                            ? 'bg-green-100 text-green-700' 
+                            : progress > 0 
+                              ? 'bg-purple-100 text-purple-700'
+                              : 'bg-slate-100 text-slate-700'
+                        }`}>
+                          {isCompleted ? '✓ Completado' : progress > 0 ? 'En progreso' : 'Sin iniciar'}
+                        </span>
+                        <span className="text-xs text-purple-600 font-medium group-hover:text-purple-700">
+                          {isCompleted ? 'Revisar' : progress > 0 ? 'Continuar' : 'Comenzar'} →
+                        </span>
+                      </div>
+                    </Link>
+                  )
+                })}
               </div>
-              <Link
-                href="/employee-portal/dashboard"
-                className="mt-4 block w-full bg-white text-purple-600 text-center py-3 rounded-lg font-bold hover:scale-105 transition-transform text-sm sm:text-base min-h-[44px] flex items-center justify-center"
-              >
-                Continuar Mi Capacitación →
-              </Link>
             </div>
           )}
 
@@ -243,25 +302,24 @@ export default async function CorporateDashboard() {
                 <div className="text-xs sm:text-sm text-slate-500 mt-1">Ver impacto y ahorros</div>
               </Link>
 
-              {/* Show self-enroll button if admin is not enrolled, otherwise show marketplace */}
-              {!adminEnrollment ? (
-                <SelfEnrollButton 
-                  courseId="a1a1a1a1-1111-1111-1111-111111111111" 
-                  courseName="Aire Limpio" 
-                />
-              ) : (
-                <Link
-                  href="/marketplace"
-                  className="p-4 border-2 border-purple-300 rounded-lg bg-gradient-to-br from-purple-50 to-pink-50 hover:border-purple-500 hover:shadow-lg transition-all group"
-                >
-                  <BookOpen className="w-8 h-8 text-purple-500 group-hover:text-purple-600 mb-2" />
-                  <div className="font-medium text-slate-900 flex items-center gap-1">
-                    Explorar Marketplace
-                    <span className="text-xs bg-purple-600 text-white px-1.5 py-0.5 rounded-full">NUEVO</span>
-                  </div>
-                  <div className="text-sm text-purple-700">Agregar más módulos</div>
-                </Link>
-              )}
+              {/* Link to take courses as learner */}
+              <Link
+                href={(adminEnrollments && adminEnrollments.length > 0) 
+                  ? `/marketplace/${adminEnrollments[0].module.slug || adminEnrollments[0].module.id}` 
+                  : "/marketplace"}
+                className="p-4 border-2 border-purple-300 rounded-lg bg-gradient-to-br from-purple-50 to-pink-50 hover:border-purple-500 hover:shadow-lg transition-all group min-h-[100px] flex flex-col"
+              >
+                <BookOpen className="w-7 h-7 sm:w-8 sm:h-8 text-purple-500 group-hover:text-purple-600 mb-2" />
+                <div className="font-medium text-slate-900 text-sm sm:text-base flex items-center gap-1">
+                  {(adminEnrollments && adminEnrollments.length > 0) ? 'Tomar el Curso' : 'Explorar Marketplace'}
+                  <span className="text-xs bg-purple-600 text-white px-1.5 py-0.5 rounded-full">TÚ</span>
+                </div>
+                <div className="text-xs sm:text-sm text-purple-700 mt-1">
+                  {(adminEnrollments && adminEnrollments.length > 0) 
+                    ? `Inscríbete en ${adminEnrollments[0].module.title}`
+                    : 'Agregar más módulos'}
+                </div>
+              </Link>
             </div>
           </div>
 
