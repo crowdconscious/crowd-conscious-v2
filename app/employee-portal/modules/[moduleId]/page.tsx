@@ -67,20 +67,22 @@ export default function ModuleOverviewPage({ params }: { params: Promise<{ modul
         coreValueName: data.module.coreValueName,
         estimatedHours: data.module.duration,
         xpReward: data.module.xpReward || 1200,
+        duration: data.module.duration,
         overview: {
           whatYouWillLearn: data.module.whatYouLearn || [],
           whyItMatters: data.module.description || 'Aprende habilidades prácticas para generar impacto real.',
           impactPotential: data.module.outcomes?.[0] || 'Genera cambio positivo medible en tu organización y comunidad.'
         },
-        lessons: data.module.curriculum?.map((lesson: any, index: number) => ({
-          id: `lesson-${index + 1}`,
+        // Use actual lessons from database with UUIDs
+        lessons: data.module.lessons?.map((lesson: any) => ({
+          id: lesson.id, // Use actual UUID from database!
           title: lesson.title,
-          duration: lesson.duration,
-          xp: lesson.xp,
-          topics: lesson.topics || [],
-          lessonNumber: index + 1,
-          story: `Lección ${index + 1}`,
-          content: `Contenido de ${lesson.title}`,
+          duration: `${lesson.estimated_minutes || 45} min`,
+          xpReward: lesson.xp_reward || 50,
+          topics: lesson.key_points || [],
+          lessonNumber: lesson.lesson_order,
+          story: lesson.description || `Lección ${lesson.lesson_order}`,
+          content: lesson.description || `Contenido de ${lesson.title}`,
           tools: []
         })) || []
       }
