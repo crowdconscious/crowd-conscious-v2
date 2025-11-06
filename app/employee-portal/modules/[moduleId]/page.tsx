@@ -10,6 +10,7 @@ export default function ModuleOverviewPage({ params }: { params: Promise<{ modul
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [moduleId, setModuleId] = useState<string>('')
+  const [module, setModule] = useState<any>(null)
   const [completedLessons, setCompletedLessons] = useState<string[]>([])
   const [progress, setProgress] = useState({
     percentage: 0,
@@ -18,16 +19,74 @@ export default function ModuleOverviewPage({ params }: { params: Promise<{ modul
     xpEarned: 0
   })
 
-  // For now, we'll use the clean air module
-  // Later this can be dynamic based on params.moduleId
-  const module = cleanAirModule
-
   useEffect(() => {
     params.then((p) => {
       setModuleId(p.moduleId)
+      loadModuleData(p.moduleId)
       loadProgress(p.moduleId)
     })
   }, [])
+
+  // Helper function to get gradient color based on core value
+  const getColorForCoreValue = (coreValue: string) => {
+    const colors: Record<string, string> = {
+      clean_air: 'from-teal-500 to-cyan-600',
+      clean_water: 'from-blue-500 to-indigo-600',
+      safe_cities: 'from-purple-500 to-pink-600',
+      zero_waste: 'from-green-500 to-emerald-600',
+      fair_trade: 'from-orange-500 to-amber-600',
+      biodiversity: 'from-lime-500 to-green-600'
+    }
+    return colors[coreValue] || 'from-purple-600 to-blue-600'
+  }
+
+  const loadModuleData = async (modId: string) => {
+    try {
+      console.log('🔍 Fetching module data for:', modId)
+      const response = await fetch(`/api/marketplace/modules/${modId}`)
+      
+      if (!response.ok) {
+        console.error('❌ Failed to fetch module:', response.status)
+        // Fallback to cleanAirModule if fetch fails
+        setModule(cleanAirModule)
+        return
+      }
+      
+      const data = await response.json()
+      console.log('✅ Module loaded:', data.module?.title)
+      
+      // Transform to course player format
+      const moduleData = {
+        id: data.module.id,
+        title: data.module.title,
+        description: data.module.longDescription || data.module.description,
+        icon: data.module.coreValueIcon || '🌟',
+        color: getColorForCoreValue(data.module.coreValue),
+        coreValue: data.module.coreValue,
+        coreValueIcon: data.module.coreValueIcon,
+        coreValueName: data.module.coreValueName,
+        estimatedHours: data.module.duration,
+        xpReward: data.module.xpReward || 1200,
+        lessons: data.module.curriculum?.map((lesson: any, index: number) => ({
+          id: `lesson-${index + 1}`,
+          title: lesson.title,
+          duration: lesson.duration,
+          xp: lesson.xp,
+          topics: lesson.topics || [],
+          story: `Lección ${index + 1}`,
+          content: `Contenido de ${lesson.title}`,
+          tools: []
+        })) || []
+      }
+      
+      console.log('📦 Module data transformed:', moduleData)
+      setModule(moduleData)
+    } catch (error) {
+      console.error('💥 Error loading module:', error)
+      // Fallback to cleanAirModule
+      setModule(cleanAirModule)
+    }
+  }
 
   // Reload progress when returning to this page
   useEffect(() => {
@@ -76,7 +135,7 @@ export default function ModuleOverviewPage({ params }: { params: Promise<{ modul
 
   const nextLesson = getNextLesson()
 
-  if (loading) {
+  if (loading || !module) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
         <div className="text-center">
@@ -90,7 +149,7 @@ export default function ModuleOverviewPage({ params }: { params: Promise<{ modul
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       {/* Header */}
-      <div className={`bg-gradient-to-r ${module.color} text-white py-12 px-4`}>
+      <div className={`bg-gradient-to-r ${module.color || 'from-purple-600 to-blue-600'} text-white py-12 px-4`}>
         <div className="max-w-4xl mx-auto">
           <Link 
             href="/employee-portal/dashboard"
