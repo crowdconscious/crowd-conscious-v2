@@ -157,7 +157,7 @@ export default async function CorporateDashboard() {
               return (
                 <Link
                   key={enrollment.id}
-                  href={`/marketplace/${module.slug || module.id}`}
+                  href={`/employee-portal/modules/${enrollment.module_id}`}
                   className="group border-2 border-slate-200 rounded-xl p-4 hover:border-purple-500 hover:shadow-lg transition-all bg-white"
                 >
                   {/* Thumbnail */}
@@ -319,8 +319,8 @@ export default async function CorporateDashboard() {
 
               {/* Link to take courses as learner */}
               <Link
-                href={(userEnrollments && userEnrollments.length > 0 && userEnrollments[0].marketplace_modules) 
-                  ? `/marketplace/${userEnrollments[0].marketplace_modules.slug || userEnrollments[0].marketplace_modules.id}` 
+                href={(userEnrollments && userEnrollments.length > 0 && userEnrollments[0].module_id) 
+                  ? `/employee-portal/modules/${userEnrollments[0].module_id}` 
                   : "/marketplace"}
                 className="p-4 border-2 border-purple-300 rounded-lg bg-gradient-to-br from-purple-50 to-pink-50 hover:border-purple-500 hover:shadow-lg transition-all group min-h-[100px] flex flex-col"
               >
@@ -331,7 +331,7 @@ export default async function CorporateDashboard() {
                 </div>
                 <div className="text-xs sm:text-sm text-purple-700 mt-1">
                   {(userEnrollments && userEnrollments.length > 0 && userEnrollments[0].marketplace_modules) 
-                    ? `Inscríbete en ${userEnrollments[0].marketplace_modules.title}`
+                    ? `Continúa con ${userEnrollments[0].marketplace_modules.title}`
                     : 'Agregar más módulos'}
                 </div>
               </Link>
