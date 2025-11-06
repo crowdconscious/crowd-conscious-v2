@@ -67,12 +67,18 @@ export default function ModuleOverviewPage({ params }: { params: Promise<{ modul
         coreValueName: data.module.coreValueName,
         estimatedHours: data.module.duration,
         xpReward: data.module.xpReward || 1200,
+        overview: {
+          whatYouWillLearn: data.module.whatYouLearn || [],
+          whyItMatters: data.module.description || 'Aprende habilidades prácticas para generar impacto real.',
+          impactPotential: data.module.outcomes?.[0] || 'Genera cambio positivo medible en tu organización y comunidad.'
+        },
         lessons: data.module.curriculum?.map((lesson: any, index: number) => ({
           id: `lesson-${index + 1}`,
           title: lesson.title,
           duration: lesson.duration,
           xp: lesson.xp,
           topics: lesson.topics || [],
+          lessonNumber: index + 1,
           story: `Lección ${index + 1}`,
           content: `Contenido de ${lesson.title}`,
           tools: []
@@ -125,11 +131,13 @@ export default function ModuleOverviewPage({ params }: { params: Promise<{ modul
     if (lessonNumber === 1) return true
     
     // Subsequent lessons unlock when previous is completed
+    if (!module || !module.lessons) return false
     const previousLesson = module.lessons.find((l: any) => l.lessonNumber === lessonNumber - 1)
     return previousLesson ? completedLessons.includes(previousLesson.id) : false
   }
 
   const getNextLesson = () => {
+    if (!module || !module.lessons) return null
     return module.lessons.find((l: any) => !completedLessons.includes(l.id))
   }
 
