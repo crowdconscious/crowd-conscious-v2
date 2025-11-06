@@ -49,29 +49,28 @@ export default async function CorporateDashboard() {
     .select('*', { count: 'exact', head: true })
     .eq('corporate_account_id', profile?.corporate_account_id)
 
-  // Get admin's enrolled modules (NEW - using module_id)
-  const { data: adminEnrollments, error: enrollmentError } = await supabase
+  // Get admin's enrolled modules - simplified approach
+  const { data: rawEnrollments } = await supabase
     .from('course_enrollments')
-    .select(`
-      *,
-      marketplace_modules!course_enrollments_module_id_fkey(
-        id,
-        title,
-        slug,
-        thumbnail_url,
-        difficulty_level,
-        estimated_duration_hours
-      )
-    `)
+    .select('*')
     .eq('user_id', user.id)
     .not('module_id', 'is', null)
-  
-  // Debug logging
-  if (enrollmentError) {
-    console.error('❌ Error fetching admin enrollments:', enrollmentError)
+
+  // Get module details separately
+  let adminEnrollments: any[] = []
+  if (rawEnrollments && rawEnrollments.length > 0) {
+    const moduleIds = rawEnrollments.map(e => e.module_id)
+    const { data: modules } = await supabase
+      .from('marketplace_modules')
+      .select('id, title, slug, thumbnail_url, difficulty_level, estimated_duration_hours')
+      .in('id', moduleIds)
+
+    // Combine enrollments with module data
+    adminEnrollments = rawEnrollments.map(enrollment => ({
+      ...enrollment,
+      marketplace_modules: modules?.find(m => m.id === enrollment.module_id) || null
+    })).filter(e => e.marketplace_modules !== null)
   }
-  console.log('📚 Admin enrollments found:', adminEnrollments?.length || 0)
-  console.log('👤 User ID:', user.id)
 
   const stats = [
     {
