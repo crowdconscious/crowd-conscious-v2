@@ -113,6 +113,7 @@ const MOCK_MODULES = [
     enrollments: 520,
     duration: 7,
     price: 18000,
+    individualPrice: 360,
     featured: false,
     thumbnailUrl: null
   },
