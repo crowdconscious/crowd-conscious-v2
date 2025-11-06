@@ -234,7 +234,7 @@ export default function ModuleOverviewPage({ params }: { params: Promise<{ modul
         <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
           <h2 className="text-2xl font-bold text-slate-900 mb-4">¿Qué Aprenderás?</h2>
           <ul className="space-y-3 mb-6">
-            {module.overview.whatYouWillLearn.map((item, index) => (
+            {module.overview.whatYouWillLearn.map((item: any, index: number) => (
               <li key={index} className="flex items-start gap-3">
                 <CheckCircle className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
                 <span className="text-slate-700">{item}</span>
@@ -260,7 +260,7 @@ export default function ModuleOverviewPage({ params }: { params: Promise<{ modul
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <h2 className="text-2xl font-bold text-slate-900 mb-6">Lecciones</h2>
           <div className="space-y-4">
-            {module.lessons.map((lesson) => {
+            {module.lessons.map((lesson: any) => {
               const isCompleted = completedLessons.includes(lesson.id)
               const isUnlocked = isLessonUnlocked(lesson.lessonNumber)
               const isCurrent = nextLesson?.id === lesson.id
