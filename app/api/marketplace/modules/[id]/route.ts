@@ -105,7 +105,7 @@ export async function GET(
       thumbnailUrl: module.thumbnail_url,
       xpReward: module.xp_reward,
       
-      // Curriculum from lessons
+      // Curriculum from lessons (summary)
       curriculum: (module.lessons || [])
         .sort((a: any, b: any) => a.lesson_order - b.lesson_order)
         .map((lesson: any) => ({
@@ -113,6 +113,22 @@ export async function GET(
           duration: `${lesson.estimated_minutes || 30} min`,
           topics: lesson.key_points || [],
           xp: lesson.xp_reward || 250
+        })),
+      
+      // Full lessons with IDs for lesson player
+      lessons: (module.lessons || [])
+        .sort((a: any, b: any) => a.lesson_order - b.lesson_order)
+        .map((lesson: any) => ({
+          id: lesson.id,
+          lesson_order: lesson.lesson_order,
+          title: lesson.title,
+          description: lesson.description,
+          estimated_minutes: lesson.estimated_minutes,
+          xp_reward: lesson.xp_reward,
+          key_points: lesson.key_points || [],
+          content: lesson.content,
+          quiz_questions: lesson.quiz_questions,
+          resources: lesson.resources
         })),
       
       // Default data for sections not yet in database
