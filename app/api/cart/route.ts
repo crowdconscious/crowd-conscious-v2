@@ -97,10 +97,31 @@ export async function GET() {
         const module = (item as any).marketplace_modules
         const promoCode = (item as any).promo_codes
         
+        console.log('📦 Processing cart item:', {
+          id: item.id,
+          price_snapshot: item.price_snapshot,
+          price_snapshot_type: typeof item.price_snapshot,
+          discounted_price: item.discounted_price,
+          discounted_price_type: typeof item.discounted_price,
+          promo_code_id: item.promo_code_id
+        })
+        
         // Use discounted_price if promo applied, otherwise use price_snapshot
-        const finalPrice = item.discounted_price || item.price_snapshot
-        const originalPrice = item.price_snapshot
+        // CRITICAL: Convert strings to numbers!
+        const finalPrice = item.discounted_price !== null && item.discounted_price !== undefined
+          ? Number(item.discounted_price)
+          : Number(item.price_snapshot)
+        const originalPrice = Number(item.price_snapshot)
         const hasDiscount = item.discounted_price !== null && item.discounted_price !== undefined
+        
+        const discountAmount = hasDiscount ? originalPrice - finalPrice : 0
+        
+        console.log('💰 Calculated prices:', {
+          finalPrice,
+          originalPrice,
+          hasDiscount,
+          discountAmount
+        })
         
         return {
           id: item.id,
@@ -132,7 +153,7 @@ export async function GET() {
           } : null,
           total_price: finalPrice,
           original_price: originalPrice,
-          discount_amount: hasDiscount ? originalPrice - finalPrice : 0,
+          discount_amount: discountAmount, // Use pre-calculated value
           price_per_employee: Math.round(finalPrice / item.employee_count)
         }
       })
@@ -148,6 +169,21 @@ export async function GET() {
     const totalDiscount = enrichedCartItems.reduce((sum, item) => sum + item.discount_amount, 0)
     const totalEmployees = enrichedCartItems.reduce((sum, item) => sum + item.employee_count, 0)
     const hasPromo = enrichedCartItems.some(item => item.promo_code !== null)
+    
+    console.log('📊 Cart totals calculated:', {
+      enrichedItemsCount: enrichedCartItems.length,
+      cartTotal,
+      originalTotal,
+      totalDiscount,
+      totalEmployees,
+      hasPromo,
+      itemDiscounts: enrichedCartItems.map(i => ({ 
+        id: i.id, 
+        discount: i.discount_amount,
+        original: i.original_price,
+        final: i.total_price
+      }))
+    })
 
     return ApiResponse.ok({
       items: enrichedCartItems,
