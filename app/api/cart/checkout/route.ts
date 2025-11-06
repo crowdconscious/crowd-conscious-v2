@@ -151,11 +151,18 @@ export async function POST() {
       }))
 
     // Prepare metadata for webhook
-    const cartMetadata = cartItems.map((item: any) => ({
-      module_id: item.module_id,
-      employee_count: item.employee_count,
-      price: item.price_snapshot
-    }))
+    const cartMetadata = cartItems.map((item: any) => {
+      // Use discounted price if promo applied, otherwise use price_snapshot
+      const finalPrice = item.discounted_price !== null && item.discounted_price !== undefined
+        ? Number(item.discounted_price)
+        : Number(item.price_snapshot)
+      
+      return {
+        module_id: item.module_id,
+        employee_count: item.employee_count,
+        price: finalPrice // Send actual final price (after discount) to webhook
+      }
+    })
 
     // Create Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
