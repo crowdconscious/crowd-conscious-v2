@@ -22,14 +22,27 @@ export async function GET(
 
     console.log('🔍 API: Fetching module details for:', id)
 
-    // Fetch module with lessons
-    const { data: module, error: moduleError } = await supabase
+    // Try to determine if id is a UUID or a slug
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+    
+    console.log(`🔍 API: Lookup type: ${isUUID ? 'UUID' : 'SLUG'}`)
+
+    // Fetch module with lessons - by ID or slug
+    let query = supabase
       .from('marketplace_modules')
       .select(`
         *,
         lessons:module_lessons(*)
       `)
-      .eq('id', id)
+    
+    // Use appropriate field based on lookup type
+    if (isUUID) {
+      query = query.eq('id', id)
+    } else {
+      query = query.eq('slug', id)
+    }
+    
+    const { data: module, error: moduleError } = await query
       .eq('status', 'published')
       .single()
 
