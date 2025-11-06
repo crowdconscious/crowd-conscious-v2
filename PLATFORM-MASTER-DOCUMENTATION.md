@@ -1,8 +1,8 @@
 # 🌍 Crowd Conscious: Complete Platform Documentation
 
-**Version**: 2.0  
-**Last Updated**: November 5, 2025  
-**Status**: Phase 1 Implementation (Universal Marketplace)  
+**Version**: 2.1  
+**Last Updated**: November 6, 2025  
+**Status**: Phase 1 Complete + Reviews & Promo Codes  
 **Owner**: Francisco Blockstrand
 
 ---
@@ -19,8 +19,11 @@
 8. [Database Schema](#database-schema)
 9. [API Architecture](#api-architecture)
 10. [Stripe Integration](#stripe-integration)
-11. [Admin Dashboard](#admin-dashboard)
-12. [Future Roadmap](#future-roadmap)
+11. [Promo Codes & Discounts](#promo-codes--discounts) ✨ NEW
+12. [Review System](#review-system) ✨ NEW
+13. [Platform Modules (6 Core Modules)](#platform-modules-6-core-modules) ✨ NEW
+14. [Admin Dashboard](#admin-dashboard)
+15. [Future Roadmap](#future-roadmap)
 
 ---
 
@@ -1277,6 +1280,487 @@ CREATE FUNCTION process_module_sale(
 
 ---
 
+## 🎟️ **Promo Codes & Discounts**
+
+### **Overview**
+
+The promo code system allows administrators to create discount codes for strategic partners, promotions, and referral programs. This enables flexible pricing strategies and partnership opportunities.
+
+### **Features**
+
+#### **Discount Types**
+- **Percentage Discount**: e.g., 50% OFF
+- **Fixed Amount**: e.g., $5,000 MXN OFF  
+- **Free (100% OFF)**: Ideal for demos, VIP partners, strategic relationships
+
+#### **Configuration Options**
+- **Max Uses**: Total number of times code can be used (unlimited if not set)
+- **Max Uses Per User**: Limit redemptions per user (default: 1)
+- **Valid Date Range**: Start and end dates for code validity
+- **Minimum Purchase**: Minimum cart value required to apply code
+- **Module Restrictions**: Apply only to specific modules (optional)
+- **Purchase Type Restrictions**: Individual, team, or corporate only (optional)
+
+#### **Tracking & Analytics**
+- **Current Uses**: Real-time usage tracking
+- **Discount Amount**: Total savings provided
+- **Partner/Campaign Tracking**: Associate codes with partners or campaigns
+- **Usage History**: Complete audit trail of all redemptions
+
+### **Admin Interface**
+
+**Location**: `/admin/promo-codes`
+
+**Dashboard Cards**:
+- Total codes created
+- Active codes count
+- Total uses across all codes
+- Total discounts granted (MXN)
+- Average discount per use
+
+**Code Management**:
+- Create new codes with full configuration
+- View all codes (active and inactive)
+- Toggle activation status
+- Copy codes for sharing
+- View usage statistics per code
+
+### **User Experience**
+
+**Cart Application**:
+1. User adds modules to cart
+2. User enters promo code in checkout
+3. System validates code:
+   - Code exists and is active
+   - Not expired
+   - Hasn't reached max uses
+   - User hasn't exceeded per-user limit
+   - Cart meets minimum purchase requirement
+4. Discount applied automatically
+5. Shows original price, discount, and final price
+
+**Validation Messages**:
+- "Código aplicado con éxito! Ahorro: $X MXN"
+- "Código inválido o inactivo"
+- "Este código ha expirado"
+- "Ya has utilizado este código"
+- "Compra mínima de $X MXN requerida"
+
+### **Sample Use Cases**
+
+#### **Strategic Partner Code**
+```
+Code: PARTNER50
+Type: 50% discount
+Max Uses: Unlimited
+Partner: EcoTech Solutions
+Use Case: Long-term partnership discount
+```
+
+#### **Launch Week Promotion**
+```
+Code: LAUNCH100
+Type: 100% OFF (Free)
+Max Uses: 50
+Valid: Launch week only
+Use Case: Early adopter incentive
+```
+
+#### **Referral Program**
+```
+Code: WELCOME25
+Type: 25% discount
+Max Uses Per User: 1
+Use Case: First-time buyer discount
+```
+
+### **Revenue Tracking**
+
+When a promo code is used:
+- **`promo_code_uses` table** records:
+  - Original cart total
+  - Discount amount
+  - Final cart total
+  - Modules purchased
+  - User ID
+  - Stripe session ID
+- **Revenue distribution** still applies to final amount (after discount)
+- **Analytics** track promotion effectiveness (conversion rate, ROI)
+
+### **API Endpoints**
+
+**POST /api/admin/promo-codes/create**
+- Create new promo code
+- Requires super admin permissions
+
+**PUT /api/admin/promo-codes/toggle**
+- Activate/deactivate code
+
+**POST /api/cart/apply-promo**
+- Validate and apply promo code to cart
+
+### **Database Schema**
+
+```sql
+promo_codes:
+- id, code, description
+- discount_type, discount_value
+- max_uses, max_uses_per_user, current_uses
+- valid_from, valid_until
+- applicable_modules, applicable_purchase_types
+- minimum_purchase_amount
+- active, partner_name, campaign_name
+- created_by, created_at, updated_at
+
+promo_code_uses:
+- id, promo_code_id, user_id
+- cart_total_before_discount, discount_amount, cart_total_after_discount
+- modules_purchased, used_at, stripe_session_id
+```
+
+---
+
+## ⭐ **Review System**
+
+### **Overview**
+
+The review system allows users to rate and provide feedback on both modules and communities, building trust and helping others make informed decisions.
+
+### **Module Reviews**
+
+#### **Who Can Review**
+- **Only enrolled users** can review modules
+- Must have purchased/enrolled in the module
+- One review per user per module (can be edited)
+
+#### **Review Components**
+1. **Star Rating** (1-5 stars) - Required
+2. **Review Title** - Optional, max 100 characters
+3. **Review Text** - Optional, max 1000 characters
+4. **Would Recommend** - Boolean toggle
+5. **Completion Status** - completed / in_progress / not_started
+6. **Verified Purchase Badge** - Automatically added for enrolled users
+
+#### **Review Features**
+- **Helpfulness Voting**: Other users can mark reviews as helpful/not helpful
+- **Sorting Options**: Most recent, most helpful, highest rated
+- **Rating Distribution**: Visual breakdown of 5-star, 4-star, etc.
+- **Average Rating**: Automatically calculated and displayed
+- **Review Prompts**: Users prompted to review after completing a module
+
+#### **Moderation**
+- **Flag System**: Users can flag inappropriate reviews
+- **Admin Response**: Admins can respond to reviews publicly
+- **Edit/Delete**: Users can edit or delete their own reviews
+- **Verification**: Reviews marked as "verified purchase"
+
+### **Community Reviews**
+
+#### **Who Can Review**
+- **Only community members** can review
+- Current or past members
+- One review per user per community
+
+#### **Review Components**
+1. **Overall Rating** (1-5 stars) - Required
+2. **Specific Ratings** (optional):
+   - Impact Rating (1-5 stars)
+   - Transparency Rating (1-5 stars)
+   - Communication Rating (1-5 stars)
+3. **Review Title & Text**
+4. **Would Recommend**
+5. **Member Status**: current_member / past_member / supporter / observer
+
+#### **Community Response**
+- Community admins can respond to reviews
+- Builds trust and shows engagement
+- Opportunity to address concerns publicly
+
+### **User Interface**
+
+#### **Review Display**
+- **Summary Section**:
+  - Large average rating number
+  - Star visualization
+  - Total review count
+  - Rating distribution bars
+- **Individual Reviews**:
+  - User avatar and name
+  - Date posted
+  - Star rating
+  - Review title (if provided)
+  - Review text
+  - Completion/member badges
+  - Helpfulness buttons
+  - Admin/community responses
+
+#### **Review Form**
+- **Star Selection**: Interactive star rating (hover effects)
+- **Text Fields**: Title and detailed review
+- **Checkboxes**: Would recommend, completion status
+- **Real-time Validation**: Character counters, required field indicators
+- **Success Message**: Confirmation after submission
+
+#### **Review Prompt Modal**
+Appears after module completion:
+- Celebratory design with confetti/sparkles
+- "¡Felicidades! Has completado [Module Name]"
+- Quick review option
+- "Más tarde" button to dismiss
+
+### **Analytics & Insights**
+
+**For Module Creators**:
+- Average rating over time
+- Review count and response rate
+- Common keywords in reviews (future feature)
+- Correlation between reviews and sales
+
+**For Communities**:
+- Member satisfaction trends
+- Areas of strength (from specific ratings)
+- Improvement opportunities
+- Review engagement metrics
+
+### **API Endpoints**
+
+**GET /api/reviews/modules?moduleId=X**
+- Fetch all reviews for a module
+
+**POST /api/reviews/modules**
+- Create new module review
+- Validates enrollment
+
+**PUT /api/reviews/modules**
+- Update existing review
+
+**DELETE /api/reviews/modules?reviewId=X**
+- Delete own review
+
+**GET /api/reviews/communities?communityId=X**
+- Fetch community reviews
+
+**POST /api/reviews/communities**
+- Create community review
+- Validates membership
+
+### **Database Schema**
+
+```sql
+module_reviews:
+- id, module_id, user_id
+- rating, title, review_text
+- would_recommend, completion_status
+- helpful_count, not_helpful_count
+- is_verified_purchase, is_flagged
+- created_at, updated_at
+
+community_reviews:
+- id, community_id, user_id
+- rating, title, review_text
+- impact_rating, transparency_rating, communication_rating
+- would_recommend, member_status
+- helpful_count, not_helpful_count
+- is_verified_member, community_response
+- created_at, updated_at
+
+module_review_votes & community_review_votes:
+- id, review_id, user_id
+- vote_type (helpful / not_helpful)
+- created_at
+```
+
+### **Automatic Rating Updates**
+
+Database triggers automatically update:
+- **Module** `avg_rating` and `review_count`
+- **Community** `avg_rating` and `review_count`
+
+When reviews are created, updated, or deleted.
+
+---
+
+## 📚 **Platform Modules (6 Core Modules)**
+
+### **Overview**
+
+Crowd Conscious offers **6 professionally-developed platform modules** covering core sustainability and social impact topics. These modules serve as templates and benchmarks for community-created content.
+
+### **Module Catalog**
+
+#### **1. Aire Limpio: El Despertar Corporativo** 🌬️
+**Core Value**: Clean Air  
+**Difficulty**: Beginner  
+**Duration**: 8 hours  
+**XP Reward**: 200 XP  
+**Price**: $18,000 MXN base (50 people) | $360 MXN individual
+
+**What You'll Learn**:
+- Understand air quality metrics and health impacts
+- Identify emission sources in your organization
+- Calculate ROI of air quality improvements
+- Create a 90-day implementation plan
+- Measure and document progress
+
+**Lessons** (5):
+1. El Impacto Invisible (45 min) - Air quality fundamentals
+2. Identificando Fuentes de Emisión (60 min) - Emission mapping
+3. Calculando el ROI (45 min) - Financial justification
+4. Plan de Acción 90 Días (60 min) - Implementation planning
+5. Reflexión y Compromiso (30 min) - Commitment and next steps
+
+---
+
+#### **2. Estrategias Avanzadas de Calidad del Aire** 🌬️
+**Core Value**: Clean Air  
+**Difficulty**: Intermediate  
+**Duration**: 8 hours  
+**XP Reward**: 250 XP  
+**Price**: $18,000 MXN base | $360 MXN individual
+
+**What You'll Learn**:
+- Advanced air quality monitoring systems
+- HVAC optimization techniques
+- Fleet electrification strategies
+- Certification processes (ISO 14001)
+- Long-term strategic planning
+
+**Lessons** (5):
+1. Monitoreo Avanzado (60 min) - Real-time monitoring
+2. Optimización HVAC (60 min) - Ventilation improvements
+3. Flota Verde (60 min) - Vehicle electrification
+4. Certificaciones (45 min) - International standards
+5. Plan Maestro (75 min) - 3-year roadmap
+
+---
+
+#### **3. Gestión Sostenible del Agua** 💧
+**Core Value**: Clean Water  
+**Difficulty**: Beginner  
+**Duration**: 6 hours  
+**XP Reward**: 200 XP  
+**Price**: $18,000 MXN base | $360 MXN individual
+
+**What You'll Learn**:
+- Water footprint analysis
+- Conservation techniques
+- Recycling and treatment options
+- Regulatory compliance (NOM-001-SEMARNAT)
+- Cost savings through reduction
+
+**Lessons** (5):
+1. El Agua en tu Empresa (45 min) - Water impact assessment
+2. Huella Hídrica (60 min) - Footprint calculation
+3. Estrategias de Ahorro (60 min) - Conservation methods
+4. Calidad y Tratamiento (45 min) - Water quality management
+5. Plan Gestión Hídrica (60 min) - Integrated strategy
+
+---
+
+#### **4. Economía Circular: Cero Residuos** ♻️
+**Core Value**: Zero Waste  
+**Difficulty**: Intermediate  
+**Duration**: 10 hours  
+**XP Reward**: 250 XP  
+**Price**: $18,000 MXN base | $360 MXN individual
+
+**What You'll Learn**:
+- Circular economy principles
+- Waste stream analysis
+- The 5 R's framework (Refuse, Reduce, Reuse, Recycle, Regenerate)
+- Waste-to-resource opportunities
+- Zero waste certification
+
+**Lessons** (6):
+1. De Lineal a Circular (45 min) - Economic models
+2. Auditoría de Residuos (60 min) - Waste assessment
+3. Las 5 R's en Acción (60 min) - Waste hierarchy
+4. Reciclaje y Valorización (60 min) - Material markets
+5. Compostaje Corporativo (45 min) - Organic waste management
+6. Plan Cero Residuos (75 min) - Comprehensive strategy
+
+---
+
+#### **5. Ciudades Seguras y Espacios Inclusivos** 🏙️
+**Core Value**: Safe Cities  
+**Difficulty**: Beginner  
+**Duration**: 6 hours  
+**XP Reward**: 200 XP  
+**Price**: $18,000 MXN base | $360 MXN individual
+
+**What You'll Learn**:
+- Urban safety principles
+- Community safety mapping
+- CPTED (Crime Prevention Through Environmental Design)
+- Accessible mobility planning
+- Public-private collaboration
+
+**Lessons** (5):
+1. Principios de Seguridad Urbana (45 min) - Safety fundamentals
+2. Mapeo de Seguridad (60 min) - Risk assessment
+3. Diseño de Espacios Seguros (60 min) - Environmental design
+4. Movilidad Segura (45 min) - Transportation safety
+5. Plan de Seguridad Comunitaria (60 min) - Collaborative action
+
+---
+
+#### **6. Comercio Justo y Cadenas de Valor** 🤝
+**Core Value**: Fair Trade  
+**Difficulty**: Intermediate  
+**Duration**: 8 hours  
+**XP Reward**: 250 XP  
+**Price**: $18,000 MXN base | $360 MXN individual
+
+**What You'll Learn**:
+- Fair trade principles and certifications
+- Supply chain mapping and transparency
+- Local sourcing benefits
+- Living wage calculations
+- Responsible procurement policies
+
+**Lessons** (5):
+1. Principios de Comercio Justo (45 min) - Fair trade fundamentals
+2. Mapeo de Cadena de Suministro (60 min) - Supply chain analysis
+3. Sourcing Local (60 min) - Local procurement
+4. Salarios y Condiciones Dignas (45 min) - Labor standards
+5. Plan de Compras Responsables (75 min) - Procurement strategy
+
+---
+
+### **Module Features**
+
+All platform modules include:
+- **Interactive Tools**: Calculators, assessments, planners
+- **Real-World Examples**: Case studies from Mexican companies
+- **Evidence Submission**: Upload photos, documents, data
+- **Progress Tracking**: Automatic XP rewards and completion tracking
+- **Certificates**: Digital certificates upon completion
+- **Downloadable Resources**: Templates, guides, checklists
+
+### **Revenue Model**
+
+Platform modules generate **100% revenue to Crowd Conscious**:
+- Used to fund platform development
+- Support community growth initiatives
+- Cover operational costs
+- Invest in new module creation
+
+Community modules (created by communities) split revenue:
+- **50%** → Community wallet
+- **20%** → Individual creator
+- **30%** → Platform
+
+### **Quality Standards**
+
+Platform modules set the quality benchmark:
+- Professional content development
+- Peer-reviewed by sustainability experts
+- Tested with real companies
+- Regular updates based on feedback
+- Compliance with latest regulations and standards
+
+---
+
 ## 👨‍💼 **Admin Dashboard**
 
 ### **Super Admin Panel**
@@ -1833,17 +2317,86 @@ Crowd Conscious is more than a platform—it's an **ecosystem** that connects le
 
 **The Vision**: A world where every company's training budget becomes sustainable funding for grassroots change, where communities monetize their knowledge, and where learning leads to measurable real-world impact.
 
-**Current Focus**: Phase 1 - Universal Marketplace
+**Current Status**: Phase 1 - COMPLETE ✅
 
-- Making the platform accessible to ALL learners (not just corporates)
-- Enabling dynamic, community-set pricing
-- Building a sustainable revenue model for creators and communities
+Recent completions:
+- ✅ Universal marketplace (individuals + teams + corporates)
+- ✅ Dynamic, community-set pricing
+- ✅ 6 platform modules published and ready
+- ✅ Promo codes system for partnerships
+- ✅ Review system for modules and communities
+- ✅ Community module builder (fully functional)
+- ✅ Cart & checkout with Stripe
+- ✅ Revenue distribution automation
+
+**Platform Ready For**: Production use, community creators, first customers
 
 **Next Steps**: See [Future Roadmap](#future-roadmap)
 
 ---
 
+## 🚀 **Quick Start Guide**
+
+### **For First-Time Setup**
+
+1. **Run Database Setup**:
+   - Open Supabase SQL Editor
+   - Copy contents of `COMPLETE-DATABASE-SETUP.sql`
+   - Click RUN
+   - Wait for completion (30-60 seconds)
+   - Verify: 6 modules, promo codes, review tables created
+
+2. **Test Key Features**:
+   - ✅ Visit `/marketplace` - see 6 modules
+   - ✅ Visit `/admin/promo-codes` - create test code
+   - ✅ Add module to cart, apply promo code
+   - ✅ Complete purchase flow
+   - ✅ Leave a review on completed module
+
+3. **Community Setup**:
+   - Create test community
+   - Navigate to community modules section
+   - Create first module using builder
+   - Submit for admin review
+   - Approve and publish to marketplace
+
+### **File Structure (Key Files)**
+
+```
+crowd-conscious-v2/
+├── COMPLETE-DATABASE-SETUP.sql          ← Run this first!
+├── PLATFORM-MASTER-DOCUMENTATION.md     ← You are here
+├── URGENT-FIX-SCRIPT.sql                ← Alternative setup
+│
+├── app/
+│   ├── api/
+│   │   ├── reviews/                     ← Review endpoints
+│   │   │   ├── modules/route.ts
+│   │   │   └── communities/route.ts
+│   │   ├── admin/promo-codes/           ← Promo code management
+│   │   └── marketplace/modules/[id]/    ← Module API
+│   │
+│   ├── components/
+│   │   └── reviews/                     ← Review UI components
+│   │       ├── ModuleReviewForm.tsx
+│   │       ├── ReviewsList.tsx
+│   │       └── ReviewPrompt.tsx
+│   │
+│   └── (app)/
+│       ├── admin/promo-codes/           ← Admin interface
+│       ├── marketplace/                 ← Browse modules
+│       └── communities/[id]/modules/    ← Module builder
+│
+└── sql-migrations/
+    ├── create-promo-codes-system.sql
+    ├── create-review-system.sql
+    └── phase-2-marketplace-tables.sql
+```
+
+---
+
 _Document created: November 5, 2025_  
+_Last major update: November 6, 2025_  
 _For: Internal team, new developers, investors, partners_  
 _Maintained by: Francisco Blockstrand & Development Team_
 
