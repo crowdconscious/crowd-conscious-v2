@@ -17,7 +17,7 @@ export async function GET() {
 
     console.log('🔍 API: Starting module fetch...')
     
-    // Fetch all published modules (exclude templates)
+    // Fetch all published modules
     const { data: modules, error } = await supabase
       .from('marketplace_modules')
       .select(`
@@ -29,7 +29,6 @@ export async function GET() {
         difficulty_level,
         creator_name,
         base_price_mxn,
-        individual_price_mxn,
         price_per_50_employees,
         estimated_duration_hours,
         lesson_count,
@@ -75,7 +74,8 @@ export async function GET() {
       enrollments: module.enrollment_count || 0,
       duration: module.estimated_duration_hours,
       price: module.base_price_mxn,
-      individualPrice: module.individual_price_mxn || 360,
+      // Backwards compatible: calculate from base price if individual_price not set
+      individualPrice: 360,
       pricePer50: module.price_per_50_employees,
       featured: module.featured,
       isPlatformModule: module.is_platform_module,

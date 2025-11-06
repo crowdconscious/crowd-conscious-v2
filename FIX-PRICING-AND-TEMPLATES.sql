@@ -32,13 +32,26 @@ BEGIN
 END $$;
 
 -- =====================================================
--- STEP 2: CREATE FREE TEMPLATE MODULES (Hidden from marketplace)
+-- STEP 2: DISABLE PRICING VALIDATION FOR TEMPLATES
 -- =====================================================
 
 DO $$
 BEGIN
   RAISE NOTICE '';
-  RAISE NOTICE '📚 Step 2/3: Creating FREE template modules...';
+  RAISE NOTICE '📚 Step 2/3: Disabling pricing validation for templates...';
+END $$;
+
+-- Temporarily disable the pricing validation trigger
+DROP TRIGGER IF EXISTS validate_pricing_trigger ON marketplace_modules;
+
+-- =====================================================
+-- STEP 3: CREATE FREE TEMPLATE MODULES (Hidden from marketplace)
+-- =====================================================
+
+DO $$
+BEGIN
+  RAISE NOTICE '';
+  RAISE NOTICE '📚 Step 3/4: Creating FREE template modules...';
 END $$;
 
 -- Template 1: Basic Clean Air Module
@@ -148,13 +161,53 @@ BEGIN
 END $$;
 
 -- =====================================================
--- STEP 3: VERIFY PRICING ON PREMIUM MODULES
+-- STEP 4: RE-ENABLE PRICING VALIDATION (but allow $0 for templates)
 -- =====================================================
 
 DO $$
 BEGIN
   RAISE NOTICE '';
-  RAISE NOTICE '💰 Step 3/3: Verifying premium module pricing...';
+  RAISE NOTICE '🔧 Step 4/5: Updating pricing validation...';
+END $$;
+
+-- Update the validation function to allow $0 for templates
+CREATE OR REPLACE FUNCTION validate_module_pricing()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Skip validation for templates
+  IF NEW.is_template = TRUE AND NEW.status = 'template' THEN
+    RETURN NEW;
+  END IF;
+  
+  -- For non-templates, enforce minimum pricing
+  IF NEW.base_price_mxn < 300 THEN
+    RAISE EXCEPTION 'Base price must be at least 300 MXN (minimum viable price)';
+  END IF;
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Recreate the trigger
+DROP TRIGGER IF EXISTS validate_pricing_trigger ON marketplace_modules;
+CREATE TRIGGER validate_pricing_trigger
+  BEFORE INSERT OR UPDATE ON marketplace_modules
+  FOR EACH ROW
+  EXECUTE FUNCTION validate_module_pricing();
+
+DO $$
+BEGIN
+  RAISE NOTICE '✅ Pricing validation updated (allows $0 for templates)';
+END $$;
+
+-- =====================================================
+-- STEP 5: VERIFY PRICING ON PREMIUM MODULES
+-- =====================================================
+
+DO $$
+BEGIN
+  RAISE NOTICE '';
+  RAISE NOTICE '💰 Step 5/5: Verifying premium module pricing...';
 END $$;
 
 -- Ensure all premium modules have correct individual pricing
