@@ -125,12 +125,12 @@ export default function ModuleOverviewPage({ params }: { params: Promise<{ modul
     if (lessonNumber === 1) return true
     
     // Subsequent lessons unlock when previous is completed
-    const previousLesson = module.lessons.find(l => l.lessonNumber === lessonNumber - 1)
+    const previousLesson = module.lessons.find((l: any) => l.lessonNumber === lessonNumber - 1)
     return previousLesson ? completedLessons.includes(previousLesson.id) : false
   }
 
   const getNextLesson = () => {
-    return module.lessons.find(l => !completedLessons.includes(l.id))
+    return module.lessons.find((l: any) => !completedLessons.includes(l.id))
   }
 
   const nextLesson = getNextLesson()
