@@ -7,7 +7,9 @@
 -- 3. Fixes dashboard data fetching
 -- ========================================================================
 
-RAISE NOTICE '🔧 Starting Lessons and Progress Fix...';
+DO $$ BEGIN
+  RAISE NOTICE '🔧 Starting Lessons and Progress Fix...';
+END $$;
 
 -- ========================================================================
 -- STEP 1: Add Lessons to Aire Limpio: El Despertar Corporativo
@@ -222,7 +224,9 @@ WHERE EXISTS (
   SELECT 1 FROM module_lessons l WHERE l.module_id = m.id
 );
 
-RAISE NOTICE '✅ Updated lesson counts for all modules';
+DO $$ BEGIN
+  RAISE NOTICE '✅ Updated lesson counts for all modules';
+END $$;
 
 -- ========================================================================
 -- STEP 6: Ensure course_enrollments table can track progress
@@ -238,7 +242,9 @@ ADD COLUMN IF NOT EXISTS completed BOOLEAN DEFAULT false;
 ALTER TABLE course_enrollments
 ADD COLUMN IF NOT EXISTS completion_date TIMESTAMP;
 
-RAISE NOTICE '✅ Ensured progress tracking columns exist';
+DO $$ BEGIN
+  RAISE NOTICE '✅ Ensured progress tracking columns exist';
+END $$;
 
 -- ========================================================================
 -- STEP 7: Create lesson_responses table if it doesn't exist
@@ -286,7 +292,9 @@ USING (
   )
 );
 
-RAISE NOTICE '✅ lesson_responses table ready';
+DO $$ BEGIN
+  RAISE NOTICE '✅ lesson_responses table ready';
+END $$;
 
 -- ========================================================================
 -- VERIFICATION
@@ -317,5 +325,7 @@ BEGIN
   END IF;
 END $$;
 
-RAISE NOTICE '🎉 Lessons and Progress Fix Complete!';
+DO $$ BEGIN
+  RAISE NOTICE '🎉 Lessons and Progress Fix Complete!';
+END $$;
 
