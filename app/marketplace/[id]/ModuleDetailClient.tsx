@@ -99,6 +99,9 @@ export default function ModuleDetailClient({ module }: ModuleDetailClientProps) 
         setShowAddToCart(true)
         setTimeout(() => setShowAddToCart(false), 3000)
         console.log('✅ Added to cart:', data)
+        
+        // Trigger cart update event for CartButton to refresh
+        window.dispatchEvent(new Event('cartUpdated'))
       } else {
         if (response.status === 401) {
           alert('Por favor inicia sesión para agregar al carrito.')

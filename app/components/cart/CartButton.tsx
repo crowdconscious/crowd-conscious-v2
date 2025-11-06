@@ -37,6 +37,18 @@ export default function CartButton() {
 
   useEffect(() => {
     fetchCartCount()
+    
+    // Listen for cart updates from other components
+    const handleCartUpdate = () => {
+      console.log('📢 Cart update event received, refreshing count...')
+      fetchCartCount()
+    }
+    
+    window.addEventListener('cartUpdated', handleCartUpdate)
+    
+    return () => {
+      window.removeEventListener('cartUpdated', handleCartUpdate)
+    }
   }, [])
 
   // Refresh cart count when cart updates
