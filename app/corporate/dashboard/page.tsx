@@ -123,13 +123,22 @@ export default async function CorporateDashboard() {
           </p>
         </div>
         
-        <Link
-          href="/corporate/employees"
-          className="bg-gradient-to-r from-teal-600 to-purple-600 text-white px-4 sm:px-6 py-3 rounded-lg font-medium hover:scale-105 transition-transform flex items-center justify-center gap-2 text-sm sm:text-base min-h-[44px]"
-        >
-          <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-          <span className="whitespace-nowrap">Invitar Empleados</span>
-        </Link>
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+          <Link
+            href="/marketplace"
+            className="border-2 border-emerald-500 text-emerald-600 px-4 sm:px-6 py-3 rounded-lg font-medium hover:bg-emerald-50 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base min-h-[44px]"
+          >
+            <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="whitespace-nowrap">Explorar Módulos</span>
+          </Link>
+          <Link
+            href="/corporate/employees"
+            className="bg-gradient-to-r from-teal-600 to-purple-600 text-white px-4 sm:px-6 py-3 rounded-lg font-medium hover:scale-105 transition-transform flex items-center justify-center gap-2 text-sm sm:text-base min-h-[44px]"
+          >
+            <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="whitespace-nowrap">Invitar Empleados</span>
+          </Link>
+        </div>
       </div>
 
       {/* User's Enrolled Courses - Show to EVERYONE with enrollments */}

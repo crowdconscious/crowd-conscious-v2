@@ -122,13 +122,24 @@ export default async function EmployeeDashboard() {
   return (
     <div className="space-y-6">
       {/* Welcome Header - Mobile Friendly */}
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
-          ¡Hola, {profile?.full_name?.split(' ')[0] || 'Empleado'}! 👋
-        </h1>
-        <p className="text-slate-600 mt-1 text-sm sm:text-base">
-          Continúa tu camino hacia la certificación
-        </p>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
+            ¡Hola, {profile?.full_name?.split(' ')[0] || 'Empleado'}! 👋
+          </h1>
+          <p className="text-slate-600 mt-1 text-sm sm:text-base">
+            Continúa tu camino hacia la certificación
+          </p>
+        </div>
+        <Link
+          href="/marketplace"
+          className="border-2 border-emerald-500 bg-emerald-50 text-emerald-700 px-6 py-3 rounded-lg font-semibold hover:bg-emerald-100 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base min-h-[44px] shadow-sm"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+          </svg>
+          <span className="whitespace-nowrap">Explorar Más Módulos</span>
+        </Link>
       </div>
 
       {/* Overall Progress - Mobile Optimized */}

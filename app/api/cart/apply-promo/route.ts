@@ -67,14 +67,13 @@ export async function POST(request: Request) {
 
     for (const item of cartItems) {
       const itemDiscount = discountPerItem
-      const finalPrice = Math.max((item.price_snapshot || 0) - itemDiscount, 0)
+      const discountedPrice = Math.max((item.price_snapshot || 0) - itemDiscount, 0)
 
       await adminClient
         .from('cart_items')
         .update({
           promo_code_id: promoCodeId,
-          discount_amount: itemDiscount,
-          final_price: finalPrice
+          discounted_price: discountedPrice
         })
         .eq('id', item.id)
     }
@@ -120,13 +119,11 @@ export async function DELETE(request: Request) {
     const updateQuery = isCorporate
       ? adminClient.from('cart_items').update({
           promo_code_id: null,
-          discount_amount: 0,
-          final_price: null
+          discounted_price: null
         }).eq('corporate_account_id', profile.corporate_account_id)
       : adminClient.from('cart_items').update({
           promo_code_id: null,
-          discount_amount: 0,
-          final_price: null
+          discounted_price: null
         }).eq('user_id', user.id)
 
     const { error } = await updateQuery
