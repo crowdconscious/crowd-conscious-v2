@@ -15,18 +15,17 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get the Clean Air course enrollment
-    const cleanAirCourseId = 'a1a1a1a1-1111-1111-1111-111111111111'
-    
+    // Get enrollment using CORRECT column names (user_id, module_id)
     const { data: enrollment, error } = await supabase
       .from('course_enrollments')
-      .select('xp_earned, completion_percentage')
-      .eq('employee_id', user.id)
-      .eq('course_id', cleanAirCourseId)
+      .select('id, xp_earned, progress_percentage')  // FIXED: correct column names
+      .eq('user_id', user.id)  // FIXED: was 'employee_id'
+      .eq('module_id', moduleId)  // FIXED: was 'course_id' with hardcoded ID
       .single()
 
     if (error || !enrollment) {
-      console.log('No enrollment found for user:', user.id)
+      console.log('❌ No enrollment found for user:', user.id, 'module:', moduleId)
+      console.error('Enrollment error:', error)
       return NextResponse.json({ 
         completedLessons: [],
         xpEarned: 0,
@@ -34,36 +33,40 @@ export async function GET(
       })
     }
 
+    console.log('✅ Enrollment found:', { enrollmentId: enrollment.id, moduleId })
+
     // Fetch actual completed lessons from lesson_responses table
+    // FIXED: Use enrollment_id, not employee_id/course_id/module_id
     const { data: responses, error: responsesError } = await supabase
       .from('lesson_responses')
       .select('lesson_id')
-      .eq('employee_id', user.id)
-      .eq('course_id', cleanAirCourseId)
-      .eq('module_id', moduleId)
+      .eq('enrollment_id', enrollment.id)  // FIXED: lesson_responses uses enrollment_id
 
     if (responsesError) {
-      console.error('Error fetching lesson responses:', responsesError)
+      console.error('❌ Error fetching lesson responses:', responsesError)
       return NextResponse.json({
         completedLessons: [],
         xpEarned: enrollment.xp_earned || 0,
-        completionPercentage: enrollment.completion_percentage || 0
+        completionPercentage: enrollment.progress_percentage || 0  // FIXED: correct column name
       })
     }
 
     // Get unique lesson IDs
     const completedLessons = [...new Set(responses?.map(r => r.lesson_id) || [])]
 
-    console.log('✅ Progress for', moduleId, ':', { 
+    console.log('✅ Progress loaded:', { 
+      moduleId,
+      enrollmentId: enrollment.id,
       completedLessons,
+      completedCount: completedLessons.length,
       xpEarned: enrollment.xp_earned,
-      completionPercentage: enrollment.completion_percentage
+      progressPercentage: enrollment.progress_percentage
     })
 
     return NextResponse.json({
       completedLessons,
       xpEarned: enrollment.xp_earned || 0,
-      completionPercentage: enrollment.completion_percentage || 0
+      completionPercentage: enrollment.progress_percentage || 0  // FIXED: correct column name
     })
 
   } catch (error) {
