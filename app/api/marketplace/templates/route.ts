@@ -24,16 +24,16 @@ export async function GET(request: NextRequest) {
         price_per_50_employees,
         lessons:module_lessons(
           id,
-          lesson_number,
+          lesson_order,
           title,
-          content,
+          description,
           estimated_minutes,
           xp_reward,
           key_points
         )
       `)
       .eq('is_template', true)
-      .eq('status', 'published')
+      .eq('status', 'template')
       .order('created_at', { ascending: false })
     
     if (error) {

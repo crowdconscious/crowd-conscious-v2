@@ -168,61 +168,66 @@ WHERE table_schema = 'auth'
   AND table_name = 'users';
 
 -- =====================================================
--- 8. COUNT EXISTING DATA
+-- 8. CHECK SPECIFIC COLUMNS IN MARKETPLACE_MODULES
 -- =====================================================
 
 DO $$
 BEGIN
   RAISE NOTICE '';
-  RAISE NOTICE '📊 EXISTING DATA COUNTS:';
+  RAISE NOTICE '🔍 MARKETPLACE_MODULES SPECIAL COLUMNS:';
 END $$;
 
-DO $$
-DECLARE
-  v_count INTEGER;
-BEGIN
-  -- Profiles
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'profiles') THEN
-    SELECT COUNT(*) INTO v_count FROM profiles;
-    RAISE NOTICE 'Profiles: %', v_count;
-  END IF;
+SELECT 
+  column_name,
+  data_type,
+  is_nullable
+FROM information_schema.columns
+WHERE table_schema = 'public'
+  AND table_name = 'marketplace_modules'
+  AND column_name IN ('is_platform_module', 'individual_price_mxn', 'creator_user_id', 'creator_community_id')
+ORDER BY column_name;
 
-  -- Communities
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'communities') THEN
-    SELECT COUNT(*) INTO v_count FROM communities;
-    RAISE NOTICE 'Communities: %', v_count;
-  END IF;
-
-  -- Marketplace Modules
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'marketplace_modules') THEN
-    SELECT COUNT(*) INTO v_count FROM marketplace_modules;
-    RAISE NOTICE 'Marketplace Modules: %', v_count;
-    
-    SELECT COUNT(*) INTO v_count FROM marketplace_modules WHERE is_platform_module = TRUE;
-    RAISE NOTICE 'Platform Modules: %', v_count;
-    
-    SELECT COUNT(*) INTO v_count FROM marketplace_modules WHERE status = 'published';
-    RAISE NOTICE 'Published Modules: %', v_count;
-  EXCEPTION WHEN undefined_column THEN
-    RAISE NOTICE 'Marketplace Modules exist but is_platform_module column missing';
-  END IF;
-
-  -- Promo Codes
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'promo_codes') THEN
-    SELECT COUNT(*) INTO v_count FROM promo_codes;
-    RAISE NOTICE 'Promo Codes: %', v_count;
-  END IF;
-
-  -- Reviews
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'module_reviews') THEN
-    SELECT COUNT(*) INTO v_count FROM module_reviews;
-    RAISE NOTICE 'Module Reviews: %', v_count;
-  END IF;
-END $$;
+-- =====================================================
+-- 9. CHECK COURSE_ENROLLMENTS TABLE (if exists)
+-- =====================================================
 
 DO $$
 BEGIN
   RAISE NOTICE '';
-  RAISE NOTICE '✅ Diagnostic complete! Please share these results.';
+  RAISE NOTICE '🎓 COURSE_ENROLLMENTS TABLE:';
+END $$;
+
+SELECT 
+  column_name,
+  data_type,
+  is_nullable
+FROM information_schema.columns
+WHERE table_schema = 'public'
+  AND table_name = 'course_enrollments'
+ORDER BY ordinal_position;
+
+-- =====================================================
+-- 10. CHECK CART_ITEMS TABLE (if exists)
+-- =====================================================
+
+DO $$
+BEGIN
+  RAISE NOTICE '';
+  RAISE NOTICE '🛒 CART_ITEMS TABLE:';
+END $$;
+
+SELECT 
+  column_name,
+  data_type,
+  is_nullable
+FROM information_schema.columns
+WHERE table_schema = 'public'
+  AND table_name = 'cart_items'
+ORDER BY ordinal_position;
+
+DO $$
+BEGIN
+  RAISE NOTICE '';
+  RAISE NOTICE '✅ Diagnostic complete! Please share ALL results above.';
 END $$;
 
