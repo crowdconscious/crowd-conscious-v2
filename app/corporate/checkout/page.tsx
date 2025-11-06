@@ -67,8 +67,22 @@ export default function CheckoutPage() {
       
       if (response.ok) {
         const data = await response.json()
+        
+        console.log('🛒 CHECKOUT PAGE - Cart API Response:', {
+          items: data.items,
+          summary: data.summary,
+          has_promo: data.summary?.has_promo,
+          total_discount: data.summary?.total_discount,
+          original_total: data.summary?.original_total,
+          total_price: data.summary?.total_price
+        })
+        
         setCartItems(data.items || [])
         setCartSummary(data.summary)
+        
+        console.log('🎯 CHECKOUT PAGE - State set to:', {
+          cartSummary: data.summary
+        })
         
         // If cart is empty, redirect to marketplace
         if (data.items.length === 0) {
@@ -314,6 +328,12 @@ export default function CheckoutPage() {
                     {formatCurrency(cartSummary.has_promo ? cartSummary.original_total : cartSummary.total_price)}
                   </span>
                 </div>
+                {console.log('💳 RENDERING SUMMARY:', {
+                  has_promo: cartSummary.has_promo,
+                  total_discount: cartSummary.total_discount,
+                  should_show_discount: cartSummary.has_promo && cartSummary.total_discount > 0,
+                  promo_code: cartItems[0]?.promo_code
+                })}
                 {cartSummary.has_promo && cartSummary.total_discount > 0 && (
                   <div className="flex justify-between text-green-600">
                     <span className="flex items-center gap-2">
