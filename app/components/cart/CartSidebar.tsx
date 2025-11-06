@@ -41,6 +41,12 @@ export default function CartSidebar({ isOpen, onClose, onUpdate }: CartSidebarPr
     total_price: 0,
     total_employees: 0
   })
+  
+  // Promo code state
+  const [promoCode, setPromoCode] = useState('')
+  const [appliedPromo, setAppliedPromo] = useState<any>(null)
+  const [promoLoading, setPromoLoading] = useState(false)
+  const [promoError, setPromoError] = useState<string | null>(null)
 
   // Fetch cart data
   const fetchCart = async () => {
@@ -156,6 +162,63 @@ export default function CartSidebar({ isOpen, onClose, onUpdate }: CartSidebarPr
       alert('Error de conexión')
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Apply promo code
+  const applyPromoCode = async () => {
+    if (!promoCode.trim()) {
+      setPromoError('Por favor ingresa un código')
+      return
+    }
+
+    setPromoLoading(true)
+    setPromoError(null)
+
+    try {
+      const response = await fetch('/api/cart/apply-promo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: promoCode.trim().toUpperCase() })
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setAppliedPromo(data)
+        setPromoCode('')
+        await fetchCart() // Refresh cart to show discounted prices
+        onUpdate()
+      } else {
+        setPromoError(data.error || data.message || 'Código inválido')
+      }
+    } catch (error) {
+      console.error('Error applying promo code:', error)
+      setPromoError('Error de conexión')
+    } finally {
+      setPromoLoading(false)
+    }
+  }
+
+  // Remove promo code
+  const removePromoCode = async () => {
+    setPromoLoading(true)
+
+    try {
+      const response = await fetch('/api/cart/apply-promo', {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        setAppliedPromo(null)
+        setPromoError(null)
+        await fetchCart()
+        onUpdate()
+      }
+    } catch (error) {
+      console.error('Error removing promo code:', error)
+    } finally {
+      setPromoLoading(false)
     }
   }
 
@@ -343,20 +406,88 @@ export default function CartSidebar({ isOpen, onClose, onUpdate }: CartSidebarPr
           {/* Footer */}
           {cartItems.length > 0 && (
             <div className="border-t border-slate-200 p-6 bg-white">
+              {/* Promo Code Section */}
+              <div className="mb-4 pb-4 border-b border-slate-200">
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Código Promocional
+                </label>
+                
+                {!appliedPromo ? (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={promoCode}
+                      onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                      placeholder="PARTNER50"
+                      className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      disabled={promoLoading}
+                    />
+                    <button
+                      onClick={applyPromoCode}
+                      disabled={promoLoading || !promoCode.trim()}
+                      className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {promoLoading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        'Aplicar'
+                      )}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-green-700 font-bold text-sm">{appliedPromo.code}</span>
+                        <span className="text-xs bg-green-600 text-white px-2 py-0.5 rounded-full">
+                          -{appliedPromo.savings_percentage}%
+                        </span>
+                      </div>
+                      <button
+                        onClick={removePromoCode}
+                        disabled={promoLoading}
+                        className="text-green-700 hover:text-green-900 text-xs underline"
+                      >
+                        Remover
+                      </button>
+                    </div>
+                    <div className="text-xs text-green-700">
+                      Ahorro: {formatCurrency(appliedPromo.discount_amount)}
+                    </div>
+                  </div>
+                )}
+                
+                {promoError && (
+                  <div className="mt-2 text-xs text-red-600 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {promoError}
+                  </div>
+                )}
+              </div>
+
               {/* Totals */}
               <div className="space-y-2 mb-4">
                 <div className="flex justify-between text-slate-600">
                   <span>Subtotal</span>
                   <span className="font-medium">{formatCurrency(cartSummary.total_price)}</span>
                 </div>
+                
+                {appliedPromo && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Descuento ({appliedPromo.code})</span>
+                    <span className="font-medium">-{formatCurrency(appliedPromo.discount_amount)}</span>
+                  </div>
+                )}
+                
                 <div className="flex justify-between text-slate-600 text-sm">
                   <span>Empleados totales</span>
                   <span className="font-medium">{cartSummary.total_employees}</span>
                 </div>
+                
                 <div className="pt-2 border-t border-slate-200 flex justify-between">
                   <span className="text-lg font-bold text-slate-900">Total</span>
                   <span className="text-2xl font-bold text-purple-600">
-                    {formatCurrency(cartSummary.total_price)}
+                    {formatCurrency(appliedPromo ? appliedPromo.final_total : cartSummary.total_price)}
                   </span>
                 </div>
               </div>
