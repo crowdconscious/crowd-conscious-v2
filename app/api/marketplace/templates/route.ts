@@ -32,8 +32,8 @@ export async function GET(request: NextRequest) {
           key_points
         )
       `)
-      .eq('status', 'published')
-      .limit(0)
+      .eq('is_template', true)
+      .eq('status', 'template')
       .order('created_at', { ascending: false })
     
     if (error) {
