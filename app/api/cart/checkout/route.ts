@@ -47,7 +47,7 @@ export async function POST() {
       }
     }
 
-    // Fetch cart items with module details
+    // Fetch cart items with module details AND promo codes
     let cartQuery = adminClient
       .from('cart_items')
       .select(`
@@ -55,6 +55,8 @@ export async function POST() {
         module_id,
         employee_count,
         price_snapshot,
+        promo_code_id,
+        discounted_price,
         marketplace_modules (
           id,
           title,
@@ -62,6 +64,12 @@ export async function POST() {
           thumbnail_url,
           base_price_mxn,
           price_per_50_employees
+        ),
+        promo_codes (
+          id,
+          code,
+          discount_type,
+          discount_value
         )
       `)
 
@@ -78,12 +86,22 @@ export async function POST() {
       return ApiResponse.badRequest('Cart is empty or failed to fetch')
     }
 
-    // Calculate line items for Stripe
+    // Calculate line items for Stripe with promo code discounts
     const lineItems = cartItems.map((item: any) => {
       const module = item.marketplace_modules
-      const description = isCorporate
+      const promoCode = item.promo_codes
+      
+      // Use discounted_price if promo code applied, otherwise use price_snapshot
+      const finalPrice = item.discounted_price || item.price_snapshot
+      
+      let description = isCorporate
         ? `${item.employee_count} empleado${item.employee_count > 1 ? 's' : ''} - ${module.description?.substring(0, 100) || ''}`
         : `Acceso personal - ${module.description?.substring(0, 100) || ''}`
+      
+      // Add promo code info to description if applied
+      if (promoCode) {
+        description += ` | Código: ${promoCode.code}`
+      }
 
       return {
         price_data: {
@@ -93,14 +111,26 @@ export async function POST() {
             description,
             images: module.thumbnail_url ? [module.thumbnail_url] : []
           },
-          unit_amount: Math.round(item.price_snapshot * 100) // Use price_snapshot (already calculated)
+          unit_amount: Math.round(finalPrice * 100) // Use discounted price if promo applied
         },
         quantity: 1
       }
     })
 
-    // Calculate total from price_snapshot
-    const totalAmount = cartItems.reduce((sum: number, item: any) => sum + item.price_snapshot, 0)
+    // Calculate total from discounted prices (if promo applied) or price_snapshot
+    const totalAmount = cartItems.reduce((sum: number, item: any) => 
+      sum + (item.discounted_price || item.price_snapshot), 0
+    )
+    
+    // Get promo code info for metadata (if any)
+    const appliedPromoCodes = cartItems
+      .filter((item: any) => item.promo_codes)
+      .map((item: any) => ({
+        code: item.promo_codes.code,
+        module_id: item.module_id,
+        discount_type: item.promo_codes.discount_type,
+        discount_value: item.promo_codes.discount_value
+      }))
 
     // Prepare metadata for webhook
     const cartMetadata = cartItems.map((item: any) => ({
@@ -118,13 +148,16 @@ export async function POST() {
       metadata: {
         type: 'module_purchase',
         user_id: user.id,
-        purchase_type: isCorporate ? 'corporate' : 'individual', // NEW: Critical for webhook!
+        purchase_type: isCorporate ? 'corporate' : 'individual', // Critical for webhook!
         corporate_account_id: isCorporate ? profile.corporate_account_id : null,
         company_name: corporateAccount?.company_name || null,
         cart_items: JSON.stringify(cartMetadata),
-        total_amount: totalAmount.toString()
+        total_amount: totalAmount.toString(),
+        // Add promo code info for webhook tracking
+        promo_codes: appliedPromoCodes.length > 0 ? JSON.stringify(appliedPromoCodes) : null,
+        has_discount: appliedPromoCodes.length > 0 ? 'true' : 'false'
       },
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?purchase=success`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/employee-portal/dashboard?purchase=success`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/marketplace?cancelled=true`
     })
 
