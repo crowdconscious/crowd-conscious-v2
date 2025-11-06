@@ -130,9 +130,15 @@ export async function GET(
           estimated_minutes: lesson.estimated_minutes,
           xp_reward: lesson.xp_reward,
           key_points: lesson.key_points || [],
-          content: lesson.content,
-          quiz_questions: lesson.quiz_questions,
-          resources: lesson.resources
+          story_content: lesson.story_content,
+          learning_objectives: lesson.learning_objectives,
+          did_you_know: lesson.did_you_know,
+          real_world_example: lesson.real_world_example,
+          activity_type: lesson.activity_type,
+          activity_config: lesson.activity_config,
+          resources: lesson.resources,
+          tools_used: lesson.tools_used,
+          next_steps: lesson.next_steps
         })),
       
       // Default data for sections not yet in database

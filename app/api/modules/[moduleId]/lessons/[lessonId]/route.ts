@@ -37,9 +37,17 @@ export async function GET(
         description,
         estimated_minutes,
         xp_reward,
+        story_content,
+        learning_objectives,
         key_points,
-        quiz_questions,
-        resources
+        did_you_know,
+        real_world_example,
+        activity_type,
+        activity_config,
+        activity_required,
+        tools_used,
+        resources,
+        next_steps
       `)
       .eq('module_id', moduleId)
       .eq('id', lessonId)
@@ -72,8 +80,8 @@ export async function GET(
       duration: `${lesson.estimated_minutes} min`,
       xpReward: lesson.xp_reward,
       
-      // Story section (simplified for now)
-      story: {
+      // Story section - use story_content if available
+      story: lesson.story_content || {
         introduction: lesson.description || '',
         mainContent: lesson.key_points || ['Contenido del curso disponible próximamente'],
         conclusion: 'Completa esta lección para continuar tu aprendizaje',
@@ -82,18 +90,21 @@ export async function GET(
       
       // Learning section
       learning: {
+        objectives: lesson.learning_objectives || [],
         keyPoints: lesson.key_points || [],
-        didYouKnow: [
+        didYouKnow: lesson.did_you_know || [
           'Este módulo ha sido desarrollado por expertos en la materia',
           'Incluye casos de estudio reales de empresas mexicanas'
         ],
-        realWorldExample: 'Empresas líderes han implementado estos principios con resultados medibles'
+        realWorldExample: lesson.real_world_example || 'Empresas líderes han implementado estos principios con resultados medibles'
       },
       
-      // Activity section
-      activity: {
+      // Activity section - use activity_config if available
+      activity: lesson.activity_config || {
         title: 'Actividad Práctica',
+        type: lesson.activity_type || 'reflection',
         description: 'Completa esta actividad para aplicar lo aprendido',
+        required: lesson.activity_required || false,
         reflectionPrompts: [
           '¿Cómo puedes aplicar estos conceptos en tu organización?',
           '¿Qué obstáculos podrías enfrentar y cómo los superarías?',
@@ -101,18 +112,21 @@ export async function GET(
         ]
       },
       
+      // Tools used in this lesson
+      tools: lesson.tools_used || [],
+      
       // Resources
       resources: lesson.resources || [],
       
       // Next steps
-      nextSteps: [
+      nextSteps: lesson.next_steps || [
         'Revisa los recursos adicionales proporcionados',
         'Discute estos conceptos con tu equipo',
         'Identifica una acción concreta que puedas tomar esta semana'
       ],
       
-      // Quiz if available
-      quiz: lesson.quiz_questions || null
+      // Quiz - removed as column doesn't exist
+      quiz: null
     }
 
     console.log('✅ API: Lesson fetched successfully:', lesson.title)
