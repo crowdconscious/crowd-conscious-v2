@@ -1,9 +1,11 @@
 import { createClient } from '@/lib/supabase-server'
+import { createAdminClient } from '@/lib/supabase-admin'
 import Link from 'next/link'
 import { Users, BookOpen, Award, TrendingUp, Plus, AlertCircle } from 'lucide-react'
 
 export default async function CorporateDashboard() {
   const supabase = await createClient()
+  const adminClient = createAdminClient()
   
   const { data: { user } } = await supabase.auth.getUser()
   
@@ -61,14 +63,14 @@ export default async function CorporateDashboard() {
   console.log('🔍 DEBUG - Raw enrollments length:', rawEnrollments?.length)
   console.log('🔍 DEBUG - Enrollments error:', enrollmentsError)
 
-  // Get module details separately
+  // Get module details separately - USE ADMIN CLIENT to bypass RLS
   let userEnrollments: any[] = []
   if (rawEnrollments && rawEnrollments.length > 0) {
     const moduleIds = rawEnrollments.map(e => e.module_id).filter(Boolean) // Remove nulls
     console.log('🔍 DEBUG - Module IDs:', moduleIds)
     
     if (moduleIds.length > 0) {
-      const { data: modules, error: modulesError } = await supabase
+      const { data: modules, error: modulesError } = await adminClient
         .from('marketplace_modules')
         .select('id, title, slug, thumbnail_url, difficulty_level, estimated_duration_hours')
         .in('id', moduleIds)
