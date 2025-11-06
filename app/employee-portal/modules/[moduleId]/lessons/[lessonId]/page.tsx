@@ -185,9 +185,11 @@ export default function LessonPage({
         const data = await response.json()
         console.log('✅ Lesson completed:', data)
         
-        // Find next lesson
-        const currentIndex = module.lessons.findIndex((l: any) => l.id === lessonId)
-        const nextLesson = module.lessons[currentIndex + 1]
+        // Navigate back to module overview to see progress and next lesson
+        // (module.lessons might not be available in this context)
+        setTimeout(() => {
+          router.push(`/employee-portal/modules/${moduleId}`)
+        }, 1500)
 
         // If module complete, generate certificate
         if (data.moduleComplete) {
@@ -233,15 +235,7 @@ export default function LessonPage({
         // Force refresh to update progress across the app
         router.refresh()
 
-        // Wait a moment for the success message, then navigate
-        setTimeout(() => {
-          if (nextLesson) {
-            router.push(`/employee-portal/modules/${moduleId}/lessons/${nextLesson.id}`)
-          } else {
-            // Module completed - go to certificate page
-            router.push(`/employee-portal/modules/${moduleId}/certificate`)
-          }
-        }, 2000)
+        // Navigation already handled above (redirects to module overview after 1.5s)
       } else {
         const error = await response.json()
         console.error('❌ Failed to complete lesson:', error)

@@ -1289,11 +1289,13 @@ The promo code system allows administrators to create discount codes for strateg
 ### **Features**
 
 #### **Discount Types**
+
 - **Percentage Discount**: e.g., 50% OFF
-- **Fixed Amount**: e.g., $5,000 MXN OFF  
+- **Fixed Amount**: e.g., $5,000 MXN OFF
 - **Free (100% OFF)**: Ideal for demos, VIP partners, strategic relationships
 
 #### **Configuration Options**
+
 - **Max Uses**: Total number of times code can be used (unlimited if not set)
 - **Max Uses Per User**: Limit redemptions per user (default: 1)
 - **Valid Date Range**: Start and end dates for code validity
@@ -1302,6 +1304,7 @@ The promo code system allows administrators to create discount codes for strateg
 - **Purchase Type Restrictions**: Individual, team, or corporate only (optional)
 
 #### **Tracking & Analytics**
+
 - **Current Uses**: Real-time usage tracking
 - **Discount Amount**: Total savings provided
 - **Partner/Campaign Tracking**: Associate codes with partners or campaigns
@@ -1312,6 +1315,7 @@ The promo code system allows administrators to create discount codes for strateg
 **Location**: `/admin/promo-codes`
 
 **Dashboard Cards**:
+
 - Total codes created
 - Active codes count
 - Total uses across all codes
@@ -1319,6 +1323,7 @@ The promo code system allows administrators to create discount codes for strateg
 - Average discount per use
 
 **Code Management**:
+
 - Create new codes with full configuration
 - View all codes (active and inactive)
 - Toggle activation status
@@ -1328,6 +1333,7 @@ The promo code system allows administrators to create discount codes for strateg
 ### **User Experience**
 
 **Cart Application**:
+
 1. User adds modules to cart
 2. User enters promo code in checkout
 3. System validates code:
@@ -1340,6 +1346,7 @@ The promo code system allows administrators to create discount codes for strateg
 5. Shows original price, discount, and final price
 
 **Validation Messages**:
+
 - "Código aplicado con éxito! Ahorro: $X MXN"
 - "Código inválido o inactivo"
 - "Este código ha expirado"
@@ -1349,6 +1356,7 @@ The promo code system allows administrators to create discount codes for strateg
 ### **Sample Use Cases**
 
 #### **Strategic Partner Code**
+
 ```
 Code: PARTNER50
 Type: 50% discount
@@ -1358,6 +1366,7 @@ Use Case: Long-term partnership discount
 ```
 
 #### **Launch Week Promotion**
+
 ```
 Code: LAUNCH100
 Type: 100% OFF (Free)
@@ -1367,6 +1376,7 @@ Use Case: Early adopter incentive
 ```
 
 #### **Referral Program**
+
 ```
 Code: WELCOME25
 Type: 25% discount
@@ -1377,6 +1387,7 @@ Use Case: First-time buyer discount
 ### **Revenue Tracking**
 
 When a promo code is used:
+
 - **`promo_code_uses` table** records:
   - Original cart total
   - Discount amount
@@ -1390,13 +1401,16 @@ When a promo code is used:
 ### **API Endpoints**
 
 **POST /api/admin/promo-codes/create**
+
 - Create new promo code
 - Requires super admin permissions
 
 **PUT /api/admin/promo-codes/toggle**
+
 - Activate/deactivate code
 
 **POST /api/cart/apply-promo**
+
 - Validate and apply promo code to cart
 
 ### **Database Schema**
@@ -1429,11 +1443,13 @@ The review system allows users to rate and provide feedback on both modules and 
 ### **Module Reviews**
 
 #### **Who Can Review**
+
 - **Only enrolled users** can review modules
 - Must have purchased/enrolled in the module
 - One review per user per module (can be edited)
 
 #### **Review Components**
+
 1. **Star Rating** (1-5 stars) - Required
 2. **Review Title** - Optional, max 100 characters
 3. **Review Text** - Optional, max 1000 characters
@@ -1442,6 +1458,7 @@ The review system allows users to rate and provide feedback on both modules and 
 6. **Verified Purchase Badge** - Automatically added for enrolled users
 
 #### **Review Features**
+
 - **Helpfulness Voting**: Other users can mark reviews as helpful/not helpful
 - **Sorting Options**: Most recent, most helpful, highest rated
 - **Rating Distribution**: Visual breakdown of 5-star, 4-star, etc.
@@ -1449,6 +1466,7 @@ The review system allows users to rate and provide feedback on both modules and 
 - **Review Prompts**: Users prompted to review after completing a module
 
 #### **Moderation**
+
 - **Flag System**: Users can flag inappropriate reviews
 - **Admin Response**: Admins can respond to reviews publicly
 - **Edit/Delete**: Users can edit or delete their own reviews
@@ -1457,11 +1475,13 @@ The review system allows users to rate and provide feedback on both modules and 
 ### **Community Reviews**
 
 #### **Who Can Review**
+
 - **Only community members** can review
 - Current or past members
 - One review per user per community
 
 #### **Review Components**
+
 1. **Overall Rating** (1-5 stars) - Required
 2. **Specific Ratings** (optional):
    - Impact Rating (1-5 stars)
@@ -1472,6 +1492,7 @@ The review system allows users to rate and provide feedback on both modules and 
 5. **Member Status**: current_member / past_member / supporter / observer
 
 #### **Community Response**
+
 - Community admins can respond to reviews
 - Builds trust and shows engagement
 - Opportunity to address concerns publicly
@@ -1479,6 +1500,7 @@ The review system allows users to rate and provide feedback on both modules and 
 ### **User Interface**
 
 #### **Review Display**
+
 - **Summary Section**:
   - Large average rating number
   - Star visualization
@@ -1495,6 +1517,7 @@ The review system allows users to rate and provide feedback on both modules and 
   - Admin/community responses
 
 #### **Review Form**
+
 - **Star Selection**: Interactive star rating (hover effects)
 - **Text Fields**: Title and detailed review
 - **Checkboxes**: Would recommend, completion status
@@ -1502,7 +1525,9 @@ The review system allows users to rate and provide feedback on both modules and 
 - **Success Message**: Confirmation after submission
 
 #### **Review Prompt Modal**
+
 Appears after module completion:
+
 - Celebratory design with confetti/sparkles
 - "¡Felicidades! Has completado [Module Name]"
 - Quick review option
@@ -1511,12 +1536,14 @@ Appears after module completion:
 ### **Analytics & Insights**
 
 **For Module Creators**:
+
 - Average rating over time
 - Review count and response rate
 - Common keywords in reviews (future feature)
 - Correlation between reviews and sales
 
 **For Communities**:
+
 - Member satisfaction trends
 - Areas of strength (from specific ratings)
 - Improvement opportunities
@@ -1525,22 +1552,28 @@ Appears after module completion:
 ### **API Endpoints**
 
 **GET /api/reviews/modules?moduleId=X**
+
 - Fetch all reviews for a module
 
 **POST /api/reviews/modules**
+
 - Create new module review
 - Validates enrollment
 
 **PUT /api/reviews/modules**
+
 - Update existing review
 
 **DELETE /api/reviews/modules?reviewId=X**
+
 - Delete own review
 
 **GET /api/reviews/communities?communityId=X**
+
 - Fetch community reviews
 
 **POST /api/reviews/communities**
+
 - Create community review
 - Validates membership
 
@@ -1573,6 +1606,7 @@ module_review_votes & community_review_votes:
 ### **Automatic Rating Updates**
 
 Database triggers automatically update:
+
 - **Module** `avg_rating` and `review_count`
 - **Community** `avg_rating` and `review_count`
 
@@ -1596,7 +1630,7 @@ All platform modules must meet these standards:
 ✅ **Real-World Activities**: Every lesson includes actionable mini-projects  
 ✅ **Community Integration**: Lessons connect workplace learning to neighborhood impact  
 ✅ **Emotional Connection**: Users should feel empathy, urgency, and hope  
-✅ **Measurable Outcomes**: Every module produces documented results  
+✅ **Measurable Outcomes**: Every module produces documented results
 
 ---
 
@@ -1606,23 +1640,23 @@ All modules are chapters in an overarching narrative that follows these characte
 
 #### **Recurring Characters**
 
-1. **María** - Factory employee, single mother  
+1. **María** - Factory employee, single mother
    - Perspective: Worker seeing impact on family and neighborhood
    - Arc: From passive worker to community catalyst
 
-2. **Don Roberto** - Neighbor, retired teacher  
+2. **Don Roberto** - Neighbor, retired teacher
    - Perspective: Community elder witnessing change
    - Arc: From skeptical observer to active supporter
 
-3. **Carlos** - New sustainability manager  
+3. **Carlos** - New sustainability manager
    - Perspective: Corporate leadership learning to balance business and impact
    - Arc: From numbers-focused to people-focused leader
 
-4. **Lupita** - Local shop owner  
+4. **Lupita** - Local shop owner
    - Perspective: Small business affected by corporate neighbors
    - Arc: From struggling entrepreneur to partnership beneficiary
 
-5. **The Factory** - Personified as a character  
+5. **The Factory** - Personified as a character
    - Perspective: The organization itself "waking up"
    - Arc: From invisible polluter to community partner
 
@@ -1661,21 +1695,25 @@ Content adapts based on company profile:
 #### **Industry Adaptations**
 
 **Manufacturing/Factory** (Default):
+
 - María works on production line
 - Focus: Emissions, waste, worker safety
 - Neighbors: Affected by noise, air quality, truck traffic
 
 **Office Building**:
+
 - María becomes accountant/office worker
 - Focus: Energy use, e-waste, commuting
 - Neighbors: Affected by parking, lunch waste
 
 **Restaurant/Retail**:
+
 - María is server/cashier
 - Focus: Food waste, packaging, grease disposal
 - Neighbors: Affected by trash, delivery trucks
 
 **Construction**:
+
 - María is site manager
 - Focus: Material waste, dust, noise
 - Neighbors: Affected by construction debris, safety
@@ -1742,6 +1780,7 @@ Every lesson must include **at least 3** of these:
 Each module requires **3-5 mini-projects** that produce tangible outputs:
 
 **Examples**:
+
 - Install air quality monitoring station
 - Create water-saving device inventory
 - Design safe route map with neighbors
@@ -1749,6 +1788,7 @@ Each module requires **3-5 mini-projects** that produce tangible outputs:
 - Pilot local supplier program
 
 **Deliverable Format**:
+
 - Photos/videos of implementation
 - Before/after measurements
 - Cost analysis
@@ -1762,6 +1802,7 @@ Each module requires **3-5 mini-projects** that produce tangible outputs:
 Courses lead to **verified certification** at 3 levels:
 
 #### **Conscious Participant** (Bronze)
+
 - ✅ Complete 3 modules
 - ✅ 50% employee participation
 - ✅ 1 project implemented
@@ -1769,6 +1810,7 @@ Courses lead to **verified certification** at 3 levels:
 - ⏱️ Timeline: 3 months
 
 #### **Conscious Contributor** (Silver)
+
 - ✅ Complete 5 modules
 - ✅ 75% employee participation
 - ✅ 3 projects implemented
@@ -1777,6 +1819,7 @@ Courses lead to **verified certification** at 3 levels:
 - ⏱️ Timeline: 6 months
 
 #### **Conscious Leader** (Gold)
+
 - ✅ All 6 modules completed
 - ✅ 90% employee participation
 - ✅ 5+ projects implemented
@@ -1908,6 +1951,7 @@ Crowd Conscious offers **6 professionally-developed platform modules** covering 
 ### **Module Catalog**
 
 #### **1. Aire Limpio: El Despertar Corporativo** 🌬️
+
 **Core Value**: Clean Air  
 **Difficulty**: Beginner  
 **Duration**: 8 hours  
@@ -1915,6 +1959,7 @@ Crowd Conscious offers **6 professionally-developed platform modules** covering 
 **Price**: $18,000 MXN base (50 people) | $360 MXN individual
 
 **What You'll Learn**:
+
 - Understand air quality metrics and health impacts
 - Identify emission sources in your organization
 - Calculate ROI of air quality improvements
@@ -1922,6 +1967,7 @@ Crowd Conscious offers **6 professionally-developed platform modules** covering 
 - Measure and document progress
 
 **Lessons** (5):
+
 1. El Impacto Invisible (45 min) - Air quality fundamentals
 2. Identificando Fuentes de Emisión (60 min) - Emission mapping
 3. Calculando el ROI (45 min) - Financial justification
@@ -1931,6 +1977,7 @@ Crowd Conscious offers **6 professionally-developed platform modules** covering 
 ---
 
 #### **2. Estrategias Avanzadas de Calidad del Aire** 🌬️
+
 **Core Value**: Clean Air  
 **Difficulty**: Intermediate  
 **Duration**: 8 hours  
@@ -1938,6 +1985,7 @@ Crowd Conscious offers **6 professionally-developed platform modules** covering 
 **Price**: $18,000 MXN base | $360 MXN individual
 
 **What You'll Learn**:
+
 - Advanced air quality monitoring systems
 - HVAC optimization techniques
 - Fleet electrification strategies
@@ -1945,6 +1993,7 @@ Crowd Conscious offers **6 professionally-developed platform modules** covering 
 - Long-term strategic planning
 
 **Lessons** (5):
+
 1. Monitoreo Avanzado (60 min) - Real-time monitoring
 2. Optimización HVAC (60 min) - Ventilation improvements
 3. Flota Verde (60 min) - Vehicle electrification
@@ -1954,6 +2003,7 @@ Crowd Conscious offers **6 professionally-developed platform modules** covering 
 ---
 
 #### **3. Gestión Sostenible del Agua** 💧
+
 **Core Value**: Clean Water  
 **Difficulty**: Beginner  
 **Duration**: 6 hours  
@@ -1961,6 +2011,7 @@ Crowd Conscious offers **6 professionally-developed platform modules** covering 
 **Price**: $18,000 MXN base | $360 MXN individual
 
 **What You'll Learn**:
+
 - Water footprint analysis
 - Conservation techniques
 - Recycling and treatment options
@@ -1968,6 +2019,7 @@ Crowd Conscious offers **6 professionally-developed platform modules** covering 
 - Cost savings through reduction
 
 **Lessons** (5):
+
 1. El Agua en tu Empresa (45 min) - Water impact assessment
 2. Huella Hídrica (60 min) - Footprint calculation
 3. Estrategias de Ahorro (60 min) - Conservation methods
@@ -1977,6 +2029,7 @@ Crowd Conscious offers **6 professionally-developed platform modules** covering 
 ---
 
 #### **4. Economía Circular: Cero Residuos** ♻️
+
 **Core Value**: Zero Waste  
 **Difficulty**: Intermediate  
 **Duration**: 10 hours  
@@ -1984,6 +2037,7 @@ Crowd Conscious offers **6 professionally-developed platform modules** covering 
 **Price**: $18,000 MXN base | $360 MXN individual
 
 **What You'll Learn**:
+
 - Circular economy principles
 - Waste stream analysis
 - The 5 R's framework (Refuse, Reduce, Reuse, Recycle, Regenerate)
@@ -1991,6 +2045,7 @@ Crowd Conscious offers **6 professionally-developed platform modules** covering 
 - Zero waste certification
 
 **Lessons** (6):
+
 1. De Lineal a Circular (45 min) - Economic models
 2. Auditoría de Residuos (60 min) - Waste assessment
 3. Las 5 R's en Acción (60 min) - Waste hierarchy
@@ -2001,6 +2056,7 @@ Crowd Conscious offers **6 professionally-developed platform modules** covering 
 ---
 
 #### **5. Ciudades Seguras y Espacios Inclusivos** 🏙️
+
 **Core Value**: Safe Cities  
 **Difficulty**: Beginner  
 **Duration**: 6 hours  
@@ -2008,6 +2064,7 @@ Crowd Conscious offers **6 professionally-developed platform modules** covering 
 **Price**: $18,000 MXN base | $360 MXN individual
 
 **What You'll Learn**:
+
 - Urban safety principles
 - Community safety mapping
 - CPTED (Crime Prevention Through Environmental Design)
@@ -2015,6 +2072,7 @@ Crowd Conscious offers **6 professionally-developed platform modules** covering 
 - Public-private collaboration
 
 **Lessons** (5):
+
 1. Principios de Seguridad Urbana (45 min) - Safety fundamentals
 2. Mapeo de Seguridad (60 min) - Risk assessment
 3. Diseño de Espacios Seguros (60 min) - Environmental design
@@ -2024,6 +2082,7 @@ Crowd Conscious offers **6 professionally-developed platform modules** covering 
 ---
 
 #### **6. Comercio Justo y Cadenas de Valor** 🤝
+
 **Core Value**: Fair Trade  
 **Difficulty**: Intermediate  
 **Duration**: 8 hours  
@@ -2031,6 +2090,7 @@ Crowd Conscious offers **6 professionally-developed platform modules** covering 
 **Price**: $18,000 MXN base | $360 MXN individual
 
 **What You'll Learn**:
+
 - Fair trade principles and certifications
 - Supply chain mapping and transparency
 - Local sourcing benefits
@@ -2038,6 +2098,7 @@ Crowd Conscious offers **6 professionally-developed platform modules** covering 
 - Responsible procurement policies
 
 **Lessons** (5):
+
 1. Principios de Comercio Justo (45 min) - Fair trade fundamentals
 2. Mapeo de Cadena de Suministro (60 min) - Supply chain analysis
 3. Sourcing Local (60 min) - Local procurement
@@ -2049,6 +2110,7 @@ Crowd Conscious offers **6 professionally-developed platform modules** covering 
 ### **Module Features**
 
 All platform modules include:
+
 - **Interactive Tools**: Calculators, assessments, planners
 - **Real-World Examples**: Case studies from Mexican companies
 - **Evidence Submission**: Upload photos, documents, data
@@ -2059,12 +2121,14 @@ All platform modules include:
 ### **Revenue Model**
 
 Platform modules generate **100% revenue to Crowd Conscious**:
+
 - Used to fund platform development
 - Support community growth initiatives
 - Cover operational costs
 - Invest in new module creation
 
 Community modules (created by communities) split revenue:
+
 - **50%** → Community wallet
 - **20%** → Individual creator
 - **30%** → Platform
@@ -2072,6 +2136,7 @@ Community modules (created by communities) split revenue:
 ### **Quality Standards**
 
 Platform modules set the quality benchmark:
+
 - Professional content development
 - Peer-reviewed by sustainability experts
 - Tested with real companies
@@ -2639,6 +2704,7 @@ Crowd Conscious is more than a platform—it's an **ecosystem** that connects le
 **Current Status**: Phase 1 - COMPLETE ✅
 
 Recent completions:
+
 - ✅ Universal marketplace (individuals + teams + corporates)
 - ✅ Dynamic, community-set pricing
 - ✅ 6 platform modules published and ready
