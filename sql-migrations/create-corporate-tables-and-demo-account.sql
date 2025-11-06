@@ -24,8 +24,6 @@ CREATE TABLE IF NOT EXISTS corporate_accounts (
 CREATE INDEX IF NOT EXISTS idx_corporate_accounts_admin 
 ON corporate_accounts(admin_user_id);
 
-RAISE NOTICE '✅ corporate_accounts table created or already exists';
-
 -- STEP 2: Add corporate fields to profiles if they don't exist
 DO $$
 BEGIN
@@ -36,6 +34,8 @@ BEGIN
   ) THEN
     ALTER TABLE profiles ADD COLUMN is_corporate_user BOOLEAN DEFAULT false;
     RAISE NOTICE '✅ Added is_corporate_user to profiles';
+  ELSE
+    RAISE NOTICE 'ℹ️  is_corporate_user already exists in profiles';
   END IF;
 
   -- Add corporate_account_id column
@@ -45,6 +45,8 @@ BEGIN
   ) THEN
     ALTER TABLE profiles ADD COLUMN corporate_account_id UUID REFERENCES corporate_accounts(id);
     RAISE NOTICE '✅ Added corporate_account_id to profiles';
+  ELSE
+    RAISE NOTICE 'ℹ️  corporate_account_id already exists in profiles';
   END IF;
 
   -- Add corporate_role column
@@ -54,11 +56,13 @@ BEGIN
   ) THEN
     ALTER TABLE profiles ADD COLUMN corporate_role TEXT CHECK (corporate_role IN ('admin', 'employee'));
     RAISE NOTICE '✅ Added corporate_role to profiles';
+  ELSE
+    RAISE NOTICE 'ℹ️  corporate_role already exists in profiles';
   END IF;
 END $$;
 
 -- STEP 3: Setup YOUR demo corporate account
--- ⚠️ REPLACE 'your-email@example.com' with your actual email (2 places below)
+-- ⚠️ REPLACE 'your-email@example.com' with your actual email in the DO block below
 DO $$
 DECLARE
   v_user_id UUID;
@@ -69,10 +73,10 @@ BEGIN
   -- Get your user ID
   SELECT id INTO v_user_id
   FROM auth.users
-  WHERE email = 'your-email@example.com';  -- ⚠️ REPLACE THIS!
+  WHERE email = 'your-email@example.com';  -- ⚠️ REPLACE THIS WITH YOUR EMAIL!
 
   IF v_user_id IS NULL THEN
-    RAISE EXCEPTION 'User not found! Please replace the email in line 72.';
+    RAISE EXCEPTION 'User not found! Please replace your-email@example.com with your actual email in the script (line 77).';
   END IF;
 
   RAISE NOTICE '✅ Found user: %', v_user_id;
@@ -97,7 +101,7 @@ BEGIN
         updated_at = NOW()
   RETURNING id INTO v_corporate_account_id;
 
-  RAISE NOTICE '✅ Corporate account: %', v_corporate_account_id;
+  RAISE NOTICE '✅ Corporate account created: %', v_corporate_account_id;
 
   -- Update profile to corporate admin
   UPDATE profiles
@@ -138,30 +142,33 @@ BEGIN
     )
     ON CONFLICT (user_id, module_id) DO NOTHING;
 
-    IF FOUND THEN
-      v_enrollment_count := v_enrollment_count + 1;
+    GET DIAGNOSTICS v_enrollment_count = ROW_COUNT;
+    
+    IF v_enrollment_count > 0 THEN
       RAISE NOTICE '  📚 Enrolled in: %', v_module_record.title;
     END IF;
   END LOOP;
 
-  RAISE NOTICE '🎉 Setup complete! Enrolled in % module(s)', v_enrollment_count;
-  RAISE NOTICE '🎯 You can now access /corporate/dashboard';
+  RAISE NOTICE '🎉 Setup complete!';
+  RAISE NOTICE '🎯 Access your corporate dashboard at /corporate/dashboard';
 
 END $$;
 
 -- =====================================================
 -- VERIFICATION QUERIES
+-- Run these after the script completes to verify everything worked
 -- =====================================================
 
--- Check corporate_accounts table exists
+-- Check corporate_accounts table exists and has data
 SELECT 
-  'corporate_accounts exists' as status,
+  'corporate_accounts' as table_name,
   COUNT(*) as row_count
 FROM corporate_accounts;
 
 -- Check your corporate account
 -- ⚠️ REPLACE 'your-email@example.com' with your actual email
 SELECT 
+  'Your Corporate Account' as info,
   ca.id,
   ca.company_name,
   ca.employee_count,
@@ -174,6 +181,7 @@ WHERE au.email = 'your-email@example.com';  -- ⚠️ REPLACE THIS!
 -- Check your profile
 -- ⚠️ REPLACE 'your-email@example.com' with your actual email
 SELECT 
+  'Your Profile' as info,
   p.id,
   p.full_name,
   au.email,
@@ -187,7 +195,17 @@ WHERE au.email = 'your-email@example.com';  -- ⚠️ REPLACE THIS!
 -- Check your enrollments
 -- ⚠️ REPLACE 'your-email@example.com' with your actual email
 SELECT 
-  ce.id,
+  'Your Enrollments' as info,
+  COUNT(*) as total_modules,
+  COUNT(CASE WHEN ce.progress_percentage > 0 THEN 1 END) as started_modules,
+  COUNT(CASE WHEN ce.completed = true THEN 1 END) as completed_modules
+FROM course_enrollments ce
+JOIN auth.users au ON ce.user_id = au.id
+WHERE au.email = 'your-email@example.com';  -- ⚠️ REPLACE THIS!
+
+-- List all your enrolled modules
+-- ⚠️ REPLACE 'your-email@example.com' with your actual email
+SELECT 
   mm.title as module_title,
   ce.purchase_type,
   ce.progress_percentage,
@@ -197,4 +215,3 @@ JOIN marketplace_modules mm ON ce.module_id = mm.id
 JOIN auth.users au ON ce.user_id = au.id
 WHERE au.email = 'your-email@example.com'  -- ⚠️ REPLACE THIS!
 ORDER BY ce.enrolled_at DESC;
-
