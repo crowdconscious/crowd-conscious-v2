@@ -35,7 +35,6 @@ export async function GET(
         lesson_order,
         title,
         description,
-        content,
         estimated_minutes,
         xp_reward,
         key_points,
@@ -76,7 +75,7 @@ export async function GET(
       // Story section (simplified for now)
       story: {
         introduction: lesson.description || '',
-        mainContent: [lesson.content || 'Contenido del curso disponible próximamente'],
+        mainContent: lesson.key_points || ['Contenido del curso disponible próximamente'],
         conclusion: 'Completa esta lección para continuar tu aprendizaje',
         characterInsight: 'Reflexiona sobre cómo aplicar estos conceptos en tu organización'
       },
