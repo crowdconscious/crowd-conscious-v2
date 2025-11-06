@@ -100,7 +100,10 @@ export async function POST() {
       const promoCode = item.promo_codes
       
       // Use discounted_price if promo code applied, otherwise use price_snapshot
-      const finalPrice = item.discounted_price || item.price_snapshot
+      // CRITICAL: Must check for null/undefined, NOT use || (because 0 is falsy!)
+      const finalPrice = item.discounted_price !== null && item.discounted_price !== undefined
+        ? Number(item.discounted_price)
+        : Number(item.price_snapshot)
       
       console.log(`💰 ${module.title}: price_snapshot=${item.price_snapshot}, discounted_price=${item.discounted_price}, using=${finalPrice}`)
       
@@ -128,9 +131,14 @@ export async function POST() {
     })
 
     // Calculate total from discounted prices (if promo applied) or price_snapshot
-    const totalAmount = cartItems.reduce((sum: number, item: any) => 
-      sum + (item.discounted_price || item.price_snapshot), 0
-    )
+    const totalAmount = cartItems.reduce((sum: number, item: any) => {
+      const price = item.discounted_price !== null && item.discounted_price !== undefined
+        ? Number(item.discounted_price)
+        : Number(item.price_snapshot)
+      return sum + price
+    }, 0)
+    
+    console.log(`💳 Stripe total amount: ${totalAmount} MXN = ${totalAmount * 100} cents`)
     
     // Get promo code info for metadata (if any)
     const appliedPromoCodes = cartItems
