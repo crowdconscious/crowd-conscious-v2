@@ -53,6 +53,17 @@
       "source": "/privacy-policy",
       "destination": "/privacy",
       "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.crowdconscious.app"
+        }
+      ],
+      "destination": "https://crowdconscious.app/:path*",
+      "permanent": true
     }
   ]
 }
