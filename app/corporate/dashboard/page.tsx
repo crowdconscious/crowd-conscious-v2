@@ -50,11 +50,11 @@ export default async function CorporateDashboard() {
     .eq('corporate_account_id', profile?.corporate_account_id)
 
   // Get admin's enrolled modules (NEW - using module_id)
-  const { data: adminEnrollments } = await supabase
+  const { data: adminEnrollments, error: enrollmentError } = await supabase
     .from('course_enrollments')
     .select(`
       *,
-      module:marketplace_modules(
+      marketplace_modules!course_enrollments_module_id_fkey(
         id,
         title,
         slug,
@@ -65,6 +65,13 @@ export default async function CorporateDashboard() {
     `)
     .eq('user_id', user.id)
     .not('module_id', 'is', null)
+  
+  // Debug logging
+  if (enrollmentError) {
+    console.error('❌ Error fetching admin enrollments:', enrollmentError)
+  }
+  console.log('📚 Admin enrollments found:', adminEnrollments?.length || 0)
+  console.log('👤 User ID:', user.id)
 
   const stats = [
     {
@@ -168,9 +175,12 @@ export default async function CorporateDashboard() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {adminEnrollments.map((enrollment: any) => {
-                  const module = enrollment.module
+                  const module = enrollment.marketplace_modules
                   const progress = enrollment.completion_percentage || 0
                   const isCompleted = enrollment.status === 'completed'
+                  
+                  // Skip if module data is missing
+                  if (!module) return null
                   
                   return (
                     <Link
@@ -304,8 +314,8 @@ export default async function CorporateDashboard() {
 
               {/* Link to take courses as learner */}
               <Link
-                href={(adminEnrollments && adminEnrollments.length > 0) 
-                  ? `/marketplace/${adminEnrollments[0].module.slug || adminEnrollments[0].module.id}` 
+                href={(adminEnrollments && adminEnrollments.length > 0 && adminEnrollments[0].marketplace_modules) 
+                  ? `/marketplace/${adminEnrollments[0].marketplace_modules.slug || adminEnrollments[0].marketplace_modules.id}` 
                   : "/marketplace"}
                 className="p-4 border-2 border-purple-300 rounded-lg bg-gradient-to-br from-purple-50 to-pink-50 hover:border-purple-500 hover:shadow-lg transition-all group min-h-[100px] flex flex-col"
               >
@@ -315,8 +325,8 @@ export default async function CorporateDashboard() {
                   <span className="text-xs bg-purple-600 text-white px-1.5 py-0.5 rounded-full">TÚ</span>
                 </div>
                 <div className="text-xs sm:text-sm text-purple-700 mt-1">
-                  {(adminEnrollments && adminEnrollments.length > 0) 
-                    ? `Inscríbete en ${adminEnrollments[0].module.title}`
+                  {(adminEnrollments && adminEnrollments.length > 0 && adminEnrollments[0].marketplace_modules) 
+                    ? `Inscríbete en ${adminEnrollments[0].marketplace_modules.title}`
                     : 'Agregar más módulos'}
                 </div>
               </Link>
