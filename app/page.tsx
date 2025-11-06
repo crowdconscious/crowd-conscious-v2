@@ -205,12 +205,33 @@ async function getImpactStats(): Promise<ImpactStats> {
 }
 
 export default async function LandingPage() {
-  // Fetch all data server-side for SEO
-  const [communities, completedNeeds, impactStats] = await Promise.all([
-    getEnhancedCommunities(),
-    getCompletedNeeds(),
-    getImpactStats()
-  ])
+  console.log('🏠 Landing page starting...')
+  
+  // Fetch all data server-side for SEO with timeout protection
+  let communities: Community[] = []
+  let completedNeeds: CompletedNeed[] = []
+  let impactStats: ImpactStats = {
+    total_funds_raised: 0,
+    active_communities: 0,
+    needs_fulfilled: 0,
+    total_members: 0
+  }
+
+  try {
+    const results = await Promise.allSettled([
+      getEnhancedCommunities(),
+      getCompletedNeeds(),
+      getImpactStats()
+    ])
+
+    if (results[0].status === 'fulfilled') communities = results[0].value
+    if (results[1].status === 'fulfilled') completedNeeds = results[1].value
+    if (results[2].status === 'fulfilled') impactStats = results[2].value
+    
+    console.log('✅ Landing page data loaded')
+  } catch (error) {
+    console.error('⚠️ Landing page data fetch error (using defaults):', error)
+  }
 
   return (
     <div className="min-h-screen overflow-x-hidden">
