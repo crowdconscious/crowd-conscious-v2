@@ -35,6 +35,8 @@ export async function GET() {
         module_id,
         employee_count,
         price_snapshot,
+        promo_code_id,
+        discounted_price,
         added_at,
         marketplace_modules (
           id,
@@ -51,6 +53,12 @@ export async function GET() {
           creator_name,
           avg_rating,
           review_count
+        ),
+        promo_codes (
+          id,
+          code,
+          discount_type,
+          discount_value
         )
       `)
       .order('added_at', { ascending: false })
@@ -72,21 +80,20 @@ export async function GET() {
     // Enrich cart items with calculated pricing
     const enrichedCartItems = (cartItems || []).map(item => {
       const module = (item as any).marketplace_modules
-      const totalPrice = calculateModulePrice(
-        {
-          base_price_mxn: module.base_price_mxn,
-          price_per_50_employees: module.price_per_50_employees,
-          individual_price_mxn: module.individual_price_mxn,
-          is_platform_module: false
-        },
-        item.employee_count
-      )
+      const promoCode = (item as any).promo_codes
+      
+      // Use discounted_price if promo applied, otherwise use price_snapshot
+      const finalPrice = item.discounted_price || item.price_snapshot
+      const originalPrice = item.price_snapshot
+      const hasDiscount = item.discounted_price !== null && item.discounted_price !== undefined
       
       return {
         id: item.id,
         module_id: item.module_id,
         employee_count: item.employee_count,
         price_snapshot: item.price_snapshot,
+        discounted_price: item.discounted_price,
+        promo_code_id: item.promo_code_id,
         added_at: item.added_at,
         module: {
           id: module.id,
@@ -103,21 +110,34 @@ export async function GET() {
           avg_rating: module.avg_rating,
           review_count: module.review_count
         },
-        total_price: totalPrice,
-        price_per_employee: Math.round(totalPrice / item.employee_count)
+        promo_code: promoCode ? {
+          code: promoCode.code,
+          discount_type: promoCode.discount_type,
+          discount_value: promoCode.discount_value
+        } : null,
+        total_price: finalPrice,
+        original_price: originalPrice,
+        discount_amount: hasDiscount ? originalPrice - finalPrice : 0,
+        price_per_employee: Math.round(finalPrice / item.employee_count)
       }
     })
 
-    // Calculate cart totals
+    // Calculate cart totals (using final/discounted prices)
     const cartTotal = enrichedCartItems.reduce((sum, item) => sum + item.total_price, 0)
+    const originalTotal = enrichedCartItems.reduce((sum, item) => sum + item.original_price, 0)
+    const totalDiscount = enrichedCartItems.reduce((sum, item) => sum + item.discount_amount, 0)
     const totalEmployees = enrichedCartItems.reduce((sum, item) => sum + item.employee_count, 0)
+    const hasPromo = enrichedCartItems.some(item => item.promo_code !== null)
 
     return ApiResponse.ok({
       items: enrichedCartItems,
       summary: {
         item_count: enrichedCartItems.length,
         total_price: cartTotal,
-        total_employees: totalEmployees
+        original_total: originalTotal,
+        total_discount: totalDiscount,
+        total_employees: totalEmployees,
+        has_promo: hasPromo
       }
     })
   } catch (error) {

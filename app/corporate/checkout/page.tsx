@@ -13,18 +13,29 @@ interface CartItem {
   module_id: string
   employee_count: number
   price_snapshot: number
+  discounted_price?: number
+  promo_code?: {
+    code: string
+    discount_type: string
+    discount_value: number
+  }
   module: {
     title: string
     core_value: string
     creator_name: string
   }
   total_price: number
+  original_price: number
+  discount_amount: number
 }
 
 interface CartSummary {
   item_count: number
   total_price: number
+  original_total: number
+  total_discount: number
   total_employees: number
+  has_promo: boolean
 }
 
 export default function CheckoutPage() {
@@ -33,7 +44,10 @@ export default function CheckoutPage() {
   const [cartSummary, setCartSummary] = useState<CartSummary>({
     item_count: 0,
     total_price: 0,
-    total_employees: 0
+    original_total: 0,
+    total_discount: 0,
+    total_employees: 0,
+    has_promo: false
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -296,8 +310,21 @@ export default function CheckoutPage() {
               <div className="space-y-4 mb-6">
                 <div className="flex justify-between text-slate-700">
                   <span>Módulos ({cartSummary.item_count})</span>
-                  <span className="font-medium">{formatCurrency(cartSummary.total_price)}</span>
+                  <span className={`font-medium ${cartSummary.has_promo ? 'line-through text-slate-400' : ''}`}>
+                    {formatCurrency(cartSummary.has_promo ? cartSummary.original_total : cartSummary.total_price)}
+                  </span>
                 </div>
+                {cartSummary.has_promo && cartSummary.total_discount > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span className="flex items-center gap-2">
+                      <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded-full">
+                        {cartItems[0]?.promo_code?.code}
+                      </span>
+                      Descuento
+                    </span>
+                    <span className="font-bold">-{formatCurrency(cartSummary.total_discount)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-slate-700">
                   <span>Empleados totales</span>
                   <span className="font-medium">{cartSummary.total_employees}</span>
