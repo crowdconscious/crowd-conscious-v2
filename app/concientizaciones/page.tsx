@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { CheckCircle2, Users, TrendingUp, Award, ArrowRight, Sparkles } from 'lucide-react'
+import { CheckCircle2, Users, Heart, Award, ArrowRight, Sparkles, BookOpen, TrendingUp } from 'lucide-react'
 
 export default function ConcientizacionesLanding() {
   return (
@@ -15,10 +15,10 @@ export default function ConcientizacionesLanding() {
             </Link>
             <div className="flex items-center gap-4">
               <Link 
-                href="/assessment" 
+                href="/marketplace" 
                 className="text-gray-600 hover:text-gray-900 transition"
               >
-                Evaluación Gratuita
+                Explorar Módulos
               </Link>
               <Link 
                 href="/login" 
@@ -27,10 +27,10 @@ export default function ConcientizacionesLanding() {
                 Iniciar Sesión
               </Link>
               <Link 
-                href="/assessment"
+                href="/marketplace"
                 className="bg-emerald-600 text-white px-6 py-2 rounded-lg hover:bg-emerald-700 transition shadow-lg shadow-emerald-200"
               >
-                Comenzar Ahora
+                Comenzar Gratis
               </Link>
             </div>
           </div>
@@ -44,24 +44,24 @@ export default function ConcientizacionesLanding() {
           <div className="text-center max-w-4xl mx-auto">
             <div className="inline-flex items-center gap-2 bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full mb-6">
               <Sparkles className="w-4 h-4" />
-              <span className="text-sm font-medium">Capacitación que Financia Comunidades</span>
+              <span className="text-sm font-medium">Aprende • Gana • Impacta</span>
             </div>
             <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
-              Transforma tu Empresa
+              Capacitación en Sostenibilidad
               <span className="block bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">
-                Impacta tu Comunidad
+                que Financia Comunidades
               </span>
             </h1>
             <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-              Capacitación en sostenibilidad creada por comunidades reales, para empresas reales. 
-              Cada peso que inviertes financia proyectos comunitarios verificables.
+              Cursos creados por comunidades reales para personas como tú. Aprende habilidades prácticas, 
+              gana certificaciones valiosas, y cada peso que inviertes ayuda a financiar proyectos comunitarios verificables.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link 
-                href="/assessment"
+                href="/marketplace"
                 className="bg-emerald-600 text-white px-8 py-4 rounded-xl hover:bg-emerald-700 transition shadow-xl shadow-emerald-200 font-semibold text-lg flex items-center justify-center gap-2"
               >
-                Evaluación Gratuita
+                Explorar Módulos
                 <ArrowRight className="w-5 h-5" />
               </Link>
               <a 
@@ -80,12 +80,12 @@ export default function ConcientizacionesLanding() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div className="text-center">
-              <div className="text-4xl font-bold text-emerald-600 mb-2">50%</div>
-              <div className="text-gray-600">de cada compra va a comunidades</div>
+              <div className="text-4xl font-bold text-emerald-600 mb-2">$360</div>
+              <div className="text-gray-600">por persona / módulo</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-emerald-600 mb-2">$18k</div>
-              <div className="text-gray-600">por módulo (50 empleados)</div>
+              <div className="text-4xl font-bold text-emerald-600 mb-2">50%</div>
+              <div className="text-gray-600">va a comunidades</div>
             </div>
             <div className="text-center">
               <div className="text-4xl font-bold text-emerald-600 mb-2">6+</div>
@@ -107,21 +107,21 @@ export default function ConcientizacionesLanding() {
               Cómo Funciona
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Un modelo revolucionario que conecta empresas, empleados y comunidades
+              Aprende de comunidades reales, gana certificaciones valiosas, y genera impacto medible
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
             <div className="bg-white rounded-2xl p-8 shadow-lg border-2 border-emerald-100 hover:border-emerald-300 transition">
               <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center mb-4">
-                <Users className="w-6 h-6 text-emerald-600" />
+                <BookOpen className="w-6 h-6 text-emerald-600" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-3">
-                1. Elige Módulos
+                1. Elige tu Camino
               </h3>
               <p className="text-gray-600">
-                Selecciona módulos creados por comunidades que resolvieron problemas reales. 
-                Compra individual o en paquetes con descuento.
+                Explora módulos creados por comunidades que resolvieron problemas reales. 
+                Compra individual ($360) o en equipo con descuento.
               </p>
             </div>
 
@@ -130,24 +130,24 @@ export default function ConcientizacionesLanding() {
                 <TrendingUp className="w-6 h-6 text-blue-600" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-3">
-                2. Capacita Empleados
+                2. Aprende & Crece
               </h3>
               <p className="text-gray-600">
-                Tus empleados aprenden con historias auténticas, actividades interactivas y 
-                proyectos aplicables. Rastrea progreso y obtén métricas ESG.
+                Aprende con historias auténticas, actividades interactivas y proyectos aplicables. 
+                Gana XP, completa desafíos, y obtén certificados.
               </p>
             </div>
 
             <div className="bg-white rounded-2xl p-8 shadow-lg border-2 border-purple-100 hover:border-purple-300 transition">
               <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-4">
-                <Award className="w-6 h-6 text-purple-600" />
+                <Heart className="w-6 h-6 text-purple-600" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-3">
-                3. Impacto Verificable
+                3. Genera Impacto Real
               </h3>
               <p className="text-gray-600">
                 50% de tu inversión financia proyectos comunitarios directamente. 
-                Ve dónde fue tu dinero con transparencia total.
+                Ve exactamente dónde fue tu dinero con transparencia total.
               </p>
             </div>
           </div>
@@ -162,125 +162,95 @@ export default function ConcientizacionesLanding() {
               Precios Transparentes
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Paga solo por lo que necesitas. Ahorra hasta 40% con paquetes.
+              Para individuos, equipos y empresas. Sin cuotas ocultas.
             </p>
           </div>
 
-          {/* Individual Module Pricing */}
-          <div className="bg-white rounded-2xl p-8 shadow-xl border-2 border-gray-200 mb-8">
-            <div className="flex items-start justify-between flex-wrap gap-4 mb-6">
-              <div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">Módulos Individuales</h3>
-                <p className="text-gray-600">Compra módulos específicos según tus necesidades</p>
-              </div>
-              <div className="text-right">
-                <div className="text-4xl font-bold text-emerald-600">$18,000 <span className="text-xl text-gray-500">MXN</span></div>
-                <div className="text-sm text-gray-500">~$900 USD por módulo</div>
-              </div>
-            </div>
-            <ul className="space-y-3 mb-6">
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
-                <span className="text-gray-700">Hasta 50 empleados incluidos</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
-                <span className="text-gray-700">+$8,000 MXN por cada 50 empleados adicionales</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
-                <span className="text-gray-700">3-4 semanas de contenido</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
-                <span className="text-gray-700">Dashboard básico de progreso</span>
-              </li>
-            </ul>
-          </div>
-
-          {/* Bundle Packages */}
-          <div className="grid md:grid-cols-3 gap-8">
-            {/* Starter Bundle */}
+          {/* Pricing Cards */}
+          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            {/* Individual */}
             <div className="bg-white rounded-2xl p-8 shadow-xl border-2 border-gray-200 hover:border-emerald-300 transition">
               <div className="mb-6">
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">🌱 Starter</h3>
-                <div className="text-4xl font-bold text-gray-900 mb-2">
-                  $45,000 <span className="text-lg text-gray-500">MXN</span>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">👤 Individual</h3>
+                <div className="text-5xl font-bold text-gray-900 mb-2">
+                  $360
                 </div>
-                <div className="text-sm text-gray-500 mb-2">~$2,250 USD</div>
-                <div className="inline-block bg-emerald-100 text-emerald-700 text-xs font-semibold px-3 py-1 rounded-full">
-                  Ahorra $9,000
-                </div>
+                <div className="text-sm text-gray-500 mb-2">MXN por módulo</div>
+                <div className="text-xs text-gray-400">~$18 USD</div>
               </div>
               <ul className="space-y-3 mb-8">
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
-                  <span className="text-gray-700"><strong>3 módulos</strong> a elegir</span>
+                  <span className="text-gray-700">Acceso personal completo</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
-                  <span className="text-gray-700">50 empleados incluidos</span>
+                  <span className="text-gray-700">3-4 semanas de contenido</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
-                  <span className="text-gray-700">3 meses de acceso</span>
+                  <span className="text-gray-700">Certificado al completar</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
-                  <span className="text-gray-700">Dashboard básico</span>
+                  <span className="text-gray-700">Dashboard de progreso</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
                   <span className="text-gray-700">Acceso a comunidad</span>
                 </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                  <span className="text-gray-700">Financias impacto real</span>
+                </li>
               </ul>
               <Link 
-                href="/assessment"
-                className="block w-full text-center bg-gray-900 text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition font-semibold"
+                href="/marketplace"
+                className="block w-full text-center bg-emerald-600 text-white px-6 py-3 rounded-lg hover:bg-emerald-700 transition font-semibold"
               >
-                Comenzar
+                Comenzar Ahora
               </Link>
             </div>
 
-            {/* Impact Bundle (Recommended) */}
+            {/* Team (Recommended) */}
             <div className="bg-gradient-to-br from-emerald-50 to-blue-50 rounded-2xl p-8 shadow-2xl border-2 border-emerald-400 relative transform md:scale-105">
               <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-emerald-600 text-white px-4 py-1 rounded-full text-sm font-semibold">
                 ⭐ Recomendado
               </div>
               <div className="mb-6">
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">🌍 Impact</h3>
-                <div className="text-4xl font-bold text-gray-900 mb-2">
-                  $85,000 <span className="text-lg text-gray-500">MXN</span>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">👥 Equipos</h3>
+                <div className="text-5xl font-bold text-gray-900 mb-2">
+                  $324
                 </div>
-                <div className="text-sm text-gray-500 mb-2">~$4,250 USD</div>
+                <div className="text-sm text-gray-500 mb-2">MXN por persona</div>
                 <div className="inline-block bg-emerald-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
-                  Ahorra $23,000
+                  Ahorra 10%
                 </div>
               </div>
               <ul className="space-y-3 mb-8">
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
-                  <span className="text-gray-700"><strong>6 módulos</strong> completos</span>
+                  <span className="text-gray-700"><strong>5-20 personas</strong></span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
-                  <span className="text-gray-700">100 empleados incluidos</span>
+                  <span className="text-gray-700">Todo lo de Individual</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
-                  <span className="text-gray-700">6 meses de acceso</span>
+                  <span className="text-gray-700">Dashboard de equipo</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
-                  <span className="text-gray-700">Dashboard avanzado + ESG</span>
+                  <span className="text-gray-700">Tabla de líderes</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
-                  <span className="text-gray-700">Creación de comunidad</span>
+                  <span className="text-gray-700">Gestión de miembros</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
-                  <span className="text-gray-700"><strong>$10,000 MXN</strong> en créditos</span>
+                  <span className="text-gray-700">Reportes de progreso</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
@@ -288,45 +258,39 @@ export default function ConcientizacionesLanding() {
                 </li>
               </ul>
               <Link 
-                href="/assessment"
+                href="/marketplace"
                 className="block w-full text-center bg-emerald-600 text-white px-6 py-3 rounded-lg hover:bg-emerald-700 transition font-semibold shadow-lg shadow-emerald-200"
               >
-                Comenzar Ahora
+                Inscribir Equipo
               </Link>
             </div>
 
-            {/* Enterprise Bundle */}
+            {/* Enterprise */}
             <div className="bg-white rounded-2xl p-8 shadow-xl border-2 border-gray-200 hover:border-blue-300 transition">
               <div className="mb-6">
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">🚀 Enterprise</h3>
-                <div className="text-4xl font-bold text-gray-900 mb-2">
-                  Custom
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">🏢 Empresas</h3>
+                <div className="text-5xl font-bold text-gray-900 mb-2">
+                  $18k
                 </div>
-                <div className="text-sm text-gray-500 mb-2">Desde $150,000 MXN</div>
-                <div className="inline-block bg-blue-100 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full">
-                  Personalizado
-                </div>
+                <div className="text-sm text-gray-500 mb-2">MXN (50+ empleados)</div>
+                <div className="text-xs text-gray-400">~$360 por persona</div>
               </div>
               <ul className="space-y-3 mb-8">
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <span className="text-gray-700"><strong>Módulos ilimitados</strong></span>
+                  <span className="text-gray-700"><strong>50+ empleados</strong></span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <span className="text-gray-700">Empleados ilimitados</span>
+                  <span className="text-gray-700">+$8k por cada 50 adicionales</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <span className="text-gray-700">12 meses de acceso</span>
+                  <span className="text-gray-700">Dashboard ESG avanzado</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <span className="text-gray-700">Módulos personalizados</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <span className="text-gray-700">White-label disponible</span>
+                  <span className="text-gray-700">Reportes de impacto</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
@@ -334,15 +298,29 @@ export default function ConcientizacionesLanding() {
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <span className="text-gray-700"><strong>$50,000 MXN</strong> en créditos</span>
+                  <span className="text-gray-700">Módulos personalizados</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <span className="text-gray-700">Soporte dedicado</span>
                 </li>
               </ul>
               <Link 
-                href="/assessment"
+                href="/contact"
                 className="block w-full text-center bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-semibold"
               >
                 Contactar Ventas
               </Link>
+            </div>
+          </div>
+
+          {/* Promo Code Notice */}
+          <div className="mt-12 text-center">
+            <div className="inline-flex items-center gap-2 bg-yellow-100 text-yellow-800 px-6 py-3 rounded-full">
+              <Sparkles className="w-4 h-4" />
+              <span className="text-sm font-medium">
+                ¿Tienes un código promocional? Aplícalo en el checkout para descuentos especiales
+              </span>
             </div>
           </div>
         </div>
@@ -356,25 +334,39 @@ export default function ConcientizacionesLanding() {
               Módulos Disponibles
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Contenido creado por comunidades que resolvieron estos desafíos
+              Contenido auténtico creado por comunidades que resolvieron estos desafíos
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
-              { icon: '🌬️', name: 'Aire Limpio', desc: 'Calidad del aire, emisiones, huella de carbono' },
-              { icon: '💧', name: 'Agua Limpia', desc: 'Conservación, filtración, protección de cuencas' },
-              { icon: '🏙️', name: 'Ciudades Seguras', desc: 'Seguridad urbana, espacios públicos, diseño inclusivo' },
-              { icon: '♻️', name: 'Basura Cero', desc: 'Economía circular, reciclaje, compostaje' },
-              { icon: '🤝', name: 'Comercio Justo', desc: 'Abastecimiento local, salarios justos, cadenas éticas' },
-              { icon: '🌱', name: 'Biodiversidad', desc: 'Jardines urbanos, espacios verdes, restauración' },
+              { icon: '🌬️', name: 'Aire Limpio', desc: 'Calidad del aire, emisiones, huella de carbono', color: 'emerald' },
+              { icon: '💧', name: 'Agua Limpia', desc: 'Conservación, filtración, protección de cuencas', color: 'blue' },
+              { icon: '🏙️', name: 'Ciudades Seguras', desc: 'Seguridad urbana, espacios públicos, diseño inclusivo', color: 'purple' },
+              { icon: '♻️', name: 'Basura Cero', desc: 'Economía circular, reciclaje, compostaje', color: 'green' },
+              { icon: '🤝', name: 'Comercio Justo', desc: 'Abastecimiento local, salarios justos, cadenas éticas', color: 'orange' },
+              { icon: '🌱', name: 'Biodiversidad', desc: 'Jardines urbanos, espacios verdes, restauración', color: 'lime' },
             ].map((module, i) => (
-              <div key={i} className="bg-white rounded-xl p-6 shadow-lg border-2 border-gray-100 hover:border-emerald-300 transition">
-                <div className="text-4xl mb-3">{module.icon}</div>
+              <div key={i} className={`bg-white rounded-xl p-6 shadow-lg border-2 border-${module.color}-100 hover:border-${module.color}-300 transition cursor-pointer group`}>
+                <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">{module.icon}</div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">{module.name}</h3>
-                <p className="text-gray-600 text-sm">{module.desc}</p>
+                <p className="text-gray-600 text-sm mb-4">{module.desc}</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-emerald-600 font-bold">$360 MXN</span>
+                  <span className="text-xs text-gray-500">~4 semanas</span>
+                </div>
               </div>
             ))}
+          </div>
+
+          <div className="text-center mt-12">
+            <Link 
+              href="/marketplace"
+              className="inline-flex items-center gap-2 bg-emerald-600 text-white px-8 py-4 rounded-xl hover:bg-emerald-700 transition shadow-xl font-semibold text-lg"
+            >
+              Ver Todos los Módulos
+              <ArrowRight className="w-5 h-5" />
+            </Link>
           </div>
         </div>
       </section>
@@ -383,16 +375,16 @@ export default function ConcientizacionesLanding() {
       <section className="py-24 bg-gradient-to-br from-emerald-600 to-blue-600 text-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-4xl md:text-5xl font-bold mb-6">
-            ¿Listo para Transformar tu Empresa?
+            ¿Listo para Aprender y Generar Impacto?
           </h2>
           <p className="text-xl mb-8 opacity-90">
-            Comienza con una evaluación gratuita. Te recomendaremos los módulos perfectos para tu industria.
+            Únete a miles de personas aprendiendo habilidades prácticas mientras financian proyectos comunitarios reales.
           </p>
           <Link 
-            href="/assessment"
+            href="/marketplace"
             className="inline-flex items-center gap-2 bg-white text-emerald-600 px-8 py-4 rounded-xl hover:bg-gray-100 transition shadow-2xl font-semibold text-lg"
           >
-            Comenzar Evaluación Gratuita
+            Explorar Módulos Gratis
             <ArrowRight className="w-5 h-5" />
           </Link>
         </div>
@@ -405,22 +397,23 @@ export default function ConcientizacionesLanding() {
             <div>
               <h3 className="font-bold text-lg mb-4">Crowd Conscious</h3>
               <p className="text-gray-400 text-sm">
-                Capacitación corporativa que financia comunidades.
+                Aprende, crece, y genera impacto. Capacitación que financia comunidades.
               </p>
             </div>
             <div>
               <h4 className="font-semibold mb-4">Producto</h4>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><Link href="/assessment" className="hover:text-white transition">Evaluación</Link></li>
+                <li><Link href="/marketplace" className="hover:text-white transition">Módulos</Link></li>
                 <li><Link href="#pricing" className="hover:text-white transition">Precios</Link></li>
-                <li><Link href="/concientizaciones" className="hover:text-white transition">Módulos</Link></li>
+                <li><Link href="/how-it-works" className="hover:text-white transition">Cómo Funciona</Link></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">Empresa</h4>
+              <h4 className="font-semibold mb-4">Comunidad</h4>
               <ul className="space-y-2 text-sm text-gray-400">
                 <li><Link href="/" className="hover:text-white transition">Inicio</Link></li>
-                <li><Link href="/dashboard" className="hover:text-white transition">Comunidad</Link></li>
+                <li><Link href="/dashboard" className="hover:text-white transition">Dashboard</Link></li>
+                <li><Link href="/communities" className="hover:text-white transition">Comunidades</Link></li>
               </ul>
             </div>
             <div>
