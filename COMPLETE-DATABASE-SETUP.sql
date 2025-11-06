@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS promo_codes (
   applicable_purchase_types TEXT[],
   minimum_purchase_amount NUMERIC(10, 2) DEFAULT 0,
   active BOOLEAN DEFAULT TRUE,
-  created_by UUID REFERENCES auth.users(id),
+  created_by UUID REFERENCES profiles(id),
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW(),
   partner_name TEXT,
@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS promo_codes (
 CREATE TABLE IF NOT EXISTS promo_code_uses (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   promo_code_id UUID REFERENCES promo_codes(id) ON DELETE CASCADE,
-  user_id UUID REFERENCES auth.users(id),
+  user_id UUID REFERENCES profiles(id),
   cart_total_before_discount NUMERIC(10, 2) NOT NULL,
   discount_amount NUMERIC(10, 2) NOT NULL,
   cart_total_after_discount NUMERIC(10, 2) NOT NULL,
@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS promo_code_uses (
 CREATE INDEX IF NOT EXISTS idx_promo_codes_code ON promo_codes(code);
 CREATE INDEX IF NOT EXISTS idx_promo_codes_active ON promo_codes(active) WHERE active = TRUE;
 
-GRANT SELECT ON promo_codes TO authenticated;
+GRANT SELECT ON promo_codes TO authenticated, anon;
 GRANT ALL ON promo_code_uses TO authenticated;
 
 INSERT INTO promo_codes (code, description, discount_type, discount_value, partner_name, campaign_name)
@@ -227,7 +227,7 @@ END $$;
 CREATE TABLE IF NOT EXISTS module_reviews (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   module_id UUID REFERENCES marketplace_modules(id) ON DELETE CASCADE NOT NULL,
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
   rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
   title TEXT,
   review_text TEXT,
@@ -248,7 +248,7 @@ CREATE TABLE IF NOT EXISTS module_reviews (
 CREATE TABLE IF NOT EXISTS community_reviews (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   community_id UUID REFERENCES communities(id) ON DELETE CASCADE NOT NULL,
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
   rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
   title TEXT,
   review_text TEXT,
@@ -272,7 +272,7 @@ CREATE TABLE IF NOT EXISTS community_reviews (
 CREATE TABLE IF NOT EXISTS module_review_votes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   review_id UUID REFERENCES module_reviews(id) ON DELETE CASCADE NOT NULL,
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
   vote_type TEXT CHECK (vote_type IN ('helpful', 'not_helpful')) NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   UNIQUE(review_id, user_id)
@@ -281,7 +281,7 @@ CREATE TABLE IF NOT EXISTS module_review_votes (
 CREATE TABLE IF NOT EXISTS community_review_votes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   review_id UUID REFERENCES community_reviews(id) ON DELETE CASCADE NOT NULL,
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
   vote_type TEXT CHECK (vote_type IN ('helpful', 'not_helpful')) NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   UNIQUE(review_id, user_id)
