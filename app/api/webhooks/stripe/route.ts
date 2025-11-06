@@ -37,6 +37,10 @@ function getSupabase(): SupabaseClient<Database> {
 // Handle module purchase after successful payment
 async function handleModulePurchase(session: Stripe.Checkout.Session) {
   try {
+    console.log('🎯 WEBHOOK: handleModulePurchase called')
+    console.log('🎯 WEBHOOK: Session ID:', session.id)
+    console.log('🎯 WEBHOOK: Payment status:', session.payment_status)
+    
     const supabaseClient = getSupabase()
     const {
       purchase_type, // NEW: 'individual' or 'corporate'
@@ -47,20 +51,28 @@ async function handleModulePurchase(session: Stripe.Checkout.Session) {
       total_amount
     } = session.metadata || {}
 
-    console.log('📦 Module purchase metadata:', {
+    console.log('📦 WEBHOOK: Module purchase metadata:', {
       purchase_type,
       user_id,
       corporate_account_id,
       company_name,
-      cart_items: cart_items?.substring(0, 100),
+      cart_items_length: cart_items?.length,
+      cart_items_preview: cart_items?.substring(0, 200),
       total_amount
     })
 
     // Validate required metadata
     if (!user_id || !cart_items || !purchase_type) {
-      console.error('❌ Missing required metadata for module purchase')
+      console.error('❌ WEBHOOK ERROR: Missing required metadata', {
+        has_user_id: !!user_id,
+        has_cart_items: !!cart_items,
+        has_purchase_type: !!purchase_type,
+        all_metadata: session.metadata
+      })
       return
     }
+
+    console.log('✅ WEBHOOK: Metadata validated successfully')
 
     const cartItemsData = JSON.parse(cart_items)
     const isIndividual = purchase_type === 'individual'
@@ -90,7 +102,7 @@ async function handleModulePurchase(session: Stripe.Checkout.Session) {
       // 2. Create enrollments based on purchase type
       if (isIndividual) {
         // INDIVIDUAL PURCHASE: Enroll just the user
-        console.log(`👤 Enrolling individual user: ${user_id}`)
+        console.log(`👤 WEBHOOK: Enrolling individual user: ${user_id}`)
 
         const enrollmentData = {
           user_id: user_id,
@@ -103,14 +115,24 @@ async function handleModulePurchase(session: Stripe.Checkout.Session) {
           completed: false
         }
 
-        const { error: enrollError } = await (supabaseClient as any)
+        console.log('📝 WEBHOOK: Enrollment data to insert:', enrollmentData)
+
+        const { data: enrollResult, error: enrollError } = await (supabaseClient as any)
           .from('course_enrollments')
           .insert(enrollmentData)
+          .select()
 
         if (enrollError) {
-          console.error('❌ Error enrolling individual user:', enrollError)
+          console.error('❌ WEBHOOK ERROR: Failed to enroll individual user', {
+            error: enrollError,
+            error_message: enrollError.message,
+            error_details: enrollError.details,
+            error_hint: enrollError.hint,
+            error_code: enrollError.code,
+            enrollment_data: enrollmentData
+          })
         } else {
-          console.log(`✅ Enrolled individual user in module ${module_id}`)
+          console.log(`✅ WEBHOOK: Successfully enrolled individual user in module ${module_id}`, enrollResult)
         }
       } else {
         // CORPORATE PURCHASE: Enroll all employees
@@ -175,9 +197,15 @@ async function handleModulePurchase(session: Stripe.Checkout.Session) {
       console.log('✅ Cart cleared')
     }
 
-    console.log(`🎉 ${isIndividual ? 'Individual' : 'Corporate'} module purchase completed successfully`)
-  } catch (error) {
-    console.error('💥 Error in handleModulePurchase:', error)
+    console.log(`🎉 WEBHOOK: ${isIndividual ? 'Individual' : 'Corporate'} module purchase completed successfully`)
+  } catch (error: any) {
+    console.error('💥 WEBHOOK CRITICAL ERROR in handleModulePurchase:', {
+      error_message: error.message,
+      error_stack: error.stack,
+      error_details: error
+    })
+    // Re-throw to ensure Stripe knows the webhook failed
+    throw error
   }
 }
 
