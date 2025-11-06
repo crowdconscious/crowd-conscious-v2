@@ -86,6 +86,14 @@ export async function POST() {
       return ApiResponse.badRequest('Cart is empty or failed to fetch')
     }
 
+    console.log('🛒 Cart items for checkout:', cartItems.map((item: any) => ({
+      module: item.marketplace_modules?.title,
+      price_snapshot: item.price_snapshot,
+      discounted_price: item.discounted_price,
+      promo_code_id: item.promo_code_id,
+      promo_code: item.promo_codes?.code
+    })))
+
     // Calculate line items for Stripe with promo code discounts
     const lineItems = cartItems.map((item: any) => {
       const module = item.marketplace_modules
@@ -93,6 +101,8 @@ export async function POST() {
       
       // Use discounted_price if promo code applied, otherwise use price_snapshot
       const finalPrice = item.discounted_price || item.price_snapshot
+      
+      console.log(`💰 ${module.title}: price_snapshot=${item.price_snapshot}, discounted_price=${item.discounted_price}, using=${finalPrice}`)
       
       let description = isCorporate
         ? `${item.employee_count} empleado${item.employee_count > 1 ? 's' : ''} - ${module.description?.substring(0, 100) || ''}`
