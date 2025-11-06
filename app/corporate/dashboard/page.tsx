@@ -127,6 +127,100 @@ export default async function CorporateDashboard() {
         </Link>
       </div>
 
+      {/* Debug Info - TEMPORARY */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg text-xs">
+          <strong>Debug:</strong> adminEnrollments count = {adminEnrollments?.length || 0}
+          {rawEnrollments && <div>Raw enrollments: {rawEnrollments.length}</div>}
+        </div>
+      )}
+
+      {/* Admin's Enrolled Courses - ALWAYS show if admin has enrollments */}
+      {adminEnrollments && adminEnrollments.length > 0 ? (
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg sm:text-xl font-bold text-slate-900">Mis Cursos</h3>
+              <p className="text-sm text-slate-600 mt-1">
+                Tienes {adminEnrollments.length} módulo{adminEnrollments.length !== 1 ? 's' : ''} disponible{adminEnrollments.length !== 1 ? 's' : ''}
+              </p>
+            </div>
+            <BookOpen className="w-8 h-8 text-purple-500" />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {adminEnrollments.map((enrollment: any) => {
+              const module = enrollment.marketplace_modules
+              const progress = enrollment.completion_percentage || 0
+              const isCompleted = enrollment.status === 'completed'
+              
+              // Skip if module data is missing
+              if (!module) return null
+              
+              return (
+                <Link
+                  key={enrollment.id}
+                  href={`/marketplace/${module.slug || module.id}`}
+                  className="group border-2 border-slate-200 rounded-xl p-4 hover:border-purple-500 hover:shadow-lg transition-all bg-white"
+                >
+                  {/* Thumbnail */}
+                  {module.thumbnail_url ? (
+                    <div className="w-full h-32 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg mb-3 overflow-hidden">
+                      <img 
+                        src={module.thumbnail_url} 
+                        alt={module.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-full h-32 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg mb-3 flex items-center justify-center">
+                      <BookOpen className="w-12 h-12 text-purple-400" />
+                    </div>
+                  )}
+
+                  {/* Title & Status */}
+                  <h4 className="font-bold text-slate-900 mb-2 line-clamp-2 group-hover:text-purple-600 transition-colors">
+                    {module.title}
+                  </h4>
+
+                  {/* Progress Bar */}
+                  <div className="mb-3">
+                    <div className="flex items-center justify-between text-xs text-slate-600 mb-1">
+                      <span>Progreso</span>
+                      <span className="font-bold">{progress}%</span>
+                    </div>
+                    <div className="w-full bg-slate-200 rounded-full h-2">
+                      <div 
+                        className={`h-2 rounded-full transition-all ${
+                          isCompleted ? 'bg-green-500' : 'bg-purple-500'
+                        }`}
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* CTA */}
+                  <div className="flex items-center justify-between">
+                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                      isCompleted 
+                        ? 'bg-green-100 text-green-700' 
+                        : progress > 0 
+                          ? 'bg-purple-100 text-purple-700'
+                          : 'bg-slate-100 text-slate-700'
+                    }`}>
+                      {isCompleted ? '✓ Completado' : progress > 0 ? 'En progreso' : 'Sin iniciar'}
+                    </span>
+                    <span className="text-xs text-purple-600 font-medium group-hover:text-purple-700">
+                      {isCompleted ? 'Revisar' : progress > 0 ? 'Continuar' : 'Comenzar'} →
+                    </span>
+                  </div>
+                </Link>
+              )
+            })}
+          </div>
+        </div>
+      ) : null}
+
       {/* Empty State or Stats */}
       {!hasEmployees ? (
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center">
@@ -159,91 +253,6 @@ export default async function CorporateDashboard() {
         </div>
       ) : (
         <>
-          {/* Admin's Enrolled Courses */}
-          {adminEnrollments && adminEnrollments.length > 0 && (
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-lg sm:text-xl font-bold text-slate-900">Mis Cursos</h3>
-                  <p className="text-sm text-slate-600 mt-1">
-                    Tienes {adminEnrollments.length} módulo{adminEnrollments.length !== 1 ? 's' : ''} disponible{adminEnrollments.length !== 1 ? 's' : ''}
-                  </p>
-                </div>
-                <BookOpen className="w-8 h-8 text-purple-500" />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {adminEnrollments.map((enrollment: any) => {
-                  const module = enrollment.marketplace_modules
-                  const progress = enrollment.completion_percentage || 0
-                  const isCompleted = enrollment.status === 'completed'
-                  
-                  // Skip if module data is missing
-                  if (!module) return null
-                  
-                  return (
-                    <Link
-                      key={enrollment.id}
-                      href={`/marketplace/${module.slug || module.id}`}
-                      className="group border-2 border-slate-200 rounded-xl p-4 hover:border-purple-500 hover:shadow-lg transition-all bg-white"
-                    >
-                      {/* Thumbnail */}
-                      {module.thumbnail_url ? (
-                        <div className="w-full h-32 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg mb-3 overflow-hidden">
-                          <img 
-                            src={module.thumbnail_url} 
-                            alt={module.title}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      ) : (
-                        <div className="w-full h-32 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg mb-3 flex items-center justify-center">
-                          <BookOpen className="w-12 h-12 text-purple-400" />
-                        </div>
-                      )}
-
-                      {/* Title & Status */}
-                      <h4 className="font-bold text-slate-900 mb-2 line-clamp-2 group-hover:text-purple-600 transition-colors">
-                        {module.title}
-                      </h4>
-
-                      {/* Progress Bar */}
-                      <div className="mb-3">
-                        <div className="flex items-center justify-between text-xs text-slate-600 mb-1">
-                          <span>Progreso</span>
-                          <span className="font-bold">{progress}%</span>
-                        </div>
-                        <div className="w-full bg-slate-200 rounded-full h-2">
-                          <div 
-                            className={`h-2 rounded-full transition-all ${
-                              isCompleted ? 'bg-green-500' : 'bg-purple-500'
-                            }`}
-                            style={{ width: `${progress}%` }}
-                          />
-                        </div>
-                      </div>
-
-                      {/* CTA */}
-                      <div className="flex items-center justify-between">
-                        <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                          isCompleted 
-                            ? 'bg-green-100 text-green-700' 
-                            : progress > 0 
-                              ? 'bg-purple-100 text-purple-700'
-                              : 'bg-slate-100 text-slate-700'
-                        }`}>
-                          {isCompleted ? '✓ Completado' : progress > 0 ? 'En progreso' : 'Sin iniciar'}
-                        </span>
-                        <span className="text-xs text-purple-600 font-medium group-hover:text-purple-700">
-                          {isCompleted ? 'Revisar' : progress > 0 ? 'Continuar' : 'Comenzar'} →
-                        </span>
-                      </div>
-                    </Link>
-                  )
-                })}
-              </div>
-            </div>
-          )}
 
           {/* Stats Grid - Mobile Optimized */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
