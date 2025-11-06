@@ -52,39 +52,28 @@ export default async function CorporateDashboard() {
     .eq('corporate_account_id', profile?.corporate_account_id)
 
   // Get user's enrolled modules - SIMPLE: if user has enrollments, show them
-  const { data: rawEnrollments, error: enrollmentsError } = await supabase
+  const { data: rawEnrollments } = await supabase
     .from('course_enrollments')
     .select('*')
     .eq('user_id', user.id)
     .not('module_id', 'is', null)
 
-  console.log('🔍 DEBUG - User ID:', user.id)
-  console.log('🔍 DEBUG - Raw enrollments:', rawEnrollments)
-  console.log('🔍 DEBUG - Raw enrollments length:', rawEnrollments?.length)
-  console.log('🔍 DEBUG - Enrollments error:', enrollmentsError)
-
   // Get module details separately - USE ADMIN CLIENT to bypass RLS
   let userEnrollments: any[] = []
   if (rawEnrollments && rawEnrollments.length > 0) {
     const moduleIds = rawEnrollments.map(e => e.module_id).filter(Boolean) // Remove nulls
-    console.log('🔍 DEBUG - Module IDs:', moduleIds)
     
     if (moduleIds.length > 0) {
-      const { data: modules, error: modulesError } = await adminClient
+      const { data: modules } = await adminClient
         .from('marketplace_modules')
         .select('id, title, slug, thumbnail_url, difficulty_level, estimated_duration_hours')
         .in('id', moduleIds)
-
-      console.log('🔍 DEBUG - Modules found:', modules)
-      console.log('🔍 DEBUG - Modules error:', modulesError)
 
       // Combine enrollments with module data
       userEnrollments = rawEnrollments.map(enrollment => ({
         ...enrollment,
         marketplace_modules: modules?.find(m => m.id === enrollment.module_id) || null
       })).filter(e => e.marketplace_modules !== null)
-      
-      console.log('🔍 DEBUG - Final userEnrollments:', userEnrollments)
     }
   }
 
@@ -141,23 +130,6 @@ export default async function CorporateDashboard() {
           <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
           <span className="whitespace-nowrap">Invitar Empleados</span>
         </Link>
-      </div>
-
-      {/* 🔍 TEMPORARY DEBUG BOX */}
-      <div className="bg-yellow-100 border-2 border-yellow-500 rounded-xl p-6 mb-6">
-        <h3 className="text-lg font-bold text-yellow-900 mb-4">🔍 DEBUG INFO (Remove after fixing)</h3>
-        <div className="space-y-2 text-sm font-mono">
-          <div><strong>User ID:</strong> {user.id}</div>
-          <div><strong>Raw Enrollments Found:</strong> {rawEnrollments?.length || 0}</div>
-          <div><strong>Enrollments Error:</strong> {enrollmentsError ? JSON.stringify(enrollmentsError) : 'None'}</div>
-          <div><strong>Final userEnrollments:</strong> {userEnrollments?.length || 0}</div>
-          {rawEnrollments && rawEnrollments.length > 0 && (
-            <div className="mt-4 p-3 bg-white rounded">
-              <strong>Raw Data Sample:</strong>
-              <pre className="text-xs mt-2 overflow-auto">{JSON.stringify(rawEnrollments[0], null, 2)}</pre>
-            </div>
-          )}
-        </div>
       </div>
 
       {/* User's Enrolled Courses - Show to EVERYONE with enrollments */}
