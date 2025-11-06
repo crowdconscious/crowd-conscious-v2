@@ -49,10 +49,11 @@ export default async function CorporateDashboard() {
     .select('*', { count: 'exact', head: true })
     .eq('corporate_account_id', profile?.corporate_account_id)
 
-  // Get admin's enrolled modules - simplified approach
+  // Get admin's enrolled modules - use same query as stats
   const { data: rawEnrollments } = await supabase
     .from('course_enrollments')
     .select('*')
+    .eq('corporate_account_id', profile?.corporate_account_id)
     .eq('user_id', user.id)
     .not('module_id', 'is', null)
 
@@ -126,14 +127,6 @@ export default async function CorporateDashboard() {
           <span className="whitespace-nowrap">Invitar Empleados</span>
         </Link>
       </div>
-
-      {/* Debug Info - TEMPORARY */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg text-xs">
-          <strong>Debug:</strong> adminEnrollments count = {adminEnrollments?.length || 0}
-          {rawEnrollments && <div>Raw enrollments: {rawEnrollments.length}</div>}
-        </div>
-      )}
 
       {/* Admin's Enrolled Courses - ALWAYS show if admin has enrollments */}
       {adminEnrollments && adminEnrollments.length > 0 ? (
