@@ -328,12 +328,15 @@ export default function CheckoutPage() {
                     {formatCurrency(cartSummary.has_promo ? cartSummary.original_total : cartSummary.total_price)}
                   </span>
                 </div>
-                {console.log('💳 RENDERING SUMMARY:', {
-                  has_promo: cartSummary.has_promo,
-                  total_discount: cartSummary.total_discount,
-                  should_show_discount: cartSummary.has_promo && cartSummary.total_discount > 0,
-                  promo_code: cartItems[0]?.promo_code
-                })}
+                {(() => {
+                  console.log('💳 RENDERING SUMMARY:', {
+                    has_promo: cartSummary.has_promo,
+                    total_discount: cartSummary.total_discount,
+                    should_show_discount: cartSummary.has_promo && cartSummary.total_discount > 0,
+                    promo_code: cartItems[0]?.promo_code
+                  })
+                  return null
+                })()}
                 {cartSummary.has_promo && cartSummary.total_discount > 0 && (
                   <div className="flex justify-between text-green-600">
                     <span className="flex items-center gap-2">
