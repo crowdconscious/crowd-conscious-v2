@@ -862,16 +862,17 @@ CREATE INDEX IF NOT EXISTS idx_marketplace_modules_creator_community ON public.m
 
 **Standardized Module Names (Updated Nov 7, 2025):**
 
-| Core Value           | Official Title (Database = Frontend)         | Slug                                  | Status       |
-| -------------------- | --------------------------------------------- | ------------------------------------- | ------------ |
-| `clean_air`          | "Estrategias Avanzadas de Calidad del Aire"   | `estrategias-avanzadas-calidad-aire`  | ✅ Live      |
-| `clean_water`        | "Gestión Sostenible del Agua"                 | `gestion-sostenible-agua`             | ✅ Live      |
-| `safe_cities`        | "Ciudades Seguras y Espacios Inclusivos"      | `ciudades-seguras-espacios-inclusivos`| ✅ Live      |
-| `zero_waste`         | "Economía Circular: Cero Residuos"            | `economia-circular-cero-residuos`     | ✅ Live      |
-| `fair_trade`         | "Comercio Justo y Cadenas de Valor"           | `comercio-justo-cadenas-valor`        | ✅ Live      |
-| `impact_integration` | "Integración de Impacto y Medición"           | `integracion-impacto-medicion`        | ⏳ Pending   |
+| Core Value           | Official Title (Database = Frontend)        | Slug                                   | Status     |
+| -------------------- | ------------------------------------------- | -------------------------------------- | ---------- |
+| `clean_air`          | "Estrategias Avanzadas de Calidad del Aire" | `estrategias-avanzadas-calidad-aire`   | ✅ Live    |
+| `clean_water`        | "Gestión Sostenible del Agua"               | `gestion-sostenible-agua`              | ✅ Live    |
+| `safe_cities`        | "Ciudades Seguras y Espacios Inclusivos"    | `ciudades-seguras-espacios-inclusivos` | ✅ Live    |
+| `zero_waste`         | "Economía Circular: Cero Residuos"          | `economia-circular-cero-residuos`      | ✅ Live    |
+| `fair_trade`         | "Comercio Justo y Cadenas de Valor"         | `comercio-justo-cadenas-valor`         | ✅ Live    |
+| `impact_integration` | "Integración de Impacto y Medición"         | `integracion-impacto-medicion`         | ⏳ Pending |
 
 **⚠️ CRITICAL: All duplicates removed as of Nov 7, 2025**
+
 - Previously had 11 modules (4x clean_air, 2x clean_water, 2x zero_waste)
 - Now standardized to **1 module per core_value**
 - Kept modules WITH enriched lesson content
@@ -1012,28 +1013,45 @@ CREATE INDEX IF NOT EXISTS idx_enrollments_corporate ON course_enrollments(corpo
 CREATE INDEX IF NOT EXISTS idx_enrollments_status ON course_enrollments(status);
 ```
 
-**🚨 CRITICAL SCHEMA INSIGHTS:**
+**🚨 CRITICAL SCHEMA INSIGHTS (Nov 7, 2025 - VERIFIED):**
 
-1. **UNIQUE constraint is on `(user_id, course_id)` NOT `(user_id, module_id)`!!!**
-2. **Both `course_id` AND `module_id` fields exist** (might be for multi-module courses vs single modules)
-3. **module_id is UUID**, not TEXT (I was wrong!)
-4. **Lots of nullable fields** - the table has grown organically
-5. **Multiple overlapping columns** (completion_percentage + progress_percentage, completed_at + completion_date)
+1. **TWO SEPARATE TABLES EXIST:**
+   - `courses` table = Multi-module programs/courses
+   - `marketplace_modules` table = Individual standalone modules
 
-**⚠️ WEBHOOK IMPLICATIONS:**
+2. **`course_enrollments` REFERENCES BOTH:**
+   - `course_id` → FK to `courses` table (nullable)
+   - `module_id` → FK to `marketplace_modules` table (nullable)
 
-When Stripe webhook creates enrollments, it MUST set:
+3. **USAGE PATTERN:**
+   - **For individual modules:** Set `course_id = NULL`, `module_id = module UUID`
+   - **For multi-module courses:** Set `course_id = course UUID`, `module_id = current module UUID`
 
-- `course_id` (for the unique constraint)
-- Possibly also `module_id` (for JOIN queries)
-- If they're different, enrollment might exist but not show in dashboard!
+4. **UNIQUE constraint is on `(user_id, course_id)`** 
+   - PostgreSQL treats NULL != NULL, so multiple enrollments with NULL course_id are allowed
+   - This means the same user CAN be enrolled in multiple modules (different module_ids, all course_id = NULL)
+
+5. **module_id is UUID**, not TEXT!
+
+6. **Lots of nullable fields** - the table has grown organically
+
+7. **Multiple overlapping columns** (completion_percentage + progress_percentage, completed_at + completion_date)
+
+**⚠️ WEBHOOK IMPLICATIONS (CRITICAL FIX NEEDED):**
+
+When Stripe webhook creates enrollments for **individual modules**, it MUST:
+
+- ✅ Set `course_id = NULL` (not a multi-module course!)
+- ✅ Set `module_id = marketplace module UUID`
+- ❌ Do NOT try to set `course_id` to the module UUID (FK constraint will fail!)
 
 **🔍 TROUBLESHOOTING CHECKLIST:**
 
-1. ✅ Is `course_id` set in enrollments? (Not just `module_id`)
-2. ✅ Does `course_id` match the module UUID from marketplace?
-3. ✅ Are there duplicate modules with same `core_value`?
-4. ✅ Is the dashboard querying `module_id` or `course_id` for JOINs?
+1. ✅ Is `module_id` set in enrollments? (Required!)
+2. ✅ Is `course_id = NULL` for individual module enrollments?
+3. ✅ Does `module_id` match a real UUID from `marketplace_modules`?
+4. ✅ Are there duplicate modules with same `core_value`?
+5. ✅ Is the dashboard querying `module_id` for JOINs?
 
 #### **lesson_responses** (User progress on lessons)
 
