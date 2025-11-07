@@ -371,6 +371,147 @@ export default function LessonPage({
           </div>
         </div>
 
+        {/* Interactive Tools Section - FIRST (before activity) */}
+        {lesson.tools && lesson.tools.length > 0 && (
+          <div className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 mb-4 sm:mb-6 md:mb-8">
+            <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0">
+                <span className="text-xl sm:text-2xl">🛠️</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-900">Herramientas Interactivas</h2>
+                <p className="text-slate-600 text-xs sm:text-sm">Usa estas herramientas para aplicar lo aprendido</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {lesson.tools.map((toolName: string, index: number) => {
+                // Render the actual tool component
+                const renderTool = () => {
+                  switch (toolName) {
+                    case 'AirQualityAssessment':
+                      return (
+                        <div className="bg-white rounded-xl p-4 sm:p-6 border-2 border-purple-200">
+                          <h3 className="font-bold text-lg mb-4 text-purple-900">📊 Evaluación de Calidad del Aire</h3>
+                          <div className="space-y-4">
+                            <div>
+                              <label className="block text-sm font-medium text-slate-700 mb-2">
+                                ¿Tienes monitoreo de calidad del aire actualmente?
+                              </label>
+                              <select className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-purple-500 focus:outline-none"
+                                onChange={(e) => setActivityData({...activityData, hasMonitoring: e.target.value})}>
+                                <option value="">Seleccionar...</option>
+                                <option value="yes">Sí, monitoreamos regularmente</option>
+                                <option value="partial">Parcial o esporádico</option>
+                                <option value="no">No, no monitoreamos</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-700 mb-2">
+                                Nivel de PM2.5 actual (si conoces, en μg/m³)
+                              </label>
+                              <input type="number" 
+                                className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-purple-500 focus:outline-none"
+                                placeholder="Ej: 25"
+                                onChange={(e) => setActivityData({...activityData, pm25Level: e.target.value})} />
+                            </div>
+                            <div className="bg-purple-50 p-4 rounded-lg">
+                              <p className="text-sm text-purple-900">
+                                💡 <strong>Referencia:</strong> OMS recomienda PM2.5 &lt; 10 μg/m³. En México, la norma es &lt; 45 μg/m³.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    
+                    case 'CarbonCalculator':
+                      return (
+                        <div className="bg-white rounded-xl p-4 sm:p-6 border-2 border-purple-200">
+                          <h3 className="font-bold text-lg mb-4 text-purple-900">🌍 Calculadora de Carbono</h3>
+                          <CarbonCalculator 
+                            onCalculate={(result: any) => {
+                              console.log('Carbon calculation:', result)
+                              setActivityData({...activityData, carbonFootprint: result})
+                            }}
+                          />
+                        </div>
+                      )
+                    
+                    case 'CostCalculator':
+                      return (
+                        <div className="bg-white rounded-xl p-4 sm:p-6 border-2 border-purple-200">
+                          <h3 className="font-bold text-lg mb-4 text-purple-900">💰 Calculadora de Costos/ROI</h3>
+                          <CostCalculator 
+                            onCalculate={(result: any) => {
+                              console.log('Cost calculation:', result)
+                              setActivityData({...activityData, costAnalysis: result})
+                            }}
+                          />
+                        </div>
+                      )
+                    
+                    case 'EvidenceUploader':
+                      return (
+                        <div className="bg-white rounded-xl p-4 sm:p-6 border-2 border-purple-200">
+                          <h3 className="font-bold text-lg mb-4 text-purple-900">📸 Subir Evidencia</h3>
+                          <EvidenceUploader 
+                            onUpload={(files: any) => {
+                              console.log('Evidence uploaded:', files)
+                              setUploadedFiles(files)
+                              uploadEvidence(files)
+                            }}
+                          />
+                        </div>
+                      )
+                    
+                    case 'ReflectionJournal':
+                      return (
+                        <div className="bg-white rounded-xl p-4 sm:p-6 border-2 border-purple-200">
+                          <h3 className="font-bold text-lg mb-4 text-purple-900">📝 Diario de Reflexión</h3>
+                          <ReflectionJournal 
+                            onSave={(data: any) => {
+                              console.log('Reflection saved:', data)
+                              setActivityData({...activityData, reflection: data})
+                              saveActivityData('reflection', data)
+                            }}
+                          />
+                        </div>
+                      )
+                    
+                    case 'ImpactComparison':
+                      return (
+                        <div className="bg-white rounded-xl p-4 sm:p-6 border-2 border-purple-200">
+                          <h3 className="font-bold text-lg mb-4 text-purple-900">📊 Comparación de Impacto</h3>
+                          <ImpactComparison 
+                            onCompare={(data: any) => {
+                              console.log('Impact comparison:', data)
+                              setImpactData(data)
+                              setActivityData({...activityData, impactComparison: data})
+                            }}
+                          />
+                        </div>
+                      )
+                    
+                    default:
+                      return (
+                        <div className="bg-white rounded-xl p-4 sm:p-6 border-2 border-purple-200">
+                          <p className="text-sm text-slate-600">Herramienta: {toolName}</p>
+                          <p className="text-xs text-slate-500 mt-2">Esta herramienta estará disponible próximamente</p>
+                        </div>
+                      )
+                  }
+                }
+
+                return (
+                  <div key={index}>
+                    {renderTool()}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Activity Section - Mobile Optimized */}
         <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 mb-4 sm:mb-6 md:mb-8">
           <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
@@ -394,13 +535,26 @@ export default function LessonPage({
             </button>
           ) : (
             <div className="space-y-3 sm:space-y-4">
+              {/* Activity Instructions (from enriched database) */}
+              {lesson.activity.instructions && (
+                <div className="bg-orange-50 border-2 border-orange-200 rounded-xl p-4 mb-4">
+                  <h3 className="font-bold text-orange-900 mb-3">📋 Instrucciones:</h3>
+                  <ol className="space-y-2 list-decimal list-inside">
+                    {lesson.activity.instructions.map((instruction: string, index: number) => (
+                      <li key={index} className="text-sm text-orange-900">{instruction}</li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+
               {/* Activity Content - Reflection Prompts */}
-              {lesson.activity.reflectionPrompts && (
+              {lesson.activity.reflectionPrompts && lesson.activity.reflectionPrompts.length > 0 && (
                 <div className="space-y-4">
+                  <h3 className="font-bold text-slate-900 mb-2">Preguntas de Reflexión:</h3>
                   {lesson.activity.reflectionPrompts.map((prompt: string, index: number) => (
                     <div key={index} className="border-2 border-slate-200 rounded-xl p-4">
                       <label className="block text-sm font-medium text-slate-700 mb-2">
-                        {prompt}
+                        {index + 1}. {prompt}
                       </label>
                       <textarea
                         className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-teal-500 focus:outline-none min-h-[100px]"
@@ -415,71 +569,11 @@ export default function LessonPage({
                 </div>
               )}
 
-              {/* Calculator Inputs */}
-              {lesson.activity.calculatorInputs && (
-                <div className="space-y-4">
-                  {lesson.activity.calculatorInputs.map((input: any, index: number) => (
-                    <div key={index} className="border-2 border-slate-200 rounded-xl p-4">
-                      <label className="block text-sm font-medium text-slate-700 mb-2">
-                        {input.label}
-                      </label>
-                      {input.type === 'number' && (
-                        <input
-                          type="number"
-                          className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-teal-500 focus:outline-none"
-                          placeholder={`Ej: 5 ${input.unit}`}
-                          onChange={(e) => setActivityData({
-                            ...activityData,
-                            [`input_${index}`]: e.target.value
-                          })}
-                        />
-                      )}
-                      {input.type === 'select' && (
-                        <select
-                          className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-teal-500 focus:outline-none"
-                          onChange={(e) => setActivityData({
-                            ...activityData,
-                            [`input_${index}`]: e.target.value
-                          })}
-                        >
-                          <option value="">Seleccionar...</option>
-                          <option value="low">Bajo</option>
-                          <option value="medium">Medio</option>
-                          <option value="high">Alto</option>
-                        </select>
-                      )}
-                      {input.type === 'boolean' && (
-                        <div className="flex gap-4">
-                          <button
-                            onClick={() => setActivityData({
-                              ...activityData,
-                              [`input_${index}`]: 'yes'
-                            })}
-                            className={`flex-1 py-3 rounded-lg border-2 font-medium transition-all ${
-                              activityData[`input_${index}`] === 'yes'
-                                ? 'border-teal-500 bg-teal-50 text-teal-700'
-                                : 'border-slate-200 text-slate-700 hover:border-teal-300'
-                            }`}
-                          >
-                            Sí
-                          </button>
-                          <button
-                            onClick={() => setActivityData({
-                              ...activityData,
-                              [`input_${index}`]: 'no'
-                            })}
-                            className={`flex-1 py-3 rounded-lg border-2 font-medium transition-all ${
-                              activityData[`input_${index}`] === 'no'
-                                ? 'border-teal-500 bg-teal-50 text-teal-700'
-                                : 'border-slate-200 text-slate-700 hover:border-teal-300'
-                            }`}
-                          >
-                            No
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+              {/* Success Criteria */}
+              {lesson.activity.success_criteria && (
+                <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4">
+                  <h3 className="font-bold text-green-900 mb-2">✅ Criterios de Éxito:</h3>
+                  <p className="text-sm text-green-800">{lesson.activity.success_criteria}</p>
                 </div>
               )}
 
@@ -495,7 +589,7 @@ export default function LessonPage({
                   }}
                   className="w-full bg-green-600 text-white py-3 sm:py-4 rounded-lg sm:rounded-xl font-bold text-base sm:text-lg hover:scale-105 transition-transform mt-4 sm:mt-6 min-h-[44px]"
                 >
-                  Completar Actividad
+                  ✅ Terminar Actividad
                 </button>
               ) : (
                 <div className="w-full bg-teal-50 border-2 border-teal-500 text-teal-700 py-3 sm:py-4 rounded-lg sm:rounded-xl font-bold text-sm sm:text-base md:text-lg mt-4 sm:mt-6 flex items-center justify-center gap-2 min-h-[44px]">
