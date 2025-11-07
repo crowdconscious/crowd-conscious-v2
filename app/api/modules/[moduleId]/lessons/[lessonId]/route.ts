@@ -104,12 +104,19 @@ export async function GET(
         realWorldExample: lesson.real_world_example || 'Empresas líderes han implementado estos principios con resultados medibles'
       },
       
-      // Activity section - use activity_config if available
-      activity: lesson.activity_config || {
+      // Activity section - transform activity_config to match frontend expectations
+      activity: lesson.activity_config ? {
+        ...lesson.activity_config,
+        // Map 'steps' to 'instructions' for frontend compatibility
+        instructions: lesson.activity_config.steps || lesson.activity_config.instructions || [],
+        // Ensure reflectionPrompts exists
+        reflectionPrompts: lesson.activity_config.reflection_prompts || lesson.activity_config.reflectionPrompts || []
+      } : {
         title: 'Actividad Práctica',
         type: lesson.activity_type || 'reflection',
         description: 'Completa esta actividad para aplicar lo aprendido',
         required: lesson.activity_required || false,
+        instructions: [],
         reflectionPrompts: [
           '¿Cómo puedes aplicar estos conceptos en tu organización?',
           '¿Qué obstáculos podrías enfrentar y cómo los superarías?',
