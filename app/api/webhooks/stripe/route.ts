@@ -177,7 +177,7 @@ async function handleModulePurchase(session: Stripe.Checkout.Session) {
 
         if (employees && employees.length > 0) {
           // Enroll each employee individually with duplicate check
-          for (const employee of employees) {
+          for (const employee of employees as Array<{ id: string }>) {
             // Check if already enrolled
             const { data: existingEnrollment } = await supabaseClient
               .from('course_enrollments')
