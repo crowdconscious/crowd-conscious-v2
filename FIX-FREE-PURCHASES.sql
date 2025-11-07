@@ -26,6 +26,7 @@ BEGIN
     END IF;
 
     -- Also check for any other amount-related constraints
+    ALTER TABLE public.module_sales 
     DROP CONSTRAINT IF EXISTS module_sales_check;
     
     RAISE NOTICE '🎉 Free purchases (100% promo codes) now work!';
