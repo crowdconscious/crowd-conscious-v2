@@ -185,10 +185,27 @@ export default function LessonPage({
         const data = await response.json()
         console.log('✅ Lesson completed:', data)
         
-        // Navigate back to module overview to see progress and next lesson
-        // (module.lessons might not be available in this context)
+        // Show success message
+        const successMsg = data.moduleComplete 
+          ? '🎉 ¡Módulo Completado!' 
+          : `✅ ¡Lección completada! +${data.xpEarned || 0} XP`
+        
+        const successDiv = document.createElement('div')
+        successDiv.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3'
+        successDiv.innerHTML = `
+          <span class="text-2xl">${data.moduleComplete ? '🎉' : '✅'}</span>
+          <span class="font-bold">${successMsg}</span>
+        `
+        document.body.appendChild(successDiv)
+        
         setTimeout(() => {
-          router.push(`/employee-portal/modules/${moduleId}`)
+          successDiv.remove()
+        }, 2000)
+        
+        // CRITICAL: Force a full page reload to refresh progress
+        // router.push() doesn't reload data, so we use window.location
+        setTimeout(() => {
+          window.location.href = `/employee-portal/modules/${moduleId}`
         }, 1500)
 
         // If module complete, generate certificate
@@ -214,28 +231,7 @@ export default function LessonPage({
           }
         }
 
-        // Show success message briefly
-        const successMsg = data.moduleComplete 
-          ? '🎉 ¡Módulo Completado! Generando certificado...' 
-          : `✅ Lección completada! +${data.xpEarned || 0} XP`
-        
-        // Create a temporary success alert
-        const successDiv = document.createElement('div')
-        successDiv.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3 animate-fade-in'
-        successDiv.innerHTML = `
-          <span class="text-2xl">${data.moduleComplete ? '🎉' : '✅'}</span>
-          <span class="font-bold">${successMsg}</span>
-        `
-        document.body.appendChild(successDiv)
-        
-        setTimeout(() => {
-          successDiv.remove()
-        }, 2500)
-
-        // Force refresh to update progress across the app
-        router.refresh()
-
-        // Navigation already handled above (redirects to module overview after 1.5s)
+        // Navigation already handled above (redirects to module overview after 1.5s with full reload)
       } else {
         const error = await response.json()
         console.error('❌ Failed to complete lesson:', error)
