@@ -13,6 +13,8 @@ import {
   ImpactComparison,
   AirQualityAssessment
 } from '@/components/module-tools'
+import { SecurityAuditTool, CommunitySurveyTool, CostCalculatorTool } from '@/components/module-tools/Module3Tools'
+import InteractiveActivity from '@/components/activities/InteractiveActivity'
 import ToolModal from './ToolModal'
 
 export default function LessonPage({ 
@@ -485,6 +487,52 @@ export default function LessonPage({
                         </div>
                       )
                     
+                    // Module 3: Safe Cities Tools
+                    case 'security-audit-tool':
+                      return (
+                        <SecurityAuditTool
+                          onSave={(data: any) => {
+                            console.log('Security audit saved:', data)
+                            setActivityData({...activityData, securityAudit: data})
+                            saveActivityData('security-audit', data)
+                          }}
+                        />
+                      )
+                    
+                    case 'community-survey-tool':
+                      return (
+                        <CommunitySurveyTool
+                          onSave={(data: any) => {
+                            console.log('Community survey saved:', data)
+                            setActivityData({...activityData, communitySurvey: data})
+                            saveActivityData('community-survey', data)
+                          }}
+                        />
+                      )
+                    
+                    case 'cost-calculator':
+                      return (
+                        <CostCalculatorTool
+                          onSave={(data: any) => {
+                            console.log('Cost calculator saved:', data)
+                            setActivityData({...activityData, costCalculation: data})
+                            saveActivityData('cost-calculation', data)
+                          }}
+                        />
+                      )
+                    
+                    // Reusable tools (can be used in multiple modules)
+                    case 'photo-uploader':
+                      return (
+                        <EvidenceUploader 
+                          onUpload={(files: any) => {
+                            console.log('Evidence uploaded:', files)
+                            setUploadedFiles(files)
+                            uploadEvidence(files)
+                          }}
+                        />
+                      )
+                    
                     default:
                       return (
                         <div className="bg-white rounded-xl p-4 sm:p-6 border-2 border-purple-200">
@@ -527,70 +575,21 @@ export default function LessonPage({
               Comenzar Actividad
             </button>
           ) : (
-            <div className="space-y-3 sm:space-y-4">
-              {/* Activity Instructions (from enriched database) */}
-              {lesson.activity.instructions && (
-                <div className="bg-orange-50 border-2 border-orange-200 rounded-xl p-4 mb-4">
-                  <h3 className="font-bold text-orange-900 mb-3">📋 Instrucciones:</h3>
-                  <ol className="space-y-2 list-decimal list-inside">
-                    {lesson.activity.instructions.map((instruction: string, index: number) => (
-                      <li key={index} className="text-sm text-orange-900">{instruction}</li>
-                    ))}
-                  </ol>
-                </div>
-              )}
-
-              {/* Activity Content - Reflection Prompts */}
-              {lesson.activity.reflectionPrompts && lesson.activity.reflectionPrompts.length > 0 && (
-                <div className="space-y-4">
-                  <h3 className="font-bold text-slate-900 mb-2">Preguntas de Reflexión:</h3>
-                  {lesson.activity.reflectionPrompts.map((prompt: string, index: number) => (
-                    <div key={index} className="border-2 border-slate-200 rounded-xl p-4">
-                      <label className="block text-sm font-medium text-slate-700 mb-2">
-                        {index + 1}. {prompt}
-                      </label>
-                      <textarea
-                        className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-teal-500 focus:outline-none min-h-[100px]"
-                        placeholder="Escribe tu respuesta aquí..."
-                        onChange={(e) => setActivityData({
-                          ...activityData,
-                          [`prompt_${index}`]: e.target.value
-                        })}
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Success Criteria */}
-              {lesson.activity.success_criteria && (
-                <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4">
-                  <h3 className="font-bold text-green-900 mb-2">✅ Criterios de Éxito:</h3>
-                  <p className="text-sm text-green-800">{lesson.activity.success_criteria}</p>
-                </div>
-              )}
-
-              {!activityCompleted ? (
-                <button
-                  onClick={() => {
-                    setActivityCompleted(true)
-                    // Scroll to complete lesson button
-                    setTimeout(() => {
-                      const completeLessonButton = document.querySelector('[data-complete-lesson]')
-                      completeLessonButton?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-                    }, 100)
-                  }}
-                  className="w-full bg-green-600 text-white py-3 sm:py-4 rounded-lg sm:rounded-xl font-bold text-base sm:text-lg hover:scale-105 transition-transform mt-4 sm:mt-6 min-h-[44px]"
-                >
-                  ✅ Terminar Actividad
-                </button>
-              ) : (
-                <div className="w-full bg-teal-50 border-2 border-teal-500 text-teal-700 py-3 sm:py-4 rounded-lg sm:rounded-xl font-bold text-sm sm:text-base md:text-lg mt-4 sm:mt-6 flex items-center justify-center gap-2 min-h-[44px]">
-                  <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6" />
-                  <span>¡Actividad Completada! Ahora completa la lección abajo ↓</span>
-                </div>
-              )}
-            </div>
+            <InteractiveActivity
+              activity={lesson.activity}
+              moduleId={moduleId}
+              lessonId={lessonId}
+              enrollmentId={lesson.enrollment_id || moduleId} // Use enrollment ID if available
+              activityType={lesson.activity.type || 'reflection'}
+              onComplete={() => {
+                setActivityCompleted(true)
+                // Scroll to complete lesson button
+                setTimeout(() => {
+                  const completeLessonButton = document.querySelector('[data-complete-lesson]')
+                  completeLessonButton?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                }, 100)
+              }}
+            />
           )}
         </div>
 
