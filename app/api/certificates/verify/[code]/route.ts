@@ -7,107 +7,79 @@ export async function GET(
 ) {
   try {
     const { code } = await params
+    
+    if (!code) {
+      return NextResponse.json({ 
+        valid: false,
+        error: 'No se proporcionó código de verificación' 
+      }, { status: 400 })
+    }
+
     const supabase = await createClient()
 
-    // Search for certificate by verification code
-    const { data: certificate, error } = await supabase
-      .from('certifications')
-      .select('*')
-      .eq('verification_code', code.toUpperCase())
-      .single()
+    // Verification codes are in format: CC-XXXXXXXX (where XXXXXXXX is first 8 chars of enrollment ID)
+    // Extract the enrollment ID prefix from the code
+    const codePrefix = code.replace('CC-', '').toLowerCase()
 
-    if (error || !certificate) {
-      return NextResponse.json(
-        { error: 'Certificate not found' },
-        { status: 404 }
-      )
+    console.log('🔍 Verifying certificate with code:', code)
+    console.log('🔍 Looking for enrollment IDs starting with:', codePrefix)
+
+    // Find completed enrollment where ID starts with this prefix
+    const { data: enrollments, error } = await supabase
+      .from('course_enrollments')
+      .select(`
+        *,
+        user:profiles!user_id(full_name, email),
+        module:marketplace_modules(id, title, core_value, slug)
+      `)
+      .eq('completed', true)
+      .ilike('id', `${codePrefix}%`)
+      .limit(1)
+
+    if (error) {
+      console.error('Error querying enrollments:', error)
+      return NextResponse.json({ 
+        valid: false,
+        error: 'Error al verificar el certificado' 
+      }, { status: 500 })
     }
 
-    // Get employee profile
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('full_name, corporate_account_id')
-      .eq('id', certificate.employee_id)
-      .single()
+    console.log('📜 Enrollments found:', enrollments?.length || 0)
 
-    // Get corporate account
-    const { data: corporateAccount } = await supabase
-      .from('corporate_accounts')
-      .select('company_name')
-      .eq('id', certificate.corporate_account_id)
-      .single()
-
-    // Format response based on certificate type
-    let certificateData: any = {
-      id: certificate.id,
-      verificationCode: certificate.verification_code,
-      issuedAt: certificate.issued_at,
-      certificationType: certificate.certification_type,
-      modules: certificate.modules_completed || []
+    if (!enrollments || enrollments.length === 0) {
+      return NextResponse.json({ 
+        valid: false,
+        error: 'Certificado no encontrado. Verifica que el código sea correcto.' 
+      }, { status: 404 })
     }
 
-    if (certificate.certification_type === 'corporate_module') {
-      // Corporate certificate
-      const moduleId = certificate.modules_completed?.[0]
-      let moduleName = 'Módulo Completado'
-      
-      if (moduleId === 'clean_air') {
-        moduleName = 'Aire Limpio para Todos'
-      } else if (moduleId === 'clean_water') {
-        moduleName = 'Agua Limpia y Vida'
-      } else if (moduleId === 'zero_waste') {
-        moduleName = 'Cero Residuos'
-      }
+    const enrollment = enrollments[0]
+    const userData = enrollment.user
+    const moduleData = enrollment.module
 
-      // Get employee count for this company and module
-      const cleanAirCourseId = 'a1a1a1a1-1111-1111-1111-111111111111'
-      const { data: enrollments } = await supabase
-        .from('course_enrollments')
-        .select('employee_id, xp_earned')
-        .eq('corporate_account_id', certificate.corporate_account_id)
-        .eq('course_id', cleanAirCourseId)
-        .eq('completion_percentage', 100)
-
-      certificateData = {
-        ...certificateData,
-        companyName: corporateAccount?.company_name || 'Empresa',
-        moduleName,
-        employeesCompleted: enrollments?.length || 0,
-        totalXP: enrollments?.reduce((sum, e) => sum + (e.xp_earned || 0), 0) || 0
-      }
-    } else {
-      // Employee certificate
-      const moduleId = certificate.modules_completed?.[0]
-      let moduleName = 'Módulo Completado'
-      
-      if (moduleId === 'clean_air') {
-        moduleName = 'Aire Limpio para Todos'
-      } else if (moduleId === 'clean_water') {
-        moduleName = 'Agua Limpia y Vida'
-      } else if (moduleId === 'zero_waste') {
-        moduleName = 'Cero Residuos'
-      }
-
-      certificateData = {
-        ...certificateData,
-        employeeName: profile?.full_name || 'Empleado',
-        companyName: corporateAccount?.company_name || 'Empresa',
-        moduleName,
-        xpEarned: 750 // Default, can be fetched from enrollment
-      }
-    }
+    console.log('✅ Certificate verified:', {
+      enrollment_id: enrollment.id,
+      user: userData?.full_name,
+      module: moduleData?.title
+    })
 
     return NextResponse.json({
       valid: true,
-      certificate: certificateData
+      verificationCode: code.toUpperCase(),
+      certificateHolder: userData?.full_name || 'Usuario',
+      moduleName: moduleData?.title || 'Módulo Completado',
+      issuedAt: enrollment.completion_date || enrollment.purchased_at,
+      xpEarned: enrollment.xp_earned || 250,
+      completionDate: enrollment.completion_date,
+      enrollmentId: enrollment.id
     })
 
   } catch (error: any) {
-    console.error('Error verifying certificate:', error)
-    return NextResponse.json(
-      { error: 'Server error', details: error.message },
-      { status: 500 }
-    )
+    console.error('Error in certificate verification:', error)
+    return NextResponse.json({ 
+      valid: false,
+      error: 'Error del servidor al verificar el certificado',
+      details: error.message 
+    }, { status: 500 })
   }
 }
-

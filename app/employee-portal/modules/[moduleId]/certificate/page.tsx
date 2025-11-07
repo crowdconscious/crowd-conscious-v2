@@ -304,15 +304,9 @@ export default function CertificatePage({ params }: { params: Promise<{ moduleId
               <p className="text-lg sm:text-xl text-slate-700 mb-6">
                 Este certificado es otorgado a
               </p>
-              <h1 className="text-3xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-purple-600 mb-6">
-                {certificate?.employeeName || 'Cargando...'}
+              <h1 className="text-3xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-purple-600 mb-8">
+                {certificate?.employeeName || 'Usuario'}
               </h1>
-              <p className="text-base sm:text-lg text-slate-700 mb-4">
-                de la empresa
-              </p>
-              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-8">
-                {certificate?.companyName || 'Cargando...'}
-              </h2>
               <p className="text-base sm:text-lg text-slate-700 mb-4">
                 por completar exitosamente el módulo
               </p>
