@@ -36,22 +36,23 @@ export async function GET(
     console.log('✅ Enrollment found:', { enrollmentId: enrollment.id, moduleId })
 
     // Fetch actual completed lessons from lesson_responses table
-    // FIXED: Use enrollment_id, not employee_id/course_id/module_id
+    // CRITICAL: Only get lessons where completed = TRUE
     const { data: responses, error: responsesError } = await supabase
       .from('lesson_responses')
       .select('lesson_id')
-      .eq('enrollment_id', enrollment.id)  // FIXED: lesson_responses uses enrollment_id
+      .eq('enrollment_id', enrollment.id)
+      .eq('completed', true)  // 🔥 CRITICAL FIX: Only completed lessons!
 
     if (responsesError) {
       console.error('❌ Error fetching lesson responses:', responsesError)
       return NextResponse.json({
         completedLessons: [],
         xpEarned: enrollment.xp_earned || 0,
-        completionPercentage: enrollment.progress_percentage || 0  // FIXED: correct column name
+        completionPercentage: enrollment.progress_percentage || 0
       })
     }
 
-    // Get unique lesson IDs
+    // Get unique lesson IDs (only completed ones)
     const completedLessons = [...new Set(responses?.map(r => r.lesson_id) || [])]
 
     console.log('✅ Progress loaded:', { 
