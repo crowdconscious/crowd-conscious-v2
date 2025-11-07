@@ -11,7 +11,6 @@ INSERT INTO public.course_enrollments (
     purchased_at,
     progress_percentage,
     completed,
-    enrolled_at,
     last_accessed_at,
     xp_earned
 )
@@ -23,7 +22,6 @@ SELECT
     NOW() AS purchased_at,
     0 AS progress_percentage,
     FALSE AS completed,
-    NOW() AS enrolled_at,
     NOW() AS last_accessed_at,
     0 AS xp_earned
 FROM
@@ -35,14 +33,13 @@ WHERE
     AND mm.status = 'published'
 ON CONFLICT (user_id, module_id) DO UPDATE SET
     updated_at = NOW(),
-    last_accessed_at = NOW(),
-    enrolled_at = course_enrollments.enrolled_at -- Keep original enrollment date
+    last_accessed_at = NOW()
 RETURNING 
     id AS enrollment_id,
     user_id,
     module_id,
     purchased_at,
-    enrolled_at;
+    created_at;
 
 -- ✅ If you see a row returned above with an enrollment_id, you're enrolled!
 -- ✅ Refresh your dashboard at crowdconscious.app/employee-portal to see Module 2!
