@@ -1,0 +1,169 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase-server'
+
+export const dynamic = 'force-dynamic'
+
+export async function POST(request: NextRequest) {
+  try {
+    const supabase = await createClient()
+    
+    // Get current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    
+    if (userError || !user) {
+      return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+    }
+
+    const body = await request.json()
+    const {
+      enrollment_id,
+      module_id,
+      lesson_id,
+      activity_type,
+      responses, // { question_1: "answer", question_2: ["option_a", "option_b"], etc. }
+      evidence_urls, // Array of uploaded file URLs
+      completion_data // Additional completion metadata
+    } = body
+
+    console.log('💾 Saving activity response:', {
+      user_id: user.id,
+      enrollment_id,
+      module_id,
+      lesson_id,
+      activity_type
+    })
+
+    // Check if response already exists for this lesson
+    const { data: existingResponse } = await supabase
+      .from('activity_responses')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('lesson_id', lesson_id)
+      .single()
+
+    let result
+
+    if (existingResponse) {
+      // Update existing response
+      const { data, error } = await supabase
+        .from('activity_responses')
+        .update({
+          responses,
+          evidence_urls: evidence_urls || [],
+          completion_data: completion_data || {},
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existingResponse.id)
+        .select()
+        .single()
+
+      if (error) {
+        console.error('❌ Error updating activity response:', error)
+        return NextResponse.json({ 
+          error: 'Error al actualizar respuesta',
+          details: error.message 
+        }, { status: 500 })
+      }
+
+      result = data
+      console.log('✅ Activity response updated:', result.id)
+    } else {
+      // Create new response
+      const { data, error } = await supabase
+        .from('activity_responses')
+        .insert({
+          user_id: user.id,
+          enrollment_id,
+          module_id,
+          lesson_id,
+          activity_type,
+          responses,
+          evidence_urls: evidence_urls || [],
+          completion_data: completion_data || {},
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single()
+
+      if (error) {
+        console.error('❌ Error creating activity response:', error)
+        return NextResponse.json({ 
+          error: 'Error al guardar respuesta',
+          details: error.message 
+        }, { status: 500 })
+      }
+
+      result = data
+      console.log('✅ Activity response created:', result.id)
+    }
+
+    // Update enrollment progress
+    await supabase.rpc('update_lesson_completion', {
+      p_enrollment_id: enrollment_id,
+      p_lesson_id: lesson_id,
+      p_completed: true
+    })
+
+    return NextResponse.json({
+      success: true,
+      response_id: result.id,
+      message: 'Respuesta guardada exitosamente'
+    })
+
+  } catch (error) {
+    console.error('❌ Critical error saving activity response:', error)
+    return NextResponse.json({ 
+      error: 'Error del servidor',
+      details: error instanceof Error ? error.message : 'Error desconocido'
+    }, { status: 500 })
+  }
+}
+
+// GET endpoint to retrieve user's responses for a lesson
+export async function GET(request: NextRequest) {
+  try {
+    const supabase = await createClient()
+    
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    
+    if (userError || !user) {
+      return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+    }
+
+    const { searchParams } = new URL(request.url)
+    const lesson_id = searchParams.get('lesson_id')
+    const module_id = searchParams.get('module_id')
+
+    if (!lesson_id) {
+      return NextResponse.json({ error: 'lesson_id requerido' }, { status: 400 })
+    }
+
+    const { data, error } = await supabase
+      .from('activity_responses')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('lesson_id', lesson_id)
+      .single()
+
+    if (error && error.code !== 'PGRST116') { // PGRST116 = not found
+      console.error('❌ Error fetching activity response:', error)
+      return NextResponse.json({ 
+        error: 'Error al recuperar respuesta',
+        details: error.message 
+      }, { status: 500 })
+    }
+
+    return NextResponse.json({
+      response: data || null
+    })
+
+  } catch (error) {
+    console.error('❌ Critical error fetching activity response:', error)
+    return NextResponse.json({ 
+      error: 'Error del servidor',
+      details: error instanceof Error ? error.message : 'Error desconocido'
+    }, { status: 500 })
+  }
+}
+
