@@ -763,74 +763,74 @@ created_at TIMESTAMP
 ```sql
 CREATE TABLE IF NOT EXISTS public.marketplace_modules (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  
+
   -- BASIC INFO
   title TEXT NOT NULL,
   -- ⚠️ CRITICAL: This title MUST match frontend display!
   -- Example: "Aire Limpio: El Despertar Corporativo" (NOT "Estrategias Avanzadas...")
-  
+
   description TEXT NOT NULL,
   slug TEXT UNIQUE NOT NULL,
   -- URL-friendly identifier, used in routes
-  
+
   -- CREATOR INFO
   creator_community_id UUID REFERENCES public.communities(id) ON DELETE SET NULL,
   creator_user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   creator_name TEXT NOT NULL,
   -- Cached for display
-  
+
   -- CONTENT STRUCTURE
   estimated_duration_hours INTEGER NOT NULL,
   lesson_count INTEGER DEFAULT 0,
   xp_reward INTEGER NOT NULL,
-  
+
   -- CLASSIFICATION
   core_value TEXT NOT NULL,
   -- ⚠️ CRITICAL: Must be one of:
   -- 'clean_air', 'clean_water', 'safe_cities', 'zero_waste', 'fair_trade', 'impact_integration'
-  
+
   industry_tags TEXT[],
   -- e.g., ['manufacturing', 'corporate', 'food_service']
-  
+
   difficulty_level TEXT DEFAULT 'beginner',
   -- 'beginner', 'intermediate', 'advanced'
-  
+
   -- PRICING (Phase 1 additions)
   base_price_mxn INTEGER NOT NULL,
   -- Base price for 50 employees
-  
+
   price_per_50_employees INTEGER NOT NULL,
   -- Additional cost per 50-employee pack
-  
+
   individual_price_mxn INTEGER,
   -- Price for 1 person (if null, calculated as base/50)
-  
+
   team_price_mxn INTEGER,
   -- Optional team pricing
-  
+
   team_discount_percent INTEGER DEFAULT 10,
   -- Team discount %
-  
+
   -- MODULE TYPE
   is_platform_module BOOLEAN DEFAULT false,
   -- Platform modules = 100% revenue to platform
-  
+
   is_template BOOLEAN DEFAULT false,
   -- Template modules for community creators
-  
+
   price_set_by_community BOOLEAN DEFAULT true,
   -- Can community change price?
-  
+
   platform_suggested_price INTEGER,
   -- Guidance from platform
-  
+
   -- STATUS & APPROVAL
   status TEXT DEFAULT 'draft',
   -- 'draft', 'review', 'published', 'suspended'
-  
+
   approved_by UUID REFERENCES auth.users(id),
   approval_date TIMESTAMPTZ,
-  
+
   -- METRICS
   purchase_count INTEGER DEFAULT 0,
   enrollment_count INTEGER DEFAULT 0,
@@ -838,15 +838,15 @@ CREATE TABLE IF NOT EXISTS public.marketplace_modules (
   review_count INTEGER DEFAULT 0,
   completion_rate INTEGER DEFAULT 0,
   -- Percentage
-  
+
   -- SEO & DISCOVERY
   featured BOOLEAN DEFAULT false,
   search_keywords TEXT[],
-  
+
   -- MEDIA
   thumbnail_url TEXT,
   preview_video_url TEXT,
-  
+
   -- TIMESTAMPS
   created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
@@ -862,14 +862,14 @@ CREATE INDEX IF NOT EXISTS idx_marketplace_modules_creator_community ON public.m
 
 **Module Name Standards:**
 
-| Core Value | Expected Database Title | Frontend Display | Status |
-|------------|-------------------------|------------------|--------|
-| `clean_air` | "Aire Limpio: El Despertar Corporativo" | Should match DB | ✅ Check |
-| `clean_water` | "El Pozo se Seca: Agua Limpia" | Should match DB | ✅ Check |
-| `safe_cities` | "Las Calles Que Compartimos: Ciudades Seguras" | Should match DB | ⚠️ Verify |
-| `zero_waste` | "De Basura a Recurso: Cero Residuos" | Should match DB | ⚠️ Verify |
-| `fair_trade` | "El Comercio Que Sostiene: Comercio Justo" | Should match DB | ⚠️ Verify |
-| `impact_integration` | "La Celebración: Integración de Impacto" | Should match DB | ⚠️ Verify |
+| Core Value           | Expected Database Title                        | Frontend Display | Status    |
+| -------------------- | ---------------------------------------------- | ---------------- | --------- |
+| `clean_air`          | "Aire Limpio: El Despertar Corporativo"        | Should match DB  | ✅ Check  |
+| `clean_water`        | "El Pozo se Seca: Agua Limpia"                 | Should match DB  | ✅ Check  |
+| `safe_cities`        | "Las Calles Que Compartimos: Ciudades Seguras" | Should match DB  | ⚠️ Verify |
+| `zero_waste`         | "De Basura a Recurso: Cero Residuos"           | Should match DB  | ⚠️ Verify |
+| `fair_trade`         | "El Comercio Que Sostiene: Comercio Justo"     | Should match DB  | ⚠️ Verify |
+| `impact_integration` | "La Celebración: Integración de Impacto"       | Should match DB  | ⚠️ Verify |
 
 **⚠️ TROUBLESHOOTING: If modules don't appear after purchase:**
 
@@ -918,68 +918,86 @@ CREATE UNIQUE INDEX cart_items_corporate_module_unique
 ON cart_items(corporate_account_id, module_id) WHERE corporate_account_id IS NOT NULL
 ```
 
-#### **course_enrollments** (ACTUAL SCHEMA - Updated Nov 7, 2025)
+#### **course_enrollments** (ACTUAL SCHEMA - VERIFIED Nov 7, 2025)
 
-**⚠️ CRITICAL: This is the ACTUAL schema in production!**
+**🔴 CRITICAL: THIS IS THE REAL PRODUCTION SCHEMA (verified from live database)**
 
 ```sql
 CREATE TABLE IF NOT EXISTS course_enrollments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+  -- USER & ACCOUNT
+  user_id UUID NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  -- ⚠️ NOTE: user_id is NULLABLE!
   
-  -- USER & ACCOUNT (Phase 2: user_id renamed from employee_id)
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  corporate_account_id UUID REFERENCES corporate_accounts(id) ON DELETE CASCADE,
-  -- NOTE: corporate_account_id is NULLABLE after phase-2 migration
+  corporate_account_id UUID NULL REFERENCES corporate_accounts(id) ON DELETE CASCADE,
+  -- Also nullable
   
-  -- MODULE REFERENCE
-  module_id TEXT NOT NULL,
-  -- ⚠️ IMPORTANT: module_id is TEXT, not UUID!
-  -- It contains the UUID as a string OR slug
+  assigned_by UUID NULL,
+  -- Who assigned this course
+
+  -- COURSE/MODULE REFERENCES
+  course_id UUID NULL,
+  -- ⚠️ CRITICAL: This is the PRIMARY course reference!
   
-  module_name TEXT,
-  -- Cached module name for display
+  module_id UUID NULL,
+  -- ⚠️ IMPORTANT: module_id is UUID (NOT TEXT like I thought!)
+  -- Both course_id AND module_id exist as separate fields!
   
-  -- PURCHASE INFO (Added in Phase 2)
-  purchase_type TEXT DEFAULT 'corporate' 
-    CHECK (purchase_type IN ('individual', 'corporate', 'team', 'enterprise', 'gift')),
-  purchased_at TIMESTAMPTZ,
-  purchase_price_snapshot INTEGER,
-  -- Price in MXN (not cents, not decimal)
-  
+  current_module_id UUID NULL,
+  -- For tracking progress through multi-module courses
+
+  -- PURCHASE INFO
+  purchase_type TEXT DEFAULT 'corporate',
+  purchased_at TIMESTAMPTZ NULL,
+  purchase_price_snapshot INTEGER NULL,
+  -- Price in MXN (not cents)
+
   -- PROGRESS TRACKING
-  status TEXT DEFAULT 'not_started' 
-    CHECK (status IN ('not_started', 'in_progress', 'completed')),
-  completion_percentage INTEGER DEFAULT 0 
-    CHECK (completion_percentage >= 0 AND completion_percentage <= 100),
+  status TEXT DEFAULT 'not_started',
+  -- 'not_started', 'in_progress', 'completed'
+  
+  completion_percentage INTEGER DEFAULT 0,
   progress_percentage INTEGER DEFAULT 0,
-  -- NOTE: Both completion_percentage AND progress_percentage exist!
+  -- YES, both exist!
   
   completed BOOLEAN DEFAULT false,
-  completed_at TIMESTAMPTZ,
-  completion_date TIMESTAMPTZ,
-  -- NOTE: Both completed_at AND completion_date exist!
+  completed_at TIMESTAMP NULL,
+  completion_date TIMESTAMP NULL,
+  -- YES, both completed_at AND completion_date exist!
   
-  -- ACTIVITY TRACKING
-  started_at TIMESTAMPTZ,
-  last_activity_at TIMESTAMPTZ DEFAULT NOW(),
-  last_accessed_at TIMESTAMPTZ,
-  -- NOTE: Both last_activity_at AND last_accessed_at exist!
-  
-  -- PERFORMANCE
-  quiz_score INTEGER CHECK (quiz_score >= 0 AND quiz_score <= 100),
-  time_spent_minutes INTEGER DEFAULT 0,
+  modules_completed INTEGER DEFAULT 0,
+
+  -- TIMING
+  assigned_at TIMESTAMP DEFAULT NOW(),
+  started_at TIMESTAMP NULL,
+  last_accessed_at TIMESTAMP NULL,
+  due_date TIMESTAMP NULL,
+  mandatory BOOLEAN DEFAULT true,
+
+  -- SCORING
+  total_score INTEGER DEFAULT 0,
+  max_score INTEGER DEFAULT 0,
+  final_score INTEGER NULL,
   xp_earned INTEGER DEFAULT 0,
   
+  -- GAMIFICATION
+  badges_earned TEXT[] DEFAULT ARRAY[]::text[],
+  
+  -- TIME TRACKING
+  total_time_spent INTEGER DEFAULT 0,
+  -- In minutes
+
   -- CERTIFICATE
-  certificate_url TEXT,
-  
+  certificate_url TEXT NULL,
+
   -- TIMESTAMPS
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
-  
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+
   -- CONSTRAINTS
-  UNIQUE(user_id, module_id)
-  -- This is the ONLY unique constraint - no (employee_id, module_id) anymore!
+  UNIQUE(user_id, course_id)
+  -- ⚠️⚠️⚠️ CRITICAL: Constraint is on course_id, NOT module_id!
 );
 
 -- INDEXES
@@ -988,13 +1006,27 @@ CREATE INDEX IF NOT EXISTS idx_enrollments_corporate ON course_enrollments(corpo
 CREATE INDEX IF NOT EXISTS idx_enrollments_status ON course_enrollments(status);
 ```
 
-**Schema Migration Notes:**
+**🚨 CRITICAL SCHEMA INSIGHTS:**
 
-1. **user_id** was renamed from `employee_id` in Phase 2
-2. **module_id** is `TEXT`, not `UUID` (historical reasons)
-3. **corporate_account_id** is now nullable (allows individual users)
-4. **Multiple timestamp columns** exist for different purposes
-5. **Unique constraint** is on `(user_id, module_id)` only
+1. **UNIQUE constraint is on `(user_id, course_id)` NOT `(user_id, module_id)`!!!**
+2. **Both `course_id` AND `module_id` fields exist** (might be for multi-module courses vs single modules)
+3. **module_id is UUID**, not TEXT (I was wrong!)
+4. **Lots of nullable fields** - the table has grown organically
+5. **Multiple overlapping columns** (completion_percentage + progress_percentage, completed_at + completion_date)
+
+**⚠️ WEBHOOK IMPLICATIONS:**
+
+When Stripe webhook creates enrollments, it MUST set:
+- `course_id` (for the unique constraint)
+- Possibly also `module_id` (for JOIN queries)
+- If they're different, enrollment might exist but not show in dashboard!
+
+**🔍 TROUBLESHOOTING CHECKLIST:**
+
+1. ✅ Is `course_id` set in enrollments? (Not just `module_id`)
+2. ✅ Does `course_id` match the module UUID from marketplace?
+3. ✅ Are there duplicate modules with same `core_value`?
+4. ✅ Is the dashboard querying `module_id` or `course_id` for JOINs?
 
 #### **lesson_responses** (User progress on lessons)
 
