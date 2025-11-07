@@ -24,8 +24,9 @@ export async function GET(
     console.log('🔍 Verifying certificate with code:', code)
     console.log('🔍 Looking for enrollment IDs starting with:', codePrefix)
 
-    // Find completed enrollment where ID starts with this prefix
-    const { data: enrollments, error } = await supabase
+    // Get ALL completed enrollments and filter in JavaScript
+    // (UUID fields can't use ILIKE directly in Supabase)
+    const { data: allEnrollments, error } = await supabase
       .from('course_enrollments')
       .select(`
         *,
@@ -33,20 +34,27 @@ export async function GET(
         module:marketplace_modules(id, title, core_value, slug)
       `)
       .eq('completed', true)
-      .ilike('id', `${codePrefix}%`)
-      .limit(1)
 
     if (error) {
       console.error('Error querying enrollments:', error)
       return NextResponse.json({ 
         valid: false,
-        error: 'Error al verificar el certificado' 
+        error: 'Error al verificar el certificado',
+        details: error.message 
       }, { status: 500 })
     }
 
-    console.log('📜 Enrollments found:', enrollments?.length || 0)
+    console.log('📜 Total completed enrollments:', allEnrollments?.length || 0)
 
-    if (!enrollments || enrollments.length === 0) {
+    // Filter for enrollment IDs that start with the code prefix
+    const enrollments = allEnrollments?.filter(e => 
+      e.id.toLowerCase().startsWith(codePrefix)
+    ) || []
+
+    console.log('📜 Matching enrollments:', enrollments.length)
+
+    if (enrollments.length === 0) {
+      console.log('❌ No enrollment found matching code:', code)
       return NextResponse.json({ 
         valid: false,
         error: 'Certificado no encontrado. Verifica que el código sea correcto.' 
