@@ -94,32 +94,96 @@ export async function POST(req: NextRequest) {
 
     console.log('✅ Update successful:', updateData)
 
-    // Store lesson responses if provided
-    if (responses) {
-      try {
-        const { error: responseError } = await supabase
-          .from('lesson_responses')
-          .upsert({
-            enrollment_id: enrollment.id,  // FIXED: use enrollment_id
-            lesson_id: lessonId,
-            quiz_score: responses.score || null,  // FIXED: match actual schema
-            evidence_urls: responses.evidence || [],  // FIXED: match actual schema
-            completed: true,
-            completed_at: new Date().toISOString()
-          }, {
-            onConflict: 'enrollment_id,lesson_id'  // FIXED: correct unique constraint
-          })
+    // ✅ ENHANCED: Store ALL activity data for impact reports
+    console.log('💾 Saving activity data:', { 
+      hasResponses: !!responses,
+      hasReflection: !!reflection,
+      hasActionItems: !!actionItems,
+      timeSpent 
+    })
 
-        if (responseError) {
-          console.error('Error storing lesson responses:', responseError)
-          // Don't fail the request if response storage fails
-        } else {
-          console.log('✅ Lesson responses stored')
-        }
-      } catch (responseStoreError) {
-        console.error('Error storing responses:', responseStoreError)
-        // Continue even if response storage fails
+    try {
+      const responseData: any = {
+        enrollment_id: enrollment.id,
+        lesson_id: lessonId,
+        module_id: moduleId,
+        completed: true,
+        completed_at: new Date().toISOString(),
+        time_spent_minutes: timeSpent || 0
       }
+
+      // Store ALL activity data for impact reports
+      if (responses) {
+        // General responses (quiz answers, reflection prompts, etc.)
+        responseData.responses = responses
+        
+        // Carbon calculator data
+        if (responses.carbonFootprint) {
+          responseData.carbon_data = responses.carbonFootprint
+        }
+        
+        // Cost/ROI calculator data
+        if (responses.costAnalysis) {
+          responseData.cost_data = responses.costAnalysis
+        }
+        
+        // Impact comparison data
+        if (responses.impactComparison) {
+          responseData.impact_comparisons = responses.impactComparison
+        }
+        
+        // Quiz score (if quiz exists)
+        if (responses.score !== undefined) {
+          responseData.quiz_score = responses.score
+        }
+
+        // Air quality assessment data
+        if (responses.hasMonitoring || responses.pm25Level) {
+          responseData.responses = {
+            ...responseData.responses,
+            airQualityAssessment: {
+              hasMonitoring: responses.hasMonitoring,
+              pm25Level: responses.pm25Level,
+              assessedAt: new Date().toISOString()
+            }
+          }
+        }
+      }
+
+      // Reflection data
+      if (reflection) {
+        responseData.reflection = typeof reflection === 'string' 
+          ? reflection 
+          : JSON.stringify(reflection)
+      }
+
+      // Action items/commitments
+      if (actionItems && Array.isArray(actionItems)) {
+        responseData.action_items = actionItems
+      }
+
+      // Evidence URLs (photos uploaded during activity)
+      if (responses?.evidence || responses?.uploadedFiles) {
+        responseData.evidence_urls = responses.evidence || responses.uploadedFiles || []
+      }
+
+      console.log('💾 Upserting lesson response with data:', Object.keys(responseData))
+
+      const { error: responseError } = await supabase
+        .from('lesson_responses')
+        .upsert(responseData, {
+          onConflict: 'enrollment_id,lesson_id'
+        })
+
+      if (responseError) {
+        console.error('❌ Error storing lesson responses:', responseError)
+        // Don't fail the request if response storage fails
+      } else {
+        console.log('✅ Lesson responses stored successfully with full activity data')
+      }
+    } catch (responseStoreError) {
+      console.error('❌ Error storing responses:', responseStoreError)
+      // Continue even if response storage fails
     }
 
     console.log('✅ Lesson completed:', { 

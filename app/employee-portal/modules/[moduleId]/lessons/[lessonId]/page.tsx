@@ -10,7 +10,8 @@ import {
   CostCalculator,
   EvidenceUploader,
   ReflectionJournal,
-  ImpactComparison
+  ImpactComparison,
+  AirQualityAssessment
 } from '@/components/module-tools'
 import ToolModal from './ToolModal'
 
@@ -393,34 +394,12 @@ export default function LessonPage({
                       return (
                         <div className="bg-white rounded-xl p-4 sm:p-6 border-2 border-purple-200">
                           <h3 className="font-bold text-lg mb-4 text-purple-900">📊 Evaluación de Calidad del Aire</h3>
-                          <div className="space-y-4">
-                            <div>
-                              <label className="block text-sm font-medium text-slate-700 mb-2">
-                                ¿Tienes monitoreo de calidad del aire actualmente?
-                              </label>
-                              <select className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-purple-500 focus:outline-none"
-                                onChange={(e) => setActivityData({...activityData, hasMonitoring: e.target.value})}>
-                                <option value="">Seleccionar...</option>
-                                <option value="yes">Sí, monitoreamos regularmente</option>
-                                <option value="partial">Parcial o esporádico</option>
-                                <option value="no">No, no monitoreamos</option>
-                              </select>
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-slate-700 mb-2">
-                                Nivel de PM2.5 actual (si conoces, en μg/m³)
-                              </label>
-                              <input type="number" 
-                                className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-purple-500 focus:outline-none"
-                                placeholder="Ej: 25"
-                                onChange={(e) => setActivityData({...activityData, pm25Level: e.target.value})} />
-                            </div>
-                            <div className="bg-purple-50 p-4 rounded-lg">
-                              <p className="text-sm text-purple-900">
-                                💡 <strong>Referencia:</strong> OMS recomienda PM2.5 &lt; 10 μg/m³. En México, la norma es &lt; 45 μg/m³.
-                              </p>
-                            </div>
-                          </div>
+                          <AirQualityAssessment 
+                            onComplete={(result: any) => {
+                              console.log('Air quality assessment:', result)
+                              setActivityData({...activityData, airQualityAssessment: result})
+                            }}
+                          />
                         </div>
                       )
                     
@@ -484,15 +463,24 @@ export default function LessonPage({
                       )
                     
                     case 'ImpactComparison':
+                      // ImpactComparison is a display component that shows carbon impact in perspective
+                      // It needs value, unit, and comparisons array
+                      const carbonValue = activityData.carbonFootprint?.total || 1000 // Default 1000 kg CO2
+                      const comparisonData = [
+                        { icon: '🌳', label: 'Árboles necesarios para compensar', value: Math.round(carbonValue / 20), unit: 'árboles' },
+                        { icon: '🚗', label: 'Equivalente a conducir', value: Math.round(carbonValue * 4.6), unit: 'km' },
+                        { icon: '💡', label: 'Energía de focos LED', value: Math.round(carbonValue * 2.5), unit: 'horas' }
+                      ]
+                      
                       return (
                         <div className="bg-white rounded-xl p-4 sm:p-6 border-2 border-purple-200">
                           <h3 className="font-bold text-lg mb-4 text-purple-900">📊 Comparación de Impacto</h3>
                           <ImpactComparison 
-                            onCompare={(data: any) => {
-                              console.log('Impact comparison:', data)
-                              setImpactData(data)
-                              setActivityData({...activityData, impactComparison: data})
-                            }}
+                            value={carbonValue}
+                            unit="kg CO₂"
+                            comparisons={comparisonData}
+                            title="Tu Huella de Carbono en Perspectiva"
+                            description="Equivalencias del mundo real"
                           />
                         </div>
                       )
