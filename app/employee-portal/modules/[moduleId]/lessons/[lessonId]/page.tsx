@@ -469,6 +469,11 @@ export default function LessonPage({
                         <div className="bg-white rounded-xl p-4 sm:p-6 border-2 border-purple-200">
                           <h3 className="font-bold text-lg mb-4 text-purple-900">📝 Diario de Reflexión</h3>
                           <ReflectionJournal 
+                            prompts={lesson.activity?.reflectionPrompts || [
+                              '¿Qué aprendiste en esta lección?',
+                              '¿Cómo aplicarás esto en tu trabajo?',
+                              '¿Qué obstáculos podrías enfrentar?'
+                            ]}
                             onSave={(data: any) => {
                               console.log('Reflection saved:', data)
                               setActivityData({...activityData, reflection: data})
