@@ -3,6 +3,8 @@ import { supabase } from '@/lib/supabase'
 import { redirect } from 'next/navigation'
 import EmailTemplatesClient from './EmailTemplatesClient'
 
+export const dynamic = 'force-dynamic'
+
 async function checkAdminAccess(userId: string) {
   const { data: profile } = await supabase
     .from('profiles')
