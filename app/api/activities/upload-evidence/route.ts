@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
-import { v4 as uuidv4 } from 'uuid'
+import { randomUUID } from 'crypto'
 
 export const dynamic = 'force-dynamic'
 
@@ -33,15 +33,15 @@ export async function POST(request: NextRequest) {
       try {
         // Generate unique filename
         const fileExt = file.name.split('.').pop()
-        const fileName = `${user.id}/${moduleId}/${lessonId}/${uuidv4()}.${fileExt}`
+        const fileName = `${user.id}/${moduleId}/${lessonId}/${randomUUID()}.${fileExt}`
 
         // Convert File to ArrayBuffer then to Buffer
         const arrayBuffer = await file.arrayBuffer()
         const buffer = Buffer.from(arrayBuffer)
 
-        // Upload to Supabase Storage
+        // Upload to Supabase Storage (use EXISTING employee-evidence bucket)
         const { data, error } = await supabase.storage
-          .from('activity-evidence')
+          .from('employee-evidence')
           .upload(fileName, buffer, {
             contentType: file.type,
             upsert: false
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
 
         // Get public URL
         const { data: { publicUrl } } = supabase.storage
-          .from('activity-evidence')
+          .from('employee-evidence')
           .getPublicUrl(fileName)
 
         uploadedUrls.push(publicUrl)

@@ -33,24 +33,27 @@ export async function POST(request: NextRequest) {
       activity_type
     })
 
-    // Check if response already exists for this lesson
+    // Use EXISTING lesson_responses table (consolidate with existing infrastructure)
     const { data: existingResponse } = await supabase
-      .from('activity_responses')
-      .select('id')
-      .eq('user_id', user.id)
+      .from('lesson_responses')
+      .select('*')
+      .eq('enrollment_id', enrollment_id)
       .eq('lesson_id', lesson_id)
       .single()
 
     let result
 
     if (existingResponse) {
-      // Update existing response
+      // Update existing response - merge with existing data
       const { data, error } = await supabase
-        .from('activity_responses')
+        .from('lesson_responses')
         .update({
-          responses,
-          evidence_urls: evidence_urls || [],
-          completion_data: completion_data || {},
+          responses: {
+            ...existingResponse.responses,
+            activity_responses: responses,
+            completion_data: completion_data || {}
+          },
+          evidence_urls: [...(existingResponse.evidence_urls || []), ...(evidence_urls || [])],
           updated_at: new Date().toISOString()
         })
         .eq('id', existingResponse.id)
@@ -70,16 +73,17 @@ export async function POST(request: NextRequest) {
     } else {
       // Create new response
       const { data, error } = await supabase
-        .from('activity_responses')
+        .from('lesson_responses')
         .insert({
-          user_id: user.id,
           enrollment_id,
           module_id,
           lesson_id,
-          activity_type,
-          responses,
+          responses: {
+            activity_responses: responses,
+            completion_data: completion_data || {}
+          },
           evidence_urls: evidence_urls || [],
-          completion_data: completion_data || {},
+          completed: false,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
@@ -139,10 +143,22 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'lesson_id requerido' }, { status: 400 })
     }
 
-    const { data, error } = await supabase
-      .from('activity_responses')
-      .select('*')
+    // Get enrollment_id first
+    const { data: enrollment } = await supabase
+      .from('course_enrollments')
+      .select('id')
       .eq('user_id', user.id)
+      .eq('module_id', module_id)
+      .single()
+
+    if (!enrollment) {
+      return NextResponse.json({ response: null })
+    }
+
+    const { data, error } = await supabase
+      .from('lesson_responses')
+      .select('*')
+      .eq('enrollment_id', enrollment.id)
       .eq('lesson_id', lesson_id)
       .single()
 
@@ -154,8 +170,14 @@ export async function GET(request: NextRequest) {
       }, { status: 500 })
     }
 
+    // Extract activity responses from the responses JSONB field
+    const activityResponses = data?.responses?.activity_responses || {}
+
     return NextResponse.json({
-      response: data || null
+      response: data ? { 
+        ...data,
+        responses: activityResponses // Return just the activity responses part
+      } : null
     })
 
   } catch (error) {
