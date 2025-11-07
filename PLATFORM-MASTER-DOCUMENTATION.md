@@ -1,8 +1,8 @@
 # 🌍 Crowd Conscious: Complete Platform Documentation
 
-**Version**: 2.1  
-**Last Updated**: November 6, 2025  
-**Status**: Phase 1 Complete + Reviews & Promo Codes  
+**Version**: 2.2  
+**Last Updated**: November 7, 2025  
+**Status**: Production Ready - Complete User Journey Working 🎉  
 **Owner**: Francisco Blockstrand
 
 ---
@@ -19,11 +19,14 @@
 8. [Database Schema](#database-schema)
 9. [API Architecture](#api-architecture)
 10. [Stripe Integration](#stripe-integration)
-11. [Promo Codes & Discounts](#promo-codes--discounts) ✨ NEW
-12. [Review System](#review-system) ✨ NEW
-13. [Platform Modules (6 Core Modules)](#platform-modules-6-core-modules) ✨ NEW
+11. [Promo Codes & Discounts](#promo-codes--discounts)
+12. [Review System](#review-system)
+13. [Platform Modules (6 Core Modules)](#platform-modules-6-core-modules)
 14. [Admin Dashboard](#admin-dashboard)
-15. [Future Roadmap](#future-roadmap)
+15. [Complete User Journey](#complete-user-journey) ✨ **NEW - PRODUCTION READY**
+16. [Certificate System](#certificate-system) ✨ **NEW**
+17. [Recent Platform Improvements (Nov 7, 2025)](#recent-platform-improvements-nov-7-2025) ✨ **NEW**
+18. [Future Roadmap](#future-roadmap)
 
 ---
 
@@ -2263,6 +2266,326 @@ Platform modules set the quality benchmark:
 - Change logo/banner
 - Update description
 - Manage social links
+
+---
+
+## ✅ **Complete User Journey** 
+
+### **End-to-End Flow: From Discovery to Certificate** 🎓
+
+The complete user journey is now **FULLY FUNCTIONAL** and production-ready. Users can seamlessly:
+
+#### **1. Discovery & Purchase**
+1. Visit `/concientizaciones` landing page
+2. Browse marketplace (`/marketplace`)
+3. Add modules to cart
+4. Apply promo codes (e.g., `DEMOJAVI` for 100% off)
+5. Checkout via Stripe
+6. Automatic enrollment via webhook
+
+#### **2. Learning Experience**
+1. Access "Portal de Aprendizaje" (`/employee-portal/dashboard`)
+2. View enrolled modules with progress
+3. Start lessons (`/employee-portal/modules/[moduleId]/lessons/[lessonId]`)
+4. Read story-driven content
+5. Use interactive tools:
+   - Air Quality Assessment
+   - Carbon Calculator
+   - Cost Calculator
+   - Evidence Uploader
+   - Reflection Journal
+   - Impact Comparison
+6. Complete activities and mini-projects
+7. Submit responses and evidence
+
+#### **3. Progress Tracking**
+- Real-time progress percentage (0% → 100%)
+- XP earning (50 XP per lesson)
+- Lesson unlocking (sequential, based on completion)
+- Dashboard stats:
+  - Módulos activos
+  - XP ganado
+  - Tiempo invertido
+  - Certificaciones
+
+#### **4. Impact & Certificates**
+- View environmental impact (CO2 reduced, cost savings)
+- Earn certificate upon 100% completion
+- Download certificate as PNG
+- Share on social media (Twitter, LinkedIn, Facebook, Instagram Stories)
+- Certificate verification via `/verify` page
+
+#### **5. Key Features**
+- ✅ Individual and corporate user support
+- ✅ Promo code system (flat amount & percentage discounts)
+- ✅ Cart with real-time discount preview
+- ✅ Stripe integration with metadata tracking
+- ✅ Lesson-by-lesson progress tracking
+- ✅ Tool data logging for impact reports
+- ✅ Certificate generation and verification
+- ✅ Mobile-responsive design
+
+---
+
+## 🎓 **Certificate System**
+
+### **Overview**
+
+Professional certificates issued upon module completion with public verification system.
+
+### **Certificate Components**
+
+#### **Visual Design**
+- Gradient border (yellow-orange-pink)
+- Crowd Conscious logo
+- User name (no company name for individuals)
+- Module title
+- Stats: Lessons completed, XP earned, Duration
+- Signature line (Founder)
+- Issue date
+- Verification code
+
+#### **Verification Code Format**
+```
+CC-XXXXXXXX
+```
+- `CC` = Crowd Conscious
+- `XXXXXXXX` = First 8 characters of enrollment ID (UUID)
+
+#### **Downloadable Formats**
+- PNG (via html2canvas)
+- Instagram Story format (1080x1920)
+- Print-friendly
+
+#### **Social Sharing**
+- Twitter (with text + URL)
+- LinkedIn (share URL)
+- Facebook (share URL)
+- Instagram Stories (download image)
+- Copy shareable link
+
+### **Public Verification System**
+
+#### **Verification Page: `/verify`**
+
+**Features:**
+- Public access (no login required)
+- Enter verification code manually
+- Auto-verify via URL: `/verify?code=CC-XXXXXXXX`
+- Display certificate details if valid
+- Clear error messages if invalid
+
+**What's Shown:**
+- ✅ Certificate holder name
+- ✅ Module completed
+- ✅ Issue date
+- ✅ XP earned
+- ✅ Verification code
+- ❌ No sensitive data
+
+**API Endpoint:** `/api/certificates/verify/[code]`
+
+**How It Works:**
+1. Extract code prefix (e.g., `98fb646e` from `CC-98FB646E`)
+2. Query completed `course_enrollments`
+3. Filter by enrollment ID starting with prefix
+4. Return certificate data if match found
+
+**Security:**
+- Read-only (can't modify certificates)
+- Only shows public certificate info
+- No PII exposed
+
+### **Database Schema**
+
+**Certificates Data:**
+- Stored in `course_enrollments` table
+- `completed = true` indicates certificate earned
+- `completion_date` = issue date
+- `xp_earned` = total XP
+- `certificate_url` = (optional) PDF URL
+
+**API Endpoints:**
+- `GET /api/certificates/latest` - Fetch user's latest certificate
+- `GET /api/certificates/my-certificates` - Fetch all user certificates
+- `GET /api/certificates/verify/[code]` - Verify certificate by code
+
+---
+
+## 🎉 **Recent Platform Improvements (Nov 7, 2025)**
+
+### **🐛 Critical Bugs Fixed**
+
+#### **1. Dashboard Data Loading**
+- **Problem:** Dashboard showing 0% progress, no courses, no certificates
+- **Root Cause:** RLS policy on `marketplace_modules` blocking JOIN with `course_enrollments`
+- **Fix:** Added `authenticated_users_can_view_modules` policy allowing all authenticated users to SELECT modules
+- **Status:** ✅ FIXED
+
+#### **2. Lesson Progress Not Saving**
+- **Problem:** Completing lessons didn't update progress (stuck at 0%)
+- **Root Causes:**
+  - API using outdated column names (`employee_id`, `course_id` instead of `user_id`, `module_id`)
+  - `lesson_responses` schema mismatch (using text IDs instead of UUIDs)
+  - Progress API fetching ALL `lesson_responses` instead of only completed ones
+  - XP not being saved to `course_enrollments`
+- **Fixes:**
+  - Migrated `lesson_responses` schema to use UUIDs and `enrollment_id`
+  - Updated all APIs to use correct column names
+  - Added `.eq('completed', true)` filter to progress API
+  - Added `xp_earned` update to `course_enrollments`
+  - Created `FIX-MISSING-XP.sql` to repair existing data
+- **Status:** ✅ FIXED
+
+#### **3. Lesson Completion RLS Error**
+- **Problem:** `42501 RLS error` when trying to mark lessons complete
+- **Root Cause:** No RLS policies for `lesson_responses` table
+- **Fix:** Created comprehensive RLS policies allowing authenticated users to manage their own lesson responses
+- **Status:** ✅ FIXED
+
+#### **4. Tool Data Not Logging**
+- **Problem:** Calculator and tool responses not saved to database
+- **Root Cause:** APIs using outdated schema (`employee_id`, `course_id`)
+- **Fix:** Updated `/api/corporate/progress/save-activity` and `/api/corporate/progress/upload-evidence` to use `enrollment_id` and `lesson_id`
+- **Status:** ✅ FIXED
+
+#### **5. Certificate Data Loading**
+- **Problem:** Certificates showing "Cargando..." and company name for individual users
+- **Root Cause:** API querying old `certifications` table and requiring `corporate_account_id`
+- **Fix:** 
+  - Changed to query `course_enrollments` where `completed = true`
+  - Made `companyName` optional (only for corporate users)
+  - Removed company name from certificate display
+- **Status:** ✅ FIXED
+
+#### **6. Certificate Verification Failing**
+- **Problem:** Verification returning 500 error
+- **Root Cause:** Trying to use `ILIKE` pattern matching on UUID field (not supported)
+- **Fix:** Fetch all completed enrollments and filter in JavaScript using `.startsWith()`
+- **Status:** ✅ FIXED
+
+#### **7. Stripe Discount Not Applied**
+- **Problem:** Checkout page showed discount, but Stripe checkout didn't
+- **Root Causes:**
+  - `price_snapshot` and `discounted_price` returned as strings from DB
+  - Using `||` operator which treats `0` as falsy
+- **Fix:** 
+  - Explicit `Number()` conversion in cart and checkout APIs
+  - Changed to check for `null`/`undefined` explicitly
+  - Ensured `cartMetadata` sends `finalPrice` to webhook
+- **Status:** ✅ FIXED
+
+#### **8. Cart UI Not Updating**
+- **Problem:** Adding items to cart didn't update floating cart button
+- **Root Cause:** No inter-component communication
+- **Fix:** Implemented global `cartUpdated` event system
+- **Status:** ✅ FIXED
+
+#### **9. Next.js 15 Build Errors**
+- **Problems:**
+  - `/verify` page: `useSearchParams()` without Suspense
+  - `/admin/email-templates`: Static rendering with cookies
+- **Fixes:**
+  - Wrapped `useSearchParams()` in Suspense boundary
+  - Added `export const dynamic = 'force-dynamic'` to admin pages
+- **Status:** ✅ FIXED
+
+### **🎨 Portal Redesign**
+
+#### **Employee Portal → Portal de Aprendizaje**
+- **Changed:** Portal title from company name to "Concientizaciones"
+- **Changed:** Subtitle from "Portal de Empleado" to "Portal de Aprendizaje"
+- **Changed:** Made corporate account info conditional (only for corporate users)
+- **Changed:** Removed restriction - now accessible to ALL authenticated users
+- **Why:** More inclusive for individual learners, not just corporate employees
+
+#### **Landing Page (`/concientizaciones`)**
+- **Redesigned:** To welcome individuals, teams, and corporations
+- **Emphasized:** $360 per person pricing (not $18,000)
+- **Added:** Clear value propositions for each user type
+- **Status:** ✅ COMPLETE
+
+### **📊 Database Schema Updates**
+
+#### **New Columns Added:**
+- `course_enrollments.progress_percentage` (replaces `completion_percentage`)
+- `course_enrollments.completed` (boolean)
+- `course_enrollments.completion_date`
+- `course_enrollments.certificate_url`
+- `course_enrollments.purchased_at`
+- `course_enrollments.purchase_price_snapshot`
+- `lesson_responses.enrollment_id` (FK to `course_enrollments`)
+- `lesson_responses.completed` (boolean)
+- `lesson_responses.quiz_score`
+- `cart_items.promo_code_id` (FK to `promo_codes`)
+- `cart_items.discounted_price`
+
+#### **Schema Migrations:**
+- Converted `lesson_responses.module_id` from text to UUID
+- Converted `lesson_responses.lesson_id` from text to UUID
+- Made `course_enrollments.corporate_account_id` nullable
+- Removed obsolete columns from `lesson_responses`
+
+#### **New RLS Policies:**
+- `authenticated_users_can_view_modules` on `marketplace_modules`
+- `authenticated_users_select_own_responses` on `lesson_responses`
+- `authenticated_users_insert_own_responses` on `lesson_responses`
+- `authenticated_users_update_own_responses` on `lesson_responses`
+- `authenticated_users_delete_own_responses` on `lesson_responses`
+
+### **🔧 API Improvements**
+
+#### **Updated APIs:**
+- `/api/corporate/progress/complete-lesson` - Lesson completion tracking
+- `/api/corporate/progress/module/[moduleId]` - Progress loading
+- `/api/corporate/progress/save-activity` - Tool data logging
+- `/api/corporate/progress/upload-evidence` - Evidence uploads
+- `/api/cart/route` - Cart with promo codes
+- `/api/cart/apply-promo` - Promo code application
+- `/api/cart/checkout` - Stripe checkout with discounts
+- `/api/webhooks/stripe` - Enrollment creation
+- `/api/certificates/latest` - Latest certificate
+- `/api/certificates/my-certificates` - All user certificates
+- `/api/employee/impact` - Real impact data from tools
+
+#### **New APIs:**
+- `/api/certificates/verify/[code]` - Public certificate verification
+- `/api/debug/enrollments` - Debug enrollment issues
+
+### **📁 New Documentation Files**
+
+- `FIX-MARKETPLACE-RLS.sql` - RLS fix for marketplace modules
+- `FIX-LESSON-RESPONSES-RLS.sql` - RLS policies for lesson responses
+- `FIX-MISSING-XP.sql` - Repair XP data in enrollments
+- `MIGRATE-TO-NEW-SCHEMA.sql` - Lesson responses schema migration
+- `ENRICH-MODULE-1-LESSON-1.sql` - Rich content for Module 1, Lesson 1
+- `ENRICH-MODULE-1-LESSONS-2-5.sql` - Rich content for lessons 2-5
+- `COMPLETE-FIX-SUMMARY.md` - Summary of all fixes
+- `Course-architecture-structure.md` - Learning design philosophy
+
+### **✅ Production Readiness Checklist**
+
+| Feature | Status |
+|---------|--------|
+| User registration & auth | ✅ Working |
+| Module marketplace | ✅ Working |
+| Cart & checkout | ✅ Working |
+| Promo codes | ✅ Working |
+| Stripe integration | ✅ Working |
+| Enrollment creation | ✅ Working |
+| Lesson loading | ✅ Working |
+| Interactive tools | ✅ Working |
+| Progress tracking | ✅ Working |
+| Lesson completion | ✅ Working |
+| XP earning | ✅ Working |
+| Certificate generation | ✅ Working |
+| Certificate verification | ✅ Working |
+| Impact tracking | ✅ Working |
+| Dashboard stats | ✅ Working |
+| Mobile responsive | ✅ Working |
+| RLS policies | ✅ Working |
+| Error handling | ✅ Working |
+| Build & deployment | ✅ Working |
 
 ---
 
