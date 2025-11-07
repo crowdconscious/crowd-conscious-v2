@@ -103,13 +103,18 @@ export async function POST(req: NextRequest) {
     })
 
     try {
+      // 🎯 MINIMAL REQUIRED FIELDS - lesson can be completed without responses!
       const responseData: any = {
         enrollment_id: enrollment.id,
         lesson_id: lessonId,
-        module_id: moduleId,
         completed: true,
         completed_at: new Date().toISOString(),
         time_spent_minutes: timeSpent || 0
+      }
+      
+      // Only add module_id if it's a valid UUID
+      if (moduleId && moduleId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+        responseData.module_id = moduleId
       }
 
       // Store ALL activity data for impact reports
@@ -167,8 +172,12 @@ export async function POST(req: NextRequest) {
         responseData.evidence_urls = responses.evidence || responses.uploadedFiles || []
       }
 
-      console.log('💾 Upserting lesson response with data:', Object.keys(responseData))
-      console.log('💾 Full response data:', JSON.stringify(responseData, null, 2))
+      console.log('💾 About to upsert lesson response')
+      console.log('💾 Keys:', Object.keys(responseData))
+      console.log('💾 enrollment_id:', responseData.enrollment_id)
+      console.log('💾 lesson_id:', responseData.lesson_id)
+      console.log('💾 completed:', responseData.completed)
+      console.log('💾 module_id:', responseData.module_id)
 
       const { data: upsertedData, error: responseError } = await supabase
         .from('lesson_responses')
@@ -178,16 +187,34 @@ export async function POST(req: NextRequest) {
         .select()
 
       if (responseError) {
-        console.error('❌ CRITICAL: Error storing lesson responses:', responseError)
-        console.error('❌ Response data that failed:', responseData)
-        // 🔥 THROW ERROR instead of silently continuing
+        console.error('❌ CRITICAL ERROR storing lesson responses!')
+        console.error('❌ Error code:', responseError.code)
+        console.error('❌ Error message:', responseError.message)
+        console.error('❌ Error details:', responseError.details)
+        console.error('❌ Error hint:', responseError.hint)
+        console.error('❌ Data that failed:', {
+          enrollment_id: responseData.enrollment_id,
+          lesson_id: responseData.lesson_id,
+          module_id: responseData.module_id,
+          completed: responseData.completed
+        })
+        
+        // 🔥 Return detailed error to frontend
         return NextResponse.json({ 
           error: 'Failed to save lesson completion',
-          details: responseError.message,
-          hint: responseError.hint
+          code: responseError.code,
+          message: responseError.message,
+          details: responseError.details,
+          hint: responseError.hint,
+          debugData: {
+            enrollment_id: responseData.enrollment_id,
+            lesson_id: responseData.lesson_id,
+            hasModuleId: !!responseData.module_id
+          }
         }, { status: 500 })
       } else {
-        console.log('✅ Lesson responses stored successfully:', upsertedData)
+        console.log('✅ Lesson responses stored successfully!')
+        console.log('✅ Inserted/Updated rows:', upsertedData)
       }
     } catch (responseStoreError: any) {
       console.error('❌ CRITICAL: Exception storing responses:', responseStoreError)
