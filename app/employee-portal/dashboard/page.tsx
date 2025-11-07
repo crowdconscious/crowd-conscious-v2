@@ -34,17 +34,26 @@ export default async function EmployeeDashboard() {
     .eq('user_id', user.id)
     .order('purchased_at', { ascending: false })
 
-  console.log('📊 Employee Dashboard - Enrollments:', {
-    count: enrollments?.length || 0,
-    enrollments: enrollments?.map(e => ({
-      id: e.id,
-      module_title: e.module?.title,
-      progress: e.progress_percentage,
-      completed: e.completed,
-      xp: e.xp_earned
-    })),
-    error: enrollmentError
+  // ✅ CRITICAL DEBUGGING
+  console.log('🔍 DASHBOARD DEBUG:', {
+    userId: user.id,
+    userEmail: user.email,
+    enrollmentCount: enrollments?.length || 0,
+    hasError: !!enrollmentError,
+    error: enrollmentError,
+    rawEnrollments: JSON.stringify(enrollments, null, 2)
   })
+
+  // ✅ If error, log it prominently
+  if (enrollmentError) {
+    console.error('❌ ENROLLMENT FETCH ERROR:', enrollmentError)
+  }
+
+  // ✅ If no enrollments, check why
+  if (!enrollments || enrollments.length === 0) {
+    console.warn('⚠️ NO ENROLLMENTS FOUND FOR USER:', user.id)
+    console.warn('⚠️ Checking if user has purchased anything...')
+  }
 
   const totalModules = enrollments?.length || 0
   const completedModules = enrollments?.filter(e => e.completed).length || 0
@@ -325,10 +334,32 @@ export default async function EmployeeDashboard() {
             })}
           </div>
         ) : (
-          <div className="text-center py-8 sm:py-12 text-slate-600">
+          <div className="text-center py-8 sm:py-12">
             <BookOpen className="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-slate-400 mb-4" />
-            <p className="text-sm sm:text-base">No tienes módulos asignados aún.</p>
-            <p className="text-xs sm:text-sm">Contacta a tu administrador.</p>
+            <p className="text-sm sm:text-base text-slate-600 font-medium mb-2">
+              No tienes módulos inscritos aún
+            </p>
+            <p className="text-xs sm:text-sm text-slate-500 mb-4">
+              Explora nuestro catálogo y comienza tu aprendizaje
+            </p>
+            <Link
+              href="/marketplace"
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-teal-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:scale-105 transition-transform"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+              Explorar Módulos
+            </Link>
+            {enrollmentError && (
+              <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-left">
+                <p className="text-sm font-medium text-red-800">Error al cargar módulos:</p>
+                <pre className="text-xs text-red-600 mt-2 overflow-auto">{JSON.stringify(enrollmentError, null, 2)}</pre>
+                <p className="text-xs text-slate-600 mt-2">
+                  👉 Visita <a href="/api/debug/enrollments" className="underline text-teal-600">/api/debug/enrollments</a> para más información
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>
