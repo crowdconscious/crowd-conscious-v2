@@ -85,13 +85,13 @@ SET
   ],
   
   updated_at = NOW()
-WHERE lesson_number = 1
-AND module_id IN (
+WHERE module_id = (
   SELECT id FROM marketplace_modules 
   WHERE core_value = 'safe_cities' 
   AND status = 'published'
   LIMIT 1
-);
+)
+AND lesson_order = 1;
 
 -- ============================================
 -- LESSON 3.2: "El Impacto del Diseño"
@@ -167,13 +167,13 @@ SET
   ],
   
   updated_at = NOW()
-WHERE lesson_number = 2
-AND module_id IN (
+WHERE module_id = (
   SELECT id FROM marketplace_modules 
   WHERE core_value = 'safe_cities' 
   AND status = 'published'
   LIMIT 1
-);
+)
+AND lesson_order = 2;
 
 -- ============================================
 -- LESSON 3.3: "La Vida en las Calles"
@@ -252,13 +252,13 @@ SET
   ],
   
   updated_at = NOW()
-WHERE lesson_number = 3
-AND module_id IN (
+WHERE module_id = (
   SELECT id FROM marketplace_modules 
   WHERE core_value = 'safe_cities' 
   AND status = 'published'
   LIMIT 1
-);
+)
+AND lesson_order = 3;
 
 -- ============================================
 -- LESSON 3.4: "Movilidad para Todos"
@@ -336,13 +336,13 @@ SET
   ],
   
   updated_at = NOW()
-WHERE lesson_number = 4
-AND module_id IN (
+WHERE module_id = (
   SELECT id FROM marketplace_modules 
   WHERE core_value = 'safe_cities' 
   AND status = 'published'
   LIMIT 1
-);
+)
+AND lesson_order = 4;
 
 -- ============================================
 -- LESSON 3.5: "Midiendo Ciudades Más Seguras"
@@ -436,19 +436,19 @@ SET
   ],
   
   updated_at = NOW()
-WHERE lesson_number = 5
-AND module_id IN (
+WHERE module_id = (
   SELECT id FROM marketplace_modules 
   WHERE core_value = 'safe_cities' 
   AND status = 'published'
   LIMIT 1
-);
+)
+AND lesson_order = 5;
 
 -- ============================================
 -- Verification: Check that all 5 lessons were updated
 -- ============================================
 SELECT 
-    ml.lesson_number,
+    ml.lesson_order,
     ml.title,
     CASE 
         WHEN ml.story_content IS NOT NULL THEN '✅'
@@ -467,7 +467,7 @@ FROM module_lessons ml
 JOIN marketplace_modules mm ON ml.module_id = mm.id
 WHERE mm.core_value = 'safe_cities'
   AND mm.status = 'published'
-ORDER BY ml.lesson_number;
+ORDER BY ml.lesson_order;
 
 -- ✅ Success message
 SELECT '🎉 Module 3 (Ciudades Seguras) enrichment complete!' AS status,
