@@ -1027,7 +1027,7 @@ CREATE INDEX IF NOT EXISTS idx_enrollments_status ON course_enrollments(status);
    - **For individual modules:** Set `course_id = NULL`, `module_id = module UUID`
    - **For multi-module courses:** Set `course_id = course UUID`, `module_id = current module UUID`
 
-4. **UNIQUE constraint is on `(user_id, course_id)`** 
+4. **UNIQUE constraint is on `(user_id, course_id)`**
    - PostgreSQL treats NULL != NULL, so multiple enrollments with NULL course_id are allowed
    - This means the same user CAN be enrolled in multiple modules (different module_ids, all course_id = NULL)
 

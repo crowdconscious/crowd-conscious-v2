@@ -105,13 +105,31 @@ export async function GET(
       },
       
       // Activity section - transform activity_config to match frontend expectations
-      activity: lesson.activity_config ? {
-        ...lesson.activity_config,
-        // Map 'steps' to 'instructions' for frontend compatibility
-        instructions: lesson.activity_config.steps || lesson.activity_config.instructions || [],
-        // Ensure reflectionPrompts exists
-        reflectionPrompts: lesson.activity_config.reflection_prompts || lesson.activity_config.reflectionPrompts || []
-      } : {
+      activity: lesson.activity_config ? (() => {
+        const config = lesson.activity_config
+        
+        // Handle instructions: can be string (Module 2) or array (Module 3 as 'steps')
+        let instructions = []
+        if (config.steps && Array.isArray(config.steps)) {
+          // Module 3 format: 'steps' array
+          instructions = config.steps
+        } else if (config.instructions) {
+          // Module 2 format: 'instructions' as string or array
+          if (typeof config.instructions === 'string') {
+            // Convert string to array with single element
+            instructions = [config.instructions]
+          } else if (Array.isArray(config.instructions)) {
+            instructions = config.instructions
+          }
+        }
+        
+        return {
+          ...config,
+          instructions,
+          // Ensure reflectionPrompts exists and is array
+          reflectionPrompts: config.reflection_prompts || config.reflectionPrompts || []
+        }
+      })() : {
         title: 'Actividad Práctica',
         type: lesson.activity_type || 'reflection',
         description: 'Completa esta actividad para aplicar lo aprendido',
