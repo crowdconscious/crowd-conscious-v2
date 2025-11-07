@@ -111,19 +111,43 @@ export default function ModuleOverviewPage({ params }: { params: Promise<{ modul
 
   const loadProgress = async (modId: string) => {
     try {
+      console.log('📊 Loading progress for module:', modId)
+      
       // Fetch user's progress for this module
       const response = await fetch(`/api/corporate/progress/module/${modId}`)
       const data = await response.json()
       
+      console.log('✅ Progress API response:', data)
+      
       if (data.completedLessons) {
         setCompletedLessons(data.completedLessons)
-        const progressData = getModuleProgress(data.completedLessons)
-        setProgress(progressData)
+        
+        // ✅ FIX: Use actual progress from database, not local calculation!
+        setProgress({
+          percentage: data.completionPercentage || 0,  // From database
+          completedCount: data.completedLessons.length,
+          totalCount: module?.lessons?.length || 5,
+          xpEarned: data.xpEarned || 0  // From database
+        })
+        
+        console.log('📈 Progress updated:', {
+          percentage: data.completionPercentage,
+          completed: data.completedLessons.length,
+          xpEarned: data.xpEarned
+        })
+      } else {
+        // No progress yet
+        setProgress({
+          percentage: 0,
+          completedCount: 0,
+          totalCount: module?.lessons?.length || 5,
+          xpEarned: 0
+        })
       }
       
       setLoading(false)
     } catch (error) {
-      console.error('Error loading progress:', error)
+      console.error('❌ Error loading progress:', error)
       setLoading(false)
     }
   }
