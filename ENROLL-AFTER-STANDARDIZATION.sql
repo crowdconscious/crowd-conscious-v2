@@ -10,8 +10,8 @@
 INSERT INTO public.course_enrollments (
     id,
     user_id,
-    course_id,          -- ⚠️ CRITICAL: Set BOTH course_id and module_id
-    module_id,          -- ⚠️ to the SAME UUID for single-module courses
+    course_id,          -- ⚠️ NULL for individual modules (only set for multi-module courses)
+    module_id,          -- ⚠️ This references marketplace_modules
     purchase_type,
     purchased_at,
     status,
@@ -33,8 +33,8 @@ INSERT INTO public.course_enrollments (
 SELECT
     gen_random_uuid(),
     p.id,
-    mm.id,              -- course_id
-    mm.id,              -- module_id (same as course_id)
+    NULL,               -- course_id = NULL (not a multi-module course)
+    mm.id,              -- module_id = the individual module UUID
     'individual',
     NOW(),
     'not_started',
@@ -61,11 +61,11 @@ WHERE
     AND mm.title = 'Gestión Sostenible del Agua'  -- Use the NEW standardized name
     AND mm.core_value = 'clean_water'
     AND mm.status = 'published'
-    -- Prevent duplicates
+    -- Prevent duplicates (check module_id since course_id is NULL)
     AND NOT EXISTS (
         SELECT 1 FROM public.course_enrollments ce
         WHERE ce.user_id = p.id
-        AND ce.course_id = mm.id
+        AND ce.module_id = mm.id
     )
 RETURNING 
     id AS enrollment_id,
@@ -87,7 +87,7 @@ INSERT INTO public.course_enrollments (
     modules_completed, badges_earned, assigned_at, created_at, updated_at, last_accessed_at
 )
 SELECT
-    gen_random_uuid(), p.id, mm.id, mm.id, 'individual', NOW(),
+    gen_random_uuid(), p.id, NULL, mm.id, 'individual', NOW(),
     'not_started', 0, 0, false, false, 0, 0, 0, 0, 0,
     ARRAY[]::text[], NOW(), NOW(), NOW(), NOW()
 FROM profiles p, marketplace_modules mm
@@ -96,9 +96,9 @@ AND mm.title = 'Estrategias Avanzadas de Calidad del Aire'
 AND mm.status = 'published'
 AND NOT EXISTS (
     SELECT 1 FROM course_enrollments ce
-    WHERE ce.user_id = p.id AND ce.course_id = mm.id
+    WHERE ce.user_id = p.id AND ce.module_id = mm.id
 )
-RETURNING id, (SELECT title FROM marketplace_modules WHERE id = course_id) as module_title;
+RETURNING id, (SELECT title FROM marketplace_modules WHERE id = module_id) as module_title;
 
 -- Ciudades Seguras y Espacios Inclusivos
 INSERT INTO public.course_enrollments (
@@ -108,7 +108,7 @@ INSERT INTO public.course_enrollments (
     modules_completed, badges_earned, assigned_at, created_at, updated_at, last_accessed_at
 )
 SELECT
-    gen_random_uuid(), p.id, mm.id, mm.id, 'individual', NOW(),
+    gen_random_uuid(), p.id, NULL, mm.id, 'individual', NOW(),
     'not_started', 0, 0, false, false, 0, 0, 0, 0, 0,
     ARRAY[]::text[], NOW(), NOW(), NOW(), NOW()
 FROM profiles p, marketplace_modules mm
@@ -117,9 +117,9 @@ AND mm.title = 'Ciudades Seguras y Espacios Inclusivos'
 AND mm.status = 'published'
 AND NOT EXISTS (
     SELECT 1 FROM course_enrollments ce
-    WHERE ce.user_id = p.id AND ce.course_id = mm.id
+    WHERE ce.user_id = p.id AND ce.module_id = mm.id
 )
-RETURNING id, (SELECT title FROM marketplace_modules WHERE id = course_id) as module_title;
+RETURNING id, (SELECT title FROM marketplace_modules WHERE id = module_id) as module_title;
 
 -- Economía Circular: Cero Residuos
 INSERT INTO public.course_enrollments (
@@ -129,7 +129,7 @@ INSERT INTO public.course_enrollments (
     modules_completed, badges_earned, assigned_at, created_at, updated_at, last_accessed_at
 )
 SELECT
-    gen_random_uuid(), p.id, mm.id, mm.id, 'individual', NOW(),
+    gen_random_uuid(), p.id, NULL, mm.id, 'individual', NOW(),
     'not_started', 0, 0, false, false, 0, 0, 0, 0, 0,
     ARRAY[]::text[], NOW(), NOW(), NOW(), NOW()
 FROM profiles p, marketplace_modules mm
@@ -138,9 +138,9 @@ AND mm.title = 'Economía Circular: Cero Residuos'
 AND mm.status = 'published'
 AND NOT EXISTS (
     SELECT 1 FROM course_enrollments ce
-    WHERE ce.user_id = p.id AND ce.course_id = mm.id
+    WHERE ce.user_id = p.id AND ce.module_id = mm.id
 )
-RETURNING id, (SELECT title FROM marketplace_modules WHERE id = course_id) as module_title;
+RETURNING id, (SELECT title FROM marketplace_modules WHERE id = module_id) as module_title;
 
 -- Comercio Justo y Cadenas de Valor
 INSERT INTO public.course_enrollments (
@@ -150,7 +150,7 @@ INSERT INTO public.course_enrollments (
     modules_completed, badges_earned, assigned_at, created_at, updated_at, last_accessed_at
 )
 SELECT
-    gen_random_uuid(), p.id, mm.id, mm.id, 'individual', NOW(),
+    gen_random_uuid(), p.id, NULL, mm.id, 'individual', NOW(),
     'not_started', 0, 0, false, false, 0, 0, 0, 0, 0,
     ARRAY[]::text[], NOW(), NOW(), NOW(), NOW()
 FROM profiles p, marketplace_modules mm
@@ -159,9 +159,9 @@ AND mm.title = 'Comercio Justo y Cadenas de Valor'
 AND mm.status = 'published'
 AND NOT EXISTS (
     SELECT 1 FROM course_enrollments ce
-    WHERE ce.user_id = p.id AND ce.course_id = mm.id
+    WHERE ce.user_id = p.id AND ce.module_id = mm.id
 )
-RETURNING id, (SELECT title FROM marketplace_modules WHERE id = course_id) as module_title;
+RETURNING id, (SELECT title FROM marketplace_modules WHERE id = module_id) as module_title;
 
 -- ============================================
 -- Verify your enrollments
