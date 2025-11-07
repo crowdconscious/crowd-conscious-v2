@@ -72,7 +72,7 @@ UPDATE marketplace_modules
 SET 
     title = 'Economía Circular: Cero Residuos',
     slug = 'economia-circular-cero-residuos',
-    description = 'Transforma tu modelo de negocio con principios de economía circular. De basura a recurso: aprende las 5 R\'s y crea valor desde los residuos.',
+    description = 'Transforma tu modelo de negocio con principios de economía circular. De basura a recurso: aprende las 5 R''s y crea valor desde los residuos.',
     updated_at = NOW()
 WHERE core_value = 'zero_waste'
 AND id IN (
