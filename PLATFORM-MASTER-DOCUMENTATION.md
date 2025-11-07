@@ -860,16 +860,22 @@ CREATE INDEX IF NOT EXISTS idx_marketplace_modules_featured ON public.marketplac
 CREATE INDEX IF NOT EXISTS idx_marketplace_modules_creator_community ON public.marketplace_modules(creator_community_id);
 ```
 
-**Module Name Standards:**
+**Standardized Module Names (Updated Nov 7, 2025):**
 
-| Core Value           | Expected Database Title                        | Frontend Display | Status    |
-| -------------------- | ---------------------------------------------- | ---------------- | --------- |
-| `clean_air`          | "Aire Limpio: El Despertar Corporativo"        | Should match DB  | ✅ Check  |
-| `clean_water`        | "El Pozo se Seca: Agua Limpia"                 | Should match DB  | ✅ Check  |
-| `safe_cities`        | "Las Calles Que Compartimos: Ciudades Seguras" | Should match DB  | ⚠️ Verify |
-| `zero_waste`         | "De Basura a Recurso: Cero Residuos"           | Should match DB  | ⚠️ Verify |
-| `fair_trade`         | "El Comercio Que Sostiene: Comercio Justo"     | Should match DB  | ⚠️ Verify |
-| `impact_integration` | "La Celebración: Integración de Impacto"       | Should match DB  | ⚠️ Verify |
+| Core Value           | Official Title (Database = Frontend)         | Slug                                  | Status       |
+| -------------------- | --------------------------------------------- | ------------------------------------- | ------------ |
+| `clean_air`          | "Estrategias Avanzadas de Calidad del Aire"   | `estrategias-avanzadas-calidad-aire`  | ✅ Live      |
+| `clean_water`        | "Gestión Sostenible del Agua"                 | `gestion-sostenible-agua`             | ✅ Live      |
+| `safe_cities`        | "Ciudades Seguras y Espacios Inclusivos"      | `ciudades-seguras-espacios-inclusivos`| ✅ Live      |
+| `zero_waste`         | "Economía Circular: Cero Residuos"            | `economia-circular-cero-residuos`     | ✅ Live      |
+| `fair_trade`         | "Comercio Justo y Cadenas de Valor"           | `comercio-justo-cadenas-valor`        | ✅ Live      |
+| `impact_integration` | "Integración de Impacto y Medición"           | `integracion-impacto-medicion`        | ⏳ Pending   |
+
+**⚠️ CRITICAL: All duplicates removed as of Nov 7, 2025**
+- Previously had 11 modules (4x clean_air, 2x clean_water, 2x zero_waste)
+- Now standardized to **1 module per core_value**
+- Kept modules WITH enriched lesson content
+- Deleted timestamped duplicates (e.g., `-1762180427` suffixes)
 
 **⚠️ TROUBLESHOOTING: If modules don't appear after purchase:**
 
@@ -929,21 +935,21 @@ CREATE TABLE IF NOT EXISTS course_enrollments (
   -- USER & ACCOUNT
   user_id UUID NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   -- ⚠️ NOTE: user_id is NULLABLE!
-  
+
   corporate_account_id UUID NULL REFERENCES corporate_accounts(id) ON DELETE CASCADE,
   -- Also nullable
-  
+
   assigned_by UUID NULL,
   -- Who assigned this course
 
   -- COURSE/MODULE REFERENCES
   course_id UUID NULL,
   -- ⚠️ CRITICAL: This is the PRIMARY course reference!
-  
+
   module_id UUID NULL,
   -- ⚠️ IMPORTANT: module_id is UUID (NOT TEXT like I thought!)
   -- Both course_id AND module_id exist as separate fields!
-  
+
   current_module_id UUID NULL,
   -- For tracking progress through multi-module courses
 
@@ -956,16 +962,16 @@ CREATE TABLE IF NOT EXISTS course_enrollments (
   -- PROGRESS TRACKING
   status TEXT DEFAULT 'not_started',
   -- 'not_started', 'in_progress', 'completed'
-  
+
   completion_percentage INTEGER DEFAULT 0,
   progress_percentage INTEGER DEFAULT 0,
   -- YES, both exist!
-  
+
   completed BOOLEAN DEFAULT false,
   completed_at TIMESTAMP NULL,
   completion_date TIMESTAMP NULL,
   -- YES, both completed_at AND completion_date exist!
-  
+
   modules_completed INTEGER DEFAULT 0,
 
   -- TIMING
@@ -980,10 +986,10 @@ CREATE TABLE IF NOT EXISTS course_enrollments (
   max_score INTEGER DEFAULT 0,
   final_score INTEGER NULL,
   xp_earned INTEGER DEFAULT 0,
-  
+
   -- GAMIFICATION
   badges_earned TEXT[] DEFAULT ARRAY[]::text[],
-  
+
   -- TIME TRACKING
   total_time_spent INTEGER DEFAULT 0,
   -- In minutes
@@ -1017,6 +1023,7 @@ CREATE INDEX IF NOT EXISTS idx_enrollments_status ON course_enrollments(status);
 **⚠️ WEBHOOK IMPLICATIONS:**
 
 When Stripe webhook creates enrollments, it MUST set:
+
 - `course_id` (for the unique constraint)
 - Possibly also `module_id` (for JOIN queries)
 - If they're different, enrollment might exist but not show in dashboard!
