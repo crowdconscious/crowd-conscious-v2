@@ -13,9 +13,8 @@ export default function CertificatePage({ params }: { params: Promise<{ moduleId
   const [loading, setLoading] = useState(true)
   const [moduleId, setModuleId] = useState<string>('')
   const [certificate, setCertificate] = useState<any>(null)
+  const [module, setModule] = useState<any>(null)
   const [copied, setCopied] = useState(false)
-
-  const module = cleanAirModule
 
   useEffect(() => {
     params.then((p) => {
@@ -26,8 +25,14 @@ export default function CertificatePage({ params }: { params: Promise<{ moduleId
 
   const loadCertificate = async (modId: string) => {
     try {
-      // For now, fetch the latest certificate for this module
-      // In production, you'd fetch based on moduleId
+      // Fetch the actual module data
+      const moduleResponse = await fetch(`/api/modules/${modId}`)
+      if (moduleResponse.ok) {
+        const moduleData = await moduleResponse.json()
+        setModule(moduleData.module)
+      }
+
+      // Fetch the certificate for this module
       const response = await fetch('/api/certificates/latest')
       if (response.ok) {
         const data = await response.json()
@@ -47,6 +52,29 @@ export default function CertificatePage({ params }: { params: Promise<{ moduleId
       // Dynamically import html2canvas (client-side only)
       const html2canvas = (await import('html2canvas')).default
       
+      // CRITICAL FIX: Temporarily convert gradient text to solid color for export
+      // bg-clip-text with gradients doesn't render in html2canvas
+      const gradientElements = certificateRef.current.querySelectorAll('.bg-clip-text')
+      const originalStyles: Array<{ element: Element; backgroundColor: string; backgroundImage: string; color: string; webkitTextFillColor: string }> = []
+      
+      gradientElements.forEach((el) => {
+        const htmlEl = el as HTMLElement
+        // Save original styles
+        originalStyles.push({
+          element: el,
+          backgroundColor: htmlEl.style.backgroundColor,
+          backgroundImage: htmlEl.style.backgroundImage,
+          color: htmlEl.style.color,
+          webkitTextFillColor: htmlEl.style.webkitTextFillColor
+        })
+        
+        // Replace gradient with solid teal color for export
+        htmlEl.style.backgroundColor = 'transparent'
+        htmlEl.style.backgroundImage = 'none'
+        htmlEl.style.color = '#0d9488' // teal-600
+        htmlEl.style.webkitTextFillColor = '#0d9488'
+      })
+      
       // Wait for all images to load
       const images = certificateRef.current.getElementsByTagName('img')
       await Promise.all(
@@ -55,7 +83,6 @@ export default function CertificatePage({ params }: { params: Promise<{ moduleId
           return new Promise((resolve, reject) => {
             img.onload = resolve
             img.onerror = reject
-            // Force reload if needed
             if (!img.src) {
               reject(new Error('No image src'))
             }
@@ -65,12 +92,21 @@ export default function CertificatePage({ params }: { params: Promise<{ moduleId
       
       // Capture the certificate div as canvas
       const canvas = await html2canvas(certificateRef.current, {
-        scale: 2, // Higher quality
+        scale: 3, // Higher quality
         backgroundColor: '#ffffff',
         logging: false,
         useCORS: true,
-        allowTaint: true, // Allow cross-origin images
-        imageTimeout: 0, // Don't timeout on images
+        allowTaint: true,
+        imageTimeout: 0,
+      })
+      
+      // Restore original gradient styles
+      originalStyles.forEach(({ element, backgroundColor, backgroundImage, color, webkitTextFillColor }) => {
+        const htmlEl = element as HTMLElement
+        htmlEl.style.backgroundColor = backgroundColor
+        htmlEl.style.backgroundImage = backgroundImage
+        htmlEl.style.color = color
+        htmlEl.style.webkitTextFillColor = webkitTextFillColor
       })
 
       // Convert to blob and download
@@ -79,7 +115,7 @@ export default function CertificatePage({ params }: { params: Promise<{ moduleId
           const url = URL.createObjectURL(blob)
           const link = document.createElement('a')
           link.href = url
-          link.download = `certificado-${module.title.toLowerCase().replace(/\s+/g, '-')}.png`
+          link.download = `certificado-${module?.title?.toLowerCase().replace(/\s+/g, '-') || 'modulo'}.png`
           document.body.appendChild(link)
           link.click()
           document.body.removeChild(link)
@@ -94,7 +130,7 @@ export default function CertificatePage({ params }: { params: Promise<{ moduleId
   }
 
   const shareCertificate = async (platform: string) => {
-    const text = `¡Acabo de completar el módulo "${module.title}" en Crowd Conscious! 🎓🌱`
+    const text = `¡Acabo de completar el módulo "${module?.title || 'Módulo'}" en Crowd Conscious! 🎓🌱`
     const url = window.location.origin + `/certificates/${certificate?.verificationCode}`
 
     if (platform === 'instagram') {
@@ -129,6 +165,25 @@ export default function CertificatePage({ params }: { params: Promise<{ moduleId
     try {
       const html2canvas = (await import('html2canvas')).default
       
+      // Fix gradient text for export
+      const gradientElements = certificateRef.current.querySelectorAll('.bg-clip-text')
+      const originalStyles: Array<{ element: Element; backgroundColor: string; backgroundImage: string; color: string; webkitTextFillColor: string }> = []
+      
+      gradientElements.forEach((el) => {
+        const htmlEl = el as HTMLElement
+        originalStyles.push({
+          element: el,
+          backgroundColor: htmlEl.style.backgroundColor,
+          backgroundImage: htmlEl.style.backgroundImage,
+          color: htmlEl.style.color,
+          webkitTextFillColor: htmlEl.style.webkitTextFillColor
+        })
+        htmlEl.style.backgroundColor = 'transparent'
+        htmlEl.style.backgroundImage = 'none'
+        htmlEl.style.color = '#0d9488'
+        htmlEl.style.webkitTextFillColor = '#0d9488'
+      })
+      
       // Wait for all images to load
       const images = certificateRef.current.getElementsByTagName('img')
       await Promise.all(
@@ -154,6 +209,15 @@ export default function CertificatePage({ params }: { params: Promise<{ moduleId
         imageTimeout: 0,
         width: 1080,
         height: 1920
+      })
+      
+      // Restore original gradient styles
+      originalStyles.forEach(({ element, backgroundColor, backgroundImage, color, webkitTextFillColor }) => {
+        const htmlEl = element as HTMLElement
+        htmlEl.style.backgroundColor = backgroundColor
+        htmlEl.style.backgroundImage = backgroundImage
+        htmlEl.style.color = color
+        htmlEl.style.webkitTextFillColor = webkitTextFillColor
       })
 
       canvas.toBlob((blob) => {
@@ -311,14 +375,14 @@ export default function CertificatePage({ params }: { params: Promise<{ moduleId
                 por completar exitosamente el módulo
               </p>
               <h3 className="text-2xl sm:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-purple-600 mb-6">
-                {module.title}
+                {module?.title || certificate?.moduleName || 'Módulo Completado'}
               </h3>
             </div>
 
             {/* Stats */}
             <div className="grid grid-cols-3 gap-4 mb-8 max-w-md mx-auto">
               <div className="text-center p-3 sm:p-4 bg-white rounded-xl shadow-sm">
-                <div className="text-2xl sm:text-3xl font-bold text-teal-600">{module.lessons.length}</div>
+                <div className="text-2xl sm:text-3xl font-bold text-teal-600">{module?.lesson_count || module?.lessons?.length || 5}</div>
                 <div className="text-xs sm:text-sm text-slate-600">Lecciones</div>
               </div>
               <div className="text-center p-3 sm:p-4 bg-white rounded-xl shadow-sm">
@@ -326,7 +390,7 @@ export default function CertificatePage({ params }: { params: Promise<{ moduleId
                 <div className="text-xs sm:text-sm text-slate-600">XP Ganados</div>
               </div>
               <div className="text-center p-3 sm:p-4 bg-white rounded-xl shadow-sm">
-                <div className="text-2xl sm:text-3xl font-bold text-orange-600">{module.duration}</div>
+                <div className="text-2xl sm:text-3xl font-bold text-orange-600">{module?.duration || '45 min'}</div>
                 <div className="text-xs sm:text-sm text-slate-600">Duración</div>
               </div>
             </div>
