@@ -10,42 +10,49 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get all certificates for this user
-    const { data: certificates, error } = await supabase
-      .from('certifications')
-      .select('*')
-      .eq('employee_id', user.id)
-      .eq('certification_type', 'module_completion')
-      .order('issued_at', { ascending: false })
+    // ✅ Get all COMPLETED enrollments (these are the certificates!)
+    const { data: completedEnrollments, error } = await supabase
+      .from('course_enrollments')
+      .select(`
+        *,
+        module:marketplace_modules(
+          id,
+          title,
+          core_value,
+          slug
+        )
+      `)
+      .eq('user_id', user.id)
+      .eq('completed', true)
+      .order('completion_date', { ascending: false })
 
     if (error) {
       console.error('Error fetching certificates:', error)
-      return NextResponse.json({ certificates: [] })
+      return NextResponse.json({ 
+        certificates: [],
+        error: error.message 
+      })
     }
 
+    console.log('📜 Certificates API - Completed enrollments:', {
+      count: completedEnrollments?.length || 0,
+      enrollments: completedEnrollments
+    })
+
     // Map to friendly format
-    const formattedCerts = certificates.map(cert => {
-      // Extract module info from modules_completed array
-      const moduleId = cert.modules_completed?.[0] || 'unknown'
-      let moduleName = 'Módulo Completado'
-      
-      // Map module IDs to names
-      if (moduleId === 'clean_air') {
-        moduleName = 'Aire Limpio para Todos'
-      } else if (moduleId === 'clean_water') {
-        moduleName = 'Agua Limpia y Vida'
-      } else if (moduleId === 'zero_waste') {
-        moduleName = 'Cero Residuos'
-      }
+    const formattedCerts = (completedEnrollments || []).map(enrollment => {
+      const moduleData = enrollment.module
+      const moduleId = moduleData?.id || enrollment.module_id
+      const moduleName = moduleData?.title || 'Módulo Completado'
 
       return {
-        id: cert.id,
-        moduleId,
-        moduleName,
-        verificationCode: cert.verification_code,
-        issuedAt: cert.issued_at,
-        certificateUrl: cert.certificate_url,
-        xpEarned: 750 // Default for now, can be calculated from enrollment data
+        id: enrollment.id,
+        moduleId: moduleId,
+        moduleName: moduleName,
+        verificationCode: `CC-${enrollment.id.slice(0, 8).toUpperCase()}`,
+        issuedAt: enrollment.completion_date || enrollment.purchased_at,
+        certificateUrl: enrollment.certificate_url,
+        xpEarned: enrollment.xp_earned || 250
       }
     })
 
