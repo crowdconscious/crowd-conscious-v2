@@ -80,8 +80,13 @@ export async function GET(
       duration: `${lesson.estimated_minutes} min`,
       xpReward: lesson.xp_reward,
       
-      // Story section - use story_content if available
-      story: lesson.story_content || {
+      // Story section - transform enriched story_content to frontend format
+      story: lesson.story_content ? {
+        introduction: lesson.story_content.opening || lesson.description || '',
+        mainContent: lesson.story_content.dialogue || lesson.key_points || ['Contenido del curso disponible próximamente'],
+        conclusion: lesson.story_content.resolution_preview || 'Completa esta lección para continuar tu aprendizaje',
+        characterInsight: lesson.story_content.cliffhanger || 'Reflexiona sobre cómo aplicar estos conceptos en tu organización'
+      } : {
         introduction: lesson.description || '',
         mainContent: lesson.key_points || ['Contenido del curso disponible próximamente'],
         conclusion: 'Completa esta lección para continuar tu aprendizaje',
