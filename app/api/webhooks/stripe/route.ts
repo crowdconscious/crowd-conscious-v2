@@ -104,18 +104,41 @@ async function handleModulePurchase(session: Stripe.Checkout.Session) {
         // INDIVIDUAL PURCHASE: Enroll just the user
         console.log(`👤 WEBHOOK: Enrolling individual user: ${user_id}`)
 
+        // ⚠️ CRITICAL: For individual modules, set course_id = NULL, module_id = UUID
+        // course_id is FK to 'courses' table (multi-module programs)
+        // module_id is FK to 'marketplace_modules' table (individual modules)
         const enrollmentData = {
           user_id: user_id,
           corporate_account_id: null,
-          module_id: module_id,
+          course_id: null,  // ✅ NULL for individual modules
+          module_id: module_id,  // ✅ UUID of marketplace module
           purchase_type: 'individual',
           purchased_at: new Date().toISOString(),
           purchase_price_snapshot: parseFloat(price),
+          status: 'not_started',
           progress_percentage: 0,
-          completed: false
+          completion_percentage: 0,
+          completed: false,
+          xp_earned: 0,
+          started_at: new Date().toISOString(),
+          last_accessed_at: new Date().toISOString()
         }
 
         console.log('📝 WEBHOOK: Enrollment data to insert:', enrollmentData)
+
+        // Check if already enrolled (since unique constraint is on user_id, course_id which are both NULL-able)
+        const { data: existingEnrollment } = await supabaseClient
+          .from('course_enrollments')
+          .select('id')
+          .eq('user_id', user_id)
+          .eq('module_id', module_id)
+          .is('course_id', null)
+          .single()
+
+        if (existingEnrollment) {
+          console.log(`ℹ️ WEBHOOK: User already enrolled in module ${module_id}, skipping`)
+          continue
+        }
 
         const { data: enrollResult, error: enrollError } = await (supabaseClient as any)
           .from('course_enrollments')
@@ -153,28 +176,48 @@ async function handleModulePurchase(session: Stripe.Checkout.Session) {
         console.log(`👥 Found ${employees?.length || 0} employees to enroll`)
 
         if (employees && employees.length > 0) {
-          const enrollments = employees.map((employee: any) => ({
-            user_id: employee.id, // Using user_id (renamed from employee_id in Phase 2)
-            corporate_account_id: corporate_account_id,
-            module_id: module_id,
-            purchase_type: 'corporate',
-            purchased_at: new Date().toISOString(),
-            purchase_price_snapshot: parseFloat(price),
-            progress_percentage: 0,
-            completed: false
-          }))
+          // Enroll each employee individually with duplicate check
+          for (const employee of employees) {
+            // Check if already enrolled
+            const { data: existingEnrollment } = await supabaseClient
+              .from('course_enrollments')
+              .select('id')
+              .eq('user_id', employee.id)
+              .eq('module_id', module_id)
+              .is('course_id', null)
+              .single()
 
-          const { error: enrollError } = await (supabaseClient as any)
-            .from('course_enrollments')
-            .upsert(enrollments, {
-              onConflict: 'user_id,module_id',
-              ignoreDuplicates: true
-            })
+            if (existingEnrollment) {
+              console.log(`ℹ️ Employee ${employee.id} already enrolled, skipping`)
+              continue
+            }
 
-          if (enrollError) {
-            console.error('❌ Error enrolling employees:', enrollError)
-          } else {
-            console.log(`✅ Enrolled ${employees.length} employees in module ${module_id}`)
+            const enrollmentData = {
+              user_id: employee.id,
+              corporate_account_id: corporate_account_id,
+              course_id: null,  // ✅ NULL for individual modules
+              module_id: module_id,  // ✅ UUID of marketplace module
+              purchase_type: 'corporate',
+              purchased_at: new Date().toISOString(),
+              purchase_price_snapshot: parseFloat(price),
+              status: 'not_started',
+              progress_percentage: 0,
+              completion_percentage: 0,
+              completed: false,
+              xp_earned: 0,
+              started_at: new Date().toISOString(),
+              last_accessed_at: new Date().toISOString()
+            }
+
+            const { error: enrollError } = await (supabaseClient as any)
+              .from('course_enrollments')
+              .insert(enrollmentData)
+
+            if (enrollError) {
+              console.error(`❌ Error enrolling employee ${employee.id}:`, enrollError)
+            } else {
+              console.log(`✅ Enrolled employee ${employee.id} in module ${module_id}`)
+            }
           }
         }
       }
