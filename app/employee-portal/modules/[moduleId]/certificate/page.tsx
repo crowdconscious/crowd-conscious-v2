@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
 import { Download, Share2, Award, CheckCircle, Twitter, Linkedin, Facebook, Copy, ArrowLeft, Instagram } from 'lucide-react'
 import { cleanAirModule } from '@/app/lib/course-content/clean-air-module'
 
@@ -351,12 +350,12 @@ export default function CertificatePage({ params }: { params: Promise<{ moduleId
             {/* Header */}
             <div className="mb-8">
               <div className="flex justify-center mb-6">
-                <div className="relative w-40 h-40 sm:w-48 sm:h-48">
-                  <Image
+                <div className="w-40 h-40 sm:w-48 sm:h-48 flex items-center justify-center">
+                  <img
                     src="/images/logo.png"
                     alt="Crowd Conscious"
-                    fill
-                    className="object-contain"
+                    className="max-w-full max-h-full object-contain"
+                    crossOrigin="anonymous"
                   />
                 </div>
               </div>
