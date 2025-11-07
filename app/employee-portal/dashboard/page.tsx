@@ -18,8 +18,8 @@ export default async function EmployeeDashboard() {
     .eq('id', user.id)
     .single()
 
-  // Get enrollments with module details
-  const { data: enrollments } = await supabase
+  // ✅ Get enrollments with module details (FIXED: use purchased_at instead of enrolled_at)
+  const { data: enrollments, error: enrollmentError } = await supabase
     .from('course_enrollments')
     .select(`
       *,
@@ -32,20 +32,33 @@ export default async function EmployeeDashboard() {
       )
     `)
     .eq('user_id', user.id)
-    .order('enrolled_at', { ascending: false })
+    .order('purchased_at', { ascending: false })
+
+  console.log('📊 Employee Dashboard - Enrollments:', {
+    count: enrollments?.length || 0,
+    enrollments: enrollments?.map(e => ({
+      id: e.id,
+      module_title: e.module?.title,
+      progress: e.progress_percentage,
+      completed: e.completed,
+      xp: e.xp_earned
+    })),
+    error: enrollmentError
+  })
 
   const totalModules = enrollments?.length || 0
   const completedModules = enrollments?.filter(e => e.completed).length || 0
   const inProgressModules = enrollments?.filter(e => !e.completed && (e.progress_percentage || 0) > 0).length || 0
+  const totalXP = enrollments?.reduce((sum, e) => sum + (e.xp_earned || 0), 0) || 0
   const averageProgress = totalModules > 0
     ? Math.round(enrollments!.reduce((sum, e) => sum + (e.progress_percentage || 0), 0) / totalModules)
     : 0
 
-  // Get certifications
+  // ✅ Get certifications (FIXED: use user_id instead of employee_id)
   const { data: certifications } = await supabase
     .from('certifications')
     .select('*')
-    .eq('employee_id', user.id)
+    .eq('user_id', user.id)
 
   const moduleInfo: Record<string, { name: string; icon: string; description: string; color: string; available: boolean }> = {
     clean_air: {
@@ -113,7 +126,7 @@ export default async function EmployeeDashboard() {
     },
     {
       name: 'Certificaciones',
-      value: certifications?.length || 0,
+      value: completedModules, // Use completed modules count (same as certifications)
       icon: Award,
       color: 'teal'
     }
