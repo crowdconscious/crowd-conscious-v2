@@ -22,40 +22,36 @@ export async function POST(request: Request) {
 
     console.log('💾 Saving activity data:', {
       user: user.id,
-      courseId,
       moduleId,
       lessonId,
       activityType
     })
 
-    // Get employee's corporate account
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('corporate_account_id, is_corporate_user')
-      .eq('id', user.id)
+    // ✅ Get enrollment_id for this user and module
+    const { data: enrollment } = await supabase
+      .from('course_enrollments')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('module_id', moduleId)
       .single()
 
-    if (!profile?.is_corporate_user || !profile.corporate_account_id) {
-      return NextResponse.json({ error: 'Not a corporate user' }, { status: 403 })
+    if (!enrollment) {
+      return NextResponse.json({ error: 'Enrollment not found' }, { status: 404 })
     }
 
     // Check if response exists
     const { data: existing } = await supabase
       .from('lesson_responses')
       .select('*')
-      .eq('employee_id', user.id)
-      .eq('course_id', courseId)
-      .eq('module_id', moduleId)
+      .eq('enrollment_id', enrollment.id)
       .eq('lesson_id', lessonId)
       .single()
 
     // Prepare update data based on activity type
     let updateData: any = {
-      employee_id: user.id,
-      corporate_account_id: profile.corporate_account_id,
-      course_id: courseId,
-      module_id: moduleId,
+      enrollment_id: enrollment.id,
       lesson_id: lessonId,
+      module_id: moduleId,
       updated_at: new Date().toISOString()
     }
 
@@ -186,20 +182,29 @@ export async function GET(request: Request) {
     }
 
     const { searchParams } = new URL(request.url)
-    const courseId = searchParams.get('courseId')
     const moduleId = searchParams.get('moduleId')
     const lessonId = searchParams.get('lessonId')
 
-    if (!courseId || !moduleId || !lessonId) {
+    if (!moduleId || !lessonId) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 })
+    }
+
+    // ✅ Get enrollment_id for this user and module
+    const { data: enrollment } = await supabase
+      .from('course_enrollments')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('module_id', moduleId)
+      .single()
+
+    if (!enrollment) {
+      return NextResponse.json({ error: 'Enrollment not found' }, { status: 404 })
     }
 
     const { data, error } = await supabase
       .from('lesson_responses')
       .select('*')
-      .eq('employee_id', user.id)
-      .eq('course_id', courseId)
-      .eq('module_id', moduleId)
+      .eq('enrollment_id', enrollment.id)
       .eq('lesson_id', lessonId)
       .single()
 

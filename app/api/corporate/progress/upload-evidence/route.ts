@@ -91,28 +91,30 @@ export async function POST(request: Request) {
     // Save URLs to lesson_responses
     if (uploadedUrls.length > 0) {
       try {
-        // Get employee's corporate account
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('corporate_account_id')
-          .eq('id', user.id)
+        // ✅ Get enrollment_id for this user and module
+        const { data: enrollment } = await supabase
+          .from('course_enrollments')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('module_id', moduleId)
           .single()
 
-        if (!profile?.corporate_account_id) {
+        if (!enrollment) {
+          // Return uploaded URLs even if enrollment not found
           return NextResponse.json({ 
-            error: 'Not a corporate user',
-            uploadedUrls, // Return URLs anyway
-            errors
-          }, { status: 403 })
+            success: true,
+            uploadedUrls,
+            count: uploadedUrls.length,
+            warning: 'Evidence uploaded but not saved to lesson (enrollment not found)',
+            errors: errors.length > 0 ? errors : undefined
+          })
         }
 
         // Check if lesson response exists
         const { data: existing } = await supabase
           .from('lesson_responses')
           .select('evidence_urls')
-          .eq('employee_id', user.id)
-          .eq('course_id', courseId)
-          .eq('module_id', moduleId)
+          .eq('enrollment_id', enrollment.id)
           .eq('lesson_id', lessonId)
           .single()
 
@@ -125,21 +127,18 @@ export async function POST(request: Request) {
               evidence_urls: allUrls,
               updated_at: new Date().toISOString()
             })
-            .eq('employee_id', user.id)
-            .eq('course_id', courseId)
-            .eq('module_id', moduleId)
+            .eq('enrollment_id', enrollment.id)
             .eq('lesson_id', lessonId)
         } else {
-          // Create new record
+          // Create new record with minimal data + evidence
           await supabase
             .from('lesson_responses')
             .insert({
-              employee_id: user.id,
-              corporate_account_id: profile.corporate_account_id,
-              course_id: courseId,
-              module_id: moduleId,
+              enrollment_id: enrollment.id,
               lesson_id: lessonId,
+              module_id: moduleId,
               evidence_urls: uploadedUrls,
+              completed: false, // Not completed yet, just saving evidence
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString()
             })

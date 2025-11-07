@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get user's profile
+    // ✅ Get user's profile
     const { data: profile } = await supabase
       .from('profiles')
       .select('corporate_account_id')
@@ -21,44 +21,60 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
     }
 
-    // Get user's course enrollments
-    const cleanAirCourseId = 'a1a1a1a1-1111-1111-1111-111111111111'
-    
+    // ✅ Get ALL user's course enrollments (not just one module)
     const { data: enrollments } = await supabase
       .from('course_enrollments')
       .select('*')
-      .eq('employee_id', user.id)
-      .eq('course_id', cleanAirCourseId)
+      .eq('user_id', user.id)
 
     // Calculate personal metrics
     const totalXP = enrollments?.reduce((sum, e) => sum + (e.xp_earned || 0), 0) || 0
-    const modulesCompleted = enrollments?.filter(e => e.completion_percentage === 100).length || 0
+    const modulesCompleted = enrollments?.filter(e => e.completed === true).length || 0
 
-    // Get lesson responses for time calculation
+    // ✅ Get lesson responses for time calculation
+    const enrollmentIds = enrollments?.map(e => e.id) || []
     const { data: responses } = await supabase
       .from('lesson_responses')
-      .select('time_spent')
-      .eq('employee_id', user.id)
-      .eq('course_id', cleanAirCourseId)
+      .select('time_spent_minutes, carbon_data, cost_data')
+      .in('enrollment_id', enrollmentIds)
+      .eq('completed', true)
 
-    const timeSpentMinutes = responses?.reduce((sum, r) => sum + (r.time_spent || 0), 0) || 0
+    const timeSpentMinutes = responses?.reduce((sum, r) => sum + (r.time_spent_minutes || 0), 0) || 0
     const timeSpentHours = Math.round(timeSpentMinutes / 60)
 
-    // Calculate impact metrics (simulated based on XP and activities)
-    // In a real app, these would come from actual calculator data stored in lesson_responses
-    const co2Reduced = Math.floor(totalXP / 10) // 1 kg CO2 per 10 XP
-    const costSavings = Math.floor(totalXP / 5) // $1 saved per 5 XP
+    // ✅ Calculate REAL impact metrics from actual calculator data
+    let co2Reduced = 0
+    let costSavings = 0
 
-    // Get company-wide stats
-    const { data: companyEnrollments } = await supabase
-      .from('course_enrollments')
-      .select('employee_id, xp_earned')
-      .eq('corporate_account_id', profile.corporate_account_id)
-      .eq('course_id', cleanAirCourseId)
+    responses?.forEach(r => {
+      // Sum carbon footprint data
+      if (r.carbon_data) {
+        co2Reduced += r.carbon_data.totalCO2 || r.carbon_data.annualCO2 || 0
+      }
+      // Sum cost savings data
+      if (r.cost_data) {
+        costSavings += r.cost_data.annualSavings || r.cost_data.threeYearSavings || 0
+      }
+    })
 
-    const uniqueEmployees = new Set(companyEnrollments?.map(e => e.employee_id) || [])
-    const companyEmployeeCount = uniqueEmployees.size
-    const companyTotalXP = companyEnrollments?.reduce((sum, e) => sum + (e.xp_earned || 0), 0) || 0
+    // Round to integers
+    co2Reduced = Math.round(co2Reduced)
+    costSavings = Math.round(costSavings)
+
+    // ✅ Get company-wide stats (only if corporate user)
+    let companyEmployeeCount = 0
+    let companyTotalXP = 0
+
+    if (profile.corporate_account_id) {
+      const { data: companyEnrollments } = await supabase
+        .from('course_enrollments')
+        .select('user_id, xp_earned')
+        .eq('corporate_account_id', profile.corporate_account_id)
+
+      const uniqueEmployees = new Set(companyEnrollments?.map(e => e.user_id) || [])
+      companyEmployeeCount = uniqueEmployees.size
+      companyTotalXP = companyEnrollments?.reduce((sum, e) => sum + (e.xp_earned || 0), 0) || 0
+    }
 
     return NextResponse.json({
       totalXP,

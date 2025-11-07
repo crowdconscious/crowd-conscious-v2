@@ -21,47 +21,64 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
     }
 
-    // Get corporate account
-    const { data: corporateAccount } = await supabase
-      .from('corporate_accounts')
-      .select('company_name')
-      .eq('id', profile.corporate_account_id)
-      .single()
-
-    if (!corporateAccount) {
-      return NextResponse.json({ error: 'Corporate account not found' }, { status: 404 })
+    // ✅ Get corporate account (optional for individual users)
+    let companyName = null
+    if (profile.corporate_account_id) {
+      const { data: corporateAccount } = await supabase
+        .from('corporate_accounts')
+        .select('company_name')
+        .eq('id', profile.corporate_account_id)
+        .single()
+      
+      companyName = corporateAccount?.company_name || null
     }
 
-    // Get latest certificate
-    const { data: certificate, error } = await supabase
-      .from('certifications')
-      .select('*')
-      .eq('employee_id', user.id)
-      .order('issued_at', { ascending: false })
+    // Get latest completed module from enrollments
+    const { data: latestEnrollment } = await supabase
+      .from('course_enrollments')
+      .select(`
+        *,
+        module:marketplace_modules(title)
+      `)
+      .eq('user_id', user.id)
+      .eq('completed', true)
+      .order('completion_date', { ascending: false })
       .limit(1)
       .single()
 
-    if (error || !certificate) {
-      console.log('No certificate found, returning default data')
+    if (!latestEnrollment) {
+      console.log('No completed modules found')
       // Return default data if no certificate exists yet
       return NextResponse.json({
         employeeName: profile.full_name,
-        companyName: corporateAccount.company_name,
+        companyName: companyName,
         verificationCode: 'PENDING',
         issuedAt: new Date().toISOString(),
-        xpEarned: 0
+        xpEarned: 0,
+        modulesCompleted: 0
       })
     }
 
+    // Calculate total XP and modules from all completions
+    const { data: allCompletions } = await supabase
+      .from('course_enrollments')
+      .select('xp_earned')
+      .eq('user_id', user.id)
+      .eq('completed', true)
+
+    const totalXP = allCompletions?.reduce((sum, e) => sum + (e.xp_earned || 0), 0) || 0
+    const modulesCompleted = allCompletions?.length || 0
+
     return NextResponse.json({
-      id: certificate.id,
+      id: latestEnrollment.id,
       employeeName: profile.full_name,
-      companyName: corporateAccount.company_name,
-      verificationCode: certificate.verification_code,
-      certificateUrl: certificate.certificate_url,
-      modulesCompleted: certificate.modules_completed,
-      issuedAt: certificate.issued_at,
-      xpEarned: 750 // Default XP for now
+      companyName: companyName,
+      moduleName: latestEnrollment.module?.title || 'Módulo Completado',
+      verificationCode: `CC-${latestEnrollment.id.slice(0, 8).toUpperCase()}`,
+      certificateUrl: latestEnrollment.certificate_url,
+      modulesCompleted: modulesCompleted,
+      issuedAt: latestEnrollment.completion_date || latestEnrollment.purchased_at,
+      xpEarned: totalXP
     })
 
   } catch (error: any) {

@@ -80,11 +80,13 @@ export async function POST(req: NextRequest) {
     const { data: updateData, error: updateError } = await supabase
       .from('course_enrollments')
       .update({
-        progress_percentage: newPercentage,  // FIXED: use correct column name
-        completed: moduleComplete,  // FIXED: use boolean 'completed' field
-        completion_date: moduleComplete ? new Date().toISOString() : null
+        progress_percentage: newPercentage,
+        xp_earned: newXP,  // ✅ FIX: Actually save the XP!
+        completed: moduleComplete,
+        completion_date: moduleComplete ? new Date().toISOString() : null,
+        last_accessed_at: new Date().toISOString()
       })
-      .eq('id', enrollment.id)  // FIXED: update by enrollment ID
+      .eq('id', enrollment.id)
       .select()
 
     if (updateError) {
