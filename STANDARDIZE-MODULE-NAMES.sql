@@ -25,11 +25,55 @@ GROUP BY mm.id, mm.title, mm.slug, mm.core_value
 ORDER BY mm.core_value, lesson_count DESC;
 
 -- ============================================
--- STEP 2: Rename modules WITH lessons to marketplace names
+-- STEP 2: DELETE DUPLICATES FIRST (before renaming!)
 -- ============================================
 
--- Module 1: Aire Limpio (clean_air) 
--- Keep the one with 5 lessons, rename to marketplace name
+-- Delete clean_air duplicates EXCEPT the one with enriched content (id ending in ...8f132)
+-- Keep: 63c08c28-638d-42d9-ba5d-ecfc541957b0 (has 5 lessons)
+DELETE FROM marketplace_modules
+WHERE core_value = 'clean_air'
+AND status = 'published'
+AND id NOT IN (
+    '63c08c28-638d-42d9-ba5d-ecfc541957b0'
+);
+
+-- Delete clean_water duplicates, keep only ONE with lessons
+-- First, find which one has lessons
+WITH clean_water_with_lessons AS (
+    SELECT mm.id
+    FROM marketplace_modules mm
+    JOIN module_lessons ml ON mm.id = ml.module_id
+    WHERE mm.core_value = 'clean_water'
+    GROUP BY mm.id
+    HAVING COUNT(ml.id) > 0
+    ORDER BY COUNT(ml.id) DESC
+    LIMIT 1
+)
+DELETE FROM marketplace_modules
+WHERE core_value = 'clean_water'
+AND status = 'published'
+AND id NOT IN (SELECT id FROM clean_water_with_lessons);
+
+-- Delete zero_waste duplicates, keep only ONE with most lessons
+WITH zero_waste_with_lessons AS (
+    SELECT mm.id
+    FROM marketplace_modules mm
+    LEFT JOIN module_lessons ml ON mm.id = ml.module_id
+    WHERE mm.core_value = 'zero_waste'
+    GROUP BY mm.id
+    ORDER BY COUNT(ml.id) DESC
+    LIMIT 1
+)
+DELETE FROM marketplace_modules
+WHERE core_value = 'zero_waste'
+AND status = 'published'
+AND id NOT IN (SELECT id FROM zero_waste_with_lessons);
+
+-- ============================================
+-- STEP 3: NOW rename the remaining modules (no conflicts!)
+-- ============================================
+
+-- Module 1: Aire Limpio → Estrategias Avanzadas
 UPDATE marketplace_modules
 SET 
     title = 'Estrategias Avanzadas de Calidad del Aire',
@@ -39,8 +83,7 @@ SET
 WHERE id = '63c08c28-638d-42d9-ba5d-ecfc541957b0'
 AND core_value = 'clean_air';
 
--- Module 2: Agua Limpia (clean_water)
--- Rename to marketplace name
+-- Module 2: Agua Limpia → Gestión Sostenible del Agua  
 UPDATE marketplace_modules
 SET 
     title = 'Gestión Sostenible del Agua',
@@ -48,16 +91,9 @@ SET
     description = 'Domina las mejores prácticas de gestión del agua, desde auditorías hídricas hasta sistemas de reciclaje. Aprende a reducir costos y conservar recursos.',
     updated_at = NOW()
 WHERE core_value = 'clean_water'
-AND id IN (
-    SELECT mm.id FROM marketplace_modules mm
-    JOIN module_lessons ml ON mm.id = ml.module_id
-    WHERE mm.core_value = 'clean_water'
-    GROUP BY mm.id
-    HAVING COUNT(ml.id) > 0
-    LIMIT 1
-);
+AND status = 'published';
 
--- Module 3: Ciudades Seguras (safe_cities)
+-- Module 3: Ciudades Seguras (already has correct name)
 UPDATE marketplace_modules
 SET 
     title = 'Ciudades Seguras y Espacios Inclusivos',
@@ -67,7 +103,7 @@ SET
 WHERE core_value = 'safe_cities'
 AND status = 'published';
 
--- Module 4: Cero Residuos (zero_waste)
+-- Module 4: Cero Residuos → Economía Circular
 UPDATE marketplace_modules
 SET 
     title = 'Economía Circular: Cero Residuos',
@@ -75,16 +111,9 @@ SET
     description = 'Transforma tu modelo de negocio con principios de economía circular. De basura a recurso: aprende las 5 R''s y crea valor desde los residuos.',
     updated_at = NOW()
 WHERE core_value = 'zero_waste'
-AND id IN (
-    SELECT mm.id FROM marketplace_modules mm
-    LEFT JOIN module_lessons ml ON mm.id = ml.module_id
-    WHERE mm.core_value = 'zero_waste'
-    GROUP BY mm.id
-    ORDER BY COUNT(ml.id) DESC
-    LIMIT 1
-);
+AND status = 'published';
 
--- Module 5: Comercio Justo (fair_trade)
+-- Module 5: Comercio Justo (already has correct name)
 UPDATE marketplace_modules
 SET 
     title = 'Comercio Justo y Cadenas de Valor',
@@ -92,42 +121,6 @@ SET
     description = 'Construye cadenas de valor éticas y sostenibles. Aprende sobre comercio justo, sourcing local y salarios dignos.',
     updated_at = NOW()
 WHERE core_value = 'fair_trade'
-AND status = 'published';
-
--- ============================================
--- STEP 3: Delete duplicate modules (ones WITHOUT lessons)
--- ============================================
-
--- Delete clean_air duplicates (keep the one we just renamed)
-DELETE FROM marketplace_modules
-WHERE core_value = 'clean_air'
-AND id != '63c08c28-638d-42d9-ba5d-ecfc541957b0'
-AND status = 'published';
-
--- Delete clean_water duplicates (keep the one with lessons)
-DELETE FROM marketplace_modules
-WHERE core_value = 'clean_water'
-AND id NOT IN (
-    SELECT mm.id FROM marketplace_modules mm
-    JOIN module_lessons ml ON mm.id = ml.module_id
-    WHERE mm.core_value = 'clean_water'
-    GROUP BY mm.id
-    HAVING COUNT(ml.id) > 0
-    LIMIT 1
-)
-AND status = 'published';
-
--- Delete zero_waste duplicates (keep the one with most lessons)
-DELETE FROM marketplace_modules
-WHERE core_value = 'zero_waste'
-AND id NOT IN (
-    SELECT mm.id FROM marketplace_modules mm
-    LEFT JOIN module_lessons ml ON mm.id = ml.module_id
-    WHERE mm.core_value = 'zero_waste'
-    GROUP BY mm.id
-    ORDER BY COUNT(ml.id) DESC
-    LIMIT 1
-)
 AND status = 'published';
 
 -- ============================================
