@@ -25,26 +25,29 @@ export default async function EmployeeLayout({
     .eq('id', user.id)
     .single()
 
-  // Check if employee OR admin (admins can take courses too!)
-  if (!profile?.is_corporate_user || (profile?.corporate_role !== 'employee' && profile?.corporate_role !== 'admin')) {
-    redirect('/dashboard')
+  // ✅ REMOVED RESTRICTION: Now accessible to ALL authenticated users
+  // Individual users, employees, and admins can all access learning portal
+
+  // Get corporate account (optional - only for corporate users)
+  let corporateAccount = null
+  if (profile?.corporate_account_id) {
+    const { data } = await supabase
+      .from('corporate_accounts')
+      .select('company_name, program_tier')
+      .eq('id', profile.corporate_account_id)
+      .single()
+    corporateAccount = data
   }
 
-  // Get corporate account
-  const { data: corporateAccount } = await supabase
-    .from('corporate_accounts')
-    .select('company_name, program_tier')
-    .eq('id', profile.corporate_account_id)
-    .single()
-
-  // Check if graduated (has certification)
-  const { data: certifications } = await supabase
-    .from('certifications')
+  // Check if graduated (has completed modules)
+  const { data: completedEnrollments } = await supabase
+    .from('course_enrollments')
     .select('id')
-    .eq('employee_id', user.id)
+    .eq('user_id', user.id)
+    .eq('completed', true)
     .limit(1)
 
-  const isGraduated = certifications && certifications.length > 0
+  const isGraduated = completedEnrollments && completedEnrollments.length > 0
 
   const navigation = [
     { name: 'Mi Progreso', href: '/employee-portal/dashboard', icon: Home },
@@ -65,9 +68,9 @@ export default async function EmployeeLayout({
               </div>
               <div>
                 <div className="font-bold text-slate-900">
-                  {corporateAccount?.company_name || 'Concientizaciones'}
+                  Concientizaciones
                 </div>
-                <div className="text-xs text-slate-500">Portal de Empleado</div>
+                <div className="text-xs text-slate-500">Portal de Aprendizaje</div>
               </div>
             </Link>
 
@@ -114,16 +117,18 @@ export default async function EmployeeLayout({
               </div>
             </nav>
 
-            {/* Account Info */}
-            <div className="mt-4 bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-              <div className="text-xs text-slate-500 uppercase mb-2">Programa</div>
-              <div className="font-bold text-slate-900 capitalize">
-                {corporateAccount?.program_tier || 'Activo'}
+            {/* Account Info - Only show for corporate users */}
+            {corporateAccount && (
+              <div className="mt-4 bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+                <div className="text-xs text-slate-500 uppercase mb-2">Programa</div>
+                <div className="font-bold text-slate-900 capitalize">
+                  {corporateAccount?.program_tier || 'Activo'}
+                </div>
+                <div className="text-sm text-slate-600 mt-1">
+                  {corporateAccount?.company_name}
+                </div>
               </div>
-              <div className="text-sm text-slate-600 mt-1">
-                {corporateAccount?.company_name}
-              </div>
-            </div>
+            )}
 
             {/* Graduation Badge */}
             {isGraduated && (
