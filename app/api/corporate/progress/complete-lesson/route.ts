@@ -168,22 +168,33 @@ export async function POST(req: NextRequest) {
       }
 
       console.log('💾 Upserting lesson response with data:', Object.keys(responseData))
+      console.log('💾 Full response data:', JSON.stringify(responseData, null, 2))
 
-      const { error: responseError } = await supabase
+      const { data: upsertedData, error: responseError } = await supabase
         .from('lesson_responses')
         .upsert(responseData, {
           onConflict: 'enrollment_id,lesson_id'
         })
+        .select()
 
       if (responseError) {
-        console.error('❌ Error storing lesson responses:', responseError)
-        // Don't fail the request if response storage fails
+        console.error('❌ CRITICAL: Error storing lesson responses:', responseError)
+        console.error('❌ Response data that failed:', responseData)
+        // 🔥 THROW ERROR instead of silently continuing
+        return NextResponse.json({ 
+          error: 'Failed to save lesson completion',
+          details: responseError.message,
+          hint: responseError.hint
+        }, { status: 500 })
       } else {
-        console.log('✅ Lesson responses stored successfully with full activity data')
+        console.log('✅ Lesson responses stored successfully:', upsertedData)
       }
-    } catch (responseStoreError) {
-      console.error('❌ Error storing responses:', responseStoreError)
-      // Continue even if response storage fails
+    } catch (responseStoreError: any) {
+      console.error('❌ CRITICAL: Exception storing responses:', responseStoreError)
+      return NextResponse.json({ 
+        error: 'Exception saving lesson',
+        details: responseStoreError.message 
+      }, { status: 500 })
     }
 
     console.log('✅ Lesson completed:', { 
