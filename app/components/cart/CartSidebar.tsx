@@ -495,7 +495,7 @@ export default function CartSidebar({ isOpen, onClose, onUpdate }: CartSidebarPr
               {/* Action Buttons */}
               <div className="space-y-3">
                 <Link
-                  href="/corporate/checkout"
+                  href="/checkout"
                   onClick={onClose}
                   className="block w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 rounded-xl font-bold text-center hover:scale-105 transition-transform shadow-lg"
                 >

@@ -28,7 +28,8 @@ export default async function EmployeeDashboard() {
         title,
         description,
         core_value,
-        slug
+        slug,
+        lesson_count
       )
     `)
     .eq('user_id', user.id)
