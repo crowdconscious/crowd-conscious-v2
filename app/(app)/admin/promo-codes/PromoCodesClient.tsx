@@ -214,6 +214,64 @@ export default function PromoCodesClient({
         </div>
       </div>
 
+      {/* Active Promo Codes Quickview */}
+      <div className="bg-gradient-to-br from-purple-600 to-pink-600 text-white rounded-xl shadow-lg p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-xl font-bold mb-1">🎫 Códigos Activos</h3>
+            <p className="text-purple-100 text-sm">Comparte estos códigos con tus socios y campañas</p>
+          </div>
+          <div className="text-3xl font-bold">{stats.activeCodes}</div>
+        </div>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {promoCodes.filter(code => code.active).slice(0, 6).map((code) => (
+            <div 
+              key={code.id}
+              className="bg-white/20 backdrop-blur-sm rounded-lg p-4 hover:bg-white/30 transition-colors"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <code className="text-lg font-mono font-bold">{code.code}</code>
+                <button
+                  onClick={() => handleCopyCode(code.code)}
+                  className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                  title="Copiar código"
+                >
+                  {copiedCode === code.code ? (
+                    <Check className="w-4 h-4" />
+                  ) : (
+                    <Copy className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+              <div className="text-2xl font-bold mb-1">{getDiscountDisplay(code)}</div>
+              {code.partner_name && (
+                <div className="text-sm text-purple-100">{code.partner_name}</div>
+              )}
+              {code.campaign_name && (
+                <div className="text-xs text-purple-200">{code.campaign_name}</div>
+              )}
+              <div className="text-xs text-purple-200 mt-2">
+                {code.current_uses} {code.max_uses ? `/ ${code.max_uses}` : '/ ∞'} usos
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        {promoCodes.filter(code => code.active).length === 0 && (
+          <div className="text-center py-8 text-purple-100">
+            <Ticket className="w-12 h-12 mx-auto mb-2 opacity-50" />
+            <p>No hay códigos activos. Crea uno arriba ↑</p>
+          </div>
+        )}
+        
+        {promoCodes.filter(code => code.active).length > 6 && (
+          <p className="text-center text-purple-100 text-sm mt-4">
+            + {promoCodes.filter(code => code.active).length - 6} códigos más activos (ver tabla abajo)
+          </p>
+        )}
+      </div>
+
       {/* Create Form */}
       {showCreateForm && (
         <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-6">

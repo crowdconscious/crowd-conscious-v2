@@ -266,10 +266,16 @@ export default async function EmployeeDashboard() {
                 available: true // All modules with lessons are available
               }
               
+              const isAvailable = moduleData?.id && moduleData?.lesson_count > 0
+              const moduleUrl = isAvailable ? `/employee-portal/modules/${moduleData.id}` : '#'
+              
               return (
-                <div 
+                <Link 
                   key={enrollment.id}
-                  className="border-2 border-slate-200 rounded-lg p-3 sm:p-4 hover:border-teal-300 transition-colors"
+                  href={moduleUrl}
+                  className={`block border-2 border-slate-200 rounded-lg p-3 sm:p-4 hover:border-teal-300 transition-all ${
+                    isAvailable ? 'cursor-pointer hover:shadow-lg' : 'cursor-not-allowed opacity-75'
+                  }`}
                 >
                   {/* Mobile: Stack vertically, Desktop: Side by side */}
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
@@ -309,16 +315,15 @@ export default async function EmployeeDashboard() {
                         </div>
                         <div className="text-xs text-slate-500">Progreso</div>
                       </div>
-                      <Link
-                        href={info.available && moduleData?.id ? `/employee-portal/modules/${moduleData.id}` : '#'}
-                        className={`${info.available && moduleData?.id ? 'bg-gradient-to-r from-teal-600 to-purple-600 text-white hover:scale-105' : 'bg-slate-300 text-slate-500 cursor-not-allowed'} px-4 sm:px-6 py-2 rounded-lg font-medium transition-transform text-sm sm:text-base whitespace-nowrap min-h-[44px] flex items-center justify-center`}
+                      <div
+                        className={`${isAvailable ? 'bg-gradient-to-r from-teal-600 to-purple-600 text-white' : 'bg-slate-300 text-slate-500'} px-4 sm:px-6 py-2 rounded-lg font-medium text-sm sm:text-base whitespace-nowrap min-h-[44px] flex items-center justify-center pointer-events-none`}
                       >
-                        {info.available && moduleData?.id ? (
+                        {isAvailable ? (
                           enrollment.completed ? 'Revisar' :
-                          enrollment.progress_percentage > 0 ? 'Continuar' :
+                          (enrollment.progress_percentage || 0) > 0 ? 'Continuar' :
                           'Empezar'
                         ) : 'Pronto'}
-                      </Link>
+                      </div>
                     </div>
                   </div>
                   
@@ -329,7 +334,7 @@ export default async function EmployeeDashboard() {
                       style={{ width: `${enrollment.progress_percentage || 0}%` }}
                     />
                   </div>
-                </div>
+                </Link>
               )
             })}
           </div>
