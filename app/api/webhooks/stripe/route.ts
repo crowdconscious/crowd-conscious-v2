@@ -248,7 +248,7 @@ async function handleModulePurchase(session: Stripe.Checkout.Session) {
           const { code, module_id } = promoCodeInfo
           
           // Get promo code ID from database
-          const { data: promoCodeRecord } = await supabaseClient
+          const { data: promoCodeRecord } = await (supabaseClient as any)
             .from('promo_codes')
             .select('id')
             .eq('code', code)
@@ -256,16 +256,15 @@ async function handleModulePurchase(session: Stripe.Checkout.Session) {
           
           if (promoCodeRecord) {
             // Insert into promo_code_uses
-            const { error: useError } = await supabaseClient
+            const { error: useError } = await (supabaseClient as any)
               .from('promo_code_uses')
               .insert({
                 promo_code_id: promoCodeRecord.id,
                 user_id: user_id,
-                module_id: module_id,
                 cart_total_before_discount: originalTotal,
                 discount_amount: totalDiscount / promoCodesData.length, // Distribute discount across codes
                 cart_total_after_discount: finalTotal,
-                modules_purchased: JSON.stringify(cartItemsData),
+                modules_purchased: cartItemsData, // JSONB - store as object, not string
                 stripe_session_id: session.id,
                 used_at: new Date().toISOString()
               })
