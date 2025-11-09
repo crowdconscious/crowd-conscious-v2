@@ -276,7 +276,7 @@ async function handleModulePurchase(session: Stripe.Checkout.Session) {
             }
             
             // Increment current_uses on promo_codes table
-            const { error: incrementError } = await supabaseClient
+            const { error: incrementError } = await (supabaseClient as any)
               .rpc('increment_promo_code_uses', { promo_id: promoCodeRecord.id })
             
             if (incrementError) {
