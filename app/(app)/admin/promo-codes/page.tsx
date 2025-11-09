@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase-server'
+import { createAdminClient } from '@/lib/supabase-admin'
 import { redirect } from 'next/navigation'
 import PromoCodesClient from './PromoCodesClient'
 
@@ -26,8 +27,11 @@ export default async function AdminPromoCodesPage() {
     redirect('/dashboard')
   }
 
+  // Use admin client to bypass RLS for promo codes query
+  const adminClient = createAdminClient()
+
   // Fetch existing promo codes
-  const { data: promoCodes } = await supabase
+  const { data: promoCodes } = await adminClient
     .from('promo_codes')
     .select(`
       *,
@@ -36,7 +40,7 @@ export default async function AdminPromoCodesPage() {
     .order('created_at', { ascending: false })
 
   // Fetch usage stats
-  const { data: usageStats } = await supabase
+  const { data: usageStats } = await adminClient
     .from('promo_code_uses')
     .select('promo_code_id, discount_amount')
 
