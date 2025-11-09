@@ -10,7 +10,7 @@ UPDATE module_lessons
 SET tools_used = ARRAY['supply-chain-mapper']::TEXT[]
 WHERE module_id IN (
   SELECT id FROM marketplace_modules 
-  WHERE core_value = 'fair_trade' AND is_published = true
+  WHERE core_value = 'fair_trade' AND status = 'published'
 )
 AND lesson_order = 1;
 
@@ -19,7 +19,7 @@ UPDATE module_lessons
 SET tools_used = ARRAY['fair-wage-calculator']::TEXT[]
 WHERE module_id IN (
   SELECT id FROM marketplace_modules 
-  WHERE core_value = 'fair_trade' AND is_published = true
+  WHERE core_value = 'fair_trade' AND status = 'published'
 )
 AND lesson_order = 2;
 
@@ -28,7 +28,7 @@ UPDATE module_lessons
 SET tools_used = ARRAY['local-supplier-finder', 'responsible-procurement-scorecard']::TEXT[]
 WHERE module_id IN (
   SELECT id FROM marketplace_modules 
-  WHERE core_value = 'fair_trade' AND is_published = true
+  WHERE core_value = 'fair_trade' AND status = 'published'
 )
 AND lesson_order = 3;
 
@@ -37,7 +37,7 @@ UPDATE module_lessons
 SET tools_used = ARRAY['responsible-procurement-scorecard']::TEXT[]
 WHERE module_id IN (
   SELECT id FROM marketplace_modules 
-  WHERE core_value = 'fair_trade' AND is_published = true
+  WHERE core_value = 'fair_trade' AND status = 'published'
 )
 AND lesson_order = 4;
 
@@ -46,7 +46,7 @@ UPDATE module_lessons
 SET tools_used = ARRAY['impact-report-generator']::TEXT[]
 WHERE module_id IN (
   SELECT id FROM marketplace_modules 
-  WHERE core_value = 'fair_trade' AND is_published = true
+  WHERE core_value = 'fair_trade' AND status = 'published'
 )
 AND lesson_order = 5;
 
@@ -61,6 +61,6 @@ SELECT
 FROM module_lessons ml
 JOIN marketplace_modules mm ON ml.module_id = mm.id
 WHERE mm.core_value = 'fair_trade'
-  AND mm.is_published = true
+  AND mm.status = 'published'
 ORDER BY ml.lesson_order;
 
