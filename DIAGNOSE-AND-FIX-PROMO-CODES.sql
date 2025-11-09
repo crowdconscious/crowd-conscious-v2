@@ -54,22 +54,32 @@ WHERE tablename = 'promo_codes';
 -- ============================================
 -- FIX: Ensure admins can see and manage promo codes
 -- ============================================
+-- 
+-- 🔐 SECURITY MODEL FOR PROMO CODES:
+-- --------------------------------
+-- ❌ Users CANNOT browse/view promo codes (they are SECRET)
+-- ✅ Users can TYPE a code in the checkout form
+-- ✅ Backend API validates the code when user clicks "Apply"
+-- ✅ API uses SERVICE ROLE (bypasses RLS) to check if code exists and is valid
+-- ✅ Only ADMINS can view the list of promo codes
+--
+-- This prevents users from discovering secret partner/campaign codes
+-- by querying the database or inspecting API responses.
+--
 
--- Drop any restrictive policies
+-- Drop any old/restrictive policies
 DROP POLICY IF EXISTS "admins_can_view_promo_codes" ON promo_codes;
 DROP POLICY IF EXISTS "admins_can_manage_promo_codes" ON promo_codes;
 DROP POLICY IF EXISTS "authenticated_can_view_active_codes" ON promo_codes;
+DROP POLICY IF EXISTS "anyone_can_view_active_promo_codes" ON promo_codes;
 
 -- Create comprehensive policies
--- Policy 1: Everyone can view active promo codes (for applying them at checkout)
-CREATE POLICY "anyone_can_view_active_promo_codes" 
-ON promo_codes FOR SELECT
-USING (
-  active = true
-);
+-- ⚠️ IMPORTANT: Promo codes should be SECRET!
+-- Users cannot browse codes - they must know the code to use it
+-- Code validation happens server-side in the cart/checkout API
 
--- Policy 2: Super admins can view ALL promo codes (active + inactive)
-CREATE POLICY "admins_can_view_all_promo_codes" 
+-- Policy 1: ONLY super admins can view promo codes
+CREATE POLICY "admins_only_can_view_promo_codes" 
 ON promo_codes FOR SELECT
 USING (
   EXISTS (
@@ -282,8 +292,10 @@ ORDER BY pc.code;
 -- ============================================
 
 SELECT 
-  'SUMMARY: RLS policies updated, codes recreated' as result,
-  'Admins can now view/manage all codes' as admin_access,
-  'Users can view active codes for checkout' as user_access,
-  '3 demo codes created: DEMOJAVI, DEMOPUNKY, DOMINGO1' as codes_created;
+  '✅ SUMMARY: RLS policies updated, codes recreated' as result,
+  '🔐 Admins can view/manage all codes' as admin_access,
+  '❌ Users CANNOT browse codes (secret!)' as user_access,
+  '✅ Users can TYPE codes manually at checkout' as user_validation,
+  '🔧 Backend API validates codes using service role' as api_validation,
+  '🎟️ 3 demo codes created: DEMOJAVI, DEMOPUNKY, DOMINGO1' as codes_created;
 
