@@ -15,7 +15,12 @@ import {
   EmissionSourceIdentifier,
   AirQualityROI,
   ImplementationTimelinePlanner,
-  AirQualityMonitorTracker
+  AirQualityMonitorTracker,
+  WaterFootprintCalculator,
+  WaterAuditTool,
+  WaterConservationTracker,
+  WaterQualityTestLog,
+  RecyclingSystemDesigner
 } from '@/components/module-tools'
 import { SecurityAuditTool, CommunitySurveyTool, CostCalculatorTool } from '@/components/module-tools/Module3Tools'
 import InteractiveActivity from '@/components/activities/InteractiveActivity'
@@ -543,6 +548,62 @@ export default function LessonPage({
                             console.log('Monitoring data saved:', data)
                             setActivityData({...activityData, monitoringData: data})
                             saveActivityData('monitoring-data', data)
+                          }}
+                        />
+                      )
+                    
+                    // Module 2: Water Management Tools
+                    case 'water-footprint-calculator':
+                      return (
+                        <WaterFootprintCalculator
+                          onCalculate={(result: any) => {
+                            console.log('Water footprint calculated:', result)
+                            setActivityData({...activityData, waterFootprint: result})
+                            saveActivityData('water-footprint', result)
+                          }}
+                        />
+                      )
+                    
+                    case 'water-audit-tool':
+                      return (
+                        <WaterAuditTool
+                          onSave={(data: any) => {
+                            console.log('Water audit saved:', data)
+                            setActivityData({...activityData, waterAudit: data})
+                            saveActivityData('water-audit', data)
+                          }}
+                        />
+                      )
+                    
+                    case 'water-conservation-tracker':
+                      return (
+                        <WaterConservationTracker
+                          onSave={(data: any) => {
+                            console.log('Conservation tracker saved:', data)
+                            setActivityData({...activityData, conservationTracker: data})
+                            saveActivityData('conservation-tracker', data)
+                          }}
+                        />
+                      )
+                    
+                    case 'water-quality-test-log':
+                      return (
+                        <WaterQualityTestLog
+                          onSave={(tests: any) => {
+                            console.log('Water quality tests saved:', tests)
+                            setActivityData({...activityData, qualityTests: tests})
+                            saveActivityData('quality-tests', tests)
+                          }}
+                        />
+                      )
+                    
+                    case 'recycling-system-designer':
+                      return (
+                        <RecyclingSystemDesigner
+                          onDesign={(system: any) => {
+                            console.log('Recycling system designed:', system)
+                            setActivityData({...activityData, recyclingSystem: system})
+                            saveActivityData('recycling-system', system)
                           }}
                         />
                       )
