@@ -500,7 +500,7 @@ export function CertificationHub() {
                   {cert.status === 'locked' && <span className="text-lg">🔒</span>}
                   {cert.module}
                 </div>
-                {'date' in cert && (
+                {'date' in cert && cert.date && (
                   <div className="text-xs text-green-700 mt-1">
                     Completado: {new Date(cert.date).toLocaleDateString('es-MX')}
                   </div>
