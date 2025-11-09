@@ -31,18 +31,26 @@ export default async function AdminPromoCodesPage() {
   const adminClient = createAdminClient()
 
   // Fetch existing promo codes
-  const { data: promoCodes } = await adminClient
+  const { data: promoCodes, error: promoError } = await adminClient
     .from('promo_codes')
-    .select(`
-      *,
-      creator:created_by(full_name, email)
-    `)
+    .select('*')
     .order('created_at', { ascending: false })
 
+  // Log any errors for debugging
+  if (promoError) {
+    console.error('❌ Error fetching promo codes:', promoError)
+  } else {
+    console.log('✅ Fetched promo codes:', promoCodes?.length || 0)
+  }
+
   // Fetch usage stats
-  const { data: usageStats } = await adminClient
+  const { data: usageStats, error: usageError } = await adminClient
     .from('promo_code_uses')
     .select('promo_code_id, discount_amount')
+
+  if (usageError) {
+    console.error('❌ Error fetching usage stats:', usageError)
+  }
 
   return (
     <PromoCodesClient 
