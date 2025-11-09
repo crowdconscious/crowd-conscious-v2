@@ -11,11 +11,19 @@ export { default as ReflectionJournal } from './ReflectionJournal'
 export { default as ImpactComparison } from './ImpactComparison'
 
 // ============================================
-// MODULE-SPECIFIC TOOLS (Clean Air Module)
+// MODULE 1: AIRE LIMPIO (Clean Air Module)
 // ============================================
 export { default as AirQualityAssessment } from './AirQualityAssessment'
 export { default as AirQualityROI } from './AirQualityROI'
 export { default as AirQualityImpact } from './AirQualityImpact'
+export { default as EmissionSourceIdentifier } from './EmissionSourceIdentifier'
+export { default as ImplementationTimelinePlanner } from './ImplementationTimelinePlanner'
+export { default as AirQualityMonitorTracker } from './AirQualityMonitorTracker'
+
+// ============================================
+// MODULE 3: CIUDADES SEGURAS (Safe Cities)
+// ============================================
+export { SecurityAuditTool, CommunitySurveyTool, CostCalculatorTool } from './Module3Tools'
 
 // Type exports
 export type { default as CarbonResult } from './CarbonCalculator'
