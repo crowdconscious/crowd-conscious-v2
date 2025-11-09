@@ -11,7 +11,11 @@ import {
   EvidenceUploader,
   ReflectionJournal,
   ImpactComparison,
-  AirQualityAssessment
+  AirQualityAssessment,
+  EmissionSourceIdentifier,
+  AirQualityROI,
+  ImplementationTimelinePlanner,
+  AirQualityMonitorTracker
 } from '@/components/module-tools'
 import { SecurityAuditTool, CommunitySurveyTool, CostCalculatorTool } from '@/components/module-tools/Module3Tools'
 import InteractiveActivity from '@/components/activities/InteractiveActivity'
@@ -485,6 +489,62 @@ export default function LessonPage({
                             description="Equivalencias del mundo real"
                           />
                         </div>
+                      )
+                    
+                    // Module 1: Clean Air Tools
+                    case 'air-quality-assessment':
+                      return (
+                        <AirQualityAssessment
+                          onComplete={(result: any) => {
+                            console.log('Air quality assessment completed:', result)
+                            setActivityData({...activityData, airQualityAssessment: result})
+                            saveActivityData('air-quality-assessment', result)
+                          }}
+                        />
+                      )
+                    
+                    case 'emission-source-identifier':
+                      return (
+                        <EmissionSourceIdentifier
+                          onSave={(data: any) => {
+                            console.log('Emission inventory saved:', data)
+                            setActivityData({...activityData, emissionInventory: data})
+                            saveActivityData('emission-inventory', data)
+                          }}
+                        />
+                      )
+                    
+                    case 'air-quality-roi':
+                      return (
+                        <AirQualityROI
+                          onCalculate={(result: any) => {
+                            console.log('ROI calculation completed:', result)
+                            setActivityData({...activityData, roiCalculation: result})
+                            saveActivityData('roi-calculation', result)
+                          }}
+                        />
+                      )
+                    
+                    case 'implementation-timeline':
+                      return (
+                        <ImplementationTimelinePlanner
+                          onSave={(plan: any) => {
+                            console.log('Implementation plan saved:', plan)
+                            setActivityData({...activityData, implementationPlan: plan})
+                            saveActivityData('implementation-plan', plan)
+                          }}
+                        />
+                      )
+                    
+                    case 'air-quality-monitor':
+                      return (
+                        <AirQualityMonitorTracker
+                          onSave={(data: any) => {
+                            console.log('Monitoring data saved:', data)
+                            setActivityData({...activityData, monitoringData: data})
+                            saveActivityData('monitoring-data', data)
+                          }}
+                        />
                       )
                     
                     // Module 3: Safe Cities Tools
