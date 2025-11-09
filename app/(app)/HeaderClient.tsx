@@ -82,13 +82,15 @@ export default function HeaderClient({ user }: HeaderClientProps) {
               </Link>
               <Link 
                 href={
-                  // Handle both boolean true and string "true" for is_corporate_user
+                  // Route logic for Learn & Earn button:
+                  // 1. Corporate admin → corporate dashboard
+                  // 2. Corporate employee → employee portal
+                  // 3. ANY logged-in user → employee portal (for individual learners)
+                  // 4. Not logged in → landing page
                   (userProfile?.is_corporate_user === true || userProfile?.is_corporate_user === 'true') && userProfile?.corporate_role === 'admin'
                     ? '/corporate/dashboard'
-                    : (userProfile?.is_corporate_user === true || userProfile?.is_corporate_user === 'true') && userProfile?.corporate_role === 'employee'
-                    ? '/employee-portal/dashboard'
                     : user
-                    ? '/marketplace'  // Logged-in users go directly to marketplace
+                    ? '/employee-portal/dashboard'  // ALL logged-in users go to learning dashboard
                     : '/concientizaciones'  // Visitors see landing page
                 }
                 className="text-slate-600 dark:text-slate-300 hover:text-purple-600 font-medium flex items-center gap-1"
