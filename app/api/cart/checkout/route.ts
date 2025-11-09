@@ -182,7 +182,7 @@ export async function POST() {
         promo_codes: appliedPromoCodes.length > 0 ? JSON.stringify(appliedPromoCodes) : null,
         has_discount: appliedPromoCodes.length > 0 ? 'true' : 'false'
       },
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/concientizaciones?purchase=success`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/employee-portal/dashboard?purchase=success`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/marketplace?cancelled=true`
     })
 
