@@ -48,7 +48,9 @@ async function handleModulePurchase(session: Stripe.Checkout.Session) {
       corporate_account_id,
       company_name,
       cart_items,
-      total_amount
+      total_amount,
+      promo_codes, // JSON string of applied promo codes
+      has_discount // 'true' or 'false'
     } = session.metadata || {}
 
     console.log('📦 WEBHOOK: Module purchase metadata:', {
@@ -223,7 +225,79 @@ async function handleModulePurchase(session: Stripe.Checkout.Session) {
       }
     }
 
-    // 3. Clear the cart (based on purchase type)
+    // 3. Track promo code usage
+    if (has_discount === 'true' && promo_codes) {
+      console.log('🎟️ WEBHOOK: Processing promo code usage...')
+      
+      try {
+        const promoCodesData = JSON.parse(promo_codes)
+        
+        // Calculate total before and after discount
+        const originalTotal = parseFloat(total_amount) || 0
+        const finalTotal = session.amount_total ? session.amount_total / 100 : 0 // Stripe amount is in cents
+        const totalDiscount = originalTotal - finalTotal
+        
+        console.log('💰 Discount calculation:', {
+          originalTotal,
+          finalTotal,
+          totalDiscount,
+          promoCodesCount: promoCodesData.length
+        })
+        
+        for (const promoCodeInfo of promoCodesData) {
+          const { code, module_id } = promoCodeInfo
+          
+          // Get promo code ID from database
+          const { data: promoCodeRecord } = await supabaseClient
+            .from('promo_codes')
+            .select('id')
+            .eq('code', code)
+            .single()
+          
+          if (promoCodeRecord) {
+            // Insert into promo_code_uses
+            const { error: useError } = await supabaseClient
+              .from('promo_code_uses')
+              .insert({
+                promo_code_id: promoCodeRecord.id,
+                user_id: user_id,
+                module_id: module_id,
+                cart_total_before_discount: originalTotal,
+                discount_amount: totalDiscount / promoCodesData.length, // Distribute discount across codes
+                cart_total_after_discount: finalTotal,
+                modules_purchased: JSON.stringify(cartItemsData),
+                stripe_session_id: session.id,
+                used_at: new Date().toISOString()
+              })
+            
+            if (useError) {
+              console.error(`❌ Error creating promo_code_uses record for ${code}:`, useError)
+            } else {
+              console.log(`✅ Created promo_code_uses record for ${code}`)
+            }
+            
+            // Increment current_uses on promo_codes table
+            const { error: incrementError } = await supabaseClient
+              .rpc('increment_promo_code_uses', { promo_id: promoCodeRecord.id })
+            
+            if (incrementError) {
+              console.error(`❌ Error incrementing current_uses for ${code}:`, incrementError)
+            } else {
+              console.log(`✅ Incremented current_uses for ${code}`)
+            }
+          } else {
+            console.warn(`⚠️ Promo code ${code} not found in database`)
+          }
+        }
+        
+        console.log('✅ Promo code tracking completed')
+      } catch (promoError: any) {
+        console.error('❌ Error processing promo code usage:', promoError)
+        // Don't throw - continue with cart clearing even if promo tracking fails
+      }
+    }
+
+    // 4. Clear the cart (based on purchase type)
     let clearCartQuery = supabaseClient.from('cart_items').delete()
 
     if (isIndividual) {

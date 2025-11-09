@@ -43,14 +43,16 @@ WHERE ce.user_id = (
 )
 ORDER BY ce.purchased_at DESC;
 
--- Step 3: Check Stripe checkout sessions (if stored)
+-- Step 3: Check module sales records
 SELECT 
-  'STEP 3: Checking module sales for this user' as step;
+  'STEP 3: Checking module sales' as step;
 
+-- NOTE: module_sales tracks corporate purchases (corporate_account_id)
+-- Individual purchases are tracked in course_enrollments (user_id + module_id)
 SELECT 
   ms.id,
   ms.module_id,
-  ms.purchaser_user_id,
+  ms.corporate_account_id,
   ms.total_amount,
   ms.community_share,
   ms.platform_fee,
@@ -59,10 +61,9 @@ SELECT
   mm.title as module_title
 FROM module_sales ms
 LEFT JOIN marketplace_modules mm ON ms.module_id = mm.id
-WHERE ms.purchaser_user_id = (
-  SELECT id FROM auth.users WHERE email = 'ximenaginsburg@hotmail.com'
-)
-ORDER BY ms.sale_date DESC;
+WHERE ms.corporate_account_id IS NOT NULL -- Only corporate sales have this
+ORDER BY ms.sale_date DESC
+LIMIT 10;
 
 -- Step 4: Check promo code usage
 SELECT 
