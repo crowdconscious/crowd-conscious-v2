@@ -24,6 +24,8 @@ import {
 } from '@/components/module-tools'
 import { SecurityAuditTool, CommunitySurveyTool, CostCalculatorTool } from '@/components/module-tools/Module3Tools'
 import { WasteStreamAnalyzer, FiveRsChecklist, CompostingCalculator, ZeroWasteCertificationRoadmap } from '@/components/module-tools'
+import { SupplyChainMapper, FairWageCalculator, LocalSupplierFinder, ResponsibleProcurementScorecard, ImpactReportGenerator } from '@/components/module-tools'
+import { ImpactDashboardBuilder, ESGReportGenerator, StakeholderCommunicationPlanner, CertificationHub, ContinuousImprovementTracker } from '@/components/module-tools'
 import InteractiveActivity from '@/components/activities/InteractiveActivity'
 import ToolModal from './ToolModal'
 
@@ -684,6 +686,110 @@ export default function LessonPage({
                             console.log('Certification roadmap saved:', data)
                             setActivityData({...activityData, certificationRoadmap: data})
                             saveActivityData('certification-roadmap', data)
+                          }}
+                        />
+                      )
+                    
+                    // Module 5: Fair Trade Tools
+                    case 'supply-chain-mapper':
+                      return (
+                        <SupplyChainMapper
+                          onSave={(data: any) => {
+                            console.log('Supply chain mapped:', data)
+                            setActivityData({...activityData, supplyChain: data})
+                            saveActivityData('supply-chain', data)
+                          }}
+                        />
+                      )
+                    
+                    case 'fair-wage-calculator':
+                      return (
+                        <FairWageCalculator
+                          onCalculate={(result: any) => {
+                            console.log('Fair wage calculated:', result)
+                            setActivityData({...activityData, fairWage: result})
+                            saveActivityData('fair-wage', result)
+                          }}
+                        />
+                      )
+                    
+                    case 'local-supplier-finder':
+                      return (
+                        <LocalSupplierFinder
+                          onFind={(data: any) => {
+                            console.log('Supplier search:', data)
+                            setActivityData({...activityData, supplierSearch: data})
+                            saveActivityData('supplier-search', data)
+                          }}
+                        />
+                      )
+                    
+                    case 'responsible-procurement-scorecard':
+                      return (
+                        <ResponsibleProcurementScorecard
+                          onScore={(data: any) => {
+                            console.log('Supplier scored:', data)
+                            setActivityData({...activityData, supplierScore: data})
+                            saveActivityData('supplier-score', data)
+                          }}
+                        />
+                      )
+                    
+                    case 'impact-report-generator':
+                      return (
+                        <ImpactReportGenerator
+                          onGenerate={(data: any) => {
+                            console.log('Impact report generated:', data)
+                            setActivityData({...activityData, impactReport: data})
+                            saveActivityData('impact-report', data)
+                          }}
+                        />
+                      )
+                    
+                    // Module 6: Impact Integration Tools
+                    case 'impact-dashboard-builder':
+                      return (
+                        <ImpactDashboardBuilder
+                          onBuild={(data: any) => {
+                            console.log('Dashboard built:', data)
+                            setActivityData({...activityData, dashboard: data})
+                            saveActivityData('dashboard', data)
+                          }}
+                        />
+                      )
+                    
+                    case 'esg-report-generator':
+                      return (
+                        <ESGReportGenerator
+                          onGenerate={(data: any) => {
+                            console.log('ESG report generated:', data)
+                            setActivityData({...activityData, esgReport: data})
+                            saveActivityData('esg-report', data)
+                          }}
+                        />
+                      )
+                    
+                    case 'stakeholder-communication-planner':
+                      return (
+                        <StakeholderCommunicationPlanner
+                          onPlan={(data: any) => {
+                            console.log('Stakeholder plan created:', data)
+                            setActivityData({...activityData, stakeholderPlan: data})
+                            saveActivityData('stakeholder-plan', data)
+                          }}
+                        />
+                      )
+                    
+                    case 'certification-hub':
+                      return <CertificationHub />
+                    
+                    case 'continuous-improvement-tracker':
+                      return (
+                        <ContinuousImprovementTracker
+                          onTrack={(data: any) => {
+                            console.log('Goals tracked:', data)
+                            setActivityData({...activityData, goals: data})
+                            saveActivityData('goals', data)
                           }}
                         />
                       )

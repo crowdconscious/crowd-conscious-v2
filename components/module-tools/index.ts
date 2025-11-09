@@ -37,3 +37,23 @@ export {
   ZeroWasteCertificationRoadmap,
   default as Module4Tools
 } from './Module4Tools'
+
+// Module 5 (Comercio Justo) tools
+export {
+  SupplyChainMapper,
+  FairWageCalculator,
+  LocalSupplierFinder,
+  ResponsibleProcurementScorecard,
+  ImpactReportGenerator,
+  default as Module5Tools
+} from './Module5Tools'
+
+// Module 6 (Integración de Impacto) tools
+export {
+  ImpactDashboardBuilder,
+  ESGReportGenerator,
+  StakeholderCommunicationPlanner,
+  CertificationHub,
+  ContinuousImprovementTracker,
+  default as Module6Tools
+} from './Module6Tools'
