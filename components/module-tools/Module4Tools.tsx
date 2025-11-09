@@ -102,7 +102,7 @@ export function WasteStreamAnalyzer({ onAnalyze }: { onAnalyze?: (analysis: Wast
     }
   }
 
-  const analysis: WasteAnalysis = analyzed ? {
+  const analysis: WasteAnalysis | null = analyzed ? {
     categories,
     totalWeight: categories.reduce((sum, c) => sum + c.weight, 0),
     totalCost: categories.reduce((sum, c) => sum + (c.weight * c.disposalCost), 0),
