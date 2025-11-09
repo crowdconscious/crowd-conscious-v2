@@ -12,7 +12,8 @@ export { default as AirQualityROI } from './AirQualityROI'
 export { default as EmissionSourceIdentifier } from './EmissionSourceIdentifier'
 export { default as ImplementationTimelinePlanner } from './ImplementationTimelinePlanner'
 export { default as AirQualityMonitorTracker } from './AirQualityMonitorTracker'
-export { default as Module1Tools } from './Module1Tools'
+// Module1Tools has named exports only - not a default export
+export * from './Module1Tools'
 
 // Module 2 (Agua Limpia) tools
 export { default as WaterFootprintCalculator } from './WaterFootprintCalculator'
@@ -25,4 +26,14 @@ export {
 } from './Module2Tools'
 
 // Module 3 (Ciudades Seguras) tools
-export { default as Module3Tools } from './Module3Tools'
+// Module3Tools has named exports only - not a default export
+export * from './Module3Tools'
+
+// Module 4 (Cero Residuos) tools
+export {
+  WasteStreamAnalyzer,
+  FiveRsChecklist,
+  CompostingCalculator,
+  ZeroWasteCertificationRoadmap,
+  default as Module4Tools
+} from './Module4Tools'

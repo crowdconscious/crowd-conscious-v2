@@ -23,6 +23,7 @@ import {
   RecyclingSystemDesigner
 } from '@/components/module-tools'
 import { SecurityAuditTool, CommunitySurveyTool, CostCalculatorTool } from '@/components/module-tools/Module3Tools'
+import { WasteStreamAnalyzer, FiveRsChecklist, CompostingCalculator, ZeroWasteCertificationRoadmap } from '@/components/module-tools'
 import InteractiveActivity from '@/components/activities/InteractiveActivity'
 import ToolModal from './ToolModal'
 
@@ -638,6 +639,51 @@ export default function LessonPage({
                             console.log('Cost calculator saved:', data)
                             setActivityData({...activityData, costCalculation: data})
                             saveActivityData('cost-calculation', data)
+                          }}
+                        />
+                      )
+                    
+                    // Module 4: Zero Waste Tools
+                    case 'waste-stream-analyzer':
+                      return (
+                        <WasteStreamAnalyzer
+                          onAnalyze={(analysis: any) => {
+                            console.log('Waste stream analyzed:', analysis)
+                            setActivityData({...activityData, wasteAnalysis: analysis})
+                            saveActivityData('waste-stream-analysis', analysis)
+                          }}
+                        />
+                      )
+                    
+                    case 'five-rs-checklist':
+                      return (
+                        <FiveRsChecklist
+                          onComplete={(data: any) => {
+                            console.log('5 Rs checklist completed:', data)
+                            setActivityData({...activityData, fiveRsProgress: data})
+                            saveActivityData('five-rs-implementation', data)
+                          }}
+                        />
+                      )
+                    
+                    case 'composting-calculator':
+                      return (
+                        <CompostingCalculator
+                          onCalculate={(result: any) => {
+                            console.log('Composting calculated:', result)
+                            setActivityData({...activityData, compostingPlan: result})
+                            saveActivityData('composting-plan', result)
+                          }}
+                        />
+                      )
+                    
+                    case 'zero-waste-certification-roadmap':
+                      return (
+                        <ZeroWasteCertificationRoadmap
+                          onSave={(data: any) => {
+                            console.log('Certification roadmap saved:', data)
+                            setActivityData({...activityData, certificationRoadmap: data})
+                            saveActivityData('certification-roadmap', data)
                           }}
                         />
                       )
