@@ -1,8 +1,8 @@
 # 🌍 Crowd Conscious: Complete Platform Documentation
 
-**Version**: 2.2  
-**Last Updated**: November 7, 2025  
-**Status**: Production Ready - Complete User Journey Working 🎉  
+**Version**: 2.3  
+**Last Updated**: November 9, 2025  
+**Status**: Production Ready - Core System Complete | Module Tools In Progress 🚀  
 **Owner**: Francisco Blockstrand
 
 ---
@@ -2629,7 +2629,7 @@ CC-XXXXXXXX
 
 ---
 
-## 🎉 **Recent Platform Improvements (Nov 7, 2025)**
+## 🎉 **Recent Platform Improvements (Nov 7-9, 2025)**
 
 ### **🐛 Critical Bugs Fixed**
 
@@ -2715,6 +2715,61 @@ CC-XXXXXXXX
   - Wrapped `useSearchParams()` in Suspense boundary
   - Added `export const dynamic = 'force-dynamic'` to admin pages
 - **Status:** ✅ FIXED
+
+#### **10. Promo Code Admin Display (Nov 9, 2025)**
+
+- **Problem:** Admin panel showing 0 promo codes despite codes existing in database
+- **Root Causes:**
+  - Admin page using regular Supabase client (subject to RLS)
+  - Foreign key join to `created_by` (profiles) possibly failing
+- **Fixes:**
+  - Modified `/admin/promo-codes/page.tsx` to use `createAdminClient()` to bypass RLS
+  - Simplified query: removed `creator:created_by` join, use direct `SELECT *`
+  - Added error logging for debugging
+- **Status:** ✅ FIXED (Nov 9, 2025)
+
+#### **11. Promo Code Usage Tracking (Nov 9, 2025)**
+
+- **Problem:** Promo code `current_uses` remained 0 despite multiple uses
+- **Root Cause:** Stripe webhook not tracking promo code usage
+- **Fixes:**
+  - Added promo code parsing from Stripe session metadata
+  - Created `promo_code_uses` table insert logic
+  - Added `increment_promo_code_uses` RPC function call
+  - Fixed TypeScript errors by casting Supabase client to `any`
+  - Removed non-existent `module_id` column from `promo_code_uses` insert
+- **Status:** ✅ FIXED (Nov 9, 2025)
+
+#### **12. Free Purchase Enrollment Failure (Nov 9, 2025)**
+
+- **Problem:** Webhook failing to create enrollments for 100% discounted purchases
+- **Root Cause:** `wallet_transactions_amount_check` constraint blocking $0 transactions
+- **Error:** `new row for relation "wallet_transactions" violates check constraint "wallet_transactions_amount_check"`
+- **Fixes:**
+  - Modified constraint to allow `amount >= 0` for `completed` transactions
+  - Kept `amount > 0` requirement for non-completed transactions
+  - Created `FIX-WALLET-CONSTRAINT-SIMPLE.sql` (Supabase-compatible)
+  - Tested successful enrollment with 100% promo code
+- **Status:** ✅ FIXED (Nov 9, 2025)
+
+#### **13. Module Enrollment & Schema Issues (Nov 7-9, 2025)**
+
+- **Problems:**
+  - Modules not appearing on dashboard after purchase
+  - Foreign key constraint violations during enrollment
+  - Duplicate module entries in database (11 modules instead of 6)
+  - Module name mismatches between database and frontend
+- **Root Causes:**
+  - Incorrect understanding of `course_id` vs `module_id` schema
+  - `course_id` is FK to separate `courses` table (multi-module programs)
+  - For individual modules, `course_id` should be `NULL`, not the module UUID
+  - Duplicate modules with timestamp suffixes
+- **Fixes:**
+  - Updated webhook to set `course_id = NULL` for individual modules
+  - Created `STANDARDIZE-MODULE-NAMES.sql` to delete duplicates and rename
+  - Fixed all enrollment scripts to use correct schema
+  - Documented actual schema in master documentation
+- **Status:** ✅ FIXED (Nov 7-9, 2025)
 
 ### **🎨 Portal Redesign**
 
@@ -2819,6 +2874,358 @@ CC-XXXXXXXX
 | RLS policies             | ✅ Working |
 | Error handling           | ✅ Working |
 | Build & deployment       | ✅ Working |
+
+---
+
+## 📊 **Current Status & Next Steps** (Nov 9, 2025)
+
+### **✅ COMPLETE - Core Platform**
+
+#### **Purchase Flow & Enrollment (100% Working)**
+- ✅ Marketplace browsing and filtering
+- ✅ Cart with promo code support (flat amount + percentage)
+- ✅ Stripe checkout integration
+- ✅ Webhook processing (enrollment + revenue distribution)
+- ✅ Free purchases (100% promo codes) working
+- ✅ Individual & corporate user support
+- ✅ Dashboard enrollment display
+- ✅ Module access after purchase
+
+#### **Learning Experience (100% Working)**
+- ✅ Lesson navigation and content display
+- ✅ Progress tracking (0% → 100%)
+- ✅ XP earning system
+- ✅ Certificate generation and download
+- ✅ Certificate verification (`/verify`)
+- ✅ Social sharing (Twitter, LinkedIn, Facebook, Instagram)
+
+#### **Interactive Activity System (100% Working)**
+- ✅ Generic `InteractiveActivity` component
+- ✅ Response saving to `lesson_responses` table
+- ✅ Evidence file uploads to Supabase Storage
+- ✅ Activity data for ESG reporting
+
+#### **Admin & Promo Codes (100% Working)**
+- ✅ Admin dashboard with super admin access
+- ✅ Promo code creation & management
+- ✅ Promo code usage tracking
+- ✅ Active codes quickview display
+- ✅ RLS policies for secure code management
+- ✅ Webhook integration for usage increments
+
+#### **Module Content (100% Complete)**
+All 6 core modules fully enriched with:
+- ✅ Module 1: Estrategias Avanzadas de Calidad del Aire (5 lessons)
+- ✅ Module 2: Gestión Sostenible del Agua (5 lessons)
+- ✅ Module 3: Ciudades Seguras y Espacios Inclusivos (5 lessons)
+- ✅ Module 4: Economía Circular: Cero Residuos (5 lessons)
+- ✅ Module 5: Comercio Justo y Cadenas de Valor (5 lessons)
+- ✅ Module 6: Integración de Impacto y Medición (5 lessons)
+
+Each lesson includes:
+- Story-driven narrative content
+- Learning objectives & key points
+- Real-world examples
+- Activity configurations
+- Reflection prompts
+- Resources & next steps
+
+---
+
+### **🚧 IN PROGRESS - Interactive Module Tools**
+
+#### **Module 3: Ciudades Seguras (COMPLETE ✅)**
+- ✅ Security Audit Tool
+- ✅ CPTED Assessment Tool
+- ✅ Community Survey Tool
+- ✅ Design Planner Tool
+- ✅ Cost Calculator Tool
+
+#### **Module 1: Aire Limpio (PENDING 🔨)**
+**Tools Needed:**
+1. **Air Quality Assessment Tool**
+   - Input: Location, factory type, hours of operation
+   - Output: Baseline air quality score, risk areas
+   - Data saved to `lesson_responses`
+
+2. **Emission Source Identifier**
+   - Interactive facility map
+   - Click to mark emission sources (smokestacks, vehicles, processes)
+   - Upload photos of sources
+   - Generates emission inventory report
+
+3. **ROI Calculator (Air Quality)**
+   - Input: Current costs (health claims, productivity loss, fines)
+   - Input: Improvement costs (filters, monitoring, training)
+   - Output: 3-year ROI projection with charts
+
+4. **Implementation Timeline Planner**
+   - Drag-and-drop 90-day action plan
+   - Assign tasks and deadlines
+   - Budget allocation
+   - Export as PDF/CSV
+
+5. **Air Quality Monitor Tracker**
+   - Log daily/weekly air quality readings
+   - Chart trends over time
+   - Compare to regulatory standards
+   - Generate compliance reports
+
+#### **Module 2: Agua Limpia (PENDING 🔨)**
+**Tools Needed:**
+1. **Water Footprint Calculator**
+   - Input: Water usage by area (production, bathrooms, cooling, irrigation)
+   - Output: Total liters/day, cost, environmental impact
+   - Comparison to industry benchmarks
+
+2. **Water Audit Tool**
+   - Room-by-room water usage mapping
+   - Photo upload for leaks/waste points
+   - Priority ranking (quick wins vs long-term)
+   - Generates audit report
+
+3. **Conservation Tracker**
+   - Set reduction goals (% or liters)
+   - Log weekly usage
+   - Track savings (water + money)
+   - Celebrate milestones
+
+4. **Water Quality Tester Log**
+   - Record pH, turbidity, contaminants
+   - Compare to NOM-001-SEMARNAT standards
+   - Flag violations
+   - Generate compliance timeline
+
+5. **Recycling System Designer**
+   - Visualize greywater system
+   - Calculate treatment costs vs savings
+   - Payback period calculator
+   - Vendor contact database
+
+#### **Module 4: Cero Residuos (PENDING 🔨)**
+**Tools Needed:**
+1. **Waste Stream Analyzer**
+   - Categorize waste (organic, plastic, paper, metal, hazardous)
+   - Weigh and log daily/weekly
+   - Pie chart visualization
+   - Identify top 3 waste sources
+
+2. **5 R's Implementation Checklist**
+   - Interactive checklist for Refuse, Reduce, Reuse, Recycle, Regenerate
+   - Examples and best practices for each R
+   - Company-specific action items
+   - Track implementation progress
+
+3. **Material Exchange Marketplace**
+   - List materials you can donate/sell
+   - Search materials you need
+   - Match with other businesses
+   - Track exchanges and revenue
+
+4. **Composting Calculator**
+   - Input: Organic waste volume
+   - Output: Compost production estimate
+   - Cost savings (fertilizer replacement)
+   - CO2 reduction calculation
+
+5. **Zero Waste Certification Roadmap**
+   - Assessment: Current waste diversion rate
+   - Gap analysis for certification levels (Bronze/Silver/Gold)
+   - Action plan with timelines
+   - Document repository for evidence
+
+#### **Module 5: Comercio Justo (PENDING 🔨)**
+**Tools Needed:**
+1. **Supply Chain Mapper**
+   - Visual supply chain diagram builder
+   - Add suppliers with details (location, workers, certifications)
+   - Flag risk areas (child labor, low wages, environmental damage)
+   - Traceability scoring
+
+2. **Fair Wage Calculator**
+   - Input: Region, industry, job role
+   - Output: Living wage vs minimum wage vs your wage
+   - Gap analysis
+   - Cost impact of raising wages
+
+3. **Local Supplier Finder**
+   - Database of local suppliers by category
+   - Distance calculator (carbon footprint)
+   - Price comparison tool
+   - Quality/certification filters
+
+4. **Responsible Procurement Scorecard**
+   - Rate suppliers on 10 criteria (labor, environment, transparency, etc.)
+   - Weighted scoring system
+   - Compare suppliers side-by-side
+   - Generate preferred supplier list
+
+5. **Impact Report Generator**
+   - Input: Purchases from local/fair trade suppliers
+   - Output: Jobs supported, CO2 saved, community investment
+   - Shareable infographic
+   - ESG report section
+
+#### **Module 6: Integración de Impacto (PENDING 🔨)**
+**Tools Needed:**
+1. **Impact Dashboard Builder**
+   - Choose KPIs from previous 5 modules
+   - Custom dashboard layout
+   - Real-time data visualization
+   - Export to PowerPoint/PDF
+
+2. **ESG Report Generator**
+   - Auto-populate from all module activities
+   - GRI-aligned format
+   - Custom branding
+   - Multi-year comparison
+
+3. **Stakeholder Communication Planner**
+   - Identify stakeholders (employees, customers, investors, community)
+   - Tailor messaging per group
+   - Schedule communications
+   - Track engagement
+
+4. **Certification Hub**
+   - View all earned certifications
+   - Download official certificates
+   - Share badges on website/social media
+   - Track certification expiry dates
+
+5. **Continuous Improvement Tracker**
+   - Set annual goals for each core value
+   - Quarterly check-ins
+   - Benchmark against past performance
+   - Celebrate wins, flag risks
+
+---
+
+### **📋 Module Tools Development Plan**
+
+#### **Phase 1: Core Calculation Tools (THIS WEEK)**
+**Priority: Module 1 (Aire Limpio) & Module 2 (Agua Limpia)**
+
+These are the most in-demand modules and have clear ROI calculations that drive purchase decisions.
+
+**Action Items:**
+1. Build Module 1 tools (5 tools) - 2 days
+2. Build Module 2 tools (5 tools) - 2 days
+3. Test all tools save data correctly - 1 day
+4. Verify data appears in impact reports - 1 day
+
+#### **Phase 2: Advanced Tools (NEXT WEEK)**
+**Priority: Module 4 (Cero Residuos) & Module 5 (Comercio Justo)**
+
+These modules require more complex data structures (marketplaces, supply chains).
+
+**Action Items:**
+1. Build Module 4 tools (5 tools) - 2 days
+2. Build Module 5 tools (5 tools) - 2 days
+3. Test marketplace & mapping features - 1 day
+4. Integration testing across modules - 1 day
+
+#### **Phase 3: Integration Tools (WEEK 3)**
+**Priority: Module 6 (Integración de Impacto)**
+
+This module pulls data from all previous modules, so it must be built last.
+
+**Action Items:**
+1. Build Module 6 tools (5 tools) - 2 days
+2. Test cross-module data aggregation - 1 day
+3. ESG report generation testing - 1 day
+4. Full platform integration test - 1 day
+
+---
+
+### **🎯 Success Criteria**
+
+**For Each Tool:**
+- ✅ Matches activity_config in database
+- ✅ Saves responses to `lesson_responses` table
+- ✅ Uploads evidence to Supabase Storage
+- ✅ Works on mobile (responsive design)
+- ✅ Provides immediate visual feedback
+- ✅ Includes help/example data
+- ✅ Data accessible for reports
+
+**For Each Module:**
+- ✅ All 5 lessons have at least 1 tool
+- ✅ Tools progress from simple (Lesson 1) to complex (Lesson 5)
+- ✅ Tools build on each other (data flows forward)
+- ✅ 100% completion possible
+- ✅ Certificate earned upon completion
+
+---
+
+### **📊 Technical Implementation Notes**
+
+#### **Tool Component Architecture**
+```typescript
+// components/module-tools/Module[X]Tools.tsx
+
+export function Module[X]Tool({ 
+  moduleId, 
+  lessonId, 
+  enrollmentId 
+}: ToolProps) {
+  const [responses, setResponses] = useState({})
+  const [loading, setLoading] = useState(false)
+  
+  const handleSave = async () => {
+    const res = await fetch('/api/activities/save-response', {
+      method: 'POST',
+      body: JSON.stringify({
+        enrollmentId,
+        lessonId,
+        responses,
+        activityType: 'tool_[tool_name]'
+      })
+    })
+    // Update progress
+  }
+  
+  return (
+    <div className="tool-container">
+      {/* Tool UI */}
+      <button onClick={handleSave}>Save Progress</button>
+    </div>
+  )
+}
+```
+
+#### **Data Storage Pattern**
+All tool responses saved to `lesson_responses.responses` (JSONB):
+
+```json
+{
+  "tool_air_quality_assessment": {
+    "location": "Mexico City",
+    "factory_type": "Manufacturing",
+    "baseline_score": 45,
+    "risk_areas": ["smokestacks", "loading_dock"],
+    "timestamp": "2025-11-09T10:00:00Z"
+  },
+  "tool_roi_calculator": {
+    "current_costs": 50000,
+    "improvement_costs": 30000,
+    "projected_savings": 80000,
+    "roi_months": 18
+  }
+}
+```
+
+#### **Evidence Files**
+Stored in Supabase Storage: `employee-evidence/{userId}/{moduleId}/{lessonId}/{filename}`
+
+---
+
+### **🔥 IMMEDIATE NEXT STEPS**
+
+1. **TODAY**: Start building Module 1 tools
+2. **THIS WEEK**: Complete Module 1 & 2 tools
+3. **NEXT WEEK**: Build Module 4 & 5 tools
+4. **WEEK 3**: Build Module 6 integration tools
+5. **ONGOING**: Test with real users, gather feedback, iterate
 
 ---
 
