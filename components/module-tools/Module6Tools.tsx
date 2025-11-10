@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { LayoutDashboard, FileText, Users, Award, TrendingUp, Target } from 'lucide-react'
+import { useToolDataSaver } from '@/lib/hooks/useToolDataSaver'
 
 // =========================================================
 // TOOL 1: Impact Dashboard Builder
@@ -14,10 +15,41 @@ interface DashboardMetric {
   trend: 'up' | 'down' | 'stable'
 }
 
-export function ImpactDashboardBuilder({ onBuild }: { onBuild?: (data: any) => void }) {
+export function ImpactDashboardBuilder({ onBuild, enrollmentId, moduleId, lessonId }: { 
+  onBuild?: (data: any) => void
+  enrollmentId?: string
+  moduleId?: string
+  lessonId?: string
+}) {
+  const { saveToolData, loadToolData } = useToolDataSaver()
+
   const [selectedMetrics, setSelectedMetrics] = useState<string[]>([])
   const [dashboardName, setDashboardName] = useState('')
   const [built, setBuilt] = useState(false)
+
+  useEffect(() => {
+    if (enrollmentId && moduleId && lessonId) {
+      loadToolData({ lesson_id: lessonId, module_id: moduleId, tool_name: 'impact-dashboard-builder' })
+        .then(data => { 
+          if (data?.selectedMetrics) setSelectedMetrics(data.selectedMetrics)
+          if (data?.dashboardName) setDashboardName(data.dashboardName)
+        })
+    }
+  }, [enrollmentId, moduleId, lessonId])
+
+  const handleBuildWithSave = async (data: any) => {
+    if (enrollmentId && moduleId && lessonId) {
+      await saveToolData({
+        enrollment_id: enrollmentId,
+        module_id: moduleId,
+        lesson_id: lessonId,
+        tool_name: 'impact-dashboard-builder',
+        tool_data: data,
+        tool_type: 'planner'
+      })
+    }
+    onBuild?.(data)
+  }
 
   const availableMetrics = [
     { module: '🌬️ Aire Limpio', metric: 'AQI Promedio', value: 'air-quality-aqi' },
@@ -148,7 +180,27 @@ export function ImpactDashboardBuilder({ onBuild }: { onBuild?: (data: any) => v
 // =========================================================
 // TOOL 2: ESG Report Generator
 // =========================================================
-export function ESGReportGenerator({ onGenerate }: { onGenerate?: (data: any) => void }) {
+export function ESGReportGenerator({ onGenerate, enrollmentId, moduleId, lessonId }: { 
+  onGenerate?: (data: any) => void
+  enrollmentId?: string
+  moduleId?: string
+  lessonId?: string
+}) {
+  const { saveToolData } = useToolDataSaver()
+  
+  const handleGenerateWithSave = async (data: any) => {
+    if (enrollmentId && moduleId && lessonId) {
+      await saveToolData({
+        enrollment_id: enrollmentId,
+        module_id: moduleId,
+        lesson_id: lessonId,
+        tool_name: 'esg-report-generator',
+        tool_data: data,
+        tool_type: 'calculator'
+      })
+    }
+    onGenerate?.(data)
+  }
   const [reportType, setReportType] = useState('')
   const [period, setPeriod] = useState('')
   const [generated, setGenerated] = useState(false)
@@ -295,7 +347,27 @@ interface Stakeholder {
   interests: string[]
 }
 
-export function StakeholderCommunicationPlanner({ onPlan }: { onPlan?: (data: any) => void }) {
+export function StakeholderCommunicationPlanner({ onPlan, enrollmentId, moduleId, lessonId }: { 
+  onPlan?: (data: any) => void
+  enrollmentId?: string
+  moduleId?: string
+  lessonId?: string
+}) {
+  const { saveToolData } = useToolDataSaver()
+  
+  const handlePlanWithSave = async (data: any) => {
+    if (enrollmentId && moduleId && lessonId) {
+      await saveToolData({
+        enrollment_id: enrollmentId,
+        module_id: moduleId,
+        lesson_id: lessonId,
+        tool_name: 'stakeholder-communication-planner',
+        tool_data: data,
+        tool_type: 'planner'
+      })
+    }
+    onPlan?.(data)
+  }
   const [stakeholders, setStakeholders] = useState<Stakeholder[]>([])
   const [showForm, setShowForm] = useState(false)
   const [currentStakeholder, setCurrentStakeholder] = useState<Partial<Stakeholder>>({
@@ -444,7 +516,25 @@ export function StakeholderCommunicationPlanner({ onPlan }: { onPlan?: (data: an
 // =========================================================
 // TOOL 4: Certification Hub
 // =========================================================
-export function CertificationHub() {
+export function CertificationHub({ enrollmentId, moduleId, lessonId }: { 
+  enrollmentId?: string
+  moduleId?: string
+  lessonId?: string
+} = {}) {
+  const { saveToolData } = useToolDataSaver()
+  
+  const handleCertClick = async (certName: string) => {
+    if (enrollmentId && moduleId && lessonId) {
+      await saveToolData({
+        enrollment_id: enrollmentId,
+        module_id: moduleId,
+        lesson_id: lessonId,
+        tool_name: 'certification-hub',
+        tool_data: { viewedCert: certName, timestamp: new Date().toISOString() },
+        tool_type: 'tracker'
+      })
+    }
+  }
   const [certifications] = useState([
     { module: 'Aire Limpio', status: 'earned', date: '2025-10-15' },
     { module: 'Agua Limpia', status: 'earned', date: '2025-11-02' },
@@ -536,7 +626,34 @@ interface Goal {
   status: 'on_track' | 'at_risk' | 'completed'
 }
 
-export function ContinuousImprovementTracker({ onTrack }: { onTrack?: (data: any) => void }) {
+export function ContinuousImprovementTracker({ onTrack, enrollmentId, moduleId, lessonId }: { 
+  onTrack?: (data: any) => void
+  enrollmentId?: string
+  moduleId?: string
+  lessonId?: string
+}) {
+  const { saveToolData, loadToolData } = useToolDataSaver()
+
+  useEffect(() => {
+    if (enrollmentId && moduleId && lessonId) {
+      loadToolData({ lesson_id: lessonId, module_id: moduleId, tool_name: 'continuous-improvement-tracker' })
+        .then(data => { if (data?.goals) setGoals(data.goals) })
+    }
+  }, [enrollmentId, moduleId, lessonId])
+
+  const handleTrackWithSave = async (data: any) => {
+    if (enrollmentId && moduleId && lessonId) {
+      await saveToolData({
+        enrollment_id: enrollmentId,
+        module_id: moduleId,
+        lesson_id: lessonId,
+        tool_name: 'continuous-improvement-tracker',
+        tool_data: data,
+        tool_type: 'tracker'
+      })
+    }
+    onTrack?.(data)
+  }
   const [goals, setGoals] = useState<Goal[]>([])
   const [showForm, setShowForm] = useState(false)
   const [currentGoal, setCurrentGoal] = useState<Partial<Goal>>({
