@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { TrendingUp, Award, Clock, Target, Leaf, DollarSign, Users, Zap, Trophy, Star } from 'lucide-react'
+import { TrendingUp, Award, Clock, Target, Leaf, DollarSign, Users, Zap, Trophy, Star, FileText, Download } from 'lucide-react'
+import Link from 'next/link'
 
 export default function EmployeeImpactPage() {
   const [loading, setLoading] = useState(true)
@@ -155,6 +156,34 @@ export default function EmployeeImpactPage() {
               <div className="text-sm text-slate-600">Ahorros Generados</div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* ESG Report Download Section */}
+      <div className="bg-gradient-to-br from-teal-50 to-blue-50 border-2 border-teal-300 rounded-xl p-6 sm:p-8">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-teal-600 rounded-lg flex items-center justify-center flex-shrink-0">
+              <FileText className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-slate-900 mb-1">Reportes ESG</h3>
+              <p className="text-slate-700 text-sm mb-2">
+                Descarga reportes detallados en PDF y Excel con tus métricas de impacto ambiental
+              </p>
+              <div className="flex items-center gap-2 text-xs text-slate-600">
+                <Download className="w-4 h-4" />
+                <span>Incluye: CO₂ reducido, agua ahorrada, residuos evitados y más</span>
+              </div>
+            </div>
+          </div>
+          <Link
+            href="/employee-portal/mi-impacto"
+            className="flex-shrink-0 bg-gradient-to-r from-teal-600 to-blue-600 text-white px-6 py-3 rounded-lg hover:scale-105 transition-transform font-medium flex items-center gap-2 shadow-lg"
+          >
+            <FileText className="w-5 h-5" />
+            Ver Reportes ESG
+          </Link>
         </div>
       </div>
 
