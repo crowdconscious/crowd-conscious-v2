@@ -944,7 +944,7 @@ export default function LessonPage({
           </p>
           <button
             onClick={completeLesson}
-            disabled={completing || (!activityCompleted && showActivity)}
+            disabled={completing}
             data-complete-lesson
             className="bg-white text-teal-600 px-6 sm:px-8 py-3 sm:py-4 rounded-lg sm:rounded-xl font-bold text-base sm:text-lg hover:scale-105 transition-transform disabled:opacity-50 disabled:hover:scale-100 shadow-lg flex items-center gap-2 mx-auto min-h-[44px]"
           >
@@ -960,7 +960,7 @@ export default function LessonPage({
           </button>
           {showActivity && !activityCompleted && (
             <p className="text-xs sm:text-sm text-white/80 mt-3 sm:mt-4">
-              Completa la actividad práctica para continuar
+              💡 Tip: Completa la actividad práctica para obtener el máximo beneficio
             </p>
           )}
         </div>

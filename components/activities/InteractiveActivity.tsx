@@ -171,7 +171,16 @@ export default function InteractiveActivity({
   const generateQuestions = (): ActivityQuestion[] => {
     const questions: ActivityQuestion[] = []
 
-    // Add reflection prompts as textarea questions
+    // PRE-ASSESSMENT: Knowledge level (always add)
+    questions.push({
+      id: 'pre_assessment',
+      type: 'multiple_choice',
+      question: '¿Cuál es tu nivel de conocimiento actual sobre este tema?',
+      options: ['Ninguno - Es mi primera vez', 'Básico - He escuchado algo', 'Intermedio - Tengo experiencia', 'Avanzado - Soy experto'],
+      required: true
+    })
+
+    // REFLECTION QUESTIONS: Add from reflectionPrompts OR generate defaults
     if (activity.reflectionPrompts && activity.reflectionPrompts.length > 0) {
       activity.reflectionPrompts.forEach((prompt, index) => {
         questions.push({
@@ -179,28 +188,82 @@ export default function InteractiveActivity({
           type: 'textarea',
           question: prompt,
           required: true,
-          placeholder: 'Escribe tu reflexión aquí...'
+          placeholder: 'Escribe tu reflexión aquí (mínimo 50 caracteres)...'
         })
+      })
+    } else {
+      // DEFAULT REFLECTION QUESTIONS if none provided
+      questions.push({
+        id: 'key_learning',
+        type: 'textarea',
+        question: 'Después de esta lección, ¿qué es lo más importante que aprendiste?',
+        required: true,
+        placeholder: 'Describe los conceptos o ideas clave que te llevas de esta lección...'
+      })
+      
+      questions.push({
+        id: 'application_plan',
+        type: 'textarea',
+        question: '¿Cómo planeas aplicar este conocimiento en tu organización?',
+        required: true,
+        placeholder: 'Describe acciones concretas que tomarás basadas en esta lección...'
+      })
+      
+      questions.push({
+        id: 'challenges_identified',
+        type: 'textarea',
+        question: '¿Qué desafíos anticipas al implementar esto?',
+        required: false,
+        placeholder: 'Menciona obstáculos potenciales y cómo podrías superarlos...'
       })
     }
 
-    // Add success criteria as checklist
+    // ACTIVITY STEPS AS CHECKLIST: Convert steps to completion checklist
+    if (activity.instructions && activity.instructions.length > 0) {
+      questions.push({
+        id: 'steps_completed',
+        type: 'checkbox',
+        question: '¿Cuáles de estos pasos has completado?',
+        options: activity.instructions.map((step, idx) => `Paso ${idx + 1}: ${step.substring(0, 100)}...`),
+        required: false
+      })
+    }
+
+    // SUCCESS CRITERIA as checklist (if provided)
     if (activity.successCriteria && activity.successCriteria.length > 0) {
       questions.push({
-        id: 'success_criteria_checklist',
+        id: 'success_criteria',
         type: 'checkbox',
-        question: '¿Qué criterios de éxito has completado?',
+        question: '¿Qué criterios de éxito has logrado?',
         options: activity.successCriteria,
         required: false
       })
     }
 
-    // Add file upload for evidence
+    // CONFIDENCE RATING: How confident do they feel?
+    questions.push({
+      id: 'confidence_level',
+      type: 'rating',
+      question: '¿Qué tan seguro te sientes para implementar lo aprendido?',
+      options: ['1 - Nada seguro', '2 - Poco seguro', '3 - Moderadamente seguro', '4 - Bastante seguro', '5 - Muy seguro'],
+      required: true
+    })
+
+    // EVIDENCE UPLOAD: Photos, documents, etc.
     questions.push({
       id: 'evidence_upload',
       type: 'file_upload',
-      question: 'Sube evidencia de tu trabajo (fotos, documentos, etc.)',
+      question: 'Sube evidencia de tu trabajo (fotos, documentos, capturas de pantalla, etc.)',
       required: false
+    })
+
+    // ADDITIONAL NOTES: Optional free text
+    questions.push({
+      id: 'additional_notes',
+      type: 'textarea',
+      question: 'Notas adicionales o comentarios (opcional)',
+      required: false,
+      placeholder: 'Cualquier observación, pregunta o comentario adicional...'
     })
 
     return questions
@@ -300,6 +363,43 @@ export default function InteractiveActivity({
                     </label>
                   )
                 })}
+              </div>
+            )}
+
+            {/* Rating Scale */}
+            {question.type === 'rating' && question.options && (
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                {question.options.map((option, optIndex) => (
+                  <label
+                    key={optIndex}
+                    className={`flex-1 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                      responses[question.id] === option
+                        ? 'border-teal-600 bg-teal-50 shadow-lg'
+                        : 'border-slate-300 hover:border-teal-400 hover:bg-slate-50'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name={question.id}
+                      value={option}
+                      checked={responses[question.id] === option}
+                      onChange={(e) => handleResponseChange(question.id, e.target.value)}
+                      className="sr-only"
+                    />
+                    <div className="text-center">
+                      <div className={`text-2xl sm:text-3xl font-bold mb-1 ${
+                        responses[question.id] === option ? 'text-teal-600' : 'text-slate-700'
+                      }`}>
+                        {optIndex + 1}
+                      </div>
+                      <div className={`text-xs sm:text-sm ${
+                        responses[question.id] === option ? 'text-teal-700' : 'text-slate-600'
+                      }`}>
+                        {option.split(' - ')[1] || option}
+                      </div>
+                    </div>
+                  </label>
+                ))}
               </div>
             )}
 
