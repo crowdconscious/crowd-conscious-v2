@@ -284,14 +284,14 @@ async function generateModuleReport(
     },
     participation: {
       total_enrollments: enrollments?.length || 0,
-      completed: enrollments?.filter(e => e.completed).length || 0,
-      in_progress: enrollments?.filter(e => e.status === 'in_progress').length || 0,
+      completed: enrollments?.filter((e: any) => e.completed).length || 0,
+      in_progress: enrollments?.filter((e: any) => e.status === 'in_progress').length || 0,
       completion_rate: enrollments?.length ? 
-        ((enrollments.filter(e => e.completed).length / enrollments.length) * 100).toFixed(1) : 0
+        ((enrollments.filter((e: any) => e.completed).length / enrollments.length) * 100).toFixed(1) : 0
     },
     tools: {
       total_uses: allToolResults.length,
-      unique_tools: [...new Set(allToolResults.map(t => t.tool_name))].length,
+      unique_tools: [...new Set(allToolResults.map((t: any) => t.tool_name))].length,
       results: allToolResults
     },
     impact: aggregateImpact,
@@ -403,7 +403,7 @@ async function generateCorporateReport(
     },
     tools: {
       total_uses: companyToolResults.length,
-      unique_tools: [...new Set(companyToolResults.map(t => t.tool_name))].length
+      unique_tools: [...new Set(companyToolResults.map((t: any) => t.tool_name))].length
     },
     impact: companyImpact,
     by_core_value: groupImpactByCoreValue(enrollments, activities),
@@ -517,7 +517,7 @@ function calculateAggregateImpact(toolResults: any[]) {
  * Calculate company-wide impact
  */
 function calculateCompanyWideImpact(toolResults: any[]) {
-  return calculateAggregateImpact(toolResults.map(t => ({ ...t, user_id: t.tool_name })))
+  return calculateAggregateImpact(toolResults.map((t: any) => ({ ...t, user_id: t.tool_name })))
 }
 
 /**
