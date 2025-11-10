@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { BookOpen, Award, TrendingUp, Home, LogOut } from 'lucide-react'
+import { BookOpen, Award, TrendingUp, Home, LogOut, FileText } from 'lucide-react'
 import SignOutButton from '@/components/SignOutButton'
 
 export default async function EmployeeLayout({
@@ -54,6 +54,7 @@ export default async function EmployeeLayout({
     { name: 'Cursos', href: '/employee-portal/courses', icon: BookOpen },
     { name: 'Certificaciones', href: '/employee-portal/certifications', icon: Award },
     { name: 'Mi Impacto', href: '/employee-portal/impact', icon: TrendingUp },
+    { name: 'Reportes ESG', href: '/employee-portal/mi-impacto', icon: FileText },
   ]
 
   return (
