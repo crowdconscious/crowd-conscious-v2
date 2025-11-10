@@ -41,7 +41,7 @@ export default async function CorporateLayout({
     { name: 'Dashboard', href: '/corporate/dashboard', icon: TrendingUp },
     { name: 'Empleados', href: '/corporate/employees', icon: Users },
     { name: 'Progreso', href: '/corporate/progress', icon: FileText },
-    { name: 'Impacto', href: '/corporate/impact', icon: Award },
+    { name: 'Reportes ESG', href: '/corporate/esg-reports', icon: FileText, badge: 'PREMIUM' },
     { name: 'Certificados', href: '/corporate/certificates', icon: BadgeCheck },
     { name: 'Configuración', href: '/corporate/settings', icon: Settings },
   ]
@@ -94,7 +94,12 @@ export default async function CorporateLayout({
                       className="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-700 hover:bg-slate-50 hover:text-teal-600 transition-colors"
                     >
                       <Icon className="w-5 h-5" />
-                      <span className="font-medium">{item.name}</span>
+                      <span className="font-medium flex-1">{item.name}</span>
+                      {item.badge && (
+                        <span className="text-xs bg-emerald-600 text-white px-2 py-0.5 rounded-full font-bold">
+                          {item.badge}
+                        </span>
+                      )}
                     </Link>
                   )
                 })}
