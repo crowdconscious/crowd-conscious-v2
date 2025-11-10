@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { TestTube, Droplets, LineChart, AlertTriangle, CheckCircle } from 'lucide-react'
+import { useToolDataSaver } from '@/lib/hooks/useToolDataSaver'
 
 // Water Quality Tester Log
 interface QualityTest {
@@ -17,9 +18,13 @@ interface QualityTest {
 
 interface WaterQualityTestLogProps {
   onSave?: (tests: QualityTest[]) => void
+  // ESG Reporting Props
+  enrollmentId?: string
+  moduleId?: string
+  lessonId?: string
 }
 
-export function WaterQualityTestLog({ onSave }: WaterQualityTestLogProps) {
+export function WaterQualityTestLog({ onSave, enrollmentId, moduleId, lessonId }: WaterQualityTestLogProps) {
   const [tests, setTests] = useState<QualityTest[]>([])
   const [showForm, setShowForm] = useState(false)
   const [currentTest, setCurrentTest] = useState({
@@ -30,12 +35,33 @@ export function WaterQualityTestLog({ onSave }: WaterQualityTestLogProps) {
     notes: ''
   })
 
+  // ✨ ESG Data Saving
+  const { saveToolData, loadToolData, loading: saving } = useToolDataSaver()
+
+  // ✨ Load previous data on mount
+  useEffect(() => {
+    if (enrollmentId && moduleId && lessonId) {
+      const loadPrevious = async () => {
+        const savedData = await loadToolData({
+          lesson_id: lessonId,
+          module_id: moduleId,
+          tool_name: 'water-quality-tester'
+        })
+
+        if (savedData && savedData.tests) {
+          setTests(savedData.tests)
+        }
+      }
+      loadPrevious()
+    }
+  }, [enrollmentId, moduleId, lessonId])
+
   const standards = {
     ph: { min: 6.5, max: 8.5, name: 'pH' },
     turbidity: { max: 5, name: 'Turbidez (NTU)' }
   }
 
-  const addTest = () => {
+  const addTest = async () => {
     if (currentTest.location && currentTest.ph) {
       const ph = parseFloat(currentTest.ph)
       const turbidity = parseFloat(currentTest.turbidity) || 0
@@ -65,6 +91,18 @@ export function WaterQualityTestLog({ onSave }: WaterQualityTestLogProps) {
         notes: ''
       })
       setShowForm(false)
+
+      // ✨ Save to database for ESG reporting
+      if (enrollmentId && moduleId && lessonId) {
+        await saveToolData({
+          enrollment_id: enrollmentId,
+          module_id: moduleId,
+          lesson_id: lessonId,
+          tool_name: 'water-quality-tester',
+          tool_data: { tests: updatedTests },
+          tool_type: 'tracker'
+        })
+      }
 
       if (onSave) {
         onSave(updatedTests)
@@ -274,9 +312,13 @@ interface RecyclingSystem {
 
 interface RecyclingSystemDesignerProps {
   onDesign?: (system: RecyclingSystem) => void
+  // ESG Reporting Props
+  enrollmentId?: string
+  moduleId?: string
+  lessonId?: string
 }
 
-export function RecyclingSystemDesigner({ onDesign }: RecyclingSystemDesignerProps) {
+export function RecyclingSystemDesigner({ onDesign, enrollmentId, moduleId, lessonId }: RecyclingSystemDesignerProps) {
   const [system, setSystem] = useState<Partial<RecyclingSystem>>({
     type: 'greywater',
     capacity: 500,
@@ -286,6 +328,30 @@ export function RecyclingSystemDesigner({ onDesign }: RecyclingSystemDesignerPro
     reuseFor: []
   })
   const [calculated, setCalculated] = useState(false)
+
+  // ✨ ESG Data Saving
+  const { saveToolData, loadToolData, loading: saving } = useToolDataSaver()
+
+  // ✨ Load previous data on mount
+  useEffect(() => {
+    if (enrollmentId && moduleId && lessonId) {
+      const loadPrevious = async () => {
+        const savedData = await loadToolData({
+          lesson_id: lessonId,
+          module_id: moduleId,
+          tool_name: 'recycling-system-designer'
+        })
+
+        if (savedData && savedData.system) {
+          setSystem(savedData.system)
+          if (savedData.calculated) {
+            setCalculated(true)
+          }
+        }
+      }
+      loadPrevious()
+    }
+  }, [enrollmentId, moduleId, lessonId])
 
   const treatmentOptions = {
     greywater: ['Filtración física', 'Biorreactor', 'Humedal artificial', 'UV + Cloración'],
@@ -302,7 +368,7 @@ export function RecyclingSystemDesigner({ onDesign }: RecyclingSystemDesignerPro
     'Procesos industriales'
   ]
 
-  const calculate = () => {
+  const calculate = async () => {
     const waterPrice = 15 // MXN per m³
     const dailySavings = (system.capacity! / 1000) * waterPrice
     const monthlySavings = dailySavings * 22
@@ -310,21 +376,44 @@ export function RecyclingSystemDesigner({ onDesign }: RecyclingSystemDesignerPro
 
     const paybackMonths = system.installCost! / monthlySavings
 
-    setCalculated(true)
-
-    if (onDesign) {
-      onDesign(system as RecyclingSystem)
-    }
-
-    return {
+    const results = {
       dailySavings,
       monthlySavings,
       yearlySavings,
       paybackMonths
     }
+
+    setCalculated(true)
+
+    // ✨ Save to database for ESG reporting
+    if (enrollmentId && moduleId && lessonId) {
+      await saveToolData({
+        enrollment_id: enrollmentId,
+        module_id: moduleId,
+        lesson_id: lessonId,
+        tool_name: 'recycling-system-designer',
+        tool_data: { system, calculated: true, results },
+        tool_type: 'planner'
+      })
+    }
+
+    if (onDesign) {
+      onDesign(system as RecyclingSystem)
+    }
+
+    return results
   }
 
-  const results = calculated ? calculate() : null
+  const calculateResults = () => {
+    const waterPrice = 15 // MXN per m³
+    const dailySavings = (system.capacity! / 1000) * waterPrice
+    const monthlySavings = dailySavings * 22
+    const yearlySavings = dailySavings * 250
+    const paybackMonths = system.installCost! / monthlySavings
+    return { dailySavings, monthlySavings, yearlySavings, paybackMonths }
+  }
+
+  const results = calculated ? calculateResults() : null
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-MX', {
@@ -462,7 +551,7 @@ export function RecyclingSystemDesigner({ onDesign }: RecyclingSystemDesignerPro
           </div>
 
           <button
-            onClick={() => setCalculated(true)}
+            onClick={calculate}
             disabled={!system.capacity || !system.treatmentMethod || !system.installCost}
             className="w-full bg-gradient-to-r from-blue-600 to-teal-600 text-white py-3 rounded-lg font-bold text-sm sm:text-base hover:scale-105 transition-transform disabled:opacity-50 disabled:hover:scale-100 min-h-[44px]"
           >
