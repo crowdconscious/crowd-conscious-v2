@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import CartButton from '../../components/cart/CartButton'
 import { createClient } from '@/lib/supabase-client'
+import ModuleReviewsSection from '@/components/reviews/ModuleReviewsSection'
 
 interface ModuleDetailClientProps {
   module: any
@@ -17,6 +18,7 @@ export default function ModuleDetailClient({ module }: ModuleDetailClientProps) 
   const [user, setUser] = useState<any>(null)
   const [profile, setProfile] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [isEnrolled, setIsEnrolled] = useState(false)
   
   // Fetch user and profile data
   useEffect(() => {
@@ -34,13 +36,23 @@ export default function ModuleDetailClient({ module }: ModuleDetailClientProps) 
           .single()
         
         setProfile(userProfile)
+
+        // Check if user is enrolled in this module
+        const { data: enrollment } = await supabase
+          .from('course_enrollments')
+          .select('id')
+          .eq('user_id', currentUser.id)
+          .eq('module_id', module.id)
+          .single()
+        
+        setIsEnrolled(!!enrollment)
       }
       
       setLoading(false)
     }
     
     fetchUserData()
-  }, [])
+  }, [module.id])
   
   // Determine if user is corporate admin
   const isCorporate = profile?.corporate_role === 'admin' && profile?.corporate_account_id
@@ -486,6 +498,14 @@ export default function ModuleDetailClient({ module }: ModuleDetailClientProps) 
                   Compartir
                 </button>
               </div>
+
+              {/* Reviews Section */}
+              <ModuleReviewsSection
+                moduleId={module.id}
+                moduleTitle={module.title}
+                currentUserId={user?.id}
+                isEnrolled={isEnrolled}
+              />
             </div>
           </div>
         </div>

@@ -1,14 +1,16 @@
 import { createClient } from '@/lib/supabase-server'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+
+export const dynamic = 'force-dynamic'
 
 // GET: Fetch reviews for a module
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
+    const searchParams = request.nextUrl.searchParams
     const moduleId = searchParams.get('moduleId')
 
     if (!moduleId) {
-      return NextResponse.json({ error: 'Module ID required' }, { status: 400 })
+      return NextResponse.json({ error: 'moduleId required' }, { status: 400 })
     }
 
     const supabase = await createClient()
@@ -18,32 +20,28 @@ export async function GET(request: Request) {
       .from('module_reviews')
       .select(`
         *,
-        user:user_id (
-          id,
-          profiles (
-            full_name,
-            avatar_url
-          )
+        profiles:user_id (
+          full_name,
+          avatar_url
         )
       `)
       .eq('module_id', moduleId)
-      .eq('is_flagged', false)
       .order('created_at', { ascending: false })
 
     if (error) {
-      console.error('Error fetching module reviews:', error)
+      console.error('Error fetching reviews:', error)
       return NextResponse.json({ error: 'Failed to fetch reviews' }, { status: 500 })
     }
 
-    return NextResponse.json({ reviews })
-  } catch (error) {
-    console.error('Unexpected error:', error)
+    return NextResponse.json({ reviews: reviews || [] }, { status: 200 })
+  } catch (error: any) {
+    console.error('Error in reviews API:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 // POST: Create a new review
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -53,18 +51,13 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { moduleId, rating, title, reviewText, wouldRecommend, completionStatus } = body
+    const { moduleId, rating, title, review_text, would_recommend } = body
 
-    // Validate required fields
     if (!moduleId || !rating) {
-      return NextResponse.json({ error: 'Module ID and rating are required' }, { status: 400 })
+      return NextResponse.json({ error: 'moduleId and rating required' }, { status: 400 })
     }
 
-    if (rating < 1 || rating > 5) {
-      return NextResponse.json({ error: 'Rating must be between 1 and 5' }, { status: 400 })
-    }
-
-    // Check if user is enrolled in this module
+    // Verify user is enrolled in this module
     const { data: enrollment } = await supabase
       .from('course_enrollments')
       .select('id, completed')
@@ -73,55 +66,49 @@ export async function POST(request: Request) {
       .single()
 
     if (!enrollment) {
-      return NextResponse.json({ 
-        error: 'You must be enrolled in this module to leave a review' 
-      }, { status: 403 })
-    }
-
-    // Check if user already reviewed this module
-    const { data: existingReview } = await supabase
-      .from('module_reviews')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('module_id', moduleId)
-      .single()
-
-    if (existingReview) {
-      return NextResponse.json({ 
-        error: 'You have already reviewed this module. You can edit your existing review.' 
-      }, { status: 409 })
+      return NextResponse.json({ error: 'Must be enrolled to review' }, { status: 403 })
     }
 
     // Create review
-    const { data: review, error: insertError } = await supabase
+    const { data: review, error } = await supabase
       .from('module_reviews')
       .insert({
         module_id: moduleId,
         user_id: user.id,
-        rating: rating,
+        rating,
         title: title || null,
-        review_text: reviewText || null,
-        would_recommend: wouldRecommend !== undefined ? wouldRecommend : true,
-        completion_status: completionStatus || (enrollment.completed ? 'completed' : 'in_progress'),
-        is_verified_purchase: true // They're enrolled, so it's verified
+        review_text: review_text || null,
+        would_recommend: would_recommend !== false,
+        completion_status: enrollment.completed ? 'completed' : 'in_progress',
+        is_verified_purchase: true
       })
-      .select()
+      .select(`
+        *,
+        profiles:user_id (
+          full_name,
+          avatar_url
+        )
+      `)
       .single()
 
-    if (insertError) {
-      console.error('Error creating review:', insertError)
+    if (error) {
+      // Handle duplicate review error
+      if (error.code === '23505') {
+        return NextResponse.json({ error: 'Ya has dejado una reseña para este módulo' }, { status: 409 })
+      }
+      console.error('Error creating review:', error)
       return NextResponse.json({ error: 'Failed to create review' }, { status: 500 })
     }
 
     return NextResponse.json({ review }, { status: 201 })
-  } catch (error) {
-    console.error('Unexpected error:', error)
+  } catch (error: any) {
+    console.error('Error in create review API:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
-// PUT: Update an existing review
-export async function PUT(request: Request) {
+// PUT: Update existing review
+export async function PUT(request: NextRequest) {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -131,25 +118,30 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json()
-    const { reviewId, rating, title, reviewText, wouldRecommend } = body
+    const { reviewId, rating, title, review_text, would_recommend } = body
 
     if (!reviewId) {
-      return NextResponse.json({ error: 'Review ID required' }, { status: 400 })
+      return NextResponse.json({ error: 'reviewId required' }, { status: 400 })
     }
 
-    // Update review (RLS ensures they can only update their own)
     const { data: review, error } = await supabase
       .from('module_reviews')
       .update({
-        rating: rating,
-        title: title,
-        review_text: reviewText,
-        would_recommend: wouldRecommend,
+        rating: rating !== undefined ? rating : undefined,
+        title: title !== undefined ? title : undefined,
+        review_text: review_text !== undefined ? review_text : undefined,
+        would_recommend: would_recommend !== undefined ? would_recommend : undefined,
         updated_at: new Date().toISOString()
       })
       .eq('id', reviewId)
       .eq('user_id', user.id)
-      .select()
+      .select(`
+        *,
+        profiles:user_id (
+          full_name,
+          avatar_url
+        )
+      `)
       .single()
 
     if (error) {
@@ -157,15 +149,15 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: 'Failed to update review' }, { status: 500 })
     }
 
-    return NextResponse.json({ review })
-  } catch (error) {
-    console.error('Unexpected error:', error)
+    return NextResponse.json({ review }, { status: 200 })
+  } catch (error: any) {
+    console.error('Error in update review API:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
-// DELETE: Delete a review
-export async function DELETE(request: Request) {
+// DELETE: Delete review
+export async function DELETE(request: NextRequest) {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -174,11 +166,11 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { searchParams } = new URL(request.url)
+    const searchParams = request.nextUrl.searchParams
     const reviewId = searchParams.get('reviewId')
 
     if (!reviewId) {
-      return NextResponse.json({ error: 'Review ID required' }, { status: 400 })
+      return NextResponse.json({ error: 'reviewId required' }, { status: 400 })
     }
 
     const { error } = await supabase
@@ -192,10 +184,9 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'Failed to delete review' }, { status: 500 })
     }
 
-    return NextResponse.json({ message: 'Review deleted successfully' })
-  } catch (error) {
-    console.error('Unexpected error:', error)
+    return NextResponse.json({ message: 'Review deleted' }, { status: 200 })
+  } catch (error: any) {
+    console.error('Error in delete review API:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
-
