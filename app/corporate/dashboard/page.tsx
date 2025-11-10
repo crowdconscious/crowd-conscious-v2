@@ -318,12 +318,15 @@ export default async function CorporateDashboard() {
               </Link>
               
               <Link
-                href="/corporate/impact"
-                className="p-4 border-2 border-slate-200 rounded-lg hover:border-green-600 hover:bg-green-50 transition-colors group min-h-[100px] flex flex-col"
+                href="/corporate/esg-reports"
+                className="p-4 border-2 border-emerald-300 rounded-lg bg-gradient-to-br from-emerald-50 to-teal-50 hover:border-emerald-500 hover:shadow-lg transition-all group min-h-[100px] flex flex-col"
               >
-                <Award className="w-7 h-7 sm:w-8 sm:h-8 text-slate-400 group-hover:text-green-600 mb-2" />
-                <div className="font-medium text-slate-900 text-sm sm:text-base">Métricas de Impacto</div>
-                <div className="text-xs sm:text-sm text-slate-500 mt-1">Ver impacto y ahorros</div>
+                <Award className="w-7 h-7 sm:w-8 sm:h-8 text-emerald-600 group-hover:text-emerald-700 mb-2" />
+                <div className="font-medium text-slate-900 text-sm sm:text-base flex items-center gap-1">
+                  Reportes ESG
+                  <span className="text-xs bg-emerald-600 text-white px-1.5 py-0.5 rounded-full">PREMIUM</span>
+                </div>
+                <div className="text-xs sm:text-sm text-emerald-700 mt-1">Ver impacto y descargar reportes</div>
               </Link>
 
               {/* Link to take courses as learner */}
