@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Trash2, Recycle, CheckSquare, TrendingUp, Target, Leaf, Award } from 'lucide-react'
+import { useToolDataSaver } from '@/lib/hooks/useToolDataSaver'
 
 // Tool 1: Waste Stream Analyzer
 interface WasteCategory {
@@ -21,7 +22,14 @@ interface WasteAnalysis {
   recommendations: string[]
 }
 
-export function WasteStreamAnalyzer({ onAnalyze }: { onAnalyze?: (analysis: WasteAnalysis) => void }) {
+export function WasteStreamAnalyzer({ onAnalyze, enrollmentId, moduleId, lessonId }: { 
+  onAnalyze?: (analysis: WasteAnalysis) => void
+  enrollmentId?: string
+  moduleId?: string
+  lessonId?: string
+}) {
+  const { saveToolData, loadToolData } = useToolDataSaver()
+
   const [categories, setCategories] = useState<WasteCategory[]>([])
   const [currentCategory, setCurrentCategory] = useState<Partial<WasteCategory>>({
     type: 'organic',
@@ -31,6 +39,23 @@ export function WasteStreamAnalyzer({ onAnalyze }: { onAnalyze?: (analysis: Wast
     currentDestination: 'landfill'
   })
   const [analyzed, setAnalyzed] = useState(false)
+
+  useEffect(() => {
+    if (enrollmentId && moduleId && lessonId) {
+      const loadPrevious = async () => {
+        const savedData = await loadToolData({
+          lesson_id: lessonId,
+          module_id: moduleId,
+          tool_name: 'waste-stream-analyzer'
+        })
+        if (savedData && savedData.categories) {
+          setCategories(savedData.categories)
+          if (savedData.analyzed) setAnalyzed(true)
+        }
+      }
+      loadPrevious()
+    }
+  }, [enrollmentId, moduleId, lessonId])
 
   const wasteTypes = [
     { value: 'organic', label: '🥗 Orgánicos', recyclable: false, compostable: true },
@@ -64,7 +89,7 @@ export function WasteStreamAnalyzer({ onAnalyze }: { onAnalyze?: (analysis: Wast
     }
   }
 
-  const analyze = () => {
+  const analyze = async () => {
     const totalWeight = categories.reduce((sum, c) => sum + c.weight, 0)
     const totalCost = categories.reduce((sum, c) => sum + (c.weight * c.disposalCost), 0)
     const recyclableWeight = categories.filter(c => c.recyclable).reduce((sum, c) => sum + c.weight, 0)
@@ -97,6 +122,19 @@ export function WasteStreamAnalyzer({ onAnalyze }: { onAnalyze?: (analysis: Wast
     }
 
     setAnalyzed(true)
+
+    // ✨ Save to database for ESG reporting
+    if (enrollmentId && moduleId && lessonId) {
+      await saveToolData({
+        enrollment_id: enrollmentId,
+        module_id: moduleId,
+        lesson_id: lessonId,
+        tool_name: 'waste-stream-analyzer',
+        tool_data: { categories, analyzed: true, analysis },
+        tool_type: 'analyzer'
+      })
+    }
+
     if (onAnalyze) {
       onAnalyze(analysis)
     }
@@ -363,7 +401,34 @@ interface RImplementation {
   }[]
 }
 
-export function FiveRsChecklist({ onComplete }: { onComplete?: (data: RImplementation[]) => void }) {
+export function FiveRsChecklist({ onComplete, enrollmentId, moduleId, lessonId }: { 
+  onComplete?: (data: RImplementation[]) => void
+  enrollmentId?: string
+  moduleId?: string
+  lessonId?: string
+}) {
+  const { saveToolData, loadToolData } = useToolDataSaver()
+
+  useEffect(() => {
+    if (enrollmentId && moduleId && lessonId) {
+      loadToolData({ lesson_id: lessonId, module_id: moduleId, tool_name: 'five-rs-checklist' })
+        .then(data => { if (data) console.log('Loaded:', data) })
+    }
+  }, [enrollmentId, moduleId, lessonId])
+
+  const handleSave = async (data: RImplementation[]) => {
+    if (enrollmentId && moduleId && lessonId) {
+      await saveToolData({
+        enrollment_id: enrollmentId,
+        module_id: moduleId,
+        lesson_id: lessonId,
+        tool_name: 'five-rs-checklist',
+        tool_data: { implementation: data },
+        tool_type: 'assessment'
+      })
+    }
+    onComplete?.(data)
+  }
   const [implementations, setImplementations] = useState<RImplementation[]>([
     { r: 'refuse', actions: [] },
     { r: 'reduce', actions: [] },
@@ -543,7 +608,27 @@ export function FiveRsChecklist({ onComplete }: { onComplete?: (data: RImplement
 }
 
 // Tool 3: Composting Calculator
-export function CompostingCalculator({ onCalculate }: { onCalculate?: (result: any) => void }) {
+export function CompostingCalculator({ onCalculate, enrollmentId, moduleId, lessonId }: { 
+  onCalculate?: (result: any) => void
+  enrollmentId?: string
+  moduleId?: string
+  lessonId?: string
+}) {
+  const { saveToolData } = useToolDataSaver()
+  
+  const handleCalculateWithSave = async (result: any) => {
+    if (enrollmentId && moduleId && lessonId) {
+      await saveToolData({
+        enrollment_id: enrollmentId,
+        module_id: moduleId,
+        lesson_id: lessonId,
+        tool_name: 'composting-calculator',
+        tool_data: result,
+        tool_type: 'calculator'
+      })
+    }
+    onCalculate?.(result)
+  }
   const [inputs, setInputs] = useState({
     organicWaste: 0, // kg per week
     compostYield: 30, // % conversion rate
@@ -741,7 +826,27 @@ export function CompostingCalculator({ onCalculate }: { onCalculate?: (result: a
 }
 
 // Tool 4: Zero Waste Certification Roadmap (Simplified)
-export function ZeroWasteCertificationRoadmap({ onSave }: { onSave?: (data: any) => void }) {
+export function ZeroWasteCertificationRoadmap({ onSave, enrollmentId, moduleId, lessonId }: { 
+  onSave?: (data: any) => void
+  enrollmentId?: string
+  moduleId?: string
+  lessonId?: string
+}) {
+  const { saveToolData } = useToolDataSaver()
+  
+  const handleSaveRoadmap = async (data: any) => {
+    if (enrollmentId && moduleId && lessonId) {
+      await saveToolData({
+        enrollment_id: enrollmentId,
+        module_id: moduleId,
+        lesson_id: lessonId,
+        tool_name: 'continuous-improvement',
+        tool_data: data,
+        tool_type: 'tracker'
+      })
+    }
+    onSave?.(data)
+  }
   const [currentRate, setCurrentRate] = useState(0)
   const [targetLevel, setTargetLevel] = useState<'bronze' | 'silver' | 'gold'>('bronze')
 
