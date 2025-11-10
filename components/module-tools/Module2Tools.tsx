@@ -873,7 +873,7 @@ export function WaterFootprintCalculator({
             disabled={inputs.production + inputs.bathrooms + inputs.cooling + inputs.irrigation + inputs.cleaning + inputs.other === 0}
             className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 text-white py-4 rounded-lg font-bold hover:scale-105 transition-transform disabled:opacity-50 disabled:hover:scale-100"
           >
-            Calcular Huella Hídrica
+            💾 Calcular y Guardar
           </button>
         </div>
       ) : (
@@ -954,12 +954,32 @@ export function WaterFootprintCalculator({
             </ul>
           </div>
 
-          <button
-            onClick={() => setCalculated(false)}
-            className="w-full bg-blue-100 text-blue-700 py-3 rounded-lg font-medium hover:bg-blue-200 transition-colors"
-          >
-            Recalcular
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={async () => {
+                // Re-save current data
+                if (enrollmentId && moduleId && lessonId) {
+                  await saveToolData({
+                    enrollment_id: enrollmentId,
+                    module_id: moduleId,
+                    lesson_id: lessonId,
+                    tool_name: 'water-footprint-calculator',
+                    tool_data: { inputs, results, calculated: true, totalWater: results.totalLitersPerDay },
+                    tool_type: 'calculator'
+                  })
+                }
+              }}
+              className="flex-1 bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+            >
+              💾 Guardar Datos
+            </button>
+            <button
+              onClick={() => setCalculated(false)}
+              className="flex-1 bg-blue-100 text-blue-700 py-3 rounded-lg font-medium hover:bg-blue-200 transition-colors"
+            >
+              🔄 Recalcular
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -1187,7 +1207,26 @@ export function WaterAuditTool({ onSave, enrollmentId, moduleId, lessonId }: Wat
       {/* Zones List */}
       {zones.length > 0 && (
         <div className="space-y-3">
-          <h4 className="font-bold text-slate-900">Zonas Auditadas</h4>
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="font-bold text-slate-900">Zonas Auditadas</h4>
+            <button
+              onClick={async () => {
+                if (enrollmentId && moduleId && lessonId) {
+                  await saveToolData({
+                    enrollment_id: enrollmentId,
+                    module_id: moduleId,
+                    lesson_id: lessonId,
+                    tool_name: 'water-audit-tool',
+                    tool_data: { zones },
+                    tool_type: 'assessment'
+                  })
+                }
+              }}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors flex items-center gap-2"
+            >
+              💾 Guardar Todo
+            </button>
+          </div>
           {zones.sort((a, b) => {
             const priorityOrder = { high: 3, medium: 2, low: 1 }
             return priorityOrder[b.priority] - priorityOrder[a.priority]
@@ -1502,7 +1541,26 @@ export function ConservationTracker({ onTrack, enrollmentId, moduleId, lessonId 
           {/* Logs History */}
           {logs.length > 0 && (
             <div className="space-y-2">
-              <h4 className="font-bold text-slate-900">Historial</h4>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-bold text-slate-900">Historial</h4>
+                <button
+                  onClick={async () => {
+                    if (enrollmentId && moduleId && lessonId) {
+                      await saveToolData({
+                        enrollment_id: enrollmentId,
+                        module_id: moduleId,
+                        lesson_id: lessonId,
+                        tool_name: 'conservation-tracker',
+                        tool_data: { baselineUsage, reductionGoal, logs },
+                        tool_type: 'tracker'
+                      })
+                    }
+                  }}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors flex items-center gap-2"
+                >
+                  💾 Guardar Progreso
+                </button>
+              </div>
               {logs.slice().reverse().map((log) => (
                 <div 
                   key={log.week} 

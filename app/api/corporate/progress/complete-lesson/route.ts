@@ -34,6 +34,16 @@ export async function POST(req: NextRequest) {
 
     console.log('✅ Enrollment found:', { enrollmentId: enrollment.id, moduleId })
 
+    // 🔥 FIX: Get actual lesson count from the module (not hardcoded!)
+    const { data: moduleData } = await supabase
+      .from('marketplace_modules')
+      .select('lesson_count')
+      .eq('id', moduleId)
+      .single()
+    
+    const totalLessons = moduleData?.lesson_count || 5  // Use actual count, fallback to 5
+    console.log('📚 Module has', totalLessons, 'lessons')
+
     // Track completed lessons - check if already completed this specific lesson
     const { data: existingResponse } = await supabase
       .from('lesson_responses')
@@ -56,13 +66,14 @@ export async function POST(req: NextRequest) {
     }
     
     const currentCompleted = uniqueLessons.size
-    const totalLessons = 5  // FIXED: Aire Limpio has 5 lessons
+    // 🔥 FIX: Dynamic calculation based on actual lesson count
     const newPercentage = Math.round((currentCompleted / totalLessons) * 100)
     const moduleComplete = currentCompleted >= totalLessons
     
     // Only award XP if this is a new completion
     const currentXP = enrollment.xp_earned || 0
-    const newXP = isNewCompletion ? currentXP + (xpEarned || 50) : currentXP
+    const xpToAward = xpEarned || 50
+    const newXP = isNewCompletion ? currentXP + xpToAward : currentXP
 
     // Update enrollment progress
     console.log('🔄 Updating enrollment:', {
@@ -71,9 +82,12 @@ export async function POST(req: NextRequest) {
       module_id: moduleId,
       lesson_id: lessonId,
       is_new_completion: isNewCompletion,
+      current_xp: currentXP,
+      xp_to_award: xpToAward,
+      new_xp_total: newXP,
       unique_lessons_completed: currentCompleted,
+      total_lessons: totalLessons,
       progress_percentage: newPercentage,
-      xp_earned: newXP,
       completed: moduleComplete
     })
 
