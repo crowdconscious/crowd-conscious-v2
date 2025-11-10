@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { TrendingUp, MapPin, DollarSign, CheckCircle, BarChart3, Users } from 'lucide-react'
+import { useToolDataSaver } from '@/lib/hooks/useToolDataSaver'
 
 // =========================================================
 // TOOL 1: Supply Chain Mapper
@@ -17,7 +18,14 @@ interface Supplier {
   notes: string
 }
 
-export function SupplyChainMapper({ onSave }: { onSave?: (data: any) => void }) {
+export function SupplyChainMapper({ onSave, enrollmentId, moduleId, lessonId }: { 
+  onSave?: (data: any) => void
+  enrollmentId?: string
+  moduleId?: string
+  lessonId?: string
+}) {
+  const { saveToolData, loadToolData } = useToolDataSaver()
+
   const [suppliers, setSuppliers] = useState<Supplier[]>([])
   const [showForm, setShowForm] = useState(false)
   const [currentSupplier, setCurrentSupplier] = useState<Partial<Supplier>>({
@@ -29,6 +37,27 @@ export function SupplyChainMapper({ onSave }: { onSave?: (data: any) => void }) 
     riskLevel: 'low',
     notes: ''
   })
+
+  useEffect(() => {
+    if (enrollmentId && moduleId && lessonId) {
+      loadToolData({ lesson_id: lessonId, module_id: moduleId, tool_name: 'supply-chain-mapper' })
+        .then(data => { if (data?.suppliers) setSuppliers(data.suppliers) })
+    }
+  }, [enrollmentId, moduleId, lessonId])
+
+  const handleSave = async (data: any) => {
+    if (enrollmentId && moduleId && lessonId) {
+      await saveToolData({
+        enrollment_id: enrollmentId,
+        module_id: moduleId,
+        lesson_id: lessonId,
+        tool_name: 'supply-chain-mapper',
+        tool_data: data,
+        tool_type: 'mapper'
+      })
+    }
+    onSave?.(data)
+  }
 
   const addSupplier = () => {
     if (currentSupplier.name && currentSupplier.location) {
@@ -218,7 +247,27 @@ export function SupplyChainMapper({ onSave }: { onSave?: (data: any) => void }) 
 // =========================================================
 // TOOL 2: Fair Wage Calculator
 // =========================================================
-export function FairWageCalculator({ onCalculate }: { onCalculate?: (result: any) => void }) {
+export function FairWageCalculator({ onCalculate, enrollmentId, moduleId, lessonId }: { 
+  onCalculate?: (result: any) => void
+  enrollmentId?: string
+  moduleId?: string
+  lessonId?: string
+}) {
+  const { saveToolData } = useToolDataSaver()
+  
+  const handleCalculateWithSave = async (result: any) => {
+    if (enrollmentId && moduleId && lessonId) {
+      await saveToolData({
+        enrollment_id: enrollmentId,
+        module_id: moduleId,
+        lesson_id: lessonId,
+        tool_name: 'fair-wage-calculator',
+        tool_data: result,
+        tool_type: 'calculator'
+      })
+    }
+    onCalculate?.(result)
+  }
   const [inputs, setInputs] = useState({
     region: '',
     role: '',
@@ -386,7 +435,27 @@ export function FairWageCalculator({ onCalculate }: { onCalculate?: (result: any
 // =========================================================
 // TOOL 3: Local Supplier Finder (Simplified)
 // =========================================================
-export function LocalSupplierFinder({ onFind }: { onFind?: (data: any) => void }) {
+export function LocalSupplierFinder({ onFind, enrollmentId, moduleId, lessonId }: { 
+  onFind?: (data: any) => void
+  enrollmentId?: string
+  moduleId?: string
+  lessonId?: string
+}) {
+  const { saveToolData } = useToolDataSaver()
+  
+  const handleFindWithSave = async (data: any) => {
+    if (enrollmentId && moduleId && lessonId) {
+      await saveToolData({
+        enrollment_id: enrollmentId,
+        module_id: moduleId,
+        lesson_id: lessonId,
+        tool_name: 'local-supplier-finder',
+        tool_data: data,
+        tool_type: 'planner'
+      })
+    }
+    onFind?.(data)
+  }
   const [category, setCategory] = useState('')
   const [maxDistance, setMaxDistance] = useState(50)
   const [searched, setSearched] = useState(false)
@@ -485,7 +554,27 @@ export function LocalSupplierFinder({ onFind }: { onFind?: (data: any) => void }
 // =========================================================
 // TOOL 4: Responsible Procurement Scorecard
 // =========================================================
-export function ResponsibleProcurementScorecard({ onScore }: { onScore?: (data: any) => void }) {
+export function ResponsibleProcurementScorecard({ onScore, enrollmentId, moduleId, lessonId }: { 
+  onScore?: (data: any) => void
+  enrollmentId?: string
+  moduleId?: string
+  lessonId?: string
+}) {
+  const { saveToolData } = useToolDataSaver()
+  
+  const handleScoreWithSave = async (data: any) => {
+    if (enrollmentId && moduleId && lessonId) {
+      await saveToolData({
+        enrollment_id: enrollmentId,
+        module_id: moduleId,
+        lesson_id: lessonId,
+        tool_name: 'responsible-procurement-scorecard',
+        tool_data: data,
+        tool_type: 'assessment'
+      })
+    }
+    onScore?.(data)
+  }
   const [supplierName, setSupplierName] = useState('')
   const [scores, setScores] = useState<Record<string, number>>({})
   const [scored, setScored] = useState(false)
@@ -617,7 +706,27 @@ export function ResponsibleProcurementScorecard({ onScore }: { onScore?: (data: 
 // =========================================================
 // TOOL 5: Impact Report Generator (Simplified)
 // =========================================================
-export function ImpactReportGenerator({ onGenerate }: { onGenerate?: (data: any) => void }) {
+export function ImpactReportGenerator({ onGenerate, enrollmentId, moduleId, lessonId }: { 
+  onGenerate?: (data: any) => void
+  enrollmentId?: string
+  moduleId?: string
+  lessonId?: string
+}) {
+  const { saveToolData } = useToolDataSaver()
+  
+  const handleGenerateWithSave = async (data: any) => {
+    if (enrollmentId && moduleId && lessonId) {
+      await saveToolData({
+        enrollment_id: enrollmentId,
+        module_id: moduleId,
+        lesson_id: lessonId,
+        tool_name: 'impact-report-generator',
+        tool_data: data,
+        tool_type: 'calculator'
+      })
+    }
+    onGenerate?.(data)
+  }
   const [data, setData] = useState({
     localSpend: 0,
     jobsSupported: 0,
