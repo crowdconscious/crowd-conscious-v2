@@ -1,11 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Wind, TrendingUp, AlertTriangle, CheckCircle } from 'lucide-react'
+import { useToolDataSaver } from '@/lib/hooks/useToolDataSaver'
 
 interface AirQualityAssessmentProps {
   onComplete?: (result: AssessmentResult) => void
   className?: string
+  // ESG Reporting Props
+  enrollmentId?: string
+  moduleId?: string
+  lessonId?: string
 }
 
 interface AssessmentResult {
@@ -26,7 +31,10 @@ interface AssessmentResult {
 
 export default function AirQualityAssessment({
   onComplete,
-  className = ''
+  className = '',
+  enrollmentId,
+  moduleId,
+  lessonId
 }: AirQualityAssessmentProps) {
   const [step, setStep] = useState(1)
   const [answers, setAnswers] = useState({
@@ -39,8 +47,33 @@ export default function AirQualityAssessment({
   })
   const [result, setResult] = useState<AssessmentResult | null>(null)
   const [completed, setCompleted] = useState(false)
+  
+  // ESG Data Saving
+  const { saveToolData, loadToolData, loading: saving } = useToolDataSaver()
+  
+  // Load previous assessment data if available
+  useEffect(() => {
+    if (enrollmentId && moduleId && lessonId) {
+      const loadPrevious = async () => {
+        const savedData = await loadToolData({
+          lesson_id: lessonId,
+          module_id: moduleId,
+          tool_name: 'air-quality-assessment'
+        })
+        
+        if (savedData && savedData.answers) {
+          setAnswers(savedData.answers)
+          if (savedData.score) {
+            setResult(savedData)
+            setCompleted(true)
+          }
+        }
+      }
+      loadPrevious()
+    }
+  }, [enrollmentId, moduleId, lessonId])
 
-  const calculateScore = () => {
+  const calculateScore = async () => {
     let score = 50 // Base score
 
     // Windows (0-15 points)
@@ -122,6 +155,18 @@ export default function AirQualityAssessment({
 
     setResult(assessmentResult)
     setCompleted(true)
+    
+    // 💾 Save to database for ESG reporting
+    if (enrollmentId && moduleId && lessonId) {
+      await saveToolData({
+        enrollment_id: enrollmentId,
+        module_id: moduleId,
+        lesson_id: lessonId,
+        tool_name: 'air-quality-assessment',
+        tool_data: assessmentResult,
+        tool_type: 'assessment'
+      })
+    }
 
     if (onComplete) {
       onComplete(assessmentResult)

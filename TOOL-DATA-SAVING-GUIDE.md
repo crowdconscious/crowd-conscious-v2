@@ -3,10 +3,12 @@
 ## ✅ WHAT'S BUILT
 
 **Created:**
+
 1. `/api/tools/save-result` - API endpoint to save/load tool results
 2. `/lib/hooks/useToolDataSaver.ts` - React hook for easy tool integration
 
 **How It Works:**
+
 - Tool results save to `activity_responses.custom_responses` (JSONB)
 - Each tool's data stored with key: `tool_{tool-name}`
 - Automatically merges with existing activity responses
@@ -21,13 +23,13 @@
 ```tsx
 export default function AirQualityAssessment({ onComplete }: Props) {
   const [result, setResult] = useState(null)
-  
+
   const calculateScore = () => {
     const assessmentResult = { score: 75, ... }
     setResult(assessmentResult)
     if (onComplete) onComplete(assessmentResult)
   }
-  
+
   // Result is calculated but NOT saved to database
 }
 ```
@@ -37,7 +39,7 @@ export default function AirQualityAssessment({ onComplete }: Props) {
 ```tsx
 import { useToolDataSaver } from '@/lib/hooks/useToolDataSaver'
 
-export default function AirQualityAssessment({ 
+export default function AirQualityAssessment({
   onComplete,
   enrollmentId,  // NEW: Required
   moduleId,      // NEW: Required
@@ -45,11 +47,11 @@ export default function AirQualityAssessment({
 }: Props) {
   const [result, setResult] = useState(null)
   const { saveToolData, loading, saved } = useToolDataSaver()  // NEW
-  
+
   const calculateScore = async () => {  // Make async
     const assessmentResult = { score: 75, ... }
     setResult(assessmentResult)
-    
+
     // NEW: Save to database for ESG reports
     await saveToolData({
       enrollment_id: enrollmentId,
@@ -59,10 +61,10 @@ export default function AirQualityAssessment({
       tool_data: assessmentResult,
       tool_type: 'assessment'
     })
-    
+
     if (onComplete) onComplete(assessmentResult)
   }
-  
+
   // Now result is saved AND available for ESG reports!
 }
 ```
@@ -125,24 +127,24 @@ Use appropriate `tool_type` for better categorization:
 Tools can load previously saved data:
 
 ```tsx
-const { loadToolData } = useToolDataSaver()
+const { loadToolData } = useToolDataSaver();
 
 useEffect(() => {
   const loadPreviousData = async () => {
     const savedData = await loadToolData({
       lesson_id: lessonId,
       module_id: moduleId,
-      tool_name: 'air-quality-assessment'
-    })
-    
+      tool_name: "air-quality-assessment",
+    });
+
     if (savedData) {
-      setResult(savedData)
-      console.log('Loaded previous assessment:', savedData.score)
+      setResult(savedData);
+      console.log("Loaded previous assessment:", savedData.score);
     }
-  }
-  
-  loadPreviousData()
-}, [lessonId, moduleId])
+  };
+
+  loadPreviousData();
+}, [lessonId, moduleId]);
 ```
 
 ---
@@ -186,6 +188,7 @@ useEffect(() => {
 ## 📋 TOOLS TO UPDATE (29 total)
 
 **Module 1 - Aire Limpio (5):**
+
 - [ ] AirQualityAssessment
 - [ ] EmissionSourceIdentifier
 - [ ] AirQualityROI
@@ -193,6 +196,7 @@ useEffect(() => {
 - [ ] AirQualityMonitorTracker
 
 **Module 2 - Agua Limpia (5):**
+
 - [ ] WaterFootprintCalculator
 - [ ] WaterAuditTool
 - [ ] WaterConservationTracker
@@ -200,6 +204,7 @@ useEffect(() => {
 - [ ] RecyclingSystemDesigner
 
 **Module 3 - Ciudades Seguras (5):**
+
 - [ ] SecurityAuditTool
 - [ ] CPTEDAssessmentTool
 - [ ] CommunitySurveyTool
@@ -207,12 +212,14 @@ useEffect(() => {
 - [ ] CostCalculatorTool
 
 **Module 4 - Cero Residuos (4):**
+
 - [ ] WasteStreamAnalyzer
 - [ ] FiveRsChecklist
 - [ ] CompostingCalculator
 - [ ] ZeroWasteCertificationRoadmap
 
 **Module 5 - Comercio Justo (5):**
+
 - [ ] SupplyChainMapper
 - [ ] FairWageCalculator
 - [ ] LocalSupplierFinder
@@ -220,6 +227,7 @@ useEffect(() => {
 - [ ] ImpactReportGenerator
 
 **Module 6 - Integración de Impacto (5):**
+
 - [ ] ImpactDashboardBuilder
 - [ ] ESGReportGenerator
 - [ ] StakeholderCommunicationPlanner
@@ -249,7 +257,7 @@ curl -X POST https://crowdconscious.app/api/tools/save-result \
 **2. Check database:**
 
 ```sql
-SELECT 
+SELECT
   id,
   custom_responses->'tool_air-quality-assessment' as tool_data,
   created_at
@@ -260,6 +268,7 @@ LIMIT 1;
 ```
 
 **3. Update one tool as a test:**
+
 - Pick AirQualityAssessment (simplest)
 - Add the 3 props (enrollmentId, moduleId, lessonId)
 - Add useToolDataSaver hook
@@ -269,4 +278,3 @@ LIMIT 1;
 ---
 
 Status: Infrastructure ready! Now updating tools... 🚀
-

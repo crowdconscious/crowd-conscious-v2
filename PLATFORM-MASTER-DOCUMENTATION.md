@@ -3255,6 +3255,302 @@ Stored in Supabase Storage: `employee-evidence/{userId}/{moduleId}/{lessonId}/{f
 
 ---
 
+## 📊 **ESG Reporting Infrastructure** (Nov 10, 2025) ✨ **NEW**
+
+### **Overview**
+
+Complete ESG (Environmental, Social, and Governance) reporting system with database tables, APIs, analytics dashboard, and downloadable reports in PDF and Excel formats.
+
+### **✅ Database Tables Created**
+
+#### **activity_responses**
+- Stores structured user responses from interactive activities
+- Fields: `pre_assessment_level`, `key_learning`, `application_plan`, `challenges_identified`, `confidence_level`
+- Includes `custom_responses` JSONB for tool data: `tool_air-quality-assessment`, `tool_water-footprint-calculator`, etc.
+- Evidence: `evidence_urls[]`, `evidence_metadata`
+- Progress tracking: `completion_percentage`, `questions_answered`, `time_spent_minutes`
+
+#### **impact_measurements**
+- Environmental impact tracking
+- Fields: `measurement_type`, `metric_name`, `baseline_value`, `current_value`, `target_value`
+- Impact areas: CO₂ reduction, water savings, waste reduction, cost savings
+- Temporal tracking: `measurement_date`, `previous_measurement_id`
+
+#### **esg_reports**
+- Generated report metadata
+- Fields: `report_type` (individual, module, corporate), `report_data` (JSONB)
+- File references: `pdf_url`, `excel_url`
+- Date ranges: `date_from`, `date_to`
+
+### **✅ APIs Created**
+
+#### **POST/GET /api/activities/save-response**
+- **Purpose**: Save and load interactive activity responses
+- **Features**:
+  - Dual-write to `activity_responses` (new structured) AND `lesson_responses` (legacy)
+  - Backward compatible
+  - Returns `esg_ready: true` flag when saved to new table
+  - Extracts structured fields (pre_assessment, key_learning, etc.)
+  - Stores tool data in `custom_responses` JSONB
+
+#### **POST/GET /api/tools/save-result**
+- **Purpose**: Save tool results for ESG reporting
+- **Features**:
+  - Stores each tool with key: `tool_{tool-name}`
+  - Automatic merge with existing activity responses
+  - Timestamp tracking (`saved_at`)
+  - Tool type classification (assessment, calculator, planner, tracker)
+  - Load previous results capability
+
+#### **GET /api/esg/generate-report** 🎯 **CORE FEATURE**
+- **Purpose**: Generate downloadable ESG reports in PDF, Excel, or JSON
+- **Query Parameters**:
+  - `format`: `pdf` | `excel` | `json` (default: json)
+  - `type`: `individual` | `module` | `corporate`
+  - `enrollment_id`: For individual reports
+  - `module_id`: For module-specific reports
+  - `corporate_account_id`: For corporate reports
+  - `date_from`, `date_to`: Optional date filtering
+
+**Report Types:**
+
+1. **Individual Learning Report**
+   - User's progress through a specific module
+   - All activity responses and tool results
+   - Impact metrics (CO₂, water, waste, cost savings)
+   - XP earned, completion %, time spent
+   - Trees equivalent calculation
+
+2. **Module Impact Report**
+   - Aggregate impact across all users in a module
+   - Participation rate, completion rate
+   - Total tool uses, unique tools used
+   - Company-wide metrics by module
+
+3. **Corporate ESG Compliance Report**
+   - Company-wide metrics across all modules
+   - Employee participation rates
+   - Total XP, completed modules
+   - Aggregated environmental impact
+   - Impact grouped by core value (clean_air, clean_water, etc.)
+
+### **✅ React Hook: useToolDataSaver**
+
+**File**: `/lib/hooks/useToolDataSaver.ts`
+
+**Functions**:
+- `saveToolData()`: Save tool results to database
+- `loadToolData()`: Load previous tool results
+- Auto-notification on save: "Datos guardados para reporte ESG ✅"
+
+**Usage**:
+```typescript
+const { saveToolData, loadToolData, loading, saved } = useToolDataSaver()
+
+// Save tool data
+await saveToolData({
+  enrollment_id: enrollmentId,
+  module_id: moduleId,
+  lesson_id: lessonId,
+  tool_name: 'air-quality-roi',
+  tool_data: calculatedResult,
+  tool_type: 'calculator'
+})
+
+// Load previous data
+const savedData = await loadToolData({
+  lesson_id: lessonId,
+  module_id: moduleId,
+  tool_name: 'air-quality-roi'
+})
+```
+
+### **✅ Analytics Dashboard: /employee-portal/mi-impacto** 🎯 **CORE FEATURE**
+
+**File**: `/app/(app)/employee-portal/mi-impacto/page.tsx`
+
+**Features**:
+
+**Impact Stats Cards**:
+- 🌱 CO₂ Reduced (kg) with trees equivalent
+- 💧 Water Saved (liters)
+- 🗑️ Waste Reduced (kg)
+- 💰 Cost Savings (MXN)
+
+**Learning Stats**:
+- Modules Inscribed, Completed, In Progress
+- Total XP earned
+- Activities completed
+- Tools used
+
+**Impact by Module**:
+- Breakdown of tool usage per module
+- Core value tracking
+- Completion status per module
+
+**Download Reports Section**:
+- ESG Report Downloader component for each completed enrollment
+- PDF and Excel export buttons
+- Real-time report generation
+
+### **✅ ESG Report Downloader Component**
+
+**File**: `/components/esg/ESGReportDownloader.tsx`
+
+**Features**:
+- Dual format download: PDF and Excel
+- Real-time generation (not pre-generated)
+- Loading states with spinner
+- Success notifications
+- Error handling
+- Automatic file download on completion
+
+**PDF Report Includes**:
+- Crowd Conscious branded header
+- Report type (Individual, Module, Corporate)
+- Progress metrics
+- Environmental impact summary
+- Tools used
+- Generated timestamp
+
+**Excel Report Includes**:
+- Summary sheet with key metrics
+- Tools Used sheet with details
+- Styled headers (colored, bold)
+- Professional formatting
+- Exportable for further analysis
+
+### **✅ Tool Updates for ESG** (2/29 Complete)
+
+**Pattern Applied to Tools**:
+1. Add `useEffect` and `useToolDataSaver` imports
+2. Add props: `enrollmentId`, `moduleId`, `lessonId`
+3. Call `useToolDataSaver()` hook
+4. Add `useEffect` to load previous data on mount
+5. Make calculate function `async`
+6. Add `saveToolData()` call after calculation
+
+**Completed Tools**:
+- ✅ AirQualityAssessment (Module 1)
+- ✅ AirQualityROI (Module 1)
+
+**Remaining**: 27 tools (guide created: `BATCH-UPDATE-TOOLS-FOR-ESG.md`)
+
+### **Impact Calculation Logic**
+
+**Air Quality Tools**:
+- ROI Calculator: Saves `annualSavings`, estimates 500kg CO₂ reduction
+
+**Water Tools**:
+- Footprint Calculator: Assumes 20% water reduction from baseline
+
+**Waste Tools**:
+- Waste Analyzer: Assumes 30% waste reduction potential
+
+**Cost Tools**:
+- All calculators: Aggregate `annualSavings` for total cost impact
+
+**Trees Equivalent**:
+- Formula: `CO₂ kg / 21` (1 tree absorbs 21kg CO₂/year)
+
+### **Data Flow**
+
+```
+User → Tool → Calculate Result
+            ↓
+    Save to activity_responses.custom_responses
+            ↓
+    {
+      "tool_air-quality-roi": {
+        "annualSavings": 50000,
+        "totalInvestment": 13000,
+        "roi": 384,
+        "tool_type": "calculator",
+        "saved_at": "2025-11-10T..."
+      }
+    }
+            ↓
+    Generate Report (PDF/Excel)
+            ↓
+    Aggregate Impact Metrics
+            ↓
+    Download for ESG Compliance
+```
+
+### **Benefits**
+
+**For Individuals**:
+- Track personal environmental impact
+- Visual progress on sustainability goals
+- Downloadable proof of learning
+- Shareable ESG metrics
+
+**For Companies**:
+- ESG compliance documentation
+- Employee participation tracking
+- Aggregate environmental impact reporting
+- Before/after comparisons
+- ROI justification for training investment
+
+**For Crowd Conscious**:
+- Data-driven impact stories
+- Marketing material (aggregated metrics)
+- Proof of platform effectiveness
+- Partnership opportunities with ESG-focused orgs
+
+### **Future Enhancements**
+
+**Phase 2 (Planned)**:
+- [ ] Automatic report scheduling (monthly, quarterly)
+- [ ] Email delivery of reports
+- [ ] Compare multiple time periods (Month 1 vs Month 6)
+- [ ] Company-wide leaderboards
+- [ ] Integration with external ESG platforms (GRI, CDP)
+- [ ] Blockchain verification of impact claims
+
+### **Files Created (Nov 10, 2025)**
+
+**Database**:
+- `CREATE-PROPER-ESG-INFRASTRUCTURE.sql` - Schema and RLS policies
+
+**APIs**:
+- `/app/api/activities/save-response/route.ts` - Updated for dual-write
+- `/app/api/tools/save-result/route.ts` - Tool data saving endpoint
+- `/app/api/esg/generate-report/route.ts` - Report generation (PDF/Excel/JSON)
+
+**Components**:
+- `/components/esg/ESGReportDownloader.tsx` - Download UI component
+- `/app/(app)/employee-portal/mi-impacto/page.tsx` - Analytics dashboard
+
+**Utilities**:
+- `/lib/hooks/useToolDataSaver.ts` - React hook for tool data
+
+**Documentation**:
+- `ESG-INFRASTRUCTURE-GUIDE.md` - System architecture
+- `ESG-REPORT-GENERATOR-DESIGN.md` - Report types and features
+- `TOOL-DATA-SAVING-GUIDE.md` - How to integrate tools
+- `BATCH-UPDATE-TOOLS-FOR-ESG.md` - Systematic tool update guide
+
+**Dependencies Added**:
+- `exceljs` - Excel file generation
+- `jspdf` - PDF document generation
+- `jspdf-autotable` - PDF table formatting
+
+### **Testing Checklist**
+
+- [ ] USER: Run SQL to create `activity_responses`, `impact_measurements`, `esg_reports` tables
+- [ ] USER: Test Module 1 tools save data (AirQualityAssessment, AirQualityROI)
+- [ ] USER: Complete a lesson with activity responses
+- [ ] USER: Visit `/employee-portal/mi-impacto` to see impact dashboard
+- [ ] USER: Download PDF report (should generate and download)
+- [ ] USER: Download Excel report (should generate and download)
+- [ ] USER: Verify data in `activity_responses.custom_responses` in Supabase
+- [ ] Update remaining 27 tools following `BATCH-UPDATE-TOOLS-FOR-ESG.md`
+- [ ] Test corporate ESG report generation
+- [ ] Test module impact report generation
+
+---
+
 ## 🚀 **Future Roadmap**
 
 ### **Phase 2: Enhanced Learning (Q1 2026)**

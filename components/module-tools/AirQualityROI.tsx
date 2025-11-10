@@ -1,11 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { DollarSign, TrendingUp, Users, Calendar, Heart } from 'lucide-react'
+import { useToolDataSaver } from '@/lib/hooks/useToolDataSaver'
 
 interface AirQualityROIProps {
   onCalculate?: (result: ROIResult) => void
   className?: string
+  // ESG Reporting Props
+  enrollmentId?: string
+  moduleId?: string
+  lessonId?: string
 }
 
 interface ROIResult {
@@ -29,7 +34,10 @@ interface ROIResult {
 
 export default function AirQualityROI({
   onCalculate,
-  className = ''
+  className = '',
+  enrollmentId,
+  moduleId,
+  lessonId
 }: AirQualityROIProps) {
   const [inputs, setInputs] = useState({
     employees: '',
@@ -41,8 +49,33 @@ export default function AirQualityROI({
   })
   const [result, setResult] = useState<ROIResult | null>(null)
   const [calculated, setCalculated] = useState(false)
+  
+  // ESG Data Saving
+  const { saveToolData, loadToolData, loading: saving } = useToolDataSaver()
+  
+  // Load previous calculation if available
+  useEffect(() => {
+    if (enrollmentId && moduleId && lessonId) {
+      const loadPrevious = async () => {
+        const savedData = await loadToolData({
+          lesson_id: lessonId,
+          module_id: moduleId,
+          tool_name: 'air-quality-roi'
+        })
+        
+        if (savedData && savedData.inputs) {
+          setInputs(savedData.inputs)
+          if (savedData.totalInvestment !== undefined) {
+            setResult(savedData)
+            setCalculated(true)
+          }
+        }
+      }
+      loadPrevious()
+    }
+  }, [enrollmentId, moduleId, lessonId])
 
-  const calculate = () => {
+  const calculate = async () => {
     const employees = parseInt(inputs.employees) || 0
     const currentSickDays = parseFloat(inputs.currentSickDays) || 0
     const salaryPerDay = parseFloat(inputs.averageSalaryPerDay) || 0
@@ -107,6 +140,21 @@ export default function AirQualityROI({
 
     setResult(calculatedResult)
     setCalculated(true)
+    
+    // 💾 Save to database for ESG reporting (including inputs for reload)
+    if (enrollmentId && moduleId && lessonId) {
+      await saveToolData({
+        enrollment_id: enrollmentId,
+        module_id: moduleId,
+        lesson_id: lessonId,
+        tool_name: 'air-quality-roi',
+        tool_data: {
+          ...calculatedResult,
+          inputs // Save inputs so user can see/edit them later
+        },
+        tool_type: 'calculator'
+      })
+    }
 
     if (onCalculate) {
       onCalculate(calculatedResult)
