@@ -141,7 +141,13 @@ async function generateIndividualReport(
   const { data: activities } = await query
 
   // Extract tool data from custom_responses
-  const toolResults = []
+  const toolResults: Array<{
+    tool_name: string
+    tool_type: string
+    data: any
+    saved_at: string
+    lesson_id: string
+  }> = []
   if (activities) {
     for (const activity of activities) {
       if (activity.custom_responses) {
@@ -243,7 +249,11 @@ async function generateModuleReport(
   const { data: activities } = await query
 
   // Aggregate tool results
-  const allToolResults: any[] = []
+  const allToolResults: Array<{
+    tool_name: string
+    data: any
+    user_id: string
+  }> = []
   if (activities) {
     for (const activity of activities) {
       if (activity.custom_responses) {
@@ -347,7 +357,10 @@ async function generateCorporateReport(
   const uniqueModules = [...new Set(enrollments?.map(e => e.module_id))].length || 0
 
   // Extract all tool results for company-wide impact
-  const companyToolResults: any[] = []
+  const companyToolResults: Array<{
+    tool_name: string
+    data: any
+  }> = []
   if (activities) {
     for (const activity of activities) {
       if (activity.custom_responses) {
