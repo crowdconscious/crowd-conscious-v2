@@ -66,7 +66,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(reportData)
     } else if (format === 'excel') {
       const excelBuffer = await generateExcelReport(reportData)
-      return new NextResponse(excelBuffer, {
+      // Convert Buffer to ArrayBuffer for NextResponse compatibility
+      const arrayBuffer = excelBuffer.buffer.slice(
+        excelBuffer.byteOffset,
+        excelBuffer.byteOffset + excelBuffer.byteLength
+      )
+      return new NextResponse(arrayBuffer, {
         headers: {
           'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
           'Content-Disposition': `attachment; filename="esg-report-${Date.now()}.xlsx"`
@@ -74,7 +79,12 @@ export async function GET(request: NextRequest) {
       })
     } else if (format === 'pdf') {
       const pdfBuffer = await generatePDFReport(reportData)
-      return new NextResponse(pdfBuffer, {
+      // Convert Buffer to ArrayBuffer for NextResponse compatibility
+      const arrayBuffer = pdfBuffer.buffer.slice(
+        pdfBuffer.byteOffset,
+        pdfBuffer.byteOffset + pdfBuffer.byteLength
+      )
+      return new NextResponse(arrayBuffer, {
         headers: {
           'Content-Type': 'application/pdf',
           'Content-Disposition': `attachment; filename="esg-report-${Date.now()}.pdf"`
