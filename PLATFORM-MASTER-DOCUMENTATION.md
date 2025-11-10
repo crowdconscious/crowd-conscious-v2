@@ -2882,6 +2882,7 @@ CC-XXXXXXXX
 ### **✅ COMPLETE - Core Platform**
 
 #### **Purchase Flow & Enrollment (100% Working)**
+
 - ✅ Marketplace browsing and filtering
 - ✅ Cart with promo code support (flat amount + percentage)
 - ✅ Stripe checkout integration
@@ -2892,6 +2893,7 @@ CC-XXXXXXXX
 - ✅ Module access after purchase
 
 #### **Learning Experience (100% Working)**
+
 - ✅ Lesson navigation and content display
 - ✅ Progress tracking (0% → 100%)
 - ✅ XP earning system
@@ -2900,12 +2902,14 @@ CC-XXXXXXXX
 - ✅ Social sharing (Twitter, LinkedIn, Facebook, Instagram)
 
 #### **Interactive Activity System (100% Working)**
+
 - ✅ Generic `InteractiveActivity` component
 - ✅ Response saving to `lesson_responses` table
 - ✅ Evidence file uploads to Supabase Storage
 - ✅ Activity data for ESG reporting
 
 #### **Admin & Promo Codes (100% Working)**
+
 - ✅ Admin dashboard with super admin access
 - ✅ Promo code creation & management
 - ✅ Promo code usage tracking
@@ -2914,7 +2918,9 @@ CC-XXXXXXXX
 - ✅ Webhook integration for usage increments
 
 #### **Module Content (100% Complete)**
+
 All 6 core modules fully enriched with:
+
 - ✅ Module 1: Estrategias Avanzadas de Calidad del Aire (5 lessons)
 - ✅ Module 2: Gestión Sostenible del Agua (5 lessons)
 - ✅ Module 3: Ciudades Seguras y Espacios Inclusivos (5 lessons)
@@ -2923,6 +2929,7 @@ All 6 core modules fully enriched with:
 - ✅ Module 6: Integración de Impacto y Medición (5 lessons)
 
 Each lesson includes:
+
 - Story-driven narrative content
 - Learning objectives & key points
 - Real-world examples
@@ -2941,38 +2948,41 @@ Each lesson includes:
 ---
 
 #### **Module 1: Aire Limpio (COMPLETE ✅) - 5 Tools**
+
 1. ✅ **Air Quality Assessment Tool**
-**Tools Needed:**
+   **Tools Needed:**
 1. **Air Quality Assessment Tool**
    - Input: Location, factory type, hours of operation
    - Output: Baseline air quality score, risk areas
    - Data saved to `lesson_responses`
 
-2. **Emission Source Identifier**
+1. **Emission Source Identifier**
    - Interactive facility map
    - Click to mark emission sources (smokestacks, vehicles, processes)
    - Upload photos of sources
    - Generates emission inventory report
 
-3. **ROI Calculator (Air Quality)**
+1. **ROI Calculator (Air Quality)**
    - Input: Current costs (health claims, productivity loss, fines)
    - Input: Improvement costs (filters, monitoring, training)
    - Output: 3-year ROI projection with charts
 
-4. **Implementation Timeline Planner**
+1. **Implementation Timeline Planner**
    - Drag-and-drop 90-day action plan
    - Assign tasks and deadlines
    - Budget allocation
    - Export as PDF/CSV
 
-5. **Air Quality Monitor Tracker**
+1. **Air Quality Monitor Tracker**
    - Log daily/weekly air quality readings
    - Chart trends over time
    - Compare to regulatory standards
    - Generate compliance reports
 
 #### **Module 2: Agua Limpia (PENDING 🔨)**
+
 **Tools Needed:**
+
 1. **Water Footprint Calculator**
    - Input: Water usage by area (production, bathrooms, cooling, irrigation)
    - Output: Total liters/day, cost, environmental impact
@@ -3003,7 +3013,9 @@ Each lesson includes:
    - Vendor contact database
 
 #### **Module 4: Cero Residuos (PENDING 🔨)**
+
 **Tools Needed:**
+
 1. **Waste Stream Analyzer**
    - Categorize waste (organic, plastic, paper, metal, hazardous)
    - Weigh and log daily/weekly
@@ -3035,7 +3047,9 @@ Each lesson includes:
    - Document repository for evidence
 
 #### **Module 5: Comercio Justo (PENDING 🔨)**
+
 **Tools Needed:**
+
 1. **Supply Chain Mapper**
    - Visual supply chain diagram builder
    - Add suppliers with details (location, workers, certifications)
@@ -3067,7 +3081,9 @@ Each lesson includes:
    - ESG report section
 
 #### **Module 6: Integración de Impacto (PENDING 🔨)**
+
 **Tools Needed:**
+
 1. **Impact Dashboard Builder**
    - Choose KPIs from previous 5 modules
    - Custom dashboard layout
@@ -3103,33 +3119,39 @@ Each lesson includes:
 ### **📋 Module Tools Development Plan**
 
 #### **Phase 1: Core Calculation Tools (THIS WEEK)**
+
 **Priority: Module 1 (Aire Limpio) & Module 2 (Agua Limpia)**
 
 These are the most in-demand modules and have clear ROI calculations that drive purchase decisions.
 
 **Action Items:**
+
 1. Build Module 1 tools (5 tools) - 2 days
 2. Build Module 2 tools (5 tools) - 2 days
 3. Test all tools save data correctly - 1 day
 4. Verify data appears in impact reports - 1 day
 
 #### **Phase 2: Advanced Tools (NEXT WEEK)**
+
 **Priority: Module 4 (Cero Residuos) & Module 5 (Comercio Justo)**
 
 These modules require more complex data structures (marketplaces, supply chains).
 
 **Action Items:**
+
 1. Build Module 4 tools (5 tools) - 2 days
 2. Build Module 5 tools (5 tools) - 2 days
 3. Test marketplace & mapping features - 1 day
 4. Integration testing across modules - 1 day
 
 #### **Phase 3: Integration Tools (WEEK 3)**
+
 **Priority: Module 6 (Integración de Impacto)**
 
 This module pulls data from all previous modules, so it must be built last.
 
 **Action Items:**
+
 1. Build Module 6 tools (5 tools) - 2 days
 2. Test cross-module data aggregation - 1 day
 3. ESG report generation testing - 1 day
@@ -3140,6 +3162,7 @@ This module pulls data from all previous modules, so it must be built last.
 ### **🎯 Success Criteria**
 
 **For Each Tool:**
+
 - ✅ Matches activity_config in database
 - ✅ Saves responses to `lesson_responses` table
 - ✅ Uploads evidence to Supabase Storage
@@ -3149,6 +3172,7 @@ This module pulls data from all previous modules, so it must be built last.
 - ✅ Data accessible for reports
 
 **For Each Module:**
+
 - ✅ All 5 lessons have at least 1 tool
 - ✅ Tools progress from simple (Lesson 1) to complex (Lesson 5)
 - ✅ Tools build on each other (data flows forward)
@@ -3160,17 +3184,18 @@ This module pulls data from all previous modules, so it must be built last.
 ### **📊 Technical Implementation Notes**
 
 #### **Tool Component Architecture**
+
 ```typescript
 // components/module-tools/Module[X]Tools.tsx
 
-export function Module[X]Tool({ 
-  moduleId, 
-  lessonId, 
-  enrollmentId 
+export function Module[X]Tool({
+  moduleId,
+  lessonId,
+  enrollmentId
 }: ToolProps) {
   const [responses, setResponses] = useState({})
   const [loading, setLoading] = useState(false)
-  
+
   const handleSave = async () => {
     const res = await fetch('/api/activities/save-response', {
       method: 'POST',
@@ -3183,7 +3208,7 @@ export function Module[X]Tool({
     })
     // Update progress
   }
-  
+
   return (
     <div className="tool-container">
       {/* Tool UI */}
@@ -3194,6 +3219,7 @@ export function Module[X]Tool({
 ```
 
 #### **Data Storage Pattern**
+
 All tool responses saved to `lesson_responses.responses` (JSONB):
 
 ```json
@@ -3215,6 +3241,7 @@ All tool responses saved to `lesson_responses.responses` (JSONB):
 ```
 
 #### **Evidence Files**
+
 Stored in Supabase Storage: `employee-evidence/{userId}/{moduleId}/{lessonId}/{filename}`
 
 ---
@@ -3224,21 +3251,23 @@ Stored in Supabase Storage: `employee-evidence/{userId}/{moduleId}/{lessonId}/{f
 **Total**: 29 interactive tools across 6 modules  
 **Status**: 100% Complete and Ready for Production 🚀
 
-| Module | Tools Count | Status |
-|--------|-------------|--------|
-| Module 1: Aire Limpio | 5 tools | ✅ Complete |
-| Module 2: Agua Limpia | 5 tools | ✅ Complete |
-| Module 3: Ciudades Seguras | 5 tools | ✅ Complete |
-| Module 4: Cero Residuos | 4 tools | ✅ Complete |
-| Module 5: Comercio Justo | 5 tools | ✅ Complete (NEW) |
-| Module 6: Integración de Impacto | 5 tools | ✅ Complete (NEW) |
+| Module                           | Tools Count | Status            |
+| -------------------------------- | ----------- | ----------------- |
+| Module 1: Aire Limpio            | 5 tools     | ✅ Complete       |
+| Module 2: Agua Limpia            | 5 tools     | ✅ Complete       |
+| Module 3: Ciudades Seguras       | 5 tools     | ✅ Complete       |
+| Module 4: Cero Residuos          | 4 tools     | ✅ Complete       |
+| Module 5: Comercio Justo         | 5 tools     | ✅ Complete (NEW) |
+| Module 6: Integración de Impacto | 5 tools     | ✅ Complete (NEW) |
 
 **Key Files:**
+
 - Components: `components/module-tools/Module1Tools.tsx` through `Module6Tools.tsx`
 - Configuration: `CONFIGURE-ALL-TOOLS-COMPLETE.sql` (master script)
 - Documentation: `HOW-TO-ACTIVATE-MODULE-TOOLS.md` (step-by-step guide)
 
 **To Activate:**
+
 1. Run `CONFIGURE-ALL-TOOLS-COMPLETE.sql` in Supabase
 2. Refresh browser
 3. All 29 tools will appear in lessons!
@@ -3264,6 +3293,7 @@ Complete ESG (Environmental, Social, and Governance) reporting system with datab
 ### **✅ Database Tables Created**
 
 #### **activity_responses**
+
 - Stores structured user responses from interactive activities
 - Fields: `pre_assessment_level`, `key_learning`, `application_plan`, `challenges_identified`, `confidence_level`
 - Includes `custom_responses` JSONB for tool data: `tool_air-quality-assessment`, `tool_water-footprint-calculator`, etc.
@@ -3271,12 +3301,14 @@ Complete ESG (Environmental, Social, and Governance) reporting system with datab
 - Progress tracking: `completion_percentage`, `questions_answered`, `time_spent_minutes`
 
 #### **impact_measurements**
+
 - Environmental impact tracking
 - Fields: `measurement_type`, `metric_name`, `baseline_value`, `current_value`, `target_value`
 - Impact areas: CO₂ reduction, water savings, waste reduction, cost savings
 - Temporal tracking: `measurement_date`, `previous_measurement_id`
 
 #### **esg_reports**
+
 - Generated report metadata
 - Fields: `report_type` (individual, module, corporate), `report_data` (JSONB)
 - File references: `pdf_url`, `excel_url`
@@ -3285,6 +3317,7 @@ Complete ESG (Environmental, Social, and Governance) reporting system with datab
 ### **✅ APIs Created**
 
 #### **POST/GET /api/activities/save-response**
+
 - **Purpose**: Save and load interactive activity responses
 - **Features**:
   - Dual-write to `activity_responses` (new structured) AND `lesson_responses` (legacy)
@@ -3294,6 +3327,7 @@ Complete ESG (Environmental, Social, and Governance) reporting system with datab
   - Stores tool data in `custom_responses` JSONB
 
 #### **POST/GET /api/tools/save-result**
+
 - **Purpose**: Save tool results for ESG reporting
 - **Features**:
   - Stores each tool with key: `tool_{tool-name}`
@@ -3303,6 +3337,7 @@ Complete ESG (Environmental, Social, and Governance) reporting system with datab
   - Load previous results capability
 
 #### **GET /api/esg/generate-report** 🎯 **CORE FEATURE**
+
 - **Purpose**: Generate downloadable ESG reports in PDF, Excel, or JSON
 - **Query Parameters**:
   - `format`: `pdf` | `excel` | `json` (default: json)
@@ -3339,30 +3374,32 @@ Complete ESG (Environmental, Social, and Governance) reporting system with datab
 **File**: `/lib/hooks/useToolDataSaver.ts`
 
 **Functions**:
+
 - `saveToolData()`: Save tool results to database
 - `loadToolData()`: Load previous tool results
 - Auto-notification on save: "Datos guardados para reporte ESG ✅"
 
 **Usage**:
+
 ```typescript
-const { saveToolData, loadToolData, loading, saved } = useToolDataSaver()
+const { saveToolData, loadToolData, loading, saved } = useToolDataSaver();
 
 // Save tool data
 await saveToolData({
   enrollment_id: enrollmentId,
   module_id: moduleId,
   lesson_id: lessonId,
-  tool_name: 'air-quality-roi',
+  tool_name: "air-quality-roi",
   tool_data: calculatedResult,
-  tool_type: 'calculator'
-})
+  tool_type: "calculator",
+});
 
 // Load previous data
 const savedData = await loadToolData({
   lesson_id: lessonId,
   module_id: moduleId,
-  tool_name: 'air-quality-roi'
-})
+  tool_name: "air-quality-roi",
+});
 ```
 
 ### **✅ Analytics Dashboard: /employee-portal/mi-impacto** 🎯 **CORE FEATURE**
@@ -3372,23 +3409,27 @@ const savedData = await loadToolData({
 **Features**:
 
 **Impact Stats Cards**:
+
 - 🌱 CO₂ Reduced (kg) with trees equivalent
 - 💧 Water Saved (liters)
 - 🗑️ Waste Reduced (kg)
 - 💰 Cost Savings (MXN)
 
 **Learning Stats**:
+
 - Modules Inscribed, Completed, In Progress
 - Total XP earned
 - Activities completed
 - Tools used
 
 **Impact by Module**:
+
 - Breakdown of tool usage per module
 - Core value tracking
 - Completion status per module
 
 **Download Reports Section**:
+
 - ESG Report Downloader component for each completed enrollment
 - PDF and Excel export buttons
 - Real-time report generation
@@ -3398,6 +3439,7 @@ const savedData = await loadToolData({
 **File**: `/components/esg/ESGReportDownloader.tsx`
 
 **Features**:
+
 - Dual format download: PDF and Excel
 - Real-time generation (not pre-generated)
 - Loading states with spinner
@@ -3406,6 +3448,7 @@ const savedData = await loadToolData({
 - Automatic file download on completion
 
 **PDF Report Includes**:
+
 - Crowd Conscious branded header
 - Report type (Individual, Module, Corporate)
 - Progress metrics
@@ -3414,6 +3457,7 @@ const savedData = await loadToolData({
 - Generated timestamp
 
 **Excel Report Includes**:
+
 - Summary sheet with key metrics
 - Tools Used sheet with details
 - Styled headers (colored, bold)
@@ -3423,6 +3467,7 @@ const savedData = await loadToolData({
 ### **✅ Tool Updates for ESG** (2/29 Complete)
 
 **Pattern Applied to Tools**:
+
 1. Add `useEffect` and `useToolDataSaver` imports
 2. Add props: `enrollmentId`, `moduleId`, `lessonId`
 3. Call `useToolDataSaver()` hook
@@ -3431,6 +3476,7 @@ const savedData = await loadToolData({
 6. Add `saveToolData()` call after calculation
 
 **Completed Tools**:
+
 - ✅ AirQualityAssessment (Module 1)
 - ✅ AirQualityROI (Module 1)
 
@@ -3439,18 +3485,23 @@ const savedData = await loadToolData({
 ### **Impact Calculation Logic**
 
 **Air Quality Tools**:
+
 - ROI Calculator: Saves `annualSavings`, estimates 500kg CO₂ reduction
 
 **Water Tools**:
+
 - Footprint Calculator: Assumes 20% water reduction from baseline
 
 **Waste Tools**:
+
 - Waste Analyzer: Assumes 30% waste reduction potential
 
 **Cost Tools**:
+
 - All calculators: Aggregate `annualSavings` for total cost impact
 
 **Trees Equivalent**:
+
 - Formula: `CO₂ kg / 21` (1 tree absorbs 21kg CO₂/year)
 
 ### **Data Flow**
@@ -3480,12 +3531,14 @@ User → Tool → Calculate Result
 ### **Benefits**
 
 **For Individuals**:
+
 - Track personal environmental impact
 - Visual progress on sustainability goals
 - Downloadable proof of learning
 - Shareable ESG metrics
 
 **For Companies**:
+
 - ESG compliance documentation
 - Employee participation tracking
 - Aggregate environmental impact reporting
@@ -3493,6 +3546,7 @@ User → Tool → Calculate Result
 - ROI justification for training investment
 
 **For Crowd Conscious**:
+
 - Data-driven impact stories
 - Marketing material (aggregated metrics)
 - Proof of platform effectiveness
@@ -3501,6 +3555,7 @@ User → Tool → Calculate Result
 ### **Future Enhancements**
 
 **Phase 2 (Planned)**:
+
 - [ ] Automatic report scheduling (monthly, quarterly)
 - [ ] Email delivery of reports
 - [ ] Compare multiple time periods (Month 1 vs Month 6)
@@ -3511,27 +3566,33 @@ User → Tool → Calculate Result
 ### **Files Created (Nov 10, 2025)**
 
 **Database**:
+
 - `CREATE-PROPER-ESG-INFRASTRUCTURE.sql` - Schema and RLS policies
 
 **APIs**:
+
 - `/app/api/activities/save-response/route.ts` - Updated for dual-write
 - `/app/api/tools/save-result/route.ts` - Tool data saving endpoint
 - `/app/api/esg/generate-report/route.ts` - Report generation (PDF/Excel/JSON)
 
 **Components**:
+
 - `/components/esg/ESGReportDownloader.tsx` - Download UI component
 - `/app/(app)/employee-portal/mi-impacto/page.tsx` - Analytics dashboard
 
 **Utilities**:
+
 - `/lib/hooks/useToolDataSaver.ts` - React hook for tool data
 
 **Documentation**:
+
 - `ESG-INFRASTRUCTURE-GUIDE.md` - System architecture
 - `ESG-REPORT-GENERATOR-DESIGN.md` - Report types and features
 - `TOOL-DATA-SAVING-GUIDE.md` - How to integrate tools
 - `BATCH-UPDATE-TOOLS-FOR-ESG.md` - Systematic tool update guide
 
 **Dependencies Added**:
+
 - `exceljs` - Excel file generation
 - `jspdf` - PDF document generation
 - `jspdf-autotable` - PDF table formatting
