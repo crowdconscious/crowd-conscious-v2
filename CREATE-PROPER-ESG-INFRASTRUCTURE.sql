@@ -12,7 +12,10 @@
 -- Better structure than JSONB in lesson_responses
 -- Allows proper querying, filtering, and analytics
 
-CREATE TABLE IF NOT EXISTS activity_responses (
+-- Drop existing table if it exists (clean slate)
+DROP TABLE IF EXISTS activity_responses CASCADE;
+
+CREATE TABLE activity_responses (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   
   -- User & Enrollment
@@ -77,7 +80,10 @@ CREATE INDEX IF NOT EXISTS idx_activity_responses_completed ON activity_response
 -- ================================================================
 -- Allows users to re-measure and see improvement
 
-CREATE TABLE IF NOT EXISTS impact_measurements (
+-- Drop existing table if it exists (clean slate)
+DROP TABLE IF EXISTS impact_measurements CASCADE;
+
+CREATE TABLE impact_measurements (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   
   -- User & Context
@@ -123,7 +129,10 @@ CREATE INDEX IF NOT EXISTS idx_impact_measurements_period ON impact_measurements
 -- ================================================================
 -- Store compiled ESG reports for download
 
-CREATE TABLE IF NOT EXISTS esg_reports (
+-- Drop existing table if it exists (clean slate)
+DROP TABLE IF EXISTS esg_reports CASCADE;
+
+CREATE TABLE esg_reports (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   
   -- User & Account
