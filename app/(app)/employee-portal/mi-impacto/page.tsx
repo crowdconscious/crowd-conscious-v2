@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import { 
   TrendingUp, 
   Droplet, 
@@ -10,7 +11,8 @@ import {
   Calendar,
   Target,
   BarChart3,
-  Leaf
+  Leaf,
+  ArrowLeft
 } from 'lucide-react'
 import ESGReportDownloader from '@/components/esg/ESGReportDownloader'
 
@@ -137,6 +139,15 @@ export default async function MiImpactoPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-teal-50 to-blue-50">
       <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Back Navigation */}
+        <Link 
+          href="/employee-portal/dashboard"
+          className="inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 mb-6 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          <span className="font-medium">Volver al Portal</span>
+        </Link>
+
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-2">
@@ -309,6 +320,8 @@ export default async function MiImpactoPage() {
                   type="individual"
                   enrollmentId={enrollment.id}
                   moduleId={enrollment.module_id || undefined}
+                  moduleName={enrollment.marketplace_modules?.title}
+                  coreValue={enrollment.marketplace_modules?.core_value}
                 />
               ))}
             </div>

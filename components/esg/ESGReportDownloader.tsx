@@ -7,6 +7,8 @@ interface ESGReportDownloaderProps {
   type: 'individual' | 'module' | 'corporate'
   enrollmentId?: string
   moduleId?: string
+  moduleName?: string
+  coreValue?: string
   corporateAccountId?: string
   dateFrom?: string
   dateTo?: string
@@ -17,11 +19,27 @@ export default function ESGReportDownloader({
   type,
   enrollmentId,
   moduleId,
+  moduleName,
+  coreValue,
   corporateAccountId,
   dateFrom,
   dateTo,
   className = ''
 }: ESGReportDownloaderProps) {
+  
+  // Map core values to emojis
+  const getCoreValueEmoji = (cv: string | undefined) => {
+    if (!cv) return '📊'
+    const emojiMap: Record<string, string> = {
+      'clean_air': '🌬️',
+      'clean_water': '💧',
+      'safe_cities': '🏙️',
+      'zero_waste': '♻️',
+      'fair_trade': '🤝',
+      'impact_integration': '📈'
+    }
+    return emojiMap[cv] || '📊'
+  }
   const [downloading, setDownloading] = useState<'pdf' | 'excel' | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -86,12 +104,14 @@ export default function ESGReportDownloader({
   return (
     <div className={`bg-white border-2 border-slate-200 rounded-xl p-6 ${className}`}>
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-          <Download className="w-6 h-6 text-white" />
+        <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center text-2xl">
+          {getCoreValueEmoji(coreValue)}
         </div>
-        <div>
-          <h3 className="text-lg font-bold text-slate-900">Descargar Reporte ESG</h3>
-          <p className="text-sm text-slate-600">Exporta tu reporte en PDF o Excel</p>
+        <div className="flex-1">
+          <h3 className="text-lg font-bold text-slate-900">
+            {moduleName || 'Reporte ESG'}
+          </h3>
+          <p className="text-sm text-slate-600">Descargar reporte en PDF o Excel</p>
         </div>
       </div>
 
