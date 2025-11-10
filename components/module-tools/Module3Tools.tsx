@@ -1,10 +1,33 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Shield, MapPin, Users, Home, Camera, Plus, Minus, Save, Download } from 'lucide-react'
+import { useToolDataSaver } from '@/lib/hooks/useToolDataSaver'
 
 // Security Audit Tool - For Lesson 3.1
-export function SecurityAuditTool({ onSave }: { onSave?: (data: any) => void }) {
+export function SecurityAuditTool({ onSave, enrollmentId, moduleId, lessonId }: { 
+  onSave?: (data: any) => void
+  enrollmentId?: string
+  moduleId?: string
+  lessonId?: string
+}) {
+  const { saveToolData, loadToolData } = useToolDataSaver()
+
+  useEffect(() => {
+    if (enrollmentId && moduleId && lessonId) {
+      const loadPrevious = async () => {
+        const savedData = await loadToolData({
+          lesson_id: lessonId,
+          module_id: moduleId,
+          tool_name: 'security-audit'
+        })
+        if (savedData && savedData.auditData) {
+          setAuditData(savedData.auditData)
+        }
+      }
+      loadPrevious()
+    }
+  }, [enrollmentId, moduleId, lessonId])
   const [auditData, setAuditData] = useState<Record<string, any>>({
     location: '',
     date: new Date().toISOString().split('T')[0],
@@ -34,12 +57,13 @@ export function SecurityAuditTool({ onSave }: { onSave?: (data: any) => void }) 
     { id: 'emergency', label: 'Salidas de emergencia claras', category: 'Seguridad' }
   ]
 
-  const addZone = () => {
+  const addZone = async () => {
     if (currentZone.name) {
-      setAuditData((prev: any) => ({
-        ...prev,
-        zones: [...prev.zones, { ...currentZone, id: Date.now() }]
-      }))
+      const updatedData = {
+        ...auditData,
+        zones: [...auditData.zones, { ...currentZone, id: Date.now() }]
+      }
+      setAuditData(updatedData)
       setCurrentZone({
         name: '',
         lighting: 5,
@@ -49,6 +73,22 @@ export function SecurityAuditTool({ onSave }: { onSave?: (data: any) => void }) 
         notes: '',
         photos: []
       })
+
+      // ✨ Save to database for ESG reporting
+      if (enrollmentId && moduleId && lessonId) {
+        await saveToolData({
+          enrollment_id: enrollmentId,
+          module_id: moduleId,
+          lesson_id: lessonId,
+          tool_name: 'security-audit',
+          tool_data: { auditData: updatedData },
+          tool_type: 'assessment'
+        })
+      }
+
+      if (onSave) {
+        onSave(updatedData)
+      }
     }
   }
 
@@ -210,7 +250,19 @@ export function SecurityAuditTool({ onSave }: { onSave?: (data: any) => void }) 
 
       {/* Save Button */}
       <button
-        onClick={() => onSave?.(auditData)}
+        onClick={async () => {
+          if (enrollmentId && moduleId && lessonId) {
+            await saveToolData({
+              enrollment_id: enrollmentId,
+              module_id: moduleId,
+              lesson_id: lessonId,
+              tool_name: 'security-audit',
+              tool_data: { auditData },
+              tool_type: 'assessment'
+            })
+          }
+          onSave?.(auditData)
+        }}
         disabled={auditData.zones.length === 0}
         className="w-full bg-gradient-to-r from-teal-600 to-purple-600 text-white px-8 py-4 rounded-xl font-bold hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
       >
@@ -222,7 +274,14 @@ export function SecurityAuditTool({ onSave }: { onSave?: (data: any) => void }) 
 }
 
 // Community Survey Tool - For Lesson 3.2
-export function CommunitySurveyTool({ onSave }: { onSave?: (data: any) => void }) {
+export function CommunitySurveyTool({ onSave, enrollmentId, moduleId, lessonId }: { 
+  onSave?: (data: any) => void
+  enrollmentId?: string
+  moduleId?: string
+  lessonId?: string
+}) {
+  const { saveToolData, loadToolData } = useToolDataSaver()
+
   const [surveyData, setsurveyData] = useState({
     respondent_count: 0,
     demographics: {
@@ -239,6 +298,36 @@ export function CommunitySurveyTool({ onSave }: { onSave?: (data: any) => void }
     priorities: [],
     comments: []
   })
+
+  useEffect(() => {
+    if (enrollmentId && moduleId && lessonId) {
+      const loadPrevious = async () => {
+        const savedData = await loadToolData({
+          lesson_id: lessonId,
+          module_id: moduleId,
+          tool_name: 'community-safety-map'
+        })
+        if (savedData && savedData.surveyData) {
+          setsurveyData(savedData.surveyData)
+        }
+      }
+      loadPrevious()
+    }
+  }, [enrollmentId, moduleId, lessonId])
+
+  const handleSave = async () => {
+    if (enrollmentId && moduleId && lessonId) {
+      await saveToolData({
+        enrollment_id: enrollmentId,
+        module_id: moduleId,
+        lesson_id: lessonId,
+        tool_name: 'community-safety-map',
+        tool_data: { surveyData },
+        tool_type: 'mapper'
+      })
+    }
+    onSave?.(surveyData)
+  }
 
   return (
     <div className="bg-white rounded-xl border-2 border-slate-200 p-6 space-y-6">
@@ -277,7 +366,14 @@ export function CommunitySurveyTool({ onSave }: { onSave?: (data: any) => void }
 }
 
 // Cost Calculator - For Lesson 3.4
-export function CostCalculatorTool({ onSave }: { onSave?: (data: any) => void }) {
+export function CostCalculatorTool({ onSave, enrollmentId, moduleId, lessonId }: { 
+  onSave?: (data: any) => void
+  enrollmentId?: string
+  moduleId?: string
+  lessonId?: string
+}) {
+  const { saveToolData, loadToolData } = useToolDataSaver()
+
   const [improvements, setImprovements] = useState<Array<{
     name: string
     cost: number
@@ -292,10 +388,43 @@ export function CostCalculatorTool({ onSave }: { onSave?: (data: any) => void })
     priority: 'medium'
   })
 
-  const addImprovement = () => {
+  useEffect(() => {
+    if (enrollmentId && moduleId && lessonId) {
+      const loadPrevious = async () => {
+        const savedData = await loadToolData({
+          lesson_id: lessonId,
+          module_id: moduleId,
+          tool_name: 'cost-calculator'
+        })
+        if (savedData && savedData.improvements) {
+          setImprovements(savedData.improvements)
+        }
+      }
+      loadPrevious()
+    }
+  }, [enrollmentId, moduleId, lessonId])
+
+  const addImprovement = async () => {
     if (currentItem.name && currentItem.cost > 0) {
-      setImprovements(prev => [...prev, { ...currentItem }])
+      const updatedImprovements = [...improvements, { ...currentItem }]
+      setImprovements(updatedImprovements)
       setCurrentItem({ name: '', cost: 0, impact: 5, priority: 'medium' })
+
+      // ✨ Save to database for ESG reporting
+      if (enrollmentId && moduleId && lessonId) {
+        await saveToolData({
+          enrollment_id: enrollmentId,
+          module_id: moduleId,
+          lesson_id: lessonId,
+          tool_name: 'cost-calculator',
+          tool_data: { improvements: updatedImprovements },
+          tool_type: 'calculator'
+        })
+      }
+
+      if (onSave) {
+        onSave(updatedImprovements)
+      }
     }
   }
 
