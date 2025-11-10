@@ -236,7 +236,7 @@ async function generateModuleReport(
     .eq('module_id', module_id)
 
   // Get all activity responses for these enrollments
-  const enrollmentIds = enrollments?.map(e => e.id) || []
+  const enrollmentIds = enrollments?.map((e: any) => e.id) || []
   
   let query = supabase
     .from('activity_responses')
@@ -339,7 +339,7 @@ async function generateCorporateReport(
     .eq('corporate_account_id', corporate_account_id)
 
   // Get all activity responses
-  const enrollmentIds = enrollments?.map(e => e.id) || []
+  const enrollmentIds = enrollments?.map((e: any) => e.id) || []
   
   let query = supabase
     .from('activity_responses')
@@ -352,9 +352,9 @@ async function generateCorporateReport(
   const { data: activities } = await query
 
   // Calculate company-wide metrics
-  const totalXP = enrollments?.reduce((sum, e) => sum + (e.xp_earned || 0), 0) || 0
-  const completedModules = enrollments?.filter(e => e.completed).length || 0
-  const uniqueModules = [...new Set(enrollments?.map(e => e.module_id))].length || 0
+  const totalXP = enrollments?.reduce((sum: number, e: any) => sum + (e.xp_earned || 0), 0) || 0
+  const completedModules = enrollments?.filter((e: any) => e.completed).length || 0
+  const uniqueModules = [...new Set(enrollments?.map((e: any) => e.module_id))].length || 0
 
   // Extract all tool results for company-wide impact
   const companyToolResults: Array<{
@@ -389,9 +389,9 @@ async function generateCorporateReport(
     },
     participation: {
       total_employees: employees?.length || 0,
-      enrolled: [...new Set(enrollments?.map(e => e.user_id))].length || 0,
+      enrolled: [...new Set(enrollments?.map((e: any) => e.user_id))].length || 0,
       participation_rate: employees?.length ? 
-        (([...new Set(enrollments?.map(e => e.user_id))].length / employees.length) * 100).toFixed(1) : 0
+        (([...new Set(enrollments?.map((e: any) => e.user_id))].length / employees.length) * 100).toFixed(1) : 0
     },
     learning: {
       total_enrollments: enrollments?.length || 0,
