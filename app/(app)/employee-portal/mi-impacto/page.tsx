@@ -313,8 +313,8 @@ export default async function MiImpactoPage() {
             </h2>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {/* Individual Reports */}
-              {enrollments?.filter(e => e.completed).slice(0, 3).map((enrollment) => (
+              {/* Individual Reports - Show ALL completed modules */}
+              {enrollments?.filter(e => e.completed).map((enrollment) => (
                 <ESGReportDownloader
                   key={enrollment.id}
                   type="individual"
@@ -326,9 +326,9 @@ export default async function MiImpactoPage() {
               ))}
             </div>
 
-            {completedEnrollments > 3 && (
-              <p className="text-sm text-slate-500 mt-4 text-center">
-                Mostrando los 3 reportes más recientes. Total disponibles: {completedEnrollments}
+            {completedEnrollments > 0 && (
+              <p className="text-sm text-slate-600 mt-4 text-center font-medium">
+                ✅ Mostrando todos los {completedEnrollments} {completedEnrollments === 1 ? 'reporte disponible' : 'reportes disponibles'}
               </p>
             )}
           </div>
