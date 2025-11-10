@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Activity, TrendingDown, TrendingUp, AlertCircle, CheckCircle, Plus, Save } from 'lucide-react'
+import { useToolDataSaver } from '@/lib/hooks/useToolDataSaver'
 
 interface Reading {
   id: string
@@ -17,6 +18,10 @@ interface Reading {
 interface MonitorTrackerProps {
   onSave?: (data: MonitoringData) => void
   className?: string
+  // ESG Reporting Props
+  enrollmentId?: string
+  moduleId?: string
+  lessonId?: string
 }
 
 interface MonitoringData {
@@ -57,7 +62,10 @@ const weatherOptions = [
 
 export default function AirQualityMonitorTracker({
   onSave,
-  className = ''
+  className = '',
+  enrollmentId,
+  moduleId,
+  lessonId
 }: MonitorTrackerProps) {
   const [facilityName, setFacilityName] = useState('')
   const [readings, setReadings] = useState<Reading[]>([])
@@ -72,6 +80,31 @@ export default function AirQualityMonitorTracker({
     notes: ''
   })
   const [completed, setCompleted] = useState(false)
+
+  // ✨ ESG Data Saving
+  const { saveToolData, loadToolData, loading: saving } = useToolDataSaver()
+
+  // ✨ Load previous data on mount
+  useEffect(() => {
+    if (enrollmentId && moduleId && lessonId) {
+      const loadPrevious = async () => {
+        const savedData = await loadToolData({
+          lesson_id: lessonId,
+          module_id: moduleId,
+          tool_name: 'air-quality-monitor'
+        })
+
+        if (savedData && savedData.readings) {
+          setFacilityName(savedData.facilityName || '')
+          setReadings(savedData.readings || [])
+          if (savedData.readings.length > 0) {
+            setCompleted(true)
+          }
+        }
+      }
+      loadPrevious()
+    }
+  }, [enrollmentId, moduleId, lessonId])
 
   const addReading = () => {
     if (currentReading.pm25 && currentReading.pm10 && currentReading.location) {
@@ -171,7 +204,7 @@ export default function AirQualityMonitorTracker({
     return { label: 'Peligrosa', color: 'text-red-600', bgColor: 'bg-red-100' }
   }
 
-  const saveMonitoringData = () => {
+  const saveMonitoringData = async () => {
     const data: MonitoringData = {
       facilityName,
       startDate: readings[readings.length - 1]?.date || new Date().toISOString().split('T')[0],
@@ -185,6 +218,18 @@ export default function AirQualityMonitorTracker({
     }
     
     setCompleted(true)
+
+    // ✨ Save to database for ESG reporting
+    if (enrollmentId && moduleId && lessonId) {
+      await saveToolData({
+        enrollment_id: enrollmentId,
+        module_id: moduleId,
+        lesson_id: lessonId,
+        tool_name: 'air-quality-monitor',
+        tool_data: data,
+        tool_type: 'tracker'
+      })
+    }
     
     if (onSave) {
       onSave(data)

@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Factory, MapPin, Camera, AlertTriangle, CheckCircle, Download, Save } from 'lucide-react'
+import { useToolDataSaver } from '@/lib/hooks/useToolDataSaver'
 
 interface EmissionSource {
   id: string
@@ -16,6 +17,10 @@ interface EmissionSource {
 interface EmissionSourceIdentifierProps {
   onSave?: (data: EmissionInventory) => void
   className?: string
+  // ESG Reporting Props
+  enrollmentId?: string
+  moduleId?: string
+  lessonId?: string
 }
 
 interface EmissionInventory {
@@ -52,7 +57,10 @@ const locations = [
 
 export default function EmissionSourceIdentifier({
   onSave,
-  className = ''
+  className = '',
+  enrollmentId,
+  moduleId,
+  lessonId
 }: EmissionSourceIdentifierProps) {
   const [facilityName, setFacilityName] = useState('')
   const [sources, setSources] = useState<EmissionSource[]>([])
@@ -65,6 +73,31 @@ export default function EmissionSourceIdentifier({
   })
   const [showForm, setShowForm] = useState(false)
   const [completed, setCompleted] = useState(false)
+
+  // ✨ ESG Data Saving
+  const { saveToolData, loadToolData, loading: saving } = useToolDataSaver()
+
+  // ✨ Load previous data on mount
+  useEffect(() => {
+    if (enrollmentId && moduleId && lessonId) {
+      const loadPrevious = async () => {
+        const savedData = await loadToolData({
+          lesson_id: lessonId,
+          module_id: moduleId,
+          tool_name: 'emission-source-identifier'
+        })
+
+        if (savedData && savedData.sources) {
+          setFacilityName(savedData.facilityName || '')
+          setSources(savedData.sources || [])
+          if (savedData.sources.length > 0) {
+            setCompleted(true)
+          }
+        }
+      }
+      loadPrevious()
+    }
+  }, [enrollmentId, moduleId, lessonId])
 
   const addSource = () => {
     if (currentSource.type && currentSource.location) {
@@ -121,7 +154,7 @@ export default function EmissionSourceIdentifier({
     return sourceTypes.find(t => t.value === type)?.label || type
   }
 
-  const generateReport = () => {
+  const generateReport = async () => {
     const inventory: EmissionInventory = {
       facilityName,
       assessmentDate: new Date().toISOString().split('T')[0],
@@ -131,6 +164,18 @@ export default function EmissionSourceIdentifier({
     }
     
     setCompleted(true)
+
+    // ✨ Save to database for ESG reporting
+    if (enrollmentId && moduleId && lessonId) {
+      await saveToolData({
+        enrollment_id: enrollmentId,
+        module_id: moduleId,
+        lesson_id: lessonId,
+        tool_name: 'emission-source-identifier',
+        tool_data: inventory,
+        tool_type: 'analyzer'
+      })
+    }
     
     if (onSave) {
       onSave(inventory)

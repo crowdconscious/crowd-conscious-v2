@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Calendar, Plus, CheckCircle, Clock, DollarSign, Users, Save, Download } from 'lucide-react'
+import { useToolDataSaver } from '@/lib/hooks/useToolDataSaver'
 
 interface Task {
   id: string
@@ -17,6 +18,10 @@ interface Task {
 interface TimelinePlannerProps {
   onSave?: (data: TimelinePlan) => void
   className?: string
+  // ESG Reporting Props
+  enrollmentId?: string
+  moduleId?: string
+  lessonId?: string
 }
 
 interface TimelinePlan {
@@ -49,7 +54,10 @@ const milestoneTemplates = [
 
 export default function ImplementationTimelinePlanner({
   onSave,
-  className = ''
+  className = '',
+  enrollmentId,
+  moduleId,
+  lessonId
 }: TimelinePlannerProps) {
   const [projectName, setProjectName] = useState('')
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0])
@@ -64,6 +72,32 @@ export default function ImplementationTimelinePlanner({
     status: 'pending' as const
   })
   const [completed, setCompleted] = useState(false)
+
+  // ✨ ESG Data Saving
+  const { saveToolData, loadToolData, loading: saving } = useToolDataSaver()
+
+  // ✨ Load previous data on mount
+  useEffect(() => {
+    if (enrollmentId && moduleId && lessonId) {
+      const loadPrevious = async () => {
+        const savedData = await loadToolData({
+          lesson_id: lessonId,
+          module_id: moduleId,
+          tool_name: 'implementation-timeline'
+        })
+
+        if (savedData && savedData.tasks) {
+          setProjectName(savedData.projectName || '')
+          setStartDate(savedData.startDate || new Date().toISOString().split('T')[0])
+          setTasks(savedData.tasks || [])
+          if (savedData.tasks.length > 0) {
+            setCompleted(true)
+          }
+        }
+      }
+      loadPrevious()
+    }
+  }, [enrollmentId, moduleId, lessonId])
 
   const addTask = () => {
     if (currentTask.title && currentTask.responsible) {
@@ -101,7 +135,7 @@ export default function ImplementationTimelinePlanner({
   const completedTasks = tasks.filter(t => t.status === 'completed').length
   const inProgressTasks = tasks.filter(t => t.status === 'in-progress').length
 
-  const savePlan = () => {
+  const savePlan = async () => {
     const plan: TimelinePlan = {
       projectName,
       startDate,
@@ -111,6 +145,18 @@ export default function ImplementationTimelinePlanner({
     }
     
     setCompleted(true)
+
+    // ✨ Save to database for ESG reporting
+    if (enrollmentId && moduleId && lessonId) {
+      await saveToolData({
+        enrollment_id: enrollmentId,
+        module_id: moduleId,
+        lesson_id: lessonId,
+        tool_name: 'implementation-timeline',
+        tool_data: plan,
+        tool_type: 'planner'
+      })
+    }
     
     if (onSave) {
       onSave(plan)
