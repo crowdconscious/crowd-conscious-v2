@@ -322,11 +322,15 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- ================================================================
--- MIGRATION FROM lesson_responses (Optional)
+-- MIGRATION FROM lesson_responses (Optional - SKIP FOR NOW)
 -- ================================================================
--- If you want to migrate existing data from lesson_responses:
+-- Migration can be done later once we understand the exact schema
+-- For now, start fresh with the new activity_responses table
 
 /*
+-- This migration is DISABLED because column names need verification
+-- Run this ONLY after confirming actual lesson_responses schema
+
 INSERT INTO activity_responses (
   user_id,
   enrollment_id,
@@ -334,13 +338,9 @@ INSERT INTO activity_responses (
   lesson_id,
   activity_type,
   activity_title,
-  key_learning,
-  application_plan,
+  custom_responses,
   evidence_urls,
-  completion_percentage,
-  completed,
-  created_at,
-  updated_at
+  created_at
 )
 SELECT 
   ce.user_id,
@@ -349,17 +349,12 @@ SELECT
   lr.lesson_id,
   'reflection',
   'Actividad de Lección',
-  lr.responses->>'activity_responses',
-  NULL,
-  lr.evidence_urls,
-  CASE WHEN lr.completed THEN 100 ELSE 0 END,
-  lr.completed,
-  lr.created_at,
-  lr.updated_at
+  lr.responses, -- Store entire JSONB as custom_responses
+  COALESCE(lr.evidence_urls, ARRAY[]::text[]),
+  lr.created_at
 FROM lesson_responses lr
 JOIN course_enrollments ce ON lr.enrollment_id = ce.id
-WHERE lr.responses IS NOT NULL
-  AND lr.responses->>'activity_responses' IS NOT NULL;
+WHERE lr.responses IS NOT NULL;
 */
 
 -- ================================================================
@@ -388,29 +383,25 @@ WHERE tablename IN ('activity_responses', 'impact_measurements', 'esg_reports')
 ORDER BY tablename, policyname;
 
 -- ================================================================
--- SUCCESS MESSAGE
+-- ✅ ESG INFRASTRUCTURE SETUP COMPLETE
 -- ================================================================
-DO $$
-BEGIN
-  RAISE NOTICE '';
-  RAISE NOTICE '================================================';
-  RAISE NOTICE '✅ ESG INFRASTRUCTURE CREATED SUCCESSFULLY!';
-  RAISE NOTICE '================================================';
-  RAISE NOTICE '';
-  RAISE NOTICE '📊 TABLES CREATED:';
-  RAISE NOTICE '  1. activity_responses - Detailed activity tracking';
-  RAISE NOTICE '  2. impact_measurements - Progress over time';
-  RAISE NOTICE '  3. esg_reports - Generated reports';
-  RAISE NOTICE '';
-  RAISE NOTICE '🔐 RLS POLICIES: Applied';
-  RAISE NOTICE '📈 HELPER FUNCTIONS: Created';
-  RAISE NOTICE '';
-  RAISE NOTICE '🚀 NEXT STEPS:';
-  RAISE NOTICE '  1. Create storage buckets (Supabase Dashboard)';
-  RAISE NOTICE '  2. Update API to use new activity_responses table';
-  RAISE NOTICE '  3. Build ESG report generator';
-  RAISE NOTICE '  4. Test data flow end-to-end';
-  RAISE NOTICE '';
-  RAISE NOTICE '================================================';
-END $$;
+-- 
+-- 📊 TABLES CREATED:
+--   1. activity_responses - Detailed activity tracking
+--   2. impact_measurements - Progress over time  
+--   3. esg_reports - Generated reports
+-- 
+-- 🔐 RLS POLICIES: Applied
+-- 📈 HELPER FUNCTIONS: Created
+-- 
+-- 🚀 NEXT STEPS:
+--   1. Create storage buckets in Supabase Dashboard:
+--      - activity-evidence (Private)
+--      - esg-reports (Private, shareable)
+--      - impact-measurements (Private)
+--   2. Update API to use new activity_responses table
+--   3. Build ESG report generator
+--   4. Test data flow end-to-end
+-- 
+-- ✅ Ready to use!
 
