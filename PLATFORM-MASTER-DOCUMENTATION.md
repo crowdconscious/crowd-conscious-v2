@@ -41,24 +41,22 @@
 A complete ESG (Environmental, Social, Governance) reporting system designed specifically for corporate customers.
 
 **Features**:
+
 - **Company-Wide Metrics**:
   - Participation rate (% of employees enrolled)
   - Total modules completed
   - Aggregate XP earned
   - Tools used across all employees
-  
 - **Environmental Impact Aggregation**:
   - Total CO₂ reduced (kg) with trees equivalent
   - Total water saved (liters)
   - Total waste avoided (kg)
   - Total cost savings (MXN/year)
-  
 - **Module Performance Tracking**:
   - Enrollments per module
   - Completion rates by module
   - Average progress per module
   - Visual progress bars
-  
 - **Downloadable Reports** (PDF + Excel):
   - Corporate-wide report (all modules, all employees)
   - Module-specific reports
@@ -77,12 +75,14 @@ A complete ESG (Environmental, Social, Governance) reporting system designed spe
 **NEW API**: `/api/marketplace/modules-with-stats`
 
 **What's New**:
+
 - **Real Enrollment Counts**: Each module card shows actual number of users enrolled
 - **Review Ratings**: Displays average rating and review count (e.g., 4.8 (142))
 - **Live Data**: Pulls from `course_enrollments` and `module_reviews` tables
 - **Fallback Handling**: Gracefully shows 0 if no data yet
 
 **Module Cards Now Display**:
+
 ```
 ⭐ 4.8 (142 reviews)
 👥 1,250 inscritos
@@ -98,12 +98,14 @@ A complete ESG (Environmental, Social, Governance) reporting system designed spe
 **ADDED**: Share buttons on every module card
 
 **Platforms**:
+
 - **Twitter (X)**: Pre-filled tweet with module details
 - **LinkedIn**: Professional sharing
 - **Facebook**: Social sharing
 - **WhatsApp**: Mobile-friendly sharing
 
 **How It Works**:
+
 - Clicking opens popup window (600x400)
 - Pre-fills message: "🌍 [Module Title] - [Description]... | Crowd Conscious"
 - Includes module URL for easy sharing
@@ -116,24 +118,28 @@ A complete ESG (Environmental, Social, Governance) reporting system designed spe
 ### **🔧 Critical Fixes**
 
 #### **XP Tracking Fixed**
+
 - **Issue**: Certificates showed XP but module pages showed 0 XP
 - **Solution**: Created `URGENT-FIX-XP-TRACKING.sql`
 - **Fix**: Recalculates all `xp_earned` = completed_lessons × 50
 - **Status**: SQL script ready to run
 
 #### **120% Progress Bug Fixed**
+
 - **Issue**: Modules with 6 lessons showed 120% progress
 - **Solution**: Created `FIX-LESSON-COUNTS.sql`
 - **Fix**: Dynamically fetches lesson_count from database
 - **Result**: All progress now ≤ 100%
 
 #### **XP Standardization**
+
 - **Issue**: Inconsistent XP (90, 265, 575)
 - **Solution**: Created `FIX-XP-STANDARDIZATION.sql`
 - **Fix**: Standardizes all modules to 50 XP per lesson
 - **Result**: All XP values are multiples of 50
 
 #### **Sidebar Enhancement**
+
 - **Added**: "Reportes ESG" to corporate sidebar
 - **Badge**: Green "PREMIUM" badge
 - **Access**: Always visible (doesn't require employees)
@@ -143,6 +149,7 @@ A complete ESG (Environmental, Social, Governance) reporting system designed spe
 ### **📁 New Files Created (Nov 10)**
 
 **SQL Fixes**:
+
 - `URGENT-FIX-XP-TRACKING.sql` - Fix ALL XP issues
 - `FIX-LESSON-COUNTS.sql` - Fix 120% progress
 - `FIX-XP-STANDARDIZATION.sql` - Standardize XP values
@@ -150,16 +157,19 @@ A complete ESG (Environmental, Social, Governance) reporting system designed spe
 - `FIX-WALLET-CONSTRAINT-SIMPLE.sql` - Allow $0 promo code transactions
 
 **New Features**:
+
 - `/app/corporate/esg-reports/page.tsx` - Corporate ESG dashboard
 - `/app/api/marketplace/modules-with-stats/route.ts` - Engagement metrics API
 
 **Documentation**:
+
 - `FINAL-ACTION-PLAN-ALL-FIXES.md` - Comprehensive 35-min fix guide
 - `QUICK-FIX-REFERENCE.md` - One-page reference card
 - `ACTION-PLAN-FIX-ALL-ISSUES.md` - Step-by-step troubleshooting
 - `CRITICAL-FIXES-DEPLOYED.md` - Technical details of fixes
 
 **Tooling Enhancements**:
+
 - Enhanced save notifications (4sec, animated, higher z-index)
 - Module 2 tools now have explicit save buttons
 - All 29 tools save data for ESG reporting
@@ -2633,6 +2643,7 @@ A comprehensive ESG (Environmental, Social, Governance) reporting dashboard desi
 ```
 
 **What's Tracked**:
+
 - **Participation Rate**: Percentage of employees who are enrolled in at least one module
 - **Modules Completed**: Total number of module completions across all employees
 - **Total XP**: Aggregate XP earned by all employees
@@ -2650,6 +2661,7 @@ A comprehensive ESG (Environmental, Social, Governance) reporting dashboard desi
 ```
 
 **How It Works**:
+
 - Aggregates tool results from all employees
 - Extracts impact data from `activity_responses.custom_responses`
 - Calculates totals (CO₂ from Air Quality ROI, Water from Footprint Calculator, etc.)
@@ -2658,6 +2670,7 @@ A comprehensive ESG (Environmental, Social, Governance) reporting dashboard desi
 #### **3. Module Performance Tracking**
 
 **Per-Module Breakdown**:
+
 - Number of employees enrolled
 - Number completed
 - Completion rate (%)
@@ -2665,6 +2678,7 @@ A comprehensive ESG (Environmental, Social, Governance) reporting dashboard desi
 - Visual progress bar
 
 **Example Display**:
+
 ```
 Estrategias Avanzadas de Calidad del Aire
 75 empleados inscritos • 42 completados • 56% tasa de completación
@@ -2674,6 +2688,7 @@ Estrategias Avanzadas de Calidad del Aire
 #### **4. Downloadable Reports**
 
 **Corporate-Wide Report**:
+
 - PDF and Excel formats
 - All modules, all employees
 - Company-wide metrics
@@ -2681,6 +2696,7 @@ Estrategias Avanzadas de Calidad del Aire
 - Tools usage breakdown
 
 **Module-Specific Reports**:
+
 - PDF and Excel formats
 - Per-module analytics
 - Employee list and progress
@@ -2688,6 +2704,7 @@ Estrategias Avanzadas de Calidad del Aire
 - Impact metrics for that module
 
 **Report Contents**:
+
 ```
 Métricas de Aprendizaje:
 • Participación de empleados
@@ -2705,18 +2722,21 @@ Impacto Ambiental:
 ### **Use Cases**
 
 #### **For HR Directors**:
+
 - Track training program effectiveness
 - Monitor employee participation
 - Identify top performers
 - Plan future training initiatives
 
 #### **For ESG Officers**:
+
 - Generate compliance reports
 - Track environmental impact
 - Calculate ROI of training programs
 - Prepare stakeholder presentations
 
 #### **For C-Suite**:
+
 - Board meeting presentations
 - Investor relations materials
 - ESG certification applications
@@ -2725,6 +2745,7 @@ Impacto Ambiental:
 ### **Technical Implementation**
 
 **Data Sources**:
+
 - `course_enrollments` - Employee progress and completion
 - `activity_responses` - Tool usage and impact data
 - `marketplace_modules` - Module details
@@ -2734,28 +2755,29 @@ Impacto Ambiental:
 
 ```typescript
 // Air Quality Tools
-if (toolName === 'air-quality-roi' && value.annualSavings) {
-  totalSavings += value.annualSavings
-  totalCO2 += 500 // Estimated kg reduced
+if (toolName === "air-quality-roi" && value.annualSavings) {
+  totalSavings += value.annualSavings;
+  totalCO2 += 500; // Estimated kg reduced
 }
 
 // Water Tools
-if (toolName === 'water-footprint-calculator' && value.totalWater) {
-  totalWater += value.totalWater * 0.2 // 20% reduction
+if (toolName === "water-footprint-calculator" && value.totalWater) {
+  totalWater += value.totalWater * 0.2; // 20% reduction
 }
 
 // Waste Tools
-if (toolName === 'waste-stream-analyzer' && value.totalWaste) {
-  totalWaste += value.totalWaste * 0.3 // 30% reduction
+if (toolName === "waste-stream-analyzer" && value.totalWaste) {
+  totalWaste += value.totalWaste * 0.3; // 30% reduction
 }
 
 // Trees Equivalent
-const trees = Math.round(totalCO2 / 21)
+const trees = Math.round(totalCO2 / 21);
 ```
 
 ### **Benefits**
 
 #### **For Corporate Customers**:
+
 - ✅ ESG compliance documentation
 - ✅ Stakeholder-ready reports
 - ✅ ISO 14001 preparation
@@ -2764,6 +2786,7 @@ const trees = Math.round(totalCO2 / 21)
 - ✅ Employee engagement tracking
 
 #### **For Crowd Conscious**:
+
 - ✅ Premium feature justifies pricing
 - ✅ Competitive differentiation
 - ✅ Client retention tool
@@ -2773,6 +2796,7 @@ const trees = Math.round(totalCO2 / 21)
 ### **Future Enhancements**
 
 **Planned Features**:
+
 - [ ] Automated monthly report emails
 - [ ] Quarterly comparison charts
 - [ ] Company-vs-industry benchmarking

@@ -70,6 +70,11 @@ export async function GET(request: NextRequest) {
           impact_integration: '📊'
         }
 
+        // Handle communities array (Supabase returns array for foreign keys)
+        const community = Array.isArray(module.communities) && module.communities.length > 0 
+          ? module.communities[0] 
+          : null
+
         return {
           id: module.id,
           title: module.title,
@@ -77,8 +82,8 @@ export async function GET(request: NextRequest) {
           slug: module.slug,
           coreValue: module.core_value,
           difficulty: module.difficulty_level || 'beginner',
-          creator: module.communities?.name || module.creator_name || 'Crowd Conscious Platform',
-          creatorAvatar: module.communities?.logo_url || coreValueEmojis[module.core_value] || '🌟',
+          creator: community?.name || module.creator_name || 'Crowd Conscious Platform',
+          creatorAvatar: community?.logo_url || coreValueEmojis[module.core_value] || '🌟',
           rating: Math.round(averageRating * 10) / 10, // Round to 1 decimal
           reviewCount: reviewCount,
           enrollments: enrollmentCount || 0,
