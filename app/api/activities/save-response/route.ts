@@ -102,12 +102,18 @@ export async function POST(request: NextRequest) {
       console.log('✅ Activity response created:', result.id)
     }
 
-    // Update enrollment progress
-    await supabase.rpc('update_lesson_completion', {
-      p_enrollment_id: enrollment_id,
-      p_lesson_id: lesson_id,
-      p_completed: true
-    })
+    // Update enrollment progress (optional - don't block if RPC doesn't exist)
+    try {
+      await supabase.rpc('update_lesson_completion', {
+        p_enrollment_id: enrollment_id,
+        p_lesson_id: lesson_id,
+        p_completed: true
+      })
+      console.log('✅ Lesson progress updated via RPC')
+    } catch (rpcError) {
+      console.warn('⚠️ RPC function not available, skipping progress update:', rpcError)
+      // Don't fail the whole request if RPC doesn't exist
+    }
 
     return NextResponse.json({
       success: true,

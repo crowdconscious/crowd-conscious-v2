@@ -43,6 +43,7 @@ export default function LessonPage({
   const [moduleId, setModuleId] = useState<string>('')
   const [lessonId, setLessonId] = useState<string>('')
   const [lesson, setLesson] = useState<any>(null)
+  const [enrollmentId, setEnrollmentId] = useState<string>('')
   const [startTime] = useState(Date.now()) // Track when lesson started
   const [uploadedFiles, setUploadedFiles] = useState<any[]>([])
   const [impactData, setImpactData] = useState<any>(null)
@@ -165,6 +166,34 @@ export default function LessonPage({
     
     fetchLesson()
   }, [])
+
+  // Fetch enrollment ID for this module
+  useEffect(() => {
+    const fetchEnrollmentId = async () => {
+      if (!moduleId) return
+      
+      try {
+        console.log('🔍 Fetching enrollment ID for module:', moduleId)
+        const response = await fetch(`/api/enrollments?module_id=${moduleId}`)
+        
+        if (response.ok) {
+          const data = await response.json()
+          if (data.enrollment_id) {
+            setEnrollmentId(data.enrollment_id)
+            console.log('✅ Enrollment ID:', data.enrollment_id)
+          } else {
+            console.warn('⚠️ No enrollment found for module:', moduleId)
+          }
+        } else {
+          console.error('❌ Failed to fetch enrollment:', response.status)
+        }
+      } catch (error) {
+        console.error('❌ Error fetching enrollment:', error)
+      }
+    }
+    
+    fetchEnrollmentId()
+  }, [moduleId])
 
   if (!lesson || !module) {
     return (
@@ -852,7 +881,7 @@ export default function LessonPage({
               activity={lesson.activity}
               moduleId={moduleId}
               lessonId={lessonId}
-              enrollmentId={lesson.enrollment_id || moduleId} // Use enrollment ID if available
+              enrollmentId={enrollmentId || moduleId} // Use fetched enrollment ID
               activityType={lesson.activity.type || 'reflection'}
               onComplete={() => {
                 setActivityCompleted(true)
