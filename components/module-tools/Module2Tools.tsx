@@ -632,12 +632,918 @@ export function RecyclingSystemDesigner({ onDesign, enrollmentId, moduleId, less
   )
 }
 
+// =========================================================
+// TOOL 3: Water Footprint Calculator
+// =========================================================
+
+interface WaterFootprintCalculatorProps {
+  onCalculate?: (result: any) => void
+  enrollmentId?: string
+  moduleId?: string
+  lessonId?: string
+}
+
+export function WaterFootprintCalculator({ 
+  onCalculate, 
+  enrollmentId, 
+  moduleId, 
+  lessonId 
+}: WaterFootprintCalculatorProps) {
+  const { saveToolData, loadToolData } = useToolDataSaver()
+
+  const [inputs, setInputs] = useState({
+    production: 0,      // Liters per day
+    bathrooms: 0,
+    cooling: 0,
+    irrigation: 0,
+    cleaning: 0,
+    other: 0,
+    waterCostPerM3: 15  // MXN per cubic meter
+  })
+
+  const [calculated, setCalculated] = useState(false)
+  const [results, setResults] = useState({
+    totalLitersPerDay: 0,
+    totalLitersPerYear: 0,
+    totalCubicMetersPerYear: 0,
+    annualCost: 0,
+    costPerDay: 0,
+    breakdown: {} as Record<string, { liters: number; percentage: number }>
+  })
+
+  // Load previous data
+  useEffect(() => {
+    if (enrollmentId && moduleId && lessonId) {
+      loadToolData({ lesson_id: lessonId, module_id: moduleId, tool_name: 'water-footprint-calculator' })
+        .then(data => {
+          if (data?.inputs) setInputs(data.inputs)
+          if (data?.calculated) {
+            setCalculated(true)
+            setResults(data.results)
+          }
+        })
+    }
+  }, [enrollmentId, moduleId, lessonId])
+
+  const calculate = async () => {
+    const totalLitersPerDay = 
+      inputs.production + 
+      inputs.bathrooms + 
+      inputs.cooling + 
+      inputs.irrigation + 
+      inputs.cleaning + 
+      inputs.other
+
+    const totalLitersPerYear = totalLitersPerDay * 365
+    const totalCubicMetersPerYear = totalLitersPerYear / 1000
+    const annualCost = totalCubicMetersPerYear * inputs.waterCostPerM3
+    const costPerDay = annualCost / 365
+
+    // Calculate breakdown
+    const breakdown: Record<string, { liters: number; percentage: number }> = {
+      production: { 
+        liters: inputs.production * 365, 
+        percentage: (inputs.production / totalLitersPerDay) * 100 
+      },
+      bathrooms: { 
+        liters: inputs.bathrooms * 365, 
+        percentage: (inputs.bathrooms / totalLitersPerDay) * 100 
+      },
+      cooling: { 
+        liters: inputs.cooling * 365, 
+        percentage: (inputs.cooling / totalLitersPerDay) * 100 
+      },
+      irrigation: { 
+        liters: inputs.irrigation * 365, 
+        percentage: (inputs.irrigation / totalLitersPerDay) * 100 
+      },
+      cleaning: { 
+        liters: inputs.cleaning * 365, 
+        percentage: (inputs.cleaning / totalLitersPerDay) * 100 
+      },
+      other: { 
+        liters: inputs.other * 365, 
+        percentage: (inputs.other / totalLitersPerDay) * 100 
+      }
+    }
+
+    const calculatedResults = {
+      totalLitersPerDay,
+      totalLitersPerYear,
+      totalCubicMetersPerYear,
+      annualCost,
+      costPerDay,
+      breakdown
+    }
+
+    setResults(calculatedResults)
+    setCalculated(true)
+
+    // Save to database
+    if (enrollmentId && moduleId && lessonId) {
+      await saveToolData({
+        enrollment_id: enrollmentId,
+        module_id: moduleId,
+        lesson_id: lessonId,
+        tool_name: 'water-footprint-calculator',
+        tool_data: { 
+          inputs, 
+          results: calculatedResults, 
+          calculated: true,
+          totalWater: totalLitersPerDay // For ESG reporting
+        },
+        tool_type: 'calculator'
+      })
+    }
+
+    onCalculate?.(calculatedResults)
+  }
+
+  return (
+    <div className="bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-200 rounded-xl p-6">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
+          <Droplets className="w-6 h-6 text-white" />
+        </div>
+        <div>
+          <h3 className="text-xl font-bold text-slate-900">Calculadora de Huella Hídrica</h3>
+          <p className="text-sm text-slate-600">Calcula tu consumo total de agua y costos</p>
+        </div>
+      </div>
+
+      {!calculated ? (
+        <div className="space-y-4">
+          {/* Input Fields */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                💧 Producción (L/día)
+              </label>
+              <input
+                type="number"
+                value={inputs.production || ''}
+                onChange={(e) => setInputs(prev => ({ ...prev, production: Number(e.target.value) }))}
+                className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 focus:border-blue-500 focus:outline-none"
+                placeholder="0"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                🚽 Baños (L/día)
+              </label>
+              <input
+                type="number"
+                value={inputs.bathrooms || ''}
+                onChange={(e) => setInputs(prev => ({ ...prev, bathrooms: Number(e.target.value) }))}
+                className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 focus:border-blue-500 focus:outline-none"
+                placeholder="0"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                ❄️ Enfriamiento (L/día)
+              </label>
+              <input
+                type="number"
+                value={inputs.cooling || ''}
+                onChange={(e) => setInputs(prev => ({ ...prev, cooling: Number(e.target.value) }))}
+                className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 focus:border-blue-500 focus:outline-none"
+                placeholder="0"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                🌱 Riego (L/día)
+              </label>
+              <input
+                type="number"
+                value={inputs.irrigation || ''}
+                onChange={(e) => setInputs(prev => ({ ...prev, irrigation: Number(e.target.value) }))}
+                className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 focus:border-blue-500 focus:outline-none"
+                placeholder="0"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                🧹 Limpieza (L/día)
+              </label>
+              <input
+                type="number"
+                value={inputs.cleaning || ''}
+                onChange={(e) => setInputs(prev => ({ ...prev, cleaning: Number(e.target.value) }))}
+                className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 focus:border-blue-500 focus:outline-none"
+                placeholder="0"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                📦 Otros (L/día)
+              </label>
+              <input
+                type="number"
+                value={inputs.other || ''}
+                onChange={(e) => setInputs(prev => ({ ...prev, other: Number(e.target.value) }))}
+                className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 focus:border-blue-500 focus:outline-none"
+                placeholder="0"
+              />
+            </div>
+          </div>
+
+          <div className="bg-blue-100 rounded-lg p-4">
+            <label className="block text-sm font-semibold text-blue-900 mb-2">
+              💰 Costo del Agua (MXN por m³)
+            </label>
+            <input
+              type="number"
+              value={inputs.waterCostPerM3}
+              onChange={(e) => setInputs(prev => ({ ...prev, waterCostPerM3: Number(e.target.value) }))}
+              className="w-full px-4 py-2 rounded-lg border-2 border-blue-300 focus:border-blue-500 focus:outline-none"
+              placeholder="15"
+            />
+            <p className="text-xs text-blue-700 mt-1">Promedio en México: $15-25 MXN/m³</p>
+          </div>
+
+          <button
+            onClick={calculate}
+            disabled={inputs.production + inputs.bathrooms + inputs.cooling + inputs.irrigation + inputs.cleaning + inputs.other === 0}
+            className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 text-white py-4 rounded-lg font-bold hover:scale-105 transition-transform disabled:opacity-50 disabled:hover:scale-100"
+          >
+            Calcular Huella Hídrica
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {/* Results Summary */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="bg-white rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-blue-600">
+                {results.totalLitersPerDay.toLocaleString()}
+              </div>
+              <div className="text-xs text-slate-600">Litros/día</div>
+            </div>
+            <div className="bg-white rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-cyan-600">
+                {results.totalCubicMetersPerYear.toFixed(0)}
+              </div>
+              <div className="text-xs text-slate-600">m³/año</div>
+            </div>
+            <div className="bg-white rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-green-600">
+                ${results.annualCost.toLocaleString()}
+              </div>
+              <div className="text-xs text-slate-600">Costo anual (MXN)</div>
+            </div>
+            <div className="bg-white rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-purple-600">
+                ${results.costPerDay.toFixed(0)}
+              </div>
+              <div className="text-xs text-slate-600">Costo/día (MXN)</div>
+            </div>
+          </div>
+
+          {/* Breakdown */}
+          <div className="bg-white rounded-lg p-4">
+            <h4 className="font-bold text-slate-900 mb-3">Desglose por Área</h4>
+            <div className="space-y-2">
+              {Object.entries(results.breakdown)
+                .filter(([_, data]) => data.percentage > 0)
+                .sort((a, b) => b[1].percentage - a[1].percentage)
+                .map(([key, data]) => (
+                  <div key={key} className="flex items-center gap-3">
+                    <div className="flex-1">
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="font-medium capitalize">{key}</span>
+                        <span className="text-slate-600">{data.percentage.toFixed(1)}%</span>
+                      </div>
+                      <div className="w-full bg-slate-200 rounded-full h-2">
+                        <div 
+                          className="bg-gradient-to-r from-blue-500 to-cyan-500 h-2 rounded-full"
+                          style={{ width: `${data.percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                    <span className="text-xs text-slate-500 w-24 text-right">
+                      {(data.liters / 1000).toFixed(0)} m³/año
+                    </span>
+                  </div>
+                ))}
+            </div>
+          </div>
+
+          {/* Recommendations */}
+          <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-4">
+            <h4 className="font-bold text-yellow-900 mb-2">💡 Oportunidades de Ahorro</h4>
+            <ul className="text-sm text-yellow-800 space-y-1">
+              {results.breakdown.production?.percentage > 30 && (
+                <li>• Considera sistemas de recirculación en producción</li>
+              )}
+              {results.breakdown.bathrooms?.percentage > 20 && (
+                <li>• Instala sanitarios y grifos de bajo flujo</li>
+              )}
+              {results.breakdown.irrigation?.percentage > 15 && (
+                <li>• Implementa riego por goteo o recolección de agua de lluvia</li>
+              )}
+              {results.annualCost > 50000 && (
+                <li>• Con tu consumo, un ahorro del 20% = ${(results.annualCost * 0.2).toLocaleString()} MXN/año</li>
+              )}
+            </ul>
+          </div>
+
+          <button
+            onClick={() => setCalculated(false)}
+            className="w-full bg-blue-100 text-blue-700 py-3 rounded-lg font-medium hover:bg-blue-200 transition-colors"
+          >
+            Recalcular
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// =========================================================
+// TOOL 4: Water Audit Tool
+// =========================================================
+
+interface WaterAuditZone {
+  id: string
+  name: string
+  usage: number        // Liters per day
+  issues: string[]     // Leaks, waste, etc.
+  priority: 'low' | 'medium' | 'high'
+  photos: string[]
+  notes: string
+}
+
+interface WaterAuditToolProps {
+  onSave?: (data: any) => void
+  enrollmentId?: string
+  moduleId?: string
+  lessonId?: string
+}
+
+export function WaterAuditTool({ onSave, enrollmentId, moduleId, lessonId }: WaterAuditToolProps) {
+  const { saveToolData, loadToolData } = useToolDataSaver()
+
+  const [zones, setZones] = useState<WaterAuditZone[]>([])
+  const [showForm, setShowForm] = useState(false)
+  const [currentZone, setCurrentZone] = useState({
+    name: '',
+    usage: 0,
+    issues: [] as string[],
+    priority: 'medium' as 'low' | 'medium' | 'high',
+    notes: ''
+  })
+
+  // Load previous data
+  useEffect(() => {
+    if (enrollmentId && moduleId && lessonId) {
+      loadToolData({ lesson_id: lessonId, module_id: moduleId, tool_name: 'water-audit-tool' })
+        .then(data => { if (data?.zones) setZones(data.zones) })
+    }
+  }, [enrollmentId, moduleId, lessonId])
+
+  const addZone = async () => {
+    if (currentZone.name && currentZone.usage > 0) {
+      const newZone: WaterAuditZone = {
+        id: Date.now().toString(),
+        ...currentZone,
+        photos: []
+      }
+
+      const updatedZones = [...zones, newZone]
+      setZones(updatedZones)
+      setCurrentZone({ name: '', usage: 0, issues: [], priority: 'medium', notes: '' })
+      setShowForm(false)
+
+      // Save to database
+      if (enrollmentId && moduleId && lessonId) {
+        await saveToolData({
+          enrollment_id: enrollmentId,
+          module_id: moduleId,
+          lesson_id: lessonId,
+          tool_name: 'water-audit-tool',
+          tool_data: { zones: updatedZones },
+          tool_type: 'assessment'
+        })
+      }
+
+      onSave?.(updatedZones)
+    }
+  }
+
+  const issueOptions = [
+    'Fuga visible',
+    'Goteo constante',
+    'Grifos sin cerrar completamente',
+    'Uso excesivo',
+    'Sin medidor',
+    'Equipo ineficiente',
+    'Desperdicio de agua',
+    'Falta de mantenimiento'
+  ]
+
+  const totalUsage = zones.reduce((sum, zone) => sum + zone.usage, 0)
+  const highPriorityIssues = zones.filter(z => z.priority === 'high').length
+
+  return (
+    <div className="bg-gradient-to-br from-cyan-50 to-blue-50 border-2 border-cyan-200 rounded-xl p-6">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-lg flex items-center justify-center">
+          <CheckCircle className="w-6 h-6 text-white" />
+        </div>
+        <div>
+          <h3 className="text-xl font-bold text-slate-900">Auditoría de Agua</h3>
+          <p className="text-sm text-slate-600">Mapeo zona por zona</p>
+        </div>
+      </div>
+
+      {/* Summary */}
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="bg-white rounded-lg p-4 text-center">
+          <div className="text-2xl font-bold text-cyan-600">{zones.length}</div>
+          <div className="text-xs text-slate-600">Zonas Auditadas</div>
+        </div>
+        <div className="bg-white rounded-lg p-4 text-center">
+          <div className="text-2xl font-bold text-blue-600">{totalUsage.toLocaleString()}</div>
+          <div className="text-xs text-slate-600">L/día Total</div>
+        </div>
+        <div className="bg-white rounded-lg p-4 text-center">
+          <div className="text-2xl font-bold text-red-600">{highPriorityIssues}</div>
+          <div className="text-xs text-slate-600">Alta Prioridad</div>
+        </div>
+      </div>
+
+      {/* Add Zone Button */}
+      {!showForm && (
+        <button
+          onClick={() => setShowForm(true)}
+          className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 text-white py-4 rounded-lg font-bold hover:scale-105 transition-transform mb-4"
+        >
+          + Agregar Zona
+        </button>
+      )}
+
+      {/* Add Zone Form */}
+      {showForm && (
+        <div className="bg-white rounded-lg p-4 mb-4 space-y-4">
+          <h4 className="font-bold text-slate-900">Nueva Zona</h4>
+          
+          <input
+            type="text"
+            value={currentZone.name}
+            onChange={(e) => setCurrentZone(prev => ({ ...prev, name: e.target.value }))}
+            placeholder="Nombre de la zona (ej: Baño Principal)"
+            className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 focus:border-cyan-500 focus:outline-none"
+          />
+
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
+              Uso Estimado (L/día)
+            </label>
+            <input
+              type="number"
+              value={currentZone.usage || ''}
+              onChange={(e) => setCurrentZone(prev => ({ ...prev, usage: Number(e.target.value) }))}
+              className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 focus:border-cyan-500 focus:outline-none"
+              placeholder="0"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
+              Problemas Identificados
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {issueOptions.map(issue => (
+                <label key={issue} className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={currentZone.issues.includes(issue)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setCurrentZone(prev => ({ ...prev, issues: [...prev.issues, issue] }))
+                      } else {
+                        setCurrentZone(prev => ({ ...prev, issues: prev.issues.filter(i => i !== issue) }))
+                      }
+                    }}
+                    className="rounded"
+                  />
+                  {issue}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
+              Prioridad
+            </label>
+            <select
+              value={currentZone.priority}
+              onChange={(e) => setCurrentZone(prev => ({ ...prev, priority: e.target.value as any }))}
+              className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 focus:border-cyan-500 focus:outline-none"
+            >
+              <option value="low">Baja - Puede esperar</option>
+              <option value="medium">Media - Planear</option>
+              <option value="high">Alta - Urgente</option>
+            </select>
+          </div>
+
+          <textarea
+            value={currentZone.notes}
+            onChange={(e) => setCurrentZone(prev => ({ ...prev, notes: e.target.value }))}
+            placeholder="Notas adicionales..."
+            rows={2}
+            className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 focus:border-cyan-500 focus:outline-none resize-none"
+          />
+
+          <div className="flex gap-2">
+            <button
+              onClick={addZone}
+              disabled={!currentZone.name || currentZone.usage === 0}
+              className="flex-1 bg-cyan-600 text-white py-2 rounded-lg font-medium hover:bg-cyan-700 transition-colors disabled:opacity-50"
+            >
+              Agregar
+            </button>
+            <button
+              onClick={() => {
+                setShowForm(false)
+                setCurrentZone({ name: '', usage: 0, issues: [], priority: 'medium', notes: '' })
+              }}
+              className="flex-1 bg-slate-200 text-slate-700 py-2 rounded-lg font-medium hover:bg-slate-300 transition-colors"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Zones List */}
+      {zones.length > 0 && (
+        <div className="space-y-3">
+          <h4 className="font-bold text-slate-900">Zonas Auditadas</h4>
+          {zones.sort((a, b) => {
+            const priorityOrder = { high: 3, medium: 2, low: 1 }
+            return priorityOrder[b.priority] - priorityOrder[a.priority]
+          }).map((zone) => {
+            const priorityColor = zone.priority === 'high' ? 'bg-red-100 border-red-300' : 
+                                   zone.priority === 'medium' ? 'bg-yellow-100 border-yellow-300' : 
+                                   'bg-green-100 border-green-300'
+            
+            return (
+              <div key={zone.id} className={`rounded-lg border-2 p-4 ${priorityColor}`}>
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <h5 className="font-bold text-slate-900">{zone.name}</h5>
+                    <p className="text-sm text-slate-600">{zone.usage} L/día</p>
+                  </div>
+                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                    zone.priority === 'high' ? 'bg-red-200 text-red-800' :
+                    zone.priority === 'medium' ? 'bg-yellow-200 text-yellow-800' :
+                    'bg-green-200 text-green-800'
+                  }`}>
+                    {zone.priority === 'high' ? '🔴 Alta' : zone.priority === 'medium' ? '🟡 Media' : '🟢 Baja'}
+                  </span>
+                </div>
+                
+                {zone.issues.length > 0 && (
+                  <div className="mb-2">
+                    <p className="text-xs font-semibold text-slate-700 mb-1">Problemas:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {zone.issues.map((issue, i) => (
+                        <span key={i} className="text-xs bg-white px-2 py-1 rounded">
+                          {issue}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {zone.notes && (
+                  <p className="text-sm text-slate-600 mt-2">{zone.notes}</p>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// =========================================================
+// TOOL 5: Conservation Tracker
+// =========================================================
+
+interface ConservationLog {
+  week: number
+  date: string
+  waterUsed: number  // Liters
+  target: number
+  saved: number
+  notes: string
+}
+
+interface ConservationTrackerProps {
+  onTrack?: (data: any) => void
+  enrollmentId?: string
+  moduleId?: string
+  lessonId?: string
+}
+
+export function ConservationTracker({ onTrack, enrollmentId, moduleId, lessonId }: ConservationTrackerProps) {
+  const { saveToolData, loadToolData } = useToolDataSaver()
+
+  const [baselineUsage, setBaselineUsage] = useState(0)
+  const [reductionGoal, setReductionGoal] = useState(20) // Percentage
+  const [logs, setLogs] = useState<ConservationLog[]>([])
+  const [showAddLog, setShowAddLog] = useState(false)
+  const [currentLog, setCurrentLog] = useState({
+    waterUsed: 0,
+    notes: ''
+  })
+
+  // Load previous data
+  useEffect(() => {
+    if (enrollmentId && moduleId && lessonId) {
+      loadToolData({ lesson_id: lessonId, module_id: moduleId, tool_name: 'conservation-tracker' })
+        .then(data => {
+          if (data?.baselineUsage) setBaselineUsage(data.baselineUsage)
+          if (data?.reductionGoal) setReductionGoal(data.reductionGoal)
+          if (data?.logs) setLogs(data.logs)
+        })
+    }
+  }, [enrollmentId, moduleId, lessonId])
+
+  const addLog = async () => {
+    if (currentLog.waterUsed > 0) {
+      const weekNumber = logs.length + 1
+      const target = baselineUsage * (1 - reductionGoal / 100)
+      const saved = baselineUsage - currentLog.waterUsed
+
+      const newLog: ConservationLog = {
+        week: weekNumber,
+        date: new Date().toISOString().split('T')[0],
+        waterUsed: currentLog.waterUsed,
+        target,
+        saved,
+        notes: currentLog.notes
+      }
+
+      const updatedLogs = [...logs, newLog]
+      setLogs(updatedLogs)
+      setCurrentLog({ waterUsed: 0, notes: '' })
+      setShowAddLog(false)
+
+      // Save to database
+      if (enrollmentId && moduleId && lessonId) {
+        await saveToolData({
+          enrollment_id: enrollmentId,
+          module_id: moduleId,
+          lesson_id: lessonId,
+          tool_name: 'conservation-tracker',
+          tool_data: { baselineUsage, reductionGoal, logs: updatedLogs },
+          tool_type: 'tracker'
+        })
+      }
+
+      onTrack?.(updatedLogs)
+    }
+  }
+
+  const totalSaved = logs.reduce((sum, log) => sum + log.saved, 0)
+  const avgUsage = logs.length > 0 ? logs.reduce((sum, log) => sum + log.waterUsed, 0) / logs.length : 0
+  const actualReduction = baselineUsage > 0 ? ((baselineUsage - avgUsage) / baselineUsage) * 100 : 0
+
+  return (
+    <div className="bg-gradient-to-br from-teal-50 to-green-50 border-2 border-teal-200 rounded-xl p-6">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-green-500 rounded-lg flex items-center justify-center">
+          <LineChart className="w-6 h-6 text-white" />
+        </div>
+        <div>
+          <h3 className="text-xl font-bold text-slate-900">Seguimiento de Conservación</h3>
+          <p className="text-sm text-slate-600">Rastrea tu reducción de agua semana a semana</p>
+        </div>
+      </div>
+
+      {/* Setup */}
+      {baselineUsage === 0 ? (
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
+              💧 Consumo Actual/Línea Base (L/día)
+            </label>
+            <input
+              type="number"
+              value={baselineUsage || ''}
+              onChange={(e) => setBaselineUsage(Number(e.target.value))}
+              className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 focus:border-teal-500 focus:outline-none"
+              placeholder="ej: 5000"
+            />
+            <p className="text-xs text-slate-500 mt-1">Usa la calculadora de huella hídrica si no conoces este dato</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
+              🎯 Meta de Reducción (%)
+            </label>
+            <input
+              type="range"
+              min="5"
+              max="50"
+              value={reductionGoal}
+              onChange={(e) => setReductionGoal(Number(e.target.value))}
+              className="w-full"
+            />
+            <div className="flex justify-between text-sm text-slate-600">
+              <span>5%</span>
+              <span className="font-bold text-teal-700">{reductionGoal}%</span>
+              <span>50%</span>
+            </div>
+            {baselineUsage > 0 && (
+              <p className="text-sm text-teal-700 mt-2 font-medium">
+                Meta: {(baselineUsage * (1 - reductionGoal / 100)).toFixed(0)} L/día (ahorro de {(baselineUsage * reductionGoal / 100).toFixed(0)} L/día)
+              </p>
+            )}
+          </div>
+
+          <button
+            onClick={async () => {
+              // Save baseline
+              if (enrollmentId && moduleId && lessonId) {
+                await saveToolData({
+                  enrollment_id: enrollmentId,
+                  module_id: moduleId,
+                  lesson_id: lessonId,
+                  tool_name: 'conservation-tracker',
+                  tool_data: { baselineUsage, reductionGoal, logs: [] },
+                  tool_type: 'tracker'
+                })
+              }
+            }}
+            disabled={baselineUsage === 0}
+            className="w-full bg-gradient-to-r from-teal-600 to-green-600 text-white py-4 rounded-lg font-bold hover:scale-105 transition-transform disabled:opacity-50 disabled:hover:scale-100"
+          >
+            Comenzar Seguimiento
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {/* Progress Summary */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="bg-white rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-slate-900">{baselineUsage}</div>
+              <div className="text-xs text-slate-600">Línea Base (L/día)</div>
+            </div>
+            <div className="bg-white rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-teal-600">{avgUsage.toFixed(0)}</div>
+              <div className="text-xs text-slate-600">Promedio Actual (L/día)</div>
+            </div>
+            <div className="bg-white rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-green-600">{actualReduction.toFixed(1)}%</div>
+              <div className="text-xs text-slate-600">Reducción Lograda</div>
+            </div>
+            <div className="bg-white rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-blue-600">{totalSaved.toFixed(0)}</div>
+              <div className="text-xs text-slate-600">Total Ahorrado (L)</div>
+            </div>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="bg-white rounded-lg p-4">
+            <div className="flex justify-between text-sm mb-2">
+              <span className="font-semibold">Progreso hacia meta de {reductionGoal}%</span>
+              <span className={`font-bold ${actualReduction >= reductionGoal ? 'text-green-600' : 'text-orange-600'}`}>
+                {actualReduction >= reductionGoal ? '✅ ¡Meta alcanzada!' : `${(actualReduction / reductionGoal * 100).toFixed(0)}%`}
+              </span>
+            </div>
+            <div className="w-full bg-slate-200 rounded-full h-3">
+              <div 
+                className="bg-gradient-to-r from-teal-500 to-green-500 h-3 rounded-full transition-all duration-500"
+                style={{ width: `${Math.min((actualReduction / reductionGoal * 100), 100)}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Add Log Button */}
+          {!showAddLog && (
+            <button
+              onClick={() => setShowAddLog(true)}
+              className="w-full bg-teal-600 text-white py-3 rounded-lg font-medium hover:bg-teal-700 transition-colors"
+            >
+              + Registrar Semana {logs.length + 1}
+            </button>
+          )}
+
+          {/* Add Log Form */}
+          {showAddLog && (
+            <div className="bg-white rounded-lg p-4 space-y-4">
+              <h4 className="font-bold text-slate-900">Semana {logs.length + 1}</h4>
+              
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Consumo de Agua (L/día)
+                </label>
+                <input
+                  type="number"
+                  value={currentLog.waterUsed || ''}
+                  onChange={(e) => setCurrentLog(prev => ({ ...prev, waterUsed: Number(e.target.value) }))}
+                  className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 focus:border-teal-500 focus:outline-none"
+                  placeholder="0"
+                />
+                {currentLog.waterUsed > 0 && (
+                  <p className={`text-sm mt-1 font-medium ${
+                    currentLog.waterUsed < baselineUsage ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {currentLog.waterUsed < baselineUsage 
+                      ? `✅ Ahorro: ${baselineUsage - currentLog.waterUsed} L/día (${((1 - currentLog.waterUsed / baselineUsage) * 100).toFixed(1)}%)`
+                      : `⚠️ Aumento: ${currentLog.waterUsed - baselineUsage} L/día`
+                    }
+                  </p>
+                )}
+              </div>
+
+              <textarea
+                value={currentLog.notes}
+                onChange={(e) => setCurrentLog(prev => ({ ...prev, notes: e.target.value }))}
+                placeholder="Notas: ¿Qué acciones tomaste esta semana?"
+                rows={2}
+                className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 focus:border-teal-500 focus:outline-none resize-none"
+              />
+
+              <div className="flex gap-2">
+                <button
+                  onClick={addLog}
+                  disabled={currentLog.waterUsed === 0}
+                  className="flex-1 bg-teal-600 text-white py-2 rounded-lg font-medium hover:bg-teal-700 transition-colors disabled:opacity-50"
+                >
+                  Guardar
+                </button>
+                <button
+                  onClick={() => {
+                    setShowAddLog(false)
+                    setCurrentLog({ waterUsed: 0, notes: '' })
+                  }}
+                  className="flex-1 bg-slate-200 text-slate-700 py-2 rounded-lg font-medium hover:bg-slate-300 transition-colors"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Logs History */}
+          {logs.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="font-bold text-slate-900">Historial</h4>
+              {logs.slice().reverse().map((log) => (
+                <div 
+                  key={log.week} 
+                  className={`rounded-lg border-2 p-3 ${
+                    log.waterUsed <= log.target ? 'bg-green-50 border-green-200' : 'bg-orange-50 border-orange-200'
+                  }`}
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="font-bold text-slate-900">Semana {log.week}</div>
+                      <div className="text-xs text-slate-600">{log.date}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-bold text-slate-900">{log.waterUsed} L/día</div>
+                      <div className={`text-xs font-medium ${log.saved > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {log.saved > 0 ? `↓ ${log.saved.toFixed(0)} L ahorrados` : `↑ ${Math.abs(log.saved).toFixed(0)} L más`}
+                      </div>
+                    </div>
+                  </div>
+                  {log.notes && (
+                    <p className="text-sm text-slate-600 mt-2">{log.notes}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // Main Module 2 Tools Component
 export default function Module2Tools() {
   return (
     <div className="space-y-6">
       <WaterQualityTestLog />
       <RecyclingSystemDesigner />
+      <WaterFootprintCalculator />
+      <WaterAuditTool />
+      <ConservationTracker />
     </div>
   )
 }
