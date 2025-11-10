@@ -49,15 +49,24 @@ export default function InteractiveActivity({
 
   const loadExistingResponses = async () => {
     try {
-      const response = await fetch(`/api/activities/save-response?lesson_id=${lessonId}`)
+      console.log('🔍 Loading existing responses for:', { lessonId, moduleId })
+      const response = await fetch(`/api/activities/save-response?lesson_id=${lessonId}&module_id=${moduleId}`)
+      
       if (response.ok) {
         const data = await response.json()
+        console.log('📥 Loaded response data:', data)
+        
         if (data.response) {
           setResponses(data.response.responses || {})
+          console.log('✅ Responses loaded from', data.response.esg_ready ? 'NEW table (ESG ready)' : 'LEGACY table')
+        } else {
+          console.log('ℹ️ No existing responses found')
         }
+      } else {
+        console.error('❌ Failed to load responses:', response.status)
       }
     } catch (error) {
-      console.error('Error loading responses:', error)
+      console.error('❌ Error loading responses:', error)
     }
   }
 
@@ -107,10 +116,15 @@ export default function InteractiveActivity({
   }
 
   const saveResponses = async () => {
+    console.log('💾 Starting save process...')
+    console.log('📝 Current responses:', responses)
+    console.log('📍 IDs:', { enrollmentId, moduleId, lessonId, activityType })
+    
     setSaving(true)
     try {
       // Upload evidence files first
       const evidenceUrls = await uploadEvidence()
+      console.log('📎 Evidence uploaded:', evidenceUrls)
 
       // Calculate time spent
       const timeSpentMinutes = Math.floor((Date.now() - startTime) / 60000)
@@ -123,26 +137,43 @@ export default function InteractiveActivity({
       }).length
       const completionPercentage = Math.round((answeredQuestions / totalQuestions) * 100)
 
+      console.log('📊 Completion:', {
+        answeredQuestions,
+        totalQuestions,
+        completionPercentage,
+        timeSpentMinutes
+      })
+
+      const payload = {
+        enrollment_id: enrollmentId,
+        module_id: moduleId,
+        lesson_id: lessonId,
+        activity_type: activityType,
+        responses,
+        evidence_urls: evidenceUrls,
+        completion_data: {
+          completion_percentage: completionPercentage,
+          time_spent_minutes: timeSpentMinutes,
+          questions_answered: answeredQuestions,
+          total_questions: totalQuestions
+        }
+      }
+
+      console.log('📤 Sending to API:', payload)
+
       const response = await fetch('/api/activities/save-response', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          enrollment_id: enrollmentId,
-          module_id: moduleId,
-          lesson_id: lessonId,
-          activity_type: activityType,
-          responses,
-          evidence_urls: evidenceUrls,
-          completion_data: {
-            completion_percentage: completionPercentage,
-            time_spent_minutes: timeSpentMinutes,
-            questions_answered: answeredQuestions,
-            total_questions: totalQuestions
-          }
-        })
+        body: JSON.stringify(payload)
       })
 
+      console.log('📥 API response status:', response.status)
+
       if (response.ok) {
+        const data = await response.json()
+        console.log('✅ API response data:', data)
+        console.log('🎯 ESG Ready:', data.esg_ready)
+        
         setSaved(true)
         
         // Show success notification
@@ -151,6 +182,7 @@ export default function InteractiveActivity({
         successDiv.innerHTML = `
           <span class="text-2xl">✅</span>
           <span class="font-bold">Respuestas guardadas exitosamente</span>
+          ${data.esg_ready ? '<span class="text-xs">(ESG Ready 📊)</span>' : ''}
         `
         document.body.appendChild(successDiv)
         setTimeout(() => successDiv.remove(), 3000)
@@ -158,9 +190,13 @@ export default function InteractiveActivity({
         if (onComplete && completionPercentage === 100) {
           onComplete()
         }
+      } else {
+        const errorData = await response.json()
+        console.error('❌ API error response:', errorData)
+        alert(`Error: ${errorData.error || 'Error desconocido'}`)
       }
     } catch (error) {
-      console.error('Error saving responses:', error)
+      console.error('❌ Error saving responses:', error)
       alert('Error al guardar respuestas. Por favor, intenta de nuevo.')
     } finally {
       setSaving(false)
