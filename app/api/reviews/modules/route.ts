@@ -15,25 +15,42 @@ export async function GET(request: NextRequest) {
 
     const supabase = await createClient()
 
-    // Fetch reviews with user profile data
+    // Fetch reviews (without JOIN to avoid FK issues)
     const { data: reviews, error } = await supabase
       .from('module_reviews')
-      .select(`
-        *,
-        profiles:user_id (
-          full_name,
-          avatar_url
-        )
-      `)
+      .select('*')
       .eq('module_id', moduleId)
       .order('created_at', { ascending: false })
 
     if (error) {
-      console.error('Error fetching reviews:', error)
+      console.error('❌ Error fetching reviews:', error)
       return NextResponse.json({ error: 'Failed to fetch reviews' }, { status: 500 })
     }
 
-    return NextResponse.json({ reviews: reviews || [] }, { status: 200 })
+    if (!reviews || reviews.length === 0) {
+      return NextResponse.json({ reviews: [] }, { status: 200 })
+    }
+
+    // Fetch profile data for all reviewers separately
+    const userIds = [...new Set(reviews.map(r => r.user_id))]
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, full_name, avatar_url')
+      .in('id', userIds)
+
+    // Create a profile map for quick lookup
+    const profileMap = new Map(profiles?.map(p => [p.id, p]) || [])
+
+    // Combine reviews with profile data
+    const reviewsWithProfiles = reviews.map(review => ({
+      ...review,
+      profiles: profileMap.get(review.user_id) || { 
+        full_name: 'Usuario', 
+        avatar_url: null 
+      }
+    }))
+
+    return NextResponse.json({ reviews: reviewsWithProfiles }, { status: 200 })
   } catch (error: any) {
     console.error('Error in reviews API:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -69,7 +86,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Must be enrolled to review' }, { status: 403 })
     }
 
-    // Create review
+    // Create review (without JOIN to avoid FK issues)
     const { data: review, error } = await supabase
       .from('module_reviews')
       .insert({
@@ -82,13 +99,7 @@ export async function POST(request: NextRequest) {
         completion_status: enrollment.completed ? 'completed' : 'in_progress',
         is_verified_purchase: true
       })
-      .select(`
-        *,
-        profiles:user_id (
-          full_name,
-          avatar_url
-        )
-      `)
+      .select()
       .single()
 
     if (error) {
@@ -96,11 +107,33 @@ export async function POST(request: NextRequest) {
       if (error.code === '23505') {
         return NextResponse.json({ error: 'Ya has dejado una reseña para este módulo' }, { status: 409 })
       }
-      console.error('Error creating review:', error)
-      return NextResponse.json({ error: 'Failed to create review' }, { status: 500 })
+      console.error('❌ Error creating review:', error)
+      console.error('❌ Error details:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      })
+      return NextResponse.json({ 
+        error: 'Failed to create review', 
+        details: error.message 
+      }, { status: 500 })
     }
 
-    return NextResponse.json({ review }, { status: 201 })
+    // Fetch profile data separately
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('full_name, avatar_url')
+      .eq('id', user.id)
+      .single()
+
+    // Combine review with profile data
+    const reviewWithProfile = {
+      ...review,
+      profiles: profile || { full_name: user.email, avatar_url: null }
+    }
+
+    return NextResponse.json({ review: reviewWithProfile }, { status: 201 })
   } catch (error: any) {
     console.error('Error in create review API:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -135,21 +168,28 @@ export async function PUT(request: NextRequest) {
       })
       .eq('id', reviewId)
       .eq('user_id', user.id)
-      .select(`
-        *,
-        profiles:user_id (
-          full_name,
-          avatar_url
-        )
-      `)
+      .select()
       .single()
 
     if (error) {
-      console.error('Error updating review:', error)
+      console.error('❌ Error updating review:', error)
       return NextResponse.json({ error: 'Failed to update review' }, { status: 500 })
     }
 
-    return NextResponse.json({ review }, { status: 200 })
+    // Fetch profile data separately
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('full_name, avatar_url')
+      .eq('id', user.id)
+      .single()
+
+    // Combine review with profile data
+    const reviewWithProfile = {
+      ...review,
+      profiles: profile || { full_name: user.email, avatar_url: null }
+    }
+
+    return NextResponse.json({ review: reviewWithProfile }, { status: 200 })
   } catch (error: any) {
     console.error('Error in update review API:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
