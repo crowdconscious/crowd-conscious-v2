@@ -85,8 +85,9 @@ SELECT
   ) as total_unified_xp,
   -- Sources breakdown
   (SELECT COUNT(*) FROM course_enrollments WHERE user_id = u.id AND completed = true) as modules_completed,
-  (SELECT COUNT(*) FROM community_content WHERE author_id = u.id) as posts_created,
-  (SELECT COUNT(*) FROM comments WHERE author_id = u.id) as comments_posted
+  -- Posts and comments may not exist, use COALESCE and check if tables exist
+  COALESCE((SELECT COUNT(*) FROM community_content WHERE user_id = u.id), 0) as posts_created,
+  COALESCE((SELECT COUNT(*) FROM comments WHERE user_id = u.id), 0) as comments_posted
 FROM auth.users u
 LEFT JOIN profiles p ON p.id = u.id
 LEFT JOIN user_stats us ON us.user_id = u.id;

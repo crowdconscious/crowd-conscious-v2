@@ -122,6 +122,10 @@ export default async function MiImpactoPage() {
   // Calculate total XP
   const totalXP = enrollments?.reduce((sum, e) => sum + (e.xp_earned || 0), 0) || 0
 
+  // Calculate total time spent (in minutes)
+  const totalTimeMinutes = enrollments?.reduce((sum, e) => sum + (e.total_time_spent || 0), 0) || 0
+  const totalTimeHours = Math.round(totalTimeMinutes / 60 * 10) / 10 // Round to 1 decimal
+
   // Calculate completion stats
   const totalEnrollments = enrollments?.length || 0
   const completedEnrollments = enrollments?.filter(e => e.completed).length || 0
@@ -226,7 +230,7 @@ export default async function MiImpactoPage() {
             <h2 className="text-xl font-bold text-slate-900">Estadísticas de Aprendizaje</h2>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
             <div className="text-center">
               <div className="text-3xl font-bold text-teal-600 mb-1">{totalEnrollments}</div>
               <p className="text-sm text-slate-600">Módulos Inscritos</p>
@@ -240,8 +244,18 @@ export default async function MiImpactoPage() {
               <p className="text-sm text-slate-600">En Progreso</p>
             </div>
             <div className="text-center relative group cursor-help">
+              <div className="text-3xl font-bold text-blue-600 mb-1">{totalTimeHours}h</div>
+              <p className="text-sm text-slate-600">Tiempo Total ⓘ</p>
+              {/* Tooltip showing time breakdown */}
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-slate-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10 shadow-xl">
+                ⏱️ Tiempo invertido en aprendizaje
+                <div className="text-[10px] mt-1">({totalTimeMinutes} minutos totales)</div>
+                <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-900"></div>
+              </div>
+            </div>
+            <div className="text-center relative group cursor-help">
               <div className="text-3xl font-bold text-purple-600 mb-1">{totalXP.toLocaleString('es-MX')}</div>
-              <p className="text-sm text-slate-600">XP de Aprendizaje ⓘ</p>
+              <p className="text-sm text-slate-600">XP Ganado ⓘ</p>
               {/* Tooltip explaining this is learning XP */}
               <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-slate-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10 shadow-xl">
                 ✨ XP ganado de módulos completados
