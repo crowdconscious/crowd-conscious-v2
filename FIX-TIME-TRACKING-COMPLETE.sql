@@ -111,20 +111,9 @@ EXECUTE FUNCTION update_enrollment_time_spent();
 -- estimate based on content type
 
 -- Add estimated time for completed lessons without time data
+-- Note: Using simple 20 min default since we can't reliably detect lesson types
 UPDATE lesson_responses lr
-SET time_spent_minutes = (
-  SELECT 
-    CASE 
-      -- Lessons with activities/tools: 30 min average
-      WHEN ml.activity_type IS NOT NULL THEN 30
-      -- Lessons with quizzes: 20 min average
-      WHEN ml.quiz_questions IS NOT NULL THEN 20
-      -- Regular content lessons: 15 min average
-      ELSE 15
-    END
-  FROM module_lessons ml
-  WHERE ml.id = lr.lesson_id
-)
+SET time_spent_minutes = 20 -- Average lesson time
 WHERE lr.completed = true
 AND (lr.time_spent_minutes IS NULL OR lr.time_spent_minutes = 0)
 AND lr.lesson_id IS NOT NULL;
