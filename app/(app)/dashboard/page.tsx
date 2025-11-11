@@ -23,12 +23,20 @@ interface UserStats {
 
 async function getUserStats(userId: string): Promise<UserStats> {
   try {
-    // Fetch real user stats from database
+    // Fetch community platform stats
     const { data, error } = await supabase
       .from('user_stats')
       .select('*')
       .eq('user_id', userId)
       .single()
+
+    // Fetch learning platform XP (from course enrollments)
+    const { data: enrollments } = await supabase
+      .from('course_enrollments')
+      .select('xp_earned')
+      .eq('user_id', userId)
+    
+    const learningXP = enrollments?.reduce((sum, e) => sum + (e.xp_earned || 0), 0) || 0
 
     if (error) {
       console.log('⚠️ user_stats table not accessible:', error.message)
@@ -39,7 +47,7 @@ async function getUserStats(userId: string): Promise<UserStats> {
           .from('user_stats')
           .insert({
             user_id: userId,
-            total_xp: 0,
+            total_xp: learningXP, // Initialize with learning XP
             level: 1,
             current_streak: 0,
             longest_streak: 0,
@@ -53,17 +61,20 @@ async function getUserStats(userId: string): Promise<UserStats> {
           .single()
 
         if (!insertError && newStats) {
-          return newStats as UserStats
+          // Add learning XP to the stats
+          const statsWithLearning = newStats as UserStats
+          statsWithLearning.total_xp = (newStats.total_xp || 0) + learningXP
+          return statsWithLearning
         }
       }
       
-      // If table doesn't exist or insert failed, return default stats
-      console.log('📊 Returning default stats (run SQL migrations to enable gamification)')
+      // If table doesn't exist or insert failed, return default stats with learning XP
+      console.log('📊 Returning default stats with learning XP:', learningXP)
       return {
         id: 'temp-' + userId,
         user_id: userId,
-        total_xp: 0,
-        level: 1,
+        total_xp: learningXP, // Use learning XP even if no community stats
+        level: Math.max(1, Math.floor(learningXP / 100)), // 100 XP per level
         current_streak: 0,
         longest_streak: 0,
         last_activity: new Date().toISOString(),
@@ -75,7 +86,17 @@ async function getUserStats(userId: string): Promise<UserStats> {
       }
     }
 
-    return data as UserStats
+    // Combine community XP + learning XP for unified total
+    const unifiedStats = data as UserStats
+    const communityXP = data.total_xp || 0
+    unifiedStats.total_xp = communityXP + learningXP
+    
+    // Recalculate level based on unified XP
+    unifiedStats.level = Math.max(1, Math.floor(unifiedStats.total_xp / 100))
+
+    console.log(`📊 Unified XP: ${unifiedStats.total_xp} (Community: ${communityXP} + Learning: ${learningXP})`)
+
+    return unifiedStats
   } catch (error) {
     console.error('❌ Error in getUserStats:', error)
     // Always return default stats instead of null

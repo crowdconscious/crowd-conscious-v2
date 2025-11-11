@@ -239,9 +239,15 @@ export default async function MiImpactoPage() {
               <div className="text-3xl font-bold text-orange-600 mb-1">{inProgressEnrollments}</div>
               <p className="text-sm text-slate-600">En Progreso</p>
             </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-purple-600 mb-1">{totalXP}</div>
-              <p className="text-sm text-slate-600">XP Total</p>
+            <div className="text-center relative group cursor-help">
+              <div className="text-3xl font-bold text-purple-600 mb-1">{totalXP.toLocaleString('es-MX')}</div>
+              <p className="text-sm text-slate-600">XP de Aprendizaje ⓘ</p>
+              {/* Tooltip explaining this is learning XP */}
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-slate-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10 shadow-xl">
+                ✨ XP ganado de módulos completados
+                <div className="text-[10px] mt-1">(50 XP por lección)</div>
+                <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-900"></div>
+              </div>
             </div>
           </div>
 
