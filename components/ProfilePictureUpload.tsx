@@ -231,14 +231,6 @@ export default function ProfilePictureUpload({
 
       {/* Upload Controls */}
       <div className="flex items-center gap-3">
-        <label htmlFor={`${userType}-image-upload`}>
-          <AnimatedButton
-            disabled={isUploading}
-            className="cursor-pointer"
-          >
-            {isUploading ? 'Uploading...' : 'Upload New'}
-          </AnimatedButton>
-        </label>
         <input
           id={`${userType}-image-upload`}
           type="file"
@@ -246,7 +238,21 @@ export default function ProfilePictureUpload({
           onChange={handleFileUpload}
           disabled={isUploading}
           className="hidden"
+          aria-label="Upload profile picture"
         />
+        <label 
+          htmlFor={`${userType}-image-upload`}
+          className={`
+            inline-block px-6 py-3 rounded-lg font-semibold
+            transition-all duration-200 cursor-pointer
+            ${isUploading 
+              ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+              : 'bg-teal-600 text-white hover:bg-teal-700 hover:shadow-lg active:scale-95'
+            }
+          `}
+        >
+          {isUploading ? 'Uploading...' : 'Upload New'}
+        </label>
 
         {currentImage && (
           <AnimatedButton

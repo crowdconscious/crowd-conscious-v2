@@ -53,9 +53,10 @@ export default function StreakTracker() {
         const { error } = await Promise.race([streakPromise, timeoutPromise]) as any
         
         if (error) {
-          // Check if it's a "function does not exist" error
-          if (error.code === '42883' || error.message?.includes('does not exist')) {
-            console.warn('⚠️ Streak tracker: Database function not yet created. Run gamification migrations.')
+          // Check if it's a "function does not exist" or "table does not exist" error
+          if (error.code === '42883' || error.code === '42P01' || error.message?.includes('does not exist')) {
+            // Silently skip - gamification features are optional
+            console.log('ℹ️ Streak tracker: Gamification features not enabled (optional)')
           } else {
             console.error('❌ Error updating streak:', error)
           }
