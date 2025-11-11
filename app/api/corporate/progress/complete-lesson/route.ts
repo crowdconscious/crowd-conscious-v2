@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { validateLessonResponse, getQualityControlMessage } from '@/lib/quality-control-validation'
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,9 +12,37 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { moduleId, lessonId, xpEarned, responses, reflection, actionItems, timeSpent } = body
+    const { moduleId, lessonId, xpEarned, responses, reflection, actionItems, timeSpent, evidence, quizAnswers, quizQuestions, activityType, activityData } = body
 
     console.log('Complete lesson request:', { userId: user.id, moduleId, lessonId, xpEarned, hasResponses: !!responses })
+
+    // 🔒 QUALITY CONTROL: Validate response quality before marking complete
+    const validation = validateLessonResponse({
+      responses,
+      reflection,
+      actionItems,
+      evidence,
+      quizAnswers,
+      quizQuestions,
+      activityType,
+      activityData
+    })
+
+    if (!validation.isValid) {
+      console.warn('❌ Quality control failed:', validation.errors)
+      return NextResponse.json({
+        error: 'quality_control_failed',
+        message: getQualityControlMessage(validation),
+        validation: {
+          errors: validation.errors,
+          warnings: validation.warnings,
+          score: validation.score,
+          minimumRequired: 70
+        }
+      }, { status: 400 })
+    }
+
+    console.log('✅ Quality control passed:', { score: validation.score })
 
     // Get enrollment using actual column names (user_id, module_id)
     const { data: enrollment, error: enrollmentError } = await supabase
