@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Search, Filter, Star, Clock, Users, TrendingUp, Sparkles, ChevronDown, Share2, MessageCircle } from 'lucide-react'
+import { Search, Filter, Star, Clock, Users, TrendingUp, Sparkles, ChevronDown, Share2, MessageCircle, ArrowLeft } from 'lucide-react'
 import CartButton from '../components/cart/CartButton'
 
 const CORE_VALUES = [
@@ -243,6 +243,17 @@ export default function MarketplacePage() {
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20">
+          {/* Back Button */}
+          <div className="mb-6">
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-2 text-white/90 hover:text-white transition-colors group"
+            >
+              <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+              <span className="font-medium">Volver al Dashboard</span>
+            </Link>
+          </div>
+
           <div className="text-center max-w-4xl mx-auto">
             <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium mb-6">
               <Sparkles className="w-4 h-4" />
