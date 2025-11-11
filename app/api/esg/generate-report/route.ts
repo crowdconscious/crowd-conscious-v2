@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase-server'
 import ExcelJS from 'exceljs'
 import { jsPDF } from 'jspdf'
 import 'jspdf-autotable'
+import { generateProfessionalESGPDF } from '@/lib/generate-professional-esg-pdf'
 
 export const dynamic = 'force-dynamic'
 
@@ -74,12 +75,13 @@ export async function GET(request: NextRequest) {
         }
       })
     } else if (format === 'pdf') {
-      const pdfBuffer = await generatePDFReport(reportData)
+      // Use NEW professional PDF generator (certificate quality)
+      const pdfBuffer = await generateProfessionalESGPDF(reportData)
       // Convert Buffer to Uint8Array for NextResponse compatibility
       return new NextResponse(new Uint8Array(pdfBuffer), {
         headers: {
           'Content-Type': 'application/pdf',
-          'Content-Disposition': `attachment; filename="esg-report-${Date.now()}.pdf"`
+          'Content-Disposition': `attachment; filename="esg-report-profesional-${Date.now()}.pdf"`
         }
       })
     } else {
