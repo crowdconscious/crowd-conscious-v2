@@ -718,13 +718,35 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
                 <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
                   <span className="text-xl">❓</span>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-slate-900">Help Center</h3>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-semibold text-slate-900">Help Center</h3>
+                    <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">
+                      Próximamente
+                    </span>
+                  </div>
                   <p className="text-slate-600 text-sm">Find answers to common questions</p>
                 </div>
               </div>
-              <AnimatedButton variant="ghost" size="sm">
-                Visit →
+              <AnimatedButton 
+                variant="ghost" 
+                size="sm"
+                onClick={() => {
+                  // Show "coming soon" notification
+                  const notification = document.createElement('div')
+                  notification.className = 'fixed top-4 right-4 bg-amber-500 text-white px-6 py-3 rounded-lg shadow-lg z-50'
+                  notification.textContent = '📚 Centro de Ayuda próximamente disponible'
+                  document.body.appendChild(notification)
+                  setTimeout(() => {
+                    if (document.body.contains(notification)) {
+                      document.body.removeChild(notification)
+                    }
+                  }, 3000)
+                }}
+                disabled
+                className="opacity-50 cursor-not-allowed"
+              >
+                Próximamente
               </AnimatedButton>
             </div>
           </AnimatedCard>
@@ -735,13 +757,25 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
                 <div className="w-12 h-12 bg-pink-100 rounded-full flex items-center justify-center">
                   <span className="text-xl">💬</span>
                 </div>
-                <div>
+                <div className="flex-1">
                   <h3 className="font-semibold text-slate-900">Contact Support</h3>
                   <p className="text-slate-600 text-sm">Get help from our support team</p>
+                  <a 
+                    href="mailto:support@crowdconscious.app?subject=Help%20Request"
+                    className="text-teal-600 hover:text-teal-700 text-sm font-medium inline-flex items-center gap-1 mt-1"
+                  >
+                    support@crowdconscious.app
+                  </a>
                 </div>
               </div>
-              <AnimatedButton variant="ghost" size="sm">
-                Contact →
+              <AnimatedButton 
+                variant="ghost" 
+                size="sm"
+                onClick={() => {
+                  window.location.href = 'mailto:support@crowdconscious.app?subject=Help%20Request&body=Hola%20equipo%20de%20Crowd%20Conscious,%0A%0ANecesito%20ayuda%20con:%0A%0A'
+                }}
+              >
+                Enviar Email →
               </AnimatedButton>
             </div>
           </AnimatedCard>
