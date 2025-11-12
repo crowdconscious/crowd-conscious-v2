@@ -17,7 +17,14 @@ import {
   WasteAuditTemplate,
   WaterIntensityBenchmarks,
   LeakCostCalculator,
-  NinetyDayActionPlan
+  NinetyDayActionPlan,
+  QuickWinsChecklist,
+  ImpactEffortMatrix,
+  EnvironmentalBusinessCase,
+  WaterPerformanceDashboard,
+  WaterWasteAuditChecklist,
+  RainwaterHarvestCalculator,
+  CommunityInterviewGuide
 } from '@/components/module-tools'
 
 interface ToolModalProps {
@@ -127,6 +134,27 @@ export default function ToolModal({ toolType, toolTitle, onClose, onDataCapture 
       
       case '90-day-action-plan':
         return <NinetyDayActionPlan />
+      
+      case 'quick-wins-checklist':
+        return <QuickWinsChecklist />
+      
+      case 'impact-effort-matrix':
+        return <ImpactEffortMatrix />
+      
+      case 'environmental-business-case':
+        return <EnvironmentalBusinessCase />
+      
+      case 'water-performance-dashboard':
+        return <WaterPerformanceDashboard />
+      
+      case 'water-waste-audit-checklist':
+        return <WaterWasteAuditChecklist />
+      
+      case 'rainwater-harvest-calculator':
+        return <RainwaterHarvestCalculator />
+      
+      case 'community-interview-guide':
+        return <CommunityInterviewGuide />
       
       default:
         return (

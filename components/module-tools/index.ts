@@ -20,6 +20,13 @@ export { default as WasteAuditTemplate } from './WasteAuditTemplate'
 export { default as WaterIntensityBenchmarks } from './WaterIntensityBenchmarks'
 export { default as LeakCostCalculator } from './LeakCostCalculator'
 export { default as NinetyDayActionPlan } from './NinetyDayActionPlan'
+export { default as QuickWinsChecklist } from './QuickWinsChecklist'
+export { default as ImpactEffortMatrix } from './ImpactEffortMatrix'
+export { default as EnvironmentalBusinessCase } from './EnvironmentalBusinessCase'
+export { default as WaterPerformanceDashboard } from './WaterPerformanceDashboard'
+export { default as WaterWasteAuditChecklist } from './WaterWasteAuditChecklist'
+export { default as RainwaterHarvestCalculator } from './RainwaterHarvestCalculator'
+export { default as CommunityInterviewGuide } from './CommunityInterviewGuide'
 // Module1Tools has named exports only - not a default export
 export * from './Module1Tools'
 

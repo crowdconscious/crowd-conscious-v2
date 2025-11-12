@@ -24,6 +24,13 @@ import {
   WaterIntensityBenchmarks,
   LeakCostCalculator,
   NinetyDayActionPlan,
+  QuickWinsChecklist,
+  ImpactEffortMatrix,
+  EnvironmentalBusinessCase,
+  WaterPerformanceDashboard,
+  WaterWasteAuditChecklist,
+  RainwaterHarvestCalculator,
+  CommunityInterviewGuide,
   WaterFootprintCalculator,
   WaterAuditTool,
   WaterConservationTracker,
@@ -972,6 +979,62 @@ export default function LessonPage({
                         <div className="bg-white rounded-xl p-4 sm:p-6 border-2 border-purple-200">
                           <h3 className="font-bold text-lg mb-4 text-purple-900">📅 Plan de Acción 90 Días</h3>
                           <NinetyDayActionPlan />
+                        </div>
+                      )
+                    
+                    case 'quick-wins-checklist':
+                      return (
+                        <div className="bg-white rounded-xl p-4 sm:p-6 border-2 border-purple-200">
+                          <h3 className="font-bold text-lg mb-4 text-purple-900">⭐ Checklist: Victorias Rápidas</h3>
+                          <QuickWinsChecklist />
+                        </div>
+                      )
+                    
+                    case 'impact-effort-matrix':
+                      return (
+                        <div className="bg-white rounded-xl p-4 sm:p-6 border-2 border-purple-200">
+                          <h3 className="font-bold text-lg mb-4 text-purple-900">📊 Matriz Impacto vs. Esfuerzo</h3>
+                          <ImpactEffortMatrix />
+                        </div>
+                      )
+                    
+                    case 'environmental-business-case':
+                      return (
+                        <div className="bg-white rounded-xl p-4 sm:p-6 border-2 border-purple-200">
+                          <h3 className="font-bold text-lg mb-4 text-purple-900">📄 Caso de Negocio Ambiental</h3>
+                          <EnvironmentalBusinessCase />
+                        </div>
+                      )
+                    
+                    case 'water-performance-dashboard':
+                      return (
+                        <div className="bg-white rounded-xl p-4 sm:p-6 border-2 border-purple-200">
+                          <h3 className="font-bold text-lg mb-4 text-purple-900">📊 Panel de Desempeño Hídrico</h3>
+                          <WaterPerformanceDashboard />
+                        </div>
+                      )
+                    
+                    case 'water-waste-audit-checklist':
+                      return (
+                        <div className="bg-white rounded-xl p-4 sm:p-6 border-2 border-purple-200">
+                          <h3 className="font-bold text-lg mb-4 text-purple-900">💧 Checklist: Auditoría de Desperdicios</h3>
+                          <WaterWasteAuditChecklist />
+                        </div>
+                      )
+                    
+                    case 'rainwater-harvest-calculator':
+                      return (
+                        <div className="bg-white rounded-xl p-4 sm:p-6 border-2 border-purple-200">
+                          <h3 className="font-bold text-lg mb-4 text-purple-900">🌧️ Calculadora: Cosecha de Agua de Lluvia</h3>
+                          <RainwaterHarvestCalculator />
+                        </div>
+                      )
+                    
+                    case 'community-interview-guide':
+                      return (
+                        <div className="bg-white rounded-xl p-4 sm:p-6 border-2 border-purple-200">
+                          <h3 className="font-bold text-lg mb-4 text-purple-900">👥 Guía: Entrevistas Comunitarias</h3>
+                          <CommunityInterviewGuide />
                         </div>
                       )
                     
