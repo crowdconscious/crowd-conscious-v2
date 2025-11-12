@@ -38,7 +38,7 @@ export const createEnrollmentSchema = z.object({
 export const completeLessonSchema = z.object({
   enrollmentId: enrollmentIdSchema,
   lessonId: lessonIdSchema,
-  activityData: z.record(z.any()).optional(),
+  activityData: z.record(z.string(), z.any()).optional(),
   timeSpentMinutes: z.number().nonnegative().optional(),
   completed: z.boolean().default(true),
 })
@@ -202,9 +202,9 @@ export async function validateRequest<T>(
   try {
     const body = await request.json()
     return schema.parse(body)
-  } catch (error) {
+  } catch (error: any) {
     if (error instanceof z.ZodError) {
-      const errors = error.errors.map((e) => ({
+      const errors = (error as z.ZodError).issues.map((e) => ({
         field: e.path.join('.'),
         message: e.message,
       }))
@@ -233,9 +233,9 @@ export function validateQuery<T>(
   try {
     const params = Object.fromEntries(searchParams.entries())
     return schema.parse(params)
-  } catch (error) {
+  } catch (error: any) {
     if (error instanceof z.ZodError) {
-      const errors = error.errors.map((e) => ({
+      const errors = (error as z.ZodError).issues.map((e) => ({
         field: e.path.join('.'),
         message: e.message,
       }))

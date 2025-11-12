@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase-server'
 import { ApiResponse } from '@/lib/api-responses'
 import Stripe from 'stripe'
 import { moderateRateLimit, getRateLimitIdentifier, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
+import { purchaseModuleSchema, validateRequest } from '@/lib/validation-schemas'
 
 function getStripeClient() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!, {

@@ -3,6 +3,7 @@ import Stripe from 'stripe'
 import { ApiResponse } from '@/lib/api-responses'
 import { strictRateLimit, getRateLimitIdentifier, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { getCurrentUser } from '@/lib/auth-server'
+import { createCheckoutSchema, validateRequest } from '@/lib/validation-schemas'
 
 // Initialize Stripe lazily to avoid build-time errors
 let stripe: Stripe | null = null
@@ -140,11 +141,11 @@ export async function POST(request: NextRequest) {
       customer_email: email,
       metadata: {
         sponsorshipId,
-        sponsorType,
+        sponsorType: sponsorType || 'individual',
         brandName: brandName || '',
         taxReceipt: taxReceipt ? 'yes' : 'no',
-        contentTitle,
-        communityName,
+        contentTitle: contentTitle || '',
+        communityName: communityName || '',
         communityId: communityId || '',
         platformFeeAmount: (platformFeeAmount / 100).toString(),
         founderAmount: (founderAmount / 100).toString(),
