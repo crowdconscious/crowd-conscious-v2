@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createServerAuth, getCurrentUser } from '@/lib/auth-server'
+import { ApiResponse } from '@/lib/api-responses'
 import { sendEmail, emailTemplates } from '@/lib/resend'
 
 export async function POST(
@@ -9,10 +10,7 @@ export async function POST(
   try {
     const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      )
+      return ApiResponse.unauthorized('Authentication required', 'AUTHENTICATION_REQUIRED')
     }
 
     const { id: eventId } = await params
@@ -39,10 +37,7 @@ export async function POST(
       .single()
 
     if (eventError || !event) {
-      return NextResponse.json(
-        { error: 'Event not found' },
-        { status: 404 }
-      )
+      return ApiResponse.notFound('Event', 'EVENT_NOT_FOUND')
     }
 
     // Check if user is a community member
@@ -54,10 +49,7 @@ export async function POST(
       .single()
 
     if (membershipError || !membership) {
-      return NextResponse.json(
-        { error: 'You must be a community member to register for events' },
-        { status: 403 }
-      )
+      return ApiResponse.forbidden('You must be a community member to register for events', 'NOT_COMMUNITY_MEMBER')
     }
 
     // Check if already registered
@@ -69,10 +61,7 @@ export async function POST(
       .single()
 
     if (existingRegistration) {
-      return NextResponse.json(
-        { error: 'You are already registered for this event' },
-        { status: 400 }
-      )
+      return ApiResponse.conflict('You are already registered for this event', 'ALREADY_REGISTERED')
     }
 
     // Check event capacity
@@ -86,10 +75,7 @@ export async function POST(
         .eq('content_id', eventId)
 
       if (currentRegistrations >= maxAttendees) {
-        return NextResponse.json(
-          { error: 'Event is at full capacity' },
-          { status: 400 }
-        )
+        return ApiResponse.badRequest('Event is at full capacity', 'EVENT_FULL')
       }
     }
 
@@ -107,10 +93,9 @@ export async function POST(
 
     if (registrationError) {
       console.error('Error creating registration:', registrationError)
-      return NextResponse.json(
-        { error: 'Failed to register for event' },
-        { status: 500 }
-      )
+      return ApiResponse.serverError('Failed to register for event', 'REGISTRATION_ERROR', { 
+        message: registrationError.message 
+      })
     }
 
     // Send confirmation email
@@ -168,18 +153,16 @@ export async function POST(
       // Don't fail the registration if email fails
     }
 
-    return NextResponse.json({
-      success: true,
+    return ApiResponse.created({
       registration: registration,
       message: 'Successfully registered for event!'
-    }, { status: 201 })
+    })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Event registration error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Internal server error', 'REGISTRATION_SERVER_ERROR', { 
+      message: error.message 
+    })
   }
 }
 
@@ -190,10 +173,7 @@ export async function DELETE(
   try {
     const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      )
+      return ApiResponse.unauthorized('Authentication required', 'AUTHENTICATION_REQUIRED')
     }
 
     const { id: eventId } = await params
@@ -208,22 +188,19 @@ export async function DELETE(
 
     if (error) {
       console.error('Error canceling registration:', error)
-      return NextResponse.json(
-        { error: 'Failed to cancel registration' },
-        { status: 500 }
-      )
+      return ApiResponse.serverError('Failed to cancel registration', 'REGISTRATION_CANCEL_ERROR', { 
+        message: error.message 
+      })
     }
 
-    return NextResponse.json({
-      success: true,
+    return ApiResponse.ok({
       message: 'Registration canceled successfully'
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Registration cancellation error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Internal server error', 'REGISTRATION_CANCEL_SERVER_ERROR', { 
+      message: error.message 
+    })
   }
 }

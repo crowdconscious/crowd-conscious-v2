@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createServerAuth } from '@/lib/auth-server'
+import { ApiResponse } from '@/lib/api-responses'
 
 export async function POST(request: NextRequest) {
   try {
@@ -7,10 +8,7 @@ export async function POST(request: NextRequest) {
     const { contentId, contentType } = body
 
     if (!contentId || !contentType) {
-      return NextResponse.json(
-        { error: 'Content ID and type are required' },
-        { status: 400 }
-      )
+      return ApiResponse.badRequest('Content ID and type are required', 'MISSING_REQUIRED_FIELDS')
     }
 
     const supabase = await createServerAuth()
@@ -38,18 +36,16 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({
-      success: true,
+    return ApiResponse.ok({
       shareUrl,
       contentId,
       contentType,
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating share link:', error)
-    return NextResponse.json(
-      { error: 'Failed to generate share link' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Failed to generate share link', 'SHARE_LINK_ERROR', { 
+      message: error.message 
+    })
   }
 }
 
@@ -61,10 +57,7 @@ export async function GET(request: NextRequest) {
     const referrer = searchParams.get('referrer')
 
     if (!contentId) {
-      return NextResponse.json(
-        { error: 'Content ID is required' },
-        { status: 400 }
-      )
+      return ApiResponse.badRequest('Content ID is required', 'MISSING_CONTENT_ID')
     }
 
     const supabase = await createServerAuth()
@@ -79,15 +72,15 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error('Error tracking share click:', error)
+      // Don't fail the request if tracking fails
     }
 
-    return NextResponse.json({ success: true })
-  } catch (error) {
+    return ApiResponse.ok({ success: true })
+  } catch (error: any) {
     console.error('Error tracking share click:', error)
-    return NextResponse.json(
-      { error: 'Failed to track share click' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Failed to track share click', 'SHARE_CLICK_ERROR', { 
+      message: error.message 
+    })
   }
 }
 

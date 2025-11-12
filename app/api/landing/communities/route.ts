@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server'
 import { createServerAuth } from '@/lib/auth-server'
+import { ApiResponse } from '@/lib/api-responses'
 
 export async function GET() {
   try {
@@ -23,7 +23,7 @@ export async function GET() {
 
     if (error) {
       console.error('Error fetching communities:', error)
-      return NextResponse.json({ communities: [] })
+      return ApiResponse.ok({ communities: [] })
     }
 
     // Add recent activity for each community
@@ -45,16 +45,15 @@ export async function GET() {
       })
     )
 
-    return NextResponse.json({ 
+    return ApiResponse.ok({ 
       communities: communitiesWithActivity,
       count: communitiesWithActivity.length 
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('API error:', error)
-    return NextResponse.json({ 
-      communities: [],
-      error: 'Failed to fetch communities' 
+    return ApiResponse.serverError('Failed to fetch communities', 'COMMUNITIES_FETCH_ERROR', { 
+      message: error.message 
     })
   }
 }

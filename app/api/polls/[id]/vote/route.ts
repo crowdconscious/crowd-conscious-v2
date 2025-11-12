@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createServerAuth, getCurrentUser } from '@/lib/auth-server'
+import { ApiResponse } from '@/lib/api-responses'
 
 export async function POST(
   request: NextRequest,
@@ -8,20 +9,14 @@ export async function POST(
   try {
     const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      )
+      return ApiResponse.unauthorized('Authentication required', 'AUTHENTICATION_REQUIRED')
     }
 
     const { id: contentId } = await params
     const { optionId } = await request.json()
 
     if (!optionId) {
-      return NextResponse.json(
-        { error: 'Poll option ID is required' },
-        { status: 400 }
-      )
+      return ApiResponse.badRequest('Poll option ID is required', 'MISSING_OPTION_ID')
     }
 
     const supabase = await createServerAuth()
@@ -35,10 +30,7 @@ export async function POST(
       .single()
 
     if (contentError || !content) {
-      return NextResponse.json(
-        { error: 'Poll not found' },
-        { status: 404 }
-      )
+      return ApiResponse.notFound('Poll', 'POLL_NOT_FOUND')
     }
 
     // Verify the option belongs to this poll
@@ -50,10 +42,7 @@ export async function POST(
       .single()
 
     if (optionError || !option) {
-      return NextResponse.json(
-        { error: 'Invalid poll option' },
-        { status: 400 }
-      )
+      return ApiResponse.badRequest('Invalid poll option', 'INVALID_POLL_OPTION')
     }
 
     // Insert or update the vote
@@ -70,10 +59,9 @@ export async function POST(
 
     if (voteError) {
       console.error('Error creating vote:', voteError)
-      return NextResponse.json(
-        { error: voteError.message || 'Failed to cast vote' },
-        { status: 500 }
-      )
+      return ApiResponse.serverError('Failed to cast vote', 'VOTE_CREATION_ERROR', { 
+        message: voteError.message 
+      })
     }
 
     // Get updated vote counts
@@ -87,19 +75,17 @@ export async function POST(
       console.error('Error fetching vote counts:', countError)
     }
 
-    return NextResponse.json({
-      success: true,
+    return ApiResponse.ok({
       message: 'Vote cast successfully',
       vote: vote,
       voteCounts: voteCounts || []
-    }, { status: 200 })
+    })
 
   } catch (error: any) {
     console.error('API error casting vote:', error)
-    return NextResponse.json(
-      { error: error.message || 'Internal server error' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Internal server error', 'VOTE_SERVER_ERROR', { 
+      message: error.message 
+    })
   }
 }
 
@@ -110,10 +96,7 @@ export async function DELETE(
   try {
     const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      )
+      return ApiResponse.unauthorized('Authentication required', 'AUTHENTICATION_REQUIRED')
     }
 
     const { id: contentId } = await params
@@ -128,10 +111,9 @@ export async function DELETE(
 
     if (deleteError) {
       console.error('Error deleting vote:', deleteError)
-      return NextResponse.json(
-        { error: deleteError.message || 'Failed to remove vote' },
-        { status: 500 }
-      )
+      return ApiResponse.serverError('Failed to remove vote', 'VOTE_DELETE_ERROR', { 
+        message: deleteError.message 
+      })
     }
 
     // Get updated vote counts
@@ -141,17 +123,15 @@ export async function DELETE(
       .eq('content_id', contentId)
       .order('id')
 
-    return NextResponse.json({
-      success: true,
+    return ApiResponse.ok({
       message: 'Vote removed successfully',
       voteCounts: voteCounts || []
-    }, { status: 200 })
+    })
 
   } catch (error: any) {
     console.error('API error removing vote:', error)
-    return NextResponse.json(
-      { error: error.message || 'Internal server error' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Internal server error', 'VOTE_DELETE_SERVER_ERROR', { 
+      message: error.message 
+    })
   }
 }

@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createServerAuth, getCurrentUser } from '@/lib/auth-server'
+import { ApiResponse } from '@/lib/api-responses'
 
 async function checkFounderPermission(communityId: string, userId: string): Promise<boolean> {
   const supabase = await createServerAuth()
@@ -25,10 +26,7 @@ export async function POST(
   try {
     const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      )
+      return ApiResponse.unauthorized('Authentication required', 'AUTHENTICATION_REQUIRED')
     }
 
     const { id: communityId } = await params
@@ -36,26 +34,17 @@ export async function POST(
 
     // Validate required fields
     if (!name || !name.trim()) {
-      return NextResponse.json(
-        { error: 'Community name is required' },
-        { status: 400 }
-      )
+      return ApiResponse.badRequest('Community name is required', 'MISSING_COMMUNITY_NAME')
     }
 
     if (!core_values || !Array.isArray(core_values) || core_values.length < 3) {
-      return NextResponse.json(
-        { error: 'At least 3 core values are required' },
-        { status: 400 }
-      )
+      return ApiResponse.badRequest('At least 3 core values are required', 'INSUFFICIENT_CORE_VALUES')
     }
 
     // Check permissions - only founders can update basic info
     const isFounder = await checkFounderPermission(communityId, (user as any).id)
     if (!isFounder) {
-      return NextResponse.json(
-        { error: 'Only community founders can update basic information' },
-        { status: 403 }
-      )
+      return ApiResponse.forbidden('Only community founders can update basic information', 'NOT_FOUNDER')
     }
 
     const supabase = await createServerAuth()
@@ -71,19 +60,17 @@ export async function POST(
 
     if (updateError) {
       console.error('Error updating community basic info:', updateError)
-      return NextResponse.json(
-        { error: updateError.message || 'Failed to update community' },
-        { status: 500 }
-      )
+      return ApiResponse.serverError('Failed to update community', 'COMMUNITY_UPDATE_ERROR', { 
+        message: updateError.message 
+      })
     }
 
-    return NextResponse.json({ success: true }, { status: 200 })
+    return ApiResponse.ok({ success: true })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('API error updating community basic info:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Internal server error', 'COMMUNITY_UPDATE_SERVER_ERROR', { 
+      message: error.message 
+    })
   }
 }
