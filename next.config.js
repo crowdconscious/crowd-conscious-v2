@@ -1,5 +1,10 @@
 /** @type {import('next').NextConfig} */
 
+const withNextIntl = require('next-intl/plugin')(
+  // Path to i18n config
+  './i18n.ts'
+)
+
 const nextConfig = {
   // Environment variables for basic monitoring
   env: {
@@ -23,4 +28,4 @@ const nextConfig = {
   }
 }
 
-module.exports = nextConfig
+module.exports = withNextIntl(nextConfig)
