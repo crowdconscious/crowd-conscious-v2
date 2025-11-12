@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { ApiResponse } from '@/lib/api-responses'
 
 /**
  * GET /api/users/unified-xp
@@ -27,10 +28,7 @@ export async function GET(request: NextRequest) {
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     
     if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return ApiResponse.unauthorized('Please log in to view your XP')
     }
 
     // Get XP breakdown from view
@@ -59,7 +57,7 @@ export async function GET(request: NextRequest) {
       const learningXP = enrollments?.reduce((sum, e) => sum + (e.xp_earned || 0), 0) || 0
       const modulesCompleted = enrollments?.filter(e => e.completed).length || 0
 
-      return NextResponse.json({
+      return ApiResponse.ok({
         total_xp: communityXP + learningXP,
         community_xp: communityXP,
         learning_xp: learningXP,
@@ -74,7 +72,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Return unified XP data
-    return NextResponse.json({
+    return ApiResponse.ok({
       total_xp: xpData.total_unified_xp,
       community_xp: xpData.community_xp,
       learning_xp: xpData.learning_xp,
@@ -86,12 +84,9 @@ export async function GET(request: NextRequest) {
       }
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in unified-xp API:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Internal server error', 'XP_FETCH_ERROR', { message: error.message })
   }
 }
 

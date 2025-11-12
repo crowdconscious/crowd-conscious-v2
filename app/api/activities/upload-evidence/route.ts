@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { ApiResponse } from '@/lib/api-responses'
 import { randomUUID } from 'crypto'
 
 export const dynamic = 'force-dynamic'
@@ -12,7 +13,7 @@ export async function POST(request: NextRequest) {
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     
     if (userError || !user) {
-      return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+      return ApiResponse.unauthorized('Please log in to upload evidence')
     }
 
     const formData = await request.formData()
@@ -21,12 +22,17 @@ export async function POST(request: NextRequest) {
     const lessonId = formData.get('lessonId') as string
 
     if (!files || files.length === 0) {
-      return NextResponse.json({ error: 'No se proporcionaron archivos' }, { status: 400 })
+      return ApiResponse.badRequest('No se proporcionaron archivos', 'MISSING_FILES')
+    }
+
+    if (!moduleId || !lessonId) {
+      return ApiResponse.badRequest('moduleId and lessonId are required', 'MISSING_REQUIRED_FIELDS')
     }
 
     console.log(`📤 Uploading ${files.length} evidence files for user ${user.id}`)
 
     const uploadedUrls: string[] = []
+    const errors: string[] = []
 
     // Upload each file to Supabase Storage
     for (const file of files) {
@@ -49,6 +55,7 @@ export async function POST(request: NextRequest) {
 
         if (error) {
           console.error(`❌ Error uploading file ${file.name}:`, error)
+          errors.push(`${file.name}: ${error.message}`)
           continue
         }
 
@@ -60,31 +67,31 @@ export async function POST(request: NextRequest) {
         uploadedUrls.push(publicUrl)
         console.log(`✅ File uploaded: ${fileName}`)
 
-      } catch (fileError) {
+      } catch (fileError: any) {
         console.error(`❌ Error processing file ${file.name}:`, fileError)
+        errors.push(`${file.name}: ${fileError.message}`)
       }
     }
 
     if (uploadedUrls.length === 0) {
-      return NextResponse.json({ 
-        error: 'Error al subir archivos',
-        details: 'Ningún archivo se subió correctamente'
-      }, { status: 500 })
+      return ApiResponse.serverError('Error al subir archivos', 'EVIDENCE_UPLOAD_ERROR', { 
+        details: 'Ningún archivo se subió correctamente',
+        errors
+      })
     }
 
-    return NextResponse.json({
-      success: true,
+    return ApiResponse.ok({
       urls: uploadedUrls,
       count: uploadedUrls.length,
-      message: `${uploadedUrls.length} archivo(s) subido(s) exitosamente`
+      message: `${uploadedUrls.length} archivo(s) subido(s) exitosamente`,
+      ...(errors.length > 0 && { warnings: errors })
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Critical error uploading evidence:', error)
-    return NextResponse.json({ 
-      error: 'Error del servidor',
-      details: error instanceof Error ? error.message : 'Error desconocido'
-    }, { status: 500 })
+    return ApiResponse.serverError('Error del servidor', 'EVIDENCE_UPLOAD_SERVER_ERROR', { 
+      message: error instanceof Error ? error.message : 'Error desconocido'
+    })
   }
 }
 

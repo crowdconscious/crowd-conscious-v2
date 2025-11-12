@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { ApiResponse } from '@/lib/api-responses'
 
 // Disable caching - always fetch fresh module data
 export const dynamic = 'force-dynamic'
@@ -50,11 +51,7 @@ export async function GET(
 
     if (error || !module) {
       console.error('❌ API: Module not found:', error)
-      return NextResponse.json({ 
-        error: 'Module not found',
-        details: error?.message,
-        searched: { moduleId }
-      }, { status: 404 })
+      return ApiResponse.notFound('Module', 'MODULE_NOT_FOUND')
     }
 
     // Transform to match frontend format
@@ -72,14 +69,13 @@ export async function GET(
     }
 
     console.log('✅ API: Module fetched successfully:', module.title)
-    return NextResponse.json({ module: transformedModule })
+    return ApiResponse.ok({ module: transformedModule })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ API: Critical error in module fetch:', error)
-    return NextResponse.json({ 
-      error: 'Failed to fetch module',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 })
+    return ApiResponse.serverError('Failed to fetch module', 'MODULE_FETCH_ERROR', { 
+      message: error instanceof Error ? error.message : 'Unknown error'
+    })
   }
 }
 

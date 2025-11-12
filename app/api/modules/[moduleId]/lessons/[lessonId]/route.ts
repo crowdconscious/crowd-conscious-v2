@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { ApiResponse } from '@/lib/api-responses'
 
 // Disable caching - always fetch fresh lesson data
 export const dynamic = 'force-dynamic'
@@ -56,11 +57,7 @@ export async function GET(
     if (error || !lesson) {
       console.error('❌ API: Lesson not found:', error)
       console.error('❌ API: Searched for moduleId:', moduleId, 'lessonId:', lessonId)
-      return NextResponse.json({ 
-        error: 'Lesson not found',
-        details: error?.message,
-        searched: { moduleId, lessonId }
-      }, { status: 404 })
+      return ApiResponse.notFound('Lesson', 'LESSON_NOT_FOUND')
     }
 
     // Get module info
@@ -160,14 +157,13 @@ export async function GET(
     }
 
     console.log('✅ API: Lesson fetched successfully:', lesson.title)
-    return NextResponse.json({ lesson: transformedLesson, module })
+    return ApiResponse.ok({ lesson: transformedLesson, module })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ API: Critical error in lesson fetch:', error)
-    return NextResponse.json({ 
-      error: 'Failed to fetch lesson',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 })
+    return ApiResponse.serverError('Failed to fetch lesson', 'LESSON_FETCH_ERROR', { 
+      message: error instanceof Error ? error.message : 'Unknown error'
+    })
   }
 }
 

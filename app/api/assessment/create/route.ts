@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendAssessmentQuoteEmail } from '@/lib/resend'
+import { ApiResponse } from '@/lib/api-responses'
 
 function getSupabaseAdmin() {
   return createClient(
@@ -288,8 +289,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Return assessment ID and calculated data
-    return NextResponse.json({
-      success: true,
+    return ApiResponse.created({
       assessment_id: assessment.id,
       roi,
       modules: recommendedModules,
@@ -305,9 +305,10 @@ export async function POST(req: NextRequest) {
 
   } catch (error: any) {
     console.error('Assessment creation error:', error)
-    return NextResponse.json(
-      { error: error.message || 'Error al procesar evaluación' },
-      { status: 500 }
+    return ApiResponse.serverError(
+      error.message || 'Error al procesar evaluación',
+      'ASSESSMENT_CREATION_ERROR',
+      { message: error.message }
     )
   }
 }

@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { ApiResponse } from '@/lib/api-responses'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,14 +16,14 @@ export async function GET(request: NextRequest) {
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     
     if (userError || !user) {
-      return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+      return ApiResponse.unauthorized('Please log in to view enrollments')
     }
 
     const { searchParams } = new URL(request.url)
     const module_id = searchParams.get('module_id')
 
     if (!module_id) {
-      return NextResponse.json({ error: 'module_id requerido' }, { status: 400 })
+      return ApiResponse.badRequest('module_id requerido', 'MISSING_MODULE_ID')
     }
 
     console.log('🔍 Fetching enrollment for:', { user_id: user.id, module_id })
@@ -39,21 +40,18 @@ export async function GET(request: NextRequest) {
     if (error) {
       if (error.code === 'PGRST116') { // Not found
         console.warn('⚠️ No enrollment found for user:', user.id, 'module:', module_id)
-        return NextResponse.json({ 
+        return ApiResponse.ok({ 
           enrollment_id: null,
           message: 'No enrollment found' 
         })
       }
       
       console.error('❌ Error fetching enrollment:', error)
-      return NextResponse.json({ 
-        error: 'Error al buscar inscripción',
-        details: error.message 
-      }, { status: 500 })
+      return ApiResponse.serverError('Error al buscar inscripción', 'ENROLLMENT_FETCH_ERROR', { message: error.message })
     }
 
     if (!data) {
-      return NextResponse.json({ 
+      return ApiResponse.ok({ 
         enrollment_id: null,
         message: 'No enrollment found' 
       })
@@ -61,17 +59,15 @@ export async function GET(request: NextRequest) {
 
     console.log('✅ Found enrollment ID:', data.id)
 
-    return NextResponse.json({
-      enrollment_id: data.id,
-      success: true
+    return ApiResponse.ok({
+      enrollment_id: data.id
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Critical error fetching enrollment:', error)
-    return NextResponse.json({ 
-      error: 'Error del servidor',
-      details: error instanceof Error ? error.message : 'Error desconocido'
-    }, { status: 500 })
+    return ApiResponse.serverError('Error del servidor', 'ENROLLMENT_FETCH_SERVER_ERROR', { 
+      message: error instanceof Error ? error.message : 'Error desconocido'
+    })
   }
 }
 

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase-server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
+import { ApiResponse } from '@/lib/api-responses'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,7 +11,7 @@ export async function GET(request: NextRequest) {
     const moduleId = searchParams.get('moduleId')
 
     if (!moduleId) {
-      return NextResponse.json({ error: 'moduleId required' }, { status: 400 })
+      return ApiResponse.badRequest('moduleId required', 'MISSING_MODULE_ID')
     }
 
     const supabase = await createClient()
@@ -24,11 +25,11 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error('❌ Error fetching reviews:', error)
-      return NextResponse.json({ error: 'Failed to fetch reviews' }, { status: 500 })
+      return ApiResponse.serverError('Failed to fetch reviews', 'REVIEWS_FETCH_ERROR', { message: error.message })
     }
 
     if (!reviews || reviews.length === 0) {
-      return NextResponse.json({ reviews: [] }, { status: 200 })
+      return ApiResponse.ok({ reviews: [] })
     }
 
     // Fetch profile data for all reviewers separately
@@ -50,10 +51,10 @@ export async function GET(request: NextRequest) {
       }
     }))
 
-    return NextResponse.json({ reviews: reviewsWithProfiles }, { status: 200 })
+    return ApiResponse.ok({ reviews: reviewsWithProfiles })
   } catch (error: any) {
     console.error('Error in reviews API:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return ApiResponse.serverError('Internal server error', 'REVIEWS_API_ERROR', { message: error.message })
   }
 }
 
@@ -64,14 +65,14 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return ApiResponse.unauthorized('Please log in to leave a review')
     }
 
     const body = await request.json()
     const { moduleId, rating, title, review_text, would_recommend } = body
 
     if (!moduleId || !rating) {
-      return NextResponse.json({ error: 'moduleId and rating required' }, { status: 400 })
+      return ApiResponse.badRequest('moduleId and rating required', 'MISSING_REQUIRED_FIELDS')
     }
 
     // Verify user is enrolled in this module
@@ -83,7 +84,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (!enrollment) {
-      return NextResponse.json({ error: 'Must be enrolled to review' }, { status: 403 })
+      return ApiResponse.forbidden('Must be enrolled to review', 'NOT_ENROLLED')
     }
 
     // Create review (without JOIN to avoid FK issues)
@@ -105,7 +106,7 @@ export async function POST(request: NextRequest) {
     if (error) {
       // Handle duplicate review error
       if (error.code === '23505') {
-        return NextResponse.json({ error: 'Ya has dejado una reseña para este módulo' }, { status: 409 })
+        return ApiResponse.conflict('Ya has dejado una reseña para este módulo', 'DUPLICATE_REVIEW')
       }
       console.error('❌ Error creating review:', error)
       console.error('❌ Error details:', {
@@ -114,10 +115,7 @@ export async function POST(request: NextRequest) {
         hint: error.hint,
         code: error.code
       })
-      return NextResponse.json({ 
-        error: 'Failed to create review', 
-        details: error.message 
-      }, { status: 500 })
+      return ApiResponse.serverError('Failed to create review', 'REVIEW_CREATION_ERROR', { message: error.message })
     }
 
     // Fetch profile data separately
@@ -133,10 +131,10 @@ export async function POST(request: NextRequest) {
       profiles: profile || { full_name: user.email, avatar_url: null }
     }
 
-    return NextResponse.json({ review: reviewWithProfile }, { status: 201 })
+    return ApiResponse.created({ review: reviewWithProfile })
   } catch (error: any) {
     console.error('Error in create review API:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return ApiResponse.serverError('Internal server error', 'REVIEW_CREATION_SERVER_ERROR', { message: error.message })
   }
 }
 
@@ -147,14 +145,14 @@ export async function PUT(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return ApiResponse.unauthorized('Please log in to update your review')
     }
 
     const body = await request.json()
     const { reviewId, rating, title, review_text, would_recommend } = body
 
     if (!reviewId) {
-      return NextResponse.json({ error: 'reviewId required' }, { status: 400 })
+      return ApiResponse.badRequest('reviewId required', 'MISSING_REVIEW_ID')
     }
 
     const { data: review, error } = await supabase
@@ -173,7 +171,11 @@ export async function PUT(request: NextRequest) {
 
     if (error) {
       console.error('❌ Error updating review:', error)
-      return NextResponse.json({ error: 'Failed to update review' }, { status: 500 })
+      return ApiResponse.serverError('Failed to update review', 'REVIEW_UPDATE_ERROR', { message: error.message })
+    }
+
+    if (!review) {
+      return ApiResponse.notFound('Review', 'REVIEW_NOT_FOUND')
     }
 
     // Fetch profile data separately
@@ -189,10 +191,10 @@ export async function PUT(request: NextRequest) {
       profiles: profile || { full_name: user.email, avatar_url: null }
     }
 
-    return NextResponse.json({ review: reviewWithProfile }, { status: 200 })
+    return ApiResponse.ok({ review: reviewWithProfile })
   } catch (error: any) {
     console.error('Error in update review API:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return ApiResponse.serverError('Internal server error', 'REVIEW_UPDATE_SERVER_ERROR', { message: error.message })
   }
 }
 
@@ -203,14 +205,14 @@ export async function DELETE(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return ApiResponse.unauthorized('Please log in to delete your review')
     }
 
     const searchParams = request.nextUrl.searchParams
     const reviewId = searchParams.get('reviewId')
 
     if (!reviewId) {
-      return NextResponse.json({ error: 'reviewId required' }, { status: 400 })
+      return ApiResponse.badRequest('reviewId required', 'MISSING_REVIEW_ID')
     }
 
     const { error } = await supabase
@@ -221,12 +223,12 @@ export async function DELETE(request: NextRequest) {
 
     if (error) {
       console.error('Error deleting review:', error)
-      return NextResponse.json({ error: 'Failed to delete review' }, { status: 500 })
+      return ApiResponse.serverError('Failed to delete review', 'REVIEW_DELETE_ERROR', { message: error.message })
     }
 
-    return NextResponse.json({ message: 'Review deleted' }, { status: 200 })
+    return ApiResponse.ok({ message: 'Review deleted' })
   } catch (error: any) {
     console.error('Error in delete review API:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return ApiResponse.serverError('Internal server error', 'REVIEW_DELETE_SERVER_ERROR', { message: error.message })
   }
 }

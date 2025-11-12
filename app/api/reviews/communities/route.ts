@@ -1,14 +1,15 @@
 import { createClient } from '@/lib/supabase-server'
-import { NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
+import { ApiResponse } from '@/lib/api-responses'
 
 // GET: Fetch reviews for a community
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const communityId = searchParams.get('communityId')
 
     if (!communityId) {
-      return NextResponse.json({ error: 'Community ID required' }, { status: 400 })
+      return ApiResponse.badRequest('Community ID required', 'MISSING_COMMUNITY_ID')
     }
 
     const supabase = await createClient()
@@ -32,24 +33,24 @@ export async function GET(request: Request) {
 
     if (error) {
       console.error('Error fetching community reviews:', error)
-      return NextResponse.json({ error: 'Failed to fetch reviews' }, { status: 500 })
+      return ApiResponse.serverError('Failed to fetch reviews', 'COMMUNITY_REVIEWS_FETCH_ERROR', { message: error.message })
     }
 
-    return NextResponse.json({ reviews })
-  } catch (error) {
+    return ApiResponse.ok({ reviews: reviews || [] })
+  } catch (error: any) {
     console.error('Unexpected error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return ApiResponse.serverError('Internal server error', 'COMMUNITY_REVIEWS_API_ERROR', { message: error.message })
   }
 }
 
 // POST: Create a new community review
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return ApiResponse.unauthorized('Please log in to leave a review')
     }
 
     const body = await request.json()
@@ -67,11 +68,11 @@ export async function POST(request: Request) {
 
     // Validate required fields
     if (!communityId || !rating) {
-      return NextResponse.json({ error: 'Community ID and rating are required' }, { status: 400 })
+      return ApiResponse.badRequest('Community ID and rating are required', 'MISSING_REQUIRED_FIELDS')
     }
 
     if (rating < 1 || rating > 5) {
-      return NextResponse.json({ error: 'Rating must be between 1 and 5' }, { status: 400 })
+      return ApiResponse.badRequest('Rating must be between 1 and 5', 'INVALID_RATING')
     }
 
     // Check if user is a member of this community
@@ -83,9 +84,7 @@ export async function POST(request: Request) {
       .single()
 
     if (!membership) {
-      return NextResponse.json({ 
-        error: 'You must be a member of this community to leave a review' 
-      }, { status: 403 })
+      return ApiResponse.forbidden('You must be a member of this community to leave a review', 'NOT_COMMUNITY_MEMBER')
     }
 
     // Check if user already reviewed this community
@@ -97,9 +96,7 @@ export async function POST(request: Request) {
       .single()
 
     if (existingReview) {
-      return NextResponse.json({ 
-        error: 'You have already reviewed this community. You can edit your existing review.' 
-      }, { status: 409 })
+      return ApiResponse.conflict('You have already reviewed this community. You can edit your existing review.', 'DUPLICATE_REVIEW')
     }
 
     // Create review
@@ -123,24 +120,24 @@ export async function POST(request: Request) {
 
     if (insertError) {
       console.error('Error creating review:', insertError)
-      return NextResponse.json({ error: 'Failed to create review' }, { status: 500 })
+      return ApiResponse.serverError('Failed to create review', 'COMMUNITY_REVIEW_CREATION_ERROR', { message: insertError.message })
     }
 
-    return NextResponse.json({ review }, { status: 201 })
-  } catch (error) {
+    return ApiResponse.created({ review })
+  } catch (error: any) {
     console.error('Unexpected error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return ApiResponse.serverError('Internal server error', 'COMMUNITY_REVIEW_CREATION_SERVER_ERROR', { message: error.message })
   }
 }
 
 // PUT: Update an existing review
-export async function PUT(request: Request) {
+export async function PUT(request: NextRequest) {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return ApiResponse.unauthorized('Please log in to update your review')
     }
 
     const body = await request.json()
@@ -156,7 +153,7 @@ export async function PUT(request: Request) {
     } = body
 
     if (!reviewId) {
-      return NextResponse.json({ error: 'Review ID required' }, { status: 400 })
+      return ApiResponse.badRequest('Review ID required', 'MISSING_REVIEW_ID')
     }
 
     // Update review
@@ -179,31 +176,35 @@ export async function PUT(request: Request) {
 
     if (error) {
       console.error('Error updating review:', error)
-      return NextResponse.json({ error: 'Failed to update review' }, { status: 500 })
+      return ApiResponse.serverError('Failed to update review', 'COMMUNITY_REVIEW_UPDATE_ERROR', { message: error.message })
     }
 
-    return NextResponse.json({ review })
-  } catch (error) {
+    if (!review) {
+      return ApiResponse.notFound('Review', 'REVIEW_NOT_FOUND')
+    }
+
+    return ApiResponse.ok({ review })
+  } catch (error: any) {
     console.error('Unexpected error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return ApiResponse.serverError('Internal server error', 'COMMUNITY_REVIEW_UPDATE_SERVER_ERROR', { message: error.message })
   }
 }
 
 // DELETE: Delete a review
-export async function DELETE(request: Request) {
+export async function DELETE(request: NextRequest) {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return ApiResponse.unauthorized('Please log in to delete your review')
     }
 
     const { searchParams } = new URL(request.url)
     const reviewId = searchParams.get('reviewId')
 
     if (!reviewId) {
-      return NextResponse.json({ error: 'Review ID required' }, { status: 400 })
+      return ApiResponse.badRequest('Review ID required', 'MISSING_REVIEW_ID')
     }
 
     const { error } = await supabase
@@ -214,13 +215,13 @@ export async function DELETE(request: Request) {
 
     if (error) {
       console.error('Error deleting review:', error)
-      return NextResponse.json({ error: 'Failed to delete review' }, { status: 500 })
+      return ApiResponse.serverError('Failed to delete review', 'COMMUNITY_REVIEW_DELETE_ERROR', { message: error.message })
     }
 
-    return NextResponse.json({ message: 'Review deleted successfully' })
-  } catch (error) {
+    return ApiResponse.ok({ message: 'Review deleted successfully' })
+  } catch (error: any) {
     console.error('Unexpected error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return ApiResponse.serverError('Internal server error', 'COMMUNITY_REVIEW_DELETE_SERVER_ERROR', { message: error.message })
   }
 }
 

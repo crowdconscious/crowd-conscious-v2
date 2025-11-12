@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { ApiResponse } from '@/lib/api-responses'
 
 /**
  * GET /api/user/profile
@@ -12,7 +12,7 @@ export async function GET() {
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return ApiResponse.unauthorized('Please log in to view your profile')
     }
 
     // Get user's profile
@@ -23,19 +23,13 @@ export async function GET() {
       .single()
 
     if (error || !profile) {
-      return NextResponse.json(
-        { error: 'Profile not found' },
-        { status: 404 }
-      )
+      return ApiResponse.notFound('Profile', 'PROFILE_NOT_FOUND')
     }
 
-    return NextResponse.json(profile)
+    return ApiResponse.ok(profile)
   } catch (error: any) {
     console.error('Error fetching profile:', error)
-    return NextResponse.json(
-      { error: 'Server error', details: error.message },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Server error', 'PROFILE_FETCH_ERROR', { message: error.message })
   }
 }
 

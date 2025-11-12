@@ -1,9 +1,10 @@
+import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { ApiResponse } from '@/lib/api-responses'
 
 // POST /api/user/modules/create - Create module as individual creator
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     // Authenticate user
     const supabase = await createClient()
