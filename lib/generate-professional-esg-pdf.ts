@@ -226,7 +226,7 @@ function addImpactSection(doc: jsPDF, reportData: any, startY: number, pageWidth
   doc.setFontSize(14)
   doc.setTextColor(76, 175, 80) // Green
   doc.setFont('helvetica', 'bold')
-  doc.text('🌍 Impacto Ambiental Documentado', 20, y)
+  doc.text('Impacto Ambiental Documentado', 20, y)
   
   y += 10
 
@@ -237,18 +237,18 @@ function addImpactSection(doc: jsPDF, reportData: any, startY: number, pageWidth
   const cardHeight = 25
   const gap = 10
 
-  // Card 1: CO2
+  // Card 1: CO2 (Unicode removed for PDF compatibility)
   drawImpactCard(doc, 20, y, cardWidth, cardHeight, {
-    icon: '🌬️',
-    label: 'CO₂ Reducido',
+    icon: '',
+    label: 'CO2 Reducido',
     value: `${impact.co2_reduced_kg || 0} kg`,
-    subtitle: `≈ ${impact.trees_equivalent || 0} árboles`,
+    subtitle: `~${impact.trees_equivalent || 0} arboles`,
     color: [76, 175, 80] // Green
   })
 
   // Card 2: Water
   drawImpactCard(doc, 20 + cardWidth + gap, y, cardWidth, cardHeight, {
-    icon: '💧',
+    icon: '',
     label: 'Agua Ahorrada',
     value: `${(impact.water_saved_liters || 0).toLocaleString('es-MX')} L`,
     subtitle: 'Litros conservados',
@@ -259,7 +259,7 @@ function addImpactSection(doc: jsPDF, reportData: any, startY: number, pageWidth
 
   // Card 3: Waste
   drawImpactCard(doc, 20, y, cardWidth, cardHeight, {
-    icon: '♻️',
+    icon: '',
     label: 'Residuos Reducidos',
     value: `${impact.waste_reduced_kg || 0} kg`,
     subtitle: 'Basura evitada',
@@ -268,7 +268,7 @@ function addImpactSection(doc: jsPDF, reportData: any, startY: number, pageWidth
 
   // Card 4: Savings
   drawImpactCard(doc, 20 + cardWidth + gap, y, cardWidth, cardHeight, {
-    icon: '💰',
+    icon: '',
     label: 'Ahorro en Costos',
     value: `$${(impact.cost_savings_mxn || 0).toLocaleString('es-MX')}`,
     subtitle: 'MXN ahorrados/año',
@@ -325,7 +325,7 @@ function addToolsSection(doc: jsPDF, reportData: any, startY: number, pageWidth:
   doc.setFontSize(12)
   doc.setTextColor(33, 150, 243) // Blue
   doc.setFont('helvetica', 'bold')
-  doc.text('🛠️ Herramientas Utilizadas', 20, y)
+  doc.text('Herramientas Utilizadas', 20, y)
   
   y += 8
 
