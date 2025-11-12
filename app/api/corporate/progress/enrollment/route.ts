@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { ApiResponse } from '@/lib/api-responses'
 
 /**
  * GET /api/corporate/progress/enrollment?moduleId={moduleId}
@@ -26,7 +27,7 @@ export async function GET(req: NextRequest) {
     // Get user from request headers
     const authHeader = req.headers.get('authorization')
     if (!authHeader) {
-      return NextResponse.json({ error: 'Unauthorized - No auth header' }, { status: 401 })
+      return ApiResponse.unauthorized('No authorization header provided', 'MISSING_AUTH_HEADER')
     }
 
     const token = authHeader.replace('Bearer ', '')
@@ -36,18 +37,14 @@ export async function GET(req: NextRequest) {
     const { data: { user }, error: authError } = await supabase.auth.getUser(token)
     
     if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized - Invalid token' }, { status: 401 })
-    }
-    
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return ApiResponse.unauthorized('Invalid or expired token', 'INVALID_TOKEN')
     }
 
     const { searchParams } = new URL(req.url)
     const moduleId = searchParams.get('moduleId')
 
     if (!moduleId) {
-      return NextResponse.json({ error: 'moduleId is required' }, { status: 400 })
+      return ApiResponse.badRequest('moduleId is required', 'MISSING_MODULE_ID')
     }
 
     // Get user's enrollment for this specific module
@@ -63,19 +60,13 @@ export async function GET(req: NextRequest) {
       .single()
 
     if (error || !enrollment) {
-      return NextResponse.json(
-        { error: 'Enrollment not found for this module' },
-        { status: 404 }
-      )
+      return ApiResponse.notFound('Enrollment', 'ENROLLMENT_NOT_FOUND')
     }
 
-    return NextResponse.json(enrollment)
+    return ApiResponse.ok(enrollment)
   } catch (error: any) {
     console.error('Error fetching enrollment:', error)
-    return NextResponse.json(
-      { error: 'Server error', details: error.message },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Server error', 'ENROLLMENT_FETCH_ERROR', { message: error.message })
   }
 }
 

@@ -1,26 +1,21 @@
+import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
-import { NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth-server'
+import { ApiResponse } from '@/lib/api-responses'
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser()
     
     if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return ApiResponse.unauthorized('Please log in to clone templates')
     }
 
     const supabase = await createClient()
     const { templateId, communityId } = await request.json()
 
     if (!templateId || !communityId) {
-      return NextResponse.json(
-        { error: 'Template ID and Community ID are required' },
-        { status: 400 }
-      )
+      return ApiResponse.badRequest('Template ID and Community ID are required', 'MISSING_REQUIRED_FIELDS')
     }
 
     // Verify user is admin/founder of the community
@@ -32,10 +27,7 @@ export async function POST(request: Request) {
       .single()
 
     if (!membership || (membership.role !== 'founder' && membership.role !== 'admin')) {
-      return NextResponse.json(
-        { error: 'You must be a community admin to clone templates' },
-        { status: 403 }
-      )
+      return ApiResponse.forbidden('You must be a community admin to clone templates', 'NOT_COMMUNITY_ADMIN')
     }
 
     // Fetch the template module
@@ -46,10 +38,7 @@ export async function POST(request: Request) {
       .single()
 
     if (templateError || !template) {
-      return NextResponse.json(
-        { error: 'Template not found' },
-        { status: 404 }
-      )
+      return ApiResponse.notFound('Template', 'TEMPLATE_NOT_FOUND')
     }
 
     // Fetch template lessons
@@ -104,10 +93,10 @@ export async function POST(request: Request) {
 
     if (moduleError) {
       console.error('Error creating cloned module:', moduleError)
-      return NextResponse.json(
-        { error: 'Failed to clone module', details: moduleError.message },
-        { status: 500 }
-      )
+      return ApiResponse.serverError('Failed to clone module', 'MODULE_CLONE_ERROR', { 
+        message: moduleError.message,
+        code: moduleError.code
+      })
     }
 
     // Clone lessons
@@ -142,8 +131,7 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({
-      success: true,
+    return ApiResponse.created({
       module: {
         id: newModule.id,
         slug: newModule.slug,
@@ -151,12 +139,9 @@ export async function POST(request: Request) {
         lessonCount: templateLessons?.length || 0
       }
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in POST /api/modules/clone-template:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Internal server error', 'MODULE_CLONE_SERVER_ERROR', { message: error.message })
   }
 }
 

@@ -1,12 +1,13 @@
 import { createClient as createAdminClient } from '@supabase/supabase-js'
-import { NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
+import { ApiResponse } from '@/lib/api-responses'
 
 // Disable caching for this route - always fetch fresh data
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -50,16 +51,9 @@ export async function GET(
       .eq('status', 'published')
       .single()
 
-    if (moduleError) {
+    if (moduleError || !module) {
       console.error('❌ API: Module fetch error:', moduleError)
-      return NextResponse.json({ 
-        error: 'Module not found',
-        details: moduleError.message 
-      }, { status: 404 })
-    }
-
-    if (!module) {
-      return NextResponse.json({ error: 'Module not found' }, { status: 404 })
+      return ApiResponse.notFound('Module', 'MODULE_NOT_FOUND')
     }
 
     // Get community info if exists
@@ -167,14 +161,13 @@ export async function GET(
     }
 
     console.log('✅ API: Module transformed successfully')
-    return NextResponse.json({ module: transformedModule })
+    return ApiResponse.ok({ module: transformedModule })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('💥 API: Unexpected error:', error)
-    return NextResponse.json({ 
-      error: 'Internal server error',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 })
+    return ApiResponse.serverError('Internal server error', 'MARKETPLACE_MODULE_DETAILS_ERROR', { 
+      message: error instanceof Error ? error.message : 'Unknown error'
+    })
   }
 }
 

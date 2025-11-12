@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { ApiResponse } from '@/lib/api-responses'
 
 function getSupabaseAdmin() {
   return createClient(
@@ -27,13 +28,13 @@ export async function GET(
       .eq('id', id)
       .single()
 
-    if (error) {
-      throw new Error('Assessment not found')
+    if (error || !assessment) {
+      return ApiResponse.notFound('Assessment', 'ASSESSMENT_NOT_FOUND')
     }
 
     // Return the stored assessment data
     // In production, you'd also fetch related company data if it exists
-    return NextResponse.json({
+    return ApiResponse.ok({
       companyName: 'Tu Empresa', // Would come from assessment
       contact: {
         fullName: 'Contact Name',
@@ -68,9 +69,10 @@ export async function GET(
     })
   } catch (error: any) {
     console.error('Error fetching assessment:', error)
-    return NextResponse.json(
-      { error: error.message || 'Error fetching proposal' },
-      { status: 500 }
+    return ApiResponse.serverError(
+      error.message || 'Error fetching proposal',
+      'ASSESSMENT_FETCH_ERROR',
+      { message: error.message }
     )
   }
 }

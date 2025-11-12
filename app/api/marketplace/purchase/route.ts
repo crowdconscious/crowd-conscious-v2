@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { ApiResponse } from '@/lib/api-responses'
 import Stripe from 'stripe'
 
 function getStripeClient() {
@@ -17,7 +18,7 @@ function getStripeClient() {
  * 3. Create course enrollments
  * 4. Distribute revenue to wallets
  */
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const stripe = getStripeClient()
     const supabase = await createClient()
@@ -25,10 +26,7 @@ export async function POST(request: Request) {
     // Authenticate user
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return ApiResponse.unauthorized('Please log in to purchase modules')
     }
 
     // Get request body
@@ -36,10 +34,7 @@ export async function POST(request: Request) {
 
     // Validate input
     if (!moduleId || !employeeCount) {
-      return NextResponse.json(
-        { success: false, error: 'Missing required fields' },
-        { status: 400 }
-      )
+      return ApiResponse.badRequest('Missing required fields', 'MISSING_REQUIRED_FIELDS')
     }
 
     // Get corporate account
@@ -50,17 +45,11 @@ export async function POST(request: Request) {
       .single()
 
     if (!profile?.is_corporate_user || profile.corporate_role !== 'admin') {
-      return NextResponse.json(
-        { success: false, error: 'Only corporate admins can purchase modules' },
-        { status: 403 }
-      )
+      return ApiResponse.forbidden('Only corporate admins can purchase modules', 'NOT_CORPORATE_ADMIN')
     }
 
     if (!profile.corporate_account_id) {
-      return NextResponse.json(
-        { success: false, error: 'No corporate account found' },
-        { status: 400 }
-      )
+      return ApiResponse.badRequest('No corporate account found', 'MISSING_CORPORATE_ACCOUNT')
     }
 
     // Get module details
@@ -72,10 +61,7 @@ export async function POST(request: Request) {
       .single()
 
     if (moduleError || !module) {
-      return NextResponse.json(
-        { success: false, error: 'Module not found' },
-        { status: 404 }
-      )
+      return ApiResponse.notFound('Module', 'MODULE_NOT_FOUND')
     }
 
     // Calculate total price
@@ -99,15 +85,12 @@ export async function POST(request: Request) {
     })
 
     if (paymentIntent.status !== 'succeeded') {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Payment failed',
-          requires_action: paymentIntent.status === 'requires_action',
-          client_secret: paymentIntent.client_secret,
-        },
-        { status: 402 }
-      )
+      return ApiResponse.custom({
+        success: false,
+        error: 'Payment failed',
+        requires_action: paymentIntent.status === 'requires_action',
+        client_secret: paymentIntent.client_secret,
+      }, 402)
     }
 
     // Payment successful - process module sale with revenue split
@@ -133,14 +116,9 @@ export async function POST(request: Request) {
         reason: 'requested_by_customer',
       })
 
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Failed to process sale. Payment has been refunded.',
-          details: saleError.message,
-        },
-        { status: 500 }
-      )
+      return ApiResponse.serverError('Failed to process sale. Payment has been refunded.', 'SALE_PROCESSING_ERROR', { 
+        message: saleError.message 
+      })
     }
 
     // Create course enrollment for corporate account
@@ -186,38 +164,30 @@ export async function POST(request: Request) {
         },
       })
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        sale_id: sale,
-        module: {
-          id: module.id,
-          title: module.title,
-          description: module.description,
-        },
-        purchase: {
-          total_amount: totalAmount,
-          employee_count: employeeCount,
-          payment_intent_id: paymentIntent.id,
-        },
-        revenue_split: {
-          platform_fee: totalAmount * 0.30,
-          community_share: totalAmount * 0.50,
-          creator_share: totalAmount * 0.20,
-        },
+    return ApiResponse.ok({
+      sale_id: sale,
+      module: {
+        id: module.id,
+        title: module.title,
+        description: module.description,
+      },
+      purchase: {
+        total_amount: totalAmount,
+        employee_count: employeeCount,
+        payment_intent_id: paymentIntent.id,
+      },
+      revenue_split: {
+        platform_fee: totalAmount * 0.30,
+        community_share: totalAmount * 0.50,
+        creator_share: totalAmount * 0.20,
       },
     })
 
   } catch (error: any) {
     console.error('Marketplace purchase error:', error)
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Internal server error',
-        details: error.message,
-      },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Internal server error', 'MARKETPLACE_PURCHASE_ERROR', { 
+      message: error.message 
+    })
   }
 }
 
@@ -226,17 +196,14 @@ export async function POST(request: Request) {
  * 
  * Get purchase history for corporate account
  */
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
     
     // Authenticate user
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return ApiResponse.unauthorized('Please log in to view purchase history')
     }
 
     // Get corporate account
@@ -247,10 +214,7 @@ export async function GET(request: Request) {
       .single()
 
     if (!profile?.is_corporate_user || !profile.corporate_account_id) {
-      return NextResponse.json(
-        { success: false, error: 'Not a corporate user' },
-        { status: 403 }
-      )
+      return ApiResponse.forbidden('Not a corporate user', 'NOT_CORPORATE_USER')
     }
 
     // Get purchase history
@@ -271,27 +235,18 @@ export async function GET(request: Request) {
 
     if (error) {
       console.error('Error fetching purchases:', error)
-      return NextResponse.json(
-        { success: false, error: 'Failed to fetch purchases' },
-        { status: 500 }
-      )
+      return ApiResponse.serverError('Failed to fetch purchases', 'PURCHASE_HISTORY_FETCH_ERROR', { message: error.message })
     }
 
-    return NextResponse.json({
-      success: true,
-      data: purchases || [],
+    return ApiResponse.ok({
+      purchases: purchases || [],
     })
 
   } catch (error: any) {
     console.error('Get purchases error:', error)
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Internal server error',
-        details: error.message,
-      },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Internal server error', 'PURCHASE_HISTORY_SERVER_ERROR', { 
+      message: error.message 
+    })
   }
 }
 

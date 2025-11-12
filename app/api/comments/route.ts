@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createServerAuth, getCurrentUser } from '@/lib/auth-server'
+import { ApiResponse } from '@/lib/api-responses'
 
 export async function GET(request: NextRequest) {
   try {
@@ -7,10 +8,7 @@ export async function GET(request: NextRequest) {
     const contentId = searchParams.get('contentId')
     
     if (!contentId) {
-      return NextResponse.json(
-        { error: 'contentId is required' },
-        { status: 400 }
-      )
+      return ApiResponse.badRequest('contentId is required', 'MISSING_CONTENT_ID')
     }
 
     const supabase = await createServerAuth()
@@ -36,31 +34,20 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error('Error fetching comments:', error)
-      return NextResponse.json(
-        { error: 'Failed to fetch comments' },
-        { status: 500 }
-      )
+      return ApiResponse.serverError('Failed to fetch comments', 'COMMENTS_FETCH_ERROR', { message: error.message })
     }
 
     // Structure comments with replies
     const structuredComments = structureComments(comments || [])
 
-    return NextResponse.json({ 
+    return ApiResponse.ok({ 
       comments: structuredComments,
       count: comments?.length || 0 
-    }, {
-      headers: {
-        'Cache-Control': 'no-store, must-revalidate',
-        'Pragma': 'no-cache'
-      }
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Comments API error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Internal server error', 'COMMENTS_API_ERROR', { message: error.message })
   }
 }
 
@@ -68,19 +55,13 @@ export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      )
+      return ApiResponse.unauthorized('Please log in to comment')
     }
 
     const { contentId, content, parentId } = await request.json()
 
     if (!contentId || !content?.trim()) {
-      return NextResponse.json(
-        { error: 'contentId and content are required' },
-        { status: 400 }
-      )
+      return ApiResponse.badRequest('contentId and content are required', 'MISSING_REQUIRED_FIELDS')
     }
 
     // Verify user is a member of the community (for content)
@@ -93,10 +74,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (contentError || !contentData) {
-      return NextResponse.json(
-        { error: 'Content not found' },
-        { status: 404 }
-      )
+      return ApiResponse.notFound('Content', 'CONTENT_NOT_FOUND')
     }
 
     // Check if user is a member of the community
@@ -108,10 +86,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (membershipError || !membership) {
-      return NextResponse.json(
-        { error: 'You must be a community member to comment' },
-        { status: 403 }
-      )
+      return ApiResponse.forbidden('You must be a community member to comment', 'NOT_COMMUNITY_MEMBER')
     }
 
     // Create comment
@@ -140,23 +115,16 @@ export async function POST(request: NextRequest) {
 
     if (commentError) {
       console.error('Error creating comment:', commentError)
-      return NextResponse.json(
-        { error: 'Failed to create comment' },
-        { status: 500 }
-      )
+      return ApiResponse.serverError('Failed to create comment', 'COMMENT_CREATION_ERROR', { message: commentError.message })
     }
 
-    return NextResponse.json({ 
-      success: true, 
+    return ApiResponse.created({ 
       comment: comment 
-    }, { status: 201 })
+    })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Comment creation error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Internal server error', 'COMMENT_CREATION_SERVER_ERROR', { message: error.message })
   }
 }
 

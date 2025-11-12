@@ -1,16 +1,13 @@
 import { createClient } from '@/lib/supabase-server'
-import { NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth-server'
+import { ApiResponse } from '@/lib/api-responses'
 
 export async function GET() {
   try {
     const user = await getCurrentUser()
     
     if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return ApiResponse.unauthorized('Please log in to view templates')
     }
 
     const supabase = await createClient()
@@ -39,19 +36,13 @@ export async function GET() {
 
     if (error) {
       console.error('Error fetching templates:', error)
-      return NextResponse.json(
-        { error: 'Failed to fetch templates' },
-        { status: 500 }
-      )
+      return ApiResponse.serverError('Failed to fetch templates', 'TEMPLATES_FETCH_ERROR', { message: error.message })
     }
 
-    return NextResponse.json({ templates: templates || [] })
-  } catch (error) {
+    return ApiResponse.ok({ templates: templates || [] })
+  } catch (error: any) {
     console.error('Error in GET /api/modules/templates:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Internal server error', 'TEMPLATES_SERVER_ERROR', { message: error.message })
   }
 }
 

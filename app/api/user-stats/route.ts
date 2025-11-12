@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createServerAuth } from '@/lib/auth-server'
+import { ApiResponse } from '@/lib/api-responses'
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,7 +10,7 @@ export async function GET(request: NextRequest) {
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     
     if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return ApiResponse.unauthorized('Please log in to view your stats')
     }
 
     // Try to get existing user stats
@@ -43,21 +44,21 @@ export async function GET(request: NextRequest) {
 
       if (insertError) {
         console.error('Error creating user stats:', insertError)
-        return NextResponse.json({ error: 'Failed to create user stats' }, { status: 500 })
+        return ApiResponse.serverError('Failed to create user stats', 'USER_STATS_CREATION_ERROR', { message: insertError.message })
       }
 
-      return NextResponse.json({ data: newStats })
+      return ApiResponse.ok(newStats)
     }
 
     if (error) {
       console.error('Error fetching user stats:', error)
-      return NextResponse.json({ error: 'Failed to fetch user stats' }, { status: 500 })
+      return ApiResponse.serverError('Failed to fetch user stats', 'USER_STATS_FETCH_ERROR', { message: error.message })
     }
 
-    return NextResponse.json({ data })
+    return ApiResponse.ok(data)
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('API error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return ApiResponse.serverError('Internal server error', 'USER_STATS_API_ERROR', { message: error.message })
   }
 }

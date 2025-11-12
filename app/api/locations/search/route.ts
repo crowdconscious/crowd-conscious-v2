@@ -1,11 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
+import { ApiResponse } from '@/lib/api-responses'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const query = searchParams.get('q')
 
   if (!query || query.length < 3) {
-    return NextResponse.json({ error: 'Query must be at least 3 characters' }, { status: 400 })
+    return ApiResponse.badRequest('Query must be at least 3 characters', 'QUERY_TOO_SHORT')
   }
 
   try {
@@ -50,8 +51,8 @@ export async function GET(request: NextRequest) {
       }
     }))
 
-    return NextResponse.json(locations)
-  } catch (error) {
+    return ApiResponse.ok(locations)
+  } catch (error: any) {
     console.error('Location search error:', error)
     
     // Return fallback suggestions
@@ -68,6 +69,6 @@ export async function GET(request: NextRequest) {
       }
     ]
     
-    return NextResponse.json(fallbackResults)
+    return ApiResponse.ok(fallbackResults)
   }
 }

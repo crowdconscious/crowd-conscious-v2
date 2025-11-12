@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createServerAuth } from '@/lib/auth-server'
+import { ApiResponse } from '@/lib/api-responses'
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,7 +10,7 @@ export async function POST(request: NextRequest) {
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     
     if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return ApiResponse.unauthorized('Please log in to create a community')
     }
 
     const body = await request.json()
@@ -17,7 +18,7 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (!name || !slug || !description || !address || !core_values || core_values.length < 3) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+      return ApiResponse.badRequest('Missing required fields. Name, slug, description, address, and at least 3 core values are required.', 'MISSING_REQUIRED_FIELDS')
     }
 
     // Create the community
@@ -36,7 +37,13 @@ export async function POST(request: NextRequest) {
 
     if (communityError) {
       console.error('Community creation error:', communityError)
-      return NextResponse.json({ error: 'Failed to create community' }, { status: 500 })
+      
+      // Handle duplicate slug error
+      if (communityError.code === '23505') {
+        return ApiResponse.conflict('A community with this slug already exists', 'DUPLICATE_SLUG')
+      }
+      
+      return ApiResponse.serverError('Failed to create community', 'COMMUNITY_CREATION_ERROR', { message: communityError.message })
     }
 
     // Add the creator as a founder member
@@ -53,10 +60,10 @@ export async function POST(request: NextRequest) {
       // Don't fail the request, community was created
     }
 
-    return NextResponse.json({ data: community })
+    return ApiResponse.created({ community })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('API error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return ApiResponse.serverError('Internal server error', 'COMMUNITY_CREATION_SERVER_ERROR', { message: error.message })
   }
 }

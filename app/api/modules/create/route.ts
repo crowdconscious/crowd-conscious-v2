@@ -1,19 +1,17 @@
+import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
-import { NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth-server'
+import { ApiResponse } from '@/lib/api-responses'
 import { Resend } from 'resend'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser()
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return ApiResponse.unauthorized('Please log in to create modules')
     }
 
     const supabase = await createClient()
@@ -36,6 +34,11 @@ export async function POST(request: Request) {
       status
     } = body
 
+    // Validate required fields
+    if (!title || !description || !coreValue || !communityId || !userId) {
+      return ApiResponse.badRequest('Missing required fields', 'MISSING_REQUIRED_FIELDS')
+    }
+
     // Validate community membership
     const { data: membership } = await supabase
       .from('community_members')
@@ -45,10 +48,7 @@ export async function POST(request: Request) {
       .single()
 
     if (!membership || (membership.role !== 'founder' && membership.role !== 'admin')) {
-      return NextResponse.json(
-        { error: 'You must be a community admin to create modules' },
-        { status: 403 }
-      )
+      return ApiResponse.forbidden('You must be a community admin to create modules', 'NOT_COMMUNITY_ADMIN')
     }
 
     // Generate slug from title
@@ -98,10 +98,10 @@ export async function POST(request: Request) {
     if (moduleError) {
       console.error('Error creating module:', moduleError)
       console.error('Module data:', { title, description, slug, communityId, userId })
-      return NextResponse.json(
-        { error: 'Failed to create module', details: moduleError.message, code: moduleError.code },
-        { status: 500 }
-      )
+      return ApiResponse.serverError('Failed to create module', 'MODULE_CREATION_ERROR', { 
+        message: moduleError.message,
+        code: moduleError.code
+      })
     }
 
     // Create lessons if any
@@ -252,20 +252,16 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({
-      success: true,
+    return ApiResponse.created({
       module: {
         id: module.id,
         slug: module.slug,
         status: module.status
       }
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in POST /api/modules/create:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Internal server error', 'MODULE_CREATION_SERVER_ERROR', { message: error.message })
   }
 }
 

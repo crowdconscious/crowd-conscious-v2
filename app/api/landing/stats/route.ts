@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server'
 import { createServerAuth } from '@/lib/auth-server'
+import { ApiResponse } from '@/lib/api-responses'
 
 export async function GET() {
   try {
@@ -46,19 +46,18 @@ export async function GET() {
 
     console.log('📊 Landing page stats:', stats)
 
-    return NextResponse.json({ stats })
+    return ApiResponse.ok({ stats })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Stats API error:', error)
-    return NextResponse.json({ 
+    return ApiResponse.ok({ 
       stats: {
         total_funds_raised: 0,
         active_communities: 0,
         needs_fulfilled: 0,
         total_members: 0,
         total_users: 0
-      },
-      error: 'Failed to fetch stats' 
+      }
     })
   }
 }

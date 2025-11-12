@@ -1,5 +1,5 @@
 import { createClient as createAdminClient } from '@supabase/supabase-js'
-import { NextResponse } from 'next/server'
+import { ApiResponse } from '@/lib/api-responses'
 
 // Disable caching - always fetch fresh module data
 export const dynamic = 'force-dynamic'
@@ -57,11 +57,10 @@ export async function GET() {
       console.error('Error code:', error.code)
       console.error('Error message:', error.message)
       console.error('Error details:', error.details)
-      return NextResponse.json({ 
-        error: 'Failed to fetch modules',
-        details: error.message,
+      return ApiResponse.serverError('Failed to fetch modules', 'MARKETPLACE_MODULES_FETCH_ERROR', { 
+        message: error.message,
         code: error.code
-      }, { status: 500 })
+      })
     }
 
     console.log('✅ API: Modules fetched:', modules?.length || 0)
@@ -91,10 +90,10 @@ export async function GET() {
       xpReward: module.xp_reward
     }))
 
-    return NextResponse.json({ modules: transformedModules })
-  } catch (error) {
+    return ApiResponse.ok({ modules: transformedModules })
+  } catch (error: any) {
     console.error('Error in GET /api/marketplace/modules:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return ApiResponse.serverError('Internal server error', 'MARKETPLACE_MODULES_SERVER_ERROR', { message: error.message })
   }
 }
 
