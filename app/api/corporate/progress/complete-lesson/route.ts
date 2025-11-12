@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { validateLessonResponse, getQualityControlMessage } from '@/lib/quality-control-validation'
+import { ApiResponse } from '@/lib/api-responses'
 
 export async function POST(req: NextRequest) {
   try {
@@ -8,7 +9,7 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return ApiResponse.unauthorized('Please log in to complete lessons')
     }
 
     const body = await req.json()
@@ -30,16 +31,18 @@ export async function POST(req: NextRequest) {
 
     if (!validation.isValid) {
       console.warn('❌ Quality control failed:', validation.errors)
-      return NextResponse.json({
-        error: 'quality_control_failed',
-        message: getQualityControlMessage(validation),
-        validation: {
-          errors: validation.errors,
-          warnings: validation.warnings,
-          score: validation.score,
-          minimumRequired: 70
+      return ApiResponse.badRequest(
+        getQualityControlMessage(validation),
+        'QUALITY_CONTROL_FAILED',
+        {
+          validation: {
+            errors: validation.errors,
+            warnings: validation.warnings,
+            score: validation.score,
+            minimumRequired: 70
+          }
         }
-      }, { status: 400 })
+      )
     }
 
     console.log('✅ Quality control passed:', { score: validation.score })
@@ -54,11 +57,7 @@ export async function POST(req: NextRequest) {
 
     if (enrollmentError || !enrollment) {
       console.error('Enrollment not found:', { enrollmentError, userId: user.id, moduleId })
-      return NextResponse.json({ 
-        error: 'Enrollment not found',
-        details: 'Please ensure you are enrolled in this module',
-        debug: { userId: user.id, moduleId }
-      }, { status: 404 })
+      return ApiResponse.notFound('Enrollment', 'ENROLLMENT_NOT_FOUND')
     }
 
     console.log('✅ Enrollment found:', { enrollmentId: enrollment.id, moduleId })
@@ -137,7 +136,7 @@ export async function POST(req: NextRequest) {
 
     if (updateError) {
       console.error('❌ Error updating enrollment:', updateError)
-      return NextResponse.json({ error: 'Failed to update progress', details: updateError }, { status: 500 })
+      return ApiResponse.serverError('Failed to update progress', 'ENROLLMENT_UPDATE_FAILED', updateError)
     }
 
     console.log('✅ Update successful:', updateData)
@@ -248,28 +247,32 @@ export async function POST(req: NextRequest) {
         })
         
         // 🔥 Return detailed error to frontend
-        return NextResponse.json({ 
-          error: 'Failed to save lesson completion',
-          code: responseError.code,
-          message: responseError.message,
-          details: responseError.details,
-          hint: responseError.hint,
-          debugData: {
-            enrollment_id: responseData.enrollment_id,
-            lesson_id: responseData.lesson_id,
-            hasModuleId: !!responseData.module_id
+        return ApiResponse.serverError(
+          'Failed to save lesson completion',
+          'LESSON_RESPONSE_SAVE_FAILED',
+          {
+            code: responseError.code,
+            message: responseError.message,
+            details: responseError.details,
+            hint: responseError.hint,
+            debugData: {
+              enrollment_id: responseData.enrollment_id,
+              lesson_id: responseData.lesson_id,
+              hasModuleId: !!responseData.module_id
+            }
           }
-        }, { status: 500 })
+        )
       } else {
         console.log('✅ Lesson responses stored successfully!')
         console.log('✅ Inserted/Updated rows:', upsertedData)
       }
     } catch (responseStoreError: any) {
       console.error('❌ CRITICAL: Exception storing responses:', responseStoreError)
-      return NextResponse.json({ 
-        error: 'Exception saving lesson',
-        details: responseStoreError.message 
-      }, { status: 500 })
+      return ApiResponse.serverError(
+        'Exception saving lesson',
+        'LESSON_SAVE_EXCEPTION',
+        { message: responseStoreError.message }
+      )
     }
 
     console.log('✅ Lesson completed:', { 
@@ -280,8 +283,7 @@ export async function POST(req: NextRequest) {
       moduleComplete 
     })
 
-    return NextResponse.json({
-      success: true,
+    return ApiResponse.ok({
       isNewCompletion,
       xpEarned: isNewCompletion ? (xpEarned || 250) : 0,
       newXP,
@@ -290,9 +292,9 @@ export async function POST(req: NextRequest) {
       completionPercentage: newPercentage
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error completing lesson:', error)
-    return NextResponse.json({ error: 'Server error' }, { status: 500 })
+    return ApiResponse.serverError('Server error while completing lesson', 'LESSON_COMPLETION_ERROR', error)
   }
 }
 

@@ -22,6 +22,14 @@ import { NextResponse } from 'next/server'
  * if (!found) return ApiResponse.notFound('Module')
  * ```
  */
+/**
+ * ✅ PHASE 4: Enhanced standardized API responses
+ * 
+ * All responses now include:
+ * - success: boolean flag
+ * - error: standardized error object with code, message, timestamp
+ * - Consistent format across all endpoints
+ */
 export const ApiResponse = {
   // ============================================================================
   // SUCCESS RESPONSES
@@ -31,14 +39,26 @@ export const ApiResponse = {
    * 200 OK - Successful request
    */
   ok: <T>(data: T) => {
-    return NextResponse.json(data, { status: 200 })
+    return NextResponse.json(
+      {
+        success: true,
+        data
+      },
+      { status: 200 }
+    )
   },
 
   /**
    * 201 Created - Resource successfully created
    */
   created: <T>(data: T) => {
-    return NextResponse.json(data, { status: 201 })
+    return NextResponse.json(
+      {
+        success: true,
+        data
+      },
+      { status: 201 }
+    )
   },
 
   /**
@@ -55,12 +75,16 @@ export const ApiResponse = {
   /**
    * 400 Bad Request - Invalid request data
    */
-  badRequest: (message: string, details?: any) => {
+  badRequest: (message: string, code = 'BAD_REQUEST', details?: any) => {
     return NextResponse.json(
       {
-        error: 'Bad Request',
-        message,
-        ...(details && { details })
+        success: false,
+        error: {
+          code,
+          message,
+          timestamp: new Date().toISOString(),
+          ...(details && { details })
+        }
       },
       { status: 400 }
     )
@@ -69,11 +93,15 @@ export const ApiResponse = {
   /**
    * 401 Unauthorized - Authentication required
    */
-  unauthorized: (message = 'Please log in to continue') => {
+  unauthorized: (message = 'Please log in to continue', code = 'UNAUTHORIZED') => {
     return NextResponse.json(
       {
-        error: 'Unauthorized',
-        message
+        success: false,
+        error: {
+          code,
+          message,
+          timestamp: new Date().toISOString()
+        }
       },
       { status: 401 }
     )
@@ -82,11 +110,15 @@ export const ApiResponse = {
   /**
    * 403 Forbidden - Insufficient permissions
    */
-  forbidden: (message = 'You do not have permission to perform this action') => {
+  forbidden: (message = 'You do not have permission to perform this action', code = 'FORBIDDEN') => {
     return NextResponse.json(
       {
-        error: 'Forbidden',
-        message
+        success: false,
+        error: {
+          code,
+          message,
+          timestamp: new Date().toISOString()
+        }
       },
       { status: 403 }
     )
@@ -95,11 +127,15 @@ export const ApiResponse = {
   /**
    * 404 Not Found - Resource does not exist
    */
-  notFound: (resource: string) => {
+  notFound: (resource: string, code = 'NOT_FOUND') => {
     return NextResponse.json(
       {
-        error: 'Not Found',
-        message: `${resource} not found`
+        success: false,
+        error: {
+          code,
+          message: `${resource} not found`,
+          timestamp: new Date().toISOString()
+        }
       },
       { status: 404 }
     )
@@ -108,11 +144,15 @@ export const ApiResponse = {
   /**
    * 409 Conflict - Resource already exists or conflict with current state
    */
-  conflict: (message: string) => {
+  conflict: (message: string, code = 'CONFLICT') => {
     return NextResponse.json(
       {
-        error: 'Conflict',
-        message
+        success: false,
+        error: {
+          code,
+          message,
+          timestamp: new Date().toISOString()
+        }
       },
       { status: 409 }
     )
@@ -121,12 +161,16 @@ export const ApiResponse = {
   /**
    * 422 Unprocessable Entity - Validation failed
    */
-  validationError: (errors: Record<string, string[]>) => {
+  validationError: (errors: Record<string, string[]>, code = 'VALIDATION_ERROR') => {
     return NextResponse.json(
       {
-        error: 'Validation Error',
-        message: 'The request data is invalid',
-        errors
+        success: false,
+        error: {
+          code,
+          message: 'The request data is invalid',
+          timestamp: new Date().toISOString(),
+          errors
+        }
       },
       { status: 422 }
     )
@@ -139,15 +183,19 @@ export const ApiResponse = {
   /**
    * 500 Internal Server Error - Unexpected server error
    */
-  serverError: (message = 'An unexpected error occurred', details?: any) => {
+  serverError: (message = 'An unexpected error occurred', code = 'INTERNAL_SERVER_ERROR', details?: any) => {
     // Log error for monitoring
-    console.error('[API Error]', message, details)
+    console.error('[API Error]', { code, message, details })
 
     return NextResponse.json(
       {
-        error: 'Internal Server Error',
-        message,
-        ...(process.env.NODE_ENV === 'development' && details && { details })
+        success: false,
+        error: {
+          code,
+          message,
+          timestamp: new Date().toISOString(),
+          ...(process.env.NODE_ENV === 'development' && details && { details })
+        }
       },
       { status: 500 }
     )
@@ -156,11 +204,15 @@ export const ApiResponse = {
   /**
    * 503 Service Unavailable - Service temporarily unavailable
    */
-  serviceUnavailable: (message = 'Service temporarily unavailable') => {
+  serviceUnavailable: (message = 'Service temporarily unavailable', code = 'SERVICE_UNAVAILABLE') => {
     return NextResponse.json(
       {
-        error: 'Service Unavailable',
-        message
+        success: false,
+        error: {
+          code,
+          message,
+          timestamp: new Date().toISOString()
+        }
       },
       { status: 503 }
     )

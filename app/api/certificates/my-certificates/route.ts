@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { ApiResponse } from '@/lib/api-responses'
 
 export async function GET(req: NextRequest) {
   try {
@@ -7,7 +8,7 @@ export async function GET(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return ApiResponse.unauthorized('Please log in to view certificates')
     }
 
     // ✅ Get all COMPLETED enrollments (these are the certificates!)
@@ -62,10 +63,7 @@ export async function GET(req: NextRequest) {
 
   } catch (error: any) {
     console.error('Error in my-certificates API:', error)
-    return NextResponse.json({ 
-      error: 'Server error', 
-      details: error.message 
-    }, { status: 500 })
+    return ApiResponse.serverError('Failed to fetch certificates', 'CERTIFICATES_FETCH_ERROR', { message: error.message })
   }
 }
 
