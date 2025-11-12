@@ -58,10 +58,12 @@ export default function CommunityBasicSettings({ community }: CommunityBasicSett
         })
       })
 
-      const result = await response.json()
+      const responseData = await response.json()
 
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to update community')
+        // ✅ PHASE 4: Extract error message from standardized format
+        const errorMessage = responseData.error?.message || responseData.error || 'Failed to update community'
+        throw new Error(errorMessage)
       }
 
       setMessage('✅ Community updated successfully!')

@@ -111,12 +111,16 @@ export default function CommentsSection({ contentId, contentType, initialUser }:
     try {
       setLoading(true)
       const response = await fetch(`/api/comments?contentId=${contentId}`)
-      const data = await response.json()
+      const responseData = await response.json()
       
       if (response.ok) {
-        setComments(data.comments || [])
+        // ✅ PHASE 4: Handle standardized API response format
+        const data = responseData.success !== undefined ? responseData.data : responseData
+        setComments(data?.comments || [])
       } else {
-        console.error('Error fetching comments:', data.error)
+        // Extract error message from standardized format
+        const errorMessage = responseData.error?.message || responseData.error || 'Error fetching comments'
+        console.error('Error fetching comments:', errorMessage)
       }
     } catch (error) {
       console.error('Error fetching comments:', error)
@@ -142,9 +146,11 @@ export default function CommentsSection({ contentId, contentType, initialUser }:
         })
       })
 
-      const data = await response.json()
+      const responseData = await response.json()
 
       if (response.ok) {
+        // ✅ PHASE 4: Handle standardized API response format
+        const data = responseData.success !== undefined ? responseData.data : responseData
         // Refresh comments to get updated list
         await fetchComments()
         
@@ -156,7 +162,9 @@ export default function CommentsSection({ contentId, contentType, initialUser }:
           setNewComment('')
         }
       } else {
-        alert(data.error || 'Failed to post comment')
+        // ✅ PHASE 4: Extract error message from standardized format
+        const errorMessage = responseData.error?.message || responseData.error || 'Failed to post comment'
+        alert(errorMessage)
       }
     } catch (error) {
       console.error('Error posting comment:', error)

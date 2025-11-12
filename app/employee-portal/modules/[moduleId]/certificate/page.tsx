@@ -29,12 +29,16 @@ export default function CertificatePage({ params }: { params: Promise<{ moduleId
       
       // Step 1: Get user profile
       const profileRes = await fetch('/api/user/profile')
-      const profile = profileRes.ok ? await profileRes.json() : null
+      const profileResponseData = profileRes.ok ? await profileRes.json() : null
+      // ✅ PHASE 4: Handle standardized API response format
+      const profile = profileResponseData?.success !== undefined ? profileResponseData.data : profileResponseData
       const userName = profile?.full_name || 'Usuario'
       
       // Step 2: Get module data
       const moduleRes = await fetch(`/api/marketplace/modules/${modId}`)
-      const moduleData = moduleRes.ok ? await moduleRes.json() : null
+      const moduleResponseData = moduleRes.ok ? await moduleRes.json() : null
+      // ✅ PHASE 4: Handle standardized API response format
+      const moduleData = moduleResponseData?.success !== undefined ? moduleResponseData.data : moduleResponseData
       const moduleName = moduleData?.module?.title || 'Módulo Completado'
       
       if (moduleData?.module) {

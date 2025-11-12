@@ -75,15 +75,19 @@ export default function CreateCommunityPage() {
         })
       })
 
-      const result = await response.json()
+      const responseData = await response.json()
 
       if (!response.ok) {
-        console.error('Community creation error:', result.error)
-        setMessage(result.error || 'Error creating community. Please try again.')
+        // ✅ PHASE 4: Extract error message from standardized format
+        const errorMessage = responseData.error?.message || responseData.error || 'Error creating community. Please try again.'
+        console.error('Community creation error:', errorMessage)
+        setMessage(errorMessage)
       } else {
+        // ✅ PHASE 4: Handle standardized API response format
+        const data = responseData.success !== undefined ? responseData.data : responseData
         setMessage('Community created successfully!')
         setTimeout(() => {
-          router.push(`/communities/${result.data.id}`)
+          router.push(`/communities/${data?.id || data?.community?.id}`)
         }, 1000)
       }
     } catch (error) {
