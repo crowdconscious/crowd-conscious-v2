@@ -21,6 +21,9 @@ import {
   WaterAuditTemplate,
   SecurityAuditChecklist,
   WasteAuditTemplate,
+  WaterIntensityBenchmarks,
+  LeakCostCalculator,
+  NinetyDayActionPlan,
   WaterFootprintCalculator,
   WaterAuditTool,
   WaterConservationTracker,
@@ -944,6 +947,31 @@ export default function LessonPage({
                         <div className="bg-white rounded-xl p-4 sm:p-6 border-2 border-purple-200">
                           <h3 className="font-bold text-lg mb-4 text-purple-900">🗑️ Auditoría de Flujos de Residuos</h3>
                           <WasteAuditTemplate />
+                        </div>
+                      )
+                    
+                    case 'water-intensity-benchmarks':
+                    case 'water-intensity-benchmarks-detailed':
+                      return (
+                        <div className="bg-white rounded-xl p-4 sm:p-6 border-2 border-purple-200">
+                          <h3 className="font-bold text-lg mb-4 text-purple-900">📊 Benchmarks: Intensidad de Agua</h3>
+                          <WaterIntensityBenchmarks />
+                        </div>
+                      )
+                    
+                    case 'leak-cost-calculator':
+                      return (
+                        <div className="bg-white rounded-xl p-4 sm:p-6 border-2 border-purple-200">
+                          <h3 className="font-bold text-lg mb-4 text-purple-900">💧 Calculadora: Costo de Fugas</h3>
+                          <LeakCostCalculator />
+                        </div>
+                      )
+                    
+                    case '90-day-action-plan':
+                      return (
+                        <div className="bg-white rounded-xl p-4 sm:p-6 border-2 border-purple-200">
+                          <h3 className="font-bold text-lg mb-4 text-purple-900">📅 Plan de Acción 90 Días</h3>
+                          <NinetyDayActionPlan />
                         </div>
                       )
                     

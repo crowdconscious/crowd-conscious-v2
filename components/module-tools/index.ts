@@ -17,6 +17,9 @@ export { default as SustainabilityROICalculator } from './SustainabilityROICalcu
 export { default as WaterAuditTemplate } from './WaterAuditTemplate'
 export { default as SecurityAuditChecklist } from './SecurityAuditChecklist'
 export { default as WasteAuditTemplate } from './WasteAuditTemplate'
+export { default as WaterIntensityBenchmarks } from './WaterIntensityBenchmarks'
+export { default as LeakCostCalculator } from './LeakCostCalculator'
+export { default as NinetyDayActionPlan } from './NinetyDayActionPlan'
 // Module1Tools has named exports only - not a default export
 export * from './Module1Tools'
 

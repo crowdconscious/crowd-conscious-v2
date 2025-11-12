@@ -14,7 +14,10 @@ import {
   SustainabilityROICalculator,
   WaterAuditTemplate,
   SecurityAuditChecklist,
-  WasteAuditTemplate
+  WasteAuditTemplate,
+  WaterIntensityBenchmarks,
+  LeakCostCalculator,
+  NinetyDayActionPlan
 } from '@/components/module-tools'
 
 interface ToolModalProps {
@@ -114,6 +117,16 @@ export default function ToolModal({ toolType, toolTitle, onClose, onDataCapture 
       
       case 'waste-audit-template':
         return <WasteAuditTemplate />
+      
+      case 'water-intensity-benchmarks':
+      case 'water-intensity-benchmarks-detailed':
+        return <WaterIntensityBenchmarks />
+      
+      case 'leak-cost-calculator':
+        return <LeakCostCalculator />
+      
+      case '90-day-action-plan':
+        return <NinetyDayActionPlan />
       
       default:
         return (
