@@ -155,11 +155,13 @@ export default function MarketplacePage() {
         console.log('📡 Response status:', response.status)
         
         if (response.ok) {
-          const data = await response.json()
-          console.log('✅ Modules fetched:', data.modules?.length || 0)
-          console.log('📦 First module:', data.modules?.[0])
-          setModules(data.modules)
-          setFilteredModules(data.modules)
+          const responseData = await response.json()
+          // ✅ PHASE 4: Handle standardized API response format
+          const data = responseData.success !== undefined ? responseData.data : responseData
+          console.log('✅ Modules fetched:', data?.modules?.length || 0)
+          console.log('📦 First module:', data?.modules?.[0])
+          setModules(data?.modules || [])
+          setFilteredModules(data?.modules || [])
         } else {
           console.error('❌ Failed to fetch modules, status:', response.status)
           console.log('Using fallback mock data')
