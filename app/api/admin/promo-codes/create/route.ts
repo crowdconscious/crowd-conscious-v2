@@ -1,14 +1,15 @@
+import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { createAdminClient } from '@/lib/supabase-admin'
-import { NextResponse } from 'next/server'
+import { ApiResponse } from '@/lib/api-responses'
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return ApiResponse.unauthorized('Please log in to create promo codes')
     }
 
     // Check if user is admin
@@ -22,10 +23,7 @@ export async function POST(request: Request) {
 
     if (!isAdmin) {
       console.error('User is not admin:', { email: profile?.email, role: profile?.role })
-      return NextResponse.json({ 
-        error: 'Forbidden: Admin access required',
-        details: 'You must be an administrator to create promo codes'
-      }, { status: 403 })
+      return ApiResponse.forbidden('You must be an administrator to create promo codes', 'NOT_ADMIN')
     }
 
     console.log('✅ Admin check passed for user:', profile?.email)
@@ -63,23 +61,18 @@ export async function POST(request: Request) {
 
     if (error) {
       console.error('❌ Database error creating promo code:', error)
-      return NextResponse.json(
-        { 
-          error: error.message || 'Failed to create promo code',
-          details: error.details || error.hint || 'No additional details'
-        },
-        { status: 400 }
+      return ApiResponse.badRequest(
+        error.message || 'Failed to create promo code',
+        'PROMO_CODE_CREATION_ERROR',
+        { details: error.details || error.hint || 'No additional details' }
       )
     }
 
     console.log('✅ Promo code created successfully:', promoCode)
-    return NextResponse.json({ promoCode }, { status: 201 })
-  } catch (error) {
+    return ApiResponse.created({ promoCode })
+  } catch (error: any) {
     console.error('Unexpected error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Internal server error', 'PROMO_CODE_SERVER_ERROR', { message: error.message })
   }
 }
 

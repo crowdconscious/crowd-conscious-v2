@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createServerAuth, getCurrentUser } from '@/lib/auth-server'
+import { ApiResponse } from '@/lib/api-responses'
 
 // Helper function to check if user is admin
 async function checkAdminPermission(user: any): Promise<boolean> {
@@ -30,10 +31,7 @@ export async function DELETE(request: NextRequest) {
   try {
     const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      )
+      return ApiResponse.unauthorized('Authentication required', 'AUTHENTICATION_REQUIRED')
     }
 
     const { searchParams } = new URL(request.url)
@@ -41,10 +39,7 @@ export async function DELETE(request: NextRequest) {
     const id = searchParams.get('id')
 
     if (!type || !id) {
-      return NextResponse.json(
-        { error: 'Type and ID are required' },
-        { status: 400 }
-      )
+      return ApiResponse.badRequest('Type and ID are required', 'MISSING_REQUIRED_FIELDS')
     }
 
     const supabase = await createServerAuth()
@@ -59,10 +54,7 @@ export async function DELETE(request: NextRequest) {
       })
       
       if (!isAdmin) {
-        return NextResponse.json(
-          { error: 'Admin permissions required. Your user_type must be "admin".' },
-          { status: 403 }
-        )
+        return ApiResponse.forbidden('Admin permissions required. Your user_type must be "admin".', 'NOT_ADMIN')
       }
 
       // Delete community and all related data
@@ -75,15 +67,11 @@ export async function DELETE(request: NextRequest) {
 
       if (deleteError) {
         console.error('❌ Error deleting community:', deleteError)
-        return NextResponse.json(
-          { error: `Failed to delete community: ${deleteError.message}` },
-          { status: 500 }
-        )
+        return ApiResponse.serverError('Failed to delete community', 'COMMUNITY_DELETE_ERROR', { message: deleteError.message })
       }
 
       console.log('✅ Community deleted successfully:', data)
-      return NextResponse.json({ 
-        success: true, 
+      return ApiResponse.ok({ 
         message: 'Community deleted successfully' 
       })
 
@@ -96,10 +84,7 @@ export async function DELETE(request: NextRequest) {
         .single()
 
       if (contentError || !content) {
-        return NextResponse.json(
-          { error: 'Content not found' },
-          { status: 404 }
-        )
+        return ApiResponse.notFound('Content', 'CONTENT_NOT_FOUND')
       }
 
       // Check if user is admin or community admin
@@ -116,10 +101,7 @@ export async function DELETE(request: NextRequest) {
       })
 
       if (!isAdmin && !isCommunityAdmin) {
-        return NextResponse.json(
-          { error: 'Admin or community admin permissions required' },
-          { status: 403 }
-        )
+        return ApiResponse.forbidden('Admin or community admin permissions required', 'INSUFFICIENT_PERMISSIONS')
       }
 
       // Delete content
@@ -132,31 +114,21 @@ export async function DELETE(request: NextRequest) {
 
       if (deleteError) {
         console.error('❌ Error deleting content:', deleteError)
-        return NextResponse.json(
-          { error: `Failed to delete content: ${deleteError.message}` },
-          { status: 500 }
-        )
+        return ApiResponse.serverError('Failed to delete content', 'CONTENT_DELETE_ERROR', { message: deleteError.message })
       }
 
       console.log('✅ Content deleted successfully:', data)
-      return NextResponse.json({ 
-        success: true, 
+      return ApiResponse.ok({ 
         message: 'Content deleted successfully' 
       })
 
     } else {
-      return NextResponse.json(
-        { error: 'Invalid type. Must be "community" or "content"' },
-        { status: 400 }
-      )
+      return ApiResponse.badRequest('Invalid type. Must be "community" or "content"', 'INVALID_TYPE')
     }
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Admin deletion error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Internal server error', 'ADMIN_DELETE_SERVER_ERROR', { message: error.message })
   }
 }
 
@@ -165,18 +137,12 @@ export async function GET(request: NextRequest) {
   try {
     const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      )
+      return ApiResponse.unauthorized('Authentication required', 'AUTHENTICATION_REQUIRED')
     }
 
     const isAdmin = await checkAdminPermission(user)
     if (!isAdmin) {
-      return NextResponse.json(
-        { error: 'Admin permissions required' },
-        { status: 403 }
-      )
+      return ApiResponse.forbidden('Admin permissions required', 'NOT_ADMIN')
     }
 
     const supabase = await createServerAuth()
@@ -212,17 +178,14 @@ export async function GET(request: NextRequest) {
       console.error('Error fetching users:', usersResult.error)
     }
 
-    return NextResponse.json({
+    return ApiResponse.ok({
       communities: communitiesResult.data || [],
       content: contentResult.data || [],
       users: usersResult.data || []
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Admin dashboard error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Internal server error', 'ADMIN_DASHBOARD_ERROR', { message: error.message })
   }
 }

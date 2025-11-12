@@ -1,27 +1,28 @@
+import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
-import { NextResponse } from 'next/server'
+import { ApiResponse } from '@/lib/api-responses'
 import { getCurrentUser } from '@/lib/auth-server'
 import { Resend } from 'resend'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser()
 
     if (!user || user.user_type !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return ApiResponse.unauthorized('Admin access required', 'NOT_ADMIN')
     }
 
     const supabase = await createClient()
     const { moduleId, action, reviewNotes } = await request.json()
 
     if (!moduleId || !action) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+      return ApiResponse.badRequest('Missing required fields', 'MISSING_REQUIRED_FIELDS')
     }
 
     if (action !== 'approve' && action !== 'reject') {
-      return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
+      return ApiResponse.badRequest('Invalid action. Must be "approve" or "reject"', 'INVALID_ACTION')
     }
 
     // Fetch module details
@@ -36,7 +37,7 @@ export async function POST(request: Request) {
       .single()
 
     if (moduleError || !module) {
-      return NextResponse.json({ error: 'Module not found' }, { status: 404 })
+      return ApiResponse.notFound('Module', 'MODULE_NOT_FOUND')
     }
 
     // Update module status
@@ -58,7 +59,7 @@ export async function POST(request: Request) {
 
     if (updateError) {
       console.error('Error updating module:', updateError)
-      return NextResponse.json({ error: 'Failed to update module' }, { status: 500 })
+      return ApiResponse.serverError('Failed to update module', 'MODULE_UPDATE_ERROR', { message: updateError.message })
     }
 
     // Send email notification to creator
@@ -248,15 +249,14 @@ export async function POST(request: Request) {
       // Don't fail the request if email fails
     }
 
-    return NextResponse.json({
-      success: true,
+    return ApiResponse.ok({
       action,
       moduleId,
       newStatus
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in POST /api/admin/modules/review:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return ApiResponse.serverError('Internal server error', 'MODULE_REVIEW_SERVER_ERROR', { message: error.message })
   }
 }
 

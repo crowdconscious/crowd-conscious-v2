@@ -1,13 +1,13 @@
-import { createClient } from '@/lib/supabase-server'
-import { NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth-server'
+import { createClient } from '@/lib/supabase-server'
+import { ApiResponse } from '@/lib/api-responses'
 
 export async function GET() {
   try {
     const user = await getCurrentUser()
 
     if (!user || user.user_type !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return ApiResponse.unauthorized('Admin access required', 'NOT_ADMIN')
     }
 
     const supabase = await createClient()
@@ -25,13 +25,13 @@ export async function GET() {
 
     if (error) {
       console.error('Error fetching pending modules:', error)
-      return NextResponse.json({ error: 'Failed to fetch modules' }, { status: 500 })
+      return ApiResponse.serverError('Failed to fetch modules', 'MODULES_FETCH_ERROR', { message: error.message })
     }
 
-    return NextResponse.json({ modules: modules || [] })
-  } catch (error) {
+    return ApiResponse.ok({ modules: modules || [] })
+  } catch (error: any) {
     console.error('Error in GET /api/admin/modules/pending:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return ApiResponse.serverError('Internal server error', 'MODULES_PENDING_SERVER_ERROR', { message: error.message })
   }
 }
 

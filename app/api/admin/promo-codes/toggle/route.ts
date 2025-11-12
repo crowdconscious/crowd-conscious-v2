@@ -1,14 +1,15 @@
+import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { createAdminClient } from '@/lib/supabase-admin'
-import { NextResponse } from 'next/server'
+import { ApiResponse } from '@/lib/api-responses'
 
-export async function PUT(request: Request) {
+export async function PUT(request: NextRequest) {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return ApiResponse.unauthorized('Please log in to toggle promo codes')
     }
 
     // Check if user is admin
@@ -21,10 +22,15 @@ export async function PUT(request: Request) {
     const isAdmin = profile?.email === 'francisco@crowdconscious.app'
 
     if (!isAdmin) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      return ApiResponse.forbidden('Admin access required', 'NOT_ADMIN')
     }
 
     const { id, active } = await request.json()
+
+    if (!id || active === undefined) {
+      return ApiResponse.badRequest('id and active are required', 'MISSING_REQUIRED_FIELDS')
+    }
+
     const adminClient = createAdminClient()
 
     const { error } = await adminClient
@@ -33,16 +39,13 @@ export async function PUT(request: Request) {
       .eq('id', id)
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 })
+      return ApiResponse.badRequest(error.message, 'PROMO_CODE_UPDATE_ERROR', { message: error.message })
     }
 
-    return NextResponse.json({ success: true })
-  } catch (error) {
+    return ApiResponse.ok({ success: true })
+  } catch (error: any) {
     console.error('Error toggling promo code:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Internal server error', 'PROMO_CODE_TOGGLE_SERVER_ERROR', { message: error.message })
   }
 }
 
