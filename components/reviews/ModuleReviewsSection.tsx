@@ -42,15 +42,28 @@ export default function ModuleReviewsSection({
   const fetchReviews = async () => {
     try {
       const response = await fetch(`/api/reviews/modules?moduleId=${moduleId}`)
+      const responseData = await response.json()
+      
+      // Parse standardized ApiResponse format
+      let reviews: Review[] = []
+      if (responseData.success !== undefined) {
+        // Standardized format
+        reviews = responseData.data?.reviews || []
+      } else {
+        // Legacy format
+        reviews = responseData.reviews || []
+      }
+      
       if (response.ok) {
-        const data = await response.json()
-        setReviews(data.reviews || [])
+        setReviews(reviews)
         
         // Find user's existing review
         if (currentUserId) {
-          const existingReview = data.reviews.find((r: any) => r.user_id === currentUserId)
+          const existingReview = reviews.find((r: any) => r.user_id === currentUserId)
           setUserReview(existingReview || null)
         }
+      } else {
+        console.error('Error fetching reviews:', responseData.error?.message || 'Unknown error')
       }
     } catch (error) {
       console.error('Error fetching reviews:', error)

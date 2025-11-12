@@ -69,7 +69,12 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { moduleId, rating, title, review_text, would_recommend } = body
+    const { moduleId, rating, title, review_text, reviewText, would_recommend, wouldRecommend, completion_status, completionStatus } = body
+    
+    // Support both snake_case and camelCase
+    const finalReviewText = review_text || reviewText
+    const finalWouldRecommend = would_recommend !== undefined ? would_recommend : (wouldRecommend !== undefined ? wouldRecommend : true)
+    const finalCompletionStatus = completion_status || completionStatus || 'completed'
 
     if (!moduleId || !rating) {
       return ApiResponse.badRequest('moduleId and rating required', 'MISSING_REQUIRED_FIELDS')
@@ -95,9 +100,9 @@ export async function POST(request: NextRequest) {
         user_id: user.id,
         rating,
         title: title || null,
-        review_text: review_text || null,
-        would_recommend: would_recommend !== false,
-        completion_status: enrollment.completed ? 'completed' : 'in_progress',
+        review_text: finalReviewText || null,
+        would_recommend: finalWouldRecommend,
+        completion_status: finalCompletionStatus,
         is_verified_purchase: true
       })
       .select()
