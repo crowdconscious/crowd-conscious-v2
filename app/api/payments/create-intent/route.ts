@@ -3,12 +3,20 @@ import { getCurrentUser } from '@/lib/auth-server'
 import { supabase } from '@/lib/supabase'
 import { createSponsorshipPaymentIntent } from '@/lib/stripe'
 import { ApiResponse } from '@/lib/api-responses'
+import { strictRateLimit, getRateLimitIdentifier, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser()
     if (!user) {
       return ApiResponse.unauthorized('Please log in to create payment intent', 'AUTHENTICATION_REQUIRED')
+    }
+
+    // Rate limiting: 5 requests per minute for payment intents (strict)
+    const identifier = await getRateLimitIdentifier(request, user.id)
+    const rateLimitResult = await checkRateLimit(strictRateLimit, identifier)
+    if (rateLimitResult && !rateLimitResult.allowed) {
+      return rateLimitResponse(rateLimitResult.limit, rateLimitResult.remaining, rateLimitResult.reset)
     }
 
     const { sponsorshipId, amount } = await request.json()

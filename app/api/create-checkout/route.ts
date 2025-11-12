@@ -1,6 +1,8 @@
 import { NextRequest } from 'next/server'
 import Stripe from 'stripe'
 import { ApiResponse } from '@/lib/api-responses'
+import { strictRateLimit, getRateLimitIdentifier, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
+import { getCurrentUser } from '@/lib/auth-server'
 
 // Initialize Stripe lazily to avoid build-time errors
 let stripe: Stripe | null = null
@@ -19,6 +21,13 @@ function getStripe(): Stripe {
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting: 5 requests per minute for checkout (strict)
+    const user = await getCurrentUser()
+    const identifier = await getRateLimitIdentifier(request, user?.id)
+    const rateLimitResult = await checkRateLimit(strictRateLimit, identifier)
+    if (rateLimitResult && !rateLimitResult.allowed) {
+      return rateLimitResponse(rateLimitResult.limit, rateLimitResult.remaining, rateLimitResult.reset)
+    }
     // Debug logging
     console.log('🔍 Environment check:', {
       hasStripeKey: !!process.env.STRIPE_SECRET_KEY,

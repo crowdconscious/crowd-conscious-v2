@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { ApiResponse } from '@/lib/api-responses'
 import Stripe from 'stripe'
+import { moderateRateLimit, getRateLimitIdentifier, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 function getStripeClient() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -20,7 +21,6 @@ function getStripeClient() {
  */
 export async function POST(request: NextRequest) {
   try {
-    const stripe = getStripeClient()
     const supabase = await createClient()
     
     // Authenticate user
@@ -28,6 +28,15 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return ApiResponse.unauthorized('Please log in to purchase modules')
     }
+
+    // Rate limiting: 10 requests per minute for purchases
+    const identifier = await getRateLimitIdentifier(request, user.id)
+    const rateLimitResult = await checkRateLimit(moderateRateLimit, identifier)
+    if (rateLimitResult && !rateLimitResult.allowed) {
+      return rateLimitResponse(rateLimitResult.limit, rateLimitResult.remaining, rateLimitResult.reset)
+    }
+
+    const stripe = getStripeClient()
 
     // Get request body
     const { moduleId, employeeCount = 50, paymentMethodId } = await request.json()

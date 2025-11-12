@@ -1,12 +1,20 @@
 import { NextRequest } from 'next/server'
 import { createServerAuth, getCurrentUser } from '@/lib/auth-server'
 import { ApiResponse } from '@/lib/api-responses'
+import { moderateRateLimit, getRateLimitIdentifier, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser()
     if (!user) {
       return ApiResponse.unauthorized('Authentication required', 'AUTHENTICATION_REQUIRED')
+    }
+
+    // Rate limiting: 10 requests per minute for treasury spending (moderate)
+    const identifier = await getRateLimitIdentifier(request, user.id)
+    const rateLimitResult = await checkRateLimit(moderateRateLimit, identifier)
+    if (rateLimitResult && !rateLimitResult.allowed) {
+      return rateLimitResponse(rateLimitResult.limit, rateLimitResult.remaining, rateLimitResult.reset)
     }
 
     const body = await request.json()
