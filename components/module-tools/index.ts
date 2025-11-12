@@ -12,6 +12,7 @@ export { default as AirQualityROI } from './AirQualityROI'
 export { default as EmissionSourceIdentifier } from './EmissionSourceIdentifier'
 export { default as ImplementationTimelinePlanner } from './ImplementationTimelinePlanner'
 export { default as AirQualityMonitorTracker } from './AirQualityMonitorTracker'
+export { default as EmissionInventoryTemplate } from './EmissionInventoryTemplate'
 // Module1Tools has named exports only - not a default export
 export * from './Module1Tools'
 

@@ -16,6 +16,7 @@ import {
   AirQualityROI,
   ImplementationTimelinePlanner,
   AirQualityMonitorTracker,
+  EmissionInventoryTemplate,
   WaterFootprintCalculator,
   WaterAuditTool,
   WaterConservationTracker,
@@ -600,6 +601,14 @@ export default function LessonPage({
                             saveActivityData('emission-inventory', data)
                           }}
                         />
+                      )
+                    
+                    case 'emission-inventory-template':
+                      return (
+                        <div className="bg-white rounded-xl p-4 sm:p-6 border-2 border-purple-200">
+                          <h3 className="font-bold text-lg mb-4 text-purple-900">📋 Inventario de Emisiones</h3>
+                          <EmissionInventoryTemplate />
+                        </div>
                       )
                     
                     case 'air-quality-roi':
