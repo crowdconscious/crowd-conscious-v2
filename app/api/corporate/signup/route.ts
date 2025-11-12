@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { ApiResponse } from '@/lib/api-responses'
 
 // Get admin Supabase client
 function getSupabaseAdmin() {
@@ -37,10 +38,7 @@ export async function POST(req: NextRequest) {
 
     // Validate required fields
     if (!companyName || !email || !password || !programTier) {
-      return NextResponse.json(
-        { error: 'Faltan campos requeridos' },
-        { status: 400 }
-      )
+      return ApiResponse.badRequest('Faltan campos requeridos', 'MISSING_REQUIRED_FIELDS')
     }
 
     // Create auth user
@@ -56,10 +54,7 @@ export async function POST(req: NextRequest) {
 
     if (authError) {
       console.error('Auth error:', authError)
-      return NextResponse.json(
-        { error: authError.message },
-        { status: 400 }
-      )
+      return ApiResponse.badRequest(authError.message, 'AUTH_ERROR', { code: authError.status })
     }
 
     const userId = authData.user.id
@@ -117,10 +112,7 @@ export async function POST(req: NextRequest) {
       console.error('Corporate account error:', corporateError)
       // Clean up user if corporate account creation fails
       await supabaseAdmin.auth.admin.deleteUser(userId)
-      return NextResponse.json(
-        { error: 'Error al crear cuenta corporativa' },
-        { status: 500 }
-      )
+      return ApiResponse.serverError('Error al crear cuenta corporativa', 'CORPORATE_ACCOUNT_CREATION_ERROR', { message: corporateError.message })
     }
 
     // Update user profile
@@ -142,18 +134,14 @@ export async function POST(req: NextRequest) {
     // TODO: Create Stripe checkout session for payment
     // For now, just return success
 
-    return NextResponse.json({
-      success: true,
+    return ApiResponse.created({
       corporate_account_id: corporateAccount.id,
       user_id: userId,
       message: 'Cuenta creada exitosamente',
     })
   } catch (error: any) {
     console.error('Signup error:', error)
-    return NextResponse.json(
-      { error: error.message || 'Error al crear cuenta' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Error al crear cuenta', 'SIGNUP_SERVER_ERROR', { message: error.message })
   }
 }
 

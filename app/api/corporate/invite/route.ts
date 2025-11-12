@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { ApiResponse } from '@/lib/api-responses'
 import { sendEmployeeInvitationEmail } from '@/lib/resend'
 import crypto from 'crypto'
 
@@ -24,17 +25,11 @@ export async function POST(request: NextRequest) {
 
     // Validate input
     if (!emails || !Array.isArray(emails) || emails.length === 0) {
-      return NextResponse.json(
-        { error: 'Se requiere al menos un email' },
-        { status: 400 }
-      )
+      return ApiResponse.badRequest('Se requiere al menos un email', 'MISSING_EMAILS')
     }
 
     if (!corporate_account_id) {
-      return NextResponse.json(
-        { error: 'corporate_account_id requerido' },
-        { status: 400 }
-      )
+      return ApiResponse.badRequest('corporate_account_id requerido', 'MISSING_CORPORATE_ACCOUNT_ID')
     }
 
     // Get corporate account info
@@ -45,10 +40,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (accountError || !corporateAccount) {
-      return NextResponse.json(
-        { error: 'Cuenta corporativa no encontrada' },
-        { status: 404 }
-      )
+      return ApiResponse.notFound('Corporate account', 'CORPORATE_ACCOUNT_NOT_FOUND')
     }
 
     // Get inviter info
@@ -70,11 +62,9 @@ export async function POST(request: NextRequest) {
     const remainingSlots = corporateAccount.employee_limit - (currentEmployees || 0)
 
     if (remainingSlots < emails.length) {
-      return NextResponse.json(
-        { 
-          error: `Solo tienes ${remainingSlots} espacios disponibles. Límite: ${corporateAccount.employee_limit}` 
-        },
-        { status: 400 }
+      return ApiResponse.badRequest(
+        `Solo tienes ${remainingSlots} espacios disponibles. Límite: ${corporateAccount.employee_limit}`,
+        'INSUFFICIENT_EMPLOYEE_SLOTS'
       )
     }
 
@@ -174,8 +164,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({
-      success: true,
+    return ApiResponse.ok({
       invited: results.length,
       errorCount: errors.length,
       results,
@@ -184,10 +173,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error: any) {
     console.error('Invitation error:', error)
-    return NextResponse.json(
-      { error: error.message || 'Error al enviar invitaciones' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Error al enviar invitaciones', 'INVITATION_ERROR', { message: error.message })
   }
 }
 
@@ -199,10 +185,7 @@ export async function GET(request: NextRequest) {
     const corporate_account_id = searchParams.get('corporate_account_id')
 
     if (!corporate_account_id) {
-      return NextResponse.json(
-        { error: 'corporate_account_id requerido' },
-        { status: 400 }
-      )
+      return ApiResponse.badRequest('corporate_account_id requerido', 'MISSING_CORPORATE_ACCOUNT_ID')
     }
 
     const { data: invitations, error } = await supabaseAdmin
@@ -215,14 +198,11 @@ export async function GET(request: NextRequest) {
       throw error
     }
 
-    return NextResponse.json({ invitations })
+    return ApiResponse.ok({ invitations })
 
   } catch (error: any) {
     console.error('Get invitations error:', error)
-    return NextResponse.json(
-      { error: error.message || 'Error al obtener invitaciones' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Error al obtener invitaciones', 'INVITATIONS_FETCH_ERROR', { message: error.message })
   }
 }
 

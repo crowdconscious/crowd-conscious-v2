@@ -1,12 +1,27 @@
+import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
-import { NextResponse } from 'next/server'
+import { ApiResponse } from '@/lib/api-responses'
+
+/**
+ * Helper function to check if user has access to a community wallet
+ */
+async function checkCommunityAccess(supabase: any, userId: string, communityId: string): Promise<boolean> {
+  const { data: membership } = await supabase
+    .from('community_members')
+    .select('role')
+    .eq('community_id', communityId)
+    .eq('user_id', userId)
+    .single()
+  
+  return membership && (membership.role === 'admin' || membership.role === 'founder')
+}
 
 /**
  * GET /api/wallets/[id]
  * Fetch wallet details including balance
  */
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -16,10 +31,7 @@ export async function GET(
     // Check authentication
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return ApiResponse.unauthorized('Please log in to view wallet')
     }
 
     // Fetch wallet
@@ -30,10 +42,16 @@ export async function GET(
       .single()
 
     if (walletError || !wallet) {
-      return NextResponse.json(
-        { error: 'Wallet not found' },
-        { status: 404 }
-      )
+      return ApiResponse.notFound('Wallet', 'WALLET_NOT_FOUND')
+    }
+
+    // Verify user owns this wallet
+    const ownsWallet = 
+      (wallet.owner_type === 'user' && wallet.owner_id === user.id) ||
+      (wallet.owner_type === 'community' && await checkCommunityAccess(supabase, user.id, wallet.owner_id))
+
+    if (!ownsWallet) {
+      return ApiResponse.forbidden('You do not have access to this wallet', 'WALLET_ACCESS_DENIED')
     }
 
     // Fetch recent transactions (last 10)
@@ -98,7 +116,7 @@ export async function GET(
       }
     }
 
-    return NextResponse.json({
+    return ApiResponse.ok({
       ...wallet,
       balance: parseFloat(wallet.balance || '0'),
       recentTransactions: (transactions || []).map(t => ({
@@ -109,12 +127,9 @@ export async function GET(
       })),
       moduleRevenue
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in GET /api/wallets/[id]:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Internal server error', 'WALLET_FETCH_SERVER_ERROR', { message: error.message })
   }
 }
 

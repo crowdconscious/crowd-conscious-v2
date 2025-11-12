@@ -1,21 +1,19 @@
+import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
-import { NextResponse } from 'next/server'
+import { ApiResponse } from '@/lib/api-responses'
 
 /**
  * POST /api/wallets/user
  * Get or create wallet for a user (creator)
  */
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
 
     // Check authentication
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return ApiResponse.unauthorized('Please log in to access wallet')
     }
 
     // Check if wallet exists
@@ -42,28 +40,19 @@ export async function POST(request: Request) {
 
       if (createError) {
         console.error('Error creating wallet:', createError)
-        return NextResponse.json(
-          { error: 'Failed to create wallet' },
-          { status: 500 }
-        )
+        return ApiResponse.serverError('Failed to create wallet', 'WALLET_CREATION_ERROR', { message: createError.message })
       }
 
       wallet = newWallet
     } else if (walletError) {
       console.error('Error fetching wallet:', walletError)
-      return NextResponse.json(
-        { error: 'Failed to fetch wallet' },
-        { status: 500 }
-      )
+      return ApiResponse.serverError('Failed to fetch wallet', 'WALLET_FETCH_ERROR', { message: walletError.message })
     }
 
-    return NextResponse.json({ wallet })
-  } catch (error) {
+    return ApiResponse.ok({ wallet })
+  } catch (error: any) {
     console.error('Error in POST /api/wallets/user:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Internal server error', 'WALLET_SERVER_ERROR', { message: error.message })
   }
 }
 

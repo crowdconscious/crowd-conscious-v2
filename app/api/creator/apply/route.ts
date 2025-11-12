@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { ApiResponse } from '@/lib/api-responses'
 
 export async function POST(req: NextRequest) {
   try {
@@ -41,27 +42,20 @@ export async function POST(req: NextRequest) {
 
     if (error) {
       console.error('Error creating application:', error)
-      return NextResponse.json(
-        { error: 'Failed to submit application' },
-        { status: 500 }
-      )
+      return ApiResponse.serverError('Failed to submit application', 'APPLICATION_CREATION_ERROR', { message: error.message })
     }
 
     // TODO: Send email notification to admin
     // TODO: Send confirmation email to applicant
 
-    return NextResponse.json({
-      success: true,
+    return ApiResponse.created({
       applicationId: application.id,
       message: 'Application submitted successfully'
     })
 
   } catch (error: any) {
     console.error('Error in creator application:', error)
-    return NextResponse.json(
-      { error: 'Server error', details: error.message },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Server error', 'APPLICATION_SERVER_ERROR', { message: error.message })
   }
 }
 

@@ -1,44 +1,37 @@
+import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
-import { NextResponse } from 'next/server'
+import { ApiResponse } from '@/lib/api-responses'
 
 /**
  * POST /api/wallets/community
  * Get or create wallet for a community
  * Used when community is first created or when accessing wallet page
  */
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
     const { communityId } = await request.json()
 
     if (!communityId) {
-      return NextResponse.json(
-        { error: 'Community ID is required' },
-        { status: 400 }
-      )
+      return ApiResponse.badRequest('Community ID is required', 'MISSING_COMMUNITY_ID')
     }
 
     // Check authentication
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return ApiResponse.unauthorized('Please log in to access wallet')
     }
 
-    // Verify user is admin of this community
-    const { data: community, error: communityError } = await supabase
-      .from('communities')
-      .select('admin_id')
-      .eq('id', communityId)
+    // Verify user is admin or founder of this community
+    const { data: membership, error: membershipError } = await supabase
+      .from('community_members')
+      .select('role')
+      .eq('community_id', communityId)
+      .eq('user_id', user.id)
       .single()
 
-    if (communityError || !community || community.admin_id !== user.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized to access this community' },
-        { status: 403 }
-      )
+    if (membershipError || !membership || (membership.role !== 'admin' && membership.role !== 'founder')) {
+      return ApiResponse.forbidden('You must be a community admin or founder to access this wallet', 'NOT_COMMUNITY_ADMIN')
     }
 
     // Check if wallet exists
@@ -65,28 +58,19 @@ export async function POST(request: Request) {
 
       if (createError) {
         console.error('Error creating wallet:', createError)
-        return NextResponse.json(
-          { error: 'Failed to create wallet' },
-          { status: 500 }
-        )
+        return ApiResponse.serverError('Failed to create wallet', 'WALLET_CREATION_ERROR', { message: createError.message })
       }
 
       wallet = newWallet
     } else if (walletError) {
       console.error('Error fetching wallet:', walletError)
-      return NextResponse.json(
-        { error: 'Failed to fetch wallet' },
-        { status: 500 }
-      )
+      return ApiResponse.serverError('Failed to fetch wallet', 'WALLET_FETCH_ERROR', { message: walletError.message })
     }
 
-    return NextResponse.json({ wallet })
-  } catch (error) {
+    return ApiResponse.ok({ wallet })
+  } catch (error: any) {
     console.error('Error in POST /api/wallets/community:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Internal server error', 'WALLET_SERVER_ERROR', { message: error.message })
   }
 }
 
