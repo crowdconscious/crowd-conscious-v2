@@ -38,13 +38,18 @@ export async function POST(request: NextRequest) {
 
     const stripe = getStripeClient()
 
-    // Get request body
-    const { moduleId, employeeCount = 50, paymentMethodId } = await request.json()
-
-    // Validate input
-    if (!moduleId || !employeeCount) {
-      return ApiResponse.badRequest('Missing required fields', 'MISSING_REQUIRED_FIELDS')
+    // Validate request body
+    let validatedData
+    try {
+      validatedData = await validateRequest(request, purchaseModuleSchema)
+    } catch (error: any) {
+      if (error.status === 422) {
+        return Response.json(error, { status: 422 })
+      }
+      throw error
     }
+
+    const { moduleId, employeeCount = 50, paymentMethodId, promoCode } = validatedData
 
     // Get corporate account
     const { data: profile } = await supabase

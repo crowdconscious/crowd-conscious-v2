@@ -35,6 +35,17 @@ export async function POST(request: NextRequest) {
       nodeEnv: process.env.NODE_ENV
     })
 
+    // Validate request body
+    let validatedData
+    try {
+      validatedData = await validateRequest(request, createCheckoutSchema)
+    } catch (error: any) {
+      if (error.status === 422) {
+        return Response.json(error, { status: 422 })
+      }
+      throw error
+    }
+
     const {
       sponsorshipId,
       amount,
@@ -45,13 +56,8 @@ export async function POST(request: NextRequest) {
       brandName,
       email,
       taxReceipt,
-      coverPlatformFee = false // NEW: Whether sponsor covers platform fee
-    } = await request.json()
-
-    // Validate required fields
-    if (!sponsorshipId || !amount || !email) {
-      return ApiResponse.badRequest('Missing required fields', 'MISSING_REQUIRED_FIELDS')
-    }
+      coverPlatformFee = false
+    } = validatedData
 
     const stripeClient = getStripe()
     

@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { createSponsorshipPaymentIntent } from '@/lib/stripe'
 import { ApiResponse } from '@/lib/api-responses'
 import { strictRateLimit, getRateLimitIdentifier, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
+import { createPaymentIntentSchema, validateRequest } from '@/lib/validation-schemas'
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,11 +20,18 @@ export async function POST(request: NextRequest) {
       return rateLimitResponse(rateLimitResult.limit, rateLimitResult.remaining, rateLimitResult.reset)
     }
 
-    const { sponsorshipId, amount } = await request.json()
-
-    if (!sponsorshipId || !amount || amount <= 0) {
-      return ApiResponse.badRequest('Invalid parameters', 'INVALID_PARAMETERS')
+    // Validate request body
+    let validatedData
+    try {
+      validatedData = await validateRequest(request, createPaymentIntentSchema)
+    } catch (error: any) {
+      if (error.status === 422) {
+        return Response.json(error, { status: 422 })
+      }
+      throw error
     }
+
+    const { sponsorshipId, amount } = validatedData
 
     // Get sponsorship details
     const { data: sponsorship, error: sponsorshipError } = await supabase

@@ -26,12 +26,18 @@ export async function POST(request: NextRequest) {
 
     const stripe = getStripeClient()
 
-    const body = await request.json()
-    const { communityId, amount, communityName } = body
-
-    if (!communityId || !amount || amount <= 0) {
-      return ApiResponse.badRequest('Community ID and valid amount are required', 'MISSING_REQUIRED_FIELDS')
+    // Validate request body
+    let validatedData
+    try {
+      validatedData = await validateRequest(request, treasuryDonateSchema)
+    } catch (error: any) {
+      if (error.status === 422) {
+        return Response.json(error, { status: 422 })
+      }
+      throw error
     }
+
+    const { communityId, amount, communityName } = validatedData
 
     const supabase = await createServerAuth()
 
