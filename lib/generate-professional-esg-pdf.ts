@@ -40,19 +40,28 @@ export async function generateProfessionalESGPDF(reportData: any): Promise<Buffe
     doc.rect(0, 0, pageWidth, 45, 'F')
   }
 
-  // Logo - Use simple white text (no image to avoid overlap)
-  doc.setFontSize(18)
-  doc.setTextColor(255, 255, 255)
-  doc.setFont('helvetica', 'bold')
-  doc.text('CROWDCONSCIOUS', 20, 14)
+  // Logo - Use the white logo uploaded by user
+  try {
+    const whiteLogoPath = path.join(process.cwd(), 'public', 'images', 'logo white.png')
+    
+    if (fs.existsSync(whiteLogoPath)) {
+      const logoBuffer = fs.readFileSync(whiteLogoPath)
+      const logoBase64 = `data:image/png;base64,${logoBuffer.toString('base64')}`
+      
+      // Add logo - small size, top-left
+      doc.addImage(logoBase64, 'PNG', 15, 8, 25, 8)
+    }
+  } catch (error) {
+    console.error('Logo error:', error)
+  }
 
-  // Tagline - positioned below logo  
+  // Tagline
   doc.setFontSize(8)
   doc.setTextColor(255, 255, 255)
   doc.setFont('helvetica', 'normal')
   doc.text('Impulsando el cambio a través de la educación', 20, 20)
 
-  // Report Title - moved down to avoid overlap
+  // Report Title
   doc.setFontSize(16)
   doc.setFont('helvetica', 'bold')
   doc.text('REPORTE ESG', 20, 35)
