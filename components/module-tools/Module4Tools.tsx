@@ -44,6 +44,7 @@ export function WasteStreamAnalyzer({ onAnalyze, enrollmentId, moduleId, lessonI
     if (enrollmentId && moduleId && lessonId) {
       const loadPrevious = async () => {
         const savedData = await loadToolData({
+          enrollment_id: enrollmentId!,
           lesson_id: lessonId,
           module_id: moduleId,
           tool_name: 'waste-stream-analyzer'
@@ -411,7 +412,7 @@ export function FiveRsChecklist({ onComplete, enrollmentId, moduleId, lessonId }
 
   useEffect(() => {
     if (enrollmentId && moduleId && lessonId) {
-      loadToolData({ lesson_id: lessonId, module_id: moduleId, tool_name: 'five-rs-checklist' })
+      loadToolData({ enrollment_id: enrollmentId!, lesson_id: lessonId, module_id: moduleId, tool_name: 'five-rs-checklist' })
         .then(data => { if (data) console.log('Loaded:', data) })
     }
   }, [enrollmentId, moduleId, lessonId])

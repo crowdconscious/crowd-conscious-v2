@@ -43,6 +43,7 @@ export function WaterQualityTestLog({ onSave, enrollmentId, moduleId, lessonId }
     if (enrollmentId && moduleId && lessonId) {
       const loadPrevious = async () => {
         const savedData = await loadToolData({
+          enrollment_id: enrollmentId!,
           lesson_id: lessonId,
           module_id: moduleId,
           tool_name: 'water-quality-tester'
@@ -337,6 +338,7 @@ export function RecyclingSystemDesigner({ onDesign, enrollmentId, moduleId, less
     if (enrollmentId && moduleId && lessonId) {
       const loadPrevious = async () => {
         const savedData = await loadToolData({
+          enrollment_id: enrollmentId!,
           lesson_id: lessonId,
           module_id: moduleId,
           tool_name: 'recycling-system-designer'
@@ -674,7 +676,7 @@ export function WaterFootprintCalculator({
   // Load previous data
   useEffect(() => {
     if (enrollmentId && moduleId && lessonId) {
-      loadToolData({ lesson_id: lessonId, module_id: moduleId, tool_name: 'water-footprint-calculator' })
+      loadToolData({ enrollment_id: enrollmentId!, lesson_id: lessonId, module_id: moduleId, tool_name: 'water-footprint-calculator' })
         .then(data => {
           if (data?.inputs) setInputs(data.inputs)
           if (data?.calculated) {
@@ -1023,7 +1025,7 @@ export function WaterAuditTool({ onSave, enrollmentId, moduleId, lessonId }: Wat
   // Load previous data
   useEffect(() => {
     if (enrollmentId && moduleId && lessonId) {
-      loadToolData({ lesson_id: lessonId, module_id: moduleId, tool_name: 'water-audit-tool' })
+      loadToolData({ enrollment_id: enrollmentId!, lesson_id: lessonId, module_id: moduleId, tool_name: 'water-audit-tool' })
         .then(data => { if (data?.zones) setZones(data.zones) })
     }
   }, [enrollmentId, moduleId, lessonId])
@@ -1311,7 +1313,7 @@ export function ConservationTracker({ onTrack, enrollmentId, moduleId, lessonId 
   // Load previous data
   useEffect(() => {
     if (enrollmentId && moduleId && lessonId) {
-      loadToolData({ lesson_id: lessonId, module_id: moduleId, tool_name: 'conservation-tracker' })
+      loadToolData({ enrollment_id: enrollmentId!, lesson_id: lessonId, module_id: moduleId, tool_name: 'conservation-tracker' })
         .then(data => {
           if (data?.baselineUsage) setBaselineUsage(data.baselineUsage)
           if (data?.reductionGoal) setReductionGoal(data.reductionGoal)

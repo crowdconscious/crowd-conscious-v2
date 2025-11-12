@@ -114,7 +114,7 @@ export async function POST(
     // Check if there's an existing activity_response for this lesson
     const { data: existingActivity } = await supabase
       .from('activity_responses')
-      .select('id, custom_responses, attempt_number, evidence_urls')
+      .select('id, custom_responses, attempt_number, evidence_urls, completion_percentage, questions_answered, total_questions, time_spent_minutes, completed, completed_at')
       .eq('enrollment_id', enrollmentId)
       .eq('lesson_id', lesson_id)
       .order('created_at', { ascending: false })

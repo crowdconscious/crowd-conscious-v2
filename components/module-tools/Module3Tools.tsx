@@ -17,6 +17,7 @@ export function SecurityAuditTool({ onSave, enrollmentId, moduleId, lessonId }: 
     if (enrollmentId && moduleId && lessonId) {
       const loadPrevious = async () => {
         const savedData = await loadToolData({
+          enrollment_id: enrollmentId!,
           lesson_id: lessonId,
           module_id: moduleId,
           tool_name: 'security-audit'
@@ -303,6 +304,7 @@ export function CommunitySurveyTool({ onSave, enrollmentId, moduleId, lessonId }
     if (enrollmentId && moduleId && lessonId) {
       const loadPrevious = async () => {
         const savedData = await loadToolData({
+          enrollment_id: enrollmentId!,
           lesson_id: lessonId,
           module_id: moduleId,
           tool_name: 'community-safety-map'
@@ -392,6 +394,7 @@ export function CostCalculatorTool({ onSave, enrollmentId, moduleId, lessonId }:
     if (enrollmentId && moduleId && lessonId) {
       const loadPrevious = async () => {
         const savedData = await loadToolData({
+          enrollment_id: enrollmentId!,
           lesson_id: lessonId,
           module_id: moduleId,
           tool_name: 'cost-calculator'

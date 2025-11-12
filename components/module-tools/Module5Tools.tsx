@@ -40,7 +40,7 @@ export function SupplyChainMapper({ onSave, enrollmentId, moduleId, lessonId }: 
 
   useEffect(() => {
     if (enrollmentId && moduleId && lessonId) {
-      loadToolData({ lesson_id: lessonId, module_id: moduleId, tool_name: 'supply-chain-mapper' })
+      loadToolData({ enrollment_id: enrollmentId!, lesson_id: lessonId, module_id: moduleId, tool_name: 'supply-chain-mapper' })
         .then(data => { if (data?.suppliers) setSuppliers(data.suppliers) })
     }
   }, [enrollmentId, moduleId, lessonId])

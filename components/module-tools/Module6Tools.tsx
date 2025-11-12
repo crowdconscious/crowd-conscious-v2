@@ -29,7 +29,7 @@ export function ImpactDashboardBuilder({ onBuild, enrollmentId, moduleId, lesson
 
   useEffect(() => {
     if (enrollmentId && moduleId && lessonId) {
-      loadToolData({ lesson_id: lessonId, module_id: moduleId, tool_name: 'impact-dashboard-builder' })
+      loadToolData({ enrollment_id: enrollmentId!, lesson_id: lessonId, module_id: moduleId, tool_name: 'impact-dashboard-builder' })
         .then(data => { 
           if (data?.selectedMetrics) setSelectedMetrics(data.selectedMetrics)
           if (data?.dashboardName) setDashboardName(data.dashboardName)
@@ -636,7 +636,7 @@ export function ContinuousImprovementTracker({ onTrack, enrollmentId, moduleId, 
 
   useEffect(() => {
     if (enrollmentId && moduleId && lessonId) {
-      loadToolData({ lesson_id: lessonId, module_id: moduleId, tool_name: 'continuous-improvement-tracker' })
+      loadToolData({ enrollment_id: enrollmentId!, lesson_id: lessonId, module_id: moduleId, tool_name: 'continuous-improvement-tracker' })
         .then(data => { if (data?.goals) setGoals(data.goals) })
     }
   }, [enrollmentId, moduleId, lessonId])
