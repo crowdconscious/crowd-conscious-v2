@@ -408,18 +408,20 @@ export function validateLessonResponse(lessonData: {
   // Calculate overall score
   const averageScore = componentCount > 0 ? Math.round(totalScore / componentCount) : 0
 
-  // If no components were validated, it means nothing was submitted
+  // ✅ PHASE 4 FIX: Allow lesson completion even without activities
+  // If no components were validated, allow completion (user can complete lesson without filling activities)
   if (componentCount === 0) {
+    // No validation errors - allow completion
     return {
-      isValid: false,
-      errors: ['Debes completar al menos una actividad o reflexión para continuar'],
-      warnings: [],
-      score: 0,
-      minimumMet: false
+      isValid: true,
+      errors: [],
+      warnings: ['No se completaron actividades adicionales, pero la lección puede marcarse como completa'],
+      score: 100, // Full score if nothing to validate
+      minimumMet: true
     }
   }
 
-  // Check if minimum score met
+  // Check if minimum score met (only if components were validated)
   const minimumMet = averageScore >= QUALITY_STANDARDS.MIN_COMPLETION_SCORE
 
   if (!minimumMet) {

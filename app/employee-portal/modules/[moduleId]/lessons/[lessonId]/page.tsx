@@ -230,8 +230,11 @@ export default function LessonPage({
         })
       })
 
+      const responseData = await response.json()
+      
       if (response.ok) {
-        const data = await response.json()
+        // ✅ PHASE 4: Handle standardized success response format
+        const data = responseData.success !== undefined ? responseData.data : responseData
         console.log('✅ Lesson completed:', data)
         
         // Show success message
@@ -282,19 +285,40 @@ export default function LessonPage({
 
         // Navigation already handled above (redirects to module overview after 1.5s with full reload)
       } else {
-        const error = await response.json()
-        console.error('❌ Failed to complete lesson:', error)
+        // ✅ PHASE 4: Handle standardized error response format
+        console.error('❌ Failed to complete lesson:', responseData)
         console.error('Response status:', response.status)
-        console.error('Error details:', error)
+        console.error('Error details:', responseData)
         
-        // Show more detailed error
-        const errorMsg = error.error || error.details?.message || 'No se pudo completar la lección'
+        // Extract error message from standardized format
+        let errorMsg = 'No se pudo completar la lección'
+        
+        if (responseData.success === false && responseData.error) {
+          // New standardized format: { success: false, error: { code, message, timestamp } }
+          errorMsg = responseData.error.message || errorMsg
+        } else if (responseData.error) {
+          // Legacy format: { error: "message" } or { error: { message: "..." } }
+          errorMsg = typeof responseData.error === 'string' 
+            ? responseData.error 
+            : responseData.error.message || errorMsg
+        } else if (responseData.message) {
+          // Fallback: { message: "..." }
+          errorMsg = responseData.message
+        } else if (responseData.details?.message) {
+          // Another fallback: { details: { message: "..." } }
+          errorMsg = responseData.details.message
+        }
+        
+        console.error('Extracted error message:', errorMsg)
         alert(`Error: ${errorMsg}\n\nPor favor intenta de nuevo o contacta soporte.`)
       }
     } catch (error: any) {
       console.error('❌ Error completing lesson:', error)
       console.error('Error stack:', error.stack)
-      alert(`Error al completar la lección: ${error.message}\n\nPor favor intenta de nuevo.`)
+      
+      // Extract error message safely
+      const errorMsg = error?.message || error?.toString() || 'Error desconocido'
+      alert(`Error al completar la lección: ${errorMsg}\n\nPor favor intenta de nuevo.`)
     }
     setCompleting(false)
   }

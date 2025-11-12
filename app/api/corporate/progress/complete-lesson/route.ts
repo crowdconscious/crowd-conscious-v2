@@ -15,18 +15,31 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const { moduleId, lessonId, xpEarned, responses, reflection, actionItems, timeSpent, evidence, quizAnswers, quizQuestions, activityType, activityData } = body
 
-    console.log('Complete lesson request:', { userId: user.id, moduleId, lessonId, xpEarned, hasResponses: !!responses })
+    console.log('Complete lesson request:', { 
+      userId: user.id, 
+      moduleId, 
+      lessonId, 
+      xpEarned, 
+      hasResponses: !!responses,
+      hasActivityData: !!activityData,
+      hasReflection: !!reflection,
+      hasActionItems: !!actionItems,
+      responsesKeys: responses ? Object.keys(responses) : []
+    })
 
     // 🔒 QUALITY CONTROL: Validate response quality before marking complete
+    // ✅ PHASE 4 FIX: Extract activityData from responses if it's nested there
+    const actualActivityData = activityData || responses?.activityData || responses
+    
     const validation = validateLessonResponse({
-      responses,
-      reflection,
-      actionItems,
-      evidence,
-      quizAnswers,
-      quizQuestions,
-      activityType,
-      activityData
+      responses: responses || {},
+      reflection: reflection || responses?.reflection,
+      actionItems: actionItems || responses?.actionItems,
+      evidence: evidence || responses?.evidence || responses?.uploadedFiles,
+      quizAnswers: quizAnswers || responses?.quizAnswers,
+      quizQuestions: quizQuestions || responses?.quizQuestions,
+      activityType: activityType || responses?.activityType || 'general',
+      activityData: actualActivityData
     })
 
     if (!validation.isValid) {
