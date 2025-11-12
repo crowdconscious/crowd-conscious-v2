@@ -256,8 +256,9 @@ export default function LessonPage({
         
         // CRITICAL: Force a full page reload to refresh progress
         // router.push() doesn't reload data, so we use window.location
+        // ✅ Add cache-busting query param to ensure fresh data
         setTimeout(() => {
-          window.location.href = `/employee-portal/modules/${moduleId}`
+          window.location.href = `/employee-portal/modules/${moduleId}?t=${Date.now()}`
         }, 1500)
 
         // If module complete, generate certificate

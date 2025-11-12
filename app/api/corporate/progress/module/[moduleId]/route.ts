@@ -35,7 +35,8 @@ export async function GET(
     if (error || !enrollment) {
       console.log('❌ No enrollment found for user:', user.id, 'module:', moduleId)
       console.error('Enrollment error:', error)
-      return NextResponse.json({ 
+      // ✅ FIX: Use standardized response format even when no enrollment
+      return ApiResponse.ok({ 
         completedLessons: [],
         xpEarned: 0,
         completionPercentage: 0

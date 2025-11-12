@@ -115,11 +115,14 @@ export default function ModuleOverviewPage({ params }: { params: Promise<{ modul
       
       // Fetch user's progress for this module
       const response = await fetch(`/api/corporate/progress/module/${modId}`)
-      const data = await response.json()
+      const responseData = await response.json()
       
-      console.log('✅ Progress API response:', data)
+      console.log('✅ Progress API response:', responseData)
       
-      if (data.completedLessons) {
+      // ✅ CRITICAL FIX: Handle standardized API response format
+      const data = responseData.success !== undefined ? responseData.data : responseData
+      
+      if (data && data.completedLessons) {
         setCompletedLessons(data.completedLessons)
         
         // ✅ FIX: Use actual progress from database, not local calculation!
@@ -133,10 +136,12 @@ export default function ModuleOverviewPage({ params }: { params: Promise<{ modul
         console.log('📈 Progress updated:', {
           percentage: data.completionPercentage,
           completed: data.completedLessons.length,
-          xpEarned: data.xpEarned
+          xpEarned: data.xpEarned,
+          completedLessons: data.completedLessons
         })
       } else {
-        // No progress yet
+        // No progress yet - but check if there's an enrollment with progress_percentage
+        console.warn('⚠️ No completedLessons found, but checking enrollment progress...')
         setProgress({
           percentage: 0,
           completedCount: 0,
