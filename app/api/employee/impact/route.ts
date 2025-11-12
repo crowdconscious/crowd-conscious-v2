@@ -21,23 +21,28 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
     }
 
-    // ✅ Get ALL user's course enrollments (not just one module)
+    // ✅ FIXED: Use JOIN instead of separate queries
     const { data: enrollments } = await supabase
       .from('course_enrollments')
-      .select('*')
+      .select(`
+        *,
+        responses:lesson_responses(
+          time_spent_minutes,
+          carbon_data,
+          cost_data,
+          completed
+        )
+      `)
       .eq('user_id', user.id)
 
     // Calculate personal metrics
     const totalXP = enrollments?.reduce((sum, e) => sum + (e.xp_earned || 0), 0) || 0
     const modulesCompleted = enrollments?.filter(e => e.completed === true).length || 0
 
-    // ✅ Get lesson responses for time calculation
-    const enrollmentIds = enrollments?.map(e => e.id) || []
-    const { data: responses } = await supabase
-      .from('lesson_responses')
-      .select('time_spent_minutes, carbon_data, cost_data')
-      .in('enrollment_id', enrollmentIds)
-      .eq('completed', true)
+    // Extract responses from joined data
+    const responses = enrollments?.flatMap(e => 
+      (e.responses || []).filter((r: any) => r.completed === true)
+    ) || []
 
     const timeSpentMinutes = responses?.reduce((sum, r) => sum + (r.time_spent_minutes || 0), 0) || 0
     const timeSpentHours = Math.round(timeSpentMinutes / 60)

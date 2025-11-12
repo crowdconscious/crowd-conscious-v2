@@ -38,53 +38,76 @@ async function getAllCommunities(): Promise<Community[]> {
 
   if (!communities) return []
 
-  // Get sponsor data for each community
-  const communitiesWithSponsors = await Promise.all(
-    communities.map(async (community) => {
-      // Get brand relationships for this community
-      const { data: relationships } = await supabase
-        .from('brand_community_relationships')
-        .select(`
-          total_sponsored,
-          profiles (
-            id,
-            company_name,
-            full_name,
-            logo_url,
-            verified_brand
-          )
-        `)
-        .eq('community_id', (community as any).id)
-        .eq('is_active', true)
-        .order('total_sponsored', { ascending: false })
-        .limit(5)
+  const communityIds = communities.map(c => (c as any).id)
 
-      // Get active needs count
-      const { count: activeNeeds } = await supabase
-        .from('community_content')
-        .select('id', { count: 'exact' })
-        .eq('community_id', (community as any).id)
-        .eq('type', 'need')
-        .in('status', ['voting', 'approved'])
+  // ✅ FIXED: Batch fetch all relationships and needs in single queries
+  // Get all brand relationships for all communities at once
+  const { data: allRelationships } = await supabase
+    .from('brand_community_relationships')
+    .select(`
+      community_id,
+      total_sponsored,
+      profiles (
+        id,
+        company_name,
+        full_name,
+        logo_url,
+        verified_brand
+      )
+    `)
+    .in('community_id', communityIds)
+    .eq('is_active', true)
+    .order('total_sponsored', { ascending: false })
 
-      const sponsors = relationships?.map((rel: any) => ({
-        id: rel.profiles?.id,
-        company_name: rel.profiles?.company_name || rel.profiles?.full_name,
-        logo_url: rel.profiles?.logo_url,
-        total_sponsored: rel.total_sponsored,
-        verified_brand: rel.profiles?.verified_brand
-      })) || []
+  // Get all active needs counts at once
+  const { data: allNeeds } = await supabase
+    .from('community_content')
+    .select('community_id, id')
+    .in('community_id', communityIds)
+    .eq('type', 'need')
+    .in('status', ['voting', 'approved'])
 
-      const totalSponsored = relationships?.reduce((sum, rel: any) => sum + rel.total_sponsored, 0) || 0
+  // Group relationships by community_id
+  const relationshipsByCommunity = new Map<string, any[]>()
+  allRelationships?.forEach((rel: any) => {
+    const communityId = rel.community_id
+    if (!relationshipsByCommunity.has(communityId)) {
+      relationshipsByCommunity.set(communityId, [])
+    }
+    relationshipsByCommunity.get(communityId)!.push(rel)
+  })
 
-      return {
-        ...(community as any),
-        sponsors,
-        total_sponsored: totalSponsored,
-        active_needs: activeNeeds || 0
-      }
-    })
-  )
+  // Count needs per community
+  const needsCountByCommunity = new Map<string, number>()
+  allNeeds?.forEach((need: any) => {
+    const communityId = need.community_id
+    needsCountByCommunity.set(communityId, (needsCountByCommunity.get(communityId) || 0) + 1)
+  })
+
+  // Map communities with sponsors (no N+1 queries!)
+  const communitiesWithSponsors = communities.map((community) => {
+    const relationships = relationshipsByCommunity.get((community as any).id) || []
+    // Limit to top 5 sponsors per community
+    const topSponsors = relationships.slice(0, 5)
+    
+    const sponsors = topSponsors.map((rel: any) => ({
+      id: rel.profiles?.id,
+      company_name: rel.profiles?.company_name || rel.profiles?.full_name,
+      logo_url: rel.profiles?.logo_url,
+      total_sponsored: rel.total_sponsored,
+      verified_brand: rel.profiles?.verified_brand
+    }))
+
+    const totalSponsored = relationships.reduce((sum: number, rel: any) => sum + (rel.total_sponsored || 0), 0)
+    const activeNeeds = needsCountByCommunity.get((community as any).id) || 0
+
+    return {
+      ...(community as any),
+      sponsors,
+      total_sponsored: totalSponsored,
+      active_needs: activeNeeds
+    }
+  })
 
   return communitiesWithSponsors
 }

@@ -147,79 +147,122 @@ export default function ContentList({ communityId, userRole }: ContentListProps)
         console.error('Error fetching content:', error)
         setContent([])
       } else if (contentData) {
-        // For each content item, fetch related data
-        const enhancedContent = await Promise.all(
-          contentData.map(async (item: any) => {
-            let enhancedItem: any = { ...item }
-            
-            // Fetch related data based on content type
-            if (item.type === 'need') {
-              const { data: activities } = await (supabase as any)
-                .from('need_activities')
-                .select('id, title, is_completed, completed_by')
-                .eq('content_id', item.id)
-                .order('order_index')
-              enhancedItem.need_activities = activities || []
-            }
-            
-            if (item.type === 'poll') {
-              // Use RPC to get poll results with total votes (authenticated + external)
-              const { data: options, error: pollError } = await (supabase as any)
-                .rpc('get_poll_results', { content_uuid: item.id })
-              
-              if (pollError) {
-                console.error('Error fetching poll results:', pollError)
-                // Fallback to direct query if RPC fails
-                const { data: fallbackOptions } = await (supabase as any)
-                  .from('poll_options')
-                  .select('id, option_text, vote_count, created_at')
-                  .eq('content_id', item.id)
-                  .order('created_at')
-                enhancedItem.poll_options = (fallbackOptions || []).map((opt: any) => ({
-                  id: opt.id,
-                  option_text: opt.option_text,
-                  vote_count: opt.vote_count || 0
-                }))
-              } else {
-                enhancedItem.poll_options = (options || []).map((opt: any) => ({
-                  id: opt.option_id,
-                  option_text: opt.option_text,
-                  vote_count: opt.vote_count || 0
-                }))
-              }
-              
-              // Check if user has voted
-              if (user) {
-                const { data: userVote } = await (supabase as any)
-                  .from('poll_votes')
-                  .select('poll_option_id')
-                  .eq('content_id', item.id)
-                  .eq('user_id', user.id)
-                enhancedItem.user_poll_vote = userVote || []
-              }
-            }
-            
-            if (item.type === 'event') {
-              const { data: registrations } = await (supabase as any)
-                .from('event_registrations')
-                .select('id, user_id, status')
-                .eq('content_id', item.id)
-              enhancedItem.event_registrations = registrations || []
-              
-              // Check if user is registered
-              if (user) {
-                const { data: userReg } = await (supabase as any)
-                  .from('event_registrations')
-                  .select('id, status')
-                  .eq('content_id', item.id)
-                  .eq('user_id', user.id)
-                enhancedItem.user_event_registration = userReg || []
-              }
-            }
-            
-            return enhancedItem
+        // ✅ FIXED: Batch fetch all related data in single queries
+        const contentIds = contentData.map((item: any) => item.id)
+        const needIds = contentData.filter((item: any) => item.type === 'need').map((item: any) => item.id)
+        const pollIds = contentData.filter((item: any) => item.type === 'poll').map((item: any) => item.id)
+        const eventIds = contentData.filter((item: any) => item.type === 'event').map((item: any) => item.id)
+
+        // Batch fetch all need activities
+        const { data: allNeedActivities } = await (supabase as any)
+          .from('need_activities')
+          .select('id, content_id, title, is_completed, completed_by, order_index')
+          .in('content_id', needIds)
+          .order('order_index')
+
+        // Batch fetch all poll options (using RPC for each poll, but we'll optimize this)
+        // Note: RPC doesn't support batch, so we'll use direct query as fallback for now
+        const { data: allPollOptions } = await (supabase as any)
+          .from('poll_options')
+          .select('id, content_id, option_text, vote_count, created_at')
+          .in('content_id', pollIds)
+          .order('created_at')
+
+        // Batch fetch all event registrations
+        const { data: allEventRegistrations } = await (supabase as any)
+          .from('event_registrations')
+          .select('id, content_id, user_id, status')
+          .in('content_id', eventIds)
+
+        // Batch fetch user votes for all polls
+        let allUserVotes: any[] = []
+        if (user && pollIds.length > 0) {
+          const { data: votes } = await (supabase as any)
+            .from('poll_votes')
+            .select('content_id, poll_option_id')
+            .in('content_id', pollIds)
+            .eq('user_id', user.id)
+          allUserVotes = votes || []
+        }
+
+        // Batch fetch user event registrations
+        let allUserEventRegs: any[] = []
+        if (user && eventIds.length > 0) {
+          const { data: regs } = await (supabase as any)
+            .from('event_registrations')
+            .select('id, content_id, status')
+            .in('content_id', eventIds)
+            .eq('user_id', user.id)
+          allUserEventRegs = regs || []
+        }
+
+        // Group data by content_id
+        const activitiesByContent = new Map<string, any[]>()
+        allNeedActivities?.forEach((activity: any) => {
+          const contentId = activity.content_id
+          if (!activitiesByContent.has(contentId)) {
+            activitiesByContent.set(contentId, [])
+          }
+          activitiesByContent.get(contentId)!.push(activity)
+        })
+
+        const pollOptionsByContent = new Map<string, any[]>()
+        allPollOptions?.forEach((option: any) => {
+          const contentId = option.content_id
+          if (!pollOptionsByContent.has(contentId)) {
+            pollOptionsByContent.set(contentId, [])
+          }
+          pollOptionsByContent.get(contentId)!.push({
+            id: option.id,
+            option_text: option.option_text,
+            vote_count: option.vote_count || 0
           })
-        )
+        })
+
+        const registrationsByContent = new Map<string, any[]>()
+        allEventRegistrations?.forEach((reg: any) => {
+          const contentId = reg.content_id
+          if (!registrationsByContent.has(contentId)) {
+            registrationsByContent.set(contentId, [])
+          }
+          registrationsByContent.get(contentId)!.push(reg)
+        })
+
+        const userVotesByContent = new Map<string, any[]>()
+        allUserVotes.forEach((vote: any) => {
+          const contentId = vote.content_id
+          if (!userVotesByContent.has(contentId)) {
+            userVotesByContent.set(contentId, [])
+          }
+          userVotesByContent.get(contentId)!.push(vote)
+        })
+
+        const userRegsByContent = new Map<string, any[]>()
+        allUserEventRegs.forEach((reg: any) => {
+          const contentId = reg.content_id
+          userRegsByContent.set(contentId, reg)
+        })
+
+        // Map content with related data (no N+1 queries!)
+        const enhancedContent = contentData.map((item: any) => {
+          let enhancedItem: any = { ...item }
+          
+          if (item.type === 'need') {
+            enhancedItem.need_activities = activitiesByContent.get(item.id) || []
+          }
+          
+          if (item.type === 'poll') {
+            enhancedItem.poll_options = pollOptionsByContent.get(item.id) || []
+            enhancedItem.user_poll_vote = userVotesByContent.get(item.id) || []
+          }
+          
+          if (item.type === 'event') {
+            enhancedItem.event_registrations = registrationsByContent.get(item.id) || []
+            enhancedItem.user_event_registration = userRegsByContent.get(item.id) || []
+          }
+          
+          return enhancedItem
+        })
         
         setContent(enhancedContent as Content[])
       }

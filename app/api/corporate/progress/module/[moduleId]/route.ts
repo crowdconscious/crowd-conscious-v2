@@ -15,12 +15,20 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get enrollment using CORRECT column names (user_id, module_id)
+    // ✅ FIXED: Use JOIN instead of separate queries
     const { data: enrollment, error } = await supabase
       .from('course_enrollments')
-      .select('id, xp_earned, progress_percentage')  // FIXED: correct column names
-      .eq('user_id', user.id)  // FIXED: was 'employee_id'
-      .eq('module_id', moduleId)  // FIXED: was 'course_id' with hardcoded ID
+      .select(`
+        id,
+        xp_earned,
+        progress_percentage,
+        lesson_responses(
+          lesson_id,
+          completed
+        )
+      `)
+      .eq('user_id', user.id)
+      .eq('module_id', moduleId)
       .single()
 
     if (error || !enrollment) {
@@ -35,25 +43,10 @@ export async function GET(
 
     console.log('✅ Enrollment found:', { enrollmentId: enrollment.id, moduleId })
 
-    // Fetch actual completed lessons from lesson_responses table
-    // CRITICAL: Only get lessons where completed = TRUE
-    const { data: responses, error: responsesError } = await supabase
-      .from('lesson_responses')
-      .select('lesson_id')
-      .eq('enrollment_id', enrollment.id)
-      .eq('completed', true)  // 🔥 CRITICAL FIX: Only completed lessons!
-
-    if (responsesError) {
-      console.error('❌ Error fetching lesson responses:', responsesError)
-      return NextResponse.json({
-        completedLessons: [],
-        xpEarned: enrollment.xp_earned || 0,
-        completionPercentage: enrollment.progress_percentage || 0
-      })
-    }
-
-    // Get unique lesson IDs (only completed ones)
-    const completedLessons = [...new Set(responses?.map(r => r.lesson_id) || [])]
+    // Extract completed lesson IDs from joined data (filter for completed = true)
+    const allResponses = (enrollment as any).lesson_responses || []
+    const completedResponses = allResponses.filter((r: any) => r.completed === true)
+    const completedLessons = [...new Set(completedResponses.map((r: any) => r.lesson_id))]
 
     console.log('✅ Progress loaded:', { 
       moduleId,
@@ -67,7 +60,7 @@ export async function GET(
     return NextResponse.json({
       completedLessons,
       xpEarned: enrollment.xp_earned || 0,
-      completionPercentage: enrollment.progress_percentage || 0  // FIXED: correct column name
+      completionPercentage: enrollment.progress_percentage || 0
     })
 
   } catch (error) {

@@ -34,6 +34,7 @@ export async function GET(req: NextRequest) {
 
     const isCorporateAdmin = profile?.corporate_role === 'admin' && profile?.corporate_account_id
 
+    // ✅ FIXED: Use JOIN instead of separate queries
     // Build query based on user type
     let enrollmentsQuery = supabase
       .from('course_enrollments')
@@ -51,6 +52,13 @@ export async function GET(req: NextRequest) {
           title,
           description,
           core_value
+        ),
+        lesson_responses(
+          *,
+          module_lessons (
+            title,
+            lesson_order
+          )
         )
       `)
 
@@ -73,24 +81,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch enrollments' }, { status: 500 })
     }
 
-    // Get all lesson responses for these enrollments
-    const enrollmentIds = enrollments?.map(e => e.id) || []
-    
-    const { data: lessonResponses, error: responsesError } = await supabase
-      .from('lesson_responses')
-      .select(`
-        *,
-        module_lessons (
-          title,
-          lesson_order
-        )
-      `)
-      .in('enrollment_id', enrollmentIds)
-
-    if (responsesError) {
-      console.error('Error fetching lesson responses:', responsesError)
-      return NextResponse.json({ error: 'Failed to fetch responses' }, { status: 500 })
-    }
+    // Extract lesson responses from joined data
+    const lessonResponses = enrollments?.flatMap((e: any) => e.lesson_responses || []) || []
 
     // Aggregate impact metrics
     const impactMetrics = {
