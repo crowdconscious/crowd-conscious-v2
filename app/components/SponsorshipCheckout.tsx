@@ -103,8 +103,10 @@ export default function SponsorshipCheckout({
     try {
       const response = await fetch(`/api/treasury/stats?communityId=${communityId}`)
       if (response.ok) {
-        const data = await response.json()
-        setPoolBalance(data.balance || 0)
+        const responseData = await response.json()
+        // ✅ PHASE 4: Handle standardized API response format
+        const data = responseData.success !== undefined ? responseData.data : responseData
+        setPoolBalance(data?.balance || 0)
       }
     } catch (error) {
       console.error('Error fetching pool balance:', error)
@@ -307,6 +309,7 @@ export default function SponsorshipCheckout({
               amount: formData.amount,
               contentTitle,
               communityName,
+              communityId, // ✅ FIX: Include communityId for Stripe checkout
               sponsorType: formData.sponsor_type,
               brandName: formData.brand_name,
               email: formData.email,
@@ -315,9 +318,21 @@ export default function SponsorshipCheckout({
             })
           })
 
-          const { url, error: checkoutError } = await response.json()
+          const responseData = await response.json()
           
-          if (checkoutError) throw new Error(checkoutError)
+          if (!response.ok) {
+            // ✅ PHASE 4: Extract error from standardized format
+            const errorMessage = responseData.error?.message || responseData.error || 'Failed to create checkout session'
+            throw new Error(errorMessage)
+          }
+          
+          // ✅ PHASE 4: Handle standardized API response format
+          const data = responseData.success !== undefined ? responseData.data : responseData
+          const url = data?.url
+          
+          if (!url) {
+            throw new Error('No checkout URL returned')
+          }
           
           // Redirect to Stripe
           window.location.href = url

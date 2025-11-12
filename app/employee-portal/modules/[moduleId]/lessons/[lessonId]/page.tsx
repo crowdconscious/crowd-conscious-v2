@@ -182,12 +182,15 @@ export default function LessonPage({
         const response = await fetch(`/api/enrollments?module_id=${moduleId}`)
         
         if (response.ok) {
-          const data = await response.json()
-          if (data.enrollment_id) {
+          const responseData = await response.json()
+          // ✅ PHASE 4: Handle standardized API response format
+          const data = responseData.success !== undefined ? responseData.data : responseData
+          if (data?.enrollment_id) {
             setEnrollmentId(data.enrollment_id)
             console.log('✅ Enrollment ID:', data.enrollment_id)
           } else {
             console.warn('⚠️ No enrollment found for module:', moduleId)
+            console.log('AA No enrollment found for module:', moduleId)
           }
         } else {
           console.error('❌ Failed to fetch enrollment:', response.status)
