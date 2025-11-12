@@ -1,18 +1,19 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createServerAuth, getCurrentUser } from '@/lib/auth-server'
+import { ApiResponse } from '@/lib/api-responses'
 
 export async function GET(request: NextRequest) {
   try {
     const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+      return ApiResponse.unauthorized('Authentication required', 'AUTHENTICATION_REQUIRED')
     }
 
     const { searchParams } = new URL(request.url)
     const communityId = searchParams.get('communityId')
 
     if (!communityId) {
-      return NextResponse.json({ error: 'Community ID is required' }, { status: 400 })
+      return ApiResponse.badRequest('Community ID is required', 'MISSING_COMMUNITY_ID')
     }
 
     const supabase = await createServerAuth()
@@ -26,10 +27,7 @@ export async function GET(request: NextRequest) {
       .single()
 
     if (!membership) {
-      return NextResponse.json(
-        { error: 'You must be a community member to view treasury stats' },
-        { status: 403 }
-      )
+      return ApiResponse.forbidden('You must be a community member to view treasury stats', 'NOT_COMMUNITY_MEMBER')
     }
 
     // Get treasury stats using RPC
@@ -39,19 +37,16 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error('Error fetching treasury stats:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return ApiResponse.serverError('Failed to fetch treasury stats', 'TREASURY_STATS_ERROR', { message: error.message })
     }
 
-    return NextResponse.json({
+    return ApiResponse.ok({
       ...data,
       userRole: membership.role,
     })
   } catch (error: any) {
     console.error('Treasury stats error:', error)
-    return NextResponse.json(
-      { error: error.message || 'Failed to fetch treasury stats' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Failed to fetch treasury stats', 'TREASURY_STATS_SERVER_ERROR', { message: error.message })
   }
 }
 

@@ -1,14 +1,15 @@
-import { NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { ApiResponse } from '@/lib/api-responses'
 
 // Upload evidence images to Supabase Storage
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
     const { data: { user }, error: userError } = await supabase.auth.getUser()
 
     if (userError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return ApiResponse.unauthorized('Please log in to upload evidence')
     }
 
     // Parse form data
@@ -19,11 +20,11 @@ export async function POST(request: Request) {
     const lessonId = formData.get('lessonId') as string
 
     if (!files || files.length === 0) {
-      return NextResponse.json({ error: 'No files provided' }, { status: 400 })
+      return ApiResponse.badRequest('No files provided', 'MISSING_FILES')
     }
 
     if (!courseId || !moduleId || !lessonId) {
-      return NextResponse.json({ error: 'Missing course/module/lesson IDs' }, { status: 400 })
+      return ApiResponse.badRequest('Missing course/module/lesson IDs', 'MISSING_REQUIRED_FIELDS')
     }
 
     console.log(`📸 Uploading ${files.length} evidence image(s) for user ${user.id}`)
@@ -101,8 +102,7 @@ export async function POST(request: Request) {
 
         if (!enrollment) {
           // Return uploaded URLs even if enrollment not found
-          return NextResponse.json({ 
-            success: true,
+          return ApiResponse.ok({ 
             uploadedUrls,
             count: uploadedUrls.length,
             warning: 'Evidence uploaded but not saved to lesson (enrollment not found)',
@@ -151,50 +151,46 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({
-      success: true,
+    return ApiResponse.ok({
       uploadedUrls,
       count: uploadedUrls.length,
       errors: errors.length > 0 ? errors : undefined
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Error in upload-evidence:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Internal server error', 'EVIDENCE_UPLOAD_SERVER_ERROR', { message: error.message })
   }
 }
 
 // Delete evidence image from Storage
-export async function DELETE(request: Request) {
+export async function DELETE(request: NextRequest) {
   try {
     const supabase = await createClient()
     const { data: { user }, error: userError } = await supabase.auth.getUser()
 
     if (userError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return ApiResponse.unauthorized('Please log in to delete evidence')
     }
 
     const { searchParams } = new URL(request.url)
     const url = searchParams.get('url')
 
     if (!url) {
-      return NextResponse.json({ error: 'No URL provided' }, { status: 400 })
+      return ApiResponse.badRequest('No URL provided', 'MISSING_URL')
     }
 
     // Extract file path from URL
     // Format: https://[project].supabase.co/storage/v1/object/public/employee-evidence/[path]
     const urlParts = url.split('/employee-evidence/')
     if (urlParts.length < 2) {
-      return NextResponse.json({ error: 'Invalid URL format' }, { status: 400 })
+      return ApiResponse.badRequest('Invalid URL format', 'INVALID_URL_FORMAT')
     }
 
     const filePath = urlParts[1]
 
     // Verify the file belongs to the user
     if (!filePath.startsWith(user.id)) {
-      return NextResponse.json({ error: 'Cannot delete another user\'s file' }, { status: 403 })
+      return ApiResponse.forbidden('Cannot delete another user\'s file', 'FILE_ACCESS_DENIED')
     }
 
     // Delete from Storage
@@ -204,17 +200,14 @@ export async function DELETE(request: Request) {
 
     if (error) {
       console.error('❌ Error deleting file:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return ApiResponse.serverError('Failed to delete file', 'FILE_DELETE_ERROR', { message: error.message })
     }
 
     console.log(`✅ Deleted: ${filePath}`)
-    return NextResponse.json({ success: true })
-  } catch (error) {
+    return ApiResponse.ok({ message: 'File deleted successfully' })
+  } catch (error: any) {
     console.error('❌ Error in delete evidence:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Internal server error', 'EVIDENCE_DELETE_SERVER_ERROR', { message: error.message })
   }
 }
 

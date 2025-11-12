@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import Stripe from 'stripe'
 import { createServerAuth } from '@/lib/auth-server'
 import { createClient } from '@supabase/supabase-js'
+import { ApiResponse } from '@/lib/api-responses'
 
 // Initialize Stripe lazily
 let stripe: Stripe | null = null
@@ -45,10 +46,7 @@ export async function POST(request: NextRequest) {
     
     if (authError || !user) {
       console.error('❌ Authentication failed:', authError)
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return ApiResponse.unauthorized('Please log in to access Stripe Connect', 'AUTHENTICATION_REQUIRED')
     }
     
     console.log('✅ User authenticated:', user.id)
@@ -63,10 +61,7 @@ export async function POST(request: NextRequest) {
     
     if (profileError) {
       console.error('❌ Failed to fetch profile:', profileError)
-      return NextResponse.json(
-        { error: 'Failed to fetch user profile' },
-        { status: 500 }
-      )
+      return ApiResponse.serverError('Failed to fetch user profile', 'PROFILE_FETCH_ERROR', { message: profileError.message })
     }
     
     const stripeClient = getStripe()
@@ -121,17 +116,14 @@ export async function POST(request: NextRequest) {
     
     console.log('✅ Onboarding link created:', accountLink.url)
     
-    return NextResponse.json({ 
+    return ApiResponse.ok({ 
       url: accountLink.url,
       accountId: accountId
     })
     
   } catch (error: any) {
     console.error('💥 Stripe Connect onboarding error:', error)
-    return NextResponse.json(
-      { error: error.message || 'Failed to create onboarding link' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Failed to create onboarding link', 'STRIPE_CONNECT_ONBOARD_ERROR', { message: error.message })
   }
 }
 
@@ -147,10 +139,7 @@ export async function GET(request: NextRequest) {
     const { data: { user }, error: authError } = await supabaseAuth.auth.getUser()
     
     if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return ApiResponse.unauthorized('Please log in to check onboarding status', 'AUTHENTICATION_REQUIRED')
     }
     
     // Get user profile
@@ -162,7 +151,7 @@ export async function GET(request: NextRequest) {
       .single()
     
     if (profileError || !profile.stripe_connect_id) {
-      return NextResponse.json({
+      return ApiResponse.ok({
         onboarded: false,
         charges_enabled: false,
         payouts_enabled: false
@@ -193,7 +182,7 @@ export async function GET(request: NextRequest) {
         .eq('id', user.id)
     }
     
-    return NextResponse.json({
+    return ApiResponse.ok({
       onboarded: onboardingComplete,
       charges_enabled: chargesEnabled,
       payouts_enabled: payoutsEnabled,
@@ -202,10 +191,7 @@ export async function GET(request: NextRequest) {
     
   } catch (error: any) {
     console.error('Error checking onboarding status:', error)
-    return NextResponse.json(
-      { error: error.message },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Failed to check onboarding status', 'ONBOARDING_STATUS_ERROR', { message: error.message })
   }
 }
 

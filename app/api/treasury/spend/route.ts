@@ -1,21 +1,19 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createServerAuth, getCurrentUser } from '@/lib/auth-server'
+import { ApiResponse } from '@/lib/api-responses'
 
 export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+      return ApiResponse.unauthorized('Authentication required', 'AUTHENTICATION_REQUIRED')
     }
 
     const body = await request.json()
     const { communityId, contentId, amount, sponsorshipId, description } = body
 
     if (!communityId || !contentId || !amount || amount <= 0) {
-      return NextResponse.json(
-        { error: 'Community ID, content ID, and valid amount are required' },
-        { status: 400 }
-      )
+      return ApiResponse.badRequest('Community ID, content ID, and valid amount are required', 'MISSING_REQUIRED_FIELDS')
     }
 
     const supabase = await createServerAuth()
@@ -29,10 +27,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (!membership || (membership.role !== 'admin' && membership.role !== 'moderator')) {
-      return NextResponse.json(
-        { error: 'Only community admins can spend from the treasury' },
-        { status: 403 }
-      )
+      return ApiResponse.forbidden('Only community admins can spend from the treasury', 'NOT_COMMUNITY_ADMIN')
     }
 
     // Use SQL function to spend from treasury
@@ -48,12 +43,9 @@ export async function POST(request: NextRequest) {
     if (error) {
       console.error('Error spending from treasury:', error)
       if (error.message.includes('Insufficient funds')) {
-        return NextResponse.json(
-          { error: 'Insufficient funds in community treasury' },
-          { status: 400 }
-        )
+        return ApiResponse.badRequest('Insufficient funds in community treasury', 'INSUFFICIENT_FUNDS')
       }
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return ApiResponse.serverError('Failed to spend from treasury', 'TREASURY_SPEND_ERROR', { message: error.message })
     }
 
     // Update the sponsorship status to 'paid' since it's paid from pool
@@ -88,17 +80,13 @@ export async function POST(request: NextRequest) {
         .eq('id', contentId)
     }
 
-    return NextResponse.json({
-      success: true,
+    return ApiResponse.ok({
       transaction_id: data,
       message: 'Successfully sponsored from community pool'
     })
   } catch (error: any) {
     console.error('Treasury spending error:', error)
-    return NextResponse.json(
-      { error: error.message || 'Failed to spend from treasury' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Failed to spend from treasury', 'TREASURY_SPEND_SERVER_ERROR', { message: error.message })
   }
 }
 

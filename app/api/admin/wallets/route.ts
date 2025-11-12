@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { ApiResponse } from '@/lib/api-responses'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,7 +22,7 @@ export async function GET(request: NextRequest) {
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     
     if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return ApiResponse.unauthorized('Please log in to view wallet data')
     }
     
     // Get user profile to verify admin status
@@ -32,7 +33,7 @@ export async function GET(request: NextRequest) {
       .single()
     
     if (!profile || profile.user_type !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      return ApiResponse.forbidden('Admin access required', 'NOT_ADMIN')
     }
     
     // Fetch platform treasury wallet
@@ -116,7 +117,7 @@ export async function GET(request: NextRequest) {
       sum + parseFloat(sale.total_amount || '0'), 0
     ) || 0
     
-    return NextResponse.json({
+    return ApiResponse.ok({
       platformWallet: {
         ...platformWallet,
         balance: parseFloat(platformWallet?.balance || '0')
@@ -156,12 +157,9 @@ export async function GET(request: NextRequest) {
       }
     })
     
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching wallet data:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch wallet data' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Failed to fetch wallet data', 'WALLETS_FETCH_ERROR', { message: error.message })
   }
 }
 

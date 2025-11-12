@@ -1,12 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { getCurrentUser } from '@/lib/auth-server'
+import { ApiResponse } from '@/lib/api-responses'
 import { supabase } from '@/lib/supabase'
 
 export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return ApiResponse.unauthorized('Please log in to moderate users')
     }
 
     // Check if user is admin
@@ -17,18 +18,18 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (!profile || (profile as any).user_type !== 'admin' || (profile as any).suspended) {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+      return ApiResponse.forbidden('Admin access required', 'NOT_ADMIN')
     }
 
     const { userId, action, reason } = await request.json()
 
     if (!userId || !action || !['suspend', 'unsuspend'].includes(action)) {
-      return NextResponse.json({ error: 'Invalid parameters' }, { status: 400 })
+      return ApiResponse.badRequest('Invalid parameters. userId and action (suspend/unsuspend) are required', 'INVALID_PARAMETERS')
     }
 
     // Prevent self-suspension
     if (userId === (user as any).id) {
-      return NextResponse.json({ error: 'Cannot moderate your own account' }, { status: 400 })
+      return ApiResponse.badRequest('Cannot moderate your own account', 'CANNOT_MODERATE_SELF')
     }
 
     // Check target user exists and is not a super admin
@@ -39,12 +40,12 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (!targetUser) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+      return ApiResponse.notFound('User', 'USER_NOT_FOUND')
     }
 
     // Prevent suspending super admins unless you're also a super admin
     if ((targetUser as any).user_type === 'admin' && (targetUser as any).admin_level === 'super' && (profile as any).admin_level !== 'super') {
-      return NextResponse.json({ error: 'Cannot moderate super admin' }, { status: 403 })
+      return ApiResponse.forbidden('Cannot moderate super admin', 'CANNOT_MODERATE_SUPER_ADMIN')
     }
 
     // Update user suspension status
@@ -71,7 +72,7 @@ export async function POST(request: NextRequest) {
 
     if (updateError) {
       console.error('Error updating user:', updateError)
-      return NextResponse.json({ error: 'Failed to update user' }, { status: 500 })
+      return ApiResponse.serverError('Failed to update user', 'USER_UPDATE_ERROR', { message: updateError.message })
     }
 
     // Log admin action
@@ -86,9 +87,9 @@ export async function POST(request: NextRequest) {
         details: { reason }
       }) */
 
-    return NextResponse.json({ success: true })
-  } catch (error) {
+    return ApiResponse.ok({ success: true })
+  } catch (error: any) {
     console.error('User moderation error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return ApiResponse.serverError('Internal server error', 'USER_MODERATION_SERVER_ERROR', { message: error.message })
   }
 }

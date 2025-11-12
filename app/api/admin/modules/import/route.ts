@@ -1,8 +1,9 @@
+import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
-import { NextResponse } from 'next/server'
+import { ApiResponse } from '@/lib/api-responses'
 import { getCurrentUser } from '@/lib/auth-server'
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
     
@@ -10,10 +11,7 @@ export async function POST(request: Request) {
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized - Not logged in' },
-        { status: 401 }
-      )
+      return ApiResponse.unauthorized('Please log in to import modules')
     }
 
     // Check if user is admin in profiles table
@@ -24,10 +22,7 @@ export async function POST(request: Request) {
       .single()
     
     if (!profile || profile.user_type !== 'admin') {
-      return NextResponse.json(
-        { error: 'Unauthorized - Admin access required' },
-        { status: 401 }
-      )
+      return ApiResponse.forbidden('Admin access required', 'NOT_ADMIN')
     }
 
     const body = await request.json()
@@ -91,10 +86,7 @@ export async function POST(request: Request) {
 
     if (moduleError) {
       console.error('Error creating platform module:', moduleError)
-      return NextResponse.json(
-        { error: 'Failed to create module', details: moduleError.message },
-        { status: 500 }
-      )
+      return ApiResponse.serverError('Failed to create module', 'MODULE_CREATION_ERROR', { message: moduleError.message })
     }
 
     // Create lessons if provided
@@ -129,8 +121,7 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({
-      success: true,
+    return ApiResponse.created({
       module: {
         id: module.id,
         slug: module.slug,
@@ -138,12 +129,9 @@ export async function POST(request: Request) {
         lessonCount: lessons?.length || 0
       }
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in POST /api/admin/modules/import:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Internal server error', 'MODULE_IMPORT_SERVER_ERROR', { message: error.message })
   }
 }
 

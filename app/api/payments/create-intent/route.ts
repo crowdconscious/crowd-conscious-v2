@@ -1,19 +1,20 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { getCurrentUser } from '@/lib/auth-server'
 import { supabase } from '@/lib/supabase'
 import { createSponsorshipPaymentIntent } from '@/lib/stripe'
+import { ApiResponse } from '@/lib/api-responses'
 
 export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return ApiResponse.unauthorized('Please log in to create payment intent', 'AUTHENTICATION_REQUIRED')
     }
 
     const { sponsorshipId, amount } = await request.json()
 
     if (!sponsorshipId || !amount || amount <= 0) {
-      return NextResponse.json({ error: 'Invalid parameters' }, { status: 400 })
+      return ApiResponse.badRequest('Invalid parameters', 'INVALID_PARAMETERS')
     }
 
     // Get sponsorship details
@@ -40,16 +41,16 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (sponsorshipError || !sponsorship) {
-      return NextResponse.json({ error: 'Sponsorship not found' }, { status: 404 })
+      return ApiResponse.notFound('Sponsorship', 'SPONSORSHIP_NOT_FOUND')
     }
 
     if ((sponsorship as any).status !== 'approved') {
-      return NextResponse.json({ error: 'Sponsorship not approved yet' }, { status: 400 })
+      return ApiResponse.badRequest('Sponsorship not approved yet', 'SPONSORSHIP_NOT_APPROVED')
     }
 
     // Verify the amount matches the sponsorship
     if (Math.abs((sponsorship as any).amount - amount) > 0.01) {
-      return NextResponse.json({ error: 'Amount mismatch' }, { status: 400 })
+      return ApiResponse.badRequest('Amount mismatch', 'AMOUNT_MISMATCH')
     }
 
     // Create Stripe payment intent
@@ -75,10 +76,10 @@ export async function POST(request: NextRequest) {
 
     if (updateError) {
       console.error('Error updating sponsorship:', updateError)
-      return NextResponse.json({ error: 'Failed to update sponsorship' }, { status: 500 })
+      return ApiResponse.serverError('Failed to update sponsorship', 'SPONSORSHIP_UPDATE_ERROR', { message: updateError.message })
     }
 
-    return NextResponse.json({
+    return ApiResponse.ok({
       clientSecret: paymentData.clientSecret,
       paymentIntentId: paymentData.paymentIntentId,
       amount: paymentData.amount,
@@ -86,8 +87,8 @@ export async function POST(request: NextRequest) {
       netAmount: paymentData.netAmount
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating payment intent:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return ApiResponse.serverError('Internal server error', 'PAYMENT_INTENT_ERROR', { message: error.message })
   }
 }

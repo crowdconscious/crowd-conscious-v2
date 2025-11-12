@@ -1,12 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { getCurrentUser } from '@/lib/auth-server'
+import { ApiResponse } from '@/lib/api-responses'
 import { supabase } from '@/lib/supabase'
 
 export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return ApiResponse.unauthorized('Please log in to moderate communities')
     }
 
     // Check if user is admin
@@ -17,13 +18,13 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (!profile || (profile as any).user_type !== 'admin' || (profile as any).suspended) {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+      return ApiResponse.forbidden('Admin access required', 'NOT_ADMIN')
     }
 
     const { communityId, action, notes } = await request.json()
 
     if (!communityId || !action || !['approve', 'reject', 'suspend', 'delete'].includes(action)) {
-      return NextResponse.json({ error: 'Invalid parameters' }, { status: 400 })
+      return ApiResponse.badRequest('Invalid parameters. communityId and action (approve/reject/suspend/delete) are required', 'INVALID_PARAMETERS')
     }
 
     let updateData: any = {
@@ -69,7 +70,7 @@ export async function POST(request: NextRequest) {
 
     if (updateError) {
       console.error('Error updating community:', updateError)
-      return NextResponse.json({ error: 'Failed to update community' }, { status: 500 })
+      return ApiResponse.serverError('Failed to update community', 'COMMUNITY_UPDATE_ERROR', { message: updateError.message })
     }
 
     // Log admin action
@@ -85,9 +86,9 @@ export async function POST(request: NextRequest) {
       })
       .catch(err => console.log('Admin action logging failed:', err)) // Don't fail if logging fails */
 
-    return NextResponse.json({ success: true, message })
-  } catch (error) {
+    return ApiResponse.ok({ success: true, message })
+  } catch (error: any) {
     console.error('Community moderation error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return ApiResponse.serverError('Internal server error', 'COMMUNITY_MODERATION_SERVER_ERROR', { message: error.message })
   }
 }

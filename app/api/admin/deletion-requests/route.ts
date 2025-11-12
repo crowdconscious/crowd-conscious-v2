@@ -1,12 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createServerAuth, getCurrentUser } from '@/lib/auth-server'
+import { ApiResponse } from '@/lib/api-responses'
 
 // Get all deletion requests (admin only)
 export async function GET() {
   try {
     const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+      return ApiResponse.unauthorized('Authentication required', 'AUTHENTICATION_REQUIRED')
     }
 
     const supabase = await createServerAuth()
@@ -19,7 +20,7 @@ export async function GET() {
       .single()
 
     if ((profile as any)?.user_type !== 'admin') {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+      return ApiResponse.forbidden('Admin access required', 'NOT_ADMIN')
     }
 
     // Fetch deletion requests with requester info
@@ -40,14 +41,14 @@ export async function GET() {
 
     if (error) {
       console.error('Error fetching deletion requests:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return ApiResponse.serverError('Failed to fetch deletion requests', 'DELETION_REQUESTS_FETCH_ERROR', { message: error.message })
     }
 
-    return NextResponse.json({ data: requests }, { status: 200 })
+    return ApiResponse.ok({ data: requests })
 
   } catch (error: any) {
     console.error('API error fetching deletion requests:', error)
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
+    return ApiResponse.serverError('Internal server error', 'DELETION_REQUESTS_SERVER_ERROR', { message: error.message })
   }
 }
 
@@ -56,15 +57,13 @@ export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+      return ApiResponse.unauthorized('Authentication required', 'AUTHENTICATION_REQUIRED')
     }
 
     const { request_type, target_id, target_name, reason } = await request.json()
 
     if (!request_type || !target_id || !target_name) {
-      return NextResponse.json({ 
-        error: 'Missing required fields: request_type, target_id, target_name' 
-      }, { status: 400 })
+      return ApiResponse.badRequest('Missing required fields: request_type, target_id, target_name', 'MISSING_REQUIRED_FIELDS')
     }
 
     const supabase = await createServerAuth()
@@ -88,9 +87,7 @@ export async function POST(request: NextRequest) {
           .single()
 
         if ((profile as any)?.user_type !== 'admin') {
-          return NextResponse.json({ 
-            error: 'Only community founders or admins can request community deletion' 
-          }, { status: 403 })
+          return ApiResponse.forbidden('Only community founders or admins can request community deletion', 'INSUFFICIENT_PERMISSIONS')
         }
       }
     } else {
@@ -102,9 +99,7 @@ export async function POST(request: NextRequest) {
         .single()
 
       if ((profile as any)?.user_type !== 'admin') {
-        return NextResponse.json({ 
-          error: 'Only admins can request user or content deletion' 
-        }, { status: 403 })
+        return ApiResponse.forbidden('Only admins can request user or content deletion', 'INSUFFICIENT_PERMISSIONS')
       }
     }
 
@@ -123,17 +118,16 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error('Error creating deletion request:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return ApiResponse.serverError('Failed to create deletion request', 'DELETION_REQUEST_CREATION_ERROR', { message: error.message })
     }
 
-    return NextResponse.json({ 
-      success: true, 
+    return ApiResponse.created({ 
       message: 'Deletion request created successfully',
       data: deletionRequest 
-    }, { status: 201 })
+    })
 
   } catch (error: any) {
     console.error('API error creating deletion request:', error)
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
+    return ApiResponse.serverError('Internal server error', 'DELETION_REQUEST_SERVER_ERROR', { message: error.message })
   }
 }

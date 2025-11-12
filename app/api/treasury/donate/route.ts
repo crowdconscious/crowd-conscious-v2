@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createServerAuth, getCurrentUser } from '@/lib/auth-server'
+import { ApiResponse } from '@/lib/api-responses'
 import Stripe from 'stripe'
 
 function getStripeClient() {
@@ -13,17 +14,14 @@ export async function POST(request: NextRequest) {
     const stripe = getStripeClient()
     const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+      return ApiResponse.unauthorized('Authentication required', 'AUTHENTICATION_REQUIRED')
     }
 
     const body = await request.json()
     const { communityId, amount, communityName } = body
 
     if (!communityId || !amount || amount <= 0) {
-      return NextResponse.json(
-        { error: 'Community ID and valid amount are required' },
-        { status: 400 }
-      )
+      return ApiResponse.badRequest('Community ID and valid amount are required', 'MISSING_REQUIRED_FIELDS')
     }
 
     const supabase = await createServerAuth()
@@ -37,10 +35,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (!membership) {
-      return NextResponse.json(
-        { error: 'You must be a community member to donate to the pool' },
-        { status: 403 }
-      )
+      return ApiResponse.forbidden('You must be a community member to donate to the pool', 'NOT_COMMUNITY_MEMBER')
     }
 
     // Get user profile for email
@@ -80,13 +75,10 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    return NextResponse.json({ url: session.url })
+    return ApiResponse.ok({ url: session.url })
   } catch (error: any) {
     console.error('Treasury donation error:', error)
-    return NextResponse.json(
-      { error: error.message || 'Failed to create donation' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Failed to create donation', 'TREASURY_DONATION_ERROR', { message: error.message })
   }
 }
 

@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import Stripe from 'stripe'
+import { ApiResponse } from '@/lib/api-responses'
 
 // Initialize Stripe lazily to avoid build-time errors
 let stripe: Stripe | null = null
@@ -40,10 +41,7 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (!sponsorshipId || !amount || !email) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      )
+      return ApiResponse.badRequest('Missing required fields', 'MISSING_REQUIRED_FIELDS')
     }
 
     const stripeClient = getStripe()
@@ -162,12 +160,9 @@ export async function POST(request: NextRequest) {
 
     const session = await stripeClient.checkout.sessions.create(sessionConfig)
 
-    return NextResponse.json({ url: session.url })
+    return ApiResponse.ok({ url: session.url })
   } catch (error: any) {
     console.error('Stripe checkout error:', error)
-    return NextResponse.json(
-      { error: error.message || 'Failed to create checkout session' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Failed to create checkout session', 'CHECKOUT_SESSION_ERROR', { message: error.message })
   }
 }
