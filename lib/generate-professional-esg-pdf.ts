@@ -40,7 +40,7 @@ export async function generateProfessionalESGPDF(reportData: any): Promise<Buffe
     doc.rect(0, 0, pageWidth, 45, 'F')
   }
 
-  // Logo image - Use the white logo uploaded by user
+  // Logo image - Use the white logo uploaded by user (auto aspect ratio)
   try {
     const whiteLogoPath = path.join(process.cwd(), 'public', 'images', 'logo white.png')
     
@@ -48,13 +48,14 @@ export async function generateProfessionalESGPDF(reportData: any): Promise<Buffe
       const logoBuffer = fs.readFileSync(whiteLogoPath)
       const logoBase64 = `data:image/png;base64,${logoBuffer.toString('base64')}`
       
-      // Add white logo image (top-left, proper size)
-      const logoWidth = 35
-      const logoHeight = 10.5 // Maintains aspect ratio for typical logo
+      // Add white logo image (top-left)
+      // Only specify width, let PDF maintain aspect ratio
+      const logoWidth = 40
       const logoX = 15
       const logoY = 8
       
-      doc.addImage(logoBase64, 'PNG', logoX, logoY, logoWidth, logoHeight, undefined, 'FAST')
+      // Using addImage with only width specified maintains aspect ratio
+      doc.addImage(logoBase64, 'PNG', logoX, logoY, logoWidth, 0, undefined, 'FAST')
     } else {
       // Fallback: white text logo
       doc.setFontSize(18)

@@ -26,60 +26,21 @@ export default function CertificatePage({ params }: { params: Promise<{ moduleId
     try {
       console.log('🎓 Loading certificate for module:', modId)
       
-      // Fetch user profile first (always available)
-      const profileResponse = await fetch('/api/user/profile')
-      let userName = 'Usuario'
-      if (profileResponse.ok) {
-        const profileData = await profileResponse.json()
-        userName = profileData.full_name || 'Usuario'
-        console.log('✅ Profile loaded:', userName)
-      } else {
-        console.error('❌ Profile fetch failed:', profileResponse.status)
-      }
-
-      // Fetch the actual module data
-      let fetchedModule: any = null
-      const moduleResponse = await fetch(`/api/modules/${modId}`)
-      if (moduleResponse.ok) {
-        const moduleData = await moduleResponse.json()
-        fetchedModule = moduleData.module
-        setModule(fetchedModule)
-        console.log('✅ Module loaded:', fetchedModule?.title)
-      } else {
-        console.error('❌ Module fetch failed:', moduleResponse.status)
-      }
-
-      // Fetch the user's enrollment for THIS SPECIFIC MODULE
-      const enrollmentResponse = await fetch(`/api/corporate/progress/enrollment?moduleId=${modId}`)
-      let enrollmentData: any = null
-      if (enrollmentResponse.ok) {
-        enrollmentData = await enrollmentResponse.json()
-        console.log('✅ Enrollment loaded:', {
-          id: enrollmentData.id,
-          xp: enrollmentData.xp_earned,
-          moduleTitle: enrollmentData.module?.title
-        })
-      } else {
-        console.error('❌ Enrollment fetch failed:', enrollmentResponse.status, await enrollmentResponse.text())
-      }
-
-      // Build certificate with all available data
-      // Priority: Use enrollment data first, then fall back to fetched module
-      const moduleName = enrollmentData?.module?.title || fetchedModule?.title || 'Módulo Completado'
-      const verificationId = enrollmentData?.id || fetchedModule?.id || null
+      // Fetch certificate data directly from our dedicated endpoint
+      const certResponse = await fetch(`/api/certificates/module/${modId}`)
       
-      const certData = {
-        employeeName: userName,
-        moduleName: moduleName,
-        xpEarned: enrollmentData?.xp_earned || 250,
-        issuedAt: enrollmentData?.completion_date || new Date().toISOString(),
-        verificationCode: verificationId ? `CC-${verificationId.slice(0, 8).toUpperCase()}` : 'PENDING'
+      if (certResponse.ok) {
+        const certData = await certResponse.json()
+        console.log('✅ Certificate data loaded:', certData)
+        setCertificate(certData)
+        if (certData.module) {
+          setModule(certData.module)
+        }
+      } else {
+        console.error('❌ Certificate fetch failed:', certResponse.status)
+        const errorText = await certResponse.text()
+        console.error('Error details:', errorText)
       }
-      
-      console.log('📜 Final certificate data:', certData)
-      console.log('📍 Debug - fetchedModule?.title:', fetchedModule?.title)
-      console.log('📍 Debug - fetchedModule?.id:', fetchedModule?.id)
-      setCertificate(certData)
 
       setLoading(false)
     } catch (error) {

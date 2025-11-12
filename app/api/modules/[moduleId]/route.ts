@@ -5,6 +5,19 @@ import { createClient } from '@supabase/supabase-js'
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  )
+}
+
 export async function GET(
   request: NextRequest,
   context: { params: Promise<{ moduleId: string }> }
@@ -12,17 +25,8 @@ export async function GET(
   try {
     const { moduleId } = await context.params
     
-    // Use admin client to bypass RLS
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    )
+    // Use admin client to bypass RLS (initialized in function scope)
+    const supabase = getSupabaseAdmin()
 
     console.log(`🔍 API: Fetching module: ${moduleId}`)
 
