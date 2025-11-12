@@ -24,7 +24,9 @@ import {
   WaterPerformanceDashboard,
   WaterWasteAuditChecklist,
   RainwaterHarvestCalculator,
-  CommunityInterviewGuide
+  CommunityInterviewGuide,
+  AuditReportTemplate,
+  ThreeYearSecurityPlan
 } from '@/components/module-tools'
 
 interface ToolModalProps {
@@ -155,6 +157,12 @@ export default function ToolModal({ toolType, toolTitle, onClose, onDataCapture 
       
       case 'community-interview-guide':
         return <CommunityInterviewGuide />
+      
+      case 'audit-report-template':
+        return <AuditReportTemplate />
+      
+      case '3-year-security-plan':
+        return <ThreeYearSecurityPlan />
       
       default:
         return (

@@ -27,6 +27,8 @@ export { default as WaterPerformanceDashboard } from './WaterPerformanceDashboar
 export { default as WaterWasteAuditChecklist } from './WaterWasteAuditChecklist'
 export { default as RainwaterHarvestCalculator } from './RainwaterHarvestCalculator'
 export { default as CommunityInterviewGuide } from './CommunityInterviewGuide'
+export { default as AuditReportTemplate } from './AuditReportTemplate'
+export { default as ThreeYearSecurityPlan } from './ThreeYearSecurityPlan'
 // Module1Tools has named exports only - not a default export
 export * from './Module1Tools'
 
