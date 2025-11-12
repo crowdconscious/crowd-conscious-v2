@@ -8,8 +8,9 @@ import { createPaymentIntentSchema, validateRequest } from '@/lib/validation-sch
 import { trackApiError } from '@/lib/error-tracking'
 
 export async function POST(request: NextRequest) {
+  let user: any = null
   try {
-    const user = await getCurrentUser()
+    user = await getCurrentUser()
     if (!user) {
       return ApiResponse.unauthorized('Please log in to create payment intent', 'AUTHENTICATION_REQUIRED')
     }

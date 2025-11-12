@@ -4,6 +4,7 @@ import { ApiResponse } from '@/lib/api-responses'
 import Stripe from 'stripe'
 import { moderateRateLimit, getRateLimitIdentifier, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { purchaseModuleSchema, validateRequest } from '@/lib/validation-schemas'
+import { trackApiError } from '@/lib/error-tracking'
 
 function getStripeClient() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -21,17 +22,19 @@ function getStripeClient() {
  * 4. Distribute revenue to wallets
  */
 export async function POST(request: NextRequest) {
+  let user: any = null
   try {
     const supabase = await createClient()
     
     // Authenticate user
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
+    const { data: { user: authUser } } = await supabase.auth.getUser()
+    if (!authUser) {
       return ApiResponse.unauthorized('Please log in to purchase modules')
     }
+    user = authUser
 
     // Rate limiting: 10 requests per minute for purchases
-    const identifier = await getRateLimitIdentifier(request, user.id)
+    const identifier = await getRateLimitIdentifier(request, authUser.id)
     const rateLimitResult = await checkRateLimit(moderateRateLimit, identifier)
     if (rateLimitResult && !rateLimitResult.allowed) {
       return rateLimitResponse(rateLimitResult.limit, rateLimitResult.remaining, rateLimitResult.reset)
@@ -56,7 +59,7 @@ export async function POST(request: NextRequest) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('corporate_account_id, corporate_role, is_corporate_user')
-      .eq('id', user.id)
+      .eq('id', authUser.id)
       .single()
 
     if (!profile?.is_corporate_user || profile.corporate_role !== 'admin') {
@@ -140,7 +143,7 @@ export async function POST(request: NextRequest) {
     const { error: enrollmentError } = await supabase
       .from('course_enrollments')
       .insert({
-        employee_id: user.id, // Corporate admin is also enrolled
+        employee_id: authUser.id, // Corporate admin is also enrolled
         corporate_account_id: profile.corporate_account_id,
         module_id: moduleId,
         module_name: module.title,
@@ -168,7 +171,7 @@ export async function POST(request: NextRequest) {
       .from('corporate_activity_log')
       .insert({
         corporate_account_id: profile.corporate_account_id,
-        user_id: user.id,
+        user_id: authUser.id,
         action_type: 'module_purchased',
         action_details: {
           module_id: moduleId,

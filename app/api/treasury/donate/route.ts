@@ -4,6 +4,7 @@ import { ApiResponse } from '@/lib/api-responses'
 import Stripe from 'stripe'
 import { moderateRateLimit, getRateLimitIdentifier, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { treasuryDonateSchema, validateRequest } from '@/lib/validation-schemas'
+import { trackApiError } from '@/lib/error-tracking'
 
 function getStripeClient() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -12,8 +13,9 @@ function getStripeClient() {
 }
 
 export async function POST(request: NextRequest) {
+  let user: any = null
   try {
-    const user = await getCurrentUser()
+    user = await getCurrentUser()
     if (!user) {
       return ApiResponse.unauthorized('Authentication required', 'AUTHENTICATION_REQUIRED')
     }

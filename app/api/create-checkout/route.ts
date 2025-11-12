@@ -4,6 +4,7 @@ import { ApiResponse } from '@/lib/api-responses'
 import { strictRateLimit, getRateLimitIdentifier, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { getCurrentUser } from '@/lib/auth-server'
 import { createCheckoutSchema, validateRequest } from '@/lib/validation-schemas'
+import { trackApiError } from '@/lib/error-tracking'
 
 // Initialize Stripe lazily to avoid build-time errors
 let stripe: Stripe | null = null
@@ -21,9 +22,10 @@ function getStripe(): Stripe {
 }
 
 export async function POST(request: NextRequest) {
+  let user: any = null
   try {
     // Rate limiting: 5 requests per minute for checkout (strict)
-    const user = await getCurrentUser()
+    user = await getCurrentUser()
     const identifier = await getRateLimitIdentifier(request, user?.id)
     const rateLimitResult = await checkRateLimit(strictRateLimit, identifier)
     if (rateLimitResult && !rateLimitResult.allowed) {

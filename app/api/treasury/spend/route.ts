@@ -5,8 +5,9 @@ import { moderateRateLimit, getRateLimitIdentifier, checkRateLimit, rateLimitRes
 import { trackApiError } from '@/lib/error-tracking'
 
 export async function POST(request: NextRequest) {
+  let user: any = null
   try {
-    const user = await getCurrentUser()
+    user = await getCurrentUser()
     if (!user) {
       return ApiResponse.unauthorized('Authentication required', 'AUTHENTICATION_REQUIRED')
     }
