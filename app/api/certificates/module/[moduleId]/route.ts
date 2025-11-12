@@ -42,7 +42,7 @@ export async function GET(
         completed,
         completion_date,
         purchased_at,
-        module:module_id(id, title, lesson_count, estimated_duration_minutes)
+        module:marketplace_modules(id, title, lesson_count, estimated_duration_minutes)
       `)
       .eq('user_id', user.id)
       .eq('module_id', moduleId)
@@ -81,8 +81,11 @@ export async function GET(
       )
     }
 
+    // Extract module data (Supabase returns it as an object from the join)
+    const moduleData = enrollment.module as any
+    
     console.log('✅ Enrollment found:', {
-      module: enrollment.module?.title,
+      module: moduleData?.title,
       completed: enrollment.completed,
       xp: enrollment.xp_earned
     })
@@ -90,14 +93,14 @@ export async function GET(
     // Build certificate data
     const certificateData = {
       employeeName: profile?.full_name || 'Usuario',
-      moduleName: enrollment.module?.title || 'Módulo Completado',
+      moduleName: moduleData?.title || 'Módulo Completado',
       xpEarned: enrollment.xp_earned || 250,
       issuedAt: enrollment.completion_date || enrollment.purchased_at || new Date().toISOString(),
       verificationCode: `CC-${enrollment.id.slice(0, 8).toUpperCase()}`,
       module: {
-        title: enrollment.module?.title,
-        lesson_count: enrollment.module?.lesson_count || 5,
-        duration: `${enrollment.module?.estimated_duration_minutes || 45} min`
+        title: moduleData?.title,
+        lesson_count: moduleData?.lesson_count || 5,
+        duration: `${moduleData?.estimated_duration_minutes || 45} min`
       }
     }
 
