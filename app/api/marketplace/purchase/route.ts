@@ -199,7 +199,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error: any) {
-    console.error('Marketplace purchase error:', error)
+    trackApiError(error, '/api/marketplace/purchase', 'POST', user?.id)
     return ApiResponse.serverError('Internal server error', 'MARKETPLACE_PURCHASE_ERROR', { 
       message: error.message 
     })

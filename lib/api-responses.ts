@@ -184,8 +184,13 @@ export const ApiResponse = {
    * 500 Internal Server Error - Unexpected server error
    */
   serverError: (message = 'An unexpected error occurred', code = 'INTERNAL_SERVER_ERROR', details?: any) => {
-    // Log error for monitoring
-    console.error('[API Error]', { code, message, details })
+    // Track error for monitoring
+    const { trackError } = require('@/lib/error-tracking')
+    trackError(new Error(message), {
+      code,
+      details,
+      type: 'server_error',
+    })
 
     return NextResponse.json(
       {

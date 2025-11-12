@@ -178,7 +178,7 @@ export async function POST(request: NextRequest) {
 
     return ApiResponse.ok({ url: session.url })
   } catch (error: any) {
-    console.error('Stripe checkout error:', error)
+    trackApiError(error, '/api/create-checkout', 'POST', user?.id)
     return ApiResponse.serverError('Failed to create checkout session', 'CHECKOUT_SESSION_ERROR', { message: error.message })
   }
 }

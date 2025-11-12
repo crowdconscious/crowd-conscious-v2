@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
 
     return ApiResponse.ok({ url: session.url })
   } catch (error: any) {
-    console.error('Treasury donation error:', error)
+    trackApiError(error, '/api/treasury/donate', 'POST', user?.id)
     return ApiResponse.serverError('Failed to create donation', 'TREASURY_DONATION_ERROR', { message: error.message })
   }
 }

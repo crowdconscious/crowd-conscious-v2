@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { createServerAuth, getCurrentUser } from '@/lib/auth-server'
 import { ApiResponse } from '@/lib/api-responses'
 import { moderateRateLimit, getRateLimitIdentifier, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
+import { trackApiError } from '@/lib/error-tracking'
 
 export async function POST(request: NextRequest) {
   try {
@@ -93,7 +94,7 @@ export async function POST(request: NextRequest) {
       message: 'Successfully sponsored from community pool'
     })
   } catch (error: any) {
-    console.error('Treasury spending error:', error)
+    trackApiError(error, '/api/treasury/spend', 'POST', user?.id)
     return ApiResponse.serverError('Failed to spend from treasury', 'TREASURY_SPEND_SERVER_ERROR', { message: error.message })
   }
 }

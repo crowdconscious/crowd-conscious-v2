@@ -5,6 +5,7 @@ import { createSponsorshipPaymentIntent } from '@/lib/stripe'
 import { ApiResponse } from '@/lib/api-responses'
 import { strictRateLimit, getRateLimitIdentifier, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { createPaymentIntentSchema, validateRequest } from '@/lib/validation-schemas'
+import { trackApiError } from '@/lib/error-tracking'
 
 export async function POST(request: NextRequest) {
   try {
@@ -104,7 +105,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error: any) {
-    console.error('Error creating payment intent:', error)
+    trackApiError(error, '/api/payments/create-intent', 'POST', user?.id)
     return ApiResponse.serverError('Internal server error', 'PAYMENT_INTENT_ERROR', { message: error.message })
   }
 }
