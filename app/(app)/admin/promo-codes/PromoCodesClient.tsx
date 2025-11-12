@@ -74,11 +74,22 @@ export default function PromoCodesClient({
   const handleCreateCode = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    // Validate required fields
+    if (!formData.code.trim()) {
+      alert('❌ El código es requerido')
+      return
+    }
+
+    if (formData.discount_type !== 'free' && !formData.discount_value) {
+      alert('❌ El valor del descuento es requerido')
+      return
+    }
+
     const payload = {
       code: formData.code.toUpperCase().trim(),
       description: formData.description || null,
       discount_type: formData.discount_type,
-      discount_value: parseFloat(formData.discount_value),
+      discount_value: formData.discount_type === 'free' ? 100 : parseFloat(formData.discount_value),
       max_uses: formData.max_uses ? parseInt(formData.max_uses) : null,
       max_uses_per_user: parseInt(formData.max_uses_per_user),
       valid_until: formData.valid_until || null,
@@ -89,6 +100,8 @@ export default function PromoCodesClient({
       created_by: currentUserId
     }
 
+    console.log('🎫 Creating promo code:', payload)
+
     try {
       const response = await fetch('/api/admin/promo-codes/create', {
         method: 'POST',
@@ -96,8 +109,11 @@ export default function PromoCodesClient({
         body: JSON.stringify(payload)
       })
 
+      console.log('📡 Response status:', response.status)
+
       if (response.ok) {
         const { promoCode } = await response.json()
+        console.log('✅ Promo code created:', promoCode)
         setPromoCodes([promoCode, ...promoCodes])
         setShowCreateForm(false)
         // Reset form
@@ -117,11 +133,12 @@ export default function PromoCodesClient({
         alert('✅ Código promocional creado exitosamente')
       } else {
         const error = await response.json()
-        alert(`❌ Error: ${error.error}`)
+        console.error('❌ API Error:', error)
+        alert(`❌ Error: ${error.error || 'Error desconocido'}`)
       }
     } catch (error) {
-      console.error('Error creating promo code:', error)
-      alert('❌ Error al crear el código')
+      console.error('❌ Network Error creating promo code:', error)
+      alert('❌ Error al crear el código. Revisa la consola para más detalles.')
     }
   }
 

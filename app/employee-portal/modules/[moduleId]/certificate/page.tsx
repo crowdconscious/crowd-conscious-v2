@@ -31,11 +31,27 @@ export default function CertificatePage({ params }: { params: Promise<{ moduleId
         setModule(moduleData.module)
       }
 
-      // Fetch the certificate for this module
-      const response = await fetch('/api/certificates/latest')
-      if (response.ok) {
-        const data = await response.json()
-        setCertificate(data)
+      // Fetch the user's enrollment for THIS SPECIFIC MODULE to get certificate data
+      const enrollmentResponse = await fetch(`/api/corporate/progress/enrollment?moduleId=${modId}`)
+      if (enrollmentResponse.ok) {
+        const enrollmentData = await enrollmentResponse.json()
+        // Create certificate object from enrollment data
+        setCertificate({
+          employeeName: enrollmentData.profile?.full_name || 'Usuario',
+          moduleName: enrollmentData.module?.title || moduleData.module?.title,
+          xpEarned: enrollmentData.xp_earned || 250,
+          issuedAt: enrollmentData.completion_date || new Date().toISOString(),
+          verificationCode: enrollmentData.id ? `CC-${enrollmentData.id.slice(0, 8).toUpperCase()}` : 'PENDING'
+        })
+      } else {
+        // Fallback: create certificate from module data only
+        setCertificate({
+          employeeName: 'Usuario',
+          moduleName: moduleData.module?.title,
+          xpEarned: 250,
+          issuedAt: new Date().toISOString(),
+          verificationCode: 'PENDING'
+        })
       }
       setLoading(false)
     } catch (error) {
