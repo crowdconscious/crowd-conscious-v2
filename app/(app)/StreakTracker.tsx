@@ -50,18 +50,28 @@ export default function StreakTracker() {
           p_user_id: user.id 
         })
         
-        const { error } = await Promise.race([streakPromise, timeoutPromise]) as any
-        
-        if (error) {
-          // Check if it's a "function does not exist" or "table does not exist" error
-          if (error.code === '42883' || error.code === '42P01' || error.message?.includes('does not exist')) {
-            // Silently skip - gamification features are optional
-            console.log('ℹ️ Streak tracker: Gamification features not enabled (optional)')
+        try {
+          const { error } = await Promise.race([streakPromise, timeoutPromise]) as any
+          
+          if (error) {
+            // Check if it's a "function does not exist" or "table does not exist" error
+            if (error.code === '42883' || error.code === '42P01' || error.message?.includes('does not exist') || error.message?.includes('404')) {
+              // Silently skip - gamification features are optional
+              // Don't log as error - this is expected if the function isn't deployed
+              return
+            } else {
+              console.error('❌ Error updating streak:', error)
+            }
           } else {
-            console.error('❌ Error updating streak:', error)
+            console.log('✅ Daily streak tracked successfully')
           }
-        } else {
-          console.log('✅ Daily streak tracked successfully')
+        } catch (rpcError: any) {
+          // Handle RPC call failures gracefully
+          if (rpcError.message?.includes('timeout') || rpcError.message?.includes('404') || rpcError.code === '42883') {
+            // Silently skip - gamification features are optional
+            return
+          }
+          throw rpcError
         }
         
         setHasTracked(true)

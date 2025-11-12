@@ -28,7 +28,7 @@ type UsageStat = {
 
 export default function PromoCodesClient({
   initialPromoCodes,
-  usageStats,
+  usageStats: initialUsageStats,
   currentUserId
 }: {
   initialPromoCodes: PromoCode[]
@@ -36,8 +36,10 @@ export default function PromoCodesClient({
   currentUserId: string
 }) {
   const [promoCodes, setPromoCodes] = useState(initialPromoCodes)
+  const [usageStats, setUsageStats] = useState(initialUsageStats)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [copiedCode, setCopiedCode] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
 
   // Form state
   const [formData, setFormData] = useState({
@@ -53,6 +55,30 @@ export default function PromoCodesClient({
     minimum_purchase_amount: '0',
     notes: ''
   })
+
+  // Fetch updated promo codes and usage stats
+  const refreshData = async () => {
+    setLoading(true)
+    try {
+      const response = await fetch('/api/admin/promo-codes/stats')
+      if (response.ok) {
+        const responseData = await response.json()
+        // ✅ PHASE 4: Parse standardized API response format
+        const data = responseData.success !== undefined ? responseData.data : responseData
+        
+        if (data.promoCodes) {
+          setPromoCodes(data.promoCodes)
+        }
+        if (data.usageStats) {
+          setUsageStats(data.usageStats)
+        }
+      }
+    } catch (error) {
+      console.error('Error refreshing promo codes:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const calculateStats = () => {
     const totalCodes = promoCodes.length
@@ -113,9 +139,17 @@ export default function PromoCodesClient({
 
       if (response.ok) {
         const responseData = await response.json()
+        console.log('📡 Full response:', responseData)
         // ✅ PHASE 4: Parse standardized API response format
         const data = responseData.success !== undefined ? responseData.data : responseData
         const promoCode = data.promoCode || data
+        
+        if (!promoCode || !promoCode.id) {
+          console.error('❌ Invalid promo code response:', data)
+          alert('❌ Error: Respuesta inválida del servidor')
+          return
+        }
+        
         console.log('✅ Promo code created:', promoCode)
         setPromoCodes([promoCode, ...promoCodes])
         setShowCreateForm(false)
@@ -133,6 +167,8 @@ export default function PromoCodesClient({
           minimum_purchase_amount: '0',
           notes: ''
         })
+        // Refresh stats after creation
+        await refreshData()
         alert('✅ Código promocional creado exitosamente')
       } else {
         const errorData = await response.json()
@@ -159,6 +195,8 @@ export default function PromoCodesClient({
         setPromoCodes(promoCodes.map(code => 
           code.id === id ? { ...code, active: !currentActive } : code
         ))
+        // Refresh stats after toggle
+        await refreshData()
       }
     } catch (error) {
       console.error('Error toggling code:', error)
@@ -179,13 +217,24 @@ export default function PromoCodesClient({
           <h1 className="text-3xl font-bold text-slate-900">Códigos Promocionales</h1>
           <p className="text-slate-600 mt-1">Gestiona descuentos para socios estratégicos y promociones</p>
         </div>
-        <button
-          onClick={() => setShowCreateForm(!showCreateForm)}
-          className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg font-medium hover:scale-105 transition-transform flex items-center gap-2"
-        >
-          <Plus className="w-5 h-5" />
-          Crear Código
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={refreshData}
+            disabled={loading}
+            className="border-2 border-purple-600 text-purple-600 px-4 py-3 rounded-lg font-medium hover:bg-purple-50 transition-colors disabled:opacity-50 flex items-center gap-2"
+            title="Actualizar estadísticas"
+          >
+            <TrendingUp className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+            {loading ? 'Actualizando...' : 'Actualizar'}
+          </button>
+          <button
+            onClick={() => setShowCreateForm(!showCreateForm)}
+            className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg font-medium hover:scale-105 transition-transform flex items-center gap-2"
+          >
+            <Plus className="w-5 h-5" />
+            Crear Código
+          </button>
+        </div>
       </div>
 
       {/* Stats */}
