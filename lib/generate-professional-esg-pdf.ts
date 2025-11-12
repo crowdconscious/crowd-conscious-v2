@@ -2,7 +2,6 @@ import { jsPDF } from 'jspdf'
 import 'jspdf-autotable'
 import * as fs from 'fs'
 import * as path from 'path'
-import sharp from 'sharp'
 
 /**
  * Generate Professional ESG Report PDF
@@ -41,43 +40,17 @@ export async function generateProfessionalESGPDF(reportData: any): Promise<Buffe
     doc.rect(0, 0, pageWidth, 45, 'F')
   }
 
-  // Logo image - Crowd Conscious logo converted to white for visibility on gradient
+  // Logo image - Use the white logo uploaded by user
   try {
-    const logoPath = path.join(process.cwd(), 'public', 'images', 'logo.png')
+    const whiteLogoPath = path.join(process.cwd(), 'public', 'images', 'logo white.png')
     
-    if (fs.existsSync(logoPath)) {
-      // Convert logo to white using Sharp
-      // This extracts the alpha channel and makes all pixels white while preserving transparency
-      const whiteLogoBuffer = await sharp(logoPath)
-        .ensureAlpha() // Make sure we have an alpha channel
-        .extractChannel('alpha') // Extract the alpha (transparency) channel
-        .toColourspace('b-w') // Convert to black and white
-        .negate() // Invert (so transparent becomes black, opaque becomes white)
-        .toBuffer()
+    if (fs.existsSync(whiteLogoPath)) {
+      const logoBuffer = fs.readFileSync(whiteLogoPath)
+      const logoBase64 = `data:image/png;base64,${logoBuffer.toString('base64')}`
       
-      // Create a white PNG with the original's alpha channel
-      const whiteLogo = await sharp({
-        create: {
-          width: 512, // Will be resized by PDF
-          height: 512,
-          channels: 4,
-          background: { r: 255, g: 255, b: 255, alpha: 1 }
-        }
-      })
-        .composite([
-          {
-            input: logoPath,
-            blend: 'dest-in' // Use original as alpha mask
-          }
-        ])
-        .png()
-        .toBuffer()
-      
-      const logoBase64 = `data:image/png;base64,${whiteLogo.toString('base64')}`
-      
-      // Add logo image (top-left, proper size)
-      const logoWidth = 30
-      const logoHeight = 9
+      // Add white logo image (top-left, proper size)
+      const logoWidth = 35
+      const logoHeight = 10.5 // Maintains aspect ratio for typical logo
       const logoX = 15
       const logoY = 8
       
@@ -90,7 +63,7 @@ export async function generateProfessionalESGPDF(reportData: any): Promise<Buffe
       doc.text('CROWDCONSCIOUS', 20, 15)
     }
   } catch (error) {
-    console.error('Error processing logo for PDF:', error)
+    console.error('Error loading white logo for PDF:', error)
     // Fallback: white text logo
     doc.setFontSize(18)
     doc.setTextColor(255, 255, 255)

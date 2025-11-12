@@ -64,15 +64,21 @@ export default function CertificatePage({ params }: { params: Promise<{ moduleId
       }
 
       // Build certificate with all available data
+      // Priority: Use enrollment data first, then fall back to fetched module
+      const moduleName = enrollmentData?.module?.title || fetchedModule?.title || 'Módulo Completado'
+      const verificationId = enrollmentData?.id || fetchedModule?.id || null
+      
       const certData = {
         employeeName: userName,
-        moduleName: fetchedModule?.title || enrollmentData?.module?.title || 'Módulo Completado',
+        moduleName: moduleName,
         xpEarned: enrollmentData?.xp_earned || 250,
         issuedAt: enrollmentData?.completion_date || new Date().toISOString(),
-        verificationCode: enrollmentData?.id ? `CC-${enrollmentData.id.slice(0, 8).toUpperCase()}` : 'PENDING'
+        verificationCode: verificationId ? `CC-${verificationId.slice(0, 8).toUpperCase()}` : 'PENDING'
       }
       
       console.log('📜 Final certificate data:', certData)
+      console.log('📍 Debug - fetchedModule?.title:', fetchedModule?.title)
+      console.log('📍 Debug - fetchedModule?.id:', fetchedModule?.id)
       setCertificate(certData)
 
       setLoading(false)
