@@ -106,10 +106,10 @@ export async function POST(req: NextRequest) {
     // Always add current lesson since we're about to mark it as completed
     uniqueLessons.add(lessonId)
     
-    const currentCompleted = uniqueLessons.size
+    let currentCompleted = uniqueLessons.size
     // 🔥 FIX: Dynamic calculation based on actual lesson count
-    const newPercentage = Math.round((currentCompleted / totalLessons) * 100)
-    const moduleComplete = currentCompleted >= totalLessons
+    let newPercentage = Math.round((currentCompleted / totalLessons) * 100)
+    let moduleComplete = currentCompleted >= totalLessons
     
     // Only award XP if this is a new completion
     const currentXP = enrollment.xp_earned || 0
