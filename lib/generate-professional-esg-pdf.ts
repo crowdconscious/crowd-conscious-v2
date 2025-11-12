@@ -40,48 +40,22 @@ export async function generateProfessionalESGPDF(reportData: any): Promise<Buffe
     doc.rect(0, 0, pageWidth, 45, 'F')
   }
 
-  // Logo image - Use the white logo uploaded by user (auto aspect ratio)
-  try {
-    const whiteLogoPath = path.join(process.cwd(), 'public', 'images', 'logo white.png')
-    
-    if (fs.existsSync(whiteLogoPath)) {
-      const logoBuffer = fs.readFileSync(whiteLogoPath)
-      const logoBase64 = `data:image/png;base64,${logoBuffer.toString('base64')}`
-      
-      // Add white logo image (top-left)
-      // Only specify width, let PDF maintain aspect ratio
-      const logoWidth = 40
-      const logoX = 15
-      const logoY = 8
-      
-      // Using addImage with only width specified maintains aspect ratio
-      doc.addImage(logoBase64, 'PNG', logoX, logoY, logoWidth, 0, undefined, 'FAST')
-    } else {
-      // Fallback: white text logo
-      doc.setFontSize(18)
-      doc.setTextColor(255, 255, 255)
-      doc.setFont('helvetica', 'bold')
-      doc.text('CROWDCONSCIOUS', 20, 15)
-    }
-  } catch (error) {
-    console.error('Error loading white logo for PDF:', error)
-    // Fallback: white text logo
-    doc.setFontSize(18)
-    doc.setTextColor(255, 255, 255)
-    doc.setFont('helvetica', 'bold')
-    doc.text('CROWDCONSCIOUS', 20, 15)
-  }
+  // Logo - Use simple white text (no image to avoid overlap)
+  doc.setFontSize(18)
+  doc.setTextColor(255, 255, 255)
+  doc.setFont('helvetica', 'bold')
+  doc.text('CROWDCONSCIOUS', 20, 14)
 
-  // Tagline - positioned below logo
+  // Tagline - positioned below logo  
   doc.setFontSize(8)
   doc.setTextColor(255, 255, 255)
   doc.setFont('helvetica', 'normal')
-  doc.text('Impulsando el cambio a través de la educación', 20, 23)
+  doc.text('Impulsando el cambio a través de la educación', 20, 20)
 
-  // Report Title
+  // Report Title - moved down to avoid overlap
   doc.setFontSize(16)
   doc.setFont('helvetica', 'bold')
-  doc.text('REPORTE ESG', 20, 37)
+  doc.text('REPORTE ESG', 20, 35)
   
   // Report Type Badge
   const reportTypeText = reportData.report_type === 'individual' 
