@@ -52,7 +52,16 @@ export default function ModuleOverviewPage({ params }: { params: Promise<{ modul
         return
       }
       
-      const data = await response.json()
+      const responseData = await response.json()
+      // ✅ PHASE 4: Handle standardized API response format
+      const data = responseData.success !== undefined ? responseData.data : responseData
+      
+      if (!data?.module) {
+        console.error('❌ Module data not found in response:', responseData)
+        setModule(cleanAirModule)
+        return
+      }
+      
       console.log('✅ Module loaded:', data.module?.title)
       
       // Transform to course player format

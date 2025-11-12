@@ -28,9 +28,11 @@ const getModuleById = async (id: string) => {
       return null
     }
     
-    const data = await response.json()
-    console.log('✅ Server: Module fetched:', data.module?.title)
-    return data.module
+    const responseData = await response.json()
+    // ✅ PHASE 4: Handle standardized API response format
+    const data = responseData.success !== undefined ? responseData.data : responseData
+    console.log('✅ Server: Module fetched:', data?.module?.title)
+    return data?.module || null
   } catch (error) {
     console.error('💥 Server: Error fetching module:', error)
     return null
