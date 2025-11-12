@@ -95,16 +95,16 @@ export async function POST(req: NextRequest) {
 
     const isNewCompletion = !existingResponse
     
-    // Get all unique completed lessons for this enrollment
+    // ✅ CRITICAL FIX: Get only COMPLETED lessons (filter by completed = true)
     const { data: allCompletedLessons } = await supabase
       .from('lesson_responses')
       .select('lesson_id')
-      .eq('enrollment_id', enrollment.id)  // FIXED: use enrollment_id
+      .eq('enrollment_id', enrollment.id)
+      .eq('completed', true)  // ✅ CRITICAL: Only count completed lessons!
     
     const uniqueLessons = new Set(allCompletedLessons?.map(r => r.lesson_id) || [])
-    if (isNewCompletion) {
-      uniqueLessons.add(lessonId) // Add current lesson if it's new
-    }
+    // Always add current lesson since we're about to mark it as completed
+    uniqueLessons.add(lessonId)
     
     const currentCompleted = uniqueLessons.size
     // 🔥 FIX: Dynamic calculation based on actual lesson count
@@ -278,6 +278,44 @@ export async function POST(req: NextRequest) {
       } else {
         console.log('✅ Lesson responses stored successfully!')
         console.log('✅ Inserted/Updated rows:', upsertedData)
+        
+        // ✅ CRITICAL FIX: Recalculate progress AFTER saving to ensure accuracy
+        const { data: updatedCompletedLessons } = await supabase
+          .from('lesson_responses')
+          .select('lesson_id')
+          .eq('enrollment_id', enrollment.id)
+          .eq('completed', true)
+        
+        const finalCompletedCount = new Set(updatedCompletedLessons?.map(r => r.lesson_id) || []).size
+        const finalPercentage = Math.round((finalCompletedCount / totalLessons) * 100)
+        const finalModuleComplete = finalCompletedCount >= totalLessons
+        
+        // Update enrollment with final accurate progress if it changed
+        if (finalPercentage !== newPercentage || finalModuleComplete !== moduleComplete) {
+          console.log('🔄 Recalculating progress after save:', {
+            oldPercentage: newPercentage,
+            newPercentage: finalPercentage,
+            oldCompleted: moduleComplete,
+            newCompleted: finalModuleComplete,
+            oldCount: currentCompleted,
+            newCount: finalCompletedCount
+          })
+          
+          await supabase
+            .from('course_enrollments')
+            .update({
+              progress_percentage: finalPercentage,
+              completed: finalModuleComplete,
+              completed_at: finalModuleComplete ? new Date().toISOString() : null,
+              completion_date: finalModuleComplete ? new Date().toISOString() : null
+            })
+            .eq('id', enrollment.id)
+          
+          // Update return values
+          newPercentage = finalPercentage
+          moduleComplete = finalModuleComplete
+          currentCompleted = finalCompletedCount
+        }
       }
     } catch (responseStoreError: any) {
       console.error('❌ CRITICAL: Exception storing responses:', responseStoreError)
@@ -297,12 +335,15 @@ export async function POST(req: NextRequest) {
     })
 
     return ApiResponse.ok({
-      isNewCompletion,
-      xpEarned: isNewCompletion ? (xpEarned || 250) : 0,
-      newXP,
-      moduleComplete,
-      completedLessons: currentCompleted,
-      completionPercentage: newPercentage
+      success: true,
+      data: {
+        isNewCompletion,
+        xpEarned: isNewCompletion ? (xpEarned || 50) : 0,
+        newXP,
+        moduleComplete,
+        completedLessons: currentCompleted,
+        completionPercentage: newPercentage
+      }
     })
 
   } catch (error: any) {
