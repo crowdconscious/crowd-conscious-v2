@@ -14,6 +14,7 @@ export default function CertificatePage({ params }: { params: Promise<{ moduleId
   const [certificate, setCertificate] = useState<any>(null)
   const [module, setModule] = useState<any>(null)
   const [copied, setCopied] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     params.then((p) => {
@@ -26,12 +27,12 @@ export default function CertificatePage({ params }: { params: Promise<{ moduleId
     try {
       console.log('🎓 Loading certificate for module:', modId)
       
-      // Step 1: Get user profile (simple, always works)
+      // Step 1: Get user profile
       const profileRes = await fetch('/api/user/profile')
       const profile = profileRes.ok ? await profileRes.json() : null
       const userName = profile?.full_name || 'Usuario'
       
-      // Step 2: Get module data (this API WORKS - it's used in module page)
+      // Step 2: Get module data
       const moduleRes = await fetch(`/api/marketplace/modules/${modId}`)
       const moduleData = moduleRes.ok ? await moduleRes.json() : null
       const moduleName = moduleData?.module?.title || 'Módulo Completado'
@@ -40,16 +41,71 @@ export default function CertificatePage({ params }: { params: Promise<{ moduleId
         setModule(moduleData.module)
       }
       
-      // Step 3: Build certificate with what we have
+      // ✅ CRITICAL FIX: Get enrollment ID to generate correct verification code
+      // Verification code must be based on enrollment ID, not module ID!
+      const progressRes = await fetch(`/api/corporate/progress/module/${modId}`)
+      const progressResponseData = progressRes.ok ? await progressRes.json() : null
+      
+      // Extract enrollment ID from progress API (now returns enrollmentId)
+      let enrollmentId: string | null = null
+      if (progressResponseData) {
+        const progressData = progressResponseData.success !== undefined ? progressResponseData.data : progressResponseData
+        enrollmentId = progressData?.enrollmentId || null
+        
+        if (enrollmentId) {
+          console.log('✅ Found enrollment ID from progress API:', enrollmentId)
+        } else {
+          console.warn('⚠️ Progress API did not return enrollment ID')
+        }
+      }
+      
+      // ✅ FALLBACK: Try to get from my-certificates API if progress API didn't return it
+      if (!enrollmentId) {
+        try {
+          const certsRes = await fetch('/api/certificates/my-certificates')
+          if (certsRes.ok) {
+            const certsData = await certsRes.json()
+            const cert = certsData.certificates?.find((c: any) => c.moduleId === modId)
+            if (cert && cert.id) {
+              enrollmentId = cert.id
+              console.log('✅ Found enrollment ID from certificates API:', enrollmentId)
+            }
+          }
+        } catch (certError) {
+          console.error('Could not fetch from certificates API:', certError)
+        }
+      }
+      
+      // Extract XP from progress data
+      const progressData = progressResponseData?.success !== undefined 
+        ? progressResponseData.data 
+        : progressResponseData
+      const xpEarned = progressData?.xpEarned || 250
+      
+      // Build certificate with enrollment-based verification code
       setCertificate({
         employeeName: userName,
         moduleName: moduleName,
-        xpEarned: 250, // Default XP
+        xpEarned: xpEarned,
         issuedAt: new Date().toISOString(),
-        verificationCode: `CC-${modId.slice(0, 8).toUpperCase()}`
+        // ✅ CRITICAL FIX: Use enrollment ID (first 8 chars) for verification code
+        // This MUST match what the verify API expects!
+        verificationCode: enrollmentId 
+          ? `CC-${enrollmentId.slice(0, 8).toUpperCase()}`
+          : null // Don't generate invalid code if enrollment not found
       })
       
-      console.log('✅ Certificate loaded:', { userName, moduleName })
+      if (!enrollmentId) {
+        console.error('❌ CRITICAL: Cannot generate certificate - no enrollment ID found for module:', modId)
+        setError('No se pudo encontrar la inscripción para este módulo. Por favor completa el módulo primero.')
+      }
+      
+      console.log('✅ Certificate loaded:', { 
+        userName, 
+        moduleName, 
+        enrollmentId,
+        verificationCode: enrollmentId ? `CC-${enrollmentId.slice(0, 8).toUpperCase()}` : 'FALLBACK'
+      })
       setLoading(false)
     } catch (error) {
       console.error('💥 Error loading certificate:', error)

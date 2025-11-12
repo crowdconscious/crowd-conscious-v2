@@ -15,11 +15,14 @@ export async function GET(
 
     const supabase = await createClient()
 
+    // ✅ FIX: Decode URL-encoded code and remove any trailing colons/numbers (e.g., "CC-53D0B2FD:1" -> "CC-53D0B2FD")
+    const decodedCode = decodeURIComponent(code).split(':')[0].trim()
+    
     // Verification codes are in format: CC-XXXXXXXX (where XXXXXXXX is first 8 chars of enrollment ID)
     // Extract the enrollment ID prefix from the code
-    const codePrefix = code.replace('CC-', '').toLowerCase()
+    const codePrefix = decodedCode.replace('CC-', '').replace('cc-', '').toLowerCase()
 
-    console.log('🔍 Verifying certificate with code:', code)
+    console.log('🔍 Verifying certificate with code:', decodedCode)
     console.log('🔍 Looking for enrollment IDs starting with:', codePrefix)
 
     // Get ALL completed enrollments and filter in JavaScript
@@ -48,7 +51,9 @@ export async function GET(
     console.log('📜 Matching enrollments:', enrollments.length)
 
     if (enrollments.length === 0) {
-      console.log('❌ No enrollment found matching code:', code)
+      console.log('❌ No enrollment found matching code:', decodedCode)
+      console.log('❌ Searched for prefix:', codePrefix)
+      console.log('❌ Total completed enrollments checked:', allEnrollments?.length || 0)
       return ApiResponse.notFound('Certificado', 'CERTIFICATE_NOT_FOUND')
     }
 
@@ -64,7 +69,7 @@ export async function GET(
 
     return ApiResponse.ok({
       valid: true,
-      verificationCode: code.toUpperCase(),
+      verificationCode: decodedCode.toUpperCase(),
       certificateHolder: userData?.full_name || 'Usuario',
       moduleName: moduleData?.title || 'Módulo Completado',
       issuedAt: enrollment.completed_at || enrollment.completion_date || enrollment.purchased_at,  // ✅ PHASE 3: Use completed_at first

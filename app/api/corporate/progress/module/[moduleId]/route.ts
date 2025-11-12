@@ -60,6 +60,7 @@ export async function GET(
     })
 
     return ApiResponse.ok({
+      enrollmentId: enrollment.id,  // ✅ CRITICAL: Return enrollment ID for certificate verification code
       completedLessons,
       xpEarned: enrollment.xp_earned || 0,
       completionPercentage: enrollment.progress_percentage || 0

@@ -35,15 +35,31 @@ function VerifyContent() {
 
     try {
       const response = await fetch(`/api/certificates/verify/${encodeURIComponent(codeToVerify.trim())}`)
-      const data = await response.json()
+      const responseData = await response.json()
 
-      if (response.ok && data.valid) {
-        setResult(data)
+      // ✅ PHASE 4: Handle standardized API response format
+      if (response.ok) {
+        const data = responseData.success !== undefined ? responseData.data : responseData
+        
+        if (data && data.valid) {
+          setResult(data)
+        } else {
+          // Extract error message from standardized format
+          const errorMsg = responseData.success === false && responseData.error
+            ? responseData.error.message
+            : responseData.error?.message || responseData.message || 'Certificado no encontrado'
+          setError(errorMsg)
+        }
       } else {
-        setError(data.error || 'Certificado no encontrado')
+        // Error response - extract message from standardized format
+        const errorMsg = responseData.success === false && responseData.error
+          ? responseData.error.message
+          : responseData.error?.message || responseData.message || 'Certificado no encontrado'
+        setError(errorMsg)
       }
-    } catch (err) {
-      setError('Error al verificar el certificado')
+    } catch (err: any) {
+      console.error('Error verifying certificate:', err)
+      setError(err?.message || 'Error al verificar el certificado. Por favor intenta nuevamente.')
     } finally {
       setLoading(false)
     }
