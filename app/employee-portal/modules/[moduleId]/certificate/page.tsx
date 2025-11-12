@@ -24,11 +24,13 @@ export default function CertificatePage({ params }: { params: Promise<{ moduleId
 
   const loadCertificate = async (modId: string) => {
     try {
-      // Fetch the actual module data
+      // Fetch the actual module data first
+      let fetchedModule: any = null
       const moduleResponse = await fetch(`/api/modules/${modId}`)
       if (moduleResponse.ok) {
         const moduleData = await moduleResponse.json()
-        setModule(moduleData.module)
+        fetchedModule = moduleData.module
+        setModule(fetchedModule)
       }
 
       // Fetch the user's enrollment for THIS SPECIFIC MODULE to get certificate data
@@ -38,7 +40,7 @@ export default function CertificatePage({ params }: { params: Promise<{ moduleId
         // Create certificate object from enrollment data
         setCertificate({
           employeeName: enrollmentData.profile?.full_name || 'Usuario',
-          moduleName: enrollmentData.module?.title || moduleData.module?.title,
+          moduleName: enrollmentData.module?.title || fetchedModule?.title || 'Módulo Completado',
           xpEarned: enrollmentData.xp_earned || 250,
           issuedAt: enrollmentData.completion_date || new Date().toISOString(),
           verificationCode: enrollmentData.id ? `CC-${enrollmentData.id.slice(0, 8).toUpperCase()}` : 'PENDING'
@@ -47,7 +49,7 @@ export default function CertificatePage({ params }: { params: Promise<{ moduleId
         // Fallback: create certificate from module data only
         setCertificate({
           employeeName: 'Usuario',
-          moduleName: moduleData.module?.title,
+          moduleName: fetchedModule?.title || 'Módulo Completado',
           xpEarned: 250,
           issuedAt: new Date().toISOString(),
           verificationCode: 'PENDING'
