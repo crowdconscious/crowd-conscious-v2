@@ -2,7 +2,8 @@ import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { ApiResponse } from '@/lib/api-responses'
 
-export const dynamic = 'force-dynamic'
+// Cache module stats for 2 minutes (stats change more frequently than listings)
+export const revalidate = 120
 
 export async function GET(request: NextRequest) {
   try {

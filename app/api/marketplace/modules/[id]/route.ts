@@ -2,9 +2,8 @@ import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { NextRequest } from 'next/server'
 import { ApiResponse } from '@/lib/api-responses'
 
-// Disable caching for this route - always fetch fresh data
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
+// Cache module details for 5 minutes (public data, same for all users)
+export const revalidate = 300
 
 export async function GET(
   request: NextRequest,

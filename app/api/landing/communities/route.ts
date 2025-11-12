@@ -1,6 +1,9 @@
 import { createServerAuth } from '@/lib/auth-server'
 import { ApiResponse } from '@/lib/api-responses'
 
+// Cache landing page communities for 5 minutes (public data, same for all users)
+export const revalidate = 300
+
 export async function GET() {
   try {
     const supabase = await createServerAuth()

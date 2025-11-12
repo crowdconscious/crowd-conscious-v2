@@ -1,9 +1,8 @@
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { ApiResponse } from '@/lib/api-responses'
 
-// Disable caching - always fetch fresh module data
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
+// Cache module listings for 5 minutes (public data, same for all users)
+export const revalidate = 300
 
 export async function GET() {
   try {

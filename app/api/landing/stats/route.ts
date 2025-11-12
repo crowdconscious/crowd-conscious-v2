@@ -1,6 +1,9 @@
 import { createServerAuth } from '@/lib/auth-server'
 import { ApiResponse } from '@/lib/api-responses'
 
+// Cache landing page stats for 10 minutes (public data, changes infrequently)
+export const revalidate = 600
+
 export async function GET() {
   try {
     const supabase = await createServerAuth()
