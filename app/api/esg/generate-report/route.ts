@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
 
     // Return format based on request
     if (format === 'json') {
-      return NextResponse.json(reportData)
+      return ApiResponse.ok(reportData)
     } else if (format === 'excel') {
       const excelBuffer = await generateExcelReport(reportData)
       // Convert Buffer to Uint8Array for NextResponse compatibility

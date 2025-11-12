@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { ApiResponse } from '@/lib/api-responses'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest) {
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     
     if (userError || !user) {
-      return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+      return ApiResponse.unauthorized('Please log in to save tool results', 'AUTHENTICATION_REQUIRED')
     }
 
     const body = await request.json()
@@ -74,16 +75,12 @@ export async function POST(request: NextRequest) {
 
       if (error) {
         console.error('❌ Error updating tool result:', error)
-        return NextResponse.json({ 
-          error: 'Error al actualizar resultado',
-          details: error.message 
-        }, { status: 500 })
+        return ApiResponse.serverError('Error al actualizar resultado', 'TOOL_RESULT_UPDATE_ERROR', { message: error.message })
       }
 
       console.log('✅ Tool result updated in activity_responses:', existingResponse.id)
 
-      return NextResponse.json({
-        success: true,
+      return ApiResponse.ok({
         response_id: existingResponse.id,
         message: 'Resultado guardado exitosamente',
         action: 'updated'
@@ -118,28 +115,21 @@ export async function POST(request: NextRequest) {
 
       if (error) {
         console.error('❌ Error creating tool result:', error)
-        return NextResponse.json({ 
-          error: 'Error al guardar resultado',
-          details: error.message 
-        }, { status: 500 })
+        return ApiResponse.serverError('Error al guardar resultado', 'TOOL_RESULT_CREATION_ERROR', { message: error.message })
       }
 
       console.log('✅ Tool result created in activity_responses:', data.id)
 
-      return NextResponse.json({
-        success: true,
+      return ApiResponse.ok({
         response_id: data.id,
         message: 'Resultado guardado exitosamente',
         action: 'created'
       })
     }
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Critical error saving tool result:', error)
-    return NextResponse.json({ 
-      error: 'Error del servidor',
-      details: error instanceof Error ? error.message : 'Error desconocido'
-    }, { status: 500 })
+    return ApiResponse.serverError('Error del servidor', 'TOOL_RESULT_SERVER_ERROR', { message: error.message })
   }
 }
 
@@ -153,7 +143,7 @@ export async function GET(request: NextRequest) {
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     
     if (userError || !user) {
-      return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+      return ApiResponse.unauthorized('Please log in to retrieve tool results', 'AUTHENTICATION_REQUIRED')
     }
 
     const { searchParams } = new URL(request.url)
@@ -162,9 +152,7 @@ export async function GET(request: NextRequest) {
     const tool_name = searchParams.get('tool_name')
 
     if (!lesson_id || !module_id) {
-      return NextResponse.json({ 
-        error: 'lesson_id and module_id required' 
-      }, { status: 400 })
+      return ApiResponse.badRequest('lesson_id and module_id required', 'MISSING_REQUIRED_PARAMS')
     }
 
     // Get enrollment_id
@@ -176,7 +164,7 @@ export async function GET(request: NextRequest) {
       .single()
 
     if (!enrollment) {
-      return NextResponse.json({ tool_data: null })
+      return ApiResponse.ok({ tool_data: null })
     }
 
     // Get activity_response with tool data
@@ -190,30 +178,27 @@ export async function GET(request: NextRequest) {
       .single()
 
     if (!response) {
-      return NextResponse.json({ tool_data: null })
+      return ApiResponse.ok({ tool_data: null })
     }
 
     // Extract specific tool data if tool_name provided
     if (tool_name) {
       const toolData = response.custom_responses?.[`tool_${tool_name}`]
-      return NextResponse.json({ 
+      return ApiResponse.ok({ 
         tool_data: toolData || null,
         tool_name
       })
     }
 
     // Return all tool data
-    return NextResponse.json({ 
+    return ApiResponse.ok({ 
       tool_data: response.custom_responses || {},
       all_tools: true
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Error fetching tool results:', error)
-    return NextResponse.json({ 
-      error: 'Error del servidor',
-      details: error instanceof Error ? error.message : 'Error desconocido'
-    }, { status: 500 })
+    return ApiResponse.serverError('Error del servidor', 'TOOL_RESULT_FETCH_ERROR', { message: error.message })
   }
 }
 

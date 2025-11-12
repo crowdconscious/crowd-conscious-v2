@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { ApiResponse } from '@/lib/api-responses'
 
@@ -190,7 +190,7 @@ export async function GET(req: NextRequest) {
       return generateCSVReport(report)
     }
 
-    return NextResponse.json(report)
+    return ApiResponse.ok(report)
 
   } catch (error: any) {
     console.error('Error generating impact report:', error)

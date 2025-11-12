@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import Stripe from 'stripe'
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import { ApiResponse } from '@/lib/api-responses'
 import type { Database } from '@/types/database'
 
 // Initialize Stripe lazily to avoid build-time errors
@@ -345,10 +346,7 @@ export async function POST(request: NextRequest) {
 
   if (!signature) {
     console.error('❌ No signature provided')
-    return NextResponse.json(
-      { error: 'No signature provided' },
-      { status: 400 }
-    )
+    return ApiResponse.badRequest('No signature provided', 'MISSING_WEBHOOK_SIGNATURE')
   }
 
   let event: Stripe.Event
@@ -373,10 +371,7 @@ export async function POST(request: NextRequest) {
       type: err.type,
       message: err.message
     })
-    return NextResponse.json(
-      { error: `Webhook Error: ${err.message}` },
-      { status: 400 }
-    )
+    return ApiResponse.badRequest(`Webhook Error: ${err.message}`, 'WEBHOOK_SIGNATURE_ERROR')
   }
 
   // Handle the event
@@ -471,10 +466,7 @@ export async function POST(request: NextRequest) {
             details: error.details,
             hint: error.hint
           })
-          return NextResponse.json(
-            { error: 'Failed to update sponsorship' },
-            { status: 500 }
-          )
+          return ApiResponse.serverError('Failed to update sponsorship', 'SPONSORSHIP_UPDATE_ERROR', { message: error.message })
         }
 
         console.log('✅ Sponsorship updated successfully:', sponsorshipId)
@@ -532,20 +524,14 @@ export async function POST(request: NextRequest) {
             
             if (error) {
               console.error('❌ Failed to add treasury donation:', error)
-              return NextResponse.json(
-                { error: 'Failed to add treasury donation' },
-                { status: 500 }
-              )
+              return ApiResponse.serverError('Failed to add treasury donation', 'TREASURY_DONATION_ERROR', { message: error.message })
             }
             
             console.log('✅ Treasury donation added successfully:', data)
             console.log('🎉 Treasury webhook processing completed successfully')
-          } catch (treasuryError) {
+          } catch (treasuryError: any) {
             console.error('❌ Treasury donation error:', treasuryError)
-            return NextResponse.json(
-              { error: 'Treasury donation processing failed' },
-              { status: 500 }
-            )
+            return ApiResponse.serverError('Treasury donation processing failed', 'TREASURY_DONATION_SERVER_ERROR', { message: treasuryError.message })
           }
         } else {
           console.warn('⚠️ Missing required metadata for treasury donation')
@@ -574,7 +560,7 @@ export async function POST(request: NextRequest) {
   }
 
   console.log('✅ Webhook response sent')
-  return NextResponse.json({ received: true })
+  return ApiResponse.ok({ received: true })
 }
 
 // Disable body parsing for webhooks

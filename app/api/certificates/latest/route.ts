@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { ApiResponse } from '@/lib/api-responses'
 
@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
     if (!latestEnrollment) {
       console.log('No completed modules found')
       // Return default data if no certificate exists yet
-      return NextResponse.json({
+      return ApiResponse.ok({
         employeeName: profile.full_name,
         companyName: companyName,
         verificationCode: 'PENDING',
@@ -70,7 +70,7 @@ export async function GET(req: NextRequest) {
     const totalXP = allCompletions?.reduce((sum, e) => sum + (e.xp_earned || 0), 0) || 0
     const modulesCompleted = allCompletions?.length || 0
 
-    return NextResponse.json({
+    return ApiResponse.ok({
       id: latestEnrollment.id,
       employeeName: profile.full_name,
       companyName: companyName,

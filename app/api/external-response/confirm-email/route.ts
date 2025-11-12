@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
+import { ApiResponse } from '@/lib/api-responses'
 import { sendEmail } from '@/lib/resend'
 
 export async function POST(request: NextRequest) {
@@ -17,10 +18,7 @@ export async function POST(request: NextRequest) {
     } = body
 
     if (!email || !responseType || !contentTitle) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      )
+      return ApiResponse.badRequest('Missing required fields: email, responseType, contentTitle', 'MISSING_REQUIRED_FIELDS')
     }
 
     let emailTemplate
@@ -166,23 +164,16 @@ export async function POST(request: NextRequest) {
 
     if (!result.success) {
       console.error('Failed to send email:', result.error)
-      return NextResponse.json(
-        { error: 'Failed to send confirmation email' },
-        { status: 500 }
-      )
+      return ApiResponse.serverError('Failed to send confirmation email', 'CONFIRMATION_EMAIL_ERROR', { error: result.error })
     }
 
-    return NextResponse.json({
-      success: true,
-      message: 'Confirmation email sent'
+    return ApiResponse.ok({
+      message: 'Confirmation email sent successfully'
     })
 
   } catch (error: any) {
     console.error('External response confirmation email error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Internal server error', 'CONFIRMATION_EMAIL_SERVER_ERROR', { message: error.message })
   }
 }
 

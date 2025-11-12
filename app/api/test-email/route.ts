@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
+import { ApiResponse } from '@/lib/api-responses'
 import { sendEmail, emailTemplates, sendWelcomeEmail, sendSponsorshipApprovalEmail } from '@/lib/resend'
 
 // Test email endpoint
@@ -7,10 +8,7 @@ export async function POST(request: NextRequest) {
     const { type, email, name, testData } = await request.json()
 
     if (!email) {
-      return NextResponse.json(
-        { error: 'Email is required' },
-        { status: 400 }
-      )
+      return ApiResponse.badRequest('Email is required', 'MISSING_EMAIL')
     }
 
     let result: { success: boolean; error?: string }
@@ -63,31 +61,21 @@ export async function POST(request: NextRequest) {
         break
 
       default:
-        return NextResponse.json(
-          { error: 'Invalid email type. Use: welcome, welcome-brand, sponsorship, or custom' },
-          { status: 400 }
-        )
+        return ApiResponse.badRequest('Invalid email type. Use: welcome, welcome-brand, sponsorship, or custom', 'INVALID_EMAIL_TYPE')
     }
 
     if (result.success) {
-      return NextResponse.json({
-        success: true,
+      return ApiResponse.ok({
         message: `${type} email sent successfully to ${email}`,
         timestamp: new Date().toISOString()
       })
     } else {
-      return NextResponse.json(
-        { error: result.error || 'Failed to send email' },
-        { status: 500 }
-      )
+      return ApiResponse.serverError(result.error || 'Failed to send email', 'EMAIL_SEND_ERROR')
     }
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Email test error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Internal server error', 'EMAIL_TEST_SERVER_ERROR', { message: error.message })
   }
 }
 
@@ -97,7 +85,7 @@ export async function GET() {
     const hasResendKey = !!process.env.RESEND_API_KEY
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
-    return NextResponse.json({
+    return ApiResponse.ok({
       emailSystem: {
         configured: hasResendKey,
         service: 'Resend',
@@ -116,11 +104,8 @@ export async function GET() {
         testCustom: 'POST with { "type": "custom", "email": "your@email.com" }'
       }
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Email status error:', error)
-    return NextResponse.json(
-      { error: 'Failed to get email status' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Failed to get email status', 'EMAIL_STATUS_ERROR', { message: error.message })
   }
 }

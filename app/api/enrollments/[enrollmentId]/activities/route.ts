@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { ApiResponse } from '@/lib/api-responses'
 
@@ -154,10 +154,7 @@ export async function POST(
 
       if (error) {
         console.error('❌ Error updating activity response:', error)
-        return NextResponse.json({ 
-          error: 'Error al actualizar respuesta',
-          details: error.message 
-        }, { status: 500 })
+        return ApiResponse.serverError('Error al actualizar respuesta', 'ACTIVITY_UPDATE_ERROR', { message: error.message })
       }
 
       activityResult = data
@@ -191,10 +188,7 @@ export async function POST(
 
       if (error) {
         console.error('❌ Error creating activity response:', error)
-        return NextResponse.json({ 
-          error: 'Error al guardar respuesta',
-          details: error.message 
-        }, { status: 500 })
+        return ApiResponse.serverError('Error al guardar respuesta', 'ACTIVITY_CREATION_ERROR', { message: error.message })
       }
 
       activityResult = data

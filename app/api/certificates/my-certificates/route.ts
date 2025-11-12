@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { ApiResponse } from '@/lib/api-responses'
 
@@ -29,10 +29,7 @@ export async function GET(req: NextRequest) {
 
     if (error) {
       console.error('Error fetching certificates:', error)
-      return NextResponse.json({ 
-        certificates: [],
-        error: error.message 
-      })
+      return ApiResponse.serverError('Failed to fetch certificates', 'CERTIFICATES_FETCH_ERROR', { message: error.message })
     }
 
     console.log('📜 Certificates API - Completed enrollments:', {
@@ -57,7 +54,7 @@ export async function GET(req: NextRequest) {
       }
     })
 
-    return NextResponse.json({
+    return ApiResponse.ok({
       certificates: formattedCerts
     })
 

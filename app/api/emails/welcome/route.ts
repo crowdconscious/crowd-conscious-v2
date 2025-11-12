@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
+import { ApiResponse } from '@/lib/api-responses'
 import { sendWelcomeEmail } from '@/lib/resend'
 
 export async function POST(request: NextRequest) {
@@ -6,18 +7,18 @@ export async function POST(request: NextRequest) {
     const { email, name } = await request.json()
 
     if (!email || !name) {
-      return NextResponse.json({ error: 'Email and name are required' }, { status: 400 })
+      return ApiResponse.badRequest('Email and name are required', 'MISSING_REQUIRED_FIELDS')
     }
 
     const success = await sendWelcomeEmail(email, name)
 
     if (!success) {
-      return NextResponse.json({ error: 'Failed to send welcome email' }, { status: 500 })
+      return ApiResponse.serverError('Failed to send welcome email', 'WELCOME_EMAIL_ERROR')
     }
 
-    return NextResponse.json({ success: true })
-  } catch (error) {
+    return ApiResponse.ok({ message: 'Welcome email sent successfully' })
+  } catch (error: any) {
     console.error('Welcome email error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return ApiResponse.serverError('Internal server error', 'WELCOME_EMAIL_SERVER_ERROR', { message: error.message })
   }
 }

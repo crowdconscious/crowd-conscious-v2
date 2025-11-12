@@ -1,27 +1,24 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
+import { ApiResponse } from '@/lib/api-responses'
 import { resend } from '@/lib/resend'
 
 export async function GET(request: NextRequest) {
   try {
     // Check if Resend is configured
     if (!resend) {
-      return NextResponse.json({ 
-        success: false,
-        error: 'Resend not configured',
+      return ApiResponse.serverError('Resend not configured', 'RESEND_NOT_CONFIGURED', {
         details: 'RESEND_API_KEY environment variable is not set',
         fix: 'Add RESEND_API_KEY to Vercel environment variables'
-      }, { status: 500 })
+      })
     }
 
     // Check API key format
     const apiKey = process.env.RESEND_API_KEY
     if (!apiKey?.startsWith('re_')) {
-      return NextResponse.json({
-        success: false,
-        error: 'Invalid API key format',
+      return ApiResponse.serverError('Invalid API key format', 'INVALID_API_KEY_FORMAT', {
         details: 'RESEND_API_KEY should start with "re_"',
         currentKeyPrefix: apiKey?.substring(0, 3) || 'not set'
-      }, { status: 500 })
+      })
     }
 
     // Get test email from query parameter
@@ -74,9 +71,8 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error('❌ Resend error:', error)
-      return NextResponse.json({
-        success: false,
-        error: error.message,
+      return ApiResponse.serverError('Failed to send test email', 'RESEND_ERROR', {
+        errorMessage: error.message,
         errorName: error.name,
         details: error,
         troubleshooting: {
@@ -85,13 +81,12 @@ export async function GET(request: NextRequest) {
           'Rate limit': 'You\'ve hit Resend\'s rate limit. Wait a few minutes and try again.',
           'Blocked': 'Email address is blocked. Try a different email.'
         }
-      }, { status: 500 })
+      })
     }
 
     console.log('✅ Email sent successfully! ID:', data?.id)
 
-    return NextResponse.json({ 
-      success: true, 
+    return ApiResponse.ok({ 
       message: 'Email sent successfully!',
       emailId: data?.id,
       from: 'comunidad@crowdconscious.app',
@@ -106,12 +101,11 @@ export async function GET(request: NextRequest) {
     })
   } catch (error: any) {
     console.error('❌ Unexpected error:', error)
-    return NextResponse.json({ 
-      success: false,
-      error: error.message,
+    return ApiResponse.serverError('Unexpected error', 'UNEXPECTED_ERROR', {
+      message: error.message,
       stack: error.stack,
       type: 'Unexpected error'
-    }, { status: 500 })
+    })
   }
 }
 

@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
+import { ApiResponse } from '@/lib/api-responses'
 import { resend } from '@/lib/resend'
 
 export async function GET() {
@@ -58,20 +59,20 @@ export async function GET() {
       }
     }
 
-    return NextResponse.json({
+    return ApiResponse.ok({
       timestamp: new Date().toISOString(),
       environment: envCheck,
       resend: resendCheck,
       domains: domainsCheck,
       email_test: emailTest
-    }, { status: 200 })
+    })
 
   } catch (error: any) {
     console.error('Debug email error:', error)
-    return NextResponse.json({
-      error: error.message || 'Internal server error',
+    return ApiResponse.serverError('Internal server error', 'DEBUG_EMAIL_ERROR', {
+      message: error.message,
       timestamp: new Date().toISOString()
-    }, { status: 500 })
+    })
   }
 }
 
@@ -80,11 +81,11 @@ export async function POST(request: NextRequest) {
     const { email } = await request.json()
     
     if (!email) {
-      return NextResponse.json({ error: 'Email address required' }, { status: 400 })
+      return ApiResponse.badRequest('Email address required', 'MISSING_EMAIL')
     }
 
     if (!resend) {
-      return NextResponse.json({ error: 'Resend not configured' }, { status: 500 })
+      return ApiResponse.serverError('Resend not configured', 'RESEND_NOT_CONFIGURED')
     }
 
     // Try to send a real test email
@@ -103,17 +104,16 @@ export async function POST(request: NextRequest) {
       `
     })
 
-    return NextResponse.json({
-      success: true,
+    return ApiResponse.ok({
       message: `Debug email sent successfully to ${email}`,
       result: result
-    }, { status: 200 })
+    })
 
   } catch (error: any) {
     console.error('Debug email send error:', error)
-    return NextResponse.json({
-      error: error.message || 'Failed to send debug email',
+    return ApiResponse.serverError('Failed to send debug email', 'DEBUG_EMAIL_SEND_ERROR', {
+      message: error.message,
       error_code: error.code || 'unknown'
-    }, { status: 500 })
+    })
   }
 }

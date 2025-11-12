@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { ApiResponse } from '@/lib/api-responses'
 
 export async function GET() {
   const diagnostics = {
@@ -81,8 +81,10 @@ export async function GET() {
     }
   }
 
-  return NextResponse.json(diagnostics, { 
-    status: diagnostics.checks.emailSend?.success ? 200 : 500 
-  })
+  if (diagnostics.checks.emailSend?.success) {
+    return ApiResponse.ok(diagnostics)
+  } else {
+    return ApiResponse.serverError('Email diagnostics failed', 'EMAIL_DIAGNOSTICS_ERROR', diagnostics)
+  }
 }
 

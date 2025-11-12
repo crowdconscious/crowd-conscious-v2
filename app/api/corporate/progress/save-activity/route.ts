@@ -1,10 +1,11 @@
-import { NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { ApiResponse } from '@/lib/api-responses'
 
 // ⚠️ DEPRECATED: This endpoint is deprecated. Use /api/enrollments/[enrollmentId]/activities instead.
 // This endpoint will be removed in a future version.
 // Save activity data from reusable tools (calculators, evidence, reflections, etc.)
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   console.warn('⚠️ DEPRECATED ENDPOINT: /api/corporate/progress/save-activity is deprecated. Use /api/enrollments/[enrollmentId]/activities instead.')
   
   try {
@@ -12,7 +13,7 @@ export async function POST(request: Request) {
     const { data: { user }, error: userError } = await supabase.auth.getUser()
 
     if (userError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return ApiResponse.unauthorized('Please log in to save activity data', 'AUTHENTICATION_REQUIRED')
     }
 
     const body = await request.json()
@@ -40,7 +41,7 @@ export async function POST(request: Request) {
       .single()
 
     if (!enrollment) {
-      return NextResponse.json({ error: 'Enrollment not found' }, { status: 404 })
+      return ApiResponse.notFound('Enrollment', 'ENROLLMENT_NOT_FOUND')
     }
 
     // Check if response exists
@@ -107,12 +108,11 @@ export async function POST(request: Request) {
 
       if (error) {
         console.error('❌ Error updating activity:', error)
-        return NextResponse.json({ error: error.message }, { status: 500 })
+        return ApiResponse.serverError('Failed to update activity', 'ACTIVITY_UPDATE_ERROR', { message: error.message })
       }
 
       console.log('✅ Activity updated:', data.id)
-      return NextResponse.json({ 
-        success: true, 
+      return ApiResponse.ok({ 
         responseId: data.id,
         message: 'Activity data saved successfully'
       })
@@ -156,33 +156,29 @@ export async function POST(request: Request) {
 
       if (error) {
         console.error('❌ Error creating activity:', error)
-        return NextResponse.json({ error: error.message }, { status: 500 })
+        return ApiResponse.serverError('Failed to create activity', 'ACTIVITY_CREATION_ERROR', { message: error.message })
       }
 
       console.log('✅ Activity created:', data.id)
-      return NextResponse.json({ 
-        success: true, 
+      return ApiResponse.ok({ 
         responseId: data.id,
         message: 'Activity data saved successfully'
       })
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Error in save-activity:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Internal server error', 'SAVE_ACTIVITY_SERVER_ERROR', { message: error.message })
   }
 }
 
 // Get saved activity data for a lesson
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
     const { data: { user }, error: userError } = await supabase.auth.getUser()
 
     if (userError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return ApiResponse.unauthorized('Please log in to retrieve activity data', 'AUTHENTICATION_REQUIRED')
     }
 
     const { searchParams } = new URL(request.url)
@@ -190,7 +186,7 @@ export async function GET(request: Request) {
     const lessonId = searchParams.get('lessonId')
 
     if (!moduleId || !lessonId) {
-      return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 })
+      return ApiResponse.badRequest('Missing required parameters: moduleId, lessonId', 'MISSING_REQUIRED_PARAMS')
     }
 
     // ✅ Get enrollment_id for this user and module
@@ -202,7 +198,7 @@ export async function GET(request: Request) {
       .single()
 
     if (!enrollment) {
-      return NextResponse.json({ error: 'Enrollment not found' }, { status: 404 })
+      return ApiResponse.notFound('Enrollment', 'ENROLLMENT_NOT_FOUND')
     }
 
     const { data, error } = await supabase
@@ -213,19 +209,15 @@ export async function GET(request: Request) {
       .single()
 
     if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return ApiResponse.serverError('Failed to retrieve activity data', 'ACTIVITY_FETCH_ERROR', { message: error.message })
     }
 
-    return NextResponse.json({ 
-      success: true, 
+    return ApiResponse.ok({ 
       data: data || null 
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Error in get activity:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Internal server error', 'GET_ACTIVITY_SERVER_ERROR', { message: error.message })
   }
 }
 

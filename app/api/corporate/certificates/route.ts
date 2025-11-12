@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { ApiResponse } from '@/lib/api-responses'
 
@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return ApiResponse.unauthorized('Please log in to view certificates', 'AUTHENTICATION_REQUIRED')
     }
 
     // Get user's profile and corporate account
@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
       .single()
 
     if (!profile || profile.role !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized - Admin only' }, { status: 403 })
+      return ApiResponse.forbidden('Admin access required', 'NOT_ADMIN')
     }
 
     // Get corporate account details
@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
       .single()
 
     if (!corporateAccount) {
-      return NextResponse.json({ error: 'Corporate account not found' }, { status: 404 })
+      return ApiResponse.notFound('Corporate account', 'CORPORATE_ACCOUNT_NOT_FOUND')
     }
 
     // Get all course enrollments for this company

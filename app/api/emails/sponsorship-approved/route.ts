@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { getCurrentUser } from '@/lib/auth-server'
+import { ApiResponse } from '@/lib/api-responses'
 import { supabase } from '@/lib/supabase'
 import { sendSponsorshipApprovalEmail } from '@/lib/resend'
 
@@ -7,13 +8,13 @@ export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return ApiResponse.unauthorized('Please log in to send sponsorship emails', 'AUTHENTICATION_REQUIRED')
     }
 
     const { sponsorshipId } = await request.json()
 
     if (!sponsorshipId) {
-      return NextResponse.json({ error: 'Sponsorship ID is required' }, { status: 400 })
+      return ApiResponse.badRequest('Sponsorship ID is required', 'MISSING_SPONSORSHIP_ID')
     }
 
     // Get sponsorship details with related data
@@ -39,11 +40,11 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error || !sponsorship) {
-      return NextResponse.json({ error: 'Sponsorship not found' }, { status: 404 })
+      return ApiResponse.notFound('Sponsorship', 'SPONSORSHIP_NOT_FOUND')
     }
 
     if ((sponsorship as any).status !== 'approved') {
-      return NextResponse.json({ error: 'Sponsorship not approved' }, { status: 400 })
+      return ApiResponse.badRequest('Sponsorship not approved', 'SPONSORSHIP_NOT_APPROVED')
     }
 
     // Send approval email to brand
@@ -58,12 +59,12 @@ export async function POST(request: NextRequest) {
     )
 
     if (!success) {
-      return NextResponse.json({ error: 'Failed to send approval email' }, { status: 500 })
+      return ApiResponse.serverError('Failed to send approval email', 'SPONSORSHIP_EMAIL_ERROR')
     }
 
-    return NextResponse.json({ success: true })
-  } catch (error) {
+    return ApiResponse.ok({ message: 'Sponsorship approval email sent successfully' })
+  } catch (error: any) {
     console.error('Sponsorship approval email error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return ApiResponse.serverError('Internal server error', 'SPONSORSHIP_EMAIL_SERVER_ERROR', { message: error.message })
   }
 }

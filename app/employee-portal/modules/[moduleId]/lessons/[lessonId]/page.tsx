@@ -140,12 +140,30 @@ export default function LessonPage({
         const response = await fetch(`/api/modules/${p.moduleId}/lessons/${p.lessonId}`)
         
         if (response.ok) {
-          const data = await response.json()
-          console.log('✅ Lesson data:', data)
-          setLesson(data.lesson)
-          setModule(data.module || { title: 'Módulo', totalLessons: 1, color: 'from-teal-600 to-blue-700' })
+          const responseData = await response.json()
+          console.log('✅ Lesson API response:', responseData)
+          
+          // ✅ PHASE 4: Parse standardized API response format
+          const data = responseData.success !== undefined ? responseData.data : responseData
+          
+          if (data?.lesson) {
+            console.log('✅ Lesson data:', data.lesson)
+            setLesson(data.lesson)
+            setModule(data.module || { title: 'Módulo', totalLessons: 1, color: 'from-teal-600 to-blue-700' })
+          } else {
+            console.error('❌ Lesson data not found in response:', data)
+            // Fallback to static content if API response is malformed
+            const lessonData = getLessonById(p.moduleId, p.lessonId)
+            if (lessonData) {
+              setLesson(lessonData)
+              setModule(cleanAirModule)
+            }
+          }
         } else {
           console.error('❌ Failed to fetch lesson:', response.status)
+          const errorData = await response.json().catch(() => ({}))
+          console.error('Error details:', errorData)
+          
           // Fallback to static content if API fails
           const lessonData = getLessonById(p.moduleId, p.lessonId)
           if (lessonData) {

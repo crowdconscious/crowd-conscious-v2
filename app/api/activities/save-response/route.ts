@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { ApiResponse } from '@/lib/api-responses'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,7 +16,7 @@ export async function POST(request: NextRequest) {
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     
     if (userError || !user) {
-      return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+      return ApiResponse.unauthorized('Please log in to save activity responses', 'AUTHENTICATION_REQUIRED')
     }
 
     const body = await request.json()
@@ -195,19 +196,15 @@ export async function POST(request: NextRequest) {
       console.warn('⚠️ RPC function not available, skipping progress update:', rpcError)
     }
 
-    return NextResponse.json({
-      success: true,
+    return ApiResponse.ok({
       response_id: activityResult?.id || 'legacy',
       message: 'Respuesta guardada exitosamente',
       esg_ready: !!activityResult // Indicates if saved to new ESG table
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Critical error saving activity response:', error)
-    return NextResponse.json({ 
-      error: 'Error del servidor',
-      details: error instanceof Error ? error.message : 'Error desconocido'
-    }, { status: 500 })
+    return ApiResponse.serverError('Error del servidor', 'ACTIVITY_RESPONSE_SAVE_ERROR', { message: error.message })
   }
 }
 
@@ -219,7 +216,7 @@ export async function GET(request: NextRequest) {
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     
     if (userError || !user) {
-      return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+      return ApiResponse.unauthorized('Please log in to retrieve activity responses', 'AUTHENTICATION_REQUIRED')
     }
 
     const { searchParams } = new URL(request.url)
@@ -227,7 +224,7 @@ export async function GET(request: NextRequest) {
     const module_id = searchParams.get('module_id')
 
     if (!lesson_id) {
-      return NextResponse.json({ error: 'lesson_id requerido' }, { status: 400 })
+      return ApiResponse.badRequest('lesson_id requerido', 'MISSING_LESSON_ID')
     }
 
     // Get enrollment_id first
@@ -239,7 +236,7 @@ export async function GET(request: NextRequest) {
       .single()
 
     if (!enrollment) {
-      return NextResponse.json({ response: null })
+      return ApiResponse.ok({ response: null })
     }
 
     // 🔥 TRY NEW TABLE FIRST: activity_responses (structured ESG data)
@@ -267,7 +264,7 @@ export async function GET(request: NextRequest) {
 
       console.log('✅ Loaded from new activity_responses table')
       
-      return NextResponse.json({
+      return ApiResponse.ok({
         response: {
           id: newResponse.id,
           responses: reconstructedResponses,
@@ -289,10 +286,7 @@ export async function GET(request: NextRequest) {
 
     if (legacyError && legacyError.code !== 'PGRST116') { // PGRST116 = not found
       console.error('❌ Error fetching activity response:', legacyError)
-      return NextResponse.json({ 
-        error: 'Error al recuperar respuesta',
-        details: legacyError.message 
-      }, { status: 500 })
+      return ApiResponse.serverError('Error al recuperar respuesta', 'ACTIVITY_RESPONSE_FETCH_ERROR', { message: legacyError.message })
     }
 
     if (legacyData) {
@@ -301,7 +295,7 @@ export async function GET(request: NextRequest) {
       
       console.log('⚠️ Loaded from legacy lesson_responses table')
 
-      return NextResponse.json({
+      return ApiResponse.ok({
         response: { 
           ...legacyData,
           responses: activityResponses, // Return just the activity responses part
@@ -311,14 +305,11 @@ export async function GET(request: NextRequest) {
     }
 
     // No data found in either table
-    return NextResponse.json({ response: null })
+    return ApiResponse.ok({ response: null })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Critical error fetching activity response:', error)
-    return NextResponse.json({ 
-      error: 'Error del servidor',
-      details: error instanceof Error ? error.message : 'Error desconocido'
-    }, { status: 500 })
+    return ApiResponse.serverError('Error del servidor', 'ACTIVITY_RESPONSE_FETCH_SERVER_ERROR', { message: error.message })
   }
 }
 
