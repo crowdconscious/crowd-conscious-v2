@@ -24,12 +24,17 @@ export default function CertificatePage({ params }: { params: Promise<{ moduleId
 
   const loadCertificate = async (modId: string) => {
     try {
+      console.log('🎓 Loading certificate for module:', modId)
+      
       // Fetch user profile first (always available)
       const profileResponse = await fetch('/api/user/profile')
       let userName = 'Usuario'
       if (profileResponse.ok) {
         const profileData = await profileResponse.json()
         userName = profileData.full_name || 'Usuario'
+        console.log('✅ Profile loaded:', userName)
+      } else {
+        console.error('❌ Profile fetch failed:', profileResponse.status)
       }
 
       // Fetch the actual module data
@@ -39,6 +44,9 @@ export default function CertificatePage({ params }: { params: Promise<{ moduleId
         const moduleData = await moduleResponse.json()
         fetchedModule = moduleData.module
         setModule(fetchedModule)
+        console.log('✅ Module loaded:', fetchedModule?.title)
+      } else {
+        console.error('❌ Module fetch failed:', moduleResponse.status)
       }
 
       // Fetch the user's enrollment for THIS SPECIFIC MODULE
@@ -46,20 +54,30 @@ export default function CertificatePage({ params }: { params: Promise<{ moduleId
       let enrollmentData: any = null
       if (enrollmentResponse.ok) {
         enrollmentData = await enrollmentResponse.json()
+        console.log('✅ Enrollment loaded:', {
+          id: enrollmentData.id,
+          xp: enrollmentData.xp_earned,
+          moduleTitle: enrollmentData.module?.title
+        })
+      } else {
+        console.error('❌ Enrollment fetch failed:', enrollmentResponse.status, await enrollmentResponse.text())
       }
 
       // Build certificate with all available data
-      setCertificate({
+      const certData = {
         employeeName: userName,
         moduleName: fetchedModule?.title || enrollmentData?.module?.title || 'Módulo Completado',
         xpEarned: enrollmentData?.xp_earned || 250,
         issuedAt: enrollmentData?.completion_date || new Date().toISOString(),
         verificationCode: enrollmentData?.id ? `CC-${enrollmentData.id.slice(0, 8).toUpperCase()}` : 'PENDING'
-      })
+      }
+      
+      console.log('📜 Final certificate data:', certData)
+      setCertificate(certData)
 
       setLoading(false)
     } catch (error) {
-      console.error('Error loading certificate:', error)
+      console.error('💥 Error loading certificate:', error)
       setLoading(false)
     }
   }

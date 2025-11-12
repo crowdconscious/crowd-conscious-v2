@@ -1,11 +1,14 @@
 import { jsPDF } from 'jspdf'
 import 'jspdf-autotable'
+import * as fs from 'fs'
+import * as path from 'path'
+import sharp from 'sharp'
 
 /**
  * Generate Professional ESG Report PDF
  * 
  * Design matches certificate quality with:
- * - Crowd Conscious branding (white logo text, top-left)
+ * - Crowd Conscious branding (actual logo image in white tones, top-left)
  * - Gradient headers
  * - Visual impact indicators
  * - Professional layout
@@ -38,17 +41,68 @@ export async function generateProfessionalESGPDF(reportData: any): Promise<Buffe
     doc.rect(0, 0, pageWidth, 45, 'F')
   }
 
-  // Logo text - white, top-left corner, above tagline
-  doc.setFontSize(18)
-  doc.setTextColor(255, 255, 255)
-  doc.setFont('helvetica', 'bold')
-  doc.text('CROWDCONSCIOUS', 20, 15)
+  // Logo image - Crowd Conscious logo converted to white for visibility on gradient
+  try {
+    const logoPath = path.join(process.cwd(), 'public', 'images', 'logo.png')
+    
+    if (fs.existsSync(logoPath)) {
+      // Convert logo to white using Sharp
+      // This extracts the alpha channel and makes all pixels white while preserving transparency
+      const whiteLogoBuffer = await sharp(logoPath)
+        .ensureAlpha() // Make sure we have an alpha channel
+        .extractChannel('alpha') // Extract the alpha (transparency) channel
+        .toColourspace('b-w') // Convert to black and white
+        .negate() // Invert (so transparent becomes black, opaque becomes white)
+        .toBuffer()
+      
+      // Create a white PNG with the original's alpha channel
+      const whiteLogo = await sharp({
+        create: {
+          width: 512, // Will be resized by PDF
+          height: 512,
+          channels: 4,
+          background: { r: 255, g: 255, b: 255, alpha: 1 }
+        }
+      })
+        .composite([
+          {
+            input: logoPath,
+            blend: 'dest-in' // Use original as alpha mask
+          }
+        ])
+        .png()
+        .toBuffer()
+      
+      const logoBase64 = `data:image/png;base64,${whiteLogo.toString('base64')}`
+      
+      // Add logo image (top-left, proper size)
+      const logoWidth = 30
+      const logoHeight = 9
+      const logoX = 15
+      const logoY = 8
+      
+      doc.addImage(logoBase64, 'PNG', logoX, logoY, logoWidth, logoHeight, undefined, 'FAST')
+    } else {
+      // Fallback: white text logo
+      doc.setFontSize(18)
+      doc.setTextColor(255, 255, 255)
+      doc.setFont('helvetica', 'bold')
+      doc.text('CROWDCONSCIOUS', 20, 15)
+    }
+  } catch (error) {
+    console.error('Error processing logo for PDF:', error)
+    // Fallback: white text logo
+    doc.setFontSize(18)
+    doc.setTextColor(255, 255, 255)
+    doc.setFont('helvetica', 'bold')
+    doc.text('CROWDCONSCIOUS', 20, 15)
+  }
 
   // Tagline - positioned below logo
   doc.setFontSize(8)
   doc.setTextColor(255, 255, 255)
   doc.setFont('helvetica', 'normal')
-  doc.text('Impulsando el cambio a través de la educación', 20, 21)
+  doc.text('Impulsando el cambio a través de la educación', 20, 23)
 
   // Report Title
   doc.setFontSize(16)
