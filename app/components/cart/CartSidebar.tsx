@@ -56,13 +56,18 @@ export default function CartSidebar({ isOpen, onClose, onUpdate }: CartSidebarPr
       const response = await fetch('/api/cart')
       
       if (response.ok) {
-        const data = await response.json()
+        const responseData = await response.json()
+        // ✅ PHASE 4: Parse standardized API response format
+        const data = responseData.success !== undefined ? responseData.data : responseData
         setCartItems(data.items || [])
         setCartSummary(data.summary)
       } else if (response.status === 401 || response.status === 403) {
         setError('No autorizado. Por favor inicia sesión como administrador corporativo.')
       } else {
-        setError('Error al cargar el carrito')
+        const errorData = await response.json().catch(() => ({}))
+        // ✅ PHASE 4: Extract error message from standardized format
+        const errorMessage = errorData.error?.message || errorData.error || 'Error al cargar el carrito'
+        setError(errorMessage)
       }
     } catch (err) {
       console.error('Error fetching cart:', err)
@@ -182,15 +187,19 @@ export default function CartSidebar({ isOpen, onClose, onUpdate }: CartSidebarPr
         body: JSON.stringify({ code: promoCode.trim().toUpperCase() })
       })
 
-      const data = await response.json()
+      const responseData = await response.json()
 
       if (response.ok) {
+        // ✅ PHASE 4: Parse standardized API response format
+        const data = responseData.success !== undefined ? responseData.data : responseData
         setAppliedPromo(data)
         setPromoCode('')
         await fetchCart() // Refresh cart to show discounted prices
         onUpdate()
       } else {
-        setPromoError(data.error || data.message || 'Código inválido')
+        // ✅ PHASE 4: Extract error message from standardized format
+        const errorMessage = responseData.error?.message || responseData.error || responseData.message || 'Código inválido'
+        setPromoError(errorMessage)
       }
     } catch (error) {
       console.error('Error applying promo code:', error)

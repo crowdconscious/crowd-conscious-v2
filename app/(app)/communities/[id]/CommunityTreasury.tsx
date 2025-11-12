@@ -68,7 +68,9 @@ export default function CommunityTreasury({
     try {
       const response = await fetch(`/api/treasury/stats?communityId=${communityId}`)
       if (response.ok) {
-        const data = await response.json()
+        const responseData = await response.json()
+        // ✅ PHASE 4: Parse standardized API response format
+        const data = responseData.success !== undefined ? responseData.data : responseData
         setStats(data)
       }
     } catch (error) {
@@ -88,12 +90,17 @@ export default function CommunityTreasury({
       })
       
       if (createResponse.ok) {
-        const { wallet } = await createResponse.json()
+        const createData = await createResponse.json()
+        // ✅ PHASE 4: Parse standardized API response format
+        const createParsed = createData.success !== undefined ? createData.data : createData
+        const wallet = createParsed.wallet || createParsed
         
         // Fetch full wallet details
         const detailsResponse = await fetch(`/api/wallets/${wallet.id}`)
         if (detailsResponse.ok) {
-          const walletDetails = await detailsResponse.json()
+          const detailsData = await detailsResponse.json()
+          // ✅ PHASE 4: Parse standardized API response format
+          const walletDetails = detailsData.success !== undefined ? detailsData.data : detailsData
           setWalletData(walletDetails)
         }
       }
@@ -122,12 +129,16 @@ export default function CommunityTreasury({
       })
 
       if (response.ok) {
-        const data = await response.json()
+        const responseData = await response.json()
+        // ✅ PHASE 4: Parse standardized API response format
+        const data = responseData.success !== undefined ? responseData.data : responseData
         // Redirect to Stripe checkout
         window.location.href = data.url
       } else {
-        const error = await response.json()
-        alert(error.error || 'Failed to process donation')
+        const errorData = await response.json()
+        // ✅ PHASE 4: Extract error message from standardized format
+        const errorMessage = errorData.error?.message || errorData.error || 'Failed to process donation'
+        alert(errorMessage)
       }
     } catch (error) {
       console.error('Donation error:', error)

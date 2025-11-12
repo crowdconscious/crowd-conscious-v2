@@ -13,18 +13,20 @@ export default function CartButton() {
   const fetchCartCount = async () => {
     try {
       const response = await fetch('/api/cart')
-      const data = await response.json()
+      const responseData = await response.json()
       
-      console.log('Cart API Response:', { status: response.status, data })
+      console.log('Cart API Response:', { status: response.status, responseData })
       
       if (response.ok) {
+        // ✅ PHASE 4: Parse standardized API response format
+        const data = responseData.success !== undefined ? responseData.data : responseData
         setItemCount(data.summary?.item_count || 0)
       } else if (response.status === 401 || response.status === 403) {
         // User not logged in or not a corporate admin - this is OK, just show 0
         console.log('Not authorized for cart, showing 0 items')
         setItemCount(0)
       } else {
-        console.error('Cart API Error:', response.status, data)
+        console.error('Cart API Error:', response.status, responseData)
         setItemCount(0)
       }
     } catch (error) {

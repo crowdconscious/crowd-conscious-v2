@@ -16,7 +16,9 @@ export default function EmployeeImpactPage() {
     try {
       const response = await fetch('/api/employee/impact')
       if (response.ok) {
-        const data = await response.json()
+        const responseData = await response.json()
+        // ✅ PHASE 4: Parse standardized API response format
+        const data = responseData.success !== undefined ? responseData.data : responseData
         setImpactData(data)
       }
       setLoading(false)

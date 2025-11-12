@@ -528,12 +528,23 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
                           const response = await fetch('/api/stripe/connect/onboard', {
                             method: 'POST'
                           })
-                          const data = await response.json()
-                          if (data.url) {
-                            window.location.href = data.url
+                          const responseData = await response.json()
+                          if (response.ok) {
+                            // ✅ PHASE 4: Parse standardized API response format
+                            const data = responseData.success !== undefined ? responseData.data : responseData
+                            if (data.url) {
+                              window.location.href = data.url
+                            } else {
+                              alert('Failed to start onboarding. Please try again.')
+                            }
+                          } else {
+                            // ✅ PHASE 4: Extract error message from standardized format
+                            const errorMessage = responseData.error?.message || responseData.error || 'Failed to start onboarding. Please try again.'
+                            alert(errorMessage)
                           }
                         } catch (error) {
                           console.error('Failed to start onboarding:', error)
+                          alert('Failed to start onboarding. Please try again.')
                         }
                       }}
                       variant="ghost"
@@ -573,11 +584,19 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
                         const response = await fetch('/api/stripe/connect/onboard', {
                           method: 'POST'
                         })
-                        const data = await response.json()
-                        if (data.url) {
-                          window.location.href = data.url
+                        const responseData = await response.json()
+                        if (response.ok) {
+                          // ✅ PHASE 4: Parse standardized API response format
+                          const data = responseData.success !== undefined ? responseData.data : responseData
+                          if (data.url) {
+                            window.location.href = data.url
+                          } else {
+                            alert('Failed to start onboarding. Please try again.')
+                          }
                         } else {
-                          alert('Failed to start onboarding. Please try again.')
+                          // ✅ PHASE 4: Extract error message from standardized format
+                          const errorMessage = responseData.error?.message || responseData.error || 'Failed to start onboarding. Please try again.'
+                          alert(errorMessage)
                         }
                       } catch (error) {
                         console.error('Failed to start onboarding:', error)

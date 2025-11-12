@@ -66,7 +66,9 @@ export default function CheckoutPage() {
       const response = await fetch('/api/cart')
       
       if (response.ok) {
-        const data = await response.json()
+        const responseData = await response.json()
+        // ✅ PHASE 4: Parse standardized API response format
+        const data = responseData.success !== undefined ? responseData.data : responseData
         
         console.log('🛒 CHECKOUT PAGE - Cart API Response:', {
           items: data.items,
@@ -113,13 +115,22 @@ export default function CheckoutPage() {
         headers: { 'Content-Type': 'application/json' }
       })
 
-      const data = await response.json()
+      const responseData = await response.json()
 
-      if (response.ok && data.url) {
-        // Redirect to Stripe Checkout
-        window.location.href = data.url
+      if (response.ok) {
+        // ✅ PHASE 4: Parse standardized API response format
+        const data = responseData.success !== undefined ? responseData.data : responseData
+        if (data.url) {
+          // Redirect to Stripe Checkout
+          window.location.href = data.url
+        } else {
+          alert('Error: URL de pago no disponible')
+          setProcessing(false)
+        }
       } else {
-        alert(data.error || 'Error al procesar el pago')
+        // ✅ PHASE 4: Extract error message from standardized format
+        const errorMessage = responseData.error?.message || responseData.error || 'Error al procesar el pago'
+        alert(errorMessage)
         setProcessing(false)
       }
     } catch (error) {

@@ -51,10 +51,12 @@ export default function ModuleReviewForm({
         })
       })
 
-      const data = await response.json()
+      const responseData = await response.json()
 
       if (!response.ok) {
-        setError(data.error || 'Error al enviar la reseña')
+        // ✅ PHASE 4: Extract error message from standardized format
+        const errorMessage = responseData.error?.message || responseData.error || 'Error al enviar la reseña'
+        setError(errorMessage)
         setLoading(false)
         return
       }

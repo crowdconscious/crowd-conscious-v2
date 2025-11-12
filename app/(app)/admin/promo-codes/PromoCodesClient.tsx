@@ -112,7 +112,10 @@ export default function PromoCodesClient({
       console.log('📡 Response status:', response.status)
 
       if (response.ok) {
-        const { promoCode } = await response.json()
+        const responseData = await response.json()
+        // ✅ PHASE 4: Parse standardized API response format
+        const data = responseData.success !== undefined ? responseData.data : responseData
+        const promoCode = data.promoCode || data
         console.log('✅ Promo code created:', promoCode)
         setPromoCodes([promoCode, ...promoCodes])
         setShowCreateForm(false)
@@ -132,9 +135,11 @@ export default function PromoCodesClient({
         })
         alert('✅ Código promocional creado exitosamente')
       } else {
-        const error = await response.json()
-        console.error('❌ API Error:', error)
-        alert(`❌ Error: ${error.error || 'Error desconocido'}`)
+        const errorData = await response.json()
+        // ✅ PHASE 4: Extract error message from standardized format
+        const errorMessage = errorData.error?.message || errorData.error || 'Error desconocido'
+        console.error('❌ API Error:', errorData)
+        alert(`❌ Error: ${errorMessage}`)
       }
     } catch (error) {
       console.error('❌ Network Error creating promo code:', error)

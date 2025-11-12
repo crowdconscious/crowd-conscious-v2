@@ -52,12 +52,16 @@ export default function AdminDashboardClient() {
     try {
       setLoading(true)
       const response = await fetch('/api/admin')
-      const result = await response.json()
+      const responseData = await response.json()
 
       if (response.ok) {
-        setData(result)
+        // ✅ PHASE 4: Parse standardized API response format
+        const data = responseData.success !== undefined ? responseData.data : responseData
+        setData(data)
       } else {
-        setError(result.error || 'Failed to fetch admin data')
+        // ✅ PHASE 4: Extract error message from standardized format
+        const errorMessage = responseData.error?.message || responseData.error || 'Failed to fetch admin data'
+        setError(errorMessage)
       }
     } catch (error) {
       console.error('Error fetching admin data:', error)
@@ -78,14 +82,16 @@ export default function AdminDashboardClient() {
         method: 'DELETE'
       })
 
-      const result = await response.json()
+      const responseData = await response.json()
 
       if (response.ok) {
         // Refresh data
         await fetchAdminData()
         alert(`${type.charAt(0).toUpperCase() + type.slice(1)} deleted successfully`)
       } else {
-        alert(result.error || `Failed to delete ${type}`)
+        // ✅ PHASE 4: Extract error message from standardized format
+        const errorMessage = responseData.error?.message || responseData.error || `Failed to delete ${type}`
+        alert(errorMessage)
       }
     } catch (error) {
       console.error(`Error deleting ${type}:`, error)

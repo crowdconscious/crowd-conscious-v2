@@ -73,12 +73,17 @@ export default function ProfileClient({
       })
       
       if (createResponse.ok) {
-        const { wallet } = await createResponse.json()
+        const createData = await createResponse.json()
+        // ✅ PHASE 4: Parse standardized API response format
+        const createParsed = createData.success !== undefined ? createData.data : createData
+        const wallet = createParsed.wallet || createParsed
         
         // Fetch full wallet details
         const detailsResponse = await fetch(`/api/wallets/${wallet.id}`)
         if (detailsResponse.ok) {
-          const walletDetails = await detailsResponse.json()
+          const detailsData = await detailsResponse.json()
+          // ✅ PHASE 4: Parse standardized API response format
+          const walletDetails = detailsData.success !== undefined ? detailsData.data : detailsData
           setWalletData(walletDetails)
         }
       }
