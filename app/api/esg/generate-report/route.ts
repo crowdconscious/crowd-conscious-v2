@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { ApiResponse } from '@/lib/api-responses'
 import ExcelJS from 'exceljs'
 import { jsPDF } from 'jspdf'
 import 'jspdf-autotable'
@@ -27,7 +28,7 @@ export async function GET(request: NextRequest) {
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     
     if (userError || !user) {
-      return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+      return ApiResponse.unauthorized('No autenticado', 'UNAUTHORIZED')
     }
 
     const { searchParams } = new URL(request.url)
@@ -51,15 +52,14 @@ export async function GET(request: NextRequest) {
     } else if (type === 'corporate' && corporate_account_id) {
       reportData = await generateCorporateReport(supabase, corporate_account_id, date_from, date_to)
     } else {
-      return NextResponse.json({ 
-        error: 'Parámetros inválidos. Se requiere enrollment_id, module_id o corporate_account_id según el tipo.' 
-      }, { status: 400 })
+      return ApiResponse.badRequest(
+        'Parámetros inválidos. Se requiere enrollment_id, module_id o corporate_account_id según el tipo.',
+        'INVALID_REPORT_PARAMETERS'
+      )
     }
 
     if (!reportData || reportData.error) {
-      return NextResponse.json({ 
-        error: reportData?.error || 'No se encontraron datos para el reporte' 
-      }, { status: 404 })
+      return ApiResponse.notFound('Reporte', 'REPORT_DATA_NOT_FOUND')
     }
 
     // Return format based on request
@@ -85,15 +85,16 @@ export async function GET(request: NextRequest) {
         }
       })
     } else {
-      return NextResponse.json({ error: 'Formato no soportado' }, { status: 400 })
+      return ApiResponse.badRequest('Formato no soportado', 'UNSUPPORTED_FORMAT')
     }
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Error generating ESG report:', error)
-    return NextResponse.json({ 
-      error: 'Error generando reporte',
-      details: error instanceof Error ? error.message : 'Error desconocido'
-    }, { status: 500 })
+    return ApiResponse.serverError(
+      'Error generando reporte',
+      'ESG_REPORT_GENERATION_ERROR',
+      { message: error instanceof Error ? error.message : 'Error desconocido' }
+    )
   }
 }
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { ApiResponse } from '@/lib/api-responses'
 
 export async function GET(req: NextRequest) {
   try {
@@ -7,7 +8,7 @@ export async function GET(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return ApiResponse.unauthorized('Please log in to view impact')
     }
 
     // ✅ Get user's profile
@@ -18,7 +19,7 @@ export async function GET(req: NextRequest) {
       .single()
 
     if (!profile) {
-      return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
+      return ApiResponse.notFound('Profile', 'PROFILE_NOT_FOUND')
     }
 
     // ✅ FIXED: Use JOIN instead of separate queries
@@ -81,7 +82,7 @@ export async function GET(req: NextRequest) {
       companyTotalXP = companyEnrollments?.reduce((sum, e) => sum + (e.xp_earned || 0), 0) || 0
     }
 
-    return NextResponse.json({
+    return ApiResponse.ok({
       totalXP,
       modulesCompleted,
       timeSpentHours,
@@ -93,10 +94,7 @@ export async function GET(req: NextRequest) {
 
   } catch (error: any) {
     console.error('Error fetching employee impact:', error)
-    return NextResponse.json({ 
-      error: 'Server error', 
-      details: error.message 
-    }, { status: 500 })
+    return ApiResponse.serverError('Failed to fetch impact data', 'IMPACT_FETCH_ERROR', { message: error.message })
   }
 }
 

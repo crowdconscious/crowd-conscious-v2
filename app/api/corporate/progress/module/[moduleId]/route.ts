@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { ApiResponse } from '@/lib/api-responses'
 
 export async function GET(
   req: NextRequest,
@@ -12,7 +13,7 @@ export async function GET(
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return ApiResponse.unauthorized('Please log in to view progress')
     }
 
     // ✅ FIXED: Use JOIN instead of separate queries
@@ -57,15 +58,15 @@ export async function GET(
       progressPercentage: enrollment.progress_percentage
     })
 
-    return NextResponse.json({
+    return ApiResponse.ok({
       completedLessons,
       xpEarned: enrollment.xp_earned || 0,
       completionPercentage: enrollment.progress_percentage || 0
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in progress API:', error)
-    return NextResponse.json({ error: 'Server error' }, { status: 500 })
+    return ApiResponse.serverError('Failed to fetch progress', 'PROGRESS_FETCH_ERROR', { message: error.message })
   }
 }
 

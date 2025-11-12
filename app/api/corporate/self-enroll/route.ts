@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
+import { ApiResponse } from '@/lib/api-responses'
 
 /**
  * POST /api/corporate/self-enroll
@@ -11,7 +12,7 @@ export async function POST(req: Request) {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return ApiResponse.unauthorized('Please log in to enroll')
   }
 
   try {
@@ -25,7 +26,7 @@ export async function POST(req: Request) {
       .single()
 
     if (!profile?.is_corporate_user || profile.corporate_role !== 'admin') {
-      return NextResponse.json({ error: 'Only corporate admins can self-enroll' }, { status: 403 })
+      return ApiResponse.forbidden('Only corporate admins can self-enroll', 'ADMIN_ONLY')
     }
 
     // Check if already enrolled
@@ -37,7 +38,7 @@ export async function POST(req: Request) {
       .single()
 
     if (existingEnrollment) {
-      return NextResponse.json({ error: 'Already enrolled' }, { status: 400 })
+      return ApiResponse.conflict('Already enrolled in this course', 'ALREADY_ENROLLED')
     }
 
     // Create enrollment (using only columns that exist)
@@ -58,18 +59,15 @@ export async function POST(req: Request) {
 
     if (enrollmentError) {
       console.error('Enrollment error:', enrollmentError)
-      return NextResponse.json({ error: 'Failed to enroll' }, { status: 500 })
+      return ApiResponse.serverError('Failed to enroll', 'ENROLLMENT_CREATION_ERROR', enrollmentError)
     }
 
     console.log('✅ Admin self-enrolled:', user.id, 'in course:', courseId)
 
-    return NextResponse.json({
-      success: true,
-      enrollment
-    })
-  } catch (error) {
+    return ApiResponse.created({ enrollment })
+  } catch (error: any) {
     console.error('Self-enrollment error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return ApiResponse.serverError('Internal server error during enrollment', 'SELF_ENROLLMENT_ERROR', { message: error.message })
   }
 }
 

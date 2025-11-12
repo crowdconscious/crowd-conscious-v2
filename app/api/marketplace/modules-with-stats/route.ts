@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { ApiResponse } from '@/lib/api-responses'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,7 +37,7 @@ export async function GET(request: NextRequest) {
 
     if (modulesError) {
       console.error('Error fetching modules:', modulesError)
-      return NextResponse.json({ error: 'Failed to fetch modules' }, { status: 500 })
+      return ApiResponse.serverError('Failed to fetch modules', 'MODULES_FETCH_ERROR', modulesError)
     }
 
     // ✅ FIXED: Batch fetch all enrollment counts and reviews in single queries
@@ -115,13 +116,10 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    return NextResponse.json({ modules: modulesWithStats }, { status: 200 })
+    return ApiResponse.ok({ modules: modulesWithStats })
   } catch (error: any) {
     console.error('Error in modules-with-stats API:', error)
-    return NextResponse.json(
-      { error: 'Internal server error', details: error.message },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Failed to fetch modules with stats', 'MODULES_STATS_ERROR', { message: error.message })
   }
 }
 

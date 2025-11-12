@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { ApiResponse } from '@/lib/api-responses'
 
 export async function GET(
   req: NextRequest,
@@ -9,10 +10,7 @@ export async function GET(
     const { code } = await params
     
     if (!code) {
-      return NextResponse.json({ 
-        valid: false,
-        error: 'No se proporcionó código de verificación' 
-      }, { status: 400 })
+      return ApiResponse.badRequest('No se proporcionó código de verificación', 'MISSING_VERIFICATION_CODE')
     }
 
     const supabase = await createClient()
@@ -37,11 +35,7 @@ export async function GET(
 
     if (error) {
       console.error('Error querying enrollments:', error)
-      return NextResponse.json({ 
-        valid: false,
-        error: 'Error al verificar el certificado',
-        details: error.message 
-      }, { status: 500 })
+      return ApiResponse.serverError('Error al verificar el certificado', 'CERTIFICATE_VERIFICATION_ERROR', { message: error.message })
     }
 
     console.log('📜 Total completed enrollments:', allEnrollments?.length || 0)
@@ -55,10 +49,7 @@ export async function GET(
 
     if (enrollments.length === 0) {
       console.log('❌ No enrollment found matching code:', code)
-      return NextResponse.json({ 
-        valid: false,
-        error: 'Certificado no encontrado. Verifica que el código sea correcto.' 
-      }, { status: 404 })
+      return ApiResponse.notFound('Certificado', 'CERTIFICATE_NOT_FOUND')
     }
 
     const enrollment = enrollments[0]
@@ -71,7 +62,7 @@ export async function GET(
       module: moduleData?.title
     })
 
-    return NextResponse.json({
+    return ApiResponse.ok({
       valid: true,
       verificationCode: code.toUpperCase(),
       certificateHolder: userData?.full_name || 'Usuario',
@@ -84,10 +75,6 @@ export async function GET(
 
   } catch (error: any) {
     console.error('Error in certificate verification:', error)
-    return NextResponse.json({ 
-      valid: false,
-      error: 'Error del servidor al verificar el certificado',
-      details: error.message 
-    }, { status: 500 })
+    return ApiResponse.serverError('Error del servidor al verificar el certificado', 'CERTIFICATE_VERIFICATION_SERVER_ERROR', { message: error.message })
   }
 }

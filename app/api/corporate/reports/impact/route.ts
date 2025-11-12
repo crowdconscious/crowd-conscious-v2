@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { ApiResponse } from '@/lib/api-responses'
 
 /**
  * GET /api/corporate/reports/impact
@@ -18,7 +19,7 @@ export async function GET(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return ApiResponse.unauthorized('Please log in to view impact reports')
     }
 
     const { searchParams } = new URL(req.url)
@@ -78,7 +79,7 @@ export async function GET(req: NextRequest) {
 
     if (enrollmentsError) {
       console.error('Error fetching enrollments:', enrollmentsError)
-      return NextResponse.json({ error: 'Failed to fetch enrollments' }, { status: 500 })
+      return ApiResponse.serverError('Failed to fetch enrollments', 'ENROLLMENTS_FETCH_ERROR')
     }
 
     // Extract lesson responses from joined data
@@ -191,9 +192,9 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(report)
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating impact report:', error)
-    return NextResponse.json({ error: 'Server error' }, { status: 500 })
+    return ApiResponse.serverError('Failed to generate impact report', 'IMPACT_REPORT_ERROR', { message: error.message })
   }
 }
 

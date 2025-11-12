@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { ApiResponse } from '@/lib/api-responses'
 
 export async function GET(req: NextRequest) {
   try {
@@ -43,7 +44,7 @@ export async function GET(req: NextRequest) {
       .eq('completion_percentage', 100) // Only completed
 
     if (!enrollments || enrollments.length === 0) {
-      return NextResponse.json({ certificates: [] })
+      return ApiResponse.ok({ certificates: [] })
     }
 
     // Generate certificates for completed modules
@@ -101,17 +102,14 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({
+    return ApiResponse.ok({
       certificates,
       companyName: corporateAccount.company_name
     })
 
   } catch (error: any) {
     console.error('Error fetching corporate certificates:', error)
-    return NextResponse.json({ 
-      error: 'Server error', 
-      details: error.message 
-    }, { status: 500 })
+    return ApiResponse.serverError('Failed to fetch corporate certificates', 'CORPORATE_CERTIFICATES_ERROR', { message: error.message })
   }
 }
 

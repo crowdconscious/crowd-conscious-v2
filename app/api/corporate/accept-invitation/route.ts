@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { ApiResponse } from '@/lib/api-responses'
 
 function getSupabaseAdmin() {
   return createClient(
@@ -22,10 +23,7 @@ export async function POST(request: NextRequest) {
 
     // Validate input
     if (!token || !password) {
-      return NextResponse.json(
-        { error: 'Token y contraseña requeridos' },
-        { status: 400 }
-      )
+      return ApiResponse.badRequest('Token y contraseña requeridos', 'MISSING_CREDENTIALS')
     }
 
     // Find invitation
@@ -36,10 +34,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (inviteError || !invitation) {
-      return NextResponse.json(
-        { error: 'Invitación no válida' },
-        { status: 404 }
-      )
+      return ApiResponse.notFound('Invitación', 'INVITATION_NOT_FOUND')
     }
 
     // Check if expired
@@ -47,18 +42,12 @@ export async function POST(request: NextRequest) {
     const expiresAt = new Date(invitation.expires_at)
     
     if (now > expiresAt) {
-      return NextResponse.json(
-        { error: 'Esta invitación ha expirado' },
-        { status: 400 }
-      )
+      return ApiResponse.badRequest('Esta invitación ha expirado', 'INVITATION_EXPIRED')
     }
 
     // Check if already accepted
     if (invitation.status === 'accepted') {
-      return NextResponse.json(
-        { error: 'Esta invitación ya fue aceptada' },
-        { status: 400 }
-      )
+      return ApiResponse.conflict('Esta invitación ya fue aceptada', 'INVITATION_ALREADY_ACCEPTED')
     }
 
     // Create user account
@@ -75,9 +64,10 @@ export async function POST(request: NextRequest) {
 
     if (authError || !authData.user) {
       console.error('Auth error:', authError)
-      return NextResponse.json(
-        { error: authError?.message || 'Error al crear cuenta' },
-        { status: 400 }
+      return ApiResponse.badRequest(
+        authError?.message || 'Error al crear cuenta',
+        'ACCOUNT_CREATION_ERROR',
+        authError
       )
     }
 
@@ -151,17 +141,17 @@ export async function POST(request: NextRequest) {
       console.error('Log error:', logError)
     }
 
-    return NextResponse.json({
-      success: true,
+    return ApiResponse.created({
       message: 'Cuenta creada exitosamente',
       user_id: authData.user.id
     })
 
   } catch (error: any) {
     console.error('Accept invitation error:', error)
-    return NextResponse.json(
-      { error: error.message || 'Error al aceptar invitación' },
-      { status: 500 }
+    return ApiResponse.serverError(
+      error.message || 'Error al aceptar invitación',
+      'INVITATION_ACCEPT_ERROR',
+      { message: error.message }
     )
   }
 }
@@ -174,10 +164,7 @@ export async function GET(request: NextRequest) {
     const token = searchParams.get('token')
 
     if (!token) {
-      return NextResponse.json(
-        { error: 'Token requerido' },
-        { status: 400 }
-      )
+      return ApiResponse.badRequest('Token requerido', 'MISSING_TOKEN')
     }
 
     // Find invitation
@@ -188,10 +175,7 @@ export async function GET(request: NextRequest) {
       .single()
 
     if (error || !invitation) {
-      return NextResponse.json(
-        { valid: false, error: 'Invitación no encontrada' },
-        { status: 404 }
-      )
+      return ApiResponse.notFound('Invitación', 'INVITATION_NOT_FOUND')
     }
 
     // Check if expired
@@ -199,21 +183,15 @@ export async function GET(request: NextRequest) {
     const expiresAt = new Date(invitation.expires_at)
     
     if (now > expiresAt) {
-      return NextResponse.json(
-        { valid: false, error: 'Invitación expirada' },
-        { status: 400 }
-      )
+      return ApiResponse.badRequest('Invitación expirada', 'INVITATION_EXPIRED')
     }
 
     // Check if already accepted
     if (invitation.status === 'accepted') {
-      return NextResponse.json(
-        { valid: false, error: 'Ya aceptada' },
-        { status: 400 }
-      )
+      return ApiResponse.conflict('Invitación ya aceptada', 'INVITATION_ALREADY_ACCEPTED')
     }
 
-    return NextResponse.json({
+    return ApiResponse.ok({
       valid: true,
       invitation: {
         email: invitation.email,
@@ -224,9 +202,10 @@ export async function GET(request: NextRequest) {
 
   } catch (error: any) {
     console.error('Validate token error:', error)
-    return NextResponse.json(
-      { valid: false, error: error.message },
-      { status: 500 }
+    return ApiResponse.serverError(
+      'Error al validar invitación',
+      'TOKEN_VALIDATION_ERROR',
+      { message: error.message }
     )
   }
 }

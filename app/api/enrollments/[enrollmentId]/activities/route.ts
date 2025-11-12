@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { ApiResponse } from '@/lib/api-responses'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,7 +27,7 @@ export async function POST(
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     
     if (userError || !user) {
-      return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+      return ApiResponse.unauthorized('No autenticado', 'UNAUTHORIZED')
     }
 
     const body = await request.json()
@@ -55,9 +56,10 @@ export async function POST(
 
     // Validate required fields
     if (!module_id || !lesson_id || !activity_type) {
-      return NextResponse.json({ 
-        error: 'Faltan campos requeridos: module_id, lesson_id, activity_type' 
-      }, { status: 400 })
+      return ApiResponse.badRequest(
+        'Faltan campos requeridos: module_id, lesson_id, activity_type',
+        'MISSING_REQUIRED_FIELDS'
+      )
     }
 
     // Normalize activity data based on activity_type
@@ -260,19 +262,19 @@ export async function POST(
       console.warn('⚠️ RPC function not available, skipping progress update:', rpcError)
     }
 
-    return NextResponse.json({
-      success: true,
+    return ApiResponse.ok({
       response_id: activityResult?.id,
       message: 'Respuesta guardada exitosamente',
       esg_ready: true // Always true - we're using the new table
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Critical error saving activity:', error)
-    return NextResponse.json({ 
-      error: 'Error del servidor',
-      details: error instanceof Error ? error.message : 'Error desconocido'
-    }, { status: 500 })
+    return ApiResponse.serverError(
+      'Error del servidor',
+      'ACTIVITY_SAVE_ERROR',
+      { message: error instanceof Error ? error.message : 'Error desconocido' }
+    )
   }
 }
 
@@ -290,7 +292,7 @@ export async function GET(
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     
     if (userError || !user) {
-      return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+      return ApiResponse.unauthorized('No autenticado', 'UNAUTHORIZED')
     }
 
     const { searchParams } = new URL(request.url)
@@ -298,7 +300,7 @@ export async function GET(
     const tool_name = searchParams.get('tool_name')
 
     if (!lesson_id) {
-      return NextResponse.json({ error: 'lesson_id requerido' }, { status: 400 })
+      return ApiResponse.badRequest('lesson_id requerido', 'MISSING_LESSON_ID')
     }
 
     // Get activity_response from new table
@@ -312,7 +314,7 @@ export async function GET(
       .single()
 
     if (!response) {
-      return NextResponse.json({ response: null })
+      return ApiResponse.ok({ response: null })
     }
 
     // Reconstruct responses object from structured data
@@ -330,7 +332,7 @@ export async function GET(
     // If tool_name specified, return just that tool's data
     if (tool_name) {
       const toolData = response.custom_responses?.[`tool_${tool_name}`]
-      return NextResponse.json({
+      return ApiResponse.ok({
         tool_data: toolData || null,
         tool_name
       })
@@ -338,7 +340,7 @@ export async function GET(
 
     console.log('✅ Loaded from activity_responses table')
     
-    return NextResponse.json({
+    return ApiResponse.ok({
       response: {
         id: response.id,
         responses: reconstructedResponses,
@@ -349,12 +351,13 @@ export async function GET(
       }
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Critical error fetching activity:', error)
-    return NextResponse.json({ 
-      error: 'Error del servidor',
-      details: error instanceof Error ? error.message : 'Error desconocido'
-    }, { status: 500 })
+    return ApiResponse.serverError(
+      'Error del servidor',
+      'ACTIVITY_FETCH_ERROR',
+      { message: error instanceof Error ? error.message : 'Error desconocido' }
+    )
   }
 }
 
