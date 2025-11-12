@@ -9,7 +9,12 @@ import {
   CostCalculator,
   EvidenceUploader,
   ReflectionJournal,
-  ImpactComparison
+  ImpactComparison,
+  EmissionInventoryTemplate,
+  SustainabilityROICalculator,
+  WaterAuditTemplate,
+  SecurityAuditChecklist,
+  WasteAuditTemplate
 } from '@/components/module-tools'
 
 interface ToolModalProps {
@@ -51,6 +56,7 @@ export default function ToolModal({ toolType, toolTitle, onClose, onDataCapture 
         )
       
       case 'carbon_calculator':
+      case 'carbon-footprint-calculator': // Database uses kebab-case
         return (
           <CarbonCalculator
             onCalculate={(data) => {
@@ -92,10 +98,28 @@ export default function ToolModal({ toolType, toolTitle, onClose, onDataCapture 
           />
         )
       
+      // New priority tools (kebab-case from database)
+      case 'emission-inventory-template':
+        return <EmissionInventoryTemplate />
+      
+      case 'sustainability-roi-calculator':
+      case 'roi-calculator-sustainability':
+        return <SustainabilityROICalculator />
+      
+      case 'water-audit-template':
+        return <WaterAuditTemplate />
+      
+      case 'security-audit-checklist':
+        return <SecurityAuditChecklist />
+      
+      case 'waste-audit-template':
+        return <WasteAuditTemplate />
+      
       default:
         return (
           <div className="text-center py-12">
             <p className="text-slate-600">Herramienta no encontrada: {toolType}</p>
+            <p className="text-xs text-slate-500 mt-2">Si esta herramienta debería estar disponible, por favor contacta al soporte.</p>
           </div>
         )
     }

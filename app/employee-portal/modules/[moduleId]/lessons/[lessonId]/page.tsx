@@ -17,6 +17,10 @@ import {
   ImplementationTimelinePlanner,
   AirQualityMonitorTracker,
   EmissionInventoryTemplate,
+  SustainabilityROICalculator,
+  WaterAuditTemplate,
+  SecurityAuditChecklist,
+  WasteAuditTemplate,
   WaterFootprintCalculator,
   WaterAuditTool,
   WaterConservationTracker,
@@ -611,6 +615,20 @@ export default function LessonPage({
                         </div>
                       )
                     
+                    // Map kebab-case tool names from database to PascalCase components
+                    case 'carbon-footprint-calculator':
+                      return (
+                        <div className="bg-white rounded-xl p-4 sm:p-6 border-2 border-purple-200">
+                          <h3 className="font-bold text-lg mb-4 text-purple-900">🌍 Calculadora de Huella de Carbono</h3>
+                          <CarbonCalculator 
+                            onCalculate={(result: any) => {
+                              console.log('Carbon calculation:', result)
+                              setActivityData({...activityData, carbonFootprint: result})
+                            }}
+                          />
+                        </div>
+                      )
+                    
                     case 'air-quality-roi':
                       return (
                         <AirQualityROI
@@ -895,11 +913,46 @@ export default function LessonPage({
                         />
                       )
                     
+                    // Additional priority tools
+                    case 'sustainability-roi-calculator':
+                    case 'roi-calculator-sustainability':
+                      return (
+                        <div className="bg-white rounded-xl p-4 sm:p-6 border-2 border-purple-200">
+                          <h3 className="font-bold text-lg mb-4 text-purple-900">💰 Calculadora ROI Sustentabilidad</h3>
+                          <SustainabilityROICalculator />
+                        </div>
+                      )
+                    
+                    case 'water-audit-template':
+                      return (
+                        <div className="bg-white rounded-xl p-4 sm:p-6 border-2 border-purple-200">
+                          <h3 className="font-bold text-lg mb-4 text-purple-900">💧 Auditoría de Uso de Agua</h3>
+                          <WaterAuditTemplate />
+                        </div>
+                      )
+                    
+                    case 'security-audit-checklist':
+                      return (
+                        <div className="bg-white rounded-xl p-4 sm:p-6 border-2 border-purple-200">
+                          <h3 className="font-bold text-lg mb-4 text-purple-900">🛡️ Checklist de Auditoría de Seguridad</h3>
+                          <SecurityAuditChecklist />
+                        </div>
+                      )
+                    
+                    case 'waste-audit-template':
+                      return (
+                        <div className="bg-white rounded-xl p-4 sm:p-6 border-2 border-purple-200">
+                          <h3 className="font-bold text-lg mb-4 text-purple-900">🗑️ Auditoría de Flujos de Residuos</h3>
+                          <WasteAuditTemplate />
+                        </div>
+                      )
+                    
                     default:
                       return (
                         <div className="bg-white rounded-xl p-4 sm:p-6 border-2 border-purple-200">
-                          <p className="text-sm text-slate-600">Herramienta: {toolName}</p>
-                          <p className="text-xs text-slate-500 mt-2">Esta herramienta estará disponible próximamente</p>
+                          <h3 className="font-bold text-lg mb-4 text-purple-900">🛠️ {toolName}</h3>
+                          <p className="text-slate-600">Herramienta no encontrada: {toolName}</p>
+                          <p className="text-xs text-slate-500 mt-2">Si esta herramienta debería estar disponible, por favor contacta al soporte.</p>
                         </div>
                       )
                   }

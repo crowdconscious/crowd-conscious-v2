@@ -13,6 +13,10 @@ export { default as EmissionSourceIdentifier } from './EmissionSourceIdentifier'
 export { default as ImplementationTimelinePlanner } from './ImplementationTimelinePlanner'
 export { default as AirQualityMonitorTracker } from './AirQualityMonitorTracker'
 export { default as EmissionInventoryTemplate } from './EmissionInventoryTemplate'
+export { default as SustainabilityROICalculator } from './SustainabilityROICalculator'
+export { default as WaterAuditTemplate } from './WaterAuditTemplate'
+export { default as SecurityAuditChecklist } from './SecurityAuditChecklist'
+export { default as WasteAuditTemplate } from './WasteAuditTemplate'
 // Module1Tools has named exports only - not a default export
 export * from './Module1Tools'
 
