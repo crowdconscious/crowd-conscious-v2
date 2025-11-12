@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { getCurrentUser } from '@/lib/auth-server'
+import { ApiResponse } from '@/lib/api-responses'
 import { supabase } from '@/lib/supabase'
 
 // This is a one-time setup endpoint to make the first admin
@@ -8,14 +9,14 @@ export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json({ error: 'You must be logged in' }, { status: 401 })
+      return ApiResponse.unauthorized('You must be logged in', 'AUTHENTICATION_REQUIRED')
     }
 
     const { secretKey } = await request.json()
 
     // Simple secret key protection (change this to something secure)
     if (secretKey !== 'setup-admin-2024') {
-      return NextResponse.json({ error: 'Invalid secret key' }, { status: 403 })
+      return ApiResponse.forbidden('Invalid secret key', 'INVALID_SECRET_KEY')
     }
 
     // Check if user already exists in profiles
@@ -36,7 +37,7 @@ export async function POST(request: NextRequest) {
 
       if (error) {
         console.error('Error updating profile:', error)
-        return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 })
+        return ApiResponse.serverError('Failed to update profile', 'PROFILE_UPDATE_ERROR', { message: error.message })
       }
     } else {
       // Create new admin profile
@@ -51,17 +52,16 @@ export async function POST(request: NextRequest) {
 
       if (error) {
         console.error('Error creating profile:', error)
-        return NextResponse.json({ error: 'Failed to create admin profile' }, { status: 500 })
+        return ApiResponse.serverError('Failed to create admin profile', 'PROFILE_CREATION_ERROR', { message: error.message })
       }
     }
 
-    return NextResponse.json({ 
-      success: true, 
+    return ApiResponse.ok({ 
       message: 'Admin account created successfully! Refresh the page to see admin controls.' 
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Setup admin error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return ApiResponse.serverError('Internal server error', 'SETUP_ADMIN_SERVER_ERROR', { message: error.message })
   }
 }

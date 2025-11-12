@@ -1,15 +1,16 @@
-import { NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createServerAuth } from '@/lib/auth-server'
+import { ApiResponse } from '@/lib/api-responses'
 import { sendEmail, emailTemplates } from '@/lib/resend'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   // Verify cron secret to prevent unauthorized access
   const authHeader = request.headers.get('authorization')
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return ApiResponse.unauthorized('Invalid cron secret', 'INVALID_CRON_SECRET')
   }
 
   try {
@@ -22,7 +23,7 @@ export async function GET(request: Request) {
     
     if (usersError || !users) {
       console.error('Error fetching users:', usersError)
-      return NextResponse.json({ error: 'No users found' }, { status: 404 })
+      return ApiResponse.serverError('Failed to fetch users', 'USERS_FETCH_ERROR', { message: usersError?.message })
     }
 
     const results = []
@@ -105,15 +106,14 @@ export async function GET(request: Request) {
       }
     }
 
-    return NextResponse.json({ 
-      success: true, 
+    return ApiResponse.ok({ 
       sent: results.filter(r => r.status === 'sent').length,
       failed: results.filter(r => r.status === 'failed').length,
       results 
     })
   } catch (error: any) {
     console.error('Cron job error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return ApiResponse.serverError('Cron job failed', 'CRON_JOB_ERROR', { message: error.message })
   }
 }
 

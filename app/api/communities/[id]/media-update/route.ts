@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createServerAuth } from '@/lib/auth-server'
+import { ApiResponse } from '@/lib/api-responses'
 
 export async function POST(
   request: NextRequest,
@@ -12,7 +13,7 @@ export async function POST(
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     
     if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return ApiResponse.unauthorized('Please log in to update community media', 'AUTHENTICATION_REQUIRED')
     }
 
     const { id: communityId } = await params
@@ -21,11 +22,11 @@ export async function POST(
 
     // Validate inputs
     if (!field || !url) {
-      return NextResponse.json({ error: 'Missing field or url' }, { status: 400 })
+      return ApiResponse.badRequest('Missing field or url', 'MISSING_REQUIRED_FIELDS')
     }
 
     if (!['logo_url', 'banner_url', 'image_url'].includes(field)) {
-      return NextResponse.json({ error: 'Invalid field' }, { status: 400 })
+      return ApiResponse.badRequest('Invalid field. Must be logo_url, banner_url, or image_url', 'INVALID_FIELD')
     }
 
     // Check if user is founder/admin of the community
@@ -37,7 +38,7 @@ export async function POST(
       .single()
 
     if (!membership || !['founder', 'admin'].includes(membership.role)) {
-      return NextResponse.json({ error: 'Only founders and admins can update community media' }, { status: 403 })
+      return ApiResponse.forbidden('Only founders and admins can update community media', 'NOT_COMMUNITY_ADMIN')
     }
 
     // Update the community media
@@ -48,13 +49,13 @@ export async function POST(
 
     if (updateError) {
       console.error('Error updating community media:', updateError)
-      return NextResponse.json({ error: 'Failed to update community media' }, { status: 500 })
+      return ApiResponse.serverError('Failed to update community media', 'MEDIA_UPDATE_ERROR', { message: updateError.message })
     }
 
-    return NextResponse.json({ success: true, message: 'Media updated successfully' })
+    return ApiResponse.ok({ message: 'Media updated successfully' })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('API error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return ApiResponse.serverError('Internal server error', 'MEDIA_UPDATE_SERVER_ERROR', { message: error.message })
   }
 }

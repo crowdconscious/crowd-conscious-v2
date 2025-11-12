@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
+import { ApiResponse } from '@/lib/api-responses'
 
 // Initialize Stripe lazily to avoid build-time errors
 let stripe: Stripe | null = null
@@ -39,10 +40,7 @@ export async function GET(request: NextRequest) {
     const sessionId = searchParams.get('session_id')
 
     if (!sessionId) {
-      return NextResponse.json(
-        { error: 'Missing session_id' },
-        { status: 400 }
-      )
+      return ApiResponse.badRequest('Missing session_id', 'MISSING_SESSION_ID')
     }
 
     // Retrieve session from Stripe
@@ -50,20 +48,14 @@ export async function GET(request: NextRequest) {
     const session = await stripeClient.checkout.sessions.retrieve(sessionId)
 
     if (session.payment_status !== 'paid') {
-      return NextResponse.json(
-        { success: false, error: 'Payment not completed' },
-        { status: 400 }
-      )
+      return ApiResponse.badRequest('Payment not completed', 'PAYMENT_NOT_COMPLETED')
     }
 
     // Get sponsorship details
     const sponsorshipId = session.metadata?.sponsorshipId
 
     if (!sponsorshipId) {
-      return NextResponse.json(
-        { success: false, error: 'Sponsorship not found' },
-        { status: 404 }
-      )
+      return ApiResponse.notFound('Sponsorship', 'SPONSORSHIP_NOT_FOUND')
     }
 
     const supabaseClient = getSupabase()
@@ -74,21 +66,14 @@ export async function GET(request: NextRequest) {
       .single()
 
     if (error || !sponsorship) {
-      return NextResponse.json(
-        { success: false, error: 'Sponsorship not found' },
-        { status: 404 }
-      )
+      return ApiResponse.notFound('Sponsorship', 'SPONSORSHIP_NOT_FOUND')
     }
 
-    return NextResponse.json({
-      success: true,
+    return ApiResponse.ok({
       sponsorship
     })
   } catch (error: any) {
     console.error('Payment verification error:', error)
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Payment verification failed', 'PAYMENT_VERIFICATION_ERROR', { message: error.message })
   }
 }

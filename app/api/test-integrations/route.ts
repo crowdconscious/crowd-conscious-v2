@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { ApiResponse } from '@/lib/api-responses'
 
 // Test all integrations endpoint
 export async function GET() {
@@ -43,12 +43,9 @@ export async function GET() {
       results.recommendations.push('Set STRIPE_SECRET_KEY environment variable for payment functionality')
     }
 
-    return NextResponse.json(results)
-  } catch (error) {
+    return ApiResponse.ok(results)
+  } catch (error: any) {
     console.error('Integration test error:', error)
-    return NextResponse.json(
-      { error: 'Failed to test integrations' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Failed to test integrations', 'INTEGRATION_TEST_ERROR', { message: error.message })
   }
 }

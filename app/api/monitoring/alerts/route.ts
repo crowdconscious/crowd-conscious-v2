@@ -1,13 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { performanceMonitor, ErrorTracker } from '@/lib/monitoring-simple'
 import { getCurrentUser } from '@/lib/auth-server'
+import { ApiResponse } from '@/lib/api-responses'
 import { supabase } from '@/lib/supabase'
 
 export async function GET(request: NextRequest) {
   try {
     const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return ApiResponse.unauthorized('Please log in to view alerts', 'AUTHENTICATION_REQUIRED')
     }
 
     // Check if user is admin
@@ -18,7 +19,7 @@ export async function GET(request: NextRequest) {
       .single()
 
     if ((profile as any)?.user_type !== 'admin') {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+      return ApiResponse.forbidden('Admin access required', 'NOT_ADMIN')
     }
 
     // Get current metrics and alerts
@@ -93,7 +94,7 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    return NextResponse.json({
+    return ApiResponse.ok({
       alerts,
       summary: {
         errorRate,
@@ -105,10 +106,7 @@ export async function GET(request: NextRequest) {
 
   } catch (error: any) {
     ErrorTracker.captureError(error, { endpoint: '/api/monitoring/alerts' })
-    return NextResponse.json(
-      { error: 'Failed to fetch alerts' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Failed to fetch alerts', 'ALERTS_FETCH_ERROR', { message: error.message })
   }
 }
 
@@ -116,7 +114,7 @@ export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return ApiResponse.unauthorized('Please log in to manage alerts', 'AUTHENTICATION_REQUIRED')
     }
 
     // Check if user is admin
@@ -127,7 +125,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     if ((profile as any)?.user_type !== 'admin') {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+      return ApiResponse.forbidden('Admin access required', 'NOT_ADMIN')
     }
 
     const { alertId, action } = await request.json()
@@ -143,16 +141,13 @@ export async function POST(request: NextRequest) {
         { userId: (user as any).id, alertId }
       )
 
-      return NextResponse.json({ success: true })
+      return ApiResponse.ok({ message: 'Alert resolved successfully' })
     }
 
-    return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
+    return ApiResponse.badRequest('Invalid action. Must be "resolve"', 'INVALID_ACTION')
 
   } catch (error: any) {
     ErrorTracker.captureError(error, { endpoint: '/api/monitoring/alerts' })
-    return NextResponse.json(
-      { error: 'Failed to process alert action' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Failed to process alert action', 'ALERT_ACTION_ERROR', { message: error.message })
   }
 }

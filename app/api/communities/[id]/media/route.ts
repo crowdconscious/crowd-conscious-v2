@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { getCurrentUser } from '../../../../../lib/auth-server'
+import { ApiResponse } from '@/lib/api-responses'
 import { supabase } from '../../../../../lib/supabase'
 import { uploadMedia, validateFile } from '../../../../../lib/media'
 
@@ -111,10 +112,7 @@ export async function POST(
     // Authentication check
     const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      )
+      return ApiResponse.unauthorized('Please log in to upload media', 'AUTHENTICATION_REQUIRED')
     }
 
     const { id: communityId } = await params
@@ -122,10 +120,7 @@ export async function POST(
     // Authorization check - only founders can upload media
     const isFounder = await checkFounderPermission(communityId, (user as any).id)
     if (!isFounder) {
-      return NextResponse.json(
-        { error: 'Only community founders can upload media' },
-        { status: 403 }
-      )
+      return ApiResponse.forbidden('Only community founders can upload media', 'NOT_COMMUNITY_FOUNDER')
     }
 
     // Parse form data
@@ -134,36 +129,24 @@ export async function POST(
     const mediaType = formData.get('type') as string // 'logo', 'banner', 'image'
 
     if (!file) {
-      return NextResponse.json(
-        { error: 'No file provided' },
-        { status: 400 }
-      )
+      return ApiResponse.badRequest('No file provided', 'MISSING_FILE')
     }
 
     if (!mediaType || !['logo', 'banner', 'image'].includes(mediaType)) {
-      return NextResponse.json(
-        { error: 'Invalid media type. Must be: logo, banner, or image' },
-        { status: 400 }
-      )
+      return ApiResponse.badRequest('Invalid media type. Must be: logo, banner, or image', 'INVALID_MEDIA_TYPE')
     }
 
     // Validate file
     const validation = await validateUploadFile(file)
     if (!validation.valid) {
-      return NextResponse.json(
-        { error: validation.error },
-        { status: 400 }
-      )
+      return ApiResponse.badRequest(validation.error || 'File validation failed', 'FILE_VALIDATION_ERROR')
     }
 
     // Upload to storage
     const uploadResult = await uploadMedia(file, 'community-images', communityId)
     
     if (!uploadResult.success) {
-      return NextResponse.json(
-        { error: uploadResult.error || 'Upload failed' },
-        { status: 500 }
-      )
+      return ApiResponse.serverError(uploadResult.error || 'Upload failed', 'MEDIA_UPLOAD_ERROR')
     }
 
     // Update community record
@@ -177,27 +160,20 @@ export async function POST(
 
     if (updateError) {
       console.error('Error updating community:', updateError)
-      return NextResponse.json(
-        { error: 'Failed to update community record' },
-        { status: 500 }
-      )
+      return ApiResponse.serverError('Failed to update community record', 'COMMUNITY_UPDATE_ERROR', { message: updateError.message })
     }
 
     // Return success response
-    return NextResponse.json({
-      success: true,
+    return ApiResponse.ok({
       url: uploadResult.url,
       path: uploadResult.path,
       mediaType,
       message: `${mediaType.charAt(0).toUpperCase() + mediaType.slice(1)} uploaded successfully`
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Upload API error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error during upload' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Internal server error during upload', 'MEDIA_UPLOAD_SERVER_ERROR', { message: error.message })
   }
 }
 
@@ -209,10 +185,7 @@ export async function DELETE(
     // Authentication check
     const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      )
+      return ApiResponse.unauthorized('Please log in to delete media', 'AUTHENTICATION_REQUIRED')
     }
 
     const { id: communityId } = await params
@@ -220,20 +193,14 @@ export async function DELETE(
     // Authorization check - only founders can delete media
     const isFounder = await checkFounderPermission(communityId, (user as any).id)
     if (!isFounder) {
-      return NextResponse.json(
-        { error: 'Only community founders can delete media' },
-        { status: 403 }
-      )
+      return ApiResponse.forbidden('Only community founders can delete media', 'NOT_COMMUNITY_FOUNDER')
     }
 
     const { searchParams } = new URL(request.url)
     const mediaType = searchParams.get('type')
 
     if (!mediaType || !['logo', 'banner', 'image'].includes(mediaType)) {
-      return NextResponse.json(
-        { error: 'Invalid media type' },
-        { status: 400 }
-      )
+      return ApiResponse.badRequest('Invalid media type. Must be: logo, banner, or image', 'INVALID_MEDIA_TYPE')
     }
 
     // Update community record to remove media URL
@@ -247,22 +214,15 @@ export async function DELETE(
 
     if (updateError) {
       console.error('Error removing media from community:', updateError)
-      return NextResponse.json(
-        { error: 'Failed to remove media reference' },
-        { status: 500 }
-      )
+      return ApiResponse.serverError('Failed to remove media reference', 'MEDIA_DELETE_ERROR', { message: updateError.message })
     }
 
-    return NextResponse.json({
-      success: true,
+    return ApiResponse.ok({
       message: `${mediaType.charAt(0).toUpperCase() + mediaType.slice(1)} removed successfully`
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Delete API error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error during deletion' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError('Internal server error during deletion', 'MEDIA_DELETE_SERVER_ERROR', { message: error.message })
   }
 }

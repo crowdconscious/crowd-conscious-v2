@@ -1,12 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { getCurrentUser } from '@/lib/auth-server'
+import { ApiResponse } from '@/lib/api-responses'
 import { supabase } from '@/lib/supabase'
 
 export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return ApiResponse.unauthorized('Please log in to update settings', 'AUTHENTICATION_REQUIRED')
     }
 
     // Check if user is admin
@@ -17,13 +18,13 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (!profile || (profile as any).user_type !== 'admin' || (profile as any).suspended) {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+      return ApiResponse.forbidden('Admin access required', 'NOT_ADMIN')
     }
 
     const { settingKey, value } = await request.json()
 
     if (!settingKey || value === undefined) {
-      return NextResponse.json({ error: 'Setting key and value are required' }, { status: 400 })
+      return ApiResponse.badRequest('Setting key and value are required', 'MISSING_REQUIRED_FIELDS')
     }
 
     // Validate setting key
@@ -35,27 +36,27 @@ export async function POST(request: NextRequest) {
     ]
 
     if (!validSettings.includes(settingKey)) {
-      return NextResponse.json({ error: 'Invalid setting key' }, { status: 400 })
+      return ApiResponse.badRequest('Invalid setting key', 'INVALID_SETTING_KEY')
     }
 
     // Validate values based on setting type
     if (settingKey === 'platform_fee_percentage') {
       const feePercent = parseFloat(value)
       if (isNaN(feePercent) || feePercent < 0 || feePercent > 100) {
-        return NextResponse.json({ error: 'Platform fee must be between 0 and 100' }, { status: 400 })
+        return ApiResponse.badRequest('Platform fee must be between 0 and 100', 'INVALID_FEE_PERCENTAGE')
       }
     }
 
     if (settingKey.includes('amount')) {
       const amount = parseFloat(value)
       if (isNaN(amount) || amount < 0) {
-        return NextResponse.json({ error: 'Amount must be a positive number' }, { status: 400 })
+        return ApiResponse.badRequest('Amount must be a positive number', 'INVALID_AMOUNT')
       }
     }
 
     if (settingKey === 'auto_approve_communities') {
       if (!['true', 'false'].includes(value.toLowerCase())) {
-        return NextResponse.json({ error: 'Auto approve must be true or false' }, { status: 400 })
+        return ApiResponse.badRequest('Auto approve must be true or false', 'INVALID_BOOLEAN_VALUE')
       }
     }
 
@@ -81,7 +82,7 @@ export async function POST(request: NextRequest) {
 
       if (updateError) {
         console.error('Error updating setting:', updateError)
-        return NextResponse.json({ error: 'Failed to update setting' }, { status: 500 })
+        return ApiResponse.serverError('Failed to update setting', 'SETTING_UPDATE_ERROR', { message: updateError.message })
       }
     } else {
       // Create new setting if it doesn't exist
@@ -98,7 +99,7 @@ export async function POST(request: NextRequest) {
 
       if (insertError) {
         console.error('Error creating setting:', insertError)
-        return NextResponse.json({ error: 'Failed to create setting' }, { status: 500 })
+        return ApiResponse.serverError('Failed to create setting', 'SETTING_CREATION_ERROR', { message: insertError.message })
       }
     }
 
@@ -115,10 +116,10 @@ export async function POST(request: NextRequest) {
       })
       .catch(err => console.log('Admin action logging failed:', err)) // Don't fail if logging fails */
 
-    return NextResponse.json({ success: true })
-  } catch (error) {
+    return ApiResponse.ok({ message: 'Setting updated successfully' })
+  } catch (error: any) {
     console.error('Setting update error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return ApiResponse.serverError('Internal server error', 'SETTING_UPDATE_SERVER_ERROR', { message: error.message })
   }
 }
 

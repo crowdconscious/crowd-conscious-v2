@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createServerAuth, getCurrentUser } from '@/lib/auth-server'
+import { ApiResponse } from '@/lib/api-responses'
 
 // Update deletion request (approve/reject)
 export async function PATCH(
@@ -9,16 +10,14 @@ export async function PATCH(
   try {
     const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+      return ApiResponse.unauthorized('Authentication required', 'AUTHENTICATION_REQUIRED')
     }
 
     const { id: requestId } = await params
     const { status, admin_notes } = await request.json()
 
     if (!['approved', 'rejected'].includes(status)) {
-      return NextResponse.json({ 
-        error: 'Status must be either "approved" or "rejected"' 
-      }, { status: 400 })
+      return ApiResponse.badRequest('Status must be either "approved" or "rejected"', 'INVALID_STATUS')
     }
 
     const supabase = await createServerAuth()
@@ -31,7 +30,7 @@ export async function PATCH(
       .single()
 
     if ((profile as any)?.user_type !== 'admin') {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+      return ApiResponse.forbidden('Admin access required', 'NOT_ADMIN')
     }
 
     // Update deletion request
@@ -49,7 +48,7 @@ export async function PATCH(
 
     if (error) {
       console.error('Error updating deletion request:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return ApiResponse.serverError('Failed to update deletion request', 'DELETION_REQUEST_UPDATE_ERROR', { message: error.message })
     }
 
     // If approved, perform the actual deletion
@@ -74,21 +73,18 @@ export async function PATCH(
           })
           .eq('id', requestId)
 
-        return NextResponse.json({ 
-          error: 'Deletion request approved but deletion failed: ' + deletionError.message 
-        }, { status: 500 })
+        return ApiResponse.serverError('Deletion request approved but deletion failed', 'DELETION_EXECUTION_ERROR', { message: deletionError.message })
       }
     }
 
-    return NextResponse.json({ 
-      success: true, 
+    return ApiResponse.ok({ 
       message: `Deletion request ${status}`,
       data: updatedRequest 
-    }, { status: 200 })
+    })
 
   } catch (error: any) {
     console.error('API error updating deletion request:', error)
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
+    return ApiResponse.serverError('Internal server error', 'DELETION_REQUEST_SERVER_ERROR', { message: error.message })
   }
 }
 
