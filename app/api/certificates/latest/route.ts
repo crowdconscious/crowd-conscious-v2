@@ -77,7 +77,7 @@ export async function GET(req: NextRequest) {
       verificationCode: `CC-${latestEnrollment.id.slice(0, 8).toUpperCase()}`,
       certificateUrl: latestEnrollment.certificate_url,
       modulesCompleted: modulesCompleted,
-      issuedAt: latestEnrollment.completion_date || latestEnrollment.purchased_at,
+      issuedAt: latestEnrollment.completed_at || latestEnrollment.completion_date || latestEnrollment.purchased_at,  // ✅ PHASE 3: Use completed_at first
       xpEarned: totalXP
     })
 

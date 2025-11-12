@@ -48,7 +48,8 @@ export async function POST(req: Request) {
         corporate_account_id: profile.corporate_account_id,
         course_id: courseId,
         status: 'not_started',
-        completion_percentage: 0,
+        progress_percentage: 0,  // ✅ PHASE 3: Use standardized field
+        completion_percentage: 0,  // Keep for backward compatibility
         modules_completed: 0,
         xp_earned: 0,
       })

@@ -118,8 +118,8 @@ async function handleModulePurchase(session: Stripe.Checkout.Session) {
           purchased_at: new Date().toISOString(),
           purchase_price_snapshot: parseFloat(price),
           status: 'not_started',
-          progress_percentage: 0,
-          completion_percentage: 0,
+          progress_percentage: 0,  // ✅ PHASE 3: Use standardized field
+          completion_percentage: 0,  // Keep for backward compatibility (trigger will sync)
           completed: false,
           xp_earned: 0,
           started_at: new Date().toISOString(),
@@ -203,8 +203,8 @@ async function handleModulePurchase(session: Stripe.Checkout.Session) {
               purchased_at: new Date().toISOString(),
               purchase_price_snapshot: parseFloat(price),
               status: 'not_started',
-              progress_percentage: 0,
-              completion_percentage: 0,
+              progress_percentage: 0,  // ✅ PHASE 3: Use standardized field
+              completion_percentage: 0,  // Keep for backward compatibility (trigger will sync)
               completed: false,
               xp_earned: 0,
               started_at: new Date().toISOString(),

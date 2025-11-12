@@ -117,7 +117,8 @@ export async function POST(request: NextRequest) {
           assigned_at: new Date().toISOString(),
           mandatory: true,
           status: 'not_started',
-          completion_percentage: 0,
+          progress_percentage: 0,  // ✅ PHASE 3: Use standardized field
+          completion_percentage: 0,  // Keep for backward compatibility
           modules_completed: 0,
           started_at: new Date().toISOString(),
           last_accessed_at: new Date().toISOString(),

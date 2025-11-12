@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
         moduleId: moduleId,
         moduleName: moduleName,
         verificationCode: `CC-${enrollment.id.slice(0, 8).toUpperCase()}`,
-        issuedAt: enrollment.completion_date || enrollment.purchased_at,
+        issuedAt: enrollment.completed_at || enrollment.completion_date || enrollment.purchased_at,  // ✅ PHASE 3: Use completed_at first
         certificateUrl: enrollment.certificate_url,
         xpEarned: enrollment.xp_earned || 250
       }

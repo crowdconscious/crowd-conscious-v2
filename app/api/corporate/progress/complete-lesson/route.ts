@@ -120,12 +120,15 @@ export async function POST(req: NextRequest) {
       completed: moduleComplete
     })
 
+    // ✅ PHASE 3: Use standardized field names
     const { data: updateData, error: updateError } = await supabase
       .from('course_enrollments')
       .update({
         progress_percentage: newPercentage,
-        xp_earned: newXP,  // ✅ FIX: Actually save the XP!
+        xp_earned: newXP,
         completed: moduleComplete,
+        completed_at: moduleComplete ? new Date().toISOString() : null,  // ✅ Use completed_at (standardized)
+        // Keep completion_date for backward compatibility (trigger will sync)
         completion_date: moduleComplete ? new Date().toISOString() : null,
         last_accessed_at: new Date().toISOString()
       })

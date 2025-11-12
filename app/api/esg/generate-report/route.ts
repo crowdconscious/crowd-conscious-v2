@@ -186,7 +186,7 @@ async function generateIndividualReport(
     },
     progress: {
       status: enrollment.status,
-      completion_percentage: enrollment.progress_percentage || enrollment.completion_percentage || 0,
+      completion_percentage: enrollment.progress_percentage || enrollment.completion_percentage || 0,  // ✅ PHASE 3: Use progress_percentage first
       xp_earned: enrollment.xp_earned || 0,
       completed: enrollment.completed,
       completed_at: enrollment.completed_at,

@@ -76,9 +76,9 @@ export async function GET(
       verificationCode: code.toUpperCase(),
       certificateHolder: userData?.full_name || 'Usuario',
       moduleName: moduleData?.title || 'Módulo Completado',
-      issuedAt: enrollment.completion_date || enrollment.purchased_at,
+      issuedAt: enrollment.completed_at || enrollment.completion_date || enrollment.purchased_at,  // ✅ PHASE 3: Use completed_at first
       xpEarned: enrollment.xp_earned || 250,
-      completionDate: enrollment.completion_date,
+      completionDate: enrollment.completed_at || enrollment.completion_date,  // ✅ PHASE 3: Use completed_at first
       enrollmentId: enrollment.id
     })
 
