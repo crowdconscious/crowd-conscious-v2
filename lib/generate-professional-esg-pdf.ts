@@ -1,13 +1,11 @@
 import { jsPDF } from 'jspdf'
 import 'jspdf-autotable'
-import * as fs from 'fs'
-import * as path from 'path'
 
 /**
  * Generate Professional ESG Report PDF
  * 
  * Design matches certificate quality with:
- * - Crowd Conscious branding (with logo image)
+ * - Crowd Conscious branding (white logo text, top-left)
  * - Gradient headers
  * - Visual impact indicators
  * - Professional layout
@@ -40,44 +38,17 @@ export async function generateProfessionalESGPDF(reportData: any): Promise<Buffe
     doc.rect(0, 0, pageWidth, 45, 'F')
   }
 
-  // Logo image - embed actual platform logo
-  try {
-    const logoPath = path.join(process.cwd(), 'public', 'images', 'logo.png')
-    
-    if (fs.existsSync(logoPath)) {
-      const logoBuffer = fs.readFileSync(logoPath)
-      const logoBase64 = `data:image/png;base64,${logoBuffer.toString('base64')}`
-      
-      // Add logo image (centered in header, 40mm wide, auto height)
-      const logoWidth = 40
-      const logoHeight = 12 // Approximate height, adjust as needed
-      const logoX = (pageWidth - logoWidth) / 2
-      
-      doc.addImage(logoBase64, 'PNG', logoX, 8, logoWidth, logoHeight)
-    } else {
-      // Fallback to text if logo not found
-      doc.setFontSize(20)
-      doc.setTextColor(255, 255, 255)
-      doc.setFont('helvetica', 'bold')
-      const logoText = 'CROWDCONSCIOUS'
-      const textWidth = doc.getTextWidth(logoText)
-      doc.text(logoText, (pageWidth - textWidth) / 2, 18)
-    }
-  } catch (error) {
-    console.error('Error loading logo:', error)
-    // Fallback to text if error
-    doc.setFontSize(20)
-    doc.setTextColor(255, 255, 255)
-    doc.setFont('helvetica', 'bold')
-    const logoText = 'CROWDCONSCIOUS'
-    const textWidth = doc.getTextWidth(logoText)
-    doc.text(logoText, (pageWidth - textWidth) / 2, 18)
-  }
-
-  // Tagline
-  doc.setFontSize(9)
+  // Logo text - white, top-left corner, above tagline
+  doc.setFontSize(18)
   doc.setTextColor(255, 255, 255)
-  doc.text('Impulsando el cambio a través de la educación', 20, 25)
+  doc.setFont('helvetica', 'bold')
+  doc.text('CROWDCONSCIOUS', 20, 15)
+
+  // Tagline - positioned below logo
+  doc.setFontSize(8)
+  doc.setTextColor(255, 255, 255)
+  doc.setFont('helvetica', 'normal')
+  doc.text('Impulsando el cambio a través de la educación', 20, 21)
 
   // Report Title
   doc.setFontSize(16)

@@ -148,10 +148,13 @@ export default async function EmployeeDashboard() {
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
-            ¡Hola, {profile?.full_name?.split(' ')[0] || 'Empleado'}! 👋
+            ¡Hola, {profile?.full_name?.split(' ')[0] || 'Estudiante'}! 👋
           </h1>
           <p className="text-slate-600 mt-1 text-sm sm:text-base">
-            Continúa tu camino hacia la certificación
+            Bienvenido al Portal de Aprendizaje - Aprende, crece y haz impacto
+          </p>
+          <p className="text-slate-500 text-xs sm:text-sm mt-1">
+            🌱 Abierto para todos: estudiantes individuales, equipos corporativos y organizaciones
           </p>
         </div>
         <Link

@@ -24,7 +24,15 @@ export default function CertificatePage({ params }: { params: Promise<{ moduleId
 
   const loadCertificate = async (modId: string) => {
     try {
-      // Fetch the actual module data first
+      // Fetch user profile first (always available)
+      const profileResponse = await fetch('/api/user/profile')
+      let userName = 'Usuario'
+      if (profileResponse.ok) {
+        const profileData = await profileResponse.json()
+        userName = profileData.full_name || 'Usuario'
+      }
+
+      // Fetch the actual module data
       let fetchedModule: any = null
       const moduleResponse = await fetch(`/api/modules/${modId}`)
       if (moduleResponse.ok) {
@@ -33,28 +41,22 @@ export default function CertificatePage({ params }: { params: Promise<{ moduleId
         setModule(fetchedModule)
       }
 
-      // Fetch the user's enrollment for THIS SPECIFIC MODULE to get certificate data
+      // Fetch the user's enrollment for THIS SPECIFIC MODULE
       const enrollmentResponse = await fetch(`/api/corporate/progress/enrollment?moduleId=${modId}`)
+      let enrollmentData: any = null
       if (enrollmentResponse.ok) {
-        const enrollmentData = await enrollmentResponse.json()
-        // Create certificate object from enrollment data
-        setCertificate({
-          employeeName: enrollmentData.profile?.full_name || 'Usuario',
-          moduleName: enrollmentData.module?.title || fetchedModule?.title || 'Módulo Completado',
-          xpEarned: enrollmentData.xp_earned || 250,
-          issuedAt: enrollmentData.completion_date || new Date().toISOString(),
-          verificationCode: enrollmentData.id ? `CC-${enrollmentData.id.slice(0, 8).toUpperCase()}` : 'PENDING'
-        })
-      } else {
-        // Fallback: create certificate from module data only
-        setCertificate({
-          employeeName: 'Usuario',
-          moduleName: fetchedModule?.title || 'Módulo Completado',
-          xpEarned: 250,
-          issuedAt: new Date().toISOString(),
-          verificationCode: 'PENDING'
-        })
+        enrollmentData = await enrollmentResponse.json()
       }
+
+      // Build certificate with all available data
+      setCertificate({
+        employeeName: userName,
+        moduleName: fetchedModule?.title || enrollmentData?.module?.title || 'Módulo Completado',
+        xpEarned: enrollmentData?.xp_earned || 250,
+        issuedAt: enrollmentData?.completion_date || new Date().toISOString(),
+        verificationCode: enrollmentData?.id ? `CC-${enrollmentData.id.slice(0, 8).toUpperCase()}` : 'PENDING'
+      })
+
       setLoading(false)
     } catch (error) {
       console.error('Error loading certificate:', error)
