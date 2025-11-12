@@ -3,13 +3,16 @@ import { createAdminClient } from '@/lib/supabase-admin'
 import { ApiResponse } from '@/lib/api-responses'
 import Stripe from 'stripe'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-08-27.basil'
-})
+function getStripeClient() {
+  return new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    apiVersion: '2025-08-27.basil'
+  })
+}
 
 // POST /api/cart/checkout - Create Stripe checkout session
 export async function POST() {
   try {
+    const stripe = getStripeClient()
     // Auth check
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()

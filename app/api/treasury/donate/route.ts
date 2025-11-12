@@ -2,12 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerAuth, getCurrentUser } from '@/lib/auth-server'
 import Stripe from 'stripe'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-08-27.basil',
-})
+function getStripeClient() {
+  return new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    apiVersion: '2025-08-27.basil',
+  })
+}
 
 export async function POST(request: NextRequest) {
   try {
+    const stripe = getStripeClient()
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })

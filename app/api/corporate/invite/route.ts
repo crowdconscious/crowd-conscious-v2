@@ -3,19 +3,22 @@ import { createClient } from '@supabase/supabase-js'
 import { sendEmployeeInvitationEmail } from '@/lib/resend'
 import crypto from 'crypto'
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
     }
-  }
-)
+  )
+}
 
 export async function POST(request: NextRequest) {
   try {
+    const supabaseAdmin = getSupabaseAdmin()
     const body = await request.json()
     const { emails, corporate_account_id, invited_by_id } = body
 
@@ -191,6 +194,7 @@ export async function POST(request: NextRequest) {
 // GET - List all invitations for a corporate account
 export async function GET(request: NextRequest) {
   try {
+    const supabaseAdmin = getSupabaseAdmin()
     const { searchParams } = new URL(request.url)
     const corporate_account_id = searchParams.get('corporate_account_id')
 
