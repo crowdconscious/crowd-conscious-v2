@@ -17,8 +17,15 @@ export default function EmployeeCertificationsPage() {
     try {
       const response = await fetch('/api/certificates/my-certificates')
       if (response.ok) {
-        const data = await response.json()
-        setCertificates(data.certificates || [])
+        const responseData = await response.json()
+        console.log('📜 Certificates API response:', responseData)
+        
+        // ✅ PHASE 4: Parse standardized API response format
+        const data = responseData.success !== undefined ? responseData.data : responseData
+        setCertificates(data?.certificates || [])
+      } else {
+        const errorData = await response.json().catch(() => ({}))
+        console.error('❌ Failed to load certificates:', errorData)
       }
       setLoading(false)
     } catch (error) {

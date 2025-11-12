@@ -25,7 +25,8 @@ export async function GET(req: NextRequest) {
       `)
       .eq('user_id', user.id)
       .eq('completed', true)
-      .order('completion_date', { ascending: false })
+      .order('completed_at', { ascending: false, nullsFirst: false })
+      .order('completion_date', { ascending: false, nullsFirst: false })
 
     if (error) {
       console.error('Error fetching certificates:', error)
