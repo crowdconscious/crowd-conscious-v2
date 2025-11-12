@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 
+// ⚠️ DEPRECATED: This endpoint is deprecated. Use /api/enrollments/[enrollmentId]/activities instead.
+// This endpoint will be removed in a future version.
 // Save activity data from reusable tools (calculators, evidence, reflections, etc.)
 export async function POST(request: Request) {
+  console.warn('⚠️ DEPRECATED ENDPOINT: /api/corporate/progress/save-activity is deprecated. Use /api/enrollments/[enrollmentId]/activities instead.')
+  
   try {
     const supabase = await createClient()
     const { data: { user }, error: userError } = await supabase.auth.getUser()

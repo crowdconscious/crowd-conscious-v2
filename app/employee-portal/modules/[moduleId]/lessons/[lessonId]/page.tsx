@@ -54,25 +54,30 @@ export default function LessonPage({
 
   const cleanAirCourseId = 'a1a1a1a1-1111-1111-1111-111111111111' // Clean Air course ID (legacy)
 
-  // Save activity data to database
+  // ✅ PHASE 2: Save activity data using unified endpoint
   const saveActivityData = async (activityType: string, data: any) => {
+    if (!enrollmentId) {
+      console.warn('⚠️ Cannot save activity: enrollmentId not available')
+      return
+    }
+
     try {
-      const response = await fetch('/api/corporate/progress/save-activity', {
+      const response = await fetch(`/api/enrollments/${enrollmentId}/activities`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          courseId: cleanAirCourseId,
-          moduleId,
-          lessonId,
-          activityType,
-          activityData: data
+          module_id: moduleId,
+          lesson_id: lessonId,
+          activity_type: activityType,
+          activity_data: data,
+          write_to_legacy: false // Don't write to legacy table (deprecated)
         })
       })
 
       if (!response.ok) {
         console.error('Failed to save activity data')
       } else {
-        console.log(`✅ ${activityType} data saved`)
+        console.log(`✅ ${activityType} data saved via unified endpoint`)
       }
     } catch (error) {
       console.error(`Error saving ${activityType} data:`, error)

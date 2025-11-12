@@ -4,11 +4,16 @@ import { createClient } from '@/lib/supabase-server'
 export const dynamic = 'force-dynamic'
 
 /**
+ * ⚠️ DEPRECATED: This endpoint is deprecated. Use /api/enrollments/[enrollmentId]/activities instead.
+ * This endpoint will be removed in a future version.
+ * 
  * Save tool results to activity_responses.custom_responses
  * This stores data from module-specific tools (calculators, assessments, etc.)
  * for ESG reporting and analytics
  */
 export async function POST(request: NextRequest) {
+  console.warn('⚠️ DEPRECATED ENDPOINT: /api/tools/save-result is deprecated. Use /api/enrollments/[enrollmentId]/activities instead.')
+  
   try {
     const supabase = await createClient()
     

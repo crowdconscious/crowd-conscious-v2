@@ -4,6 +4,10 @@ import { createClient } from '@/lib/supabase-server'
 export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
+  // ⚠️ DEPRECATED: This endpoint is deprecated. Use /api/enrollments/[enrollmentId]/activities instead.
+  // This endpoint will be removed in a future version.
+  console.warn('⚠️ DEPRECATED ENDPOINT: /api/activities/save-response is deprecated. Use /api/enrollments/[enrollmentId]/activities instead.')
+  
   try {
     const supabase = await createClient()
     

@@ -24,12 +24,21 @@ export function useToolDataSaver() {
     setError(null)
     
     try {
-      console.log('💾 Saving tool data:', params.tool_name)
+      console.log('💾 Saving tool data via unified endpoint:', params.tool_name)
       
-      const response = await fetch('/api/tools/save-result', {
+      // ✅ PHASE 2: Use unified endpoint
+      const response = await fetch(`/api/enrollments/${params.enrollment_id}/activities`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(params)
+        body: JSON.stringify({
+          module_id: params.module_id,
+          lesson_id: params.lesson_id,
+          activity_type: 'tool_usage',
+          activity_data: params.tool_data,
+          tool_name: params.tool_name,
+          tool_type: params.tool_type || 'calculator',
+          write_to_legacy: false // Don't write to legacy table (deprecated)
+        })
       })
 
       if (!response.ok) {
@@ -110,14 +119,15 @@ export function useToolDataSaver() {
   }
 
   const loadToolData = async (params: {
+    enrollment_id: string
     lesson_id: string
     module_id: string
     tool_name?: string
   }) => {
     try {
-      const url = new URL('/api/tools/save-result', window.location.origin)
+      // ✅ PHASE 2: Use unified endpoint
+      const url = new URL(`/api/enrollments/${params.enrollment_id}/activities`, window.location.origin)
       url.searchParams.set('lesson_id', params.lesson_id)
-      url.searchParams.set('module_id', params.module_id)
       if (params.tool_name) {
         url.searchParams.set('tool_name', params.tool_name)
       }
@@ -129,9 +139,18 @@ export function useToolDataSaver() {
       }
 
       const data = await response.json()
-      console.log('📥 Tool data loaded:', data)
+      console.log('📥 Tool data loaded from unified endpoint:', data)
       
-      return data.tool_data
+      // Handle both old and new response formats
+      if (data.tool_data !== undefined) {
+        return data.tool_data
+      }
+      if (data.response?.responses) {
+        const toolKey = params.tool_name ? `tool_${params.tool_name}` : null
+        return toolKey ? data.response.responses[toolKey] : data.response.responses
+      }
+      
+      return null
     } catch (err) {
       console.error('❌ Error loading tool data:', err)
       return null

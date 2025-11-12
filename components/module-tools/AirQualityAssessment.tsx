@@ -56,6 +56,7 @@ export default function AirQualityAssessment({
     if (enrollmentId && moduleId && lessonId) {
       const loadPrevious = async () => {
         const savedData = await loadToolData({
+          enrollment_id: enrollmentId!,
           lesson_id: lessonId,
           module_id: moduleId,
           tool_name: 'air-quality-assessment'

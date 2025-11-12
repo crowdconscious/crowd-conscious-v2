@@ -49,8 +49,9 @@ export default function InteractiveActivity({
 
   const loadExistingResponses = async () => {
     try {
-      console.log('🔍 Loading existing responses for:', { lessonId, moduleId })
-      const response = await fetch(`/api/activities/save-response?lesson_id=${lessonId}&module_id=${moduleId}`)
+      console.log('🔍 Loading existing responses for:', { lessonId, moduleId, enrollmentId })
+      // ✅ PHASE 2: Use unified endpoint
+      const response = await fetch(`/api/enrollments/${enrollmentId}/activities?lesson_id=${lessonId}`)
       
       if (response.ok) {
         const data = await response.json()
@@ -58,7 +59,7 @@ export default function InteractiveActivity({
         
         if (data.response) {
           setResponses(data.response.responses || {})
-          console.log('✅ Responses loaded from', data.response.esg_ready ? 'NEW table (ESG ready)' : 'LEGACY table')
+          console.log('✅ Responses loaded from unified endpoint (ESG ready)')
         } else {
           console.log('ℹ️ No existing responses found')
         }
@@ -159,12 +160,28 @@ export default function InteractiveActivity({
         }
       }
 
-      console.log('📤 Sending to API:', payload)
+      console.log('📤 Sending to unified API:', payload)
 
-      const response = await fetch('/api/activities/save-response', {
+      // ✅ PHASE 2: Use unified endpoint
+      const response = await fetch(`/api/enrollments/${enrollmentId}/activities`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+          module_id: moduleId,
+          lesson_id: lessonId,
+          activity_type: activityType,
+          activity_data: responses,
+          evidence_urls: evidenceUrls,
+          completion_data: {
+            completion_percentage: completionPercentage,
+            time_spent_minutes: timeSpentMinutes,
+            questions_answered: answeredQuestions,
+            total_questions: totalQuestions
+          },
+          // For backward compatibility with old format
+          responses: responses,
+          write_to_legacy: false // Don't write to legacy table (deprecated)
+        })
       })
 
       console.log('📥 API response status:', response.status)
