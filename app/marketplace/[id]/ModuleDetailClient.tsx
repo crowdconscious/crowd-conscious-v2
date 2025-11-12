@@ -105,9 +105,11 @@ export default function ModuleDetailClient({ module }: ModuleDetailClientProps) 
         })
       })
 
-      const data = await response.json()
+      const responseData = await response.json()
 
       if (response.ok) {
+        // ✅ PHASE 4: Handle standardized API response format
+        const data = responseData.success !== undefined ? responseData.data : responseData
         setShowAddToCart(true)
         setTimeout(() => setShowAddToCart(false), 3000)
         console.log('✅ Added to cart:', data)
@@ -115,12 +117,14 @@ export default function ModuleDetailClient({ module }: ModuleDetailClientProps) 
         // Trigger cart update event for CartButton to refresh
         window.dispatchEvent(new Event('cartUpdated'))
       } else {
+        // ✅ PHASE 4: Extract error message from standardized format
+        const errorMessage = responseData.error?.message || responseData.error || 'Error al agregar al carrito'
         if (response.status === 401) {
           alert('Por favor inicia sesión para agregar al carrito.')
-        } else if (data.error?.includes('already owned') || data.error?.includes('You already own')) {
+        } else if (errorMessage.includes('already owned') || errorMessage.includes('You already own')) {
           alert('Ya posees este módulo.')
         } else {
-          alert(data.error || 'Error al agregar al carrito')
+          alert(errorMessage)
         }
       }
     } catch (error) {
