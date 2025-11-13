@@ -1029,6 +1029,27 @@ export default function SponsorshipCheckout({
           </div>
         </form>
       </div>
+
+      {/* ✅ PHASE 3: Celebration Modal */}
+      {celebration && (
+        <CelebrationModal
+          isOpen={celebration.isOpen}
+          type={celebration.type}
+          title={celebration.title}
+          message={celebration.message}
+          xpGained={celebration.xpGained}
+          achievements={celebration.achievements}
+          onClose={() => {
+            setCelebration(null)
+            // Call onSuccess after closing celebration
+            if (onSuccess) {
+              onSuccess()
+            } else if (communityId) {
+              window.location.href = `/communities/${communityId}/content/${contentId}`
+            }
+          }}
+        />
+      )}
     </div>
   )
 }
