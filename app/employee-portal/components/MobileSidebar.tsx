@@ -8,7 +8,7 @@ import { BookOpen, Award, TrendingUp, Home, FileText, X, Menu } from 'lucide-rea
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 interface MobileSidebarProps {
-  isGraduated: boolean
+  isGraduated: boolean | null
   corporateAccount?: {
     company_name: string
     program_tier: string
@@ -158,7 +158,7 @@ export default function MobileSidebar({ isGraduated, corporateAccount }: MobileS
               )}
 
               {/* Graduation Badge */}
-              {isGraduated && (
+              {isGraduated === true && (
                 <div className="bg-gradient-to-br from-teal-50 to-purple-50 rounded-lg border-2 border-teal-200 p-4">
                   <div className="text-center">
                     <div className="text-3xl mb-2">🎓</div>
