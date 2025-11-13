@@ -65,7 +65,7 @@ export const XPBadge = memo(function XPBadge({
         initial={animated && !prefersReducedMotion ? { opacity: 0, x: -10 } : false}
         animate={animated && !prefersReducedMotion ? { opacity: 1, x: 0 } : false}
         transition={{ duration: 0.3 }}
-        whileHover={animated && !prefersReducedMotion ? { scale: 1.05, shadow: 'md' } : {}}
+        whileHover={animated && !prefersReducedMotion ? { scale: 1.05 } : {}}
       >
         <div className="text-lg">{tierConfig.icon}</div>
         <div className="flex flex-col">
