@@ -14,71 +14,88 @@
 
 -- Check if old columns exist and migrate if needed
 DO $$ 
+DECLARE
+  has_xp_amount BOOLEAN;
+  has_related_id BOOLEAN;
+  has_amount BOOLEAN;
+  has_action_id BOOLEAN;
 BEGIN
-  -- Check if xp_amount column exists (old schema)
-  IF EXISTS (
+  -- Check which columns exist
+  SELECT EXISTS (
     SELECT 1 FROM information_schema.columns 
     WHERE table_schema = 'public' 
     AND table_name = 'xp_transactions' 
     AND column_name = 'xp_amount'
-  ) THEN
-    -- Old schema detected - migrate to new schema
-    RAISE NOTICE 'Migrating xp_transactions table to new schema...';
-    
-    -- Rename columns if they exist
-    ALTER TABLE public.xp_transactions 
-    RENAME COLUMN IF EXISTS xp_amount TO amount;
-    
-    ALTER TABLE public.xp_transactions 
-    RENAME COLUMN IF EXISTS related_id TO action_id;
+  ) INTO has_xp_amount;
+  
+  SELECT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_schema = 'public' 
+    AND table_name = 'xp_transactions' 
+    AND column_name = 'related_id'
+  ) INTO has_related_id;
+  
+  SELECT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_schema = 'public' 
+    AND table_name = 'xp_transactions' 
+    AND column_name = 'amount'
+  ) INTO has_amount;
+  
+  SELECT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_schema = 'public' 
+    AND table_name = 'xp_transactions' 
+    AND column_name = 'action_id'
+  ) INTO has_action_id;
+  
+  -- Migrate xp_amount to amount
+  IF has_xp_amount AND NOT has_amount THEN
+    RAISE NOTICE 'Renaming xp_amount to amount...';
+    ALTER TABLE public.xp_transactions RENAME COLUMN xp_amount TO amount;
+  ELSIF has_xp_amount AND has_amount THEN
+    -- Both exist - copy data and drop old
+    RAISE NOTICE 'Copying xp_amount to amount and dropping xp_amount...';
+    UPDATE public.xp_transactions SET amount = xp_amount WHERE amount IS NULL;
+    ALTER TABLE public.xp_transactions DROP COLUMN xp_amount;
+  ELSIF NOT has_amount THEN
+    -- Neither exists - create amount
+    RAISE NOTICE 'Creating amount column...';
+    ALTER TABLE public.xp_transactions ADD COLUMN amount INTEGER;
   END IF;
   
-  -- Ensure new columns exist
-  IF NOT EXISTS (
+  -- Migrate related_id to action_id
+  IF has_related_id AND NOT has_action_id THEN
+    RAISE NOTICE 'Renaming related_id to action_id...';
+    ALTER TABLE public.xp_transactions RENAME COLUMN related_id TO action_id;
+  ELSIF has_related_id AND has_action_id THEN
+    -- Both exist - copy data and drop old
+    RAISE NOTICE 'Copying related_id to action_id and dropping related_id...';
+    UPDATE public.xp_transactions SET action_id = related_id WHERE action_id IS NULL;
+    ALTER TABLE public.xp_transactions DROP COLUMN related_id;
+  ELSIF NOT has_action_id THEN
+    -- Neither exists - create action_id
+    RAISE NOTICE 'Creating action_id column...';
+    ALTER TABLE public.xp_transactions ADD COLUMN action_id UUID;
+  END IF;
+  
+  -- Ensure amount is NOT NULL (only if column exists and has no NULL values)
+  IF has_amount OR EXISTS (
     SELECT 1 FROM information_schema.columns 
     WHERE table_schema = 'public' 
     AND table_name = 'xp_transactions' 
     AND column_name = 'amount'
   ) THEN
-    ALTER TABLE public.xp_transactions 
-    ADD COLUMN amount INTEGER;
-    
-    -- Copy data from xp_amount if it exists
-    IF EXISTS (
-      SELECT 1 FROM information_schema.columns 
-      WHERE table_schema = 'public' 
-      AND table_name = 'xp_transactions' 
-      AND column_name = 'xp_amount'
-    ) THEN
-      UPDATE public.xp_transactions SET amount = xp_amount WHERE amount IS NULL;
-      ALTER TABLE public.xp_transactions DROP COLUMN IF EXISTS xp_amount;
+    -- Check if there are any NULL values
+    IF NOT EXISTS (SELECT 1 FROM public.xp_transactions WHERE amount IS NULL) THEN
+      BEGIN
+        ALTER TABLE public.xp_transactions ALTER COLUMN amount SET NOT NULL;
+      EXCEPTION
+        WHEN OTHERS THEN
+          RAISE NOTICE 'Could not set amount to NOT NULL (may already be nullable): %', SQLERRM;
+      END;
     END IF;
   END IF;
-  
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns 
-    WHERE table_schema = 'public' 
-    AND table_name = 'xp_transactions' 
-    AND column_name = 'action_id'
-  ) THEN
-    ALTER TABLE public.xp_transactions 
-    ADD COLUMN action_id UUID;
-    
-    -- Copy data from related_id if it exists
-    IF EXISTS (
-      SELECT 1 FROM information_schema.columns 
-      WHERE table_schema = 'public' 
-      AND table_name = 'xp_transactions' 
-      AND column_name = 'related_id'
-    ) THEN
-      UPDATE public.xp_transactions SET action_id = related_id WHERE action_id IS NULL;
-      ALTER TABLE public.xp_transactions DROP COLUMN IF EXISTS related_id;
-    END IF;
-  END IF;
-  
-  -- Ensure amount is NOT NULL
-  ALTER TABLE public.xp_transactions 
-  ALTER COLUMN amount SET NOT NULL;
   
 END $$;
 
