@@ -68,8 +68,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    if (completedLessons) {
-      for (const lesson of completedLessons) {
+    if (allCompletedLessons.length > 0) {
+      for (const lesson of allCompletedLessons) {
         // Check if XP already awarded
         const { data: existingXP } = await supabase
           .from('xp_transactions')
