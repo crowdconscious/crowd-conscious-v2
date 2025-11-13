@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, ArrowRight, CheckCircle, Award, Lightbulb, BookOpen, Target, ExternalLink } from 'lucide-react'
+import { CelebrationModal } from '@/components/gamification/CelebrationModal'
+import { useUserTier } from '@/hooks/useUserTier'
+import { getTierByXP } from '@/lib/tier-config'
 import { cleanAirModule, getLessonById } from '@/app/lib/course-content/clean-air-module'
 import {
   CarbonCalculator,
@@ -66,8 +69,17 @@ export default function LessonPage({
   const [impactData, setImpactData] = useState<any>(null)
   const [toolModalOpen, setToolModalOpen] = useState(false)
   const [currentTool, setCurrentTool] = useState<{ type: string; title: string } | null>(null)
+  const [celebration, setCelebration] = useState<{
+    isOpen: boolean
+    type: 'lesson_completed' | 'module_completed' | 'tier_up' | 'achievement'
+    title: string
+    message: string
+    xpGained?: number
+    achievements?: any[]
+  } | null>(null)
 
   const [module, setModule] = useState<any>(null)
+  const { refetch: refetchTier } = useUserTier()
 
   const cleanAirCourseId = 'a1a1a1a1-1111-1111-1111-111111111111' // Clean Air course ID (legacy)
 
@@ -275,29 +287,54 @@ export default function LessonPage({
         const data = responseData.success !== undefined ? responseData.data : responseData
         console.log('✅ Lesson completed:', data)
         
-        // Show success message
-        const successMsg = data.moduleComplete 
-          ? '🎉 ¡Módulo Completado!' 
-          : `✅ ¡Lección completada! +${data.xpEarned || 0} XP`
+        // ✅ PHASE 3: Show celebration modal with XP and achievements
+        const xpGained = data.xp?.gained || data.xpEarned || 0
+        const achievements = data.achievements || data.xp?.achievements || []
+        const tierChanged = data.xp?.tier_changed || false
+        const newTier = data.xp?.new_tier
         
-        const successDiv = document.createElement('div')
-        successDiv.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3'
-        successDiv.innerHTML = `
-          <span class="text-2xl">${data.moduleComplete ? '🎉' : '✅'}</span>
-          <span class="font-bold">${successMsg}</span>
-        `
-        document.body.appendChild(successDiv)
+        // Show lesson completion celebration
+        setCelebration({
+          isOpen: true,
+          type: data.moduleComplete ? 'module_completed' : 'lesson_completed',
+          title: data.moduleComplete ? '🎉 ¡Módulo Completado!' : '✅ ¡Lección Completada!',
+          message: data.moduleComplete 
+            ? '¡Felicitaciones por completar todo el módulo!'
+            : '¡Excelente trabajo completando esta lección!',
+          xpGained,
+          achievements: achievements.map((a: any) => ({
+            type: a.type || a.action_type,
+            name: a.name || a.title,
+            description: a.description || a.message,
+            icon: a.icon || '🏆'
+          }))
+        })
         
-        setTimeout(() => {
-          successDiv.remove()
-        }, 2000)
+        // Refetch tier data to get updated XP
+        await refetchTier()
+        
+        // If tier changed, show tier-up celebration after lesson celebration
+        if (tierChanged && newTier) {
+          setTimeout(() => {
+            const tierConfig = getTierByXP(data.xp?.total_xp || 0)
+            setCelebration({
+              isOpen: true,
+              type: 'tier_up',
+              title: `🚀 ¡Subiste de Nivel!`,
+              message: `¡Ahora eres ${tierConfig.name}!`,
+              xpGained: 0,
+              achievements: []
+            })
+          }, 4000)
+        }
         
         // CRITICAL: Force a full page reload to refresh progress
         // router.push() doesn't reload data, so we use window.location
         // ✅ Add cache-busting query param to ensure fresh data
+        // Delay reload to allow celebration modal to be seen
         setTimeout(() => {
           window.location.href = `/employee-portal/modules/${moduleId}?t=${Date.now()}`
-        }, 1500)
+        }, tierChanged ? 8000 : 5000) // Longer delay if tier changed
 
         // If module complete, generate certificate
         if (data.moduleComplete) {
@@ -1231,6 +1268,27 @@ export default function LessonPage({
             saveActivityData(currentTool.type, data)
             setActivityData((prev: any) => ({ ...prev, [currentTool.type]: data }))
             console.log('Tool data captured:', data)
+          }}
+        />
+      )}
+
+      {/* ✅ PHASE 3: Celebration Modal */}
+      {celebration && (
+        <CelebrationModal
+          isOpen={celebration.isOpen}
+          type={celebration.type}
+          title={celebration.title}
+          message={celebration.message}
+          xpGained={celebration.xpGained}
+          achievements={celebration.achievements}
+          onClose={() => {
+            setCelebration(null)
+            // If module was completed, navigate after closing
+            if (celebration.type === 'module_completed') {
+              setTimeout(() => {
+                window.location.href = `/employee-portal/modules/${moduleId}?t=${Date.now()}`
+              }, 500)
+            }
           }}
         />
       )}

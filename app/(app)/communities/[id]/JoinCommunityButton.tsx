@@ -3,6 +3,9 @@
 import { useState } from 'react'
 import { createClientAuth } from '@/lib/auth'
 import { useRouter } from 'next/navigation'
+import { addToast } from '@/components/NotificationSystem'
+import { useUserTier } from '@/hooks/useUserTier'
+import confetti from 'canvas-confetti'
 
 interface JoinCommunityButtonProps {
   communityId: string
@@ -14,6 +17,7 @@ export default function JoinCommunityButton({ communityId, userId }: JoinCommuni
   const [message, setMessage] = useState('')
   const router = useRouter()
   const supabase = createClientAuth()
+  const { refetch: refetchTier } = useUserTier()
 
   const handleJoin = async () => {
     setLoading(true)
@@ -41,6 +45,29 @@ export default function JoinCommunityButton({ communityId, userId }: JoinCommuni
           setMessage('Error: ' + error.message)
         }
         return
+      }
+      
+      // ✅ PHASE 3: Show celebration toast with XP
+      try {
+        // Small confetti burst for joining
+        confetti({
+          particleCount: 40,
+          spread: 70,
+          origin: { y: 0.6 }
+        })
+        
+        // Show toast notification
+        addToast({
+          type: 'success',
+          title: 'Welcome to the Community! 🎉',
+          message: 'You joined successfully! You earned XP for joining.',
+          duration: 5000
+        })
+        
+        // Refetch tier to show updated XP
+        await refetchTier()
+      } catch (err) {
+        console.error('Error showing join celebration:', err)
       }
       
       setMessage('Successfully joined the community!')

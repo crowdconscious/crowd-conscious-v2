@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { createClientAuth } from '@/lib/auth'
+import { addToast } from '@/components/NotificationSystem'
+import { useUserTier } from '@/hooks/useUserTier'
+import confetti from 'canvas-confetti'
 
 interface PollOption {
   id: string
@@ -27,6 +30,7 @@ export default function PollVoting({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const supabase = createClientAuth()
+  const { refetch: refetchTier } = useUserTier()
 
   // Set up real-time subscription for poll vote updates
   useEffect(() => {
@@ -81,6 +85,30 @@ export default function PollVoting({
       if (voteError) {
         setError(voteError.message)
       } else {
+        // ✅ PHASE 3: Show celebration toast with XP
+        // The XP is awarded via database trigger, so we fetch it
+        try {
+          // Small confetti burst for voting
+          confetti({
+            particleCount: 30,
+            spread: 60,
+            origin: { y: 0.6 }
+          })
+          
+          // Show toast notification
+          addToast({
+            type: 'success',
+            title: 'Vote Cast! 🗳️',
+            message: 'Thanks for participating! You earned XP for voting.',
+            duration: 4000
+          })
+          
+          // Refetch tier to show updated XP
+          await refetchTier()
+        } catch (err) {
+          console.error('Error showing vote celebration:', err)
+        }
+        
         onVoteUpdate() // Refresh the content list
       }
     } catch (err: any) {

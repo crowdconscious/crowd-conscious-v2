@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { createClientAuth } from '@/lib/auth'
 import { uploadSponsorLogo } from '@/lib/storage'
+import { CelebrationModal } from '@/components/gamification/CelebrationModal'
+import { useUserTier } from '@/hooks/useUserTier'
 
 interface SponsorshipCheckoutProps {
   contentId: string
@@ -85,9 +87,20 @@ export default function SponsorshipCheckout({
   
   // Platform fee coverage
   const [coverPlatformFee, setCoverPlatformFee] = useState(true) // Default to checked for psychology
+  
+  // ✅ PHASE 3: Celebration state
+  const [celebration, setCelebration] = useState<{
+    isOpen: boolean
+    type: 'sponsor' | 'achievement'
+    title: string
+    message: string
+    xpGained?: number
+    achievements?: any[]
+  } | null>(null)
 
   const supabase = createClientAuth()
   const isAdmin = userRole === 'admin' || userRole === 'moderator'
+  const { refetch: refetchTier } = useUserTier()
   
   // Fetch pool balance if user is admin
   useEffect(() => {
@@ -257,6 +270,9 @@ export default function SponsorshipCheckout({
 
       // ✅ GAMIFICATION: Award XP for non-financial sponsorships immediately
       // (Financial sponsorships get XP via webhook after payment)
+      let xpGained = 0
+      let achievements: any[] = []
+      
       if (formData.support_type !== 'financial' && (sponsorship as any)?.id) {
         try {
           const xpResponse = await fetch('/api/gamification/xp', {
@@ -271,12 +287,44 @@ export default function SponsorshipCheckout({
           
           if (xpResponse.ok) {
             const xpData = await xpResponse.json()
+            xpGained = xpData.data?.xp_amount || 0
             console.log('✅ XP awarded for non-financial sponsorship:', xpData)
+            
+            // Check for achievements
+            try {
+              const achievementsResponse = await fetch(`/api/gamification/achievements?userId=${user.id}`)
+              if (achievementsResponse.ok) {
+                const achievementsData = await achievementsResponse.json()
+                achievements = achievementsData.data || []
+              }
+            } catch (err) {
+              console.error('Error fetching achievements:', err)
+            }
           }
         } catch (xpError) {
           // Log but don't fail sponsorship creation
           console.error('⚠️ Error awarding XP for non-financial sponsorship (non-fatal):', xpError)
         }
+      }
+      
+      // ✅ PHASE 3: Show celebration modal for non-financial sponsorships
+      if (formData.support_type !== 'financial' && xpGained > 0) {
+        setCelebration({
+          isOpen: true,
+          type: 'sponsor',
+          title: 'Thank You for Sponsoring! 💝',
+          message: `Your ${formData.support_type} support makes a real difference!`,
+          xpGained,
+          achievements: achievements.map((a: any) => ({
+            type: a.type || a.action_type,
+            name: a.name || a.title,
+            description: a.description || a.message,
+            icon: a.icon || '🏆'
+          }))
+        })
+        
+        // Refetch tier to show updated XP
+        await refetchTier()
       }
 
       // Send confirmation email
