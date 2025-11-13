@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { createServerAuth, getCurrentUser } from '@/lib/auth-server'
 import { ApiResponse } from '@/lib/api-responses'
+import { awardXP } from '@/lib/xp-system'
 
 export async function POST(
   request: NextRequest,
@@ -75,10 +76,35 @@ export async function POST(
       console.error('Error fetching vote counts:', countError)
     }
 
+    // ✅ GAMIFICATION: Award XP for voting (only for upvotes/new votes)
+    let xpResult = null
+    try {
+      xpResult = await awardXP(
+        (user as any).id,
+        'vote_content',
+        contentId,
+        'Voted on poll'
+      )
+      console.log('✅ XP awarded for vote:', {
+        xp_amount: xpResult.xp_amount,
+        total_xp: xpResult.total_xp
+      })
+    } catch (xpError: any) {
+      // Log but don't fail the request if XP award fails
+      console.error('⚠️ Error awarding XP for vote (non-fatal):', xpError)
+    }
+
     return ApiResponse.ok({
       message: 'Vote cast successfully',
       vote: vote,
-      voteCounts: voteCounts || []
+      voteCounts: voteCounts || [],
+      // ✅ GAMIFICATION: Include XP in response
+      ...(xpResult && {
+        xp: {
+          gained: xpResult.xp_amount,
+          total: xpResult.total_xp
+        }
+      })
     })
 
   } catch (error: any) {

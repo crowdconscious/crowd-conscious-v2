@@ -1,16 +1,17 @@
-import { createBrowserClient } from '@supabase/ssr'
-import { Database } from '../types/database'
+/**
+ * Supabase Client for Client Components
+ * Creates a client-side Supabase instance
+ */
 
-// Client-side Supabase client with proper browser configuration
-export const createSupabaseClient = () => {
-  return createBrowserClient<Database>(
+import { createBrowserClient } from '@supabase/ssr'
+
+export function createClient() {
+  return createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
 }
 
-// Alias for consistency
-export const createClient = createSupabaseClient
-
-// Pre-configured client for immediate use
-export const supabaseClient = createSupabaseClient()
+// Export as default for backward compatibility
+export const supabaseClient = createClient()
+export default supabaseClient

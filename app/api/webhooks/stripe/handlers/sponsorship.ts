@@ -1,5 +1,7 @@
 import Stripe from 'stripe'
 import { getStripe, getSupabase } from '../lib/stripe-webhook-utils'
+import { awardXP } from '@/lib/xp-system'
+import { checkAndUnlockAchievements } from '@/lib/achievement-service'
 
 /**
  * Handle sponsorship payment after successful checkout
@@ -82,6 +84,44 @@ export async function handleSponsorship(session: Stripe.Checkout.Session) {
   }
 
   console.log('✅ Sponsorship updated successfully:', sponsorshipId)
+
+  // ✅ GAMIFICATION: Award XP and check achievements for sponsorship
+  try {
+    // Get sponsor user ID from sponsorship record
+    const { data: sponsorship, error: sponsorError } = await (supabaseClient as any)
+      .from('sponsorships')
+      .select('sponsor_id, content_id, community_content(title)')
+      .eq('id', sponsorshipId)
+      .single()
+
+    if (!sponsorError && sponsorship?.sponsor_id) {
+      // Award XP for sponsorship
+      const xpResult = await awardXP(
+        sponsorship.sponsor_id,
+        'sponsor_need',
+        sponsorshipId,
+        `Sponsored: ${sponsorship.community_content?.title || 'community need'}`
+      )
+
+      // Check for achievements
+      const achievements = await checkAndUnlockAchievements(
+        sponsorship.sponsor_id,
+        'sponsor_need',
+        sponsorshipId
+      )
+
+      console.log('✅ XP awarded for sponsorship:', {
+        sponsor_id: sponsorship.sponsor_id,
+        xp_amount: xpResult.xp_amount,
+        total_xp: xpResult.total_xp,
+        tier_changed: xpResult.tier_changed,
+        achievements_unlocked: achievements.length
+      })
+    }
+  } catch (xpError: any) {
+    // Log but don't fail webhook if XP award fails
+    console.error('⚠️ Error awarding XP for sponsorship (non-fatal):', xpError)
+  }
 
   if (connectedAccountId) {
     console.log('💰 Payment split:', {

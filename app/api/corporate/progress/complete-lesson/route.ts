@@ -2,6 +2,8 @@ import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { validateLessonResponse, getQualityControlMessage } from '@/lib/quality-control-validation'
 import { ApiResponse } from '@/lib/api-responses'
+import { awardXP } from '@/lib/xp-system'
+import { checkAndUnlockAchievements } from '@/lib/achievement-service'
 
 export async function POST(req: NextRequest) {
   try {
@@ -334,6 +336,72 @@ export async function POST(req: NextRequest) {
       moduleComplete 
     })
 
+    // ✅ GAMIFICATION: Award XP and check achievements (only for new completions)
+    let xpResult = null
+    let achievements: any[] = []
+    
+    if (isNewCompletion) {
+      try {
+        // Award XP for lesson completion
+        xpResult = await awardXP(
+          user.id,
+          'lesson_completed',
+          lessonId,
+          `Completed lesson in module ${moduleId}`
+        )
+
+        // Check for achievements
+        achievements = await checkAndUnlockAchievements(
+          user.id,
+          'lesson_completed',
+          lessonId
+        )
+
+        console.log('✅ XP awarded:', {
+          xp_amount: xpResult.xp_amount,
+          total_xp: xpResult.total_xp,
+          tier_changed: xpResult.tier_changed,
+          achievements_unlocked: achievements.length
+        })
+      } catch (xpError: any) {
+        // Log but don't fail the request if XP award fails
+        console.error('⚠️ Error awarding XP (non-fatal):', xpError)
+      }
+    }
+
+    // ✅ GAMIFICATION: Award XP for module completion (if module just completed)
+    let moduleXPResult = null
+    let moduleAchievements: any[] = []
+    
+    if (moduleComplete && isNewCompletion) {
+      try {
+        // Award XP for module completion
+        moduleXPResult = await awardXP(
+          user.id,
+          'module_completed',
+          moduleId,
+          `Completed module ${moduleId}`
+        )
+
+        // Check for module achievements
+        moduleAchievements = await checkAndUnlockAchievements(
+          user.id,
+          'module_completed',
+          moduleId
+        )
+
+        console.log('✅ Module completion XP awarded:', {
+          xp_amount: moduleXPResult.xp_amount,
+          total_xp: moduleXPResult.total_xp,
+          tier_changed: moduleXPResult.tier_changed,
+          achievements_unlocked: moduleAchievements.length
+        })
+      } catch (moduleXPError: any) {
+        // Log but don't fail the request if XP award fails
+        console.error('⚠️ Error awarding module completion XP (non-fatal):', moduleXPError)
+      }
+    }
+
     return ApiResponse.ok({
       success: true,
       data: {
@@ -342,7 +410,39 @@ export async function POST(req: NextRequest) {
         newXP,
         moduleComplete,
         completedLessons: currentCompleted,
-        completionPercentage: newPercentage
+        completionPercentage: newPercentage,
+        // ✅ GAMIFICATION: Include XP and achievements in response
+        ...(xpResult && {
+          xp: {
+            gained: xpResult.xp_amount,
+            total: xpResult.total_xp,
+            tier_changed: xpResult.tier_changed,
+            new_tier: xpResult.new_tier,
+            old_tier: xpResult.old_tier
+          },
+          achievements: achievements.map(a => ({
+            type: a.type,
+            name: a.name,
+            description: a.description,
+            icon: a.icon
+          }))
+        }),
+        // ✅ GAMIFICATION: Include module completion XP and achievements
+        ...(moduleXPResult && {
+          module_xp: {
+            gained: moduleXPResult.xp_amount,
+            total: moduleXPResult.total_xp,
+            tier_changed: moduleXPResult.tier_changed,
+            new_tier: moduleXPResult.new_tier,
+            old_tier: moduleXPResult.old_tier
+          },
+          module_achievements: moduleAchievements.map(a => ({
+            type: a.type,
+            name: a.name,
+            description: a.description,
+            icon: a.icon
+          }))
+        })
       }
     })
 
