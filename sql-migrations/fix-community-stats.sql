@@ -5,6 +5,10 @@
 
 BEGIN;
 
+-- Ensure updated_at column exists first
+ALTER TABLE communities ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+UPDATE communities SET updated_at = COALESCE(created_at, NOW()) WHERE updated_at IS NULL;
+
 -- Update all community member counts to be accurate
 UPDATE communities 
 SET member_count = (

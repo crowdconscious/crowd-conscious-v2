@@ -24,58 +24,7 @@ DROP POLICY IF EXISTS "Employees can view own responses" ON lesson_responses;
 DROP POLICY IF EXISTS "Employees can insert responses" ON lesson_responses;
 DROP POLICY IF EXISTS "Employees can update responses" ON lesson_responses;
 
--- Step 3: Create permissive policies for authenticated users
-
--- SELECT: Users can view their own lesson responses
-CREATE POLICY "authenticated_users_select_own_responses" ON lesson_responses
-FOR SELECT
-TO authenticated
-USING (
-  enrollment_id IN (
-    SELECT id FROM course_enrollments 
-    WHERE user_id = auth.uid()
-  )
-);
-
--- INSERT: Users can create lesson responses for their enrollments
-CREATE POLICY "authenticated_users_insert_own_responses" ON lesson_responses
-FOR INSERT
-TO authenticated
-WITH CHECK (
-  enrollment_id IN (
-    SELECT id FROM course_enrollments 
-    WHERE user_id = auth.uid()
-  )
-);
-
--- UPDATE: Users can update their own lesson responses
-CREATE POLICY "authenticated_users_update_own_responses" ON lesson_responses
-FOR UPDATE
-TO authenticated
-USING (
-  enrollment_id IN (
-    SELECT id FROM course_enrollments 
-    WHERE user_id = auth.uid()
-  )
-)
-WITH CHECK (
-  enrollment_id IN (
-    SELECT id FROM course_enrollments 
-    WHERE user_id = auth.uid()
-  )
-);
-
--- DELETE: Users can delete their own lesson responses (optional)
-CREATE POLICY "authenticated_users_delete_own_responses" ON lesson_responses
-FOR DELETE
-TO authenticated
-USING (
-  enrollment_id IN (
-    SELECT id FROM course_enrollments 
-    WHERE user_id = auth.uid()
-  )
-);
-
+ 
 -- Step 4: Verify RLS is enabled
 ALTER TABLE lesson_responses ENABLE ROW LEVEL SECURITY;
 

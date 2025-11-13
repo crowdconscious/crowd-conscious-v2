@@ -36,16 +36,6 @@ WHERE p.email = 'francisco.blockstrand@gmail.com'
 ORDER BY lr.completed_at DESC
 LIMIT 10;
 
--- Step 3: Check if there are any errors in the enrollment table schema
-SELECT 
-  'ENROLLMENT TABLE SCHEMA' as section,
-  column_name,
-  data_type,
-  is_nullable
-FROM information_schema.columns
-WHERE table_name = 'course_enrollments'
-ORDER BY ordinal_position;
-
 -- Step 4: Try to manually update progress (for testing)
 -- UNCOMMENT THIS TO TEST IF UPDATES WORK AT ALL
 /*
