@@ -1,18 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { createClientAuth } from '../../../lib/auth'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [success, setSuccess] = useState(false)
-  
-  const router = useRouter()
-  const supabase = createClientAuth()
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -20,23 +15,48 @@ export default function ForgotPasswordPage() {
     setMessage('')
 
     try {
-      const redirectUrl = `${window.location.origin}/reset-password`
+      console.log('📧 Sending password reset email to:', email)
       
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: redirectUrl,
+      // Use API route to avoid client-side timeout issues
+      const response = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
       })
 
-      if (error) {
-        console.error('❌ Password reset error:', error)
-        setMessage(error.message)
+      const data = await response.json()
+
+      if (!response.ok) {
+        console.error('❌ Password reset error:', data.error)
+        
+        // Provide more helpful error messages
+        let errorMessage = data.error || 'Failed to send reset email'
+        if (data.error?.includes('timeout') || data.error?.includes('504')) {
+          errorMessage = 'Request timed out. Please check your internet connection and try again. If the problem persists, verify that the redirect URL is configured in Supabase Authentication settings.'
+        } else if (data.error?.includes('email')) {
+          errorMessage = 'Unable to send reset email. Please verify your email address and try again.'
+        }
+        
+        setMessage(errorMessage)
         setSuccess(false)
       } else {
+        console.log('✅ Password reset email sent successfully')
         setSuccess(true)
         setMessage('Check your email for a password reset link. The link will expire in 1 hour.')
       }
     } catch (error: any) {
       console.error('💥 Unexpected error during password reset:', error)
-      setMessage(`An unexpected error occurred: ${error?.message || 'Unknown error'}`)
+      
+      let errorMessage = 'An unexpected error occurred. Please try again.'
+      if (error?.message?.includes('timeout') || error?.message?.includes('Failed to fetch')) {
+        errorMessage = 'Unable to connect to the server. Please check your internet connection and try again.'
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
+      
+      setMessage(errorMessage)
       setSuccess(false)
     } finally {
       setLoading(false)
