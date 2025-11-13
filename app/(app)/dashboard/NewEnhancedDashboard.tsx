@@ -98,14 +98,14 @@ export default function NewEnhancedDashboard({ user, initialUserStats, userCommu
         </div>
       )}
 
-      {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-teal-600 via-teal-700 to-purple-700 text-white rounded-xl p-8 relative overflow-hidden">
+      {/* Welcome Section - Tier Themed */}
+      <div className="tier-themed-gradient text-white rounded-xl p-8 relative overflow-hidden shadow-xl">
         <div className="absolute inset-0 bg-black/10" />
         <div className="relative z-10">
           <h1 className="text-3xl md:text-4xl font-bold mb-2">
             {getTimeOfDayMessage()}, {user.full_name || user.email?.split('@')[0] || 'Changemaker'}! 👋
           </h1>
-          <p className="text-teal-100 text-lg mb-6">
+          <p className="text-white/90 text-lg mb-6">
             Ready to make an impact in your community today?
           </p>
 

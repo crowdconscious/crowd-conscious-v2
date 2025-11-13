@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, ArrowRight, CheckCircle, Award, Lightbulb, BookOpen, Target, ExternalLink } from 'lucide-react'
 import { CelebrationModal } from '@/components/gamification/CelebrationModal'
+import { XPBadge } from '@/components/gamification/XPBadge'
 import { useUserTier } from '@/hooks/useUserTier'
 import { getTierByXP } from '@/lib/tier-config'
 import { cleanAirModule, getLessonById } from '@/app/lib/course-content/clean-air-module'
@@ -426,6 +427,10 @@ export default function LessonPage({
                   +{lesson.xpReward} XP
                 </span>
               </div>
+            </div>
+            {/* XP Badge */}
+            <div className="hidden sm:block">
+              <XPBadge variant="compact" />
             </div>
           </div>
         </div>

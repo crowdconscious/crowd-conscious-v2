@@ -196,6 +196,68 @@ body {
   100% { transform: translateY(0); opacity: 1; }
 }
 
+/* =============================================================================
+   TIER THEME ANIMATIONS - Gamification visual effects
+   ============================================================================= */
+
+/* Rainbow gradient animation for Legend tier */
+@keyframes rainbow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Legend tier animated background */
+.legend-tier {
+  background: linear-gradient(
+    135deg,
+    #ff6b6b 0%,
+    #4ecdc4 25%,
+    #45b7d1 50%,
+    #a855f7 75%,
+    #ff6b6b 100%
+  );
+  background-size: 400% 400%;
+  animation: rainbow 3s ease infinite;
+}
+
+/* Tier-based background accents */
+.tier-1 {
+  --tier-accent: #f3f4f6;
+}
+
+.tier-2 {
+  --tier-accent: #e0f2fe;
+}
+
+.tier-3 {
+  --tier-accent: #faf5ff;
+}
+
+.tier-4 {
+  --tier-accent: #fffbeb;
+}
+
+.tier-5 {
+  --tier-accent: transparent; /* Uses animated rainbow instead */
+}
+
+/* Tier-themed elements */
+.tier-themed-bg {
+  background: var(--tier-bg, #ffffff);
+  transition: background 0.5s ease;
+}
+
+.tier-themed-gradient {
+  background: linear-gradient(135deg, var(--tier-primary), var(--tier-secondary));
+}
+
 /* Utility animations for enhanced interactions */
 .animate-slide-down {
   animation: slide-down 0.3s ease-out;

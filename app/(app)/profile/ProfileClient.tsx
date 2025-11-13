@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { supabaseClient } from '@/lib/supabase-client'
 import { AnimatedCard, AnimatedButton } from '@/components/ui/UIComponents'
+import { XPBadge } from '@/components/gamification/XPBadge'
 import { Wallet, TrendingUp, DollarSign, Package } from 'lucide-react'
 
 interface ProfileClientProps {
@@ -157,7 +158,7 @@ export default function ProfileClient({
   return (
     <div className="space-y-8">
       {/* Profile Header */}
-      <div className="bg-gradient-to-r from-teal-600 via-teal-700 to-purple-700 text-white rounded-xl p-8 relative overflow-hidden">
+      <div className="tier-themed-gradient text-white rounded-xl p-8 relative overflow-hidden">
         <div className="absolute inset-0 bg-black/10" />
         <div className="relative z-10">
           <div className="flex flex-col md:flex-row items-start gap-6">
@@ -179,7 +180,11 @@ export default function ProfileClient({
                   <h1 className="text-3xl md:text-4xl font-bold mb-2">
                     {profile?.full_name || 'Community Member'}
                   </h1>
-                  <p className="text-teal-100 mb-2">{user.email}</p>
+                  <p className="text-white/90 mb-2">{user.email}</p>
+                  {/* XP Badge */}
+                  <div className="mt-3">
+                    <XPBadge variant="full" />
+                  </div>
                   {profile?.bio && (
                     <p className="text-teal-100 mb-3 max-w-2xl">{profile.bio}</p>
                   )}

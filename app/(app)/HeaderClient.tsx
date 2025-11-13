@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabaseClient } from '@/lib/supabase-client'
 import { AnimatedButton } from '@/components/ui/UIComponents'
+import { XPBadge } from '@/components/gamification/XPBadge'
 
 interface HeaderClientProps {
   user: any
@@ -123,6 +124,11 @@ export default function HeaderClient({ user }: HeaderClientProps) {
 
           {/* User Controls */}
           <div className="flex items-center gap-4">
+            {/* XP Badge */}
+            <div className="hidden md:block">
+              <XPBadge variant="compact" />
+            </div>
+            
             {/* User Menu */}
             <div className="flex items-center gap-3">
               {/* User Info */}
