@@ -19,6 +19,7 @@ Or use Supabase SQL Editor to run the migration.
 ## Step 3: Create Initial Components
 
 See the strategy document for component code examples:
+
 - `components/gamification/TierDisplay.tsx`
 - `components/gamification/CelebrationModal.tsx`
 - `components/gamification/XPProgressBar.tsx`
@@ -30,21 +31,21 @@ Add XP awards to key actions:
 
 ```typescript
 // Example: Lesson completion
-import { awardXP } from '@/lib/xp-system'
-import { triggerCelebration } from '@/hooks/useCelebration'
+import { awardXP } from "@/lib/xp-system";
+import { triggerCelebration } from "@/hooks/useCelebration";
 
 async function completeLesson(lessonId: string) {
   // ... existing completion logic ...
-  
+
   // Award XP
-  const xpGained = await awardXP(userId, 'lesson_completed', lessonId)
-  
+  const xpGained = await awardXP(userId, "lesson_completed", lessonId);
+
   // Trigger celebration
-  triggerCelebration('lesson_completed', {
-    title: 'Lesson Completed!',
-    message: 'Great job!',
-    xpGained
-  })
+  triggerCelebration("lesson_completed", {
+    title: "Lesson Completed!",
+    message: "Great job!",
+    xpGained,
+  });
 }
 ```
 
@@ -88,4 +89,3 @@ Update all components to use Tailwind responsive classes:
 ---
 
 **See `GAMIFICATION-UPGRADE-STRATEGY.md` for complete details!**
-

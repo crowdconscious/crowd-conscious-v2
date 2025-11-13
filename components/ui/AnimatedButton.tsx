@@ -4,7 +4,7 @@ import { memo, ReactNode } from 'react'
 import { motion, MotionProps } from 'framer-motion'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 
-interface AnimatedButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface AnimatedButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'children'> {
   children: ReactNode
   variant?: 'primary' | 'secondary' | 'success' | 'danger'
   size?: 'sm' | 'md' | 'lg'
@@ -26,7 +26,9 @@ export const AnimatedButton = memo(function AnimatedButton({
   loading = false,
   disabled,
   className = '',
-  ...props
+  onClick,
+  type = 'button',
+  ...htmlProps
 }: AnimatedButtonProps) {
   const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
 
@@ -52,6 +54,8 @@ export const AnimatedButton = memo(function AnimatedButton({
 
   return (
     <motion.button
+      type={type}
+      onClick={onClick}
       className={`
         ${variants[variant]}
         ${sizes[size]}
@@ -66,7 +70,7 @@ export const AnimatedButton = memo(function AnimatedButton({
       disabled={disabled || loading}
       transition={{ type: 'spring', stiffness: 400, damping: 17 }}
       {...motionProps}
-      {...props}
+      {...(htmlProps as any)}
       aria-busy={loading}
     >
       {loading ? (

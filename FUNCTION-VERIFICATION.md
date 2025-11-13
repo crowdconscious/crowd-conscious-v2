@@ -3,8 +3,9 @@
 ## ✅ **Current Status**
 
 Your verification shows **10 functions** total:
+
 - ✅ `award_xp` (appears twice - likely overloads)
-- ✅ `calculate_tier` 
+- ✅ `calculate_tier`
 - ✅ `calculate_tier_progress`
 - ✅ `check_achievements` (appears twice - likely overloads)
 - ✅ `get_leaderboard`
@@ -15,6 +16,7 @@ Your verification shows **10 functions** total:
 ## 🔍 **What to Check**
 
 The duplicates (`award_xp` and `check_achievements` appearing twice) could be:
+
 1. **Function Overloads** (✅ Good) - Same name, different parameters
 2. **Actual Duplicates** (❌ Bad) - Same signature, needs cleanup
 
@@ -23,13 +25,13 @@ The duplicates (`award_xp` and `check_achievements` appearing twice) could be:
 Run this in Supabase to see full function signatures:
 
 ```sql
-SELECT 
+SELECT
   routine_name,
   pg_get_function_arguments(oid) as arguments,
   data_type as return_type
 FROM information_schema.routines r
 JOIN pg_proc p ON p.proname = r.routine_name
-WHERE routine_schema = 'public' 
+WHERE routine_schema = 'public'
 AND routine_name IN ('award_xp', 'check_achievements')
 ORDER BY routine_name, arguments;
 ```
@@ -37,6 +39,7 @@ ORDER BY routine_name, arguments;
 **Expected Results:**
 
 If functions are correct, you should see:
+
 - `award_xp` with signature: `p_user_id uuid, p_action_type character varying, p_action_id uuid DEFAULT NULL, p_description text DEFAULT NULL`
 - `check_achievements` with signature: `p_user_id uuid, p_action_type character varying, p_action_id uuid DEFAULT NULL`
 
@@ -81,4 +84,3 @@ SELECT public.get_leaderboard(10, 0, NULL); -- Should return []
 ```
 
 If these work, **you're good to go!** 🚀
-

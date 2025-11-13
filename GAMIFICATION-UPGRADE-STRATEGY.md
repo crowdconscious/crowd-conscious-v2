@@ -8,6 +8,7 @@
 ## 📋 **Executive Summary**
 
 This upgrade will:
+
 - ✅ Make the entire app mobile-responsive
 - ✅ Implement a 5-tier XP status system with visual rewards
 - ✅ Add celebration animations for key actions
@@ -23,13 +24,13 @@ This upgrade will:
 
 #### **Tier Structure**
 
-| Tier | Name | XP Required | Theme Colors | Unlocked Perks |
-|------|------|-------------|--------------|----------------|
-| 1 | **Explorer** | 0-500 | Gray/Neutral | Basic dashboard, standard features |
-| 2 | **Contributor** | 501-1,500 | Blue/Cyan | Enhanced dashboard, priority support |
-| 3 | **Changemaker** | 1,501-3,500 | Purple/Pink | Custom themes, badge display |
-| 4 | **Impact Leader** | 3,501-7,500 | Gold/Orange | Exclusive content, leaderboard access |
-| 5 | **Legend** | 7,501+ | Animated Rainbow | All perks, special recognition, animated background |
+| Tier | Name              | XP Required | Theme Colors     | Unlocked Perks                                      |
+| ---- | ----------------- | ----------- | ---------------- | --------------------------------------------------- |
+| 1    | **Explorer**      | 0-500       | Gray/Neutral     | Basic dashboard, standard features                  |
+| 2    | **Contributor**   | 501-1,500   | Blue/Cyan        | Enhanced dashboard, priority support                |
+| 3    | **Changemaker**   | 1,501-3,500 | Purple/Pink      | Custom themes, badge display                        |
+| 4    | **Impact Leader** | 3,501-7,500 | Gold/Orange      | Exclusive content, leaderboard access               |
+| 5    | **Legend**        | 7,501+      | Animated Rainbow | All perks, special recognition, animated background |
 
 #### **Visual Implementation**
 
@@ -37,37 +38,37 @@ This upgrade will:
 // Tier themes with gradients
 const tierThemes = {
   explorer: {
-    primary: '#6B7280',
-    secondary: '#9CA3AF',
-    gradient: 'linear-gradient(135deg, #6B7280 0%, #9CA3AF 100%)',
-    animated: false
+    primary: "#6B7280",
+    secondary: "#9CA3AF",
+    gradient: "linear-gradient(135deg, #6B7280 0%, #9CA3AF 100%)",
+    animated: false,
   },
   contributor: {
-    primary: '#0EA5E9',
-    secondary: '#06B6D4',
-    gradient: 'linear-gradient(135deg, #0EA5E9 0%, #06B6D4 100%)',
-    animated: false
+    primary: "#0EA5E9",
+    secondary: "#06B6D4",
+    gradient: "linear-gradient(135deg, #0EA5E9 0%, #06B6D4 100%)",
+    animated: false,
   },
   changemaker: {
-    primary: '#A855F7',
-    secondary: '#EC4899',
-    gradient: 'linear-gradient(135deg, #A855F7 0%, #EC4899 100%)',
-    animated: false
+    primary: "#A855F7",
+    secondary: "#EC4899",
+    gradient: "linear-gradient(135deg, #A855F7 0%, #EC4899 100%)",
+    animated: false,
   },
   impactLeader: {
-    primary: '#F59E0B',
-    secondary: '#EF4444',
-    gradient: 'linear-gradient(135deg, #F59E0B 0%, #EF4444 100%)',
-    animated: false
+    primary: "#F59E0B",
+    secondary: "#EF4444",
+    gradient: "linear-gradient(135deg, #F59E0B 0%, #EF4444 100%)",
+    animated: false,
   },
   legend: {
-    primary: '#FF6B6B',
-    secondary: '#4ECDC4',
-    gradient: 'linear-gradient(135deg, #FF6B6B 0%, #4ECDC4 50%, #45B7D1 100%)',
+    primary: "#FF6B6B",
+    secondary: "#4ECDC4",
+    gradient: "linear-gradient(135deg, #FF6B6B 0%, #4ECDC4 50%, #45B7D1 100%)",
     animated: true, // Animated rainbow gradient
-    animation: 'rainbow 3s ease infinite'
-  }
-}
+    animation: "rainbow 3s ease infinite",
+  },
+};
 ```
 
 ---
@@ -371,10 +372,10 @@ export function CelebrationModal({
             >
               <Trophy className="w-16 h-16 text-yellow-500" />
             </motion.div>
-            
+
             <h2 className="text-2xl font-bold text-center mb-2">{title}</h2>
             <p className="text-center text-slate-600 mb-4">{message}</p>
-            
+
             {xpGained && (
               <motion.div
                 className="text-center p-4 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg mb-4"
@@ -549,6 +550,7 @@ export function LessonCard({ lesson, onComplete }) {
 ## 🎯 **Implementation Phases**
 
 ### **Phase 1: Foundation (Week 1)**
+
 1. ✅ Install all required packages
 2. ✅ Create database migrations
 3. ✅ Set up XP tracking hooks
@@ -556,6 +558,7 @@ export function LessonCard({ lesson, onComplete }) {
 5. ✅ Implement basic celebration modal
 
 ### **Phase 2: Core Gamification (Week 2)**
+
 1. ✅ Build tier display component
 2. ✅ Implement XP reward system
 3. ✅ Create achievement system
@@ -563,6 +566,7 @@ export function LessonCard({ lesson, onComplete }) {
 5. ✅ Build tier theme system
 
 ### **Phase 3: Mobile Optimization (Week 3)**
+
 1. ✅ Make all components responsive
 2. ✅ Implement mobile navigation
 3. ✅ Add pull-to-refresh
@@ -570,6 +574,7 @@ export function LessonCard({ lesson, onComplete }) {
 5. ✅ Optimize touch targets
 
 ### **Phase 4: Polish & Micro-interactions (Week 4)**
+
 1. ✅ Add loading skeletons
 2. ✅ Implement toast notifications
 3. ✅ Add progress bars everywhere
@@ -584,42 +589,44 @@ export function LessonCard({ lesson, onComplete }) {
 
 ```typescript
 // hooks/useUserTier.ts
-import { useQuery, useMutation } from '@tanstack/react-query'
-import { createClient } from '@/lib/supabase-client'
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { createClient } from "@/lib/supabase-client";
 
 export function useUserTier() {
-  const supabase = createClient()
-  
+  const supabase = createClient();
+
   const { data: userTier } = useQuery({
-    queryKey: ['userTier'],
+    queryKey: ["userTier"],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return null
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return null;
 
       const { data } = await supabase
-        .from('user_xp')
-        .select('*')
-        .eq('user_id', user.id)
-        .single()
+        .from("user_xp")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
 
-      return data
-    }
-  })
+      return data;
+    },
+  });
 
   const calculateTier = (xp: number) => {
-    if (xp >= 7501) return { tier: 5, name: 'Legend', xpRequired: 7501 }
-    if (xp >= 3501) return { tier: 4, name: 'Impact Leader', xpRequired: 3501 }
-    if (xp >= 1501) return { tier: 3, name: 'Changemaker', xpRequired: 1501 }
-    if (xp >= 501) return { tier: 2, name: 'Contributor', xpRequired: 501 }
-    return { tier: 1, name: 'Explorer', xpRequired: 0 }
-  }
+    if (xp >= 7501) return { tier: 5, name: "Legend", xpRequired: 7501 };
+    if (xp >= 3501) return { tier: 4, name: "Impact Leader", xpRequired: 3501 };
+    if (xp >= 1501) return { tier: 3, name: "Changemaker", xpRequired: 1501 };
+    if (xp >= 501) return { tier: 2, name: "Contributor", xpRequired: 501 };
+    return { tier: 1, name: "Explorer", xpRequired: 0 };
+  };
 
   return {
     tier: userTier ? calculateTier(userTier.total_xp) : null,
     xp: userTier?.total_xp || 0,
     progress: userTier?.tier_progress || 0,
-    nextTierXP: userTier?.xp_to_next_tier || 500
-  }
+    nextTierXP: userTier?.xp_to_next_tier || 500,
+  };
 }
 ```
 
@@ -627,31 +634,31 @@ export function useUserTier() {
 
 ```typescript
 // hooks/useCelebration.ts
-import { useState } from 'react'
-import { useMutation } from '@tanstack/react-query'
-import { awardXP } from '@/lib/xp-system'
+import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { awardXP } from "@/lib/xp-system";
 
 export function useCelebration() {
-  const [celebration, setCelebration] = useState(null)
+  const [celebration, setCelebration] = useState(null);
 
   const triggerCelebration = async (type: string, actionId?: string) => {
     // Award XP
-    const xpGained = await awardXP(type, actionId)
-    
+    const xpGained = await awardXP(type, actionId);
+
     // Show celebration
     setCelebration({
       type,
       xpGained,
-      isOpen: true
-    })
+      isOpen: true,
+    });
 
     // Auto-close after 3 seconds
     setTimeout(() => {
-      setCelebration(null)
-    }, 3000)
-  }
+      setCelebration(null);
+    }, 3000);
+  };
 
-  return { celebration, triggerCelebration }
+  return { celebration, triggerCelebration };
 }
 ```
 
@@ -664,19 +671,25 @@ export function useCelebration() {
 
 /* Rainbow gradient animation for Legend tier */
 @keyframes rainbow {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 .legend-gradient {
   background: linear-gradient(
     135deg,
-    #FF6B6B 0%,
-    #4ECDC4 25%,
-    #45B7D1 50%,
-    #A855F7 75%,
-    #FF6B6B 100%
+    #ff6b6b 0%,
+    #4ecdc4 25%,
+    #45b7d1 50%,
+    #a855f7 75%,
+    #ff6b6b 100%
   );
   background-size: 400% 400%;
   animation: rainbow 3s ease infinite;
@@ -684,7 +697,9 @@ export function useCelebration() {
 
 /* Hover effects */
 .interactive {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .interactive:hover {
@@ -694,8 +709,13 @@ export function useCelebration() {
 
 /* Pulse animation for notifications */
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 .pulse {
@@ -704,17 +724,16 @@ export function useCelebration() {
 
 /* Shimmer loading effect */
 @keyframes shimmer {
-  0% { background-position: -1000px 0; }
-  100% { background-position: 1000px 0; }
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
 }
 
 .shimmer {
-  background: linear-gradient(
-    90deg,
-    #f0f0f0 0px,
-    #e0e0e0 40px,
-    #f0f0f0 80px
-  );
+  background: linear-gradient(90deg, #f0f0f0 0px, #e0e0e0 40px, #f0f0f0 80px);
   background-size: 1000px 100%;
   animation: shimmer 2s infinite;
 }
@@ -816,19 +835,19 @@ export function TierTimeline() {
 
 ```typescript
 // lib/sounds.ts
-import { Howl } from 'howler'
+import { Howl } from "howler";
 
 const sounds = {
-  levelUp: new Howl({ src: ['/sounds/levelup.mp3'], volume: 0.5 }),
-  achievement: new Howl({ src: ['/sounds/achievement.mp3'], volume: 0.5 }),
-  xpGain: new Howl({ src: ['/sounds/coin.mp3'], volume: 0.3 }),
-  click: new Howl({ src: ['/sounds/click.mp3'], volume: 0.2 })
-}
+  levelUp: new Howl({ src: ["/sounds/levelup.mp3"], volume: 0.5 }),
+  achievement: new Howl({ src: ["/sounds/achievement.mp3"], volume: 0.5 }),
+  xpGain: new Howl({ src: ["/sounds/coin.mp3"], volume: 0.3 }),
+  click: new Howl({ src: ["/sounds/click.mp3"], volume: 0.2 }),
+};
 
 export function playSound(type: keyof typeof sounds) {
-  const userPrefs = getUserPreferences()
+  const userPrefs = getUserPreferences();
   if (userPrefs?.sound_enabled) {
-    sounds[type].play()
+    sounds[type].play();
   }
 }
 ```
@@ -907,4 +926,3 @@ export function BottomSheet({
 ---
 
 **Ready to proceed with implementation?** 🚀
-

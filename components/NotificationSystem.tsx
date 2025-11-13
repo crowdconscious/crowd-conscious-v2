@@ -295,7 +295,28 @@ export function ToastContainer() {
 export function GlobalSearch() {
   const [isOpen, setIsOpen] = useState(false)
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState({
+  interface SearchResult {
+    communities: Array<{
+      id: any
+      name: any
+      description: any
+      image_url: any
+      member_count: any
+      core_values: any
+    }>
+    content: Array<{
+      id: any
+      title: any
+      description: any
+      type: any
+      community_id: any
+      created_at: any
+      community?: any
+    }>
+    loading: boolean
+  }
+
+  const [results, setResults] = useState<SearchResult>({
     communities: [],
     content: [],
     loading: false
