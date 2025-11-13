@@ -17,10 +17,14 @@ function LoginForm() {
 
   useEffect(() => {
     const error = searchParams.get('error')
+    const passwordReset = searchParams.get('password_reset')
+    
     if (error === 'auth_callback_error') {
       setMessage('There was an error confirming your email. Please try signing in.')
     } else if (error === 'auth_callback_exception') {
       setMessage('Authentication error. Please try again.')
+    } else if (passwordReset === 'success') {
+      setMessage('Password reset successful! Please sign in with your new password.')
     }
   }, [searchParams])
 
@@ -94,9 +98,17 @@ function LoginForm() {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-2">
-              Password
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-slate-700">
+                Password
+              </label>
+              <Link 
+                href="/forgot-password" 
+                className="text-sm text-teal-600 hover:text-teal-700 font-medium"
+              >
+                Forgot password?
+              </Link>
+            </div>
             <input
               id="password"
               type="password"
@@ -109,7 +121,11 @@ function LoginForm() {
           </div>
 
           {message && (
-            <div className="p-3 rounded-lg text-sm bg-red-50 text-red-700 border border-red-200">
+            <div className={`p-3 rounded-lg text-sm ${
+              message.includes('successful') 
+                ? 'bg-green-50 text-green-700 border border-green-200'
+                : 'bg-red-50 text-red-700 border border-red-200'
+            }`}>
               {message}
             </div>
           )}
