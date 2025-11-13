@@ -46,22 +46,31 @@ export async function POST(request: NextRequest) {
         message: error.message,
         status: error.status,
         name: error.name,
-        error: JSON.stringify(error, null, 2)
+        fullError: error,
+        errorString: JSON.stringify(error, Object.getOwnPropertyNames(error), 2)
       })
       
-      // Provide more helpful error messages
+      // Return the actual error message from Supabase
+      // This helps debug configuration issues
       let errorMessage = error.message || 'Failed to send reset email'
       
-      if (error.message?.includes('rate limit') || error.message?.includes('too many')) {
+      // Only show generic messages for rate limits
+      if (error.message?.toLowerCase().includes('rate limit') || 
+          error.message?.toLowerCase().includes('too many') ||
+          error.status === 429) {
         errorMessage = 'Too many requests. Please wait a few minutes and try again.'
-      } else if (error.message?.includes('email')) {
-        errorMessage = 'Unable to send reset email. Please verify your email address.'
-      } else if (error.message?.includes('redirect')) {
-        errorMessage = 'Invalid redirect URL. Please contact support.'
+      } else {
+        // For other errors, show the actual Supabase error message
+        // This helps identify configuration issues like redirect URL problems
+        errorMessage = error.message || 'Failed to send reset email. Please check your email address and try again.'
       }
       
       return NextResponse.json(
-        { error: errorMessage },
+        { 
+          error: errorMessage,
+          errorCode: error.status,
+          errorName: error.name
+        },
         { status: 400 }
       )
     }

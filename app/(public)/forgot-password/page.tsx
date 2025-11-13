@@ -32,19 +32,22 @@ export default function ForgotPasswordPage() {
         console.error('❌ Password reset error:', {
           status: response.status,
           error: data.error,
-          data: data
+          errorCode: data.errorCode,
+          errorName: data.errorName,
+          fullData: data
         })
         
-        // Provide more helpful error messages
+        // Show the error message from the server
+        // The server will provide helpful messages based on the actual Supabase error
         let errorMessage = data.error || 'Failed to send reset email'
         
-        if (response.status === 400) {
-          // Keep the error message from the server
-          errorMessage = data.error || 'Invalid request. Please check your email address.'
+        // Add additional context for common issues
+        if (data.errorCode === 429 || errorMessage.includes('rate limit') || errorMessage.includes('too many')) {
+          errorMessage = 'Too many requests. Please wait a few minutes and try again.'
         } else if (response.status === 500) {
           errorMessage = 'Server error. Please try again in a few moments.'
-        } else if (data.error?.includes('timeout') || data.error?.includes('504')) {
-          errorMessage = 'Request timed out. Please check your internet connection and try again.'
+        } else if (data.error?.includes('redirect') || data.error?.includes('URL')) {
+          errorMessage = `${errorMessage} (This may be a configuration issue. Please contact support if this persists.)`
         }
         
         setMessage(errorMessage)
