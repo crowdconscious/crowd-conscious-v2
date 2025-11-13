@@ -7,6 +7,10 @@ import ImpactDashboard from './ImpactDashboard'
 import { XPProgressBar, AchievementsGrid, CommunityLeaderboard, WeeklyChallenge } from '@/components/GamificationSystem'
 import DashboardCalendar from '../../components/DashboardCalendar'
 import CorporateTrainingCard from '@/components/CorporateTrainingCard'
+import DashboardMobileMenu from '@/components/DashboardMobileMenu'
+import { useUserTier } from '@/hooks/useUserTier'
+import { getTierByXP } from '@/lib/tier-config'
+import { XPBadge } from '@/components/gamification/XPBadge'
 
 interface UserStats {
   id: string
@@ -38,11 +42,42 @@ export default function NewEnhancedDashboard({ user, initialUserStats, userCommu
   const [userStats] = useState<UserStats | null>(initialUserStats)
   const [activeTab, setActiveTab] = useState<'overview' | 'impact' | 'gamification' | 'calendar'>('overview')
   const [mounted, setMounted] = useState(false)
+  const { xp, tier, progress } = useUserTier()
 
   // Prevent hydration mismatch by only showing time-based content after mount
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  // Calculate retroactive XP on mount if user has actions but no XP
+  useEffect(() => {
+    const calculateRetroactiveXP = async () => {
+      if (!xp || xp.total_xp === 0) {
+        // Check if user has completed actions but no XP
+        try {
+          const response = await fetch('/api/gamification/retroactive-xp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+          })
+          if (response.ok) {
+            const result = await response.json()
+            if (result.success && result.data.total_xp_awarded > 0) {
+              // Refetch XP data after a short delay
+              setTimeout(() => {
+                window.location.reload()
+              }, 2000)
+            }
+          }
+        } catch (error) {
+          console.error('Error calculating retroactive XP:', error)
+        }
+      }
+    }
+    if (mounted) {
+      calculateRetroactiveXP()
+    }
+  }, [xp, mounted])
 
   const getTimeOfDayMessage = (): string => {
     if (!mounted) return 'Hello' // Default for SSR
@@ -65,8 +100,13 @@ export default function NewEnhancedDashboard({ user, initialUserStats, userCommu
     )
   }
 
+  const tierConfig = xp ? getTierByXP(xp.total_xp) : null
+
   return (
     <div className="space-y-8">
+      {/* Mobile Hamburger Menu */}
+      <DashboardMobileMenu />
+
       {/* Corporate Portal Banner */}
       {corporateInfo && (
         <div className="bg-gradient-to-r from-purple-600 to-teal-600 text-white rounded-xl p-6 relative overflow-hidden shadow-xl">
@@ -102,12 +142,48 @@ export default function NewEnhancedDashboard({ user, initialUserStats, userCommu
       <div className="tier-themed-gradient text-white rounded-xl p-8 relative overflow-hidden shadow-xl">
         <div className="absolute inset-0 bg-black/10" />
         <div className="relative z-10">
-          <h1 className="text-3xl md:text-4xl font-bold mb-2">
-            {getTimeOfDayMessage()}, {user.full_name || user.email?.split('@')[0] || 'Changemaker'}! 👋
-          </h1>
-          <p className="text-white/90 text-lg mb-6">
-            Ready to make an impact in your community today?
-          </p>
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex-1">
+              <h1 className="text-3xl md:text-4xl font-bold mb-2">
+                {getTimeOfDayMessage()}, {user.full_name || user.email?.split('@')[0] || 'Changemaker'}! 👋
+              </h1>
+              <p className="text-white/90 text-lg mb-4">
+                Ready to make an impact in your community today?
+              </p>
+            </div>
+            {/* XP Badge - Desktop */}
+            <div className="hidden md:block">
+              <XPBadge variant="compact" />
+            </div>
+          </div>
+
+          {/* Tier Display - Prominent */}
+          {tierConfig && (
+            <div className="mb-6 bg-white/20 backdrop-blur-sm rounded-lg p-4 border border-white/30">
+              <div className="flex items-center gap-4">
+                <div className="text-4xl">{tierConfig.icon}</div>
+                <div className="flex-1">
+                  <div className="text-sm text-white/80 mb-1">Current Tier</div>
+                  <div className="text-2xl font-bold">{tierConfig.name}</div>
+                  <div className="text-sm text-white/90 mt-1">
+                    {tierConfig.perks.slice(0, 2).join(' • ')}
+                  </div>
+                </div>
+                {progress && progress.xpNeeded > 0 && (
+                  <div className="text-right">
+                    <div className="text-sm text-white/80 mb-1">Next Tier</div>
+                    <div className="text-lg font-bold">{progress.xpNeeded} XP</div>
+                    <div className="w-24 h-2 bg-white/20 rounded-full mt-2 overflow-hidden">
+                      <div 
+                        className="h-full bg-white rounded-full transition-all duration-500"
+                        style={{ width: `${progress.progress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <AnimatedCard 
@@ -115,28 +191,28 @@ export default function NewEnhancedDashboard({ user, initialUserStats, userCommu
               onClick={() => setActiveTab('gamification')}
             >
               <div className="text-2xl font-bold">{userStats.level}</div>
-              <div className="text-teal-100 text-sm">Level</div>
+              <div className="text-white/90 text-sm">Level</div>
             </AnimatedCard>
             <AnimatedCard 
               className="bg-white/20 backdrop-blur-sm rounded-lg p-4 text-center cursor-pointer hover:bg-white/30 transition-all"
               onClick={() => setActiveTab('gamification')}
             >
               <div className="text-2xl font-bold">{userStats.total_xp.toLocaleString()}</div>
-              <div className="text-teal-100 text-sm">Total XP</div>
+              <div className="text-white/90 text-sm">Total XP</div>
             </AnimatedCard>
             <AnimatedCard 
               className="bg-white/20 backdrop-blur-sm rounded-lg p-4 text-center cursor-pointer hover:bg-white/30 transition-all"
               onClick={() => setActiveTab('gamification')}
             >
               <div className="text-2xl font-bold">{userStats.current_streak}</div>
-              <div className="text-teal-100 text-sm">Day Streak</div>
+              <div className="text-white/90 text-sm">Day Streak</div>
             </AnimatedCard>
             <AnimatedCard 
               className="bg-white/20 backdrop-blur-sm rounded-lg p-4 text-center cursor-pointer hover:bg-white/30 transition-all"
               onClick={() => setActiveTab('impact')}
             >
               <div className="text-2xl font-bold">{userStats.votes_cast}</div>
-              <div className="text-teal-100 text-sm">Votes Cast</div>
+              <div className="text-white/90 text-sm">Votes Cast</div>
             </AnimatedCard>
           </div>
         </div>
