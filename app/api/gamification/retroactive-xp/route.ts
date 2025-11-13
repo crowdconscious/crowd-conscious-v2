@@ -40,11 +40,33 @@ export async function POST(request: NextRequest) {
     }
 
     // 1. Award XP for completed lessons
+    // Check both lesson_progress and course_enrollments for completed lessons
     const { data: completedLessons } = await supabase
       .from('lesson_progress')
       .select('lesson_id, completed_at')
       .eq('user_id', userId)
       .eq('completed', true)
+    
+    // Also check course_enrollments for lesson completions
+    const { data: enrollments } = await supabase
+      .from('course_enrollments')
+      .select('module_id, lesson_responses')
+      .eq('user_id', userId)
+    
+    const allCompletedLessons = completedLessons || []
+    
+    // Extract lesson IDs from enrollments if they have lesson_responses
+    if (enrollments) {
+      for (const enrollment of enrollments) {
+        if (enrollment.lesson_responses && Array.isArray(enrollment.lesson_responses)) {
+          for (const response of enrollment.lesson_responses) {
+            if (response.lesson_id && !allCompletedLessons.find(l => l.lesson_id === response.lesson_id)) {
+              allCompletedLessons.push({ lesson_id: response.lesson_id, completed_at: new Date().toISOString() })
+            }
+          }
+        }
+      }
+    }
 
     if (completedLessons) {
       for (const lesson of completedLessons) {
