@@ -76,6 +76,18 @@ export default function HeaderClient({ user }: HeaderClientProps) {
                 Communities
               </Link>
               <Link 
+                href="/leaderboard" 
+                className="text-slate-600 dark:text-slate-300 hover:text-teal-600 font-medium"
+              >
+                Leaderboard
+              </Link>
+              <Link 
+                href="/achievements" 
+                className="text-slate-600 dark:text-slate-300 hover:text-teal-600 font-medium"
+              >
+                Achievements
+              </Link>
+              <Link 
                 href="/discover" 
                 className="text-slate-600 dark:text-slate-300 hover:text-teal-600 font-medium"
               >
