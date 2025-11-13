@@ -223,7 +223,7 @@ CHECK (
 GRANT EXECUTE ON FUNCTION trigger_community_join_xp TO authenticated;
 GRANT EXECUTE ON FUNCTION trigger_poll_vote_xp TO authenticated;
 GRANT EXECUTE ON FUNCTION update_member_count TO authenticated;
-GRANT EXECUTE ON FUNCTION update_communities_updated_at TO authenticated;
+-- Note: update_communities_updated_at is a trigger function, doesn't need explicit grant
 
 COMMIT;
 
