@@ -1,7 +1,7 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, memo, useCallback } from 'react'
 import confetti from 'canvas-confetti'
 import { Trophy, Sparkles, Star, X } from 'lucide-react'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
@@ -23,7 +23,12 @@ interface CelebrationModalProps {
   onClose: () => void
 }
 
-export function CelebrationModal({
+/**
+ * CelebrationModal Component
+ * Shows celebration animations with confetti and XP display
+ * Memoized for performance, accessible with keyboard navigation
+ */
+export const CelebrationModal = memo(function CelebrationModal({
   isOpen,
   type,
   title,
@@ -33,8 +38,33 @@ export function CelebrationModal({
   onClose
 }: CelebrationModalProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const modalRef = useRef<HTMLDivElement>(null)
   const isMobile = useMediaQuery('(max-width: 768px)')
   const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
+  
+  // ✅ PHASE 4: Keyboard navigation (ESC to close)
+  useEffect(() => {
+    if (!isOpen) return
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose()
+      }
+    }
+
+    document.addEventListener('keydown', handleEscape)
+    return () => document.removeEventListener('keydown', handleEscape)
+  }, [isOpen, onClose])
+
+  // ✅ PHASE 4: Focus trap - focus modal when opened
+  useEffect(() => {
+    if (isOpen && modalRef.current) {
+      const firstFocusable = modalRef.current.querySelector(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      ) as HTMLElement
+      firstFocusable?.focus()
+    }
+  }, [isOpen])
 
   useEffect(() => {
     if (!isOpen || prefersReducedMotion) return
@@ -90,18 +120,19 @@ export function CelebrationModal({
     return () => clearInterval(interval)
   }, [isOpen, type, prefersReducedMotion])
 
-  const getIcon = () => {
+  // ✅ PHASE 4: Memoize icon to prevent re-renders
+  const getIcon = useCallback(() => {
     switch (type) {
       case 'tier_up':
-        return <Trophy className="w-16 h-16 text-yellow-500" />
+        return <Trophy className="w-16 h-16 text-yellow-500" aria-hidden="true" />
       case 'module_completed':
-        return <Star className="w-16 h-16 text-purple-500" />
+        return <Star className="w-16 h-16 text-purple-500" aria-hidden="true" />
       case 'achievement':
-        return <Sparkles className="w-16 h-16 text-blue-500" />
+        return <Sparkles className="w-16 h-16 text-blue-500" aria-hidden="true" />
       default:
-        return <Trophy className="w-16 h-16 text-green-500" />
+        return <Trophy className="w-16 h-16 text-green-500" aria-hidden="true" />
     }
-  }
+  }, [type])
 
   return (
     <AnimatePresence>
@@ -126,7 +157,8 @@ export function CelebrationModal({
             aria-describedby="celebration-message"
           >
             <motion.div
-              className="bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full mx-4 shadow-2xl pointer-events-auto"
+              ref={modalRef}
+              className="bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full mx-4 shadow-2xl pointer-events-auto focus:outline-none"
               initial={{ scale: 0.5, opacity: 0, y: 50 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.5, opacity: 0, y: 50 }}
@@ -136,14 +168,16 @@ export function CelebrationModal({
                 bounce: prefersReducedMotion ? 0 : 0.3
               }}
               onClick={(e) => e.stopPropagation()}
+              tabIndex={-1}
             >
               {/* Close button */}
               <button
                 onClick={onClose}
-                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 transition-colors"
+                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
                 aria-label="Close celebration"
+                autoFocus
               >
-                <X className="w-5 h-5" />
+                <X className="w-5 h-5" aria-hidden="true" />
               </button>
 
               {/* Icon */}
@@ -192,7 +226,7 @@ export function CelebrationModal({
 
               {/* Achievements */}
               {achievements.length > 0 && (
-                <div className="space-y-2 mb-6">
+                <div className="space-y-2 mb-6" role="list" aria-label="Unlocked achievements">
                   <p className="text-sm font-semibold text-slate-700 text-center mb-2">
                     New Achievements Unlocked!
                   </p>
@@ -203,8 +237,10 @@ export function CelebrationModal({
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: prefersReducedMotion ? 0 : 0.3 + index * 0.1 }}
+                      role="listitem"
+                      aria-label={`Achievement: ${achievement.name}`}
                     >
-                      <span className="text-2xl">{achievement.icon}</span>
+                      <span className="text-2xl" aria-hidden="true">{achievement.icon}</span>
                       <div className="flex-1">
                         <p className="font-semibold text-slate-900">{achievement.name}</p>
                         <p className="text-sm text-slate-600">{achievement.description}</p>
@@ -221,6 +257,12 @@ export function CelebrationModal({
                 whileHover={prefersReducedMotion ? {} : { scale: 1.02 }}
                 whileTap={prefersReducedMotion ? {} : { scale: 0.98 }}
                 aria-label="Continue"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    onClose()
+                  }
+                }}
               >
                 Continue
               </motion.button>
@@ -230,5 +272,5 @@ export function CelebrationModal({
       )}
     </AnimatePresence>
   )
-}
+})
 
