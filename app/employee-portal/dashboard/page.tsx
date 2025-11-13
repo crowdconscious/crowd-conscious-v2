@@ -286,7 +286,17 @@ export default async function EmployeeDashboard() {
 
       {/* My Courses - Mobile Optimized */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6">
-        <h3 className="text-base sm:text-lg font-bold text-slate-900 mb-4">Mis Módulos</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-base sm:text-lg font-bold text-slate-900">Mis Módulos</h3>
+          {enrollments && enrollments.length > 0 && (
+            <Link
+              href="/employee-portal/courses"
+              className="text-xs sm:text-sm text-teal-600 hover:text-teal-700 font-medium flex items-center gap-1"
+            >
+              Ver todos <TrendingUp className="w-4 h-4" />
+            </Link>
+          )}
+        </div>
         
         {enrollments && enrollments.length > 0 ? (
           <div className="space-y-3 sm:space-y-4">
@@ -304,15 +314,29 @@ export default async function EmployeeDashboard() {
               
               const isAvailable = moduleData?.id && moduleData?.lesson_count > 0
               const moduleUrl = isAvailable ? `/employee-portal/modules/${moduleData.id}` : '#'
+              const progress = enrollment.progress_percentage || 0
+              const isInProgress = progress > 0 && !enrollment.completed
               
               return (
                 <Link 
                   key={enrollment.id}
                   href={moduleUrl}
-                  className={`block border-2 border-slate-200 rounded-lg p-3 sm:p-4 hover:border-teal-300 transition-all ${
-                    isAvailable ? 'cursor-pointer hover:shadow-lg' : 'cursor-not-allowed opacity-75'
+                  className={`block border-2 rounded-lg p-3 sm:p-4 transition-all relative overflow-hidden group ${
+                    isAvailable 
+                      ? `cursor-pointer hover:shadow-lg ${
+                          isInProgress 
+                            ? 'border-purple-300 bg-purple-50/50 hover:border-purple-400' 
+                            : enrollment.completed
+                            ? 'border-green-300 bg-green-50/50 hover:border-green-400'
+                            : 'border-slate-200 hover:border-teal-300'
+                        }` 
+                      : 'cursor-not-allowed opacity-75 border-slate-200'
                   }`}
                 >
+                  {/* Animated progress indicator */}
+                  {isInProgress && (
+                    <div className="absolute top-0 left-0 h-1 bg-gradient-to-r from-purple-500 to-teal-500 animate-pulse" style={{ width: `${progress}%` }} />
+                  )}
                   {/* Mobile: Stack vertically, Desktop: Side by side */}
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
                     <div className="flex items-start gap-3 sm:gap-4">
