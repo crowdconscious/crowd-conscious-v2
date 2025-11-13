@@ -8,11 +8,21 @@
 -- =====================================================
 
 -- =====================================================
--- Fix 1: Community Join XP Trigger
+-- Fix 1: Add Missing Action Types to xp_rewards
 -- =====================================================
--- The trigger is calling award_xp with wrong signature
--- Should be: award_xp(UUID, VARCHAR(50), UUID, TEXT)
--- Currently calling: award_xp(UUID, VARCHAR, INTEGER, UUID, TEXT)
+
+INSERT INTO public.xp_rewards (action_type, xp_amount, description) VALUES
+  ('join_community', 25, 'Join a community'),
+  ('vote_content', 25, 'Vote on community content') -- Already exists but ensure it's there
+ON CONFLICT (action_type) DO UPDATE SET
+  xp_amount = EXCLUDED.xp_amount,
+  description = EXCLUDED.description;
+
+-- =====================================================
+-- Fix 2: Community Join XP Trigger
+-- =====================================================
+-- The trigger is calling award_xp with correct signature
+-- award_xp(UUID, VARCHAR(50), UUID, TEXT)
 
 DROP FUNCTION IF EXISTS trigger_community_join_xp() CASCADE;
 
@@ -41,9 +51,9 @@ CREATE TRIGGER trigger_community_join_xp
   EXECUTE FUNCTION trigger_community_join_xp();
 
 -- =====================================================
--- Fix 2: Poll Vote XP Trigger
+-- Fix 3: Poll Vote XP Trigger
 -- =====================================================
--- The trigger is calling award_xp with wrong signature
+-- The trigger is calling award_xp with correct signature
 
 DROP FUNCTION IF EXISTS trigger_poll_vote_xp() CASCADE;
 
@@ -57,12 +67,6 @@ BEGIN
     NEW.content_id::UUID,
     'Voted on poll'::TEXT
   );
-  
-  -- Update vote count (poll votes also count toward achievement)
-  UPDATE user_stats 
-  SET votes_cast = votes_cast + 1,
-      updated_at = NOW()
-  WHERE user_id = NEW.user_id;
   
   -- Update streak and check achievements
   PERFORM update_user_streak(NEW.user_id);
@@ -79,7 +83,7 @@ CREATE TRIGGER trigger_poll_vote_xp
   EXECUTE FUNCTION trigger_poll_vote_xp();
 
 -- =====================================================
--- Fix 3: Sponsorships Amount Constraint
+-- Fix 4: Sponsorships Amount Constraint
 -- =====================================================
 -- Allow amount = 0 for non-financial sponsorships (volunteer/resources)
 -- Current constraint likely requires amount > 0 or amount >= 100
