@@ -33,34 +33,34 @@ export async function POST(req: NextRequest) {
     // ✅ PHASE 4 FIX: Extract activityData from responses if it's nested there
     const actualActivityData = activityData || responses?.activityData || responses
     
-    const validation = validateLessonResponse({
-      responses: responses || {},
-      reflection: reflection || responses?.reflection,
-      actionItems: actionItems || responses?.actionItems,
-      evidence: evidence || responses?.evidence || responses?.uploadedFiles,
-      quizAnswers: quizAnswers || responses?.quizAnswers,
-      quizQuestions: quizQuestions || responses?.quizQuestions,
-      activityType: activityType || responses?.activityType || 'general',
-      activityData: actualActivityData
-    })
+    // Only validate if there's actual content to validate (skip for empty submissions)
+    const hasContent = !!(responses || reflection || actionItems || evidence || quizAnswers || actualActivityData)
+    
+    let validation = null
+    if (hasContent) {
+      validation = validateLessonResponse({
+        responses: responses || {},
+        reflection: reflection || responses?.reflection,
+        actionItems: actionItems || responses?.actionItems,
+        evidence: evidence || responses?.evidence || responses?.uploadedFiles,
+        quizAnswers: quizAnswers || responses?.quizAnswers,
+        quizQuestions: quizQuestions || responses?.quizQuestions,
+        activityType: activityType || responses?.activityType || 'general',
+        activityData: actualActivityData
+      })
 
-    if (!validation.isValid) {
-      console.warn('❌ Quality control failed:', validation.errors)
-      return ApiResponse.badRequest(
-        getQualityControlMessage(validation),
-        'QUALITY_CONTROL_FAILED',
-        {
-          validation: {
-            errors: validation.errors,
-            warnings: validation.warnings,
-            score: validation.score,
-            minimumRequired: 70
-          }
-        }
-      )
+      if (!validation.isValid) {
+        console.warn('❌ Quality control failed:', validation.errors)
+        // ✅ GAMIFICATION: Still award XP even if validation fails (but log it)
+        // This ensures users get XP for attempting lessons, even if quality is low
+        console.warn('⚠️ Quality control failed but continuing with lesson completion (XP will still be awarded)')
+        // Don't return early - continue with lesson completion
+      } else {
+        console.log('✅ Quality control passed:', { score: validation.score })
+      }
+    } else {
+      console.log('ℹ️ No content to validate, skipping quality control')
     }
-
-    console.log('✅ Quality control passed:', { score: validation.score })
 
     // Get enrollment using actual column names (user_id, module_id)
     const { data: enrollment, error: enrollmentError } = await supabase
@@ -339,6 +339,7 @@ export async function POST(req: NextRequest) {
     // ✅ GAMIFICATION: Award XP and check achievements (only for new completions)
     let xpResult = null
     let achievements: any[] = []
+    let xpError: any = null
     
     if (isNewCompletion) {
       try {
@@ -363,10 +364,24 @@ export async function POST(req: NextRequest) {
           tier_changed: xpResult.tier_changed,
           achievements_unlocked: achievements.length
         })
-      } catch (xpError: any) {
-        // Log but don't fail the request if XP award fails
-        console.error('⚠️ Error awarding XP (non-fatal):', xpError)
+      } catch (err: any) {
+        // Log error details for debugging
+        xpError = err
+        console.error('⚠️ Error awarding XP (non-fatal):', {
+          error: err.message,
+          stack: err.stack,
+          userId: user.id,
+          lessonId,
+          moduleId
+        })
+        
+        // Check if it's a database function error
+        if (err.message?.includes('award_xp') || err.message?.includes('function')) {
+          console.error('⚠️ Database function error - check if award_xp function exists and xp_rewards table has entries')
+        }
       }
+    } else {
+      console.log('ℹ️ Lesson already completed, skipping XP award')
     }
 
     // ✅ GAMIFICATION: Award XP for module completion (if module just completed)
