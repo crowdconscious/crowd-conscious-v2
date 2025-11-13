@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase-server'
 import Link from 'next/link'
 import { BookOpen, Award, Target, TrendingUp, Clock, CheckCircle } from 'lucide-react'
+import ActionCTA from '../components/ActionCTA'
 
 export default async function EmployeeDashboard() {
   const supabase = await createClient()
@@ -168,9 +169,40 @@ export default async function EmployeeDashboard() {
         </Link>
       </div>
 
+      {/* Action-Inviting CTA - Show when progress is low */}
+      {averageProgress < 50 && totalModules > 0 && (
+        <ActionCTA
+          title="¡Continúa tu Aprendizaje! 🚀"
+          description={`Estás al ${averageProgress}% de completar tus módulos. ¡Sigue adelante y gana más XP!`}
+          action="Continuar Aprendiendo"
+          href="/employee-portal/courses"
+          variant="primary"
+          icon="trending"
+          pulse={true}
+        />
+      )}
+
+      {/* Action CTA - Show when no modules */}
+      {totalModules === 0 && (
+        <ActionCTA
+          title="¡Comienza tu Viaje de Aprendizaje! 📚"
+          description="Explora nuestros módulos y comienza a ganar XP mientras aprendes sobre sostenibilidad."
+          action="Explorar Módulos"
+          href="/marketplace"
+          variant="success"
+          icon="sparkles"
+          pulse={true}
+        />
+      )}
+
       {/* Overall Progress - Mobile Optimized */}
-      <div className="bg-gradient-to-br from-teal-50 to-purple-50 rounded-xl border-2 border-teal-200 p-4 sm:p-6">
-        <div className="flex items-center justify-between mb-4">
+      <div className="bg-gradient-to-br from-teal-50 to-purple-50 rounded-xl border-2 border-teal-200 p-4 sm:p-6 relative overflow-hidden">
+        {/* Animated background */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500 rounded-full blur-2xl animate-pulse" />
+        </div>
+        
+        <div className="relative z-10 flex items-center justify-between mb-4">
           <div>
             <div className="text-xs sm:text-sm font-medium text-slate-600">Progreso General</div>
             <div className="text-2xl sm:text-3xl font-bold text-teal-900">{averageProgress}%</div>

@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { BookOpen, Award, TrendingUp, Home, LogOut, FileText } from 'lucide-react'
 import SignOutButton from '@/components/SignOutButton'
+import MobileSidebar from './components/MobileSidebar'
 
 export default async function EmployeeLayout({
   children,
@@ -59,15 +60,20 @@ export default async function EmployeeLayout({
 
   return (
     <div className="min-h-screen bg-slate-50">
+      {/* Mobile Sidebar Component */}
+      <MobileSidebar isGraduated={isGraduated} corporateAccount={corporateAccount} />
+
       {/* Top Navigation */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
-            <Link href="/employee-portal/dashboard" className="flex items-center gap-3">
+            {/* Mobile: Add spacing for hamburger button */}
+            <div className="md:hidden w-12" />
+            <Link href="/employee-portal/dashboard" className="flex items-center gap-3 flex-1 md:flex-none justify-center md:justify-start">
               <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-purple-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold">CC</span>
               </div>
-              <div>
+              <div className="hidden sm:block">
                 <div className="font-bold text-slate-900">
                   Concientizaciones
                 </div>
@@ -75,15 +81,16 @@ export default async function EmployeeLayout({
               </div>
             </Link>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               <Link
                 href="/dashboard"
-                className="text-sm bg-gradient-to-r from-teal-600 to-purple-600 text-white px-4 py-2 rounded-lg hover:scale-105 transition-transform font-medium"
+                className="text-xs sm:text-sm bg-gradient-to-r from-teal-600 to-purple-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:scale-105 transition-transform font-medium whitespace-nowrap"
                 title={isGraduated ? "Accede a la comunidad principal" : "Explora la plataforma comunitaria"}
               >
-                {isGraduated ? '🎓 Ir a Comunidad' : '🌍 Ver Comunidad'}
+                <span className="hidden sm:inline">{isGraduated ? '🎓 Ir a Comunidad' : '🌍 Ver Comunidad'}</span>
+                <span className="sm:hidden">{isGraduated ? '🎓' : '🌍'}</span>
               </Link>
-              <div className="text-sm text-slate-600">
+              <div className="hidden md:block text-sm text-slate-600">
                 {profile?.full_name || profile?.email}
               </div>
               <SignOutButton 
@@ -98,8 +105,8 @@ export default async function EmployeeLayout({
 
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="flex gap-6">
-          {/* Sidebar Navigation */}
-          <aside className="w-64 flex-shrink-0">
+          {/* Sidebar Navigation - Hidden on mobile */}
+          <aside className="hidden md:block w-64 flex-shrink-0">
             <nav className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
               <div className="space-y-1">
                 {navigation.map((item) => {
@@ -147,8 +154,8 @@ export default async function EmployeeLayout({
             )}
           </aside>
 
-          {/* Main Content */}
-          <main className="flex-1">
+          {/* Main Content - Full width on mobile */}
+          <main className="flex-1 w-full md:w-auto">
             {children}
           </main>
         </div>
