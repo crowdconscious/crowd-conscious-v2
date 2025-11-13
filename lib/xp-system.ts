@@ -30,15 +30,25 @@ export async function awardXP(
   const supabase = await createClient()
   
   // Call the database function to award XP
+  // ✅ FIX: Explicitly cast types to match function signature (UUID, VARCHAR, UUID, TEXT)
   const { data, error } = await supabase.rpc('award_xp', {
-    p_user_id: userId,
-    p_action_type: actionType,
-    p_action_id: actionId || null,
-    p_description: description || null
+    p_user_id: userId as any, // UUID
+    p_action_type: actionType as any, // VARCHAR(50)
+    p_action_id: (actionId || null) as any, // UUID or NULL
+    p_description: (description || null) as any // TEXT or NULL
   })
 
   if (error) {
-    console.error('Error awarding XP:', error)
+    console.error('Error awarding XP:', {
+      error: error.message,
+      code: error.code,
+      details: error.details,
+      hint: error.hint,
+      userId,
+      actionType,
+      actionId,
+      description
+    })
     throw error
   }
 

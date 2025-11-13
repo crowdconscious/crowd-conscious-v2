@@ -113,6 +113,14 @@ export async function POST(req: NextRequest) {
     let newPercentage = Math.round((currentCompleted / totalLessons) * 100)
     let moduleComplete = currentCompleted >= totalLessons
     
+    console.log('📊 Module completion check:', {
+      currentCompleted,
+      totalLessons,
+      moduleComplete,
+      isNewCompletion,
+      willAwardModuleXP: moduleComplete && isNewCompletion
+    })
+    
     // Only award XP if this is a new completion
     const currentXP = enrollment.xp_earned || 0
     const xpToAward = xpEarned || 50
@@ -318,6 +326,7 @@ export async function POST(req: NextRequest) {
           moduleComplete = finalModuleComplete
           currentCompleted = finalCompletedCount
         }
+        
       }
     } catch (responseStoreError: any) {
       console.error('❌ CRITICAL: Exception storing responses:', responseStoreError)
@@ -385,8 +394,18 @@ export async function POST(req: NextRequest) {
     }
 
     // ✅ GAMIFICATION: Award XP for module completion (if module just completed)
+    // Use moduleComplete which is updated after recalculation
     let moduleXPResult = null
     let moduleAchievements: any[] = []
+    let moduleXPError: any = null
+    
+    console.log('🎯 Checking module completion for XP:', {
+      moduleComplete,
+      isNewCompletion,
+      currentCompleted,
+      totalLessons,
+      willAward: moduleComplete && isNewCompletion
+    })
     
     if (moduleComplete && isNewCompletion) {
       try {
@@ -411,10 +430,30 @@ export async function POST(req: NextRequest) {
           tier_changed: moduleXPResult.tier_changed,
           achievements_unlocked: moduleAchievements.length
         })
-      } catch (moduleXPError: any) {
-        // Log but don't fail the request if XP award fails
-        console.error('⚠️ Error awarding module completion XP (non-fatal):', moduleXPError)
+      } catch (err: any) {
+        // Log error details for debugging
+        moduleXPError = err
+        console.error('⚠️ Error awarding module completion XP (non-fatal):', {
+          error: err.message,
+          stack: err.stack,
+          userId: user.id,
+          moduleId,
+          currentCompleted,
+          totalLessons,
+          moduleComplete
+        })
+        
+        // Check if it's a database function error
+        if (err.message?.includes('award_xp') || err.message?.includes('function')) {
+          console.error('⚠️ Database function error - check if award_xp function exists and xp_rewards table has entries')
+        }
       }
+    } else {
+      console.log('ℹ️ Module completion XP not awarded:', {
+        moduleComplete,
+        isNewCompletion,
+        reason: !moduleComplete ? 'Module not complete' : 'Not a new completion'
+      })
     }
 
     return ApiResponse.ok({
@@ -457,7 +496,10 @@ export async function POST(req: NextRequest) {
             description: a.description,
             icon: a.icon
           }))
-        })
+        }),
+        // ✅ Include XP errors for debugging (if any)
+        ...(xpError && { xp_error: xpError.message }),
+        ...(moduleXPError && { module_xp_error: moduleXPError.message })
       }
     })
 

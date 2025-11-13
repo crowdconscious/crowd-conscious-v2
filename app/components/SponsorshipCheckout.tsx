@@ -190,6 +190,13 @@ export default function SponsorshipCheckout({
     setError(null)
 
     try {
+      // ✅ VALIDATION: Minimum sponsorship amount (100 pesos)
+      if (formData.support_type === 'financial' && formData.amount < 100) {
+        setError('El monto mínimo de patrocinio es 100 pesos MXN')
+        setLoading(false)
+        return
+      }
+
       // Get current user
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
@@ -246,6 +253,30 @@ export default function SponsorshipCheckout({
 
       if (sponsorError) throw sponsorError
       if (!sponsorship) throw new Error('Failed to create sponsorship')
+
+      // ✅ GAMIFICATION: Award XP for non-financial sponsorships immediately
+      // (Financial sponsorships get XP via webhook after payment)
+      if (formData.support_type !== 'financial' && (sponsorship as any)?.id) {
+        try {
+          const xpResponse = await fetch('/api/gamification/xp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action_type: 'sponsor_need',
+              action_id: (sponsorship as any).id,
+              description: `Sponsored: ${contentTitle} (${formData.support_type})`
+            })
+          })
+          
+          if (xpResponse.ok) {
+            const xpData = await xpResponse.json()
+            console.log('✅ XP awarded for non-financial sponsorship:', xpData)
+          }
+        } catch (xpError) {
+          // Log but don't fail sponsorship creation
+          console.error('⚠️ Error awarding XP for non-financial sponsorship (non-fatal):', xpError)
+        }
+      }
 
       // Send confirmation email
       try {
