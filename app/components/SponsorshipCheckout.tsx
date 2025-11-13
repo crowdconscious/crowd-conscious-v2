@@ -219,7 +219,8 @@ export default function SponsorshipCheckout({
       const sponsorshipData: any = {
         content_id: contentId,
         sponsor_id: user.id,
-        amount: formData.support_type === 'financial' ? formData.amount : 0, // 0 for non-financial support
+        // ✅ FIX: For non-financial sponsorships, set amount to 0 (allowed by constraint)
+        amount: formData.support_type === 'financial' ? formData.amount : 0,
         status: 'approved', // Changed from 'pending' to 'approved' for direct support
         sponsor_type: formData.sponsor_type,
         support_type: formData.support_type, // NEW: Track support type
