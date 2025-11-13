@@ -25,7 +25,7 @@ export const XPBadge = memo(function XPBadge({
   className = '',
   animated = true
 }: XPBadgeProps) {
-  const { xp, tier, isLoading } = useUserTier()
+  const { xp, tier, progress, isLoading } = useUserTier()
   const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
   const isMobile = useMediaQuery('(max-width: 768px)')
 
@@ -95,17 +95,17 @@ export const XPBadge = memo(function XPBadge({
         </div>
         <TrendingUp className="w-5 h-5 opacity-80" />
       </div>
-      {tier.progress && tier.progress.xpNeeded > 0 && (
+      {progress && progress.xpNeeded > 0 && (
         <div className="mt-2">
           <div className="flex justify-between text-xs opacity-90 mb-1">
             <span>Next tier</span>
-            <span>{tier.progress.xpNeeded} XP</span>
+            <span>{progress.xpNeeded} XP</span>
           </div>
           <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
             <motion.div
               className="h-full bg-white rounded-full"
               initial={{ width: 0 }}
-              animate={{ width: `${tier.progress.progress}%` }}
+              animate={{ width: `${progress.progress}%` }}
               transition={{ duration: 0.5, ease: 'easeOut' }}
             />
           </div>
