@@ -29,14 +29,22 @@ export default function ForgotPasswordPage() {
       const data = await response.json()
 
       if (!response.ok) {
-        console.error('❌ Password reset error:', data.error)
+        console.error('❌ Password reset error:', {
+          status: response.status,
+          error: data.error,
+          data: data
+        })
         
         // Provide more helpful error messages
         let errorMessage = data.error || 'Failed to send reset email'
-        if (data.error?.includes('timeout') || data.error?.includes('504')) {
-          errorMessage = 'Request timed out. Please check your internet connection and try again. If the problem persists, verify that the redirect URL is configured in Supabase Authentication settings.'
-        } else if (data.error?.includes('email')) {
-          errorMessage = 'Unable to send reset email. Please verify your email address and try again.'
+        
+        if (response.status === 400) {
+          // Keep the error message from the server
+          errorMessage = data.error || 'Invalid request. Please check your email address.'
+        } else if (response.status === 500) {
+          errorMessage = 'Server error. Please try again in a few moments.'
+        } else if (data.error?.includes('timeout') || data.error?.includes('504')) {
+          errorMessage = 'Request timed out. Please check your internet connection and try again.'
         }
         
         setMessage(errorMessage)
