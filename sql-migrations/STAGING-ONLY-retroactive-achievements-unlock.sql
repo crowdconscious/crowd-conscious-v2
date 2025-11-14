@@ -29,18 +29,19 @@ BEGIN
   LOOP
     v_achievements_unlocked := 0;
 
-    -- Count completed modules (course_enrollments with completed_at not null)
-    SELECT COUNT(DISTINCT ce.course_id) INTO v_modules_completed
+    -- Count completed modules (course_enrollments with status='completed')
+    SELECT COUNT(DISTINCT ce.module_id) INTO v_modules_completed
     FROM public.course_enrollments ce
-    WHERE ce.user_id = v_user.id
-      AND ce.completed_at IS NOT NULL;
+    WHERE ce.employee_id = v_user.id
+      AND ce.status = 'completed';
 
-    -- Count completed lessons (from lesson_responses JSONB array)
+    -- Count completed lessons (use completion_percentage as proxy - 100% = all lessons completed)
+    -- For now, we'll estimate: if module is completed, count it as lessons completed
+    -- This is a simplified approach since we don't have individual lesson tracking
     SELECT COUNT(*) INTO v_lessons_completed
     FROM public.course_enrollments ce
-    CROSS JOIN LATERAL jsonb_array_elements(ce.lesson_responses) AS lesson
-    WHERE ce.user_id = v_user.id
-      AND lesson->>'completed' = 'true';
+    WHERE ce.employee_id = v_user.id
+      AND ce.status = 'completed';
 
     -- Count votes cast
     SELECT COUNT(*) INTO v_votes_cast

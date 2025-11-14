@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useUserAchievements, useUserTier } from '@/hooks/useUserTier'
-import { Trophy, Lock, CheckCircle, Sparkles, Target, Award } from 'lucide-react'
+import { Trophy, Lock, CheckCircle, Sparkles, Target, Award, TrendingUp } from 'lucide-react'
 import { AnimatedCard } from '@/components/ui/UIComponents'
 import { XPBadge } from '@/components/gamification/XPBadge'
 
@@ -152,6 +152,25 @@ export default function AchievementsClient({ user }: AchievementsClientProps) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [isCheckingAchievements, setIsCheckingAchievements] = useState(false)
   const [achievementsUnlocked, setAchievementsUnlocked] = useState<number | null>(null)
+  const [userStats, setUserStats] = useState<any>(null)
+
+  // Fetch user stats for progress tracking
+  useEffect(() => {
+    const fetchUserStats = async () => {
+      try {
+        const response = await fetch('/api/user-stats')
+        if (response.ok) {
+          const result = await response.json()
+          if (result.success) {
+            setUserStats(result.data)
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching user stats:', error)
+      }
+    }
+    fetchUserStats()
+  }, [])
 
   // Automatically check and unlock retroactive achievements on mount
   useEffect(() => {
