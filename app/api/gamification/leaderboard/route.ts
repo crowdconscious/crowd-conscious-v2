@@ -42,6 +42,11 @@ export async function GET(request: NextRequest) {
     }
 
     const { data: leaderboardData, error: leaderboardError } = await leaderboardQuery
+    
+    // Log errors for debugging
+    if (leaderboardError) {
+      console.error('Leaderboard view error:', leaderboardError)
+    }
 
     // If view doesn't exist or fails, try user_xp table
     let leaderboard: any[] = []
@@ -63,12 +68,16 @@ export async function GET(request: NextRequest) {
 
       const { data: xpData, error: xpError } = await xpQuery
 
+      if (xpError) {
+        console.error('User XP query error:', xpError)
+      }
+
       if (!xpError && xpData && xpData.length > 0) {
         leaderboard = xpData.map((entry: any) => ({
           user_id: entry.user_id,
-          total_xp: entry.total_xp,
-          tier: entry.tier,
-          full_name: entry.profiles?.full_name,
+          total_xp: entry.total_xp || 0,
+          tier: entry.tier || 1,
+          full_name: entry.profiles?.full_name || 'Anonymous User',
           email: entry.profiles?.email,
           avatar_url: entry.profiles?.avatar_url
         }))
@@ -86,15 +95,20 @@ export async function GET(request: NextRequest) {
 
         const { data: statsData, error: statsError } = await statsQuery
         
-        if (!statsError && statsData) {
+        if (statsError) {
+          console.error('User stats query error:', statsError)
+        }
+        
+        if (!statsError && statsData && statsData.length > 0) {
           // Calculate tier from XP for user_stats
           leaderboard = statsData
-            .filter((stat: any) => stat.total_xp > 0) // Only show users with XP
+            .filter((stat: any) => (stat.total_xp || 0) > 0) // Only show users with XP
             .map((stat: any) => {
-              const calculatedTier = stat.total_xp >= 7501 ? 5 : 
-                                    stat.total_xp >= 3501 ? 4 : 
-                                    stat.total_xp >= 1501 ? 3 : 
-                                    stat.total_xp >= 501 ? 2 : 1
+              const totalXP = stat.total_xp || 0
+              const calculatedTier = totalXP >= 7501 ? 5 : 
+                                    totalXP >= 3501 ? 4 : 
+                                    totalXP >= 1501 ? 3 : 
+                                    totalXP >= 501 ? 2 : 1
               
               // Apply tier filter if specified
               if (tierFilter && calculatedTier !== tierFilter) {
@@ -103,14 +117,16 @@ export async function GET(request: NextRequest) {
               
               return {
                 user_id: stat.user_id,
-                total_xp: stat.total_xp,
+                total_xp: totalXP,
                 tier: calculatedTier,
-                full_name: stat.profiles?.full_name,
+                full_name: stat.profiles?.full_name || 'Anonymous User',
                 email: stat.profiles?.email,
                 avatar_url: stat.profiles?.avatar_url
               }
             })
             .filter((entry: any) => entry !== null) // Remove filtered entries
+        } else {
+          console.log('No leaderboard data found in user_xp or user_stats')
         }
       }
     } else {
@@ -135,7 +151,7 @@ export async function GET(request: NextRequest) {
     let userRank = null
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
-      // Get user's XP and calculate rank
+      // Get user's XP from user_xp or user_stats
       const { data: userXP } = await supabase
         .from('user_xp')
         .select('total_xp, current_tier')
@@ -145,9 +161,9 @@ export async function GET(request: NextRequest) {
       let userTotalXP = 0
       let userTier = 1
       
-      if (userXP) {
-        userTotalXP = userXP.total_xp
-        userTier = userXP.current_tier
+      if (userXP && userXP.total_xp) {
+        userTotalXP = userXP.total_xp || 0
+        userTier = userXP.current_tier || 1
       } else {
         // Fall back to user_stats
         const { data: userStats } = await supabase
@@ -156,8 +172,8 @@ export async function GET(request: NextRequest) {
           .eq('user_id', user.id)
           .single()
         
-        if (userStats) {
-          userTotalXP = userStats.total_xp
+        if (userStats && userStats.total_xp) {
+          userTotalXP = userStats.total_xp || 0
           userTier = userTotalXP >= 7501 ? 5 : 
                     userTotalXP >= 3501 ? 4 : 
                     userTotalXP >= 1501 ? 3 : 
@@ -165,14 +181,34 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      // Calculate rank by counting users with more XP
-      const { count: rankCount } = await supabase
-        .from('user_xp')
-        .select('*', { count: 'exact', head: true })
-        .gt('total_xp', userTotalXP)
+      // Calculate rank by counting users with more XP from leaderboard
+      // Use the same data source as the leaderboard
+      let rankCount = 0
+      if (leaderboard.length > 0) {
+        // Count users in leaderboard with more XP
+        rankCount = leaderboard.filter((entry: any) => entry.total_xp > userTotalXP).length
+      } else {
+        // Fallback: count from database
+        const { count: dbRankCount } = await supabase
+          .from('user_xp')
+          .select('*', { count: 'exact', head: true })
+          .gt('total_xp', userTotalXP)
+        
+        rankCount = dbRankCount || 0
+        
+        // Also check user_stats if user_xp is empty
+        if (rankCount === 0) {
+          const { count: statsRankCount } = await supabase
+            .from('user_stats')
+            .select('*', { count: 'exact', head: true })
+            .gt('total_xp', userTotalXP)
+          
+          rankCount = statsRankCount || 0
+        }
+      }
 
       userRank = {
-        rank: (rankCount || 0) + 1,
+        rank: rankCount + 1,
         total_xp: userTotalXP,
         tier: userTier
       }
