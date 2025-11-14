@@ -22,21 +22,21 @@ export async function POST(request: NextRequest) {
     // Count user's actual actions
     const userId = user.id
 
-    // Count completed modules (using employee_id and status='completed')
+    // Count completed modules (using user_id and completed=true)
     const { count: modulesCompleted } = await supabase
       .from('course_enrollments')
       .select('*', { count: 'exact', head: true })
-      .eq('employee_id', userId)
-      .eq('status', 'completed')
+      .eq('user_id', userId)
+      .eq('completed', true)
 
     // Count completed lessons - use completion_percentage as proxy
-    // If module is completed (status='completed'), count it as lessons completed
+    // If module is completed (completed=true), count it as lessons completed
     // This is simplified since we don't have individual lesson tracking
     const { count: lessonsCompleted } = await supabase
       .from('course_enrollments')
       .select('*', { count: 'exact', head: true })
-      .eq('employee_id', userId)
-      .eq('status', 'completed')
+      .eq('user_id', userId)
+      .eq('completed', true)
 
     // Count votes
     const { count: votesCast } = await supabase

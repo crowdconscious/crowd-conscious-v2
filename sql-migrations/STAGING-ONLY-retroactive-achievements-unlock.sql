@@ -29,19 +29,19 @@ BEGIN
   LOOP
     v_achievements_unlocked := 0;
 
-    -- Count completed modules (course_enrollments with status='completed')
+    -- Count completed modules (course_enrollments with completed=true)
     SELECT COUNT(DISTINCT ce.module_id) INTO v_modules_completed
     FROM public.course_enrollments ce
-    WHERE ce.employee_id = v_user.id
-      AND ce.status = 'completed';
+    WHERE ce.user_id = v_user.id
+      AND ce.completed = true;
 
     -- Count completed lessons (use completion_percentage as proxy - 100% = all lessons completed)
     -- For now, we'll estimate: if module is completed, count it as lessons completed
     -- This is a simplified approach since we don't have individual lesson tracking
     SELECT COUNT(*) INTO v_lessons_completed
     FROM public.course_enrollments ce
-    WHERE ce.employee_id = v_user.id
-      AND ce.status = 'completed';
+    WHERE ce.user_id = v_user.id
+      AND ce.completed = true;
 
     -- Count votes cast
     SELECT COUNT(*) INTO v_votes_cast
