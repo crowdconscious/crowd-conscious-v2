@@ -5,11 +5,20 @@
 -- which doesn't properly handle INSERT operations. PostgreSQL RLS requires 
 -- "WITH CHECK" for INSERT operations, not just "USING".
 
--- Drop all existing policies to recreate them properly
-DROP POLICY IF EXISTS "Users can view own settings" ON user_settings;
-DROP POLICY IF EXISTS "Users can update own settings" ON user_settings;
-DROP POLICY IF EXISTS "Users can insert own settings" ON user_settings;
-DROP POLICY IF EXISTS "Users can delete own settings" ON user_settings;
+-- Drop ALL existing policies on user_settings to avoid conflicts
+-- Using a DO block to drop all policies dynamically
+DO $$
+DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN 
+        SELECT policyname 
+        FROM pg_policies 
+        WHERE tablename = 'user_settings' AND schemaname = 'public'
+    LOOP
+        EXECUTE format('DROP POLICY IF EXISTS %I ON user_settings', r.policyname);
+    END LOOP;
+END $$;
 
 -- Create separate policies for better control
 -- SELECT policy: Users can view their own settings
