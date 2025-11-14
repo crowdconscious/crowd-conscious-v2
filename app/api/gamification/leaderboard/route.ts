@@ -29,62 +29,99 @@ export async function GET(request: NextRequest) {
       return ApiResponse.badRequest('Tier must be between 1 and 5', 'INVALID_TIER')
     }
 
-    // Get leaderboard from user_xp table (preferred) or user_stats table
+    // Try to use leaderboard_view first (combines user_xp and user_stats)
     let leaderboardQuery = supabase
-      .from('user_xp')
-      .select(`
-        user_id,
-        total_xp,
-        current_tier as tier,
-        profiles!inner(full_name, email, avatar_url)
-      `)
+      .from('leaderboard_view')
+      .select('*')
       .order('total_xp', { ascending: false })
       .range(offset, offset + limit - 1)
 
     // Apply tier filter if specified
     if (tierFilter) {
-      leaderboardQuery = leaderboardQuery.eq('current_tier', tierFilter)
+      leaderboardQuery = leaderboardQuery.eq('tier', tierFilter)
     }
 
     const { data: leaderboardData, error: leaderboardError } = await leaderboardQuery
 
-    // If user_xp table doesn't have data, fall back to user_stats
+    // If view doesn't exist or fails, try user_xp table
     let leaderboard: any[] = []
     if (leaderboardError || !leaderboardData || leaderboardData.length === 0) {
-      let statsQuery = supabase
-        .from('user_stats')
+      let xpQuery = supabase
+        .from('user_xp')
         .select(`
           user_id,
           total_xp,
+          current_tier as tier,
           profiles!inner(full_name, email, avatar_url)
         `)
         .order('total_xp', { ascending: false })
         .range(offset, offset + limit - 1)
 
-      const { data: statsData, error: statsError } = await statsQuery
-      
-      if (!statsError && statsData) {
-        // Calculate tier from XP for user_stats
-        leaderboard = statsData.map((stat: any) => ({
-          user_id: stat.user_id,
-          total_xp: stat.total_xp,
-          tier: stat.total_xp >= 7501 ? 5 : 
-                stat.total_xp >= 3501 ? 4 : 
-                stat.total_xp >= 1501 ? 3 : 
-                stat.total_xp >= 501 ? 2 : 1,
-          full_name: stat.profiles?.full_name,
-          email: stat.profiles?.email,
-          avatar_url: stat.profiles?.avatar_url
+      if (tierFilter) {
+        xpQuery = xpQuery.eq('current_tier', tierFilter)
+      }
+
+      const { data: xpData, error: xpError } = await xpQuery
+
+      if (!xpError && xpData && xpData.length > 0) {
+        leaderboard = xpData.map((entry: any) => ({
+          user_id: entry.user_id,
+          total_xp: entry.total_xp,
+          tier: entry.tier,
+          full_name: entry.profiles?.full_name,
+          email: entry.profiles?.email,
+          avatar_url: entry.profiles?.avatar_url
         }))
+      } else {
+        // Fall back to user_stats
+        let statsQuery = supabase
+          .from('user_stats')
+          .select(`
+            user_id,
+            total_xp,
+            profiles!inner(full_name, email, avatar_url)
+          `)
+          .order('total_xp', { ascending: false })
+          .range(offset, offset + limit - 1)
+
+        const { data: statsData, error: statsError } = await statsQuery
+        
+        if (!statsError && statsData) {
+          // Calculate tier from XP for user_stats
+          leaderboard = statsData
+            .filter((stat: any) => stat.total_xp > 0) // Only show users with XP
+            .map((stat: any) => {
+              const calculatedTier = stat.total_xp >= 7501 ? 5 : 
+                                    stat.total_xp >= 3501 ? 4 : 
+                                    stat.total_xp >= 1501 ? 3 : 
+                                    stat.total_xp >= 501 ? 2 : 1
+              
+              // Apply tier filter if specified
+              if (tierFilter && calculatedTier !== tierFilter) {
+                return null
+              }
+              
+              return {
+                user_id: stat.user_id,
+                total_xp: stat.total_xp,
+                tier: calculatedTier,
+                full_name: stat.profiles?.full_name,
+                email: stat.profiles?.email,
+                avatar_url: stat.profiles?.avatar_url
+              }
+            })
+            .filter((entry: any) => entry !== null) // Remove filtered entries
+        }
       }
     } else {
+      // Use leaderboard_view data
       leaderboard = leaderboardData.map((entry: any) => ({
         user_id: entry.user_id,
         total_xp: entry.total_xp,
         tier: entry.tier,
-        full_name: entry.profiles?.full_name,
-        email: entry.profiles?.email,
-        avatar_url: entry.profiles?.avatar_url
+        full_name: entry.full_name,
+        email: entry.email,
+        avatar_url: entry.avatar_url
       }))
     }
 

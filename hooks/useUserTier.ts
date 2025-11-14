@@ -167,7 +167,7 @@ export function useUserAchievements(userId?: string) {
     async function fetchAchievements() {
       try {
         setIsLoading(true)
-        const targetUserId = userId
+        let targetUserId = userId
         if (!targetUserId) {
           const { data: { user } } = await supabase.auth.getUser()
           if (!user) {
@@ -175,7 +175,7 @@ export function useUserAchievements(userId?: string) {
             setIsLoading(false)
             return
           }
-          const targetUserId = user.id
+          targetUserId = user.id
         }
 
         const response = await fetch(`/api/gamification/achievements?user_id=${targetUserId}`)

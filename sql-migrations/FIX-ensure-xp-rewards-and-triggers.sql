@@ -46,9 +46,9 @@ BEGIN
       updated_at = NOW()
   WHERE user_id = NEW.created_by;
   
-  -- Update streak and check achievements
+  -- Update streak and check achievements (pass action_type for content creation)
   PERFORM public.update_user_streak(NEW.created_by);
-  PERFORM public.check_achievements(NEW.created_by);
+  PERFORM public.check_achievements(NEW.created_by, 'create_content', NEW.id);
   
   RETURN NEW;
 EXCEPTION
@@ -84,9 +84,9 @@ BEGIN
       updated_at = NOW()
   WHERE user_id = NEW.user_id;
   
-  -- Update streak and check achievements
+  -- Update streak and check achievements (pass action_type for voting)
   PERFORM public.update_user_streak(NEW.user_id);
-  PERFORM public.check_achievements(NEW.user_id);
+  PERFORM public.check_achievements(NEW.user_id, 'vote_content', NEW.content_id);
   
   RETURN NEW;
 EXCEPTION
@@ -121,9 +121,9 @@ BEGIN
       updated_at = NOW()
   WHERE user_id = NEW.user_id;
   
-  -- Update streak and check achievements
+  -- Update streak and check achievements (pass action_type for voting)
   PERFORM public.update_user_streak(NEW.user_id);
-  PERFORM public.check_achievements(NEW.user_id);
+  PERFORM public.check_achievements(NEW.user_id, 'vote_content', NEW.content_id);
   
   RETURN NEW;
 EXCEPTION
@@ -189,9 +189,9 @@ BEGIN
       updated_at = NOW()
   WHERE user_id = NEW.user_id;
   
-  -- Update streak and check achievements
+  -- Update streak and check achievements (pass action_type for voting)
   PERFORM public.update_user_streak(NEW.user_id);
-  PERFORM public.check_achievements(NEW.user_id);
+  PERFORM public.check_achievements(NEW.user_id, 'vote_content', NEW.content_id);
   
   RETURN NEW;
 EXCEPTION
@@ -250,9 +250,9 @@ BEGIN
     'RSVP to event'
   );
   
-  -- Update streak and check achievements
+  -- Update streak and check achievements (pass action_type for voting)
   PERFORM public.update_user_streak(NEW.user_id);
-  PERFORM public.check_achievements(NEW.user_id);
+  PERFORM public.check_achievements(NEW.user_id, 'vote_content', NEW.content_id);
   
   RETURN NEW;
 EXCEPTION
