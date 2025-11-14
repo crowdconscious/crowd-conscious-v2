@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
         name: 'Getting Started',
         description: 'Complete your first lesson',
         icon: '📚',
-        condition: lessonsCompleted >= 1
+        condition: (lessonsCompleted || 0) >= 1
       },
       {
         type: 'FIRST_MODULE_COMPLETED',
