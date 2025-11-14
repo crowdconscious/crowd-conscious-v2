@@ -62,12 +62,13 @@ export async function GET(request: NextRequest) {
       console.log('Falling back to user_stats/user_xp queries')
       
       // Try user_stats FIRST since it has the actual XP data (8 users with XP)
+      // Use LEFT JOIN (profiles) instead of INNER JOIN (!inner) to include users without profiles
       let statsQuery = supabase
         .from('user_stats')
         .select(`
           user_id,
           total_xp,
-          profiles!inner(full_name, email, avatar_url)
+          profiles(full_name, email, avatar_url)
         `)
         .order('total_xp', { ascending: false })
         .range(offset, offset + limit - 1)
