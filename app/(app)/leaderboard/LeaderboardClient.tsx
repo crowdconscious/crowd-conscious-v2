@@ -55,6 +55,14 @@ export default function LeaderboardClient({ user }: LeaderboardClientProps) {
       if (result.success) {
         setLeaderboard(result.data.leaderboard || [])
         setUserRank(result.data.user_rank || null)
+        
+        // Log for debugging
+        console.log('Leaderboard data:', {
+          leaderboardCount: result.data.leaderboard?.length || 0,
+          userRank: result.data.user_rank
+        })
+      } else {
+        console.error('Leaderboard API error:', result.error)
       }
     } catch (error) {
       console.error('Error fetching leaderboard:', error)
