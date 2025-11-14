@@ -150,6 +150,37 @@ export default function AchievementsClient({ user }: AchievementsClientProps) {
   const { achievements, isLoading } = useUserAchievements()
   const { tier, xp } = useUserTier()
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [isCheckingAchievements, setIsCheckingAchievements] = useState(false)
+  const [achievementsUnlocked, setAchievementsUnlocked] = useState<number | null>(null)
+
+  // Automatically check and unlock retroactive achievements on mount
+  useEffect(() => {
+    const checkRetroactiveAchievements = async () => {
+      setIsCheckingAchievements(true)
+      try {
+        const response = await fetch('/api/gamification/retroactive-achievements', {
+          method: 'POST'
+        })
+        const result = await response.json()
+        if (result.success && result.data.achievements_unlocked > 0) {
+          setAchievementsUnlocked(result.data.achievements_unlocked)
+          // Refetch achievements after a short delay
+          setTimeout(() => {
+            window.location.reload()
+          }, 1500)
+        }
+      } catch (error) {
+        console.error('Error checking retroactive achievements:', error)
+      } finally {
+        setIsCheckingAchievements(false)
+      }
+    }
+
+    // Only check if we have achievements loaded (to avoid double-checking)
+    if (!isLoading && achievements) {
+      checkRetroactiveAchievements()
+    }
+  }, [isLoading, achievements])
 
   const unlockedAchievements = achievements || []
   const unlockedTypes = new Set(unlockedAchievements.map((a: Achievement) => a.achievement_type))
@@ -180,6 +211,27 @@ export default function AchievementsClient({ user }: AchievementsClientProps) {
 
   return (
     <div className="space-y-8">
+      {/* Success Message */}
+      {achievementsUnlocked !== null && achievementsUnlocked > 0 && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-3">
+          <CheckCircle className="w-5 h-5 text-green-600" />
+          <div>
+            <p className="text-green-800 font-medium">
+              🎉 Unlocked {achievementsUnlocked} achievement{achievementsUnlocked !== 1 ? 's' : ''}!
+            </p>
+            <p className="text-green-600 text-sm">Your achievements have been updated based on your past actions.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Checking Achievements Indicator */}
+      {isCheckingAchievements && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center gap-3">
+          <Sparkles className="w-5 h-5 text-blue-600 animate-spin" />
+          <p className="text-blue-800">Checking your past actions and unlocking achievements...</p>
+        </div>
+      )}
+
       {/* Header */}
       <div className="tier-themed-gradient text-white rounded-xl p-8 relative overflow-hidden shadow-xl">
         <div className="absolute inset-0 bg-black/10" />
