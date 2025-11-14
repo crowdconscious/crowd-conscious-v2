@@ -9,6 +9,10 @@ import {
   CommunityLeaderboard, 
   WeeklyChallenge 
 } from '@/components/GamificationSystem'
+import { TierProgressionCard } from '@/components/gamification/TierProgressionCard'
+import { XPWaysToEarn } from '@/components/gamification/XPWaysToEarn'
+import { useUserTier } from '@/hooks/useUserTier'
+import { getTierByXP } from '@/lib/tier-config'
 import { 
   AnimatedCard, 
   AnimatedButton, 
@@ -63,6 +67,7 @@ export default function DashboardClient({
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([])
   const [quickActions, setQuickActions] = useState<QuickAction[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const { xp, tier } = useUserTier()
 
   const fetchDashboardData = async () => {
     setIsLoading(true)
@@ -268,43 +273,81 @@ export default function DashboardClient({
       )}
 
       {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-teal-600 via-teal-700 to-purple-700 text-white rounded-xl p-8 relative overflow-hidden">
+      <div 
+        className={`bg-gradient-to-r ${xp && tier ? `from-[${tier.colors.primary}] to-[${tier.colors.secondary}]` : 'from-teal-600 via-teal-700 to-purple-700'} text-white rounded-xl p-8 relative overflow-hidden`}
+        style={xp && tier ? {
+          background: `linear-gradient(135deg, ${tier.colors.primary} 0%, ${tier.colors.secondary} 100%)`
+        } : undefined}
+      >
         <div className="absolute inset-0 bg-black/10" />
         <div className="relative z-10">
-          <h1 className="text-3xl md:text-4xl font-bold mb-2">
-            {getTimeOfDayMessage()}, {user.full_name || user.email?.split('@')[0] || 'Changemaker'}! 👋
-          </h1>
-          <p className="text-teal-100 text-lg mb-6">
-            Ready to make an impact in your community today?
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold mb-2">
+                {getTimeOfDayMessage()}, {user.full_name || user.email?.split('@')[0] || 'Changemaker'}! 👋
+              </h1>
+              {xp && tier && (
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="text-2xl">{tier.icon}</span>
+                  <span className="text-xl font-semibold">{tier.name}</span>
+                  <span className="text-white/80 text-sm">• {xp.total_xp.toLocaleString()} XP</span>
+                </div>
+              )}
+            </div>
+            {xp && tier && (
+              <div className="text-right">
+                <div className="text-sm text-white/80 mb-1">Current Tier</div>
+                <div className="text-3xl">{tier.icon}</div>
+              </div>
+            )}
+          </div>
+          <p className="text-white/90 text-lg mb-6">
+            {xp && tier ? (
+              <>
+                {tier.id === 1 && "Start your journey! Complete lessons and engage with your community to level up."}
+                {tier.id === 2 && "Great progress! Keep contributing to unlock exclusive features and themes."}
+                {tier.id === 3 && "You're making a real impact! Continue your journey to unlock premium perks."}
+                {tier.id === 4 && "Outstanding work! You're among the top contributors. Keep pushing forward!"}
+                {tier.id === 5 && "Legendary status achieved! You've unlocked everything. Keep inspiring others!"}
+              </>
+            ) : (
+              "Ready to make an impact in your community today?"
+            )}
           </p>
 
           {userStats && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 text-center">
                 <div className="text-2xl font-bold">{userStats.level}</div>
-                <div className="text-teal-100 text-sm">Level</div>
+                <div className="text-white/90 text-sm">Level</div>
               </div>
               <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 text-center">
                 <div className="text-2xl font-bold">{userStats.total_xp.toLocaleString()}</div>
-                <div className="text-teal-100 text-sm">Total XP</div>
+                <div className="text-white/90 text-sm">Total XP</div>
               </div>
               <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 text-center">
                 <div className="text-2xl font-bold">{userStats.current_streak}</div>
-                <div className="text-teal-100 text-sm">Day Streak</div>
+                <div className="text-white/90 text-sm">Day Streak</div>
               </div>
               <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 text-center">
                 <div className="text-2xl font-bold">{userStats.achievements_unlocked.length}</div>
-                <div className="text-teal-100 text-sm">Achievements</div>
+                <div className="text-white/90 text-sm">Achievements</div>
               </div>
             </div>
           )}
         </div>
       </div>
 
+      {/* Tier Progression Card - Enhanced Gamification Info */}
+      <TierProgressionCard />
+
       {/* XP Progress Bar */}
       {userStats && (
         <XPProgressBar userStats={userStats} />
       )}
+
+      {/* Ways to Earn XP */}
+      <XPWaysToEarn />
 
       {/* Weekly Challenge */}
       <WeeklyChallenge />
