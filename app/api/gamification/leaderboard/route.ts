@@ -78,12 +78,17 @@ export async function GET(request: NextRequest) {
       console.log('User stats query result:', {
         hasError: !!statsError,
         error: statsError,
+        errorCode: statsError?.code,
+        errorMessage: statsError?.message,
+        errorDetails: statsError?.details,
+        errorHint: statsError?.hint,
         dataLength: statsData?.length || 0,
-        firstEntry: statsData?.[0]
+        firstEntry: statsData?.[0],
+        allData: statsData
       })
       
       if (statsError) {
-        console.error('User stats query error:', statsError)
+        console.error('User stats query error:', JSON.stringify(statsError, null, 2))
       }
       
       if (!statsError && statsData && statsData.length > 0) {
