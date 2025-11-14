@@ -56,7 +56,7 @@ BEGIN
     -- Count content created
     SELECT COUNT(*) INTO v_content_created
     FROM public.community_content cc
-    WHERE cc.user_id = v_user.id;
+    WHERE cc.created_by = v_user.id;
 
     -- Get total XP and tier
     SELECT COALESCE(ux.total_xp, 0), COALESCE(ux.current_tier, 1)

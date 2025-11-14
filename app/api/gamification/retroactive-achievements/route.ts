@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     const { count: contentCreated } = await supabase
       .from('community_content')
       .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId)
+      .eq('created_by', userId)
 
     // Get current tier
     const { data: userXP } = await supabase
