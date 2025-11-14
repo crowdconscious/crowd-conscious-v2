@@ -44,6 +44,13 @@ export async function GET(request: NextRequest) {
     const { data: leaderboardData, error: leaderboardError } = await leaderboardQuery
     
     // Log errors for debugging
+    console.log('Leaderboard view query result:', {
+      hasError: !!leaderboardError,
+      error: leaderboardError,
+      dataLength: leaderboardData?.length || 0,
+      data: leaderboardData
+    })
+    
     if (leaderboardError) {
       console.error('Leaderboard view error:', leaderboardError)
     }
@@ -51,6 +58,7 @@ export async function GET(request: NextRequest) {
     // If view doesn't exist or fails, try user_xp table
     let leaderboard: any[] = []
     if (leaderboardError || !leaderboardData || leaderboardData.length === 0) {
+      console.log('Falling back to user_xp/user_stats queries')
       let xpQuery = supabase
         .from('user_xp')
         .select(`
@@ -72,7 +80,15 @@ export async function GET(request: NextRequest) {
         console.error('User XP query error:', xpError)
       }
 
+      console.log('User XP query result:', {
+        hasError: !!xpError,
+        error: xpError,
+        dataLength: xpData?.length || 0,
+        firstEntry: xpData?.[0]
+      })
+
       if (!xpError && xpData && xpData.length > 0) {
+        console.log('Using user_xp data, mapping entries...')
         leaderboard = xpData.map((entry: any) => ({
           user_id: entry.user_id,
           total_xp: entry.total_xp || 0,
@@ -81,6 +97,7 @@ export async function GET(request: NextRequest) {
           email: entry.profiles?.email,
           avatar_url: entry.profiles?.avatar_url
         }))
+        console.log('Mapped leaderboard from user_xp:', leaderboard.length, 'entries')
       } else {
         // Fall back to user_stats
         let statsQuery = supabase
@@ -95,11 +112,19 @@ export async function GET(request: NextRequest) {
 
         const { data: statsData, error: statsError } = await statsQuery
         
+        console.log('User stats query result:', {
+          hasError: !!statsError,
+          error: statsError,
+          dataLength: statsData?.length || 0,
+          firstEntry: statsData?.[0]
+        })
+        
         if (statsError) {
           console.error('User stats query error:', statsError)
         }
         
         if (!statsError && statsData && statsData.length > 0) {
+          console.log('Using user_stats data, mapping entries...')
           // Calculate tier from XP for user_stats
           leaderboard = statsData
             .filter((stat: any) => (stat.total_xp || 0) > 0) // Only show users with XP
@@ -125,20 +150,23 @@ export async function GET(request: NextRequest) {
               }
             })
             .filter((entry: any) => entry !== null) // Remove filtered entries
+          console.log('Mapped leaderboard from user_stats:', leaderboard.length, 'entries')
         } else {
           console.log('No leaderboard data found in user_xp or user_stats')
         }
       }
     } else {
       // Use leaderboard_view data
+      console.log('Using leaderboard_view data, mapping entries...')
       leaderboard = leaderboardData.map((entry: any) => ({
         user_id: entry.user_id,
-        total_xp: entry.total_xp,
-        tier: entry.tier,
-        full_name: entry.full_name,
+        total_xp: entry.total_xp || 0,
+        tier: entry.tier || 1,
+        full_name: entry.full_name || 'Anonymous User',
         email: entry.email,
         avatar_url: entry.avatar_url
       }))
+      console.log('Mapped leaderboard from view:', leaderboard.length, 'entries')
     }
 
     // Add rank numbers
@@ -213,6 +241,14 @@ export async function GET(request: NextRequest) {
         tier: userTier
       }
     }
+
+    // Log for debugging
+    console.log('Leaderboard API response:', {
+      leaderboardCount: leaderboardWithRanks?.length || 0,
+      userRank,
+      firstEntry: leaderboardWithRanks?.[0],
+      leaderboardData: leaderboardWithRanks
+    })
 
     return ApiResponse.ok({
       leaderboard: leaderboardWithRanks || [],

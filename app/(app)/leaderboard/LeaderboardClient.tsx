@@ -52,14 +52,25 @@ export default function LeaderboardClient({ user }: LeaderboardClientProps) {
       }
 
       const result = await response.json()
+      console.log('Full API response:', result)
+      
       if (result.success) {
-        setLeaderboard(result.data.leaderboard || [])
-        setUserRank(result.data.user_rank || null)
+        const leaderboardData = result.data?.leaderboard || []
+        const userRankData = result.data?.user_rank || null
+        
+        console.log('Leaderboard array:', leaderboardData)
+        console.log('Leaderboard count:', leaderboardData.length)
+        console.log('User rank:', userRankData)
+        
+        setLeaderboard(leaderboardData)
+        setUserRank(userRankData)
         
         // Log for debugging
         console.log('Leaderboard data:', {
-          leaderboardCount: result.data.leaderboard?.length || 0,
-          userRank: result.data.user_rank
+          leaderboardCount: leaderboardData.length,
+          userRank: userRankData,
+          firstEntry: leaderboardData[0],
+          allEntries: leaderboardData
         })
       } else {
         console.error('Leaderboard API error:', result.error)
