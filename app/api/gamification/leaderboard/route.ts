@@ -55,104 +55,110 @@ export async function GET(request: NextRequest) {
       console.error('Leaderboard view error:', leaderboardError)
     }
 
-    // If view doesn't exist or fails, try user_xp table
+    // If view doesn't exist or fails, try user_stats first (it has the actual XP data)
+    // Then fall back to user_xp if needed
     let leaderboard: any[] = []
     if (leaderboardError || !leaderboardData || leaderboardData.length === 0) {
-      console.log('Falling back to user_xp/user_stats queries')
-      let xpQuery = supabase
-        .from('user_xp')
+      console.log('Falling back to user_stats/user_xp queries')
+      
+      // Try user_stats FIRST since it has the actual XP data (8 users with XP)
+      let statsQuery = supabase
+        .from('user_stats')
         .select(`
           user_id,
           total_xp,
-          current_tier as tier,
           profiles!inner(full_name, email, avatar_url)
         `)
         .order('total_xp', { ascending: false })
         .range(offset, offset + limit - 1)
 
-      if (tierFilter) {
-        xpQuery = xpQuery.eq('current_tier', tierFilter)
-      }
-
-      const { data: xpData, error: xpError } = await xpQuery
-
-      if (xpError) {
-        console.error('User XP query error:', xpError)
-      }
-
-      console.log('User XP query result:', {
-        hasError: !!xpError,
-        error: xpError,
-        dataLength: xpData?.length || 0,
-        firstEntry: xpData?.[0]
+      const { data: statsData, error: statsError } = await statsQuery
+      
+      console.log('User stats query result:', {
+        hasError: !!statsError,
+        error: statsError,
+        dataLength: statsData?.length || 0,
+        firstEntry: statsData?.[0]
       })
-
-      if (!xpError && xpData && xpData.length > 0) {
-        console.log('Using user_xp data, mapping entries...')
-        leaderboard = xpData.map((entry: any) => ({
-          user_id: entry.user_id,
-          total_xp: entry.total_xp || 0,
-          tier: entry.tier || 1,
-          full_name: entry.profiles?.full_name || 'Anonymous User',
-          email: entry.profiles?.email,
-          avatar_url: entry.profiles?.avatar_url
-        }))
-        console.log('Mapped leaderboard from user_xp:', leaderboard.length, 'entries')
+      
+      if (statsError) {
+        console.error('User stats query error:', statsError)
+      }
+      
+      if (!statsError && statsData && statsData.length > 0) {
+        console.log('Using user_stats data, mapping entries...')
+        // Calculate tier from XP for user_stats
+        leaderboard = statsData
+          .filter((stat: any) => (stat.total_xp || 0) > 0) // Only show users with XP
+          .map((stat: any) => {
+            const totalXP = stat.total_xp || 0
+            const calculatedTier = totalXP >= 7501 ? 5 : 
+                                  totalXP >= 3501 ? 4 : 
+                                  totalXP >= 1501 ? 3 : 
+                                  totalXP >= 501 ? 2 : 1
+            
+            // Apply tier filter if specified
+            if (tierFilter && calculatedTier !== tierFilter) {
+              return null
+            }
+            
+            return {
+              user_id: stat.user_id,
+              total_xp: totalXP,
+              tier: calculatedTier,
+              full_name: stat.profiles?.full_name || 'Anonymous User',
+              email: stat.profiles?.email,
+              avatar_url: stat.profiles?.avatar_url
+            }
+          })
+          .filter((entry: any) => entry !== null) // Remove filtered entries
+        console.log('Mapped leaderboard from user_stats:', leaderboard.length, 'entries')
       } else {
-        // Fall back to user_stats
-        let statsQuery = supabase
-          .from('user_stats')
+        // Fall back to user_xp (though it likely has no XP data)
+        console.log('user_stats returned no data, trying user_xp...')
+        let xpQuery = supabase
+          .from('user_xp')
           .select(`
             user_id,
             total_xp,
+            current_tier as tier,
             profiles!inner(full_name, email, avatar_url)
           `)
           .order('total_xp', { ascending: false })
           .range(offset, offset + limit - 1)
 
-        const { data: statsData, error: statsError } = await statsQuery
-        
-        console.log('User stats query result:', {
-          hasError: !!statsError,
-          error: statsError,
-          dataLength: statsData?.length || 0,
-          firstEntry: statsData?.[0]
-        })
-        
-        if (statsError) {
-          console.error('User stats query error:', statsError)
+        if (tierFilter) {
+          xpQuery = xpQuery.eq('current_tier', tierFilter)
         }
-        
-        if (!statsError && statsData && statsData.length > 0) {
-          console.log('Using user_stats data, mapping entries...')
-          // Calculate tier from XP for user_stats
-          leaderboard = statsData
-            .filter((stat: any) => (stat.total_xp || 0) > 0) // Only show users with XP
-            .map((stat: any) => {
-              const totalXP = stat.total_xp || 0
-              const calculatedTier = totalXP >= 7501 ? 5 : 
-                                    totalXP >= 3501 ? 4 : 
-                                    totalXP >= 1501 ? 3 : 
-                                    totalXP >= 501 ? 2 : 1
-              
-              // Apply tier filter if specified
-              if (tierFilter && calculatedTier !== tierFilter) {
-                return null
-              }
-              
-              return {
-                user_id: stat.user_id,
-                total_xp: totalXP,
-                tier: calculatedTier,
-                full_name: stat.profiles?.full_name || 'Anonymous User',
-                email: stat.profiles?.email,
-                avatar_url: stat.profiles?.avatar_url
-              }
-            })
-            .filter((entry: any) => entry !== null) // Remove filtered entries
-          console.log('Mapped leaderboard from user_stats:', leaderboard.length, 'entries')
+
+        const { data: xpData, error: xpError } = await xpQuery
+
+        if (xpError) {
+          console.error('User XP query error:', xpError)
+        }
+
+        console.log('User XP query result:', {
+          hasError: !!xpError,
+          error: xpError,
+          dataLength: xpData?.length || 0,
+          firstEntry: xpData?.[0]
+        })
+
+        if (!xpError && xpData && xpData.length > 0) {
+          console.log('Using user_xp data, mapping entries...')
+          leaderboard = xpData
+            .filter((entry: any) => (entry.total_xp || 0) > 0) // Only show users with XP
+            .map((entry: any) => ({
+              user_id: entry.user_id,
+              total_xp: entry.total_xp || 0,
+              tier: entry.tier || 1,
+              full_name: entry.profiles?.full_name || 'Anonymous User',
+              email: entry.profiles?.email,
+              avatar_url: entry.profiles?.avatar_url
+            }))
+          console.log('Mapped leaderboard from user_xp:', leaderboard.length, 'entries')
         } else {
-          console.log('No leaderboard data found in user_xp or user_stats')
+          console.log('No leaderboard data found in user_stats or user_xp')
         }
       }
     } else {
