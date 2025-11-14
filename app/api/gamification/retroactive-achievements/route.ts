@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     const { count: sponsorshipsMade } = await supabase
       .from('sponsorships')
       .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId)
+      .eq('sponsor_id', userId)
 
     // Count content created
     const { count: contentCreated } = await supabase

@@ -51,7 +51,7 @@ BEGIN
     -- Count sponsorships made
     SELECT COUNT(*) INTO v_sponsorships_made
     FROM public.sponsorships s
-    WHERE s.user_id = v_user.id;
+    WHERE s.sponsor_id = v_user.id;
 
     -- Count content created
     SELECT COUNT(*) INTO v_content_created
