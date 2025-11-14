@@ -62,18 +62,34 @@ export async function GET(request: NextRequest) {
       console.log('Falling back to user_stats/user_xp queries')
       
       // Try user_stats FIRST since it has the actual XP data (8 users with XP)
-      // Use LEFT JOIN (profiles) instead of INNER JOIN (!inner) to include users without profiles
+      // Query user_stats directly first, then fetch profiles separately to avoid join issues
       let statsQuery = supabase
         .from('user_stats')
-        .select(`
-          user_id,
-          total_xp,
-          profiles(full_name, email, avatar_url)
-        `)
+        .select('user_id, total_xp')
+        .gt('total_xp', 0)
         .order('total_xp', { ascending: false })
         .range(offset, offset + limit - 1)
 
       const { data: statsData, error: statsError } = await statsQuery
+      
+      // If we got stats data, fetch profiles separately
+      let statsWithProfiles: any[] = []
+      if (!statsError && statsData && statsData.length > 0) {
+        const userIds = statsData.map((s: any) => s.user_id)
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, full_name, email, avatar_url')
+          .in('id', userIds)
+        
+        // Combine stats with profiles
+        statsWithProfiles = statsData.map((stat: any) => {
+          const profile = profilesData?.find((p: any) => p.id === stat.user_id)
+          return {
+            ...stat,
+            profiles: profile || null
+          }
+        })
+      }
       
       console.log('User stats query result:', {
         hasError: !!statsError,
@@ -83,6 +99,7 @@ export async function GET(request: NextRequest) {
         errorDetails: statsError?.details,
         errorHint: statsError?.hint,
         dataLength: statsData?.length || 0,
+        statsWithProfilesLength: statsWithProfiles.length,
         firstEntry: statsData?.[0],
         allData: statsData
       })
@@ -91,10 +108,10 @@ export async function GET(request: NextRequest) {
         console.error('User stats query error:', JSON.stringify(statsError, null, 2))
       }
       
-      if (!statsError && statsData && statsData.length > 0) {
+      if (!statsError && statsWithProfiles.length > 0) {
         console.log('Using user_stats data, mapping entries...')
         // Calculate tier from XP for user_stats
-        leaderboard = statsData
+        leaderboard = statsWithProfiles
           .filter((stat: any) => (stat.total_xp || 0) > 0) // Only show users with XP
           .map((stat: any) => {
             const totalXP = stat.total_xp || 0
