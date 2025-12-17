@@ -15,26 +15,66 @@
 -- Fix user_xp_breakdown: Remove auth.users exposure, use profiles instead
 DROP VIEW IF EXISTS public.user_xp_breakdown CASCADE;
 
-CREATE OR REPLACE VIEW public.user_xp_breakdown AS
-SELECT 
-  p.id as user_id,
-  p.email,
-  p.full_name,
-  COALESCE(us.total_xp, 0) as community_xp,
-  COALESCE(
-    (SELECT SUM(xp_earned) FROM course_enrollments WHERE user_id = p.id),
-    0
-  ) as learning_xp,
-  COALESCE(us.total_xp, 0) + COALESCE(
-    (SELECT SUM(xp_earned) FROM course_enrollments WHERE user_id = p.id),
-    0
-  ) as total_unified_xp,
-  -- Sources breakdown
-  (SELECT COUNT(*) FROM course_enrollments WHERE user_id = p.id AND completed = true) as modules_completed,
-  COALESCE((SELECT COUNT(*) FROM community_content WHERE created_by = p.id), 0) as posts_created,
-  COALESCE((SELECT COUNT(*) FROM comments WHERE user_id = p.id), 0) as comments_posted
-FROM public.profiles p
-LEFT JOIN public.user_stats us ON us.user_id = p.id;
+-- Use dynamic approach to handle different schema versions
+DO $$
+DECLARE
+  user_col TEXT;
+  completed_col TEXT;
+  xp_earned_col TEXT;
+  view_sql TEXT;
+BEGIN
+  -- Detect which columns exist in course_enrollments
+  SELECT 
+    CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'course_enrollments' AND column_name = 'user_id') 
+      THEN 'user_id' ELSE 'employee_id' END,
+    CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'course_enrollments' AND column_name = 'completed') 
+      THEN 'completed' 
+      WHEN EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'course_enrollments' AND column_name = 'status') 
+      THEN 'status' 
+      ELSE NULL END,
+    CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'course_enrollments' AND column_name = 'xp_earned') 
+      THEN 'xp_earned' ELSE NULL END
+  INTO user_col, completed_col, xp_earned_col;
+
+  -- Build view SQL dynamically
+  view_sql := format('
+    CREATE OR REPLACE VIEW public.user_xp_breakdown AS
+    SELECT 
+      p.id as user_id,
+      p.email,
+      p.full_name,
+      COALESCE(us.total_xp, 0) as community_xp,
+      COALESCE(
+        (SELECT SUM(%s) FROM course_enrollments WHERE %s = p.id),
+        0
+      ) as learning_xp,
+      COALESCE(us.total_xp, 0) + COALESCE(
+        (SELECT SUM(%s) FROM course_enrollments WHERE %s = p.id),
+        0
+      ) as total_unified_xp,
+      -- Sources breakdown
+      %s as modules_completed,
+      COALESCE((SELECT COUNT(*) FROM community_content WHERE created_by = p.id), 0) as posts_created,
+      COALESCE((SELECT COUNT(*) FROM comments WHERE user_id = p.id), 0) as comments_posted
+    FROM public.profiles p
+    LEFT JOIN public.user_stats us ON us.user_id = p.id
+  ',
+    COALESCE(xp_earned_col, '0'),
+    user_col,
+    COALESCE(xp_earned_col, '0'),
+    user_col,
+    CASE 
+      WHEN completed_col = 'completed' THEN format('(SELECT COUNT(*) FROM course_enrollments WHERE %s = p.id AND completed = true)', user_col)
+      WHEN completed_col = 'status' THEN format('(SELECT COUNT(*) FROM course_enrollments WHERE %s = p.id AND status = ''completed'')', user_col)
+      ELSE format('(SELECT COUNT(*) FROM course_enrollments WHERE %s = p.id)', user_col)
+    END
+  );
+
+  EXECUTE view_sql;
+
+  RAISE NOTICE 'Created user_xp_breakdown view with detected columns';
+  RAISE NOTICE 'User column: %, Completed column: %, XP column: %', user_col, completed_col, xp_earned_col;
+END $$;
 
 -- Grant access (RLS will control what users can see)
 GRANT SELECT ON public.user_xp_breakdown TO authenticated;
