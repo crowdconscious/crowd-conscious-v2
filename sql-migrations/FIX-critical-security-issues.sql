@@ -40,9 +40,10 @@ BEGIN
       THEN 'xp_earned' ELSE NULL END
   INTO user_col, completed_col, xp_earned_col;
 
-  -- Build view SQL dynamically
+  -- Build view SQL dynamically with security_invoker
   view_sql := format('
-    CREATE OR REPLACE VIEW public.user_xp_breakdown AS
+    CREATE OR REPLACE VIEW public.user_xp_breakdown
+    WITH (security_invoker = true) AS
     SELECT 
       p.id as user_id,
       p.email,
@@ -88,7 +89,8 @@ GRANT SELECT ON public.user_xp_breakdown TO anon;
 -- Explicitly drop with CASCADE to remove all dependencies
 DROP VIEW IF EXISTS public.leaderboard_view CASCADE;
 
-CREATE OR REPLACE VIEW public.leaderboard_view AS
+CREATE OR REPLACE VIEW public.leaderboard_view
+WITH (security_invoker = true) AS
 SELECT 
   COALESCE(ux.user_id, us.user_id) as user_id,
   COALESCE(ux.total_xp, us.total_xp, 0) as total_xp,
@@ -150,9 +152,10 @@ BEGIN
       THEN 'time_spent_minutes' ELSE NULL END
   INTO user_col, module_id_col, module_name_col, status_col, completion_col, purchase_type_col, purchased_at_col, time_spent_col;
 
-  -- Build view SQL dynamically based on what exists
+  -- Build view SQL dynamically based on what exists with security_invoker
   view_sql := format('
-    CREATE OR REPLACE VIEW public.user_enrolled_modules AS
+    CREATE OR REPLACE VIEW public.user_enrolled_modules
+    WITH (security_invoker = true) AS
     SELECT 
       e.id AS enrollment_id,
       e.%I AS user_id,
@@ -204,7 +207,8 @@ GRANT SELECT ON public.user_enrolled_modules TO authenticated;
 -- Explicitly drop with CASCADE to remove all dependencies
 DROP VIEW IF EXISTS public.poll_options_with_totals CASCADE;
 
-CREATE OR REPLACE VIEW public.poll_options_with_totals AS
+CREATE OR REPLACE VIEW public.poll_options_with_totals
+WITH (security_invoker = true) AS
 SELECT 
   po.id,
   po.content_id,
@@ -244,9 +248,10 @@ BEGIN
       pricing_type_expr := '''free''';
     END IF;
 
-    -- Build view SQL
+    -- Build view SQL with security_invoker
     view_sql := format('
-      CREATE OR REPLACE VIEW public.marketplace_modules_with_pricing AS
+      CREATE OR REPLACE VIEW public.marketplace_modules_with_pricing
+      WITH (security_invoker = true) AS
       SELECT 
         m.*,
         %s as current_price,
@@ -291,9 +296,10 @@ BEGIN
       ELSE NULL END
     INTO user_col, time_col;
 
-    -- Build view SQL dynamically
+    -- Build view SQL dynamically with security_invoker
     view_sql := format('
-      CREATE OR REPLACE VIEW public.enrollment_time_breakdown AS
+      CREATE OR REPLACE VIEW public.enrollment_time_breakdown
+      WITH (security_invoker = true) AS
       SELECT 
         DATE_TRUNC(''day'', created_at) as enrollment_date,
         COUNT(*) as enrollments_count,
