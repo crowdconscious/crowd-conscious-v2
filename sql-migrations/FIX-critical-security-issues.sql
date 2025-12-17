@@ -259,22 +259,52 @@ END $$;
 -- Fix enrollment_time_breakdown: Remove SECURITY DEFINER (if exists)
 DROP VIEW IF EXISTS public.enrollment_time_breakdown CASCADE;
 
--- Recreate if needed
+-- Recreate if needed (use dynamic approach)
 DO $$
+DECLARE
+  user_col TEXT;
+  time_col TEXT;
+  view_sql TEXT;
 BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'course_enrollments') THEN
-    EXECUTE '
+    -- Detect which columns exist
+    SELECT 
+      CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'course_enrollments' AND column_name = 'user_id') 
+        THEN 'user_id' ELSE 'employee_id' END,
+      CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'course_enrollments' AND column_name = 'time_spent_minutes') 
+        THEN 'time_spent_minutes'
+      WHEN EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'course_enrollments' AND column_name = 'total_time_spent') 
+        THEN 'total_time_spent'
+      WHEN EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'course_enrollments' AND column_name = 'time_spent') 
+        THEN 'time_spent'
+      ELSE NULL END
+    INTO user_col, time_col;
+
+    -- Build view SQL dynamically
+    view_sql := format('
       CREATE OR REPLACE VIEW public.enrollment_time_breakdown AS
       SELECT 
         DATE_TRUNC(''day'', created_at) as enrollment_date,
         COUNT(*) as enrollments_count,
-        COUNT(DISTINCT user_id) as unique_users,
-        AVG(time_spent_minutes) as avg_time_spent
+        COUNT(DISTINCT %I) as unique_users,
+        %s as avg_time_spent
       FROM course_enrollments
       GROUP BY DATE_TRUNC(''day'', created_at)
-      ORDER BY enrollment_date DESC';
+      ORDER BY enrollment_date DESC
+    ',
+      user_col,
+      CASE 
+        WHEN time_col IS NOT NULL THEN 'AVG(' || time_col || ')'
+        ELSE 'NULL::NUMERIC'
+      END
+    );
+
+    EXECUTE view_sql;
     
     GRANT SELECT ON public.enrollment_time_breakdown TO authenticated;
+    
+    RAISE NOTICE 'Created enrollment_time_breakdown view';
+    RAISE NOTICE 'User column: %, Time column: %', user_col, time_col;
   END IF;
 END $$;
 
