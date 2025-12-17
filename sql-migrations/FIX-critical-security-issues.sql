@@ -11,8 +11,12 @@
 -- ============================================================================
 -- PART 1: Fix Views - Remove SECURITY DEFINER and auth.users exposure
 -- ============================================================================
+-- Note: Views themselves don't have SECURITY DEFINER, but Supabase linter
+-- may flag them if they call SECURITY DEFINER functions or have cached metadata.
+-- We'll explicitly drop and recreate them to ensure clean state.
 
 -- Fix user_xp_breakdown: Remove auth.users exposure, use profiles instead
+-- Explicitly drop with CASCADE to remove all dependencies
 DROP VIEW IF EXISTS public.user_xp_breakdown CASCADE;
 
 -- Use dynamic approach to handle different schema versions
@@ -81,6 +85,7 @@ GRANT SELECT ON public.user_xp_breakdown TO authenticated;
 GRANT SELECT ON public.user_xp_breakdown TO anon;
 
 -- Fix leaderboard_view: Remove SECURITY DEFINER
+-- Explicitly drop with CASCADE to remove all dependencies
 DROP VIEW IF EXISTS public.leaderboard_view CASCADE;
 
 CREATE OR REPLACE VIEW public.leaderboard_view AS
@@ -110,6 +115,7 @@ GRANT SELECT ON public.leaderboard_view TO anon;
 
 -- Fix user_enrolled_modules: Remove SECURITY DEFINER
 -- Use dynamic approach to detect which columns exist (same as original migration)
+-- Explicitly drop with CASCADE to remove all dependencies
 DROP VIEW IF EXISTS public.user_enrolled_modules CASCADE;
 
 DO $$
@@ -193,6 +199,9 @@ END $$;
 GRANT SELECT ON public.user_enrolled_modules TO authenticated;
 
 -- Fix poll_options_with_totals: Remove SECURITY DEFINER
+-- Note: This view calls get_total_poll_votes function which may have SECURITY DEFINER
+-- We'll recreate the view, but the function itself is fine (functions can have SECURITY DEFINER)
+-- Explicitly drop with CASCADE to remove all dependencies
 DROP VIEW IF EXISTS public.poll_options_with_totals CASCADE;
 
 CREATE OR REPLACE VIEW public.poll_options_with_totals AS
@@ -208,6 +217,7 @@ GRANT SELECT ON public.poll_options_with_totals TO authenticated;
 GRANT SELECT ON public.poll_options_with_totals TO anon;
 
 -- Fix marketplace_modules_with_pricing: Remove SECURITY DEFINER (if exists)
+-- Explicitly drop with CASCADE to remove all dependencies
 DROP VIEW IF EXISTS public.marketplace_modules_with_pricing CASCADE;
 
 -- Recreate if needed (check if marketplace_modules table exists)
@@ -257,6 +267,7 @@ BEGIN
 END $$;
 
 -- Fix enrollment_time_breakdown: Remove SECURITY DEFINER (if exists)
+-- Explicitly drop with CASCADE to remove all dependencies
 DROP VIEW IF EXISTS public.enrollment_time_breakdown CASCADE;
 
 -- Recreate if needed (use dynamic approach)
