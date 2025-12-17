@@ -354,50 +354,62 @@ ALTER TABLE public.xp_rewards ENABLE ROW LEVEL SECURITY;
 -- PART 3: Create/Update RLS Policies
 -- ============================================================================
 
--- Profiles policies (if not already exist)
+-- Profiles policies - Drop all existing policies first
 DO $$
+DECLARE
+  r RECORD;
 BEGIN
-  -- Drop existing policies to recreate cleanly
-  DROP POLICY IF EXISTS "Anyone can view profiles" ON public.profiles;
-  DROP POLICY IF EXISTS "Enable delete for users based on id" ON public.profiles;
-  DROP POLICY IF EXISTS "Enable insert for service role" ON public.profiles;
-  DROP POLICY IF EXISTS "Enable profile creation on signup" ON public.profiles;
-  DROP POLICY IF EXISTS "Enable read access for all users" ON public.profiles;
-  DROP POLICY IF EXISTS "Enable update for users based on id" ON public.profiles;
-  DROP POLICY IF EXISTS "Public can view leaderboard profiles" ON public.profiles;
-  DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
+  -- Drop ALL existing policies on profiles dynamically
+  FOR r IN 
+    SELECT policyname 
+    FROM pg_policies 
+    WHERE tablename = 'profiles' AND schemaname = 'public'
+  LOOP
+    EXECUTE format('DROP POLICY IF EXISTS %I ON public.profiles', r.policyname);
+  END LOOP;
 END $$;
 
 -- Public can view profiles (for leaderboard, etc.)
+DROP POLICY IF EXISTS "Public can view profiles" ON public.profiles;
 CREATE POLICY "Public can view profiles" ON public.profiles
   FOR SELECT USING (true);
 
 -- Users can update their own profile
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
 CREATE POLICY "Users can update own profile" ON public.profiles
   FOR UPDATE USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
 
 -- Service role can insert (for signup triggers)
+DROP POLICY IF EXISTS "Service role can insert profiles" ON public.profiles;
 CREATE POLICY "Service role can insert profiles" ON public.profiles
   FOR INSERT WITH CHECK (true);
 
 -- Users can delete their own profile
+DROP POLICY IF EXISTS "Users can delete own profile" ON public.profiles;
 CREATE POLICY "Users can delete own profile" ON public.profiles
   FOR DELETE USING (auth.uid() = id);
 
--- Promo codes policies
+-- Promo codes policies - Drop all existing policies first
 DO $$
+DECLARE
+  r RECORD;
 BEGIN
-  DROP POLICY IF EXISTS "admins_only_can_view_promo_codes" ON public.promo_codes;
-  DROP POLICY IF EXISTS "admins_can_insert_promo_codes" ON public.promo_codes;
-  DROP POLICY IF EXISTS "admins_can_update_promo_codes" ON public.promo_codes;
-  DROP POLICY IF EXISTS "admins_can_delete_promo_codes" ON public.promo_codes;
+  FOR r IN 
+    SELECT policyname 
+    FROM pg_policies 
+    WHERE tablename = 'promo_codes' AND schemaname = 'public'
+  LOOP
+    EXECUTE format('DROP POLICY IF EXISTS %I ON public.promo_codes', r.policyname);
+  END LOOP;
 END $$;
 
 -- Anyone can view active promo codes (for validation)
+DROP POLICY IF EXISTS "Anyone can view active promo codes" ON public.promo_codes;
 CREATE POLICY "Anyone can view active promo codes" ON public.promo_codes
   FOR SELECT USING (active = true);
 
 -- Admins can view all promo codes
+DROP POLICY IF EXISTS "Admins can view all promo codes" ON public.promo_codes;
 CREATE POLICY "Admins can view all promo codes" ON public.promo_codes
   FOR SELECT USING (
     EXISTS (
@@ -407,6 +419,7 @@ CREATE POLICY "Admins can view all promo codes" ON public.promo_codes
   );
 
 -- Admins can manage promo codes
+DROP POLICY IF EXISTS "Admins can insert promo codes" ON public.promo_codes;
 CREATE POLICY "Admins can insert promo codes" ON public.promo_codes
   FOR INSERT WITH CHECK (
     EXISTS (
@@ -415,6 +428,7 @@ CREATE POLICY "Admins can insert promo codes" ON public.promo_codes
     )
   );
 
+DROP POLICY IF EXISTS "Admins can update promo codes" ON public.promo_codes;
 CREATE POLICY "Admins can update promo codes" ON public.promo_codes
   FOR UPDATE USING (
     EXISTS (
@@ -428,6 +442,7 @@ CREATE POLICY "Admins can update promo codes" ON public.promo_codes
     )
   );
 
+DROP POLICY IF EXISTS "Admins can delete promo codes" ON public.promo_codes;
 CREATE POLICY "Admins can delete promo codes" ON public.promo_codes
   FOR DELETE USING (
     EXISTS (
@@ -436,17 +451,30 @@ CREATE POLICY "Admins can delete promo codes" ON public.promo_codes
     )
   );
 
--- Promo code uses policies
-DROP POLICY IF EXISTS "Users can view own promo code uses" ON public.promo_code_uses;
-DROP POLICY IF EXISTS "Users can insert own promo code uses" ON public.promo_code_uses;
+-- Promo code uses policies - Drop all existing policies first
+DO $$
+DECLARE
+  r RECORD;
+BEGIN
+  FOR r IN 
+    SELECT policyname 
+    FROM pg_policies 
+    WHERE tablename = 'promo_code_uses' AND schemaname = 'public'
+  LOOP
+    EXECUTE format('DROP POLICY IF EXISTS %I ON public.promo_code_uses', r.policyname);
+  END LOOP;
+END $$;
 
+DROP POLICY IF EXISTS "Users can view own promo code uses" ON public.promo_code_uses;
 CREATE POLICY "Users can view own promo code uses" ON public.promo_code_uses
   FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own promo code uses" ON public.promo_code_uses;
 CREATE POLICY "Users can insert own promo code uses" ON public.promo_code_uses
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 -- Admins can view all promo code uses
+DROP POLICY IF EXISTS "Admins can view all promo code uses" ON public.promo_code_uses;
 CREATE POLICY "Admins can view all promo code uses" ON public.promo_code_uses
   FOR SELECT USING (
     EXISTS (
@@ -455,10 +483,21 @@ CREATE POLICY "Admins can view all promo code uses" ON public.promo_code_uses
     )
   );
 
--- Corporate accounts policies
-DROP POLICY IF EXISTS "Corporate admins can view own account" ON public.corporate_accounts;
-DROP POLICY IF EXISTS "Corporate admins can update own account" ON public.corporate_accounts;
+-- Corporate accounts policies - Drop all existing policies first
+DO $$
+DECLARE
+  r RECORD;
+BEGIN
+  FOR r IN 
+    SELECT policyname 
+    FROM pg_policies 
+    WHERE tablename = 'corporate_accounts' AND schemaname = 'public'
+  LOOP
+    EXECUTE format('DROP POLICY IF EXISTS %I ON public.corporate_accounts', r.policyname);
+  END LOOP;
+END $$;
 
+DROP POLICY IF EXISTS "Corporate admins can view own account" ON public.corporate_accounts;
 CREATE POLICY "Corporate admins can view own account" ON public.corporate_accounts
   FOR SELECT USING (
     EXISTS (
@@ -469,6 +508,7 @@ CREATE POLICY "Corporate admins can view own account" ON public.corporate_accoun
     )
   );
 
+DROP POLICY IF EXISTS "Corporate admins can update own account" ON public.corporate_accounts;
 CREATE POLICY "Corporate admins can update own account" ON public.corporate_accounts
   FOR UPDATE USING (
     EXISTS (
@@ -487,13 +527,25 @@ CREATE POLICY "Corporate admins can update own account" ON public.corporate_acco
   );
 
 -- Service role can insert corporate accounts (for signup)
+DROP POLICY IF EXISTS "Service role can insert corporate accounts" ON public.corporate_accounts;
 CREATE POLICY "Service role can insert corporate accounts" ON public.corporate_accounts
   FOR INSERT WITH CHECK (true);
 
--- Employee invitations policies
-DROP POLICY IF EXISTS "Corporate admins can manage invitations" ON public.employee_invitations;
-DROP POLICY IF EXISTS "Users can view own invitations" ON public.employee_invitations;
+-- Employee invitations policies - Drop all existing policies first
+DO $$
+DECLARE
+  r RECORD;
+BEGIN
+  FOR r IN 
+    SELECT policyname 
+    FROM pg_policies 
+    WHERE tablename = 'employee_invitations' AND schemaname = 'public'
+  LOOP
+    EXECUTE format('DROP POLICY IF EXISTS %I ON public.employee_invitations', r.policyname);
+  END LOOP;
+END $$;
 
+DROP POLICY IF EXISTS "Corporate admins can manage invitations" ON public.employee_invitations;
 CREATE POLICY "Corporate admins can manage invitations" ON public.employee_invitations
   FOR ALL USING (
     EXISTS (
@@ -511,6 +563,7 @@ CREATE POLICY "Corporate admins can manage invitations" ON public.employee_invit
     )
   );
 
+DROP POLICY IF EXISTS "Users can view own invitations" ON public.employee_invitations;
 CREATE POLICY "Users can view own invitations" ON public.employee_invitations
   FOR SELECT USING (
     -- Users can see invitations sent to their email
@@ -528,13 +581,25 @@ CREATE POLICY "Users can view own invitations" ON public.employee_invitations
     )
   );
 
--- XP rewards policies (read-only for most users)
-DROP POLICY IF EXISTS "Anyone can view XP rewards" ON public.xp_rewards;
-DROP POLICY IF EXISTS "Admins can manage XP rewards" ON public.xp_rewards;
+-- XP rewards policies - Drop all existing policies first
+DO $$
+DECLARE
+  r RECORD;
+BEGIN
+  FOR r IN 
+    SELECT policyname 
+    FROM pg_policies 
+    WHERE tablename = 'xp_rewards' AND schemaname = 'public'
+  LOOP
+    EXECUTE format('DROP POLICY IF EXISTS %I ON public.xp_rewards', r.policyname);
+  END LOOP;
+END $$;
 
+DROP POLICY IF EXISTS "Anyone can view XP rewards" ON public.xp_rewards;
 CREATE POLICY "Anyone can view XP rewards" ON public.xp_rewards
   FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Admins can manage XP rewards" ON public.xp_rewards;
 CREATE POLICY "Admins can manage XP rewards" ON public.xp_rewards
   FOR ALL USING (
     EXISTS (
