@@ -211,22 +211,66 @@ GRANT SELECT ON public.poll_options_with_totals TO anon;
 DROP VIEW IF EXISTS public.marketplace_modules_with_pricing CASCADE;
 
 -- Recreate if needed (check if marketplace_modules table exists)
+-- Use dynamic approach to detect pricing columns
 DO $$
+DECLARE
+  price_col TEXT;
+  base_price_col TEXT;
+  individual_price_col TEXT;
+  view_sql TEXT;
 BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'marketplace_modules') THEN
-    EXECUTE '
+    -- Detect which pricing columns exist
+    SELECT 
+      CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'marketplace_modules' AND column_name = 'price') 
+        THEN 'price' ELSE NULL END,
+      CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'marketplace_modules' AND column_name = 'base_price_mxn') 
+        THEN 'base_price_mxn' ELSE NULL END,
+      CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'marketplace_modules' AND column_name = 'individual_price_mxn') 
+        THEN 'individual_price_mxn' ELSE NULL END
+    INTO price_col, base_price_col, individual_price_col;
+
+    -- Build view SQL dynamically based on what exists
+    view_sql := format('
       CREATE OR REPLACE VIEW public.marketplace_modules_with_pricing AS
       SELECT 
         m.*,
-        COALESCE(m.price, 0) as current_price,
+        %s as current_price,
         CASE 
-          WHEN m.price IS NULL OR m.price = 0 THEN ''free''
+          WHEN %s = 0 OR %s IS NULL THEN ''free''
           ELSE ''paid''
         END as pricing_type
-      FROM marketplace_modules m';
+      FROM marketplace_modules m
+    ',
+      -- Use first available price column
+      COALESCE(
+        CASE WHEN price_col IS NOT NULL THEN 'COALESCE(m.' || price_col || ', 0)' END,
+        CASE WHEN base_price_col IS NOT NULL THEN 'COALESCE(m.' || base_price_col || ', 0)' END,
+        CASE WHEN individual_price_col IS NOT NULL THEN 'COALESCE(m.' || individual_price_col || ', 0)' END,
+        '0'
+      ),
+      -- For pricing_type check
+      COALESCE(
+        CASE WHEN price_col IS NOT NULL THEN 'm.' || price_col END,
+        CASE WHEN base_price_col IS NOT NULL THEN 'm.' || base_price_col END,
+        CASE WHEN individual_price_col IS NOT NULL THEN 'm.' || individual_price_col END,
+        '0'
+      ),
+      COALESCE(
+        CASE WHEN price_col IS NOT NULL THEN 'm.' || price_col END,
+        CASE WHEN base_price_col IS NOT NULL THEN 'm.' || base_price_col END,
+        CASE WHEN individual_price_col IS NOT NULL THEN 'm.' || individual_price_col END,
+        '0'
+      )
+    );
+
+    EXECUTE view_sql;
     
     GRANT SELECT ON public.marketplace_modules_with_pricing TO authenticated;
     GRANT SELECT ON public.marketplace_modules_with_pricing TO anon;
+    
+    RAISE NOTICE 'Created marketplace_modules_with_pricing view';
+    RAISE NOTICE 'Price columns detected: price=%, base_price_mxn=%, individual_price_mxn=%', price_col, base_price_col, individual_price_col;
   END IF;
 END $$;
 
