@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { createAdminClient } from '@/lib/supabase-admin'
 import { getCurrentUser } from '@/lib/auth-server'
+import { tradeSchema } from '@/lib/prediction-schemas'
+import { validateRequest } from '@/lib/validation-schemas'
 import {
-  strictRateLimit,
+  moderateRateLimit,
   getRateLimitIdentifier,
   checkRateLimit,
   rateLimitResponse,
@@ -16,7 +19,7 @@ export async function POST(request: Request) {
     }
 
     const identifier = await getRateLimitIdentifier(request, user.id)
-    const limitResult = await checkRateLimit(strictRateLimit, identifier)
+    const limitResult = await checkRateLimit(moderateRateLimit, identifier)
     if (limitResult && !limitResult.allowed) {
       return rateLimitResponse(
         limitResult.limit,
@@ -25,28 +28,21 @@ export async function POST(request: Request) {
       )
     }
 
-    const body = await request.json()
-    const { market_id, side, amount } = body
-
-    if (!market_id || !side || typeof amount !== 'number') {
-      return NextResponse.json(
-        { error: 'Missing market_id, side, or amount' },
-        { status: 400 }
-      )
+    let validatedData
+    try {
+      validatedData = await validateRequest(request, tradeSchema)
+    } catch (error: unknown) {
+      const err = error as { status?: number; error?: unknown }
+      if (err.status === 422) {
+        return NextResponse.json(err.error ?? error, { status: 422 })
+      }
+      throw error
     }
 
-    if (!['yes', 'no'].includes(side)) {
-      return NextResponse.json({ error: 'Invalid side' }, { status: 400 })
-    }
-
-    if (amount < 10) {
-      return NextResponse.json(
-        { error: 'Minimum trade amount is 10 MXN' },
-        { status: 400 }
-      )
-    }
+    const { market_id, side, amount } = validatedData
 
     const supabase = await createClient()
+
     const { data, error } = await supabase.rpc('execute_prediction_trade', {
       p_user_id: user.id,
       p_market_id: market_id,
@@ -62,15 +58,60 @@ export async function POST(request: Request) {
       )
     }
 
-    // Award XP for prediction trade
+    const trade = data as { id: string; market_id: string; amount: number; side: string }
+
+    try {
+      const admin = createAdminClient()
+      await admin.from('audit_logs').insert({
+        action: 'prediction_trade',
+        target_type: 'prediction_trade',
+        target_id: trade.id,
+        target_name: `Trade ${trade.side} ${trade.amount} MXN on market`,
+        performed_by: user.id,
+        details: {
+          market_id: trade.market_id,
+          side: trade.side,
+          amount: trade.amount,
+        },
+      })
+    } catch (auditErr) {
+      console.error('Audit log error (non-fatal):', auditErr)
+    }
+
+    const { count } = await supabase
+      .from('prediction_trades')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+
+    const isFirstTrade = (count ?? 0) <= 1
+
     await supabase.rpc('award_xp', {
       p_user_id: user.id,
       p_action_type: 'prediction_trade',
-      p_action_id: data?.id || null,
+      p_action_id: trade.id,
       p_description: 'Prediction market trade',
     })
 
-    return NextResponse.json({ success: true, trade: data, xpGained: 25 })
+    if (isFirstTrade) {
+      try {
+        await supabase.rpc('award_xp', {
+          p_user_id: user.id,
+          p_action_type: 'prediction_first_trade',
+          p_action_id: trade.id,
+          p_description: 'First prediction trade',
+        })
+      } catch {
+        // prediction_first_trade may not exist in xp_rewards
+      }
+    }
+
+    const xpGained = isFirstTrade ? 75 : 25
+
+    return NextResponse.json({
+      success: true,
+      trade: data,
+      xpGained,
+    })
   } catch (err) {
     console.error('Trade route error:', err)
     return NextResponse.json(

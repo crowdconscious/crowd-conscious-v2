@@ -360,9 +360,58 @@ export default function AchievementsClient({ user }: AchievementsClientProps) {
                         </p>
                       )}
                       {!achievement.unlocked && (
-                        <div className="flex items-center gap-1 text-xs text-slate-400">
-                          <Lock className="w-3 h-3" />
-                          <span>Locked</span>
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-1 text-xs text-slate-400">
+                            <Lock className="w-3 h-3" />
+                            <span>Locked</span>
+                          </div>
+                          {/* Progress indicator for locked achievements */}
+                          {userStats && (
+                            <div className="space-y-1">
+                              {(achievement.type === 'MODULE_5' || achievement.type === 'MODULE_10') && (
+                                <div className="text-xs">
+                                  <div className="flex justify-between text-slate-500 mb-1">
+                                    <span>Modules completed</span>
+                                    <span>{userStats.modules_completed || 0} / {achievement.type === 'MODULE_5' ? 5 : 10}</span>
+                                  </div>
+                                  <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                    <div 
+                                      className="h-full bg-teal-500 transition-all"
+                                      style={{ width: `${Math.min(((userStats.modules_completed || 0) / (achievement.type === 'MODULE_5' ? 5 : 10)) * 100, 100)}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              )}
+                              {achievement.type === 'VOTE_50' && (
+                                <div className="text-xs">
+                                  <div className="flex justify-between text-slate-500 mb-1">
+                                    <span>Votes cast</span>
+                                    <span>{userStats.votes_cast || 0} / 50</span>
+                                  </div>
+                                  <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                    <div 
+                                      className="h-full bg-teal-500 transition-all"
+                                      style={{ width: `${Math.min(((userStats.votes_cast || 0) / 50) * 100, 100)}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              )}
+                              {achievement.type === 'SPONSOR_10' && (
+                                <div className="text-xs">
+                                  <div className="flex justify-between text-slate-500 mb-1">
+                                    <span>Sponsorships</span>
+                                    <span>{userStats.sponsorships_made || 0} / 10</span>
+                                  </div>
+                                  <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                    <div 
+                                      className="h-full bg-teal-500 transition-all"
+                                      style={{ width: `${Math.min(((userStats.sponsorships_made || 0) / 10) * 100, 100)}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>

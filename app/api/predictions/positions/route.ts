@@ -15,7 +15,7 @@ export async function GET(request: Request) {
     const supabase = await createClient()
     let query = supabase
       .from('prediction_positions')
-      .select('*, prediction_markets(title, current_probability)')
+      .select('*, prediction_markets(id, title, current_probability, status, resolution_date)')
       .eq('user_id', user.id)
 
     if (marketId) {
@@ -32,7 +32,28 @@ export async function GET(request: Request) {
       )
     }
 
-    return NextResponse.json({ positions: data || [] })
+    const positions = (data || []).map((p: Record<string, unknown>) => {
+      const market = p.prediction_markets as { current_probability: number } | null
+      const shares = Number(p.shares) || 0
+      const avgPrice = Number(p.average_price) || 0
+      const prob = market?.current_probability ?? 50
+
+      const cost = shares * avgPrice
+      const currentValue =
+        (p.side as string) === 'yes'
+          ? shares * (prob / 100)
+          : shares * ((100 - prob) / 100)
+      const unrealizedPnl = currentValue - cost
+
+      return {
+        ...p,
+        cost,
+        currentValue,
+        unrealizedPnl,
+      }
+    })
+
+    return NextResponse.json({ positions })
   } catch (err) {
     console.error('Positions route error:', err)
     return NextResponse.json(

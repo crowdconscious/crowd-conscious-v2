@@ -5,8 +5,38 @@ export function middleware(request: NextRequest) {
   const startTime = Date.now()
   const { pathname } = request.nextUrl
 
-  // Clone the response to add monitoring
-  const response = NextResponse.next()
+  // Predictions access gate: /predictions/* (except /predictions/gate)
+  if (pathname.startsWith('/predictions')) {
+    const isGatePage = pathname === '/predictions/gate'
+
+    if (!isGatePage) {
+      const cookieValue = request.cookies.get('predictions_access')?.value
+      const expectedCode = process.env.PREDICTIONS_ACCESS_CODE
+
+      if (!expectedCode || cookieValue !== expectedCode) {
+        return NextResponse.redirect(new URL('/predictions/gate', request.url))
+      }
+    }
+
+    // Pass pathname to server components via request headers
+    const requestHeaders = new Headers(request.headers)
+    requestHeaders.set('x-pathname', pathname)
+
+    const response = NextResponse.next({
+      request: { headers: requestHeaders },
+    })
+    response.headers.set('x-request-start', startTime.toString())
+    response.headers.set('x-pathname', pathname)
+    return response
+  }
+
+  // Default: clone the response to add monitoring
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.set('x-pathname', pathname)
+
+  const response = NextResponse.next({
+    request: { headers: requestHeaders },
+  })
 
   // Add monitoring headers
   response.headers.set('x-request-start', startTime.toString())
@@ -16,7 +46,7 @@ export function middleware(request: NextRequest) {
   if (pathname.startsWith('/api/')) {
     const endTime = Date.now()
     const duration = endTime - startTime
-    
+
     // Log slow requests
     if (duration > 3000) {
       console.warn(`Slow API request: ${pathname} took ${duration}ms`)

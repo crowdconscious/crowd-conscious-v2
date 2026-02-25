@@ -128,3 +128,6 @@ GRANT EXECUTE ON FUNCTION public.get_user_rank TO anon;
 -- Check RLS policies:
 -- SELECT * FROM pg_policies WHERE tablename IN ('user_xp', 'user_stats', 'profiles');
 
+
+
+

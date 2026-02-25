@@ -312,3 +312,5 @@ GRANT EXECUTE ON FUNCTION public.check_achievements TO authenticated;
 GRANT EXECUTE ON FUNCTION trigger_content_xp TO authenticated;
 GRANT EXECUTE ON FUNCTION trigger_vote_xp TO authenticated;
 
+
+

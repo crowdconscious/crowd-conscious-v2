@@ -82,3 +82,6 @@ FROM pg_policies
 WHERE tablename IN ('user_xp', 'user_stats', 'profiles', 'leaderboard_view')
 ORDER BY tablename, policyname;
 
+
+
+

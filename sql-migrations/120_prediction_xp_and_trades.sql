@@ -2,9 +2,10 @@
 -- 120: PREDICTION XP REWARDS & ANONYMIZED TRADES
 -- =====================================================
 
--- Add prediction_trade to xp_rewards
+-- Add prediction_trade and prediction_first_trade to xp_rewards
 INSERT INTO public.xp_rewards (action_type, xp_amount, description) VALUES
-  ('prediction_trade', 25, 'Traded on a prediction market')
+  ('prediction_trade', 25, 'Traded on a prediction market'),
+  ('prediction_first_trade', 50, 'Made your first prediction trade')
 ON CONFLICT (action_type) DO UPDATE SET
   xp_amount = EXCLUDED.xp_amount,
   description = EXCLUDED.description;

@@ -53,3 +53,5 @@ GRANT SELECT ON public.leaderboard_view TO anon;
 CREATE INDEX IF NOT EXISTS idx_user_xp_total_xp ON public.user_xp(total_xp DESC);
 CREATE INDEX IF NOT EXISTS idx_user_stats_total_xp ON public.user_stats(total_xp DESC);
 
+
+

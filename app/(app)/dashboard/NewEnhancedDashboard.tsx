@@ -275,6 +275,14 @@ export default function NewEnhancedDashboard({ user, initialUserStats, userCommu
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   {[
                     {
+                      title: 'Collective Consciousness',
+                      description: 'Predict outcomes, fund solutions',
+                      icon: '🔮',
+                      href: '/predictions/gate',
+                      badge: 'Predictions',
+                      color: 'from-emerald-500 to-teal-500'
+                    },
+                    {
                       title: 'Browse Communities',
                       description: 'Discover local groups making impact',
                       icon: '🌍',

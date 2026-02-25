@@ -642,6 +642,35 @@ export interface Database {
           updated_at?: string
         }
       }
+      prediction_deposits: {
+        Row: {
+          id: string
+          user_id: string
+          wallet_id: string
+          stripe_payment_intent_id: string
+          amount: number
+          status: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          wallet_id: string
+          stripe_payment_intent_id: string
+          amount: number
+          status?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          wallet_id?: string
+          stripe_payment_intent_id?: string
+          amount?: number
+          status?: string
+          created_at?: string
+        }
+      }
       conscious_fund: {
         Row: {
           id: string
