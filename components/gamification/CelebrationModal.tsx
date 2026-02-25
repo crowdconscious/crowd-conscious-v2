@@ -15,7 +15,7 @@ interface Achievement {
 
 interface CelebrationModalProps {
   isOpen: boolean
-  type: 'lesson_completed' | 'module_completed' | 'tier_up' | 'achievement' | 'sponsor' | 'purchase'
+  type: 'lesson_completed' | 'module_completed' | 'tier_up' | 'achievement' | 'sponsor' | 'purchase' | 'prediction_trade'
   title: string
   message: string
   xpGained?: number
