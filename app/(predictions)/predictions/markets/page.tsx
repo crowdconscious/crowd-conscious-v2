@@ -35,16 +35,27 @@ async function getCategoryCounts(): Promise<Record<string, number>> {
   return counts
 }
 
+async function getResolvedCount(): Promise<number> {
+  const supabase = await createClient()
+  const { count } = await supabase
+    .from('prediction_markets')
+    .select('id', { count: 'exact', head: true })
+    .eq('status', 'resolved')
+  return count ?? 0
+}
+
 export default async function PredictionsMarketsPage() {
-  const [markets, categoryCounts] = await Promise.all([
+  const [markets, categoryCounts, resolvedCount] = await Promise.all([
     getMarkets(),
     getCategoryCounts(),
+    getResolvedCount(),
   ])
 
   return (
     <MarketsClient
       initialMarkets={markets}
       categoryCounts={categoryCounts}
+      resolvedCount={resolvedCount}
     />
   )
 }

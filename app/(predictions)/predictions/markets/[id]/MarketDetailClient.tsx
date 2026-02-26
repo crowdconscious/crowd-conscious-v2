@@ -71,6 +71,8 @@ interface Props {
   trades: TradeAnon[]
   tradeCount: number
   totalConsciousFromMarket: number
+  totalPayout?: number
+  resolutionEvidence?: { evidence_url?: string; admin_notes?: string }
 }
 
 type TimeRange = '7d' | '30d' | 'all'
@@ -84,6 +86,8 @@ export function MarketDetailClient({
   trades,
   tradeCount,
   totalConsciousFromMarket,
+  totalPayout = 0,
+  resolutionEvidence = {},
 }: Props) {
   const [researchOpen, setResearchOpen] = useState(false)
   const [timeRange, setTimeRange] = useState<TimeRange>('30d')
@@ -124,6 +128,10 @@ export function MarketDetailClient({
     setCelebration({ open: true, xpGained })
   }
 
+  const isResolved = market.status === 'resolved'
+  const outcomeLabel = market.resolved_outcome ? 'YES' : 'NO'
+  const resolvedDate = market.resolved_at ? formatDate(market.resolved_at) : ''
+
   return (
     <div className="space-y-6 pb-8">
       <Link
@@ -132,6 +140,30 @@ export function MarketDetailClient({
       >
         ← Back to markets
       </Link>
+
+      {isResolved && (
+        <div className="bg-emerald-500/20 border border-emerald-500/50 rounded-xl p-6">
+          <h2 className="text-xl font-bold text-emerald-400 mb-2">
+            RESOLVED: {outcomeLabel} on {resolvedDate}
+          </h2>
+          {resolutionEvidence?.evidence_url && (
+            <a
+              href={resolutionEvidence.evidence_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-emerald-300 hover:text-emerald-200 text-sm"
+            >
+              <ExternalLink className="w-4 h-4" />
+              View resolution evidence
+            </a>
+          )}
+          {totalPayout > 0 && (
+            <p className="text-slate-300 mt-2">
+              Winners paid out: {formatVolume(totalPayout)} to {tradeCount} trader(s)
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-[65%_35%] gap-8">
         {/* Left Column */}
@@ -420,10 +452,19 @@ export function MarketDetailClient({
 
         {/* Right Column */}
         <div className="lg:sticky lg:top-6 lg:self-start space-y-6">
-          <TradePanel
-            market={market}
-            onTradeSuccess={handleTradeSuccess}
-          />
+          {isResolved ? (
+            <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+              <h3 className="font-semibold text-white mb-2">Trading closed</h3>
+              <p className="text-slate-400 text-sm">
+                This market has been resolved. No further trades are allowed.
+              </p>
+            </div>
+          ) : (
+            <TradePanel
+              market={market}
+              onTradeSuccess={handleTradeSuccess}
+            />
+          )}
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
             <h3 className="font-semibold text-white mb-3 flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />

@@ -16,16 +16,24 @@ const CATEGORIES = [
   { id: 'cause', label: 'Cause', icon: Heart },
 ] as const
 
+const STATUS_TABS = [
+  { id: 'active', label: 'Active' },
+  { id: 'resolved', label: 'Resolved' },
+] as const
+
 interface Props {
   initialMarkets: PredictionMarket[]
   categoryCounts: Record<string, number>
+  resolvedCount?: number
 }
 
 export function MarketsClient({
   initialMarkets,
   categoryCounts,
+  resolvedCount = 0,
 }: Props) {
   const [markets, setMarkets] = useState<PredictionMarket[]>(initialMarkets)
+  const [statusTab, setStatusTab] = useState<'active' | 'resolved'>('active')
   const [category, setCategory] = useState<string>('all')
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -40,6 +48,7 @@ export function MarketsClient({
     setSearching(true)
     try {
       const params = new URLSearchParams()
+      params.set('status', statusTab)
       if (category !== 'all') params.set('category', category)
       if (debouncedSearch) params.set('search', debouncedSearch)
       const res = await fetch(`/api/predictions/markets?${params}`)
@@ -50,15 +59,15 @@ export function MarketsClient({
     } finally {
       setSearching(false)
     }
-  }, [category, debouncedSearch])
+  }, [statusTab, category, debouncedSearch])
 
   useEffect(() => {
-    if (debouncedSearch || category !== 'all') {
+    if (statusTab === 'resolved' || debouncedSearch || category !== 'all') {
       fetchMarkets()
     } else {
       setMarkets(initialMarkets)
     }
-  }, [debouncedSearch, category, initialMarkets, fetchMarkets])
+  }, [statusTab, debouncedSearch, category, initialMarkets, fetchMarkets])
 
   return (
     <div className="space-y-6">
@@ -67,6 +76,27 @@ export function MarketsClient({
         <p className="text-slate-400 mt-1">
           Browse and trade on prediction markets
         </p>
+      </div>
+
+      <div className="flex gap-2 mb-4">
+        {STATUS_TABS.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setStatusTab(tab.id)}
+            className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+              statusTab === tab.id
+                ? 'bg-emerald-600 text-white'
+                : 'bg-slate-800 text-slate-400 hover:text-white'
+            }`}
+          >
+            {tab.label}
+            {tab.id === 'resolved' && resolvedCount > 0 && (
+              <span className="ml-1.5 px-1.5 py-0.5 rounded text-xs bg-white/20">
+                {resolvedCount}
+              </span>
+            )}
+          </button>
+        ))}
       </div>
 
       <div className="relative">

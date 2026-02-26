@@ -65,7 +65,7 @@ export default async function MarketDetailPage({
       .eq('source_type', 'trade_fee'),
   ])
 
-  let trades: { side: string; amount: number; price: number; created_at: string }[] = []
+  let trades: { side: string; amount: number; price: number; fee_amount?: number; conscious_fund_amount?: number; shares?: number; created_at: string }[] = []
   try {
     const { data } = await supabase.rpc('get_market_trades_anon', { p_market_id: id })
     trades = data ?? []
@@ -74,6 +74,18 @@ export default async function MarketDetailPage({
   }
   const totalConsciousFromMarket =
     (consciousRes?.data ?? []).reduce((sum, t) => sum + Number(t.amount), 0)
+
+  let totalPayout = 0
+  if (market.status === 'resolved' && market.resolved_outcome != null) {
+    const winningSide = market.resolved_outcome ? 'yes' : 'no'
+    const winningTrades = trades.filter((t: { side: string }) => t.side === winningSide)
+    totalPayout = winningTrades.reduce((sum: number, t: { shares?: number; amount?: number; price?: number; fee_amount?: number; conscious_fund_amount?: number }) => {
+      const shares = t.shares ?? (Number(t.amount) - Number(t.fee_amount ?? 0) - Number(t.conscious_fund_amount ?? 0)) / (Number(t.price) * 10 || 1)
+      return sum + shares * 10
+    }, 0)
+  }
+
+  const resolutionEvidence = (market.resolution_evidence as { evidence_url?: string }) || {}
 
   return (
     <MarketDetailClient
@@ -85,6 +97,8 @@ export default async function MarketDetailPage({
       trades={trades}
       tradeCount={tradeCountRes?.count ?? 0}
       totalConsciousFromMarket={totalConsciousFromMarket}
+      totalPayout={totalPayout}
+      resolutionEvidence={resolutionEvidence}
     />
   )
 }

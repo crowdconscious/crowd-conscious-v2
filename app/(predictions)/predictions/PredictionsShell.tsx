@@ -12,6 +12,7 @@ import {
   Receipt,
   Menu,
   X,
+  ShieldCheck,
 } from 'lucide-react'
 
 const NAV_ITEMS = [
@@ -24,8 +25,10 @@ const NAV_ITEMS = [
 
 export default function PredictionsShell({
   children,
+  isAdmin = false,
 }: {
   children: React.ReactNode
+  isAdmin?: boolean
 }) {
   const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -67,6 +70,22 @@ export default function PredictionsShell({
             )
           })}
         </nav>
+
+        {isAdmin && (
+          <div className="px-4 pb-2">
+            <Link
+              href="/predictions/admin/resolve"
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                pathname === '/predictions/admin/resolve'
+                  ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
+                  : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800/50'
+              }`}
+            >
+              <ShieldCheck className="w-4 h-4" />
+              Resolve Markets
+            </Link>
+          </div>
+        )}
 
         <div className="p-4 border-t border-slate-800">
           <Link
@@ -140,6 +159,20 @@ export default function PredictionsShell({
                   </Link>
                 )
               })}
+              {isAdmin && (
+                <Link
+                  href="/predictions/admin/resolve"
+                  onClick={closeMobileMenu}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                    pathname === '/predictions/admin/resolve'
+                      ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
+                      : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800/50'
+                  }`}
+                >
+                  <ShieldCheck className="w-4 h-4" />
+                  Resolve Markets
+                </Link>
+              )}
             </nav>
 
             <div className="p-4 border-t border-slate-800">

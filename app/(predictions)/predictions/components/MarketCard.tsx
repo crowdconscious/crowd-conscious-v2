@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import {
   Globe,
   Building2,
@@ -10,6 +11,7 @@ import {
   TrendingUp,
   TrendingDown,
   Calendar,
+  CheckCircle,
 } from 'lucide-react'
 import type { Database } from '@/types/database'
 import { TradeModal } from './TradeModal'
@@ -151,30 +153,42 @@ export function MarketCard({ market }: MarketCardProps) {
           </p>
         </div>
 
-        <div className="flex gap-2 mt-auto">
-          <button
-            onClick={() => openTrade('yes')}
-            className="flex-1 py-2.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm transition-colors flex items-center justify-center gap-1.5"
+        {market.status === 'resolved' ? (
+          <Link
+            href={`/predictions/markets/${market.id}`}
+            className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 text-sm font-medium transition-colors mt-auto"
           >
-            <TrendingUp className="w-4 h-4" />
-            Yes ↑
-          </button>
-          <button
-            onClick={() => openTrade('no')}
-            className="flex-1 py-2.5 px-3 rounded-lg bg-red-600/80 hover:bg-red-500/80 text-white font-medium text-sm transition-colors flex items-center justify-center gap-1.5"
-          >
-            <TrendingDown className="w-4 h-4" />
-            No ↓
-          </button>
-        </div>
+            <CheckCircle className="w-4 h-4" />
+            Resolved: {market.resolved_outcome ? 'YES' : 'NO'} — View details
+          </Link>
+        ) : (
+          <div className="flex gap-2 mt-auto">
+            <button
+              onClick={() => openTrade('yes')}
+              className="flex-1 py-2.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm transition-colors flex items-center justify-center gap-1.5"
+            >
+              <TrendingUp className="w-4 h-4" />
+              Yes ↑
+            </button>
+            <button
+              onClick={() => openTrade('no')}
+              className="flex-1 py-2.5 px-3 rounded-lg bg-red-600/80 hover:bg-red-500/80 text-white font-medium text-sm transition-colors flex items-center justify-center gap-1.5"
+            >
+              <TrendingDown className="w-4 h-4" />
+              No ↓
+            </button>
+          </div>
+        )}
       </div>
 
-      <TradeModal
-        market={market}
-        side={tradeSide}
-        isOpen={tradeModalOpen}
-        onClose={() => setTradeModalOpen(false)}
-      />
+      {market.status !== 'resolved' && (
+        <TradeModal
+          market={market}
+          side={tradeSide}
+          isOpen={tradeModalOpen}
+          onClose={() => setTradeModalOpen(false)}
+        />
+      )}
     </>
   )
 }
