@@ -39,13 +39,27 @@ async function getFundData(userId: string) {
   const userContribution =
     userTrades?.reduce((sum, t) => sum + Number(t.conscious_fund_amount), 0) ?? 0
 
+  // Normalize prediction_markets: Supabase may return array or object for FK relation
+  const normalizedTransactions = (transactions ?? []).map((tx) => {
+    const pm = tx.prediction_markets
+    const market = Array.isArray(pm) ? pm[0] : pm
+    return {
+      id: tx.id,
+      amount: tx.amount,
+      source_type: tx.source_type,
+      description: tx.description,
+      created_at: tx.created_at,
+      prediction_markets: market ? { id: String(market.id), title: String(market.title) } : null,
+    }
+  })
+
   return {
     fund: fund ?? {
       current_balance: 0,
       total_collected: 0,
       total_disbursed: 0,
     },
-    transactions: transactions ?? [],
+    transactions: normalizedTransactions,
     userContribution,
   }
 }
