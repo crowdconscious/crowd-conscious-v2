@@ -22,11 +22,16 @@ import {
   Heart,
   ChevronDown,
   ChevronUp,
+  ChevronRight,
   ExternalLink,
   TrendingUp,
   Wallet,
   Calendar,
   BarChart3,
+  Newspaper,
+  BarChart2,
+  Bell,
+  PenLine,
 } from 'lucide-react'
 import { TradePanel } from '../../components/TradePanel'
 import { CelebrationModal } from '@/components/gamification/CelebrationModal'
@@ -60,6 +65,35 @@ function formatDate(d: string): string {
     day: 'numeric',
     year: 'numeric',
   })
+}
+
+function formatRelativeTime(d: string): string {
+  const now = Date.now()
+  const then = new Date(d).getTime()
+  const diffMs = now - then
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMs / 3600000)
+  const diffDays = Math.floor(diffMs / 86400000)
+  if (diffMins < 1) return 'hace un momento'
+  if (diffMins < 60) return `hace ${diffMins} minuto${diffMins === 1 ? '' : 's'}`
+  if (diffHours < 24) return `hace ${diffHours} hora${diffHours === 1 ? '' : 's'}`
+  if (diffDays < 7) return `hace ${diffDays} día${diffDays === 1 ? '' : 's'}`
+  return formatDate(d)
+}
+
+function getSentimentLabel(score: number): string {
+  if (score < -60) return 'Muy Negativo'
+  if (score < -20) return 'Negativo'
+  if (score <= 20) return 'Neutral'
+  if (score <= 60) return 'Positivo'
+  return 'Muy Positivo'
+}
+
+const AGENT_ICONS: Record<string, React.ElementType> = {
+  news_monitor: Newspaper,
+  sentiment_tracker: BarChart2,
+  data_watchdog: Bell,
+  content_creator: PenLine,
 }
 
 interface Props {
@@ -122,7 +156,6 @@ export function MarketDetailClient({
   }))
 
   const latestSentiment = sentiment[0] ? Number(sentiment[0].score) : 0
-  const latestAgentUpdate = agentContent[0]?.created_at
 
   const handleTradeSuccess = (xpGained?: number) => {
     setCelebration({ open: true, xpGained })
@@ -302,6 +335,49 @@ export function MarketDetailClient({
             )}
           </div>
 
+          {/* Sentiment Gauge - between probability chart and research */}
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+            <h3 className="font-semibold text-white mb-3">
+              Sentimiento: {sentiment.length > 0 ? getSentimentLabel(latestSentiment) : '—'}
+            </h3>
+            {sentiment.length > 0 ? (
+              <>
+                <div className="relative h-4 bg-gradient-to-r from-red-500 via-yellow-500 to-emerald-500 rounded-full overflow-visible mb-2">
+                  <div
+                    className="absolute top-1/2 -translate-y-1/2 w-3 h-6 bg-white border-2 border-slate-800 rounded-sm shadow-md transition-all z-10"
+                    style={{
+                      left: `${Math.min(100, Math.max(0, ((latestSentiment + 100) / 200) * 100))}%`,
+                      transform: 'translate(-50%, -50%)',
+                    }}
+                  />
+                </div>
+                <div className="flex justify-between text-xs text-slate-400 mb-4">
+                  <span>-100</span>
+                  <span className="text-white font-medium">{latestSentiment.toFixed(0)}</span>
+                  <span>+100</span>
+                </div>
+                {sentimentChartData.length >= 2 && (
+                  <div className="h-12">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={[...sentimentChartData].reverse().slice(-10)}>
+                        <Line
+                          type="monotone"
+                          dataKey="score"
+                          stroke="#a855f7"
+                          strokeWidth={1.5}
+                          dot={false}
+                          isAnimationActive={false}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </>
+            ) : (
+              <p className="text-slate-500 text-sm">No hay datos de sentimiento aún</p>
+            )}
+          </div>
+
           {/* Research Center */}
           <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
             <button
@@ -363,91 +439,22 @@ export function MarketDetailClient({
             </AnimatePresence>
           </div>
 
-          {/* AI Insights */}
-          {agentContent.length > 0 && (
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-              <h3 className="font-semibold text-white mb-3">AI Insights</h3>
-              <p className="text-slate-400 text-xs mb-4">
-                Last updated: {latestAgentUpdate ? formatDate(latestAgentUpdate) : '—'}
-              </p>
-              <div className="space-y-4">
-                {agentContent.map((ac) => (
-                  <div key={ac.id} className="border-l-2 border-emerald-500/50 pl-4">
-                    <p className="text-emerald-400 text-sm font-medium">{ac.title}</p>
-                    <p className="text-slate-300 text-sm mt-1">{ac.body}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Sentiment Indicator */}
-          {sentiment.length > 0 && (
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-              <h3 className="font-semibold text-white mb-3">Sentiment</h3>
-              <div className="flex items-center gap-4 mb-4">
-                <div className="flex-1">
-                  <div className="h-3 bg-gradient-to-r from-red-500 via-slate-500 to-emerald-500 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-slate-900 w-2 border-2 border-white rounded-full transition-all"
-                      style={{
-                        marginLeft: `${((latestSentiment + 100) / 200) * 100}%`,
-                        transform: 'translateX(-50%)',
-                      }}
-                    />
-                  </div>
-                  <div className="flex justify-between text-xs text-slate-400 mt-1">
-                    <span>-100</span>
-                    <span className="text-white font-medium">{latestSentiment}</span>
-                    <span>+100</span>
-                  </div>
-                </div>
-              </div>
-              {sentimentChartData.length > 1 && (
-                <div className="h-24">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={sentimentChartData}>
-                      <Line
-                        type="monotone"
-                        dataKey="score"
-                        stroke="#a855f7"
-                        strokeWidth={2}
-                        dot={false}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Activity Feed */}
+          {/* Agent Insights */}
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-            <h3 className="font-semibold text-white mb-4">Recent Activity</h3>
-            {trades.length === 0 ? (
-              <p className="text-slate-400 text-sm">No trades yet</p>
+            <h3 className="font-semibold text-white mb-4">Análisis de agentes</h3>
+            {agentContent.length === 0 ? (
+              <p className="text-slate-500 text-sm">No hay análisis disponible aún</p>
             ) : (
-              <div className="space-y-2">
-                {trades.map((t, i) => {
-                  const pricePerShare = t.price_per_share_mxn != null ? Number(t.price_per_share_mxn) : Number(t.price) * 10
-                  const shares = t.shares != null ? Number(t.shares) : (pricePerShare > 0 ? Number(t.amount) / pricePerShare : 0)
-                  return (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between py-2 border-b border-slate-800 last:border-0"
-                    >
-                      <span className="text-slate-300 text-sm">
-                        Someone bought {shares.toFixed(1)} {t.side.toUpperCase()} shares at ${pricePerShare.toFixed(2)}
-                      </span>
-                      <span className="text-slate-500 text-xs">
-                        {formatDate(t.created_at)}
-                      </span>
-                    </div>
-                  )
-                })}
+              <div className="space-y-4">
+                {agentContent.slice(0, 5).map((ac) => (
+                  <AgentInsightCard key={ac.id} content={ac} />
+                ))}
               </div>
             )}
           </div>
+
+          {/* Activity Feed - with polling */}
+          <ActivityFeed marketId={market.id} initialTrades={trades} />
         </div>
 
         {/* Right Column */}
@@ -514,6 +521,85 @@ export function MarketDetailClient({
         xpGained={celebration.xpGained}
         onClose={() => setCelebration({ open: false })}
       />
+    </div>
+  )
+}
+
+function AgentInsightCard({ content }: { content: AgentContent }) {
+  const [expanded, setExpanded] = useState(false)
+  const Icon = AGENT_ICONS[content.agent_type] || Newspaper
+  const bodyLines = content.body.split('\n').filter(Boolean)
+  const truncated = bodyLines.slice(0, 3).join('\n')
+  const hasMore = bodyLines.length > 3 || content.body.length > (truncated.length + 20)
+
+  return (
+    <div className="border border-slate-800 rounded-lg p-4">
+      <div className="flex items-start gap-3">
+        <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center shrink-0">
+          <Icon className="w-5 h-5 text-emerald-400" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="font-medium text-white text-sm">{content.title}</p>
+          <p className={`text-slate-400 text-sm mt-1 whitespace-pre-wrap ${!expanded ? 'line-clamp-3' : ''}`}>
+            {expanded ? content.body : truncated}
+          </p>
+          {hasMore && (
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="mt-2 inline-flex items-center gap-1 text-emerald-400 hover:text-emerald-300 text-xs font-medium"
+            >
+              {expanded ? 'Ver menos' : 'Leer más'}
+              <ChevronRight className={`w-4 h-4 transition-transform ${expanded ? 'rotate-90' : ''}`} />
+            </button>
+          )}
+          <p className="text-slate-500 text-xs mt-2">{formatRelativeTime(content.created_at)}</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ActivityFeed({ marketId, initialTrades }: { marketId: string; initialTrades: TradeAnon[] }) {
+  const [trades, setTrades] = useState(initialTrades)
+
+  useEffect(() => {
+    const fetchTrades = async () => {
+      try {
+        const res = await fetch(`/api/predictions/markets/${marketId}/trades`)
+        const data = await res.json()
+        if (data.trades) setTrades(data.trades)
+      } catch {
+        // keep current
+      }
+    }
+    const interval = setInterval(fetchTrades, 30000)
+    fetchTrades()
+    return () => clearInterval(interval)
+  }, [marketId])
+
+  return (
+    <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+      <h3 className="font-semibold text-white mb-4">Actividad reciente</h3>
+      {trades.length === 0 ? (
+        <p className="text-slate-400 text-sm">No hay operaciones aún</p>
+      ) : (
+        <div className="space-y-2">
+          {trades.slice(0, 10).map((t, i) => {
+            const pricePerShare = t.price_per_share_mxn != null ? Number(t.price_per_share_mxn) : Number(t.price) * 10
+            const shares = t.shares != null ? Number(t.shares) : (pricePerShare > 0 ? Number(t.amount) / pricePerShare : 0)
+            return (
+              <div
+                key={i}
+                className="flex items-center justify-between py-2 border-b border-slate-800 last:border-0"
+              >
+                <span className="text-slate-300 text-sm">
+                  Alguien compró {shares.toFixed(1)} shares {t.side.toUpperCase()} a ${pricePerShare.toFixed(2)} — {formatRelativeTime(t.created_at)}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

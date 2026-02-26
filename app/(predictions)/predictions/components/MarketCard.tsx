@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import type { Database } from '@/types/database'
 import { TradeModal } from './TradeModal'
+import { MiniSparkline } from './MiniSparkline'
 
 type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row']
 
@@ -80,9 +81,10 @@ function getCountdown(resolutionDate: string): string {
 
 interface MarketCardProps {
   market: PredictionMarket
+  history?: { probability: number; recorded_at: string }[]
 }
 
-export function MarketCard({ market }: MarketCardProps) {
+export function MarketCard({ market, history = [] }: MarketCardProps) {
   const [tradeModalOpen, setTradeModalOpen] = useState(false)
   const [tradeSide, setTradeSide] = useState<'yes' | 'no'>('yes')
 
@@ -134,6 +136,22 @@ export function MarketCard({ market }: MarketCardProps) {
             />
           </div>
         </div>
+
+        {history.length >= 2 && (
+          <div className="mb-4">
+            <MiniSparkline
+              data={history.map((h) => ({ value: h.probability }))}
+              positive={
+                history.length >= 2
+                  ? history[history.length - 1].probability >= history[0].probability
+                  : true
+              }
+              width={120}
+              height={40}
+              className="rounded"
+            />
+          </div>
+        )}
 
         <div className="space-y-2 text-sm text-slate-400 mb-4">
           <div className="flex items-center gap-2">

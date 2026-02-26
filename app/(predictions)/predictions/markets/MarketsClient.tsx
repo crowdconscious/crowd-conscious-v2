@@ -25,12 +25,14 @@ interface Props {
   initialMarkets: PredictionMarket[]
   categoryCounts: Record<string, number>
   resolvedCount?: number
+  historyByMarket?: Record<string, { probability: number; recorded_at: string }[]>
 }
 
 export function MarketsClient({
   initialMarkets,
   categoryCounts,
   resolvedCount = 0,
+  historyByMarket = {},
 }: Props) {
   const [markets, setMarkets] = useState<PredictionMarket[]>(initialMarkets)
   const [statusTab, setStatusTab] = useState<'active' | 'resolved'>('active')
@@ -169,7 +171,11 @@ export function MarketsClient({
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {markets.map((market) => (
-            <MarketCard key={market.id} market={market} />
+            <MarketCard
+              key={market.id}
+              market={market}
+              history={historyByMarket[market.id] ?? []}
+            />
           ))}
         </div>
       )}

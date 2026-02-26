@@ -44,11 +44,31 @@ async function getResolvedCount(): Promise<number> {
   return count ?? 0
 }
 
+async function getHistoryByMarket(): Promise<Record<string, { probability: number; recorded_at: string }[]>> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('prediction_market_history')
+    .select('market_id, probability, recorded_at')
+    .order('recorded_at', { ascending: true })
+
+  const byMarket: Record<string, { probability: number; recorded_at: string }[]> = {}
+  for (const row of data ?? []) {
+    const id = row.market_id
+    if (!byMarket[id]) byMarket[id] = []
+    byMarket[id].push({ probability: Number(row.probability), recorded_at: row.recorded_at })
+  }
+  for (const id of Object.keys(byMarket)) {
+    byMarket[id] = byMarket[id].slice(-14)
+  }
+  return byMarket
+}
+
 export default async function PredictionsMarketsPage() {
-  const [markets, categoryCounts, resolvedCount] = await Promise.all([
+  const [markets, categoryCounts, resolvedCount, historyByMarket] = await Promise.all([
     getMarkets(),
     getCategoryCounts(),
     getResolvedCount(),
+    getHistoryByMarket(),
   ])
 
   return (
@@ -56,6 +76,7 @@ export default async function PredictionsMarketsPage() {
       initialMarkets={markets}
       categoryCounts={categoryCounts}
       resolvedCount={resolvedCount}
+      historyByMarket={historyByMarket}
     />
   )
 }
