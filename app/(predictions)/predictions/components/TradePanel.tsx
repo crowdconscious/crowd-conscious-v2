@@ -8,6 +8,12 @@ import type { Database } from '@/types/database'
 type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row']
 type PredictionPosition = Database['public']['Tables']['prediction_positions']['Row']
 
+const SHARE_PAYOUT = 10  // $10 MXN per share if correct
+
+function formatCurrency(num: number): string {
+  return `$${num.toFixed(2)}`
+}
+
 function formatVolume(vol: number): string {
   if (vol >= 1_000_000) return `$${(vol / 1_000_000).toFixed(1)}M`
   if (vol >= 1_000) return `$${(vol / 1_000).toFixed(1)}K`
@@ -40,14 +46,17 @@ export function TradePanel({ market, onTradeSuccess }: TradePanelProps) {
 
   const minTrade = Number(market.min_trade)
   const prob = Number(market.current_probability)
-  const price = side === 'yes' ? prob / 100 : (100 - prob) / 100
+  // $10 share basis: YES price = prob/100*10, NO price = (100-prob)/100*10
+  const pricePerShare = side === 'yes' ? (prob / 100) * 10 : ((100 - prob) / 100) * 10
   const numAmount = parseFloat(amount) || 0
-  const shares = price > 0 ? numAmount / price : 0
   const feeAmount = numAmount * (Number(market.fee_percentage) / 100)
   const consciousAmount = numAmount * (Number(market.conscious_fund_percentage) / 100)
-  const estimatedPayout = shares * 1.0
+  const netAmount = numAmount - feeAmount - consciousAmount
+  const shares = pricePerShare > 0 ? netAmount / pricePerShare : 0
+  const potentialPayout = shares * SHARE_PAYOUT
+  const totalCost = numAmount
   const balance = wallet?.balance ?? 0
-  const hasBalance = balance >= numAmount + feeAmount + consciousAmount
+  const hasBalance = balance >= totalCost
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -151,15 +160,18 @@ export function TradePanel({ market, onTradeSuccess }: TradePanelProps) {
           </div>
 
           {numAmount >= minTrade && (
-            <div className="space-y-2 text-sm">
-              <p className="text-slate-300">
-                You get ~{shares.toFixed(0)} shares at {(price * 100).toFixed(0)}¢ per share
+            <div className="space-y-2 text-sm p-3 bg-slate-800/50 rounded-lg">
+              <p className="text-white font-medium">
+                You&apos;re buying {shares.toFixed(2)} {side.toUpperCase()} shares at {formatCurrency(pricePerShare)} each
+              </p>
+              <p className="text-emerald-400">
+                If {side.toUpperCase()} wins, you receive: {formatCurrency(potentialPayout)} ({shares.toFixed(2)} × ${SHARE_PAYOUT})
               </p>
               <p className="text-slate-400">
-                Estimated payout if correct: {formatVolume(estimatedPayout)}
+                Platform fee: {formatCurrency(feeAmount)} | Conscious Fund: {formatCurrency(consciousAmount)}
               </p>
-              <p className="text-slate-500">
-                Platform fee: {formatVolume(feeAmount)} | Conscious Fund: {formatVolume(consciousAmount)}
+              <p className="text-slate-300 font-medium">
+                Total cost: {formatCurrency(totalCost)}
               </p>
             </div>
           )}
@@ -177,20 +189,64 @@ export function TradePanel({ market, onTradeSuccess }: TradePanelProps) {
       {(yesPosition || noPosition) && (
         <div className="mt-4 pt-4 border-t border-slate-800">
           <p className="text-slate-400 text-sm font-medium mb-2">Your position</p>
-          <div className="space-y-1 text-sm">
+          <div className="space-y-3 text-sm">
             {yesPosition && Number(yesPosition.shares) > 0 && (
-              <p className="text-emerald-400">
-                YES: {Number(yesPosition.shares).toFixed(0)} shares @ {(Number(yesPosition.average_price) * 100).toFixed(0)}¢
-              </p>
+              <PositionRow
+                side="YES"
+                shares={Number(yesPosition.shares)}
+                avgPrice={Number(yesPosition.average_price)}
+                currentProb={prob}
+                isYes
+              />
             )}
             {noPosition && Number(noPosition.shares) > 0 && (
-              <p className="text-red-400">
-                NO: {Number(noPosition.shares).toFixed(0)} shares @ {((1 - Number(noPosition.average_price)) * 100).toFixed(0)}¢
-              </p>
+              <PositionRow
+                side="NO"
+                shares={Number(noPosition.shares)}
+                avgPrice={Number(noPosition.average_price)}
+                currentProb={prob}
+                isYes={false}
+              />
             )}
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+function PositionRow({
+  side,
+  shares,
+  avgPrice,
+  currentProb,
+  isYes,
+}: {
+  side: string
+  shares: number
+  avgPrice: number
+  currentProb: number
+  isYes: boolean
+}) {
+  const avgPriceMxn = isYes ? avgPrice * 10 : (1 - avgPrice) * 10
+  const currentPriceMxn = isYes ? (currentProb / 100) * 10 : ((100 - currentProb) / 100) * 10
+  const costBasis = shares * avgPriceMxn
+  const currentValue = shares * currentPriceMxn
+  const pnl = currentValue - costBasis
+  const pnlPct = costBasis > 0 ? (pnl / costBasis) * 100 : 0
+  const colorClass = isYes ? 'text-emerald-400' : 'text-red-400'
+
+  return (
+    <div className="p-3 bg-slate-800/50 rounded-lg">
+      <p className={`font-medium ${colorClass}`}>
+        {side}: {shares.toFixed(2)} shares @ {formatCurrency(avgPriceMxn)} avg
+      </p>
+      <p className="text-slate-300 mt-1">
+        Current value: {formatCurrency(currentValue)}
+      </p>
+      <p className={pnl >= 0 ? 'text-emerald-400' : 'text-red-400'}>
+        P&L: {pnl >= 0 ? '+' : ''}{formatCurrency(pnl)} ({pnlPct >= 0 ? '+' : ''}{pnlPct.toFixed(1)}%)
+      </p>
     </div>
   )
 }

@@ -6,6 +6,12 @@ import type { Database } from '@/types/database'
 
 type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row']
 
+const SHARE_PAYOUT = 10
+
+function formatCurrency(num: number): string {
+  return `$${num.toFixed(2)}`
+}
+
 interface TradeModalProps {
   market: PredictionMarket
   side: 'yes' | 'no'
@@ -21,7 +27,14 @@ export function TradeModal({ market, side, isOpen, onClose }: TradeModalProps) {
 
   const minTrade = Number(market.min_trade)
   const prob = Number(market.current_probability)
-  const price = side === 'yes' ? prob / 100 : (100 - prob) / 100
+  const pricePerShare = side === 'yes' ? (prob / 100) * 10 : ((100 - prob) / 100) * 10
+  const numAmount = parseFloat(amount) || 0
+  const feeAmount = numAmount * (Number(market.fee_percentage) / 100)
+  const consciousAmount = numAmount * (Number(market.conscious_fund_percentage) / 100)
+  const netAmount = numAmount - feeAmount - consciousAmount
+  const shares = pricePerShare > 0 ? netAmount / pricePerShare : 0
+  const potentialPayout = shares * SHARE_PAYOUT
+  const totalCost = numAmount
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -91,10 +104,20 @@ export function TradeModal({ market, side, isOpen, onClose }: TradeModalProps) {
             />
           </div>
 
-          {amount && !isNaN(parseFloat(amount)) && (
-            <div className="text-sm text-slate-400">
-              ~{(parseFloat(amount) / price).toFixed(0)} shares at{' '}
-              {(price * 100).toFixed(0)}¢
+          {numAmount >= minTrade && (
+            <div className="space-y-2 text-sm p-3 bg-slate-800/50 rounded-lg">
+              <p className="text-white font-medium">
+                You&apos;re buying {shares.toFixed(2)} {side.toUpperCase()} shares at {formatCurrency(pricePerShare)} each
+              </p>
+              <p className="text-emerald-400">
+                If {side.toUpperCase()} wins, you receive: {formatCurrency(potentialPayout)} ({shares.toFixed(2)} × ${SHARE_PAYOUT})
+              </p>
+              <p className="text-slate-400">
+                Platform fee: {formatCurrency(feeAmount)} | Conscious Fund: {formatCurrency(consciousAmount)}
+              </p>
+              <p className="text-slate-300 font-medium">
+                Total cost: {formatCurrency(totalCost)}
+              </p>
             </div>
           )}
 
@@ -108,7 +131,7 @@ export function TradeModal({ market, side, isOpen, onClose }: TradeModalProps) {
             </button>
             <button
               type="submit"
-              disabled={loading || !amount || parseFloat(amount) < minTrade}
+              disabled={loading || !amount || numAmount < minTrade}
               className="flex-1 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? 'Trading...' : 'Trade'}

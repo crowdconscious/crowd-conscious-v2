@@ -117,7 +117,9 @@ export function MarketCard({ market }: MarketCardProps) {
             <span className="text-3xl font-bold text-white">
               {prob.toFixed(0)}%
             </span>
-            <span className="text-slate-400 text-sm">YES</span>
+            <span className="text-slate-400 text-sm">
+              YES (${((prob / 100) * 10).toFixed(2)})
+            </span>
           </div>
           <div className="h-2 bg-slate-800 rounded-full overflow-hidden flex">
             <div

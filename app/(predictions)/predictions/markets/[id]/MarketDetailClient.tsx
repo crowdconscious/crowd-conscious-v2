@@ -35,7 +35,7 @@ import type { Database } from '@/types/database'
 type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row']
 type AgentContent = Database['public']['Tables']['agent_content']['Row']
 type SentimentScore = { score: number; source: string; recorded_at: string }
-type TradeAnon = { side: string; amount: number; price: number; created_at: string }
+type TradeAnon = { side: string; amount: number; price: number; shares?: number; price_per_share_mxn?: number; created_at: string }
 
 const CATEGORY_CONFIG: Record<
   string,
@@ -73,6 +73,8 @@ interface Props {
   totalConsciousFromMarket: number
 }
 
+type TimeRange = '7d' | '30d' | 'all'
+
 export function MarketDetailClient({
   market,
   creatorName,
@@ -84,6 +86,7 @@ export function MarketDetailClient({
   totalConsciousFromMarket,
 }: Props) {
   const [researchOpen, setResearchOpen] = useState(false)
+  const [timeRange, setTimeRange] = useState<TimeRange>('30d')
   const [celebration, setCelebration] = useState<{
     open: boolean
     xpGained?: number
@@ -94,8 +97,17 @@ export function MarketDetailClient({
   const prob = Number(market.current_probability)
   const volume = Number(market.total_volume)
 
-  const historyChartData = history.map((h) => ({
-    date: new Date(h.recorded_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+  const now = Date.now()
+  const filteredHistory = history.filter((h) => {
+    if (timeRange === 'all') return true
+    const t = new Date(h.recorded_at).getTime()
+    const days = timeRange === '7d' ? 7 : 30
+    return t >= now - days * 24 * 60 * 60 * 1000
+  })
+
+  const historyChartData = filteredHistory.map((h) => ({
+    date: new Date(h.recorded_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' }),
+    fullDate: new Date(h.recorded_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
     probability: Number(h.probability),
     volume: Number(h.volume_24h),
   }))
@@ -152,7 +164,9 @@ export function MarketDetailClient({
             <div className="flex items-center justify-between mb-6">
               <div>
                 <p className="text-slate-400 text-sm">Current probability</p>
-                <p className="text-4xl font-bold text-white">{prob.toFixed(0)}% YES</p>
+                <p className="text-4xl font-bold text-white">
+                  {prob.toFixed(0)}% YES <span className="text-xl font-normal text-slate-400">(${((prob / 100) * 10).toFixed(2)}/share)</span>
+                </p>
               </div>
               <div
                 className="relative h-24 w-24 rounded-full flex items-center justify-center"
@@ -178,16 +192,49 @@ export function MarketDetailClient({
 
             {historyChartData.length > 0 && (
               <>
-                <p className="text-slate-400 text-sm mb-3">Probability (last 30 days)</p>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-slate-400 text-sm">Probability (from prediction_market_history)</p>
+                  <div className="flex gap-2">
+                    {(['7d', '30d', 'all'] as const).map((range) => (
+                      <button
+                        key={range}
+                        onClick={() => setTimeRange(range)}
+                        className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                          timeRange === range
+                            ? 'bg-emerald-600 text-white'
+                            : 'bg-slate-800 text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        {range === 'all' ? 'All' : range.toUpperCase()}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <div className="h-48">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={historyChartData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                       <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} />
-                      <YAxis stroke="#94a3b8" fontSize={12} domain={[0, 100]} />
+                      <YAxis stroke="#94a3b8" fontSize={12} domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
                       <Tooltip
-                        contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155' }}
+                        contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
                         labelStyle={{ color: '#94a3b8' }}
+                        formatter={(value: number) => [`${value.toFixed(1)}%`, 'Probability']}
+                        labelFormatter={(label, payload) => {
+                          const p = payload[0]?.payload
+                          return p?.fullDate ?? label
+                        }}
+                        content={({ active, payload, label }) => {
+                          if (!active || !payload?.length) return null
+                          const p = payload[0].payload
+                          return (
+                            <div className="bg-slate-800 border border-slate-600 rounded-lg p-3 shadow-xl">
+                              <p className="text-slate-300 text-sm font-medium">{p.fullDate}</p>
+                              <p className="text-emerald-400 font-semibold">{Number(p.probability).toFixed(1)}% YES</p>
+                              <p className="text-slate-400 text-xs">Volume (24h): ${Number(p.volume).toFixed(0)}</p>
+                            </div>
+                          )
+                        }}
                       />
                       <Line
                         type="monotone"
@@ -349,19 +396,23 @@ export function MarketDetailClient({
               <p className="text-slate-400 text-sm">No trades yet</p>
             ) : (
               <div className="space-y-2">
-                {trades.map((t, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center justify-between py-2 border-b border-slate-800 last:border-0"
-                  >
-                    <span className="text-slate-300 text-sm">
-                      Someone bought {Math.round(Number(t.amount) / Number(t.price))} {t.side.toUpperCase()} shares at ${Number(t.price).toFixed(2)}
-                    </span>
-                    <span className="text-slate-500 text-xs">
-                      {formatDate(t.created_at)}
-                    </span>
-                  </div>
-                ))}
+                {trades.map((t, i) => {
+                  const pricePerShare = t.price_per_share_mxn != null ? Number(t.price_per_share_mxn) : Number(t.price) * 10
+                  const shares = t.shares != null ? Number(t.shares) : (pricePerShare > 0 ? Number(t.amount) / pricePerShare : 0)
+                  return (
+                    <div
+                      key={i}
+                      className="flex items-center justify-between py-2 border-b border-slate-800 last:border-0"
+                    >
+                      <span className="text-slate-300 text-sm">
+                        Someone bought {shares.toFixed(1)} {t.side.toUpperCase()} shares at ${pricePerShare.toFixed(2)}
+                      </span>
+                      <span className="text-slate-500 text-xs">
+                        {formatDate(t.created_at)}
+                      </span>
+                    </div>
+                  )
+                })}
               </div>
             )}
           </div>

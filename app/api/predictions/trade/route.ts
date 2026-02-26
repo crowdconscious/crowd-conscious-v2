@@ -58,7 +58,29 @@ export async function POST(request: Request) {
       )
     }
 
-    const trade = data as { id: string; market_id: string; amount: number; side: string }
+    const trade = data as {
+      id: string
+      market_id: string
+      amount: number
+      side: string
+      price: number
+      fee_amount: number
+      conscious_fund_amount: number
+    }
+
+    // Fetch updated market for new_probability
+    const { data: updatedMarket } = await supabase
+      .from('prediction_markets')
+      .select('current_probability')
+      .eq('id', market_id)
+      .single()
+
+    const pricePerShare = trade.side === 'yes'
+      ? (Number(trade.price) * 10)
+      : ((1 - Number(trade.price)) * 10)
+    const netAmount = trade.amount - Number(trade.fee_amount) - Number(trade.conscious_fund_amount)
+    const sharesReceived = pricePerShare > 0 ? netAmount / pricePerShare : 0
+    const potentialPayout = sharesReceived * 10
 
     try {
       const admin = createAdminClient()
@@ -111,6 +133,10 @@ export async function POST(request: Request) {
       success: true,
       trade: data,
       xpGained,
+      shares_received: sharesReceived,
+      price_per_share: pricePerShare,
+      new_probability: updatedMarket?.current_probability ?? null,
+      potential_payout: potentialPayout,
     })
   } catch (err) {
     console.error('Trade route error:', err)
