@@ -13,11 +13,13 @@ import {
   Menu,
   X,
   ShieldCheck,
+  Sparkles,
 } from 'lucide-react'
 
 const NAV_ITEMS = [
   { href: '/predictions', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/predictions/markets', label: 'Markets', icon: TrendingUp },
+  { href: '/predictions/insights', label: 'AI Insights', icon: Sparkles },
   { href: '/predictions/wallet', label: 'Wallet', icon: Wallet },
   { href: '/predictions/trades', label: 'My Trades', icon: Receipt },
   { href: '/predictions/fund', label: 'Conscious Fund', icon: Heart },

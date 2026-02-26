@@ -1,203 +1,346 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { Search, Globe, Building2, Briefcase, Users, Heart } from 'lucide-react'
-import { MarketCard } from './MarketCard'
+import Link from 'next/link'
+import {
+  TrendingUp,
+  TrendingDown,
+  ArrowRight,
+  Sparkles,
+  Vote,
+  BarChart3,
+  Bot,
+} from 'lucide-react'
+import { MiniSparkline } from './MiniSparkline'
 import type { Database } from '@/types/database'
 
 type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row']
+type AgentContent = Database['public']['Tables']['agent_content']['Row']
 
-const CATEGORIES = [
-  { id: 'all', label: 'All', icon: Globe },
-  { id: 'world', label: 'World', icon: Globe },
-  { id: 'government', label: 'Government', icon: Building2 },
-  { id: 'corporate', label: 'Corporate', icon: Briefcase },
-  { id: 'community', label: 'Community', icon: Users },
-  { id: 'cause', label: 'Cause', icon: Heart },
-] as const
+type EnrichedPosition = {
+  id: string
+  market_id: string
+  side: 'yes' | 'no'
+  shares: number
+  average_price: number | null
+  costBasis: number
+  currentValue: number
+  pnl: number
+  pnlPct: number
+  currentPriceMxn: number
+  prediction_markets: Pick<PredictionMarket, 'id' | 'title' | 'current_probability' | 'status'> | null
+}
 
-interface Stats {
-  totalMarketsActive: number
-  totalVolume: number
-  consciousFundBalance: number
-  grantsAwarded: number
-  categoryCounts: Record<string, number>
+type MoverMarket = PredictionMarket & { oldProb: number; newProb: number; delta: number }
+
+interface DashboardData {
+  userName: string
+  portfolioValue: number
+  totalPnl: number
+  totalPnlPct: number
+  userContribution: number
+  fundBalance: number
+  positions: EnrichedPosition[]
+  biggestMovers: MoverMarket[]
+  newMarkets: PredictionMarket[]
+  agentContent: AgentContent[]
+  allMarkets: PredictionMarket[]
+  historyByMarket: Record<string, { probability: number; recorded_at: string }[]>
 }
 
 interface Props {
-  initialMarkets: PredictionMarket[]
-  initialStats: Stats
+  data: DashboardData
 }
 
 function formatCurrency(num: number): string {
   if (num >= 1_000_000) return `$${(num / 1_000_000).toFixed(1)}M`
   if (num >= 1_000) return `$${(num / 1_000).toFixed(1)}K`
-  return `$${num.toFixed(0)}`
+  return `$${num.toFixed(2)}`
 }
 
-export function PredictionsDashboardClient({
-  initialMarkets,
-  initialStats,
-}: Props) {
-  const [markets, setMarkets] = useState<PredictionMarket[]>(initialMarkets)
-  const [stats, setStats] = useState<Stats>(initialStats)
-  const [category, setCategory] = useState<string>('all')
-  const [search, setSearch] = useState('')
-  const [debouncedSearch, setDebouncedSearch] = useState('')
-  const [searching, setSearching] = useState(false)
+function formatPnl(pnl: number, pct: number): string {
+  const sign = pnl >= 0 ? '+' : ''
+  return `${sign}${formatCurrency(pnl)} (${sign}${pct.toFixed(1)}%)`
+}
 
-  useEffect(() => {
-    const t = setTimeout(() => setDebouncedSearch(search), 300)
-    return () => clearTimeout(t)
-  }, [search])
+function truncate(str: string, len: number): string {
+  if (str.length <= len) return str
+  return str.slice(0, len) + '…'
+}
 
-  const fetchMarkets = useCallback(async () => {
-    setSearching(true)
-    try {
-      const params = new URLSearchParams()
-      if (category !== 'all') params.set('category', category)
-      if (debouncedSearch) params.set('search', debouncedSearch)
-      const res = await fetch(`/api/predictions/markets?${params}`)
-      const data = await res.json()
-      if (data.markets) setMarkets(data.markets)
-    } catch (err) {
-      console.error('Fetch markets error:', err)
-    } finally {
-      setSearching(false)
-    }
-  }, [category, debouncedSearch])
+export function PredictionsDashboardClient({ data }: Props) {
+  const {
+    userName,
+    portfolioValue,
+    totalPnl,
+    totalPnlPct,
+    userContribution,
+    fundBalance,
+    positions,
+    biggestMovers,
+    newMarkets,
+    agentContent,
+    allMarkets,
+    historyByMarket,
+  } = data
 
-  useEffect(() => {
-    if (debouncedSearch || category !== 'all') {
-      fetchMarkets()
-    } else {
-      setMarkets(initialMarkets)
-    }
-  }, [debouncedSearch, category, initialMarkets, fetchMarkets])
+  const activeMarkets = allMarkets.filter((m) => m.status !== 'resolved')
 
   return (
-    <div className="space-y-6 pb-24">
-      {/* Hero */}
-      <div>
-        <h1 className="text-3xl font-bold text-white tracking-tight">
-          Collective Consciousness
+    <div className="space-y-8 pb-24">
+      {/* Section 1: Portfolio Summary */}
+      <section>
+        <h1 className="text-2xl font-bold text-white tracking-tight">
+          Welcome back, {userName}
         </h1>
-        <p className="text-slate-400 mt-1">
-          Your predictions fund solutions
+        <p className="text-slate-400 mt-1 text-sm">
+          Your personalized intelligence hub
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
-            <p className="text-slate-400 text-sm">Total Markets Active</p>
-            <p className="text-2xl font-bold text-emerald-400 mt-1">
-              {stats.totalMarketsActive}
+          <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
+            <p className="text-slate-400 text-sm">Portfolio Value</p>
+            <p className="text-2xl font-bold text-white mt-1">
+              {formatCurrency(portfolioValue)}
             </p>
           </div>
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
-            <p className="text-slate-400 text-sm">Total Volume</p>
-            <p className="text-2xl font-bold text-emerald-400 mt-1">
-              {formatCurrency(stats.totalVolume)}
+          <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
+            <p className="text-slate-400 text-sm">Total P&L</p>
+            <p
+              className={`text-2xl font-bold mt-1 ${
+                totalPnl >= 0 ? 'text-emerald-400' : 'text-red-400'
+              }`}
+            >
+              {formatPnl(totalPnl, totalPnlPct)}
             </p>
           </div>
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
-            <p className="text-slate-400 text-sm">Conscious Fund Balance</p>
+          <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
+            <p className="text-slate-400 text-sm">Conscious Impact</p>
             <p className="text-2xl font-bold text-emerald-400 mt-1">
-              {formatCurrency(stats.consciousFundBalance)}
+              {formatCurrency(userContribution)}
             </p>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
-        <input
-          type="search"
-          placeholder="Search markets..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-10 pr-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-        />
-      </div>
-
-      {/* Category tabs */}
-      <div className="overflow-x-auto -mx-4 px-4 scrollbar-hide">
-        <div className="flex gap-2 min-w-max pb-2">
-          {CATEGORIES.map((cat) => {
-            const Icon = cat.icon
-            const count =
-              cat.id === 'all'
-                ? stats.totalMarketsActive
-                : stats.categoryCounts[cat.id] || 0
-            const isWorld = cat.id === 'world'
-            const isActive = category === cat.id
-
-            return (
-              <button
-                key={cat.id}
-                onClick={() => setCategory(cat.id)}
-                className={`
-                  flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap transition-colors
-                  ${isActive ? 'bg-emerald-600 text-white' : 'bg-slate-800/80 text-slate-400 hover:text-white hover:bg-slate-700'}
-                  ${isWorld && !isActive ? 'ring-1 ring-blue-500/30 text-blue-400' : ''}
-                `}
+      {/* Section 2 & 3: Positions + Trending (two columns) */}
+      <section className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        {/* Your Active Positions - left ~60% */}
+        <div className="lg:col-span-3">
+          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-emerald-400" />
+            Your Active Positions
+          </h2>
+          {positions.length === 0 ? (
+            <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-8 text-center">
+              <p className="text-slate-400">You haven&apos;t made any predictions yet.</p>
+              <Link
+                href="/predictions/markets"
+                className="inline-flex items-center gap-2 mt-3 text-emerald-400 hover:text-emerald-300 text-sm font-medium"
               >
-                <Icon className="w-4 h-4" />
-                {cat.label}
-                <span
-                  className={`ml-1 px-1.5 py-0.5 rounded text-xs ${
-                    isActive ? 'bg-white/20' : 'bg-slate-700/50'
-                  }`}
-                >
-                  {count}
-                </span>
-              </button>
-            )
-          })}
-        </div>
-      </div>
+                Browse markets <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {positions.map((pos) => {
+                const hist = historyByMarket[pos.market_id] || []
+                const sparkData = hist.map((h) => ({ value: h.probability }))
+                const market = pos.prediction_markets
+                if (!market) return null
 
-      {/* Market grid */}
-      <div>
-        {searching ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[1, 2, 3].map((i) => (
+                return (
+                  <div
+                    key={pos.id}
+                    className="bg-slate-900/80 border border-slate-800 rounded-xl p-4 flex items-center justify-between gap-4"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-white truncate">{market.title}</p>
+                      <p className="text-slate-400 text-sm mt-0.5">
+                        {pos.shares.toFixed(1)} shares @ {formatCurrency(pos.currentPriceMxn)} avg
+                      </p>
+                      <p
+                        className={`text-sm font-medium mt-1 ${
+                          pos.pnl >= 0 ? 'text-emerald-400' : 'text-red-400'
+                        }`}
+                      >
+                        {formatPnl(pos.pnl, pos.pnlPct)}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <MiniSparkline
+                        data={sparkData}
+                        positive={pos.pnl >= 0}
+                        className="rounded"
+                      />
+                      <Link
+                        href={`/predictions/markets/${market.id}`}
+                        className="text-emerald-400 hover:text-emerald-300 text-sm font-medium flex items-center gap-1"
+                      >
+                        View Market <ArrowRight className="w-4 h-4" />
+                      </Link>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Trending & Alerts - right ~40% */}
+        <div className="lg:col-span-2 space-y-6">
+          <div>
+            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-amber-400" />
+              Biggest Movers
+            </h2>
+            <div className="space-y-2">
+              {biggestMovers.length === 0 ? (
+                <p className="text-slate-500 text-sm">No significant moves in last 24h</p>
+              ) : (
+                biggestMovers.map((m) => (
+                  <Link
+                    key={m.id}
+                    href={`/predictions/markets/${m.id}`}
+                    className="block bg-slate-900/80 border border-slate-800 rounded-xl p-3 hover:border-slate-600 transition-colors"
+                  >
+                    <p className="font-medium text-white text-sm truncate">{m.title}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-slate-500 text-xs">{m.oldProb.toFixed(0)}%</span>
+                      <ArrowRight className="w-3 h-3 text-slate-500" />
+                      <span className="text-white text-xs font-medium">{m.newProb.toFixed(0)}%</span>
+                      {m.delta >= 0 ? (
+                        <TrendingUp className="w-4 h-4 text-emerald-400" />
+                      ) : (
+                        <TrendingDown className="w-4 h-4 text-red-400" />
+                      )}
+                    </div>
+                  </Link>
+                ))
+              )}
+            </div>
+          </div>
+
+          <div>
+            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-blue-400" />
+              New Markets
+            </h2>
+            <div className="space-y-2">
+              {newMarkets.length === 0 ? (
+                <p className="text-slate-500 text-sm">No new markets this week</p>
+              ) : (
+                newMarkets.slice(0, 5).map((m) => (
+                  <Link
+                    key={m.id}
+                    href={`/predictions/markets/${m.id}`}
+                    className="block bg-slate-900/80 border border-slate-800 rounded-xl p-3 hover:border-slate-600 transition-colors"
+                  >
+                    <p className="font-medium text-white text-sm truncate">{m.title}</p>
+                    <p className="text-slate-500 text-xs mt-0.5">
+                      {Number(m.current_probability).toFixed(0)}% probability
+                    </p>
+                  </Link>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 4: AI Pulse */}
+      <section>
+        <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+          <Bot className="w-5 h-5 text-violet-400" />
+          AI Pulse
+        </h2>
+        {agentContent.length === 0 ? (
+          <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-8 text-center">
+            <p className="text-slate-400">AI insights coming soon</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {agentContent.map((ac) => (
               <div
-                key={i}
-                className="bg-slate-900 border border-slate-800 rounded-xl p-5 animate-pulse"
+                key={ac.id}
+                className="bg-slate-900/80 border border-slate-800 rounded-xl p-4"
               >
-                <div className="h-6 bg-slate-700 rounded w-1/3 mb-4" />
-                <div className="h-12 bg-slate-700 rounded mb-4" />
-                <div className="h-4 bg-slate-700 rounded w-2/3" />
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-violet-500/20 flex items-center justify-center shrink-0">
+                    <Bot className="w-5 h-5 text-violet-400" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-white text-sm">{ac.title}</p>
+                    <p className="text-slate-400 text-xs mt-1 line-clamp-2">
+                      {ac.body?.slice(0, 100)}…
+                    </p>
+                    <p className="text-slate-500 text-xs mt-2">
+                      {new Date(ac.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
-        ) : markets.length === 0 ? (
-          <div className="text-center py-16 text-slate-400">
-            <p className="text-lg">No markets found</p>
-            <p className="text-sm mt-2">
-              {search || category !== 'all'
-                ? 'Try adjusting your search or filters'
-                : 'Markets will appear here when they are active'}
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {markets.map((market) => (
-              <MarketCard key={market.id} market={market} />
-            ))}
-          </div>
         )}
-      </div>
+        {agentContent.length > 0 && (
+          <Link
+            href="/predictions/insights"
+            className="inline-flex items-center gap-2 mt-3 text-emerald-400 hover:text-emerald-300 text-sm font-medium"
+          >
+            View all insights <ArrowRight className="w-4 h-4" />
+          </Link>
+        )}
+      </section>
 
-      {/* Conscious Fund Banner */}
-      <div className="fixed bottom-0 left-0 right-0 md:left-64 bg-emerald-600/90 backdrop-blur-sm border-t border-emerald-500/30 py-3 px-4 z-20">
-        <p className="text-center text-white text-sm font-medium">
-          Every trade funds solutions. Conscious Fund Balance:{' '}
-          {formatCurrency(stats.consciousFundBalance)} | Grants Awarded:{' '}
-          {formatCurrency(stats.grantsAwarded)}
-        </p>
-      </div>
+      {/* Section 5: Conscious Fund Mini */}
+      <section>
+        <div className="bg-slate-900/80 border border-slate-800 rounded-xl px-6 py-4 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-6">
+            <div>
+              <p className="text-slate-400 text-xs">Fund Balance</p>
+              <p className="text-lg font-bold text-emerald-400">{formatCurrency(fundBalance)}</p>
+            </div>
+            <div className="h-8 w-px bg-slate-700" />
+            <div>
+              <p className="text-slate-400 text-xs">Your Contribution</p>
+              <p className="text-lg font-bold text-white">{formatCurrency(userContribution)}</p>
+            </div>
+          </div>
+          <Link
+            href="/predictions/fund"
+            className="inline-flex items-center gap-2 text-emerald-400 hover:text-emerald-300 font-medium"
+          >
+            <Vote className="w-4 h-4" />
+            Vote for causes <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+      </section>
+
+      {/* Section 6: Market Overview */}
+      <section>
+        <h2 className="text-lg font-semibold text-white mb-4">Market Overview</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {activeMarkets.slice(0, 8).map((m) => {
+            const hist = historyByMarket[m.id] || []
+            const sparkData = hist.map((h) => ({ value: h.probability }))
+            const prob = Number(m.current_probability)
+
+            return (
+              <Link
+                key={m.id}
+                href={`/predictions/markets/${m.id}`}
+                className="bg-slate-900/80 border border-slate-800 rounded-xl p-3 hover:border-slate-600 transition-colors flex items-center gap-3"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-white text-sm truncate">{truncate(m.title, 40)}</p>
+                  <p className="text-emerald-400 text-sm font-semibold">{prob.toFixed(0)}%</p>
+                </div>
+                <MiniSparkline data={sparkData} positive={true} className="shrink-0 rounded" />
+              </Link>
+            )
+          })}
+        </div>
+      </section>
     </div>
   )
 }
