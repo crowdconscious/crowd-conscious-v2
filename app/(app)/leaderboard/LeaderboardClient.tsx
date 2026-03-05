@@ -134,11 +134,11 @@ export default function LeaderboardClient({ user }: LeaderboardClientProps) {
       </div>
 
       {/* Filters */}
-      <AnimatedCard className="p-6">
+      <AnimatedCard className="p-6 bg-slate-900/50 border border-slate-800 rounded-xl">
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">
-            <Filter className="w-5 h-5 text-slate-600" />
-            <span className="font-medium text-slate-900">Timeframe:</span>
+            <Filter className="w-5 h-5 text-slate-400" />
+            <span className="font-medium text-white">Timeframe:</span>
           </div>
           <div className="flex gap-2">
             {(['all', 'week', 'month'] as const).map((period) => (
@@ -147,8 +147,8 @@ export default function LeaderboardClient({ user }: LeaderboardClientProps) {
                 onClick={() => setTimeframe(period)}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                   timeframe === period
-                    ? 'bg-teal-600 text-white'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white'
                 }`}
               >
                 {period === 'all' ? 'All Time' : period === 'week' ? 'This Week' : 'This Month'}
@@ -157,11 +157,11 @@ export default function LeaderboardClient({ user }: LeaderboardClientProps) {
           </div>
 
           <div className="flex items-center gap-2 ml-auto">
-            <span className="font-medium text-slate-900">Tier:</span>
+            <span className="font-medium text-white">Tier:</span>
             <select
               value={tierFilter || ''}
               onChange={(e) => setTierFilter(e.target.value ? parseInt(e.target.value) : null)}
-              className="px-4 py-2 rounded-lg border border-slate-300 bg-white text-slate-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+              className="px-4 py-2 rounded-lg border border-slate-700 bg-slate-800 text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
             >
               <option value="">All Tiers</option>
               <option value="1">🌱 Explorer</option>
@@ -206,18 +206,18 @@ export default function LeaderboardClient({ user }: LeaderboardClientProps) {
       )}
 
       {/* Rest of Leaderboard */}
-      <AnimatedCard className="p-6">
-        <h2 className="text-xl font-bold text-slate-900 mb-6">All Rankings</h2>
+      <AnimatedCard className="p-6 bg-slate-900/50 border border-slate-800 rounded-xl">
+        <h2 className="text-xl font-bold text-white mb-6">All Rankings</h2>
         {isLoading ? (
           <div className="space-y-4">
             {[...Array(10)].map((_, i) => (
               <div key={i} className="animate-pulse flex items-center gap-4">
-                <div className="w-12 h-12 bg-slate-200 rounded-full" />
+                <div className="w-12 h-12 bg-slate-700 rounded-full" />
                 <div className="flex-1 space-y-2">
-                  <div className="h-4 bg-slate-200 rounded w-1/3" />
-                  <div className="h-3 bg-slate-200 rounded w-1/4" />
+                  <div className="h-4 bg-slate-700 rounded w-1/3" />
+                  <div className="h-3 bg-slate-700 rounded w-1/4" />
                 </div>
-                <div className="h-6 bg-slate-200 rounded w-20" />
+                <div className="h-6 bg-slate-700 rounded w-20" />
               </div>
             ))}
           </div>
@@ -235,31 +235,31 @@ export default function LeaderboardClient({ user }: LeaderboardClientProps) {
                   transition={{ delay: index * 0.05 }}
                   className={`flex items-center gap-4 p-4 rounded-lg transition-colors ${
                     isCurrentUser
-                      ? 'bg-teal-50 border-2 border-teal-500'
-                      : 'bg-slate-50 hover:bg-slate-100'
+                      ? 'bg-emerald-500/20 border-2 border-emerald-500'
+                      : 'bg-slate-800/80 hover:bg-slate-800 border border-slate-700'
                   }`}
                 >
                   {/* Rank */}
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center font-bold text-slate-700">
+                  <div className="w-12 h-12 rounded-full bg-slate-700 flex items-center justify-center font-bold text-white">
                     {rank}
                   </div>
 
                   {/* User Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <div className={`font-semibold text-slate-900 ${isCurrentUser ? 'text-teal-700' : ''}`}>
+                      <div className={`font-semibold text-white ${isCurrentUser ? 'text-emerald-400' : ''}`}>
                         {entry.full_name || entry.email.split('@')[0]}
                         {isCurrentUser && <span className="ml-2 text-xs">(You)</span>}
                       </div>
                     </div>
-                    <div className="text-sm text-slate-600 flex items-center gap-2">
+                    <div className="text-sm text-slate-400 flex items-center gap-2">
                       <span>{tierConfig.icon} {tierConfig.name}</span>
                     </div>
                   </div>
 
                   {/* XP */}
                   <div className="text-right">
-                    <div className="font-bold text-slate-900">{entry.total_xp.toLocaleString()} XP</div>
+                    <div className="font-bold text-white">{entry.total_xp.toLocaleString()} XP</div>
                     <div className="text-xs text-slate-500">Tier {entry.tier}</div>
                   </div>
                 </motion.div>
@@ -268,8 +268,8 @@ export default function LeaderboardClient({ user }: LeaderboardClientProps) {
 
             {leaderboard.length === 0 && !isLoading && (
               <div className="text-center py-12">
-                <Trophy className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                <p className="text-slate-600 text-lg">No rankings yet</p>
+                <Trophy className="w-16 h-16 text-slate-500 mx-auto mb-4" />
+                <p className="text-slate-400 text-lg">No rankings yet</p>
                 <p className="text-slate-500 text-sm mt-2">Start earning XP to appear on the leaderboard!</p>
               </div>
             )}

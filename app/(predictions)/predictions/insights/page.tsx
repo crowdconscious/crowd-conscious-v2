@@ -28,13 +28,13 @@ export default async function InsightsPage() {
         </Link>
       </div>
 
-      <h1 className="text-2xl font-bold text-white">AI Insights</h1>
-      <p className="text-slate-400">Latest analysis and market intelligence from our AI agents.</p>
+      <h1 className="text-2xl font-bold text-white">Insights</h1>
+      <p className="text-slate-400">Market intelligence and analysis.</p>
 
       {!agentContent || agentContent.length === 0 ? (
         <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-12 text-center">
           <Bot className="w-12 h-12 text-slate-500 mx-auto mb-4" />
-          <p className="text-slate-400">AI insights coming soon</p>
+          <p className="text-slate-400">Coming soon</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

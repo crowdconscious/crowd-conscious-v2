@@ -9,6 +9,8 @@ import {
   Building2,
   Briefcase,
   Users,
+  Trophy,
+  Leaf,
   ChevronRight,
   TrendingUp,
 } from 'lucide-react'
@@ -29,6 +31,8 @@ const CATEGORY_CONFIG: Record<
   corporate: { label: 'Corporate', icon: Briefcase, bg: 'bg-purple-500/20', text: 'text-purple-400' },
   community: { label: 'Community', icon: Users, bg: 'bg-emerald-500/20', text: 'text-emerald-400' },
   cause: { label: 'Cause', icon: Heart, bg: 'bg-amber-500/20', text: 'text-amber-400' },
+  world_cup: { label: 'World Cup', icon: Trophy, bg: 'bg-emerald-500/20', text: 'text-emerald-400' },
+  sustainability: { label: 'Sustainability', icon: Leaf, bg: 'bg-green-500/20', text: 'text-green-400' },
 }
 
 async function getLandingData() {
@@ -136,7 +140,7 @@ export default async function LandingPage() {
                 Start Predicting
               </Link>
               <Link
-                href="/predictions/markets"
+                href="/markets"
                 className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl border border-slate-600 hover:border-slate-500 text-slate-200 font-semibold transition-colors"
               >
                 Browse Markets
@@ -264,7 +268,7 @@ export default async function LandingPage() {
               </div>
               <div className="mt-8 text-center">
                 <Link
-                  href="/predictions/markets"
+                  href="/markets"
                   className="inline-flex items-center gap-2 text-emerald-400 hover:text-emerald-300 font-medium"
                 >
                   See all markets
@@ -288,18 +292,25 @@ export default async function LandingPage() {
                     Brand sponsors fund the Conscious Fund. Your votes decide which causes receive
                     grants. No money from you — just your predictions.
                   </p>
-                  <div className="flex flex-wrap gap-6">
-                    <div>
-                      <p className="text-slate-500 text-sm">Fund total</p>
-                      <p className="text-2xl font-bold text-emerald-400">
-                        {formatCurrency(fundBalance)} MXN
-                      </p>
+                  {fundBalance > 0 || causesCount > 0 ? (
+                    <div className="flex flex-wrap gap-6">
+                      <div>
+                        <p className="text-slate-500 text-sm">Fund total</p>
+                        <p className="text-2xl font-bold text-emerald-400">
+                          {formatCurrency(fundBalance)} MXN
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-slate-500 text-sm">Causes funded</p>
+                        <p className="text-2xl font-bold text-white">{causesCount}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-slate-500 text-sm">Causes funded</p>
-                      <p className="text-2xl font-bold text-white">{causesCount}</p>
-                    </div>
-                  </div>
+                  ) : (
+                    <p className="text-slate-200 font-medium">
+                      Coming soon — the Conscious Fund will direct sponsor contributions to community
+                      causes chosen by our users.
+                    </p>
+                  )}
                 </div>
                 <Link
                   href="/predictions/fund"

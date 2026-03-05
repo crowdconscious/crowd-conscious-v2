@@ -34,7 +34,7 @@ export default function LandingNav() {
 
           <div className="hidden md:flex items-center gap-8">
             <Link
-              href="/predictions/markets"
+              href="/markets"
               className="text-slate-400 hover:text-white transition-colors font-medium"
             >
               Markets
@@ -82,7 +82,7 @@ export default function LandingNav() {
         <div className="md:hidden border-t border-slate-800 bg-slate-950/98 backdrop-blur-md">
           <div className="px-4 py-4 space-y-3">
             <Link
-              href="/predictions/markets"
+              href="/markets"
               onClick={() => setMobileOpen(false)}
               className="block py-2 text-slate-400 hover:text-white"
             >

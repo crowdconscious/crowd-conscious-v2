@@ -1,6 +1,5 @@
 import { getCurrentUser } from '../../../lib/auth-server'
 import { supabase } from '../../../lib/supabase'
-import DashboardNavigation from '@/components/DashboardNavigation'
 import SettingsClient from './SettingsClient'
 
 async function getUserSettings(userId: string) {
@@ -55,10 +54,8 @@ export default async function SettingsPage() {
 
   return (
     <div className="space-y-8">
-      <DashboardNavigation />
-      
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-slate-900">Settings</h1>
+        <h1 className="text-3xl font-bold text-white">Settings</h1>
       </div>
 
       <SettingsClient 

@@ -1,51 +1,41 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
-import { supabaseClient } from '@/lib/supabase-client'
-import { AnimatedCard, AnimatedButton } from '@/components/ui/UIComponents'
+import { AnimatedButton } from '@/components/ui/UIComponents'
 import { XPBadge } from '@/components/gamification/XPBadge'
-import { Wallet, TrendingUp, DollarSign, Package } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 
 interface ProfileClientProps {
   user: any
   profile: any
-  userCommunities: any[]
-  impactStats: any
-  userSettings: any
-}
-
-interface CreatorWallet {
-  id: string
-  balance: number
-  currency: string
-  status: string
-  recentTransactions: Array<{
+  predictionStats: {
+    predictions: number
+    accuracy: number
+    totalXp: number
+    rank: number | null
+  }
+  recentPredictions: Array<{
     id: string
-    type: 'credit' | 'debit'
-    amount: number
-    source: string
-    description: string
+    market_id: string
+    market_title: string
+    market_status: string
+    outcome_label: string
+    confidence: number
+    xp_earned: number
+    is_correct: boolean | null
     created_at: string
   }>
-  moduleRevenue?: {
-    total: number
-    moduleCount: number
-    salesCount: number
-  }
 }
 
-export default function ProfileClient({ 
-  user, 
-  profile, 
-  userCommunities, 
-  impactStats, 
-  userSettings 
+export default function ProfileClient({
+  user,
+  profile,
+  predictionStats,
+  recentPredictions,
 }: ProfileClientProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [walletData, setWalletData] = useState<CreatorWallet | null>(null)
-  const [loadingWallet, setLoadingWallet] = useState(true)
   const [editData, setEditData] = useState({
     full_name: profile?.full_name || '',
     bio: profile?.bio || '',
@@ -54,70 +44,15 @@ export default function ProfileClient({
     twitter: profile?.twitter || '',
     linkedin: profile?.linkedin || '',
     instagram: profile?.instagram || '',
-    is_public: profile?.is_public ?? true
+    is_public: profile?.is_public ?? true,
   })
-
-  // Fetch creator wallet on mount
-  useEffect(() => {
-    fetchCreatorWallet()
-  }, [user?.id])
-
-  const fetchCreatorWallet = async () => {
-    if (!user?.id) return
-    
-    try {
-      // Get or create wallet for this user
-      const createResponse = await fetch('/api/wallets/user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id })
-      })
-      
-      if (createResponse.ok) {
-        const createData = await createResponse.json()
-        // ✅ PHASE 4: Parse standardized API response format
-        const createParsed = createData.success !== undefined ? createData.data : createData
-        const wallet = createParsed.wallet || createParsed
-        
-        // Fetch full wallet details
-        const detailsResponse = await fetch(`/api/wallets/${wallet.id}`)
-        if (detailsResponse.ok) {
-          const detailsData = await detailsResponse.json()
-          // ✅ PHASE 4: Parse standardized API response format
-          const walletDetails = detailsData.success !== undefined ? detailsData.data : detailsData
-          setWalletData(walletDetails)
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching creator wallet:', error)
-    } finally {
-      setLoadingWallet(false)
-    }
-  }
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-MX', {
-      style: 'currency',
-      currency: 'MXN'
-    }).format(amount)
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-MX', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    })
-  }
 
   const handleSaveProfile = async () => {
     setIsLoading(true)
     try {
-      // TODO: Update profile - temporarily disabled for deployment
       console.log('Updating profile for user:', (user as any).id, editData)
-
       setIsEditing(false)
-      window.location.reload() // Refresh to show updated data
+      window.location.reload()
     } catch (error) {
       console.error('Error updating profile:', error)
       alert('Failed to update profile')
@@ -126,165 +61,144 @@ export default function ProfileClient({
     }
   }
 
-  const handleFollow = async (targetUserId: string) => {
-    try {
-      // TODO: Follow user - temporarily disabled for deployment
-      console.log('Following user:', { follower: (user as any).id, following: targetUserId })
-      // Refresh page to update follow counts
-      window.location.reload()
-    } catch (error) {
-      console.error('Error following user:', error)
-      alert('Failed to follow user')
-    }
-  }
-
-  const handleUnfollow = async (targetUserId: string) => {
-    try {
-      const { error } = await supabaseClient
-        .from('user_follows')
-        .delete()
-        .eq('follower_id', user.id)
-        .eq('following_id', targetUserId)
-
-      if (error) throw error
-      // Refresh page to update follow counts
-      window.location.reload()
-    } catch (error) {
-      console.error('Error unfollowing user:', error)
-      alert('Failed to unfollow user')
-    }
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('es-MX', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    })
   }
 
   return (
     <div className="space-y-8">
       {/* Profile Header */}
-      <div className="tier-themed-gradient text-white rounded-xl p-8 relative overflow-hidden">
-        <div className="absolute inset-0 bg-black/10" />
-        <div className="relative z-10">
-          <div className="flex flex-col md:flex-row items-start gap-6">
-            <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border-4 border-white/30">
-              {profile?.avatar_url ? (
-                <img 
-                  src={profile.avatar_url} 
-                  alt={profile.full_name || 'Profile'} 
-                  className="w-full h-full object-cover rounded-full"
-                />
-              ) : (
-                <span className="text-3xl">👤</span>
-              )}
-            </div>
-            
-            <div className="flex-1">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h1 className="text-3xl md:text-4xl font-bold mb-2">
-                    {profile?.full_name || 'Community Member'}
-                  </h1>
-                  <p className="text-white/90 mb-2">{user.email}</p>
-                  {/* XP Badge */}
-                  <div className="mt-3">
-                    <XPBadge variant="full" />
-                  </div>
-                  {profile?.bio && (
-                    <p className="text-teal-100 mb-3 max-w-2xl">{profile.bio}</p>
-                  )}
-                  {profile?.location && (
-                    <p className="text-teal-200 text-sm mb-2">📍 {profile.location}</p>
-                  )}
+      <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-8">
+        <div className="flex flex-col md:flex-row items-start gap-6">
+          <div className="w-24 h-24 bg-slate-800 rounded-full flex items-center justify-center border-2 border-slate-700">
+            {profile?.avatar_url ? (
+              <img
+                src={profile.avatar_url}
+                alt={profile.full_name || 'Profile'}
+                className="w-full h-full object-cover rounded-full"
+              />
+            ) : (
+              <span className="text-3xl">👤</span>
+            )}
+          </div>
+
+          <div className="flex-1">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
+                  {profile?.full_name || 'Predictor'}
+                </h1>
+                <p className="text-slate-400 mb-2">{user.email}</p>
+                <div className="mt-3">
+                  <XPBadge variant="full" />
                 </div>
-                
-                <div className="flex items-center gap-3">
-                  <AnimatedButton
-                    onClick={() => setIsEditing(!isEditing)}
-                    variant="secondary"
-                    size="sm"
-                    className="bg-white/20 hover:bg-white/30 text-white border-white/30"
-                  >
-                    {isEditing ? 'Cancel' : 'Edit Profile'}
-                  </AnimatedButton>
-                  
-                  <Link href="/settings">
-                    <AnimatedButton
-                      variant="secondary"
-                      size="sm"
-                      className="bg-white/20 hover:bg-white/30 text-white border-white/30"
-                    >
-                      ⚙️ Settings
-                    </AnimatedButton>
-                  </Link>
-                </div>
+                {profile?.bio && (
+                  <p className="text-slate-400 mt-3 max-w-2xl">{profile.bio}</p>
+                )}
+                {profile?.location && (
+                  <p className="text-slate-500 text-sm mt-2">📍 {profile.location}</p>
+                )}
               </div>
 
-              {/* Social Links */}
-              {(profile?.website || profile?.twitter || profile?.linkedin || profile?.instagram) && (
-                <div className="flex items-center gap-4 mb-4">
-                  {profile.website && (
-                    <a 
-                      href={profile.website} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-teal-100 hover:text-white text-sm transition-colors"
-                    >
-                      🌐 Website
-                    </a>
-                  )}
-                  {profile.twitter && (
-                    <a 
-                      href={`https://twitter.com/${profile.twitter}`} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-teal-100 hover:text-white text-sm transition-colors"
-                    >
-                      🐦 Twitter
-                    </a>
-                  )}
-                  {profile.linkedin && (
-                    <a 
-                      href={profile.linkedin} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-teal-100 hover:text-white text-sm transition-colors"
-                    >
-                      💼 LinkedIn
-                    </a>
-                  )}
-                  {profile.instagram && (
-                    <a 
-                      href={`https://instagram.com/${profile.instagram}`} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-teal-100 hover:text-white text-sm transition-colors"
-                    >
-                      📸 Instagram
-                    </a>
-                  )}
-                </div>
-              )}
+              <div className="flex items-center gap-3">
+                <AnimatedButton
+                  onClick={() => setIsEditing(!isEditing)}
+                  variant="secondary"
+                  size="sm"
+                  className="bg-slate-800 hover:bg-slate-700 text-white border-slate-700"
+                >
+                  {isEditing ? 'Cancel' : 'Edit Profile'}
+                </AnimatedButton>
+                <Link href="/settings">
+                  <AnimatedButton
+                    variant="secondary"
+                    size="sm"
+                    className="bg-slate-800 hover:bg-slate-700 text-white border-slate-700"
+                  >
+                    ⚙️ Settings
+                  </AnimatedButton>
+                </Link>
+              </div>
+            </div>
 
-              {/* Stats */}
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                <div className="bg-white/10 rounded-lg p-3 text-center backdrop-blur-sm">
-                  <div className="text-2xl font-bold">{userCommunities.length}</div>
-                  <div className="text-sm text-teal-200">Communities</div>
+            {/* Social Links */}
+            {(profile?.website ||
+              profile?.twitter ||
+              profile?.linkedin ||
+              profile?.instagram) && (
+              <div className="flex items-center gap-4 mb-4">
+                {profile.website && (
+                  <a
+                    href={profile.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-slate-400 hover:text-white text-sm transition-colors"
+                  >
+                    🌐 Website
+                  </a>
+                )}
+                {profile.twitter && (
+                  <a
+                    href={`https://twitter.com/${profile.twitter}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-slate-400 hover:text-white text-sm transition-colors"
+                  >
+                    🐦 Twitter
+                  </a>
+                )}
+                {profile.linkedin && (
+                  <a
+                    href={profile.linkedin}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-slate-400 hover:text-white text-sm transition-colors"
+                  >
+                    💼 LinkedIn
+                  </a>
+                )}
+                {profile.instagram && (
+                  <a
+                    href={`https://instagram.com/${profile.instagram}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-slate-400 hover:text-white text-sm transition-colors"
+                  >
+                    📸 Instagram
+                  </a>
+                )}
+              </div>
+            )}
+
+            {/* Prediction Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+              <div className="bg-slate-800/80 rounded-lg p-4 text-center border border-slate-700">
+                <div className="text-2xl font-bold text-white">
+                  {predictionStats.predictions}
                 </div>
-                <div className="bg-white/10 rounded-lg p-3 text-center backdrop-blur-sm">
-                  <div className="text-2xl font-bold">{profile?.follower_count || 0}</div>
-                  <div className="text-sm text-teal-200">Followers</div>
+                <div className="text-sm text-slate-400">Predictions</div>
+              </div>
+              <div className="bg-slate-800/80 rounded-lg p-4 text-center border border-slate-700">
+                <div className="text-2xl font-bold text-white">
+                  {predictionStats.accuracy}%
                 </div>
-                <div className="bg-white/10 rounded-lg p-3 text-center backdrop-blur-sm">
-                  <div className="text-2xl font-bold">{profile?.following_count || 0}</div>
-                  <div className="text-sm text-teal-200">Following</div>
+                <div className="text-sm text-slate-400">Accuracy</div>
+              </div>
+              <div className="bg-slate-800/80 rounded-lg p-4 text-center border border-slate-700">
+                <div className="text-2xl font-bold text-emerald-400">
+                  {predictionStats.totalXp}
                 </div>
-                <div className="bg-white/10 rounded-lg p-3 text-center backdrop-blur-sm">
-                  <div className="text-2xl font-bold">{impactStats.votes_cast}</div>
-                  <div className="text-sm text-teal-200">Votes Cast</div>
+                <div className="text-sm text-slate-400">Total XP</div>
+              </div>
+              <div className="bg-slate-800/80 rounded-lg p-4 text-center border border-slate-700">
+                <div className="text-2xl font-bold text-white">
+                  {predictionStats.rank ?? '—'}
                 </div>
-                <div className="bg-white/10 rounded-lg p-3 text-center backdrop-blur-sm">
-                  <div className="text-2xl font-bold">
-                    {userCommunities.filter((c: any) => c.role === 'founder').length}
-                  </div>
-                  <div className="text-sm text-teal-200">Founded</div>
-                </div>
+                <div className="text-sm text-slate-400">Rank</div>
               </div>
             </div>
           </div>
@@ -293,37 +207,41 @@ export default function ProfileClient({
 
       {/* Edit Profile Form */}
       {isEditing && (
-        <AnimatedCard className="p-6">
-          <h3 className="text-xl font-semibold text-slate-900 mb-6">Edit Profile</h3>
-          
+        <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+          <h3 className="text-xl font-semibold text-white mb-6">Edit Profile</h3>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="block text-sm font-medium text-slate-400 mb-2">
                 Full Name
               </label>
               <input
                 type="text"
                 value={editData.full_name}
-                onChange={(e) => setEditData({ ...editData, full_name: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                onChange={(e) =>
+                  setEditData({ ...editData, full_name: e.target.value })
+                }
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="block text-sm font-medium text-slate-400 mb-2">
                 Location
               </label>
               <input
                 type="text"
                 value={editData.location}
-                onChange={(e) => setEditData({ ...editData, location: e.target.value })}
+                onChange={(e) =>
+                  setEditData({ ...editData, location: e.target.value })
+                }
                 placeholder="City, Country"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
               />
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="block text-sm font-medium text-slate-400 mb-2">
                 Bio
               </label>
               <textarea
@@ -331,59 +249,67 @@ export default function ProfileClient({
                 onChange={(e) => setEditData({ ...editData, bio: e.target.value })}
                 placeholder="Tell people about yourself..."
                 rows={3}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="block text-sm font-medium text-slate-400 mb-2">
                 Website
               </label>
               <input
                 type="url"
                 value={editData.website}
-                onChange={(e) => setEditData({ ...editData, website: e.target.value })}
+                onChange={(e) =>
+                  setEditData({ ...editData, website: e.target.value })
+                }
                 placeholder="https://your-website.com"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="block text-sm font-medium text-slate-400 mb-2">
                 Twitter Username
               </label>
               <input
                 type="text"
                 value={editData.twitter}
-                onChange={(e) => setEditData({ ...editData, twitter: e.target.value })}
+                onChange={(e) =>
+                  setEditData({ ...editData, twitter: e.target.value })
+                }
                 placeholder="username"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="block text-sm font-medium text-slate-400 mb-2">
                 LinkedIn URL
               </label>
               <input
                 type="url"
                 value={editData.linkedin}
-                onChange={(e) => setEditData({ ...editData, linkedin: e.target.value })}
+                onChange={(e) =>
+                  setEditData({ ...editData, linkedin: e.target.value })
+                }
                 placeholder="https://linkedin.com/in/username"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="block text-sm font-medium text-slate-400 mb-2">
                 Instagram Username
               </label>
               <input
                 type="text"
                 value={editData.instagram}
-                onChange={(e) => setEditData({ ...editData, instagram: e.target.value })}
+                onChange={(e) =>
+                  setEditData({ ...editData, instagram: e.target.value })
+                }
                 placeholder="username"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
               />
             </div>
 
@@ -392,10 +318,14 @@ export default function ProfileClient({
                 <input
                   type="checkbox"
                   checked={editData.is_public}
-                  onChange={(e) => setEditData({ ...editData, is_public: e.target.checked })}
-                  className="rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+                  onChange={(e) =>
+                    setEditData({ ...editData, is_public: e.target.checked })
+                  }
+                  className="rounded border-slate-600 bg-slate-800 text-emerald-600 focus:ring-emerald-500"
                 />
-                <span className="text-sm text-slate-700">Make my profile public</span>
+                <span className="text-sm text-slate-400">
+                  Make my profile public
+                </span>
               </label>
             </div>
           </div>
@@ -404,270 +334,82 @@ export default function ProfileClient({
             <AnimatedButton
               onClick={() => setIsEditing(false)}
               variant="ghost"
+              className="text-slate-400 hover:text-white"
             >
               Cancel
             </AnimatedButton>
-            <AnimatedButton
-              onClick={handleSaveProfile}
-              loading={isLoading}
-            >
+            <AnimatedButton onClick={handleSaveProfile} loading={isLoading}>
               Save Changes
             </AnimatedButton>
           </div>
-        </AnimatedCard>
-      )}
-
-      {/* Creator Wallet */}
-      {!loadingWallet && walletData && walletData.balance > 0 && (
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2">
-            <Wallet className="w-7 h-7 text-purple-600" />
-            Creator Wallet
-          </h2>
-
-          <AnimatedCard className="bg-gradient-to-br from-purple-50 via-pink-50 to-purple-50 border-2 border-purple-200">
-            <div className="p-6">
-              <div className="flex items-start justify-between mb-6">
-                <div>
-                  <p className="text-sm font-medium text-purple-700 mb-1">Total Creator Earnings</p>
-                  <p className="text-4xl font-bold text-purple-900">{formatCurrency(walletData.balance)}</p>
-                  <p className="text-xs text-purple-600 mt-1">
-                    {walletData.currency} • {walletData.status === 'active' ? '✅ Active' : '⚠️ ' + walletData.status}
-                  </p>
-                </div>
-
-                {walletData.moduleRevenue && walletData.moduleRevenue.total > 0 && (
-                  <div className="text-right bg-white/60 rounded-lg p-3">
-                    <p className="text-xs text-purple-600 mb-1 flex items-center gap-1 justify-end">
-                      <TrendingUp className="w-3 h-3" />
-                      Module Sales
-                    </p>
-                    <p className="text-xl font-bold text-purple-900">{formatCurrency(walletData.moduleRevenue.total)}</p>
-                    <p className="text-xs text-purple-600 mt-1">
-                      {walletData.moduleRevenue.salesCount} sales • {walletData.moduleRevenue.moduleCount} modules
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Creator Stats */}
-              {walletData.moduleRevenue && (
-                <div className="grid grid-cols-3 gap-4 mb-6">
-                  <div className="bg-white/60 rounded-lg p-3">
-                    <div className="flex items-center gap-2">
-                      <Package className="w-5 h-5 text-purple-600" />
-                      <div>
-                        <p className="text-xs text-slate-600">Modules</p>
-                        <p className="text-xl font-bold text-slate-900">{walletData.moduleRevenue.moduleCount}</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="bg-white/60 rounded-lg p-3">
-                    <div className="flex items-center gap-2">
-                      <DollarSign className="w-5 h-5 text-purple-600" />
-                      <div>
-                        <p className="text-xs text-slate-600">Sales</p>
-                        <p className="text-xl font-bold text-slate-900">{walletData.moduleRevenue.salesCount}</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="bg-white/60 rounded-lg p-3">
-                    <div className="flex items-center gap-2">
-                      <TrendingUp className="w-5 h-5 text-purple-600" />
-                      <div>
-                        <p className="text-xs text-slate-600">Avg/Sale</p>
-                        <p className="text-xl font-bold text-slate-900">
-                          {formatCurrency(walletData.moduleRevenue.total / walletData.moduleRevenue.salesCount)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Info Box */}
-              <div className="bg-purple-100 border border-purple-200 rounded-lg p-4">
-                <p className="text-sm font-semibold text-purple-900 mb-2 flex items-center gap-2">
-                  <span>💰</span>
-                  <span>How Creator Earnings Work</span>
-                </p>
-                <p className="text-xs text-purple-700 mb-2">
-                  You receive <strong>20% of all module sales</strong> from courses you create. When a corporation purchases your module:
-                </p>
-                <ul className="text-xs text-purple-700 space-y-1 ml-4">
-                  <li>• 50% goes to the community wallet</li>
-                  <li>• 30% goes to platform operations</li>
-                  <li>• 20% goes to you (the creator)</li>
-                </ul>
-                <p className="text-xs text-purple-600 mt-2 italic">
-                  All transactions are transparent and recorded in your wallet history.
-                </p>
-              </div>
-
-              {/* Recent Transactions */}
-              {walletData.recentTransactions && walletData.recentTransactions.length > 0 && (
-                <div className="mt-6">
-                  <h4 className="font-semibold text-slate-900 mb-3 text-sm">Recent Transactions</h4>
-                  <div className="space-y-2">
-                    {walletData.recentTransactions.slice(0, 5).map((tx) => (
-                      <div
-                        key={tx.id}
-                        className="flex items-center justify-between p-3 bg-white/60 rounded-lg hover:bg-white/80 transition-colors"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                            tx.type === 'credit' ? 'bg-green-100' : 'bg-red-100'
-                          }`}>
-                            <span className="text-sm">
-                              {tx.type === 'credit' ? '💰' : '💸'}
-                            </span>
-                          </div>
-                          <div>
-                            <p className="text-xs font-medium text-slate-900">
-                              {tx.description}
-                            </p>
-                            <p className="text-xs text-slate-500">{formatDate(tx.created_at)}</p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className={`text-sm font-semibold ${
-                            tx.type === 'credit' ? 'text-green-600' : 'text-red-600'
-                          }`}>
-                            {tx.type === 'credit' ? '+' : '-'}{formatCurrency(tx.amount)}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </AnimatedCard>
         </div>
       )}
 
-      {/* My Communities */}
+      {/* Recent Predictions */}
       <div>
-        <h2 className="text-2xl font-bold text-slate-900 mb-6">My Communities</h2>
-        
-        {userCommunities.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {userCommunities.map((membership: any) => (
-              <AnimatedCard key={membership.community.id} hover>
-                <Link
-                  href={`/communities/${membership.community.id}`}
-                  className="block p-6"
-                >
-                  {/* Community Header */}
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-teal-400 to-purple-500 rounded-full flex items-center justify-center">
-                      {membership.community.logo_url ? (
-                        <img
-                          src={membership.community.logo_url}
-                          alt={membership.community.name}
-                          className="w-full h-full object-cover rounded-full"
-                        />
-                      ) : (
-                        <span className="text-white font-bold">
-                          {membership.community.name[0].toUpperCase()}
-                        </span>
-                      )}
-                    </div>
-                    
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-slate-900">{membership.community.name}</h3>
-                      <div className="flex items-center gap-2 text-sm text-slate-500">
-                        <span className={`
-                          px-2 py-1 rounded-full text-xs font-medium
-                          ${membership.role === 'founder' ? 'bg-purple-100 text-purple-700' :
-                            membership.role === 'admin' ? 'bg-blue-100 text-blue-700' :
-                            'bg-teal-100 text-teal-700'}
-                        `}>
-                          {membership.role}
-                        </span>
-                        <span>•</span>
-                        <span>{membership.community.member_count} members</span>
-                      </div>
-                    </div>
+        <h2 className="text-2xl font-bold text-white mb-6">Recent Predictions</h2>
+
+        {recentPredictions.length > 0 ? (
+          <div className="space-y-3">
+            {recentPredictions.map((pred) => (
+              <Link
+                key={pred.id}
+                href={`/predictions/markets/${pred.market_id}`}
+                className="block bg-slate-900/50 border border-slate-800 rounded-xl p-4 hover:border-slate-700 transition-colors"
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-white truncate">
+                      {pred.market_title}
+                    </p>
+                    <p className="text-sm text-slate-400 mt-1">
+                      {pred.outcome_label} • Confidence {pred.confidence}/10
+                    </p>
                   </div>
-
-                  {/* Description */}
-                  <p className="text-slate-600 text-sm mb-4 line-clamp-2">
-                    {membership.community.description || 'Building community impact together.'}
-                  </p>
-
-                  {/* Core Values */}
-                  {membership.community.core_values?.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mb-4">
-                      {membership.community.core_values.slice(0, 2).map((value: string, index: number) => (
-                        <span 
-                          key={index}
-                          className="text-xs px-2 py-1 bg-slate-100 text-slate-600 rounded-full"
-                        >
-                          {value}
-                        </span>
-                      ))}
-                      {membership.community.core_values.length > 2 && (
-                        <span className="text-xs px-2 py-1 bg-slate-100 text-slate-500 rounded-full">
-                          +{membership.community.core_values.length - 2}
-                        </span>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Joined Date */}
-                  <div className="text-xs text-slate-500 border-t border-slate-100 pt-3">
-                    Joined {new Date(membership.joined_at).toLocaleDateString()}
+                  <div className="flex items-center gap-4 shrink-0">
+                    <span className="text-emerald-400 font-medium">
+                      +{pred.xp_earned} XP
+                    </span>
+                    {pred.market_status === 'resolved' && pred.is_correct !== null && (
+                      <span
+                        className={
+                          pred.is_correct
+                            ? 'text-emerald-400'
+                            : 'text-red-400'
+                        }
+                      >
+                        {pred.is_correct ? '✓' : '✗'}
+                      </span>
+                    )}
+                    <ChevronRight className="w-5 h-5 text-slate-500" />
                   </div>
-                </Link>
-              </AnimatedCard>
+                </div>
+              </Link>
             ))}
+            <div className="pt-4">
+              <Link
+                href="/predictions/trades"
+                className="inline-flex items-center gap-2 text-emerald-400 hover:text-emerald-300 font-medium"
+              >
+                See all predictions
+                <ChevronRight className="w-5 h-5" />
+              </Link>
+            </div>
           </div>
         ) : (
-          <div className="text-center py-12">
-            <div className="text-6xl mb-4">🌟</div>
-            <h3 className="text-xl font-semibold text-slate-900 mb-2">No communities yet</h3>
-            <p className="text-slate-600 mb-6">Join or create your first community to get started!</p>
-            <Link href="/communities">
-              <AnimatedButton className="flex items-center gap-2">
-                <span>🌍</span>
-                <span>Explore Communities</span>
-              </AnimatedButton>
+          <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-12 text-center">
+            <p className="text-slate-400 mb-4">
+              You haven&apos;t made any predictions yet.
+            </p>
+            <Link
+              href="/predictions/markets"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-medium transition-colors"
+            >
+              Browse Markets
             </Link>
           </div>
         )}
       </div>
-
-      {/* Impact Summary */}
-      <AnimatedCard className="p-6">
-        <h3 className="text-xl font-semibold text-slate-900 mb-4">Your Impact</h3>
-        
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="text-center p-4 bg-slate-50 rounded-lg">
-            <div className="text-2xl mb-2">🗳️</div>
-            <div className="text-lg font-bold text-slate-900">{impactStats.votes_cast}</div>
-            <div className="text-sm text-slate-600">Votes Cast</div>
-          </div>
-          
-          <div className="text-center p-4 bg-slate-50 rounded-lg">
-            <div className="text-2xl mb-2">💡</div>
-            <div className="text-lg font-bold text-slate-900">{impactStats.needs_created}</div>
-            <div className="text-sm text-slate-600">Needs Created</div>
-          </div>
-          
-          <div className="text-center p-4 bg-slate-50 rounded-lg">
-            <div className="text-2xl mb-2">📅</div>
-            <div className="text-lg font-bold text-slate-900">{impactStats.events_created}</div>
-            <div className="text-sm text-slate-600">Events Created</div>
-          </div>
-          
-          <div className="text-center p-4 bg-slate-50 rounded-lg">
-            <div className="text-2xl mb-2">🏆</div>
-            <div className="text-lg font-bold text-slate-900">{userCommunities.length}</div>
-            <div className="text-sm text-slate-600">Communities Joined</div>
-          </div>
-        </div>
-      </AnimatedCard>
     </div>
   )
 }

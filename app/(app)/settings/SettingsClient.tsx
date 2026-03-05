@@ -273,7 +273,7 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
 
       {/* Profile Picture/Logo Upload */}
       <div>
-        <h2 className="text-2xl font-bold text-slate-900 mb-6">
+        <h2 className="text-2xl font-bold text-white mb-6">
           {profile?.user_type === 'brand' ? 'Brand Logo' : 'Profile Picture'}
         </h2>
         
@@ -292,14 +292,14 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
 
       {/* Profile Settings */}
       <div>
-        <h2 className="text-2xl font-bold text-slate-900 mb-6">
+        <h2 className="text-2xl font-bold text-white mb-6">
           {profile?.user_type === 'brand' ? 'Brand Information' : 'Profile Information'}
         </h2>
         
         <AnimatedCard className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="block text-sm font-medium text-slate-400 mb-2">
                 {profile?.user_type === 'brand' ? 'Company Name' : 'Full Name'}
               </label>
               <input
@@ -315,7 +315,7 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="block text-sm font-medium text-slate-400 mb-2">
                 Email
               </label>
               <input
@@ -328,7 +328,7 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="block text-sm font-medium text-slate-400 mb-2">
                 Location
               </label>
               <input
@@ -344,7 +344,7 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
             {profile?.user_type === 'brand' && (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                  <label className="block text-sm font-medium text-slate-400 mb-2">
                     Industry
                   </label>
                   <input
@@ -357,7 +357,7 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                  <label className="block text-sm font-medium text-slate-400 mb-2">
                     Company Size
                   </label>
                   <select
@@ -375,7 +375,7 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                  <label className="block text-sm font-medium text-slate-400 mb-2">
                     Company Website
                   </label>
                   <input
@@ -390,7 +390,7 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
             )}
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="block text-sm font-medium text-slate-400 mb-2">
                 {profile?.user_type === 'brand' ? 'Company Description' : 'Bio'}
               </label>
               <textarea
@@ -407,7 +407,7 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
 
       {/* App Preferences */}
       <div>
-        <h2 className="text-2xl font-bold text-slate-900 mb-6">App Preferences</h2>
+        <h2 className="text-2xl font-bold text-white mb-6">App Preferences</h2>
         
         <div className="grid gap-6">
           {/* Theme */}
@@ -418,7 +418,7 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
                   <span className="text-xl">🎨</span>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-slate-900">Theme</h3>
+                  <h3 className="font-semibold text-white">Theme</h3>
                   <p className="text-slate-600 text-sm">Choose your preferred appearance</p>
                 </div>
               </div>
@@ -444,7 +444,7 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
                   <span className="text-xl">🌍</span>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-slate-900">Language</h3>
+                  <h3 className="font-semibold text-white">Language</h3>
                   <p className="text-slate-600 text-sm">Choose your preferred language</p>
                 </div>
               </div>
@@ -470,7 +470,7 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
                   <span className="text-xl">💰</span>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-slate-900">Currency</h3>
+                  <h3 className="font-semibold text-white">Currency</h3>
                   <p className="text-slate-600 text-sm">Choose your preferred currency</p>
                 </div>
               </div>
@@ -492,7 +492,7 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
 
       {/* Payment Settings */}
       <div>
-        <h2 className="text-2xl font-bold text-slate-900 mb-6">💳 Payment Settings</h2>
+        <h2 className="text-2xl font-bold text-white mb-6">💳 Payment Settings</h2>
         
         <AnimatedCard className="p-6">
           <div className="flex items-start gap-4">
@@ -500,7 +500,7 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
               <span className="text-xl">💰</span>
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-slate-900 mb-2">Stripe Connect - Receive Payments</h3>
+              <h3 className="font-semibold text-white mb-2">Stripe Connect - Receive Payments</h3>
               <p className="text-slate-600 text-sm mb-4">
                 Connect your Stripe account to receive 85% of sponsorship payments directly to your bank account. Required if you're a community creator accepting sponsorships.
               </p>
@@ -625,7 +625,7 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
 
       {/* Notifications */}
       <div>
-        <h2 className="text-2xl font-bold text-slate-900 mb-6">Notifications</h2>
+        <h2 className="text-2xl font-bold text-white mb-6">Notifications</h2>
         
         <div className="grid gap-4">
           <AnimatedCard className="p-6">
@@ -635,7 +635,7 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
                   <span className="text-xl">📧</span>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-slate-900">Email Notifications</h3>
+                  <h3 className="font-semibold text-white">Email Notifications</h3>
                   <p className="text-slate-600 text-sm">Receive updates about your communities</p>
                 </div>
               </div>
@@ -658,7 +658,7 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
                   <span className="text-xl">🔔</span>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-slate-900">Push Notifications</h3>
+                  <h3 className="font-semibold text-white">Push Notifications</h3>
                   <p className="text-slate-600 text-sm">Get notified about important updates</p>
                 </div>
               </div>
@@ -681,7 +681,7 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
                   <span className="text-xl">📬</span>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-slate-900">Marketing Emails</h3>
+                  <h3 className="font-semibold text-white">Marketing Emails</h3>
                   <p className="text-slate-600 text-sm">Receive updates about new features and tips</p>
                 </div>
               </div>
@@ -701,7 +701,7 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
 
       {/* Privacy */}
       <div>
-        <h2 className="text-2xl font-bold text-slate-900 mb-6">Privacy</h2>
+        <h2 className="text-2xl font-bold text-white mb-6">Privacy</h2>
         
         <AnimatedCard className="p-6">
           <div className="flex items-center justify-between">
@@ -710,7 +710,7 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
                 <span className="text-xl">🔒</span>
               </div>
               <div>
-                <h3 className="font-semibold text-slate-900">Profile Visibility</h3>
+                <h3 className="font-semibold text-white">Profile Visibility</h3>
                 <p className="text-slate-600 text-sm">Control who can see your profile</p>
               </div>
             </div>
@@ -728,7 +728,7 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
 
       {/* Support */}
       <div>
-        <h2 className="text-2xl font-bold text-slate-900 mb-6">Support</h2>
+        <h2 className="text-2xl font-bold text-white mb-6">Support</h2>
         
         <div className="grid gap-4">
           <AnimatedCard className="p-6">
@@ -739,7 +739,7 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-semibold text-slate-900">Help Center</h3>
+                    <h3 className="font-semibold text-white">Help Center</h3>
                     <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">
                       Próximamente
                     </span>
@@ -777,7 +777,7 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
                   <span className="text-xl">💬</span>
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-slate-900">Contact Support</h3>
+                  <h3 className="font-semibold text-white">Contact Support</h3>
                   <p className="text-slate-600 text-sm">Get help from our support team</p>
                   <a 
                     href="mailto:support@crowdconscious.app?subject=Help%20Request"

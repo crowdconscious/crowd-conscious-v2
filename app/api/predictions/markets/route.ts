@@ -5,7 +5,7 @@ import type { Database } from '@/types/database'
 
 type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row']
 
-const VALID_CATEGORIES = ['world', 'government', 'corporate', 'community', 'cause'] as const
+const VALID_CATEGORIES = ['world', 'world_cup', 'government', 'sustainability', 'corporate', 'community', 'cause'] as const
 const VALID_STATUSES = ['active', 'trading', 'resolved', 'cancelled'] as const
 
 export async function GET(request: Request) {

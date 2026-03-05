@@ -7,6 +7,8 @@ import {
   Briefcase,
   Users,
   Heart,
+  Trophy,
+  Leaf,
   TrendingUp,
   TrendingDown,
   Calendar,
@@ -55,6 +57,18 @@ const CATEGORY_CONFIG: Record<
     icon: Heart,
     bg: 'bg-amber-500/20',
     text: 'text-amber-400',
+  },
+  world_cup: {
+    label: 'World Cup',
+    icon: Trophy,
+    bg: 'bg-emerald-500/20',
+    text: 'text-emerald-400',
+  },
+  sustainability: {
+    label: 'Sustainability',
+    icon: Leaf,
+    bg: 'bg-green-500/20',
+    text: 'text-green-400',
   },
 }
 

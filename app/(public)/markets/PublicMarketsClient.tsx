@@ -1,8 +1,18 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Search, Globe, Building2, Briefcase, Users, Heart, Trophy, Leaf } from 'lucide-react'
-import { MarketCard } from '../components/MarketCard'
+import Link from 'next/link'
+import {
+  Search,
+  Globe,
+  Building2,
+  Briefcase,
+  Users,
+  Heart,
+  Trophy,
+  Leaf,
+} from 'lucide-react'
+import { PublicMarketCard } from './PublicMarketCard'
 import type { Database } from '@/types/database'
 
 type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row']
@@ -18,28 +28,20 @@ const CATEGORIES = [
   { id: 'cause', label: 'Cause', icon: Heart },
 ] as const
 
-const STATUS_TABS = [
-  { id: 'active', label: 'Active' },
-  { id: 'resolved', label: 'Resolved' },
-] as const
-
 interface Props {
   initialMarkets: PredictionMarket[]
   categoryCounts: Record<string, number>
-  resolvedCount?: number
   historyByMarket?: Record<string, { probability: number; recorded_at: string }[]>
   leadingOutcomes?: Record<string, { label: string; probability: number }>
 }
 
-export function MarketsClient({
+export default function PublicMarketsClient({
   initialMarkets,
   categoryCounts,
-  resolvedCount = 0,
   historyByMarket = {},
   leadingOutcomes = {},
 }: Props) {
   const [markets, setMarkets] = useState<PredictionMarket[]>(initialMarkets)
-  const [statusTab, setStatusTab] = useState<'active' | 'resolved'>('active')
   const [category, setCategory] = useState<string>('all')
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -54,10 +56,9 @@ export function MarketsClient({
     setSearching(true)
     try {
       const params = new URLSearchParams()
-      params.set('status', statusTab)
       if (category !== 'all') params.set('category', category)
       if (debouncedSearch) params.set('search', debouncedSearch)
-      const res = await fetch(`/api/predictions/markets?${params}`)
+      const res = await fetch(`/api/markets?${params}`)
       const data = await res.json()
       if (data.markets) setMarkets(data.markets)
     } catch (err) {
@@ -65,44 +66,23 @@ export function MarketsClient({
     } finally {
       setSearching(false)
     }
-  }, [statusTab, category, debouncedSearch])
+  }, [category, debouncedSearch])
 
   useEffect(() => {
-    if (statusTab === 'resolved' || debouncedSearch || category !== 'all') {
+    if (debouncedSearch || category !== 'all') {
       fetchMarkets()
     } else {
       setMarkets(initialMarkets)
     }
-  }, [statusTab, debouncedSearch, category, initialMarkets, fetchMarkets])
+  }, [debouncedSearch, category, initialMarkets, fetchMarkets])
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Markets</h1>
+        <h1 className="text-3xl font-bold text-white">Browse Markets</h1>
         <p className="text-slate-400 mt-1">
-          Browse and predict on markets
+          Predict on what matters. Sign up free to start earning XP.
         </p>
-      </div>
-
-      <div className="flex gap-2 mb-4">
-        {STATUS_TABS.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setStatusTab(tab.id)}
-            className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
-              statusTab === tab.id
-                ? 'bg-emerald-600 text-white'
-                : 'bg-slate-800 text-slate-400 hover:text-white'
-            }`}
-          >
-            {tab.label}
-            {tab.id === 'resolved' && resolvedCount > 0 && (
-              <span className="ml-1.5 px-1.5 py-0.5 rounded text-xs bg-white/20">
-                {resolvedCount}
-              </span>
-            )}
-          </button>
-        ))}
       </div>
 
       <div className="relative">
@@ -175,7 +155,7 @@ export function MarketsClient({
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {markets.map((market) => (
-            <MarketCard
+            <PublicMarketCard
               key={market.id}
               market={market}
               history={historyByMarket[market.id] ?? []}
@@ -184,6 +164,15 @@ export function MarketsClient({
           ))}
         </div>
       )}
+
+      <div className="text-center pt-8">
+        <Link
+          href="/signup"
+          className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold transition-colors"
+        >
+          Sign up to predict
+        </Link>
+      </div>
     </div>
   )
 }

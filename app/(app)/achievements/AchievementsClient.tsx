@@ -139,11 +139,11 @@ const CATEGORY_COLORS = {
 }
 
 const RARITY_COLORS = {
-  common: 'border-slate-300 bg-slate-50',
-  uncommon: 'border-green-300 bg-green-50',
-  rare: 'border-blue-300 bg-blue-50',
-  epic: 'border-purple-300 bg-purple-50',
-  legendary: 'border-yellow-400 bg-yellow-50'
+  common: 'border-slate-600 bg-slate-800/80',
+  uncommon: 'border-emerald-500/50 bg-emerald-500/10',
+  rare: 'border-blue-500/50 bg-blue-500/10',
+  epic: 'border-purple-500/50 bg-purple-500/10',
+  legendary: 'border-amber-500/50 bg-amber-500/10'
 }
 
 export default function AchievementsClient({ user }: AchievementsClientProps) {
@@ -232,22 +232,22 @@ export default function AchievementsClient({ user }: AchievementsClientProps) {
     <div className="space-y-8">
       {/* Success Message */}
       {achievementsUnlocked !== null && achievementsUnlocked > 0 && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-3">
-          <CheckCircle className="w-5 h-5 text-green-600" />
+        <div className="bg-emerald-500/20 border border-emerald-500/50 rounded-lg p-4 flex items-center gap-3">
+          <CheckCircle className="w-5 h-5 text-emerald-400" />
           <div>
-            <p className="text-green-800 font-medium">
+            <p className="text-emerald-200 font-medium">
               🎉 Unlocked {achievementsUnlocked} achievement{achievementsUnlocked !== 1 ? 's' : ''}!
             </p>
-            <p className="text-green-600 text-sm">Your achievements have been updated based on your past actions.</p>
+            <p className="text-emerald-300 text-sm">Your achievements have been updated based on your past actions.</p>
           </div>
         </div>
       )}
 
       {/* Checking Achievements Indicator */}
       {isCheckingAchievements && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center gap-3">
-          <Sparkles className="w-5 h-5 text-blue-600 animate-spin" />
-          <p className="text-blue-800">Checking your past actions and unlocking achievements...</p>
+        <div className="bg-blue-500/20 border border-blue-500/50 rounded-lg p-4 flex items-center gap-3">
+          <Sparkles className="w-5 h-5 text-blue-400 animate-spin" />
+          <p className="text-blue-200">Checking your past actions and unlocking achievements...</p>
         </div>
       )}
 
@@ -284,14 +284,14 @@ export default function AchievementsClient({ user }: AchievementsClientProps) {
       </div>
 
       {/* Category Filters */}
-      <AnimatedCard className="p-6">
+      <AnimatedCard className="p-6 bg-slate-900/50 border border-slate-800 rounded-xl">
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setSelectedCategory(null)}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
               selectedCategory === null
-                ? 'bg-teal-600 text-white'
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                ? 'bg-emerald-600 text-white'
+                : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white'
             }`}
           >
             All Categories
@@ -302,8 +302,8 @@ export default function AchievementsClient({ user }: AchievementsClientProps) {
               onClick={() => setSelectedCategory(category)}
               className={`px-4 py-2 rounded-lg font-medium transition-colors capitalize ${
                 selectedCategory === category
-                  ? 'bg-teal-600 text-white'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white'
               }`}
             >
               {category}
@@ -316,7 +316,7 @@ export default function AchievementsClient({ user }: AchievementsClientProps) {
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[...Array(9)].map((_, i) => (
-            <div key={i} className="animate-pulse bg-slate-200 rounded-xl h-32" />
+            <div key={i} className="animate-pulse bg-slate-700 rounded-xl h-32" />
           ))}
         </div>
       ) : (
@@ -348,12 +348,12 @@ export default function AchievementsClient({ user }: AchievementsClientProps) {
                     {/* Content */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-bold text-slate-900">{achievement.name}</h3>
+                        <h3 className="font-bold text-white">{achievement.name}</h3>
                         {achievement.unlocked && (
                           <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
                         )}
                       </div>
-                      <p className="text-sm text-slate-600 mb-2">{achievement.description}</p>
+                      <p className="text-sm text-slate-400 mb-2">{achievement.description}</p>
                       {achievement.unlocked && achievement.unlockedAt && (
                         <p className="text-xs text-slate-500">
                           Unlocked {new Date(achievement.unlockedAt).toLocaleDateString()}
@@ -374,7 +374,7 @@ export default function AchievementsClient({ user }: AchievementsClientProps) {
                                     <span>Modules completed</span>
                                     <span>{userStats.modules_completed || 0} / {achievement.type === 'MODULE_5' ? 5 : 10}</span>
                                   </div>
-                                  <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                  <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
                                     <div 
                                       className="h-full bg-teal-500 transition-all"
                                       style={{ width: `${Math.min(((userStats.modules_completed || 0) / (achievement.type === 'MODULE_5' ? 5 : 10)) * 100, 100)}%` }}
@@ -388,7 +388,7 @@ export default function AchievementsClient({ user }: AchievementsClientProps) {
                                     <span>Votes cast</span>
                                     <span>{userStats.votes_cast || 0} / 50</span>
                                   </div>
-                                  <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                  <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
                                     <div 
                                       className="h-full bg-teal-500 transition-all"
                                       style={{ width: `${Math.min(((userStats.votes_cast || 0) / 50) * 100, 100)}%` }}
@@ -402,7 +402,7 @@ export default function AchievementsClient({ user }: AchievementsClientProps) {
                                     <span>Sponsorships</span>
                                     <span>{userStats.sponsorships_made || 0} / 10</span>
                                   </div>
-                                  <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                  <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
                                     <div 
                                       className="h-full bg-teal-500 transition-all"
                                       style={{ width: `${Math.min(((userStats.sponsorships_made || 0) / 10) * 100, 100)}%` }}
