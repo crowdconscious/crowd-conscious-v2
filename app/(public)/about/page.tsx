@@ -104,7 +104,7 @@ export default function AboutPage() {
         <section className="py-16 px-4 border-t border-slate-800">
           <div className="max-w-3xl mx-auto text-center">
             <p className="text-slate-400">
-              Founded in Mexico City by Francisco Blockstrand. Built with AI. Powered by community.
+              Founded in Mexico City, powered by our conscious community.
             </p>
           </div>
         </section>
