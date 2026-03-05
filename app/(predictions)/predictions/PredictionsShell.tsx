@@ -13,12 +13,20 @@ import {
   X,
   ShieldCheck,
 } from 'lucide-react'
+import { useLanguage } from '@/contexts/LanguageContext'
+import LanguageSwitcherSimple from '@/components/LanguageSwitcherSimple'
 
-const NAV_ITEMS = [
+const NAV_ITEMS_EN = [
   { href: '/predictions', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/predictions/markets', label: 'Markets', icon: TrendingUp },
   { href: '/predictions/trades', label: 'My Predictions', icon: Receipt },
   { href: '/predictions/fund', label: 'Conscious Fund', icon: Heart },
+]
+const NAV_ITEMS_ES = [
+  { href: '/predictions', label: 'Panel', icon: LayoutDashboard },
+  { href: '/predictions/markets', label: 'Mercados', icon: TrendingUp },
+  { href: '/predictions/trades', label: 'Mis Predicciones', icon: Receipt },
+  { href: '/predictions/fund', label: 'Fondo Consciente', icon: Heart },
 ]
 
 export default function PredictionsShell({
@@ -29,8 +37,10 @@ export default function PredictionsShell({
   isAdmin?: boolean
 }) {
   const pathname = usePathname()
+  const { language } = useLanguage()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const closeMobileMenu = () => setMobileMenuOpen(false)
+  const NAV_ITEMS = language === 'es' ? NAV_ITEMS_ES : NAV_ITEMS_EN
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex">
@@ -72,18 +82,19 @@ export default function PredictionsShell({
               }`}
             >
               <ShieldCheck className="w-4 h-4" />
-              Resolve Markets
+              {language === 'es' ? 'Resolver Mercados' : 'Resolve Markets'}
             </Link>
           </div>
         )}
 
-        <div className="p-4 border-t border-slate-800">
+        <div className="p-4 border-t border-slate-800 space-y-3">
+          <LanguageSwitcherSimple />
           <Link
             href="/profile"
             className="flex items-center gap-2 text-sm text-slate-400 hover:text-emerald-400 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            Profile & Settings
+            {language === 'es' ? 'Perfil y Configuración' : 'Profile & Settings'}
           </Link>
         </div>
       </aside>
@@ -98,12 +109,15 @@ export default function PredictionsShell({
           <Menu className="w-6 h-6" />
         </button>
         <h1 className="font-bold text-white">Crowd Conscious</h1>
-        <Link
-          href="/profile"
-          className="text-sm text-emerald-400"
-        >
-          Profile
-        </Link>
+        <div className="flex items-center gap-2">
+          <LanguageSwitcherSimple />
+          <Link
+            href="/profile"
+            className="text-sm text-emerald-400"
+          >
+            {language === 'es' ? 'Perfil' : 'Profile'}
+          </Link>
+        </div>
       </div>
 
       {/* Mobile menu overlay */}
@@ -159,19 +173,20 @@ export default function PredictionsShell({
                   }`}
                 >
                   <ShieldCheck className="w-4 h-4" />
-                  Resolve Markets
+                  {language === 'es' ? 'Resolver Mercados' : 'Resolve Markets'}
                 </Link>
               )}
             </nav>
 
-            <div className="p-4 border-t border-slate-800">
+            <div className="p-4 border-t border-slate-800 space-y-3">
+              <LanguageSwitcherSimple />
               <Link
                 href="/profile"
                 onClick={closeMobileMenu}
                 className="flex items-center gap-2 text-sm text-slate-400 hover:text-emerald-400 transition-colors"
               >
                 <ArrowLeft className="w-4 h-4" />
-                Profile & Settings
+                {language === 'es' ? 'Perfil y Configuración' : 'Profile & Settings'}
               </Link>
             </div>
           </aside>

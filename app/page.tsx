@@ -2,24 +2,13 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase-server'
 import dynamic from 'next/dynamic'
 import { toDisplayPercent } from '@/lib/probability-utils'
-import {
-  Target,
-  Vote,
-  Heart,
-  Globe,
-  Building2,
-  Briefcase,
-  Users,
-  Trophy,
-  Leaf,
-  ChevronRight,
-  TrendingUp,
-} from 'lucide-react'
+import { Globe, Building2, Briefcase, Users, Trophy, Leaf, ChevronRight, Heart } from 'lucide-react'
 
 const LandingNav = dynamic(() => import('./components/landing/LandingNav'))
 const Footer = dynamic(() => import('../components/Footer'))
 const CookieConsent = dynamic(() => import('../components/CookieConsent'))
 const SmartHomeClient = dynamic(() => import('./SmartHomeClient'))
+const LandingHeroClient = dynamic(() => import('./components/landing/LandingHeroClient').then((m) => ({ default: m.LandingHeroClient })))
 
 export const revalidate = 60
 
@@ -119,110 +108,7 @@ export default async function LandingPage() {
       <main>
         <LandingNav />
 
-        {/* Hero */}
-        <section className="relative pt-24 pb-20 px-4 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-slate-900/80 via-slate-950 to-slate-950" />
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-emerald-500/10 rounded-full blur-3xl" />
-          <div className="relative max-w-5xl mx-auto text-center">
-            <h1 className="text-4xl md:text-6xl font-bold text-white tracking-tight mb-6">
-              Predict what matters.
-              <br />
-              <span className="text-emerald-400">Fund real change.</span>
-            </h1>
-            <p className="text-xl text-slate-400 max-w-2xl mx-auto mb-10">
-              Free predictions on the World Cup, your city, and the issues you care about. No money
-              needed — brands sponsor the impact.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                href="/signup"
-                className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold text-lg transition-colors"
-              >
-                Start Predicting
-              </Link>
-              <Link
-                href="/markets"
-                className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl border border-slate-600 hover:border-slate-500 text-slate-200 font-semibold transition-colors"
-              >
-                Browse Markets
-              </Link>
-            </div>
-
-            {/* Hero market cards */}
-            {heroMarkets.length > 0 && (
-              <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
-                {heroMarkets.map((m) => {
-                  const config = CATEGORY_CONFIG[m.category] || CATEGORY_CONFIG.world
-                  const Icon = config.icon
-                  const leading = outcomesByMarket[m.id]
-                  const prob = leading
-                    ? Math.round(toDisplayPercent(leading.probability))
-                    : Math.round(toDisplayPercent(Number(m.current_probability))) || 50
-                  const label = leading?.label ?? 'YES'
-                  const votes = m.total_votes ?? 0
-
-                  return (
-                    <Link
-                      key={m.id}
-                      href={`/predictions/markets/${m.id}`}
-                      className="block bg-slate-900/80 border border-slate-800 rounded-xl p-5 hover:border-slate-700 transition-colors text-left"
-                    >
-                      <span
-                        className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium ${config.bg} ${config.text}`}
-                      >
-                        <Icon className="w-3 h-3" />
-                        {config.label}
-                      </span>
-                      <p className="font-medium text-white mt-2 line-clamp-2">{m.title}</p>
-                      <p className="text-emerald-400 text-sm font-semibold mt-1">
-                        {label} {prob}%
-                      </p>
-                      <p className="text-slate-500 text-xs mt-1">{votes} predictions</p>
-                    </Link>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* How It Works */}
-        <section className="py-20 px-4 border-t border-slate-800">
-          <div className="max-w-5xl mx-auto">
-            <h2 className="text-3xl font-bold text-white text-center mb-12">
-              How it works
-            </h2>
-            <div className="grid md:grid-cols-3 gap-8">
-              <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-8">
-                <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center mb-4">
-                  <Target className="w-6 h-6 text-emerald-400" />
-                </div>
-                <h3 className="text-xl font-semibold text-white mb-2">Pick a market</h3>
-                <p className="text-slate-400">
-                  World Cup, sustainability, policy, culture — choose what matters to you.
-                </p>
-              </div>
-              <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-8">
-                <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center mb-4">
-                  <Vote className="w-6 h-6 text-emerald-400" />
-                </div>
-                <h3 className="text-xl font-semibold text-white mb-2">Share your prediction</h3>
-                <p className="text-slate-400">
-                  Vote with confidence. Earn XP. Climb the leaderboard.
-                </p>
-              </div>
-              <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-8">
-                <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center mb-4">
-                  <Heart className="w-6 h-6 text-emerald-400" />
-                </div>
-                <h3 className="text-xl font-semibold text-white mb-2">Fund real impact</h3>
-                <p className="text-slate-400">
-                  Brand sponsors fund the Conscious Fund. Your engagement decides where it goes.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
+        <LandingHeroClient heroMarkets={heroMarkets} outcomesByMarket={outcomesByMarket} />
 
         {/* Live Markets Preview */}
         {previewMarkets.length > 0 && (

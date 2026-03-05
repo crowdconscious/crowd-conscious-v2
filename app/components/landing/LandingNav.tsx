@@ -4,10 +4,19 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Menu, X } from 'lucide-react'
+import LanguageSwitcherSimple from '@/components/LanguageSwitcherSimple'
+import { useLanguage } from '@/contexts/LanguageContext'
+
+const NAV = {
+  es: { markets: 'Mercados', about: 'Acerca de', forSponsors: 'Para Patrocinadores', signIn: 'Iniciar Sesión', startPredicting: 'Empezar a Predecir' },
+  en: { markets: 'Markets', about: 'About', forSponsors: 'For Sponsors', signIn: 'Sign In', startPredicting: 'Start Predicting' },
+}
 
 export default function LandingNav() {
+  const { language } = useLanguage()
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const nav = NAV[language]
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20)
@@ -37,34 +46,35 @@ export default function LandingNav() {
               href="/markets"
               className="text-slate-400 hover:text-white transition-colors font-medium"
             >
-              Markets
+              {nav.markets}
             </Link>
             <Link
               href="/about"
               className="text-slate-400 hover:text-white transition-colors font-medium"
             >
-              About
+              {nav.about}
             </Link>
             <Link
               href="/sponsor"
               className="text-slate-400 hover:text-white transition-colors font-medium"
             >
-              For Sponsors
+              {nav.forSponsors}
             </Link>
           </div>
 
           <div className="hidden md:flex items-center gap-4">
+            <LanguageSwitcherSimple />
             <Link
               href="/login"
               className="text-slate-400 hover:text-white transition-colors font-medium"
             >
-              Sign In
+              {nav.signIn}
             </Link>
             <Link
               href="/signup"
               className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-white font-semibold transition-colors"
             >
-              Start Predicting
+              {nav.startPredicting}
             </Link>
           </div>
 
@@ -81,40 +91,43 @@ export default function LandingNav() {
       {mobileOpen && (
         <div className="md:hidden border-t border-slate-800 bg-slate-950/98 backdrop-blur-md">
           <div className="px-4 py-4 space-y-3">
+            <div className="py-2">
+              <LanguageSwitcherSimple />
+            </div>
             <Link
               href="/markets"
               onClick={() => setMobileOpen(false)}
               className="block py-2 text-slate-400 hover:text-white"
             >
-              Markets
+              {nav.markets}
             </Link>
             <Link
               href="/about"
               onClick={() => setMobileOpen(false)}
               className="block py-2 text-slate-400 hover:text-white"
             >
-              About
+              {nav.about}
             </Link>
             <Link
               href="/sponsor"
               onClick={() => setMobileOpen(false)}
               className="block py-2 text-slate-400 hover:text-white"
             >
-              For Sponsors
+              {nav.forSponsors}
             </Link>
             <Link
               href="/login"
               onClick={() => setMobileOpen(false)}
               className="block py-2 text-slate-400 hover:text-white"
             >
-              Sign In
+              {nav.signIn}
             </Link>
             <Link
               href="/signup"
               onClick={() => setMobileOpen(false)}
               className="block py-3 rounded-lg bg-emerald-500 text-white font-semibold text-center"
             >
-              Start Predicting
+              {nav.startPredicting}
             </Link>
           </div>
         </div>

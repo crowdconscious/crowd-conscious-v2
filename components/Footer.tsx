@@ -1,16 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 export default function Footer() {
-  const [language, setLanguage] = useState<'es' | 'en'>('es')
-
-  useEffect(() => {
-    const savedLanguage = localStorage.getItem('preferred-language') as 'es' | 'en'
-    const browserLanguage = navigator.language.startsWith('es') ? 'es' : 'en'
-    setLanguage(savedLanguage || browserLanguage)
-  }, [])
+  const { language, setLanguage } = useLanguage()
 
   const content = {
     es: {

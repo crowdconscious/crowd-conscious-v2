@@ -137,14 +137,15 @@ export const formatNumber = (num: number, language: string = 'en'): string => {
 }
 
 // Get user's preferred language from localStorage or browser
+// Uses 'preferred-language' to align with LanguageContext
 export const getUserLanguage = (): string => {
   if (typeof window !== 'undefined') {
-    const saved = localStorage.getItem('language')
+    const saved = localStorage.getItem('preferred-language')
     if (saved && ['en', 'es'].includes(saved)) {
       return saved
     }
-    
-    // Fallback to browser language
+    const fallback = localStorage.getItem('language')
+    if (fallback && ['en', 'es'].includes(fallback)) return fallback
     const browserLang = navigator.language.split('-')[0]
     return ['en', 'es'].includes(browserLang) ? browserLang : 'en'
   }

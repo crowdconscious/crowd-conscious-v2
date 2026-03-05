@@ -3,22 +3,15 @@
 import { useState, useEffect } from 'react'
 import { AnimatedCard } from './ui/UIComponents'
 import Link from 'next/link'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 export default function CookieConsent() {
   const [showBanner, setShowBanner] = useState(false)
-  const [language, setLanguage] = useState<'es' | 'en'>('es')
+  const { language, setLanguage } = useLanguage()
 
   useEffect(() => {
-    // Check if user has already consented
     const hasConsented = localStorage.getItem('cookie-consent')
-    if (!hasConsented) {
-      setShowBanner(true)
-    }
-
-    // Detect language from browser or previous setting
-    const savedLanguage = localStorage.getItem('preferred-language') as 'es' | 'en'
-    const browserLanguage = navigator.language.startsWith('es') ? 'es' : 'en'
-    setLanguage(savedLanguage || browserLanguage)
+    if (!hasConsented) setShowBanner(true)
   }, [])
 
   const handleAcceptAll = () => {
@@ -38,19 +31,19 @@ export default function CookieConsent() {
   const content = {
     es: {
       title: "🍪 Usamos Cookies",
-      description: "Utilizamos cookies para mejorar su experiencia, analizar el tráfico del sitio y personalizar el contenido. También incluimos una comisión del 15% en todas las transacciones de patrocinio.",
+      description: "Utilizamos cookies para mejorar su experiencia, analizar el tráfico del sitio y personalizar el contenido. 80% de patrocinios al Fondo Consciente, 20% plataforma.",
       essential: "Solo Esenciales",
       acceptAll: "Aceptar Todas",
       learnMore: "Más información",
-      platformFee: "📋 Transparencia: Cobramos una comisión del 15% en todas las transacciones para mantener la plataforma."
+      platformFee: "📋 Transparencia: 80% de patrocinios al Fondo Consciente, 20% plataforma."
     },
     en: {
       title: "🍪 We Use Cookies",
-      description: "We use cookies to improve your experience, analyze site traffic, and personalize content. We also include a 15% commission on all sponsorship transactions.",
+      description: "We use cookies to improve your experience, analyze site traffic, and personalize content. 80% of sponsorships go to the Conscious Fund, 20% to platform operations.",
       essential: "Essential Only",
       acceptAll: "Accept All",
       learnMore: "Learn more",
-      platformFee: "📋 Transparency: We charge a 15% commission on all transactions to maintain the platform."
+      platformFee: "📋 Transparency: 80% of sponsorships to Conscious Fund, 20% platform."
     }
   }
 
