@@ -32,6 +32,7 @@ export async function GET(request: NextRequest) {
 
     // Send email to each user with their personalized stats
     for (const user of users) {
+      if (!user.email) continue
       try {
         // Get user stats
         const { data: userStats } = await (supabase as any)

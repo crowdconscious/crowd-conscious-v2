@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { getCurrentUser } from '@/lib/auth-server'
+import { sendMarketResolutionEmail } from '@/lib/resend'
 
 export async function POST(request: Request) {
   try {
@@ -54,7 +55,7 @@ export async function POST(request: Request) {
         )
       }
 
-      // Notify voters
+      // Notify voters (in-app + email)
       const admin = createAdminClient()
       const { data: market } = await admin
         .from('prediction_markets')
@@ -68,6 +69,8 @@ export async function POST(request: Request) {
         .eq('market_id', market_id)
 
       const winningLabel = result.winning_outcome || 'Unknown'
+      const marketTitle = market?.title || 'Prediction'
+
       for (const v of votes || []) {
         const won = v.outcome_id === winning_outcome_id
         const message = won
@@ -76,10 +79,23 @@ export async function POST(request: Request) {
         await admin.from('notifications').insert({
           user_id: v.user_id,
           type: 'market_resolved',
-          title: `Market resolved: ${market?.title || 'Prediction'}`,
-          message: `"${market?.title || 'Market'}" resolved as ${winningLabel}. ${message}`,
+          title: `Market resolved: ${marketTitle}`,
+          message: `"${marketTitle}" resolved as ${winningLabel}. ${message}`,
           data: { market_id, winning_outcome: winningLabel, won, bonus_xp: v.bonus_xp ?? 0 },
         })
+
+        // Send resolution email (no email for every prediction, only on resolution)
+        const { data: profile } = await admin.from('profiles').select('email, full_name').eq('id', v.user_id).single()
+        if (profile?.email) {
+          sendMarketResolutionEmail(
+            profile.email,
+            profile.full_name || 'Predictor',
+            marketTitle,
+            winningLabel,
+            won,
+            v.bonus_xp ?? undefined
+          ).catch((err) => console.error('Resolution email error:', err))
+        }
       }
 
       return NextResponse.json({

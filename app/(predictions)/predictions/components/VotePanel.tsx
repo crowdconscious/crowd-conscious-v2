@@ -97,8 +97,7 @@ export function VotePanel({ market, outcomes, myVote, onVoteSuccess }: VotePanel
       const data = await res.json()
       if (data.success) {
         onVoteSuccess?.(data.xp_earned)
-        // Delay reload so user can see the celebration modal for a few seconds
-        setTimeout(() => window.location.reload(), 3500)
+        // Celebration stays open until user clicks Continue (no auto-reload)
       } else {
         alert(data.error || 'Vote failed')
       }

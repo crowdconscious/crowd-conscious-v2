@@ -167,6 +167,11 @@ export function MarketDetailClient({
     setCelebration({ open: true, xpGained })
   }
 
+  const handleCelebrationClose = () => {
+    setCelebration({ open: false })
+    window.location.reload()
+  }
+
   const isResolved = market.status === 'resolved'
   const resolutionLabel = (market as { resolution?: string }).resolution ?? (market.resolved_outcome ? 'YES' : 'NO')
   const resolvedDate = market.resolved_at ? formatDate(market.resolved_at) : ''
@@ -569,9 +574,9 @@ export function MarketDetailClient({
         title="Nice!"
         message={celebration.xpGained ? `You earned ${celebration.xpGained} XP` : 'Your prediction has been recorded.'}
         xpGained={celebration.xpGained}
-        shareLabel="Share your prediction"
         sharePath={`/predictions/markets/${market.id}`}
-        onClose={() => setCelebration({ open: false })}
+        shareTitle={market.title}
+        onClose={handleCelebrationClose}
       />
     </div>
   )

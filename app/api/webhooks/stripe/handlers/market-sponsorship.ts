@@ -1,5 +1,6 @@
 import Stripe from 'stripe'
 import { getSupabase } from '../lib/stripe-webhook-utils'
+import { sendSponsorConfirmationEmail } from '@/lib/resend'
 
 /**
  * Handle market sponsorship payment after successful checkout
@@ -78,7 +79,22 @@ export async function handleMarketSponsorship(session: Stripe.Checkout.Session) 
     }
   }
 
-  // 3. TODO: Send confirmation email via Resend (when configured)
+  // 3. Send sponsor confirmation email
+  if (sponsor_email) {
+    let marketTitle: string | undefined
+    if (market_id) {
+      const { data: market } = await (supabase as any).from('prediction_markets').select('title').eq('id', market_id).single()
+      marketTitle = market?.title
+    }
+    await sendSponsorConfirmationEmail(
+      sponsor_email,
+      sponsor_name || 'Sponsor',
+      tier || 'sponsor',
+      amountMXN,
+      marketTitle
+    )
+  }
+
   console.log('Market sponsorship completed:', {
     sessionId: session.id,
     sponsor_name,

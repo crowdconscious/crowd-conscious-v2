@@ -25,14 +25,13 @@ export const emailTemplates = {
           </p>
           <h3 style="color: #1e293b;">What you can do:</h3>
           <ul style="color: #475569; line-height: 1.8;">
-            <li>🏘️ Join communities in your area</li>
-            <li>🎯 Create and vote on community needs</li>
+            <li>🎯 Make predictions on markets that matter</li>
+            <li>🗳️ Vote on where the Conscious Fund goes</li>
+            <li>📊 Earn XP and climb the leaderboard</li>
             <li>🤝 Connect with like-minded changemakers</li>
-            <li>📊 Track measurable impact</li>
           </ul>
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${APP_URL}/login" style="background: #14b8a6; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; margin-right: 10px; box-shadow: 0 4px 14px rgba(20, 184, 166, 0.3);">🚀 Login to Dashboard</a>
-            <a href="${APP_URL}/communities" style="background: #6366f1; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; margin-left: 10px; box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);">🌍 Browse Communities</a>
+            <a href="${APP_URL}/predictions" style="background: #14b8a6; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; box-shadow: 0 4px 14px rgba(20, 184, 166, 0.3);">🚀 Start Predicting</a>
           </div>
         </div>
       </div>
@@ -72,6 +71,48 @@ export const emailTemplates = {
           <p style="color: #6b7280; font-size: 14px; text-align: center; margin-top: 20px;">
             Questions? Contact us at <a href="mailto:comunidad@crowdconscious.app" style="color: #14b8a6;">comunidad@crowdconscious.app</a>
           </p>
+        </div>
+      </div>
+    `
+  }),
+
+  sponsorConfirmation: (sponsorName: string, tier: string, amountMXN: number, marketTitle?: string) => ({
+    subject: `Thank you for sponsoring Crowd Conscious! 🙏`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #10b981, #14b8a6); padding: 40px 20px; text-align: center; border-radius: 10px 10px 0 0;">
+          <h1 style="color: white; margin: 0; font-size: 28px;">Thank you for your sponsorship! 🙏</h1>
+        </div>
+        <div style="padding: 30px 20px; background: #f8fafc; border-radius: 0 0 10px 10px;">
+          <p style="color: #475569; line-height: 1.6;">Hi ${sponsorName},</p>
+          <p style="color: #475569; line-height: 1.6;">
+            Your ${tier} sponsorship of ${amountMXN.toLocaleString()} MXN has been received. 15% goes to the Conscious Fund to support community causes.
+          </p>
+          ${marketTitle ? `<p style="color: #475569; line-height: 1.6;"><strong>Market:</strong> ${marketTitle}</p>` : ''}
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${APP_URL}/sponsor" style="background: #10b981; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">View Sponsor Page</a>
+          </div>
+        </div>
+      </div>
+    `
+  }),
+
+  marketResolution: (userName: string, marketTitle: string, winningOutcome: string, wasCorrect: boolean, bonusXp?: number) => ({
+    subject: wasCorrect ? `You were right! 🎯 "${marketTitle}" resolved` : `Market resolved: "${marketTitle}"`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, ${wasCorrect ? '#10b981' : '#64748b'}, ${wasCorrect ? '#14b8a6' : '#94a3b8'}); padding: 40px 20px; text-align: center; border-radius: 10px 10px 0 0;">
+          <h1 style="color: white; margin: 0; font-size: 28px;">${wasCorrect ? 'You were right! 🎯' : 'Market resolved'}</h1>
+        </div>
+        <div style="padding: 30px 20px; background: #f8fafc; border-radius: 0 0 10px 10px;">
+          <p style="color: #475569; line-height: 1.6;">Hi ${userName},</p>
+          <p style="color: #475569; line-height: 1.6;">
+            The market <strong>"${marketTitle}"</strong> has been resolved as <strong>${winningOutcome}</strong>.
+          </p>
+          ${wasCorrect ? `<p style="color: #10b981; font-weight: bold;">${bonusXp ? `+${bonusXp} bonus XP earned!` : 'Your prediction was correct!'}</p>` : '<p style="color: #64748b;">Better luck next time — keep predicting!</p>'}
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${APP_URL}/predictions/markets" style="background: #14b8a6; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Browse Markets</a>
+          </div>
         </div>
       </div>
     `
@@ -419,6 +460,33 @@ export async function sendWelcomeEmail(
   name: string
 ): Promise<boolean> {
   const template = emailTemplates.welcomeUser(name)
+  const result = await sendEmail(email, template)
+  return result.success
+}
+
+// Send sponsor confirmation (market sponsorship)
+export async function sendSponsorConfirmationEmail(
+  email: string,
+  sponsorName: string,
+  tier: string,
+  amountMXN: number,
+  marketTitle?: string
+): Promise<boolean> {
+  const template = emailTemplates.sponsorConfirmation(sponsorName, tier, amountMXN, marketTitle)
+  const result = await sendEmail(email, template)
+  return result.success
+}
+
+// Send market resolution notification
+export async function sendMarketResolutionEmail(
+  email: string,
+  userName: string,
+  marketTitle: string,
+  winningOutcome: string,
+  wasCorrect: boolean,
+  bonusXp?: number
+): Promise<boolean> {
+  const template = emailTemplates.marketResolution(userName, marketTitle, winningOutcome, wasCorrect, bonusXp)
   const result = await sendEmail(email, template)
   return result.success
 }
