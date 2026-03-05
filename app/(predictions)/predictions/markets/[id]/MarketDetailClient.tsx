@@ -36,6 +36,7 @@ import {
 } from 'lucide-react'
 import { VotePanel } from '../../components/VotePanel'
 import { CelebrationModal } from '@/components/gamification/CelebrationModal'
+import { toDisplayPercent } from '@/lib/probability-utils'
 import type { Database } from '@/types/database'
 
 type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row']
@@ -134,7 +135,7 @@ export function MarketDetailClient({
 
   const config = CATEGORY_CONFIG[market.category] || CATEGORY_CONFIG.world
   const Icon = config.icon
-  const prob = Number(market.current_probability)
+  const prob = toDisplayPercent(Number(market.current_probability))
   const isMultiOutcome = (market as { market_type?: string }).market_type === 'multi' && outcomes.length > 2
   const leadingOutcome = outcomes.length > 0
     ? outcomes.reduce((a, b) => ((a?.probability ?? 0) > (b?.probability ?? 0) ? a : b))
@@ -151,7 +152,7 @@ export function MarketDetailClient({
   const historyChartData = filteredHistory.map((h) => ({
     date: new Date(h.recorded_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' }),
     fullDate: new Date(h.recorded_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
-    probability: Number(h.probability),
+    probability: toDisplayPercent(Number(h.probability)),
     volume: Number(h.trade_count) || Number(h.volume_24h),
   }))
 
@@ -274,8 +275,8 @@ export function MarketDetailClient({
                 <p className="text-slate-400 text-sm">Current probability</p>
                 <p className="text-4xl font-bold text-white">
                   {isMultiOutcome && leadingOutcome
-                    ? `${leadingOutcome.label} ${Math.round((leadingOutcome.probability || 0) * 100)}%`
-                    : `${prob.toFixed(0)}% YES`}
+                    ? `${leadingOutcome.label} ${Math.round(toDisplayPercent(leadingOutcome.probability || 0))}%`
+                    : `${Math.round(prob)}% YES`}
                 </p>
               </div>
               <div
@@ -285,7 +286,7 @@ export function MarketDetailClient({
                 }}
               >
                 <span className="absolute inset-0 m-auto w-16 h-16 rounded-full bg-slate-900 flex items-center justify-center text-2xl font-bold text-white">
-                  {prob}%
+                  {Math.round(prob)}%
                 </span>
               </div>
             </div>
@@ -296,7 +297,7 @@ export function MarketDetailClient({
                     key={o.id}
                     className="h-full transition-all"
                     style={{
-                      width: `${(o.probability || 0) * 100}%`,
+                      width: `${toDisplayPercent(o.probability || 0)}%`,
                       backgroundColor: i === 0 ? '#10b981' : ['#ef4444', '#f59e0b', '#6366f1'][(i - 1) % 3] + '99',
                     }}
                   />
@@ -355,7 +356,7 @@ export function MarketDetailClient({
                           return (
                             <div className="bg-slate-800 border border-slate-600 rounded-lg p-3 shadow-xl">
                               <p className="text-slate-300 text-sm font-medium">{p.fullDate}</p>
-                              <p className="text-emerald-400 font-semibold">{Number(p.probability).toFixed(1)}%</p>
+                              <p className="text-emerald-400 font-semibold">{toDisplayPercent(Number(p.probability)).toFixed(1)}%</p>
                               <p className="text-slate-400 text-xs">Votes: {Number(p.volume) || 0}</p>
                             </div>
                           )

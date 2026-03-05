@@ -54,14 +54,15 @@ async function getDashboardData(userId: string) {
       .limit(3),
     supabase.from('conscious_fund').select('current_balance').limit(1).single(),
     supabase
-      .from('prediction_trades')
-      .select('conscious_fund_amount')
-      .eq('user_id', userId),
+      .from('xp_transactions')
+      .select('amount')
+      .eq('user_id', userId)
+      .in('action_type', ['prediction_vote', 'prediction_correct']),
     supabase.from('user_xp').select('total_xp').eq('user_id', userId).single(),
   ])
 
   const userName = profile?.full_name || 'Changemaker'
-  const userContribution = (userTrades || []).reduce((s, t) => s + Number(t.conscious_fund_amount || 0), 0)
+  const userImpactXp = (userTrades ?? []).reduce((s, t) => s + Number(t.amount), 0)
   const fundBalance = Number(fund?.current_balance ?? 0)
   const totalXp = Number(userXp?.total_xp ?? 0)
 
@@ -182,7 +183,7 @@ async function getDashboardData(userId: string) {
     accuracyPct,
     correctPredictions: correctCount,
     totalResolvedPredictions: resolvedVotes.length,
-    userContribution,
+    userImpactXp,
     fundBalance,
     positions: enrichedPositions,
     userPredictions,

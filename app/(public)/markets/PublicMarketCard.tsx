@@ -14,6 +14,7 @@ import {
   CheckCircle,
 } from 'lucide-react'
 import type { Database } from '@/types/database'
+import { toDisplayPercent } from '@/lib/probability-utils'
 import { MiniSparkline } from '@/app/(predictions)/predictions/components/MiniSparkline'
 
 type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row'] & {
@@ -66,7 +67,7 @@ export function PublicMarketCard({
 }: PublicMarketCardProps) {
   const config = CATEGORY_CONFIG[market.category] || CATEGORY_CONFIG.world
   const Icon = config.icon
-  const prob = Number(market.current_probability)
+  const prob = toDisplayPercent(Number(market.current_probability))
   const voteCount = (market.total_votes ?? 0) || Number(market.total_volume) || 0
 
   return (
@@ -98,8 +99,8 @@ export function PublicMarketCard({
         <div className="flex items-baseline gap-2 mb-2">
           <span className="text-3xl font-bold text-white">
             {leadingOutcome
-              ? `${leadingOutcome.label} ${Math.round((leadingOutcome.probability || 0) * 100)}%`
-              : `${prob.toFixed(0)}%`}
+              ? `${leadingOutcome.label} ${Math.round(toDisplayPercent(leadingOutcome.probability || 0))}%`
+              : `${Math.round(prob)}%`}
           </span>
           {!leadingOutcome && <span className="text-slate-400 text-sm">YES</span>}
         </div>
@@ -115,13 +116,13 @@ export function PublicMarketCard({
         </div>
       </div>
 
-      {history.length >= 2 && (
+        {history.length >= 2 && (
         <div className="mb-4">
           <MiniSparkline
-            data={history.map((h) => ({ value: h.probability }))}
+            data={history.map((h) => ({ value: toDisplayPercent(h.probability) }))}
             positive={
               history.length >= 2
-                ? history[history.length - 1].probability >= history[0].probability
+                ? toDisplayPercent(history[history.length - 1].probability) >= toDisplayPercent(history[0].probability)
                 : true
             }
             width={120}

@@ -4,6 +4,7 @@ import { ApiResponse } from '@/lib/api-responses'
 import { getStripe } from './lib/stripe-webhook-utils'
 import { handleModulePurchase } from './handlers/module-purchase'
 import { handleSponsorship } from './handlers/sponsorship'
+import { handleMarketSponsorship } from './handlers/market-sponsorship'
 import { handleTreasuryDonation } from './handlers/treasury-donation'
 import { handlePaymentSucceeded, handlePaymentFailed } from './handlers/payment-verification'
 
@@ -114,7 +115,10 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
   const { type: purchaseType } = session.metadata || {}
 
   // Route to appropriate handler based on metadata
-  if (purchaseType === 'module_purchase') {
+  if (purchaseType === 'market_sponsorship') {
+    console.log('🎯 Processing market sponsorship...')
+    await handleMarketSponsorship(session)
+  } else if (purchaseType === 'module_purchase') {
     console.log('📚 Processing module purchase...')
     await handleModulePurchase(session)
   } else if (purchaseType === 'treasury_donation') {
@@ -127,7 +131,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     console.warn('⚠️ Unknown checkout session type:', {
       purchaseType,
       hasSponsorshipId: !!session.metadata?.sponsorshipId,
-      metadata: session.metadata
+      metadata: session.metadata,
     })
   }
 }

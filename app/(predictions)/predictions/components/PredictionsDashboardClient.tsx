@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { MiniSparkline } from './MiniSparkline'
 import { OnboardingOverlay, shouldShowOnboarding } from './OnboardingOverlay'
+import { toDisplayPercent } from '@/lib/probability-utils'
 import type { Database } from '@/types/database'
 
 type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row']
@@ -53,7 +54,7 @@ interface DashboardData {
   accuracyPct: number
   correctPredictions: number
   totalResolvedPredictions: number
-  userContribution: number
+  userImpactXp: number
   fundBalance: number
   positions: EnrichedPosition[]
   userPredictions: UserPrediction[]
@@ -90,7 +91,7 @@ export function PredictionsDashboardClient({ data }: Props) {
     userName,
     totalXp,
     accuracyPct,
-    userContribution,
+    userImpactXp,
     fundBalance,
     positions,
     userPredictions,
@@ -143,9 +144,9 @@ export function PredictionsDashboardClient({ data }: Props) {
             </p>
           </div>
           <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
-            <p className="text-slate-400 text-sm">Sponsor-funded impact</p>
+            <p className="text-slate-400 text-sm">Your impact</p>
             <p className="text-2xl font-bold text-emerald-400 mt-1">
-              {formatCurrency(userContribution)}
+              {userImpactXp} XP
             </p>
           </div>
         </div>
@@ -265,7 +266,7 @@ export function PredictionsDashboardClient({ data }: Props) {
                   >
                     <p className="font-medium text-white text-sm truncate">{m.title}</p>
                     <p className="text-slate-500 text-xs mt-0.5">
-                      {Number(m.current_probability).toFixed(0)}% probability
+                      {Math.round(toDisplayPercent(Number(m.current_probability)))}% probability
                     </p>
                   </Link>
                 ))
@@ -330,8 +331,8 @@ export function PredictionsDashboardClient({ data }: Props) {
             </div>
             <div className="h-8 w-px bg-slate-700" />
             <div>
-              <p className="text-slate-400 text-xs">Sponsor-funded impact</p>
-              <p className="text-lg font-bold text-white">{formatCurrency(userContribution)}</p>
+              <p className="text-slate-400 text-xs">Your impact</p>
+              <p className="text-lg font-bold text-white">{userImpactXp} XP</p>
             </div>
           </div>
           <Link
@@ -350,8 +351,8 @@ export function PredictionsDashboardClient({ data }: Props) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {activeMarkets.slice(0, 8).map((m) => {
             const hist = historyByMarket[m.id] || []
-            const sparkData = hist.map((h) => ({ value: h.probability }))
-            const prob = Number(m.current_probability)
+            const sparkData = hist.map((h) => ({ value: toDisplayPercent(h.probability) }))
+            const prob = toDisplayPercent(Number(m.current_probability))
 
             return (
               <Link
@@ -361,7 +362,7 @@ export function PredictionsDashboardClient({ data }: Props) {
               >
                 <div className="min-w-0 flex-1">
                   <p className="font-medium text-white text-sm truncate">{truncate(m.title, 40)}</p>
-                  <p className="text-emerald-400 text-sm font-semibold">{prob.toFixed(0)}%</p>
+                  <p className="text-emerald-400 text-sm font-semibold">{Math.round(prob)}%</p>
                 </div>
                 <MiniSparkline data={sparkData} positive={true} className="shrink-0 rounded" />
               </Link>

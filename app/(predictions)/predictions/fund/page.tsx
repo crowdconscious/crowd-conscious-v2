@@ -12,47 +12,47 @@ async function getFundData(userId: string) {
   const cycle = getCurrentCycle()
 
   const [
-    { data: fund },
-    { data: transactions },
-    { data: userTrades },
+    { data: sponsorMarkets },
     { data: causes },
     { data: allVotes },
     { data: myVotes },
+    { data: fund },
+    { data: userXp },
   ] = await Promise.all([
     supabase
-      .from('conscious_fund')
-      .select('current_balance, total_collected, total_disbursed')
-      .limit(1)
-      .single(),
-    supabase
-      .from('conscious_fund_transactions')
-      .select(
-        `
-        id,
-        amount,
-        source_type,
-        description,
-        created_at,
-        prediction_markets(id, title)
-      `
-      )
-      .order('created_at', { ascending: false })
-      .limit(30),
-    supabase
-      .from('prediction_trades')
-      .select('conscious_fund_amount, amount')
-      .eq('user_id', userId),
+      .from('prediction_markets')
+      .select('id, title, sponsor_name, sponsor_logo_url, sponsor_contribution')
+      .not('sponsor_name', 'is', null)
+      .gt('sponsor_contribution', 0),
     supabase.from('fund_causes').select('*').eq('active', true).order('name'),
     supabase.from('fund_votes').select('cause_id').eq('cycle', cycle),
     supabase.from('fund_votes').select('cause_id').eq('user_id', userId).eq('cycle', cycle),
+    supabase.from('conscious_fund').select('total_collected, total_disbursed').limit(1).single(),
+    supabase
+      .from('xp_transactions')
+      .select('amount')
+      .eq('user_id', userId)
+      .in('action_type', ['prediction_vote', 'prediction_correct']),
   ])
 
-  const userContribution =
-    userTrades?.reduce((sum, t) => sum + Number(t.conscious_fund_amount), 0) ?? 0
+  // Total Fund: 15% of sponsor contributions (free-to-play model)
+  const totalFundFromSponsors =
+    (sponsorMarkets ?? []).reduce(
+      (sum, m) => sum + Number((m as { sponsor_contribution?: number }).sponsor_contribution ?? 0) * 0.15,
+      0
+    ) ?? 0
 
-  const totalVolume = (userTrades ?? []).reduce((s, t) => s + Number(t.amount), 0)
-  const hasTraded = totalVolume > 0
-  const votePower = Math.min(10, Math.max(hasTraded ? 1 : 0, Math.floor(totalVolume / 500)))
+  // Use sponsor-based total; add legacy conscious_fund balance if any
+  const legacyBalance = Math.max(0, Number(fund?.total_collected ?? 0) - Number(fund?.total_disbursed ?? 0))
+  const totalFund = totalFundFromSponsors + legacyBalance
+
+  const causesSupported = (causes ?? []).length
+  const monthlyAllocation = totalFund > 0 ? Math.floor(totalFund / 12) : 0
+
+  const yourImpactXp = (userXp ?? []).reduce((sum, t) => sum + Number(t.amount), 0)
+
+  // 1 vote per user per month (free-to-play)
+  const votePower = 1
   const votesUsed = (myVotes ?? []).length
 
   const voteCountByCause: Record<string, number> = {}
@@ -74,39 +74,27 @@ async function getFundData(userId: string) {
 
   const maxVotes = Math.max(1, ...Object.values(voteCountByCause))
 
-  // Normalize prediction_markets: Supabase may return array or object for FK relation
-  const normalizedTransactions = (transactions ?? []).map((tx) => {
-    const pm = tx.prediction_markets
-    const market = Array.isArray(pm) ? pm[0] : pm
-    return {
-      id: tx.id,
-      amount: tx.amount,
-      source_type: tx.source_type,
-      description: tx.description,
-      created_at: tx.created_at,
-      prediction_markets: market ? { id: String(market.id), title: String(market.title) } : null,
-    }
-  })
-
-  const nextDisbursement = new Date()
-  nextDisbursement.setMonth(nextDisbursement.getMonth() + 1)
-  nextDisbursement.setDate(0)
+  const sponsors = (sponsorMarkets ?? []).map((m) => ({
+    id: m.id,
+    title: m.title,
+    sponsor_name: (m as { sponsor_name?: string }).sponsor_name,
+    sponsor_logo_url: (m as { sponsor_logo_url?: string }).sponsor_logo_url,
+    sponsor_contribution: Number((m as { sponsor_contribution?: number }).sponsor_contribution ?? 0),
+  }))
 
   return {
-    fund: fund ?? {
-      current_balance: 0,
-      total_collected: 0,
-      total_disbursed: 0,
-    },
-    transactions: normalizedTransactions,
-    userContribution,
+    totalFund,
+    causesSupported,
+    monthlyAllocation,
+    yourImpactXp,
     causes: causesWithVotes,
     cycle,
     votePower,
     votesUsed,
     myVotesByCause,
     maxVotes,
-    nextDisbursement: nextDisbursement.toISOString(),
+    sponsors,
+    totalDisbursed: Number(fund?.total_disbursed ?? 0),
   }
 }
 
@@ -118,16 +106,18 @@ export default async function PredictionsFundPage() {
 
   return (
     <FundClient
-      fund={data.fund}
-      transactions={data.transactions}
-      userContribution={data.userContribution}
+      totalFund={data.totalFund}
+      causesSupported={data.causesSupported}
+      monthlyAllocation={data.monthlyAllocation}
+      yourImpactXp={data.yourImpactXp}
       causes={data.causes}
       cycle={data.cycle}
       votePower={data.votePower}
       votesUsed={data.votesUsed}
       myVotesByCause={data.myVotesByCause}
       maxVotes={data.maxVotes}
-      nextDisbursement={data.nextDisbursement}
+      sponsors={data.sponsors}
+      totalDisbursed={data.totalDisbursed}
     />
   )
 }

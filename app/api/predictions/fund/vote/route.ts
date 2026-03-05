@@ -30,16 +30,8 @@ export async function POST(req: Request) {
     const supabase = await createClient()
     const cycle = getCurrentCycle()
 
-    const { data: trades } = await supabase
-      .from('prediction_trades')
-      .select('amount')
-      .eq('user_id', user.id)
-      .eq('status', 'filled')
-
-    const totalVolume = (trades ?? []).reduce((s, t) => s + Number(t.amount), 0)
-    const hasTraded = totalVolume > 0
-    const rawPower = Math.floor(totalVolume / 500)
-    const votePower = Math.min(10, Math.max(hasTraded ? 1 : 0, rawPower))
+    // Free-to-play: 1 vote per user per month (not based on trades)
+    const votePower = 1
 
     const { data: existingVotes } = await supabase
       .from('fund_votes')

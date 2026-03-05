@@ -1,22 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Heart, Wallet, ArrowUpCircle, ArrowDownCircle, Vote } from 'lucide-react'
-
-type Fund = {
-  current_balance: number
-  total_collected: number
-  total_disbursed: number
-}
-
-type Transaction = {
-  id: string
-  amount: number
-  source_type: string
-  description: string | null
-  created_at: string
-  prediction_markets: { id: string; title: string } | null
-}
+import Link from 'next/link'
+import { Heart, Vote, Sparkles, Users, ArrowRight } from 'lucide-react'
 
 type Cause = {
   id: string
@@ -27,10 +13,27 @@ type Cause = {
   vote_count: number
 }
 
+type Sponsor = {
+  id: string
+  title: string
+  sponsor_name?: string
+  sponsor_logo_url?: string
+  sponsor_contribution: number
+}
+
+const CATEGORY_LABELS: Record<string, string> = {
+  water: 'Clean Water',
+  education: 'Education',
+  environment: 'Environment',
+  social_justice: 'Social Justice',
+  health: 'Health',
+  other: 'Other',
+}
+
 function formatCurrency(num: number): string {
   if (num >= 1_000_000) return `$${(num / 1_000_000).toFixed(1)}M`
   if (num >= 1_000) return `$${(num / 1_000).toFixed(1)}K`
-  return `$${num.toFixed(2)}`
+  return `$${Math.round(num)}`
 }
 
 function formatDate(iso: string): string {
@@ -38,48 +41,37 @@ function formatDate(iso: string): string {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
   })
 }
 
-function sourceLabel(source: string): string {
-  switch (source) {
-    case 'trade_fee':
-      return 'Sponsor fee'
-    case 'donation':
-      return 'Donation'
-    case 'sponsorship':
-      return 'Sponsorship'
-    default:
-      return source
-  }
-}
-
 interface Props {
-  fund: Fund
-  transactions: Transaction[]
-  userContribution: number
-  causes?: Cause[]
-  cycle?: string
-  votePower?: number
-  votesUsed?: number
-  myVotesByCause?: Record<string, number>
-  maxVotes?: number
-  nextDisbursement?: string
+  totalFund: number
+  causesSupported: number
+  monthlyAllocation: number
+  yourImpactXp: number
+  causes: Cause[]
+  cycle: string
+  votePower: number
+  votesUsed: number
+  myVotesByCause: Record<string, number>
+  maxVotes: number
+  sponsors: Sponsor[]
+  totalDisbursed: number
 }
 
 export function FundClient({
-  fund,
-  transactions,
-  userContribution,
+  totalFund,
+  causesSupported,
+  monthlyAllocation,
+  yourImpactXp,
   causes = [],
   cycle = '',
-  votePower = 0,
+  votePower = 1,
   votesUsed = 0,
   myVotesByCause = {},
   maxVotes = 1,
-  nextDisbursement = '',
+  sponsors = [],
+  totalDisbursed = 0,
 }: Props) {
   const [voting, setVoting] = useState<Record<string, boolean>>({})
   const [localVotesUsed, setLocalVotesUsed] = useState(votesUsed)
@@ -111,124 +103,62 @@ export function FundClient({
       setVoting((p) => ({ ...p, [causeId]: false }))
     }
   }
+
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <div className="max-w-4xl mx-auto space-y-10">
+      {/* Section 1: Fund Overview */}
       <div>
-        <h1 className="text-2xl font-bold text-white">Conscious Fund</h1>
-        <p className="text-slate-400 mt-1">
-          Sponsor contributions fund solutions. Full transparency.
+        <h1 className="text-3xl font-bold text-white">The Conscious Fund</h1>
+        <p className="text-slate-400 mt-2 text-lg">
+          Powered by sponsors. Directed by you.
+        </p>
+        <p className="text-slate-500 mt-2 text-sm max-w-2xl">
+          When brands sponsor prediction markets on Crowd Conscious, a portion of their contribution
+          goes to the Conscious Fund. Users vote on which community causes receive grants each month.
         </p>
       </div>
 
-      {/* Fund overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-          <div className="flex items-center gap-2 text-slate-400 text-sm mb-2">
-            <Wallet className="w-5 h-5" />
-            Current Balance
-          </div>
-          <p className="text-3xl font-bold text-emerald-400">
-            {formatCurrency(Number(fund.current_balance))} MXN
-          </p>
-        </div>
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-          <div className="flex items-center gap-2 text-slate-400 text-sm mb-2">
-            <ArrowUpCircle className="w-5 h-5" />
-            Total Collected
-          </div>
-          <p className="text-3xl font-bold text-white">
-            {formatCurrency(Number(fund.total_collected))} MXN
-          </p>
-        </div>
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-          <div className="flex items-center gap-2 text-slate-400 text-sm mb-2">
-            <ArrowDownCircle className="w-5 h-5" />
-            Total Disbursed
-          </div>
-          <p className="text-3xl font-bold text-amber-400">
-            {formatCurrency(Number(fund.total_disbursed))} MXN
-          </p>
-        </div>
-      </div>
-
-      {/* Sponsor-funded impact */}
-      <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 flex items-center gap-4">
-        <Heart className="w-10 h-10 text-emerald-400" />
-        <div>
-          <p className="text-sm text-slate-400">Sponsor-funded impact</p>
+          <p className="text-slate-400 text-sm mb-1">Total Fund</p>
           <p className="text-2xl font-bold text-emerald-400">
-            {formatCurrency(userContribution)} MXN
+            {formatCurrency(totalFund)} MXN
           </p>
+          <p className="text-slate-500 text-xs mt-1">15% of sponsor contributions</p>
+        </div>
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+          <p className="text-slate-400 text-sm mb-1">Causes Supported</p>
+          <p className="text-2xl font-bold text-white">{causesSupported}</p>
+        </div>
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+          <p className="text-slate-400 text-sm mb-1">Monthly Allocation</p>
+          <p className="text-2xl font-bold text-amber-400">
+            {formatCurrency(monthlyAllocation)} MXN
+          </p>
+        </div>
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+          <p className="text-slate-400 text-sm mb-1">Your Impact</p>
+          <p className="text-2xl font-bold text-white">{yourImpactXp} XP</p>
+          <p className="text-slate-500 text-xs mt-1">From predictions</p>
         </div>
       </div>
 
-      {/* Transaction feed */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
-        <h2 className="text-lg font-semibold text-white px-6 py-4 border-b border-slate-800">
-          Recent Transactions
-        </h2>
-
-        {transactions.length === 0 ? (
-          <div className="p-12 text-center text-slate-400">
-            <p>No transactions yet</p>
-            <p className="text-sm mt-1">
-              Fund grows from sponsor contributions.
-            </p>
-          </div>
-        ) : (
-          <div className="divide-y divide-slate-800">
-            {transactions.map((tx) => (
-              <div
-                key={tx.id}
-                className="flex items-center justify-between px-6 py-4 hover:bg-slate-800/30"
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-white">
-                    {sourceLabel(tx.source_type)}
-                    {tx.prediction_markets?.title && (
-                      <span className="text-slate-400 font-normal">
-                        {' '}
-                        — {tx.prediction_markets.title}
-                      </span>
-                    )}
-                  </p>
-                  <p className="text-sm text-slate-500">
-                    {formatDate(tx.created_at)}
-                  </p>
-                </div>
-                <div className="text-right ml-4">
-                  <p className="font-semibold text-emerald-400">
-                    +{formatCurrency(Number(tx.amount))}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Cause voting */}
+      {/* Section 2: Vote for Causes */}
       <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-800">
           <h2 className="text-lg font-semibold text-white flex items-center gap-2">
             <Vote className="w-5 h-5 text-emerald-400" />
-            ¿A dónde debe ir el fondo?
+            Vote for Causes
           </h2>
           <p className="text-slate-400 text-sm mt-1">
-            Tu poder de voto: {localVotesUsed} de {votePower} votos usados
-            {cycle && ` · Ciclo ${cycle}`}
-          </p>
-          <p className="text-slate-500 text-xs mt-1">
-            Próximo desembolso: {nextDisbursement ? formatDate(nextDisbursement) : '—'}
-          </p>
-          <p className="text-slate-500 text-xs mt-0.5">
-            60% al primer lugar, 30% al segundo, 10% al tercero
+            You have {votePower - localVotesUsed} vote{votePower - localVotesUsed !== 1 ? 's' : ''} remaining this month
+            {cycle && ` · Cycle ${cycle}`}
           </p>
         </div>
 
         {causes.length === 0 ? (
           <div className="p-12 text-center text-slate-400">
-            <p>No hay causas disponibles aún</p>
+            <p>No causes available yet</p>
           </div>
         ) : (
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -240,8 +170,18 @@ export function FundClient({
               return (
                 <div
                   key={cause.id}
-                  className="bg-slate-800/50 border border-slate-700 rounded-xl p-4"
+                  className={`bg-slate-800/50 border rounded-xl p-4 ${
+                    myVotes > 0 ? 'border-emerald-500/50' : 'border-slate-700'
+                  }`}
                 >
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-medium text-slate-400">
+                      {CATEGORY_LABELS[cause.category ?? ''] ?? cause.category ?? 'Other'}
+                    </span>
+                    {myVotes > 0 && (
+                      <span className="text-xs text-emerald-400 font-medium">Your vote</span>
+                    )}
+                  </div>
                   <h3 className="font-semibold text-white">{cause.name}</h3>
                   {cause.organization && (
                     <p className="text-slate-400 text-sm mt-0.5">{cause.organization}</p>
@@ -251,10 +191,7 @@ export function FundClient({
                   )}
                   <div className="mt-3">
                     <div className="flex justify-between text-xs text-slate-400 mb-1">
-                      <span>{total} votos</span>
-                      {myVotes > 0 && (
-                        <span className="text-emerald-400">Tus votos: {myVotes}</span>
-                      )}
+                      <span>{total} votes</span>
                     </div>
                     <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
                       <div
@@ -269,11 +206,78 @@ export function FundClient({
                     className="mt-3 w-full py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white text-sm font-medium flex items-center justify-center gap-2 transition-colors"
                   >
                     <Heart className="w-4 h-4" />
-                    Vote ♥
+                    Vote
                   </button>
                 </div>
               )
             })}
+          </div>
+        )}
+      </div>
+
+      {/* Section 3: Past Allocations */}
+      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+        <h2 className="text-lg font-semibold text-white flex items-center gap-2 mb-4">
+          <Sparkles className="w-5 h-5 text-amber-400" />
+          Past Allocations
+        </h2>
+        {totalDisbursed > 0 ? (
+          <p className="text-slate-300">
+            {formatCurrency(totalDisbursed)} MXN has been disbursed to community causes.
+          </p>
+        ) : (
+          <p className="text-slate-400">
+            The first Conscious Fund allocation will happen when we reach $10,000 MXN in sponsor
+            contributions. Help us get there by sharing Crowd Conscious with brands you believe in.
+          </p>
+        )}
+      </div>
+
+      {/* Section 4: Sponsors Making It Possible */}
+      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+        <h2 className="text-lg font-semibold text-white flex items-center gap-2 mb-4">
+          <Users className="w-5 h-5 text-emerald-400" />
+          Sponsors Making It Possible
+        </h2>
+        {sponsors.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-slate-400 mb-4">Be the first sponsor</p>
+            <Link
+              href="/sponsor"
+              className="inline-flex items-center gap-2 text-emerald-400 hover:text-emerald-300 font-medium"
+            >
+              Sponsor a market <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {sponsors.map((s) => (
+              <div
+                key={s.id}
+                className="flex items-center gap-4 p-4 bg-slate-800/50 border border-slate-700 rounded-xl"
+              >
+                {s.sponsor_logo_url ? (
+                  <img
+                    src={s.sponsor_logo_url}
+                    alt={s.sponsor_name ?? ''}
+                    className="w-12 h-12 object-contain rounded"
+                  />
+                ) : (
+                  <div className="w-12 h-12 bg-amber-500/20 rounded flex items-center justify-center">
+                    <span className="text-amber-400 font-bold text-lg">
+                      {s.sponsor_name?.[0] ?? '?'}
+                    </span>
+                  </div>
+                )}
+                <div>
+                  <p className="font-medium text-white">{s.sponsor_name}</p>
+                  <p className="text-slate-400 text-sm">{s.title}</p>
+                  <p className="text-slate-500 text-xs">
+                    {formatCurrency(s.sponsor_contribution)} MXN contribution
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>

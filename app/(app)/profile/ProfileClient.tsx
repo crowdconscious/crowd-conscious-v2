@@ -26,6 +26,15 @@ interface ProfileClientProps {
     is_correct: boolean | null
     created_at: string
   }>
+  topAchievements?: Array<{
+    id: string
+    achievement_type: string
+    achievement_name: string
+    achievement_description: string | null
+    icon_url: string | null
+    unlocked_at: string
+  }>
+  impactVotes?: Array<{ cause_id: string; cause_name: string }>
 }
 
 export default function ProfileClient({
@@ -33,6 +42,8 @@ export default function ProfileClient({
   profile,
   predictionStats,
   recentPredictions,
+  topAchievements = [],
+  impactVotes = [],
 }: ProfileClientProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -345,9 +356,70 @@ export default function ProfileClient({
         </div>
       )}
 
+      {/* Achievements */}
+      {topAchievements.length > 0 && (
+        <div>
+          <h2 className="text-2xl font-bold text-white mb-6">Achievements</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+            {topAchievements.map((a) => (
+              <div
+                key={a.id}
+                className="bg-slate-900/50 border border-slate-800 rounded-xl p-4 flex items-center gap-3"
+              >
+                <span className="text-2xl">
+                  {a.icon_url ? (
+                    <img src={a.icon_url} alt="" className="w-8 h-8" />
+                  ) : (
+                    '🏆'
+                  )}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-white truncate">{a.achievement_name}</p>
+                  {a.achievement_description && (
+                    <p className="text-slate-400 text-xs truncate">{a.achievement_description}</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+          <Link
+            href="/achievements"
+            className="inline-flex items-center gap-2 text-emerald-400 hover:text-emerald-300 font-medium"
+          >
+            View all achievements
+            <ChevronRight className="w-4 h-4" />
+          </Link>
+        </div>
+      )}
+
+      {/* Impact */}
+      <div>
+        <h2 className="text-2xl font-bold text-white mb-6">Impact</h2>
+        <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+          <p className="text-slate-300">
+            Your predictions have contributed to{' '}
+            <span className="font-bold text-emerald-400">{predictionStats.totalXp} XP</span> of
+            collective intelligence.
+          </p>
+          {impactVotes.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-slate-700">
+              <p className="text-slate-400 text-sm mb-2">Your Conscious Fund votes this month:</p>
+              <ul className="space-y-1">
+                {impactVotes.map((v) => (
+                  <li key={v.cause_id} className="text-emerald-400 text-sm flex items-center gap-2">
+                    <span className="text-emerald-500">✓</span>
+                    {v.cause_name}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Recent Predictions */}
       <div>
-        <h2 className="text-2xl font-bold text-white mb-6">Recent Predictions</h2>
+        <h2 className="text-2xl font-bold text-white mb-6">My Predictions</h2>
 
         {recentPredictions.length > 0 ? (
           <div className="space-y-3">

@@ -61,6 +61,38 @@ async function getPredictionStats(userId: string) {
   }
 }
 
+async function getTopAchievements(userId: string, limit = 3) {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('user_achievements')
+    .select('id, achievement_type, achievement_name, achievement_description, icon_url, unlocked_at')
+    .eq('user_id', userId)
+    .order('unlocked_at', { ascending: false })
+    .limit(limit)
+  return data ?? []
+}
+
+async function getFundVotes(userId: string) {
+  const supabase = await createClient()
+  const cycle = new Date().toISOString().slice(0, 7)
+  const { data } = await supabase
+    .from('fund_votes')
+    .select('cause_id')
+    .eq('user_id', userId)
+    .eq('cycle', cycle)
+  return data ?? []
+}
+
+async function getCauseName(causeId: string) {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('fund_causes')
+    .select('name')
+    .eq('id', causeId)
+    .single()
+  return data?.name ?? 'Cause'
+}
+
 async function getRecentPredictions(userId: string, limit = 10) {
   const supabase = await createClient()
 
@@ -108,11 +140,22 @@ export default async function ProfilePage() {
 
   const userId = (user as { id: string }).id
 
-  const [profile, predictionStats, recentPredictions] = await Promise.all([
-    getProfile(userId),
-    getPredictionStats(userId),
-    getRecentPredictions(userId),
-  ])
+  const [profile, predictionStats, recentPredictions, topAchievements, fundVotes] =
+    await Promise.all([
+      getProfile(userId),
+      getPredictionStats(userId),
+      getRecentPredictions(userId),
+      getTopAchievements(userId),
+      getFundVotes(userId),
+    ])
+
+  const causeNames = await Promise.all(
+    fundVotes.map((v) => getCauseName(v.cause_id))
+  )
+  const impactVotes = fundVotes.map((v, i) => ({
+    cause_id: v.cause_id,
+    cause_name: causeNames[i],
+  }))
 
   return (
     <ProfileClient
@@ -120,6 +163,8 @@ export default async function ProfilePage() {
       profile={profile}
       predictionStats={predictionStats}
       recentPredictions={recentPredictions}
+      topAchievements={topAchievements}
+      impactVotes={impactVotes}
     />
   )
 }
