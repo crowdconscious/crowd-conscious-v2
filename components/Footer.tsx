@@ -106,13 +106,13 @@ export default function Footer() {
             <h3 className="font-semibold text-white mb-4">{content[language].platform}</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/predictions/markets" className="text-slate-300 hover:text-teal-400 transition-colors">
+                <Link href="/markets" className="text-slate-300 hover:text-teal-400 transition-colors">
                   Markets
                 </Link>
               </li>
               <li>
-                <Link href="/concientizaciones" className="text-slate-300 hover:text-teal-400 transition-colors">
-                  {language === 'es' ? 'Para Empresas' : 'For Businesses'}
+                <Link href="/sponsor" className="text-slate-300 hover:text-teal-400 transition-colors">
+                  {language === 'es' ? 'Patrocinar Mercado' : 'Sponsor a Market'}
                 </Link>
               </li>
               <li>
@@ -174,8 +174,11 @@ export default function Footer() {
             <div className="text-sm text-slate-400">
               © {new Date().getFullYear()} Crowd Conscious. {content[language].rights}
             </div>
-            <div className="text-sm text-slate-400">
-              {content[language].madeIn}
+            <div className="flex flex-wrap items-center gap-4 text-sm text-slate-400">
+              <span>{content[language].madeIn}</span>
+              <Link href="/concientizaciones" className="text-slate-500 hover:text-slate-400 transition-colors">
+                {language === 'es' ? 'Capacitación Corporativa' : 'Corporate Training'}
+              </Link>
             </div>
           </div>
         </div>

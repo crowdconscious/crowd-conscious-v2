@@ -78,11 +78,6 @@ export function PublicMarketCard({
           <Icon className="w-3.5 h-3.5" />
           {config.label}
         </span>
-        {market.sponsor_name && (
-          <span className="px-2 py-0.5 rounded text-xs bg-amber-500/20 text-amber-400">
-            Sponsored
-          </span>
-        )}
       </div>
 
       {market.image_url && (
@@ -147,10 +142,13 @@ export function PublicMarketCard({
         </div>
       </div>
 
+      {market.sponsor_name && (
+        <p className="text-xs text-slate-500 mt-auto mb-2">Sponsored by {market.sponsor_name}</p>
+      )}
       {market.status === 'resolved' ? (
         <Link
           href={`/predictions/markets/${market.id}`}
-          className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-slate-700 text-slate-300 text-sm font-medium mt-auto hover:bg-slate-600 transition-colors"
+          className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-slate-700 text-slate-300 text-sm font-medium hover:bg-slate-600 transition-colors"
         >
           <CheckCircle className="w-4 h-4" />
           View details
@@ -158,7 +156,7 @@ export function PublicMarketCard({
       ) : (
         <Link
           href={`/login?redirect=${encodeURIComponent(`/predictions/markets/${market.id}`)}`}
-          className="flex-1 py-2.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium text-center mt-auto transition-colors"
+          className="flex-1 py-2.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium text-center transition-colors"
         >
           Predict
         </Link>

@@ -112,11 +112,6 @@ export function MarketCard({ market, history = [], leadingOutcome }: MarketCardP
             <Icon className="w-3.5 h-3.5" />
             {config.label}
           </span>
-          {market.sponsor_name && (
-            <span className="px-2 py-0.5 rounded text-xs bg-amber-500/20 text-amber-400">
-              Sponsored
-            </span>
-          )}
         </div>
 
         {market.image_url && (
@@ -183,13 +178,16 @@ export function MarketCard({ market, history = [], leadingOutcome }: MarketCardP
           </div>
         </div>
 
+        {market.sponsor_name && (
+          <p className="text-xs text-slate-500 mt-auto mb-2">Sponsored by {market.sponsor_name}</p>
+        )}
         {market.status === 'resolved' ? (
-          <div className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-slate-700 text-slate-300 text-sm font-medium mt-auto">
+          <div className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-slate-700 text-slate-300 text-sm font-medium">
             <CheckCircle className="w-4 h-4" />
             Resolved — View details
           </div>
         ) : (
-          <div className="flex gap-2 mt-auto">
+          <div className="flex gap-2">
             <span className="flex-1 py-2.5 px-3 rounded-lg bg-emerald-600/80 text-white text-sm font-medium text-center">
               Predict
             </span>

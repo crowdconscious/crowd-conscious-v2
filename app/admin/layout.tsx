@@ -60,6 +60,12 @@ export default async function AdminLayout({
           <div className="flex items-center gap-4">
             <span className="text-red-100 text-sm">Logged in as Admin</span>
             <a 
+              href="/admin/markets" 
+              className="bg-emerald-600 hover:bg-emerald-500 px-3 py-1 rounded text-sm transition-colors font-medium"
+            >
+              📊 Markets
+            </a>
+            <a 
               href="/admin/promo-codes" 
               className="bg-purple-600 hover:bg-purple-500 px-3 py-1 rounded text-sm transition-colors font-medium"
             >

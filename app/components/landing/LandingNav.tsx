@@ -46,10 +46,10 @@ export default function LandingNav() {
               About
             </Link>
             <Link
-              href="/concientizaciones"
+              href="/sponsor"
               className="text-slate-400 hover:text-white transition-colors font-medium"
             >
-              For Businesses
+              For Sponsors
             </Link>
           </div>
 
@@ -96,11 +96,11 @@ export default function LandingNav() {
               About
             </Link>
             <Link
-              href="/concientizaciones"
+              href="/sponsor"
               onClick={() => setMobileOpen(false)}
               className="block py-2 text-slate-400 hover:text-white"
             >
-              For Businesses
+              For Sponsors
             </Link>
             <Link
               href="/login"

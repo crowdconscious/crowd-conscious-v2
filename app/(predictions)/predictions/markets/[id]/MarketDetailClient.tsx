@@ -227,6 +227,46 @@ export function MarketDetailClient({
             </span>
           </div>
 
+          {/* Sponsor Banner */}
+          {(market as { sponsor_name?: string }).sponsor_name && (
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex items-center gap-3 min-w-0">
+                {(market as { sponsor_logo_url?: string }).sponsor_logo_url ? (
+                  <img
+                    src={(market as { sponsor_logo_url?: string }).sponsor_logo_url}
+                    alt={(market as { sponsor_name?: string }).sponsor_name || ''}
+                    className="w-12 h-12 object-contain rounded shrink-0"
+                  />
+                ) : (
+                  <div className="w-12 h-12 bg-amber-500/20 rounded flex items-center justify-center shrink-0">
+                    <span className="text-amber-400 font-bold">
+                      {(market as { sponsor_name?: string }).sponsor_name?.[0] || '?'}
+                    </span>
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <p className="font-semibold text-white">
+                    🤝 Sponsored by {(market as { sponsor_name?: string }).sponsor_name}
+                  </p>
+                  <p className="text-slate-400 text-sm">
+                    This market is made possible by {(market as { sponsor_name?: string }).sponsor_name}. 15% of this
+                    sponsorship funds the Conscious Fund.
+                  </p>
+                </div>
+              </div>
+              {(market as { sponsor_url?: string }).sponsor_url && (
+                <a
+                  href={(market as { sponsor_url?: string }).sponsor_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 font-medium text-sm transition-colors"
+                >
+                  Visit <ExternalLink className="w-4 h-4" />
+                </a>
+              )}
+            </div>
+          )}
+
           {/* Probability Display */}
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
             <div className="flex items-center justify-between mb-6">
