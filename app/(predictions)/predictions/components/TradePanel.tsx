@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { TrendingUp, TrendingDown, Wallet } from 'lucide-react'
 import type { Database } from '@/types/database'
+import { toDisplayPercent } from '@/lib/probability-utils'
 
 type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row']
 type PredictionPosition = Database['public']['Tables']['prediction_positions']['Row']
@@ -45,7 +46,7 @@ export function TradePanel({ market, onTradeSuccess }: TradePanelProps) {
   }, [market.id])
 
   const minTrade = Number(market.min_trade)
-  const prob = Number(market.current_probability)
+  const prob = toDisplayPercent(Number(market.current_probability))
   // $10 share basis: YES price = prob/100*10, NO price = (100-prob)/100*10
   const pricePerShare = side === 'yes' ? (prob / 100) * 10 : ((100 - prob) / 100) * 10
   const numAmount = parseFloat(amount) || 0

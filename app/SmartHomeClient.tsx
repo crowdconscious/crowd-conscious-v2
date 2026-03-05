@@ -6,14 +6,9 @@ import { createClientAuth } from '@/lib/auth'
 
 /**
  * Smart Home Redirect
- * 
- * Redirects users to their appropriate dashboard based on their role:
- * - Corporate Admins → /corporate/dashboard
- * - Corporate Employees → /employee-portal/dashboard
- * - Regular Users → /communities
- * - Not logged in → Landing page (stays on /)
- * 
- * This prevents users from being sent to landing pages after logging in
+ *
+ * When a logged-in user visits the home page (/), redirect them to the main
+ * dashboard (/predictions). Not logged in → stay on landing page.
  */
 export default function SmartHomeClient() {
   const router = useRouter()
@@ -29,29 +24,8 @@ export default function SmartHomeClient() {
           return
         }
 
-        // Get user profile to check role
-        const { data: profile, error: profileError } = await (supabase as any)
-          .from('profiles')
-          .select('is_corporate_user, corporate_role')
-          .eq('id', user.id)
-          .single()
-
-        if (profileError || !profile) {
-          console.error('Error fetching profile:', profileError)
-          return
-        }
-
-        // Route based on user type
-        if (profile.is_corporate_user) {
-          if (profile.corporate_role === 'admin') {
-            router.replace('/corporate/dashboard')
-          } else {
-            router.replace('/employee-portal/dashboard')
-          }
-        } else {
-          // Regular user - send to predictions dashboard
-          router.replace('/predictions')
-        }
+        // Logged in - always go to main dashboard
+        router.replace('/predictions')
       } catch (error) {
         console.error('Error in smart home redirect:', error)
       }

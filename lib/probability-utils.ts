@@ -9,3 +9,8 @@ export function toDisplayPercent(value: number): number {
   if (n > 0 && n <= 1) return n * 100
   return Math.min(100, Math.max(0, n))
 }
+
+/** Rounded percentage for display (e.g. "42" for 42%) */
+export function toDisplayPercentRounded(value: number): number {
+  return Math.round(toDisplayPercent(value))
+}

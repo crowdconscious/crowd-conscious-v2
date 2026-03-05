@@ -76,14 +76,14 @@ const ACHIEVEMENT_DEFINITIONS = {
     name: 'Sharp Insight',
     description: 'Get your first correct prediction',
     icon: '🎯',
-    category: 'impact',
+    category: 'accuracy',
     rarity: 'common'
   },
   CORRECT_10: {
     name: 'Accurate Mind',
     description: 'Get 10 correct predictions',
     icon: '✨',
-    category: 'impact',
+    category: 'accuracy',
     rarity: 'uncommon'
   },
   TIER_2: {
@@ -132,6 +132,7 @@ const ACHIEVEMENT_DEFINITIONS = {
 
 const CATEGORY_COLORS = {
   impact: 'from-emerald-500 to-teal-500',
+  accuracy: 'from-blue-500 to-cyan-500',
   progression: 'from-amber-500 to-orange-500',
   consistency: 'from-red-500 to-rose-500'
 }
@@ -250,13 +251,12 @@ export default function AchievementsClient({ user }: AchievementsClientProps) {
       )}
 
       {/* Header */}
-      <div className="tier-themed-gradient text-white rounded-xl p-8 relative overflow-hidden shadow-xl">
-        <div className="absolute inset-0 bg-black/10" />
+      <div className="bg-slate-900 border border-slate-700 rounded-xl p-8 relative overflow-hidden shadow-xl">
         <div className="relative z-10">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-3xl md:text-4xl font-bold mb-2">🏆 Achievements</h1>
-              <p className="text-white/90">Track your impact through predictions, fund votes, and contributions</p>
+              <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">🏆 Achievements</h1>
+              <p className="text-slate-400">Track your impact through predictions, fund votes, and contributions</p>
             </div>
             <div className="hidden md:block">
               <XPBadge variant="compact" />
@@ -264,14 +264,14 @@ export default function AchievementsClient({ user }: AchievementsClientProps) {
           </div>
 
           {/* Progress */}
-          <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 border border-white/30">
+          <div className="bg-slate-800/80 rounded-lg p-4 border border-slate-700">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-white/80">Progress</span>
-              <span className="text-sm font-semibold">{unlockedCount} / {totalAchievements}</span>
+              <span className="text-sm text-slate-400">Progress</span>
+              <span className="text-sm font-semibold text-white">{unlockedCount} / {totalAchievements}</span>
             </div>
-            <div className="w-full h-3 bg-white/20 rounded-full overflow-hidden">
+            <div className="w-full h-3 bg-slate-700 rounded-full overflow-hidden">
               <motion.div
-                className="h-full bg-white rounded-full"
+                className="h-full bg-emerald-500 rounded-full"
                 initial={{ width: 0 }}
                 animate={{ width: `${progressPercent}%` }}
                 transition={{ duration: 1, ease: 'easeOut' }}
@@ -282,7 +282,7 @@ export default function AchievementsClient({ user }: AchievementsClientProps) {
       </div>
 
       {/* Category Filters */}
-      <AnimatedCard className="p-6 bg-slate-900/50 border border-slate-800 rounded-xl">
+      <AnimatedCard className="p-6 bg-slate-900 border border-slate-700 rounded-xl">
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setSelectedCategory(null)}
@@ -437,9 +437,9 @@ export default function AchievementsClient({ user }: AchievementsClientProps) {
 
       {/* Empty State */}
       {filteredAchievements.length === 0 && !isLoading && (
-        <AnimatedCard className="p-12 text-center">
-          <Trophy className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-          <p className="text-slate-600 text-lg">No achievements found</p>
+        <AnimatedCard className="p-12 text-center bg-slate-900 border border-slate-700">
+          <Trophy className="w-16 h-16 text-slate-500 mx-auto mb-4" />
+          <p className="text-slate-400 text-lg">No achievements found</p>
           <p className="text-slate-500 text-sm mt-2">Try selecting a different category</p>
         </AnimatedCard>
       )}

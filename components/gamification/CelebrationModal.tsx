@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { useEffect, useRef, memo, useCallback } from 'react'
 import confetti from 'canvas-confetti'
-import { Trophy, Sparkles, Star, X } from 'lucide-react'
+import { Trophy, Sparkles, Star, X, CheckCircle, Share2 } from 'lucide-react'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 interface Achievement {
@@ -20,6 +20,8 @@ interface CelebrationModalProps {
   message: string
   xpGained?: number
   achievements?: Achievement[]
+  shareLabel?: string
+  sharePath?: string
   onClose: () => void
 }
 
@@ -35,6 +37,8 @@ export const CelebrationModal = memo(function CelebrationModal({
   message,
   xpGained,
   achievements = [],
+  shareLabel,
+  sharePath,
   onClose
 }: CelebrationModalProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -99,8 +103,8 @@ export const CelebrationModal = memo(function CelebrationModal({
       })
     }, 250)
 
-    // Additional bursts for major achievements
-    if (type === 'tier_up' || type === 'module_completed') {
+    // Additional bursts for prediction and major achievements
+    if (type === 'prediction_trade' || type === 'tier_up' || type === 'module_completed') {
       setTimeout(() => {
         confetti({
           particleCount: 100,
@@ -120,7 +124,20 @@ export const CelebrationModal = memo(function CelebrationModal({
     return () => clearInterval(interval)
   }, [isOpen, type, prefersReducedMotion])
 
-  // ✅ PHASE 4: Memoize icon to prevent re-renders
+  const handleShare = useCallback(() => {
+    const url = sharePath
+      ? `${typeof window !== 'undefined' ? window.location.origin : ''}${sharePath}`
+      : typeof window !== 'undefined' ? window.location.href : ''
+    const text = 'I just made a prediction on Crowd Conscious!'
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      navigator.share({ title: 'My prediction', text, url }).catch(() => {
+        navigator.clipboard?.writeText(url)
+      })
+    } else {
+      navigator.clipboard?.writeText(url)
+    }
+  }, [sharePath])
+
   const getIcon = useCallback(() => {
     switch (type) {
       case 'tier_up':
@@ -129,6 +146,8 @@ export const CelebrationModal = memo(function CelebrationModal({
         return <Star className="w-16 h-16 text-purple-500" aria-hidden="true" />
       case 'achievement':
         return <Sparkles className="w-16 h-16 text-blue-500" aria-hidden="true" />
+      case 'prediction_trade':
+        return <CheckCircle className="w-16 h-16 text-emerald-500" aria-hidden="true" />
       default:
         return <Trophy className="w-16 h-16 text-green-500" aria-hidden="true" />
     }
@@ -214,14 +233,27 @@ export const CelebrationModal = memo(function CelebrationModal({
               {/* XP Gained */}
               {xpGained && xpGained > 0 && (
                 <motion.div
-                  className="text-center p-4 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg mb-4"
+                  className="text-center p-4 bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 rounded-lg mb-4 flex items-center justify-center gap-2"
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ delay: prefersReducedMotion ? 0 : 0.2 }}
                 >
-                  <p className="text-sm opacity-90">XP Gained</p>
-                  <p className="text-3xl font-bold">+{xpGained}</p>
+                  <CheckCircle className="w-6 h-6" />
+                  <span className="text-xl font-bold">+{xpGained} XP</span>
                 </motion.div>
+              )}
+
+              {/* Share button */}
+              {shareLabel && sharePath && (
+                <motion.button
+                  onClick={handleShare}
+                  className="w-full py-2.5 mb-4 flex items-center justify-center gap-2 text-slate-600 hover:text-slate-800 border border-slate-300 rounded-lg font-medium transition-colors"
+                  whileHover={prefersReducedMotion ? {} : { scale: 1.01 }}
+                  whileTap={prefersReducedMotion ? {} : { scale: 0.99 }}
+                >
+                  <Share2 className="w-4 h-4" />
+                  {shareLabel}
+                </motion.button>
               )}
 
               {/* Achievements */}

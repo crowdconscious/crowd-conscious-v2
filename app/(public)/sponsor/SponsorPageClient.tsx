@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { toDisplayPercent } from '@/lib/probability-utils'
 import {
   Globe,
   Building2,
@@ -272,8 +273,8 @@ export function SponsorPageClient({
                   const Icon = config.icon
                   const leading = leadingOutcomes[m.id]
                   const prob = leading
-                    ? Math.round(leading.probability * 100)
-                    : Number(m.current_probability) || 50
+                    ? Math.round(toDisplayPercent(leading.probability))
+                    : Math.round(toDisplayPercent(Number(m.current_probability))) || 50
                   const label = leading?.label ?? 'YES'
                   const votes = m.total_votes ?? 0
 

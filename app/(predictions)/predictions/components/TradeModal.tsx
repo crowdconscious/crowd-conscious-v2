@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { X } from 'lucide-react'
 import type { Database } from '@/types/database'
+import { toDisplayPercent } from '@/lib/probability-utils'
 
 type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row']
 
@@ -26,7 +27,7 @@ export function TradeModal({ market, side, isOpen, onClose }: TradeModalProps) {
   if (!isOpen) return null
 
   const minTrade = Number(market.min_trade)
-  const prob = Number(market.current_probability)
+  const prob = toDisplayPercent(Number(market.current_probability))
   const pricePerShare = side === 'yes' ? (prob / 100) * 10 : ((100 - prob) / 100) * 10
   const numAmount = parseFloat(amount) || 0
   const feeAmount = numAmount * (Number(market.fee_percentage) / 100)

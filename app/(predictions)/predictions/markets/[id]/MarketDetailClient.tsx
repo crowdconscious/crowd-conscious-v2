@@ -566,9 +566,11 @@ export function MarketDetailClient({
       <CelebrationModal
         isOpen={celebration.open}
         type="prediction_trade"
-        title="Prediction recorded!"
-        message="Your prediction has been recorded."
+        title="Nice!"
+        message={celebration.xpGained ? `You earned ${celebration.xpGained} XP` : 'Your prediction has been recorded.'}
         xpGained={celebration.xpGained}
+        shareLabel="Share your prediction"
+        sharePath={`/predictions/markets/${market.id}`}
         onClose={() => setCelebration({ open: false })}
       />
     </div>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, CheckCircle, XCircle, Ban, ExternalLink } from 'lucide-react'
+import { toDisplayPercent } from '@/lib/probability-utils'
 
 type Outcome = { id: string; label: string; probability: number; vote_count: number }
 
@@ -293,7 +294,7 @@ export default function AdminResolvePage() {
                   >
                     {outcomes.map((o) => (
                       <option key={o.id} value={o.id}>
-                        {o.label} ({Math.round((o.probability || 0) * 100)}%, {o.vote_count} votes)
+                        {o.label} ({Math.round(toDisplayPercent(o.probability || 0))}%, {o.vote_count} votes)
                       </option>
                     ))}
                   </select>
