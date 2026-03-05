@@ -176,6 +176,7 @@ async function getDashboardData(userId: string) {
   )
 
   return {
+    userId,
     userName,
     totalXp,
     accuracyPct,

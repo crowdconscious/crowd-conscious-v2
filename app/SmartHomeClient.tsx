@@ -49,8 +49,8 @@ export default function SmartHomeClient() {
             router.replace('/employee-portal/dashboard')
           }
         } else {
-          // Regular user - send to communities page
-          router.replace('/communities')
+          // Regular user - send to predictions dashboard
+          router.replace('/predictions')
         }
       } catch (error) {
         console.error('Error in smart home redirect:', error)

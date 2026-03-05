@@ -23,7 +23,7 @@ export default async function AppLayout({
 
   return (
     <TierThemeProvider>
-      <div className="min-h-screen bg-white text-slate-900 transition-colors tier-themed-bg" style={{backgroundColor: '#ffffff', color: '#090909'}}>
+      <div className="min-h-screen bg-slate-950 text-slate-100 transition-colors">
         {/* Track daily streaks and award XP */}
         <StreakTracker />
         

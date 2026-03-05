@@ -47,16 +47,16 @@ export default function HeaderClient({ user }: HeaderClientProps) {
   }
 
   return (
-    <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-50">
+    <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           {/* Logo and Main Nav */}
           <div className="flex items-center gap-8">
             <Link href="/" className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-blue-600 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">CC</span>
               </div>
-              <span className="font-bold text-xl text-slate-900 dark:text-white">
+              <span className="font-bold text-xl text-white">
                 Crowd Conscious
               </span>
             </Link>
@@ -65,31 +65,31 @@ export default function HeaderClient({ user }: HeaderClientProps) {
             <nav className="hidden md:flex items-center gap-6">
               <Link 
                 href="/predictions"
-                className="text-slate-600 dark:text-slate-300 hover:text-teal-600 font-medium"
+                className="text-slate-400 hover:text-emerald-400 font-medium transition-colors"
               >
                 Dashboard
               </Link>
               <Link 
                 href="/predictions/markets" 
-                className="text-slate-600 dark:text-slate-300 hover:text-teal-600 font-medium"
+                className="text-slate-400 hover:text-emerald-400 font-medium transition-colors"
               >
                 Markets
               </Link>
               <Link 
                 href="/leaderboard" 
-                className="text-slate-600 dark:text-slate-300 hover:text-teal-600 font-medium"
+                className="text-slate-400 hover:text-emerald-400 font-medium transition-colors"
               >
                 Leaderboard
               </Link>
               <Link 
                 href="/predictions/fund" 
-                className="text-slate-600 dark:text-slate-300 hover:text-teal-600 font-medium"
+                className="text-slate-400 hover:text-emerald-400 font-medium transition-colors"
               >
                 Fund
               </Link>
               <Link 
                 href="/achievements" 
-                className="text-slate-600 dark:text-slate-300 hover:text-teal-600 font-medium"
+                className="text-slate-400 hover:text-emerald-400 font-medium transition-colors"
               >
                 Achievements
               </Link>
@@ -107,10 +107,10 @@ export default function HeaderClient({ user }: HeaderClientProps) {
             <div className="flex items-center gap-3">
               {/* User Info */}
               <div className="hidden lg:block text-right">
-                <div className="text-sm font-medium text-slate-900 dark:text-white">
+                <div className="text-sm font-medium text-white">
                   {userProfile?.full_name || user.email}
                 </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400">
+                <div className="text-xs text-slate-400">
                   User
                 </div>
               </div>
@@ -121,11 +121,11 @@ export default function HeaderClient({ user }: HeaderClientProps) {
                   <img 
                     src={userProfile.avatar_url} 
                     alt="Profile"
-                    className="w-10 h-10 rounded-full object-cover border-2 border-slate-200 dark:border-slate-600"
+                    className="w-10 h-10 rounded-full object-cover border-2 border-slate-700"
                   />
                 ) : (
-                  <div className="w-10 h-10 bg-teal-100 dark:bg-teal-900 rounded-full flex items-center justify-center border-2 border-slate-200 dark:border-slate-600">
-                    <span className="text-teal-600 dark:text-teal-400 font-medium">
+                  <div className="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center border-2 border-slate-700">
+                    <span className="text-emerald-400 font-medium">
                       {userProfile?.full_name?.[0] || user.email[0]}
                     </span>
                   </div>
@@ -135,7 +135,7 @@ export default function HeaderClient({ user }: HeaderClientProps) {
               {/* Settings & Logout */}
               <div className="hidden md:flex items-center gap-2">
                 <Link href="/settings">
-                  <AnimatedButton variant="ghost" size="sm">
+                  <AnimatedButton variant="ghost" size="sm" className="text-slate-400 hover:text-white">
                     ⚙️
                   </AnimatedButton>
                 </Link>
@@ -143,7 +143,7 @@ export default function HeaderClient({ user }: HeaderClientProps) {
                   onClick={handleSignOut}
                   variant="ghost" 
                   size="sm"
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
                 >
                   Sign Out
                 </AnimatedButton>

@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import {
   TrendingUp,
@@ -11,6 +12,7 @@ import {
   Bot,
 } from 'lucide-react'
 import { MiniSparkline } from './MiniSparkline'
+import { OnboardingOverlay, shouldShowOnboarding } from './OnboardingOverlay'
 import type { Database } from '@/types/database'
 
 type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row']
@@ -45,6 +47,7 @@ type UserPrediction = {
 }
 
 interface DashboardData {
+  userId: string
   userName: string
   totalXp: number
   accuracyPct: number
@@ -83,6 +86,7 @@ function truncate(str: string, len: number): string {
 
 export function PredictionsDashboardClient({ data }: Props) {
   const {
+    userId,
     userName,
     totalXp,
     accuracyPct,
@@ -98,9 +102,24 @@ export function PredictionsDashboardClient({ data }: Props) {
   } = data
 
   const activeMarkets = allMarkets.filter((m) => m.status !== 'resolved')
+  const [showOnboarding, setShowOnboarding] = useState(false)
+
+  useEffect(() => {
+    if (userId && userPredictions.length === 0 && shouldShowOnboarding(false, userId)) {
+      setShowOnboarding(true)
+    }
+  }, [userId, userPredictions.length])
+
+  const trendingForOnboarding = newMarkets.length >= 3 ? newMarkets : activeMarkets.slice(0, 3)
 
   return (
     <div className="space-y-8 pb-24">
+      {showOnboarding && (
+        <OnboardingOverlay
+          trendingMarkets={trendingForOnboarding}
+          onDismiss={() => setShowOnboarding(false)}
+        />
+      )}
       {/* Section 1: Portfolio Summary */}
       <section>
         <h1 className="text-2xl font-bold text-white tracking-tight">

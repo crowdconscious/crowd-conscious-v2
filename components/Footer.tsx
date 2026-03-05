@@ -29,7 +29,7 @@ export default function Footer() {
       mission: "Misión",
       team: "Equipo",
       careers: "Carreras",
-      description: "Conectando comunidades con marcas para crear impacto social y ambiental medible.",
+      description: "Predicciones gratuitas sobre el Mundial, tu ciudad y lo que te importa. Las marcas patrocinan el impacto.",
       rights: "Todos los derechos reservados.",
       platformFee: "Modelo de ingresos: 30% plataforma, 50% comunidad, 20% creador en módulos educativos",
       madeIn: "Hecho con ❤️ en México"
@@ -50,7 +50,7 @@ export default function Footer() {
       mission: "Mission",
       team: "Team",
       careers: "Careers",
-      description: "Connecting communities with brands to create measurable social and environmental impact.",
+      description: "Free predictions on the World Cup, your city, and what matters. Brands sponsor the impact.",
       rights: "All rights reserved.",
       platformFee: "Revenue model: 30% platform, 50% community, 20% creator on educational modules",
       madeIn: "Made with ❤️ in Mexico"
@@ -106,18 +106,18 @@ export default function Footer() {
             <h3 className="font-semibold text-white mb-4">{content[language].platform}</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/communities" className="text-slate-300 hover:text-teal-400 transition-colors">
-                  {content[language].communities}
+                <Link href="/predictions/markets" className="text-slate-300 hover:text-teal-400 transition-colors">
+                  Markets
                 </Link>
               </li>
               <li>
-                <Link href="/brand/discover" className="text-slate-300 hover:text-teal-400 transition-colors">
-                  {content[language].brands}
+                <Link href="/concientizaciones" className="text-slate-300 hover:text-teal-400 transition-colors">
+                  {language === 'es' ? 'Para Empresas' : 'For Businesses'}
                 </Link>
               </li>
               <li>
-                <Link href="/dashboard" className="text-slate-300 hover:text-teal-400 transition-colors">
-                  {content[language].impact}
+                <Link href="/about" className="text-slate-300 hover:text-teal-400 transition-colors">
+                  {content[language].about}
                 </Link>
               </li>
             </ul>
@@ -165,23 +165,6 @@ export default function Footer() {
                 </Link>
               </li>
             </ul>
-          </div>
-        </div>
-
-        {/* Platform Fee Notice */}
-        <div className="border-t border-slate-700 pt-6 mb-6">
-          <div className="bg-slate-800 rounded-lg p-4">
-            <div className="flex items-center justify-center text-center">
-              <div className="text-sm">
-                <span className="text-slate-400">💡 </span>
-                <span className="text-slate-300 font-medium">
-                  {content[language].platformFee}
-                </span>
-                <span className="text-slate-400 ml-2">
-                  ({language === 'es' ? 'Transparencia total' : 'Full transparency'})
-                </span>
-              </div>
-            </div>
           </div>
         </div>
 
