@@ -157,7 +157,7 @@ export function SponsorPageClient({
                 </div>
                 <h3 className="text-lg font-semibold text-white mb-2">Fund Real Impact</h3>
                 <p className="text-slate-400 text-sm">
-                  15% of your sponsorship goes directly to the Conscious Fund. Users vote on which
+                  80% of your sponsorship goes directly to the Conscious Fund. Users vote on which
                   community causes receive grants. Your brand gets credited for the impact.
                 </p>
               </div>

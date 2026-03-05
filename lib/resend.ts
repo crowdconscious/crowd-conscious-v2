@@ -86,7 +86,7 @@ export const emailTemplates = {
         <div style="padding: 30px 20px; background: #f8fafc; border-radius: 0 0 10px 10px;">
           <p style="color: #475569; line-height: 1.6;">Hi ${sponsorName},</p>
           <p style="color: #475569; line-height: 1.6;">
-            Your ${tier} sponsorship of ${amountMXN.toLocaleString()} MXN has been received. 15% goes to the Conscious Fund to support community causes.
+            Your ${tier} sponsorship of ${amountMXN.toLocaleString()} MXN has been received. 80% goes to the Conscious Fund to support community causes.
           </p>
           ${marketTitle ? `<p style="color: #475569; line-height: 1.6;"><strong>Market:</strong> ${marketTitle}</p>` : ''}
           <div style="text-align: center; margin: 30px 0;">

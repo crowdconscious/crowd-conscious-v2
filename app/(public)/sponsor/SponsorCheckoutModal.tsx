@@ -300,6 +300,17 @@ export function SponsorCheckoutModal({
             <p className="text-xs text-slate-500 mt-1">Max 2MB. JPEG, PNG, WebP, GIF.</p>
           </div>
 
+          <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/30 p-3 text-sm">
+            <p className="text-emerald-400 font-medium">80% → Conscious Fund</p>
+            <p className="text-slate-400 text-xs mt-0.5">
+              {Math.round(
+                (customAmountInput ? Math.max(MIN_AMOUNT, parseInt(customAmountInput, 10) || tierPrice) : amount) *
+                  0.8
+              ).toLocaleString()}{' '}
+              MXN to community causes. 20% platform.
+            </p>
+          </div>
+
           {error && (
             <p className="text-red-400 text-sm">{error}</p>
           )}

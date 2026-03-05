@@ -124,7 +124,7 @@ export function FundClient({
           <p className="text-2xl font-bold text-emerald-400">
             {formatCurrency(totalFund)} MXN
           </p>
-          <p className="text-slate-500 text-xs mt-1">15% of sponsor contributions</p>
+          <p className="text-slate-500 text-xs mt-1">80% of sponsor contributions (20% platform)</p>
         </div>
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
           <p className="text-slate-400 text-sm mb-1">Causes Supported</p>

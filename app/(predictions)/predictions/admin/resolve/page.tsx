@@ -34,7 +34,6 @@ export default function AdminResolvePage() {
   const [adminNotes, setAdminNotes] = useState('')
   const [cancelReason, setCancelReason] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [estimate, setEstimate] = useState<{ total_payout: number; trader_count: number } | null>(null)
   const [resolveResult, setResolveResult] = useState<{ total_voters: number; correct_voters: number; winning_outcome: string } | null>(null)
 
   const fetchMarkets = async () => {
@@ -68,14 +67,7 @@ export default function AdminResolvePage() {
           setSelectedOutcomeId(d.outcomes?.[0]?.id || '')
         })
         .catch(() => setOutcomes([]))
-    } else if (modal?.type === 'resolve_yes' || modal?.type === 'resolve_no') {
-      const outcome = modal.type === 'resolve_yes' ? 'yes' : 'no'
-      fetch(`/api/predictions/admin/resolve/estimate?market_id=${modal.market.id}&outcome=${outcome}`)
-        .then((r) => r.json())
-        .then((d) => setEstimate({ total_payout: d.total_payout || 0, trader_count: d.trader_count || 0 }))
-        .catch(() => setEstimate(null))
     } else {
-      setEstimate(null)
       setResolveResult(null)
       setOutcomes([])
     }
@@ -342,11 +334,9 @@ export default function AdminResolvePage() {
             <h3 className="text-lg font-semibold text-white mb-4">
               Resolve {modal.type === 'resolve_yes' ? 'YES' : 'NO'} — {modal.market.title.slice(0, 50)}...
             </h3>
-            {estimate && (
-              <p className="text-emerald-400 mb-4">
-                This will pay out {estimate.total_payout.toFixed(2)} MXN to {estimate.trader_count} trader(s). Are you sure?
-              </p>
-            )}
+            <p className="text-emerald-400 mb-4">
+              80% of sponsor contributions go to the Conscious Fund. Are you sure?
+            </p>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">Evidence URL (required)</label>

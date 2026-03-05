@@ -51,7 +51,7 @@ export default async function SponsorSuccessPage({
             <ul className="text-slate-400 text-sm space-y-2">
               <li>• You&apos;ll receive a confirmation email shortly</li>
               <li>• Your logo and name will appear on the sponsored market</li>
-              <li>• 15% of your contribution has been added to the Conscious Fund</li>
+              <li>• 80% of your contribution has been added to the Conscious Fund</li>
               <li>• Users will see your brand when they predict</li>
             </ul>
           </div>

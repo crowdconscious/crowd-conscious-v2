@@ -290,7 +290,8 @@ export default async function LandingPage() {
                     Every prediction drives real impact
                   </h2>
                   <p className="text-slate-400 mb-6 max-w-xl">
-                    Brand sponsors fund the Conscious Fund. Your votes decide which causes receive
+                    Brand sponsors fund the Conscious Fund. 80% of every sponsorship goes to community
+                    causes; 20% supports platform operations. Your votes decide which causes receive
                     grants. No money from you — just your predictions.
                   </p>
                   {fundBalance > 0 || causesCount > 0 ? (

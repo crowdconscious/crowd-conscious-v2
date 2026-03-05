@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase-server'
 import { getCurrentUser } from '@/lib/auth-server'
 import { redirect } from 'next/navigation'
 import { FundClient } from './FundClient'
+import { CONSCIOUS_FUND_PERCENT } from '@/lib/fund-allocation'
 
 function getCurrentCycle(): string {
   return new Date().toISOString().slice(0, 7)
@@ -35,10 +36,10 @@ async function getFundData(userId: string) {
       .in('action_type', ['prediction_vote', 'prediction_correct']),
   ])
 
-  // Total Fund: 15% of sponsor contributions (free-to-play model)
+  // Total Fund: 80% of sponsor contributions (20% platform retention)
   const totalFundFromSponsors =
     (sponsorMarkets ?? []).reduce(
-      (sum, m) => sum + Number((m as { sponsor_contribution?: number }).sponsor_contribution ?? 0) * 0.15,
+      (sum, m) => sum + Number((m as { sponsor_contribution?: number }).sponsor_contribution ?? 0) * CONSCIOUS_FUND_PERCENT,
       0
     ) ?? 0
 
