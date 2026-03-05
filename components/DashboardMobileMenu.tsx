@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, X, Home, Users, Trophy, Award, Compass, BookOpen, User, Settings, LogOut } from 'lucide-react'
+import { Menu, X, Home, BarChart3, Trophy, Award, DollarSign, User, Settings, LogOut } from 'lucide-react'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { supabaseClient } from '@/lib/supabase-client'
 import { useRouter } from 'next/navigation'
@@ -57,18 +57,11 @@ export default function DashboardMobileMenu() {
   }
 
   const navItems = [
-    { path: '/dashboard', icon: Home, label: 'Dashboard' },
-    { path: '/communities', icon: Users, label: 'Communities' },
+    { path: '/predictions', icon: Home, label: 'Dashboard' },
+    { path: '/predictions/markets', icon: BarChart3, label: 'Markets' },
     { path: '/leaderboard', icon: Trophy, label: 'Leaderboard' },
     { path: '/achievements', icon: Award, label: 'Achievements' },
-    { path: '/discover', icon: Compass, label: 'Discover' },
-    { 
-      path: userProfile?.is_corporate_user === true || userProfile?.is_corporate_user === 'true'
-        ? (userProfile?.corporate_role === 'admin' ? '/corporate/dashboard' : '/employee-portal/dashboard')
-        : '/employee-portal/dashboard',
-      icon: BookOpen, 
-      label: 'Learn & Earn' 
-    },
+    { path: '/predictions/fund', icon: DollarSign, label: 'Fund' },
   ]
 
   if (!isMobile) {

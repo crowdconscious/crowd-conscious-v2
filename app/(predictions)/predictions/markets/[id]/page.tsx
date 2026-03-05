@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase-server'
+import { getCurrentUser } from '@/lib/auth-server'
 import { MarketDetailClient } from './MarketDetailClient'
 
 export const dynamic = 'force-dynamic'
@@ -11,6 +12,7 @@ export default async function MarketDetailPage({
 }) {
   const { id } = await params
   const supabase = await createClient()
+  const user = await getCurrentUser()
 
   const { data: market, error: marketError } = await supabase
     .from('prediction_markets')
@@ -29,6 +31,8 @@ export default async function MarketDetailPage({
     { data: creator },
     tradeCountRes,
     consciousRes,
+    { data: outcomes },
+    { data: myVoteRow },
   ] = await Promise.all([
     supabase
       .from('prediction_market_history')
@@ -63,6 +67,19 @@ export default async function MarketDetailPage({
       .select('amount')
       .eq('market_id', id)
       .eq('source_type', 'trade_fee'),
+    supabase
+      .from('market_outcomes')
+      .select('id, label, probability, vote_count, total_confidence, is_winner, sort_order')
+      .eq('market_id', id)
+      .order('sort_order', { ascending: true }),
+    user
+      ? supabase
+          .from('market_votes')
+          .select('outcome_id, confidence, xp_earned, is_correct, bonus_xp')
+          .eq('market_id', id)
+          .eq('user_id', user.id)
+          .single()
+      : Promise.resolve({ data: null }),
   ])
 
   let trades: { side: string; amount: number; price: number; fee_amount?: number; conscious_fund_amount?: number; shares?: number; created_at: string }[] = []
@@ -75,14 +92,27 @@ export default async function MarketDetailPage({
   const totalConsciousFromMarket =
     (consciousRes?.data ?? []).reduce((sum, t) => sum + Number(t.amount), 0)
 
-  let totalPayout = 0
-  if (market.status === 'resolved' && market.resolved_outcome != null) {
-    const winningSide = market.resolved_outcome ? 'yes' : 'no'
-    const winningTrades = trades.filter((t: { side: string }) => t.side === winningSide)
-    totalPayout = winningTrades.reduce((sum: number, t: { shares?: number; amount?: number; price?: number; fee_amount?: number; conscious_fund_amount?: number }) => {
-      const shares = t.shares ?? (Number(t.amount) - Number(t.fee_amount ?? 0) - Number(t.conscious_fund_amount ?? 0)) / (Number(t.price) * 10 || 1)
-      return sum + shares * 10
-    }, 0)
+  const voteCount = (market as { total_votes?: number }).total_votes ?? tradeCountRes?.count ?? 0
+  const outcomesList = (outcomes || []).map((o) => ({
+    id: o.id,
+    label: o.label,
+    probability: Number(o.probability),
+    vote_count: o.vote_count ?? 0,
+    total_confidence: o.total_confidence ?? 0,
+    is_winner: o.is_winner,
+  }))
+
+  let myVote: { outcome_id: string; outcome_label: string; confidence: number; xp_earned: number; is_correct: boolean | null; bonus_xp: number } | null = null
+  if (myVoteRow) {
+    const outcomeLabel = (outcomes || []).find((o) => o.id === myVoteRow.outcome_id)?.label ?? null
+    myVote = {
+      outcome_id: myVoteRow.outcome_id,
+      outcome_label: outcomeLabel ?? 'Unknown',
+      confidence: myVoteRow.confidence,
+      xp_earned: myVoteRow.xp_earned,
+      is_correct: myVoteRow.is_correct,
+      bonus_xp: myVoteRow.bonus_xp ?? 0,
+    }
   }
 
   const resolutionEvidence = (market.resolution_evidence as { evidence_url?: string }) || {}
@@ -95,10 +125,11 @@ export default async function MarketDetailPage({
       agentContent={agentContent || []}
       sentiment={sentiment || []}
       trades={trades}
-      tradeCount={tradeCountRes?.count ?? 0}
+      tradeCount={voteCount}
       totalConsciousFromMarket={totalConsciousFromMarket}
-      totalPayout={totalPayout}
       resolutionEvidence={resolutionEvidence}
+      outcomes={outcomesList}
+      myVote={myVote}
     />
   )
 }

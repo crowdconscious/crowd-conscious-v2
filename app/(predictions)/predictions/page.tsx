@@ -18,11 +18,13 @@ async function getDashboardData(userId: string) {
   const [
     { data: profile },
     { data: positions },
+    { data: marketVotes },
     { data: markets },
     { data: history },
     { data: agentContent },
     { data: fund },
     { data: userTrades },
+    { data: userXp },
   ] = await Promise.all([
     supabase.from('profiles').select('full_name').eq('id', userId).single(),
     supabase
@@ -31,10 +33,14 @@ async function getDashboardData(userId: string) {
       .eq('user_id', userId)
       .gt('shares', 0),
     supabase
+      .from('market_votes')
+      .select('id, market_id, outcome_id, confidence, xp_earned, is_correct, bonus_xp')
+      .eq('user_id', userId),
+    supabase
       .from('prediction_markets')
       .select('*')
       .in('status', ['active', 'trading', 'resolved'])
-      .order('total_volume', { ascending: false }),
+      .order('total_votes', { ascending: false, nullsFirst: false }),
     supabase
       .from('prediction_market_history')
       .select('market_id, probability, recorded_at')
@@ -51,11 +57,55 @@ async function getDashboardData(userId: string) {
       .from('prediction_trades')
       .select('conscious_fund_amount')
       .eq('user_id', userId),
+    supabase.from('user_xp').select('total_xp').eq('user_id', userId).single(),
   ])
 
   const userName = profile?.full_name || 'Changemaker'
   const userContribution = (userTrades || []).reduce((s, t) => s + Number(t.conscious_fund_amount || 0), 0)
   const fundBalance = Number(fund?.current_balance ?? 0)
+  const totalXp = Number(userXp?.total_xp ?? 0)
+
+  const votes = (marketVotes || []) as Array<{
+    id: string
+    market_id: string
+    outcome_id: string
+    confidence: number
+    xp_earned: number
+    is_correct: boolean | null
+    bonus_xp: number | null
+  }>
+  const marketIds = [...new Set(votes.map((v) => v.market_id))]
+  const outcomeIds = [...new Set(votes.map((v) => v.outcome_id))]
+
+  let outcomesData: { id: string; label: string }[] = []
+  let marketsData: { id: string; title: string; status: string }[] = []
+  if (outcomeIds.length > 0) {
+    const res = await supabase.from('market_outcomes').select('id, label').in('id', outcomeIds)
+    outcomesData = res.data || []
+  }
+  if (marketIds.length > 0) {
+    const res = await supabase.from('prediction_markets').select('id, title, status').in('id', marketIds)
+    marketsData = res.data || []
+  }
+
+  const outcomesMap = new Map(outcomesData.map((o) => [o.id, o.label]))
+  const marketsMap = new Map(marketsData.map((m) => [m.id, { title: m.title, status: m.status }]))
+
+  const userPredictions = votes.map((v) => ({
+    id: v.id,
+    market_id: v.market_id,
+    outcome_label: outcomesMap.get(v.outcome_id) ?? 'Unknown',
+    confidence: v.confidence,
+    xp_earned: v.xp_earned,
+    is_correct: v.is_correct,
+    bonus_xp: v.bonus_xp ?? 0,
+    market_title: marketsMap.get(v.market_id)?.title ?? 'Market',
+    market_status: marketsMap.get(v.market_id)?.status ?? 'active',
+  }))
+
+  const resolvedVotes = userPredictions.filter((v) => v.market_status === 'resolved')
+  const correctCount = resolvedVotes.filter((v) => v.is_correct === true).length
+  const accuracyPct = resolvedVotes.length > 0 ? (correctCount / resolvedVotes.length) * 100 : 0
 
   const positionsWithMarket = (positions || []) as PositionWithMarket[]
   const activePositions = positionsWithMarket.filter(
@@ -127,12 +177,14 @@ async function getDashboardData(userId: string) {
 
   return {
     userName,
-    portfolioValue,
-    totalPnl,
-    totalPnlPct,
+    totalXp,
+    accuracyPct,
+    correctPredictions: correctCount,
+    totalResolvedPredictions: resolvedVotes.length,
     userContribution,
     fundBalance,
     positions: enrichedPositions,
+    userPredictions,
     biggestMovers: biggestMovers.map((x) => ({
       ...x.market,
       oldProb: x.oldProb,

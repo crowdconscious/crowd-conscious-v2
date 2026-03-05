@@ -6,7 +6,6 @@ import { AnimatedCard, AnimatedButton } from '@/components/ui/UIComponents'
 import ImpactDashboard from './ImpactDashboard'
 import { XPProgressBar, AchievementsGrid, CommunityLeaderboard, WeeklyChallenge } from '@/components/GamificationSystem'
 import DashboardCalendar from '../../components/DashboardCalendar'
-import CorporateTrainingCard from '@/components/CorporateTrainingCard'
 import DashboardMobileMenu from '@/components/DashboardMobileMenu'
 import { useUserTier } from '@/hooks/useUserTier'
 import { getTierByXP } from '@/lib/tier-config'
@@ -275,33 +274,33 @@ export default function NewEnhancedDashboard({ user, initialUserStats, userCommu
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   {[
                     {
-                      title: 'Collective Consciousness',
-                      description: 'Predict outcomes, fund solutions',
+                      title: 'Predictions Dashboard',
+                      description: 'Predict outcomes, trade positions',
                       icon: '🔮',
-                      href: '/predictions/gate',
+                      href: '/predictions',
                       badge: 'Predictions',
                       color: 'from-emerald-500 to-teal-500'
                     },
                     {
-                      title: 'Browse Communities',
-                      description: 'Discover local groups making impact',
-                      icon: '🌍',
-                      href: '/communities',
+                      title: 'Markets',
+                      description: 'Browse and trade prediction markets',
+                      icon: '📊',
+                      href: '/predictions/markets',
                       color: 'from-blue-500 to-cyan-500'
                     },
                     {
-                      title: 'Share an Idea',
-                      description: 'Post a need, event, or poll',
-                      icon: '💡',
-                      href: '/communities',
-                      badge: '+25 XP',
+                      title: 'Fund Causes',
+                      description: 'Support solutions with your winnings',
+                      icon: '💰',
+                      href: '/predictions/fund',
+                      badge: 'Impact',
                       color: 'from-green-500 to-emerald-500'
                     },
                     {
-                      title: 'Discover Trending',
-                      description: "See what's popular this week",
-                      icon: '🔥',
-                      href: '/discover',
+                      title: 'Leaderboard',
+                      description: 'See top predictors',
+                      icon: '🏆',
+                      href: '/leaderboard',
                       color: 'from-orange-500 to-red-500'
                     }
                   ].map((action) => (
@@ -323,9 +322,6 @@ export default function NewEnhancedDashboard({ user, initialUserStats, userCommu
                       </AnimatedCard>
                     </Link>
                   ))}
-                  
-                  {/* Corporate Training Card - Client-side routing for accurate role detection */}
-                  <CorporateTrainingCard initialCorporateInfo={corporateInfo} />
                 </div>
               </div>
 

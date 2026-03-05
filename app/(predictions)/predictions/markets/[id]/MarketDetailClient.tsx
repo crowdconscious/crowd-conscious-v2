@@ -25,7 +25,6 @@ import {
   ChevronRight,
   ExternalLink,
   TrendingUp,
-  Wallet,
   Calendar,
   BarChart3,
   Newspaper,
@@ -33,7 +32,7 @@ import {
   Bell,
   PenLine,
 } from 'lucide-react'
-import { TradePanel } from '../../components/TradePanel'
+import { VotePanel } from '../../components/VotePanel'
 import { CelebrationModal } from '@/components/gamification/CelebrationModal'
 import type { Database } from '@/types/database'
 
@@ -51,12 +50,6 @@ const CATEGORY_CONFIG: Record<
   corporate: { label: 'Corporate', icon: Briefcase, bg: 'bg-purple-500/20', text: 'text-purple-400' },
   community: { label: 'Community', icon: Users, bg: 'bg-emerald-500/20', text: 'text-emerald-400' },
   cause: { label: 'Cause', icon: Heart, bg: 'bg-amber-500/20', text: 'text-amber-400' },
-}
-
-function formatVolume(vol: number): string {
-  if (vol >= 1_000_000) return `$${(vol / 1_000_000).toFixed(1)}M`
-  if (vol >= 1_000) return `$${(vol / 1_000).toFixed(1)}K`
-  return `$${vol.toFixed(0)}`
 }
 
 function formatDate(d: string): string {
@@ -96,6 +89,9 @@ const AGENT_ICONS: Record<string, React.ElementType> = {
   content_creator: PenLine,
 }
 
+type Outcome = { id: string; label: string; probability: number; vote_count: number; total_confidence: number; is_winner: boolean | null }
+type MyVote = { outcome_id: string; outcome_label: string; confidence: number; xp_earned: number; is_correct: boolean | null; bonus_xp: number } | null
+
 interface Props {
   market: PredictionMarket
   creatorName: string
@@ -105,8 +101,9 @@ interface Props {
   trades: TradeAnon[]
   tradeCount: number
   totalConsciousFromMarket: number
-  totalPayout?: number
   resolutionEvidence?: { evidence_url?: string; admin_notes?: string }
+  outcomes?: Outcome[]
+  myVote?: MyVote
 }
 
 type TimeRange = '7d' | '30d' | 'all'
@@ -120,8 +117,9 @@ export function MarketDetailClient({
   trades,
   tradeCount,
   totalConsciousFromMarket,
-  totalPayout = 0,
   resolutionEvidence = {},
+  outcomes = [],
+  myVote = null,
 }: Props) {
   const [researchOpen, setResearchOpen] = useState(false)
   const [timeRange, setTimeRange] = useState<TimeRange>('30d')
@@ -133,7 +131,10 @@ export function MarketDetailClient({
   const config = CATEGORY_CONFIG[market.category] || CATEGORY_CONFIG.world
   const Icon = config.icon
   const prob = Number(market.current_probability)
-  const volume = Number(market.total_volume)
+  const isMultiOutcome = (market as { market_type?: string }).market_type === 'multi' && outcomes.length > 2
+  const leadingOutcome = outcomes.length > 0
+    ? outcomes.reduce((a, b) => ((a?.probability ?? 0) > (b?.probability ?? 0) ? a : b))
+    : null
 
   const now = Date.now()
   const filteredHistory = history.filter((h) => {
@@ -147,7 +148,7 @@ export function MarketDetailClient({
     date: new Date(h.recorded_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' }),
     fullDate: new Date(h.recorded_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
     probability: Number(h.probability),
-    volume: Number(h.volume_24h),
+    volume: Number(h.trade_count) || Number(h.volume_24h),
   }))
 
   const sentimentChartData = sentiment.map((s) => ({
@@ -162,7 +163,7 @@ export function MarketDetailClient({
   }
 
   const isResolved = market.status === 'resolved'
-  const outcomeLabel = market.resolved_outcome ? 'YES' : 'NO'
+  const resolutionLabel = (market as { resolution?: string }).resolution ?? (market.resolved_outcome ? 'YES' : 'NO')
   const resolvedDate = market.resolved_at ? formatDate(market.resolved_at) : ''
 
   return (
@@ -177,7 +178,7 @@ export function MarketDetailClient({
       {isResolved && (
         <div className="bg-emerald-500/20 border border-emerald-500/50 rounded-xl p-6">
           <h2 className="text-xl font-bold text-emerald-400 mb-2">
-            RESOLVED: {outcomeLabel} on {resolvedDate}
+            RESOLVED: {resolutionLabel} on {resolvedDate}
           </h2>
           {resolutionEvidence?.evidence_url && (
             <a
@@ -190,11 +191,9 @@ export function MarketDetailClient({
               View resolution evidence
             </a>
           )}
-          {totalPayout > 0 && (
-            <p className="text-slate-300 mt-2">
-              Winners paid out: {formatVolume(totalPayout)} to {tradeCount} trader(s)
-            </p>
-          )}
+          <p className="text-slate-300 mt-2">
+            {tradeCount} prediction{tradeCount !== 1 ? 's' : ''} cast
+          </p>
         </div>
       )}
 
@@ -230,7 +229,9 @@ export function MarketDetailClient({
               <div>
                 <p className="text-slate-400 text-sm">Current probability</p>
                 <p className="text-4xl font-bold text-white">
-                  {prob.toFixed(0)}% YES <span className="text-xl font-normal text-slate-400">(${((prob / 100) * 10).toFixed(2)}/share)</span>
+                  {isMultiOutcome && leadingOutcome
+                    ? `${leadingOutcome.label} ${Math.round((leadingOutcome.probability || 0) * 100)}%`
+                    : `${prob.toFixed(0)}% YES`}
                 </p>
               </div>
               <div
@@ -245,14 +246,29 @@ export function MarketDetailClient({
               </div>
             </div>
             <div className="h-3 bg-slate-800 rounded-full overflow-hidden flex mb-6">
-              <div
-                className="bg-emerald-500 h-full transition-all"
-                style={{ width: `${prob}%` }}
-              />
-              <div
-                className="bg-red-500/60 h-full transition-all"
-                style={{ width: `${100 - prob}%` }}
-              />
+              {isMultiOutcome && outcomes.length > 0 ? (
+                outcomes.map((o, i) => (
+                  <div
+                    key={o.id}
+                    className="h-full transition-all"
+                    style={{
+                      width: `${(o.probability || 0) * 100}%`,
+                      backgroundColor: i === 0 ? '#10b981' : ['#ef4444', '#f59e0b', '#6366f1'][(i - 1) % 3] + '99',
+                    }}
+                  />
+                ))
+              ) : (
+                <>
+                  <div
+                    className="bg-emerald-500 h-full transition-all"
+                    style={{ width: `${prob}%` }}
+                  />
+                  <div
+                    className="bg-red-500/60 h-full transition-all"
+                    style={{ width: `${100 - prob}%` }}
+                  />
+                </>
+              )}
             </div>
 
             {historyChartData.length > 0 && (
@@ -295,8 +311,8 @@ export function MarketDetailClient({
                           return (
                             <div className="bg-slate-800 border border-slate-600 rounded-lg p-3 shadow-xl">
                               <p className="text-slate-300 text-sm font-medium">{p.fullDate}</p>
-                              <p className="text-emerald-400 font-semibold">{Number(p.probability).toFixed(1)}% YES</p>
-                              <p className="text-slate-400 text-xs">Volume (24h): ${Number(p.volume).toFixed(0)}</p>
+                              <p className="text-emerald-400 font-semibold">{Number(p.probability).toFixed(1)}%</p>
+                              <p className="text-slate-400 text-xs">Votes: {Number(p.volume) || 0}</p>
                             </div>
                           )
                         }}
@@ -311,7 +327,7 @@ export function MarketDetailClient({
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
-                <p className="text-slate-400 text-sm mt-3">Volume (24h)</p>
+                <p className="text-slate-400 text-sm mt-3">Vote activity</p>
                 <div className="h-32 mt-2">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={historyChartData}>
@@ -459,19 +475,12 @@ export function MarketDetailClient({
 
         {/* Right Column */}
         <div className="lg:sticky lg:top-6 lg:self-start space-y-6">
-          {isResolved ? (
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-              <h3 className="font-semibold text-white mb-2">Trading closed</h3>
-              <p className="text-slate-400 text-sm">
-                This market has been resolved. No further trades are allowed.
-              </p>
-            </div>
-          ) : (
-            <TradePanel
-              market={market}
-              onTradeSuccess={handleTradeSuccess}
-            />
-          )}
+          <VotePanel
+            market={market as PredictionMarket & { market_type?: string; total_votes?: number }}
+            outcomes={outcomes}
+            myVote={myVote}
+            onVoteSuccess={handleTradeSuccess}
+          />
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
             <h3 className="font-semibold text-white mb-3 flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
@@ -483,16 +492,12 @@ export function MarketDetailClient({
                 <span className="text-white">{formatDate(market.resolution_date)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Total volume</span>
-                <span className="text-white">{formatVolume(volume)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Traders</span>
+                <span className="text-slate-400">Predictions</span>
                 <span className="text-white">{tradeCount}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Fee rate</span>
-                <span className="text-white">{market.fee_percentage}%</span>
+                <span className="text-slate-400">Category</span>
+                <span className="text-white">{config.label}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Conscious Fund</span>
@@ -506,7 +511,7 @@ export function MarketDetailClient({
               Conscious Impact
             </h3>
             <p className="text-white text-sm mb-2">
-              This market has funded {formatVolume(totalConsciousFromMarket)} for {config.label.toLowerCase()}
+              Sponsor-funded impact for {config.label.toLowerCase()}
             </p>
             <UserContribution marketId={market.id} />
           </div>
@@ -516,7 +521,7 @@ export function MarketDetailClient({
       <CelebrationModal
         isOpen={celebration.open}
         type="prediction_trade"
-        title="Trade successful!"
+        title="Prediction recorded!"
         message="Your prediction has been recorded."
         xpGained={celebration.xpGained}
         onClose={() => setCelebration({ open: false })}
@@ -581,23 +586,19 @@ function ActivityFeed({ marketId, initialTrades }: { marketId: string; initialTr
     <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
       <h3 className="font-semibold text-white mb-4">Actividad reciente</h3>
       {trades.length === 0 ? (
-        <p className="text-slate-400 text-sm">No hay operaciones aún</p>
+        <p className="text-slate-400 text-sm">No activity yet</p>
       ) : (
         <div className="space-y-2">
-          {trades.slice(0, 10).map((t, i) => {
-            const pricePerShare = t.price_per_share_mxn != null ? Number(t.price_per_share_mxn) : Number(t.price) * 10
-            const shares = t.shares != null ? Number(t.shares) : (pricePerShare > 0 ? Number(t.amount) / pricePerShare : 0)
-            return (
-              <div
-                key={i}
-                className="flex items-center justify-between py-2 border-b border-slate-800 last:border-0"
-              >
-                <span className="text-slate-300 text-sm">
-                  Alguien compró {shares.toFixed(1)} shares {t.side.toUpperCase()} a ${pricePerShare.toFixed(2)} — {formatRelativeTime(t.created_at)}
-                </span>
-              </div>
-            )
-          })}
+          {trades.slice(0, 10).map((t, i) => (
+            <div
+              key={i}
+              className="flex items-center justify-between py-2 border-b border-slate-800 last:border-0"
+            >
+              <span className="text-slate-300 text-sm">
+                Someone predicted {t.side.toUpperCase()} — {formatRelativeTime(t.created_at)}
+              </span>
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -617,7 +618,7 @@ function UserContribution({ marketId }: { marketId: string }) {
   if (contribution === null) return <p className="text-slate-400 text-sm">Loading...</p>
   return (
     <p className="text-emerald-300 text-sm">
-      Your trades have contributed {formatVolume(contribution)}
+      Your predictions contribute to collective intelligence
     </p>
   )
 }

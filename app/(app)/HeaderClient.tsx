@@ -64,16 +64,16 @@ export default function HeaderClient({ user }: HeaderClientProps) {
             {/* Main Navigation - Desktop */}
             <nav className="hidden md:flex items-center gap-6">
               <Link 
-                href="/dashboard"
+                href="/predictions"
                 className="text-slate-600 dark:text-slate-300 hover:text-teal-600 font-medium"
               >
                 Dashboard
               </Link>
               <Link 
-                href="/communities" 
+                href="/predictions/markets" 
                 className="text-slate-600 dark:text-slate-300 hover:text-teal-600 font-medium"
               >
-                Communities
+                Markets
               </Link>
               <Link 
                 href="/leaderboard" 
@@ -82,55 +82,17 @@ export default function HeaderClient({ user }: HeaderClientProps) {
                 Leaderboard
               </Link>
               <Link 
+                href="/predictions/fund" 
+                className="text-slate-600 dark:text-slate-300 hover:text-teal-600 font-medium"
+              >
+                Fund
+              </Link>
+              <Link 
                 href="/achievements" 
                 className="text-slate-600 dark:text-slate-300 hover:text-teal-600 font-medium"
               >
                 Achievements
               </Link>
-              <Link 
-                href="/discover" 
-                className="text-slate-600 dark:text-slate-300 hover:text-teal-600 font-medium"
-              >
-                Discover
-              </Link>
-              <Link 
-                href={
-                  // Route logic for Learn & Earn button:
-                  // 1. Corporate admin → corporate dashboard
-                  // 2. Corporate employee → employee portal
-                  // 3. ANY logged-in user → employee portal (for individual learners)
-                  // 4. Not logged in → landing page
-                  (userProfile?.is_corporate_user === true || userProfile?.is_corporate_user === 'true') && userProfile?.corporate_role === 'admin'
-                    ? '/corporate/dashboard'
-                    : user
-                    ? '/employee-portal/dashboard'  // ALL logged-in users go to learning dashboard
-                    : '/concientizaciones'  // Visitors see landing page
-                }
-                className="text-slate-600 dark:text-slate-300 hover:text-purple-600 font-medium flex items-center gap-1"
-              >
-                {user ? '📚 Learn & Earn' : '🎓 Corporate Training'}
-              </Link>
-              {/* Create Module Button - Only for logged-in users */}
-              {user && (
-                <Link
-                  href="/marketplace/create"
-                  className="hidden md:flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-medium hover:scale-105 transition-transform text-sm"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  Crear Módulo
-                </Link>
-              )}
-              {/* Admin Link */}
-              {userProfile?.user_type === 'admin' && (
-                <Link 
-                  href="/admin" 
-                  className="bg-red-600 text-white px-3 py-1 rounded-md text-sm font-medium hover:bg-red-700 transition-colors"
-                >
-                  ⚠️ Admin
-                </Link>
-              )}
             </nav>
           </div>
 

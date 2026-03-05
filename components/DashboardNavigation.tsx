@@ -33,7 +33,7 @@ export default function DashboardNavigation({
         </AnimatedButton>
         
         {showBackToDashboard && (
-          <Link href="/dashboard">
+          <Link href="/predictions">
             <AnimatedButton
               variant="secondary"
               size="sm"
@@ -60,14 +60,24 @@ export default function DashboardNavigation({
       </div>
 
       <div className="flex items-center gap-3">
-        <Link href="/communities">
+        <Link href="/predictions">
           <AnimatedButton variant="ghost" size="sm">
-            🌍 Communities
+            🔮 Predictions
           </AnimatedButton>
         </Link>
-        <Link href="/discover">
+        <Link href="/predictions/markets">
           <AnimatedButton variant="ghost" size="sm">
-            🔍 Discover
+            📊 Markets
+          </AnimatedButton>
+        </Link>
+        <Link href="/leaderboard">
+          <AnimatedButton variant="ghost" size="sm">
+            🏆 Leaderboard
+          </AnimatedButton>
+        </Link>
+        <Link href="/predictions/fund">
+          <AnimatedButton variant="ghost" size="sm">
+            💰 Fund
           </AnimatedButton>
         </Link>
       </div>

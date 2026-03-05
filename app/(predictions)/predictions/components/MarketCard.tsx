@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
 import {
   Globe,
@@ -14,10 +13,14 @@ import {
   CheckCircle,
 } from 'lucide-react'
 import type { Database } from '@/types/database'
-import { TradeModal } from './TradeModal'
 import { MiniSparkline } from './MiniSparkline'
 
-type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row']
+type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row'] & {
+  market_type?: string
+  total_votes?: number
+  sponsor_name?: string
+  image_url?: string
+}
 
 const CATEGORY_CONFIG: Record<
   string,
@@ -55,12 +58,6 @@ const CATEGORY_CONFIG: Record<
   },
 }
 
-function formatVolume(vol: number): string {
-  if (vol >= 1_000_000) return `$${(vol / 1_000_000).toFixed(1)}M`
-  if (vol >= 1_000) return `$${(vol / 1_000).toFixed(1)}K`
-  return `$${vol.toFixed(0)}`
-}
-
 function getCountdown(resolutionDate: string): string {
   const end = new Date(resolutionDate)
   const now = new Date()
@@ -82,27 +79,18 @@ function getCountdown(resolutionDate: string): string {
 interface MarketCardProps {
   market: PredictionMarket
   history?: { probability: number; recorded_at: string }[]
+  leadingOutcome?: { label: string; probability: number } | null
 }
 
-export function MarketCard({ market, history = [] }: MarketCardProps) {
-  const [tradeModalOpen, setTradeModalOpen] = useState(false)
-  const [tradeSide, setTradeSide] = useState<'yes' | 'no'>('yes')
-
+export function MarketCard({ market, history = [], leadingOutcome }: MarketCardProps) {
   const config = CATEGORY_CONFIG[market.category] || CATEGORY_CONFIG.world
   const Icon = config.icon
   const prob = Number(market.current_probability)
-  const volume = Number(market.total_volume)
-  const consciousAmount =
-    volume * (Number(market.conscious_fund_percentage) / 100)
-
-  const openTrade = (side: 'yes' | 'no') => {
-    setTradeSide(side)
-    setTradeModalOpen(true)
-  }
+  const voteCount = (market.total_votes ?? 0) || Number(market.total_volume) || 0
 
   return (
-    <>
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 hover:border-slate-700 transition-colors flex flex-col">
+    <Link href={`/predictions/markets/${market.id}`}>
+      <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 hover:border-slate-700 transition-colors flex flex-col h-full">
         <div className="flex items-start justify-between gap-2 mb-3">
           <span
             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text}`}
@@ -110,7 +98,22 @@ export function MarketCard({ market, history = [] }: MarketCardProps) {
             <Icon className="w-3.5 h-3.5" />
             {config.label}
           </span>
+          {market.sponsor_name && (
+            <span className="px-2 py-0.5 rounded text-xs bg-amber-500/20 text-amber-400">
+              Sponsored
+            </span>
+          )}
         </div>
+
+        {market.image_url && (
+          <div className="mb-3 -mx-5 -mt-1">
+            <img
+              src={market.image_url}
+              alt=""
+              className="w-full h-24 object-cover rounded-t-xl"
+            />
+          </div>
+        )}
 
         <h3 className="text-white font-semibold line-clamp-2 mb-4 min-h-[2.5rem]">
           {market.title}
@@ -119,11 +122,13 @@ export function MarketCard({ market, history = [] }: MarketCardProps) {
         <div className="mb-4">
           <div className="flex items-baseline gap-2 mb-2">
             <span className="text-3xl font-bold text-white">
-              {prob.toFixed(0)}%
+              {leadingOutcome
+                ? `${leadingOutcome.label} ${Math.round((leadingOutcome.probability || 0) * 100)}%`
+                : `${prob.toFixed(0)}%`}
             </span>
-            <span className="text-slate-400 text-sm">
-              YES (${((prob / 100) * 10).toFixed(2)})
-            </span>
+            {!leadingOutcome && (
+              <span className="text-slate-400 text-sm">YES</span>
+            )}
           </div>
           <div className="h-2 bg-slate-800 rounded-full overflow-hidden flex">
             <div
@@ -156,7 +161,7 @@ export function MarketCard({ market, history = [] }: MarketCardProps) {
         <div className="space-y-2 text-sm text-slate-400 mb-4">
           <div className="flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-slate-500" />
-            <span>Volume: {formatVolume(volume)}</span>
+            <span>{voteCount} predictions</span>
           </div>
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4 text-slate-500" />
@@ -164,49 +169,19 @@ export function MarketCard({ market, history = [] }: MarketCardProps) {
           </div>
         </div>
 
-        <div className="mb-4 px-3 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
-          <p className="text-xs text-emerald-400">
-            This market has funded {formatVolume(consciousAmount)} for{' '}
-            {config.label.toLowerCase()}
-          </p>
-        </div>
-
         {market.status === 'resolved' ? (
-          <Link
-            href={`/predictions/markets/${market.id}`}
-            className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 text-sm font-medium transition-colors mt-auto"
-          >
+          <div className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-slate-700 text-slate-300 text-sm font-medium mt-auto">
             <CheckCircle className="w-4 h-4" />
-            Resolved: {market.resolved_outcome ? 'YES' : 'NO'} — View details
-          </Link>
+            Resolved — View details
+          </div>
         ) : (
           <div className="flex gap-2 mt-auto">
-            <button
-              onClick={() => openTrade('yes')}
-              className="flex-1 py-2.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm transition-colors flex items-center justify-center gap-1.5"
-            >
-              <TrendingUp className="w-4 h-4" />
-              Yes ↑
-            </button>
-            <button
-              onClick={() => openTrade('no')}
-              className="flex-1 py-2.5 px-3 rounded-lg bg-red-600/80 hover:bg-red-500/80 text-white font-medium text-sm transition-colors flex items-center justify-center gap-1.5"
-            >
-              <TrendingDown className="w-4 h-4" />
-              No ↓
-            </button>
+            <span className="flex-1 py-2.5 px-3 rounded-lg bg-emerald-600/80 text-white text-sm font-medium text-center">
+              Predict
+            </span>
           </div>
         )}
       </div>
-
-      {market.status !== 'resolved' && (
-        <TradeModal
-          market={market}
-          side={tradeSide}
-          isOpen={tradeModalOpen}
-          onClose={() => setTradeModalOpen(false)}
-        />
-      )}
-    </>
+    </Link>
   )
 }

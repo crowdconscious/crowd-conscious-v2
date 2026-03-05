@@ -10,7 +10,7 @@ async function getMarkets(): Promise<PredictionMarket[]> {
     .from('prediction_markets')
     .select('*')
     .in('status', ['active', 'trading'])
-    .order('total_volume', { ascending: false })
+    .order('total_votes', { ascending: false, nullsFirst: false })
 
   if (error) {
     console.error('Predictions markets fetch error:', error)
@@ -63,12 +63,30 @@ async function getHistoryByMarket(): Promise<Record<string, { probability: numbe
   return byMarket
 }
 
+async function getLeadingOutcomesByMarket(): Promise<Record<string, { label: string; probability: number }>> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('market_outcomes')
+    .select('market_id, label, probability')
+    .order('probability', { ascending: false })
+
+  const byMarket: Record<string, { label: string; probability: number }> = {}
+  for (const row of data ?? []) {
+    const id = row.market_id
+    if (!byMarket[id]) {
+      byMarket[id] = { label: row.label, probability: Number(row.probability) }
+    }
+  }
+  return byMarket
+}
+
 export default async function PredictionsMarketsPage() {
-  const [markets, categoryCounts, resolvedCount, historyByMarket] = await Promise.all([
+  const [markets, categoryCounts, resolvedCount, historyByMarket, leadingOutcomes] = await Promise.all([
     getMarkets(),
     getCategoryCounts(),
     getResolvedCount(),
     getHistoryByMarket(),
+    getLeadingOutcomesByMarket(),
   ])
 
   return (
@@ -77,6 +95,7 @@ export default async function PredictionsMarketsPage() {
       categoryCounts={categoryCounts}
       resolvedCount={resolvedCount}
       historyByMarket={historyByMarket}
+      leadingOutcomes={leadingOutcomes}
     />
   )
 }

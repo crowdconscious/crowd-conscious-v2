@@ -5,19 +5,8 @@ export function middleware(request: NextRequest) {
   const startTime = Date.now()
   const { pathname } = request.nextUrl
 
-  // Predictions access gate: /predictions/* (except /predictions/gate)
+  // Predictions: directly accessible (no gate)
   if (pathname.startsWith('/predictions')) {
-    const isGatePage = pathname === '/predictions/gate'
-
-    if (!isGatePage) {
-      const cookieValue = request.cookies.get('predictions_access')?.value
-      const expectedCode = process.env.PREDICTIONS_ACCESS_CODE
-
-      if (!expectedCode || cookieValue !== expectedCode) {
-        return NextResponse.redirect(new URL('/predictions/gate', request.url))
-      }
-    }
-
     // Pass pathname to server components via request headers
     const requestHeaders = new Headers(request.headers)
     requestHeaders.set('x-pathname', pathname)
@@ -54,7 +43,7 @@ export function middleware(request: NextRequest) {
   }
 
   // Track page views for authenticated routes
-  if (pathname.startsWith('/dashboard') || pathname.startsWith('/communities')) {
+  if (pathname.startsWith('/dashboard') || pathname.startsWith('/predictions')) {
     // This will be picked up by the client-side analytics tracker
     response.headers.set('x-track-page-view', 'true')
   }

@@ -46,7 +46,7 @@ function formatDate(iso: string): string {
 function sourceLabel(source: string): string {
   switch (source) {
     case 'trade_fee':
-      return 'Trade fee'
+      return 'Sponsor fee'
     case 'donation':
       return 'Donation'
     case 'sponsorship':
@@ -116,7 +116,7 @@ export function FundClient({
       <div>
         <h1 className="text-2xl font-bold text-white">Conscious Fund</h1>
         <p className="text-slate-400 mt-1">
-          Every trade funds solutions. Full transparency.
+          Sponsor contributions fund solutions. Full transparency.
         </p>
       </div>
 
@@ -151,11 +151,11 @@ export function FundClient({
         </div>
       </div>
 
-      {/* Your contribution */}
+      {/* Sponsor-funded impact */}
       <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 flex items-center gap-4">
         <Heart className="w-10 h-10 text-emerald-400" />
         <div>
-          <p className="text-sm text-slate-400">Your contributions from trades</p>
+          <p className="text-sm text-slate-400">Sponsor-funded impact</p>
           <p className="text-2xl font-bold text-emerald-400">
             {formatCurrency(userContribution)} MXN
           </p>
@@ -172,7 +172,7 @@ export function FundClient({
           <div className="p-12 text-center text-slate-400">
             <p>No transactions yet</p>
             <p className="text-sm mt-1">
-              Fund grows from trade fees. Start trading to contribute.
+              Fund grows from sponsor contributions.
             </p>
           </div>
         ) : (

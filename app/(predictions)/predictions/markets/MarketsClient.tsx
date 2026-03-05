@@ -26,6 +26,7 @@ interface Props {
   categoryCounts: Record<string, number>
   resolvedCount?: number
   historyByMarket?: Record<string, { probability: number; recorded_at: string }[]>
+  leadingOutcomes?: Record<string, { label: string; probability: number }>
 }
 
 export function MarketsClient({
@@ -33,6 +34,7 @@ export function MarketsClient({
   categoryCounts,
   resolvedCount = 0,
   historyByMarket = {},
+  leadingOutcomes = {},
 }: Props) {
   const [markets, setMarkets] = useState<PredictionMarket[]>(initialMarkets)
   const [statusTab, setStatusTab] = useState<'active' | 'resolved'>('active')
@@ -76,7 +78,7 @@ export function MarketsClient({
       <div>
         <h1 className="text-2xl font-bold text-white">Markets</h1>
         <p className="text-slate-400 mt-1">
-          Browse and trade on prediction markets
+          Browse and predict on markets
         </p>
       </div>
 
@@ -175,6 +177,7 @@ export function MarketsClient({
               key={market.id}
               market={market}
               history={historyByMarket[market.id] ?? []}
+              leadingOutcome={leadingOutcomes[market.id]}
             />
           ))}
         </div>

@@ -32,14 +32,28 @@ type EnrichedPosition = {
 
 type MoverMarket = PredictionMarket & { oldProb: number; newProb: number; delta: number }
 
+type UserPrediction = {
+  id: string
+  market_id: string
+  outcome_label: string
+  confidence: number
+  xp_earned: number
+  is_correct: boolean | null
+  bonus_xp: number
+  market_title: string
+  market_status: string
+}
+
 interface DashboardData {
   userName: string
-  portfolioValue: number
-  totalPnl: number
-  totalPnlPct: number
+  totalXp: number
+  accuracyPct: number
+  correctPredictions: number
+  totalResolvedPredictions: number
   userContribution: number
   fundBalance: number
   positions: EnrichedPosition[]
+  userPredictions: UserPrediction[]
   biggestMovers: MoverMarket[]
   newMarkets: PredictionMarket[]
   agentContent: AgentContent[]
@@ -70,12 +84,12 @@ function truncate(str: string, len: number): string {
 export function PredictionsDashboardClient({ data }: Props) {
   const {
     userName,
-    portfolioValue,
-    totalPnl,
-    totalPnlPct,
+    totalXp,
+    accuracyPct,
     userContribution,
     fundBalance,
     positions,
+    userPredictions,
     biggestMovers,
     newMarkets,
     agentContent,
@@ -98,23 +112,19 @@ export function PredictionsDashboardClient({ data }: Props) {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
           <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
-            <p className="text-slate-400 text-sm">Portfolio Value</p>
+            <p className="text-slate-400 text-sm">Prediction Score</p>
             <p className="text-2xl font-bold text-white mt-1">
-              {formatCurrency(portfolioValue)}
+              {totalXp.toLocaleString()} XP
             </p>
           </div>
           <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
-            <p className="text-slate-400 text-sm">Total P&L</p>
-            <p
-              className={`text-2xl font-bold mt-1 ${
-                totalPnl >= 0 ? 'text-emerald-400' : 'text-red-400'
-              }`}
-            >
-              {formatPnl(totalPnl, totalPnlPct)}
+            <p className="text-slate-400 text-sm">Accuracy</p>
+            <p className="text-2xl font-bold text-emerald-400 mt-1">
+              {accuracyPct.toFixed(0)}%
             </p>
           </div>
           <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
-            <p className="text-slate-400 text-sm">Conscious Impact</p>
+            <p className="text-slate-400 text-sm">Sponsor-funded impact</p>
             <p className="text-2xl font-bold text-emerald-400 mt-1">
               {formatCurrency(userContribution)}
             </p>
@@ -124,13 +134,13 @@ export function PredictionsDashboardClient({ data }: Props) {
 
       {/* Section 2 & 3: Positions + Trending (two columns) */}
       <section className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        {/* Your Active Positions - left ~60% */}
+        {/* Your Predictions - left ~60% */}
         <div className="lg:col-span-3">
           <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
             <BarChart3 className="w-5 h-5 text-emerald-400" />
-            Your Active Positions
+            Your Predictions
           </h2>
-          {positions.length === 0 ? (
+          {userPredictions.length === 0 ? (
             <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-8 text-center">
               <p className="text-slate-400">You haven&apos;t made any predictions yet.</p>
               <Link
@@ -142,41 +152,40 @@ export function PredictionsDashboardClient({ data }: Props) {
             </div>
           ) : (
             <div className="space-y-3">
-              {positions.map((pos) => {
-                const hist = historyByMarket[pos.market_id] || []
+              {userPredictions.slice(0, 10).map((v) => {
+                const hist = historyByMarket[v.market_id] || []
                 const sparkData = hist.map((h) => ({ value: h.probability }))
-                const market = pos.prediction_markets
-                if (!market) return null
 
                 return (
                   <div
-                    key={pos.id}
+                    key={v.id}
                     className="bg-slate-900/80 border border-slate-800 rounded-xl p-4 flex items-center justify-between gap-4"
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium text-white truncate">{market.title}</p>
+                      <p className="font-medium text-white truncate">{v.market_title}</p>
                       <p className="text-slate-400 text-sm mt-0.5">
-                        {pos.shares.toFixed(1)} shares @ {formatCurrency(pos.currentPriceMxn)} avg
+                        Your pick: {v.outcome_label} at confidence {v.confidence}
                       </p>
-                      <p
-                        className={`text-sm font-medium mt-1 ${
-                          pos.pnl >= 0 ? 'text-emerald-400' : 'text-red-400'
-                        }`}
-                      >
-                        {formatPnl(pos.pnl, pos.pnlPct)}
+                      <p className="text-emerald-400 text-sm font-medium mt-1">
+                        +{v.xp_earned + v.bonus_xp} XP
+                        {v.market_status === 'resolved' && (
+                          <span className="ml-2">
+                            {v.is_correct ? '✓ Correct' : '✗'}
+                          </span>
+                        )}
                       </p>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
                       <MiniSparkline
                         data={sparkData}
-                        positive={pos.pnl >= 0}
+                        positive={v.is_correct !== false}
                         className="rounded"
                       />
                       <Link
-                        href={`/predictions/markets/${market.id}`}
+                        href={`/predictions/markets/${v.market_id}`}
                         className="text-emerald-400 hover:text-emerald-300 text-sm font-medium flex items-center gap-1"
                       >
-                        View Market <ArrowRight className="w-4 h-4" />
+                        View <ArrowRight className="w-4 h-4" />
                       </Link>
                     </div>
                   </div>
@@ -302,7 +311,7 @@ export function PredictionsDashboardClient({ data }: Props) {
             </div>
             <div className="h-8 w-px bg-slate-700" />
             <div>
-              <p className="text-slate-400 text-xs">Your Contribution</p>
+              <p className="text-slate-400 text-xs">Sponsor-funded impact</p>
               <p className="text-lg font-bold text-white">{formatCurrency(userContribution)}</p>
             </div>
           </div>

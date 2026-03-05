@@ -39,15 +39,21 @@ export async function GET() {
 
     const withCounts = await Promise.all(
       (markets || []).map(async (m) => {
+        const { count: voteCount } = await supabase
+          .from('market_votes')
+          .select('id', { count: 'exact', head: true })
+          .eq('market_id', m.id)
         const { data: trades } = await supabase
           .from('prediction_trades')
           .select('user_id')
           .eq('market_id', m.id)
         const userIds = new Set((trades || []).map((t) => t.user_id))
+        const traderCount = voteCount ?? userIds.size
         return {
           ...m,
           trade_count: trades?.length ?? 0,
-          trader_count: userIds.size,
+          trader_count: Math.max(traderCount, userIds.size),
+          vote_count: voteCount ?? 0,
         }
       })
     )

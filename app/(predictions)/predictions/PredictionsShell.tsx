@@ -6,7 +6,6 @@ import Link from 'next/link'
 import {
   LayoutDashboard,
   TrendingUp,
-  Wallet,
   Heart,
   ArrowLeft,
   Receipt,
@@ -20,8 +19,7 @@ const NAV_ITEMS = [
   { href: '/predictions', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/predictions/markets', label: 'Markets', icon: TrendingUp },
   { href: '/predictions/insights', label: 'AI Insights', icon: Sparkles },
-  { href: '/predictions/wallet', label: 'Wallet', icon: Wallet },
-  { href: '/predictions/trades', label: 'My Trades', icon: Receipt },
+  { href: '/predictions/trades', label: 'My Predictions', icon: Receipt },
   { href: '/predictions/fund', label: 'Conscious Fund', icon: Heart },
 ]
 
@@ -34,13 +32,6 @@ export default function PredictionsShell({
 }) {
   const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const isGatePage = pathname === '/predictions/gate'
-
-  // Gate page: minimal layout, no sidebar
-  if (isGatePage) {
-    return <>{children}</>
-  }
-
   const closeMobileMenu = () => setMobileMenuOpen(false)
 
   return (
@@ -91,11 +82,11 @@ export default function PredictionsShell({
 
         <div className="p-4 border-t border-slate-800">
           <Link
-            href="/dashboard"
+            href="/profile"
             className="flex items-center gap-2 text-sm text-slate-400 hover:text-emerald-400 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Main App
+            Profile & Settings
           </Link>
         </div>
       </aside>
@@ -111,10 +102,10 @@ export default function PredictionsShell({
         </button>
         <h1 className="font-bold text-white">Predictions</h1>
         <Link
-          href="/dashboard"
+          href="/profile"
           className="text-sm text-emerald-400"
         >
-          Main App
+          Profile
         </Link>
       </div>
 
@@ -179,12 +170,12 @@ export default function PredictionsShell({
 
             <div className="p-4 border-t border-slate-800">
               <Link
-                href="/dashboard"
+                href="/profile"
                 onClick={closeMobileMenu}
                 className="flex items-center gap-2 text-sm text-slate-400 hover:text-emerald-400 transition-colors"
               >
                 <ArrowLeft className="w-4 h-4" />
-                Back to Main App
+                Profile & Settings
               </Link>
             </div>
           </aside>

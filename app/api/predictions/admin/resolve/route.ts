@@ -22,18 +22,83 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { market_id, outcome, evidence_url, admin_notes } = body
+    const { market_id, outcome, winning_outcome_id, evidence_url, admin_notes } = body
 
-    if (!market_id || typeof outcome !== 'boolean') {
+    if (!market_id) {
       return NextResponse.json(
-        { error: 'market_id and outcome (boolean) required' },
+        { error: 'market_id is required' },
+        { status: 400 }
+      )
+    }
+
+    // New flow: winning_outcome_id for free-to-play markets with outcomes
+    if (winning_outcome_id) {
+      const { data, error } = await supabase.rpc('resolve_market_free', {
+        p_market_id: market_id,
+        p_winning_outcome_id: winning_outcome_id,
+      })
+
+      if (error) {
+        console.error('Resolve free error:', error)
+        return NextResponse.json(
+          { error: error.message || 'Resolution failed' },
+          { status: 400 }
+        )
+      }
+
+      const result = data as { success?: boolean; error?: string; total_voters?: number; correct_voters?: number; winning_outcome?: string }
+      if (result.success === false) {
+        return NextResponse.json(
+          { error: result.error || 'Resolution failed' },
+          { status: 400 }
+        )
+      }
+
+      // Notify voters
+      const admin = createAdminClient()
+      const { data: market } = await admin
+        .from('prediction_markets')
+        .select('title')
+        .eq('id', market_id)
+        .single()
+
+      const { data: votes } = await admin
+        .from('market_votes')
+        .select('user_id, outcome_id, is_correct, bonus_xp')
+        .eq('market_id', market_id)
+
+      const winningLabel = result.winning_outcome || 'Unknown'
+      for (const v of votes || []) {
+        const won = v.outcome_id === winning_outcome_id
+        const message = won
+          ? `Correct! You earned ${v.bonus_xp ?? 0} bonus XP.`
+          : `The market resolved as ${winningLabel}.`
+        await admin.from('notifications').insert({
+          user_id: v.user_id,
+          type: 'market_resolved',
+          title: `Market resolved: ${market?.title || 'Prediction'}`,
+          message: `"${market?.title || 'Market'}" resolved as ${winningLabel}. ${message}`,
+          data: { market_id, winning_outcome: winningLabel, won, bonus_xp: v.bonus_xp ?? 0 },
+        })
+      }
+
+      return NextResponse.json({
+        success: true,
+        total_voters: result.total_voters ?? 0,
+        correct_voters: result.correct_voters ?? 0,
+        winning_outcome: winningLabel,
+      })
+    }
+
+    // Legacy flow: outcome (boolean) for money-based markets
+    if (typeof outcome !== 'boolean') {
+      return NextResponse.json(
+        { error: 'Either winning_outcome_id or outcome (boolean) is required' },
         { status: 400 }
       )
     }
 
     const admin = createAdminClient()
-
-    // Fetch positions BEFORE resolve (they get zeroed)
     const { data: positions } = await admin
       .from('prediction_positions')
       .select('user_id, side, shares, average_price')
@@ -62,7 +127,6 @@ export async function POST(request: Request) {
 
     const winningSide = outcome ? 'yes' : 'no'
     const payoutPerShare = 10
-    const marketTitle = market?.title || 'Market'
 
     for (const pos of positions || []) {
       if (Number(pos.shares) <= 0) continue
@@ -74,23 +138,15 @@ export async function POST(request: Request) {
       const costBasis = shares * avgPrice * 10
 
       const message = won
-        ? `Ganaste $${payout.toFixed(2)} MXN.`
-        : `Perdiste tu posición de $${costBasis.toFixed(2)} MXN.`
-
-      const fullMessage = `El mercado "${marketTitle}" se resolvió como ${winningSide.toUpperCase()}. ${message}`
+        ? `You won ${payout.toFixed(2)} MXN.`
+        : `You lost your position (${costBasis.toFixed(2)} MXN cost basis).`
 
       await admin.from('notifications').insert({
         user_id: userId,
         type: 'market_resolved',
-        title: `Mercado resuelto: ${marketTitle}`,
-        message: fullMessage,
-        data: {
-          market_id,
-          outcome: winningSide,
-          won,
-          payout: won ? payout : 0,
-          cost_basis: costBasis,
-        },
+        title: `Market resolved: ${market?.title || 'Prediction'}`,
+        message: `"${market?.title || 'Market'}" resolved as ${winningSide.toUpperCase()}. ${message}`,
+        data: { market_id, outcome: winningSide, won, payout: won ? payout : 0, cost_basis: costBasis },
       })
     }
 

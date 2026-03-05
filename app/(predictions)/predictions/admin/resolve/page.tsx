@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, CheckCircle, XCircle, Ban, ExternalLink } from 'lucide-react'
 
+type Outcome = { id: string; label: string; probability: number; vote_count: number }
+
 type Market = {
   id: string
   title: string
@@ -11,23 +13,28 @@ type Market = {
   resolution_criteria: string
   verification_sources: string[]
   total_volume: number
+  market_type?: string
   status: string
   trade_count: number
   trader_count: number
+  vote_count?: number
 }
 
-type ModalType = 'resolve_yes' | 'resolve_no' | 'cancel' | null
+type ModalType = 'resolve_outcome' | 'resolve_yes' | 'resolve_no' | 'cancel' | null
 
 export default function AdminResolvePage() {
   const [markets, setMarkets] = useState<Market[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [modal, setModal] = useState<{ type: ModalType; market: Market } | null>(null)
+  const [outcomes, setOutcomes] = useState<Outcome[]>([])
+  const [selectedOutcomeId, setSelectedOutcomeId] = useState<string>('')
   const [evidenceUrl, setEvidenceUrl] = useState('')
   const [adminNotes, setAdminNotes] = useState('')
   const [cancelReason, setCancelReason] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [estimate, setEstimate] = useState<{ total_payout: number; trader_count: number } | null>(null)
+  const [resolveResult, setResolveResult] = useState<{ total_voters: number; correct_voters: number; winning_outcome: string } | null>(null)
 
   const fetchMarkets = async () => {
     setLoading(true)
@@ -52,7 +59,15 @@ export default function AdminResolvePage() {
   }, [])
 
   useEffect(() => {
-    if (modal?.type === 'resolve_yes' || modal?.type === 'resolve_no') {
+    if (modal?.type === 'resolve_outcome' && modal.market) {
+      fetch(`/api/predictions/markets/${modal.market.id}/outcomes`)
+        .then((r) => r.json())
+        .then((d) => {
+          setOutcomes(d.outcomes || [])
+          setSelectedOutcomeId(d.outcomes?.[0]?.id || '')
+        })
+        .catch(() => setOutcomes([]))
+    } else if (modal?.type === 'resolve_yes' || modal?.type === 'resolve_no') {
       const outcome = modal.type === 'resolve_yes' ? 'yes' : 'no'
       fetch(`/api/predictions/admin/resolve/estimate?market_id=${modal.market.id}&outcome=${outcome}`)
         .then((r) => r.json())
@@ -60,8 +75,45 @@ export default function AdminResolvePage() {
         .catch(() => setEstimate(null))
     } else {
       setEstimate(null)
+      setResolveResult(null)
+      setOutcomes([])
     }
   }, [modal?.type, modal?.market?.id])
+
+  const handleResolveOutcome = async () => {
+    if (!modal?.market || modal.type !== 'resolve_outcome' || !selectedOutcomeId) return
+
+    setSubmitting(true)
+    setResolveResult(null)
+    try {
+      const res = await fetch('/api/predictions/admin/resolve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          market_id: modal.market.id,
+          winning_outcome_id: selectedOutcomeId,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Resolution failed')
+      setResolveResult({
+        total_voters: data.total_voters ?? 0,
+        correct_voters: data.correct_voters ?? 0,
+        winning_outcome: data.winning_outcome ?? 'Unknown',
+      })
+      setTimeout(() => {
+        setModal(null)
+        setEvidenceUrl('')
+        setAdminNotes('')
+        setResolveResult(null)
+        fetchMarkets()
+      }, 2000)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Resolution failed')
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   const handleResolve = async () => {
     if (!modal?.market || (modal.type !== 'resolve_yes' && modal.type !== 'resolve_no')) return
@@ -123,6 +175,8 @@ export default function AdminResolvePage() {
   const formatDate = (d: string) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
   const isPastDue = (d: string) => new Date(d) < new Date()
 
+  const voteCount = (m: Market) => m.vote_count ?? m.trader_count ?? 0
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <Link
@@ -135,7 +189,7 @@ export default function AdminResolvePage() {
 
       <h1 className="text-2xl font-bold text-white">Resolve Markets</h1>
       <p className="text-slate-400">
-        Resolve or cancel prediction markets. Only admins can access this page.
+        Resolve or cancel prediction markets. Select the winning outcome for free-to-play markets.
       </p>
 
       {error && (
@@ -183,23 +237,27 @@ export default function AdminResolvePage() {
                     </p>
                   )}
                   <div className="flex gap-4 mt-2 text-sm text-slate-400">
-                    <span>Volume: ${Number(m.total_volume).toFixed(0)}</span>
-                    <span>Traders: {m.trader_count}</span>
+                    <span>{voteCount(m)} predictions</span>
                   </div>
                 </div>
-                <div className="flex gap-2 flex-shrink-0">
+                <div className="flex gap-2 flex-shrink-0 flex-wrap">
                   <button
-                    onClick={() => setModal({ type: 'resolve_yes', market: m })}
+                    onClick={() => setModal({ type: 'resolve_outcome', market: m })}
                     className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium flex items-center gap-2"
                   >
                     <CheckCircle className="w-4 h-4" />
+                    Select winner
+                  </button>
+                  <button
+                    onClick={() => setModal({ type: 'resolve_yes', market: m })}
+                    className="px-4 py-2 rounded-lg bg-emerald-600/80 hover:bg-emerald-500/80 text-white text-sm font-medium flex items-center gap-2"
+                  >
                     Resolve YES
                   </button>
                   <button
                     onClick={() => setModal({ type: 'resolve_no', market: m })}
-                    className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white text-sm font-medium flex items-center gap-2"
+                    className="px-4 py-2 rounded-lg bg-red-600/80 hover:bg-red-500/80 text-white text-sm font-medium flex items-center gap-2"
                   >
-                    <XCircle className="w-4 h-4" />
                     Resolve NO
                   </button>
                   <button
@@ -216,7 +274,66 @@ export default function AdminResolvePage() {
         </div>
       )}
 
-      {/* Resolve confirmation modal */}
+      {/* Resolve with outcome selection modal */}
+      {modal?.type === 'resolve_outcome' ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60" onClick={() => setModal(null)} />
+          <div className="relative bg-slate-900 border border-slate-700 rounded-xl p-6 max-w-md w-full shadow-xl">
+            <h3 className="text-lg font-semibold text-white mb-4">
+              Select winning outcome — {modal.market.title.slice(0, 50)}...
+            </h3>
+            {outcomes.length > 0 ? (
+              <>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-slate-300 mb-2">Winning outcome</label>
+                  <select
+                    value={selectedOutcomeId}
+                    onChange={(e) => setSelectedOutcomeId(e.target.value)}
+                    className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white"
+                  >
+                    {outcomes.map((o) => (
+                      <option key={o.id} value={o.id}>
+                        {o.label} ({Math.round((o.probability || 0) * 100)}%, {o.vote_count} votes)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {resolveResult ? (
+                  <div className="p-4 bg-emerald-500/20 border border-emerald-500/50 rounded-lg mb-4">
+                    <p className="text-emerald-400 font-medium">Resolution complete!</p>
+                    <p className="text-slate-300 text-sm mt-1">
+                      {resolveResult.correct_voters} of {resolveResult.total_voters} predictors were correct.
+                    </p>
+                    <p className="text-slate-400 text-sm">Bonus XP awarded to correct voters.</p>
+                  </div>
+                ) : (
+                  <div className="flex gap-2 mt-6">
+                    <button
+                      onClick={() => setModal(null)}
+                      className="flex-1 py-2 rounded-lg border border-slate-600 text-slate-300 hover:bg-slate-800"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleResolveOutcome}
+                      disabled={submitting || !selectedOutcomeId}
+                      className="flex-1 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium disabled:opacity-50"
+                    >
+                      {submitting ? 'Resolving...' : 'Confirm'}
+                    </button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <p className="text-slate-400 text-sm mb-4">
+                No outcomes found. Use &quot;Resolve YES&quot; or &quot;Resolve NO&quot; for legacy markets.
+              </p>
+            )}
+          </div>
+        </div>
+      ) : null}
+
+      {/* Legacy resolve YES/NO modal */}
       {modal?.type === 'resolve_yes' || modal?.type === 'resolve_no' ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60" onClick={() => setModal(null)} />
@@ -226,7 +343,7 @@ export default function AdminResolvePage() {
             </h3>
             {estimate && (
               <p className="text-emerald-400 mb-4">
-                This will pay out ${estimate.total_payout.toFixed(2)} to {estimate.trader_count} trader(s). Are you sure?
+                This will pay out {estimate.total_payout.toFixed(2)} MXN to {estimate.trader_count} trader(s). Are you sure?
               </p>
             )}
             <div className="space-y-4">
@@ -279,7 +396,7 @@ export default function AdminResolvePage() {
               Cancel market — {modal.market.title.slice(0, 50)}...
             </h3>
             <p className="text-slate-400 text-sm mb-4">
-              This will refund all traders and close the market. Traders will receive their cost basis back.
+              This will close the market. For legacy markets with positions, traders will receive refunds.
             </p>
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">Reason (optional)</label>
