@@ -10,6 +10,8 @@ const TIER_PRICES_MXN: Record<string, number> = {
   impact: 50000,
 }
 
+const MIN_AMOUNT_MXN = 100
+
 const TIER_LABELS: Record<string, string> = {
   market: 'Market Sponsor',
   category: 'Category Sponsor',
@@ -21,6 +23,7 @@ const schema = z.object({
   market_id: z.string().uuid().optional(),
   category: z.string().optional(),
   tier: z.enum(['market', 'category', 'impact', 'patron']),
+  amount_mxn: z.number().min(MIN_AMOUNT_MXN).optional(),
   sponsor_name: z.string().min(1),
   sponsor_url: z.string().optional(),
   sponsor_logo_url: z.string().optional(),
@@ -40,6 +43,7 @@ export async function POST(request: NextRequest) {
       market_id,
       category,
       tier,
+      amount_mxn: customAmount,
       sponsor_name,
       sponsor_url,
       sponsor_logo_url,
@@ -53,10 +57,15 @@ export async function POST(request: NextRequest) {
       return ApiResponse.ok({ redirect_url: mailto, is_contact: true })
     }
 
-    const priceMXN = TIER_PRICES_MXN[tier]
-    if (!priceMXN) {
+    const tierPrice = TIER_PRICES_MXN[tier]
+    if (!tierPrice) {
       return ApiResponse.badRequest('Invalid tier', 'INVALID_TIER')
     }
+
+    // Use custom amount if provided (min 100 MXN), else tier price
+    const priceMXN = customAmount != null && customAmount >= MIN_AMOUNT_MXN
+      ? Math.round(customAmount)
+      : tierPrice
 
     const stripe = getStripe()
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'

@@ -21,42 +21,70 @@ interface Achievement {
   unlocked_at: string
 }
 
-// Achievement definitions
+// Achievement definitions - Impact-focused (no modules/lessons from previous app)
 const ACHIEVEMENT_DEFINITIONS = {
-  FIRST_MODULE_COMPLETED: {
-    name: 'First Steps',
-    description: 'Complete your first module',
-    icon: '🌱',
-    category: 'learning',
+  FIRST_VOTE: {
+    name: 'Voice Heard',
+    description: 'Cast your first prediction',
+    icon: '🗳️',
+    category: 'impact',
     rarity: 'common'
   },
-  FIRST_LESSON_COMPLETED: {
-    name: 'Getting Started',
-    description: 'Complete your first lesson',
-    icon: '📚',
-    category: 'learning',
+  VOTE_10: {
+    name: 'Active Predictor',
+    description: 'Make 10 predictions',
+    icon: '📊',
+    category: 'impact',
     rarity: 'common'
+  },
+  VOTE_50: {
+    name: 'Democracy Champion',
+    description: 'Cast 50 predictions',
+    icon: '🏛️',
+    category: 'impact',
+    rarity: 'rare'
+  },
+  FIRST_FUND_VOTE: {
+    name: 'Fund Voice',
+    description: 'Vote for your first cause in the Conscious Fund',
+    icon: '💚',
+    category: 'impact',
+    rarity: 'common'
+  },
+  FUND_CHAMPION: {
+    name: 'Fund Champion',
+    description: 'Vote for causes across 5 different months',
+    icon: '🌍',
+    category: 'impact',
+    rarity: 'uncommon'
   },
   FIRST_SPONSORSHIP: {
     name: 'First Contribution',
     description: 'Make your first sponsorship',
     icon: '💝',
-    category: 'community',
+    category: 'impact',
     rarity: 'common'
   },
-  FIRST_VOTE: {
-    name: 'Voice Heard',
-    description: 'Cast your first vote',
-    icon: '🗳️',
-    category: 'community',
+  SPONSOR_10: {
+    name: 'Generous Giver',
+    description: 'Make 10 sponsorships',
+    icon: '🎁',
+    category: 'impact',
+    rarity: 'uncommon'
+  },
+  FIRST_CORRECT: {
+    name: 'Sharp Insight',
+    description: 'Get your first correct prediction',
+    icon: '🎯',
+    category: 'impact',
     rarity: 'common'
   },
-  FIRST_CONTENT: {
-    name: 'Creator',
-    description: 'Create your first content',
+  CORRECT_10: {
+    name: 'Accurate Mind',
+    description: 'Get 10 correct predictions',
     icon: '✨',
-    category: 'creation',
-    rarity: 'common'
+    category: 'impact',
+    rarity: 'uncommon'
   },
   TIER_2: {
     name: 'Contributor',
@@ -99,41 +127,11 @@ const ACHIEVEMENT_DEFINITIONS = {
     icon: '💪',
     category: 'consistency',
     rarity: 'rare'
-  },
-  SPONSOR_10: {
-    name: 'Generous Giver',
-    description: 'Make 10 sponsorships',
-    icon: '🎁',
-    category: 'community',
-    rarity: 'uncommon'
-  },
-  VOTE_50: {
-    name: 'Democracy Champion',
-    description: 'Cast 50 votes',
-    icon: '🏛️',
-    category: 'community',
-    rarity: 'rare'
-  },
-  MODULE_5: {
-    name: 'Knowledge Seeker',
-    description: 'Complete 5 modules',
-    icon: '📖',
-    category: 'learning',
-    rarity: 'uncommon'
-  },
-  MODULE_10: {
-    name: 'Master Learner',
-    description: 'Complete 10 modules',
-    icon: '🎓',
-    category: 'learning',
-    rarity: 'rare'
   }
 }
 
 const CATEGORY_COLORS = {
-  learning: 'from-blue-500 to-cyan-500',
-  community: 'from-purple-500 to-pink-500',
-  creation: 'from-green-500 to-emerald-500',
+  impact: 'from-emerald-500 to-teal-500',
   progression: 'from-amber-500 to-orange-500',
   consistency: 'from-red-500 to-rose-500'
 }
@@ -258,7 +256,7 @@ export default function AchievementsClient({ user }: AchievementsClientProps) {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-3xl md:text-4xl font-bold mb-2">🏆 Achievements</h1>
-              <p className="text-white/90">Track your progress and unlock rewards</p>
+              <p className="text-white/90">Track your impact through predictions, fund votes, and contributions</p>
             </div>
             <div className="hidden md:block">
               <XPBadge variant="compact" />
@@ -368,30 +366,44 @@ export default function AchievementsClient({ user }: AchievementsClientProps) {
                           {/* Progress indicator for locked achievements */}
                           {userStats && (
                             <div className="space-y-1">
-                              {(achievement.type === 'MODULE_5' || achievement.type === 'MODULE_10') && (
+                              {(achievement.type === 'VOTE_10' || achievement.type === 'VOTE_50') && (
                                 <div className="text-xs">
                                   <div className="flex justify-between text-slate-500 mb-1">
-                                    <span>Modules completed</span>
-                                    <span>{userStats.modules_completed || 0} / {achievement.type === 'MODULE_5' ? 5 : 10}</span>
+                                    <span>Predictions</span>
+                                    <span>{userStats.votes_cast || 0} / {achievement.type === 'VOTE_10' ? 10 : 50}</span>
                                   </div>
                                   <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
                                     <div 
                                       className="h-full bg-teal-500 transition-all"
-                                      style={{ width: `${Math.min(((userStats.modules_completed || 0) / (achievement.type === 'MODULE_5' ? 5 : 10)) * 100, 100)}%` }}
+                                      style={{ width: `${Math.min(((userStats.votes_cast || 0) / (achievement.type === 'VOTE_10' ? 10 : 50)) * 100, 100)}%` }}
                                     />
                                   </div>
                                 </div>
                               )}
-                              {achievement.type === 'VOTE_50' && (
+                              {(achievement.type === 'FIRST_FUND_VOTE' || achievement.type === 'FUND_CHAMPION') && (
                                 <div className="text-xs">
                                   <div className="flex justify-between text-slate-500 mb-1">
-                                    <span>Votes cast</span>
-                                    <span>{userStats.votes_cast || 0} / 50</span>
+                                    <span>Fund vote cycles</span>
+                                    <span>{userStats.fund_vote_cycles || 0} / {achievement.type === 'FUND_CHAMPION' ? 5 : 1}</span>
                                   </div>
                                   <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
                                     <div 
                                       className="h-full bg-teal-500 transition-all"
-                                      style={{ width: `${Math.min(((userStats.votes_cast || 0) / 50) * 100, 100)}%` }}
+                                      style={{ width: `${Math.min(((userStats.fund_vote_cycles || 0) / (achievement.type === 'FUND_CHAMPION' ? 5 : 1)) * 100, 100)}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              )}
+                              {(achievement.type === 'FIRST_CORRECT' || achievement.type === 'CORRECT_10') && (
+                                <div className="text-xs">
+                                  <div className="flex justify-between text-slate-500 mb-1">
+                                    <span>Correct predictions</span>
+                                    <span>{userStats.correct_predictions || 0} / {achievement.type === 'CORRECT_10' ? 10 : 1}</span>
+                                  </div>
+                                  <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                                    <div 
+                                      className="h-full bg-teal-500 transition-all"
+                                      style={{ width: `${Math.min(((userStats.correct_predictions || 0) / (achievement.type === 'CORRECT_10' ? 10 : 1)) * 100, 100)}%` }}
                                     />
                                   </div>
                                 </div>

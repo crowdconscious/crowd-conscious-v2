@@ -47,7 +47,33 @@ export async function GET(request: NextRequest) {
         return ApiResponse.serverError('Failed to create user stats', 'USER_STATS_CREATION_ERROR', { message: insertError.message })
       }
 
-      return ApiResponse.ok(newStats)
+      // Enrich with prediction/fund stats
+      const { count: votesCast } = await supabase
+        .from('market_votes')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+      const { data: fundVotes } = await supabase
+        .from('fund_votes')
+        .select('cycle')
+        .eq('user_id', user.id)
+      const fundVoteCycles = new Set(fundVotes?.map((v) => v.cycle) ?? []).size
+      const { data: correctVotes } = await supabase
+        .from('market_votes')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('is_correct', true)
+      const { count: sponsorshipsMade } = await supabase
+        .from('sponsorships')
+        .select('*', { count: 'exact', head: true })
+        .eq('sponsor_id', user.id)
+
+      return ApiResponse.ok({
+        ...newStats,
+        votes_cast: votesCast ?? 0,
+        fund_vote_cycles: fundVoteCycles,
+        correct_predictions: correctVotes?.length ?? 0,
+        sponsorships_made: sponsorshipsMade ?? 0,
+      })
     }
 
     if (error) {
@@ -55,7 +81,37 @@ export async function GET(request: NextRequest) {
       return ApiResponse.serverError('Failed to fetch user stats', 'USER_STATS_FETCH_ERROR', { message: error.message })
     }
 
-    return ApiResponse.ok(data)
+    // Enrich with prediction/fund stats for achievements (market_votes, fund_votes)
+    const { count: votesCast } = await supabase
+      .from('market_votes')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+
+    const { data: fundVotes } = await supabase
+      .from('fund_votes')
+      .select('cycle')
+      .eq('user_id', user.id)
+    const fundVoteCycles = new Set(fundVotes?.map((v) => v.cycle) ?? []).size
+
+    const { data: correctVotes } = await supabase
+      .from('market_votes')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('is_correct', true)
+    const correctPredictions = correctVotes?.length ?? 0
+
+    const { count: sponsorshipsMade } = await supabase
+      .from('sponsorships')
+      .select('*', { count: 'exact', head: true })
+      .eq('sponsor_id', user.id)
+
+    return ApiResponse.ok({
+      ...data,
+      votes_cast: votesCast ?? data?.votes_cast ?? 0,
+      fund_vote_cycles: fundVoteCycles,
+      correct_predictions: correctPredictions,
+      sponsorships_made: sponsorshipsMade ?? data?.sponsorships_made ?? 0,
+    })
 
   } catch (error: any) {
     console.error('API error:', error)

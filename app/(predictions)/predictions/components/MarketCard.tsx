@@ -22,6 +22,7 @@ type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row'
   market_type?: string
   total_votes?: number
   sponsor_name?: string
+  sponsor_logo_url?: string
   image_url?: string
 }
 
@@ -180,7 +181,16 @@ export function MarketCard({ market, history = [], leadingOutcome }: MarketCardP
         </div>
 
         {market.sponsor_name && (
-          <p className="text-xs text-slate-500 mt-auto mb-2">Sponsored by {market.sponsor_name}</p>
+          <div className="flex items-center gap-2 mt-auto mb-2">
+            {market.sponsor_logo_url ? (
+              <img
+                src={market.sponsor_logo_url}
+                alt=""
+                className="w-6 h-6 rounded object-contain bg-slate-800"
+              />
+            ) : null}
+            <p className="text-xs text-slate-500">Sponsored by {market.sponsor_name}</p>
+          </div>
         )}
         {market.status === 'resolved' ? (
           <div className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-slate-700 text-slate-300 text-sm font-medium">

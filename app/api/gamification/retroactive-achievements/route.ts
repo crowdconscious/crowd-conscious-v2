@@ -19,42 +19,35 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Count user's actual actions
+    // Count user's actual actions (impact-focused: predictions, fund, sponsorships)
     const userId = user.id
 
-    // Count completed modules (using user_id and completed=true)
-    const { count: modulesCompleted } = await supabase
-      .from('course_enrollments')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .eq('completed', true)
-
-    // Count completed lessons - use completion_percentage as proxy
-    // If module is completed (completed=true), count it as lessons completed
-    // This is simplified since we don't have individual lesson tracking
-    const { count: lessonsCompleted } = await supabase
-      .from('course_enrollments')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .eq('completed', true)
-
-    // Count votes
+    // Count prediction votes (market_votes)
     const { count: votesCast } = await supabase
-      .from('votes')
+      .from('market_votes')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId)
+
+    // Count correct predictions
+    const { data: correctVotes } = await supabase
+      .from('market_votes')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('is_correct', true)
+    const correctPredictions = correctVotes?.length ?? 0
+
+    // Count distinct fund vote cycles
+    const { data: fundVotes } = await supabase
+      .from('fund_votes')
+      .select('cycle')
+      .eq('user_id', userId)
+    const fundVoteCycles = new Set(fundVotes?.map((v) => v.cycle) ?? []).size
 
     // Count sponsorships
     const { count: sponsorshipsMade } = await supabase
       .from('sponsorships')
       .select('*', { count: 'exact', head: true })
       .eq('sponsor_id', userId)
-
-    // Count content created
-    const { count: contentCreated } = await supabase
-      .from('community_content')
-      .select('*', { count: 'exact', head: true })
-      .eq('created_by', userId)
 
     // Get current tier
     const { data: userXP } = await supabase
@@ -68,49 +61,42 @@ export async function POST(request: NextRequest) {
 
     const achievementsUnlocked: string[] = []
 
-    // Check and unlock achievements
+    // Check and unlock achievements (impact-focused)
     const achievementChecks = [
-      {
-        type: 'FIRST_LESSON_COMPLETED',
-        name: 'Getting Started',
-        description: 'Complete your first lesson',
-        icon: '📚',
-        condition: (lessonsCompleted || 0) >= 1
-      },
-      {
-        type: 'FIRST_MODULE_COMPLETED',
-        name: 'First Steps',
-        description: 'Complete your first module',
-        icon: '🌱',
-        condition: (modulesCompleted || 0) >= 1
-      },
-      {
-        type: 'MODULE_5',
-        name: 'Knowledge Seeker',
-        description: 'Complete 5 modules',
-        icon: '📖',
-        condition: (modulesCompleted || 0) >= 5
-      },
-      {
-        type: 'MODULE_10',
-        name: 'Master Learner',
-        description: 'Complete 10 modules',
-        icon: '🎓',
-        condition: (modulesCompleted || 0) >= 10
-      },
       {
         type: 'FIRST_VOTE',
         name: 'Voice Heard',
-        description: 'Cast your first vote',
+        description: 'Cast your first prediction',
         icon: '🗳️',
         condition: (votesCast || 0) >= 1
       },
       {
+        type: 'VOTE_10',
+        name: 'Active Predictor',
+        description: 'Make 10 predictions',
+        icon: '📊',
+        condition: (votesCast || 0) >= 10
+      },
+      {
         type: 'VOTE_50',
         name: 'Democracy Champion',
-        description: 'Cast 50 votes',
+        description: 'Cast 50 predictions',
         icon: '🏛️',
         condition: (votesCast || 0) >= 50
+      },
+      {
+        type: 'FIRST_FUND_VOTE',
+        name: 'Fund Voice',
+        description: 'Vote for your first cause in the Conscious Fund',
+        icon: '💚',
+        condition: fundVoteCycles >= 1
+      },
+      {
+        type: 'FUND_CHAMPION',
+        name: 'Fund Champion',
+        description: 'Vote for causes across 5 different months',
+        icon: '🌍',
+        condition: fundVoteCycles >= 5
       },
       {
         type: 'FIRST_SPONSORSHIP',
@@ -127,11 +113,18 @@ export async function POST(request: NextRequest) {
         condition: (sponsorshipsMade || 0) >= 10
       },
       {
-        type: 'FIRST_CONTENT',
-        name: 'Creator',
-        description: 'Create your first content',
+        type: 'FIRST_CORRECT',
+        name: 'Sharp Insight',
+        description: 'Get your first correct prediction',
+        icon: '🎯',
+        condition: correctPredictions >= 1
+      },
+      {
+        type: 'CORRECT_10',
+        name: 'Accurate Mind',
+        description: 'Get 10 correct predictions',
         icon: '✨',
-        condition: (contentCreated || 0) >= 1
+        condition: correctPredictions >= 10
       },
       {
         type: 'TIER_2',
@@ -199,11 +192,10 @@ export async function POST(request: NextRequest) {
         achievements_unlocked: achievementsUnlocked.length,
         achievements: achievementsUnlocked,
         stats: {
-          modules_completed: modulesCompleted || 0,
-          lessons_completed: lessonsCompleted,
           votes_cast: votesCast || 0,
+          fund_vote_cycles: fundVoteCycles,
+          correct_predictions: correctPredictions,
           sponsorships_made: sponsorshipsMade || 0,
-          content_created: contentCreated || 0,
           current_tier: currentTier,
           total_xp: totalXP
         }

@@ -359,16 +359,19 @@ export default function ProfileClient({
       {/* Achievements */}
       {topAchievements.length > 0 && (
         <div>
-          <h2 className="text-2xl font-bold text-white mb-6">Achievements</h2>
+          <h2 className="text-2xl font-bold text-white mb-2">Impact Achievements</h2>
+          <p className="text-slate-400 text-sm mb-6">Milestones from predictions, fund votes, and contributions</p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
             {topAchievements.map((a) => (
               <div
                 key={a.id}
-                className="bg-slate-900/50 border border-slate-800 rounded-xl p-4 flex items-center gap-3"
+                className="bg-slate-900/50 border border-slate-700 rounded-xl p-4 flex items-center gap-3 hover:border-slate-600 transition-colors"
               >
-                <span className="text-2xl">
-                  {a.icon_url ? (
-                    <img src={a.icon_url} alt="" className="w-8 h-8" />
+                <span className="text-2xl w-10 h-10 flex items-center justify-center rounded-lg bg-emerald-500/20">
+                  {a.icon_url && typeof a.icon_url === 'string' && !a.icon_url.startsWith('http') ? (
+                    <span>{a.icon_url}</span>
+                  ) : a.icon_url ? (
+                    <img src={a.icon_url} alt="" className="w-8 h-8 object-contain" />
                   ) : (
                     '🏆'
                   )}
@@ -394,11 +397,12 @@ export default function ProfileClient({
 
       {/* Impact */}
       <div>
-        <h2 className="text-2xl font-bold text-white mb-6">Impact</h2>
-        <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+        <h2 className="text-2xl font-bold text-white mb-2">Your Impact</h2>
+        <p className="text-slate-400 text-sm mb-6">Contributions to collective intelligence and the Conscious Fund</p>
+        <div className="bg-slate-900/50 border border-slate-700 rounded-xl p-6">
           <p className="text-slate-300">
-            Your predictions have contributed to{' '}
-            <span className="font-bold text-emerald-400">{predictionStats.totalXp} XP</span> of
+            Your predictions have contributed{' '}
+            <span className="font-bold text-emerald-400">{predictionStats.totalXp} XP</span> to
             collective intelligence.
           </p>
           {impactVotes.length > 0 && (
