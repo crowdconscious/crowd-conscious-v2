@@ -62,7 +62,7 @@ export async function GET(
             }}
           >
             <img
-              src={`${baseUrl}/images/logo.png`}
+              src={`${baseUrl}/images/logo%20white.png`}
               alt=""
               width={40}
               height={40}

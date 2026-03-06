@@ -579,6 +579,7 @@ export function MarketDetailClient({
         xpGained={celebration.xpGained}
         sharePath={`/predictions/markets/${market.id}`}
         shareTitle={market.title}
+        shareCardMarketId={market.id}
         onClose={handleCelebrationClose}
       />
     </div>
