@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, CheckCircle, XCircle, Ban, ExternalLink } from 'lucide-react'
+import { ArrowLeft, CheckCircle, XCircle, Ban, ExternalLink, PlusCircle } from 'lucide-react'
 import { toDisplayPercent } from '@/lib/probability-utils'
 
 type Outcome = { id: string; label: string; probability: number; vote_count: number }
@@ -180,10 +180,21 @@ export default function AdminResolvePage() {
         Back to dashboard
       </Link>
 
-      <h1 className="text-2xl font-bold text-white">Resolve Markets</h1>
-      <p className="text-slate-400">
-        Resolve or cancel prediction markets. Select the winning outcome for free-to-play markets.
-      </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Resolve Markets</h1>
+          <p className="text-slate-400">
+            Resolve or cancel prediction markets. Select the winning outcome for free-to-play markets.
+          </p>
+        </div>
+        <Link
+          href="/predictions/admin/create-market"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm shrink-0"
+        >
+          <PlusCircle className="w-4 h-4" />
+          Create New Market
+        </Link>
+      </div>
 
       {error && (
         <div className="p-4 bg-red-500/20 border border-red-500/50 rounded-lg text-red-400">
