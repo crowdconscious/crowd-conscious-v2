@@ -110,12 +110,11 @@ Write reasons in Spanish.`
     }
 
     const topItem = analysis[0] as Record<string, unknown> | undefined
-    let topRecommendation = topItem?.title ?? topItem?.submission_title
+    let topRecommendation: string = String(topItem?.title ?? topItem?.submission_title ?? '')
     if (!topRecommendation && topItem?.id) {
       const match = pending.find((p) => p.id === topItem.id)
       topRecommendation = match?.title ?? String(topItem.id)
     }
-    topRecommendation = String(topRecommendation ?? '')
 
     try {
       await supabase.from('agent_content').insert({
