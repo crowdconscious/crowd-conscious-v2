@@ -12,6 +12,9 @@ import {
   Menu,
   X,
   ShieldCheck,
+  Lightbulb,
+  FileText,
+  PlusCircle,
 } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import LanguageSwitcherSimple from '@/components/LanguageSwitcherSimple'
@@ -20,12 +23,14 @@ const NAV_ITEMS_EN = [
   { href: '/predictions', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/predictions/markets', label: 'Markets', icon: TrendingUp },
   { href: '/predictions/trades', label: 'My Predictions', icon: Receipt },
+  { href: '/predictions/inbox', label: 'Conscious Inbox', icon: Lightbulb },
   { href: '/predictions/fund', label: 'Conscious Fund', icon: Heart },
 ]
 const NAV_ITEMS_ES = [
   { href: '/predictions', label: 'Panel', icon: LayoutDashboard },
   { href: '/predictions/markets', label: 'Mercados', icon: TrendingUp },
   { href: '/predictions/trades', label: 'Mis Predicciones', icon: Receipt },
+  { href: '/predictions/inbox', label: 'Buzón Consciente', icon: Lightbulb },
   { href: '/predictions/fund', label: 'Fondo Consciente', icon: Heart },
 ]
 
@@ -72,7 +77,29 @@ export default function PredictionsShell({
         </nav>
 
         {isAdmin && (
-          <div className="px-4 pb-2">
+          <div className="px-4 pb-2 space-y-1">
+            <Link
+              href="/predictions/admin/create-market"
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                pathname === '/predictions/admin/create-market'
+                  ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
+                  : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800/50'
+              }`}
+            >
+              <PlusCircle className="w-4 h-4" />
+              {language === 'es' ? 'Crear Mercado' : 'Create Market'}
+            </Link>
+            <Link
+              href="/predictions/admin/inbox"
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                pathname === '/predictions/admin/inbox'
+                  ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
+                  : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800/50'
+              }`}
+            >
+              <FileText className="w-4 h-4" />
+              {language === 'es' ? 'Revisar Buzón' : 'Review Inbox'}
+            </Link>
             <Link
               href="/predictions/admin/resolve"
               className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
@@ -163,18 +190,44 @@ export default function PredictionsShell({
                 )
               })}
               {isAdmin && (
-                <Link
-                  href="/predictions/admin/resolve"
-                  onClick={closeMobileMenu}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                    pathname === '/predictions/admin/resolve'
-                      ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
-                      : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800/50'
-                  }`}
-                >
-                  <ShieldCheck className="w-4 h-4" />
-                  {language === 'es' ? 'Resolver Mercados' : 'Resolve Markets'}
-                </Link>
+                <>
+                  <Link
+                    href="/predictions/admin/create-market"
+                    onClick={closeMobileMenu}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                      pathname === '/predictions/admin/create-market'
+                        ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
+                        : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800/50'
+                    }`}
+                  >
+                    <PlusCircle className="w-4 h-4" />
+                    {language === 'es' ? 'Crear Mercado' : 'Create Market'}
+                  </Link>
+                  <Link
+                    href="/predictions/admin/inbox"
+                    onClick={closeMobileMenu}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                      pathname === '/predictions/admin/inbox'
+                        ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
+                        : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800/50'
+                    }`}
+                  >
+                    <FileText className="w-4 h-4" />
+                    {language === 'es' ? 'Revisar Buzón' : 'Review Inbox'}
+                  </Link>
+                  <Link
+                    href="/predictions/admin/resolve"
+                    onClick={closeMobileMenu}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                      pathname === '/predictions/admin/resolve'
+                        ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
+                        : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800/50'
+                    }`}
+                  >
+                    <ShieldCheck className="w-4 h-4" />
+                    {language === 'es' ? 'Resolver Mercados' : 'Resolve Markets'}
+                  </Link>
+                </>
               )}
             </nav>
 
