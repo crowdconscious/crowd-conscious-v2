@@ -1,0 +1,90 @@
+import Anthropic from '@anthropic-ai/sdk';
+import { createClient } from '@supabase/supabase-js';
+
+// --- Model Selection ---
+// Haiku 4.5: Fast, cheap ($1/$5 per MTok) — use for data digestion, summarization, ranking
+// Sonnet:    Balanced, creative ($3/$15 per MTok) — use for content creation, social media copy
+export const MODELS = {
+  FAST: 'claude-haiku-4-5-20251001',     // For CEO digest, inbox curator, news monitor
+  CREATIVE: 'claude-sonnet-4-5-20241022', // For social media content creator
+} as const;
+
+// --- Token Limits ---
+// These cap how much Claude can write back. Output tokens are 5x more expensive than input.
+// 1024 tokens ≈ 750 words. More than enough for a digest or a few social posts.
+export const TOKEN_LIMITS = {
+  DIGEST: 1024,        // CEO digest, inbox curator
+  NEWS: 1024,          // News monitor summaries
+  SOCIAL_CONTENT: 2048, // Social media posts (needs more room for multiple posts + languages)
+} as const;
+
+// --- Clients ---
+export function getAnthropicClient(): Anthropic {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    throw new Error('ANTHROPIC_API_KEY is not set. Add it to Vercel environment variables.');
+  }
+  return new Anthropic({ apiKey });
+}
+
+export function getSupabaseAdmin() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) {
+    throw new Error('Supabase env vars missing. Check NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.');
+  }
+  return createClient(url, key);
+}
+
+// --- Logging ---
+// Call this at the end of every agent run to track costs and errors
+export async function logAgentRun(params: {
+  agentName: string;
+  status: 'success' | 'error' | 'skipped';
+  durationMs: number;
+  tokensInput?: number;
+  tokensOutput?: number;
+  errorMessage?: string;
+  summary?: Record<string, any>;
+}) {
+  const supabase = getSupabaseAdmin();
+  
+  // Cost estimation based on model
+  // Haiku: $1/$5 per MTok → $0.000001 per input token, $0.000005 per output token
+  // Sonnet: $3/$15 per MTok → $0.000003 per input token, $0.000015 per output token
+  const isCreative = params.agentName === 'content-creator';
+  const inputRate = isCreative ? 0.000003 : 0.000001;
+  const outputRate = isCreative ? 0.000015 : 0.000005;
+  const costEstimate = 
+    ((params.tokensInput || 0) * inputRate) + 
+    ((params.tokensOutput || 0) * outputRate);
+
+  await supabase.from('agent_runs').insert({
+    agent_name: params.agentName,
+    status: params.status,
+    duration_ms: params.durationMs,
+    tokens_input: params.tokensInput || 0,
+    tokens_output: params.tokensOutput || 0,
+    cost_estimate: costEstimate,
+    error_message: params.errorMessage || null,
+    summary: params.summary || {},
+  });
+}
+
+// --- Safe JSON Parse ---
+// Claude sometimes wraps JSON in markdown code fences. This strips them.
+export function parseAgentJSON(text: string): any {
+  const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+  return JSON.parse(cleaned);
+}
+
+// --- Date helpers ---
+export function mexicoCityNow(): Date {
+  return new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Mexico_City' }));
+}
+
+export function formatDateMX(date: Date): string {
+  return date.toLocaleDateString('es-MX', { 
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+  });
+}

@@ -51,7 +51,16 @@ export default function CreateMarketPage() {
   useEffect(() => {
     const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '')
     const id = params.get('from_inbox')
-    if (id) setFromInboxId(id)
+    if (id) {
+      setFromInboxId(id)
+      return
+    }
+    const prefillTitle = params.get('title')
+    const prefillCategory = params.get('category')
+    const prefillCriteria = params.get('resolution_criteria')
+    if (prefillTitle) setTitle(prefillTitle)
+    if (prefillCategory) setCategory(prefillCategory)
+    if (prefillCriteria) setResolutionCriteria(prefillCriteria)
   }, [])
 
   const loadInboxItem = useCallback(async (id: string) => {
