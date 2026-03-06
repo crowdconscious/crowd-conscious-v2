@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Heart, Vote, Sparkles, Users, ArrowRight } from 'lucide-react'
+import { Heart, Vote, Sparkles, Users, ArrowRight, Info } from 'lucide-react'
 
 type Cause = {
   id: string
@@ -150,9 +150,15 @@ export function FundClient({
             <Vote className="w-5 h-5 text-emerald-400" />
             Vote for Causes
           </h2>
-          <p className="text-slate-400 text-sm mt-1">
+          <p className="text-slate-400 text-sm mt-1 flex items-center gap-1.5">
             You have {votePower - localVotesUsed} vote{votePower - localVotesUsed !== 1 ? 's' : ''} remaining this month
             {cycle && ` · Cycle ${cycle}`}
+            <span
+              className="inline-flex text-slate-500 hover:text-slate-400 cursor-help"
+              title="You earn votes by making predictions on markets. Each prediction earns XP, and your monthly vote allocation is based on your XP."
+            >
+              <Info className="w-4 h-4" />
+            </span>
           </p>
         </div>
 

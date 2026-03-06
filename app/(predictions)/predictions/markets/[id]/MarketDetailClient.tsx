@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import {
   LineChart,
@@ -377,7 +377,7 @@ export function MarketDetailClient({
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
-                <p className="text-slate-400 text-sm mt-3">Vote activity</p>
+                <p className="text-slate-400 text-sm mt-3">Probability history</p>
                 <div className="h-32 mt-2">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={historyChartData}>
@@ -519,8 +519,11 @@ export function MarketDetailClient({
             )}
           </div>
 
-          {/* Activity Feed - with polling */}
-          <ActivityFeed marketId={market.id} initialTrades={trades} />
+          {/* Discussion */}
+          <MarketDiscussion marketId={market.id} />
+
+          {/* Recent Predictions */}
+          <RecentPredictions marketId={market.id} />
         </div>
 
         {/* Right Column */}
@@ -616,43 +619,136 @@ function AgentInsightCard({ content }: { content: AgentContent }) {
   )
 }
 
-function ActivityFeed({ marketId, initialTrades }: { marketId: string; initialTrades: TradeAnon[] }) {
-  const [trades, setTrades] = useState(initialTrades)
+type PredictionEntry = { user_name: string; outcome_label: string; confidence: number; created_at: string }
+
+function RecentPredictions({ marketId }: { marketId: string }) {
+  const [predictions, setPredictions] = useState<PredictionEntry[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const fetchTrades = async () => {
+    const fetchPredictions = async () => {
       try {
-        const res = await fetch(`/api/predictions/markets/${marketId}/trades`)
+        const res = await fetch(`/api/predictions/markets/${marketId}/votes`)
         const data = await res.json()
-        if (data.trades) setTrades(data.trades)
+        if (data.predictions) setPredictions(data.predictions)
       } catch {
-        // keep current
+        setPredictions([])
+      } finally {
+        setLoading(false)
       }
     }
-    const interval = setInterval(fetchTrades, 30000)
-    fetchTrades()
+    fetchPredictions()
+    const interval = setInterval(fetchPredictions, 30000)
     return () => clearInterval(interval)
   }, [marketId])
 
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-      <h3 className="font-semibold text-white mb-4">Actividad reciente</h3>
-      {trades.length === 0 ? (
-        <p className="text-slate-400 text-sm">No activity yet</p>
+      <h3 className="font-semibold text-white mb-4">Recent Predictions</h3>
+      {loading ? (
+        <p className="text-slate-400 text-sm">Loading...</p>
+      ) : predictions.length === 0 ? (
+        <p className="text-slate-400 text-sm">No predictions yet</p>
       ) : (
         <div className="space-y-2">
-          {trades.slice(0, 10).map((t, i) => (
+          {predictions.slice(0, 10).map((p, i) => (
             <div
               key={i}
               className="flex items-center justify-between py-2 border-b border-slate-800 last:border-0"
             >
-              <span className="text-slate-300 text-sm">
-                Someone predicted {t.side.toUpperCase()} — {formatRelativeTime(t.created_at)}
-              </span>
+              <div>
+                <span className="text-slate-300 text-sm font-medium">{p.user_name}</span>
+                <span className="text-slate-500 text-sm"> predicted </span>
+                <span className="text-emerald-400 text-sm font-medium">{p.outcome_label}</span>
+                <span className="text-slate-500 text-sm"> (confidence {p.confidence}/10)</span>
+              </div>
+              <span className="text-slate-500 text-xs">{formatRelativeTime(p.created_at)}</span>
             </div>
           ))}
         </div>
       )}
+    </div>
+  )
+}
+
+type CommentEntry = { id: string; user_id: string; content: string; created_at: string; username: string }
+
+function MarketDiscussion({ marketId }: { marketId: string }) {
+  const [comments, setComments] = useState<CommentEntry[]>([])
+  const [content, setContent] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
+  const fetchComments = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/predictions/markets/${marketId}/comments`)
+      const data = await res.json()
+      setComments(data.comments ?? [])
+    } catch {
+      setComments([])
+    }
+  }, [marketId])
+
+  useEffect(() => {
+    fetchComments()
+  }, [fetchComments])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!content.trim() || submitting) return
+    setSubmitting(true)
+    try {
+      const res = await fetch(`/api/predictions/markets/${marketId}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: content.trim() }),
+      })
+      const data = await res.json()
+      if (res.ok && data.comment) {
+        setComments((prev) => [...prev, data.comment])
+        setContent('')
+      }
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+      <h3 className="font-semibold text-white mb-4">Discussion</h3>
+      <form onSubmit={handleSubmit} className="mb-4">
+        <textarea
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder="Add a comment..."
+          rows={3}
+          className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none mb-2"
+        />
+        <button
+          type="submit"
+          disabled={!content.trim() || submitting}
+          className="px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {submitting ? 'Posting...' : 'Post comment'}
+        </button>
+      </form>
+      <div className="space-y-3">
+        {comments.length === 0 ? (
+          <p className="text-slate-500 text-sm">No comments yet. Be the first to discuss.</p>
+        ) : (
+          comments.map((c) => (
+            <div
+              key={c.id}
+              className="py-3 border-b border-slate-800 last:border-0"
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <span className="font-medium text-white text-sm">{c.username}</span>
+                <span className="text-slate-500 text-xs">{formatRelativeTime(c.created_at)}</span>
+              </div>
+              <p className="text-slate-300 text-sm whitespace-pre-wrap">{c.content}</p>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   )
 }

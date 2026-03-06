@@ -76,13 +76,17 @@ export async function POST(request: Request) {
         const message = won
           ? `Correct! You earned ${v.bonus_xp ?? 0} bonus XP.`
           : `The market resolved as ${winningLabel}.`
-        await admin.from('notifications').insert({
-          user_id: v.user_id,
-          type: 'market_resolved',
-          title: `Market resolved: ${marketTitle}`,
-          message: `"${marketTitle}" resolved as ${winningLabel}. ${message}`,
-          data: { market_id, winning_outcome: winningLabel, won, bonus_xp: v.bonus_xp ?? 0 },
-        })
+        try {
+          await admin.from('notifications').insert({
+            user_id: v.user_id,
+            type: 'market_resolved',
+            title: `Market resolved: ${marketTitle}`,
+            message: `"${marketTitle}" resolved as ${winningLabel}. ${message}`,
+            link: `/predictions/markets/${market_id}`,
+          })
+        } catch (notifErr) {
+          console.error('Notification insert error:', notifErr)
+        }
 
         // Send resolution email (no email for every prediction, only on resolution)
         const { data: profile } = await admin.from('profiles').select('email, full_name').eq('id', v.user_id).single()

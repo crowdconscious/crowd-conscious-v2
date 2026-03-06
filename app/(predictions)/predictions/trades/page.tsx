@@ -87,7 +87,12 @@ export default function PredictionsTradesPage() {
           <div className="flex items-center gap-2 text-slate-400 text-sm mb-1">
             Accuracy
           </div>
-          <p className="text-xl font-bold text-emerald-400">{accuracy.toFixed(0)}%</p>
+          <p className="text-xl font-bold text-emerald-400">
+            {resolvedItems.length === 0 ? '—' : `${accuracy.toFixed(0)}%`}
+          </p>
+          {resolvedItems.length === 0 && (
+            <p className="text-slate-500 text-xs mt-0.5">No resolved markets yet</p>
+          )}
         </div>
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
           <div className="flex items-center gap-2 text-slate-400 text-sm mb-1">

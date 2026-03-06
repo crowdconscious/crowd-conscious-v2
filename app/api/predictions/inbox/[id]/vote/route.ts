@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { createAdminClient } from '@/lib/supabase-admin'
 import { getCurrentUser } from '@/lib/auth-server'
 
 export async function POST(
@@ -45,6 +46,28 @@ export async function POST(
         console.error('Vote insert error:', error)
         return Response.json({ error: error.message }, { status: 500 })
       }
+
+      // Notify submitter (if different from voter)
+      const { data: item } = await supabase
+        .from('conscious_inbox')
+        .select('user_id, title')
+        .eq('id', id)
+        .single()
+      if (item && item.user_id !== user.id) {
+        try {
+          const admin = createAdminClient()
+          await admin.from('notifications').insert({
+            user_id: item.user_id,
+            type: 'inbox_upvote',
+            title: 'Someone upvoted your idea',
+            message: `"${item.title?.slice(0, 50) || 'Your submission'}..." received an upvote.`,
+            link: '/predictions/inbox',
+          })
+        } catch {
+          // ignore
+        }
+      }
+
       return Response.json({ voted: true })
     }
   } catch (err) {

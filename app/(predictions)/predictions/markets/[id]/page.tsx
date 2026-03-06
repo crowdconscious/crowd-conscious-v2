@@ -5,6 +5,49 @@ import { MarketDetailClient } from './MarketDetailClient'
 
 export const dynamic = 'force-dynamic'
 
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
+  const { id } = await params
+  const supabase = await createClient()
+  const { data: market } = await supabase
+    .from('prediction_markets')
+    .select('title, description')
+    .eq('id', id)
+    .single()
+
+  if (!market) return {}
+
+  const title = market.title || 'Prediction Market'
+  const description =
+    market.description?.slice(0, 160) ||
+    `Make your prediction on ${title} at Crowd Conscious.`
+  const ogImage = `${BASE_URL}/api/og/market/${id}`
+
+  return {
+    title: `${title} | Crowd Conscious`,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `${BASE_URL}/predictions/markets/${id}`,
+      siteName: 'Crowd Conscious',
+      images: [{ url: ogImage, width: 1200, height: 630, alt: title }],
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [ogImage],
+    },
+  }
+}
+
 export default async function MarketDetailPage({
   params,
 }: {

@@ -91,6 +91,7 @@ export function PredictionsDashboardClient({ data }: Props) {
     userName,
     totalXp,
     accuracyPct,
+    totalResolvedPredictions,
     userImpactXp,
     fundBalance,
     positions,
@@ -140,8 +141,11 @@ export function PredictionsDashboardClient({ data }: Props) {
           <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
             <p className="text-slate-400 text-sm">Accuracy</p>
             <p className="text-2xl font-bold text-emerald-400 mt-1">
-              {accuracyPct.toFixed(0)}%
+              {totalResolvedPredictions === 0 ? '—' : `${accuracyPct.toFixed(0)}%`}
             </p>
+            {totalResolvedPredictions === 0 && (
+              <p className="text-slate-500 text-xs mt-0.5">No resolved markets yet</p>
+            )}
           </div>
           <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
             <p className="text-slate-400 text-sm">Your impact</p>

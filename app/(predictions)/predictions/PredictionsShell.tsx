@@ -15,14 +15,17 @@ import {
   Lightbulb,
   FileText,
   PlusCircle,
+  Trophy,
 } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import LanguageSwitcherSimple from '@/components/LanguageSwitcherSimple'
+import { NotificationsBell } from './components/NotificationsBell'
 
 const NAV_ITEMS_EN = [
   { href: '/predictions', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/predictions/markets', label: 'Markets', icon: TrendingUp },
   { href: '/predictions/trades', label: 'My Predictions', icon: Receipt },
+  { href: '/predictions/leaderboard', label: 'Leaderboard', icon: Trophy },
   { href: '/predictions/inbox', label: 'Conscious Inbox', icon: Lightbulb },
   { href: '/predictions/fund', label: 'Conscious Fund', icon: Heart },
 ]
@@ -30,6 +33,7 @@ const NAV_ITEMS_ES = [
   { href: '/predictions', label: 'Panel', icon: LayoutDashboard },
   { href: '/predictions/markets', label: 'Mercados', icon: TrendingUp },
   { href: '/predictions/trades', label: 'Mis Predicciones', icon: Receipt },
+  { href: '/predictions/leaderboard', label: 'Clasificación', icon: Trophy },
   { href: '/predictions/inbox', label: 'Buzón Consciente', icon: Lightbulb },
   { href: '/predictions/fund', label: 'Fondo Consciente', icon: Heart },
 ]
@@ -58,7 +62,9 @@ export default function PredictionsShell({
         <nav className="flex-1 p-4 space-y-1">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon
-            const isActive = pathname === item.href
+            const isActive =
+              pathname === item.href
+              || (item.href !== '/predictions' && pathname.startsWith(item.href + '/'))
             return (
               <Link
                 key={item.href}
@@ -115,7 +121,10 @@ export default function PredictionsShell({
         )}
 
         <div className="p-4 border-t border-slate-800 space-y-3">
-          <LanguageSwitcherSimple />
+          <div className="flex items-center gap-2">
+            <NotificationsBell />
+            <LanguageSwitcherSimple />
+          </div>
           <Link
             href="/profile"
             className="flex items-center gap-2 text-sm text-slate-400 hover:text-emerald-400 transition-colors"
@@ -137,6 +146,7 @@ export default function PredictionsShell({
         </button>
         <h1 className="font-bold text-white">Crowd Conscious</h1>
         <div className="flex items-center gap-2">
+          <NotificationsBell />
           <LanguageSwitcherSimple />
           <Link
             href="/profile"
@@ -172,7 +182,9 @@ export default function PredictionsShell({
             <nav className="flex-1 p-4 space-y-1 overflow-auto">
               {NAV_ITEMS.map((item) => {
                 const Icon = item.icon
-                const isActive = pathname === item.href
+                const isActive =
+                  pathname === item.href
+                  || (item.href !== '/predictions' && pathname.startsWith(item.href + '/'))
                 return (
                   <Link
                     key={item.href}
@@ -232,7 +244,10 @@ export default function PredictionsShell({
             </nav>
 
             <div className="p-4 border-t border-slate-800 space-y-3">
-              <LanguageSwitcherSimple />
+              <div className="flex items-center gap-2">
+                <NotificationsBell />
+                <LanguageSwitcherSimple />
+              </div>
               <Link
                 href="/profile"
                 onClick={closeMobileMenu}
