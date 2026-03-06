@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { AnimatedButton } from '@/components/ui/UIComponents'
-import { XPBadge } from '@/components/gamification/XPBadge'
 import { ChevronRight } from 'lucide-react'
+import { getTierByXP } from '@/lib/tier-config'
 
 interface ProfileClientProps {
   user: any
@@ -80,6 +80,8 @@ export default function ProfileClient({
     })
   }
 
+  const tier = getTierByXP(predictionStats.totalXp)
+
   return (
     <div className="space-y-8">
       {/* Profile Header */}
@@ -105,7 +107,18 @@ export default function ProfileClient({
                 </h1>
                 <p className="text-slate-400 mb-2">{user.email}</p>
                 <div className="mt-3">
-                  <XPBadge variant="full" animated={false} />
+                  <div
+                    className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r ${tier.colors.gradient} text-white text-sm font-medium shadow-sm`}
+                    style={{ animation: 'none' }}
+                  >
+                    <span className="text-lg">{tier.icon}</span>
+                    <div>
+                      <div className="font-bold text-xs leading-tight">{tier.name}</div>
+                      <div className="text-xs opacity-90 leading-tight">
+                        {predictionStats.totalXp.toLocaleString()} XP
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 {profile?.bio && (
                   <p className="text-slate-400 mt-3 max-w-2xl">{profile.bio}</p>

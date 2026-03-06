@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { createClient } from '@/lib/supabase-client'
 import { getTierByXP, calculateProgressToNextTier } from '@/lib/tier-config'
 
@@ -42,10 +42,11 @@ export function useUserTier(): UseUserTierReturn {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
   const [lastFetch, setLastFetch] = useState<number>(0)
+  const lastFetchRef = useRef(0)
 
-  const fetchXP = useCallback(async () => {
+  const fetchXP = useCallback(async (isInitial = false) => {
     try {
-      setIsLoading(true)
+      if (isInitial) setIsLoading(true)
       setError(null)
 
       const { data: { user } } = await supabase.auth.getUser()
@@ -69,7 +70,9 @@ export function useUserTier(): UseUserTierReturn {
       }
 
       setXp(result.data.xp as UserXP)
-      setLastFetch(Date.now())
+      const now = Date.now()
+      setLastFetch(now)
+      lastFetchRef.current = now
     } catch (err) {
       setError(err as Error)
       console.error('Error fetching XP:', err)
@@ -78,20 +81,21 @@ export function useUserTier(): UseUserTierReturn {
     }
   }, [supabase])
 
-  // Fetch on mount and when window regains focus (if data is stale)
+  // Fetch on mount
   useEffect(() => {
-    fetchXP()
+    fetchXP(true) // Initial load - show loading state
+  }, [fetchXP])
 
+  // Refetch on window focus (background - no loading flash)
+  useEffect(() => {
     const handleFocus = () => {
-      // Refetch if data is older than 30 seconds
-      if (Date.now() - lastFetch > 30000) {
-        fetchXP()
+      if (Date.now() - lastFetchRef.current > 30000) {
+        fetchXP(false)
       }
     }
-
     window.addEventListener('focus', handleFocus)
     return () => window.removeEventListener('focus', handleFocus)
-  }, [fetchXP, lastFetch])
+  }, [fetchXP])
 
   // Calculate tier and progress
   const tier = useMemo(() => {
@@ -133,8 +137,8 @@ export function useUserTier(): UseUserTierReturn {
         throw new Error(result.error?.message || 'Failed to award XP')
       }
 
-      // Refetch XP data after awarding
-      await fetchXP()
+      // Refetch XP data after awarding (background - no loading flash)
+      await fetchXP(false)
 
       return result.data
     } catch (err) {
