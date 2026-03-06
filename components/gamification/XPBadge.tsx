@@ -31,7 +31,7 @@ export const XPBadge = memo(function XPBadge({
 
   if (isLoading) {
     return (
-      <div className={`animate-pulse bg-slate-200 rounded-full ${variant === 'minimal' ? 'w-16 h-6' : 'w-24 h-8'} ${className}`} />
+      <div className={`bg-slate-700/50 rounded-lg ${variant === 'minimal' ? 'w-16 h-6' : 'w-24 h-8'} ${className}`} aria-hidden="true" />
     )
   }
 

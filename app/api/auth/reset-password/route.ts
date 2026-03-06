@@ -54,11 +54,15 @@ export async function POST(request: NextRequest) {
       // This helps debug configuration issues
       let errorMessage = error.message || 'Failed to send reset email'
       
-      // Only show generic messages for rate limits
-      if (error.message?.toLowerCase().includes('rate limit') || 
-          error.message?.toLowerCase().includes('too many') ||
+      // Only show generic messages for rate limits (Supabase: "email rate limit exceeded")
+      const errLower = error.message?.toLowerCase() || ''
+      if (errLower.includes('rate limit') || 
+          errLower.includes('too many') ||
+          errLower.includes('email rate limit exceeded') ||
           error.status === 429) {
         errorMessage = 'Too many requests. Please wait a few minutes and try again.'
+      } else if (errLower.includes('recovery email') || errLower.includes('confirmation email')) {
+        errorMessage = 'We couldn\'t send the reset email. Please try again later or contact support.'
       } else {
         // For other errors, show the actual Supabase error message
         // This helps identify configuration issues like redirect URL problems

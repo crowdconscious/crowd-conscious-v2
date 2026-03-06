@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabaseClient } from '@/lib/supabase-client'
-import { AnimatedButton } from '@/components/ui/UIComponents'
 import { XPBadge } from '@/components/gamification/XPBadge'
 
 interface HeaderClientProps {
@@ -97,57 +96,47 @@ export default function HeaderClient({ user }: HeaderClientProps) {
           </div>
 
           {/* User Controls */}
-          <div className="flex items-center gap-4">
-            {/* XP Badge */}
+          <div className="flex items-center gap-3">
+            {/* XP Badge - no animation to avoid blinking */}
             <div className="hidden md:block">
-              <XPBadge variant="compact" />
+              <XPBadge variant="compact" animated={false} />
             </div>
-            
-            {/* User Menu */}
-            <div className="flex items-center gap-3">
-              {/* User Info */}
-              <div className="hidden lg:block text-right">
-                <div className="text-sm font-medium text-white">
-                  {userProfile?.full_name || user.email}
-                </div>
-                <div className="text-xs text-slate-400">
-                  User
-                </div>
-              </div>
 
-              {/* Profile Picture */}
-              <Link href="/profile">
-                {userProfile?.avatar_url ? (
-                  <img 
-                    src={userProfile.avatar_url} 
-                    alt="Profile"
-                    className="w-10 h-10 rounded-full object-cover border-2 border-slate-700"
-                  />
-                ) : (
-                  <div className="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center border-2 border-slate-700">
-                    <span className="text-emerald-400 font-medium">
-                      {userProfile?.full_name?.[0] || user.email[0]}
-                    </span>
-                  </div>
-                )}
+            {/* Profile avatar */}
+            <Link href="/profile" className="shrink-0">
+              {userProfile?.avatar_url ? (
+                <img
+                  src={userProfile.avatar_url}
+                  alt="Profile"
+                  className="w-9 h-9 rounded-full object-cover border border-slate-600"
+                />
+              ) : (
+                <div className="w-9 h-9 bg-emerald-500/20 rounded-full flex items-center justify-center border border-slate-600">
+                  <span className="text-emerald-400 text-sm font-medium">
+                    {userProfile?.full_name?.[0] || user.email?.[0] || '?'}
+                  </span>
+                </div>
+              )}
+            </Link>
+
+            {/* Settings & Sign Out - always visible */}
+            <div className="flex items-center gap-1">
+              <Link
+                href="/settings"
+                className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+                aria-label="Settings"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
               </Link>
-
-              {/* Settings & Logout */}
-              <div className="hidden md:flex items-center gap-2">
-                <Link href="/settings">
-                  <AnimatedButton variant="ghost" size="sm" className="text-slate-400 hover:text-white">
-                    ⚙️
-                  </AnimatedButton>
-                </Link>
-                <AnimatedButton 
-                  onClick={handleSignOut}
-                  variant="ghost" 
-                  size="sm"
-                  className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                >
-                  Sign Out
-                </AnimatedButton>
-              </div>
+              <button
+                onClick={handleSignOut}
+                className="px-3 py-1.5 text-sm text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors font-medium"
+              >
+                Sign Out
+              </button>
             </div>
           </div>
         </div>

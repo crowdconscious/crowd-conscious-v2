@@ -83,9 +83,9 @@ export default function ProfileClient({
   return (
     <div className="space-y-8">
       {/* Profile Header */}
-      <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-8">
-        <div className="flex flex-col md:flex-row items-start gap-6">
-          <div className="w-24 h-24 bg-slate-800 rounded-full flex items-center justify-center border-2 border-slate-700">
+      <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+        <div className="flex flex-col sm:flex-row items-start gap-6">
+          <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center border border-slate-700 shrink-0">
             {profile?.avatar_url ? (
               <img
                 src={profile.avatar_url}
@@ -100,12 +100,12 @@ export default function ProfileClient({
           <div className="flex-1">
             <div className="flex items-start justify-between mb-4">
               <div>
-                <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
+                <h1 className="text-2xl font-bold text-white">
                   {profile?.full_name || 'Predictor'}
                 </h1>
                 <p className="text-slate-400 mb-2">{user.email}</p>
                 <div className="mt-3">
-                  <XPBadge variant="full" />
+                  <XPBadge variant="full" animated={false} />
                 </div>
                 {profile?.bio && (
                   <p className="text-slate-400 mt-3 max-w-2xl">{profile.bio}</p>
@@ -115,23 +115,18 @@ export default function ProfileClient({
                 )}
               </div>
 
-              <div className="flex items-center gap-3">
-                <AnimatedButton
+              <div className="flex items-center gap-2">
+                <button
                   onClick={() => setIsEditing(!isEditing)}
-                  variant="secondary"
-                  size="sm"
-                  className="bg-slate-800 hover:bg-slate-700 text-white border-slate-700"
+                  className="px-3 py-1.5 text-sm rounded-lg bg-slate-800 hover:bg-slate-700 text-white border border-slate-700"
                 >
                   {isEditing ? 'Cancel' : 'Edit Profile'}
-                </AnimatedButton>
-                <Link href="/settings">
-                  <AnimatedButton
-                    variant="secondary"
-                    size="sm"
-                    className="bg-slate-800 hover:bg-slate-700 text-white border-slate-700"
-                  >
-                    ⚙️ Settings
-                  </AnimatedButton>
+                </button>
+                <Link
+                  href="/settings"
+                  className="px-3 py-1.5 text-sm rounded-lg bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 inline-flex items-center gap-1.5"
+                >
+                  ⚙️ Settings
                 </Link>
               </div>
             </div>

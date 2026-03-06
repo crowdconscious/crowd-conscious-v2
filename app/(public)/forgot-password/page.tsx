@@ -41,9 +41,12 @@ export default function ForgotPasswordPage() {
         // The server will provide helpful messages based on the actual Supabase error
         let errorMessage = data.error || 'Failed to send reset email'
         
-        // Add additional context for common issues
-        if (data.errorCode === 429 || errorMessage.includes('rate limit') || errorMessage.includes('too many')) {
+        // Add additional context for common issues (Supabase: "email rate limit exceeded")
+        const errLower = errorMessage.toLowerCase()
+        if (data.errorCode === 429 || errLower.includes('rate limit') || errLower.includes('too many') || errLower.includes('email rate limit exceeded')) {
           errorMessage = 'Too many requests. Please wait a few minutes and try again.'
+        } else if (errLower.includes('recovery email') || errLower.includes('confirmation email')) {
+          errorMessage = 'We couldn\'t send the reset email. Please try again later or contact support.'
         } else if (response.status === 500) {
           errorMessage = 'Server error. Please try again in a few moments.'
         } else if (data.error?.includes('redirect') || data.error?.includes('URL')) {

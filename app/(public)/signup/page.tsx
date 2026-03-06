@@ -46,11 +46,16 @@ export default function SignUpPage() {
 
       if (error) {
         console.error('❌ Signup error:', error)
+        const errMsg = error.message?.toLowerCase() || ''
         // Better error messages for common issues
-        if (error.message.includes('already registered')) {
+        if (errMsg.includes('already registered')) {
           setMessage('This email is already registered. Please sign in instead.')
-        } else if (error.message.includes('duplicate')) {
+        } else if (errMsg.includes('duplicate')) {
           setMessage('An account with this email already exists. Please sign in.')
+        } else if (errMsg.includes('rate limit') || errMsg.includes('too many') || error.status === 429) {
+          setMessage('Too many signup attempts. Please wait a few minutes and try again.')
+        } else if (errMsg.includes('confirmation email') || errMsg.includes('recovery email')) {
+          setMessage('We couldn\'t send the verification email. Please try again later or contact support.')
         } else {
           setMessage(error.message)
         }
