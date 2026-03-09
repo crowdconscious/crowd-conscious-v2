@@ -218,8 +218,11 @@ export default async function LandingPage() {
         )}
 
         {/* World Cup 2026 Section */}
-        <section className="relative py-24 px-4 border-t border-slate-800 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-950" />
+        <section
+          className="relative py-24 px-4 border-t border-slate-800 overflow-hidden"
+          style={{ backgroundImage: 'url(/images/worldcup-bg%20(1).png)', backgroundSize: 'cover' }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-900/90 via-slate-950/95 to-slate-950" />
           <div className="relative max-w-5xl mx-auto">
             <h2 className="text-3xl md:text-4xl font-bold text-white text-center mb-2">
               ⚽ World Cup 2026 is Coming to Mexico City
@@ -265,8 +268,12 @@ export default async function LandingPage() {
         </section>
 
         {/* Conscious Fund */}
-        <section className="py-20 px-4 border-t border-slate-800">
-          <div className="max-w-5xl mx-auto">
+        <section
+          className="py-20 px-4 border-t border-slate-800 relative"
+          style={{ backgroundImage: 'url(/images/fund-bg.png)', backgroundSize: 'cover' }}
+        >
+          <div className="absolute inset-0 bg-slate-950/80" />
+          <div className="max-w-5xl mx-auto relative">
             <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-8 md:p-12">
               <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-8">
                 <div>

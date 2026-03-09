@@ -203,7 +203,14 @@ export function LandingHeroClient({
   return (
     <>
       {/* Hero */}
-      <section className="relative pt-24 pb-20 px-4 overflow-hidden">
+      <section
+        className="relative pt-24 pb-20 px-4 overflow-hidden"
+        style={{
+          backgroundImage: 'url(/images/hero-bg.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
         {/* Animated floating orbs */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div
@@ -328,9 +335,9 @@ export function LandingHeroClient({
           <h2 className="text-3xl font-bold text-white text-center mb-12">{c.howItWorks}</h2>
           <div className="grid md:grid-cols-3 gap-8">
             {[
-              { icon: Target, title: c.pickMarket, desc: c.pickMarketDesc, img: '/images/step-1.webp' },
-              { icon: Vote, title: c.sharePrediction, desc: c.sharePredictionDesc, img: '/images/step-2.webp' },
-              { icon: Heart, title: c.fundChange, desc: c.fundChangeDesc, img: '/images/step-3.webp' },
+              { icon: Target, title: c.pickMarket, desc: c.pickMarketDesc, img: '/images/step-1.png', alt: 'Pick a market' },
+              { icon: Vote, title: c.sharePrediction, desc: c.sharePredictionDesc, img: '/images/step-2.png', alt: 'Share your prediction' },
+              { icon: Heart, title: c.fundChange, desc: c.fundChangeDesc, img: '/images/step-3.png', alt: 'Fund the change' },
             ].map((item, i) => (
               <div
                 key={i}
@@ -346,6 +353,7 @@ export function LandingHeroClient({
                 </div>
                 <h3 className="text-xl font-semibold text-white mb-2">{item.title}</h3>
                 <p className="text-slate-400">{item.desc}</p>
+                <img src={item.img} alt={item.alt} className="w-full rounded-lg mt-4 object-cover" />
               </div>
             ))}
           </div>

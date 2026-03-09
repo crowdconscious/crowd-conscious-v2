@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useEffect, useRef, memo, useCallback, useState } from 'react'
 import confetti from 'canvas-confetti'
 import { Trophy, Sparkles, Star, X, CheckCircle, Share2, ImageIcon, Download, Instagram } from 'lucide-react'
+import { copyMarketLink, downloadCard, shareNative } from '@/lib/share-utils'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 interface Achievement {
@@ -153,111 +154,47 @@ export const CelebrationModal = memo(function CelebrationModal({
   } : null
 
   const handleCopyLink = useCallback(() => {
-    if (shareUrl && navigator.clipboard) {
-      navigator.clipboard.writeText(shareUrl)
-    }
-  }, [shareUrl])
+    if (shareCardMarketId) copyMarketLink(shareCardMarketId)
+  }, [shareCardMarketId])
 
   const [shareCardLoading, setShareCardLoading] = useState(false)
   const [cardLoaded, setCardLoaded] = useState(false)
   const [cardError, setCardError] = useState(false)
 
-  // Reset card load state when modal opens or marketId changes
   useEffect(() => {
-    if (isOpen && shareCardMarketId) {
+    if (shareCardMarketId) {
       setCardLoaded(false)
       setCardError(false)
     }
-  }, [isOpen, shareCardMarketId])
+  }, [shareCardMarketId])
+
   const handleShareCard = useCallback(async () => {
-    if (!shareCardUrl) return
+    if (!shareCardMarketId) return
     setShareCardLoading(true)
     try {
-      const res = await fetch(shareCardUrl)
-      if (!res.ok) throw new Error('Failed to fetch card')
-      const blob = await res.blob()
-      const file = new File([blob], 'crowd-conscious-prediction.png', { type: 'image/png' })
-      if (navigator.share && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({
-          title: shareTitle || 'My prediction on Crowd Conscious',
-          text: shareText,
-          url: shareUrl,
-          files: [file],
-        })
-      } else {
-        const a = document.createElement('a')
-        a.href = URL.createObjectURL(blob)
-        a.download = 'crowd-conscious-prediction.png'
-        a.click()
-        URL.revokeObjectURL(a.href)
-      }
-    } catch (e) {
-      if (shareCardUrl) window.open(shareCardUrl, '_blank')
+      await shareNative(shareCardMarketId, shareTitle || 'My prediction on Crowd Conscious', 'standard')
     } finally {
       setShareCardLoading(false)
     }
-  }, [shareCardUrl, shareTitle, shareText, shareUrl])
+  }, [shareCardMarketId, shareTitle])
 
   const handleDownloadCard = useCallback(async () => {
-    if (!shareCardUrl) return
+    if (!shareCardMarketId) return
     setShareCardLoading(true)
     try {
-      const res = await fetch(shareCardUrl)
-      if (!res.ok) throw new Error('Failed to fetch card')
-      const blob = await res.blob()
-      const a = document.createElement('a')
-      a.href = URL.createObjectURL(blob)
-      a.download = 'crowd-conscious-prediction.png'
-      a.click()
-      URL.revokeObjectURL(a.href)
-    } catch {
-      if (shareCardUrl) window.open(shareCardUrl, '_blank')
+      await downloadCard(shareCardMarketId, 'standard')
     } finally {
       setShareCardLoading(false)
     }
-  }, [shareCardUrl])
+  }, [shareCardMarketId])
 
   const handleShareToStories = useCallback(async () => {
-    if (!shareCardStoryUrl) return
+    if (!shareCardMarketId) return
     setShareCardLoading(true)
     try {
-      const res = await fetch(shareCardStoryUrl)
-      if (!res.ok) throw new Error('Failed to fetch story image')
-      const blob = await res.blob()
-      const file = new File([blob], 'crowd-conscious-story.png', { type: 'image/png' })
-      if (navigator.share && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({
-          title: shareTitle || 'My prediction on Crowd Conscious',
-          text: shareText,
-          url: shareUrl,
-          files: [file],
-        })
-      } else {
-        const a = document.createElement('a')
-        a.href = URL.createObjectURL(blob)
-        a.download = 'crowd-conscious-story.png'
-        a.click()
-        URL.revokeObjectURL(a.href)
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
-        if (isMobile) {
-          window.open('instagram://story-camera', '_blank')
-        } else {
-          alert('📸 Image saved! Save and share it to your Instagram Story.\n\nTip: Open Instagram → Your Story → Select the downloaded image')
-        }
-      }
-    } catch (e) {
-      if (shareCardStoryUrl) window.open(shareCardStoryUrl, '_blank')
-    } finally {
-      setShareCardLoading(false)
-    }
-  }, [shareCardStoryUrl, shareTitle, shareText, shareUrl])
-
-  const handleDownloadStory = useCallback(async () => {
-    if (!shareCardStoryUrl) return
-    setShareCardLoading(true)
-    try {
-      const res = await fetch(shareCardStoryUrl)
-      if (!res.ok) throw new Error('Failed to fetch story image')
+      await shareNative(shareCardMarketId, shareTitle || 'My prediction on Crowd Conscious', 'story')
+    } catch {
+      const res = await fetch(`/api/og/market/${shareCardMarketId}?format=story`)
       const blob = await res.blob()
       const a = document.createElement('a')
       a.href = URL.createObjectURL(blob)
@@ -265,15 +202,24 @@ export const CelebrationModal = memo(function CelebrationModal({
       a.click()
       URL.revokeObjectURL(a.href)
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
-      if (!isMobile) {
-        alert('📸 Image saved! Save and share it to your Instagram Story.\n\nTip: Open Instagram → Your Story → Select the downloaded image')
-      }
-    } catch {
-      if (shareCardStoryUrl) window.open(shareCardStoryUrl, '_blank')
+      if (isMobile) window.open('instagram://story-camera', '_blank')
+      else alert('📸 Image saved! Save and share it to your Instagram Story.')
     } finally {
       setShareCardLoading(false)
     }
-  }, [shareCardStoryUrl])
+  }, [shareCardMarketId, shareTitle])
+
+  const handleDownloadStory = useCallback(async () => {
+    if (!shareCardMarketId) return
+    setShareCardLoading(true)
+    try {
+      await downloadCard(shareCardMarketId, 'story')
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+      if (!isMobile) alert('📸 Image saved! Save and share it to your Instagram Story.')
+    } finally {
+      setShareCardLoading(false)
+    }
+  }, [shareCardMarketId])
 
   const getIcon = useCallback(() => {
     switch (type) {
@@ -384,26 +330,18 @@ export const CelebrationModal = memo(function CelebrationModal({
               {shareLinks && (
                 <div className="mb-4">
                   {shareCardMarketId && !cardError && (
-                    <div className="relative w-full max-w-[500px] mx-auto mb-4">
+                    <div className="w-full max-w-md mx-auto mb-4">
                       {!cardLoaded && (
-                        <div
-                          className="w-full rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 text-sm"
-                          style={{ aspectRatio: '1200/630', backgroundColor: '#1a2332' }}
-                        >
-                          Generating your card...
+                        <div className="w-full aspect-[1200/630] bg-slate-800 rounded-xl flex items-center justify-center">
+                          <span className="text-slate-500 text-sm">Generating your card...</span>
                         </div>
                       )}
                       <img
                         src={`/api/og/market/${shareCardMarketId}`}
                         alt="Your prediction card"
+                        className={`w-full rounded-xl border border-slate-700 ${cardLoaded ? 'block' : 'hidden'}`}
                         onLoad={() => setCardLoaded(true)}
                         onError={() => setCardError(true)}
-                        className="w-full rounded-xl border border-slate-200"
-                        style={{
-                          display: cardLoaded ? 'block' : 'none',
-                          width: '100%',
-                          maxWidth: '500px',
-                        }}
                       />
                     </div>
                   )}

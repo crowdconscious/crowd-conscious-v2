@@ -11,7 +11,7 @@ import {
   BarChart3,
   Bot,
 } from 'lucide-react'
-import { ShareMarketButton } from '@/components/predictions/ShareMarketButton'
+import ShareButton from '@/components/ShareButton'
 import { MiniSparkline } from './MiniSparkline'
 import { OnboardingOverlay, shouldShowOnboarding } from './OnboardingOverlay'
 import { toDisplayPercent } from '@/lib/probability-utils'
@@ -206,9 +206,9 @@ export function PredictionsDashboardClient({ data }: Props) {
                         positive={v.is_correct !== false}
                         className="rounded"
                       />
-                      <ShareMarketButton
+                      <ShareButton
                         marketId={v.market_id}
-                        marketTitle={v.market_title}
+                        title={v.market_title}
                         variant="compact"
                       />
                       <Link
@@ -255,9 +255,9 @@ export function PredictionsDashboardClient({ data }: Props) {
                       </div>
                     </Link>
                     <div onClick={(e) => e.stopPropagation()}>
-                      <ShareMarketButton
+                      <ShareButton
                         marketId={m.id}
-                        marketTitle={m.title ?? ''}
+                        title={m.title ?? ''}
                         variant="compact"
                       />
                     </div>
@@ -288,9 +288,9 @@ export function PredictionsDashboardClient({ data }: Props) {
                       </p>
                     </Link>
                     <div onClick={(e) => e.stopPropagation()}>
-                      <ShareMarketButton
+                      <ShareButton
                         marketId={m.id}
-                        marketTitle={m.title ?? ''}
+                        title={m.title ?? ''}
                         variant="compact"
                       />
                     </div>
@@ -393,7 +393,7 @@ export function PredictionsDashboardClient({ data }: Props) {
                   <MiniSparkline data={sparkData} positive={true} className="shrink-0 rounded" />
                 </Link>
                 <div onClick={(e) => e.stopPropagation()}>
-                  <ShareMarketButton
+                  <ShareButton
                     marketId={m.id}
                     marketTitle={m.title ?? ''}
                     variant="compact"

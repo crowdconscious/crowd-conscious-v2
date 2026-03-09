@@ -21,6 +21,10 @@ export const metadata: Metadata = {
   title: 'Crowd Conscious - Where Predictions Meet Purpose',
   description:
     'Free-to-play prediction platform where your opinion drives real community impact. Predict on sustainability, policy, sports & more — brand sponsors fund the Conscious Fund.',
+  icons: {
+    icon: '/images/favicon-512.png',
+    apple: '/images/apple-touch-icon.png',
+  },
   openGraph: {
     title: 'Crowd Conscious - Where Predictions Meet Purpose',
     description:
@@ -28,6 +32,7 @@ export const metadata: Metadata = {
     url: BASE_URL,
     siteName: 'Crowd Conscious',
     type: 'website',
+    images: [{ url: `${BASE_URL}/images/favicon-512.png`, width: 512, height: 512, alt: 'Crowd Conscious' }],
   },
   twitter: {
     card: 'summary_large_image',

@@ -32,11 +32,11 @@ export default function LandingNav() {
         <div className="flex justify-between items-center h-20">
           <Link href="/" className="flex items-center shrink-0">
             <Image
-              src="/images/logo.png"
+              src="/images/logo-small.png"
               alt="Crowd Conscious"
-              width={140}
-              height={140}
-              className="h-16 w-[140px] object-contain object-left"
+              width={160}
+              height={40}
+              className="h-10 w-auto object-contain object-left"
               priority
             />
           </Link>

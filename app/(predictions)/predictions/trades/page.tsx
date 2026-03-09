@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Check, X, Target } from 'lucide-react'
-import { ShareMarketButton } from '@/components/predictions/ShareMarketButton'
+import ShareButton from '@/components/ShareButton'
 
 type VoteItem = {
   id: string
@@ -148,10 +148,10 @@ export default function PredictionsTradesPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
-                    <ShareMarketButton
+                    <ShareButton
                       marketId={row.market_id}
-                      marketTitle={row.market_title}
-                      variant="compact"
+                      title={row.market_title}
+                      compact
                     />
                     <span className="text-emerald-400 font-medium">
                       +{row.xp_earned + row.bonus_xp} XP

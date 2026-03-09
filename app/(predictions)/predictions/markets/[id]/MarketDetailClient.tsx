@@ -36,6 +36,7 @@ import {
 } from 'lucide-react'
 import { VotePanel } from '../../components/VotePanel'
 import { CelebrationModal } from '@/components/gamification/CelebrationModal'
+import ShareButton from '@/components/ShareButton'
 import { toDisplayPercent } from '@/lib/probability-utils'
 import type { Database } from '@/types/database'
 
@@ -218,7 +219,10 @@ export function MarketDetailClient({
               <Icon className="w-3.5 h-3.5" />
               {config.label}
             </span>
-            <h1 className="text-2xl font-bold text-white mb-2">{market.title}</h1>
+            <div className="flex items-center justify-between gap-4 mb-2">
+              <h1 className="text-2xl font-bold text-white flex-1 min-w-0">{market.title}</h1>
+              <ShareButton marketId={market.id} title={market.title ?? ''} />
+            </div>
             <p className="text-slate-400 text-sm">
               Created by {creatorName} on {formatDate(market.created_at)}
             </p>
@@ -535,10 +539,13 @@ export function MarketDetailClient({
             onVoteSuccess={handleTradeSuccess}
           />
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
-            <h3 className="font-semibold text-white mb-3 flex items-center gap-2">
-              <BarChart3 className="w-4 h-4" />
-              Market Info
-            </h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold text-white flex items-center gap-2">
+                <BarChart3 className="w-4 h-4" />
+                Market Info
+              </h3>
+              <ShareButton marketId={market.id} title={market.title ?? ''} compact />
+            </div>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-slate-400">Resolution date</span>
