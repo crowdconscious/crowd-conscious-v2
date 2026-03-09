@@ -11,6 +11,7 @@ import {
   BarChart3,
   Bot,
 } from 'lucide-react'
+import { ShareMarketButton } from '@/components/predictions/ShareMarketButton'
 import { MiniSparkline } from './MiniSparkline'
 import { OnboardingOverlay, shouldShowOnboarding } from './OnboardingOverlay'
 import { toDisplayPercent } from '@/lib/probability-utils'
@@ -199,11 +200,16 @@ export function PredictionsDashboardClient({ data }: Props) {
                         )}
                       </p>
                     </div>
-                    <div className="flex items-center gap-3 shrink-0">
+                    <div className="flex items-center gap-2 shrink-0">
                       <MiniSparkline
                         data={sparkData}
                         positive={v.is_correct !== false}
                         className="rounded"
+                      />
+                      <ShareMarketButton
+                        marketId={v.market_id}
+                        marketTitle={v.market_title}
+                        variant="compact"
                       />
                       <Link
                         href={`/predictions/markets/${v.market_id}`}
@@ -231,23 +237,31 @@ export function PredictionsDashboardClient({ data }: Props) {
                 <p className="text-slate-500 text-sm">No significant moves in last 24h</p>
               ) : (
                 biggestMovers.map((m) => (
-                  <Link
+                  <div
                     key={m.id}
-                    href={`/predictions/markets/${m.id}`}
-                    className="block bg-slate-900/80 border border-slate-800 rounded-xl p-3 hover:border-slate-600 transition-colors"
+                    className="bg-slate-900/80 border border-slate-800 rounded-xl p-3 hover:border-slate-600 transition-colors flex items-center justify-between gap-2"
                   >
-                    <p className="font-medium text-white text-sm truncate">{m.title}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-slate-500 text-xs">{m.oldProb.toFixed(0)}%</span>
-                      <ArrowRight className="w-3 h-3 text-slate-500" />
-                      <span className="text-white text-xs font-medium">{m.newProb.toFixed(0)}%</span>
-                      {m.delta >= 0 ? (
-                        <TrendingUp className="w-4 h-4 text-emerald-400" />
-                      ) : (
-                        <TrendingDown className="w-4 h-4 text-red-400" />
-                      )}
+                    <Link href={`/predictions/markets/${m.id}`} className="min-w-0 flex-1">
+                      <p className="font-medium text-white text-sm truncate">{m.title}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-slate-500 text-xs">{m.oldProb.toFixed(0)}%</span>
+                        <ArrowRight className="w-3 h-3 text-slate-500" />
+                        <span className="text-white text-xs font-medium">{m.newProb.toFixed(0)}%</span>
+                        {m.delta >= 0 ? (
+                          <TrendingUp className="w-4 h-4 text-emerald-400" />
+                        ) : (
+                          <TrendingDown className="w-4 h-4 text-red-400" />
+                        )}
+                      </div>
+                    </Link>
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <ShareMarketButton
+                        marketId={m.id}
+                        marketTitle={m.title ?? ''}
+                        variant="compact"
+                      />
                     </div>
-                  </Link>
+                  </div>
                 ))
               )}
             </div>
@@ -263,16 +277,24 @@ export function PredictionsDashboardClient({ data }: Props) {
                 <p className="text-slate-500 text-sm">No new markets this week</p>
               ) : (
                 newMarkets.slice(0, 5).map((m) => (
-                  <Link
+                  <div
                     key={m.id}
-                    href={`/predictions/markets/${m.id}`}
-                    className="block bg-slate-900/80 border border-slate-800 rounded-xl p-3 hover:border-slate-600 transition-colors"
+                    className="bg-slate-900/80 border border-slate-800 rounded-xl p-3 hover:border-slate-600 transition-colors flex items-center justify-between gap-2"
                   >
-                    <p className="font-medium text-white text-sm truncate">{m.title}</p>
-                    <p className="text-slate-500 text-xs mt-0.5">
-                      {Math.round(toDisplayPercent(Number(m.current_probability)))}% probability
-                    </p>
-                  </Link>
+                    <Link href={`/predictions/markets/${m.id}`} className="min-w-0 flex-1">
+                      <p className="font-medium text-white text-sm truncate">{m.title}</p>
+                      <p className="text-slate-500 text-xs mt-0.5">
+                        {Math.round(toDisplayPercent(Number(m.current_probability)))}% probability
+                      </p>
+                    </Link>
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <ShareMarketButton
+                        marketId={m.id}
+                        marketTitle={m.title ?? ''}
+                        variant="compact"
+                      />
+                    </div>
+                  </div>
                 ))
               )}
             </div>
@@ -359,17 +381,25 @@ export function PredictionsDashboardClient({ data }: Props) {
             const prob = toDisplayPercent(Number(m.current_probability))
 
             return (
-              <Link
+              <div
                 key={m.id}
-                href={`/predictions/markets/${m.id}`}
                 className="bg-slate-900/80 border border-slate-800 rounded-xl p-3 hover:border-slate-600 transition-colors flex items-center gap-3"
               >
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium text-white text-sm truncate">{truncate(m.title, 40)}</p>
-                  <p className="text-emerald-400 text-sm font-semibold">{Math.round(prob)}%</p>
+                <Link href={`/predictions/markets/${m.id}`} className="min-w-0 flex-1 flex items-center gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-white text-sm truncate">{truncate(m.title ?? '', 40)}</p>
+                    <p className="text-emerald-400 text-sm font-semibold">{Math.round(prob)}%</p>
+                  </div>
+                  <MiniSparkline data={sparkData} positive={true} className="shrink-0 rounded" />
+                </Link>
+                <div onClick={(e) => e.stopPropagation()}>
+                  <ShareMarketButton
+                    marketId={m.id}
+                    marketTitle={m.title ?? ''}
+                    variant="compact"
+                  />
                 </div>
-                <MiniSparkline data={sparkData} positive={true} className="shrink-0 rounded" />
-              </Link>
+              </div>
             )
           })}
         </div>

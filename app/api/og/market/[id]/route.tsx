@@ -116,7 +116,18 @@ export async function GET(
 
     const donutSize = isStory ? 200 : 120
     const donutInner = isStory ? 140 : 80
-    const donutDeg = Math.min(100, Math.max(0, probability)) * 3.6
+    const prob = Math.min(100, Math.max(0, probability))
+    // Satori doesn't support conic-gradient; use SVG donut
+    const r = Math.round(donutSize * 0.4)
+    const strokeW = Math.round(donutSize * 0.15)
+    const circumference = 2 * Math.PI * r
+    const dashOffset = circumference - (circumference * prob) / 100
+    const donutSvg = `data:image/svg+xml;base64,${Buffer.from(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${donutSize}" height="${donutSize}" viewBox="0 0 ${donutSize} ${donutSize}">
+        <circle cx="${donutSize/2}" cy="${donutSize/2}" r="${r}" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="${strokeW}"/>
+        <circle cx="${donutSize/2}" cy="${donutSize/2}" r="${r}" fill="none" stroke="#10b981" stroke-width="${strokeW}" stroke-dasharray="${circumference}" stroke-dashoffset="${dashOffset}" transform="rotate(-90 ${donutSize/2} ${donutSize/2})"/>
+      </svg>`
+    ).toString('base64')}`
 
     const cardContent = (
       <div
@@ -221,13 +232,13 @@ export async function GET(
                   display: 'flex',
                   width: `${donutSize}px`,
                   height: `${donutSize}px`,
-                  borderRadius: '50%',
-                  background: `conic-gradient(#10b981 0deg, #10b981 ${donutDeg}deg, rgba(255,255,255,0.1) ${donutDeg}deg, rgba(255,255,255,0.1) 360deg)`,
                   alignItems: 'center',
                   justifyContent: 'center',
                   marginBottom: '40px',
+                  position: 'relative',
                 }}
               >
+                <img src={donutSvg} alt="" width={donutSize} height={donutSize} style={{ display: 'flex', position: 'absolute' }} />
                 <div
                   style={{
                     display: 'flex',
@@ -240,6 +251,7 @@ export async function GET(
                     fontSize: isStory ? '48px' : '28px',
                     fontWeight: 'bold',
                     color: '#10b981',
+                    zIndex: 1,
                   }}
                 >
                   {probability}%
@@ -403,13 +415,13 @@ export async function GET(
                   display: 'flex',
                   width: `${donutSize}px`,
                   height: `${donutSize}px`,
-                  borderRadius: '50%',
-                  background: `conic-gradient(#10b981 0deg, #10b981 ${donutDeg}deg, rgba(255,255,255,0.1) ${donutDeg}deg, rgba(255,255,255,0.1) 360deg)`,
                   alignItems: 'center',
                   justifyContent: 'center',
                   flexShrink: 0,
+                  position: 'relative',
                 }}
               >
+                <img src={donutSvg} alt="" width={donutSize} height={donutSize} style={{ display: 'flex', position: 'absolute' }} />
                 <div
                   style={{
                     display: 'flex',
@@ -422,6 +434,7 @@ export async function GET(
                     fontSize: '28px',
                     fontWeight: 'bold',
                     color: '#10b981',
+                    zIndex: 1,
                   }}
                 >
                   {probability}%
