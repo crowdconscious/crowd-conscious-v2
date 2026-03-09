@@ -133,14 +133,20 @@ export const CelebrationModal = memo(function CelebrationModal({
   const shareText = shareTitle
     ? `I just predicted on "${shareTitle}" on Crowd Conscious! 🎯`
     : 'I just made a prediction on Crowd Conscious! 🎯'
+  const shareTextX = shareTitle
+    ? `${shareTitle}\n\nMake your prediction:`
+    : 'Make your prediction on Crowd Conscious'
+  const shareTextWhatsApp = shareTitle
+    ? `${shareTitle} — Make your prediction: ${shareUrl}`
+    : shareUrl
   const shareCardUrl = shareCardMarketId && typeof window !== 'undefined'
     ? `${window.location.origin}/api/og/market/${shareCardMarketId}`
     : null
 
   const shareLinks = sharePath && shareUrl ? {
-    x: `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`,
+    x: `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareTextX)}&url=${encodeURIComponent(shareUrl)}`,
     facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
-    whatsapp: `https://wa.me/?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`,
+    whatsapp: `https://wa.me/?text=${encodeURIComponent(shareTextWhatsApp)}`,
   } : null
 
   const handleCopyLink = useCallback(() => {
@@ -306,6 +312,13 @@ export const CelebrationModal = memo(function CelebrationModal({
               {/* Social share buttons */}
               {shareLinks && (
                 <div className="mb-4">
+                  {shareCardMarketId && (
+                    <img
+                      src={`/api/og/market/${shareCardMarketId}`}
+                      alt="Share card preview"
+                      className="w-full max-w-[400px] rounded-xl mx-auto mb-4 border border-slate-200"
+                    />
+                  )}
                   <p className="text-sm font-medium text-slate-600 mb-2 text-center">Share your prediction</p>
                   <div className="flex flex-wrap justify-center gap-2">
                     <a
