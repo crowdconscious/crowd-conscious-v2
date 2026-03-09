@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { useEffect, useRef, memo, useCallback, useState } from 'react'
 import confetti from 'canvas-confetti'
-import { Trophy, Sparkles, Star, X, CheckCircle, Share2, ImageIcon, Download } from 'lucide-react'
+import { Trophy, Sparkles, Star, X, CheckCircle, Share2, ImageIcon, Download, Instagram } from 'lucide-react'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 interface Achievement {
@@ -142,6 +142,9 @@ export const CelebrationModal = memo(function CelebrationModal({
   const shareCardUrl = shareCardMarketId && typeof window !== 'undefined'
     ? `${window.location.origin}/api/og/market/${shareCardMarketId}`
     : null
+  const shareCardStoryUrl = shareCardMarketId && typeof window !== 'undefined'
+    ? `${window.location.origin}/api/og/market/${shareCardMarketId}?format=story`
+    : null
 
   const shareLinks = sharePath && shareUrl ? {
     x: `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareTextX)}&url=${encodeURIComponent(shareUrl)}`,
@@ -203,6 +206,64 @@ export const CelebrationModal = memo(function CelebrationModal({
       setShareCardLoading(false)
     }
   }, [shareCardUrl])
+
+  const handleShareToStories = useCallback(async () => {
+    if (!shareCardStoryUrl) return
+    setShareCardLoading(true)
+    try {
+      const res = await fetch(shareCardStoryUrl)
+      if (!res.ok) throw new Error('Failed to fetch story image')
+      const blob = await res.blob()
+      const file = new File([blob], 'crowd-conscious-story.png', { type: 'image/png' })
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({
+          title: shareTitle || 'My prediction on Crowd Conscious',
+          text: shareText,
+          url: shareUrl,
+          files: [file],
+        })
+      } else {
+        const a = document.createElement('a')
+        a.href = URL.createObjectURL(blob)
+        a.download = 'crowd-conscious-story.png'
+        a.click()
+        URL.revokeObjectURL(a.href)
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+        if (isMobile) {
+          window.open('instagram://story-camera', '_blank')
+        } else {
+          alert('📸 Image saved! Save and share it to your Instagram Story.\n\nTip: Open Instagram → Your Story → Select the downloaded image')
+        }
+      }
+    } catch (e) {
+      if (shareCardStoryUrl) window.open(shareCardStoryUrl, '_blank')
+    } finally {
+      setShareCardLoading(false)
+    }
+  }, [shareCardStoryUrl, shareTitle, shareText, shareUrl])
+
+  const handleDownloadStory = useCallback(async () => {
+    if (!shareCardStoryUrl) return
+    setShareCardLoading(true)
+    try {
+      const res = await fetch(shareCardStoryUrl)
+      if (!res.ok) throw new Error('Failed to fetch story image')
+      const blob = await res.blob()
+      const a = document.createElement('a')
+      a.href = URL.createObjectURL(blob)
+      a.download = 'crowd-conscious-story.png'
+      a.click()
+      URL.revokeObjectURL(a.href)
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+      if (!isMobile) {
+        alert('📸 Image saved! Save and share it to your Instagram Story.\n\nTip: Open Instagram → Your Story → Select the downloaded image')
+      }
+    } catch {
+      if (shareCardStoryUrl) window.open(shareCardStoryUrl, '_blank')
+    } finally {
+      setShareCardLoading(false)
+    }
+  }, [shareCardStoryUrl])
 
   const getIcon = useCallback(() => {
     switch (type) {
@@ -375,11 +436,31 @@ export const CelebrationModal = memo(function CelebrationModal({
                           <Download className="w-4 h-4" />
                           Download card
                         </button>
+                        {shareCardStoryUrl && (
+                          <>
+                            <button
+                              onClick={handleShareToStories}
+                              disabled={shareCardLoading}
+                              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#F77737] hover:opacity-90 text-white font-medium text-sm transition-colors disabled:opacity-60"
+                            >
+                              <Instagram className="w-4 h-4" />
+                              {shareCardLoading ? 'Loading…' : 'Share to Stories'}
+                            </button>
+                            <button
+                              onClick={handleDownloadStory}
+                              disabled={shareCardLoading}
+                              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium transition-colors disabled:opacity-60"
+                            >
+                              <Download className="w-4 h-4" />
+                              Download Story
+                            </button>
+                          </>
+                        )}
                       </>
                     )}
                   </div>
                   <p className="text-xs text-slate-500 mt-2 text-center">
-                    Share the branded card to Instagram Stories, WhatsApp, or save it. Link previews use the same card.
+                    Share the branded card (Twitter, WhatsApp) or the Story format for Instagram. Link previews use the standard card.
                   </p>
                 </div>
               )}
