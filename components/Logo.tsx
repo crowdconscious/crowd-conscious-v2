@@ -4,7 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 
 interface LogoProps {
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'sm' | 'md' | 'lg' | 'nav' | 'sidebar'
   linkTo?: string
   showText?: boolean
   className?: string
@@ -14,6 +14,8 @@ const sizes = {
   sm: { width: 120, height: 36 },
   md: { width: 160, height: 48 },
   lg: { width: 220, height: 66 },
+  nav: { width: 160, height: 40 },   // h-10 for public nav bars
+  sidebar: { width: 120, height: 32 }, // h-8 for authenticated sidebar
 }
 
 export default function Logo({

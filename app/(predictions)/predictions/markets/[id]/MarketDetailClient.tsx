@@ -259,7 +259,7 @@ export function MarketDetailClient({
                     🤝 Sponsored by {(market as { sponsor_name?: string }).sponsor_name}
                   </p>
                   <p className="text-slate-400 text-sm">
-                    This market is made possible by {(market as { sponsor_name?: string }).sponsor_name}. 80% of this
+                    This market is made possible by {(market as { sponsor_name?: string }).sponsor_name}. 40% of this
                     sponsorship funds the Conscious Fund.
                   </p>
                 </div>

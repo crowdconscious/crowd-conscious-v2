@@ -58,7 +58,7 @@ export default function PredictionsShell({
       {/* Sidebar - desktop only */}
       <aside className="w-64 border-r border-slate-800 flex flex-col flex-shrink-0 hidden md:flex">
         <div className="p-4 border-b border-slate-800">
-          <Logo size="sm" linkTo="/predictions" />
+          <Logo size="sidebar" linkTo="/predictions" />
         </div>
 
         <nav className="flex-1 p-4 space-y-1">
@@ -157,7 +157,7 @@ export default function PredictionsShell({
         >
           <Menu className="w-6 h-6" />
         </button>
-        <Logo size="sm" linkTo="/predictions" />
+        <Logo size="sidebar" linkTo="/predictions" />
         <div className="flex items-center gap-2">
           <NotificationsBell />
           <LanguageSwitcherSimple />
@@ -181,7 +181,7 @@ export default function PredictionsShell({
           <aside className="md:hidden fixed top-0 left-0 bottom-0 w-64 bg-slate-900 border-r border-slate-800 flex flex-col z-40 shadow-xl">
             <div className="p-4 border-b border-slate-800 flex items-center justify-between">
               <div onClick={closeMobileMenu} className="flex items-center">
-                <Logo size="sm" linkTo="/predictions" />
+                <Logo size="sidebar" linkTo="/predictions" />
               </div>
               <button
                 onClick={closeMobileMenu}

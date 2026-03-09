@@ -52,7 +52,7 @@ export default function HeaderClient({ user }: HeaderClientProps) {
         <div className="flex items-center justify-between">
           {/* Logo and Main Nav */}
           <div className="flex items-center gap-8">
-            <Logo size="sm" linkTo="/predictions" className="shrink-0" />
+            <Logo size="sidebar" linkTo="/predictions" className="shrink-0" />
 
             {/* Main Navigation - Desktop */}
             <nav className="hidden md:flex items-center gap-6">

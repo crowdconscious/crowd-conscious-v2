@@ -5,7 +5,7 @@ import { CONSCIOUS_FUND_PERCENT } from '@/lib/fund-allocation'
 
 /**
  * Handle market sponsorship payment after successful checkout
- * Updates prediction_markets with sponsor info, adds 80% to Conscious Fund (20% platform retention)
+ * Updates prediction_markets with sponsor info, adds 40% to Conscious Fund (60% platform retention)
  */
 export async function handleMarketSponsorship(session: Stripe.Checkout.Session) {
   const metadata = session.metadata || {}
@@ -24,11 +24,11 @@ export async function handleMarketSponsorship(session: Stripe.Checkout.Session) 
 
   const amountTotal = session.amount_total ?? 0
   const amountMXN = amountTotal / 100 // Stripe amounts are in centavos
-  const fundAmount = Math.round(amountMXN * CONSCIOUS_FUND_PERCENT) // 80% to Conscious Fund
+  const fundAmount = Math.round(amountMXN * CONSCIOUS_FUND_PERCENT) // 40% to Conscious Fund
 
   const supabase = getSupabase()
 
-  // 1. Insert fund transaction (80% of sponsorship)
+  // 1. Insert fund transaction (40% of sponsorship)
   const { error: fundTxError } = await (supabase as any)
     .from('conscious_fund_transactions')
     .insert({
@@ -36,14 +36,14 @@ export async function handleMarketSponsorship(session: Stripe.Checkout.Session) 
       source_type: 'sponsorship' as const,
       source_id: null,
       market_id: market_id || null,
-      description: `Sponsorship from ${sponsor_name} (${tier}) - 80% to Conscious Fund. Session: ${session.id}`,
+      description: `Sponsorship from ${sponsor_name} (${tier}) - 40% to Conscious Fund. Session: ${session.id}`,
     })
 
   if (fundTxError) {
     console.error('Market sponsorship: failed to insert fund transaction', fundTxError)
   }
 
-  // 2. Update conscious_fund totals (add 80% to fund)
+  // 2. Update conscious_fund totals (add 40% to fund)
   const { data: fundRow } = await (supabase as any)
     .from('conscious_fund')
     .select('id, total_collected, current_balance')

@@ -112,7 +112,7 @@ export default function DashboardMobileMenu() {
           >
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-slate-200">
-              <Logo size="sm" linkTo="/predictions" />
+              <Logo size="sidebar" linkTo="/predictions" />
               <button
                 onClick={() => setIsOpen(false)}
                 className="p-1 rounded-lg hover:bg-slate-100 transition-colors"

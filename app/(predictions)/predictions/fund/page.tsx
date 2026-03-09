@@ -36,7 +36,7 @@ async function getFundData(userId: string) {
       .in('action_type', ['prediction_vote', 'prediction_correct']),
   ])
 
-  // Total Fund: 80% of sponsor contributions (20% platform retention)
+  // Total Fund: 40% of sponsor contributions (60% platform retention)
   const totalFundFromSponsors =
     (sponsorMarkets ?? []).reduce(
       (sum, m) => sum + Number((m as { sponsor_contribution?: number }).sponsor_contribution ?? 0) * CONSCIOUS_FUND_PERCENT,

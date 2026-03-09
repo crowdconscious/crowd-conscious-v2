@@ -119,10 +119,11 @@ export async function GET(
               flexDirection: 'column',
               alignItems: 'center',
               background: 'linear-gradient(180deg, #0a1628 0%, #0d1f2d 40%, #0a2e1f 100%)',
-              padding: '80px 60px',
+              padding: '100px 60px',
               fontFamily: 'sans-serif',
               position: 'relative',
-              justifyContent: 'space-between',
+              justifyContent: 'center',
+              gap: '60px',
             }}
           >
             <div

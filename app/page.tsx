@@ -281,8 +281,7 @@ export default async function LandingPage() {
                     The Conscious Fund
                   </h2>
                   <p className="text-slate-400 mb-6 max-w-xl">
-                    When brands sponsor markets, a portion goes to community causes. Users vote on where
-                    the money goes. No money from you — just your predictions.
+                    40% of every sponsorship goes directly to community causes — 10x the industry average for cause marketing. Users vote on where the money goes. No money from you — just your predictions.
                   </p>
                   {fundBalance > 0 || causesCount > 0 ? (
                     <div className="flex flex-wrap gap-6 mb-6">

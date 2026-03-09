@@ -156,8 +156,7 @@ export default function AboutContent({
             The Conscious Fund
           </h2>
           <p className="text-slate-400 text-lg leading-relaxed text-center mb-12 max-w-2xl mx-auto">
-            Brands sponsor markets → 80% of sponsorship goes to the Conscious Fund → Users vote on
-            which causes receive grants → Community impact. It&apos;s a virtuous cycle.
+            Brands sponsor markets → 40% of every sponsorship goes directly to community causes — 10x the industry average for cause marketing → Users vote on which causes receive grants → Community impact. It&apos;s a virtuous cycle.
           </p>
           <div className="grid md:grid-cols-3 gap-6 mb-10">
             <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-6 text-center">
