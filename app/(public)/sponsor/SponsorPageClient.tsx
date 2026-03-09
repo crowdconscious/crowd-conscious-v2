@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import { toDisplayPercent } from '@/lib/probability-utils'
 import {
   Globe,
@@ -30,7 +29,7 @@ const CATEGORY_CONFIG: Record<
   sustainability: { label: 'Sustainability', icon: Leaf, bg: 'bg-green-500/20', text: 'text-green-400' },
 }
 
-const SPONSOR_EMAIL = 'francisco@crowdconscious.app'
+const SPONSOR_EMAIL = 'comunidad@crowdconscious.app'
 
 function sponsorMailto(marketTitle?: string, tier?: string) {
   const subject = encodeURIComponent('Sponsorship Inquiry - Crowd Conscious')
@@ -91,21 +90,23 @@ export function SponsorPageClient({
     })
   }
 
+  const previewMarketId = unsponsored[0]?.id ?? sponsored[0]?.id
+
   return (
     <>
       <main className="pt-24 pb-16">
         {/* Hero */}
         <section className="py-20 px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
-              Put your brand behind what matters
-            </h1>
-            <p className="text-xl text-slate-400 mb-10 max-w-2xl mx-auto">
-              Sponsor prediction markets on Crowd Conscious. Your brand gets visibility with an
-              engaged, socially-conscious audience. A portion of every sponsorship funds community
-              impact through the Conscious Fund.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-12">
+              <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 tracking-tight">
+                Put Your Brand in Front of the World Cup
+              </h1>
+              <p className="text-xl md:text-2xl text-slate-400 max-w-2xl mx-auto">
+                Sponsor a prediction market. Engage millions of fans. Fund real social impact.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
               <a
                 href="#markets"
                 className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold transition-colors"
@@ -119,6 +120,75 @@ export function SponsorPageClient({
               >
                 Contact Us
               </a>
+            </div>
+            {/* Sponsored market card mockup */}
+            <div className="max-w-md mx-auto">
+              <p className="text-slate-500 text-sm text-center mb-3">Your brand on a market card</p>
+              <div className="bg-slate-900/80 border border-slate-700 rounded-2xl overflow-hidden shadow-xl shadow-emerald-500/5">
+                {previewMarketId ? (
+                  <>
+                    <img
+                      src={`/api/og/market/${previewMarketId}`}
+                      alt="Sponsored market card preview"
+                      className="w-full h-auto"
+                    />
+                    <div className="px-4 py-2 bg-slate-800/80 border-t border-slate-700 flex items-center justify-between">
+                      <span className="text-slate-500 text-xs">Sponsored by</span>
+                      <div className="w-8 h-8 rounded bg-emerald-500/20 flex items-center justify-center text-emerald-400 text-xs font-medium">You</div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="p-6 space-y-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-emerald-400 font-bold text-sm">CROWD CONSCIOUS</span>
+                        <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-xs">⚽ World Cup</span>
+                      </div>
+                      <p className="text-white font-semibold text-lg">
+                        Will Mexico win the opening match at Estadio Azteca?
+                      </p>
+                      <div className="flex justify-between items-end">
+                        <div>
+                          <p className="text-slate-500 text-xs">Current crowd consensus</p>
+                          <p className="text-emerald-400 font-bold text-2xl">42% Yes</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="px-4 py-2 bg-slate-800/80 border-t border-slate-700 flex items-center justify-between">
+                      <span className="text-slate-500 text-xs">Sponsored by</span>
+                      <div className="w-8 h-8 rounded bg-emerald-500/20 flex items-center justify-center text-emerald-400 text-xs font-medium">You</div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Social Proof */}
+        <section className="py-20 px-4 border-t border-slate-800">
+          <div className="max-w-5xl mx-auto">
+            <h2 className="text-2xl md:text-3xl font-bold text-white text-center mb-4">
+              Why Prediction Markets?
+            </h2>
+            <p className="text-slate-400 text-center mb-12 max-w-2xl mx-auto">
+              Prediction markets have proven remarkably accurate at forecasting real-world events.
+            </p>
+            <div className="grid md:grid-cols-3 gap-6">
+              <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 text-center">
+                <p className="text-3xl md:text-4xl font-bold text-emerald-400">94%</p>
+                <p className="text-slate-400 text-sm mt-1">accurate at forecasting events</p>
+                <p className="text-slate-500 text-xs mt-2">Polymarket, academic research</p>
+              </div>
+              <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 text-center">
+                <p className="text-3xl md:text-4xl font-bold text-emerald-400">2.2B+</p>
+                <p className="text-slate-400 text-sm mt-1">World Cup viewers expected in 2026</p>
+              </div>
+              <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 text-center">
+                <p className="text-slate-400 text-sm">
+                  Mexico City hosts the opening match — the global spotlight will be here
+                </p>
+              </div>
             </div>
           </div>
         </section>
@@ -166,80 +236,153 @@ export function SponsorPageClient({
         </section>
 
         {/* Sponsorship Tiers */}
-        <section className="py-16 px-4 border-t border-slate-800">
+        <section className="py-20 px-4 border-t border-slate-800">
           <div className="max-w-6xl mx-auto">
-            <h2 className="text-2xl font-bold text-white text-center mb-12">
+            <h2 className="text-2xl md:text-3xl font-bold text-white text-center mb-4">
               Sponsorship Tiers
             </h2>
+            <p className="text-slate-400 text-center mb-12 max-w-2xl mx-auto">
+              Clean pricing. Every tier includes a Conscious Fund donation.
+            </p>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+              <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 flex flex-col">
                 <h3 className="text-lg font-bold text-white mb-1">Market Sponsor</h3>
-                <p className="text-2xl font-bold text-emerald-400 mb-4">$2,000 MXN (~$100 USD)</p>
-                <ul className="text-slate-400 text-sm space-y-2 mb-6">
-                  <li>• Logo on one market card + detail page</li>
-                  <li>• Link to your website/social</li>
-                  <li>• Mentioned in market resolution post</li>
-                  <li>• &quot;Sponsored by [Brand]&quot; badge</li>
+                <p className="text-2xl font-bold text-emerald-400 mb-2">$2,000 MXN (~$100 USD)</p>
+                <ul className="text-slate-300 text-sm space-y-2 mb-4 flex-1">
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-400 mt-0.5">✓</span>
+                    Logo on one market card + detail page
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-400 mt-0.5">✓</span>
+                    Link to your website/social
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-400 mt-0.5">✓</span>
+                    Mentioned in market resolution post
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-400 mt-0.5">✓</span>
+                    &quot;Sponsored by [Brand]&quot; badge
+                  </li>
                 </ul>
+                <p className="text-slate-500 text-xs mb-3 flex items-center gap-1">
+                  <Heart className="w-3.5 h-3.5 text-emerald-500/80" />
+                  Includes Conscious Fund donation
+                </p>
                 <p className="text-slate-500 text-xs mb-4">Best for: Local businesses, individual supporters</p>
                 <button
                   onClick={() => openModal('market', 'Market Sponsor')}
-                  className="block w-full py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-center text-sm font-medium transition-colors"
+                  className="block w-full py-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-center text-sm font-medium transition-colors"
                 >
                   Sponsor Now
                 </button>
               </div>
 
-              <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+              <div className="bg-slate-900/50 border-2 border-emerald-500/40 rounded-xl p-6 flex flex-col relative">
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-semibold">
+                  Most Popular
+                </span>
                 <h3 className="text-lg font-bold text-white mb-1">Category Sponsor</h3>
-                <p className="text-2xl font-bold text-emerald-400 mb-4">$10,000 MXN (~$500 USD)</p>
-                <ul className="text-slate-400 text-sm space-y-2 mb-6">
-                  <li>• Logo on ALL markets in a category</li>
-                  <li>• Featured placement on markets list</li>
-                  <li>• Sponsor analytics dashboard</li>
-                  <li>• Social media shoutout</li>
+                <p className="text-2xl font-bold text-emerald-400 mb-2">$10,000 MXN (~$500 USD)</p>
+                <ul className="text-slate-300 text-sm space-y-2 mb-4 flex-1">
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-400 mt-0.5">✓</span>
+                    Logo on ALL markets in a category
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-400 mt-0.5">✓</span>
+                    Featured placement on markets list
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-400 mt-0.5">✓</span>
+                    Sponsor analytics dashboard
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-400 mt-0.5">✓</span>
+                    Social media shoutout
+                  </li>
                 </ul>
+                <p className="text-slate-500 text-xs mb-3 flex items-center gap-1">
+                  <Heart className="w-3.5 h-3.5 text-emerald-500/80" />
+                  Includes Conscious Fund donation
+                </p>
                 <p className="text-slate-500 text-xs mb-4">Best for: Medium businesses, regional brands</p>
                 <button
                   onClick={() => openModal('category', 'Category Sponsor')}
-                  className="block w-full py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-center text-sm font-medium transition-colors"
+                  className="block w-full py-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-center text-sm font-medium transition-colors"
                 >
                   Sponsor Now
                 </button>
               </div>
 
-              <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+              <div className="bg-slate-900/50 border-2 border-amber-500/30 rounded-xl p-6 flex flex-col shadow-lg shadow-amber-500/5">
                 <h3 className="text-lg font-bold text-white mb-1">Impact Partner</h3>
-                <p className="text-2xl font-bold text-emerald-400 mb-4">$50,000 MXN (~$2,500 USD)</p>
-                <ul className="text-slate-400 text-sm space-y-2 mb-6">
-                  <li>• All Category Sponsor benefits</li>
-                  <li>• Custom branded market(s)</li>
-                  <li>• Featured on landing page</li>
-                  <li>• Conscious Fund naming rights</li>
-                  <li>• Quarterly impact report</li>
+                <p className="text-2xl font-bold text-amber-400 mb-2">$50,000 MXN (~$2,500 USD)</p>
+                <ul className="text-slate-300 text-sm space-y-2 mb-4 flex-1">
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-400 mt-0.5">✓</span>
+                    All Category Sponsor benefits
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-400 mt-0.5">✓</span>
+                    Custom branded market(s)
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-400 mt-0.5">✓</span>
+                    Featured on landing page
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-400 mt-0.5">✓</span>
+                    Conscious Fund naming rights
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-400 mt-0.5">✓</span>
+                    Quarterly impact report
+                  </li>
                 </ul>
+                <p className="text-slate-500 text-xs mb-3 flex items-center gap-1">
+                  <Heart className="w-3.5 h-3.5 text-emerald-500/80" />
+                  Includes Conscious Fund donation
+                </p>
                 <p className="text-slate-500 text-xs mb-4">Best for: Corporations, ESG-focused brands</p>
                 <button
                   onClick={() => openModal('impact', 'Impact Partner')}
-                  className="block w-full py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-center text-sm font-medium transition-colors"
+                  className="block w-full py-3 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-center text-sm font-medium transition-colors"
                 >
                   Sponsor Now
                 </button>
               </div>
 
-              <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+              <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 flex flex-col">
                 <h3 className="text-lg font-bold text-white mb-1">Founding Patron</h3>
-                <p className="text-2xl font-bold text-emerald-400 mb-4">Custom pricing</p>
-                <ul className="text-slate-400 text-sm space-y-2 mb-6">
-                  <li>• All Impact Partner benefits</li>
-                  <li>• Co-create market strategy for events</li>
-                  <li>• VIP access to platform analytics</li>
-                  <li>• Speaking slot at Crowd Conscious events</li>
+                <p className="text-2xl font-bold text-emerald-400 mb-2">Custom pricing</p>
+                <ul className="text-slate-300 text-sm space-y-2 mb-4 flex-1">
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-400 mt-0.5">✓</span>
+                    All Impact Partner benefits
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-400 mt-0.5">✓</span>
+                    Co-create market strategy for events
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-400 mt-0.5">✓</span>
+                    VIP access to platform analytics
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-400 mt-0.5">✓</span>
+                    Speaking slot at Crowd Conscious events
+                  </li>
                 </ul>
+                <p className="text-slate-500 text-xs mb-3 flex items-center gap-1">
+                  <Heart className="w-3.5 h-3.5 text-emerald-500/80" />
+                  Includes Conscious Fund donation
+                </p>
                 <p className="text-slate-500 text-xs mb-4">Best for: Major sponsors, media partners</p>
                 <button
                   onClick={() => openModal('patron', 'Founding Patron')}
-                  className="block w-full py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-center text-sm font-medium transition-colors"
+                  className="block w-full py-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-center text-sm font-medium transition-colors"
                 >
                   Contact Us
                 </button>
@@ -371,6 +514,52 @@ export function SponsorPageClient({
           </div>
         </section>
 
+        {/* FAQ */}
+        <section className="py-20 px-4 border-t border-slate-800">
+          <div className="max-w-3xl mx-auto">
+            <h2 className="text-2xl md:text-3xl font-bold text-white text-center mb-12">
+              Frequently Asked Questions
+            </h2>
+            <div className="space-y-6">
+              <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-white mb-2">How does my brand appear?</h3>
+                <p className="text-slate-400 text-sm">
+                  Your logo appears on the market card, detail page, share images (OG cards), and
+                  leaderboard. Every user who predicts sees your brand.
+                </p>
+              </div>
+              <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-white mb-2">Where does the Conscious Fund money go?</h3>
+                <p className="text-slate-400 text-sm">
+                  Community-voted causes: education, clean water, environment, social justice, health.
+                  Users vote monthly on which organizations receive grants.
+                </p>
+              </div>
+              <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-white mb-2">Can I propose a custom market?</h3>
+                <p className="text-slate-400 text-sm">
+                  Yes. We&apos;ll create a market aligned with your brand — World Cup, sustainability,
+                  policy, or your industry. Contact us to discuss.
+                </p>
+              </div>
+              <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-white mb-2">When should I sponsor?</h3>
+                <p className="text-slate-400 text-sm">
+                  Now. World Cup campaigns start months before June 11, 2026. Early sponsors get
+                  premium placement and founding partner recognition.
+                </p>
+              </div>
+              <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-white mb-2">Is this gambling?</h3>
+                <p className="text-slate-400 text-sm">
+                  No. Free-to-play, opinion-based predictions. No money exchanged by users. Brands
+                  sponsor; users predict; communities benefit.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* For Influencers */}
         <section className="py-16 px-4 border-t border-slate-800">
           <div className="max-w-3xl mx-auto">
@@ -416,6 +605,30 @@ export function SponsorPageClient({
                 <p className="text-slate-400 text-sm mt-1">nations, 1 city, your brand</p>
               </div>
             </div>
+          </div>
+        </section>
+
+        {/* Contact CTA */}
+        <section className="py-24 px-4 border-t border-slate-800">
+          <div className="max-w-2xl mx-auto text-center">
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
+              Ready to make an impact?
+            </h2>
+            <p className="text-slate-400 mb-8">
+              Let&apos;s discuss how your brand can reach millions during the World Cup.
+            </p>
+            <div className="flex justify-center">
+              <a
+                href={sponsorMailto()}
+                className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold transition-colors"
+              >
+                <Mail className="w-5 h-5" />
+                Email Us
+              </a>
+            </div>
+            <p className="text-slate-500 text-sm mt-6">
+              <a href={`mailto:${SPONSOR_EMAIL}`} className="text-emerald-400 hover:underline">{SPONSOR_EMAIL}</a>
+            </p>
           </div>
         </section>
       </main>

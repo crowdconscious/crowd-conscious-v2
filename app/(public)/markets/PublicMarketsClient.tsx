@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import {
   Search,
@@ -41,9 +42,15 @@ export default function PublicMarketsClient({
   historyByMarket = {},
   leadingOutcomes = {},
 }: Props) {
+  const searchParams = useSearchParams()
+  const categoryFromUrl = searchParams.get('category') || 'all'
   const [markets, setMarkets] = useState<PredictionMarket[]>(initialMarkets)
-  const [category, setCategory] = useState<string>('all')
+  const [category, setCategory] = useState<string>(categoryFromUrl)
   const [search, setSearch] = useState('')
+
+  useEffect(() => {
+    setCategory(categoryFromUrl)
+  }, [categoryFromUrl])
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [searching, setSearching] = useState(false)
 

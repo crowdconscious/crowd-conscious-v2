@@ -14,21 +14,33 @@ export const revalidate = 60
 
 const CATEGORY_CONFIG: Record<
   string,
-  { label: string; icon: React.ElementType; bg: string; text: string }
+  { label: string; icon: React.ElementType; bg: string; text: string; emoji: string }
 > = {
-  world: { label: 'World', icon: Globe, bg: 'bg-blue-500/20', text: 'text-blue-400' },
-  government: { label: 'Government', icon: Building2, bg: 'bg-red-500/20', text: 'text-red-400' },
-  corporate: { label: 'Corporate', icon: Briefcase, bg: 'bg-purple-500/20', text: 'text-purple-400' },
-  community: { label: 'Community', icon: Users, bg: 'bg-emerald-500/20', text: 'text-emerald-400' },
-  cause: { label: 'Cause', icon: Heart, bg: 'bg-amber-500/20', text: 'text-amber-400' },
-  world_cup: { label: 'World Cup', icon: Trophy, bg: 'bg-emerald-500/20', text: 'text-emerald-400' },
-  sustainability: { label: 'Sustainability', icon: Leaf, bg: 'bg-green-500/20', text: 'text-green-400' },
+  world: { label: 'World', icon: Globe, bg: 'bg-blue-500/20', text: 'text-blue-400', emoji: '🌍' },
+  government: { label: 'Government', icon: Building2, bg: 'bg-red-500/20', text: 'text-red-400', emoji: '🏛' },
+  corporate: { label: 'Corporate', icon: Briefcase, bg: 'bg-purple-500/20', text: 'text-purple-400', emoji: '🏢' },
+  community: { label: 'Community', icon: Users, bg: 'bg-emerald-500/20', text: 'text-emerald-400', emoji: '👥' },
+  cause: { label: 'Cause', icon: Heart, bg: 'bg-amber-500/20', text: 'text-amber-400', emoji: '💚' },
+  world_cup: { label: 'World Cup', icon: Trophy, bg: 'bg-emerald-500/20', text: 'text-emerald-400', emoji: '⚽' },
+  sustainability: { label: 'Sustainability', icon: Leaf, bg: 'bg-green-500/20', text: 'text-green-400', emoji: '🌱' },
+}
+
+function getCurrentCycle(): string {
+  return new Date().toISOString().slice(0, 7)
 }
 
 async function getLandingData() {
   const supabase = await createClient()
+  const cycle = getCurrentCycle()
 
-  const [marketsRes, outcomesRes, fundRes, causesRes] = await Promise.all([
+  const [
+    marketsRes,
+    outcomesRes,
+    fundRes,
+    causesRes,
+    votesRes,
+    worldCupRes,
+  ] = await Promise.all([
     supabase
       .from('prediction_markets')
       .select('id, title, category, current_probability, total_votes, image_url, sponsor_name')
@@ -44,7 +56,15 @@ async function getLandingData() {
       .select('current_balance, total_collected, total_disbursed')
       .limit(1)
       .single(),
-    supabase.from('fund_causes').select('id').eq('active', true),
+    supabase.from('fund_causes').select('id, name').eq('active', true).order('name'),
+    supabase.from('fund_votes').select('cause_id').eq('cycle', cycle),
+    supabase
+      .from('prediction_markets')
+      .select('id, title, category, current_probability, total_votes')
+      .eq('category', 'world_cup')
+      .in('status', ['active', 'trading'])
+      .order('total_votes', { ascending: false, nullsFirst: false })
+      .limit(4),
   ])
 
   const markets = (marketsRes.data || []) as Array<{
@@ -66,13 +86,32 @@ async function getLandingData() {
   }
 
   const fundBalance = fundRes.data?.current_balance ?? 0
-  const causesCount = causesRes.data?.length ?? 0
+  const causes = (causesRes.data || []) as Array<{ id: string; name: string }>
+  const voteCountByCause: Record<string, number> = {}
+  for (const v of votesRes.data || []) {
+    const id = v.cause_id
+    voteCountByCause[id] = (voteCountByCause[id] ?? 0) + 1
+  }
+  const causesWithVotes = causes
+    .map((c) => ({ ...c, vote_count: voteCountByCause[c.id] ?? 0 }))
+    .sort((a, b) => b.vote_count - a.vote_count)
+    .slice(0, 3)
+
+  const worldCupMarkets = (worldCupRes.data || []) as Array<{
+    id: string
+    title: string
+    category: string
+    current_probability: number
+    total_votes: number | null
+  }>
 
   return {
     markets,
     outcomesByMarket,
     fundBalance: Number(fundBalance),
-    causesCount,
+    causesCount: causes.length,
+    causesWithVotes,
+    worldCupMarkets,
   }
 }
 
@@ -82,11 +121,17 @@ function formatCurrency(num: number): string {
   return `$${num.toFixed(0)}`
 }
 
+const WorldCupCountdown = dynamic(() =>
+  import('./components/landing/WorldCupCountdown').then((m) => ({ default: m.WorldCupCountdown }))
+)
+
 export default async function LandingPage() {
   let markets: Awaited<ReturnType<typeof getLandingData>>['markets'] = []
   let outcomesByMarket: Awaited<ReturnType<typeof getLandingData>>['outcomesByMarket'] = {}
   let fundBalance = 0
   let causesCount = 0
+  let causesWithVotes: Array<{ id: string; name: string; vote_count: number }> = []
+  let worldCupMarkets: Awaited<ReturnType<typeof getLandingData>>['worldCupMarkets'] = []
 
   try {
     const data = await getLandingData()
@@ -94,6 +139,8 @@ export default async function LandingPage() {
     outcomesByMarket = data.outcomesByMarket
     fundBalance = data.fundBalance
     causesCount = data.causesCount
+    causesWithVotes = data.causesWithVotes
+    worldCupMarkets = data.worldCupMarkets
   } catch (e) {
     console.error('Landing data fetch error:', e)
   }
@@ -110,14 +157,14 @@ export default async function LandingPage() {
 
         <LandingHeroClient heroMarkets={heroMarkets} outcomesByMarket={outcomesByMarket} />
 
-        {/* Live Markets Preview */}
+        {/* Live Markets Preview - Trending */}
         {previewMarkets.length > 0 && (
           <section className="py-20 px-4 border-t border-slate-800">
             <div className="max-w-5xl mx-auto">
               <h2 className="text-3xl font-bold text-white mb-2">Trending markets</h2>
               <p className="text-slate-400 mb-8">See what the crowd is predicting</p>
-              <div className="space-y-3">
-                {previewMarkets.map((m) => {
+              <div className="space-y-0">
+                {previewMarkets.map((m, i) => {
                   const config = CATEGORY_CONFIG[m.category] || CATEGORY_CONFIG.world
                   const Icon = config.icon
                   const leading = outcomesByMarket[m.id]
@@ -131,19 +178,23 @@ export default async function LandingPage() {
                     <Link
                       key={m.id}
                       href={`/predictions/markets/${m.id}`}
-                      className="flex items-center justify-between gap-4 p-4 bg-slate-900/50 border border-slate-800 rounded-xl hover:border-slate-700 transition-colors"
+                      className={`flex items-center justify-between gap-4 p-4 border border-slate-800 rounded-xl hover:border-slate-700 hover:bg-slate-900/30 transition-colors ${
+                        i % 2 === 0 ? 'bg-slate-900/30' : 'bg-slate-900/10'
+                      }`}
                     >
                       <div className="flex items-center gap-4 min-w-0">
+                        <span className="shrink-0 text-slate-500 font-bold text-sm w-8">#{i + 1}</span>
                         <span
                           className={`shrink-0 inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium ${config.bg} ${config.text}`}
                         >
+                          <span>{config.emoji}</span>
                           <Icon className="w-3 h-3" />
                           {config.label}
                         </span>
                         <p className="font-medium text-white truncate">{m.title}</p>
                       </div>
                       <div className="flex items-center gap-4 shrink-0">
-                        <span className="text-emerald-400 font-semibold">
+                        <span className="text-emerald-400 font-bold text-lg">
                           {label} {prob}%
                         </span>
                         <span className="text-slate-500 text-sm">{votes} votes</span>
@@ -166,22 +217,68 @@ export default async function LandingPage() {
           </section>
         )}
 
+        {/* World Cup 2026 Section */}
+        <section className="relative py-24 px-4 border-t border-slate-800 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-950" />
+          <div className="relative max-w-5xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold text-white text-center mb-2">
+              ⚽ World Cup 2026 is Coming to Mexico City
+            </h2>
+            <p className="text-slate-400 text-center mb-8">
+              Opening match June 11 at Estadio Azteca. Predict the outcomes.
+            </p>
+            <div className="flex justify-center mb-10">
+              <WorldCupCountdown />
+            </div>
+            {worldCupMarkets.length > 0 && (
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+                {worldCupMarkets.map((m) => {
+                  const leading = outcomesByMarket[m.id]
+                  const prob = leading
+                    ? Math.round(toDisplayPercent(leading.probability))
+                    : Math.round(toDisplayPercent(Number(m.current_probability))) || 50
+                  const label = leading?.label ?? 'YES'
+
+                  return (
+                    <Link
+                      key={m.id}
+                      href={`/predictions/markets/${m.id}`}
+                      className="block bg-slate-900/60 border border-slate-700 rounded-xl p-4 hover:border-emerald-500/40 hover:shadow-lg hover:shadow-emerald-500/10 transition-all"
+                    >
+                      <p className="font-medium text-white line-clamp-2 text-sm">{m.title}</p>
+                      <p className="text-emerald-400 font-bold mt-2">{label} {prob}%</p>
+                    </Link>
+                  )
+                })}
+              </div>
+            )}
+            <div className="text-center">
+              <Link
+                href="/markets?category=world_cup"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold transition-colors"
+              >
+                Browse World Cup Markets
+                <ChevronRight className="w-5 h-5" />
+              </Link>
+            </div>
+          </div>
+        </section>
+
         {/* Conscious Fund */}
         <section className="py-20 px-4 border-t border-slate-800">
           <div className="max-w-5xl mx-auto">
             <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-8 md:p-12">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
+              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-8">
                 <div>
                   <h2 className="text-2xl font-bold text-white mb-2">
-                    Every prediction drives real impact
+                    The Conscious Fund
                   </h2>
                   <p className="text-slate-400 mb-6 max-w-xl">
-                    Brand sponsors fund the Conscious Fund. 80% of every sponsorship goes to community
-                    causes; 20% supports platform operations. Your votes decide which causes receive
-                    grants. No money from you — just your predictions.
+                    When brands sponsor markets, a portion goes to community causes. Users vote on where
+                    the money goes. No money from you — just your predictions.
                   </p>
                   {fundBalance > 0 || causesCount > 0 ? (
-                    <div className="flex flex-wrap gap-6">
+                    <div className="flex flex-wrap gap-6 mb-6">
                       <div>
                         <p className="text-slate-500 text-sm">Fund total</p>
                         <p className="text-2xl font-bold text-emerald-400">
@@ -189,11 +286,26 @@ export default async function LandingPage() {
                         </p>
                       </div>
                       <div>
-                        <p className="text-slate-500 text-sm">Causes funded</p>
+                        <p className="text-slate-500 text-sm">Causes</p>
                         <p className="text-2xl font-bold text-white">{causesCount}</p>
                       </div>
                     </div>
-                  ) : (
+                  ) : null}
+                  {causesWithVotes.length > 0 && (
+                    <div className="space-y-2 mb-6">
+                      <p className="text-slate-500 text-sm font-medium">Top causes by votes</p>
+                      {causesWithVotes.map((cause) => (
+                        <div
+                          key={cause.id}
+                          className="flex justify-between items-center py-2 border-b border-slate-800 last:border-0"
+                        >
+                          <span className="text-white font-medium">{cause.name}</span>
+                          <span className="text-emerald-400 font-semibold">{cause.vote_count} votes</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {(fundBalance === 0 && causesCount === 0) && (
                     <p className="text-slate-200 font-medium">
                       Coming soon — the Conscious Fund will direct sponsor contributions to community
                       causes chosen by our users.
@@ -204,7 +316,7 @@ export default async function LandingPage() {
                   href="/predictions/fund"
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/30 font-medium transition-colors shrink-0"
                 >
-                  Learn more
+                  Learn more about the Conscious Fund
                   <ChevronRight className="w-5 h-5" />
                 </Link>
               </div>

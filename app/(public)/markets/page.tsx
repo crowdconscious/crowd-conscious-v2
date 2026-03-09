@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase-server'
 import dynamic from 'next/dynamic'
+import { Suspense } from 'react'
 import type { Database } from '@/types/database'
 
 type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row']
@@ -99,12 +100,14 @@ export default async function PublicMarketsPage() {
 
       <main className="pt-24 pb-16">
         <div className="max-w-6xl mx-auto px-4">
+          <Suspense fallback={<div className="animate-pulse h-64 bg-slate-900 rounded-xl" />}>
           <PublicMarketsClient
             initialMarkets={markets}
             categoryCounts={categoryCounts}
             historyByMarket={historyByMarket}
             leadingOutcomes={leadingOutcomes}
           />
+          </Suspense>
         </div>
       </main>
 

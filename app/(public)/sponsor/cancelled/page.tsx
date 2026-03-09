@@ -32,7 +32,7 @@ export default function SponsorCancelledPage() {
               Back to Sponsor
             </Link>
             <a
-              href="mailto:francisco@crowdconscious.app?subject=Sponsorship%20Inquiry"
+              href="mailto:comunidad@crowdconscious.app?subject=Sponsorship%20Inquiry"
               className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-slate-600 hover:border-slate-500 text-slate-200 font-medium transition-colors"
             >
               <Mail className="w-4 h-4" />

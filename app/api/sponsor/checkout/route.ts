@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     // Founding Patron = custom pricing, redirect to contact
     if (tier === 'patron') {
       const body = `Hi, I'm interested in becoming a Founding Patron.\n\nCompany/Name: ${sponsor_name}\nEmail: ${email}\n${sponsor_url ? `Website: ${sponsor_url}\n` : ''}`
-      const mailto = `mailto:francisco@crowdconscious.app?subject=${encodeURIComponent('Founding Patron Inquiry - Crowd Conscious')}&body=${encodeURIComponent(body)}`
+      const mailto = `mailto:comunidad@crowdconscious.app?subject=${encodeURIComponent('Founding Patron Inquiry - Crowd Conscious')}&body=${encodeURIComponent(body)}`
       return ApiResponse.ok({ redirect_url: mailto, is_contact: true })
     }
 

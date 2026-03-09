@@ -186,6 +186,28 @@ body {
   50% { transform: translateY(-10px); }
 }
 
+/* Landing hero: floating gradient orbs */
+@keyframes float-orb-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.6; }
+  33% { transform: translate(30px, -20px) scale(1.05); opacity: 0.8; }
+  66% { transform: translate(-20px, 15px) scale(0.95); opacity: 0.5; }
+}
+
+@keyframes float-orb-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.5; }
+  50% { transform: translate(-25px, -30px) scale(1.1); opacity: 0.7; }
+}
+
+@keyframes float-orb-3 {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.4; }
+  50% { transform: translate(20px, 25px) scale(1.08); opacity: 0.6; }
+}
+
+@keyframes cta-pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
+  50% { box-shadow: 0 0 20px 4px rgba(16, 185, 129, 0.3); }
+}
+
 @keyframes glow {
   0%, 100% { box-shadow: 0 0 5px rgba(20, 184, 166, 0.3); }
   50% { box-shadow: 0 0 20px rgba(20, 184, 166, 0.6); }
