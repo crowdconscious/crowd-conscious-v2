@@ -30,14 +30,16 @@ export async function runCeoDigest(): Promise<{
 
     const metrics: Record<string, unknown> = {}
 
-    // a. USER METRICS
+    // a. USER METRICS (use market_votes distinct user_id - profiles may not exist)
     try {
-      const { count: totalUsers } = await supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true })
-      metrics.total_registered_users = totalUsers ?? 0
+      const { data: allVotes } = await supabase
+        .from('market_votes')
+        .select('user_id')
+      const distinctUsers = new Set((allVotes ?? []).map((v) => v.user_id))
+      metrics.total_registered_users = distinctUsers.size
     } catch (e) {
-      metrics.total_registered_users = 'error'
+      console.warn('[CEO Digest] market_votes user count failed:', e)
+      metrics.total_registered_users = 0
     }
 
     try {
@@ -79,13 +81,15 @@ export async function runCeoDigest(): Promise<{
         .sort((a, b) => b[1] - a[1])
         .slice(0, 5)
       const marketIds = sorted.map(([id]) => id)
-      const { data: markets } = await supabase
-        .from('prediction_markets')
-        .select('id, title')
-        .in('id', marketIds)
-      const titleMap: Record<string, string> = {}
-      for (const m of markets ?? []) {
-        titleMap[m.id] = m.title
+      let titleMap: Record<string, string> = {}
+      if (marketIds.length > 0) {
+        const { data: markets } = await supabase
+          .from('prediction_markets')
+          .select('id, title')
+          .in('id', marketIds)
+        for (const m of markets ?? []) {
+          titleMap[m.id] = m.title
+        }
       }
       metrics.top_markets_last_24h = sorted.map(([id, count]) => ({
         market_id: id,
@@ -153,33 +157,40 @@ export async function runCeoDigest(): Promise<{
       metrics.markets_with_zero_predictions = 'error'
     }
 
-    // d. CONSCIOUS FUND
+    // d. CONSCIOUS FUND (conscious_fund, sponsor columns may not exist)
     try {
-      const { data: fund } = await supabase
+      let legacyBalance = 0
+      const { data: fund, error: fundErr } = await supabase
         .from('conscious_fund')
         .select('total_collected, total_disbursed')
         .limit(1)
         .single()
-      const legacyBalance = Math.max(
-        0,
-        Number(fund?.total_collected ?? 0) - Number(fund?.total_disbursed ?? 0)
-      )
-      const { data: sponsorMarkets } = await supabase
+      if (!fundErr && fund) {
+        legacyBalance = Math.max(
+          0,
+          Number(fund.total_collected ?? 0) - Number(fund.total_disbursed ?? 0)
+        )
+      }
+      let totalFromSponsors = 0
+      const { data: sponsorMarkets, error: sponsorErr } = await supabase
         .from('prediction_markets')
         .select('sponsor_contribution')
         .not('sponsor_name', 'is', null)
         .gt('sponsor_contribution', 0)
-      const totalFromSponsors =
-        (sponsorMarkets ?? []).reduce(
-          (sum, m) =>
-            sum +
-            Number((m as { sponsor_contribution?: number }).sponsor_contribution ?? 0) *
-              CONSCIOUS_FUND_PERCENT,
-          0
-        ) ?? 0
+      if (!sponsorErr && sponsorMarkets) {
+        totalFromSponsors =
+          sponsorMarkets.reduce(
+            (sum, m) =>
+              sum +
+              Number((m as { sponsor_contribution?: number }).sponsor_contribution ?? 0) *
+                CONSCIOUS_FUND_PERCENT,
+            0
+          ) ?? 0
+      }
       metrics.total_fund_value = legacyBalance + totalFromSponsors
     } catch (e) {
-      metrics.total_fund_value = 'error'
+      console.warn('[CEO Digest] conscious_fund failed:', e)
+      metrics.total_fund_value = 0
     }
 
     try {

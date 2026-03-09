@@ -61,41 +61,47 @@ export async function runContentCreator(): Promise<{
 
     try {
       const cutoff24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-      const { data: history } = await supabase
+      const { data: history, error: historyErr } = await supabase
         .from('prediction_market_history')
         .select('market_id, probability, recorded_at')
         .gte('recorded_at', cutoff24h)
         .order('recorded_at', { ascending: false })
 
-      const byMarket = new Map<string, number[]>()
-      for (const h of history ?? []) {
-        if (!byMarket.has(h.market_id)) byMarket.set(h.market_id, [])
-        byMarket.get(h.market_id)!.push(Number(h.probability))
-      }
-      const changes: Array<{ market_id: string; old_prob: number; new_prob: number; change: number }> = []
-      for (const [mid, probs] of byMarket) {
-        if (probs.length >= 2) {
-          const oldP = probs[probs.length - 1]
-          const newP = probs[0]
-          changes.push({ market_id: mid, old_prob: oldP, new_prob: newP, change: newP - oldP })
+      if (historyErr) {
+        console.warn('[Content Creator] prediction_market_history not found, skipping:', historyErr.message)
+        data.probability_shifts_24h = []
+      } else {
+        const byMarket = new Map<string, number[]>()
+        for (const h of history ?? []) {
+          if (!byMarket.has(h.market_id)) byMarket.set(h.market_id, [])
+          byMarket.get(h.market_id)!.push(Number(h.probability))
         }
+        const changes: Array<{ market_id: string; old_prob: number; new_prob: number; change: number }> = []
+        for (const [mid, probs] of byMarket) {
+          if (probs.length >= 2) {
+            const oldP = probs[probs.length - 1]
+            const newP = probs[0]
+            changes.push({ market_id: mid, old_prob: oldP, new_prob: newP, change: newP - oldP })
+          }
+        }
+        changes.sort((a, b) => Math.abs(b.change) - Math.abs(a.change))
+        const topIds = changes.slice(0, 5).map((c) => c.market_id)
+        const { data: mktTitles } = await supabase
+          .from('prediction_markets')
+          .select('id, title')
+          .in('id', topIds)
+        const titleMap: Record<string, string> = {}
+        for (const m of mktTitles ?? []) {
+          titleMap[m.id] = m.title
+        }
+        data.probability_shifts_24h = changes.slice(0, 5).map((c) => ({
+          ...c,
+          title: titleMap[c.market_id] ?? c.market_id,
+        }))
       }
-      changes.sort((a, b) => Math.abs(b.change) - Math.abs(a.change))
-      const topIds = changes.slice(0, 5).map((c) => c.market_id)
-      const { data: mktTitles } = await supabase
-        .from('prediction_markets')
-        .select('id, title')
-        .in('id', topIds)
-      const titleMap: Record<string, string> = {}
-      for (const m of mktTitles ?? []) {
-        titleMap[m.id] = m.title
-      }
-      data.probability_shifts_24h = changes.slice(0, 5).map((c) => ({
-        ...c,
-        title: titleMap[c.market_id] ?? c.market_id,
-      }))
     } catch (e) {
-      data.probability_shifts_24h = 'error'
+      console.warn('[Content Creator] probability_shifts_24h failed:', e)
+      data.probability_shifts_24h = []
     }
 
     // b. RECENTLY RESOLVED markets (last 48h)
@@ -147,82 +153,102 @@ export async function runContentCreator(): Promise<{
       data.hot_inbox_items = 'error'
     }
 
-    // d. CONSCIOUS FUND
+    // d. CONSCIOUS FUND (fund_causes, fund_votes, conscious_fund may not exist)
     try {
       const cycle = getCurrentCycle()
-      const { data: causes } = await supabase
-        .from('fund_causes')
-        .select('id, name')
-        .eq('active', true)
-      const { data: votes } = await supabase
-        .from('fund_votes')
-        .select('cause_id')
-        .eq('cycle', cycle)
-      const byCause: Record<string, number> = {}
-      for (const v of votes ?? []) {
-        byCause[v.cause_id] = (byCause[v.cause_id] ?? 0) + 1
+      let causesData: Array<{ id: string; name: string; vote_count: number }> = []
+      try {
+        const { data: causes } = await supabase
+          .from('fund_causes')
+          .select('id, name')
+          .eq('active', true)
+        const { data: votes } = await supabase
+          .from('fund_votes')
+          .select('cause_id')
+          .eq('cycle', cycle)
+        const byCause: Record<string, number> = {}
+        for (const v of votes ?? []) {
+          byCause[v.cause_id] = (byCause[v.cause_id] ?? 0) + 1
+        }
+        causesData = (causes ?? []).map((c) => ({
+          id: c.id,
+          name: c.name,
+          vote_count: byCause[c.id] ?? 0,
+        }))
+      } catch {
+        console.warn('[Content Creator] fund_causes/fund_votes not found, skipping')
       }
-      data.fund_causes_with_votes = (causes ?? []).map((c) => ({
-        id: c.id,
-        name: c.name,
-        vote_count: byCause[c.id] ?? 0,
-      }))
+      data.fund_causes_with_votes = causesData
 
-      const { data: fund } = await supabase
-        .from('conscious_fund')
-        .select('total_collected, total_disbursed')
-        .limit(1)
-        .single()
-      const legacyBalance = Math.max(
-        0,
-        Number(fund?.total_collected ?? 0) - Number(fund?.total_disbursed ?? 0)
-      )
-      const { data: sponsorMarkets } = await supabase
-        .from('prediction_markets')
-        .select('sponsor_contribution')
-        .not('sponsor_name', 'is', null)
-        .gt('sponsor_contribution', 0)
-      const totalFromSponsors =
-        (sponsorMarkets ?? []).reduce(
-          (sum, m) =>
-            sum +
-            Number((m as { sponsor_contribution?: number }).sponsor_contribution ?? 0) *
-              CONSCIOUS_FUND_PERCENT,
-          0
-        ) ?? 0
-      data.total_fund_value = legacyBalance + totalFromSponsors
+      let totalFromSponsors = 0
+      try {
+        const { data: fund } = await supabase
+          .from('conscious_fund')
+          .select('total_collected, total_disbursed')
+          .limit(1)
+          .single()
+        const legacyBalance = Math.max(
+          0,
+          Number(fund?.total_collected ?? 0) - Number(fund?.total_disbursed ?? 0)
+        )
+        const { data: sponsorMarkets } = await supabase
+          .from('prediction_markets')
+          .select('sponsor_contribution')
+          .not('sponsor_name', 'is', null)
+          .gt('sponsor_contribution', 0)
+        totalFromSponsors =
+          (sponsorMarkets ?? []).reduce(
+            (sum, m) =>
+              sum +
+              Number((m as { sponsor_contribution?: number }).sponsor_contribution ?? 0) *
+                CONSCIOUS_FUND_PERCENT,
+            0
+          ) ?? 0
+        data.total_fund_value = legacyBalance + totalFromSponsors
+      } catch (e) {
+        console.warn('[Content Creator] conscious_fund not found, skipping:', e)
+        data.total_fund_value = 0
+      }
     } catch (e) {
-      data.fund_causes_with_votes = 'error'
-      data.total_fund_value = 'error'
+      data.fund_causes_with_votes = []
+      data.total_fund_value = 0
     }
 
-    // e. LEADERBOARD
+    // e. LEADERBOARD (profiles may not exist - use display names from user_xp only)
     try {
-      const { data: xpRows } = await supabase
+      const { data: xpRows, error: xpErr } = await supabase
         .from('user_xp')
         .select('user_id, total_xp')
         .gt('total_xp', 0)
         .order('total_xp', { ascending: false })
         .limit(5)
 
-      const userIds = (xpRows ?? []).map((r) => r.user_id)
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, full_name')
-        .in('id', userIds)
-
-      const profileMap = new Map(
-        (profiles ?? []).map((p) => [p.id, p.full_name || 'Anonymous'])
-      )
-
-      data.leaderboard_top_3 = (xpRows ?? []).slice(0, 3).map((r, i) => ({
-        rank: i + 1,
-        user_id: r.user_id,
-        username: profileMap.get(r.user_id) ?? 'Anonymous',
-        total_xp: Number(r.total_xp),
-      }))
+      if (xpErr || !xpRows?.length) {
+        data.leaderboard_top_3 = []
+      } else {
+        const userIds = xpRows.map((r) => r.user_id)
+        let profileMap = new Map<string, string>()
+        try {
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, full_name')
+            .in('id', userIds)
+          profileMap = new Map(
+            (profiles ?? []).map((p) => [p.id, p.full_name || 'Anonymous'])
+          )
+        } catch {
+          // profiles table may not exist - use Predictor N
+        }
+        data.leaderboard_top_3 = xpRows.slice(0, 3).map((r, i) => ({
+          rank: i + 1,
+          user_id: r.user_id,
+          username: profileMap.get(r.user_id) ?? `Predictor #${i + 1}`,
+          total_xp: Number(r.total_xp),
+        }))
+      }
     } catch (e) {
-      data.leaderboard_top_3 = 'error'
+      console.warn('[Content Creator] leaderboard failed:', e)
+      data.leaderboard_top_3 = []
     }
 
     const systemMessage = `You are the social media content strategist for Crowd Conscious (crowdconscious.app), a free-to-play opinion platform in Mexico City. You create engaging social media content that drives people to the platform. Your tone is: smart but accessible, community-driven, slightly provocative (asking questions people want to answer), and always ties back to social impact. You write in BOTH Spanish and English. The platform is gearing up for FIFA World Cup 2026 — opening match is June 11 at Estadio Azteca, Mexico City.`

@@ -29,14 +29,14 @@ export default function LandingNav() {
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all ${navBg}`}>
       <div className="max-w-6xl mx-auto px-4">
-        <div className="flex justify-between items-center h-16">
-          <Link href="/" className="flex items-center gap-2">
+        <div className="flex justify-between items-center h-20">
+          <Link href="/" className="flex items-center shrink-0">
             <Image
               src="/images/logo.png"
               alt="Crowd Conscious"
-              width={36}
-              height={36}
-              className="w-9 h-9 object-contain"
+              width={140}
+              height={140}
+              className="h-16 w-[140px] object-contain object-left"
               priority
             />
           </Link>

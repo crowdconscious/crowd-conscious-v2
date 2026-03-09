@@ -25,6 +25,7 @@ export async function runInboxCurator(): Promise<{
       .order('upvotes', { ascending: false })
 
     if (pendingErr) {
+      console.warn('[Inbox Curator] conscious_inbox fetch failed:', pendingErr.message)
       throw new Error(`Failed to fetch pending items: ${pendingErr.message}`)
     }
 
@@ -48,24 +49,32 @@ export async function runInboxCurator(): Promise<{
       return { success: true, skipped: true, summary: { pending_count: 0 } }
     }
 
-    const { data: activeMarkets } = await supabase
+    let activeTitles: string[] = []
+    const { data: activeMarkets, error: marketsErr } = await supabase
       .from('prediction_markets')
       .select('title')
       .in('status', ['active', 'trading'])
+    if (!marketsErr) {
+      activeTitles = (activeMarkets ?? []).map((m) => m.title)
+    } else {
+      console.warn('[Inbox Curator] prediction_markets fetch failed:', marketsErr.message)
+    }
 
-    const activeTitles = (activeMarkets ?? []).map((m) => m.title)
-
+    let recentDecisionsList: Array<{ title: string; status: string }> = []
     const cutoff7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
-    const { data: recentDecisions } = await supabase
+    const { data: recentDecisions, error: decisionsErr } = await supabase
       .from('conscious_inbox')
       .select('title, status')
       .in('status', ['approved', 'rejected'])
       .gte('updated_at', cutoff7d)
-
-    const recentDecisionsList = (recentDecisions ?? []).map((r) => ({
-      title: r.title,
-      status: r.status,
-    }))
+    if (!decisionsErr) {
+      recentDecisionsList = (recentDecisions ?? []).map((r) => ({
+        title: r.title,
+        status: r.status,
+      }))
+    } else {
+      console.warn('[Inbox Curator] recent decisions fetch failed:', decisionsErr.message)
+    }
 
     const anthropic = getAnthropicClient()
 

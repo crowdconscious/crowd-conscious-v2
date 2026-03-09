@@ -29,15 +29,15 @@ export default function Navigation() {
       transition={{ duration: 0.5 }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex justify-between items-center h-20">
           {/* Logo - Just the logo without text */}
-          <Link href="/" className="hover:opacity-80 transition-opacity">
+          <Link href="/" className="hover:opacity-80 transition-opacity shrink-0">
             <Image
               src="/images/logo.png"
               alt="Crowd Conscious"
-              width={40}
-              height={40}
-              className={`w-10 h-10 object-contain ${
+              width={140}
+              height={140}
+              className={`h-16 w-[140px] object-contain object-left ${
                 isScrolled ? '' : 'brightness-0 invert'
               }`}
               priority
