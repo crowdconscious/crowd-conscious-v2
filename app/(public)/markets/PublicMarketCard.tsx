@@ -1,6 +1,8 @@
 'use client'
 
 import Link from 'next/link'
+import { getMarketText, getOutcomeLabel } from '@/lib/i18n/market-translations'
+import { useLocale } from '@/lib/i18n/useLocale'
 import {
   Globe,
   Building2,
@@ -66,6 +68,7 @@ export function PublicMarketCard({
   history = [],
   leadingOutcome,
 }: PublicMarketCardProps) {
+  const locale = useLocale()
   const config = CATEGORY_CONFIG[market.category] || CATEGORY_CONFIG.world
   const Icon = config.icon
   const prob = toDisplayPercent(Number(market.current_probability))
@@ -93,14 +96,14 @@ export function PublicMarketCard({
       )}
 
       <h3 className="text-white font-semibold line-clamp-2 mb-4 min-h-[2.5rem]">
-        {market.title}
+        {getMarketText(market, 'title', locale)}
       </h3>
 
       <div className="mb-4">
         <div className="flex items-baseline gap-2 mb-2">
           <span className="text-3xl font-bold text-white">
             {leadingOutcome
-              ? `${leadingOutcome.label} ${Math.round(toDisplayPercent(leadingOutcome.probability || 0))}%`
+              ? `${getOutcomeLabel(leadingOutcome, locale)} ${Math.round(toDisplayPercent(leadingOutcome.probability || 0))}%`
               : `${Math.round(prob)}%`}
           </span>
           {!leadingOutcome && <span className="text-slate-400 text-sm">YES</span>}

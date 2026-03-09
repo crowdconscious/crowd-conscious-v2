@@ -44,6 +44,9 @@ export default function CreateMarketPage() {
   const [sponsorLogoUrl, setSponsorLogoUrl] = useState('')
   const [sponsorshipAmountMxn, setSponsorshipAmountMxn] = useState('')
   const [consciousFundPercentage, setConsciousFundPercentage] = useState(7.5)
+  const [enTitle, setEnTitle] = useState('')
+  const [enDescription, setEnDescription] = useState('')
+  const [enResolutionCriteria, setEnResolutionCriteria] = useState('')
 
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -180,6 +183,16 @@ export default function CreateMarketPage() {
           sponsor_logo_url: sponsorLogoUrl.trim() || null,
           sponsorship_amount_mxn: sponsorshipAmountMxn ? Number(sponsorshipAmountMxn) : null,
           conscious_fund_percentage: consciousFundPercentage,
+          translations:
+            enTitle || enDescription || enResolutionCriteria
+              ? {
+                  en: {
+                    ...(enTitle && { title: enTitle.trim() }),
+                    ...(enDescription && { description: enDescription.trim() }),
+                    ...(enResolutionCriteria && { resolution_criteria: enResolutionCriteria.trim() }),
+                  },
+                }
+              : undefined,
         }),
       })
       const data = await res.json()
@@ -372,9 +385,51 @@ export default function CreateMarketPage() {
                   </label>
                 </div>
               </div>
-              {marketType === 'multi' && (
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1.5">Options</label>
+            </div>
+          </section>
+
+          {/* English Translation */}
+          <details className="mt-6 border border-slate-700 rounded-lg p-4 bg-slate-900/50">
+            <summary className="text-slate-300 cursor-pointer font-medium">
+              🌐 English Translation (optional)
+            </summary>
+            <div className="mt-4 space-y-4">
+              <div>
+                <label className="block text-sm text-slate-400">English Title</label>
+                <input
+                  type="text"
+                  value={enTitle}
+                  onChange={(e) => setEnTitle(e.target.value)}
+                  placeholder="English version of the market question"
+                  className="w-full mt-1 px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-slate-400">English Description</label>
+                <textarea
+                  value={enDescription}
+                  onChange={(e) => setEnDescription(e.target.value)}
+                  placeholder="English description"
+                  rows={3}
+                  className="w-full mt-1 px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-slate-400">English Resolution Criteria</label>
+                <textarea
+                  value={enResolutionCriteria}
+                  onChange={(e) => setEnResolutionCriteria(e.target.value)}
+                  placeholder="English resolution criteria"
+                  rows={2}
+                  className="w-full mt-1 px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+                />
+              </div>
+            </div>
+          </details>
+
+          {marketType === 'multi' && (
+            <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+              <label className="block text-sm font-medium text-slate-300 mb-1.5">Options</label>
                   <div className="space-y-2">
                     {outcomes.map((o, i) => (
                       <div key={i} className="flex gap-2">
@@ -406,8 +461,6 @@ export default function CreateMarketPage() {
                   </div>
                 </div>
               )}
-            </div>
-          </section>
 
           {/* Verification */}
           <section className="bg-slate-900 border border-slate-800 rounded-xl p-6">

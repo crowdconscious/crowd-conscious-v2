@@ -38,6 +38,8 @@ import { VotePanel } from '../../components/VotePanel'
 import { CelebrationModal } from '@/components/gamification/CelebrationModal'
 import ShareButton from '@/components/ShareButton'
 import { toDisplayPercent } from '@/lib/probability-utils'
+import { getMarketText, getOutcomeLabel } from '@/lib/i18n/market-translations'
+import { useLocale } from '@/lib/i18n/useLocale'
 import type { Database } from '@/types/database'
 
 type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row']
@@ -127,6 +129,7 @@ export function MarketDetailClient({
   outcomes = [],
   myVote = null,
 }: Props) {
+  const locale = useLocale()
   const [researchOpen, setResearchOpen] = useState(false)
   const [timeRange, setTimeRange] = useState<TimeRange>('30d')
   const [celebration, setCelebration] = useState<{
@@ -220,8 +223,8 @@ export function MarketDetailClient({
               {config.label}
             </span>
             <div className="flex items-center justify-between gap-4 mb-2">
-              <h1 className="text-2xl font-bold text-white flex-1 min-w-0">{market.title}</h1>
-              <ShareButton marketId={market.id} title={market.title ?? ''} />
+              <h1 className="text-2xl font-bold text-white flex-1 min-w-0">{getMarketText(market, 'title', locale)}</h1>
+              <ShareButton marketId={market.id} title={getMarketText(market, 'title', locale)} />
             </div>
             <p className="text-slate-400 text-sm">
               Created by {creatorName} on {formatDate(market.created_at)}
@@ -284,7 +287,7 @@ export function MarketDetailClient({
                 <p className="text-slate-400 text-sm">Current probability</p>
                 <p className="text-4xl font-bold text-white">
                   {isMultiOutcome && leadingOutcome
-                    ? `${leadingOutcome.label} ${Math.round(toDisplayPercent(leadingOutcome.probability || 0))}%`
+                    ? `${getOutcomeLabel(leadingOutcome, locale)} ${Math.round(toDisplayPercent(leadingOutcome.probability || 0))}%`
                     : `${Math.round(prob)}% YES`}
                 </p>
               </div>
@@ -472,11 +475,11 @@ export function MarketDetailClient({
                   <div className="p-4 space-y-4">
                     <div>
                       <p className="text-slate-400 text-sm font-medium mb-1">Description</p>
-                      <p className="text-white text-sm">{market.description}</p>
+                      <p className="text-white text-sm">{getMarketText(market, 'description', locale)}</p>
                     </div>
                     <div>
                       <p className="text-slate-400 text-sm font-medium mb-1">Resolution criteria</p>
-                      <p className="text-white text-sm">{market.resolution_criteria}</p>
+                      <p className="text-white text-sm">{getMarketText(market, 'resolution_criteria', locale)}</p>
                     </div>
                     {market.verification_sources?.length > 0 && (
                       <div>
@@ -544,7 +547,7 @@ export function MarketDetailClient({
                 <BarChart3 className="w-4 h-4" />
                 Market Info
               </h3>
-              <ShareButton marketId={market.id} title={market.title ?? ''} compact />
+              <ShareButton marketId={market.id} title={getMarketText(market, 'title', locale)} compact />
             </div>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
@@ -585,7 +588,7 @@ export function MarketDetailClient({
         message={celebration.xpGained ? `You earned ${celebration.xpGained} XP` : 'Your prediction has been recorded.'}
         xpGained={celebration.xpGained}
         sharePath={`/predictions/markets/${market.id}`}
-        shareTitle={market.title}
+        shareTitle={getMarketText(market, 'title', locale)}
         shareCardMarketId={market.id}
         onClose={handleCelebrationClose}
       />

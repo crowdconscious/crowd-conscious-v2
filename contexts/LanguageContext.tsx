@@ -25,7 +25,9 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    setLanguageState(getInitialLanguage())
+    const lang = getInitialLanguage()
+    setLanguageState(lang)
+    document.cookie = `${STORAGE_KEY}=${lang};path=/;max-age=31536000`
     setMounted(true)
   }, [])
 
@@ -33,6 +35,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     setLanguageState(lang)
     if (typeof window !== 'undefined') {
       localStorage.setItem(STORAGE_KEY, lang)
+      document.cookie = `${STORAGE_KEY}=${lang};path=/;max-age=31536000`
       document.documentElement.lang = lang === 'es' ? 'es' : 'en'
     }
   }, [])

@@ -2,6 +2,7 @@ import { ImageResponse } from 'next/og'
 import { createClient } from '@supabase/supabase-js'
 import { readFile } from 'fs/promises'
 import { join } from 'path'
+import { getMarketText, getOutcomeLabel } from '@/lib/i18n/market-translations'
 
 // Node.js runtime (default) — no Edge
 
@@ -23,6 +24,7 @@ export async function GET(
     const { id: marketId } = await params
     const { searchParams } = new URL(request.url)
     const format = searchParams.get('format')
+    const locale = searchParams.get('lang') || 'es'
     const isStory = format === 'story'
     const WIDTH = isStory ? 1080 : 1200
     const HEIGHT = isStory ? 1920 : 630
@@ -34,7 +36,7 @@ export async function GET(
 
     const { data: market, error } = await supabase
       .from('prediction_markets')
-      .select('id, title, category, current_probability, total_votes')
+      .select('id, title, category, current_probability, total_votes, translations')
       .eq('id', marketId)
       .single()
 
@@ -67,17 +69,18 @@ export async function GET(
 
     const { data: outcomes } = await supabase
       .from('market_outcomes')
-      .select('label, probability')
+      .select('label, probability, translations')
       .eq('market_id', marketId)
       .order('probability', { ascending: false })
 
     const topOutcome = outcomes?.[0]
     const probRaw = topOutcome?.probability ?? market.current_probability ?? 0.5
     const probability = Math.min(100, Math.max(0, Math.round(Number(probRaw) * 100)))
-    const outcomeName = topOutcome?.label ?? (probability >= 50 ? 'Yes' : 'Undecided')
+    const outcomeName = topOutcome ? getOutcomeLabel(topOutcome, locale) : (probability >= 50 ? 'Yes' : 'Undecided')
     const totalPredictions = market.total_votes ?? 0
     const emoji = CATEGORY_EMOJI[market.category || ''] || '🔮'
-    const titleLength = (market.title ?? '').length
+    const displayTitle = getMarketText(market, 'title', locale)
+    const titleLength = displayTitle.length
 
     let logoBase64 = ''
     try {
@@ -201,7 +204,7 @@ export async function GET(
                   justifyContent: 'center',
                 }}
               >
-                {(market.title ?? '').slice(0, 120)}{(market.title?.length ?? 0) > 120 ? '…' : ''}
+                {displayTitle.slice(0, 120)}{displayTitle.length > 120 ? '…' : ''}
               </div>
             </div>
             <div
@@ -413,7 +416,7 @@ export async function GET(
                   lineHeight: '1.25',
                 }}
               >
-                {(market.title ?? '').slice(0, 120)}{(market.title?.length ?? 0) > 120 ? '…' : ''}
+                {displayTitle.slice(0, 120)}{displayTitle.length > 120 ? '…' : ''}
               </div>
             </div>
             <div

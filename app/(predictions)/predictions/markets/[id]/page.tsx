@@ -1,7 +1,9 @@
 import { notFound } from 'next/navigation'
+import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase-server'
 import { getCurrentUser } from '@/lib/auth-server'
 import { MarketDetailClient } from './MarketDetailClient'
+import { getMarketText } from '@/lib/i18n/market-translations'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,20 +15,22 @@ export async function generateMetadata({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
+  const cookieStore = await cookies()
+  const locale = cookieStore.get('preferred-language')?.value === 'en' ? 'en' : 'es'
   const supabase = await createClient()
   const { data: market } = await supabase
     .from('prediction_markets')
-    .select('title, description')
+    .select('title, description, translations')
     .eq('id', id)
     .single()
 
   if (!market) return {}
 
-  const title = market.title || 'Prediction Market'
+  const title = getMarketText(market, 'title', locale) || 'Prediction Market'
   const description =
-    market.description?.slice(0, 160) ||
+    getMarketText(market, 'description', locale)?.slice(0, 160) ||
     `Make your prediction on ${title} at Crowd Conscious.`
-  const ogImage = `${BASE_URL}/api/og/market/${id}`
+  const ogImage = `${BASE_URL}/api/og/market/${id}${locale === 'en' ? '?lang=en' : ''}`
 
   return {
     title: `${title} | Crowd Conscious`,
@@ -112,7 +116,7 @@ export default async function MarketDetailPage({
       .eq('source_type', 'trade_fee'),
     supabase
       .from('market_outcomes')
-      .select('id, label, probability, vote_count, total_confidence, is_winner, sort_order')
+      .select('id, label, probability, vote_count, total_confidence, is_winner, sort_order, translations')
       .eq('market_id', id)
       .order('sort_order', { ascending: true }),
     user
@@ -143,6 +147,7 @@ export default async function MarketDetailPage({
     vote_count: o.vote_count ?? 0,
     total_confidence: o.total_confidence ?? 0,
     is_winner: o.is_winner,
+    translations: (o as { translations?: unknown }).translations,
   }))
 
   let myVote: { outcome_id: string; outcome_label: string; confidence: number; xp_earned: number; is_correct: boolean | null; bonus_xp: number } | null = null

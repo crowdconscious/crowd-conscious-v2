@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { X } from 'lucide-react'
 import type { Database } from '@/types/database'
 import { toDisplayPercent } from '@/lib/probability-utils'
+import { getMarketText } from '@/lib/i18n/market-translations'
+import { useLocale } from '@/lib/i18n/useLocale'
 
 type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row']
 
@@ -21,6 +23,7 @@ interface TradeModalProps {
 }
 
 export function TradeModal({ market, side, isOpen, onClose }: TradeModalProps) {
+  const locale = useLocale()
   const [amount, setAmount] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -78,8 +81,8 @@ export function TradeModal({ market, side, isOpen, onClose }: TradeModalProps) {
       <div className="relative bg-slate-900 border border-slate-700 rounded-xl shadow-xl max-w-md w-full p-6">
         <div className="flex items-start justify-between mb-4">
           <h3 className="text-lg font-semibold text-white">
-            Trade {side === 'yes' ? 'YES' : 'NO'} — {market.title.slice(0, 50)}
-            {market.title.length > 50 ? '...' : ''}
+            Trade {side === 'yes' ? 'YES' : 'NO'} — {getMarketText(market, 'title', locale).slice(0, 50)}
+            {getMarketText(market, 'title', locale).length > 50 ? '...' : ''}
           </h3>
           <button
             onClick={onClose}

@@ -9,6 +9,7 @@ import {
   downloadCard,
   shareNative,
 } from '@/lib/share-utils'
+import { useLocale } from '@/lib/i18n/useLocale'
 
 interface ShareButtonProps {
   marketId: string
@@ -17,6 +18,7 @@ interface ShareButtonProps {
 }
 
 export default function ShareButton({ marketId, title, compact = false }: ShareButtonProps) {
+  const locale = useLocale()
   const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -104,7 +106,7 @@ export default function ShareButton({ marketId, title, compact = false }: ShareB
           </button>
           <button
             onClick={() => {
-              downloadCard(marketId, 'standard')
+              downloadCard(marketId, 'standard', locale)
               setOpen(false)
             }}
             className="w-full px-4 py-2 text-left text-sm text-slate-200 hover:bg-slate-700 flex items-center gap-3"
@@ -113,7 +115,7 @@ export default function ShareButton({ marketId, title, compact = false }: ShareB
           </button>
           <button
             onClick={() => {
-              downloadCard(marketId, 'story')
+              downloadCard(marketId, 'story', locale)
               setOpen(false)
             }}
             className="w-full px-4 py-2 text-left text-sm text-slate-200 hover:bg-slate-700 flex items-center gap-3"
@@ -123,7 +125,7 @@ export default function ShareButton({ marketId, title, compact = false }: ShareB
           <div className="border-t border-slate-700 my-1" />
           <button
             onClick={() => {
-              shareNative(marketId, title)
+              shareNative(marketId, title, 'standard', locale)
               setOpen(false)
             }}
             className="w-full px-4 py-2 text-left text-sm text-emerald-400 hover:bg-slate-700 flex items-center gap-3 font-medium"

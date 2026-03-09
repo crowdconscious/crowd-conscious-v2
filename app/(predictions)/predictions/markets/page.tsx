@@ -63,18 +63,22 @@ async function getHistoryByMarket(): Promise<Record<string, { probability: numbe
   return byMarket
 }
 
-async function getLeadingOutcomesByMarket(): Promise<Record<string, { label: string; probability: number }>> {
+async function getLeadingOutcomesByMarket(): Promise<Record<string, { label: string; probability: number; translations?: unknown }>> {
   const supabase = await createClient()
   const { data } = await supabase
     .from('market_outcomes')
-    .select('market_id, label, probability')
+    .select('market_id, label, probability, translations')
     .order('probability', { ascending: false })
 
-  const byMarket: Record<string, { label: string; probability: number }> = {}
+  const byMarket: Record<string, { label: string; probability: number; translations?: unknown }> = {}
   for (const row of data ?? []) {
     const id = row.market_id
     if (!byMarket[id]) {
-      byMarket[id] = { label: row.label, probability: Number(row.probability) }
+      byMarket[id] = {
+        label: row.label,
+        probability: Number(row.probability),
+        translations: (row as { translations?: unknown }).translations,
+      }
     }
   }
   return byMarket

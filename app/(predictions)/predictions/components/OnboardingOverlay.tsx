@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, ChevronRight } from 'lucide-react'
 import type { Database } from '@/types/database'
+import { getMarketText } from '@/lib/i18n/market-translations'
+import { useLocale } from '@/lib/i18n/useLocale'
 
 type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row']
 
@@ -16,6 +18,7 @@ interface OnboardingOverlayProps {
 }
 
 export function OnboardingOverlay({ trendingMarkets, onDismiss }: OnboardingOverlayProps) {
+  const locale = useLocale()
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -78,7 +81,7 @@ export function OnboardingOverlay({ trendingMarkets, onDismiss }: OnboardingOver
                 onClick={handleDismiss}
                 className="flex items-center justify-between p-3 bg-slate-800/50 border border-slate-700 rounded-lg hover:border-emerald-500/50 transition-colors group"
               >
-                <span className="font-medium text-white truncate pr-2">{m.title}</span>
+                <span className="font-medium text-white truncate pr-2">{getMarketText(m, 'title', locale)}</span>
                 <ChevronRight className="w-5 h-5 text-slate-500 group-hover:text-emerald-400 shrink-0" />
               </Link>
             ))}

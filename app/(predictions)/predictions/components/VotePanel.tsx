@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { Check, TrendingUp, TrendingDown } from 'lucide-react'
 import type { Database } from '@/types/database'
 import { toDisplayPercent } from '@/lib/probability-utils'
+import { getOutcomeLabel } from '@/lib/i18n/market-translations'
+import { useLocale } from '@/lib/i18n/useLocale'
 
 type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row'] & {
   market_type?: string
@@ -18,6 +20,7 @@ type Outcome = {
   vote_count: number
   total_confidence: number
   is_winner: boolean | null
+  translations?: Record<string, { label?: string }> | null
 }
 
 type MyVote = {
@@ -71,6 +74,7 @@ interface VotePanelProps {
 }
 
 export function VotePanel({ market, outcomes, myVote, onVoteSuccess }: VotePanelProps) {
+  const locale = useLocale()
   const [selectedOutcomeId, setSelectedOutcomeId] = useState<string | null>(null)
   const [confidence, setConfidence] = useState(7)
   const [loading, setLoading] = useState(false)
@@ -114,13 +118,13 @@ export function VotePanel({ market, outcomes, myVote, onVoteSuccess }: VotePanel
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
         <h3 className="font-semibold text-white mb-2">Predictions closed</h3>
         <p className="text-slate-400 text-sm mb-4">
-          This market has been resolved. Winning outcome: <span className="text-emerald-400 font-medium">{winningOutcome?.label ?? market.resolution ?? '—'}</span>
+          This market has been resolved. Winning outcome: <span className="text-emerald-400 font-medium">{winningOutcome ? getOutcomeLabel(winningOutcome, locale) : (market.resolution ?? '—')}</span>
         </p>
         {myVote && (
           <div className="p-4 bg-slate-800/50 rounded-lg">
             <p className="text-slate-300 text-sm font-medium">Your prediction</p>
             <p className="text-white mt-1">
-              {myVote.outcome_label} at confidence {myVote.confidence}
+              {outcomes.find((o) => o.id === myVote.outcome_id) ? getOutcomeLabel(outcomes.find((o) => o.id === myVote.outcome_id)!, locale) : myVote.outcome_label} at confidence {myVote.confidence}
             </p>
             <p className="text-slate-400 text-sm mt-1">
               {myVote.is_correct ? (
@@ -142,7 +146,7 @@ export function VotePanel({ market, outcomes, myVote, onVoteSuccess }: VotePanel
         <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
           <p className="text-emerald-400 font-medium flex items-center gap-2">
             <Check className="w-4 h-4" />
-            {myVote!.outcome_label} at confidence {myVote!.confidence}
+            {outcomes.find((o) => o.id === myVote!.outcome_id) ? getOutcomeLabel(outcomes.find((o) => o.id === myVote!.outcome_id)!, locale) : myVote!.outcome_label} at confidence {myVote!.confidence}
           </p>
           <p className="text-slate-300 text-sm mt-1">+{myVote!.xp_earned} XP earned</p>
         </div>
@@ -168,7 +172,8 @@ export function VotePanel({ market, outcomes, myVote, onVoteSuccess }: VotePanel
         <div className="space-y-4">
           <div className="flex gap-2">
             {outcomes.map((o) => {
-              const isYes = o.label.toLowerCase() === 'yes'
+              const label = getOutcomeLabel(o, locale)
+              const isYes = label.toLowerCase() === 'yes'
               const isSelected = selectedOutcomeId === o.id
               return (
                 <button
@@ -183,7 +188,7 @@ export function VotePanel({ market, outcomes, myVote, onVoteSuccess }: VotePanel
                   }`}
                 >
                   {isYes ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-                  I think {o.label.toUpperCase()}
+                  I think {label.toUpperCase()}
                 </button>
               )
             })}
@@ -238,7 +243,7 @@ export function VotePanel({ market, outcomes, myVote, onVoteSuccess }: VotePanel
               >
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-white">{o.label}</p>
+                    <p className="font-medium text-white">{getOutcomeLabel(o, locale)}</p>
                     <p className="text-slate-400 text-sm">
                       {Math.round(toDisplayPercent(o.probability || 0))}% · {o.vote_count} votes
                     </p>

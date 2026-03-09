@@ -16,6 +16,8 @@ import {
 } from 'lucide-react'
 import { SponsorCheckoutModal } from './SponsorCheckoutModal'
 import Logo from '@/components/Logo'
+import { getMarketText } from '@/lib/i18n/market-translations'
+import { useLocale } from '@/lib/i18n/useLocale'
 
 const CATEGORY_CONFIG: Record<
   string,
@@ -67,6 +69,7 @@ export function SponsorPageClient({
   sponsored,
   leadingOutcomes,
 }: Props) {
+  const locale = useLocale()
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
   const [modal, setModal] = useState<{
     open: boolean
@@ -541,7 +544,7 @@ export function SponsorPageClient({
                     )}
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-white truncate">{m.sponsor_name}</p>
-                      <p className="text-slate-400 text-sm truncate">{m.title}</p>
+                      <p className="text-slate-400 text-sm truncate">{getMarketText(m, 'title', locale)}</p>
                       {m.sponsor_url && (
                         <a
                           href={m.sponsor_url}

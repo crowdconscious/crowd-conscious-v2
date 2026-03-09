@@ -29,12 +29,13 @@ export function copyMarketLink(marketId: string) {
   navigator.clipboard.writeText(`${base}/predictions/markets/${marketId}`)
 }
 
-export async function downloadCard(marketId: string, format: 'standard' | 'story' = 'standard') {
+export async function downloadCard(marketId: string, format: 'standard' | 'story' = 'standard', locale?: string) {
   const base = typeof window !== 'undefined' ? window.location.origin : ''
+  const langParam = locale && locale !== 'es' ? `&lang=${locale}` : ''
   const url =
     format === 'story'
-      ? `${base}/api/og/market/${marketId}?format=story`
-      : `${base}/api/og/market/${marketId}`
+      ? `${base}/api/og/market/${marketId}?format=story${langParam}`
+      : `${base}/api/og/market/${marketId}${locale && locale !== 'es' ? `?lang=${locale}` : ''}`
   try {
     const response = await fetch(url)
     const blob = await response.blob()
@@ -51,10 +52,11 @@ export async function downloadCard(marketId: string, format: 'standard' | 'story
   }
 }
 
-export async function shareNative(marketId: string, title: string, format: 'standard' | 'story' = 'standard') {
+export async function shareNative(marketId: string, title: string, format: 'standard' | 'story' = 'standard', locale?: string) {
   const base = getBaseUrl()
   const marketUrl = `${base}/predictions/markets/${marketId}`
-  const url = format === 'story' ? `/api/og/market/${marketId}?format=story` : `/api/og/market/${marketId}`
+  const langParam = locale && locale !== 'es' ? (format === 'story' ? `&lang=${locale}` : `?lang=${locale}`) : ''
+  const url = format === 'story' ? `/api/og/market/${marketId}?format=story${langParam}` : `/api/og/market/${marketId}${langParam}`
   const filename = format === 'story' ? 'crowd-conscious-story.png' : 'prediction.png'
   try {
     const response = await fetch(url)

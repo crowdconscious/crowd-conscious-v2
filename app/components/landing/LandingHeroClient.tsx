@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { toDisplayPercent } from '@/lib/probability-utils'
+import { getMarketText, getOutcomeLabel } from '@/lib/i18n/market-translations'
 import {
   Target,
   Vote,
@@ -316,9 +317,9 @@ export function LandingHeroClient({
                       <Icon className="w-3 h-3" />
                       {config.label}
                     </span>
-                    <p className="font-medium text-white mt-2 line-clamp-2">{m.title}</p>
+                    <p className="font-medium text-white mt-2 line-clamp-2">{getMarketText(m, 'title', language)}</p>
                     <p className="text-emerald-400 text-lg font-bold mt-1">
-                      {label} {prob}%
+                      {leading ? getOutcomeLabel(leading, language) : label} {prob}%
                     </p>
                     <p className="text-slate-500 text-xs mt-1">{votes} {c.predictions}</p>
                   </Link>

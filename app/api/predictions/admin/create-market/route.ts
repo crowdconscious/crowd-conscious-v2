@@ -39,6 +39,7 @@ export async function POST(request: NextRequest) {
       sponsor_logo_url,
       sponsorship_amount_mxn,
       conscious_fund_percentage,
+      translations,
     } = body
 
     if (!title?.trim()) {
@@ -128,19 +129,18 @@ export async function POST(request: NextRequest) {
         return Response.json({ error: rpcError.message }, { status: 500 })
       }
 
-      await admin
-        .from('prediction_markets')
-        .update({
-          description: description?.trim() || 'Standard description',
-          resolution_criteria: resolution_criteria?.trim() || 'Standard resolution',
-          verification_sources: verificationStrings,
-          tags: tagArray,
-          metadata,
-          conscious_fund_percentage: fundPct,
-          sponsor_contribution: sponsorAmount,
-          current_probability: 100 / outcomeLabels.length,
-        })
-        .eq('id', marketId)
+      const updatePayload: Record<string, unknown> = {
+        description: description?.trim() || 'Standard description',
+        resolution_criteria: resolution_criteria?.trim() || 'Standard resolution',
+        verification_sources: verificationStrings,
+        tags: tagArray,
+        metadata,
+        conscious_fund_percentage: fundPct,
+        sponsor_contribution: sponsorAmount,
+        current_probability: 100 / outcomeLabels.length,
+      }
+      if (translations && typeof translations === 'object') updatePayload.translations = translations
+      await admin.from('prediction_markets').update(updatePayload).eq('id', marketId)
 
       return Response.json({
         success: true,
@@ -165,19 +165,18 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: rpcError.message }, { status: 500 })
     }
 
-    await admin
-      .from('prediction_markets')
-      .update({
-        description: description?.trim() || 'Standard description',
-        resolution_criteria: resolution_criteria?.trim() || 'Standard resolution',
-        verification_sources: verificationStrings,
-        tags: tagArray,
-        metadata,
-        current_probability: prob,
-        conscious_fund_percentage: fundPct,
-        sponsor_contribution: sponsorAmount,
-      })
-      .eq('id', marketId)
+    const updatePayload: Record<string, unknown> = {
+      description: description?.trim() || 'Standard description',
+      resolution_criteria: resolution_criteria?.trim() || 'Standard resolution',
+      verification_sources: verificationStrings,
+      tags: tagArray,
+      metadata,
+      current_probability: prob,
+      conscious_fund_percentage: fundPct,
+      sponsor_contribution: sponsorAmount,
+    }
+    if (translations && typeof translations === 'object') updatePayload.translations = translations
+    await admin.from('prediction_markets').update(updatePayload).eq('id', marketId)
 
     return Response.json({
       success: true,

@@ -15,6 +15,8 @@ import ShareButton from '@/components/ShareButton'
 import { MiniSparkline } from './MiniSparkline'
 import { OnboardingOverlay, shouldShowOnboarding } from './OnboardingOverlay'
 import { toDisplayPercent } from '@/lib/probability-utils'
+import { getMarketText } from '@/lib/i18n/market-translations'
+import { useLocale } from '@/lib/i18n/useLocale'
 import type { Database } from '@/types/database'
 
 type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row']
@@ -87,6 +89,7 @@ function truncate(str: string, len: number): string {
 }
 
 export function PredictionsDashboardClient({ data }: Props) {
+  const locale = useLocale()
   const {
     userId,
     userName,
@@ -242,7 +245,7 @@ export function PredictionsDashboardClient({ data }: Props) {
                     className="bg-slate-900/80 border border-slate-800 rounded-xl p-3 hover:border-slate-600 transition-colors flex items-center justify-between gap-2"
                   >
                     <Link href={`/predictions/markets/${m.id}`} className="min-w-0 flex-1">
-                      <p className="font-medium text-white text-sm truncate">{m.title}</p>
+                      <p className="font-medium text-white text-sm truncate">{getMarketText(m, 'title', locale)}</p>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-slate-500 text-xs">{m.oldProb.toFixed(0)}%</span>
                         <ArrowRight className="w-3 h-3 text-slate-500" />
@@ -257,7 +260,7 @@ export function PredictionsDashboardClient({ data }: Props) {
                     <div onClick={(e) => e.stopPropagation()}>
                       <ShareButton
                         marketId={m.id}
-                        title={m.title ?? ''}
+                        title={getMarketText(m, 'title', locale)}
                         compact
                       />
                     </div>
@@ -282,7 +285,7 @@ export function PredictionsDashboardClient({ data }: Props) {
                     className="bg-slate-900/80 border border-slate-800 rounded-xl p-3 hover:border-slate-600 transition-colors flex items-center justify-between gap-2"
                   >
                     <Link href={`/predictions/markets/${m.id}`} className="min-w-0 flex-1">
-                      <p className="font-medium text-white text-sm truncate">{m.title}</p>
+                      <p className="font-medium text-white text-sm truncate">{getMarketText(m, 'title', locale)}</p>
                       <p className="text-slate-500 text-xs mt-0.5">
                         {Math.round(toDisplayPercent(Number(m.current_probability)))}% probability
                       </p>
@@ -290,7 +293,7 @@ export function PredictionsDashboardClient({ data }: Props) {
                     <div onClick={(e) => e.stopPropagation()}>
                       <ShareButton
                         marketId={m.id}
-                        title={m.title ?? ''}
+                        title={getMarketText(m, 'title', locale)}
                         compact
                       />
                     </div>

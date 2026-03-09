@@ -1,7 +1,9 @@
 import Link from 'next/link'
+import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase-server'
 import dynamic from 'next/dynamic'
 import { toDisplayPercent } from '@/lib/probability-utils'
+import { getMarketText, getOutcomeLabel } from '@/lib/i18n/market-translations'
 import { Globe, Building2, Briefcase, Users, Trophy, Leaf, ChevronRight, Heart } from 'lucide-react'
 
 const LandingNav = dynamic(() => import('./components/landing/LandingNav'))
@@ -43,13 +45,13 @@ async function getLandingData() {
   ] = await Promise.all([
     supabase
       .from('prediction_markets')
-      .select('id, title, category, current_probability, total_votes, image_url, sponsor_name')
+      .select('id, title, category, current_probability, total_votes, image_url, sponsor_name, translations')
       .in('status', ['active', 'trading'])
       .order('total_votes', { ascending: false, nullsFirst: false })
       .limit(6),
     supabase
       .from('market_outcomes')
-      .select('market_id, label, probability')
+      .select('market_id, label, probability, translations')
       .order('probability', { ascending: false }),
     supabase
       .from('conscious_fund')
@@ -60,7 +62,7 @@ async function getLandingData() {
     supabase.from('fund_votes').select('cause_id').eq('cycle', cycle),
     supabase
       .from('prediction_markets')
-      .select('id, title, category, current_probability, total_votes')
+      .select('id, title, category, current_probability, total_votes, translations')
       .eq('category', 'world_cup')
       .in('status', ['active', 'trading'])
       .order('total_votes', { ascending: false, nullsFirst: false })
@@ -77,11 +79,15 @@ async function getLandingData() {
     sponsor_name: string | null
   }>
 
-  const outcomesByMarket: Record<string, { label: string; probability: number }> = {}
+  const outcomesByMarket: Record<string, { label: string; probability: number; translations?: unknown }> = {}
   for (const o of outcomesRes.data || []) {
     const id = o.market_id
     if (!outcomesByMarket[id]) {
-      outcomesByMarket[id] = { label: o.label, probability: Number(o.probability) }
+      outcomesByMarket[id] = {
+        label: o.label,
+        probability: Number(o.probability),
+        translations: (o as { translations?: unknown }).translations,
+      }
     }
   }
 
@@ -126,6 +132,9 @@ const WorldCupCountdown = dynamic(() =>
 )
 
 export default async function LandingPage() {
+  const cookieStore = await cookies()
+  const locale = cookieStore.get('preferred-language')?.value === 'en' ? 'en' : 'es'
+
   let markets: Awaited<ReturnType<typeof getLandingData>>['markets'] = []
   let outcomesByMarket: Awaited<ReturnType<typeof getLandingData>>['outcomesByMarket'] = {}
   let fundBalance = 0
@@ -191,11 +200,11 @@ export default async function LandingPage() {
                           <Icon className="w-3 h-3" />
                           {config.label}
                         </span>
-                        <p className="font-medium text-white truncate">{m.title}</p>
+                        <p className="font-medium text-white truncate">{getMarketText(m, 'title', locale)}</p>
                       </div>
                       <div className="flex items-center gap-4 shrink-0">
                         <span className="text-emerald-400 font-bold text-lg">
-                          {label} {prob}%
+                          {leading ? getOutcomeLabel(leading, locale) : label} {prob}%
                         </span>
                         <span className="text-slate-500 text-sm">{votes} votes</span>
                         <ChevronRight className="w-5 h-5 text-slate-500" />
@@ -248,8 +257,8 @@ export default async function LandingPage() {
                       href={`/predictions/markets/${m.id}`}
                       className="block bg-slate-900/60 border border-slate-700 rounded-xl p-4 hover:border-emerald-500/40 hover:shadow-lg hover:shadow-emerald-500/10 transition-all"
                     >
-                      <p className="font-medium text-white line-clamp-2 text-sm">{m.title}</p>
-                      <p className="text-emerald-400 font-bold mt-2">{label} {prob}%</p>
+                      <p className="font-medium text-white line-clamp-2 text-sm">{getMarketText(m, 'title', locale)}</p>
+                      <p className="text-emerald-400 font-bold mt-2">{leading ? getOutcomeLabel(leading, locale) : label} {prob}%</p>
                     </Link>
                   )
                 })}
