@@ -159,6 +159,16 @@ export const CelebrationModal = memo(function CelebrationModal({
   }, [shareUrl])
 
   const [shareCardLoading, setShareCardLoading] = useState(false)
+  const [cardLoaded, setCardLoaded] = useState(false)
+  const [cardError, setCardError] = useState(false)
+
+  // Reset card load state when modal opens or marketId changes
+  useEffect(() => {
+    if (isOpen && shareCardMarketId) {
+      setCardLoaded(false)
+      setCardError(false)
+    }
+  }, [isOpen, shareCardMarketId])
   const handleShareCard = useCallback(async () => {
     if (!shareCardUrl) return
     setShareCardLoading(true)
@@ -373,14 +383,29 @@ export const CelebrationModal = memo(function CelebrationModal({
               {/* Social share buttons */}
               {shareLinks && (
                 <div className="mb-4">
-                  {shareCardMarketId && (
-                    <img
-                      src={`/api/og/market/${shareCardMarketId}`}
-                      alt="Share card preview"
-                      className="w-full max-w-[400px] rounded-xl mx-auto mb-4 border border-slate-200"
-                      onLoad={() => console.log('[CelebrationModal] Card image loaded')}
-                      onError={(e) => console.error('[CelebrationModal] Card image failed to load:', e)}
-                    />
+                  {shareCardMarketId && !cardError && (
+                    <div className="relative w-full max-w-[500px] mx-auto mb-4">
+                      {!cardLoaded && (
+                        <div
+                          className="w-full rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 text-sm"
+                          style={{ aspectRatio: '1200/630', backgroundColor: '#1a2332' }}
+                        >
+                          Generating your card...
+                        </div>
+                      )}
+                      <img
+                        src={`/api/og/market/${shareCardMarketId}`}
+                        alt="Your prediction card"
+                        onLoad={() => setCardLoaded(true)}
+                        onError={() => setCardError(true)}
+                        className="w-full rounded-xl border border-slate-200"
+                        style={{
+                          display: cardLoaded ? 'block' : 'none',
+                          width: '100%',
+                          maxWidth: '500px',
+                        }}
+                      />
+                    </div>
                   )}
                   <p className="text-sm font-medium text-slate-600 mb-2 text-center">Share your prediction</p>
                   <div className="flex flex-wrap justify-center gap-2">
