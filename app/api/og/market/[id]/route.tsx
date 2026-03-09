@@ -1,5 +1,7 @@
 import { ImageResponse } from 'next/og'
 import { createClient } from '@supabase/supabase-js'
+import { readFile } from 'fs/promises'
+import { join } from 'path'
 
 // Node.js runtime (default) — no Edge
 
@@ -77,6 +79,21 @@ export async function GET(
     const emoji = CATEGORY_EMOJI[market.category || ''] || '🔮'
     const titleLength = (market.title ?? '').length
 
+    let logoBase64 = ''
+    try {
+      try {
+        const logoPath = join(process.cwd(), 'public', 'images', 'logo.png')
+        const logoData = await readFile(logoPath)
+        logoBase64 = `data:image/png;base64,${logoData.toString('base64')}`
+      } catch {
+        const logoPath = join(process.cwd(), 'public', 'images', 'logo-small.png')
+        const logoData = await readFile(logoPath)
+        logoBase64 = `data:image/png;base64,${logoData.toString('base64')}`
+      }
+    } catch (err) {
+      console.log('[OG] Could not load logo file, using text fallback')
+    }
+
     // Satori doesn't support conic-gradient; use SVG donut
     const donutSize = isStory ? 220 : 160
     const donutInner = isStory ? 155 : 110
@@ -128,16 +145,26 @@ export async function GET(
                 width: '100%',
               }}
             >
-              <div
-                style={{
-                  display: 'flex',
-                  fontSize: '28px',
-                  fontWeight: 700,
-                  color: '#10b981',
-                }}
-              >
-                CROWD CONSCIOUS
-              </div>
+              {logoBase64 ? (
+                <img
+                  src={logoBase64}
+                  width={200}
+                  height={60}
+                  style={{ display: 'flex', objectFit: 'contain' }}
+                  alt=""
+                />
+              ) : (
+                <div
+                  style={{
+                    display: 'flex',
+                    fontSize: '28px',
+                    fontWeight: 700,
+                    color: '#10b981',
+                  }}
+                >
+                  CROWD CONSCIOUS
+                </div>
+              )}
               <div
                 style={{
                   display: 'flex',
@@ -325,17 +352,27 @@ export async function GET(
               justifyContent: 'space-between',
             }}
           >
-            <div
-              style={{
-                display: 'flex',
-                fontSize: '24px',
-                fontWeight: 700,
-                color: '#10b981',
-                letterSpacing: '-0.5px',
-              }}
-            >
-              CROWD CONSCIOUS
-            </div>
+            {logoBase64 ? (
+              <img
+                src={logoBase64}
+                width={180}
+                height={54}
+                style={{ display: 'flex', objectFit: 'contain' }}
+                alt=""
+              />
+            ) : (
+              <div
+                style={{
+                  display: 'flex',
+                  fontSize: '24px',
+                  fontWeight: 700,
+                  color: '#10b981',
+                  letterSpacing: '-0.5px',
+                }}
+              >
+                CROWD CONSCIOUS
+              </div>
+            )}
             <div
               style={{
                 display: 'flex',

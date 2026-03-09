@@ -74,7 +74,7 @@ export const BaseEmailTemplate = ({
           }}>
             {/* Logo */}
             <Img
-              src={`${APP_URL}/logo.png`}
+              src={`${APP_URL}/images/logo.png`}
               alt="Crowd Conscious Logo"
               width="60"
               height="60"

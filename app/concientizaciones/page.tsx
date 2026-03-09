@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { CheckCircle2, Users, Heart, Award, ArrowRight, Sparkles, BookOpen, TrendingUp } from 'lucide-react'
+import Logo from '@/components/Logo'
 
 export default function ConcientizacionesLanding() {
   return (
@@ -8,11 +9,7 @@ export default function ConcientizacionesLanding() {
       <nav className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <Link href="/" className="flex items-center gap-2">
-              <span className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">
-                Crowd Conscious
-              </span>
-            </Link>
+            <Logo size="sm" linkTo="/" />
             <div className="flex items-center gap-4">
               <Link 
                 href="/marketplace" 

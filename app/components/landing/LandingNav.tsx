@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { Menu, X } from 'lucide-react'
+import Logo from '@/components/Logo'
 import LanguageSwitcherSimple from '@/components/LanguageSwitcherSimple'
 import { useLanguage } from '@/contexts/LanguageContext'
 
@@ -30,16 +30,7 @@ export default function LandingNav() {
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all ${navBg}`}>
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex justify-between items-center h-20">
-          <Link href="/" className="flex items-center shrink-0">
-            <Image
-              src="/images/logo-small.png"
-              alt="Crowd Conscious"
-              width={160}
-              height={40}
-              className="h-10 w-auto object-contain object-left"
-              priority
-            />
-          </Link>
+          <Logo size="md" linkTo="/" />
 
           <div className="hidden md:flex items-center gap-8">
             <Link

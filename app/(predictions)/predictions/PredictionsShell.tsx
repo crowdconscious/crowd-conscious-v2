@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
+import Logo from '@/components/Logo'
 import {
   LayoutDashboard,
   TrendingUp,
@@ -57,16 +57,9 @@ export default function PredictionsShell({
     <div className="min-h-screen bg-slate-950 text-slate-100 flex">
       {/* Sidebar - desktop only */}
       <aside className="w-64 border-r border-slate-800 flex flex-col flex-shrink-0 hidden md:flex">
-        <Link href="/" className="flex items-center gap-2 p-4 border-b border-slate-800 hover:opacity-90 transition-opacity">
-          <Image
-            src="/images/logo.png"
-            alt="Crowd Conscious"
-            width={120}
-            height={120}
-            className="h-8 w-20 object-contain shrink-0"
-          />
-          <span className="font-bold text-xl text-white">Crowd Conscious</span>
-        </Link>
+        <div className="p-4 border-b border-slate-800">
+          <Logo size="sm" linkTo="/predictions" />
+        </div>
 
         <nav className="flex-1 p-4 space-y-1">
           {NAV_ITEMS.map((item) => {
@@ -164,16 +157,7 @@ export default function PredictionsShell({
         >
           <Menu className="w-6 h-6" />
         </button>
-        <Link href="/" className="flex items-center gap-2">
-          <Image
-            src="/images/logo.png"
-            alt="Crowd Conscious"
-            width={80}
-            height={80}
-            className="h-7 w-14 object-contain"
-          />
-          <span className="font-bold text-lg text-white">Crowd Conscious</span>
-        </Link>
+        <Logo size="sm" linkTo="/predictions" />
         <div className="flex items-center gap-2">
           <NotificationsBell />
           <LanguageSwitcherSimple />
@@ -196,16 +180,9 @@ export default function PredictionsShell({
           />
           <aside className="md:hidden fixed top-0 left-0 bottom-0 w-64 bg-slate-900 border-r border-slate-800 flex flex-col z-40 shadow-xl">
             <div className="p-4 border-b border-slate-800 flex items-center justify-between">
-              <Link href="/" className="flex items-center gap-2" onClick={closeMobileMenu}>
-                <Image
-                  src="/images/logo.png"
-                  alt="Crowd Conscious"
-                  width={120}
-                  height={120}
-                  className="h-8 w-20 object-contain shrink-0"
-                />
-                <span className="font-bold text-xl text-white">Crowd Conscious</span>
-              </Link>
+              <div onClick={closeMobileMenu} className="flex items-center">
+                <Logo size="sm" linkTo="/predictions" />
+              </div>
               <button
                 onClick={closeMobileMenu}
                 className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"

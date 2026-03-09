@@ -22,7 +22,9 @@ export const metadata: Metadata = {
   description:
     'Free-to-play prediction platform where your opinion drives real community impact. Predict on sustainability, policy, sports & more — brand sponsors fund the Conscious Fund.',
   icons: {
-    icon: '/images/favicon-512.png',
+    icon: [
+      { url: '/images/favicon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
     apple: '/images/apple-touch-icon.png',
   },
   openGraph: {

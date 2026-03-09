@@ -15,6 +15,7 @@ import {
   ExternalLink,
 } from 'lucide-react'
 import { SponsorCheckoutModal } from './SponsorCheckoutModal'
+import Logo from '@/components/Logo'
 
 const CATEGORY_CONFIG: Record<
   string,
@@ -141,7 +142,7 @@ export function SponsorPageClient({
                   <>
                     <div className="p-6 space-y-4">
                       <div className="flex justify-between items-center">
-                        <span className="text-emerald-400 font-bold text-sm">CROWD CONSCIOUS</span>
+                        <Logo size="sm" linkTo="" className="[&_img]:max-h-6" />
                         <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-xs">⚽ World Cup</span>
                       </div>
                       <p className="text-white font-semibold text-lg">

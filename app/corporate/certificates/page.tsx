@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { Award, Download, Share2, Twitter, Linkedin, Facebook, Instagram, CheckCircle, Users, TrendingUp, Calendar } from 'lucide-react'
+import Logo from '@/components/Logo'
 
 export default function CorporateCertificatesPage() {
   const [loading, setLoading] = useState(true)
@@ -159,14 +159,7 @@ export default function CorporateCertificatesPage() {
                 {/* Certificate Preview */}
                 <div className="bg-gradient-to-br from-yellow-50 to-orange-50 p-6 border-b-4 border-gradient-to-r from-yellow-400 to-orange-500">
                   <div className="flex items-center justify-center mb-4">
-                    <div className="relative w-16 h-16">
-                      <Image
-                        src="/images/logo.png"
-                        alt="Crowd Conscious"
-                        fill
-                        className="object-contain"
-                      />
-                    </div>
+                    <Logo size="sm" linkTo="" />
                   </div>
                   <h3 className="text-center font-bold text-slate-900 text-lg mb-2">
                     Empresa Consciente
@@ -293,14 +286,7 @@ export default function CorporateCertificatesPage() {
                 {/* Header */}
                 <div className="mb-8">
                   <div className="flex justify-center mb-6">
-                    <div className="relative w-40 h-40 sm:w-48 sm:h-48">
-                      <Image
-                        src="/images/logo.png"
-                        alt="Crowd Conscious"
-                        fill
-                        className="object-contain"
-                      />
-                    </div>
+                    <Logo size="lg" linkTo="" className="max-h-48" />
                   </div>
                   <div className="h-1 w-full bg-gradient-to-r from-teal-600 to-purple-600 rounded-full"></div>
                 </div>

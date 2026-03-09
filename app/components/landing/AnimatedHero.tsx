@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import Image from 'next/image'
+import Logo from '@/components/Logo'
 import { useEffect, useState } from 'react'
 
 interface ImpactStats {
@@ -27,7 +27,9 @@ export default function AnimatedHero({ impactStats }: AnimatedHeroProps) {
     return (
       <section className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-600 via-teal-700 to-purple-700">
         <div className="text-center text-white">
-          <h1 className="text-5xl md:text-7xl font-bold mb-6">Crowd Conscious</h1>
+          <div className="flex justify-center mb-6">
+            <Logo size="lg" linkTo="" className="brightness-0 invert" />
+          </div>
           <p className="text-xl md:text-2xl opacity-90">Loading...</p>
         </div>
       </section>
@@ -89,26 +91,8 @@ export default function AnimatedHero({ impactStats }: AnimatedHeroProps) {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1, type: 'spring', delay: 0.1 }}
         >
-          <div className="w-32 h-32 md:w-40 md:h-40 lg:w-48 lg:h-48 relative flex items-center justify-center">
-            <Image
-              src="/images/logo.png"
-              alt="Crowd Conscious Logo"
-              width={192}
-              height={192}
-              className="w-full h-full object-contain brightness-0 invert drop-shadow-2xl"
-              priority
-            />
-          </div>
+          <Logo size="lg" linkTo="" className="brightness-0 invert drop-shadow-2xl max-h-48" />
         </motion.div>
-
-        <motion.h1
-          className="text-5xl md:text-7xl lg:text-8xl font-bold mb-6 bg-gradient-to-r from-white to-teal-100 bg-clip-text text-transparent"
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.2 }}
-        >
-          Crowd Conscious
-        </motion.h1>
 
         <motion.p
           className="text-xl md:text-2xl lg:text-3xl mb-8 text-teal-100 max-w-4xl mx-auto leading-relaxed"

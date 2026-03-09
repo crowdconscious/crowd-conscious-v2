@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
+import Logo from '@/components/Logo'
 
 export default function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false)
@@ -30,19 +30,10 @@ export default function Navigation() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
-          {/* Logo - Just the logo without text */}
-          <Link href="/" className="hover:opacity-80 transition-opacity shrink-0">
-            <Image
-              src="/images/logo.png"
-              alt="Crowd Conscious"
-              width={140}
-              height={140}
-              className={`h-16 w-[140px] object-contain object-left ${
-                isScrolled ? '' : 'brightness-0 invert'
-              }`}
-              priority
-            />
-          </Link>
+          {/* Logo */}
+          <div className={isScrolled ? '' : '[&_img]:brightness-0 [&_img]:invert'}>
+            <Logo size="md" linkTo="/" />
+          </div>
 
           {/* Navigation Links */}
           <div className="hidden md:flex items-center space-x-8">

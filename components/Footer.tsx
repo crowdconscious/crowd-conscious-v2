@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Logo from '@/components/Logo'
 import { useLanguage } from '@/contexts/LanguageContext'
 
 export default function Footer() {
@@ -58,9 +59,8 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-8">
           {/* Brand Section */}
           <div className="lg:col-span-1">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-gradient-to-r from-teal-500 to-purple-500 rounded-lg"></div>
-              <span className="text-xl font-bold">Crowd Conscious</span>
+            <div className="mb-4">
+              <Logo size="sm" linkTo="/" />
             </div>
             <p className="text-slate-300 text-sm mb-4 leading-relaxed">
               {content[language].description}

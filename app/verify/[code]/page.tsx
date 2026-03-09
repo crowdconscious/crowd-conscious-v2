@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { CheckCircle, XCircle, Shield, Calendar, Award, Building2, User, ArrowLeft } from 'lucide-react'
+import Logo from '@/components/Logo'
 
 export default function VerificationPage({ params }: { params: Promise<{ code: string }> }) {
   const [loading, setLoading] = useState(true)
@@ -54,20 +54,10 @@ export default function VerificationPage({ params }: { params: Promise<{ code: s
       {/* Header */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-10 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-4">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="relative w-10 h-10">
-              <Image
-                src="/images/logo.png"
-                alt="Crowd Conscious"
-                fill
-                className="object-contain"
-              />
-            </div>
-            <div>
-              <div className="font-bold text-slate-900">Crowd Conscious</div>
-              <div className="text-xs text-slate-500">Verificación de Certificados</div>
-            </div>
-          </Link>
+          <div className="flex items-center gap-3">
+            <Logo size="sm" linkTo="/" />
+            <div className="text-xs text-slate-500">Verificación de Certificados</div>
+          </div>
         </div>
       </header>
 
@@ -127,19 +117,9 @@ export default function VerificationPage({ params }: { params: Promise<{ code: s
 
             {/* Certificate Details */}
             <div className="p-8 sm:p-12">
-              <div className="flex items-center justify-center gap-4 mb-8 pb-8 border-b border-slate-200">
-                <div className="relative w-16 h-16">
-                  <Image
-                    src="/images/logo.png"
-                    alt="Crowd Conscious"
-                    fill
-                    className="object-contain"
-                  />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-slate-900">Crowd Conscious</h2>
-                  <p className="text-slate-600">Plataforma de Impacto Social</p>
-                </div>
+              <div className="flex flex-col items-center justify-center gap-2 mb-8 pb-8 border-b border-slate-200">
+                <Logo size="md" linkTo="" />
+                <p className="text-slate-600">Plataforma de Impacto Social</p>
               </div>
 
               {/* Certificate Information */}

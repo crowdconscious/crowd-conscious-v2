@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
+import Logo from '@/components/Logo'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X, Home, BarChart3, Trophy, Award, DollarSign, User, Settings, LogOut } from 'lucide-react'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
@@ -111,12 +112,7 @@ export default function DashboardMobileMenu() {
           >
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-slate-200">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-blue-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">CC</span>
-                </div>
-                <span className="font-bold text-lg text-slate-900">Crowd Conscious</span>
-              </div>
+              <Logo size="sm" linkTo="/predictions" />
               <button
                 onClick={() => setIsOpen(false)}
                 className="p-1 rounded-lg hover:bg-slate-100 transition-colors"

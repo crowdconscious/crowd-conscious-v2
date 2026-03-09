@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Logo from '@/components/Logo'
 import { supabaseClient } from '@/lib/supabase-client'
 import { XPBadge } from '@/components/gamification/XPBadge'
 
@@ -51,14 +52,7 @@ export default function HeaderClient({ user }: HeaderClientProps) {
         <div className="flex items-center justify-between">
           {/* Logo and Main Nav */}
           <div className="flex items-center gap-8">
-            <Link href="/" className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">CC</span>
-              </div>
-              <span className="font-bold text-xl text-white">
-                Crowd Conscious
-              </span>
-            </Link>
+            <Logo size="sm" linkTo="/predictions" className="shrink-0" />
 
             {/* Main Navigation - Desktop */}
             <nav className="hidden md:flex items-center gap-6">

@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { Award, Download, Share2, Calendar, CheckCircle, Lock, ArrowRight } from 'lucide-react'
+import Logo from '@/components/Logo'
 
 export default function EmployeeCertificationsPage() {
   const [loading, setLoading] = useState(true)
@@ -111,14 +111,7 @@ export default function EmployeeCertificationsPage() {
                       </div>
                     </div>
                     <div className="flex items-center justify-center mb-4">
-                      <div className="relative w-16 h-16">
-                        <Image
-                          src="/images/logo.png"
-                          alt="Crowd Conscious"
-                          fill
-                          className="object-contain"
-                        />
-                      </div>
+                      <Logo size="sm" linkTo="" />
                     </div>
                     <h3 className="text-center font-bold text-slate-900 text-base sm:text-lg mb-2">
                       {cert.moduleName}

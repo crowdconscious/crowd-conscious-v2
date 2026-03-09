@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Download, Share2, Award, CheckCircle, Twitter, Linkedin, Facebook, Copy, ArrowLeft, Instagram } from 'lucide-react'
 import { cleanAirModule } from '@/app/lib/course-content/clean-air-module'
+import Logo from '@/components/Logo'
 
 export default function CertificatePage({ params }: { params: Promise<{ moduleId: string }> }) {
   const router = useRouter()
@@ -423,14 +424,7 @@ export default function CertificatePage({ params }: { params: Promise<{ moduleId
             {/* Header */}
             <div className="mb-8">
               <div className="flex justify-center mb-6">
-                <div className="w-40 h-40 sm:w-48 sm:h-48 flex items-center justify-center">
-                  <img
-                    src="/images/logo.png"
-                    alt="Crowd Conscious"
-                    className="max-w-full max-h-full object-contain"
-                    crossOrigin="anonymous"
-                  />
-                </div>
+                <Logo size="lg" linkTo="" className="max-h-48 [&_img]:max-h-48" />
               </div>
               <div className="h-1 w-full bg-gradient-to-r from-teal-600 to-purple-600 rounded-full"></div>
             </div>
