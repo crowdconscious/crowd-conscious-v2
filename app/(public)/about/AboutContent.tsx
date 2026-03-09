@@ -8,7 +8,6 @@ import {
   Heart,
   Building2,
   ChevronRight,
-  Sparkles,
 } from 'lucide-react'
 
 function useScrollReveal() {
@@ -45,7 +44,6 @@ export default function AboutContent({
   const howRef = useScrollReveal()
   const fundRef = useScrollReveal()
   const worldCupRef = useScrollReveal()
-  const teamRef = useScrollReveal()
   const ctaRef = useScrollReveal()
 
   return (
@@ -212,34 +210,6 @@ export default function AboutContent({
             </p>
             <p className="text-emerald-400/90 font-medium">
               We&apos;re based in Mexico City — this is our home event.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* The Team */}
-      <section
-        ref={teamRef.ref}
-        className={`py-24 px-4 border-t border-slate-800 transition-all duration-700 delay-100 ${
-          teamRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-        }`}
-      >
-        <div className="max-w-3xl mx-auto">
-          <h2 className="text-2xl md:text-3xl font-bold text-white text-center mb-12">
-            The Team
-          </h2>
-          <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-8 md:p-10">
-            {/* Photo placeholder */}
-            <div className="w-24 h-24 rounded-full bg-slate-800 border border-slate-700 mb-6 flex items-center justify-center">
-              <Sparkles className="w-10 h-10 text-slate-600" />
-            </div>
-            <p className="text-xl font-semibold text-white mb-2">
-              Founded by Francisco A. Blockstrand in Mexico City
-            </p>
-            <p className="text-slate-400 leading-relaxed">
-              International background in sustainability and hospitality. Building venues and
-              experiences that bring people together — now applying that same ethos to collective
-              intelligence and social impact.
             </p>
           </div>
         </div>
