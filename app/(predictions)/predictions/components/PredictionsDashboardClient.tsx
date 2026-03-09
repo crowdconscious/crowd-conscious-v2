@@ -209,7 +209,7 @@ export function PredictionsDashboardClient({ data }: Props) {
                       <ShareButton
                         marketId={v.market_id}
                         title={v.market_title}
-                        variant="compact"
+                        compact
                       />
                       <Link
                         href={`/predictions/markets/${v.market_id}`}
@@ -258,7 +258,7 @@ export function PredictionsDashboardClient({ data }: Props) {
                       <ShareButton
                         marketId={m.id}
                         title={m.title ?? ''}
-                        variant="compact"
+                        compact
                       />
                     </div>
                   </div>
@@ -291,7 +291,7 @@ export function PredictionsDashboardClient({ data }: Props) {
                       <ShareButton
                         marketId={m.id}
                         title={m.title ?? ''}
-                        variant="compact"
+                        compact
                       />
                     </div>
                   </div>
@@ -396,7 +396,7 @@ export function PredictionsDashboardClient({ data }: Props) {
                   <ShareButton
                     marketId={m.id}
                     marketTitle={m.title ?? ''}
-                    variant="compact"
+                    compact
                   />
                 </div>
               </div>
