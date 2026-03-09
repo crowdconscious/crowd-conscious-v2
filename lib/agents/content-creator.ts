@@ -353,6 +353,7 @@ Return as a JSON array of 6 objects. No markdown wrapping. Just raw JSON.`
     }
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error(String(error))
+    const fullError = error instanceof Error ? `${error.message} | ${error.stack ?? ''}` : String(error)
     console.error('Content creator agent error:', err)
 
     try {
@@ -360,8 +361,8 @@ Return as a JSON array of 6 objects. No markdown wrapping. Just raw JSON.`
         agentName: 'content-creator',
         status: 'error',
         durationMs: Date.now() - startTime,
-        errorMessage: err.message,
-        summary: { posts_generated: 0 },
+        errorMessage: fullError,
+        summary: { step: 'identify which step failed', posts_generated: 0 },
       })
     } catch (logErr) {
       console.error('Failed to log agent run:', logErr)

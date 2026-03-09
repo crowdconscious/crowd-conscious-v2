@@ -362,6 +362,7 @@ Keep it under 500 words. Write in Spanish. Today is ${todayFormatted}.`
     }
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error(String(error))
+    const fullError = error instanceof Error ? `${error.message} | ${error.stack ?? ''}` : String(error)
     console.error('CEO Digest agent error:', err)
 
     try {
@@ -369,8 +370,8 @@ Keep it under 500 words. Write in Spanish. Today is ${todayFormatted}.`
         agentName: 'ceo-digest',
         status: 'error',
         durationMs: Date.now() - startTime,
-        errorMessage: err.message,
-        summary: { metrics_gathered: false, email_sent: false },
+        errorMessage: fullError,
+        summary: { step: 'identify which step failed', metrics_gathered: false, email_sent: false },
       })
     } catch (logErr) {
       console.error('Failed to log agent run:', logErr)

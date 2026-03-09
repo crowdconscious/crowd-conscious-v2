@@ -82,8 +82,9 @@ export async function GET(request: NextRequest) {
       {
         success: false,
         agent: agentName,
-        error: err.message,
-        stack: process.env.NODE_ENV === 'development' ? (err as Error).stack : undefined,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        hint: 'Check Vercel logs for more detail: Vercel Dashboard → Deployments → Functions → Logs',
       },
       { status: 500 }
     )

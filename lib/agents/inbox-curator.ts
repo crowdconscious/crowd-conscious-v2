@@ -159,6 +159,7 @@ Write reasons in Spanish.`
     }
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error(String(error))
+    const fullError = error instanceof Error ? `${error.message} | ${error.stack ?? ''}` : String(error)
     console.error('Inbox curator agent error:', err)
 
     try {
@@ -166,8 +167,8 @@ Write reasons in Spanish.`
         agentName: 'inbox-curator',
         status: 'error',
         durationMs: Date.now() - startTime,
-        errorMessage: err.message,
-        summary: {},
+        errorMessage: fullError,
+        summary: { step: 'identify which step failed' },
       })
     } catch (logErr) {
       console.error('Failed to log agent run:', logErr)

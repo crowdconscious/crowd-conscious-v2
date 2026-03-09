@@ -214,6 +214,15 @@ export default function AdminAgentsPage() {
                     <div className="text-sm text-slate-400">
                       Last run: {formatDate(run.created_at)}
                     </div>
+                    {run.status === 'error' && run.error_message && (
+                      <div
+                        className="text-xs text-red-400 truncate cursor-help"
+                        title={run.error_message}
+                      >
+                        Error: {run.error_message.split('|')[0]?.trim().slice(0, 60)}
+                        {(run.error_message.split('|')[0]?.trim().length ?? 0) > 60 ? '…' : ''}
+                      </div>
+                    )}
                     <div className="text-xs text-slate-500 space-y-1">
                       <div>
                         Tokens: {run.tokens_input + run.tokens_output} (in: {run.tokens_input},
@@ -475,6 +484,7 @@ export default function AdminAgentsPage() {
                 <th className="px-4 py-3">Duration</th>
                 <th className="px-4 py-3">Tokens</th>
                 <th className="px-4 py-3">Cost</th>
+                <th className="px-4 py-3">Error</th>
               </tr>
             </thead>
             <tbody>
@@ -506,6 +516,19 @@ export default function AdminAgentsPage() {
                   </td>
                   <td className="px-4 py-3 text-slate-400">
                     ${Number(run.cost_estimate ?? 0).toFixed(6)}
+                  </td>
+                  <td className="px-4 py-3 max-w-xs">
+                    {run.status === 'error' && run.error_message ? (
+                      <span
+                        title={run.error_message}
+                        className="block text-red-400 text-xs truncate cursor-help"
+                        style={{ maxWidth: 200 }}
+                      >
+                        {run.error_message.split('|')[0]?.trim() ?? run.error_message}
+                      </span>
+                    ) : (
+                      <span className="text-slate-500">—</span>
+                    )}
                   </td>
                 </tr>
               ))}

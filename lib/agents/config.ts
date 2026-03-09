@@ -20,6 +20,8 @@ export const TOKEN_LIMITS = {
 
 // --- Clients ---
 export function getAnthropicClient(): Anthropic {
+  console.log('[AGENT] ANTHROPIC_API_KEY exists:', !!process.env.ANTHROPIC_API_KEY);
+  console.log('[AGENT] Key starts with:', process.env.ANTHROPIC_API_KEY?.substring(0, 10) ?? 'N/A');
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     throw new Error('ANTHROPIC_API_KEY is not set. Add it to Vercel environment variables.');
@@ -28,6 +30,7 @@ export function getAnthropicClient(): Anthropic {
 }
 
 export function getSupabaseAdmin() {
+  console.log('[AGENT] SUPABASE_SERVICE_ROLE_KEY exists:', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) {

@@ -298,6 +298,7 @@ Return as JSON: { relevance: [...], suggestions: [...], brief: '...' }`
     }
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error(String(error))
+    const fullError = error instanceof Error ? `${error.message} | ${error.stack ?? ''}` : String(error)
     console.error('News monitor agent error:', err)
 
     try {
@@ -305,8 +306,8 @@ Return as JSON: { relevance: [...], suggestions: [...], brief: '...' }`
         agentName: 'news-monitor',
         status: 'error',
         durationMs: Date.now() - startTime,
-        errorMessage: err.message,
-        summary: {},
+        errorMessage: fullError,
+        summary: { step: 'identify which step failed' },
       })
     } catch (logErr) {
       console.error('Failed to log agent run:', logErr)

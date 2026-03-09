@@ -71,7 +71,12 @@ export async function POST(request: NextRequest) {
     const err = error instanceof Error ? error : new Error(String(error))
     console.error('Run agent error:', err)
     return NextResponse.json(
-      { success: false, error: err.message },
+      {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? (error as Error).stack : undefined,
+        hint: 'Check Vercel logs for more detail: Vercel Dashboard → Deployments → Functions → Logs',
+      },
       { status: 500 }
     )
   }
