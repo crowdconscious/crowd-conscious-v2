@@ -395,7 +395,7 @@ export function PredictionsDashboardClient({ data }: Props) {
                 <div onClick={(e) => e.stopPropagation()}>
                   <ShareButton
                     marketId={m.id}
-                    marketTitle={m.title ?? ''}
+                    title={m.title ?? ''}
                     compact
                   />
                 </div>
