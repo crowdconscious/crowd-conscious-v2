@@ -1,8 +1,7 @@
 import { ImageResponse } from 'next/og'
 import { createClient } from '@supabase/supabase-js'
 
-export const runtime = 'edge'
-
+// Node.js runtime (default) — Edge + Supabase can cause fetch failures
 const WIDTH = 1200
 const HEIGHT = 630
 
@@ -53,7 +52,11 @@ export async function GET(
             Crowd Conscious
           </div>
         ),
-        { width: WIDTH, height: HEIGHT }
+        {
+          width: WIDTH,
+          height: HEIGHT,
+          headers: { 'Cache-Control': 'public, max-age=60, s-maxage=300' },
+        }
       )
     }
 
@@ -95,7 +98,7 @@ export async function GET(
               width: '400px',
               height: '400px',
               borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(16,185,129,0.15) 0%, transparent 70%)',
+              background: 'radial-gradient(circle, rgba(16,185,129,0.12) 0%, transparent 70%)',
               display: 'flex',
             }}
           />
@@ -132,7 +135,7 @@ export async function GET(
                 color: '#10b981',
               }}
             >
-              {emoji} {categoryLabel}
+              {`${emoji} ${categoryLabel}`}
             </div>
           </div>
 
@@ -146,16 +149,39 @@ export async function GET(
           >
             <div
               style={{
-                fontSize: (market.title?.length ?? 0) > 80 ? '36px' : '44px',
+                display: 'flex',
+                fontSize: (market.title?.length ?? 0) > 80 ? '34px' : '42px',
                 fontWeight: 'bold',
                 color: '#ffffff',
                 lineHeight: '1.3',
                 maxWidth: '750px',
               }}
             >
-              {market.title?.slice(0, 120)}
-              {(market.title?.length ?? 0) > 120 ? '…' : ''}
+              {`${(market.title ?? '').slice(0, 120)}${(market.title?.length ?? 0) > 120 ? '…' : ''}`}
             </div>
+          </div>
+
+          {/* Progress bar (above probability) */}
+          <div
+            style={{
+              display: 'flex',
+              width: '100%',
+              height: '8px',
+              backgroundColor: 'rgba(255,255,255,0.1)',
+              borderRadius: '4px',
+              marginBottom: '20px',
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                width: `${Math.min(100, Math.max(0, probability))}%`,
+                height: '100%',
+                backgroundColor: '#10b981',
+                borderRadius: '4px',
+              }}
+            />
           </div>
 
           {/* Bottom: Probability + Stats */}
@@ -215,7 +241,7 @@ export async function GET(
                   display: 'flex',
                 }}
               >
-                {totalPredictions} prediction{totalPredictions !== 1 ? 's' : ''}
+                {`${totalPredictions} prediction${totalPredictions !== 1 ? 's' : ''}`}
               </div>
               <div
                 style={{
@@ -228,32 +254,15 @@ export async function GET(
               </div>
             </div>
           </div>
-
-          {/* Progress bar */}
-          <div
-            style={{
-              display: 'flex',
-              width: '100%',
-              height: '6px',
-              backgroundColor: 'rgba(255,255,255,0.1)',
-              borderRadius: '3px',
-              marginTop: '20px',
-              overflow: 'hidden',
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                width: `${Math.min(100, Math.max(0, probability))}%`,
-                height: '100%',
-                backgroundColor: '#10b981',
-                borderRadius: '3px',
-              }}
-            />
-          </div>
         </div>
       ),
-      { width: WIDTH, height: HEIGHT }
+      {
+        width: WIDTH,
+        height: HEIGHT,
+        headers: {
+          'Cache-Control': 'public, max-age=60, s-maxage=300',
+        },
+      }
     )
   } catch (e) {
     console.error('OG image error:', e)

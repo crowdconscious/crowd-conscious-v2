@@ -317,6 +317,8 @@ export const CelebrationModal = memo(function CelebrationModal({
                       src={`/api/og/market/${shareCardMarketId}`}
                       alt="Share card preview"
                       className="w-full max-w-[400px] rounded-xl mx-auto mb-4 border border-slate-200"
+                      onLoad={() => console.log('[CelebrationModal] Card image loaded')}
+                      onError={(e) => console.error('[CelebrationModal] Card image failed to load:', e)}
                     />
                   )}
                   <p className="text-sm font-medium text-slate-600 mb-2 text-center">Share your prediction</p>
