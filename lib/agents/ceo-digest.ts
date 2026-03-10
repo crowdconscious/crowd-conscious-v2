@@ -292,11 +292,23 @@ Generate today's CEO digest with these sections:
 
 Keep it under 500 words. Write in Spanish. Today is ${todayFormatted}.`
 
+    const userPrompt = userMessage?.trim() ?? ''
+    if (!userPrompt) {
+      console.error('[CEO Digest] Empty prompt, skipping API call')
+      await logAgentRun({
+        agentName: 'ceo-digest',
+        status: 'skipped',
+        durationMs: Date.now() - startTime,
+        summary: { reason: 'empty_prompt' },
+      })
+      return { success: false, error: 'empty_prompt' }
+    }
+
     const response = await anthropic.messages.create({
       model: MODELS.FAST,
       max_tokens: TOKEN_LIMITS.DIGEST,
       system: systemMessage,
-      messages: [{ role: 'user', content: userMessage }],
+      messages: [{ role: 'user', content: userPrompt }],
     })
 
     const textBlock = response.content.find((b) => b.type === 'text')
@@ -373,7 +385,14 @@ Keep it under 500 words. Write in Spanish. Today is ${todayFormatted}.`
     }
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error(String(error))
+    const apiErr = error as { status?: number; error?: { type?: string; error?: { message?: string }; message?: string }; message?: string }
     const fullError = error instanceof Error ? `${error.message} | ${error.stack ?? ''}` : String(error)
+    console.error('[CEO Digest] Anthropic API error:', JSON.stringify({
+      status: apiErr?.status,
+      type: apiErr?.error?.type,
+      message: apiErr?.error?.error?.message ?? apiErr?.error?.message ?? apiErr?.message,
+      full: apiErr?.error ?? apiErr,
+    }, null, 2))
     console.error('CEO Digest agent error:', err)
 
     try {
@@ -381,7 +400,7 @@ Keep it under 500 words. Write in Spanish. Today is ${todayFormatted}.`
         agentName: 'ceo-digest',
         status: 'error',
         durationMs: Date.now() - startTime,
-        errorMessage: fullError,
+        errorMessage: `API ${apiErr?.status ?? '?'}: ${apiErr?.error?.error?.message ?? apiErr?.error?.message ?? err.message}`,
         summary: { step: 'identify which step failed', metrics_gathered: false, email_sent: false },
       })
     } catch (logErr) {

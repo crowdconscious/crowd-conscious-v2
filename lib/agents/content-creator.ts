@@ -277,11 +277,23 @@ For each post return a JSON object with: { platform, language, post_type, hook, 
 
 Return as a JSON array of 6 objects. No markdown wrapping. Just raw JSON.`
 
+    const userPrompt = userMessage?.trim() ?? ''
+    if (!userPrompt) {
+      console.error('[Content Creator] Empty prompt, skipping API call')
+      await logAgentRun({
+        agentName: 'content-creator',
+        status: 'skipped',
+        durationMs: Date.now() - startTime,
+        summary: { reason: 'empty_prompt' },
+      })
+      return { success: false, error: 'empty_prompt' }
+    }
+
     const response = await anthropic.messages.create({
       model: MODELS.CREATIVE,
       max_tokens: TOKEN_LIMITS.SOCIAL_CONTENT,
       system: systemMessage,
-      messages: [{ role: 'user', content: userMessage }],
+      messages: [{ role: 'user', content: userPrompt }],
     })
 
     const textBlock = response.content.find((b) => b.type === 'text')
@@ -379,7 +391,13 @@ Return as a JSON array of 6 objects. No markdown wrapping. Just raw JSON.`
     }
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error(String(error))
-    const fullError = error instanceof Error ? `${error.message} | ${error.stack ?? ''}` : String(error)
+    const apiErr = error as { status?: number; error?: { type?: string; error?: { message?: string }; message?: string }; message?: string }
+    console.error('[Content Creator] Anthropic API error:', JSON.stringify({
+      status: apiErr?.status,
+      type: apiErr?.error?.type,
+      message: apiErr?.error?.error?.message ?? apiErr?.error?.message ?? apiErr?.message,
+      full: apiErr?.error ?? apiErr,
+    }, null, 2))
     console.error('Content creator agent error:', err)
 
     try {
@@ -387,7 +405,7 @@ Return as a JSON array of 6 objects. No markdown wrapping. Just raw JSON.`
         agentName: 'content-creator',
         status: 'error',
         durationMs: Date.now() - startTime,
-        errorMessage: fullError,
+        errorMessage: `API ${apiErr?.status ?? '?'}: ${apiErr?.error?.error?.message ?? apiErr?.error?.message ?? err.message}`,
         summary: { step: 'identify which step failed', posts_generated: 0 },
       })
     } catch (logErr) {

@@ -3,10 +3,12 @@ import { createClient } from '@supabase/supabase-js';
 
 // --- Model Selection ---
 // Haiku 4.5: Fast, cheap ($1/$5 per MTok) — use for data digestion, summarization, ranking
-// Sonnet:    Balanced, creative ($3/$15 per MTok) — use for content creation, social media copy
+// Sonnet 4.5: Balanced, creative ($3/$15 per MTok) — use for content creation, social media copy
+// Note: claude-sonnet-4-5-20241022 was WRONG (Oct 2024). Sonnet 4.5 released Sept 2025.
+// Fallback to Claude 3.5 if 4.5 models fail (3.5 retired Feb 2026 but may still work on some keys).
 export const MODELS = {
-  FAST: 'claude-haiku-4-5-20251001',     // For CEO digest, inbox curator, news monitor
-  CREATIVE: 'claude-sonnet-4-5-20241022', // For social media content creator
+  FAST: 'claude-3-5-haiku-20241022',     // Fallback: claude-haiku-4-5-20251001
+  CREATIVE: 'claude-3-5-sonnet-20241022', // Fallback: claude-sonnet-4-5-20250929
 } as const;
 
 // --- Token Limits ---
