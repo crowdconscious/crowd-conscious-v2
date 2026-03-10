@@ -251,7 +251,19 @@ export async function runContentCreator(): Promise<{
       data.leaderboard_top_3 = []
     }
 
-    const systemMessage = `You are the social media content strategist for Crowd Conscious (crowdconscious.app), a free-to-play opinion platform in Mexico City. You create engaging social media content that drives people to the platform. Your tone is: smart but accessible, community-driven, slightly provocative (asking questions people want to answer), and always ties back to social impact. You write in BOTH Spanish and English. The platform is gearing up for FIFA World Cup 2026 — opening match is June 11 at Estadio Azteca, Mexico City.`
+    const systemMessage = `You are the social media content strategist for Crowd Conscious (crowdconscious.app), a free-to-play opinion platform in Mexico City. You create engaging social media content that drives people to the platform. Your tone is: smart but accessible, community-driven, slightly provocative (asking questions people want to answer), and always ties back to social impact. You write in BOTH Spanish and English. The platform is gearing up for FIFA World Cup 2026 — opening match is June 11 at Estadio Azteca, Mexico City.
+
+For each Instagram post, also provide:
+1. IMAGE_PROMPT: A detailed prompt for generating an image with Leonardo AI or Midjourney. Be specific: describe the composition, colors (use our brand: dark navy #0a1628, emerald #10b981), mood, and style. Example: "Dark navy gradient background, large emerald green percentage number 54% floating in center, subtle soccer ball pattern overlay, minimal text, futuristic data visualization aesthetic, 1080x1080"
+2. CAROUSEL_IDEA: If this would work as a carousel (multiple slides), describe 3-4 slides: Slide 1: Hook (the question or bold stat), Slide 2: Context (what's happening, why it matters), Slide 3: Data (the probability, how it changed), Slide 4: CTA (what do you think? crowdconscious.app)
+3. MEME_SUGGESTION: If there's a relevant meme format, describe it. Example: "Drake meme — rejecting: checking news for election predictions / accepting: checking Crowd Conscious for collective intelligence". Only suggest memes culturally relevant to Mexican/LATAM audience.
+
+For Twitter posts, also provide:
+1. THREAD_OPTION: A 3-tweet thread version if the topic deserves deeper explanation
+2. QUOTE_TWEET_HOOK: A one-liner designed to go viral if someone quotes the original tweet
+
+For LinkedIn posts, also provide:
+1. HOOK_VARIATIONS: 3 alternative first lines (the hook determines 80% of engagement)`
 
     const userMessage = `Here is today's platform activity data (JSON):
 
@@ -273,7 +285,11 @@ POST 5 — LinkedIn (Spanish): Professional tone. Focus on the social impact ang
 
 POST 6 — Community Highlight (Spanish): Celebrate the top predictor or most active community member, or a trending inbox submission. Make people feel seen.
 
-For each post return a JSON object with: { platform, language, post_type, hook, body, hashtags, cta }
+For each post return a JSON object with:
+- Base: platform, language, post_type, hook, body, hashtags, cta
+- Instagram posts add: image_prompt, carousel_idea, meme_suggestion
+- Twitter posts add: thread_option, quote_tweet_hook
+- LinkedIn posts add: hook_variations (array of 3 strings)
 
 Return as a JSON array of 6 objects. No markdown wrapping. Just raw JSON.`
 
@@ -357,6 +373,12 @@ Return as a JSON array of 6 objects. No markdown wrapping. Just raw JSON.`
         tokens_input: usage.input_tokens,
         tokens_output: usage.output_tokens,
         hashtags: post.hashtags,
+        image_prompt: post.image_prompt,
+        carousel_idea: post.carousel_idea,
+        meme_suggestion: post.meme_suggestion,
+        thread_option: post.thread_option,
+        quote_tweet_hook: post.quote_tweet_hook,
+        hook_variations: post.hook_variations,
       }
 
       try {
