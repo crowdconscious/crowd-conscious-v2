@@ -43,11 +43,8 @@ export async function POST(request: NextRequest) {
       .eq('user_id', userId)
     const fundVoteCycles = new Set(fundVotes?.map((v) => v.cycle) ?? []).size
 
-    // Count sponsorships
-    const { count: sponsorshipsMade } = await supabase
-      .from('sponsorships')
-      .select('*', { count: 'exact', head: true })
-      .eq('sponsor_id', userId)
+    // Legacy: sponsorships table removed
+    const sponsorshipsMade = 0
 
     // Get current tier
     const { data: userXP } = await supabase

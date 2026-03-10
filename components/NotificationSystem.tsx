@@ -343,26 +343,10 @@ export function GlobalSearch() {
       setResults(prev => ({ ...prev, loading: true }))
       
       try {
-        const [communitiesRes, contentRes] = await Promise.all([
-          supabaseClient
-            .from('communities')
-            .select('id, name, description, image_url, member_count, core_values')
-            .textSearch('name', query)
-            .limit(5),
-          
-          supabaseClient
-            .from('community_content')
-            .select(`
-              id, title, description, type, community_id, created_at,
-              community:communities(name)
-            `)
-            .textSearch('title', query)
-            .limit(5)
-        ])
-
+        // Legacy: communities and community_content removed
         setResults({
-          communities: communitiesRes.data || [],
-          content: contentRes.data || [],
+          communities: [],
+          content: [],
           loading: false
         })
       } catch (error) {

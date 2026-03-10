@@ -41,11 +41,8 @@ export async function GET(request: NextRequest) {
           .eq('user_id', user.id)
           .single()
 
-        // Get user's communities
-        const { data: memberships } = await (supabase as any)
-          .from('community_members')
-          .select('community_id')
-          .eq('user_id', user.id)
+        // Legacy: community_members removed. communitiesJoined = 0.
+        const memberships: any[] = []
 
         // Get user's XP transactions from last month
         const { data: xpTransactions } = await (supabase as any)

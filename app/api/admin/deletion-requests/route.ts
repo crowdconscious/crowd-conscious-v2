@@ -70,37 +70,24 @@ export async function POST(request: NextRequest) {
 
     // Check permissions based on request type
     if (request_type === 'community') {
-      // Check if user is founder of the community
-      const { data: membership } = await (supabase as any)
-        .from('community_members')
-        .select('role')
-        .eq('community_id', target_id)
-        .eq('user_id', (user as any).id)
-        .single()
+      return ApiResponse.badRequest('Community deletion no longer supported. Communities table was removed.', 'LEGACY_FEATURE_REMOVED')
+    }
+    if (request_type === 'content') {
+      return ApiResponse.badRequest('Content deletion no longer supported. Community content table was removed.', 'LEGACY_FEATURE_REMOVED')
+    }
+    if (request_type !== 'user') {
+      return ApiResponse.badRequest('Only user deletion is supported. Community and content deletion were removed.', 'INVALID_REQUEST_TYPE')
+    }
 
-      if ((membership as any)?.role !== 'founder') {
-        // Check if user is admin
-        const { data: profile } = await (supabase as any)
-          .from('profiles')
-          .select('user_type')
-          .eq('id', (user as any).id)
-          .single()
+    // For user deletion, only admins can request
+    const { data: profile } = await (supabase as any)
+      .from('profiles')
+      .select('user_type')
+      .eq('id', (user as any).id)
+      .single()
 
-        if ((profile as any)?.user_type !== 'admin') {
-          return ApiResponse.forbidden('Only community founders or admins can request community deletion', 'INSUFFICIENT_PERMISSIONS')
-        }
-      }
-    } else {
-      // For user and content deletion, only admins can request
-      const { data: profile } = await (supabase as any)
-        .from('profiles')
-        .select('user_type')
-        .eq('id', (user as any).id)
-        .single()
-
-      if ((profile as any)?.user_type !== 'admin') {
-        return ApiResponse.forbidden('Only admins can request user or content deletion', 'INSUFFICIENT_PERMISSIONS')
-      }
+    if ((profile as any)?.user_type !== 'admin') {
+      return ApiResponse.forbidden('Only admins can request user deletion', 'INSUFFICIENT_PERMISSIONS')
     }
 
     // Create deletion request

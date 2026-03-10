@@ -14,21 +14,18 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient()
     const { templateId, communityId } = await request.json()
 
-    if (!templateId || !communityId) {
-      return ApiResponse.badRequest('Template ID and Community ID are required', 'MISSING_REQUIRED_FIELDS')
+    if (!templateId) {
+      return ApiResponse.badRequest('Template ID is required', 'MISSING_REQUIRED_FIELDS')
     }
 
-    // Verify user is admin/founder of the community
-    const { data: membership } = await supabase
-      .from('community_members')
-      .select('role')
-      .eq('community_id', communityId)
-      .eq('user_id', user.id)
+    // Get creator name from profile (communities table removed)
+    const { data: userProfile } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', (user as any).id)
       .single()
 
-    if (!membership || (membership.role !== 'founder' && membership.role !== 'admin')) {
-      return ApiResponse.forbidden('You must be a community admin to clone templates', 'NOT_COMMUNITY_ADMIN')
-    }
+    const creatorName = userProfile?.full_name || 'Creator'
 
     // Fetch the template module
     const { data: template, error: templateError } = await supabase
@@ -52,13 +49,6 @@ export async function POST(request: NextRequest) {
       console.error('Error fetching template lessons:', lessonsError)
     }
 
-    // Fetch community name
-    const { data: communityData } = await supabase
-      .from('communities')
-      .select('name')
-      .eq('id', communityId)
-      .single()
-
     // Create new module (clone)
     const slug = `${template.slug}-clone-${Date.now()}`
     
@@ -68,9 +58,9 @@ export async function POST(request: NextRequest) {
         title: `${template.title} (Copia)`,
         description: template.description,
         slug,
-        creator_community_id: communityId,
-        creator_user_id: user.id,
-        creator_name: communityData?.name || 'Community',
+        creator_community_id: communityId || null,
+        creator_user_id: (user as any).id,
+        creator_name: creatorName,
         core_value: template.core_value,
         difficulty_level: template.difficulty_level,
         estimated_duration_hours: template.estimated_duration_hours,

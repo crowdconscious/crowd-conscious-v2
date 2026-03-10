@@ -89,34 +89,8 @@ export async function POST(request: NextRequest) {
       sponsorshipAmount: amount * 100
     })
 
-    // Get community founder's Stripe Connect account (if exists)
-    let connectedAccountId: string | null = null
-    if (communityId) {
-      try {
-        const { createClient } = await import('@supabase/supabase-js')
-        const supabase = createClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.SUPABASE_SERVICE_ROLE_KEY!
-        )
-        
-        const { data: community } = await supabase
-          .from('communities')
-          .select('stripe_account_id, created_by, profiles!communities_created_by_fkey(stripe_connect_id, stripe_onboarding_complete)')
-          .eq('id', communityId)
-          .single()
-        
-        const founderProfile: any = (community as any)?.profiles
-        if (founderProfile?.stripe_connect_id && founderProfile?.stripe_onboarding_complete) {
-          connectedAccountId = founderProfile.stripe_connect_id
-          console.log('✅ Found connected account for founder:', connectedAccountId)
-        } else {
-          console.log('⚠️ Founder has not completed Stripe Connect onboarding')
-        }
-      } catch (error) {
-        console.error('⚠️ Error fetching community Stripe account:', error)
-        // Continue without Connect - platform gets full amount
-      }
-    }
+    // Legacy: communities table removed. No Stripe Connect for community founders.
+    const connectedAccountId: string | null = null
 
     // Create checkout session with or without Connect
     const sessionConfig: Stripe.Checkout.SessionCreateParams = {

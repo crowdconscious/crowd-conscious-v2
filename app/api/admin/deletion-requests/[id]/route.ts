@@ -108,70 +108,20 @@ async function performDeletion(supabase: any, request: any, adminId: string) {
 }
 
 async function deleteCommunity(supabase: any, communityId: string, communityName: string, adminId: string) {
-  // Delete in order to respect foreign key constraints
-  
-  // 1. Delete community content
-  await supabase.from('community_content').delete().eq('community_id', communityId)
-  
-  // 2. Delete community members
-  await supabase.from('community_members').delete().eq('community_id', communityId)
-  
-  // 3. Delete the community
-  const { error } = await supabase.from('communities').delete().eq('id', communityId)
-  
-  if (error) throw error
-
-  // TODO: Add audit logging when audit_logs table is created
-  console.log(`Community deleted: ${communityName} (ID: ${communityId}) by admin: ${adminId}`)
+  throw new Error('Community deletion no longer supported. Communities table was removed.')
 }
 
 async function deleteUser(supabase: any, userId: string, userName: string, adminId: string) {
-  // Delete user-related data
-  
-  // 1. Delete user's community memberships
-  await supabase.from('community_members').delete().eq('user_id', userId)
-  
-  // 2. Delete user's content
-  await supabase.from('community_content').delete().eq('created_by', userId)
-  
-  // 3. Delete user's comments
+  // Legacy tables (community_members, community_content, poll_votes, event_registrations) removed
   await supabase.from('comments').delete().eq('user_id', userId)
-  
-  // 4. Delete user's votes
-  await supabase.from('poll_votes').delete().eq('user_id', userId)
-  
-  // 5. Delete user's event registrations
-  await supabase.from('event_registrations').delete().eq('user_id', userId)
-  
-  // 6. Delete user profile
+
   const { error } = await supabase.from('profiles').delete().eq('id', userId)
-  
   if (error) throw error
 
-  // Note: The actual auth user deletion should be done through Supabase Auth Admin API
-  // This requires additional setup and is not included here for security reasons
-
-  // TODO: Add audit logging when audit_logs table is created
+  // Note: Auth user deletion should be done via Supabase Auth Admin API
   console.log(`User deleted: ${userName} (ID: ${userId}) by admin: ${adminId}`)
 }
 
 async function deleteContent(supabase: any, contentId: string, contentTitle: string, adminId: string) {
-  // Delete content and related data
-  
-  // 1. Delete comments on this content
-  await supabase.from('comments').delete().eq('content_id', contentId)
-  
-  // 2. Delete votes on this content
-  await supabase.from('poll_votes').delete().eq('content_id', contentId)
-  
-  // 3. Delete event registrations for this content
-  await supabase.from('event_registrations').delete().eq('content_id', contentId)
-  
-  // 4. Delete the content
-  const { error } = await supabase.from('community_content').delete().eq('id', contentId)
-  
-  if (error) throw error
-
-  // TODO: Add audit logging when audit_logs table is created
-  console.log(`Content deleted: ${contentTitle} (ID: ${contentId}) by admin: ${adminId}`)
+  throw new Error('Content deletion no longer supported. Community content table was removed.')
 }

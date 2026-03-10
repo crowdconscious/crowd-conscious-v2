@@ -34,22 +34,19 @@ export async function POST(request: NextRequest) {
       status
     } = body
 
-    // Validate required fields
-    if (!title || !description || !coreValue || !communityId || !userId) {
+    // Validate required fields (communityId optional - communities table removed)
+    if (!title || !description || !coreValue || !userId) {
       return ApiResponse.badRequest('Missing required fields', 'MISSING_REQUIRED_FIELDS')
     }
 
-    // Validate community membership
-    const { data: membership } = await supabase
-      .from('community_members')
-      .select('role')
-      .eq('community_id', communityId)
-      .eq('user_id', userId)
+    // Get creator name from profile (communities table removed)
+    const { data: userProfile } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', userId)
       .single()
 
-    if (!membership || (membership.role !== 'founder' && membership.role !== 'admin')) {
-      return ApiResponse.forbidden('You must be a community admin to create modules', 'NOT_COMMUNITY_ADMIN')
-    }
+    const creatorName = userProfile?.full_name || 'Creator'
 
     // Generate slug from title
     const slug = title
@@ -61,13 +58,6 @@ export async function POST(request: NextRequest) {
       .replace(/-+/g, '-')
       .trim()
 
-    // Fetch community name for creator_name
-    const { data: communityData } = await supabase
-      .from('communities')
-      .select('name')
-      .eq('id', communityId)
-      .single()
-
     // Create the module
     const { data: module, error: moduleError } = await (supabase as any)
       .from('marketplace_modules')
@@ -75,9 +65,9 @@ export async function POST(request: NextRequest) {
         title,
         description,
         slug: `${slug}-${Date.now()}`, // Add timestamp to ensure uniqueness
-        creator_community_id: communityId,
+        creator_community_id: communityId || null,
         creator_user_id: userId,
-        creator_name: communityData?.name || 'Community',
+        creator_name: creatorName,
         core_value: coreValue,
         difficulty_level: difficulty,
         estimated_duration_hours: estimatedHours,
@@ -134,13 +124,6 @@ export async function POST(request: NextRequest) {
     // Send email notification if submitted for review
     if (status === 'review') {
       try {
-        // Fetch community details
-        const { data: community } = await supabase
-          .from('communities')
-          .select('name')
-          .eq('id', communityId)
-          .single()
-
         // Fetch user details
         const { data: userProfile } = await supabase
           .from('profiles')
@@ -217,7 +200,7 @@ export async function POST(request: NextRequest) {
                       <div class="value">
                         <strong>${userProfile?.full_name || 'Usuario'}</strong><br>
                         ${userProfile?.email || ''}<br>
-                        Comunidad: <strong>${community?.name || 'Desconocida'}</strong>
+                        Comunidad: <strong>${creatorName}</strong>
                       </div>
                     </div>
                     

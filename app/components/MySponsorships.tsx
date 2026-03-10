@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClientAuth } from '@/lib/auth'
 import Link from 'next/link'
 
 interface Sponsorship {
@@ -25,41 +24,14 @@ export default function MySponsorships({ userId }: { userId: string }) {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'individual' | 'business'>('all')
 
-  const supabase = createClientAuth()
-
   useEffect(() => {
     fetchSponsorships()
   }, [userId])
 
   const fetchSponsorships = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('sponsorships')
-        .select(`
-          *,
-          content:community_content(title, community_id),
-          community:communities!inner(name)
-        `)
-        .eq('sponsor_id', userId)
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
-
-      // Transform data to include community name
-      const transformedData: Sponsorship[] = (data || []).map((s: any) => ({
-        ...s,
-        content: {
-          title: s.content?.title || 'Unknown Content',
-          community_name: s.community?.name || 'Unknown Community'
-        }
-      }))
-
-      setSponsorships(transformedData)
-    } catch (error) {
-      console.error('Error fetching sponsorships:', error)
-    } finally {
-      setLoading(false)
-    }
+    // Legacy: sponsorships table removed
+    setSponsorships([])
+    setLoading(false)
   }
 
   const filteredSponsors = sponsorships.filter(s => {
@@ -94,9 +66,9 @@ export default function MySponsorships({ userId }: { userId: string }) {
         <p className="text-slate-600 mb-6">
           Start making an impact by sponsoring community needs
         </p>
-        <Link href="/communities">
+        <Link href="/predictions">
           <button className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors">
-            Browse Communities
+            Explore Predictions
           </button>
         </Link>
       </div>
@@ -257,9 +229,9 @@ export default function MySponsorships({ userId }: { userId: string }) {
                 </div>
 
                 <div className="mt-3">
-                  <Link href={`/communities/${sponsorship.content_id}`}>
+                  <Link href="/predictions">
                     <button className="text-sm text-teal-600 hover:text-teal-700 font-medium">
-                      View Content →
+                      Explore Predictions →
                     </button>
                   </Link>
                 </div>

@@ -1,8 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClientAuth } from '@/lib/auth'
-import Link from 'next/link'
 
 interface Sponsor {
   id: string
@@ -26,34 +24,15 @@ export default function SponsorDisplay({ contentId, showAll = false }: SponsorDi
   const [loading, setLoading] = useState(true)
   const [totalAmount, setTotalAmount] = useState(0)
 
-  const supabase = createClientAuth()
-
   useEffect(() => {
     fetchSponsors()
   }, [contentId])
 
   const fetchSponsors = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('sponsorships')
-        .select('*')
-        .eq('content_id', contentId)
-        .eq('status', 'paid')
-        .order('amount', { ascending: false })
-
-      if (error) throw error
-
-      const sponsors = (data || []) as Sponsor[]
-      setSponsors(sponsors)
-      
-      // Calculate total
-      const total = sponsors.reduce((sum, s) => sum + (s.amount || 0), 0)
-      setTotalAmount(total)
-    } catch (error) {
-      console.error('Error fetching sponsors:', error)
-    } finally {
-      setLoading(false)
-    }
+    // Legacy: sponsorships table removed
+    setSponsors([])
+    setTotalAmount(0)
+    setLoading(false)
   }
 
   const getSponsorTier = (amount: number) => {

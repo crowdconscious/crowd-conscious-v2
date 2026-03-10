@@ -56,135 +56,27 @@ export default function ImpactDashboard({ userId }: ImpactDashboardProps) {
   const fetchImpactMetrics = async () => {
     setLoading(true)
     try {
-      // Calculate date range based on timeframe
-      const endDate = new Date()
-      const startDate = new Date()
-      
-      switch (timeframe) {
-        case 'month':
-          startDate.setMonth(endDate.getMonth() - 1)
-          break
-        case 'quarter':
-          startDate.setMonth(endDate.getMonth() - 3)
-          break
-        case 'year':
-          startDate.setFullYear(endDate.getFullYear() - 1)
-          break
-      }
-
-      // Fetch overall platform metrics
-      const [
-        communitiesResponse,
-        contentResponse,
-        membersResponse,
-        userStatsResponse
-      ] = await Promise.all([
-        supabaseClient.from('communities').select('id, name, created_at, member_count'),
-        supabaseClient.from('community_content').select('id, type, funding_goal, current_funding, created_at'),
-        supabaseClient.from('community_members').select('id, community_id, created_at'),
-        supabaseClient.from('community_members').select('*').eq('user_id', userId)
-      ])
-
-      // Process the data into metrics
-      const communities = communitiesResponse.data || []
-      const content = contentResponse.data || []
-      const members = membersResponse.data || []
-      const userCommunities = userStatsResponse.data || []
-
-      // Calculate totals
-      const totalFunding = content.reduce((sum, item: any) => sum + (item.current_funding || 0), 0)
-      
-      // Content by type
-      const contentByType = content.reduce((acc: any, item: any) => {
-        acc[item.type] = (acc[item.type] || 0) + 1
-        return acc
-      }, {})
-      
-      const totalContent = content.length
-      const contentTypeData = Object.entries(contentByType).map(([type, count]) => ({
-        type: type.charAt(0).toUpperCase() + type.slice(1),
-        count: count as number,
-        percentage: totalContent > 0 ? ((count as number) / totalContent) * 100 : 0
-      }))
-
-      // Calculate real funding by month from database
-      const fundingByMonth = content
-        .filter((item: any) => item.current_funding > 0)
-        .reduce((acc: any, item: any) => {
-          const date = new Date(item.created_at)
-          const monthKey = date.toLocaleString('en-US', { month: 'short' })
-          const existing = acc.find((m: any) => m.month === monthKey)
-          if (existing) {
-            existing.amount += item.current_funding
-          } else {
-            acc.push({ month: monthKey, amount: item.current_funding })
-          }
-          return acc
-        }, [] as Array<{month: string, amount: number}>)
-      
-      // Sort by month order
-      const monthOrder = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-      fundingByMonth.sort((a: any, b: any) => monthOrder.indexOf(a.month) - monthOrder.indexOf(b.month))
-
-      // Calculate real community growth by month
-      const communityGrowth = communities
-        .reduce((acc: any, comm: any) => {
-          const date = new Date(comm.created_at)
-          const monthKey = date.toLocaleString('en-US', { month: 'short' })
-          const existing = acc.find((m: any) => m.month === monthKey)
-          if (existing) {
-            existing.communities += 1
-            existing.members += comm.member_count || 0
-          } else {
-            acc.push({ 
-              month: monthKey, 
-              communities: 1, 
-              members: comm.member_count || 0 
-            })
-          }
-          return acc
-        }, [] as Array<{month: string, communities: number, members: number}>)
-      
-      communityGrowth.sort((a: any, b: any) => monthOrder.indexOf(a.month) - monthOrder.indexOf(b.month))
-
-      // Get real top communities with actual names
-      const topCommunities = await Promise.all(
-        communities.slice(0, 5).map(async (community: any) => {
-          const { data: commContent } = await supabaseClient
-            .from('community_content')
-            .select('id')
-            .eq('community_id', community.id)
-          
-          return {
-            name: community.name || `Community ${community.id?.slice(-4)}`,
-            impact_score: (community.member_count || 0) + (commContent?.length || 0) * 5,
-            member_count: community.member_count || 0,
-            content_count: commContent?.length || 0
-          }
-        })
-      )
-
-      // Fetch real user stats from user_stats table
+      // Legacy: communities, community_content, community_members removed. Use user_stats only.
       const { data: userStats } = await supabaseClient
         .from('user_stats')
         .select('*')
         .eq('user_id', userId)
         .single()
 
-      // Cast to any to avoid TypeScript errors before SQL migrations run
       const stats = userStats as any
+      const monthKey = new Date().toLocaleString('en-US', { month: 'short' })
 
       setMetrics({
-        total_communities: communities.length,
-        total_content: content.length,
-        total_funding_raised: totalFunding,
-        total_participants: members.length,
-        content_by_type: contentTypeData,
-        funding_by_month: fundingByMonth.length > 0 ? fundingByMonth : [{ month: new Date().toLocaleString('en-US', { month: 'short' }), amount: 0 }],
-        community_growth: communityGrowth.length > 0 ? communityGrowth : [{ month: new Date().toLocaleString('en-US', { month: 'short' }), communities: 0, members: 0 }],
-        top_communities: topCommunities,
+        total_communities: 0,
+        total_content: 0,
+        total_funding_raised: 0,
+        total_participants: 0,
+        content_by_type: [],
+        funding_by_month: [{ month: monthKey, amount: 0 }],
+        community_growth: [{ month: monthKey, communities: 0, members: 0 }],
+        top_communities: [],
         personal_impact: {
-          communities_joined: userCommunities.length,
+          communities_joined: 0,
           content_created: stats?.content_created || 0,
           votes_cast: stats?.votes_cast || 0,
           events_attended: stats?.events_attended || 0,

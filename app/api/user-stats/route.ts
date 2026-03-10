@@ -62,17 +62,13 @@ export async function GET(request: NextRequest) {
         .select('id')
         .eq('user_id', user.id)
         .eq('is_correct', true)
-      const { count: sponsorshipsMade } = await supabase
-        .from('sponsorships')
-        .select('*', { count: 'exact', head: true })
-        .eq('sponsor_id', user.id)
 
       return ApiResponse.ok({
         ...newStats,
         votes_cast: votesCast ?? 0,
         fund_vote_cycles: fundVoteCycles,
         correct_predictions: correctVotes?.length ?? 0,
-        sponsorships_made: sponsorshipsMade ?? 0,
+        sponsorships_made: 0,
       })
     }
 
@@ -100,17 +96,12 @@ export async function GET(request: NextRequest) {
       .eq('is_correct', true)
     const correctPredictions = correctVotes?.length ?? 0
 
-    const { count: sponsorshipsMade } = await supabase
-      .from('sponsorships')
-      .select('*', { count: 'exact', head: true })
-      .eq('sponsor_id', user.id)
-
     return ApiResponse.ok({
       ...data,
       votes_cast: votesCast ?? data?.votes_cast ?? 0,
       fund_vote_cycles: fundVoteCycles,
       correct_predictions: correctPredictions,
-      sponsorships_made: sponsorshipsMade ?? data?.sponsorships_made ?? 0,
+      sponsorships_made: data?.sponsorships_made ?? 0,
     })
 
   } catch (error: any) {

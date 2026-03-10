@@ -46,34 +46,10 @@ export default function EventRegistration({
   }
 
   const checkRegistrationStatus = async () => {
-    try {
-      setLoading(true)
-      
-      // Check if user is registered
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data: registration } = await supabase
-          .from('event_registrations')
-          .select('id')
-          .eq('content_id', eventId)
-          .eq('user_id', user.id)
-          .single()
-
-        setIsRegistered(!!registration)
-      }
-
-      // Get total registration count
-      const { count } = await supabase
-        .from('event_registrations')
-        .select('*', { count: 'exact', head: true })
-        .eq('content_id', eventId)
-
-      setRegistrationCount(count || 0)
-    } catch (error) {
-      console.error('Error checking registration status:', error)
-    } finally {
-      setLoading(false)
-    }
+    // Legacy: event_registrations table removed
+    setIsRegistered(false)
+    setRegistrationCount(0)
+    setLoading(false)
   }
 
   const handleRegister = async () => {
