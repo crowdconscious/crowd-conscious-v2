@@ -18,25 +18,67 @@ function ResetPasswordForm() {
   const supabase = createClientAuth()
 
   useEffect(() => {
-    // Check if we have a valid password reset token in the URL
-    const checkToken = async () => {
-      const hashParams = new URLSearchParams(window.location.hash.substring(1))
-      const accessToken = hashParams.get('access_token')
-      const type = hashParams.get('type')
-      
-      // Also check query params (Supabase might use either)
-      const queryToken = searchParams.get('access_token')
-      const queryType = searchParams.get('type')
+    // Establish session from URL tokens before allowing password update.
+    // Supabase can send: (a) access_token + refresh_token in hash/query, or (b) code (PKCE) in query.
+    // We must explicitly set the session — otherwise updateUser() fails with "Auth session missing!"
+    const establishSession = async () => {
+      const hashParams = new URLSearchParams(window.location.hash?.substring(1) || '')
+      const accessToken =
+        hashParams.get('access_token') || searchParams.get('access_token')
+      const refreshToken =
+        hashParams.get('refresh_token') || searchParams.get('refresh_token')
+      const type = hashParams.get('type') || searchParams.get('type')
+      const code = searchParams.get('code')
 
-      if ((accessToken && type === 'recovery') || (queryToken && queryType === 'recovery')) {
+      // Already have a session (e.g. from prior page load)
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
         setIsValidToken(true)
-      } else {
-        setIsValidToken(false)
-        setMessage('Invalid or expired reset link. Please request a new password reset.')
+        return
       }
+
+      // PKCE flow: exchange code for session (requires same browser that requested reset)
+      if (code) {
+        const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+        if (error) {
+          console.error('Code exchange failed:', error)
+          setIsValidToken(false)
+          setMessage(
+            error.message?.includes('code verifier')
+              ? 'Please request a new password reset on this device and click the link in the same browser. Links opened on a different device won\'t work.'
+              : 'Invalid or expired reset link. Please request a new password reset.'
+          )
+          return
+        }
+        if (data.session) {
+          setIsValidToken(true)
+          return
+        }
+      }
+
+      // Implicit flow: set session from access_token + refresh_token
+      if (accessToken && refreshToken && type === 'recovery') {
+        const { data, error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        })
+        if (error) {
+          console.error('Set session failed:', error)
+          setIsValidToken(false)
+          setMessage('Invalid or expired reset link. Please request a new password reset.')
+          return
+        }
+        if (data.session) {
+          setIsValidToken(true)
+          return
+        }
+      }
+
+      setIsValidToken(false)
+      setMessage('Invalid or expired reset link. Please request a new password reset.')
     }
 
-    checkToken()
+    establishSession()
   }, [searchParams])
 
   const handleResetPassword = async (e: React.FormEvent) => {
@@ -59,6 +101,14 @@ function ResetPasswordForm() {
     }
 
     try {
+      // Ensure we have a session before updateUser (can be lost on mobile/in-app browsers)
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        setMessage('Your session expired. Please click the reset link in your email again and try immediately.')
+        setLoading(false)
+        return
+      }
+
       const { error } = await supabase.auth.updateUser({
         password: password,
       })
