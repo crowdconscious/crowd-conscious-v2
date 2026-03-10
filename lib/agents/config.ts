@@ -76,10 +76,53 @@ export async function logAgentRun(params: {
 }
 
 // --- Safe JSON Parse ---
-// Claude sometimes wraps JSON in markdown code fences. This strips them.
+// Claude sometimes wraps JSON in markdown code fences or adds extra text. Extract and parse.
+function extractBalanced(str: string, open: string, close: string): string | null {
+  const start = str.indexOf(open);
+  if (start === -1) return null;
+  let depth = 1;
+  for (let i = start + 1; i < str.length; i++) {
+    if (str[i] === open) depth++;
+    else if (str[i] === close) {
+      depth--;
+      if (depth === 0) return str.slice(start, i + 1);
+    }
+  }
+  return null;
+}
+
 export function parseAgentJSON(text: string): any {
-  const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-  return JSON.parse(cleaned);
+  if (!text || typeof text !== 'string') {
+    throw new Error('Empty or invalid input');
+  }
+  const cleaned = text
+    .replace(/```json\n?/gi, '')
+    .replace(/```\n?/g, '')
+    .trim();
+  // Try direct parse first
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    // Extract first complete JSON array
+    const arrayStr = extractBalanced(cleaned, '[', ']');
+    if (arrayStr) {
+      try {
+        return JSON.parse(arrayStr);
+      } catch {
+        // Fall through
+      }
+    }
+    // Extract first complete JSON object and wrap in array
+    const objectStr = extractBalanced(cleaned, '{', '}');
+    if (objectStr) {
+      try {
+        return [JSON.parse(objectStr)];
+      } catch {
+        // Fall through
+      }
+    }
+  }
+  throw new Error(`Could not parse JSON from response (length: ${text.length})`);
 }
 
 // --- Date helpers ---

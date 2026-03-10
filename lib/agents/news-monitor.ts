@@ -177,7 +177,14 @@ ${JSON.stringify(dedupedArticles.map((a) => ({ title: a.title, description: a.de
 
 Do three things:
 1. RELEVANCE CHECK: For each active market, list any news stories that are relevant to it (by title/url). Rate relevance 1-5.
-2. MARKET SUGGESTIONS: Based on stories NOT related to existing markets, suggest up to 3 new market ideas. For each: title as a question, category, why it would be interesting, suggested resolution date.
+2. MARKET SUGGESTIONS: Based on stories NOT related to existing markets, suggest up to 3 new market ideas. For each suggestion provide:
+   - title: question format (e.g. "¿Superará el desempleo en México el 4% durante 2026?")
+   - category: one of world_cup, world, government, sustainability, corporate, community, cause
+   - description: 2-4 sentences of context (why it matters, who cares, what's at stake)
+   - resolution_criteria: how to resolve (official source, date, threshold)
+   - resolution_date: suggested date (YYYY-MM-DD)
+   - source_urls: array of {url, label} from the news articles you used (include the actual URLs from the news stories)
+   - why_interesting: 1 sentence on engagement potential
 3. BRIEF: Write a 3-sentence summary of what's happening today that matters to our audience (Mexico City, World Cup, economy, sustainability).
 
 Return as JSON: { relevance: [...], suggestions: [...], brief: '...' }`

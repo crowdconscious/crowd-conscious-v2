@@ -96,7 +96,7 @@ For each pending submission, provide:
 4. If 'create_market': suggest resolution_criteria and resolution_date
 5. If 'merge_with_existing': which existing market title it overlaps with
 
-Return as JSON array sorted by relevance_score descending.
+Return ONLY a valid JSON array. No markdown code blocks, no explanation before or after. Sorted by relevance_score descending.
 Write reasons in Spanish.`
 
     const userPrompt = userMessage?.trim() ?? ''
@@ -127,7 +127,39 @@ Write reasons in Spanish.`
       const parsed = parseAgentJSON(rawText)
       analysis = Array.isArray(parsed) ? parsed : [parsed]
     } catch (e) {
-      throw new Error(`JSON parse failed: ${String(e)}`)
+      console.error('[Inbox Curator] JSON parse failed. Raw response (first 500 chars):', rawText.slice(0, 500))
+      // Save raw response so admin can review; don't fail the run
+      try {
+        await supabase.from('agent_content').insert({
+          market_id: null,
+          agent_type: 'news_monitor',
+          content_type: 'weekly_digest',
+          title: 'Inbox Curator Digest (parse failed)',
+          body: rawText,
+          language: 'es',
+          metadata: {
+            type: 'inbox_digest',
+            parse_error: String(e),
+            pending_count: pending.length,
+            model: MODELS.FAST,
+            tokens_input: usage.input_tokens,
+            tokens_output: usage.output_tokens,
+          },
+          published: false,
+        })
+      } catch (saveErr) {
+        console.error('[Inbox Curator] Failed to save raw content:', saveErr)
+      }
+      await logAgentRun({
+        agentName: 'inbox-curator',
+        status: 'error',
+        durationMs: Date.now() - startTime,
+        errorMessage: `JSON parse failed: ${String(e)}`,
+        tokensInput: usage.input_tokens,
+        tokensOutput: usage.output_tokens,
+        summary: { pending_count: pending.length, parse_failed: true },
+      })
+      return { success: false, error: `JSON parse failed: ${String(e)}` }
     }
 
     const topItem = analysis[0] as Record<string, unknown> | undefined

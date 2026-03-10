@@ -375,18 +375,43 @@ export default function AdminAgentsPage() {
                 }
                 const title = String(sug.title ?? item.title)
                 const category = String(sug.category ?? '')
+                const description = String(sug.description ?? '')
                 const resolutionCriteria = String(sug.resolution_criteria ?? '')
-                const createUrl = `/predictions/admin/create-market?title=${encodeURIComponent(title)}&category=${encodeURIComponent(category)}&resolution_criteria=${encodeURIComponent(resolutionCriteria)}`
+                const sourceUrls = Array.isArray(sug.source_urls)
+                  ? (sug.source_urls as Array<{ url?: string; label?: string }>)
+                  : []
+                const createUrl = `/predictions/admin/create-market?suggestion_id=${encodeURIComponent(item.id)}`
 
                 return (
                   <div
                     key={item.id}
                     className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 flex items-start justify-between gap-4"
                   >
-                    <div>
+                    <div className="min-w-0 flex-1">
                       <div className="font-medium text-white">{title}</div>
-                      <div className="text-sm text-slate-400 mt-1">Category: {category}</div>
-                      <div className="text-sm text-slate-500 mt-1">{resolutionCriteria}</div>
+                      <div className="text-sm text-slate-400 mt-1">Category: {category || '—'}</div>
+                      {description && (
+                        <div className="text-sm text-slate-500 mt-1 line-clamp-2">{description}</div>
+                      )}
+                      {resolutionCriteria && (
+                        <div className="text-sm text-slate-500 mt-1">Resolution: {resolutionCriteria}</div>
+                      )}
+                      {sourceUrls.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {sourceUrls.slice(0, 3).map((s, i) => (
+                            <a
+                              key={i}
+                              href={s.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1"
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                              {s.label || s.url || 'Link'}
+                            </a>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <Link
                       href={createUrl}

@@ -22,6 +22,7 @@ type MarketOption = { id: string; title: string }
 
 export default function CreateMarketPage() {
   const [fromInboxId, setFromInboxId] = useState<string | null>(null)
+  const [suggestionId, setSuggestionId] = useState<string | null>(null)
   const [successId, setSuccessId] = useState<string | null>(null)
 
   const [title, setTitle] = useState('')
@@ -53,9 +54,14 @@ export default function CreateMarketPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '')
-    const id = params.get('from_inbox')
-    if (id) {
-      setFromInboxId(id)
+    const inboxId = params.get('from_inbox')
+    const sugId = params.get('suggestion_id')
+    if (inboxId) {
+      setFromInboxId(inboxId)
+      return
+    }
+    if (sugId) {
+      setSuggestionId(sugId)
       return
     }
     const prefillTitle = params.get('title')
@@ -89,9 +95,58 @@ export default function CreateMarketPage() {
     }
   }, [])
 
+  const loadSuggestion = useCallback(async (id: string) => {
+    try {
+      const res = await fetch(`/api/predictions/admin/agent-content/${id}`)
+      const data = await res.json()
+      if (res.ok && data.item) {
+        const item = data.item
+        let sug: Record<string, unknown> = {}
+        try {
+          sug = typeof item.body === 'string' ? JSON.parse(item.body) : (item.body || {})
+        } catch {
+          sug = { title: item.title }
+        }
+        setTitle(String(sug.title ?? item.title ?? ''))
+        setDescription(String(sug.description ?? ''))
+        setCategory(String(sug.category ?? ''))
+        setResolutionCriteria(String(sug.resolution_criteria ?? ''))
+        if (sug.resolution_date) {
+          const d = new Date(String(sug.resolution_date))
+          if (!isNaN(d.getTime())) {
+            setResolutionDate(d.toISOString().slice(0, 16))
+          }
+        }
+        const sourceUrls = Array.isArray(sug.source_urls)
+          ? (sug.source_urls as Array<{ url?: string; label?: string }>)
+          : []
+        if (sourceUrls.length > 0) {
+          setVerificationSources(
+            sourceUrls.map((s) => ({
+              name: String(s.label || s.url || 'Source'),
+              url: String(s.url || ''),
+            }))
+          )
+          setLinks(
+            sourceUrls.map((s) => ({
+              url: String(s.url || ''),
+              label: String(s.label || s.url || ''),
+            }))
+          )
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, [])
+
   useEffect(() => {
     if (fromInboxId) loadInboxItem(fromInboxId)
   }, [fromInboxId, loadInboxItem])
+
+  useEffect(() => {
+    if (suggestionId) loadSuggestion(suggestionId)
+  }, [suggestionId, loadSuggestion])
 
   useEffect(() => {
     if (!relatedSearch.trim()) {
