@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase-server'
 import dynamic from 'next/dynamic'
+import { SponsorBadge } from '@/components/SponsorBadge'
 import { toDisplayPercent } from '@/lib/probability-utils'
 import { getMarketText, getOutcomeLabel } from '@/lib/i18n/market-translations'
 import { Globe, Building2, Briefcase, Users, Trophy, Leaf, ChevronRight, Heart } from 'lucide-react'
@@ -45,7 +46,7 @@ async function getLandingData() {
   ] = await Promise.all([
     supabase
       .from('prediction_markets')
-      .select('id, title, category, current_probability, total_votes, image_url, sponsor_name, translations')
+      .select('id, title, category, current_probability, total_votes, image_url, sponsor_name, sponsor_logo_url, sponsor_url, translations')
       .in('status', ['active', 'trading'])
       .order('total_votes', { ascending: false, nullsFirst: false })
       .limit(6),
@@ -77,6 +78,8 @@ async function getLandingData() {
     total_votes: number | null
     image_url: string | null
     sponsor_name: string | null
+    sponsor_logo_url: string | null
+    sponsor_url: string | null
   }>
 
   const outcomesByMarket: Record<string, { label: string; probability: number; translations?: unknown }> = {}
@@ -200,7 +203,18 @@ export default async function LandingPage() {
                           <Icon className="w-3 h-3" />
                           {config.label}
                         </span>
-                        <p className="font-medium text-white truncate">{getMarketText(m, 'title', locale)}</p>
+                        <div className="min-w-0">
+                          <p className="font-medium text-white truncate">{getMarketText(m, 'title', locale)}</p>
+                          {m.sponsor_name && (
+                            <div className="mt-0.5">
+                              <SponsorBadge
+                                sponsorName={m.sponsor_name}
+                                sponsorUrl={m.sponsor_url}
+                                sponsorLogoUrl={m.sponsor_logo_url}
+                              />
+                            </div>
+                          )}
+                        </div>
                       </div>
                       <div className="flex items-center gap-4 shrink-0">
                         <span className="text-emerald-400 font-bold text-lg">

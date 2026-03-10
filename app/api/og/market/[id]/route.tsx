@@ -36,7 +36,7 @@ export async function GET(
 
     const { data: market, error } = await supabase
       .from('prediction_markets')
-      .select('id, title, category, current_probability, total_votes, translations')
+      .select('id, title, category, current_probability, total_votes, translations, sponsor_name, sponsor_logo_url')
       .eq('id', marketId)
       .single()
 
@@ -75,6 +75,18 @@ export async function GET(
 
     const topOutcome = outcomes?.[0]
     const probRaw = topOutcome?.probability ?? market.current_probability ?? 0.5
+    let sponsorLogoBase64 = ''
+    if ((market as { sponsor_logo_url?: string }).sponsor_logo_url) {
+      try {
+        const logoRes = await fetch((market as { sponsor_logo_url?: string }).sponsor_logo_url!)
+        const logoBuffer = await logoRes.arrayBuffer()
+        const base64 = Buffer.from(logoBuffer).toString('base64')
+        const contentType = logoRes.headers.get('content-type') || 'image/png'
+        sponsorLogoBase64 = `data:${contentType};base64,${base64}`
+      } catch {
+        /* skip logo in OG if fetch fails */
+      }
+    }
     const probability = Math.min(100, Math.max(0, Math.round(Number(probRaw) * 100)))
     const outcomeName = topOutcome ? getOutcomeLabel(topOutcome, locale) : (probability >= 50 ? 'Yes' : 'Undecided')
     const totalPredictions = market.total_votes ?? 0
@@ -304,6 +316,25 @@ export async function GET(
                 display: 'flex',
               }}
             />
+            {(market as { sponsor_name?: string }).sponsor_name && (
+              <div
+                style={{
+                  display: 'flex',
+                  position: 'absolute',
+                  bottom: '12px',
+                  left: '56px',
+                  fontSize: '14px',
+                  color: '#94a3b8',
+                  alignItems: 'center',
+                  gap: '8px',
+                }}
+              >
+                {sponsorLogoBase64 ? (
+                  <img src={sponsorLogoBase64} alt="" width={24} height={24} style={{ display: 'flex', objectFit: 'contain', borderRadius: '4px' }} />
+                ) : null}
+                Sponsored by {(market as { sponsor_name?: string }).sponsor_name}
+              </div>
+            )}
           </div>
         ),
         { width: WIDTH, height: HEIGHT, headers: { 'Cache-Control': 'public, max-age=60, s-maxage=300' } }
@@ -347,6 +378,25 @@ export async function GET(
               display: 'flex',
             }}
           />
+          {(market as { sponsor_name?: string }).sponsor_name && (
+            <div
+              style={{
+                display: 'flex',
+                position: 'absolute',
+                bottom: '12px',
+                left: '56px',
+                fontSize: '14px',
+                color: '#94a3b8',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              {sponsorLogoBase64 ? (
+                <img src={sponsorLogoBase64} alt="" width={24} height={24} style={{ display: 'flex', objectFit: 'contain', borderRadius: '4px' }} />
+              ) : null}
+              Sponsored by {(market as { sponsor_name?: string }).sponsor_name}
+            </div>
+          )}
           <div
             style={{
               display: 'flex',

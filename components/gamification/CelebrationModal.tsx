@@ -23,6 +23,8 @@ interface CelebrationModalProps {
   achievements?: Achievement[]
   sharePath?: string
   shareTitle?: string
+  /** When present, share text includes "Sponsored by X on Crowd Conscious" */
+  shareSponsorName?: string | null
   /** Market ID for OG card image. Used for "Share card" to share the branded image. */
   shareCardMarketId?: string
   onClose: () => void
@@ -42,6 +44,7 @@ export const CelebrationModal = memo(function CelebrationModal({
   achievements = [],
   sharePath,
   shareTitle,
+  shareSponsorName,
   shareCardMarketId,
   onClose
 }: CelebrationModalProps) {
@@ -132,13 +135,19 @@ export const CelebrationModal = memo(function CelebrationModal({
     ? `${window.location.origin}${sharePath}`
     : typeof window !== 'undefined' ? window.location.href : ''
   const shareText = shareTitle
-    ? `I just predicted on "${shareTitle}" on Crowd Conscious! 🎯`
+    ? shareSponsorName
+      ? `I just predicted on "${shareTitle}" — Sponsored by ${shareSponsorName} on Crowd Conscious! 🎯`
+      : `I just predicted on "${shareTitle}" on Crowd Conscious! 🎯`
     : 'I just made a prediction on Crowd Conscious! 🎯'
   const shareTextX = shareTitle
-    ? `${shareTitle}\n\nMake your prediction:`
+    ? shareSponsorName
+      ? `${shareTitle} — Sponsored by ${shareSponsorName}\n\nMake your prediction:`
+      : `${shareTitle}\n\nMake your prediction:`
     : 'Make your prediction on Crowd Conscious'
   const shareTextWhatsApp = shareTitle
-    ? `${shareTitle} — Make your prediction: ${shareUrl}`
+    ? shareSponsorName
+      ? `${shareTitle} — Sponsored by ${shareSponsorName} on Crowd Conscious. Make your prediction: ${shareUrl}`
+      : `${shareTitle} — Make your prediction: ${shareUrl}`
     : shareUrl
   const shareCardUrl = shareCardMarketId && typeof window !== 'undefined'
     ? `${window.location.origin}/api/og/market/${shareCardMarketId}`
@@ -172,11 +181,11 @@ export const CelebrationModal = memo(function CelebrationModal({
     if (!shareCardMarketId) return
     setShareCardLoading(true)
     try {
-      await shareNative(shareCardMarketId, shareTitle || 'My prediction on Crowd Conscious', 'standard')
+      await shareNative(shareCardMarketId, shareTitle || 'My prediction on Crowd Conscious', 'standard', undefined, shareSponsorName)
     } finally {
       setShareCardLoading(false)
     }
-  }, [shareCardMarketId, shareTitle])
+  }, [shareCardMarketId, shareTitle, shareSponsorName])
 
   const handleDownloadCard = useCallback(async () => {
     if (!shareCardMarketId) return
@@ -192,7 +201,7 @@ export const CelebrationModal = memo(function CelebrationModal({
     if (!shareCardMarketId) return
     setShareCardLoading(true)
     try {
-      await shareNative(shareCardMarketId, shareTitle || 'My prediction on Crowd Conscious', 'story')
+      await shareNative(shareCardMarketId, shareTitle || 'My prediction on Crowd Conscious', 'story', undefined, shareSponsorName)
     } catch {
       const res = await fetch(`/api/og/market/${shareCardMarketId}?format=story`)
       const blob = await res.blob()
@@ -207,7 +216,7 @@ export const CelebrationModal = memo(function CelebrationModal({
     } finally {
       setShareCardLoading(false)
     }
-  }, [shareCardMarketId, shareTitle])
+  }, [shareCardMarketId, shareTitle, shareSponsorName])
 
   const handleDownloadStory = useCallback(async () => {
     if (!shareCardMarketId) return

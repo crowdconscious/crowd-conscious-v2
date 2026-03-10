@@ -76,21 +76,102 @@ export const emailTemplates = {
     `
   }),
 
-  sponsorConfirmation: (sponsorName: string, tier: string, amountMXN: number, marketTitle?: string) => ({
-    subject: `Thank you for sponsoring Crowd Conscious! 🙏`,
-    html: `
+  sponsorConfirmation: (
+    sponsorName: string,
+    tier: string,
+    amountMXN: number,
+    marketTitle?: string,
+    category?: string,
+    marketId?: string,
+    sponsorshipId?: string,
+    reportToken?: string
+  ) => {
+    const fundAmount = Math.round(amountMXN * 0.4)
+    const sponsoredLabel = marketTitle
+      ? `"${marketTitle}"`
+      : category
+        ? `${category} category`
+        : 'Crowd Conscious'
+    const reportLink =
+      sponsorshipId && reportToken
+        ? `${APP_URL}/sponsor/report/${sponsorshipId}?token=${encodeURIComponent(reportToken)}`
+        : null
+    return {
+      subject: 'Your Crowd Conscious sponsorship is live! 🎉',
+      html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: linear-gradient(135deg, #10b981, #14b8a6); padding: 40px 20px; text-align: center; border-radius: 10px 10px 0 0;">
-          <h1 style="color: white; margin: 0; font-size: 28px;">Thank you for your sponsorship! 🙏</h1>
+          <h1 style="color: white; margin: 0; font-size: 28px;">Your sponsorship is live! 🎉</h1>
         </div>
         <div style="padding: 30px 20px; background: #f8fafc; border-radius: 0 0 10px 10px;">
           <p style="color: #475569; line-height: 1.6;">Hi ${sponsorName},</p>
           <p style="color: #475569; line-height: 1.6;">
-            Your ${tier} sponsorship of ${amountMXN.toLocaleString()} MXN has been received. 40% goes to the Conscious Fund to support community causes.
+            Thank you for sponsoring ${sponsoredLabel}. Your brand will appear on the market card, detail page, and share images.
           </p>
-          ${marketTitle ? `<p style="color: #475569; line-height: 1.6;"><strong>Market:</strong> ${marketTitle}</p>` : ''}
+          <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;">
+            <p style="margin: 0 0 10px 0; color: #1e293b;"><strong>💰 Your impact</strong></p>
+            <p style="margin: 0; color: #475569;">40% (${fundAmount.toLocaleString()} MXN) goes to the Conscious Fund for community causes chosen by our users.</p>
+          </div>
+          ${marketId ? `
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${APP_URL}/predictions/markets/${marketId}" style="background: #10b981; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">View your sponsored market →</a>
+          </div>
+          ` : `
           <div style="text-align: center; margin: 30px 0;">
             <a href="${APP_URL}/sponsor" style="background: #10b981; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">View Sponsor Page</a>
+          </div>
+          `}
+          ${reportLink ? `
+          <div style="text-align: center; margin: 20px 0;">
+            <a href="${reportLink}" style="background: #334155; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 500; display: inline-block; font-size: 14px;">View your analytics dashboard →</a>
+          </div>
+          <p style="color: #64748b; font-size: 12px; margin-top: 10px;">
+            Save this link — it's your private analytics page. You'll also receive a quarterly impact report by email.
+          </p>
+          ` : `
+          <p style="color: #64748b; font-size: 14px; margin-top: 20px;">
+            You'll receive a quarterly impact report showing how your sponsorship is making a difference.
+          </p>
+          `}
+        </div>
+      </div>
+    `
+    }
+  },
+
+  sponsorshipAdminNotification: (data: {
+    sponsorName: string
+    sponsorEmail: string
+    sponsorUrl?: string
+    tier: string
+    amountMXN: number
+    fundAmount: number
+    platformAmount: number
+    marketTitle?: string
+    marketId?: string
+    category?: string
+  }) => ({
+    subject: `🎉 New sponsorship: ${data.sponsorName} — $${data.amountMXN.toLocaleString()} MXN`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #10b981, #14b8a6); padding: 30px 20px; text-align: center; border-radius: 10px 10px 0 0;">
+          <h1 style="color: white; margin: 0; font-size: 24px;">New Sponsorship</h1>
+        </div>
+        <div style="padding: 30px 20px; background: #f8fafc; border-radius: 0 0 10px 10px;">
+          <p style="color: #1e293b; font-weight: bold;">${data.sponsorName}</p>
+          <p style="color: #475569; margin: 5px 0;">Email: ${data.sponsorEmail}</p>
+          ${data.sponsorUrl ? `<p style="color: #475569; margin: 5px 0;">Website: <a href="${data.sponsorUrl}">${data.sponsorUrl}</a></p>` : ''}
+          <p style="color: #475569; margin: 5px 0;">Tier: ${data.tier}</p>
+          ${data.marketTitle ? `<p style="color: #475569; margin: 5px 0;">Market: ${data.marketTitle}</p>` : ''}
+          ${data.category ? `<p style="color: #475569; margin: 5px 0;">Category: ${data.category}</p>` : ''}
+          <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e2e8f0;">
+            <p style="margin: 0 0 8px 0; color: #1e293b;"><strong>Amounts</strong></p>
+            <p style="margin: 0; color: #475569;">Total: $${data.amountMXN.toLocaleString()} MXN</p>
+            <p style="margin: 0; color: #10b981;">Fund (40%): $${data.fundAmount.toLocaleString()} MXN</p>
+            <p style="margin: 0; color: #64748b;">Platform (60%): $${data.platformAmount.toLocaleString()} MXN</p>
+          </div>
+          <div style="text-align: center;">
+            <a href="${APP_URL}/admin" style="background: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Admin Dashboard</a>
           </div>
         </div>
       </div>
@@ -470,10 +551,42 @@ export async function sendSponsorConfirmationEmail(
   sponsorName: string,
   tier: string,
   amountMXN: number,
-  marketTitle?: string
+  marketTitle?: string,
+  category?: string,
+  marketId?: string,
+  sponsorshipId?: string,
+  reportToken?: string
 ): Promise<boolean> {
-  const template = emailTemplates.sponsorConfirmation(sponsorName, tier, amountMXN, marketTitle)
+  const template = emailTemplates.sponsorConfirmation(
+    sponsorName,
+    tier,
+    amountMXN,
+    marketTitle,
+    category,
+    marketId,
+    sponsorshipId,
+    reportToken
+  )
   const result = await sendEmail(email, template)
+  return result.success
+}
+
+// Send admin notification when sponsorship is activated
+export async function sendSponsorshipAdminNotification(data: {
+  sponsorName: string
+  sponsorEmail: string
+  sponsorUrl?: string
+  tier: string
+  amountMXN: number
+  fundAmount: number
+  platformAmount: number
+  marketTitle?: string
+  marketId?: string
+  category?: string
+}): Promise<boolean> {
+  const adminEmail = process.env.ADMIN_EMAIL || 'comunidad@crowdconscious.app'
+  const template = emailTemplates.sponsorshipAdminNotification(data)
+  const result = await sendEmail(adminEmail, template)
   return result.success
 }
 

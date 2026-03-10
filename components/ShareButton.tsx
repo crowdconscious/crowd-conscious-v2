@@ -14,10 +14,11 @@ import { useLocale } from '@/lib/i18n/useLocale'
 interface ShareButtonProps {
   marketId: string
   title: string
+  sponsorName?: string | null
   compact?: boolean
 }
 
-export default function ShareButton({ marketId, title, compact = false }: ShareButtonProps) {
+export default function ShareButton({ marketId, title, sponsorName, compact = false }: ShareButtonProps) {
   const locale = useLocale()
   const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -81,7 +82,7 @@ export default function ShareButton({ marketId, title, compact = false }: ShareB
           </button>
           <button
             onClick={() => {
-              shareToWhatsApp(marketId, title)
+              shareToWhatsApp(marketId, title, sponsorName)
               setOpen(false)
             }}
             className="w-full px-4 py-2 text-left text-sm text-slate-200 hover:bg-slate-700 flex items-center gap-3"
@@ -125,7 +126,7 @@ export default function ShareButton({ marketId, title, compact = false }: ShareB
           <div className="border-t border-slate-700 my-1" />
           <button
             onClick={() => {
-              shareNative(marketId, title, 'standard', locale)
+              shareNative(marketId, title, 'standard', locale, sponsorName)
               setOpen(false)
             }}
             className="w-full px-4 py-2 text-left text-sm text-emerald-400 hover:bg-slate-700 flex items-center gap-3 font-medium"

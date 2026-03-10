@@ -71,14 +71,32 @@ export async function POST(request: NextRequest) {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'
 
     const tierLabel = TIER_LABELS[tier] || tier
-    const marketTitle = market_id ? undefined : undefined // We'll fetch if needed, for now description is generic
+    let marketTitle: string | undefined
+    if (market_id) {
+      const { createClient } = await import('@supabase/supabase-js')
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+      )
+      const { data: m } = await supabase
+        .from('prediction_markets')
+        .select('title')
+        .eq('id', market_id)
+        .single()
+      marketTitle = m?.title
+    }
     const categoryLabel = category || 'selected'
+    const productName = marketTitle
+      ? `${tierLabel} — ${marketTitle}`
+      : category
+        ? `${tierLabel} — ${categoryLabel} Category`
+        : `${tierLabel} — Crowd Conscious`
     const description =
-      market_id
-        ? `Sponsor a specific market`
+      market_id && marketTitle
+        ? `Sponsor "${marketTitle}". 40% funds community causes.`
         : category
-          ? `${categoryLabel} Category Sponsorship`
-          : `${tierLabel} - Crowd Conscious`
+          ? `${categoryLabel} Category Sponsorship. 40% funds community causes.`
+          : `Crowd Conscious ${tierLabel}. 40% funds community causes.`
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -87,7 +105,7 @@ export async function POST(request: NextRequest) {
           price_data: {
             currency: 'mxn',
             product_data: {
-              name: `Crowd Conscious - ${tierLabel}`,
+              name: productName,
               description,
               images: sponsor_logo_url ? [sponsor_logo_url] : undefined,
             },

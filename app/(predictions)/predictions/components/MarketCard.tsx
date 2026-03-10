@@ -184,15 +184,30 @@ export function MarketCard({ market, history = [], leadingOutcome }: MarketCardP
         </div>
 
         {market.sponsor_name && (
-          <div className="flex items-center gap-2 mt-auto mb-2">
+          <div className="flex items-center gap-2 mt-auto pt-3 border-t border-slate-800">
             {market.sponsor_logo_url ? (
               <img
                 src={market.sponsor_logo_url}
-                alt=""
-                className="w-6 h-6 rounded object-contain bg-slate-800"
+                alt={market.sponsor_name}
+                className="h-5 w-auto rounded object-contain bg-slate-800"
               />
             ) : null}
-            <p className="text-xs text-slate-500">Sponsored by {market.sponsor_name}</p>
+            <span className="text-xs text-slate-500">
+              Sponsored by{' '}
+              {(market as { sponsor_url?: string }).sponsor_url ? (
+                <a
+                  href={(market as { sponsor_url?: string }).sponsor_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-emerald-400 hover:underline"
+                >
+                  {market.sponsor_name}
+                </a>
+              ) : (
+                market.sponsor_name
+              )}
+            </span>
           </div>
         )}
         {market.status === 'resolved' ? (

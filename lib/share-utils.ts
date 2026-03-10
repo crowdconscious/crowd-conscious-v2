@@ -3,19 +3,27 @@ function getBaseUrl(): string {
   return process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'
 }
 
-export function shareToTwitter(marketId: string, title: string) {
+function getShareSuffix(sponsorName?: string | null): string {
+  return sponsorName
+    ? ` — Sponsored by ${sponsorName} on Crowd Conscious`
+    : ' — What do you think?'
+}
+
+export function shareToTwitter(marketId: string, title: string, sponsorName?: string | null) {
   const base = getBaseUrl()
-  const text = encodeURIComponent(`${title}\n\nWhat do you think?`)
+  const suffix = getShareSuffix(sponsorName)
+  const text = encodeURIComponent(`${title}${sponsorName ? suffix : `\n\nWhat do you think?`}`)
   const url = encodeURIComponent(`${base}/predictions/markets/${marketId}`)
   window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank')
 }
 
-export function shareToWhatsApp(marketId: string, title: string) {
+export function shareToWhatsApp(marketId: string, title: string, sponsorName?: string | null) {
   const base = getBaseUrl()
-  const text = encodeURIComponent(
-    `${title} — Make your prediction: ${base}/predictions/markets/${marketId}`
-  )
-  window.open(`https://wa.me/?text=${text}`, '_blank')
+  const url = `${base}/predictions/markets/${marketId}`
+  const text = sponsorName
+    ? `${title} — Sponsored by ${sponsorName} on Crowd Conscious. Make your prediction: ${url}`
+    : `${title} — Make your prediction: ${url}`
+  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
 }
 
 export function shareToFacebook(marketId: string) {
@@ -52,12 +60,13 @@ export async function downloadCard(marketId: string, format: 'standard' | 'story
   }
 }
 
-export async function shareNative(marketId: string, title: string, format: 'standard' | 'story' = 'standard', locale?: string) {
+export async function shareNative(marketId: string, title: string, format: 'standard' | 'story' = 'standard', locale?: string, sponsorName?: string | null) {
   const base = getBaseUrl()
   const marketUrl = `${base}/predictions/markets/${marketId}`
   const langParam = locale && locale !== 'es' ? (format === 'story' ? `&lang=${locale}` : `?lang=${locale}`) : ''
   const url = format === 'story' ? `/api/og/market/${marketId}?format=story${langParam}` : `/api/og/market/${marketId}${langParam}`
   const filename = format === 'story' ? 'crowd-conscious-story.png' : 'prediction.png'
+  const shareText = `${title}${getShareSuffix(sponsorName)}`
   try {
     const response = await fetch(url)
     const blob = await response.blob()
@@ -66,14 +75,14 @@ export async function shareNative(marketId: string, title: string, format: 'stan
     if (navigator.canShare?.({ files: [file] })) {
       await navigator.share({
         title,
-        text: `${title} — What do you think?`,
+        text: shareText,
         url: marketUrl,
         files: [file],
       })
     } else {
       await navigator.share({
         title,
-        text: `${title} — What do you think?`,
+        text: shareText,
         url: marketUrl,
       })
     }

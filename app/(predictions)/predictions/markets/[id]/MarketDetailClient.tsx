@@ -224,7 +224,7 @@ export function MarketDetailClient({
             </span>
             <div className="flex items-center justify-between gap-4 mb-2">
               <h1 className="text-2xl font-bold text-white flex-1 min-w-0">{getMarketText(market, 'title', locale)}</h1>
-              <ShareButton marketId={market.id} title={getMarketText(market, 'title', locale)} />
+              <ShareButton marketId={market.id} title={getMarketText(market, 'title', locale)} sponsorName={(market as { sponsor_name?: string }).sponsor_name} />
             </div>
             <p className="text-slate-400 text-sm">
               Created by {creatorName} on {formatDate(market.created_at)}
@@ -547,7 +547,7 @@ export function MarketDetailClient({
                 <BarChart3 className="w-4 h-4" />
                 Market Info
               </h3>
-              <ShareButton marketId={market.id} title={getMarketText(market, 'title', locale)} compact />
+              <ShareButton marketId={market.id} title={getMarketText(market, 'title', locale)} sponsorName={(market as { sponsor_name?: string }).sponsor_name} compact />
             </div>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
@@ -589,6 +589,7 @@ export function MarketDetailClient({
         xpGained={celebration.xpGained}
         sharePath={`/predictions/markets/${market.id}`}
         shareTitle={getMarketText(market, 'title', locale)}
+        shareSponsorName={(market as { sponsor_name?: string }).sponsor_name}
         shareCardMarketId={market.id}
         onClose={handleCelebrationClose}
       />

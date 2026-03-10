@@ -18,6 +18,7 @@ import {
   PlusCircle,
   Trophy,
   Bot,
+  DollarSign,
 } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import LanguageSwitcherSimple from '@/components/LanguageSwitcherSimple'
@@ -129,6 +130,17 @@ export default function PredictionsShell({
             >
               <Bot className="w-4 h-4" />
               {language === 'es' ? 'Panel de Agentes' : 'Agent Dashboard'}
+            </Link>
+            <Link
+              href="/predictions/admin/sponsors"
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                pathname === '/predictions/admin/sponsors'
+                  ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
+                  : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800/50'
+              }`}
+            >
+              <DollarSign className="w-4 h-4" />
+              {language === 'es' ? 'Patrocinadores' : 'Sponsors'}
             </Link>
           </div>
         )}
@@ -263,6 +275,18 @@ export default function PredictionsShell({
                   >
                     <Bot className="w-4 h-4" />
                     {language === 'es' ? 'Panel de Agentes' : 'Agent Dashboard'}
+                  </Link>
+                  <Link
+                    href="/predictions/admin/sponsors"
+                    onClick={closeMobileMenu}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                      pathname === '/predictions/admin/sponsors'
+                        ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
+                        : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800/50'
+                    }`}
+                  >
+                    <DollarSign className="w-4 h-4" />
+                    {language === 'es' ? 'Patrocinadores' : 'Sponsors'}
                   </Link>
                 </>
               )}

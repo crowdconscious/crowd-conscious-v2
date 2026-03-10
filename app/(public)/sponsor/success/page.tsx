@@ -8,10 +8,37 @@ const Footer = dynamic(() => import('@/components/Footer'))
 
 async function getSessionDetails(sessionId: string) {
   if (!sessionId) return null
-  const supabase = await createClient()
-  // We don't store session details server-side; metadata comes from Stripe
-  // For now we show generic success. Could add Stripe SDK server-side to fetch session.
-  return { sessionId }
+  try {
+    const { getStripe } = await import('@/app/api/webhooks/stripe/lib/stripe-webhook-utils')
+    const stripe = getStripe()
+    const session = await stripe.checkout.sessions.retrieve(sessionId, {
+      expand: ['line_items'],
+    })
+    if (session.payment_status !== 'paid') return { sessionId }
+    const metadata = session.metadata || {}
+    const marketId = metadata.market_id as string | undefined
+    let marketTitle: string | undefined
+    if (marketId) {
+      const supabase = await createClient()
+      const { data: m } = await supabase
+        .from('prediction_markets')
+        .select('title')
+        .eq('id', marketId)
+        .single()
+      marketTitle = m?.title
+    }
+    return {
+      sessionId,
+      sponsorName: metadata.sponsor_name as string | undefined,
+      tier: metadata.tier as string | undefined,
+      amountMXN: session.amount_total ? session.amount_total / 100 : undefined,
+      marketId,
+      marketTitle,
+      category: metadata.category as string | undefined,
+    }
+  } catch {
+    return { sessionId }
+  }
 }
 
 export default async function SponsorSuccessPage({
@@ -24,8 +51,13 @@ export default async function SponsorSuccessPage({
   const session = sessionId ? await getSessionDetails(sessionId) : null
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'
-  const shareUrl = `${baseUrl}/sponsor`
-  const shareText = encodeURIComponent('I just sponsored a prediction market on Crowd Conscious! 🎯')
+  const marketUrl = session?.marketId ? `${baseUrl}/predictions/markets/${session.marketId}` : `${baseUrl}/predictions/markets`
+  const shareUrl = session?.marketId ? marketUrl : `${baseUrl}/sponsor`
+  const shareText = encodeURIComponent(
+    session?.marketTitle
+      ? `I just sponsored "${session.marketTitle}" on Crowd Conscious! 🎯`
+      : 'I just sponsored a prediction market on Crowd Conscious! 🎯'
+  )
   const twitterShare = `https://twitter.com/intent/tweet?text=${shareText}&url=${encodeURIComponent(shareUrl)}`
   const linkedInShare = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`
 
@@ -42,26 +74,41 @@ export default async function SponsorSuccessPage({
             Thank you for sponsoring!
           </h1>
           <p className="text-slate-400 text-lg mb-8">
-            Your payment was successful. Your brand will appear on the market within 24 hours — or
-            instantly if the webhook has already processed.
+            {session?.marketTitle ? (
+              <>Your brand will appear on <strong className="text-white">&quot;{session.marketTitle}&quot;</strong> within minutes — or instantly if the webhook has already processed.</>
+            ) : (
+              <>Your payment was successful. Your brand will appear on the market within minutes — or instantly if the webhook has already processed.</>
+            )}
           </p>
+
+          {session?.marketTitle && (
+            <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4 mb-6 text-left">
+              <p className="text-slate-500 text-sm mb-2">Preview: Your sponsored market card</p>
+              <div className="bg-slate-900 rounded-lg p-4 border border-slate-700">
+                <p className="text-white font-medium">{session.marketTitle}</p>
+                {session.sponsorName && (
+                  <p className="text-emerald-400 text-sm mt-2">Sponsored by {session.sponsorName}</p>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 mb-8 text-left">
             <h2 className="font-semibold text-white mb-2">What happens next?</h2>
             <ul className="text-slate-400 text-sm space-y-2">
               <li>• You&apos;ll receive a confirmation email shortly</li>
-              <li>• Your logo and name will appear on the sponsored market</li>
+              <li>• Your logo and name will appear on the market card, detail page, and share images</li>
               <li>• 40% of your contribution has been added to the Conscious Fund</li>
-              <li>• Users will see your brand when they predict</li>
+              <li>• Users will see your brand when they predict and share</li>
             </ul>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
             <Link
-              href="/predictions/markets"
+              href={session?.marketId ? `/predictions/markets/${session.marketId}` : '/predictions/markets'}
               className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition-colors"
             >
-              Browse Markets
+              {session?.marketId ? 'View your sponsored market' : 'Browse Markets'}
               <ArrowRight className="w-4 h-4" />
             </Link>
             <Link

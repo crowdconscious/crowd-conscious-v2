@@ -142,6 +142,29 @@ export async function POST(request: NextRequest) {
       if (translations && typeof translations === 'object') updatePayload.translations = translations
       await admin.from('prediction_markets').update(updatePayload).eq('id', marketId)
 
+      // Auto-apply active category sponsor if one exists for this category
+      const { data: categorySponsor } = await admin
+        .from('sponsorships')
+        .select('id, sponsor_name, sponsor_logo_url, sponsor_url')
+        .eq('category', category)
+        .eq('tier', 'category')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (categorySponsor) {
+        await admin
+          .from('prediction_markets')
+          .update({
+            sponsor_id: categorySponsor.id,
+            sponsor_name: categorySponsor.sponsor_name,
+            sponsor_logo_url: categorySponsor.sponsor_logo_url,
+            sponsor_url: categorySponsor.sponsor_url,
+          })
+          .eq('id', marketId)
+      }
+
       return Response.json({
         success: true,
         market_id: marketId,
@@ -177,6 +200,29 @@ export async function POST(request: NextRequest) {
     }
     if (translations && typeof translations === 'object') updatePayload.translations = translations
     await admin.from('prediction_markets').update(updatePayload).eq('id', marketId)
+
+    // Auto-apply active category sponsor if one exists for this category
+    const { data: categorySponsor } = await admin
+      .from('sponsorships')
+      .select('id, sponsor_name, sponsor_logo_url, sponsor_url')
+      .eq('category', category)
+      .eq('tier', 'category')
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (categorySponsor) {
+      await admin
+        .from('prediction_markets')
+        .update({
+          sponsor_id: categorySponsor.id,
+          sponsor_name: categorySponsor.sponsor_name,
+          sponsor_logo_url: categorySponsor.sponsor_logo_url,
+          sponsor_url: categorySponsor.sponsor_url,
+        })
+        .eq('id', marketId)
+    }
 
     return Response.json({
       success: true,
