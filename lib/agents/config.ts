@@ -56,7 +56,7 @@ export async function logAgentRun(params: {
   // Cost estimation based on model
   // Haiku: $1/$5 per MTok → $0.000001 per input token, $0.000005 per output token
   // Sonnet: $3/$15 per MTok → $0.000003 per input token, $0.000015 per output token
-  const isCreative = params.agentName === 'content-creator';
+  const isCreative = params.agentName === 'content-creator' || params.agentName === 'ceo-digest';
   const inputRate = isCreative ? 0.000003 : 0.000001;
   const outputRate = isCreative ? 0.000015 : 0.000005;
   const costEstimate = 

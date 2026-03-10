@@ -275,7 +275,15 @@ export async function runCeoDigest(): Promise<{
       metrics.agent_errors_last_24h = 'error'
     }
 
-    const systemMessage = `You are the daily briefing analyst for Crowd Conscious, a free-to-play opinion platform based in Mexico City preparing for FIFA World Cup 2026 (opening match June 11 at Estadio Azteca). Produce a concise executive digest in Spanish for the CEO. Be direct, use numbers, flag anything that needs attention.`
+    const systemMessage = `You are the daily briefing analyst for Crowd Conscious, a free-to-play opinion platform based in Mexico City preparing for FIFA World Cup 2026 (opening match June 11, 2026 at Estadio Azteca).
+
+RULES (strict):
+- Write in Spanish. Professional, executive tone. No alarmism.
+- Use DAYS for time horizons (e.g. "~93 días hasta la inauguración"), never weeks unless it's actually weeks.
+- You have NO access to API balance or credits. NEVER infer "créditos agotados" or "recargar presupuesto" — error counts can be from parsing, model config, or transient issues. Only report what the data shows: agent status (success/error) and error messages.
+- Do NOT claim a model "no está disponible" — errors may be historical; if an agent has recent success, it is working.
+- Agent health: use the most recent run per agent. If the latest run is success, report ✅. Past errors do not mean the agent is broken now.
+- Be precise with numbers. Double-check date math.`
 
     const userMessage = `Here are today's platform metrics (JSON):
 
@@ -288,7 +296,7 @@ Generate today's CEO digest with these sections:
 2. MERCADOS ACTIVOS — what's hot, what's dead, probability shifts
 3. ACCIONES PENDIENTES — markets to resolve, inbox to review, anything broken
 4. OPORTUNIDADES — suggested new markets based on what's trending, sponsor angles
-5. SALUD DE LA PLATAFORMA — agents running ok? any technical issues?
+5. SALUD DE LA PLATAFORMA — agents running ok? (use most recent run status only)
 
 Keep it under 500 words. Write in Spanish. Today is ${todayFormatted}.`
 
@@ -305,7 +313,7 @@ Keep it under 500 words. Write in Spanish. Today is ${todayFormatted}.`
     }
 
     const response = await anthropic.messages.create({
-      model: MODELS.FAST,
+      model: MODELS.CREATIVE,
       max_tokens: TOKEN_LIMITS.DIGEST,
       system: systemMessage,
       messages: [{ role: 'user', content: userPrompt }],
@@ -330,7 +338,7 @@ Keep it under 500 words. Write in Spanish. Today is ${todayFormatted}.`
         body: digestText,
         language: 'es',
         metadata: {
-          model: MODELS.FAST,
+          model: MODELS.CREATIVE,
           tokens_input: usage.input_tokens,
           tokens_output: usage.output_tokens,
           date: today.toISOString().slice(0, 10),
