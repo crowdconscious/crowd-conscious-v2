@@ -50,8 +50,9 @@ async function getDashboardData(userId: string) {
       .from('agent_content')
       .select('*')
       .eq('published', true)
+      .eq('content_type', 'news_summary')
       .order('created_at', { ascending: false })
-      .limit(3),
+      .limit(5),
     supabase.from('conscious_fund').select('current_balance').limit(1).single(),
     supabase
       .from('xp_transactions')
