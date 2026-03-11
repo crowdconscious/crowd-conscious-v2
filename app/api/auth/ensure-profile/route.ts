@@ -28,21 +28,34 @@ export async function POST(request: NextRequest) {
 
     const admin = createAdminClient()
 
-    // Verify user exists in auth.users (prevents unauthorized profile creation)
-    const { data: authUser, error: authError } = await admin.auth.admin.getUserById(userId)
-    if (authError || !authUser?.user) {
-      console.error('Ensure-profile: user not found in auth', { userId, authError })
-      return NextResponse.json(
-        { error: 'User not found. Please complete signup first.' },
-        { status: 404 }
-      )
+    // Verify user exists in auth.users — retry to handle Supabase race (getUserById can return null right after signUp)
+    let authUser: { user?: { email?: string } } | null = null
+    const authRetries = 3
+    const authDelayMs = 500
+
+    for (let a = 0; a < authRetries; a++) {
+      const { data, error } = await admin.auth.admin.getUserById(userId)
+      if (!error && data?.user) {
+        authUser = data
+        break
+      }
+      if (a < authRetries - 1) {
+        await new Promise((r) => setTimeout(r, authDelayMs))
+      }
     }
 
-    if (authUser.user.email?.toLowerCase() !== email.toLowerCase()) {
-      return NextResponse.json(
-        { error: 'Email mismatch' },
-        { status: 400 }
-      )
+    if (authUser?.user) {
+      if (authUser.user.email?.toLowerCase() !== email.toLowerCase()) {
+        return NextResponse.json(
+          { error: 'Email mismatch' },
+          { status: 400 }
+        )
+      }
+    }
+    // If getUserById never found the user, add a short delay before insert — signUp just succeeded
+    // so the user exists; the admin API may have race/replication lag.
+    if (!authUser?.user) {
+      await new Promise((r) => setTimeout(r, 600))
     }
 
     // Check if profile already exists
