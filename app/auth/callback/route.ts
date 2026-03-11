@@ -1,4 +1,5 @@
 import { createServerAuth } from '../../../lib/auth-server'
+import { createAdminClient } from '@/lib/supabase-admin'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
@@ -33,7 +34,29 @@ export async function GET(request: NextRequest) {
 
       if (data.user) {
         console.log('✅ Session exchanged successfully, user:', data.user.id)
-        // Always redirect to main dashboard (/predictions)
+        // Ensure profile exists (handles signup flow where user closed browser before ensure-profile ran)
+        try {
+          const admin = createAdminClient()
+          const { data: existing } = await admin
+            .from('profiles')
+            .select('id')
+            .eq('id', data.user.id)
+            .single()
+          if (!existing) {
+            await admin.from('profiles').insert({
+              id: data.user.id,
+              email: data.user.email ?? '',
+              full_name: data.user.user_metadata?.full_name ?? data.user.email ?? 'User',
+              user_type: 'user',
+            })
+            console.log('✅ Profile created in auth callback')
+          }
+        } catch (profileErr) {
+          const msg = (profileErr as Error)?.message ?? ''
+          if (!msg.includes('duplicate') && !msg.includes('unique')) {
+            console.error('⚠️ Profile ensure failed in callback:', profileErr)
+          }
+        }
         return NextResponse.redirect(new URL('/dashboard', request.url))
       }
     } catch (error: any) {

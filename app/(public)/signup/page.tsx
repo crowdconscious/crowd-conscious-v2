@@ -61,54 +61,25 @@ export default function SignUpPage() {
         }
       } else if (data.user) {
         console.log('✅ User created in auth.users:', data.user.id)
-        
-        // Check if profile was created by trigger
-        console.log('🔍 Checking if profile exists...')
-        const { data: existingProfile, error: checkError } = await (supabase as any)
-          .from('profiles')
-          .select('*')
-          .eq('id', data.user.id)
-          .single()
-        
-        console.log('Profile check result:', { existingProfile, checkError })
-        
-        if (!existingProfile) {
-          console.log('⚠️ Profile not found - creating manually...')
-          // Try to create profile manually if trigger didn't work
-          try {
-            const { data: newProfile, error: profileError } = await (supabase as any)
-              .from('profiles')
-              .insert({
-                id: data.user.id,
-                email: data.user.email,
-                full_name: fullName,
-                user_type: 'user'
-              })
-              .select()
-              .single()
-            
-            if (profileError) {
-              console.error('❌ Profile creation error:', profileError)
-              // If it's a duplicate error, it's actually OK - the trigger already created it
-              if (!profileError.message?.includes('duplicate')) {
-                setMessage(`Profile creation failed: ${profileError.message}`)
-                return
-              }
-            } else {
-              console.log('✅ Profile created manually:', newProfile)
-            }
-          } catch (profileErr: any) {
-            console.error('❌ Profile creation exception:', profileErr)
-            // Check if it's a duplicate error - that's actually fine
-            if (!profileErr?.message?.includes('duplicate')) {
-              setMessage(`Error: ${profileErr.message}`)
-              return
-            }
-          }
-        } else {
-          console.log('✅ Profile already exists (trigger worked!):', existingProfile)
+
+        // Ensure profile exists (trigger may not have run yet; client insert can hit FK race)
+        const ensureRes = await fetch('/api/auth/ensure-profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: data.user.id,
+            email: data.user.email ?? email,
+            fullName: fullName || data.user.user_metadata?.full_name,
+          }),
+        })
+        const ensureData = await ensureRes.json()
+
+        if (!ensureRes.ok) {
+          console.error('❌ Ensure-profile error:', ensureData)
+          setMessage(ensureData.error ?? 'Profile creation failed. Please try again or contact support.')
+          return
         }
-        
+
         setMessage('✅ Account created! Check your email for the confirmation link.')
         
         // Try to send welcome email
