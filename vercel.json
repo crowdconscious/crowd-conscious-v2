@@ -17,23 +17,23 @@
     },
     {
       "path": "/api/cron/agents/sponsor-report",
-      "schedule": "0 16 1 * *"
+      "schedule": "0 9 1 * *"
     },
     {
       "path": "/api/cron/agents/ceo-digest",
-      "schedule": "0 14 * * *"
+      "schedule": "0 9 * * *"
     },
     {
       "path": "/api/cron/agents/content-creator",
-      "schedule": "0 15 * * *"
+      "schedule": "0 9 * * *"
     },
     {
       "path": "/api/cron/agents/news-monitor",
-      "schedule": "0 16 * * *"
+      "schedule": "0 9 * * *"
     },
     {
       "path": "/api/cron/agents/inbox-curator",
-      "schedule": "0 17 * * *"
+      "schedule": "0 9 * * *"
     }
   ],
   "headers": [
