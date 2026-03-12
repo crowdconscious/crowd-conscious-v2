@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase-server'
-import { CONSCIOUS_FUND_PERCENT } from '@/lib/fund-allocation'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 300
@@ -15,9 +14,9 @@ export async function GET() {
     ] = await Promise.all([
       supabase
         .from('prediction_markets')
-        .select('total_votes, sponsor_contribution', { count: 'exact' })
+        .select('total_votes', { count: 'exact' })
         .in('status', ['active', 'trading']),
-      supabase.from('conscious_fund').select('total_collected, total_disbursed').limit(1).single(),
+      supabase.from('conscious_fund').select('current_balance, total_collected, total_disbursed').limit(1).single(),
       supabase.from('profiles').select('id', { count: 'exact', head: true }),
     ])
 
@@ -27,16 +26,13 @@ export async function GET() {
     )
     const totalMarkets = marketsCount ?? (markets?.length ?? 0)
 
-    const sponsorTotal =
-      (markets ?? []).reduce(
-        (sum, m) => sum + Number((m as { sponsor_contribution?: number }).sponsor_contribution ?? 0),
-        0
-      ) ?? 0
-    const legacyBalance = Math.max(
-      0,
-      Number(fund?.total_collected ?? 0) - Number(fund?.total_disbursed ?? 0)
+    const fundAmount = Math.round(
+      Math.max(
+        0,
+        Number(fund?.current_balance ?? 0) ||
+          Math.max(0, Number(fund?.total_collected ?? 0) - Number(fund?.total_disbursed ?? 0))
+      )
     )
-    const fundAmount = Math.round(sponsorTotal * CONSCIOUS_FUND_PERCENT + legacyBalance)
 
     const activeUsers = profilesCount ?? 0
 

@@ -2,8 +2,6 @@ import { createClient } from '@/lib/supabase-server'
 import { getCurrentUser } from '@/lib/auth-server'
 import { redirect } from 'next/navigation'
 import { FundClient } from './FundClient'
-import { CONSCIOUS_FUND_PERCENT } from '@/lib/fund-allocation'
-
 function getCurrentCycle(): string {
   return new Date().toISOString().slice(0, 7)
 }
@@ -28,7 +26,7 @@ async function getFundData(userId: string) {
     supabase.from('fund_causes').select('*').eq('active', true).order('name'),
     supabase.from('fund_votes').select('cause_id').eq('cycle', cycle),
     supabase.from('fund_votes').select('cause_id').eq('user_id', userId).eq('cycle', cycle),
-    supabase.from('conscious_fund').select('total_collected, total_disbursed').limit(1).single(),
+    supabase.from('conscious_fund').select('current_balance, total_collected, total_disbursed').limit(1).single(),
     supabase
       .from('xp_transactions')
       .select('amount')
@@ -36,16 +34,12 @@ async function getFundData(userId: string) {
       .in('action_type', ['prediction_vote', 'prediction_correct']),
   ])
 
-  // Total Fund: 40% of sponsor contributions (60% platform retention)
-  const totalFundFromSponsors =
-    (sponsorMarkets ?? []).reduce(
-      (sum, m) => sum + Number((m as { sponsor_contribution?: number }).sponsor_contribution ?? 0) * CONSCIOUS_FUND_PERCENT,
-      0
-    ) ?? 0
-
-  // Use sponsor-based total; add legacy conscious_fund balance if any
-  const legacyBalance = Math.max(0, Number(fund?.total_collected ?? 0) - Number(fund?.total_disbursed ?? 0))
-  const totalFund = totalFundFromSponsors + legacyBalance
+  // Total Fund: use actual balance from conscious_fund (updated by Stripe webhook on sponsor payments + trade fees)
+  const totalFund = Math.max(
+    0,
+    Number(fund?.current_balance ?? 0) ||
+      Math.max(0, Number(fund?.total_collected ?? 0) - Number(fund?.total_disbursed ?? 0))
+  )
 
   const causesSupported = (causes ?? []).length
   const monthlyAllocation = totalFund > 0 ? Math.floor(totalFund / 12) : 0

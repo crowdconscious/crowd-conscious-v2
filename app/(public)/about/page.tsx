@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase-server'
 import dynamic from 'next/dynamic'
-import { CONSCIOUS_FUND_PERCENT } from '@/lib/fund-allocation'
 
 const LandingNav = dynamic(() => import('@/app/components/landing/LandingNav'))
 const Footer = dynamic(() => import('@/components/Footer'))
@@ -12,29 +11,20 @@ async function getAboutData() {
   const supabase = await createClient()
 
   const [
-    { data: sponsorMarkets },
     { data: causes },
     { data: fund },
   ] = await Promise.all([
-    supabase
-      .from('prediction_markets')
-      .select('id, sponsor_contribution')
-      .not('sponsor_name', 'is', null)
-      .gt('sponsor_contribution', 0),
     supabase.from('fund_causes').select('id').eq('active', true),
-    supabase.from('conscious_fund').select('total_collected, total_disbursed').limit(1).single(),
+    supabase.from('conscious_fund').select('current_balance, total_collected, total_disbursed').limit(1).single(),
   ])
 
-  const sponsorTotal =
-    (sponsorMarkets ?? []).reduce(
-      (sum, m) => sum + Number((m as { sponsor_contribution?: number }).sponsor_contribution ?? 0),
-      0
-    ) ?? 0
-  const legacyBalance = Math.max(
-    0,
-    Number(fund?.total_collected ?? 0) - Number(fund?.total_disbursed ?? 0)
+  const totalFund = Math.round(
+    Math.max(
+      0,
+      Number(fund?.current_balance ?? 0) ||
+        Math.max(0, Number(fund?.total_collected ?? 0) - Number(fund?.total_disbursed ?? 0))
+    )
   )
-  const totalFund = Math.round(sponsorTotal * CONSCIOUS_FUND_PERCENT + legacyBalance)
   const causesSupported = (causes ?? []).length
   const monthlyAllocation = totalFund > 0 ? Math.floor(totalFund / 12) : 0
 

@@ -11,6 +11,7 @@ export async function GET(request: NextRequest) {
     let query = supabase
       .from('conscious_inbox')
       .select('id, user_id, type, title, description, category, links, status, upvotes, created_at')
+      .neq('status', 'rejected')
       .order('upvotes', { ascending: false })
       .order('created_at', { ascending: false })
 
