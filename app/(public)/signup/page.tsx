@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { createClientAuth } from '../../../lib/auth'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 
 export default function SignUpPage() {
   const [email, setEmail] = useState('')
@@ -11,8 +10,7 @@ export default function SignUpPage() {
   const [fullName, setFullName] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
-  
-  const router = useRouter()
+
   const supabase = createClientAuth()
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -21,6 +19,8 @@ export default function SignUpPage() {
     setMessage('')
 
     try {
+      console.log('[SIGNUP] Attempting signup for:', email)
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -30,30 +30,42 @@ export default function SignUpPage() {
         },
       })
 
+      console.log('[SIGNUP] Response data:', JSON.stringify(data, null, 2))
+      console.log('[SIGNUP] Response error:', error ? JSON.stringify(error, null, 2) : null)
+
       if (error) {
-        console.error('Signup error:', error)
+        console.error('[SIGNUP] Supabase error:', error.message, error.status)
         const errMsg = error.message?.toLowerCase() || ''
         if (errMsg.includes('already registered') || errMsg.includes('duplicate')) {
-          setMessage('Este correo ya está registrado. ¿Quieres iniciar sesión? / This email is already registered. Want to sign in?')
+          setMessage('Este correo ya está registrado. Intenta iniciar sesión. / This email is already registered. Try signing in.')
         } else if (errMsg.includes('rate limit') || errMsg.includes('too many') || error.status === 429) {
           setMessage('Demasiados intentos. Espera unos minutos. / Too many attempts. Please wait a few minutes.')
         } else {
           setMessage('Algo salió mal. Intenta de nuevo. / Something went wrong. Please try again.')
         }
-      } else if (data.user) {
-        setMessage('¡Cuenta creada! Revisa tu correo para confirmar. / Account created! Check your email to confirm.')
-        try {
-          await fetch('/api/emails/welcome', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: data.user.email, name: fullName }),
-          })
-        } catch {
-          // Don't show error — account creation succeeded
+        return
+      }
+
+      if (data?.user) {
+        console.log('[SIGNUP] User created:', data.user.id)
+        console.log('[SIGNUP] User email confirmed:', data.user.email_confirmed_at)
+        console.log('[SIGNUP] Identities:', data.user.identities?.length)
+
+        // CRITICAL: Supabase returns a fake user object with empty identities when user already exists
+        if (data.user.identities?.length === 0) {
+          console.log('[SIGNUP] User already exists (empty identities)')
+          setMessage('Este correo ya está registrado. Intenta iniciar sesión. / This email is already registered. Try signing in.')
+          return
         }
+
+        setMessage('¡Cuenta creada! Revisa tu correo para confirmar. / Account created! Check your email to confirm.')
+        // No redirect — stay on signup page. User must confirm email first.
+      } else {
+        console.warn('[SIGNUP] No error but no user in response:', data)
+        setMessage('Algo salió mal. Intenta de nuevo. / Something went wrong. Please try again.')
       }
     } catch (error: unknown) {
-      console.error('Signup error:', error)
+      console.error('[SIGNUP] Exception:', error)
       setMessage('Algo salió mal. Intenta de nuevo. / Something went wrong. Please try again.')
     } finally {
       setLoading(false)

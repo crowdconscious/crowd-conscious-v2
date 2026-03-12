@@ -212,8 +212,8 @@ export function MarketDetailClient({
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-[65%_35%] gap-8">
-        {/* Left Column */}
-        <div className="space-y-6">
+        {/* Left Column — stats, charts, discussion (order-2 on mobile so VotePanel shows first) */}
+        <div className="space-y-6 order-2 lg:order-1">
           {/* Market Header */}
           <div>
             <span
@@ -533,8 +533,8 @@ export function MarketDetailClient({
           <RecentPredictions marketId={market.id} />
         </div>
 
-        {/* Right Column */}
-        <div className="lg:sticky lg:top-6 lg:self-start space-y-6">
+        {/* Right Column — VotePanel first on mobile for easier voting UX */}
+        <div className="lg:sticky lg:top-6 lg:self-start space-y-6 order-1 lg:order-2">
           <VotePanel
             market={market as PredictionMarket & { market_type?: string; total_votes?: number }}
             outcomes={outcomes}
