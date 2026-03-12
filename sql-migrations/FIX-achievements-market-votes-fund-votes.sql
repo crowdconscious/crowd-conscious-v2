@@ -22,7 +22,6 @@ DECLARE
   v_unlocked_achievements JSONB := '[]'::jsonb;
   v_achievement JSONB;
   v_content_count INTEGER;
-  v_vote_count INTEGER;
   v_market_vote_count INTEGER;
   v_fund_vote_cycles INTEGER;
   v_correct_predictions INTEGER;
@@ -48,15 +47,15 @@ BEGIN
   FROM public.fund_votes
   WHERE user_id = p_user_id;
 
-  -- Legacy: content votes (votes table)
-  SELECT COUNT(*) INTO v_vote_count
-  FROM public.votes
-  WHERE user_id = p_user_id;
-
-  -- Content creation
-  SELECT COUNT(*) INTO v_content_count
-  FROM public.community_content
-  WHERE created_by = p_user_id;
+  -- Content creation (community_content table may not exist - legacy)
+  v_content_count := 0;
+  BEGIN
+    SELECT COUNT(*) INTO v_content_count
+    FROM public.community_content
+    WHERE created_by = p_user_id;
+  EXCEPTION WHEN OTHERS THEN
+    v_content_count := 0;
+  END;
 
   -- Sponsorships (legacy table - market_sponsorship table may not have sponsor_id)
   v_sponsorship_count := 0;
