@@ -70,12 +70,20 @@ function deduplicateArticles(articles: NewsArticle[]): NewsArticle[] {
 
 async function fetchNewsData(query: string, limit: number): Promise<NewsArticle[]> {
   const key = process.env.NEWSDATA_API_KEY
-  if (!key) return []
+  if (!key) {
+    console.warn('[News Monitor] NEWSDATA_API_KEY not found in env')
+    return []
+  }
   const url = `https://newsdata.io/api/1/latest?apikey=${encodeURIComponent(key)}&q=${encodeURIComponent(query)}&language=es,en&country=mx&size=${limit}`
   try {
     const res = await fetch(url)
-    const data = (await res.json()) as { results?: Array<Record<string, unknown>>; status?: string }
+    const data = (await res.json()) as { results?: Array<Record<string, unknown>>; status?: string; totalResults?: number; message?: string }
     const raw = Array.isArray(data) ? data : (data.results ?? [])
+    if (raw.length === 0 && data.message) {
+      console.warn('[News Monitor] newsdata.io:', data.message, 'status:', data.status)
+    } else if (raw.length > 0) {
+      console.log('[News Monitor] newsdata.io fetched', raw.length, 'articles for query:', query.slice(0, 40))
+    }
     return raw.slice(0, limit).map((r: Record<string, unknown>) => ({
       title: String(r.title ?? ''),
       description: String(r.description ?? r.content ?? ''),
@@ -166,6 +174,7 @@ export async function runNewsMonitor(): Promise<{
     }
 
     const dedupedArticles = deduplicateArticles(newsArticles)
+    console.log('[News Monitor] articles fetched:', dedupedArticles.length, '(NEWSDATA_API_KEY:', !!newsDataKey, 'GNEWS_API_KEY:', !!gnewsKey, ')')
 
     const systemMessage = `You are a news analyst for Crowd Conscious, a free-to-play opinion platform in Mexico City. Analyze news stories and identify which ones are relevant to our active markets. Also suggest new market ideas based on trending news. Write in Spanish for the main content.`
 
