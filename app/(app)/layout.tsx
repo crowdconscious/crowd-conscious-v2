@@ -31,7 +31,7 @@ export default async function AppLayout({
         <HeaderClient user={user} />
 
         {/* Main content */}
-        <main className="max-w-6xl mx-auto px-4 py-8 pb-20 md:pb-8">
+        <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 pb-20 md:pb-8 overflow-x-hidden">
           {children}
         </main>
 

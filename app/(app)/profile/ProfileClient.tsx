@@ -194,26 +194,26 @@ export default function ProfileClient({
             )}
 
             {/* Prediction Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-              <div className="bg-slate-800/80 rounded-lg p-4 text-center border border-slate-700">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 mt-6 w-full max-w-full min-w-0">
+              <div className="bg-slate-800/80 rounded-lg p-3 sm:p-4 text-center border border-slate-700 min-w-0 overflow-hidden">
                 <div className="text-2xl font-bold text-white">
                   {predictionStats.predictions}
                 </div>
                 <div className="text-sm text-slate-400">Predictions</div>
               </div>
-              <div className="bg-slate-800/80 rounded-lg p-4 text-center border border-slate-700">
+              <div className="bg-slate-800/80 rounded-lg p-3 sm:p-4 text-center border border-slate-700 min-w-0">
                 <div className="text-2xl font-bold text-white">
                   {predictionStats.accuracy}%
                 </div>
                 <div className="text-sm text-slate-400">Accuracy</div>
               </div>
-              <div className="bg-slate-800/80 rounded-lg p-4 text-center border border-slate-700">
+              <div className="bg-slate-800/80 rounded-lg p-3 sm:p-4 text-center border border-slate-700 min-w-0">
                 <div className="text-2xl font-bold text-emerald-400">
                   {predictionStats.totalXp}
                 </div>
                 <div className="text-sm text-slate-400">Total XP</div>
               </div>
-              <div className="bg-slate-800/80 rounded-lg p-4 text-center border border-slate-700">
+              <div className="bg-slate-800/80 rounded-lg p-3 sm:p-4 text-center border border-slate-700 min-w-0">
                 <div className="text-2xl font-bold text-white">
                   {predictionStats.rank ?? '—'}
                 </div>

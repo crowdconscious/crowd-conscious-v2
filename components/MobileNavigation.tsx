@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { LayoutDashboard, TrendingUp, Trophy, User, LogOut } from 'lucide-react'
 import { supabaseClient } from '@/lib/supabase-client'
 
 export default function MobileNavigation() {
@@ -9,10 +10,10 @@ export default function MobileNavigation() {
   const router = useRouter()
 
   const navItems = [
-    { path: '/predictions', icon: '🏠', label: 'Dashboard' },
-    { path: '/predictions/markets', icon: '📊', label: 'Markets' },
-    { path: '/leaderboard', icon: '🏆', label: 'Leaderboard' },
-    { path: '/profile', icon: '👤', label: 'Profile' },
+    { path: '/predictions', icon: LayoutDashboard, label: 'Dashboard' },
+    { path: '/predictions/markets', icon: TrendingUp, label: 'Markets' },
+    { path: '/leaderboard', icon: Trophy, label: 'Leaderboard' },
+    { path: '/profile', icon: User, label: 'Profile' },
   ]
 
   const handleSignOut = async () => {
@@ -23,25 +24,29 @@ export default function MobileNavigation() {
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 z-50 safe-area-bottom">
       <div className="flex items-center justify-around py-2 px-2">
-        {navItems.map((item) => (
-          <Link
-            key={item.path}
-            href={item.path}
-            className={`
-              flex flex-col items-center justify-center py-2 px-2 flex-1 transition-colors
-              ${pathname === item.path ? 'text-emerald-400' : 'text-slate-500'}
-            `}
-          >
-            <span className="text-xl mb-0.5">{item.icon}</span>
-            <span className="text-xs font-medium">{item.label}</span>
-          </Link>
-        ))}
+        {navItems.map((item) => {
+          const Icon = item.icon
+          const isActive = pathname === item.path
+          return (
+            <Link
+              key={item.path}
+              href={item.path}
+              className={`
+                flex flex-col items-center justify-center py-2 px-1 flex-1 min-w-0 transition-colors
+                ${isActive ? 'text-emerald-400' : 'text-slate-500'}
+              `}
+            >
+              <Icon className="h-5 w-5 mb-0.5 shrink-0" strokeWidth={2} />
+              <span className="text-xs font-medium truncate">{item.label}</span>
+            </Link>
+          )
+        })}
         <button
           onClick={handleSignOut}
-          className="flex flex-col items-center justify-center py-2 px-2 flex-1 text-slate-500 hover:text-red-400 transition-colors"
+          className="flex flex-col items-center justify-center py-2 px-1 flex-1 min-w-0 text-slate-500 hover:text-red-400 transition-colors"
         >
-          <span className="text-xl mb-0.5">🚪</span>
-          <span className="text-xs font-medium">Sign Out</span>
+          <LogOut className="h-5 w-5 mb-0.5 shrink-0" strokeWidth={2} />
+          <span className="text-xs font-medium truncate">Sign Out</span>
         </button>
       </div>
     </div>
