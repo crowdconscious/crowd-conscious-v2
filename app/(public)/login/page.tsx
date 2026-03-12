@@ -49,15 +49,29 @@ function LoginForm() {
       })
 
       if (error) {
-        console.error('❌ Sign in error:', error)
-        setMessage(error.message)
+        console.error('Sign in error:', error)
+        const errMsg = error.message?.toLowerCase() || ''
+        if (errMsg.includes('invalid') && (errMsg.includes('credentials') || errMsg.includes('password'))) {
+          setMessage('Email o contraseña incorrectos. / Invalid email or password.')
+        } else {
+          setMessage('Algo salió mal. Intenta de nuevo. / Something went wrong. Please try again.')
+        }
       } else if (data.user) {
-        console.log('✅ Sign in successful, user:', data.user.id)
-        console.log('✅ Session established:', !!data.session)
-        console.log('🔄 Redirecting to dashboard...')
-        
-        // Use window.location for hard navigation to ensure session is properly set
-        // This forces a server round-trip which ensures getCurrentUser() sees the session
+        // Safety net: ensure profile exists (catches users who got stuck without a profile)
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', data.user.id)
+          .single()
+
+        if (!profile) {
+          await fetch('/api/auth/ensure-profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: data.user.id }),
+          })
+        }
+
         window.location.href = '/dashboard'
       }
     } catch (error: any) {

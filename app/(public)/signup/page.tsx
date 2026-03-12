@@ -21,98 +21,40 @@ export default function SignUpPage() {
     setMessage('')
 
     try {
-      console.log('🚀 Starting signup process...')
-      console.log('📧 Email:', email)
-      console.log('👤 Full name:', fullName)
-      console.log('🔗 Redirect URL:', `${window.location.origin}/auth/callback`)
-      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: {
-            full_name: fullName,
-          },
-          emailRedirectTo: `${window.location.origin}/auth/callback`
-        }
-      })
-
-      console.log('📦 Signup response:', { 
-        hasUser: !!data?.user, 
-        hasSession: !!data?.session,
-        hasError: !!error,
-        errorMessage: error?.message
+          data: { full_name: fullName },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
       })
 
       if (error) {
-        console.error('❌ Signup error:', error)
+        console.error('Signup error:', error)
         const errMsg = error.message?.toLowerCase() || ''
-        // Better error messages for common issues
-        if (errMsg.includes('already registered')) {
-          setMessage('This email is already registered. Please sign in instead.')
-        } else if (errMsg.includes('duplicate')) {
-          setMessage('An account with this email already exists. Please sign in.')
+        if (errMsg.includes('already registered') || errMsg.includes('duplicate')) {
+          setMessage('Este correo ya está registrado. ¿Quieres iniciar sesión? / This email is already registered. Want to sign in?')
         } else if (errMsg.includes('rate limit') || errMsg.includes('too many') || error.status === 429) {
-          setMessage('Too many signup attempts. Please wait a few minutes and try again.')
-        } else if (errMsg.includes('confirmation email') || errMsg.includes('recovery email')) {
-          setMessage('We couldn\'t send the verification email. Please try again later or contact support.')
+          setMessage('Demasiados intentos. Espera unos minutos. / Too many attempts. Please wait a few minutes.')
         } else {
-          setMessage(error.message)
+          setMessage('Algo salió mal. Intenta de nuevo. / Something went wrong. Please try again.')
         }
       } else if (data.user) {
-        console.log('✅ User created in auth.users:', data.user.id)
-
-        // Ensure profile exists (trigger may not have run yet; client insert can hit FK race)
-        const ensureRes = await fetch('/api/auth/ensure-profile', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: data.user.id,
-            email: data.user.email ?? email,
-            fullName: fullName || data.user.user_metadata?.full_name,
-          }),
-        })
-        const ensureData = await ensureRes.json()
-
-        if (!ensureRes.ok) {
-          console.error('❌ Ensure-profile error:', ensureData)
-          setMessage(ensureData.error ?? 'Profile creation failed. Please try again or contact support.')
-          return
-        }
-
-        setMessage('✅ Account created! Check your email for the confirmation link.')
-        
-        // Try to send welcome email
+        setMessage('¡Cuenta creada! Revisa tu correo para confirmar. / Account created! Check your email to confirm.')
         try {
           await fetch('/api/emails/welcome', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              email: data.user.email,
-              name: fullName
-            })
+            body: JSON.stringify({ email: data.user.email, name: fullName }),
           })
-        } catch (emailErr) {
-          console.log('Welcome email failed:', emailErr)
-          // Don't show error to user - account creation succeeded
+        } catch {
+          // Don't show error — account creation succeeded
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Signup error:', error)
-      console.error('Error details:', {
-        message: error?.message,
-        code: error?.code,
-        details: error?.details,
-        hint: error?.hint
-      })
-      
-      if (error?.message?.includes('duplicate') || error?.message?.includes('already exists')) {
-        setMessage('This email is already registered. Please sign in or use a different email.')
-      } else {
-        // Show the actual error in development
-        const errorMsg = error?.message || error?.toString() || 'Unknown error'
-        setMessage(`Error: ${errorMsg}. Check console for details.`)
-      }
+      setMessage('Algo salió mal. Intenta de nuevo. / Something went wrong. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -175,7 +117,7 @@ export default function SignUpPage() {
 
           {message && (
             <div className={`p-3 rounded-lg text-sm ${
-              message.includes('Check your email') 
+              message.includes('Cuenta creada') || message.includes('Account created')
                 ? 'bg-green-50 text-green-700 border border-green-200'
                 : 'bg-red-50 text-red-700 border border-red-200'
             }`}>

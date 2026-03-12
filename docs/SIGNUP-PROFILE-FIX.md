@@ -1,45 +1,43 @@
-# Signup & Profile Creation Fix
+# Signup & Profile Creation
 
-## Problem
+## Current Flow
 
-Users reported:
-- **"Profile creation failed: insert or update on table 'profiles' violates foreign key constraint 'profiles_id_fkey'"** when creating new accounts
-- Issues changing passwords (may be separate; see Password Reset section)
+1. **Database trigger** (`on_auth_user_created`) — Automatically creates a profile when a user signs up in `auth.users`. This is the primary mechanism.
 
-## Root Cause
+2. **Signup page** — Calls `supabase.auth.signUp()` only. No ensure-profile call. Shows success/error message.
 
-The `profiles` table has `id` referencing `auth.users(id)`. When the client tries to insert a profile immediately after signup:
+3. **Auth callback** — When user clicks email confirmation link:
+   - Exchanges code for session
+   - Calls `/api/auth/ensure-profile` as a **safety net** (trigger should have already created profile)
+   - Redirects to `/predictions`
 
-1. **Race condition**: The auth.users row may not be fully committed/visible when the client insert runs
-2. **Supabase getUserById race**: `auth.admin.getUserById()` can return null right after signUp (~20% of the time) due to propagation lag
-3. **RLS**: The anon client may lack permission to insert into profiles
-4. **Trigger missing**: The `on_auth_user_created` trigger may not exist or may have failed
+4. **Login page** — After successful sign-in, checks if profile exists. If missing, calls ensure-profile. Catches users who got stuck (e.g. Enrique).
 
-## Fix Applied
+5. **`/api/auth/ensure-profile`** — Backup only. Checks if profile exists; if not, creates it from auth user data.
 
-1. **`/api/auth/ensure-profile`** — Server-side API that:
-   - Retries `getUserById` up to 3 times (500ms delay) to handle Supabase auth race
-   - If user still not found, proceeds anyway (signUp just succeeded) with 600ms delay before insert
-   - Creates the profile using the **service role** (bypasses RLS)
-   - Retries profile insert up to 3 times (400ms delay) to handle FK propagation delay
+## Fix Existing Broken Users
 
-2. **Signup page** — Now calls `ensure-profile` instead of inserting directly from the client
-
-3. **Auth callback** — When users confirm email (or complete password reset), we ensure the profile exists before redirecting to dashboard
-
-## Verify Database Trigger (Optional)
-
-If you want the trigger as a first line of defense, run in Supabase SQL Editor:
+Run in Supabase SQL Editor to create profiles for auth users who are missing one:
 
 ```sql
-
--- If missing, create it (see docs/archives/FIX-SIGNUP-TRIGGER.sql)
+-- See sql-migrations/FIX-missing-profiles-from-auth-users.sql
+INSERT INTO public.profiles (id, full_name, email, user_type)
+SELECT
+  au.id,
+  COALESCE(au.raw_user_meta_data->>'full_name', au.raw_user_meta_data->>'name', split_part(au.email, '@', 1), ''),
+  au.email,
+  'user'
+FROM auth.users au
+LEFT JOIN public.profiles p ON p.id = au.id
+WHERE p.id IS NULL;
 ```
 
-## Password Reset
+## Verify Trigger Exists
 
-Password change uses `supabase.auth.updateUser()` and does not touch the profiles table. If users report password change failures, common causes:
+```sql
+SELECT trigger_name, event_object_table
+FROM information_schema.triggers
+WHERE trigger_name = 'on_auth_user_created';
+```
 
-- **Session lost on mobile**: "Please click the reset link again and try immediately"
-- **PKCE**: Link opened on different device/browser than the one that requested reset
-- **Expired link**: Reset links expire; user must request a new one
+If missing, see `docs/archives/FIX-SIGNUP-TRIGGER.sql`.
