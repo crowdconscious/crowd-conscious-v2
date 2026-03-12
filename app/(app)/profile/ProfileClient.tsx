@@ -83,10 +83,10 @@ export default function ProfileClient({
   const tier = getTierByXP(predictionStats.totalXp)
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 w-full min-w-0 max-w-full overflow-hidden">
       {/* Profile Header */}
-      <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
-        <div className="flex flex-col sm:flex-row items-start gap-6">
+      <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4 sm:p-6 w-full min-w-0 overflow-hidden box-border">
+        <div className="flex flex-col sm:flex-row items-start gap-6 min-w-0">
           <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center border border-slate-700 shrink-0">
             {profile?.avatar_url ? (
               <img
@@ -99,13 +99,13 @@ export default function ProfileClient({
             )}
           </div>
 
-          <div className="flex-1">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h1 className="text-2xl font-bold text-white">
+          <div className="flex-1 min-w-0 w-full">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-2xl font-bold text-white break-words">
                   {profile?.full_name || 'Predictor'}
                 </h1>
-                <p className="text-slate-400 mb-2">{user.email}</p>
+                <p className="text-slate-400 mb-2 break-all">{user.email}</p>
                 <div className="mt-3">
                   <div
                     className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r ${tier.colors.gradient} text-white text-sm font-medium shadow-sm`}
@@ -121,23 +121,23 @@ export default function ProfileClient({
                   </div>
                 </div>
                 {profile?.bio && (
-                  <p className="text-slate-400 mt-3 max-w-2xl">{profile.bio}</p>
+                  <p className="text-slate-400 mt-3 max-w-2xl break-words">{profile.bio}</p>
                 )}
                 {profile?.location && (
                   <p className="text-slate-500 text-sm mt-2">📍 {profile.location}</p>
                 )}
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0 flex-wrap">
                 <button
                   onClick={() => setIsEditing(!isEditing)}
-                  className="px-3 py-1.5 text-sm rounded-lg bg-slate-800 hover:bg-slate-700 text-white border border-slate-700"
+                  className="px-3 py-1.5 text-sm rounded-lg bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 whitespace-nowrap"
                 >
                   {isEditing ? 'Cancel' : 'Edit Profile'}
                 </button>
                 <Link
                   href="/settings"
-                  className="px-3 py-1.5 text-sm rounded-lg bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 inline-flex items-center gap-1.5"
+                  className="px-3 py-1.5 text-sm rounded-lg bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 inline-flex items-center gap-1.5 whitespace-nowrap"
                 >
                   ⚙️ Settings
                 </Link>
@@ -194,7 +194,7 @@ export default function ProfileClient({
             )}
 
             {/* Prediction Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 mt-6 w-full max-w-full min-w-0">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 mt-6 w-full min-w-0 overflow-hidden">
               <div className="bg-slate-800/80 rounded-lg p-3 sm:p-4 text-center border border-slate-700 min-w-0 overflow-hidden">
                 <div className="text-2xl font-bold text-white">
                   {predictionStats.predictions}

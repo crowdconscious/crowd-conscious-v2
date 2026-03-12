@@ -23,7 +23,7 @@ export default async function AppLayout({
 
   return (
     <TierThemeProvider>
-      <div className="min-h-screen bg-slate-950 text-slate-100 transition-colors">
+      <div className="min-h-screen bg-slate-950 text-slate-100 transition-colors overflow-x-hidden">
         {/* Track daily streaks and award XP */}
         <StreakTracker />
         
@@ -31,7 +31,7 @@ export default async function AppLayout({
         <HeaderClient user={user} />
 
         {/* Main content */}
-        <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 pb-20 md:pb-8 overflow-x-hidden">
+        <main className="w-full max-w-6xl mx-auto px-3 sm:px-6 py-8 pb-20 md:pb-8 overflow-x-hidden box-border">
           {children}
         </main>
 
