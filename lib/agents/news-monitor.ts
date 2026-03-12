@@ -191,16 +191,16 @@ ${JSON.stringify(dedupedArticles.map((a) => ({ title: a.title, description: a.de
 
 Do three things:
 1. RELEVANCE CHECK: For each active market, list any news stories that are relevant to it (by title/url). Rate relevance 1-5.
-2. MARKET SUGGESTIONS: Based on stories NOT related to existing markets, suggest up to 3 new market ideas. For each suggestion provide:
+2. MARKET SUGGESTIONS: Based on stories NOT related to existing markets (or from active markets if no stories), suggest up to 3 new market ideas. REQUIRED: every suggestion MUST have ALL of these fields:
    - title: question format in Spanish (e.g. "¿Superará el desempleo en México el 4% durante 2026?")
-   - title_en: English translation of the title (e.g. "Will unemployment in Mexico exceed 4% during 2026?")
+   - title_en: English translation of the title
    - category: one of world_cup, world, government, sustainability, corporate, community, cause
    - description: 2-4 sentences of context in Spanish (why it matters, who cares, what's at stake)
    - description_en: English translation of the description
    - resolution_criteria: how to resolve in Spanish (official source, date, threshold)
    - resolution_criteria_en: English translation of resolution criteria
    - resolution_date: suggested date (YYYY-MM-DD)
-   - source_urls: array of {url, label} - MUST include the actual URLs from the news stories you used (e.g. {url: "https://...", label: "Source name"})
+   - source_urls: array of {url, label} - use URLs from the news stories when available; if no stories, use placeholder URLs like https://example.com/source
    - tags: comma-separated keywords in Spanish (e.g. "economia, banxico, empleo")
    - why_interesting: 1 sentence on engagement potential
 ${briefInstruction}
@@ -249,6 +249,8 @@ Return as JSON: { relevance: [...], suggestions: [...], brief: '...' }`
     const suggestions = Array.isArray(parsed.suggestions) ? parsed.suggestions : []
     const brief = String(parsed.brief ?? '').trim()
 
+    console.log('[News Monitor] Parsed:', { suggestionsCount: suggestions.length, briefLen: brief.length, hasRelevance: relevance.length > 0 })
+
     let briefSaved = false
     let suggestionsSaved = 0
     let relevanceSaved = false
@@ -260,59 +262,60 @@ Return as JSON: { relevance: [...], suggestions: [...], brief: '...' }`
       brief.length < 50
 
     if (brief && !isNoNewsPlaceholder) {
-      try {
-        await supabase.from('agent_content').insert({
-          market_id: null,
-          agent_type: 'news_monitor',
-          content_type: 'news_summary',
-          title: 'Resumen de noticias del día',
-          body: brief,
-          language: 'es',
-          metadata: { type: 'news_brief', model: MODELS.FAST, tokens_input: usage.input_tokens, tokens_output: usage.output_tokens },
-          published: true,
-        })
-        briefSaved = true
-      } catch (e) {
-        console.error('Failed to save brief:', e)
+      const { error: briefErr } = await supabase.from('agent_content').insert({
+        market_id: null,
+        agent_type: 'news_monitor',
+        content_type: 'news_summary',
+        title: 'Resumen de noticias del día',
+        body: brief,
+        language: 'es',
+        metadata: { type: 'news_brief', model: MODELS.FAST, tokens_input: usage.input_tokens, tokens_output: usage.output_tokens },
+        published: true,
+      })
+      if (briefErr) {
+        console.error('[News Monitor] Failed to save brief:', briefErr)
+        throw new Error(`Failed to save brief: ${briefErr.message}`)
       }
+      briefSaved = true
     }
 
     for (const s of suggestions) {
       if (!s || typeof s !== 'object') continue
       const obj = s as Record<string, unknown>
       const title = String(obj.title ?? 'Nueva sugerencia')
-      try {
-        await supabase.from('agent_content').insert({
-          market_id: null,
-          agent_type: 'news_monitor',
-          content_type: 'market_insight',
-          title,
-          body: JSON.stringify(obj),
-          language: 'es',
-          metadata: { type: 'market_suggestion', model: MODELS.FAST },
-          published: false,
-        })
-        suggestionsSaved++
-      } catch (e) {
-        console.error('Failed to save suggestion:', e)
+      const { error: sugErr } = await supabase.from('agent_content').insert({
+        market_id: null,
+        agent_type: 'news_monitor',
+        content_type: 'market_insight',
+        title,
+        body: JSON.stringify(obj),
+        language: 'es',
+        metadata: { type: 'market_suggestion', model: MODELS.FAST },
+        published: false,
+      })
+      if (sugErr) {
+        console.error('[News Monitor] Failed to save suggestion:', sugErr)
+        throw new Error(`Failed to save suggestion: ${sugErr.message}`)
       }
+      suggestionsSaved++
     }
 
     if (relevance.length > 0) {
-      try {
-        await supabase.from('agent_content').insert({
-          market_id: null,
-          agent_type: 'news_monitor',
-          content_type: 'news_summary',
-          title: 'Relevancia noticias-mercados',
-          body: JSON.stringify(relevance),
-          language: 'es',
-          metadata: { type: 'news_relevance', model: MODELS.FAST },
-          published: false,
-        })
+      const { error: relErr } = await supabase.from('agent_content').insert({
+        market_id: null,
+        agent_type: 'news_monitor',
+        content_type: 'news_summary',
+        title: 'Relevancia noticias-mercados',
+        body: JSON.stringify(relevance),
+        language: 'es',
+        metadata: { type: 'news_relevance', model: MODELS.FAST },
+        published: false,
+      })
+      if (relErr) {
+        console.error('[News Monitor] Failed to save relevance:', relErr)
+        // Non-fatal: relevance is optional
+      } else {
         relevanceSaved = true
-      } catch (e) {
-        console.error('Failed to save relevance:', e)
       }
     }
 

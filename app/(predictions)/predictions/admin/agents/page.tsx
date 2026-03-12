@@ -377,6 +377,7 @@ export default function AdminAgentsPage() {
   } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [runResult, setRunResult] = useState<string | null>(null)
   const [running, setRunning] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<TabId>('all')
 
@@ -403,6 +404,7 @@ export default function AdminAgentsPage() {
 
   const runAgent = async (agentId: string) => {
     setRunning(agentId)
+    setRunResult(null)
     try {
       const res = await fetch('/api/predictions/admin/run-agent', {
         method: 'POST',
@@ -412,6 +414,18 @@ export default function AdminAgentsPage() {
       const json = await res.json()
       if (!res.ok) throw new Error(json.error ?? 'Failed')
       await fetchData()
+      const result = json.result
+      if (result?.summary && agentId === 'news-monitor') {
+        const s = result.summary
+        const parts: string[] = []
+        if (typeof s.brief_saved === 'boolean') parts.push(`Brief: ${s.brief_saved ? 'saved' : 'skipped'}`)
+        if (typeof s.suggestions_saved === 'number') parts.push(`Suggestions: ${s.suggestions_saved}`)
+        if (typeof s.articles_fetched === 'number') parts.push(`Articles: ${s.articles_fetched}`)
+        if (parts.length > 0) {
+        setRunResult(parts.join(' • '))
+        setTimeout(() => setRunResult(null), 8000)
+      }
+    }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Run failed')
     } finally {
@@ -480,6 +494,12 @@ export default function AdminAgentsPage() {
       {error && (
         <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 text-red-400">
           {error}
+        </div>
+      )}
+
+      {runResult && (
+        <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-4 text-emerald-400">
+          Run complete: {runResult}
         </div>
       )}
 
