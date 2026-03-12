@@ -167,7 +167,12 @@ export async function runNewsMonitor(): Promise<{
 
     const dedupedArticles = deduplicateArticles(newsArticles)
 
-    const systemMessage = `You are a news analyst for Crowd Conscious, a free-to-play opinion platform in Mexico City. Analyze news stories and identify which ones are relevant to our active markets. Also suggest new market ideas based on trending news. Write in Spanish.`
+    const systemMessage = `You are a news analyst for Crowd Conscious, a free-to-play opinion platform in Mexico City. Analyze news stories and identify which ones are relevant to our active markets. Also suggest new market ideas based on trending news. Write in Spanish for the main content.`
+
+    const hasArticles = dedupedArticles.length > 0
+    const briefInstruction = hasArticles
+      ? `3. BRIEF: Write a 3-sentence summary of today's most relevant news for our audience (Mexico City, World Cup, economy, sustainability). Use the actual news stories provided.`
+      : `3. BRIEF: Since no external news articles were provided, write a 3-sentence summary of what's trending on our active markets and what our Mexico City audience should watch. Focus on World Cup 2026, economy (Banxico, employment), sustainability, and local issues. Make it engaging and useful—never say "no hay noticias" or "no recent news."`
 
     const userMessage = `Active markets on our platform:
 ${JSON.stringify(activeMarkets.map((m) => ({ title: m.title, category: m.category, tags: m.tags })), null, 2)}
@@ -178,14 +183,18 @@ ${JSON.stringify(dedupedArticles.map((a) => ({ title: a.title, description: a.de
 Do three things:
 1. RELEVANCE CHECK: For each active market, list any news stories that are relevant to it (by title/url). Rate relevance 1-5.
 2. MARKET SUGGESTIONS: Based on stories NOT related to existing markets, suggest up to 3 new market ideas. For each suggestion provide:
-   - title: question format (e.g. "¿Superará el desempleo en México el 4% durante 2026?")
+   - title: question format in Spanish (e.g. "¿Superará el desempleo en México el 4% durante 2026?")
+   - title_en: English translation of the title (e.g. "Will unemployment in Mexico exceed 4% during 2026?")
    - category: one of world_cup, world, government, sustainability, corporate, community, cause
-   - description: 2-4 sentences of context (why it matters, who cares, what's at stake)
-   - resolution_criteria: how to resolve (official source, date, threshold)
+   - description: 2-4 sentences of context in Spanish (why it matters, who cares, what's at stake)
+   - description_en: English translation of the description
+   - resolution_criteria: how to resolve in Spanish (official source, date, threshold)
+   - resolution_criteria_en: English translation of resolution criteria
    - resolution_date: suggested date (YYYY-MM-DD)
-   - source_urls: array of {url, label} from the news articles you used (include the actual URLs from the news stories)
+   - source_urls: array of {url, label} - MUST include the actual URLs from the news stories you used (e.g. {url: "https://...", label: "Source name"})
+   - tags: comma-separated keywords in Spanish (e.g. "economia, banxico, empleo")
    - why_interesting: 1 sentence on engagement potential
-3. BRIEF: Write a 3-sentence summary of what's happening today that matters to our audience (Mexico City, World Cup, economy, sustainability).
+${briefInstruction}
 
 Return as JSON: { relevance: [...], suggestions: [...], brief: '...' }`
 
@@ -229,13 +238,19 @@ Return as JSON: { relevance: [...], suggestions: [...], brief: '...' }`
 
     const relevance = Array.isArray(parsed.relevance) ? parsed.relevance : []
     const suggestions = Array.isArray(parsed.suggestions) ? parsed.suggestions : []
-    const brief = String(parsed.brief ?? '')
+    const brief = String(parsed.brief ?? '').trim()
 
     let briefSaved = false
     let suggestionsSaved = 0
     let relevanceSaved = false
 
-    if (brief) {
+    // Skip saving generic "no news" placeholders—they don't add value to AI Pulse
+    const isNoNewsPlaceholder =
+      !brief ||
+      /no hay noticias|no recent news|no news in the feed|empty feed/i.test(brief) ||
+      brief.length < 50
+
+    if (brief && !isNoNewsPlaceholder) {
       try {
         await supabase.from('agent_content').insert({
           market_id: null,

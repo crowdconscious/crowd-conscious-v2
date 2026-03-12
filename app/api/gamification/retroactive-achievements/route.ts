@@ -1,14 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerAuth } from '@/lib/auth-server'
+import { createAdminClient } from '@/lib/supabase-admin'
 
 /**
  * API Route to retroactively unlock achievements for the current user
  * Checks past actions and unlocks achievements that should have been unlocked
+ * Uses admin client for inserts (RLS on user_achievements only allows SELECT)
  */
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createServerAuth()
-    
+    const admin = createAdminClient()
+
     // Get the authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     
@@ -22,14 +25,14 @@ export async function POST(request: NextRequest) {
     // Count user's actual actions (impact-focused: predictions, fund, sponsorships)
     const userId = user.id
 
-    // Count prediction votes (market_votes)
-    const { count: votesCast } = await supabase
+    // Count prediction votes (market_votes) - use admin for consistency
+    const { count: votesCast } = await admin
       .from('market_votes')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId)
 
     // Count correct predictions
-    const { data: correctVotes } = await supabase
+    const { data: correctVotes } = await admin
       .from('market_votes')
       .select('id')
       .eq('user_id', userId)
@@ -37,7 +40,7 @@ export async function POST(request: NextRequest) {
     const correctPredictions = correctVotes?.length ?? 0
 
     // Count distinct fund vote cycles
-    const { data: fundVotes } = await supabase
+    const { data: fundVotes } = await admin
       .from('fund_votes')
       .select('cycle')
       .eq('user_id', userId)
@@ -47,7 +50,7 @@ export async function POST(request: NextRequest) {
     const sponsorshipsMade = 0
 
     // Get current tier
-    const { data: userXP } = await supabase
+    const { data: userXP } = await admin
       .from('user_xp')
       .select('total_xp, current_tier')
       .eq('user_id', userId)
@@ -153,11 +156,11 @@ export async function POST(request: NextRequest) {
       }
     ]
 
-    // Check each achievement and unlock if condition is met
+    // Check each achievement and unlock if condition is met (admin client bypasses RLS for INSERT)
     for (const achievement of achievementChecks) {
       if (achievement.condition) {
         // Check if already unlocked
-        const { data: existing } = await supabase
+        const { data: existing } = await admin
           .from('user_achievements')
           .select('id')
           .eq('user_id', userId)
@@ -165,8 +168,8 @@ export async function POST(request: NextRequest) {
           .single()
 
         if (!existing) {
-          // Unlock the achievement
-          const { error: insertError } = await supabase
+          // Unlock the achievement (admin bypasses RLS)
+          const { error: insertError } = await admin
             .from('user_achievements')
             .insert({
               user_id: userId,

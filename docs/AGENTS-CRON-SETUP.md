@@ -21,6 +21,11 @@
 
 3. **Vercel Cron** — Ensure Cron Jobs are enabled for your project (available on Pro and Enterprise plans).
 
+4. **News Monitor — Real news** — For the News Monitor to fetch actual news articles (and produce useful briefs for AI Pulse), add one of:
+   - `NEWSDATA_API_KEY` — [newsdata.io](https://newsdata.io) (free tier available)
+   - `GNEWS_API_KEY` — [gnews.io](https://gnews.io) (free tier available)
+   - Without these, the agent still runs and suggests markets, but briefs will summarize active markets instead of external news.
+
 ## Verify Cron is Running
 
 1. **Vercel Dashboard** → Project → Settings → Cron Jobs — confirm schedules are listed.

@@ -111,6 +111,17 @@ export default function CreateMarketPage() {
         setDescription(String(sug.description ?? ''))
         setCategory(String(sug.category ?? ''))
         setResolutionCriteria(String(sug.resolution_criteria ?? ''))
+        // English translations (pre-fill from agent suggestion)
+        setEnTitle(String(sug.title_en ?? ''))
+        setEnDescription(String(sug.description_en ?? ''))
+        setEnResolutionCriteria(String(sug.resolution_criteria_en ?? ''))
+        // Tags
+        const tags = sug.tags
+        if (typeof tags === 'string') {
+          setTagsInput(tags)
+        } else if (Array.isArray(tags)) {
+          setTagsInput((tags as string[]).join(', '))
+        }
         if (sug.resolution_date) {
           const d = new Date(String(sug.resolution_date))
           if (!isNaN(d.getTime())) {
@@ -308,6 +319,11 @@ export default function CreateMarketPage() {
       {fromInboxId && (
         <p className="text-sm text-emerald-400">
           Pre-filled from inbox submission. Edit as needed.
+        </p>
+      )}
+      {suggestionId && !fromInboxId && (
+        <p className="text-sm text-emerald-400">
+          Pre-filled from News Monitor suggestion (title, description, resolution, sources, English translation, tags). Edit as needed.
         </p>
       )}
 
