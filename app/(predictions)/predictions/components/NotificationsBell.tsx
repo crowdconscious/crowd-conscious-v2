@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Bell } from 'lucide-react'
 
 type Notification = {
@@ -29,6 +30,7 @@ function formatTime(iso: string): string {
 }
 
 export function NotificationsBell() {
+  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
@@ -37,6 +39,10 @@ export function NotificationsBell() {
   const fetchNotifications = async () => {
     try {
       const res = await fetch('/api/notifications')
+      if (res.status === 401) {
+        router.replace('/login')
+        return
+      }
       const data = await res.json()
       setNotifications(data.notifications ?? [])
       setUnreadCount(data.unreadCount ?? 0)
@@ -63,7 +69,11 @@ export function NotificationsBell() {
 
   const markAsRead = async (id: string) => {
     try {
-      await fetch(`/api/notifications/${id}/read`, { method: 'POST' })
+      const res = await fetch(`/api/notifications/${id}/read`, { method: 'POST' })
+      if (res.status === 401) {
+        router.replace('/login')
+        return
+      }
       setNotifications((prev) =>
         prev.map((n) => (n.id === id ? { ...n, read: true } : n))
       )

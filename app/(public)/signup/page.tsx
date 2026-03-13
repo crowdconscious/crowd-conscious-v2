@@ -58,6 +58,17 @@ export default function SignUpPage() {
           return
         }
 
+        // Belt-and-suspenders: ensure profile exists (trigger may be disabled)
+        try {
+          await fetch('/api/auth/ensure-profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: data.user.id }),
+          })
+        } catch (err) {
+          console.warn('[SIGNUP] ensure-profile failed (non-blocking):', err)
+        }
+
         setMessage('¡Cuenta creada! Revisa tu correo para confirmar. / Account created! Check your email to confirm.')
         // No redirect — stay on signup page. User must confirm email first.
       } else {

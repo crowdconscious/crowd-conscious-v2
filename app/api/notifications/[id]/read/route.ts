@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase-server'
-import { getCurrentUser } from '@/lib/auth-server'
+import { getCurrentUser, AuthSessionExpiredError } from '@/lib/auth-server'
 
 export async function POST(
   _req: Request,
@@ -26,6 +26,9 @@ export async function POST(
 
     return Response.json({ success: true })
   } catch (err) {
+    if (err instanceof AuthSessionExpiredError) {
+      return new Response(null, { status: 401 })
+    }
     console.error('Mark read error:', err)
     return Response.json({ error: 'Failed' }, { status: 500 })
   }

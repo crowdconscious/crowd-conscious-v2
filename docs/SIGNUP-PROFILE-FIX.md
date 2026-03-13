@@ -1,14 +1,14 @@
 # Signup & Profile Creation
 
-## Troubleshooting: "Database error saving new user" (500)
+## Troubleshooting: "Something went wrong" or "Database error saving new user"
 
-If signup fails with this error, the `on_auth_user_created` trigger is likely failing and rolling back the auth insert. **Immediate fix:** Run `sql-migrations/EMERGENCY-FIX-signup-trigger-causing-500.sql` in Supabase SQL Editor to drop the trigger. Profiles will be created by ensure-profile (auth callback + login) instead.
+If signup fails, a trigger on `auth.users` is likely failing and rolling back the auth insert. **Immediate fix:** Run `sql-migrations/EMERGENCY-FIX-signup-triggers-ALL.sql` in Supabase SQL Editor to drop ALL triggers. Profiles will be created by ensure-profile (signup page + auth callback + login).
 
 ## Current Flow
 
-1. **Database trigger** (`on_auth_user_created`) — Automatically creates a profile when a user signs up in `auth.users`. This is the primary mechanism.
+1. **Database triggers** — DISABLED by default. Triggers on `auth.users` (`on_auth_user_created`, `on_auth_user_created_stats`) often cause signup failures if they reference missing tables (e.g. `user_stats`) or hit RLS.
 
-2. **Signup page** — Calls `supabase.auth.signUp()` only. No ensure-profile call. Shows success/error message.
+2. **Signup page** — Calls `supabase.auth.signUp()`, then `/api/auth/ensure-profile` to create profile. Shows success/error message.
 
 3. **Auth callback** — When user clicks email confirmation link:
    - Exchanges code for session

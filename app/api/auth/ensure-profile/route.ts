@@ -8,7 +8,7 @@ import { createAdminClient } from '@/lib/supabase-admin'
  * trigger should create profiles automatically; this endpoint catches cases
  * where the trigger failed or the user signed up before the trigger existed.
  *
- * Called from: auth callback (after email confirmation), login page (if profile missing).
+ * Called from: signup page (after success), auth callback (after email confirmation), login page (if profile missing).
  */
 export async function POST(request: NextRequest) {
   try {
@@ -29,6 +29,12 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (existingProfile) {
+      // Ensure user_stats exists (replaces on_auth_user_created_stats trigger)
+      const { error: statsErr } = await supabase.from('user_stats').upsert(
+        { user_id: userId, total_xp: 0, level: 1, current_streak: 0, longest_streak: 0, last_activity: new Date().toISOString() },
+        { onConflict: 'user_id' }
+      )
+      if (statsErr) console.warn('[ENSURE-PROFILE] user_stats upsert skipped:', statsErr.message)
       return NextResponse.json({ success: true, source: 'existing' })
     }
 
@@ -50,6 +56,23 @@ export async function POST(request: NextRequest) {
       // 23505 = unique violation (already exists)
       console.error('[ENSURE-PROFILE] Insert failed:', error)
       return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    // Also create user_stats if table exists (replaces on_auth_user_created_stats trigger)
+    const { error: statsErr } = await supabase.from('user_stats').upsert(
+      {
+        user_id: userId,
+        total_xp: 0,
+        level: 1,
+        current_streak: 0,
+        longest_streak: 0,
+        last_activity: new Date().toISOString(),
+      },
+      { onConflict: 'user_id' }
+    )
+    if (statsErr) {
+      // Non-fatal: user_stats may not exist (predictions platform uses user_xp)
+      console.warn('[ENSURE-PROFILE] user_stats upsert skipped:', statsErr.message)
     }
 
     return NextResponse.json({ success: true, source: 'created' })

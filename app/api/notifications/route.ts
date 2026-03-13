@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase-server'
-import { getCurrentUser } from '@/lib/auth-server'
+import { getCurrentUser, AuthSessionExpiredError } from '@/lib/auth-server'
 
 export async function GET() {
   try {
@@ -26,6 +26,9 @@ export async function GET() {
 
     return Response.json({ notifications, unreadCount })
   } catch (err) {
+    if (err instanceof AuthSessionExpiredError) {
+      return new Response(null, { status: 401 })
+    }
     console.error('Notifications error:', err)
     return Response.json({ notifications: [], unreadCount: 0 })
   }
