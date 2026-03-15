@@ -1,0 +1,38 @@
+-- ============================================================================
+-- FIX: Security Definer View - public.votes
+-- ============================================================================
+-- Supabase linter flags: View `public.votes` is defined with SECURITY DEFINER.
+--
+-- WHY THIS MATTERS:
+-- - SECURITY DEFINER = view runs with creator's permissions, bypassing RLS
+-- - Risk: Can expose more data via API than intended
+-- - Fix: Use SECURITY INVOKER so view respects the querying user's RLS
+--
+-- CONTEXT:
+-- - The legacy `votes` table (community content) was deprecated; use market_votes.
+-- - If public.votes exists as a view, it may be a compatibility layer.
+-- - This migration drops the view. If you need it, recreate with security_invoker.
+--
+-- RUN IN SUPABASE SQL EDITOR.
+-- ============================================================================
+
+-- Drop the view (handles both view and any dependent objects)
+DROP VIEW IF EXISTS public.votes CASCADE;
+
+-- ============================================================================
+-- If you need a compatibility view over market_votes, recreate like this:
+--
+-- CREATE OR REPLACE VIEW public.votes
+-- WITH (security_invoker = true)  -- REQUIRED: respects RLS
+-- AS
+-- SELECT
+--   id,
+--   market_id AS content_id,
+--   user_id,
+--   'approve' AS vote,
+--   1 AS weight,
+--   created_at
+-- FROM public.market_votes;
+--
+-- (Adjust columns to match your legacy votes schema if needed.)
+-- ============================================================================

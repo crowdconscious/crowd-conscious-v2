@@ -71,18 +71,20 @@ function deduplicateArticles(articles: NewsArticle[]): NewsArticle[] {
 async function fetchNewsData(query: string, limit: number): Promise<NewsArticle[]> {
   const key = process.env.NEWSDATA_API_KEY
   if (!key) {
-    console.warn('[News Monitor] NEWSDATA_API_KEY not found in env')
+    console.warn('[NEWS-MONITOR] NEWSDATA_API_KEY not found in env')
     return []
   }
   const url = `https://newsdata.io/api/1/latest?apikey=${encodeURIComponent(key)}&q=${encodeURIComponent(query)}&language=es,en&country=mx&size=${limit}`
   try {
     const res = await fetch(url)
-    const data = (await res.json()) as { results?: Array<Record<string, unknown>>; status?: string; totalResults?: number; message?: string }
+    const data = (await res.json()) as { results?: Array<Record<string, unknown>>; status?: string; totalResults?: number; message?: string; error?: string }
     const raw = Array.isArray(data) ? data : (data.results ?? [])
-    if (raw.length === 0 && data.message) {
-      console.warn('[News Monitor] newsdata.io:', data.message, 'status:', data.status)
-    } else if (raw.length > 0) {
-      console.log('[News Monitor] newsdata.io fetched', raw.length, 'articles for query:', query.slice(0, 40))
+    console.log(`[NEWS-MONITOR] NewsData.io response status: ${res.status}`, 'results:', raw.length, 'query:', query.slice(0, 50))
+    if (raw.length === 0) {
+      console.log('[NEWS-MONITOR] NewsData.io empty/error - full response:', JSON.stringify({ status: data.status, message: data.message, error: data.error }))
+    }
+    if (raw.length > 0) {
+      console.log('[NEWS-MONITOR] Article titles:', raw.slice(0, 3).map((r: Record<string, unknown>) => String(r.title ?? '')))
     }
     return raw.slice(0, limit).map((r: Record<string, unknown>) => ({
       title: String(r.title ?? ''),
@@ -92,19 +94,26 @@ async function fetchNewsData(query: string, limit: number): Promise<NewsArticle[
       published_at: String(r.pubDate ?? r.publishedAt ?? ''),
     }))
   } catch (e) {
-    console.warn('NewsData fetch error:', e)
+    console.warn('[NEWS-MONITOR] NewsData fetch error:', e)
     return []
   }
 }
 
 async function fetchGNews(query: string, limit: number): Promise<NewsArticle[]> {
   const key = process.env.GNEWS_API_KEY
-  if (!key) return []
+  if (!key) {
+    console.log('[NEWS-MONITOR] GNEWS_API_KEY not set, skipping GNews')
+    return []
+  }
   const url = `https://gnews.io/api/v4/search?q=${encodeURIComponent(query)}&lang=es&country=mx&max=${limit}&apikey=${encodeURIComponent(key)}`
   try {
     const res = await fetch(url)
-    const data = (await res.json()) as { articles?: Array<Record<string, unknown>> }
+    const data = (await res.json()) as { articles?: Array<Record<string, unknown>>; errors?: unknown }
     const raw = data.articles ?? []
+    console.log(`[NEWS-MONITOR] GNews response status: ${res.status}`, 'articles:', raw.length, 'query:', query.slice(0, 50))
+    if (raw.length === 0 && (data as { errors?: unknown }).errors) {
+      console.log('[NEWS-MONITOR] GNews error response:', JSON.stringify((data as { errors?: unknown }).errors))
+    }
     return raw.slice(0, limit).map((a: Record<string, unknown>) => ({
       title: String(a.title ?? ''),
       description: String(a.description ?? a.content ?? ''),
@@ -113,7 +122,7 @@ async function fetchGNews(query: string, limit: number): Promise<NewsArticle[]> 
       published_at: String(a.publishedAt ?? ''),
     }))
   } catch (e) {
-    console.warn('GNews fetch error:', e)
+    console.warn('[NEWS-MONITOR] GNews fetch error:', e)
     return []
   }
 }
@@ -124,6 +133,7 @@ export async function runNewsMonitor(): Promise<{
   summary?: { articles_fetched: number; brief_saved: boolean; suggestions_saved: number; relevance_saved: boolean }
 }> {
   const startTime = Date.now()
+  console.log('[NEWS-MONITOR] Starting run...')
 
   try {
     const anthropic = getAnthropicClient()
@@ -140,6 +150,8 @@ export async function runNewsMonitor(): Promise<{
       category: m.category,
       tags: (m.tags ?? []) as string[],
     }))
+
+    console.log('[NEWS-MONITOR] Active markets found:', activeMarkets.length, activeMarkets.map((m) => m.title).slice(0, 3))
 
     const newsArticles: NewsArticle[] = []
     const newsDataKey = process.env.NEWSDATA_API_KEY
@@ -162,6 +174,7 @@ export async function runNewsMonitor(): Promise<{
       }
 
       for (const q of Array.from(searchQueries).slice(0, 5)) {
+        console.log('[NEWS-MONITOR] Search query:', q)
         let articles: NewsArticle[] = []
         if (newsDataKey) {
           articles = await fetchNewsData(q, 5)
@@ -169,12 +182,13 @@ export async function runNewsMonitor(): Promise<{
         if (articles.length === 0 && gnewsKey) {
           articles = await fetchGNews(q, 5)
         }
+        console.log('[NEWS-MONITOR] Articles found for query:', articles.length)
         newsArticles.push(...articles)
       }
     }
 
     const dedupedArticles = deduplicateArticles(newsArticles)
-    console.log('[News Monitor] articles fetched:', dedupedArticles.length, '(NEWSDATA_API_KEY:', !!newsDataKey, 'GNEWS_API_KEY:', !!gnewsKey, ')')
+    console.log('[NEWS-MONITOR] Articles fetched (deduped):', dedupedArticles.length, '(NEWSDATA_API_KEY:', !!newsDataKey, 'GNEWS_API_KEY:', !!gnewsKey, ')')
 
     const systemMessage = `You are a news analyst for Crowd Conscious, a free-to-play opinion platform in Mexico City. Analyze news stories and identify which ones are relevant to our active markets. Also suggest new market ideas based on trending news. Write in Spanish for the main content.`
 
@@ -232,7 +246,11 @@ Return as JSON: { relevance: [...], suggestions: [...], brief: '...' }`
 
     let parsed: { relevance?: unknown[]; suggestions?: unknown[]; brief?: string }
     try {
-      parsed = parseAgentJSON(rawText)
+      const raw = parseAgentJSON(rawText)
+      // parseAgentJSON may return [obj] when JSON is wrapped; unwrap for object responses
+      parsed = Array.isArray(raw) && raw.length > 0 && typeof raw[0] === 'object'
+        ? (raw[0] as { relevance?: unknown[]; suggestions?: unknown[]; brief?: string })
+        : (raw as { relevance?: unknown[]; suggestions?: unknown[]; brief?: string })
     } catch (e) {
       console.error('News monitor parse error:', e)
       await logAgentRun({
@@ -249,20 +267,29 @@ Return as JSON: { relevance: [...], suggestions: [...], brief: '...' }`
     const suggestions = Array.isArray(parsed.suggestions) ? parsed.suggestions : []
     const brief = String(parsed.brief ?? '').trim()
 
-    console.log('[News Monitor] Parsed:', { suggestionsCount: suggestions.length, briefLen: brief.length, hasRelevance: relevance.length > 0 })
+    console.log('[NEWS-MONITOR] Parsed:', { suggestionsCount: suggestions.length, briefLen: brief.length, hasRelevance: relevance.length > 0 })
+    console.log('[NEWS-MONITOR] Brief preview:', brief.slice(0, 150) + (brief.length > 150 ? '...' : ''))
 
     let briefSaved = false
     let suggestionsSaved = 0
     let relevanceSaved = false
 
-    // Skip saving generic "no news" placeholders—they don't add value to AI Pulse
+    // Skip only truly empty or useless placeholders. Do NOT block substantive analysis that
+    // happens to mention "no recent news" — e.g. "No recent news in the feed, but our markets
+    // reflect Mexico City, Banxico, World Cup..." is valuable and should be saved.
+    const isPurelyNoNews = /^(no hay noticias|no recent news|no news in the feed|empty feed)[.\s]*$/i.test(brief.trim())
     const isNoNewsPlaceholder =
       !brief ||
-      /no hay noticias|no recent news|no news in the feed|empty feed/i.test(brief) ||
-      brief.length < 50
+      brief.length < 60 ||
+      (brief.length < 120 && (isPurelyNoNews || /no hay noticias|no recent news|no news in the feed|empty feed/i.test(brief)))
+
+    if (isNoNewsPlaceholder) {
+      console.log('[NEWS-MONITOR] Brief rejected as placeholder:', { briefLen: brief.length, isPurelyNoNews, reason: !brief ? 'empty' : brief.length < 60 ? 'too_short' : 'short_and_contains_no_news' })
+    }
 
     if (brief && !isNoNewsPlaceholder) {
-      const { error: briefErr } = await supabase.from('agent_content').insert({
+      console.log('[NEWS-MONITOR] Saving to agent_content (published: true)...')
+      const { data: insertData, error: briefErr } = await supabase.from('agent_content').insert({
         market_id: null,
         agent_type: 'news_monitor',
         content_type: 'news_summary',
@@ -272,10 +299,13 @@ Return as JSON: { relevance: [...], suggestions: [...], brief: '...' }`
         metadata: { type: 'news_brief', model: MODELS.FAST, tokens_input: usage.input_tokens, tokens_output: usage.output_tokens },
         published: true,
       })
+      .select('id')
+      .single()
       if (briefErr) {
-        console.error('[News Monitor] Failed to save brief:', briefErr)
+        console.error('[NEWS-MONITOR] Failed to save brief:', briefErr)
         throw new Error(`Failed to save brief: ${briefErr.message}`)
       }
+      console.log('[NEWS-MONITOR] Insert result:', insertData ? { id: insertData.id } : 'no data')
       briefSaved = true
     }
 
