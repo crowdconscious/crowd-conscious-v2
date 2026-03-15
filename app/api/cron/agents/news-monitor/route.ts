@@ -7,8 +7,8 @@ export async function GET(request: Request) {
   }
 
   const { runNewsMonitor } = await import('@/lib/agents/news-monitor')
-  const result = await runNewsMonitor()
+  const result = await runNewsMonitor({ includeSocial: true })
   return Response.json(result)
 }
 
-export const maxDuration = 30
+export const maxDuration = 120 // social scraping can take 60-90s

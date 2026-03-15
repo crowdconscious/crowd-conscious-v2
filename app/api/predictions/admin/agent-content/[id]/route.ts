@@ -72,6 +72,7 @@ export async function PATCH(
 
     const updates: Record<string, unknown> = {}
     if (typeof body.published === 'boolean') updates.published = body.published
+    if (body.market_id !== undefined) updates.market_id = body.market_id
     if (body.metadata && typeof body.metadata === 'object') {
       const admin = createAdminClient()
       const { data: existing } = await admin

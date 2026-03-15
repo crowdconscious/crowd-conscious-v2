@@ -381,7 +381,7 @@ export interface Database {
           id: string
           market_id: string | null
           agent_type: 'news_monitor' | 'sentiment_tracker' | 'data_watchdog' | 'content_creator'
-          content_type: 'news_summary' | 'sentiment_report' | 'data_alert' | 'social_post' | 'weekly_digest' | 'market_insight' | 'sponsor_report'
+          content_type: 'news_summary' | 'sentiment_report' | 'data_alert' | 'social_post' | 'weekly_digest' | 'market_insight' | 'sponsor_report' | 'social_scrape_log' | 'market_suggestion' | 'content_brief'
           title: string
           body: string
           language: string
@@ -393,7 +393,7 @@ export interface Database {
           id?: string
           market_id?: string | null
           agent_type: 'news_monitor' | 'sentiment_tracker' | 'data_watchdog' | 'content_creator'
-          content_type: 'news_summary' | 'sentiment_report' | 'data_alert' | 'social_post' | 'weekly_digest' | 'market_insight' | 'sponsor_report'
+          content_type: 'news_summary' | 'sentiment_report' | 'data_alert' | 'social_post' | 'weekly_digest' | 'market_insight' | 'sponsor_report' | 'social_scrape_log' | 'market_suggestion' | 'content_brief'
           title: string
           body: string
           language?: string
@@ -405,7 +405,7 @@ export interface Database {
           id?: string
           market_id?: string | null
           agent_type?: 'news_monitor' | 'sentiment_tracker' | 'data_watchdog' | 'content_creator'
-          content_type?: 'news_summary' | 'sentiment_report' | 'data_alert' | 'social_post' | 'weekly_digest' | 'market_insight'
+          content_type?: 'news_summary' | 'sentiment_report' | 'data_alert' | 'social_post' | 'weekly_digest' | 'market_insight' | 'sponsor_report' | 'social_scrape_log' | 'market_suggestion' | 'content_brief'
           title?: string
           body?: string
           language?: string

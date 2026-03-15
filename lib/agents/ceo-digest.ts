@@ -275,6 +275,76 @@ export async function runCeoDigest(): Promise<{
       metrics.agent_errors_last_24h = 'error'
     }
 
+    // g. NEWS MONITOR & CONTENT (content briefs, market suggestions, recent news)
+    let newsMonitorContext = ''
+    try {
+      const cutoff24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+      const { data: briefs } = await supabase
+        .from('agent_content')
+        .select('body, created_at, content_type, metadata')
+        .eq('agent_type', 'news_monitor')
+        .in('content_type', ['content_brief', 'market_insight'])
+        .gte('created_at', cutoff24h)
+        .order('created_at', { ascending: false })
+        .limit(5)
+      const contentBrief = (briefs ?? []).find(
+        (r: { content_type?: string; metadata?: { type?: string } }) =>
+          r.content_type === 'content_brief' || r.metadata?.type === 'content_brief'
+      )
+      if (contentBrief?.body) {
+        try {
+          const b = JSON.parse(contentBrief.body) as {
+            trending_topics?: string[]
+            new_market_suggestions?: string[]
+            sentiment_snapshot?: unknown
+          }
+          newsMonitorContext = `
+Temas trending (News Monitor): ${(b.trending_topics ?? []).join(', ') || 'N/A'}
+Sugerencias de mercados nuevos: ${(b.new_market_suggestions ?? []).join(', ') || 'N/A'}
+Snapshot sentimiento: ${JSON.stringify(b.sentiment_snapshot ?? {})}`
+        } catch {
+          newsMonitorContext = '\n(Brief del News Monitor disponible pero no parseable)'
+        }
+      }
+
+      const { data: newsBriefs } = await supabase
+        .from('agent_content')
+        .select('title, body, created_at')
+        .eq('agent_type', 'news_monitor')
+        .eq('content_type', 'news_summary')
+        .eq('published', true)
+        .gte('created_at', cutoff24h)
+        .order('created_at', { ascending: false })
+        .limit(2)
+      if ((newsBriefs ?? []).length > 0) {
+        newsMonitorContext += `\n\nResúmenes de noticias recientes:\n${(newsBriefs ?? [])
+          .map((n) => `• ${n.title}: ${(n.body ?? '').slice(0, 150)}...`)
+          .join('\n')}`
+      }
+
+      const { data: suggestions } = await supabase
+        .from('agent_content')
+        .select('title, body, content_type, metadata')
+        .eq('agent_type', 'news_monitor')
+        .in('content_type', ['market_suggestion', 'market_insight'])
+        .eq('published', false)
+        .gte('created_at', cutoff24h)
+        .limit(8)
+      const sugRows = (suggestions ?? []).filter(
+        (r: { content_type?: string; metadata?: { type?: string } }) =>
+          r.content_type === 'market_suggestion' || r.metadata?.type === 'market_suggestion'
+      )
+      if (sugRows.length > 0) {
+        newsMonitorContext += `\n\nSugerencias pendientes de aprobación: ${sugRows.map((s: { title?: string }) => s.title).join('; ')}`
+      }
+
+      if (newsMonitorContext) {
+        metrics.news_monitor_context = newsMonitorContext.trim()
+      }
+    } catch (e) {
+      console.warn('[CEO Digest] News Monitor context failed:', e)
+    }
+
     const systemMessage = `You are the daily briefing analyst for Crowd Conscious, a free-to-play opinion platform based in Mexico City preparing for FIFA World Cup 2026 (opening match June 11, 2026 at Estadio Azteca).
 
 RULES (strict):
@@ -294,9 +364,10 @@ ${JSON.stringify(metrics, null, 2)}
 Generate today's CEO digest with these sections:
 1. RESUMEN RÁPIDO — 3-5 headline metrics with trend context
 2. MERCADOS ACTIVOS — what's hot, what's dead, probability shifts
-3. ACCIONES PENDIENTES — markets to resolve, inbox to review, anything broken
-4. OPORTUNIDADES — suggested new markets based on what's trending, sponsor angles
-5. SALUD DE LA PLATAFORMA — agents running ok? (use most recent run status only)
+3. NOTICIAS Y CONTENIDO — if news_monitor_context is present: trending topics, market suggestions from News Monitor, sentiment snapshot. Use this to inform OPORTUNIDADES.
+4. ACCIONES PENDIENTES — markets to resolve, inbox to review, anything broken
+5. OPORTUNIDADES — suggested new markets based on what's trending (use News Monitor data when available), sponsor angles
+6. SALUD DE LA PLATAFORMA — agents running ok? (use most recent run status only)
 
 Keep it under 500 words. Write in Spanish. Today is ${todayFormatted}.`
 

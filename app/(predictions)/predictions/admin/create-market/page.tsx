@@ -18,6 +18,16 @@ const CATEGORIES = [
   { id: 'cause', label: 'Cause' },
 ] as const
 
+// Map suggestion category (from News Monitor) to form category
+const CATEGORY_MAP: Record<string, string> = {
+  sports: 'world_cup',
+  politics: 'government',
+  economy: 'corporate',
+  culture: 'community',
+  world: 'world',
+  technology: 'corporate',
+}
+
 type MarketOption = { id: string; title: string }
 
 export default function CreateMarketPage() {
@@ -51,6 +61,7 @@ export default function CreateMarketPage() {
 
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [sourceSignals, setSourceSignals] = useState<string[]>([])
 
   useEffect(() => {
     const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '')
@@ -107,27 +118,50 @@ export default function CreateMarketPage() {
         } catch {
           sug = { title: item.title }
         }
-        setTitle(String(sug.title ?? item.title ?? ''))
-        setDescription(String(sug.description ?? ''))
-        setCategory(String(sug.category ?? ''))
-        setResolutionCriteria(String(sug.resolution_criteria ?? ''))
-        // English translations (pre-fill from agent suggestion)
+        // Pre-fill ALL fields (News Monitor v2 format: title_es, description_es, etc.)
+        const titleVal = String(sug.title_es ?? sug.title ?? item.title ?? '')
+        const descVal = String(sug.description_es ?? sug.description ?? '')
+        const catRaw = String(sug.category ?? '').toLowerCase()
+        const mappedCat = catRaw ? (CATEGORY_MAP[catRaw] ?? catRaw) : ''
+        const resCritVal = String(sug.resolution_criteria_es ?? sug.resolution_criteria ?? '')
+        const initProb = Number(sug.initial_probability)
+        const validProb = initProb >= 1 && initProb <= 99 ? initProb : 50
+
+        setTitle(titleVal)
+        setDescription(descVal)
+        setCategory(mappedCat)
+        setResolutionCriteria(resCritVal)
+        setInitialProbability(validProb)
+
+        // English translations
         setEnTitle(String(sug.title_en ?? ''))
         setEnDescription(String(sug.description_en ?? ''))
         setEnResolutionCriteria(String(sug.resolution_criteria_en ?? ''))
+
         // Tags
         const tags = sug.tags
         if (typeof tags === 'string') {
           setTagsInput(tags)
         } else if (Array.isArray(tags)) {
           setTagsInput((tags as string[]).join(', '))
+        } else {
+          setTagsInput('')
         }
-        if (sug.resolution_date) {
-          const d = new Date(String(sug.resolution_date))
+
+        // Resolution date
+        const resDate = sug.resolution_date
+        if (resDate) {
+          const d = new Date(String(resDate))
           if (!isNaN(d.getTime())) {
             setResolutionDate(d.toISOString().slice(0, 16))
           }
         }
+
+        // Source signals (News Monitor v2)
+        const signals = Array.isArray(sug.source_signals) ? (sug.source_signals as string[]) : []
+        setSourceSignals(signals)
+
+        // Legacy: source_urls → verification sources & links
         const sourceUrls = Array.isArray(sug.source_urls)
           ? (sug.source_urls as Array<{ url?: string; label?: string }>)
           : []
@@ -263,7 +297,22 @@ export default function CreateMarketPage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to create market')
-      setSuccessId(data.market_id)
+      const marketId = data.market_id
+
+      // Mark suggestion as used when created from suggestion_id
+      if (suggestionId) {
+        try {
+          await fetch(`/api/predictions/admin/agent-content/${suggestionId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ published: true, market_id: marketId }),
+          })
+        } catch {
+          // Non-fatal: market was created
+        }
+      }
+
+      setSuccessId(marketId)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create market')
     } finally {
@@ -322,9 +371,16 @@ export default function CreateMarketPage() {
         </p>
       )}
       {suggestionId && !fromInboxId && (
-        <p className="text-sm text-emerald-400">
-          Pre-filled from News Monitor suggestion (title, description, resolution, sources, English translation, tags). Edit as needed.
-        </p>
+        <div className="space-y-1">
+          <p className="text-sm text-emerald-400">
+            Pre-filled from News Monitor suggestion (title, description, resolution, English translation, tags). Edit as needed.
+          </p>
+          {sourceSignals.length > 0 && (
+            <p className="text-xs text-slate-500">
+              Based on signals from: {sourceSignals.join(', ')}
+            </p>
+          )}
+        </div>
       )}
 
       {error && (

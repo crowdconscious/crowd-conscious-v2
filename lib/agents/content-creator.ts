@@ -30,6 +30,74 @@ export async function runContentCreator(): Promise<{
 
     const data: Record<string, unknown> = {}
 
+    // 0. NEWS MONITOR INTELLIGENCE (content briefs + market suggestions)
+    const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+    let briefs: Array<{ id: string; body: string; created_at: string }> = []
+    let suggestions: Array<{ id: string; title: string; body: string; created_at: string }> = []
+
+    try {
+      const { data: briefRows } = await supabase
+        .from('agent_content')
+        .select('id, body, created_at')
+        .eq('agent_type', 'news_monitor')
+        .eq('content_type', 'content_brief')
+        .gte('created_at', since24h)
+        .order('created_at', { ascending: false })
+        .limit(3)
+      briefs = (briefRows ?? []) as typeof briefs
+      if (briefs.length === 0) {
+        const { data: fallback } = await supabase
+          .from('agent_content')
+          .select('id, body, created_at, metadata')
+          .eq('agent_type', 'news_monitor')
+          .eq('content_type', 'market_insight')
+          .gte('created_at', since24h)
+          .order('created_at', { ascending: false })
+          .limit(5)
+        const withType = (fallback ?? []).filter(
+          (r: { metadata?: { type?: string } }) => (r as { metadata?: { type?: string } }).metadata?.type === 'content_brief'
+        )
+        briefs = withType.slice(0, 3).map(({ id, body, created_at }) => ({ id, body, created_at })) as typeof briefs
+      }
+    } catch (e) {
+      console.warn('[Content Creator] content_brief fetch failed:', e)
+    }
+
+    try {
+      const { data: sugRows } = await supabase
+        .from('agent_content')
+        .select('id, title, body, created_at, content_type, metadata')
+        .eq('agent_type', 'news_monitor')
+        .in('content_type', ['market_suggestion', 'market_insight'])
+        .gte('created_at', since24h)
+        .order('created_at', { ascending: false })
+        .limit(8)
+      const rows = (sugRows ?? []) as Array<{ id: string; title: string; body: string; created_at: string; content_type?: string; metadata?: { type?: string } }>
+      suggestions = rows
+        .filter((r) => r.content_type === 'market_suggestion' || r.metadata?.type === 'market_suggestion')
+        .slice(0, 5)
+    } catch (e) {
+      console.warn('[Content Creator] market_suggestion fetch failed:', e)
+    }
+
+    const twoDaysAgo = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()
+    let newMarkets: Array<{ id: string; title: string; description?: string; tags?: string[]; current_probability?: number }> = []
+    try {
+      const { data: mktRows } = await supabase
+        .from('prediction_markets')
+        .select('id, title, description, tags, current_probability')
+        .gte('created_at', twoDaysAgo)
+        .in('status', ['active', 'trading'])
+        .limit(5)
+      newMarkets = (mktRows ?? []) as typeof newMarkets
+    } catch (e) {
+      console.warn('[Content Creator] new markets fetch failed:', e)
+    }
+
+    data.news_monitor_briefs = briefs.length
+    data.news_monitor_suggestions = suggestions.length
+    data.new_markets_count = newMarkets.length
+
     // a. ACTIVE MARKETS with activity
     try {
       const { data: markets } = await supabase
@@ -265,13 +333,84 @@ For Twitter posts, also provide:
 For LinkedIn posts, also provide:
 1. HOOK_VARIATIONS: 3 alternative first lines (the hook determines 80% of engagement)`
 
-    const userMessage = `Here is today's platform activity data (JSON):
+    const briefContext = briefs?.length
+      ? (() => {
+          try {
+            const b = JSON.parse(briefs[0].body) as {
+              trending_topics?: string[]
+              new_market_suggestions?: string[]
+              sentiment_snapshot?: unknown
+            }
+            return `
+Temas trending: ${(b.trending_topics ?? []).join(', ') || 'N/A'}
+Sugerencias de mercados nuevos: ${(b.new_market_suggestions ?? []).join(', ') || 'N/A'}
+Snapshot de sentimiento: ${JSON.stringify(b.sentiment_snapshot ?? {})}`
+          } catch {
+            return 'No hay briefs recientes del News Monitor.'
+          }
+        })()
+      : 'No hay briefs recientes del News Monitor.'
+
+    const newMarketsContext =
+      newMarkets?.length > 0
+        ? newMarkets
+            .map(
+              (m) =>
+                `• "${m.title}" (${m.current_probability ?? 50}% YES) — tags: ${(m.tags ?? []).join(', ') || 'N/A'}`
+            )
+            .join('\n')
+        : 'No hay mercados nuevos.'
+
+    const suggestionsContext =
+      suggestions?.length > 0
+        ? suggestions
+            .map((s) => {
+              try {
+                const body = JSON.parse(s.body) as { reasoning?: string }
+                return `• "${s.title}" — ${body.reasoning ?? 'N/A'}`
+              } catch {
+                return `• "${s.title}"`
+              }
+            })
+            .join('\n')
+        : 'No hay sugerencias pendientes.'
+
+    const userMessage = `CONTEXTO DE INTELIGENCIA (del News Monitor):
+${briefContext}
+
+MERCADOS NUEVOS O RECIENTES (últimas 48h):
+${newMarketsContext}
+
+SUGERENCIAS PENDIENTES DE APROBACIÓN:
+${suggestionsContext}
+
+INSTRUCCIONES ADICIONALES:
+- Si hay mercados nuevos, genera AL MENOS 1 social post que los promocione
+- Si hay temas trending, úsalos como gancho para el contenido
+- Los social posts deben mencionar @crowdconscious y usar #CrowdConscious
+- Genera contenido en ESPAÑOL e INGLÉS (bilingual posts)
+- Formato para Instagram: usa emojis, pregunta directa, CTA a votar
+- Formato para Twitter/X: conciso, dato + pregunta, link implícito
+- NO generes contenido genérico — cada post debe referenciar datos reales
+
+Para cada social post, especifica además:
+- platform: "instagram" | "twitter" | "both"
+- language: "es" | "en" | "both"
+- text_es: texto en español
+- text_en: texto en inglés
+- hook: dato o noticia que conecta con el mercado
+- market_reference: título del mercado que promociona (si aplica)
+- suggested_image: breve descripción de imagen para acompañar
+
+---
+
+Here is today's platform activity data (JSON):
 
 \`\`\`json
 ${JSON.stringify(data, null, 2)}
 \`\`\`
 
-Based on today's platform activity, generate exactly 6 social media posts:
+Based on today's platform activity AND the News Monitor context above, generate exactly 6 social media posts:
 
 POST 1 — Instagram carousel caption (Spanish): About the hottest market or biggest probability shift. Hook people into giving their opinion. Include relevant emojis. End with CTA to crowdconscious.app
 
@@ -361,10 +500,44 @@ Return as a JSON array of 6 objects. No markdown wrapping. Just raw JSON.`
       }
     }
 
+    const activeMarketsArr = Array.isArray(data.active_markets)
+      ? (data.active_markets as Array<{ id: string; title: string }>)
+      : []
+    const allMarkets = [...(newMarkets ?? []), ...activeMarketsArr]
+    const marketByTitle = new Map<string, string>()
+    for (const m of allMarkets) {
+      const t = (m.title ?? '').trim()
+      if (t && !marketByTitle.has(t)) marketByTitle.set(t, m.id)
+    }
+
     for (const post of parsedArray) {
       if (!post || typeof post !== 'object') continue
       const platform = String(post.platform ?? 'unknown').toLowerCase()
       const hook = String(post.hook ?? 'Untitled')
+      const marketRef = String(post.market_reference ?? '').trim()
+      let marketId: string | null = null
+      if (marketRef) {
+        marketId = marketByTitle.get(marketRef) ?? null
+        if (!marketId) {
+          const match = allMarkets.find(
+            (m) =>
+              (m.title ?? '').toLowerCase().includes(marketRef.toLowerCase()) ||
+              marketRef.toLowerCase().includes((m.title ?? '').toLowerCase())
+          )
+          if (match) marketId = match.id
+        }
+      }
+
+      const suggestionRef = suggestions?.find((s) =>
+        (post.market_reference && s.title && String(s.title).includes(String(post.market_reference).slice(0, 30))) ||
+        (post.hook && s.title && String(s.title).includes(String(post.hook).slice(0, 30)))
+      )
+      const postBody = { ...post } as Record<string, unknown>
+      if (suggestionRef) {
+        postBody.suggestion_id = suggestionRef.id
+        postBody.suggestion_title = suggestionRef.title
+      }
+
       const metadata: Record<string, unknown> = {
         platform: post.platform,
         language: post.language,
@@ -379,15 +552,20 @@ Return as a JSON array of 6 objects. No markdown wrapping. Just raw JSON.`
         thread_option: post.thread_option,
         quote_tweet_hook: post.quote_tweet_hook,
         hook_variations: post.hook_variations,
+        hook: post.hook,
+        market_reference: post.market_reference,
+        suggested_image: post.suggested_image,
+        text_es: post.text_es,
+        text_en: post.text_en,
       }
 
       try {
         await supabase.from('agent_content').insert({
-          market_id: null,
+          market_id: marketId,
           agent_type: 'content_creator',
           content_type: 'social_post',
           title: hook,
-          body: JSON.stringify(post),
+          body: JSON.stringify(postBody),
           language: String(post.language ?? 'es'),
           metadata,
           published: false,
