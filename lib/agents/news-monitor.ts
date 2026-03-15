@@ -54,26 +54,56 @@ function extractKeywords(title: string, tags: string[] = [], category?: string):
   return result
 }
 
-function scoreSignalForMarket(
-  signal: Signal,
-  keywords: string[],
-  marketCategory: string,
-  categoryTags: string[]
-): number {
-  let score = 0
-  const titleLower = signal.title.toLowerCase()
-  const textLower = signal.text.toLowerCase()
-  const signalCatLower = signal.category.toLowerCase()
+/** Broader matching: keywords from title + tags, category expansion from tags, generous threshold */
+function matchSignalsToMarket(
+  market: { title: string; tags: string[]; category?: string },
+  allSignals: Signal[]
+): Signal[] {
+  const titleKeywords = extractKeywords(market.title, [], market.category)
+  const tagKeywords = (market.tags || []).map((t) => t.toLowerCase().trim()).filter(Boolean)
+  const allKeywords = [...new Set([...titleKeywords, ...tagKeywords])]
 
-  for (const kw of keywords) {
-    if (titleLower.includes(kw)) score += 3
-    if (textLower.includes(kw)) score += 1
+  const relevantCategories = tagKeywords.flatMap((tag) =>
+    Object.entries(CATEGORY_TO_TAGS).filter(([, tags]) =>
+      tags.some((t) => t.includes(tag) || tag.includes(t))
+    ).map(([cat]) => cat)
+  )
+  const marketCatMap: Record<string, string> = {
+    government: 'politics',
+    corporate: 'business',
+    community: 'culture',
+    cause: 'general',
+    world_cup: 'sports',
   }
-  if (categoryTags.some((t) => signalCatLower.includes(t) || titleLower.includes(t) || textLower.includes(t))) {
-    score += 2
+  const mappedCat = market.category ? (marketCatMap[market.category] ?? market.category) : ''
+  if (mappedCat && !relevantCategories.includes(mappedCat)) {
+    relevantCategories.push(mappedCat)
   }
-  score += (signal.engagement ?? 0) * 0.001
-  return score
+  const expandedTags = [...new Set(relevantCategories.flatMap((c) => CATEGORY_TO_TAGS[c] ?? []))]
+
+  const scored = allSignals.map((signal) => {
+    let score = 0
+    const signalText = `${signal.title} ${signal.text}`.toLowerCase()
+    const titleLower = signal.title.toLowerCase()
+
+    for (const kw of allKeywords) {
+      const kwLower = kw.toLowerCase()
+      if (titleLower.includes(kwLower)) score += 3
+      else if (signalText.includes(kwLower)) score += 1
+    }
+
+    if (relevantCategories.includes(signal.category?.toLowerCase())) score += 2
+    if (expandedTags.some((t) => signalText.includes(t))) score += 2
+
+    score += (signal.engagement ?? 0) * 0.001
+    return { ...signal, _score: score }
+  })
+
+  return scored
+    .filter((s) => s._score >= 1)
+    .sort((a, b) => (b._score ?? 0) - (a._score ?? 0))
+    .slice(0, 8)
+    .map(({ _score, ...s }) => s)
 }
 
 function normalizeTitleForDedup(title: string): string {
@@ -281,22 +311,27 @@ export async function runNewsMonitor(options?: {
       console.log('[NEWS-MONITOR] After fallback:', allSignals.length, 'signals')
     }
 
-    // Step 3: Match signals to markets
+    // Step 3: Match signals to markets (generous: 1+ signal is enough for analysis)
     const marketSignals: Record<string, Signal[]> = {}
     for (const market of activeMarkets) {
-      const keywords = extractKeywords(market.title, market.tags, market.category)
-      const categoryTags = CATEGORY_TO_TAGS[market.category] ?? []
-      const scored = allSignals
-        .map((s) => ({ signal: s, score: scoreSignalForMarket(s, keywords, market.category, categoryTags) }))
-        .filter((x) => x.score > 0)
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 8)
-        .map((x) => x.signal)
-      marketSignals[market.id] = scored
+      marketSignals[market.id] = matchSignalsToMarket(market, allSignals)
     }
 
-    const marketsWithSignals = activeMarkets.filter((m) => (marketSignals[m.id]?.length ?? 0) >= 2)
-    console.log('[NEWS-MONITOR] Markets with 2+ signals:', marketsWithSignals.length)
+    let marketsToAnalyze = activeMarkets.filter((m) => (marketSignals[m.id]?.length ?? 0) >= 1)
+    if (marketsToAnalyze.length === 0 && allSignals.length > 0 && activeMarkets.length > 0) {
+      console.log('[NEWS-MONITOR] No market-specific matches; using top 5 signals for all markets as fallback')
+      const fallbackSignals = allSignals.slice(0, 5)
+      for (const m of activeMarkets) {
+        marketSignals[m.id] = fallbackSignals
+      }
+      marketsToAnalyze = activeMarkets
+    }
+
+    console.log('[NEWS-MONITOR] Markets to analyze:', marketsToAnalyze.length, 'of', activeMarkets.length)
+    for (const m of marketsToAnalyze) {
+      const n = marketSignals[m.id]?.length ?? 0
+      console.log(`[NEWS-MONITOR]   "${m.title.slice(0, 50)}...": ${n} signals`)
+    }
 
     let totalTokensInput = 0
     let totalTokensOutput = 0
@@ -308,8 +343,8 @@ export async function runNewsMonitor(options?: {
     }> = []
     const allSuggestions: MarketAnalysis['suggested_markets'] = []
 
-    // Step 4: Analyze with Claude (per market with 2+ signals)
-    for (const market of marketsWithSignals) {
+    // Step 4: Analyze with Claude (per market with 1+ signals)
+    for (const market of marketsToAnalyze) {
       const matchedSignals = marketSignals[market.id] ?? []
       const signalsText = matchedSignals
         .map(
@@ -365,6 +400,8 @@ REGLAS PARA suggested_markets:
 - Si no hay buenas sugerencias, devuelve "suggested_markets": []`
 
       try {
+        console.log(`[NEWS-MONITOR] Analyzing "${market.title.slice(0, 50)}..." with ${matchedSignals.length} signals`)
+
         const response = await anthropic.messages.create({
           model: MODELS.FAST,
           max_tokens: TOKEN_LIMITS.NEWS,
@@ -377,10 +414,25 @@ REGLAS PARA suggested_markets:
         totalTokensInput += usage.input_tokens
         totalTokensOutput += usage.output_tokens
 
-        const raw = parseAgentJSON(rawText)
-        const parsed = (Array.isArray(raw) && raw.length > 0 && typeof raw[0] === 'object'
-          ? raw[0]
-          : raw) as MarketAnalysis
+        console.log(`[NEWS-MONITOR] Claude raw response for "${market.title.slice(0, 40)}":`, rawText?.substring(0, 200) + (rawText?.length > 200 ? '...' : ''))
+
+        let parsed: MarketAnalysis
+        try {
+          const raw = parseAgentJSON(rawText)
+          parsed = (Array.isArray(raw) && raw.length > 0 && typeof raw[0] === 'object'
+            ? raw[0]
+            : raw) as MarketAnalysis
+        } catch (parseErr) {
+          console.error(`[NEWS-MONITOR] JSON parse failed for "${market.title}":`, parseErr)
+          console.error(`[NEWS-MONITOR] Raw response:`, rawText?.substring(0, 500))
+          continue
+        }
+
+        console.log(`[NEWS-MONITOR] Parsed for "${market.title.slice(0, 40)}":`, {
+          hasSummary: !!parsed?.market_analysis?.summary,
+          sentiment: parsed?.market_analysis?.sentiment_score,
+          suggestions: parsed?.suggested_markets?.length ?? 0,
+        })
 
         if (parsed?.market_analysis) {
           marketAnalyses.push({
@@ -390,11 +442,16 @@ REGLAS PARA suggested_markets:
             suggestions: parsed.suggested_markets ?? [],
           })
           if (Array.isArray(parsed.suggested_markets)) {
-            allSuggestions.push(...parsed.suggested_markets)
+            for (const sug of parsed.suggested_markets) {
+              if (sug?.title_es) {
+                sug.source_signals = sug.source_signals ?? matchedSignals.map((s) => s.source_name).slice(0, 5)
+                allSuggestions.push(sug)
+              }
+            }
           }
         }
       } catch (e) {
-        console.warn('[NEWS-MONITOR] Claude error for market', market.title, e)
+        console.error(`[NEWS-MONITOR] Claude error for market "${market.title}":`, e)
       }
     }
 
@@ -445,22 +502,20 @@ REGLAS PARA suggested_markets:
       })
       if (!sentErr) relevanceSaved = true
 
-      // Save market-specific relevance
-      const relBody = JSON.stringify({
-        market_id: ma.market_id,
-        relevance: ma.analysis.relevance,
-        probability_suggestion: ma.analysis.probability_suggestion,
-        summary: ma.analysis.summary,
-      })
+      // Save per-market news summary (published so it shows in News Briefs)
       await supabase.from('agent_content').insert({
         market_id: ma.market_id,
         agent_type: 'news_monitor',
         content_type: 'news_summary',
         title: `Análisis: ${ma.market_title}`,
-        body: relBody,
+        body: ma.analysis.summary,
         language: 'es',
-        metadata: { type: 'market_analysis', relevance: ma.analysis.relevance },
-        published: false,
+        metadata: {
+          type: 'market_analysis',
+          relevance: ma.analysis.relevance,
+          probability_suggestion: ma.analysis.probability_suggestion,
+        },
+        published: true,
       })
     }
 
@@ -507,11 +562,8 @@ REGLAS PARA suggested_markets:
       if (!error) suggestionsSaved++
     }
 
-    // Step 7: Signal to Content Creator (content_brief)
-    const approvedOrHighRelevanceContent = marketAnalyses.filter(
-      (a) => a.analysis.relevance === 'high' || a.analysis.relevance === 'medium'
-    )
-    if (approvedOrHighRelevanceContent.length > 0 || allSuggestions.length > 0) {
+    // Step 7: Signal to Content Creator (content_brief) — always when we have signals or analyses
+    if (marketAnalyses.length > 0 || allSignals.length > 0) {
       const briefPayload = {
         market_id: null,
         agent_type: 'news_monitor' as const,
