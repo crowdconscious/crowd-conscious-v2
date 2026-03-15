@@ -41,3 +41,15 @@ Use **Run Now** on the Agent Dashboard (`/predictions/admin/agents`). This bypas
 - **Cron not firing**: Check CRON_SECRET, production deployment, and Vercel plan.
 - **401 Unauthorized**: CRON_SECRET mismatch — ensure no trailing newlines or special characters.
 - **20 errors in agent_runs**: Individual agent failures (API, parsing, etc.). Check error_message in agent_runs.
+
+## News Monitor — Articles: 0
+
+If the News Monitor runs successfully but shows "Articles: 0" and no new News Briefs:
+
+1. **Verify NEWSDATA_API_KEY in Vercel** — Must be set for Production (and Preview if testing).
+2. **NewsData.io free tier** — Uses no country/language filters to maximize results. Fallback query "Mexico" runs if market queries return 0.
+3. **Check Vercel logs** — Look for `[NEWS-MONITOR]` lines. If you see "NewsData.io empty - full response: {...}", the API returned an error or no matches. Common causes:
+   - Invalid/expired API key → 403 or error in response
+   - Rate limit or credit exhaustion → Check NewsData.io dashboard (Account Settings → Credits)
+   - Query too narrow → Fallback "Mexico" should still return results
+4. **Credits** — Free tier: 200 credits. Each API request uses credits. If credits are exhausted, requests return empty.

@@ -68,20 +68,40 @@ function deduplicateArticles(articles: NewsArticle[]): NewsArticle[] {
   return result
 }
 
-async function fetchNewsData(query: string, limit: number): Promise<NewsArticle[]> {
+type NewsDataFetchOptions = { country?: string; language?: string }
+
+async function fetchNewsData(
+  query: string,
+  limit: number,
+  options: NewsDataFetchOptions = {}
+): Promise<NewsArticle[]> {
   const key = process.env.NEWSDATA_API_KEY
   if (!key) {
     console.warn('[NEWS-MONITOR] NEWSDATA_API_KEY not found in env')
     return []
   }
-  const url = `https://newsdata.io/api/1/latest?apikey=${encodeURIComponent(key)}&q=${encodeURIComponent(query)}&language=es,en&country=mx&size=${limit}`
+  const params = new URLSearchParams({
+    apikey: key,
+    q: query,
+    size: String(Math.min(limit, 10)), // Free tier max 10/request
+  })
+  if (options.country) params.set('country', options.country)
+  if (options.language) params.set('language', options.language)
+  const url = `https://newsdata.io/api/1/latest?${params.toString()}`
   try {
     const res = await fetch(url)
-    const data = (await res.json()) as { results?: Array<Record<string, unknown>>; status?: string; totalResults?: number; message?: string; error?: string }
+    const data = (await res.json()) as {
+      results?: Array<Record<string, unknown>>
+      status?: string
+      totalResults?: number
+      message?: string
+      error?: string
+      code?: string
+    }
     const raw = Array.isArray(data) ? data : (data.results ?? [])
-    console.log(`[NEWS-MONITOR] NewsData.io response status: ${res.status}`, 'results:', raw.length, 'query:', query.slice(0, 50))
+    console.log(`[NEWS-MONITOR] NewsData.io response status: ${res.status}`, 'results:', raw.length, 'query:', query.slice(0, 50), 'filters:', { country: options.country ?? 'none', language: options.language ?? 'none' })
     if (raw.length === 0) {
-      console.log('[NEWS-MONITOR] NewsData.io empty/error - full response:', JSON.stringify({ status: data.status, message: data.message, error: data.error }))
+      console.log('[NEWS-MONITOR] NewsData.io empty - full response:', JSON.stringify({ status: data.status, totalResults: data.totalResults, message: data.message, error: data.error, code: data.code }))
     }
     if (raw.length > 0) {
       console.log('[NEWS-MONITOR] Article titles:', raw.slice(0, 3).map((r: Record<string, unknown>) => String(r.title ?? '')))
@@ -173,17 +193,26 @@ export async function runNewsMonitor(): Promise<{
         searchQueries.add('Mexico World Cup 2026 economia')
       }
 
+      // NewsData.io free tier: country+language filters often return 0. Use NO filters to maximize results.
+      // extractSearchTerms already adds "Mexico" to queries, so results stay relevant.
       for (const q of Array.from(searchQueries).slice(0, 5)) {
         console.log('[NEWS-MONITOR] Search query:', q)
         let articles: NewsArticle[] = []
         if (newsDataKey) {
-          articles = await fetchNewsData(q, 5)
+          articles = await fetchNewsData(q, 5, {}) // No country/language — free tier is restrictive
         }
         if (articles.length === 0 && gnewsKey) {
           articles = await fetchGNews(q, 5)
         }
         console.log('[NEWS-MONITOR] Articles found for query:', articles.length)
         newsArticles.push(...articles)
+      }
+
+      // FALLBACK: If all queries return 0, try broad "Mexico" query.
+      if (newsArticles.length === 0 && newsDataKey) {
+        console.log('[NEWS-MONITOR] All queries returned 0 — fallback: q=Mexico')
+        const fallbackArticles = await fetchNewsData('Mexico', 10, {})
+        newsArticles.push(...fallbackArticles)
       }
     }
 
@@ -274,17 +303,20 @@ Return as JSON: { relevance: [...], suggestions: [...], brief: '...' }`
     let suggestionsSaved = 0
     let relevanceSaved = false
 
-    // Skip only truly empty or useless placeholders. Do NOT block substantive analysis that
-    // happens to mention "no recent news" — e.g. "No recent news in the feed, but our markets
-    // reflect Mexico City, Banxico, World Cup..." is valuable and should be saved.
+    // When Articles: 0, the fallback prompt is our ONLY output — we must save it.
+    // When Articles > 0, we can be slightly more selective.
+    // Never block substantive analysis that mentions "no recent news" in passing
+    // (e.g. "No recent news in the feed, but our markets reflect Mexico City, Banxico, World Cup...").
+    const hasNoArticles = dedupedArticles.length === 0
     const isPurelyNoNews = /^(no hay noticias|no recent news|no news in the feed|empty feed)[.\s]*$/i.test(brief.trim())
-    const isNoNewsPlaceholder =
-      !brief ||
-      brief.length < 60 ||
-      (brief.length < 120 && (isPurelyNoNews || /no hay noticias|no recent news|no news in the feed|empty feed/i.test(brief)))
+    const isNoNewsPlaceholder = hasNoArticles
+      ? !brief || brief.length < 40
+      : !brief ||
+        brief.length < 60 ||
+        (brief.length < 120 && (isPurelyNoNews || /no hay noticias|no recent news|no news in the feed|empty feed/i.test(brief)))
 
     if (isNoNewsPlaceholder) {
-      console.log('[NEWS-MONITOR] Brief rejected as placeholder:', { briefLen: brief.length, isPurelyNoNews, reason: !brief ? 'empty' : brief.length < 60 ? 'too_short' : 'short_and_contains_no_news' })
+      console.log('[NEWS-MONITOR] Brief rejected as placeholder:', { briefLen: brief.length, hasNoArticles, isPurelyNoNews, reason: !brief ? 'empty' : brief.length < (hasNoArticles ? 40 : 60) ? 'too_short' : 'short_and_contains_no_news' })
     }
 
     if (brief && !isNoNewsPlaceholder) {
