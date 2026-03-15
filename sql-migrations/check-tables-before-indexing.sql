@@ -12,7 +12,7 @@ SELECT
         WHEN tablename LIKE 'marketplace_%' THEN 'Marketplace'
         WHEN tablename LIKE 'wallet%' OR tablename LIKE '%_sales' THEN 'Wallet System'
         WHEN tablename LIKE 'course_%' OR tablename LIKE 'employee_%' OR tablename LIKE 'corporate_%' OR tablename = 'certifications' OR tablename = 'lesson_responses' OR tablename = 'project_submissions' THEN 'Corporate Training'
-        WHEN tablename LIKE 'community_%' OR tablename = 'communities' OR tablename = 'votes' OR tablename = 'sponsorships' THEN 'Community Platform'
+        WHEN tablename LIKE 'community_%' OR tablename = 'communities' OR tablename = 'market_votes' OR tablename = 'sponsorships' THEN 'Community Platform'
         WHEN tablename = 'profiles' THEN 'Auth'
         ELSE 'Other'
     END as category,
@@ -27,7 +27,7 @@ SELECT
         WHEN tablename LIKE 'marketplace_%' THEN 'Marketplace'
         WHEN tablename LIKE 'wallet%' OR tablename LIKE '%_sales' THEN 'Wallet System'
         WHEN tablename LIKE 'course_%' OR tablename LIKE 'employee_%' OR tablename LIKE 'corporate_%' OR tablename = 'certifications' OR tablename = 'lesson_responses' OR tablename = 'project_submissions' THEN 'Corporate Training'
-        WHEN tablename LIKE 'community_%' OR tablename = 'communities' OR tablename = 'votes' OR tablename = 'sponsorships' THEN 'Community Platform'
+        WHEN tablename LIKE 'community_%' OR tablename = 'communities' OR tablename = 'market_votes' OR tablename = 'sponsorships' THEN 'Community Platform'
         WHEN tablename = 'profiles' THEN 'Auth'
         ELSE 'Other'
     END as category,
@@ -50,7 +50,7 @@ FROM (VALUES
     ('communities'),
     ('community_members'),
     ('community_content'),
-    ('votes'),
+    ('market_votes'),
     ('sponsorships'),
     ('impact_metrics'),
     ('share_links'),

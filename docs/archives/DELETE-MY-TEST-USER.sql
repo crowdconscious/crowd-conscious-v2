@@ -29,8 +29,8 @@ BEGIN
     RAISE NOTICE 'Deleting comments...';
     DELETE FROM comments WHERE user_id = v_user_id;
     
-    RAISE NOTICE 'Deleting votes...';
-    DELETE FROM votes WHERE user_id = v_user_id;
+    RAISE NOTICE 'Deleting market_votes...';
+    DELETE FROM market_votes WHERE user_id = v_user_id;
     
     RAISE NOTICE 'Deleting event_registrations...';
     DELETE FROM event_registrations WHERE user_id = v_user_id;

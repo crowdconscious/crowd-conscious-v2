@@ -382,11 +382,12 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS trigger_vote_xp ON votes;
-CREATE TRIGGER trigger_vote_xp
-  AFTER INSERT ON votes
-  FOR EACH ROW
-  EXECUTE FUNCTION trigger_vote_xp();
+-- votes table no longer exists; prediction platform uses market_votes
+-- DROP TRIGGER IF EXISTS trigger_vote_xp ON votes;
+-- CREATE TRIGGER trigger_vote_xp
+--   AFTER INSERT ON votes
+--   FOR EACH ROW
+--   EXECUTE FUNCTION trigger_vote_xp();
 
 -- Award XP when user creates content
 CREATE OR REPLACE FUNCTION trigger_content_xp()

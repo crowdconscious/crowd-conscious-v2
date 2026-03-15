@@ -27,8 +27,8 @@ DELETE FROM community_members WHERE user_id = 'USER_ID';
 -- Delete from comments
 DELETE FROM comments WHERE user_id = 'USER_ID';
 
--- Delete from votes
-DELETE FROM votes WHERE user_id = 'USER_ID';
+-- votes table no longer exists; use market_votes
+-- DELETE FROM market_votes WHERE user_id = 'USER_ID';
 
 -- Delete from event_registrations
 DELETE FROM event_registrations WHERE user_id = 'USER_ID';
@@ -77,7 +77,7 @@ BEGIN
     DELETE FROM xp_transactions WHERE user_id = v_user_id;
     DELETE FROM community_members WHERE user_id = v_user_id;
     DELETE FROM comments WHERE user_id = v_user_id;
-    DELETE FROM votes WHERE user_id = v_user_id;
+    -- DELETE FROM market_votes WHERE user_id = v_user_id;  -- votes table no longer exists
     DELETE FROM event_registrations WHERE user_id = v_user_id;
     DELETE FROM sponsorships WHERE user_id = v_user_id;
     DELETE FROM community_content WHERE created_by = v_user_id;
@@ -138,15 +138,9 @@ FOREIGN KEY (user_id)
 REFERENCES profiles(id)
 ON DELETE CASCADE;
 
--- votes
-ALTER TABLE votes
-DROP CONSTRAINT IF EXISTS votes_user_id_fkey;
-
-ALTER TABLE votes
-ADD CONSTRAINT votes_user_id_fkey
-FOREIGN KEY (user_id)
-REFERENCES profiles(id)
-ON DELETE CASCADE;
+-- votes table no longer exists
+-- ALTER TABLE votes DROP CONSTRAINT IF EXISTS votes_user_id_fkey;
+-- ALTER TABLE votes ADD CONSTRAINT votes_user_id_fkey ...
 
 -- event_registrations
 ALTER TABLE event_registrations

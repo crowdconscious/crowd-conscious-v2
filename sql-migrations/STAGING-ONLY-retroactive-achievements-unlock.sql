@@ -43,10 +43,10 @@ BEGIN
     WHERE ce.user_id = v_user.id
       AND ce.completed = true;
 
-    -- Count votes cast
+    -- Count votes cast (prediction platform uses market_votes; votes table no longer exists)
     SELECT COUNT(*) INTO v_votes_cast
-    FROM public.votes v
-    WHERE v.user_id = v_user.id;
+    FROM public.market_votes mv
+    WHERE mv.user_id = v_user.id;
 
     -- Count sponsorships made
     SELECT COUNT(*) INTO v_sponsorships_made

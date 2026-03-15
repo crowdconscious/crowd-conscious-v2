@@ -143,9 +143,8 @@ ON sponsorships(content_id, status);
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_sponsorships_sponsor 
 ON sponsorships(sponsor_id, created_at DESC);
 
--- Votes
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_votes_content 
-ON votes(content_id);
+-- votes table no longer exists; use market_votes
+-- CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_votes_content ON votes(content_id);
 
 -- Impact metrics
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_impact_metrics_community 

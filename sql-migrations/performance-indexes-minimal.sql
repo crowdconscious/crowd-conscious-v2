@@ -49,8 +49,8 @@ ON community_content(status, created_at DESC);
 -- VOTES (Core table)
 -- ============================================
 
-CREATE INDEX IF NOT EXISTS idx_votes_content 
-ON votes(content_id);
+-- votes table no longer exists; use market_votes
+-- CREATE INDEX IF NOT EXISTS idx_votes_content ON votes(content_id);
 
 -- ============================================
 -- SPONSORSHIPS (Core table)
@@ -194,7 +194,7 @@ TABLES INDEXED (Core - always):
 2. communities
 3. community_members
 4. community_content
-5. votes
+5. market_votes
 6. sponsorships
 7. impact_metrics
 

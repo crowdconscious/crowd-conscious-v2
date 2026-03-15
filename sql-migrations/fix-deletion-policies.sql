@@ -114,22 +114,12 @@ CREATE POLICY "Founders and admins can remove members" ON community_members
   );
 
 -- =====================================================
--- 5. VOTES - Allow voters to delete their own votes
+-- 5. VOTES - DEPRECATED: votes table no longer exists. Use market_votes.
 -- =====================================================
 
--- Drop any existing delete policies
-DROP POLICY IF EXISTS "Users can delete own votes" ON votes;
-
-CREATE POLICY "Users can delete own votes" ON votes
-  FOR DELETE USING (
-    user_id = auth.uid()
-    OR
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE profiles.id = auth.uid()
-      AND profiles.user_type = 'admin'
-    )
-  );
+-- votes table no longer exists; policy removed
+-- DROP POLICY IF EXISTS "Users can delete own votes" ON votes;
+-- CREATE POLICY "Users can delete own votes" ON votes ...
 
 -- =====================================================
 -- 6. SPONSORSHIPS - Allow platform admins only

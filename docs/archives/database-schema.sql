@@ -67,6 +67,7 @@ CREATE TABLE public.community_content (
 
 -- =====================================================
 -- 5. VOTES (with weighted voting)
+-- DEPRECATED: This table no longer exists. Prediction platform uses market_votes instead.
 -- =====================================================
 CREATE TABLE public.votes (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,

@@ -1,3 +1,5 @@
+export const maxDuration = 120
+
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth-server'
 import { createClient } from '@/lib/supabase-server'
@@ -81,5 +83,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-
-export const maxDuration = 60

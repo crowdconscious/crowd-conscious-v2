@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import {
   CheckCircle,
   XCircle,
@@ -46,6 +47,8 @@ type AgentContent = {
   metadata: Record<string, unknown>
   published: boolean
   created_at: string
+  market_id?: string | null
+  agent_type?: string
 }
 
 type TabId = 'all' | 'ceo' | 'social' | 'news' | 'inbox' | 'suggestions' | 'calendar'
@@ -58,6 +61,19 @@ function formatDate(t: string) {
     hour: '2-digit',
     minute: '2-digit',
   })
+}
+
+function formatRelativeTime(t: string) {
+  const d = new Date(t)
+  const now = new Date()
+  const diffMs = now.getTime() - d.getTime()
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMs / 3600000)
+  const diffDays = Math.floor(diffMs / 86400000)
+  if (diffMins < 60) return `${diffMins}m ago`
+  if (diffHours < 24) return `${diffHours}h ago`
+  if (diffDays < 7) return `${diffDays}d ago`
+  return formatDate(t)
 }
 
 function CollapsibleSection({
@@ -359,7 +375,7 @@ function getContentTab(item: AgentContent): TabId | null {
   const type = meta.type as string
   const digestType = meta.digest_type as string
   if (type === 'inbox_digest') return 'inbox'
-  if (type === 'market_suggestion' || item.content_type === 'market_insight') return 'suggestions'
+  if (item.content_type === 'market_suggestion' || (item.content_type === 'market_insight' && type === 'market_suggestion')) return 'suggestions'
   if (type === 'news_brief' || type === 'news_relevance' || item.content_type === 'news_summary')
     return 'news'
   if (item.content_type === 'social_post' || (meta.platform as string)) return 'social'
@@ -369,6 +385,7 @@ function getContentTab(item: AgentContent): TabId | null {
 }
 
 export default function AdminAgentsPage() {
+  const router = useRouter()
   const [data, setData] = useState<{
     agentRuns: AgentRun[]
     lastRunsByAgent: Record<string, AgentRun>
@@ -405,14 +422,22 @@ export default function AdminAgentsPage() {
   const runAgent = async (agentId: string) => {
     setRunning(agentId)
     setRunResult(null)
+    setError('')
     try {
       const res = await fetch('/api/predictions/admin/run-agent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ agent: agentId }),
       })
-      const json = await res.json()
-      if (!res.ok) throw new Error(json.error ?? 'Failed')
+      let json: { error?: string; result?: { summary?: Record<string, unknown> } }
+      try {
+        json = await res.json()
+      } catch {
+        throw new Error(`Agent run failed with status ${res.status}. Response was not JSON (e.g. 504 timeout). The agent may still be running — check Vercel logs.`)
+      }
+      if (!res.ok) {
+        throw new Error(json.error ?? `Agent run failed with status ${res.status}`)
+      }
       await fetchData()
       const result = json.result
       if (result?.summary && agentId === 'news-monitor') {
@@ -422,12 +447,13 @@ export default function AdminAgentsPage() {
         if (typeof s.suggestions_saved === 'number') parts.push(`Suggestions: ${s.suggestions_saved}`)
         if (typeof s.articles_fetched === 'number') parts.push(`Articles: ${s.articles_fetched}`)
         if (parts.length > 0) {
-        setRunResult(parts.join(' • '))
-        setTimeout(() => setRunResult(null), 8000)
+          setRunResult(parts.join(' • '))
+          setTimeout(() => setRunResult(null), 8000)
+        }
       }
-    }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Run failed')
+      const msg = e instanceof Error ? e.message : 'Run failed'
+      setError(`${msg} The agent may still be running — check Vercel logs.`)
     } finally {
       setRunning(null)
     }
@@ -451,6 +477,21 @@ export default function AdminAgentsPage() {
       await fetchData()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Update failed')
+    }
+  }
+
+  const dismissSuggestion = async (id: string) => {
+    try {
+      const res = await fetch('/api/predictions/admin/dismiss-suggestion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      })
+      if (!res.ok) throw new Error('Dismiss failed')
+      await fetchData()
+      router.refresh()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Dismiss failed')
     }
   }
 
@@ -481,6 +522,20 @@ export default function AdminAgentsPage() {
 
   const lastRuns = data?.lastRunsByAgent ?? {}
   const stats = data?.monthlyStats ?? { totalCost: 0, totalRuns: 0, totalErrors: 0 }
+
+  const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+  const newsSummaryCount = content.filter(
+    (c) =>
+      c.content_type === 'news_summary' &&
+      (c.agent_type === 'news_monitor' || !c.agent_type) &&
+      c.created_at >= twentyFourHoursAgo
+  ).length
+  const pendingSuggestions = content.filter(
+    (c) =>
+      (c.content_type === 'market_suggestion' ||
+        (c.content_type === 'market_insight' && (c.metadata as { type?: string })?.type === 'market_suggestion')) &&
+      !c.published
+  ).length
 
   return (
     <div className="space-y-8">
@@ -585,6 +640,14 @@ export default function AdminAgentsPage() {
       {/* SECTION 2: RECENT CONTENT */}
       <section>
         <h2 className="text-lg font-semibold text-white mb-4">Recent Content</h2>
+        <div className="flex gap-4 text-sm text-white/50 mb-4">
+          <span>📰 {newsSummaryCount} análisis hoy</span>
+          <span>💡 {pendingSuggestions} sugerencias pendientes</span>
+          <span>📊 {stats.totalRuns} runs este mes</span>
+          {stats.totalErrors > 0 && (
+            <span className="text-red-400">{stats.totalErrors} errores</span>
+          )}
+        </div>
         <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
           {[
             { id: 'all' as TabId, label: 'All' },
@@ -649,59 +712,80 @@ export default function AdminAgentsPage() {
                 )
               }
 
-              if (type === 'market_suggestion' || item.content_type === 'market_insight') {
-                let sug: Record<string, unknown> = {}
+              if (type === 'market_suggestion' || item.content_type === 'market_suggestion' || item.content_type === 'market_insight') {
+                let suggestion: Record<string, unknown> = {}
                 try {
-                  sug = JSON.parse(item.body) as Record<string, unknown>
+                  suggestion = JSON.parse(item.body) as Record<string, unknown>
                 } catch {
-                  sug = { title: item.title }
+                  suggestion = { title: item.title }
                 }
-                const title = String(sug.title ?? item.title)
-                const category = String(sug.category ?? '')
-                const description = String(sug.description ?? '')
-                const resolutionCriteria = String(sug.resolution_criteria ?? '')
-                const sourceUrls = Array.isArray(sug.source_urls)
-                  ? (sug.source_urls as Array<{ url?: string; label?: string }>)
-                  : []
                 const createUrl = `/predictions/admin/create-market?suggestion_id=${encodeURIComponent(item.id)}`
 
                 return (
                   <div
                     key={item.id}
-                    className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 flex items-start justify-between gap-4"
+                    className="border border-white/10 rounded-lg p-4 space-y-3"
                   >
-                    <div className="min-w-0 flex-1">
-                      <div className="font-medium text-white">{title}</div>
-                      <div className="text-sm text-slate-400 mt-1">Category: {category || '—'}</div>
-                      {description && (
-                        <div className="text-sm text-slate-500 mt-1 line-clamp-2">{description}</div>
-                      )}
-                      {resolutionCriteria && (
-                        <div className="text-sm text-slate-500 mt-1">Resolution: {resolutionCriteria}</div>
-                      )}
-                      {sourceUrls.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {sourceUrls.slice(0, 3).map((s, i) => (
-                            <a
-                              key={i}
-                              href={s.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1"
-                            >
-                              <ExternalLink className="w-3 h-3" />
-                              {s.label || s.url || 'Link'}
-                            </a>
-                          ))}
-                        </div>
+                    <h4 className="text-white font-medium">{item.title}</h4>
+                    <div className="flex gap-2">
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400">
+                        {String(suggestion.category ?? '—')}
+                      </span>
+                      {suggestion.initial_probability != null && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-400">
+                          {String(suggestion.initial_probability)}% initial
+                        </span>
                       )}
                     </div>
-                    <Link
-                      href={createUrl}
-                      className="flex items-center gap-1 px-3 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-sm font-medium text-white shrink-0"
-                    >
-                      <Lightbulb className="w-4 h-4" /> Create Market
-                    </Link>
+                    {suggestion.description_es ? (
+                      <p className="text-white/60 text-sm">{String(suggestion.description_es)}</p>
+                    ) : null}
+                    {suggestion.resolution_criteria_es ? (
+                      <div className="text-white/40 text-xs">
+                        <span className="font-medium text-white/50">Resolución:</span>{' '}
+                        {String(suggestion.resolution_criteria_es)}
+                      </div>
+                    ) : null}
+                    {suggestion.resolution_date ? (
+                      <div className="text-white/40 text-xs">
+                        <span className="font-medium text-white/50">Fecha:</span>{' '}
+                        {String(suggestion.resolution_date)}
+                      </div>
+                    ) : null}
+                    {Array.isArray(suggestion.tags) && suggestion.tags.length > 0 && (
+                      <div className="flex gap-1 flex-wrap">
+                        {(suggestion.tags as string[]).map((tag: string) => (
+                          <span
+                            key={tag}
+                            className="text-xs px-1.5 py-0.5 rounded bg-white/5 text-white/40"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {suggestion.reasoning ? (
+                      <p className="text-white/50 text-xs italic">{String(suggestion.reasoning)}</p>
+                    ) : null}
+                    {Array.isArray(suggestion.source_signals) && suggestion.source_signals.length > 0 && (
+                      <div className="text-white/30 text-xs">
+                        Fuentes: {(suggestion.source_signals as string[]).join(', ')}
+                      </div>
+                    )}
+                    <div className="flex gap-2 pt-1">
+                      <Link
+                        href={createUrl}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-600 transition-colors"
+                      >
+                        💡 Create Market
+                      </Link>
+                      <button
+                        onClick={() => dismissSuggestion(item.id)}
+                        className="px-3 py-1.5 rounded-lg border border-white/10 text-white/40 text-sm hover:text-white/60 hover:border-white/20 transition-colors"
+                      >
+                        Dismiss
+                      </button>
+                    </div>
                   </div>
                 )
               }
@@ -752,12 +836,27 @@ export default function AdminAgentsPage() {
                 return (
                   <div
                     key={item.id}
-                    className="bg-slate-800/50 border border-slate-700 rounded-lg p-4"
+                    className="border border-white/10 rounded-lg p-4 space-y-3"
                   >
-                    <div className="text-slate-400 text-sm mb-2">{formatDate(item.created_at)}</div>
-                    <pre className="text-white whitespace-pre-wrap font-sans text-sm">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-white font-medium text-sm">
+                        {item.title}
+                      </h4>
+                      <span className="text-white/40 text-xs">
+                        {formatRelativeTime(item.created_at)}
+                      </span>
+                    </div>
+                    <p className="text-white/70 text-sm leading-relaxed whitespace-pre-wrap">
                       {item.body}
-                    </pre>
+                    </p>
+                    {item.market_id && (
+                      <Link
+                        href={`/predictions/markets/${item.market_id}`}
+                        className="text-emerald-400 text-xs hover:underline"
+                      >
+                        Ver mercado →
+                      </Link>
+                    )}
                   </div>
                 )
               }

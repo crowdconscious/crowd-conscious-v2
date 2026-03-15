@@ -52,26 +52,8 @@ REFERENCES profiles(id)
 ON DELETE CASCADE;
 
 -- =====================================================
--- 3. VOTES - CASCADE when content deleted
+-- 3. VOTES - DEPRECATED: votes table no longer exists. Use market_votes.
 -- =====================================================
-
-ALTER TABLE votes 
-DROP CONSTRAINT IF EXISTS votes_content_id_fkey;
-
-ALTER TABLE votes
-ADD CONSTRAINT votes_content_id_fkey 
-FOREIGN KEY (content_id) 
-REFERENCES community_content(id) 
-ON DELETE CASCADE;
-
-ALTER TABLE votes 
-DROP CONSTRAINT IF EXISTS votes_user_id_fkey;
-
-ALTER TABLE votes
-ADD CONSTRAINT votes_user_id_fkey 
-FOREIGN KEY (user_id) 
-REFERENCES profiles(id) 
-ON DELETE CASCADE;
 
 -- =====================================================
 -- 4. SPONSORSHIPS - CASCADE when content deleted

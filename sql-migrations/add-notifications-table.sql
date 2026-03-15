@@ -135,12 +135,12 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Create trigger for vote notifications
-DROP TRIGGER IF EXISTS trigger_notify_content_voted ON votes;
-CREATE TRIGGER trigger_notify_content_voted
-  AFTER INSERT ON votes
-  FOR EACH ROW
-  EXECUTE FUNCTION notify_content_voted();
+-- votes table no longer exists; trigger removed. Prediction platform uses market_votes.
+-- DROP TRIGGER IF EXISTS trigger_notify_content_voted ON votes;
+-- CREATE TRIGGER trigger_notify_content_voted
+--   AFTER INSERT ON votes
+--   FOR EACH ROW
+--   EXECUTE FUNCTION notify_content_voted();
 
 -- Notify when someone RSVPs to your event
 CREATE OR REPLACE FUNCTION notify_event_rsvp()

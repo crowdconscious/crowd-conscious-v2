@@ -66,11 +66,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-DROP TRIGGER IF EXISTS trigger_vote_xp ON public.votes;
-CREATE TRIGGER trigger_vote_xp
-  AFTER INSERT ON public.votes
-  FOR EACH ROW
-  EXECUTE FUNCTION trigger_vote_xp();
+-- NOTE: votes table (community content) no longer exists. Removed trigger_vote_xp on votes.
+-- Prediction platform uses market_votes; execute_market_vote RPC handles XP/achievements.
 
 -- Fix 3: Comment Trigger
 -- ============================================================================

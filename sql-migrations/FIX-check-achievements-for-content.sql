@@ -38,8 +38,9 @@ BEGIN
   FROM public.community_content
   WHERE created_by = p_user_id;
 
+  -- Prediction platform uses market_votes (votes table for community content no longer exists)
   SELECT COUNT(*) INTO v_vote_count
-  FROM public.votes
+  FROM public.market_votes
   WHERE user_id = p_user_id;
 
   SELECT COUNT(*) INTO v_sponsorship_count
@@ -271,46 +272,12 @@ CREATE TRIGGER trigger_content_xp
   FOR EACH ROW
   EXECUTE FUNCTION trigger_content_xp();
 
--- Update vote trigger to pass action_type
-CREATE OR REPLACE FUNCTION trigger_vote_xp()
-RETURNS TRIGGER AS $$
-BEGIN
-  -- Award XP for voting (XP amount comes from xp_rewards table)
-  PERFORM public.award_xp(
-    NEW.user_id, 
-    'vote_content',  -- Action type (must match xp_rewards table)
-    NEW.content_id, -- Action ID (content ID)
-    'Voted on content'
-  );
-  
-  -- Update vote count in user stats
-  UPDATE public.user_stats 
-  SET votes_cast = votes_cast + 1,
-      updated_at = NOW()
-  WHERE user_id = NEW.user_id;
-  
-  -- Update streak and check achievements (pass action_type)
-  PERFORM public.update_user_streak(NEW.user_id);
-  PERFORM public.check_achievements(NEW.user_id, 'vote_content', NEW.content_id);
-  
-  RETURN NEW;
-EXCEPTION
-  WHEN OTHERS THEN
-    RAISE WARNING 'Error in trigger_vote_xp: %', SQLERRM;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-DROP TRIGGER IF EXISTS trigger_vote_xp ON public.votes;
-CREATE TRIGGER trigger_vote_xp
-  AFTER INSERT ON public.votes
-  FOR EACH ROW
-  EXECUTE FUNCTION trigger_vote_xp();
+-- NOTE: votes table (community content) no longer exists. Prediction platform uses market_votes.
+-- trigger_vote_xp on votes removed. Market votes use execute_market_vote RPC which calls check_achievements.
 
 -- Grant execute permissions
 GRANT EXECUTE ON FUNCTION public.check_achievements TO authenticated;
 GRANT EXECUTE ON FUNCTION trigger_content_xp TO authenticated;
-GRANT EXECUTE ON FUNCTION trigger_vote_xp TO authenticated;
 
 
 

@@ -29,10 +29,11 @@ WHERE NOT EXISTS (
   SELECT 1 FROM auth.users u WHERE u.id = c.user_id
 )
 UNION ALL
-SELECT 'votes', COUNT(*)
-FROM votes v
+-- votes table no longer exists; prediction platform uses market_votes
+SELECT 'market_votes', COUNT(*)
+FROM market_votes mv
 WHERE NOT EXISTS (
-  SELECT 1 FROM auth.users u WHERE u.id = v.user_id
+  SELECT 1 FROM auth.users u WHERE u.id = mv.user_id
 );
 
 -- Step 2: Delete all orphaned data
@@ -70,10 +71,10 @@ WHERE NOT EXISTS (
   SELECT 1 FROM auth.users u WHERE u.id = c.user_id
 );
 
--- Delete orphaned votes
-DELETE FROM votes v
+-- Delete orphaned market_votes (votes table no longer exists)
+DELETE FROM market_votes mv
 WHERE NOT EXISTS (
-  SELECT 1 FROM auth.users u WHERE u.id = v.user_id
+  SELECT 1 FROM auth.users u WHERE u.id = mv.user_id
 );
 
 -- Delete orphaned event_registrations

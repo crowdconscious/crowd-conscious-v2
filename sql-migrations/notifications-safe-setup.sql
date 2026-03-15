@@ -137,11 +137,12 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Step 12: Drop and recreate vote trigger
-DROP TRIGGER IF EXISTS trigger_notify_content_voted ON votes;
-CREATE TRIGGER trigger_notify_content_voted
-  AFTER INSERT ON votes
-  FOR EACH ROW
-  EXECUTE FUNCTION notify_content_voted();
+-- votes table no longer exists; trigger removed. Prediction platform uses market_votes.
+-- DROP TRIGGER IF EXISTS trigger_notify_content_voted ON votes;
+-- CREATE TRIGGER trigger_notify_content_voted
+--   AFTER INSERT ON votes
+--   FOR EACH ROW
+--   EXECUTE FUNCTION notify_content_voted();
 
 -- Step 13: New content notification function
 CREATE OR REPLACE FUNCTION notify_new_content()

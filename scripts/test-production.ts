@@ -223,41 +223,49 @@ class ProductionTester {
 
   async testVotingSystem(): Promise<{ success: boolean; details: string; data?: any }> {
     try {
-      // Get test content
-      const { data: content } = await this.supabase
-        .from('community_content')
-        .select('id, community_id, created_by')
-        .eq('status', 'draft')
+      // Get an active market with outcomes (prediction platform uses market_votes)
+      const { data: markets } = await this.supabase
+        .from('prediction_markets')
+        .select('id')
+        .in('status', ['active', 'trading'])
         .limit(1)
 
-      if (!content || content.length === 0) {
-        return { success: false, details: 'No content available for voting test' }
+      if (!markets || markets.length === 0) {
+        return { success: false, details: 'No active markets available for voting test' }
       }
 
-      const contentItem = content[0]
+      const { data: outcomes } = await this.supabase
+        .from('market_outcomes')
+        .select('id')
+        .eq('market_id', markets[0].id)
+        .limit(1)
 
-      // Create a vote
-      const voteData = {
-        content_id: contentItem.id,
-        user_id: contentItem.created_by,
-        vote: 'approve',
-        weight: 1
+      const { data: users } = await this.supabase.from('profiles').select('id').limit(1)
+
+      if (!outcomes?.length || !users?.length) {
+        return { success: false, details: 'No outcomes or users for voting test' }
       }
 
-      const { data, error } = await this.supabase
-        .from('votes')
-        .insert(voteData)
-        .select()
-        .single()
+      const { data, error } = await this.supabase.rpc('execute_market_vote', {
+        p_user_id: users[0].id,
+        p_market_id: markets[0].id,
+        p_outcome_id: outcomes[0].id,
+        p_confidence: 7
+      })
 
       if (error) {
         return { success: false, details: `Voting failed: ${error.message}` }
       }
 
+      const result = data as { success?: boolean; vote_id?: string }
+      if (result.success === false) {
+        return { success: false, details: 'Market vote RPC returned success: false' }
+      }
+
       return {
         success: true,
-        details: 'Vote cast successfully',
-        data: { voteId: data.id, contentId: contentItem.id }
+        details: 'Market vote cast successfully',
+        data: { voteId: result.vote_id, marketId: markets[0].id }
       }
     } catch (error: any) {
       return { success: false, details: `Voting exception: ${error.message}` }
@@ -592,7 +600,7 @@ class ProductionTester {
         'profiles',
         'communities',
         'community_content',
-        'votes',
+        'market_votes',
         'sponsorships'
       ]
 
