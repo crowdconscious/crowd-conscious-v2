@@ -19,8 +19,6 @@ export default function SignUpPage() {
     setMessage('')
 
     try {
-      console.log('[SIGNUP] Attempting signup for:', email)
-
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -30,31 +28,45 @@ export default function SignUpPage() {
         },
       })
 
-      console.log('[SIGNUP] Response data:', JSON.stringify(data, null, 2))
-      console.log('[SIGNUP] Response error:', error ? JSON.stringify(error, null, 2) : null)
-
       if (error) {
-        console.error('[SIGNUP] Supabase error:', error.message, error.status)
+        const code = (error as { code?: string }).code ?? ''
         const errMsg = error.message?.toLowerCase() || ''
-        if (errMsg.includes('already registered') || errMsg.includes('duplicate')) {
-          setMessage('Este correo ya está registrado. Intenta iniciar sesión. / This email is already registered. Try signing in.')
-        } else if (errMsg.includes('rate limit') || errMsg.includes('too many') || error.status === 429) {
-          setMessage('Demasiados intentos. Espera unos minutos. / Too many attempts. Please wait a few minutes.')
+        if (
+          code === 'user_already_exists' ||
+          code === 'email_exists' ||
+          errMsg.includes('already registered') ||
+          errMsg.includes('duplicate')
+        ) {
+          setMessage('Este correo ya tiene una cuenta. Intenta iniciar sesión.')
+        } else if (
+          code === 'over_email_send_rate_limit' ||
+          code === 'over_request_rate_limit' ||
+          errMsg.includes('rate limit') ||
+          errMsg.includes('too many') ||
+          error.status === 429
+        ) {
+          setMessage('Demasiados intentos. Espera un momento.')
+        } else if (code === 'weak_password') {
+          setMessage('La contraseña debe tener al menos 6 caracteres.')
+        } else if (
+          code === 'email_address_invalid' ||
+          code === 'validation_failed' ||
+          errMsg.includes('invalid email')
+        ) {
+          setMessage('Por favor ingresa un correo válido.')
+        } else if (code === 'signup_disabled' || code === 'email_provider_disabled') {
+          setMessage('Registros temporalmente deshabilitados.')
         } else {
-          setMessage('Algo salió mal. Intenta de nuevo. / Something went wrong. Please try again.')
+          console.error('[SIGNUP] Unhandled error:', { code, message: error.message, status: error.status })
+          setMessage('Algo salió mal. Intenta de nuevo.')
         }
         return
       }
 
       if (data?.user) {
-        console.log('[SIGNUP] User created:', data.user.id)
-        console.log('[SIGNUP] User email confirmed:', data.user.email_confirmed_at)
-        console.log('[SIGNUP] Identities:', data.user.identities?.length)
-
         // CRITICAL: Supabase returns a fake user object with empty identities when user already exists
         if (data.user.identities?.length === 0) {
-          console.log('[SIGNUP] User already exists (empty identities)')
-          setMessage('Este correo ya está registrado. Intenta iniciar sesión. / This email is already registered. Try signing in.')
+          setMessage('Este correo ya tiene una cuenta. Intenta iniciar sesión.')
           return
         }
 
@@ -69,15 +81,13 @@ export default function SignUpPage() {
           console.warn('[SIGNUP] ensure-profile failed (non-blocking):', err)
         }
 
-        setMessage('¡Cuenta creada! Revisa tu correo para confirmar. / Account created! Check your email to confirm.')
-        // No redirect — stay on signup page. User must confirm email first.
+        setMessage('Revisa tu correo para confirmar tu cuenta.')
       } else {
-        console.warn('[SIGNUP] No error but no user in response:', data)
-        setMessage('Algo salió mal. Intenta de nuevo. / Something went wrong. Please try again.')
+        setMessage('Algo salió mal. Intenta de nuevo.')
       }
     } catch (error: unknown) {
       console.error('[SIGNUP] Exception:', error)
-      setMessage('Algo salió mal. Intenta de nuevo. / Something went wrong. Please try again.')
+      setMessage('Algo salió mal. Intenta de nuevo.')
     } finally {
       setLoading(false)
     }
@@ -87,14 +97,14 @@ export default function SignUpPage() {
     <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
       <div className="max-w-md w-full bg-white rounded-lg shadow-sm border border-slate-200 p-8">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-slate-900">Join Crowd Conscious</h1>
-          <p className="text-slate-600 mt-2">Create your account to start making impact</p>
+          <h1 className="text-2xl font-bold text-slate-900">Únete a Crowd Conscious</h1>
+          <p className="text-slate-600 mt-2">Crea tu cuenta y empieza a predecir</p>
         </div>
 
         <form onSubmit={handleSignUp} className="space-y-6">
           <div>
             <label htmlFor="fullName" className="block text-sm font-medium text-slate-700 mb-2">
-              Full Name
+              Nombre Completo
             </label>
             <input
               id="fullName"
@@ -103,13 +113,13 @@ export default function SignUpPage() {
               onChange={(e) => setFullName(e.target.value)}
               required
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-              placeholder="Enter your full name"
+              placeholder="Tu nombre completo"
             />
           </div>
 
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-2">
-              Email
+              Correo Electrónico
             </label>
             <input
               id="email"
@@ -118,13 +128,13 @@ export default function SignUpPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-              placeholder="Enter your email"
+              placeholder="Tu correo electrónico"
             />
           </div>
 
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-2">
-              Password
+              Contraseña
             </label>
             <input
               id="password"
@@ -134,13 +144,13 @@ export default function SignUpPage() {
               required
               minLength={6}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-              placeholder="Create a password (min 6 characters)"
+              placeholder="Crea una contraseña (mín. 6 caracteres)"
             />
           </div>
 
           {message && (
             <div className={`p-3 rounded-lg text-sm ${
-              message.includes('Cuenta creada') || message.includes('Account created')
+              message.includes('Revisa tu correo')
                 ? 'bg-green-50 text-green-700 border border-green-200'
                 : 'bg-red-50 text-red-700 border border-red-200'
             }`}>
@@ -151,24 +161,24 @@ export default function SignUpPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-teal-600 hover:bg-teal-700 disabled:bg-slate-400 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+            className="w-full bg-teal-600 hover:bg-teal-700 disabled:bg-slate-400 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-colors"
           >
-            {loading ? 'Creating Account...' : 'Create Account'}
+            {loading ? 'Creando cuenta...' : 'Crear cuenta'}
           </button>
         </form>
 
         <div className="mt-6 text-center">
           <p className="text-slate-600">
-            Already have an account?{' '}
+            ¿Ya tienes cuenta?{' '}
             <Link href="/login" className="text-teal-600 hover:text-teal-700 font-medium">
-              Sign In
+              Iniciar Sesión
             </Link>
           </p>
         </div>
 
         <div className="mt-4 text-center">
           <Link href="/" className="text-slate-500 hover:text-slate-700 text-sm">
-            ← Back to Home
+            ← Volver al Inicio
           </Link>
         </div>
       </div>

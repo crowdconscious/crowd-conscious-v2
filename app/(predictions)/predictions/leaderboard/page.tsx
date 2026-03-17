@@ -1,10 +1,12 @@
 import { createClient } from '@/lib/supabase-server'
+import { createAdminClient } from '@/lib/supabase-admin'
 import { getCurrentUser } from '@/lib/auth-server'
 import { LeaderboardClient } from './LeaderboardClient'
 
 async function getLeaderboardData() {
-  const supabase = await createClient()
   const user = await getCurrentUser()
+  // Use admin client for public (unauthenticated) view to bypass RLS on market_votes
+  const supabase = user ? await createClient() : createAdminClient()
 
   const { data: xpRows, error: xpError } = await supabase
     .from('user_xp')
@@ -118,6 +120,7 @@ async function getLeaderboardData() {
 }
 
 export default async function LeaderboardPage() {
+  const user = await getCurrentUser()
   const data = await getLeaderboardData()
-  return <LeaderboardClient {...data} />
+  return <LeaderboardClient {...data} isAuthenticated={!!user} />
 }

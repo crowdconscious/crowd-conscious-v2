@@ -16,26 +16,36 @@ type LeaderboardEntry = {
 interface Props {
   leaderboard: LeaderboardEntry[]
   currentUserRank: LeaderboardEntry | null
+  isAuthenticated?: boolean
 }
 
-export function LeaderboardClient({ leaderboard, currentUserRank }: Props) {
+export function LeaderboardClient({ leaderboard, currentUserRank, isAuthenticated = true }: Props) {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <Link
-        href="/predictions"
+        href={isAuthenticated ? '/predictions' : '/'}
         className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-emerald-400"
       >
         <ArrowLeft className="w-4 h-4" />
-        Back to dashboard
+        {isAuthenticated ? 'Back to dashboard' : 'Volver al inicio'}
       </Link>
 
       <h1 className="text-2xl font-bold text-white flex items-center gap-2">
         <Trophy className="w-7 h-7 text-amber-400" />
-        Leaderboard
+        Clasificación
       </h1>
       <p className="text-slate-400">
-        Top predictors by XP. Make predictions to climb the ranks.
+        Los mejores predictores por XP. Haz predicciones para subir en el ranking.
       </p>
+
+      {!isAuthenticated && (
+        <Link
+          href="/signup"
+          className="block w-full py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold text-center transition-colors"
+        >
+          Regístrate para empezar a ganar XP
+        </Link>
+      )}
 
       {currentUserRank && !leaderboard.some((e) => e.user_id === currentUserRank.user_id) && (
         <div

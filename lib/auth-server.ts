@@ -49,13 +49,50 @@ export async function getCurrentUser() {
     if (error || !user) return null
 
     // Get full profile
-    const { data: profile } = await supabase
+    let { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', user.id)
       .single()
 
-    return profile
+    // Fallback: if profile doesn't exist (race with ensure-profile), create on the fly
+    if (profileError?.code === 'PGRST116' || !profile) {
+      try {
+        const { createAdminClient } = await import('./supabase-admin')
+        const admin = createAdminClient()
+
+        await admin
+          .from('profiles')
+          .upsert(
+            {
+              id: user.id,
+              email: user.email ?? '',
+              full_name: user.user_metadata?.full_name ?? '',
+              user_type: 'user',
+            },
+            { onConflict: 'id', ignoreDuplicates: true }
+          )
+
+        await admin
+          .from('user_stats')
+          .upsert(
+            { user_id: user.id, total_xp: 0, level: 1, current_streak: 0, longest_streak: 0, last_activity: new Date().toISOString() },
+            { onConflict: 'user_id', ignoreDuplicates: true }
+          )
+
+        const { data: newProfile } = await admin
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single()
+
+        profile = newProfile ?? profile
+      } catch (fallbackErr) {
+        console.warn('[getCurrentUser] Profile fallback creation failed:', fallbackErr)
+      }
+    }
+
+    return profile ?? null
   } catch (error: unknown) {
     const authError = error as { message?: string; status?: number; code?: string }
     const isRefreshTokenNotFound =

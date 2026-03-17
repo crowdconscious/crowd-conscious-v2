@@ -57,6 +57,7 @@ interface Props {
   maxVotes: number
   sponsors: Sponsor[]
   totalDisbursed: number
+  isAuthenticated?: boolean
 }
 
 export function FundClient({
@@ -72,6 +73,7 @@ export function FundClient({
   maxVotes = 1,
   sponsors = [],
   totalDisbursed = 0,
+  isAuthenticated = true,
 }: Props) {
   const [voting, setVoting] = useState<Record<string, boolean>>({})
   const [localVotesUsed, setLocalVotesUsed] = useState(votesUsed)
@@ -108,14 +110,23 @@ export function FundClient({
     <div className="max-w-4xl mx-auto space-y-10">
       {/* Section 1: Fund Overview */}
       <div>
-        <h1 className="text-3xl font-bold text-white">The Conscious Fund</h1>
+        <h1 className="text-3xl font-bold text-white">Fondo Consciente</h1>
         <p className="text-slate-400 mt-2 text-lg">
-          Powered by sponsors. Directed by you.
+          Impulsado por patrocinadores. Dirigido por ti.
         </p>
         <p className="text-slate-500 mt-2 text-sm max-w-2xl">
-          When brands sponsor prediction markets on Crowd Conscious, a portion of their contribution
-          goes to the Conscious Fund. Users vote on which community causes receive grants each month.
+          Cuando las marcas patrocinan mercados de predicción en Crowd Conscious, una parte de su
+          contribución va al Fondo Consciente. Los usuarios votan qué causas comunitarias reciben
+          apoyos cada mes.
         </p>
+        {!isAuthenticated && (
+          <Link
+            href="/signup"
+            className="inline-block mt-4 py-3 px-6 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold transition-colors"
+          >
+            Regístrate para votar por causas
+          </Link>
+        )}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -148,11 +159,13 @@ export function FundClient({
         <div className="px-6 py-4 border-b border-slate-800">
           <h2 className="text-lg font-semibold text-white flex items-center gap-2">
             <Vote className="w-5 h-5 text-emerald-400" />
-            Vote for Causes
+            Vota por causas
           </h2>
           <p className="text-slate-400 text-sm mt-1 flex items-center gap-1.5">
-            You have {votePower - localVotesUsed} vote{votePower - localVotesUsed !== 1 ? 's' : ''} remaining this month
-            {cycle && ` · Cycle ${cycle}`}
+            {isAuthenticated
+              ? `Te quedan ${votePower - localVotesUsed} voto${votePower - localVotesUsed !== 1 ? 's' : ''} este mes`
+              : 'Regístrate para votar y dirigir los fondos a causas comunitarias'}
+            {cycle && ` · Ciclo ${cycle}`}
             <span
               className="inline-flex text-slate-500 hover:text-slate-400 cursor-help"
               title="You earn votes by making predictions on markets. Each prediction earns XP, and your monthly vote allocation is based on your XP."
@@ -206,14 +219,23 @@ export function FundClient({
                       />
                     </div>
                   </div>
-                  <button
-                    onClick={() => handleVote(cause.id)}
-                    disabled={!canVote || voting[cause.id]}
-                    className="mt-3 w-full py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white text-sm font-medium flex items-center justify-center gap-2 transition-colors"
-                  >
-                    <Heart className="w-4 h-4" />
-                    Vote
-                  </button>
+                  {isAuthenticated ? (
+                    <button
+                      onClick={() => handleVote(cause.id)}
+                      disabled={!canVote || voting[cause.id]}
+                      className="mt-3 w-full py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white text-sm font-medium flex items-center justify-center gap-2 transition-colors"
+                    >
+                      <Heart className="w-4 h-4" />
+                      Votar
+                    </button>
+                  ) : (
+                    <Link
+                      href="/signup"
+                      className="mt-3 w-full py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium flex items-center justify-center gap-2 transition-colors"
+                    >
+                      Regístrate para votar
+                    </Link>
+                  )}
                 </div>
               )
             })}

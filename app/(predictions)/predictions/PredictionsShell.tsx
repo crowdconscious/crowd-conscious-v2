@@ -44,9 +44,11 @@ const NAV_ITEMS_ES = [
 export default function PredictionsShell({
   children,
   isAdmin = false,
+  isAuthenticated = true,
 }: {
   children: React.ReactNode
   isAdmin?: boolean
+  isAuthenticated?: boolean
 }) {
   const pathname = usePathname()
   const { language } = useLanguage()
@@ -147,15 +149,17 @@ export default function PredictionsShell({
 
         <div className="p-4 border-t border-slate-800 space-y-3">
           <div className="flex items-center gap-2">
-            <NotificationsBell />
+            {isAuthenticated && <NotificationsBell />}
             <LanguageSwitcherSimple />
           </div>
           <Link
-            href="/profile"
+            href={isAuthenticated ? '/profile' : '/login'}
             className="flex items-center gap-2 text-sm text-slate-400 hover:text-emerald-400 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            {language === 'es' ? 'Perfil y Configuración' : 'Profile & Settings'}
+            {isAuthenticated
+              ? (language === 'es' ? 'Perfil y Configuración' : 'Profile & Settings')
+              : (language === 'es' ? 'Iniciar Sesión' : 'Sign In')}
           </Link>
         </div>
       </aside>
@@ -171,13 +175,13 @@ export default function PredictionsShell({
         </button>
         <Logo size="sidebar" linkTo="/predictions" />
         <div className="flex items-center gap-2">
-          <NotificationsBell />
+          {isAuthenticated && <NotificationsBell />}
           <LanguageSwitcherSimple />
           <Link
-            href="/profile"
+            href={isAuthenticated ? '/profile' : '/login'}
             className="text-sm text-emerald-400"
           >
-            {language === 'es' ? 'Perfil' : 'Profile'}
+            {isAuthenticated ? (language === 'es' ? 'Perfil' : 'Profile') : (language === 'es' ? 'Iniciar Sesión' : 'Sign In')}
           </Link>
         </div>
       </div>
@@ -294,16 +298,18 @@ export default function PredictionsShell({
 
             <div className="p-4 border-t border-slate-800 space-y-3">
               <div className="flex items-center gap-2">
-                <NotificationsBell />
+                {isAuthenticated && <NotificationsBell />}
                 <LanguageSwitcherSimple />
               </div>
               <Link
-                href="/profile"
+                href={isAuthenticated ? '/profile' : '/login'}
                 onClick={closeMobileMenu}
                 className="flex items-center gap-2 text-sm text-slate-400 hover:text-emerald-400 transition-colors"
               >
                 <ArrowLeft className="w-4 h-4" />
-                {language === 'es' ? 'Perfil y Configuración' : 'Profile & Settings'}
+                {isAuthenticated
+                  ? (language === 'es' ? 'Perfil y Configuración' : 'Profile & Settings')
+                  : (language === 'es' ? 'Iniciar Sesión' : 'Sign In')}
               </Link>
             </div>
           </aside>

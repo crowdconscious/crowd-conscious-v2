@@ -1,14 +1,16 @@
 import { createClient } from '@/lib/supabase-server'
+import { createAdminClient } from '@/lib/supabase-admin'
 import { getCurrentUser } from '@/lib/auth-server'
-import { redirect } from 'next/navigation'
 import { FundClient } from './FundClient'
+
 function getCurrentCycle(): string {
   return new Date().toISOString().slice(0, 7)
 }
 
-async function getFundData(userId: string) {
-  const supabase = await createClient()
+async function getFundData(userId: string | null) {
   const cycle = getCurrentCycle()
+  // Use admin client when unauthenticated (fund_causes, fund_votes require auth for anon)
+  const supabase = userId ? await createClient() : createAdminClient()
 
   const [
     { data: sponsorMarkets },
@@ -25,13 +27,17 @@ async function getFundData(userId: string) {
       .gt('sponsor_contribution', 0),
     supabase.from('fund_causes').select('*').eq('active', true).order('name'),
     supabase.from('fund_votes').select('cause_id').eq('cycle', cycle),
-    supabase.from('fund_votes').select('cause_id').eq('user_id', userId).eq('cycle', cycle),
+    userId
+      ? supabase.from('fund_votes').select('cause_id').eq('user_id', userId).eq('cycle', cycle)
+      : { data: [] },
     supabase.from('conscious_fund').select('current_balance, total_collected, total_disbursed').limit(1).single(),
-    supabase
-      .from('xp_transactions')
-      .select('amount')
-      .eq('user_id', userId)
-      .in('action_type', ['prediction_vote', 'prediction_correct']),
+    userId
+      ? supabase
+          .from('xp_transactions')
+          .select('amount')
+          .eq('user_id', userId)
+          .in('action_type', ['prediction_vote', 'prediction_correct'])
+      : { data: [] },
   ])
 
   // Total Fund: use actual balance from conscious_fund (updated by Stripe webhook on sponsor payments + trade fees)
@@ -95,9 +101,7 @@ async function getFundData(userId: string) {
 
 export default async function PredictionsFundPage() {
   const user = await getCurrentUser()
-  if (!user) redirect('/login')
-
-  const data = await getFundData(user.id)
+  const data = await getFundData(user?.id ?? null)
 
   return (
     <FundClient
@@ -113,6 +117,7 @@ export default async function PredictionsFundPage() {
       maxVotes={data.maxVotes}
       sponsors={data.sponsors}
       totalDisbursed={data.totalDisbursed}
+      isAuthenticated={!!user}
     />
   )
 }
