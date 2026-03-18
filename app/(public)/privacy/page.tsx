@@ -10,47 +10,47 @@ export default function PrivacyPage() {
   const content = {
     es: {
       title: "Aviso de Privacidad",
-      lastUpdated: "Última actualización: 27 de septiembre de 2025",
+      lastUpdated: "Última actualización: 25 de febrero de 2026",
       sections: [
         {
           title: "1. Responsable del Tratamiento",
-          content: "Crowd Conscious, con domicilio en México, es responsable del tratamiento de sus datos personales conforme a la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP)."
+          content: "Crowd Conscious, con domicilio en México, es responsable del tratamiento de sus datos personales conforme a la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP) y el RGPD cuando aplique."
         },
         {
           title: "2. Datos Personales Recabados",
-          content: "Recabamos los siguientes datos personales: (a) Datos de identificación: nombre completo, correo electrónico, (b) Datos de contacto: dirección, teléfono, (c) Datos financieros: información de pago para transacciones (procesada por Stripe), (d) Datos de navegación: cookies, dirección IP, comportamiento en la plataforma."
+          content: "Recabamos los siguientes datos personales: (a) Datos de identificación: nombre completo, correo electrónico; (b) Datos de cuenta: contraseña (encriptada), preferencias de idioma; (c) Datos de actividad: predicciones, votos en mercados, votos en causas del Fondo Consciente, XP, logros, comentarios, ideas en el Buzón Consciente; (d) Datos financieros: información de pago para patrocinios (procesada por Stripe; no almacenamos datos de tarjeta); (e) Datos de navegación: cookies, dirección IP, sesiones; (f) Datos corporativos (si aplica): invitaciones, progreso en módulos, certificaciones."
         },
         {
           title: "3. Finalidades del Tratamiento",
-          content: "Sus datos personales serán utilizados para: (a) Prestación de servicios de la plataforma, (b) Procesamiento de transacciones y pagos, (c) Comunicación sobre su cuenta y servicios, (d) Mejora de nuestros servicios y experiencia del usuario, (e) Cumplimiento de obligaciones legales."
+          content: "Sus datos personales serán utilizados para: (a) Prestación de la plataforma de predicción (cuentas, sesiones, XP, leaderboard); (b) Procesamiento de patrocinios y asignación del Fondo Consciente; (c) Comunicación sobre su cuenta, logros, notificaciones y servicios; (d) Generación de contenido por agentes de IA (resúmenes, insights, reportes de patrocinadores); (e) Mejora de servicios y experiencia del usuario; (f) Cumplimiento de obligaciones legales; (g) Seguridad y prevención de fraude (incluyendo limitación de tasa)."
         },
         {
           title: "4. Transferencias de Datos",
-          content: "Sus datos pueden ser transferidos a: (a) Stripe Inc. (Estados Unidos) para procesamiento de pagos, (b) Supabase Inc. (Estados Unidos) para almacenamiento de datos, (c) Resend (Estados Unidos) para servicios de correo electrónico. Todas las transferencias cumplen con los niveles de protección requeridos."
+          content: "Sus datos pueden ser transferidos a: (a) Supabase Inc. (Estados Unidos) para almacenamiento, autenticación y base de datos; (b) Stripe Inc. (Estados Unidos) para procesamiento de pagos de patrocinio; (c) Resend (Estados Unidos) para correo electrónico transaccional; (d) Vercel (Estados Unidos) para alojamiento y análisis; (e) Anthropic (Estados Unidos) para procesamiento de agentes de IA que generan contenido; (f) Upstash (cuando se utiliza) para limitación de tasa. Todas las transferencias cumplen con los niveles de protección requeridos."
         },
         {
           title: "5. Cookies y Tecnologías Similares",
-          content: "Utilizamos cookies para: (a) Funcionalidad esencial de la plataforma, (b) Análisis de uso y rendimiento, (c) Personalización de contenido, (d) Seguridad y prevención de fraudes. Puede configurar sus preferencias de cookies en cualquier momento."
+          content: "Utilizamos cookies para: (a) Funcionalidad esencial (autenticación, sesión); (b) Preferencias (idioma, tema); (c) Análisis de uso y rendimiento; (d) Seguridad. Puede configurar sus preferencias de cookies en cualquier momento. Consulte nuestra Política de Cookies para más detalles."
         },
         {
-          title: "6. Derechos ARCO",
-          content: "Usted tiene derecho a: (a) Acceso: conocer qué datos tenemos sobre usted, (b) Rectificación: corregir datos inexactos, (c) Cancelación: solicitar eliminación de datos, (d) Oposición: oponerse al tratamiento. Para ejercer estos derechos, contáctenos en: comunidad@crowdconscious.app"
+          title: "6. Derechos ARCO y RGPD",
+          content: "Usted tiene derecho a: (a) Acceso: conocer qué datos tenemos sobre usted; (b) Rectificación: corregir datos inexactos; (c) Cancelación: solicitar eliminación de datos; (d) Oposición: oponerse al tratamiento; (e) Portabilidad: recibir sus datos en formato estructurado. Para ejercer estos derechos o solicitar eliminación de cuenta (GDPR), contáctenos en: comunidad@crowdconscious.app. Los administradores disponen de un flujo de trabajo para procesar solicitudes de eliminación."
         },
         {
           title: "7. Seguridad de Datos",
-          content: "Implementamos medidas de seguridad técnicas, físicas y administrativas para proteger sus datos personales contra acceso no autorizado, alteración, divulgación o destrucción."
+          content: "Implementamos medidas de seguridad técnicas, físicas y administrativas: encriptación, políticas de seguridad a nivel de fila (RLS), autenticación segura, y protección contra acceso no autorizado, alteración, divulgación o destrucción."
         },
         {
           title: "8. Retención de Datos",
-          content: "Conservamos sus datos personales durante el tiempo necesario para cumplir con las finalidades descritas y las obligaciones legales aplicables."
+          content: "Conservamos sus datos personales durante el tiempo necesario para cumplir con las finalidades descritas y las obligaciones legales aplicables. Los datos de predicciones y votos se conservan para mantener la integridad del historial de la plataforma, salvo solicitud de eliminación."
         },
         {
           title: "9. Menores de Edad",
-          content: "No recabamos intencionalmente datos de menores de 18 años. Si detectamos datos de menores, procederemos a su eliminación inmediata."
+          content: "No recabamos intencionalmente datos de menores de 18 años. La plataforma está dirigida a usuarios adultos. Si detectamos datos de menores, procederemos a su eliminación inmediata."
         },
         {
           title: "10. Modificaciones al Aviso",
-          content: "Nos reservamos el derecho de modificar este aviso de privacidad. Las modificaciones serán comunicadas a través de la plataforma."
+          content: "Nos reservamos el derecho de modificar este aviso de privacidad. Las modificaciones serán comunicadas a través de la plataforma. La fecha de última actualización se indica al inicio."
         },
         {
           title: "11. Contacto",
@@ -60,47 +60,47 @@ export default function PrivacyPage() {
     },
     en: {
       title: "Privacy Notice",
-      lastUpdated: "Last updated: September 27, 2025",
+      lastUpdated: "Last updated: February 25, 2026",
       sections: [
         {
           title: "1. Data Controller",
-          content: "Crowd Conscious, domiciled in Mexico, is responsible for the treatment of your personal data in accordance with the Federal Law on Protection of Personal Data Held by Private Parties (LFPDPPP)."
+          content: "Crowd Conscious, domiciled in Mexico, is responsible for the treatment of your personal data in accordance with Mexico's Federal Law on Protection of Personal Data Held by Private Parties (LFPDPPP) and GDPR where applicable."
         },
         {
           title: "2. Personal Data Collected",
-          content: "We collect the following personal data: (a) Identification data: full name, email address, (b) Contact data: address, phone number, (c) Financial data: payment information for transactions (processed by Stripe), (d) Navigation data: cookies, IP address, platform behavior."
+          content: "We collect the following personal data: (a) Identification data: full name, email address; (b) Account data: password (encrypted), language preferences; (c) Activity data: predictions, market votes, Conscious Fund cause votes, XP, achievements, comments, Conscious Inbox ideas; (d) Financial data: payment information for sponsorships (processed by Stripe; we do not store card data); (e) Navigation data: cookies, IP address, sessions; (f) Corporate data (if applicable): invitations, module progress, certifications."
         },
         {
           title: "3. Processing Purposes",
-          content: "Your personal data will be used for: (a) Platform service provision, (b) Transaction and payment processing, (c) Communication about your account and services, (d) Service improvement and user experience enhancement, (e) Legal compliance obligations."
+          content: "Your personal data will be used for: (a) Provision of the prediction platform (accounts, sessions, XP, leaderboard); (b) Processing sponsorships and Conscious Fund allocation; (c) Communication about your account, achievements, notifications, and services; (d) AI agent-generated content (summaries, insights, sponsor reports); (e) Service improvement and user experience enhancement; (f) Legal compliance obligations; (g) Security and fraud prevention (including rate limiting)."
         },
         {
           title: "4. Data Transfers",
-          content: "Your data may be transferred to: (a) Stripe Inc. (United States) for payment processing, (b) Supabase Inc. (United States) for data storage, (c) Resend (United States) for email services. All transfers comply with required protection levels."
+          content: "Your data may be transferred to: (a) Supabase Inc. (United States) for storage, authentication, and database; (b) Stripe Inc. (United States) for sponsorship payment processing; (c) Resend (United States) for transactional email; (d) Vercel (United States) for hosting and analytics; (e) Anthropic (United States) for AI agent content generation; (f) Upstash (when used) for rate limiting. All transfers comply with required protection levels."
         },
         {
           title: "5. Cookies and Similar Technologies",
-          content: "We use cookies for: (a) Essential platform functionality, (b) Usage and performance analysis, (c) Content personalization, (d) Security and fraud prevention. You can configure your cookie preferences at any time."
+          content: "We use cookies for: (a) Essential functionality (authentication, session); (b) Preferences (language, theme); (c) Usage and performance analysis; (d) Security. You can configure your cookie preferences at any time. See our Cookie Policy for details."
         },
         {
-          title: "6. ARCO Rights",
-          content: "You have the right to: (a) Access: know what data we have about you, (b) Rectification: correct inaccurate data, (c) Cancellation: request data deletion, (d) Opposition: oppose data processing. To exercise these rights, contact us at: comunidad@crowdconscious.app"
+          title: "6. ARCO and GDPR Rights",
+          content: "You have the right to: (a) Access: know what data we have about you; (b) Rectification: correct inaccurate data; (c) Cancellation: request data deletion; (d) Opposition: oppose data processing; (e) Portability: receive your data in a structured format. To exercise these rights or request account deletion (GDPR), contact us at: comunidad@crowdconscious.app. Administrators have a workflow to process deletion requests."
         },
         {
           title: "7. Data Security",
-          content: "We implement technical, physical, and administrative security measures to protect your personal data against unauthorized access, alteration, disclosure, or destruction."
+          content: "We implement technical, physical, and administrative security measures: encryption, row-level security (RLS) policies, secure authentication, and protection against unauthorized access, alteration, disclosure, or destruction."
         },
         {
           title: "8. Data Retention",
-          content: "We retain your personal data for the time necessary to fulfill the described purposes and applicable legal obligations."
+          content: "We retain your personal data for the time necessary to fulfill the described purposes and applicable legal obligations. Prediction and vote data are retained to maintain platform history integrity, unless deletion is requested."
         },
         {
           title: "9. Minors",
-          content: "We do not intentionally collect data from individuals under 18 years of age. If we detect data from minors, we will proceed with immediate deletion."
+          content: "We do not intentionally collect data from individuals under 18 years of age. The platform is intended for adult users. If we detect data from minors, we will proceed with immediate deletion."
         },
         {
           title: "10. Notice Modifications",
-          content: "We reserve the right to modify this privacy notice. Modifications will be communicated through the platform."
+          content: "We reserve the right to modify this privacy notice. Modifications will be communicated through the platform. The last updated date is indicated at the top."
         },
         {
           title: "11. Contact",

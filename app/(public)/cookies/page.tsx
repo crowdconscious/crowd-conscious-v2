@@ -10,43 +10,43 @@ export default function CookiesPage() {
   const content = {
     es: {
       title: "Política de Cookies",
-      lastUpdated: "Última actualización: 27 de septiembre de 2025",
+      lastUpdated: "Última actualización: 25 de febrero de 2026",
       sections: [
         {
           title: "1. ¿Qué son las Cookies?",
-          content: "Las cookies son pequeños archivos de texto que se almacenan en su dispositivo cuando visita nuestro sitio web. Estas cookies nos ayudan a proporcionar, proteger y mejorar nuestros servicios."
+          content: "Las cookies son pequeños archivos de texto que se almacenan en su dispositivo cuando visita Crowd Conscious. Estas cookies nos ayudan a proporcionar, proteger y mejorar nuestros servicios de predicción, autenticación y experiencia de usuario."
         },
         {
           title: "2. Tipos de Cookies que Utilizamos",
-          content: "Utilizamos diferentes tipos de cookies: (a) Cookies esenciales: necesarias para el funcionamiento básico del sitio, (b) Cookies de rendimiento: nos ayudan a entender cómo interactúa con el sitio, (c) Cookies de funcionalidad: recuerdan sus preferencias, (d) Cookies de seguridad: protegen contra actividades fraudulentas."
+          content: "Utilizamos diferentes tipos de cookies: (a) Cookies esenciales: necesarias para el funcionamiento de la plataforma (autenticación, sesión, predicciones); (b) Cookies de rendimiento: nos ayudan a entender cómo interactúa con la plataforma; (c) Cookies de funcionalidad: recuerdan sus preferencias (idioma español/inglés, tema); (d) Cookies de seguridad: protegen contra actividades fraudulentas y limitación de tasa."
         },
         {
-          title: "3. Cookies Específicas",
-          content: "Las cookies específicas que utilizamos incluyen: (a) Cookies de autenticación de Supabase para mantener su sesión activa, (b) Cookies de preferencias de tema (modo oscuro/claro), (c) Cookies de configuración de idioma (español/inglés), (d) Cookies de análisis para mejorar la experiencia del usuario."
+          title: "3. Cookies Específicas de Crowd Conscious",
+          content: "Las cookies que utilizamos incluyen: (a) Cookies de autenticación de Supabase para mantener su sesión activa y permitir predicciones, votos y acceso al Fondo Consciente; (b) Cookies de preferencias de idioma (español/inglés); (c) Cookies de consentimiento (cookie-consent, analytics-cookies, marketing-cookies) para recordar sus preferencias del banner; (d) Cookies de análisis para mejorar la experiencia en mercados de predicción y la plataforma."
         },
         {
           title: "4. Cookies de Terceros",
-          content: "También utilizamos cookies de servicios de terceros: (a) Stripe: para procesamiento seguro de pagos, (b) Vercel Analytics: para análisis de rendimiento del sitio, (c) Supabase: para autenticación y almacenamiento de datos."
+          content: "Utilizamos cookies de servicios de terceros: (a) Supabase: autenticación y persistencia de sesión; (b) Stripe: procesamiento seguro de pagos de patrocinio (cuando aplica); (c) Vercel: alojamiento y análisis de rendimiento; (d) Resend: envío de correos transaccionales (confirmación, notificaciones). No almacenamos datos de tarjetas de crédito; Stripe gestiona el pago de forma segura."
         },
         {
           title: "5. Gestión de Cookies",
-          content: "Puede gestionar sus preferencias de cookies: (a) A través de la configuración de su navegador, (b) Usando nuestro banner de consentimiento de cookies, (c) Contactándonos directamente para solicitudes específicas."
+          content: "Puede gestionar sus preferencias de cookies: (a) A través del banner de consentimiento al visitar la plataforma (Aceptar Todas / Solo Esenciales); (b) A través de la configuración de su navegador; (c) Contactándonos en comunidad@crowdconscious.app para solicitudes específicas. Tenga en cuenta que rechazar cookies esenciales puede afectar su capacidad para iniciar sesión y participar en predicciones."
         },
         {
           title: "6. Cookies Esenciales",
-          content: "Algunas cookies son esenciales para el funcionamiento del sitio y no pueden desactivarse: (a) Cookies de autenticación de usuario, (b) Cookies de seguridad y prevención de fraudes, (c) Cookies de funcionalidad básica del sitio."
+          content: "Algunas cookies son esenciales y no pueden desactivarse sin afectar la funcionalidad: (a) Cookies de autenticación de Supabase (sesión de usuario); (b) Cookies de seguridad y prevención de fraude; (c) Cookies necesarias para guardar predicciones, votos en causas y acceso al leaderboard."
         },
         {
-          title: "7. Retención de Datos",
-          content: "Las cookies se retienen por diferentes períodos: (a) Cookies de sesión: se eliminan al cerrar el navegador, (b) Cookies persistentes: pueden durar hasta 1 año, (c) Cookies de autenticación: duran hasta que cierre sesión."
+          title: "7. Retención",
+          content: "Las cookies se retienen por diferentes períodos: (a) Cookies de sesión: se eliminan al cerrar el navegador; (b) Cookies persistentes (preferencias, consentimiento): pueden durar hasta 1 año; (c) Cookies de autenticación: duran según la configuración de Supabase hasta que cierre sesión o expire la sesión."
         },
         {
           title: "8. Sus Derechos",
-          content: "Usted tiene derecho a: (a) Conocer qué cookies utilizamos, (b) Retirar su consentimiento en cualquier momento, (c) Solicitar la eliminación de cookies no esenciales, (d) Acceder a información detallada sobre nuestro uso de cookies."
+          content: "Usted tiene derecho a: (a) Conocer qué cookies utilizamos; (b) Retirar su consentimiento en cualquier momento a través del banner o contactándonos; (c) Solicitar la eliminación de cookies no esenciales; (d) Acceder a esta política en cualquier momento desde el enlace en el pie de página o el banner."
         },
         {
-          title: "9. Actualizaciones de la Política",
-          content: "Podemos actualizar esta política de cookies ocasionalmente. Le notificaremos sobre cambios significativos a través de nuestro banner de cookies o por correo electrónico."
+          title: "9. Actualizaciones",
+          content: "Podemos actualizar esta política de cookies ocasionalmente. Le notificaremos sobre cambios significativos a través de nuestro banner de cookies o en la plataforma. La fecha de última actualización se indica al inicio."
         },
         {
           title: "10. Contacto",
@@ -56,43 +56,43 @@ export default function CookiesPage() {
     },
     en: {
       title: "Cookie Policy",
-      lastUpdated: "Last updated: September 27, 2025",
+      lastUpdated: "Last updated: February 25, 2026",
       sections: [
         {
           title: "1. What are Cookies?",
-          content: "Cookies are small text files that are stored on your device when you visit our website. These cookies help us provide, protect, and improve our services."
+          content: "Cookies are small text files stored on your device when you visit Crowd Conscious. These cookies help us provide, protect, and improve our prediction services, authentication, and user experience."
         },
         {
           title: "2. Types of Cookies We Use",
-          content: "We use different types of cookies: (a) Essential cookies: necessary for basic site functionality, (b) Performance cookies: help us understand how you interact with the site, (c) Functionality cookies: remember your preferences, (d) Security cookies: protect against fraudulent activities."
+          content: "We use different types of cookies: (a) Essential cookies: necessary for platform functionality (authentication, session, predictions); (b) Performance cookies: help us understand how you interact with the platform; (c) Functionality cookies: remember your preferences (Spanish/English language, theme); (d) Security cookies: protect against fraudulent activities and rate limiting."
         },
         {
-          title: "3. Specific Cookies",
-          content: "Specific cookies we use include: (a) Supabase authentication cookies to maintain your active session, (b) Theme preference cookies (dark/light mode), (c) Language setting cookies (Spanish/English), (d) Analytics cookies to improve user experience."
+          title: "3. Crowd Conscious-Specific Cookies",
+          content: "Cookies we use include: (a) Supabase authentication cookies to maintain your active session and enable predictions, votes, and Conscious Fund access; (b) Language preference cookies (Spanish/English); (c) Consent cookies (cookie-consent, analytics-cookies, marketing-cookies) to remember your banner preferences; (d) Analytics cookies to improve the prediction market and platform experience."
         },
         {
           title: "4. Third-Party Cookies",
-          content: "We also use cookies from third-party services: (a) Stripe: for secure payment processing, (b) Vercel Analytics: for site performance analysis, (c) Supabase: for authentication and data storage."
+          content: "We use cookies from third-party services: (a) Supabase: authentication and session persistence; (b) Stripe: secure sponsorship payment processing (when applicable); (c) Vercel: hosting and performance analytics; (d) Resend: transactional email delivery (confirmation, notifications). We do not store credit card data; Stripe handles payment securely."
         },
         {
           title: "5. Cookie Management",
-          content: "You can manage your cookie preferences: (a) Through your browser settings, (b) Using our cookie consent banner, (c) Contacting us directly for specific requests."
+          content: "You can manage your cookie preferences: (a) Through the consent banner when visiting the platform (Accept All / Essential Only); (b) Through your browser settings; (c) By contacting us at comunidad@crowdconscious.app for specific requests. Note that rejecting essential cookies may affect your ability to log in and participate in predictions."
         },
         {
           title: "6. Essential Cookies",
-          content: "Some cookies are essential for site functionality and cannot be disabled: (a) User authentication cookies, (b) Security and fraud prevention cookies, (c) Basic site functionality cookies."
+          content: "Some cookies are essential and cannot be disabled without affecting functionality: (a) Supabase authentication cookies (user session); (b) Security and fraud prevention cookies; (c) Cookies required to save predictions, cause votes, and leaderboard access."
         },
         {
-          title: "7. Data Retention",
-          content: "Cookies are retained for different periods: (a) Session cookies: deleted when you close your browser, (b) Persistent cookies: may last up to 1 year, (c) Authentication cookies: last until you log out."
+          title: "7. Retention",
+          content: "Cookies are retained for different periods: (a) Session cookies: deleted when you close your browser; (b) Persistent cookies (preferences, consent): may last up to 1 year; (c) Authentication cookies: last per Supabase configuration until you log out or the session expires."
         },
         {
           title: "8. Your Rights",
-          content: "You have the right to: (a) Know which cookies we use, (b) Withdraw your consent at any time, (c) Request deletion of non-essential cookies, (d) Access detailed information about our cookie usage."
+          content: "You have the right to: (a) Know which cookies we use; (b) Withdraw your consent at any time via the banner or by contacting us; (c) Request deletion of non-essential cookies; (d) Access this policy at any time from the footer link or banner."
         },
         {
-          title: "9. Policy Updates",
-          content: "We may update this cookie policy occasionally. We will notify you of significant changes through our cookie banner or by email."
+          title: "9. Updates",
+          content: "We may update this cookie policy occasionally. We will notify you of significant changes through our cookie banner or on the platform. The last updated date is indicated at the top."
         },
         {
           title: "10. Contact",

@@ -10,7 +10,7 @@ export default function TermsPage() {
   const content = {
     es: {
       title: "Términos y Condiciones de Uso",
-      lastUpdated: "Última actualización: 27 de septiembre de 2025",
+      lastUpdated: "Última actualización: 25 de febrero de 2026",
       sections: [
         {
           title: "1. Aceptación de los Términos",
@@ -18,53 +18,57 @@ export default function TermsPage() {
         },
         {
           title: "2. Descripción del Servicio",
-          content: "Crowd Conscious es una plataforma digital que conecta comunidades locales con marcas y patrocinadores para proyectos de impacto social y ambiental. La Plataforma facilita la creación de contenido comunitario, votaciones democráticas y transacciones de patrocinio."
+          content: "Crowd Conscious es una plataforma de predicción gratuita (free-to-play) que canaliza la inteligencia colectiva hacia el impacto social. La Plataforma permite a los usuarios: (a) Participar en mercados de predicción sobre temas como Copa Mundial, economía, política, sostenibilidad y más, sin arriesgar dinero; (b) Ganar XP y logros por sus predicciones; (c) Votar democráticamente sobre qué causas comunitarias reciben fondos del Fondo Consciente; (d) Sugerir ideas de mercados en el Buzón Consciente. Las marcas pueden patrocinar mercados; el 40% de cada patrocinio se destina al Fondo Consciente para causas elegidas por la comunidad."
         },
         {
           title: "3. Registro y Cuentas de Usuario",
-          content: "Para utilizar ciertos servicios, debe crear una cuenta proporcionando información precisa y completa. Es responsable de mantener la confidencialidad de su cuenta y contraseña, y de todas las actividades que ocurran bajo su cuenta."
+          content: "Para utilizar la Plataforma debe crear una cuenta proporcionando información precisa y completa (correo electrónico, contraseña, nombre). Es responsable de mantener la confidencialidad de su cuenta y contraseña, y de todas las actividades que ocurran bajo su cuenta. La confirmación por correo electrónico es requerida para activar su cuenta."
         },
         {
           title: "4. Tipos de Usuario",
-          content: "La Plataforma admite dos tipos principales de usuarios: (a) Usuarios Comunitarios: individuos que participan en comunidades locales, (b) Marcas/Patrocinadores: empresas que buscan oportunidades de patrocinio e impacto social."
+          content: "La Plataforma admite varios tipos de usuarios: (a) Predictores: individuos que participan en mercados de predicción, ganan XP y votan en causas; (b) Marcas/Patrocinadores: empresas que patrocinan mercados y reciben reportes de impacto; (c) Usuarios Corporativos: empleados invitados que acceden a módulos de aprendizaje y certificaciones; (d) Administradores: personal autorizado que gestiona mercados, agentes y configuraciones de la Plataforma."
         },
         {
-          title: "5. Comisión de la Plataforma",
-          content: "Crowd Conscious cobra una comisión del 15% sobre todas las transacciones de patrocinio procesadas a través de la Plataforma. Esta comisión se descuenta automáticamente del monto total del patrocinio antes de que los fondos se transfieran a la comunidad beneficiaria. Los usuarios y marcas reconocen y aceptan esta estructura de comisiones."
+          title: "5. Predicciones Free-to-Play y XP",
+          content: "Las predicciones en Crowd Conscious son gratuitas. No se requiere dinero real para participar. Cada voto genera puntos de experiencia (XP) que contribuyen a su puntuación y clasificación en el leaderboard. El XP y los logros son elementos gamificados de la Plataforma y no tienen valor monetario ni pueden canjearse por dinero."
         },
         {
-          title: "6. Pagos y Transacciones",
-          content: "Todos los pagos se procesan a través de proveedores de servicios de pago de terceros (Stripe). La Plataforma no almacena información de tarjetas de crédito. Los reembolsos están sujetos a las políticas de nuestros procesadores de pago y la legislación mexicana aplicable."
+          title: "6. Fondo Consciente y Patrocinios",
+          content: "El 40% de cada transacción de patrocinio procesada a través de la Plataforma se destina al Fondo Consciente. El 60% restante financia las operaciones de la Plataforma. Los usuarios votan democráticamente sobre qué causas comunitarias reciben las asignaciones mensuales del Fondo. Esta estructura es transparente y se comunica claramente a patrocinadores y usuarios."
         },
         {
-          title: "7. Contenido del Usuario",
-          content: "Los usuarios son responsables del contenido que publican. Al publicar contenido, otorga a Crowd Conscious una licencia no exclusiva para usar, mostrar y distribuir dicho contenido en la Plataforma. El contenido debe cumplir con las leyes mexicanas y no debe ser ofensivo, ilegal o infringir derechos de terceros."
+          title: "7. Pagos y Transacciones",
+          content: "Los pagos de patrocinio se procesan a través de Stripe. La Plataforma no almacena información de tarjetas de crédito. Los reembolsos están sujetos a las políticas de Stripe y la legislación aplicable. Las predicciones de usuarios no implican pagos; son gratuitas."
         },
         {
-          title: "8. Prohibiciones",
-          content: "Está prohibido: (a) Usar la Plataforma para actividades ilegales, (b) Publicar contenido falso o engañoso, (c) Intentar comprometer la seguridad de la Plataforma, (d) Usar la Plataforma para spam o actividades comerciales no autorizadas."
+          title: "8. Contenido del Usuario",
+          content: "Los usuarios son responsables del contenido que publican (comentarios, ideas en el Buzón Consciente, etc.). Al publicar contenido, otorga a Crowd Conscious una licencia no exclusiva para usar, mostrar y distribuir dicho contenido en la Plataforma. El contenido debe cumplir con las leyes aplicables y no debe ser ofensivo, ilegal o infringir derechos de terceros."
         },
         {
-          title: "9. Privacidad y Protección de Datos",
-          content: "El manejo de datos personales se rige por nuestra Política de Privacidad y cumple con la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP) de México."
+          title: "9. Prohibiciones",
+          content: "Está prohibido: (a) Usar la Plataforma para actividades ilegales; (b) Publicar contenido falso o engañoso; (c) Intentar comprometer la seguridad de la Plataforma; (d) Usar la Plataforma para spam o actividades comerciales no autorizadas; (e) Manipular mercados de predicción o votaciones de causas de forma fraudulenta."
         },
         {
-          title: "10. Ley Aplicable y Jurisdicción",
+          title: "10. Privacidad y Protección de Datos",
+          content: "El manejo de datos personales se rige por nuestra Política de Privacidad y cumple con la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP) de México y el RGPD cuando aplique."
+        },
+        {
+          title: "11. Ley Aplicable y Jurisdicción",
           content: "Estos términos se rigen por las leyes de los Estados Unidos Mexicanos. Cualquier disputa será resuelta por los tribunales competentes de la Ciudad de México, México."
         },
         {
-          title: "11. Modificaciones",
-          content: "Nos reservamos el derecho de modificar estos términos en cualquier momento. Los cambios entrarán en vigor inmediatamente después de su publicación en la Plataforma."
+          title: "12. Modificaciones",
+          content: "Nos reservamos el derecho de modificar estos términos en cualquier momento. Los cambios entrarán en vigor tras su publicación en la Plataforma. Le recomendamos revisar estos términos periódicamente."
         },
         {
-          title: "12. Contacto",
+          title: "13. Contacto",
           content: "Para preguntas sobre estos términos, contáctanos en: comunidad@crowdconscious.app"
         }
       ]
     },
     en: {
       title: "Terms and Conditions of Use",
-      lastUpdated: "Last updated: September 27, 2025",
+      lastUpdated: "Last updated: February 25, 2026",
       sections: [
         {
           title: "1. Acceptance of Terms",
@@ -72,46 +76,50 @@ export default function TermsPage() {
         },
         {
           title: "2. Service Description",
-          content: "Crowd Conscious is a digital platform that connects local communities with brands and sponsors for social and environmental impact projects. The Platform facilitates community content creation, democratic voting, and sponsorship transactions."
+          content: "Crowd Conscious is a free-to-play prediction platform that channels collective intelligence toward social impact. The Platform enables users to: (a) Participate in prediction markets on topics such as World Cup, economy, policy, sustainability, and more, without risking money; (b) Earn XP and achievements for their predictions; (c) Vote democratically on which community causes receive grants from the Conscious Fund; (d) Suggest market ideas in the Conscious Inbox. Brands may sponsor markets; 40% of each sponsorship goes to the Conscious Fund for causes chosen by the community."
         },
         {
           title: "3. User Registration and Accounts",
-          content: "To use certain services, you must create an account by providing accurate and complete information. You are responsible for maintaining the confidentiality of your account and password, and for all activities that occur under your account."
+          content: "To use the Platform you must create an account by providing accurate and complete information (email, password, full name). You are responsible for maintaining the confidentiality of your account and password, and for all activities that occur under your account. Email confirmation is required to activate your account."
         },
         {
           title: "4. User Types",
-          content: "The Platform supports two main types of users: (a) Community Users: individuals who participate in local communities, (b) Brands/Sponsors: companies seeking sponsorship opportunities and social impact."
+          content: "The Platform supports several user types: (a) Predictors: individuals who participate in prediction markets, earn XP, and vote on causes; (b) Brands/Sponsors: companies that sponsor markets and receive impact reports; (c) Corporate Users: invited employees who access learning modules and certifications; (d) Administrators: authorized personnel who manage markets, agents, and Platform settings."
         },
         {
-          title: "5. Platform Fee",
-          content: "Crowd Conscious charges a 15% commission on all sponsorship transactions processed through the Platform. This commission is automatically deducted from the total sponsorship amount before funds are transferred to the beneficiary community. Users and brands acknowledge and accept this fee structure."
+          title: "5. Free-to-Play Predictions and XP",
+          content: "Predictions on Crowd Conscious are free. No real money is required to participate. Each vote generates experience points (XP) that contribute to your score and leaderboard ranking. XP and achievements are gamification elements of the Platform and have no monetary value and cannot be redeemed for money."
         },
         {
-          title: "6. Payments and Transactions",
-          content: "All payments are processed through third-party payment service providers (Stripe). The Platform does not store credit card information. Refunds are subject to our payment processors' policies and applicable Mexican legislation."
+          title: "6. Conscious Fund and Sponsorships",
+          content: "40% of each sponsorship transaction processed through the Platform goes to the Conscious Fund. The remaining 60% funds Platform operations. Users vote democratically on which community causes receive the Fund's monthly allocations. This structure is transparent and clearly communicated to sponsors and users."
         },
         {
-          title: "7. User Content",
-          content: "Users are responsible for the content they post. By posting content, you grant Crowd Conscious a non-exclusive license to use, display, and distribute such content on the Platform. Content must comply with Mexican laws and must not be offensive, illegal, or infringe third-party rights."
+          title: "7. Payments and Transactions",
+          content: "Sponsorship payments are processed through Stripe. The Platform does not store credit card information. Refunds are subject to Stripe's policies and applicable legislation. User predictions do not involve payments; they are free."
         },
         {
-          title: "8. Prohibitions",
-          content: "It is prohibited to: (a) Use the Platform for illegal activities, (b) Post false or misleading content, (c) Attempt to compromise the Platform's security, (d) Use the Platform for spam or unauthorized commercial activities."
+          title: "8. User Content",
+          content: "Users are responsible for the content they post (comments, Conscious Inbox ideas, etc.). By posting content, you grant Crowd Conscious a non-exclusive license to use, display, and distribute such content on the Platform. Content must comply with applicable laws and must not be offensive, illegal, or infringe third-party rights."
         },
         {
-          title: "9. Privacy and Data Protection",
-          content: "The handling of personal data is governed by our Privacy Policy and complies with Mexico's Federal Law on Protection of Personal Data Held by Private Parties (LFPDPPP)."
+          title: "9. Prohibitions",
+          content: "It is prohibited to: (a) Use the Platform for illegal activities; (b) Post false or misleading content; (c) Attempt to compromise the Platform's security; (d) Use the Platform for spam or unauthorized commercial activities; (e) Fraudulently manipulate prediction markets or cause voting."
         },
         {
-          title: "10. Applicable Law and Jurisdiction",
+          title: "10. Privacy and Data Protection",
+          content: "The handling of personal data is governed by our Privacy Policy and complies with Mexico's Federal Law on Protection of Personal Data Held by Private Parties (LFPDPPP) and GDPR where applicable."
+        },
+        {
+          title: "11. Applicable Law and Jurisdiction",
           content: "These terms are governed by the laws of the United Mexican States. Any disputes will be resolved by the competent courts of Mexico City, Mexico."
         },
         {
-          title: "11. Modifications",
-          content: "We reserve the right to modify these terms at any time. Changes will take effect immediately after publication on the Platform."
+          title: "12. Modifications",
+          content: "We reserve the right to modify these terms at any time. Changes will take effect upon publication on the Platform. We recommend reviewing these terms periodically."
         },
         {
-          title: "12. Contact",
+          title: "13. Contact",
           content: "For questions about these terms, contact us at: comunidad@crowdconscious.app"
         }
       ]
