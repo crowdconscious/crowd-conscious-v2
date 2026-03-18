@@ -242,12 +242,13 @@ export function PredictionsDashboardClient({ data }: Props) {
 
             {userPredictions.length === 0 ? (
               <div className="mt-4 rounded-xl border border-white/[0.06] bg-white/[0.02] p-8 text-center">
-                <p className="text-slate-400">You haven&apos;t made any predictions yet.</p>
+                <p className="text-slate-300 text-lg">🎯 Aún no has hecho predicciones.</p>
+                <p className="text-slate-400 mt-1">¡Haz tu primera predicción!</p>
                 <Link
                   href="/predictions/markets"
-                  className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-emerald-400 hover:text-emerald-300"
+                  className="mt-4 inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm bg-emerald-600 text-white hover:bg-emerald-500 transition-colors"
                 >
-                  Browse markets <ArrowRight className="h-4 w-4" />
+                  Explorar mercados <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
             ) : (
@@ -348,22 +349,15 @@ export function PredictionsDashboardClient({ data }: Props) {
 
         {/* RIGHT COLUMN — sidebar */}
         <div className="space-y-5">
-          {/* AI Pulse */}
+          {/* AI Pulse — only show when there's content */}
+          {agentContent && agentContent.length > 0 && (
           <div>
             <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-white">
               <Bot className="h-5 w-5 text-violet-400" />
               AI Pulse
             </h2>
-            {!agentContent || agentContent.length === 0 ? (
-              <p
-                className="text-[13px] italic"
-                style={{ color: 'rgba(255,255,255,0.35)' }}
-              >
-                Los agentes están recopilando información...
-              </p>
-            ) : (
-              <div className="space-y-2.5">
-                {agentContent.slice(0, 3).map((ac) => {
+            <div className="space-y-2.5">
+              {agentContent.slice(0, 3).map((ac) => {
                   const meta = (ac.metadata as Record<string, unknown>) ?? {}
                   const digestType = meta.digest_type as string | undefined
                   const typeKey = digestType === 'ceo_digest' ? 'ceo_digest' : ac.content_type
@@ -409,15 +403,15 @@ export function PredictionsDashboardClient({ data }: Props) {
                     </div>
                   )
                 })}
-                <Link
-                  href="/predictions/insights"
-                  className="inline-flex items-center gap-2 text-sm font-medium text-emerald-400 hover:text-emerald-300"
-                >
-                  Ver todo →
-                </Link>
-              </div>
-            )}
+              <Link
+                href="/predictions/insights"
+                className="inline-flex items-center gap-2 text-sm font-medium text-emerald-400 hover:text-emerald-300"
+              >
+                Ver todo →
+              </Link>
+            </div>
           </div>
+          )}
 
           {/* Biggest Movers */}
           <div>

@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
 
       const { data: marketId, error: rpcError } = await admin.rpc('create_multi_market', {
         p_title: title.trim(),
-        p_description: description?.trim() || resolution_criteria?.trim() || 'Standard resolution',
+        p_description: description?.trim() || null,
         p_category: category,
         p_created_by: user.id,
         p_end_date: resolution_date,
@@ -122,6 +122,7 @@ export async function POST(request: NextRequest) {
         p_sponsor_name: sponsor_name?.trim() || null,
         p_sponsor_logo_url: sponsor_logo_url?.trim() || null,
         p_image_url: null,
+        p_resolution_criteria: resolution_criteria?.trim() || null,
       })
 
       if (rpcError) {
@@ -174,13 +175,14 @@ export async function POST(request: NextRequest) {
 
     const { data: marketId, error: rpcError } = await admin.rpc('create_binary_market', {
       p_title: title.trim(),
-      p_description: description?.trim() || resolution_criteria?.trim() || 'Standard resolution',
+      p_description: description?.trim() || null,
       p_category: category,
       p_created_by: user.id,
       p_end_date: resolution_date,
       p_sponsor_name: sponsor_name?.trim() || null,
       p_sponsor_logo_url: sponsor_logo_url?.trim() || null,
       p_image_url: null,
+      p_resolution_criteria: resolution_criteria?.trim() || null,
     })
 
     if (rpcError) {
@@ -189,8 +191,8 @@ export async function POST(request: NextRequest) {
     }
 
     const updatePayload: Record<string, unknown> = {
-      description: description?.trim() || 'Standard description',
-      resolution_criteria: resolution_criteria?.trim() || 'Standard resolution',
+      description: description?.trim() || null,
+      resolution_criteria: resolution_criteria?.trim() || null,
       verification_sources: verificationStrings,
       tags: tagArray,
       metadata,

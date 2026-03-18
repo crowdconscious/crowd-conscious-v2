@@ -7,6 +7,7 @@ import {
   X,
   Link2,
   Plus,
+  Sparkles,
 } from 'lucide-react'
 const CATEGORIES = [
   { id: 'world_cup', label: 'World Cup' },
@@ -62,6 +63,7 @@ export default function CreateMarketPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [sourceSignals, setSourceSignals] = useState<string[]>([])
+  const [suggestingCriteria, setSuggestingCriteria] = useState(false)
 
   useEffect(() => {
     const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '')
@@ -243,6 +245,28 @@ export default function CreateMarketPage() {
   const removeRelatedMarket = (id: string) =>
     setRelatedMarketIds((prev) => prev.filter((x) => x !== id))
 
+  const handleSuggestCriteria = async () => {
+    if (!title.trim()) return
+    setSuggestingCriteria(true)
+    try {
+      const res = await fetch('/api/predictions/admin/suggest-criteria', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: title.trim(), description: description.trim() || undefined }),
+      })
+      const data = await res.json()
+      if (res.ok && data.suggested) {
+        setResolutionCriteria(data.suggested)
+      } else {
+        setError(data.error || 'Failed to suggest criteria')
+      }
+    } catch {
+      setError('Failed to suggest criteria')
+    } finally {
+      setSuggestingCriteria(false)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
@@ -407,11 +431,16 @@ export default function CreateMarketPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">Description</label>
+                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                  Descripción del mercado
+                </label>
+                <p className="text-xs text-slate-500 mb-1.5">
+                  Contexto y por qué es relevante. ¿Qué factores influyen?
+                </p>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Context about the issue"
+                  placeholder="Explica el contexto de este mercado. ¿Por qué es relevante? ¿Qué factores influyen?"
                   rows={4}
                   className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
                 />
@@ -477,15 +506,30 @@ export default function CreateMarketPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1.5">
-                  Resolution criteria
+                  Criterio de resolución
                 </label>
-                <textarea
-                  value={resolutionCriteria}
-                  onChange={(e) => setResolutionCriteria(e.target.value)}
-                  placeholder="How this market gets resolved"
-                  rows={3}
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
-                />
+                <p className="text-xs text-slate-500 mb-1.5">
+                  Condiciones específicas y verificables. Ejemplo: Resuelve SÍ si el tipo de cambio MXN/USD baja de 19.00 según Banxico antes del 31 de diciembre de 2026.
+                </p>
+                <div className="flex gap-2">
+                  <textarea
+                    value={resolutionCriteria}
+                    onChange={(e) => setResolutionCriteria(e.target.value)}
+                    placeholder="Define exactamente cómo se resuelve. Ejemplo: Resuelve SÍ si el tipo de cambio MXN/USD baja de 19.00 según datos de Banxico antes del 31 de diciembre de 2026."
+                    rows={3}
+                    className="flex-1 px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSuggestCriteria}
+                    disabled={suggestingCriteria || !title.trim()}
+                    title="Generate AI suggestion from title and description"
+                    className="shrink-0 self-start px-3 py-2 rounded-lg bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center gap-1.5"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    {suggestingCriteria ? '...' : 'Suggest'}
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1.5">Market type</label>
@@ -819,9 +863,11 @@ export default function CreateMarketPage() {
 
         {/* Preview */}
         <div className="lg:col-span-1">
-          <div className="sticky top-6">
-            <h3 className="text-sm font-medium text-slate-400 mb-3">Preview</h3>
-            <div className="pointer-events-none select-none [&_a]:pointer-events-none">
+          <div className="sticky top-6 space-y-4">
+            <h3 className="text-sm font-medium text-slate-400">Preview</h3>
+            {/* Card preview (markets list) */}
+            <div className="pointer-events-none select-none">
+              <p className="text-xs text-slate-500 mb-1">Card (markets list)</p>
               <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
                 <span
                   className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-slate-600 text-slate-300 mb-3`}
@@ -855,6 +901,24 @@ export default function CreateMarketPage() {
                   {resolutionDate
                     ? `Resolves ${new Date(resolutionDate).toLocaleDateString()}`
                     : 'No resolution date'}
+                </div>
+              </div>
+            </div>
+            {/* Detail preview (description + resolution criteria) */}
+            <div className="pointer-events-none select-none">
+              <p className="text-xs text-slate-500 mb-1">Detail (description & criteria)</p>
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
+                <div>
+                  <p className="text-slate-500 text-xs font-medium mb-1">Description</p>
+                  <p className="text-white text-sm line-clamp-3">
+                    {description || <span className="italic text-slate-500">—</span>}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-slate-500 text-xs font-medium mb-1">Resolution criteria</p>
+                  <p className="text-white text-sm line-clamp-3">
+                    {resolutionCriteria || <span className="italic text-slate-500">—</span>}
+                  </p>
                 </div>
               </div>
             </div>

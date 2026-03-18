@@ -87,13 +87,25 @@ export default async function MarketDetailPage({
       .eq('market_id', id)
       .order('recorded_at', { ascending: true })
       .limit(90),
-    supabase
-      .from('agent_content')
-      .select('*')
-      .eq('market_id', id)
-      .eq('published', true)
-      .order('created_at', { ascending: false })
-      .limit(5),
+    (async () => {
+      const [marketRes, generalRes] = await Promise.all([
+        supabase
+          .from('agent_content')
+          .select('*')
+          .eq('market_id', id)
+          .eq('published', true)
+          .order('created_at', { ascending: false })
+          .limit(5),
+        supabase
+          .from('agent_content')
+          .select('*')
+          .is('market_id', null)
+          .eq('published', true)
+          .order('created_at', { ascending: false })
+          .limit(3),
+      ])
+      return { data: (marketRes.data?.length ? marketRes.data : generalRes.data) ?? [] }
+    })(),
     supabase
       .from('sentiment_scores')
       .select('score, source, recorded_at')

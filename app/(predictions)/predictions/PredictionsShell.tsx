@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
+import { motion } from 'framer-motion'
 import Logo from '@/components/Logo'
 import {
   LayoutDashboard,
@@ -45,16 +46,24 @@ export default function PredictionsShell({
   children,
   isAdmin = false,
   isAuthenticated = true,
+  navCounts = { inboxPending: 0, activeMarkets: 0 },
 }: {
   children: React.ReactNode
   isAdmin?: boolean
   isAuthenticated?: boolean
+  navCounts?: { inboxPending: number; activeMarkets: number }
 }) {
   const pathname = usePathname()
   const { language } = useLanguage()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const closeMobileMenu = () => setMobileMenuOpen(false)
   const NAV_ITEMS = language === 'es' ? NAV_ITEMS_ES : NAV_ITEMS_EN
+
+  const getBadgeForHref = (href: string) => {
+    if (href === '/predictions/inbox' && navCounts.inboxPending > 0) return navCounts.inboxPending
+    if (href === '/predictions/markets' && navCounts.activeMarkets > 0) return navCounts.activeMarkets
+    return null
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex">
@@ -70,18 +79,26 @@ export default function PredictionsShell({
             const isActive =
               pathname === item.href
               || (item.href !== '/predictions' && pathname.startsWith(item.href + '/'))
+            const badge = getBadgeForHref(item.href)
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                className={`flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                   isActive
                     ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
                 }`}
               >
-                <Icon className="w-4 h-4" />
-                {item.label}
+                <span className="flex items-center gap-3">
+                  <Icon className="w-4 h-4" />
+                  {item.label}
+                </span>
+                {badge != null && (
+                  <span className="min-w-[1.25rem] h-5 px-1.5 rounded-full bg-emerald-500/30 text-emerald-400 text-xs font-semibold flex items-center justify-center">
+                    {badge > 99 ? '99+' : badge}
+                  </span>
+                )}
               </Link>
             )
           })}
@@ -225,19 +242,27 @@ export default function PredictionsShell({
                 const isActive =
                   pathname === item.href
                   || (item.href !== '/predictions' && pathname.startsWith(item.href + '/'))
+                const badge = getBadgeForHref(item.href)
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
                     onClick={closeMobileMenu}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                    className={`flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                       isActive
                         ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30'
                         : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
                     }`}
                   >
-                    <Icon className="w-4 h-4" />
-                    {item.label}
+                    <span className="flex items-center gap-3">
+                      <Icon className="w-4 h-4" />
+                      {item.label}
+                    </span>
+                    {badge != null && (
+                      <span className="min-w-[1.25rem] h-5 px-1.5 rounded-full bg-emerald-500/30 text-emerald-400 text-xs font-semibold flex items-center justify-center">
+                        {badge > 99 ? '99+' : badge}
+                      </span>
+                    )}
                   </Link>
                 )
               })}
@@ -341,7 +366,15 @@ export default function PredictionsShell({
 
       {/* Main content */}
       <main className="flex-1 min-h-screen pt-14 md:pt-0 overflow-auto">
-        <div className="p-4 md:p-6 lg:p-8">{children}</div>
+        <motion.div
+          key={pathname}
+          className="p-4 md:p-6 lg:p-8"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2, ease: 'easeOut' }}
+        >
+          {children}
+        </motion.div>
       </main>
     </div>
   )

@@ -368,17 +368,16 @@ export function InboxClient({ initialItems }: Props) {
 
       {/* Feed */}
       {items.length === 0 ? (
-        <div className="text-center py-16 text-slate-400">
-          <Lightbulb className="w-12 h-12 mx-auto mb-4 opacity-50" />
-          <p className="text-lg">No submissions yet</p>
-          <p className="text-sm mt-2">
-            Be the first to suggest a market idea or cause for the Conscious Fund.
-          </p>
+        <div className="text-center py-16 rounded-xl border border-slate-800 bg-slate-900/50">
+          <span className="text-4xl">💡</span>
+          <p className="text-lg text-slate-300 mt-3">¿Tienes una idea para un mercado?</p>
+          <p className="text-slate-400 mt-1">¡Compártela con la comunidad!</p>
           <button
             onClick={() => setModalOpen(true)}
-            className="mt-4 px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-500"
+            className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-emerald-600 text-white font-medium hover:bg-emerald-500 transition-colors"
           >
-            Submit Idea
+            <Plus className="w-4 h-4" />
+            Compartir idea
           </button>
         </div>
       ) : (

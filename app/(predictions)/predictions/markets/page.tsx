@@ -2,15 +2,32 @@ import { createClient } from '@/lib/supabase-server'
 import { MarketsClient } from './MarketsClient'
 import type { Database } from '@/types/database'
 
-type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row']
+type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row'] & {
+  recent_votes?: number
+}
 
-async function getMarkets(): Promise<PredictionMarket[]> {
+const VALID_CATEGORIES = ['world', 'world_cup', 'government', 'sustainability', 'corporate', 'community', 'cause']
+
+async function getMarkets(sort: string = 'active', category: string = 'all'): Promise<PredictionMarket[]> {
   const supabase = await createClient()
-  const { data, error } = await supabase
+  let query = supabase
     .from('prediction_markets')
     .select('*')
     .in('status', ['active', 'trading'])
-    .order('total_votes', { ascending: false, nullsFirst: false })
+
+  if (category && category !== 'all' && VALID_CATEGORIES.includes(category)) {
+    query = query.eq('category', category)
+  }
+
+  if (sort === 'newest') {
+    query = query.order('created_at', { ascending: false })
+  } else if (sort === 'closing') {
+    query = query.gt('resolution_date', new Date().toISOString()).order('resolution_date', { ascending: true })
+  } else {
+    query = query.order('total_votes', { ascending: false, nullsFirst: false })
+  }
+
+  const { data, error } = await query
 
   if (error) {
     console.error('Predictions markets fetch error:', error)
@@ -18,6 +35,83 @@ async function getMarkets(): Promise<PredictionMarket[]> {
   }
 
   return (data || []) as PredictionMarket[]
+}
+
+async function getTrendingMarkets(): Promise<PredictionMarket[]> {
+  const supabase = await createClient()
+  const { data: markets } = await supabase
+    .from('prediction_markets')
+    .select('*')
+    .in('status', ['active', 'trading'])
+    .limit(50)
+
+  if (!markets?.length) return []
+
+  const marketIds = markets.map((m) => m.id)
+  const twoDaysAgo = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()
+
+  const [recentVotesRes, totalVotesRes, commentCountRes] = await Promise.all([
+    supabase.from('market_votes').select('market_id').in('market_id', marketIds).gte('created_at', twoDaysAgo),
+    supabase.from('market_votes').select('market_id').in('market_id', marketIds),
+    supabase.from('market_comments').select('market_id').in('market_id', marketIds),
+  ])
+
+  const recentByMarket: Record<string, number> = {}
+  for (const r of recentVotesRes.data ?? []) {
+    recentByMarket[r.market_id] = (recentByMarket[r.market_id] ?? 0) + 1
+  }
+  const totalByMarket: Record<string, number> = {}
+  for (const r of totalVotesRes.data ?? []) {
+    totalByMarket[r.market_id] = (totalByMarket[r.market_id] ?? 0) + 1
+  }
+  const commentsByMarket: Record<string, number> = {}
+  for (const r of commentCountRes.data ?? []) {
+    commentsByMarket[r.market_id] = (commentsByMarket[r.market_id] ?? 0) + 1
+  }
+
+  const now = new Date()
+  const scored = markets.map((m) => {
+    const recentVotes = recentByMarket[m.id] ?? 0
+    const totalVotes = totalByMarket[m.id] ?? Number((m as { total_votes?: number }).total_votes) ?? 0
+    const commentCount = commentsByMarket[m.id] ?? 0
+    const resolutionDate = new Date(m.resolution_date)
+    const daysToResolve = Math.ceil((resolutionDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+    const urgencyBonus = daysToResolve < 30 ? 50 : daysToResolve < 90 ? 20 : 0
+    const activityScore = recentVotes * 10 + totalVotes * 2 + commentCount * 3
+    return { ...m, recent_votes: recentVotes, heatScore: activityScore + urgencyBonus }
+  })
+  scored.sort((a, b) => (b.heatScore ?? 0) - (a.heatScore ?? 0))
+  return scored.slice(0, 5).map(({ heatScore, ...m }) => ({ ...m, recent_votes: m.recent_votes })) as PredictionMarket[]
+}
+
+async function getQuickMarkets(): Promise<{ markets: PredictionMarket[]; label: string }> {
+  const supabase = await createClient()
+  const in30Days = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+  const in90Days = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString()
+
+  const { data: soon30 } = await supabase
+    .from('prediction_markets')
+    .select('*')
+    .in('status', ['active', 'trading'])
+    .lte('resolution_date', in30Days)
+    .gt('resolution_date', new Date().toISOString())
+    .order('resolution_date', { ascending: true })
+    .limit(5)
+
+  if (soon30?.length) {
+    return { markets: soon30 as PredictionMarket[], label: 'Quick Predictions' }
+  }
+
+  const { data: soon90 } = await supabase
+    .from('prediction_markets')
+    .select('*')
+    .in('status', ['active', 'trading'])
+    .lte('resolution_date', in90Days)
+    .gt('resolution_date', new Date().toISOString())
+    .order('resolution_date', { ascending: true })
+    .limit(5)
+
+  return { markets: (soon90 || []) as PredictionMarket[], label: 'Próximas en resolverse' }
 }
 
 async function getCategoryCounts(): Promise<Record<string, number>> {
@@ -84,22 +178,37 @@ async function getLeadingOutcomesByMarket(): Promise<Record<string, { label: str
   return byMarket
 }
 
-export default async function PredictionsMarketsPage() {
-  const [markets, categoryCounts, resolvedCount, historyByMarket, leadingOutcomes] = await Promise.all([
-    getMarkets(),
-    getCategoryCounts(),
-    getResolvedCount(),
-    getHistoryByMarket(),
-    getLeadingOutcomesByMarket(),
-  ])
+export default async function PredictionsMarketsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ sort?: string; category?: string }>
+}) {
+  const params = await searchParams
+  const sort = params.sort || 'active'
+  const category = params.category || 'all'
+
+  const [markets, trendingMarkets, quickMarkets, categoryCounts, resolvedCount, historyByMarket, leadingOutcomes] =
+    await Promise.all([
+      getMarkets(sort, category),
+      getTrendingMarkets(),
+      getQuickMarkets(),
+      getCategoryCounts(),
+      getResolvedCount(),
+      getHistoryByMarket(),
+      getLeadingOutcomesByMarket(),
+    ])
 
   return (
     <MarketsClient
       initialMarkets={markets}
+      trendingMarkets={trendingMarkets}
+      quickMarkets={quickMarkets}
       categoryCounts={categoryCounts}
       resolvedCount={resolvedCount}
       historyByMarket={historyByMarket}
       leadingOutcomes={leadingOutcomes}
+      initialCategory={category}
+      initialSort={sort}
     />
   )
 }

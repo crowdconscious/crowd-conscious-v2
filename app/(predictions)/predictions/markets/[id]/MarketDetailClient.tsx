@@ -33,6 +33,10 @@ import {
   BarChart2,
   Bell,
   PenLine,
+  FileText,
+  CheckCircle2,
+  Tag,
+  User,
 } from 'lucide-react'
 import { VotePanel } from '../../components/VotePanel'
 import { CelebrationModal } from '@/components/gamification/CelebrationModal'
@@ -408,50 +412,46 @@ export function MarketDetailClient({
             )}
           </div>
 
-          {/* Sentiment Gauge - between probability chart and research */}
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-            <h3 className="font-semibold text-white mb-3">
-              Sentimiento: {sentiment.length > 0 ? getSentimentLabel(latestSentiment) : '—'}
-            </h3>
-            {sentiment.length > 0 ? (
-              <>
-                <div className="relative h-4 bg-gradient-to-r from-red-500 via-yellow-500 to-emerald-500 rounded-full overflow-visible mb-2">
-                  <div
-                    className="absolute top-1/2 -translate-y-1/2 w-3 h-6 bg-white border-2 border-slate-800 rounded-sm shadow-md transition-all z-10"
-                    style={{
-                      left: `${Math.min(100, Math.max(0, ((latestSentiment + 100) / 200) * 100))}%`,
-                      transform: 'translate(-50%, -50%)',
-                    }}
-                  />
+          {/* Sentiment Gauge - only show when we have data */}
+          {sentiment.length > 0 && (
+            <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+              <h3 className="font-semibold text-white mb-3">
+                Sentimiento: {getSentimentLabel(latestSentiment)}
+              </h3>
+              <div className="relative h-4 bg-gradient-to-r from-red-500 via-yellow-500 to-emerald-500 rounded-full overflow-visible mb-2">
+                <div
+                  className="absolute top-1/2 -translate-y-1/2 w-3 h-6 bg-white border-2 border-slate-800 rounded-sm shadow-md transition-all z-10"
+                  style={{
+                    left: `${Math.min(100, Math.max(0, ((latestSentiment + 100) / 200) * 100))}%`,
+                    transform: 'translate(-50%, -50%)',
+                  }}
+                />
+              </div>
+              <div className="flex justify-between text-xs text-slate-400 mb-4">
+                <span>-100</span>
+                <span className="text-white font-medium">{latestSentiment.toFixed(0)}</span>
+                <span>+100</span>
+              </div>
+              {sentimentChartData.length >= 2 && (
+                <div className="h-12">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={[...sentimentChartData].reverse().slice(-10)}>
+                      <Line
+                        type="monotone"
+                        dataKey="score"
+                        stroke="#a855f7"
+                        strokeWidth={1.5}
+                        dot={false}
+                        isAnimationActive={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
                 </div>
-                <div className="flex justify-between text-xs text-slate-400 mb-4">
-                  <span>-100</span>
-                  <span className="text-white font-medium">{latestSentiment.toFixed(0)}</span>
-                  <span>+100</span>
-                </div>
-                {sentimentChartData.length >= 2 && (
-                  <div className="h-12">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={[...sentimentChartData].reverse().slice(-10)}>
-                        <Line
-                          type="monotone"
-                          dataKey="score"
-                          stroke="#a855f7"
-                          strokeWidth={1.5}
-                          dot={false}
-                          isAnimationActive={false}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-              </>
-            ) : (
-              <p className="text-slate-500 text-sm">No hay datos de sentimiento aún</p>
-            )}
-          </div>
+              )}
+            </div>
+          )}
 
-          {/* Research Center */}
+          {/* Research Center — Understand This Issue */}
           <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
             <button
               onClick={() => setResearchOpen(!researchOpen)}
@@ -472,22 +472,63 @@ export function MarketDetailClient({
                   exit={{ height: 0, opacity: 0 }}
                   className="border-t border-slate-800"
                 >
-                  <div className="p-4 space-y-4">
-                    <div>
-                      <p className="text-slate-400 text-sm font-medium mb-1">Description</p>
-                      <p className="text-white text-sm">{getMarketText(market, 'description', locale)}</p>
+                  <div className="p-4 space-y-5">
+                    {/* Description */}
+                    <div className="rounded-lg bg-slate-800/50 p-4 border border-slate-700/50">
+                      <h4 className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2 flex items-center gap-2">
+                        <FileText className="w-4 h-4" />
+                        {locale === 'en' ? 'Description' : 'Descripción'}
+                      </h4>
+                      <p className="text-white text-sm leading-relaxed">
+                        {getMarketText(market, 'description', locale) || (locale === 'en' ? 'No description available.' : 'No hay descripción disponible.')}
+                      </p>
                     </div>
-                    <div>
-                      <p className="text-slate-400 text-sm font-medium mb-1">Resolution criteria</p>
-                      <p className="text-white text-sm">{getMarketText(market, 'resolution_criteria', locale)}</p>
+
+                    {/* Divider */}
+                    <div className="border-t border-slate-700/70" />
+
+                    {/* How This Resolves — visually distinct, key for credibility */}
+                    <div className="rounded-lg bg-emerald-500/5 p-4 border border-emerald-500/20">
+                      <h4 className="text-emerald-400 text-xs font-semibold uppercase tracking-wider mb-2 flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4" />
+                        {locale === 'en' ? 'How This Resolves' : 'Cómo se resuelve'}
+                      </h4>
+                      <p className="text-white text-sm leading-relaxed">
+                        {getMarketText(market, 'resolution_criteria', locale) ||
+                          (locale === 'en'
+                            ? 'No specific resolution criteria defined.'
+                            : 'No se ha definido un criterio de resolución específico.')}
+                      </p>
                     </div>
+
+                    {/* Meta footer */}
+                    <div className="flex flex-wrap gap-x-6 gap-y-2 pt-2 text-sm text-slate-400">
+                      <span className="flex items-center gap-1.5">
+                        <Calendar className="w-4 h-4 text-slate-500" />
+                        {locale === 'en' ? 'Resolution date' : 'Fecha de resolución'}:{' '}
+                        <span className="text-white">{formatDate(market.resolution_date)}</span>
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <Tag className="w-4 h-4 text-slate-500" />
+                        {locale === 'en' ? 'Category' : 'Categoría'}:{' '}
+                        <span className="text-white">{config.label}</span>
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <User className="w-4 h-4 text-slate-500" />
+                        {locale === 'en' ? 'Created by' : 'Creado por'}:{' '}
+                        <span className="text-white">{creatorName}</span>
+                      </span>
+                    </div>
+
                     {market.verification_sources?.length > 0 && (
                       <div>
-                        <p className="text-slate-400 text-sm font-medium mb-1">Verification sources</p>
-                        <ul className="space-y-1">
+                        <h4 className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">
+                          {locale === 'en' ? 'Verification sources' : 'Fuentes de verificación'}
+                        </h4>
+                        <ul className="space-y-1.5">
                           {market.verification_sources.map((src, i) => (
                             <li key={i} className="flex items-center gap-2 text-sm">
-                              <ExternalLink className="w-4 h-4 text-emerald-400" />
+                              <ExternalLink className="w-4 h-4 text-emerald-400 shrink-0" />
                               <span className="text-white">{src}</span>
                             </li>
                           ))}
@@ -495,15 +536,20 @@ export function MarketDetailClient({
                       </div>
                     )}
                     {market.tags?.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {market.tags.map((tag, i) => (
-                          <span
-                            key={i}
-                            className="px-2 py-1 bg-slate-700 rounded text-xs text-slate-300"
-                          >
-                            {tag}
-                          </span>
-                        ))}
+                      <div>
+                        <h4 className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">
+                          {locale === 'en' ? 'Tags' : 'Etiquetas'}
+                        </h4>
+                        <div className="flex flex-wrap gap-2">
+                          {market.tags.map((tag, i) => (
+                            <span
+                              key={i}
+                              className="px-2 py-1 bg-slate-700 rounded text-xs text-slate-300"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -512,19 +558,17 @@ export function MarketDetailClient({
             </AnimatePresence>
           </div>
 
-          {/* Agent Insights */}
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-            <h3 className="font-semibold text-white mb-4">Análisis de agentes</h3>
-            {agentContent.length === 0 ? (
-              <p className="text-slate-500 text-sm">No hay análisis disponible aún</p>
-            ) : (
+          {/* Agent Insights — only show when we have content */}
+          {agentContent.length > 0 && (
+            <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+              <h3 className="font-semibold text-white mb-4">Análisis de agentes</h3>
               <div className="space-y-4">
                 {agentContent.slice(0, 5).map((ac) => (
                   <AgentInsightCard key={ac.id} content={ac} />
                 ))}
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Discussion */}
           <MarketDiscussion marketId={market.id} />
@@ -745,7 +789,7 @@ function MarketDiscussion({ marketId }: { marketId: string }) {
       </form>
       <div className="space-y-3">
         {comments.length === 0 ? (
-          <p className="text-slate-500 text-sm">No comments yet. Be the first to discuss.</p>
+          <p className="text-slate-400 text-sm py-2">💬 Sé el primero en comentar</p>
         ) : (
           comments.map((c) => (
             <div

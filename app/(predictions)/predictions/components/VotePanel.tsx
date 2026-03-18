@@ -66,6 +66,35 @@ function getConfidenceEmoji(n: number): string {
   return CONFIDENCE_EMOJI[Math.min(10, Math.max(1, n))] || '🤷'
 }
 
+/** Auto-confidence for multi-outcome: picking favorite = lower, underdog = higher */
+function autoConfidence(selectedOutcomeProbability: number): number {
+  if (selectedOutcomeProbability > 0.7) return 5 // Picking the favorite
+  if (selectedOutcomeProbability > 0.4) return 7 // Picking a contender
+  if (selectedOutcomeProbability > 0.2) return 8 // Picking an underdog
+  return 9 // Picking a long shot
+}
+
+/** Contextual message for multi-outcome pick */
+function getPickMessage(selectedOutcomeProbability: number, locale: string): string {
+  if (selectedOutcomeProbability > 0.7) {
+    return locale === 'en' ? '🎯 Going with the crowd' : '🎯 Siguiendo al grupo'
+  }
+  if (selectedOutcomeProbability > 0.4) {
+    return locale === 'en' ? '🤔 An interesting pick' : '🤔 Una elección interesante'
+  }
+  if (selectedOutcomeProbability > 0.2) {
+    return locale === 'en' ? '🔥 Bold prediction!' : '🔥 ¡Predicción audaz!'
+  }
+  return locale === 'en' ? '🔥 Bold prediction!' : '🔥 ¡Predicción audaz!'
+}
+
+/** Normalize probability to 0-1 for logic (DB may store 0-1 or 0-100) */
+function toDecimal(prob: number): number {
+  const n = Number(prob)
+  if (Number.isNaN(n)) return 0
+  return n > 1 ? n / 100 : Math.min(1, Math.max(0, n))
+}
+
 interface VotePanelProps {
   market: PredictionMarket
   outcomes: Outcome[]
@@ -81,7 +110,17 @@ export function VotePanel({ market, outcomes, myVote, onVoteSuccess }: VotePanel
 
   const isResolved = market.status === 'resolved'
   const hasVoted = !!myVote
-  const isBinary = (market.market_type || 'binary') === 'binary' && outcomes.length <= 2
+  const hasYesNoLabels = outcomes.some((o) => {
+    const l = getOutcomeLabel(o, locale).toLowerCase()
+    return l === 'yes' || l === 'sí' || l === 'si' || l === 'no'
+  })
+  const isBinary =
+    outcomes.length === 2 &&
+    (market.market_type === 'binary' || (market.market_type !== 'multi' && hasYesNoLabels))
+
+  const selectedOutcome = selectedOutcomeId ? outcomes.find((o) => o.id === selectedOutcomeId) : null
+  const selectedProb = selectedOutcome ? toDecimal(selectedOutcome.probability) : 0
+  const effectiveConfidence = isBinary ? confidence : selectedOutcome ? autoConfidence(selectedProb) : 7
 
   const handleVote = async () => {
     if (!selectedOutcomeId || loading || hasVoted || isResolved) return
@@ -94,14 +133,13 @@ export function VotePanel({ market, outcomes, myVote, onVoteSuccess }: VotePanel
         body: JSON.stringify({
           market_id: market.id,
           outcome_id: selectedOutcomeId,
-          confidence,
+          confidence: effectiveConfidence,
         }),
       })
 
       const data = await res.json()
       if (data.success) {
         onVoteSuccess?.(data.xp_earned)
-        // Celebration stays open until user clicks Continue (no auto-reload)
       } else {
         alert(data.error || 'Vote failed')
       }
@@ -118,17 +156,25 @@ export function VotePanel({ market, outcomes, myVote, onVoteSuccess }: VotePanel
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
         <h3 className="font-semibold text-white mb-2">Predictions closed</h3>
         <p className="text-slate-400 text-sm mb-4">
-          This market has been resolved. Winning outcome: <span className="text-emerald-400 font-medium">{winningOutcome ? getOutcomeLabel(winningOutcome, locale) : (market.resolution ?? '—')}</span>
+          This market has been resolved. Winning outcome:{' '}
+          <span className="text-emerald-400 font-medium">
+            {winningOutcome ? getOutcomeLabel(winningOutcome, locale) : (market.resolution ?? '—')}
+          </span>
         </p>
         {myVote && (
           <div className="p-4 bg-slate-800/50 rounded-lg">
             <p className="text-slate-300 text-sm font-medium">Your prediction</p>
             <p className="text-white mt-1">
-              {outcomes.find((o) => o.id === myVote.outcome_id) ? getOutcomeLabel(outcomes.find((o) => o.id === myVote.outcome_id)!, locale) : myVote.outcome_label} at confidence {myVote.confidence}
+              {outcomes.find((o) => o.id === myVote.outcome_id)
+                ? getOutcomeLabel(outcomes.find((o) => o.id === myVote.outcome_id)!, locale)
+                : myVote.outcome_label}
+              {isBinary && <span className="text-slate-400"> at confidence {myVote.confidence}</span>}
             </p>
             <p className="text-slate-400 text-sm mt-1">
               {myVote.is_correct ? (
-                <span className="text-emerald-400">✓ Correct! +{myVote.xp_earned + (myVote.bonus_xp || 0)} XP total</span>
+                <span className="text-emerald-400">
+                  ✓ Correct! +{myVote.xp_earned + (myVote.bonus_xp || 0)} XP total
+                </span>
               ) : (
                 <span className="text-slate-400">+{myVote.xp_earned} XP earned</span>
               )}
@@ -146,7 +192,10 @@ export function VotePanel({ market, outcomes, myVote, onVoteSuccess }: VotePanel
         <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
           <p className="text-emerald-400 font-medium flex items-center gap-2">
             <Check className="w-4 h-4" />
-            {outcomes.find((o) => o.id === myVote!.outcome_id) ? getOutcomeLabel(outcomes.find((o) => o.id === myVote!.outcome_id)!, locale) : myVote!.outcome_label} at confidence {myVote!.confidence}
+            {outcomes.find((o) => o.id === myVote!.outcome_id)
+              ? getOutcomeLabel(outcomes.find((o) => o.id === myVote!.outcome_id)!, locale)
+              : myVote!.outcome_label}
+            {isBinary && <span className="text-slate-400 font-normal">at confidence {myVote!.confidence}</span>}
           </p>
           <p className="text-slate-300 text-sm mt-1">+{myVote!.xp_earned} XP earned</p>
         </div>
@@ -173,7 +222,7 @@ export function VotePanel({ market, outcomes, myVote, onVoteSuccess }: VotePanel
           <div className="flex gap-2">
             {outcomes.map((o) => {
               const label = getOutcomeLabel(o, locale)
-              const isYes = label.toLowerCase() === 'yes'
+              const isYes = label.toLowerCase() === 'yes' || label.toLowerCase() === 'sí' || label.toLowerCase() === 'si'
               const isSelected = selectedOutcomeId === o.id
               return (
                 <button
@@ -223,6 +272,8 @@ export function VotePanel({ market, outcomes, myVote, onVoteSuccess }: VotePanel
         <div className="space-y-3">
           {outcomes.map((o) => {
             const isSelected = selectedOutcomeId === o.id
+            const probDecimal = toDecimal(o.probability)
+            const pickMessage = isSelected ? getPickMessage(probDecimal, locale) : null
             return (
               <div
                 key={o.id}
@@ -245,38 +296,29 @@ export function VotePanel({ market, outcomes, myVote, onVoteSuccess }: VotePanel
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-white">{getOutcomeLabel(o, locale)}</p>
                     <p className="text-slate-400 text-sm">
-                      {Math.round(toDisplayPercent(o.probability || 0))}% · {o.vote_count} votes
+                      Currently: {Math.round(toDisplayPercent(o.probability || 0))}% · {o.vote_count} votes
                     </p>
                   </div>
-                  <span className={`px-4 py-2 rounded-lg text-sm font-medium ${
-                    isSelected ? 'bg-emerald-600 text-white' : 'bg-slate-700 text-slate-400'
-                  }`}>
-                    {isSelected ? 'Selected' : 'Select'}
+                  <span
+                    className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                      isSelected ? 'bg-emerald-600 text-white' : 'bg-slate-700 text-slate-400'
+                    }`}
+                  >
+                    {isSelected ? (locale === 'en' ? 'Selected' : 'Seleccionado') : (locale === 'en' ? 'Pick' : 'Elegir')}
                   </span>
                 </div>
                 {isSelected && (
                   <div className="mt-4 pt-4 border-t border-slate-700">
-                    <p className="text-slate-300 font-medium mb-2 flex items-center gap-2">
-                      <span className="text-xl">{getConfidenceEmoji(confidence)}</span>
-                      {getConfidenceLabel(confidence)} ({confidence}/10)
-                    </p>
-                    <div className="flex items-center gap-3 mb-3">
-                      <input
-                        type="range"
-                        min={1}
-                        max={10}
-                        value={confidence}
-                        onChange={(e) => setConfidence(parseInt(e.target.value, 10))}
-                        onClick={(e) => e.stopPropagation()}
-                        className="flex-1 h-2.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500"
-                      />
-                    </div>
+                    <p className="text-amber-400/90 text-sm font-medium mb-3">{pickMessage}</p>
                     <button
-                      onClick={(e) => { e.stopPropagation(); handleVote() }}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleVote()
+                      }}
                       disabled={loading}
                       className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-sm font-medium rounded-lg"
                     >
-                      {loading ? 'Submitting...' : 'Submit prediction'}
+                      {loading ? 'Submitting...' : (locale === 'en' ? 'Submit prediction' : 'Enviar predicción')}
                     </button>
                   </div>
                 )}

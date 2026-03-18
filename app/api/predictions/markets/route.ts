@@ -7,6 +7,7 @@ type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row'
 
 const VALID_CATEGORIES = ['world', 'world_cup', 'government', 'sustainability', 'corporate', 'community', 'cause'] as const
 const VALID_STATUSES = ['active', 'trading', 'resolved', 'cancelled'] as const
+const VALID_SORTS = ['active', 'newest', 'closing', 'debated'] as const
 
 export async function GET(request: Request) {
   try {
@@ -20,13 +21,13 @@ export async function GET(request: Request) {
     const search = searchParams.get('search')?.trim()
     const category = searchParams.get('category')
     const status = searchParams.get('status')
+    const sort = searchParams.get('sort') || 'active'
     const limit = Math.min(parseInt(searchParams.get('limit') || '20', 10), 100)
     const offset = Math.max(0, parseInt(searchParams.get('offset') || '0', 10))
 
     let query = supabase
       .from('prediction_markets')
       .select('*', { count: 'exact' })
-      .order('total_volume', { ascending: false })
       .range(offset, offset + limit - 1)
 
     if (status && VALID_STATUSES.includes(status as (typeof VALID_STATUSES)[number])) {
@@ -42,6 +43,17 @@ export async function GET(request: Request) {
     if (search) {
       const pattern = `%${search}%`
       query = query.or(`title.ilike.${pattern},description.ilike.${pattern}`)
+    }
+
+    const validSort = VALID_SORTS.includes(sort as (typeof VALID_SORTS)[number]) ? sort : 'active'
+    if (validSort === 'newest') {
+      query = query.order('created_at', { ascending: false })
+    } else if (validSort === 'closing') {
+      query = query.gt('resolution_date', new Date().toISOString()).order('resolution_date', { ascending: true })
+    } else if (validSort === 'debated') {
+      query = query.order('total_votes', { ascending: false })
+    } else {
+      query = query.order('total_votes', { ascending: false, nullsFirst: false })
     }
 
     const { data, error, count } = await query
