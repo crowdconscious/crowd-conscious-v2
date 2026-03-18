@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
+import Link from 'next/link'
 import {
   Plus,
   ChevronUp,
@@ -14,6 +15,7 @@ import {
   Trophy,
   Leaf,
   Lightbulb,
+  Sparkles,
 } from 'lucide-react'
 import type { InboxItem } from './page'
 
