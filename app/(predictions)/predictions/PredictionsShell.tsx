@@ -112,6 +112,17 @@ export default function PredictionsShell({
               {language === 'es' ? 'Revisar Buzón' : 'Review Inbox'}
             </Link>
             <Link
+              href="/predictions/admin/causes"
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                pathname === '/predictions/admin/causes'
+                  ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
+                  : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800/50'
+              }`}
+            >
+              <Heart className="w-4 h-4" />
+              {language === 'es' ? 'Gestionar Causas' : 'Manage Causes'}
+            </Link>
+            <Link
               href="/predictions/admin/resolve"
               className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                 pathname === '/predictions/admin/resolve'
@@ -255,6 +266,18 @@ export default function PredictionsShell({
                   >
                     <FileText className="w-4 h-4" />
                     {language === 'es' ? 'Revisar Buzón' : 'Review Inbox'}
+                  </Link>
+                  <Link
+                    href="/predictions/admin/causes"
+                    onClick={closeMobileMenu}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                      pathname === '/predictions/admin/causes'
+                        ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
+                        : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800/50'
+                    }`}
+                  >
+                    <Heart className="w-4 h-4" />
+                    {language === 'es' ? 'Gestionar Causas' : 'Manage Causes'}
                   </Link>
                   <Link
                     href="/predictions/admin/resolve"

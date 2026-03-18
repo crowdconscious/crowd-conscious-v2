@@ -11,6 +11,7 @@ import {
   ChevronUp,
   FileText,
   X,
+  Heart,
 } from 'lucide-react'
 
 type InboxItem = {
@@ -34,6 +35,7 @@ const STATUS_FILTERS = [
   { id: 'reviewed', label: 'Reviewed' },
   { id: 'approved', label: 'Approved' },
   { id: 'rejected', label: 'Rejected' },
+  { id: 'promoted_to_cause', label: 'Promoted to Cause' },
 ] as const
 
 const TYPE_FILTERS = [
@@ -62,7 +64,17 @@ const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string }>
   approved: { label: 'Approved', bg: 'bg-emerald-500/20', text: 'text-emerald-400' },
   rejected: { label: 'Rejected', bg: 'bg-red-500/20', text: 'text-red-400' },
   published: { label: 'Published', bg: 'bg-emerald-500/20', text: 'text-emerald-400' },
+  promoted_to_cause: { label: 'Promoted to Cause', bg: 'bg-amber-500/20', text: 'text-amber-400' },
 }
+
+const CATEGORIES = [
+  { id: 'water', label: 'Water' },
+  { id: 'education', label: 'Education' },
+  { id: 'environment', label: 'Environment' },
+  { id: 'social_justice', label: 'Social Justice' },
+  { id: 'health', label: 'Health' },
+  { id: 'other', label: 'Other' },
+] as const
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('en-US', {
@@ -82,6 +94,14 @@ export default function AdminInboxPage() {
   const [typeFilter, setTypeFilter] = useState('all')
   const [sort, setSort] = useState('upvotes')
   const [rejectModal, setRejectModal] = useState<{ item: InboxItem; note: string } | null>(null)
+  const [promoteModal, setPromoteModal] = useState<InboxItem | null>(null)
+  const [promoteForm, setPromoteForm] = useState({
+    name: '',
+    organization: '',
+    category: 'other',
+    description: '',
+    website_url: '',
+  })
   const [editingNotes, setEditingNotes] = useState<string | null>(null)
   const [notesValue, setNotesValue] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -144,6 +164,47 @@ export default function AdminInboxPage() {
   const startEditNotes = (item: InboxItem) => {
     setEditingNotes(item.id)
     setNotesValue(item.admin_notes || '')
+  }
+
+  const openPromoteModal = (item: InboxItem) => {
+    setPromoteModal(item)
+    setPromoteForm({
+      name: item.title,
+      organization: '',
+      category: 'other',
+      description: item.description || '',
+      website_url: '',
+    })
+  }
+
+  const handlePromoteToCause = async () => {
+    if (!promoteModal) return
+    setSubmitting(true)
+    try {
+      const res = await fetch(`/api/predictions/admin/inbox/${promoteModal.id}/promote-to-cause`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: promoteForm.name.trim(),
+          organization: promoteForm.organization.trim(),
+          category: promoteForm.category,
+          description: promoteForm.description.trim(),
+          website_url: promoteForm.website_url.trim() || undefined,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Promote failed')
+      setItems((prev) =>
+        prev.map((i) =>
+          i.id === promoteModal.id ? { ...i, status: 'promoted_to_cause' } : i
+        )
+      )
+      setPromoteModal(null)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Promote failed')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -341,6 +402,14 @@ export default function AdminInboxPage() {
 
                 {/* Action buttons */}
                 <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-800">
+                  <button
+                    onClick={() => openPromoteModal(item)}
+                    disabled={submitting || item.status === 'promoted_to_cause'}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:bg-slate-700 disabled:text-slate-500 text-white text-sm font-medium disabled:opacity-50"
+                  >
+                    <Heart className="w-4 h-4" />
+                    Promote to Cause
+                  </button>
                   <Link
                     href={`/predictions/admin/create-market?from_inbox=${item.id}`}
                     className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium"
@@ -377,6 +446,103 @@ export default function AdminInboxPage() {
             )
           })}
         </div>
+      )}
+
+      {/* Promote to Cause modal */}
+      {promoteModal && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+            onClick={() => !submitting && setPromoteModal(null)}
+            aria-hidden="true"
+          />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+            <div
+              className="bg-slate-900 border border-slate-800 rounded-xl p-6 w-full max-w-md shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="text-lg font-semibold text-white mb-4">Promote to Cause</h3>
+              <p className="text-slate-400 text-sm mb-4">
+                Create a fund cause from this inbox item. The item will be marked as promoted.
+              </p>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-400 mb-1">Name *</label>
+                  <input
+                    type="text"
+                    value={promoteForm.name}
+                    onChange={(e) => setPromoteForm((f) => ({ ...f, name: e.target.value }))}
+                    required
+                    className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white"
+                    placeholder="Cause name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-400 mb-1">Organization *</label>
+                  <input
+                    type="text"
+                    value={promoteForm.organization}
+                    onChange={(e) => setPromoteForm((f) => ({ ...f, organization: e.target.value }))}
+                    required
+                    className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white"
+                    placeholder="Organization name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-400 mb-1">Category *</label>
+                  <select
+                    value={promoteForm.category}
+                    onChange={(e) => setPromoteForm((f) => ({ ...f, category: e.target.value }))}
+                    className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white"
+                  >
+                    {CATEGORIES.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-400 mb-1">Description *</label>
+                  <textarea
+                    value={promoteForm.description}
+                    onChange={(e) => setPromoteForm((f) => ({ ...f, description: e.target.value }))}
+                    required
+                    maxLength={500}
+                    rows={4}
+                    className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white resize-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-400 mb-1">Website URL</label>
+                  <input
+                    type="url"
+                    value={promoteForm.website_url}
+                    onChange={(e) => setPromoteForm((f) => ({ ...f, website_url: e.target.value }))}
+                    className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white"
+                    placeholder="https://..."
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2 justify-end mt-6">
+                <button
+                  onClick={() => setPromoteModal(null)}
+                  disabled={submitting}
+                  className="px-4 py-2 rounded-lg bg-slate-700 text-slate-300 text-sm hover:bg-slate-600"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handlePromoteToCause}
+                  disabled={submitting || !promoteForm.name.trim() || !promoteForm.organization.trim() || !promoteForm.description.trim()}
+                  className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium disabled:opacity-50"
+                >
+                  {submitting ? 'Creating...' : 'Create Cause'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
       )}
 
       {/* Reject modal */}

@@ -52,6 +52,7 @@ const STATUS_CONFIG: Record<
   approved: { label: 'Approved', bg: 'bg-emerald-500/20', text: 'text-emerald-400' },
   rejected: { label: 'Rejected', bg: 'bg-red-500/20', text: 'text-red-400' },
   published: { label: 'Published', bg: 'bg-emerald-500/20', text: 'text-emerald-400' },
+  promoted_to_cause: { label: 'Promoted to Cause', bg: 'bg-amber-500/20', text: 'text-amber-400' },
 }
 
 const FILTER_TABS = [
@@ -413,13 +414,21 @@ export function InboxClient({ initialItems }: Props) {
                       >
                         {typeConfig.label}
                       </span>
-                      {statusConfig && (
+                      {item.status === 'promoted_to_cause' ? (
+                        <Link
+                          href="/predictions/fund"
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 transition-colors"
+                        >
+                          <Sparkles className="w-3.5 h-3.5" />
+                          Promoted to Cause
+                        </Link>
+                      ) : statusConfig ? (
                         <span
                           className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${statusConfig.bg} ${statusConfig.text}`}
                         >
                           {statusConfig.label}
                         </span>
-                      )}
+                      ) : null}
                     </div>
                     <h3 className="text-white font-semibold mb-1">{item.title}</h3>
                     {item.description && (

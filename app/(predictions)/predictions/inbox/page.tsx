@@ -9,7 +9,7 @@ export type InboxItem = {
   description: string | null
   category: string | null
   links: { url: string; label: string }[]
-  status: 'pending' | 'reviewed' | 'approved' | 'rejected' | 'published'
+  status: 'pending' | 'reviewed' | 'approved' | 'rejected' | 'published' | 'promoted_to_cause'
   upvotes: number
   created_at: string
   submitter_name: string

@@ -82,7 +82,7 @@ export async function PATCH(
     const updates: Record<string, unknown> = { updated_at: new Date().toISOString() }
 
     if (status !== undefined) {
-      const valid = ['pending', 'reviewed', 'approved', 'rejected', 'published']
+      const valid = ['pending', 'reviewed', 'approved', 'rejected', 'published', 'promoted_to_cause']
       if (!valid.includes(status)) {
         return Response.json({ error: 'Invalid status' }, { status: 400 })
       }
