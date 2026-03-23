@@ -9,13 +9,13 @@ interface GuestRegistrationPromptProps {
   marketId: string
   outcomeId: string
   confidence: number
-  /** yes | no for binary markets (included in signup URL) */
   voteYesNo: 'yes' | 'no' | null
+  guestId: string
   onDismiss: () => void
 }
 
 /**
- * Full-screen prompt after anonymous vote: drive signup with query params + pending vote in sessionStorage.
+ * Full-screen prompt after anonymous vote: signup to claim XP on the existing market_votes row.
  */
 export function GuestRegistrationPrompt({
   open,
@@ -23,6 +23,7 @@ export function GuestRegistrationPrompt({
   outcomeId,
   confidence,
   voteYesNo,
+  guestId,
   onDismiss,
 }: GuestRegistrationPromptProps) {
   const router = useRouter()
@@ -33,11 +34,13 @@ export function GuestRegistrationPrompt({
       outcomeId,
       confidence,
       vote: voteYesNo ?? undefined,
+      guestId,
     })
     const params = new URLSearchParams()
     params.set('market', marketId)
     params.set('confidence', String(confidence))
     params.set('outcome', outcomeId)
+    params.set('guest_id', guestId)
     if (voteYesNo) params.set('vote', voteYesNo)
     router.push(`/signup?${params.toString()}`)
   }
@@ -61,10 +64,11 @@ export function GuestRegistrationPrompt({
             exit={{ scale: 0.95, y: 12 }}
           >
             <h2 id="guest-reg-heading" className="text-2xl font-bold text-white mb-3">
-              ¿Quieres ver cómo vota la multitud?
+              ¿Quieres ganar XP por tus predicciones?
             </h2>
             <p className="text-slate-400 text-base mb-8 leading-relaxed">
-              Crea tu cuenta gratis para ver los resultados completos, ganar XP y seguir prediciendo.
+              Tu voto ya cuenta para la comunidad. Crea tu cuenta para ver tu historial, ganar XP y aparecer en el
+              ranking.
             </p>
             <button
               type="button"

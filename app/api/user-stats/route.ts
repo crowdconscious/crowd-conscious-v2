@@ -52,6 +52,7 @@ export async function GET(request: NextRequest) {
         .from('market_votes')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id)
+        .eq('is_anonymous', false)
       const { data: fundVotes } = await supabase
         .from('fund_votes')
         .select('cycle')
@@ -61,6 +62,7 @@ export async function GET(request: NextRequest) {
         .from('market_votes')
         .select('id')
         .eq('user_id', user.id)
+        .eq('is_anonymous', false)
         .eq('is_correct', true)
 
       return ApiResponse.ok({
@@ -82,6 +84,7 @@ export async function GET(request: NextRequest) {
       .from('market_votes')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', user.id)
+      .eq('is_anonymous', false)
 
     const { data: fundVotes } = await supabase
       .from('fund_votes')
@@ -93,6 +96,7 @@ export async function GET(request: NextRequest) {
       .from('market_votes')
       .select('id')
       .eq('user_id', user.id)
+      .eq('is_anonymous', false)
       .eq('is_correct', true)
     const correctPredictions = correctVotes?.length ?? 0
 

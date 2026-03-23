@@ -19,6 +19,7 @@ export async function GET(request: Request) {
       .from('market_votes')
       .select('id, market_id, outcome_id, confidence, xp_earned, is_correct, bonus_xp, created_at')
       .eq('user_id', user.id)
+      .eq('is_anonymous', false)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
 
@@ -58,6 +59,7 @@ export async function GET(request: Request) {
       .from('market_votes')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', user.id)
+      .eq('is_anonymous', false)
 
     return NextResponse.json({
       items,

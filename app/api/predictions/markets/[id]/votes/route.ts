@@ -13,7 +13,7 @@ export async function GET(
   try {
     const { data: votes, error } = await supabase
       .from('market_votes')
-      .select('user_id, outcome_id, confidence, created_at')
+      .select('user_id, outcome_id, confidence, created_at, is_anonymous')
       .eq('market_id', id)
       .order('created_at', { ascending: false })
       .limit(20)
@@ -43,7 +43,9 @@ export async function GET(
     )
 
     const predictions = (votes ?? []).map((v) => ({
-      user_name: profileMap.get(v.user_id) || 'Anonymous',
+      user_name: v.is_anonymous
+        ? 'Invitado'
+        : profileMap.get(v.user_id) || 'Anonymous',
       outcome_label: outcomeMap.get(v.outcome_id) || 'Unknown',
       confidence: v.confidence,
       created_at: v.created_at,

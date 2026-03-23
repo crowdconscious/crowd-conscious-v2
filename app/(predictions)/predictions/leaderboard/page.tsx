@@ -94,6 +94,7 @@ async function getLeaderboardData(category: string) {
     .from('market_votes')
     .select('user_id, market_id, outcome_id, is_correct, xp_earned, bonus_xp, created_at')
     .in('user_id', userIds)
+    .eq('is_anonymous', false)
     .order('created_at', { ascending: false })
 
   const marketIds = [...new Set((votes ?? []).map((v) => v.market_id))]

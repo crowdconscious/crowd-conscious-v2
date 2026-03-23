@@ -2,11 +2,10 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase-client'
-import { getPendingVote, clearPendingVote, clearGuestVote } from '@/lib/guest-vote-storage'
+import { getPendingVote, clearPendingVote, clearGuestMarketKeys } from '@/lib/guest-vote-storage'
 
 /**
- * After signup/login, submits the vote stored in sessionStorage (from guest flow).
- * Mount once inside authenticated predictions shell.
+ * After signup/login: claim guest market_votes row (re-attribute user_id + award XP).
  */
 export function PendingVoteSubmitter() {
   const done = useRef(false)
@@ -23,31 +22,35 @@ export function PendingVoteSubmitter() {
       if (!session?.user) return
 
       const pending = getPendingVote()
-      if (!pending?.marketId || !pending.outcomeId) return
+      if (!pending?.marketId) return
+      if (!pending.guestId) {
+        clearPendingVote()
+        done.current = true
+        return
+      }
 
       done.current = true
 
       try {
-        const res = await fetch('/api/predictions/vote', {
+        const res = await fetch('/api/votes/claim-guest', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            guest_id: pending.guestId,
             market_id: pending.marketId,
-            outcome_id: pending.outcomeId,
-            confidence: pending.confidence,
           }),
         })
         const data = await res.json()
         if (res.ok && data.success !== false) {
           clearPendingVote()
-          clearGuestVote(pending.marketId)
+          clearGuestMarketKeys(pending.marketId)
           const xp = typeof data.xp_earned === 'number' ? data.xp_earned : 0
           setToast(
             xp > 0
-              ? `¡Tu predicción quedó registrada! +${xp} XP`
-              : '¡Tu predicción quedó registrada!'
+              ? `Tu predicción anterior ya tiene XP — ¡bienvenido! +${xp} XP`
+              : 'Tu predicción anterior ya tiene XP — ¡bienvenido!'
           )
-          window.setTimeout(() => setToast(null), 5000)
+          window.setTimeout(() => setToast(null), 6000)
         } else {
           done.current = false
           console.warn('[PendingVoteSubmitter]', data.error || res.status)

@@ -26,6 +26,7 @@ async function getPredictionStats(userId: string) {
     .from('market_votes')
     .select('id, is_correct, xp_earned, bonus_xp')
     .eq('user_id', userId)
+    .eq('is_anonymous', false)
 
   if (votesError) {
     return { predictions: 0, accuracy: 0, totalXp: 0, rank: null }
@@ -100,6 +101,7 @@ async function getRecentPredictions(userId: string, limit = 10) {
     .from('market_votes')
     .select('id, market_id, outcome_id, confidence, xp_earned, bonus_xp, is_correct, created_at')
     .eq('user_id', userId)
+    .eq('is_anonymous', false)
     .order('created_at', { ascending: false })
     .limit(limit)
 

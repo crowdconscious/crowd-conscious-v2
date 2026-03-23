@@ -24,7 +24,8 @@ export async function GET() {
       supabase
         .from('market_votes')
         .select('user_id, market_id, is_correct')
-        .in('user_id', userIds),
+        .in('user_id', userIds)
+        .eq('is_anonymous', false),
     ])
 
     const marketIds = [...new Set((votesRes.data ?? []).map((v) => v.market_id))]

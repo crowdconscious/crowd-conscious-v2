@@ -30,12 +30,14 @@ export async function POST(request: NextRequest) {
       .from('market_votes')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId)
+      .eq('is_anonymous', false)
 
     // Count correct predictions
     const { data: correctVotes } = await admin
       .from('market_votes')
       .select('id')
       .eq('user_id', userId)
+      .eq('is_anonymous', false)
       .eq('is_correct', true)
     const correctPredictions = correctVotes?.length ?? 0
 

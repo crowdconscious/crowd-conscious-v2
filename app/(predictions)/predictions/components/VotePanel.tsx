@@ -106,11 +106,12 @@ interface VotePanelProps {
   outcomes: Outcome[]
   myVote: MyVote | null
   onVoteSuccess?: (xpGained?: number) => void
-  /** When false, votes are local-only; use onGuestVote + sessionStorage in parent */
   isAuthenticated?: boolean
-  /** Set after anonymous vote (from sessionStorage or parent state) */
+  /** Browser guest UUID; required when submitting anonymous vote */
+  guestId?: string | null
   guestVoteRecord?: GuestVotePayload | null
-  onGuestVote?: (payload: GuestVotePayload) => void
+  /** After successful POST /api/votes/anonymous */
+  onAnonymousVoteSuccess?: (payload: GuestVotePayload, meta: { total_votes?: number }) => void
 }
 
 export function VotePanel({
@@ -119,8 +120,9 @@ export function VotePanel({
   myVote,
   onVoteSuccess,
   isAuthenticated = true,
+  guestId = null,
   guestVoteRecord = null,
-  onGuestVote,
+  onAnonymousVoteSuccess,
 }: VotePanelProps) {
   const locale = useLocale()
   const [selectedOutcomeId, setSelectedOutcomeId] = useState<string | null>(null)
@@ -148,6 +150,10 @@ export function VotePanel({
     setLoading(true)
     try {
       if (!isAuthenticated) {
+        if (!guestId) {
+          alert(locale === 'es' ? 'Espera un momento…' : 'Please wait…')
+          return
+        }
         const label = getOutcomeLabel(
           outcomes.find((o) => o.id === selectedOutcomeId)!,
           locale
@@ -155,11 +161,27 @@ export function VotePanel({
         let voteYesNo: 'yes' | 'no' | null = null
         if (label === 'yes' || label === 'sí' || label === 'si') voteYesNo = 'yes'
         else if (label === 'no') voteYesNo = 'no'
-        onGuestVote?.({
+        const payload: GuestVotePayload = {
           outcomeId: selectedOutcomeId,
           confidence: effectiveConfidence,
           voteYesNo: isBinary ? voteYesNo : null,
+        }
+        const res = await fetch('/api/votes/anonymous', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            market_id: market.id,
+            outcome_id: selectedOutcomeId,
+            confidence: effectiveConfidence,
+            guest_id: guestId,
+          }),
         })
+        const data = await res.json()
+        if (!res.ok) {
+          alert(data.error || 'Vote failed')
+          return
+        }
+        onAnonymousVoteSuccess?.(payload, { total_votes: data.total_votes })
         return
       }
 
@@ -229,7 +251,11 @@ export function VotePanel({
     return (
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
         <h3 className="font-semibold text-white mb-4">
-          {guestPreviewOnly ? (locale === 'en' ? 'Your preview prediction' : 'Tu predicción (vista previa)') : 'Your prediction'}
+          {guestPreviewOnly
+            ? locale === 'en'
+              ? 'Your prediction (guest)'
+              : 'Tu predicción (invitado)'
+            : 'Your prediction'}
         </h3>
         <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
           <p className="text-emerald-400 font-medium flex items-center gap-2">
@@ -244,8 +270,8 @@ export function VotePanel({
           {guestPreviewOnly ? (
             <p className="text-slate-400 text-sm mt-2">
               {locale === 'en'
-                ? 'Create a free account to save your prediction and earn XP.'
-                : 'Crea una cuenta gratis para guardar tu predicción y ganar XP.'}
+                ? 'Your vote counts toward the market. Create an account to earn XP and appear on the leaderboard.'
+                : 'Tu voto cuenta para el mercado. Crea una cuenta para ganar XP y aparecer en el ranking.'}
             </p>
           ) : (
             <p className="text-slate-300 text-sm mt-1">+{myVote!.xp_earned} XP earned</p>

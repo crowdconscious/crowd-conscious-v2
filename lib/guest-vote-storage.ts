@@ -1,21 +1,48 @@
 /**
- * One anonymous vote per market per browser session (sessionStorage).
- * Cleared when the vote is submitted to Supabase after signup/login.
+ * Browser guest identity + per-market vote tracking (localStorage).
+ * Guest votes are stored in Supabase market_votes with user_id = guest UUID.
  */
 
-const KEY = (marketId: string) => `cc_guest_vote_${marketId}`
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+export const GUEST_ID_KEY = 'cc_guest_id'
 
 export type GuestVoteRecord = {
   outcomeId: string
   confidence: number
-  /** For signup URL / UX */
   voteYesNo: 'yes' | 'no' | null
 }
 
-export function getGuestVote(marketId: string): GuestVoteRecord | null {
+/** Stable per-browser guest id (not an auth user). */
+export function getOrCreateGuestId(): string {
+  if (typeof window === 'undefined') return ''
+  try {
+    let id = localStorage.getItem(GUEST_ID_KEY)
+    if (!id || !UUID_RE.test(id)) {
+      id = crypto.randomUUID()
+      localStorage.setItem(GUEST_ID_KEY, id)
+    }
+    return id
+  } catch {
+    return ''
+  }
+}
+
+/** `cc_voted_[marketId]` stores guest_id when that guest has voted on this market. */
+export function getVotedGuestIdForMarket(marketId: string): string | null {
   if (typeof window === 'undefined') return null
   try {
-    const raw = sessionStorage.getItem(KEY(marketId))
+    const v = localStorage.getItem(`cc_voted_${marketId}`)
+    return v && UUID_RE.test(v) ? v : null
+  } catch {
+    return null
+  }
+}
+
+export function getGuestVoteDetail(marketId: string): GuestVoteRecord | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = localStorage.getItem(`cc_guest_vote_${marketId}`)
     if (!raw) return null
     return JSON.parse(raw) as GuestVoteRecord
   } catch {
@@ -23,17 +50,27 @@ export function getGuestVote(marketId: string): GuestVoteRecord | null {
   }
 }
 
-export function setGuestVote(marketId: string, record: GuestVoteRecord): void {
+export function setMarketGuestVote(marketId: string, guestId: string, record: GuestVoteRecord): void {
   if (typeof window === 'undefined') return
-  sessionStorage.setItem(KEY(marketId), JSON.stringify(record))
+  try {
+    localStorage.setItem(`cc_voted_${marketId}`, guestId)
+    localStorage.setItem(`cc_guest_vote_${marketId}`, JSON.stringify(record))
+  } catch {
+    // ignore quota
+  }
 }
 
-export function clearGuestVote(marketId: string): void {
+export function clearGuestMarketKeys(marketId: string): void {
   if (typeof window === 'undefined') return
-  sessionStorage.removeItem(KEY(marketId))
+  try {
+    localStorage.removeItem(`cc_voted_${marketId}`)
+    localStorage.removeItem(`cc_guest_vote_${marketId}`)
+  } catch {
+    // ignore
+  }
 }
 
-/** Pending vote to submit after registration (survives email confirmation flow) */
+/** Pending claim after signup (survives email confirmation). */
 export const PENDING_VOTE_KEY = 'cc_pending_vote'
 
 export type PendingVotePayload = {
@@ -41,6 +78,8 @@ export type PendingVotePayload = {
   outcomeId: string
   confidence: number
   vote?: 'yes' | 'no'
+  /** Required to claim anonymous row in market_votes */
+  guestId: string
 }
 
 export function setPendingVote(payload: PendingVotePayload): void {

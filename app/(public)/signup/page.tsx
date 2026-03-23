@@ -17,7 +17,8 @@ function PendingVoteFromQuery() {
     const outcome = searchParams.get('outcome')
     const confidence = searchParams.get('confidence')
     const vote = searchParams.get('vote')
-    if (!market || !outcome || confidence == null) return
+    const guestId = searchParams.get('guest_id')
+    if (!market || !outcome || confidence == null || !guestId) return
     const conf = parseInt(confidence, 10)
     if (Number.isNaN(conf)) return
     setPendingVote({
@@ -25,6 +26,7 @@ function PendingVoteFromQuery() {
       outcomeId: outcome,
       confidence: conf,
       vote: vote === 'yes' || vote === 'no' ? vote : undefined,
+      guestId,
     })
   }, [searchParams])
 

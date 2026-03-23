@@ -38,10 +38,16 @@ import {
   Tag,
   User,
 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { VotePanel, type GuestVotePayload } from '../../components/VotePanel'
 import { GuestRegistrationPrompt } from '../../components/GuestRegistrationPrompt'
 import { CelebrationModal } from '@/components/gamification/CelebrationModal'
-import { getGuestVote, setGuestVote } from '@/lib/guest-vote-storage'
+import {
+  getOrCreateGuestId,
+  getGuestVoteDetail,
+  getVotedGuestIdForMarket,
+  setMarketGuestVote,
+} from '@/lib/guest-vote-storage'
 import ShareButton from '@/components/ShareButton'
 import { toDisplayPercent } from '@/lib/probability-utils'
 import { getMarketText, getOutcomeLabel } from '@/lib/i18n/market-translations'
@@ -118,7 +124,7 @@ interface Props {
   resolutionEvidence?: { evidence_url?: string; admin_notes?: string }
   outcomes?: Outcome[]
   myVote?: MyVote
-  /** When false, VotePanel stores votes in sessionStorage only (guest flow) */
+  /** When false, anonymous votes use /api/votes/anonymous + localStorage guest id */
   isAuthenticated?: boolean
 }
 
@@ -139,8 +145,10 @@ export function MarketDetailClient({
   isAuthenticated = true,
 }: Props) {
   const locale = useLocale()
+  const router = useRouter()
   const [researchOpen, setResearchOpen] = useState(false)
   const [timeRange, setTimeRange] = useState<TimeRange>('30d')
+  const [guestId, setGuestId] = useState<string>('')
   const [guestVoteRecord, setGuestVoteRecord] = useState<GuestVotePayload | null>(null)
   const [registerPromptOpen, setRegisterPromptOpen] = useState(false)
   const [celebration, setCelebration] = useState<{
@@ -152,10 +160,17 @@ export function MarketDetailClient({
   useEffect(() => {
     if (isAuthenticated) {
       setGuestVoteRecord(null)
+      setGuestId('')
       return
     }
-    const stored = getGuestVote(market.id)
-    setGuestVoteRecord(stored)
+    const gid = getOrCreateGuestId()
+    setGuestId(gid)
+    const voted = getVotedGuestIdForMarket(market.id)
+    if (gid && voted === gid) {
+      setGuestVoteRecord(getGuestVoteDetail(market.id))
+    } else {
+      setGuestVoteRecord(null)
+    }
   }, [market.id, isAuthenticated])
 
   useEffect(() => {
@@ -201,10 +216,12 @@ export function MarketDetailClient({
     setCelebration({ open: true, xpGained, guest: false })
   }
 
-  const handleGuestVote = (payload: GuestVotePayload) => {
-    setGuestVote(market.id, payload)
+  const handleAnonymousVoteSuccess = (payload: GuestVotePayload, _meta?: { total_votes?: number }) => {
+    if (!guestId) return
+    setMarketGuestVote(market.id, guestId, payload)
     setGuestVoteRecord(payload)
     setCelebration({ open: true, guest: true })
+    router.refresh()
   }
 
   const handleCelebrationClose = () => {
@@ -622,8 +639,9 @@ export function MarketDetailClient({
             myVote={myVote}
             onVoteSuccess={handleTradeSuccess}
             isAuthenticated={isAuthenticated}
+            guestId={guestId}
             guestVoteRecord={guestVoteRecord}
-            onGuestVote={handleGuestVote}
+            onAnonymousVoteSuccess={handleAnonymousVoteSuccess}
           />
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
             <div className="flex items-center justify-between mb-3">
@@ -686,13 +704,14 @@ export function MarketDetailClient({
         onClose={handleCelebrationClose}
       />
 
-      {guestVoteRecord && (
+      {guestVoteRecord && guestId && (
         <GuestRegistrationPrompt
           open={registerPromptOpen}
           marketId={market.id}
           outcomeId={guestVoteRecord.outcomeId}
           confidence={guestVoteRecord.confidence}
           voteYesNo={guestVoteRecord.voteYesNo}
+          guestId={guestId}
           onDismiss={() => setRegisterPromptOpen(false)}
         />
       )}
