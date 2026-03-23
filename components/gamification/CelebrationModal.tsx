@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useEffect, useRef, memo, useCallback, useState } from 'react'
 import confetti from 'canvas-confetti'
 import { Trophy, Sparkles, Star, X, CheckCircle, Share2, ImageIcon, Download, Instagram } from 'lucide-react'
-import { copyMarketLink, downloadCard, shareNative } from '@/lib/share-utils'
+import { copyMarketLink, downloadCard, shareNative, shareStoryImage } from '@/lib/share-utils'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 interface Achievement {
@@ -20,6 +20,10 @@ interface CelebrationModalProps {
   title: string
   message: string
   xpGained?: number
+  /** Anonymous preview vote: hide XP, show message line instead */
+  guestVote?: boolean
+  /** Shown below title when guestVote (e.g. "Tu predicción fue registrada") */
+  guestMessage?: string
   achievements?: Achievement[]
   sharePath?: string
   shareTitle?: string
@@ -46,6 +50,8 @@ export const CelebrationModal = memo(function CelebrationModal({
   shareTitle,
   shareSponsorName,
   shareCardMarketId,
+  guestVote = false,
+  guestMessage = 'Tu predicción fue registrada',
   onClose
 }: CelebrationModalProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -169,6 +175,7 @@ export const CelebrationModal = memo(function CelebrationModal({
   const [shareCardLoading, setShareCardLoading] = useState(false)
   const [cardLoaded, setCardLoaded] = useState(false)
   const [cardError, setCardError] = useState(false)
+  const [storyToast, setStoryToast] = useState<string | null>(null)
 
   useEffect(() => {
     if (shareCardMarketId) {
@@ -197,38 +204,39 @@ export const CelebrationModal = memo(function CelebrationModal({
     }
   }, [shareCardMarketId])
 
+  const showStoryHint = useCallback(() => {
+    setStoryToast('Imagen descargada — ábrela en Instagram para compartirla')
+    window.setTimeout(() => setStoryToast(null), 6000)
+  }, [])
+
   const handleShareToStories = useCallback(async () => {
     if (!shareCardMarketId) return
     setShareCardLoading(true)
+    setStoryToast(null)
     try {
-      await shareNative(shareCardMarketId, shareTitle || 'My prediction on Crowd Conscious', 'story', undefined, shareSponsorName)
-    } catch {
-      const res = await fetch(`/api/og/market/${shareCardMarketId}?format=story`)
-      const blob = await res.blob()
-      const a = document.createElement('a')
-      a.href = URL.createObjectURL(blob)
-      a.download = 'crowd-conscious-story.png'
-      a.click()
-      URL.revokeObjectURL(a.href)
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
-      if (isMobile) window.open('instagram://story-camera', '_blank')
-      else alert('📸 Image saved! Save and share it to your Instagram Story.')
+      const result = await shareStoryImage(shareCardMarketId, {
+        title: shareTitle || 'Crowd Conscious',
+      })
+      if (result === 'downloaded') {
+        showStoryHint()
+      }
+    } catch (err) {
+      console.error('Share to Stories failed:', err)
     } finally {
       setShareCardLoading(false)
     }
-  }, [shareCardMarketId, shareTitle, shareSponsorName])
+  }, [shareCardMarketId, shareTitle, showStoryHint])
 
   const handleDownloadStory = useCallback(async () => {
     if (!shareCardMarketId) return
     setShareCardLoading(true)
     try {
       await downloadCard(shareCardMarketId, 'story')
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
-      if (!isMobile) alert('📸 Image saved! Save and share it to your Instagram Story.')
+      showStoryHint()
     } finally {
       setShareCardLoading(false)
     }
-  }, [shareCardMarketId])
+  }, [shareCardMarketId, showStoryHint])
 
   const getIcon = useCallback(() => {
     switch (type) {
@@ -322,17 +330,30 @@ export const CelebrationModal = memo(function CelebrationModal({
                 {message}
               </p>
 
-              {/* XP Gained */}
-              {xpGained && xpGained > 0 && (
+              {/* XP Gained — hidden for anonymous preview votes */}
+              {guestVote ? (
                 <motion.div
-                  className="text-center p-4 bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 rounded-lg mb-4 flex items-center justify-center gap-2"
+                  className="text-center p-4 bg-emerald-500/15 border border-emerald-500/40 text-emerald-700 rounded-lg mb-4 flex items-center justify-center gap-2"
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ delay: prefersReducedMotion ? 0 : 0.2 }}
                 >
-                  <CheckCircle className="w-6 h-6" />
-                  <span className="text-xl font-bold">+{xpGained} XP</span>
+                  <CheckCircle className="w-6 h-6 text-emerald-600" />
+                  <span className="text-lg font-semibold">{guestMessage}</span>
                 </motion.div>
+              ) : (
+                xpGained != null &&
+                xpGained > 0 && (
+                  <motion.div
+                    className="text-center p-4 bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 rounded-lg mb-4 flex items-center justify-center gap-2"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: prefersReducedMotion ? 0 : 0.2 }}
+                  >
+                    <CheckCircle className="w-6 h-6" />
+                    <span className="text-xl font-bold">+{xpGained} XP</span>
+                  </motion.div>
+                )
               )}
 
               {/* Social share buttons */}
@@ -434,6 +455,14 @@ export const CelebrationModal = memo(function CelebrationModal({
                   <p className="text-xs text-slate-500 mt-2 text-center">
                     Share the branded card (Twitter, WhatsApp) or the Story format for Instagram. Link previews use the standard card.
                   </p>
+                  {storyToast && (
+                    <p
+                      role="status"
+                      className="mt-3 text-center text-sm font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2"
+                    >
+                      {storyToast}
+                    </p>
+                  )}
                 </div>
               )}
 

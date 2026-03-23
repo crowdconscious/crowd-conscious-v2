@@ -60,6 +60,70 @@ export async function downloadCard(marketId: string, format: 'standard' | 'story
   }
 }
 
+/** Result of Instagram Story share: native sheet vs file download fallback */
+export type ShareStoryResult = 'shared' | 'downloaded' | 'cancelled'
+
+/**
+ * Instagram Stories flow: Web Share API with image file on supported mobile browsers.
+ * Opens native share sheet where user can pick Instagram Stories.
+ * Desktop / unsupported: triggers download of the story PNG.
+ */
+export async function shareStoryImage(
+  marketId: string,
+  options: { title: string; locale?: string }
+): Promise<ShareStoryResult> {
+  const base = getBaseUrl()
+  const langParam = options.locale && options.locale !== 'es' ? `&lang=${options.locale}` : ''
+  const imageUrl = `${base}/api/og/market/${marketId}?format=story${langParam}`
+
+  let blob: Blob
+  try {
+    const response = await fetch(imageUrl)
+    if (!response.ok) throw new Error(`OG fetch ${response.status}`)
+    blob = await response.blob()
+  } catch (e) {
+    console.error('[shareStoryImage] fetch failed:', e)
+    throw e
+  }
+
+  const file = new File([blob], 'crowd-conscious-story.png', { type: 'image/png' })
+
+  if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+    const canShareFiles =
+      typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })
+
+    if (canShareFiles) {
+      try {
+        await navigator.share({
+          files: [file],
+          title: options.title,
+        })
+        return 'shared'
+      } catch (err) {
+        const name = (err as Error)?.name
+        if (name === 'AbortError') return 'cancelled'
+        console.warn('[shareStoryImage] share() failed, falling back to download:', err)
+      }
+    }
+  }
+
+  // Fallback: direct download (desktop or no file share)
+  try {
+    const blobUrl = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = blobUrl
+    a.download = 'crowd-conscious-story.png'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(blobUrl)
+    return 'downloaded'
+  } catch (e) {
+    console.error('[shareStoryImage] download fallback failed:', e)
+    throw e
+  }
+}
+
 export async function shareNative(marketId: string, title: string, format: 'standard' | 'story' = 'standard', locale?: string, sponsorName?: string | null) {
   const base = getBaseUrl()
   const marketUrl = `${base}/predictions/markets/${marketId}`

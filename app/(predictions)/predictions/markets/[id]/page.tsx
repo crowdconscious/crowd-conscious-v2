@@ -190,6 +190,7 @@ export default async function MarketDetailPage({
       resolutionEvidence={resolutionEvidence}
       outcomes={outcomesList}
       myVote={myVote}
+      isAuthenticated={!!user}
     />
   )
 }

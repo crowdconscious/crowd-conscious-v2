@@ -38,8 +38,10 @@ import {
   Tag,
   User,
 } from 'lucide-react'
-import { VotePanel } from '../../components/VotePanel'
+import { VotePanel, type GuestVotePayload } from '../../components/VotePanel'
+import { GuestRegistrationPrompt } from '../../components/GuestRegistrationPrompt'
 import { CelebrationModal } from '@/components/gamification/CelebrationModal'
+import { getGuestVote, setGuestVote } from '@/lib/guest-vote-storage'
 import ShareButton from '@/components/ShareButton'
 import { toDisplayPercent } from '@/lib/probability-utils'
 import { getMarketText, getOutcomeLabel } from '@/lib/i18n/market-translations'
@@ -116,6 +118,8 @@ interface Props {
   resolutionEvidence?: { evidence_url?: string; admin_notes?: string }
   outcomes?: Outcome[]
   myVote?: MyVote
+  /** When false, VotePanel stores votes in sessionStorage only (guest flow) */
+  isAuthenticated?: boolean
 }
 
 type TimeRange = '7d' | '30d' | 'all'
@@ -132,14 +136,36 @@ export function MarketDetailClient({
   resolutionEvidence = {},
   outcomes = [],
   myVote = null,
+  isAuthenticated = true,
 }: Props) {
   const locale = useLocale()
   const [researchOpen, setResearchOpen] = useState(false)
   const [timeRange, setTimeRange] = useState<TimeRange>('30d')
+  const [guestVoteRecord, setGuestVoteRecord] = useState<GuestVotePayload | null>(null)
+  const [registerPromptOpen, setRegisterPromptOpen] = useState(false)
   const [celebration, setCelebration] = useState<{
     open: boolean
     xpGained?: number
+    guest?: boolean
   }>({ open: false })
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      setGuestVoteRecord(null)
+      return
+    }
+    const stored = getGuestVote(market.id)
+    setGuestVoteRecord(stored)
+  }, [market.id, isAuthenticated])
+
+  useEffect(() => {
+    if (!celebration.open || !celebration.guest) return
+    const t = window.setTimeout(() => {
+      setCelebration({ open: false })
+      setRegisterPromptOpen(true)
+    }, 3000)
+    return () => clearTimeout(t)
+  }, [celebration.open, celebration.guest])
 
   const config = CATEGORY_CONFIG[market.category] || CATEGORY_CONFIG.world
   const Icon = config.icon
@@ -172,12 +198,23 @@ export function MarketDetailClient({
   const latestSentiment = sentiment[0] ? Number(sentiment[0].score) : 0
 
   const handleTradeSuccess = (xpGained?: number) => {
-    setCelebration({ open: true, xpGained })
+    setCelebration({ open: true, xpGained, guest: false })
+  }
+
+  const handleGuestVote = (payload: GuestVotePayload) => {
+    setGuestVote(market.id, payload)
+    setGuestVoteRecord(payload)
+    setCelebration({ open: true, guest: true })
   }
 
   const handleCelebrationClose = () => {
+    const wasGuest = celebration.guest
     setCelebration({ open: false })
-    window.location.reload()
+    if (wasGuest) {
+      setRegisterPromptOpen(true)
+    } else {
+      window.location.reload()
+    }
   }
 
   const isResolved = market.status === 'resolved'
@@ -584,6 +621,9 @@ export function MarketDetailClient({
             outcomes={outcomes}
             myVote={myVote}
             onVoteSuccess={handleTradeSuccess}
+            isAuthenticated={isAuthenticated}
+            guestVoteRecord={guestVoteRecord}
+            onGuestVote={handleGuestVote}
           />
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
             <div className="flex items-center justify-between mb-3">
@@ -629,14 +669,33 @@ export function MarketDetailClient({
         isOpen={celebration.open}
         type="prediction_trade"
         title="Nice!"
-        message={celebration.xpGained ? `You earned ${celebration.xpGained} XP` : 'Your prediction has been recorded.'}
-        xpGained={celebration.xpGained}
+        message={
+          celebration.guest
+            ? ''
+            : celebration.xpGained
+              ? `You earned ${celebration.xpGained} XP`
+              : 'Your prediction has been recorded.'
+        }
+        xpGained={celebration.guest ? undefined : celebration.xpGained}
+        guestVote={celebration.guest === true}
+        guestMessage="Tu predicción fue registrada"
         sharePath={`/predictions/markets/${market.id}`}
         shareTitle={getMarketText(market, 'title', locale)}
         shareSponsorName={(market as { sponsor_name?: string }).sponsor_name}
         shareCardMarketId={market.id}
         onClose={handleCelebrationClose}
       />
+
+      {guestVoteRecord && (
+        <GuestRegistrationPrompt
+          open={registerPromptOpen}
+          marketId={market.id}
+          outcomeId={guestVoteRecord.outcomeId}
+          confidence={guestVoteRecord.confidence}
+          voteYesNo={guestVoteRecord.voteYesNo}
+          onDismiss={() => setRegisterPromptOpen(false)}
+        />
+      )}
     </div>
   )
 }

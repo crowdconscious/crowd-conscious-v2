@@ -16,6 +16,72 @@ const CATEGORY_EMOJI: Record<string, string> = {
   cause: '💚',
 }
 
+const CATEGORY_LABELS: Record<string, string> = {
+  world_cup: 'World Cup',
+  world: 'World',
+  government: 'Government',
+  sustainability: 'Sustainability',
+  corporate: 'Corporate',
+  community: 'Community',
+  cause: 'Cause',
+}
+
+type OutcomeRow = {
+  label: string
+  probability: unknown
+  translations?: unknown
+}
+
+function getCategoryDisplay(category: string | null | undefined): string {
+  if (!category) return 'Market'
+  return CATEGORY_LABELS[category] ?? category.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
+function getVoteSplit(
+  market: { current_probability: number | string | null },
+  outcomes: OutcomeRow[] | null | undefined,
+  locale: string
+): {
+  line: string
+  leftPct: number
+  rightPct: number
+  leftLabel: string
+  rightLabel: string
+  /** 0–100: left segment width for split bar */
+  barLeftWidth: number
+} {
+  const outs = outcomes ?? []
+  if (outs.length >= 2) {
+    const sorted = [...outs].sort((a, b) => Number(b.probability) - Number(a.probability))
+    const a = sorted[0]
+    const b = sorted[1]
+    const p1 = Math.min(100, Math.max(0, Math.round(Number(a.probability) * 100)))
+    const p2 = Math.min(100, Math.max(0, Math.round(Number(b.probability) * 100)))
+    const l1 = getOutcomeLabel(a, locale)
+    const l2 = getOutcomeLabel(b, locale)
+    const sum = p1 + p2
+    const barLeftWidth = sum > 0 ? Math.round((p1 / sum) * 1000) / 10 : 50
+    return {
+      line: `${l1} ${p1}% · ${l2} ${p2}%`,
+      leftPct: p1,
+      rightPct: p2,
+      leftLabel: l1,
+      rightLabel: l2,
+      barLeftWidth,
+    }
+  }
+  const yesPct = Math.min(100, Math.max(0, Math.round(Number(market.current_probability ?? 50))))
+  const noPct = 100 - yesPct
+  return {
+    line: `YES ${yesPct}% · NO ${noPct}%`,
+    leftPct: yesPct,
+    rightPct: noPct,
+    leftLabel: 'YES',
+    rightLabel: 'NO',
+    barLeftWidth: yesPct,
+  }
+}
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -50,7 +116,7 @@ export async function GET(
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              background: 'linear-gradient(150deg, #0a1628 0%, #0d1f2d 50%, #0a2e1f 100%)',
+              background: '#0a0e14',
               color: 'white',
               fontSize: 48,
               fontWeight: 'bold',
@@ -73,7 +139,8 @@ export async function GET(
       .eq('market_id', marketId)
       .order('probability', { ascending: false })
 
-    const topOutcome = outcomes?.[0]
+    const outcomeRows = (outcomes ?? []) as OutcomeRow[]
+    const topOutcome = outcomeRows[0]
     const probRaw = topOutcome?.probability ?? market.current_probability ?? 0.5
     let sponsorLogoBase64 = ''
     if ((market as { sponsor_logo_url?: string }).sponsor_logo_url) {
@@ -88,11 +155,13 @@ export async function GET(
       }
     }
     const probability = Math.min(100, Math.max(0, Math.round(Number(probRaw) * 100)))
-    const outcomeName = topOutcome ? getOutcomeLabel(topOutcome, locale) : (probability >= 50 ? 'Yes' : 'Undecided')
+    const outcomeName = topOutcome ? getOutcomeLabel(topOutcome, locale) : probability >= 50 ? 'Yes' : 'Undecided'
     const totalPredictions = market.total_votes ?? 0
     const emoji = CATEGORY_EMOJI[market.category || ''] || '🔮'
     const displayTitle = getMarketText(market, 'title', locale)
     const titleLength = displayTitle.length
+    const categoryDisplay = getCategoryDisplay(market.category)
+    const split = getVoteSplit(market, outcomeRows, locale)
 
     let logoBase64 = ''
     try {
@@ -109,19 +178,8 @@ export async function GET(
       console.log('[OG] Could not load logo file, using text fallback')
     }
 
-    // Satori doesn't support conic-gradient; use SVG donut
-    const donutSize = isStory ? 220 : 160
-    const donutInner = isStory ? 155 : 110
-    const r = Math.round(donutSize * 0.4)
-    const strokeW = Math.round(donutSize * 0.15)
-    const circumference = 2 * Math.PI * r
-    const dashOffset = circumference - (circumference * probability) / 100
-    const donutSvg = `data:image/svg+xml;base64,${Buffer.from(
-      `<svg xmlns="http://www.w3.org/2000/svg" width="${donutSize}" height="${donutSize}" viewBox="0 0 ${donutSize} ${donutSize}">
-        <circle cx="${donutSize/2}" cy="${donutSize/2}" r="${r}" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="${strokeW}"/>
-        <circle cx="${donutSize/2}" cy="${donutSize/2}" r="${r}" fill="none" stroke="#10b981" stroke-width="${strokeW}" stroke-dasharray="${circumference}" stroke-dashoffset="${dashOffset}" transform="rotate(-90 ${donutSize/2} ${donutSize/2})"/>
-      </svg>`
-    ).toString('base64')}`
+    const leftBarFlex = split.barLeftWidth
+    const rightBarFlex = Math.round((100 - leftBarFlex) * 10) / 10
 
     if (isStory) {
       return new ImageResponse(
@@ -132,209 +190,162 @@ export async function GET(
               height: '100%',
               display: 'flex',
               flexDirection: 'column',
-              alignItems: 'center',
-              background: 'linear-gradient(180deg, #0a1628 0%, #0d1f2d 40%, #0a2e1f 100%)',
-              padding: '100px 60px',
+              background: '#0a0e14',
+              padding: '72px 56px 100px',
               fontFamily: 'sans-serif',
               position: 'relative',
-              justifyContent: 'center',
-              gap: '60px',
+              justifyContent: 'space-between',
             }}
           >
             <div
               style={{
-                position: 'absolute',
-                top: '200px',
-                right: '-100px',
-                width: '500px',
-                height: '500px',
-                borderRadius: '250px',
-                background: 'radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 70%)',
-                display: 'flex',
-              }}
-            />
-            <div
-              style={{
                 display: 'flex',
                 flexDirection: 'column',
-                alignItems: 'center',
-                width: '100%',
-              }}
-            >
-              {logoBase64 ? (
-                <img
-                  src={logoBase64}
-                  width={200}
-                  height={60}
-                  style={{ display: 'flex', objectFit: 'contain' }}
-                  alt=""
-                />
-              ) : (
-                <div
-                  style={{
-                    display: 'flex',
-                    fontSize: '28px',
-                    fontWeight: 700,
-                    color: '#10b981',
-                  }}
-                >
-                  CROWD CONSCIOUS
-                </div>
-              )}
-              <div
-                style={{
-                  display: 'flex',
-                  marginTop: '24px',
-                  backgroundColor: 'rgba(16,185,129,0.12)',
-                  borderRadius: '20px',
-                  padding: '8px 24px',
-                  fontSize: '18px',
-                  fontWeight: 600,
-                  color: '#10b981',
-                }}
-              >
-                {emoji} {(market.category || 'market').replace('_', ' ').toUpperCase()}
-              </div>
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                textAlign: 'center',
-                maxWidth: '900px',
+                flex: 1,
+                justifyContent: 'flex-start',
+                gap: '40px',
               }}
             >
               <div
                 style={{
                   display: 'flex',
-                  fontSize: titleLength > 80 ? '44px' : '54px',
-                  fontWeight: 700,
-                  color: '#ffffff',
-                  lineHeight: '1.2',
-                  textAlign: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                {displayTitle.slice(0, 120)}{displayTitle.length > 120 ? '…' : ''}
-              </div>
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  width: '220px',
-                  height: '220px',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  position: 'relative',
-                }}
-              >
-                <img src={donutSvg} alt="" width={220} height={220} style={{ display: 'flex', position: 'absolute' }} />
-                <div
-                  style={{
-                    display: 'flex',
-                    width: '155px',
-                    height: '155px',
-                    borderRadius: '80px',
-                    backgroundColor: '#0d1f2d',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '52px',
-                    fontWeight: 700,
-                    color: '#10b981',
-                    zIndex: 1,
-                  }}
-                >
-                  {probability}%
-                </div>
-              </div>
-              <div
-                style={{
-                  display: 'flex',
-                  marginTop: '20px',
-                  fontSize: '28px',
-                  fontWeight: 700,
-                  color: '#10b981',
-                }}
-              >
-                {outcomeName}
-              </div>
-              <div
-                style={{
-                  display: 'flex',
-                  marginTop: '8px',
-                  fontSize: '18px',
-                  color: '#64748b',
-                }}
-              >
-                {totalPredictions} prediction{totalPredictions !== 1 ? 's' : ''}
-              </div>
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
+                  alignSelf: 'flex-start',
+                  backgroundColor: 'rgba(16,185,129,0.15)',
+                  border: '2px solid rgba(16,185,129,0.45)',
+                  borderRadius: '16px',
+                  padding: '12px 24px',
                   fontSize: '26px',
-                  fontWeight: 600,
-                  color: '#ffffff',
+                  fontWeight: 700,
+                  color: '#10b981',
                 }}
               >
-                What do you think?
+                {emoji} {categoryDisplay}
               </div>
               <div
                 style={{
                   display: 'flex',
-                  marginTop: '12px',
-                  fontSize: '20px',
-                  color: '#94a3b8',
+                  fontSize: titleLength > 90 ? '42px' : titleLength > 60 ? '48px' : '56px',
+                  fontWeight: 800,
+                  color: '#ffffff',
+                  lineHeight: '1.15',
+                  letterSpacing: '-0.5px',
                 }}
               >
-                crowdconscious.app
+                {displayTitle.slice(0, 140)}{displayTitle.length > 140 ? '…' : ''}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '28px', marginTop: '16px' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    fontSize: '36px',
+                    fontWeight: 800,
+                    color: '#e2e8f0',
+                    letterSpacing: '-0.3px',
+                  }}
+                >
+                  {split.line}
+                </div>
+                <div
+                  style={{
+                    display: 'flex',
+                    width: '100%',
+                    height: '28px',
+                    borderRadius: '8px',
+                    overflow: 'hidden',
+                    backgroundColor: 'rgba(255,255,255,0.06)',
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      width: `${leftBarFlex}%`,
+                      height: '100%',
+                      backgroundColor: '#10b981',
+                    }}
+                  />
+                  <div
+                    style={{
+                      display: 'flex',
+                      width: `${rightBarFlex}%`,
+                      height: '100%',
+                      backgroundColor: '#475569',
+                    }}
+                  />
+                </div>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    fontSize: '22px',
+                    fontWeight: 600,
+                    color: '#94a3b8',
+                  }}
+                >
+                  <span style={{ color: '#10b981' }}>{split.leftLabel}</span>
+                  <span style={{ color: '#94a3b8' }}>{split.rightLabel}</span>
+                </div>
               </div>
             </div>
             <div
               style={{
-                position: 'absolute',
-                bottom: '0',
-                left: '0',
-                width: '100%',
-                height: '4px',
-                background: 'linear-gradient(90deg, transparent, #10b981, transparent)',
                 display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'flex-end',
+                justifyContent: 'space-between',
+                width: '100%',
+                paddingTop: '32px',
+                borderTop: '1px solid rgba(16,185,129,0.25)',
               }}
-            />
-            {(market as { sponsor_name?: string }).sponsor_name && (
+            >
               <div
                 style={{
                   display: 'flex',
-                  position: 'absolute',
-                  bottom: '12px',
-                  left: '56px',
-                  fontSize: '14px',
-                  color: '#94a3b8',
-                  alignItems: 'center',
+                  flexDirection: 'column',
                   gap: '8px',
                 }}
               >
-                {sponsorLogoBase64 ? (
-                  <img src={sponsorLogoBase64} alt="" width={24} height={24} style={{ display: 'flex', objectFit: 'contain', borderRadius: '4px' }} />
+                <div style={{ display: 'flex', fontSize: '28px', fontWeight: 700, color: '#10b981' }}>
+                  {outcomeName}
+                </div>
+                <div style={{ display: 'flex', fontSize: '22px', color: '#64748b' }}>
+                  {totalPredictions} prediction{totalPredictions !== 1 ? 's' : ''}
+                </div>
+                <div style={{ display: 'flex', fontSize: '26px', fontWeight: 700, color: '#ffffff', marginTop: '8px' }}>
+                  crowdconscious.app
+                </div>
+                {(market as { sponsor_name?: string }).sponsor_name ? (
+                  <div
+                    style={{
+                      display: 'flex',
+                      marginTop: '16px',
+                      fontSize: '15px',
+                      color: '#64748b',
+                      alignItems: 'center',
+                      gap: '8px',
+                    }}
+                  >
+                    {sponsorLogoBase64 ? (
+                      <img src={sponsorLogoBase64} alt="" width={20} height={20} style={{ display: 'flex', objectFit: 'contain', borderRadius: '4px' }} />
+                    ) : null}
+                    Sponsored by {(market as { sponsor_name?: string }).sponsor_name}
+                  </div>
                 ) : null}
-                Sponsored by {(market as { sponsor_name?: string }).sponsor_name}
               </div>
-            )}
+              <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: '4px' }}>
+                {logoBase64 ? (
+                  <img
+                    src={logoBase64}
+                    width={140}
+                    height={42}
+                    style={{ display: 'flex', objectFit: 'contain' }}
+                    alt=""
+                  />
+                ) : (
+                  <div style={{ display: 'flex', fontSize: '20px', fontWeight: 700, color: '#10b981' }}>CC</div>
+                )}
+              </div>
+            </div>
           </div>
         ),
         { width: WIDTH, height: HEIGHT, headers: { 'Cache-Control': 'public, max-age=60, s-maxage=300' } }
@@ -349,8 +360,8 @@ export async function GET(
             height: '100%',
             display: 'flex',
             flexDirection: 'row',
-            background: 'linear-gradient(150deg, #0a1628 0%, #0d1f2d 50%, #0a2e1f 100%)',
-            padding: '48px 56px',
+            background: '#0a0e14',
+            padding: '40px 48px',
             fontFamily: 'sans-serif',
             position: 'relative',
           }}
@@ -358,23 +369,11 @@ export async function GET(
           <div
             style={{
               position: 'absolute',
-              top: '-80px',
-              right: '-80px',
-              width: '350px',
-              height: '350px',
-              borderRadius: '200px',
-              background: 'radial-gradient(circle, rgba(16,185,129,0.12) 0%, transparent 70%)',
-              display: 'flex',
-            }}
-          />
-          <div
-            style={{
-              position: 'absolute',
-              bottom: '0',
+              top: '0',
               left: '0',
               width: '100%',
               height: '4px',
-              background: 'linear-gradient(90deg, #10b981 0%, rgba(16,185,129,0.3) 100%)',
+              background: 'linear-gradient(90deg, #10b981 0%, rgba(16,185,129,0.2) 100%)',
               display: 'flex',
             }}
           />
@@ -383,16 +382,16 @@ export async function GET(
               style={{
                 display: 'flex',
                 position: 'absolute',
-                bottom: '12px',
-                left: '56px',
-                fontSize: '14px',
-                color: '#94a3b8',
+                bottom: '10px',
+                left: '48px',
+                fontSize: '12px',
+                color: '#64748b',
                 alignItems: 'center',
-                gap: '8px',
+                gap: '6px',
               }}
             >
               {sponsorLogoBase64 ? (
-                <img src={sponsorLogoBase64} alt="" width={24} height={24} style={{ display: 'flex', objectFit: 'contain', borderRadius: '4px' }} />
+                <img src={sponsorLogoBase64} alt="" width={20} height={20} style={{ display: 'flex', objectFit: 'contain', borderRadius: '4px' }} />
               ) : null}
               Sponsored by {(market as { sponsor_name?: string }).sponsor_name}
             </div>
@@ -402,86 +401,77 @@ export async function GET(
               display: 'flex',
               flexDirection: 'column',
               flex: '1',
-              paddingRight: '40px',
+              paddingRight: '36px',
               justifyContent: 'space-between',
             }}
           >
             {logoBase64 ? (
-              <img
-                src={logoBase64}
-                width={180}
-                height={54}
-                style={{ display: 'flex', objectFit: 'contain' }}
-                alt=""
-              />
+              <img src={logoBase64} width={160} height={48} style={{ display: 'flex', objectFit: 'contain' }} alt="" />
             ) : (
+              <div style={{ display: 'flex', fontSize: '22px', fontWeight: 700, color: '#10b981' }}>CROWD CONSCIOUS</div>
+            )}
+            <div style={{ display: 'flex', marginTop: '14px' }}>
               <div
                 style={{
                   display: 'flex',
-                  fontSize: '24px',
+                  backgroundColor: 'rgba(16,185,129,0.15)',
+                  border: '1px solid rgba(16,185,129,0.4)',
+                  borderRadius: '14px',
+                  padding: '8px 16px',
+                  fontSize: '15px',
                   fontWeight: 700,
                   color: '#10b981',
-                  letterSpacing: '-0.5px',
                 }}
               >
-                CROWD CONSCIOUS
-              </div>
-            )}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                marginTop: '16px',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  backgroundColor: 'rgba(16,185,129,0.12)',
-                  borderRadius: '16px',
-                  padding: '6px 16px',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  color: '#10b981',
-                  letterSpacing: '0.5px',
-                }}
-              >
-                {emoji} {(market.category || 'market').replace('_', ' ').toUpperCase()}
+                {emoji} {categoryDisplay}
               </div>
             </div>
-            <div
-              style={{
-                display: 'flex',
-                flex: '1',
-                alignItems: 'center',
-                marginTop: '8px',
-              }}
-            >
+            <div style={{ display: 'flex', flex: '1', alignItems: 'center', marginTop: '10px' }}>
               <div
                 style={{
                   display: 'flex',
-                  fontSize: titleLength > 100 ? '28px' : titleLength > 60 ? '34px' : '40px',
-                  fontWeight: 700,
+                  fontSize: titleLength > 100 ? '26px' : titleLength > 60 ? '32px' : '36px',
+                  fontWeight: 800,
                   color: '#ffffff',
-                  lineHeight: '1.25',
+                  lineHeight: '1.2',
                 }}
               >
                 {displayTitle.slice(0, 120)}{displayTitle.length > 120 ? '…' : ''}
               </div>
             </div>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '24px',
-                marginTop: '12px',
-              }}
-            >
-              <div style={{ display: 'flex', fontSize: '14px', color: '#64748b' }}>
-                {totalPredictions} prediction{totalPredictions !== 1 ? 's' : ''}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '12px' }}>
+              <div style={{ display: 'flex', fontSize: '22px', fontWeight: 800, color: '#e2e8f0' }}>{split.line}</div>
+              <div
+                style={{
+                  display: 'flex',
+                  width: '100%',
+                  maxWidth: '420px',
+                  height: '14px',
+                  borderRadius: '6px',
+                  overflow: 'hidden',
+                  backgroundColor: 'rgba(255,255,255,0.08)',
+                }}
+              >
+                <div style={{ display: 'flex', width: `${leftBarFlex}%`, height: '100%', backgroundColor: '#10b981' }} />
+                <div style={{ display: 'flex', width: `${rightBarFlex}%`, height: '100%', backgroundColor: '#475569' }} />
               </div>
-              <div style={{ display: 'flex', fontSize: '14px', color: '#64748b' }}>
-                crowdconscious.app
+              <div
+                style={{
+                  display: 'flex',
+                  fontSize: '24px',
+                  fontWeight: 800,
+                  fontStyle: 'italic',
+                  color: '#10b981',
+                  marginTop: '6px',
+                }}
+              >
+                ¿Y tú?
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '4px' }}>
+                <div style={{ display: 'flex', fontSize: '13px', color: '#64748b' }}>
+                  {totalPredictions} prediction{totalPredictions !== 1 ? 's' : ''}
+                </div>
+                <div style={{ display: 'flex', fontSize: '14px', fontWeight: 600, color: '#94a3b8' }}>crowdconscious.app</div>
               </div>
             </div>
           </div>
@@ -491,69 +481,31 @@ export async function GET(
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              width: '280px',
+              width: '260px',
+              borderLeft: '1px solid rgba(16,185,129,0.2)',
+              paddingLeft: '32px',
             }}
           >
-            <div
-              style={{
-                display: 'flex',
-                width: '160px',
-                height: '160px',
-                alignItems: 'center',
-                justifyContent: 'center',
-                position: 'relative',
-              }}
-            >
-              <img src={donutSvg} alt="" width={160} height={160} style={{ display: 'flex', position: 'absolute' }} />
-              <div
-                style={{
-                  display: 'flex',
-                  width: '110px',
-                  height: '110px',
-                  borderRadius: '55px',
-                  backgroundColor: '#0d1f2d',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '36px',
-                  fontWeight: 700,
-                  color: '#10b981',
-                  zIndex: 1,
-                }}
-              >
-                {probability}%
-              </div>
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                marginTop: '16px',
-                fontSize: '22px',
-                fontWeight: 700,
-                color: '#10b981',
-              }}
-            >
+            <div style={{ display: 'flex', fontSize: '48px', fontWeight: 800, color: '#10b981' }}>{probability}%</div>
+            <div style={{ display: 'flex', marginTop: '8px', fontSize: '18px', fontWeight: 700, color: '#94a3b8', textAlign: 'center' }}>
               {outcomeName}
             </div>
             <div
               style={{
                 display: 'flex',
                 width: '200px',
-                height: '4px',
-                backgroundColor: 'rgba(255,255,255,0.08)',
-                borderRadius: '2px',
-                marginTop: '16px',
+                height: '8px',
+                marginTop: '20px',
+                borderRadius: '4px',
                 overflow: 'hidden',
+                backgroundColor: 'rgba(255,255,255,0.08)',
               }}
             >
-              <div
-                style={{
-                  display: 'flex',
-                  width: `${probability}%`,
-                  height: '4px',
-                  backgroundColor: '#10b981',
-                  borderRadius: '2px',
-                }}
-              />
+              <div style={{ display: 'flex', width: `${leftBarFlex}%`, height: '100%', backgroundColor: '#10b981' }} />
+              <div style={{ display: 'flex', width: `${rightBarFlex}%`, height: '100%', backgroundColor: '#475569' }} />
+            </div>
+            <div style={{ display: 'flex', marginTop: '12px', fontSize: '13px', color: '#64748b', textAlign: 'center' }}>
+              {split.leftLabel} · {split.rightLabel}
             </div>
           </div>
         </div>

@@ -3,8 +3,10 @@ import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase-server'
 import PredictionsShell from './PredictionsShell'
+import { PendingVoteSubmitter } from './components/PendingVoteSubmitter'
 
-const PUBLIC_PATHS = ['/predictions/leaderboard', '/predictions/fund']
+/** Public: no login required (market detail pages allow guest voting) */
+const PUBLIC_PATHS = ['/predictions/leaderboard', '/predictions/fund', '/predictions/markets']
 
 async function getNavCounts(supabase: Awaited<ReturnType<typeof createClient>>) {
   const [inboxRes, marketsRes] = await Promise.all([
@@ -52,6 +54,7 @@ export default async function PredictionsLayout({
 
   return (
     <PredictionsShell isAdmin={isAdmin} isAuthenticated={!!user} navCounts={navCounts}>
+      {user ? <PendingVoteSubmitter /> : null}
       {children}
     </PredictionsShell>
   )

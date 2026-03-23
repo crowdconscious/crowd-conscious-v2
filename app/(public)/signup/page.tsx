@@ -1,8 +1,35 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { createClientAuth } from '../../../lib/auth'
 import Link from 'next/link'
+import { setPendingVote } from '@/lib/guest-vote-storage'
+
+/**
+ * Persist guest-flow query params so the vote submits after email confirm + login.
+ */
+function PendingVoteFromQuery() {
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    const market = searchParams.get('market')
+    const outcome = searchParams.get('outcome')
+    const confidence = searchParams.get('confidence')
+    const vote = searchParams.get('vote')
+    if (!market || !outcome || confidence == null) return
+    const conf = parseInt(confidence, 10)
+    if (Number.isNaN(conf)) return
+    setPendingVote({
+      marketId: market,
+      outcomeId: outcome,
+      confidence: conf,
+      vote: vote === 'yes' || vote === 'no' ? vote : undefined,
+    })
+  }, [searchParams])
+
+  return null
+}
 
 export default function SignUpPage() {
   const [email, setEmail] = useState('')
@@ -95,6 +122,9 @@ export default function SignUpPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
+      <Suspense fallback={null}>
+        <PendingVoteFromQuery />
+      </Suspense>
       <div className="max-w-md w-full bg-white rounded-lg shadow-sm border border-slate-200 p-8">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-slate-900">Únete a Crowd Conscious</h1>

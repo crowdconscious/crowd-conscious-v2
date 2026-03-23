@@ -95,21 +95,41 @@ function toDecimal(prob: number): number {
   return n > 1 ? n / 100 : Math.min(1, Math.max(0, n))
 }
 
+export type GuestVotePayload = {
+  outcomeId: string
+  confidence: number
+  voteYesNo: 'yes' | 'no' | null
+}
+
 interface VotePanelProps {
   market: PredictionMarket
   outcomes: Outcome[]
   myVote: MyVote | null
   onVoteSuccess?: (xpGained?: number) => void
+  /** When false, votes are local-only; use onGuestVote + sessionStorage in parent */
+  isAuthenticated?: boolean
+  /** Set after anonymous vote (from sessionStorage or parent state) */
+  guestVoteRecord?: GuestVotePayload | null
+  onGuestVote?: (payload: GuestVotePayload) => void
 }
 
-export function VotePanel({ market, outcomes, myVote, onVoteSuccess }: VotePanelProps) {
+export function VotePanel({
+  market,
+  outcomes,
+  myVote,
+  onVoteSuccess,
+  isAuthenticated = true,
+  guestVoteRecord = null,
+  onGuestVote,
+}: VotePanelProps) {
   const locale = useLocale()
   const [selectedOutcomeId, setSelectedOutcomeId] = useState<string | null>(null)
   const [confidence, setConfidence] = useState(7)
   const [loading, setLoading] = useState(false)
 
   const isResolved = market.status === 'resolved'
-  const hasVoted = !!myVote
+  const hasVoted = isAuthenticated ? !!myVote : !!myVote || !!guestVoteRecord
+  const guestPreviewOnly = !isAuthenticated && !!guestVoteRecord && !myVote
   const hasYesNoLabels = outcomes.some((o) => {
     const l = getOutcomeLabel(o, locale).toLowerCase()
     return l === 'yes' || l === 'sí' || l === 'si' || l === 'no'
@@ -127,6 +147,22 @@ export function VotePanel({ market, outcomes, myVote, onVoteSuccess }: VotePanel
 
     setLoading(true)
     try {
+      if (!isAuthenticated) {
+        const label = getOutcomeLabel(
+          outcomes.find((o) => o.id === selectedOutcomeId)!,
+          locale
+        ).toLowerCase()
+        let voteYesNo: 'yes' | 'no' | null = null
+        if (label === 'yes' || label === 'sí' || label === 'si') voteYesNo = 'yes'
+        else if (label === 'no') voteYesNo = 'no'
+        onGuestVote?.({
+          outcomeId: selectedOutcomeId,
+          confidence: effectiveConfidence,
+          voteYesNo: isBinary ? voteYesNo : null,
+        })
+        return
+      }
+
       const res = await fetch('/api/predictions/vote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -138,7 +174,7 @@ export function VotePanel({ market, outcomes, myVote, onVoteSuccess }: VotePanel
       })
 
       const data = await res.json()
-      if (data.success) {
+      if (data.success !== false && data.error == null) {
         onVoteSuccess?.(data.xp_earned)
       } else {
         alert(data.error || 'Vote failed')
@@ -186,20 +222,36 @@ export function VotePanel({ market, outcomes, myVote, onVoteSuccess }: VotePanel
   }
 
   if (hasVoted) {
+    const displayOutcomeId = myVote?.outcome_id ?? guestVoteRecord?.outcomeId
+    const displayConfidence = myVote?.confidence ?? guestVoteRecord?.confidence
+    const outcomeForDisplay = outcomes.find((o) => o.id === displayOutcomeId)
+
     return (
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-        <h3 className="font-semibold text-white mb-4">Your prediction</h3>
+        <h3 className="font-semibold text-white mb-4">
+          {guestPreviewOnly ? (locale === 'en' ? 'Your preview prediction' : 'Tu predicción (vista previa)') : 'Your prediction'}
+        </h3>
         <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
           <p className="text-emerald-400 font-medium flex items-center gap-2">
             <Check className="w-4 h-4" />
-            {outcomes.find((o) => o.id === myVote!.outcome_id)
-              ? getOutcomeLabel(outcomes.find((o) => o.id === myVote!.outcome_id)!, locale)
-              : myVote!.outcome_label}
-            {isBinary && <span className="text-slate-400 font-normal">at confidence {myVote!.confidence}</span>}
+            {outcomeForDisplay
+              ? getOutcomeLabel(outcomeForDisplay, locale)
+              : myVote?.outcome_label ?? '—'}
+            {isBinary && displayConfidence != null && (
+              <span className="text-slate-400 font-normal">at confidence {displayConfidence}</span>
+            )}
           </p>
-          <p className="text-slate-300 text-sm mt-1">+{myVote!.xp_earned} XP earned</p>
+          {guestPreviewOnly ? (
+            <p className="text-slate-400 text-sm mt-2">
+              {locale === 'en'
+                ? 'Create a free account to save your prediction and earn XP.'
+                : 'Crea una cuenta gratis para guardar tu predicción y ganar XP.'}
+            </p>
+          ) : (
+            <p className="text-slate-300 text-sm mt-1">+{myVote!.xp_earned} XP earned</p>
+          )}
         </div>
-        <p className="text-slate-500 text-xs mt-3">One prediction per market</p>
+        {!guestPreviewOnly && <p className="text-slate-500 text-xs mt-3">One prediction per market</p>}
       </div>
     )
   }
