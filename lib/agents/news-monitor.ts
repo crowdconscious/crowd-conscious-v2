@@ -327,8 +327,15 @@ export async function runNewsMonitor(options?: {
       marketsToAnalyze = activeMarkets
     }
 
-    console.log('[NEWS-MONITOR] Markets to analyze:', marketsToAnalyze.length, 'of', activeMarkets.length)
-    for (const m of marketsToAnalyze) {
+    // Limit markets to avoid 504 timeout: max 6, prioritize by signal count
+    const MAX_MARKETS_TO_ANALYZE = 6
+    const sorted = [...marketsToAnalyze].sort(
+      (a, b) => (marketSignals[b.id]?.length ?? 0) - (marketSignals[a.id]?.length ?? 0)
+    )
+    const limitedMarkets = sorted.slice(0, MAX_MARKETS_TO_ANALYZE)
+
+    console.log('[NEWS-MONITOR] Markets to analyze:', limitedMarkets.length, 'of', marketsToAnalyze.length, '(capped to', MAX_MARKETS_TO_ANALYZE, 'to stay within timeout)')
+    for (const m of limitedMarkets) {
       const n = marketSignals[m.id]?.length ?? 0
       console.log(`[NEWS-MONITOR]   "${m.title.slice(0, 50)}...": ${n} signals`)
     }
@@ -343,8 +350,14 @@ export async function runNewsMonitor(options?: {
     }> = []
     const allSuggestions: MarketAnalysis['suggested_markets'] = []
 
-    // Step 4: Analyze with Claude (per market with 1+ signals)
-    for (const market of marketsToAnalyze) {
+    // Step 4: Analyze with Claude — process in parallel batches of 3 to stay within timeout
+    const BATCH_SIZE = 3
+    const analyzeMarket = async (market: typeof limitedMarkets[0]): Promise<{
+      analysis?: MarketAnalysis['market_analysis']
+      suggestions?: MarketAnalysis['suggested_markets']
+      tokensInput: number
+      tokensOutput: number
+    }> => {
       const matchedSignals = marketSignals[market.id] ?? []
       const signalsText = matchedSignals
         .map(
@@ -411,10 +424,6 @@ REGLAS PARA suggested_markets:
         const textBlock = response.content.find((b) => b.type === 'text')
         const rawText = textBlock && 'text' in textBlock ? textBlock.text : ''
         const usage = response.usage ?? { input_tokens: 0, output_tokens: 0 }
-        totalTokensInput += usage.input_tokens
-        totalTokensOutput += usage.output_tokens
-
-        console.log(`[NEWS-MONITOR] Claude raw response for "${market.title.slice(0, 40)}":`, rawText?.substring(0, 200) + (rawText?.length > 200 ? '...' : ''))
 
         let parsed: MarketAnalysis
         try {
@@ -424,34 +433,54 @@ REGLAS PARA suggested_markets:
             : raw) as MarketAnalysis
         } catch (parseErr) {
           console.error(`[NEWS-MONITOR] JSON parse failed for "${market.title}":`, parseErr)
-          console.error(`[NEWS-MONITOR] Raw response:`, rawText?.substring(0, 500))
-          continue
+          return { tokensInput: usage.input_tokens, tokensOutput: usage.output_tokens }
         }
 
-        console.log(`[NEWS-MONITOR] Parsed for "${market.title.slice(0, 40)}":`, {
-          hasSummary: !!parsed?.market_analysis?.summary,
-          sentiment: parsed?.market_analysis?.sentiment_score,
-          suggestions: parsed?.suggested_markets?.length ?? 0,
-        })
-
         if (parsed?.market_analysis) {
-          marketAnalyses.push({
-            market_id: market.id,
-            market_title: market.title,
+          const suggestions = parsed.suggested_markets ?? []
+          for (const sug of suggestions) {
+            if (sug?.title_es) {
+              sug.source_signals = sug.source_signals ?? matchedSignals.map((s) => s.source_name).slice(0, 5)
+            }
+          }
+          return {
             analysis: parsed.market_analysis,
-            suggestions: parsed.suggested_markets ?? [],
-          })
-          if (Array.isArray(parsed.suggested_markets)) {
-            for (const sug of parsed.suggested_markets) {
-              if (sug?.title_es) {
-                sug.source_signals = sug.source_signals ?? matchedSignals.map((s) => s.source_name).slice(0, 5)
-                allSuggestions.push(sug)
+            suggestions,
+            tokensInput: usage.input_tokens,
+            tokensOutput: usage.output_tokens,
+          }
+        }
+        return { tokensInput: usage.input_tokens, tokensOutput: usage.output_tokens }
+      } catch (e) {
+        console.error(`[NEWS-MONITOR] Claude error for market "${market.title}":`, e)
+        return { tokensInput: 0, tokensOutput: 0 }
+      }
+    }
+
+    // Run analyses in parallel batches of BATCH_SIZE
+    for (let i = 0; i < limitedMarkets.length; i += BATCH_SIZE) {
+      const batch = limitedMarkets.slice(i, i + BATCH_SIZE)
+      const results = await Promise.all(batch.map((m) => analyzeMarket(m)))
+      for (let j = 0; j < batch.length; j++) {
+        const market = batch[j]
+        const res = results[j]
+        if (res) {
+          totalTokensInput += res.tokensInput
+          totalTokensOutput += res.tokensOutput
+          if (res.analysis) {
+            marketAnalyses.push({
+              market_id: market.id,
+              market_title: market.title,
+              analysis: res.analysis,
+              suggestions: res.suggestions ?? [],
+            })
+            if (Array.isArray(res.suggestions)) {
+              for (const sug of res.suggestions) {
+                if (sug?.title_es) allSuggestions.push(sug)
               }
             }
           }
         }
-      } catch (e) {
-        console.error(`[NEWS-MONITOR] Claude error for market "${market.title}":`, e)
       }
     }
 

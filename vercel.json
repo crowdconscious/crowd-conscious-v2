@@ -7,7 +7,10 @@
   "regions": ["iad1"],
   "functions": {
     "app/api/cron/agents/news-monitor/route.ts": {
-      "maxDuration": 120
+      "maxDuration": 300
+    },
+    "app/api/predictions/admin/run-agent/route.ts": {
+      "maxDuration": 300
     },
     "app/api/**/*.ts": {
       "maxDuration": 30
