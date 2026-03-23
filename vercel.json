@@ -14,6 +14,12 @@
     },
     "app/api/**/*.ts": {
       "maxDuration": 30
+    },
+    "app/api/cron/daily-market-digest/route.ts": {
+      "maxDuration": 300
+    },
+    "app/api/cron/reengagement-inactive/route.ts": {
+      "maxDuration": 300
     }
   },
   "crons": [
@@ -40,6 +46,14 @@
     {
       "path": "/api/cron/agents/inbox-curator",
       "schedule": "0 15 * * *"
+    },
+    {
+      "path": "/api/cron/daily-market-digest",
+      "schedule": "0 15 * * *"
+    },
+    {
+      "path": "/api/cron/reengagement-inactive",
+      "schedule": "0 16 * * 1"
     }
   ],
   "headers": [

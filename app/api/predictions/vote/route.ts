@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { getCurrentUser } from '@/lib/auth-server'
+import { sendPostVoteConfirmation } from '@/lib/prediction-email-notifications'
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -52,13 +53,27 @@ export async function POST(request: Request) {
       )
     }
 
-    const result = data as { success?: boolean; error?: string }
+    const result = data as {
+      success?: boolean
+      error?: string
+      xp_earned?: number
+      outcome_label?: string
+      confidence?: number
+      new_probability?: number
+    }
     if (result.success === false) {
       return NextResponse.json(
         { error: result.error || 'Vote failed' },
         { status: 400 }
       )
     }
+
+    void sendPostVoteConfirmation({
+      userId: user.id,
+      email: user.email,
+      marketId: market_id,
+      rpcResult: result,
+    }).catch((err) => console.error('[vote] post-confirmation', err))
 
     return NextResponse.json(result)
   } catch (err) {

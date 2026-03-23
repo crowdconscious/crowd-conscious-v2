@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Logo from '@/components/Logo'
 import { supabaseClient } from '@/lib/supabase-client'
 import { XPBadge } from '@/components/gamification/XPBadge'
+import { NotificationsBell } from '@/app/(predictions)/predictions/components/NotificationsBell'
 
 interface HeaderClientProps {
   user: any
@@ -90,11 +91,13 @@ export default function HeaderClient({ user }: HeaderClientProps) {
           </div>
 
           {/* User Controls */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {/* XP Badge - no animation to avoid blinking */}
             <div className="hidden md:block">
               <XPBadge variant="compact" animated={false} />
             </div>
+
+            <NotificationsBell />
 
             {/* Profile avatar */}
             <Link href="/profile" className="shrink-0">

@@ -16,6 +16,8 @@ export interface Database {
           full_name: string | null
           avatar_url: string | null
           user_type: 'user' | 'brand' | 'admin'
+          /** When false, marketing prediction emails are skipped (see cron + unsubscribe). */
+          email_notifications: boolean | null
           created_at: string
         }
         Insert: {
@@ -24,6 +26,7 @@ export interface Database {
           full_name?: string | null
           avatar_url?: string | null
           user_type?: 'user' | 'brand' | 'admin'
+          email_notifications?: boolean | null
           created_at?: string
         }
         Update: {
@@ -32,6 +35,7 @@ export interface Database {
           full_name?: string | null
           avatar_url?: string | null
           user_type?: 'user' | 'brand' | 'admin'
+          email_notifications?: boolean | null
           created_at?: string
         }
       }

@@ -20,6 +20,7 @@ import {
   Trophy,
   Bot,
   DollarSign,
+  Bell,
 } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import LanguageSwitcherSimple from '@/components/LanguageSwitcherSimple'
@@ -27,6 +28,7 @@ import { NotificationsBell } from './components/NotificationsBell'
 
 const NAV_ITEMS_EN = [
   { href: '/predictions', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/predictions/notifications', label: 'Notifications', icon: Bell },
   { href: '/predictions/markets', label: 'Markets', icon: TrendingUp },
   { href: '/predictions/trades', label: 'My Predictions', icon: Receipt },
   { href: '/predictions/leaderboard', label: 'Leaderboard', icon: Trophy },
@@ -35,6 +37,7 @@ const NAV_ITEMS_EN = [
 ]
 const NAV_ITEMS_ES = [
   { href: '/predictions', label: 'Panel', icon: LayoutDashboard },
+  { href: '/predictions/notifications', label: 'Notificaciones', icon: Bell },
   { href: '/predictions/markets', label: 'Mercados', icon: TrendingUp },
   { href: '/predictions/trades', label: 'Mis Predicciones', icon: Receipt },
   { href: '/predictions/leaderboard', label: 'Clasificación', icon: Trophy },

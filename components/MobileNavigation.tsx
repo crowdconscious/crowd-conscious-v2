@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { LayoutDashboard, TrendingUp, Trophy, User, LogOut } from 'lucide-react'
+import { LayoutDashboard, TrendingUp, Trophy, User, LogOut, Bell } from 'lucide-react'
 import { supabaseClient } from '@/lib/supabase-client'
 
 export default function MobileNavigation() {
@@ -12,6 +12,7 @@ export default function MobileNavigation() {
   const navItems = [
     { path: '/predictions', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/predictions/markets', icon: TrendingUp, label: 'Markets' },
+    { path: '/predictions/notifications', icon: Bell, label: 'Alerts' },
     { path: '/leaderboard', icon: Trophy, label: 'Leaderboard' },
     { path: '/profile', icon: User, label: 'Profile' },
   ]
