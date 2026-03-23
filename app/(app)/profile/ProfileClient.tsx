@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { AnimatedButton } from '@/components/ui/UIComponents'
 import { ChevronRight } from 'lucide-react'
@@ -45,6 +46,7 @@ export default function ProfileClient({
   topAchievements = [],
   impactVotes = [],
 }: ProfileClientProps) {
+  const router = useRouter()
   const [isEditing, setIsEditing] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [editData, setEditData] = useState({
@@ -61,9 +63,35 @@ export default function ProfileClient({
   const handleSaveProfile = async () => {
     setIsLoading(true)
     try {
-      console.log('Updating profile for user:', (user as any).id, editData)
+      const res = await fetch('/api/user/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          full_name: editData.full_name,
+          bio: editData.bio,
+          location: editData.location,
+          website: editData.website,
+          twitter: editData.twitter,
+          linkedin: editData.linkedin,
+          instagram: editData.instagram,
+          is_public: editData.is_public,
+        }),
+      })
+
+      const json = await res.json().catch(() => ({}))
+
+      if (!res.ok) {
+        const msg =
+          json?.error?.message ||
+          json?.message ||
+          (typeof json?.error === 'string' ? json.error : null) ||
+          'No se pudo guardar el perfil'
+        alert(msg)
+        return
+      }
+
       setIsEditing(false)
-      window.location.reload()
+      router.refresh()
     } catch (error) {
       console.error('Error updating profile:', error)
       alert('Failed to update profile')

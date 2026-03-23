@@ -186,32 +186,39 @@ export default function SettingsClient({ user, userSettings, profile }: Settings
         throw settingsError
       }
 
-      // Update profile data
-      const profileUpdate: any = {
-        bio: profileData.bio,
-        location: profileData.location
-      }
+      // Profile updates: use server API (session cookies) so RLS + auth match reliably
+      const profilePayload =
+        profile?.user_type === 'brand'
+          ? {
+              bio: profileData.bio,
+              location: profileData.location,
+              company_name: profileData.company_name,
+              company_website: profileData.company_website,
+              industry: profileData.industry,
+              company_size: profileData.company_size,
+            }
+          : {
+              full_name: profileData.full_name,
+              bio: profileData.bio,
+              location: profileData.location,
+            }
 
-      // Add appropriate fields based on user type
-      if (profile?.user_type === 'brand') {
-        profileUpdate.company_name = profileData.company_name
-        profileUpdate.company_description = profileData.bio // Using bio field for company description
-        profileUpdate.company_website = profileData.company_website
-        profileUpdate.industry = profileData.industry
-        profileUpdate.company_size = profileData.company_size
-      } else {
-        profileUpdate.full_name = profileData.full_name
-      }
+      const profileRes = await fetch('/api/user/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(profilePayload),
+      })
 
-      // Update profile in database
-      const { error: profileError } = await (supabaseClient as any)
-        .from('profiles')
-        .update(profileUpdate)
-        .eq('id', user.id)
-
-      if (profileError) {
-        console.error('Profile error:', profileError)
-        throw profileError
+      const profileJson = await profileRes.json().catch(() => ({}))
+      if (!profileRes.ok) {
+        const msg =
+          profileJson?.error?.message ||
+          (typeof profileJson?.error === 'object' && profileJson?.error !== null
+            ? (profileJson.error as { message?: string }).message
+            : null) ||
+          'Failed to update profile'
+        console.error('Profile error:', profileJson)
+        throw new Error(msg)
       }
 
       setHasChanges(false)
