@@ -21,6 +21,7 @@ import {
   Bot,
   DollarSign,
   Bell,
+  BarChart3,
 } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import LanguageSwitcherSimple from '@/components/LanguageSwitcherSimple'
@@ -109,6 +110,20 @@ export default function PredictionsShell({
 
         {isAdmin && (
           <div className="px-4 pb-2 space-y-1">
+            <p className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-amber-500/90">
+              {language === 'es' ? 'Administración' : 'Admin'}
+            </p>
+            <Link
+              href="/admin/intelligence"
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                pathname.startsWith('/admin/intelligence')
+                  ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
+                  : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800/50'
+              }`}
+            >
+              <BarChart3 className="w-4 h-4" />
+              {language === 'es' ? 'Centro de Inteligencia' : 'Intelligence Hub'}
+            </Link>
             <Link
               href="/predictions/admin/create-market"
               className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
@@ -271,6 +286,21 @@ export default function PredictionsShell({
               })}
               {isAdmin && (
                 <>
+                  <p className="px-3 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-amber-500/90">
+                    {language === 'es' ? 'Administración' : 'Admin'}
+                  </p>
+                  <Link
+                    href="/admin/intelligence"
+                    onClick={closeMobileMenu}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                      pathname.startsWith('/admin/intelligence')
+                        ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
+                        : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800/50'
+                    }`}
+                  >
+                    <BarChart3 className="w-4 h-4" />
+                    {language === 'es' ? 'Centro de Inteligencia' : 'Intelligence Hub'}
+                  </Link>
                   <Link
                     href="/predictions/admin/create-market"
                     onClick={closeMobileMenu}
