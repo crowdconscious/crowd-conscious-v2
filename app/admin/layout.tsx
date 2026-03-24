@@ -2,28 +2,35 @@ import { getCurrentUser } from '@/lib/auth-server'
 import { supabase } from '@/lib/supabase'
 import { redirect } from 'next/navigation'
 
-async function checkAdminAccess(userId: string) {
+async function checkAdminAccess(userId: string, email: string | null | undefined) {
   try {
-    console.log('🔍 Checking admin access for user:', userId)
-    
     const { data: profile, error } = await supabase
       .from('profiles')
-      .select('user_type')
+      .select('user_type, email')
       .eq('id', userId)
       .single()
 
     if (error) {
-      console.error('❌ Error fetching profile for admin check:', error)
+      console.error('Error fetching profile for admin check:', error)
       return false
     }
 
-    console.log('👤 User profile:', profile)
-    const isAdmin = (profile as any)?.user_type === 'admin'
-    console.log('🛡️ Is admin:', isAdmin)
-    
-    return isAdmin
+    if ((profile as { user_type?: string })?.user_type === 'admin') {
+      return true
+    }
+
+    const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim()
+    const em =
+      (email || (profile as { email?: string | null })?.email || '')
+        .toLowerCase()
+        .trim()
+    if (adminEmail && em && em === adminEmail) {
+      return true
+    }
+
+    return false
   } catch (error) {
-    console.error('💥 Admin check failed:', error)
+    console.error('Admin check failed:', error)
     return false
   }
 }
@@ -39,7 +46,10 @@ export default async function AdminLayout({
     redirect('/login')
   }
 
-  const hasAdminAccess = await checkAdminAccess((user as any).id)
+  const hasAdminAccess = await checkAdminAccess(
+    (user as { id: string }).id,
+    (user as { email?: string | null }).email
+  )
 
   if (!hasAdminAccess) {
     redirect('/dashboard?error=unauthorized')
@@ -59,6 +69,12 @@ export default async function AdminLayout({
           </div>
           <div className="flex items-center gap-4">
             <span className="text-red-100 text-sm">Logged in as Admin</span>
+            <a
+              href="/admin/intelligence"
+              className="bg-slate-800 hover:bg-slate-700 border border-emerald-500/40 px-3 py-1 rounded text-sm transition-colors font-medium"
+            >
+              📈 Intelligence Hub
+            </a>
             <a 
               href="/admin/markets" 
               className="bg-emerald-600 hover:bg-emerald-500 px-3 py-1 rounded text-sm transition-colors font-medium"
