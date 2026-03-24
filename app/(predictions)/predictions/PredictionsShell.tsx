@@ -114,9 +114,9 @@ export default function PredictionsShell({
               {language === 'es' ? 'Administración' : 'Admin'}
             </p>
             <Link
-              href="/admin/intelligence"
+              href="/predictions/intelligence"
               className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                pathname.startsWith('/admin/intelligence')
+                pathname.startsWith('/predictions/intelligence')
                   ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
                   : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800/50'
               }`}
@@ -290,10 +290,10 @@ export default function PredictionsShell({
                     {language === 'es' ? 'Administración' : 'Admin'}
                   </p>
                   <Link
-                    href="/admin/intelligence"
+                    href="/predictions/intelligence"
                     onClick={closeMobileMenu}
                     className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                      pathname.startsWith('/admin/intelligence')
+                      pathname.startsWith('/predictions/intelligence')
                         ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
                         : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800/50'
                     }`}

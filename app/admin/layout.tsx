@@ -70,7 +70,7 @@ export default async function AdminLayout({
           <div className="flex items-center gap-4">
             <span className="text-red-100 text-sm">Logged in as Admin</span>
             <a
-              href="/admin/intelligence"
+              href="/predictions/intelligence"
               className="bg-slate-800 hover:bg-slate-700 border border-emerald-500/40 px-3 py-1 rounded text-sm transition-colors font-medium"
             >
               📈 Intelligence Hub

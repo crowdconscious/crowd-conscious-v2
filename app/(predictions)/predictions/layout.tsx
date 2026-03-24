@@ -45,10 +45,14 @@ export default async function PredictionsLayout({
   if (user) {
     const supabase = await createClient()
     const [profileRes, counts] = await Promise.all([
-      supabase.from('profiles').select('user_type').eq('id', user.id).single(),
+      supabase.from('profiles').select('user_type, email').eq('id', user.id).single(),
       getNavCounts(supabase),
     ])
-    isAdmin = profileRes.data?.user_type === 'admin'
+    const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim()
+    const profileEmail = profileRes.data?.email?.toLowerCase().trim()
+    isAdmin =
+      profileRes.data?.user_type === 'admin' ||
+      (!!adminEmail && !!profileEmail && profileEmail === adminEmail)
     navCounts = counts
   }
 

@@ -191,11 +191,11 @@ export async function fetchIntelligenceDashboard(): Promise<IntelligenceDashboar
       pushErr('conscious_fund', e)
     }
 
-    // --- Votes last 30d ---
-    const since30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
-    const { data: v30 } = await admin.from('market_votes').select('created_at').gte('created_at', since30)
+    // --- Votes by day (up to ~1y) — client filters 7d / 30d / all ---
+    const since365 = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString()
+    const { data: v365 } = await admin.from('market_votes').select('created_at').gte('created_at', since365)
     const byDay = new Map<string, number>()
-    for (const row of v30 ?? []) {
+    for (const row of v365 ?? []) {
       const k = dayKey((row as { created_at: string }).created_at)
       byDay.set(k, (byDay.get(k) ?? 0) + 1)
     }
@@ -300,8 +300,8 @@ export async function fetchIntelligenceDashboard(): Promise<IntelligenceDashboar
     }
     out.confidenceDist = [...bins.entries()].map(([confidence, count]) => ({ confidence, count }))
 
-    // --- Signups profiles 30d ---
-    const { data: prof30 } = await admin.from('profiles').select('created_at').gte('created_at', since30)
+    // --- Signups by day (up to ~1y) ---
+    const { data: prof30 } = await admin.from('profiles').select('created_at').gte('created_at', since365)
     const sDay = new Map<string, number>()
     for (const row of prof30 ?? []) {
       const k = dayKey((row as { created_at: string }).created_at)

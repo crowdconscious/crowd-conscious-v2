@@ -23,7 +23,7 @@ import {
   Doughnut,
   Radar,
 } from 'react-chartjs-2'
-import { BarChart3, Download, LineChart, PieChart, Share2, Sparkles, Table2, Users } from 'lucide-react'
+import { BarChart3, Download, Shield } from 'lucide-react'
 import type { IntelligenceDashboardData, MarketRowCsv } from '@/lib/intelligence-data'
 
 ChartJS.register(
@@ -41,27 +41,28 @@ ChartJS.register(
   Filler
 )
 
-const BG = '#0a0e14'
+const CARD = 'rounded-xl border border-white/5 bg-[#1a2029]'
 const ACCENT = '#10b981'
-const BORDER = 'rgba(148, 163, 184, 0.25)'
-const TEXT = '#e2e8f0'
+const BORDER = 'rgba(255,255,255,0.06)'
+const TEXT = '#e8e6df'
+const MUTED = '#6b7280'
 
 const chartOptsBase = {
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
     legend: {
-      labels: { color: TEXT },
+      labels: { color: TEXT, font: { size: 11 } },
     },
   },
   scales: {
     x: {
-      ticks: { color: '#94a3b8' },
-      grid: { color: BORDER },
+      ticks: { color: MUTED, font: { size: 10 } },
+      grid: { color: 'rgba(255,255,255,0.04)' },
     },
     y: {
-      ticks: { color: '#94a3b8' },
-      grid: { color: BORDER },
+      ticks: { color: MUTED, font: { size: 10 } },
+      grid: { color: 'rgba(255,255,255,0.04)' },
     },
   },
 }
@@ -153,28 +154,34 @@ type TabId =
   | 'share'
   | 'sponsor'
 
-const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
-  { id: 'overview', label: 'Overview', icon: <PieChart className="w-4 h-4" /> },
-  { id: 'markets', label: 'Markets', icon: <Table2 className="w-4 h-4" /> },
-  { id: 'users', label: 'Users', icon: <Users className="w-4 h-4" /> },
-  { id: 'sentiment', label: 'Sentiment', icon: <LineChart className="w-4 h-4" /> },
-  { id: 'headlines', label: 'Headlines', icon: <Sparkles className="w-4 h-4" /> },
-  { id: 'share', label: 'Share Cards', icon: <Share2 className="w-4 h-4" /> },
-  { id: 'sponsor', label: 'Sponsor Report', icon: <BarChart3 className="w-4 h-4" /> },
+const TABS: { id: TabId; label: string }[] = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'markets', label: 'Markets' },
+  { id: 'users', label: 'Users' },
+  { id: 'sentiment', label: 'Sentiment' },
+  { id: 'headlines', label: 'Headlines' },
+  { id: 'share', label: 'Share Cards' },
+  { id: 'sponsor', label: 'Sponsor Report' },
 ]
+
+type RangeKey = '7' | '30' | 'all'
 
 export default function IntelligenceClient({ data }: { data: IntelligenceDashboardData }) {
   const [tab, setTab] = useState<TabId>('overview')
-  const [range, setRange] = useState<7 | 30 | 90>(30)
+  const [range, setRange] = useState<RangeKey>('30')
 
   const filteredVotesTime = useMemo(() => {
-    const n = range === 7 ? 7 : range === 30 ? 30 : 90
-    return data.votesOverTime.slice(-n)
+    const s = data.votesOverTime
+    if (range === 'all') return s
+    const n = range === '7' ? 7 : 30
+    return s.slice(-n)
   }, [data.votesOverTime, range])
 
   const filteredSignups = useMemo(() => {
-    const n = range === 7 ? 7 : range === 30 ? 30 : 90
-    return data.signupsOverTime.slice(-n)
+    const s = data.signupsOverTime
+    if (range === 'all') return s
+    const n = range === '7' ? 7 : 30
+    return s.slice(-n)
   }, [data.signupsOverTime, range])
 
   const yesNoDoughnut = useMemo(() => {
@@ -199,7 +206,7 @@ export default function IntelligenceClient({ data }: { data: IntelligenceDashboa
   const downloadCard = useCallback(async (el: HTMLDivElement | null, name: string) => {
     if (!el) return
     const mod = await import('html2canvas')
-    const canvas = await mod.default(el, { backgroundColor: BG, scale: 2 })
+    const canvas = await mod.default(el, { backgroundColor: '#1a2029', scale: 2 })
     const a = document.createElement('a')
     a.href = canvas.toDataURL('image/png')
     a.download = `cc-share-${name.slice(0, 20).replace(/\s+/g, '-')}.png`
@@ -228,106 +235,124 @@ export default function IntelligenceClient({ data }: { data: IntelligenceDashboa
   }, [data])
 
   return (
-    <div className="min-h-screen text-slate-200" style={{ background: BG }}>
-      <div className="sticky top-0 z-20 border-b border-slate-800/80 backdrop-blur-md px-4 py-3 flex flex-wrap items-center justify-between gap-3" style={{ background: 'rgba(10,14,20,0.92)' }}>
+    <div className="space-y-6 text-[#e8e6df] max-w-[1600px] mx-auto">
+      <Link
+        href="/predictions"
+        className="inline-flex text-sm text-slate-500 hover:text-emerald-400 transition-colors"
+      >
+        ← Back to Dashboard
+      </Link>
+
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between border-b border-white/5 pb-5">
         <div>
-          <h1 className="text-xl font-bold text-white flex items-center gap-2">
-            <BarChart3 className="w-6 h-6 text-emerald-400" />
-            Intelligence Hub
-          </h1>
-          <p className="text-xs text-slate-500">Admin-only analytics · Real Supabase data</p>
+          <div className="flex flex-wrap items-center gap-2 mb-1">
+            <BarChart3 className="w-6 h-6 text-emerald-500" aria-hidden />
+            <h1 className="text-xl font-medium text-[#e8e6df]">Intelligence Hub</h1>
+            <span className="inline-flex items-center gap-1 rounded-md border border-emerald-500/25 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-emerald-400">
+              <Shield className="w-3 h-3" />
+              Admin
+            </span>
+          </div>
+          <p className="text-sm text-slate-500">Admin analytics · Real Supabase data</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <select
             value={range}
-            onChange={(e) => setRange(Number(e.target.value) as 7 | 30 | 90)}
-            className="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-sm"
+            onChange={(e) => setRange(e.target.value as RangeKey)}
+            className="rounded-lg border border-white/10 bg-[#1a2029] px-3 py-2 text-sm text-[#e8e6df] focus:outline-none focus:ring-1 focus:ring-emerald-500/40"
           >
-            <option value={7}>Last 7 days</option>
-            <option value={30}>Last 30 days</option>
-            <option value={90}>Last 90 days (chart window)</option>
+            <option value="7">Last 7 days</option>
+            <option value="30">Last 30 days</option>
+            <option value="all">All time (up to 1y)</option>
           </select>
           <button
             type="button"
             onClick={() => downloadCSV(data.allMarkets)}
-            className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm px-3 py-1.5"
+            className="inline-flex items-center gap-2 rounded-lg bg-emerald-500 px-3 py-2 text-sm font-medium text-slate-950 hover:bg-emerald-400"
           >
             <Download className="w-4 h-4" />
             Export CSV
           </button>
-          <Link href="/admin" className="text-sm text-slate-400 hover:text-white">
-            ← Admin
-          </Link>
         </div>
-      </div>
+      </header>
 
       {!data.loadedWithServiceRole && (
-        <div className="mx-4 mt-4 rounded-lg border border-amber-700/50 bg-amber-950/40 px-4 py-3 text-amber-200 text-sm">
+        <div className={`${CARD} px-4 py-3 text-amber-200/90 text-sm border-amber-500/20`}>
           Service role key missing — KPIs may be empty in local dev. Configure SUPABASE_SERVICE_ROLE_KEY.
         </div>
       )}
       {data.errors.length > 0 && (
-        <div className="mx-4 mt-4 rounded-lg border border-red-800/50 bg-red-950/30 px-4 py-2 text-red-200 text-xs font-mono">
+        <div className={`${CARD} px-4 py-2 text-red-300/90 text-xs font-mono border-red-500/20`}>
           {data.errors.slice(0, 3).join(' · ')}
         </div>
       )}
 
-      <div className="flex flex-col md:flex-row max-w-[1600px] mx-auto">
-        <nav className="md:w-56 shrink-0 border-b md:border-b-0 md:border-r border-slate-800 p-3 space-y-1">
-          {TABS.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setTab(t.id)}
-              className={`w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-left transition-colors ${
-                tab === t.id ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30' : 'text-slate-400 hover:bg-slate-800/80'
-              }`}
-            >
-              {t.icon}
-              {t.label}
-            </button>
-          ))}
-        </nav>
+      <div className="flex flex-wrap gap-1 border-b border-white/5 pb-px">
+        {TABS.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => setTab(t.id)}
+            className={`rounded-t-lg px-4 py-2.5 text-sm font-medium transition-colors ${
+              tab === t.id
+                ? 'bg-emerald-500/[0.08] text-emerald-400 border border-b-0 border-white/5 border-t border-x'
+                : 'text-slate-500 hover:text-slate-300 hover:bg-white/[0.03]'
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
 
-        <main className="flex-1 p-4 md:p-6 space-y-8 min-w-0">
+      <main className="space-y-8 min-w-0 pb-8">
           {tab === 'overview' && (
             <>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 <Kpi label="Registered votes" value={data.kpis.registered_votes} />
                 <Kpi label="Total votes" value={data.kpis.total_votes} />
-                <Kpi label="Users (profiles)" value={data.kpis.total_users} />
+                <Kpi label="Users" value={data.kpis.total_users} />
                 <Kpi label="Active markets" value={data.kpis.active_markets} />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <Kpi
+                  label="Avg confidence"
+                  value={data.kpis.avg_confidence != null ? data.kpis.avg_confidence.toFixed(2) : '—'}
+                />
+                <Kpi
+                  label="Conscious fund"
+                  value={data.kpis.fund_total != null ? data.kpis.fund_total.toLocaleString() : '—'}
+                  accent
+                />
                 <Kpi label="Orphan markets (0 votes)" value={data.kpis.orphan_markets} />
-                <Kpi label="Avg confidence" value={data.kpis.avg_confidence != null ? data.kpis.avg_confidence.toFixed(2) : '—'} />
-                <Kpi label="Fund total" value={data.kpis.fund_total != null ? data.kpis.fund_total.toLocaleString() : '—'} />
               </div>
               {data.voterSplit.some((v) => v.count > 0) && (
-                <div className="h-56 max-w-md rounded-xl border border-slate-800 p-4 bg-slate-900/40">
-                  <h3 className="text-sm font-semibold text-slate-300 mb-2">Registered vs anonymous votes</h3>
+                <div className={`h-56 max-w-md ${CARD} p-5`}>
+                  <h3 className="text-sm font-medium text-slate-500 mb-3">Registered vs anonymous</h3>
                   <Doughnut
                     data={{
                       labels: data.voterSplit.map((v) =>
-                        v.voter_type === 'anonymous' ? 'Anonymous (guest)' : 'Registered'
+                        v.voter_type === 'anonymous' ? 'Anonymous' : 'Registered'
                       ),
                       datasets: [
                         {
                           data: data.voterSplit.map((v) => v.count),
-                          backgroundColor: ['rgba(148,163,184,0.75)', 'rgba(16,185,129,0.85)'],
-                          borderColor: BORDER,
+                          backgroundColor: ['#374151', '#10b981'],
+                          borderColor: 'rgba(255,255,255,0.06)',
+                          borderWidth: 1,
                         },
                       ],
                     }}
                     options={{
                       responsive: true,
                       maintainAspectRatio: false,
-                      plugins: { legend: { position: 'bottom', labels: { color: TEXT } } },
+                      plugins: { legend: { position: 'bottom', labels: { color: TEXT, font: { size: 11 } } } },
                     }}
                   />
                 </div>
               )}
               <div className="grid lg:grid-cols-2 gap-6">
-                <div className="h-72 rounded-xl border border-slate-800 p-4 bg-slate-900/40">
-                  <h3 className="text-sm font-semibold text-slate-300 mb-2">Votes per day</h3>
+                <div className={`h-72 ${CARD} p-5`}>
+                  <h3 className="text-sm font-medium text-slate-500 mb-3">Votes per day</h3>
                   <Line
                     data={{
                       labels: filteredVotesTime.map((d) => d.date),
@@ -339,14 +364,16 @@ export default function IntelligenceClient({ data }: { data: IntelligenceDashboa
                           backgroundColor: 'rgba(16,185,129,0.15)',
                           fill: true,
                           tension: 0.25,
+                          pointRadius: 2,
+                          pointBackgroundColor: ACCENT,
                         },
                       ],
                     }}
                     options={{ ...chartOptsBase, plugins: { ...chartOptsBase.plugins, legend: { display: false } } }}
                   />
                 </div>
-                <div className="h-72 rounded-xl border border-slate-800 p-4 bg-slate-900/40">
-                  <h3 className="text-sm font-semibold text-slate-300 mb-2">Votes by category</h3>
+                <div className={`h-72 ${CARD} p-5`}>
+                  <h3 className="text-sm font-medium text-slate-500 mb-3">Votes by category</h3>
                   <Doughnut
                     data={{
                       labels: data.votesByCategory.map((c) => c.category),
@@ -373,25 +400,30 @@ export default function IntelligenceClient({ data }: { data: IntelligenceDashboa
                   />
                 </div>
               </div>
-              <div>
-                <h3 className="text-sm font-semibold text-slate-300 mb-2">Top markets</h3>
-                <div className="overflow-x-auto rounded-xl border border-slate-800">
+              <div className={`${CARD} overflow-hidden`}>
+                <h3 className="text-sm font-medium text-slate-500 px-5 pt-5 pb-2">Top markets</h3>
+                <div className="overflow-x-auto">
                   <table className="w-full text-sm">
-                    <thead className="bg-slate-900/80 text-slate-400">
-                      <tr>
-                        <th className="text-left p-2">Title</th>
-                        <th className="text-left p-2">Cat</th>
-                        <th className="text-right p-2">Votes</th>
-                        <th className="text-right p-2">YES</th>
+                    <thead>
+                      <tr className="border-b border-white/5 text-left text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                        <th className="px-5 py-2">Title</th>
+                        <th className="px-3 py-2">Category</th>
+                        <th className="px-3 py-2 text-right">Votes</th>
+                        <th className="px-5 py-2 text-right">YES</th>
                       </tr>
                     </thead>
                     <tbody>
                       {data.topMarkets.map((m) => (
-                        <tr key={m.id} className="border-t border-slate-800/80">
-                          <td className="p-2 max-w-md truncate">{m.title}</td>
-                          <td className="p-2">{m.category}</td>
-                          <td className="p-2 text-right">{m.total_votes}</td>
-                          <td className="p-2 text-right">{Math.round(m.yes_probability * 100)}%</td>
+                        <tr
+                          key={m.id}
+                          className="border-b border-white/5 transition-colors hover:bg-white/[0.02]"
+                        >
+                          <td className="px-5 py-2.5 max-w-[260px] truncate text-slate-300">{m.title}</td>
+                          <td className="px-3 py-2.5 text-slate-400">{m.category}</td>
+                          <td className="px-3 py-2.5 text-right tabular-nums">{m.total_votes}</td>
+                          <td className="px-5 py-2.5 text-right tabular-nums text-emerald-400/90">
+                            {Math.round(m.yes_probability * 100)}%
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -403,8 +435,8 @@ export default function IntelligenceClient({ data }: { data: IntelligenceDashboa
 
           {tab === 'markets' && (
             <div className="space-y-6">
-              <div className="h-80 rounded-xl border border-slate-800 p-4 bg-slate-900/40">
-                <h3 className="text-sm font-semibold text-slate-300 mb-2">Probability drift (top 5 markets, ~4 weeks)</h3>
+              <div className={`h-80 ${CARD} p-5`}>
+                <h3 className="text-sm font-medium text-slate-500 mb-3">Probability drift (top 5 markets, ~4 weeks)</h3>
                 <Line
                   data={{
                     labels: mergeDriftLabels(data.driftSeries),
@@ -422,37 +454,46 @@ export default function IntelligenceClient({ data }: { data: IntelligenceDashboa
                   }}
                 />
               </div>
-              <div className="overflow-x-auto rounded-xl border border-slate-800">
+              <div className={`overflow-x-auto ${CARD}`}>
                 <table className="w-full text-sm min-w-[800px]">
-                  <thead className="bg-slate-900/80 text-slate-400">
-                    <tr>
-                      <th className="text-left p-2">Market</th>
-                      <th className="text-left p-2">Category</th>
-                      <th className="text-right p-2">Votes</th>
-                      <th className="text-left p-2 min-w-[200px]">YES %</th>
-                      <th className="text-left p-2">Status</th>
-                      <th className="text-left p-2">Resolves</th>
+                  <thead>
+                    <tr className="border-b border-white/5 text-left text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                      <th className="px-5 py-3">Market</th>
+                      <th className="px-3 py-3">Category</th>
+                      <th className="px-3 py-3 text-right">Votes</th>
+                      <th className="px-5 py-3">YES %</th>
+                      <th className="px-3 py-3">Status</th>
+                      <th className="px-5 py-3">Resolves</th>
                     </tr>
                   </thead>
                   <tbody>
                     {data.allMarkets.map((m) => (
-                      <tr key={m.id} className="border-t border-slate-800/80">
-                        <td className="p-2 max-w-xs truncate">{m.title}</td>
-                        <td className="p-2">{m.category}</td>
-                        <td className="p-2 text-right">{m.total_votes}</td>
-                        <td className="p-2">
+                      <tr
+                        key={m.id}
+                        className="border-b border-white/5 transition-colors hover:bg-white/[0.02]"
+                      >
+                        <td className="px-5 py-3 max-w-[260px] truncate text-slate-300">{m.title}</td>
+                        <td className="px-3 py-3 text-slate-400">{m.category}</td>
+                        <td className="px-3 py-3 text-right tabular-nums">{m.total_votes}</td>
+                        <td className="px-5 py-3">
                           <div className="flex items-center gap-2">
-                            <div className="h-2 flex-1 rounded-full bg-slate-800 overflow-hidden min-w-[80px]">
+                            <div className="h-1.5 w-[60px] shrink-0 rounded-full bg-slate-800 overflow-hidden">
                               <div
                                 className="h-full rounded-full bg-emerald-500"
                                 style={{ width: `${Math.round(m.yes_probability * 100)}%` }}
                               />
                             </div>
-                            <span className="text-xs text-slate-400 w-10">{Math.round(m.yes_probability * 100)}%</span>
+                            <span className="text-xs text-slate-400 tabular-nums w-9">
+                              {Math.round(m.yes_probability * 100)}%
+                            </span>
                           </div>
                         </td>
-                        <td className="p-2">{m.status}</td>
-                        <td className="p-2 text-xs text-slate-500">{m.resolution_date?.slice(0, 10) ?? '—'}</td>
+                        <td className="px-3 py-3">
+                          <StatusBadge status={m.status} />
+                        </td>
+                        <td className="px-5 py-3 text-xs text-slate-500">
+                          {m.resolution_date?.slice(0, 10) ?? '—'}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -463,8 +504,8 @@ export default function IntelligenceClient({ data }: { data: IntelligenceDashboa
 
           {tab === 'users' && (
             <div className="grid lg:grid-cols-2 gap-6">
-              <div className="h-72 rounded-xl border border-slate-800 p-4 bg-slate-900/40">
-                <h3 className="text-sm font-semibold text-slate-300 mb-2">New profiles (signups) by day</h3>
+              <div className={`h-72 ${CARD} p-5`}>
+                <h3 className="text-sm font-medium text-slate-500 mb-3">New profiles (signups) by day</h3>
                 <Line
                   data={{
                     labels: filteredSignups.map((d) => d.date),
@@ -481,8 +522,8 @@ export default function IntelligenceClient({ data }: { data: IntelligenceDashboa
                   options={{ ...chartOptsBase, plugins: { legend: { display: false } } }}
                 />
               </div>
-              <div className="h-72 rounded-xl border border-slate-800 p-4 bg-slate-900/40">
-                <h3 className="text-sm font-semibold text-slate-300 mb-2">XP leaderboard (top 10)</h3>
+              <div className={`h-72 ${CARD} p-5`}>
+                <h3 className="text-sm font-medium text-slate-500 mb-3">XP leaderboard (top 10)</h3>
                 <Bar
                   data={{
                     labels: data.leaderboard.map((_, i) => `#${i + 1}`),
@@ -503,8 +544,8 @@ export default function IntelligenceClient({ data }: { data: IntelligenceDashboa
                   }}
                 />
               </div>
-              <div className="lg:col-span-2 h-64 rounded-xl border border-slate-800 p-4 bg-slate-900/40">
-                <h3 className="text-sm font-semibold text-slate-300 mb-2">Accuracy distribution (top 50 users by XP)</h3>
+              <div className={`lg:col-span-2 h-64 ${CARD} p-5`}>
+                <h3 className="text-sm font-medium text-slate-500 mb-3">Accuracy distribution (top 50 users by XP)</h3>
                 <Bar
                   data={{
                     labels: data.accuracyBuckets.map((b) => b.label),
@@ -512,32 +553,39 @@ export default function IntelligenceClient({ data }: { data: IntelligenceDashboa
                       {
                         label: 'Users',
                         data: data.accuracyBuckets.map((b) => b.count),
-                        backgroundColor: 'rgba(59,130,246,0.55)',
+                        backgroundColor: 'rgba(16,185,129,0.35)',
                       },
                     ],
                   }}
                   options={{ ...chartOptsBase, plugins: { legend: { display: false } } }}
                 />
               </div>
-              <div className="lg:col-span-2 overflow-x-auto rounded-xl border border-slate-800">
+              <div className={`lg:col-span-2 overflow-x-auto ${CARD}`}>
                 <table className="w-full text-sm">
-                  <thead className="bg-slate-900/80 text-slate-400">
-                    <tr>
-                      <th className="text-left p-2">#</th>
-                      <th className="text-left p-2">Name</th>
-                      <th className="text-right p-2">XP</th>
-                      <th className="text-right p-2">Votes</th>
-                      <th className="text-right p-2">Accuracy</th>
+                  <thead>
+                    <tr className="border-b border-white/5 text-left text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                      <th className="px-5 py-3">#</th>
+                      <th className="px-3 py-3">Name</th>
+                      <th className="px-3 py-3 text-right">XP</th>
+                      <th className="px-3 py-3 text-right">Votes</th>
+                      <th className="px-5 py-3 text-right">Accuracy</th>
                     </tr>
                   </thead>
                   <tbody>
                     {data.leaderboard.map((l, i) => (
-                      <tr key={i} className="border-t border-slate-800/80">
-                        <td className="p-2">{i + 1}</td>
-                        <td className="p-2">{l.display_name || 'Anonymous'}</td>
-                        <td className="p-2 text-right">{l.total_xp.toLocaleString()}</td>
-                        <td className="p-2 text-right">{l.votes_cast}</td>
-                        <td className="p-2 text-right">{l.accuracy_pct != null ? `${l.accuracy_pct}%` : '—'}</td>
+                      <tr
+                        key={i}
+                        className="border-b border-white/5 transition-colors hover:bg-white/[0.02]"
+                      >
+                        <td className="px-5 py-2.5 text-slate-500">{i + 1}</td>
+                        <td className="px-3 py-2.5 text-slate-300">{l.display_name || 'Anonymous'}</td>
+                        <td className="px-3 py-2.5 text-right tabular-nums text-emerald-400/90">
+                          {l.total_xp.toLocaleString()}
+                        </td>
+                        <td className="px-3 py-2.5 text-right tabular-nums">{l.votes_cast}</td>
+                        <td className="px-5 py-2.5 text-right tabular-nums">
+                          {l.accuracy_pct != null ? `${l.accuracy_pct}%` : '—'}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -548,8 +596,8 @@ export default function IntelligenceClient({ data }: { data: IntelligenceDashboa
 
           {tab === 'sentiment' && (
             <div className="grid lg:grid-cols-2 gap-6">
-              <div className="h-96 rounded-xl border border-slate-800 p-4 bg-slate-900/40">
-                <h3 className="text-sm font-semibold text-slate-300 mb-2">YES % by category (weighted)</h3>
+              <div className={`h-96 ${CARD} p-5`}>
+                <h3 className="text-sm font-medium text-slate-500 mb-3">YES % by category (weighted)</h3>
                 <Radar
                   data={{
                     labels: radarSentiment.labels,
@@ -580,8 +628,8 @@ export default function IntelligenceClient({ data }: { data: IntelligenceDashboa
                   }}
                 />
               </div>
-              <div className="h-96 rounded-xl border border-slate-800 p-4 bg-slate-900/40">
-                <h3 className="text-sm font-semibold text-slate-300 mb-2">YES vs NO (vote_count on outcomes)</h3>
+              <div className={`h-96 ${CARD} p-5`}>
+                <h3 className="text-sm font-medium text-slate-500 mb-3">YES vs NO (outcomes)</h3>
                 <Doughnut
                   data={{
                     labels: ['YES-like', 'NO-like', 'Other / multi'],
@@ -600,8 +648,8 @@ export default function IntelligenceClient({ data }: { data: IntelligenceDashboa
                   options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: TEXT } } } }}
                 />
               </div>
-              <div className="lg:col-span-2 h-64 rounded-xl border border-slate-800 p-4 bg-slate-900/40">
-                <h3 className="text-sm font-semibold text-slate-300 mb-2">Confidence (1–10)</h3>
+              <div className={`lg:col-span-2 h-64 ${CARD} p-5`}>
+                <h3 className="text-sm font-medium text-slate-500 mb-3">Confidence (1–10)</h3>
                 <Bar
                   data={{
                     labels: data.confidenceDist.map((c) => String(c.confidence)),
@@ -624,12 +672,12 @@ export default function IntelligenceClient({ data }: { data: IntelligenceDashboa
               {headlines.map((h, i) => (
                 <div
                   key={i}
-                  className={`rounded-xl border p-4 ${
+                  className={`rounded-xl border border-white/5 bg-[#1a2029] p-5 ${
                     h.color === 'green'
-                      ? 'border-emerald-500/30 bg-emerald-500/5'
+                      ? 'border-l-2 border-l-emerald-500/60'
                       : h.color === 'amber'
-                        ? 'border-amber-500/30 bg-amber-500/5'
-                        : 'border-sky-500/30 bg-sky-500/5'
+                        ? 'border-l-2 border-l-amber-500/60'
+                        : 'border-l-2 border-l-sky-500/50'
                   }`}
                 >
                   <div className="text-xs uppercase tracking-wide text-slate-500 mb-1">{h.type}</div>
@@ -646,8 +694,7 @@ export default function IntelligenceClient({ data }: { data: IntelligenceDashboa
                 <div key={m.id} className="space-y-2">
                   <div
                     id={`share-card-${m.id}`}
-                    className="rounded-2xl border border-slate-700 overflow-hidden shadow-xl"
-                    style={{ background: 'linear-gradient(145deg, #0f172a 0%, #020617 100%)' }}
+                    className="rounded-2xl border border-white/10 overflow-hidden shadow-xl bg-[#1a2029]"
                   >
                     <div className="px-4 py-3 flex items-center justify-between border-b border-slate-800">
                       <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">{m.category}</span>
@@ -684,7 +731,7 @@ export default function IntelligenceClient({ data }: { data: IntelligenceDashboa
                       const el = document.getElementById(`share-card-${m.id}`)
                       downloadCard(el as HTMLDivElement, m.title)
                     }}
-                    className="w-full py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm text-white border border-slate-700"
+                    className="w-full py-2 rounded-lg border border-white/10 bg-[#0f1419] hover:bg-white/5 text-sm text-slate-200"
                   >
                     Download card (PNG)
                   </button>
@@ -695,7 +742,7 @@ export default function IntelligenceClient({ data }: { data: IntelligenceDashboa
 
           {tab === 'sponsor' && (
             <div className="max-w-3xl space-y-4">
-              <pre className="rounded-xl border border-slate-800 bg-slate-950/80 p-4 text-xs text-slate-300 whitespace-pre-wrap font-mono overflow-x-auto">
+              <pre className="rounded-xl border border-white/5 bg-[#0f1419] p-5 text-xs leading-relaxed text-slate-400 whitespace-pre-wrap font-mono overflow-x-auto">
                 {sponsorBody}
               </pre>
               <button
@@ -703,24 +750,58 @@ export default function IntelligenceClient({ data }: { data: IntelligenceDashboa
                 onClick={() => {
                   void navigator.clipboard.writeText(sponsorBody)
                 }}
-                className="rounded-lg bg-emerald-600 hover:bg-emerald-500 px-4 py-2 text-sm text-white"
+                className="rounded-lg bg-emerald-500 px-4 py-2.5 text-sm font-medium text-slate-950 hover:bg-emerald-400"
               >
                 Copy report
               </button>
             </div>
           )}
-        </main>
+      </main>
+    </div>
+  )
+}
+
+function Kpi({
+  label,
+  value,
+  accent,
+}: {
+  label: string
+  value: string | number
+  accent?: boolean
+}) {
+  return (
+    <div className={`${CARD} p-5`}>
+      <div className="text-[11px] font-medium uppercase tracking-wide text-slate-500">{label}</div>
+      <div
+        className={`mt-1 text-2xl font-medium ${accent ? 'text-emerald-400' : 'text-[#e8e6df]'}`}
+      >
+        {value}
       </div>
     </div>
   )
 }
 
-function Kpi({ label, value }: { label: string; value: string | number }) {
+function StatusBadge({ status }: { status: string }) {
+  const s = status.toLowerCase()
+  if (s === 'active' || s === 'trading') {
+    return (
+      <span className="inline-flex rounded-md bg-emerald-500/15 px-2 py-0.5 text-[11px] font-medium text-emerald-400">
+        {status}
+      </span>
+    )
+  }
+  if (s === 'resolved') {
+    return (
+      <span className="inline-flex rounded-md bg-sky-500/15 px-2 py-0.5 text-[11px] font-medium text-sky-400">
+        {status}
+      </span>
+    )
+  }
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-      <div className="text-xs text-slate-500 uppercase tracking-wide">{label}</div>
-      <div className="text-2xl font-bold text-white mt-1">{value}</div>
-    </div>
+    <span className="inline-flex rounded-md bg-white/5 px-2 py-0.5 text-[11px] font-medium text-slate-400">
+      {status}
+    </span>
   )
 }
 
