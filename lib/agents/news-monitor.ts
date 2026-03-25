@@ -9,6 +9,11 @@ import {
 import { fetchRSSSignals } from '@/lib/agents/fetchers/rss-fetcher'
 import { fetchSocialSignals } from '@/lib/agents/fetchers/social-fetcher'
 import { CATEGORY_TO_TAGS, Signal } from '@/lib/agents/sources-config'
+import {
+  emptyPlatformIntelligence,
+  formatNewsMonitorPlatformContext,
+  getPlatformIntelligence,
+} from '@/lib/agents/intelligence-bridge'
 
 type NewsArticle = {
   title: string
@@ -74,6 +79,7 @@ function matchSignalsToMarket(
     community: 'culture',
     cause: 'general',
     world_cup: 'sports',
+    sustainability: 'sustainability',
   }
   const mappedCat = market.category ? (marketCatMap[market.category] ?? market.category) : ''
   if (mappedCat && !relevantCategories.includes(mappedCat)) {
@@ -104,6 +110,39 @@ function matchSignalsToMarket(
     .sort((a, b) => (b._score ?? 0) - (a._score ?? 0))
     .slice(0, 8)
     .map(({ _score, ...s }) => s)
+}
+
+/** Cap per source category so Claude sees diverse topics (not only sports / Mundial). */
+function diversifySignals(signals: Signal[], maxPerCategory: number = 8): Signal[] {
+  const byCategory: Record<string, Signal[]> = {}
+
+  for (const signal of signals) {
+    const cat = signal.category?.trim() || 'general'
+    if (!byCategory[cat]) byCategory[cat] = []
+    byCategory[cat].push(signal)
+  }
+
+  const diverse: Signal[] = []
+  for (const [, catSignals] of Object.entries(byCategory)) {
+    diverse.push(...catSignals.slice(0, maxPerCategory))
+  }
+
+  return diverse
+    .sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime())
+    .slice(0, 40)
+}
+
+function getEndOfWeek(): string {
+  const now = new Date()
+  const daysUntilSunday = 7 - now.getDay()
+  const sunday = new Date(now.getTime() + daysUntilSunday * 86400000)
+  return sunday.toISOString().split('T')[0]
+}
+
+function getEndOfMonth(): string {
+  const now = new Date()
+  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+  return lastDay.toISOString().split('T')[0]
 }
 
 function normalizeTitleForDedup(title: string): string {
@@ -216,7 +255,7 @@ async function fetchFallbackSignals(activeMarkets: { title: string; tags: string
     const terms = extractKeywords(m.title, m.tags, m.category).slice(0, 4)
     if (terms.length > 0) searchQueries.add(terms.join(' '))
   }
-  if (searchQueries.size === 0) searchQueries.add('Mexico World Cup 2026 economia')
+  if (searchQueries.size === 0) searchQueries.add('Mexico economia politica sociedad')
 
   const newsArticles: NewsArticle[] = []
   for (const q of Array.from(searchQueries).slice(0, 5)) {
@@ -278,6 +317,14 @@ export async function runNewsMonitor(options?: {
     const anthropic = getAnthropicClient()
     const supabase = getSupabaseAdmin()
 
+    let platformIntel = emptyPlatformIntelligence()
+    try {
+      platformIntel = await getPlatformIntelligence()
+    } catch (e) {
+      console.warn('[NEWS-MONITOR] getPlatformIntelligence failed:', e)
+    }
+    const platformBlock = formatNewsMonitorPlatformContext(platformIntel)
+
     // Step 1: Fetch signals (parallel)
     const [rssSignals, socialSignals] = await Promise.all([
       fetchRSSSignals(),
@@ -311,6 +358,8 @@ export async function runNewsMonitor(options?: {
       console.log('[NEWS-MONITOR] After fallback:', allSignals.length, 'signals')
     }
 
+    allSignals = diversifySignals(allSignals)
+    console.log('[NEWS-MONITOR] After diversity filter:', allSignals.length, 'signals')
     // Step 3: Match signals to markets (generous: 1+ signal is enough for analysis)
     const marketSignals: Record<string, Signal[]> = {}
     for (const market of activeMarkets) {
@@ -366,7 +415,17 @@ export async function runNewsMonitor(options?: {
         )
         .join('\n\n')
 
+      const today = new Date().toISOString().split('T')[0]
+      const endOfWeek = getEndOfWeek()
+      const endOfMonth = getEndOfMonth()
+
       const userMessage = `Eres el analista de inteligencia de Crowd Conscious, una plataforma de predicciones en México. Tu trabajo NO es solo resumir noticias — es identificar oportunidades de mercados de predicción.
+
+${platformBlock}
+
+FECHA DE HOY: ${today}
+FIN DE ESTA SEMANA: ${endOfWeek}
+FIN DE ESTE MES: ${endOfMonth}
 
 MERCADO EXISTENTE: ${market.title}
 CRITERIO: ${market.resolution_criteria}
@@ -375,6 +434,20 @@ TAGS: ${market.tags?.join(', ') ?? ''}
 
 SEÑALES RECIENTES:
 ${signalsText}
+
+REGLA CRÍTICA DE DIVERSIDAD:
+- NO sugieras mercados sobre el Mundial FIFA a menos que las señales
+  sean MUY específicas (ejemplo: resultado de un partido, fecha de venta
+  de boletos). El Mundial ya tiene suficientes mercados.
+- PRIORIZA estos temas para sugerencias:
+  1. TRENDING: Lo que está en tendencia HOY en México (política, viral, cultura)
+  2. ECONOMÍA: Tipo de cambio, Banxico, empleo, inflación, nearshoring
+  3. GEOPOLÍTICA: Trump/México, aranceles, migración, relaciones internacionales
+  4. SUSTENTABILIDAD: Calidad del aire, agua, cambio climático, energía
+  5. TECNOLOGÍA: IA, regulación tech, startups mexicanas
+  6. SOCIEDAD: Seguridad, educación, salud pública, protestas
+- El Mundial es solo UNO de muchos temas. Máximo 1 de cada 5 sugerencias
+  puede ser sobre el Mundial.
 
 Responde SOLO en JSON válido:
 {
@@ -393,7 +466,7 @@ Responde SOLO en JSON válido:
       "category": "sports|politics|economy|culture|world|technology",
       "resolution_criteria_es": "Criterio claro y verificable de cómo se resuelve este mercado",
       "resolution_criteria_en": "Clear, verifiable criteria for how this market resolves",
-      "resolution_date": "YYYY-MM-DD (fecha razonable para resolución)",
+      "resolution_date": "YYYY-MM-DD (dentro de días o pocas semanas; ver REGLAS resolution_date)",
       "initial_probability": <número 1-99, tu estimación inicial>,
       "tags": ["tag1", "tag2", "tag3"],
       "reasoning": "Por qué este mercado sería interesante para la comunidad",
@@ -402,12 +475,33 @@ Responde SOLO en JSON válido:
   ]
 }
 
+REGLAS PARA resolution_date — ESTO ES CRÍTICO:
+- Al menos 50% de las sugerencias deben resolverse en los próximos 7 DÍAS (desde HOY: ${today})
+- El resto puede resolverse en 2-4 semanas máximo
+- NUNCA sugieras una fecha más allá de 3 meses en el futuro (desde ${today})
+- Usa las señales para identificar EVENTOS CONCRETOS con fecha:
+  • Partidos deportivos → fecha del partido
+  • Reuniones de Banxico → fecha de la reunión
+  • Elecciones/votaciones → fecha de la votación
+  • Lanzamientos de datos (INEGI, encuestas) → fecha de publicación
+  • Eventos culturales → fecha del evento
+- Si no hay un evento con fecha clara, usa como máximo fin de esta semana (${endOfWeek}) o fin de este mes (${endOfMonth})
+- Fecha de hoy: ${today}
+- Fin de esta semana: ${endOfWeek}
+- Fin de este mes: ${endOfMonth}
+
+EJEMPLOS DE BUENAS FECHAS (ilustrativos; usa la fecha real según señales y calendario):
+- Señal: "Banxico se reúne el jueves" → resolution_date: la fecha ISO del jueves más próximo
+- Señal: "Cruz Azul juega el domingo" → resolution_date: la fecha ISO de ese domingo
+- Señal: "INEGI publica PIB el viernes" → resolution_date: la fecha ISO de ese viernes
+- Señal: "Tendencia viral hoy" → resolution_date: 2-7 días desde ${today} (urgencia)
+
 REGLAS PARA suggested_markets:
 - Sugiere 0-2 mercados NUEVOS que NO existan ya en la plataforma
 - Solo sugiere si las señales realmente lo justifican (no inventes)
 - El título DEBE ser una pregunta con ¿? que se responda Sí/No
 - resolution_criteria debe ser VERIFICABLE con fuentes públicas
-- resolution_date debe ser realista (no más de 6 meses en el futuro)
+- Cada resolution_date debe cumplir las REGLAS PARA resolution_date de arriba (corto plazo, urgencia)
 - initial_probability debe reflejar lo que sugieren las señales
 - tags deben ser lowercase, sin acentos, separados por coma
 - Si no hay buenas sugerencias, devuelve "suggested_markets": []`

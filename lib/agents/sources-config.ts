@@ -33,6 +33,28 @@ export const RSS_FEEDS: RSSSource[] = [
   { url: 'https://mexicotoday.com/feed', name: 'Mexico Today', category: 'general', language: 'en' },
   // International — Spanish
   { url: 'https://www.dw.com/es/rss', name: 'Deutsche Welle Español', category: 'world', language: 'es' },
+  // Trending / viral / social pulse
+  {
+    url: 'https://www.eluniversal.com.mx/rss/tendencias.xml',
+    name: 'El Universal Tendencias',
+    category: 'trending',
+    language: 'es',
+  },
+  { url: 'https://www.bbc.com/mundo/topics/c2lej05epw5t/rss.xml', name: 'BBC Mundo', category: 'world', language: 'es' },
+  // Economy (dedicated feeds)
+  {
+    url: 'https://www.bloomberg.com/feeds/podcasts/bloomberg_en_espanol.xml',
+    name: 'Bloomberg Español',
+    category: 'economy',
+    language: 'es',
+  },
+  // Sustainability / environment
+  {
+    url: 'https://www.greenpeace.org/mexico/feed/',
+    name: 'Greenpeace México',
+    category: 'sustainability',
+    language: 'es',
+  },
 ]
 
 // ── TWITTER/X ACCOUNTS ──
@@ -86,6 +108,8 @@ export const CATEGORY_TO_TAGS: Record<string, string[]> = {
   culture: ['cdmx', 'cultura', 'eventos', 'turismo'],
   general: ['mexico', 'noticias', 'sociedad'],
   world: ['mundo', 'internacional', 'geopolitica', 'trump'],
+  trending: ['viral', 'tendencia', 'redes', 'cultura', 'sociedad'],
+  sustainability: ['ambiente', 'clima', 'sustentabilidad', 'contaminacion', 'energia'],
 }
 
 // ── SIGNAL INTERFACE (shared across all fetchers) ──

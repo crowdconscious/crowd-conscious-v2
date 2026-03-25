@@ -11,4 +11,4 @@ export async function GET(request: Request) {
   return Response.json(result)
 }
 
-export const maxDuration = 45
+export const maxDuration = 300

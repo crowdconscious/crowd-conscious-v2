@@ -9,6 +9,9 @@
     "app/api/cron/agents/news-monitor/route.ts": {
       "maxDuration": 300
     },
+    "app/api/cron/agents/content-creator/route.ts": {
+      "maxDuration": 300
+    },
     "app/api/predictions/admin/run-agent/route.ts": {
       "maxDuration": 300
     },

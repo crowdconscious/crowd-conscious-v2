@@ -9,9 +9,29 @@ import {
   mexicoCityNow,
 } from '@/lib/agents/config'
 import { CONSCIOUS_FUND_PERCENT } from '@/lib/fund-allocation'
+import {
+  emptyPlatformIntelligence,
+  formatContentCreatorPlatformContext,
+  getPlatformIntelligence,
+} from '@/lib/agents/intelligence-bridge'
 
 function getCurrentCycle(): string {
   return new Date().toISOString().slice(0, 7)
+}
+
+/** Next 7 calendar days in Mexico City (labels + YYYY-MM-DD for prompts and validation). */
+function buildNextSevenDaysMexico(): { day: string; date: string }[] {
+  const today = mexicoCityNow()
+  const out: { day: string; date: string }[] = []
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(today)
+    d.setDate(today.getDate() + i)
+    out.push({
+      day: d.toLocaleDateString('es-MX', { weekday: 'long' }),
+      date: d.toLocaleDateString('en-CA', { timeZone: 'America/Mexico_City' }),
+    })
+  }
+  return out
 }
 
 export async function runContentCreator(): Promise<{
@@ -27,6 +47,14 @@ export async function runContentCreator(): Promise<{
     const supabase = getSupabaseAdmin()
     const today = mexicoCityNow()
     const todayFormatted = formatDateMX(today)
+
+    let platformIntel = emptyPlatformIntelligence()
+    try {
+      platformIntel = await getPlatformIntelligence()
+    } catch (e) {
+      console.warn('[Content Creator] getPlatformIntelligence failed:', e)
+    }
+    const platformLiveBlock = formatContentCreatorPlatformContext(platformIntel)
 
     const data: Record<string, unknown> = {}
 
@@ -319,6 +347,13 @@ export async function runContentCreator(): Promise<{
       data.leaderboard_top_3 = []
     }
 
+    data.platform_intelligence = {
+      overview: platformIntel.overview,
+      engagement: platformIntel.engagement,
+      trending: platformIntel.trending,
+      content_hooks: platformIntel.content_worthy,
+    }
+
     const systemMessage = `You are the social media content strategist for Crowd Conscious (crowdconscious.app), a free-to-play opinion platform in Mexico City. You create engaging social media content that drives people to the platform. Your tone is: smart but accessible, community-driven, slightly provocative (asking questions people want to answer), and always ties back to social impact. You write in BOTH Spanish and English. The platform is gearing up for FIFA World Cup 2026 — opening match is June 11 at Estadio Azteca, Mexico City.
 
 For each Instagram post, also provide:
@@ -375,6 +410,20 @@ Snapshot de sentimiento: ${JSON.stringify(b.sentiment_snapshot ?? {})}`
             .join('\n')
         : 'No hay sugerencias pendientes.'
 
+    const daysOfWeek = buildNextSevenDaysMexico()
+    const calendarBlock = `CALENDARIO DE ESTA SEMANA (zona horaria Ciudad de México, próximos 7 días):
+${daysOfWeek.map((d) => `${d.day}: ${d.date}`).join('\n')}
+
+Para cada uno de los 6 posts, asigna un "scheduled_date" del calendario arriba (solo esas fechas YYYY-MM-DD).
+Distribuye los posts de forma uniforme en la semana:
+- Lunes y miércoles: posts en español (Instagram y/o Twitter)
+- Martes y jueves: posts en inglés (Twitter y/o LinkedIn)
+- Viernes: community highlight / contenido especial
+- Sábado: opcional, contenido ligero o meme
+- Domingo: resumen semanal / preview de la semana
+
+Cada objeto del array JSON DEBE incluir "scheduled_date": "YYYY-MM-DD" (obligatorio).`
+
     const userMessage = `CONTEXTO DE INTELIGENCIA (del News Monitor):
 ${briefContext}
 
@@ -383,6 +432,10 @@ ${newMarketsContext}
 
 SUGERENCIAS PENDIENTES DE APROBACIÓN:
 ${suggestionsContext}
+
+${platformLiveBlock}
+
+${calendarBlock}
 
 INSTRUCCIONES ADICIONALES:
 - Si hay mercados nuevos, genera AL MENOS 1 social post que los promocione
@@ -425,6 +478,7 @@ POST 5 — LinkedIn (Spanish): Professional tone. Focus on the social impact ang
 POST 6 — Community Highlight (Spanish): Celebrate the top predictor or most active community member, or a trending inbox submission. Make people feel seen.
 
 For each post return a JSON object with:
+- scheduled_date: "YYYY-MM-DD" (must be one of the dates listed in CALENDARIO DE ESTA SEMANA above)
 - Base: platform, language, post_type, hook, body, hashtags, cta
 - Instagram posts add: image_prompt, carousel_idea, meme_suggestion
 - Twitter posts add: thread_option, quote_tweet_hook
@@ -510,7 +564,10 @@ Return as a JSON array of 6 objects. No markdown wrapping. Just raw JSON.`
       if (t && !marketByTitle.has(t)) marketByTitle.set(t, m.id)
     }
 
-    for (const post of parsedArray) {
+    const allowedDates = new Set(daysOfWeek.map((d) => d.date))
+
+    for (let idx = 0; idx < parsedArray.length; idx++) {
+      const post = parsedArray[idx]
       if (!post || typeof post !== 'object') continue
       const platform = String(post.platform ?? 'unknown').toLowerCase()
       const hook = String(post.hook ?? 'Untitled')
@@ -532,13 +589,20 @@ Return as a JSON array of 6 objects. No markdown wrapping. Just raw JSON.`
         (post.market_reference && s.title && String(s.title).includes(String(post.market_reference).slice(0, 30))) ||
         (post.hook && s.title && String(s.title).includes(String(post.hook).slice(0, 30)))
       )
-      const postBody = { ...post } as Record<string, unknown>
+      const rawScheduled = String(post.scheduled_date ?? '').trim()
+      const scheduledDate =
+        rawScheduled && allowedDates.has(rawScheduled)
+          ? rawScheduled
+          : daysOfWeek[idx % daysOfWeek.length]!.date
+
+      const postBody = { ...post, scheduled_date: scheduledDate } as Record<string, unknown>
       if (suggestionRef) {
         postBody.suggestion_id = suggestionRef.id
         postBody.suggestion_title = suggestionRef.title
       }
 
       const metadata: Record<string, unknown> = {
+        scheduled_date: scheduledDate,
         platform: post.platform,
         language: post.language,
         post_type: post.post_type,

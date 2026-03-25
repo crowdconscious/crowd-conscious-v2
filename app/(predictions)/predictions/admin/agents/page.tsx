@@ -63,6 +63,30 @@ function formatDate(t: string) {
   })
 }
 
+/** YYYY-MM-DD in the browser's local calendar (avoids UTC day shifts from toISOString). */
+function dateKeyLocal(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+function getSocialPostScheduledDateKey(post: AgentContent): string {
+  const meta = post.metadata as { scheduled_date?: string } | undefined
+  if (meta?.scheduled_date && /^\d{4}-\d{2}-\d{2}$/.test(String(meta.scheduled_date))) {
+    return String(meta.scheduled_date).slice(0, 10)
+  }
+  try {
+    const p = JSON.parse(post.body) as { scheduled_date?: string }
+    if (p.scheduled_date && /^\d{4}-\d{2}-\d{2}$/.test(String(p.scheduled_date))) {
+      return String(p.scheduled_date).slice(0, 10)
+    }
+  } catch {
+    // ignore
+  }
+  return dateKeyLocal(new Date(post.created_at))
+}
+
 function formatRelativeTime(t: string) {
   const d = new Date(t)
   const now = new Date()
@@ -250,8 +274,7 @@ function ContentCalendarView({
 
   const postsByDate = new Map<string, AgentContent[]>()
   for (const post of posts) {
-    const d = new Date(post.created_at)
-    const key = d.toISOString().slice(0, 10)
+    const key = getSocialPostScheduledDateKey(post)
     if (!postsByDate.has(key)) postsByDate.set(key, [])
     postsByDate.get(key)!.push(post)
   }
@@ -291,7 +314,7 @@ function ContentCalendarView({
       </div>
       <div className="grid grid-cols-7 gap-2">
         {days.map((day) => {
-          const key = day.toISOString().slice(0, 10)
+          const key = dateKeyLocal(day)
           const dayPosts = postsByDate.get(key) ?? []
           return (
             <div
