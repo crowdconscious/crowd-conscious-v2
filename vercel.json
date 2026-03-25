@@ -23,6 +23,12 @@
     },
     "app/api/cron/reengagement-inactive/route.ts": {
       "maxDuration": 300
+    },
+    "app/api/cron/agents/ceo-digest/route.ts": {
+      "maxDuration": 300
+    },
+    "app/api/cron/agents/inbox-curator/route.ts": {
+      "maxDuration": 300
     }
   },
   "crons": [

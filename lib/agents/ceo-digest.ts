@@ -30,15 +30,14 @@ export async function runCeoDigest(): Promise<{
 
     const metrics: Record<string, unknown> = {}
 
-    // a. USER METRICS (use market_votes distinct user_id - profiles may not exist)
+    // a. USER METRICS — profiles count (fast). Avoid loading entire market_votes into memory.
     try {
-      const { data: allVotes } = await supabase
-        .from('market_votes')
-        .select('user_id')
-      const distinctUsers = new Set((allVotes ?? []).map((v) => v.user_id))
-      metrics.total_registered_users = distinctUsers.size
+      const { count: profileCount } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+      metrics.total_registered_users = profileCount ?? 0
     } catch (e) {
-      console.warn('[CEO Digest] market_votes user count failed:', e)
+      console.warn('[CEO Digest] profiles user count failed:', e)
       metrics.total_registered_users = 0
     }
 
@@ -139,20 +138,12 @@ export async function runCeoDigest(): Promise<{
     }
 
     try {
-      const { data: allMarkets } = await supabase
+      const { count: zeroPred } = await supabase
         .from('prediction_markets')
-        .select('id')
+        .select('id', { count: 'exact', head: true })
         .in('status', ['active', 'trading'])
-      const marketIds = (allMarkets ?? []).map((m) => m.id)
-      const { data: voteCounts } = await supabase
-        .from('market_votes')
-        .select('market_id')
-      const byMarket: Record<string, number> = {}
-      for (const v of voteCounts ?? []) {
-        byMarket[v.market_id] = (byMarket[v.market_id] ?? 0) + 1
-      }
-      const zeroVotes = marketIds.filter((id) => (byMarket[id] ?? 0) === 0)
-      metrics.markets_with_zero_predictions = zeroVotes.length
+        .or('total_votes.is.null,total_votes.eq.0')
+      metrics.markets_with_zero_predictions = zeroPred ?? 0
     } catch (e) {
       metrics.markets_with_zero_predictions = 'error'
     }

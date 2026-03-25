@@ -11,4 +11,5 @@ export async function GET(request: Request) {
   return Response.json(result)
 }
 
-export const maxDuration = 30
+/** CEO digest loads metrics + Claude + Resend; must exceed default 30s on busy DBs */
+export const maxDuration = 300
