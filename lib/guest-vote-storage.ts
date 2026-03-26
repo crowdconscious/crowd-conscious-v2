@@ -7,6 +7,9 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 export const GUEST_ID_KEY = 'cc_guest_id'
 
+/** Single JSON map: marketId → { guest_id, outcome_id, voted_at } for list badges + dedupe */
+export const VOTED_MARKETS_MAP_KEY = 'cc_voted_markets'
+
 export type GuestVoteRecord = {
   outcomeId: string
   confidence: number
@@ -55,9 +58,37 @@ export function setMarketGuestVote(marketId: string, guestId: string, record: Gu
   try {
     localStorage.setItem(`cc_voted_${marketId}`, guestId)
     localStorage.setItem(`cc_guest_vote_${marketId}`, JSON.stringify(record))
+    const raw = localStorage.getItem(VOTED_MARKETS_MAP_KEY)
+    const map = (raw ? JSON.parse(raw) : {}) as Record<
+      string,
+      { guest_id?: string; outcome_id?: string; voted_at?: number }
+    >
+    map[marketId] = {
+      guest_id: guestId,
+      outcome_id: record.outcomeId,
+      voted_at: Date.now(),
+    }
+    localStorage.setItem(VOTED_MARKETS_MAP_KEY, JSON.stringify(map))
   } catch {
     // ignore quota
   }
+}
+
+/** Market IDs the guest has already voted on (for list badges). */
+export function getGuestVotedMarketIds(): Set<string> {
+  if (typeof window === 'undefined') return new Set()
+  try {
+    const raw = localStorage.getItem(VOTED_MARKETS_MAP_KEY)
+    if (!raw) return new Set()
+    const map = JSON.parse(raw) as Record<string, unknown>
+    return new Set(Object.keys(map).filter((k) => map[k] != null))
+  } catch {
+    return new Set()
+  }
+}
+
+export function hasGuestVotedMarket(marketId: string): boolean {
+  return getGuestVotedMarketIds().has(marketId)
 }
 
 export function clearGuestMarketKeys(marketId: string): void {

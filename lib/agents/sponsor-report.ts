@@ -23,7 +23,12 @@ type SponsorImpactData = {
   sponsorship: Sponsorship
   marketIds: string[]
   marketTitles: string[]
+  /** Period activity: votes + trades in window */
   totalPredictions: number
+  /** Current sum of engagement_count on sponsored markets (reach) */
+  totalEngagementSnapshot: number
+  /** Current sum of total_votes (registered) on those markets */
+  registeredVotesSnapshot: number
   uniqueUsers: number
   shareCount: number
   fundAllocationMxn: number
@@ -227,6 +232,8 @@ async function gatherSponsorImpact(
       marketIds: [],
       marketTitles: [],
       totalPredictions: 0,
+      totalEngagementSnapshot: 0,
+      registeredVotesSnapshot: 0,
       uniqueUsers: 0,
       shareCount: 0,
       fundAllocationMxn: Number(sponsorship.fund_amount ?? 0),
@@ -273,6 +280,20 @@ async function gatherSponsorImpact(
 
   const totalPredictions = (marketVotes?.length ?? 0) + (trades?.length ?? 0)
 
+  let totalEngagementSnapshot = 0
+  let registeredVotesSnapshot = 0
+  if (marketIds.length) {
+    const { data: pm } = await supabase
+      .from('prediction_markets')
+      .select('engagement_count, total_votes')
+      .in('id', marketIds)
+    for (const row of pm ?? []) {
+      const r = row as { engagement_count?: number | null; total_votes?: number | null }
+      totalEngagementSnapshot += Number(r.engagement_count ?? r.total_votes ?? 0)
+      registeredVotesSnapshot += Number(r.total_votes ?? 0)
+    }
+  }
+
   const probabilityChanges: SponsorImpactData['probabilityChanges'] = []
   for (const mid of marketIds) {
     const hist = (history ?? []).filter((h) => h.market_id === mid)
@@ -298,6 +319,8 @@ async function gatherSponsorImpact(
     marketIds,
     marketTitles,
     totalPredictions,
+    totalEngagementSnapshot,
+    registeredVotesSnapshot,
     uniqueUsers: uniqueUsers.size,
     shareCount: 0,
     fundAllocationMxn,
@@ -319,13 +342,17 @@ function buildPrompt(data: SponsorImpactData): string {
 
   return `Generate a sponsor impact report for ${s.sponsor_name}.
 
-Their $${Number(s.amount_mxn).toLocaleString()} MXN sponsorship of ${marketOrCategory} generated:
-- ${data.totalPredictions} predictions
-- ${data.uniqueUsers} unique users who interacted
+Their $${Number(s.amount_mxn).toLocaleString()} MXN sponsorship of ${marketOrCategory} — headline reach:
+- ${data.totalEngagementSnapshot.toLocaleString()} total engagements (all interactions on sponsored markets today — registered + anonymous)
+- ${data.registeredVotesSnapshot.toLocaleString()} registered voters shaping community probability
+- ${data.totalPredictions} prediction interactions in the reporting period (votes + trades in window)
+- ${data.uniqueUsers} unique users who interacted in the period
 - $${data.fundAllocationMxn.toLocaleString()} MXN was allocated to the Conscious Fund, supporting these causes: ${data.causesSupported.join(', ') || 'community causes'}
 
-${data.probabilityChanges.length > 0 ? `Probability changes on their markets:` : ''}
+${data.probabilityChanges.length > 0 ? `Probability changes on their markets (registered-voter signal):` : ''}
 ${data.probabilityChanges.map((p) => `- ${p.marketTitle}: ${p.startProb.toFixed(0)}% → ${p.endProb.toFixed(0)}% (${p.delta >= 0 ? '+' : ''}${p.delta.toFixed(0)}%)`).join('\n')}
+
+Footnote for accuracy: Total engagements include registered and anonymous community members. Community probability shown in the product is derived from registered users only for data integrity.
 
 Write a professional 3-paragraph summary emphasizing the brand's impact. Include specific numbers. Be concise and celebratory. Write in English.`;
 }

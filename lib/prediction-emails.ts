@@ -32,16 +32,41 @@ function emailFooter(unsubscribeUrl: string | null): string {
   `
 }
 
+export type DailyDigestVariant = 'new' | 'trending' | 'unvoted' | 'fallback'
+
+function formatMarketQuestionForSubject(title: string): string {
+  const t = title.replace(/\s+/g, ' ').trim()
+  return t.endsWith('?') ? t : `${t}?`
+}
+
 export function dailyMarketDigestTemplate(opts: {
   marketTitle: string
   /** Plain text, e.g. "67% YES" or "89% a favor de Opción A (líder)" */
   probabilitySummary: string
   marketUrl: string
   unsubscribeUrl: string | null
+  /** Controls subject line so emails are not identical every day */
+  digestVariant?: DailyDigestVariant
 }): { subject: string; html: string } {
   const rawTitle = opts.marketTitle.replace(/\s+/g, ' ').trim()
-  const titleForSubject = rawTitle.endsWith('?') ? rawTitle.slice(0, -1).trim() : rawTitle
-  const plainSubject = `${titleForSubject}? — Vota hoy en Crowd Conscious`
+  const q = formatMarketQuestionForSubject(rawTitle)
+
+  let plainSubject: string
+  switch (opts.digestVariant) {
+    case 'new':
+      plainSubject = `🆕 Nuevo mercado: ${q}`
+      break
+    case 'trending':
+      plainSubject = `📈 La comunidad está prediciendo: ${q}`
+      break
+    case 'fallback':
+      plainSubject = `¿Ya viste esto? — ${q}`
+      break
+    case 'unvoted':
+    default:
+      plainSubject = `${q} — La comunidad ya está votando`
+      break
+  }
 
   const html = `
   <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #f8fafc;">

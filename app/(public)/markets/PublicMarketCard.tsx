@@ -20,8 +20,9 @@ import { toDisplayPercent } from '@/lib/probability-utils'
 import { MiniSparkline } from '@/app/(predictions)/predictions/components/MiniSparkline'
 
 type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row'] & {
-  market_type?: string
-  total_votes?: number
+  market_type?: string | null
+  total_votes?: number | null
+  engagement_count?: number | null
   sponsor_name?: string
   sponsor_logo_url?: string
   image_url?: string

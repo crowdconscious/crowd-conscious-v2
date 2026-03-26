@@ -11,6 +11,8 @@ type RpcVoteResult = {
   outcome_label?: string
   confidence?: number
   new_probability?: number
+  is_update?: boolean
+  no_change?: boolean
 }
 
 /** Fire-and-forget from vote API: in-app notification + optional email (respects email_notifications). */
@@ -21,6 +23,11 @@ export async function sendPostVoteConfirmation(args: {
   rpcResult: RpcVoteResult
 }): Promise<void> {
   const { userId, marketId, rpcResult } = args
+
+  if (rpcResult.is_update === true || rpcResult.no_change === true) {
+    return
+  }
+
   const admin = createAdminClient()
 
   const { data: profile } = await admin

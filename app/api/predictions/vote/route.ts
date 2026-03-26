@@ -60,6 +60,8 @@ export async function POST(request: Request) {
       outcome_label?: string
       confidence?: number
       new_probability?: number
+      is_update?: boolean
+      no_change?: boolean
     }
     if (result.success === false) {
       return NextResponse.json(
@@ -75,7 +77,11 @@ export async function POST(request: Request) {
       rpcResult: result,
     }).catch((err) => console.error('[vote] post-confirmation', err))
 
-    return NextResponse.json(result)
+    return NextResponse.json({
+      ...result,
+      is_update: result.is_update === true,
+      no_change: result.no_change === true,
+    })
   } catch (err) {
     console.error('Vote route error:', err)
     return NextResponse.json(

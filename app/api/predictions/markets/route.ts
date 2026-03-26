@@ -51,9 +51,9 @@ export async function GET(request: Request) {
     } else if (validSort === 'closing') {
       query = query.gt('resolution_date', new Date().toISOString()).order('resolution_date', { ascending: true })
     } else if (validSort === 'debated') {
-      query = query.order('total_votes', { ascending: false })
+      query = query.order('engagement_count', { ascending: false, nullsFirst: false })
     } else {
-      query = query.order('total_votes', { ascending: false, nullsFirst: false })
+      query = query.order('engagement_count', { ascending: false, nullsFirst: false })
     }
 
     const { data, error, count } = await query

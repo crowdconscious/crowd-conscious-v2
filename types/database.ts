@@ -107,6 +107,11 @@ export interface Database {
           resolved_at: string | null
           resolution_evidence: Json
           current_probability: number
+          /** Registered vote rows — community probability */
+          total_votes?: number | null
+          /** All interactions incl. anonymous — reach */
+          engagement_count?: number | null
+          market_type?: string | null
           total_volume: number
           fee_percentage: number
           conscious_fund_percentage: number

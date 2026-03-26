@@ -102,7 +102,9 @@ export async function GET(
 
     const { data: market, error } = await supabase
       .from('prediction_markets')
-      .select('id, title, category, current_probability, total_votes, translations, sponsor_name, sponsor_logo_url')
+      .select(
+        'id, title, category, current_probability, total_votes, engagement_count, translations, sponsor_name, sponsor_logo_url'
+      )
       .eq('id', marketId)
       .single()
 
@@ -156,7 +158,7 @@ export async function GET(
     }
     const probability = Math.min(100, Math.max(0, Math.round(Number(probRaw) * 100)))
     const outcomeName = topOutcome ? getOutcomeLabel(topOutcome, locale) : probability >= 50 ? 'Yes' : 'Undecided'
-    const totalPredictions = market.total_votes ?? 0
+    const engagement = Number((market as { engagement_count?: number }).engagement_count) || Number(market.total_votes) || 0
     const emoji = CATEGORY_EMOJI[market.category || ''] || '🔮'
     const displayTitle = getMarketText(market, 'title', locale)
     const titleLength = displayTitle.length
@@ -309,7 +311,7 @@ export async function GET(
                   {outcomeName}
                 </div>
                 <div style={{ display: 'flex', fontSize: '22px', color: '#64748b' }}>
-                  {totalPredictions} prediction{totalPredictions !== 1 ? 's' : ''}
+                  {engagement.toLocaleString()} participaciones
                 </div>
                 <div style={{ display: 'flex', fontSize: '26px', fontWeight: 700, color: '#ffffff', marginTop: '8px' }}>
                   crowdconscious.app
@@ -469,7 +471,7 @@ export async function GET(
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '4px' }}>
                 <div style={{ display: 'flex', fontSize: '13px', color: '#64748b' }}>
-                  {totalPredictions} prediction{totalPredictions !== 1 ? 's' : ''}
+                  {engagement.toLocaleString()} participaciones
                 </div>
                 <div style={{ display: 'flex', fontSize: '14px', fontWeight: 600, color: '#94a3b8' }}>crowdconscious.app</div>
               </div>

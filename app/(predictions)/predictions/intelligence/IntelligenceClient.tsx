@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, useCallback } from 'react'
+import { useMemo, useState, useCallback, useEffect } from 'react'
 import Link from 'next/link'
 import {
   Chart as ChartJS,
@@ -24,7 +24,7 @@ import {
   Radar,
 } from 'react-chartjs-2'
 import { BarChart3, Download, Shield } from 'lucide-react'
-import type { IntelligenceDashboardData, MarketRowCsv } from '@/lib/intelligence-data'
+import type { IntelligenceDashboardData, MarketRowCsv, VoteChangeLeader } from '@/lib/intelligence-data'
 
 ChartJS.register(
   CategoryScale,
@@ -68,7 +68,15 @@ const chartOptsBase = {
 }
 
 function downloadCSV(rows: MarketRowCsv[]) {
-  const headers = ['Market', 'Category', 'Total Votes', 'YES %', 'Status', 'Resolution Date']
+  const headers = [
+    'Market',
+    'Category',
+    'Registered voters',
+    'Engagement',
+    'YES %',
+    'Status',
+    'Resolution Date',
+  ]
   const lines = [
     headers.join(','),
     ...rows.map((m) =>
@@ -76,6 +84,7 @@ function downloadCSV(rows: MarketRowCsv[]) {
         `"${(m.title || '').replace(/"/g, '""')}"`,
         m.category,
         m.total_votes,
+        m.engagement_count,
         `${Math.round(m.yes_probability * 100)}%`,
         m.status,
         m.resolution_date ?? '',
@@ -101,7 +110,7 @@ function generateHeadlines(data: IntelligenceDashboardData) {
       type: 'Top finding',
       color: 'green',
       text: `"${pct}% de la comunidad inclina su predicción hacia "${topMarket.title.slice(0, 80)}${topMarket.title.length > 80 ? '…' : ''}", según datos agregados en Crowd Conscious."`,
-      meta: `Basado en: ${topMarket.total_votes} votos`,
+      meta: `Basado en: ${topMarket.total_votes} votantes registrados (probabilidad de comunidad)`,
     })
   }
 
@@ -138,7 +147,7 @@ function generateHeadlines(data: IntelligenceDashboardData) {
       type: 'Índice de optimismo',
       color: 'blue',
       text: `La comunidad muestra un ${Math.round(avgYes * 100)}% de probabilidad YES promedio ponderada por categoría.`,
-      meta: `Basado en ${data.kpis.total_votes} votos y ${data.kpis.active_markets} mercados activos`,
+      meta: `Basado en ${data.kpis.total_engagement.toLocaleString()} participaciones y ${data.kpis.active_markets} mercados activos`,
     })
   }
 
@@ -165,6 +174,88 @@ const TABS: { id: TabId; label: string }[] = [
 ]
 
 type RangeKey = '7' | '30' | 'all'
+
+type CronAgentRow = {
+  agent: string
+  lastRun: string | null
+  status: string
+  error: string | null
+  summary: string | null
+  isHealthy: boolean
+}
+
+function CronHealthStrip() {
+  const [rows, setRows] = useState<CronAgentRow[] | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [err, setErr] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/admin/cron-health', { credentials: 'include' })
+      .then(async (r) => {
+        const data = await r.json()
+        if (!r.ok) throw new Error(data.error || r.statusText)
+        return data as { agents: CronAgentRow[] }
+      })
+      .then((data) => {
+        if (!cancelled) setRows(data.agents ?? [])
+      })
+      .catch((e) => {
+        if (!cancelled) setErr(e instanceof Error ? e.message : String(e))
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  if (loading) {
+    return (
+      <div className={`${CARD} px-4 py-3 text-sm text-slate-500`}>System health: loading…</div>
+    )
+  }
+  if (err) {
+    return (
+      <div className={`${CARD} px-4 py-3 text-sm text-amber-200/90 border-amber-500/20`}>
+        System health: could not load ({err})
+      </div>
+    )
+  }
+  if (!rows?.length) return null
+
+  return (
+    <div className={`${CARD} p-4`}>
+      <h3 className="text-sm font-medium text-slate-500 mb-1">System health</h3>
+      <p className="text-xs text-slate-600 mb-3">
+        Scheduled crons (Vercel). Green = last run succeeded within the expected window.
+      </p>
+      <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-xs">
+        {rows.map((a) => (
+          <li
+            key={a.agent}
+            className="flex items-start gap-2 rounded-lg border border-white/5 bg-black/20 px-2 py-2"
+            title={a.summary || a.error || undefined}
+          >
+            <span
+              className="mt-1 h-2 w-2 shrink-0 rounded-full"
+              style={{ backgroundColor: a.isHealthy ? ACCENT : '#ef4444' }}
+              aria-hidden
+            />
+            <span className="min-w-0">
+              <span className="font-mono text-[11px] text-[#e8e6df]">{a.agent}</span>
+              <span className="block text-slate-600">{a.status}</span>
+              {a.lastRun && (
+                <span className="block text-slate-500">{new Date(a.lastRun).toLocaleString()}</span>
+              )}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
 
 export default function IntelligenceClient({ data }: { data: IntelligenceDashboardData }) {
   const [tab, setTab] = useState<TabId>('overview')
@@ -219,8 +310,9 @@ export default function IntelligenceClient({ data }: { data: IntelligenceDashboa
       `Generated: ${new Date().toISOString().slice(0, 10)}`,
       ``,
       `Platform KPIs`,
-      `- Registered votes (non-anonymous): ${data.kpis.registered_votes.toLocaleString()}`,
-      `- Total votes (incl. guests): ${data.kpis.total_votes.toLocaleString()}`,
+      `- Registered voters: ${data.kpis.registered_votes.toLocaleString()}`,
+      `- Total engagement (all interactions): ${data.kpis.total_engagement.toLocaleString()}`,
+      `- Anonymous share of engagement: ${data.kpis.anonymous_engagement_rate_pct != null ? `${data.kpis.anonymous_engagement_rate_pct}%` : '—'}`,
       `- Profiles (users): ${data.kpis.total_users.toLocaleString()}`,
       `- Active markets: ${data.kpis.active_markets}`,
       `- Markets with 0 votes: ${data.kpis.orphan_markets}`,
@@ -287,6 +379,8 @@ export default function IntelligenceClient({ data }: { data: IntelligenceDashboa
         </div>
       )}
 
+      <CronHealthStrip />
+
       <div className="flex flex-wrap gap-1 border-b border-white/5 pb-px">
         {TABS.map((t) => (
           <button
@@ -308,12 +402,20 @@ export default function IntelligenceClient({ data }: { data: IntelligenceDashboa
           {tab === 'overview' && (
             <>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                <Kpi label="Registered votes" value={data.kpis.registered_votes} />
-                <Kpi label="Total votes" value={data.kpis.total_votes} />
+                <Kpi label="Registered voters" value={data.kpis.registered_votes} />
+                <Kpi label="Total engagement" value={data.kpis.total_engagement} />
+                <Kpi
+                  label="Anonymous share"
+                  value={
+                    data.kpis.anonymous_engagement_rate_pct != null
+                      ? `${data.kpis.anonymous_engagement_rate_pct}%`
+                      : '—'
+                  }
+                />
                 <Kpi label="Users" value={data.kpis.total_users} />
-                <Kpi label="Active markets" value={data.kpis.active_markets} />
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <Kpi label="Active markets" value={data.kpis.active_markets} />
                 <Kpi
                   label="Avg confidence"
                   value={data.kpis.avg_confidence != null ? data.kpis.avg_confidence.toFixed(2) : '—'}
@@ -325,6 +427,32 @@ export default function IntelligenceClient({ data }: { data: IntelligenceDashboa
                 />
                 <Kpi label="Orphan markets (0 votes)" value={data.kpis.orphan_markets} />
               </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Kpi
+                  label="Vote updates (7d, registered)"
+                  value={data.kpis.vote_changes_week}
+                />
+              </div>
+              {data.voteChangeLeaders.length > 0 && (
+                <div className={`${CARD} p-5`}>
+                  <h3 className="text-sm font-medium text-slate-500 mb-3">
+                    Markets with the most vote-change activity (7d)
+                  </h3>
+                  <ul className="space-y-2 text-sm">
+                    {data.voteChangeLeaders.map((m: VoteChangeLeader) => (
+                      <li key={m.market_id} className="flex justify-between gap-4 text-slate-300">
+                        <Link
+                          href={`/predictions/markets/${m.market_id}`}
+                          className="text-emerald-400/90 hover:text-emerald-300 truncate min-w-0"
+                        >
+                          {m.title}
+                        </Link>
+                        <span className="text-slate-500 tabular-nums shrink-0">{m.change_events} changes</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               {data.voterSplit.some((v) => v.count > 0) && (
                 <div className={`h-56 max-w-md ${CARD} p-5`}>
                   <h3 className="text-sm font-medium text-slate-500 mb-3">Registered vs anonymous</h3>
@@ -408,7 +536,8 @@ export default function IntelligenceClient({ data }: { data: IntelligenceDashboa
                       <tr className="border-b border-white/5 text-left text-[11px] font-medium uppercase tracking-wide text-slate-500">
                         <th className="px-5 py-2">Title</th>
                         <th className="px-3 py-2">Category</th>
-                        <th className="px-3 py-2 text-right">Votes</th>
+                        <th className="px-3 py-2 text-right">Eng.</th>
+                        <th className="px-3 py-2 text-right">Reg.</th>
                         <th className="px-5 py-2 text-right">YES</th>
                       </tr>
                     </thead>
@@ -420,7 +549,8 @@ export default function IntelligenceClient({ data }: { data: IntelligenceDashboa
                         >
                           <td className="px-5 py-2.5 max-w-[260px] truncate text-slate-300">{m.title}</td>
                           <td className="px-3 py-2.5 text-slate-400">{m.category}</td>
-                          <td className="px-3 py-2.5 text-right tabular-nums">{m.total_votes}</td>
+                          <td className="px-3 py-2.5 text-right tabular-nums">{m.engagement_count}</td>
+                          <td className="px-3 py-2.5 text-right tabular-nums text-slate-400">{m.total_votes}</td>
                           <td className="px-5 py-2.5 text-right tabular-nums text-emerald-400/90">
                             {Math.round(m.yes_probability * 100)}%
                           </td>
@@ -460,7 +590,8 @@ export default function IntelligenceClient({ data }: { data: IntelligenceDashboa
                     <tr className="border-b border-white/5 text-left text-[11px] font-medium uppercase tracking-wide text-slate-500">
                       <th className="px-5 py-3">Market</th>
                       <th className="px-3 py-3">Category</th>
-                      <th className="px-3 py-3 text-right">Votes</th>
+                      <th className="px-3 py-3 text-right">Engagement</th>
+                      <th className="px-3 py-3 text-right">Reg.</th>
                       <th className="px-5 py-3">YES %</th>
                       <th className="px-3 py-3">Status</th>
                       <th className="px-5 py-3">Resolves</th>
@@ -474,7 +605,8 @@ export default function IntelligenceClient({ data }: { data: IntelligenceDashboa
                       >
                         <td className="px-5 py-3 max-w-[260px] truncate text-slate-300">{m.title}</td>
                         <td className="px-3 py-3 text-slate-400">{m.category}</td>
-                        <td className="px-3 py-3 text-right tabular-nums">{m.total_votes}</td>
+                        <td className="px-3 py-3 text-right tabular-nums">{m.engagement_count}</td>
+                        <td className="px-3 py-3 text-right tabular-nums text-slate-400">{m.total_votes}</td>
                         <td className="px-5 py-3">
                           <div className="flex items-center gap-2">
                             <div className="h-1.5 w-[60px] shrink-0 rounded-full bg-slate-800 overflow-hidden">
@@ -719,7 +851,9 @@ export default function IntelligenceClient({ data }: { data: IntelligenceDashboa
                         </div>
                       </div>
                       <div className="flex items-center justify-between pt-2 border-t border-slate-800">
-                        <span className="text-slate-400 text-sm">{m.total_votes.toLocaleString()} predicciones</span>
+                        <span className="text-slate-400 text-sm">
+                          {m.engagement_count.toLocaleString()} participaciones
+                        </span>
                         <span className="text-emerald-400 font-medium text-sm">¿Y tú?</span>
                       </div>
                       <p className="text-[11px] text-slate-500 truncate">{baseUrl}/predictions/markets/{m.id}</p>

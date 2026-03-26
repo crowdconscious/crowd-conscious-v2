@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { getMarketText, getOutcomeLabel } from '@/lib/i18n/market-translations'
 import { useLocale } from '@/lib/i18n/useLocale'
@@ -19,12 +20,14 @@ import {
   Zap,
 } from 'lucide-react'
 import type { Database } from '@/types/database'
+import { hasGuestVotedMarket } from '@/lib/guest-vote-storage'
 import { toDisplayPercent } from '@/lib/probability-utils'
 import { MiniSparkline } from './MiniSparkline'
 
 type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row'] & {
-  market_type?: string
-  total_votes?: number
+  market_type?: string | null
+  total_votes?: number | null
+  engagement_count?: number | null
   sponsor_name?: string
   sponsor_logo_url?: string
   image_url?: string
@@ -143,10 +146,15 @@ interface MarketCardProps {
 
 export function MarketCard({ market, history = [], leadingOutcome, variant = 'default' }: MarketCardProps) {
   const locale = useLocale()
+  const [guestVoted, setGuestVoted] = useState(false)
+  useEffect(() => {
+    setGuestVoted(hasGuestVotedMarket(market.id))
+  }, [market.id])
   const config = CATEGORY_CONFIG[market.category] || CATEGORY_CONFIG.world
   const Icon = config.icon
   const prob = toDisplayPercent(Number(market.current_probability))
-  const voteCount = (market.total_votes ?? 0) || Number(market.total_volume) || 0
+  const engagement =
+    Number(market.engagement_count) || Number(market.total_votes) || Number(market.total_volume) || 0
   const recentVotes = market.recent_votes ?? 0
   const urgency = getUrgency(market.resolution_date)
   const isTrending = variant === 'trending'
@@ -170,12 +178,20 @@ export function MarketCard({ market, history = [], leadingOutcome, variant = 'de
             <Icon className="w-3.5 h-3.5" />
             {config.label}
           </span>
-          {isTrending && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/20 text-amber-400">
-              <Flame className="w-3 h-3" />
-              Trending
-            </span>
-          )}
+          <div className="flex items-center gap-1.5 shrink-0">
+            {guestVoted && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
+                <CheckCircle className="w-3 h-3" />
+                {locale === 'en' ? 'Voted' : 'Votaste'}
+              </span>
+            )}
+            {isTrending && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/20 text-amber-400">
+                <Flame className="w-3 h-3" />
+                Trending
+              </span>
+            )}
+          </div>
         </div>
 
         {market.image_url && (
@@ -238,9 +254,9 @@ export function MarketCard({ market, history = [], leadingOutcome, variant = 'de
               <span
                 className={recentVotes > 0 ? 'inline-block animate-[vote-pulse_0.6s_ease-out]' : ''}
               >
-                {voteCount}
+                {engagement.toLocaleString()}
               </span>{' '}
-              predictions
+              {locale === 'en' ? 'engagements' : 'participaciones'}
               {recentVotes > 0 && (
                 <span className="text-amber-400 ml-1">· {recentVotes} new</span>
               )}

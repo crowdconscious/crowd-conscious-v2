@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Check, TrendingUp, TrendingDown } from 'lucide-react'
 import type { Database } from '@/types/database'
+import { hasGuestVotedMarket } from '@/lib/guest-vote-storage'
 import { toDisplayPercent } from '@/lib/probability-utils'
 import { getOutcomeLabel } from '@/lib/i18n/market-translations'
 import { useLocale } from '@/lib/i18n/useLocale'
@@ -105,13 +106,20 @@ interface VotePanelProps {
   market: PredictionMarket
   outcomes: Outcome[]
   myVote: MyVote | null
-  onVoteSuccess?: (xpGained?: number) => void
+  onVoteSuccess?: (payload: {
+    xpEarned?: number
+    isUpdate?: boolean
+    noChange?: boolean
+  }) => void
   isAuthenticated?: boolean
   /** Browser guest UUID; required when submitting anonymous vote */
   guestId?: string | null
   guestVoteRecord?: GuestVotePayload | null
   /** After successful POST /api/votes/anonymous */
-  onAnonymousVoteSuccess?: (payload: GuestVotePayload, meta: { total_votes?: number }) => void
+  onAnonymousVoteSuccess?: (
+    payload: GuestVotePayload,
+    meta: { total_votes?: number; engagement_count?: number }
+  ) => void
 }
 
 export function VotePanel({
@@ -130,8 +138,9 @@ export function VotePanel({
   const [loading, setLoading] = useState(false)
 
   const isResolved = market.status === 'resolved'
-  const hasVoted = isAuthenticated ? !!myVote : !!myVote || !!guestVoteRecord
-  const guestPreviewOnly = !isAuthenticated && !!guestVoteRecord && !myVote
+  const isEditing = isAuthenticated && !!myVote
+  const guestHasVoted = !isAuthenticated && !!guestVoteRecord
+  const guestPreviewOnly = guestHasVoted
   const hasYesNoLabels = outcomes.some((o) => {
     const l = getOutcomeLabel(o, locale).toLowerCase()
     return l === 'yes' || l === 'sí' || l === 'si' || l === 'no'
@@ -140,18 +149,34 @@ export function VotePanel({
     outcomes.length === 2 &&
     (market.market_type === 'binary' || (market.market_type !== 'multi' && hasYesNoLabels))
 
+  useEffect(() => {
+    if (myVote && isAuthenticated) {
+      setSelectedOutcomeId(myVote.outcome_id)
+      setConfidence(myVote.confidence)
+    }
+    if (!myVote && isAuthenticated) {
+      setSelectedOutcomeId(null)
+      setConfidence(7)
+    }
+  }, [myVote?.outcome_id, myVote?.confidence, myVote, isAuthenticated])
+
   const selectedOutcome = selectedOutcomeId ? outcomes.find((o) => o.id === selectedOutcomeId) : null
   const selectedProb = selectedOutcome ? toDecimal(selectedOutcome.probability) : 0
   const effectiveConfidence = isBinary ? confidence : selectedOutcome ? autoConfidence(selectedProb) : 7
 
   const handleVote = async () => {
-    if (!selectedOutcomeId || loading || hasVoted || isResolved) return
+    if (!selectedOutcomeId || loading || isResolved) return
+    if (!isAuthenticated && guestHasVoted) return
 
     setLoading(true)
     try {
       if (!isAuthenticated) {
         if (!guestId) {
           alert(locale === 'es' ? 'Espera un momento…' : 'Please wait…')
+          return
+        }
+        if (typeof window !== 'undefined' && hasGuestVotedMarket(market.id)) {
+          alert(locale === 'es' ? 'Ya votaste en este mercado' : 'You already voted on this market')
           return
         }
         const label = getOutcomeLabel(
@@ -177,11 +202,18 @@ export function VotePanel({
           }),
         })
         const data = await res.json()
+        if (data.already_voted) {
+          alert(data.message || (locale === 'es' ? 'Ya votaste en este mercado' : 'You already voted on this market'))
+          return
+        }
         if (!res.ok) {
           alert(data.error || 'Vote failed')
           return
         }
-        onAnonymousVoteSuccess?.(payload, { total_votes: data.total_votes })
+        onAnonymousVoteSuccess?.(payload, {
+          total_votes: data.registered_vote_count ?? data.total_votes,
+          engagement_count: data.engagement_count,
+        })
         return
       }
 
@@ -197,7 +229,11 @@ export function VotePanel({
 
       const data = await res.json()
       if (data.success !== false && data.error == null) {
-        onVoteSuccess?.(data.xp_earned)
+        onVoteSuccess?.({
+          xpEarned: data.xp_earned,
+          isUpdate: data.is_update === true,
+          noChange: data.no_change === true,
+        })
       } else {
         alert(data.error || 'Vote failed')
       }
@@ -243,9 +279,9 @@ export function VotePanel({
     )
   }
 
-  if (hasVoted) {
-    const displayOutcomeId = myVote?.outcome_id ?? guestVoteRecord?.outcomeId
-    const displayConfidence = myVote?.confidence ?? guestVoteRecord?.confidence
+  if (guestHasVoted) {
+    const displayOutcomeId = guestVoteRecord?.outcomeId
+    const displayConfidence = guestVoteRecord?.confidence
     const outcomeForDisplay = outcomes.find((o) => o.id === displayOutcomeId)
 
     return (
@@ -267,17 +303,12 @@ export function VotePanel({
               <span className="text-slate-400 font-normal">at confidence {displayConfidence}</span>
             )}
           </p>
-          {guestPreviewOnly ? (
-            <p className="text-slate-400 text-sm mt-2">
-              {locale === 'en'
-                ? 'Your vote counts toward the market. Create an account to earn XP and appear on the leaderboard.'
-                : 'Tu voto cuenta para el mercado. Crea una cuenta para ganar XP y aparecer en el ranking.'}
-            </p>
-          ) : (
-            <p className="text-slate-300 text-sm mt-1">+{myVote!.xp_earned} XP earned</p>
-          )}
+          <p className="text-slate-400 text-sm mt-2">
+            {locale === 'en'
+              ? 'Your vote counts toward the market. Create an account to earn XP and appear on the leaderboard.'
+              : 'Tu voto cuenta para el mercado. Crea una cuenta para ganar XP y aparecer en el ranking.'}
+          </p>
         </div>
-        {!guestPreviewOnly && <p className="text-slate-500 text-xs mt-3">One prediction per market</p>}
       </div>
     )
   }
@@ -291,9 +322,45 @@ export function VotePanel({
     )
   }
 
+  const predictLabel =
+    locale === 'es'
+      ? isEditing
+        ? 'Actualizar predicción'
+        : 'Predecir'
+      : isEditing
+        ? 'Update prediction'
+        : 'Predict'
+  const submitLoadingLabel = locale === 'es' ? 'Enviando…' : 'Submitting...'
+
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-      <h3 className="font-semibold text-white mb-4">Make your prediction</h3>
+      <h3 className="font-semibold text-white mb-4">
+        {locale === 'es'
+          ? isEditing
+            ? 'Tu predicción'
+            : 'Haz tu predicción'
+          : isEditing
+            ? 'Your prediction'
+            : 'Make your prediction'}
+      </h3>
+      {!isAuthenticated && !guestHasVoted && (
+        <p className="text-slate-500 text-xs mb-3">
+          {locale === 'es' ? 'Vota sin crear cuenta' : 'Vote without creating an account'}
+        </p>
+      )}
+      {isEditing && (
+        <p className="text-slate-500 text-xs mb-4">
+          {locale === 'es'
+            ? 'Tu predicción actual · cambia tu voto cuando quieras'
+            : 'Your current prediction — change your vote anytime'}
+          {myVote ? (
+            <span className="block mt-1.5 text-slate-600">
+              +{myVote.xp_earned} XP{' '}
+              {locale === 'es' ? '(primera predicción)' : '(first prediction)'}
+            </span>
+          ) : null}
+        </p>
+      )}
 
       {isBinary ? (
         <div className="space-y-4">
@@ -343,7 +410,7 @@ export function VotePanel({
             disabled={!selectedOutcomeId || loading}
             className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
           >
-            {loading ? 'Submitting...' : 'Predict'}
+            {loading ? submitLoadingLabel : predictLabel}
           </button>
         </div>
       ) : (
@@ -396,7 +463,7 @@ export function VotePanel({
                       disabled={loading}
                       className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-sm font-medium rounded-lg"
                     >
-                      {loading ? 'Submitting...' : (locale === 'en' ? 'Submit prediction' : 'Enviar predicción')}
+                      {loading ? submitLoadingLabel : predictLabel}
                     </button>
                   </div>
                 )}

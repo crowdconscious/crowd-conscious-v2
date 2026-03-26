@@ -24,7 +24,7 @@ async function getMarkets(sort: string = 'active', category: string = 'all'): Pr
   } else if (sort === 'closing') {
     query = query.gt('resolution_date', new Date().toISOString()).order('resolution_date', { ascending: true })
   } else {
-    query = query.order('total_votes', { ascending: false, nullsFirst: false })
+    query = query.order('engagement_count', { ascending: false, nullsFirst: false })
   }
 
   const { data, error } = await query

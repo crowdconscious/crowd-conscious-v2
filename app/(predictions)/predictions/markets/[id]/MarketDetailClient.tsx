@@ -119,7 +119,10 @@ interface Props {
   agentContent: AgentContent[]
   sentiment: SentimentScore[]
   trades: TradeAnon[]
-  tradeCount: number
+  /** All votes + anonymous — reach / social proof */
+  engagementCount: number
+  /** Registered vote rows only — community probability denominator */
+  registeredVoteCount: number
   totalConsciousFromMarket: number
   resolutionEvidence?: { evidence_url?: string; admin_notes?: string }
   outcomes?: Outcome[]
@@ -137,7 +140,8 @@ export function MarketDetailClient({
   agentContent,
   sentiment,
   trades,
-  tradeCount,
+  engagementCount,
+  registeredVoteCount,
   totalConsciousFromMarket,
   resolutionEvidence = {},
   outcomes = [],
@@ -156,6 +160,7 @@ export function MarketDetailClient({
     xpGained?: number
     guest?: boolean
   }>({ open: false })
+  const [voteQuietMessage, setVoteQuietMessage] = useState<string | null>(null)
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -212,8 +217,23 @@ export function MarketDetailClient({
 
   const latestSentiment = sentiment[0] ? Number(sentiment[0].score) : 0
 
-  const handleTradeSuccess = (xpGained?: number) => {
-    setCelebration({ open: true, xpGained, guest: false })
+  const handleTradeSuccess = (payload?: {
+    xpEarned?: number
+    isUpdate?: boolean
+    noChange?: boolean
+  }) => {
+    if (payload?.noChange) {
+      setVoteQuietMessage(locale === 'es' ? 'Sin cambios' : 'No changes')
+      window.setTimeout(() => setVoteQuietMessage(null), 2500)
+      return
+    }
+    if (payload?.isUpdate) {
+      setVoteQuietMessage(locale === 'es' ? 'Predicción actualizada ✓' : 'Prediction updated ✓')
+      window.setTimeout(() => setVoteQuietMessage(null), 3500)
+      router.refresh()
+      return
+    }
+    setCelebration({ open: true, xpGained: payload?.xpEarned, guest: false })
   }
 
   const handleAnonymousVoteSuccess = (payload: GuestVotePayload, _meta?: { total_votes?: number }) => {
@@ -247,6 +267,15 @@ export function MarketDetailClient({
         ← Back to markets
       </Link>
 
+      {voteQuietMessage && (
+        <div
+          role="status"
+          className="rounded-lg border border-emerald-500/35 bg-emerald-500/10 px-4 py-2.5 text-sm text-emerald-100"
+        >
+          {voteQuietMessage}
+        </div>
+      )}
+
       {isResolved && (
         <div className="bg-emerald-500/20 border border-emerald-500/50 rounded-xl p-6">
           <h2 className="text-xl font-bold text-emerald-400 mb-2">
@@ -264,7 +293,8 @@ export function MarketDetailClient({
             </a>
           )}
           <p className="text-slate-300 mt-2">
-            {tradeCount} prediction{tradeCount !== 1 ? 's' : ''} cast
+            {engagementCount.toLocaleString()} participation{engagementCount !== 1 ? 's' : ''} ·{' '}
+            {registeredVoteCount.toLocaleString()} registered voter{registeredVoteCount !== 1 ? 's' : ''}
           </p>
         </div>
       )}
@@ -338,19 +368,39 @@ export function MarketDetailClient({
             </div>
           )}
 
-          {/* Probability Display */}
+          {/* Probability + engagement (registered vs total reach) */}
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <p className="text-slate-400 text-sm">Current probability</p>
-                <p className="text-4xl font-bold text-white">
-                  {isMultiOutcome && leadingOutcome
-                    ? `${getOutcomeLabel(leadingOutcome, locale)} ${Math.round(toDisplayPercent(leadingOutcome.probability || 0))}%`
-                    : `${Math.round(prob)}% YES`}
-                </p>
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-6">
+              <div className="flex flex-wrap gap-8 items-end">
+                <div>
+                  <p className="text-slate-400 text-sm">
+                    {locale === 'en' ? 'Community probability' : 'Probabilidad de la comunidad'}
+                  </p>
+                  <p className="text-3xl font-bold text-emerald-400">
+                    {isMultiOutcome && leadingOutcome
+                      ? `${getOutcomeLabel(leadingOutcome, locale)} ${Math.round(toDisplayPercent(leadingOutcome.probability || 0))}%`
+                      : `${Math.round(prob)}% YES`}
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    {locale === 'en' ? 'community signal' : 'señal de la comunidad'} ·{' '}
+                    {registeredVoteCount.toLocaleString()}{' '}
+                    {locale === 'en' ? 'registered voters' : 'votantes registrados'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-slate-400 text-sm">
+                    {locale === 'en' ? 'Total engagement' : 'Participación total'}
+                  </p>
+                  <p className="text-2xl font-semibold text-white">
+                    {engagementCount.toLocaleString()}
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    {locale === 'en' ? 'all interactions (incl. guests)' : 'todas las interacciones (incl. invitados)'}
+                  </p>
+                </div>
               </div>
               <div
-                className="relative h-24 w-24 rounded-full flex items-center justify-center"
+                className="relative h-24 w-24 rounded-full flex items-center justify-center shrink-0 mx-auto sm:mx-0"
                 style={{
                   background: `conic-gradient(#10b981 0% ${prob}%, #334155 ${prob}% 100%)`,
                 }}
@@ -657,8 +707,16 @@ export function MarketDetailClient({
                 <span className="text-white">{formatDate(market.resolution_date)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Predictions</span>
-                <span className="text-white">{tradeCount}</span>
+                <span className="text-slate-400">
+                  {locale === 'en' ? 'Engagement' : 'Participación'}
+                </span>
+                <span className="text-white">{engagementCount.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">
+                  {locale === 'en' ? 'Registered voters' : 'Votantes registrados'}
+                </span>
+                <span className="text-white">{registeredVoteCount.toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Category</span>

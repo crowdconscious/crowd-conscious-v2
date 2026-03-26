@@ -6,6 +6,7 @@
  * - Fund balance: public.conscious_fund (not conscious_fund_contributions)
  * - User counts: profiles (auth.users not queryable from PostgREST)
  * - Guest votes: market_votes.is_anonymous (migration 147)
+ * - Engagement: prediction_markets.engagement_count (migration 151); KPI "total" = all interactions
  */
 
 import { createAdminClient } from '@/lib/supabase-admin'
@@ -15,6 +16,7 @@ export type TopMarketRow = {
   title: string
   category: string
   total_votes: number
+  engagement_count: number
   status: string
   resolution_date: string | null
   yes_probability: number
@@ -47,20 +49,33 @@ export type MarketRowCsv = {
   title: string
   category: string
   total_votes: number
+  engagement_count: number
   yes_probability: number
   status: string
   resolution_date: string | null
 }
 
+export type VoteChangeLeader = {
+  market_id: string
+  title: string
+  change_events: number
+}
+
 export type IntelligenceDashboardData = {
   kpis: {
+    /** Rows in market_votes with is_anonymous false/null */
     registered_votes: number
-    total_votes: number
+    /** All vote rows (registered + anonymous) — platform engagement */
+    total_engagement: number
+    /** (total_engagement - registered_votes) / total_engagement · 100 */
+    anonymous_engagement_rate_pct: number | null
     total_users: number
     active_markets: number
     orphan_markets: number
     avg_confidence: number | null
     fund_total: number | null
+    /** Registered votes with at least one change, updated in the last 7 days */
+    vote_changes_week: number
   }
   votesOverTime: VotesByDay[]
   votesByCategory: CategoryCount[]
@@ -76,6 +91,7 @@ export type IntelligenceDashboardData = {
   /** Larger list for Markets tab + CSV */
   allMarkets: MarketRowCsv[]
   accuracyBuckets: { label: string; count: number }[]
+  voteChangeLeaders: VoteChangeLeader[]
   loadedWithServiceRole: boolean
   errors: string[]
 }
@@ -83,13 +99,16 @@ export type IntelligenceDashboardData = {
 const empty = (): IntelligenceDashboardData => ({
   kpis: {
     registered_votes: 0,
-    total_votes: 0,
+    total_engagement: 0,
+    anonymous_engagement_rate_pct: null,
     total_users: 0,
     active_markets: 0,
     orphan_markets: 0,
     avg_confidence: null,
     fund_total: null,
+    vote_changes_week: 0,
   },
+  voteChangeLeaders: [],
   votesOverTime: [],
   votesByCategory: [],
   topMarkets: [],
@@ -137,11 +156,11 @@ export async function fetchIntelligenceDashboard(): Promise<IntelligenceDashboar
   }
 
   try {
-    // --- KPIs ---
-    const { count: totalVotes } = await admin
+    // --- KPIs: total_engagement = all rows; registered_votes = non-anonymous only ---
+    const { count: totalEngagement } = await admin
       .from('market_votes')
       .select('*', { count: 'exact', head: true })
-    out.kpis.total_votes = totalVotes ?? 0
+    out.kpis.total_engagement = totalEngagement ?? 0
 
     let registered = 0
     try {
@@ -151,9 +170,12 @@ export async function fetchIntelligenceDashboard(): Promise<IntelligenceDashboar
         .or('is_anonymous.is.null,is_anonymous.eq.false')
       registered = r ?? 0
     } catch {
-      registered = totalVotes ?? 0
+      registered = totalEngagement ?? 0
     }
     out.kpis.registered_votes = registered
+    const te = out.kpis.total_engagement
+    out.kpis.anonymous_engagement_rate_pct =
+      te > 0 ? Math.round(((te - registered) / te) * 1000) / 10 : null
 
     const { count: totalUsers } = await admin
       .from('profiles')
@@ -191,6 +213,44 @@ export async function fetchIntelligenceDashboard(): Promise<IntelligenceDashboar
       pushErr('conscious_fund', e)
     }
 
+    try {
+      const weekAgoIso = new Date(Date.now() - 7 * 86400000).toISOString()
+      const { count: vcw } = await admin
+        .from('market_votes')
+        .select('*', { count: 'exact', head: true })
+        .gt('change_count', 0)
+        .gte('updated_at', weekAgoIso)
+        .or('is_anonymous.is.null,is_anonymous.eq.false')
+      out.kpis.vote_changes_week = vcw ?? 0
+
+      const { data: chRows } = await admin
+        .from('market_votes')
+        .select('market_id, change_count')
+        .gte('updated_at', weekAgoIso)
+        .gt('change_count', 0)
+        .or('is_anonymous.is.null,is_anonymous.eq.false')
+        .limit(8000)
+
+      const sumBy = new Map<string, number>()
+      for (const r of chRows ?? []) {
+        const row = r as { market_id: string; change_count: number }
+        sumBy.set(row.market_id, (sumBy.get(row.market_id) ?? 0) + Number(row.change_count ?? 0))
+      }
+      const topPairs = [...sumBy.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5)
+      if (topPairs.length) {
+        const topIds = topPairs.map(([id]) => id)
+        const { data: titles } = await admin.from('prediction_markets').select('id, title').in('id', topIds)
+        const tmap = new Map((titles ?? []).map((t: { id: string; title: string }) => [t.id, t.title]))
+        out.voteChangeLeaders = topPairs.map(([id, n]) => ({
+          market_id: id,
+          title: String(tmap.get(id) ?? id),
+          change_events: n,
+        }))
+      }
+    } catch (e) {
+      pushErr('vote_change_stats', e)
+    }
+
     // --- Votes by day (up to ~1y) — client filters 7d / 30d / all ---
     const since365 = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString()
     const { data: v365 } = await admin.from('market_votes').select('created_at').gte('created_at', since365)
@@ -220,8 +280,8 @@ export async function fetchIntelligenceDashboard(): Promise<IntelligenceDashboar
     // --- Top markets + all markets for table ---
     const { data: topPm } = await admin
       .from('prediction_markets')
-      .select('id, title, category, total_votes, status, resolution_date, current_probability')
-      .order('total_votes', { ascending: false, nullsFirst: false })
+      .select('id, title, category, total_votes, engagement_count, status, resolution_date, current_probability')
+      .order('engagement_count', { ascending: false, nullsFirst: false })
       .limit(200)
 
     const pmList = topPm ?? []
@@ -246,11 +306,14 @@ export async function fetchIntelligenceDashboard(): Promise<IntelligenceDashboar
       const cp = Number(p.current_probability ?? 50)
       const cpFrac = cp > 1 ? cp / 100 : cp
       const yp = yesProb.get(id) ?? cpFrac
+      const reg = Number(p.total_votes ?? 0)
+      const eng = Number((p.engagement_count as number | undefined) ?? reg)
       return {
         id,
         title: String(p.title ?? ''),
         category: String(p.category ?? ''),
-        total_votes: Number(p.total_votes ?? 0),
+        total_votes: reg,
+        engagement_count: eng,
         status: String(p.status ?? ''),
         resolution_date: (p.resolution_date as string | null) ?? null,
         yes_probability: yp,
@@ -261,11 +324,14 @@ export async function fetchIntelligenceDashboard(): Promise<IntelligenceDashboar
       const id = p.id as string
       const cp = Number(p.current_probability ?? 50)
       const yesP = cp > 1 ? cp / 100 : cp
+      const reg = Number(p.total_votes ?? 0)
+      const eng = Number((p.engagement_count as number | undefined) ?? reg)
       return {
         id,
         title: String(p.title ?? ''),
         category: String(p.category ?? ''),
-        total_votes: Number(p.total_votes ?? 0),
+        total_votes: reg,
+        engagement_count: eng,
         yes_probability: yesP,
         status: String(p.status ?? ''),
         resolution_date: (p.resolution_date as string | null) ?? null,
@@ -458,7 +524,7 @@ export async function fetchIntelligenceDashboard(): Promise<IntelligenceDashboar
     } catch {
       out.voterSplit = [
         { voter_type: 'anonymous', count: 0 },
-        { voter_type: 'registered', count: out.kpis.total_votes },
+        { voter_type: 'registered', count: out.kpis.registered_votes },
       ]
     }
 

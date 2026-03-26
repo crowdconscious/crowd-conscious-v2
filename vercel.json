@@ -6,32 +6,42 @@
   "devCommand": "npm run dev",
   "regions": ["iad1"],
   "functions": {
-    "app/api/cron/agents/news-monitor/route.ts": {
-      "maxDuration": 300
-    },
-    "app/api/cron/agents/content-creator/route.ts": {
-      "maxDuration": 300
-    },
-    "app/api/predictions/admin/run-agent/route.ts": {
-      "maxDuration": 300
-    },
-    "app/api/**/*.ts": {
-      "maxDuration": 30
-    },
-    "app/api/cron/daily-market-digest/route.ts": {
-      "maxDuration": 300
-    },
-    "app/api/cron/reengagement-inactive/route.ts": {
-      "maxDuration": 300
-    },
-    "app/api/cron/agents/ceo-digest/route.ts": {
-      "maxDuration": 300
-    },
-    "app/api/cron/agents/inbox-curator/route.ts": {
-      "maxDuration": 300
-    }
+    "app/api/cron/agents/ceo-digest/route.ts": { "maxDuration": 300 },
+    "app/api/cron/agents/inbox-curator/route.ts": { "maxDuration": 300 },
+    "app/api/cron/agents/content-creator/route.ts": { "maxDuration": 300 },
+    "app/api/cron/agents/news-monitor/route.ts": { "maxDuration": 300 },
+    "app/api/cron/agents/sponsor-report/route.ts": { "maxDuration": 300 },
+    "app/api/cron/daily-market-digest/route.ts": { "maxDuration": 120 },
+    "app/api/cron/monthly-impact/route.ts": { "maxDuration": 120 },
+    "app/api/cron/reengagement-inactive/route.ts": { "maxDuration": 120 },
+    "app/api/predictions/admin/run-agent/route.ts": { "maxDuration": 300 },
+    "app/api/**/*.ts": { "maxDuration": 30 }
   },
   "crons": [
+    {
+      "path": "/api/cron/agents/news-monitor",
+      "schedule": "0 14 * * *"
+    },
+    {
+      "path": "/api/cron/agents/inbox-curator",
+      "schedule": "5 14 * * *"
+    },
+    {
+      "path": "/api/cron/daily-market-digest",
+      "schedule": "15 15 * * *"
+    },
+    {
+      "path": "/api/cron/agents/content-creator",
+      "schedule": "30 15 * * *"
+    },
+    {
+      "path": "/api/cron/agents/ceo-digest",
+      "schedule": "0 16 * * *"
+    },
+    {
+      "path": "/api/cron/reengagement-inactive",
+      "schedule": "0 16 * * 1"
+    },
     {
       "path": "/api/cron/monthly-impact",
       "schedule": "0 9 1 * *"
@@ -39,30 +49,6 @@
     {
       "path": "/api/cron/agents/sponsor-report",
       "schedule": "0 9 1 * *"
-    },
-    {
-      "path": "/api/cron/agents/news-monitor",
-      "schedule": "0 14 * * *"
-    },
-    {
-      "path": "/api/cron/agents/content-creator",
-      "schedule": "0 15 * * *"
-    },
-    {
-      "path": "/api/cron/agents/ceo-digest",
-      "schedule": "0 16 * * *"
-    },
-    {
-      "path": "/api/cron/agents/inbox-curator",
-      "schedule": "0 15 * * *"
-    },
-    {
-      "path": "/api/cron/daily-market-digest",
-      "schedule": "0 15 * * *"
-    },
-    {
-      "path": "/api/cron/reengagement-inactive",
-      "schedule": "0 16 * * 1"
     }
   ],
   "headers": [

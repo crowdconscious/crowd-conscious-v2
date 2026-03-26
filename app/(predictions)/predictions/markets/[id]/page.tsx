@@ -76,7 +76,6 @@ export default async function MarketDetailPage({
     { data: agentContent },
     { data: sentiment },
     { data: creator },
-    tradeCountRes,
     consciousRes,
     { data: outcomes },
     { data: myVoteRow },
@@ -118,10 +117,6 @@ export default async function MarketDetailPage({
       .eq('id', market.created_by)
       .single(),
     supabase
-      .from('prediction_trades')
-      .select('id', { count: 'exact', head: true })
-      .eq('market_id', id),
-    supabase
       .from('conscious_fund_transactions')
       .select('amount')
       .eq('market_id', id)
@@ -151,7 +146,9 @@ export default async function MarketDetailPage({
   const totalConsciousFromMarket =
     (consciousRes?.data ?? []).reduce((sum, t) => sum + Number(t.amount), 0)
 
-  const voteCount = (market as { total_votes?: number }).total_votes ?? tradeCountRes?.count ?? 0
+  const registeredVoteCount = Number((market as { total_votes?: number }).total_votes) || 0
+  const engagementCount =
+    Number((market as { engagement_count?: number }).engagement_count) || registeredVoteCount
   const outcomesList = (outcomes || []).map((o) => ({
     id: o.id,
     label: o.label,
@@ -185,7 +182,8 @@ export default async function MarketDetailPage({
       agentContent={agentContent || []}
       sentiment={sentiment || []}
       trades={trades}
-      tradeCount={voteCount}
+      engagementCount={engagementCount}
+      registeredVoteCount={registeredVoteCount}
       totalConsciousFromMarket={totalConsciousFromMarket}
       resolutionEvidence={resolutionEvidence}
       outcomes={outcomesList}
