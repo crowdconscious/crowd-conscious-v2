@@ -1,7 +1,22 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase-server'
 import dynamic from 'next/dynamic'
 import { Suspense } from 'react'
 import type { Database } from '@/types/database'
+import { SITE_URL } from '@/lib/seo/site'
+
+export const metadata: Metadata = {
+  title: 'Mercados de Predicción — Explora y Predice Gratis',
+  description:
+    'Explora mercados activos sobre deportes, política, Mundial 2026 y más. Vota gratis y sigue las probabilidades en tiempo real.',
+  alternates: {
+    canonical: `${SITE_URL}/markets`,
+    languages: {
+      'es-MX': `${SITE_URL}/markets`,
+      'en-US': `${SITE_URL}/markets`,
+    },
+  },
+}
 
 type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row']
 

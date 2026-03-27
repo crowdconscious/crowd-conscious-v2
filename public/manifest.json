@@ -1,0 +1,23 @@
+{
+  "name": "Crowd Conscious",
+  "short_name": "Crowd Conscious",
+  "description": "Predicciones gratuitas que financian causas reales — free prediction markets with community impact.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#10b981",
+  "icons": [
+    {
+      "src": "/images/favicon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

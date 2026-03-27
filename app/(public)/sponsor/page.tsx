@@ -1,6 +1,27 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase-server'
 import dynamic from 'next/dynamic'
 import { SponsorPageClient } from './SponsorPageClient'
+import { SITE_URL } from '@/lib/seo/site'
+
+export const metadata: Metadata = {
+  title: 'Patrocina un Mercado de Predicciones — Para Marcas',
+  description:
+    'Activa tu audiencia con predicciones patrocinadas que financian causas reales. 40% al Fondo Consciente. Ideal para el Mundial 2026.',
+  openGraph: {
+    title: 'Crowd Conscious para Marcas — Activación con Propósito',
+    description:
+      'Patrocina mercados de predicciones. Cada voto genera impacto comunitario. Tu marca, tu causa, tu audiencia.',
+    url: `${SITE_URL}/sponsor`,
+  },
+  alternates: {
+    canonical: `${SITE_URL}/sponsor`,
+    languages: {
+      'es-MX': `${SITE_URL}/sponsor`,
+      'en-US': `${SITE_URL}/sponsor`,
+    },
+  },
+}
 
 const LandingNav = dynamic(() => import('@/app/components/landing/LandingNav'))
 const Footer = dynamic(() => import('@/components/Footer'))

@@ -1,5 +1,20 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase-server'
 import dynamic from 'next/dynamic'
+import { SITE_URL } from '@/lib/seo/site'
+
+export const metadata: Metadata = {
+  title: 'Acerca de Crowd Conscious — Predicciones con Propósito',
+  description:
+    'Crowd Conscious conecta inteligencia colectiva, patrocinios de marcas y el Fondo Consciente para impacto comunitario real en México y el mundo.',
+  alternates: {
+    canonical: `${SITE_URL}/about`,
+    languages: {
+      'es-MX': `${SITE_URL}/about`,
+      'en-US': `${SITE_URL}/about`,
+    },
+  },
+}
 
 const LandingNav = dynamic(() => import('@/app/components/landing/LandingNav'))
 const Footer = dynamic(() => import('@/components/Footer'))

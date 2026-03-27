@@ -1,53 +1,64 @@
+import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase-server'
 import { getCurrentUser } from '@/lib/auth-server'
 import { MarketDetailClient } from './MarketDetailClient'
 import { getMarketText } from '@/lib/i18n/market-translations'
+import { SITE_URL } from '@/lib/seo/site'
 
 export const dynamic = 'force-dynamic'
-
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'
 
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ id: string }>
-}) {
+}): Promise<Metadata> {
   const { id } = await params
   const cookieStore = await cookies()
   const locale = cookieStore.get('preferred-language')?.value === 'en' ? 'en' : 'es'
   const supabase = await createClient()
   const { data: market } = await supabase
     .from('prediction_markets')
-    .select('title, description, translations')
+    .select('title, description, translations, total_votes')
     .eq('id', id)
     .single()
 
-  if (!market) return {}
+  if (!market) {
+    return { title: 'Prediction Market | Crowd Conscious' }
+  }
 
   const title = getMarketText(market, 'title', locale) || 'Prediction Market'
-  const description =
+  const baseDesc =
     getMarketText(market, 'description', locale)?.slice(0, 160) ||
-    `Make your prediction on ${title} at Crowd Conscious.`
-  const ogImage = `${BASE_URL}/api/og/market/${id}${locale === 'en' ? '?lang=en' : ''}`
+    `Predice sobre: ${title}. ${market.total_votes ?? 0} votos. 100% gratis en Crowd Conscious.`
+  const description = baseDesc
+  const ogImage = `${SITE_URL}/api/og/market/${id}${locale === 'en' ? '?lang=en' : ''}`
+  const canonical = `${SITE_URL}/predictions/markets/${id}`
 
   return {
     title: `${title} | Crowd Conscious`,
     description,
     openGraph: {
-      title,
+      title: `${title} | Crowd Conscious`,
       description,
-      url: `${BASE_URL}/predictions/markets/${id}`,
+      url: canonical,
       siteName: 'Crowd Conscious',
       images: [{ url: ogImage, width: 1200, height: 630, alt: title }],
-      type: 'website',
+      type: 'article',
     },
     twitter: {
       card: 'summary_large_image',
-      title,
+      title: `${title} | Crowd Conscious`,
       description,
       images: [ogImage],
+    },
+    alternates: {
+      canonical,
+      languages: {
+        'es-MX': canonical,
+        'en-US': canonical,
+      },
     },
   }
 }

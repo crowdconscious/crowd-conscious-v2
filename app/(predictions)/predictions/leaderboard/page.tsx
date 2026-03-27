@@ -1,7 +1,22 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase-server'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { getCurrentUser } from '@/lib/auth-server'
 import { LeaderboardClient } from './LeaderboardClient'
+import { SITE_URL } from '@/lib/seo/site'
+
+export const metadata: Metadata = {
+  title: 'Leaderboard — Los Mejores Predictores',
+  description:
+    'Ranking de los predictores más acertados en Crowd Conscious. Gana XP, sube de nivel y demuestra tu inteligencia colectiva.',
+  alternates: {
+    canonical: `${SITE_URL}/predictions/leaderboard`,
+    languages: {
+      'es-MX': `${SITE_URL}/predictions/leaderboard`,
+      'en-US': `${SITE_URL}/predictions/leaderboard`,
+    },
+  },
+}
 
 const CATEGORIES = ['all', 'world_cup', 'world', 'government', 'sustainability', 'corporate', 'community', 'cause'] as const
 

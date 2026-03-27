@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "../src/app/globals.css";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { SITE_URL } from "@/lib/seo/site";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,33 +16,114 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "Crowd Conscious",
+  url: SITE_URL,
+  logo: `${SITE_URL}/images/logo-small.png`,
+  description:
+    "Free-to-play prediction markets platform where your opinion drives real community impact.",
+  sameAs: [
+    "https://twitter.com/crowdconscious",
+    "https://instagram.com/crowdconscious",
+  ],
+  foundingDate: "2025",
+  foundingLocation: {
+    "@type": "Place",
+    name: "Mexico City, Mexico",
+  },
+};
 
 export const metadata: Metadata = {
-  title: 'Crowd Conscious - Where Predictions Meet Purpose',
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default:
+      "Crowd Conscious — Predicciones Gratis que Financian Causas Reales",
+    template: "%s | Crowd Conscious",
+  },
   description:
-    'Free-to-play prediction platform where your opinion drives real community impact. Predict on sustainability, policy, sports & more — brand sponsors fund the Conscious Fund.',
-  icons: {
-    icon: [
-      { url: '/images/favicon-512.png', sizes: '512x512', type: 'image/png' },
-    ],
-    apple: '/images/apple-touch-icon.png',
-  },
+    "Plataforma de predicciones gratuita donde tu opinión genera impacto comunitario real. Predice sobre deportes, política y más — marcas patrocinan el Fondo Consciente. Mundial 2026.",
+  keywords: [
+    "predicciones gratis",
+    "mercado de predicciones",
+    "prediction market",
+    "mundial 2026",
+    "world cup 2026",
+    "inteligencia colectiva",
+    "collective intelligence",
+    "cause marketing",
+    "impacto social",
+    "predicciones deportivas",
+    "crowd conscious",
+    "fondo consciente",
+    "free prediction platform",
+    "predicciones mundial mexico",
+  ],
+  authors: [{ name: "Crowd Conscious" }],
+  creator: "Crowd Conscious",
+  publisher: "Crowd Conscious",
+  formatDetection: { email: false, address: false, telephone: false },
+
   openGraph: {
-    title: 'Crowd Conscious - Where Predictions Meet Purpose',
+    type: "website",
+    locale: "es_MX",
+    alternateLocale: ["en_US"],
+    url: SITE_URL,
+    siteName: "Crowd Conscious",
+    title:
+      "Crowd Conscious — Predicciones Gratis que Financian Causas Reales",
     description:
-      'Free-to-play prediction platform where your opinion drives real community impact. Predict on sustainability, policy, sports & more.',
-    url: BASE_URL,
-    siteName: 'Crowd Conscious',
-    type: 'website',
-    images: [{ url: `${BASE_URL}/images/favicon-512.png`, width: 512, height: 512, alt: 'Crowd Conscious' }],
+      "Plataforma de predicciones gratuita donde tu opinión genera impacto comunitario real. Predice sobre deportes, política y más.",
+    images: [
+      {
+        url: "/images/og-default.png",
+        width: 512,
+        height: 512,
+        alt: "Crowd Conscious — Predicciones con Propósito",
+        type: "image/png",
+      },
+    ],
   },
+
   twitter: {
-    card: 'summary_large_image',
-    title: 'Crowd Conscious - Where Predictions Meet Purpose',
+    card: "summary_large_image",
+    title: "Crowd Conscious — Predicciones Gratis con Impacto Real",
     description:
-      'Free-to-play prediction platform where your opinion drives real community impact.',
+      "Predice sobre deportes, política y más. Marcas patrocinan el Fondo Consciente. 100% gratis.",
+    images: ["/images/og-default.png"],
+    creator: "@crowdconscious",
+    site: "@crowdconscious",
   },
+
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+
+  icons: {
+    icon: "/images/favicon-512.png",
+    apple: "/images/apple-touch-icon.png",
+  },
+
+  manifest: "/manifest.json",
+
+  alternates: {
+    canonical: SITE_URL,
+    languages: {
+      "es-MX": SITE_URL,
+      "en-US": SITE_URL,
+    },
+  },
+
+  verification: {},
 };
 
 export default function RootLayout({
@@ -92,6 +174,12 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white text-slate-900`}
       >
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(organizationJsonLd),
+          }}
+        />
         <LanguageProvider>
           {children}
           <Analytics />

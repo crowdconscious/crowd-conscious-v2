@@ -1,5 +1,7 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { cookies } from 'next/headers'
+import { SITE_URL } from '@/lib/seo/site'
 import { createClient } from '@/lib/supabase-server'
 import { getLiveEventTitle } from '@/lib/live-event-title'
 import type { Json } from '@/types/database'
@@ -16,6 +18,27 @@ const SmartHomeClient = dynamic(() => import('./SmartHomeClient'))
 const LandingHeroClient = dynamic(() => import('./components/landing/LandingHeroClient').then((m) => ({ default: m.LandingHeroClient })))
 
 export const revalidate = 60
+
+export const metadata: Metadata = {
+  title:
+    "Crowd Conscious — Predicciones Gratis que Financian Causas Reales | Mundial 2026",
+  description:
+    "Plataforma gratuita de predicciones donde cada voto genera impacto. Predice en el Mundial 2026, política, deportes y más. 40% de patrocinios van a causas comunitarias.",
+  alternates: {
+    canonical: SITE_URL,
+    languages: {
+      "es-MX": SITE_URL,
+      "en-US": SITE_URL,
+    },
+  },
+  openGraph: {
+    title:
+      "Crowd Conscious — Predicciones Gratis que Financian Causas Reales | Mundial 2026",
+    description:
+      "Plataforma gratuita de predicciones donde cada voto genera impacto. Mundial 2026, política, deportes y más.",
+    url: SITE_URL,
+  },
+}
 
 const CATEGORY_CONFIG: Record<
   string,

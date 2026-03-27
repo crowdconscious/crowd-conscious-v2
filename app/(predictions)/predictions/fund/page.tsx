@@ -1,7 +1,22 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase-server'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { getCurrentUser } from '@/lib/auth-server'
 import { FundClient } from './FundClient'
+import { SITE_URL } from '@/lib/seo/site'
+
+export const metadata: Metadata = {
+  title: 'Fondo Consciente — Vota por Causas Comunitarias',
+  description:
+    'El 40% de los patrocinios alimenta el Fondo Consciente. Los usuarios eligen a qué causas va el impacto. Transparente y gratuito.',
+  alternates: {
+    canonical: `${SITE_URL}/predictions/fund`,
+    languages: {
+      'es-MX': `${SITE_URL}/predictions/fund`,
+      'en-US': `${SITE_URL}/predictions/fund`,
+    },
+  },
+}
 
 function getCurrentCycle(): string {
   return new Date().toISOString().slice(0, 7)

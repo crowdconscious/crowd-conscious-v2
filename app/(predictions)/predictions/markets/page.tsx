@@ -1,6 +1,21 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase-server'
 import { MarketsClient } from './MarketsClient'
 import type { Database } from '@/types/database'
+import { SITE_URL } from '@/lib/seo/site'
+
+export const metadata: Metadata = {
+  title: 'Todos los Mercados — Predicciones',
+  description:
+    'Lista completa de mercados de predicción en Crowd Conscious: filtra por categoría, ordena por actividad o cierre.',
+  alternates: {
+    canonical: `${SITE_URL}/predictions/markets`,
+    languages: {
+      'es-MX': `${SITE_URL}/predictions/markets`,
+      'en-US': `${SITE_URL}/predictions/markets`,
+    },
+  },
+}
 
 type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row'] & {
   recent_votes?: number

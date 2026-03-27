@@ -1,5 +1,7 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { headers } from 'next/headers'
+import { SITE_URL } from '@/lib/seo/site'
 import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase-server'
 import { getCurrentUser } from '@/lib/auth-server'
@@ -9,6 +11,25 @@ import { CreateLiveEventPanel } from '@/components/live/CreateLiveEventPanel'
 
 /** Per-session admin create form; list still fetched each request. */
 export const dynamic = 'force-dynamic'
+
+export const metadata: Metadata = {
+  title: 'Conscious Live — Predicciones en Tiempo Real',
+  description:
+    'Predice en vivo durante partidos del Mundial 2026. Votación en tiempo real, leaderboard y transmisión en vivo.',
+  openGraph: {
+    title: 'Conscious Live — Predicciones en Vivo | Mundial 2026',
+    description:
+      'Predice en vivo, sube en el leaderboard y genera impacto. Transmisión + votación en tiempo real.',
+    url: `${SITE_URL}/live`,
+  },
+  alternates: {
+    canonical: `${SITE_URL}/live`,
+    languages: {
+      'es-MX': `${SITE_URL}/live`,
+      'en-US': `${SITE_URL}/live`,
+    },
+  },
+}
 
 type LiveEventRow = Database['public']['Tables']['live_events']['Row']
 
