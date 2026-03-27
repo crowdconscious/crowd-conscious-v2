@@ -87,6 +87,10 @@ export default async function LiveEventsPage() {
           <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">{t.title}</h1>
         </div>
 
+        {isAdmin && (
+          <CreateLiveEventPanel locale={locale === 'es' ? 'es' : 'en'} />
+        )}
+
         {error && (
           <p className="rounded-xl border border-red-500/30 bg-red-950/40 px-4 py-3 text-sm text-red-200">
             {t.error}
