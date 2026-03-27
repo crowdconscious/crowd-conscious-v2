@@ -1,3 +1,7 @@
+/**
+ * Optional roadmap (Phase 7B): enrich prompts with Conscious Live (`live_events`, micro-markets)
+ * for match-day social posts; News Monitor can surface pre-match topics for admins.
+ */
 import {
   getAnthropicClient,
   getSupabaseAdmin,

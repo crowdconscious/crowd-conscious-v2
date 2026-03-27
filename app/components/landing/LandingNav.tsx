@@ -6,10 +6,25 @@ import { Menu, X } from 'lucide-react'
 import Logo from '@/components/Logo'
 import LanguageSwitcherSimple from '@/components/LanguageSwitcherSimple'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { useLiveNavBadge } from '@/hooks/useLiveNavBadge'
 
 const NAV = {
-  es: { markets: 'Mercados', about: 'Acerca de', forSponsors: 'Para Patrocinadores', signIn: 'Iniciar Sesión', startPredicting: 'Empezar a Predecir' },
-  en: { markets: 'Markets', about: 'About', forSponsors: 'For Sponsors', signIn: 'Sign In', startPredicting: 'Start Predicting' },
+  es: {
+    markets: 'Mercados',
+    live: 'En Vivo',
+    about: 'Acerca de',
+    forSponsors: 'Para Patrocinadores',
+    signIn: 'Iniciar Sesión',
+    startPredicting: 'Empezar a Predecir',
+  },
+  en: {
+    markets: 'Markets',
+    live: 'Live',
+    about: 'About',
+    forSponsors: 'For Sponsors',
+    signIn: 'Sign In',
+    startPredicting: 'Start Predicting',
+  },
 }
 
 export default function LandingNav() {
@@ -17,6 +32,7 @@ export default function LandingNav() {
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const nav = NAV[language]
+  const { liveCount } = useLiveNavBadge()
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20)
@@ -38,6 +54,18 @@ export default function LandingNav() {
               className="text-slate-400 hover:text-white transition-colors font-medium"
             >
               {nav.markets}
+            </Link>
+            <Link
+              href="/live"
+              className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors font-medium"
+            >
+              {nav.live}
+              {liveCount > 0 && (
+                <span className="relative flex h-2.5 w-2.5" aria-label="Live">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+                </span>
+              )}
             </Link>
             <Link
               href="/about"
@@ -88,9 +116,22 @@ export default function LandingNav() {
             <Link
               href="/markets"
               onClick={() => setMobileOpen(false)}
-              className="block py-2 text-slate-400 hover:text-white"
+              className="block min-h-[44px] py-3 text-slate-400 hover:text-white"
             >
               {nav.markets}
+            </Link>
+            <Link
+              href="/live"
+              onClick={() => setMobileOpen(false)}
+              className="flex min-h-[44px] items-center gap-2 py-3 text-slate-400 hover:text-white"
+            >
+              {nav.live}
+              {liveCount > 0 && (
+                <span className="relative flex h-2.5 w-2.5" aria-label="Live">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+                </span>
+              )}
             </Link>
             <Link
               href="/about"

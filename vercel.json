@@ -12,6 +12,7 @@
     "app/api/cron/agents/news-monitor/route.ts": { "maxDuration": 300 },
     "app/api/cron/agents/sponsor-report/route.ts": { "maxDuration": 300 },
     "app/api/cron/daily-market-digest/route.ts": { "maxDuration": 120 },
+    "app/api/cron/live-reminders/route.ts": { "maxDuration": 120 },
     "app/api/cron/monthly-impact/route.ts": { "maxDuration": 120 },
     "app/api/cron/reengagement-inactive/route.ts": { "maxDuration": 120 },
     "app/api/predictions/admin/run-agent/route.ts": { "maxDuration": 300 },
@@ -45,6 +46,10 @@
     {
       "path": "/api/cron/monthly-impact",
       "schedule": "0 9 1 * *"
+    },
+    {
+      "path": "/api/cron/live-reminders",
+      "schedule": "*/10 * * * *"
     },
     {
       "path": "/api/cron/agents/sponsor-report",

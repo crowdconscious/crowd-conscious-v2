@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase-server'
+import { getLiveEventTitle } from '@/lib/live-event-title'
+import type { Json } from '@/types/database'
 import dynamic from 'next/dynamic'
 import { SponsorBadge } from '@/components/SponsorBadge'
 import { toDisplayPercent } from '@/lib/probability-utils'
@@ -43,6 +45,7 @@ async function getLandingData() {
     causesRes,
     votesRes,
     worldCupRes,
+    liveNowRes,
   ] = await Promise.all([
     supabase
       .from('prediction_markets')
@@ -68,6 +71,13 @@ async function getLandingData() {
       .in('status', ['active', 'trading'])
       .order('total_votes', { ascending: false, nullsFirst: false })
       .limit(4),
+    supabase
+      .from('live_events')
+      .select('id, title, translations')
+      .eq('status', 'live')
+      .order('match_date', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ])
 
   const markets = (marketsRes.data || []) as Array<{
@@ -114,6 +124,10 @@ async function getLandingData() {
     total_votes: number | null
   }>
 
+  const liveNowRow = liveNowRes.data as
+    | { id: string; title: string; translations: Json | null }
+    | null
+
   return {
     markets,
     outcomesByMarket,
@@ -121,6 +135,7 @@ async function getLandingData() {
     causesCount: causes.length,
     causesWithVotes,
     worldCupMarkets,
+    liveNowRow,
   }
 }
 
@@ -144,6 +159,7 @@ export default async function LandingPage() {
   let causesCount = 0
   let causesWithVotes: Array<{ id: string; name: string; vote_count: number }> = []
   let worldCupMarkets: Awaited<ReturnType<typeof getLandingData>>['worldCupMarkets'] = []
+  let liveNowRow: Awaited<ReturnType<typeof getLandingData>>['liveNowRow'] = null
 
   try {
     const data = await getLandingData()
@@ -153,6 +169,7 @@ export default async function LandingPage() {
     causesCount = data.causesCount
     causesWithVotes = data.causesWithVotes
     worldCupMarkets = data.worldCupMarkets
+    liveNowRow = data.liveNowRow
   } catch (e) {
     console.error('Landing data fetch error:', e)
   }
@@ -166,6 +183,38 @@ export default async function LandingPage() {
 
       <main>
         <LandingNav />
+
+        {liveNowRow && (
+          <div className="border-b border-red-500/20 bg-gradient-to-r from-red-950/90 via-slate-900 to-slate-950 px-4 py-4">
+            <div className="mx-auto flex max-w-5xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-3">
+                <span className="relative mt-1 flex h-3 w-3 shrink-0 items-center justify-center">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+                  <span className="relative inline-flex h-3 w-3 rounded-full bg-red-500" />
+                </span>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-red-300/95">
+                    {locale === 'es' ? 'En vivo ahora' : 'Live now'}
+                  </p>
+                  <p className="mt-1 text-base font-semibold text-white">
+                    {getLiveEventTitle(liveNowRow, locale)}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-400">
+                    {locale === 'es'
+                      ? 'Entra a Conscious Live para votar en micro-mercados del partido.'
+                      : 'Join Conscious Live to vote on in-match micro-markets.'}
+                  </p>
+                </div>
+              </div>
+              <Link
+                href={`/live/${liveNowRow.id}`}
+                className="inline-flex min-h-[44px] shrink-0 items-center justify-center rounded-xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-red-900/30 transition hover:bg-red-500"
+              >
+                {locale === 'es' ? 'Ver transmisión' : 'Watch live'}
+              </Link>
+            </div>
+          </div>
+        )}
 
         <LandingHeroClient heroMarkets={heroMarkets} outcomesByMarket={outcomesByMarket} />
 

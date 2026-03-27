@@ -91,6 +91,179 @@ export interface Database {
       // PREDICTION / COLLECTIVE CONSCIOUSNESS
       // ═══════════════════════════════════════
 
+      live_event_fund_snapshots: {
+        Row: {
+          id: string
+          live_event_id: string
+          cause_id: string | null
+          cause_name: string | null
+          total_impact_usd: number
+          total_votes_cast: number | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          live_event_id: string
+          cause_id?: string | null
+          cause_name?: string | null
+          total_impact_usd?: number
+          total_votes_cast?: number | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          live_event_id?: string
+          cause_id?: string | null
+          cause_name?: string | null
+          total_impact_usd?: number
+          total_votes_cast?: number | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      live_events: {
+        Row: {
+          id: string
+          title: string
+          description: string | null
+          translations: Json
+          match_date: string
+          youtube_url: string | null
+          youtube_video_id: string | null
+          status: 'scheduled' | 'live' | 'completed' | 'cancelled'
+          viewer_count: number
+          total_votes_cast: number
+          total_fund_impact: number | null
+          sponsor_name: string | null
+          sponsor_logo_url: string | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+          reminder_1h_sent_at: string | null
+          results_email_sent_at: string | null
+        }
+        Insert: {
+          id?: string
+          title: string
+          description?: string | null
+          translations?: Json
+          match_date: string
+          youtube_url?: string | null
+          youtube_video_id?: string | null
+          status?: 'scheduled' | 'live' | 'completed' | 'cancelled'
+          viewer_count?: number
+          total_votes_cast?: number
+          total_fund_impact?: number | null
+          sponsor_name?: string | null
+          sponsor_logo_url?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+          reminder_1h_sent_at?: string | null
+          results_email_sent_at?: string | null
+        }
+        Update: {
+          id?: string
+          title?: string
+          description?: string | null
+          translations?: Json
+          match_date?: string
+          youtube_url?: string | null
+          youtube_video_id?: string | null
+          status?: 'scheduled' | 'live' | 'completed' | 'cancelled'
+          viewer_count?: number
+          total_votes_cast?: number
+          total_fund_impact?: number | null
+          sponsor_name?: string | null
+          sponsor_logo_url?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+          reminder_1h_sent_at?: string | null
+          results_email_sent_at?: string | null
+        }
+      }
+
+      market_outcomes: {
+        Row: {
+          id: string
+          market_id: string
+          label: string
+          description: string | null
+          probability: number
+          vote_count: number
+          total_confidence: number
+          sort_order: number | null
+          is_winner: boolean | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          market_id: string
+          label: string
+          description?: string | null
+          probability?: number
+          vote_count?: number
+          total_confidence?: number
+          sort_order?: number | null
+          is_winner?: boolean | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          market_id?: string
+          label?: string
+          description?: string | null
+          probability?: number
+          vote_count?: number
+          total_confidence?: number
+          sort_order?: number | null
+          is_winner?: boolean | null
+          created_at?: string
+        }
+      }
+
+      market_votes: {
+        Row: {
+          id: string
+          market_id: string
+          outcome_id: string
+          user_id: string
+          confidence: number
+          xp_earned: number
+          is_correct: boolean | null
+          bonus_xp: number | null
+          is_anonymous: boolean
+          created_at: string
+          updated_at?: string | null
+          change_count?: number | null
+        }
+        Insert: {
+          id?: string
+          market_id: string
+          outcome_id: string
+          user_id: string
+          confidence: number
+          xp_earned?: number
+          is_correct?: boolean | null
+          bonus_xp?: number | null
+          is_anonymous?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          market_id?: string
+          outcome_id?: string
+          user_id?: string
+          confidence?: number
+          xp_earned?: number
+          is_correct?: boolean | null
+          bonus_xp?: number | null
+          is_anonymous?: boolean
+          created_at?: string
+        }
+      }
+
       prediction_markets: {
         Row: {
           id: string
@@ -111,6 +284,10 @@ export interface Database {
           total_votes?: number | null
           /** All interactions incl. anonymous — reach */
           engagement_count?: number | null
+          live_event_id: string | null
+          is_micro_market: boolean | null
+          sponsor_label: string | null
+          expires_in_minutes: number | null
           market_type?: string | null
           total_volume: number
           fee_percentage: number
@@ -142,6 +319,10 @@ export interface Database {
           min_trade?: number
           tags?: string[]
           metadata?: Json
+          live_event_id?: string | null
+          is_micro_market?: boolean | null
+          sponsor_label?: string | null
+          expires_in_minutes?: number | null
           created_at?: string
           updated_at?: string
         }
@@ -166,6 +347,10 @@ export interface Database {
           min_trade?: number
           tags?: string[]
           metadata?: Json
+          live_event_id?: string | null
+          is_micro_market?: boolean | null
+          sponsor_label?: string | null
+          expires_in_minutes?: number | null
           created_at?: string
           updated_at?: string
         }
@@ -457,7 +642,18 @@ export interface Database {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_profiles_public: {
+        Args: { p_ids: string[] }
+        Returns: {
+          id: string
+          full_name: string | null
+          avatar_url: string | null
+        }[]
+      }
+      increment_live_event_fund_impact: {
+        Args: { p_live_event_id: string; p_delta: number }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

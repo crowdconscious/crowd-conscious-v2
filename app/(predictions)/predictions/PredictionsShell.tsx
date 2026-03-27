@@ -22,6 +22,7 @@ import {
   DollarSign,
   Bell,
   BarChart3,
+  Radio,
 } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import LanguageSwitcherSimple from '@/components/LanguageSwitcherSimple'
@@ -29,6 +30,7 @@ import { NotificationsBell } from './components/NotificationsBell'
 
 const NAV_ITEMS_EN = [
   { href: '/predictions', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/live', label: 'Live', icon: Radio },
   { href: '/predictions/notifications', label: 'Notifications', icon: Bell },
   { href: '/predictions/markets', label: 'Markets', icon: TrendingUp },
   { href: '/predictions/trades', label: 'My Predictions', icon: Receipt },
@@ -38,6 +40,7 @@ const NAV_ITEMS_EN = [
 ]
 const NAV_ITEMS_ES = [
   { href: '/predictions', label: 'Panel', icon: LayoutDashboard },
+  { href: '/live', label: 'En Vivo', icon: Radio },
   { href: '/predictions/notifications', label: 'Notificaciones', icon: Bell },
   { href: '/predictions/markets', label: 'Mercados', icon: TrendingUp },
   { href: '/predictions/trades', label: 'Mis Predicciones', icon: Receipt },
@@ -50,12 +53,12 @@ export default function PredictionsShell({
   children,
   isAdmin = false,
   isAuthenticated = true,
-  navCounts = { inboxPending: 0, activeMarkets: 0 },
+  navCounts = { inboxPending: 0, activeMarkets: 0, liveNowCount: 0 },
 }: {
   children: React.ReactNode
   isAdmin?: boolean
   isAuthenticated?: boolean
-  navCounts?: { inboxPending: number; activeMarkets: number }
+  navCounts?: { inboxPending: number; activeMarkets: number; liveNowCount: number }
 }) {
   const pathname = usePathname()
   const { language } = useLanguage()
@@ -69,6 +72,8 @@ export default function PredictionsShell({
     return null
   }
 
+  const showLivePulse = navCounts.liveNowCount > 0
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex">
       {/* Sidebar - desktop only */}
@@ -81,14 +86,16 @@ export default function PredictionsShell({
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon
             const isActive =
-              pathname === item.href
-              || (item.href !== '/predictions' && pathname.startsWith(item.href + '/'))
+              item.href === '/live'
+                ? pathname === '/live' || pathname.startsWith('/live/')
+                : pathname === item.href ||
+                  (item.href !== '/predictions' && pathname.startsWith(item.href + '/'))
             const badge = getBadgeForHref(item.href)
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                className={`flex min-h-[44px] items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                   isActive
                     ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
@@ -98,11 +105,16 @@ export default function PredictionsShell({
                   <Icon className="w-4 h-4" />
                   {item.label}
                 </span>
-                {badge != null && (
+                {item.href === '/live' && showLivePulse ? (
+                  <span className="relative flex h-3 w-3 shrink-0 items-center justify-center" aria-label="Live">
+                    <span className="absolute h-2 w-2 animate-ping rounded-full bg-red-500 opacity-75" />
+                    <span className="relative h-2 w-2 rounded-full bg-red-500" />
+                  </span>
+                ) : badge != null ? (
                   <span className="min-w-[1.25rem] h-5 px-1.5 rounded-full bg-emerald-500/30 text-emerald-400 text-xs font-semibold flex items-center justify-center">
                     {badge > 99 ? '99+' : badge}
                   </span>
-                )}
+                ) : null}
               </Link>
             )
           })}
@@ -258,15 +270,17 @@ export default function PredictionsShell({
               {NAV_ITEMS.map((item) => {
                 const Icon = item.icon
                 const isActive =
-                  pathname === item.href
-                  || (item.href !== '/predictions' && pathname.startsWith(item.href + '/'))
+                  item.href === '/live'
+                    ? pathname === '/live' || pathname.startsWith('/live/')
+                    : pathname === item.href ||
+                      (item.href !== '/predictions' && pathname.startsWith(item.href + '/'))
                 const badge = getBadgeForHref(item.href)
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
                     onClick={closeMobileMenu}
-                    className={`flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                    className={`flex min-h-[44px] items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                       isActive
                         ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30'
                         : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
@@ -276,11 +290,16 @@ export default function PredictionsShell({
                       <Icon className="w-4 h-4" />
                       {item.label}
                     </span>
-                    {badge != null && (
+                    {item.href === '/live' && showLivePulse ? (
+                      <span className="relative flex h-3 w-3 shrink-0 items-center justify-center" aria-label="Live">
+                        <span className="absolute h-2 w-2 animate-ping rounded-full bg-red-500 opacity-75" />
+                        <span className="relative h-2 w-2 rounded-full bg-red-500" />
+                      </span>
+                    ) : badge != null ? (
                       <span className="min-w-[1.25rem] h-5 px-1.5 rounded-full bg-emerald-500/30 text-emerald-400 text-xs font-semibold flex items-center justify-center">
                         {badge > 99 ? '99+' : badge}
                       </span>
-                    )}
+                    ) : null}
                   </Link>
                 )
               })}

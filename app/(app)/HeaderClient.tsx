@@ -7,6 +7,7 @@ import Logo from '@/components/Logo'
 import { supabaseClient } from '@/lib/supabase-client'
 import { XPBadge } from '@/components/gamification/XPBadge'
 import { NotificationsBell } from '@/app/(predictions)/predictions/components/NotificationsBell'
+import { useLiveNavBadge } from '@/hooks/useLiveNavBadge'
 
 interface HeaderClientProps {
   user: any
@@ -15,6 +16,7 @@ interface HeaderClientProps {
 export default function HeaderClient({ user }: HeaderClientProps) {
   const [userProfile, setUserProfile] = useState<any>(null)
   const router = useRouter()
+  const { liveCount } = useLiveNavBadge()
 
   useEffect(() => {
     if (user) {
@@ -62,6 +64,18 @@ export default function HeaderClient({ user }: HeaderClientProps) {
                 className="text-slate-400 hover:text-emerald-400 font-medium transition-colors"
               >
                 Dashboard
+              </Link>
+              <Link 
+                href="/live"
+                className="inline-flex items-center gap-2 text-slate-400 hover:text-emerald-400 font-medium transition-colors"
+              >
+                Live
+                {liveCount > 0 && (
+                  <span className="relative flex h-2 w-2" aria-label="Live">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+                  </span>
+                )}
               </Link>
               <Link 
                 href="/predictions/markets" 

@@ -1,7 +1,14 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { createAdminClient } from '@/lib/supabase-admin'
 import { getCurrentUser } from '@/lib/auth-server'
 import { sendPostVoteConfirmation } from '@/lib/prediction-email-notifications'
+
+/** USD attributed to Conscious Fund cause per sponsored micro-market vote (env override). */
+function sponsoredMicroMarketVoteImpactUsd(): number {
+  const n = Number(process.env.LIVE_MICRO_MARKET_SPONSORED_VOTE_IMPACT_USD ?? 0.05)
+  return Number.isFinite(n) && n > 0 ? n : 0.05
+}
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -76,6 +83,29 @@ export async function POST(request: Request) {
       marketId: market_id,
       rpcResult: result,
     }).catch((err) => console.error('[vote] post-confirmation', err))
+
+    const { data: marketMeta } = await supabase
+      .from('prediction_markets')
+      .select('is_micro_market, sponsor_label, live_event_id')
+      .eq('id', market_id)
+      .maybeSingle()
+
+    if (
+      marketMeta?.is_micro_market === true &&
+      typeof marketMeta.sponsor_label === 'string' &&
+      marketMeta.sponsor_label.trim().length > 0 &&
+      marketMeta.live_event_id
+    ) {
+      const delta = sponsoredMicroMarketVoteImpactUsd()
+      const admin = createAdminClient()
+      const { error: fundErr } = await admin.rpc('increment_live_event_fund_impact', {
+        p_live_event_id: marketMeta.live_event_id,
+        p_delta: delta,
+      })
+      if (fundErr) {
+        console.error('[vote] increment_live_event_fund_impact', fundErr)
+      }
+    }
 
     return NextResponse.json({
       ...result,

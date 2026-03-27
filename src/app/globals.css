@@ -392,3 +392,42 @@ input:focus, textarea:focus, select:focus {
 .bg-white .text-gray-500 {
   color: #4b5563 !important;
 }
+
+/* Conscious Live: thumb-friendly range input (min ~44px touch target) */
+.touch-range-input {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 2.75rem;
+  background: transparent;
+}
+.touch-range-input:focus {
+  outline: none;
+}
+.touch-range-input::-webkit-slider-runnable-track {
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: rgb(15 23 42 / 0.85);
+}
+.touch-range-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  margin-top: -1.125rem;
+  height: 2.75rem;
+  width: 2.75rem;
+  border-radius: 9999px;
+  border: 2px solid rgb(52 211 153);
+  background: rgb(15 23 42);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.35);
+}
+.touch-range-input::-moz-range-track {
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: rgb(15 23 42 / 0.85);
+}
+.touch-range-input::-moz-range-thumb {
+  height: 2.75rem;
+  width: 2.75rem;
+  border-radius: 9999px;
+  border: 2px solid rgb(52 211 153);
+  background: rgb(15 23 42);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.35);
+}

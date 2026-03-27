@@ -9,7 +9,7 @@ import { PendingVoteSubmitter } from './components/PendingVoteSubmitter'
 const PUBLIC_PATHS = ['/predictions/leaderboard', '/predictions/fund', '/predictions/markets']
 
 async function getNavCounts(supabase: Awaited<ReturnType<typeof createClient>>) {
-  const [inboxRes, marketsRes] = await Promise.all([
+  const [inboxRes, marketsRes, liveRes] = await Promise.all([
     supabase
       .from('conscious_inbox')
       .select('id', { count: 'exact', head: true })
@@ -18,10 +18,15 @@ async function getNavCounts(supabase: Awaited<ReturnType<typeof createClient>>) 
       .from('prediction_markets')
       .select('id', { count: 'exact', head: true })
       .in('status', ['active', 'trading']),
+    supabase
+      .from('live_events')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'live'),
   ])
   return {
     inboxPending: inboxRes.count ?? 0,
     activeMarkets: marketsRes.count ?? 0,
+    liveNowCount: liveRes.count ?? 0,
   }
 }
 
@@ -41,7 +46,7 @@ export default async function PredictionsLayout({
   }
 
   let isAdmin = false
-  let navCounts = { inboxPending: 0, activeMarkets: 0 }
+  let navCounts = { inboxPending: 0, activeMarkets: 0, liveNowCount: 0 }
   if (user) {
     const supabase = await createClient()
     const [profileRes, counts] = await Promise.all([
