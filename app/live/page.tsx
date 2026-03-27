@@ -2,10 +2,13 @@ import Link from 'next/link'
 import { headers } from 'next/headers'
 import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase-server'
+import { getCurrentUser } from '@/lib/auth-server'
 import type { Database } from '@/types/database'
 import { LiveEventCard } from '@/components/live/LiveEventCard'
+import { CreateLiveEventPanel } from '@/components/live/CreateLiveEventPanel'
 
-export const revalidate = 30
+/** Per-session admin create form; list still fetched each request. */
+export const dynamic = 'force-dynamic'
 
 type LiveEventRow = Database['public']['Tables']['live_events']['Row']
 
@@ -36,6 +39,17 @@ function partitionEvents(rows: LiveEventRow[]) {
 
 export default async function LiveEventsPage() {
   const supabase = await createClient()
+  const sessionProfile = await getCurrentUser()
+
+  let isAdmin = false
+  if (sessionProfile) {
+    const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim()
+    const profileEmail = sessionProfile.email?.toLowerCase().trim()
+    isAdmin =
+      sessionProfile.user_type === 'admin' ||
+      (!!adminEmail && !!profileEmail && profileEmail === adminEmail)
+  }
+
   const { data, error } = await supabase.from('live_events').select('*').order('match_date', { ascending: false })
 
   const h = await headers()
@@ -52,6 +66,10 @@ export default async function LiveEventsPage() {
     upcoming: locale === 'es' ? 'Próximos' : 'Upcoming',
     past: locale === 'es' ? 'Pasados' : 'Past',
     empty: locale === 'es' ? 'No hay eventos por ahora.' : 'No events yet.',
+    emptyAdminHint:
+      locale === 'es'
+        ? 'Como administrador, usa el formulario de arriba para crear el primer evento.'
+        : 'As an admin, use the form above to create your first event.',
     error: locale === 'es' ? 'No se pudieron cargar los eventos.' : 'Could not load events.',
   }
 
@@ -76,9 +94,12 @@ export default async function LiveEventsPage() {
         )}
 
         {!error && rows.length === 0 && (
-          <p className="rounded-xl border border-white/10 bg-slate-900/50 px-4 py-8 text-center text-slate-400">
-            {t.empty}
-          </p>
+          <div className="rounded-xl border border-white/10 bg-slate-900/50 px-4 py-8 text-center">
+            <p className="text-slate-400">{t.empty}</p>
+            {isAdmin && (
+              <p className="mt-3 text-sm text-slate-500">{t.emptyAdminHint}</p>
+            )}
+          </div>
         )}
 
         {!error && liveNow.length > 0 && (
