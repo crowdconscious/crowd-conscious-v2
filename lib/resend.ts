@@ -1,4 +1,5 @@
 import { Resend } from 'resend'
+import { calculateFundAllocationRounded, normalizeSponsorTierId } from '@/lib/sponsor-tiers'
 
 if (!process.env.RESEND_API_KEY) {
   console.warn('RESEND_API_KEY is not set - email functionality will be disabled')
@@ -86,7 +87,10 @@ export const emailTemplates = {
     sponsorshipId?: string,
     reportToken?: string
   ) => {
-    const fundAmount = Math.round(amountMXN * 0.4)
+    const tierId = normalizeSponsorTierId(tier)
+    const alloc = calculateFundAllocationRounded(amountMXN, tierId)
+    const fundAmount = alloc.fundAmountRounded
+    const fundPct = Math.round(alloc.fundPercent * 100)
     const sponsoredLabel = marketTitle
       ? `"${marketTitle}"`
       : category
@@ -110,7 +114,7 @@ export const emailTemplates = {
           </p>
           <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;">
             <p style="margin: 0 0 10px 0; color: #1e293b;"><strong>💰 Your impact</strong></p>
-            <p style="margin: 0; color: #475569;">40% (${fundAmount.toLocaleString()} MXN) goes to the Conscious Fund for community causes chosen by our users.</p>
+            <p style="margin: 0; color: #475569;">${fundPct}% of estimated net proceeds (${fundAmount.toLocaleString()} MXN) goes to the Conscious Fund for community causes chosen by our users.</p>
           </div>
           ${marketId ? `
           <div style="text-align: center; margin: 30px 0;">
@@ -147,6 +151,7 @@ export const emailTemplates = {
     amountMXN: number
     fundAmount: number
     platformAmount: number
+    fundPercent: number
     marketTitle?: string
     marketId?: string
     category?: string
@@ -167,8 +172,8 @@ export const emailTemplates = {
           <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e2e8f0;">
             <p style="margin: 0 0 8px 0; color: #1e293b;"><strong>Amounts</strong></p>
             <p style="margin: 0; color: #475569;">Total: $${data.amountMXN.toLocaleString()} MXN</p>
-            <p style="margin: 0; color: #10b981;">Fund (40%): $${data.fundAmount.toLocaleString()} MXN</p>
-            <p style="margin: 0; color: #64748b;">Platform (60%): $${data.platformAmount.toLocaleString()} MXN</p>
+            <p style="margin: 0; color: #10b981;">Fund (${Math.round(data.fundPercent * 100)}% of net est.): $${data.fundAmount.toLocaleString()} MXN</p>
+            <p style="margin: 0; color: #64748b;">Platform (${Math.round((1 - data.fundPercent) * 100)}% of net est.): $${data.platformAmount.toLocaleString()} MXN</p>
           </div>
           <div style="text-align: center;">
             <a href="${APP_URL}/admin" style="background: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Admin Dashboard</a>
@@ -580,6 +585,7 @@ export async function sendSponsorshipAdminNotification(data: {
   amountMXN: number
   fundAmount: number
   platformAmount: number
+  fundPercent: number
   marketTitle?: string
   marketId?: string
   category?: string

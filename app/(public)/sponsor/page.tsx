@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     absolute: 'Patrocina un Mercado — Tu Marca en el Mundial 2026 | Crowd Conscious',
   },
   description:
-    'Patrocina mercados de predicción en Crowd Conscious. 40% al Fondo Consciente. Precios desde $2,000 MXN. Mundial 2026 en Ciudad de México.',
+    'Patrocina mercados de predicción en Crowd Conscious. Hasta el 40% al Fondo Consciente (según nivel). Precios desde $3,000 MXN. Mundial 2026 en Ciudad de México.',
   openGraph: {
     title: 'Crowd Conscious para Marcas — Activación con Propósito',
     description:

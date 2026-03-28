@@ -2,19 +2,16 @@
 
 import { useState, useRef } from 'react'
 import { X, Upload } from 'lucide-react'
-
-type Tier = 'market' | 'category' | 'impact' | 'patron'
-
-const TIER_PRICES_MXN: Record<string, number> = {
-  market: 2000,
-  category: 10000,
-  impact: 50000,
-}
+import {
+  SPONSOR_TIERS,
+  calculateFundAllocationRounded,
+  type SponsorTierId,
+} from '@/lib/sponsor-tiers'
 
 interface SponsorCheckoutModalProps {
   isOpen: boolean
   onClose: () => void
-  tier: Tier
+  tier: SponsorTierId
   tierLabel: string
   marketId?: string
   marketTitle?: string
@@ -31,7 +28,10 @@ export function SponsorCheckoutModal({
   category,
 }: SponsorCheckoutModalProps) {
   const MIN_AMOUNT = 100
-  const tierPrice = TIER_PRICES_MXN[tier] ?? 2000
+  const tierConfig = SPONSOR_TIERS[tier]
+  const tierPrice = tierConfig.price
+  const fundPct = Math.round(tierConfig.fundPercent * 100)
+
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [url, setUrl] = useState('')
@@ -92,7 +92,6 @@ export function SponsorCheckoutModal({
     setError('')
     setLoading(true)
     try {
-      // If user selected a file but upload hasn't completed, wait for it
       let finalLogoUrl = logoUrl
       if (logoFile && !logoUrl && !uploadingLogo) {
         setError('Please wait for logo upload to complete')
@@ -132,12 +131,18 @@ export function SponsorCheckoutModal({
         return
       }
       setError('No checkout URL received')
-    } catch (err) {
+    } catch {
       setError('Failed to start checkout')
     } finally {
       setLoading(false)
     }
   }
+
+  const previewAmount =
+    customAmountInput && !Number.isNaN(parseInt(customAmountInput, 10))
+      ? Math.max(MIN_AMOUNT, parseInt(customAmountInput, 10))
+      : amount
+  const allocPreview = calculateFundAllocationRounded(previewAmount, tier)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -146,46 +151,50 @@ export function SponsorCheckoutModal({
         onClick={onClose}
         aria-hidden="true"
       />
-      <div className="relative bg-slate-900 border border-slate-700 rounded-2xl p-6 w-full max-w-md shadow-2xl">
-        <div className="flex justify-between items-center mb-6">
+      <div className="relative w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-2xl">
+        <div className="mb-6 flex items-center justify-between">
           <h3 className="text-xl font-bold text-white">Sponsor Now — {tierLabel}</h3>
           <button
             onClick={onClose}
-            className="p-2 text-slate-400 hover:text-white rounded-lg transition-colors"
+            className="rounded-lg p-2 text-slate-400 transition-colors hover:text-white"
             aria-label="Close"
           >
-            <X className="w-5 h-5" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
         {marketTitle && (
-          <p className="text-slate-400 text-sm mb-4">Market: {marketTitle}</p>
+          <p className="mb-4 text-sm text-slate-400">Market: {marketTitle}</p>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-1">
-              Amount (MXN) *
-            </label>
-            <div className="flex flex-wrap gap-2 mb-2">
+            <label className="mb-1 block text-sm font-medium text-slate-400">Amount (MXN) *</label>
+            <div className="mb-2 flex flex-wrap gap-2">
               <button
                 type="button"
-                onClick={() => { setAmount(MIN_AMOUNT); setCustomAmountInput('') }}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                onClick={() => {
+                  setAmount(MIN_AMOUNT)
+                  setCustomAmountInput('')
+                }}
+                className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
                   amount === MIN_AMOUNT && !customAmountInput
                     ? 'bg-emerald-600 text-white'
-                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white border border-slate-600'
+                    : 'border border-slate-600 bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white'
                 }`}
               >
                 100 (name only)
               </button>
               <button
                 type="button"
-                onClick={() => { setAmount(tierPrice); setCustomAmountInput('') }}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                onClick={() => {
+                  setAmount(tierPrice)
+                  setCustomAmountInput('')
+                }}
+                className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
                   amount === tierPrice && !customAmountInput
                     ? 'bg-emerald-600 text-white'
-                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white border border-slate-600'
+                    : 'border border-slate-600 bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white'
                 }`}
               >
                 {tierPrice.toLocaleString()} (logo + features)
@@ -195,7 +204,9 @@ export function SponsorCheckoutModal({
               <input
                 type="number"
                 min={MIN_AMOUNT}
-                value={customAmountInput || (amount === tierPrice || amount === MIN_AMOUNT ? '' : amount)}
+                value={
+                  customAmountInput || (amount === tierPrice || amount === MIN_AMOUNT ? '' : amount)
+                }
                 onChange={(e) => {
                   const v = e.target.value
                   setCustomAmountInput(v)
@@ -203,55 +214,47 @@ export function SponsorCheckoutModal({
                   if (!Number.isNaN(n) && n >= MIN_AMOUNT) setAmount(n)
                 }}
                 placeholder={tierPrice.toString()}
-                className="flex-1 px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                className="flex-1 rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500"
               />
-              <span className="text-slate-500 text-sm">MXN</span>
+              <span className="text-sm text-slate-500">MXN</span>
             </div>
-            <p className="text-xs text-slate-500 mt-1">Min 100 MXN. Custom amount supported.</p>
+            <p className="mt-1 text-xs text-slate-500">Min 100 MXN. Custom amount supported.</p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-1">
-              Name / Company *
-            </label>
+            <label className="mb-1 block text-sm font-medium text-slate-400">Name / Company *</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              className="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500"
               placeholder="Your name or company"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-1">
-              Email *
-            </label>
+            <label className="mb-1 block text-sm font-medium text-slate-400">Email *</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              className="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500"
               placeholder="you@company.com"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-1">
-              Website / Social URL
-            </label>
+            <label className="mb-1 block text-sm font-medium text-slate-400">Website / Social URL</label>
             <input
               type="url"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              className="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500"
               placeholder="https://..."
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-1">
-              Logo (optional)
-            </label>
+            <label className="mb-1 block text-sm font-medium text-slate-400">Logo (optional)</label>
             <div className="flex items-center gap-4">
               <input
                 ref={fileInputRef}
@@ -265,7 +268,7 @@ export function SponsorCheckoutModal({
                   <img
                     src={logoPreview}
                     alt="Logo preview"
-                    className="w-16 h-16 object-contain rounded-lg border border-slate-600 bg-slate-800"
+                    className="h-16 w-16 rounded-lg border border-slate-600 bg-slate-800 object-contain"
                   />
                   <div className="flex-1">
                     <p className="text-sm text-slate-400">
@@ -277,9 +280,9 @@ export function SponsorCheckoutModal({
                         setLogoFile(null)
                         setLogoPreview(null)
                         setLogoUrl('')
-                        fileInputRef.current?.value && (fileInputRef.current.value = '')
+                        if (fileInputRef.current) fileInputRef.current.value = ''
                       }}
-                      className="text-sm text-red-400 hover:text-red-300 mt-1"
+                      className="mt-1 text-sm text-red-400 hover:text-red-300"
                     >
                       Remove
                     </button>
@@ -290,55 +293,55 @@ export function SponsorCheckoutModal({
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploadingLogo}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-slate-800 border border-slate-600 rounded-lg text-slate-300 hover:bg-slate-700 hover:border-slate-500 transition-colors disabled:opacity-50"
+                  className="flex items-center gap-2 rounded-lg border border-slate-600 bg-slate-800 px-4 py-2.5 text-slate-300 transition-colors hover:border-slate-500 hover:bg-slate-700 disabled:opacity-50"
                 >
-                  <Upload className="w-4 h-4" />
+                  <Upload className="h-4 w-4" />
                   {uploadingLogo ? 'Uploading...' : 'Upload image'}
                 </button>
               )}
             </div>
-            <p className="text-xs text-slate-500 mt-1">Max 2MB. JPEG, PNG, WebP, GIF.</p>
+            <p className="mt-1 text-xs text-slate-500">Max 2MB. JPEG, PNG, WebP, GIF.</p>
           </div>
 
-          <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/30 p-3 text-sm">
-            <p className="text-emerald-400 font-medium">40% → Conscious Fund</p>
-            <p className="text-slate-400 text-xs mt-0.5">
-              Your impact: {Math.round(
-                (customAmountInput ? Math.max(MIN_AMOUNT, parseInt(customAmountInput, 10) || tierPrice) : amount) *
-                  0.4
-              ).toLocaleString()}{' '}
-              MXN funds community causes chosen by our users. 60% platform.
+          <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm">
+            <p className="font-medium text-emerald-400">
+              Up to {fundPct}% → Conscious Fund
+            </p>
+            <p className="mt-0.5 text-xs text-slate-400">
+              Estimated from this amount (after est. processing fees):{' '}
+              <span className="font-medium text-emerald-300/90">
+                ~{allocPreview.fundAmountRounded.toLocaleString()} MXN
+              </span>{' '}
+              to community causes; remainder supports platform operations.
             </p>
           </div>
 
           {marketTitle && (
-            <div className="rounded-lg bg-slate-800/50 border border-slate-600 p-3">
-              <p className="text-slate-500 text-xs mb-2">Preview: Your sponsored market card</p>
-              <div className="bg-slate-900 rounded-lg p-3 text-sm">
-                <p className="text-white font-medium line-clamp-2">{marketTitle}</p>
-                <p className="text-emerald-400 text-xs mt-1">Sponsored by [Your Brand]</p>
+            <div className="rounded-lg border border-slate-600 bg-slate-800/50 p-3">
+              <p className="mb-2 text-xs text-slate-500">Preview: Your sponsored market card</p>
+              <div className="rounded-lg bg-slate-900 p-3 text-sm">
+                <p className="line-clamp-2 font-medium text-white">{marketTitle}</p>
+                <p className="mt-1 text-xs text-emerald-400">Sponsored by [Your Brand]</p>
               </div>
             </div>
           )}
 
-          <p className="text-slate-500 text-xs text-center">Payment secured by Stripe</p>
+          <p className="text-center text-xs text-slate-500">Payment secured by Stripe</p>
 
-          {error && (
-            <p className="text-red-400 text-sm">{error}</p>
-          )}
+          {error && <p className="text-sm text-red-400">{error}</p>}
 
           <div className="flex gap-3 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-2.5 rounded-lg border border-slate-600 text-slate-300 hover:bg-slate-800 transition-colors"
+              className="flex-1 rounded-lg border border-slate-600 py-2.5 text-slate-300 transition-colors hover:bg-slate-800"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-medium transition-colors"
+              className="flex-1 rounded-lg bg-emerald-600 py-2.5 font-medium text-white transition-colors hover:bg-emerald-500 disabled:opacity-50"
             >
               {loading ? 'Redirecting...' : 'Continue to Payment'}
             </button>

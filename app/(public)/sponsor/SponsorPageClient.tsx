@@ -19,6 +19,7 @@ import Logo from '@/components/Logo'
 import { getMarketText } from '@/lib/i18n/market-translations'
 import { useLocale } from '@/lib/i18n/useLocale'
 import { daysUntilWorldCup } from '@/lib/world-cup-kickoff'
+import { SPONSOR_TIERS, type SponsorTierId } from '@/lib/sponsor-tiers'
 
 const CATEGORY_CONFIG: Record<
   string,
@@ -74,15 +75,15 @@ export function SponsorPageClient({
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
   const [modal, setModal] = useState<{
     open: boolean
-    tier: 'market' | 'category' | 'impact' | 'patron'
+    tier: SponsorTierId
     tierLabel: string
     marketId?: string
     marketTitle?: string
     category?: string
-  }>({ open: false, tier: 'market', tierLabel: 'Market Sponsor' })
+  }>({ open: false, tier: 'starter', tierLabel: 'Market Sponsor' })
 
   const openModal = (
-    tier: 'market' | 'category' | 'impact' | 'patron',
+    tier: SponsorTierId,
     tierLabel: string,
     opts?: { marketId?: string; marketTitle?: string; category?: string }
   ) => {
@@ -239,8 +240,9 @@ export function SponsorPageClient({
                 </div>
                 <h3 className="text-lg font-semibold text-white mb-2">Fund Real Impact</h3>
                 <p className="text-cc-text-secondary text-sm">
-                  40% of every sponsorship goes directly to community causes — 10x the industry average for cause marketing. Users vote on which
-                  community causes receive grants. Your brand gets credited for the impact.
+                  {locale === 'es'
+                    ? 'Entre el 20% y 40% de cada patrocinio va directamente a causas comunitarias — hasta 10× el promedio de la industria en causa marketing. La comunidad elige a dónde va el fondo.'
+                    : 'Between 20% and 40% of every sponsorship goes directly to community causes — up to 10× the industry average for cause marketing. Users vote on where the fund goes.'}
                 </p>
               </div>
             </div>
@@ -254,15 +256,26 @@ export function SponsorPageClient({
               Sponsorship Tiers
             </h2>
             <p className="text-cc-text-secondary text-center mb-4 max-w-2xl mx-auto">
-              Clean pricing. Every tier includes a Conscious Fund donation.
+              {locale === 'es'
+                ? 'Precios claros. Cada nivel incluye aportación al Fondo Consciente (20–40% según el nivel).'
+                : 'Clean pricing. Every tier includes a Conscious Fund contribution (20–40% by tier).'}
             </p>
             <p className="text-emerald-400/90 text-center text-sm mb-12 max-w-xl mx-auto">
-              For every $2,000 MXN you invest, $800 MXN goes directly to community causes chosen by the people your brand reaches.
+              {locale === 'es'
+                ? 'Entre el 20% y 40% de cada patrocinio va directamente a causas comunitarias — hasta 10× el promedio de la industria en causa marketing.'
+                : 'Between 20% and 40% of every sponsorship goes directly to community causes — up to 10× the industry average for cause marketing.'}
             </p>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="border border-cc-border bg-cc-card/80 rounded-xl p-6 flex flex-col">
                 <h3 className="text-lg font-bold text-white mb-1">Market Sponsor (Starter)</h3>
-                <p className="text-2xl font-bold text-emerald-400 mb-2">$2,000 MXN (~$100 USD)</p>
+                <p className="text-2xl font-bold text-emerald-400 mb-1">
+                  ${SPONSOR_TIERS.starter.price.toLocaleString()} MXN (~$150 USD)
+                </p>
+                <span className="text-emerald-400 text-sm font-medium mb-3 block">
+                  {locale === 'es'
+                    ? `Incluye ${Math.round(SPONSOR_TIERS.starter.fundPercent * 100)}% al Fondo Consciente`
+                    : `Includes ${Math.round(SPONSOR_TIERS.starter.fundPercent * 100)}% to Conscious Fund`}
+                </span>
                 <ul className="text-gray-300 text-sm space-y-2 mb-4 flex-1">
                   <li className="flex items-start gap-2">
                     <span className="text-emerald-400 mt-0.5">✓</span>
@@ -287,7 +300,7 @@ export function SponsorPageClient({
                 </p>
                 <p className="text-cc-text-muted text-xs mb-4">Perfect for local businesses and first-time sponsors</p>
                 <button
-                  onClick={() => openModal('market', 'Market Sponsor')}
+                  onClick={() => openModal('starter', 'Market Sponsor')}
                   className="block w-full py-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-center text-sm font-medium transition-colors"
                 >
                   Sponsor Now
@@ -299,7 +312,14 @@ export function SponsorPageClient({
                   Most Popular
                 </span>
                 <h3 className="text-lg font-bold text-white mb-1">Category Sponsor</h3>
-                <p className="text-2xl font-bold text-emerald-400 mb-2">$10,000 MXN (~$500 USD)</p>
+                <p className="text-2xl font-bold text-emerald-400 mb-1">
+                  ${SPONSOR_TIERS.growth.price.toLocaleString()} MXN (~$500 USD)
+                </p>
+                <span className="text-emerald-400 text-sm font-medium mb-3 block">
+                  {locale === 'es'
+                    ? `Incluye ${Math.round(SPONSOR_TIERS.growth.fundPercent * 100)}% al Fondo Consciente`
+                    : `Includes ${Math.round(SPONSOR_TIERS.growth.fundPercent * 100)}% to Conscious Fund`}
+                </span>
                 <ul className="text-gray-300 text-sm space-y-2 mb-4 flex-1">
                   <li className="flex items-start gap-2">
                     <span className="text-emerald-400 mt-0.5">✓</span>
@@ -328,7 +348,7 @@ export function SponsorPageClient({
                 </p>
                 <p className="text-cc-text-muted text-xs mb-4">Best for: Medium businesses, regional brands</p>
                 <button
-                  onClick={() => openModal('category', 'Category Sponsor')}
+                  onClick={() => openModal('growth', 'Category Sponsor')}
                   className="block w-full py-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-center text-sm font-medium transition-colors"
                 >
                   Sponsor Now
@@ -337,7 +357,14 @@ export function SponsorPageClient({
 
               <div className="border-2 border-amber-500/40 bg-cc-card/80 rounded-xl p-6 flex flex-col shadow-lg shadow-amber-500/5">
                 <h3 className="text-lg font-bold text-white mb-1">Impact Partner</h3>
-                <p className="text-2xl font-bold text-amber-400 mb-2">$50,000 MXN (~$2,500 USD)</p>
+                <p className="text-2xl font-bold text-amber-400 mb-1">
+                  ${SPONSOR_TIERS.champion.price.toLocaleString()} MXN (~$1,250 USD)
+                </p>
+                <span className="text-emerald-400 text-sm font-medium mb-3 block">
+                  {locale === 'es'
+                    ? `Incluye ${Math.round(SPONSOR_TIERS.champion.fundPercent * 100)}% al Fondo Consciente`
+                    : `Includes ${Math.round(SPONSOR_TIERS.champion.fundPercent * 100)}% to Conscious Fund`}
+                </span>
                 <ul className="text-gray-300 text-sm space-y-2 mb-4 flex-1">
                   <li className="flex items-start gap-2">
                     <span className="text-emerald-400 mt-0.5">✓</span>
@@ -362,7 +389,7 @@ export function SponsorPageClient({
                 </p>
                 <p className="text-cc-text-muted text-xs mb-4">Best for: Corporations, ESG-focused brands</p>
                 <button
-                  onClick={() => openModal('impact', 'Impact Partner')}
+                  onClick={() => openModal('champion', 'Impact Partner')}
                   className="block w-full py-3 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-center text-sm font-medium transition-colors"
                 >
                   Sponsor Now
@@ -371,7 +398,14 @@ export function SponsorPageClient({
 
               <div className="border border-cc-border bg-cc-card/80 rounded-xl p-6 flex flex-col">
                 <h3 className="text-lg font-bold text-white mb-1">Founding Patron</h3>
-                <p className="text-2xl font-bold text-emerald-400 mb-2">Custom pricing</p>
+                <p className="text-2xl font-bold text-emerald-400 mb-1">
+                  ${SPONSOR_TIERS.anchor.price.toLocaleString()} MXN (~$3,000 USD)
+                </p>
+                <span className="text-emerald-400 text-sm font-medium mb-2 block">
+                  {locale === 'es'
+                    ? `Incluye ${Math.round(SPONSOR_TIERS.anchor.fundPercent * 100)}% al Fondo Consciente`
+                    : `Includes ${Math.round(SPONSOR_TIERS.anchor.fundPercent * 100)}% to Conscious Fund`}
+                </span>
                 <p className="text-amber-400/90 text-xs font-medium mb-2">Limited to 5 founding patrons</p>
                 <ul className="text-gray-300 text-sm space-y-2 mb-4 flex-1">
                   <li className="flex items-start gap-2">
@@ -397,10 +431,10 @@ export function SponsorPageClient({
                 </p>
                 <p className="text-cc-text-muted text-xs mb-4">Best for: Major sponsors, media partners</p>
                 <button
-                  onClick={() => openModal('patron', 'Founding Patron')}
+                  onClick={() => openModal('anchor', 'Founding Patron')}
                   className="block w-full py-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-center text-sm font-medium transition-colors"
                 >
-                  Contact Us
+                  Sponsor Now
                 </button>
               </div>
             </div>
@@ -491,7 +525,7 @@ export function SponsorPageClient({
                       </p>
                       <button
                         onClick={() =>
-                          openModal('market', 'Market Sponsor', {
+                          openModal('starter', 'Market Sponsor', {
                             marketId: m.id,
                             marketTitle: m.title,
                             category: m.category,
@@ -522,7 +556,7 @@ export function SponsorPageClient({
                   founding partner recognition.
                 </p>
                 <button
-                  onClick={() => openModal('market', 'Market Sponsor')}
+                  onClick={() => openModal('starter', 'Market Sponsor')}
                   className="inline-flex items-center gap-2 mt-4 text-emerald-400 hover:text-emerald-300 font-medium"
                 >
                   Sponsor Now
@@ -581,7 +615,9 @@ export function SponsorPageClient({
                 </p>
               </div>
               <div className="border border-cc-border bg-cc-card/80 rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-white mb-2">What happens to the 40% Conscious Fund contribution?</h3>
+                <h3 className="text-lg font-semibold text-white mb-2">
+                  What happens to the Conscious Fund contribution (20–40% by tier)?
+                </h3>
                 <p className="text-cc-text-secondary text-sm">
                   Users vote on which community causes receive grants each month. Your brand gets credited for the impact. We send you a quarterly report.
                 </p>

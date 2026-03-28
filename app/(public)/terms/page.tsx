@@ -18,7 +18,7 @@ export default function TermsPage() {
         },
         {
           title: "2. Descripción del Servicio",
-          content: "Crowd Conscious es una plataforma de predicción gratuita (free-to-play) que canaliza la inteligencia colectiva hacia el impacto social. La Plataforma permite a los usuarios: (a) Participar en mercados de predicción sobre temas como Copa Mundial, economía, política, sostenibilidad y más, sin arriesgar dinero; (b) Ganar XP y logros por sus predicciones; (c) Votar democráticamente sobre qué causas comunitarias reciben fondos del Fondo Consciente; (d) Sugerir ideas de mercados en el Buzón Consciente. Las marcas pueden patrocinar mercados; el 40% de cada patrocinio se destina al Fondo Consciente para causas elegidas por la comunidad."
+          content: "Crowd Conscious es una plataforma de predicción gratuita (free-to-play) que canaliza la inteligencia colectiva hacia el impacto social. La Plataforma permite a los usuarios: (a) Participar en mercados de predicción sobre temas como Copa Mundial, economía, política, sostenibilidad y más, sin arriesgar dinero; (b) Ganar XP y logros por sus predicciones; (c) Votar democráticamente sobre qué causas comunitarias reciben fondos del Fondo Consciente; (d) Sugerir ideas de mercados en el Buzón Consciente. Las marcas pueden patrocinar mercados; entre el 20% y el 40% del neto estimado de cada patrocinio (según el nivel) se destina al Fondo Consciente para causas elegidas por la comunidad."
         },
         {
           title: "3. Registro y Cuentas de Usuario",
@@ -34,7 +34,7 @@ export default function TermsPage() {
         },
         {
           title: "6. Fondo Consciente y Patrocinios",
-          content: "El 40% de cada transacción de patrocinio procesada a través de la Plataforma se destina al Fondo Consciente. El 60% restante financia las operaciones de la Plataforma. Los usuarios votan democráticamente sobre qué causas comunitarias reciben las asignaciones mensuales del Fondo. Esta estructura es transparente y se comunica claramente a patrocinadores y usuarios."
+          content: "Según el nivel de patrocinio, entre el 20% y el 40% del neto estimado de cada transacción de patrocinio procesada a través de la Plataforma se destina al Fondo Consciente; el resto del neto estimado financia las operaciones de la Plataforma (tras deducir comisiones de procesamiento de pago). Los usuarios votan democráticamente sobre qué causas comunitarias reciben las asignaciones mensuales del Fondo. Esta estructura es transparente y se comunica claramente a patrocinadores y usuarios."
         },
         {
           title: "7. Pagos y Transacciones",
@@ -76,7 +76,7 @@ export default function TermsPage() {
         },
         {
           title: "2. Service Description",
-          content: "Crowd Conscious is a free-to-play prediction platform that channels collective intelligence toward social impact. The Platform enables users to: (a) Participate in prediction markets on topics such as World Cup, economy, policy, sustainability, and more, without risking money; (b) Earn XP and achievements for their predictions; (c) Vote democratically on which community causes receive grants from the Conscious Fund; (d) Suggest market ideas in the Conscious Inbox. Brands may sponsor markets; 40% of each sponsorship goes to the Conscious Fund for causes chosen by the community."
+          content: "Crowd Conscious is a free-to-play prediction platform that channels collective intelligence toward social impact. The Platform enables users to: (a) Participate in prediction markets on topics such as World Cup, economy, policy, sustainability, and more, without risking money; (b) Earn XP and achievements for their predictions; (c) Vote democratically on which community causes receive grants from the Conscious Fund; (d) Suggest market ideas in the Conscious Inbox. Brands may sponsor markets; between 20% and 40% of estimated net proceeds from each sponsorship (by tier) goes to the Conscious Fund for causes chosen by the community."
         },
         {
           title: "3. User Registration and Accounts",
@@ -92,7 +92,7 @@ export default function TermsPage() {
         },
         {
           title: "6. Conscious Fund and Sponsorships",
-          content: "40% of each sponsorship transaction processed through the Platform goes to the Conscious Fund. The remaining 60% funds Platform operations. Users vote democratically on which community causes receive the Fund's monthly allocations. This structure is transparent and clearly communicated to sponsors and users."
+          content: "Depending on sponsorship tier, between 20% and 40% of estimated net proceeds from each transaction processed through the Platform goes to the Conscious Fund; the remainder of estimated net proceeds funds Platform operations (after payment processing fees). Users vote democratically on which community causes receive the Fund's monthly allocations. This structure is transparent and clearly communicated to sponsors and users."
         },
         {
           title: "7. Payments and Transactions",

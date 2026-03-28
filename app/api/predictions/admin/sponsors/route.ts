@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
         let marketIds: string[] = []
         let marketTitles: string[] = []
 
-        if (s.tier === 'market' && s.market_id) {
+        if ((s.tier === 'market' || s.tier === 'starter') && s.market_id) {
           marketIds = [s.market_id]
           const { data: m } = await admin
             .from('prediction_markets')

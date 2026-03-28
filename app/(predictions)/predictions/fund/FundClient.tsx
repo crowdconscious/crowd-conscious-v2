@@ -3,6 +3,11 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Heart, Vote, Sparkles, Users, ArrowRight, Info } from 'lucide-react'
+import {
+  TransparencyDashboard,
+  type SponsorshipLogPublic,
+  type CauseBreakdownRow,
+} from '@/components/fund/TransparencyDashboard'
 
 type Cause = {
   id: string
@@ -36,14 +41,6 @@ function formatCurrency(num: number): string {
   return `$${Math.round(num)}`
 }
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  })
-}
-
 interface Props {
   totalFund: number
   causesSupported: number
@@ -57,6 +54,9 @@ interface Props {
   maxVotes: number
   sponsors: Sponsor[]
   totalDisbursed: number
+  sponsorshipLogs: SponsorshipLogPublic[]
+  sponsorshipLogTotal: number
+  causesBreakdown: CauseBreakdownRow[]
   isAuthenticated?: boolean
 }
 
@@ -73,6 +73,9 @@ export function FundClient({
   maxVotes = 1,
   sponsors = [],
   totalDisbursed = 0,
+  sponsorshipLogs = [],
+  sponsorshipLogTotal = 0,
+  causesBreakdown = [],
   isAuthenticated = true,
 }: Props) {
   const [voting, setVoting] = useState<Record<string, boolean>>({})
@@ -115,9 +118,10 @@ export function FundClient({
           Impulsado por patrocinadores. Dirigido por ti.
         </p>
         <p className="text-cc-text-muted mt-2 text-sm max-w-2xl">
-          Cuando las marcas patrocinan mercados de predicción en Crowd Conscious, una parte de su
-          contribución va al Fondo Consciente. Los usuarios votan qué causas comunitarias reciben
-          apoyos cada mes.
+          Cuando las marcas patrocinan mercados de predicción en Crowd Conscious, entre el 20% y hasta el
+          40% de la parte neta de cada patrocinio (según el nivel) va al Fondo Consciente, además de
+          las aportaciones por comisiones de operación. Los usuarios votan qué causas comunitarias
+          reciben apoyos cada mes.
         </p>
         {!isAuthenticated && (
           <Link
@@ -135,7 +139,9 @@ export function FundClient({
           <p className="text-2xl font-bold text-emerald-400">
             {formatCurrency(totalFund)} MXN
           </p>
-          <p className="text-cc-text-muted text-xs mt-1">From sponsors (40%) + trade fees</p>
+          <p className="text-cc-text-muted text-xs mt-1">
+            From sponsorships (up to 40% of net by tier) + trade fees
+          </p>
         </div>
         <div className="bg-cc-card border border-emerald-500/20 rounded-xl p-6">
           <p className="text-gray-400 text-sm mb-1">Causes Supported</p>
@@ -244,6 +250,14 @@ export function FundClient({
           </div>
         )}
       </div>
+
+      <TransparencyDashboard
+        sponsorships={sponsorshipLogs}
+        sponsorshipTotalCount={sponsorshipLogTotal}
+        totalDistributed={totalDisbursed}
+        causesSupported={causesSupported}
+        causesBreakdown={causesBreakdown}
+      />
 
       {/* Section 3: Past Allocations */}
       <div className="bg-cc-card border border-cc-border rounded-xl p-6">

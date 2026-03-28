@@ -32,7 +32,7 @@ export const metadata: Metadata = {
       'Crowd Conscious — Predicciones Gratis que Financian Causas Reales | Mundial 2026',
   },
   description:
-    "Plataforma gratuita de predicciones donde cada voto genera impacto. Predice en el Mundial 2026, política, deportes y más. 40% de patrocinios van a causas comunitarias.",
+    "Plataforma gratuita de predicciones donde cada voto genera impacto. Cada patrocinio financia causas reales; tú decides a dónde va el impacto. Mundial 2026, política, deportes y más.",
   alternates: {
     canonical: SITE_URL,
     languages: {
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     title:
       "Crowd Conscious — Predicciones Gratis que Financian Causas Reales | Mundial 2026",
     description:
-      "Plataforma gratuita de predicciones donde cada voto genera impacto. Mundial 2026, política, deportes y más.",
+      "Plataforma gratuita de predicciones donde cada voto genera impacto. Cada patrocinio financia causas reales; tú decides el impacto. Mundial 2026, política, deportes y más.",
     url: SITE_URL,
   },
 }
@@ -377,8 +377,8 @@ export default async function LandingPage() {
               </h3>
               <p className="text-sm leading-relaxed text-gray-300">
                 {locale === 'es'
-                  ? 'Marcas patrocinan mercados. 40% va al Fondo Consciente. Tú eliges la causa.'
-                  : 'Brands sponsor markets. 40% goes to the Conscious Fund. You choose the cause.'}
+                  ? 'Marcas patrocinan mercados. Hasta el 40% va al Fondo Consciente. Tú eliges la causa.'
+                  : 'Brands sponsor markets. Up to 40% goes to the Conscious Fund. You choose the cause.'}
               </p>
             </div>
             <div>
@@ -434,12 +434,14 @@ export default async function LandingPage() {
               </p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-emerald-400">40%</p>
+              <p className="text-xl font-bold text-emerald-400 md:text-2xl">
+                {locale === 'es' ? 'Tú decides' : 'You decide'}
+              </p>
               <p className="mt-1 text-xs font-medium uppercase tracking-wider text-gray-400">
-                {locale === 'es' ? 'al Fondo' : 'to Fund'}
+                {locale === 'es' ? 'el impacto' : 'the impact'}
               </p>
               <p className="text-xs font-medium uppercase tracking-wider text-gray-500">
-                {locale === 'es' ? 'Consciente' : 'Conscious'}
+                {locale === 'es' ? 'comunidad' : 'community'}
               </p>
             </div>
           </div>
@@ -457,10 +459,10 @@ export default async function LandingPage() {
                   </h2>
                   <p className="mb-6 max-w-xl text-gray-400">
                     {locale === 'es'
-                      ? 'El 40% de cada patrocinio va a causas comunitarias. Tú votas a dónde va el impacto.'
-                      : '40% of every sponsorship goes to community causes. You vote where the impact goes.'}
+                      ? 'Cada patrocinio financia causas reales. Tú decides a dónde va el impacto.'
+                      : 'Every sponsorship funds real causes. You decide where the impact goes.'}
                   </p>
-                  {fundBalance > 0 || causesCount > 0 ? (
+                  {fundBalance > 0 ? (
                     <div className="mb-6 flex flex-wrap gap-6">
                       <div>
                         <p className="text-sm text-gray-500">{locale === 'es' ? 'Total del fondo' : 'Fund total'}</p>
@@ -471,7 +473,13 @@ export default async function LandingPage() {
                         <p className="text-2xl font-bold text-white">{causesCount}</p>
                       </div>
                     </div>
-                  ) : null}
+                  ) : (
+                    <p className="mb-6 max-w-xl text-slate-300 leading-relaxed">
+                      {locale === 'es'
+                        ? 'El Fondo Consciente se activa con el primer patrocinio. Cada marca que se une genera impacto directo.'
+                        : 'The Conscious Fund activates with the first sponsorship. Every brand that joins creates direct impact.'}
+                    </p>
+                  )}
                   {causesWithVotes.length > 0 && (
                     <div className="mb-6 space-y-2">
                       <p className="text-sm font-medium text-gray-500">
@@ -487,13 +495,6 @@ export default async function LandingPage() {
                         </div>
                       ))}
                     </div>
-                  )}
-                  {fundBalance === 0 && causesCount === 0 && (
-                    <p className="font-medium text-slate-200">
-                      {locale === 'es'
-                        ? 'Próximamente: el Fondo Consciente dirigirá patrocinios a causas elegidas por la comunidad.'
-                        : 'Coming soon — the Conscious Fund will direct sponsor contributions to community-chosen causes.'}
-                    </p>
                   )}
                 </div>
                 <Link

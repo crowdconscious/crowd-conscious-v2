@@ -3,6 +3,7 @@ import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { CheckCircle, Share2, ArrowRight } from 'lucide-react'
 import LandingNav from '@/app/components/landing/LandingNav'
+import { calculateFundAllocationRounded, normalizeSponsorTierId } from '@/lib/sponsor-tiers'
 
 const Footer = dynamic(() => import('@/components/Footer'))
 
@@ -61,6 +62,16 @@ export default async function SponsorSuccessPage({
   const twitterShare = `https://twitter.com/intent/tweet?text=${shareText}&url=${encodeURIComponent(shareUrl)}`
   const linkedInShare = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`
 
+  let fundBullet =
+    'Between 20% and 40% of estimated net from your sponsorship (by tier) has been allocated to the Conscious Fund.'
+  if (session?.amountMXN != null) {
+    const alloc = calculateFundAllocationRounded(
+      session.amountMXN,
+      normalizeSponsorTierId(session?.tier)
+    )
+    fundBullet = `${Math.round(alloc.fundPercent * 100)}% of estimated net from your sponsorship has been allocated to the Conscious Fund.`
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <LandingNav />
@@ -98,7 +109,7 @@ export default async function SponsorSuccessPage({
             <ul className="text-slate-400 text-sm space-y-2">
               <li>• You&apos;ll receive a confirmation email shortly</li>
               <li>• Your logo and name will appear on the market card, detail page, and share images</li>
-              <li>• 40% of your contribution has been added to the Conscious Fund</li>
+              <li>• {fundBullet}</li>
               <li>• Users will see your brand when they predict and share</li>
             </ul>
           </div>

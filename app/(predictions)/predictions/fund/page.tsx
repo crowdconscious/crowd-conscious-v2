@@ -4,11 +4,16 @@ import { createAdminClient } from '@/lib/supabase-admin'
 import { getCurrentUser } from '@/lib/auth-server'
 import { FundClient } from './FundClient'
 import { SITE_URL } from '@/lib/seo/site'
+import { buildCauseDistributionBreakdown } from '@/lib/fund-transparency'
+import {
+  TransparencyDashboard,
+  type SponsorshipLogPublic,
+} from '@/components/fund/TransparencyDashboard'
 
 export const metadata: Metadata = {
   title: { absolute: 'Fondo Consciente | Crowd Conscious' },
   description:
-    'El 40% de los patrocinios alimenta el Fondo Consciente. Los usuarios eligen a qué causas va el impacto. Transparente y gratuito.',
+    'Hasta el 40% del neto estimado de patrocinios (según nivel) alimenta el Fondo Consciente. Los usuarios eligen a qué causas va el impacto. Transparente y gratuito.',
   alternates: {
     canonical: `${SITE_URL}/predictions/fund`,
     languages: {
@@ -26,6 +31,7 @@ async function getFundData(userId: string | null) {
   const cycle = getCurrentCycle()
   // Use admin client when unauthenticated (fund_causes, fund_votes require auth for anon)
   const supabase = userId ? await createClient() : createAdminClient()
+  const admin = createAdminClient()
 
   const [
     { data: sponsorMarkets },
@@ -34,6 +40,8 @@ async function getFundData(userId: string | null) {
     { data: myVotes },
     { data: fund },
     { data: userXp },
+    { data: sponsorshipLogRows },
+    { count: sponsorshipLogCount },
   ] = await Promise.all([
     supabase
       .from('prediction_markets')
@@ -53,6 +61,15 @@ async function getFundData(userId: string | null) {
           .eq('user_id', userId)
           .in('action_type', ['prediction_vote', 'prediction_correct'])
       : { data: [] },
+    admin
+      .from('sponsorship_log')
+      .select(
+        'id, sponsor_name, is_anonymous, sponsor_tier, amount_paid, net_amount, fund_allocation, fund_percent, paid_at'
+      )
+      .eq('is_public', true)
+      .order('paid_at', { ascending: false })
+      .limit(50),
+    admin.from('sponsorship_log').select('*', { count: 'exact', head: true }).eq('is_public', true),
   ])
 
   // Total Fund: use actual balance from conscious_fund (updated by Stripe webhook on sponsor payments + trade fees)
@@ -98,6 +115,31 @@ async function getFundData(userId: string | null) {
     sponsor_contribution: Number((m as { sponsor_contribution?: number }).sponsor_contribution ?? 0),
   }))
 
+  const causesBreakdown = buildCauseDistributionBreakdown(
+    causesWithVotes.map((c) => ({
+      id: c.id,
+      name: c.name,
+      vote_count: c.vote_count,
+    })),
+    Number(fund?.total_disbursed ?? 0),
+    totalFund
+  )
+
+  const sponsorshipLogs: SponsorshipLogPublic[] = (sponsorshipLogRows ?? []).map((row) => {
+    const r = row as Record<string, unknown>
+    return {
+      id: String(r.id),
+      sponsor_name: String(r.sponsor_name ?? ''),
+      is_anonymous: Boolean(r.is_anonymous),
+      sponsor_tier: String(r.sponsor_tier ?? 'starter'),
+      amount_paid: Number(r.amount_paid),
+      net_amount: Number(r.net_amount),
+      fund_allocation: Number(r.fund_allocation),
+      fund_percent: Number(r.fund_percent),
+      paid_at: String(r.paid_at),
+    }
+  })
+
   return {
     totalFund,
     causesSupported,
@@ -111,6 +153,9 @@ async function getFundData(userId: string | null) {
     maxVotes,
     sponsors,
     totalDisbursed: Number(fund?.total_disbursed ?? 0),
+    sponsorshipLogs,
+    sponsorshipLogTotal: sponsorshipLogCount ?? 0,
+    causesBreakdown,
   }
 }
 
@@ -132,6 +177,9 @@ export default async function PredictionsFundPage() {
       maxVotes={data.maxVotes}
       sponsors={data.sponsors}
       totalDisbursed={data.totalDisbursed}
+      sponsorshipLogs={data.sponsorshipLogs}
+      sponsorshipLogTotal={data.sponsorshipLogTotal}
+      causesBreakdown={data.causesBreakdown}
       isAuthenticated={!!user}
     />
   )

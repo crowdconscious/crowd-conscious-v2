@@ -3,26 +3,25 @@ import Stripe from 'stripe'
 import { z } from 'zod'
 import { getStripe } from '@/app/api/webhooks/stripe/lib/stripe-webhook-utils'
 import { ApiResponse } from '@/lib/api-responses'
-
-const TIER_PRICES_MXN: Record<string, number> = {
-  market: 2000,
-  category: 10000,
-  impact: 50000,
-}
+import {
+  SPONSOR_TIERS,
+  type SponsorTierId,
+  calculateFundAllocationRounded,
+} from '@/lib/sponsor-tiers'
 
 const MIN_AMOUNT_MXN = 100
 
-const TIER_LABELS: Record<string, string> = {
-  market: 'Market Sponsor',
-  category: 'Category Sponsor',
-  impact: 'Impact Partner',
-  patron: 'Founding Patron',
+const TIER_LABELS: Record<SponsorTierId, string> = {
+  starter: 'Market Sponsor',
+  growth: 'Category Sponsor',
+  champion: 'Impact Partner',
+  anchor: 'Founding Patron',
 }
 
 const schema = z.object({
   market_id: z.string().uuid().optional(),
   category: z.string().optional(),
-  tier: z.enum(['market', 'category', 'impact', 'patron']),
+  tier: z.enum(['starter', 'growth', 'champion', 'anchor']),
   amount_mxn: z.number().min(MIN_AMOUNT_MXN).optional(),
   sponsor_name: z.string().min(1),
   sponsor_url: z.string().optional(),
@@ -42,7 +41,7 @@ export async function POST(request: NextRequest) {
     const {
       market_id,
       category,
-      tier,
+      tier: tierId,
       amount_mxn: customAmount,
       sponsor_name,
       sponsor_url,
@@ -50,27 +49,19 @@ export async function POST(request: NextRequest) {
       email,
     } = parsed.data
 
-    // Founding Patron = custom pricing, redirect to contact
-    if (tier === 'patron') {
-      const body = `Hi, I'm interested in becoming a Founding Patron.\n\nCompany/Name: ${sponsor_name}\nEmail: ${email}\n${sponsor_url ? `Website: ${sponsor_url}\n` : ''}`
-      const mailto = `mailto:comunidad@crowdconscious.app?subject=${encodeURIComponent('Founding Patron Inquiry - Crowd Conscious')}&body=${encodeURIComponent(body)}`
-      return ApiResponse.ok({ redirect_url: mailto, is_contact: true })
-    }
+    const tier = SPONSOR_TIERS[tierId]
+    const tierPrice = tier.price
 
-    const tierPrice = TIER_PRICES_MXN[tier]
-    if (!tierPrice) {
-      return ApiResponse.badRequest('Invalid tier', 'INVALID_TIER')
-    }
+    const priceMXN =
+      customAmount != null && customAmount >= MIN_AMOUNT_MXN ? Math.round(customAmount) : tierPrice
 
-    // Use custom amount if provided (min 100 MXN), else tier price
-    const priceMXN = customAmount != null && customAmount >= MIN_AMOUNT_MXN
-      ? Math.round(customAmount)
-      : tierPrice
+    const alloc = calculateFundAllocationRounded(priceMXN, tierId)
+    const fundPctLabel = Math.round(tier.fundPercent * 100)
 
     const stripe = getStripe()
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'
 
-    const tierLabel = TIER_LABELS[tier] || tier
+    const tierLabel = TIER_LABELS[tierId] || tier.name
     let marketTitle: string | undefined
     if (market_id) {
       const { createClient } = await import('@supabase/supabase-js')
@@ -93,10 +84,10 @@ export async function POST(request: NextRequest) {
         : `${tierLabel} — Crowd Conscious`
     const description =
       market_id && marketTitle
-        ? `Sponsor "${marketTitle}". 40% funds community causes.`
+        ? `Sponsor "${marketTitle}". Up to ${fundPctLabel}% to Conscious Fund (after fees).`
         : category
-          ? `${categoryLabel} Category Sponsorship. 40% funds community causes.`
-          : `Crowd Conscious ${tierLabel}. 40% funds community causes.`
+          ? `${categoryLabel} category sponsorship. Up to ${fundPctLabel}% to Conscious Fund (after fees).`
+          : `Crowd Conscious ${tierLabel}. Up to ${fundPctLabel}% to Conscious Fund (after fees).`
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -109,7 +100,7 @@ export async function POST(request: NextRequest) {
               description,
               images: sponsor_logo_url ? [sponsor_logo_url] : undefined,
             },
-            unit_amount: priceMXN * 100, // MXN centavos (2000 MXN = 200000)
+            unit_amount: priceMXN * 100,
           },
           quantity: 1,
         },
@@ -120,7 +111,11 @@ export async function POST(request: NextRequest) {
       customer_email: email,
       metadata: {
         type: 'market_sponsorship',
-        tier,
+        tier: tierId,
+        sponsor_tier: tierId,
+        fund_percent: String(tier.fundPercent),
+        fund_amount_estimated_mxn: String(alloc.fundAmountRounded),
+        platform_amount_estimated_mxn: String(alloc.platformAmountRounded),
         market_id: market_id || '',
         category: category || '',
         sponsor_name,
@@ -134,11 +129,9 @@ export async function POST(request: NextRequest) {
       url: session.url,
       session_id: session.id,
     })
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Failed to create checkout session'
     console.error('Sponsor checkout error:', err)
-    return ApiResponse.serverError(
-      err.message || 'Failed to create checkout session',
-      'CHECKOUT_ERROR'
-    )
+    return ApiResponse.serverError(message, 'CHECKOUT_ERROR')
   }
 }

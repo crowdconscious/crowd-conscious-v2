@@ -1,14 +1,11 @@
 import Stripe from 'stripe'
 import { getSupabase } from '../lib/stripe-webhook-utils'
 import { sendSponsorConfirmationEmail, sendSponsorshipAdminNotification } from '@/lib/resend'
-import { CONSCIOUS_FUND_PERCENT, PLATFORM_RETENTION_PERCENT } from '@/lib/fund-allocation'
-
-const TIER_DURATION_MONTHS: Record<string, number> = {
-  market: 3,
-  category: 6,
-  impact: 12,
-  patron: 12,
-}
+import {
+  normalizeSponsorTierId,
+  calculateFundAllocationRounded,
+  TIER_DURATION_MONTHS,
+} from '@/lib/sponsor-tiers'
 
 /**
  * Handle market sponsorship payment after successful checkout.
@@ -31,25 +28,27 @@ export async function handleMarketSponsorship(session: Stripe.Checkout.Session) 
 
   const amountTotal = session.amount_total ?? 0
   const amountMXN = amountTotal / 100
-  const fundAmount = Math.round(amountMXN * CONSCIOUS_FUND_PERCENT)
-  const platformAmount = Math.round(amountMXN * PLATFORM_RETENTION_PERCENT)
+
+  const tierId = normalizeSponsorTierId(tier)
+  const alloc = calculateFundAllocationRounded(amountMXN, tierId)
+  const fundAmount = alloc.fundAmountRounded
+  const platformAmount = alloc.platformAmountRounded
+  const fundPctLabel = Math.round(alloc.fundPercent * 100)
 
   const supabase = getSupabase()
-  const tierKey = (tier as string) || 'market'
-  const months = TIER_DURATION_MONTHS[tierKey] ?? 3
+  const months = TIER_DURATION_MONTHS[tierId] ?? 3
   const endDate = new Date()
   endDate.setMonth(endDate.getMonth() + months)
 
   const reportToken = crypto.randomUUID()
 
-  // 1. Create sponsorship record
   const { data: sponsorship, error: sponsorError } = await (supabase as any)
     .from('sponsorships')
     .insert({
       stripe_session_id: session.id,
       stripe_payment_intent_id: session.payment_intent as string | null,
       amount_mxn: amountMXN,
-      tier: tierKey,
+      tier: tierId,
       status: 'active',
       sponsor_name: sponsor_name || 'Sponsor',
       sponsor_email: sponsor_email || '',
@@ -73,7 +72,38 @@ export async function handleMarketSponsorship(session: Stripe.Checkout.Session) 
 
   const sponsorshipId = sponsorship?.id
 
-  // 2. Insert fund transaction
+  const isAnonymous =
+    metadata.sponsor_anonymous === 'true' ||
+    metadata.anonymous === 'true' ||
+    metadata.hide_sponsor_name === 'true'
+
+  const { error: sponsorshipLogError } = await (supabase as any)
+    .from('sponsorship_log')
+    .upsert(
+      {
+        stripe_session_id: session.id,
+        sponsorship_id: sponsorshipId,
+        sponsor_name: sponsor_name || 'Sponsor',
+        is_anonymous: isAnonymous,
+        sponsor_tier: tierId,
+        amount_paid: amountMXN,
+        stripe_fee: alloc.stripeFeeRounded,
+        net_amount: alloc.netAmountRounded,
+        fund_allocation: fundAmount,
+        fund_percent: alloc.fundPercent,
+        platform_revenue: platformAmount,
+        market_id: market_id || null,
+        cause_id: null,
+        paid_at: new Date().toISOString(),
+        is_public: true,
+      },
+      { onConflict: 'stripe_session_id' }
+    )
+
+  if (sponsorshipLogError) {
+    console.error('Market sponsorship: sponsorship_log upsert failed', sponsorshipLogError)
+  }
+
   const { error: fundTxError } = await (supabase as any)
     .from('conscious_fund_transactions')
     .insert({
@@ -81,14 +111,13 @@ export async function handleMarketSponsorship(session: Stripe.Checkout.Session) 
       source_type: 'sponsorship' as const,
       source_id: sponsorshipId,
       market_id: market_id || null,
-      description: `Sponsorship from ${sponsor_name} (${tierKey}) - 40% to Conscious Fund. Session: ${session.id}`,
+      description: `Sponsorship from ${sponsor_name} (${tierId}) — ${fundPctLabel}% (est. net) to Conscious Fund. Session: ${session.id}`,
     })
 
   if (fundTxError) {
     console.error('Market sponsorship: failed to insert fund transaction', fundTxError)
   }
 
-  // 3. Update conscious_fund totals
   const { data: fundRow } = await (supabase as any)
     .from('conscious_fund')
     .select('id, total_collected, current_balance')
@@ -116,7 +145,6 @@ export async function handleMarketSponsorship(session: Stripe.Checkout.Session) 
     updated_at: new Date().toISOString(),
   }
 
-  // 4. Update prediction_markets
   if (market_id && sponsor_name) {
     const { error: marketError } = await (supabase as any)
       .from('prediction_markets')
@@ -128,8 +156,8 @@ export async function handleMarketSponsorship(session: Stripe.Checkout.Session) 
     }
   }
 
-  // 5. Category tier: update ALL active markets in that category
-  if (tierKey === 'category' && category && sponsor_name) {
+  // Category tier: update ALL active markets in that category
+  if (tierId === 'growth' && category && sponsor_name) {
     const { error: categoryError } = await (supabase as any)
       .from('prediction_markets')
       .update(sponsorPayload)
@@ -141,7 +169,6 @@ export async function handleMarketSponsorship(session: Stripe.Checkout.Session) 
     }
   }
 
-  // 6. Send sponsor confirmation email
   let marketTitle: string | undefined
   if (market_id) {
     const { data: market } = await (supabase as any)
@@ -156,7 +183,7 @@ export async function handleMarketSponsorship(session: Stripe.Checkout.Session) 
     await sendSponsorConfirmationEmail(
       sponsor_email,
       sponsor_name || 'Sponsor',
-      tierKey,
+      tierId,
       amountMXN,
       marketTitle,
       category || undefined,
@@ -166,15 +193,15 @@ export async function handleMarketSponsorship(session: Stripe.Checkout.Session) 
     )
   }
 
-  // 7. Send admin notification
   await sendSponsorshipAdminNotification({
     sponsorName: sponsor_name || 'Sponsor',
     sponsorEmail: sponsor_email || '',
     sponsorUrl: sponsor_url || '',
-    tier: tierKey,
+    tier: tierId,
     amountMXN,
     fundAmount,
     platformAmount,
+    fundPercent: alloc.fundPercent,
     marketId: market_id || undefined,
     marketTitle,
     category: category || undefined,
@@ -184,7 +211,7 @@ export async function handleMarketSponsorship(session: Stripe.Checkout.Session) 
     sessionId: session.id,
     sponsorshipId,
     sponsor_name,
-    tier: tierKey,
+    tier: tierId,
     market_id: market_id || 'category',
     category: category || null,
     amountMXN,

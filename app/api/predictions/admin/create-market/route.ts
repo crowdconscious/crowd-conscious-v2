@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
         .from('sponsorships')
         .select('id, sponsor_name, sponsor_logo_url, sponsor_url')
         .eq('category', category)
-        .eq('tier', 'category')
+        .in('tier', ['category', 'growth'])
         .eq('status', 'active')
         .order('created_at', { ascending: false })
         .limit(1)
@@ -208,11 +208,11 @@ export async function POST(request: NextRequest) {
       .from('sponsorships')
       .select('id, sponsor_name, sponsor_logo_url, sponsor_url')
       .eq('category', category)
-      .eq('tier', 'category')
-      .eq('status', 'active')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
+        .in('tier', ['category', 'growth'])
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
 
     if (categorySponsor) {
       await admin

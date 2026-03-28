@@ -492,6 +492,65 @@ export interface Database {
           created_at?: string
         }
       }
+      sponsorship_log: {
+        Row: {
+          id: string
+          stripe_session_id: string | null
+          sponsorship_id: string | null
+          sponsor_name: string
+          is_anonymous: boolean
+          sponsor_tier: string
+          amount_paid: number
+          stripe_fee: number
+          net_amount: number
+          fund_allocation: number
+          fund_percent: number
+          platform_revenue: number
+          market_id: string | null
+          cause_id: string | null
+          paid_at: string
+          is_public: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          stripe_session_id?: string | null
+          sponsorship_id?: string | null
+          sponsor_name: string
+          is_anonymous?: boolean
+          sponsor_tier: string
+          amount_paid: number
+          stripe_fee?: number
+          net_amount: number
+          fund_allocation: number
+          fund_percent: number
+          platform_revenue: number
+          market_id?: string | null
+          cause_id?: string | null
+          paid_at?: string
+          is_public?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          stripe_session_id?: string | null
+          sponsorship_id?: string | null
+          sponsor_name?: string
+          is_anonymous?: boolean
+          sponsor_tier?: string
+          amount_paid?: number
+          stripe_fee?: number
+          net_amount?: number
+          fund_allocation?: number
+          fund_percent?: number
+          platform_revenue?: number
+          market_id?: string | null
+          cause_id?: string | null
+          paid_at?: string
+          is_public?: boolean
+          created_at?: string
+        }
+      }
       conscious_fund: {
         Row: {
           id: string

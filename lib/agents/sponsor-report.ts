@@ -199,7 +199,7 @@ async function gatherSponsorImpact(
   let marketIds: string[] = []
   let marketTitles: string[] = []
 
-  if (sponsorship.tier === 'market' && sponsorship.market_id) {
+  if ((sponsorship.tier === 'market' || sponsorship.tier === 'starter') && sponsorship.market_id) {
     marketIds = [sponsorship.market_id]
     const { data: m } = await supabase
       .from('prediction_markets')
@@ -208,7 +208,7 @@ async function gatherSponsorImpact(
       .single()
     marketTitles = m?.title ? [m.title] : []
 
-  } else if (sponsorship.tier === 'category' && sponsorship.category) {
+  } else if ((sponsorship.tier === 'category' || sponsorship.tier === 'growth') && sponsorship.category) {
     const { data: markets } = await supabase
       .from('prediction_markets')
       .select('id, title')
@@ -336,7 +336,7 @@ function buildPrompt(data: SponsorImpactData): string {
   const marketOrCategory =
     data.marketTitles.length > 0
       ? data.marketTitles.join(', ')
-      : s.tier === 'category' && s.category
+      : (s.tier === 'category' || s.tier === 'growth') && s.category
         ? `category "${s.category}"`
         : 'their sponsored market(s)'
 

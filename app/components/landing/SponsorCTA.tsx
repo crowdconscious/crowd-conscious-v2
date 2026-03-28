@@ -16,13 +16,13 @@ export function SponsorCTA({ locale }: { locale: 'es' | 'en' }) {
         <p className="mb-8 text-base leading-relaxed text-gray-300">
           {isEs ? (
             <>
-              Activa tu audiencia con predicciones patrocinadas que financian causas reales. 40% al Fondo
-              Consciente — 10× el promedio de causa marketing.
+              Activa tu audiencia con predicciones patrocinadas que financian causas reales. Hasta el 40%
+              al Fondo Consciente — hasta 10× el promedio de causa marketing.
             </>
           ) : (
             <>
-              Activate your audience with sponsored predictions that fund real causes. 40% to the Conscious
-              Fund — 10× the average for cause marketing.
+              Activate your audience with sponsored predictions that fund real causes. Up to 40% to the
+              Conscious Fund — up to 10× the cause marketing average.
             </>
           )}
         </p>

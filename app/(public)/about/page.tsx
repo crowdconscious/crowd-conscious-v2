@@ -10,7 +10,7 @@ export const metadata: Metadata = {
       'Quiénes Somos — Consciencia Colectiva para el Bien Social | Crowd Conscious',
   },
   description:
-    'Crowd Conscious combina mercados de predicción con impacto social. 40% de cada patrocinio va a causas comunitarias. Basados en Ciudad de México.',
+    'Crowd Conscious combina mercados de predicción con impacto social. Entre el 20% y 40% de cada patrocinio va directamente a causas comunitarias — hasta 10× el promedio de la industria en causa marketing. Basados en Ciudad de México.',
   alternates: {
     canonical: `${SITE_URL}/about`,
     languages: {

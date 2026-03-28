@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase-admin'
 import { notFound } from 'next/navigation'
+import { getFundPercent, normalizeSponsorTierId } from '@/lib/sponsor-tiers'
 import dynamic from 'next/dynamic'
 import { BarChart3, Users, Heart, ExternalLink } from 'lucide-react'
 import LandingNav from '@/app/components/landing/LandingNav'
@@ -22,7 +23,7 @@ async function getSponsorReport(id: string, token: string | null) {
   let marketIds: string[] = []
   let marketTitles: string[] = []
 
-  if (sponsorship.tier === 'market' && sponsorship.market_id) {
+  if ((sponsorship.tier === 'market' || sponsorship.tier === 'starter') && sponsorship.market_id) {
     marketIds = [sponsorship.market_id]
     const { data: m } = await admin
       .from('prediction_markets')
@@ -65,6 +66,9 @@ async function getSponsorReport(id: string, token: string | null) {
 
   const totalPredictions = (votesCount ?? 0) + (trades ?? []).length
   const fundAmount = Number(sponsorship.fund_amount ?? 0)
+  const fundPercentLabel = Math.round(
+    getFundPercent(normalizeSponsorTierId(sponsorship.tier as string)) * 100
+  )
 
   return {
     sponsorship,
@@ -73,6 +77,7 @@ async function getSponsorReport(id: string, token: string | null) {
     totalPredictions,
     uniqueUsers: uniqueUsers.size,
     fundAmount,
+    fundPercentLabel,
   }
 }
 
@@ -101,7 +106,8 @@ export default async function SponsorReportPage({
     notFound()
   }
 
-  const { sponsorship, marketTitles, totalPredictions, uniqueUsers, fundAmount } = report
+  const { sponsorship, marketTitles, totalPredictions, uniqueUsers, fundAmount, fundPercentLabel } =
+    report
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'
 
   return (
@@ -143,7 +149,9 @@ export default async function SponsorReportPage({
                   Conscious Fund
                 </div>
                 <p className="text-2xl font-bold text-emerald-400">{formatCurrency(fundAmount)}</p>
-                <p className="text-slate-500 text-xs mt-1">40% allocated to community causes</p>
+                <p className="text-slate-500 text-xs mt-1">
+                  {fundPercentLabel}% of estimated net allocated to community causes
+                </p>
               </div>
             </div>
 

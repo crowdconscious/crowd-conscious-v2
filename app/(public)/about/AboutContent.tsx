@@ -192,8 +192,8 @@ export default function AboutContent({
           </h2>
           <p className="text-slate-400 text-lg leading-relaxed text-center mb-12 max-w-2xl mx-auto">
             {locale === 'es'
-              ? 'Las marcas patrocinan mercados → el 40% de cada patrocinio va directamente a causas comunitarias — mucho por encima del promedio de marketing con causa → los usuarios votan qué causas reciben apoyos → impacto comunitario. Un ciclo virtuoso.'
-              : 'Brands sponsor markets → 40% of every sponsorship goes directly to community causes — 10x the industry average for cause marketing → Users vote on which causes receive grants → Community impact. It&apos;s a virtuous cycle.'}
+              ? 'Las marcas patrocinan mercados → entre el 20% y 40% de cada patrocinio va directamente a causas comunitarias — hasta 10× el promedio de la industria en causa marketing → los usuarios votan qué causas reciben apoyos → impacto comunitario. Un ciclo virtuoso.'
+              : 'Brands sponsor markets → between 20% and 40% of every sponsorship goes directly to community causes — up to 10× the industry average for cause marketing → Users vote on which causes receive grants → Community impact. It&apos;s a virtuous cycle.'}
           </p>
           <div className="grid md:grid-cols-3 gap-6 mb-10">
             <div className="border border-cc-border bg-cc-card rounded-xl p-6 text-center">
