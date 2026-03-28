@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type CSSProperties } from 'react'
 import { Check, TrendingUp, TrendingDown } from 'lucide-react'
 import type { Database } from '@/types/database'
 import { hasGuestVotedMarket } from '@/lib/guest-vote-storage'
@@ -400,8 +400,12 @@ export function VotePanel({
                 max={10}
                 value={confidence}
                 onChange={(e) => setConfidence(parseInt(e.target.value, 10))}
-                className="flex-1 h-2.5 cursor-pointer rounded-lg bg-gray-700 accent-emerald-500 [color-scheme:dark] appearance-none"
-                style={{ accentColor: '#10b981' }}
+                className="cc-range-slider min-w-0 flex-1"
+                style={
+                  {
+                    '--cc-range-pct': `${((confidence - 1) / 9) * 100}%`,
+                  } as CSSProperties
+                }
               />
             </div>
           </div>

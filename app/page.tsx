@@ -314,7 +314,7 @@ export default async function LandingPage() {
                 : 'Opening match June 11 at Estadio Azteca.'}
             </p>
             <div className="mb-10 flex justify-center">
-              <WorldCupCountdown />
+              <WorldCupCountdown locale={locale === 'es' ? 'es' : 'en'} />
             </div>
             {worldCupMarkets.length > 0 && (
               <div className="mx-auto grid max-w-7xl grid-cols-1 gap-4 md:grid-cols-2">

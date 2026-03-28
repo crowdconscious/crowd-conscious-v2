@@ -44,23 +44,50 @@ export function ImpactTicker({
 }) {
   const { language } = useLanguage()
   const locale = language === 'en' ? 'en' : 'es'
-  const hasData = totalVotes > 0 || fundTotal > 0
-  const displayVotes = useCountUp(totalVotes, 1500, hasData)
-  const displayFund = useCountUp(Math.round(fundTotal), 1500, hasData)
+  const fundRounded = Math.round(fundTotal)
+  const hasVotes = totalVotes > 0
+  const hasFund = fundRounded > 0
+  const displayVotes = useCountUp(totalVotes, 1500, hasVotes)
+  const displayFund = useCountUp(fundRounded, 1500, hasFund)
 
-  if (!hasData) {
+  if (!hasVotes && !hasFund) {
     return (
       <div className="border-b border-cc-border/50 bg-cc-card/60 px-4 py-2">
         <p className="text-center text-xs text-gray-400 md:text-sm">
           {locale === 'es'
-            ? 'Sé el primero en predecir → Cada voto cuenta'
-            : 'Be the first to predict → Every vote counts'}
+            ? 'Sé el primero en predecir — cada voto cuenta'
+            : 'Be the first to predict — every vote counts'}
         </p>
       </div>
     )
   }
 
   const cause = activeCauseName?.trim() || (locale === 'es' ? 'causas activas' : 'active causes')
+
+  if (hasVotes && !hasFund) {
+    return (
+      <div className="border-b border-cc-border/50 bg-gray-800/30 px-4 py-2">
+        <p className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center text-xs text-gray-400 md:text-sm">
+          <Globe className="h-4 w-4 shrink-0 text-emerald-500/80" aria-hidden />
+          <span>
+            {locale === 'es' ? (
+              <>
+                <span className="font-medium text-gray-200">{displayVotes.toLocaleString('es-MX')}</span> predicciones
+                {' generando impacto para '}
+                <span className="text-gray-300">{cause}</span>
+              </>
+            ) : (
+              <>
+                <span className="font-medium text-gray-200">{displayVotes.toLocaleString('en-US')}</span> predictions
+                {' driving impact for '}
+                <span className="text-gray-300">{cause}</span>
+              </>
+            )}
+          </span>
+        </p>
+      </div>
+    )
+  }
 
   return (
     <div className="border-b border-cc-border/50 bg-gray-800/30 px-4 py-2">

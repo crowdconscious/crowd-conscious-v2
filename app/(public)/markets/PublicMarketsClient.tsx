@@ -180,6 +180,7 @@ export default function PublicMarketsClient({
               key={market.id}
               market={market}
               outcomes={outcomesByMarketId[market.id] ?? []}
+              publicPredictCta
             />
           ))}
         </div>

@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useLanguage } from '@/contexts/LanguageContext'
 import {
@@ -107,6 +108,8 @@ export function MarketCard({
   showDeadline = true,
   showVoteCount = true,
   compact = false,
+  /** Public /markets: card links to market detail; footer "Predict" → login with redirect */
+  publicPredictCta = false,
 }: {
   market: MarketCardMarket
   outcomes: MarketCardOutcome[]
@@ -114,6 +117,7 @@ export function MarketCard({
   showDeadline?: boolean
   showVoteCount?: boolean
   compact?: boolean
+  publicPredictCta?: boolean
 }) {
   const router = useRouter()
   const { language } = useLanguage()
@@ -136,26 +140,19 @@ export function MarketCard({
 
   const deadline = formatDeadline(market.resolution_date || new Date().toISOString(), locale)
 
-  const go = () => router.push(`/predictions/markets/${market.id}`)
+  const detailHref = `/predictions/markets/${market.id}`
+  const loginHref = `/login?redirect=${encodeURIComponent(detailHref)}`
+  const go = () => router.push(detailHref)
 
   const pad = compact ? 'p-4' : 'p-5'
   const barHBinary = compact ? 'h-8' : 'h-9'
   const barHMulti = compact ? 'h-6' : 'h-7'
   const labelW = compact ? 'w-20 sm:w-24' : 'w-24 sm:w-28'
 
-  return (
-    <div
-      role="link"
-      tabIndex={0}
-      onClick={go}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-          go()
-        }
-      }}
-      className={`group cursor-pointer rounded-xl border border-cc-border bg-cc-card transition-all duration-200 hover:scale-[1.01] hover:border-emerald-500/30 ${pad}`}
-    >
+  const shellClass = `group rounded-xl border border-cc-border bg-cc-card transition-all duration-200 hover:scale-[1.01] hover:border-emerald-500/30`
+
+  const body = (
+    <>
       {showCategory && (
         <div className="mb-3 flex items-start justify-between gap-2">
           <span
@@ -254,6 +251,44 @@ export function MarketCard({
           {showDeadline && <span>{deadline}</span>}
         </div>
       )}
+    </>
+  )
+
+  if (publicPredictCta) {
+    return (
+      <div className={`${shellClass} overflow-hidden`}>
+        <Link
+          href={detailHref}
+          className={`block cursor-pointer text-left text-inherit no-underline ${pad} outline-none ring-emerald-500/30 focus-visible:ring-2`}
+        >
+          {body}
+        </Link>
+        <div className="border-t border-cc-border px-5 pb-5">
+          <Link
+            href={loginHref}
+            className="flex min-h-[44px] w-full items-center justify-center rounded-lg bg-emerald-600 text-sm font-semibold text-white transition-colors hover:bg-emerald-500"
+          >
+            {locale === 'es' ? 'Predecir' : 'Predict'}
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div
+      role="link"
+      tabIndex={0}
+      onClick={go}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          go()
+        }
+      }}
+      className={`${shellClass} cursor-pointer ${pad}`}
+    >
+      {body}
     </div>
   )
 }

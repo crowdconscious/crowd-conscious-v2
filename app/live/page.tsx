@@ -9,6 +9,7 @@ import { getCurrentUser } from '@/lib/auth-server'
 import type { Database } from '@/types/database'
 import { LiveEventCard } from '@/components/live/LiveEventCard'
 import { CreateLiveEventPanel } from '@/components/live/CreateLiveEventPanel'
+import { daysUntilWorldCup } from '@/lib/world-cup-kickoff'
 
 /** Per-session admin create form; list still fetched each request. */
 export const dynamic = 'force-dynamic'
@@ -99,8 +100,8 @@ export default async function LiveEventsPage() {
         : 'Live predictions during matches and live events.',
     emptyEvent:
       locale === 'es'
-        ? 'Próximo hito: Mundial 2026 · 11 de junio, Estadio Azteca'
-        : 'Next milestone: World Cup 2026 · June 11, Estadio Azteca',
+        ? `Próximo evento: Mundial 2026 · Faltan ${daysUntilWorldCup()} días`
+        : `Next event: World Cup 2026 · ${daysUntilWorldCup()} days to go`,
     emptyCta: locale === 'es' ? 'Ver predicciones' : 'Browse predictions',
     error: locale === 'es' ? 'No se pudieron cargar los eventos.' : 'Could not load events.',
   }

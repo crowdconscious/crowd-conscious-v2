@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, type CSSProperties } from 'react'
 import Link from 'next/link'
 import {
   ArrowLeft,
@@ -19,12 +19,12 @@ const CATEGORIES = [
   { id: 'cause', label: 'Cause' },
 ] as const
 
-/** Unified dark inputs (cc tokens) */
+/** Unified dark inputs (#1a2029 / #2d3748) */
 const ccInput =
-  'w-full px-4 py-2.5 bg-cc-card border border-cc-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20'
+  'w-full px-4 py-2.5 bg-[#1a2029] border border-[#2d3748] rounded-lg text-white placeholder:text-gray-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20'
 const ccInputSm =
-  'px-3 py-2 bg-cc-card border border-cc-border rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20'
-const ccSection = 'bg-cc-card border border-cc-border rounded-xl p-6'
+  'px-3 py-2 bg-[#1a2029] border border-[#2d3748] rounded-lg text-white text-sm placeholder:text-gray-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20'
+const ccSection = 'bg-[#1a2029] border border-[#2d3748] rounded-xl p-6'
 
 // Map suggestion category (from News Monitor) to form category
 const CATEGORY_MAP: Record<string, string> = {
@@ -478,8 +478,12 @@ export default function CreateMarketPage() {
                     max={99}
                     value={initialProbability}
                     onChange={(e) => setInitialProbability(Number(e.target.value))}
-                    className="flex-1 h-2 accent-emerald-500 cursor-pointer [color-scheme:dark]"
-                    style={{ accentColor: '#10b981' }}
+                    className="cc-range-slider flex-1 min-w-0"
+                    style={
+                      {
+                        '--cc-range-pct': `${((initialProbability - 1) / 98) * 100}%`,
+                      } as CSSProperties
+                    }
                   />
                   <input
                     type="number"
@@ -489,7 +493,7 @@ export default function CreateMarketPage() {
                     onChange={(e) =>
                       setInitialProbability(Math.min(99, Math.max(1, Number(e.target.value) || 50)))
                     }
-                    className="w-16 px-2 py-1.5 bg-cc-card border border-cc-border rounded-lg text-white text-sm text-center focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20"
+                    className="w-16 shrink-0 px-2 py-1.5 bg-[#1a2029] border border-[#2d3748] rounded-lg text-white text-sm text-center focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20"
                   />
                 </div>
               </div>

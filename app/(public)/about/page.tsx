@@ -4,9 +4,9 @@ import dynamic from 'next/dynamic'
 import { SITE_URL } from '@/lib/seo/site'
 
 export const metadata: Metadata = {
-  title: 'Acerca de Crowd Conscious — Predicciones con Propósito',
+  title: 'Quiénes Somos — Consciencia Colectiva para el Bien Social',
   description:
-    'Crowd Conscious conecta inteligencia colectiva, patrocinios de marcas y el Fondo Consciente para impacto comunitario real en México y el mundo.',
+    'Crowd Conscious combina mercados de predicción con impacto social. 40% de cada patrocinio va a causas comunitarias. Basados en Ciudad de México.',
   alternates: {
     canonical: `${SITE_URL}/about`,
     languages: {

@@ -18,6 +18,7 @@ import { SponsorCheckoutModal } from './SponsorCheckoutModal'
 import Logo from '@/components/Logo'
 import { getMarketText } from '@/lib/i18n/market-translations'
 import { useLocale } from '@/lib/i18n/useLocale'
+import { daysUntilWorldCup } from '@/lib/world-cup-kickoff'
 
 const CATEGORY_CONFIG: Record<
   string,
@@ -108,7 +109,10 @@ export function SponsorPageClient({
                 Put Your Brand in Front of the World Cup
               </h1>
               <p className="text-lg md:text-xl text-amber-400/90 mb-2">
-                ⚽ {Math.max(0, Math.ceil((new Date('2026-06-11').getTime() - Date.now()) / (1000 * 60 * 60 * 24)))} days until the opening match at Estadio Azteca
+                ⚽{' '}
+                {locale === 'es'
+                  ? `${daysUntilWorldCup()} días para el partido inaugural en el Estadio Azteca`
+                  : `${daysUntilWorldCup()} days until the opening match at Estadio Azteca`}
               </p>
               <p className="text-xl md:text-2xl text-cc-text-secondary max-w-2xl mx-auto">
                 Sponsor a prediction market. Engage millions of fans. Fund real social impact.

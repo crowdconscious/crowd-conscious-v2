@@ -77,14 +77,14 @@ export default function PredictionsTradesPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+        <div className="rounded-xl border border-[#2d3748] bg-[#1a2029] p-4">
           <div className="flex items-center gap-2 text-slate-400 text-sm mb-1">
             <Target className="w-4 h-4" />
             Total predictions
           </div>
           <p className="text-xl font-bold text-white">{items.length}</p>
         </div>
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+        <div className="rounded-xl border border-[#2d3748] bg-[#1a2029] p-4">
           <div className="flex items-center gap-2 text-slate-400 text-sm mb-1">
             Accuracy
           </div>
@@ -95,7 +95,7 @@ export default function PredictionsTradesPage() {
             <p className="text-slate-500 text-xs mt-0.5">No resolved markets yet</p>
           )}
         </div>
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+        <div className="rounded-xl border border-[#2d3748] bg-[#1a2029] p-4">
           <div className="flex items-center gap-2 text-slate-400 text-sm mb-1">
             XP earned
           </div>
@@ -104,8 +104,8 @@ export default function PredictionsTradesPage() {
       </div>
 
       {/* Predictions list */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
-        <h2 className="text-lg font-semibold text-white px-6 py-4 border-b border-slate-800">
+      <div className="overflow-hidden rounded-xl border border-[#2d3748] bg-[#1a2029]">
+        <h2 className="border-b border-[#2d3748] px-6 py-4 text-lg font-semibold text-white">
           Prediction history
         </h2>
 
@@ -130,11 +130,11 @@ export default function PredictionsTradesPage() {
           </div>
         ) : (
           <>
-            <div className="divide-y divide-slate-800">
+            <div className="divide-y divide-[#2d3748]">
               {items.map((row) => (
                 <div
                   key={row.id}
-                  className="px-6 py-4 hover:bg-slate-800/30 flex items-center justify-between gap-4"
+                  className="flex items-center justify-between gap-4 px-6 py-4 transition-colors hover:bg-gray-800/30"
                 >
                   <div className="min-w-0 flex-1">
                     <Link
@@ -170,7 +170,7 @@ export default function PredictionsTradesPage() {
             </div>
 
             {totalPages > 1 && (
-              <div className="flex items-center justify-between px-6 py-4 border-t border-slate-800">
+              <div className="flex items-center justify-between border-t border-[#2d3748] px-6 py-4">
                 <p className="text-sm text-slate-400">
                   Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)} of {total}
                 </p>

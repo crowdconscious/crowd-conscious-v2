@@ -5,9 +5,9 @@ import { SponsorPageClient } from './SponsorPageClient'
 import { SITE_URL } from '@/lib/seo/site'
 
 export const metadata: Metadata = {
-  title: 'Patrocina un Mercado de Predicciones — Para Marcas',
+  title: 'Patrocina un Mercado — Tu Marca en el Mundial 2026',
   description:
-    'Activa tu audiencia con predicciones patrocinadas que financian causas reales. 40% al Fondo Consciente. Ideal para el Mundial 2026.',
+    'Patrocina mercados de predicción en Crowd Conscious. 40% al Fondo Consciente. Precios desde $2,000 MXN. Mundial 2026 en Ciudad de México.',
   openGraph: {
     title: 'Crowd Conscious para Marcas — Activación con Propósito',
     description:

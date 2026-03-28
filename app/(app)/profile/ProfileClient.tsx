@@ -159,13 +159,13 @@ export default function ProfileClient({
               <div className="flex items-center gap-2 shrink-0 flex-wrap">
                 <button
                   onClick={() => setIsEditing(!isEditing)}
-                  className="px-3 py-1.5 text-sm rounded-lg bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 whitespace-nowrap"
+                  className="whitespace-nowrap rounded-lg border border-[#2d3748] bg-[#1a2029] px-3 py-1.5 text-sm text-gray-300 transition-colors hover:border-gray-600 hover:bg-gray-800/40"
                 >
                   {isEditing ? 'Cancel' : 'Edit Profile'}
                 </button>
                 <Link
                   href="/settings"
-                  className="px-3 py-1.5 text-sm rounded-lg bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 inline-flex items-center gap-1.5 whitespace-nowrap"
+                  className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-[#2d3748] bg-[#1a2029] px-3 py-1.5 text-sm text-gray-300 transition-colors hover:border-gray-600 hover:bg-gray-800/40"
                 >
                   ⚙️ Settings
                 </Link>
@@ -223,25 +223,25 @@ export default function ProfileClient({
 
             {/* Prediction Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 mt-6 w-full min-w-0 overflow-hidden">
-              <div className="bg-slate-800/80 rounded-lg p-3 sm:p-4 text-center border border-slate-700 min-w-0 overflow-hidden">
+              <div className="min-w-0 overflow-hidden rounded-lg border border-[#2d3748] bg-[#1a2029]/90 p-3 text-center sm:p-4">
                 <div className="text-2xl font-bold text-white">
                   {predictionStats.predictions}
                 </div>
                 <div className="text-sm text-slate-400">Predictions</div>
               </div>
-              <div className="bg-slate-800/80 rounded-lg p-3 sm:p-4 text-center border border-slate-700 min-w-0">
+              <div className="min-w-0 rounded-lg border border-[#2d3748] bg-[#1a2029]/90 p-3 text-center sm:p-4">
                 <div className="text-2xl font-bold text-white">
                   {predictionStats.accuracy}%
                 </div>
                 <div className="text-sm text-slate-400">Accuracy</div>
               </div>
-              <div className="bg-slate-800/80 rounded-lg p-3 sm:p-4 text-center border border-slate-700 min-w-0">
+              <div className="min-w-0 rounded-lg border border-[#2d3748] bg-[#1a2029]/90 p-3 text-center sm:p-4">
                 <div className="text-2xl font-bold text-emerald-400">
                   {predictionStats.totalXp}
                 </div>
                 <div className="text-sm text-slate-400">Total XP</div>
               </div>
-              <div className="bg-slate-800/80 rounded-lg p-3 sm:p-4 text-center border border-slate-700 min-w-0">
+              <div className="min-w-0 rounded-lg border border-[#2d3748] bg-[#1a2029]/90 p-3 text-center sm:p-4">
                 <div className="text-2xl font-bold text-white">
                   {predictionStats.rank ?? '—'}
                 </div>
