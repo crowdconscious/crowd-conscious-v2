@@ -19,6 +19,13 @@ const CATEGORIES = [
   { id: 'cause', label: 'Cause' },
 ] as const
 
+/** Unified dark inputs (cc tokens) */
+const ccInput =
+  'w-full px-4 py-2.5 bg-cc-card border border-cc-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20'
+const ccInputSm =
+  'px-3 py-2 bg-cc-card border border-cc-border rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20'
+const ccSection = 'bg-cc-card border border-cc-border rounded-xl p-6'
+
 // Map suggestion category (from News Monitor) to form category
 const CATEGORY_MAP: Record<string, string> = {
   sports: 'world_cup',
@@ -354,7 +361,7 @@ export default function CreateMarketPage() {
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="bg-emerald-500/20 border border-emerald-500/50 rounded-xl p-8 text-center">
           <h2 className="text-xl font-bold text-emerald-400 mb-2">Market created successfully</h2>
-          <p className="text-slate-300 mb-6">Your prediction market is now live.</p>
+          <p className="text-cc-text-secondary mb-6">Your prediction market is now live.</p>
           <div className="flex gap-4 justify-center flex-wrap">
             <Link
               href={`/predictions/markets/${successId}`}
@@ -364,7 +371,7 @@ export default function CreateMarketPage() {
             </Link>
             <Link
               href="/predictions/admin/create-market"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-700 text-slate-200 font-medium hover:bg-slate-600"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-800 text-gray-200 font-medium hover:bg-gray-700 border border-cc-border"
             >
               Create another
             </Link>
@@ -378,14 +385,14 @@ export default function CreateMarketPage() {
     <div className="max-w-5xl mx-auto space-y-8">
       <Link
         href="/predictions"
-        className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-emerald-400"
+        className="inline-flex items-center gap-2 text-sm text-cc-text-secondary hover:text-emerald-400"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to dashboard
       </Link>
 
       <h1 className="text-2xl font-bold text-white">Create New Market</h1>
-      <p className="text-slate-400">
+      <p className="text-cc-text-secondary">
         Manually create a new prediction market. All fields support the community voting system.
       </p>
 
@@ -400,7 +407,7 @@ export default function CreateMarketPage() {
             Pre-filled from News Monitor suggestion (title, description, resolution, English translation, tags). Edit as needed.
           </p>
           {sourceSignals.length > 0 && (
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-cc-text-muted">
               Based on signals from: {sourceSignals.join(', ')}
             </p>
           )}
@@ -416,25 +423,25 @@ export default function CreateMarketPage() {
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
           {/* Basic info */}
-          <section className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+          <section className={ccSection}>
             <h2 className="text-lg font-semibold text-white mb-4">Basic info</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">Title *</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Title *</label>
                 <input
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g. ¿Bajará Banxico la tasa..."
                   required
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className={ccInput}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">
                   Descripción del mercado
                 </label>
-                <p className="text-xs text-slate-500 mb-1.5">
+                <p className="text-xs text-cc-text-muted mb-1.5">
                   Contexto y por qué es relevante. ¿Qué factores influyen?
                 </p>
                 <textarea
@@ -442,15 +449,15 @@ export default function CreateMarketPage() {
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Explica el contexto de este mercado. ¿Por qué es relevante? ¿Qué factores influyen?"
                   rows={4}
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+                  className={`${ccInput} resize-none`}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">Category</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Category</label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className={ccInput}
                 >
                   <option value="">Select category</option>
                   {CATEGORIES.map((c) => (
@@ -461,7 +468,7 @@ export default function CreateMarketPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">
                   Initial probability (1–99)
                 </label>
                 <div className="flex items-center gap-4">
@@ -471,7 +478,8 @@ export default function CreateMarketPage() {
                     max={99}
                     value={initialProbability}
                     onChange={(e) => setInitialProbability(Number(e.target.value))}
-                    className="flex-1"
+                    className="flex-1 h-2 accent-emerald-500 cursor-pointer [color-scheme:dark]"
+                    style={{ accentColor: '#10b981' }}
                   />
                   <input
                     type="number"
@@ -481,7 +489,7 @@ export default function CreateMarketPage() {
                     onChange={(e) =>
                       setInitialProbability(Math.min(99, Math.max(1, Number(e.target.value) || 50)))
                     }
-                    className="w-16 px-2 py-1.5 bg-slate-800 border border-slate-700 rounded text-white text-sm"
+                    className="w-16 px-2 py-1.5 bg-cc-card border border-cc-border rounded-lg text-white text-sm text-center focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20"
                   />
                 </div>
               </div>
@@ -489,11 +497,11 @@ export default function CreateMarketPage() {
           </section>
 
           {/* Resolution */}
-          <section className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+          <section className={ccSection}>
             <h2 className="text-lg font-semibold text-white mb-4">Resolution</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">
                   Resolution date *
                 </label>
                 <input
@@ -501,14 +509,14 @@ export default function CreateMarketPage() {
                   value={resolutionDate}
                   onChange={(e) => setResolutionDate(e.target.value)}
                   required
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className={`${ccInput} [color-scheme:dark]`}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">
                   Criterio de resolución
                 </label>
-                <p className="text-xs text-slate-500 mb-1.5">
+                <p className="text-xs text-cc-text-muted mb-1.5">
                   Condiciones específicas y verificables. Ejemplo: Resuelve SÍ si el tipo de cambio MXN/USD baja de 19.00 según Banxico antes del 31 de diciembre de 2026.
                 </p>
                 <div className="flex gap-2">
@@ -517,7 +525,7 @@ export default function CreateMarketPage() {
                     onChange={(e) => setResolutionCriteria(e.target.value)}
                     placeholder="Define exactamente cómo se resuelve. Ejemplo: Resuelve SÍ si el tipo de cambio MXN/USD baja de 19.00 según datos de Banxico antes del 31 de diciembre de 2026."
                     rows={3}
-                    className="flex-1 px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+                    className={`flex-1 ${ccInput} resize-none`}
                   />
                   <button
                     type="button"
@@ -532,7 +540,7 @@ export default function CreateMarketPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">Market type</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Market type</label>
                 <div className="flex gap-4">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -540,9 +548,9 @@ export default function CreateMarketPage() {
                       name="marketType"
                       checked={marketType === 'binary'}
                       onChange={() => setMarketType('binary')}
-                      className="text-emerald-600"
+                      className="text-emerald-600 accent-emerald-500"
                     />
-                    <span className="text-slate-300">Yes/No</span>
+                    <span className="text-gray-300">Yes/No</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -550,9 +558,9 @@ export default function CreateMarketPage() {
                       name="marketType"
                       checked={marketType === 'multi'}
                       onChange={() => setMarketType('multi')}
-                      className="text-emerald-600"
+                      className="text-emerald-600 accent-emerald-500"
                     />
-                    <span className="text-slate-300">Multiple choice</span>
+                    <span className="text-gray-300">Multiple choice</span>
                   </label>
                 </div>
               </div>
@@ -560,47 +568,47 @@ export default function CreateMarketPage() {
           </section>
 
           {/* English Translation */}
-          <details className="mt-6 border border-slate-700 rounded-lg p-4 bg-slate-900/50">
-            <summary className="text-slate-300 cursor-pointer font-medium">
+          <details className="mt-6 border border-cc-border rounded-lg p-4 bg-cc-bg/80">
+            <summary className="text-gray-300 cursor-pointer font-medium">
               🌐 English Translation (optional)
             </summary>
             <div className="mt-4 space-y-4">
               <div>
-                <label className="block text-sm text-slate-400">English Title</label>
+                <label className="block text-sm text-cc-text-secondary">English Title</label>
                 <input
                   type="text"
                   value={enTitle}
                   onChange={(e) => setEnTitle(e.target.value)}
                   placeholder="English version of the market question"
-                  className="w-full mt-1 px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className={`mt-1 ${ccInput}`}
                 />
               </div>
               <div>
-                <label className="block text-sm text-slate-400">English Description</label>
+                <label className="block text-sm text-cc-text-secondary">English Description</label>
                 <textarea
                   value={enDescription}
                   onChange={(e) => setEnDescription(e.target.value)}
                   placeholder="English description"
                   rows={3}
-                  className="w-full mt-1 px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+                  className={`mt-1 ${ccInput} resize-none`}
                 />
               </div>
               <div>
-                <label className="block text-sm text-slate-400">English Resolution Criteria</label>
+                <label className="block text-sm text-cc-text-secondary">English Resolution Criteria</label>
                 <textarea
                   value={enResolutionCriteria}
                   onChange={(e) => setEnResolutionCriteria(e.target.value)}
                   placeholder="English resolution criteria"
                   rows={2}
-                  className="w-full mt-1 px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+                  className={`mt-1 ${ccInput} resize-none`}
                 />
               </div>
             </div>
           </details>
 
           {marketType === 'multi' && (
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">Options</label>
+            <div className={ccSection}>
+              <label className="block text-sm font-medium text-gray-300 mb-1.5">Options</label>
                   <div className="space-y-2">
                     {outcomes.map((o, i) => (
                       <div key={i} className="flex gap-2">
@@ -609,13 +617,13 @@ export default function CreateMarketPage() {
                           value={o}
                           onChange={(e) => updateOutcome(i, e.target.value)}
                           placeholder={`Option ${i + 1}`}
-                          className="flex-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm"
+                          className={`flex-1 ${ccInputSm}`}
                         />
                         <button
                           type="button"
                           onClick={() => removeOutcome(i)}
                           disabled={outcomes.length <= 2}
-                          className="p-2 text-slate-400 hover:text-red-400 disabled:opacity-50"
+                          className="p-2 text-gray-400 hover:text-red-400 disabled:opacity-50"
                         >
                           <X className="w-4 h-4" />
                         </button>
@@ -634,11 +642,11 @@ export default function CreateMarketPage() {
               )}
 
           {/* Verification */}
-          <section className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+          <section className={ccSection}>
             <h2 className="text-lg font-semibold text-white mb-4">Verification</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">
                   Verification sources
                 </label>
                 <div className="space-y-2">
@@ -649,19 +657,19 @@ export default function CreateMarketPage() {
                         value={s.name}
                         onChange={(e) => updateVerificationSource(i, 'name', e.target.value)}
                         placeholder="Source name"
-                        className="flex-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm"
+                        className={`flex-1 ${ccInputSm}`}
                       />
                       <input
                         type="url"
                         value={s.url}
                         onChange={(e) => updateVerificationSource(i, 'url', e.target.value)}
                         placeholder="URL (optional)"
-                        className="flex-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm"
+                        className={`flex-1 ${ccInputSm}`}
                       />
                       <button
                         type="button"
                         onClick={() => removeVerificationSource(i)}
-                        className="p-2 text-slate-400 hover:text-red-400"
+                        className="p-2 text-gray-400 hover:text-red-400"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -678,20 +686,20 @@ export default function CreateMarketPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">Tags</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Tags</label>
                 <input
                   type="text"
                   value={tagsInput}
                   onChange={(e) => setTagsInput(e.target.value)}
                   placeholder="economia, banxico, tasas"
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className={ccInput}
                 />
                 {tags.length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-2">
                     {tags.map((tag, i) => (
                       <span
                         key={i}
-                        className="px-2 py-1 bg-slate-700 rounded text-xs text-slate-300"
+                        className="px-2 py-1 bg-gray-800 rounded text-xs text-gray-300 border border-cc-border/50"
                       >
                         {tag}
                       </span>
@@ -703,11 +711,11 @@ export default function CreateMarketPage() {
           </section>
 
           {/* Rich content */}
-          <section className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+          <section className={ccSection}>
             <h2 className="text-lg font-semibold text-white mb-4">Rich content</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">Links</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Links</label>
                 <div className="space-y-2">
                   {links.map((l, i) => (
                     <div key={i} className="flex gap-2">
@@ -716,19 +724,19 @@ export default function CreateMarketPage() {
                         value={l.url}
                         onChange={(e) => updateLink(i, 'url', e.target.value)}
                         placeholder="https://..."
-                        className="flex-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm"
+                        className={`flex-1 ${ccInputSm}`}
                       />
                       <input
                         type="text"
                         value={l.label}
                         onChange={(e) => updateLink(i, 'label', e.target.value)}
                         placeholder="Label"
-                        className="w-28 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm"
+                        className={`w-28 ${ccInputSm}`}
                       />
                       <button
                         type="button"
                         onClick={() => removeLink(i)}
-                        className="p-2 text-slate-400 hover:text-red-400"
+                        className="p-2 text-gray-400 hover:text-red-400"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -745,7 +753,7 @@ export default function CreateMarketPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">
                   Related markets
                 </label>
                 <input
@@ -753,16 +761,16 @@ export default function CreateMarketPage() {
                   value={relatedSearch}
                   onChange={(e) => setRelatedSearch(e.target.value)}
                   placeholder="Search markets..."
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 mb-2"
+                  className={`${ccInput} mb-2`}
                 />
                 {relatedOptions.length > 0 && (
-                  <div className="border border-slate-700 rounded-lg overflow-hidden">
+                  <div className="border border-cc-border rounded-lg overflow-hidden">
                     {relatedOptions.slice(0, 5).map((m) => (
                       <button
                         key={m.id}
                         type="button"
                         onClick={() => addRelatedMarket(m.id)}
-                        className="w-full px-4 py-2 text-left text-sm text-slate-300 hover:bg-slate-800"
+                        className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-cc-card-hover"
                       >
                         {m.title.slice(0, 60)}...
                       </button>
@@ -774,7 +782,7 @@ export default function CreateMarketPage() {
                     {relatedMarketIds.map((id) => (
                       <span
                         key={id}
-                        className="inline-flex items-center gap-1 px-2 py-1 bg-slate-700 rounded text-xs text-slate-300"
+                        className="inline-flex items-center gap-1 px-2 py-1 bg-gray-800 border border-cc-border rounded text-xs text-gray-300"
                       >
                         {id.slice(0, 8)}...
                         <button
@@ -793,11 +801,11 @@ export default function CreateMarketPage() {
           </section>
 
           {/* Sponsorship */}
-          <section className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+          <section className={ccSection}>
             <h2 className="text-lg font-semibold text-white mb-4">Sponsorship</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">
                   Sponsor name
                 </label>
                 <input
@@ -805,11 +813,11 @@ export default function CreateMarketPage() {
                   value={sponsorName}
                   onChange={(e) => setSponsorName(e.target.value)}
                   placeholder="Optional"
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className={ccInput}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">
                   Sponsor logo URL
                 </label>
                 <input
@@ -817,11 +825,11 @@ export default function CreateMarketPage() {
                   value={sponsorLogoUrl}
                   onChange={(e) => setSponsorLogoUrl(e.target.value)}
                   placeholder="https://..."
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className={ccInput}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">
                   Sponsorship amount (MXN)
                 </label>
                 <input
@@ -830,11 +838,11 @@ export default function CreateMarketPage() {
                   value={sponsorshipAmountMxn}
                   onChange={(e) => setSponsorshipAmountMxn(e.target.value)}
                   placeholder="Optional"
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className={ccInput}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">
                   Conscious Fund allocation %
                 </label>
                 <input
@@ -846,7 +854,7 @@ export default function CreateMarketPage() {
                   onChange={(e) =>
                     setConsciousFundPercentage(Math.min(100, Math.max(0, Number(e.target.value) || 7.5)))
                   }
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className={ccInput}
                 />
               </div>
             </div>
@@ -864,40 +872,61 @@ export default function CreateMarketPage() {
         {/* Preview */}
         <div className="lg:col-span-1">
           <div className="sticky top-6 space-y-4">
-            <h3 className="text-sm font-medium text-slate-400">Preview</h3>
+            <h3 className="text-sm font-medium text-cc-text-secondary">Preview</h3>
             {/* Card preview (markets list) */}
             <div className="pointer-events-none select-none">
-              <p className="text-xs text-slate-500 mb-1">Card (markets list)</p>
-              <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-                <span
-                  className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-slate-600 text-slate-300 mb-3`}
-                >
+              <p className="text-xs text-cc-text-muted mb-1">Card (markets list)</p>
+              <div className="bg-cc-card border border-cc-border rounded-xl p-5 hover:border-emerald-500/30 transition-colors">
+                <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 mb-3">
                   {CATEGORIES.find((c) => c.id === (category || 'world'))?.label || 'Category'}
                 </span>
-                <h3 className="text-white font-semibold line-clamp-2 mb-4 min-h-[2.5rem]">
+                <h3 className="text-white font-semibold line-clamp-2 mb-3 min-h-[2.5rem] text-base leading-snug">
                   {title || 'Market title'}
                 </h3>
-                <div className="mb-4">
-                  <span className="text-2xl font-bold text-white">
-                    {marketType === 'binary'
-                      ? `${initialProbability}%`
-                      : outcomes[0] || 'Option 1'}
-                  </span>
-                  {marketType === 'binary' && (
-                    <span className="text-slate-400 text-sm ml-2">YES</span>
-                  )}
-                </div>
-                <div className="h-2 bg-slate-800 rounded-full overflow-hidden flex">
-                  <div
-                    className="bg-emerald-500 h-full rounded-l-full"
-                    style={{ width: `${initialProbability}%` }}
-                  />
-                  <div
-                    className="bg-red-500/60 h-full rounded-r-full"
-                    style={{ width: `${100 - initialProbability}%` }}
-                  />
-                </div>
-                <div className="mt-4 text-sm text-slate-400">
+                {marketType === 'binary' ? (
+                  <div className="grid grid-cols-2 gap-2 mt-1">
+                    <div className="h-9 rounded-lg bg-gray-800/50 relative overflow-hidden">
+                      <div
+                        className="absolute left-0 top-0 h-full rounded-lg bg-emerald-500/20"
+                        style={{ width: `${initialProbability}%` }}
+                      />
+                      <div className="relative z-10 flex justify-between items-center px-3 h-full">
+                        <span className="text-sm text-gray-200">YES</span>
+                        <span className="text-sm font-semibold text-white">{initialProbability}%</span>
+                      </div>
+                    </div>
+                    <div className="h-9 rounded-lg bg-gray-800/50 relative overflow-hidden">
+                      <div
+                        className="absolute left-0 top-0 h-full rounded-lg bg-emerald-500/20"
+                        style={{ width: `${100 - initialProbability}%` }}
+                      />
+                      <div className="relative z-10 flex justify-between items-center px-3 h-full">
+                        <span className="text-sm text-gray-200">NO</span>
+                        <span className="text-sm font-semibold text-white">{100 - initialProbability}%</span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-1.5 mt-2">
+                    {outcomes
+                      .map((o, i) => ({ o, i }))
+                      .filter(({ o }) => o.trim())
+                      .slice(0, 4)
+                      .map(({ o, i }) => (
+                        <div key={i} className="flex items-center gap-3">
+                          <span className="text-sm text-gray-300 w-[100px] truncate">{o || `Option ${i + 1}`}</span>
+                          <div className="flex-1 h-7 rounded bg-gray-800/50 relative overflow-hidden">
+                            <div
+                              className="absolute left-0 top-0 h-full rounded bg-emerald-500/20"
+                              style={{ width: `${Math.max(8, 100 / Math.max(2, outcomes.filter((x) => x.trim()).length))}%` }}
+                            />
+                          </div>
+                          <span className="text-sm font-semibold text-white w-10 text-right">—</span>
+                        </div>
+                      ))}
+                  </div>
+                )}
+                <div className="mt-3 text-xs text-gray-500">
                   {resolutionDate
                     ? `Resolves ${new Date(resolutionDate).toLocaleDateString()}`
                     : 'No resolution date'}
@@ -906,18 +935,18 @@ export default function CreateMarketPage() {
             </div>
             {/* Detail preview (description + resolution criteria) */}
             <div className="pointer-events-none select-none">
-              <p className="text-xs text-slate-500 mb-1">Detail (description & criteria)</p>
-              <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
+              <p className="text-xs text-cc-text-muted mb-1">Detail (description & criteria)</p>
+              <div className="bg-cc-card border border-cc-border rounded-xl p-4 space-y-3">
                 <div>
-                  <p className="text-slate-500 text-xs font-medium mb-1">Description</p>
+                  <p className="text-cc-text-muted text-xs font-medium mb-1">Description</p>
                   <p className="text-white text-sm line-clamp-3">
-                    {description || <span className="italic text-slate-500">—</span>}
+                    {description || <span className="italic text-cc-text-muted">—</span>}
                   </p>
                 </div>
                 <div>
-                  <p className="text-slate-500 text-xs font-medium mb-1">Resolution criteria</p>
+                  <p className="text-cc-text-muted text-xs font-medium mb-1">Resolution criteria</p>
                   <p className="text-white text-sm line-clamp-3">
-                    {resolutionCriteria || <span className="italic text-slate-500">—</span>}
+                    {resolutionCriteria || <span className="italic text-cc-text-muted">—</span>}
                   </p>
                 </div>
               </div>

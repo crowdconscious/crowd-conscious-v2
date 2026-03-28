@@ -39,21 +39,21 @@ const TYPE_CONFIG: Record<
   string,
   { label: string; bg: string; text: string }
 > = {
-  market_idea: { label: 'Market Idea', bg: 'bg-emerald-500/20', text: 'text-emerald-400' },
-  cause_proposal: { label: 'Cause/NGO', bg: 'bg-amber-500/20', text: 'text-amber-400' },
-  ngo_suggestion: { label: 'Cause/NGO', bg: 'bg-amber-500/20', text: 'text-amber-400' },
-  general: { label: 'General', bg: 'bg-slate-500/20', text: 'text-slate-400' },
+  market_idea: { label: 'Market Idea', bg: 'bg-emerald-500/10', text: 'text-emerald-400' },
+  cause_proposal: { label: 'Cause/NGO', bg: 'bg-pink-500/10', text: 'text-pink-400' },
+  ngo_suggestion: { label: 'Cause/NGO', bg: 'bg-pink-500/10', text: 'text-pink-400' },
+  general: { label: 'General', bg: 'bg-gray-700/50', text: 'text-gray-300' },
 }
 
 const STATUS_CONFIG: Record<
   string,
   { label: string; bg: string; text: string }
 > = {
-  pending: { label: 'Pending', bg: 'bg-slate-500/20', text: 'text-slate-400' },
-  reviewed: { label: 'Reviewed', bg: 'bg-blue-500/20', text: 'text-blue-400' },
-  approved: { label: 'Approved', bg: 'bg-emerald-500/20', text: 'text-emerald-400' },
+  pending: { label: 'Pending', bg: 'bg-gray-700/50', text: 'text-gray-400' },
+  reviewed: { label: 'Reviewed', bg: 'bg-gray-700/50', text: 'text-gray-300' },
+  approved: { label: 'Approved', bg: 'bg-emerald-500/10', text: 'text-emerald-400' },
   rejected: { label: 'Rejected', bg: 'bg-red-500/20', text: 'text-red-400' },
-  published: { label: 'Published', bg: 'bg-emerald-500/20', text: 'text-emerald-400' },
+  published: { label: 'Published', bg: 'bg-emerald-500/10', text: 'text-emerald-400' },
   promoted_to_cause: { label: 'Promoted to Cause', bg: 'bg-amber-500/20', text: 'text-amber-400' },
 }
 
@@ -213,7 +213,7 @@ export function InboxClient({ initialItems }: Props) {
           <Lightbulb className="w-7 h-7 text-amber-400" />
           Conscious Inbox
         </h1>
-        <p className="text-slate-400 mt-1">
+        <p className="text-cc-text-secondary mt-1">
           Suggest markets, causes, and ideas. The community decides what matters.
         </p>
       </div>
@@ -231,10 +231,10 @@ export function InboxClient({ initialItems }: Props) {
             <button
               key={tab.id}
               onClick={() => setFilter(tab.id)}
-              className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+              className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors border ${
                 filter === tab.id
-                  ? 'bg-emerald-600 text-white'
-                  : 'bg-slate-800 text-slate-400 hover:text-white'
+                  ? 'bg-emerald-500 text-white border-emerald-500'
+                  : 'bg-cc-card border-cc-border text-gray-400 hover:border-cc-border-light hover:text-gray-200'
               }`}
             >
               {tab.label}
@@ -251,23 +251,23 @@ export function InboxClient({ initialItems }: Props) {
             onClick={() => setModalOpen(false)}
             aria-hidden="true"
           />
-          <div className="fixed inset-y-0 right-0 w-full max-w-md bg-slate-900 border-l border-slate-800 shadow-xl z-50 flex flex-col overflow-hidden">
-            <div className="p-4 border-b border-slate-800 flex items-center justify-between">
+          <div className="fixed inset-y-0 right-0 w-full max-w-md bg-cc-nav-bg border-l border-cc-border shadow-xl z-50 flex flex-col overflow-hidden">
+            <div className="p-4 border-b border-cc-border flex items-center justify-between">
               <h2 className="text-lg font-semibold text-white">Submit Idea</h2>
               <button
                 onClick={() => setModalOpen(false)}
-                className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-cc-card transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
             <form onSubmit={handleSubmit} className="flex-1 overflow-auto p-4 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">Type</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Type</label>
                 <select
                   value={formType}
                   onChange={(e) => setFormType(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full px-4 py-2.5 bg-cc-card border border-cc-border rounded-lg text-white focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20"
                 >
                   {TYPE_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>
@@ -277,32 +277,32 @@ export function InboxClient({ initialItems }: Props) {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">Title *</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Title *</label>
                 <input
                   type="text"
                   value={formTitle}
                   onChange={(e) => setFormTitle(e.target.value)}
                   placeholder="Brief title for your idea"
                   required
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full px-4 py-2.5 bg-cc-card border border-cc-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">Description</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Description</label>
                 <textarea
                   value={formDescription}
                   onChange={(e) => setFormDescription(e.target.value)}
                   placeholder="Add more context..."
                   rows={4}
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+                  className="w-full px-4 py-2.5 bg-cc-card border border-cc-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 resize-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">Category</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Category</label>
                 <select
                   value={formCategory}
                   onChange={(e) => setFormCategory(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full px-4 py-2.5 bg-cc-card border border-cc-border rounded-lg text-white focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20"
                 >
                   <option value="">Select category</option>
                   {CATEGORIES.map((c) => (
@@ -314,7 +314,7 @@ export function InboxClient({ initialItems }: Props) {
               </div>
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-sm font-medium text-slate-300">Links</label>
+                  <label className="block text-sm font-medium text-gray-300">Links</label>
                   <button
                     type="button"
                     onClick={addLink}
@@ -332,19 +332,19 @@ export function InboxClient({ initialItems }: Props) {
                         value={link.url}
                         onChange={(e) => updateLink(idx, 'url', e.target.value)}
                         placeholder="https://..."
-                        className="flex-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        className="flex-1 px-3 py-2 bg-cc-card border border-cc-border rounded-lg text-white placeholder-gray-500 text-sm focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20"
                       />
                       <input
                         type="text"
                         value={link.label}
                         onChange={(e) => updateLink(idx, 'label', e.target.value)}
                         placeholder="Label"
-                        className="w-24 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        className="w-24 px-3 py-2 bg-cc-card border border-cc-border rounded-lg text-white placeholder-gray-500 text-sm focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20"
                       />
                       <button
                         type="button"
                         onClick={() => removeLink(idx)}
-                        className="p-2 text-slate-400 hover:text-red-400"
+                        className="p-2 text-gray-400 hover:text-red-400"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -368,10 +368,10 @@ export function InboxClient({ initialItems }: Props) {
 
       {/* Feed */}
       {items.length === 0 ? (
-        <div className="text-center py-16 rounded-xl border border-slate-800 bg-slate-900/50">
+        <div className="text-center py-16 rounded-xl border border-cc-border bg-cc-card/80">
           <span className="text-4xl">💡</span>
-          <p className="text-lg text-slate-300 mt-3">¿Tienes una idea para un mercado?</p>
-          <p className="text-slate-400 mt-1">¡Compártela con la comunidad!</p>
+          <p className="text-lg text-gray-300 mt-3">¿Tienes una idea para un mercado?</p>
+          <p className="text-cc-text-secondary mt-1">¡Compártela con la comunidad!</p>
           <button
             onClick={() => setModalOpen(true)}
             className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-emerald-600 text-white font-medium hover:bg-emerald-500 transition-colors"
@@ -391,7 +391,7 @@ export function InboxClient({ initialItems }: Props) {
             return (
               <article
                 key={item.id}
-                className="bg-slate-900 border border-slate-800 rounded-xl p-5 hover:border-slate-700 transition-colors"
+                className="bg-cc-card border border-cc-border rounded-xl p-5 transition-colors hover:border-cc-border-light"
               >
                 <div className="flex gap-4">
                   <div className="flex flex-col items-center flex-shrink-0">
@@ -400,12 +400,12 @@ export function InboxClient({ initialItems }: Props) {
                       disabled={isLoading}
                       className={`flex flex-col items-center p-2 rounded-lg transition-colors ${
                         voted
-                          ? 'bg-emerald-600/20 text-emerald-400'
-                          : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                          ? 'bg-emerald-500/10 text-emerald-400'
+                          : 'text-gray-400 hover:text-emerald-400 hover:bg-emerald-500/5'
                       } ${isLoading ? 'opacity-50 cursor-wait' : ''}`}
                     >
                       <ChevronUp className="w-6 h-6" />
-                      <span className="text-sm font-semibold mt-0.5">{item.upvotes}</span>
+                      <span className="text-sm font-medium mt-0.5 text-gray-300">{item.upvotes}</span>
                     </button>
                   </div>
                   <div className="flex-1 min-w-0">
@@ -433,11 +433,11 @@ export function InboxClient({ initialItems }: Props) {
                     </div>
                     <h3 className="text-white font-semibold mb-1">{item.title}</h3>
                     {item.description && (
-                      <p className="text-slate-400 text-sm mb-3 line-clamp-2">
+                      <p className="text-cc-text-secondary text-sm mb-3 line-clamp-2">
                         {truncate(item.description, 200)}
                       </p>
                     )}
-                    <p className="text-slate-500 text-xs">
+                    <p className="text-cc-text-muted text-xs">
                       Submitted by {item.submitter_name} · {formatRelativeTime(item.created_at)}
                     </p>
                   </div>

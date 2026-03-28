@@ -247,30 +247,30 @@ export function VotePanel({
   if (isResolved) {
     const winningOutcome = outcomes.find((o) => o.is_winner)
     return (
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+      <div className="bg-cc-card border border-cc-border rounded-xl p-6">
         <h3 className="font-semibold text-white mb-2">Predictions closed</h3>
-        <p className="text-slate-400 text-sm mb-4">
+        <p className="text-cc-text-secondary text-sm mb-4">
           This market has been resolved. Winning outcome:{' '}
           <span className="text-emerald-400 font-medium">
             {winningOutcome ? getOutcomeLabel(winningOutcome, locale) : (market.resolution ?? '—')}
           </span>
         </p>
         {myVote && (
-          <div className="p-4 bg-slate-800/50 rounded-lg">
-            <p className="text-slate-300 text-sm font-medium">Your prediction</p>
+          <div className="p-4 bg-gray-800/50 rounded-lg border border-cc-border/50">
+            <p className="text-gray-300 text-sm font-medium">Your prediction</p>
             <p className="text-white mt-1">
               {outcomes.find((o) => o.id === myVote.outcome_id)
                 ? getOutcomeLabel(outcomes.find((o) => o.id === myVote.outcome_id)!, locale)
                 : myVote.outcome_label}
-              {isBinary && <span className="text-slate-400"> at confidence {myVote.confidence}</span>}
+              {isBinary && <span className="text-cc-text-secondary"> at confidence {myVote.confidence}</span>}
             </p>
-            <p className="text-slate-400 text-sm mt-1">
+            <p className="text-cc-text-secondary text-sm mt-1">
               {myVote.is_correct ? (
                 <span className="text-emerald-400">
                   ✓ Correct! +{myVote.xp_earned + (myVote.bonus_xp || 0)} XP total
                 </span>
               ) : (
-                <span className="text-slate-400">+{myVote.xp_earned} XP earned</span>
+                <span className="text-cc-text-secondary">+{myVote.xp_earned} XP earned</span>
               )}
             </p>
           </div>
@@ -285,7 +285,7 @@ export function VotePanel({
     const outcomeForDisplay = outcomes.find((o) => o.id === displayOutcomeId)
 
     return (
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+      <div className="bg-cc-card border border-cc-border rounded-xl p-6">
         <h3 className="font-semibold text-white mb-4">
           {guestPreviewOnly
             ? locale === 'en'
@@ -300,10 +300,10 @@ export function VotePanel({
               ? getOutcomeLabel(outcomeForDisplay, locale)
               : myVote?.outcome_label ?? '—'}
             {isBinary && displayConfidence != null && (
-              <span className="text-slate-400 font-normal">at confidence {displayConfidence}</span>
+              <span className="text-cc-text-secondary font-normal">at confidence {displayConfidence}</span>
             )}
           </p>
-          <p className="text-slate-400 text-sm mt-2">
+          <p className="text-cc-text-secondary text-sm mt-2">
             {locale === 'en'
               ? 'Your vote counts toward the market. Create an account to earn XP and appear on the leaderboard.'
               : 'Tu voto cuenta para el mercado. Crea una cuenta para ganar XP y aparecer en el ranking.'}
@@ -315,9 +315,9 @@ export function VotePanel({
 
   if (outcomes.length === 0) {
     return (
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+      <div className="bg-cc-card border border-cc-border rounded-xl p-6">
         <h3 className="font-semibold text-white mb-2">Make your prediction</h3>
-        <p className="text-slate-400 text-sm">No outcomes available yet.</p>
+        <p className="text-cc-text-secondary text-sm">No outcomes available yet.</p>
       </div>
     )
   }
@@ -333,7 +333,7 @@ export function VotePanel({
   const submitLoadingLabel = locale === 'es' ? 'Enviando…' : 'Submitting...'
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+    <div className="bg-cc-card border border-cc-border rounded-xl p-6">
       <h3 className="font-semibold text-white mb-4">
         {locale === 'es'
           ? isEditing
@@ -344,17 +344,17 @@ export function VotePanel({
             : 'Make your prediction'}
       </h3>
       {!isAuthenticated && !guestHasVoted && (
-        <p className="text-slate-500 text-xs mb-3">
+        <p className="text-cc-text-muted text-xs mb-3">
           {locale === 'es' ? 'Vota sin crear cuenta' : 'Vote without creating an account'}
         </p>
       )}
       {isEditing && (
-        <p className="text-slate-500 text-xs mb-4">
+        <p className="text-cc-text-muted text-xs mb-4">
           {locale === 'es'
             ? 'Tu predicción actual · cambia tu voto cuando quieras'
             : 'Your current prediction — change your vote anytime'}
           {myVote ? (
-            <span className="block mt-1.5 text-slate-600">
+            <span className="block mt-1.5 text-gray-600">
               +{myVote.xp_earned} XP{' '}
               {locale === 'es' ? '(primera predicción)' : '(first prediction)'}
             </span>
@@ -378,7 +378,7 @@ export function VotePanel({
                       ? isYes
                         ? 'bg-emerald-600 text-white border-2 border-emerald-500 shadow-lg shadow-emerald-500/20'
                         : 'bg-red-600 text-white border-2 border-red-500 shadow-lg shadow-red-500/20'
-                      : 'bg-transparent border-2 border-slate-600 text-slate-500 hover:border-slate-500 hover:text-slate-400'
+                      : 'bg-transparent border-2 border-cc-border text-gray-500 hover:border-cc-border-light hover:text-gray-400'
                   }`}
                 >
                   {isYes ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
@@ -388,8 +388,8 @@ export function VotePanel({
             })}
           </div>
 
-          <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
-            <p className="text-slate-300 font-medium mb-2 flex items-center gap-2">
+          <div className="rounded-lg border border-cc-border bg-gray-800/50 p-4">
+            <p className="text-gray-300 font-medium mb-2 flex items-center gap-2">
               <span className="text-xl">{getConfidenceEmoji(confidence)}</span>
               {getConfidenceLabel(confidence)} ({confidence}/10)
             </p>
@@ -400,7 +400,8 @@ export function VotePanel({
                 max={10}
                 value={confidence}
                 onChange={(e) => setConfidence(parseInt(e.target.value, 10))}
-                className="flex-1 h-2.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                className="flex-1 h-2.5 cursor-pointer rounded-lg bg-gray-700 accent-emerald-500 [color-scheme:dark] appearance-none"
+                style={{ accentColor: '#10b981' }}
               />
             </div>
           </div>
@@ -434,26 +435,26 @@ export function VotePanel({
                 className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
                   isSelected
                     ? 'border-emerald-500 bg-emerald-500/10 ring-2 ring-emerald-500/30'
-                    : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
+                    : 'border-cc-border bg-gray-800/50 hover:border-cc-border-light'
                 }`}
               >
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-white">{getOutcomeLabel(o, locale)}</p>
-                    <p className="text-slate-400 text-sm">
+                    <p className="text-cc-text-secondary text-sm">
                       Currently: {Math.round(toDisplayPercent(o.probability || 0))}% · {o.vote_count} votes
                     </p>
                   </div>
                   <span
                     className={`px-4 py-2 rounded-lg text-sm font-medium ${
-                      isSelected ? 'bg-emerald-600 text-white' : 'bg-slate-700 text-slate-400'
+                      isSelected ? 'bg-emerald-600 text-white' : 'bg-gray-700 text-gray-400'
                     }`}
                   >
                     {isSelected ? (locale === 'en' ? 'Selected' : 'Seleccionado') : (locale === 'en' ? 'Pick' : 'Elegir')}
                   </span>
                 </div>
                 {isSelected && (
-                  <div className="mt-4 pt-4 border-t border-slate-700">
+                  <div className="mt-4 pt-4 border-t border-cc-border">
                     <p className="text-amber-400/90 text-sm font-medium mb-3">{pickMessage}</p>
                     <button
                       onClick={(e) => {

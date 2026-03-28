@@ -110,14 +110,27 @@ body {
   color: #090909 !important;
 }
 
+/* Authenticated / predictions shell: restore dark color-scheme so native inputs, range, datetime pickers match cc theme (overrides * { color-scheme: light } above). */
+html.dark,
+html.dark *,
+html[data-theme='dark'],
+html[data-theme='dark'] * {
+  color-scheme: dark !important;
+}
+
+html.dark input[type='range'],
+html[data-theme='dark'] input[type='range'] {
+  accent-color: var(--cc-accent);
+}
+
 /* Dark mode toggle - applied only with .dark class or [data-theme="dark"] */
 .dark,
 [data-theme="dark"] {
   --background: #0a0a0a;
   --foreground: #ededed;
-  --input-background: #1f2937;
+  --input-background: #1a2029;
   --input-foreground: #f9fafb;
-  --input-border: #374151;
+  --input-border: #2d3748;
   --muted: #9ca3af;
   --muted-foreground: #d1d5db;
 

@@ -913,7 +913,7 @@ function MarketDiscussion({ marketId }: { marketId: string }) {
           onChange={(e) => setContent(e.target.value)}
           placeholder="Add a comment..."
           rows={3}
-          className="mb-2 w-full resize-none rounded-lg border border-cc-border bg-cc-bg px-4 py-3 text-white placeholder:text-cc-text-muted focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          className="mb-2 w-full resize-none rounded-lg border border-cc-border bg-cc-card px-4 py-3 text-white placeholder:text-cc-text-muted focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20"
         />
         <button
           type="submit"

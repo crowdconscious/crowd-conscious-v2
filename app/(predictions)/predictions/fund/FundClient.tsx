@@ -111,10 +111,10 @@ export function FundClient({
       {/* Section 1: Fund Overview */}
       <div>
         <h1 className="text-3xl font-bold text-white">Fondo Consciente</h1>
-        <p className="text-slate-400 mt-2 text-lg">
+        <p className="text-cc-text-secondary mt-2 text-lg">
           Impulsado por patrocinadores. Dirigido por ti.
         </p>
-        <p className="text-slate-500 mt-2 text-sm max-w-2xl">
+        <p className="text-cc-text-muted mt-2 text-sm max-w-2xl">
           Cuando las marcas patrocinan mercados de predicción en Crowd Conscious, una parte de su
           contribución va al Fondo Consciente. Los usuarios votan qué causas comunitarias reciben
           apoyos cada mes.
@@ -130,44 +130,44 @@ export function FundClient({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-          <p className="text-slate-400 text-sm mb-1">Total Fund</p>
+        <div className="bg-cc-card border border-emerald-500/20 rounded-xl p-6">
+          <p className="text-gray-400 text-sm mb-1">Total Fund</p>
           <p className="text-2xl font-bold text-emerald-400">
             {formatCurrency(totalFund)} MXN
           </p>
-          <p className="text-slate-500 text-xs mt-1">From sponsors (40%) + trade fees</p>
+          <p className="text-cc-text-muted text-xs mt-1">From sponsors (40%) + trade fees</p>
         </div>
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-          <p className="text-slate-400 text-sm mb-1">Causes Supported</p>
+        <div className="bg-cc-card border border-emerald-500/20 rounded-xl p-6">
+          <p className="text-gray-400 text-sm mb-1">Causes Supported</p>
           <p className="text-2xl font-bold text-white">{causesSupported}</p>
         </div>
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-          <p className="text-slate-400 text-sm mb-1">Monthly Allocation</p>
+        <div className="bg-cc-card border border-emerald-500/20 rounded-xl p-6">
+          <p className="text-gray-400 text-sm mb-1">Monthly Allocation</p>
           <p className="text-2xl font-bold text-amber-400">
             {formatCurrency(monthlyAllocation)} MXN
           </p>
         </div>
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-          <p className="text-slate-400 text-sm mb-1">Your Impact</p>
+        <div className="bg-cc-card border border-emerald-500/20 rounded-xl p-6">
+          <p className="text-gray-400 text-sm mb-1">Your Impact</p>
           <p className="text-2xl font-bold text-white">{yourImpactXp} XP</p>
-          <p className="text-slate-500 text-xs mt-1">From predictions</p>
+          <p className="text-cc-text-muted text-xs mt-1">From predictions</p>
         </div>
       </div>
 
       {/* Section 2: Vote for Causes */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-800">
+      <div className="bg-cc-card border border-cc-border rounded-xl overflow-hidden">
+        <div className="px-6 py-4 border-b border-cc-border">
           <h2 className="text-lg font-semibold text-white flex items-center gap-2">
             <Vote className="w-5 h-5 text-emerald-400" />
             Vota por causas
           </h2>
-          <p className="text-slate-400 text-sm mt-1 flex items-center gap-1.5">
+          <p className="text-cc-text-secondary text-sm mt-1 flex items-center gap-1.5">
             {isAuthenticated
               ? `Te quedan ${votePower - localVotesUsed} voto${votePower - localVotesUsed !== 1 ? 's' : ''} este mes`
               : 'Regístrate para votar y dirigir los fondos a causas comunitarias'}
             {cycle && ` · Ciclo ${cycle}`}
             <span
-              className="inline-flex text-slate-500 hover:text-slate-400 cursor-help"
+              className="inline-flex text-cc-text-muted hover:text-gray-400 cursor-help"
               title="You earn votes by making predictions on markets. Each prediction earns XP, and your monthly vote allocation is based on your XP."
             >
               <Info className="w-4 h-4" />
@@ -176,7 +176,7 @@ export function FundClient({
         </div>
 
         {causes.length === 0 ? (
-          <div className="p-12 text-center text-slate-400">
+          <div className="p-12 text-center text-cc-text-secondary">
             <p>No causes available yet</p>
           </div>
         ) : (
@@ -189,30 +189,32 @@ export function FundClient({
               return (
                 <div
                   key={cause.id}
-                  className={`bg-slate-800/50 border rounded-xl p-4 ${
-                    myVotes > 0 ? 'border-emerald-500/50' : 'border-slate-700'
+                  className={`bg-cc-card border rounded-xl p-4 ${
+                    myVotes > 0 ? 'border-emerald-500/40' : 'border-cc-border'
                   }`}
                 >
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-medium text-slate-400">
+                    <span className="text-xs font-medium text-cc-text-secondary">
                       {CATEGORY_LABELS[cause.category ?? ''] ?? cause.category ?? 'Other'}
                     </span>
                     {myVotes > 0 && (
-                      <span className="text-xs text-emerald-400 font-medium">Your vote</span>
+                      <span className="text-xs bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded font-medium">
+                        Your vote
+                      </span>
                     )}
                   </div>
                   <h3 className="font-semibold text-white">{cause.name}</h3>
                   {cause.organization && (
-                    <p className="text-slate-400 text-sm mt-0.5">{cause.organization}</p>
+                    <p className="text-cc-text-secondary text-sm mt-0.5">{cause.organization}</p>
                   )}
                   {cause.description && (
-                    <p className="text-slate-500 text-xs mt-1 line-clamp-2">{cause.description}</p>
+                    <p className="text-cc-text-muted text-xs mt-1 line-clamp-2">{cause.description}</p>
                   )}
                   <div className="mt-3">
-                    <div className="flex justify-between text-xs text-slate-400 mb-1">
+                    <div className="flex justify-between text-xs text-cc-text-secondary mb-1">
                       <span>{total} votes</span>
                     </div>
-                    <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
+                    <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-emerald-500 rounded-full transition-all"
                         style={{ width: `${Math.min(100, pct)}%` }}
@@ -223,7 +225,7 @@ export function FundClient({
                     <button
                       onClick={() => handleVote(cause.id)}
                       disabled={!canVote || voting[cause.id]}
-                      className="mt-3 w-full py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white text-sm font-medium flex items-center justify-center gap-2 transition-colors"
+                      className="mt-3 w-full py-2 px-3 rounded-lg border border-cc-border text-gray-300 hover:border-emerald-500/50 hover:text-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium flex items-center justify-center gap-2 transition-colors bg-transparent"
                     >
                       <Heart className="w-4 h-4" />
                       Votar
@@ -244,17 +246,17 @@ export function FundClient({
       </div>
 
       {/* Section 3: Past Allocations */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+      <div className="bg-cc-card border border-cc-border rounded-xl p-6">
         <h2 className="text-lg font-semibold text-white flex items-center gap-2 mb-4">
           <Sparkles className="w-5 h-5 text-amber-400" />
           Past Allocations
         </h2>
         {totalDisbursed > 0 ? (
-          <p className="text-slate-300">
+          <p className="text-gray-300">
             {formatCurrency(totalDisbursed)} MXN has been disbursed to community causes.
           </p>
         ) : (
-          <p className="text-slate-400">
+          <p className="text-cc-text-secondary">
             The first Conscious Fund allocation will happen when we reach $10,000 MXN in sponsor
             contributions. Help us get there by sharing Crowd Conscious with brands you believe in.
           </p>
@@ -262,14 +264,14 @@ export function FundClient({
       </div>
 
       {/* Section 4: Sponsors Making It Possible */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+      <div className="bg-cc-card border border-cc-border rounded-xl p-6">
         <h2 className="text-lg font-semibold text-white flex items-center gap-2 mb-4">
           <Users className="w-5 h-5 text-emerald-400" />
           Sponsors Making It Possible
         </h2>
         {sponsors.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-slate-400 mb-4">Be the first sponsor</p>
+            <p className="text-cc-text-secondary mb-4">Be the first sponsor</p>
             <Link
               href="/sponsor"
               className="inline-flex items-center gap-2 text-emerald-400 hover:text-emerald-300 font-medium"
@@ -282,7 +284,7 @@ export function FundClient({
             {sponsors.map((s) => (
               <div
                 key={s.id}
-                className="flex items-center gap-4 p-4 bg-slate-800/50 border border-slate-700 rounded-xl"
+                className="flex items-center gap-4 p-4 bg-cc-bg/50 border border-cc-border rounded-xl"
               >
                 {s.sponsor_logo_url ? (
                   <img
@@ -299,8 +301,8 @@ export function FundClient({
                 )}
                 <div>
                   <p className="font-medium text-white">{s.sponsor_name}</p>
-                  <p className="text-slate-400 text-sm">{s.title}</p>
-                  <p className="text-slate-500 text-xs">
+                  <p className="text-cc-text-secondary text-sm">{s.title}</p>
+                  <p className="text-cc-text-muted text-xs">
                     {formatCurrency(s.sponsor_contribution)} MXN contribution
                   </p>
                 </div>
