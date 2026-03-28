@@ -57,7 +57,11 @@ export default function LandingNav() {
             </Link>
             <Link
               href="/live"
-              className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors font-medium"
+              className={`inline-flex min-h-[44px] items-center gap-2 font-medium transition-colors ${
+                liveCount > 0
+                  ? 'text-red-300 hover:text-red-200'
+                  : 'text-slate-400 hover:text-white'
+              }`}
             >
               {nav.live}
               {liveCount > 0 && (

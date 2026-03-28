@@ -53,10 +53,71 @@ export default function Footer() {
   }
 
   return (
-    <footer className="bg-slate-900 text-white">
-      <div className="max-w-6xl mx-auto px-4 py-12">
+    <footer className="border-t border-gray-800 bg-[#0a0f14] text-white">
+      <div className="mx-auto max-w-7xl px-4 py-12">
+        <div className="mb-10 grid grid-cols-2 gap-8 md:grid-cols-4">
+          <div>
+            <h4 className="mb-4 text-sm font-semibold text-white">
+              {language === 'es' ? 'Plataforma' : 'Platform'}
+            </h4>
+            <nav className="flex flex-col gap-2">
+              <Link href="/predictions" className="text-sm text-gray-400 transition-colors hover:text-gray-200">
+                {language === 'es' ? 'Predicciones' : 'Predictions'}
+              </Link>
+              <Link href="/live" className="text-sm text-gray-400 transition-colors hover:text-gray-200">
+                {language === 'es' ? 'En vivo' : 'Live'}
+              </Link>
+              <Link href="/predictions/leaderboard" className="text-sm text-gray-400 transition-colors hover:text-gray-200">
+                Leaderboard
+              </Link>
+            </nav>
+          </div>
+          <div>
+            <h4 className="mb-4 text-sm font-semibold text-white">
+              {language === 'es' ? 'Mundial 2026' : 'World Cup 2026'}
+            </h4>
+            <nav className="flex flex-col gap-2">
+              <Link href="/markets?category=world_cup" className="text-sm text-gray-400 transition-colors hover:text-gray-200">
+                {language === 'es' ? 'Predicciones' : 'Predictions'}
+              </Link>
+              <Link href="/live" className="text-sm text-gray-400 transition-colors hover:text-gray-200">
+                {language === 'es' ? 'Partidos en vivo' : 'Live matches'}
+              </Link>
+            </nav>
+          </div>
+          <div>
+            <h4 className="mb-4 text-sm font-semibold text-white">
+              {language === 'es' ? 'Para marcas' : 'For brands'}
+            </h4>
+            <nav className="flex flex-col gap-2">
+              <Link href="/sponsor" className="text-sm text-gray-400 transition-colors hover:text-gray-200">
+                {language === 'es' ? 'Patrocinar' : 'Sponsor'}
+              </Link>
+              <Link href="/about" className="text-sm text-gray-400 transition-colors hover:text-gray-200">
+                {language === 'es' ? 'Fondo Consciente' : 'Conscious Fund'}
+              </Link>
+            </nav>
+          </div>
+          <div>
+            <h4 className="mb-4 text-sm font-semibold text-white">
+              {language === 'es' ? 'Compañía' : 'Company'}
+            </h4>
+            <nav className="flex flex-col gap-2">
+              <Link href="/about" className="text-sm text-gray-400 transition-colors hover:text-gray-200">
+                {language === 'es' ? 'Quiénes somos' : 'About us'}
+              </Link>
+              <Link href="/terms" className="text-sm text-gray-400 transition-colors hover:text-gray-200">
+                {content[language].terms}
+              </Link>
+              <Link href="/privacy" className="text-sm text-gray-400 transition-colors hover:text-gray-200">
+                {content[language].privacy}
+              </Link>
+            </nav>
+          </div>
+        </div>
+
         {/* Main Footer Content */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-8">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-5 mb-8">
           {/* Brand Section */}
           <div className="lg:col-span-1">
             <div className="mb-4">
@@ -191,11 +252,12 @@ export default function Footer() {
         </div>
 
         {/* Bottom Section */}
-        <div className="border-t border-slate-700 pt-6">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="text-sm text-slate-400">
-              © 2026 Crowd Conscious. Mexico City. {content[language].rights}
-            </div>
+        <div className="border-t border-gray-800 pt-8">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <p className="text-xs text-gray-500">
+              © 2026 Crowd Conscious. {language === 'es' ? 'Predicciones con propósito.' : 'Predictions with purpose.'}{' '}
+              {content[language].rights}
+            </p>
             <div className="flex flex-wrap items-center gap-4 text-sm text-slate-400">
               <span>{content[language].madeIn}</span>
               <Link href="/concientizaciones" className="text-slate-500 hover:text-slate-400 transition-colors">

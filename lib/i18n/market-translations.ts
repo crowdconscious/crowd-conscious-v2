@@ -5,7 +5,7 @@
 
 type TranslatableMarketField = 'title' | 'description' | 'resolution_criteria'
 
-interface MarketWithTranslations {
+export interface MarketWithTranslations {
   title: string
   description?: string | null
   resolution_criteria?: string | null
