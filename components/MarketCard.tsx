@@ -14,7 +14,7 @@ export type MarketCardMarket = {
   id: string
   title: string
   translations?: unknown
-  total_votes: number | null
+  total_votes?: number | null
   current_probability: number
   category: string
   market_type?: string | null
@@ -54,6 +54,21 @@ const CATEGORY_LABELS_EN: Record<string, string> = {
   sustainability: 'Sustainability',
 }
 
+/** Visual style per category — matches browse / landing */
+function categoryPillClass(category: string): string {
+  const c = category || 'world'
+  const map: Record<string, string> = {
+    world_cup: 'bg-emerald-500/10 text-emerald-400',
+    world: 'bg-blue-500/10 text-blue-400',
+    government: 'bg-amber-500/10 text-amber-400',
+    sustainability: 'bg-green-500/10 text-green-400',
+    corporate: 'bg-purple-500/10 text-purple-400',
+    community: 'bg-pink-500/10 text-pink-400',
+    cause: 'bg-amber-500/10 text-amber-400',
+  }
+  return map[c] ?? 'bg-emerald-500/10 text-emerald-400'
+}
+
 function categoryLabel(category: string, locale: string): string {
   if (locale === 'es') {
     return CATEGORY_LABELS_ES[category] ?? category.replace(/_/g, ' ')
@@ -88,9 +103,17 @@ function syntheticBinaryOutcomes(market: MarketCardMarket): MarketCardOutcome[] 
 export function MarketCard({
   market,
   outcomes,
+  showCategory = true,
+  showDeadline = true,
+  showVoteCount = true,
+  compact = false,
 }: {
   market: MarketCardMarket
   outcomes: MarketCardOutcome[]
+  showCategory?: boolean
+  showDeadline?: boolean
+  showVoteCount?: boolean
+  compact?: boolean
 }) {
   const router = useRouter()
   const { language } = useLanguage()
@@ -115,6 +138,11 @@ export function MarketCard({
 
   const go = () => router.push(`/predictions/markets/${market.id}`)
 
+  const pad = compact ? 'p-4' : 'p-5'
+  const barHBinary = compact ? 'h-8' : 'h-9'
+  const barHMulti = compact ? 'h-6' : 'h-7'
+  const labelW = compact ? 'w-20 sm:w-24' : 'w-24 sm:w-28'
+
   return (
     <div
       role="link"
@@ -126,26 +154,48 @@ export function MarketCard({
           go()
         }
       }}
-      className="group cursor-pointer rounded-xl border border-gray-800 bg-[#1a2029] p-5 transition-all duration-200 hover:scale-[1.01] hover:border-emerald-500/30"
+      className={`group cursor-pointer rounded-xl border border-cc-border bg-cc-card transition-all duration-200 hover:scale-[1.01] hover:border-emerald-500/30 ${pad}`}
     >
-      <div className="mb-3 flex items-start justify-between gap-2">
-        <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-400">
-          {categoryLabel(market.category, locale)}
-        </span>
-        {market.sponsor_name ? (
-          <div className="min-w-0 max-w-[55%] text-right">
-            <SponsorBadge
-              sponsorName={market.sponsor_name}
-              sponsorUrl={market.sponsor_url}
-              sponsorLogoUrl={market.sponsor_logo_url}
-              className="justify-end"
-              size="sm"
-            />
-          </div>
-        ) : null}
-      </div>
+      {showCategory && (
+        <div className="mb-3 flex items-start justify-between gap-2">
+          <span
+            className={`rounded-full px-2.5 py-1 text-xs font-medium ${categoryPillClass(market.category)}`}
+          >
+            {categoryLabel(market.category, locale)}
+          </span>
+          {market.sponsor_name ? (
+            <div className="min-w-0 max-w-[55%] text-right">
+              <SponsorBadge
+                sponsorName={market.sponsor_name}
+                sponsorUrl={market.sponsor_url}
+                sponsorLogoUrl={market.sponsor_logo_url}
+                className="justify-end"
+                size="sm"
+              />
+            </div>
+          ) : null}
+        </div>
+      )}
 
-      <h3 className="mb-4 text-base font-semibold leading-snug text-white line-clamp-3">{title}</h3>
+      {!showCategory && market.sponsor_name ? (
+        <div className="mb-3 flex justify-end">
+          <SponsorBadge
+            sponsorName={market.sponsor_name}
+            sponsorUrl={market.sponsor_url}
+            sponsorLogoUrl={market.sponsor_logo_url}
+            className="justify-end"
+            size="sm"
+          />
+        </div>
+      ) : null}
+
+      <h3
+        className={`mb-4 font-semibold leading-snug text-cc-text-primary line-clamp-3 ${
+          compact ? 'text-sm' : 'text-base'
+        }`}
+      >
+        {title}
+      </h3>
 
       {isBinaryLayout ? (
         <div className="grid grid-cols-2 gap-2">
@@ -155,7 +205,7 @@ export function MarketCard({
             return (
               <div
                 key={o.id}
-                className="relative flex h-8 items-center overflow-hidden rounded-lg bg-gray-800/50 px-3"
+                className={`relative flex items-center overflow-hidden rounded-lg bg-gray-800/50 px-3 ${barHBinary}`}
               >
                 <div
                   className="absolute left-0 top-0 h-full rounded-lg bg-emerald-500/20"
@@ -170,20 +220,20 @@ export function MarketCard({
           })}
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="flex flex-col gap-1.5">
           {multiRows.map((o) => {
             const pct = Math.round(toDisplayPercent(o.probability))
             const label = getOutcomeLabel(o, locale)
             return (
-              <div key={o.id} className="flex items-center gap-2">
-                <span className="w-24 shrink-0 truncate text-sm text-gray-200 sm:w-28">{label}</span>
-                <div className="relative h-8 min-w-0 flex-1 overflow-hidden rounded-lg bg-gray-800/50">
+              <div key={o.id} className="flex items-center gap-3">
+                <span className={`${labelW} shrink-0 truncate text-sm text-gray-300`}>{label}</span>
+                <div className={`relative min-w-0 flex-1 overflow-hidden rounded-lg bg-gray-800/50 ${barHMulti}`}>
                   <div
                     className="absolute left-0 top-0 h-full rounded-lg bg-emerald-500/20"
                     style={{ width: `${pct}%` }}
                   />
                   <div className="relative z-10 flex h-full items-center justify-end px-2">
-                    <span className="text-sm font-semibold text-white">{pct}%</span>
+                    <span className="w-[45px] text-right text-sm font-semibold text-white">{pct}%</span>
                   </div>
                 </div>
               </div>
@@ -197,11 +247,13 @@ export function MarketCard({
         </div>
       )}
 
-      <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-gray-500">
-        <span>{voteLabel}</span>
-        <span aria-hidden>·</span>
-        <span>{deadline}</span>
-      </div>
+      {(showVoteCount || showDeadline) && (
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-cc-text-muted">
+          {showVoteCount && <span>{voteLabel}</span>}
+          {showVoteCount && showDeadline && <span aria-hidden>·</span>}
+          {showDeadline && <span>{deadline}</span>}
+        </div>
+      )}
     </div>
   )
 }

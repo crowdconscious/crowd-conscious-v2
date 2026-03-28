@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic'
 import { Suspense } from 'react'
 import type { Database } from '@/types/database'
 import { SITE_URL } from '@/lib/seo/site'
+import type { MarketCardOutcome } from '@/components/MarketCard'
 
 export const metadata: Metadata = {
   title: 'Mercados de Predicción — Explora y Predice Gratis',
@@ -61,67 +62,60 @@ async function getCategoryCounts(): Promise<Record<string, number>> {
   return counts
 }
 
-async function getHistoryByMarket(): Promise<
-  Record<string, { probability: number; recorded_at: string }[]>
-> {
-  const supabase = await createClient()
-  const { data } = await supabase
-    .from('prediction_market_history')
-    .select('market_id, probability, recorded_at')
-    .order('recorded_at', { ascending: true })
-
-  const byMarket: Record<string, { probability: number; recorded_at: string }[]> = {}
-  for (const row of data ?? []) {
-    const id = row.market_id
-    if (!byMarket[id]) byMarket[id] = []
-    byMarket[id].push({ probability: Number(row.probability), recorded_at: row.recorded_at })
-  }
-  for (const id of Object.keys(byMarket)) {
-    byMarket[id] = byMarket[id].slice(-14)
-  }
-  return byMarket
-}
-
-async function getLeadingOutcomesByMarket(): Promise<
-  Record<string, { label: string; probability: number }>
-> {
+async function getOutcomesGrouped(): Promise<Record<string, MarketCardOutcome[]>> {
   const supabase = await createClient()
   const { data } = await supabase
     .from('market_outcomes')
-    .select('market_id, label, probability')
+    .select('id, market_id, label, probability, sort_order, translations')
     .order('probability', { ascending: false })
 
-  const byMarket: Record<string, { label: string; probability: number }> = {}
-  for (const row of data ?? []) {
-    const id = row.market_id
-    if (!byMarket[id]) {
-      byMarket[id] = { label: row.label, probability: Number(row.probability) }
+  const out: Record<string, MarketCardOutcome[]> = {}
+  for (const r of data ?? []) {
+    const row = r as {
+      id: string
+      market_id: string
+      label: string
+      probability: number
+      sort_order: number | null
+      translations?: unknown
     }
+    const mid = row.market_id
+    if (!out[mid]) out[mid] = []
+    out[mid].push({
+      id: row.id,
+      label: row.label,
+      probability: Number(row.probability),
+      sort_order: row.sort_order ?? 0,
+      translations: row.translations,
+    })
   }
-  return byMarket
+  for (const id of Object.keys(out)) {
+    out[id].sort((a, b) => b.probability - a.probability)
+  }
+  return out
 }
 
 export default async function PublicMarketsPage() {
-  const [markets, categoryCounts, historyByMarket, leadingOutcomes] = await Promise.all([
+  const [markets, categoryCounts, outcomesByMarketId] = await Promise.all([
     getMarkets(),
     getCategoryCounts(),
-    getHistoryByMarket(),
-    getLeadingOutcomesByMarket(),
+    getOutcomesGrouped(),
   ])
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="min-h-screen bg-cc-bg text-cc-text-primary">
       <LandingNav />
 
-      <main className="pt-24 pb-16">
-        <div className="max-w-6xl mx-auto px-4">
-          <Suspense fallback={<div className="animate-pulse h-64 bg-slate-900 rounded-xl" />}>
-          <PublicMarketsClient
-            initialMarkets={markets}
-            categoryCounts={categoryCounts}
-            historyByMarket={historyByMarket}
-            leadingOutcomes={leadingOutcomes}
-          />
+      <main className="pb-16 pt-24">
+        <div className="mx-auto max-w-7xl px-4">
+          <Suspense
+            fallback={<div className="h-64 animate-pulse rounded-xl bg-cc-card/80" />}
+          >
+            <PublicMarketsClient
+              initialMarkets={markets}
+              categoryCounts={categoryCounts}
+              outcomesByMarketId={outcomesByMarketId}
+            />
           </Suspense>
         </div>
       </main>

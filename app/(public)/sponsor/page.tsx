@@ -69,7 +69,7 @@ export default async function SponsorPage() {
   const leadingOutcomes = await getLeadingOutcomes(marketIds)
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="min-h-screen bg-cc-bg text-cc-text-primary">
       <LandingNav />
       <SponsorPageClient
         unsponsored={unsponsored}

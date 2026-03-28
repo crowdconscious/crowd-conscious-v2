@@ -7,7 +7,7 @@ import type { Json } from '@/types/database'
 import dynamic from 'next/dynamic'
 import { Globe, Heart, Trophy, ChevronRight } from 'lucide-react'
 import { LiveEventBanner } from './components/landing/LiveEventBanner'
-import type { MarketCardMarket, MarketCardOutcome } from './components/landing/MarketCard'
+import type { MarketCardMarket, MarketCardOutcome } from '@/components/MarketCard'
 
 const LandingNav = dynamic(() => import('./components/landing/LandingNav'))
 const Footer = dynamic(() => import('../components/Footer'))
@@ -15,7 +15,7 @@ const CookieConsent = dynamic(() => import('../components/CookieConsent'))
 const SmartHomeClient = dynamic(() => import('./SmartHomeClient'))
 
 const MarketCard = dynamic(() =>
-  import('./components/landing/MarketCard').then((m) => ({ default: m.MarketCard }))
+  import('@/components/MarketCard').then((m) => ({ default: m.MarketCard }))
 )
 const ImpactTicker = dynamic(() =>
   import('./components/landing/ImpactTicker').then((m) => ({ default: m.ImpactTicker }))
@@ -220,7 +220,7 @@ export default async function LandingPage() {
   const localeShort: 'es' | 'en' = locale
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#0f1419] text-slate-100">
+    <div className="min-h-screen overflow-x-hidden bg-cc-bg text-cc-text-primary">
       <SmartHomeClient />
 
       <LandingNav />
@@ -297,10 +297,10 @@ export default async function LandingPage() {
         </section>
 
         <section
-          className="relative overflow-hidden border-t border-gray-800 px-4 py-16 md:px-8"
+          className="relative overflow-hidden border-t border-cc-border px-4 py-16 md:px-8"
           style={{ backgroundImage: 'url(/images/worldcup-bg%20(1).png)', backgroundSize: 'cover' }}
         >
-          <div className="absolute inset-0 bg-gradient-to-b from-[#0f1419]/90 via-[#0f1419]/95 to-[#0f1419]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-cc-bg/90 via-cc-bg/95 to-cc-bg" />
           <div className="relative mx-auto max-w-5xl">
             <h2 className="mb-2 text-center text-2xl font-bold text-white md:text-3xl">
               ⚽{' '}
@@ -335,7 +335,7 @@ export default async function LandingPage() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-5xl border-t border-gray-800 px-4 py-12 md:px-8">
+        <section className="mx-auto max-w-5xl border-t border-cc-border px-4 py-12 md:px-8">
           <div className="grid grid-cols-1 gap-8 text-center md:grid-cols-3">
             <div>
               <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10">
@@ -382,12 +382,12 @@ export default async function LandingPage() {
         <SponsorCTA locale={localeShort} />
 
         <section
-          className="relative border-t border-gray-800 px-4 py-16"
+          className="relative border-t border-cc-border px-4 py-16"
           style={{ backgroundImage: 'url(/images/fund-bg.png)', backgroundSize: 'cover' }}
         >
-          <div className="absolute inset-0 bg-[#0f1419]/85" />
+          <div className="absolute inset-0 bg-cc-bg/85" />
           <div className="relative mx-auto max-w-5xl">
-            <div className="rounded-2xl border border-gray-800 bg-[#1a2029]/80 p-8 md:p-12">
+            <div className="rounded-2xl border border-cc-border bg-cc-card/80 p-8 md:p-12">
               <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
                 <div>
                   <h2 className="mb-2 text-2xl font-bold text-white">

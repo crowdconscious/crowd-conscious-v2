@@ -50,7 +50,7 @@ export function ImpactTicker({
 
   if (!hasData) {
     return (
-      <div className="border-b border-gray-800/50 bg-[#1a2029]/60 px-4 py-2">
+      <div className="border-b border-cc-border/50 bg-cc-card/60 px-4 py-2">
         <p className="text-center text-xs text-gray-400 md:text-sm">
           {locale === 'es'
             ? 'Sé el primero en predecir → Cada voto cuenta'
@@ -63,7 +63,7 @@ export function ImpactTicker({
   const cause = activeCauseName?.trim() || (locale === 'es' ? 'causas activas' : 'active causes')
 
   return (
-    <div className="border-b border-gray-800/50 bg-gray-800/30 px-4 py-2">
+    <div className="border-b border-cc-border/50 bg-gray-800/30 px-4 py-2">
       <p className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center text-xs text-gray-400 md:text-sm">
         <Globe className="h-4 w-4 shrink-0 text-emerald-500/80" aria-hidden />
         <span>

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { Trophy } from 'lucide-react'
 import { headers } from 'next/headers'
 import { SITE_URL } from '@/lib/seo/site'
 import { ArrowLeft } from 'lucide-react'
@@ -91,16 +92,26 @@ export default async function LiveEventsPage() {
       locale === 'es'
         ? 'Como administrador, usa el formulario de arriba para crear el primer evento.'
         : 'As an admin, use the form above to create your first event.',
+    emptyLead: locale === 'es' ? 'Conscious Live' : 'Conscious Live',
+    emptySub:
+      locale === 'es'
+        ? 'Predicciones en tiempo real durante partidos y eventos en vivo.'
+        : 'Live predictions during matches and live events.',
+    emptyEvent:
+      locale === 'es'
+        ? 'Próximo hito: Mundial 2026 · 11 de junio, Estadio Azteca'
+        : 'Next milestone: World Cup 2026 · June 11, Estadio Azteca',
+    emptyCta: locale === 'es' ? 'Ver predicciones' : 'Browse predictions',
     error: locale === 'es' ? 'No se pudieron cargar los eventos.' : 'Could not load events.',
   }
 
   return (
-    <div className="min-h-screen bg-[#070b10]">
+    <div className="min-h-screen bg-cc-bg text-cc-text-primary">
       <div className="mx-auto max-w-3xl px-4 py-8">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-sm text-slate-400 transition hover:text-teal-400"
+            className="inline-flex items-center gap-2 text-sm text-cc-text-secondary transition hover:text-cc-text-primary"
           >
             <ArrowLeft className="h-4 w-4" />
             {t.back}
@@ -119,10 +130,24 @@ export default async function LiveEventsPage() {
         )}
 
         {!error && rows.length === 0 && (
-          <div className="rounded-xl border border-white/10 bg-slate-900/50 px-4 py-8 text-center">
-            <p className="text-slate-400">{t.empty}</p>
+          <div className="rounded-xl border border-cc-border bg-cc-card px-6 py-10 text-center">
+            <div className="mb-4 flex justify-center">
+              <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/10 text-3xl">
+                <Trophy className="h-8 w-8 text-emerald-400" aria-hidden />
+              </span>
+            </div>
+            <p className="text-lg font-semibold text-white">{t.emptyLead}</p>
+            <p className="mt-3 text-sm text-cc-text-secondary">{t.emptySub}</p>
+            <p className="mt-4 text-sm text-cc-text-muted">{t.emptyEvent}</p>
+            <Link
+              href="/markets"
+              className="mt-6 inline-flex min-h-[44px] items-center justify-center rounded-lg border border-cc-border bg-cc-bg px-6 py-2.5 text-sm font-medium text-emerald-400 transition hover:border-emerald-500/40 hover:text-emerald-300"
+            >
+              ← {t.emptyCta}
+            </Link>
+            <p className="mt-8 text-cc-text-secondary">{t.empty}</p>
             {isAdmin && (
-              <p className="mt-3 text-sm text-slate-500">{t.emptyAdminHint}</p>
+              <p className="mt-3 text-sm text-cc-text-muted">{t.emptyAdminHint}</p>
             )}
           </div>
         )}

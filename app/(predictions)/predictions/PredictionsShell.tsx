@@ -75,10 +75,10 @@ export default function PredictionsShell({
   const showLivePulse = navCounts.liveNowCount > 0
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex">
+    <div className="flex min-h-screen bg-cc-bg text-cc-text-primary">
       {/* Sidebar - desktop only */}
-      <aside className="w-64 border-r border-slate-800 flex flex-col flex-shrink-0 hidden md:flex">
-        <div className="p-4 border-b border-slate-800">
+      <aside className="hidden w-64 flex-shrink-0 flex-col border-r border-cc-border bg-cc-nav-bg md:flex">
+        <div className="border-b border-cc-border p-4">
           <Logo size="sidebar" linkTo="/predictions" />
         </div>
 
@@ -98,7 +98,7 @@ export default function PredictionsShell({
                 className={`flex min-h-[44px] items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                   isActive
                     ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                    : 'text-cc-text-secondary hover:bg-gray-800/50 hover:text-cc-text-primary'
                 }`}
               >
                 <span className="flex items-center gap-3">
@@ -130,7 +130,7 @@ export default function PredictionsShell({
               className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                 pathname.startsWith('/predictions/intelligence')
                   ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
-                  : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800/50'
+                  : 'text-cc-text-secondary hover:bg-gray-800/50 hover:text-amber-400'
               }`}
             >
               <BarChart3 className="w-4 h-4" />
@@ -141,7 +141,7 @@ export default function PredictionsShell({
               className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                 pathname === '/predictions/admin/create-market'
                   ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
-                  : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800/50'
+                  : 'text-cc-text-secondary hover:bg-gray-800/50 hover:text-amber-400'
               }`}
             >
               <PlusCircle className="w-4 h-4" />
@@ -152,7 +152,7 @@ export default function PredictionsShell({
               className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                 pathname === '/predictions/admin/inbox'
                   ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
-                  : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800/50'
+                  : 'text-cc-text-secondary hover:bg-gray-800/50 hover:text-amber-400'
               }`}
             >
               <FileText className="w-4 h-4" />
@@ -163,7 +163,7 @@ export default function PredictionsShell({
               className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                 pathname === '/predictions/admin/causes'
                   ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
-                  : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800/50'
+                  : 'text-cc-text-secondary hover:bg-gray-800/50 hover:text-amber-400'
               }`}
             >
               <Heart className="w-4 h-4" />
@@ -174,7 +174,7 @@ export default function PredictionsShell({
               className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                 pathname === '/predictions/admin/resolve'
                   ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
-                  : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800/50'
+                  : 'text-cc-text-secondary hover:bg-gray-800/50 hover:text-amber-400'
               }`}
             >
               <ShieldCheck className="w-4 h-4" />
@@ -185,7 +185,7 @@ export default function PredictionsShell({
               className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                 pathname === '/predictions/admin/agents'
                   ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
-                  : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800/50'
+                  : 'text-cc-text-secondary hover:bg-gray-800/50 hover:text-amber-400'
               }`}
             >
               <Bot className="w-4 h-4" />
@@ -196,7 +196,7 @@ export default function PredictionsShell({
               className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                 pathname === '/predictions/admin/sponsors'
                   ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
-                  : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800/50'
+                  : 'text-cc-text-secondary hover:bg-gray-800/50 hover:text-amber-400'
               }`}
             >
               <DollarSign className="w-4 h-4" />
@@ -205,14 +205,14 @@ export default function PredictionsShell({
           </div>
         )}
 
-        <div className="p-4 border-t border-slate-800 space-y-3">
+        <div className="space-y-3 border-t border-cc-border p-4">
           <div className="flex items-center gap-2">
             {isAuthenticated && <NotificationsBell />}
             <LanguageSwitcherSimple />
           </div>
           <Link
             href={isAuthenticated ? '/profile' : '/login'}
-            className="flex items-center gap-2 text-sm text-slate-400 hover:text-emerald-400 transition-colors"
+            className="flex items-center gap-2 text-sm text-cc-text-secondary transition-colors hover:text-emerald-400"
           >
             <ArrowLeft className="w-4 h-4" />
             {isAuthenticated
@@ -223,10 +223,10 @@ export default function PredictionsShell({
       </aside>
 
       {/* Mobile header with hamburger */}
-      <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4 z-20">
+      <div className="fixed left-0 right-0 top-0 z-20 flex h-14 items-center justify-between border-b border-cc-border bg-cc-nav-bg px-4 md:hidden">
         <button
           onClick={() => setMobileMenuOpen(true)}
-          className="p-2 -ml-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+          className="-ml-2 rounded-lg p-2 text-cc-text-secondary transition-colors hover:bg-gray-800 hover:text-white"
           aria-label="Open menu"
         >
           <Menu className="w-6 h-6" />
@@ -252,14 +252,14 @@ export default function PredictionsShell({
             onClick={closeMobileMenu}
             aria-hidden="true"
           />
-          <aside className="md:hidden fixed top-0 left-0 bottom-0 w-64 bg-slate-900 border-r border-slate-800 flex flex-col z-40 shadow-xl">
-            <div className="p-4 border-b border-slate-800 flex items-center justify-between">
+          <aside className="fixed bottom-0 left-0 top-0 z-40 flex w-64 flex-col border-r border-cc-border bg-cc-nav-bg shadow-xl md:hidden">
+            <div className="flex items-center justify-between border-b border-cc-border p-4">
               <div onClick={closeMobileMenu} className="flex items-center">
                 <Logo size="sidebar" linkTo="/predictions" />
               </div>
               <button
                 onClick={closeMobileMenu}
-                className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                className="rounded-lg p-2 text-cc-text-secondary transition-colors hover:bg-gray-800 hover:text-white"
                 aria-label="Close menu"
               >
                 <X className="w-5 h-5" />
@@ -283,7 +283,7 @@ export default function PredictionsShell({
                     className={`flex min-h-[44px] items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                       isActive
                         ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30'
-                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                        : 'text-cc-text-secondary hover:bg-gray-800/50 hover:text-cc-text-primary'
                     }`}
                   >
                     <span className="flex items-center gap-3">
@@ -314,7 +314,7 @@ export default function PredictionsShell({
                     className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                       pathname.startsWith('/predictions/intelligence')
                         ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
-                        : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800/50'
+                        : 'text-cc-text-secondary hover:bg-gray-800/50 hover:text-amber-400'
                     }`}
                   >
                     <BarChart3 className="w-4 h-4" />
@@ -326,7 +326,7 @@ export default function PredictionsShell({
                     className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                       pathname === '/predictions/admin/create-market'
                         ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
-                        : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800/50'
+                        : 'text-cc-text-secondary hover:bg-gray-800/50 hover:text-amber-400'
                     }`}
                   >
                     <PlusCircle className="w-4 h-4" />
@@ -338,7 +338,7 @@ export default function PredictionsShell({
                     className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                       pathname === '/predictions/admin/inbox'
                         ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
-                        : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800/50'
+                        : 'text-cc-text-secondary hover:bg-gray-800/50 hover:text-amber-400'
                     }`}
                   >
                     <FileText className="w-4 h-4" />
@@ -350,7 +350,7 @@ export default function PredictionsShell({
                     className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                       pathname === '/predictions/admin/causes'
                         ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
-                        : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800/50'
+                        : 'text-cc-text-secondary hover:bg-gray-800/50 hover:text-amber-400'
                     }`}
                   >
                     <Heart className="w-4 h-4" />
@@ -362,7 +362,7 @@ export default function PredictionsShell({
                     className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                       pathname === '/predictions/admin/resolve'
                         ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
-                        : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800/50'
+                        : 'text-cc-text-secondary hover:bg-gray-800/50 hover:text-amber-400'
                     }`}
                   >
                     <ShieldCheck className="w-4 h-4" />
@@ -374,7 +374,7 @@ export default function PredictionsShell({
                     className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                       pathname === '/predictions/admin/agents'
                         ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
-                        : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800/50'
+                        : 'text-cc-text-secondary hover:bg-gray-800/50 hover:text-amber-400'
                     }`}
                   >
                     <Bot className="w-4 h-4" />
@@ -386,7 +386,7 @@ export default function PredictionsShell({
                     className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                       pathname === '/predictions/admin/sponsors'
                         ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
-                        : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800/50'
+                        : 'text-cc-text-secondary hover:bg-gray-800/50 hover:text-amber-400'
                     }`}
                   >
                     <DollarSign className="w-4 h-4" />
@@ -396,7 +396,7 @@ export default function PredictionsShell({
               )}
             </nav>
 
-            <div className="p-4 border-t border-slate-800 space-y-3">
+            <div className="space-y-3 border-t border-cc-border p-4">
               <div className="flex items-center gap-2">
                 {isAuthenticated && <NotificationsBell />}
                 <LanguageSwitcherSimple />
@@ -404,7 +404,7 @@ export default function PredictionsShell({
               <Link
                 href={isAuthenticated ? '/profile' : '/login'}
                 onClick={closeMobileMenu}
-                className="flex items-center gap-2 text-sm text-slate-400 hover:text-emerald-400 transition-colors"
+                className="flex items-center gap-2 text-sm text-cc-text-secondary transition-colors hover:text-emerald-400"
               >
                 <ArrowLeft className="w-4 h-4" />
                 {isAuthenticated

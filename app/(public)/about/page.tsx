@@ -65,7 +65,7 @@ export default async function AboutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 overflow-x-hidden">
+    <div className="min-h-screen overflow-x-hidden bg-cc-bg text-cc-text-primary">
       <LandingNav />
 
       <main className="pt-24">

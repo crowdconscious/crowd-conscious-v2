@@ -262,7 +262,7 @@ export function MarketDetailClient({
     <div className="space-y-6 pb-8">
       <Link
         href="/predictions"
-        className="text-sm text-slate-400 hover:text-emerald-400 transition-colors inline-flex items-center gap-1"
+        className="inline-flex items-center gap-1 text-sm text-cc-text-secondary transition-colors hover:text-cc-text-primary"
       >
         ← Back to markets
       </Link>
@@ -320,7 +320,7 @@ export function MarketDetailClient({
             <span
               className={`inline-block mt-2 px-2.5 py-1 rounded text-xs font-medium ${
                 market.status === 'resolved'
-                  ? 'bg-slate-600 text-slate-300'
+                  ? 'bg-gray-600 text-slate-300'
                   : 'bg-emerald-500/20 text-emerald-400'
               }`}
             >
@@ -369,7 +369,7 @@ export function MarketDetailClient({
           )}
 
           {/* Probability + engagement (registered vs total reach) */}
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+          <div className="bg-cc-card border border-cc-border rounded-xl p-6">
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-6">
               <div className="flex flex-wrap gap-8 items-end">
                 <div>
@@ -405,12 +405,12 @@ export function MarketDetailClient({
                   background: `conic-gradient(#10b981 0% ${prob}%, #334155 ${prob}% 100%)`,
                 }}
               >
-                <span className="absolute inset-0 m-auto w-16 h-16 rounded-full bg-slate-900 flex items-center justify-center text-2xl font-bold text-white">
+                <span className="absolute inset-0 m-auto flex h-16 w-16 items-center justify-center rounded-full bg-cc-bg text-2xl font-bold text-white">
                   {Math.round(prob)}%
                 </span>
               </div>
             </div>
-            <div className="h-3 bg-slate-800 rounded-full overflow-hidden flex mb-6">
+            <div className="h-3 bg-gray-800 rounded-full overflow-hidden flex mb-6">
               {isMultiOutcome && outcomes.length > 0 ? (
                 outcomes.map((o, i) => (
                   <div
@@ -448,7 +448,7 @@ export function MarketDetailClient({
                         className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
                           timeRange === range
                             ? 'bg-emerald-600 text-white'
-                            : 'bg-slate-800 text-slate-400 hover:text-white'
+                            : 'bg-gray-800 text-slate-400 hover:text-white'
                         }`}
                       >
                         {range === 'all' ? 'All' : range.toUpperCase()}
@@ -474,7 +474,7 @@ export function MarketDetailClient({
                           if (!active || !payload?.length) return null
                           const p = payload[0].payload
                           return (
-                            <div className="bg-slate-800 border border-slate-600 rounded-lg p-3 shadow-xl">
+                            <div className="bg-gray-800 border border-cc-border-light rounded-lg p-3 shadow-xl">
                               <p className="text-slate-300 text-sm font-medium">{p.fullDate}</p>
                               <p className="text-emerald-400 font-semibold">{toDisplayPercent(Number(p.probability)).toFixed(1)}%</p>
                               <p className="text-slate-400 text-xs">Votes: {Number(p.volume) || 0}</p>
@@ -518,13 +518,13 @@ export function MarketDetailClient({
 
           {/* Sentiment Gauge - only show when we have data */}
           {sentiment.length > 0 && (
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+            <div className="bg-cc-card border border-cc-border rounded-xl p-6">
               <h3 className="font-semibold text-white mb-3">
                 Sentimiento: {getSentimentLabel(latestSentiment)}
               </h3>
               <div className="relative h-4 bg-gradient-to-r from-red-500 via-yellow-500 to-emerald-500 rounded-full overflow-visible mb-2">
                 <div
-                  className="absolute top-1/2 -translate-y-1/2 w-3 h-6 bg-white border-2 border-slate-800 rounded-sm shadow-md transition-all z-10"
+                  className="absolute top-1/2 -translate-y-1/2 w-3 h-6 bg-white border-2 border-cc-border rounded-sm shadow-md transition-all z-10"
                   style={{
                     left: `${Math.min(100, Math.max(0, ((latestSentiment + 100) / 200) * 100))}%`,
                     transform: 'translate(-50%, -50%)',
@@ -556,10 +556,10 @@ export function MarketDetailClient({
           )}
 
           {/* Research Center — Understand This Issue */}
-          <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+          <div className="bg-cc-card border border-cc-border rounded-xl overflow-hidden">
             <button
               onClick={() => setResearchOpen(!researchOpen)}
-              className="w-full flex items-center justify-between p-4 text-left hover:bg-slate-800/50 transition-colors"
+              className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-800/50 transition-colors"
             >
               <span className="font-semibold text-white">Understand This Issue</span>
               {researchOpen ? (
@@ -574,11 +574,11 @@ export function MarketDetailClient({
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  className="border-t border-slate-800"
+                  className="border-t border-cc-border"
                 >
                   <div className="p-4 space-y-5">
                     {/* Description */}
-                    <div className="rounded-lg bg-slate-800/50 p-4 border border-slate-700/50">
+                    <div className="rounded-lg bg-gray-800/50 p-4 border border-cc-border/50">
                       <h4 className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2 flex items-center gap-2">
                         <FileText className="w-4 h-4" />
                         {locale === 'en' ? 'Description' : 'Descripción'}
@@ -589,7 +589,7 @@ export function MarketDetailClient({
                     </div>
 
                     {/* Divider */}
-                    <div className="border-t border-slate-700/70" />
+                    <div className="border-t border-cc-border/70" />
 
                     {/* How This Resolves — visually distinct, key for credibility */}
                     <div className="rounded-lg bg-emerald-500/5 p-4 border border-emerald-500/20">
@@ -648,7 +648,7 @@ export function MarketDetailClient({
                           {market.tags.map((tag, i) => (
                             <span
                               key={i}
-                              className="px-2 py-1 bg-slate-700 rounded text-xs text-slate-300"
+                              className="px-2 py-1 bg-gray-700 rounded text-xs text-slate-300"
                             >
                               {tag}
                             </span>
@@ -664,7 +664,7 @@ export function MarketDetailClient({
 
           {/* Agent Insights — only show when we have content */}
           {agentContent.length > 0 && (
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+            <div className="bg-cc-card border border-cc-border rounded-xl p-6">
               <h3 className="font-semibold text-white mb-4">Análisis de agentes</h3>
               <div className="space-y-4">
                 {agentContent.slice(0, 5).map((ac) => (
@@ -693,7 +693,7 @@ export function MarketDetailClient({
             guestVoteRecord={guestVoteRecord}
             onAnonymousVoteSuccess={handleAnonymousVoteSuccess}
           />
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+          <div className="bg-cc-card border border-cc-border rounded-xl p-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-semibold text-white flex items-center gap-2">
                 <BarChart3 className="w-4 h-4" />
@@ -785,7 +785,7 @@ function AgentInsightCard({ content }: { content: AgentContent }) {
   const hasMore = bodyLines.length > 3 || content.body.length > (truncated.length + 20)
 
   return (
-    <div className="border border-slate-800 rounded-lg p-4">
+    <div className="border border-cc-border rounded-lg p-4">
       <div className="flex items-start gap-3">
         <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center shrink-0">
           <Icon className="w-5 h-5 text-emerald-400" />
@@ -835,7 +835,7 @@ function RecentPredictions({ marketId }: { marketId: string }) {
   }, [marketId])
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+    <div className="bg-cc-card border border-cc-border rounded-xl p-6">
       <h3 className="font-semibold text-white mb-4">Recent Predictions</h3>
       {loading ? (
         <p className="text-slate-400 text-sm">Loading...</p>
@@ -846,7 +846,7 @@ function RecentPredictions({ marketId }: { marketId: string }) {
           {predictions.slice(0, 10).map((p, i) => (
             <div
               key={i}
-              className="flex items-center justify-between py-2 border-b border-slate-800 last:border-0"
+              className="flex items-center justify-between py-2 border-b border-cc-border last:border-0"
             >
               <div>
                 <span className="text-slate-300 text-sm font-medium">{p.user_name}</span>
@@ -905,7 +905,7 @@ function MarketDiscussion({ marketId }: { marketId: string }) {
   }
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+    <div className="bg-cc-card border border-cc-border rounded-xl p-6">
       <h3 className="font-semibold text-white mb-4">Discussion</h3>
       <form onSubmit={handleSubmit} className="mb-4">
         <textarea
@@ -913,7 +913,7 @@ function MarketDiscussion({ marketId }: { marketId: string }) {
           onChange={(e) => setContent(e.target.value)}
           placeholder="Add a comment..."
           rows={3}
-          className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none mb-2"
+          className="mb-2 w-full resize-none rounded-lg border border-cc-border bg-cc-bg px-4 py-3 text-white placeholder:text-cc-text-muted focus:outline-none focus:ring-2 focus:ring-emerald-500"
         />
         <button
           type="submit"
@@ -930,7 +930,7 @@ function MarketDiscussion({ marketId }: { marketId: string }) {
           comments.map((c) => (
             <div
               key={c.id}
-              className="py-3 border-b border-slate-800 last:border-0"
+              className="py-3 border-b border-cc-border last:border-0"
             >
               <div className="flex items-center gap-2 mb-1">
                 <span className="font-medium text-white text-sm">{c.username}</span>

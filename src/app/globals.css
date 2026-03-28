@@ -75,8 +75,14 @@
   --color-neutral-800: #1f2937;
   --color-neutral-900: #111827;
   --color-neutral-950: #030712;
-}
 
+  /* Unified dark theme tokens (landing + app shell) */
+  --cc-bg: #0f1419;
+  --cc-card: #1a2029;
+  --cc-border: #2d3748;
+  --cc-nav-bg: #0a0f14;
+  --cc-accent: #10b981;
+}
 
 /* FORCE LIGHT MODE BY DEFAULT - Dark mode disabled unless explicitly enabled */
 

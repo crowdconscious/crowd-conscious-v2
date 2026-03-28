@@ -9,6 +9,21 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        cc: {
+          bg: '#0f1419',
+          card: '#1a2029',
+          'card-hover': '#1f2937',
+          border: '#2d3748',
+          'border-light': '#374151',
+          accent: '#10b981',
+          'accent-hover': '#059669',
+          'accent-soft': 'rgba(16, 185, 129, 0.1)',
+          'accent-medium': 'rgba(16, 185, 129, 0.2)',
+          'text-primary': '#f9fafb',
+          'text-secondary': '#9ca3af',
+          'text-muted': '#6b7280',
+          'nav-bg': '#0a0f14',
+        },
         // Custom color palette
         primary: {
           50: '#f0fdfa',

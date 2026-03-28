@@ -69,7 +69,7 @@ export default function AboutContent({
       {/* The Problem */}
       <section
         ref={problemRef.ref}
-        className={`py-24 px-4 border-t border-slate-800 transition-all duration-700 delay-100 ${
+        className={`py-24 px-4 border-t border-cc-border transition-all duration-700 delay-100 ${
           problemRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
         }`}
       >
@@ -88,7 +88,7 @@ export default function AboutContent({
       {/* How It Works */}
       <section
         ref={howRef.ref}
-        className={`py-24 px-4 border-t border-slate-800 transition-all duration-700 delay-100 ${
+        className={`py-24 px-4 border-t border-cc-border transition-all duration-700 delay-100 ${
           howRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
         }`}
       >
@@ -97,7 +97,7 @@ export default function AboutContent({
             How It Works
           </h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-            <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 hover:border-emerald-500/30 transition-colors">
+            <div className="border border-cc-border bg-cc-card/90 rounded-xl p-6 hover:border-emerald-500/30 transition-colors">
               <div className="w-14 h-14 rounded-xl bg-emerald-500/20 flex items-center justify-center mb-4">
                 <Target className="w-7 h-7 text-emerald-400" />
               </div>
@@ -107,7 +107,7 @@ export default function AboutContent({
                 required.
               </p>
             </div>
-            <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 hover:border-emerald-500/30 transition-colors">
+            <div className="border border-cc-border bg-cc-card/90 rounded-xl p-6 hover:border-emerald-500/30 transition-colors">
               <div className="w-14 h-14 rounded-xl bg-emerald-500/20 flex items-center justify-center mb-4">
                 <Vote className="w-7 h-7 text-emerald-400" />
               </div>
@@ -117,7 +117,7 @@ export default function AboutContent({
                 consensus.
               </p>
             </div>
-            <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 hover:border-emerald-500/30 transition-colors">
+            <div className="border border-cc-border bg-cc-card/90 rounded-xl p-6 hover:border-emerald-500/30 transition-colors">
               <div className="w-14 h-14 rounded-xl bg-emerald-500/20 flex items-center justify-center mb-4">
                 <Building2 className="w-7 h-7 text-emerald-400" />
               </div>
@@ -127,7 +127,7 @@ export default function AboutContent({
                 Conscious Fund.
               </p>
             </div>
-            <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 hover:border-emerald-500/30 transition-colors md:col-span-2 lg:col-span-1">
+            <div className="border border-cc-border bg-cc-card/90 rounded-xl p-6 hover:border-emerald-500/30 transition-colors md:col-span-2 lg:col-span-1">
               <div className="w-14 h-14 rounded-xl bg-emerald-500/20 flex items-center justify-center mb-4">
                 <Heart className="w-7 h-7 text-emerald-400" />
               </div>
@@ -147,7 +147,7 @@ export default function AboutContent({
       {/* The Conscious Fund */}
       <section
         ref={fundRef.ref}
-        className={`py-24 px-4 border-t border-slate-800 transition-all duration-700 delay-100 ${
+        className={`py-24 px-4 border-t border-cc-border transition-all duration-700 delay-100 ${
           fundRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
         }`}
       >
@@ -159,15 +159,15 @@ export default function AboutContent({
             Brands sponsor markets → 40% of every sponsorship goes directly to community causes — 10x the industry average for cause marketing → Users vote on which causes receive grants → Community impact. It&apos;s a virtuous cycle.
           </p>
           <div className="grid md:grid-cols-3 gap-6 mb-10">
-            <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-6 text-center">
+            <div className="border border-cc-border bg-cc-card rounded-xl p-6 text-center">
               <p className="text-slate-500 text-sm mb-1">Fund total</p>
               <p className="text-2xl font-bold text-emerald-400">{fundTotal} MXN</p>
             </div>
-            <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-6 text-center">
+            <div className="border border-cc-border bg-cc-card rounded-xl p-6 text-center">
               <p className="text-slate-500 text-sm mb-1">Causes supported</p>
               <p className="text-2xl font-bold text-white">{causesSupported}</p>
             </div>
-            <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-6 text-center">
+            <div className="border border-cc-border bg-cc-card rounded-xl p-6 text-center">
               <p className="text-slate-500 text-sm mb-1">Monthly allocation</p>
               <p className="text-2xl font-bold text-emerald-400">{monthlyAllocation} MXN</p>
             </div>
@@ -187,12 +187,12 @@ export default function AboutContent({
       {/* World Cup 2026 */}
       <section
         ref={worldCupRef.ref}
-        className={`py-24 px-4 border-t border-slate-800 transition-all duration-700 delay-100 ${
+        className={`py-24 px-4 border-t border-cc-border transition-all duration-700 delay-100 ${
           worldCupRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
         }`}
       >
         <div className="max-w-4xl mx-auto">
-          <div className="bg-slate-900/50 border border-emerald-500/20 rounded-2xl p-8 md:p-12">
+          <div className="rounded-2xl border border-emerald-500/20 bg-cc-card/90 p-8 md:p-12">
             <div className="flex items-center gap-3 mb-6">
               <span className="text-4xl">⚽</span>
               <h2 className="text-2xl md:text-3xl font-bold text-white">
@@ -217,7 +217,7 @@ export default function AboutContent({
       {/* CTA */}
       <section
         ref={ctaRef.ref}
-        className={`py-28 px-4 border-t border-slate-800 transition-all duration-700 delay-100 ${
+        className={`py-28 px-4 border-t border-cc-border transition-all duration-700 delay-100 ${
           ctaRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
         }`}
       >
@@ -234,7 +234,7 @@ export default function AboutContent({
             </Link>
             <Link
               href="/sponsor"
-              className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl border border-slate-600 hover:border-slate-500 text-slate-200 font-semibold transition-colors"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-cc-border-light px-8 py-4 font-semibold text-cc-text-primary transition-colors hover:border-gray-500"
             >
               Become a Sponsor
             </Link>
