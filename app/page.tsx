@@ -6,10 +6,10 @@ import { createClient } from '@/lib/supabase-server'
 import type { Json } from '@/types/database'
 import dynamic from 'next/dynamic'
 import { Globe, Heart, Trophy, ChevronRight } from 'lucide-react'
+import LandingNav from './components/landing/LandingNav'
 import { LiveEventBanner } from './components/landing/LiveEventBanner'
 import type { MarketCardMarket, MarketCardOutcome } from '@/components/MarketCard'
 
-const LandingNav = dynamic(() => import('./components/landing/LandingNav'))
 const Footer = dynamic(() => import('../components/Footer'))
 const CookieConsent = dynamic(() => import('../components/CookieConsent'))
 const SmartHomeClient = dynamic(() => import('./SmartHomeClient'))
@@ -27,8 +27,10 @@ const SponsorCTA = dynamic(() =>
 export const revalidate = 60
 
 export const metadata: Metadata = {
-  title:
-    "Crowd Conscious — Predicciones Gratis que Financian Causas Reales | Mundial 2026",
+  title: {
+    absolute:
+      'Crowd Conscious — Predicciones Gratis que Financian Causas Reales | Mundial 2026',
+  },
   description:
     "Plataforma gratuita de predicciones donde cada voto genera impacto. Predice en el Mundial 2026, política, deportes y más. 40% de patrocinios van a causas comunitarias.",
   alternates: {
@@ -91,6 +93,8 @@ async function getLandingData() {
     votesRes,
     worldCupRes,
     liveNowRes,
+    activeMarketsCountRes,
+    profilesCountRes,
   ] = await Promise.all([
     supabase
       .from('prediction_markets')
@@ -127,6 +131,11 @@ async function getLandingData() {
       .order('match_date', { ascending: false })
       .limit(1)
       .maybeSingle(),
+    supabase
+      .from('prediction_markets')
+      .select('id', { count: 'exact', head: true })
+      .in('status', ['active', 'trading']),
+    supabase.from('profiles').select('id', { count: 'exact', head: true }),
   ])
 
   const markets = (marketsRes.data || []) as MarketCardMarket[]
@@ -162,6 +171,9 @@ async function getLandingData() {
   const fundTotal = fundBalance
   const activeCauseName = causesWithVotes[0]?.name ?? causes[0]?.name ?? null
 
+  const activeMarketCount = activeMarketsCountRes.count ?? markets.length
+  const profileCount = profilesCountRes.count
+
   return {
     markets,
     outcomesByMarketId,
@@ -173,6 +185,8 @@ async function getLandingData() {
     totalVotes,
     fundTotal,
     activeCauseName,
+    activeMarketCount,
+    profileCount,
   }
 }
 
@@ -200,6 +214,8 @@ export default async function LandingPage() {
   let totalVotes = 0
   let fundTotal = 0
   let activeCauseName: string | null = null
+  let activeMarketCount = 0
+  let profileCount: number | null = null
 
   try {
     const data = await getLandingData()
@@ -213,6 +229,8 @@ export default async function LandingPage() {
     totalVotes = data.totalVotes
     fundTotal = data.fundTotal
     activeCauseName = data.activeCauseName
+    activeMarketCount = data.activeMarketCount
+    profileCount = data.profileCount
   } catch (e) {
     console.error('Landing data fetch error:', e)
   }
@@ -379,14 +397,58 @@ export default async function LandingPage() {
           </div>
         </section>
 
+        {/* Social proof — stats from live data */}
+        <section
+          className="border-y border-[#2d3748] bg-[#1a2029]/50 py-10"
+          aria-label={locale === 'es' ? 'Cifras de la plataforma' : 'Platform stats'}
+        >
+          <div className="mx-auto grid max-w-4xl grid-cols-2 gap-6 px-4 md:grid-cols-4 md:gap-4">
+            <div className="text-center">
+              <p className="text-2xl font-bold text-white">{activeMarketCount}</p>
+              <p className="mt-1 text-xs font-medium uppercase tracking-wider text-gray-400">
+                {locale === 'es' ? 'mercados' : 'markets'}
+              </p>
+              <p className="text-xs font-medium uppercase tracking-wider text-gray-500">
+                {locale === 'es' ? 'activos' : 'active'}
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-white">
+                {profileCount != null && profileCount > 0
+                  ? profileCount.toLocaleString(locale === 'es' ? 'es-MX' : 'en-US')
+                  : locale === 'es'
+                    ? 'creciendo'
+                    : 'Growing'}
+              </p>
+              <p className="mt-1 text-xs font-medium uppercase tracking-wider text-gray-400">
+                {locale === 'es' ? 'usuarios' : 'users'}
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-white">{causesCount}</p>
+              <p className="mt-1 text-xs font-medium uppercase tracking-wider text-gray-400">
+                {locale === 'es' ? 'causas' : 'causes'}
+              </p>
+              <p className="text-xs font-medium uppercase tracking-wider text-gray-500">
+                {locale === 'es' ? 'apoyadas' : 'supported'}
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-emerald-400">40%</p>
+              <p className="mt-1 text-xs font-medium uppercase tracking-wider text-gray-400">
+                {locale === 'es' ? 'al Fondo' : 'to Fund'}
+              </p>
+              <p className="text-xs font-medium uppercase tracking-wider text-gray-500">
+                {locale === 'es' ? 'Consciente' : 'Conscious'}
+              </p>
+            </div>
+          </div>
+        </section>
+
         <SponsorCTA locale={localeShort} />
 
-        <section
-          className="relative border-t border-cc-border px-4 py-16"
-          style={{ backgroundImage: 'url(/images/fund-bg.png)', backgroundSize: 'cover' }}
-        >
-          <div className="absolute inset-0 bg-cc-bg/85" />
-          <div className="relative mx-auto max-w-5xl">
+        <section className="border-t border-cc-border bg-cc-bg px-4 py-16">
+          <div className="mx-auto max-w-5xl">
             <div className="rounded-2xl border border-cc-border bg-cc-card/80 p-8 md:p-12">
               <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
                 <div>

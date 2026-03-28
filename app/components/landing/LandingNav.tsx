@@ -8,6 +8,17 @@ import LanguageSwitcherSimple from '@/components/LanguageSwitcherSimple'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useLiveNavBadge } from '@/hooks/useLiveNavBadge'
 
+/** Pulsing dot when ≥1 public live event; link label is always shown separately. */
+function LiveNowIndicator({ liveCount }: { liveCount: number }) {
+  if (liveCount <= 0) return null
+  return (
+    <span className="relative flex h-2.5 w-2.5" aria-hidden>
+      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+      <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+    </span>
+  )
+}
+
 const NAV = {
   es: {
     markets: 'Mercados',
@@ -127,15 +138,12 @@ export default function LandingNav() {
             <Link
               href="/live"
               onClick={() => setMobileOpen(false)}
-              className="flex min-h-[44px] items-center gap-2 py-3 text-slate-400 hover:text-white"
+              className={`flex min-h-[44px] items-center gap-2 py-3 ${
+                liveCount > 0 ? 'text-red-300 hover:text-red-200' : 'text-slate-400 hover:text-white'
+              }`}
             >
-              {nav.live}
-              {liveCount > 0 && (
-                <span className="relative flex h-2.5 w-2.5" aria-label="Live">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
-                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
-                </span>
-              )}
+              <span>{nav.live}</span>
+              <LiveNowIndicator liveCount={liveCount} />
             </Link>
             <Link
               href="/about"

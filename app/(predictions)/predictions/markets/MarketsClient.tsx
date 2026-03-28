@@ -39,7 +39,10 @@ interface Props {
   categoryCounts: Record<string, number>
   resolvedCount?: number
   historyByMarket?: Record<string, { probability: number; recorded_at: string }[]>
-  leadingOutcomes?: Record<string, { label: string; probability: number }>
+  outcomesByMarket?: Record<
+    string,
+    Array<{ id: string; label: string; probability: number; sort_order: number; translations?: unknown }>
+  >
   initialCategory?: string
   initialSort?: string
 }
@@ -51,7 +54,7 @@ export function MarketsClient({
   categoryCounts,
   resolvedCount = 0,
   historyByMarket = {},
-  leadingOutcomes = {},
+  outcomesByMarket = {},
   initialCategory = 'all',
   initialSort = 'active',
 }: Props) {
@@ -200,7 +203,7 @@ export function MarketsClient({
                       <MarketCard
                         market={market}
                         history={historyByMarket[market.id] ?? []}
-                        leadingOutcome={leadingOutcomes[market.id]}
+                        outcomes={outcomesByMarket[market.id]}
                         variant="trending"
                       />
                     </div>
@@ -224,7 +227,7 @@ export function MarketsClient({
                       <MarketCard
                         market={market}
                         history={historyByMarket[market.id] ?? []}
-                        leadingOutcome={leadingOutcomes[market.id]}
+                        outcomes={outcomesByMarket[market.id]}
                         variant="quick"
                       />
                     </div>
@@ -302,7 +305,7 @@ export function MarketsClient({
               key={market.id}
               market={market}
               history={historyByMarket[market.id] ?? []}
-              leadingOutcome={leadingOutcomes[market.id]}
+              outcomes={outcomesByMarket[market.id]}
             />
           ))}
         </div>

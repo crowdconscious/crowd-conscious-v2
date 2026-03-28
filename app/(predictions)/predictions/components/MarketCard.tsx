@@ -13,11 +13,9 @@ import {
   Trophy,
   Leaf,
   TrendingUp,
-  TrendingDown,
   Calendar,
   CheckCircle,
   Flame,
-  Zap,
 } from 'lucide-react'
 import type { Database } from '@/types/database'
 import { hasGuestVotedMarket } from '@/lib/guest-vote-storage'
@@ -31,6 +29,14 @@ type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row'
   sponsor_name?: string
   sponsor_logo_url?: string
   image_url?: string
+}
+
+type OutcomeRow = {
+  id: string
+  label: string
+  probability: number
+  sort_order?: number
+  translations?: unknown
 }
 
 const CATEGORY_CONFIG: Record<
@@ -95,15 +101,6 @@ const CATEGORY_CONFIG: Record<
   },
 }
 
-/** Probability bar color: near 50% = amber (contentious), near 0/100% = green (consensus) */
-function getProbabilityBarColor(prob: number): { yes: string; no: string } {
-  const p = Math.min(100, Math.max(0, prob))
-  const distFrom50 = Math.abs(p - 50)
-  if (distFrom50 < 15) return { yes: '#f59e0b', no: 'rgba(245, 158, 11, 0.5)' }
-  if (distFrom50 < 30) return { yes: '#eab308', no: 'rgba(234, 179, 8, 0.5)' }
-  return { yes: '#10b981', no: 'rgba(239, 68, 68, 0.5)' }
-}
-
 function getCountdown(resolutionDate: string): string {
   const end = new Date(resolutionDate)
   const now = new Date()
@@ -137,14 +134,24 @@ function getUrgency(resolutionDate: string): { level: UrgencyLevel; days: number
   return { level: 'far', days: diffDays }
 }
 
+function syntheticBinaryOutcomes(market: PredictionMarket, locale: string): OutcomeRow[] {
+  const p = Number(market.current_probability ?? 0.5)
+  const yes = locale === 'en' ? 'Yes' : 'Sí'
+  const no = 'No'
+  return [
+    { id: `syn-yes-${market.id}`, label: yes, probability: p, sort_order: 0 },
+    { id: `syn-no-${market.id}`, label: no, probability: 1 - p, sort_order: 1 },
+  ].sort((a, b) => b.probability - a.probability)
+}
+
 interface MarketCardProps {
   market: PredictionMarket & { recent_votes?: number }
   history?: { probability: number; recorded_at: string }[]
-  leadingOutcome?: { label: string; probability: number } | null
+  outcomes?: OutcomeRow[]
   variant?: 'default' | 'trending' | 'quick'
 }
 
-export function MarketCard({ market, history = [], leadingOutcome, variant = 'default' }: MarketCardProps) {
+export function MarketCard({ market, history = [], outcomes: outcomesProp, variant = 'default' }: MarketCardProps) {
   const locale = useLocale()
   const [guestVoted, setGuestVoted] = useState(false)
   useEffect(() => {
@@ -152,22 +159,34 @@ export function MarketCard({ market, history = [], leadingOutcome, variant = 'de
   }, [market.id])
   const config = CATEGORY_CONFIG[market.category] || CATEGORY_CONFIG.world
   const Icon = config.icon
-  const prob = toDisplayPercent(Number(market.current_probability))
   const engagement =
     Number(market.engagement_count) || Number(market.total_votes) || Number(market.total_volume) || 0
   const recentVotes = market.recent_votes ?? 0
   const urgency = getUrgency(market.resolution_date)
   const isTrending = variant === 'trending'
-  const isQuick = variant === 'quick'
 
-  const barColors = getProbabilityBarColor(prob)
+  const raw =
+    outcomesProp && outcomesProp.length > 0
+      ? [...outcomesProp].sort((a, b) => Number(b.probability) - Number(a.probability))
+      : syntheticBinaryOutcomes(market, locale)
+
+  const isBinaryLayout = raw.length === 2
+  const multiRows = isBinaryLayout ? [] : raw.slice(0, 4)
+  const moreCount = !isBinaryLayout && raw.length > 4 ? raw.length - 4 : 0
+
   const accent = config.accent ?? 'border-t-slate-500/50'
   const hoverGlow = config.hoverGlow ?? 'group-hover:shadow-[0_0_20px_rgba(148,163,184,0.3)]'
+
+  const barHBinary = 'h-8'
+  const barHMulti = 'h-7'
+  const labelW = 'w-24 sm:w-28'
+
+  const predictLabel = locale === 'es' ? 'Predecir' : 'Predict'
 
   return (
     <Link href={`/predictions/markets/${market.id}`}>
       <div
-        className={`group bg-slate-900 border border-slate-800 rounded-xl flex flex-col h-full transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-700 hover:shadow-lg border-t-2 ${accent} ${hoverGlow} ${
+        className={`group bg-[#1a2029] border border-[#2d3748] rounded-xl flex flex-col h-full transition-all duration-200 hover:-translate-y-0.5 hover:border-[#3d4a5c] hover:shadow-lg border-t-2 ${accent} ${hoverGlow} ${
           isTrending ? 'p-6 min-w-[280px]' : 'p-5'
         }`}
       >
@@ -195,7 +214,7 @@ export function MarketCard({ market, history = [], leadingOutcome, variant = 'de
         </div>
 
         {market.image_url && (
-          <div className="mb-3 -mx-5 -mt-1">
+          <div className={`mb-3 -mt-1 ${isTrending ? '-mx-6' : '-mx-5'}`}>
             <img
               src={market.image_url}
               alt=""
@@ -209,26 +228,57 @@ export function MarketCard({ market, history = [], leadingOutcome, variant = 'de
         </h3>
 
         <div className="mb-4">
-          <div className="flex items-baseline gap-2 mb-2">
-            <span className="text-3xl font-bold text-white">
-              {leadingOutcome
-                ? `${getOutcomeLabel(leadingOutcome, locale)} ${Math.round(toDisplayPercent(leadingOutcome.probability || 0))}%`
-                : `${Math.round(prob)}%`}
-            </span>
-            {!leadingOutcome && (
-              <span className="text-slate-400 text-sm">YES</span>
-            )}
-          </div>
-          <div className="h-2 bg-slate-800 rounded-full overflow-hidden flex">
-            <div
-              className="h-full rounded-l-full transition-all duration-300"
-              style={{ width: `${prob}%`, background: barColors.yes }}
-            />
-            <div
-              className="h-full rounded-r-full transition-all duration-300"
-              style={{ width: `${100 - prob}%`, background: barColors.no }}
-            />
-          </div>
+          {isBinaryLayout ? (
+            <div className="grid grid-cols-2 gap-2">
+              {raw.map((o, idx) => {
+                const pct = Math.round(toDisplayPercent(o.probability))
+                const label = getOutcomeLabel(o, locale)
+                const fillClass = idx === 0 ? 'bg-emerald-500/20' : 'bg-gray-500/20'
+                return (
+                  <div
+                    key={o.id}
+                    className={`relative flex items-center overflow-hidden rounded-lg bg-gray-800/50 px-3 ${barHBinary}`}
+                  >
+                    <div
+                      className={`absolute left-0 top-0 h-full rounded-lg ${fillClass}`}
+                      style={{ width: `${pct}%` }}
+                    />
+                    <div className="relative z-10 flex w-full min-w-0 justify-between gap-1 text-sm">
+                      <span className="truncate text-gray-200">{label}</span>
+                      <span className="shrink-0 font-semibold text-white">{pct}%</span>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-1.5">
+              {multiRows.map((o, idx) => {
+                const pct = Math.round(toDisplayPercent(o.probability))
+                const label = getOutcomeLabel(o, locale)
+                const fillClass = idx === 0 ? 'bg-emerald-500/20' : 'bg-gray-500/20'
+                return (
+                  <div key={o.id} className="flex items-center gap-3">
+                    <span className={`${labelW} shrink-0 truncate text-sm text-gray-300`}>{label}</span>
+                    <div className={`relative min-w-0 flex-1 overflow-hidden rounded-lg bg-gray-800/50 ${barHMulti}`}>
+                      <div
+                        className={`absolute left-0 top-0 h-full rounded-lg ${fillClass}`}
+                        style={{ width: `${pct}%` }}
+                      />
+                      <div className="relative z-10 flex h-full items-center justify-end px-2">
+                        <span className="w-[45px] text-right text-sm font-semibold text-white">{pct}%</span>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+              {moreCount > 0 && (
+                <p className="text-xs text-emerald-400/90">
+                  +{moreCount} {locale === 'es' ? 'más en el mercado' : 'more on market page'}
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         {history.length >= 2 && (
@@ -237,7 +287,8 @@ export function MarketCard({ market, history = [], leadingOutcome, variant = 'de
               data={history.map((h) => ({ value: toDisplayPercent(h.probability) }))}
               positive={
                 history.length >= 2
-                  ? toDisplayPercent(history[history.length - 1].probability) >= toDisplayPercent(history[0].probability)
+                  ? toDisplayPercent(history[history.length - 1].probability) >=
+                    toDisplayPercent(history[0].probability)
                   : true
               }
               width={120}
@@ -284,45 +335,48 @@ export function MarketCard({ market, history = [], leadingOutcome, variant = 'de
           </div>
         </div>
 
-        {market.sponsor_name && (
-          <div className="flex items-center gap-2 mt-auto pt-3 border-t border-slate-800">
-            {market.sponsor_logo_url ? (
-              <img
-                src={market.sponsor_logo_url}
-                alt={market.sponsor_name}
-                className="h-5 w-auto rounded object-contain bg-slate-800"
-              />
-            ) : null}
-            <span className="text-xs text-slate-500">
-              Sponsored by{' '}
-              {(market as { sponsor_url?: string }).sponsor_url ? (
-                <a
-                  href={(market as { sponsor_url?: string }).sponsor_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  className="text-emerald-400 hover:underline"
-                >
-                  {market.sponsor_name}
-                </a>
-              ) : (
-                market.sponsor_name
-              )}
-            </span>
-          </div>
-        )}
-        {market.status === 'resolved' ? (
-          <div className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-slate-700 text-slate-300 text-sm font-medium">
-            <CheckCircle className="w-4 h-4" />
-            Resolved — View details
-          </div>
-        ) : (
-          <div className="flex gap-2">
-            <span className="flex-1 py-2.5 px-3 rounded-lg bg-emerald-600/80 text-white text-sm font-medium text-center">
-              Predict
-            </span>
-          </div>
-        )}
+        <div className="mt-auto pt-3 border-t border-[#2d3748] space-y-3">
+          {market.sponsor_name && (
+            <div className="flex items-center gap-2">
+              {market.sponsor_logo_url ? (
+                <img
+                  src={market.sponsor_logo_url}
+                  alt={market.sponsor_name}
+                  className="h-5 w-auto rounded object-contain bg-slate-800"
+                />
+              ) : null}
+              <span className="text-xs text-slate-500">
+                Sponsored by{' '}
+                {(market as { sponsor_url?: string }).sponsor_url ? (
+                  <a
+                    href={(market as { sponsor_url?: string }).sponsor_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-emerald-400 hover:underline"
+                  >
+                    {market.sponsor_name}
+                  </a>
+                ) : (
+                  market.sponsor_name
+                )}
+              </span>
+            </div>
+          )}
+
+          {market.status === 'resolved' ? (
+            <div className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-slate-700 text-slate-300 text-sm font-medium">
+              <CheckCircle className="w-4 h-4" />
+              Resolved — View details
+            </div>
+          ) : (
+            <div className="flex justify-end">
+              <span className="inline-flex items-center rounded-lg bg-emerald-500 px-4 py-1.5 text-sm font-medium text-white transition-colors group-hover:bg-emerald-600">
+                {predictLabel} →
+              </span>
+            </div>
+          )}
+        </div>
       </div>
     </Link>
   )

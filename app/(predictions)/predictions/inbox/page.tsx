@@ -1,5 +1,14 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase-server'
 import { InboxClient } from './InboxClient'
+import { SITE_URL } from '@/lib/seo/site'
+
+export const metadata: Metadata = {
+  title: { absolute: 'Buzón Consciente | Crowd Conscious' },
+  alternates: {
+    canonical: `${SITE_URL}/predictions/inbox`,
+  },
+}
 
 export type InboxItem = {
   id: string

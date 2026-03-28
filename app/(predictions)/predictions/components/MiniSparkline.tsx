@@ -29,7 +29,8 @@ export function MiniSparkline({
   }
 
   const chartData = data.map((d) => ({ value: d.value }))
-  const stroke = positive ? '#10b981' : '#ef4444'
+  /* Upward trend: emerald; downward: neutral gray (not red — “no” isn’t failure) */
+  const stroke = positive ? '#34d399' : '#6b7280'
 
   return (
     <div className={className} style={{ width, height }}>

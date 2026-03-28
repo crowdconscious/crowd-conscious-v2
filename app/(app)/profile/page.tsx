@@ -1,7 +1,16 @@
-import { getCurrentUser } from '@/lib/auth-server'
+import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
+import { getCurrentUser } from '@/lib/auth-server'
 import { createClient } from '@/lib/supabase-server'
+import { SITE_URL } from '@/lib/seo/site'
 import ProfileClient from './ProfileClient'
+
+export const metadata: Metadata = {
+  title: { absolute: 'Tu Perfil | Crowd Conscious' },
+  alternates: {
+    canonical: `${SITE_URL}/profile`,
+  },
+}
 
 async function getProfile(userId: string) {
   const supabase = await createClient()

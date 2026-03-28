@@ -1,8 +1,8 @@
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { XCircle, Mail, ArrowLeft } from 'lucide-react'
+import LandingNav from '@/app/components/landing/LandingNav'
 
-const LandingNav = dynamic(() => import('@/app/components/landing/LandingNav'))
 const Footer = dynamic(() => import('@/components/Footer'))
 
 export default function SponsorCancelledPage() {

@@ -77,9 +77,9 @@ export const metadata: Metadata = {
       "Plataforma de predicciones gratuita donde tu opinión genera impacto comunitario real. Predice sobre deportes, política y más.",
     images: [
       {
-        url: "/images/og-default.png",
-        width: 512,
-        height: 512,
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
         alt: "Crowd Conscious — Predicciones con Propósito",
         type: "image/png",
       },
@@ -91,7 +91,7 @@ export const metadata: Metadata = {
     title: "Crowd Conscious — Predicciones Gratis con Impacto Real",
     description:
       "Predice sobre deportes, política y más. Marcas patrocinan el Fondo Consciente. 100% gratis.",
-    images: ["/images/og-default.png"],
+    images: ["/opengraph-image"],
     creator: "@crowdconscious",
     site: "@crowdconscious",
   },

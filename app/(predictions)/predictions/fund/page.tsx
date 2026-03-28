@@ -6,7 +6,7 @@ import { FundClient } from './FundClient'
 import { SITE_URL } from '@/lib/seo/site'
 
 export const metadata: Metadata = {
-  title: 'Fondo Consciente — Vota por Causas Comunitarias',
+  title: { absolute: 'Fondo Consciente | Crowd Conscious' },
   description:
     'El 40% de los patrocinios alimenta el Fondo Consciente. Los usuarios eligen a qué causas va el impacto. Transparente y gratuito.',
   alternates: {

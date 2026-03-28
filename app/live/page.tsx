@@ -7,6 +7,8 @@ import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase-server'
 import { getCurrentUser } from '@/lib/auth-server'
 import type { Database } from '@/types/database'
+import LandingNav from '@/app/components/landing/LandingNav'
+import Footer from '@/components/Footer'
 import { LiveEventCard } from '@/components/live/LiveEventCard'
 import { CreateLiveEventPanel } from '@/components/live/CreateLiveEventPanel'
 import { daysUntilWorldCup } from '@/lib/world-cup-kickoff'
@@ -15,7 +17,9 @@ import { daysUntilWorldCup } from '@/lib/world-cup-kickoff'
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: 'Conscious Live — Predicciones en Tiempo Real',
+  title: {
+    absolute: 'Conscious Live — Predicciones en Vivo | Mundial 2026',
+  },
   description:
     'Predice en vivo durante partidos del Mundial 2026. Votación en tiempo real, leaderboard y transmisión en vivo.',
   openGraph: {
@@ -108,7 +112,8 @@ export default async function LiveEventsPage() {
 
   return (
     <div className="min-h-screen bg-cc-bg text-cc-text-primary">
-      <div className="mx-auto max-w-3xl px-4 py-8">
+      <LandingNav />
+      <div className="mx-auto max-w-3xl px-4 pb-16 pt-24">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <Link
             href="/"
@@ -192,6 +197,7 @@ export default async function LiveEventsPage() {
           </section>
         )}
       </div>
+      <Footer />
     </div>
   )
 }

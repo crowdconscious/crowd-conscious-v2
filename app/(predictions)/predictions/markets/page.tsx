@@ -5,7 +5,7 @@ import type { Database } from '@/types/database'
 import { SITE_URL } from '@/lib/seo/site'
 
 export const metadata: Metadata = {
-  title: 'Todos los Mercados — Predicciones',
+  title: { absolute: 'Mercados | Crowd Conscious' },
   description:
     'Lista completa de mercados de predicción en Crowd Conscious: filtra por categoría, ordena por actividad o cierre.',
   alternates: {
@@ -172,23 +172,34 @@ async function getHistoryByMarket(): Promise<Record<string, { probability: numbe
   return byMarket
 }
 
-async function getLeadingOutcomesByMarket(): Promise<Record<string, { label: string; probability: number; translations?: unknown }>> {
+type OutcomeRow = {
+  id: string
+  label: string
+  probability: number
+  sort_order: number
+  translations?: unknown
+}
+
+async function getOutcomesByMarket(): Promise<Record<string, OutcomeRow[]>> {
   const supabase = await createClient()
   const { data } = await supabase
     .from('market_outcomes')
-    .select('market_id, label, probability, translations')
-    .order('probability', { ascending: false })
+    .select('id, market_id, label, probability, sort_order, translations')
 
-  const byMarket: Record<string, { label: string; probability: number; translations?: unknown }> = {}
+  const byMarket: Record<string, OutcomeRow[]> = {}
   for (const row of data ?? []) {
-    const id = row.market_id
-    if (!byMarket[id]) {
-      byMarket[id] = {
-        label: row.label,
-        probability: Number(row.probability),
-        translations: (row as { translations?: unknown }).translations,
-      }
-    }
+    const mid = row.market_id
+    if (!byMarket[mid]) byMarket[mid] = []
+    byMarket[mid].push({
+      id: row.id,
+      label: row.label,
+      probability: Number(row.probability),
+      sort_order: row.sort_order ?? 0,
+      translations: (row as { translations?: unknown }).translations,
+    })
+  }
+  for (const id of Object.keys(byMarket)) {
+    byMarket[id].sort((a, b) => b.probability - a.probability)
   }
   return byMarket
 }
@@ -202,7 +213,7 @@ export default async function PredictionsMarketsPage({
   const sort = params.sort || 'active'
   const category = params.category || 'all'
 
-  const [markets, trendingMarkets, quickMarkets, categoryCounts, resolvedCount, historyByMarket, leadingOutcomes] =
+  const [markets, trendingMarkets, quickMarkets, categoryCounts, resolvedCount, historyByMarket, outcomesByMarket] =
     await Promise.all([
       getMarkets(sort, category),
       getTrendingMarkets(),
@@ -210,7 +221,7 @@ export default async function PredictionsMarketsPage({
       getCategoryCounts(),
       getResolvedCount(),
       getHistoryByMarket(),
-      getLeadingOutcomesByMarket(),
+      getOutcomesByMarket(),
     ])
 
   return (
@@ -221,7 +232,7 @@ export default async function PredictionsMarketsPage({
       categoryCounts={categoryCounts}
       resolvedCount={resolvedCount}
       historyByMarket={historyByMarket}
-      leadingOutcomes={leadingOutcomes}
+      outcomesByMarket={outcomesByMarket}
       initialCategory={category}
       initialSort={sort}
     />

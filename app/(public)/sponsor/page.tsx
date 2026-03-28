@@ -1,11 +1,14 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase-server'
 import dynamic from 'next/dynamic'
+import LandingNav from '@/app/components/landing/LandingNav'
 import { SponsorPageClient } from './SponsorPageClient'
 import { SITE_URL } from '@/lib/seo/site'
 
 export const metadata: Metadata = {
-  title: 'Patrocina un Mercado — Tu Marca en el Mundial 2026',
+  title: {
+    absolute: 'Patrocina un Mercado — Tu Marca en el Mundial 2026 | Crowd Conscious',
+  },
   description:
     'Patrocina mercados de predicción en Crowd Conscious. 40% al Fondo Consciente. Precios desde $2,000 MXN. Mundial 2026 en Ciudad de México.',
   openGraph: {
@@ -23,7 +26,6 @@ export const metadata: Metadata = {
   },
 }
 
-const LandingNav = dynamic(() => import('@/app/components/landing/LandingNav'))
 const Footer = dynamic(() => import('@/components/Footer'))
 
 async function getMarkets() {

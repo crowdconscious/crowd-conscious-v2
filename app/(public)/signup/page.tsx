@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { createClientAuth } from '../../../lib/auth'
 import Link from 'next/link'
 import { setPendingVote } from '@/lib/guest-vote-storage'
+import { inputBaseClass } from '@/components/ui/input'
 
 /**
  * Persist guest-flow query params so the vote submits after email confirm + login.
@@ -33,7 +34,13 @@ function PendingVoteFromQuery() {
   return null
 }
 
-export default function SignUpPage() {
+function SignUpForm() {
+  const searchParams = useSearchParams()
+  const redirectParam = searchParams.get('redirect')
+  const loginHref = redirectParam
+    ? `/login?redirect=${encodeURIComponent(redirectParam)}`
+    : '/login'
+
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
@@ -93,13 +100,11 @@ export default function SignUpPage() {
       }
 
       if (data?.user) {
-        // CRITICAL: Supabase returns a fake user object with empty identities when user already exists
         if (data.user.identities?.length === 0) {
           setMessage('Este correo ya tiene una cuenta. Intenta iniciar sesión.')
           return
         }
 
-        // Belt-and-suspenders: ensure profile exists (trigger may be disabled)
         try {
           await fetch('/api/auth/ensure-profile', {
             method: 'POST',
@@ -123,20 +128,21 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
-      <Suspense fallback={null}>
-        <PendingVoteFromQuery />
-      </Suspense>
-      <div className="max-w-md w-full bg-white rounded-lg shadow-sm border border-slate-200 p-8">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-slate-900">Únete a Crowd Conscious</h1>
-          <p className="text-slate-600 mt-2">Crea tu cuenta y empieza a predecir</p>
+    <div className="flex min-h-screen items-center justify-center bg-[#0f1419] px-4">
+      <PendingVoteFromQuery />
+      <div className="w-full max-w-md rounded-xl border border-[#2d3748] bg-[#1a2029] p-8 shadow-xl">
+        <div className="mb-6 text-center">
+          <h1 className="text-2xl font-bold text-white">Únete a Crowd Conscious</h1>
+          <p className="mt-2 text-sm text-gray-400">Crea tu cuenta y empieza a predecir</p>
+          <p className="mt-4 text-sm font-medium text-emerald-400/90">
+            100% gratis · Sin dinero real · XP y leaderboard
+          </p>
         </div>
 
-        <form onSubmit={handleSignUp} className="space-y-6">
+        <form onSubmit={handleSignUp} className="space-y-5">
           <div>
-            <label htmlFor="fullName" className="block text-sm font-medium text-slate-700 mb-2">
-              Nombre Completo
+            <label htmlFor="fullName" className="mb-2 block text-sm font-medium text-gray-300">
+              Nombre completo
             </label>
             <input
               id="fullName"
@@ -144,14 +150,15 @@ export default function SignUpPage() {
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-              placeholder="Tu nombre completo"
+              className={inputBaseClass}
+              placeholder="Tu nombre"
+              autoComplete="name"
             />
           </div>
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-2">
-              Correo Electrónico
+            <label htmlFor="email" className="mb-2 block text-sm font-medium text-gray-300">
+              Correo electrónico
             </label>
             <input
               id="email"
@@ -159,13 +166,14 @@ export default function SignUpPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-              placeholder="Tu correo electrónico"
+              className={inputBaseClass}
+              placeholder="tu@correo.com"
+              autoComplete="email"
             />
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-2">
+            <label htmlFor="password" className="mb-2 block text-sm font-medium text-gray-300">
               Contraseña
             </label>
             <input
@@ -175,17 +183,20 @@ export default function SignUpPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-              placeholder="Crea una contraseña (mín. 6 caracteres)"
+              className={inputBaseClass}
+              placeholder="Mínimo 6 caracteres"
+              autoComplete="new-password"
             />
           </div>
 
           {message && (
-            <div className={`p-3 rounded-lg text-sm ${
-              message.includes('Revisa tu correo')
-                ? 'bg-green-50 text-green-700 border border-green-200'
-                : 'bg-red-50 text-red-700 border border-red-200'
-            }`}>
+            <div
+              className={`rounded-lg border p-3 text-sm ${
+                message.includes('Revisa tu correo')
+                  ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'
+                  : 'border-red-500/30 bg-red-950/40 text-red-200'
+              }`}
+            >
               {message}
             </div>
           )}
@@ -193,27 +204,41 @@ export default function SignUpPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-teal-600 hover:bg-teal-700 disabled:bg-slate-400 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+            className="w-full rounded-lg bg-emerald-500 py-3 font-semibold text-white transition-colors hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading ? 'Creando cuenta...' : 'Crear cuenta'}
           </button>
         </form>
 
         <div className="mt-6 text-center">
-          <p className="text-slate-600">
+          <p className="text-sm text-gray-400">
             ¿Ya tienes cuenta?{' '}
-            <Link href="/login" className="text-teal-600 hover:text-teal-700 font-medium">
-              Iniciar Sesión
+            <Link href={loginHref} className="font-medium text-emerald-400 hover:text-emerald-300">
+              Iniciar sesión
             </Link>
           </p>
         </div>
 
-        <div className="mt-4 text-center">
-          <Link href="/" className="text-slate-500 hover:text-slate-700 text-sm">
-            ← Volver al Inicio
+        <div className="mt-6 text-center">
+          <Link href="/" className="text-sm text-gray-500 transition-colors hover:text-gray-300">
+            ← Volver
           </Link>
         </div>
       </div>
     </div>
+  )
+}
+
+export default function SignUpPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-[#0f1419]">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
+        </div>
+      }
+    >
+      <SignUpForm />
+    </Suspense>
   )
 }

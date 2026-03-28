@@ -1,13 +1,17 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase-server'
 import dynamic from 'next/dynamic'
+import LandingNav from '@/app/components/landing/LandingNav'
 import { Suspense } from 'react'
 import type { Database } from '@/types/database'
 import { SITE_URL } from '@/lib/seo/site'
 import type { MarketCardOutcome } from '@/components/MarketCard'
 
 export const metadata: Metadata = {
-  title: 'Mercados de Predicción — Explora y Predice Gratis',
+  title: {
+    absolute:
+      'Mercados de Predicción — Deportes, Política, Mundial 2026 | Crowd Conscious',
+  },
   description:
     'Explora mercados activos sobre deportes, política, Mundial 2026 y más. Vota gratis y sigue las probabilidades en tiempo real.',
   alternates: {
@@ -21,7 +25,6 @@ export const metadata: Metadata = {
 
 type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row']
 
-const LandingNav = dynamic(() => import('@/app/components/landing/LandingNav'))
 const Footer = dynamic(() => import('@/components/Footer'))
 const PublicMarketsClient = dynamic(() => import('./PublicMarketsClient'))
 

@@ -2,8 +2,8 @@ import { createAdminClient } from '@/lib/supabase-admin'
 import { notFound } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { BarChart3, Users, Heart, ExternalLink } from 'lucide-react'
+import LandingNav from '@/app/components/landing/LandingNav'
 
-const LandingNav = dynamic(() => import('@/app/components/landing/LandingNav'))
 const Footer = dynamic(() => import('@/components/Footer'))
 
 async function getSponsorReport(id: string, token: string | null) {
