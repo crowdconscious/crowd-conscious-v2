@@ -136,6 +136,11 @@ export interface Database {
           total_fund_impact: number | null
           sponsor_name: string | null
           sponsor_logo_url: string | null
+          cover_image_url: string | null
+          team_a_name: string | null
+          team_a_flag: string | null
+          team_b_name: string | null
+          team_b_flag: string | null
           created_by: string | null
           created_at: string
           updated_at: string
@@ -156,6 +161,11 @@ export interface Database {
           total_fund_impact?: number | null
           sponsor_name?: string | null
           sponsor_logo_url?: string | null
+          cover_image_url?: string | null
+          team_a_name?: string | null
+          team_a_flag?: string | null
+          team_b_name?: string | null
+          team_b_flag?: string | null
           created_by?: string | null
           created_at?: string
           updated_at?: string
@@ -176,6 +186,11 @@ export interface Database {
           total_fund_impact?: number | null
           sponsor_name?: string | null
           sponsor_logo_url?: string | null
+          cover_image_url?: string | null
+          team_a_name?: string | null
+          team_a_flag?: string | null
+          team_b_name?: string | null
+          team_b_flag?: string | null
           created_by?: string | null
           created_at?: string
           updated_at?: string
@@ -288,6 +303,11 @@ export interface Database {
           is_micro_market: boolean | null
           sponsor_label: string | null
           expires_in_minutes: number | null
+          is_pulse: boolean
+          pulse_client_name: string | null
+          pulse_client_logo: string | null
+          pulse_client_email: string | null
+          pulse_embed_enabled: boolean
           market_type?: string | null
           total_volume: number
           fee_percentage: number
@@ -323,6 +343,11 @@ export interface Database {
           is_micro_market?: boolean | null
           sponsor_label?: string | null
           expires_in_minutes?: number | null
+          is_pulse?: boolean
+          pulse_client_name?: string | null
+          pulse_client_logo?: string | null
+          pulse_client_email?: string | null
+          pulse_embed_enabled?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -351,6 +376,11 @@ export interface Database {
           is_micro_market?: boolean | null
           sponsor_label?: string | null
           expires_in_minutes?: number | null
+          is_pulse?: boolean
+          pulse_client_name?: string | null
+          pulse_client_logo?: string | null
+          pulse_client_email?: string | null
+          pulse_embed_enabled?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -712,6 +742,15 @@ export interface Database {
       increment_live_event_fund_impact: {
         Args: { p_live_event_id: string; p_delta: number }
         Returns: undefined
+      }
+      execute_live_anonymous_market_vote: {
+        Args: {
+          p_guest_id: string
+          p_market_id: string
+          p_outcome_id: string
+          p_confidence: number
+        }
+        Returns: Json
       }
     }
     Enums: {

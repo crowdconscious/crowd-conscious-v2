@@ -86,11 +86,31 @@ export function AdminLiveControls({
   const [sponsorLabel, setSponsorLabel] = useState('')
   const [resolvePick, setResolvePick] = useState<Record<string, string>>({})
   const [, setTick] = useState(0)
+  const [coverImageUrl, setCoverImageUrl] = useState(event.cover_image_url ?? '')
+  const [teamAName, setTeamAName] = useState(event.team_a_name ?? '')
+  const [teamAFlag, setTeamAFlag] = useState(event.team_a_flag ?? '')
+  const [teamBName, setTeamBName] = useState(event.team_b_name ?? '')
+  const [teamBFlag, setTeamBFlag] = useState(event.team_b_flag ?? '')
 
   useEffect(() => {
     const id = setInterval(() => setTick((t) => t + 1), 1000)
     return () => clearInterval(id)
   }, [])
+
+  useEffect(() => {
+    setCoverImageUrl(event.cover_image_url ?? '')
+    setTeamAName(event.team_a_name ?? '')
+    setTeamAFlag(event.team_a_flag ?? '')
+    setTeamBName(event.team_b_name ?? '')
+    setTeamBFlag(event.team_b_flag ?? '')
+  }, [
+    event.id,
+    event.cover_image_url,
+    event.team_a_name,
+    event.team_a_flag,
+    event.team_b_name,
+    event.team_b_flag,
+  ])
 
   const t = useMemo(
     () => ({
@@ -113,13 +133,19 @@ export function AdminLiveControls({
       votes: locale === 'es' ? 'Votos (evento)' : 'Event votes',
       markets: locale === 'es' ? 'Mercados creados / resueltos' : 'Markets created / resolved',
       active: locale === 'es' ? 'Activos' : 'Active',
+      branding: locale === 'es' ? 'Marca del evento' : 'Event branding',
+      coverUrl: locale === 'es' ? 'Imagen de portada (URL)' : 'Cover image URL',
+      saveBranding: locale === 'es' ? 'Guardar marca' : 'Save branding',
+      teamA: locale === 'es' ? 'Equipo A' : 'Team A',
+      teamB: locale === 'es' ? 'Equipo B' : 'Team B',
+      flagHint: locale === 'es' ? 'Emoji o URL de imagen' : 'Emoji or image URL',
     }),
     [locale]
   )
 
   const patchEvent = useCallback(
-    async (payload: Record<string, unknown>) => {
-      setBusy('event')
+    async (payload: Record<string, unknown>, busyKey: string = 'event') => {
+      setBusy(busyKey)
       try {
         const res = await fetch(`/api/live/events/${eventId}`, {
           method: 'PATCH',
@@ -301,6 +327,74 @@ export function AdminLiveControls({
             <p className="mt-1 text-sm text-slate-500">
               {t.schedule}: <span className="text-slate-300">{event.status}</span>
             </p>
+          </section>
+
+          <section className="border-t border-white/10 pt-3">
+            <h3 className="mb-2 font-semibold text-teal-300">{t.branding}</h3>
+            <label className="mb-2 block">
+              <span className="text-sm text-slate-400">{t.coverUrl}</span>
+              <input
+                value={coverImageUrl}
+                onChange={(e) => setCoverImageUrl(e.target.value)}
+                className="mt-0.5 min-h-[44px] w-full rounded-lg border border-white/10 bg-black/40 px-2 py-2 text-sm"
+                placeholder="https://..."
+              />
+            </label>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <label className="block">
+                <span className="text-sm text-slate-400">
+                  {t.teamA} · {t.flagHint}
+                </span>
+                <input
+                  value={teamAName}
+                  onChange={(e) => setTeamAName(e.target.value)}
+                  className="mt-0.5 min-h-[44px] w-full rounded-lg border border-white/10 bg-black/40 px-2 py-2 text-sm"
+                  placeholder={locale === 'es' ? 'Nombre' : 'Name'}
+                />
+                <input
+                  value={teamAFlag}
+                  onChange={(e) => setTeamAFlag(e.target.value)}
+                  className="mt-1 min-h-[44px] w-full rounded-lg border border-white/10 bg-black/40 px-2 py-2 text-sm"
+                  placeholder="🇲🇽"
+                />
+              </label>
+              <label className="block">
+                <span className="text-sm text-slate-400">
+                  {t.teamB} · {t.flagHint}
+                </span>
+                <input
+                  value={teamBName}
+                  onChange={(e) => setTeamBName(e.target.value)}
+                  className="mt-0.5 min-h-[44px] w-full rounded-lg border border-white/10 bg-black/40 px-2 py-2 text-sm"
+                  placeholder={locale === 'es' ? 'Nombre' : 'Name'}
+                />
+                <input
+                  value={teamBFlag}
+                  onChange={(e) => setTeamBFlag(e.target.value)}
+                  className="mt-1 min-h-[44px] w-full rounded-lg border border-white/10 bg-black/40 px-2 py-2 text-sm"
+                  placeholder="🇩🇪"
+                />
+              </label>
+            </div>
+            <button
+              type="button"
+              disabled={busy !== null}
+              onClick={() =>
+                patchEvent(
+                  {
+                    cover_image_url: coverImageUrl.trim() || null,
+                    team_a_name: teamAName.trim() || null,
+                    team_a_flag: teamAFlag.trim() || null,
+                    team_b_name: teamBName.trim() || null,
+                    team_b_flag: teamBFlag.trim() || null,
+                  },
+                  'branding'
+                )
+              }
+              className="mt-3 flex min-h-[44px] w-full items-center justify-center rounded-lg border border-teal-500/40 bg-teal-950/40 px-4 py-2 text-sm font-semibold text-teal-100 hover:bg-teal-900/40 disabled:opacity-50"
+            >
+              {busy === 'branding' ? <Loader2 className="h-4 w-4 animate-spin" /> : t.saveBranding}
+            </button>
           </section>
 
           <section className="border-t border-white/10 pt-3">

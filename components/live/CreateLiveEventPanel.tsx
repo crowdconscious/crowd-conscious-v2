@@ -14,6 +14,11 @@ export function CreateLiveEventPanel({ locale }: CreateLiveEventPanelProps) {
   const [matchDate, setMatchDate] = useState('')
   const [youtubeUrl, setYoutubeUrl] = useState('')
   const [sponsorName, setSponsorName] = useState('')
+  const [coverImageUrl, setCoverImageUrl] = useState('')
+  const [teamAName, setTeamAName] = useState('')
+  const [teamAFlag, setTeamAFlag] = useState('')
+  const [teamBName, setTeamBName] = useState('')
+  const [teamBFlag, setTeamBFlag] = useState('')
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
 
@@ -26,6 +31,10 @@ export function CreateLiveEventPanel({ locale }: CreateLiveEventPanelProps) {
           match: 'Fecha y hora del partido',
           youtube: 'URL de YouTube (opcional)',
           sponsor: 'Patrocinador del evento (opcional)',
+          branding: 'Marca (opcional)',
+          cover: 'URL imagen de portada',
+          teamA: 'Equipo A (nombre + emoji o URL)',
+          teamB: 'Equipo B (nombre + emoji o URL)',
           submit: 'Crear evento',
           required: 'Título y fecha son obligatorios.',
         }
@@ -36,6 +45,10 @@ export function CreateLiveEventPanel({ locale }: CreateLiveEventPanelProps) {
           match: 'Kickoff date & time',
           youtube: 'YouTube URL (optional)',
           sponsor: 'Event sponsor (optional)',
+          branding: 'Branding (optional)',
+          cover: 'Cover image URL',
+          teamA: 'Team A (name + emoji or URL)',
+          teamB: 'Team B (name + emoji or URL)',
           submit: 'Create event',
           required: 'Title and date are required.',
         }
@@ -58,6 +71,11 @@ export function CreateLiveEventPanel({ locale }: CreateLiveEventPanelProps) {
           match_date,
           youtube_url: youtubeUrl.trim() || undefined,
           sponsor_name: sponsorName.trim() || undefined,
+          cover_image_url: coverImageUrl.trim() || undefined,
+          team_a_name: teamAName.trim() || undefined,
+          team_a_flag: teamAFlag.trim() || undefined,
+          team_b_name: teamBName.trim() || undefined,
+          team_b_flag: teamBFlag.trim() || undefined,
         }),
       })
       const json = (await res.json()) as { error?: string; event?: { id: string } }
@@ -127,6 +145,50 @@ export function CreateLiveEventPanel({ locale }: CreateLiveEventPanelProps) {
             className="min-h-[44px] w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-slate-600"
           />
         </label>
+
+        <p className="text-sm font-medium text-slate-300">{t.branding}</p>
+        <label className="block">
+          <span className="mb-1 block text-sm text-slate-400">{t.cover}</span>
+          <input
+            type="url"
+            value={coverImageUrl}
+            onChange={(e) => setCoverImageUrl(e.target.value)}
+            className="min-h-[44px] w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-slate-600"
+            placeholder="https://..."
+          />
+        </label>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="block">
+            <span className="mb-1 block text-sm text-slate-400">{t.teamA}</span>
+            <input
+              value={teamAName}
+              onChange={(e) => setTeamAName(e.target.value)}
+              className="mb-1 min-h-[44px] w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white"
+              placeholder={locale === 'es' ? 'Nombre' : 'Name'}
+            />
+            <input
+              value={teamAFlag}
+              onChange={(e) => setTeamAFlag(e.target.value)}
+              className="min-h-[44px] w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white"
+              placeholder="🇲🇽"
+            />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-sm text-slate-400">{t.teamB}</span>
+            <input
+              value={teamBName}
+              onChange={(e) => setTeamBName(e.target.value)}
+              className="mb-1 min-h-[44px] w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white"
+              placeholder={locale === 'es' ? 'Nombre' : 'Name'}
+            />
+            <input
+              value={teamBFlag}
+              onChange={(e) => setTeamBFlag(e.target.value)}
+              className="min-h-[44px] w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white"
+              placeholder="🇩🇪"
+            />
+          </label>
+        </div>
 
         {err && (
           <p className="rounded-lg border border-red-500/40 bg-red-950/50 px-3 py-2 text-sm text-red-200" role="alert">

@@ -67,6 +67,12 @@ export default function CreateMarketPage() {
   const [enDescription, setEnDescription] = useState('')
   const [enResolutionCriteria, setEnResolutionCriteria] = useState('')
 
+  const [isPulse, setIsPulse] = useState(false)
+  const [pulseClientName, setPulseClientName] = useState('')
+  const [pulseClientLogo, setPulseClientLogo] = useState('')
+  const [pulseClientEmail, setPulseClientEmail] = useState('')
+  const [successIsPulse, setSuccessIsPulse] = useState(false)
+
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [sourceSignals, setSourceSignals] = useState<string[]>([])
@@ -324,11 +330,16 @@ export default function CreateMarketPage() {
                   },
                 }
               : undefined,
+          is_pulse: isPulse,
+          pulse_client_name: isPulse ? pulseClientName.trim() || null : null,
+          pulse_client_logo: isPulse ? pulseClientLogo.trim() || null : null,
+          pulse_client_email: isPulse ? pulseClientEmail.trim() || null : null,
         }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to create market')
       const marketId = data.market_id
+      setSuccessIsPulse(isPulse)
 
       // Mark suggestion as used when created from suggestion_id
       if (suggestionId) {
@@ -369,6 +380,14 @@ export default function CreateMarketPage() {
             >
               View market
             </Link>
+            {successIsPulse && (
+              <Link
+                href={`/pulse/${successId}`}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-emerald-500/50 bg-emerald-950/50 text-emerald-200 font-medium hover:bg-emerald-900/40"
+              >
+                Pulse results page
+              </Link>
+            )}
             <Link
               href="/predictions/admin/create-market"
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-800 text-gray-200 font-medium hover:bg-gray-700 border border-cc-border"
@@ -422,6 +441,47 @@ export default function CreateMarketPage() {
 
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
+          <div className="flex items-center gap-3">
+            <label className="flex cursor-pointer items-center gap-2">
+              <input
+                type="checkbox"
+                checked={isPulse}
+                onChange={(e) => setIsPulse(e.target.checked)}
+                className="h-4 w-4 accent-emerald-500"
+              />
+              <span className="text-sm font-medium text-white">
+                Conscious Pulse (B2B sentiment)
+              </span>
+            </label>
+          </div>
+
+          {isPulse && (
+            <div className="space-y-4 rounded-xl border border-emerald-500/20 bg-[#0f1419]/80 p-4">
+              <h3 className="text-sm font-bold text-emerald-400">Pulse client info</h3>
+              <input
+                type="text"
+                placeholder="Client name (e.g. Alcaldía Cuauhtémoc)"
+                value={pulseClientName}
+                onChange={(e) => setPulseClientName(e.target.value)}
+                className={ccInput}
+              />
+              <input
+                type="url"
+                placeholder="Client logo URL"
+                value={pulseClientLogo}
+                onChange={(e) => setPulseClientLogo(e.target.value)}
+                className={ccInput}
+              />
+              <input
+                type="email"
+                placeholder="Client email"
+                value={pulseClientEmail}
+                onChange={(e) => setPulseClientEmail(e.target.value)}
+                className={ccInput}
+              />
+            </div>
+          )}
+
           {/* Basic info */}
           <section className={ccSection}>
             <h2 className="text-lg font-semibold text-white mb-4">Basic info</h2>

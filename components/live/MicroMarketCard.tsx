@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Check, Loader2 } from 'lucide-react'
 import type { Database } from '@/types/database'
@@ -55,6 +56,9 @@ export function MicroMarketCard({
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [now, setNow] = useState(() => Date.now())
 
+  const allowAnonymousVote =
+    market.live_event_id != null || market.is_micro_market === true
+
   const isResolved = market.status === 'resolved'
   const hasVoted = !!myVote && !isResolved
 
@@ -82,7 +86,10 @@ export function MicroMarketCard({
     async function load() {
       setLoadingVote(true)
       try {
-        const res = await fetch(`/api/predictions/markets/${market.id}/my-vote`, { cache: 'no-store' })
+        const res = await fetch(`/api/predictions/markets/${market.id}/my-vote`, {
+          cache: 'no-store',
+          credentials: 'same-origin',
+        })
         if (!res.ok) {
           setMyVote(null)
           return
@@ -95,6 +102,7 @@ export function MicroMarketCard({
           xp_earned: number
           is_correct: boolean | null
           bonus_xp: number
+          is_anonymous?: boolean
         } | null
         if (v) {
           setMyVote({
@@ -127,12 +135,14 @@ export function MicroMarketCard({
 
   const handleVote = useCallback(async () => {
     if (!selectedOutcomeId || isSubmitting || isResolved || isClosed || hasVoted) return
+    if (!currentUserId && !allowAnonymousVote) return
     setIsSubmitting(true)
     setErrorMsg(null)
     try {
       const res = await fetch('/api/predictions/vote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
         body: JSON.stringify({
           market_id: market.id,
           outcome_id: selectedOutcomeId,
@@ -140,14 +150,45 @@ export function MicroMarketCard({
         }),
       })
       const data = await res.json().catch(() => ({}))
+      if (data.alreadyVoted === true) {
+        const rv = await fetch(`/api/predictions/markets/${market.id}/my-vote`, {
+          cache: 'no-store',
+          credentials: 'same-origin',
+        })
+        const j = await rv.json().catch(() => ({}))
+        const v = j.vote as {
+          outcome_id: string
+          confidence: number
+          xp_earned: number
+          is_correct: boolean | null
+          bonus_xp: number
+        } | null
+        if (v) {
+          setMyVote({
+            outcome_id: v.outcome_id,
+            confidence: v.confidence,
+            xp_earned: v.xp_earned,
+            is_correct: v.is_correct,
+            bonus_xp: v.bonus_xp ?? 0,
+          })
+          setSelectedOutcomeId(v.outcome_id)
+          setConfidence(v.confidence)
+        } else {
+          setErrorMsg(locale === 'es' ? 'Ya votaste en este mercado' : 'Already voted on this market')
+        }
+        onVoteSuccess?.()
+        return
+      }
       if (!res.ok) {
         setErrorMsg(typeof data.error === 'string' ? data.error : locale === 'es' ? 'No se pudo votar' : 'Vote failed')
         return
       }
+      const xp =
+        typeof data.xp_earned === 'number' ? data.xp_earned : data.isAnonymous ? 0 : 5
       setMyVote({
         outcome_id: selectedOutcomeId,
         confidence,
-        xp_earned: typeof data.xp_earned === 'number' ? data.xp_earned : 5,
+        xp_earned: xp,
         is_correct: null,
         bonus_xp: 0,
       })
@@ -167,6 +208,8 @@ export function MicroMarketCard({
     confidence,
     onVoteSuccess,
     locale,
+    currentUserId,
+    allowAnonymousVote,
   ])
 
   const fmtTime = (sec: number) => {
@@ -185,7 +228,7 @@ export function MicroMarketCard({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2, ease: 'easeOut' }}
-      className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900/95 to-slate-950 p-4 text-sm shadow-xl shadow-black/30 sm:p-5"
+      className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#1a2029] p-4 text-sm shadow-xl shadow-black/30 sm:p-5"
     >
       {market.sponsor_label && (
         <div className="mb-3 inline-flex rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-sm font-medium text-amber-200/95">
@@ -313,9 +356,30 @@ export function MicroMarketCard({
       )}
 
       {hasVoted && !isResolved && (
-        <div className="mt-4 flex items-center gap-2 text-emerald-400">
-          <Check className="h-5 w-5" />
-          <span className="font-medium">{locale === 'es' ? '¡Voto registrado!' : 'Vote recorded!'}</span>
+        <div className="mt-4 space-y-2">
+          <div className="flex items-center gap-2 text-emerald-400">
+            <Check className="h-5 w-5 shrink-0" />
+            <span className="font-medium">{locale === 'es' ? '¡Voto registrado!' : 'Vote recorded!'}</span>
+          </div>
+          {!currentUserId && allowAnonymousVote && (
+            <p className="text-sm leading-relaxed text-slate-400">
+              {locale === 'es' ? (
+                <>
+                  Crea una cuenta para ganar XP y seguir tus predicciones.{' '}
+                  <Link href="/signup" className="font-medium text-emerald-400 underline underline-offset-2 hover:text-emerald-300">
+                    Registrarse
+                  </Link>
+                </>
+              ) : (
+                <>
+                  Sign up to earn XP and track your predictions.{' '}
+                  <Link href="/signup" className="font-medium text-emerald-400 underline underline-offset-2 hover:text-emerald-300">
+                    Create account
+                  </Link>
+                </>
+              )}
+            </p>
+          )}
         </div>
       )}
 

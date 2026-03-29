@@ -228,7 +228,7 @@ export function LiveVotingPanel({
             ref={scrollRef}
             onTouchStart={onTouchStart}
             onTouchEnd={onTouchEnd}
-            className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 scrollbar-thin [-webkit-overflow-scrolling:touch]"
+            className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-2 [-webkit-overflow-scrolling:touch] scrollbar-hide"
           >
             {sortedActive.map((m) => (
               <div

@@ -517,3 +517,12 @@ input:focus, textarea:focus, select:focus {
   background: rgb(15 23 42);
   box-shadow: 0 2px 8px rgb(0 0 0 / 0.35);
 }
+
+/* Conscious Live: horizontal snap carousel without visible scrollbar */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

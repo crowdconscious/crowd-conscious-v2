@@ -2,9 +2,12 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { Headphones, Radio } from 'lucide-react'
+import { extractYoutubeVideoId } from '@/lib/youtube'
 
 export interface StreamEmbedProps {
   youtubeVideoId: string | null
+  /** Fallback when `youtubeVideoId` is missing (e.g. only URL was stored). */
+  youtubeUrl?: string | null
   isLive: boolean
   /** ISO string for countdown when stream not ready */
   matchDate: string
@@ -30,6 +33,7 @@ function formatCountdown(ms: number, locale: 'en' | 'es'): string {
 
 export function StreamEmbed({
   youtubeVideoId,
+  youtubeUrl,
   isLive,
   matchDate,
   embedReplay = false,
@@ -40,6 +44,16 @@ export function StreamEmbed({
     localeProp ??
     (typeof navigator !== 'undefined' && navigator.language?.startsWith('en') ? 'en' : 'es')
 
+  const resolvedVideoId = useMemo(() => {
+    const id = youtubeVideoId?.trim()
+    if (id) return id
+    return extractYoutubeVideoId(youtubeUrl ?? null)
+  }, [youtubeVideoId, youtubeUrl])
+
+  const watchHref = resolvedVideoId
+    ? `https://www.youtube.com/watch?v=${resolvedVideoId}`
+    : youtubeUrl?.trim() || null
+
   const target = useMemo(() => new Date(matchDate).getTime(), [matchDate])
 
   useEffect(() => {
@@ -48,42 +62,47 @@ export function StreamEmbed({
   }, [])
 
   const remaining = Math.max(0, target - now)
-  const showPlaceholder = !youtubeVideoId || (!isLive && !embedReplay)
+  const showPlaceholder = !resolvedVideoId || (!isLive && !embedReplay)
 
   if (showPlaceholder) {
     return (
-      <div className="relative w-full max-w-full overflow-hidden rounded-xl bg-gradient-to-b from-slate-900 to-black shadow-lg shadow-black/40 ring-1 ring-white/10 aspect-video min-h-0">
+      <div className="relative aspect-video min-h-0 w-full max-w-full overflow-hidden rounded-xl bg-[#1a2029] shadow-lg shadow-black/40 ring-1 ring-white/10">
         <div className="flex h-full min-h-[12rem] flex-col items-center justify-center px-4 py-8 text-center sm:min-h-0 sm:px-6">
           <Radio className="mb-3 h-10 w-10 text-slate-500" aria-hidden />
           <p className="text-base font-semibold text-white/95 sm:text-lg">
-            {locale === 'es' ? 'Transmisión no disponible aún' : 'Stream not available yet'}
-          </p>
-          <p className="mt-1 text-sm text-slate-400">
-            {locale === 'es'
-              ? 'Mientras tanto, puedes seguir el audio en YouTube.'
-              : 'You can follow audio on YouTube in the meantime.'}
+            {locale === 'es' ? 'La transmisión empieza pronto' : 'Stream starting soon'}
           </p>
           <p
-            className="mt-6 font-mono text-3xl font-bold tabular-nums text-emerald-400/95 sm:text-4xl"
+            className="mt-2 animate-pulse text-lg font-semibold text-emerald-400 sm:text-xl"
             suppressHydrationWarning
           >
             {formatCountdown(remaining, locale)}
           </p>
-          {youtubeVideoId && (
+          {watchHref && (
             <a
-              href={`https://www.youtube.com/watch?v=${youtubeVideoId}`}
+              href={watchHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-6 inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-teal-200 transition hover:bg-white/10"
+              className="mt-6 inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-emerald-500/35 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-300 transition hover:bg-emerald-500/20"
             >
               <Headphones className="h-4 w-4 shrink-0" />
-              {locale === 'es' ? 'Abrir en YouTube (audio / video)' : 'Open in YouTube (audio / video)'}
+              {locale === 'es' ? 'Ver en YouTube →' : 'Watch on YouTube →'}
             </a>
           )}
         </div>
       </div>
     )
   }
+
+  const embedParams = new URLSearchParams({
+    autoplay: embedReplay ? '0' : '1',
+    mute: embedReplay ? '0' : '1',
+    playsinline: '1',
+    controls: '1',
+    modestbranding: '1',
+    rel: '0',
+  })
+  if (isLive) embedParams.set('enablejsapi', '1')
 
   return (
     <div className="relative aspect-video w-full max-w-full min-h-0 overflow-hidden rounded-xl bg-black shadow-lg shadow-black/40 ring-1 ring-white/10">
@@ -98,10 +117,11 @@ export function StreamEmbed({
       )}
       <iframe
         title="Conscious Live stream"
-        src={`https://www.youtube.com/embed/${youtubeVideoId}?autoplay=${embedReplay ? 0 : 1}&mute=${embedReplay ? 0 : 1}&controls=1&modestbranding=1${isLive ? '&enablejsapi=1' : ''}`}
-        className="absolute inset-0 h-full w-full"
+        src={`https://www.youtube.com/embed/${resolvedVideoId}?${embedParams.toString()}`}
+        className="absolute inset-0 h-full w-full border-0"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
         allowFullScreen
+        loading="eager"
       />
     </div>
   )

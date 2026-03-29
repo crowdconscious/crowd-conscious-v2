@@ -114,7 +114,7 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
 
   if (evLoading && !event) {
     return (
-      <div className="min-h-screen bg-[#070b10] px-4 py-10">
+      <div className="min-h-screen bg-[#0f1419] px-4 py-10">
         <div className="mx-auto max-w-3xl animate-pulse space-y-4">
           <div className="h-10 w-40 rounded bg-slate-800" />
           <div className="aspect-video rounded-xl bg-slate-800" />
@@ -126,7 +126,7 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
 
   if (evError || !event) {
     return (
-      <div className="min-h-screen bg-[#070b10] px-4 py-16 text-center">
+      <div className="min-h-screen bg-[#0f1419] px-4 py-16 text-center">
         <p className="text-slate-400">
           {locale === 'es' ? 'Evento no encontrado.' : 'Event not found.'}
         </p>
@@ -139,7 +139,7 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
 
   if (isCancelled) {
     return (
-      <div className="min-h-screen bg-[#070b10] px-4 py-10">
+      <div className="min-h-screen bg-[#0f1419] px-4 py-10">
         <div className="mx-auto max-w-2xl">
           <header className="mb-8 flex flex-wrap items-center gap-3 border-b border-white/10 pb-4">
             <Link href="/live" className="inline-flex items-center gap-2 text-slate-400 hover:text-teal-400">
@@ -156,33 +156,79 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
   }
 
   const streamLive = isLive
-  const embedReplay = isCompleted && !!event.youtube_video_id
+  const embedReplay = isCompleted && !!(event.youtube_video_id || event.youtube_url)
+
+  const hasTeamBranding = !!(
+    event.team_a_name ||
+    event.team_b_name ||
+    event.team_a_flag ||
+    event.team_b_flag ||
+    event.cover_image_url
+  )
+
+  function teamFlagEl(value: string | null) {
+    if (!value) return <span className="text-2xl leading-none">🏟️</span>
+    if (value.startsWith('http://') || value.startsWith('https://')) {
+      return (
+        <img src={value} alt="" className="h-8 w-8 shrink-0 rounded object-cover ring-1 ring-white/10" />
+      )
+    }
+    return <span className="text-2xl leading-none">{value}</span>
+  }
 
   const header = (
-    <header className="mb-6 flex flex-wrap items-center gap-3 border-b border-white/10 pb-4">
-      <Link
-        href="/live"
-        className="inline-flex items-center gap-2 rounded-lg text-slate-400 transition hover:text-teal-400"
-        aria-label={locale === 'es' ? 'Volver' : 'Back'}
-      >
-        <ArrowLeft className="h-5 w-5" />
-      </Link>
-      <div className="min-w-0 flex-1">
-        <h1 className="truncate text-xl font-bold text-white sm:text-2xl">{title}</h1>
-      </div>
-      {streamLive && (
-        <span className="inline-flex items-center gap-2 rounded-full bg-red-600/90 px-3 py-1 text-xs font-semibold uppercase text-white">
-          <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-white" />
-          </span>
-          EN VIVO
-        </span>
+    <div className="relative mb-6 overflow-hidden rounded-2xl border border-white/10 bg-[#1a2029] shadow-lg shadow-black/20">
+      {event.cover_image_url && (
+        <div className="absolute inset-0 opacity-20" aria-hidden>
+          <img src={event.cover_image_url} alt="" className="h-full w-full object-cover" />
+        </div>
       )}
-      <div className="md:hidden">
-        <ViewerCount count={viewerCount} isConnected={isConnected} locale={locale === 'es' ? 'es' : 'en'} />
-      </div>
-    </header>
+      <header className="relative z-10 flex flex-wrap items-center gap-3 p-4">
+        <Link
+          href="/live"
+          className="inline-flex items-center gap-2 rounded-lg text-slate-400 transition hover:text-teal-400"
+          aria-label={locale === 'es' ? 'Volver' : 'Back'}
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Link>
+        <div className="min-w-0 flex-1">
+          {hasTeamBranding ? (
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <div className="flex min-w-0 items-center gap-2">
+                {teamFlagEl(event.team_a_flag)}
+                <span className="truncate font-bold text-white sm:text-lg">
+                  {event.team_a_name ?? '—'}
+                </span>
+              </div>
+              <span className="text-slate-500">{locale === 'es' ? 'vs' : 'vs'}</span>
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="truncate font-bold text-white sm:text-lg">
+                  {event.team_b_name ?? '—'}
+                </span>
+                {teamFlagEl(event.team_b_flag)}
+              </div>
+            </div>
+          ) : (
+            <h1 className="truncate text-xl font-bold text-white sm:text-2xl">{title}</h1>
+          )}
+          {hasTeamBranding && (
+            <p className="mt-1 truncate text-sm text-slate-400">{title}</p>
+          )}
+        </div>
+        {streamLive && (
+          <span className="inline-flex items-center gap-2 rounded-full bg-red-600/90 px-3 py-1 text-xs font-semibold uppercase text-white">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-white" />
+            </span>
+            {locale === 'es' ? 'En vivo' : 'Live'}
+          </span>
+        )}
+        <div className="md:hidden">
+          <ViewerCount count={viewerCount} isConnected={isConnected} locale={locale === 'es' ? 'es' : 'en'} />
+        </div>
+      </header>
+    </div>
   )
 
   const ticker = (
@@ -201,6 +247,7 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
   const stream = (
     <StreamEmbed
       youtubeVideoId={event.youtube_video_id}
+      youtubeUrl={event.youtube_url}
       isLive={streamLive}
       matchDate={event.match_date}
       embedReplay={embedReplay}
@@ -255,7 +302,7 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
 
   if (isCompleted) {
     return (
-      <div className="flex min-h-screen flex-col bg-[#070b10]">
+      <div className="flex min-h-screen flex-col bg-[#0f1419]">
         {connectionBanner}
         <div className="mx-auto w-full max-w-4xl flex-1 px-4 py-6">
           {header}
@@ -346,7 +393,7 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#070b10]">
+    <div className="flex min-h-screen flex-col bg-[#0f1419]">
       {connectionBanner}
       <div className="mx-auto w-full max-w-6xl flex-1 px-4 py-6">
         {header}

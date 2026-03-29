@@ -75,6 +75,8 @@ export function usePresence(eventId: string | null, userId: string | null): UseP
         setIsConnected(true)
         await channel.track({
           user_id: userId,
+          session_id: userId ? null : getStableAnonPresenceKey(),
+          is_anonymous: userId == null,
           joined_at: new Date().toISOString(),
         })
       } else if (

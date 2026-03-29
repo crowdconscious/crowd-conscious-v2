@@ -63,6 +63,11 @@ export async function POST(request: NextRequest) {
       youtube_video_id: bodyVideoId,
       sponsor_name,
       sponsor_logo_url,
+      cover_image_url,
+      team_a_name,
+      team_a_flag,
+      team_b_name,
+      team_b_flag,
       translations,
     } = body
 
@@ -86,6 +91,11 @@ export async function POST(request: NextRequest) {
         youtube_video_id,
         sponsor_name: sponsor_name?.trim() || null,
         sponsor_logo_url: sponsor_logo_url?.trim() || null,
+        cover_image_url: typeof cover_image_url === 'string' ? cover_image_url.trim() || null : null,
+        team_a_name: typeof team_a_name === 'string' ? team_a_name.trim() || null : null,
+        team_a_flag: typeof team_a_flag === 'string' ? team_a_flag.trim() || null : null,
+        team_b_name: typeof team_b_name === 'string' ? team_b_name.trim() || null : null,
+        team_b_flag: typeof team_b_flag === 'string' ? team_b_flag.trim() || null : null,
         translations: translations && typeof translations === 'object' ? translations : {},
         created_by: user.id,
         status: 'scheduled',

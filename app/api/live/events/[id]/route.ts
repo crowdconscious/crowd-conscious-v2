@@ -46,6 +46,11 @@ export async function PATCH(request: NextRequest, { params }: Props) {
     }
     if (typeof body.sponsor_name === 'string') updates.sponsor_name = body.sponsor_name.trim() || null
     if (typeof body.sponsor_logo_url === 'string') updates.sponsor_logo_url = body.sponsor_logo_url.trim() || null
+    if (typeof body.cover_image_url === 'string') updates.cover_image_url = body.cover_image_url.trim() || null
+    if (typeof body.team_a_name === 'string') updates.team_a_name = body.team_a_name.trim() || null
+    if (typeof body.team_a_flag === 'string') updates.team_a_flag = body.team_a_flag.trim() || null
+    if (typeof body.team_b_name === 'string') updates.team_b_name = body.team_b_name.trim() || null
+    if (typeof body.team_b_flag === 'string') updates.team_b_flag = body.team_b_flag.trim() || null
     if (body.translations && typeof body.translations === 'object') updates.translations = body.translations
 
     updates.updated_at = new Date().toISOString()

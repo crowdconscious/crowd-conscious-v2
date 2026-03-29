@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase-server'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { getCurrentUser } from '@/lib/auth-server'
 import { sendPostVoteConfirmation } from '@/lib/prediction-email-notifications'
+import type { Database } from '@/types/database'
 
 /** USD attributed to Conscious Fund cause per sponsored micro-market vote (env override). */
 function sponsoredMicroMarketVoteImpactUsd(): number {
@@ -12,13 +15,44 @@ function sponsoredMicroMarketVoteImpactUsd(): number {
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
+const CC_SESSION = 'cc_session'
+
+async function applySponsoredMicroFundIfNeeded(
+  marketId: string,
+  supabase: SupabaseClient<Database>
+) {
+  const { data: marketMeta } = await supabase
+    .from('prediction_markets')
+    .select('is_micro_market, sponsor_label, live_event_id')
+    .eq('id', marketId)
+    .maybeSingle()
+
+  const meta = marketMeta as {
+    is_micro_market?: boolean | null
+    sponsor_label?: string | null
+    live_event_id?: string | null
+  } | null
+
+  if (
+    meta?.is_micro_market === true &&
+    typeof meta.sponsor_label === 'string' &&
+    meta.sponsor_label.trim().length > 0 &&
+    meta.live_event_id
+  ) {
+    const delta = sponsoredMicroMarketVoteImpactUsd()
+    const admin = createAdminClient()
+    const { error: fundErr } = await admin.rpc('increment_live_event_fund_impact', {
+      p_live_event_id: meta.live_event_id,
+      p_delta: delta,
+    })
+    if (fundErr) {
+      console.error('[vote] increment_live_event_fund_impact', fundErr)
+    }
+  }
+}
+
 export async function POST(request: Request) {
   try {
-    const user = await getCurrentUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
     const body = await request.json()
     const { market_id, outcome_id, confidence } = body
 
@@ -42,6 +76,108 @@ export async function POST(request: Request) {
         { error: 'Confidence must be a number between 1 and 10' },
         { status: 400 }
       )
+    }
+
+    const user = await getCurrentUser()
+
+    if (!user) {
+      const cookieStore = await cookies()
+      let sessionId = cookieStore.get(CC_SESSION)?.value
+      if (!sessionId || !UUID_REGEX.test(sessionId)) {
+        sessionId = crypto.randomUUID()
+      }
+
+      const admin = createAdminClient()
+      const { data: marketCheck } = await admin
+        .from('prediction_markets')
+        .select('id, status, live_event_id, is_micro_market')
+        .eq('id', market_id)
+        .maybeSingle()
+
+      if (!marketCheck || !['active', 'trading'].includes(marketCheck.status ?? '')) {
+        return NextResponse.json({ error: 'Market not found or not active' }, { status: 404 })
+      }
+
+      const allowAnon =
+        marketCheck.live_event_id != null || marketCheck.is_micro_market === true
+      if (!allowAnon) {
+        return NextResponse.json(
+          { error: 'Sign up to vote on this market' },
+          { status: 401 }
+        )
+      }
+
+      const { data, error } = await admin.rpc('execute_live_anonymous_market_vote', {
+        p_guest_id: sessionId,
+        p_market_id: market_id,
+        p_outcome_id: outcome_id,
+        p_confidence: conf,
+      })
+
+      if (error) {
+        console.error('Live anonymous vote RPC error:', error)
+        return NextResponse.json(
+          { error: error.message || 'Vote failed' },
+          { status: 400 }
+        )
+      }
+
+      const result = data as {
+        success?: boolean
+        already_voted?: boolean
+        error?: string
+        xp_earned?: number
+        outcome_label?: string
+        confidence?: number
+        new_probability?: number
+        is_update?: boolean
+        no_change?: boolean
+        is_anonymous?: boolean
+      }
+
+      if (result.already_voted === true) {
+        const res = NextResponse.json({
+          success: false,
+          alreadyVoted: true,
+          error: 'Already voted',
+          xp_earned: 0,
+          isAnonymous: true,
+        })
+        res.cookies.set(CC_SESSION, sessionId, {
+          path: '/',
+          maxAge: 60 * 60 * 24 * 365,
+          sameSite: 'lax',
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+        })
+        return res
+      }
+
+      if (result.success === false) {
+        return NextResponse.json(
+          { error: result.error || 'Vote failed' },
+          { status: 400 }
+        )
+      }
+
+      const supabase = await createClient()
+      await applySponsoredMicroFundIfNeeded(market_id, supabase)
+
+      const res = NextResponse.json({
+        ...result,
+        is_update: result.is_update === true,
+        no_change: result.no_change === true,
+        xp_earned: 0,
+        isAnonymous: true,
+      })
+      res.cookies.set(CC_SESSION, sessionId, {
+        path: '/',
+        maxAge: 60 * 60 * 24 * 365,
+        sameSite: 'lax',
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+      })
+      return res
     }
 
     const supabase = await createClient()
@@ -84,33 +220,13 @@ export async function POST(request: Request) {
       rpcResult: result,
     }).catch((err) => console.error('[vote] post-confirmation', err))
 
-    const { data: marketMeta } = await supabase
-      .from('prediction_markets')
-      .select('is_micro_market, sponsor_label, live_event_id')
-      .eq('id', market_id)
-      .maybeSingle()
-
-    if (
-      marketMeta?.is_micro_market === true &&
-      typeof marketMeta.sponsor_label === 'string' &&
-      marketMeta.sponsor_label.trim().length > 0 &&
-      marketMeta.live_event_id
-    ) {
-      const delta = sponsoredMicroMarketVoteImpactUsd()
-      const admin = createAdminClient()
-      const { error: fundErr } = await admin.rpc('increment_live_event_fund_impact', {
-        p_live_event_id: marketMeta.live_event_id,
-        p_delta: delta,
-      })
-      if (fundErr) {
-        console.error('[vote] increment_live_event_fund_impact', fundErr)
-      }
-    }
+    await applySponsoredMicroFundIfNeeded(market_id, supabase)
 
     return NextResponse.json({
       ...result,
       is_update: result.is_update === true,
       no_change: result.no_change === true,
+      isAnonymous: false,
     })
   } catch (err) {
     console.error('Vote route error:', err)

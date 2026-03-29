@@ -40,6 +40,10 @@ export async function POST(request: NextRequest) {
       sponsorship_amount_mxn,
       conscious_fund_percentage,
       translations,
+      is_pulse,
+      pulse_client_name,
+      pulse_client_logo,
+      pulse_client_email,
     } = body
 
     if (!title?.trim()) {
@@ -104,6 +108,29 @@ export async function POST(request: NextRequest) {
 
     const admin = createAdminClient()
 
+    const pulseFields = (() => {
+      const pulse = Boolean(is_pulse)
+      if (!pulse) {
+        return {
+          is_pulse: false,
+          pulse_client_name: null as string | null,
+          pulse_client_logo: null as string | null,
+          pulse_client_email: null as string | null,
+          pulse_embed_enabled: false,
+        }
+      }
+      return {
+        is_pulse: true,
+        pulse_client_name:
+          typeof pulse_client_name === 'string' ? pulse_client_name.trim() || null : null,
+        pulse_client_logo:
+          typeof pulse_client_logo === 'string' ? pulse_client_logo.trim() || null : null,
+        pulse_client_email:
+          typeof pulse_client_email === 'string' ? pulse_client_email.trim() || null : null,
+        pulse_embed_enabled: false,
+      }
+    })()
+
     if (market_type === 'multi' && Array.isArray(outcomes) && outcomes.length >= 2) {
       const outcomeLabels = outcomes
         .map((o) => (typeof o === 'string' ? o : o?.label || o?.name)?.trim())
@@ -141,6 +168,7 @@ export async function POST(request: NextRequest) {
         current_probability: 100 / outcomeLabels.length,
       }
       if (translations && typeof translations === 'object') updatePayload.translations = translations
+      Object.assign(updatePayload, pulseFields)
       await admin.from('prediction_markets').update(updatePayload).eq('id', marketId)
 
       // Auto-apply active category sponsor if one exists for this category
@@ -201,6 +229,7 @@ export async function POST(request: NextRequest) {
       sponsor_contribution: sponsorAmount,
     }
     if (translations && typeof translations === 'object') updatePayload.translations = translations
+    Object.assign(updatePayload, pulseFields)
     await admin.from('prediction_markets').update(updatePayload).eq('id', marketId)
 
     // Auto-apply active category sponsor if one exists for this category
