@@ -4,15 +4,23 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase-client'
 import type { Database } from '@/types/database'
 
-type VotePick = Pick<
-  Database['public']['Tables']['market_votes']['Row'],
-  'user_id' | 'xp_earned' | 'bonus_xp' | 'is_correct'
->
+type VoteRow = {
+  user_id: string | null
+  anonymous_participant_id: string | null
+  xp_earned: number | null
+  bonus_xp: number | null
+  is_correct: boolean | null
+}
 
 export interface LiveLeaderboardEntry {
-  user_id: string
+  /** Stable key for React: `user:uuid` or `anon:uuid` */
+  entryKey: string
+  user_id: string | null
+  anonymous_participant_id: string | null
+  participantType: 'registered' | 'anonymous'
   username: string
   avatar_url: string | null
+  avatar_emoji: string | null
   total_xp: number
   correct_count: number
   vote_count: number
@@ -21,9 +29,7 @@ export interface LiveLeaderboardEntry {
 
 export interface UseLiveLeaderboardResult {
   rankings: LiveLeaderboardEntry[]
-  /** 1-based rank for the current user, or null if not ranked / not logged in */
   currentUserRank: number | null
-  /** Full row for the current user (even when outside the top-20 slice) */
   currentUserEntry: LiveLeaderboardEntry | null
   isLoading: boolean
   error: Error | null
@@ -35,10 +41,13 @@ type ProfileRow = {
   avatar_url: string | null
 }
 
+type AnonRow = { id: string; alias: string; avatar_emoji: string | null }
+
 async function computeRankings(
   supabase: ReturnType<typeof createClient>,
   eventId: string,
-  currentUserId?: string | null
+  currentUserId?: string | null,
+  currentAnonymousParticipantId?: string | null
 ): Promise<{
   rankings: LiveLeaderboardEntry[]
   currentUserEntry: LiveLeaderboardEntry | null
@@ -58,64 +67,108 @@ async function computeRankings(
 
   const { data: votes, error: vErr } = await supabase
     .from('market_votes')
-    .select('user_id, xp_earned, bonus_xp, is_correct')
+    .select('user_id, anonymous_participant_id, xp_earned, bonus_xp, is_correct')
     .in('market_id', marketIds)
-    .eq('is_anonymous', false)
 
   if (vErr) return { rankings: [], currentUserEntry: null, error: new Error(vErr.message) }
 
-  const rows = (votes ?? []) as VotePick[]
+  const rows = (votes ?? []) as VoteRow[]
 
   const agg = new Map<
     string,
-    { total_xp: number; correct_count: number; vote_count: number }
+    {
+      total_xp: number
+      correct_count: number
+      vote_count: number
+      isAnonymous: boolean
+      user_id: string | null
+      anonymous_participant_id: string | null
+    }
   >()
 
   for (const v of rows) {
-    const uid = v.user_id
+    const anonId = v.anonymous_participant_id
+    const key = anonId ? `anon:${anonId}` : v.user_id ? `user:${v.user_id}` : null
+    if (!key) continue
+
     const xp = (v.xp_earned ?? 0) + (v.bonus_xp ?? 0)
-    const cur = agg.get(uid) ?? { total_xp: 0, correct_count: 0, vote_count: 0 }
+    const cur = agg.get(key) ?? {
+      total_xp: 0,
+      correct_count: 0,
+      vote_count: 0,
+      isAnonymous: !!anonId,
+      user_id: anonId ? null : v.user_id,
+      anonymous_participant_id: anonId,
+    }
     cur.total_xp += xp
     cur.vote_count += 1
     if (v.is_correct === true) cur.correct_count += 1
-    agg.set(uid, cur)
+    agg.set(key, cur)
   }
 
   const sortedPairs = [...agg.entries()].sort((a, b) => b[1].total_xp - a[1].total_xp)
-  const userIds = sortedPairs.map(([uid]) => uid)
-
-  if (userIds.length === 0) {
+  if (sortedPairs.length === 0) {
     return { rankings: [], currentUserEntry: null, error: null }
   }
 
-  const { data: profileRows, error: rpcErr } = await supabase.rpc('get_profiles_public', {
-    p_ids: userIds,
-  })
+  const userIds = sortedPairs
+    .filter(([, s]) => !s.isAnonymous && s.user_id)
+    .map(([, s]) => s.user_id as string)
 
-  if (rpcErr) {
-    return {
-      rankings: [],
-      currentUserEntry: null,
-      error: new Error(rpcErr.message),
-    }
-  }
+  const anonIds = sortedPairs
+    .filter(([, s]) => s.isAnonymous && s.anonymous_participant_id)
+    .map(([, s]) => s.anonymous_participant_id as string)
+
+  const [{ data: profileRows }, { data: anonRows }] = await Promise.all([
+    userIds.length
+      ? supabase.rpc('get_profiles_public', { p_ids: userIds })
+      : Promise.resolve({ data: [] as ProfileRow[] | null }),
+    anonIds.length
+      ? supabase.from('anonymous_participants').select('id, alias, avatar_emoji').in('id', anonIds)
+      : Promise.resolve({ data: [] as AnonRow[] | null }),
+  ])
 
   const profileMap = new Map(
     ((profileRows ?? []) as ProfileRow[]).map((p) => [
       p.id,
-      {
-        username: p.full_name?.trim() || 'Player',
-        avatar_url: p.avatar_url,
-      },
+      { username: p.full_name?.trim() || 'Player', avatar_url: p.avatar_url },
     ])
   )
 
-  const full: LiveLeaderboardEntry[] = sortedPairs.map(([user_id, stats], i) => {
-    const p = profileMap.get(user_id)
+  const anonMap = new Map(
+    ((anonRows ?? []) as AnonRow[]).map((a) => [
+      a.id,
+      { alias: a.alias, emoji: a.avatar_emoji ?? '🎯' },
+    ])
+  )
+
+  const full: LiveLeaderboardEntry[] = sortedPairs.map(([key, stats], i) => {
+    if (stats.isAnonymous && stats.anonymous_participant_id) {
+      const a = anonMap.get(stats.anonymous_participant_id)
+      return {
+        entryKey: key,
+        user_id: null,
+        anonymous_participant_id: stats.anonymous_participant_id,
+        participantType: 'anonymous' as const,
+        username: a?.alias ?? 'Invitado',
+        avatar_url: null,
+        avatar_emoji: a?.emoji ?? '🎯',
+        total_xp: stats.total_xp,
+        correct_count: stats.correct_count,
+        vote_count: stats.vote_count,
+        rank: i + 1,
+      }
+    }
+    const uid = stats.user_id!
+    const p = profileMap.get(uid)
     return {
-      user_id,
+      entryKey: key,
+      user_id: uid,
+      anonymous_participant_id: null,
+      participantType: 'registered' as const,
       username: p?.username ?? 'Player',
       avatar_url: p?.avatar_url ?? null,
+      avatar_emoji: null,
       total_xp: stats.total_xp,
       correct_count: stats.correct_count,
       vote_count: stats.vote_count,
@@ -124,21 +177,25 @@ async function computeRankings(
   })
 
   const rankings = full.slice(0, 20)
-  const currentUserEntry = currentUserId
-    ? full.find((r) => r.user_id === currentUserId) ?? null
-    : null
+
+  let currentUserEntry: LiveLeaderboardEntry | null = null
+  if (currentUserId) {
+    currentUserEntry = full.find((r) => r.user_id === currentUserId) ?? null
+  } else if (currentAnonymousParticipantId) {
+    currentUserEntry =
+      full.find((r) => r.anonymous_participant_id === currentAnonymousParticipantId) ?? null
+  }
 
   return { rankings, currentUserEntry, error: null }
 }
 
 /**
- * Live match leaderboard: aggregates registered votes for markets tied to `eventId`,
- * debounces recalculation on new votes (2s).
- * Uses `get_profiles_public` RPC so anon/authenticated clients get names without full profiles SELECT.
+ * Live match leaderboard: registered + anonymous alias participants for markets tied to `eventId`.
  */
 export function useLiveLeaderboard(
   eventId: string | null,
-  currentUserId?: string | null
+  currentUserId?: string | null,
+  currentAnonymousParticipantId?: string | null
 ): UseLiveLeaderboardResult {
   const supabase = useMemo(() => createClient(), [])
   const [rankings, setRankings] = useState<LiveLeaderboardEntry[]>([])
@@ -162,14 +219,15 @@ export function useLiveLeaderboard(
       const { rankings: r, currentUserEntry: cu, error: err } = await computeRankings(
         supabase,
         eventId,
-        currentUserId
+        currentUserId,
+        currentAnonymousParticipantId
       )
       if (err) setError(err)
       setRankings(r)
       setCurrentUserEntry(cu)
       if (!silent) setIsLoading(false)
     },
-    [eventId, supabase, currentUserId]
+    [eventId, supabase, currentUserId, currentAnonymousParticipantId]
   )
 
   useEffect(() => {

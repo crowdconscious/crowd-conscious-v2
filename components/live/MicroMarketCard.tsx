@@ -33,6 +33,9 @@ export interface MicroMarketCardProps {
   market: PredictionMarket
   outcomes: MarketOutcome[]
   currentUserId: string
+  /** Live event id (for login redirect); optional outside /live */
+  eventId?: string
+  onRequiresAlias?: () => void
   onVoteSuccess?: () => void
 }
 
@@ -45,6 +48,8 @@ export function MicroMarketCard({
   market,
   outcomes,
   currentUserId,
+  eventId = '',
+  onRequiresAlias,
   onVoteSuccess,
 }: MicroMarketCardProps) {
   const locale = useLocale()
@@ -57,7 +62,9 @@ export function MicroMarketCard({
   const [now, setNow] = useState(() => Date.now())
 
   const allowAnonymousVote =
-    market.live_event_id != null || market.is_micro_market === true
+    market.live_event_id != null ||
+    market.is_micro_market === true ||
+    market.is_pulse === true
 
   const isResolved = market.status === 'resolved'
   const hasVoted = !!myVote && !isResolved
@@ -150,6 +157,11 @@ export function MicroMarketCard({
         }),
       })
       const data = await res.json().catch(() => ({}))
+      if (data.requiresAlias === true) {
+        onRequiresAlias?.()
+        setErrorMsg(locale === 'es' ? 'Elige un alias para votar' : 'Choose an alias to vote')
+        return
+      }
       if (data.alreadyVoted === true) {
         const rv = await fetch(`/api/predictions/markets/${market.id}/my-vote`, {
           cache: 'no-store',
@@ -210,6 +222,7 @@ export function MicroMarketCard({
     locale,
     currentUserId,
     allowAnonymousVote,
+    onRequiresAlias,
   ])
 
   const fmtTime = (sec: number) => {
@@ -366,14 +379,20 @@ export function MicroMarketCard({
               {locale === 'es' ? (
                 <>
                   Crea una cuenta para ganar XP y seguir tus predicciones.{' '}
-                  <Link href="/signup" className="font-medium text-emerald-400 underline underline-offset-2 hover:text-emerald-300">
+                  <Link
+                    href={eventId ? `/signup?redirect=${encodeURIComponent(`/live/${eventId}`)}` : '/signup'}
+                    className="font-medium text-emerald-400 underline underline-offset-2 hover:text-emerald-300"
+                  >
                     Registrarse
                   </Link>
                 </>
               ) : (
                 <>
                   Sign up to earn XP and track your predictions.{' '}
-                  <Link href="/signup" className="font-medium text-emerald-400 underline underline-offset-2 hover:text-emerald-300">
+                  <Link
+                    href={eventId ? `/signup?redirect=${encodeURIComponent(`/live/${eventId}`)}` : '/signup'}
+                    className="font-medium text-emerald-400 underline underline-offset-2 hover:text-emerald-300"
+                  >
                     Create account
                   </Link>
                 </>

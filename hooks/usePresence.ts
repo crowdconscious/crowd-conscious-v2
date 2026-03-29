@@ -17,21 +17,26 @@ function getStableAnonPresenceKey(): string {
 export interface UsePresenceResult {
   viewerCount: number
   isConnected: boolean
-  /** Show reconnect UI: browser offline or presence channel dropped after connecting */
   showConnectionWarning: boolean
   browserOffline: boolean
 }
 
 /**
- * Joins a Supabase Presence channel for the live event and reports viewer count.
- * Logged-in users use `userId` as the presence key; guests get a stable per-tab anon key.
+ * Presence for live events. Prefer `aliasSessionId` when the viewer joined with an alias
+ * (matches httpOnly cc_session); otherwise falls back to a per-tab key.
  */
-export function usePresence(eventId: string | null, userId: string | null): UsePresenceResult {
+export function usePresence(
+  eventId: string | null,
+  userId: string | null,
+  aliasSessionId?: string | null,
+  aliasLabel?: string | null
+): UsePresenceResult {
   const supabase = useMemo(() => createClient(), [])
-  const presenceKey = useMemo(
-    () => userId ?? `anon:${getStableAnonPresenceKey()}`,
-    [userId]
-  )
+  const presenceKey = useMemo(() => {
+    if (userId) return userId
+    if (aliasSessionId) return `session:${aliasSessionId}`
+    return `anon:${getStableAnonPresenceKey()}`
+  }, [userId, aliasSessionId])
   const [viewerCount, setViewerCount] = useState(0)
   const [isConnected, setIsConnected] = useState(false)
   const [channelGen, setChannelGen] = useState(0)
@@ -73,10 +78,13 @@ export function usePresence(eventId: string | null, userId: string | null): UseP
       if (status === 'SUBSCRIBED') {
         wasEverSubscribedRef.current = true
         setIsConnected(true)
+        const presenceType = userId ? 'registered' : aliasSessionId ? 'alias' : 'viewer'
         await channel.track({
           user_id: userId,
-          session_id: userId ? null : getStableAnonPresenceKey(),
+          session_id: aliasSessionId ?? null,
+          alias: aliasLabel ?? null,
           is_anonymous: userId == null,
+          type: presenceType,
           joined_at: new Date().toISOString(),
         })
       } else if (
@@ -93,7 +101,7 @@ export function usePresence(eventId: string | null, userId: string | null): UseP
       setViewerCount(0)
       void supabase.removeChannel(channel)
     }
-  }, [eventId, presenceKey, supabase, userId, channelGen])
+  }, [eventId, presenceKey, supabase, userId, aliasSessionId, aliasLabel, channelGen])
 
   useEffect(() => {
     if (!eventId || isConnected) return

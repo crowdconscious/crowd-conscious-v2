@@ -21,6 +21,7 @@ import { LiveLeaderboard } from '@/components/live/LiveLeaderboard'
 import { ViewerCount } from '@/components/live/ViewerCount'
 import { AdminLiveControls } from '@/components/live/AdminLiveControls'
 import { LiveConnectionBanner } from '@/components/live/LiveConnectionBanner'
+import { AliasEntry, type AliasParticipantJoined } from '@/components/live/AliasEntry'
 
 export function LiveMatchClient({ eventId }: { eventId: string }) {
   const supabase = useMemo(() => createClient(), [])
@@ -29,6 +30,9 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
   const [lbOpen, setLbOpen] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const [leadingCauseName, setLeadingCauseName] = useState<string | null>(null)
+  const [gateReady, setGateReady] = useState(false)
+  const [aliasParticipant, setAliasParticipant] = useState<AliasParticipantJoined | null>(null)
+  const [showAliasModal, setShowAliasModal] = useState(false)
 
   useEffect(() => {
     void supabase.auth.getUser().then(({ data }) => setUser(data.user ?? null))
@@ -60,6 +64,58 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
       .catch(() => {})
   }, [])
 
+  useEffect(() => {
+    let cancelled = false
+    async function gate() {
+      const { data: auth } = await supabase.auth.getUser()
+      if (cancelled) return
+      if (auth.user) {
+        setAliasParticipant(null)
+        setShowAliasModal(false)
+        setGateReady(true)
+        return
+      }
+      try {
+        const res = await fetch('/api/live/anonymous-session', {
+          cache: 'no-store',
+          credentials: 'same-origin',
+        })
+        const json = (await res.json()) as {
+          participant?: {
+            id: string
+            session_id: string
+            alias: string
+            avatar_emoji: string | null
+          } | null
+        }
+        if (cancelled) return
+        const p = json.participant
+        if (p?.id && p.session_id) {
+          setAliasParticipant({
+            id: p.id,
+            alias: p.alias,
+            emoji: p.avatar_emoji ?? '🎯',
+            sessionId: p.session_id,
+          })
+          setShowAliasModal(false)
+        } else {
+          setAliasParticipant(null)
+          setShowAliasModal(true)
+        }
+      } catch {
+        if (!cancelled) {
+          setShowAliasModal(true)
+        }
+      } finally {
+        if (!cancelled) setGateReady(true)
+      }
+    }
+    void gate()
+    return () => {
+      cancelled = true
+    }
+  }, [supabase, user?.id])
+
   const { event, isLoading: evLoading, error: evError, refetch: refetchEvent } = useLiveEvent(eventId)
   const {
     activeMarkets,
@@ -72,11 +128,22 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
     currentUserEntry,
     isLoading: lbLoading,
     error: lbError,
-  } = useLiveLeaderboard(eventId, user?.id ?? null)
+  } = useLiveLeaderboard(eventId, user?.id ?? null, aliasParticipant?.id ?? null)
   const { viewerCount, isConnected, showConnectionWarning, browserOffline } = usePresence(
     eventId,
-    user?.id ?? null
+    user?.id ?? null,
+    aliasParticipant?.sessionId ?? null,
+    aliasParticipant?.alias ?? null
   )
+
+  const onRequiresAlias = useCallback(() => {
+    setShowAliasModal(true)
+  }, [])
+
+  const onAliasJoined = useCallback((p: AliasParticipantJoined) => {
+    setAliasParticipant(p)
+    setShowAliasModal(false)
+  }, [])
 
   const title = event ? getLiveEventTitle(event, locale) : ''
   const status = event?.status
@@ -111,6 +178,14 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
 
   const fundImpact = Number(event?.total_fund_impact ?? 0)
   const votesCast = event?.total_votes_cast ?? 0
+
+  if (!gateReady && !user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#0f1419] px-4 py-10">
+        <div className="h-10 w-10 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
+      </div>
+    )
+  }
 
   if (evLoading && !event) {
     return (
@@ -277,6 +352,8 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
       activeMarkets={activeMarkets}
       resolvedMarkets={resolvedMarkets}
       currentUserId={user?.id ?? ''}
+      eventId={eventId}
+      onRequiresAlias={onRequiresAlias}
       isAdmin={isAdmin}
       locale={locale === 'es' ? 'es' : 'en'}
     />
@@ -293,6 +370,7 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
         <LiveLeaderboard
           rankings={rankings}
           currentUserId={user?.id ?? ''}
+          currentAnonymousParticipantId={aliasParticipant?.id ?? null}
           currentUserEntry={currentUserEntry}
           locale={locale === 'es' ? 'es' : 'en'}
         />
@@ -303,6 +381,9 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
   if (isCompleted) {
     return (
       <div className="flex min-h-screen flex-col bg-[#0f1419]">
+        {showAliasModal && !user && (
+          <AliasEntry eventId={eventId} onJoined={onAliasJoined} />
+        )}
         {connectionBanner}
         <div className="mx-auto w-full max-w-4xl flex-1 px-4 py-6">
           {header}
@@ -394,6 +475,9 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
 
   return (
     <div className="flex min-h-screen flex-col bg-[#0f1419]">
+      {showAliasModal && !user && (
+        <AliasEntry eventId={eventId} onJoined={onAliasJoined} />
+      )}
       {connectionBanner}
       <div className="mx-auto w-full max-w-6xl flex-1 px-4 py-6">
         {header}

@@ -19,6 +19,10 @@ function initials(name: string): string {
 }
 
 function displayHandle(entry: LiveLeaderboardEntry): string {
+  if (entry.participantType === 'anonymous') {
+    const u = entry.username.trim()
+    return u.startsWith('@') ? u : `@${u.replace(/\s+/g, '_').toLowerCase().slice(0, 18)}`
+  }
   const u = entry.username.trim()
   if (u.startsWith('@')) return u
   return `@${u.replace(/\s+/g, '_').toLowerCase().slice(0, 18)}`
@@ -27,7 +31,7 @@ function displayHandle(entry: LiveLeaderboardEntry): string {
 export interface LiveLeaderboardProps {
   rankings: LiveLeaderboardEntry[]
   currentUserId: string
-  /** When the viewer is outside the top slice, pass their row from useLiveLeaderboard */
+  currentAnonymousParticipantId?: string | null
   currentUserEntry?: LiveLeaderboardEntry | null
   locale?: 'en' | 'es'
 }
@@ -35,12 +39,23 @@ export interface LiveLeaderboardProps {
 export function LiveLeaderboard({
   rankings,
   currentUserId,
+  currentAnonymousParticipantId,
   currentUserEntry,
   locale = 'es',
 }: LiveLeaderboardProps) {
   const top = useMemo(() => rankings.slice(0, 10), [rankings])
 
   const showFooter = !!(currentUserEntry && currentUserEntry.rank > 10)
+
+  const isRowYou = (row: LiveLeaderboardEntry) => {
+    if (row.participantType === 'anonymous') {
+      return (
+        !!currentAnonymousParticipantId &&
+        row.anonymous_participant_id === currentAnonymousParticipantId
+      )
+    }
+    return !!currentUserId && row.user_id === currentUserId
+  }
 
   return (
     <div className="overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900/90 to-slate-950 shadow-lg shadow-black/30">
@@ -54,12 +69,12 @@ export function LiveLeaderboard({
       <LayoutGroup>
         <ul className="divide-y divide-white/5">
           {top.map((row) => {
-            const isYou = row.user_id === currentUserId
+            const isYou = isRowYou(row)
             const medal = TIER_BADGE[row.rank]
             return (
               <motion.li
                 layout="position"
-                key={row.user_id}
+                key={row.entryKey}
                 initial={false}
                 animate={{
                   backgroundColor: isYou ? 'rgba(16, 185, 129, 0.12)' : 'rgba(0,0,0,0)',
@@ -80,26 +95,37 @@ export function LiveLeaderboard({
                     row.rank
                   )}
                 </span>
-                <div
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
-                  style={{
-                    background: row.avatar_url ? undefined : 'linear-gradient(135deg,#0d9488,#059669)',
-                  }}
-                >
-                  {row.avatar_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={row.avatar_url}
-                      alt=""
-                      className="h-full w-full rounded-full object-cover"
-                    />
-                  ) : (
-                    initials(row.username)
-                  )}
-                </div>
+                {row.participantType === 'anonymous' ? (
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center text-lg">
+                    {row.avatar_emoji ?? '🎯'}
+                  </span>
+                ) : (
+                  <div
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+                    style={{
+                      background: row.avatar_url ? undefined : 'linear-gradient(135deg,#0d9488,#059669)',
+                    }}
+                  >
+                    {row.avatar_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={row.avatar_url}
+                        alt=""
+                        className="h-full w-full rounded-full object-cover"
+                      />
+                    ) : (
+                      initials(row.username)
+                    )}
+                  </div>
+                )}
                 <div className="min-w-0 flex-1">
                   <p className={cn('truncate font-medium', isYou ? 'text-emerald-200' : 'text-white')}>
                     {displayHandle(row)}
+                    {row.participantType === 'anonymous' && (
+                      <span className="ml-1 text-xs text-slate-500">
+                        {locale === 'es' ? '(invitado)' : '(guest)'}
+                      </span>
+                    )}
                     {isYou && (
                       <span className="ml-2 text-xs text-emerald-400/90">
                         {locale === 'es' ? '(tú)' : '(you)'}
@@ -132,28 +158,39 @@ export function LiveLeaderboard({
             <span className="w-8 shrink-0 text-center font-mono text-emerald-300">
               {currentUserEntry.rank}
             </span>
-            <div
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
-              style={{
-                background: currentUserEntry.avatar_url
-                  ? undefined
-                  : 'linear-gradient(135deg,#0d9488,#059669)',
-              }}
-            >
-              {currentUserEntry.avatar_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={currentUserEntry.avatar_url}
-                  alt=""
-                  className="h-full w-full rounded-full object-cover"
-                />
-              ) : (
-                initials(currentUserEntry.username)
-              )}
-            </div>
+            {currentUserEntry.participantType === 'anonymous' ? (
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center text-lg">
+                {currentUserEntry.avatar_emoji ?? '🎯'}
+              </span>
+            ) : (
+              <div
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+                style={{
+                  background: currentUserEntry.avatar_url
+                    ? undefined
+                    : 'linear-gradient(135deg,#0d9488,#059669)',
+                }}
+              >
+                {currentUserEntry.avatar_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={currentUserEntry.avatar_url}
+                    alt=""
+                    className="h-full w-full rounded-full object-cover"
+                  />
+                ) : (
+                  initials(currentUserEntry.username)
+                )}
+              </div>
+            )}
             <div className="min-w-0 flex-1">
               <p className="truncate font-medium text-emerald-100">
                 {displayHandle(currentUserEntry)}
+                {currentUserEntry.participantType === 'anonymous' && (
+                  <span className="ml-1 text-xs text-slate-500">
+                    {locale === 'es' ? '(invitado)' : '(guest)'}
+                  </span>
+                )}
                 <span className="ml-2 text-xs text-emerald-300">
                   {locale === 'es' ? '(tú)' : '(you)'}
                 </span>

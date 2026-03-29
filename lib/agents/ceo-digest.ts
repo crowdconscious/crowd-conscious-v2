@@ -45,12 +45,38 @@ export async function runCeoDigest(): Promise<{
       const cutoff24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
       const { data: votes24h } = await supabase
         .from('market_votes')
-        .select('user_id')
+        .select('user_id, anonymous_participant_id')
         .gte('created_at', cutoff24h)
-      const distinctUsers = new Set((votes24h ?? []).map((v) => v.user_id))
+      const rows = votes24h ?? []
+      const distinctUsers = new Set(
+        rows.filter((v) => v.user_id != null).map((v) => v.user_id as string)
+      )
+      const distinctAnonymous = new Set(
+        rows.filter((v) => v.anonymous_participant_id != null).map((v) => v.anonymous_participant_id as string)
+      )
       metrics.users_with_predictions_last_24h = distinctUsers.size
+      metrics.unique_anonymous_voters_last_24h = distinctAnonymous.size
     } catch (e) {
       metrics.users_with_predictions_last_24h = 'error'
+      metrics.unique_anonymous_voters_last_24h = 'error'
+    }
+
+    try {
+      const since30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+      const { count: totalAnon } = await supabase
+        .from('anonymous_participants')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', since30d)
+      const { count: convertedAnon } = await supabase
+        .from('anonymous_participants')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', since30d)
+        .not('converted_to_user_id', 'is', null)
+      const t = totalAnon ?? 0
+      const c = convertedAnon ?? 0
+      metrics.anonymous_to_registered_conversion_30d_pct = t > 0 ? Math.round((c / t) * 1000) / 10 : 0
+    } catch (e) {
+      metrics.anonymous_to_registered_conversion_30d_pct = 'error'
     }
 
     // b. PREDICTION ACTIVITY (market_votes = free-to-play)

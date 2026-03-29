@@ -238,12 +238,53 @@ export interface Database {
         }
       }
 
+      anonymous_participants: {
+        Row: {
+          id: string
+          session_id: string
+          alias: string
+          avatar_emoji: string | null
+          created_at: string
+          last_active_at: string
+          total_votes: number
+          total_xp: number
+          converted_to_user_id: string | null
+          ip_hash: string | null
+        }
+        Insert: {
+          id?: string
+          session_id: string
+          alias: string
+          avatar_emoji?: string | null
+          created_at?: string
+          last_active_at?: string
+          total_votes?: number
+          total_xp?: number
+          converted_to_user_id?: string | null
+          ip_hash?: string | null
+        }
+        Update: {
+          id?: string
+          session_id?: string
+          alias?: string
+          avatar_emoji?: string | null
+          created_at?: string
+          last_active_at?: string
+          total_votes?: number
+          total_xp?: number
+          converted_to_user_id?: string | null
+          ip_hash?: string | null
+        }
+      }
+
       market_votes: {
         Row: {
           id: string
           market_id: string
           outcome_id: string
-          user_id: string
+          user_id: string | null
+          anonymous_participant_id: string | null
+          session_id: string | null
           confidence: number
           xp_earned: number
           is_correct: boolean | null
@@ -257,7 +298,9 @@ export interface Database {
           id?: string
           market_id: string
           outcome_id: string
-          user_id: string
+          user_id?: string | null
+          anonymous_participant_id?: string | null
+          session_id?: string | null
           confidence: number
           xp_earned?: number
           is_correct?: boolean | null
@@ -269,7 +312,9 @@ export interface Database {
           id?: string
           market_id?: string
           outcome_id?: string
-          user_id?: string
+          user_id?: string | null
+          anonymous_participant_id?: string | null
+          session_id?: string | null
           confidence?: number
           xp_earned?: number
           is_correct?: boolean | null
@@ -750,6 +795,23 @@ export interface Database {
           p_outcome_id: string
           p_confidence: number
         }
+        Returns: Json
+      }
+      increment_anonymous_xp: {
+        Args: { p_participant_id: string; p_xp_amount: number }
+        Returns: undefined
+      }
+      execute_alias_anonymous_market_vote: {
+        Args: {
+          p_participant_id: string
+          p_market_id: string
+          p_outcome_id: string
+          p_confidence: number
+        }
+        Returns: Json
+      }
+      convert_anonymous_to_user: {
+        Args: { p_session_id: string; p_user_id: string }
         Returns: Json
       }
     }

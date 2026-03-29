@@ -23,13 +23,45 @@ export async function GET(
       }
 
       const admin = createAdminClient()
-      const { data: voteRow } = await admin
-        .from('market_votes')
-        .select('id, outcome_id, confidence, xp_earned, is_correct, bonus_xp, created_at')
-        .eq('market_id', id)
-        .eq('user_id', guestId)
-        .eq('is_anonymous', true)
+
+      const { data: participant } = await admin
+        .from('anonymous_participants')
+        .select('id')
+        .eq('session_id', guestId)
+        .is('converted_to_user_id', null)
         .maybeSingle()
+
+      let voteRow:
+        | {
+            outcome_id: string
+            confidence: number
+            xp_earned: number
+            is_correct: boolean | null
+            bonus_xp: number | null
+            created_at: string
+          }
+        | null = null
+
+      if (participant?.id) {
+        const { data } = await admin
+          .from('market_votes')
+          .select('id, outcome_id, confidence, xp_earned, is_correct, bonus_xp, created_at')
+          .eq('market_id', id)
+          .eq('anonymous_participant_id', participant.id)
+          .maybeSingle()
+        voteRow = data
+      }
+
+      if (!voteRow) {
+        const { data: legacy } = await admin
+          .from('market_votes')
+          .select('id, outcome_id, confidence, xp_earned, is_correct, bonus_xp, created_at')
+          .eq('market_id', id)
+          .eq('user_id', guestId)
+          .eq('is_anonymous', true)
+          .maybeSingle()
+        voteRow = legacy
+      }
 
       if (!voteRow) {
         return NextResponse.json({ vote: null }, { status: 200 })

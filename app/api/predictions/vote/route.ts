@@ -82,15 +82,33 @@ export async function POST(request: Request) {
 
     if (!user) {
       const cookieStore = await cookies()
-      let sessionId = cookieStore.get(CC_SESSION)?.value
+      const sessionId = cookieStore.get(CC_SESSION)?.value
+
       if (!sessionId || !UUID_REGEX.test(sessionId)) {
-        sessionId = crypto.randomUUID()
+        return NextResponse.json(
+          { error: 'Choose an alias', requiresAlias: true },
+          { status: 401 }
+        )
       }
 
       const admin = createAdminClient()
+      const { data: participant } = await admin
+        .from('anonymous_participants')
+        .select('id')
+        .eq('session_id', sessionId)
+        .is('converted_to_user_id', null)
+        .maybeSingle()
+
+      if (!participant?.id) {
+        return NextResponse.json(
+          { error: 'Choose an alias', requiresAlias: true },
+          { status: 401 }
+        )
+      }
+
       const { data: marketCheck } = await admin
         .from('prediction_markets')
-        .select('id, status, live_event_id, is_micro_market')
+        .select('id, status, live_event_id, is_micro_market, is_pulse')
         .eq('id', market_id)
         .maybeSingle()
 
@@ -98,24 +116,27 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Market not found or not active' }, { status: 404 })
       }
 
-      const allowAnon =
-        marketCheck.live_event_id != null || marketCheck.is_micro_market === true
-      if (!allowAnon) {
+      const allowsAnonymous =
+        marketCheck.live_event_id != null ||
+        marketCheck.is_micro_market === true ||
+        marketCheck.is_pulse === true
+
+      if (!allowsAnonymous) {
         return NextResponse.json(
-          { error: 'Sign up to vote on this market' },
+          { error: 'Sign up to vote on this market', requiresSignup: true },
           { status: 401 }
         )
       }
 
-      const { data, error } = await admin.rpc('execute_live_anonymous_market_vote', {
-        p_guest_id: sessionId,
+      const { data, error } = await admin.rpc('execute_alias_anonymous_market_vote', {
+        p_participant_id: participant.id,
         p_market_id: market_id,
         p_outcome_id: outcome_id,
         p_confidence: conf,
       })
 
       if (error) {
-        console.error('Live anonymous vote RPC error:', error)
+        console.error('Alias anonymous vote RPC error:', error)
         return NextResponse.json(
           { error: error.message || 'Vote failed' },
           { status: 400 }
@@ -136,21 +157,13 @@ export async function POST(request: Request) {
       }
 
       if (result.already_voted === true) {
-        const res = NextResponse.json({
+        return NextResponse.json({
           success: false,
           alreadyVoted: true,
           error: 'Already voted',
           xp_earned: 0,
           isAnonymous: true,
         })
-        res.cookies.set(CC_SESSION, sessionId, {
-          path: '/',
-          maxAge: 60 * 60 * 24 * 365,
-          sameSite: 'lax',
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-        })
-        return res
       }
 
       if (result.success === false) {
@@ -163,21 +176,16 @@ export async function POST(request: Request) {
       const supabase = await createClient()
       await applySponsoredMicroFundIfNeeded(market_id, supabase)
 
-      const res = NextResponse.json({
+      const xpEarned = typeof result.xp_earned === 'number' ? result.xp_earned : 0
+
+      return NextResponse.json({
         ...result,
         is_update: result.is_update === true,
         no_change: result.no_change === true,
-        xp_earned: 0,
+        xp_earned: xpEarned,
         isAnonymous: true,
+        signupNudge: 'Regístrate para conservar tu XP permanentemente',
       })
-      res.cookies.set(CC_SESSION, sessionId, {
-        path: '/',
-        maxAge: 60 * 60 * 24 * 365,
-        sameSite: 'lax',
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-      })
-      return res
     }
 
     const supabase = await createClient()

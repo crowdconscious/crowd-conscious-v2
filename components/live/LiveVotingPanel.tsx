@@ -11,6 +11,8 @@ export interface LiveVotingPanelProps {
   activeMarkets: MarketWithOutcomes[]
   resolvedMarkets: MarketWithOutcomes[]
   currentUserId: string
+  eventId: string
+  onRequiresAlias?: () => void
   isAdmin?: boolean
   locale?: 'en' | 'es'
 }
@@ -83,6 +85,8 @@ export function LiveVotingPanel({
   activeMarkets,
   resolvedMarkets,
   currentUserId,
+  eventId,
+  onRequiresAlias,
   isAdmin = false,
   locale = 'es',
 }: LiveVotingPanelProps) {
@@ -240,6 +244,8 @@ export function LiveVotingPanel({
                   market={m}
                   outcomes={m.outcomes}
                   currentUserId={currentUserId}
+                  eventId={eventId}
+                  onRequiresAlias={onRequiresAlias}
                   onVoteSuccess={onVoteSuccess}
                 />
               </div>
