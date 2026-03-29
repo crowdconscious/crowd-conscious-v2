@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, type CSSProperties } from 'react'
+import { useState, useEffect, useCallback, useRef, type CSSProperties } from 'react'
 import Link from 'next/link'
 import {
   ArrowLeft,
@@ -72,6 +72,8 @@ export default function CreateMarketPage() {
   const [pulseClientLogo, setPulseClientLogo] = useState('')
   const [pulseClientEmail, setPulseClientEmail] = useState('')
   const [successIsPulse, setSuccessIsPulse] = useState(false)
+  const [pulseLogoUploading, setPulseLogoUploading] = useState(false)
+  const pulseLogoFileInputRef = useRef<HTMLInputElement>(null)
 
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -362,6 +364,35 @@ export default function CreateMarketPage() {
     }
   }
 
+  const onPulseLogoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setPulseLogoUploading(true)
+    setError('')
+    try {
+      const fd = new FormData()
+      fd.append('logo', file)
+      const res = await fetch('/api/sponsor/upload-logo', { method: 'POST', body: fd })
+      const json = (await res.json()) as {
+        success?: boolean
+        data?: { url?: string }
+        error?: { message?: string }
+      }
+      if (!res.ok || json.success === false) {
+        const msg = json.error?.message ?? 'Upload failed'
+        throw new Error(msg)
+      }
+      const url = json.data?.url
+      if (!url) throw new Error('No image URL returned')
+      setPulseClientLogo(url)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Logo upload failed')
+    } finally {
+      setPulseLogoUploading(false)
+    }
+  }
+
   const tags = tagsInput
     .split(/[,;]/)
     .map((t) => t.trim().toLowerCase())
@@ -465,13 +496,59 @@ export default function CreateMarketPage() {
                 onChange={(e) => setPulseClientName(e.target.value)}
                 className={ccInput}
               />
-              <input
-                type="url"
-                placeholder="Client logo URL"
-                value={pulseClientLogo}
-                onChange={(e) => setPulseClientLogo(e.target.value)}
-                className={ccInput}
-              />
+              <div className="space-y-2">
+                <span className="block text-sm font-medium text-gray-300">Client logo</span>
+                <p className="text-xs text-cc-text-muted">
+                  JPEG, PNG, WebP or GIF — max 2MB. Stored in sponsor-logos storage; you get a public URL.
+                </p>
+                <input
+                  ref={pulseLogoFileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  className="hidden"
+                  onChange={onPulseLogoFileChange}
+                />
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <button
+                    type="button"
+                    disabled={pulseLogoUploading}
+                    onClick={() => pulseLogoFileInputRef.current?.click()}
+                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#2d3748] bg-[#0f1419] px-4 py-2.5 text-sm font-medium text-white transition hover:border-emerald-500/40 hover:bg-[#1a2029] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <Upload className="h-4 w-4 text-emerald-400" />
+                    {pulseLogoUploading ? 'Uploading…' : 'Upload image'}
+                  </button>
+                  {pulseClientLogo.trim() ? (
+                    <div className="flex items-center gap-3 rounded-lg border border-[#2d3748] bg-[#0f1419] px-3 py-2">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={pulseClientLogo.trim()}
+                        alt="Logo preview"
+                        className="h-10 max-h-10 max-w-[160px] object-contain"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setPulseClientLogo('')}
+                        className="text-xs text-red-400 hover:underline"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs text-cc-text-muted">
+                    Or paste a public image URL
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://…"
+                    value={pulseClientLogo}
+                    onChange={(e) => setPulseClientLogo(e.target.value)}
+                    className={ccInput}
+                  />
+                </div>
+              </div>
               <input
                 type="email"
                 placeholder="Client email"
