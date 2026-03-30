@@ -6,6 +6,8 @@ import { createClientAuth } from '../../../lib/auth'
 import Link from 'next/link'
 import { setPendingVote } from '@/lib/guest-vote-storage'
 import { inputBaseClass } from '@/components/ui/input'
+import GoogleLoginButton from '@/components/auth/GoogleLoginButton'
+import { useLocale } from '@/lib/i18n/useLocale'
 
 /**
  * Persist guest-flow query params so the vote submits after email confirm + login.
@@ -48,6 +50,7 @@ function SignUpForm() {
   const [message, setMessage] = useState('')
 
   const supabase = createClientAuth()
+  const locale = useLocale()
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -137,6 +140,16 @@ function SignUpForm() {
           <p className="mt-4 text-sm font-medium text-emerald-400/90">
             100% gratis · Sin dinero real · XP y leaderboard
           </p>
+        </div>
+
+        <GoogleLoginButton />
+
+        <div className="my-6 flex items-center gap-4">
+          <div className="h-px flex-1 bg-[#2d3748]" />
+          <span className="text-sm text-gray-500">
+            {locale === 'es' ? 'o con email' : 'or with email'}
+          </span>
+          <div className="h-px flex-1 bg-[#2d3748]" />
         </div>
 
         <form onSubmit={handleSignUp} className="space-y-5">

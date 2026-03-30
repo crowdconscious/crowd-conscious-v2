@@ -76,7 +76,15 @@ export async function GET(request: NextRequest) {
     }
 
     const dest = safeNext ?? '/predictions'
-    const response = NextResponse.redirect(new URL(dest, request.url))
+    const forwardedHost = request.headers.get('x-forwarded-host')
+    const forwardedProto = request.headers.get('x-forwarded-proto') ?? 'https'
+    const origin =
+      process.env.NODE_ENV === 'development'
+        ? request.nextUrl.origin
+        : forwardedHost
+          ? `${forwardedProto}://${forwardedHost.split(',')[0].trim()}`
+          : request.nextUrl.origin
+    const response = NextResponse.redirect(new URL(dest, origin))
     if (sessionId) {
       clearAnonymousAliasCookies(response)
     }

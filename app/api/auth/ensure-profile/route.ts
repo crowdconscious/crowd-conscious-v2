@@ -23,9 +23,29 @@ export async function POST(request: NextRequest) {
     // Fetch user metadata for profile (needed only when creating)
     const { data: authUser } = await admin.auth.admin.getUserById(userId)
     const email = authUser?.user?.email ?? ''
-    const fullName = authUser?.user?.user_metadata?.full_name ?? authUser?.user?.email ?? ''
+    const meta = (authUser?.user?.user_metadata ?? {}) as Record<string, unknown>
+    const nameFromOAuth =
+      (typeof meta.full_name === 'string' && meta.full_name.trim()) ||
+      (typeof meta.name === 'string' && meta.name.trim()) ||
+      ''
+    const avatarFromOAuth =
+      (typeof meta.avatar_url === 'string' && meta.avatar_url.trim()) ||
+      (typeof meta.picture === 'string' && meta.picture.trim()) ||
+      ''
 
-    // UPSERT profile — idempotent, no error if already exists
+    const { data: existing } = await admin
+      .from('profiles')
+      .select('full_name, avatar_url')
+      .eq('id', userId)
+      .maybeSingle()
+
+    const fullName =
+      nameFromOAuth ||
+      (existing?.full_name?.trim() ||
+        (email.includes('@') ? email.split('@')[0] : ''))
+    const avatarUrl = avatarFromOAuth || existing?.avatar_url || null
+
+    // UPSERT profile — idempotent; merge OAuth name/avatar when present
     const { error: profileErr } = await admin
       .from('profiles')
       .upsert(
@@ -33,9 +53,10 @@ export async function POST(request: NextRequest) {
           id: userId,
           email,
           full_name: fullName,
+          avatar_url: avatarUrl,
           user_type: 'user',
         },
-        { onConflict: 'id', ignoreDuplicates: true }
+        { onConflict: 'id' }
       )
 
     if (profileErr) {

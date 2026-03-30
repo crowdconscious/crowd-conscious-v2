@@ -6,6 +6,8 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { getSafeRedirectPath } from '@/lib/auth-redirect'
 import { inputBaseClass } from '@/components/ui/input'
+import GoogleLoginButton from '@/components/auth/GoogleLoginButton'
+import { useLocale } from '@/lib/i18n/useLocale'
 
 function LoginForm() {
   const [email, setEmail] = useState('')
@@ -15,6 +17,7 @@ function LoginForm() {
 
   const searchParams = useSearchParams()
   const supabase = createClientAuth()
+  const locale = useLocale()
 
   const redirectParam = searchParams.get('redirect')
   const signupHref = redirectParam
@@ -88,6 +91,16 @@ function LoginForm() {
         <div className="mb-8 text-center">
           <h1 className="text-2xl font-bold text-white">Bienvenido de nuevo</h1>
           <p className="mt-2 text-sm text-gray-400">Inicia sesión en tu cuenta de Crowd Conscious</p>
+        </div>
+
+        <GoogleLoginButton />
+
+        <div className="my-6 flex items-center gap-4">
+          <div className="h-px flex-1 bg-[#2d3748]" />
+          <span className="text-sm text-gray-500">
+            {locale === 'es' ? 'o con email' : 'or with email'}
+          </span>
+          <div className="h-px flex-1 bg-[#2d3748]" />
         </div>
 
         <form onSubmit={handleSignIn} className="space-y-6">
