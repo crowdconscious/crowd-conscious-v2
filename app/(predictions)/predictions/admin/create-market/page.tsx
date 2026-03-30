@@ -8,6 +8,7 @@ import {
   Link2,
   Plus,
   Sparkles,
+  Upload,
 } from 'lucide-react'
 const CATEGORIES = [
   { id: 'world_cup', label: 'World Cup' },
