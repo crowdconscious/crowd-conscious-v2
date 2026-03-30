@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { getMarketText, getOutcomeLabel } from '@/lib/i18n/market-translations'
+import { getMarketText, getOutcomeLabel, getOutcomeCardLabel } from '@/lib/i18n/market-translations'
 import { useLocale } from '@/lib/i18n/useLocale'
 import {
   Globe,
@@ -246,7 +246,7 @@ export function MarketCard({ market, history = [], outcomes: outcomesProp, varia
             <div className="grid grid-cols-2 gap-2">
               {raw.map((o, idx) => {
                 const pct = Math.round(toDisplayPercent(o.probability))
-                const label = getOutcomeLabel(o, locale)
+                const label = getOutcomeCardLabel(o, locale)
                 const fillClass = idx === 0 ? 'bg-emerald-500/20' : 'bg-gray-500/20'
                 return (
                   <div
@@ -258,7 +258,7 @@ export function MarketCard({ market, history = [], outcomes: outcomesProp, varia
                       style={{ width: `${pct}%` }}
                     />
                     <div className="relative z-10 flex w-full min-w-0 justify-between gap-1 text-sm">
-                      <span className="truncate text-gray-200">{label}</span>
+                      <span className="line-clamp-2 text-left leading-tight text-gray-200">{label}</span>
                       <span className="shrink-0 font-semibold text-white">{pct}%</span>
                     </div>
                   </div>
@@ -269,11 +269,15 @@ export function MarketCard({ market, history = [], outcomes: outcomesProp, varia
             <div className="flex flex-col gap-1.5">
               {multiRows.map((o, idx) => {
                 const pct = Math.round(toDisplayPercent(o.probability))
-                const label = getOutcomeLabel(o, locale)
+                const label = getOutcomeCardLabel(o, locale)
                 const fillClass = idx === 0 ? 'bg-emerald-500/20' : 'bg-gray-500/20'
                 return (
-                  <div key={o.id} className="flex items-center gap-3">
-                    <span className={`${labelW} shrink-0 truncate text-sm text-gray-300`}>{label}</span>
+                  <div key={o.id} className="flex items-start gap-3">
+                    <span
+                      className={`${labelW} shrink-0 line-clamp-2 text-sm leading-tight text-gray-300`}
+                    >
+                      {label}
+                    </span>
                     <div className={`relative min-w-0 flex-1 overflow-hidden rounded-lg bg-gray-800/50 ${barHMulti}`}>
                       <div
                         className={`absolute left-0 top-0 h-full rounded-lg ${fillClass}`}

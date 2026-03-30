@@ -8,8 +8,8 @@ export const maxDuration = 30
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 /**
- * Anonymous (guest) vote: records engagement only — does not change community probability.
- * Uses execute_anonymous_market_vote (service role).
+ * Browser guest vote (localStorage guest UUID): inserts market_votes and updates
+ * market_outcomes probabilities via execute_anonymous_market_vote (service role).
  */
 export async function POST(request: Request) {
   try {
@@ -63,23 +63,28 @@ export async function POST(request: Request) {
       engagement_count?: number
     }
 
-    const { data: outcomes } = await admin
-      .from('market_outcomes')
-      .select('id, label, probability, vote_count')
-      .eq('market_id', market_id)
-
-    const registeredVoteCount = (market as { total_votes?: number }).total_votes ?? 0
-    const engagementCount =
-      (market as { engagement_count?: number }).engagement_count ?? registeredVoteCount
-
     if (result?.already_voted === true) {
+      const [{ data: outcomes }, { count: registeredOnly }] = await Promise.all([
+        admin.from('market_outcomes').select('id, label, probability, vote_count').eq('market_id', market_id),
+        admin
+          .from('market_votes')
+          .select('*', { count: 'exact', head: true })
+          .eq('market_id', market_id)
+          .eq('is_anonymous', false),
+      ])
+      const { data: m } = await admin
+        .from('prediction_markets')
+        .select('total_votes, engagement_count')
+        .eq('id', market_id)
+        .single()
       return NextResponse.json({
         success: false,
         already_voted: true,
         message: 'Ya votaste en este mercado desde este dispositivo',
         outcomes: outcomes ?? [],
-        engagement_count: engagementCount,
-        registered_vote_count: registeredVoteCount,
+        engagement_count: m?.engagement_count ?? 0,
+        total_votes: m?.total_votes ?? 0,
+        registered_vote_count: registeredOnly ?? 0,
       })
     }
 
@@ -90,19 +95,23 @@ export async function POST(request: Request) {
       )
     }
 
-    const { data: updatedMarket } = await admin
-      .from('prediction_markets')
-      .select('total_votes, engagement_count')
-      .eq('id', market_id)
-      .single()
+    const [{ data: outcomes }, { data: updatedMarket }, { count: registeredOnly }] = await Promise.all([
+      admin.from('market_outcomes').select('id, label, probability, vote_count').eq('market_id', market_id),
+      admin.from('prediction_markets').select('total_votes, engagement_count').eq('id', market_id).single(),
+      admin
+        .from('market_votes')
+        .select('*', { count: 'exact', head: true })
+        .eq('market_id', market_id)
+        .eq('is_anonymous', false),
+    ])
 
     return NextResponse.json({
       success: true,
       message: 'Tu participación fue registrada',
       outcomes: outcomes ?? [],
       engagement_count: updatedMarket?.engagement_count ?? result?.engagement_count ?? 0,
-      registered_vote_count: updatedMarket?.total_votes ?? result?.total_votes ?? 0,
       total_votes: updatedMarket?.total_votes ?? result?.total_votes,
+      registered_vote_count: registeredOnly ?? 0,
       xp_earned: 0,
       outcome_label: (rpcData as { outcome_label?: string })?.outcome_label,
       new_probability: (rpcData as { new_probability?: number })?.new_probability,

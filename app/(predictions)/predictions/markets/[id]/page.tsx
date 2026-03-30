@@ -83,7 +83,15 @@ export default async function MarketDetailPage({
     notFound()
   }
 
-  const [{ data: creator }, { data: outcomes }, { data: myVoteRow }] = await Promise.all([
+  const admin = createAdminClient()
+
+  const [
+    { data: creator },
+    { data: outcomes },
+    { data: myVoteRow },
+    { count: totalVoteRows },
+    { count: registeredVoteRows },
+  ] = await Promise.all([
     supabase
       .from('profiles')
       .select('full_name')
@@ -102,11 +110,17 @@ export default async function MarketDetailPage({
           .eq('user_id', user.id)
           .single()
       : Promise.resolve({ data: null }),
+    admin.from('market_votes').select('*', { count: 'exact', head: true }).eq('market_id', id),
+    admin
+      .from('market_votes')
+      .select('*', { count: 'exact', head: true })
+      .eq('market_id', id)
+      .eq('is_anonymous', false),
   ])
 
-  const registeredVoteCount = Number((market as { total_votes?: number }).total_votes) || 0
   const engagementCount =
-    Number((market as { engagement_count?: number }).engagement_count) || registeredVoteCount
+    (totalVoteRows ?? Number((market as { engagement_count?: number }).engagement_count)) || 0
+  const registeredVoteCount = registeredVoteRows ?? 0
   const outcomesList = (outcomes || []).map((o) => ({
     id: o.id,
     label: o.label,

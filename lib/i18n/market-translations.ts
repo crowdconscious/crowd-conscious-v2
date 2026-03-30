@@ -76,6 +76,19 @@ export function getOutcomeLabel(
   return autoTranslations[locale]?.[outcome.label] || outcome.label
 }
 
+/** Shorter label for tight UI: use one side of "ES / EN" bilingual strings. */
+export function getOutcomeCardLabel(
+  outcome: { label: string; translations?: unknown },
+  locale: string
+): string {
+  const full = getOutcomeLabel(outcome, locale)
+  if (!full.includes(' / ')) return full
+  const parts = full.split(' / ').map((s) => s.trim()).filter(Boolean)
+  if (parts.length < 2) return full
+  if (!locale || locale === 'es' || locale.startsWith('es')) return parts[0]
+  return parts[1] ?? parts[0]
+}
+
 // Helper to check if a market has translations for a given locale
 export function hasTranslation(
   market: MarketWithTranslations,

@@ -211,7 +211,7 @@ export function VotePanel({
           return
         }
         onAnonymousVoteSuccess?.(payload, {
-          total_votes: data.registered_vote_count ?? data.total_votes,
+          total_votes: data.total_votes ?? data.engagement_count,
           engagement_count: data.engagement_count,
         })
         return

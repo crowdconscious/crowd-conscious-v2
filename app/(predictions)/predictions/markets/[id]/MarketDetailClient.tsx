@@ -453,20 +453,29 @@ export function MarketDetailClient({
                         : `${Math.round(prob)}% YES`}
                   </p>
                   <p className="text-xs text-slate-500 mt-1">
-                    {locale === 'en' ? 'community signal' : 'señal de la comunidad'} ·{' '}
-                    {registeredVoteCount.toLocaleString()}{' '}
-                    {locale === 'en' ? 'registered voters' : 'votantes registrados'}
+                    {locale === 'en'
+                      ? 'Community signal · all votes (registered + guests)'
+                      : 'Señal de la comunidad · todos los votos (registrados e invitados)'}
+                    {registeredVoteCount > 0 && registeredVoteCount < engagementCount ? (
+                      <span>
+                        {' '}
+                        · {registeredVoteCount.toLocaleString()}{' '}
+                        {locale === 'en' ? 'registered' : 'registrados'} ·{' '}
+                        {(engagementCount - registeredVoteCount).toLocaleString()}{' '}
+                        {locale === 'en' ? 'guests' : 'invitados'}
+                      </span>
+                    ) : null}
                   </p>
                 </div>
                 <div>
                   <p className="text-slate-400 text-sm">
-                    {locale === 'en' ? 'Total engagement' : 'Participación total'}
+                    {locale === 'en' ? 'Total participation' : 'Participación total'}
                   </p>
                   <p className="text-2xl font-semibold text-white">
                     {engagementCount.toLocaleString()}
                   </p>
                   <p className="text-xs text-slate-500 mt-1">
-                    {locale === 'en' ? 'all interactions (incl. guests)' : 'todas las interacciones (incl. invitados)'}
+                    {locale === 'en' ? 'Vote rows (same pool as probability)' : 'Filas de voto (misma base que la probabilidad)'}
                   </p>
                 </div>
               </div>
