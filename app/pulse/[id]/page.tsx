@@ -17,11 +17,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const supabase = await createClient()
   const { data: market } = await supabase
     .from('prediction_markets')
-    .select('title, translations, pulse_client_name, is_pulse')
+    .select('title, translations, pulse_client_name, is_pulse, market_type, category')
     .eq('id', id)
     .maybeSingle()
 
-  if (!market || !market.is_pulse) {
+  const legacyPulse =
+    market &&
+    !market.is_pulse &&
+    market.market_type === 'multi' &&
+    market.category === 'government'
+
+  if (!market || (!market.is_pulse && !legacyPulse)) {
     return { title: 'Conscious Pulse' }
   }
 
@@ -62,6 +68,8 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
       status,
       resolution_date,
       is_pulse,
+      market_type,
+      category,
       pulse_client_name,
       pulse_client_logo,
       sponsor_name,
@@ -78,7 +86,12 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
     notFound()
   }
 
-  if (!market.is_pulse) {
+  const legacyPulse =
+    !market.is_pulse &&
+    (market as { market_type?: string | null }).market_type === 'multi' &&
+    (market as { category?: string | null }).category === 'government'
+
+  if (!market.is_pulse && !legacyPulse) {
     redirect(`/predictions/markets/${id}`)
   }
 

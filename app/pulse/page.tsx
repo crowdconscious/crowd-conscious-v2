@@ -47,23 +47,23 @@ export default async function PulseListingPage() {
   const publicClient = await createClient()
   const admin = createAdminClient()
 
+  const pulseSelect =
+    'id, title, translations, pulse_client_name, pulse_client_logo, status, total_votes, resolution_date, created_at, market_type, category, is_pulse'
+
   const { data: rows } = isAdmin
     ? await admin
         .from('prediction_markets')
-        .select(
-          'id, title, translations, pulse_client_name, pulse_client_logo, status, total_votes, resolution_date, created_at'
-        )
-        .eq('is_pulse', true)
+        .select(pulseSelect)
         .is('archived_at', null)
+        /* Legacy: multi + government surveys created before is_pulse defaulted true */
+        .or('is_pulse.eq.true,and(market_type.eq.multi,category.eq.government)')
         .order('created_at', { ascending: false })
     : await publicClient
         .from('prediction_markets')
-        .select(
-          'id, title, translations, pulse_client_name, pulse_client_logo, status, total_votes, resolution_date, created_at'
-        )
-        .eq('is_pulse', true)
-        .in('status', ['active', 'trading'])
+        .select(pulseSelect)
         .is('archived_at', null)
+        .in('status', ['active', 'trading'])
+        .or('is_pulse.eq.true,and(market_type.eq.multi,category.eq.government)')
         .order('created_at', { ascending: false })
 
   const markets = rows ?? []
