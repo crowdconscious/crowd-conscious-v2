@@ -29,8 +29,9 @@ async function getInboxItems(): Promise<InboxItem[]> {
   const { data, error } = await supabase
     .from('conscious_inbox')
     .select('id, user_id, type, title, description, category, links, status, upvotes, created_at')
-    .order('upvotes', { ascending: false })
+    .is('archived_at', null)
     .order('created_at', { ascending: false })
+    .limit(20)
 
   if (error) {
     console.error('Inbox fetch error:', error)

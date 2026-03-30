@@ -27,6 +27,7 @@ type InboxItem = {
   upvotes: number
   created_at: string
   submitter_name: string
+  archived_at: string | null
 }
 
 const STATUS_FILTERS = [
@@ -105,6 +106,7 @@ export default function AdminInboxPage() {
   const [editingNotes, setEditingNotes] = useState<string | null>(null)
   const [notesValue, setNotesValue] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [showArchived, setShowArchived] = useState(false)
 
   const fetchItems = useCallback(async () => {
     setLoading(true)
@@ -113,6 +115,7 @@ export default function AdminInboxPage() {
       if (statusFilter !== 'all') params.set('status', statusFilter)
       if (typeFilter !== 'all') params.set('type', typeFilter)
       params.set('sort', sort)
+      if (showArchived) params.set('includeArchived', '1')
       const res = await fetch(`/api/predictions/admin/inbox?${params}`)
       const data = await res.json()
       if (res.status === 403) {
@@ -126,7 +129,7 @@ export default function AdminInboxPage() {
     } finally {
       setLoading(false)
     }
-  }, [statusFilter, typeFilter, sort])
+  }, [statusFilter, typeFilter, sort, showArchived])
 
   useEffect(() => {
     fetchItems()
@@ -175,6 +178,24 @@ export default function AdminInboxPage() {
       description: item.description || '',
       website_url: '',
     })
+  }
+
+  const archiveInboxItem = async (id: string) => {
+    setSubmitting(true)
+    try {
+      const res = await fetch('/api/predictions/admin/archive', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resource: 'inbox', id }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Archive failed')
+      await fetchItems()
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Archive failed')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const handlePromoteToCause = async () => {
@@ -268,6 +289,20 @@ export default function AdminInboxPage() {
             ))}
           </select>
         </div>
+        <label className="flex items-center gap-2 text-gray-400 text-sm cursor-pointer">
+          <input
+            type="checkbox"
+            checked={showArchived}
+            onChange={(e) => setShowArchived(e.target.checked)}
+            className="accent-emerald-500"
+          />
+          Show archived
+        </label>
+        {showArchived && (
+          <span className="text-gray-500 text-xs">
+            ({items.filter((i) => i.archived_at).length} archived)
+          </span>
+        )}
       </div>
 
       {error && (
@@ -402,6 +437,16 @@ export default function AdminInboxPage() {
 
                 {/* Action buttons */}
                 <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-800">
+                  {!item.archived_at && (
+                    <button
+                      type="button"
+                      onClick={() => archiveInboxItem(item.id)}
+                      disabled={submitting}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium disabled:opacity-50"
+                    >
+                      📦 Archive
+                    </button>
+                  )}
                   <button
                     onClick={() => openPromoteModal(item)}
                     disabled={submitting || item.status === 'promoted_to_cause'}

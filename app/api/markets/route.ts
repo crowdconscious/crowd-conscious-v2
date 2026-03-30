@@ -26,6 +26,7 @@ export async function GET(request: Request) {
       .from('prediction_markets')
       .select('*')
       .in('status', ['active', 'trading'])
+      .is('archived_at', null)
       .order('total_votes', { ascending: false, nullsFirst: false })
       .limit(limit)
 

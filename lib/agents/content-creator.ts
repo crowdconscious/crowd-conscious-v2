@@ -120,6 +120,7 @@ export async function runContentCreator(): Promise<{
         .select('id, title, description, tags, current_probability')
         .gte('created_at', twoDaysAgo)
         .in('status', ['active', 'trading'])
+        .is('archived_at', null)
         .limit(5)
       newMarkets = (mktRows ?? []) as typeof newMarkets
     } catch (e) {
@@ -136,6 +137,7 @@ export async function runContentCreator(): Promise<{
         .from('prediction_markets')
         .select('id, title, category, current_probability, status')
         .in('status', ['active', 'trading'])
+        .is('archived_at', null)
 
       const marketIds = (markets ?? []).map((m) => m.id)
       const voteCounts: Record<string, number> = {}
@@ -211,6 +213,7 @@ export async function runContentCreator(): Promise<{
         .from('prediction_markets')
         .select('id, title, resolution, resolved_at')
         .eq('status', 'resolved')
+        .is('archived_at', null)
         .gte('resolved_at', cutoff48h)
 
       const resolvedWithCorrect = await Promise.all(
@@ -296,6 +299,7 @@ export async function runContentCreator(): Promise<{
           .select('sponsor_contribution')
           .not('sponsor_name', 'is', null)
           .gt('sponsor_contribution', 0)
+          .is('archived_at', null)
         totalFromSponsors =
           (sponsorMarkets ?? []).reduce(
             (sum, m) =>

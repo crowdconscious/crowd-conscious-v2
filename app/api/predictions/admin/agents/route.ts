@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth-server'
 import { createAdminClient } from '@/lib/supabase-admin'
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const user = await getCurrentUser()
     if (!user) {
@@ -20,8 +20,18 @@ export async function GET() {
       return NextResponse.json({ error: 'Admin only' }, { status: 403 })
     }
 
+    const includeArchived = new URL(request.url).searchParams.get('includeArchived') === '1'
+
     const now = new Date()
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+
+    let contentQuery = supabase
+      .from('agent_content')
+      .select('*')
+      .in('agent_type', ['news_monitor', 'content_creator'])
+      .order('created_at', { ascending: false })
+      .limit(200)
+    if (!includeArchived) contentQuery = contentQuery.is('archived_at', null)
 
     const [
       { data: allRuns },
@@ -32,12 +42,7 @@ export async function GET() {
         .select('*')
         .order('created_at', { ascending: false })
         .limit(100),
-      supabase
-        .from('agent_content')
-        .select('*')
-        .in('agent_type', ['news_monitor', 'content_creator'])
-        .order('created_at', { ascending: false })
-        .limit(200),
+      contentQuery,
     ])
 
     const runs = (allRuns ?? []) as Array<{

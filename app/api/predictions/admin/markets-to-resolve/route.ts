@@ -24,6 +24,7 @@ export async function GET() {
       .from('prediction_markets')
       .select('*')
       .in('status', ['active', 'trading'])
+      .is('archived_at', null)
       .order('resolution_date', { ascending: true })
 
     if (error) {

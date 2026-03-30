@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase-server'
+import { createAdminClient } from '@/lib/supabase-admin'
+import { getCurrentUser } from '@/lib/auth-server'
 import { getMarketText } from '@/lib/i18n/market-translations'
 
 export const metadata: Metadata = {
@@ -13,16 +15,59 @@ export const metadata: Metadata = {
   },
 }
 
+function statusLabel(status: string, locale: 'es' | 'en') {
+  if (locale === 'en') return status
+  const map: Record<string, string> = {
+    active: 'Activo',
+    trading: 'En trading',
+    resolved: 'Resuelto',
+    proposed: 'Propuesto',
+    approved: 'Aprobado',
+    disputed: 'Disputado',
+    cancelled: 'Cancelado',
+  }
+  return map[status] ?? status
+}
+
 export default async function PulseListingPage() {
-  const supabase = await createClient()
-  const { data: rows } = await supabase
-    .from('prediction_markets')
-    .select('id, title, translations, pulse_client_name, pulse_client_logo, status')
-    .eq('is_pulse', true)
-    .in('status', ['active', 'trading'])
-    .order('created_at', { ascending: false })
+  const user = await getCurrentUser()
+  let isAdmin = false
+  if (user) {
+    const supabase = await createClient()
+    const { data: prof } = await supabase
+      .from('profiles')
+      .select('user_type, email')
+      .eq('id', user.id)
+      .single()
+    const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim()
+    const em = prof?.email?.toLowerCase().trim()
+    isAdmin = prof?.user_type === 'admin' || (!!adminEmail && !!em && em === adminEmail)
+  }
+
+  const publicClient = await createClient()
+  const admin = createAdminClient()
+
+  const { data: rows } = isAdmin
+    ? await admin
+        .from('prediction_markets')
+        .select(
+          'id, title, translations, pulse_client_name, pulse_client_logo, status, total_votes, resolution_date, created_at'
+        )
+        .eq('is_pulse', true)
+        .is('archived_at', null)
+        .order('created_at', { ascending: false })
+    : await publicClient
+        .from('prediction_markets')
+        .select(
+          'id, title, translations, pulse_client_name, pulse_client_logo, status, total_votes, resolution_date, created_at'
+        )
+        .eq('is_pulse', true)
+        .in('status', ['active', 'trading'])
+        .is('archived_at', null)
+        .order('created_at', { ascending: false })
 
   const markets = rows ?? []
+  const locale = 'es'
   const byClient = new Map<string, typeof markets>()
   for (const m of markets) {
     const key = m.pulse_client_name?.trim() || 'General'
@@ -37,15 +82,18 @@ export default async function PulseListingPage() {
       <div className="mx-auto max-w-4xl px-4 py-12 sm:py-16">
         <header className="mb-10 text-center">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-400/90">
-            Conscious Pulse
+            📊 Conscious Pulse
           </p>
           <h1 className="mt-2 text-3xl font-bold text-white sm:text-4xl">
-            Medición de sentimiento público
+            Medición de sentimiento público en tiempo real
           </h1>
           <p className="mx-auto mt-3 max-w-xl text-slate-400">
             Consultas activas impulsadas por Crowd Conscious. Resultados en vivo con analíticas de
             confianza.
           </p>
+          {isAdmin && (
+            <p className="mt-2 text-xs text-amber-400/90">Vista administrador: todos los mercados Pulse</p>
+          )}
         </header>
 
         {markets.length === 0 ? (
@@ -74,9 +122,17 @@ export default async function PulseListingPage() {
                         translations: m.translations as Parameters<typeof getMarketText>[0]['translations'],
                       },
                       'title',
-                      'es'
+                      locale
                     )
                     const logo = m.pulse_client_logo?.trim()
+                    const votes = m.total_votes ?? 0
+                    const closeDate = m.resolution_date
+                      ? new Date(m.resolution_date).toLocaleDateString('es-MX', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })
+                      : '—'
                     return (
                       <li key={m.id}>
                         <Link
@@ -85,6 +141,7 @@ export default async function PulseListingPage() {
                         >
                           <div className="mb-3 flex items-start gap-3">
                             {logo ? (
+                              // eslint-disable-next-line @next/next/no-img-element
                               <img
                                 src={logo}
                                 alt=""
@@ -99,7 +156,15 @@ export default async function PulseListingPage() {
                               <p className="font-semibold leading-snug text-white group-hover:text-emerald-200">
                                 {title}
                               </p>
-                              <p className="mt-1 text-xs text-slate-500">Ver resultados →</p>
+                              <p className="mt-1 text-xs text-slate-500">
+                                Powered by Crowd Conscious
+                              </p>
+                              <p className="mt-2 text-xs text-slate-400">
+                                {votes} votos · {statusLabel(m.status, locale)} · Cierra {closeDate}
+                              </p>
+                              <p className="mt-1 text-xs font-medium text-emerald-400/90">
+                                Ver resultados →
+                              </p>
                             </div>
                           </div>
                         </Link>
@@ -111,6 +176,18 @@ export default async function PulseListingPage() {
             ))}
           </div>
         )}
+
+        <div className="mt-12 rounded-2xl border border-white/10 bg-[#1a2029] px-6 py-8 text-center">
+          <p className="text-slate-300">
+            ¿Quieres medir el sentimiento de tu comunidad?
+          </p>
+          <Link
+            href="/sponsor"
+            className="mt-4 inline-flex min-h-[44px] items-center justify-center rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-500"
+          >
+            Conoce Conscious Pulse →
+          </Link>
+        </div>
 
         <p className="mt-12 text-center text-sm text-slate-500">
           <Link href="/" className="text-emerald-400 hover:underline">

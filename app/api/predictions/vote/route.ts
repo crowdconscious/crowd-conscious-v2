@@ -108,11 +108,15 @@ export async function POST(request: Request) {
 
       const { data: marketCheck } = await admin
         .from('prediction_markets')
-        .select('id, status, live_event_id, is_micro_market, is_pulse')
+        .select('id, status, live_event_id, is_micro_market, is_pulse, archived_at')
         .eq('id', market_id)
         .maybeSingle()
 
-      if (!marketCheck || !['active', 'trading'].includes(marketCheck.status ?? '')) {
+      if (
+        !marketCheck ||
+        !['active', 'trading'].includes(marketCheck.status ?? '') ||
+        marketCheck.archived_at
+      ) {
         return NextResponse.json({ error: 'Market not found or not active' }, { status: 404 })
       }
 
@@ -189,6 +193,15 @@ export async function POST(request: Request) {
     }
 
     const supabase = await createClient()
+    const { data: marketRow } = await supabase
+      .from('prediction_markets')
+      .select('archived_at')
+      .eq('id', market_id)
+      .maybeSingle()
+    if (marketRow?.archived_at) {
+      return NextResponse.json({ error: 'Market is archived' }, { status: 404 })
+    }
+
     const { data, error } = await supabase.rpc('execute_market_vote', {
       p_user_id: user.id,
       p_market_id: market_id,

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { getMarketText, getOutcomeLabel } from '@/lib/i18n/market-translations'
 import { useLocale } from '@/lib/i18n/useLocale'
 import {
@@ -16,6 +17,7 @@ import {
   Calendar,
   CheckCircle,
   Flame,
+  BarChart3,
 } from 'lucide-react'
 import type { Database } from '@/types/database'
 import { hasGuestVotedMarket } from '@/lib/guest-vote-storage'
@@ -157,7 +159,17 @@ export function MarketCard({ market, history = [], outcomes: outcomesProp, varia
   useEffect(() => {
     setGuestVoted(hasGuestVotedMarket(market.id))
   }, [market.id])
-  const config = CATEGORY_CONFIG[market.category] || CATEGORY_CONFIG.world
+  const isPulse = Boolean((market as { is_pulse?: boolean }).is_pulse)
+  const config = isPulse
+    ? {
+        label: 'Conscious Pulse',
+        icon: BarChart3,
+        bg: 'bg-amber-500/10',
+        text: 'text-amber-400',
+        accent: 'border-t-amber-400/50',
+        hoverGlow: 'group-hover:shadow-[0_0_20px_rgba(251,191,36,0.35)]',
+      }
+    : CATEGORY_CONFIG[market.category] || CATEGORY_CONFIG.world
   const Icon = config.icon
   const engagement =
     Number(market.engagement_count) || Number(market.total_votes) || Number(market.total_volume) || 0
@@ -214,11 +226,13 @@ export function MarketCard({ market, history = [], outcomes: outcomesProp, varia
         </div>
 
         {market.image_url && (
-          <div className={`mb-3 -mt-1 ${isTrending ? '-mx-6' : '-mx-5'}`}>
-            <img
+          <div className={`relative mb-3 -mt-1 h-24 ${isTrending ? '-mx-6' : '-mx-5'}`}>
+            <Image
               src={market.image_url}
               alt=""
-              className="w-full h-24 object-cover rounded-t-xl"
+              fill
+              sizes="(max-width: 768px) 100vw, 33vw"
+              className="object-cover rounded-t-xl"
             />
           </div>
         )}
@@ -339,9 +353,11 @@ export function MarketCard({ market, history = [], outcomes: outcomesProp, varia
           {market.sponsor_name && (
             <div className="flex items-center gap-2">
               {market.sponsor_logo_url ? (
-                <img
+                <Image
                   src={market.sponsor_logo_url}
                   alt={market.sponsor_name}
+                  width={80}
+                  height={20}
                   className="h-5 w-auto rounded object-contain bg-slate-800"
                 />
               ) : null}

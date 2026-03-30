@@ -39,6 +39,7 @@ import {
   User,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { VotePanel, type GuestVotePayload } from '../../components/VotePanel'
 import { GuestRegistrationPrompt } from '../../components/GuestRegistrationPrompt'
 import { CelebrationModal } from '@/components/gamification/CelebrationModal'
@@ -70,6 +71,13 @@ const CATEGORY_CONFIG: Record<
   cause: { label: 'Cause', icon: Heart, bg: 'bg-amber-500/20', text: 'text-amber-400' },
   world_cup: { label: 'World Cup', icon: Trophy, bg: 'bg-emerald-500/20', text: 'text-emerald-400' },
   sustainability: { label: 'Sustainability', icon: Leaf, bg: 'bg-green-500/20', text: 'text-green-400' },
+}
+
+const PULSE_CATEGORY = {
+  label: 'Conscious Pulse',
+  icon: BarChart3,
+  bg: 'bg-amber-500/10',
+  text: 'text-amber-400',
 }
 
 function formatDate(d: string): string {
@@ -129,6 +137,8 @@ interface Props {
   myVote?: MyVote
   /** When false, anonymous votes use /api/votes/anonymous + localStorage guest id */
   isAuthenticated?: boolean
+  /** Admin or linked sponsor account owner — Pulse public results */
+  showPulseDashboardLink?: boolean
 }
 
 type TimeRange = '7d' | '30d' | 'all'
@@ -136,17 +146,18 @@ type TimeRange = '7d' | '30d' | 'all'
 export function MarketDetailClient({
   market,
   creatorName,
-  history,
-  agentContent,
-  sentiment,
-  trades,
+  history: historyProp = [],
+  agentContent: agentContentProp = [],
+  sentiment: sentimentProp = [],
+  trades: tradesProp = [],
   engagementCount,
   registeredVoteCount,
-  totalConsciousFromMarket,
+  totalConsciousFromMarket: totalConsciousProp = 0,
   resolutionEvidence = {},
   outcomes = [],
   myVote = null,
   isAuthenticated = true,
+  showPulseDashboardLink = false,
 }: Props) {
   const locale = useLocale()
   const router = useRouter()
@@ -161,6 +172,41 @@ export function MarketDetailClient({
     guest?: boolean
   }>({ open: false })
   const [voteQuietMessage, setVoteQuietMessage] = useState<string | null>(null)
+  const [lazyExtra, setLazyExtra] = useState<{
+    history: Props['history']
+    agentContent: AgentContent[]
+    sentiment: SentimentScore[]
+    trades: TradeAnon[]
+    totalConsciousFromMarket: number
+  } | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    setLazyExtra(null)
+    fetch(`/api/predictions/markets/${market.id}/supplementary`)
+      .then((r) => r.json())
+      .then((d: { error?: string; history?: Props['history']; agentContent?: AgentContent[]; sentiment?: SentimentScore[]; trades?: TradeAnon[]; totalConsciousFromMarket?: number }) => {
+        if (cancelled || d.error) return
+        setLazyExtra({
+          history: d.history ?? [],
+          agentContent: d.agentContent ?? [],
+          sentiment: d.sentiment ?? [],
+          trades: d.trades ?? [],
+          totalConsciousFromMarket: Number(d.totalConsciousFromMarket ?? 0),
+        })
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [market.id])
+
+  const history = lazyExtra?.history ?? historyProp
+  const agentContent = lazyExtra?.agentContent ?? agentContentProp
+  const sentiment = lazyExtra?.sentiment ?? sentimentProp
+  const trades = lazyExtra?.trades ?? tradesProp
+  const totalConsciousFromMarket = lazyExtra ? lazyExtra.totalConsciousFromMarket : totalConsciousProp
+  const secondaryLoading = !lazyExtra
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -187,13 +233,19 @@ export function MarketDetailClient({
     return () => clearTimeout(t)
   }, [celebration.open, celebration.guest])
 
-  const config = CATEGORY_CONFIG[market.category] || CATEGORY_CONFIG.world
+  const isPulseMarket = !!(market as { is_pulse?: boolean }).is_pulse
+  const config = isPulseMarket ? PULSE_CATEGORY : CATEGORY_CONFIG[market.category] || CATEGORY_CONFIG.world
   const Icon = config.icon
   const prob = toDisplayPercent(Number(market.current_probability))
   const isMultiOutcome = (market as { market_type?: string }).market_type === 'multi' && outcomes.length > 2
-  const leadingOutcome = outcomes.length > 0
-    ? outcomes.reduce((a, b) => ((a?.probability ?? 0) > (b?.probability ?? 0) ? a : b))
-    : null
+  const probs = outcomes.map((o) => Number(o.probability ?? 0))
+  const maxP = probs.length ? Math.max(...probs) : 0
+  const minP = probs.length ? Math.min(...probs) : 0
+  const allOutcomesTied = outcomes.length >= 2 && maxP === minP
+  const leadingOutcome =
+    outcomes.length > 0 && !allOutcomesTied
+      ? outcomes.reduce((a, b) => ((a?.probability ?? 0) > (b?.probability ?? 0) ? a : b))
+      : null
 
   const now = Date.now()
   const filteredHistory = history.filter((h) => {
@@ -333,10 +385,13 @@ export function MarketDetailClient({
             <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-center justify-between gap-4 flex-wrap">
               <div className="flex items-center gap-3 min-w-0">
                 {(market as { sponsor_logo_url?: string }).sponsor_logo_url ? (
-                  <img
-                    src={(market as { sponsor_logo_url?: string }).sponsor_logo_url}
+                  <Image
+                    src={(market as { sponsor_logo_url?: string }).sponsor_logo_url!}
                     alt={(market as { sponsor_name?: string }).sponsor_name || ''}
+                    width={48}
+                    height={48}
                     className="w-12 h-12 object-contain rounded shrink-0"
+                    unoptimized
                   />
                 ) : (
                   <div className="w-12 h-12 bg-amber-500/20 rounded flex items-center justify-center shrink-0">
@@ -350,8 +405,9 @@ export function MarketDetailClient({
                     🤝 Sponsored by {(market as { sponsor_name?: string }).sponsor_name}
                   </p>
                   <p className="text-slate-400 text-sm">
-                    This market is made possible by {(market as { sponsor_name?: string }).sponsor_name}.
-                    Up to 40% of this sponsorship (by tier) funds the Conscious Fund.
+                    {locale === 'es'
+                      ? `Patrocinado por ${(market as { sponsor_name?: string }).sponsor_name}. Hasta el 40% financia causas comunitarias.`
+                      : `Sponsored by ${(market as { sponsor_name?: string }).sponsor_name}. Up to 40% funds community causes.`}
                   </p>
                 </div>
               </div>
@@ -368,6 +424,17 @@ export function MarketDetailClient({
             </div>
           )}
 
+          {(market as { is_pulse?: boolean }).is_pulse && showPulseDashboardLink && (
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href={`/pulse/${market.id}`}
+                className="inline-flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-400 transition-colors hover:bg-emerald-500/20"
+              >
+                📊 {locale === 'es' ? 'Ver Panel Pulse' : 'View Pulse Dashboard'}
+              </Link>
+            </div>
+          )}
+
           {/* Probability + engagement (registered vs total reach) */}
           <div className="bg-cc-card border border-cc-border rounded-xl p-6">
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-6">
@@ -377,9 +444,13 @@ export function MarketDetailClient({
                     {locale === 'en' ? 'Community probability' : 'Probabilidad de la comunidad'}
                   </p>
                   <p className="text-3xl font-bold text-emerald-400">
-                    {isMultiOutcome && leadingOutcome
-                      ? `${getOutcomeLabel(leadingOutcome, locale)} ${Math.round(toDisplayPercent(leadingOutcome.probability || 0))}%`
-                      : `${Math.round(prob)}% YES`}
+                    {isMultiOutcome && allOutcomesTied
+                      ? locale === 'es'
+                        ? 'Empate — sin líder aún'
+                        : 'Equal — no leading outcome yet'
+                      : isMultiOutcome && leadingOutcome
+                        ? `${getOutcomeLabel(leadingOutcome, locale)} ${Math.round(toDisplayPercent(leadingOutcome.probability || 0))}%`
+                        : `${Math.round(prob)}% YES`}
                   </p>
                   <p className="text-xs text-slate-500 mt-1">
                     {locale === 'en' ? 'community signal' : 'señal de la comunidad'} ·{' '}
@@ -436,7 +507,14 @@ export function MarketDetailClient({
               )}
             </div>
 
-            {historyChartData.length > 0 && (
+            {secondaryLoading && (
+              <div className="space-y-3 mt-4" aria-hidden>
+                <div className="h-40 rounded-lg bg-slate-800/60 animate-pulse" />
+                <div className="h-24 rounded-lg bg-slate-800/40 animate-pulse" />
+              </div>
+            )}
+
+            {!secondaryLoading && historyChartData.length > 0 && (
               <>
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-slate-400 text-sm">Probability (from prediction_market_history)</p>

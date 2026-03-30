@@ -49,6 +49,7 @@ type AgentContent = {
   created_at: string
   market_id?: string | null
   agent_type?: string
+  archived_at?: string | null
 }
 
 type TabId = 'all' | 'ceo' | 'social' | 'news' | 'inbox' | 'suggestions' | 'calendar'
@@ -420,10 +421,11 @@ export default function AdminAgentsPage() {
   const [runResult, setRunResult] = useState<string | null>(null)
   const [running, setRunning] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<TabId>('all')
+  const [showArchived, setShowArchived] = useState(false)
 
   const fetchData = useCallback(async () => {
     try {
-      const res = await fetch('/api/predictions/admin/agents')
+      const res = await fetch(`/api/predictions/admin/agents?includeArchived=${showArchived ? '1' : '0'}`)
       if (!res.ok) {
         const json = await res.json().catch(() => ({}))
         throw new Error(res.status === 403 ? 'Admin access required' : json.error ?? res.statusText)
@@ -436,7 +438,7 @@ export default function AdminAgentsPage() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [showArchived])
 
   useEffect(() => {
     fetchData()
@@ -500,6 +502,21 @@ export default function AdminAgentsPage() {
       await fetchData()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Update failed')
+    }
+  }
+
+  const archiveAgentItem = async (id: string) => {
+    try {
+      const res = await fetch('/api/predictions/admin/archive', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resource: 'agent_content', id }),
+      })
+      const j = await res.json()
+      if (!res.ok) throw new Error(j.error || 'Archive failed')
+      await fetchData()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Archive failed')
     }
   }
 
@@ -662,7 +679,23 @@ export default function AdminAgentsPage() {
 
       {/* SECTION 2: RECENT CONTENT */}
       <section>
-        <h2 className="text-lg font-semibold text-white mb-4">Recent Content</h2>
+        <div className="flex flex-wrap items-center gap-3 mb-4">
+          <h2 className="text-lg font-semibold text-white">Recent Content</h2>
+          <label className="flex items-center gap-2 text-gray-400 text-sm cursor-pointer">
+            <input
+              type="checkbox"
+              checked={showArchived}
+              onChange={(e) => setShowArchived(e.target.checked)}
+              className="accent-emerald-500"
+            />
+            Show archived
+          </label>
+          {showArchived && (
+            <span className="text-gray-500 text-xs">
+              ({content.filter((c) => c.archived_at).length} archived)
+            </span>
+          )}
+        </div>
         <div className="flex gap-4 text-sm text-white/50 mb-4">
           <span>📰 {newsSummaryCount} análisis hoy</span>
           <span>💡 {pendingSuggestions} sugerencias pendientes</span>
@@ -795,7 +828,7 @@ export default function AdminAgentsPage() {
                         Fuentes: {(suggestion.source_signals as string[]).join(', ')}
                       </div>
                     )}
-                    <div className="flex gap-2 pt-1">
+                    <div className="flex gap-2 pt-1 flex-wrap">
                       <Link
                         href={createUrl}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-600 transition-colors"
@@ -808,6 +841,15 @@ export default function AdminAgentsPage() {
                       >
                         Dismiss
                       </button>
+                      {!item.archived_at && (
+                        <button
+                          type="button"
+                          onClick={() => archiveAgentItem(item.id)}
+                          className="text-gray-500 hover:text-gray-300 text-xs px-2 py-1.5"
+                        >
+                          📦 Archive
+                        </button>
+                      )}
                     </div>
                   </div>
                 )
@@ -880,6 +922,17 @@ export default function AdminAgentsPage() {
                         Ver mercado →
                       </Link>
                     )}
+                    {!item.archived_at && (
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() => archiveAgentItem(item.id)}
+                          className="text-gray-500 hover:text-gray-300 text-xs"
+                        >
+                          📦 Archive
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )
               }
@@ -894,6 +947,15 @@ export default function AdminAgentsPage() {
                     {item.body.slice(0, 500)}
                     {item.body.length > 500 ? '...' : ''}
                   </pre>
+                  {!item.archived_at && (
+                    <button
+                      type="button"
+                      onClick={() => archiveAgentItem(item.id)}
+                      className="mt-2 text-gray-500 hover:text-gray-300 text-xs"
+                    >
+                      📦 Archive
+                    </button>
+                  )}
                 </div>
               )
             })

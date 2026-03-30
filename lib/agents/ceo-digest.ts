@@ -140,6 +140,7 @@ export async function runCeoDigest(): Promise<{
         .from('prediction_markets')
         .select('id', { count: 'exact', head: true })
         .in('status', ['active', 'trading'])
+        .is('archived_at', null)
       metrics.total_active_markets = active ?? 0
     } catch (e) {
       metrics.total_active_markets = 'error'
@@ -152,6 +153,7 @@ export async function runCeoDigest(): Promise<{
         .from('prediction_markets')
         .select('id, title, resolution_date')
         .in('status', ['active', 'trading'])
+        .is('archived_at', null)
         .gte('resolution_date', now.toISOString())
         .lte('resolution_date', in7.toISOString())
       metrics.markets_approaching_resolution_7d = (approaching ?? []).length
@@ -168,6 +170,7 @@ export async function runCeoDigest(): Promise<{
         .from('prediction_markets')
         .select('id', { count: 'exact', head: true })
         .in('status', ['active', 'trading'])
+        .is('archived_at', null)
         .or('total_votes.is.null,total_votes.eq.0')
       metrics.markets_with_zero_predictions = zeroPred ?? 0
     } catch (e) {
@@ -194,6 +197,7 @@ export async function runCeoDigest(): Promise<{
         .select('sponsor_contribution')
         .not('sponsor_name', 'is', null)
         .gt('sponsor_contribution', 0)
+        .is('archived_at', null)
       if (!sponsorErr && sponsorMarkets) {
         totalFromSponsors =
           sponsorMarkets.reduce(

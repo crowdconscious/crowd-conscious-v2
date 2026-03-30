@@ -257,9 +257,45 @@ function CronHealthStrip() {
   )
 }
 
-export default function IntelligenceClient({ data }: { data: IntelligenceDashboardData }) {
+export default function IntelligenceClient({
+  initialData,
+  initialIncludeArchived = false,
+}: {
+  initialData: IntelligenceDashboardData
+  initialIncludeArchived?: boolean
+}) {
+  const [data, setData] = useState<IntelligenceDashboardData>(initialData)
+  const [showArchived, setShowArchived] = useState(initialIncludeArchived)
+  const [intelLoading, setIntelLoading] = useState(false)
   const [tab, setTab] = useState<TabId>('overview')
   const [range, setRange] = useState<RangeKey>('30')
+
+  useEffect(() => {
+    setData(initialData)
+    setShowArchived(initialIncludeArchived)
+  }, [initialData, initialIncludeArchived])
+
+  const onToggleArchived = useCallback(
+    async (checked: boolean) => {
+      setShowArchived(checked)
+      setIntelLoading(true)
+      try {
+        const r = await fetch(
+          `/api/predictions/admin/intelligence-dashboard?includeArchived=${checked ? '1' : '0'}`,
+          { credentials: 'include' }
+        )
+        const j = (await r.json()) as IntelligenceDashboardData & { error?: string }
+        if (!r.ok) throw new Error(j.error || r.statusText)
+        setData(j)
+      } catch {
+        setData(initialData)
+        setShowArchived(initialIncludeArchived)
+      } finally {
+        setIntelLoading(false)
+      }
+    },
+    [initialData, initialIncludeArchived]
+  )
 
   const filteredVotesTime = useMemo(() => {
     const s = data.votesOverTime
@@ -348,6 +384,22 @@ export default function IntelligenceClient({ data }: { data: IntelligenceDashboa
           <p className="text-sm text-slate-500">Admin analytics · Real Supabase data</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <label className="flex items-center gap-2 text-gray-400 text-sm cursor-pointer">
+            <input
+              type="checkbox"
+              checked={showArchived}
+              onChange={(e) => onToggleArchived(e.target.checked)}
+              disabled={intelLoading}
+              className="accent-emerald-500"
+            />
+            Show archived
+          </label>
+          {showArchived && (
+            <span className="text-gray-500 text-xs">
+              ({data.allMarkets.filter((m) => m.archived_at).length} archived)
+            </span>
+          )}
+          {intelLoading && <span className="text-xs text-slate-500">Updating…</span>}
           <select
             value={range}
             onChange={(e) => setRange(e.target.value as RangeKey)}

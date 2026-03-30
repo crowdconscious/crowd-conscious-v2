@@ -22,6 +22,7 @@ export async function GET() {
       .from('prediction_markets')
       .select('*')
       .in('status', ['active', 'trading'])
+      .is('archived_at', null)
       .limit(50)
 
     if (!markets?.length) {

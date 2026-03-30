@@ -36,6 +36,7 @@ export async function POST(request: Request) {
       .select('id, status, title, total_votes, engagement_count')
       .eq('id', market_id)
       .in('status', ['active', 'trading'])
+      .is('archived_at', null)
       .maybeSingle()
 
     if (marketError || !market) {

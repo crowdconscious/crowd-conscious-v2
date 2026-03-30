@@ -214,6 +214,7 @@ async function gatherSponsorImpact(
       .select('id, title')
       .eq('sponsor_id', sponsorship.id)
       .in('status', ['active', 'trading'])
+      .is('archived_at', null)
     marketIds = (markets ?? []).map((m) => m.id)
     marketTitles = (markets ?? []).map((m) => m.title ?? 'Unknown')
   } else {
@@ -222,6 +223,7 @@ async function gatherSponsorImpact(
       .select('id, title')
       .eq('sponsor_id', sponsorship.id)
       .in('status', ['active', 'trading'])
+      .is('archived_at', null)
     marketIds = (markets ?? []).map((m) => m.id)
     marketTitles = (markets ?? []).map((m) => m.title ?? 'Unknown')
   }

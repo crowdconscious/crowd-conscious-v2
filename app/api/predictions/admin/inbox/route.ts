@@ -24,10 +24,17 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status') // all | pending | reviewed | approved | rejected
     const type = searchParams.get('type') // all | market_idea | causes | general
     const sort = searchParams.get('sort') || 'upvotes' // upvotes | newest | oldest
+    const includeArchived = searchParams.get('includeArchived') === '1'
 
     let query = supabase
       .from('conscious_inbox')
-      .select('id, user_id, type, title, description, category, links, status, admin_notes, upvotes, created_at')
+      .select(
+        'id, user_id, type, title, description, category, links, status, admin_notes, upvotes, created_at, archived_at'
+      )
+
+    if (!includeArchived) {
+      query = query.is('archived_at', null)
+    }
 
     if (status && status !== 'all') {
       query = query.eq('status', status)

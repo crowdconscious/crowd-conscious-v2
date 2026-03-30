@@ -44,6 +44,7 @@ export async function GET(
         .select('*')
         .eq('market_id', id)
         .eq('published', true)
+        .is('archived_at', null)
         .order('created_at', { ascending: false })
         .limit(5),
       supabase

@@ -53,6 +53,7 @@ export type MarketRowCsv = {
   yes_probability: number
   status: string
   resolution_date: string | null
+  archived_at: string | null
 }
 
 export type VoteChangeLeader = {
@@ -139,7 +140,10 @@ function normProb(p: number): number {
   return p > 1 ? p / 100 : p
 }
 
-export async function fetchIntelligenceDashboard(): Promise<IntelligenceDashboardData> {
+export async function fetchIntelligenceDashboard(
+  options: { includeArchived?: boolean } = {}
+): Promise<IntelligenceDashboardData> {
+  const includeArchived = options.includeArchived === true
   const out = empty()
   let admin: ReturnType<typeof createAdminClient> | null = null
   try {
@@ -239,9 +243,14 @@ export async function fetchIntelligenceDashboard(): Promise<IntelligenceDashboar
       const topPairs = [...sumBy.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5)
       if (topPairs.length) {
         const topIds = topPairs.map(([id]) => id)
-        const { data: titles } = await admin.from('prediction_markets').select('id, title').in('id', topIds)
+        let titleQ = admin.from('prediction_markets').select('id, title').in('id', topIds)
+        if (!includeArchived) titleQ = titleQ.is('archived_at', null)
+        const { data: titles } = await titleQ
         const tmap = new Map((titles ?? []).map((t: { id: string; title: string }) => [t.id, t.title]))
-        out.voteChangeLeaders = topPairs.map(([id, n]) => ({
+        const pairs = includeArchived
+          ? topPairs
+          : topPairs.filter(([id]) => tmap.has(id))
+        out.voteChangeLeaders = pairs.map(([id, n]) => ({
           market_id: id,
           title: String(tmap.get(id) ?? id),
           change_events: n,
@@ -265,11 +274,14 @@ export async function fetchIntelligenceDashboard(): Promise<IntelligenceDashboar
 
     // --- Votes by category ---
     const { data: allVotes } = await admin.from('market_votes').select('market_id')
-    const { data: allM } = await admin.from('prediction_markets').select('id, category')
+    let allMq = admin.from('prediction_markets').select('id, category')
+    if (!includeArchived) allMq = allMq.is('archived_at', null)
+    const { data: allM } = await allMq
     const catMap = new Map((allM ?? []).map((m: { id: string; category: string }) => [m.id, m.category]))
     const catCount = new Map<string, number>()
     for (const v of allVotes ?? []) {
       const mid = (v as { market_id: string }).market_id
+      if (!includeArchived && !catMap.has(mid)) continue
       const c = catMap.get(mid) ?? 'unknown'
       catCount.set(c, (catCount.get(c) ?? 0) + 1)
     }
@@ -278,11 +290,15 @@ export async function fetchIntelligenceDashboard(): Promise<IntelligenceDashboar
       .sort((a, b) => b.vote_count - a.vote_count)
 
     // --- Top markets + all markets for table ---
-    const { data: topPm } = await admin
+    let topPmQ = admin
       .from('prediction_markets')
-      .select('id, title, category, total_votes, engagement_count, status, resolution_date, current_probability')
+      .select(
+        'id, title, category, total_votes, engagement_count, status, resolution_date, current_probability, archived_at'
+      )
       .order('engagement_count', { ascending: false, nullsFirst: false })
       .limit(200)
+    if (!includeArchived) topPmQ = topPmQ.is('archived_at', null)
+    const { data: topPm } = await topPmQ
 
     const pmList = topPm ?? []
     const top10 = pmList.slice(0, 10)
@@ -335,6 +351,7 @@ export async function fetchIntelligenceDashboard(): Promise<IntelligenceDashboar
         yes_probability: yesP,
         status: String(p.status ?? ''),
         resolution_date: (p.resolution_date as string | null) ?? null,
+        archived_at: (p.archived_at as string | null) ?? null,
       }
     })
 
@@ -473,7 +490,9 @@ export async function fetchIntelligenceDashboard(): Promise<IntelligenceDashboar
     out.accuracyBuckets = buckets
 
     // --- Sentiment by category ---
-    const { data: pms } = await admin.from('prediction_markets').select('id, category')
+    let pmsQ = admin.from('prediction_markets').select('id, category')
+    if (!includeArchived) pmsQ = pmsQ.is('archived_at', null)
+    const { data: pms } = await pmsQ
     const { data: mos } = await admin.from('market_outcomes').select('market_id, label, probability')
     const { data: mvAll } = await admin.from('market_votes').select('market_id')
     const votesPerMarket = new Map<string, number>()

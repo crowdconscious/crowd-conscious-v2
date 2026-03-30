@@ -21,7 +21,11 @@ export async function GET(request: NextRequest) {
       return Response.json({ error: 'live_event_id is required' }, { status: 400 })
     }
 
-    let q = supabase.from('prediction_markets').select('*').eq('live_event_id', liveEventId)
+    let q = supabase
+      .from('prediction_markets')
+      .select('*')
+      .eq('live_event_id', liveEventId)
+      .is('archived_at', null)
 
     if (status === 'active') {
       q = q.in('status', ['active', 'trading'])

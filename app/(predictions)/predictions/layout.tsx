@@ -13,11 +13,13 @@ async function getNavCounts(supabase: Awaited<ReturnType<typeof createClient>>) 
     supabase
       .from('conscious_inbox')
       .select('id', { count: 'exact', head: true })
-      .eq('status', 'pending'),
+      .eq('status', 'pending')
+      .is('archived_at', null),
     supabase
       .from('prediction_markets')
       .select('id', { count: 'exact', head: true })
-      .in('status', ['active', 'trading']),
+      .in('status', ['active', 'trading'])
+      .is('archived_at', null),
     supabase
       .from('live_events')
       .select('id', { count: 'exact', head: true })

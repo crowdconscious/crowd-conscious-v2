@@ -9,6 +9,7 @@ export async function GET() {
       .select('id', { count: 'exact', head: true })
       .eq('is_pulse', true)
       .in('status', ['active', 'trading'])
+      .is('archived_at', null)
 
     if (error) {
       console.error('[GET /api/pulse/active-count]', error)

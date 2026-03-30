@@ -57,6 +57,7 @@ async function computeRankings(
     .from('prediction_markets')
     .select('id')
     .eq('live_event_id', eventId)
+    .is('archived_at', null)
 
   if (mErr) return { rankings: [], currentUserEntry: null, error: new Error(mErr.message) }
 

@@ -32,7 +32,8 @@ type OutcomeRow = {
   translations?: unknown
 }
 
-function getCategoryDisplay(category: string | null | undefined): string {
+function getCategoryDisplay(category: string | null | undefined, isPulse?: boolean): string {
+  if (isPulse) return 'Conscious Pulse'
   if (!category) return 'Market'
   return CATEGORY_LABELS[category] ?? category.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 }
@@ -118,7 +119,7 @@ export async function GET(
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              background: '#0a0e14',
+              background: '#0f1419',
               color: 'white',
               fontSize: 48,
               fontWeight: 'bold',
@@ -142,7 +143,13 @@ export async function GET(
       .order('probability', { ascending: false })
 
     const outcomeRows = (outcomes ?? []) as OutcomeRow[]
-    const topOutcome = outcomeRows[0]
+    const sortedByProb = [...outcomeRows].sort((a, b) => Number(b.probability) - Number(a.probability))
+    const probs = sortedByProb.map((o) => Number(o.probability))
+    const multiOutcomeTie =
+      sortedByProb.length > 2 &&
+      probs.length > 0 &&
+      probs.every((p) => Math.abs(p - probs[0]) < 1e-5)
+    const topOutcome = sortedByProb[0]
     const probRaw = topOutcome?.probability ?? market.current_probability ?? 0.5
     let sponsorLogoBase64 = ''
     if ((market as { sponsor_logo_url?: string }).sponsor_logo_url) {
@@ -157,13 +164,23 @@ export async function GET(
       }
     }
     const probability = Math.min(100, Math.max(0, Math.round(Number(probRaw) * 100)))
-    const outcomeName = topOutcome ? getOutcomeLabel(topOutcome, locale) : probability >= 50 ? 'Yes' : 'Undecided'
+    const isPulseMarket = Boolean((market as { is_pulse?: boolean }).is_pulse)
+    const outcomeName = multiOutcomeTie
+      ? locale === 'es'
+        ? 'Empate — sin líder aún'
+        : 'Equal — no leader yet'
+      : topOutcome
+        ? getOutcomeLabel(topOutcome, locale)
+        : probability >= 50
+          ? 'Yes'
+          : 'Undecided'
     const engagement = Number((market as { engagement_count?: number }).engagement_count) || Number(market.total_votes) || 0
-    const emoji = CATEGORY_EMOJI[market.category || ''] || '🔮'
+    const emoji = isPulseMarket ? '📊' : CATEGORY_EMOJI[market.category || ''] || '🔮'
     const displayTitle = getMarketText(market, 'title', locale)
     const titleLength = displayTitle.length
-    const categoryDisplay = getCategoryDisplay(market.category)
+    const categoryDisplay = getCategoryDisplay(market.category, isPulseMarket)
     const split = getVoteSplit(market, outcomeRows, locale)
+    const topThreeOutcomes = sortedByProb.slice(0, 3)
 
     let logoBase64 = ''
     try {
@@ -192,7 +209,7 @@ export async function GET(
               height: '100%',
               display: 'flex',
               flexDirection: 'column',
-              background: '#0a0e14',
+              background: '#0f1419',
               padding: '72px 56px 100px',
               fontFamily: 'sans-serif',
               position: 'relative',
@@ -237,56 +254,83 @@ export async function GET(
                 {displayTitle.slice(0, 140)}{displayTitle.length > 140 ? '…' : ''}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '28px', marginTop: '16px' }}>
-                <div
-                  style={{
-                    display: 'flex',
-                    fontSize: '36px',
-                    fontWeight: 800,
-                    color: '#e2e8f0',
-                    letterSpacing: '-0.3px',
-                  }}
-                >
-                  {split.line}
-                </div>
-                <div
-                  style={{
-                    display: 'flex',
-                    width: '100%',
-                    height: '28px',
-                    borderRadius: '8px',
-                    overflow: 'hidden',
-                    backgroundColor: 'rgba(255,255,255,0.06)',
-                  }}
-                >
-                  <div
-                    style={{
-                      display: 'flex',
-                      width: `${leftBarFlex}%`,
-                      height: '100%',
-                      backgroundColor: '#10b981',
-                    }}
-                  />
-                  <div
-                    style={{
-                      display: 'flex',
-                      width: `${rightBarFlex}%`,
-                      height: '100%',
-                      backgroundColor: '#475569',
-                    }}
-                  />
-                </div>
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    fontSize: '22px',
-                    fontWeight: 600,
-                    color: '#94a3b8',
-                  }}
-                >
-                  <span style={{ color: '#10b981' }}>{split.leftLabel}</span>
-                  <span style={{ color: '#94a3b8' }}>{split.rightLabel}</span>
-                </div>
+                {outcomeRows.length > 2 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    {topThreeOutcomes.map((o, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'baseline',
+                          gap: '16px',
+                          fontSize: '28px',
+                          fontWeight: 800,
+                          color: '#e2e8f0',
+                          letterSpacing: '-0.3px',
+                        }}
+                      >
+                        <span style={{ flex: 1, minWidth: 0 }}>{getOutcomeLabel(o, locale)}</span>
+                        <span style={{ color: '#10b981', flexShrink: 0 }}>
+                          {Math.round(Number(o.probability) * 100)}%
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <>
+                    <div
+                      style={{
+                        display: 'flex',
+                        fontSize: '36px',
+                        fontWeight: 800,
+                        color: '#e2e8f0',
+                        letterSpacing: '-0.3px',
+                      }}
+                    >
+                      {split.line}
+                    </div>
+                    <div
+                      style={{
+                        display: 'flex',
+                        width: '100%',
+                        height: '28px',
+                        borderRadius: '8px',
+                        overflow: 'hidden',
+                        backgroundColor: '#1e293b',
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          width: `${leftBarFlex}%`,
+                          height: '100%',
+                          backgroundColor: '#10b981',
+                        }}
+                      />
+                      <div
+                        style={{
+                          display: 'flex',
+                          width: `${rightBarFlex}%`,
+                          height: '100%',
+                          backgroundColor: '#475569',
+                        }}
+                      />
+                    </div>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        fontSize: '22px',
+                        fontWeight: 600,
+                        color: '#94a3b8',
+                      }}
+                    >
+                      <span style={{ color: '#10b981' }}>{split.leftLabel}</span>
+                      <span style={{ color: '#94a3b8' }}>{split.rightLabel}</span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
             <div
@@ -362,7 +406,7 @@ export async function GET(
             height: '100%',
             display: 'flex',
             flexDirection: 'row',
-            background: '#0a0e14',
+            background: '#0f1419',
             padding: '40px 48px',
             fontFamily: 'sans-serif',
             position: 'relative',
@@ -432,7 +476,7 @@ export async function GET(
               <div
                 style={{
                   display: 'flex',
-                  fontSize: titleLength > 100 ? '26px' : titleLength > 60 ? '32px' : '36px',
+                  fontSize: titleLength > 100 ? '32px' : titleLength > 60 ? '38px' : '44px',
                   fontWeight: 800,
                   color: '#ffffff',
                   lineHeight: '1.2',
@@ -442,21 +486,48 @@ export async function GET(
               </div>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '12px' }}>
-              <div style={{ display: 'flex', fontSize: '22px', fontWeight: 800, color: '#e2e8f0' }}>{split.line}</div>
-              <div
-                style={{
-                  display: 'flex',
-                  width: '100%',
-                  maxWidth: '420px',
-                  height: '14px',
-                  borderRadius: '6px',
-                  overflow: 'hidden',
-                  backgroundColor: 'rgba(255,255,255,0.08)',
-                }}
-              >
-                <div style={{ display: 'flex', width: `${leftBarFlex}%`, height: '100%', backgroundColor: '#10b981' }} />
-                <div style={{ display: 'flex', width: `${rightBarFlex}%`, height: '100%', backgroundColor: '#475569' }} />
-              </div>
+              {outcomeRows.length > 2 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {topThreeOutcomes.map((o, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'baseline',
+                        gap: '12px',
+                        fontSize: '22px',
+                        fontWeight: 700,
+                        color: '#e2e8f0',
+                        maxWidth: '100%',
+                      }}
+                    >
+                      <span style={{ flex: 1, minWidth: 0 }}>{getOutcomeLabel(o, locale)}</span>
+                      <span style={{ color: '#10b981', flexShrink: 0 }}>
+                        {Math.round(Number(o.probability) * 100)}%
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <>
+                  <div style={{ display: 'flex', fontSize: '22px', fontWeight: 800, color: '#e2e8f0' }}>{split.line}</div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      width: '100%',
+                      maxWidth: '420px',
+                      height: '14px',
+                      borderRadius: '6px',
+                      overflow: 'hidden',
+                      backgroundColor: '#1e293b',
+                    }}
+                  >
+                    <div style={{ display: 'flex', width: `${leftBarFlex}%`, height: '100%', backgroundColor: '#10b981' }} />
+                    <div style={{ display: 'flex', width: `${rightBarFlex}%`, height: '100%', backgroundColor: '#475569' }} />
+                  </div>
+                </>
+              )}
               <div
                 style={{
                   display: 'flex',
@@ -488,27 +559,37 @@ export async function GET(
               paddingLeft: '32px',
             }}
           >
-            <div style={{ display: 'flex', fontSize: '48px', fontWeight: 800, color: '#10b981' }}>{probability}%</div>
+            <div style={{ display: 'flex', fontSize: '48px', fontWeight: 800, color: '#10b981' }}>
+              {multiOutcomeTie ? '—' : `${probability}%`}
+            </div>
             <div style={{ display: 'flex', marginTop: '8px', fontSize: '18px', fontWeight: 700, color: '#94a3b8', textAlign: 'center' }}>
               {outcomeName}
             </div>
-            <div
-              style={{
-                display: 'flex',
-                width: '200px',
-                height: '8px',
-                marginTop: '20px',
-                borderRadius: '4px',
-                overflow: 'hidden',
-                backgroundColor: 'rgba(255,255,255,0.08)',
-              }}
-            >
-              <div style={{ display: 'flex', width: `${leftBarFlex}%`, height: '100%', backgroundColor: '#10b981' }} />
-              <div style={{ display: 'flex', width: `${rightBarFlex}%`, height: '100%', backgroundColor: '#475569' }} />
-            </div>
-            <div style={{ display: 'flex', marginTop: '12px', fontSize: '13px', color: '#64748b', textAlign: 'center' }}>
-              {split.leftLabel} · {split.rightLabel}
-            </div>
+            {outcomeRows.length <= 2 ? (
+              <>
+                <div
+                  style={{
+                    display: 'flex',
+                    width: '200px',
+                    height: '8px',
+                    marginTop: '20px',
+                    borderRadius: '4px',
+                    overflow: 'hidden',
+                    backgroundColor: '#1e293b',
+                  }}
+                >
+                  <div style={{ display: 'flex', width: `${leftBarFlex}%`, height: '100%', backgroundColor: '#10b981' }} />
+                  <div style={{ display: 'flex', width: `${rightBarFlex}%`, height: '100%', backgroundColor: '#475569' }} />
+                </div>
+                <div style={{ display: 'flex', marginTop: '12px', fontSize: '13px', color: '#64748b', textAlign: 'center' }}>
+                  {split.leftLabel} · {split.rightLabel}
+                </div>
+              </>
+            ) : (
+              <div style={{ display: 'flex', marginTop: '16px', fontSize: '13px', color: '#64748b', textAlign: 'center' }}>
+                Top {Math.min(3, outcomeRows.length)} outcomes
+              </div>
+            )}
           </div>
         </div>
       ),

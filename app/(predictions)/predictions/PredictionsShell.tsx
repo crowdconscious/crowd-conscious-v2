@@ -23,6 +23,7 @@ import {
   Bell,
   BarChart3,
   Radio,
+  Activity,
 } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import LanguageSwitcherSimple from '@/components/LanguageSwitcherSimple'
@@ -201,6 +202,17 @@ export default function PredictionsShell({
             >
               <DollarSign className="w-4 h-4" />
               {language === 'es' ? 'Patrocinadores' : 'Sponsors'}
+            </Link>
+            <Link
+              href="/pulse"
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                pathname === '/pulse' || pathname.startsWith('/pulse/')
+                  ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
+                  : 'text-cc-text-secondary hover:bg-gray-800/50 hover:text-amber-400'
+              }`}
+            >
+              <Activity className="w-4 h-4" />
+              {language === 'es' ? 'Informes Pulse' : 'Pulse Reports'}
             </Link>
           </div>
         )}
@@ -391,6 +403,18 @@ export default function PredictionsShell({
                   >
                     <DollarSign className="w-4 h-4" />
                     {language === 'es' ? 'Patrocinadores' : 'Sponsors'}
+                  </Link>
+                  <Link
+                    href="/pulse"
+                    onClick={closeMobileMenu}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                      pathname === '/pulse' || pathname.startsWith('/pulse/')
+                        ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
+                        : 'text-cc-text-secondary hover:bg-gray-800/50 hover:text-amber-400'
+                    }`}
+                  >
+                    <Activity className="w-4 h-4" />
+                    {language === 'es' ? 'Informes Pulse' : 'Pulse Reports'}
                   </Link>
                 </>
               )}

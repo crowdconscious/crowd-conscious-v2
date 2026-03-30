@@ -54,6 +54,10 @@
     {
       "path": "/api/cron/agents/sponsor-report",
       "schedule": "0 9 1 * *"
+    },
+    {
+      "path": "/api/cron/archive",
+      "schedule": "0 6 * * *"
     }
   ],
   "headers": [

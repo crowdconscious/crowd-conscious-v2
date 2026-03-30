@@ -338,6 +338,7 @@ export async function runNewsMonitor(options?: {
       .from('prediction_markets')
       .select('id, title, category, tags, resolution_criteria, current_probability')
       .in('status', ['active', 'trading'])
+      .is('archived_at', null)
 
     const activeMarkets = (markets ?? []).map((m) => ({
       id: m.id,

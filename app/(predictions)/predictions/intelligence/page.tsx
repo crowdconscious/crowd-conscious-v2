@@ -8,7 +8,12 @@ export const metadata = {
   description: 'Admin analytics dashboard',
 }
 
-export default async function IntelligencePage() {
+export default async function IntelligencePage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ archived?: string }>
+}) {
+  const sp = (await searchParams) ?? {}
   const supabase = await createClient()
   const {
     data: { user },
@@ -34,7 +39,7 @@ export default async function IntelligencePage() {
     redirect('/predictions')
   }
 
-  const data = await fetchIntelligenceDashboard()
+  const data = await fetchIntelligenceDashboard({ includeArchived: sp.archived === '1' })
 
-  return <IntelligenceClient data={data} />
+  return <IntelligenceClient initialData={data} initialIncludeArchived={sp.archived === '1'} />
 }

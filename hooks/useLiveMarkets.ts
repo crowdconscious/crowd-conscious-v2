@@ -98,6 +98,7 @@ export function useLiveMarkets(eventId: string | null): UseLiveMarketsResult {
       .from('prediction_markets')
       .select('*')
       .eq('live_event_id', eventId)
+      .is('archived_at', null)
       .order('created_at', { ascending: false })
 
     if (mErr) {

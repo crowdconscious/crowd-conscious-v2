@@ -102,6 +102,7 @@ async function getLandingData() {
         'id, title, category, current_probability, total_votes, image_url, sponsor_name, sponsor_logo_url, sponsor_url, translations, resolution_date, market_type, status'
       )
       .in('status', ['active', 'trading'])
+      .is('archived_at', null)
       .order('total_votes', { ascending: false, nullsFirst: false })
       .limit(6),
     supabase
@@ -134,7 +135,8 @@ async function getLandingData() {
     supabase
       .from('prediction_markets')
       .select('id', { count: 'exact', head: true })
-      .in('status', ['active', 'trading']),
+      .in('status', ['active', 'trading'])
+      .is('archived_at', null),
     supabase.from('profiles').select('id', { count: 'exact', head: true }),
   ])
 

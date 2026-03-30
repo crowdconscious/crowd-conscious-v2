@@ -22,6 +22,7 @@ export async function runInboxCurator(): Promise<{
       .from('conscious_inbox')
       .select('id, type, title, description, category, upvotes, created_at')
       .eq('status', 'pending')
+      .is('archived_at', null)
       .order('upvotes', { ascending: false })
 
     if (pendingErr) {
@@ -54,6 +55,7 @@ export async function runInboxCurator(): Promise<{
       .from('prediction_markets')
       .select('title')
       .in('status', ['active', 'trading'])
+      .is('archived_at', null)
     if (!marketsErr) {
       activeTitles = (activeMarkets ?? []).map((m) => m.title)
     } else {
@@ -66,6 +68,7 @@ export async function runInboxCurator(): Promise<{
       .from('conscious_inbox')
       .select('title, status')
       .in('status', ['approved', 'rejected'])
+      .is('archived_at', null)
       .gte('updated_at', cutoff7d)
     if (!decisionsErr) {
       recentDecisionsList = (recentDecisions ?? []).map((r) => ({

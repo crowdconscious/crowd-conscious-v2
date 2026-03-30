@@ -81,6 +81,7 @@ export async function GET(request: NextRequest) {
         .from('prediction_markets')
         .select('id, title, current_probability, market_type, total_votes')
         .in('status', ['active', 'trading'])
+        .is('archived_at', null)
         .gt('total_votes', 0)
         .order('total_votes', { ascending: false, nullsFirst: false })
         .limit(80)

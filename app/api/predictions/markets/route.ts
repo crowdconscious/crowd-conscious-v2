@@ -22,13 +22,18 @@ export async function GET(request: Request) {
     const category = searchParams.get('category')
     const status = searchParams.get('status')
     const sort = searchParams.get('sort') || 'active'
-    const limit = Math.min(parseInt(searchParams.get('limit') || '20', 10), 100)
+    const limit = Math.min(parseInt(searchParams.get('limit') || '12', 10), 100)
     const offset = Math.max(0, parseInt(searchParams.get('offset') || '0', 10))
+    const includeArchived = searchParams.get('includeArchived') === '1'
 
     let query = supabase
       .from('prediction_markets')
       .select('*', { count: 'exact' })
       .range(offset, offset + limit - 1)
+
+    if (!includeArchived) {
+      query = query.is('archived_at', null)
+    }
 
     if (status && VALID_STATUSES.includes(status as (typeof VALID_STATUSES)[number])) {
       query = query.eq('status', status)

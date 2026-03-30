@@ -45,6 +45,7 @@ export async function prefetchDailyDigestData(admin: SupabaseClient): Promise<Da
     .from('prediction_markets')
     .select('id, title, current_probability, market_type, total_votes, created_at')
     .in('status', ['active', 'trading'])
+    .is('archived_at', null)
     .gt('total_votes', 0)
 
   return {

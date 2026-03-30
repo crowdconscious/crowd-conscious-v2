@@ -50,6 +50,7 @@ export async function GET(request: NextRequest) {
             .from('prediction_markets')
             .select('id, title')
             .eq('sponsor_id', s.id)
+            .is('archived_at', null)
           marketIds = (markets ?? []).map((m) => m.id)
           marketTitles = (markets ?? []).map((m) => m.title ?? 'Unknown')
         }

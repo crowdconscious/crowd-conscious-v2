@@ -40,6 +40,7 @@ async function getDashboardData(userId: string) {
       .from('prediction_markets')
       .select('*')
       .in('status', ['active', 'trading', 'resolved'])
+      .is('archived_at', null)
       .order('total_votes', { ascending: false, nullsFirst: false }),
     supabase
       .from('prediction_market_history')
@@ -50,9 +51,10 @@ async function getDashboardData(userId: string) {
       .from('agent_content')
       .select('*')
       .eq('published', true)
+      .is('archived_at', null)
       .eq('content_type', 'news_summary')
       .order('created_at', { ascending: false })
-      .limit(5),
+      .limit(20),
     supabase.from('conscious_fund').select('current_balance').limit(1).single(),
     supabase
       .from('xp_transactions')

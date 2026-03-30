@@ -361,6 +361,7 @@ export interface Database {
           tags: string[]
           metadata: Json
           sponsor_account_id?: string | null
+          archived_at?: string | null
           created_at: string
           updated_at: string
         }
@@ -386,6 +387,7 @@ export interface Database {
           tags?: string[]
           metadata?: Json
           sponsor_account_id?: string | null
+          archived_at?: string | null
           live_event_id?: string | null
           is_micro_market?: boolean | null
           sponsor_label?: string | null
@@ -420,6 +422,7 @@ export interface Database {
           tags?: string[]
           metadata?: Json
           sponsor_account_id?: string | null
+          archived_at?: string | null
           live_event_id?: string | null
           is_micro_market?: boolean | null
           sponsor_label?: string | null
@@ -778,6 +781,7 @@ export interface Database {
           language: string
           metadata: Json
           published: boolean
+          archived_at?: string | null
           created_at: string
         }
         Insert: {
@@ -790,6 +794,7 @@ export interface Database {
           language?: string
           metadata?: Json
           published?: boolean
+          archived_at?: string | null
           created_at?: string
         }
         Update: {
@@ -802,6 +807,7 @@ export interface Database {
           language?: string
           metadata?: Json
           published?: boolean
+          archived_at?: string | null
           created_at?: string
         }
       }

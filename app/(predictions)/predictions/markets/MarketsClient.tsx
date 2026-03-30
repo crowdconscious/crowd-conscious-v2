@@ -3,7 +3,20 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Search, Globe, Building2, Briefcase, Users, Heart, Trophy, Leaf, Flame, Zap } from 'lucide-react'
+import {
+  Search,
+  Globe,
+  Building2,
+  Briefcase,
+  Users,
+  Heart,
+  Trophy,
+  Leaf,
+  Flame,
+  Zap,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react'
 import { MarketCard } from '../components/MarketCard'
 import type { Database } from '@/types/database'
 
@@ -34,6 +47,10 @@ const SORT_OPTIONS = [
 
 interface Props {
   initialMarkets: PredictionMarket[]
+  /** Total active markets for current sort/category (server pagination) */
+  totalMarketsCount?: number
+  marketsPage?: number
+  marketsPageSize?: number
   trendingMarkets?: PredictionMarket[]
   quickMarkets?: { markets: PredictionMarket[]; label: string }
   categoryCounts: Record<string, number>
@@ -49,6 +66,9 @@ interface Props {
 
 export function MarketsClient({
   initialMarkets,
+  totalMarketsCount = 0,
+  marketsPage = 1,
+  marketsPageSize = 12,
   trendingMarkets = [],
   quickMarkets = { markets: [], label: 'Quick Predictions' },
   categoryCounts,
@@ -66,27 +86,61 @@ export function MarketsClient({
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [searching, setSearching] = useState(false)
+  const [clientListPage, setClientListPage] = useState(1)
+  const [clientTotal, setClientTotal] = useState<number | null>(null)
 
   const sort = searchParams.get('sort') || initialSort
+  const urlPage = Math.max(1, parseInt(searchParams.get('page') || String(marketsPage), 10))
+  const serverTotalPages = Math.max(1, Math.ceil((totalMarketsCount || 0) / marketsPageSize))
+  const clientTotalPages = Math.max(1, Math.ceil((clientTotal ?? 0) / marketsPageSize))
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 300)
     return () => clearTimeout(t)
   }, [search])
 
-  const setSort = (s: string) => {
+  useEffect(() => {
+    setMarkets(initialMarkets)
+  }, [initialMarkets])
+
+  useEffect(() => {
+    setClientListPage(1)
+    setClientTotal(null)
+  }, [statusTab, debouncedSearch, category])
+
+  const pushQuery = (next: { sort?: string; category?: string; page?: number }) => {
     const params = new URLSearchParams()
+    const s = next.sort ?? sort
+    const c = next.category ?? category
+    const p = next.page
     if (s !== 'active') params.set('sort', s)
-    if (category !== 'all') params.set('category', category)
+    if (c !== 'all') params.set('category', c)
+    if (p != null && p > 1) params.set('page', String(p))
     router.push(`/predictions/markets${params.toString() ? `?${params}` : ''}`)
+  }
+
+  const setSort = (s: string) => {
+    pushQuery({ sort: s, page: 1 })
   }
 
   const setCategoryAndNavigate = (cat: string) => {
     setCategory(cat)
+    pushQuery({ category: cat, page: 1 })
+  }
+
+  const goToServerPage = (p: number) => {
+    pushQuery({ page: p <= 1 ? 1 : p })
+  }
+
+  const setStatusTabAndNavigate = (tab: 'active' | 'resolved') => {
+    setStatusTab(tab)
+    setClientListPage(1)
     const params = new URLSearchParams()
     if (sort !== 'active') params.set('sort', sort)
-    if (cat !== 'all') params.set('category', cat)
-    router.push(`/predictions/markets${params.toString() ? `?${params}` : ''}`)
+    if (category !== 'all') params.set('category', category)
+    const path = `/predictions/markets${params.toString() ? `?${params}` : ''}`
+    router.push(path)
+    if (tab === 'active') router.refresh()
   }
 
   const fetchMarkets = useCallback(async () => {
@@ -97,15 +151,18 @@ export function MarketsClient({
       if (category !== 'all') params.set('category', category)
       if (debouncedSearch) params.set('search', debouncedSearch)
       if (sort !== 'active') params.set('sort', sort)
+      params.set('limit', String(marketsPageSize))
+      params.set('offset', String((clientListPage - 1) * marketsPageSize))
       const res = await fetch(`/api/predictions/markets?${params}`)
       const data = await res.json()
       if (data.markets) setMarkets(data.markets)
+      if (data.pagination?.total != null) setClientTotal(data.pagination.total)
     } catch (err) {
       console.error('Fetch markets error:', err)
     } finally {
       setSearching(false)
     }
-  }, [statusTab, category, debouncedSearch, sort])
+  }, [statusTab, category, debouncedSearch, sort, clientListPage, marketsPageSize])
 
   useEffect(() => {
     if (statusTab === 'resolved' || debouncedSearch || category !== 'all') {
@@ -114,6 +171,17 @@ export function MarketsClient({
       setMarkets(initialMarkets)
     }
   }, [statusTab, debouncedSearch, category, initialMarkets, fetchMarkets])
+
+  const serverDrivenList =
+    statusTab === 'active' && !debouncedSearch && category === 'all'
+
+  const totalPages = serverDrivenList ? serverTotalPages : clientTotalPages
+  const currentPage = serverDrivenList ? urlPage : clientListPage
+  const showPagination =
+    !searching &&
+    markets.length > 0 &&
+    totalPages > 1 &&
+    (statusTab === 'resolved' || debouncedSearch || category !== 'all' || serverDrivenList)
 
   const filteredQuickMarkets =
     category === 'all'
@@ -135,7 +203,7 @@ export function MarketsClient({
         {STATUS_TABS.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setStatusTab(tab.id)}
+            onClick={() => setStatusTabAndNavigate(tab.id)}
             className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
               statusTab === tab.id ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'
             }`}
@@ -308,6 +376,38 @@ export function MarketsClient({
               outcomes={outcomesByMarket[market.id]}
             />
           ))}
+        </div>
+      )}
+
+      {showPagination && (
+        <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+          <button
+            type="button"
+            disabled={currentPage <= 1}
+            onClick={() =>
+              serverDrivenList ? goToServerPage(currentPage - 1) : setClientListPage((p) => Math.max(1, p - 1))
+            }
+            className="inline-flex items-center gap-1 rounded-lg border border-slate-700 bg-slate-800/80 px-3 py-2 text-sm font-medium text-white disabled:opacity-40 disabled:pointer-events-none hover:bg-slate-700"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Previous
+          </button>
+          <span className="text-sm text-slate-400">
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            type="button"
+            disabled={currentPage >= totalPages}
+            onClick={() =>
+              serverDrivenList
+                ? goToServerPage(currentPage + 1)
+                : setClientListPage((p) => Math.min(totalPages, p + 1))
+            }
+            className="inline-flex items-center gap-1 rounded-lg border border-slate-700 bg-slate-800/80 px-3 py-2 text-sm font-medium text-white disabled:opacity-40 disabled:pointer-events-none hover:bg-slate-700"
+          >
+            Next
+            <ChevronRight className="h-4 w-4" />
+          </button>
         </div>
       )}
     </div>

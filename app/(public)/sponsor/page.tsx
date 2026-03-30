@@ -34,6 +34,7 @@ async function getMarkets() {
     .from('prediction_markets')
     .select('id, title, category, current_probability, total_votes, sponsor_name, sponsor_logo_url, sponsor_url')
     .in('status', ['active', 'trading'])
+    .is('archived_at', null)
     .order('total_votes', { ascending: false, nullsFirst: false })
 
   if (error) {

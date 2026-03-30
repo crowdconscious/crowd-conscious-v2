@@ -43,6 +43,15 @@ export async function POST(request: Request) {
 
     const supabase = await createClient()
 
+    const { data: tradeMarket } = await supabase
+      .from('prediction_markets')
+      .select('archived_at')
+      .eq('id', market_id)
+      .maybeSingle()
+    if (tradeMarket?.archived_at) {
+      return NextResponse.json({ error: 'Market is archived' }, { status: 400 })
+    }
+
     const { data, error } = await supabase.rpc('execute_prediction_trade', {
       p_user_id: user.id,
       p_market_id: market_id,

@@ -34,6 +34,7 @@ async function getMarkets(category?: string): Promise<PredictionMarket[]> {
     .from('prediction_markets')
     .select('*')
     .in('status', ['active', 'trading'])
+    .is('archived_at', null)
     .order('total_votes', { ascending: false, nullsFirst: false })
 
   if (category && category !== 'all') {
@@ -56,6 +57,7 @@ async function getCategoryCounts(): Promise<Record<string, number>> {
     .from('prediction_markets')
     .select('category')
     .in('status', ['active', 'trading'])
+    .is('archived_at', null)
 
   const counts: Record<string, number> = {}
   for (const m of data ?? []) {

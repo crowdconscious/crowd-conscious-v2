@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase-server'
 import { MarketsClient } from './MarketsClient'
 import type { Database } from '@/types/database'
 import { SITE_URL } from '@/lib/seo/site'
+import { MARKETS_PAGE_SIZE } from '@/lib/predictions/markets-page'
 
 export const metadata: Metadata = {
   title: { absolute: 'Mercados | Crowd Conscious' },
@@ -23,12 +24,20 @@ type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row'
 
 const VALID_CATEGORIES = ['world', 'world_cup', 'government', 'sustainability', 'corporate', 'community', 'cause']
 
-async function getMarkets(sort: string = 'active', category: string = 'all'): Promise<PredictionMarket[]> {
+async function getMarketsPage(
+  sort: string = 'active',
+  category: string = 'all',
+  page: number = 1
+): Promise<{ markets: PredictionMarket[]; total: number }> {
   const supabase = await createClient()
+  const from = (page - 1) * MARKETS_PAGE_SIZE
+  const to = from + MARKETS_PAGE_SIZE - 1
   let query = supabase
     .from('prediction_markets')
-    .select('*')
+    .select('*', { count: 'exact' })
     .in('status', ['active', 'trading'])
+    .is('archived_at', null)
+    .range(from, to)
 
   if (category && category !== 'all' && VALID_CATEGORIES.includes(category)) {
     query = query.eq('category', category)
@@ -42,14 +51,14 @@ async function getMarkets(sort: string = 'active', category: string = 'all'): Pr
     query = query.order('engagement_count', { ascending: false, nullsFirst: false })
   }
 
-  const { data, error } = await query
+  const { data, error, count } = await query
 
   if (error) {
     console.error('Predictions markets fetch error:', error)
-    return []
+    return { markets: [], total: 0 }
   }
 
-  return (data || []) as PredictionMarket[]
+  return { markets: (data || []) as PredictionMarket[], total: count ?? 0 }
 }
 
 async function getTrendingMarkets(): Promise<PredictionMarket[]> {
@@ -58,6 +67,7 @@ async function getTrendingMarkets(): Promise<PredictionMarket[]> {
     .from('prediction_markets')
     .select('*')
     .in('status', ['active', 'trading'])
+    .is('archived_at', null)
     .limit(50)
 
   if (!markets?.length) return []
@@ -108,6 +118,7 @@ async function getQuickMarkets(): Promise<{ markets: PredictionMarket[]; label: 
     .from('prediction_markets')
     .select('*')
     .in('status', ['active', 'trading'])
+    .is('archived_at', null)
     .lte('resolution_date', in30Days)
     .gt('resolution_date', new Date().toISOString())
     .order('resolution_date', { ascending: true })
@@ -121,6 +132,7 @@ async function getQuickMarkets(): Promise<{ markets: PredictionMarket[]; label: 
     .from('prediction_markets')
     .select('*')
     .in('status', ['active', 'trading'])
+    .is('archived_at', null)
     .lte('resolution_date', in90Days)
     .gt('resolution_date', new Date().toISOString())
     .order('resolution_date', { ascending: true })
@@ -135,6 +147,7 @@ async function getCategoryCounts(): Promise<Record<string, number>> {
     .from('prediction_markets')
     .select('category')
     .in('status', ['active', 'trading'])
+    .is('archived_at', null)
 
   const counts: Record<string, number> = {}
   for (const m of data ?? []) {
@@ -150,14 +163,19 @@ async function getResolvedCount(): Promise<number> {
     .from('prediction_markets')
     .select('id', { count: 'exact', head: true })
     .eq('status', 'resolved')
+    .is('archived_at', null)
   return count ?? 0
 }
 
-async function getHistoryByMarket(): Promise<Record<string, { probability: number; recorded_at: string }[]>> {
+async function getHistoryByMarketIds(
+  marketIds: string[]
+): Promise<Record<string, { probability: number; recorded_at: string }[]>> {
+  if (marketIds.length === 0) return {}
   const supabase = await createClient()
   const { data } = await supabase
     .from('prediction_market_history')
     .select('market_id, probability, recorded_at')
+    .in('market_id', marketIds)
     .order('recorded_at', { ascending: true })
 
   const byMarket: Record<string, { probability: number; recorded_at: string }[]> = {}
@@ -180,11 +198,13 @@ type OutcomeRow = {
   translations?: unknown
 }
 
-async function getOutcomesByMarket(): Promise<Record<string, OutcomeRow[]>> {
+async function getOutcomesByMarketIds(marketIds: string[]): Promise<Record<string, OutcomeRow[]>> {
+  if (marketIds.length === 0) return {}
   const supabase = await createClient()
   const { data } = await supabase
     .from('market_outcomes')
     .select('id, market_id, label, probability, sort_order, translations')
+    .in('market_id', marketIds)
 
   const byMarket: Record<string, OutcomeRow[]> = {}
   for (const row of data ?? []) {
@@ -207,26 +227,40 @@ async function getOutcomesByMarket(): Promise<Record<string, OutcomeRow[]>> {
 export default async function PredictionsMarketsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ sort?: string; category?: string }>
+  searchParams: Promise<{ sort?: string; category?: string; page?: string }>
 }) {
   const params = await searchParams
   const sort = params.sort || 'active'
   const category = params.category || 'all'
+  const page = Math.max(1, parseInt(params.page || '1', 10))
 
-  const [markets, trendingMarkets, quickMarkets, categoryCounts, resolvedCount, historyByMarket, outcomesByMarket] =
-    await Promise.all([
-      getMarkets(sort, category),
-      getTrendingMarkets(),
-      getQuickMarkets(),
-      getCategoryCounts(),
-      getResolvedCount(),
-      getHistoryByMarket(),
-      getOutcomesByMarket(),
-    ])
+  const [pageResult, trendingMarkets, quickMarkets, categoryCounts, resolvedCount] = await Promise.all([
+    getMarketsPage(sort, category, page),
+    getTrendingMarkets(),
+    getQuickMarkets(),
+    getCategoryCounts(),
+    getResolvedCount(),
+  ])
+
+  const { markets, total: totalMarkets } = pageResult
+  const featuredIds = [
+    ...markets.map((m) => m.id),
+    ...trendingMarkets.map((m) => m.id),
+    ...quickMarkets.markets.map((m) => m.id),
+  ]
+  const uniqueFeaturedIds = [...new Set(featuredIds)]
+
+  const [historyByMarket, outcomesByMarket] = await Promise.all([
+    getHistoryByMarketIds(uniqueFeaturedIds),
+    getOutcomesByMarketIds(uniqueFeaturedIds),
+  ])
 
   return (
     <MarketsClient
       initialMarkets={markets}
+      totalMarketsCount={totalMarkets}
+      marketsPage={page}
+      marketsPageSize={MARKETS_PAGE_SIZE}
       trendingMarkets={trendingMarkets}
       quickMarkets={quickMarkets}
       categoryCounts={categoryCounts}

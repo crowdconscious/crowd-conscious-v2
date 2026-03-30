@@ -47,7 +47,8 @@ async function getFundData(userId: string | null) {
       .from('prediction_markets')
       .select('id, title, sponsor_name, sponsor_logo_url, sponsor_contribution')
       .not('sponsor_name', 'is', null)
-      .gt('sponsor_contribution', 0),
+      .gt('sponsor_contribution', 0)
+      .is('archived_at', null),
     supabase.from('fund_causes').select('*').eq('active', true).order('name'),
     supabase.from('fund_votes').select('cause_id').eq('cycle', cycle),
     userId

@@ -19,6 +19,7 @@ export async function computeLiveEventLeaderboardRanks(
     .from('prediction_markets')
     .select('id')
     .eq('live_event_id', eventId)
+    .is('archived_at', null)
 
   if (mErr || !markets?.length) return []
 

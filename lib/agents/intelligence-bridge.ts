@@ -94,15 +94,18 @@ export async function getPlatformIntelligence(): Promise<PlatformIntelligence> {
       admin
         .from('prediction_markets')
         .select('*', { count: 'exact', head: true })
-        .in('status', ['active', 'trading']),
+        .in('status', ['active', 'trading'])
+        .is('archived_at', null),
       admin
         .from('prediction_markets')
         .select('*', { count: 'exact', head: true })
-        .or('total_votes.is.null,total_votes.eq.0'),
+        .or('total_votes.is.null,total_votes.eq.0')
+        .is('archived_at', null),
       admin
         .from('prediction_markets')
         .select('title, total_votes, current_probability')
         .in('status', ['active', 'trading'])
+        .is('archived_at', null)
         .order('total_votes', { ascending: false, nullsFirst: false })
         .limit(5),
       admin.from('market_votes').select('*', { count: 'exact', head: true }).gte('created_at', dayAgo),
