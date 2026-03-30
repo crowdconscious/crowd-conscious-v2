@@ -63,6 +63,7 @@ export async function POST(request: NextRequest) {
 
     const tierLabel = TIER_LABELS[tierId] || tier.name
     let marketTitle: string | undefined
+    let isPulseMarket = false
     if (market_id) {
       const { createClient } = await import('@supabase/supabase-js')
       const supabase = createClient(
@@ -71,10 +72,11 @@ export async function POST(request: NextRequest) {
       )
       const { data: m } = await supabase
         .from('prediction_markets')
-        .select('title')
+        .select('title, is_pulse')
         .eq('id', market_id)
         .single()
       marketTitle = m?.title
+      isPulseMarket = Boolean((m as { is_pulse?: boolean } | null)?.is_pulse)
     }
     const categoryLabel = category || 'selected'
     const productName = marketTitle
@@ -118,10 +120,12 @@ export async function POST(request: NextRequest) {
         platform_amount_estimated_mxn: String(alloc.platformAmountRounded),
         market_id: market_id || '',
         category: category || '',
+        company_name: sponsor_name,
         sponsor_name,
         sponsor_url: sponsor_url || '',
         sponsor_logo_url: sponsor_logo_url || '',
         sponsor_email: email,
+        is_pulse: isPulseMarket ? 'true' : 'false',
       },
     })
 

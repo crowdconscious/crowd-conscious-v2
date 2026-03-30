@@ -1,12 +1,14 @@
 'use client'
 
-import { useState, useRef } from 'react'
-import { X, Upload } from 'lucide-react'
+import { useState } from 'react'
+import { X } from 'lucide-react'
 import {
   SPONSOR_TIERS,
   calculateFundAllocationRounded,
   type SponsorTierId,
 } from '@/lib/sponsor-tiers'
+import { LogoUpload } from '@/components/ui/LogoUpload'
+import { useLocale } from '@/lib/i18n/useLocale'
 
 interface SponsorCheckoutModalProps {
   isOpen: boolean
@@ -27,6 +29,8 @@ export function SponsorCheckoutModal({
   marketTitle,
   category,
 }: SponsorCheckoutModalProps) {
+  const locale = useLocale()
+  const es = locale === 'es'
   const MIN_AMOUNT = 100
   const tierConfig = SPONSOR_TIERS[tier]
   const tierPrice = tierConfig.price
@@ -38,66 +42,17 @@ export function SponsorCheckoutModal({
   const [amount, setAmount] = useState<number>(tierPrice)
   const [customAmountInput, setCustomAmountInput] = useState('')
   const [logoUrl, setLogoUrl] = useState('')
-  const [logoFile, setLogoFile] = useState<File | null>(null)
-  const [logoPreview, setLogoPreview] = useState<string | null>(null)
-  const [uploadingLogo, setUploadingLogo] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   if (!isOpen) return null
-
-  const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    if (!file.type.startsWith('image/')) {
-      setError('Please select an image file (JPEG, PNG, WebP, GIF)')
-      return
-    }
-    if (file.size > 2 * 1024 * 1024) {
-      setError('Logo must be less than 2MB')
-      return
-    }
-    setError('')
-    setLogoFile(file)
-    setLogoPreview(URL.createObjectURL(file))
-    setUploadingLogo(true)
-    try {
-      const formData = new FormData()
-      formData.append('logo', file)
-      const res = await fetch('/api/sponsor/upload-logo', {
-        method: 'POST',
-        body: formData,
-      })
-      const json = await res.json()
-      const data = json.data ?? json
-      if (!res.ok) {
-        setError(data.error?.message || data.error || 'Failed to upload logo')
-        setLogoPreview(null)
-        setLogoFile(null)
-        return
-      }
-      setLogoUrl(data.url || '')
-    } catch {
-      setError('Failed to upload logo')
-      setLogoPreview(null)
-      setLogoFile(null)
-    } finally {
-      setUploadingLogo(false)
-    }
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     setLoading(true)
     try {
-      let finalLogoUrl = logoUrl
-      if (logoFile && !logoUrl && !uploadingLogo) {
-        setError('Please wait for logo upload to complete')
-        setLoading(false)
-        return
-      }
+      const finalLogoUrl = logoUrl
       const amountMxn = customAmountInput ? parseInt(customAmountInput, 10) : amount
       const finalAmount = Number.isNaN(amountMxn) || amountMxn < MIN_AMOUNT ? tierPrice : amountMxn
 
@@ -151,9 +106,12 @@ export function SponsorCheckoutModal({
         onClick={onClose}
         aria-hidden="true"
       />
-      <div className="relative w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-2xl">
+      <div className="relative w-full max-w-md rounded-2xl border border-[#2d3748] bg-[#0f1419] p-6 shadow-2xl">
         <div className="mb-6 flex items-center justify-between">
-          <h3 className="text-xl font-bold text-white">Sponsor Now — {tierLabel}</h3>
+          <h3 className="text-xl font-bold text-white">
+            {es ? 'Patrocinar — ' : 'Sponsor — '}
+            {tierLabel}
+          </h3>
           <button
             onClick={onClose}
             className="rounded-lg p-2 text-slate-400 transition-colors hover:text-white"
@@ -164,12 +122,16 @@ export function SponsorCheckoutModal({
         </div>
 
         {marketTitle && (
-          <p className="mb-4 text-sm text-slate-400">Market: {marketTitle}</p>
+          <p className="mb-4 text-sm text-slate-400">
+            {es ? 'Mercado:' : 'Market:'} {marketTitle}
+          </p>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-400">Amount (MXN) *</label>
+            <label className="mb-1 block text-sm font-medium text-slate-400">
+              {es ? 'Monto (MXN) *' : 'Amount (MXN) *'}
+            </label>
             <div className="mb-2 flex flex-wrap gap-2">
               <button
                 type="button"
@@ -218,18 +180,22 @@ export function SponsorCheckoutModal({
               />
               <span className="text-sm text-slate-500">MXN</span>
             </div>
-            <p className="mt-1 text-xs text-slate-500">Min 100 MXN. Custom amount supported.</p>
+            <p className="mt-1 text-xs text-slate-500">
+              {es ? 'Mín. 100 MXN. Monto personalizado permitido.' : 'Min 100 MXN. Custom amount supported.'}
+            </p>
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-400">Name / Company *</label>
+            <label className="mb-1 block text-sm font-medium text-slate-400">
+              {es ? 'Nombre / Empresa *' : 'Name / Company *'}
+            </label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
               className="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500"
-              placeholder="Your name or company"
+              placeholder={es ? 'Tu nombre o empresa' : 'Your name or company'}
             />
           </div>
           <div>
@@ -244,7 +210,9 @@ export function SponsorCheckoutModal({
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-400">Website / Social URL</label>
+            <label className="mb-1 block text-sm font-medium text-slate-400">
+              {es ? 'Sitio web / red social' : 'Website / Social URL'}
+            </label>
             <input
               type="url"
               value={url}
@@ -253,80 +221,55 @@ export function SponsorCheckoutModal({
               placeholder="https://..."
             />
           </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-400">Logo (optional)</label>
-            <div className="flex items-center gap-4">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif"
-                onChange={handleLogoChange}
-                className="hidden"
-              />
-              {logoPreview ? (
-                <div className="flex items-center gap-3">
-                  <img
-                    src={logoPreview}
-                    alt="Logo preview"
-                    className="h-16 w-16 rounded-lg border border-slate-600 bg-slate-800 object-contain"
-                  />
-                  <div className="flex-1">
-                    <p className="text-sm text-slate-400">
-                      {uploadingLogo ? 'Uploading...' : 'Logo uploaded'}
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setLogoFile(null)
-                        setLogoPreview(null)
-                        setLogoUrl('')
-                        if (fileInputRef.current) fileInputRef.current.value = ''
-                      }}
-                      className="mt-1 text-sm text-red-400 hover:text-red-300"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploadingLogo}
-                  className="flex items-center gap-2 rounded-lg border border-slate-600 bg-slate-800 px-4 py-2.5 text-slate-300 transition-colors hover:border-slate-500 hover:bg-slate-700 disabled:opacity-50"
-                >
-                  <Upload className="h-4 w-4" />
-                  {uploadingLogo ? 'Uploading...' : 'Upload image'}
-                </button>
-              )}
-            </div>
-            <p className="mt-1 text-xs text-slate-500">Max 2MB. JPEG, PNG, WebP, GIF.</p>
-          </div>
+          <LogoUpload
+            currentLogoUrl={logoUrl || null}
+            onUpload={(u) => setLogoUrl(u)}
+            onClear={() => setLogoUrl('')}
+            label={es ? 'Logo (opcional)' : 'Logo (optional)'}
+          />
 
           <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm">
             <p className="font-medium text-emerald-400">
-              Up to {fundPct}% → Conscious Fund
+              {es ? `Hasta ${fundPct}% → Fondo Consciente` : `Up to ${fundPct}% → Conscious Fund`}
             </p>
             <p className="mt-0.5 text-xs text-slate-400">
-              Estimated from this amount (after est. processing fees):{' '}
-              <span className="font-medium text-emerald-300/90">
-                ~{allocPreview.fundAmountRounded.toLocaleString()} MXN
-              </span>{' '}
-              to community causes; remainder supports platform operations.
+              {es ? (
+                <>
+                  Estimado con este monto (después de comisiones):{' '}
+                  <span className="font-medium text-emerald-300/90">
+                    ~{allocPreview.fundAmountRounded.toLocaleString()} MXN
+                  </span>{' '}
+                  a causas; el resto apoya la operación de la plataforma.
+                </>
+              ) : (
+                <>
+                  Estimated from this amount (after est. processing fees):{' '}
+                  <span className="font-medium text-emerald-300/90">
+                    ~{allocPreview.fundAmountRounded.toLocaleString()} MXN
+                  </span>{' '}
+                  to community causes; remainder supports platform operations.
+                </>
+              )}
             </p>
           </div>
 
           {marketTitle && (
             <div className="rounded-lg border border-slate-600 bg-slate-800/50 p-3">
-              <p className="mb-2 text-xs text-slate-500">Preview: Your sponsored market card</p>
-              <div className="rounded-lg bg-slate-900 p-3 text-sm">
+              <p className="mb-2 text-xs text-slate-500">
+                {es ? 'Vista previa: tarjeta de mercado' : 'Preview: Your sponsored market card'}
+              </p>
+              <div className="rounded-lg bg-[#0f1419] p-3 text-sm">
                 <p className="line-clamp-2 font-medium text-white">{marketTitle}</p>
-                <p className="mt-1 text-xs text-emerald-400">Sponsored by [Your Brand]</p>
+                <p className="mt-1 text-xs text-emerald-400">
+                  {es ? 'Patrocinado por [Tu marca]' : 'Sponsored by [Your Brand]'}
+                </p>
               </div>
             </div>
           )}
 
-          <p className="text-center text-xs text-slate-500">Payment secured by Stripe</p>
+          <p className="text-center text-xs text-slate-500">
+            {es ? 'Pago seguro con Stripe' : 'Payment secured by Stripe'}
+          </p>
 
           {error && <p className="text-sm text-red-400">{error}</p>}
 
@@ -336,14 +279,20 @@ export function SponsorCheckoutModal({
               onClick={onClose}
               className="flex-1 rounded-lg border border-slate-600 py-2.5 text-slate-300 transition-colors hover:bg-slate-800"
             >
-              Cancel
+              {es ? 'Cancelar' : 'Cancel'}
             </button>
             <button
               type="submit"
               disabled={loading}
               className="flex-1 rounded-lg bg-emerald-600 py-2.5 font-medium text-white transition-colors hover:bg-emerald-500 disabled:opacity-50"
             >
-              {loading ? 'Redirecting...' : 'Continue to Payment'}
+              {loading
+                ? es
+                  ? 'Redirigiendo…'
+                  : 'Redirecting...'
+                : es
+                  ? 'Continuar al pago'
+                  : 'Continue to Payment'}
             </button>
           </div>
         </form>

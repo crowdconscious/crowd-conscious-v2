@@ -50,7 +50,7 @@ export default function HeaderClient({ user }: HeaderClientProps) {
   }
 
   return (
-    <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
+    <header className="bg-[#0f1419] border-b border-[#2d3748] sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           {/* Logo and Main Nav */}

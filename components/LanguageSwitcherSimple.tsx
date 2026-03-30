@@ -37,7 +37,7 @@ export default function LanguageSwitcherSimple() {
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} aria-hidden="true" />
-          <div className="absolute right-0 mt-1 w-40 rounded-lg bg-slate-900 border border-slate-700 shadow-xl py-1 z-20">
+          <div className="absolute right-0 mt-1 w-40 rounded-lg bg-[#0f1419] border border-[#2d3748] shadow-xl py-1 z-20">
             {LANGUAGES.map((lang) => (
               <button
                 key={lang.code}

@@ -7,6 +7,84 @@ import {
   TIER_DURATION_MONTHS,
 } from '@/lib/sponsor-tiers'
 
+type SponsorAccountRow = {
+  id: string
+  access_token: string
+  total_spent: number | null
+  total_fund_contribution: number | null
+  is_pulse_client: boolean | null
+}
+
+async function upsertSponsorAccount(
+  supabase: ReturnType<typeof getSupabase>,
+  params: {
+    email: string
+    sponsorName: string
+    sponsorLogoUrl: string | null
+    tierId: string
+    amountMXN: number
+    fundAmount: number
+    isPulse: boolean
+    stripeCustomerId: string | null
+    contactName: string | null
+  }
+): Promise<{ id: string; access_token: string } | null> {
+  const email = params.email.trim().toLowerCase()
+  if (!email) return null
+
+  const { data: existing } = (await (supabase as any)
+    .from('sponsor_accounts')
+    .select('id, access_token, total_spent, total_fund_contribution, is_pulse_client')
+    .eq('contact_email', email)
+    .maybeSingle()) as { data: SponsorAccountRow | null }
+
+  if (existing) {
+    const patch = {
+      total_spent: Number(existing.total_spent ?? 0) + params.amountMXN,
+      total_fund_contribution:
+        Number(existing.total_fund_contribution ?? 0) + params.fundAmount,
+      company_name: params.sponsorName,
+      tier: params.tierId,
+      is_pulse_client: params.isPulse || !!existing.is_pulse_client,
+      ...(params.sponsorLogoUrl ? { logo_url: params.sponsorLogoUrl } : {}),
+      ...(params.stripeCustomerId ? { stripe_customer_id: params.stripeCustomerId } : {}),
+    }
+
+    const { error: updErr } = await (supabase as any)
+      .from('sponsor_accounts')
+      .update(patch)
+      .eq('id', existing.id)
+
+    if (updErr) {
+      console.error('Market sponsorship: sponsor_accounts update failed', updErr)
+    }
+    return { id: existing.id, access_token: existing.access_token }
+  }
+
+  const { data: created, error } = await (supabase as any)
+    .from('sponsor_accounts')
+    .insert({
+      company_name: params.sponsorName,
+      contact_email: email,
+      contact_name: params.contactName,
+      logo_url: params.sponsorLogoUrl,
+      tier: params.tierId,
+      stripe_customer_id: params.stripeCustomerId,
+      total_spent: params.amountMXN,
+      total_fund_contribution: params.fundAmount,
+      is_pulse_client: params.isPulse,
+    })
+    .select('id, access_token')
+    .single()
+
+  if (error || !created) {
+    console.error('Market sponsorship: sponsor_accounts insert failed', error)
+    return null
+  }
+
+  return { id: created.id, access_token: created.access_token }
+}
+
 /**
  * Handle market sponsorship payment after successful checkout.
  * Creates sponsorship record, updates markets, allocates fund, sends emails.
@@ -22,6 +100,7 @@ export async function handleMarketSponsorship(session: Stripe.Checkout.Session) 
     sponsor_url,
     sponsor_logo_url,
     sponsor_email,
+    is_pulse,
   } = metadata
 
   if (type !== 'market_sponsorship') return
@@ -135,6 +214,24 @@ export async function handleMarketSponsorship(session: Stripe.Checkout.Session) 
       .eq('id', fundRow.id)
   }
 
+  const contactEmail =
+    (sponsor_email || session.customer_details?.email || '').trim().toLowerCase()
+  const isPulseMarket = is_pulse === 'true'
+  const stripeCustomerId =
+    typeof session.customer === 'string' && session.customer ? session.customer : null
+
+  const sponsorAccount = await upsertSponsorAccount(supabase, {
+    email: contactEmail,
+    sponsorName: sponsor_name || 'Sponsor',
+    sponsorLogoUrl: sponsor_logo_url || null,
+    tierId,
+    amountMXN,
+    fundAmount,
+    isPulse: isPulseMarket,
+    stripeCustomerId,
+    contactName: session.customer_details?.name ?? null,
+  })
+
   const sponsorPayload = {
     sponsor_id: sponsorshipId,
     sponsor_name: sponsor_name || 'Sponsor',
@@ -142,6 +239,7 @@ export async function handleMarketSponsorship(session: Stripe.Checkout.Session) 
     sponsor_url: sponsor_url || null,
     sponsor_contribution: amountMXN,
     sponsor_type: 'business' as const,
+    ...(sponsorAccount ? { sponsor_account_id: sponsorAccount.id } : {}),
     updated_at: new Date().toISOString(),
   }
 
@@ -189,7 +287,8 @@ export async function handleMarketSponsorship(session: Stripe.Checkout.Session) 
       category || undefined,
       market_id || undefined,
       sponsorshipId,
-      reportToken
+      reportToken,
+      sponsorAccount?.access_token
     )
   }
 

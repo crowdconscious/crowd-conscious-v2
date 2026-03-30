@@ -55,7 +55,9 @@ export default function LandingNav() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  const navBg = scrolled ? 'bg-slate-950/95 backdrop-blur-md border-b border-slate-800' : 'bg-transparent'
+  const navBg = scrolled
+    ? 'bg-[#0f1419]/95 backdrop-blur-md border-b border-[#2d3748]'
+    : 'bg-[#0f1419] border-b border-[#2d3748]'
 
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all ${navBg}`}>
@@ -135,7 +137,7 @@ export default function LandingNav() {
       </div>
 
       {mobileOpen && (
-        <div className="md:hidden border-t border-slate-800 bg-slate-950/98 backdrop-blur-md">
+        <div className="md:hidden border-t border-[#2d3748] bg-[#0f1419]/98 backdrop-blur-md">
           <div className="px-4 py-4 space-y-3">
             <div className="py-2">
               <LanguageSwitcherSimple />

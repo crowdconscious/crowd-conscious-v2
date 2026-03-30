@@ -360,6 +360,7 @@ export interface Database {
           min_trade: number
           tags: string[]
           metadata: Json
+          sponsor_account_id?: string | null
           created_at: string
           updated_at: string
         }
@@ -384,6 +385,7 @@ export interface Database {
           min_trade?: number
           tags?: string[]
           metadata?: Json
+          sponsor_account_id?: string | null
           live_event_id?: string | null
           is_micro_market?: boolean | null
           sponsor_label?: string | null
@@ -417,6 +419,7 @@ export interface Database {
           min_trade?: number
           tags?: string[]
           metadata?: Json
+          sponsor_account_id?: string | null
           live_event_id?: string | null
           is_micro_market?: boolean | null
           sponsor_label?: string | null
@@ -566,6 +569,66 @@ export interface Database {
           status?: string
           created_at?: string
         }
+      }
+      sponsor_accounts: {
+        Row: {
+          id: string
+          company_name: string
+          contact_email: string
+          contact_name: string | null
+          logo_url: string | null
+          access_token: string
+          user_id: string | null
+          tier: string
+          is_pulse_client: boolean | null
+          pulse_subscription_active: boolean | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          total_spent: number | null
+          total_fund_contribution: number | null
+          created_at: string
+          last_login_at: string | null
+          status: 'active' | 'paused' | 'cancelled' | null
+        }
+        Insert: {
+          id?: string
+          company_name: string
+          contact_email: string
+          contact_name?: string | null
+          logo_url?: string | null
+          access_token?: string
+          user_id?: string | null
+          tier?: string
+          is_pulse_client?: boolean | null
+          pulse_subscription_active?: boolean | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          total_spent?: number | null
+          total_fund_contribution?: number | null
+          created_at?: string
+          last_login_at?: string | null
+          status?: 'active' | 'paused' | 'cancelled' | null
+        }
+        Update: {
+          id?: string
+          company_name?: string
+          contact_email?: string
+          contact_name?: string | null
+          logo_url?: string | null
+          access_token?: string
+          user_id?: string | null
+          tier?: string
+          is_pulse_client?: boolean | null
+          pulse_subscription_active?: boolean | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          total_spent?: number | null
+          total_fund_contribution?: number | null
+          created_at?: string
+          last_login_at?: string | null
+          status?: 'active' | 'paused' | 'cancelled' | null
+        }
+        Relationships: []
       }
       sponsorship_log: {
         Row: {

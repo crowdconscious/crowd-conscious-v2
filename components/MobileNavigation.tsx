@@ -26,7 +26,7 @@ export default function MobileNavigation() {
   }
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 z-50 safe-area-bottom">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-[#0f1419] border-t border-[#2d3748] z-50 safe-area-bottom">
       <div className="flex items-center justify-around py-2 px-2">
         {navItems.map((item) => {
           const Icon = item.icon
@@ -44,7 +44,7 @@ export default function MobileNavigation() {
               `}
             >
               {item.path === '/live' && liveCount > 0 && (
-                <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-red-500 ring-2 ring-slate-900" />
+                <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-red-500 ring-2 ring-[#0f1419]" />
               )}
               <Icon className="h-5 w-5 mb-0.5 shrink-0" strokeWidth={2} />
               <span className="text-xs font-medium truncate">{item.label}</span>

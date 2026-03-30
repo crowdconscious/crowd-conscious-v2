@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { LogoUpload } from '@/components/ui/LogoUpload'
 
 interface Market {
   id: string
@@ -67,8 +68,15 @@ export default function AdminMarketEditClient({ market }: { market: Market }) {
           className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
         />
       </div>
-      <div>
-        <label className="block text-sm font-medium text-slate-700 mb-2">Sponsor Logo URL</label>
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+        <LogoUpload
+          currentLogoUrl={form.sponsor_logo_url || null}
+          onUpload={(url) => setForm({ ...form, sponsor_logo_url: url })}
+          onClear={() => setForm({ ...form, sponsor_logo_url: '' })}
+          label="Sponsor logo"
+          hint="Upload image, or paste a public URL below."
+        />
+        <label className="mt-4 block text-sm font-medium text-slate-700 mb-2">Or paste logo URL</label>
         <input
           type="url"
           value={form.sponsor_logo_url}

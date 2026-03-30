@@ -85,7 +85,8 @@ export const emailTemplates = {
     category?: string,
     marketId?: string,
     sponsorshipId?: string,
-    reportToken?: string
+    reportToken?: string,
+    dashboardAccessToken?: string
   ) => {
     const tierId = normalizeSponsorTierId(tier)
     const alloc = calculateFundAllocationRounded(amountMXN, tierId)
@@ -100,6 +101,9 @@ export const emailTemplates = {
       sponsorshipId && reportToken
         ? `${APP_URL}/sponsor/report/${sponsorshipId}?token=${encodeURIComponent(reportToken)}`
         : null
+    const sponsorDashboardLink = dashboardAccessToken
+      ? `${APP_URL}/dashboard/sponsor/${dashboardAccessToken}`
+      : null
     return {
       subject: 'Your Crowd Conscious sponsorship is live! 🎉',
       html: `
@@ -125,18 +129,27 @@ export const emailTemplates = {
             <a href="${APP_URL}/sponsor" style="background: #10b981; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">View Sponsor Page</a>
           </div>
           `}
-          ${reportLink ? `
+          ${sponsorDashboardLink ? `
           <div style="text-align: center; margin: 20px 0;">
-            <a href="${reportLink}" style="background: #334155; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 500; display: inline-block; font-size: 14px;">View your analytics dashboard →</a>
+            <a href="${sponsorDashboardLink}" style="background: #0f766e; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Your sponsor dashboard (private link) →</a>
           </div>
           <p style="color: #64748b; font-size: 12px; margin-top: 10px;">
-            Save this link — it's your private analytics page. You'll also receive a quarterly impact report by email.
+            Save this URL — it is your private hub for live stats, fund impact, and PDF reports.
           </p>
-          ` : `
+          ` : ''}
+          ${reportLink ? `
+          <div style="text-align: center; margin: 20px 0;">
+            <a href="${reportLink}" style="background: #334155; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 500; display: inline-block; font-size: 14px;">Legacy analytics report →</a>
+          </div>
+          <p style="color: #64748b; font-size: 12px; margin-top: 10px;">
+            You can also use this classic analytics link. Quarterly impact reports arrive by email.
+          </p>
+          ` : ''}
+          ${!reportLink && !sponsorDashboardLink ? `
           <p style="color: #64748b; font-size: 14px; margin-top: 20px;">
             You'll receive a quarterly impact report showing how your sponsorship is making a difference.
           </p>
-          `}
+          ` : ''}
         </div>
       </div>
     `
@@ -560,7 +573,8 @@ export async function sendSponsorConfirmationEmail(
   category?: string,
   marketId?: string,
   sponsorshipId?: string,
-  reportToken?: string
+  reportToken?: string,
+  dashboardAccessToken?: string
 ): Promise<boolean> {
   const template = emailTemplates.sponsorConfirmation(
     sponsorName,
@@ -570,7 +584,8 @@ export async function sendSponsorConfirmationEmail(
     category,
     marketId,
     sponsorshipId,
-    reportToken
+    reportToken,
+    dashboardAccessToken
   )
   const result = await sendEmail(email, template)
   return result.success
