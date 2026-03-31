@@ -56,14 +56,14 @@ export default async function PulseListingPage() {
         .select(pulseSelect)
         .is('archived_at', null)
         /* Legacy: multi + government surveys created before is_pulse defaulted true */
-        .or('is_pulse.eq.true,and(market_type.eq.multi,category.eq.government)')
+        .or('is_pulse.eq.true,category.eq.pulse,and(market_type.eq.multi,category.eq.government)')
         .order('created_at', { ascending: false })
     : await publicClient
         .from('prediction_markets')
         .select(pulseSelect)
         .is('archived_at', null)
         .in('status', ['active', 'trading'])
-        .or('is_pulse.eq.true,and(market_type.eq.multi,category.eq.government)')
+        .or('is_pulse.eq.true,category.eq.pulse,and(market_type.eq.multi,category.eq.government)')
         .order('created_at', { ascending: false })
 
   const markets = rows ?? []

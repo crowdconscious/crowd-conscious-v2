@@ -329,7 +329,19 @@ export interface Database {
           id: string
           title: string
           description: string
-          category: 'world' | 'government' | 'corporate' | 'community' | 'cause'
+          category:
+            | 'world'
+            | 'world_cup'
+            | 'government'
+            | 'geopolitics'
+            | 'sustainability'
+            | 'corporate'
+            | 'community'
+            | 'cause'
+            | 'pulse'
+            | 'technology'
+            | 'economy'
+            | 'entertainment'
           subcategory: string | null
           resolution_criteria: string
           resolution_date: string
@@ -369,7 +381,19 @@ export interface Database {
           id?: string
           title: string
           description: string
-          category: 'world' | 'government' | 'corporate' | 'community' | 'cause'
+          category:
+            | 'world'
+            | 'world_cup'
+            | 'government'
+            | 'geopolitics'
+            | 'sustainability'
+            | 'corporate'
+            | 'community'
+            | 'cause'
+            | 'pulse'
+            | 'technology'
+            | 'economy'
+            | 'entertainment'
           subcategory?: string | null
           resolution_criteria: string
           resolution_date: string
@@ -404,7 +428,19 @@ export interface Database {
           id?: string
           title?: string
           description?: string
-          category?: 'world' | 'government' | 'corporate' | 'community' | 'cause'
+          category?:
+            | 'world'
+            | 'world_cup'
+            | 'government'
+            | 'geopolitics'
+            | 'sustainability'
+            | 'corporate'
+            | 'community'
+            | 'cause'
+            | 'pulse'
+            | 'technology'
+            | 'economy'
+            | 'entertainment'
           subcategory?: string | null
           resolution_criteria?: string
           resolution_date?: string

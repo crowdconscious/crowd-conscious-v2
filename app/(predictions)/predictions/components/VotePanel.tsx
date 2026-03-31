@@ -96,6 +96,23 @@ function toDecimal(prob: number): number {
   return n > 1 ? n / 100 : Math.min(1, Math.max(0, n))
 }
 
+/** Pulse listing parity: legacy multi + government rows may not have is_pulse yet */
+function isPulseLikeMarket(m: PredictionMarket): boolean {
+  if (m.is_pulse === true) return true
+  if (m.category === 'pulse') return true
+  return m.market_type === 'multi' && m.category === 'government'
+}
+
+/** Binary always has a slider; multi-outcome only for Pulse / live / micro (not plain “bold pick” multis) */
+function needsUserConfidenceSlider(isBinary: boolean, m: PredictionMarket): boolean {
+  return (
+    isBinary ||
+    isPulseLikeMarket(m) ||
+    m.is_micro_market === true ||
+    m.live_event_id != null
+  )
+}
+
 export type GuestVotePayload = {
   outcomeId: string
   confidence: number
@@ -149,6 +166,8 @@ export function VotePanel({
     outcomes.length === 2 &&
     (market.market_type === 'binary' || (market.market_type !== 'multi' && hasYesNoLabels))
 
+  const needsUserConfidence = needsUserConfidenceSlider(isBinary, market)
+
   useEffect(() => {
     if (myVote && isAuthenticated) {
       setSelectedOutcomeId(myVote.outcome_id)
@@ -162,7 +181,11 @@ export function VotePanel({
 
   const selectedOutcome = selectedOutcomeId ? outcomes.find((o) => o.id === selectedOutcomeId) : null
   const selectedProb = selectedOutcome ? toDecimal(selectedOutcome.probability) : 0
-  const effectiveConfidence = isBinary ? confidence : selectedOutcome ? autoConfidence(selectedProb) : 7
+  const effectiveConfidence = needsUserConfidence
+    ? confidence
+    : selectedOutcome
+      ? autoConfidence(selectedProb)
+      : 7
 
   const handleVote = async () => {
     if (!selectedOutcomeId || loading || isResolved) return
@@ -262,7 +285,9 @@ export function VotePanel({
               {outcomes.find((o) => o.id === myVote.outcome_id)
                 ? getOutcomeLabel(outcomes.find((o) => o.id === myVote.outcome_id)!, locale)
                 : myVote.outcome_label}
-              {isBinary && <span className="text-cc-text-secondary"> at confidence {myVote.confidence}</span>}
+              {needsUserConfidence && (
+                <span className="text-cc-text-secondary"> at confidence {myVote.confidence}</span>
+              )}
             </p>
             <p className="text-cc-text-secondary text-sm mt-1">
               {myVote.is_correct ? (
@@ -299,7 +324,7 @@ export function VotePanel({
             {outcomeForDisplay
               ? getOutcomeLabel(outcomeForDisplay, locale)
               : myVote?.outcome_label ?? '—'}
-            {isBinary && displayConfidence != null && (
+            {needsUserConfidence && displayConfidence != null && (
               <span className="text-cc-text-secondary font-normal">at confidence {displayConfidence}</span>
             )}
           </p>
@@ -423,7 +448,8 @@ export function VotePanel({
           {outcomes.map((o) => {
             const isSelected = selectedOutcomeId === o.id
             const probDecimal = toDecimal(o.probability)
-            const pickMessage = isSelected ? getPickMessage(probDecimal, locale) : null
+            const pickMessage =
+              isSelected && !needsUserConfidence ? getPickMessage(probDecimal, locale) : null
             return (
               <div
                 key={o.id}
@@ -459,17 +485,58 @@ export function VotePanel({
                 </div>
                 {isSelected && (
                   <div className="mt-4 pt-4 border-t border-cc-border">
-                    <p className="text-amber-400/90 text-sm font-medium mb-3">{pickMessage}</p>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleVote()
-                      }}
-                      disabled={loading}
-                      className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-sm font-medium rounded-lg"
-                    >
-                      {loading ? submitLoadingLabel : predictLabel}
-                    </button>
+                    {needsUserConfidence ? (
+                      <>
+                        <div className="rounded-lg border border-cc-border bg-gray-800/50 p-4 mb-3">
+                          <p className="text-gray-300 font-medium mb-2 flex items-center gap-2">
+                            <span className="text-xl">{getConfidenceEmoji(confidence)}</span>
+                            {getConfidenceLabel(confidence)} ({confidence}/10)
+                          </p>
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="range"
+                              min={1}
+                              max={10}
+                              value={confidence}
+                              onChange={(e) => setConfidence(parseInt(e.target.value, 10))}
+                              onClick={(e) => e.stopPropagation()}
+                              className="cc-range-slider min-w-0 flex-1"
+                              style={
+                                {
+                                  '--cc-range-pct': `${((confidence - 1) / 9) * 100}%`,
+                                } as CSSProperties
+                              }
+                            />
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleVote()
+                          }}
+                          disabled={loading}
+                          className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-sm font-medium rounded-lg"
+                        >
+                          {loading ? submitLoadingLabel : predictLabel}
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-amber-400/90 text-sm font-medium mb-3">{pickMessage}</p>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleVote()
+                          }}
+                          disabled={loading}
+                          className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-sm font-medium rounded-lg"
+                        >
+                          {loading ? submitLoadingLabel : predictLabel}
+                        </button>
+                      </>
+                    )}
                   </div>
                 )}
               </div>

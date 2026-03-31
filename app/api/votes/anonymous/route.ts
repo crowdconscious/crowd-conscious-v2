@@ -24,7 +24,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid UUID' }, { status: 400 })
     }
 
-    const conf = typeof confidence === 'number' ? confidence : parseInt(String(confidence), 10)
+    const conf =
+      confidence == null || confidence === ''
+        ? 5
+        : typeof confidence === 'number'
+          ? confidence
+          : parseInt(String(confidence), 10)
     if (isNaN(conf) || conf < 1 || conf > 10) {
       return NextResponse.json({ error: 'Invalid confidence value' }, { status: 400 })
     }

@@ -35,9 +35,12 @@ export type LeaderboardRow = {
 }
 export type SentimentCategory = {
   category: string
+  /** Weighted share of YES-like picks (0–1), weight = vote confidence */
   avg_yes_probability: number
+  /** Number of vote rows in this category (same as sum of weights for display) */
   total_votes: number
 }
+export type VoteYesNoSplit = { yes_like: number; no_like: number; other: number }
 export type VoterSplit = { voter_type: 'anonymous' | 'registered'; count: number }
 export type MarketHistoryPoint = {
   market_id: string
@@ -86,6 +89,8 @@ export type IntelligenceDashboardData = {
   signupsOverTime: SignupsByDay[]
   leaderboard: LeaderboardRow[]
   sentimentByCategory: SentimentCategory[]
+  /** YES / NO / other — counts of vote rows by chosen outcome (not outcome table aggregates) */
+  voteYesNoSplit: VoteYesNoSplit
   voterSplit: VoterSplit[]
   /** Top 5 markets — probability history ~4 weeks for drift chart */
   driftSeries: { marketId: string; title: string; points: { t: string; y: number }[] }[]
@@ -118,6 +123,7 @@ const empty = (): IntelligenceDashboardData => ({
   signupsOverTime: [],
   leaderboard: [],
   sentimentByCategory: [],
+  voteYesNoSplit: { yes_like: 0, no_like: 0, other: 0 },
   voterSplit: [],
   driftSeries: [],
   allMarkets: [],
@@ -133,6 +139,30 @@ function dayKey(iso: string): string {
 function isYesLabel(label: string): boolean {
   const l = label.trim().toLowerCase()
   return l === 'yes' || l === 'sí' || l === 'si' || /^yes\b/.test(l) || /^sí\b/.test(l)
+}
+
+function isNoLabel(label: string): boolean {
+  const l = label.trim().toLowerCase()
+  return l === 'no' || /^no\b/.test(l)
+}
+
+/** YES-like pick for sentiment: explicit YES, or multi-outcome with implied prob &gt; 0.5 */
+function isYesLikePick(label: string, probability: number): boolean {
+  if (isYesLabel(label)) return true
+  if (isNoLabel(label)) return false
+  return normProb(probability) > 0.5
+}
+
+type OutcomePick = { label: string; probability: number }
+
+function classifyVoteSide(o: OutcomePick | undefined): 'yes' | 'no' | 'other' {
+  if (!o) return 'other'
+  if (isYesLabel(o.label)) return 'yes'
+  if (isNoLabel(o.label)) return 'no'
+  const p = normProb(o.probability)
+  if (p > 0.5) return 'yes'
+  if (p < 0.5) return 'no'
+  return 'other'
 }
 
 function normProb(p: number): number {
@@ -373,16 +403,6 @@ export async function fetchIntelligenceDashboard(
       avg_probability: v.n ? v.probSum / v.n : 0,
     }))
 
-    // --- Confidence 1–10 ---
-    const { data: allConf } = await admin.from('market_votes').select('confidence').limit(250000)
-    const bins = new Map<number, number>()
-    for (let i = 1; i <= 10; i++) bins.set(i, 0)
-    for (const r of allConf ?? []) {
-      const c = Math.round(Number((r as { confidence: number }).confidence))
-      if (c >= 1 && c <= 10) bins.set(c, (bins.get(c) ?? 0) + 1)
-    }
-    out.confidenceDist = [...bins.entries()].map(([confidence, count]) => ({ confidence, count }))
-
     // --- Signups by day (up to ~1y) ---
     const { data: prof30 } = await admin.from('profiles').select('created_at').gte('created_at', since365)
     const sDay = new Map<string, number>()
@@ -489,42 +509,101 @@ export async function fetchIntelligenceDashboard(
     }
     out.accuracyBuckets = buckets
 
-    // --- Sentiment by category ---
-    let pmsQ = admin.from('prediction_markets').select('id, category')
-    if (!includeArchived) pmsQ = pmsQ.is('archived_at', null)
-    const { data: pms } = await pmsQ
-    const { data: mos } = await admin.from('market_outcomes').select('market_id, label, probability')
-    const { data: mvAll } = await admin.from('market_votes').select('market_id')
-    const votesPerMarket = new Map<string, number>()
-    for (const v of mvAll ?? []) {
-      const id = (v as { market_id: string }).market_id
-      votesPerMarket.set(id, (votesPerMarket.get(id) ?? 0) + 1)
+    // --- Confidence 1–10, sentiment by category (confidence-weighted), YES/NO donut — all from market_votes + chosen outcome ---
+    try {
+      let mkQ = admin.from('prediction_markets').select('id, category, archived_at')
+      if (!includeArchived) mkQ = mkQ.is('archived_at', null)
+      const { data: mkRows } = await mkQ
+      const marketMeta = new Map<string, { category: string }>()
+      for (const m of mkRows ?? []) {
+        const row = m as { id: string; category: string }
+        marketMeta.set(row.id, { category: row.category ?? 'unknown' })
+      }
+
+      const { data: voteRowsRaw } = await admin
+        .from('market_votes')
+        .select('confidence, outcome_id, market_id')
+        .limit(250000)
+
+      const voteRows = (voteRowsRaw ?? []) as {
+        confidence: number | null
+        outcome_id: string
+        market_id: string
+      }[]
+
+      const filteredVotes = voteRows.filter((v) => marketMeta.has(v.market_id))
+
+      const outcomeIds = [...new Set(filteredVotes.map((v) => v.outcome_id).filter(Boolean))]
+      const outcomeById = new Map<string, OutcomePick>()
+      const chunkSize = 500
+      for (let i = 0; i < outcomeIds.length; i += chunkSize) {
+        const chunk = outcomeIds.slice(i, i + chunkSize)
+        if (!chunk.length) continue
+        const { data: oc } = await admin
+          .from('market_outcomes')
+          .select('id, label, probability')
+          .in('id', chunk)
+        for (const r of oc ?? []) {
+          const o = r as { id: string; label: string; probability: number }
+          outcomeById.set(o.id, { label: o.label ?? '', probability: Number(o.probability ?? 0) })
+        }
+      }
+
+      const bins = new Map<number, number>()
+      for (let j = 1; j <= 10; j++) bins.set(j, 0)
+      const sentMap = new Map<string, { yesW: number; totalW: number; n: number }>()
+      let yesLike = 0
+      let noLike = 0
+      let otherSide = 0
+
+      for (const v of filteredVotes) {
+        const meta = marketMeta.get(v.market_id)
+        if (!meta) continue
+        const cat = meta.category
+        const w = Math.min(10, Math.max(1, Math.round(Number(v.confidence ?? 5))))
+        const oc = outcomeById.get(v.outcome_id)
+        bins.set(w, (bins.get(w) ?? 0) + 1)
+
+        const yesPick = oc ? isYesLikePick(oc.label, oc.probability) : false
+        const cur = sentMap.get(cat) ?? { yesW: 0, totalW: 0, n: 0 }
+        cur.totalW += w
+        cur.n += 1
+        if (yesPick) cur.yesW += w
+        sentMap.set(cat, cur)
+
+        const side = classifyVoteSide(oc)
+        if (side === 'yes') yesLike++
+        else if (side === 'no') noLike++
+        else otherSide++
+      }
+
+      out.confidenceDist = [...bins.entries()].map(([confidence, count]) => ({ confidence, count }))
+      out.sentimentByCategory = [...sentMap.entries()]
+        .map(([category, v]) => ({
+          category,
+          avg_yes_probability: v.totalW > 0 ? v.yesW / v.totalW : 0,
+          total_votes: v.n,
+        }))
+        .sort((a, b) => b.avg_yes_probability - a.avg_yes_probability)
+      out.voteYesNoSplit = { yes_like: yesLike, no_like: noLike, other: otherSide }
+    } catch (e) {
+      pushErr('sentiment_vote_aggregates', e)
+      try {
+        const { data: allConf } = await admin.from('market_votes').select('confidence').limit(250000)
+        const bins = new Map<number, number>()
+        for (let j = 1; j <= 10; j++) bins.set(j, 0)
+        for (const r of allConf ?? []) {
+          const c = Math.round(Number((r as { confidence: number }).confidence))
+          if (c >= 1 && c <= 10) bins.set(c, (bins.get(c) ?? 0) + 1)
+        }
+        out.confidenceDist = [...bins.entries()].map(([confidence, count]) => ({ confidence, count }))
+      } catch {
+        const bins = new Map<number, number>()
+        for (let j = 1; j <= 10; j++) bins.set(j, 0)
+        out.confidenceDist = [...bins.entries()].map(([confidence, count]) => ({ confidence, count }))
+      }
+      out.voteYesNoSplit = { yes_like: 0, no_like: 0, other: 0 }
     }
-    const yesByMarket = new Map<string, number>()
-    for (const o of mos ?? []) {
-      const row = o as { market_id: string; label: string; probability: number }
-      if (isYesLabel(row.label)) yesByMarket.set(row.market_id, normProb(Number(row.probability)))
-    }
-    const sentMap = new Map<string, { wSum: number; w: number; votes: number }>()
-    for (const m of pms ?? []) {
-      const row = m as { id: string; category: string }
-      const cat = row.category
-      const y = yesByMarket.get(row.id)
-      if (y == null) continue
-      const vc = votesPerMarket.get(row.id) ?? 0
-      const cur = sentMap.get(cat) ?? { wSum: 0, w: 0, votes: 0 }
-      cur.wSum += y * Math.max(1, vc)
-      cur.w += Math.max(1, vc)
-      cur.votes += vc
-      sentMap.set(cat, cur)
-    }
-    out.sentimentByCategory = [...sentMap.entries()]
-      .map(([category, v]) => ({
-        category,
-        avg_yes_probability: v.w > 0 ? v.wSum / v.w : 0,
-        total_votes: v.votes,
-      }))
-      .sort((a, b) => b.avg_yes_probability - a.avg_yes_probability)
 
     // --- Anonymous split ---
     try {

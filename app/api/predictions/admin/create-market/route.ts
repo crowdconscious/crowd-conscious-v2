@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { getCurrentUser } from '@/lib/auth-server'
+import { isValidMarketCategory } from '@/lib/market-categories'
 
 export async function POST(request: NextRequest) {
   try {
@@ -53,16 +54,8 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: 'Resolution date is required' }, { status: 400 })
     }
 
-    const validCategories = [
-      'world_cup',
-      'world',
-      'government',
-      'sustainability',
-      'corporate',
-      'community',
-      'cause',
-    ]
-    if (!category || !validCategories.includes(category)) {
+    const categoryResolved: string = Boolean(is_pulse) ? 'pulse' : String(category ?? '').trim()
+    if (!categoryResolved || !isValidMarketCategory(categoryResolved)) {
       return Response.json({ error: 'Valid category is required' }, { status: 400 })
     }
 
@@ -142,7 +135,7 @@ export async function POST(request: NextRequest) {
       const { data: marketId, error: rpcError } = await admin.rpc('create_multi_market', {
         p_title: title.trim(),
         p_description: description?.trim() || null,
-        p_category: category,
+        p_category: categoryResolved,
         p_created_by: user.id,
         p_end_date: resolution_date,
         p_outcomes: outcomeLabels,
@@ -175,7 +168,7 @@ export async function POST(request: NextRequest) {
       const { data: categorySponsor } = await admin
         .from('sponsorships')
         .select('id, sponsor_name, sponsor_logo_url, sponsor_url')
-        .eq('category', category)
+        .eq('category', categoryResolved)
         .in('tier', ['category', 'growth'])
         .eq('status', 'active')
         .order('created_at', { ascending: false })
@@ -204,7 +197,7 @@ export async function POST(request: NextRequest) {
     const { data: marketId, error: rpcError } = await admin.rpc('create_binary_market', {
       p_title: title.trim(),
       p_description: description?.trim() || null,
-      p_category: category,
+      p_category: categoryResolved,
       p_created_by: user.id,
       p_end_date: resolution_date,
       p_sponsor_name: sponsor_name?.trim() || null,
@@ -236,7 +229,7 @@ export async function POST(request: NextRequest) {
     const { data: categorySponsor } = await admin
       .from('sponsorships')
       .select('id, sponsor_name, sponsor_logo_url, sponsor_url')
-      .eq('category', category)
+      .eq('category', categoryResolved)
         .in('tier', ['category', 'growth'])
         .eq('status', 'active')
         .order('created_at', { ascending: false })

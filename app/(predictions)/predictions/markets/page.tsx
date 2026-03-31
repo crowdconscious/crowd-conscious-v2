@@ -4,6 +4,7 @@ import { MarketsClient } from './MarketsClient'
 import type { Database } from '@/types/database'
 import { SITE_URL } from '@/lib/seo/site'
 import { MARKETS_PAGE_SIZE } from '@/lib/predictions/markets-page'
+import { isValidMarketCategory } from '@/lib/market-categories'
 
 export const metadata: Metadata = {
   title: { absolute: 'Mercados | Crowd Conscious' },
@@ -22,8 +23,6 @@ type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row'
   recent_votes?: number
 }
 
-const VALID_CATEGORIES = ['world', 'world_cup', 'government', 'sustainability', 'corporate', 'community', 'cause']
-
 async function getMarketsPage(
   sort: string = 'active',
   category: string = 'all',
@@ -39,7 +38,7 @@ async function getMarketsPage(
     .is('archived_at', null)
     .range(from, to)
 
-  if (category && category !== 'all' && VALID_CATEGORIES.includes(category)) {
+  if (category && category !== 'all' && isValidMarketCategory(category)) {
     query = query.eq('category', category)
   }
 
@@ -231,7 +230,9 @@ export default async function PredictionsMarketsPage({
 }) {
   const params = await searchParams
   const sort = params.sort || 'active'
-  const category = params.category || 'all'
+  const rawCat = params.category || 'all'
+  const category =
+    rawCat !== 'all' && isValidMarketCategory(rawCat) ? rawCat : 'all'
   const page = Math.max(1, parseInt(params.page || '1', 10))
 
   const [pageResult, trendingMarkets, quickMarkets, categoryCounts, resolvedCount] = await Promise.all([

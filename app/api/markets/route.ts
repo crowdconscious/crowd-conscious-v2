@@ -1,18 +1,9 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import type { Database } from '@/types/database'
+import { isValidMarketCategory } from '@/lib/market-categories'
 
 type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row']
-
-const VALID_CATEGORIES = [
-  'world',
-  'world_cup',
-  'government',
-  'sustainability',
-  'corporate',
-  'community',
-  'cause',
-] as const
 
 export async function GET(request: Request) {
   try {
@@ -30,7 +21,7 @@ export async function GET(request: Request) {
       .order('total_votes', { ascending: false, nullsFirst: false })
       .limit(limit)
 
-    if (category && category !== 'all' && VALID_CATEGORIES.includes(category as any)) {
+    if (category && category !== 'all' && isValidMarketCategory(category)) {
       query = query.eq('category', category)
     }
 

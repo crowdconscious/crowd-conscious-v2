@@ -229,11 +229,16 @@ export const sponsorPageCopy = {
 const CATEGORY_LABELS: Record<string, { es: string; en: string }> = {
   world: { es: 'Mundo', en: 'World' },
   world_cup: { es: 'Mundial', en: 'World Cup' },
+  pulse: { es: 'Pulse', en: 'Pulse' },
   government: { es: 'Gobierno', en: 'Government' },
+  geopolitics: { es: 'Geopolítica', en: 'Geopolitics' },
   corporate: { es: 'Corporativo', en: 'Corporate' },
   community: { es: 'Comunidad', en: 'Community' },
   cause: { es: 'Causa', en: 'Cause' },
   sustainability: { es: 'Sustentabilidad', en: 'Sustainability' },
+  technology: { es: 'Tecnología', en: 'Technology' },
+  economy: { es: 'Economía', en: 'Economy' },
+  entertainment: { es: 'Entretenimiento', en: 'Entertainment' },
 }
 
 export function sponsorCategoryLabel(categoryKey: string, lang: SponsorLang): string {

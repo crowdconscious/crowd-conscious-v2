@@ -12,6 +12,11 @@ import {
   Heart,
   Trophy,
   Leaf,
+  BarChart3,
+  Map,
+  Cpu,
+  TrendingUp,
+  Clapperboard,
 } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { MarketCard } from '@/components/MarketCard'
@@ -24,11 +29,16 @@ const CATEGORIES = [
   { id: 'all', labelEs: 'Todos', labelEn: 'All', icon: Globe },
   { id: 'world_cup', labelEs: 'Mundial', labelEn: 'World Cup', icon: Trophy },
   { id: 'world', labelEs: 'Mundo', labelEn: 'World', icon: Globe },
+  { id: 'pulse', labelEs: 'Pulse', labelEn: 'Pulse', icon: BarChart3 },
   { id: 'government', labelEs: 'Gobierno', labelEn: 'Government', icon: Building2 },
+  { id: 'geopolitics', labelEs: 'Geopolítica', labelEn: 'Geopolitics', icon: Map },
   { id: 'sustainability', labelEs: 'Sostenibilidad', labelEn: 'Sustainability', icon: Leaf },
+  { id: 'technology', labelEs: 'Tecnología', labelEn: 'Technology', icon: Cpu },
+  { id: 'economy', labelEs: 'Economía', labelEn: 'Economy', icon: TrendingUp },
   { id: 'corporate', labelEs: 'Corporativo', labelEn: 'Corporate', icon: Briefcase },
   { id: 'community', labelEs: 'Comunidad', labelEn: 'Community', icon: Users },
   { id: 'cause', labelEs: 'Causa', labelEn: 'Cause', icon: Heart },
+  { id: 'entertainment', labelEs: 'Entretenimiento', labelEn: 'Entertainment', icon: Clapperboard },
 ] as const
 
 interface Props {

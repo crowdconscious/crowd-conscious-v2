@@ -9,21 +9,31 @@ import { getMarketText, getOutcomeLabel } from '@/lib/i18n/market-translations'
 const CATEGORY_EMOJI: Record<string, string> = {
   world_cup: '⚽',
   world: '🌍',
+  pulse: '📊',
   government: '🏛',
+  geopolitics: '🌐',
   sustainability: '🌱',
+  technology: '💻',
+  economy: '📈',
   corporate: '🏢',
   community: '👥',
   cause: '💚',
+  entertainment: '🎬',
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
   world_cup: 'World Cup',
   world: 'World',
+  pulse: 'Pulse',
   government: 'Government',
+  geopolitics: 'Geopolitics',
   sustainability: 'Sustainability',
+  technology: 'Technology',
+  economy: 'Economy',
   corporate: 'Corporate',
   community: 'Community',
   cause: 'Cause',
+  entertainment: 'Entertainment',
 }
 
 type OutcomeRow = {
@@ -164,7 +174,9 @@ export async function GET(
       }
     }
     const probability = Math.min(100, Math.max(0, Math.round(Number(probRaw) * 100)))
-    const isPulseMarket = Boolean((market as { is_pulse?: boolean }).is_pulse)
+    const isPulseMarket =
+      Boolean((market as { is_pulse?: boolean }).is_pulse) ||
+      market.category === 'pulse'
     const outcomeName = multiOutcomeTie
       ? locale === 'es'
         ? 'Empate — sin líder aún'

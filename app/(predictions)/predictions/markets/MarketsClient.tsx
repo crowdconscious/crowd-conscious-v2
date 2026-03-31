@@ -12,6 +12,11 @@ import {
   Heart,
   Trophy,
   Leaf,
+  BarChart3,
+  Map,
+  Cpu,
+  TrendingUp,
+  Clapperboard,
   Flame,
   Zap,
   ChevronLeft,
@@ -26,11 +31,16 @@ const CATEGORIES = [
   { id: 'all', label: 'All', icon: Globe },
   { id: 'world_cup', label: 'World Cup', icon: Trophy },
   { id: 'world', label: 'World', icon: Globe },
+  { id: 'pulse', label: 'Pulse', icon: BarChart3 },
   { id: 'government', label: 'Government', icon: Building2 },
+  { id: 'geopolitics', label: 'Geopolitics', icon: Map },
   { id: 'sustainability', label: 'Sustainability', icon: Leaf },
+  { id: 'technology', label: 'Technology', icon: Cpu },
+  { id: 'economy', label: 'Economy', icon: TrendingUp },
   { id: 'corporate', label: 'Corporate', icon: Briefcase },
   { id: 'community', label: 'Community', icon: Users },
   { id: 'cause', label: 'Cause', icon: Heart },
+  { id: 'entertainment', label: 'Entertainment', icon: Clapperboard },
 ] as const
 
 const STATUS_TABS = [

@@ -24,10 +24,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const legacyPulse =
     market &&
     !market.is_pulse &&
+    market.category !== 'pulse' &&
     market.market_type === 'multi' &&
     market.category === 'government'
 
-  if (!market || (!market.is_pulse && !legacyPulse)) {
+  const showPulse =
+    market &&
+    (market.is_pulse || market.category === 'pulse' || legacyPulse)
+
+  if (!showPulse) {
     return { title: 'Conscious Pulse' }
   }
 
@@ -88,10 +93,16 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
 
   const legacyPulse =
     !market.is_pulse &&
+    (market as { category?: string | null }).category !== 'pulse' &&
     (market as { market_type?: string | null }).market_type === 'multi' &&
     (market as { category?: string | null }).category === 'government'
 
-  if (!market.is_pulse && !legacyPulse) {
+  const showPulse =
+    market.is_pulse ||
+    (market as { category?: string | null }).category === 'pulse' ||
+    legacyPulse
+
+  if (!showPulse) {
     redirect(`/predictions/markets/${id}`)
   }
 

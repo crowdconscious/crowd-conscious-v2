@@ -48,11 +48,16 @@ const CATEGORY_LABELS: Record<string, string> = {
   all: 'All',
   world_cup: 'World Cup',
   world: 'World',
+  pulse: 'Pulse',
   government: 'Government',
+  geopolitics: 'Geopolitics',
   sustainability: 'Sustainability',
+  technology: 'Technology',
+  economy: 'Economy',
   corporate: 'Corporate',
   community: 'Community',
   cause: 'Cause',
+  entertainment: 'Entertainment',
 }
 
 function hashToColor(str: string): string {

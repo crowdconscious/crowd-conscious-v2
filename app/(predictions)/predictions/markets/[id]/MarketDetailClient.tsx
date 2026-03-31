@@ -37,6 +37,9 @@ import {
   CheckCircle2,
   Tag,
   User,
+  Map,
+  Cpu,
+  Clapperboard,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
@@ -65,12 +68,17 @@ const CATEGORY_CONFIG: Record<
   { label: string; icon: React.ElementType; bg: string; text: string }
 > = {
   world: { label: 'World', icon: Globe, bg: 'bg-blue-500/20', text: 'text-blue-400' },
+  pulse: { label: 'Pulse', icon: BarChart3, bg: 'bg-amber-500/10', text: 'text-amber-400' },
   government: { label: 'Government', icon: Building2, bg: 'bg-red-500/20', text: 'text-red-400' },
+  geopolitics: { label: 'Geopolitics', icon: Map, bg: 'bg-sky-500/20', text: 'text-sky-400' },
   corporate: { label: 'Corporate', icon: Briefcase, bg: 'bg-purple-500/20', text: 'text-purple-400' },
   community: { label: 'Community', icon: Users, bg: 'bg-emerald-500/20', text: 'text-emerald-400' },
   cause: { label: 'Cause', icon: Heart, bg: 'bg-amber-500/20', text: 'text-amber-400' },
   world_cup: { label: 'World Cup', icon: Trophy, bg: 'bg-emerald-500/20', text: 'text-emerald-400' },
   sustainability: { label: 'Sustainability', icon: Leaf, bg: 'bg-green-500/20', text: 'text-green-400' },
+  technology: { label: 'Technology', icon: Cpu, bg: 'bg-violet-500/20', text: 'text-violet-400' },
+  economy: { label: 'Economy', icon: TrendingUp, bg: 'bg-teal-500/20', text: 'text-teal-400' },
+  entertainment: { label: 'Entertainment', icon: Clapperboard, bg: 'bg-fuchsia-500/20', text: 'text-fuchsia-400' },
 }
 
 const PULSE_CATEGORY = {
@@ -233,7 +241,9 @@ export function MarketDetailClient({
     return () => clearTimeout(t)
   }, [celebration.open, celebration.guest])
 
-  const isPulseMarket = !!(market as { is_pulse?: boolean }).is_pulse
+  const isPulseMarket =
+    !!(market as { is_pulse?: boolean }).is_pulse ||
+    (market as { category?: string }).category === 'pulse'
   const config = isPulseMarket ? PULSE_CATEGORY : CATEGORY_CONFIG[market.category] || CATEGORY_CONFIG.world
   const Icon = config.icon
   const prob = toDisplayPercent(Number(market.current_probability))
@@ -424,7 +434,7 @@ export function MarketDetailClient({
             </div>
           )}
 
-          {(market as { is_pulse?: boolean }).is_pulse && showPulseDashboardLink && (
+          {isPulseMarket && showPulseDashboardLink && (
             <div className="flex flex-wrap gap-3">
               <Link
                 href={`/pulse/${market.id}`}

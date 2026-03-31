@@ -311,14 +311,14 @@ export default function IntelligenceClient({
     return s.slice(-n)
   }, [data.signupsOverTime, range])
 
-  const yesNoDoughnut = useMemo(() => {
-    const yes = data.outcomeAgg.filter((o) => isYesLike(o.label)).reduce((s, o) => s + o.total_votes, 0)
-    const no = data.outcomeAgg.filter((o) => isNoLike(o.label)).reduce((s, o) => s + o.total_votes, 0)
-    const other = data.outcomeAgg
-      .filter((o) => !isYesLike(o.label) && !isNoLike(o.label))
-      .reduce((s, o) => s + o.total_votes, 0)
-    return { yes, no, other }
-  }, [data.outcomeAgg])
+  const yesNoDoughnut = useMemo(
+    () => ({
+      yes: data.voteYesNoSplit.yes_like,
+      no: data.voteYesNoSplit.no_like,
+      other: data.voteYesNoSplit.other,
+    }),
+    [data.voteYesNoSplit]
+  )
 
   const radarSentiment = useMemo(() => {
     const labels = data.sentimentByCategory.map((s) => s.category)
@@ -781,7 +781,10 @@ export default function IntelligenceClient({
           {tab === 'sentiment' && (
             <div className="grid lg:grid-cols-2 gap-6">
               <div className={`h-96 ${CARD} p-5`}>
-                <h3 className="text-sm font-medium text-slate-500 mb-3">YES % by category (weighted)</h3>
+                <h3 className="text-sm font-medium text-slate-500 mb-1">YES % by category (weighted)</h3>
+                <p className="text-[11px] text-slate-600 mb-3">
+                  From market_votes: each vote weighted by confidence; YES-like = picked YES / NO / leading outcome (probability above 50%).
+                </p>
                 <Radar
                   data={{
                     labels: radarSentiment.labels,
@@ -813,7 +816,10 @@ export default function IntelligenceClient({
                 />
               </div>
               <div className={`h-96 ${CARD} p-5`}>
-                <h3 className="text-sm font-medium text-slate-500 mb-3">YES vs NO (outcomes)</h3>
+                <h3 className="text-sm font-medium text-slate-500 mb-1">YES vs NO (votes)</h3>
+                <p className="text-[11px] text-slate-600 mb-3">
+                  Count of vote rows by chosen outcome (not outcome-table aggregates).
+                </p>
                 <Doughnut
                   data={{
                     labels: ['YES-like', 'NO-like', 'Other / multi'],
@@ -833,7 +839,10 @@ export default function IntelligenceClient({
                 />
               </div>
               <div className={`lg:col-span-2 h-64 ${CARD} p-5`}>
-                <h3 className="text-sm font-medium text-slate-500 mb-3">Confidence (1–10)</h3>
+                <h3 className="text-sm font-medium text-slate-500 mb-1">Confidence (1–10)</h3>
+                <p className="text-[11px] text-slate-600 mb-3">
+                  Histogram of confidence in market_votes (same filter as archived toggle).
+                </p>
                 <Bar
                   data={{
                     labels: data.confidenceDist.map((c) => String(c.confidence)),
@@ -989,16 +998,6 @@ function StatusBadge({ status }: { status: string }) {
       {status}
     </span>
   )
-}
-
-function isYesLike(label: string) {
-  const l = label.trim().toLowerCase()
-  return l === 'yes' || l === 'sí' || l === 'si' || l.startsWith('yes')
-}
-
-function isNoLike(label: string) {
-  const l = label.trim().toLowerCase()
-  return l === 'no' || l.startsWith('no ')
 }
 
 function mergeDriftLabels(series: { points: { t: string }[] }[]): string[] {

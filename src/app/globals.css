@@ -526,3 +526,36 @@ input:focus, textarea:focus, select:focus {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* Pulse report PDF / print: preserve dark theme (browser default is white) */
+@media print {
+  html:has(.pulse-report-print),
+  body:has(.pulse-report-print) {
+    background: #0f1419 !important;
+    color: #f9fafb !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .pulse-report-print,
+  .pulse-report-print * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  html:has(.pulse-report-print) nav,
+  footer.pulse-print-hide-footer,
+  .pulse-no-print,
+  .no-print,
+  .vote-cta {
+    display: none !important;
+  }
+
+  .pulse-print-only {
+    display: block !important;
+  }
+}
+
+.pulse-print-only {
+  display: none;
+}

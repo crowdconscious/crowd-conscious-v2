@@ -147,7 +147,10 @@ export default async function MarketDetailPage({
   const resolutionEvidence = (market.resolution_evidence as { evidence_url?: string }) || {}
 
   let showPulseDashboardLink = false
-  if ((market as { is_pulse?: boolean }).is_pulse) {
+  const isPulseLike =
+    (market as { is_pulse?: boolean }).is_pulse === true ||
+    (market as { category?: string }).category === 'pulse'
+  if (isPulseLike) {
     const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim()
     const profileEmail = (user as { email?: string | null } | null)?.email?.toLowerCase().trim()
     const isAdmin =

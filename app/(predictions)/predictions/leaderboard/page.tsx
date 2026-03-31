@@ -18,7 +18,21 @@ export const metadata: Metadata = {
   },
 }
 
-const CATEGORIES = ['all', 'world_cup', 'world', 'government', 'sustainability', 'corporate', 'community', 'cause'] as const
+const CATEGORIES = [
+  'all',
+  'world_cup',
+  'world',
+  'pulse',
+  'government',
+  'geopolitics',
+  'sustainability',
+  'technology',
+  'economy',
+  'corporate',
+  'community',
+  'cause',
+  'entertainment',
+] as const
 
 export type RecentPrediction = {
   market_id: string

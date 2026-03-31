@@ -37,22 +37,32 @@ export type MarketCardOutcome = {
 
 const CATEGORY_LABELS_ES: Record<string, string> = {
   world: 'Mundo',
+  pulse: 'Pulse',
   government: 'Gobierno',
+  geopolitics: 'Geopolítica',
   corporate: 'Corporativo',
   community: 'Comunidad',
   cause: 'Causa',
   world_cup: 'Mundial',
   sustainability: 'Sostenibilidad',
+  technology: 'Tecnología',
+  economy: 'Economía',
+  entertainment: 'Entretenimiento',
 }
 
 const CATEGORY_LABELS_EN: Record<string, string> = {
   world: 'World',
+  pulse: 'Pulse',
   government: 'Government',
+  geopolitics: 'Geopolitics',
   corporate: 'Corporate',
   community: 'Community',
   cause: 'Cause',
   world_cup: 'World Cup',
   sustainability: 'Sustainability',
+  technology: 'Technology',
+  economy: 'Economy',
+  entertainment: 'Entertainment',
 }
 
 /** Visual style per category — matches browse / landing */
@@ -61,11 +71,16 @@ function categoryPillClass(category: string): string {
   const map: Record<string, string> = {
     world_cup: 'bg-emerald-500/10 text-emerald-400',
     world: 'bg-blue-500/10 text-blue-400',
+    pulse: 'bg-amber-500/10 text-amber-400',
     government: 'bg-amber-500/10 text-amber-400',
+    geopolitics: 'bg-sky-500/10 text-sky-400',
     sustainability: 'bg-green-500/10 text-green-400',
+    technology: 'bg-violet-500/10 text-violet-400',
+    economy: 'bg-teal-500/10 text-teal-400',
     corporate: 'bg-purple-500/10 text-purple-400',
     community: 'bg-pink-500/10 text-pink-400',
     cause: 'bg-amber-500/10 text-amber-400',
+    entertainment: 'bg-fuchsia-500/10 text-fuchsia-400',
   }
   return map[c] ?? 'bg-emerald-500/10 text-emerald-400'
 }

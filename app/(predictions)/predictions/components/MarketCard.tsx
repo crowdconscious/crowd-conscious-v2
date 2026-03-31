@@ -18,6 +18,9 @@ import {
   CheckCircle,
   Flame,
   BarChart3,
+  Map,
+  Cpu,
+  Clapperboard,
 } from 'lucide-react'
 import type { Database } from '@/types/database'
 import { hasGuestVotedMarket } from '@/lib/guest-vote-storage'
@@ -101,6 +104,46 @@ const CATEGORY_CONFIG: Record<
     accent: 'border-t-green-400/60',
     hoverGlow: 'group-hover:shadow-[0_0_20px_rgba(74,222,128,0.35)]',
   },
+  pulse: {
+    label: 'Pulse',
+    icon: BarChart3,
+    bg: 'bg-amber-500/10',
+    text: 'text-amber-400',
+    accent: 'border-t-amber-400/50',
+    hoverGlow: 'group-hover:shadow-[0_0_20px_rgba(251,191,36,0.35)]',
+  },
+  geopolitics: {
+    label: 'Geopolitics',
+    icon: Map,
+    bg: 'bg-sky-500/20',
+    text: 'text-sky-400',
+    accent: 'border-t-sky-400/50',
+    hoverGlow: 'group-hover:shadow-[0_0_20px_rgba(56,189,248,0.35)]',
+  },
+  technology: {
+    label: 'Technology',
+    icon: Cpu,
+    bg: 'bg-violet-500/20',
+    text: 'text-violet-400',
+    accent: 'border-t-violet-400/50',
+    hoverGlow: 'group-hover:shadow-[0_0_20px_rgba(167,139,250,0.35)]',
+  },
+  economy: {
+    label: 'Economy',
+    icon: TrendingUp,
+    bg: 'bg-teal-500/20',
+    text: 'text-teal-400',
+    accent: 'border-t-teal-400/50',
+    hoverGlow: 'group-hover:shadow-[0_0_20px_rgba(45,212,191,0.35)]',
+  },
+  entertainment: {
+    label: 'Entertainment',
+    icon: Clapperboard,
+    bg: 'bg-fuchsia-500/20',
+    text: 'text-fuchsia-400',
+    accent: 'border-t-fuchsia-400/50',
+    hoverGlow: 'group-hover:shadow-[0_0_20px_rgba(232,121,249,0.35)]',
+  },
 }
 
 function getCountdown(resolutionDate: string): string {
@@ -159,7 +202,8 @@ export function MarketCard({ market, history = [], outcomes: outcomesProp, varia
   useEffect(() => {
     setGuestVoted(hasGuestVotedMarket(market.id))
   }, [market.id])
-  const isPulse = Boolean((market as { is_pulse?: boolean }).is_pulse)
+  const isPulse =
+    Boolean((market as { is_pulse?: boolean }).is_pulse) || market.category === 'pulse'
   const config = isPulse
     ? {
         label: 'Conscious Pulse',

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, type CSSProperties } from 'react'
+import { useState, useEffect, useCallback, useRef, type CSSProperties } from 'react'
 import Link from 'next/link'
 import {
   ArrowLeft,
@@ -11,13 +11,18 @@ import {
 } from 'lucide-react'
 import { LogoUpload } from '@/components/ui/LogoUpload'
 const CATEGORIES = [
+  { id: 'pulse', label: 'Pulse' },
   { id: 'world_cup', label: 'World Cup' },
   { id: 'world', label: 'World' },
   { id: 'government', label: 'Government' },
+  { id: 'geopolitics', label: 'Geopolitics' },
   { id: 'sustainability', label: 'Sustainability' },
+  { id: 'technology', label: 'Technology' },
+  { id: 'economy', label: 'Economy' },
   { id: 'corporate', label: 'Corporate' },
   { id: 'community', label: 'Community' },
   { id: 'cause', label: 'Cause' },
+  { id: 'entertainment', label: 'Entertainment' },
 ] as const
 
 /** Unified dark inputs (#1a2029 / #2d3748) */
@@ -31,10 +36,10 @@ const ccSection = 'bg-[#1a2029] border border-[#2d3748] rounded-xl p-6'
 const CATEGORY_MAP: Record<string, string> = {
   sports: 'world_cup',
   politics: 'government',
-  economy: 'corporate',
+  economy: 'economy',
   culture: 'community',
   world: 'world',
-  technology: 'corporate',
+  technology: 'technology',
 }
 
 type MarketOption = { id: string; title: string }
@@ -73,6 +78,16 @@ export default function CreateMarketPage() {
   const [pulseClientLogo, setPulseClientLogo] = useState('')
   const [pulseClientEmail, setPulseClientEmail] = useState('')
   const [successIsPulse, setSuccessIsPulse] = useState(false)
+  const prevIsPulseRef = useRef(false)
+
+  useEffect(() => {
+    if (isPulse) {
+      setCategory('pulse')
+    } else if (prevIsPulseRef.current) {
+      setCategory((c) => (c === 'pulse' ? 'world' : c))
+    }
+    prevIsPulseRef.current = isPulse
+  }, [isPulse])
 
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -305,7 +320,7 @@ export default function CreateMarketPage() {
         body: JSON.stringify({
           title: title.trim(),
           description: description.trim() || null,
-          category: category || 'world',
+          category: isPulse ? 'pulse' : category || 'world',
           initial_probability: initialProbability,
           resolution_date: new Date(resolutionDate).toISOString(),
           resolution_criteria: resolutionCriteria.trim() || null,

@@ -146,6 +146,39 @@ export default function PulseResultClient({
     }))
   }, [votes, outcomeLabelById])
 
+  const leadingOutcome = useMemo(() => {
+    if (outcomes.length === 0) return null
+    return [...outcomes].sort((a, b) => b.probability - a.probability)[0]
+  }, [outcomes])
+
+  const executiveSummary = useMemo(() => {
+    if (!leadingOutcome || totalVotes === 0) return null
+    const avgConfStr = avgConfidence.toFixed(1)
+    const pct = Math.round(leadingOutcome.probability * 100)
+    const shortLabel = getOutcomeLabel(leadingOutcome, locale).split(' / ')[0]
+    const votesForLeading = votes.filter(
+      (v) => v.outcome_id === leadingOutcome.id && typeof v.confidence === 'number'
+    )
+    const leadingConf =
+      votesForLeading.length > 0
+        ? (
+            votesForLeading.reduce((s, v) => s + (v.confidence as number), 0) /
+            votesForLeading.length
+          ).toFixed(1)
+        : '0.0'
+    const strongPhraseEs =
+      parseFloat(leadingConf) >= 7
+        ? 'Esto indica una preferencia fuerte y clara de la comunidad.'
+        : 'Sin embargo, el nivel de certeza sugiere que la opinión no es definitiva.'
+    const strongPhraseEn =
+      parseFloat(leadingConf) >= 7
+        ? 'This indicates a strong, clear community preference.'
+        : 'However, the certainty level suggests the opinion is not definitive.'
+    const summaryEs = `Con ${totalVotes} participaciones y una confianza promedio de ${avgConfStr}/10, "${shortLabel}" lidera con ${pct}% de los votos y una certeza de ${leadingConf}/10. ${strongPhraseEs}`
+    const summaryEn = `With ${totalVotes} participation${totalVotes !== 1 ? 's' : ''} and an average confidence of ${avgConfStr}/10, "${shortLabel}" leads with ${pct}% of the vote and an average certainty of ${leadingConf}/10. ${strongPhraseEn}`
+    return { summaryEs, summaryEn }
+  }, [avgConfidence, leadingOutcome, locale, totalVotes, votes])
+
   const handleExport = () => {
     exportPulseVotesCsv(csvRows, question)
   }
@@ -161,16 +194,27 @@ export default function PulseResultClient({
     year: 'numeric',
   })
 
+  const reportDate = new Date().toLocaleDateString(locale === 'es' ? 'es-MX' : 'en-US', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
+
   return (
     <>
-      <style>{`
-        @media print {
-          .pulse-no-print { display: none !important; }
-          .pulse-print-bg { background: #fff !important; color: #111 !important; }
-        }
-      `}</style>
-      <div className="pulse-print-bg min-h-screen bg-[#0f1419] text-slate-100">
+      <div className="pulse-report-print min-h-screen bg-[#0f1419] text-slate-100">
         <div className="mx-auto max-w-3xl px-4 py-10 sm:py-14">
+          <div className="pulse-print-only mb-8">
+            <div className="flex items-center justify-between">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/images/logo.png" alt="Crowd Conscious" className="h-8" />
+              <span className="text-sm text-gray-400">
+                {locale === 'es' ? 'Informe Conscious Pulse' : 'Conscious Pulse Report'} · {reportDate}
+              </span>
+            </div>
+            <hr className="mt-4 border-gray-700" />
+          </div>
+
           <header className="pulse-no-print mb-10 border-b border-white/10 pb-8">
             <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-center">
@@ -257,6 +301,18 @@ export default function PulseResultClient({
               })}
             </div>
 
+            {executiveSummary ? (
+              <div className="mt-6 rounded-xl border border-emerald-500/20 bg-[#1a2029] p-5">
+                <h3 className="mb-2 text-sm font-semibold text-emerald-400">
+                  {'💡 '}
+                  {locale === 'es' ? 'Resumen ejecutivo' : 'Executive Summary'}
+                </h3>
+                <p className="text-sm leading-relaxed text-gray-300">
+                  {locale === 'es' ? executiveSummary.summaryEs : executiveSummary.summaryEn}
+                </p>
+              </div>
+            ) : null}
+
             <div className="mt-10 grid gap-4 sm:grid-cols-2">
               <div className="rounded-xl border border-white/5 bg-black/20 px-4 py-3">
                 <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
@@ -327,9 +383,20 @@ export default function PulseResultClient({
                 {locale === 'es' ? 'Más consultas Pulse' : 'More Pulse surveys'}
               </Link>
             </div>
+
+            <div className="mt-8 border-t border-gray-700 pt-4">
+              <p className="text-xs text-gray-500">
+                {locale === 'es'
+                  ? 'Este Pulse contribuye al Fondo Consciente para causas comunitarias elegidas democráticamente.'
+                  : 'This Pulse contributes to the Conscious Fund for democratically chosen community causes.'}
+              </p>
+              <p className="mt-1 text-xs text-gray-600">
+                crowdconscious.app · Conscious Pulse · {reportDate}
+              </p>
+            </div>
           </article>
 
-          <footer className="mt-12 text-center">
+          <footer className="pulse-print-hide-footer mt-12 text-center">
             <p className="text-sm text-slate-500">
               {locale === 'es' ? 'Parte de las predicciones impulsan el' : 'Part of predictions fund the'}{' '}
               <Link href="/fund" className="text-emerald-400 underline-offset-2 hover:underline">
