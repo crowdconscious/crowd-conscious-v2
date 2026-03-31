@@ -113,9 +113,9 @@ export default function ProfileClient({
   return (
     <div className="space-y-8 w-full min-w-0 max-w-full overflow-hidden">
       {/* Profile Header */}
-      <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4 sm:p-6 w-full min-w-0 overflow-hidden box-border">
+      <div className="rounded-xl border border-cc-border bg-cc-card/80 p-4 sm:p-6 w-full min-w-0 overflow-hidden box-border">
         <div className="flex flex-col sm:flex-row items-start gap-6 min-w-0">
-          <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center border border-slate-700 shrink-0">
+          <div className="w-20 h-20 rounded-full flex items-center justify-center border border-cc-border bg-cc-card shrink-0">
             {profile?.avatar_url ? (
               <img
                 src={profile.avatar_url}
@@ -254,7 +254,7 @@ export default function ProfileClient({
 
       {/* Edit Profile Form */}
       {isEditing && (
-        <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+        <div className="rounded-xl border border-cc-border bg-cc-card/80 p-6">
           <h3 className="text-xl font-semibold text-white mb-6">Edit Profile</h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -268,7 +268,7 @@ export default function ProfileClient({
                 onChange={(e) =>
                   setEditData({ ...editData, full_name: e.target.value })
                 }
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                className="w-full rounded-lg border border-cc-border bg-cc-card px-3 py-2 text-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500"
               />
             </div>
 
@@ -283,7 +283,7 @@ export default function ProfileClient({
                   setEditData({ ...editData, location: e.target.value })
                 }
                 placeholder="City, Country"
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                className="w-full rounded-lg border border-cc-border bg-cc-card px-3 py-2 text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500"
               />
             </div>
 
@@ -296,7 +296,7 @@ export default function ProfileClient({
                 onChange={(e) => setEditData({ ...editData, bio: e.target.value })}
                 placeholder="Tell people about yourself..."
                 rows={3}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                className="w-full rounded-lg border border-cc-border bg-cc-card px-3 py-2 text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500"
               />
             </div>
 
@@ -311,7 +311,7 @@ export default function ProfileClient({
                   setEditData({ ...editData, website: e.target.value })
                 }
                 placeholder="https://your-website.com"
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                className="w-full rounded-lg border border-cc-border bg-cc-card px-3 py-2 text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500"
               />
             </div>
 
@@ -326,7 +326,7 @@ export default function ProfileClient({
                   setEditData({ ...editData, twitter: e.target.value })
                 }
                 placeholder="username"
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                className="w-full rounded-lg border border-cc-border bg-cc-card px-3 py-2 text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500"
               />
             </div>
 
@@ -341,7 +341,7 @@ export default function ProfileClient({
                   setEditData({ ...editData, linkedin: e.target.value })
                 }
                 placeholder="https://linkedin.com/in/username"
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                className="w-full rounded-lg border border-cc-border bg-cc-card px-3 py-2 text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500"
               />
             </div>
 
@@ -356,7 +356,7 @@ export default function ProfileClient({
                   setEditData({ ...editData, instagram: e.target.value })
                 }
                 placeholder="username"
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                className="w-full rounded-lg border border-cc-border bg-cc-card px-3 py-2 text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500"
               />
             </div>
 
@@ -368,7 +368,7 @@ export default function ProfileClient({
                   onChange={(e) =>
                     setEditData({ ...editData, is_public: e.target.checked })
                   }
-                  className="rounded border-slate-600 bg-slate-800 text-emerald-600 focus:ring-emerald-500"
+                  className="rounded border-cc-border bg-cc-card text-emerald-600 focus:ring-emerald-500"
                 />
                 <span className="text-sm text-slate-400">
                   Make my profile public
@@ -401,7 +401,7 @@ export default function ProfileClient({
             {topAchievements.map((a) => (
               <div
                 key={a.id}
-                className="bg-slate-900/50 border border-slate-700 rounded-xl p-4 flex items-center gap-3 hover:border-slate-600 transition-colors"
+                className="flex items-center gap-3 rounded-xl border border-cc-border bg-cc-card/80 p-4 transition-colors hover:border-cc-border-light"
               >
                 <span className="text-2xl w-10 h-10 flex items-center justify-center rounded-lg bg-emerald-500/20">
                   {a.icon_url && typeof a.icon_url === 'string' && !a.icon_url.startsWith('http') ? (
@@ -435,14 +435,14 @@ export default function ProfileClient({
       <div>
         <h2 className="text-2xl font-bold text-white mb-2">Your Impact</h2>
         <p className="text-slate-400 text-sm mb-6">Contributions to collective intelligence and the Conscious Fund</p>
-        <div className="bg-slate-900/50 border border-slate-700 rounded-xl p-6">
+        <div className="rounded-xl border border-cc-border bg-cc-card/80 p-6">
           <p className="text-slate-300">
             Your predictions have contributed{' '}
             <span className="font-bold text-emerald-400">{predictionStats.totalXp} XP</span> to
             collective intelligence.
           </p>
           {impactVotes.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-slate-700">
+            <div className="mt-4 border-t border-cc-border pt-4">
               <p className="text-slate-400 text-sm mb-2">Your Conscious Fund votes this month:</p>
               <ul className="space-y-1">
                 {impactVotes.map((v) => (
@@ -467,7 +467,7 @@ export default function ProfileClient({
               <Link
                 key={pred.id}
                 href={`/predictions/markets/${pred.market_id}`}
-                className="block bg-slate-900/50 border border-slate-800 rounded-xl p-4 hover:border-slate-700 transition-colors"
+                className="block rounded-xl border border-cc-border bg-cc-card/80 p-4 transition-colors hover:border-cc-border-light"
               >
                 <div className="flex items-center justify-between gap-4">
                   <div className="min-w-0 flex-1">
@@ -509,7 +509,7 @@ export default function ProfileClient({
             </div>
           </div>
         ) : (
-          <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-12 text-center">
+          <div className="rounded-xl border border-cc-border bg-cc-card/80 p-12 text-center">
             <p className="text-slate-400 mb-4">
               You haven&apos;t made any predictions yet.
             </p>
