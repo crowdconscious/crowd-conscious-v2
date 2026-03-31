@@ -29,7 +29,7 @@
     },
     {
       "path": "/api/cron/daily-market-digest",
-      "schedule": "15 15 * * *"
+      "schedule": "15 15 * * 2,4,6"
     },
     {
       "path": "/api/cron/agents/content-creator",

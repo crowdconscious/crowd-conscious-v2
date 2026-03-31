@@ -947,7 +947,7 @@ export interface Database {
           id: string
           market_id: string | null
           agent_type: 'news_monitor' | 'sentiment_tracker' | 'data_watchdog' | 'content_creator'
-          content_type: 'news_summary' | 'sentiment_report' | 'data_alert' | 'social_post' | 'weekly_digest' | 'market_insight' | 'sponsor_report' | 'social_scrape_log' | 'market_suggestion' | 'content_brief'
+          content_type: 'news_summary' | 'sentiment_report' | 'data_alert' | 'social_post' | 'weekly_digest' | 'market_insight' | 'sponsor_report' | 'social_scrape_log' | 'market_suggestion' | 'content_brief' | 'blog_post'
           title: string
           body: string
           language: string
@@ -960,7 +960,7 @@ export interface Database {
           id?: string
           market_id?: string | null
           agent_type: 'news_monitor' | 'sentiment_tracker' | 'data_watchdog' | 'content_creator'
-          content_type: 'news_summary' | 'sentiment_report' | 'data_alert' | 'social_post' | 'weekly_digest' | 'market_insight' | 'sponsor_report' | 'social_scrape_log' | 'market_suggestion' | 'content_brief'
+          content_type: 'news_summary' | 'sentiment_report' | 'data_alert' | 'social_post' | 'weekly_digest' | 'market_insight' | 'sponsor_report' | 'social_scrape_log' | 'market_suggestion' | 'content_brief' | 'blog_post'
           title: string
           body: string
           language?: string
@@ -973,7 +973,7 @@ export interface Database {
           id?: string
           market_id?: string | null
           agent_type?: 'news_monitor' | 'sentiment_tracker' | 'data_watchdog' | 'content_creator'
-          content_type?: 'news_summary' | 'sentiment_report' | 'data_alert' | 'social_post' | 'weekly_digest' | 'market_insight' | 'sponsor_report' | 'social_scrape_log' | 'market_suggestion' | 'content_brief'
+          content_type?: 'news_summary' | 'sentiment_report' | 'data_alert' | 'social_post' | 'weekly_digest' | 'market_insight' | 'sponsor_report' | 'social_scrape_log' | 'market_suggestion' | 'content_brief' | 'blog_post'
           title?: string
           body?: string
           language?: string
@@ -981,6 +981,83 @@ export interface Database {
           published?: boolean
           archived_at?: string | null
           created_at?: string
+        }
+      }
+      blog_posts: {
+        Row: {
+          id: string
+          slug: string
+          title: string
+          title_en: string | null
+          excerpt: string
+          excerpt_en: string | null
+          content: string
+          content_en: string | null
+          cover_image_url: string | null
+          category: 'insight' | 'pulse_analysis' | 'market_story' | 'world_cup' | 'behind_data'
+          tags: string[]
+          meta_title: string | null
+          meta_description: string | null
+          related_market_ids: string[]
+          related_pulse_id: string | null
+          generated_by: string | null
+          agent_content_id: string | null
+          edited_by: string | null
+          status: 'draft' | 'published' | 'archived'
+          published_at: string | null
+          view_count: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          slug: string
+          title: string
+          title_en?: string | null
+          excerpt: string
+          excerpt_en?: string | null
+          content: string
+          content_en?: string | null
+          cover_image_url?: string | null
+          category?: 'insight' | 'pulse_analysis' | 'market_story' | 'world_cup' | 'behind_data'
+          tags?: string[]
+          meta_title?: string | null
+          meta_description?: string | null
+          related_market_ids?: string[]
+          related_pulse_id?: string | null
+          generated_by?: string | null
+          agent_content_id?: string | null
+          edited_by?: string | null
+          status?: 'draft' | 'published' | 'archived'
+          published_at?: string | null
+          view_count?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          slug?: string
+          title?: string
+          title_en?: string | null
+          excerpt?: string
+          excerpt_en?: string | null
+          content?: string
+          content_en?: string | null
+          cover_image_url?: string | null
+          category?: 'insight' | 'pulse_analysis' | 'market_story' | 'world_cup' | 'behind_data'
+          tags?: string[]
+          meta_title?: string | null
+          meta_description?: string | null
+          related_market_ids?: string[]
+          related_pulse_id?: string | null
+          generated_by?: string | null
+          agent_content_id?: string | null
+          edited_by?: string | null
+          status?: 'draft' | 'published' | 'archived'
+          published_at?: string | null
+          view_count?: number
+          created_at?: string
+          updated_at?: string
         }
       }
       sentiment_scores: {
@@ -1054,6 +1131,10 @@ export interface Database {
       convert_anonymous_to_user: {
         Args: { p_session_id: string; p_user_id: string }
         Returns: Json
+      }
+      increment_blog_post_view: {
+        Args: { p_slug: string }
+        Returns: undefined
       }
     }
     Enums: {

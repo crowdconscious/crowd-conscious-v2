@@ -25,6 +25,7 @@ const NAV = {
     markets: 'Mercados',
     live: 'En Vivo',
     about: 'Acerca de',
+    blog: 'Blog',
     forSponsors: 'Para Patrocinadores',
     signIn: 'Iniciar Sesión',
     startPredicting: 'Empezar a Predecir',
@@ -34,6 +35,7 @@ const NAV = {
     markets: 'Markets',
     live: 'Live',
     about: 'About',
+    blog: 'Blog',
     forSponsors: 'For Sponsors',
     signIn: 'Sign In',
     startPredicting: 'Start Predicting',
@@ -101,6 +103,12 @@ export default function LandingNav() {
               className="text-slate-400 hover:text-white transition-colors font-medium"
             >
               {nav.about}
+            </Link>
+            <Link
+              href="/blog"
+              className="text-slate-400 hover:text-white transition-colors font-medium"
+            >
+              {nav.blog}
             </Link>
             <Link
               href="/sponsor"
@@ -174,6 +182,13 @@ export default function LandingNav() {
               className="block py-2 text-slate-400 hover:text-white"
             >
               {nav.about}
+            </Link>
+            <Link
+              href="/blog"
+              onClick={() => setMobileOpen(false)}
+              className="block py-2 text-slate-400 hover:text-white"
+            >
+              {nav.blog}
             </Link>
             <Link
               href="/sponsor"

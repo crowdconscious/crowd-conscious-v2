@@ -52,7 +52,7 @@ type AgentContent = {
   archived_at?: string | null
 }
 
-type TabId = 'all' | 'ceo' | 'social' | 'news' | 'inbox' | 'suggestions' | 'calendar'
+type TabId = 'all' | 'ceo' | 'social' | 'news' | 'inbox' | 'suggestions' | 'calendar' | 'blog'
 
 function formatDate(t: string) {
   return new Date(t).toLocaleString('en-US', {
@@ -398,6 +398,7 @@ function getContentTab(item: AgentContent): TabId | null {
   const meta = item.metadata ?? {}
   const type = meta.type as string
   const digestType = meta.digest_type as string
+  if (item.content_type === 'blog_post') return 'blog'
   if (type === 'inbox_digest') return 'inbox'
   if (item.content_type === 'market_suggestion' || (item.content_type === 'market_insight' && type === 'market_suggestion')) return 'suggestions'
   if (type === 'news_brief' || type === 'news_relevance' || item.content_type === 'news_summary')
@@ -410,11 +411,23 @@ function getContentTab(item: AgentContent): TabId | null {
 
 export default function AdminAgentsPage() {
   const router = useRouter()
+  type BlogPostRow = {
+    id: string
+    slug: string
+    title: string
+    excerpt: string
+    status: string
+    published_at: string | null
+    created_at: string
+    category: string
+  }
+
   const [data, setData] = useState<{
     agentRuns: AgentRun[]
     lastRunsByAgent: Record<string, AgentRun>
     monthlyStats: { totalCost: number; totalRuns: number; totalErrors: number }
     agentContent: AgentContent[]
+    blogPosts: BlogPostRow[]
   } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -488,6 +501,20 @@ export default function AdminAgentsPage() {
     navigator.clipboard.writeText(text)
   }
 
+  const updateBlogPost = async (id: string, status: 'draft' | 'published' | 'archived') => {
+    try {
+      const res = await fetch(`/api/predictions/admin/blog-posts/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      })
+      if (!res.ok) throw new Error('Update failed')
+      await fetchData()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Update failed')
+    }
+  }
+
   const updateContentStatus = async (
     id: string,
     updates: { published?: boolean; metadata?: Record<string, unknown> }
@@ -543,10 +570,11 @@ export default function AdminAgentsPage() {
     )
   }
 
-  const content = data?.agentContent ?? []
+  const content = (data?.agentContent ?? []).filter((c) => c.content_type !== 'blog_post')
+  const blogPosts = data?.blogPosts ?? []
   const socialPosts = content.filter((c) => c.content_type === 'social_post' || (c.metadata?.platform as string))
   const filteredContent =
-    activeTab === 'calendar'
+    activeTab === 'calendar' || activeTab === 'blog'
       ? []
       : activeTab === 'all'
         ? content
@@ -557,6 +585,7 @@ export default function AdminAgentsPage() {
             if (activeTab === 'news') return tab === 'news'
             if (activeTab === 'inbox') return tab === 'inbox'
             if (activeTab === 'suggestions') return tab === 'suggestions'
+            if (activeTab === 'blog') return tab === 'blog'
             return true
           })
 
@@ -713,6 +742,7 @@ export default function AdminAgentsPage() {
             { id: 'inbox' as TabId, label: 'Inbox Digests' },
             { id: 'suggestions' as TabId, label: 'Market Suggestions' },
             { id: 'calendar' as TabId, label: 'Content Calendar' },
+            { id: 'blog' as TabId, label: 'Blog Posts' },
           ].map(({ id, label }) => (
             <button
               key={id}
@@ -728,7 +758,67 @@ export default function AdminAgentsPage() {
           ))}
         </div>
         <div className="space-y-4">
-          {activeTab === 'calendar' ? (
+          {activeTab === 'blog' ? (
+            blogPosts.length === 0 ? (
+              <div className="text-slate-500 py-8 text-center">No blog drafts yet. Run Content Creator.</div>
+            ) : (
+              blogPosts.map((bp) => (
+                <div
+                  key={bp.id}
+                  className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 space-y-3"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                      <span className="text-xs uppercase text-emerald-400/90">{bp.category}</span>
+                      <h3 className="text-white font-semibold text-lg">{bp.title}</h3>
+                      <p className="text-slate-400 text-sm mt-1 line-clamp-3">{bp.excerpt}</p>
+                      <p className="text-slate-500 text-xs mt-2">
+                        {formatDate(bp.created_at)} · status:{' '}
+                        <span className="text-slate-300">{bp.status}</span>
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Link
+                        href={`/blog/${bp.slug}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 px-3 py-1.5 text-xs bg-slate-700 hover:bg-slate-600 rounded text-slate-200"
+                      >
+                        <ExternalLink className="w-3 h-3" /> View
+                      </Link>
+                      {bp.status !== 'published' && (
+                        <button
+                          type="button"
+                          onClick={() => updateBlogPost(bp.id, 'published')}
+                          className="px-3 py-1.5 text-xs bg-emerald-600 hover:bg-emerald-500 rounded text-white font-medium"
+                        >
+                          Publish
+                        </button>
+                      )}
+                      {bp.status !== 'archived' && (
+                        <button
+                          type="button"
+                          onClick={() => updateBlogPost(bp.id, 'archived')}
+                          className="px-3 py-1.5 text-xs bg-slate-700 hover:bg-slate-600 rounded text-slate-300"
+                        >
+                          Archive
+                        </button>
+                      )}
+                      {bp.status === 'archived' && (
+                        <button
+                          type="button"
+                          onClick={() => updateBlogPost(bp.id, 'draft')}
+                          className="px-3 py-1.5 text-xs bg-slate-700 hover:bg-slate-600 rounded text-slate-300"
+                        >
+                          Restore draft
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )
+          ) : activeTab === 'calendar' ? (
             <ContentCalendarView
               posts={socialPosts}
               copyToClipboard={copyToClipboard}

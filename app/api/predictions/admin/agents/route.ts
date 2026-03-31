@@ -36,6 +36,7 @@ export async function GET(request: Request) {
     const [
       { data: allRuns },
       { data: allContent },
+      { data: blogPosts },
     ] = await Promise.all([
       supabase
         .from('agent_runs')
@@ -43,6 +44,11 @@ export async function GET(request: Request) {
         .order('created_at', { ascending: false })
         .limit(100),
       contentQuery,
+      supabase
+        .from('blog_posts')
+        .select('id, slug, title, excerpt, status, published_at, created_at, category')
+        .order('created_at', { ascending: false })
+        .limit(50),
     ])
 
     const runs = (allRuns ?? []) as Array<{
@@ -88,6 +94,7 @@ export async function GET(request: Request) {
         totalErrors: totalErrorsMonth,
       },
       agentContent: content,
+      blogPosts: blogPosts ?? [],
     })
   } catch (err) {
     console.error('Agents API error:', err)

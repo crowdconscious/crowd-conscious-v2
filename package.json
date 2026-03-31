@@ -40,6 +40,7 @@
     "react-chartjs-2": "^5.3.1",
     "react-dom": "19.1.2",
     "react-hook-form": "^7.63.0",
+    "react-markdown": "^9.1.0",
     "recharts": "^3.2.1",
     "resend": "^6.1.0",
     "rss-parser": "^3.13.0",

@@ -1,6 +1,6 @@
 /**
- * Optional roadmap (Phase 7B): enrich prompts with Conscious Live (`live_events`, micro-markets)
- * for match-day social posts; News Monitor can surface pre-match topics for admins.
+ * Content Creator: generates bilingual blog drafts + social snippets for review.
+ * Saves to `blog_posts` (draft) and `agent_content` (blog_post + social JSON).
  */
 import {
   getAnthropicClient,
@@ -12,36 +12,89 @@ import {
   formatDateMX,
   mexicoCityNow,
 } from '@/lib/agents/config'
-import { CONSCIOUS_FUND_PERCENT } from '@/lib/fund-allocation'
 import {
   emptyPlatformIntelligence,
   formatContentCreatorPlatformContext,
   getPlatformIntelligence,
 } from '@/lib/agents/intelligence-bridge'
 
-function getCurrentCycle(): string {
-  return new Date().toISOString().slice(0, 7)
+const ALLOWED_CATEGORIES = new Set([
+  'pulse_analysis',
+  'market_story',
+  'world_cup',
+  'behind_data',
+  'insight',
+])
+
+function slugify(raw: string): string {
+  const s = raw
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 120)
+  return s || 'post'
 }
 
-/** Next 7 calendar days in Mexico City (labels + YYYY-MM-DD for prompts and validation). */
-function buildNextSevenDaysMexico(): { day: string; date: string }[] {
-  const today = mexicoCityNow()
-  const out: { day: string; date: string }[] = []
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(today)
-    d.setDate(today.getDate() + i)
-    out.push({
-      day: d.toLocaleDateString('es-MX', { weekday: 'long' }),
-      date: d.toLocaleDateString('en-CA', { timeZone: 'America/Mexico_City' }),
-    })
+async function uniqueSlug(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  base: string
+): Promise<string> {
+  let candidate = base
+  for (let i = 0; i < 20; i++) {
+    const { data } = await supabase.from('blog_posts').select('id').eq('slug', candidate).maybeSingle()
+    if (!data) return candidate
+    candidate = `${base}-${i + 2}`
   }
-  return out
+  return `${base}-${Date.now()}`
 }
+
+const CONTENT_CREATOR_SYSTEM = `You are the Content Creator for Crowd Conscious, a collective intelligence platform in Mexico City.
+
+Your job: Generate a BLOG POST draft based on the platform's current data and recent news signals.
+
+OUTPUT FORMAT (respond in this exact JSON structure only — no markdown fences):
+{
+  "title": "Blog post title in Spanish",
+  "title_en": "Blog post title in English",
+  "slug": "url-friendly-slug",
+  "excerpt": "2-3 sentence teaser in Spanish",
+  "excerpt_en": "2-3 sentence teaser in English",
+  "content": "Full blog post in Spanish (markdown format, 400-800 words)",
+  "content_en": "Full blog post in English (markdown format)",
+  "category": "one of: pulse_analysis, market_story, world_cup, behind_data, insight",
+  "tags": ["tag1", "tag2", "tag3"],
+  "meta_description": "SEO description in Spanish (150 chars max)",
+  "related_market_titles": ["title of related market 1", "title 2"],
+  "social_posts": {
+    "twitter_es": "Short Spanish tweet with insight (280 chars)",
+    "twitter_en": "Short English tweet with insight (280 chars)",
+    "instagram_es": "Longer Spanish caption for Instagram"
+  }
+}
+
+CONTENT GUIDELINES:
+- Lead with a SURPRISING insight, not a summary
+- Use confidence / vote data to tell stories (e.g. more votes vs higher certainty)
+- Connect platform data to real-world news when possible
+- Include the Galton ox story or collective intelligence concept periodically
+- Always end with a CTA to vote on a specific market
+- Write for Mexico City: local references, neighborhoods, landmarks, current events
+- SEO: Spanish-language searches about CDMX, World Cup, public opinion, participation
+- Bilingual: Spanish primary, English secondary
+- Tone: data-driven but accessible
+
+DO NOT:
+- Write generic "prediction markets are cool" content
+- Repeat the same insight across posts
+- Use corporate language ("leverage", "synergize")
+- Write more than 800 words in Spanish body`
 
 export async function runContentCreator(): Promise<{
   success: boolean
   error?: string
-  posts_generated?: number
+  blog_post_id?: string
   tokens?: { input: number; output: number }
 }> {
   const startTime = Date.now()
@@ -60,591 +113,238 @@ export async function runContentCreator(): Promise<{
     }
     const platformLiveBlock = formatContentCreatorPlatformContext(platformIntel)
 
-    const data: Record<string, unknown> = {}
+    const since24h = new Date(Date.now() - 86400000).toISOString()
 
-    // 0. NEWS MONITOR INTELLIGENCE (content briefs + market suggestions)
-    const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-    let briefs: Array<{ id: string; body: string; created_at: string }> = []
-    let suggestions: Array<{ id: string; title: string; body: string; created_at: string }> = []
-
-    try {
-      const { data: briefRows } = await supabase
-        .from('agent_content')
-        .select('id, body, created_at')
-        .eq('agent_type', 'news_monitor')
-        .eq('content_type', 'content_brief')
-        .gte('created_at', since24h)
-        .order('created_at', { ascending: false })
-        .limit(3)
-      briefs = (briefRows ?? []) as typeof briefs
-      if (briefs.length === 0) {
-        const { data: fallback } = await supabase
-          .from('agent_content')
-          .select('id, body, created_at, metadata')
-          .eq('agent_type', 'news_monitor')
-          .eq('content_type', 'market_insight')
-          .gte('created_at', since24h)
-          .order('created_at', { ascending: false })
-          .limit(5)
-        const withType = (fallback ?? []).filter(
-          (r: { metadata?: { type?: string } }) => (r as { metadata?: { type?: string } }).metadata?.type === 'content_brief'
-        )
-        briefs = withType.slice(0, 3).map(({ id, body, created_at }) => ({ id, body, created_at })) as typeof briefs
-      }
-    } catch (e) {
-      console.warn('[Content Creator] content_brief fetch failed:', e)
-    }
-
-    try {
-      const { data: sugRows } = await supabase
-        .from('agent_content')
-        .select('id, title, body, created_at, content_type, metadata')
-        .eq('agent_type', 'news_monitor')
-        .in('content_type', ['market_suggestion', 'market_insight'])
-        .gte('created_at', since24h)
-        .order('created_at', { ascending: false })
-        .limit(8)
-      const rows = (sugRows ?? []) as Array<{ id: string; title: string; body: string; created_at: string; content_type?: string; metadata?: { type?: string } }>
-      suggestions = rows
-        .filter((r) => r.content_type === 'market_suggestion' || r.metadata?.type === 'market_suggestion')
-        .slice(0, 5)
-    } catch (e) {
-      console.warn('[Content Creator] market_suggestion fetch failed:', e)
-    }
-
-    const twoDaysAgo = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()
-    let newMarkets: Array<{ id: string; title: string; description?: string; tags?: string[]; current_probability?: number }> = []
-    try {
-      const { data: mktRows } = await supabase
+    const [
+      { data: markets },
+      { data: recentVotes },
+      { data: newsRow },
+      { data: pulseMarkets },
+      { count: profileCount },
+    ] = await Promise.all([
+      supabase
         .from('prediction_markets')
-        .select('id, title, description, tags, current_probability')
-        .gte('created_at', twoDaysAgo)
+        .select('id, title, category, total_votes, current_probability, status, is_pulse')
         .in('status', ['active', 'trading'])
         .is('archived_at', null)
-        .limit(5)
-      newMarkets = (mktRows ?? []) as typeof newMarkets
-    } catch (e) {
-      console.warn('[Content Creator] new markets fetch failed:', e)
-    }
-
-    data.news_monitor_briefs = briefs.length
-    data.news_monitor_suggestions = suggestions.length
-    data.new_markets_count = newMarkets.length
-
-    // a. ACTIVE MARKETS with activity
-    try {
-      const { data: markets } = await supabase
+        .order('total_votes', { ascending: false, nullsFirst: false })
+        .limit(10),
+      supabase
+        .from('market_votes')
+        .select('market_id, confidence, created_at')
+        .gte('created_at', since24h)
+        .order('created_at', { ascending: false })
+        .limit(50),
+      supabase
+        .from('agent_content')
+        .select('body, content_type, created_at')
+        .eq('agent_type', 'news_monitor')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase
         .from('prediction_markets')
-        .select('id, title, category, current_probability, status')
+        .select('id, title, total_votes, current_probability, is_pulse')
+        .eq('is_pulse', true)
         .in('status', ['active', 'trading'])
         .is('archived_at', null)
+        .limit(5),
+      supabase.from('profiles').select('id', { count: 'exact', head: true }),
+    ])
 
-      const marketIds = (markets ?? []).map((m) => m.id)
-      const voteCounts: Record<string, number> = {}
-      if (marketIds.length > 0) {
-        const { data: votes } = await supabase
-          .from('market_votes')
-          .select('market_id')
-        for (const v of votes ?? []) {
-          voteCounts[v.market_id] = (voteCounts[v.market_id] ?? 0) + 1
-        }
-      }
-
-      data.active_markets = (markets ?? []).map((m) => ({
-        id: m.id,
-        title: m.title,
-        category: m.category,
-        current_probability: m.current_probability,
-        prediction_count: voteCounts[m.id] ?? 0,
-      }))
-    } catch (e) {
-      data.active_markets = 'error'
-    }
-
-    try {
-      const cutoff24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-      const { data: history, error: historyErr } = await supabase
-        .from('prediction_market_history')
-        .select('market_id, probability, recorded_at')
-        .gte('recorded_at', cutoff24h)
-        .order('recorded_at', { ascending: false })
-
-      if (historyErr) {
-        console.warn('[Content Creator] prediction_market_history not found, skipping:', historyErr.message)
-        data.probability_shifts_24h = []
-      } else {
-        const byMarket = new Map<string, number[]>()
-        for (const h of history ?? []) {
-          if (!byMarket.has(h.market_id)) byMarket.set(h.market_id, [])
-          byMarket.get(h.market_id)!.push(Number(h.probability))
-        }
-        const changes: Array<{ market_id: string; old_prob: number; new_prob: number; change: number }> = []
-        for (const [mid, probs] of byMarket) {
-          if (probs.length >= 2) {
-            const oldP = probs[probs.length - 1]
-            const newP = probs[0]
-            changes.push({ market_id: mid, old_prob: oldP, new_prob: newP, change: newP - oldP })
-          }
-        }
-        changes.sort((a, b) => Math.abs(b.change) - Math.abs(a.change))
-        const topIds = changes.slice(0, 5).map((c) => c.market_id)
-        const { data: mktTitles } = await supabase
-          .from('prediction_markets')
-          .select('id, title')
-          .in('id', topIds)
-        const titleMap: Record<string, string> = {}
-        for (const m of mktTitles ?? []) {
-          titleMap[m.id] = m.title
-        }
-        data.probability_shifts_24h = changes.slice(0, 5).map((c) => ({
-          ...c,
-          title: titleMap[c.market_id] ?? c.market_id,
-        }))
-      }
-    } catch (e) {
-      console.warn('[Content Creator] probability_shifts_24h failed:', e)
-      data.probability_shifts_24h = []
-    }
-
-    // b. RECENTLY RESOLVED markets (last 48h)
-    try {
-      const cutoff48h = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()
-      const { data: resolved } = await supabase
+    const marketList = markets ?? []
+    const voteList = recentVotes ?? []
+    const voteMarketIds = [...new Set(voteList.map((v) => v.market_id).filter(Boolean))]
+    let voteTitles: Record<string, string> = {}
+    if (voteMarketIds.length > 0) {
+      const { data: vm } = await supabase
         .from('prediction_markets')
-        .select('id, title, resolution, resolved_at')
-        .eq('status', 'resolved')
-        .is('archived_at', null)
-        .gte('resolved_at', cutoff48h)
+        .select('id, title')
+        .in('id', voteMarketIds)
+      voteTitles = Object.fromEntries((vm ?? []).map((m) => [m.id, m.title]))
+    }
 
-      const resolvedWithCorrect = await Promise.all(
-        (resolved ?? []).map(async (m) => {
-          const { data: outcomes } = await supabase
-            .from('market_outcomes')
-            .select('id, label, is_winner')
-            .eq('market_id', m.id)
-          const winner = outcomes?.find((o) => o.is_winner === true)
-          const winningLabel = winner?.label ?? m.resolution ?? 'Unknown'
-          const { data: votes } = await supabase
-            .from('market_votes')
-            .select('id, is_correct')
-            .eq('market_id', m.id)
-          const correct = (votes ?? []).filter((v) => v.is_correct === true).length
-          const total = (votes ?? []).length
-          return {
-            title: m.title,
-            outcome: winningLabel,
-            correct_predictors: correct,
-            total_predictors: total,
-          }
-        })
+    let newsSnippet = ''
+    if (newsRow?.body) {
+      const b = newsRow.body
+      newsSnippet = typeof b === 'string' ? b.slice(0, 1200) : JSON.stringify(b).slice(0, 1200)
+    }
+
+    const dataBrief = `
+PLATFORM DATA (${todayFormatted}):
+- Registered users (approx): ${profileCount ?? 'N/A'}
+- Active markets (sample): ${marketList
+      .map(
+        (m) =>
+          `"${m.title}" (${m.total_votes ?? 0} votes, ${Math.round((m.current_probability ?? 0) * 100)}% prob.)`
       )
-      data.recently_resolved = resolvedWithCorrect
-    } catch (e) {
-      data.recently_resolved = 'error'
-    }
-
-    // c. HOT INBOX items
-    try {
-      const { data: top3 } = await supabase
-        .from('conscious_inbox')
-        .select('id, title, upvotes, status')
-        .in('status', ['pending', 'approved'])
-        .order('upvotes', { ascending: false })
-        .limit(3)
-      data.hot_inbox_items = top3 ?? []
-    } catch (e) {
-      data.hot_inbox_items = 'error'
-    }
-
-    // d. CONSCIOUS FUND (fund_causes, fund_votes, conscious_fund may not exist)
-    try {
-      const cycle = getCurrentCycle()
-      let causesData: Array<{ id: string; name: string; vote_count: number }> = []
-      try {
-        const { data: causes } = await supabase
-          .from('fund_causes')
-          .select('id, name')
-          .eq('active', true)
-        const { data: votes } = await supabase
-          .from('fund_votes')
-          .select('cause_id')
-          .eq('cycle', cycle)
-        const byCause: Record<string, number> = {}
-        for (const v of votes ?? []) {
-          byCause[v.cause_id] = (byCause[v.cause_id] ?? 0) + 1
-        }
-        causesData = (causes ?? []).map((c) => ({
-          id: c.id,
-          name: c.name,
-          vote_count: byCause[c.id] ?? 0,
-        }))
-      } catch {
-        console.warn('[Content Creator] fund_causes/fund_votes not found, skipping')
-      }
-      data.fund_causes_with_votes = causesData
-
-      let totalFromSponsors = 0
-      try {
-        const { data: fund } = await supabase
-          .from('conscious_fund')
-          .select('total_collected, total_disbursed')
-          .limit(1)
-          .single()
-        const legacyBalance = Math.max(
-          0,
-          Number(fund?.total_collected ?? 0) - Number(fund?.total_disbursed ?? 0)
-        )
-        const { data: sponsorMarkets } = await supabase
-          .from('prediction_markets')
-          .select('sponsor_contribution')
-          .not('sponsor_name', 'is', null)
-          .gt('sponsor_contribution', 0)
-          .is('archived_at', null)
-        totalFromSponsors =
-          (sponsorMarkets ?? []).reduce(
-            (sum, m) =>
-              sum +
-              Number((m as { sponsor_contribution?: number }).sponsor_contribution ?? 0) *
-                CONSCIOUS_FUND_PERCENT,
-            0
-          ) ?? 0
-        data.total_fund_value = legacyBalance + totalFromSponsors
-      } catch (e) {
-        console.warn('[Content Creator] conscious_fund not found, skipping:', e)
-        data.total_fund_value = 0
-      }
-    } catch (e) {
-      data.fund_causes_with_votes = []
-      data.total_fund_value = 0
-    }
-
-    // e. LEADERBOARD (profiles may not exist - use display names from user_xp only)
-    try {
-      const { data: xpRows, error: xpErr } = await supabase
-        .from('user_xp')
-        .select('user_id, total_xp')
-        .gt('total_xp', 0)
-        .order('total_xp', { ascending: false })
-        .limit(5)
-
-      if (xpErr || !xpRows?.length) {
-        data.leaderboard_top_3 = []
-      } else {
-        const userIds = xpRows.map((r) => r.user_id)
-        let profileMap = new Map<string, string>()
-        try {
-          const { data: profiles } = await supabase
-            .from('profiles')
-            .select('id, full_name')
-            .in('id', userIds)
-          profileMap = new Map(
-            (profiles ?? []).map((p) => [p.id, p.full_name || 'Anonymous'])
-          )
-        } catch {
-          // profiles table may not exist - use Predictor N
-        }
-        data.leaderboard_top_3 = xpRows.slice(0, 3).map((r, i) => ({
-          rank: i + 1,
-          user_id: r.user_id,
-          username: profileMap.get(r.user_id) ?? `Predictor #${i + 1}`,
-          total_xp: Number(r.total_xp),
-        }))
-      }
-    } catch (e) {
-      console.warn('[Content Creator] leaderboard failed:', e)
-      data.leaderboard_top_3 = []
-    }
-
-    data.platform_intelligence = {
-      overview: platformIntel.overview,
-      engagement: platformIntel.engagement,
-      trending: platformIntel.trending,
-      content_hooks: platformIntel.content_worthy,
-    }
-
-    const systemMessage = `You are the social media content strategist for Crowd Conscious (crowdconscious.app), a free-to-play opinion platform in Mexico City. You create engaging social media content that drives people to the platform. Your tone is: smart but accessible, community-driven, slightly provocative (asking questions people want to answer), and always ties back to social impact. You write in BOTH Spanish and English. The platform is gearing up for FIFA World Cup 2026 — opening match is June 11 at Estadio Azteca, Mexico City.
-
-For each Instagram post, also provide:
-1. IMAGE_PROMPT: A detailed prompt for generating an image with Leonardo AI or Midjourney. Be specific: describe the composition, colors (use our brand: dark navy #0a1628, emerald #10b981), mood, and style. Example: "Dark navy gradient background, large emerald green percentage number 54% floating in center, subtle soccer ball pattern overlay, minimal text, futuristic data visualization aesthetic, 1080x1080"
-2. CAROUSEL_IDEA: If this would work as a carousel (multiple slides), describe 3-4 slides: Slide 1: Hook (the question or bold stat), Slide 2: Context (what's happening, why it matters), Slide 3: Data (the probability, how it changed), Slide 4: CTA (what do you think? crowdconscious.app)
-3. MEME_SUGGESTION: If there's a relevant meme format, describe it. Example: "Drake meme — rejecting: checking news for election predictions / accepting: checking Crowd Conscious for collective intelligence". Only suggest memes culturally relevant to Mexican/LATAM audience.
-
-For Twitter posts, also provide:
-1. THREAD_OPTION: A 3-tweet thread version if the topic deserves deeper explanation
-2. QUOTE_TWEET_HOOK: A one-liner designed to go viral if someone quotes the original tweet
-
-For LinkedIn posts, also provide:
-1. HOOK_VARIATIONS: 3 alternative first lines (the hook determines 80% of engagement)`
-
-    const briefContext = briefs?.length
-      ? (() => {
-          try {
-            const b = JSON.parse(briefs[0].body) as {
-              trending_topics?: string[]
-              new_market_suggestions?: string[]
-              sentiment_snapshot?: unknown
-            }
-            return `
-Temas trending: ${(b.trending_topics ?? []).join(', ') || 'N/A'}
-Sugerencias de mercados nuevos: ${(b.new_market_suggestions ?? []).join(', ') || 'N/A'}
-Snapshot de sentimiento: ${JSON.stringify(b.sentiment_snapshot ?? {})}`
-          } catch {
-            return 'No hay briefs recientes del News Monitor.'
-          }
-        })()
-      : 'No hay briefs recientes del News Monitor.'
-
-    const newMarketsContext =
-      newMarkets?.length > 0
-        ? newMarkets
-            .map(
-              (m) =>
-                `• "${m.title}" (${m.current_probability ?? 50}% YES) — tags: ${(m.tags ?? []).join(', ') || 'N/A'}`
-            )
-            .join('\n')
-        : 'No hay mercados nuevos.'
-
-    const suggestionsContext =
-      suggestions?.length > 0
-        ? suggestions
-            .map((s) => {
-              try {
-                const body = JSON.parse(s.body) as { reasoning?: string }
-                return `• "${s.title}" — ${body.reasoning ?? 'N/A'}`
-              } catch {
-                return `• "${s.title}"`
-              }
-            })
-            .join('\n')
-        : 'No hay sugerencias pendientes.'
-
-    const daysOfWeek = buildNextSevenDaysMexico()
-    const calendarBlock = `CALENDARIO DE ESTA SEMANA (zona horaria Ciudad de México, próximos 7 días):
-${daysOfWeek.map((d) => `${d.day}: ${d.date}`).join('\n')}
-
-Para cada uno de los 6 posts, asigna un "scheduled_date" del calendario arriba (solo esas fechas YYYY-MM-DD).
-Distribuye los posts de forma uniforme en la semana:
-- Lunes y miércoles: posts en español (Instagram y/o Twitter)
-- Martes y jueves: posts en inglés (Twitter y/o LinkedIn)
-- Viernes: community highlight / contenido especial
-- Sábado: opcional, contenido ligero o meme
-- Domingo: resumen semanal / preview de la semana
-
-Cada objeto del array JSON DEBE incluir "scheduled_date": "YYYY-MM-DD" (obligatorio).`
-
-    const userMessage = `CONTEXTO DE INTELIGENCIA (del News Monitor):
-${briefContext}
-
-MERCADOS NUEVOS O RECIENTES (últimas 48h):
-${newMarketsContext}
-
-SUGERENCIAS PENDIENTES DE APROBACIÓN:
-${suggestionsContext}
+      .join(' | ')}
+- Votes in last 24h: ${voteList.length}
+- Recent vote activity (sample): ${voteList
+      .slice(0, 15)
+      .map((v) => `${voteTitles[v.market_id] ?? v.market_id} (conf ${v.confidence})`)
+      .join('; ')}
+${pulseMarkets?.length ? `\nACTIVE PULSE: ${pulseMarkets.map((p) => `"${p.title}" (${p.total_votes ?? 0} votes)`).join(' | ')}` : ''}
+${newsSnippet ? `\nNEWS SIGNALS (latest monitor output):\n${newsSnippet}` : ''}
 
 ${platformLiveBlock}
+`
 
-${calendarBlock}
+    const userMessage = `${dataBrief}
 
-INSTRUCCIONES ADICIONALES:
-- Si hay mercados nuevos, genera AL MENOS 1 social post que los promocione
-- Si hay temas trending, úsalos como gancho para el contenido
-- Los social posts deben mencionar @crowdconscious y usar #CrowdConscious
-- Genera contenido en ESPAÑOL e INGLÉS (bilingual posts)
-- Formato para Instagram: usa emojis, pregunta directa, CTA a votar
-- Formato para Twitter/X: conciso, dato + pregunta, link implícito
-- NO generes contenido genérico — cada post debe referenciar datos reales
-
-Para cada social post, especifica además:
-- platform: "instagram" | "twitter" | "both"
-- language: "es" | "en" | "both"
-- text_es: texto en español
-- text_en: texto en inglés
-- hook: dato o noticia que conecta con el mercado
-- market_reference: título del mercado que promociona (si aplica)
-- suggested_image: breve descripción de imagen para acompañar
-
----
-
-Here is today's platform activity data (JSON):
-
-\`\`\`json
-${JSON.stringify(data, null, 2)}
-\`\`\`
-
-Based on today's platform activity AND the News Monitor context above, generate exactly 6 social media posts:
-
-POST 1 — Instagram carousel caption (Spanish): About the hottest market or biggest probability shift. Hook people into giving their opinion. Include relevant emojis. End with CTA to crowdconscious.app
-
-POST 2 — Instagram carousel caption (English): Same topic adapted for English audience
-
-POST 3 — Twitter/X (Spanish, max 280 chars): Punchy one-liner about the most interesting market. Include the question. Link to crowdconscious.app
-
-POST 4 — Twitter/X (English, max 280 chars): Same adapted for English
-
-POST 5 — LinkedIn (Spanish): Professional tone. Focus on the social impact angle — the Conscious Fund, community governance, or how collective intelligence works. 2-3 short paragraphs.
-
-POST 6 — Community Highlight (Spanish): Celebrate the top predictor or most active community member, or a trending inbox submission. Make people feel seen.
-
-For each post return a JSON object with:
-- scheduled_date: "YYYY-MM-DD" (must be one of the dates listed in CALENDARIO DE ESTA SEMANA above)
-- Base: platform, language, post_type, hook, body, hashtags, cta
-- Instagram posts add: image_prompt, carousel_idea, meme_suggestion
-- Twitter posts add: thread_option, quote_tweet_hook
-- LinkedIn posts add: hook_variations (array of 3 strings)
-
-Return as a JSON array of 6 objects. No markdown wrapping. Just raw JSON.`
-
-    const userPrompt = userMessage?.trim() ?? ''
-    if (!userPrompt) {
-      console.error('[Content Creator] Empty prompt, skipping API call')
-      await logAgentRun({
-        agentName: 'content-creator',
-        status: 'skipped',
-        durationMs: Date.now() - startTime,
-        summary: { reason: 'empty_prompt' },
-      })
-      return { success: false, error: 'empty_prompt' }
-    }
+Respond with a single JSON object exactly as specified in your instructions.`
 
     const response = await anthropic.messages.create({
       model: MODELS.CREATIVE,
-      max_tokens: TOKEN_LIMITS.SOCIAL_CONTENT,
-      system: systemMessage,
-      messages: [{ role: 'user', content: userPrompt }],
+      max_tokens: TOKEN_LIMITS.BLOG,
+      system: CONTENT_CREATOR_SYSTEM,
+      messages: [{ role: 'user', content: userMessage }],
     })
 
     const textBlock = response.content.find((b) => b.type === 'text')
     const rawText = textBlock && 'text' in textBlock ? textBlock.text : ''
     const usage = response.usage ?? { input_tokens: 0, output_tokens: 0 }
 
-    let parsedArray: Array<Record<string, unknown>> = []
-
+    let blogObj: Record<string, unknown>
     try {
-      parsedArray = parseAgentJSON(rawText)
-      if (!Array.isArray(parsedArray)) {
-        parsedArray = [parsedArray]
-      }
+      const parsed = parseAgentJSON(rawText)
+      blogObj = (Array.isArray(parsed) ? parsed[0] : parsed) as Record<string, unknown>
     } catch (parseErr) {
-      console.error('Content creator parse error:', parseErr)
-      try {
-        await supabase.from('agent_content').insert({
-          market_id: null,
-          agent_type: 'content_creator',
-          content_type: 'social_post',
-          title: 'Social Raw (parse failed)',
-          body: rawText,
-          language: 'es',
-          metadata: {
-            platform: 'raw',
-            raw: true,
-            parse_error: String(parseErr),
-            model: MODELS.CREATIVE,
-            tokens_input: usage.input_tokens,
-            tokens_output: usage.output_tokens,
-          },
-          published: false,
-        })
-      } catch (saveErr) {
-        console.error('Failed to save raw content:', saveErr)
-      }
+      console.error('[Content Creator] JSON parse failed:', parseErr)
+      await supabase.from('agent_content').insert({
+        market_id: null,
+        agent_type: 'content_creator',
+        content_type: 'social_post',
+        title: 'Blog draft (parse failed)',
+        body: rawText.slice(0, 120000),
+        language: 'es',
+        metadata: { parse_error: String(parseErr), model: MODELS.CREATIVE },
+        published: false,
+      })
       await logAgentRun({
         agentName: 'content-creator',
         status: 'success',
         durationMs: Date.now() - startTime,
         tokensInput: usage.input_tokens,
         tokensOutput: usage.output_tokens,
-        summary: { posts_generated: 0, parse_failed: true },
+        summary: { parse_failed: true },
       })
       return {
         success: true,
-        posts_generated: 0,
         tokens: { input: usage.input_tokens, output: usage.output_tokens },
       }
     }
 
-    const activeMarketsArr = Array.isArray(data.active_markets)
-      ? (data.active_markets as Array<{ id: string; title: string }>)
-      : []
-    const allMarkets = [...(newMarkets ?? []), ...activeMarketsArr]
-    const marketByTitle = new Map<string, string>()
-    for (const m of allMarkets) {
-      const t = (m.title ?? '').trim()
-      if (t && !marketByTitle.has(t)) marketByTitle.set(t, m.id)
+    const title = String(blogObj.title ?? 'Sin título').trim()
+    const excerpt = String(blogObj.excerpt ?? '').trim()
+    const content = String(blogObj.content ?? '').trim()
+    if (!content || !excerpt) {
+      await logAgentRun({
+        agentName: 'content-creator',
+        status: 'skipped',
+        durationMs: Date.now() - startTime,
+        summary: { reason: 'missing_content_or_excerpt' },
+      })
+      return { success: false, error: 'missing_content_or_excerpt' }
     }
 
-    const allowedDates = new Set(daysOfWeek.map((d) => d.date))
+    const slugBase = slugify(String(blogObj.slug ?? title))
+    const slug = await uniqueSlug(supabase, slugBase)
 
-    for (let idx = 0; idx < parsedArray.length; idx++) {
-      const post = parsedArray[idx]
-      if (!post || typeof post !== 'object') continue
-      const platform = String(post.platform ?? 'unknown').toLowerCase()
-      const hook = String(post.hook ?? 'Untitled')
-      const marketRef = String(post.market_reference ?? '').trim()
-      let marketId: string | null = null
-      if (marketRef) {
-        marketId = marketByTitle.get(marketRef) ?? null
-        if (!marketId) {
-          const match = allMarkets.find(
-            (m) =>
-              (m.title ?? '').toLowerCase().includes(marketRef.toLowerCase()) ||
-              marketRef.toLowerCase().includes((m.title ?? '').toLowerCase())
-          )
-          if (match) marketId = match.id
-        }
-      }
+    let category = String(blogObj.category ?? 'insight').trim()
+    if (!ALLOWED_CATEGORIES.has(category)) category = 'insight'
 
-      const suggestionRef = suggestions?.find((s) =>
-        (post.market_reference && s.title && String(s.title).includes(String(post.market_reference).slice(0, 30))) ||
-        (post.hook && s.title && String(s.title).includes(String(post.hook).slice(0, 30)))
+    const tags = Array.isArray(blogObj.tags) ? (blogObj.tags as unknown[]).map((t) => String(t)) : []
+
+    const relatedTitles = Array.isArray(blogObj.related_market_titles)
+      ? (blogObj.related_market_titles as unknown[]).map((t) => String(t).trim()).filter(Boolean)
+      : []
+
+    const titleToId = new Map(marketList.map((m) => [m.title.trim().toLowerCase(), m.id]))
+    const relatedIds: string[] = []
+    for (const rt of relatedTitles) {
+      const id = titleToId.get(rt.toLowerCase())
+      if (id) relatedIds.push(id)
+    }
+    for (const m of marketList) {
+      if (relatedIds.length >= 5) break
+      const fuzzy = relatedTitles.some(
+        (rt) =>
+          m.title.toLowerCase().includes(rt.toLowerCase()) ||
+          rt.toLowerCase().includes(m.title.toLowerCase().slice(0, 20))
       )
-      const rawScheduled = String(post.scheduled_date ?? '').trim()
-      const scheduledDate =
-        rawScheduled && allowedDates.has(rawScheduled)
-          ? rawScheduled
-          : daysOfWeek[idx % daysOfWeek.length]!.date
+      if (fuzzy && !relatedIds.includes(m.id)) relatedIds.push(m.id)
+    }
 
-      const postBody = { ...post, scheduled_date: scheduledDate } as Record<string, unknown>
-      if (suggestionRef) {
-        postBody.suggestion_id = suggestionRef.id
-        postBody.suggestion_title = suggestionRef.title
-      }
+    const metaDesc = String(blogObj.meta_description ?? excerpt).slice(0, 160)
 
-      const metadata: Record<string, unknown> = {
-        scheduled_date: scheduledDate,
-        platform: post.platform,
-        language: post.language,
-        post_type: post.post_type,
-        model: MODELS.CREATIVE,
-        tokens_input: usage.input_tokens,
-        tokens_output: usage.output_tokens,
-        hashtags: post.hashtags,
-        image_prompt: post.image_prompt,
-        carousel_idea: post.carousel_idea,
-        meme_suggestion: post.meme_suggestion,
-        thread_option: post.thread_option,
-        quote_tweet_hook: post.quote_tweet_hook,
-        hook_variations: post.hook_variations,
-        hook: post.hook,
-        market_reference: post.market_reference,
-        suggested_image: post.suggested_image,
-        text_es: post.text_es,
-        text_en: post.text_en,
-      }
+    const { data: inserted, error: insErr } = await supabase
+      .from('blog_posts')
+      .insert({
+        slug,
+        title,
+        title_en: String(blogObj.title_en ?? '').trim() || null,
+        excerpt,
+        excerpt_en: String(blogObj.excerpt_en ?? '').trim() || null,
+        content,
+        content_en: String(blogObj.content_en ?? '').trim() || null,
+        category: category as
+          | 'insight'
+          | 'pulse_analysis'
+          | 'market_story'
+          | 'world_cup'
+          | 'behind_data',
+        tags,
+        meta_title: title,
+        meta_description: metaDesc,
+        related_market_ids: relatedIds,
+        generated_by: 'content-creator',
+        status: 'draft',
+      })
+      .select('id')
+      .single()
 
-      try {
-        await supabase.from('agent_content').insert({
-          market_id: marketId,
-          agent_type: 'content_creator',
-          content_type: 'social_post',
-          title: hook,
-          body: JSON.stringify(postBody),
-          language: String(post.language ?? 'es'),
-          metadata,
-          published: false,
-        })
-      } catch (insertErr) {
-        console.error('Failed to insert post:', insertErr)
-      }
+    if (insErr || !inserted) {
+      console.error('[Content Creator] blog_posts insert', insErr)
+      return { success: false, error: insErr?.message ?? 'blog_insert_failed' }
+    }
+
+    const blogId = inserted.id as string
+
+    const socialPosts = blogObj.social_posts && typeof blogObj.social_posts === 'object'
+      ? blogObj.social_posts
+      : {}
+
+    const { data: agentRow, error: agentErr } = await supabase
+      .from('agent_content')
+      .insert({
+        market_id: relatedIds[0] ?? null,
+        agent_type: 'content_creator',
+        content_type: 'blog_post',
+        title,
+        body: JSON.stringify({
+          blog_post_id: blogId,
+          slug,
+          social_posts: socialPosts,
+        }),
+        language: 'es',
+        metadata: {
+          blog_post_id: blogId,
+          slug,
+          category,
+          model: MODELS.CREATIVE,
+          tokens_input: usage.input_tokens,
+          tokens_output: usage.output_tokens,
+        },
+        published: false,
+      })
+      .select('id')
+      .single()
+
+    if (agentErr) {
+      console.error('[Content Creator] agent_content insert', agentErr)
+    } else if (agentRow?.id) {
+      await supabase.from('blog_posts').update({ agent_content_id: agentRow.id }).eq('id', blogId)
     }
 
     await logAgentRun({
@@ -653,37 +353,23 @@ Return as a JSON array of 6 objects. No markdown wrapping. Just raw JSON.`
       durationMs: Date.now() - startTime,
       tokensInput: usage.input_tokens,
       tokensOutput: usage.output_tokens,
-      summary: { posts_generated: parsedArray.length },
+      summary: { blog_post_id: blogId, slug },
     })
 
     return {
       success: true,
-      posts_generated: parsedArray.length,
+      blog_post_id: blogId,
       tokens: { input: usage.input_tokens, output: usage.output_tokens },
     }
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error(String(error))
-    const apiErr = error as { status?: number; error?: { type?: string; error?: { message?: string }; message?: string }; message?: string }
-    console.error('[Content Creator] Anthropic API error:', JSON.stringify({
-      status: apiErr?.status,
-      type: apiErr?.error?.type,
-      message: apiErr?.error?.error?.message ?? apiErr?.error?.message ?? apiErr?.message,
-      full: apiErr?.error ?? apiErr,
-    }, null, 2))
     console.error('Content creator agent error:', err)
-
-    try {
-      await logAgentRun({
-        agentName: 'content-creator',
-        status: 'error',
-        durationMs: Date.now() - startTime,
-        errorMessage: `API ${apiErr?.status ?? '?'}: ${apiErr?.error?.error?.message ?? apiErr?.error?.message ?? err.message}`,
-        summary: { step: 'identify which step failed', posts_generated: 0 },
-      })
-    } catch (logErr) {
-      console.error('Failed to log agent run:', logErr)
-    }
-
+    await logAgentRun({
+      agentName: 'content-creator',
+      status: 'error',
+      durationMs: Date.now() - startTime,
+      errorMessage: err.message,
+    })
     return { success: false, error: err.message }
   }
 }

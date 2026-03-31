@@ -17,6 +17,7 @@ export const TOKEN_LIMITS = {
   DIGEST: 1024,        // CEO digest, inbox curator
   NEWS: 1024,          // News monitor summaries
   SOCIAL_CONTENT: 4096, // Social media posts + image prompts, carousel ideas, memes
+  BLOG: 8192,          // Blog draft (bilingual markdown)
 } as const;
 
 // --- Clients ---
