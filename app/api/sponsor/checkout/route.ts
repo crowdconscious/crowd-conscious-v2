@@ -3,6 +3,7 @@ import Stripe from 'stripe'
 import { z } from 'zod'
 import { getStripe } from '@/app/api/webhooks/stripe/lib/stripe-webhook-utils'
 import { ApiResponse } from '@/lib/api-responses'
+import { createAdminClient } from '@/lib/supabase-admin'
 import {
   SPONSOR_TIERS,
   type SponsorTierId,
@@ -10,6 +11,97 @@ import {
 } from '@/lib/sponsor-tiers'
 
 const MIN_AMOUNT_MXN = 100
+
+type CouponRow = {
+  id: string
+  discount_percent: number
+  max_uses: number
+  current_uses: number
+  valid_from: string
+  valid_until: string | null
+  is_active: boolean
+}
+
+function normalizeEmail(email: string) {
+  return email.trim().toLowerCase()
+}
+
+function normalizeCode(code: string) {
+  return code.trim().toUpperCase()
+}
+
+async function resolveCouponPrice(params: {
+  couponCode: string
+  email: string
+  basePriceMXN: number
+}): Promise<
+  | {
+      ok: true
+      priceMXN: number
+      originalPriceMXN: number
+      couponId: string
+      discountPercent: number
+    }
+  | { ok: false; message: string }
+> {
+  const admin = createAdminClient()
+  const code = normalizeCode(params.couponCode)
+  const email = normalizeEmail(params.email)
+
+  const { data: coupon, error } = await admin
+    .from('coupon_codes')
+    .select('id, discount_percent, max_uses, current_uses, valid_from, valid_until, is_active')
+    .eq('code', code)
+    .eq('is_active', true)
+    .maybeSingle()
+
+  if (error || !coupon) {
+    return { ok: false, message: 'Invalid or inactive coupon code' }
+  }
+
+  const c = coupon as CouponRow
+  const now = new Date()
+  if (c.valid_from && new Date(c.valid_from) > now) {
+    return { ok: false, message: 'This code is not valid yet' }
+  }
+  if (c.valid_until && new Date(c.valid_until) < now) {
+    return { ok: false, message: 'This code has expired' }
+  }
+  if (c.current_uses >= c.max_uses) {
+    return { ok: false, message: 'This code has been fully redeemed' }
+  }
+
+  const { data: existing } = await admin
+    .from('coupon_redemptions')
+    .select('id')
+    .eq('coupon_id', c.id)
+    .eq('redeemed_by_email', email)
+    .maybeSingle()
+
+  if (existing) {
+    return { ok: false, message: 'You already redeemed this code' }
+  }
+
+  if (c.discount_percent >= 100) {
+    return {
+      ok: false,
+      message:
+        'This code covers the full amount. Continue without Stripe — your session will activate free access.',
+    }
+  }
+
+  const originalPriceMXN = params.basePriceMXN
+  const discounted = Math.round(originalPriceMXN * (1 - c.discount_percent / 100))
+  const priceMXN = Math.max(MIN_AMOUNT_MXN, discounted)
+
+  return {
+    ok: true,
+    priceMXN,
+    originalPriceMXN,
+    couponId: c.id,
+    discountPercent: c.discount_percent,
+  }
+}
 
 const TIER_LABELS: Record<SponsorTierId, string> = {
   starter: 'Market Sponsor',
@@ -27,6 +119,7 @@ const schema = z.object({
   sponsor_url: z.string().optional(),
   sponsor_logo_url: z.string().optional(),
   email: z.string().email(),
+  coupon_code: z.string().optional(),
 })
 
 export async function POST(request: NextRequest) {
@@ -47,13 +140,34 @@ export async function POST(request: NextRequest) {
       sponsor_url,
       sponsor_logo_url,
       email,
+      coupon_code: couponCodeRaw,
     } = parsed.data
 
     const tier = SPONSOR_TIERS[tierId]
     const tierPrice = tier.price
 
-    const priceMXN =
+    let basePriceMXN =
       customAmount != null && customAmount >= MIN_AMOUNT_MXN ? Math.round(customAmount) : tierPrice
+
+    let priceMXN = basePriceMXN
+    let couponId: string | null = null
+    let couponDiscountPercent: number | null = null
+    let originalAmountMxnForMeta: string | null = null
+
+    if (couponCodeRaw?.trim()) {
+      const resolved = await resolveCouponPrice({
+        couponCode: couponCodeRaw,
+        email,
+        basePriceMXN,
+      })
+      if (!resolved.ok) {
+        return ApiResponse.badRequest(resolved.message, 'COUPON_INVALID')
+      }
+      priceMXN = resolved.priceMXN
+      couponId = resolved.couponId
+      couponDiscountPercent = resolved.discountPercent
+      originalAmountMxnForMeta = String(resolved.originalPriceMXN)
+    }
 
     const alloc = calculateFundAllocationRounded(priceMXN, tierId)
     const fundPctLabel = Math.round(tier.fundPercent * 100)
@@ -126,6 +240,13 @@ export async function POST(request: NextRequest) {
         sponsor_logo_url: sponsor_logo_url || '',
         sponsor_email: email,
         is_pulse: isPulseMarket ? 'true' : 'false',
+        ...(couponId
+          ? {
+              coupon_id: couponId,
+              coupon_discount_percent: String(couponDiscountPercent ?? ''),
+              original_amount_mxn: originalAmountMxnForMeta ?? '',
+            }
+          : {}),
       },
     })
 

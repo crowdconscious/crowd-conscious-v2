@@ -15,6 +15,61 @@ type SponsorAccountRow = {
   is_pulse_client: boolean | null
 }
 
+async function recordStripeCouponRedemption(
+  supabase: ReturnType<typeof getSupabase>,
+  params: {
+    couponId: string
+    email: string
+    sponsorName: string | null
+    sponsorAccountId: string | null
+  }
+) {
+  const email = params.email.trim().toLowerCase()
+  if (!email) return
+
+  const { data: coupon, error: fetchErr } = await (supabase as any)
+    .from('coupon_codes')
+    .select('id, current_uses, max_uses')
+    .eq('id', params.couponId)
+    .maybeSingle()
+
+  if (fetchErr || !coupon) {
+    console.error('Market sponsorship: coupon not found for redemption', fetchErr)
+    return
+  }
+
+  const c = coupon as { id: string; current_uses: number; max_uses: number }
+
+  const { error: insErr } = await (supabase as any).from('coupon_redemptions').insert({
+    coupon_id: params.couponId,
+    redeemed_by_email: email,
+    redeemed_by_name: params.sponsorName,
+    sponsor_account_id: params.sponsorAccountId,
+  })
+
+  if (insErr) {
+    const code = (insErr as { code?: string }).code
+    if (code === '23505') {
+      return
+    }
+    console.error('Market sponsorship: coupon redemption insert failed', insErr)
+    return
+  }
+
+  const { data: bumped, error: bumpErr } = await (supabase as any)
+    .from('coupon_codes')
+    .update({ current_uses: c.current_uses + 1 })
+    .eq('id', c.id)
+    .eq('current_uses', c.current_uses)
+    .lt('current_uses', c.max_uses)
+    .select('id')
+    .maybeSingle()
+
+  if (bumpErr || !bumped) {
+    console.error('Market sponsorship: coupon current_uses bump failed', bumpErr)
+  }
+}
+
 async function upsertSponsorAccount(
   supabase: ReturnType<typeof getSupabase>,
   params: {
@@ -231,6 +286,16 @@ export async function handleMarketSponsorship(session: Stripe.Checkout.Session) 
     stripeCustomerId,
     contactName: session.customer_details?.name ?? null,
   })
+
+  const couponId = metadata.coupon_id
+  if (couponId && contactEmail) {
+    await recordStripeCouponRedemption(supabase, {
+      couponId,
+      email: contactEmail,
+      sponsorName: (sponsor_name as string | undefined) || null,
+      sponsorAccountId: sponsorAccount?.id ?? null,
+    })
+  }
 
   const sponsorPayload = {
     sponsor_id: sponsorshipId,

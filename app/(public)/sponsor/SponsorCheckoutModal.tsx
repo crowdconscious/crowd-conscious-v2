@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { X } from 'lucide-react'
 import {
   SPONSOR_TIERS,
@@ -29,6 +30,7 @@ export function SponsorCheckoutModal({
   marketTitle,
   category,
 }: SponsorCheckoutModalProps) {
+  const router = useRouter()
   const locale = useLocale()
   const es = locale === 'es'
   const MIN_AMOUNT = 100
@@ -44,6 +46,47 @@ export function SponsorCheckoutModal({
   const [logoUrl, setLogoUrl] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [couponCode, setCouponCode] = useState('')
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    coupon_id: string
+    discount_percent: number
+    type: string
+  } | null>(null)
+  const [validatingCoupon, setValidatingCoupon] = useState(false)
+  const [couponError, setCouponError] = useState('')
+
+  const validateCoupon = async () => {
+    setCouponError('')
+    const trimmed = couponCode.trim()
+    if (!trimmed) return
+    setValidatingCoupon(true)
+    try {
+      const res = await fetch('/api/coupons/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: trimmed,
+          ...(email.trim() ? { email: email.trim() } : {}),
+        }),
+      })
+      const json = await res.json()
+      const data = json.data ?? json
+      if (!data.valid) {
+        setAppliedCoupon(null)
+        setCouponError(data.error || (es ? 'Código no válido' : 'Invalid code'))
+        return
+      }
+      setAppliedCoupon({
+        coupon_id: data.coupon_id,
+        discount_percent: data.discount_percent,
+        type: data.type,
+      })
+    } catch {
+      setCouponError(es ? 'No se pudo validar el código' : 'Could not validate code')
+    } finally {
+      setValidatingCoupon(false)
+    }
+  }
 
   if (!isOpen) return null
 
@@ -55,6 +98,36 @@ export function SponsorCheckoutModal({
       const finalLogoUrl = logoUrl
       const amountMxn = customAmountInput ? parseInt(customAmountInput, 10) : amount
       const finalAmount = Number.isNaN(amountMxn) || amountMxn < MIN_AMOUNT ? tierPrice : amountMxn
+
+      if (appliedCoupon?.discount_percent === 100) {
+        const res = await fetch('/api/coupons/redeem', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            code: couponCode.trim().toUpperCase(),
+            email: email.trim(),
+            name: name.trim(),
+            company_name: name.trim(),
+          }),
+        })
+        const redeemJson = await res.json()
+        if (!res.ok) {
+          setError(
+            typeof redeemJson.error === 'string'
+              ? redeemJson.error
+              : es
+                ? 'No se pudo activar el acceso'
+                : 'Could not activate access'
+          )
+          return
+        }
+        if (redeemJson.success && redeemJson.dashboardUrl) {
+          router.push(redeemJson.dashboardUrl)
+          return
+        }
+        setError(es ? 'Respuesta inesperada' : 'Unexpected response')
+        return
+      }
 
       const res = await fetch('/api/sponsor/checkout', {
         method: 'POST',
@@ -68,6 +141,7 @@ export function SponsorCheckoutModal({
           sponsor_url: url || undefined,
           sponsor_logo_url: finalLogoUrl || undefined,
           email,
+          ...(appliedCoupon ? { coupon_code: couponCode.trim().toUpperCase() } : {}),
         }),
       })
       const json = await res.json()
@@ -97,7 +171,14 @@ export function SponsorCheckoutModal({
     customAmountInput && !Number.isNaN(parseInt(customAmountInput, 10))
       ? Math.max(MIN_AMOUNT, parseInt(customAmountInput, 10))
       : amount
-  const allocPreview = calculateFundAllocationRounded(previewAmount, tier)
+  const discountedPreview =
+    appliedCoupon && appliedCoupon.discount_percent < 100
+      ? Math.max(
+          MIN_AMOUNT,
+          Math.round(previewAmount * (1 - appliedCoupon.discount_percent / 100))
+        )
+      : previewAmount
+  const allocPreview = calculateFundAllocationRounded(discountedPreview, tier)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -228,6 +309,47 @@ export function SponsorCheckoutModal({
             label={es ? 'Logo (opcional)' : 'Logo (optional)'}
           />
 
+          <div className="mt-1">
+            <label className="mb-1 block text-sm font-medium text-slate-400">
+              {es ? 'Código de descuento' : 'Discount code'}
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                autoComplete="off"
+                placeholder={es ? 'Código de descuento' : 'Discount code'}
+                value={couponCode}
+                onChange={(e) => {
+                  setCouponCode(e.target.value.toUpperCase())
+                  setAppliedCoupon(null)
+                  setCouponError('')
+                }}
+                className="flex-1 rounded-lg border border-[#2d3748] bg-[#0f1419] px-3 py-2 text-sm uppercase text-white placeholder:text-slate-500"
+              />
+              <button
+                type="button"
+                onClick={validateCoupon}
+                disabled={!couponCode.trim() || validatingCoupon}
+                className="shrink-0 rounded-lg border border-[#2d3748] bg-[#1a2029] px-4 py-2 text-sm font-medium text-emerald-400 transition-colors hover:bg-emerald-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {validatingCoupon ? '…' : es ? 'Aplicar' : 'Apply'}
+              </button>
+            </div>
+            {appliedCoupon && (
+              <div className="mt-2 rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-2">
+                <span className="text-sm text-emerald-400">
+                  ✓{' '}
+                  {appliedCoupon.discount_percent === 100
+                    ? es
+                      ? '¡Acceso gratuito!'
+                      : 'Free access!'
+                    : `${appliedCoupon.discount_percent}% ${es ? 'de descuento' : 'off'}`}
+                </span>
+              </div>
+            )}
+            {couponError && <p className="mt-1 text-xs text-red-400">{couponError}</p>}
+          </div>
+
           <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm">
             <p className="font-medium text-emerald-400">
               {es ? `Hasta ${fundPct}% → Fondo Consciente` : `Up to ${fundPct}% → Conscious Fund`}
@@ -290,9 +412,13 @@ export function SponsorCheckoutModal({
                 ? es
                   ? 'Redirigiendo…'
                   : 'Redirecting...'
-                : es
-                  ? 'Continuar al pago'
-                  : 'Continue to Payment'}
+                : appliedCoupon?.discount_percent === 100
+                  ? es
+                    ? 'Activar acceso'
+                    : 'Activate access'
+                  : es
+                    ? 'Continuar al pago'
+                    : 'Continue to Payment'}
             </button>
           </div>
         </form>
