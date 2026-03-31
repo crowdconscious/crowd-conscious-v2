@@ -18,12 +18,12 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-export default async function PulseListingPage() {
+export default async function PredictionsPulsePage() {
   const ctx = await getPulseListingContext()
   const markets = await fetchPulseMarketsForListing(ctx)
   return (
     <PulseListingView
-      variant="public"
+      variant="shell"
       locale={ctx.locale}
       markets={markets}
       isAdmin={ctx.isAdmin}

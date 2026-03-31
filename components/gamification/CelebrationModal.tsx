@@ -31,6 +31,8 @@ interface CelebrationModalProps {
   shareSponsorName?: string | null
   /** Market ID for OG card image. Used for "Share card" to share the branded image. */
   shareCardMarketId?: string
+  /** Conscious Pulse / opinion markets: use “opinion” in share copy */
+  isPulseMarket?: boolean
   onClose: () => void
 }
 
@@ -50,10 +52,12 @@ export const CelebrationModal = memo(function CelebrationModal({
   shareTitle,
   shareSponsorName,
   shareCardMarketId,
+  isPulseMarket = false,
   guestVote = false,
   guestMessage = 'Tu predicción fue registrada',
   onClose
 }: CelebrationModalProps) {
+  const pulse = isPulseMarket === true
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const modalRef = useRef<HTMLDivElement>(null)
   const isMobile = useMediaQuery('(max-width: 768px)')
@@ -142,18 +146,34 @@ export const CelebrationModal = memo(function CelebrationModal({
     : typeof window !== 'undefined' ? window.location.href : ''
   const shareText = shareTitle
     ? shareSponsorName
-      ? `I just predicted on "${shareTitle}" — Sponsored by ${shareSponsorName} on Crowd Conscious! 🎯`
-      : `I just predicted on "${shareTitle}" on Crowd Conscious! 🎯`
-    : 'I just made a prediction on Crowd Conscious! 🎯'
+      ? pulse
+        ? `I shared my opinion on "${shareTitle}" — Sponsored by ${shareSponsorName} on Crowd Conscious! 🎯`
+        : `I just predicted on "${shareTitle}" — Sponsored by ${shareSponsorName} on Crowd Conscious! 🎯`
+      : pulse
+        ? `I shared my opinion on "${shareTitle}" on Crowd Conscious! 🎯`
+        : `I just predicted on "${shareTitle}" on Crowd Conscious! 🎯`
+    : pulse
+      ? 'I shared my opinion on Crowd Conscious! 🎯'
+      : 'I just made a prediction on Crowd Conscious! 🎯'
   const shareTextX = shareTitle
     ? shareSponsorName
-      ? `${shareTitle} — Sponsored by ${shareSponsorName}\n\nMake your prediction:`
-      : `${shareTitle}\n\nMake your prediction:`
-    : 'Make your prediction on Crowd Conscious'
+      ? pulse
+        ? `${shareTitle} — Sponsored by ${shareSponsorName}\n\nShare your opinion:`
+        : `${shareTitle} — Sponsored by ${shareSponsorName}\n\nMake your prediction:`
+      : pulse
+        ? `${shareTitle}\n\nShare your opinion:`
+        : `${shareTitle}\n\nMake your prediction:`
+    : pulse
+      ? 'Share your opinion on Crowd Conscious'
+      : 'Make your prediction on Crowd Conscious'
   const shareTextWhatsApp = shareTitle
     ? shareSponsorName
-      ? `${shareTitle} — Sponsored by ${shareSponsorName} on Crowd Conscious. Make your prediction: ${shareUrl}`
-      : `${shareTitle} — Make your prediction: ${shareUrl}`
+      ? pulse
+        ? `${shareTitle} — Sponsored by ${shareSponsorName} on Crowd Conscious. Share your opinion: ${shareUrl}`
+        : `${shareTitle} — Sponsored by ${shareSponsorName} on Crowd Conscious. Make your prediction: ${shareUrl}`
+      : pulse
+        ? `${shareTitle} — Share your opinion: ${shareUrl}`
+        : `${shareTitle} — Make your prediction: ${shareUrl}`
     : shareUrl
   const shareCardUrl = shareCardMarketId && typeof window !== 'undefined'
     ? `${window.location.origin}/api/og/market/${shareCardMarketId}`
@@ -188,11 +208,17 @@ export const CelebrationModal = memo(function CelebrationModal({
     if (!shareCardMarketId) return
     setShareCardLoading(true)
     try {
-      await shareNative(shareCardMarketId, shareTitle || 'My prediction on Crowd Conscious', 'standard', undefined, shareSponsorName)
+      await shareNative(
+        shareCardMarketId,
+        shareTitle || (pulse ? 'My opinion on Crowd Conscious' : 'My prediction on Crowd Conscious'),
+        'standard',
+        undefined,
+        shareSponsorName
+      )
     } finally {
       setShareCardLoading(false)
     }
-  }, [shareCardMarketId, shareTitle, shareSponsorName])
+  }, [shareCardMarketId, shareTitle, shareSponsorName, pulse])
 
   const handleDownloadCard = useCallback(async () => {
     if (!shareCardMarketId) return
@@ -368,14 +394,16 @@ export const CelebrationModal = memo(function CelebrationModal({
                       )}
                       <img
                         src={`/api/og/market/${shareCardMarketId}`}
-                        alt="Your prediction card"
+                        alt={pulse ? 'Your opinion card' : 'Your prediction card'}
                         className={`w-full rounded-xl border border-slate-700 ${cardLoaded ? 'block' : 'hidden'}`}
                         onLoad={() => setCardLoaded(true)}
                         onError={() => setCardError(true)}
                       />
                     </div>
                   )}
-                  <p className="text-sm font-medium text-slate-600 mb-2 text-center">Share your prediction</p>
+                  <p className="text-sm font-medium text-slate-600 mb-2 text-center">
+                    {pulse ? 'Share your opinion' : 'Share your prediction'}
+                  </p>
                   <div className="flex flex-wrap justify-center gap-2">
                     <a
                       href={shareLinks.x}

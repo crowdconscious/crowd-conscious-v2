@@ -86,6 +86,81 @@ export interface Database {
           last_accessed_at?: string | null
         }
       }
+      coupon_codes: {
+        Row: {
+          id: string
+          code: string
+          type: 'pulse_trial' | 'sponsor_trial' | 'full_access'
+          discount_percent: number
+          max_uses: number
+          current_uses: number
+          max_pulse_markets: number
+          max_live_events: number
+          valid_from: string
+          valid_until: string | null
+          created_by: string | null
+          created_at: string
+          is_active: boolean
+        }
+        Insert: {
+          id?: string
+          code: string
+          type?: 'pulse_trial' | 'sponsor_trial' | 'full_access'
+          discount_percent?: number
+          max_uses?: number
+          current_uses?: number
+          max_pulse_markets?: number
+          max_live_events?: number
+          valid_from?: string
+          valid_until?: string | null
+          created_by?: string | null
+          created_at?: string
+          is_active?: boolean
+        }
+        Update: {
+          id?: string
+          code?: string
+          type?: 'pulse_trial' | 'sponsor_trial' | 'full_access'
+          discount_percent?: number
+          max_uses?: number
+          current_uses?: number
+          max_pulse_markets?: number
+          max_live_events?: number
+          valid_from?: string
+          valid_until?: string | null
+          created_by?: string | null
+          created_at?: string
+          is_active?: boolean
+        }
+        Relationships: []
+      }
+      coupon_redemptions: {
+        Row: {
+          id: string
+          coupon_id: string
+          redeemed_by_email: string
+          redeemed_by_name: string | null
+          sponsor_account_id: string | null
+          redeemed_at: string
+        }
+        Insert: {
+          id?: string
+          coupon_id: string
+          redeemed_by_email: string
+          redeemed_by_name?: string | null
+          sponsor_account_id?: string | null
+          redeemed_at?: string
+        }
+        Update: {
+          id?: string
+          coupon_id?: string
+          redeemed_by_email?: string
+          redeemed_by_name?: string | null
+          sponsor_account_id?: string | null
+          redeemed_at?: string
+        }
+        Relationships: []
+      }
 
       // ═══════════════════════════════════════
       // PREDICTION / COLLECTIVE CONSCIOUSNESS
@@ -128,6 +203,15 @@ export interface Database {
           description: string | null
           translations: Json
           match_date: string
+          event_type:
+            | 'soccer_match'
+            | 'product_launch'
+            | 'government_conference'
+            | 'entertainment'
+            | 'community_event'
+            | 'custom'
+          event_subtype: string | null
+          suggested_questions: Json
           youtube_url: string | null
           youtube_video_id: string | null
           status: 'scheduled' | 'live' | 'completed' | 'cancelled'
@@ -153,6 +237,15 @@ export interface Database {
           description?: string | null
           translations?: Json
           match_date: string
+          event_type?:
+            | 'soccer_match'
+            | 'product_launch'
+            | 'government_conference'
+            | 'entertainment'
+            | 'community_event'
+            | 'custom'
+          event_subtype?: string | null
+          suggested_questions?: Json
           youtube_url?: string | null
           youtube_video_id?: string | null
           status?: 'scheduled' | 'live' | 'completed' | 'cancelled'
@@ -178,6 +271,15 @@ export interface Database {
           description?: string | null
           translations?: Json
           match_date?: string
+          event_type?:
+            | 'soccer_match'
+            | 'product_launch'
+            | 'government_conference'
+            | 'entertainment'
+            | 'community_event'
+            | 'custom'
+          event_subtype?: string | null
+          suggested_questions?: Json
           youtube_url?: string | null
           youtube_video_id?: string | null
           status?: 'scheduled' | 'live' | 'completed' | 'cancelled'
@@ -197,6 +299,40 @@ export interface Database {
           reminder_1h_sent_at?: string | null
           results_email_sent_at?: string | null
         }
+        Relationships: []
+      }
+      live_comments: {
+        Row: {
+          id: string
+          live_event_id: string
+          user_id: string | null
+          anonymous_participant_id: string | null
+          content: string
+          author_display_name: string
+          author_avatar: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          live_event_id: string
+          user_id?: string | null
+          anonymous_participant_id?: string | null
+          content: string
+          author_display_name: string
+          author_avatar?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          live_event_id?: string
+          user_id?: string | null
+          anonymous_participant_id?: string | null
+          content?: string
+          author_display_name?: string
+          author_avatar?: string | null
+          created_at?: string
+        }
+        Relationships: []
       }
 
       market_outcomes: {

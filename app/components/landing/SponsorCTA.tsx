@@ -49,6 +49,24 @@ export function SponsorCTA({ locale }: { locale: 'es' | 'en' }) {
             {isEs ? 'Ver planes de patrocinio →' : 'View sponsorship plans →'}
           </Link>
         </div>
+
+        <div className="mt-12 text-center">
+          <h3 className="mb-2 text-sm font-bold uppercase tracking-wider text-emerald-400">
+            {isEs ? '¿Necesitas medir opinión pública?' : 'Need to measure public opinion?'}
+          </h3>
+          <p className="mb-2 text-xl font-bold text-white">Conscious Pulse</p>
+          <p className="mx-auto mb-4 max-w-xl text-sm text-gray-400">
+            {isEs
+              ? 'Herramienta de medición de sentimiento para municipios, marcas e influencers. Resultados en tiempo real con analíticas de confianza.'
+              : 'Sentiment measurement tool for municipalities, brands, and influencers. Real-time results with confidence analytics.'}
+          </p>
+          <Link
+            href="/pulse"
+            className="inline-flex items-center gap-2 font-medium text-emerald-400 transition-colors hover:underline"
+          >
+            {isEs ? 'Conocer Conscious Pulse →' : 'Learn about Conscious Pulse →'}
+          </Link>
+        </div>
       </div>
     </section>
   )

@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase-admin'
 import { getCurrentUser } from '@/lib/auth-server'
 import { extractYoutubeVideoId } from '@/lib/youtube'
 import { runLiveEventCompletedSideEffects } from '@/lib/live-event-completion'
+import { LIVE_EVENT_TYPE_KEYS, type LiveEventTypeKey } from '@/lib/live-event-types'
 
 type Props = { params: Promise<{ id: string }> }
 
@@ -52,6 +53,15 @@ export async function PATCH(request: NextRequest, { params }: Props) {
     if (typeof body.team_b_name === 'string') updates.team_b_name = body.team_b_name.trim() || null
     if (typeof body.team_b_flag === 'string') updates.team_b_flag = body.team_b_flag.trim() || null
     if (body.translations && typeof body.translations === 'object') updates.translations = body.translations
+    if (typeof body.event_type === 'string' && (LIVE_EVENT_TYPE_KEYS as readonly string[]).includes(body.event_type)) {
+      updates.event_type = body.event_type as LiveEventTypeKey
+    }
+    if (body.event_subtype !== undefined) {
+      updates.event_subtype = typeof body.event_subtype === 'string' ? body.event_subtype.trim() || null : null
+    }
+    if (body.suggested_questions !== undefined && body.suggested_questions && typeof body.suggested_questions === 'object') {
+      updates.suggested_questions = body.suggested_questions
+    }
 
     updates.updated_at = new Date().toISOString()
 

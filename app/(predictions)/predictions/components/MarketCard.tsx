@@ -26,6 +26,7 @@ import type { Database } from '@/types/database'
 import { hasGuestVotedMarket } from '@/lib/guest-vote-storage'
 import { toDisplayPercent } from '@/lib/probability-utils'
 import { MiniSparkline } from './MiniSparkline'
+import { isPulseLikeMarket, marketCardPredictCta } from '@/lib/i18n/pulse-market-copy'
 
 type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row'] & {
   market_type?: string | null
@@ -202,8 +203,7 @@ export function MarketCard({ market, history = [], outcomes: outcomesProp, varia
   useEffect(() => {
     setGuestVoted(hasGuestVotedMarket(market.id))
   }, [market.id])
-  const isPulse =
-    Boolean((market as { is_pulse?: boolean }).is_pulse) || market.category === 'pulse'
+  const isPulse = isPulseLikeMarket(market)
   const config = isPulse
     ? {
         label: 'Conscious Pulse',
@@ -237,7 +237,8 @@ export function MarketCard({ market, history = [], outcomes: outcomesProp, varia
   const barHMulti = 'h-7'
   const labelW = 'w-24 sm:w-28'
 
-  const predictLabel = locale === 'es' ? 'Predecir' : 'Predict'
+  const loc = locale === 'en' ? 'en' : 'es'
+  const predictLabel = marketCardPredictCta(loc, isPulse)
 
   return (
     <Link href={`/predictions/markets/${market.id}`}>

@@ -7,6 +7,11 @@ import { hasGuestVotedMarket } from '@/lib/guest-vote-storage'
 import { toDisplayPercent } from '@/lib/probability-utils'
 import { getOutcomeLabel } from '@/lib/i18n/market-translations'
 import { useLocale } from '@/lib/i18n/useLocale'
+import {
+  getPickMessageNonPulse,
+  isPulseLikeMarket,
+  voteActionCopy,
+} from '@/lib/i18n/pulse-market-copy'
 
 type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row'] & {
   market_type?: string
@@ -75,32 +80,11 @@ function autoConfidence(selectedOutcomeProbability: number): number {
   return 9 // Picking a long shot
 }
 
-/** Contextual message for multi-outcome pick */
-function getPickMessage(selectedOutcomeProbability: number, locale: string): string {
-  if (selectedOutcomeProbability > 0.7) {
-    return locale === 'en' ? '🎯 Going with the crowd' : '🎯 Siguiendo al grupo'
-  }
-  if (selectedOutcomeProbability > 0.4) {
-    return locale === 'en' ? '🤔 An interesting pick' : '🤔 Una elección interesante'
-  }
-  if (selectedOutcomeProbability > 0.2) {
-    return locale === 'en' ? '🔥 Bold prediction!' : '🔥 ¡Predicción audaz!'
-  }
-  return locale === 'en' ? '🔥 Bold prediction!' : '🔥 ¡Predicción audaz!'
-}
-
 /** Normalize probability to 0-1 for logic (DB may store 0-1 or 0-100) */
 function toDecimal(prob: number): number {
   const n = Number(prob)
   if (Number.isNaN(n)) return 0
   return n > 1 ? n / 100 : Math.min(1, Math.max(0, n))
-}
-
-/** Pulse listing parity: legacy multi + government rows may not have is_pulse yet */
-function isPulseLikeMarket(m: PredictionMarket): boolean {
-  if (m.is_pulse === true) return true
-  if (m.category === 'pulse') return true
-  return m.market_type === 'multi' && m.category === 'government'
 }
 
 /** Binary always has a slider; multi-outcome only for Pulse / live / micro (not plain “bold pick” multis) */
@@ -150,6 +134,9 @@ export function VotePanel({
   onAnonymousVoteSuccess,
 }: VotePanelProps) {
   const locale = useLocale()
+  const loc = locale === 'en' ? 'en' : 'es'
+  const isPulse = isPulseLikeMarket(market)
+  const copy = voteActionCopy(loc, isPulse)
   const [selectedOutcomeId, setSelectedOutcomeId] = useState<string | null>(null)
   const [confidence, setConfidence] = useState(7)
   const [loading, setLoading] = useState(false)
@@ -271,22 +258,27 @@ export function VotePanel({
     const winningOutcome = outcomes.find((o) => o.is_winner)
     return (
       <div className="bg-cc-card border border-cc-border rounded-xl p-6">
-        <h3 className="font-semibold text-white mb-2">Predictions closed</h3>
+        <h3 className="font-semibold text-white mb-2">{copy.resolvedTitle}</h3>
         <p className="text-cc-text-secondary text-sm mb-4">
-          This market has been resolved. Winning outcome:{' '}
+          {loc === 'en'
+            ? 'This market has been resolved. Winning outcome:'
+            : 'Este mercado está resuelto. Resultado ganador:'}{' '}
           <span className="text-emerald-400 font-medium">
             {winningOutcome ? getOutcomeLabel(winningOutcome, locale) : (market.resolution ?? '—')}
           </span>
         </p>
         {myVote && (
           <div className="p-4 bg-gray-800/50 rounded-lg border border-cc-border/50">
-            <p className="text-gray-300 text-sm font-medium">Your prediction</p>
+            <p className="text-gray-300 text-sm font-medium">{copy.yourRecorded}</p>
             <p className="text-white mt-1">
               {outcomes.find((o) => o.id === myVote.outcome_id)
                 ? getOutcomeLabel(outcomes.find((o) => o.id === myVote.outcome_id)!, locale)
                 : myVote.outcome_label}
               {needsUserConfidence && (
-                <span className="text-cc-text-secondary"> at confidence {myVote.confidence}</span>
+                <span className="text-cc-text-secondary">
+                  {' '}
+                  {loc === 'en' ? 'at confidence' : 'con confianza'} {myVote.confidence}
+                </span>
               )}
             </p>
             <p className="text-cc-text-secondary text-sm mt-1">
@@ -311,13 +303,7 @@ export function VotePanel({
 
     return (
       <div className="bg-cc-card border border-cc-border rounded-xl p-6">
-        <h3 className="font-semibold text-white mb-4">
-          {guestPreviewOnly
-            ? locale === 'en'
-              ? 'Your prediction (guest)'
-              : 'Tu predicción (invitado)'
-            : 'Your prediction'}
-        </h3>
+        <h3 className="font-semibold text-white mb-4">{copy.guestYour}</h3>
         <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
           <p className="text-emerald-400 font-medium flex items-center gap-2">
             <Check className="w-4 h-4" />
@@ -341,32 +327,21 @@ export function VotePanel({
   if (outcomes.length === 0) {
     return (
       <div className="bg-cc-card border border-cc-border rounded-xl p-6">
-        <h3 className="font-semibold text-white mb-2">Make your prediction</h3>
-        <p className="text-cc-text-secondary text-sm">No outcomes available yet.</p>
+        <h3 className="font-semibold text-white mb-2">{copy.emptyHeading}</h3>
+        <p className="text-cc-text-secondary text-sm">
+          {loc === 'en' ? 'No outcomes available yet.' : 'Aún no hay opciones disponibles.'}
+        </p>
       </div>
     )
   }
 
-  const predictLabel =
-    locale === 'es'
-      ? isEditing
-        ? 'Actualizar predicción'
-        : 'Predecir'
-      : isEditing
-        ? 'Update prediction'
-        : 'Predict'
+  const predictLabel = isEditing ? copy.updateVerb : copy.predictVerb
   const submitLoadingLabel = locale === 'es' ? 'Enviando…' : 'Submitting...'
 
   return (
     <div className="bg-cc-card border border-cc-border rounded-xl p-6">
       <h3 className="font-semibold text-white mb-4">
-        {locale === 'es'
-          ? isEditing
-            ? 'Tu predicción'
-            : 'Haz tu predicción'
-          : isEditing
-            ? 'Your prediction'
-            : 'Make your prediction'}
+        {isEditing ? copy.yourHeading : copy.makeHeading}
       </h3>
       {!isAuthenticated && !guestHasVoted && (
         <p className="text-cc-text-muted text-xs mb-3">
@@ -375,13 +350,10 @@ export function VotePanel({
       )}
       {isEditing && (
         <p className="text-cc-text-muted text-xs mb-4">
-          {locale === 'es'
-            ? 'Tu predicción actual · cambia tu voto cuando quieras'
-            : 'Your current prediction — change your vote anytime'}
+          {copy.editSubtitle}
           {myVote ? (
             <span className="block mt-1.5 text-gray-600">
-              +{myVote.xp_earned} XP{' '}
-              {locale === 'es' ? '(primera predicción)' : '(first prediction)'}
+              +{myVote.xp_earned} XP {copy.firstXpNote}
             </span>
           ) : null}
         </p>
@@ -449,7 +421,9 @@ export function VotePanel({
             const isSelected = selectedOutcomeId === o.id
             const probDecimal = toDecimal(o.probability)
             const pickMessage =
-              isSelected && !needsUserConfidence ? getPickMessage(probDecimal, locale) : null
+              isSelected && !needsUserConfidence
+                ? getPickMessageNonPulse(probDecimal, loc)
+                : null
             return (
               <div
                 key={o.id}
@@ -472,7 +446,8 @@ export function VotePanel({
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-white">{getOutcomeLabel(o, locale)}</p>
                     <p className="text-cc-text-secondary text-sm">
-                      Currently: {Math.round(toDisplayPercent(o.probability || 0))}% · {o.vote_count} votes
+                      {loc === 'es' ? 'Actualmente' : 'Currently'}:{' '}
+                      {Math.round(toDisplayPercent(o.probability || 0))}% · {o.vote_count} {copy.voteCountWord}
                     </p>
                   </div>
                   <span

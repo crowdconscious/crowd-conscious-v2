@@ -56,6 +56,14 @@ import ShareButton from '@/components/ShareButton'
 import { toDisplayPercent } from '@/lib/probability-utils'
 import { getMarketText, getOutcomeLabel } from '@/lib/i18n/market-translations'
 import { useLocale } from '@/lib/i18n/useLocale'
+import {
+  celebrationRecordedMessage,
+  isPulseLikeMarket,
+  recentActivityEmpty,
+  recentActivityHeading,
+  userContributionLine,
+  voteUpdatedToast,
+} from '@/lib/i18n/pulse-market-copy'
 import type { Database } from '@/types/database'
 
 type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row']
@@ -168,6 +176,7 @@ export function MarketDetailClient({
   showPulseDashboardLink = false,
 }: Props) {
   const locale = useLocale()
+  const loc = locale === 'en' ? 'en' : 'es'
   const router = useRouter()
   const [researchOpen, setResearchOpen] = useState(false)
   const [timeRange, setTimeRange] = useState<TimeRange>('30d')
@@ -241,9 +250,7 @@ export function MarketDetailClient({
     return () => clearTimeout(t)
   }, [celebration.open, celebration.guest])
 
-  const isPulseMarket =
-    !!(market as { is_pulse?: boolean }).is_pulse ||
-    (market as { category?: string }).category === 'pulse'
+  const isPulseMarket = isPulseLikeMarket(market as Parameters<typeof isPulseLikeMarket>[0])
   const config = isPulseMarket ? PULSE_CATEGORY : CATEGORY_CONFIG[market.category] || CATEGORY_CONFIG.world
   const Icon = config.icon
   const prob = toDisplayPercent(Number(market.current_probability))
@@ -290,7 +297,7 @@ export function MarketDetailClient({
       return
     }
     if (payload?.isUpdate) {
-      setVoteQuietMessage(locale === 'es' ? 'Predicción actualizada ✓' : 'Prediction updated ✓')
+      setVoteQuietMessage(voteUpdatedToast(loc, isPulseMarket))
       window.setTimeout(() => setVoteQuietMessage(null), 3500)
       router.refresh()
       return
@@ -775,7 +782,7 @@ export function MarketDetailClient({
           <MarketDiscussion marketId={market.id} />
 
           {/* Recent Predictions */}
-          <RecentPredictions marketId={market.id} />
+          <RecentPredictions marketId={market.id} isPulse={isPulseMarket} />
         </div>
 
         {/* Right Column — VotePanel first on mobile for easier voting UX */}
@@ -833,7 +840,7 @@ export function MarketDetailClient({
             <p className="text-white text-sm mb-2">
               Sponsor-funded impact for {config.label.toLowerCase()}
             </p>
-            <UserContribution marketId={market.id} />
+            <UserContribution marketId={market.id} isPulse={isPulseMarket} />
           </div>
         </div>
       </div>
@@ -847,11 +854,12 @@ export function MarketDetailClient({
             ? ''
             : celebration.xpGained
               ? `You earned ${celebration.xpGained} XP`
-              : 'Your prediction has been recorded.'
+              : celebrationRecordedMessage(loc, isPulseMarket)
         }
         xpGained={celebration.guest ? undefined : celebration.xpGained}
         guestVote={celebration.guest === true}
-        guestMessage="Tu predicción fue registrada"
+        guestMessage={celebrationRecordedMessage(loc, isPulseMarket)}
+        isPulseMarket={isPulseMarket}
         sharePath={`/predictions/markets/${market.id}`}
         shareTitle={getMarketText(market, 'title', locale)}
         shareSponsorName={(market as { sponsor_name?: string }).sponsor_name}
@@ -910,7 +918,9 @@ function AgentInsightCard({ content }: { content: AgentContent }) {
 
 type PredictionEntry = { user_name: string; outcome_label: string; confidence: number; created_at: string }
 
-function RecentPredictions({ marketId }: { marketId: string }) {
+function RecentPredictions({ marketId, isPulse }: { marketId: string; isPulse: boolean }) {
+  const locale = useLocale()
+  const loc = locale === 'en' ? 'en' : 'es'
   const [predictions, setPredictions] = useState<PredictionEntry[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -933,11 +943,11 @@ function RecentPredictions({ marketId }: { marketId: string }) {
 
   return (
     <div className="bg-cc-card border border-cc-border rounded-xl p-6">
-      <h3 className="font-semibold text-white mb-4">Recent Predictions</h3>
+      <h3 className="font-semibold text-white mb-4">{recentActivityHeading(loc, isPulse)}</h3>
       {loading ? (
         <p className="text-slate-400 text-sm">Loading...</p>
       ) : predictions.length === 0 ? (
-        <p className="text-slate-400 text-sm">No predictions yet</p>
+        <p className="text-slate-400 text-sm">{recentActivityEmpty(loc, isPulse)}</p>
       ) : (
         <div className="space-y-2">
           {predictions.slice(0, 10).map((p, i) => (
@@ -1042,7 +1052,9 @@ function MarketDiscussion({ marketId }: { marketId: string }) {
   )
 }
 
-function UserContribution({ marketId }: { marketId: string }) {
+function UserContribution({ marketId, isPulse }: { marketId: string; isPulse: boolean }) {
+  const locale = useLocale()
+  const loc = locale === 'en' ? 'en' : 'es'
   const [contribution, setContribution] = useState<number | null>(null)
 
   useEffect(() => {
@@ -1053,9 +1065,5 @@ function UserContribution({ marketId }: { marketId: string }) {
   }, [marketId])
 
   if (contribution === null) return <p className="text-slate-400 text-sm">Loading...</p>
-  return (
-    <p className="text-emerald-300 text-sm">
-      Your predictions contribute to collective intelligence
-    </p>
-  )
+  return <p className="text-emerald-300 text-sm">{userContributionLine(loc, isPulse)}</p>
 }

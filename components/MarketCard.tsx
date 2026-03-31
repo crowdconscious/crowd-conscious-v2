@@ -10,6 +10,7 @@ import {
 } from '@/lib/i18n/market-translations'
 import { toDisplayPercent } from '@/lib/probability-utils'
 import { SponsorBadge } from '@/components/SponsorBadge'
+import { isPulseLikeMarket, marketCardPredictCta, voteCountLabelPublic } from '@/lib/i18n/pulse-market-copy'
 
 export type MarketCardMarket = {
   id: string
@@ -25,6 +26,7 @@ export type MarketCardMarket = {
   sponsor_logo_url?: string | null
   sponsor_url?: string | null
   image_url?: string | null
+  is_pulse?: boolean | null
 }
 
 export type MarketCardOutcome = {
@@ -139,10 +141,8 @@ export function MarketCard({
   const locale = language === 'en' ? 'en' : 'es'
   const title = getMarketText(market as MarketWithTranslations, 'title', locale)
   const votes = market.total_votes ?? 0
-  const voteLabel =
-    locale === 'es'
-      ? `${votes.toLocaleString('es-MX')} votos`
-      : `${votes.toLocaleString('en-US')} votes`
+  const isPulse = isPulseLikeMarket(market)
+  const voteLabel = voteCountLabelPublic(locale === 'en' ? 'en' : 'es', votes, isPulse)
 
   const raw =
     outcomes.length > 0
@@ -283,7 +283,7 @@ export function MarketCard({
             href={loginHref}
             className="flex min-h-[44px] w-full items-center justify-center rounded-lg bg-emerald-600 text-sm font-semibold text-white transition-colors hover:bg-emerald-500"
           >
-            {locale === 'es' ? 'Predecir' : 'Predict'}
+            {marketCardPredictCta(locale === 'en' ? 'en' : 'es', isPulse)}
           </Link>
         </div>
       </div>

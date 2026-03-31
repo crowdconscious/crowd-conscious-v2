@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase-server'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { getCurrentUser } from '@/lib/auth-server'
 import { extractYoutubeVideoId } from '@/lib/youtube'
+import { LIVE_EVENT_TYPE_KEYS, type LiveEventTypeKey } from '@/lib/live-event-types'
 
 export async function GET(request: NextRequest) {
   try {
@@ -69,10 +70,26 @@ export async function POST(request: NextRequest) {
       team_b_name,
       team_b_flag,
       translations,
+      event_type: bodyEventType,
+      event_subtype,
+      suggested_questions: bodySuggested,
     } = body
 
     if (!title?.trim() || !match_date) {
       return Response.json({ error: 'title and match_date are required' }, { status: 400 })
+    }
+
+    const event_type: LiveEventTypeKey =
+      typeof bodyEventType === 'string' && (LIVE_EVENT_TYPE_KEYS as readonly string[]).includes(bodyEventType)
+        ? (bodyEventType as LiveEventTypeKey)
+        : 'soccer_match'
+
+    const subtype =
+      typeof event_subtype === 'string' && event_subtype.trim() ? event_subtype.trim() : null
+
+    let suggested_questions: Record<string, unknown> = {}
+    if (bodySuggested && typeof bodySuggested === 'object' && !Array.isArray(bodySuggested)) {
+      suggested_questions = bodySuggested as Record<string, unknown>
     }
 
     const fromUrl = typeof youtube_url === 'string' ? extractYoutubeVideoId(youtube_url) : null
@@ -87,6 +104,9 @@ export async function POST(request: NextRequest) {
         title: title.trim(),
         description: description?.trim() ?? null,
         match_date,
+        event_type,
+        event_subtype: subtype,
+        suggested_questions,
         youtube_url: typeof youtube_url === 'string' ? youtube_url.trim() || null : null,
         youtube_video_id,
         sponsor_name: sponsor_name?.trim() || null,

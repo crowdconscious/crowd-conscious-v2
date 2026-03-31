@@ -22,6 +22,7 @@ import { ViewerCount } from '@/components/live/ViewerCount'
 import { AdminLiveControls } from '@/components/live/AdminLiveControls'
 import { LiveConnectionBanner } from '@/components/live/LiveConnectionBanner'
 import { AliasEntry, type AliasParticipantJoined } from '@/components/live/AliasEntry'
+import { LiveComments } from '@/components/live/LiveComments'
 
 export function LiveMatchClient({ eventId }: { eventId: string }) {
   const supabase = useMemo(() => createClient(), [])
@@ -144,6 +145,16 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
     setAliasParticipant(p)
     setShowAliasModal(false)
   }, [])
+
+  const commentDisplayName = useMemo(() => {
+    const meta = user?.user_metadata as { full_name?: string } | undefined
+    return (
+      meta?.full_name?.trim() ||
+      user?.email?.split('@')[0] ||
+      aliasParticipant?.alias ||
+      (locale === 'es' ? 'Invitado' : 'Guest')
+    )
+  }, [user, aliasParticipant, locale])
 
   const title = event ? getLiveEventTitle(event, locale) : ''
   const status = event?.status
@@ -359,6 +370,14 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
     />
   )
 
+  const liveChat = (
+    <LiveComments
+      eventId={eventId}
+      locale={locale === 'es' ? 'es' : 'en'}
+      displayName={commentDisplayName}
+    />
+  )
+
   const leaderboardBlock = (
     <div className="space-y-2">
       {lbError && (
@@ -399,6 +418,8 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
             {stream}
             {ticker}
           </div>
+
+          <div className="mb-6">{liveChat}</div>
 
           <div className="mb-6">
             <h3 className="mb-3 text-base font-semibold text-white">
@@ -489,6 +510,7 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
           {stream}
           {ticker}
           {votingPanel}
+          {liveChat}
           <div>
             <button
               type="button"
@@ -513,6 +535,7 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
               <ViewerCount count={viewerCount} isConnected={isConnected} locale={locale === 'es' ? 'es' : 'en'} />
             </div>
             {votingPanel}
+            {liveChat}
             {leaderboardBlock}
           </div>
         </div>

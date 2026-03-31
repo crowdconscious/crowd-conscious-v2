@@ -26,6 +26,7 @@ import {
   sponsorCategoryLabel,
   sponsorMailtoQuery,
 } from '@/lib/i18n/sponsor-page-copy'
+import { CouponRedeemSection } from '@/components/coupon/CouponRedeemSection'
 
 const CATEGORY_CONFIG: Record<
   string,
@@ -629,6 +630,7 @@ export function SponsorPageClient({
             <p className="text-cc-text-muted text-sm mt-6">
               <a href={`mailto:${SPONSOR_EMAIL}`} className="text-emerald-400 hover:underline">{SPONSOR_EMAIL}</a>
             </p>
+            <CouponRedeemSection locale={locale} />
           </div>
         </section>
       </main>
