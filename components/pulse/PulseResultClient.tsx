@@ -151,6 +151,50 @@ export default function PulseResultClient({
     return [...outcomes].sort((a, b) => b.probability - a.probability)[0]
   }, [outcomes])
 
+  const pulseInsights = useMemo(() => {
+    if (totalVotes === 0 || outcomes.length === 0) return null
+    const sorted = [...outcomes].sort((a, b) => b.probability - a.probability)
+    const lead = sorted[0]
+    const second = sorted[1]
+    const leadingPct = Math.round(lead.probability * 100)
+    const avgForOutcome = (oid: string) => {
+      const arr = votes.filter(
+        (v) =>
+          v.outcome_id === oid &&
+          typeof v.confidence === 'number' &&
+          v.confidence >= 1 &&
+          v.confidence <= 10
+      )
+      if (!arr.length) return null
+      return arr.reduce((s, v) => s + (v.confidence as number), 0) / arr.length
+    }
+    const leadingConf = avgForOutcome(lead.id)
+    const secondConf = second ? avgForOutcome(second.id) : null
+    const leadingLabel = getOutcomeLabel(lead, locale).split(' / ')[0]
+    const secondLabel = second ? getOutcomeLabel(second, locale).split(' / ')[0] : null
+    const strongOpinions = votes.filter(
+      (v) => typeof v.confidence === 'number' && v.confidence >= 8
+    ).length
+    let lowest: { label: string; conf: number } | null = null
+    for (const o of outcomes) {
+      const a = avgForOutcome(o.id)
+      if (a == null) continue
+      if (!lowest || a < lowest.conf) {
+        lowest = { label: getOutcomeLabel(o, locale).split(' / ')[0], conf: a }
+      }
+    }
+    return {
+      leadingLabel,
+      leadingPct,
+      leadingConf: leadingConf ?? 0,
+      secondLabel,
+      secondConf,
+      strongOpinions,
+      lowestLabel: lowest?.label ?? null,
+      lowestConf: lowest?.conf ?? null,
+    }
+  }, [outcomes, votes, locale, totalVotes])
+
   const executiveSummary = useMemo(() => {
     if (!leadingOutcome || totalVotes === 0) return null
     const avgConfStr = avgConfidence.toFixed(1)
@@ -202,8 +246,8 @@ export default function PulseResultClient({
 
   return (
     <>
-      <div className="pulse-report-print min-h-screen bg-[#0f1419] text-slate-100">
-        <div className="mx-auto max-w-3xl px-4 py-10 sm:py-14">
+      <div className="pulse-report-print min-h-screen bg-[#0f1419] text-slate-100 print:min-h-0">
+        <div className="pulse-report-container mx-auto max-w-3xl px-4 py-10 sm:py-14 print:py-6">
           <div className="pulse-print-only mb-8">
             <div className="flex items-center justify-between">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -255,7 +299,7 @@ export default function PulseResultClient({
             </div>
           </header>
 
-          <article className="rounded-2xl border border-white/10 bg-[#1a2029] p-6 shadow-xl shadow-black/40 sm:p-8">
+          <article className="rounded-2xl border border-white/10 bg-[#1a2029] p-6 shadow-xl shadow-black/40 sm:p-8 print:shadow-none">
             <h1 className="text-balance text-2xl font-bold leading-tight text-white sm:text-3xl">
               {question}
             </h1>
@@ -280,7 +324,7 @@ export default function PulseResultClient({
               </span>
             </div>
 
-            <div className="mt-8 space-y-5">
+            <div className="pulse-section mt-8 space-y-5">
               {outcomes.map((o) => {
                 const pct = toDisplayPercentRounded(o.probability)
                 const label = getOutcomeLabel(o, locale)
@@ -302,7 +346,7 @@ export default function PulseResultClient({
             </div>
 
             {executiveSummary ? (
-              <div className="mt-6 rounded-xl border border-emerald-500/20 bg-[#1a2029] p-5">
+              <div className="pulse-section mt-6 rounded-xl border border-emerald-500/20 bg-[#1a2029] p-5">
                 <h3 className="mb-2 text-sm font-semibold text-emerald-400">
                   {'💡 '}
                   {locale === 'es' ? 'Resumen ejecutivo' : 'Executive Summary'}
@@ -313,7 +357,64 @@ export default function PulseResultClient({
               </div>
             ) : null}
 
-            <div className="mt-10 grid gap-4 sm:grid-cols-2">
+            {pulseInsights ? (
+              <div className="pulse-section mt-6 rounded-xl border border-white/10 bg-[#1a2029] p-5">
+                <h3 className="mb-3 text-sm font-semibold text-emerald-400">
+                  {'📊 '}
+                  {locale === 'es' ? 'Insights clave' : 'Key insights'}
+                </h3>
+                <ul className="space-y-2 text-sm text-gray-300">
+                  <li>
+                    •{' '}
+                    {locale === 'es'
+                      ? `"${pulseInsights.leadingLabel}" lidera con ${pulseInsights.leadingPct}% y confianza ${pulseInsights.leadingConf.toFixed(1)}/10.`
+                      : `"${pulseInsights.leadingLabel}" leads with ${pulseInsights.leadingPct}% and confidence ${pulseInsights.leadingConf.toFixed(1)}/10.`}
+                  </li>
+                  {pulseInsights.secondLabel != null && pulseInsights.secondConf != null && (
+                      <li>
+                        •{' '}
+                        {locale === 'es'
+                          ? `Sin embargo, "${pulseInsights.secondLabel}" tiene ${
+                              pulseInsights.secondConf > pulseInsights.leadingConf ? 'mayor' : 'menor'
+                            } certeza (${pulseInsights.secondConf.toFixed(1)}/10) — ${
+                              pulseInsights.secondConf > pulseInsights.leadingConf
+                                ? 'sus defensores están más convencidos.'
+                                : 'opinión menos firme.'
+                            }`
+                          : `However, "${pulseInsights.secondLabel}" has ${
+                              pulseInsights.secondConf > pulseInsights.leadingConf ? 'higher' : 'lower'
+                            } certainty (${pulseInsights.secondConf.toFixed(1)}/10) — ${
+                              pulseInsights.secondConf > pulseInsights.leadingConf
+                                ? 'its supporters are more convinced.'
+                                : 'less firm opinion.'
+                            }`}
+                      </li>
+                    )}
+                  <li>
+                    •{' '}
+                    {pulseInsights.strongOpinions > totalVotes * 0.6
+                      ? locale === 'es'
+                        ? `${pulseInsights.strongOpinions} de ${totalVotes} votantes (${Math.round((pulseInsights.strongOpinions / totalVotes) * 100)}%) tienen opiniones fuertes — hay consenso claro.`
+                        : `${pulseInsights.strongOpinions} of ${totalVotes} voters (${Math.round((pulseInsights.strongOpinions / totalVotes) * 100)}%) have strong opinions — clear consensus.`
+                      : locale === 'es'
+                        ? `Solo ${pulseInsights.strongOpinions} de ${totalVotes} tienen opiniones fuertes — el tema aún está en debate.`
+                        : `Only ${pulseInsights.strongOpinions} of ${totalVotes} have strong opinions — the topic is still debated.`}
+                  </li>
+                  {pulseInsights.lowestLabel != null &&
+                    pulseInsights.lowestConf != null &&
+                    pulseInsights.lowestLabel !== pulseInsights.leadingLabel && (
+                      <li>
+                        •{' '}
+                        {locale === 'es'
+                          ? `"${pulseInsights.lowestLabel}" tiene la certeza más baja (${pulseInsights.lowestConf.toFixed(1)}/10) — la gente vota por esta opción pero no está segura.`
+                          : `"${pulseInsights.lowestLabel}" has the lowest certainty (${pulseInsights.lowestConf.toFixed(1)}/10) — people vote for it but aren't sure.`}
+                      </li>
+                    )}
+                </ul>
+              </div>
+            ) : null}
+
+            <div className="pulse-section mt-10 grid gap-4 sm:grid-cols-2">
               <div className="rounded-xl border border-white/5 bg-black/20 px-4 py-3">
                 <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
                   {locale === 'es' ? 'Votos totales' : 'Total votes'}
@@ -334,17 +435,19 @@ export default function PulseResultClient({
             </div>
 
             <div className="mt-8 space-y-6">
-              <ConfidenceHistogram votes={votes} />
-              {totalVotes > 0 ? <VoteTimeline votes={votes} /> : null}
+              <ConfidenceHistogram votes={votes} locale={locale} />
+              {totalVotes > 0 ? <VoteTimeline votes={votes} locale={locale} /> : null}
             </div>
 
             {isEnhancedView && (
               <div className="mt-8 space-y-6">
-                <OutcomeConfidenceTable
-                  outcomes={outcomes.map((o) => ({ id: o.id, label: getOutcomeLabel(o, locale) }))}
-                  votes={votes}
-                  locale={locale}
-                />
+                <div className="pulse-section">
+                  <OutcomeConfidenceTable
+                    outcomes={outcomes.map((o) => ({ id: o.id, label: getOutcomeLabel(o, locale) }))}
+                    votes={votes}
+                    locale={locale}
+                  />
+                </div>
                 <div className="pulse-no-print flex flex-wrap gap-3">
                   <button
                     type="button"

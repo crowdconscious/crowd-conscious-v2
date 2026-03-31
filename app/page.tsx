@@ -8,6 +8,8 @@ import dynamic from 'next/dynamic'
 import { Globe, Heart, Trophy, ChevronRight } from 'lucide-react'
 import LandingNav from './components/landing/LandingNav'
 import { LiveEventBanner } from './components/landing/LiveEventBanner'
+import { LandingPulseSection } from './components/landing/LandingPulseSection'
+import { LandingLiveSection } from './components/landing/LandingLiveSection'
 import type { MarketCardMarket, MarketCardOutcome } from '@/components/MarketCard'
 
 const Footer = dynamic(() => import('../components/Footer'))
@@ -95,6 +97,7 @@ async function getLandingData() {
     liveNowRes,
     activeMarketsCountRes,
     profilesCountRes,
+    pulseMarketRes,
   ] = await Promise.all([
     supabase
       .from('prediction_markets')
@@ -138,6 +141,15 @@ async function getLandingData() {
       .in('status', ['active', 'trading'])
       .is('archived_at', null),
     supabase.from('profiles').select('id', { count: 'exact', head: true }),
+    supabase
+      .from('prediction_markets')
+      .select('id, title, translations, total_votes')
+      .in('status', ['active', 'trading'])
+      .is('archived_at', null)
+      .or('is_pulse.eq.true,category.eq.pulse')
+      .order('total_votes', { ascending: false, nullsFirst: false })
+      .limit(1)
+      .maybeSingle(),
   ])
 
   const markets = (marketsRes.data || []) as MarketCardMarket[]
@@ -176,6 +188,26 @@ async function getLandingData() {
   const activeMarketCount = activeMarketsCountRes.count ?? markets.length
   const profileCount = profilesCountRes.count
 
+  const pulseRow = pulseMarketRes.data as {
+    id: string
+    title: string
+    translations: unknown
+    total_votes: number | null
+  } | null
+
+  let pulseAvgConfidence: number | null = null
+  if (pulseRow?.id) {
+    const { data: confRows } = await supabase
+      .from('market_votes')
+      .select('confidence')
+      .eq('market_id', pulseRow.id)
+      .limit(8000)
+    if (confRows?.length) {
+      const sum = confRows.reduce((s, r) => s + Number(r.confidence), 0)
+      pulseAvgConfidence = Math.round((sum / confRows.length) * 10) / 10
+    }
+  }
+
   return {
     markets,
     outcomesByMarketId,
@@ -189,6 +221,8 @@ async function getLandingData() {
     activeCauseName,
     activeMarketCount,
     profileCount,
+    activePulseMarket: pulseRow,
+    pulseAvgConfidence,
   }
 }
 
@@ -218,6 +252,8 @@ export default async function LandingPage() {
   let activeCauseName: string | null = null
   let activeMarketCount = 0
   let profileCount: number | null = null
+  let activePulseMarket: Awaited<ReturnType<typeof getLandingData>>['activePulseMarket'] = null
+  let pulseAvgConfidence: number | null = null
 
   try {
     const data = await getLandingData()
@@ -233,6 +269,8 @@ export default async function LandingPage() {
     activeCauseName = data.activeCauseName
     activeMarketCount = data.activeMarketCount
     profileCount = data.profileCount
+    activePulseMarket = data.activePulseMarket
+    pulseAvgConfidence = data.pulseAvgConfidence
   } catch (e) {
     console.error('Landing data fetch error:', e)
   }
@@ -398,6 +436,14 @@ export default async function LandingPage() {
             </div>
           </div>
         </section>
+
+        <LandingPulseSection
+          locale={localeShort}
+          activePulseMarket={activePulseMarket}
+          avgConfidence={pulseAvgConfidence}
+        />
+
+        <LandingLiveSection locale={localeShort} />
 
         {/* Social proof — stats from live data */}
         <section

@@ -4,8 +4,19 @@ import { useMemo } from 'react'
 
 type VoteLike = { created_at: string }
 
-export default function VoteTimeline({ votes }: { votes: VoteLike[] }) {
+const BAR_AREA_PX = 128
+
+export default function VoteTimeline({
+  votes,
+  locale = 'es',
+}: {
+  votes: VoteLike[]
+  locale?: 'es' | 'en'
+}) {
+  const es = locale === 'es'
+
   const { buckets, labels, peakLabel } = useMemo(() => {
+    const loc = es ? 'es-MX' : 'en-US'
     if (votes.length === 0) {
       return { buckets: [] as number[], labels: [] as string[], peakLabel: '—' }
     }
@@ -34,8 +45,8 @@ export default function VoteTimeline({ votes }: { votes: VoteLike[] }) {
     const labels = order.map((k) => {
       const d = new Date(byHour ? k : k + 'T12:00:00Z')
       return byHour
-        ? d.toLocaleString('es-MX', { month: 'short', day: 'numeric', hour: '2-digit' })
-        : d.toLocaleDateString('es-MX', { month: 'short', day: 'numeric' })
+        ? d.toLocaleString(loc, { month: 'short', day: 'numeric', hour: '2-digit' })
+        : d.toLocaleDateString(loc, { month: 'short', day: 'numeric' })
     })
 
     let peakIdx = 0
@@ -44,46 +55,59 @@ export default function VoteTimeline({ votes }: { votes: VoteLike[] }) {
     }
     const peakLabel =
       order.length > 0
-        ? new Date(byHour ? order[peakIdx] : order[peakIdx] + 'T12:00:00Z').toLocaleString(
-            'es-MX',
-            { dateStyle: 'medium', timeStyle: byHour ? 'short' : undefined }
-          )
+        ? new Date(byHour ? order[peakIdx] : order[peakIdx] + 'T12:00:00Z').toLocaleString(loc, {
+            dateStyle: 'medium',
+            timeStyle: byHour ? 'short' : undefined,
+          })
         : '—'
 
     return { buckets, labels, peakLabel }
-  }, [votes])
+  }, [votes, es])
 
   const maxB = Math.max(...buckets, 1)
 
   if (votes.length === 0) {
     return (
-      <div className="rounded-xl border border-white/10 bg-black/20 p-4">
-        <h3 className="mb-2 text-sm font-semibold text-white">Actividad de votación</h3>
-        <p className="text-sm text-slate-500">Aún no hay suficientes datos.</p>
+      <div className="pulse-section chart-container rounded-xl border border-white/10 bg-black/20 p-4">
+        <h3 className="mb-2 text-sm font-semibold text-white">
+          {es ? 'Actividad de votación' : 'Voting activity'}
+        </h3>
+        <p className="text-sm text-slate-500">
+          {es ? 'Aún no hay suficientes datos.' : 'Not enough data yet.'}
+        </p>
       </div>
     )
   }
 
   return (
-    <div className="rounded-xl border border-white/10 bg-black/20 p-4">
-      <h3 className="mb-3 text-sm font-semibold text-white">Actividad de votación</h3>
+    <div className="pulse-section chart-container rounded-xl border border-white/10 bg-black/20 p-4">
+      <h3 className="mb-3 text-sm font-semibold text-white">
+        {es ? 'Actividad de votación' : 'Voting activity'}
+      </h3>
       <div className="flex h-32 items-end gap-1 overflow-x-auto pb-1">
-        {buckets.map((count, i) => (
-          <div key={i} className="flex min-w-[28px] flex-1 flex-col items-center gap-1">
-            <div className="flex w-full flex-1 flex-col justify-end">
-              <div
-                className="w-full rounded-t bg-emerald-500/50"
-                style={{ height: `${(count / maxB) * 100}%`, minHeight: count > 0 ? 4 : 0 }}
-              />
+        {buckets.map((count, i) => {
+          const barPx = maxB > 0 ? Math.round((count / maxB) * BAR_AREA_PX) : 0
+          const h = count > 0 ? Math.max(barPx, 4) : 0
+          return (
+            <div
+              key={i}
+              className="flex h-32 min-w-[28px] flex-1 flex-col items-stretch justify-end"
+            >
+              <div className="flex min-h-0 flex-1 flex-col justify-end">
+                <div
+                  className="w-full rounded-t bg-emerald-500/50"
+                  style={{ height: h, minHeight: h }}
+                />
+              </div>
+              <span className="max-w-[52px] truncate pt-1 text-center text-[9px] text-gray-500">
+                {labels[i]}
+              </span>
             </div>
-            <span className="max-w-[52px] truncate text-center text-[9px] text-gray-500">
-              {labels[i]}
-            </span>
-          </div>
-        ))}
+          )
+        })}
       </div>
       <p className="mt-2 text-xs text-slate-500">
-        Pico: <span className="text-slate-300">{peakLabel}</span>
+        {es ? 'Pico' : 'Peak'}: <span className="text-slate-300">{peakLabel}</span>
       </p>
     </div>
   )

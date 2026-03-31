@@ -125,6 +125,23 @@ export default async function LiveEventsPage() {
           <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">{t.title}</h1>
         </div>
 
+        {!error && liveNow.length === 0 && (
+          <div className="mb-10 py-8 text-center">
+            <span className="text-4xl">🔴</span>
+            <h2 className="mt-4 text-2xl font-bold text-white">{t.title}</h2>
+            <p className="mx-auto mt-2 max-w-xl text-slate-400">
+              {locale === 'es'
+                ? 'Predicciones en tiempo real durante eventos en vivo. Partidos, lanzamientos, conferencias — tu audiencia predice mientras mira.'
+                : 'Real-time predictions during live events. Matches, launches, conferences — your audience predicts while watching.'}
+            </p>
+            <p className="mt-4 text-sm text-emerald-400">
+              {locale === 'es'
+                ? '⚽ Próximo: Copa del Mundo 2026 — 11 de junio, Estadio Azteca'
+                : '⚽ Next: 2026 World Cup — June 11, Estadio Azteca'}
+            </p>
+          </div>
+        )}
+
         {isAdmin && (
           <CreateLiveEventPanel locale={locale === 'es' ? 'es' : 'en'} />
         )}

@@ -543,6 +543,31 @@ input:focus, textarea:focus, select:focus {
     print-color-adjust: exact !important;
   }
 
+  .pulse-report-print {
+    min-height: auto !important;
+  }
+
+  .pulse-report-container {
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+    min-height: auto !important;
+  }
+
+  .pulse-section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .pulse-page-break {
+    break-before: page;
+    page-break-before: always;
+  }
+
+  .chart-container {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
   html:has(.pulse-report-print) nav,
   footer.pulse-print-hide-footer,
   .pulse-no-print,
@@ -553,6 +578,12 @@ input:focus, textarea:focus, select:focus {
 
   .pulse-print-only {
     display: block !important;
+  }
+
+  /* Canvas-based charts often print at 0 height; Pulse uses CSS bars, but guard anyway */
+  .pulse-report-print canvas {
+    max-height: 200px !important;
+    height: 200px !important;
   }
 }
 
