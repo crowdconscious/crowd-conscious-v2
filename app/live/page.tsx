@@ -1,9 +1,8 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { Trophy } from 'lucide-react'
+import { ArrowLeft, Trophy } from 'lucide-react'
 import { headers } from 'next/headers'
 import { SITE_URL } from '@/lib/seo/site'
-import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase-server'
 import { getCurrentUser } from '@/lib/auth-server'
 import type { Database } from '@/types/database'
@@ -11,9 +10,9 @@ import LandingNav from '@/app/components/landing/LandingNav'
 import Footer from '@/components/Footer'
 import { LiveEventCard } from '@/components/live/LiveEventCard'
 import { CreateLiveEventPanel } from '@/components/live/CreateLiveEventPanel'
+import { LiveB2BCTA, LiveProductSections } from '@/components/live/LiveProductSections'
 import { daysUntilWorldCup } from '@/lib/world-cup-kickoff'
 
-/** Per-session admin create form; list still fetched each request. */
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
@@ -82,39 +81,32 @@ export default async function LiveEventsPage() {
   const h = await headers()
   const accept = h.get('accept-language') || ''
   const locale = accept.toLowerCase().includes('en') ? 'en' : 'es'
+  const localeShort: 'es' | 'en' = locale === 'es' ? 'es' : 'en'
 
   const rows = (data ?? []) as LiveEventRow[]
   const { liveNow, upcoming, past } = partitionEvents(rows)
+  const dWc = daysUntilWorldCup()
 
   const t = {
-    title: locale === 'es' ? 'Conscious Live' : 'Conscious Live',
     back: locale === 'es' ? 'Volver al inicio' : 'Back to home',
     live: locale === 'es' ? 'En vivo ahora' : 'Live now',
-    upcoming: locale === 'es' ? 'Próximos' : 'Upcoming',
-    past: locale === 'es' ? 'Pasados' : 'Past',
+    upcoming: locale === 'es' ? 'Próximos eventos' : 'Upcoming',
+    past: locale === 'es' ? 'Eventos anteriores' : 'Past events',
     empty: locale === 'es' ? 'No hay eventos por ahora.' : 'No events yet.',
     emptyAdminHint:
       locale === 'es'
         ? 'Como administrador, usa el formulario de arriba para crear el primer evento.'
         : 'As an admin, use the form above to create your first event.',
-    emptyLead: locale === 'es' ? 'Conscious Live' : 'Conscious Live',
-    emptySub:
-      locale === 'es'
-        ? 'Predicciones en tiempo real durante partidos y eventos en vivo.'
-        : 'Live predictions during matches and live events.',
-    emptyEvent:
-      locale === 'es'
-        ? `Próximo evento: Mundial 2026 · Faltan ${daysUntilWorldCup()} días`
-        : `Next event: World Cup 2026 · ${daysUntilWorldCup()} days to go`,
-    emptyCta: locale === 'es' ? 'Ver predicciones' : 'Browse predictions',
+    emptyCta: locale === 'es' ? 'Ver mercados' : 'Browse markets',
     error: locale === 'es' ? 'No se pudieron cargar los eventos.' : 'Could not load events.',
+    eventsHeading: locale === 'es' ? 'Eventos' : 'Events',
   }
 
   return (
     <div className="min-h-screen bg-cc-bg text-cc-text-primary">
       <LandingNav />
-      <div className="mx-auto max-w-3xl px-4 pb-16 pt-24">
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mx-auto max-w-6xl px-4 pb-16 pt-24">
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <Link
             href="/"
             className="inline-flex items-center gap-2 text-sm text-cc-text-secondary transition hover:text-cc-text-primary"
@@ -122,29 +114,11 @@ export default async function LiveEventsPage() {
             <ArrowLeft className="h-4 w-4" />
             {t.back}
           </Link>
-          <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">{t.title}</h1>
         </div>
 
-        {!error && liveNow.length === 0 && (
-          <div className="mb-10 py-8 text-center">
-            <span className="text-4xl">🔴</span>
-            <h2 className="mt-4 text-2xl font-bold text-white">{t.title}</h2>
-            <p className="mx-auto mt-2 max-w-xl text-slate-400">
-              {locale === 'es'
-                ? 'Predicciones en tiempo real durante eventos en vivo. Partidos, lanzamientos, conferencias — tu audiencia predice mientras mira.'
-                : 'Real-time predictions during live events. Matches, launches, conferences — your audience predicts while watching.'}
-            </p>
-            <p className="mt-4 text-sm text-emerald-400">
-              {locale === 'es'
-                ? '⚽ Próximo: Copa del Mundo 2026 — 11 de junio, Estadio Azteca'
-                : '⚽ Next: 2026 World Cup — June 11, Estadio Azteca'}
-            </p>
-          </div>
-        )}
+        <LiveProductSections locale={localeShort} daysUntilWc={dWc} />
 
-        {isAdmin && (
-          <CreateLiveEventPanel locale={locale === 'es' ? 'es' : 'en'} />
-        )}
+        {isAdmin && <CreateLiveEventPanel locale={locale === 'es' ? 'es' : 'en'} />}
 
         {error && (
           <p className="rounded-xl border border-red-500/30 bg-red-950/40 px-4 py-3 text-sm text-red-200">
@@ -153,66 +127,69 @@ export default async function LiveEventsPage() {
         )}
 
         {!error && rows.length === 0 && (
-          <div className="rounded-xl border border-cc-border bg-cc-card px-6 py-10 text-center">
+          <div className="mb-10 rounded-xl border border-cc-border bg-cc-card px-6 py-10 text-center">
             <div className="mb-4 flex justify-center">
               <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/10 text-3xl">
                 <Trophy className="h-8 w-8 text-emerald-400" aria-hidden />
               </span>
             </div>
-            <p className="text-lg font-semibold text-white">{t.emptyLead}</p>
-            <p className="mt-3 text-sm text-cc-text-secondary">{t.emptySub}</p>
-            <p className="mt-4 text-sm text-cc-text-muted">{t.emptyEvent}</p>
+            <p className="text-cc-text-secondary">{t.empty}</p>
             <Link
               href="/markets"
               className="mt-6 inline-flex min-h-[44px] items-center justify-center rounded-lg border border-cc-border bg-cc-bg px-6 py-2.5 text-sm font-medium text-emerald-400 transition hover:border-emerald-500/40 hover:text-emerald-300"
             >
               ← {t.emptyCta}
             </Link>
-            <p className="mt-8 text-cc-text-secondary">{t.empty}</p>
-            {isAdmin && (
-              <p className="mt-3 text-sm text-cc-text-muted">{t.emptyAdminHint}</p>
-            )}
+            {isAdmin && <p className="mt-6 text-sm text-cc-text-muted">{t.emptyAdminHint}</p>}
           </div>
         )}
 
-        {!error && liveNow.length > 0 && (
-          <section className="mb-10">
-            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-red-300">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
-                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
-              </span>
-              {t.live}
-            </h2>
-            <div className="flex flex-col gap-4">
-              {liveNow.map((e) => (
-                <LiveEventCard key={e.id} event={e} group="live" />
-              ))}
-            </div>
+        {!error && rows.length > 0 && (
+          <section className="mb-4">
+            <h2 className="mb-6 text-lg font-semibold text-white">{t.eventsHeading}</h2>
+
+            {liveNow.length > 0 && (
+              <div className="mb-10">
+                <h3 className="mb-4 flex items-center gap-2 text-base font-semibold text-red-300">
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+                  </span>
+                  {t.live}
+                </h3>
+                <div className="flex flex-col gap-4">
+                  {liveNow.map((e) => (
+                    <LiveEventCard key={e.id} event={e} group="live" />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {upcoming.length > 0 && (
+              <div className="mb-10">
+                <h3 className="mb-4 text-base font-semibold text-teal-300">{t.upcoming}</h3>
+                <div className="flex flex-col gap-4">
+                  {upcoming.map((e) => (
+                    <LiveEventCard key={e.id} event={e} group="upcoming" />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {past.length > 0 && (
+              <div>
+                <h3 className="mb-4 text-base font-semibold text-slate-400">{t.past}</h3>
+                <div className="flex flex-col gap-4">
+                  {past.map((e) => (
+                    <LiveEventCard key={e.id} event={e} group="past" />
+                  ))}
+                </div>
+              </div>
+            )}
           </section>
         )}
 
-        {!error && upcoming.length > 0 && (
-          <section className="mb-10">
-            <h2 className="mb-4 text-lg font-semibold text-teal-300">{t.upcoming}</h2>
-            <div className="flex flex-col gap-4">
-              {upcoming.map((e) => (
-                <LiveEventCard key={e.id} event={e} group="upcoming" />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {!error && past.length > 0 && (
-          <section>
-            <h2 className="mb-4 text-lg font-semibold text-slate-400">{t.past}</h2>
-            <div className="flex flex-col gap-4">
-              {past.map((e) => (
-                <LiveEventCard key={e.id} event={e} group="past" />
-              ))}
-            </div>
-          </section>
-        )}
+        <LiveB2BCTA locale={localeShort} />
       </div>
       <Footer />
     </div>

@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import { ChevronUp, Shield, Loader2 } from 'lucide-react'
 import type { Database } from '@/types/database'
 import type { MarketWithOutcomes } from '@/hooks/useLiveMarkets'
-import { LogoUpload } from '@/components/ui/LogoUpload'
+import { ImageUpload } from '@/components/ui/ImageUpload'
 type LiveEventRow = Database['public']['Tables']['live_events']['Row']
 
 type DurationChoice = '5' | '10' | '15' | 'halftime' | 'fulltime'
@@ -334,9 +334,10 @@ export function AdminLiveControls({
             <h3 className="mb-2 font-semibold text-teal-300">{t.branding}</h3>
             <div className="mb-2">
               <span className="mb-1 block text-sm text-slate-400">{t.coverUrl}</span>
-              <LogoUpload
-                currentLogoUrl={coverImageUrl.trim() || null}
+              <ImageUpload
+                currentUrl={coverImageUrl.trim() || null}
                 onUpload={(url) => setCoverImageUrl(url)}
+                storagePath="live"
                 label={locale === 'es' ? 'Sube imagen de portada' : 'Upload cover image'}
                 hint={locale === 'es' ? 'PNG, JPG, WebP · máx. 2MB' : 'PNG, JPG, WebP · max 2MB'}
               />

@@ -61,7 +61,7 @@ export function SponsorCTA({ locale }: { locale: 'es' | 'en' }) {
               : 'Sentiment measurement tool for municipalities, brands, and influencers. Real-time results with confidence analytics.'}
           </p>
           <Link
-            href="/#pulse"
+            href="/pulse"
             className="inline-flex items-center gap-2 font-medium text-emerald-400 transition-colors hover:underline"
           >
             {isEs ? 'Conocer Conscious Pulse →' : 'Learn about Conscious Pulse →'}

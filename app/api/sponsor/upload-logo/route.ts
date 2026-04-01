@@ -30,7 +30,13 @@ export async function POST(request: NextRequest) {
 
     const supabase = getSupabase()
     const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
-    const path = `sponsors/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`
+    const folderRaw = formData.get('folder')
+    const allowed = ['blog', 'pulse', 'live', 'sponsors'] as const
+    const folder =
+      typeof folderRaw === 'string' && (allowed as readonly string[]).includes(folderRaw)
+        ? folderRaw
+        : 'sponsors'
+    const path = `${folder}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`
 
     const { error } = await (supabase as any).storage
       .from('sponsor-logos')

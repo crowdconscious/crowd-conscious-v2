@@ -10,6 +10,7 @@ import {
   Sparkles,
 } from 'lucide-react'
 import { LogoUpload } from '@/components/ui/LogoUpload'
+import { ImageUpload } from '@/components/ui/ImageUpload'
 const CATEGORIES = [
   { id: 'pulse', label: 'Pulse' },
   { id: 'world_cup', label: 'World Cup' },
@@ -77,6 +78,7 @@ export default function CreateMarketPage() {
   const [pulseClientName, setPulseClientName] = useState('')
   const [pulseClientLogo, setPulseClientLogo] = useState('')
   const [pulseClientEmail, setPulseClientEmail] = useState('')
+  const [pulseCoverUrl, setPulseCoverUrl] = useState('')
   const [successIsPulse, setSuccessIsPulse] = useState(false)
   const prevIsPulseRef = useRef(false)
 
@@ -350,6 +352,7 @@ export default function CreateMarketPage() {
           pulse_client_name: isPulse ? pulseClientName.trim() || null : null,
           pulse_client_logo: isPulse ? pulseClientLogo.trim() || null : null,
           pulse_client_email: isPulse ? pulseClientEmail.trim() || null : null,
+          ...(isPulse ? { cover_image_url: pulseCoverUrl.trim() || null } : {}),
         }),
       })
       const data = await res.json()
@@ -507,6 +510,26 @@ export default function CreateMarketPage() {
                 onChange={(e) => setPulseClientEmail(e.target.value)}
                 className={ccInput}
               />
+              <div className="mb-4">
+                <label className="mb-2 block text-sm font-medium text-gray-300">
+                  Pulse cover image
+                </label>
+                <ImageUpload
+                  currentUrl={pulseCoverUrl.trim() || null}
+                  onUpload={(url) => setPulseCoverUrl(url)}
+                  onClear={() => setPulseCoverUrl('')}
+                  storagePath="pulse"
+                  label="Upload cover (or paste URL below)"
+                  hint="PNG, JPG, WebP · máx. 2MB"
+                />
+                <input
+                  type="url"
+                  placeholder="https://… (optional URL instead of upload)"
+                  value={pulseCoverUrl}
+                  onChange={(e) => setPulseCoverUrl(e.target.value)}
+                  className={`${ccInput} mt-2`}
+                />
+              </div>
             </div>
           )}
 

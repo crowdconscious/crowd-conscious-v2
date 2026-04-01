@@ -19,6 +19,7 @@ import {
   ChevronRight,
   Calendar,
 } from 'lucide-react'
+import { ImageUpload } from '@/components/ui/ImageUpload'
 
 const AGENTS = [
   { id: 'ceo-digest', label: 'CEO Digest', icon: FileText },
@@ -420,6 +421,7 @@ export default function AdminAgentsPage() {
     published_at: string | null
     created_at: string
     category: string
+    cover_image_url: string | null
   }
 
   const [data, setData] = useState<{
@@ -512,6 +514,20 @@ export default function AdminAgentsPage() {
       await fetchData()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Update failed')
+    }
+  }
+
+  const saveBlogCover = async (id: string, url: string) => {
+    try {
+      const res = await fetch(`/api/predictions/admin/blog-posts/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cover_image_url: url }),
+      })
+      if (!res.ok) throw new Error('Cover update failed')
+      await fetchData()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Cover update failed')
     }
   }
 
@@ -768,7 +784,17 @@ export default function AdminAgentsPage() {
                   className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 space-y-3"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-2">
-                    <div>
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-4 max-w-md">
+                        <span className="text-gray-300 text-sm font-medium block mb-2">Cover image</span>
+                        <ImageUpload
+                          currentUrl={bp.cover_image_url?.trim() || null}
+                          onUpload={(url) => void saveBlogCover(bp.id, url)}
+                          storagePath="blog"
+                          label="Upload cover"
+                          hint="PNG, JPG, WebP · max 2MB"
+                        />
+                      </div>
                       <span className="text-xs uppercase text-emerald-400/90">{bp.category}</span>
                       <h3 className="text-white font-semibold text-lg">{bp.title}</h3>
                       <p className="text-slate-400 text-sm mt-1 line-clamp-3">{bp.excerpt}</p>

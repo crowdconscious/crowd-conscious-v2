@@ -4,6 +4,8 @@ import { useState, useRef, useCallback } from 'react'
 import { Upload } from 'lucide-react'
 import { cn } from '@/lib/design-system'
 
+export type LogoStorageFolder = 'blog' | 'pulse' | 'live' | 'sponsors'
+
 export interface LogoUploadProps {
   currentLogoUrl: string | null
   onUpload: (url: string) => void
@@ -12,6 +14,8 @@ export interface LogoUploadProps {
   /** Shown under the dashed area (e.g. format hints) */
   hint?: string
   className?: string
+  /** Subfolder under the storage bucket (default sponsors). */
+  storageFolder?: LogoStorageFolder
 }
 
 const MAX_BYTES = 2 * 1024 * 1024
@@ -26,6 +30,7 @@ export function LogoUpload({
   label = 'Logo de tu marca',
   hint,
   className,
+  storageFolder = 'sponsors',
 }: LogoUploadProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -49,6 +54,7 @@ export function LogoUpload({
       try {
         const fd = new FormData()
         fd.append('logo', file)
+        fd.append('folder', storageFolder)
         const res = await fetch('/api/sponsor/upload-logo', { method: 'POST', body: fd })
         const json = (await res.json()) as {
           success?: boolean
@@ -71,7 +77,7 @@ export function LogoUpload({
         setLoading(false)
       }
     },
-    [onUpload]
+    [onUpload, storageFolder]
   )
 
   const url = currentLogoUrl?.trim() || ''

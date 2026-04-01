@@ -1,0 +1,8 @@
+-- EXAMPLE ONLY: rename to .sql and run after uploading images (Leonardo, admin, etc.).
+-- Replace placeholders with real public URLs.
+
+-- UPDATE public.blog_posts SET cover_image_url = 'https://YOUR_PUBLIC_URL/galton.jpg'
+-- WHERE slug ILIKE '%galton%';
+
+-- UPDATE public.prediction_markets SET cover_image_url = 'https://YOUR_PUBLIC_URL/cdmx-pulse.jpg'
+-- WHERE id = '365628d5-58bd-4792-8157-d45f18d63344';

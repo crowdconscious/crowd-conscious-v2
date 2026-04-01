@@ -45,6 +45,7 @@ export async function POST(request: NextRequest) {
       pulse_client_name,
       pulse_client_logo,
       pulse_client_email,
+      cover_image_url,
     } = body
 
     if (!title?.trim()) {
@@ -162,6 +163,9 @@ export async function POST(request: NextRequest) {
       }
       if (translations && typeof translations === 'object') updatePayload.translations = translations
       Object.assign(updatePayload, pulseFields)
+      if (typeof cover_image_url === 'string') {
+        updatePayload.cover_image_url = cover_image_url.trim() || null
+      }
       await admin.from('prediction_markets').update(updatePayload).eq('id', marketId)
 
       // Auto-apply active category sponsor if one exists for this category
@@ -223,6 +227,9 @@ export async function POST(request: NextRequest) {
     }
     if (translations && typeof translations === 'object') updatePayload.translations = translations
     Object.assign(updatePayload, pulseFields)
+    if (typeof cover_image_url === 'string') {
+      updatePayload.cover_image_url = cover_image_url.trim() || null
+    }
     await admin.from('prediction_markets').update(updatePayload).eq('id', marketId)
 
     // Auto-apply active category sponsor if one exists for this category

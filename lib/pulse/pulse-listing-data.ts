@@ -10,6 +10,7 @@ export type PulseListingMarketRow = {
   translations: unknown
   pulse_client_name: string | null
   pulse_client_logo: string | null
+  cover_image_url: string | null
   status: string
   total_votes: number | null
   resolution_date: string | null
@@ -20,7 +21,7 @@ export type PulseListingMarketRow = {
 }
 
 const PULSE_SELECT =
-  'id, title, translations, pulse_client_name, pulse_client_logo, status, total_votes, resolution_date, created_at, market_type, category, is_pulse'
+  'id, title, translations, pulse_client_name, pulse_client_logo, cover_image_url, status, total_votes, resolution_date, created_at, market_type, category, is_pulse'
 
 /** Or: pulse flag, pulse category, or legacy government multi surveys */
 const PULSE_OR =

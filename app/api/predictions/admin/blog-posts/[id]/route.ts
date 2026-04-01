@@ -22,20 +22,32 @@ export async function PATCH(
 
     const { id } = await context.params
     const body = await request.json()
+
     const status = body.status as Status | undefined
-    if (!status || !['draft', 'published', 'archived'].includes(status)) {
-      return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
+    const hasStatus = typeof status === 'string' && ['draft', 'published', 'archived'].includes(status)
+    const hasCover = 'cover_image_url' in body
+
+    if (!hasStatus && !hasCover) {
+      return NextResponse.json({ error: 'Nothing to update' }, { status: 400 })
     }
 
     const patch: Record<string, unknown> = {
-      status,
       updated_at: new Date().toISOString(),
     }
-    if (status === 'published') {
-      patch.published_at = new Date().toISOString()
+
+    if (hasStatus) {
+      patch.status = status
+      if (status === 'published') {
+        patch.published_at = new Date().toISOString()
+      }
     }
 
-    const { data, error } = await admin.from('blog_posts').update(patch).eq('id', id).select('id, status').single()
+    if (hasCover) {
+      const raw = body.cover_image_url
+      patch.cover_image_url = typeof raw === 'string' ? raw.trim() || null : null
+    }
+
+    const { data, error } = await admin.from('blog_posts').update(patch).eq('id', id).select('id, status, cover_image_url').single()
 
     if (error) {
       console.error('[admin/blog-posts]', error)

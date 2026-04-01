@@ -45,6 +45,10 @@ export function getPulseListingCopy(locale: PulseListingLocale) {
     ctaQuestion: isEs
       ? '¿Quieres medir el sentimiento de tu comunidad?'
       : 'Want to measure your community’s sentiment?',
+    ctaFirstFree: isEs
+      ? 'Primera consulta gratuita para nuevos clientes.'
+      : 'First consultation free for new clients.',
+    ctaViewPlans: isEs ? 'Ver planes →' : 'View plans →',
     ctaLearnMore: isEs ? 'Conocer Conscious Pulse →' : 'Learn about Conscious Pulse →',
     home: isEs ? 'Inicio' : 'Home',
     consciousFund: isEs ? 'Fondo Consciente' : 'Conscious Fund',

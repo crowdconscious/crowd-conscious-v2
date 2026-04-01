@@ -504,6 +504,7 @@ export interface Database {
           pulse_client_logo: string | null
           pulse_client_email: string | null
           pulse_embed_enabled: boolean
+          cover_image_url: string | null
           market_type?: string | null
           total_volume: number
           fee_percentage: number
@@ -560,6 +561,7 @@ export interface Database {
           pulse_client_logo?: string | null
           pulse_client_email?: string | null
           pulse_embed_enabled?: boolean
+          cover_image_url?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -607,6 +609,7 @@ export interface Database {
           pulse_client_logo?: string | null
           pulse_client_email?: string | null
           pulse_embed_enabled?: boolean
+          cover_image_url?: string | null
           created_at?: string
           updated_at?: string
         }

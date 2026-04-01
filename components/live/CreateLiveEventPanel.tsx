@@ -9,6 +9,7 @@ import {
   suggestedQuestionsPayload,
 } from '@/lib/live-event-types'
 import { LogoUpload } from '@/components/ui/LogoUpload'
+import { ImageUpload } from '@/components/ui/ImageUpload'
 
 function CoverImageField({
   label,
@@ -24,9 +25,10 @@ function CoverImageField({
   return (
     <div>
       <span className="mb-1 block text-sm font-medium text-slate-300">{label}</span>
-      <LogoUpload
-        currentLogoUrl={value.trim() || null}
+      <ImageUpload
+        currentUrl={value.trim() || null}
         onUpload={onChange}
+        storagePath="live"
         label={es ? 'Sube imagen de portada' : 'Upload cover image'}
         hint={es ? 'PNG, JPG, WebP · máx. 2MB' : 'PNG, JPG, WebP · max 2MB'}
       />
@@ -110,7 +112,7 @@ export function CreateLiveEventPanel({ locale }: CreateLiveEventPanelProps) {
           youtube: 'URL de YouTube (opcional)',
           sponsor: 'Patrocinador del evento (opcional)',
           sponsorLogo: 'URL logo del patrocinador (opcional)',
-          cover: 'URL imagen de portada (opcional)',
+          cover: 'Imagen de portada (opcional)',
           teamA: 'Equipo A — nombre',
           teamAFlag: 'Equipo A — emoji o URL de bandera',
           teamB: 'Equipo B — nombre',
@@ -140,7 +142,7 @@ export function CreateLiveEventPanel({ locale }: CreateLiveEventPanelProps) {
           youtube: 'YouTube URL (optional)',
           sponsor: 'Event sponsor (optional)',
           sponsorLogo: 'Sponsor logo URL (optional)',
-          cover: 'Cover image URL (optional)',
+          cover: 'Cover image (optional)',
           teamA: 'Team A — name',
           teamAFlag: 'Team A — emoji or flag URL',
           teamB: 'Team B — name',

@@ -11,6 +11,8 @@ type Props = {
   isAdmin: boolean
   sponsorCompanyName: string | null
   variant: 'public' | 'shell'
+  /** When true, only renders market grid + footer (no top hero — used on product page). */
+  listOnly?: boolean
 }
 
 export default function PulseListingView({
@@ -19,6 +21,7 @@ export default function PulseListingView({
   isAdmin,
   sponsorCompanyName,
   variant,
+  listOnly = false,
 }: Props) {
   const t = getPulseListingCopy(locale)
   const dateLocale = locale === 'es' ? 'es-MX' : 'en-US'
@@ -34,17 +37,26 @@ export default function PulseListingView({
 
   const inner = (
     <>
-      <header className="mb-10 text-center">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-400/90">{t.badge}</p>
-        <h1 className="mt-2 text-3xl font-bold text-white sm:text-4xl">{t.title}</h1>
-        <p className="mx-auto mt-3 max-w-xl text-slate-400">{t.subtitle}</p>
-        {isAdmin && (
-          <p className="mt-2 text-xs text-amber-400/90">{t.adminView}</p>
-        )}
-        {!isAdmin && sponsorCompanyName && (
-          <p className="mt-2 text-xs text-emerald-400/90">{t.sponsorView(sponsorCompanyName)}</p>
-        )}
-      </header>
+      {!listOnly && (
+        <header className="mb-10 text-center">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-400/90">{t.badge}</p>
+          <h1 className="mt-2 text-3xl font-bold text-white sm:text-4xl">{t.title}</h1>
+          <p className="mx-auto mt-3 max-w-xl text-slate-400">{t.subtitle}</p>
+          {isAdmin && (
+            <p className="mt-2 text-xs text-amber-400/90">{t.adminView}</p>
+          )}
+          {!isAdmin && sponsorCompanyName && (
+            <p className="mt-2 text-xs text-emerald-400/90">{t.sponsorView(sponsorCompanyName)}</p>
+          )}
+        </header>
+      )}
+
+      {isAdmin && listOnly && (
+        <p className="mb-6 text-center text-xs text-amber-400/90">{t.adminView}</p>
+      )}
+      {!isAdmin && sponsorCompanyName && listOnly && (
+        <p className="mb-6 text-center text-xs text-emerald-400/90">{t.sponsorView(sponsorCompanyName)}</p>
+      )}
 
       {markets.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-white/15 bg-[#1a2029] px-6 py-16 text-center">
@@ -74,7 +86,6 @@ export default function PulseListingView({
                     'title',
                     locale
                   )
-                  const logo = m.pulse_client_logo?.trim()
                   const votes = m.total_votes ?? 0
                   const closeDate = m.resolution_date
                     ? new Date(m.resolution_date).toLocaleDateString(dateLocale, {
@@ -83,36 +94,44 @@ export default function PulseListingView({
                         year: 'numeric',
                       })
                     : '—'
+                  const cover = m.cover_image_url?.trim()
+                  const byLine =
+                    m.pulse_client_name?.trim() &&
+                    `${locale === 'es' ? 'Por' : 'By'} ${m.pulse_client_name.trim()} · `
                   return (
                     <li key={m.id}>
                       <Link
                         href={`/pulse/${m.id}`}
-                        className="group flex h-full flex-col rounded-2xl border border-white/10 bg-[#1a2029] p-5 transition hover:border-emerald-500/35 hover:shadow-lg hover:shadow-emerald-900/20"
+                        className="group block overflow-hidden rounded-xl border border-[#2d3748] bg-[#1a2029] transition-colors hover:border-emerald-500/30"
                       >
-                        <div className="mb-3 flex items-start gap-3">
-                          {logo ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={logo}
-                              alt=""
-                              className="h-10 w-10 shrink-0 rounded-lg object-contain"
-                            />
-                          ) : (
-                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-400">
-                              ◆
+                        {cover ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={cover}
+                            alt=""
+                            className="h-36 w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-36 w-full items-center justify-center bg-gradient-to-br from-amber-900/20 to-[#1a2029]">
+                            <span className="text-4xl" aria-hidden>
+                              📊
                             </span>
-                          )}
-                          <div className="min-w-0 flex-1">
-                            <p className="font-semibold leading-snug text-white group-hover:text-emerald-200">
-                              {title}
-                            </p>
-                            <p className="mt-1 text-xs text-slate-500">{t.poweredBy}</p>
-                            <p className="mt-2 text-xs text-slate-400">
-                              {votes} {t.votes} · {statusLabelPulse(m.status, locale)} · {t.closes}{' '}
-                              {closeDate}
-                            </p>
-                            <p className="mt-1 text-xs font-medium text-emerald-400/90">{t.viewResults}</p>
                           </div>
+                        )}
+                        <div className="p-4">
+                          <h3 className="text-sm font-bold leading-snug text-white group-hover:text-emerald-200">
+                            {title}
+                          </h3>
+                          <p className="mt-1 text-xs text-slate-500">
+                            {byLine}
+                            {votes} {locale === 'es' ? 'votos' : 'votes'}
+                          </p>
+                          <p className="mt-2 text-xs text-slate-400">
+                            {statusLabelPulse(m.status, locale)} · {t.closes} {closeDate}
+                          </p>
+                          <span className="mt-2 inline-block text-xs font-medium text-emerald-400">
+                            {t.viewResults}
+                          </span>
                         </div>
                       </Link>
                     </li>
@@ -126,11 +145,14 @@ export default function PulseListingView({
 
       <div className="mt-12 rounded-2xl border border-white/10 bg-[#1a2029] px-6 py-8 text-center">
         <p className="text-slate-300">{t.ctaQuestion}</p>
+        {listOnly && (
+          <p className="mt-2 text-sm text-slate-500">{t.ctaFirstFree}</p>
+        )}
         <Link
-          href="/#pulse"
+          href={listOnly ? '/sponsor' : '/pulse'}
           className="mt-4 inline-flex min-h-[44px] items-center justify-center rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-500"
         >
-          {t.ctaLearnMore}
+          {listOnly ? t.ctaViewPlans : t.ctaLearnMore}
         </Link>
         <CouponRedeemSection locale={locale} />
       </div>
@@ -149,6 +171,10 @@ export default function PulseListingView({
 
   if (variant === 'shell') {
     return <div className="mx-auto w-full max-w-4xl">{inner}</div>
+  }
+
+  if (listOnly) {
+    return <div className="text-slate-100">{inner}</div>
   }
 
   return (
