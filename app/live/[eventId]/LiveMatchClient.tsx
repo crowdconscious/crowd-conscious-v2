@@ -337,6 +337,10 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
       isLive={streamLive}
       matchDate={event.match_date}
       embedReplay={embedReplay}
+      isScheduled={isScheduled}
+      isCompleted={isCompleted}
+      eventTitle={event.title}
+      endedAt={event.ended_at ?? null}
       locale={locale === 'es' ? 'es' : 'en'}
     />
   )

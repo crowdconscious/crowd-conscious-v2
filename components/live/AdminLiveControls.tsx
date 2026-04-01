@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { ChevronUp, Shield, Loader2 } from 'lucide-react'
 import type { Database } from '@/types/database'
 import type { MarketWithOutcomes } from '@/hooks/useLiveMarkets'
+import { LogoUpload } from '@/components/ui/LogoUpload'
 type LiveEventRow = Database['public']['Tables']['live_events']['Row']
 
 type DurationChoice = '5' | '10' | '15' | 'halftime' | 'fulltime'
@@ -134,7 +135,7 @@ export function AdminLiveControls({
       markets: locale === 'es' ? 'Mercados creados / resueltos' : 'Markets created / resolved',
       active: locale === 'es' ? 'Activos' : 'Active',
       branding: locale === 'es' ? 'Marca del evento' : 'Event branding',
-      coverUrl: locale === 'es' ? 'Imagen de portada (URL)' : 'Cover image URL',
+      coverUrl: locale === 'es' ? 'Imagen de portada' : 'Cover image',
       saveBranding: locale === 'es' ? 'Guardar marca' : 'Save branding',
       teamA: locale === 'es' ? 'Equipo A' : 'Team A',
       teamB: locale === 'es' ? 'Equipo B' : 'Team B',
@@ -331,15 +332,15 @@ export function AdminLiveControls({
 
           <section className="border-t border-white/10 pt-3">
             <h3 className="mb-2 font-semibold text-teal-300">{t.branding}</h3>
-            <label className="mb-2 block">
-              <span className="text-sm text-slate-400">{t.coverUrl}</span>
-              <input
-                value={coverImageUrl}
-                onChange={(e) => setCoverImageUrl(e.target.value)}
-                className="mt-0.5 min-h-[44px] w-full rounded-lg border border-white/10 bg-black/40 px-2 py-2 text-sm"
-                placeholder="https://..."
+            <div className="mb-2">
+              <span className="mb-1 block text-sm text-slate-400">{t.coverUrl}</span>
+              <LogoUpload
+                currentLogoUrl={coverImageUrl.trim() || null}
+                onUpload={(url) => setCoverImageUrl(url)}
+                label={locale === 'es' ? 'Sube imagen de portada' : 'Upload cover image'}
+                hint={locale === 'es' ? 'PNG, JPG, WebP · máx. 2MB' : 'PNG, JPG, WebP · max 2MB'}
               />
-            </label>
+            </div>
             <div className="grid gap-2 sm:grid-cols-2">
               <label className="block">
                 <span className="text-sm text-slate-400">

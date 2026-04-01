@@ -37,7 +37,12 @@ export async function PATCH(request: NextRequest, { params }: Props) {
     if (typeof body.title === 'string') updates.title = body.title.trim()
     if (typeof body.description === 'string') updates.description = body.description.trim() || null
     if (typeof body.match_date === 'string') updates.match_date = body.match_date
-    if (typeof body.status === 'string') updates.status = body.status
+    if (typeof body.status === 'string') {
+      updates.status = body.status
+      if (body.status === 'completed' && before?.status !== 'completed') {
+        updates.ended_at = new Date().toISOString()
+      }
+    }
     if (typeof body.youtube_url === 'string') {
       updates.youtube_url = body.youtube_url.trim() || null
       updates.youtube_video_id = extractYoutubeVideoId(body.youtube_url)

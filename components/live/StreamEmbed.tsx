@@ -13,6 +13,12 @@ export interface StreamEmbedProps {
   matchDate: string
   /** When true, embed recorded video even if `isLive` is false (e.g. completed event replay). */
   embedReplay?: boolean
+  /** Renders embed for scheduled events that already have a video URL (not only after "go live"). */
+  isScheduled?: boolean
+  /** Show ended state instead of "Starting!" countdown when the event finished without a stored video. */
+  isCompleted?: boolean
+  eventTitle?: string | null
+  endedAt?: string | null
   locale?: 'en' | 'es'
 }
 
@@ -37,6 +43,10 @@ export function StreamEmbed({
   isLive,
   matchDate,
   embedReplay = false,
+  isScheduled = false,
+  isCompleted = false,
+  eventTitle,
+  endedAt,
   locale: localeProp,
 }: StreamEmbedProps) {
   const [now, setNow] = useState(() => Date.now())
@@ -62,9 +72,32 @@ export function StreamEmbed({
   }, [])
 
   const remaining = Math.max(0, target - now)
-  const showPlaceholder = !resolvedVideoId || (!isLive && !embedReplay)
+  const shouldEmbed =
+    !!resolvedVideoId && (isLive || embedReplay || (isScheduled && !isCompleted))
 
-  if (showPlaceholder) {
+  if (isCompleted && !resolvedVideoId) {
+    return (
+      <div className="relative aspect-video min-h-0 w-full max-w-full overflow-hidden rounded-xl bg-[#1a2029] shadow-lg shadow-black/40 ring-1 ring-white/10">
+        <div className="flex h-full min-h-[12rem] flex-col items-center justify-center gap-3 px-4 py-8 text-center sm:min-h-0">
+          <p className="text-sm text-gray-400">
+            {locale === 'es' ? 'Evento finalizado' : 'Event ended'}
+          </p>
+          {eventTitle ? (
+            <p className="text-lg font-semibold text-white">{eventTitle}</p>
+          ) : null}
+          {endedAt ? (
+            <p className="text-xs text-gray-500">
+              {new Date(endedAt).toLocaleDateString(locale === 'es' ? 'es-MX' : 'en-US', {
+                dateStyle: 'medium',
+              })}
+            </p>
+          ) : null}
+        </div>
+      </div>
+    )
+  }
+
+  if (!shouldEmbed) {
     return (
       <div className="relative aspect-video min-h-0 w-full max-w-full overflow-hidden rounded-xl bg-[#1a2029] shadow-lg shadow-black/40 ring-1 ring-white/10">
         <div className="flex h-full min-h-[12rem] flex-col items-center justify-center px-4 py-8 text-center sm:min-h-0 sm:px-6">

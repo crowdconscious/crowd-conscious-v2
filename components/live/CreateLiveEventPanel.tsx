@@ -8,6 +8,55 @@ import {
   type LiveEventTypeKey,
   suggestedQuestionsPayload,
 } from '@/lib/live-event-types'
+import { LogoUpload } from '@/components/ui/LogoUpload'
+
+function CoverImageField({
+  label,
+  value,
+  onChange,
+  es,
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  es: boolean
+}) {
+  return (
+    <div>
+      <span className="mb-1 block text-sm font-medium text-slate-300">{label}</span>
+      <LogoUpload
+        currentLogoUrl={value.trim() || null}
+        onUpload={onChange}
+        label={es ? 'Sube imagen de portada' : 'Upload cover image'}
+        hint={es ? 'PNG, JPG, WebP · máx. 2MB' : 'PNG, JPG, WebP · max 2MB'}
+      />
+    </div>
+  )
+}
+
+function SponsorLogoField({
+  label,
+  value,
+  onChange,
+  es,
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  es: boolean
+}) {
+  return (
+    <div>
+      <span className="mb-1 block text-sm font-medium text-slate-300">{label}</span>
+      <LogoUpload
+        currentLogoUrl={value.trim() || null}
+        onUpload={onChange}
+        label={es ? 'Sube logo' : 'Upload logo'}
+        hint={es ? 'PNG, JPG, WebP · máx. 2MB' : 'PNG, JPG, WebP · max 2MB'}
+      />
+    </div>
+  )
+}
 
 export interface CreateLiveEventPanelProps {
   locale: 'en' | 'es'
@@ -293,26 +342,18 @@ export function CreateLiveEventPanel({ locale }: CreateLiveEventPanelProps) {
                   className={INPUT_CLASS}
                 />
               </label>
-              <label className="block">
-                <span className="mb-1 block text-sm font-medium text-slate-300">{t.fields.sponsorLogo}</span>
-                <input
-                  type="url"
-                  value={sponsorLogoUrl}
-                  onChange={(e) => setSponsorLogoUrl(e.target.value)}
-                  className={INPUT_CLASS}
-                  placeholder="https://..."
-                />
-              </label>
-              <label className="block">
-                <span className="mb-1 block text-sm font-medium text-slate-300">{t.fields.cover}</span>
-                <input
-                  type="url"
-                  value={coverImageUrl}
-                  onChange={(e) => setCoverImageUrl(e.target.value)}
-                  className={INPUT_CLASS}
-                  placeholder="https://..."
-                />
-              </label>
+              <SponsorLogoField
+                label={t.fields.sponsorLogo}
+                value={sponsorLogoUrl}
+                onChange={setSponsorLogoUrl}
+                es={es}
+              />
+              <CoverImageField
+                label={t.fields.cover}
+                value={coverImageUrl}
+                onChange={setCoverImageUrl}
+                es={es}
+              />
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="block">
                   <span className="mb-1 block text-sm text-slate-400">{t.fields.teamA}</span>
@@ -387,24 +428,18 @@ export function CreateLiveEventPanel({ locale }: CreateLiveEventPanelProps) {
                   className={INPUT_CLASS}
                 />
               </label>
-              <label className="block">
-                <span className="mb-1 block text-sm font-medium text-slate-300">{t.fields.brandLogo}</span>
-                <input
-                  type="url"
-                  value={brandLogoUrl}
-                  onChange={(e) => setBrandLogoUrl(e.target.value)}
-                  className={INPUT_CLASS}
-                />
-              </label>
-              <label className="block">
-                <span className="mb-1 block text-sm font-medium text-slate-300">{t.fields.cover}</span>
-                <input
-                  type="url"
-                  value={coverImageUrl}
-                  onChange={(e) => setCoverImageUrl(e.target.value)}
-                  className={INPUT_CLASS}
-                />
-              </label>
+              <SponsorLogoField
+                label={t.fields.brandLogo}
+                value={brandLogoUrl}
+                onChange={setBrandLogoUrl}
+                es={es}
+              />
+              <CoverImageField
+                label={t.fields.cover}
+                value={coverImageUrl}
+                onChange={setCoverImageUrl}
+                es={es}
+              />
               <label className="block">
                 <span className="mb-1 block text-sm font-medium text-slate-300">{t.fields.partnerExtra}</span>
                 <input
@@ -455,15 +490,12 @@ export function CreateLiveEventPanel({ locale }: CreateLiveEventPanelProps) {
                   className={INPUT_CLASS}
                 />
               </label>
-              <label className="block">
-                <span className="mb-1 block text-sm font-medium text-slate-300">{t.fields.cover}</span>
-                <input
-                  type="url"
-                  value={coverImageUrl}
-                  onChange={(e) => setCoverImageUrl(e.target.value)}
-                  className={INPUT_CLASS}
-                />
-              </label>
+              <CoverImageField
+                label={t.fields.cover}
+                value={coverImageUrl}
+                onChange={setCoverImageUrl}
+                es={es}
+              />
             </>
           )}
 
@@ -505,15 +537,12 @@ export function CreateLiveEventPanel({ locale }: CreateLiveEventPanelProps) {
                   className={INPUT_CLASS}
                 />
               </label>
-              <label className="block">
-                <span className="mb-1 block text-sm font-medium text-slate-300">{t.fields.cover}</span>
-                <input
-                  type="url"
-                  value={coverImageUrl}
-                  onChange={(e) => setCoverImageUrl(e.target.value)}
-                  className={INPUT_CLASS}
-                />
-              </label>
+              <CoverImageField
+                label={t.fields.cover}
+                value={coverImageUrl}
+                onChange={setCoverImageUrl}
+                es={es}
+              />
               <label className="block">
                 <span className="mb-1 block text-sm font-medium text-slate-300">{t.fields.sponsor}</span>
                 <input
@@ -523,15 +552,12 @@ export function CreateLiveEventPanel({ locale }: CreateLiveEventPanelProps) {
                   className={INPUT_CLASS}
                 />
               </label>
-              <label className="block">
-                <span className="mb-1 block text-sm font-medium text-slate-300">{t.fields.sponsorLogo}</span>
-                <input
-                  type="url"
-                  value={sponsorLogoUrl}
-                  onChange={(e) => setSponsorLogoUrl(e.target.value)}
-                  className={INPUT_CLASS}
-                />
-              </label>
+              <SponsorLogoField
+                label={t.fields.sponsorLogo}
+                value={sponsorLogoUrl}
+                onChange={setSponsorLogoUrl}
+                es={es}
+              />
             </>
           )}
 
@@ -573,15 +599,12 @@ export function CreateLiveEventPanel({ locale }: CreateLiveEventPanelProps) {
                   className={INPUT_CLASS}
                 />
               </label>
-              <label className="block">
-                <span className="mb-1 block text-sm font-medium text-slate-300">{t.fields.cover}</span>
-                <input
-                  type="url"
-                  value={coverImageUrl}
-                  onChange={(e) => setCoverImageUrl(e.target.value)}
-                  className={INPUT_CLASS}
-                />
-              </label>
+              <CoverImageField
+                label={t.fields.cover}
+                value={coverImageUrl}
+                onChange={setCoverImageUrl}
+                es={es}
+              />
             </>
           )}
 
@@ -614,15 +637,12 @@ export function CreateLiveEventPanel({ locale }: CreateLiveEventPanelProps) {
                   className={INPUT_CLASS}
                 />
               </label>
-              <label className="block">
-                <span className="mb-1 block text-sm font-medium text-slate-300">{t.fields.cover}</span>
-                <input
-                  type="url"
-                  value={coverImageUrl}
-                  onChange={(e) => setCoverImageUrl(e.target.value)}
-                  className={INPUT_CLASS}
-                />
-              </label>
+              <CoverImageField
+                label={t.fields.cover}
+                value={coverImageUrl}
+                onChange={setCoverImageUrl}
+                es={es}
+              />
               <label className="block">
                 <span className="mb-1 block text-sm font-medium text-slate-300">{t.fields.sponsor}</span>
                 <input
@@ -632,15 +652,12 @@ export function CreateLiveEventPanel({ locale }: CreateLiveEventPanelProps) {
                   className={INPUT_CLASS}
                 />
               </label>
-              <label className="block">
-                <span className="mb-1 block text-sm font-medium text-slate-300">{t.fields.sponsorLogo}</span>
-                <input
-                  type="url"
-                  value={sponsorLogoUrl}
-                  onChange={(e) => setSponsorLogoUrl(e.target.value)}
-                  className={INPUT_CLASS}
-                />
-              </label>
+              <SponsorLogoField
+                label={t.fields.sponsorLogo}
+                value={sponsorLogoUrl}
+                onChange={setSponsorLogoUrl}
+                es={es}
+              />
             </>
           )}
 

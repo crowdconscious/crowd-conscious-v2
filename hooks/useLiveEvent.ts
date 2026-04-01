@@ -63,10 +63,8 @@ export function useLiveEvent(eventId: string | null): UseLiveEventResult {
           table: 'live_events',
           filter: `id=eq.${eventId}`,
         },
-        (payload) => {
-          if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
-            setEvent((prev) => ({ ...(prev ?? ({} as LiveEventRow)), ...(payload.new as LiveEventRow) }))
-          }
+        () => {
+          void fetchEvent()
         }
       )
       .subscribe()
@@ -74,7 +72,7 @@ export function useLiveEvent(eventId: string | null): UseLiveEventResult {
     return () => {
       void supabase.removeChannel(channel)
     }
-  }, [eventId, supabase])
+  }, [eventId, supabase, fetchEvent])
 
   const isLive = event?.status === 'live'
 

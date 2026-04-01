@@ -41,11 +41,13 @@ export async function sendPostVoteConfirmation(args: {
 
   const { data: market } = await admin
     .from('prediction_markets')
-    .select('title, current_probability, market_type')
+    .select('title, current_probability, market_type, live_event_id, is_micro_market')
     .eq('id', marketId)
     .single()
 
   if (!market?.title) return
+
+  const skipVoteEmail = market.live_event_id != null || market.is_micro_market === true
 
   const xp = typeof rpcResult.xp_earned === 'number' ? rpcResult.xp_earned : 0
   const outcomeLabel = rpcResult.outcome_label ?? '—'
@@ -72,7 +74,7 @@ export async function sendPostVoteConfirmation(args: {
     console.error('[vote notification]', e)
   }
 
-  if (profile?.email_notifications === false || !email) return
+  if (skipVoteEmail || profile?.email_notifications === false || !email) return
 
   const template = postVoteConfirmationTemplate({
     marketTitle: market.title,

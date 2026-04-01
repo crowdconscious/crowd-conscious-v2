@@ -9,9 +9,11 @@ export function extractYoutubeVideoId(url: string | null | undefined): string | 
   if (short?.[1]) return short[1]
   const v = u.match(/[?&]v=([^?&#]+)/i)
   if (v?.[1]) return v[1]
-  const live = u.match(/youtube\.com\/live\/([^?&#/]+)/i)
+  const live = u.match(/(?:www\.)?youtube\.com\/live\/([^?&#/]+)/i)
   if (live?.[1]) return live[1]
-  const embed = u.match(/youtube\.com\/embed\/([^?&#]+)/i)
+  const mobile = u.match(/m\.youtube\.com\/watch\?v=([^?&#]+)/i)
+  if (mobile?.[1]) return mobile[1]
+  const embed = u.match(/(?:www\.)?youtube\.com\/embed\/([^?&#]+)/i)
   if (embed?.[1]) return embed[1]
   const shorts = u.match(/youtube\.com\/shorts\/([^?&#]+)/i)
   if (shorts?.[1]) return shorts[1]

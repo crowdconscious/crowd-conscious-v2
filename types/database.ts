@@ -230,6 +230,7 @@ export interface Database {
           updated_at: string
           reminder_1h_sent_at: string | null
           results_email_sent_at: string | null
+          ended_at: string | null
         }
         Insert: {
           id?: string
@@ -264,6 +265,7 @@ export interface Database {
           updated_at?: string
           reminder_1h_sent_at?: string | null
           results_email_sent_at?: string | null
+          ended_at?: string | null
         }
         Update: {
           id?: string
@@ -298,6 +300,7 @@ export interface Database {
           updated_at?: string
           reminder_1h_sent_at?: string | null
           results_email_sent_at?: string | null
+          ended_at?: string | null
         }
         Relationships: []
       }

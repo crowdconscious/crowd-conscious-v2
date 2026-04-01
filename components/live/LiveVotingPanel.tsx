@@ -232,13 +232,17 @@ export function LiveVotingPanel({
             ref={scrollRef}
             onTouchStart={onTouchStart}
             onTouchEnd={onTouchEnd}
-            className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-2 [-webkit-overflow-scrolling:touch] scrollbar-hide"
+            className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-4 -mx-4 px-4 [-webkit-overflow-scrolling:touch] scrollbar-hide [&::-webkit-scrollbar]:hidden"
+            style={{
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
+            }}
           >
             {sortedActive.map((m) => (
               <div
                 key={m.id}
                 data-live-market-slide
-                className="w-[min(100%,420px)] shrink-0 snap-center"
+                className="w-[85vw] max-w-[400px] shrink-0 snap-center"
               >
                 <MicroMarketCard
                   market={m}
@@ -266,14 +270,14 @@ export function LiveVotingPanel({
                   el.scrollTo({ left: j * (slideW + gap), behavior: 'smooth' })
                 }}
                 className={cn(
-                  'min-h-[44px] min-w-[44px] rounded-full p-2 transition-colors',
-                  j === activeSlide ? 'text-emerald-400' : 'text-slate-600'
+                  'min-h-[44px] min-w-[44px] rounded-full p-2 transition-colors duration-200',
+                  j === activeSlide ? 'text-emerald-500' : 'text-gray-600'
                 )}
               >
                 <span
                   className={cn(
-                    'mx-auto block h-2 w-2 rounded-full transition-colors',
-                    j === activeSlide ? 'bg-emerald-400' : 'bg-slate-600'
+                    'mx-auto block h-2 w-2 rounded-full transition-colors duration-200',
+                    j === activeSlide ? 'bg-emerald-500' : 'bg-gray-600'
                   )}
                 />
               </button>
