@@ -176,16 +176,53 @@ export type BlogPostDigest = {
   category: string
 }
 
-/** Weekly-style newsletter: featured blog post + trending markets (replaces random daily market). */
-export function blogDigestNewsletterTemplate(opts: {
-  post: BlogPostDigest
+const EMAIL_FONT = `Arial, Helvetica, sans-serif`
+
+function marketRowHtml(m: BlogDigestMarket): string {
+  const marketUrl = `${APP_URL}/predictions/markets/${m.id}`
+  const ctaLabel = m.marketStyle === 'binary' ? 'Predecir →' : 'Opinar →'
+  const question = esc(formatMarketQuestionForSubject(m.title))
+
+  if (m.resultsLine) {
+    return `
+    <div style="background: #1a2029; border-radius: 8px; padding: 16px; margin-bottom: 8px;">
+      <p style="color: #ffffff; font-size: 14px; font-weight: bold; margin: 0 0 8px; line-height: 1.35; font-family: ${EMAIL_FONT};">
+        ${question}
+      </p>
+      <p style="color: #e2e8f0; font-size: 13px; margin: 0; line-height: 1.5; font-family: ${EMAIL_FONT};">
+        ${esc(m.resultsLine)} · <a href="${esc(marketUrl)}" style="color: #10b981; font-size: 13px; text-decoration: none; font-weight: bold;">${ctaLabel}</a>
+      </p>
+    </div>`
+  }
+
+  return `
+    <div style="background: #1a2029; border-radius: 8px; padding: 16px; margin-bottom: 8px;">
+      <p style="color: #ffffff; font-size: 14px; font-weight: bold; margin: 0 0 8px; line-height: 1.35; font-family: ${EMAIL_FONT};">
+        ${question}
+      </p>
+      <p style="color: #9ca3af; font-size: 13px; margin: 0; line-height: 1.5; font-family: ${EMAIL_FONT};">
+        ${m.total_votes ?? 0} opiniones · ${esc(String(m.category ?? '—'))} · <a href="${esc(marketUrl)}" style="color: #10b981; font-size: 13px; text-decoration: none; font-weight: bold;">Predecir →</a>
+      </p>
+    </div>`
+}
+
+/** Blog + optional Pulse + trending markets; dark theme (#0f1419), Arial-safe. */
+export function crowdNewsletterEmailTemplate(opts: {
+  post: BlogPostDigest | null
+  /** Use post title in subject when this edition newly features the latest post */
+  highlightNewBlog: boolean
+  pulseMarket: BlogDigestMarket | null
   markets: BlogDigestMarket[]
   fundTotalMxn: number
   unsubscribeUrl: string | null
+  daysUntilWorldCup?: number
 }): { subject: string; html: string } {
-  const subject = 'Lo que CDMX piensa esta semana | Crowd Conscious'
+  const subject =
+    opts.post && opts.highlightNewBlog
+      ? `${opts.post.title.replace(/\s+/g, ' ').trim().slice(0, 90)} | Crowd Conscious`
+      : 'Lo que CDMX piensa esta semana | Crowd Conscious'
 
-  const snippet = excerptFirstSentences(opts.post.excerpt, 3)
+  const snippet = opts.post ? excerptFirstSentences(opts.post.excerpt, 3) : ''
   const fundFormatted = Math.round(opts.fundTotalMxn).toLocaleString('es-MX', {
     maximumFractionDigits: 0,
   })
@@ -193,74 +230,81 @@ export function blogDigestNewsletterTemplate(opts: {
   const divider =
     '<div style="height: 0; margin: 0 20px; border: 0; border-top: 1px solid #2d3748;" role="separator" aria-hidden="true"></div>'
 
-  const marketRows = opts.markets
-    .map((m) => {
-      const marketUrl = `${APP_URL}/predictions/markets/${m.id}`
-      const ctaLabel = m.marketStyle === 'binary' ? 'Predecir →' : 'Opinar →'
-      const question = esc(formatMarketQuestionForSubject(m.title))
-
-      if (m.resultsLine) {
-        return `
-    <div style="background: #1a2029; border-radius: 8px; padding: 16px; margin-bottom: 8px;">
-      <p style="color: #ffffff; font-size: 14px; font-weight: bold; margin: 0 0 8px; line-height: 1.35;">
-        ${question}
+  const blogBlock =
+    opts.post && snippet
+      ? `
+    <div style="padding: 24px 24px 20px;">
+      <p style="color: #10b981; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 10px; font-family: ${EMAIL_FONT};">
+        ${opts.highlightNewBlog ? '📝 Nuevo en el blog' : '📝 Blog'}
       </p>
-      <p style="color: #e2e8f0; font-size: 13px; margin: 0; line-height: 1.5;">
-        ${esc(m.resultsLine)} · <a href="${esc(marketUrl)}" style="color: #10b981; font-size: 13px; text-decoration: none; font-weight: bold;">${ctaLabel}</a>
+      <h2 style="color: #ffffff; font-size: 20px; font-family: ${EMAIL_FONT}; margin: 0 0 12px; line-height: 1.3;">
+        ${esc(opts.post.title)}
+      </h2>
+      <p style="color: #9ca3af; font-size: 14px; line-height: 1.6; font-family: ${EMAIL_FONT}; margin: 0 0 12px;">
+        ${esc(snippet)}
+      </p>
+      <a href="${esc(`${APP_URL}/blog/${opts.post.slug}`)}"
+        style="display: inline-block; background: #10b981; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px; font-family: ${EMAIL_FONT};">
+        Leer artículo →
+      </a>
+    </div>`
+      : `
+    <div style="padding: 24px 24px 12px;">
+      <p style="color: #94a3b8; font-size: 14px; line-height: 1.6; font-family: ${EMAIL_FONT}; margin: 0;">
+        Análisis e historias en <a href="${esc(`${APP_URL}/blog`)}" style="color: #10b981; font-weight: bold;"><span style="font-family: ${EMAIL_FONT};">crowdconscious.app/blog</span></a>
       </p>
     </div>`
-      }
 
-      return `
-    <div style="background: #1a2029; border-radius: 8px; padding: 16px; margin-bottom: 8px;">
-      <p style="color: #ffffff; font-size: 14px; font-weight: bold; margin: 0 0 8px; line-height: 1.35;">
-        ${question}
-      </p>
-      <p style="color: #9ca3af; font-size: 13px; margin: 0; line-height: 1.5;">
-        ${m.total_votes ?? 0} opiniones · ${esc(String(m.category ?? '—'))} · <a href="${esc(marketUrl)}" style="color: #10b981; font-size: 13px; text-decoration: none; font-weight: bold;">Predecir →</a>
-      </p>
+  const pulseBlock = opts.pulseMarket
+    ? `
+    <div style="padding: 0 24px 16px;">
+      <div style="padding: 20px; background: #1a2029; border: 1px solid rgba(16,185,129,0.35); border-radius: 12px;">
+        <span style="color: #f59e0b; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-family: ${EMAIL_FONT};">📊 Pulse activo</span>
+        <h3 style="color: #ffffff; font-size: 16px; font-family: ${EMAIL_FONT}; margin: 8px 0 12px; line-height: 1.35;">
+          ${esc(formatMarketQuestionForSubject(opts.pulseMarket.title))}
+        </h3>
+        <p style="color: #9ca3af; font-size: 13px; font-family: ${EMAIL_FONT}; margin: 0 0 12px;">
+          ${opts.pulseMarket.total_votes ?? 0} opiniones · ¿Ya diste la tuya?
+        </p>
+        <a href="${esc(`${APP_URL}/predictions/markets/${opts.pulseMarket.id}`)}"
+          style="display: inline-block; background: transparent; color: #10b981; border: 1px solid #10b981; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 13px; font-family: ${EMAIL_FONT};">
+          Opinar →
+        </a>
+      </div>
     </div>`
-    })
-    .join('')
+    : ''
 
+  const marketRows = opts.markets.map((m) => marketRowHtml(m)).join('')
   const fundUrl = `${APP_URL}/predictions/fund`
+  const wc =
+    typeof opts.daysUntilWorldCup === 'number' && opts.daysUntilWorldCup > 0
+      ? `<p style="color: #6b7280; font-size: 12px; text-align: center; font-family: ${EMAIL_FONT}; margin: 0 0 8px;">⚽ Mundial 2026: ~${opts.daysUntilWorldCup} días</p>`
+      : ''
 
   const html = `
-  <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #0f1419; color: #f9fafb;">
+  <div style="font-family: ${EMAIL_FONT}; max-width: 600px; margin: 0 auto; background: #0f1419; color: #f9fafb;">
     <div style="padding: 24px; text-align: center; border-bottom: 1px solid #2d3748;">
       <img src="${LOGO_URL}" alt="Crowd Conscious" width="120" style="height: auto; margin: 0 auto;" />
     </div>
-    <div style="padding: 28px 24px 20px;">
-      <p style="color: #10b981; font-size: 13px; font-weight: 600; margin: 0 0 10px;">
-        📊 Esta semana en Crowd Conscious
-      </p>
-      <p style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 12px;">
-        Fragmento destacado — máx. 3 frases
-      </p>
-      <p style="color: #cbd5e1; font-size: 15px; line-height: 1.65; margin: 0 0 22px;">
-        <span style="color: #94a3b8;">&#8220;</span>${esc(snippet)}<span style="color: #94a3b8;">&#8221;</span>
-      </p>
-      <a href="${esc(`${APP_URL}/blog/${opts.post.slug}`)}"
-        style="display: inline-block; background: #10b981; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;">
-        Leer análisis completo →
-      </a>
-    </div>
+    ${blogBlock}
+    ${pulseBlock}
     ${divider}
     <div style="padding: 22px 24px 8px;">
-      <h2 style="color: #ffffff; font-size: 16px; margin: 0 0 14px; font-weight: 700;">
-        🔥 Mercados activos esta semana
+      <h2 style="color: #ffffff; font-size: 15px; margin: 0 0 14px; font-weight: 700; font-family: ${EMAIL_FONT};">
+        🔥 Mercados activos
       </h2>
-      ${marketRows || '<p style="color:#64748b;font-size:14px;">Pronto más mercados.</p>'}
+      ${marketRows || '<p style="color:#64748b;font-size:14px;font-family: Arial, sans-serif;">Pronto más mercados.</p>'}
     </div>
     ${divider}
     <div style="padding: 20px 24px 8px; text-align: center;">
-      <p style="color: #10b981; font-size: 14px; margin: 0 0 6px; font-weight: 600;">
+      <p style="color: #10b981; font-size: 14px; margin: 0 0 6px; font-weight: 600; font-family: ${EMAIL_FONT};">
         💚 Fondo Consciente: $${esc(fundFormatted)} MXN para causas sociales
       </p>
-      <p style="color: #9ca3af; font-size: 12px; margin: 0 0 12px; line-height: 1.5;">
+      <p style="color: #9ca3af; font-size: 12px; margin: 0 0 12px; line-height: 1.5; font-family: ${EMAIL_FONT};">
         Cada opinión y predicción impulsa el fondo.
       </p>
-      <a href="${esc(fundUrl)}" style="color: #10b981; font-size: 13px; font-weight: 600; text-decoration: none;">
+      ${wc}
+      <a href="${esc(fundUrl)}" style="color: #10b981; font-size: 13px; font-weight: 600; text-decoration: none; font-family: ${EMAIL_FONT};">
         Ver causas activas →
       </a>
     </div>
@@ -268,6 +312,23 @@ export function blogDigestNewsletterTemplate(opts: {
   </div>`
 
   return { subject, html }
+}
+
+/** @deprecated Use crowdNewsletterEmailTemplate — kept for tests */
+export function blogDigestNewsletterTemplate(opts: {
+  post: BlogPostDigest
+  markets: BlogDigestMarket[]
+  fundTotalMxn: number
+  unsubscribeUrl: string | null
+}): { subject: string; html: string } {
+  return crowdNewsletterEmailTemplate({
+    post: opts.post,
+    highlightNewBlog: true,
+    pulseMarket: null,
+    markets: opts.markets,
+    fundTotalMxn: opts.fundTotalMxn,
+    unsubscribeUrl: opts.unsubscribeUrl,
+  })
 }
 
 export type ReengagementMarket = { title: string; yesPercent: number; url: string }

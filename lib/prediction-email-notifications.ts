@@ -1,9 +1,5 @@
 import { createAdminClient } from '@/lib/supabase-admin'
-import { sendEmail } from '@/lib/resend'
-import { postVoteConfirmationTemplate } from '@/lib/prediction-emails'
 import { getCommunityProbabilitySummary } from '@/lib/market-email-helpers'
-
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'
 
 type RpcVoteResult = {
   success?: boolean
@@ -15,7 +11,7 @@ type RpcVoteResult = {
   no_change?: boolean
 }
 
-/** Fire-and-forget from vote API: in-app notification + optional email (respects email_notifications). */
+/** Fire-and-forget from vote API: in-app notification only (Resend per-vote email disabled — see email policy). */
 export async function sendPostVoteConfirmation(args: {
   userId: string
   email: string | null | undefined
@@ -76,14 +72,5 @@ export async function sendPostVoteConfirmation(args: {
 
   if (skipVoteEmail || profile?.email_notifications === false || !email) return
 
-  const template = postVoteConfirmationTemplate({
-    marketTitle: market.title,
-    outcomeLabel,
-    confidence,
-    communitySplitLine,
-    xpEarned: xp,
-    predictionsUrl: `${APP_URL}/predictions`,
-  })
-
-  await sendEmail(email, template).catch((err) => console.error('[post-vote email]', err))
+  /** Per-vote Resend email disabled — in-app notification + newsletter only (anti-spam). */
 }

@@ -11,7 +11,7 @@
     "app/api/cron/agents/content-creator/route.ts": { "maxDuration": 300 },
     "app/api/cron/agents/news-monitor/route.ts": { "maxDuration": 300 },
     "app/api/cron/agents/sponsor-report/route.ts": { "maxDuration": 300 },
-    "app/api/cron/daily-market-digest/route.ts": { "maxDuration": 120 },
+    "app/api/cron/newsletter/route.ts": { "maxDuration": 120 },
     "app/api/cron/live-reminders/route.ts": { "maxDuration": 120 },
     "app/api/cron/monthly-impact/route.ts": { "maxDuration": 120 },
     "app/api/cron/reengagement-inactive/route.ts": { "maxDuration": 120 },
@@ -28,8 +28,8 @@
       "schedule": "5 14 * * *"
     },
     {
-      "path": "/api/cron/daily-market-digest",
-      "schedule": "15 15 * * 2,4,6"
+      "path": "/api/cron/newsletter",
+      "schedule": "0 14 * * 1,3,5"
     },
     {
       "path": "/api/cron/agents/content-creator",
@@ -42,10 +42,6 @@
     {
       "path": "/api/cron/reengagement-inactive",
       "schedule": "0 16 * * 1"
-    },
-    {
-      "path": "/api/cron/monthly-impact",
-      "schedule": "0 9 1 * *"
     },
     {
       "path": "/api/cron/live-reminders",

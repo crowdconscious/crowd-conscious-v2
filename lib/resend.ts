@@ -12,32 +12,39 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
 // Email templates
 export const emailTemplates = {
-  welcomeUser: (userName: string) => ({
-    subject: 'Welcome to Crowd Conscious! 🌱',
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <div style="background: linear-gradient(135deg, #14b8a6, #3b82f6); padding: 40px 20px; text-align: center; border-radius: 10px 10px 0 0;">
-          <h1 style="color: white; margin: 0; font-size: 28px;">Welcome to Crowd Conscious! 🌱</h1>
+  welcomeUser: (userName: string) => {
+    const daysWc = Math.ceil((new Date('2026-06-11T12:00:00Z').getTime() - Date.now()) / 86400000)
+    return {
+      subject: '¡Bienvenido a Crowd Conscious!',
+      html: `
+      <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto; background: #0f1419; color: #e5e7eb;">
+        <div style="padding: 24px; text-align: center; border-bottom: 1px solid #2d3748;">
+          <img src="${APP_URL}/images/logo.png" alt="Crowd Conscious" width="120" style="height: auto;" />
         </div>
-        <div style="padding: 30px 20px; background: #f8fafc; border-radius: 0 0 10px 10px;">
-          <h2 style="color: #1e293b; margin-top: 0;">Hi ${userName}!</h2>
-          <p style="color: #475569; line-height: 1.6;">
-            Welcome to the community-driven platform where local groups organize around environmental and social impact. We're excited to have you join our movement!
+        <div style="padding: 32px 24px;">
+          <h1 style="color: #10b981; font-size: 24px; margin: 0 0 16px;">¡Bienvenido a Crowd Conscious!</h1>
+          <p style="color: #d1d5db; font-size: 14px; line-height: 1.6; margin: 0 0 14px;">
+            Hola ${userName} — ahora formas parte de una comunidad que usa inteligencia colectiva para predecir lo que importa en CDMX y México, y para impulsar causas reales.
           </p>
-          <h3 style="color: #1e293b;">What you can do:</h3>
-          <ul style="color: #475569; line-height: 1.8;">
-            <li>🎯 Make predictions on markets that matter</li>
-            <li>🗳️ Vote on where the Conscious Fund goes</li>
-            <li>📊 Earn XP and climb the leaderboard</li>
-            <li>🤝 Connect with like-minded changemakers</li>
-          </ul>
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${APP_URL}/predictions" style="background: #14b8a6; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; box-shadow: 0 4px 14px rgba(20, 184, 166, 0.3);">🚀 Start Predicting</a>
+          <p style="color: #d1d5db; font-size: 14px; line-height: 1.6; margin: 0 0 20px;">
+            Cada predicción suma al Fondo Consciente para proyectos comunitarios. Mientras más participas, más impacto generas.
+          </p>
+          <div style="text-align: center; margin: 24px 0;">
+            <a href="${APP_URL}/predictions" style="display: inline-block; background: #10b981; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">
+              Explorar mercados →
+            </a>
           </div>
+          <p style="color: #6b7280; font-size: 12px; text-align: center; margin: 0;">
+            ⚽ ~${daysWc} días para el Mundial 2026
+          </p>
+        </div>
+        <div style="padding: 16px 24px; text-align: center; border-top: 1px solid #2d3748;">
+          <p style="color: #6b7280; font-size: 11px; margin: 0;">Crowd Conscious · Predicciones con impacto · CDMX</p>
         </div>
       </div>
-    `
-  }),
+    `,
+    }
+  },
 
   eventRegistration: (userName: string, eventTitle: string, eventDate: string, eventLocation: string, communityName: string, eventUrl: string) => ({
     subject: `You're registered for ${eventTitle}! 📅`,

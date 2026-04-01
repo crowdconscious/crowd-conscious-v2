@@ -8,6 +8,7 @@ const CRON_JOBS = [
   'content-creator',
   'news-monitor',
   'inbox-curator',
+  'newsletter',
   'daily-market-digest',
   'reengagement-inactive',
   'monthly-impact',
