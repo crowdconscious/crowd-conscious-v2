@@ -5,6 +5,7 @@ import { SITE_URL } from '@/lib/seo/site'
 import { BlogPostBody } from './BlogPostBody'
 import { EmbeddedMarketCard } from '@/components/blog/EmbeddedMarketCard'
 import { BlogComments } from '@/components/blog/BlogComments'
+import { truncateMarkdownPreview } from '@/lib/blog-truncate-preview'
 
 type Props = { params: Promise<{ slug: string }> }
 
@@ -23,17 +24,6 @@ function formatDate(iso: string | null) {
     day: 'numeric',
     year: 'numeric',
   })
-}
-
-function splitMarkdownWords(content: string, maxWords: number) {
-  const words = content.trim().split(/\s+/)
-  if (words.length <= maxWords) {
-    return { preview: content, needsGate: false }
-  }
-  return {
-    preview: words.slice(0, maxWords).join(' '),
-    needsGate: true,
-  }
 }
 
 export async function generateMetadata(props: Props): Promise<Metadata> {
@@ -93,7 +83,7 @@ export default async function BlogPostPage(props: Props) {
 
   const isAuthenticated = !!userData.user
   const content = post.content || ''
-  const { preview, needsGate } = splitMarkdownWords(content, 300)
+  const { preview, needsGate } = truncateMarkdownPreview(content, 300)
   const showGate = !isAuthenticated && needsGate
 
   const relatedMarketIds = (post.related_market_ids ?? []).filter(Boolean) as string[]

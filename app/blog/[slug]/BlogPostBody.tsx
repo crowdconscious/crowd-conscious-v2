@@ -24,10 +24,12 @@ export function BlogPostBody({
 
   return (
     <>
-      <article
-        className="prose prose-invert max-w-none
+      <div
+        className="prose prose-invert mx-auto max-w-none
         prose-headings:font-bold prose-headings:text-white
-        prose-p:text-gray-300 prose-p:leading-relaxed
+        prose-h2:mt-10 prose-h2:mb-4 prose-h2:text-2xl
+        prose-h3:mt-8 prose-h3:mb-3 prose-h3:text-xl
+        prose-p:mb-5 prose-p:text-gray-300 prose-p:leading-relaxed
         prose-strong:text-white
         prose-a:text-emerald-400 prose-a:no-underline hover:prose-a:underline
         prose-blockquote:border-emerald-500/30 prose-blockquote:text-gray-400
@@ -38,16 +40,16 @@ export function BlogPostBody({
         prose-ul:marker:text-emerald-500/80"
       >
         <ReactMarkdown>{needsGate ? previewMarkdown : fullMarkdown}</ReactMarkdown>
-      </article>
+      </div>
 
       {needsGate && (
         <div
-          className="relative -mt-16 pt-20"
+          className="relative -mt-32 pt-32"
           style={{
-            background: 'linear-gradient(to bottom, transparent 0%, #0f1419 45%)',
+            background: 'linear-gradient(to bottom, transparent 0%, #0f1419 60%)',
           }}
         >
-          <div className="relative rounded-xl border border-[#2d3748] bg-[#0f1419]/95 px-6 py-10 text-center shadow-2xl backdrop-blur-md">
+          <div className="relative mx-auto max-w-md rounded-xl border border-[#2d3748] bg-[#0f1419]/95 px-6 py-12 text-center shadow-2xl backdrop-blur-md">
             <h3 className="text-xl font-bold text-white">
               {es
                 ? 'Regístrate gratis para leer el análisis completo'

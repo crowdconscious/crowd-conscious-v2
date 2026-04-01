@@ -310,7 +310,22 @@ USA ESTOS DATOS para:
 - Citar solo cifras que aparecen arriba (no inventes números)`
 }
 
-/** Block for Content Creator user prompt (real leaderboard + hooks). */
+/** Blog writer: no usernames / leaderboard — avoids “data dump” tone in public posts */
+export function formatBlogWriterPlatformContext(p: PlatformIntelligence): string {
+  const hooks = p.content_worthy.map((h) => `• ${h}`).join('\n')
+  const hot = p.trending.biggest_probability_shifts
+    .map((s) => `• "${s.title}": ${s.old_pct}% → ${s.new_pct}%`)
+    .join('\n')
+
+  return `CONTEXTO ÚTIL (sin nombres de personas):
+${hooks || '• (Nada automático; apóyate en los mercados en la lista de datos.)'}
+
+MOVIMIENTOS DE PROBABILIDAD (esta semana, solo títulos de mercados):
+${hot || 'Sin cambios fuertes en el umbral actual.'}
+
+REGLA: No menciones usuarios del leaderboard, XP ni rankings por nombre.`
+}
+
 export function formatContentCreatorPlatformContext(p: PlatformIntelligence): string {
   const hooks = p.content_worthy.map((h) => `• ${h}`).join('\n')
   const board = p.trending.most_active_users
