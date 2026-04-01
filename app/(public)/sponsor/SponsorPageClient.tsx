@@ -380,6 +380,71 @@ export function SponsorPageClient({
                 </button>
               </div>
             </div>
+
+            <section className="mt-16 border-t border-[#2d3748] pt-12">
+              <div className="mb-8 text-center">
+                <span className="text-sm font-bold uppercase tracking-wider text-amber-400">
+                  {t.pulseSectionBadge[lang]}
+                </span>
+                <h2 className="mt-2 text-2xl font-bold text-white">{t.pulseSectionTitle[lang]}</h2>
+                <p className="mt-2 text-gray-400">{t.pulseSectionSubtitle[lang]}</p>
+              </div>
+
+              <div className="mx-auto grid max-w-5xl gap-6 md:grid-cols-3">
+                <div className="rounded-xl border border-[#2d3748] bg-[#1a2029] p-6">
+                  <h3 className="font-bold text-white">{t.pulseUniqueTitle[lang]}</h3>
+                  <p className="mt-2 text-2xl font-bold text-emerald-400">{t.pulsePriceUnique[lang]}</p>
+                  <p className="text-sm text-gray-500">{t.pulseUsdUnique[lang]}</p>
+                  <ul className="mt-4 space-y-2 text-sm text-gray-300">
+                    {t.pulseFeaturesUnique[lang].map((line) => (
+                      <li key={line} className="flex gap-2">
+                        <span className="text-emerald-400">✓</span>
+                        {line}
+                      </li>
+                    ))}
+                    <li className="text-emerald-400">✓ {t.pulseFundUnique[lang]}</li>
+                  </ul>
+                  <p className="mt-4 text-xs text-gray-500">{t.pulseIdealUnique[lang]}</p>
+                </div>
+
+                <div className="relative rounded-xl border border-emerald-500/30 bg-[#1a2029] p-6">
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-emerald-500 px-3 py-1 text-xs font-bold text-white">
+                    {t.mostPopular[lang]}
+                  </span>
+                  <h3 className="mt-1 font-bold text-white">{t.pulsePackTitle[lang]}</h3>
+                  <p className="mt-2 text-2xl font-bold text-emerald-400">{t.pulsePricePack[lang]}</p>
+                  <p className="text-sm text-gray-500">{t.pulseUsdPack[lang]}</p>
+                  <ul className="mt-4 space-y-2 text-sm text-gray-300">
+                    {t.pulseFeaturesPack[lang].map((line) => (
+                      <li key={line} className="flex gap-2">
+                        <span className="text-emerald-400">✓</span>
+                        {line}
+                      </li>
+                    ))}
+                    <li className="text-emerald-400">✓ {t.pulseFundPack[lang]}</li>
+                  </ul>
+                  <p className="mt-4 text-xs text-gray-500">{t.pulseIdealPack[lang]}</p>
+                </div>
+
+                <div className="rounded-xl border border-[#2d3748] bg-[#1a2029] p-6">
+                  <h3 className="font-bold text-white">{t.pulseSubTitle[lang]}</h3>
+                  <p className="mt-2 text-2xl font-bold text-emerald-400">{t.pulsePriceSub[lang]}</p>
+                  <p className="text-sm text-gray-500">{t.pulseUsdSub[lang]}</p>
+                  <ul className="mt-4 space-y-2 text-sm text-gray-300">
+                    {t.pulseFeaturesSub[lang].map((line) => (
+                      <li key={line} className="flex gap-2">
+                        <span className="text-emerald-400">✓</span>
+                        {line}
+                      </li>
+                    ))}
+                    <li className="text-emerald-400">✓ {t.pulseFundSub[lang]}</li>
+                  </ul>
+                  <p className="mt-4 text-xs text-gray-500">{t.pulseIdealSub[lang]}</p>
+                </div>
+              </div>
+
+              <p className="mt-6 text-center text-sm text-gray-500">{t.pulseEnterpriseNote[lang]}</p>
+            </section>
           </div>
         </section>
 

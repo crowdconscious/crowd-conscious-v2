@@ -60,7 +60,7 @@ export const sponsorPageCopy = {
   includesFundPct: { es: 'Incluye', en: 'Includes' },
   toConsciousFund: { es: 'al Fondo Consciente', en: 'to Conscious Fund' },
   sponsorNow: { es: 'Patrocinar ahora', en: 'Sponsor Now' },
-  mostPopular: { es: 'Más popular', en: 'Most Popular' },
+  mostPopular: { es: 'Más Popular', en: 'Most Popular' },
   limitedPatrons: { es: 'Limitado a 5 patrones fundadores', en: 'Limited to 5 founding patrons' },
   tierStarterBest: {
     es: 'Ideal para negocios locales y primeros patrocinadores',
@@ -135,6 +135,73 @@ export const sponsorPageCopy = {
       'VIP access to platform analytics',
       'Speaking slot at Crowd Conscious events',
     ],
+  },
+  /** Conscious Pulse B2B pricing (below sponsorship tiers on /sponsor) */
+  pulseSectionBadge: { es: '📊 Conscious Pulse', en: '📊 Conscious Pulse' },
+  pulseSectionTitle: { es: 'Medición de sentimiento público', en: 'Public sentiment measurement' },
+  pulseSectionSubtitle: {
+    es: 'Para municipios, marcas e influencers que necesitan datos de opinión con certeza.',
+    en: 'For municipalities, brands, and influencers who need opinion data with certainty.',
+  },
+  pulseUniqueTitle: { es: 'Pulse Único', en: 'Single Pulse' },
+  pulsePackTitle: { es: 'Pulse Pack (3)', en: 'Pulse Pack (3)' },
+  pulseSubTitle: { es: 'Suscripción mensual', en: 'Monthly subscription' },
+  pulsePriceUnique: { es: '$5,000 MXN', en: '$5,000 MXN' },
+  pulsePricePack: { es: '$12,000 MXN', en: '$12,000 MXN' },
+  pulsePriceSub: { es: '$20,000/mes', en: '$20,000/mo' },
+  pulseUsdUnique: { es: '~$250 USD', en: '~$250 USD' },
+  pulseUsdPack: { es: '~$600 USD', en: '~$600 USD' },
+  pulseUsdSub: { es: '~$1,000 USD/mes', en: '~$1,000 USD/mo' },
+  pulseFeaturesUnique: {
+    es: [
+      '1 pregunta (hasta 6 opciones)',
+      '7-30 días activo',
+      'Resultados en vivo + código QR',
+      'Reporte PDF descargable',
+    ],
+    en: [
+      '1 question (up to 6 options)',
+      '7-30 days active',
+      'Live results + QR code',
+      'Downloadable PDF report',
+    ],
+  },
+  pulseFundUnique: { es: '20% → Fondo Consciente', en: '20% → Conscious Fund' },
+  pulseFeaturesPack: {
+    es: [
+      '3 preguntas',
+      'Activo hasta 60 días',
+      'Vista comparativa entre preguntas',
+      'Ubicación destacada en plataforma',
+    ],
+    en: [
+      '3 questions',
+      'Active up to 60 days',
+      'Comparison view across questions',
+      'Featured placement on platform',
+    ],
+  },
+  pulseFundPack: { es: '25% → Fondo Consciente', en: '25% → Conscious Fund' },
+  pulseFeaturesSub: {
+    es: ['Preguntas ilimitadas', 'Branding personalizado', 'Acceso API a datos', 'Soporte dedicado'],
+    en: ['Unlimited questions', 'Custom branding', 'API data access', 'Dedicated support'],
+  },
+  pulseFundSub: { es: '30% → Fondo Consciente', en: '30% → Conscious Fund' },
+  pulseIdealUnique: {
+    es: 'Ideal para: prueba inicial, una consulta',
+    en: 'Ideal for: initial test, one consultation',
+  },
+  pulseIdealPack: {
+    es: 'Ideal para: consultas multi-tema',
+    en: 'Ideal for: multi-topic consultations',
+  },
+  pulseIdealSub: {
+    es: 'Ideal para: municipios, medios, research continuo',
+    en: 'Ideal for: municipalities, media, ongoing research',
+  },
+  pulseEnterpriseNote: {
+    es: '¿Necesitas algo más grande? Planes Enterprise desde $50,000 MXN/mes con white-label y API completa.',
+    en: 'Need something bigger? Enterprise plans from $50,000 MXN/month with white-label and full API.',
   },
   tierNames: {
     starter: { es: 'Patrocinador de Mercado (Starter)', en: 'Market Sponsor (Starter)' },
