@@ -66,7 +66,8 @@ OUTPUT FORMAT (respond in this exact JSON structure only — no markdown fences)
   "category": "one of: pulse_analysis, market_story, world_cup, behind_data, insight",
   "tags": ["tag1", "tag2", "tag3"],
   "meta_description": "SEO description in Spanish (150 chars max)",
-  "related_market_titles": ["title of related market 1", "title 2"],
+  "related_market_ids": ["uuid-from-platform-data-list", "optional-second-uuid"],
+  "related_market_titles": ["fallback title 1 if ids unknown"],
   "social_posts": {
     "twitter_es": "Short Spanish tweet with insight (280 chars)",
     "twitter_en": "Short English tweet with insight (280 chars)",
@@ -80,6 +81,7 @@ CONTENT GUIDELINES:
 - Connect platform data to real-world news when possible
 - Include the Galton ox story or collective intelligence concept periodically
 - Always end with a CTA to vote on a specific market
+- Set related_market_ids to 1–3 UUIDs from the PLATFORM DATA market list (exact ids); use related_market_titles only if no id fits
 - Write for Mexico City: local references, neighborhoods, landmarks, current events
 - SEO: Spanish-language searches about CDMX, World Cup, public opinion, participation
 - Bilingual: Spanish primary, English secondary
@@ -173,10 +175,10 @@ export async function runContentCreator(): Promise<{
     const dataBrief = `
 PLATFORM DATA (${todayFormatted}):
 - Registered users (approx): ${profileCount ?? 'N/A'}
-- Active markets (sample): ${marketList
+- Active markets (sample, use these ids for related_market_ids): ${marketList
       .map(
         (m) =>
-          `"${m.title}" (${m.total_votes ?? 0} votes, ${Math.round((m.current_probability ?? 0) * 100)}% prob.)`
+          `"${m.title}" id=${m.id} (${m.total_votes ?? 0} votes, ${Math.round((m.current_probability ?? 0) * 100)}% prob.)`
       )
       .join(' | ')}
 - Votes in last 24h: ${voteList.length}
@@ -256,24 +258,33 @@ Respond with a single JSON object exactly as specified in your instructions.`
 
     const tags = Array.isArray(blogObj.tags) ? (blogObj.tags as unknown[]).map((t) => String(t)) : []
 
+    const allowedMarketIds = new Set(marketList.map((m) => m.id))
+    const fromModelIds = Array.isArray(blogObj.related_market_ids)
+      ? (blogObj.related_market_ids as unknown[])
+          .map((x) => String(x).trim())
+          .filter((id) => allowedMarketIds.has(id))
+      : []
+    const relatedIds: string[] = [...new Set(fromModelIds)].slice(0, 5)
+
     const relatedTitles = Array.isArray(blogObj.related_market_titles)
       ? (blogObj.related_market_titles as unknown[]).map((t) => String(t).trim()).filter(Boolean)
       : []
 
     const titleToId = new Map(marketList.map((m) => [m.title.trim().toLowerCase(), m.id]))
-    const relatedIds: string[] = []
-    for (const rt of relatedTitles) {
-      const id = titleToId.get(rt.toLowerCase())
-      if (id) relatedIds.push(id)
-    }
-    for (const m of marketList) {
-      if (relatedIds.length >= 5) break
-      const fuzzy = relatedTitles.some(
-        (rt) =>
-          m.title.toLowerCase().includes(rt.toLowerCase()) ||
-          rt.toLowerCase().includes(m.title.toLowerCase().slice(0, 20))
-      )
-      if (fuzzy && !relatedIds.includes(m.id)) relatedIds.push(m.id)
+    if (relatedIds.length === 0) {
+      for (const rt of relatedTitles) {
+        const id = titleToId.get(rt.toLowerCase())
+        if (id) relatedIds.push(id)
+      }
+      for (const m of marketList) {
+        if (relatedIds.length >= 5) break
+        const fuzzy = relatedTitles.some(
+          (rt) =>
+            m.title.toLowerCase().includes(rt.toLowerCase()) ||
+            rt.toLowerCase().includes(m.title.toLowerCase().slice(0, 20))
+        )
+        if (fuzzy && !relatedIds.includes(m.id)) relatedIds.push(m.id)
+      }
     }
 
     const metaDesc = String(blogObj.meta_description ?? excerpt).slice(0, 160)

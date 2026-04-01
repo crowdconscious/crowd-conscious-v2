@@ -1,9 +1,10 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase-server'
 import { SITE_URL } from '@/lib/seo/site'
 import { BlogPostBody } from './BlogPostBody'
+import { EmbeddedMarketCard } from '@/components/blog/EmbeddedMarketCard'
+import { BlogComments } from '@/components/blog/BlogComments'
 
 type Props = { params: Promise<{ slug: string }> }
 
@@ -95,16 +96,7 @@ export default async function BlogPostPage(props: Props) {
   const { preview, needsGate } = splitMarkdownWords(content, 300)
   const showGate = !isAuthenticated && needsGate
 
-  let related: Array<{ id: string; title: string; category: string | null; total_votes: number | null }> =
-    []
-  const ids = (post.related_market_ids ?? []).filter(Boolean)
-  if (ids.length > 0) {
-    const { data: markets } = await supabase
-      .from('prediction_markets')
-      .select('id, title, category, total_votes')
-      .in('id', ids)
-    related = markets ?? []
-  }
+  const relatedMarketIds = (post.related_market_ids ?? []).filter(Boolean) as string[]
 
   const catLabel = CATEGORY_LABEL[post.category] ?? post.category
 
@@ -137,26 +129,20 @@ export default async function BlogPostPage(props: Props) {
         />
       </div>
 
-      {related.length > 0 && (
+      {relatedMarketIds.length > 0 && (
         <section className="mt-16 border-t border-[#2d3748] pt-10">
-          <h2 className="text-lg font-semibold text-white">Mercados relacionados</h2>
-          <ul className="mt-4 space-y-3">
-            {related.map((m) => (
-              <li key={m.id}>
-                <Link
-                  href={`/predictions/markets/${m.id}`}
-                  className="block rounded-lg border border-[#2d3748] bg-[#141a22] px-4 py-3 transition-colors hover:border-emerald-500/40"
-                >
-                  <span className="font-medium text-white">{m.title}</span>
-                  <p className="mt-1 text-xs text-slate-500">
-                    {m.total_votes ?? 0} opiniones · {m.category}
-                  </p>
-                </Link>
-              </li>
+          <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-white">
+            📊 Mercados relacionados
+          </h2>
+          <div className="grid gap-4 md:grid-cols-2">
+            {relatedMarketIds.map((marketId) => (
+              <EmbeddedMarketCard key={marketId} marketId={marketId} locale="es" />
             ))}
-          </ul>
+          </div>
         </section>
       )}
+
+      <BlogComments blogPostId={post.id} locale="es" />
     </article>
   )
 }

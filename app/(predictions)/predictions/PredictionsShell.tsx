@@ -25,6 +25,7 @@ import {
   Radio,
   Activity,
   Ticket,
+  Newspaper,
 } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import LanguageSwitcherSimple from '@/components/LanguageSwitcherSimple'
@@ -39,6 +40,7 @@ const NAV_ITEMS_EN = [
   { href: '/predictions/leaderboard', label: 'Leaderboard', icon: Trophy },
   { href: '/predictions/inbox', label: 'Conscious Inbox', icon: Lightbulb },
   { href: '/predictions/fund', label: 'Conscious Fund', icon: Heart },
+  { href: '/blog', label: 'Blog', icon: Newspaper },
 ]
 const NAV_ITEMS_ES = [
   { href: '/predictions', label: 'Panel', icon: LayoutDashboard },
@@ -49,6 +51,7 @@ const NAV_ITEMS_ES = [
   { href: '/predictions/leaderboard', label: 'Clasificación', icon: Trophy },
   { href: '/predictions/inbox', label: 'Buzón Consciente', icon: Lightbulb },
   { href: '/predictions/fund', label: 'Fondo Consciente', icon: Heart },
+  { href: '/blog', label: 'Blog', icon: Newspaper },
 ]
 
 export default function PredictionsShell({

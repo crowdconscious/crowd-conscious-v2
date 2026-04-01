@@ -1063,6 +1063,38 @@ export interface Database {
           updated_at?: string
         }
       }
+      blog_comments: {
+        Row: {
+          id: string
+          blog_post_id: string
+          user_id: string | null
+          anonymous_participant_id: string | null
+          author_name: string
+          author_avatar: string | null
+          content: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          blog_post_id: string
+          user_id?: string | null
+          anonymous_participant_id?: string | null
+          author_name: string
+          author_avatar?: string | null
+          content: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          blog_post_id?: string
+          user_id?: string | null
+          anonymous_participant_id?: string | null
+          author_name?: string
+          author_avatar?: string | null
+          content?: string
+          created_at?: string
+        }
+      }
       sentiment_scores: {
         Row: {
           id: string
