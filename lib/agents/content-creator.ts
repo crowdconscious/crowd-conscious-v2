@@ -242,13 +242,17 @@ export async function runContentCreator(): Promise<{
     }
     const platformLiveBlock = formatBlogWriterPlatformContext(platformIntel)
 
-    const { data: newsRow } = await supabase
+    const { data: newsRows } = await supabase
       .from('agent_content')
-      .select('body, content_type, created_at')
+      .select('body, content_type, created_at, metadata')
       .eq('agent_type', 'news_monitor')
       .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
+      .limit(24)
+
+    const structuredRow = (newsRows ?? []).find(
+      (r) => (r.metadata as { type?: string } | null)?.type === 'structured_news_brief'
+    )
+    const newsRow = structuredRow ?? (newsRows ?? [])[0]
 
     let newsContext = 'No hay señales recientes del monitor de noticias en esta corrida.'
     if (newsRow?.body) {
@@ -440,6 +444,53 @@ Responde con un solo objeto JSON exactamente como en tus instrucciones de sistem
       console.error('[Content Creator] agent_content insert', agentErr)
     } else if (agentRow?.id) {
       await supabase.from('blog_posts').update({ agent_content_id: agentRow.id }).eq('id', blogId)
+    }
+
+    const twitterEs = String((socialPosts as { twitter_es?: string }).twitter_es ?? '').trim()
+    const twitterEn = String((socialPosts as { twitter_en?: string }).twitter_en ?? '').trim()
+    if (twitterEs) {
+      await supabase.from('agent_content').insert({
+        market_id: finalRelated[0] ?? null,
+        agent_type: 'content_creator',
+        content_type: 'social_post',
+        title: `X (ES) — ${title.slice(0, 48)}`,
+        body: JSON.stringify({
+          platform: 'twitter',
+          language: 'es',
+          text: twitterEs,
+          blog_post_slug: slug,
+        }),
+        language: 'es',
+        metadata: {
+          platform: 'twitter',
+          language: 'es',
+          blog_post_id: blogId,
+          slug,
+        },
+        published: false,
+      })
+    }
+    if (twitterEn) {
+      await supabase.from('agent_content').insert({
+        market_id: finalRelated[0] ?? null,
+        agent_type: 'content_creator',
+        content_type: 'social_post',
+        title: `X (EN) — ${title.slice(0, 48)}`,
+        body: JSON.stringify({
+          platform: 'twitter',
+          language: 'en',
+          text: twitterEn,
+          blog_post_slug: slug,
+        }),
+        language: 'en',
+        metadata: {
+          platform: 'twitter',
+          language: 'en',
+          blog_post_id: blogId,
+          slug,
+        },
+        published: false,
+      })
     }
 
     await logAgentRun({

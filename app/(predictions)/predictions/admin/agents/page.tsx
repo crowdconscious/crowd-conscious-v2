@@ -395,6 +395,117 @@ function ContentCalendarView({
   )
 }
 
+type StructuredBriefPayload = {
+  summary?: string
+  signals?: Array<{
+    headline?: string
+    source?: string
+    relevance?: string
+    category?: string
+    market_angle?: string
+    suggested_question?: string
+    key_fact?: string
+  }>
+  top_3_actionable?: string[]
+}
+
+function StructuredNewsBriefCard({
+  item,
+  onArchive,
+}: {
+  item: AgentContent
+  onArchive: () => void
+}) {
+  let data: StructuredBriefPayload | null = null
+  try {
+    data = JSON.parse(item.body) as StructuredBriefPayload
+  } catch {
+    data = null
+  }
+  if (!data) {
+    return (
+      <div className="border border-white/10 rounded-lg p-4 space-y-3">
+        <h4 className="text-white font-medium text-sm">{item.title}</h4>
+        <p className="text-white/70 text-sm whitespace-pre-wrap">{item.body}</p>
+      </div>
+    )
+  }
+  return (
+    <div className="border border-white/10 rounded-lg p-4 space-y-4">
+      <div className="flex items-center justify-between">
+        <h4 className="text-white font-medium text-sm">{item.title}</h4>
+        <span className="text-white/40 text-xs">{formatRelativeTime(item.created_at)}</span>
+      </div>
+      {data.summary && (
+        <p className="text-slate-300 text-sm leading-relaxed">{data.summary}</p>
+      )}
+      {data.top_3_actionable && data.top_3_actionable.length > 0 && (
+        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-4">
+          <h4 className="text-emerald-400 text-sm font-semibold mb-2">Acciones de hoy</h4>
+          <ul className="space-y-1">
+            {data.top_3_actionable.map((line, i) => (
+              <li key={i} className="text-slate-300 text-sm">
+                • {line}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {(data.signals ?? []).map((signal, i) => (
+        <div
+          key={i}
+          className="bg-slate-900/80 rounded-lg p-3 border border-slate-700/80"
+        >
+          <div className="flex flex-wrap items-center gap-2 mb-1">
+            <span
+              className={`text-xs px-2 py-0.5 rounded-full ${
+                signal.relevance === 'high'
+                  ? 'bg-red-500/20 text-red-400'
+                  : signal.relevance === 'medium'
+                    ? 'bg-amber-500/20 text-amber-400'
+                    : 'bg-slate-700 text-slate-400'
+              }`}
+            >
+              {signal.relevance ?? '—'}
+            </span>
+            {signal.source && (
+              <span className="text-slate-500 text-xs">{signal.source}</span>
+            )}
+            {signal.category && (
+              <span className="text-slate-600 text-xs">{signal.category}</span>
+            )}
+          </div>
+          {signal.headline && (
+            <h4 className="text-white text-sm font-medium">{signal.headline}</h4>
+          )}
+          {signal.key_fact && (
+            <p className="text-slate-400 text-xs mt-1">{signal.key_fact}</p>
+          )}
+          {signal.market_angle && (
+            <p className="text-emerald-400/80 text-xs mt-1 italic">
+              Ángulo mercado: {signal.market_angle}
+            </p>
+          )}
+          {signal.suggested_question && (
+            <p className="text-amber-400/80 text-xs mt-1">
+              &ldquo;{signal.suggested_question}&rdquo;
+            </p>
+          )}
+        </div>
+      ))}
+      {!item.archived_at && (
+        <button
+          type="button"
+          onClick={onArchive}
+          className="text-slate-500 hover:text-slate-300 text-xs"
+        >
+          📦 Archive
+        </button>
+      )}
+    </div>
+  )
+}
+
 function getContentTab(item: AgentContent): TabId | null {
   const meta = item.metadata ?? {}
   const type = meta.type as string
@@ -402,7 +513,12 @@ function getContentTab(item: AgentContent): TabId | null {
   if (item.content_type === 'blog_post') return 'blog'
   if (type === 'inbox_digest') return 'inbox'
   if (item.content_type === 'market_suggestion' || (item.content_type === 'market_insight' && type === 'market_suggestion')) return 'suggestions'
-  if (type === 'news_brief' || type === 'news_relevance' || item.content_type === 'news_summary')
+  if (
+    type === 'news_brief' ||
+    type === 'news_relevance' ||
+    type === 'structured_news_brief' ||
+    item.content_type === 'news_summary'
+  )
     return 'news'
   if (item.content_type === 'social_post' || (meta.platform as string)) return 'social'
   if (digestType === 'ceo_digest' || (item.content_type === 'weekly_digest' && type === 'ceo_digest'))
@@ -1010,6 +1126,16 @@ export default function AdminAgentsPage() {
                       })}
                     </div>
                   </div>
+                )
+              }
+
+              if (item.content_type === 'news_summary' && type === 'structured_news_brief') {
+                return (
+                  <StructuredNewsBriefCard
+                    key={item.id}
+                    item={item}
+                    onArchive={() => archiveAgentItem(item.id)}
+                  />
                 )
               }
 

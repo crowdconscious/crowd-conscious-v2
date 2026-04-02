@@ -109,11 +109,41 @@ export default function CreateMarketPage() {
       return
     }
     const prefillTitle = params.get('title')
+    const prefillTitleEn = params.get('title_en')
     const prefillCategory = params.get('category')
-    const prefillCriteria = params.get('resolution_criteria')
+    const prefillCriteria =
+      params.get('resolution_criteria') ?? params.get('resolution')
+    const prefillCriteriaEn = params.get('resolution_criteria_en')
+    const prefillDesc = params.get('description') ?? params.get('description_es')
+    const prefillDescEn = params.get('description_en')
+    const prefillProb = params.get('probability')
+    const prefillEnd = params.get('end_date')
+    const prefillTags = params.get('tags')
+    const prefillOutcomes = params.get('outcomes')
     if (prefillTitle) setTitle(prefillTitle)
+    if (prefillTitleEn) setEnTitle(prefillTitleEn)
     if (prefillCategory) setCategory(prefillCategory)
     if (prefillCriteria) setResolutionCriteria(prefillCriteria)
+    if (prefillCriteriaEn) setEnResolutionCriteria(prefillCriteriaEn)
+    if (prefillDesc) setDescription(prefillDesc)
+    if (prefillDescEn) setEnDescription(prefillDescEn)
+    if (prefillTags) setTagsInput(prefillTags)
+    if (prefillProb) {
+      const n = parseFloat(prefillProb)
+      const pct = n > 0 && n <= 1 ? Math.round(n * 100) : Math.round(n)
+      if (pct >= 1 && pct <= 99) setInitialProbability(pct)
+    }
+    if (prefillEnd) {
+      const d = new Date(prefillEnd)
+      if (!isNaN(d.getTime())) setResolutionDate(d.toISOString().slice(0, 16))
+    }
+    if (prefillOutcomes) {
+      const parts = prefillOutcomes.split(',').map((s) => s.trim()).filter(Boolean)
+      if (parts.length >= 2) {
+        setMarketType('multi')
+        setOutcomes(parts)
+      }
+    }
   }, [])
 
   const loadInboxItem = useCallback(async (id: string) => {

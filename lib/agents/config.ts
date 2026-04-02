@@ -15,7 +15,8 @@ export const MODELS = {
 // 1024 tokens ≈ 750 words. More than enough for a digest or a few social posts.
 export const TOKEN_LIMITS = {
   DIGEST: 1024,        // CEO digest, inbox curator
-  NEWS: 1024,          // News monitor summaries
+  NEWS: 1024,          // News monitor per-market summaries
+  NEWS_BRIEF: 4096,    // Structured daily brief (signals + actionable + market_suggestions JSON)
   SOCIAL_CONTENT: 4096, // Social media posts + image prompts, carousel ideas, memes
   BLOG: 8192,          // Blog draft (bilingual markdown)
 } as const;

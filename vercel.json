@@ -33,7 +33,7 @@
     },
     {
       "path": "/api/cron/agents/content-creator",
-      "schedule": "30 15 * * *"
+      "schedule": "30 14 * * *"
     },
     {
       "path": "/api/cron/agents/ceo-digest",

@@ -297,6 +297,137 @@ type MarketAnalysis = {
   }>
 }
 
+const STRUCTURED_BRIEF_SYSTEM = `You are the News Monitor for Crowd Conscious, a collective intelligence platform in Mexico City focused on the 2026 World Cup and public opinion.
+
+Your job: Scan the provided news signals and produce a STRUCTURED daily brief that the platform admin can act on.
+
+OUTPUT FORMAT — respond as JSON only (no markdown fences):
+{
+  "summary": "One sentence: X signals reviewed, Y are actionable",
+  "signals": [
+    {
+      "headline": "Short headline (max ~15 words)",
+      "source": "Source name",
+      "relevance": "high|medium|low",
+      "category": "world_cup|government|economy|sustainability|geopolitics|technology|environment|community",
+      "market_angle": "How this connects to prediction markets",
+      "suggested_question": "A prediction market question in Spanish (¿...?)",
+      "key_fact": "Most important data point or quote"
+    }
+  ],
+  "top_3_actionable": ["Brief item 1", "Brief item 2", "Brief item 3"],
+  "market_suggestions": [
+    {
+      "title_es": "¿Yes/No question in Spanish?",
+      "title_en": "English version",
+      "description_es": "Context and why it matters",
+      "description_en": "English context",
+      "category": "world_cup|government|economy|sustainability|geopolitics|technology|entertainment|community|corporate|cause|pulse",
+      "resolution_criteria_es": "Verifiable resolution criteria in Spanish",
+      "resolution_criteria_en": "English criteria",
+      "resolution_date": "YYYY-MM-DD",
+      "initial_probability": 45,
+      "tags": ["tag1", "tag2"],
+      "reasoning": "Why this market matters now",
+      "source": "Which signal inspired this",
+      "urgency": "high|medium|low"
+    }
+  ]
+}
+
+RULES:
+- Focus on Mexico, CDMX, World Cup 2026, and topics relevant to prediction markets.
+- Every signal needs market_angle and suggested_question when possible.
+- market_suggestions: 0–3 items; only if signals justify new markets; use binary Yes/No style titles.
+- Rate relevance honestly. Keep headlines short.
+- If fewer than 3 signals are relevant, say so in summary — do not pad.`
+
+function mapCategoryToMarket(s: string): string {
+  const c = (s || 'world').toLowerCase()
+  const map: Record<string, string> = {
+    politics: 'government',
+    sports: 'world_cup',
+    environment: 'sustainability',
+  }
+  return map[c] ?? c
+}
+
+function mapGlobalSuggestionToSuggestedMarket(
+  raw: Record<string, unknown>
+): MarketAnalysis['suggested_markets'][0] | null {
+  const title_es = String(raw.title_es ?? raw.title ?? '').trim()
+  if (!title_es) return null
+  const tags = Array.isArray(raw.tags) ? (raw.tags as unknown[]).map((t) => String(t).toLowerCase()) : []
+  const urgency = String(raw.urgency ?? '')
+  const src = String(raw.source ?? '')
+  return {
+    title_es,
+    title_en: String(raw.title_en ?? ''),
+    description_es: String(raw.description_es ?? ''),
+    description_en: String(raw.description_en ?? ''),
+    category: mapCategoryToMarket(String(raw.category ?? 'world')),
+    resolution_criteria_es: String(raw.resolution_criteria_es ?? ''),
+    resolution_criteria_en: String(raw.resolution_criteria_en ?? ''),
+    resolution_date: String(raw.resolution_date ?? '').slice(0, 10) || getEndOfWeek(),
+    initial_probability: Math.min(99, Math.max(1, Number(raw.initial_probability) || 50)),
+    tags,
+    reasoning: [String(raw.reasoning ?? ''), urgency && `urgency:${urgency}`, src && `source:${src}`]
+      .filter(Boolean)
+      .join(' · '),
+    source_signals: src ? [src] : [],
+  }
+}
+
+async function generateStructuredDailyBrief(
+  anthropic: ReturnType<typeof getAnthropicClient>,
+  allSignals: Signal[],
+  platformBlock: string
+): Promise<{
+  structured: Record<string, unknown> | null
+  tokensInput: number
+  tokensOutput: number
+}> {
+  if (allSignals.length === 0) {
+    return { structured: null, tokensInput: 0, tokensOutput: 0 }
+  }
+
+  const lines = allSignals.slice(0, 28).map(
+    (s, i) =>
+      `${i + 1}. [${s.source_name}] (${s.category ?? 'general'}) ${s.title}\n   ${(s.text || '').slice(0, 280)}`
+  )
+
+  const userMessage = `${platformBlock}
+
+SEÑALES (${allSignals.length} total, mostrando hasta 28):
+${lines.join('\n\n')}
+
+Produce the JSON brief as specified.`
+
+  try {
+    const response = await anthropic.messages.create({
+      model: MODELS.FAST,
+      max_tokens: TOKEN_LIMITS.NEWS_BRIEF,
+      system: STRUCTURED_BRIEF_SYSTEM,
+      messages: [{ role: 'user', content: userMessage }],
+    })
+    const textBlock = response.content.find((b) => b.type === 'text')
+    const rawText = textBlock && 'text' in textBlock ? textBlock.text : ''
+    const usage = response.usage ?? { input_tokens: 0, output_tokens: 0 }
+    const parsed = parseAgentJSON(rawText) as Record<string, unknown>
+    if (!parsed?.summary && !Array.isArray(parsed?.signals)) {
+      return { structured: null, tokensInput: usage.input_tokens, tokensOutput: usage.output_tokens }
+    }
+    return {
+      structured: parsed,
+      tokensInput: usage.input_tokens,
+      tokensOutput: usage.output_tokens,
+    }
+  } catch (e) {
+    console.error('[NEWS-MONITOR] Structured brief failed:', e)
+    return { structured: null, tokensInput: 0, tokensOutput: 0 }
+  }
+}
+
 export async function runNewsMonitor(options?: {
   includeSocial?: boolean
   forceRun?: boolean
@@ -361,6 +492,50 @@ export async function runNewsMonitor(options?: {
 
     allSignals = diversifySignals(allSignals)
     console.log('[NEWS-MONITOR] After diversity filter:', allSignals.length, 'signals')
+
+    let totalTokensInput = 0
+    let totalTokensOutput = 0
+
+    let structuredBriefJson: Record<string, unknown> | null = null
+    const briefGen = await generateStructuredDailyBrief(anthropic, allSignals, platformBlock)
+    totalTokensInput += briefGen.tokensInput
+    totalTokensOutput += briefGen.tokensOutput
+    const structuredForSuggestions = briefGen.structured
+    if (structuredForSuggestions) {
+      const { error: sbErr } = await supabase.from('agent_content').insert({
+        market_id: null,
+        agent_type: 'news_monitor',
+        content_type: 'news_summary',
+        title: 'Brief diario — señales',
+        body: JSON.stringify(structuredForSuggestions),
+        language: 'es',
+        metadata: {
+          type: 'structured_news_brief',
+          model: MODELS.FAST,
+          signal_count: allSignals.length,
+          tokens_input: briefGen.tokensInput,
+          tokens_output: briefGen.tokensOutput,
+        },
+        published: true,
+      })
+      if (sbErr) {
+        console.error('[NEWS-MONITOR] structured brief insert:', sbErr)
+      } else {
+        structuredBriefJson = structuredForSuggestions
+      }
+    }
+
+    const globalFromBrief: MarketAnalysis['suggested_markets'] = []
+    const rawGlobal = structuredForSuggestions?.market_suggestions
+    if (Array.isArray(rawGlobal)) {
+      for (const g of rawGlobal) {
+        if (g && typeof g === 'object') {
+          const m = mapGlobalSuggestionToSuggestedMarket(g as Record<string, unknown>)
+          if (m) globalFromBrief.push(m)
+        }
+      }
+    }
+
     // Step 3: Match signals to markets (generous: 1+ signal is enough for analysis)
     const marketSignals: Record<string, Signal[]> = {}
     for (const market of activeMarkets) {
@@ -390,8 +565,6 @@ export async function runNewsMonitor(options?: {
       console.log(`[NEWS-MONITOR]   "${m.title.slice(0, 50)}...": ${n} signals`)
     }
 
-    let totalTokensInput = 0
-    let totalTokensOutput = 0
     const marketAnalyses: Array<{
       market_id: string
       market_title: string
@@ -579,11 +752,19 @@ REGLAS PARA suggested_markets:
       }
     }
 
+    for (const g of globalFromBrief) {
+      if (!g?.title_es) continue
+      const key = normalizeTitleForDedup(g.title_es)
+      if (!allSuggestions.some((x) => normalizeTitleForDedup(x.title_es) === key)) {
+        allSuggestions.push(g)
+      }
+    }
+
     // Step 5: Save analysis
-    let briefSaved = false
+    let briefSaved = !!structuredBriefJson
     let relevanceSaved = false
 
-    // Build brief from first analysis (or generic if none)
+    // Build brief from first analysis (or generic if none) — skip if structured daily brief already saved
     const firstAnalysis = marketAnalyses[0]?.analysis
     const brief = firstAnalysis?.summary ?? (allSignals.length > 0
       ? `Se han recopilado ${allSignals.length} señales recientes. Revisa el análisis por mercado en los detalles.`
@@ -597,7 +778,7 @@ REGLAS PARA suggested_markets:
         brief.length < 60 ||
         (brief.length < 120 && (isPurelyNoNews || /no hay noticias|no recent news|no news in the feed|empty feed/i.test(brief)))
 
-    if (brief && !isNoNewsPlaceholder) {
+    if (brief && !isNoNewsPlaceholder && !structuredForSuggestions) {
       const { error: briefErr } = await supabase.from('agent_content').insert({
         market_id: null,
         agent_type: 'news_monitor',
