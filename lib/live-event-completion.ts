@@ -32,7 +32,6 @@ export async function runLiveEventCompletedSideEffects(
   )
 
   const ranks = await computeLiveEventLeaderboardRanks(admin, event.id)
-  const rankByUser = new Map(ranks.map((r) => [r.user_id, r]))
   const userIds = ranks.map((r) => r.user_id)
 
   if (userIds.length === 0) {
@@ -43,27 +42,32 @@ export async function runLiveEventCompletedSideEffects(
     return
   }
 
-  const { data: profs } = await admin
-    .from('profiles')
-    .select('id, email, email_notifications')
-    .in('id', userIds)
+  /** Post–live results emails disabled — in-app / live UI only (anti-spam; see email policy). */
+  const sendLiveResultsEmail = false
+  if (sendLiveResultsEmail) {
+    const rankByUser = new Map(ranks.map((r) => [r.user_id, r]))
+    const { data: profs } = await admin
+      .from('profiles')
+      .select('id, email, email_notifications')
+      .in('id', userIds)
 
-  for (const p of profs ?? []) {
-    if (p.email_notifications === false) continue
-    const email = (p.email as string | null)?.trim()
-    if (!email) continue
-    const r = rankByUser.get(p.id)
-    if (!r) continue
-    await sendLiveMatchResultsEmail(email, {
-      eventTitle: event.title,
-      rank: r.rank,
-      totalXp: r.total_xp,
-      correctCount: r.correct_count,
-      voteCount: r.vote_count,
-      resultsUrl: `${APP_URL}/live/${event.id}`,
-      locale: 'en',
-    })
-    await new Promise((res) => setTimeout(res, 60))
+    for (const p of profs ?? []) {
+      if (p.email_notifications === false) continue
+      const email = (p.email as string | null)?.trim()
+      if (!email) continue
+      const r = rankByUser.get(p.id)
+      if (!r) continue
+      await sendLiveMatchResultsEmail(email, {
+        eventTitle: event.title,
+        rank: r.rank,
+        totalXp: r.total_xp,
+        correctCount: r.correct_count,
+        voteCount: r.vote_count,
+        resultsUrl: `${APP_URL}/live/${event.id}`,
+        locale: 'en',
+      })
+      await new Promise((res) => setTimeout(res, 60))
+    }
   }
 
   await admin

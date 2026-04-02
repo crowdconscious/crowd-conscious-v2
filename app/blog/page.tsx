@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase-server'
+import NewsletterForm from '@/components/NewsletterForm'
 
 export const metadata: Metadata = {
   title: 'Blog',
@@ -134,19 +135,18 @@ export default async function BlogPage() {
 
       {list.length === 0 && <p className="text-center text-slate-500">{emptyMsg}</p>}
 
-      <div className="mt-16 rounded-xl border border-[#2d3748] bg-[#141a22] p-6 text-center">
+      <div className="mx-auto mt-16 max-w-xl rounded-xl border border-[#2d3748] bg-[#141a22] p-6 text-center">
         <p className="font-medium text-white">
           {locale === 'es' ? '¿Quieres recibir análisis semanales?' : 'Want weekly analysis in your inbox?'}
         </p>
         <p className="mt-1 text-sm text-slate-500">
-          {locale === 'es' ? 'Únete y recibe novedades en tu correo.' : 'Sign up for updates.'}
+          {locale === 'es'
+            ? 'Solo tu correo — sin cuenta obligatoria.'
+            : 'Email only — no account required.'}
         </p>
-        <Link
-          href="/signup?redirect=/blog"
-          className="mt-4 inline-flex rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500"
-        >
-          {locale === 'es' ? 'Suscribirse' : 'Subscribe'}
-        </Link>
+        <div className="mt-4 flex justify-center">
+          <NewsletterForm source="blog_listing" locale={locale} />
+        </div>
       </div>
     </div>
   )

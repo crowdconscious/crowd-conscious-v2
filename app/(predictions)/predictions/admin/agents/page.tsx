@@ -8,16 +8,12 @@ import {
   XCircle,
   Minus,
   Play,
-  Copy,
   ExternalLink,
   Bot,
   FileText,
   Newspaper,
   Inbox,
   Lightbulb,
-  ChevronDown,
-  ChevronRight,
-  Calendar,
 } from 'lucide-react'
 import { ImageUpload } from '@/components/ui/ImageUpload'
 
@@ -53,7 +49,7 @@ type AgentContent = {
   archived_at?: string | null
 }
 
-type TabId = 'all' | 'ceo' | 'social' | 'news' | 'inbox' | 'suggestions' | 'calendar' | 'blog'
+type TabId = 'all' | 'ceo' | 'news' | 'inbox' | 'suggestions' | 'blog'
 
 function formatDate(t: string) {
   return new Date(t).toLocaleString('en-US', {
@@ -63,30 +59,6 @@ function formatDate(t: string) {
     hour: '2-digit',
     minute: '2-digit',
   })
-}
-
-/** YYYY-MM-DD in the browser's local calendar (avoids UTC day shifts from toISOString). */
-function dateKeyLocal(d: Date): string {
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
-}
-
-function getSocialPostScheduledDateKey(post: AgentContent): string {
-  const meta = post.metadata as { scheduled_date?: string } | undefined
-  if (meta?.scheduled_date && /^\d{4}-\d{2}-\d{2}$/.test(String(meta.scheduled_date))) {
-    return String(meta.scheduled_date).slice(0, 10)
-  }
-  try {
-    const p = JSON.parse(post.body) as { scheduled_date?: string }
-    if (p.scheduled_date && /^\d{4}-\d{2}-\d{2}$/.test(String(p.scheduled_date))) {
-      return String(p.scheduled_date).slice(0, 10)
-    }
-  } catch {
-    // ignore
-  }
-  return dateKeyLocal(new Date(post.created_at))
 }
 
 function formatRelativeTime(t: string) {
@@ -100,299 +72,6 @@ function formatRelativeTime(t: string) {
   if (diffHours < 24) return `${diffHours}h ago`
   if (diffDays < 7) return `${diffDays}d ago`
   return formatDate(t)
-}
-
-function CollapsibleSection({
-  title,
-  children,
-  defaultOpen = false,
-}: {
-  title: string
-  children: React.ReactNode
-  defaultOpen?: boolean
-}) {
-  const [open, setOpen] = useState(defaultOpen)
-  return (
-    <div className="border border-slate-700 rounded-lg overflow-hidden">
-      <button
-        onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-2 px-3 py-2 bg-slate-800/50 text-left text-sm text-slate-300 hover:bg-slate-800"
-      >
-        {open ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-        {title}
-      </button>
-      {open && <div className="px-3 py-2 text-sm text-slate-400 border-t border-slate-700">{children}</div>}
-    </div>
-  )
-}
-
-function SocialPostCard({
-  item,
-  copyToClipboard,
-  updateContentStatus,
-  formatDate,
-}: {
-  item: AgentContent
-  copyToClipboard: (t: string) => void
-  updateContentStatus: (id: string, u: { published?: boolean; metadata?: Record<string, unknown> }) => Promise<void>
-  formatDate: (t: string) => string
-}) {
-  const meta = item.metadata ?? {}
-  let post: Record<string, unknown> = {}
-  try {
-    post = JSON.parse(item.body) as Record<string, unknown>
-  } catch {
-    post = { body: item.body }
-  }
-  const body = String(post.body ?? '')
-  const hashtags = Array.isArray(post.hashtags)
-    ? (post.hashtags as string[]).join(' ')
-    : String(post.hashtags ?? '')
-  const copyText = body + (hashtags ? `\n\n${hashtags}` : '')
-  const statusOrder = ['draft', 'approved', 'posted'] as const
-  const currentStatus = (meta.status as string) ?? (item.published ? 'approved' : 'draft')
-  const nextStatus =
-    statusOrder[(statusOrder.indexOf(currentStatus as typeof statusOrder[number]) + 1) % 3]
-  const platform = String(meta.platform ?? post.platform ?? 'social').toLowerCase()
-  const imagePrompt = String(post.image_prompt ?? meta.image_prompt ?? '')
-  const carouselIdea = String(post.carousel_idea ?? meta.carousel_idea ?? '')
-  const memeSuggestion = String(post.meme_suggestion ?? meta.meme_suggestion ?? '')
-  const threadOption = String(post.thread_option ?? meta.thread_option ?? '')
-  const quoteTweetHook = String(post.quote_tweet_hook ?? meta.quote_tweet_hook ?? '')
-  const hookVariations = Array.isArray(post.hook_variations)
-    ? (post.hook_variations as string[])
-    : Array.isArray(meta.hook_variations)
-      ? (meta.hook_variations as string[])
-      : []
-
-  return (
-    <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 space-y-3">
-      <div className="flex items-center justify-between">
-        <span className="text-amber-400 text-sm">
-          {platform} • {String(post.language ?? 'es')}
-        </span>
-        <div className="flex gap-2">
-          <button
-            onClick={() => copyToClipboard(copyText)}
-            className="flex items-center gap-1 px-2 py-1 text-xs bg-slate-700 hover:bg-slate-600 rounded text-slate-300"
-          >
-            <Copy className="w-3 h-3" /> Copy
-          </button>
-          <button
-            onClick={() =>
-              updateContentStatus(item.id, {
-                metadata: { ...meta, status: nextStatus },
-                published: nextStatus === 'posted' || nextStatus === 'approved',
-              })
-            }
-            className="flex items-center gap-1 px-2 py-1 text-xs bg-slate-700 hover:bg-slate-600 rounded text-slate-300"
-          >
-            {currentStatus} → {nextStatus}
-          </button>
-        </div>
-      </div>
-      <div className="text-white font-medium">{String(post.hook ?? item.title)}</div>
-      <pre className="text-sm text-slate-400 whitespace-pre-wrap font-sans">{body}</pre>
-      {hashtags && <div className="text-sm text-emerald-400">{hashtags}</div>}
-      {(imagePrompt || carouselIdea || memeSuggestion) && (
-        <div className="space-y-2 mt-3">
-          {imagePrompt && (
-            <CollapsibleSection title="Image Prompt (Leonardo AI / Midjourney)">
-              <div className="flex justify-between gap-2">
-                <pre className="text-slate-300 whitespace-pre-wrap font-sans text-xs flex-1">{imagePrompt}</pre>
-                <button
-                  onClick={() => copyToClipboard(imagePrompt)}
-                  className="shrink-0 px-2 py-1 text-xs bg-slate-700 hover:bg-slate-600 rounded text-slate-300"
-                >
-                  <Copy className="w-3 h-3" />
-                </button>
-              </div>
-            </CollapsibleSection>
-          )}
-          {carouselIdea && (
-            <CollapsibleSection title="Carousel Idea">
-              <pre className="text-slate-300 whitespace-pre-wrap font-sans text-xs">{carouselIdea}</pre>
-            </CollapsibleSection>
-          )}
-          {memeSuggestion && (
-            <CollapsibleSection title="Meme Suggestion">
-              <pre className="text-slate-300 whitespace-pre-wrap font-sans text-xs">{memeSuggestion}</pre>
-            </CollapsibleSection>
-          )}
-        </div>
-      )}
-      {(threadOption || quoteTweetHook) && (
-        <div className="space-y-2 mt-3">
-          {threadOption && (
-            <CollapsibleSection title="Thread Option (3 tweets)">
-              <pre className="text-slate-300 whitespace-pre-wrap font-sans text-xs">{threadOption}</pre>
-            </CollapsibleSection>
-          )}
-          {quoteTweetHook && (
-            <CollapsibleSection title="Quote Tweet Hook">
-              <pre className="text-slate-300 whitespace-pre-wrap font-sans text-xs">{quoteTweetHook}</pre>
-            </CollapsibleSection>
-          )}
-        </div>
-      )}
-      {hookVariations.length > 0 && (
-        <CollapsibleSection title="Hook Variations (3 alternatives)">
-          <ul className="list-disc list-inside space-y-1 text-slate-300">
-            {hookVariations.map((h, i) => (
-              <li key={i}>{h}</li>
-            ))}
-          </ul>
-        </CollapsibleSection>
-      )}
-    </div>
-  )
-}
-
-function ContentCalendarView({
-  posts,
-  copyToClipboard,
-  updateContentStatus,
-  formatDate,
-}: {
-  posts: AgentContent[]
-  copyToClipboard: (t: string) => void
-  updateContentStatus: (id: string, u: { published?: boolean; metadata?: Record<string, unknown> }) => Promise<void>
-  formatDate: (t: string) => string
-}) {
-  const [expandedId, setExpandedId] = useState<string | null>(null)
-  const [weekOffset, setWeekOffset] = useState(0)
-
-  const now = new Date()
-  const startOfWeek = new Date(now)
-  startOfWeek.setDate(now.getDate() - now.getDay() + 1 + weekOffset * 7)
-  startOfWeek.setHours(0, 0, 0, 0)
-
-  const days: Date[] = []
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(startOfWeek)
-    d.setDate(startOfWeek.getDate() + i)
-    days.push(d)
-  }
-
-  const postsByDate = new Map<string, AgentContent[]>()
-  for (const post of posts) {
-    const key = getSocialPostScheduledDateKey(post)
-    if (!postsByDate.has(key)) postsByDate.set(key, [])
-    postsByDate.get(key)!.push(post)
-  }
-
-  const getPlatformColor = (platform: string) => {
-    const p = platform.toLowerCase()
-    if (p.includes('instagram')) return 'bg-emerald-500/30 border-emerald-500/50'
-    if (p.includes('twitter') || p.includes('x')) return 'bg-blue-500/30 border-blue-500/50'
-    if (p.includes('linkedin')) return 'bg-purple-500/30 border-purple-500/50'
-    return 'bg-slate-500/30 border-slate-500/50'
-  }
-
-  const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-  const getDayName = (d: Date) => dayNames[(d.getDay() + 6) % 7]
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Calendar className="w-5 h-5 text-slate-400" />
-          <span className="text-slate-300">Week of {startOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setWeekOffset((o) => o - 1)}
-            className="px-3 py-1 text-sm bg-slate-700 hover:bg-slate-600 rounded text-slate-300"
-          >
-            ← Prev
-          </button>
-          <button
-            onClick={() => setWeekOffset((o) => o + 1)}
-            className="px-3 py-1 text-sm bg-slate-700 hover:bg-slate-600 rounded text-slate-300"
-          >
-            Next →
-          </button>
-        </div>
-      </div>
-      <div className="grid grid-cols-7 gap-2">
-        {days.map((day) => {
-          const key = dateKeyLocal(day)
-          const dayPosts = postsByDate.get(key) ?? []
-          return (
-            <div
-              key={key}
-              className="bg-slate-800/50 border border-slate-700 rounded-lg p-2 min-h-[120px]"
-            >
-              <div className="text-xs text-slate-500 mb-2">
-                {getDayName(day)} {day.getDate()}
-              </div>
-              <div className="space-y-1">
-                {dayPosts.map((post) => {
-                  let p: Record<string, unknown> = {}
-                  try {
-                    p = JSON.parse(post.body) as Record<string, unknown>
-                  } catch {
-                    p = {}
-                  }
-                  const platform = String(post.metadata?.platform ?? p.platform ?? 'social')
-                  const isExpanded = expandedId === post.id
-                  return (
-                    <div key={post.id} className="space-y-1">
-                      <button
-                        onClick={() => setExpandedId(isExpanded ? null : post.id)}
-                        className={`w-full text-left px-2 py-1.5 rounded text-xs border truncate ${getPlatformColor(platform)} text-white hover:opacity-90`}
-                      >
-                        {String(p.hook ?? post.title).slice(0, 40)}…
-                      </button>
-                      {isExpanded && (
-                        <div className="mt-2 p-2 bg-slate-900/80 rounded border border-slate-700 text-xs space-y-2">
-                          <pre className="text-slate-300 whitespace-pre-wrap font-sans max-h-32 overflow-y-auto">
-                            {String(p.body ?? '')}
-                          </pre>
-                          {String(p.image_prompt ?? '').slice(0, 80) && (
-                            <div className="text-slate-500 truncate" title={String(p.image_prompt)}>
-                              🖼 {String(p.image_prompt).slice(0, 60)}…
-                            </div>
-                          )}
-                          <div className="flex gap-1">
-                            <button
-                              onClick={() => {
-                                const tags = Array.isArray(p.hashtags) ? (p.hashtags as string[]).join(' ') : String(p.hashtags ?? '')
-                                copyToClipboard(String(p.body ?? '') + (tags ? `\n\n${tags}` : ''))
-                              }}
-                              className="flex-1 px-2 py-1 bg-slate-700 hover:bg-slate-600 rounded text-slate-300"
-                            >
-                              Copy
-                            </button>
-                            <button
-                              onClick={() =>
-                                updateContentStatus(post.id, {
-                                  metadata: { ...post.metadata, status: 'posted' },
-                                  published: true,
-                                })
-                              }
-                              className="flex-1 px-2 py-1 bg-emerald-600 hover:bg-emerald-500 rounded text-white font-medium"
-                            >
-                              Mark as Posted
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )
-        })}
-      </div>
-      <div className="flex gap-4 text-xs text-slate-500">
-        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-emerald-500/50" /> Instagram</span>
-        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-blue-500/50" /> Twitter</span>
-        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-purple-500/50" /> LinkedIn</span>
-      </div>
-    </div>
-  )
 }
 
 type StructuredBriefPayload = {
@@ -520,7 +199,6 @@ function getContentTab(item: AgentContent): TabId | null {
     item.content_type === 'news_summary'
   )
     return 'news'
-  if (item.content_type === 'social_post' || (meta.platform as string)) return 'social'
   if (digestType === 'ceo_digest' || (item.content_type === 'weekly_digest' && type === 'ceo_digest'))
     return 'ceo'
   return 'all'
@@ -615,10 +293,6 @@ export default function AdminAgentsPage() {
     }
   }
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text)
-  }
-
   const updateBlogPost = async (id: string, status: 'draft' | 'published' | 'archived') => {
     try {
       const res = await fetch(`/api/predictions/admin/blog-posts/${id}`, {
@@ -644,23 +318,6 @@ export default function AdminAgentsPage() {
       await fetchData()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Cover update failed')
-    }
-  }
-
-  const updateContentStatus = async (
-    id: string,
-    updates: { published?: boolean; metadata?: Record<string, unknown> }
-  ) => {
-    try {
-      const res = await fetch(`/api/predictions/admin/agent-content/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates),
-      })
-      if (!res.ok) throw new Error('Update failed')
-      await fetchData()
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Update failed')
     }
   }
 
@@ -702,18 +359,18 @@ export default function AdminAgentsPage() {
     )
   }
 
-  const content = (data?.agentContent ?? []).filter((c) => c.content_type !== 'blog_post')
+  const content = (data?.agentContent ?? []).filter(
+    (c) => c.content_type !== 'blog_post' && c.content_type !== 'social_post'
+  )
   const blogPosts = data?.blogPosts ?? []
-  const socialPosts = content.filter((c) => c.content_type === 'social_post' || (c.metadata?.platform as string))
   const filteredContent =
-    activeTab === 'calendar' || activeTab === 'blog'
+    activeTab === 'blog'
       ? []
       : activeTab === 'all'
         ? content
         : content.filter((c) => {
             const tab = getContentTab(c)
             if (activeTab === 'ceo') return tab === 'ceo'
-            if (activeTab === 'social') return tab === 'social'
             if (activeTab === 'news') return tab === 'news'
             if (activeTab === 'inbox') return tab === 'inbox'
             if (activeTab === 'suggestions') return tab === 'suggestions'
@@ -865,15 +522,21 @@ export default function AdminAgentsPage() {
             <span className="text-red-400">{stats.totalErrors} errores</span>
           )}
         </div>
+        <div className="flex flex-wrap gap-2 mb-4 items-center">
+          <Link
+            href="/predictions/admin/blog/create"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-500"
+          >
+            Write post
+          </Link>
+        </div>
         <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
           {[
             { id: 'all' as TabId, label: 'All' },
             { id: 'ceo' as TabId, label: 'CEO Digests' },
-            { id: 'social' as TabId, label: 'Social Posts' },
             { id: 'news' as TabId, label: 'News Briefs' },
             { id: 'inbox' as TabId, label: 'Inbox Digests' },
             { id: 'suggestions' as TabId, label: 'Market Suggestions' },
-            { id: 'calendar' as TabId, label: 'Content Calendar' },
             { id: 'blog' as TabId, label: 'Blog Posts' },
           ].map(({ id, label }) => (
             <button
@@ -960,31 +623,12 @@ export default function AdminAgentsPage() {
                 </div>
               ))
             )
-          ) : activeTab === 'calendar' ? (
-            <ContentCalendarView
-              posts={socialPosts}
-              copyToClipboard={copyToClipboard}
-              updateContentStatus={updateContentStatus}
-              formatDate={formatDate}
-            />
           ) : filteredContent.length === 0 ? (
             <div className="text-slate-500 py-8 text-center">No content in this category</div>
           ) : (
             filteredContent.map((item) => {
               const meta = item.metadata ?? {}
               const type = meta.type as string
-
-              if (item.content_type === 'social_post' || meta.platform) {
-                return (
-                  <SocialPostCard
-                    key={item.id}
-                    item={item}
-                    copyToClipboard={copyToClipboard}
-                    updateContentStatus={updateContentStatus}
-                    formatDate={formatDate}
-                  />
-                )
-              }
 
               if ((meta.digest_type as string) === 'ceo_digest' || (item.content_type === 'weekly_digest' && type === 'ceo_digest')) {
                 return (

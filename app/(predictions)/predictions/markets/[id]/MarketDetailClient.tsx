@@ -828,7 +828,12 @@ export function MarketDetailClient({
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Conscious Fund</span>
-                <span className="text-emerald-400">{market.conscious_fund_percentage}%</span>
+                <span className="text-emerald-400">
+                  {typeof market.conscious_fund_percentage === 'number' &&
+                  Number.isFinite(market.conscious_fund_percentage)
+                    ? `${Number(market.conscious_fund_percentage)}%`
+                    : '—'}
+                </span>
               </div>
             </div>
           </div>

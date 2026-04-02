@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
       99,
       Math.max(1, Number(initial_probability) || 50)
     )
-    const fundPct = Math.min(100, Math.max(0, Number(conscious_fund_percentage) ?? 7.5))
+    const fundPct = Math.min(100, Math.max(0, Number(conscious_fund_percentage) ?? 20))
     const sponsorAmount = Number(sponsorship_amount_mxn) || 0
 
     const verificationStrings: string[] = []

@@ -26,6 +26,7 @@ import {
   Activity,
   Ticket,
   Newspaper,
+  PenLine,
 } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import LanguageSwitcherSimple from '@/components/LanguageSwitcherSimple'
@@ -195,6 +196,17 @@ export default function PredictionsShell({
             >
               <Bot className="w-4 h-4" />
               {language === 'es' ? 'Panel de Agentes' : 'Agent Dashboard'}
+            </Link>
+            <Link
+              href="/predictions/admin/blog/create"
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                pathname.startsWith('/predictions/admin/blog')
+                  ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
+                  : 'text-cc-text-secondary hover:bg-gray-800/50 hover:text-amber-400'
+              }`}
+            >
+              <PenLine className="w-4 h-4" />
+              {language === 'es' ? 'Escribir blog' : 'Write blog'}
             </Link>
             <Link
               href="/predictions/admin/sponsors"
@@ -406,6 +418,18 @@ export default function PredictionsShell({
                   >
                     <Bot className="w-4 h-4" />
                     {language === 'es' ? 'Panel de Agentes' : 'Agent Dashboard'}
+                  </Link>
+                  <Link
+                    href="/predictions/admin/blog/create"
+                    onClick={closeMobileMenu}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                      pathname.startsWith('/predictions/admin/blog')
+                        ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
+                        : 'text-cc-text-secondary hover:bg-gray-800/50 hover:text-amber-400'
+                    }`}
+                  >
+                    <PenLine className="w-4 h-4" />
+                    {language === 'es' ? 'Escribir blog' : 'Write blog'}
                   </Link>
                   <Link
                     href="/predictions/admin/sponsors"

@@ -1,5 +1,5 @@
 /**
- * Content Creator: reader-first blog drafts (Spanish primary) + social snippets.
+ * Content Creator: reader-first blog drafts (Spanish primary).
  * Saves to `blog_posts` (draft) and `agent_content`.
  */
 import {
@@ -149,10 +149,10 @@ STRUCTURE:
 - Close: exactly one CTA block as specified below
 - Length: 400–600 words in Spanish "content" (not more)
 
-PRIORITY TOPICS (pick one angle):
-1) Active Pulse with interesting confidence vs votes — explain the gap
-2) News Monitor context below — tie to a live market
-3) A market with meaningful probability or participation shift — what it means for the city
+PRIORITY TOPICS (pick one angle — avoid repeating the same market/category as in RECENT POSTS below):
+1) News Monitor context — tie to a live market that is NOT the Pulse if Pulse was covered recently
+2) A non-Pulse market with meaningful probability or participation shift — what it means for the city
+3) Active Pulse only if Pulse was not the focus of the last 1–2 posts
 4) Else: short educational piece on collective intelligence (Galton-style) tied to ONE market
 
 TONE (CRITICAL):
@@ -191,9 +191,7 @@ OUTPUT: Respond with ONLY valid JSON (no markdown code fences, no preamble):
   "category": "pulse_analysis | market_story | world_cup | insight | behind_data",
   "tags": ["tag1", "tag2", "tag3"],
   "meta_description": "Spanish SEO, max 155 chars",
-  "related_market_id": "single UUID from the market list in the data brief",
-  "social_post_es": "Tweet-length Spanish (max 280 chars), may include market URL",
-  "social_post_en": "Tweet-length English (max 280 chars)"
+  "related_market_id": "single UUID from the market list in the data brief"
 }`
 
 function slugify(raw: string): string {
@@ -263,7 +261,32 @@ export async function runContentCreator(): Promise<{
 
     const { text: dataBrief, marketList } = await buildContentCreatorDataBrief(supabase, todayFormatted)
 
+    const { data: recentBlogRows } = await supabase
+      .from('blog_posts')
+      .select('title, related_market_ids, category, created_at')
+      .order('created_at', { ascending: false })
+      .limit(3)
+
+    const recentTitles = (recentBlogRows ?? []).map((r) => String(r.title ?? '').trim()).filter(Boolean)
+    const recentMarketIds = new Set(
+      (recentBlogRows ?? []).flatMap((r) =>
+        Array.isArray(r.related_market_ids) ? (r.related_market_ids as string[]) : []
+      )
+    )
+    const recentCategories = (recentBlogRows ?? []).map((r) => String(r.category ?? '')).filter(Boolean)
+    const uncovered = marketList.filter((m) => !recentMarketIds.has(m.id))
+    const diversityBlock = `IMPORTANTE — VARIEDAD DE CONTENIDO:
+Últimos títulos en el blog: ${recentTitles.length ? recentTitles.join(' | ') : '(ninguno aún)'}
+Categorías recientes: ${recentCategories.length ? recentCategories.join(', ') : '—'}
+Mercados ya enlazados recientemente (evitar repetir): ${recentMarketIds.size ? [...recentMarketIds].join(', ') : 'ninguno'}
+
+NO repitas el mismo ángulo ni el mismo mercado salvo que haya una noticia nueva decisiva. Prioriza mercados aún no cubiertos en esa lista:
+${uncovered.length ? uncovered.map((m) => `- "${m.title}" [ID: ${m.id}] — ${m.total_votes ?? 0} votos · ${m.category}`).join('\n') : '(toma un ángulo distinto usando el contexto de noticias de hoy)'}
+`
+
     const userMessage = `Escribe el artículo usando esta información.
+
+${diversityBlock}
 
 ${dataBrief}
 
@@ -294,7 +317,7 @@ Responde con un solo objeto JSON exactamente como en tus instrucciones de sistem
       await supabase.from('agent_content').insert({
         market_id: null,
         agent_type: 'content_creator',
-        content_type: 'social_post',
+        content_type: 'blog_post',
         title: 'Blog draft (parse failed)',
         body: rawText.slice(0, 120000),
         language: 'es',
@@ -372,15 +395,6 @@ Responde con un solo objeto JSON exactamente como en tus instrucciones de sistem
 
     const metaDesc = String(blogObj.meta_description ?? excerpt).slice(0, 160)
 
-    const socialPosts =
-      blogObj.social_posts && typeof blogObj.social_posts === 'object'
-        ? (blogObj.social_posts as Record<string, unknown>)
-        : {
-            twitter_es: String(blogObj.social_post_es ?? ''),
-            twitter_en: String(blogObj.social_post_en ?? ''),
-            instagram_es: String(blogObj.social_post_es ?? '').slice(0, 2200),
-          }
-
     const { data: inserted, error: insErr } = await supabase
       .from('blog_posts')
       .insert({
@@ -424,7 +438,6 @@ Responde con un solo objeto JSON exactamente como en tus instrucciones de sistem
         body: JSON.stringify({
           blog_post_id: blogId,
           slug,
-          social_posts: socialPosts,
         }),
         language: 'es',
         metadata: {
@@ -444,53 +457,6 @@ Responde con un solo objeto JSON exactamente como en tus instrucciones de sistem
       console.error('[Content Creator] agent_content insert', agentErr)
     } else if (agentRow?.id) {
       await supabase.from('blog_posts').update({ agent_content_id: agentRow.id }).eq('id', blogId)
-    }
-
-    const twitterEs = String((socialPosts as { twitter_es?: string }).twitter_es ?? '').trim()
-    const twitterEn = String((socialPosts as { twitter_en?: string }).twitter_en ?? '').trim()
-    if (twitterEs) {
-      await supabase.from('agent_content').insert({
-        market_id: finalRelated[0] ?? null,
-        agent_type: 'content_creator',
-        content_type: 'social_post',
-        title: `X (ES) — ${title.slice(0, 48)}`,
-        body: JSON.stringify({
-          platform: 'twitter',
-          language: 'es',
-          text: twitterEs,
-          blog_post_slug: slug,
-        }),
-        language: 'es',
-        metadata: {
-          platform: 'twitter',
-          language: 'es',
-          blog_post_id: blogId,
-          slug,
-        },
-        published: false,
-      })
-    }
-    if (twitterEn) {
-      await supabase.from('agent_content').insert({
-        market_id: finalRelated[0] ?? null,
-        agent_type: 'content_creator',
-        content_type: 'social_post',
-        title: `X (EN) — ${title.slice(0, 48)}`,
-        body: JSON.stringify({
-          platform: 'twitter',
-          language: 'en',
-          text: twitterEn,
-          blog_post_slug: slug,
-        }),
-        language: 'en',
-        metadata: {
-          platform: 'twitter',
-          language: 'en',
-          blog_post_id: blogId,
-          slug,
-        },
-        published: false,
-      })
     }
 
     await logAgentRun({

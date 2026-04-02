@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import Logo from '@/components/Logo'
+import NewsletterForm from '@/components/NewsletterForm'
 import { useLanguage } from '@/contexts/LanguageContext'
 
 export default function Footer() {
@@ -124,7 +125,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mb-10 grid grid-cols-1 gap-8 sm:grid-cols-3">
+        <div className="mb-10 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <h3 className="mb-4 text-sm font-semibold text-white">{t.platform}</h3>
             <ul className="space-y-2 text-sm">
@@ -172,6 +173,15 @@ export default function Footer() {
                 </a>
               </li>
             </ul>
+          </div>
+          <div>
+            <h3 className="mb-4 text-sm font-semibold text-white">
+              {language === 'es' ? 'Newsletter' : 'Newsletter'}
+            </h3>
+            <p className="mb-3 text-xs text-slate-500">
+              {language === 'es' ? 'Análisis sin llenar formularios largos.' : 'Analysis without a long signup.'}
+            </p>
+            <NewsletterForm source="footer" locale={language} compact />
           </div>
           <div>
             <h3 className="mb-4 text-sm font-semibold text-white">{t.legal}</h3>

@@ -69,7 +69,7 @@ export default function CreateMarketPage() {
   const [sponsorName, setSponsorName] = useState('')
   const [sponsorLogoUrl, setSponsorLogoUrl] = useState('')
   const [sponsorshipAmountMxn, setSponsorshipAmountMxn] = useState('')
-  const [consciousFundPercentage, setConsciousFundPercentage] = useState(7.5)
+  const [consciousFundPercentage, setConsciousFundPercentage] = useState(20)
   const [enTitle, setEnTitle] = useState('')
   const [enDescription, setEnDescription] = useState('')
   const [enResolutionCriteria, setEnResolutionCriteria] = useState('')
@@ -1004,7 +1004,7 @@ export default function CreateMarketPage() {
                   step={0.1}
                   value={consciousFundPercentage}
                   onChange={(e) =>
-                    setConsciousFundPercentage(Math.min(100, Math.max(0, Number(e.target.value) || 7.5)))
+                    setConsciousFundPercentage(Math.min(100, Math.max(0, Number(e.target.value) || 20)))
                   }
                   className={ccInput}
                 />

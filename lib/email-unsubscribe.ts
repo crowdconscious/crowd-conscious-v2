@@ -25,3 +25,24 @@ export function verifyUnsubscribeToken(userId: string, token: string): boolean {
     return false
   }
 }
+
+const newsletterNorm = (email: string) => email.toLowerCase().trim()
+
+/** Token for newsletter-only subscribers (no auth.users row). */
+export function createNewsletterListUnsubscribeToken(email: string): string {
+  return createHmac('sha256', getSecret())
+    .update(`newsletter:${newsletterNorm(email)}`)
+    .digest('base64url')
+}
+
+export function verifyNewsletterListUnsubscribeToken(email: string, token: string): boolean {
+  try {
+    const expected = createNewsletterListUnsubscribeToken(email)
+    const a = Buffer.from(expected, 'utf8')
+    const b = Buffer.from(token, 'utf8')
+    if (a.length !== b.length) return false
+    return timingSafeEqual(a, b)
+  } catch {
+    return false
+  }
+}

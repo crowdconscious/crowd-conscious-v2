@@ -25,6 +25,7 @@ const ImpactTicker = dynamic(() =>
 const SponsorCTA = dynamic(() =>
   import('./components/landing/SponsorCTA').then((m) => ({ default: m.SponsorCTA }))
 )
+const NewsletterForm = dynamic(() => import('@/components/NewsletterForm'))
 
 export const revalidate = 60
 
@@ -404,6 +405,20 @@ export default async function LandingPage() {
         <LandingPulseSection locale={localeShort} />
 
         <LandingLiveSection locale={localeShort} />
+
+        <section className="border-t border-[#2d3748] bg-[#0f1419] px-4 py-12">
+          <div className="mx-auto max-w-xl rounded-xl border border-[#2d3748] bg-[#1a2029] p-6 text-center">
+            <h3 className="text-lg font-bold text-white">
+              {locale === 'es' ? '¿Quieres recibir análisis semanales?' : 'Want weekly analysis?'}
+            </h3>
+            <p className="mt-1 mb-4 text-sm text-gray-400">
+              {locale === 'es'
+                ? 'Inteligencia colectiva y predicciones — directo a tu correo.'
+                : 'Collective intelligence and predictions — straight to your inbox.'}
+            </p>
+            <NewsletterForm source="landing_hero" locale={localeShort} />
+          </div>
+        </section>
 
         {/* Social proof — stats from live data */}
         <section

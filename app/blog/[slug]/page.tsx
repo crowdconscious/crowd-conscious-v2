@@ -1,8 +1,10 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase-server'
+import { getCurrentUser } from '@/lib/auth-server'
 import { SITE_URL } from '@/lib/seo/site'
 import { BlogPostBody } from './BlogPostBody'
+import { BlogDraftBar } from './BlogDraftBar'
 import { EmbeddedMarketCard } from '@/components/blog/EmbeddedMarketCard'
 import { BlogComments } from '@/components/blog/BlogComments'
 import { truncateMarkdownPreview } from '@/lib/blog-truncate-preview'
@@ -67,21 +69,33 @@ export default async function BlogPostPage(props: Props) {
   const { slug } = await props.params
   const supabase = await createClient()
 
-  const [{ data: post }, { data: userData }] = await Promise.all([
-    supabase
-      .from('blog_posts')
-      .select('*')
-      .eq('slug', slug)
-      .eq('status', 'published')
-      .maybeSingle(),
-    supabase.auth.getUser(),
-  ])
+  const user = await getCurrentUser()
+  let isAdmin = false
+  if (user) {
+    const { data: prof } = await supabase.from('profiles').select('user_type').eq('id', user.id).maybeSingle()
+    isAdmin = prof?.user_type === 'admin'
+  }
+
+  const { data: publishedPost } = await supabase
+    .from('blog_posts')
+    .select('*')
+    .eq('slug', slug)
+    .eq('status', 'published')
+    .maybeSingle()
+
+  let post = publishedPost
+  if (!post && isAdmin) {
+    const { data: draftRow } = await supabase.from('blog_posts').select('*').eq('slug', slug).maybeSingle()
+    post = draftRow
+  }
 
   if (!post) notFound()
 
-  void supabase.rpc('increment_blog_post_view', { p_slug: slug }).then(() => {})
+  if (post.status === 'published') {
+    void supabase.rpc('increment_blog_post_view', { p_slug: slug }).then(() => {})
+  }
 
-  const isAuthenticated = !!userData.user
+  const isAuthenticated = !!user
   const content = post.content || ''
   const { preview, needsGate } = truncateMarkdownPreview(content, 300)
   const showGate = !isAuthenticated && needsGate
@@ -92,6 +106,7 @@ export default async function BlogPostPage(props: Props) {
 
   return (
     <article className="mx-auto max-w-3xl px-4 py-12">
+      {isAdmin && post.status === 'draft' && <BlogDraftBar postId={post.id} />}
       <p className="text-xs font-semibold uppercase tracking-wider text-emerald-400/90">
         {catLabel.toUpperCase()} · {formatDate(post.published_at)}
       </p>

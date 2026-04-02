@@ -4,7 +4,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { sendEmail } from '@/lib/resend'
 import { crowdNewsletterEmailTemplate, type BlogDigestMarket, type BlogPostDigest } from '@/lib/prediction-emails'
-import { createUnsubscribeToken } from '@/lib/email-unsubscribe'
+import {
+  createNewsletterListUnsubscribeToken,
+  createUnsubscribeToken,
+} from '@/lib/email-unsubscribe'
 import { cronHealthCheck, cronHealthComplete } from '@/lib/cron-health'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'
@@ -186,43 +189,81 @@ export async function runCrowdNewsletterCron(
       return { ok: false, error: profErr.message }
     }
 
+    let newsletterOnly: { email: string; language: string | null }[] = []
+    try {
+      const { data: subs } = await admin
+        .from('newsletter_subscribers')
+        .select('email, language')
+        .eq('is_active', true)
+      newsletterOnly = subs ?? []
+    } catch {
+      newsletterOnly = []
+    }
+
+    type Recipient = { email: string; unsubUrl: string }
+    const byEmail = new Map<string, Recipient>()
+
+    for (const p of profiles ?? []) {
+      if (p.email_notifications === false) continue
+      const email = (p.email as string)?.trim().toLowerCase()
+      if (!email) continue
+      const unsub = `${APP_URL}/api/email/unsubscribe?user=${encodeURIComponent(p.id)}&token=${encodeURIComponent(createUnsubscribeToken(p.id))}`
+      byEmail.set(email, { email: p.email as string, unsubUrl: unsub })
+    }
+
+    for (const row of newsletterOnly) {
+      const raw = String(row.email ?? '').trim().toLowerCase()
+      if (!raw || !raw.includes('@')) continue
+      if (byEmail.has(raw)) continue
+      const tok = createNewsletterListUnsubscribeToken(raw)
+      const unsub = `${APP_URL}/api/newsletter/unsubscribe?email=${encodeURIComponent(raw)}&token=${encodeURIComponent(tok)}`
+      byEmail.set(raw, { email: String(row.email ?? '').trim(), unsubUrl: unsub })
+    }
+
+    const recipients = Array.from(byEmail.values())
+    if (recipients.length === 0) {
+      await cronHealthComplete(runId, healthJobName, admin, {
+        success: true,
+        summary: 'skipped: no_subscribers',
+      })
+      return { ok: true, skipped: true, reason: 'no_subscribers' }
+    }
+
     let sent = 0
     let failed = 0
     let subjectUsed = 'Lo que CDMX piensa esta semana | Crowd Conscious'
 
-    for (const p of profiles ?? []) {
-      if (p.email_notifications === false) continue
-      const email = (p.email as string)?.trim()
-      if (!email) continue
-
-      const unsub = `${APP_URL}/api/email/unsubscribe?user=${encodeURIComponent(p.id)}&token=${encodeURIComponent(createUnsubscribeToken(p.id))}`
+    for (const rec of recipients) {
       const tpl = crowdNewsletterEmailTemplate({
         post,
         highlightNewBlog,
         pulseMarket: pulseDigest,
         markets: marketDigests,
         fundTotalMxn,
-        unsubscribeUrl: unsub,
+        unsubscribeUrl: rec.unsubUrl,
         daysUntilWorldCup: wcDaysUntil(),
       })
       subjectUsed = tpl.subject
 
-      const r = await sendEmail(email, { subject: tpl.subject, html: tpl.html })
+      const r = await sendEmail(rec.email, { subject: tpl.subject, html: tpl.html })
       if (r.success) {
         sent++
-        try {
-          await admin.from('email_digest_log').insert({
-            user_id: p.id,
-            market_id: nonPulse[0]?.id ?? pulseMarket?.id ?? null,
-            blog_post_id: latestPost?.id ?? null,
-            email_type: 'newsletter',
-          })
-        } catch (e) {
-          console.error('[newsletter] email_digest_log insert', e)
-        }
       } else {
         failed++
-        console.warn('[newsletter] send', email, r.error)
+        console.warn('[newsletter] send', rec.email, r.error)
+      }
+    }
+
+    if (sent > 0) {
+      try {
+        await admin.from('email_digest_log').insert({
+          user_id: null,
+          market_id: nonPulse[0]?.id ?? pulseMarket?.id ?? null,
+          blog_post_id: latestPost?.id ?? null,
+          email_type: 'newsletter',
+        })
+      } catch (e) {
+        console.error('[newsletter] email_digest_log batch insert', e)
       }
     }
 
