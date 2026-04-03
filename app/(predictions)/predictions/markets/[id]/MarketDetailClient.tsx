@@ -104,6 +104,19 @@ function formatDate(d: string): string {
   })
 }
 
+function marketAvgConfidenceFromOutcomes(outcomes: Outcome[]): number | null {
+  let sum = 0
+  let votes = 0
+  for (const o of outcomes) {
+    const vc = o.vote_count ?? 0
+    if (vc <= 0) continue
+    sum += Number(o.total_confidence ?? 0)
+    votes += vc
+  }
+  if (votes === 0) return null
+  return Math.round((sum / votes) * 10) / 10
+}
+
 function formatRelativeTime(d: string): string {
   const now = Date.now()
   const then = new Date(d).getTime()
@@ -136,6 +149,15 @@ const AGENT_ICONS: Record<string, React.ElementType> = {
 type Outcome = { id: string; label: string; probability: number; vote_count: number; total_confidence: number; is_winner: boolean | null }
 type MyVote = { outcome_id: string; outcome_label: string; confidence: number; xp_earned: number; is_correct: boolean | null; bonus_xp: number } | null
 
+export type RelatedMarketSummary = {
+  id: string
+  title: string
+  translations?: { en?: { title?: string } } | null
+  total_votes: number | null
+  is_pulse: boolean
+  category: string
+}
+
 interface Props {
   market: PredictionMarket
   creatorName: string
@@ -155,6 +177,7 @@ interface Props {
   isAuthenticated?: boolean
   /** Admin or linked sponsor account owner — Pulse public results */
   showPulseDashboardLink?: boolean
+  relatedMarkets?: RelatedMarketSummary[]
 }
 
 type TimeRange = '7d' | '30d' | 'all'
@@ -174,6 +197,7 @@ export function MarketDetailClient({
   myVote = null,
   isAuthenticated = true,
   showPulseDashboardLink = false,
+  relatedMarkets = [],
 }: Props) {
   const locale = useLocale()
   const loc = locale === 'en' ? 'en' : 'es'
@@ -326,6 +350,7 @@ export function MarketDetailClient({
   const isResolved = market.status === 'resolved'
   const resolutionLabel = (market as { resolution?: string }).resolution ?? (market.resolved_outcome ? 'YES' : 'NO')
   const resolvedDate = market.resolved_at ? formatDate(market.resolved_at) : ''
+  const avgConfidenceHero = marketAvgConfidenceFromOutcomes(outcomes)
 
   return (
     <div className="space-y-6 pb-8">
@@ -342,6 +367,79 @@ export function MarketDetailClient({
           className="rounded-lg border border-emerald-500/35 bg-emerald-500/10 px-4 py-2.5 text-sm text-emerald-100"
         >
           {voteQuietMessage}
+        </div>
+      )}
+
+      {!isResolved && (
+        <div className="rounded-2xl border border-white/10 bg-cc-card px-4 py-4 -mx-1 sm:mx-0">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <span
+              className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+                isPulseMarket
+                  ? 'bg-amber-500/10 text-amber-400'
+                  : 'bg-emerald-500/10 text-emerald-400'
+              }`}
+            >
+              {isPulseMarket ? '📊 Conscious Pulse' : `🌐 ${config.label}`}
+            </span>
+            <span className="text-xs text-gray-500">
+              {engagementCount.toLocaleString()}{' '}
+              {isPulseMarket
+                ? locale === 'es'
+                  ? 'opiniones'
+                  : 'opinions'
+                : locale === 'es'
+                  ? 'predicciones'
+                  : 'predictions'}
+            </span>
+          </div>
+          <div className="flex items-start justify-between gap-3">
+            <h1 className="text-xl sm:text-2xl font-bold text-white leading-tight flex-1 min-w-0">
+              {getMarketText(market, 'title', locale)}
+            </h1>
+            <div className="shrink-0 pt-0.5">
+              <ShareButton
+                marketId={market.id}
+                title={getMarketText(market, 'title', locale)}
+                sponsorName={(market as { sponsor_name?: string }).sponsor_name}
+                compact
+              />
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-3 text-xs text-gray-500">
+            {isPulseMarket && avgConfidenceHero != null && (
+              <span>
+                {locale === 'es' ? 'Confianza promedio' : 'Avg confidence'}: {avgConfidenceHero}/10
+              </span>
+            )}
+            <span>
+              {locale === 'es' ? 'Cierra' : 'Closes'} {formatDate(market.resolution_date)}
+            </span>
+          </div>
+          {(market as { sponsor_name?: string }).sponsor_name && (
+            <div className="flex items-center gap-2 mt-3 py-2 px-3 bg-white/[0.03] rounded-lg">
+              {(market as { sponsor_logo_url?: string }).sponsor_logo_url ? (
+                <Image
+                  src={(market as { sponsor_logo_url?: string }).sponsor_logo_url!}
+                  alt=""
+                  width={20}
+                  height={20}
+                  className="h-5 w-5 rounded object-contain shrink-0"
+                  unoptimized
+                />
+              ) : null}
+              <span className="text-xs text-gray-400">
+                {locale === 'es' ? 'Patrocinado por' : 'Sponsored by'}{' '}
+                {(market as { sponsor_name?: string }).sponsor_name}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {isResolved && (
+        <div className="lg:hidden rounded-2xl border border-white/10 bg-cc-card px-4 py-4 -mx-1 sm:mx-0">
+          <h1 className="text-xl font-bold text-white leading-tight">{getMarketText(market, 'title', locale)}</h1>
         </div>
       )}
 
@@ -371,8 +469,8 @@ export function MarketDetailClient({
       <div className="grid grid-cols-1 lg:grid-cols-[65%_35%] gap-8">
         {/* Left Column — stats, charts, discussion (order-2 on mobile so VotePanel shows first) */}
         <div className="space-y-6 order-2 lg:order-1">
-          {/* Market Header */}
-          <div>
+          {/* Title lives in the hero above; desktop-only meta */}
+          <div className="hidden lg:block">
             <span
               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text} mb-3`}
             >
@@ -380,7 +478,7 @@ export function MarketDetailClient({
               {config.label}
             </span>
             <div className="flex items-center justify-between gap-4 mb-2">
-              <h1 className="text-2xl font-bold text-white flex-1 min-w-0">{getMarketText(market, 'title', locale)}</h1>
+              <h2 className="text-2xl font-bold text-white flex-1 min-w-0">{getMarketText(market, 'title', locale)}</h2>
               <ShareButton marketId={market.id} title={getMarketText(market, 'title', locale)} sponsorName={(market as { sponsor_name?: string }).sponsor_name} />
             </div>
             <p className="text-slate-400 text-sm">
@@ -397,9 +495,9 @@ export function MarketDetailClient({
             </span>
           </div>
 
-          {/* Sponsor Banner */}
+          {/* Sponsor Banner — full card on large screens; compact sponsor is in the hero on mobile */}
           {(market as { sponsor_name?: string }).sponsor_name && (
-            <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-center justify-between gap-4 flex-wrap">
+            <div className="hidden lg:flex bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 items-center justify-between gap-4 flex-wrap">
               <div className="flex items-center gap-3 min-w-0">
                 {(market as { sponsor_logo_url?: string }).sponsor_logo_url ? (
                   <Image
@@ -796,6 +894,7 @@ export function MarketDetailClient({
             guestId={guestId}
             guestVoteRecord={guestVoteRecord}
             onAnonymousVoteSuccess={handleAnonymousVoteSuccess}
+            relatedMarkets={relatedMarkets}
           />
           <div className="bg-cc-card border border-cc-border rounded-xl p-4">
             <div className="flex items-center justify-between mb-3">

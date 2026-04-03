@@ -173,6 +173,24 @@ export default async function MarketDetailPage({
     showPulseDashboardLink = isAdmin || isSponsorOwner
   }
 
+  const { data: relatedRows } = await supabase
+    .from('prediction_markets')
+    .select('id, title, translations, total_votes, is_pulse, category')
+    .in('status', ['active', 'trading'])
+    .is('archived_at', null)
+    .neq('id', id)
+    .order('total_votes', { ascending: false })
+    .limit(3)
+
+  const relatedMarkets = (relatedRows || []).map((r) => ({
+    id: r.id,
+    title: r.title,
+    translations: r.translations as { en?: { title?: string } } | null | undefined,
+    total_votes: r.total_votes ?? null,
+    is_pulse: r.is_pulse === true,
+    category: r.category,
+  }))
+
   return (
     <MarketDetailClient
       market={market}
@@ -189,6 +207,7 @@ export default async function MarketDetailPage({
       myVote={myVote}
       isAuthenticated={!!user}
       showPulseDashboardLink={showPulseDashboardLink}
+      relatedMarkets={relatedMarkets}
     />
   )
 }
