@@ -7,7 +7,7 @@ import { BlogPostBody } from './BlogPostBody'
 import { BlogDraftBar } from './BlogDraftBar'
 import { EmbeddedMarketCard } from '@/components/blog/EmbeddedMarketCard'
 import { BlogComments } from '@/components/blog/BlogComments'
-import { truncateMarkdownPreview } from '@/lib/blog-truncate-preview'
+import { BlogSoftSignupCta } from './BlogSoftSignupCta'
 
 type Props = { params: Promise<{ slug: string }> }
 
@@ -97,8 +97,6 @@ export default async function BlogPostPage(props: Props) {
 
   const isAuthenticated = !!user
   const content = post.content || ''
-  const { preview, needsGate } = truncateMarkdownPreview(content, 300)
-  const showGate = !isAuthenticated && needsGate
 
   const relatedMarketIds = (post.related_market_ids ?? []).filter(Boolean) as string[]
 
@@ -125,13 +123,7 @@ export default async function BlogPostPage(props: Props) {
       )}
 
       <div className="mt-10">
-        <BlogPostBody
-          slug={slug}
-          locale="es"
-          previewMarkdown={preview}
-          fullMarkdown={content}
-          needsGate={showGate}
-        />
+        <BlogPostBody markdown={content} />
       </div>
 
       {relatedMarketIds.length > 0 && (
@@ -146,6 +138,8 @@ export default async function BlogPostPage(props: Props) {
           </div>
         </section>
       )}
+
+      {!isAuthenticated && <BlogSoftSignupCta slug={slug} />}
 
       <BlogComments blogPostId={post.id} locale="es" />
     </article>

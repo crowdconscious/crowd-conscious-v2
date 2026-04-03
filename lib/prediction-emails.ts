@@ -3,6 +3,10 @@
  * Uses same visual language as lib/resend.ts (Crowd Conscious branding).
  */
 
+import { marked } from 'marked'
+
+marked.setOptions({ gfm: true, breaks: true })
+
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'
 const LOGO_URL = `${APP_URL}/images/logo.png`
 
@@ -174,9 +178,133 @@ export type BlogPostDigest = {
   title: string
   excerpt: string
   category: string
+  /** Full markdown body (newsletter renders full HTML when under word limit) */
+  content?: string | null
+  cover_image_url?: string | null
+  published_at?: string | null
+}
+
+function blogMarkdownWordCount(md: string | null | undefined): number {
+  if (!md?.trim()) return 0
+  return md.trim().split(/\s+/).filter(Boolean).length
+}
+
+/** Inline styles for email clients (Gmail/Outlook) — markdown → HTML from `marked`. */
+function styleBlogEmailHtml(html: string): string {
+  return html
+    .replace(/<p>/g, '<p style="color: #d1d5db; font-size: 15px; line-height: 1.7; font-family: Arial, sans-serif; margin: 0 0 16px;">')
+    .replace(/<h1>/g, '<h1 style="color: #ffffff; font-size: 22px; font-weight: bold; font-family: Arial, sans-serif; margin: 24px 0 12px;">')
+    .replace(/<h2>/g, '<h2 style="color: #ffffff; font-size: 20px; font-weight: bold; font-family: Arial, sans-serif; margin: 28px 0 12px;">')
+    .replace(/<h3>/g, '<h3 style="color: #ffffff; font-size: 17px; font-weight: bold; font-family: Arial, sans-serif; margin: 24px 0 10px;">')
+    .replace(/<h4>/g, '<h4 style="color: #e5e7eb; font-size: 15px; font-weight: bold; font-family: Arial, sans-serif; margin: 20px 0 8px;">')
+    .replace(/<strong>/g, '<strong style="color: #ffffff;">')
+    .replace(/<a /g, '<a style="color: #10b981; text-decoration: underline;" ')
+    .replace(/<ul>/g, '<ul style="color: #d1d5db; padding-left: 20px; margin: 0 0 16px;">')
+    .replace(/<ol>/g, '<ol style="color: #d1d5db; padding-left: 20px; margin: 0 0 16px;">')
+    .replace(/<li>/g, '<li style="margin-bottom: 8px; font-size: 15px; line-height: 1.6;">')
+    .replace(/<blockquote>/g, '<blockquote style="border-left: 3px solid #10b981; padding-left: 16px; margin: 16px 0; color: #9ca3af; font-style: italic;">')
+    .replace(/<hr>/g, '<hr style="border: none; border-top: 1px solid #2d3748; margin: 24px 0;">')
+    .replace(/<hr\/>/g, '<hr style="border: none; border-top: 1px solid #2d3748; margin: 24px 0;">')
+    .replace(/<pre>/g, '<pre style="background: #1a2029; padding: 14px; border-radius: 8px; overflow: auto; font-size: 13px; color: #e2e8f0;">')
+    .replace(/<img /g, '<img style="max-width: 100%; height: auto; border-radius: 8px; margin: 12px 0;" ')
+    .replace(/<table>/g, '<table style="border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 14px; color: #d1d5db;">')
 }
 
 const EMAIL_FONT = `Arial, Helvetica, sans-serif`
+
+function buildBlogDigestSection(post: BlogPostDigest, highlightNewBlog: boolean): string {
+  const blogUrl = `${APP_URL}/blog/${post.slug}`
+  const snippet = excerptFirstSentences(post.excerpt, 3)
+  const words = blogMarkdownWordCount(post.content ?? undefined)
+  const isLong = words > 1500
+  const dateStr = post.published_at
+    ? new Date(post.published_at).toLocaleDateString('es-MX', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })
+    : ''
+
+  const badge = highlightNewBlog ? '📝 Nuevo en el blog' : '📝 Blog'
+  const coverImg = post.cover_image_url?.trim()
+    ? `<img src="${esc(post.cover_image_url.trim())}" alt="" width="552" style="width: 100%; max-height: 250px; object-fit: cover; border-radius: 12px; margin-bottom: 20px; display: block;" />`
+    : ''
+
+  if (isLong) {
+    const excerptPara = esc(snippet || post.excerpt || '')
+    return `
+    <div style="padding: 24px 24px 20px;">
+      ${coverImg}
+      <p style="color: #10b981; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 10px; font-family: ${EMAIL_FONT};">
+        ${badge}
+      </p>
+      <h2 style="color: #ffffff; font-size: 20px; font-family: ${EMAIL_FONT}; margin: 0 0 12px; line-height: 1.3;">
+        ${esc(post.title)}
+      </h2>
+      ${
+        dateStr
+          ? `<p style="color: #6b7280; font-size: 12px; font-family: ${EMAIL_FONT}; margin: 0 0 16px;">${esc(dateStr)}</p>`
+          : ''
+      }
+      <p style="color: #9ca3af; font-size: 14px; line-height: 1.6; font-family: ${EMAIL_FONT}; margin: 0 0 12px;">
+        ${excerptPara}
+      </p>
+      <a href="${esc(blogUrl)}"
+        style="display: inline-block; background: #10b981; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px; font-family: ${EMAIL_FONT};">
+        Leer artículo completo →
+      </a>
+    </div>`
+  }
+
+  const raw = post.content?.trim()
+  if (!raw) {
+    return `
+    <div style="padding: 24px 24px 20px;">
+      ${coverImg}
+      <p style="color: #10b981; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 10px; font-family: ${EMAIL_FONT};">
+        ${badge}
+      </p>
+      <h2 style="color: #ffffff; font-size: 20px; font-family: ${EMAIL_FONT}; margin: 0 0 12px; line-height: 1.3;">
+        ${esc(post.title)}
+      </h2>
+      <p style="color: #9ca3af; font-size: 14px; line-height: 1.6; font-family: ${EMAIL_FONT}; margin: 0 0 12px;">
+        ${esc(snippet)}
+      </p>
+      <a href="${esc(blogUrl)}"
+        style="display: inline-block; background: #10b981; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px; font-family: ${EMAIL_FONT};">
+        Leer artículo →
+      </a>
+    </div>`
+  }
+
+  const parsed = marked(raw, { async: false }) as string
+  const styledContent = styleBlogEmailHtml(parsed)
+
+  return `
+    <div style="padding: 24px 24px 20px;">
+      ${coverImg}
+      <p style="color: #10b981; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 10px; font-family: ${EMAIL_FONT};">
+        ${badge}
+      </p>
+      <h1 style="color: #ffffff; font-size: 24px; font-family: ${EMAIL_FONT}; margin: 10px 0 8px; line-height: 1.3;">
+        ${esc(post.title)}
+      </h1>
+      ${
+        dateStr
+          ? `<p style="color: #6b7280; font-size: 12px; font-family: ${EMAIL_FONT}; margin: 0 0 20px;">${esc(dateStr)}</p>`
+          : ''
+      }
+      <div style="padding: 0;">
+        ${styledContent}
+      </div>
+      <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid #2d3748;">
+        <a href="${esc(blogUrl)}"
+          style="color: #10b981; font-size: 13px; text-decoration: none; font-family: ${EMAIL_FONT};">
+          Ver en el sitio (con comentarios) →
+        </a>
+      </div>
+    </div>`
+}
 
 function marketRowHtml(m: BlogDigestMarket): string {
   const marketUrl = `${APP_URL}/predictions/markets/${m.id}`
@@ -222,7 +350,6 @@ export function crowdNewsletterEmailTemplate(opts: {
       ? `${opts.post.title.replace(/\s+/g, ' ').trim().slice(0, 90)} | Crowd Conscious`
       : 'Lo que CDMX piensa esta semana | Crowd Conscious'
 
-  const snippet = opts.post ? excerptFirstSentences(opts.post.excerpt, 3) : ''
   const fundFormatted = Math.round(opts.fundTotalMxn).toLocaleString('es-MX', {
     maximumFractionDigits: 0,
   })
@@ -230,25 +357,9 @@ export function crowdNewsletterEmailTemplate(opts: {
   const divider =
     '<div style="height: 0; margin: 0 20px; border: 0; border-top: 1px solid #2d3748;" role="separator" aria-hidden="true"></div>'
 
-  const blogBlock =
-    opts.post && snippet
-      ? `
-    <div style="padding: 24px 24px 20px;">
-      <p style="color: #10b981; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 10px; font-family: ${EMAIL_FONT};">
-        ${opts.highlightNewBlog ? '📝 Nuevo en el blog' : '📝 Blog'}
-      </p>
-      <h2 style="color: #ffffff; font-size: 20px; font-family: ${EMAIL_FONT}; margin: 0 0 12px; line-height: 1.3;">
-        ${esc(opts.post.title)}
-      </h2>
-      <p style="color: #9ca3af; font-size: 14px; line-height: 1.6; font-family: ${EMAIL_FONT}; margin: 0 0 12px;">
-        ${esc(snippet)}
-      </p>
-      <a href="${esc(`${APP_URL}/blog/${opts.post.slug}`)}"
-        style="display: inline-block; background: #10b981; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px; font-family: ${EMAIL_FONT};">
-        Leer artículo →
-      </a>
-    </div>`
-      : `
+  const blogBlock = opts.post
+    ? buildBlogDigestSection(opts.post, opts.highlightNewBlog)
+    : `
     <div style="padding: 24px 24px 12px;">
       <p style="color: #94a3b8; font-size: 14px; line-height: 1.6; font-family: ${EMAIL_FONT}; margin: 0;">
         Análisis e historias en <a href="${esc(`${APP_URL}/blog`)}" style="color: #10b981; font-weight: bold;"><span style="font-family: ${EMAIL_FONT};">crowdconscious.app/blog</span></a>

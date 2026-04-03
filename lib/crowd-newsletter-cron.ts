@@ -61,7 +61,7 @@ export async function runCrowdNewsletterCron(
 
     const { data: latestPost } = await admin
       .from('blog_posts')
-      .select('id, slug, title, excerpt, category, published_at')
+      .select('id, slug, title, excerpt, category, published_at, content, cover_image_url')
       .eq('status', 'published')
       .order('published_at', { ascending: false, nullsFirst: false })
       .limit(1)
@@ -73,6 +73,9 @@ export async function runCrowdNewsletterCron(
           title: latestPost.title,
           excerpt: latestPost.excerpt ?? '',
           category: latestPost.category ?? 'insight',
+          content: (latestPost as { content?: string | null }).content ?? null,
+          cover_image_url: (latestPost as { cover_image_url?: string | null }).cover_image_url ?? null,
+          published_at: latestPost.published_at ?? null,
         }
       : null
 
