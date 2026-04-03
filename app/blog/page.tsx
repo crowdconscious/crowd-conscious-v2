@@ -39,7 +39,7 @@ export default async function BlogPage() {
   const { data: posts } = await supabase
     .from('blog_posts')
     .select(
-      'id, slug, title, excerpt, cover_image_url, category, published_at, tags'
+      'id, slug, title, title_en, excerpt, excerpt_en, cover_image_url, category, published_at, tags'
     )
     .eq('status', 'published')
     .order('published_at', { ascending: false })
@@ -48,6 +48,11 @@ export default async function BlogPage() {
   const list = posts ?? []
   const featured = list[0]
   const rest = list.slice(1)
+
+  const postTitle = (p: (typeof list)[0]) =>
+    locale === 'en' && p.title_en?.trim() ? p.title_en : p.title
+  const postExcerpt = (p: (typeof list)[0]) =>
+    locale === 'en' && p.excerpt_en?.trim() ? p.excerpt_en : p.excerpt
 
   const readMore = locale === 'es' ? 'Leer más →' : 'Read more →'
   const emptyMsg =
@@ -89,9 +94,9 @@ export default async function BlogPage() {
               {formatDate(featured.published_at, locale)}
             </span>
             <h2 className="mt-2 text-xl font-bold text-white group-hover:text-emerald-200 md:text-2xl">
-              {featured.title}
+              {postTitle(featured)}
             </h2>
-            <p className="mt-2 line-clamp-2 text-sm text-gray-400">{featured.excerpt}</p>
+            <p className="mt-2 line-clamp-2 text-sm text-gray-400">{postExcerpt(featured)}</p>
             <span className="mt-3 inline-block text-sm text-emerald-400">{readMore}</span>
           </div>
         </Link>
@@ -124,8 +129,10 @@ export default async function BlogPage() {
                   {CATEGORY_LABEL[post.category] ?? post.category} ·{' '}
                   {formatDate(post.published_at, locale)}
                 </span>
-                <h3 className="mt-2 text-lg font-bold text-white group-hover:text-emerald-200">{post.title}</h3>
-                <p className="mt-2 line-clamp-2 text-sm text-gray-400">{post.excerpt}</p>
+                <h3 className="mt-2 text-lg font-bold text-white group-hover:text-emerald-200">
+                  {postTitle(post)}
+                </h3>
+                <p className="mt-2 line-clamp-2 text-sm text-gray-400">{postExcerpt(post)}</p>
                 <span className="mt-3 inline-block text-sm text-emerald-400">{readMore}</span>
               </div>
             </Link>

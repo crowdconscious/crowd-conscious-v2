@@ -30,7 +30,7 @@ export function EmbeddedMarketCard({
       setErr(null)
       const { data: m, error: e1 } = await supabase
         .from('prediction_markets')
-        .select('id, title, total_votes, engagement_count, status')
+        .select('id, title, total_votes, engagement_count, status, translations')
         .eq('id', marketId)
         .maybeSingle()
       if (e1 || !m) {
@@ -49,7 +49,9 @@ export function EmbeddedMarketCard({
         return
       }
       if (!cancelled) {
-        setTitle(m.title)
+        const tr = m.translations as { en?: { title?: string } } | null
+        const enTitle = tr?.en?.title?.trim()
+        setTitle(!es && enTitle ? enTitle : m.title)
         setVotes(Number(m.total_votes ?? m.engagement_count ?? 0))
         setOutcomes((o ?? []) as OutcomeRow[])
       }

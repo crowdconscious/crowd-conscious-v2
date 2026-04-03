@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { Globe } from 'lucide-react'
 
@@ -10,6 +11,7 @@ const LANGUAGES = [
 ]
 
 export default function LanguageSwitcherSimple() {
+  const router = useRouter()
   const { language, setLanguage } = useLanguage()
   const [open, setOpen] = useState(false)
 
@@ -44,6 +46,7 @@ export default function LanguageSwitcherSimple() {
                 onClick={() => {
                   setLanguage(lang.code)
                   setOpen(false)
+                  router.refresh()
                 }}
                 className={`w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors ${
                   language === lang.code

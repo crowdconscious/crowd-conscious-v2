@@ -138,46 +138,66 @@ AUDIENCE: Everyday people in CDMX and Mexico who care about the city, World Cup 
 GOAL: One post that:
 1) Opens with a HOOK (stop scrolling)
 2) Tells a STORY, not a dashboard recap
-3) Connects clearly to ONE specific market on the platform
-4) Ends with ONE reason to vote on that market (see format below)
-5) Spanish primary in "content"; natural, tú not usted
+3) Connects to one or more LIVE markets from the data brief (usually 1–3; use more only when the story naturally ties them together)
+4) Ends with the CLOSING CTA block below (same structure in Spanish AND English)
+5) "content" = full article in Spanish; "content_en" = full article in English (not a summary — full parallel post)
 
 STRUCTURE:
-- Title: provocative question or surprise (max ~12 words Spanish)
+- Title: provocative question or surprise (~12 words) in both languages
 - Opening: hook — local fact, question, or CDMX reference anyone recognizes
 - Body: 3–4 sections with ## headings only (no ###). Short paragraphs (2–4 sentences), separated by blank lines
-- Close: exactly one CTA block as specified below
-- Length: 400–600 words in Spanish "content" (not more)
+- Close: the mandatory CTA section below (append to BOTH content and content_en)
+- Length: ~400–600 words in Spanish body (before the CTA); similar length in English
 
 PRIORITY TOPICS (pick one angle — avoid repeating the same market/category as in RECENT POSTS below):
-1) News Monitor context — tie to a live market that is NOT the Pulse if Pulse was covered recently
+1) News Monitor context — tie to live market(s) that are NOT Pulse if Pulse was covered recently
 2) A non-Pulse market with meaningful probability or participation shift — what it means for the city
 3) Active Pulse only if Pulse was not the focus of the last 1–2 posts
-4) Else: short educational piece on collective intelligence (Galton-style) tied to ONE market
+4) Else: short educational piece on collective intelligence (Galton-style) tied to market(s) from the brief
 
 TONE (CRITICAL):
 - Smart friend over coffee, not a CEO briefing
 - CDMX neighborhoods, Metro, Reforma, daily life when it fits
 - NO corporate or marketing jargon
 - NO leaderboard names, NO usernames, NO XP, NO agent/error counts, NO "registered user totals" as the headline
-- NO bullet lists in the body — prose only (the JSON is not the article body)
-- Spanish body: use Spanish outcome labels only
+- NO bullet lists in the main body — prose only (numbered lists OK only inside the closing CTA if needed; prefer separate markdown links per line)
+- Spanish body: use Spanish outcome labels where relevant; English body: natural English
 
-FORMATTING (content field):
+FORMATTING (content and content_en):
 - Valid markdown: ## for H2, **bold** sparingly
 - Blank line between paragraphs
-- No ### headings
+- No ### headings in the main article
 
-ENDING CTA (must be the only link/CTA in the article; append to Spanish content):
+CLOSING CTA — copy this structure (adapt wording; keep markdown link pattern). Append AFTER the main body to BOTH "content" (Spanish) and "content_en" (English).
 
+Spanish (content), example shape:
 ---
-
 **¿Y tú qué opinas?**
 
-Vota en el mercado: [Exact Spanish market title from data]
-→ [full URL: https://.../predictions/markets/{UUID}]
+[One short paragraph — 1–2 sentences framing the open questions; no bare URLs.]
 
-Use the related_market_id you output in JSON for that UUID. Base URL is provided in the data brief.
+Tu opinión importa. Vota con tu nivel de certeza en nuestros mercados:
+
+[→ Exact link text for market 1](BASE_URL/predictions/markets/UUID_1)
+[→ Pulse: Exact link text if Pulse](BASE_URL/predictions/markets/UUID_pulse)
+
+English (content_en), same layout:
+---
+**What do you think?**
+
+[One short paragraph in English.]
+
+Your opinion matters. Vote with your level of confidence in our markets:
+
+[→ English link text for market 1](BASE_URL/predictions/markets/UUID_1)
+[→ Pulse: English link text if Pulse](BASE_URL/predictions/markets/UUID_pulse)
+
+RULES FOR LINKS:
+- BASE_URL is given in the data brief (e.g. https://crowdconscious.app). Use it exactly; every market line MUST be a markdown link [label](url).
+- Do NOT paste raw URLs as plain text. Do NOT use bare "https://..." without markdown.
+- For Pulse markets, prefix the link text with "Pulse: " (Spanish) or "Pulse: " (English).
+- One market per line; each line is its own markdown link starting with → inside the brackets.
+- List every market you cite in "related_market_ids" (array of UUIDs, max 5, order matches reading order). Also set "related_market_id" to the primary (first) market UUID for compatibility.
 
 OUTPUT: Respond with ONLY valid JSON (no markdown code fences, no preamble):
 {
@@ -186,12 +206,13 @@ OUTPUT: Respond with ONLY valid JSON (no markdown code fences, no preamble):
   "slug": "url-friendly-slug-spanish",
   "excerpt": "Two-sentence Spanish teaser",
   "excerpt_en": "English teaser",
-  "content": "Full Spanish post, markdown, 400–600 words, with ending CTA",
-  "content_en": "Full English translation",
+  "content": "Full Spanish markdown including closing CTA",
+  "content_en": "Full English markdown including closing CTA (complete translation)",
   "category": "pulse_analysis | market_story | world_cup | insight | behind_data",
   "tags": ["tag1", "tag2", "tag3"],
   "meta_description": "Spanish SEO, max 155 chars",
-  "related_market_id": "single UUID from the market list in the data brief"
+  "related_market_id": "primary UUID from the market list",
+  "related_market_ids": ["uuid1", "uuid2"]
 }`
 
 function slugify(raw: string): string {
@@ -341,6 +362,9 @@ Responde con un solo objeto JSON exactamente como en tus instrucciones de sistem
     const title = String(blogObj.title ?? 'Sin título').trim()
     const excerpt = String(blogObj.excerpt ?? '').trim()
     const content = String(blogObj.content ?? '').trim()
+    const titleEn = String(blogObj.title_en ?? '').trim()
+    const excerptEn = String(blogObj.excerpt_en ?? '').trim()
+    const contentEn = String(blogObj.content_en ?? '').trim()
     if (!content || !excerpt) {
       await logAgentRun({
         agentName: 'content-creator',
@@ -349,6 +373,15 @@ Responde con un solo objeto JSON exactamente como en tus instrucciones de sistem
         summary: { reason: 'missing_content_or_excerpt' },
       })
       return { success: false, error: 'missing_content_or_excerpt' }
+    }
+    if (!titleEn || !excerptEn || !contentEn) {
+      await logAgentRun({
+        agentName: 'content-creator',
+        status: 'skipped',
+        durationMs: Date.now() - startTime,
+        summary: { reason: 'missing_english_fields' },
+      })
+      return { success: false, error: 'missing_english_fields' }
     }
 
     const slugBase = slugify(String(blogObj.slug ?? title))
@@ -400,11 +433,11 @@ Responde con un solo objeto JSON exactamente como en tus instrucciones de sistem
       .insert({
         slug,
         title,
-        title_en: String(blogObj.title_en ?? '').trim() || null,
+        title_en: titleEn,
         excerpt,
-        excerpt_en: String(blogObj.excerpt_en ?? '').trim() || null,
+        excerpt_en: excerptEn,
         content,
-        content_en: String(blogObj.content_en ?? '').trim() || null,
+        content_en: contentEn,
         category: category as
           | 'insight'
           | 'pulse_analysis'
