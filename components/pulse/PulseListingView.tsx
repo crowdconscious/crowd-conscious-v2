@@ -108,7 +108,6 @@ export default function PulseListingView({
                         <Link
                           href={`/predictions/admin/edit-market/${m.id}`}
                           className="absolute right-2 top-2 z-10 rounded bg-black/50 px-2 py-1 text-xs font-medium text-white backdrop-blur-sm transition hover:bg-emerald-500/50"
-                          onClick={(e) => e.stopPropagation()}
                         >
                           Edit
                         </Link>
