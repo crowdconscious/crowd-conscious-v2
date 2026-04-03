@@ -73,6 +73,13 @@ export default async function MarketDetailPage({
   const supabase = await createClient()
   const user = await getCurrentUser()
 
+  const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim()
+  const profileEmail = user?.email?.toLowerCase().trim()
+  const isAdmin =
+    !!user &&
+    (user.user_type === 'admin' ||
+      (!!adminEmail && !!profileEmail && profileEmail === adminEmail))
+
   const { data: market, error: marketError } = await supabase
     .from('prediction_markets')
     .select('*')
@@ -208,6 +215,7 @@ export default async function MarketDetailPage({
       isAuthenticated={!!user}
       showPulseDashboardLink={showPulseDashboardLink}
       relatedMarkets={relatedMarkets}
+      isAdmin={isAdmin}
     />
   )
 }

@@ -94,12 +94,25 @@ export default function PulseListingView({
                         year: 'numeric',
                       })
                     : '—'
-                  const cover = m.cover_image_url?.trim()
+                  const cover =
+                    m.cover_image_url?.trim() ||
+                    m.sponsor_logo_url?.trim() ||
+                    m.pulse_client_logo?.trim() ||
+                    null
                   const byLine =
                     m.pulse_client_name?.trim() &&
                     `${locale === 'es' ? 'Por' : 'By'} ${m.pulse_client_name.trim()} · `
                   return (
-                    <li key={m.id}>
+                    <li key={m.id} className="relative">
+                      {isAdmin && (
+                        <Link
+                          href={`/predictions/admin/edit-market/${m.id}`}
+                          className="absolute right-2 top-2 z-10 rounded bg-black/50 px-2 py-1 text-xs font-medium text-white backdrop-blur-sm transition hover:bg-emerald-500/50"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          Edit
+                        </Link>
+                      )}
                       <Link
                         href={`/pulse/${m.id}`}
                         className="group block overflow-hidden rounded-xl border border-[#2d3748] bg-[#1a2029] transition-colors hover:border-emerald-500/30"

@@ -178,6 +178,8 @@ interface Props {
   /** Admin or linked sponsor account owner — Pulse public results */
   showPulseDashboardLink?: boolean
   relatedMarkets?: RelatedMarketSummary[]
+  /** Platform admin — show edit market link */
+  isAdmin?: boolean
 }
 
 type TimeRange = '7d' | '30d' | 'all'
@@ -198,6 +200,7 @@ export function MarketDetailClient({
   isAuthenticated = true,
   showPulseDashboardLink = false,
   relatedMarkets = [],
+  isAdmin = false,
 }: Props) {
   const locale = useLocale()
   const loc = locale === 'en' ? 'en' : 'es'
@@ -397,7 +400,15 @@ export function MarketDetailClient({
             <h1 className="text-xl sm:text-2xl font-bold text-white leading-tight flex-1 min-w-0">
               {getMarketText(market, 'title', locale)}
             </h1>
-            <div className="shrink-0 pt-0.5">
+            <div className="shrink-0 pt-0.5 flex items-center gap-2">
+              {isAdmin && (
+                <Link
+                  href={`/predictions/admin/edit-market/${market.id}`}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-1.5 text-xs text-gray-400 transition-colors hover:border-emerald-500/30 hover:text-emerald-400"
+                >
+                  ✏️ {locale === 'es' ? 'Editar' : 'Edit'}
+                </Link>
+              )}
               <ShareButton
                 marketId={market.id}
                 title={getMarketText(market, 'title', locale)}
@@ -439,7 +450,17 @@ export function MarketDetailClient({
 
       {isResolved && (
         <div className="lg:hidden rounded-2xl border border-white/10 bg-cc-card px-4 py-4 -mx-1 sm:mx-0">
-          <h1 className="text-xl font-bold text-white leading-tight">{getMarketText(market, 'title', locale)}</h1>
+          <div className="flex items-start justify-between gap-3">
+            <h1 className="text-xl font-bold text-white leading-tight">{getMarketText(market, 'title', locale)}</h1>
+            {isAdmin && (
+              <Link
+                href={`/predictions/admin/edit-market/${market.id}`}
+                className="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-1.5 text-xs text-gray-400 transition-colors hover:border-emerald-500/30 hover:text-emerald-400"
+              >
+                ✏️ {locale === 'es' ? 'Editar' : 'Edit'}
+              </Link>
+            )}
+          </div>
         </div>
       )}
 

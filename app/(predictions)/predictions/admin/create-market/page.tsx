@@ -382,7 +382,12 @@ export default function CreateMarketPage() {
           pulse_client_name: isPulse ? pulseClientName.trim() || null : null,
           pulse_client_logo: isPulse ? pulseClientLogo.trim() || null : null,
           pulse_client_email: isPulse ? pulseClientEmail.trim() || null : null,
-          ...(isPulse ? { cover_image_url: pulseCoverUrl.trim() || null } : {}),
+          ...(isPulse
+            ? {
+                cover_image_url:
+                  pulseCoverUrl.trim() || sponsorLogoUrl.trim() || null,
+              }
+            : {}),
         }),
       })
       const data = await res.json()

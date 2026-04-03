@@ -136,10 +136,16 @@ export default function AdminMarketsClient() {
                   <td className="px-4 py-3 text-sm text-slate-600">{m.sponsor_name || '—'}</td>
                   <td className="px-4 py-3 space-x-3">
                     <Link
-                      href={`/admin/markets/${m.id}`}
+                      href={`/predictions/admin/edit-market/${m.id}`}
                       className="text-emerald-600 hover:text-emerald-500 text-sm font-medium"
                     >
                       Edit
+                    </Link>
+                    <Link
+                      href={`/admin/markets/${m.id}`}
+                      className="text-slate-500 hover:text-slate-700 text-xs"
+                    >
+                      Sponsor
                     </Link>
                     {!m.archived_at && (
                       <button
