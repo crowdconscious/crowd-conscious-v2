@@ -9,7 +9,7 @@ export async function GET() {
       .select('id', { count: 'exact', head: true })
       .is('archived_at', null)
       .in('status', ['active', 'trading'])
-      .or('is_pulse.eq.true,category.eq.pulse,and(market_type.eq.multi,category.eq.government)')
+      .or('is_pulse.eq.true,category.eq.pulse')
 
     if (error) {
       console.error('[GET /api/pulse/active-count]', error)

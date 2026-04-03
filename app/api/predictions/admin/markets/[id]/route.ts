@@ -40,7 +40,10 @@ export async function PATCH(
       return NextResponse.json({ error: 'Resolution date is required' }, { status: 400 })
     }
 
-    const fundPct = Math.min(100, Math.max(0, Number(body.conscious_fund_percentage) ?? 20))
+    const rawFund = Number(body.conscious_fund_percentage)
+    const fundPct = Number.isFinite(rawFund)
+      ? Math.round(Math.min(100, Math.max(0, rawFund)))
+      : 20
 
     let tags: string[] = []
     if (typeof body.tags === 'string') {

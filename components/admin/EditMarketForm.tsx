@@ -122,7 +122,9 @@ export default function EditMarketForm({
           sponsor_name: sponsorName.trim() || null,
           sponsor_logo_url: sponsorLogoUrl.trim() || null,
           sponsor_url: sponsorUrl.trim() || null,
-          conscious_fund_percentage: fundPct,
+          conscious_fund_percentage: Number.isFinite(fundPct)
+            ? Math.round(Math.min(100, Math.max(0, fundPct)))
+            : 20,
           pulse_client_name: isPulse ? pulseClientName.trim() || null : undefined,
           pulse_client_logo: isPulse ? pulseClientLogo.trim() || null : undefined,
           pulse_client_email: isPulse ? pulseClientEmail.trim() || null : undefined,
@@ -312,8 +314,16 @@ export default function EditMarketForm({
                 type="number"
                 min={0}
                 max={100}
-                value={fundPct}
-                onChange={(e) => setFundPct(Number(e.target.value))}
+                value={Number.isFinite(fundPct) ? fundPct : 20}
+                onChange={(e) => {
+                  const v = e.target.value
+                  if (v === '') {
+                    setFundPct(20)
+                    return
+                  }
+                  const n = Number(v)
+                  if (Number.isFinite(n)) setFundPct(n)
+                }}
                 className={ccInput}
               />
             </div>

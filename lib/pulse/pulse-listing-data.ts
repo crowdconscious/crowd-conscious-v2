@@ -24,9 +24,8 @@ export type PulseListingMarketRow = {
 const PULSE_SELECT =
   'id, title, translations, pulse_client_name, pulse_client_logo, cover_image_url, sponsor_logo_url, status, total_votes, resolution_date, created_at, market_type, category, is_pulse'
 
-/** Or: pulse flag, pulse category, or legacy government multi surveys */
-const PULSE_OR =
-  'is_pulse.eq.true,category.eq.pulse,and(market_type.eq.multi,category.eq.government)'
+/** Conscious Pulse listing only: explicit flag or pulse category (not legacy government multis). */
+const PULSE_OR = 'is_pulse.eq.true,category.eq.pulse'
 
 export async function getPulseListingLocale(): Promise<PulseListingLocale> {
   const cookieStore = await cookies()
