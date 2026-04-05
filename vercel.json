@@ -11,7 +11,7 @@
     "app/api/cron/agents/content-creator/route.ts": { "maxDuration": 300 },
     "app/api/cron/agents/news-monitor/route.ts": { "maxDuration": 300 },
     "app/api/cron/agents/sponsor-report/route.ts": { "maxDuration": 300 },
-    "app/api/cron/newsletter/route.ts": { "maxDuration": 120 },
+    "app/api/cron/newsletter/route.ts": { "maxDuration": 300 },
     "app/api/cron/live-reminders/route.ts": { "maxDuration": 120 },
     "app/api/cron/monthly-impact/route.ts": { "maxDuration": 120 },
     "app/api/cron/reengagement-inactive/route.ts": { "maxDuration": 120 },

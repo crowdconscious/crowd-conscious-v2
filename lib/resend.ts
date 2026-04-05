@@ -560,6 +560,26 @@ export async function sendEmail(
   }
 }
 
+/** Newsletter sends one HTML per recipient (unsubscribe URL differs). Bounded concurrency to avoid Vercel timeouts. */
+export async function sendEmailsWithConcurrency(
+  messages: Array<{ to: string; subject: string; html: string }>,
+  concurrency: number = 8
+): Promise<{ sent: number; failed: number }> {
+  let sent = 0
+  let failed = 0
+  for (let i = 0; i < messages.length; i += concurrency) {
+    const slice = messages.slice(i, i + concurrency)
+    const results = await Promise.all(
+      slice.map((m) => sendEmail(m.to, { subject: m.subject, html: m.html }))
+    )
+    for (const r of results) {
+      if (r.success) sent++
+      else failed++
+    }
+  }
+  return { sent, failed }
+}
+
 // Send welcome email
 export async function sendWelcomeEmail(
   email: string, 

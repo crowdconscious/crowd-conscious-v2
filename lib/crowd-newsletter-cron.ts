@@ -2,7 +2,7 @@
  * Crowd newsletter: blog + Pulse + trending markets, max ~3×/week via cron + 48h cooldown.
  */
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { sendEmail } from '@/lib/resend'
+import { sendEmailsWithConcurrency } from '@/lib/resend'
 import { crowdNewsletterEmailTemplate, type BlogDigestMarket, type BlogPostDigest } from '@/lib/prediction-emails'
 import {
   createNewsletterListUnsubscribeToken,
@@ -29,6 +29,13 @@ export async function runCrowdNewsletterCron(
   failed?: number
   subject?: string
   error?: string
+  /** For debugging Vercel cron (cooldown, last send, schedule is Mon/Wed/Fri 14:00 UTC) */
+  debug?: {
+    lastSentAt: string | null
+    hoursSinceLast: number | null
+    recipientCount: number
+    scheduleNote: string
+  }
 }> {
   const { runId } = await cronHealthCheck(healthJobName, admin)
 
@@ -41,19 +48,27 @@ export async function runCrowdNewsletterCron(
       .limit(1)
       .maybeSingle()
 
-    const hoursSinceLast = lastRow?.sent_at
-      ? (Date.now() - new Date(lastRow.sent_at as string).getTime()) / 3600000
-      : 999
+    const lastSentAt = lastRow?.sent_at ? String(lastRow.sent_at) : null
+    const hoursSinceLast = lastSentAt
+      ? (Date.now() - new Date(lastSentAt).getTime()) / 3600000
+      : null
 
-    if (hoursSinceLast < 48) {
+    const cooldownHours = 48
+    if (hoursSinceLast != null && hoursSinceLast < cooldownHours) {
       await cronHealthComplete(runId, healthJobName, admin, {
         success: true,
-        summary: `skipped: cooldown ${Math.round(hoursSinceLast)}h`,
+        summary: `skipped: cooldown ${Math.round(hoursSinceLast)}h (need ${cooldownHours}h; last ${lastSentAt})`,
       })
       return {
         ok: true,
         skipped: true,
         reason: `cooldown_${Math.round(hoursSinceLast)}h`,
+        debug: {
+          lastSentAt,
+          hoursSinceLast,
+          recipientCount: 0,
+          scheduleNote: 'Mon/Wed/Fri 14:00 UTC — skipped until 48h after last newsletter send',
+        },
       }
     }
 
@@ -174,9 +189,19 @@ export async function runCrowdNewsletterCron(
     if (!post && !pulseDigest && marketDigests.length === 0) {
       await cronHealthComplete(runId, healthJobName, admin, {
         success: true,
-        summary: 'skipped: no_content',
+        summary: 'skipped: no_content (no published blog + no active markets)',
       })
-      return { ok: true, skipped: true, reason: 'no_published_blog_or_markets' }
+      return {
+        ok: true,
+        skipped: true,
+        reason: 'no_published_blog_or_markets',
+        debug: {
+          lastSentAt,
+          hoursSinceLast,
+          recipientCount: 0,
+          scheduleNote: 'Mon/Wed/Fri 14:00 UTC',
+        },
+      }
     }
 
     const { data: profiles, error: profErr } = await admin
@@ -227,16 +252,23 @@ export async function runCrowdNewsletterCron(
     if (recipients.length === 0) {
       await cronHealthComplete(runId, healthJobName, admin, {
         success: true,
-        summary: 'skipped: no_subscribers',
+        summary: 'skipped: no_subscribers (profiles with email_notifications + newsletter_subscribers)',
       })
-      return { ok: true, skipped: true, reason: 'no_subscribers' }
+      return {
+        ok: true,
+        skipped: true,
+        reason: 'no_subscribers',
+        debug: {
+          lastSentAt,
+          hoursSinceLast,
+          recipientCount: 0,
+          scheduleNote: 'Mon/Wed/Fri 14:00 UTC',
+        },
+      }
     }
 
-    let sent = 0
-    let failed = 0
     let subjectUsed = 'Lo que CDMX piensa esta semana | Crowd Conscious'
-
-    for (const rec of recipients) {
+    const messages = recipients.map((rec) => {
       const tpl = crowdNewsletterEmailTemplate({
         post,
         highlightNewBlog,
@@ -247,15 +279,16 @@ export async function runCrowdNewsletterCron(
         daysUntilWorldCup: wcDaysUntil(),
       })
       subjectUsed = tpl.subject
+      return { to: rec.email, subject: tpl.subject, html: tpl.html }
+    })
 
-      const r = await sendEmail(rec.email, { subject: tpl.subject, html: tpl.html })
-      if (r.success) {
-        sent++
-      } else {
-        failed++
-        console.warn('[newsletter] send', rec.email, r.error)
-      }
+    const { sent, failed } = await sendEmailsWithConcurrency(messages, 8)
+
+    if (failed > 0) {
+      console.warn('[newsletter] send failures', failed, 'of', recipients.length)
     }
+
+    const allFailed = sent === 0 && recipients.length > 0
 
     if (sent > 0) {
       try {
@@ -271,15 +304,25 @@ export async function runCrowdNewsletterCron(
     }
 
     await cronHealthComplete(runId, healthJobName, admin, {
-      success: true,
-      summary: `newsletter sent ${sent}, failed ${failed}, post ${latestPost?.slug ?? 'none'}`,
+      success: !allFailed,
+      error: allFailed ? 'All newsletter sends failed (Resend / API key / domain)' : undefined,
+      summary: allFailed
+        ? `FAILED: 0 sent, ${failed} failed, ${recipients.length} recipients — check RESEND_API_KEY and Resend dashboard`
+        : `newsletter sent ${sent}, failed ${failed}, recipients ${recipients.length}, post ${latestPost?.slug ?? 'none'}`,
     })
 
     return {
-      ok: true,
+      ok: !allFailed,
+      error: allFailed ? 'all_sends_failed' : undefined,
       sent,
       failed,
       subject: subjectUsed,
+      debug: {
+        lastSentAt,
+        hoursSinceLast,
+        recipientCount: recipients.length,
+        scheduleNote: 'Mon/Wed/Fri 14:00 UTC',
+      },
     }
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
