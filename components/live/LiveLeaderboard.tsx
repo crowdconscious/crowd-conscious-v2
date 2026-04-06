@@ -34,6 +34,8 @@ export interface LiveLeaderboardProps {
   currentAnonymousParticipantId?: string | null
   currentUserEntry?: LiveLeaderboardEntry | null
   locale?: 'en' | 'es'
+  /** When not a soccer match, avoid "match" / "partido" in the title. */
+  eventType?: string | null
 }
 
 export function LiveLeaderboard({
@@ -42,8 +44,18 @@ export function LiveLeaderboard({
   currentAnonymousParticipantId,
   currentUserEntry,
   locale = 'es',
+  eventType = null,
 }: LiveLeaderboardProps) {
   const top = useMemo(() => rankings.slice(0, 10), [rankings])
+
+  const leaderboardTitle =
+    eventType === 'soccer_match'
+      ? locale === 'es'
+        ? 'Leaderboard del partido'
+        : 'Match leaderboard'
+      : locale === 'es'
+        ? 'Leaderboard del evento'
+        : 'Event leaderboard'
 
   const showFooter = !!(currentUserEntry && currentUserEntry.rank > 10)
 
@@ -61,9 +73,7 @@ export function LiveLeaderboard({
     <div className="overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900/90 to-slate-950 shadow-lg shadow-black/30">
       <div className="flex items-center gap-2 border-b border-white/10 px-4 py-3">
         <Trophy className="h-5 w-5 text-amber-400" />
-        <h3 className="font-semibold text-white">
-          {locale === 'es' ? 'Leaderboard del partido' : 'Match Leaderboard'}
-        </h3>
+        <h3 className="font-semibold text-white">{leaderboardTitle}</h3>
       </div>
 
       <LayoutGroup>

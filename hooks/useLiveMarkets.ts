@@ -10,6 +10,8 @@ export type MarketOutcomeRow = Database['public']['Tables']['market_outcomes']['
 export type MarketWithOutcomes = MarketRow & { outcomes: MarketOutcomeRow[] }
 
 export interface UseLiveMarketsResult {
+  /** All markets for this live event (any status). */
+  allMarkets: MarketWithOutcomes[]
   activeMarkets: MarketWithOutcomes[]
   resolvedMarkets: MarketWithOutcomes[]
   isLoading: boolean
@@ -245,5 +247,5 @@ export function useLiveMarkets(eventId: string | null): UseLiveMarketsResult {
     [list]
   )
 
-  return { activeMarkets, resolvedMarkets, isLoading, error, refetch: initialFetch }
+  return { allMarkets: list, activeMarkets, resolvedMarkets, isLoading, error, refetch: initialFetch }
 }

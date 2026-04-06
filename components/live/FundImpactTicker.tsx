@@ -9,6 +9,11 @@ export interface FundImpactTickerProps {
   activeCause: string
   sponsorName?: string
   locale?: 'en' | 'es'
+  /**
+   * When fund impact is $0 (typical for free-to-play live events), show votes + sponsor
+   * instead of "→ $0.00 for …", which reads as broken.
+   */
+  hideFundAmountWhenZero?: boolean
 }
 
 function formatMoney(n: number, locale: string): string {
@@ -50,6 +55,7 @@ export function FundImpactTicker({
   activeCause,
   sponsorName,
   locale = 'es',
+  hideFundAmountWhenZero = false,
 }: FundImpactTickerProps) {
   const av = useAnimatedScalar(totalVotes, 500)
   const am = useAnimatedScalar(fundImpact, 500)
@@ -59,6 +65,9 @@ export function FundImpactTicker({
     prevVotes.current = totalVotes
   }, [totalVotes])
 
+  const showVotesOnly =
+    hideFundAmountWhenZero && (fundImpact <= 0 || !Number.isFinite(fundImpact))
+
   return (
     <motion.div
       animate={pulse ? { scale: [1, 1.012, 1] } : {}}
@@ -66,20 +75,47 @@ export function FundImpactTicker({
       className="w-full rounded-xl border border-emerald-500/25 bg-gradient-to-r from-emerald-950/90 via-teal-950/80 to-slate-950/90 px-4 py-3 shadow-md shadow-emerald-900/20"
     >
       <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-        <p className="text-sm leading-relaxed text-emerald-100/95 sm:text-base">
-          <span className="mr-1.5" aria-hidden>
-            🌍
-          </span>
-          <span className="font-semibold text-white">{formatInt(av, locale)}</span>
-          <span className="text-emerald-200/90">
-            {' '}
-            {locale === 'es' ? 'votos →' : 'votes →'}{' '}
-          </span>
-          <span className="font-semibold text-emerald-300">{formatMoney(am, locale)}</span>
-          <span className="text-emerald-100/85"> {locale === 'es' ? 'para' : 'for'} </span>
-          <span className="font-medium text-white">{activeCause}</span>
-        </p>
-        {sponsorName && (
+        {showVotesOnly ? (
+          <p className="text-sm leading-relaxed text-emerald-100/95 sm:text-base">
+            <span className="mr-1.5" aria-hidden>
+              🌍
+            </span>
+            <span className="font-semibold text-white">{formatInt(av, locale)}</span>
+            <span className="text-emerald-200/90">
+              {' '}
+              {locale === 'es' ? 'votos' : 'votes'}
+              {sponsorName ? (
+                <>
+                  <span className="text-emerald-100/70"> · </span>
+                  <span className="text-emerald-100/85">
+                    {locale === 'es' ? 'Patrocinado por' : 'Powered by'}{' '}
+                  </span>
+                  <span className="font-medium text-white">{sponsorName}</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-emerald-100/70"> · </span>
+                  <span className="font-medium text-white">{activeCause}</span>
+                </>
+              )}
+            </span>
+          </p>
+        ) : (
+          <p className="text-sm leading-relaxed text-emerald-100/95 sm:text-base">
+            <span className="mr-1.5" aria-hidden>
+              🌍
+            </span>
+            <span className="font-semibold text-white">{formatInt(av, locale)}</span>
+            <span className="text-emerald-200/90">
+              {' '}
+              {locale === 'es' ? 'votos →' : 'votes →'}{' '}
+            </span>
+            <span className="font-semibold text-emerald-300">{formatMoney(am, locale)}</span>
+            <span className="text-emerald-100/85"> {locale === 'es' ? 'para' : 'for'} </span>
+            <span className="font-medium text-white">{activeCause}</span>
+          </p>
+        )}
+        {!showVotesOnly && sponsorName && (
           <p className="text-xs text-teal-200/80 sm:text-right">
             {locale === 'es' ? 'Patrocinado por' : 'Powered by'}{' '}
             <span className="font-semibold text-teal-100">{sponsorName}</span>

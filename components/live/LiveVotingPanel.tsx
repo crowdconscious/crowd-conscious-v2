@@ -1,11 +1,18 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState, type TouchEvent } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown, Sparkles } from 'lucide-react'
 import type { MarketWithOutcomes } from '@/hooks/useLiveMarkets'
 import { MicroMarketCard } from '@/components/live/MicroMarketCard'
 import { cn } from '@/lib/design-system'
+import { getEventTypeLabel } from '@/lib/live-event-copy'
+import { EVENT_TYPE_CONFIG, type LiveEventTypeKey } from '@/lib/live-event-types'
+
+function iconForEventType(t: string | undefined): string {
+  const key = (t && t in EVENT_TYPE_CONFIG ? t : 'custom') as LiveEventTypeKey
+  return EVENT_TYPE_CONFIG[key].icon
+}
 
 export interface LiveVotingPanelProps {
   activeMarkets: MarketWithOutcomes[]
@@ -15,12 +22,15 @@ export interface LiveVotingPanelProps {
   onRequiresAlias?: () => void
   isAdmin?: boolean
   locale?: 'en' | 'es'
+  eventType?: string | null
 }
 
 type VoteResult = {
   outcome_id: string
   is_correct: boolean | null
 }
+
+const CARD_GAP_PX = 12
 
 async function fetchMyVote(marketId: string): Promise<VoteResult | null> {
   const res = await fetch(`/api/predictions/markets/${marketId}/my-vote`, { cache: 'no-store' })
@@ -89,13 +99,15 @@ export function LiveVotingPanel({
   onRequiresAlias,
   isAdmin = false,
   locale = 'es',
+  eventType = null,
 }: LiveVotingPanelProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
-  const touchStartX = useRef<number | null>(null)
   const prevIdsRef = useRef<string>('')
   const [pulse, setPulse] = useState(false)
   const [openRecent, setOpenRecent] = useState(true)
   const [activeSlide, setActiveSlide] = useState(0)
+
+  const typeLabel = useMemo(() => getEventTypeLabel(eventType, locale), [eventType, locale])
 
   const sortedActive = useMemo(
     () => [...activeMarkets].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
@@ -135,8 +147,7 @@ export function LiveVotingPanel({
     const onScroll = () => {
       const firstCard = el.querySelector<HTMLElement>('[data-live-market-slide]')
       const slideW = firstCard?.offsetWidth ?? el.clientWidth
-      const gap = 16
-      const step = slideW + gap
+      const step = slideW + CARD_GAP_PX
       if (step <= 0) return
       const idx = Math.round(el.scrollLeft / step)
       setActiveSlide(Math.min(sortedActive.length - 1, Math.max(0, idx)))
@@ -146,23 +157,14 @@ export function LiveVotingPanel({
     return () => el.removeEventListener('scroll', onScroll)
   }, [sortedActive.length])
 
-  const onTouchStart = useCallback((e: TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX
-  }, [])
-
-  const onTouchEnd = useCallback(
-    (e: TouchEvent) => {
-      if (touchStartX.current == null) return
-      const dx = e.changedTouches[0].clientX - touchStartX.current
-      touchStartX.current = null
+  const scrollToCard = useCallback(
+    (index: number) => {
       const el = scrollRef.current
       if (!el || sortedActive.length <= 1) return
-      if (Math.abs(dx) < 56) return
-      const firstCard = el.querySelector<HTMLElement>('[data-live-market-slide]')
-      const slideW = firstCard?.offsetWidth ?? el.clientWidth
-      const gap = 16
-      const step = slideW + gap
-      el.scrollBy({ left: dx < 0 ? step : -step, behavior: 'smooth' })
+      const first = el.querySelector<HTMLElement>('[data-live-market-slide]')
+      const slideW = first?.offsetWidth ?? el.clientWidth
+      const step = slideW + CARD_GAP_PX
+      el.scrollTo({ left: index * step, behavior: 'smooth' })
     },
     [sortedActive.length]
   )
@@ -199,17 +201,15 @@ export function LiveVotingPanel({
       {sortedActive.length === 0 ? (
         <div className="flex min-h-[200px] flex-col items-center justify-center rounded-2xl border border-dashed border-white/15 bg-slate-900/40 px-4 py-10 text-center">
           <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/10 text-2xl">
-            ⚽
+            {iconForEventType(eventType ?? undefined)}
           </div>
           <p className="text-base font-medium text-slate-200">
-            {locale === 'es'
-              ? 'Aún no hay micro-mercados activos'
-              : 'No active micro-markets yet'}
+            {locale === 'es' ? 'Aún no hay micro-mercados activos' : 'No active micro-markets yet'}
           </p>
           <p className="mt-2 max-w-sm text-sm leading-relaxed text-slate-400">
             {locale === 'es'
-              ? 'Cuando el partido esté en vivo, aquí aparecerán predicciones rápidas. ¡Vuelve pronto!'
-              : 'When the match is live, quick predictions will show up here. Check back soon!'}
+              ? `Cuando ${typeLabel.action}, aquí aparecerán predicciones rápidas. ¡Vuelve pronto!`
+              : `When ${typeLabel.action}, quick predictions will show up here. Check back soon!`}
           </p>
           {isAdmin && (
             <p className="mt-4 text-sm text-amber-200/90">
@@ -224,25 +224,47 @@ export function LiveVotingPanel({
           market={sortedActive[0]}
           outcomes={sortedActive[0].outcomes}
           currentUserId={currentUserId}
+          eventId={eventId}
+          onRequiresAlias={onRequiresAlias}
           onVoteSuccess={onVoteSuccess}
         />
       ) : (
         <div>
+          <div className="mb-2 flex items-center justify-between px-4">
+            <span className="text-xs text-slate-500">
+              {locale === 'es'
+                ? `Predicción ${activeSlide + 1} de ${sortedActive.length}`
+                : `Prediction ${activeSlide + 1} of ${sortedActive.length}`}
+            </span>
+            <span className="text-xs text-slate-600">
+              {locale === 'es' ? 'Desliza →' : 'Swipe →'}
+            </span>
+          </div>
+
           <div
             ref={scrollRef}
-            onTouchStart={onTouchStart}
-            onTouchEnd={onTouchEnd}
-            className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-4 -mx-4 px-4 [-webkit-overflow-scrolling:touch] scrollbar-hide [&::-webkit-scrollbar]:hidden"
+            data-live-market-scroll
+            className="flex overflow-x-auto pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             style={{
-              scrollbarWidth: 'none',
+              scrollSnapType: 'x mandatory',
+              WebkitOverflowScrolling: 'touch',
               msOverflowStyle: 'none',
+              scrollBehavior: 'smooth',
+              paddingLeft: 16,
+              paddingRight: 16,
+              gap: CARD_GAP_PX,
             }}
           >
             {sortedActive.map((m) => (
               <div
                 key={m.id}
                 data-live-market-slide
-                className="w-[85vw] max-w-[400px] shrink-0 snap-center"
+                className="min-w-0 shrink-0"
+                style={{
+                  scrollSnapAlign: 'center',
+                  width: 'calc(100vw - 48px)',
+                  maxWidth: 400,
+                }}
               >
                 <MicroMarketCard
                   market={m}
@@ -255,20 +277,14 @@ export function LiveVotingPanel({
               </div>
             ))}
           </div>
+
           <div className="mt-3 flex justify-center gap-2">
             {sortedActive.map((_, j) => (
               <button
                 key={j}
                 type="button"
                 aria-label={locale === 'es' ? `Mercado ${j + 1}` : `Market ${j + 1}`}
-                onClick={() => {
-                  const el = scrollRef.current
-                  if (!el) return
-                  const first = el.querySelector<HTMLElement>('[data-live-market-slide]')
-                  const slideW = first?.offsetWidth ?? el.clientWidth
-                  const gap = 16
-                  el.scrollTo({ left: j * (slideW + gap), behavior: 'smooth' })
-                }}
+                onClick={() => scrollToCard(j)}
                 className={cn(
                   'min-h-[44px] min-w-[44px] rounded-full p-2 transition-colors duration-200',
                   j === activeSlide ? 'text-emerald-500' : 'text-gray-600'

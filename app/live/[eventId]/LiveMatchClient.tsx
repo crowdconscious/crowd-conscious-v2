@@ -6,6 +6,7 @@ import type { User } from '@supabase/supabase-js'
 import { ArrowLeft, ChevronDown, Share2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase-client'
 import { getLiveEventTitle } from '@/lib/live-event-title'
+import { getEventTypeLabel } from '@/lib/live-event-copy'
 import { getMarketText } from '@/lib/i18n/market-translations'
 import { useLocale } from '@/lib/i18n/useLocale'
 import { toDisplayPercentRounded } from '@/lib/probability-utils'
@@ -119,6 +120,7 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
 
   const { event, isLoading: evLoading, error: evError, refetch: refetchEvent } = useLiveEvent(eventId)
   const {
+    allMarkets,
     activeMarkets,
     resolvedMarkets,
     isLoading: mkLoading,
@@ -157,6 +159,8 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
   }, [user, aliasParticipant, locale])
 
   const title = event ? getLiveEventTitle(event, locale) : ''
+  const copyLocale = locale === 'es' ? 'es' : 'en'
+  const eventTypeLabel = event ? getEventTypeLabel(event.event_type, copyLocale) : null
   const status = event?.status
   const isLive = status === 'live'
   const isScheduled = status === 'scheduled'
@@ -188,7 +192,12 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
   }, [refetchEvent, refetchMarkets])
 
   const fundImpact = Number(event?.total_fund_impact ?? 0)
-  const votesCast = event?.total_votes_cast ?? 0
+  /** `live_events.total_votes_cast` is updated on resolve; sum market rows for accurate live count. */
+  const votesFromMarkets = useMemo(
+    () => allMarkets.reduce((s, m) => s + (Number(m.total_votes) || 0), 0),
+    [allMarkets]
+  )
+  const votesCast = Math.max(votesFromMarkets, event?.total_votes_cast ?? 0)
 
   if (!gateReady && !user) {
     return (
@@ -244,13 +253,7 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
   const streamLive = isLive
   const embedReplay = isCompleted && !!(event.youtube_video_id || event.youtube_url)
 
-  const hasTeamBranding = !!(
-    event.team_a_name ||
-    event.team_b_name ||
-    event.team_a_flag ||
-    event.team_b_flag ||
-    event.cover_image_url
-  )
+  const isSoccerMatch = event.event_type === 'soccer_match'
 
   function teamFlagEl(value: string | null) {
     if (!value) return <span className="text-2xl leading-none">🏟️</span>
@@ -278,27 +281,34 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div className="min-w-0 flex-1">
-          {hasTeamBranding ? (
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-              <div className="flex min-w-0 items-center gap-2">
-                {teamFlagEl(event.team_a_flag)}
-                <span className="truncate font-bold text-white sm:text-lg">
-                  {event.team_a_name ?? '—'}
-                </span>
+          {isSoccerMatch ? (
+            <>
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                <div className="flex min-w-0 items-center gap-2">
+                  {teamFlagEl(event.team_a_flag)}
+                  <span className="truncate font-bold text-white sm:text-lg">
+                    {event.team_a_name ?? '—'}
+                  </span>
+                </div>
+                <span className="text-slate-500">vs</span>
+                <div className="flex min-w-0 items-center gap-2">
+                  <span className="truncate font-bold text-white sm:text-lg">
+                    {event.team_b_name ?? '—'}
+                  </span>
+                  {teamFlagEl(event.team_b_flag)}
+                </div>
               </div>
-              <span className="text-slate-500">{locale === 'es' ? 'vs' : 'vs'}</span>
-              <div className="flex min-w-0 items-center gap-2">
-                <span className="truncate font-bold text-white sm:text-lg">
-                  {event.team_b_name ?? '—'}
-                </span>
-                {teamFlagEl(event.team_b_flag)}
-              </div>
-            </div>
+              <p className="mt-1 truncate text-sm text-slate-400">{title}</p>
+            </>
           ) : (
-            <h1 className="truncate text-xl font-bold text-white sm:text-2xl">{title}</h1>
-          )}
-          {hasTeamBranding && (
-            <p className="mt-1 truncate text-sm text-slate-400">{title}</p>
+            <div>
+              {eventTypeLabel && (
+                <span className="text-xs font-medium uppercase tracking-wider text-emerald-400/95">
+                  {eventTypeLabel.header}
+                </span>
+              )}
+              <h1 className="mt-0.5 truncate text-xl font-bold leading-tight text-white sm:text-2xl">{title}</h1>
+            </div>
           )}
         </div>
         {streamLive && (
@@ -326,7 +336,8 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
         (locale === 'es' ? 'causa líder del Fondo Consciente' : 'leading Conscious Fund cause')
       }
       sponsorName={event.sponsor_name ?? undefined}
-      locale={locale === 'es' ? 'es' : 'en'}
+      locale={copyLocale}
+      hideFundAmountWhenZero
     />
   )
 
@@ -354,11 +365,12 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
   )
 
   const scheduledBanner =
-    isScheduled && (
+    isScheduled &&
+    eventTypeLabel && (
       <div className="rounded-xl border border-emerald-500/25 bg-emerald-950/40 px-4 py-3 text-center text-sm text-emerald-100/95">
         {locale === 'es'
-          ? 'Las predicciones se abrirán cuando el partido esté en vivo.'
-          : 'Predictions will open when the match goes live.'}
+          ? `Las predicciones se abrirán cuando ${eventTypeLabel.action}.`
+          : `Predictions will open when ${eventTypeLabel.action}.`}
       </div>
     )
 
@@ -370,7 +382,8 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
       eventId={eventId}
       onRequiresAlias={onRequiresAlias}
       isAdmin={isAdmin}
-      locale={locale === 'es' ? 'es' : 'en'}
+      locale={copyLocale}
+      eventType={event.event_type}
     />
   )
 
@@ -395,7 +408,8 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
           currentUserId={user?.id ?? ''}
           currentAnonymousParticipantId={aliasParticipant?.id ?? null}
           currentUserEntry={currentUserEntry}
-          locale={locale === 'es' ? 'es' : 'en'}
+          locale={copyLocale}
+          eventType={event.event_type}
         />
       )}
     </div>
@@ -508,6 +522,14 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
         {header}
 
         {scheduledBanner}
+
+        {isLive && activeMarkets.length === 0 && (
+          <div className="mb-4 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-center text-sm text-amber-200/95">
+            {locale === 'es'
+              ? 'Evento en vivo — las predicciones pueden aparecer en cualquier momento.'
+              : 'Event is live — predictions may appear any moment.'}
+          </div>
+        )}
 
         {/* Mobile: vertical stack */}
         <div className="flex flex-col gap-6 md:hidden">
