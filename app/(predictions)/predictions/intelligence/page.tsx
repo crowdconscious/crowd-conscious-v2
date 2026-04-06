@@ -3,6 +3,9 @@ import { redirect } from 'next/navigation'
 import { fetchIntelligenceDashboard } from '@/lib/intelligence-data'
 import IntelligenceClient from './IntelligenceClient'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export const metadata = {
   title: 'Intelligence Hub | Predictions',
   description: 'Admin analytics dashboard',

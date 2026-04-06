@@ -323,7 +323,8 @@ export default function IntelligenceClient({
   const radarSentiment = useMemo(() => {
     const labels = data.sentimentByCategory.map((s) => s.category)
     const values = data.sentimentByCategory.map((s) => Math.round(s.avg_yes_probability * 100))
-    return { labels, values }
+    const binaryVoteRows = data.sentimentByCategory.map((s) => s.total_votes)
+    return { labels, values, binaryVoteRows }
   }, [data.sentimentByCategory])
 
   const headlines = useMemo(() => generateHeadlines(data), [data])
@@ -781,16 +782,18 @@ export default function IntelligenceClient({
           {tab === 'sentiment' && (
             <div className="grid lg:grid-cols-2 gap-6">
               <div className={`h-96 ${CARD} p-5`}>
-                <h3 className="text-sm font-medium text-slate-500 mb-1">YES % by category (weighted)</h3>
+                <h3 className="text-sm font-medium text-slate-500 mb-1">YES % by category (binary markets)</h3>
                 <p className="text-[11px] text-slate-600 mb-3">
-                  From market_votes: each vote weighted by confidence; YES-like = picked YES / NO / leading outcome (probability above 50%).
+                  Real data from <code className="text-slate-500">market_votes</code> × <code className="text-slate-500">prediction_markets</code>.
+                  Only <strong className="text-slate-400">2-outcome</strong> markets — confidence-weighted; YES-like = Sí/Yes or No. Pulse / multi-outcome
+                  votes are excluded here (they were inflating “optimism” via outcome probabilities). Last 250k votes by recency.
                 </p>
                 <Radar
                   data={{
                     labels: radarSentiment.labels,
                     datasets: [
                       {
-                        label: 'Avg YES %',
+                        label: 'Avg YES % (binary)',
                         data: radarSentiment.values,
                         backgroundColor: 'rgba(16,185,129,0.25)',
                         borderColor: ACCENT,
@@ -811,14 +814,24 @@ export default function IntelligenceClient({
                         pointLabels: { color: TEXT, font: { size: 11 } },
                       },
                     },
-                    plugins: { legend: { labels: { color: TEXT } } },
+                    plugins: {
+                      legend: { labels: { color: TEXT } },
+                      tooltip: {
+                        callbacks: {
+                          afterLabel: (ctx) => {
+                            const n = radarSentiment.binaryVoteRows[ctx.dataIndex] ?? 0
+                            return `${n} vote rows (binary markets)`
+                          },
+                        },
+                      },
+                    },
                   }}
                 />
               </div>
               <div className={`h-96 ${CARD} p-5`}>
                 <h3 className="text-sm font-medium text-slate-500 mb-1">YES vs NO (votes)</h3>
                 <p className="text-[11px] text-slate-600 mb-3">
-                  Count of vote rows by chosen outcome (not outcome-table aggregates).
+                  All markets: YES/NO labels, else leading outcome above 50% prob = YES-like (same as before). Compare with the radar, which is binary-only.
                 </p>
                 <Doughnut
                   data={{
@@ -836,6 +849,25 @@ export default function IntelligenceClient({
                     ],
                   }}
                   options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: TEXT } } } }}
+                />
+              </div>
+              <div className={`lg:col-span-2 h-56 ${CARD} p-5`}>
+                <h3 className="text-sm font-medium text-slate-500 mb-1">Vote rows by category (all markets)</h3>
+                <p className="text-[11px] text-slate-600 mb-3">
+                  Where activity actually is — includes Pulse and multi-outcome. Pairs with the radar (binary YES% only).
+                </p>
+                <Bar
+                  data={{
+                    labels: data.votesByCategory.map((c) => c.category),
+                    datasets: [
+                      {
+                        label: 'Vote rows',
+                        data: data.votesByCategory.map((c) => c.vote_count),
+                        backgroundColor: 'rgba(59,130,246,0.45)',
+                      },
+                    ],
+                  }}
+                  options={{ ...chartOptsBase, plugins: { legend: { display: false } } }}
                 />
               </div>
               <div className={`lg:col-span-2 h-64 ${CARD} p-5`}>

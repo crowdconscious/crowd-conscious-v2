@@ -35,9 +35,9 @@ export type LeaderboardRow = {
 }
 export type SentimentCategory = {
   category: string
-  /** Weighted share of YES-like picks (0–1), weight = vote confidence */
+  /** Weighted share of YES-like picks (0–1), weight = vote confidence — **binary markets only** (see intelligence hub copy) */
   avg_yes_probability: number
-  /** Number of vote rows in this category (same as sum of weights for display) */
+  /** Vote rows used for this metric (binary markets only) */
   total_votes: number
 }
 export type VoteYesNoSplit = { yes_like: number; no_like: number; other: number }
@@ -520,15 +520,33 @@ export async function fetchIntelligenceDashboard(
         marketMeta.set(row.id, { category: row.category ?? 'unknown' })
       }
 
+      /** Outcome count per market — YES% radar uses binary (2-outcome) markets only so Pulse/multi-outcome isn't misread as optimism. */
+      const marketIdsList = [...marketMeta.keys()]
+      const outcomeCountByMarket = new Map<string, number>()
+      const ocChunk = 400
+      for (let i = 0; i < marketIdsList.length; i += ocChunk) {
+        const chunk = marketIdsList.slice(i, i + ocChunk)
+        if (!chunk.length) continue
+        const { data: ocRows } = await admin.from('market_outcomes').select('market_id').in('market_id', chunk)
+        for (const r of ocRows ?? []) {
+          const mid = (r as { market_id: string }).market_id
+          outcomeCountByMarket.set(mid, (outcomeCountByMarket.get(mid) ?? 0) + 1)
+        }
+      }
+      const isBinaryMarket = (marketId: string) => outcomeCountByMarket.get(marketId) === 2
+
+      // Most recent votes first — unbounded .limit() without ORDER was an arbitrary slice of the table.
       const { data: voteRowsRaw } = await admin
         .from('market_votes')
-        .select('confidence, outcome_id, market_id')
+        .select('confidence, outcome_id, market_id, created_at')
+        .order('created_at', { ascending: false })
         .limit(250000)
 
       const voteRows = (voteRowsRaw ?? []) as {
         confidence: number | null
         outcome_id: string
         market_id: string
+        created_at?: string
       }[]
 
       const filteredVotes = voteRows.filter((v) => marketMeta.has(v.market_id))
@@ -564,12 +582,15 @@ export async function fetchIntelligenceDashboard(
         const oc = outcomeById.get(v.outcome_id)
         bins.set(w, (bins.get(w) ?? 0) + 1)
 
-        const yesPick = oc ? isYesLikePick(oc.label, oc.probability) : false
-        const cur = sentMap.get(cat) ?? { yesW: 0, totalW: 0, n: 0 }
-        cur.totalW += w
-        cur.n += 1
-        if (yesPick) cur.yesW += w
-        sentMap.set(cat, cur)
+        // Radar YES%: binary markets only. Multi-outcome "YES-like" via outcome.probability > 0.5 tracked the *leading* option, not user optimism — it skewed categories (e.g. sustainability vs World Cup Pulse).
+        if (isBinaryMarket(v.market_id)) {
+          const yesPick = oc ? isYesLikePick(oc.label, oc.probability) : false
+          const cur = sentMap.get(cat) ?? { yesW: 0, totalW: 0, n: 0 }
+          cur.totalW += w
+          cur.n += 1
+          if (yesPick) cur.yesW += w
+          sentMap.set(cat, cur)
+        }
 
         const side = classifyVoteSide(oc)
         if (side === 'yes') yesLike++
@@ -578,13 +599,20 @@ export async function fetchIntelligenceDashboard(
       }
 
       out.confidenceDist = [...bins.entries()].map(([confidence, count]) => ({ confidence, count }))
-      out.sentimentByCategory = [...sentMap.entries()]
-        .map(([category, v]) => ({
-          category,
-          avg_yes_probability: v.totalW > 0 ? v.yesW / v.totalW : 0,
-          total_votes: v.n,
-        }))
-        .sort((a, b) => b.avg_yes_probability - a.avg_yes_probability)
+
+      const categoriesSeen = new Set<string>()
+      for (const m of marketMeta.values()) categoriesSeen.add(m.category)
+
+      out.sentimentByCategory = [...categoriesSeen]
+        .sort((a, b) => a.localeCompare(b))
+        .map((category) => {
+          const v = sentMap.get(category)
+          return {
+            category,
+            avg_yes_probability: v && v.totalW > 0 ? v.yesW / v.totalW : 0,
+            total_votes: v?.n ?? 0,
+          }
+        })
       out.voteYesNoSplit = { yes_like: yesLike, no_like: noLike, other: otherSide }
     } catch (e) {
       pushErr('sentiment_vote_aggregates', e)
