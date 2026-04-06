@@ -584,6 +584,12 @@ export default function AdminAgentsPage() {
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <Link
+                        href={`/predictions/admin/blog/edit/${bp.id}`}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 text-xs bg-emerald-900/40 hover:bg-emerald-800/50 border border-emerald-700/40 rounded text-emerald-200 font-medium"
+                      >
+                        Edit
+                      </Link>
+                      <Link
                         href={`/blog/${bp.slug}`}
                         target="_blank"
                         rel="noreferrer"

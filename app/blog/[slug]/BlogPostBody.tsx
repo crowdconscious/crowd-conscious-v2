@@ -1,8 +1,11 @@
 'use client'
 
 import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import { normalizeBlogMarkdownForDisplay } from '@/lib/blog-markdown'
 
 export function BlogPostBody({ markdown }: { markdown: string }) {
+  const md = normalizeBlogMarkdownForDisplay(markdown)
   return (
     <div
       className="prose prose-invert mx-auto max-w-none
@@ -19,7 +22,7 @@ export function BlogPostBody({ markdown }: { markdown: string }) {
         prose-hr:border-gray-700
         prose-ul:marker:text-emerald-500/80"
     >
-      <ReactMarkdown>{markdown}</ReactMarkdown>
+      <ReactMarkdown remarkPlugins={[remarkGfm]}>{md}</ReactMarkdown>
     </div>
   )
 }

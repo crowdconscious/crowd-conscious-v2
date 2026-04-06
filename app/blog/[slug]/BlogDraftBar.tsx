@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 export function BlogDraftBar({ postId }: { postId: string }) {
@@ -38,14 +39,22 @@ export function BlogDraftBar({ postId }: { postId: string }) {
             This post is not published yet. Only admins see this page.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => void publish()}
-          disabled={loading}
-          className="shrink-0 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
-        >
-          {loading ? 'Publishing…' : 'Publish now'}
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href={`/predictions/admin/blog/edit/${postId}`}
+            className="shrink-0 rounded-lg border border-slate-500 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800"
+          >
+            Edit post
+          </Link>
+          <button
+            type="button"
+            onClick={() => void publish()}
+            disabled={loading}
+            className="shrink-0 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
+          >
+            {loading ? 'Publishing…' : 'Publish now'}
+          </button>
+        </div>
       </div>
       {err ? <p className="mt-2 text-xs text-red-400">{err}</p> : null}
     </div>
