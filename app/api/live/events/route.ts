@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase-admin'
 import { getCurrentUser } from '@/lib/auth-server'
 import { extractYoutubeVideoId } from '@/lib/youtube'
 import { LIVE_EVENT_TYPE_KEYS, type LiveEventTypeKey } from '@/lib/live-event-types'
+import { DEFAULT_LIVE_EVENT_DURATION_MINUTES } from '@/lib/live-event-default-durations'
 
 export async function GET(request: NextRequest) {
   try {
@@ -73,6 +74,7 @@ export async function POST(request: NextRequest) {
       event_type: bodyEventType,
       event_subtype,
       suggested_questions: bodySuggested,
+      duration_minutes: bodyDurationMinutes,
     } = body
 
     if (!title?.trim() || !match_date) {
@@ -83,6 +85,11 @@ export async function POST(request: NextRequest) {
       typeof bodyEventType === 'string' && (LIVE_EVENT_TYPE_KEYS as readonly string[]).includes(bodyEventType)
         ? (bodyEventType as LiveEventTypeKey)
         : 'soccer_match'
+
+    const duration_minutes =
+      typeof bodyDurationMinutes === 'number' && Number.isFinite(bodyDurationMinutes)
+        ? Math.max(0, Math.min(10080, Math.round(bodyDurationMinutes)))
+        : DEFAULT_LIVE_EVENT_DURATION_MINUTES[event_type]
 
     const subtype =
       typeof event_subtype === 'string' && event_subtype.trim() ? event_subtype.trim() : null
@@ -119,6 +126,7 @@ export async function POST(request: NextRequest) {
         translations: translations && typeof translations === 'object' ? translations : {},
         created_by: user.id,
         status: 'scheduled',
+        duration_minutes,
       })
       .select('*')
       .single()

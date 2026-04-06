@@ -24,6 +24,7 @@ import { AdminLiveControls } from '@/components/live/AdminLiveControls'
 import { LiveConnectionBanner } from '@/components/live/LiveConnectionBanner'
 import { AliasEntry, type AliasParticipantJoined } from '@/components/live/AliasEntry'
 import { LiveComments } from '@/components/live/LiveComments'
+import { LiveCountdown } from '@/components/live/LiveCountdown'
 
 export function LiveMatchClient({ eventId }: { eventId: string }) {
   const supabase = useMemo(() => createClient(), [])
@@ -309,6 +310,18 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
               )}
               <h1 className="mt-0.5 truncate text-xl font-bold leading-tight text-white sm:text-2xl">{title}</h1>
             </div>
+          )}
+          {streamLive && (
+            <p className="mt-1 truncate text-xs text-slate-500">
+              {event.ends_at ? (
+                <>
+                  {locale === 'es' ? 'Termina en' : 'Ends in'}:{' '}
+                  <LiveCountdown endsAt={event.ends_at} />
+                </>
+              ) : (
+                <>{locale === 'es' ? 'Evento sin límite de tiempo' : 'No time limit'}</>
+              )}
+            </p>
           )}
         </div>
         {streamLive && (

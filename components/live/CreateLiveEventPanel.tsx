@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2, PlusCircle } from 'lucide-react'
 import {
@@ -8,6 +8,8 @@ import {
   type LiveEventTypeKey,
   suggestedQuestionsPayload,
 } from '@/lib/live-event-types'
+import { DEFAULT_LIVE_EVENT_DURATION_MINUTES } from '@/lib/live-event-default-durations'
+import { LiveEventDurationField } from '@/components/live/LiveEventDurationField'
 import { LogoUpload } from '@/components/ui/LogoUpload'
 import { ImageUpload } from '@/components/ui/ImageUpload'
 
@@ -88,10 +90,17 @@ export function CreateLiveEventPanel({ locale }: CreateLiveEventPanelProps) {
   const [speakerName, setSpeakerName] = useState('')
   const [showName, setShowName] = useState('')
   const [organizerName, setOrganizerName] = useState('')
+  const [durationMinutes, setDurationMinutes] = useState(120)
 
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const [copyFlash, setCopyFlash] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (selectedType) {
+      setDurationMinutes(DEFAULT_LIVE_EVENT_DURATION_MINUTES[selectedType])
+    }
+  }, [selectedType])
 
   const t = es
     ? {
@@ -235,6 +244,7 @@ export function CreateLiveEventPanel({ locale }: CreateLiveEventPanelProps) {
           team_a_flag: selectedType === 'soccer_match' ? teamAFlag.trim() || undefined : undefined,
           team_b_name: selectedType === 'soccer_match' ? teamBName.trim() || undefined : undefined,
           team_b_flag: selectedType === 'soccer_match' ? teamBFlag.trim() || undefined : undefined,
+          duration_minutes: durationMinutes,
         }),
       })
       const json = (await res.json()) as { error?: string; event?: { id: string } }
@@ -325,6 +335,11 @@ export function CreateLiveEventPanel({ locale }: CreateLiveEventPanelProps) {
                   className={INPUT_CLASS}
                 />
               </label>
+              <LiveEventDurationField
+                value={durationMinutes}
+                onChange={setDurationMinutes}
+                locale={locale}
+              />
               <label className="block">
                 <span className="mb-1 block text-sm font-medium text-slate-300">{t.fields.youtube}</span>
                 <input
@@ -412,6 +427,11 @@ export function CreateLiveEventPanel({ locale }: CreateLiveEventPanelProps) {
                   className={INPUT_CLASS}
                 />
               </label>
+              <LiveEventDurationField
+                value={durationMinutes}
+                onChange={setDurationMinutes}
+                locale={locale}
+              />
               <label className="block">
                 <span className="mb-1 block text-sm font-medium text-slate-300">{t.fields.youtube}</span>
                 <input
@@ -483,6 +503,11 @@ export function CreateLiveEventPanel({ locale }: CreateLiveEventPanelProps) {
                   className={INPUT_CLASS}
                 />
               </label>
+              <LiveEventDurationField
+                value={durationMinutes}
+                onChange={setDurationMinutes}
+                locale={locale}
+              />
               <label className="block">
                 <span className="mb-1 block text-sm font-medium text-slate-300">{t.fields.youtube}</span>
                 <input
@@ -530,6 +555,11 @@ export function CreateLiveEventPanel({ locale }: CreateLiveEventPanelProps) {
                   className={INPUT_CLASS}
                 />
               </label>
+              <LiveEventDurationField
+                value={durationMinutes}
+                onChange={setDurationMinutes}
+                locale={locale}
+              />
               <label className="block">
                 <span className="mb-1 block text-sm font-medium text-slate-300">{t.fields.youtube}</span>
                 <input
@@ -592,6 +622,11 @@ export function CreateLiveEventPanel({ locale }: CreateLiveEventPanelProps) {
                   className={INPUT_CLASS}
                 />
               </label>
+              <LiveEventDurationField
+                value={durationMinutes}
+                onChange={setDurationMinutes}
+                locale={locale}
+              />
               <label className="block">
                 <span className="mb-1 block text-sm font-medium text-slate-300">{t.fields.youtube}</span>
                 <input
@@ -630,6 +665,11 @@ export function CreateLiveEventPanel({ locale }: CreateLiveEventPanelProps) {
                   className={INPUT_CLASS}
                 />
               </label>
+              <LiveEventDurationField
+                value={durationMinutes}
+                onChange={setDurationMinutes}
+                locale={locale}
+              />
               <label className="block">
                 <span className="mb-1 block text-sm font-medium text-slate-300">{t.fields.youtube}</span>
                 <input

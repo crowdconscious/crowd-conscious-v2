@@ -37,10 +37,34 @@ export async function PATCH(request: NextRequest, { params }: Props) {
     if (typeof body.title === 'string') updates.title = body.title.trim()
     if (typeof body.description === 'string') updates.description = body.description.trim() || null
     if (typeof body.match_date === 'string') updates.match_date = body.match_date
+    if (typeof body.duration_minutes === 'number' && Number.isFinite(body.duration_minutes)) {
+      const dm = Math.max(0, Math.min(10080, Math.round(body.duration_minutes)))
+      if (before?.status === 'scheduled' || before?.status === 'live') {
+        updates.duration_minutes = dm
+      }
+    }
     if (typeof body.status === 'string') {
       updates.status = body.status
       if (body.status === 'completed' && before?.status !== 'completed') {
         updates.ended_at = new Date().toISOString()
+      }
+      if (body.status === 'live' && before?.status !== 'live') {
+        const started = new Date().toISOString()
+        updates.started_at = started
+        const fromBody =
+          typeof body.duration_minutes === 'number' && Number.isFinite(body.duration_minutes)
+            ? Math.max(0, Math.min(10080, Math.round(body.duration_minutes)))
+            : null
+        const fromUpdates =
+          typeof updates.duration_minutes === 'number' ? (updates.duration_minutes as number) : null
+        const fromBefore =
+          typeof before?.duration_minutes === 'number' ? before.duration_minutes : null
+        const dm = fromBody ?? fromUpdates ?? fromBefore ?? 120
+        if (fromBody != null) {
+          updates.duration_minutes = fromBody
+        }
+        updates.ends_at =
+          dm > 0 ? new Date(Date.now() + dm * 60 * 1000).toISOString() : null
       }
     }
     if (typeof body.youtube_url === 'string') {

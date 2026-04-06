@@ -231,6 +231,9 @@ export interface Database {
           reminder_1h_sent_at: string | null
           results_email_sent_at: string | null
           ended_at: string | null
+          duration_minutes: number
+          started_at: string | null
+          ends_at: string | null
         }
         Insert: {
           id?: string
@@ -266,6 +269,9 @@ export interface Database {
           reminder_1h_sent_at?: string | null
           results_email_sent_at?: string | null
           ended_at?: string | null
+          duration_minutes?: number
+          started_at?: string | null
+          ends_at?: string | null
         }
         Update: {
           id?: string
@@ -301,6 +307,9 @@ export interface Database {
           reminder_1h_sent_at?: string | null
           results_email_sent_at?: string | null
           ended_at?: string | null
+          duration_minutes?: number
+          started_at?: string | null
+          ends_at?: string | null
         }
         Relationships: []
       }

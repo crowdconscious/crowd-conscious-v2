@@ -6,6 +6,7 @@ import { ChevronUp, Shield, Loader2 } from 'lucide-react'
 import type { Database } from '@/types/database'
 import type { MarketWithOutcomes } from '@/hooks/useLiveMarkets'
 import { ImageUpload } from '@/components/ui/ImageUpload'
+import { LiveEventDurationField } from '@/components/live/LiveEventDurationField'
 type LiveEventRow = Database['public']['Tables']['live_events']['Row']
 
 type DurationChoice = '5' | '10' | '15' | 'halftime' | 'fulltime'
@@ -92,6 +93,7 @@ export function AdminLiveControls({
   const [teamAFlag, setTeamAFlag] = useState(event.team_a_flag ?? '')
   const [teamBName, setTeamBName] = useState(event.team_b_name ?? '')
   const [teamBFlag, setTeamBFlag] = useState(event.team_b_flag ?? '')
+  const [eventDurationMinutes, setEventDurationMinutes] = useState(() => event.duration_minutes ?? 120)
 
   useEffect(() => {
     const id = setInterval(() => setTick((t) => t + 1), 1000)
@@ -104,6 +106,7 @@ export function AdminLiveControls({
     setTeamAFlag(event.team_a_flag ?? '')
     setTeamBName(event.team_b_name ?? '')
     setTeamBFlag(event.team_b_flag ?? '')
+    setEventDurationMinutes(event.duration_minutes ?? 120)
   }, [
     event.id,
     event.cover_image_url,
@@ -111,6 +114,7 @@ export function AdminLiveControls({
     event.team_a_flag,
     event.team_b_name,
     event.team_b_flag,
+    event.duration_minutes,
   ])
 
   const t = useMemo(
@@ -137,6 +141,7 @@ export function AdminLiveControls({
       branding: locale === 'es' ? 'Marca del evento' : 'Event branding',
       coverUrl: locale === 'es' ? 'Imagen de portada' : 'Cover image',
       saveBranding: locale === 'es' ? 'Guardar marca' : 'Save branding',
+      saveDuration: locale === 'es' ? 'Guardar duración' : 'Save duration',
       teamA: locale === 'es' ? 'Equipo A' : 'Team A',
       teamB: locale === 'es' ? 'Equipo B' : 'Team B',
       flagHint: locale === 'es' ? 'Emoji o URL de imagen' : 'Emoji or image URL',
@@ -328,6 +333,23 @@ export function AdminLiveControls({
             <p className="mt-1 text-sm text-slate-500">
               {t.schedule}: <span className="text-slate-300">{event.status}</span>
             </p>
+            {event.status === 'scheduled' && (
+              <div className="mt-3 border-t border-white/10 pt-3">
+                <LiveEventDurationField
+                  value={eventDurationMinutes}
+                  onChange={setEventDurationMinutes}
+                  locale={locale === 'es' ? 'es' : 'en'}
+                />
+                <button
+                  type="button"
+                  disabled={busy !== null}
+                  onClick={() => void patchEvent({ duration_minutes: eventDurationMinutes }, 'duration')}
+                  className="mt-2 flex min-h-[40px] w-full items-center justify-center rounded-lg border border-teal-500/40 bg-teal-950/40 px-3 py-2 text-sm font-medium text-teal-100 hover:bg-teal-900/40 disabled:opacity-50"
+                >
+                  {busy === 'duration' ? <Loader2 className="h-4 w-4 animate-spin" /> : t.saveDuration}
+                </button>
+              </div>
+            )}
           </section>
 
           <section className="border-t border-white/10 pt-3">
