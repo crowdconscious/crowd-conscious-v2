@@ -9,6 +9,10 @@ import { BlogDraftBar } from './BlogDraftBar'
 import { EmbeddedMarketCard } from '@/components/blog/EmbeddedMarketCard'
 import { BlogComments } from '@/components/blog/BlogComments'
 import { BlogSoftSignupCta } from './BlogSoftSignupCta'
+import PulseEmbed from '@/components/blog/PulseEmbed'
+import { splitMarkdownForPulseEmbed } from '@/lib/blog-pulse-insert'
+import { fetchPulseEmbedDataForBlog } from '@/lib/blog-fetch-pulse-embed'
+import { normalizePulseEmbedComponents, parsePulseEmbedPosition } from '@/lib/pulse-embed-constants'
 
 type Props = { params: Promise<{ slug: string }> }
 
@@ -37,7 +41,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   const { data: post } = await supabase
     .from('blog_posts')
     .select(
-      'title, title_en, meta_title, meta_description, excerpt, excerpt_en, cover_image_url, published_at'
+      'title, title_en, meta_title, meta_description, excerpt, excerpt_en, cover_image_url, published_at, pulse_market_id'
     )
     .eq('slug', slug)
     .eq('status', 'published')
@@ -56,7 +60,9 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     locale === 'en' && post.excerpt_en?.trim()
       ? post.excerpt_en
       : post.meta_description || post.excerpt
-  const ogImage = post.cover_image_url || `${SITE_URL}/opengraph-image`
+  const ogImage = post.pulse_market_id
+    ? `${SITE_URL}/api/og/blog/${encodeURIComponent(slug)}`
+    : post.cover_image_url || `${SITE_URL}/opengraph-image`
 
   return {
     title,
@@ -117,6 +123,17 @@ export default async function BlogPostPage(props: Props) {
   const content =
     locale === 'en' && post.content_en?.trim() ? post.content_en : post.content || ''
 
+  const pulseMarketId = (post as { pulse_market_id?: string | null }).pulse_market_id ?? null
+  const embedPosition = parsePulseEmbedPosition(
+    (post as { pulse_embed_position?: string | null }).pulse_embed_position
+  )
+  const pulseComponents = normalizePulseEmbedComponents(
+    (post as { pulse_embed_components?: unknown }).pulse_embed_components
+  )
+
+  const pulseData =
+    pulseMarketId && typeof pulseMarketId === 'string' ? await fetchPulseEmbedDataForBlog(pulseMarketId) : null
+
   const relatedMarketIds = (post.related_market_ids ?? []).filter(Boolean) as string[]
 
   const catLabel =
@@ -146,7 +163,38 @@ export default async function BlogPostPage(props: Props) {
       )}
 
       <div className="mt-10">
-        <BlogPostBody markdown={content} />
+        {pulseMarketId && pulseData ? (
+          (() => {
+            const split = splitMarkdownForPulseEmbed(content, embedPosition)
+            if (split.position === 'full_section') {
+              return (
+                <>
+                  <BlogPostBody markdown={split.before} />
+                  <PulseEmbed
+                    data={pulseData}
+                    locale={locale}
+                    components={pulseComponents}
+                    showOwnHeading
+                  />
+                </>
+              )
+            }
+            return (
+              <>
+                {split.before ? <BlogPostBody markdown={split.before} /> : null}
+                <PulseEmbed
+                  data={pulseData}
+                  locale={locale}
+                  components={pulseComponents}
+                  showOwnHeading={false}
+                />
+                {split.after ? <BlogPostBody markdown={split.after} /> : null}
+              </>
+            )
+          })()
+        ) : (
+          <BlogPostBody markdown={content} />
+        )}
       </div>
 
       {relatedMarketIds.length > 0 && (

@@ -3,10 +3,10 @@
 import { useEffect, useMemo, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { getMarketText, getOutcomeLabel } from '@/lib/i18n/market-translations'
-import { toDisplayPercentRounded } from '@/lib/probability-utils'
 import { createClient } from '@/lib/supabase-client'
 import ConfidenceHistogram from './ConfidenceHistogram'
 import VoteTimeline from './VoteTimeline'
+import PulseOutcomeBars from './PulseOutcomeBars'
 import OutcomeConfidenceTable from './OutcomeConfidenceTable'
 import { exportPulseVotesCsv, type PulseCsvVote } from './pulse-export-csv'
 
@@ -324,25 +324,8 @@ export default function PulseResultClient({
               </span>
             </div>
 
-            <div className="pulse-section mt-8 space-y-5">
-              {outcomes.map((o) => {
-                const pct = toDisplayPercentRounded(o.probability)
-                const label = getOutcomeLabel(o, locale)
-                return (
-                  <div key={o.id}>
-                    <div className="mb-1.5 flex justify-between gap-3 text-sm">
-                      <span className="font-medium text-slate-200">{label}</span>
-                      <span className="tabular-nums text-emerald-400">{pct}%</span>
-                    </div>
-                    <div className="h-3 w-full overflow-hidden rounded-full bg-black/40">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-emerald-600 to-emerald-400"
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                  </div>
-                )
-              })}
+            <div className="pulse-section mt-8">
+              <PulseOutcomeBars outcomes={outcomes} locale={locale} />
             </div>
 
             {executiveSummary ? (

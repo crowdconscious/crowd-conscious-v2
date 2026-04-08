@@ -1015,6 +1015,9 @@ export interface Database {
           meta_description: string | null
           related_market_ids: string[]
           related_pulse_id: string | null
+          pulse_market_id: string | null
+          pulse_embed_position: string
+          pulse_embed_components: Json
           generated_by: string | null
           agent_content_id: string | null
           edited_by: string | null
@@ -1040,6 +1043,9 @@ export interface Database {
           meta_description?: string | null
           related_market_ids?: string[]
           related_pulse_id?: string | null
+          pulse_market_id?: string | null
+          pulse_embed_position?: string
+          pulse_embed_components?: Json
           generated_by?: string | null
           agent_content_id?: string | null
           edited_by?: string | null
@@ -1065,6 +1071,9 @@ export interface Database {
           meta_description?: string | null
           related_market_ids?: string[]
           related_pulse_id?: string | null
+          pulse_market_id?: string | null
+          pulse_embed_position?: string
+          pulse_embed_components?: Json
           generated_by?: string | null
           agent_content_id?: string | null
           edited_by?: string | null

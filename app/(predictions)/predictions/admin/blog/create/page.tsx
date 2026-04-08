@@ -4,6 +4,13 @@ import { useState, useCallback } from 'react'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { ImageUpload } from '@/components/ui/ImageUpload'
+import BlogPulseEmbedFields from '@/components/blog/BlogPulseEmbedFields'
+import {
+  normalizePulseEmbedComponents,
+  PULSE_EMBED_COMPONENT_KEYS,
+  type PulseEmbedComponentKey,
+  type PulseEmbedPosition,
+} from '@/lib/pulse-embed-constants'
 
 const CATEGORIES = [
   { id: 'insight', label: 'Insight' },
@@ -28,8 +35,23 @@ export default function AdminBlogCreatePage() {
   const [tags, setTags] = useState('')
   const [metaDescription, setMetaDescription] = useState('')
   const [coverUrl, setCoverUrl] = useState<string | null>(null)
+  const [embedEnabled, setEmbedEnabled] = useState(false)
+  const [pulseMarketId, setPulseMarketId] = useState<string | null>(null)
+  const [pulseEmbedPosition, setPulseEmbedPosition] = useState<PulseEmbedPosition>('before_cta')
+  const [pulseComponents, setPulseComponents] = useState<PulseEmbedComponentKey[]>(() =>
+    normalizePulseEmbedComponents(null)
+  )
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+
+  const togglePulseComponent = (key: PulseEmbedComponentKey, checked: boolean) => {
+    setPulseComponents((prev) => {
+      const next = new Set(prev)
+      if (checked) next.add(key)
+      else next.delete(key)
+      return PULSE_EMBED_COMPONENT_KEYS.filter((k) => next.has(k))
+    })
+  }
 
   const autoSlug = useCallback(() => {
     const s = title
@@ -64,6 +86,9 @@ export default function AdminBlogCreatePage() {
           meta_description: metaDescription,
           cover_image_url: coverUrl,
           publish_now: publishNow,
+          pulse_market_id: embedEnabled ? pulseMarketId : null,
+          pulse_embed_position: pulseEmbedPosition,
+          pulse_embed_components: pulseComponents,
         }),
       })
       const json = await res.json().catch(() => ({}))
@@ -140,6 +165,21 @@ export default function AdminBlogCreatePage() {
             onChange={(e) => setContentEn(e.target.value)}
           />
         </div>
+
+        <BlogPulseEmbedFields
+          embedEnabled={embedEnabled}
+          onEmbedEnabledChange={(v) => {
+            setEmbedEnabled(v)
+            if (!v) setPulseMarketId(null)
+          }}
+          pulseMarketId={pulseMarketId}
+          onPulseMarketIdChange={setPulseMarketId}
+          pulseEmbedPosition={pulseEmbedPosition}
+          onPulseEmbedPositionChange={setPulseEmbedPosition}
+          selectedComponents={pulseComponents}
+          onToggleComponent={togglePulseComponent}
+        />
+
         <div>
           <label className="mb-1 block text-sm text-slate-400">Category</label>
           <select className={input} value={category} onChange={(e) => setCategory(e.target.value)}>

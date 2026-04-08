@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth-server'
 import { createAdminClient } from '@/lib/supabase-admin'
+import { PULSE_EMBED_POSITIONS, type PulseEmbedPosition } from '@/lib/pulse-embed-constants'
 
 type Status = 'draft' | 'published' | 'archived'
 
@@ -117,6 +118,29 @@ export async function PATCH(
     if ('cover_image_url' in body) {
       const raw = body.cover_image_url
       patch.cover_image_url = typeof raw === 'string' ? raw.trim() || null : null
+    }
+
+    if ('pulse_market_id' in body) {
+      const v = body.pulse_market_id
+      if (v === null || v === '') {
+        patch.pulse_market_id = null
+      } else if (typeof v === 'string' && /^[0-9a-f-]{36}$/i.test(v.trim())) {
+        patch.pulse_market_id = v.trim()
+      }
+    }
+
+    if (typeof body.pulse_embed_position === 'string') {
+      const p = body.pulse_embed_position.trim()
+      if ((PULSE_EMBED_POSITIONS as readonly string[]).includes(p)) {
+        patch.pulse_embed_position = p as PulseEmbedPosition
+      }
+    }
+
+    if (body.pulse_embed_components !== undefined) {
+      const arr = Array.isArray(body.pulse_embed_components)
+        ? body.pulse_embed_components.map((x: unknown) => String(x).trim()).filter(Boolean)
+        : []
+      patch.pulse_embed_components = arr.length > 0 ? arr : []
     }
 
     const keys = Object.keys(patch).filter((k) => k !== 'updated_at')

@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth-server'
 import { createAdminClient } from '@/lib/supabase-admin'
+import {
+  DEFAULT_PULSE_EMBED_COMPONENTS,
+  PULSE_EMBED_POSITIONS,
+  type PulseEmbedPosition,
+} from '@/lib/pulse-embed-constants'
 
 function slugify(raw: string): string {
   const s = raw
@@ -70,6 +75,24 @@ export async function POST(request: NextRequest) {
     const metaDesc = String(body.meta_description ?? excerpt).slice(0, 160)
     const now = new Date().toISOString()
 
+    let pulse_market_id: string | null = null
+    if (body.pulse_market_id != null && body.pulse_market_id !== '') {
+      const pid = String(body.pulse_market_id).trim()
+      pulse_market_id = /^[0-9a-f-]{36}$/i.test(pid) ? pid : null
+    }
+
+    let pulse_embed_position: PulseEmbedPosition = 'before_cta'
+    const rawPos = String(body.pulse_embed_position ?? 'before_cta').trim()
+    if ((PULSE_EMBED_POSITIONS as readonly string[]).includes(rawPos)) {
+      pulse_embed_position = rawPos as PulseEmbedPosition
+    }
+
+    let pulse_embed_components: string[] = [...DEFAULT_PULSE_EMBED_COMPONENTS]
+    if (Array.isArray(body.pulse_embed_components)) {
+      const arr = body.pulse_embed_components.map((x: unknown) => String(x).trim()).filter(Boolean)
+      if (arr.length > 0) pulse_embed_components = arr
+    }
+
     const { data: row, error } = await admin
       .from('blog_posts')
       .insert({
@@ -86,6 +109,9 @@ export async function POST(request: NextRequest) {
         meta_title: title,
         meta_description: metaDesc,
         related_market_ids: relatedIds,
+        pulse_market_id,
+        pulse_embed_position,
+        pulse_embed_components,
         generated_by: 'manual',
         status: publishNow ? 'published' : 'draft',
         published_at: publishNow ? now : null,

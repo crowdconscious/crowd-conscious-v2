@@ -6,6 +6,14 @@ import { useRouter } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { ImageUpload } from '@/components/ui/ImageUpload'
 import type { Database } from '@/types/database'
+import BlogPulseEmbedFields from '@/components/blog/BlogPulseEmbedFields'
+import {
+  normalizePulseEmbedComponents,
+  parsePulseEmbedPosition,
+  PULSE_EMBED_COMPONENT_KEYS,
+  type PulseEmbedComponentKey,
+  type PulseEmbedPosition,
+} from '@/lib/pulse-embed-constants'
 
 type Row = Database['public']['Tables']['blog_posts']['Row']
 
@@ -34,8 +42,25 @@ export default function EditBlogPostClient({ post }: { post: Row }) {
   const [metaDescription, setMetaDescription] = useState(post.meta_description ?? '')
   const [relatedIds, setRelatedIds] = useState((post.related_market_ids ?? []).join(', '))
   const [coverUrl, setCoverUrl] = useState<string | null>(post.cover_image_url)
+  const [embedEnabled, setEmbedEnabled] = useState(!!post.pulse_market_id)
+  const [pulseMarketId, setPulseMarketId] = useState<string | null>(post.pulse_market_id ?? null)
+  const [pulseEmbedPosition, setPulseEmbedPosition] = useState<PulseEmbedPosition>(() =>
+    parsePulseEmbedPosition(post.pulse_embed_position)
+  )
+  const [pulseComponents, setPulseComponents] = useState<PulseEmbedComponentKey[]>(() =>
+    normalizePulseEmbedComponents(post.pulse_embed_components)
+  )
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+
+  const togglePulseComponent = (key: PulseEmbedComponentKey, checked: boolean) => {
+    setPulseComponents((prev) => {
+      const next = new Set(prev)
+      if (checked) next.add(key)
+      else next.delete(key)
+      return PULSE_EMBED_COMPONENT_KEYS.filter((k) => next.has(k))
+    })
+  }
 
   const save = useCallback(
     async (opts: { publish?: boolean; archive?: boolean }) => {
@@ -64,6 +89,9 @@ export default function EditBlogPostClient({ post }: { post: Row }) {
           meta_description: metaDescription,
           related_market_ids,
           cover_image_url: coverUrl,
+          pulse_market_id: embedEnabled ? pulseMarketId : null,
+          pulse_embed_position: pulseEmbedPosition,
+          pulse_embed_components: pulseComponents,
         }
         if (opts.publish) body.status = 'published'
         if (opts.archive) body.status = 'archived'
@@ -96,6 +124,10 @@ export default function EditBlogPostClient({ post }: { post: Row }) {
       metaDescription,
       relatedIds,
       coverUrl,
+      embedEnabled,
+      pulseMarketId,
+      pulseEmbedPosition,
+      pulseComponents,
       post.id,
       router,
     ]
@@ -156,6 +188,21 @@ export default function EditBlogPostClient({ post }: { post: Row }) {
             onChange={(e) => setContentEn(e.target.value)}
           />
         </div>
+
+        <BlogPulseEmbedFields
+          embedEnabled={embedEnabled}
+          onEmbedEnabledChange={(v) => {
+            setEmbedEnabled(v)
+            if (!v) setPulseMarketId(null)
+          }}
+          pulseMarketId={pulseMarketId}
+          onPulseMarketIdChange={setPulseMarketId}
+          pulseEmbedPosition={pulseEmbedPosition}
+          onPulseEmbedPositionChange={setPulseEmbedPosition}
+          selectedComponents={pulseComponents}
+          onToggleComponent={togglePulseComponent}
+        />
+
         <div>
           <label className="mb-1 block text-sm text-slate-400">Related market IDs (UUIDs, comma-separated)</label>
           <input
