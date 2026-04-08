@@ -4,6 +4,7 @@
  */
 
 import { marked } from 'marked'
+import { normalizeBlogMarkdownForDisplay, sanitizeBlogEmailHtmlHrefs } from '@/lib/blog-markdown'
 
 marked.setOptions({ gfm: true, breaks: true })
 
@@ -277,8 +278,8 @@ function buildBlogDigestSection(post: BlogPostDigest, highlightNewBlog: boolean)
     </div>`
   }
 
-  const parsed = marked(raw, { async: false }) as string
-  const styledContent = styleBlogEmailHtml(parsed)
+  const parsed = marked(normalizeBlogMarkdownForDisplay(raw), { async: false }) as string
+  const styledContent = styleBlogEmailHtml(sanitizeBlogEmailHtmlHrefs(parsed))
 
   return `
     <div style="padding: 24px 24px 20px;">
