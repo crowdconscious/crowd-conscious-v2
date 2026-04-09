@@ -558,7 +558,8 @@ input:focus, textarea:focus, select:focus {
     page-break-inside: avoid;
   }
 
-  .pulse-outcome-reason-group > .pulse-reasoning-quote:nth-child(n + 6) {
+  /* After h4, show at most 3 reasoning rows per outcome (children 2–4) */
+  .pulse-outcome-reason-group > .pulse-reasoning-quote:nth-child(n + 5) {
     display: none !important;
   }
 

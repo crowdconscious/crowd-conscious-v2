@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { createClient } from '@/lib/supabase-client'
 import { getOutcomeLabel } from '@/lib/i18n/market-translations'
 
 type OutcomeLite = { id: string; label: string; probability: number; translations?: unknown }
@@ -9,36 +8,13 @@ type OutcomeLite = { id: string; label: string; probability: number; translation
 type ReasoningRow = {
   id: string
   reasoning: string
-  confidence: number | null
+  confidence: number
   outcome_id: string
-  user_id: string | null
-  anonymous_participant_id: string | null
-  is_anonymous?: boolean | null
-  created_at: string
-  profiles?: { full_name?: string | null; avatar_url?: string | null } | null
-  anonymous_participants?: { alias?: string | null; avatar_emoji?: string | null } | null
+  author_name: string
 }
 
-function authorLabel(
-  row: ReasoningRow,
-  locale: string
-): { name: string; prefix: string } {
-  const prof = row.profiles
-  const ap = row.anonymous_participants
-  if (prof?.full_name?.trim()) {
-    return { name: prof.full_name.trim(), prefix: '' }
-  }
-  if (ap?.alias?.trim()) {
-    const em =
-      ap.avatar_emoji && !String(ap.avatar_emoji).startsWith('http')
-        ? `${ap.avatar_emoji} `
-        : ''
-    return { name: ap.alias.trim(), prefix: em }
-  }
-  return {
-    name: locale === 'es' ? 'Invitado' : 'Guest',
-    prefix: '',
-  }
+function authorLabel(row: ReasoningRow): { name: string; prefix: string } {
+  return { name: row.author_name, prefix: '' }
 }
 
 export default function VoteReasonings({
@@ -52,30 +28,21 @@ export default function VoteReasonings({
 }) {
   const [reasonings, setReasonings] = useState<ReasoningRow[]>([])
   const [expandedOutcome, setExpandedOutcome] = useState<string | null>(null)
-  const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
     let cancelled = false
     async function fetchReasonings() {
-      const { data, error } = await supabase
-        .from('market_votes')
-        .select(
-          `
-          id, reasoning, confidence, outcome_id, user_id, anonymous_participant_id,
-          is_anonymous, created_at,
-          profiles ( full_name, avatar_url ),
-          anonymous_participants ( alias, avatar_emoji )
-        `
-        )
-        .eq('market_id', marketId)
-        .not('reasoning', 'is', null)
-        .order('created_at', { ascending: false })
-
-      if (error || !data || cancelled) {
-        if (error) console.error('[VoteReasonings]', error)
+      const lang = locale === 'en' ? 'en' : 'es'
+      const res = await fetch(
+        `/api/predictions/markets/${encodeURIComponent(marketId)}/vote-reasonings?lang=${lang}`,
+        { cache: 'no-store' }
+      )
+      if (!res.ok || cancelled) {
+        if (!res.ok) console.error('[VoteReasonings]', res.status)
         return
       }
-      const rows = (data as ReasoningRow[]).filter((r) => (r.reasoning ?? '').trim() !== '')
+      const json = (await res.json()) as { reasonings?: ReasoningRow[] }
+      const rows = (json.reasonings ?? []).filter((r) => (r.reasoning ?? '').trim() !== '')
       setReasonings(rows)
       if (rows.length > 0) {
         const ids = new Set(rows.map((r) => r.outcome_id))
@@ -88,7 +55,7 @@ export default function VoteReasonings({
     return () => {
       cancelled = true
     }
-  }, [marketId, supabase])
+  }, [marketId, locale])
 
   const byOutcome = useMemo(() => {
     return outcomes
@@ -136,7 +103,7 @@ export default function VoteReasonings({
               {(expanded || byOutcome.length === 1) && (
                 <div className="mt-2 space-y-2 pl-2">
                   {outcome.reasonings.slice(0, showCount).map((r) => {
-                    const { name, prefix } = authorLabel(r, locale)
+                    const { name, prefix } = authorLabel(r)
                     const handle = `@${name.toLowerCase().replace(/\s+/g, '_')}`
                     return (
                       <div

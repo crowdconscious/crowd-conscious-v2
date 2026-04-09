@@ -479,7 +479,7 @@ export default function PulseResultClient({
                   const quotes = featuredReasonings
                     .filter((r) => r.outcome_id === o.id)
                     .sort((a, b) => b.confidence - a.confidence)
-                    .slice(0, 3)
+                    .slice(0, 5)
                   if (quotes.length === 0) return null
                   const label = getOutcomeLabel(o, locale).split(' / ')[0]
                   return (
@@ -492,7 +492,7 @@ export default function PulseResultClient({
                       {quotes.map((r) => (
                         <div
                           key={r.id}
-                          className="pulse-reasoning-quote mb-2 border-l-2 border-emerald-500/30 py-1.5 pl-3"
+                          className="reasoning-item pulse-reasoning-quote mb-2 border-l-2 border-emerald-500/30 py-1.5 pl-3"
                         >
                           <p className="text-sm text-gray-300">&ldquo;{r.reasoning}&rdquo;</p>
                           <span className="text-xs text-gray-600">
