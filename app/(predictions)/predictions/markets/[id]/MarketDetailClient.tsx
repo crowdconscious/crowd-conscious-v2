@@ -44,6 +44,7 @@ import {
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { VotePanel, type GuestVotePayload } from '../../components/VotePanel'
+import VoteReasonings from '@/components/markets/VoteReasonings'
 import { GuestRegistrationPrompt } from '../../components/GuestRegistrationPrompt'
 import { CelebrationModal } from '@/components/gamification/CelebrationModal'
 import {
@@ -738,6 +739,8 @@ export function MarketDetailClient({
               </>
             )}
           </div>
+
+          <VoteReasonings marketId={market.id} outcomes={outcomes} locale={locale} />
 
           {/* Sentiment Gauge - only show when we have data */}
           {sentiment.length > 0 && (

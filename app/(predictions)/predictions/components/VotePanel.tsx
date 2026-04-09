@@ -19,6 +19,10 @@ import {
   voteActionCopy,
 } from '@/lib/i18n/pulse-market-copy'
 import ShareButton from '@/components/ShareButton'
+import {
+  normalizeVoteReasoning,
+  voteReasoningMaxForMarket,
+} from '@/lib/vote-reasoning'
 
 type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row'] & {
   market_type?: string
@@ -174,7 +178,10 @@ export function VotePanel({
   const copy = voteActionCopy(loc, isPulse)
   const [selectedOutcomeId, setSelectedOutcomeId] = useState<string | null>(null)
   const [confidence, setConfidence] = useState(7)
+  const [reasoning, setReasoning] = useState('')
   const [loading, setLoading] = useState(false)
+
+  const reasoningMax = voteReasoningMaxForMarket(market.is_micro_market)
 
   const isResolved = market.status === 'resolved'
   const isEditing = isAuthenticated && !!myVote
@@ -199,6 +206,10 @@ export function VotePanel({
       setConfidence(7)
     }
   }, [myVote?.outcome_id, myVote?.confidence, myVote, isAuthenticated])
+
+  useEffect(() => {
+    setReasoning('')
+  }, [selectedOutcomeId])
 
   const selectedOutcome = selectedOutcomeId ? outcomes.find((o) => o.id === selectedOutcomeId) : null
   const selectedProb = selectedOutcome ? toDecimal(selectedOutcome.probability) : 0
@@ -243,6 +254,7 @@ export function VotePanel({
             outcome_id: selectedOutcomeId,
             confidence: effectiveConfidence,
             guest_id: guestId,
+            reasoning: normalizeVoteReasoning(reasoning, reasoningMax),
           }),
         })
         const data = await res.json()
@@ -268,6 +280,7 @@ export function VotePanel({
           market_id: market.id,
           outcome_id: selectedOutcomeId,
           confidence: effectiveConfidence,
+          reasoning: normalizeVoteReasoning(reasoning, reasoningMax),
         }),
       })
 
@@ -354,6 +367,42 @@ export function VotePanel({
       </button>
     )
   }
+
+  const reasoningBlock =
+    selectedOutcomeId && !isResolved && (!guestHasVoted || isAuthenticated) ? (
+      <div className="mt-3 rounded-xl border border-white/[0.08] bg-white/[0.02] p-4">
+        <div className="mb-2 flex items-center justify-between">
+          <span className="text-sm text-gray-400">
+            {locale === 'es' ? '¿Por qué?' : 'Why?'}
+            <span className="ml-1 text-gray-600">
+              ({locale === 'es' ? 'opcional' : 'optional'})
+            </span>
+          </span>
+          <span className="text-xs text-gray-600">
+            {reasoning.length}/{reasoningMax}
+          </span>
+        </div>
+        <textarea
+          value={reasoning}
+          onChange={(e) => {
+            const v = e.target.value
+            if (v.length <= reasoningMax) setReasoning(v)
+          }}
+          placeholder={
+            locale === 'es'
+              ? 'Comparte brevemente tu razonamiento...'
+              : 'Briefly share your reasoning...'
+          }
+          rows={2}
+          className="w-full resize-none rounded-lg border border-white/[0.1] bg-white/[0.03] px-3 py-2.5 text-sm text-white placeholder:text-gray-600 focus:border-emerald-500/30 focus:outline-none"
+        />
+        <p className="mt-1.5 text-[11px] text-gray-600">
+          {locale === 'es'
+            ? 'Tu razonamiento enriquece los datos para todos'
+            : 'Your reasoning enriches the data for everyone'}
+        </p>
+      </div>
+    ) : null
 
   const confidenceBlock =
     selectedOutcomeId && needsUserConfidence ? (
@@ -607,6 +656,8 @@ export function VotePanel({
         <div className="flex flex-col gap-2">{outcomes.map((o) => renderOutcomeCard(o))}</div>
 
         {confidenceBlock}
+
+        {reasoningBlock}
 
         {submitBlock}
       </div>

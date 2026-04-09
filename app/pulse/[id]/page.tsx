@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase-server'
 import { getCurrentUser } from '@/lib/auth-server'
 import { getMarketText } from '@/lib/i18n/market-translations'
 import PulseResultClient, {
+  type PulseFeaturedReasoning,
   type PulseOutcomeRow,
   type PulseVoteRow,
 } from '@/components/pulse/PulseResultClient'
@@ -81,7 +82,7 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
       sponsor_logo_url,
       sponsor_account_id,
       market_outcomes ( id, label, probability, sort_order, translations ),
-      market_votes ( id, confidence, outcome_id, created_at, user_id, anonymous_participant_id )
+      market_votes ( id, confidence, outcome_id, created_at, user_id, anonymous_participant_id, reasoning )
     `
     )
     .eq('id', id)
@@ -134,6 +135,46 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
   const votes = (market.market_votes ?? []) as PulseVoteRow[]
   const outcomes = (market.market_outcomes ?? []) as PulseOutcomeRow[]
 
+  const { data: reasoningRowsRaw } = await admin
+    .from('market_votes')
+    .select(
+      `
+      id, reasoning, confidence, outcome_id, is_anonymous,
+      profiles ( full_name ),
+      anonymous_participants ( alias )
+    `
+    )
+    .eq('market_id', id)
+    .not('reasoning', 'is', null)
+    .order('confidence', { ascending: false })
+
+  const featuredReasonings: PulseFeaturedReasoning[] = (reasoningRowsRaw ?? [])
+    .map((row) => {
+      const r = row as {
+        id: string
+        reasoning: string | null
+        confidence: number | null
+        outcome_id: string
+        profiles?: { full_name?: string | null } | null
+        anonymous_participants?: { alias?: string | null } | null
+      }
+      const text = r.reasoning?.trim()
+      if (!text) return null
+      const prof = r.profiles
+      const ap = r.anonymous_participants
+      let author_name = locale === 'es' ? 'Invitado' : 'Guest'
+      if (prof?.full_name?.trim()) author_name = prof.full_name.trim()
+      else if (ap?.alias?.trim()) author_name = ap.alias.trim()
+      return {
+        id: r.id,
+        reasoning: text,
+        confidence: typeof r.confidence === 'number' ? r.confidence : 0,
+        outcome_id: r.outcome_id,
+        author_name,
+      }
+    })
+    .filter((x): x is PulseFeaturedReasoning => x != null)
+
   return (
     <PulseResultClient
       marketId={market.id}
@@ -150,6 +191,7 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
       votes={votes}
       locale={locale}
       isEnhancedView={isEnhancedView}
+      featuredReasonings={featuredReasonings}
     />
   )
 }

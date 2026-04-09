@@ -30,7 +30,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
         resolution_date,
         is_pulse,
         market_outcomes ( id, label, probability, sort_order, translations ),
-        market_votes ( id, confidence, outcome_id, created_at, user_id, anonymous_participant_id )
+        market_votes ( id, confidence, outcome_id, created_at, user_id, anonymous_participant_id, reasoning )
       `
       )
       .eq('id', id)

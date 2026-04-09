@@ -6,6 +6,11 @@ import { createAdminClient } from '@/lib/supabase-admin'
 import { getCurrentUser } from '@/lib/auth-server'
 import { sendPostVoteConfirmation } from '@/lib/prediction-email-notifications'
 import type { Database } from '@/types/database'
+import {
+  normalizeVoteReasoning,
+  voteReasoningMaxForMarket,
+} from '@/lib/vote-reasoning'
+import { persistVoteReasoning } from '@/lib/persist-vote-reasoning'
 
 /** USD attributed to Conscious Fund cause per sponsored micro-market vote (env override). */
 function sponsoredMicroMarketVoteImpactUsd(): number {
@@ -54,7 +59,7 @@ async function applySponsoredMicroFundIfNeeded(
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { market_id, outcome_id, confidence } = body
+    const { market_id, outcome_id, confidence, reasoning: rawReasoning } = body
 
     if (!market_id || !outcome_id) {
       return NextResponse.json(
@@ -117,6 +122,11 @@ export async function POST(request: Request) {
         .eq('id', market_id)
         .maybeSingle()
 
+      const reasoningNorm = normalizeVoteReasoning(
+        rawReasoning,
+        voteReasoningMaxForMarket(marketCheck?.is_micro_market)
+      )
+
       if (
         !marketCheck ||
         !['active', 'trading'].includes(marketCheck.status ?? '') ||
@@ -163,6 +173,7 @@ export async function POST(request: Request) {
         is_update?: boolean
         no_change?: boolean
         is_anonymous?: boolean
+        vote_id?: string
       }
 
       if (result.already_voted === true) {
@@ -185,6 +196,12 @@ export async function POST(request: Request) {
       const supabase = await createClient()
       await applySponsoredMicroFundIfNeeded(market_id, supabase)
 
+      await persistVoteReasoning(admin, {
+        reasoning: reasoningNorm,
+        marketId: market_id,
+        voteId: result.vote_id,
+      })
+
       const xpEarned = typeof result.xp_earned === 'number' ? result.xp_earned : 0
 
       return NextResponse.json({
@@ -200,12 +217,17 @@ export async function POST(request: Request) {
     const supabase = await createClient()
     const { data: marketRow } = await supabase
       .from('prediction_markets')
-      .select('archived_at')
+      .select('archived_at, is_micro_market')
       .eq('id', market_id)
       .maybeSingle()
     if (marketRow?.archived_at) {
       return NextResponse.json({ error: 'Market is archived' }, { status: 404 })
     }
+
+    const reasoningNorm = normalizeVoteReasoning(
+      rawReasoning,
+      voteReasoningMaxForMarket(marketRow?.is_micro_market)
+    )
 
     const { data, error } = await supabase.rpc('execute_market_vote', {
       p_user_id: user.id,
@@ -231,6 +253,7 @@ export async function POST(request: Request) {
       new_probability?: number
       is_update?: boolean
       no_change?: boolean
+      vote_id?: string
     }
     if (result.success === false) {
       return NextResponse.json(
@@ -247,6 +270,15 @@ export async function POST(request: Request) {
     }).catch((err) => console.error('[vote] post-confirmation', err))
 
     await applySponsoredMicroFundIfNeeded(market_id, supabase)
+
+    const admin = createAdminClient()
+    await persistVoteReasoning(admin, {
+      reasoning: reasoningNorm,
+      marketId: market_id,
+      voteId: result.vote_id,
+      userId: user.id,
+      noChange: result.no_change === true,
+    })
 
     return NextResponse.json({
       ...result,

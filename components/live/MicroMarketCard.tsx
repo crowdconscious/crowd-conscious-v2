@@ -9,6 +9,7 @@ import { getMarketText, getOutcomeLabel } from '@/lib/i18n/market-translations'
 import { useLocale } from '@/lib/i18n/useLocale'
 import { toDisplayPercentRounded } from '@/lib/probability-utils'
 import { cn } from '@/lib/design-system'
+import { normalizeVoteReasoning, VOTE_REASONING_MAX_MICRO } from '@/lib/vote-reasoning'
 
 type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row'] & {
   /** JSONB column from DB (see migration 139); omitted from generated Row for Json compatibility */
@@ -55,6 +56,7 @@ export function MicroMarketCard({
   const locale = useLocale()
   const [selectedOutcomeId, setSelectedOutcomeId] = useState<string | null>(null)
   const [confidence, setConfidence] = useState(5)
+  const [reasoning, setReasoning] = useState('')
   const [myVote, setMyVote] = useState<MyVote | null>(null)
   const [loadingVote, setLoadingVote] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -87,6 +89,10 @@ export function MicroMarketCard({
     const id = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(id)
   }, [])
+
+  useEffect(() => {
+    setReasoning('')
+  }, [selectedOutcomeId])
 
   useEffect(() => {
     let cancelled = false
@@ -154,6 +160,7 @@ export function MicroMarketCard({
           market_id: market.id,
           outcome_id: selectedOutcomeId,
           confidence,
+          reasoning: normalizeVoteReasoning(reasoning, VOTE_REASONING_MAX_MICRO),
         }),
       })
       const data = await res.json().catch(() => ({}))
@@ -342,6 +349,19 @@ export function MicroMarketCard({
             ))}
           </div>
         </div>
+      )}
+
+      {!isResolved && !isClosed && !hasVoted && selectedOutcomeId && (
+        <input
+          type="text"
+          value={reasoning}
+          onChange={(e) => {
+            const v = e.target.value
+            if (v.length <= VOTE_REASONING_MAX_MICRO) setReasoning(v)
+          }}
+          placeholder={locale === 'es' ? '¿Por qué? (opcional)' : 'Why? (optional)'}
+          className="mt-2 w-full rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-xs text-white placeholder:text-gray-600 focus:border-emerald-500/30 focus:outline-none"
+        />
       )}
 
       {errorMsg && (

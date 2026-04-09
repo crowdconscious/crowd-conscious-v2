@@ -4,15 +4,17 @@ export type PulseCsvVote = {
   outcome_label: string
   confidence: number
   kind: 'registered' | 'anonymous'
+  reasoning?: string | null
 }
 
 export function exportPulseVotesCsv(votes: PulseCsvVote[], marketTitle: string) {
-  const headers = ['Date', 'Outcome', 'Confidence', 'Type']
+  const headers = ['Date', 'Outcome', 'Confidence', 'Type', 'Reasoning']
   const rows = votes.map((v) => [
     new Date(v.created_at).toISOString(),
     `"${(v.outcome_label || v.outcome_id).replace(/"/g, '""')}"`,
     String(v.confidence),
     v.kind,
+    `"${String(v.reasoning ?? '').replace(/"/g, '""')}"`,
   ])
   const csv = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n')
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })

@@ -441,6 +441,7 @@ export interface Database {
           created_at: string
           updated_at?: string | null
           change_count?: number | null
+          reasoning?: string | null
         }
         Insert: {
           id?: string
@@ -455,6 +456,7 @@ export interface Database {
           bonus_xp?: number | null
           is_anonymous?: boolean
           created_at?: string
+          reasoning?: string | null
         }
         Update: {
           id?: string
@@ -469,6 +471,7 @@ export interface Database {
           bonus_xp?: number | null
           is_anonymous?: boolean
           created_at?: string
+          reasoning?: string | null
         }
       }
 

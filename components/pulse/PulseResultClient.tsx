@@ -17,6 +17,15 @@ export type PulseVoteRow = {
   created_at: string
   user_id: string | null
   anonymous_participant_id: string | null
+  reasoning?: string | null
+}
+
+export type PulseFeaturedReasoning = {
+  id: string
+  reasoning: string
+  confidence: number
+  outcome_id: string
+  author_name: string
 }
 
 export type PulseOutcomeRow = {
@@ -42,6 +51,7 @@ type Props = {
   votes: PulseVoteRow[]
   locale: 'es' | 'en'
   isEnhancedView: boolean
+  featuredReasonings?: PulseFeaturedReasoning[]
 }
 
 export default function PulseResultClient({
@@ -59,6 +69,7 @@ export default function PulseResultClient({
   votes: initialVotes,
   locale,
   isEnhancedView,
+  featuredReasonings = [],
 }: Props) {
   const [votes, setVotes] = useState<PulseVoteRow[]>(initialVotes)
 
@@ -143,6 +154,7 @@ export default function PulseResultClient({
       outcome_label: outcomeLabelById(v.outcome_id),
       confidence: typeof v.confidence === 'number' ? v.confidence : 0,
       kind: v.user_id ? 'registered' : 'anonymous',
+      reasoning: v.reasoning ?? null,
     }))
   }, [votes, outcomeLabelById])
 
@@ -454,6 +466,45 @@ export default function PulseResultClient({
                 </p>
               </div>
             )}
+
+            {featuredReasonings.length > 0 ? (
+              <div className="pulse-section pulse-featured-reasonings mt-6 rounded-xl border border-white/10 bg-[#1a2029] p-5">
+                <h3 className="mb-4 text-sm font-bold text-white">
+                  💬{' '}
+                  {locale === 'es'
+                    ? `Razonamientos destacados (${featuredReasonings.length} de ${totalVotes} votantes compartieron)`
+                    : `Featured reasoning (${featuredReasonings.length} of ${totalVotes} voters shared)`}
+                </h3>
+                {outcomes.map((o) => {
+                  const quotes = featuredReasonings
+                    .filter((r) => r.outcome_id === o.id)
+                    .sort((a, b) => b.confidence - a.confidence)
+                    .slice(0, 3)
+                  if (quotes.length === 0) return null
+                  const label = getOutcomeLabel(o, locale).split(' / ')[0]
+                  return (
+                    <div key={o.id} className="pulse-outcome-reason-group mb-4">
+                      <h4 className="mb-2 text-xs font-bold text-emerald-400">
+                        {label}
+                        {' · '}
+                        {quotes.length} {locale === 'es' ? 'razones' : 'reasons'}
+                      </h4>
+                      {quotes.map((r) => (
+                        <div
+                          key={r.id}
+                          className="pulse-reasoning-quote mb-2 border-l-2 border-emerald-500/30 py-1.5 pl-3"
+                        >
+                          <p className="text-sm text-gray-300">&ldquo;{r.reasoning}&rdquo;</p>
+                          <span className="text-xs text-gray-600">
+                            — {r.author_name} · {locale === 'es' ? 'certeza' : 'confidence'} {r.confidence}/10
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )
+                })}
+              </div>
+            ) : null}
 
             <div className="pulse-no-print mt-10 flex flex-col gap-3 sm:flex-row">
               <Link

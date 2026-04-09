@@ -558,6 +558,10 @@ input:focus, textarea:focus, select:focus {
     page-break-inside: avoid;
   }
 
+  .pulse-outcome-reason-group > .pulse-reasoning-quote:nth-child(n + 6) {
+    display: none !important;
+  }
+
   .pulse-page-break {
     break-before: page;
     page-break-before: always;

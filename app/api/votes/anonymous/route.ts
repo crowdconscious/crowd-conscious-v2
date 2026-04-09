@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase-admin'
+import { normalizeVoteReasoning, voteReasoningMaxForMarket } from '@/lib/vote-reasoning'
+import { persistVoteReasoning } from '@/lib/persist-vote-reasoning'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -14,7 +16,7 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { market_id, outcome_id, confidence, guest_id } = body
+    const { market_id, outcome_id, confidence, guest_id, reasoning: rawReasoning } = body
 
     if (!market_id || !outcome_id || !guest_id) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -38,7 +40,7 @@ export async function POST(request: Request) {
 
     const { data: market, error: marketError } = await admin
       .from('prediction_markets')
-      .select('id, status, title, total_votes, engagement_count')
+      .select('id, status, title, total_votes, engagement_count, is_micro_market')
       .eq('id', market_id)
       .in('status', ['active', 'trading'])
       .is('archived_at', null)
@@ -47,6 +49,11 @@ export async function POST(request: Request) {
     if (marketError || !market) {
       return NextResponse.json({ error: 'Market not found or not active' }, { status: 404 })
     }
+
+    const reasoningNorm = normalizeVoteReasoning(
+      rawReasoning,
+      voteReasoningMaxForMarket(market.is_micro_market)
+    )
 
     const { data: rpcData, error: rpcError } = await admin.rpc('execute_anonymous_market_vote', {
       p_guest_id: guest_id,
@@ -99,6 +106,13 @@ export async function POST(request: Request) {
         { status: 400 }
       )
     }
+
+    const voteId = (rpcData as { vote_id?: string })?.vote_id
+    await persistVoteReasoning(admin, {
+      reasoning: reasoningNorm,
+      marketId: market_id,
+      voteId,
+    })
 
     const [{ data: outcomes }, { data: updatedMarket }, { count: registeredOnly }] = await Promise.all([
       admin.from('market_outcomes').select('id, label, probability, vote_count').eq('market_id', market_id),
