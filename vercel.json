@@ -16,6 +16,7 @@
     "app/api/cron/live-reminders/route.ts": { "maxDuration": 120 },
     "app/api/cron/live-auto-end/route.ts": { "maxDuration": 120 },
     "app/api/cron/monthly-impact/route.ts": { "maxDuration": 120 },
+    "app/api/cron/pulse-auto-resolve/route.ts": { "maxDuration": 120 },
     "app/api/cron/reengagement-inactive/route.ts": { "maxDuration": 120 },
     "app/api/predictions/admin/run-agent/route.ts": { "maxDuration": 300 },
     "app/api/**/*.ts": { "maxDuration": 30 }
@@ -52,6 +53,10 @@
     {
       "path": "/api/cron/live-auto-end",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/pulse-auto-resolve",
+      "schedule": "5 * * * *"
     },
     {
       "path": "/api/cron/agents/sponsor-report",

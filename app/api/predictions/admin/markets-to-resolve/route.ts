@@ -25,6 +25,7 @@ export async function GET() {
       .select('*')
       .in('status', ['active', 'trading'])
       .is('archived_at', null)
+      .or('is_pulse.is.null,is_pulse.eq.false')
       .order('resolution_date', { ascending: true })
 
     if (error) {

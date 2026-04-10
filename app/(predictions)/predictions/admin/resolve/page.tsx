@@ -184,7 +184,10 @@ export default function AdminResolvePage() {
         <div>
           <h1 className="text-2xl font-bold text-white">Resolve Markets</h1>
           <p className="text-slate-400">
-            Resolve or cancel prediction markets. Select the winning outcome for free-to-play markets.
+            Resolve or cancel prediction markets. Select the winning outcome for free-to-play markets.{' '}
+            <span className="text-slate-500">
+              Pulse markets are not listed here—they resolve automatically to the outcome with the most votes after the resolution date.
+            </span>
           </p>
         </div>
         <Link
