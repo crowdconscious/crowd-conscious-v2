@@ -12,6 +12,7 @@
     "app/api/cron/agents/news-monitor/route.ts": { "maxDuration": 300 },
     "app/api/cron/agents/sponsor-report/route.ts": { "maxDuration": 300 },
     "app/api/cron/newsletter/route.ts": { "maxDuration": 300 },
+    "app/api/predictions/admin/send-newsletter/route.ts": { "maxDuration": 300 },
     "app/api/cron/live-reminders/route.ts": { "maxDuration": 120 },
     "app/api/cron/live-auto-end/route.ts": { "maxDuration": 120 },
     "app/api/cron/monthly-impact/route.ts": { "maxDuration": 120 },

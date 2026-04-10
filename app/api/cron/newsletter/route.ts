@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
 
 /**
  * Crowd newsletter: blog + Pulse + trending markets.
- * Schedule: Mon/Wed/Fri 14:00 UTC (vercel.json). Sends only if 48h+ since last newsletter/blog_digest.
+ * Schedule: Mon/Wed/Fri 14:00 UTC (vercel.json). Default: 48h cooldown unless a new blog is featured or ?force=1.
  * Auth: Authorization: Bearer CRON_SECRET (set in Vercel env).
  */
 export async function GET(request: NextRequest) {
@@ -17,8 +17,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const force = request.nextUrl.searchParams.get('force') === '1'
   const admin = createAdminClient()
-  const result = await runCrowdNewsletterCron(admin, 'newsletter')
+  const result = await runCrowdNewsletterCron(admin, 'newsletter', { force })
 
   if (!result.ok) {
     return NextResponse.json(
@@ -32,6 +33,7 @@ export async function GET(request: NextRequest) {
       ok: true,
       skipped: true,
       reason: result.reason,
+      force,
       debug: result.debug,
     })
   }
@@ -41,6 +43,7 @@ export async function GET(request: NextRequest) {
     sent: result.sent,
     failed: result.failed,
     subject: result.subject,
+    force,
     debug: result.debug,
   })
 }

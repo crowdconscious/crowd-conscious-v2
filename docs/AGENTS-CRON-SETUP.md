@@ -39,11 +39,11 @@ Use **Run Now** on the Agent Dashboard (`/predictions/admin/agents`). This bypas
 ## Crowd newsletter (`/api/cron/newsletter`)
 
 - **Schedule (see `vercel.json`)**: Monday, Wednesday, Friday at **14:00 UTC** — not daily.
-- **48h cooldown**: After a successful batch send, the next run is skipped until **48+ hours** since the last row in `email_digest_log` with `email_type` `newsletter` or `blog_digest`. If you expect mail on a day the cron does not run, nothing is sent.
+- **48h cooldown (with exceptions)**: After a successful batch send, the next run is skipped until **48+ hours** since the last row in `email_digest_log` with `email_type` `newsletter` or `blog_digest` — **unless** the latest published `blog_posts` row has a different `id` than `blog_post_id` on that last log row (new blog to feature). That bypass lets the next M/W/F send include fresh posts without waiting 48h. **Manual override**: same endpoint with `?force=1` (still requires `Authorization: Bearer CRON_SECRET`) skips the cooldown entirely.
 - **Subscribers**: Merges `profiles` (with `email_notifications` not false) and active `newsletter_subscribers`. If both are empty, the run skips with `no_subscribers`.
 - **Content**: Needs at least one of: a **published** `blog_posts` row, a Pulse market in the trending query, or non-Pulse markets — otherwise `no_published_blog_or_markets`.
 - **All sends failed**: If Resend returns errors for every recipient (missing `RESEND_API_KEY`, domain, or rate limit), `sent` stays 0, no cooldown row is written, and `cron_job_runs` for `newsletter` is marked **error** — check the Resend dashboard and Vercel function logs.
-- **Manual test**: `curl -sS -H "Authorization: Bearer $CRON_SECRET" "https://YOUR_DOMAIN/api/cron/newsletter"` — JSON includes `skipped`, `reason`, and `debug` (last send time, recipient count).
+- **Manual test**: `curl -sS -H "Authorization: Bearer $CRON_SECRET" "https://YOUR_DOMAIN/api/cron/newsletter"` — JSON includes `skipped`, `reason`, and `debug` (last send time, recipient count). To send despite cooldown: add `?force=1` (use sparingly).
 
 ## Common Issues
 

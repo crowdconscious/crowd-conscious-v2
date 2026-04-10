@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase-server'
 import dynamic from 'next/dynamic'
 import LandingNav from '@/app/components/landing/LandingNav'
 import { SITE_URL } from '@/lib/seo/site'
+import { consciousFundBalanceMxn } from '@/lib/conscious-fund-balance'
 
 export const metadata: Metadata = {
   title: {
@@ -36,13 +37,7 @@ async function getAboutData() {
     supabase.from('conscious_fund').select('current_balance, total_collected, total_disbursed').limit(1).single(),
   ])
 
-  const totalFund = Math.round(
-    Math.max(
-      0,
-      Number(fund?.current_balance ?? 0) ||
-        Math.max(0, Number(fund?.total_collected ?? 0) - Number(fund?.total_disbursed ?? 0))
-    )
-  )
+  const totalFund = Math.round(consciousFundBalanceMxn(fund ?? undefined))
   const causesSupported = (causes ?? []).length
   const monthlyAllocation = totalFund > 0 ? Math.floor(totalFund / 12) : 0
 

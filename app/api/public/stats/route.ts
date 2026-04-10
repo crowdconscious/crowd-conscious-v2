@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase-server'
+import { consciousFundBalanceMxn } from '@/lib/conscious-fund-balance'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 300
@@ -27,13 +28,7 @@ export async function GET() {
     )
     const totalMarkets = marketsCount ?? (markets?.length ?? 0)
 
-    const fundAmount = Math.round(
-      Math.max(
-        0,
-        Number(fund?.current_balance ?? 0) ||
-          Math.max(0, Number(fund?.total_collected ?? 0) - Number(fund?.total_disbursed ?? 0))
-      )
-    )
+    const fundAmount = Math.round(consciousFundBalanceMxn(fund ?? undefined))
 
     const activeUsers = profilesCount ?? 0
 

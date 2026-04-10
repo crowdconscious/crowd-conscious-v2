@@ -1,12 +1,14 @@
 /**
- * Vote-weighted illustrative breakdown of fund dollars by cause (no per-cause ledger yet).
+ * Per-cause dollar amounts from **actual disbursements** only (`total_disbursed`).
+ * `totalFundBalance` is kept for call-site compatibility but not used for splits — allocating
+ * `current_balance` by votes looked like real per-cause payouts when it was only illustrative.
  */
 export function buildCauseDistributionBreakdown(
   causes: Array<{ id: string; name: string; vote_count: number }>,
   totalDisbursed: number,
-  totalFundBalance: number
+  _totalFundBalance: number
 ): { name: string; amount: number; votes: number }[] {
-  const pool = totalDisbursed > 0 ? totalDisbursed : totalFundBalance
+  const pool = Math.max(0, totalDisbursed)
   if (causes.length === 0) return []
   const totalVotes = causes.reduce((s, c) => s + c.vote_count, 0)
   if (pool <= 0) {

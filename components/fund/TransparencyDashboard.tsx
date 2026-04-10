@@ -109,8 +109,8 @@ export function TransparencyDashboard({
     showLess: locale === 'es' ? 'Ver menos' : 'Show less',
     illustrative:
       locale === 'es'
-        ? 'Proporción ilustrativa según votos (asignación real puede variar por ciclo).'
-        : 'Illustrative share by votes (actual grants may vary by cycle).',
+        ? 'Montos por causa = fondos ya distribuidos (proporción según votos). Hasta el primer ciclo de asignación, figuran en $0.'
+        : 'Per-cause amounts reflect funds already disbursed (vote-weighted). Until the first grant cycle, they show $0.',
   }
 
   const hasRows = sponsorships.length > 0

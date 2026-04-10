@@ -1,5 +1,6 @@
 /**
- * Crowd newsletter: blog + Pulse + trending markets, max ~3×/week via cron + 48h cooldown.
+ * Crowd newsletter: blog + Pulse + trending markets, Mon/Wed/Fri cron + 48h cooldown
+ * (bypassed when a new published blog post has not yet been featured in a batch send).
  */
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { sendEmailsWithConcurrency } from '@/lib/resend'
@@ -9,6 +10,7 @@ import {
   createUnsubscribeToken,
 } from '@/lib/email-unsubscribe'
 import { cronHealthCheck, cronHealthComplete } from '@/lib/cron-health'
+import { consciousFundBalanceMxn } from '@/lib/conscious-fund-balance'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'
 
@@ -20,7 +22,8 @@ function wcDaysUntil(): number {
 
 export async function runCrowdNewsletterCron(
   admin: SupabaseClient,
-  healthJobName: 'newsletter' | 'daily-market-digest' = 'newsletter'
+  healthJobName: 'newsletter' | 'daily-market-digest' = 'newsletter',
+  options?: { force?: boolean }
 ): Promise<{
   ok: boolean
   skipped?: boolean
@@ -53,8 +56,29 @@ export async function runCrowdNewsletterCron(
       ? (Date.now() - new Date(lastSentAt).getTime()) / 3600000
       : null
 
+    const lastFeaturedBlogId = (lastRow?.blog_post_id as string | null) ?? null
+
+    const { data: latestPost } = await admin
+      .from('blog_posts')
+      .select('id, slug, title, excerpt, category, published_at, content, cover_image_url')
+      .eq('status', 'published')
+      .order('published_at', { ascending: false, nullsFirst: false })
+      .limit(1)
+      .maybeSingle()
+
+    /** New post since last newsletter batch — do not block on 48h cooldown so M/W/F can feature fresh posts. */
+    const hasNewBlogSinceLastSend =
+      !!latestPost?.id &&
+      (!lastFeaturedBlogId || latestPost.id !== lastFeaturedBlogId)
+
     const cooldownHours = 48
-    if (hoursSinceLast != null && hoursSinceLast < cooldownHours) {
+    const force = options?.force === true
+    if (
+      !force &&
+      !hasNewBlogSinceLastSend &&
+      hoursSinceLast != null &&
+      hoursSinceLast < cooldownHours
+    ) {
       await cronHealthComplete(runId, healthJobName, admin, {
         success: true,
         summary: `skipped: cooldown ${Math.round(hoursSinceLast)}h (need ${cooldownHours}h; last ${lastSentAt})`,
@@ -67,20 +91,11 @@ export async function runCrowdNewsletterCron(
           lastSentAt,
           hoursSinceLast,
           recipientCount: 0,
-          scheduleNote: 'Mon/Wed/Fri 14:00 UTC — skipped until 48h after last newsletter send',
+          scheduleNote:
+            'Mon/Wed/Fri 14:00 UTC — skipped until 48h after last send, unless a new blog is published or ?force=1',
         },
       }
     }
-
-    const lastFeaturedBlogId = (lastRow?.blog_post_id as string | null) ?? null
-
-    const { data: latestPost } = await admin
-      .from('blog_posts')
-      .select('id, slug, title, excerpt, category, published_at, content, cover_image_url')
-      .eq('status', 'published')
-      .order('published_at', { ascending: false, nullsFirst: false })
-      .limit(1)
-      .maybeSingle()
 
     const post: BlogPostDigest | null = latestPost
       ? {
@@ -94,8 +109,7 @@ export async function runCrowdNewsletterCron(
         }
       : null
 
-    const highlightNewBlog =
-      !!latestPost?.id && (!lastFeaturedBlogId || latestPost.id !== lastFeaturedBlogId)
+    const highlightNewBlog = hasNewBlogSinceLastSend
 
     const { data: trending } = await admin
       .from('prediction_markets')
@@ -181,7 +195,7 @@ export async function runCrowdNewsletterCron(
     let fundTotalMxn = 0
     try {
       const { data: fund } = await admin.from('conscious_fund').select('current_balance').limit(1).maybeSingle()
-      fundTotalMxn = Number(fund?.current_balance ?? 0)
+      fundTotalMxn = consciousFundBalanceMxn(fund ?? undefined)
     } catch {
       fundTotalMxn = 0
     }

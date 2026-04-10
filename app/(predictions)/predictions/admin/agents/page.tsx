@@ -14,6 +14,7 @@ import {
   Newspaper,
   Inbox,
   Lightbulb,
+  Mail,
 } from 'lucide-react'
 import { ImageUpload } from '@/components/ui/ImageUpload'
 
@@ -229,6 +230,7 @@ export default function AdminAgentsPage() {
   const [error, setError] = useState('')
   const [runResult, setRunResult] = useState<string | null>(null)
   const [running, setRunning] = useState<string | null>(null)
+  const [newsletterBusy, setNewsletterBusy] = useState<'idle' | 'send' | 'force'>('idle')
   const [activeTab, setActiveTab] = useState<TabId>('all')
   const [showArchived, setShowArchived] = useState(false)
 
@@ -290,6 +292,48 @@ export default function AdminAgentsPage() {
       setError(`${msg} The agent may still be running — check Vercel logs.`)
     } finally {
       setRunning(null)
+    }
+  }
+
+  const sendNewsletterNow = async (force: boolean) => {
+    setNewsletterBusy(force ? 'force' : 'send')
+    setRunResult(null)
+    setError('')
+    try {
+      const res = await fetch('/api/predictions/admin/send-newsletter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ force }),
+      })
+      const json = (await res.json()) as {
+        error?: string
+        skipped?: boolean
+        reason?: string
+        sent?: number
+        failed?: number
+        subject?: string
+        debug?: { recipientCount?: number }
+      }
+      if (!res.ok) {
+        throw new Error(json.error ?? `Newsletter failed (${res.status})`)
+      }
+      if (json.skipped) {
+        setRunResult(
+          `Newsletter skipped: ${json.reason ?? 'unknown'}${json.debug?.recipientCount != null ? ` · recipients considered: ${json.debug.recipientCount}` : ''}`
+        )
+      } else {
+        const parts = [
+          `Sent ${json.sent ?? 0}`,
+          json.failed ? `failed ${json.failed}` : null,
+          json.subject ? `«${json.subject}»` : null,
+        ].filter(Boolean)
+        setRunResult(`Newsletter: ${parts.join(' · ')}`)
+      }
+      setTimeout(() => setRunResult(null), 12000)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Newsletter failed')
+    } finally {
+      setNewsletterBusy('idle')
     }
   }
 
@@ -492,6 +536,35 @@ export default function AdminAgentsPage() {
             <span className="text-slate-400">Errors:</span>{' '}
             <span className="text-red-400 font-medium">{stats.totalErrors}</span>
           </div>
+        </div>
+      </section>
+
+      {/* Crowd newsletter (same pipeline as cron /api/cron/newsletter) */}
+      <section>
+        <h2 className="text-lg font-semibold text-white mb-2">Crowd newsletter</h2>
+        <p className="text-slate-400 text-sm mb-4 max-w-2xl">
+          Sends the blog + Pulse + markets digest to opted-in profiles and newsletter subscribers.
+          Respects the same rules as the scheduled job (48h cooldown unless a new blog is featured or you
+          force send).
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={() => void sendNewsletterNow(false)}
+            disabled={newsletterBusy !== 'idle'}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white transition-colors"
+          >
+            <Mail className="w-4 h-4" />
+            {newsletterBusy === 'send' ? 'Sending…' : 'Send newsletter now'}
+          </button>
+          <button
+            type="button"
+            onClick={() => void sendNewsletterNow(true)}
+            disabled={newsletterBusy !== 'idle'}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium bg-slate-700 hover:bg-slate-600 border border-slate-600 disabled:opacity-50 text-white transition-colors"
+          >
+            {newsletterBusy === 'force' ? 'Sending…' : 'Send now (ignore cooldown)'}
+          </button>
         </div>
       </section>
 

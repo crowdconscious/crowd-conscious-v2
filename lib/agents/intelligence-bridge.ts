@@ -127,10 +127,8 @@ export async function getPlatformIntelligence(): Promise<PlatformIntelligence> {
     out.overview.orphan_markets = orphanMarkets ?? 0
 
     if (fundRow) {
-      out.overview.conscious_fund_balance =
-        Number((fundRow as { total_collected?: number; current_balance?: number }).total_collected ?? 0) ||
-        Number((fundRow as { current_balance?: number }).current_balance ?? 0) ||
-        0
+      const cb = Number((fundRow as { current_balance?: number }).current_balance ?? 0)
+      out.overview.conscious_fund_balance = Number.isFinite(cb) ? Math.max(0, cb) : 0
     }
 
     out.engagement.votes_today = votesToday ?? 0

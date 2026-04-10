@@ -241,7 +241,8 @@ export async function fetchIntelligenceDashboard(
     try {
       const { data: fund } = await admin.from('conscious_fund').select('total_collected, current_balance').limit(1).maybeSingle()
       if (fund) {
-        out.kpis.fund_total = Number(fund.total_collected ?? 0) || Number(fund.current_balance ?? 0) || null
+        const bal = Number(fund.current_balance ?? 0)
+        out.kpis.fund_total = Number.isFinite(bal) ? Math.max(0, bal) : null
       }
     } catch (e) {
       pushErr('conscious_fund', e)

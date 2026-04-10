@@ -452,33 +452,21 @@ async function main() {
     await supabase
       .from('conscious_fund')
       .update({
-        total_collected: 15420.5,
-        current_balance: 15420.5,
+        total_collected: 0,
+        total_disbursed: 0,
+        current_balance: 0,
         updated_at: new Date().toISOString(),
       })
       .eq('id', fundRow.id)
   } else {
     await supabase.from('conscious_fund').insert({
-      total_collected: 15420.5,
+      total_collected: 0,
       total_disbursed: 0,
-      current_balance: 15420.5,
+      current_balance: 0,
     })
   }
 
-  const amounts = [120, 350, 85, 520, 200, 780, 95, 410, 650, 180, 290, 500]
-  for (let i = 0; i < 12; i++) {
-    const dayAgo = 30 - Math.floor((i / 12) * 30)
-    const recordedAt = format(subDays(new Date(), dayAgo), "yyyy-MM-dd'T'HH:mm:ss'Z'")
-    const amt = amounts[i] ?? randomInRange(50, 800)
-    await supabase.from('conscious_fund_transactions').insert({
-      amount: amt,
-      source_type: 'trade_fee',
-      market_id: marketIds[i % marketIds.length],
-      description: 'Trade fee from prediction',
-      created_at: recordedAt,
-    })
-  }
-  console.log('   ✅ Updated conscious_fund, inserted 12 transactions.\n')
+  console.log('   ✅ conscious_fund set to 0 (real balance comes from Stripe + trades).\n')
 
   // 7. Final counts
   console.log('7. Final counts:')

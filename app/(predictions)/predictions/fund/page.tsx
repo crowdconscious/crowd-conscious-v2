@@ -5,6 +5,7 @@ import { getCurrentUser } from '@/lib/auth-server'
 import { FundClient } from './FundClient'
 import { SITE_URL } from '@/lib/seo/site'
 import { buildCauseDistributionBreakdown } from '@/lib/fund-transparency'
+import { consciousFundBalanceMxn } from '@/lib/conscious-fund-balance'
 import {
   TransparencyDashboard,
   type SponsorshipLogPublic,
@@ -73,12 +74,8 @@ async function getFundData(userId: string | null) {
     admin.from('sponsorship_log').select('*', { count: 'exact', head: true }).eq('is_public', true),
   ])
 
-  // Total Fund: use actual balance from conscious_fund (updated by Stripe webhook on sponsor payments + trade fees)
-  const totalFund = Math.max(
-    0,
-    Number(fund?.current_balance ?? 0) ||
-      Math.max(0, Number(fund?.total_collected ?? 0) - Number(fund?.total_disbursed ?? 0))
-  )
+  // Total Fund: Stripe webhook + trade fees → conscious_fund.current_balance (0 is valid; never || fallback)
+  const totalFund = consciousFundBalanceMxn(fund ?? undefined)
 
   const causesSupported = (causes ?? []).length
   const monthlyAllocation = totalFund > 0 ? Math.floor(totalFund / 12) : 0
