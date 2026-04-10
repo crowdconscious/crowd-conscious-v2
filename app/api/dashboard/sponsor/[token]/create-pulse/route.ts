@@ -39,6 +39,10 @@ export async function POST(
     const resolutionCriteria =
       typeof body.resolution_criteria === 'string' ? body.resolution_criteria.trim() : ''
     const resolutionDate = typeof body.resolution_date === 'string' ? body.resolution_date.trim() : ''
+    const coverImageUrl =
+      typeof body.cover_image_url === 'string' ? body.cover_image_url.trim() || null : null
+    const sponsorLogoUrl =
+      typeof body.sponsor_logo_url === 'string' ? body.sponsor_logo_url.trim() || null : null
     const outcomesRaw = body.outcomes
     const outcomeLabels: string[] = Array.isArray(outcomesRaw)
       ? outcomesRaw.map((o: unknown) => String(o ?? '').trim()).filter(Boolean)
@@ -69,6 +73,8 @@ export async function POST(
       )
     }
 
+    const effectiveSponsorLogo = sponsorLogoUrl ?? (account.logo_url as string | null) ?? null
+
     const { data: marketId, error: rpcError } = await admin.rpc('create_multi_market', {
       p_title: title,
       p_description: description || null,
@@ -77,8 +83,8 @@ export async function POST(
       p_end_date: new Date(resolutionDate).toISOString(),
       p_outcomes: outcomeLabels,
       p_sponsor_name: account.company_name,
-      p_sponsor_logo_url: account.logo_url ?? null,
-      p_image_url: null,
+      p_sponsor_logo_url: effectiveSponsorLogo,
+      p_image_url: coverImageUrl,
       p_resolution_criteria: resolutionCriteria || description || null,
     })
 
@@ -93,16 +99,22 @@ export async function POST(
         sponsor_account_id: account.id,
         is_pulse: true,
         pulse_client_name: account.company_name,
-        pulse_client_logo: account.logo_url ?? null,
+        pulse_client_logo: effectiveSponsorLogo,
         pulse_client_email: account.contact_email,
         pulse_embed_enabled: true,
         conscious_fund_percentage: 20,
+        cover_image_url: coverImageUrl,
+        sponsor_logo_url: effectiveSponsorLogo,
       })
       .eq('id', marketId as string)
 
     if (upErr) {
       console.error('[create-pulse] update', upErr)
       return NextResponse.json({ error: upErr.message }, { status: 500 })
+    }
+
+    if (sponsorLogoUrl && sponsorLogoUrl !== (account.logo_url ?? '')) {
+      await admin.from('sponsor_accounts').update({ logo_url: sponsorLogoUrl }).eq('id', account.id)
     }
 
     return NextResponse.json({
