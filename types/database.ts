@@ -781,6 +781,7 @@ export interface Database {
           total_fund_contribution: number | null
           created_at: string
           last_login_at: string | null
+          last_dashboard_visit: string | null
           status: 'active' | 'paused' | 'cancelled' | null
         }
         Insert: {
@@ -800,6 +801,7 @@ export interface Database {
           total_fund_contribution?: number | null
           created_at?: string
           last_login_at?: string | null
+          last_dashboard_visit?: string | null
           status?: 'active' | 'paused' | 'cancelled' | null
         }
         Update: {
@@ -819,6 +821,7 @@ export interface Database {
           total_fund_contribution?: number | null
           created_at?: string
           last_login_at?: string | null
+          last_dashboard_visit?: string | null
           status?: 'active' | 'paused' | 'cancelled' | null
         }
         Relationships: []

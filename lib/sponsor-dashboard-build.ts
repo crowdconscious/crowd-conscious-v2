@@ -1,4 +1,4 @@
-import type { SponsorDashboardMarketRow } from '@/components/sponsor/SponsorDashboardClient'
+import type { SponsorDashboardMarketRow } from '@/components/sponsor/types'
 
 type OutcomeRow = {
   id: string

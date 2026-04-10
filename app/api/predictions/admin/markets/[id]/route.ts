@@ -102,6 +102,15 @@ export async function PATCH(
       conscious_fund_percentage: fundPct,
     }
 
+    if (body.sponsor_account_id !== undefined) {
+      const sid = body.sponsor_account_id
+      if (sid === null || sid === '') {
+        updateRow.sponsor_account_id = null
+      } else if (typeof sid === 'string') {
+        updateRow.sponsor_account_id = sid
+      }
+    }
+
     if (translationsIn) {
       const prevTr = (existing.translations as { en?: Record<string, string> } | null) || {}
       const enIn = (translationsIn as { en?: Record<string, string> }).en

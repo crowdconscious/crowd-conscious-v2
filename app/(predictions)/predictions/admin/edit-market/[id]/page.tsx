@@ -34,9 +34,19 @@ export default async function EditMarketPage({ params }: { params: Promise<{ id:
     .eq('market_id', id)
     .order('sort_order', { ascending: true })
 
+  const { data: sponsorAccounts } = await admin
+    .from('sponsor_accounts')
+    .select('id, company_name, tier')
+    .eq('status', 'active')
+    .order('company_name', { ascending: true })
+
   return (
     <div className="min-h-screen bg-[#0f1419] px-4 py-8 text-slate-100">
-      <EditMarketForm market={market} outcomes={outcomes ?? []} />
+      <EditMarketForm
+        market={market}
+        outcomes={outcomes ?? []}
+        sponsorAccounts={sponsorAccounts ?? []}
+      />
     </div>
   )
 }

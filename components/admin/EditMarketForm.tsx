@@ -26,6 +26,7 @@ type MarketRow = {
   sponsor_name: string | null
   sponsor_logo_url: string | null
   sponsor_url: string | null
+  sponsor_account_id: string | null
   conscious_fund_percentage: number | null
   is_pulse: boolean | null
   pulse_client_name: string | null
@@ -45,9 +46,11 @@ function toDatetimeLocal(iso: string): string {
 export default function EditMarketForm({
   market,
   outcomes: initialOutcomes,
+  sponsorAccounts = [],
 }: {
   market: MarketRow
   outcomes: OutcomeRow[]
+  sponsorAccounts?: { id: string; company_name: string; tier: string }[]
 }) {
   const router = useRouter()
   const tr = market.translations as {
@@ -70,6 +73,7 @@ export default function EditMarketForm({
   const [sponsorName, setSponsorName] = useState(market.sponsor_name ?? '')
   const [sponsorLogoUrl, setSponsorLogoUrl] = useState(market.sponsor_logo_url ?? '')
   const [sponsorUrl, setSponsorUrl] = useState(market.sponsor_url ?? '')
+  const [sponsorAccountId, setSponsorAccountId] = useState(market.sponsor_account_id ?? '')
   const [fundPct, setFundPct] = useState(
     Number.isFinite(Number(market.conscious_fund_percentage))
       ? Number(market.conscious_fund_percentage)
@@ -122,6 +126,7 @@ export default function EditMarketForm({
           sponsor_name: sponsorName.trim() || null,
           sponsor_logo_url: sponsorLogoUrl.trim() || null,
           sponsor_url: sponsorUrl.trim() || null,
+          sponsor_account_id: sponsorAccountId || null,
           conscious_fund_percentage: Number.isFinite(fundPct)
             ? Math.round(Math.min(100, Math.max(0, fundPct)))
             : 20,
@@ -285,6 +290,24 @@ export default function EditMarketForm({
         <section className={ccSection}>
           <h2 className="mb-4 text-lg font-semibold text-white">Sponsorship</h2>
           <div className="space-y-4">
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-gray-300">Sponsor account</label>
+              <select
+                value={sponsorAccountId}
+                onChange={(e) => setSponsorAccountId(e.target.value)}
+                className={ccInput}
+              >
+                <option value="">No linked account</option>
+                {sponsorAccounts.map((sa) => (
+                  <option key={sa.id} value={sa.id}>
+                    {sa.company_name} ({sa.tier})
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-gray-500">
+                Links this market to the sponsor dashboard (token URL). Optional if you only use sponsor name.
+              </p>
+            </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium text-gray-300">Sponsor name</label>
               <input value={sponsorName} onChange={(e) => setSponsorName(e.target.value)} className={ccInput} />

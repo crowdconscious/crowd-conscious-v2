@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { createAdminClient } from '@/lib/supabase-admin'
 import SponsorReportPrintButton from '@/components/sponsor/SponsorReportPrintButton'
 import { buildSponsorDashboardMarkets } from '@/lib/sponsor-dashboard-build'
+import { marketBelongsToSponsorAccount } from '@/lib/sponsor-account-access'
 import { notFound } from 'next/navigation'
 
 export const dynamic = 'force-dynamic'
@@ -17,7 +18,7 @@ export default async function SponsorMarketReportPage({
 
   const { data: account } = await admin
     .from('sponsor_accounts')
-    .select('id, company_name, logo_url, access_token')
+    .select('id, company_name, logo_url, access_token, contact_email')
     .eq('access_token', token)
     .eq('status', 'active')
     .maybeSingle()
@@ -42,13 +43,22 @@ export default async function SponsorMarketReportPage({
       resolution_date,
       is_pulse,
       sponsor_account_id,
+      sponsor_name,
+      pulse_client_email,
       market_outcomes(id, label, probability, vote_count)
     `
     )
     .eq('id', marketId)
     .maybeSingle()
 
-  if (!market || market.sponsor_account_id !== account.id) {
+  if (
+    !market ||
+    !marketBelongsToSponsorAccount(market, {
+      id: account.id,
+      company_name: account.company_name,
+      contact_email: account.contact_email,
+    })
+  ) {
     notFound()
   }
 

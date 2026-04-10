@@ -4,7 +4,10 @@ import {
   aggregateAvgConfidence,
   buildSponsorDashboardMarkets,
 } from '@/lib/sponsor-dashboard-build'
-import type { FundImpactRow } from '@/components/sponsor/SponsorDashboardClient'
+import { fetchMarketsForSponsorAccount } from '@/lib/sponsor-account-access'
+import type { FundImpactRow } from '@/components/sponsor/types'
+
+const APP_ORIGIN = (process.env.NEXT_PUBLIC_APP_URL ?? 'https://crowdconscious.app').replace(/\/$/, '')
 
 export const dynamic = 'force-dynamic'
 
@@ -36,33 +39,27 @@ export default async function SponsorDashboardPage({
     .update({ last_login_at: new Date().toISOString() })
     .eq('id', account.id)
 
-  const { data: marketsRaw } = await admin
-    .from('prediction_markets')
-    .select(
-      `
-      id,
-      title,
-      status,
-      total_votes,
-      current_probability,
-      resolution_date,
-      is_pulse,
-      market_outcomes(id, label, probability, vote_count)
-    `
-    )
-    .eq('sponsor_account_id', account.id)
-    .order('created_at', { ascending: false })
+  const accountRow = {
+    id: account.id,
+    company_name: account.company_name,
+    contact_email: account.contact_email,
+  }
 
-  const list = marketsRaw ?? []
+  const listRaw = await fetchMarketsForSponsorAccount(admin, accountRow)
+  const list = listRaw as Parameters<typeof buildSponsorDashboardMarkets>[0]
+
   const marketIds = list.map((m) => m.id)
 
   const { data: votes } =
     marketIds.length > 0
       ? await admin
           .from('market_votes')
-          .select('market_id, confidence, created_at, outcome_id')
+          .select('market_id, confidence, created_at, outcome_id, reasoning')
           .in('market_id', marketIds)
-      : { data: [] as { market_id: string; confidence: number; created_at: string; outcome_id: string }[] }
+      : { data: [] as { market_id: string; confidence: number; created_at: string; outcome_id: string; reasoning?: string | null }[] }
+
+  const totalReasonings =
+    (votes ?? []).filter((v) => typeof v.reasoning === 'string' && v.reasoning.trim().length > 0).length
 
   const { data: fundImpactRows } =
     marketIds.length > 0
@@ -74,13 +71,21 @@ export default async function SponsorDashboardPage({
           .order('created_at', { ascending: false })
       : { data: [] as FundImpactRow[] }
 
-  const markets = buildSponsorDashboardMarkets(
-    list as Parameters<typeof buildSponsorDashboardMarkets>[0],
-    votes ?? []
-  )
+  const voteRows = (votes ?? []).map((v) => ({
+    market_id: v.market_id,
+    confidence: v.confidence,
+    created_at: v.created_at,
+    outcome_id: v.outcome_id,
+  }))
+
+  const markets = buildSponsorDashboardMarkets(list, voteRows)
 
   const totalVotes = markets.reduce((sum, m) => sum + m.totalVotes, 0)
   const avgConfidenceOverall = aggregateAvgConfidence(markets)
+  const activeMarketCount = list.filter((m) => m.status === 'active' || m.status === 'trading').length
+
+  const lastVisit = (account as { last_dashboard_visit?: string | null }).last_dashboard_visit
+  const isFirstVisit = !lastVisit
 
   return (
     <SponsorDashboardClient
@@ -94,11 +99,15 @@ export default async function SponsorDashboardPage({
         created_at: account.created_at,
       }}
       markets={markets}
+      marketsRaw={listRaw}
       totalVotes={totalVotes}
-      totalMarkets={markets.length}
+      activeMarketCount={activeMarketCount}
+      totalReasonings={totalReasonings}
       avgConfidenceOverall={avgConfidenceOverall}
       fundImpactRows={(fundImpactRows ?? []) as FundImpactRow[]}
       token={token}
+      isFirstVisit={isFirstVisit}
+      appOrigin={APP_ORIGIN}
     />
   )
 }
