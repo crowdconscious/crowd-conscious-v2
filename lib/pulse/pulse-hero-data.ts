@@ -11,6 +11,7 @@ export type PulseHeroMarket = {
 export async function fetchPulseHeroHighlight(): Promise<{
   market: PulseHeroMarket | null
   avgConfidence: number | null
+  strongOpinions: number
 }> {
   const supabase = await createClient()
   const { data: pulseRow } = await supabase
@@ -25,6 +26,7 @@ export async function fetchPulseHeroHighlight(): Promise<{
 
   const market = pulseRow as PulseHeroMarket | null
   let avgConfidence: number | null = null
+  let strongOpinions = 0
   if (market?.id) {
     const { data: confRows } = await supabase
       .from('market_votes')
@@ -34,8 +36,9 @@ export async function fetchPulseHeroHighlight(): Promise<{
     if (confRows?.length) {
       const sum = confRows.reduce((s, r) => s + Number(r.confidence), 0)
       avgConfidence = Math.round((sum / confRows.length) * 10) / 10
+      strongOpinions = confRows.filter((r) => Number(r.confidence) >= 8).length
     }
   }
 
-  return { market, avgConfidence }
+  return { market, avgConfidence, strongOpinions }
 }

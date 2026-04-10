@@ -170,7 +170,7 @@ export async function POST(request: NextRequest) {
     }
 
     const token = account?.access_token
-    const dashboardUrl = token ? `/dashboard/sponsor/${token}` : '/sponsor'
+    const dashboardUrl = token ? `/dashboard/sponsor/${token}` : '/pulse'
 
     return NextResponse.json({
       success: true,

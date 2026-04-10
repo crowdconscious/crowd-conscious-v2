@@ -289,7 +289,7 @@ export default function AboutContent({
               {locale === 'es' ? 'Empieza a predecir' : 'Start Predicting'}
             </Link>
             <Link
-              href="/sponsor"
+              href="/pulse"
               className="inline-flex items-center justify-center gap-2 rounded-xl border border-cc-border-light px-8 py-4 font-semibold text-cc-text-primary transition-colors hover:border-gray-500"
             >
               {locale === 'es' ? 'Conviértete en patrocinador' : 'Become a Sponsor'}

@@ -7,8 +7,6 @@ import Logo from '@/components/Logo'
 import LanguageSwitcherSimple from '@/components/LanguageSwitcherSimple'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useLiveNavBadge } from '@/hooks/useLiveNavBadge'
-import { usePulseNavBadge } from '@/hooks/usePulseNavBadge'
-
 /** Pulsing dot when ≥1 public live event; link label is always shown separately. */
 function LiveNowIndicator({ liveCount }: { liveCount: number }) {
   if (liveCount <= 0) return null
@@ -26,7 +24,6 @@ const NAV = {
     live: 'En Vivo',
     about: 'Acerca de',
     blog: 'Blog',
-    forSponsors: 'Para Patrocinadores',
     signIn: 'Iniciar Sesión',
     startPredicting: 'Empezar a Predecir',
     pulse: 'Pulse',
@@ -36,7 +33,6 @@ const NAV = {
     live: 'Live',
     about: 'About',
     blog: 'Blog',
-    forSponsors: 'For Sponsors',
     signIn: 'Sign In',
     startPredicting: 'Start Predicting',
     pulse: 'Pulse',
@@ -49,7 +45,6 @@ export default function LandingNav() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const nav = NAV[language]
   const { liveCount } = useLiveNavBadge()
-  const { pulseCount } = usePulseNavBadge()
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20)
@@ -90,14 +85,12 @@ export default function LandingNav() {
                 </span>
               )}
             </Link>
-            {pulseCount > 0 && (
-              <Link
-                href="/pulse"
-                className="inline-flex min-h-[44px] items-center font-medium text-emerald-400/95 transition-colors hover:text-emerald-300"
-              >
-                {nav.pulse}
-              </Link>
-            )}
+            <Link
+              href="/pulse"
+              className="inline-flex min-h-[44px] items-center font-medium text-emerald-400/95 transition-colors hover:text-emerald-300"
+            >
+              {nav.pulse}
+            </Link>
             <Link
               href="/about"
               className="text-slate-400 hover:text-white transition-colors font-medium"
@@ -109,12 +102,6 @@ export default function LandingNav() {
               className="text-slate-400 hover:text-white transition-colors font-medium"
             >
               {nav.blog}
-            </Link>
-            <Link
-              href="/sponsor"
-              className="text-slate-400 hover:text-white transition-colors font-medium"
-            >
-              {nav.forSponsors}
             </Link>
           </div>
 
@@ -167,15 +154,13 @@ export default function LandingNav() {
               <span>{nav.live}</span>
               <LiveNowIndicator liveCount={liveCount} />
             </Link>
-            {pulseCount > 0 && (
-              <Link
-                href="/pulse"
-                onClick={() => setMobileOpen(false)}
-                className="block min-h-[44px] py-3 font-medium text-emerald-400 hover:text-emerald-300"
-              >
-                {nav.pulse}
-              </Link>
-            )}
+            <Link
+              href="/pulse"
+              onClick={() => setMobileOpen(false)}
+              className="block min-h-[44px] py-3 font-medium text-emerald-400 hover:text-emerald-300"
+            >
+              {nav.pulse}
+            </Link>
             <Link
               href="/about"
               onClick={() => setMobileOpen(false)}
@@ -189,13 +174,6 @@ export default function LandingNav() {
               className="block py-2 text-slate-400 hover:text-white"
             >
               {nav.blog}
-            </Link>
-            <Link
-              href="/sponsor"
-              onClick={() => setMobileOpen(false)}
-              className="block py-2 text-slate-400 hover:text-white"
-            >
-              {nav.forSponsors}
             </Link>
             <Link
               href="/login"

@@ -45,7 +45,7 @@ export function CouponRedeemSection({ locale }: Props) {
         return
       }
       setSuccess({
-        dashboardUrl: typeof data.dashboardUrl === 'string' ? data.dashboardUrl : '/sponsor',
+        dashboardUrl: typeof data.dashboardUrl === 'string' ? data.dashboardUrl : '/pulse',
         message: typeof data.message === 'string' ? data.message : '',
       })
     } catch {

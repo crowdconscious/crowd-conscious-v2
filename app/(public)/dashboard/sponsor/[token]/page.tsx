@@ -87,6 +87,15 @@ export default async function SponsorDashboardPage({
   const lastVisit = (account as { last_dashboard_visit?: string | null }).last_dashboard_visit
   const isFirstVisit = !lastVisit
 
+  const { count: pulseMarketCount } = await admin
+    .from('prediction_markets')
+    .select('id', { count: 'exact', head: true })
+    .eq('sponsor_account_id', account.id)
+    .eq('is_pulse', true)
+
+  const pulseUsed = pulseMarketCount ?? 0
+  const maxPulse = Number((account as { max_pulse_markets?: number }).max_pulse_markets ?? 1)
+
   return (
     <SponsorDashboardClient
       account={{
@@ -97,6 +106,9 @@ export default async function SponsorDashboardPage({
         total_fund_contribution: account.total_fund_contribution,
         total_spent: account.total_spent,
         created_at: account.created_at,
+        contact_email: account.contact_email,
+        max_pulse_markets: maxPulse,
+        used_pulse_markets: pulseUsed,
       }}
       markets={markets}
       marketsRaw={listRaw}

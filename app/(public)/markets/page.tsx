@@ -100,7 +100,15 @@ async function getOutcomesGrouped(): Promise<Record<string, MarketCardOutcome[]>
   return out
 }
 
-export default async function PublicMarketsPage() {
+export default async function PublicMarketsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ sponsor_mode?: string; token?: string }>
+}) {
+  const sp = await searchParams
+  const sponsorMode = sp.sponsor_mode === 'true' || sp.sponsor_mode === '1'
+  const sponsorToken = typeof sp.token === 'string' ? sp.token : ''
+
   const [markets, categoryCounts, outcomesByMarketId] = await Promise.all([
     getMarkets(),
     getCategoryCounts(),
@@ -120,6 +128,8 @@ export default async function PublicMarketsPage() {
               initialMarkets={markets}
               categoryCounts={categoryCounts}
               outcomesByMarketId={outcomesByMarketId}
+              sponsorMode={sponsorMode}
+              sponsorToken={sponsorToken}
             />
           </Suspense>
         </div>

@@ -287,7 +287,7 @@ export function FundClient({
           <div className="text-center py-8">
             <p className="text-cc-text-secondary mb-4">Be the first sponsor</p>
             <Link
-              href="/sponsor"
+              href="/pulse"
               className="inline-flex items-center gap-2 text-emerald-400 hover:text-emerald-300 font-medium"
             >
               Sponsor a market <ArrowRight className="w-4 h-4" />

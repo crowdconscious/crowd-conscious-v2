@@ -189,7 +189,7 @@ export function TransparencyDashboard({
         <div className="bg-[#1a2029] rounded-xl border border-cc-border p-8 text-center mb-6">
           <p className="text-gray-400 text-sm mb-4">{t.emptyTitle}</p>
           <Link
-            href="/sponsor"
+            href="/pulse"
             className="inline-flex text-emerald-400 hover:text-emerald-300 font-medium text-sm"
           >
             {t.emptyCta} →

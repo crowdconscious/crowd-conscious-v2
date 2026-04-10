@@ -161,7 +161,7 @@ export default function PulseListingView({
           <p className="mt-2 text-sm text-slate-500">{t.ctaFirstFree}</p>
         )}
         <Link
-          href={listOnly ? '/sponsor' : '/pulse'}
+          href={listOnly ? '/pulse#pulse-pricing' : '/pulse'}
           className="mt-4 inline-flex min-h-[44px] items-center justify-center rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-500"
         >
           {listOnly ? t.ctaViewPlans : t.ctaLearnMore}

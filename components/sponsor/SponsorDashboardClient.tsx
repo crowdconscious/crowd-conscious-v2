@@ -1,6 +1,7 @@
 'use client'
 
 import type React from 'react'
+import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
@@ -24,6 +25,10 @@ const TIER_ES: Record<string, { label: string; color: string }> = {
   growth: { label: 'Patrocinador de Categoría', color: 'text-emerald-400' },
   champion: { label: 'Socio de Impacto', color: 'text-amber-400' },
   anchor: { label: 'Patrocinador Fundador', color: 'text-purple-400' },
+  pulse_unico: { label: 'Pulse Único', color: 'text-emerald-400' },
+  pulse_pack: { label: 'Pulse Pack (3)', color: 'text-emerald-400' },
+  suscripcion: { label: 'Suscripción Pulse', color: 'text-amber-400' },
+  enterprise: { label: 'Enterprise', color: 'text-purple-400' },
 }
 
 type RawMarket = {
@@ -42,6 +47,9 @@ type Props = {
     total_fund_contribution: number | null
     total_spent: number | null
     created_at: string
+    contact_email: string
+    max_pulse_markets: number
+    used_pulse_markets: number
   }
   markets: SponsorDashboardMarketRow[]
   marketsRaw: RawMarket[]
@@ -89,6 +97,27 @@ export default function SponsorDashboardClient({
   const fundTotal = Number(account.total_fund_contribution ?? 0)
   const showPulse = account.is_pulse_client === true
   const tier = TIER_ES[account.tier] ?? TIER_ES.starter
+  const maxPulse = account.max_pulse_markets ?? 1
+  const usedPulse = account.used_pulse_markets ?? 0
+  const unlimited = maxPulse >= 999
+  const atPulseLimit = !unlimited && usedPulse >= maxPulse
+  const pulsePct = unlimited ? 100 : maxPulse > 0 ? Math.min(100, Math.round((usedPulse / maxPulse) * 100)) : 0
+  const [addonLoading, setAddonLoading] = useState(false)
+
+  const startPulseAddon = async () => {
+    setAddonLoading(true)
+    try {
+      const res = await fetch(`/api/dashboard/sponsor/${encodeURIComponent(token)}/pulse-addon-checkout`, {
+        method: 'POST',
+      })
+      const data = await res.json()
+      if (data.url) window.location.href = data.url
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setAddonLoading(false)
+    }
+  }
 
   const enriched = useMemo(() => {
     return markets.map((m) => {
@@ -139,6 +168,76 @@ export default function SponsorDashboardClient({
           />
         ) : null}
 
+        {showPulse ? (
+          <section className="rounded-xl border border-emerald-500/25 bg-[#1a2029] p-6">
+            <h2 className="text-sm font-bold uppercase tracking-wide text-slate-400">Tu plan Conscious Pulse</h2>
+            <p className="mt-2 text-lg font-semibold text-white">
+              Tu plan: <span className={tier.color}>{tier.label}</span>
+            </p>
+            <p className="mt-2 text-sm text-slate-400">
+              Mercados Pulse:{' '}
+              <span className="font-medium text-white">
+                {usedPulse} de {unlimited ? '∞' : maxPulse} utilizados
+              </span>
+            </p>
+            <div className="mt-3 h-2 w-full max-w-md overflow-hidden rounded-full bg-slate-800">
+              <div
+                className="h-full rounded-full bg-emerald-500 transition-all"
+                style={{ width: `${pulsePct}%` }}
+              />
+            </div>
+            {atPulseLimit ? (
+              <p className="mt-3 text-sm text-amber-400/95">
+                Has alcanzado el límite de tu plan.{' '}
+                <Link
+                  href={`/pulse#pulse-pricing?email=${encodeURIComponent(account.contact_email)}`}
+                  className="font-medium text-emerald-400 underline hover:text-emerald-300"
+                >
+                  Subir de plan →
+                </Link>
+              </p>
+            ) : null}
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link
+                href={`/dashboard/sponsor/${token}/create-pulse`}
+                className={`inline-flex min-h-[44px] items-center justify-center rounded-lg px-5 py-2.5 text-sm font-semibold text-white transition-colors ${
+                  atPulseLimit ? 'cursor-not-allowed bg-slate-600 opacity-60 pointer-events-none' : 'bg-emerald-600 hover:bg-emerald-500'
+                }`}
+                aria-disabled={atPulseLimit}
+              >
+                + Crear nuevo Pulse
+              </Link>
+              <button
+                type="button"
+                onClick={startPulseAddon}
+                disabled={addonLoading}
+                className="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-5 py-2.5 text-sm font-semibold text-emerald-400 transition-colors hover:bg-emerald-500/20 disabled:opacity-50"
+              >
+                {addonLoading ? '…' : 'Comprar más'}
+              </button>
+              <Link
+                href={`/pulse#pulse-pricing?email=${encodeURIComponent(account.contact_email)}`}
+                className="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-slate-600 px-5 py-2.5 text-sm font-medium text-slate-200 hover:bg-slate-800"
+              >
+                Subir de plan →
+              </Link>
+            </div>
+          </section>
+        ) : null}
+
+        <section className="rounded-xl border border-[#2d3748] bg-[#1a2029]/80 p-6">
+          <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500">Patrocinar mercados</h2>
+          <p className="mt-2 text-sm text-slate-400">
+            También puedes asociar tu marca a mercados existentes de la plataforma.
+          </p>
+          <Link
+            href={`/markets?sponsor_mode=true&token=${encodeURIComponent(token)}`}
+            className="mt-4 inline-flex min-h-[44px] items-center justify-center rounded-lg bg-slate-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-600"
+          >
+            Ver mercados disponibles →
+          </Link>
+        </section>
+
         <section className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
           <StatCard label="Mercados activos" value={String(activeMarketCount)} />
           <StatCard label="Votos totales" value={totalVotes.toLocaleString()} />
@@ -165,8 +264,9 @@ export default function SponsorDashboardClient({
                 icon={<span className="text-xl">📊</span>}
                 title="Crear un Pulse"
                 description="Nueva pregunta multi-opción para tu comunidad (certeza y resultados en vivo)."
-                href={`/dashboard/sponsor/${token}/create-pulse`}
+                href={atPulseLimit ? '#' : `/dashboard/sponsor/${token}/create-pulse`}
                 cta="Crear Pulse →"
+                disabled={atPulseLimit}
               />
             ) : null}
             <ActionCard
@@ -309,22 +409,38 @@ function ActionCard({
   description,
   href,
   cta,
+  disabled,
 }: {
   icon: React.ReactNode
   title: string
   description: string
   href: string
   cta: string
+  disabled?: boolean
 }) {
-  return (
-    <Link
-      href={href}
-      className="flex flex-col rounded-xl border border-[#2d3748] bg-[#1a2029] p-5 transition hover:border-emerald-500/30 hover:bg-[#1f2630]"
-    >
+  const className = `flex flex-col rounded-xl border border-[#2d3748] bg-[#1a2029] p-5 transition ${
+    disabled
+      ? 'cursor-not-allowed opacity-50'
+      : 'hover:border-emerald-500/30 hover:bg-[#1f2630]'
+  }`
+  const inner = (
+    <>
       <div className="mb-2">{icon}</div>
       <h3 className="font-semibold text-white">{title}</h3>
       <p className="mt-1 flex-1 text-sm text-slate-400">{description}</p>
       <span className="mt-3 text-sm font-medium text-emerald-400">{cta}</span>
+    </>
+  )
+  if (disabled) {
+    return (
+      <div className={className} role="group" aria-disabled>
+        {inner}
+      </div>
+    )
+  }
+  return (
+    <Link href={href} className={className}>
+      {inner}
     </Link>
   )
 }

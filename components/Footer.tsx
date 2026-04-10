@@ -145,7 +145,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/sponsor" className="text-slate-300 transition-colors hover:text-teal-400">
+                <Link href="/pulse" className="text-slate-300 transition-colors hover:text-teal-400">
                   {t.sponsorCta}
                 </Link>
               </li>
@@ -160,7 +160,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/sponsor" className="text-slate-300 transition-colors hover:text-teal-400">
+                <Link href="/pulse" className="text-slate-300 transition-colors hover:text-teal-400">
                   {t.sponsors}
                 </Link>
               </li>

@@ -11,7 +11,7 @@ export default function SponsorReportNotFound() {
           This sponsor report link is invalid or has expired. Please use the link from your confirmation email, or contact us for a new link.
         </p>
         <Link
-          href="/sponsor"
+          href="/pulse"
           className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition-colors"
         >
           Back to Sponsor page

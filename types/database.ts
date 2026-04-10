@@ -783,6 +783,13 @@ export interface Database {
           last_login_at: string | null
           last_dashboard_visit: string | null
           status: 'active' | 'paused' | 'cancelled' | null
+          max_pulse_markets: number
+          used_pulse_markets: number
+          max_live_events: number
+          used_live_events: number
+          has_custom_branding: boolean
+          has_api_access: boolean
+          has_white_label: boolean
         }
         Insert: {
           id?: string
@@ -803,6 +810,13 @@ export interface Database {
           last_login_at?: string | null
           last_dashboard_visit?: string | null
           status?: 'active' | 'paused' | 'cancelled' | null
+          max_pulse_markets?: number
+          used_pulse_markets?: number
+          max_live_events?: number
+          used_live_events?: number
+          has_custom_branding?: boolean
+          has_api_access?: boolean
+          has_white_label?: boolean
         }
         Update: {
           id?: string
@@ -823,6 +837,13 @@ export interface Database {
           last_login_at?: string | null
           last_dashboard_visit?: string | null
           status?: 'active' | 'paused' | 'cancelled' | null
+          max_pulse_markets?: number
+          used_pulse_markets?: number
+          max_live_events?: number
+          used_live_events?: number
+          has_custom_branding?: boolean
+          has_api_access?: boolean
+          has_white_label?: boolean
         }
         Relationships: []
       }

@@ -113,7 +113,7 @@ export function LiveB2BCTA({ locale }: B2BProps) {
             : 'Launches, conferences, activations — fully customizable.'}
         </p>
         <Link
-          href="/sponsor"
+          href="/pulse"
           className="mt-6 inline-flex min-h-[44px] items-center justify-center rounded-lg bg-emerald-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-500"
         >
           {es ? 'Conocer planes →' : 'View plans →'}

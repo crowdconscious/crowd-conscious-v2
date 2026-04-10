@@ -19,7 +19,7 @@ export async function POST(
     const { data: account, error: accErr } = await admin
       .from('sponsor_accounts')
       .select(
-        'id, company_name, contact_email, contact_name, logo_url, tier, is_pulse_client, user_id, access_token'
+        'id, company_name, contact_email, contact_name, logo_url, tier, is_pulse_client, user_id, access_token, max_pulse_markets'
       )
       .eq('access_token', token)
       .eq('status', 'active')
@@ -31,6 +31,24 @@ export async function POST(
 
     if (account.is_pulse_client !== true) {
       return NextResponse.json({ error: 'Pulse creation is only for Pulse clients' }, { status: 403 })
+    }
+
+    const maxSlots = Number((account as { max_pulse_markets?: number }).max_pulse_markets ?? 1)
+    const { count: pulseCount } = await admin
+      .from('prediction_markets')
+      .select('id', { count: 'exact', head: true })
+      .eq('sponsor_account_id', account.id)
+      .eq('is_pulse', true)
+
+    const used = pulseCount ?? 0
+    if (maxSlots < 999 && used >= maxSlots) {
+      return NextResponse.json(
+        {
+          error:
+            'Has alcanzado el límite de consultas Pulse de tu plan. Sube de plan o compra más capacidad en tu panel.',
+        },
+        { status: 403 }
+      )
     }
 
     const body = await request.json().catch(() => ({}))
@@ -116,6 +134,11 @@ export async function POST(
     if (sponsorLogoUrl && sponsorLogoUrl !== (account.logo_url ?? '')) {
       await admin.from('sponsor_accounts').update({ logo_url: sponsorLogoUrl }).eq('id', account.id)
     }
+
+    await admin
+      .from('sponsor_accounts')
+      .update({ used_pulse_markets: used + 1 })
+      .eq('id', account.id)
 
     return NextResponse.json({
       success: true,

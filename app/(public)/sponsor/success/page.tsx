@@ -53,7 +53,7 @@ export default async function SponsorSuccessPage({
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'
   const marketUrl = session?.marketId ? `${baseUrl}/predictions/markets/${session.marketId}` : `${baseUrl}/predictions/markets`
-  const shareUrl = session?.marketId ? marketUrl : `${baseUrl}/sponsor`
+  const shareUrl = session?.marketId ? marketUrl : `${baseUrl}/pulse`
   const shareText = encodeURIComponent(
     session?.marketTitle
       ? `I just sponsored "${session.marketTitle}" on Crowd Conscious! 🎯`
@@ -123,7 +123,7 @@ export default async function SponsorSuccessPage({
               <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
-              href="/sponsor"
+              href="/pulse"
               className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-slate-600 hover:border-slate-500 text-slate-200 font-medium transition-colors"
             >
               Back to Sponsor

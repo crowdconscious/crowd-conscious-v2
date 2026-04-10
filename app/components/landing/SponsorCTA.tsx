@@ -43,7 +43,7 @@ export function SponsorCTA({ locale }: { locale: 'es' | 'en' }) {
             )}
           </p>
           <Link
-            href="/sponsor"
+            href="/pulse"
             className="mt-6 inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-500 px-6 py-3 font-semibold text-white transition-colors hover:bg-emerald-600"
           >
             {isEs ? 'Ver planes de patrocinio →' : 'View sponsorship plans →'}

@@ -5,6 +5,9 @@ import { getStripe } from './lib/stripe-webhook-utils'
 import { handleModulePurchase } from './handlers/module-purchase'
 import { handleSponsorship } from './handlers/sponsorship'
 import { handleMarketSponsorship } from './handlers/market-sponsorship'
+import { handlePulsePurchase } from './handlers/pulse-purchase'
+import { handlePulseAddon } from './handlers/pulse-addon'
+import { handleMarketSponsorAccount } from './handlers/market-sponsor-account'
 import { handleTreasuryDonation } from './handlers/treasury-donation'
 import { handlePaymentSucceeded, handlePaymentFailed } from './handlers/payment-verification'
 
@@ -112,7 +115,26 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     customerEmail: session.customer_email
   })
 
-  const { type: purchaseType } = session.metadata || {}
+  const metadata = session.metadata || {}
+  const { type: purchaseType } = metadata
+
+  if (metadata.product_type === 'pulse') {
+    console.log('📊 Processing Conscious Pulse purchase...')
+    await handlePulsePurchase(session)
+    return
+  }
+
+  if (metadata.product_type === 'pulse_addon') {
+    console.log('➕ Processing Pulse add-on...')
+    await handlePulseAddon(session)
+    return
+  }
+
+  if (metadata.product_type === 'market_sponsor') {
+    console.log('🎯 Processing dashboard market sponsor...')
+    await handleMarketSponsorAccount(session)
+    return
+  }
 
   // Route to appropriate handler based on metadata
   if (purchaseType === 'market_sponsorship') {
