@@ -906,6 +906,152 @@ export interface Database {
           created_at?: string
         }
       }
+      conscious_locations: {
+        Row: {
+          id: string
+          name: string
+          slug: string
+          category:
+            | 'restaurant'
+            | 'bar'
+            | 'cafe'
+            | 'hotel'
+            | 'coworking'
+            | 'store'
+            | 'brand'
+            | 'influencer'
+            | 'other'
+          city: string
+          neighborhood: string | null
+          address: string | null
+          latitude: number | null
+          longitude: number | null
+          description: string | null
+          description_en: string | null
+          why_conscious: string | null
+          why_conscious_en: string | null
+          user_benefits: string | null
+          user_benefits_en: string | null
+          instagram_handle: string | null
+          website_url: string | null
+          contact_email: string | null
+          phone: string | null
+          logo_url: string | null
+          cover_image_url: string | null
+          conscious_score: number | null
+          approval_rate: number | null
+          avg_confidence: number | null
+          total_votes: number
+          current_market_id: string | null
+          sponsor_account_id: string | null
+          status: 'pending' | 'active' | 'under_review' | 'suspended' | 'revoked'
+          certified_at: string | null
+          certified_by: string | null
+          next_review_date: string | null
+          is_featured: boolean
+          sort_order: number
+          nomination_count: number
+          created_at: string
+          updated_at: string
+          metadata: Json
+        }
+        Insert: {
+          id?: string
+          name: string
+          slug: string
+          category?:
+            | 'restaurant'
+            | 'bar'
+            | 'cafe'
+            | 'hotel'
+            | 'coworking'
+            | 'store'
+            | 'brand'
+            | 'influencer'
+            | 'other'
+          city?: string
+          neighborhood?: string | null
+          address?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          description?: string | null
+          description_en?: string | null
+          why_conscious?: string | null
+          why_conscious_en?: string | null
+          user_benefits?: string | null
+          user_benefits_en?: string | null
+          instagram_handle?: string | null
+          website_url?: string | null
+          contact_email?: string | null
+          phone?: string | null
+          logo_url?: string | null
+          cover_image_url?: string | null
+          conscious_score?: number | null
+          approval_rate?: number | null
+          avg_confidence?: number | null
+          total_votes?: number
+          current_market_id?: string | null
+          sponsor_account_id?: string | null
+          status?: 'pending' | 'active' | 'under_review' | 'suspended' | 'revoked'
+          certified_at?: string | null
+          certified_by?: string | null
+          next_review_date?: string | null
+          is_featured?: boolean
+          sort_order?: number
+          nomination_count?: number
+          created_at?: string
+          updated_at?: string
+          metadata?: Json
+        }
+        Update: {
+          id?: string
+          name?: string
+          slug?: string
+          category?:
+            | 'restaurant'
+            | 'bar'
+            | 'cafe'
+            | 'hotel'
+            | 'coworking'
+            | 'store'
+            | 'brand'
+            | 'influencer'
+            | 'other'
+          city?: string
+          neighborhood?: string | null
+          address?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          description?: string | null
+          description_en?: string | null
+          why_conscious?: string | null
+          why_conscious_en?: string | null
+          user_benefits?: string | null
+          user_benefits_en?: string | null
+          instagram_handle?: string | null
+          website_url?: string | null
+          contact_email?: string | null
+          phone?: string | null
+          logo_url?: string | null
+          cover_image_url?: string | null
+          conscious_score?: number | null
+          approval_rate?: number | null
+          avg_confidence?: number | null
+          total_votes?: number
+          current_market_id?: string | null
+          sponsor_account_id?: string | null
+          status?: 'pending' | 'active' | 'under_review' | 'suspended' | 'revoked'
+          certified_at?: string | null
+          certified_by?: string | null
+          next_review_date?: string | null
+          is_featured?: boolean
+          sort_order?: number
+          nomination_count?: number
+          created_at?: string
+          updated_at?: string
+          metadata?: Json
+        }
+      }
       conscious_fund: {
         Row: {
           id: string
@@ -1218,6 +1364,21 @@ export interface Database {
       increment_blog_post_view: {
         Args: { p_slug: string }
         Returns: undefined
+      }
+      create_multi_market: {
+        Args: {
+          p_title: string
+          p_description: string
+          p_category: string
+          p_created_by: string
+          p_end_date: string
+          p_outcomes: string[]
+          p_sponsor_name?: string | null
+          p_sponsor_logo_url?: string | null
+          p_image_url?: string | null
+          p_resolution_criteria?: string | null
+        }
+        Returns: string
       }
     }
     Enums: {

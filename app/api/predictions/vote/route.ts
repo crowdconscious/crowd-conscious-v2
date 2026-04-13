@@ -11,6 +11,7 @@ import {
   voteReasoningMaxForMarket,
 } from '@/lib/vote-reasoning'
 import { persistVoteReasoning } from '@/lib/persist-vote-reasoning'
+import { recalculateLocationScoreByMarketId } from '@/lib/locations/recalculate-score'
 
 /** USD attributed to Conscious Fund cause per sponsored micro-market vote (env override). */
 function sponsoredMicroMarketVoteImpactUsd(): number {
@@ -122,6 +123,12 @@ export async function POST(request: Request) {
         .eq('id', market_id)
         .maybeSingle()
 
+      const { data: consciousLocRow } = await admin
+        .from('conscious_locations')
+        .select('id')
+        .eq('current_market_id', market_id)
+        .maybeSingle()
+
       const reasoningNorm = normalizeVoteReasoning(
         rawReasoning,
         voteReasoningMaxForMarket(marketCheck?.is_micro_market)
@@ -138,7 +145,8 @@ export async function POST(request: Request) {
       const allowsAnonymous =
         marketCheck.live_event_id != null ||
         marketCheck.is_micro_market === true ||
-        marketCheck.is_pulse === true
+        marketCheck.is_pulse === true ||
+        consciousLocRow != null
 
       if (!allowsAnonymous) {
         return NextResponse.json(
@@ -201,6 +209,12 @@ export async function POST(request: Request) {
         marketId: market_id,
         voteId: result.vote_id,
       })
+
+      if (result.no_change !== true) {
+        await recalculateLocationScoreByMarketId(market_id).catch((e) =>
+          console.error('[vote] recalculateLocationScore', e)
+        )
+      }
 
       const xpEarned = typeof result.xp_earned === 'number' ? result.xp_earned : 0
 
@@ -279,6 +293,12 @@ export async function POST(request: Request) {
       userId: user.id,
       noChange: result.no_change === true,
     })
+
+    if (result.no_change !== true) {
+      await recalculateLocationScoreByMarketId(market_id).catch((e) =>
+        console.error('[vote] recalculateLocationScore', e)
+      )
+    }
 
     return NextResponse.json({
       ...result,

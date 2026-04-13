@@ -27,6 +27,7 @@ const NAV = {
     signIn: 'Iniciar Sesión',
     startPredicting: 'Empezar a Predecir',
     pulse: 'Pulse',
+    locations: 'Lugares',
   },
   en: {
     markets: 'Markets',
@@ -36,6 +37,7 @@ const NAV = {
     signIn: 'Sign In',
     startPredicting: 'Start Predicting',
     pulse: 'Pulse',
+    locations: 'Locations',
   },
 }
 
@@ -90,6 +92,12 @@ export default function LandingNav() {
               className="inline-flex min-h-[44px] items-center font-medium text-emerald-400/95 transition-colors hover:text-emerald-300"
             >
               {nav.pulse}
+            </Link>
+            <Link
+              href="/locations"
+              className="text-slate-400 hover:text-white transition-colors font-medium"
+            >
+              {nav.locations}
             </Link>
             <Link
               href="/about"
@@ -160,6 +168,13 @@ export default function LandingNav() {
               className="block min-h-[44px] py-3 font-medium text-emerald-400 hover:text-emerald-300"
             >
               {nav.pulse}
+            </Link>
+            <Link
+              href="/locations"
+              onClick={() => setMobileOpen(false)}
+              className="block min-h-[44px] py-3 text-slate-400 hover:text-white"
+            >
+              {nav.locations}
             </Link>
             <Link
               href="/about"

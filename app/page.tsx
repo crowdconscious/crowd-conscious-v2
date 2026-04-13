@@ -10,6 +10,8 @@ import LandingNav from './components/landing/LandingNav'
 import { LiveEventBanner } from './components/landing/LiveEventBanner'
 import { LandingPulseSection } from './components/landing/LandingPulseSection'
 import { LandingLiveSection } from './components/landing/LandingLiveSection'
+import LandingLocationsSection from './components/landing/LandingLocationsSection'
+import type { LocationCardRow } from '@/components/locations/LocationCard'
 import type { MarketCardMarket, MarketCardOutcome } from '@/components/MarketCard'
 
 const Footer = dynamic(() => import('../components/Footer'))
@@ -98,6 +100,9 @@ async function getLandingData() {
     liveNowRes,
     activeMarketsCountRes,
     profilesCountRes,
+    locFeaturedCountRes,
+    locActiveCountRes,
+    locTopRes,
   ] = await Promise.all([
     supabase
       .from('prediction_markets')
@@ -141,6 +146,24 @@ async function getLandingData() {
       .in('status', ['active', 'trading'])
       .is('archived_at', null),
     supabase.from('profiles').select('id', { count: 'exact', head: true }),
+    supabase
+      .from('conscious_locations')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'active')
+      .eq('is_featured', true),
+    supabase
+      .from('conscious_locations')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'active'),
+    supabase
+      .from('conscious_locations')
+      .select(
+        'id, name, slug, category, city, neighborhood, why_conscious, why_conscious_en, user_benefits, user_benefits_en, cover_image_url, logo_url, instagram_handle, conscious_score, total_votes, certified_at, is_featured, sort_order'
+      )
+      .eq('status', 'active')
+      .order('is_featured', { ascending: false })
+      .order('sort_order', { ascending: true })
+      .limit(3),
   ])
 
   const markets = (marketsRes.data || []) as MarketCardMarket[]
@@ -179,6 +202,28 @@ async function getLandingData() {
   const activeMarketCount = activeMarketsCountRes.count ?? markets.length
   const profileCount = profilesCountRes.count
 
+  const locFeaturedCount = locFeaturedCountRes.count ?? 0
+  const locActiveCount = locActiveCountRes.count ?? 0
+  const showLocationsSection = locFeaturedCount >= 1 || locActiveCount >= 3
+  const landingLocationCards = (locTopRes.data ?? []) as Array<{
+    id: string
+    name: string
+    slug: string
+    category: string
+    city: string
+    neighborhood: string | null
+    why_conscious: string | null
+    why_conscious_en: string | null
+    user_benefits: string | null
+    user_benefits_en: string | null
+    cover_image_url: string | null
+    logo_url: string | null
+    instagram_handle: string | null
+    conscious_score: number | null
+    total_votes: number
+    certified_at: string | null
+  }>
+
   return {
     markets,
     outcomesByMarketId,
@@ -192,6 +237,8 @@ async function getLandingData() {
     activeCauseName,
     activeMarketCount,
     profileCount,
+    showLocationsSection,
+    landingLocationCards,
   }
 }
 
@@ -221,6 +268,8 @@ export default async function LandingPage() {
   let activeCauseName: string | null = null
   let activeMarketCount = 0
   let profileCount: number | null = null
+  let showLocationsSection = false
+  let landingLocationCards: Awaited<ReturnType<typeof getLandingData>>['landingLocationCards'] = []
 
   try {
     const data = await getLandingData()
@@ -236,6 +285,8 @@ export default async function LandingPage() {
     activeCauseName = data.activeCauseName
     activeMarketCount = data.activeMarketCount
     profileCount = data.profileCount
+    showLocationsSection = data.showLocationsSection
+    landingLocationCards = data.landingLocationCards
   } catch (e) {
     console.error('Landing data fetch error:', e)
   }
@@ -318,6 +369,13 @@ export default async function LandingPage() {
             </p>
           </div>
         </section>
+
+        {showLocationsSection && landingLocationCards.length > 0 && (
+          <LandingLocationsSection
+            locations={landingLocationCards as LocationCardRow[]}
+            locale={localeShort}
+          />
+        )}
 
         <section
           className="relative overflow-hidden border-t border-cc-border px-4 py-16 md:px-8"

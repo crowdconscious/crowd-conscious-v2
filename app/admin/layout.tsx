@@ -81,6 +81,12 @@ export default async function AdminLayout({
             >
               📊 Markets
             </a>
+            <a
+              href="/admin/locations"
+              className="bg-teal-600 hover:bg-teal-500 px-3 py-1 rounded text-sm transition-colors font-medium"
+            >
+              📍 Locations
+            </a>
             <a 
               href="/admin/promo-codes" 
               className="bg-purple-600 hover:bg-purple-500 px-3 py-1 rounded text-sm transition-colors font-medium"
