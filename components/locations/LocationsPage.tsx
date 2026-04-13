@@ -1,13 +1,13 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, X, Check } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { createClient } from '@/lib/supabase-client'
 import { LocationCard, type LocationCardRow } from './LocationCard'
+import { LocationCoverImage, LocationLogoImage } from '@/components/locations/LocationRemoteImage'
 import { locationCategoryLabel, visibleLocationCategoryFilters } from '@/lib/locations/categories'
 
 type OutcomeRow = {
@@ -57,64 +57,69 @@ function SwipeCard({
   const cat = locationCategoryLabel(loc.category, locale)
 
   return (
-    <motion.div
-      drag="x"
-      dragConstraints={{ left: -220, right: 220 }}
-      dragElastic={0.65}
-      onDragEnd={(_, info) => {
-        if (info.offset.x > 90) onChoice('yes')
-        else if (info.offset.x < -90) onChoice('no')
-      }}
-      className="relative w-full max-w-sm cursor-grab touch-pan-y overflow-hidden rounded-2xl border border-[#2d3748] bg-[#1a2029] shadow-xl active:cursor-grabbing"
-    >
-      <div className="relative h-48 w-full bg-[#0f1419]">
-        {loc.cover_image_url ? (
-          <Image src={loc.cover_image_url} alt="" fill className="object-cover" sizes="400px" />
-        ) : (
-          <div className="flex h-full items-center justify-center text-slate-600">—</div>
-        )}
-      </div>
-      <div className="space-y-3 p-4">
-        <div className="flex gap-3">
-          <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-[#0f1419]">
-            {loc.logo_url ? (
-              <Image src={loc.logo_url} alt="" fill className="object-contain p-1" sizes="44px" />
-            ) : null}
-          </div>
-          <div>
-            <h3 className="font-semibold text-white">{loc.name}</h3>
-            <p className="text-sm text-slate-400">
-              {loc.neighborhood ? `${loc.neighborhood} · ` : ''}
-              {cat}
-            </p>
-          </div>
+    <div className="relative mx-auto h-[420px] w-full max-w-[340px]">
+      <motion.div
+        drag="x"
+        dragConstraints={{ left: -220, right: 220 }}
+        dragElastic={0.65}
+        onDragEnd={(_, info) => {
+          if (info.offset.x > 80) onChoice('yes')
+          else if (info.offset.x < -80) onChoice('no')
+        }}
+        style={{ touchAction: 'none' }}
+        className="absolute inset-0 flex cursor-grab select-none flex-col overflow-hidden rounded-2xl border border-[#2d3748] bg-[#1a2029] shadow-xl active:cursor-grabbing"
+      >
+        <div className="relative h-48 w-full shrink-0 overflow-hidden bg-[#0f1419]">
+          <LocationCoverImage
+            url={loc.cover_image_url}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover"
+          />
         </div>
-        {why ? <p className="text-sm leading-relaxed text-slate-300 line-clamp-4">{why}</p> : null}
-        <div className="flex items-center justify-between gap-4 pt-2">
-          <button
-            type="button"
-            onClick={() => onChoice('no')}
-            className="flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-xl border border-red-500/40 bg-red-500/10 text-red-300 transition-colors hover:bg-red-500/20"
-            aria-label={locale === 'es' ? 'No' : 'No'}
-          >
-            <X className="h-6 w-6" />
-            <span className="font-semibold">{locale === 'es' ? 'NO' : 'NO'}</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => onChoice('yes')}
-            className="flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-emerald-300 transition-colors hover:bg-emerald-500/20"
-            aria-label={locale === 'es' ? 'Sí' : 'Yes'}
-          >
-            <span className="font-semibold">{locale === 'es' ? 'SÍ' : 'YES'}</span>
-            <Check className="h-6 w-6" />
-          </button>
+        <div className="flex min-h-0 flex-1 flex-col space-y-3 overflow-y-auto p-4">
+          <div className="flex gap-3">
+            <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-[#0f1419]">
+              <LocationLogoImage
+                url={loc.logo_url}
+                alt=""
+                className="absolute inset-0 h-full w-full object-contain p-1"
+              />
+            </div>
+            <div className="min-w-0">
+              <h3 className="font-semibold text-white">{loc.name}</h3>
+              <p className="text-sm text-slate-400">
+                {loc.neighborhood ? `${loc.neighborhood} · ` : ''}
+                {cat}
+              </p>
+            </div>
+          </div>
+          {why ? <p className="text-sm leading-relaxed text-slate-300 line-clamp-4">{why}</p> : null}
+          <div className="mt-auto flex items-center justify-between gap-4 pt-2">
+            <button
+              type="button"
+              onClick={() => onChoice('no')}
+              className="flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-xl border border-red-500/40 bg-red-500/10 text-red-300 transition-colors hover:bg-red-500/20"
+              aria-label={locale === 'es' ? 'No' : 'No'}
+            >
+              <X className="h-6 w-6" />
+              <span className="font-semibold">{locale === 'es' ? 'NO' : 'NO'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onChoice('yes')}
+              className="flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-emerald-300 transition-colors hover:bg-emerald-500/20"
+              aria-label={locale === 'es' ? 'Sí' : 'Yes'}
+            >
+              <span className="font-semibold">{locale === 'es' ? 'SÍ' : 'YES'}</span>
+              <Check className="h-6 w-6" />
+            </button>
+          </div>
+          <p className="text-center text-xs text-slate-500">
+            {locale === 'es' ? '← Desliza o toca' : '← Swipe or tap →'}
+          </p>
         </div>
-        <p className="text-center text-xs text-slate-500">
-          {locale === 'es' ? '← Desliza o toca' : '← Swipe or tap →'}
-        </p>
-      </div>
-    </motion.div>
+      </motion.div>
+    </div>
   )
 }
 
@@ -140,6 +145,19 @@ export default function LocationsPage() {
   const [reasoning, setReasoning] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [showAnonVotePrompt, setShowAnonVotePrompt] = useState(false)
+  const [showAliasModal, setShowAliasModal] = useState(false)
+  const [aliasInput, setAliasInput] = useState('')
+  const [voteError, setVoteError] = useState<string | null>(null)
+  const [nominateOpen, setNominateOpen] = useState(false)
+  const [nominateForm, setNominateForm] = useState({
+    name: '',
+    location: '',
+    why: '',
+    instagram: '',
+    submitter_email: '',
+  })
+  const [nominateBusy, setNominateBusy] = useState(false)
+  const [nominateBanner, setNominateBanner] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -190,6 +208,7 @@ export default function LocationsPage() {
   const top = stack[0]
 
   const openSheet = (loc: ApiLocation, dir: 'yes' | 'no') => {
+    setVoteError(null)
     setPendingSwipe({ loc, dir })
     setConfidence(7)
     setReasoning('')
@@ -203,10 +222,12 @@ export default function LocationsPage() {
     const outcomeId = dir === 'yes' ? yesId : noId
     if (!loc.current_market_id || !outcomeId) return
     setSubmitting(true)
+    setVoteError(null)
     try {
       const res = await fetch('/api/predictions/vote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
         body: JSON.stringify({
           market_id: loc.current_market_id,
           outcome_id: outcomeId,
@@ -214,18 +235,94 @@ export default function LocationsPage() {
           reasoning: reasoning.trim() || null,
         }),
       })
-      const j = await res.json()
+      const j = (await res.json()) as { error?: string; requiresAlias?: boolean }
+      if (res.status === 401 && j.requiresAlias === true) {
+        setShowAliasModal(true)
+        return
+      }
       if (!res.ok) {
-        alert(j.error || 'Vote failed')
+        setVoteError(
+          typeof j.error === 'string'
+            ? j.error
+            : locale === 'es'
+              ? 'No se pudo registrar el voto'
+              : 'Vote failed'
+        )
         return
       }
       setPendingSwipe(null)
       setStack((prev) => prev.filter((x) => x.id !== loc.id))
-      const { data: { session } } = await createClient().auth.getSession()
+      const {
+        data: { session },
+      } = await createClient().auth.getSession()
       if (!session?.user) setShowAnonVotePrompt(true)
       await load()
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  const joinAliasAndRetry = async (alias: string) => {
+    const clean =
+      alias.trim() ||
+      (locale === 'es' ? 'Invitado' : 'Guest')
+    const sessionId = crypto.randomUUID()
+    const res = await fetch('/api/live/join-anonymous', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ alias: clean, emoji: '🎯', session_id: sessionId }),
+    })
+    const j = (await res.json()) as { error?: string }
+    if (!res.ok) {
+      setVoteError(j.error ?? (locale === 'es' ? 'No se pudo guardar el alias' : 'Could not save alias'))
+      return
+    }
+    setShowAliasModal(false)
+    setAliasInput('')
+    await confirmVote()
+  }
+
+  const submitNomination = async () => {
+    const { name, location: locLine, why } = nominateForm
+    if (!name.trim() || !locLine.trim() || !why.trim()) {
+      setNominateBanner(
+        locale === 'es' ? 'Completa los campos obligatorios' : 'Fill in the required fields'
+      )
+      return
+    }
+    setNominateBusy(true)
+    setNominateBanner(null)
+    try {
+      const res = await fetch('/api/locations/nominate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: name.trim(),
+          location: locLine.trim(),
+          why: why.trim(),
+          instagram: nominateForm.instagram.trim() || undefined,
+          submitter_email: nominateForm.submitter_email.trim() || undefined,
+        }),
+      })
+      const j = (await res.json()) as { error?: string }
+      if (!res.ok) {
+        setNominateBanner(j.error ?? (locale === 'es' ? 'Error al enviar' : 'Submit failed'))
+        return
+      }
+      setNominateOpen(false)
+      setNominateForm({
+        name: '',
+        location: '',
+        why: '',
+        instagram: '',
+        submitter_email: '',
+      })
+      setNominateBanner(
+        locale === 'es' ? '¡Nominación enviada! La revisaremos pronto.' : 'Nomination submitted! We\'ll review it soon.'
+      )
+    } finally {
+      setNominateBusy(false)
     }
   }
 
@@ -275,10 +372,32 @@ export default function LocationsPage() {
         : 'Create an account to earn XP and appear on the leaderboard.',
     anonSignUp: locale === 'es' ? 'Registrarse' : 'Sign up',
     anonKeep: locale === 'es' ? 'Seguir votando' : 'Keep voting',
+    aliasTitle: locale === 'es' ? 'Elige un alias' : 'Choose an alias',
+    aliasBody:
+      locale === 'es'
+        ? 'Tu alias aparece junto a tu voto. Puedes cambiarlo después.'
+        : 'Your alias appears with your vote. You can change it later.',
+    aliasPlaceholder: locale === 'es' ? 'Tu alias…' : 'Your alias…',
+    aliasGuest: locale === 'es' ? 'Continuar como Invitado' : 'Continue as Guest',
+    aliasConfirm: locale === 'es' ? 'Confirmar' : 'Confirm',
+    nominateTitle: locale === 'es' ? 'Nominar un lugar' : 'Nominate a place',
+    nominateSub:
+      locale === 'es'
+        ? 'Las nominaciones son revisadas por nuestro equipo.'
+        : 'Nominations are reviewed by our team.',
+    nominateSend: locale === 'es' ? 'Enviar nominación' : 'Submit nomination',
+    nominateCancel: locale === 'es' ? 'Cancelar' : 'Cancel',
   }
 
   return (
     <div className="min-h-screen bg-[#0f1419] text-slate-100">
+      {nominateBanner ? (
+        <div className="fixed left-0 right-0 top-16 z-[60] mx-auto max-w-lg px-4">
+          <div className="rounded-xl border border-emerald-500/40 bg-[#1a2029] px-4 py-3 text-center text-sm text-emerald-200 shadow-lg">
+            {nominateBanner}
+          </div>
+        </div>
+      ) : null}
       <div className="mx-auto max-w-6xl px-4 pb-20 pt-8">
         <header className="mb-10 text-center">
           <h1 className="text-3xl font-bold text-white md:text-4xl">{t.heroTitle}</h1>
@@ -360,7 +479,12 @@ export default function LocationsPage() {
             </div>
           )}
 
-          <div className="mx-auto flex w-full max-w-sm justify-center px-2">
+          {voteError ? (
+            <p className="mb-4 text-center text-sm text-red-400" role="alert">
+              {voteError}
+            </p>
+          ) : null}
+          <div className="mx-auto flex w-full justify-center px-2">
             <AnimatePresence mode="wait">
               {top ? (
                 <motion.div
@@ -368,6 +492,7 @@ export default function LocationsPage() {
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -12 }}
+                  className="w-full max-w-[340px]"
                 >
                   <SwipeCard loc={top} locale={locale} onChoice={(d) => openSheet(top, d)} />
                 </motion.div>
@@ -435,23 +560,31 @@ export default function LocationsPage() {
               {locale === 'es' ? (
                 <>
                   No encontramos ese establecimiento.{' '}
-                  <Link
-                    href="/predictions/inbox?type=location_nomination&action=submit"
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNominateOpen(true)
+                      setNominateBanner(null)
+                    }}
                     className="text-emerald-400 hover:text-emerald-300 underline underline-offset-2"
                   >
                     Nomínalo en el Buzón Consciente
-                  </Link>
+                  </button>
                   .
                 </>
               ) : (
                 <>
                   We couldn&apos;t find that establishment.{' '}
-                  <Link
-                    href="/predictions/inbox?type=location_nomination&action=submit"
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNominateOpen(true)
+                      setNominateBanner(null)
+                    }}
                     className="text-emerald-400 hover:text-emerald-300 underline underline-offset-2"
                   >
                     Nominate it via the Conscious Inbox
-                  </Link>
+                  </button>
                   .
                 </>
               )}
@@ -469,13 +602,17 @@ export default function LocationsPage() {
                 ? 'Nomina un restaurante, bar, marca, artista o festival que merezca el sello. La comunidad decide.'
                 : 'Nominate a restaurant, bar, brand, artist, or festival that deserves the seal. The community decides.'}
             </p>
-            <Link
-              href="/predictions/inbox?type=location_nomination&action=submit"
+            <button
+              type="button"
+              onClick={() => {
+                setNominateOpen(true)
+                setNominateBanner(null)
+              }}
               className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-6 py-3 font-semibold text-white transition-colors hover:bg-emerald-600"
             >
               <span aria-hidden>🏅</span>
               {locale === 'es' ? 'Nominar un lugar' : 'Nominate a place'}
-            </Link>
+            </button>
             <p className="mt-4 text-xs text-gray-500">
               {locale === 'es'
                 ? 'Las nominaciones llegan a nuestro Buzón Consciente y son revisadas por el equipo.'
@@ -488,48 +625,203 @@ export default function LocationsPage() {
       <AnimatePresence>
         {pendingSwipe && (
           <motion.div
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 28 }}
-            className="fixed inset-x-0 bottom-0 z-50 border-t border-[#2d3748] bg-[#1a2029] p-6 shadow-2xl"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:items-center sm:pb-4"
           >
-            <p className="mb-4 text-center font-medium text-white">{t.confTitle}</p>
-            <input
-              type="range"
-              min={1}
-              max={10}
-              value={confidence}
-              onChange={(e) => setConfidence(Number(e.target.value))}
-              className="mb-6 w-full accent-emerald-500"
-            />
-            <p className="mb-4 text-center text-sm text-slate-400">
-              1 ··· <span className="text-white font-semibold">{confidence}</span> ··· 10
-            </p>
-            <label className="mb-2 block text-sm text-slate-400">{t.why}</label>
-            <textarea
-              value={reasoning}
-              onChange={(e) => setReasoning(e.target.value)}
-              rows={2}
-              className="mb-4 w-full rounded-lg border border-[#2d3748] bg-[#0f1419] p-3 text-sm text-white"
-            />
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setPendingSwipe(null)}
-                className="flex-1 rounded-lg border border-[#2d3748] py-3 text-slate-300"
-              >
-                {t.sheetCancel}
-              </button>
-              <button
-                type="button"
-                onClick={() => void confirmVote()}
-                disabled={submitting}
-                className="flex-1 rounded-lg bg-emerald-600 py-3 font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
-              >
-                {submitting ? '…' : t.confirm}
-              </button>
-            </div>
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 28 }}
+              className="w-full max-w-md rounded-t-2xl border border-[#2d3748] bg-[#1a2029] p-6 shadow-2xl sm:rounded-2xl"
+            >
+              <p className="mb-4 text-center font-medium text-white">{t.confTitle}</p>
+              <input
+                type="range"
+                min={1}
+                max={10}
+                value={confidence}
+                onChange={(e) => setConfidence(Number(e.target.value))}
+                className="mb-6 w-full accent-emerald-500"
+              />
+              <p className="mb-4 text-center text-sm text-slate-400">
+                1 ··· <span className="font-semibold text-white">{confidence}</span> ··· 10
+              </p>
+              <label className="mb-2 block text-sm text-slate-400">{t.why}</label>
+              <textarea
+                value={reasoning}
+                onChange={(e) => setReasoning(e.target.value)}
+                rows={2}
+                className="mb-4 w-full rounded-lg border border-[#2d3748] bg-[#0f1419] p-3 text-sm text-white"
+              />
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setPendingSwipe(null)}
+                  className="flex-1 rounded-lg border border-[#2d3748] py-3 text-slate-300"
+                >
+                  {t.sheetCancel}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void confirmVote()}
+                  disabled={submitting}
+                  className="flex-1 rounded-lg bg-emerald-600 py-3 font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
+                >
+                  {submitting ? '…' : t.confirm}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showAliasModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[55] flex items-center justify-center bg-black/70 p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.96, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.96, opacity: 0 }}
+              className="w-full max-w-sm rounded-2xl border border-[#2d3748] bg-[#1a2029] p-6 shadow-2xl"
+            >
+              <h3 className="mb-2 text-lg font-bold text-white">{t.aliasTitle}</h3>
+              <p className="mb-4 text-sm text-gray-400">{t.aliasBody}</p>
+              <input
+                type="text"
+                value={aliasInput}
+                onChange={(e) => setAliasInput(e.target.value)}
+                placeholder={t.aliasPlaceholder}
+                maxLength={20}
+                autoFocus
+                className="mb-4 w-full rounded-lg border border-[#2d3748] bg-[#0f1419] px-4 py-3 text-white placeholder:text-gray-500 focus:border-emerald-500 focus:outline-none"
+              />
+              {voteError ? <p className="mb-3 text-center text-sm text-red-400">{voteError}</p> : null}
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => void joinAliasAndRetry(locale === 'es' ? 'Invitado' : 'Guest')}
+                  className="flex-1 rounded-lg border border-[#2d3748] py-2.5 text-sm text-gray-400"
+                >
+                  {t.aliasGuest}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void joinAliasAndRetry(aliasInput)}
+                  className="flex-1 rounded-lg bg-emerald-500 py-2.5 text-sm font-semibold text-white hover:bg-emerald-600"
+                >
+                  {t.aliasConfirm}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {nominateOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[55] flex items-end justify-center bg-black/60 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:items-center sm:pb-4"
+          >
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-t-2xl border border-[#2d3748] bg-[#1a2029] p-6 shadow-2xl sm:rounded-2xl"
+            >
+              <h3 className="mb-1 text-xl font-bold text-white">
+                <span aria-hidden>🏅 </span>
+                {t.nominateTitle}
+              </h3>
+              <p className="mb-6 text-sm text-gray-400">{t.nominateSub}</p>
+              <div className="space-y-4">
+                <div>
+                  <label className="mb-1 block text-sm text-gray-300">
+                    {locale === 'es' ? 'Nombre del lugar *' : 'Place name *'}
+                  </label>
+                  <input
+                    value={nominateForm.name}
+                    onChange={(e) => setNominateForm((p) => ({ ...p, name: e.target.value }))}
+                    className="w-full rounded-lg border border-[#2d3748] bg-[#0f1419] px-4 py-2.5 text-white focus:border-emerald-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm text-gray-300">
+                    {locale === 'es' ? 'Ubicación (colonia, ciudad) *' : 'Location (neighborhood, city) *'}
+                  </label>
+                  <input
+                    value={nominateForm.location}
+                    onChange={(e) => setNominateForm((p) => ({ ...p, location: e.target.value }))}
+                    className="w-full rounded-lg border border-[#2d3748] bg-[#0f1419] px-4 py-2.5 text-white focus:border-emerald-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm text-gray-300">
+                    {locale === 'es' ? '¿Por qué es Consciente? *' : 'Why is it Conscious? *'}
+                  </label>
+                  <textarea
+                    value={nominateForm.why}
+                    onChange={(e) => setNominateForm((p) => ({ ...p, why: e.target.value }))}
+                    rows={3}
+                    className="w-full resize-none rounded-lg border border-[#2d3748] bg-[#0f1419] px-4 py-2.5 text-white focus:border-emerald-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm text-gray-300">
+                    Instagram ({locale === 'es' ? 'opcional' : 'optional'})
+                  </label>
+                  <input
+                    value={nominateForm.instagram}
+                    onChange={(e) => setNominateForm((p) => ({ ...p, instagram: e.target.value }))}
+                    className="w-full rounded-lg border border-[#2d3748] bg-[#0f1419] px-4 py-2.5 text-white focus:border-emerald-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm text-gray-300">
+                    {locale === 'es' ? 'Tu email (para notificarte)' : 'Your email (to notify you)'}
+                  </label>
+                  <input
+                    type="email"
+                    value={nominateForm.submitter_email}
+                    onChange={(e) => setNominateForm((p) => ({ ...p, submitter_email: e.target.value }))}
+                    className="w-full rounded-lg border border-[#2d3748] bg-[#0f1419] px-4 py-2.5 text-white focus:border-emerald-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+              {nominateBanner && nominateOpen ? (
+                <p className="mt-4 text-center text-sm text-red-400">{nominateBanner}</p>
+              ) : null}
+              <div className="mt-6 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNominateOpen(false)
+                    setNominateBanner(null)
+                  }}
+                  className="flex-1 rounded-xl border border-[#2d3748] py-3 text-gray-400"
+                >
+                  {t.nominateCancel}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void submitNomination()}
+                  disabled={nominateBusy}
+                  className="flex-1 rounded-xl bg-emerald-500 py-3 font-semibold text-white hover:bg-emerald-600 disabled:opacity-50"
+                >
+                  {nominateBusy ? '…' : t.nominateSend}
+                </button>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

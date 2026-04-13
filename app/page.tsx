@@ -103,6 +103,7 @@ async function getLandingData() {
     locFeaturedCountRes,
     locActiveCountRes,
     locTopRes,
+    allTimeVotesRes,
   ] = await Promise.all([
     supabase
       .from('prediction_markets')
@@ -164,6 +165,7 @@ async function getLandingData() {
       .order('is_featured', { ascending: false })
       .order('sort_order', { ascending: true })
       .limit(3),
+    supabase.from('prediction_markets').select('total_votes, engagement_count').is('archived_at', null),
   ])
 
   const markets = (marketsRes.data || []) as MarketCardMarket[]
@@ -195,7 +197,15 @@ async function getLandingData() {
     | { id: string; title: string; translations: Json | null; total_votes_cast?: number }
     | null
 
-  const totalVotes = markets.reduce((sum, m) => sum + (m.total_votes ?? 0), 0)
+  const voteTotals = (allTimeVotesRes.data ?? []) as Array<{
+    total_votes?: number | null
+    engagement_count?: number | null
+  }>
+  const totalVotes = voteTotals.reduce(
+    (sum, m) =>
+      sum + (Number(m.total_votes) || 0) + (Number(m.engagement_count) || 0),
+    0
+  )
   const fundTotal = fundBalance
   const activeCauseName = causesWithVotes[0]?.name ?? causes[0]?.name ?? null
 

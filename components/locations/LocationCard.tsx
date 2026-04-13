@@ -1,10 +1,10 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
 import { MapPin, Instagram, Gift } from 'lucide-react'
 import type { Database } from '@/types/database'
 import { locationCategoryLabel } from '@/lib/locations/categories'
+import { LocationCoverImage, LocationLogoImage } from '@/components/locations/LocationRemoteImage'
 
 export type LocationCardRow = {
   id: string
@@ -65,18 +65,12 @@ export function LocationCard({
 
   return (
     <article className="flex flex-col overflow-hidden rounded-xl border border-[#2d3748] bg-[#1a2029] shadow-lg">
-      <div className="relative aspect-[16/9] w-full bg-[#0f1419]">
-        {location.cover_image_url ? (
-          <Image
-            src={location.cover_image_url}
-            alt=""
-            fill
-            className="rounded-t-xl object-cover"
-            sizes="(max-width: 768px) 100vw, 33vw"
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center text-slate-500">—</div>
-        )}
+      <div className="relative aspect-[16/9] w-full overflow-hidden bg-[#0f1419]">
+        <LocationCoverImage
+          url={location.cover_image_url}
+          alt=""
+          className="absolute inset-0 h-full w-full rounded-t-xl object-cover"
+        />
         <div
           className={`absolute right-3 top-3 flex min-w-[3.5rem] flex-col items-center rounded-lg px-2 py-1 text-white shadow-md ${scoreBadgeClass(score)}`}
         >
@@ -94,9 +88,11 @@ export function LocationCard({
       <div className="flex flex-1 flex-col gap-4 p-4">
         <div className="flex gap-3">
           <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-[#0f1419]">
-            {location.logo_url ? (
-              <Image src={location.logo_url} alt="" fill className="object-contain p-1" sizes="48px" />
-            ) : null}
+            <LocationLogoImage
+              url={location.logo_url}
+              alt=""
+              className="absolute inset-0 h-full w-full object-contain p-1"
+            />
           </div>
           <div className="min-w-0">
             <h3 className="truncate font-semibold text-white">{location.name}</h3>

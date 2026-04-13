@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
 import { MapPin, Instagram, Gift } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -9,6 +8,7 @@ import { useLanguage } from '@/contexts/LanguageContext'
 import { createClient } from '@/lib/supabase-client'
 import { locationCategoryLabel } from '@/lib/locations/categories'
 import type { LocationCardRow } from './LocationCard'
+import { LocationCoverImage, LocationLogoImage } from '@/components/locations/LocationRemoteImage'
 
 type OutcomeRow = {
   id: string
@@ -45,6 +45,9 @@ export default function LocationDetailClient({
   } | null>(null)
   const [editing, setEditing] = useState(false)
   const [showAnonVotePrompt, setShowAnonVotePrompt] = useState(false)
+  const [showAliasModal, setShowAliasModal] = useState(false)
+  const [aliasInput, setAliasInput] = useState('')
+  const [voteError, setVoteError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!location.current_market_id) return
@@ -88,10 +91,12 @@ export default function LocationDetailClient({
     const outcomeId = choice === 'yes' ? yesId : choice === 'no' ? noId : null
     if (!outcomeId) return
     setSubmitting(true)
+    setVoteError(null)
     try {
       const res = await fetch('/api/predictions/vote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
         body: JSON.stringify({
           market_id: location.current_market_id,
           outcome_id: outcomeId,
@@ -99,12 +104,24 @@ export default function LocationDetailClient({
           reasoning: reasoning.trim() || null,
         }),
       })
-      const j = await res.json()
-      if (!res.ok) {
-        alert(j.error || 'Vote failed')
+      const j = (await res.json()) as { error?: string; requiresAlias?: boolean }
+      if (res.status === 401 && j.requiresAlias === true) {
+        setShowAliasModal(true)
         return
       }
-      const { data: { session } } = await createClient().auth.getSession()
+      if (!res.ok) {
+        setVoteError(
+          typeof j.error === 'string'
+            ? j.error
+            : locale === 'es'
+              ? 'No se pudo registrar el voto'
+              : 'Vote failed'
+        )
+        return
+      }
+      const {
+        data: { session },
+      } = await createClient().auth.getSession()
       if (!session?.user) setShowAnonVotePrompt(true)
       setEditing(false)
       setChoice(null)
@@ -116,6 +133,27 @@ export default function LocationDetailClient({
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const joinAliasAndRetry = async (alias: string) => {
+    const clean =
+      alias.trim() ||
+      (locale === 'es' ? 'Invitado' : 'Guest')
+    const sessionId = crypto.randomUUID()
+    const res = await fetch('/api/live/join-anonymous', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ alias: clean, emoji: '🎯', session_id: sessionId }),
+    })
+    const j = (await res.json()) as { error?: string }
+    if (!res.ok) {
+      setVoteError(j.error ?? (locale === 'es' ? 'No se pudo guardar el alias' : 'Could not save alias'))
+      return
+    }
+    setShowAliasModal(false)
+    setAliasInput('')
+    await submit()
   }
 
   const score = location.conscious_score
@@ -137,11 +175,11 @@ export default function LocationDetailClient({
   return (
     <div className="min-h-screen bg-[#0f1419] pb-8 pt-0 text-slate-100">
       <div className="relative h-[min(40vh,420px)] w-full overflow-hidden bg-[#0f1419]">
-        {location.cover_image_url ? (
-          <Image src={location.cover_image_url} alt="" fill className="object-cover" priority sizes="100vw" />
-        ) : (
-          <div className="flex h-full items-center justify-center text-slate-600">—</div>
-        )}
+        <LocationCoverImage
+          url={location.cover_image_url}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+        />
       </div>
 
       <div className="mx-auto max-w-2xl px-4 pt-6">
@@ -172,9 +210,11 @@ export default function LocationDetailClient({
 
         <div className="mb-6 flex gap-4">
           <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-[#1a2029]">
-            {location.logo_url ? (
-              <Image src={location.logo_url} alt="" fill className="object-contain p-1" sizes="64px" />
-            ) : null}
+            <LocationLogoImage
+              url={location.logo_url}
+              alt=""
+              className="absolute inset-0 h-full w-full object-contain p-1"
+            />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-white">{location.name}</h1>
@@ -237,6 +277,11 @@ export default function LocationDetailClient({
             <h2 className="mb-4 text-lg font-semibold text-white">
               {locale === 'es' ? '¿Es este lugar Consciente?' : 'Is this place Conscious?'}
             </h2>
+            {voteError ? (
+              <p className="mb-4 text-sm text-red-400" role="alert">
+                {voteError}
+              </p>
+            ) : null}
 
             {myVote && !editing ? (
               <div className="space-y-4">
@@ -327,6 +372,59 @@ export default function LocationDetailClient({
           </Link>
         </div>
       </div>
+
+      <AnimatePresence>
+        {showAliasModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[55] flex items-center justify-center bg-black/70 p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.96, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.96, opacity: 0 }}
+              className="w-full max-w-sm rounded-2xl border border-[#2d3748] bg-[#1a2029] p-6 shadow-2xl"
+            >
+              <h3 className="mb-2 text-lg font-bold text-white">
+                {locale === 'es' ? 'Elige un alias' : 'Choose an alias'}
+              </h3>
+              <p className="mb-4 text-sm text-gray-400">
+                {locale === 'es'
+                  ? 'Tu alias aparece junto a tu voto. Puedes cambiarlo después.'
+                  : 'Your alias appears with your vote. You can change it later.'}
+              </p>
+              <input
+                type="text"
+                value={aliasInput}
+                onChange={(e) => setAliasInput(e.target.value)}
+                placeholder={locale === 'es' ? 'Tu alias…' : 'Your alias…'}
+                maxLength={20}
+                autoFocus
+                className="mb-4 w-full rounded-lg border border-[#2d3748] bg-[#0f1419] px-4 py-3 text-white placeholder:text-gray-500 focus:border-emerald-500 focus:outline-none"
+              />
+              {voteError ? <p className="mb-3 text-center text-sm text-red-400">{voteError}</p> : null}
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => void joinAliasAndRetry(locale === 'es' ? 'Invitado' : 'Guest')}
+                  className="flex-1 rounded-lg border border-[#2d3748] py-2.5 text-sm text-gray-400"
+                >
+                  {locale === 'es' ? 'Continuar como Invitado' : 'Continue as Guest'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void joinAliasAndRetry(aliasInput)}
+                  className="flex-1 rounded-lg bg-emerald-500 py-2.5 text-sm font-semibold text-white hover:bg-emerald-600"
+                >
+                  {locale === 'es' ? 'Confirmar' : 'Confirm'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {showAnonVotePrompt && (

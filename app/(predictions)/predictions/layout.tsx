@@ -6,7 +6,12 @@ import PredictionsShell from './PredictionsShell'
 import { PendingVoteSubmitter } from './components/PendingVoteSubmitter'
 
 /** Public: no login required (market detail pages allow guest voting) */
-const PUBLIC_PATHS = ['/predictions/leaderboard', '/predictions/fund', '/predictions/markets']
+const PUBLIC_PATHS = [
+  '/predictions/leaderboard',
+  '/predictions/fund',
+  '/predictions/markets',
+  '/predictions/inbox',
+]
 
 async function getNavCounts(supabase: Awaited<ReturnType<typeof createClient>>) {
   const [inboxRes, marketsRes, liveRes] = await Promise.all([

@@ -55,8 +55,8 @@ export function ImpactTicker({
       <div className="border-b border-cc-border/50 bg-cc-card/60 px-4 py-2">
         <p className="text-center text-xs text-gray-400 md:text-sm">
           {locale === 'es'
-            ? 'Sé el primero en predecir — cada voto cuenta'
-            : 'Be the first to predict — every vote counts'}
+            ? 'Sé el primero en opinar — cada voto cuenta'
+            : 'Be the first to share your opinion — every vote counts'}
         </p>
       </div>
     )
@@ -72,13 +72,13 @@ export function ImpactTicker({
           <span>
             {locale === 'es' ? (
               <>
-                <span className="font-medium text-gray-200">{displayVotes.toLocaleString('es-MX')}</span> predicciones
+                <span className="font-medium text-gray-200">{displayVotes.toLocaleString('es-MX')}</span> opiniones
                 {' generando impacto para '}
                 <span className="text-gray-300">{cause}</span>
               </>
             ) : (
               <>
-                <span className="font-medium text-gray-200">{displayVotes.toLocaleString('en-US')}</span> predictions
+                <span className="font-medium text-gray-200">{displayVotes.toLocaleString('en-US')}</span> opinions
                 {' driving impact for '}
                 <span className="text-gray-300">{cause}</span>
               </>
@@ -96,7 +96,7 @@ export function ImpactTicker({
         <span>
           {locale === 'es' ? (
             <>
-              <span className="font-medium text-gray-200">{displayVotes.toLocaleString('es-MX')}</span> predicciones
+              <span className="font-medium text-gray-200">{displayVotes.toLocaleString('es-MX')}</span> opiniones
               {' → '}
               <span className="font-semibold text-emerald-400">{formatMoney(displayFund, locale)}</span>
               {' para '}
@@ -104,8 +104,7 @@ export function ImpactTicker({
             </>
           ) : (
             <>
-              <span className="font-medium text-gray-200">{displayVotes.toLocaleString('en-US')}</span>{' '}
-              predictions →{' '}
+              <span className="font-medium text-gray-200">{displayVotes.toLocaleString('en-US')}</span> opinions →{' '}
               <span className="font-semibold text-emerald-400">{formatMoney(displayFund, locale)}</span>
               {' for '}
               <span className="text-gray-300">{cause}</span>

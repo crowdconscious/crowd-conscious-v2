@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 
 export type InboxItem = {
   id: string
-  user_id: string
+  user_id: string | null
   type: 'market_idea' | 'cause_proposal' | 'ngo_suggestion' | 'general' | 'location_nomination'
   title: string
   description: string | null
@@ -40,7 +40,7 @@ async function getInboxItems(): Promise<InboxItem[]> {
   }
 
   const items = (data || []) as Array<{ user_id: string; [k: string]: unknown }>
-  const userIds = [...new Set(items.map((i) => i.user_id))]
+  const userIds = [...new Set(items.map((i) => i.user_id).filter(Boolean))] as string[]
   const names: Record<string, string> = {}
   if (userIds.length > 0) {
     const { data: profiles } = await supabase
@@ -56,7 +56,8 @@ async function getInboxItems(): Promise<InboxItem[]> {
   return items.map((i) => ({
     ...i,
     links: Array.isArray(i.links) ? i.links : [],
-    submitter_name: names[i.user_id] || 'Anonymous',
+    submitter_name:
+      i.user_id && names[i.user_id as string] ? names[i.user_id as string] : 'Anonymous',
   })) as InboxItem[]
 }
 
