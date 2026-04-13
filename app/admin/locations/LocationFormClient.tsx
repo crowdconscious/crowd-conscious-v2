@@ -3,6 +3,10 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { LogoUpload } from '@/components/ui/LogoUpload'
+import {
+  LOCATION_CATEGORY_ADMIN_LABEL_ES,
+  LOCATION_CATEGORY_FORM_OPTIONS,
+} from '@/lib/locations/categories'
 
 function slugify(name: string) {
   return name
@@ -12,18 +16,6 @@ function slugify(name: string) {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '')
 }
-
-const CATEGORIES = [
-  'restaurant',
-  'bar',
-  'cafe',
-  'hotel',
-  'coworking',
-  'store',
-  'brand',
-  'influencer',
-  'other',
-] as const
 
 export default function LocationFormClient({ action }: { action: string }) {
   const router = useRouter()
@@ -189,9 +181,9 @@ export default function LocationFormClient({ action }: { action: string }) {
           onChange={(e) => setCategory(e.target.value)}
           className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
         >
-          {CATEGORIES.map((c) => (
-            <option key={c} value={c}>
-              {c}
+          {LOCATION_CATEGORY_FORM_OPTIONS.map((c) => (
+            <option key={c.value} value={c.value}>
+              {LOCATION_CATEGORY_ADMIN_LABEL_ES[c.value] ?? c.value}
             </option>
           ))}
         </select>

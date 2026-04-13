@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import { LOCATION_CATEGORY_FORM_OPTIONS } from '@/lib/locations/categories'
 
 type Loc = {
   id: string
@@ -133,12 +134,11 @@ export default function AdminLocationsClient() {
           className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
         >
           <option value="all">All categories</option>
-          <option value="restaurant">restaurant</option>
-          <option value="bar">bar</option>
-          <option value="cafe">cafe</option>
-          <option value="hotel">hotel</option>
-          <option value="brand">brand</option>
-          <option value="other">other</option>
+          {LOCATION_CATEGORY_FORM_OPTIONS.map((c) => (
+            <option key={c.value} value={c.value}>
+              {c.value}
+            </option>
+          ))}
         </select>
       </div>
 

@@ -4,7 +4,12 @@
  */
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { sendEmailsWithConcurrency } from '@/lib/resend'
-import { crowdNewsletterEmailTemplate, type BlogDigestMarket, type BlogPostDigest } from '@/lib/prediction-emails'
+import {
+  crowdNewsletterEmailTemplate,
+  type BlogDigestMarket,
+  type BlogPostDigest,
+  type NewsletterConsciousLocation,
+} from '@/lib/prediction-emails'
 import {
   createNewsletterListUnsubscribeToken,
   createUnsubscribeToken,
@@ -200,10 +205,30 @@ export async function runCrowdNewsletterCron(
       fundTotalMxn = 0
     }
 
-    if (!post && !pulseDigest && marketDigests.length === 0) {
+    let activeLocations: NewsletterConsciousLocation[] = []
+    try {
+      const { data: locRows } = await admin
+        .from('conscious_locations')
+        .select('id, name, slug, neighborhood, why_conscious')
+        .eq('status', 'active')
+        .order('is_featured', { ascending: false })
+        .order('total_votes', { ascending: false })
+        .limit(3)
+      activeLocations = (locRows ?? []).map((r) => ({
+        id: String(r.id),
+        name: String(r.name ?? ''),
+        slug: String(r.slug ?? ''),
+        neighborhood: (r.neighborhood as string | null) ?? null,
+        why_conscious: (r.why_conscious as string | null) ?? null,
+      }))
+    } catch {
+      activeLocations = []
+    }
+
+    if (!post && !pulseDigest && marketDigests.length === 0 && activeLocations.length === 0) {
       await cronHealthComplete(runId, healthJobName, admin, {
         success: true,
-        summary: 'skipped: no_content (no published blog + no active markets)',
+        summary: 'skipped: no_content (no published blog + no active markets + no conscious locations)',
       })
       return {
         ok: true,
@@ -291,6 +316,7 @@ export async function runCrowdNewsletterCron(
         fundTotalMxn,
         unsubscribeUrl: rec.unsubUrl,
         daysUntilWorldCup: wcDaysUntil(),
+        activeLocations,
       })
       subjectUsed = tpl.subject
       return { to: rec.email, subject: tpl.subject, html: tpl.html }

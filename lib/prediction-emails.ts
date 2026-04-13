@@ -335,6 +335,66 @@ function marketRowHtml(m: BlogDigestMarket): string {
     </div>`
 }
 
+export type NewsletterConsciousLocation = {
+  id: string
+  name: string
+  slug: string
+  neighborhood: string | null
+  why_conscious: string | null
+}
+
+function buildConsciousLocationsNewsletterHtml(locations: NewsletterConsciousLocation[]): string {
+  if (!locations.length) return ''
+
+  const rows = locations
+    .map((location) => {
+      const lineName = location.neighborhood?.trim()
+        ? `${esc(location.name)} · ${esc(location.neighborhood.trim())}`
+        : esc(location.name)
+      const whyRaw = location.why_conscious?.trim()
+      const why = whyRaw ? esc(whyRaw) : '—'
+      const detailUrl = `${APP_URL}/locations/${location.slug}`
+      return `
+    <div style="background: #1a2029; border-radius: 8px; padding: 12px 16px; margin-bottom: 8px; border: 1px solid #2d3748;">
+      <p style="color: #ffffff; font-size: 14px; font-weight: bold; margin: 0; font-family: ${EMAIL_FONT};">
+        ${lineName}
+      </p>
+      <p style="color: #9ca3af; font-size: 12px; margin: 4px 0 8px; font-family: ${EMAIL_FONT};">
+        "${why}"
+      </p>
+      <a href="${esc(detailUrl)}" style="color: #10b981; font-size: 13px; font-weight: bold; text-decoration: none; font-family: ${EMAIL_FONT};">
+        Votar →
+      </a>
+    </div>`
+    })
+    .join('')
+
+  const allUrl = `${APP_URL}/locations`
+
+  return `
+    <div style="padding: 0 24px 8px;">
+      <div style="height: 0; margin: 0 0 20px; border: 0; border-top: 1px solid #2d3748;" role="separator" aria-hidden="true"></div>
+      <p style="color: #10b981; font-size: 14px; font-weight: bold; margin: 0 0 8px; font-family: ${EMAIL_FONT};">
+        🏅 Conscious Locations
+      </p>
+      <p style="color: #9ca3af; font-size: 13px; margin: 0 0 12px; line-height: 1.5; font-family: ${EMAIL_FONT};">
+        ¿Conoces estos lugares? Ayuda a la comunidad a decidir si merecen el sello Consciente.
+      </p>
+      ${rows}
+      <div style="background: #1a2029; border-radius: 12px; padding: 16px; margin-top: 12px; border: 1px solid #10b981; text-align: center;">
+        <p style="color: #10b981; font-size: 13px; font-weight: bold; margin: 0 0 8px; font-family: ${EMAIL_FONT};">
+          🏅 ¿Tu barrio tiene un lugar Consciente?
+        </p>
+        <p style="color: #9ca3af; font-size: 12px; margin: 0 0 8px; line-height: 1.5; font-family: ${EMAIL_FONT};">
+          Vota por los establecimientos de tu zona y ayuda a mantener la calidad del sello.
+        </p>
+        <a href="${esc(allUrl)}" style="color: #10b981; font-size: 14px; font-weight: bold; text-decoration: none; font-family: ${EMAIL_FONT};">
+          Ver todos los lugares →
+        </a>
+      </div>
+    </div>`
+}
+
 /** Blog + optional Pulse + trending markets; dark theme (#0f1419), Arial-safe. */
 export function crowdNewsletterEmailTemplate(opts: {
   post: BlogPostDigest | null
@@ -345,6 +405,8 @@ export function crowdNewsletterEmailTemplate(opts: {
   fundTotalMxn: number
   unsubscribeUrl: string | null
   daysUntilWorldCup?: number
+  /** Active Conscious Locations (max 3 in cron); rendered between Mercados and Fondo */
+  activeLocations?: NewsletterConsciousLocation[] | null
 }): { subject: string; html: string } {
   const subject =
     opts.post && opts.highlightNewBlog
@@ -387,6 +449,7 @@ export function crowdNewsletterEmailTemplate(opts: {
     : ''
 
   const marketRows = opts.markets.map((m) => marketRowHtml(m)).join('')
+  const consciousLocationsBlock = buildConsciousLocationsNewsletterHtml(opts.activeLocations ?? [])
   const fundUrl = `${APP_URL}/predictions/fund`
   const wc =
     typeof opts.daysUntilWorldCup === 'number' && opts.daysUntilWorldCup > 0
@@ -407,6 +470,7 @@ export function crowdNewsletterEmailTemplate(opts: {
       </h2>
       ${marketRows || '<p style="color:#64748b;font-size:14px;font-family: Arial, sans-serif;">Pronto más mercados.</p>'}
     </div>
+    ${consciousLocationsBlock}
     ${divider}
     <div style="padding: 20px 24px 8px; text-align: center;">
       <p style="color: #10b981; font-size: 14px; margin: 0 0 6px; font-weight: 600; font-family: ${EMAIL_FONT};">
@@ -432,6 +496,7 @@ export function blogDigestNewsletterTemplate(opts: {
   markets: BlogDigestMarket[]
   fundTotalMxn: number
   unsubscribeUrl: string | null
+  activeLocations?: NewsletterConsciousLocation[] | null
 }): { subject: string; html: string } {
   return crowdNewsletterEmailTemplate({
     post: opts.post,
@@ -440,6 +505,7 @@ export function blogDigestNewsletterTemplate(opts: {
     markets: opts.markets,
     fundTotalMxn: opts.fundTotalMxn,
     unsubscribeUrl: opts.unsubscribeUrl,
+    activeLocations: opts.activeLocations ?? null,
   })
 }
 

@@ -4,6 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { MapPin, Instagram, Gift } from 'lucide-react'
 import type { Database } from '@/types/database'
+import { locationCategoryLabel } from '@/lib/locations/categories'
 
 export type LocationCardRow = {
   id: string
@@ -22,18 +23,6 @@ export type LocationCardRow = {
   conscious_score: number | null
   total_votes: number
   certified_at: string | null
-}
-
-const CATEGORY_LABEL: Record<string, { es: string; en: string }> = {
-  restaurant: { es: 'Restaurante', en: 'Restaurant' },
-  bar: { es: 'Bar', en: 'Bar' },
-  cafe: { es: 'Café', en: 'Café' },
-  hotel: { es: 'Hotel', en: 'Hotel' },
-  coworking: { es: 'Coworking', en: 'Coworking' },
-  store: { es: 'Tienda', en: 'Store' },
-  brand: { es: 'Marca', en: 'Brand' },
-  influencer: { es: 'Influencer', en: 'Influencer' },
-  other: { es: 'Otro', en: 'Other' },
 }
 
 function scoreBadgeClass(score: number | null): string {
@@ -66,8 +55,7 @@ export function LocationCard({
     locale === 'es'
       ? location.user_benefits || location.user_benefits_en
       : location.user_benefits_en || location.user_benefits
-  const cat = CATEGORY_LABEL[location.category] ?? CATEGORY_LABEL.other
-  const catLabel = locale === 'es' ? cat.es : cat.en
+  const catLabel = locationCategoryLabel(location.category, locale)
   const neighborhood = location.neighborhood
   const placeLine = [neighborhood, location.city].filter(Boolean).join(', ')
   const score = location.conscious_score

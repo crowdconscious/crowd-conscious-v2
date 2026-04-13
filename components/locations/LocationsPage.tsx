@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Search, X, Check } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { LocationCard, type LocationCardRow } from './LocationCard'
+import { locationCategoryLabel, visibleLocationCategoryFilters } from '@/lib/locations/categories'
 
 type OutcomeRow = {
   id: string
@@ -39,15 +40,6 @@ type VerifyRow = {
   logo_url: string | null
 }
 
-const CATEGORY_FILTERS = [
-  { id: 'all', es: 'Todos', en: 'All' },
-  { id: 'restaurant', es: 'Restaurantes', en: 'Restaurants' },
-  { id: 'bar', es: 'Bares', en: 'Bars' },
-  { id: 'cafe', es: 'Cafés', en: 'Cafés' },
-  { id: 'hotel', es: 'Hoteles', en: 'Hotels' },
-  { id: 'brand', es: 'Marcas', en: 'Brands' },
-] as const
-
 function SwipeCard({
   loc,
   locale,
@@ -61,12 +53,7 @@ function SwipeCard({
     locale === 'es'
       ? loc.why_conscious || loc.why_conscious_en
       : loc.why_conscious_en || loc.why_conscious
-  const cat =
-    loc.category === 'restaurant'
-      ? locale === 'es'
-        ? 'Restaurante'
-        : 'Restaurant'
-      : loc.category
+  const cat = locationCategoryLabel(loc.category, locale)
 
   return (
     <motion.div
@@ -133,7 +120,7 @@ function SwipeCard({
 export default function LocationsPage() {
   const { language } = useLanguage()
   const locale = language
-  const [locations, setLocations] = useState<ApiLocation[]>([])
+  const [allLocations, setAllLocations] = useState<ApiLocation[]>([])
   const [cityOptions, setCityOptions] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [city, setCity] = useState<string | null>(null)
@@ -157,32 +144,41 @@ export default function LocationsPage() {
     try {
       const params = new URLSearchParams()
       if (city) params.set('city', city)
-      if (category !== 'all') params.set('category', category)
       const res = await fetch(`/api/locations?${params.toString()}`)
       const json = (await res.json()) as { locations?: ApiLocation[]; cities?: string[] }
-      setLocations(json.locations ?? [])
+      setAllLocations(json.locations ?? [])
       if (json.cities?.length) setCityOptions(json.cities)
     } catch {
-      setLocations([])
+      setAllLocations([])
     } finally {
       setLoading(false)
     }
-  }, [city, category])
+  }, [city])
 
   useEffect(() => {
     load()
   }, [load])
 
+  const filteredLocations = useMemo(() => {
+    if (category === 'all') return allLocations
+    return allLocations.filter((l) => l.category === category)
+  }, [allLocations, category])
+
+  const categoryPillDefs = useMemo(() => {
+    const active = new Set(allLocations.map((l) => l.category))
+    return visibleLocationCategoryFilters(active)
+  }, [allLocations])
+
   const cities =
     cityOptions.length > 0
       ? cityOptions
-      : [...new Set(locations.map((l) => l.city))].sort()
+      : [...new Set(allLocations.map((l) => l.city))].sort()
 
   const swipeQueue = useMemo(() => {
-    return locations.filter(
+    return filteredLocations.filter(
       (l) => l.current_market_id && !l.hasVoted && (l.outcomes?.length ?? 0) >= 2
     )
-  }, [locations])
+  }, [filteredLocations])
 
   const [stack, setStack] = useState<ApiLocation[]>([])
   useEffect(() => {
@@ -284,7 +280,10 @@ export default function LocationsPage() {
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                onClick={() => setCity(null)}
+                onClick={() => {
+                  setCity(null)
+                  setCategory('all')
+                }}
                 className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
                   city === null ? 'bg-emerald-500 text-white' : 'bg-[#1a2029] text-slate-300 border border-[#2d3748]'
                 }`}
@@ -295,7 +294,10 @@ export default function LocationsPage() {
                 <button
                   key={c}
                   type="button"
-                  onClick={() => setCity(c)}
+                  onClick={() => {
+                    setCity(c)
+                    setCategory('all')
+                  }}
                   className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
                     city === c ? 'bg-emerald-500 text-white' : 'bg-[#1a2029] text-slate-300 border border-[#2d3748]'
                   }`}
@@ -307,16 +309,16 @@ export default function LocationsPage() {
           </div>
 
           <div className="mb-8 flex flex-wrap gap-2">
-            {CATEGORY_FILTERS.map((c) => (
+            {categoryPillDefs.map((c) => (
               <button
-                key={c.id}
+                key={c.value}
                 type="button"
-                onClick={() => setCategory(c.id)}
+                onClick={() => setCategory(c.value)}
                 className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                  category === c.id ? 'bg-emerald-500/90 text-white' : 'bg-[#1a2029] text-slate-400 border border-[#2d3748]'
+                  category === c.value ? 'bg-emerald-500/90 text-white' : 'bg-[#1a2029] text-slate-400 border border-[#2d3748]'
                 }`}
               >
-                {locale === 'es' ? c.es : c.en}
+                {locale === 'es' ? c.label.es : c.label.en}
               </button>
             ))}
           </div>
@@ -325,13 +327,13 @@ export default function LocationsPage() {
             <p className="text-center text-slate-500">{locale === 'es' ? 'Cargando…' : 'Loading…'}</p>
           ) : (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {locations.map((loc) => (
+              {filteredLocations.map((loc) => (
                 <LocationCard key={loc.id} location={loc} locale={locale} />
               ))}
             </div>
           )}
 
-          {!loading && locations.length === 0 && (
+          {!loading && filteredLocations.length === 0 && (
             <p className="text-center text-slate-500">{locale === 'es' ? 'Sin resultados.' : 'No results.'}</p>
           )}
         </section>
@@ -340,7 +342,7 @@ export default function LocationsPage() {
           <h2 className="mb-1 text-center text-2xl font-bold text-white">{t.swipeTitle}</h2>
           <p className="mb-8 text-center text-slate-400">{t.swipeSub}</p>
 
-          {!top && swipeQueue.length === 0 && !loading && locations.length > 0 && (
+          {!top && swipeQueue.length === 0 && !loading && filteredLocations.length > 0 && (
             <div className="mx-auto max-w-md rounded-xl border border-emerald-500/30 bg-[#1a2029] p-6 text-center">
               <p className="text-lg text-emerald-300">✓ {t.doneTitle}</p>
               <p className="mt-2 text-sm text-slate-400">{t.doneSub}</p>
@@ -362,7 +364,7 @@ export default function LocationsPage() {
             </AnimatePresence>
           </div>
 
-          {!loading && locations.length === 0 && (
+          {!loading && allLocations.length === 0 && (
             <p className="text-center text-sm text-slate-500">
               {locale === 'es' ? 'No hay lugares activos aún.' : 'No active locations yet.'}
             </p>
@@ -509,7 +511,7 @@ function VerifyResultCard({ row, locale }: { row: VerifyRow; locale: 'es' | 'en'
         <h3 className="text-xl font-bold text-white">{row.name}</h3>
         <p className="text-slate-400">
           {row.neighborhood ? `${row.neighborhood} · ` : ''}
-          {row.category}
+          {locationCategoryLabel(row.category, locale)}
         </p>
         {row.conscious_score != null && (
           <p className="text-slate-300">

@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { MapPin, Instagram, Gift } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { locationCategoryLabel } from '@/lib/locations/categories'
 import type { LocationCardRow } from './LocationCard'
 
 type OutcomeRow = {
@@ -174,7 +175,7 @@ export default function LocationDetailClient({
             <h1 className="text-2xl font-bold text-white">{location.name}</h1>
             <p className="text-slate-400">
               {location.neighborhood ? `${location.neighborhood}, ` : ''}
-              {location.city} · {location.category}
+              {location.city} · {locationCategoryLabel(location.category, locale)}
             </p>
             {location.certified_at && (
               <p className="mt-1 text-sm text-emerald-400/90">
