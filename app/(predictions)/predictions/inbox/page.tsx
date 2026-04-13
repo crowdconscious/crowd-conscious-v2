@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import { createClient } from '@/lib/supabase-server'
 import { InboxClient } from './InboxClient'
 import { SITE_URL } from '@/lib/seo/site'
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
 export type InboxItem = {
   id: string
   user_id: string
-  type: 'market_idea' | 'cause_proposal' | 'ngo_suggestion' | 'general'
+  type: 'market_idea' | 'cause_proposal' | 'ngo_suggestion' | 'general' | 'location_nomination'
   title: string
   description: string | null
   category: string | null
@@ -61,5 +62,15 @@ async function getInboxItems(): Promise<InboxItem[]> {
 
 export default async function InboxPage() {
   const items = await getInboxItems()
-  return <InboxClient initialItems={items} />
+  return (
+    <Suspense
+      fallback={
+        <div className="rounded-xl border border-cc-border bg-cc-card/80 p-8 text-center text-cc-text-secondary">
+          Loading…
+        </div>
+      }
+    >
+      <InboxClient initialItems={items} />
+    </Suspense>
+  )
 }

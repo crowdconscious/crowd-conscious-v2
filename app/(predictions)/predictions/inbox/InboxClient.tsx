@@ -1,7 +1,9 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { useLanguage } from '@/contexts/LanguageContext'
 import {
   Plus,
   ChevronUp,
@@ -24,10 +26,12 @@ import {
 } from 'lucide-react'
 import type { InboxItem } from './page'
 
-const TYPE_OPTIONS = [
-  { value: 'market_idea', label: 'Market Idea' },
-  { value: 'cause_proposal', label: 'Cause/NGO' },
-  { value: 'general', label: 'General Suggestion' },
+const INBOX_TYPES = [
+  'market_idea',
+  'cause_proposal',
+  'ngo_suggestion',
+  'general',
+  'location_nomination',
 ] as const
 
 const CATEGORIES = [
@@ -53,6 +57,11 @@ const TYPE_CONFIG: Record<
   cause_proposal: { label: 'Cause/NGO', bg: 'bg-pink-500/10', text: 'text-pink-400' },
   ngo_suggestion: { label: 'Cause/NGO', bg: 'bg-pink-500/10', text: 'text-pink-400' },
   general: { label: 'General', bg: 'bg-gray-700/50', text: 'text-gray-300' },
+  location_nomination: {
+    label: 'Location Nomination',
+    bg: 'bg-teal-500/10',
+    text: 'text-teal-400',
+  },
 }
 
 const STATUS_CONFIG: Record<
@@ -66,13 +75,6 @@ const STATUS_CONFIG: Record<
   published: { label: 'Published', bg: 'bg-emerald-500/10', text: 'text-emerald-400' },
   promoted_to_cause: { label: 'Promoted to Cause', bg: 'bg-amber-500/20', text: 'text-amber-400' },
 }
-
-const FILTER_TABS = [
-  { id: 'all', label: 'All' },
-  { id: 'market_idea', label: 'Market Ideas' },
-  { id: 'causes', label: 'Causes' },
-  { id: 'general', label: 'General' },
-] as const
 
 function formatRelativeTime(dateStr: string): string {
   const date = new Date(dateStr)
@@ -101,6 +103,8 @@ interface Props {
 }
 
 export function InboxClient({ initialItems }: Props) {
+  const { language } = useLanguage()
+  const searchParams = useSearchParams()
   const [items, setItems] = useState<InboxItem[]>(initialItems)
   const [filter, setFilter] = useState<string>('all')
   const [modalOpen, setModalOpen] = useState(false)
@@ -114,6 +118,46 @@ export function InboxClient({ initialItems }: Props) {
   const [formDescription, setFormDescription] = useState('')
   const [formCategory, setFormCategory] = useState('')
   const [formLinks, setFormLinks] = useState<{ url: string; label: string }[]>([{ url: '', label: '' }])
+
+  const filterTabs = useMemo(
+    () => [
+      { id: 'all', label: language === 'es' ? 'Todos' : 'All' },
+      { id: 'market_idea', label: language === 'es' ? 'Ideas de mercado' : 'Market Ideas' },
+      { id: 'causes', label: language === 'es' ? 'Causas' : 'Causes' },
+      { id: 'general', label: language === 'es' ? 'General' : 'General' },
+      {
+        id: 'location_nomination',
+        label: language === 'es' ? 'Nominaciones' : 'Nominations',
+      },
+    ],
+    [language]
+  )
+
+  const typeOptions = useMemo(
+    () => [
+      { value: 'market_idea', label: language === 'es' ? 'Idea de mercado' : 'Market Idea' },
+      { value: 'cause_proposal', label: language === 'es' ? 'Causa / ONG' : 'Cause/NGO' },
+      { value: 'ngo_suggestion', label: language === 'es' ? 'Sugerencia ONG' : 'NGO suggestion' },
+      { value: 'general', label: language === 'es' ? 'Sugerencia general' : 'General Suggestion' },
+      {
+        value: 'location_nomination',
+        label: language === 'es' ? 'Nominación de lugar' : 'Location Nomination',
+      },
+    ],
+    [language]
+  )
+
+  useEffect(() => {
+    const action = searchParams.get('action')
+    if (action !== 'submit') return
+    const raw = searchParams.get('type') || searchParams.get('category')
+    if (raw === 'location_nomination') {
+      setFormType('location_nomination')
+    } else if (raw && INBOX_TYPES.includes(raw as (typeof INBOX_TYPES)[number])) {
+      setFormType(raw)
+    }
+    setModalOpen(true)
+  }, [searchParams])
 
   const fetchItems = useCallback(async () => {
     const params = new URLSearchParams()
@@ -236,8 +280,8 @@ export function InboxClient({ initialItems }: Props) {
           <Plus className="w-4 h-4" />
           Submit Idea
         </button>
-        <div className="flex gap-2">
-          {FILTER_TABS.map((tab) => (
+        <div className="flex flex-wrap gap-2">
+          {filterTabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setFilter(tab.id)}
@@ -272,6 +316,18 @@ export function InboxClient({ initialItems }: Props) {
               </button>
             </div>
             <form onSubmit={handleSubmit} className="flex-1 overflow-auto p-4 space-y-4">
+              {formType === 'location_nomination' && (
+                <div className="bg-[#0f1419] border border-emerald-500/20 rounded-lg p-3 mb-1">
+                  <p className="text-emerald-400 text-sm font-semibold mb-1">
+                    🏅 {language === 'es' ? 'Nominación de lugar' : 'Location Nomination'}
+                  </p>
+                  <p className="text-gray-400 text-xs">
+                    {language === 'es'
+                      ? 'Incluye: nombre del lugar, ubicación (colonia/ciudad), por qué crees que es Consciente, y su Instagram si lo conoces.'
+                      : "Include: place name, location (neighborhood/city), why you think it's Conscious, and their Instagram if you know it."}
+                  </p>
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1.5">Type</label>
                 <select
@@ -279,7 +335,7 @@ export function InboxClient({ initialItems }: Props) {
                   onChange={(e) => setFormType(e.target.value)}
                   className="w-full px-4 py-2.5 bg-cc-card border border-cc-border rounded-lg text-white focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20"
                 >
-                  {TYPE_OPTIONS.map((o) => (
+                  {typeOptions.map((o) => (
                     <option key={o.value} value={o.value}>
                       {o.label}
                     </option>
@@ -292,7 +348,13 @@ export function InboxClient({ initialItems }: Props) {
                   type="text"
                   value={formTitle}
                   onChange={(e) => setFormTitle(e.target.value)}
-                  placeholder="Brief title for your idea"
+                  placeholder={
+                    formType === 'location_nomination'
+                      ? language === 'es'
+                        ? 'Nombre del lugar'
+                        : 'Place name'
+                      : 'Brief title for your idea'
+                  }
                   required
                   className="w-full px-4 py-2.5 bg-cc-card border border-cc-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20"
                 />
@@ -394,6 +456,12 @@ export function InboxClient({ initialItems }: Props) {
         <div className="space-y-4">
           {items.map((item) => {
             const typeConfig = TYPE_CONFIG[item.type] || TYPE_CONFIG.general
+            const typeBadgeLabel =
+              item.type === 'location_nomination'
+                ? language === 'es'
+                  ? 'Nominación de lugar'
+                  : 'Location Nomination'
+                : typeConfig.label
             const statusConfig = item.status !== 'pending' ? STATUS_CONFIG[item.status] : null
             const voted = myVotes.has(item.id)
             const isLoading = voteLoading === item.id
@@ -423,7 +491,7 @@ export function InboxClient({ initialItems }: Props) {
                       <span
                         className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${typeConfig.bg} ${typeConfig.text}`}
                       >
-                        {typeConfig.label}
+                        {typeBadgeLabel}
                       </span>
                       {item.status === 'promoted_to_cause' ? (
                         <Link

@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, X, Check } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { createClient } from '@/lib/supabase-client'
 import { LocationCard, type LocationCardRow } from './LocationCard'
 import { locationCategoryLabel, visibleLocationCategoryFilters } from '@/lib/locations/categories'
 
@@ -138,6 +139,7 @@ export default function LocationsPage() {
   const [confidence, setConfidence] = useState(7)
   const [reasoning, setReasoning] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [showAnonVotePrompt, setShowAnonVotePrompt] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -219,6 +221,8 @@ export default function LocationsPage() {
       }
       setPendingSwipe(null)
       setStack((prev) => prev.filter((x) => x.id !== loc.id))
+      const { data: { session } } = await createClient().auth.getSession()
+      if (!session?.user) setShowAnonVotePrompt(true)
       await load()
     } finally {
       setSubmitting(false)
@@ -264,11 +268,18 @@ export default function LocationsPage() {
     doneTitle: locale === 'es' ? 'Has votado por todos los lugares. ¡Gracias!' : "You've voted on every place. Thanks!",
     doneSub: locale === 'es' ? 'Agregamos nuevos cada semana. Síguenos → @crowdconscious' : 'We add new ones weekly. Follow → @crowdconscious',
     sheetCancel: locale === 'es' ? 'Cancelar' : 'Cancel',
+    anonVoteTitle: locale === 'es' ? '¡Voto registrado! 🎉' : 'Vote recorded! 🎉',
+    anonVoteBody:
+      locale === 'es'
+        ? 'Crea una cuenta para ganar XP y aparecer en la clasificación.'
+        : 'Create an account to earn XP and appear on the leaderboard.',
+    anonSignUp: locale === 'es' ? 'Registrarse' : 'Sign up',
+    anonKeep: locale === 'es' ? 'Seguir votando' : 'Keep voting',
   }
 
   return (
     <div className="min-h-screen bg-[#0f1419] text-slate-100">
-      <div className="mx-auto max-w-6xl px-4 pb-20 pt-28">
+      <div className="mx-auto max-w-6xl px-4 pb-20 pt-8">
         <header className="mb-10 text-center">
           <h1 className="text-3xl font-bold text-white md:text-4xl">{t.heroTitle}</h1>
           <p className="mt-2 text-slate-400">{t.heroSub}</p>
@@ -421,11 +432,56 @@ export default function LocationsPage() {
 
           {verifySearched && verifyResult === null && !verifyMany && !verifyLoading && (
             <p className="text-center text-slate-400">
-              {locale === 'es'
-                ? 'No encontramos ese establecimiento. ¿Crees que debería ser Consciente? (próximamente: nominar)'
-                : "We couldn't find that establishment. Think it should be Conscious? (nominations coming soon)"}
+              {locale === 'es' ? (
+                <>
+                  No encontramos ese establecimiento.{' '}
+                  <Link
+                    href="/predictions/inbox?type=location_nomination&action=submit"
+                    className="text-emerald-400 hover:text-emerald-300 underline underline-offset-2"
+                  >
+                    Nomínalo en el Buzón Consciente
+                  </Link>
+                  .
+                </>
+              ) : (
+                <>
+                  We couldn&apos;t find that establishment.{' '}
+                  <Link
+                    href="/predictions/inbox?type=location_nomination&action=submit"
+                    className="text-emerald-400 hover:text-emerald-300 underline underline-offset-2"
+                  >
+                    Nominate it via the Conscious Inbox
+                  </Link>
+                  .
+                </>
+              )}
             </p>
           )}
+        </section>
+
+        <section className="mt-16 mb-12 text-center">
+          <div className="mx-auto max-w-lg rounded-2xl border border-[#2d3748] bg-[#1a2029] p-8">
+            <h3 className="mb-2 text-xl font-bold text-white">
+              {locale === 'es' ? '¿Conoces un lugar Consciente?' : 'Know a Conscious place?'}
+            </h3>
+            <p className="mb-6 text-sm text-gray-400">
+              {locale === 'es'
+                ? 'Nomina un restaurante, bar, marca, artista o festival que merezca el sello. La comunidad decide.'
+                : 'Nominate a restaurant, bar, brand, artist, or festival that deserves the seal. The community decides.'}
+            </p>
+            <Link
+              href="/predictions/inbox?type=location_nomination&action=submit"
+              className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-6 py-3 font-semibold text-white transition-colors hover:bg-emerald-600"
+            >
+              <span aria-hidden>🏅</span>
+              {locale === 'es' ? 'Nominar un lugar' : 'Nominate a place'}
+            </Link>
+            <p className="mt-4 text-xs text-gray-500">
+              {locale === 'es'
+                ? 'Las nominaciones llegan a nuestro Buzón Consciente y son revisadas por el equipo.'
+                : 'Nominations arrive in our Conscious Inbox and are reviewed by the team.'}
+            </p>
+          </div>
         </section>
       </div>
 
@@ -473,6 +529,39 @@ export default function LocationsPage() {
               >
                 {submitting ? '…' : t.confirm}
               </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showAnonVotePrompt && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            className="fixed inset-x-0 bottom-0 z-[45] border-t border-[#2d3748] bg-[#1a2029] p-4 shadow-2xl md:p-5"
+          >
+            <div className="mx-auto flex max-w-lg flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="font-semibold text-white">{t.anonVoteTitle}</p>
+                <p className="text-sm text-slate-400">{t.anonVoteBody}</p>
+              </div>
+              <div className="flex flex-shrink-0 gap-2">
+                <Link
+                  href="/signup"
+                  className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-xl bg-emerald-600 px-4 font-semibold text-white hover:bg-emerald-500 sm:flex-none"
+                >
+                  {t.anonSignUp}
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setShowAnonVotePrompt(false)}
+                  className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-xl border border-[#2d3748] px-4 text-slate-300 hover:bg-[#0f1419] sm:flex-none"
+                >
+                  {t.anonKeep}
+                </button>
+              </div>
             </div>
           </motion.div>
         )}

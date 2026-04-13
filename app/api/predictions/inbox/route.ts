@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: 'Type and title are required' }, { status: 400 })
     }
 
-    const validTypes = ['market_idea', 'cause_proposal', 'ngo_suggestion', 'general']
+    const validTypes = ['market_idea', 'cause_proposal', 'ngo_suggestion', 'general', 'location_nomination']
     if (!validTypes.includes(type)) {
       return Response.json({ error: 'Invalid type' }, { status: 400 })
     }

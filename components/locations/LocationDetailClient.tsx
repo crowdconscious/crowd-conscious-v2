@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { MapPin, Instagram, Gift } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { createClient } from '@/lib/supabase-client'
 import { locationCategoryLabel } from '@/lib/locations/categories'
 import type { LocationCardRow } from './LocationCard'
 
@@ -42,6 +44,7 @@ export default function LocationDetailClient({
     outcome_id: string
   } | null>(null)
   const [editing, setEditing] = useState(false)
+  const [showAnonVotePrompt, setShowAnonVotePrompt] = useState(false)
 
   useEffect(() => {
     if (!location.current_market_id) return
@@ -101,6 +104,8 @@ export default function LocationDetailClient({
         alert(j.error || 'Vote failed')
         return
       }
+      const { data: { session } } = await createClient().auth.getSession()
+      if (!session?.user) setShowAnonVotePrompt(true)
       setEditing(false)
       setChoice(null)
       setMyVote({
@@ -130,7 +135,7 @@ export default function LocationDetailClient({
       : '—'
 
   return (
-    <div className="min-h-screen bg-[#0f1419] pb-8 pt-20 text-slate-100">
+    <div className="min-h-screen bg-[#0f1419] pb-8 pt-0 text-slate-100">
       <div className="relative h-[min(40vh,420px)] w-full overflow-hidden bg-[#0f1419]">
         {location.cover_image_url ? (
           <Image src={location.cover_image_url} alt="" fill className="object-cover" priority sizes="100vw" />
@@ -322,6 +327,45 @@ export default function LocationDetailClient({
           </Link>
         </div>
       </div>
+
+      <AnimatePresence>
+        {showAnonVotePrompt && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            className="fixed inset-x-0 bottom-0 z-[45] border-t border-[#2d3748] bg-[#1a2029] p-4 shadow-2xl md:p-5"
+          >
+            <div className="mx-auto flex max-w-lg flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="font-semibold text-white">
+                  {locale === 'es' ? '¡Voto registrado! 🎉' : 'Vote recorded! 🎉'}
+                </p>
+                <p className="text-sm text-slate-400">
+                  {locale === 'es'
+                    ? 'Crea una cuenta para ganar XP y aparecer en la clasificación.'
+                    : 'Create an account to earn XP and appear on the leaderboard.'}
+                </p>
+              </div>
+              <div className="flex flex-shrink-0 gap-2">
+                <Link
+                  href="/signup"
+                  className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-xl bg-emerald-600 px-4 font-semibold text-white hover:bg-emerald-500 sm:flex-none"
+                >
+                  {locale === 'es' ? 'Registrarse' : 'Sign up'}
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setShowAnonVotePrompt(false)}
+                  className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-xl border border-[#2d3748] px-4 text-slate-300 hover:bg-[#0f1419] sm:flex-none"
+                >
+                  {locale === 'es' ? 'Cerrar' : 'Dismiss'}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

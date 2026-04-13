@@ -27,6 +27,7 @@ import {
   Ticket,
   Newspaper,
   PenLine,
+  MapPin,
 } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import LanguageSwitcherSimple from '@/components/LanguageSwitcherSimple'
@@ -229,6 +230,17 @@ export default function PredictionsShell({
             >
               <Ticket className="w-4 h-4" />
               {language === 'es' ? 'Cupones' : 'Coupons'}
+            </Link>
+            <Link
+              href="/admin/locations"
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                pathname.startsWith('/admin/locations')
+                  ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
+                  : 'text-cc-text-secondary hover:bg-gray-800/50 hover:text-amber-400'
+              }`}
+            >
+              <MapPin className="w-4 h-4" />
+              Locations
             </Link>
             <Link
               href="/predictions/pulse"
@@ -454,6 +466,18 @@ export default function PredictionsShell({
                   >
                     <Ticket className="w-4 h-4" />
                     {language === 'es' ? 'Cupones' : 'Coupons'}
+                  </Link>
+                  <Link
+                    href="/admin/locations"
+                    onClick={closeMobileMenu}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                      pathname.startsWith('/admin/locations')
+                        ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
+                        : 'text-cc-text-secondary hover:bg-gray-800/50 hover:text-amber-400'
+                    }`}
+                  >
+                    <MapPin className="w-4 h-4" />
+                    Locations
                   </Link>
                   <Link
                     href="/predictions/pulse"
