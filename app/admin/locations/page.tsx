@@ -1,7 +1,5 @@
-import AdminLocationsClient from './AdminLocationsClient'
+import { redirect } from 'next/navigation'
 
-export const dynamic = 'force-dynamic'
-
-export default function AdminLocationsPage() {
-  return <AdminLocationsClient />
+export default function OldAdminLocationsRedirect() {
+  redirect('/predictions/admin/locations')
 }

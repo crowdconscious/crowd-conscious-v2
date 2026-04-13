@@ -8,6 +8,8 @@ import {
   LOCATION_CATEGORY_FORM_OPTIONS,
 } from '@/lib/locations/categories'
 
+const LIST_PATH = '/predictions/admin/locations'
+
 function slugify(name: string) {
   return name
     .normalize('NFD')
@@ -16,6 +18,10 @@ function slugify(name: string) {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '')
 }
+
+const inputClass =
+  'mt-1 w-full rounded-lg border border-cc-border bg-cc-card px-3 py-2 text-cc-text-primary placeholder:text-cc-text-muted focus:border-emerald-500/50 focus:outline-none focus:ring-1 focus:ring-emerald-500/20'
+const labelClass = 'text-sm font-medium text-cc-text-secondary'
 
 export default function LocationFormClient({ action }: { action: string }) {
   const router = useRouter()
@@ -137,7 +143,7 @@ export default function LocationFormClient({ action }: { action: string }) {
       if (isNew && status === 'active') {
         alert('Ubicación creada. Mercado de votación activo.')
       }
-      router.push('/admin/locations')
+      router.push(LIST_PATH)
       router.refresh()
     } finally {
       setSaving(false)
@@ -145,41 +151,41 @@ export default function LocationFormClient({ action }: { action: string }) {
   }
 
   if (loading) {
-    return <p className="text-slate-600">Cargando…</p>
+    return <p className="text-cc-text-secondary">Cargando…</p>
   }
 
   return (
     <div className="max-w-2xl space-y-6">
-      <h1 className="text-2xl font-bold text-slate-900">{isNew ? 'Nueva ubicación' : 'Editar ubicación'}</h1>
+      <h1 className="text-2xl font-bold text-white">{isNew ? 'Nueva ubicación' : 'Editar ubicación'}</h1>
 
       <label className="block">
-        <span className="text-sm font-medium text-slate-700">Name *</span>
+        <span className={labelClass}>Name *</span>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           onBlur={onNameBlur}
-          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+          className={inputClass}
         />
       </label>
 
       <label className="block">
-        <span className="text-sm font-medium text-slate-700">Slug *</span>
+        <span className={labelClass}>Slug *</span>
         <input
           value={slug}
           onChange={(e) => {
             setSlugTouched(true)
             setSlug(e.target.value)
           }}
-          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+          className={inputClass}
         />
       </label>
 
       <label className="block">
-        <span className="text-sm font-medium text-slate-700">Category *</span>
+        <span className={labelClass}>Category *</span>
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+          className={inputClass}
         >
           {LOCATION_CATEGORY_FORM_OPTIONS.map((c) => (
             <option key={c.value} value={c.value}>
@@ -190,114 +196,102 @@ export default function LocationFormClient({ action }: { action: string }) {
       </label>
 
       <label className="block">
-        <span className="text-sm font-medium text-slate-700">City *</span>
-        <input
-          value={city}
-          onChange={(e) => setCity(e.target.value)}
-          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
-        />
+        <span className={labelClass}>City *</span>
+        <input value={city} onChange={(e) => setCity(e.target.value)} className={inputClass} />
       </label>
 
       <label className="block">
-        <span className="text-sm font-medium text-slate-700">Neighborhood</span>
+        <span className={labelClass}>Neighborhood</span>
         <input
           value={neighborhood}
           onChange={(e) => setNeighborhood(e.target.value)}
-          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+          className={inputClass}
         />
       </label>
 
       <label className="block">
-        <span className="text-sm font-medium text-slate-700">Address</span>
-        <input
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
-          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
-        />
+        <span className={labelClass}>Address</span>
+        <input value={address} onChange={(e) => setAddress(e.target.value)} className={inputClass} />
       </label>
 
       <label className="block">
-        <span className="text-sm font-medium text-slate-700">Why Conscious (ES) *</span>
+        <span className={labelClass}>Why Conscious (ES) *</span>
         <input
           value={whyConscious}
           onChange={(e) => setWhyConscious(e.target.value)}
-          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+          className={inputClass}
         />
       </label>
 
       <label className="block">
-        <span className="text-sm font-medium text-slate-700">Why Conscious (EN)</span>
+        <span className={labelClass}>Why Conscious (EN)</span>
         <input
           value={whyConsciousEn}
           onChange={(e) => setWhyConsciousEn(e.target.value)}
-          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+          className={inputClass}
         />
       </label>
 
       <label className="block">
-        <span className="text-sm font-medium text-slate-700">Description (ES)</span>
+        <span className={labelClass}>Description (ES)</span>
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={3}
-          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+          className={inputClass}
         />
       </label>
 
       <label className="block">
-        <span className="text-sm font-medium text-slate-700">Description (EN)</span>
+        <span className={labelClass}>Description (EN)</span>
         <textarea
           value={descriptionEn}
           onChange={(e) => setDescriptionEn(e.target.value)}
           rows={3}
-          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+          className={inputClass}
         />
       </label>
 
       <label className="block">
-        <span className="text-sm font-medium text-slate-700">User benefits (ES)</span>
+        <span className={labelClass}>User benefits (ES)</span>
         <input
           value={userBenefits}
           onChange={(e) => setUserBenefits(e.target.value)}
-          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+          className={inputClass}
         />
       </label>
 
       <label className="block">
-        <span className="text-sm font-medium text-slate-700">User benefits (EN)</span>
+        <span className={labelClass}>User benefits (EN)</span>
         <input
           value={userBenefitsEn}
           onChange={(e) => setUserBenefitsEn(e.target.value)}
-          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+          className={inputClass}
         />
       </label>
 
       <label className="block">
-        <span className="text-sm font-medium text-slate-700">Instagram</span>
+        <span className={labelClass}>Instagram</span>
         <input
           value={instagram}
           onChange={(e) => setInstagram(e.target.value)}
           placeholder="@labikina.mx"
-          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+          className={inputClass}
         />
       </label>
 
       <label className="block">
-        <span className="text-sm font-medium text-slate-700">Website URL</span>
-        <input
-          value={website}
-          onChange={(e) => setWebsite(e.target.value)}
-          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
-        />
+        <span className={labelClass}>Website URL</span>
+        <input value={website} onChange={(e) => setWebsite(e.target.value)} className={inputClass} />
       </label>
 
       <label className="block">
-        <span className="text-sm font-medium text-slate-700">Contact email</span>
+        <span className={labelClass}>Contact email</span>
         <input
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+          className={inputClass}
         />
       </label>
 
@@ -322,11 +316,11 @@ export default function LocationFormClient({ action }: { action: string }) {
       </div>
 
       <label className="block">
-        <span className="text-sm font-medium text-slate-700">Status *</span>
+        <span className={labelClass}>Status *</span>
         <select
           value={status}
           onChange={(e) => setStatus(e.target.value)}
-          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+          className={inputClass}
         >
           <option value="pending">pending</option>
           <option value="active">active</option>
@@ -337,8 +331,13 @@ export default function LocationFormClient({ action }: { action: string }) {
       </label>
 
       <label className="flex items-center gap-2">
-        <input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} />
-        <span className="text-sm text-slate-700">Featured</span>
+        <input
+          type="checkbox"
+          checked={featured}
+          onChange={(e) => setFeatured(e.target.checked)}
+          className="rounded border-cc-border bg-cc-card text-emerald-500"
+        />
+        <span className="text-sm text-cc-text-secondary">Featured</span>
       </label>
 
       <button
