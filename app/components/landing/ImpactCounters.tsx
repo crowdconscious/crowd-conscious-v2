@@ -2,6 +2,8 @@
 
 import { motion, useInView, useSpring, useTransform } from 'framer-motion'
 import { useRef, useEffect } from 'react'
+import { Wind, Droplets, Building2, Recycle } from 'lucide-react'
+import { IconBadge } from '@/components/ui/IconBadge'
 
 interface ImpactStats {
   total_funds_raised: number
@@ -179,18 +181,20 @@ export default function ImpactCounters({ stats }: ImpactCountersProps) {
           transition={{ duration: 0.8, delay: 0.9 }}
         >
           {[
-            { icon: '🌱', label: 'Clean Air', color: 'from-green-400 to-emerald-500' },
-            { icon: '💧', label: 'Clean Water', color: 'from-blue-400 to-cyan-500' },
-            { icon: '🏙️', label: 'Safe Cities', color: 'from-purple-400 to-pink-500' },
-            { icon: '♻️', label: 'Zero Waste', color: 'from-orange-400 to-amber-500' }
-          ].map((category, index) => (
+            { Icon: Wind, label: 'Clean Air', color: 'from-green-400 to-emerald-500' },
+            { Icon: Droplets, label: 'Clean Water', color: 'from-blue-400 to-cyan-500' },
+            { Icon: Building2, label: 'Safe Cities', color: 'from-purple-400 to-pink-500' },
+            { Icon: Recycle, label: 'Zero Waste', color: 'from-orange-400 to-amber-500' },
+          ].map((category) => (
             <motion.div
               key={category.label}
               className="text-center p-6 bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all duration-300"
               whileHover={{ scale: 1.05, y: -5 }}
               transition={{ duration: 0.2 }}
             >
-              <div className="text-4xl mb-3">{category.icon}</div>
+              <div className="mb-3 flex justify-center">
+                <IconBadge icon={category.Icon} size="lg" />
+              </div>
               <h4 className="font-semibold text-slate-900 mb-2">{category.label}</h4>
               <div className={`w-8 h-1 bg-gradient-to-r ${category.color} mx-auto rounded-full`} />
             </motion.div>

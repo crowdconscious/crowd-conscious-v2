@@ -3,12 +3,31 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, X, Check } from 'lucide-react'
+import {
+  Search,
+  X,
+  Check,
+  Wind,
+  Droplets,
+  Building2,
+  Recycle,
+  Handshake,
+  Gift,
+  Tag,
+  Star,
+  Heart,
+  Award,
+  ChevronDown,
+  ChevronRight,
+} from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { createClient } from '@/lib/supabase-client'
 import { LocationCard, type LocationCardRow } from './LocationCard'
 import { LocationCoverImage, LocationLogoImage } from '@/components/locations/LocationRemoteImage'
 import { locationCategoryLabel, visibleLocationCategoryFilters } from '@/lib/locations/categories'
+import { IconBadge } from '@/components/ui/IconBadge'
+import { parseMetadataValues } from '@/lib/locations/conscious-values'
+import { ValueBadgeRow } from '@/components/locations/ValueBadge'
 
 type OutcomeRow = {
   id: string
@@ -55,6 +74,7 @@ function SwipeCard({
       ? loc.why_conscious || loc.why_conscious_en
       : loc.why_conscious_en || loc.why_conscious
   const cat = locationCategoryLabel(loc.category, locale)
+  const valueKeys = parseMetadataValues(loc.metadata)
 
   return (
     <div className="relative mx-auto h-[420px] w-full max-w-[340px]">
@@ -94,6 +114,9 @@ function SwipeCard({
             </div>
           </div>
           {why ? <p className="text-sm leading-relaxed text-slate-300 line-clamp-4">{why}</p> : null}
+          {valueKeys.length > 0 ? (
+            <ValueBadgeRow values={valueKeys} locale={locale} size="xs" />
+          ) : null}
           <div className="mt-auto flex items-center justify-between gap-4 pt-2">
             <button
               type="button"
@@ -365,7 +388,7 @@ export default function LocationsPage() {
     doneTitle: locale === 'es' ? 'Has votado por todos los lugares. ¡Gracias!' : "You've voted on every place. Thanks!",
     doneSub: locale === 'es' ? 'Agregamos nuevos cada semana. Síguenos → @crowdconscious' : 'We add new ones weekly. Follow → @crowdconscious',
     sheetCancel: locale === 'es' ? 'Cancelar' : 'Cancel',
-    anonVoteTitle: locale === 'es' ? '¡Voto registrado! 🎉' : 'Vote recorded! 🎉',
+    anonVoteTitle: locale === 'es' ? '¡Voto registrado!' : 'Vote recorded!',
     anonVoteBody:
       locale === 'es'
         ? 'Crea una cuenta para ganar XP y aparecer en la clasificación.'
@@ -423,8 +446,8 @@ export default function LocationsPage() {
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-8">
             <div className="bg-[#1a2029] border border-[#2d3748] rounded-xl p-4 text-center">
-              <div className="text-3xl mb-2" aria-hidden>
-                🌬️
+              <div className="flex justify-center mb-2" aria-hidden>
+                <IconBadge icon={Wind} size="lg" />
               </div>
               <h3 className="text-white text-sm font-bold mb-1">
                 {locale === 'es' ? 'Aire Limpio' : 'Clean Air'}
@@ -436,8 +459,8 @@ export default function LocationsPage() {
               </p>
             </div>
             <div className="bg-[#1a2029] border border-[#2d3748] rounded-xl p-4 text-center">
-              <div className="text-3xl mb-2" aria-hidden>
-                💧
+              <div className="flex justify-center mb-2" aria-hidden>
+                <IconBadge icon={Droplets} size="lg" />
               </div>
               <h3 className="text-white text-sm font-bold mb-1">
                 {locale === 'es' ? 'Agua Limpia' : 'Clean Water'}
@@ -449,8 +472,8 @@ export default function LocationsPage() {
               </p>
             </div>
             <div className="bg-[#1a2029] border border-[#2d3748] rounded-xl p-4 text-center">
-              <div className="text-3xl mb-2" aria-hidden>
-                🏙️
+              <div className="flex justify-center mb-2" aria-hidden>
+                <IconBadge icon={Building2} size="lg" />
               </div>
               <h3 className="text-white text-sm font-bold mb-1">
                 {locale === 'es' ? 'Ciudades Seguras' : 'Safe Cities'}
@@ -462,8 +485,8 @@ export default function LocationsPage() {
               </p>
             </div>
             <div className="bg-[#1a2029] border border-[#2d3748] rounded-xl p-4 text-center">
-              <div className="text-3xl mb-2" aria-hidden>
-                ♻️
+              <div className="flex justify-center mb-2" aria-hidden>
+                <IconBadge icon={Recycle} size="lg" />
               </div>
               <h3 className="text-white text-sm font-bold mb-1">
                 {locale === 'es' ? 'Cero Desperdicio' : 'Zero Waste'}
@@ -475,8 +498,8 @@ export default function LocationsPage() {
               </p>
             </div>
             <div className="bg-[#1a2029] border border-[#2d3748] rounded-xl p-4 text-center col-span-2 sm:col-span-1 lg:col-span-1 max-w-xs sm:max-w-none mx-auto sm:mx-0 w-full lg:max-w-none">
-              <div className="text-3xl mb-2" aria-hidden>
-                🤝
+              <div className="flex justify-center mb-2" aria-hidden>
+                <IconBadge icon={Handshake} size="lg" />
               </div>
               <h3 className="text-white text-sm font-bold mb-1">
                 {locale === 'es' ? 'Comercio Justo' : 'Fair Trade'}
@@ -512,10 +535,10 @@ export default function LocationsPage() {
               </p>
             </div>
             <div className="flex sm:hidden justify-center py-2 text-gray-600" aria-hidden>
-              ↓
+              <ChevronDown className="h-5 w-5" />
             </div>
             <div className="hidden sm:flex items-center text-gray-600 px-1" aria-hidden>
-              →
+              <ChevronRight className="h-5 w-5" />
             </div>
             <div className="flex-1 bg-[#1a2029] border border-[#2d3748] rounded-xl p-5 text-center">
               <div className="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -531,10 +554,10 @@ export default function LocationsPage() {
               </p>
             </div>
             <div className="flex sm:hidden justify-center py-2 text-gray-600" aria-hidden>
-              ↓
+              <ChevronDown className="h-5 w-5" />
             </div>
             <div className="hidden sm:flex items-center text-gray-600 px-1" aria-hidden>
-              →
+              <ChevronRight className="h-5 w-5" />
             </div>
             <div className="flex-1 bg-[#1a2029] border border-[#2d3748] rounded-xl p-5 text-center">
               <div className="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -566,9 +589,9 @@ export default function LocationsPage() {
         <section className="mb-12 max-w-3xl mx-auto px-0">
           <div className="bg-gradient-to-r from-[#1a2029] to-[#1a2029] border border-emerald-500/20 rounded-2xl p-6 sm:p-8">
             <div className="text-center mb-6">
-              <span className="text-2xl" aria-hidden>
-                🎁
-              </span>
+              <div className="flex justify-center mb-2" aria-hidden>
+                <IconBadge icon={Gift} size="lg" />
+              </div>
               <h2 className="text-white text-lg sm:text-xl font-bold mt-2">
                 {locale === 'es' ? 'Beneficios para visitantes' : 'Perks for visitors'}
               </h2>
@@ -581,8 +604,8 @@ export default function LocationsPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="text-center">
-                <div className="text-xl mb-2" aria-hidden>
-                  🏷️
+                <div className="flex justify-center mb-2" aria-hidden>
+                  <IconBadge icon={Tag} size="sm" />
                 </div>
                 <h4 className="text-white text-sm font-semibold mb-1">
                   {locale === 'es' ? 'Descuentos' : 'Discounts'}
@@ -595,8 +618,8 @@ export default function LocationsPage() {
               </div>
 
               <div className="text-center">
-                <div className="text-xl mb-2" aria-hidden>
-                  ⭐
+                <div className="flex justify-center mb-2" aria-hidden>
+                  <IconBadge icon={Star} size="sm" />
                 </div>
                 <h4 className="text-white text-sm font-semibold mb-1">
                   {locale === 'es' ? 'Experiencias VIP' : 'VIP Experiences'}
@@ -609,8 +632,8 @@ export default function LocationsPage() {
               </div>
 
               <div className="text-center">
-                <div className="text-xl mb-2" aria-hidden>
-                  💚
+                <div className="flex justify-center mb-2" aria-hidden>
+                  <IconBadge icon={Heart} size="sm" />
                 </div>
                 <h4 className="text-white text-sm font-semibold mb-1">
                   {locale === 'es' ? 'Impacto real' : 'Real impact'}
@@ -839,7 +862,7 @@ export default function LocationsPage() {
               }}
               className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-6 py-3 font-semibold text-white transition-colors hover:bg-emerald-600"
             >
-              <span aria-hidden>🏅</span>
+              <Award className="h-5 w-5 shrink-0 text-white/90" aria-hidden />
               {locale === 'es' ? 'Nominar un lugar' : 'Nominate a place'}
             </button>
             <p className="mt-4 text-xs text-gray-500">
@@ -968,8 +991,8 @@ export default function LocationsPage() {
               exit={{ y: '100%' }}
               className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-t-2xl border border-[#2d3748] bg-[#1a2029] p-6 shadow-2xl sm:rounded-2xl"
             >
-              <h3 className="mb-1 text-xl font-bold text-white">
-                <span aria-hidden>🏅 </span>
+              <h3 className="mb-1 flex items-center gap-2 text-xl font-bold text-white">
+                <Award className="h-6 w-6 shrink-0 text-emerald-400" aria-hidden />
                 {t.nominateTitle}
               </h3>
               <p className="mb-6 text-sm text-gray-400">{t.nominateSub}</p>

@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { Radio } from 'lucide-react'
+import { IconBadge } from '@/components/ui/IconBadge'
 
 type Props = {
   locale: 'es' | 'en'
@@ -9,7 +11,10 @@ export function LandingLiveSection({ locale }: Props) {
 
   return (
     <section id="live" className="scroll-mt-24 border-t border-[#2d3748] px-4 py-16 text-center">
-      <span className="text-sm font-bold uppercase tracking-wider text-red-400">🔴 Conscious Live</span>
+      <div className="flex flex-col items-center gap-2">
+        <IconBadge icon={Radio} size="sm" variant="red" />
+        <span className="text-sm font-bold uppercase tracking-wider text-red-400">Conscious Live</span>
+      </div>
       <h2 className="mt-2 text-3xl font-bold text-white">
         {es ? 'Predicciones en tiempo real durante eventos en vivo' : 'Real-time predictions during live events'}
       </h2>

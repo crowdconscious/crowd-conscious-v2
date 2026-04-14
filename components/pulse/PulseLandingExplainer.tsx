@@ -1,6 +1,9 @@
 import Link from 'next/link'
+import { Landmark, Building2, Smartphone } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { getMarketText } from '@/lib/i18n/market-translations'
 import type { PulseHeroMarket } from '@/lib/pulse/pulse-hero-data'
+import { IconBadge } from '@/components/ui/IconBadge'
 
 type Locale = 'es' | 'en'
 
@@ -28,9 +31,13 @@ export function PulseLandingExplainer({ locale, heroMarket, avgConfidence, stron
   const votes = heroMarket?.total_votes ?? 0
   const avg = avgConfidence != null && !Number.isNaN(avgConfidence) ? avgConfidence.toFixed(1) : '—'
 
-  const useCases = [
+  const useCases: Array<{
+    icon: LucideIcon
+    t: string
+    d: string
+  }> = [
     {
-      emoji: '🏛️',
+      icon: Landmark,
       t: L('Municipios', 'Municipalities'),
       d: L(
         'Decisiones públicas con señal clara de tu comunidad, no solo ruido en redes.',
@@ -38,7 +45,7 @@ export function PulseLandingExplainer({ locale, heroMarket, avgConfidence, stron
       ),
     },
     {
-      emoji: '🏢',
+      icon: Building2,
       t: L('Marcas', 'Brands'),
       d: L(
         'Investigación rápida sobre producto, campaña o posicionamiento con confianza cuantificada.',
@@ -46,7 +53,7 @@ export function PulseLandingExplainer({ locale, heroMarket, avgConfidence, stron
       ),
     },
     {
-      emoji: '📱',
+      icon: Smartphone,
       t: L('Influencers & medios', 'Influencers & media'),
       d: L(
         'Tu audiencia vota en segundos; ves distribución y certeza en tiempo real.',
@@ -137,7 +144,7 @@ export function PulseLandingExplainer({ locale, heroMarket, avgConfidence, stron
           <div className="mt-10 grid gap-6 md:grid-cols-3">
             {useCases.map((u) => (
               <div key={u.t} className="rounded-xl border border-[#2d3748] bg-[#1a2029] p-6">
-                <span className="text-2xl">{u.emoji}</span>
+                <IconBadge icon={u.icon} size="md" />
                 <h3 className="mt-3 font-bold text-white">{u.t}</h3>
                 <p className="mt-2 text-sm text-slate-400">{u.d}</p>
               </div>

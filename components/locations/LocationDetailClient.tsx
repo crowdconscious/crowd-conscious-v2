@@ -2,12 +2,15 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { MapPin, Instagram, Gift } from 'lucide-react'
+import { MapPin, Instagram, Gift, Globe, Clock, CheckCircle } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { createClient } from '@/lib/supabase-client'
 import { locationCategoryLabel } from '@/lib/locations/categories'
 import type { LocationCardRow } from './LocationCard'
+import type { Json } from '@/types/database'
+import { parseMetadataValues } from '@/lib/locations/conscious-values'
+import { ValueBadgeRow } from '@/components/locations/ValueBadge'
 import { LocationCoverImage, LocationLogoImage } from '@/components/locations/LocationRemoteImage'
 
 type OutcomeRow = {
@@ -29,6 +32,7 @@ export default function LocationDetailClient({
     user_benefits_en: string | null
     next_review_date: string | null
     current_market_id: string | null
+    metadata?: Json | null
   }
   outcomes: OutcomeRow[]
 }) {
@@ -160,6 +164,7 @@ export default function LocationDetailClient({
   const votes = location.total_votes ?? 0
   const needed = Math.max(0, 10 - votes)
   const ig = location.instagram_handle?.replace(/^@/, '') ?? ''
+  const valueKeys = parseMetadataValues(location.metadata)
 
   const badgeClass =
     score == null ? 'bg-slate-600' : score >= 8 ? 'bg-emerald-500' : score >= 6 ? 'bg-amber-500' : 'bg-slate-500'
@@ -200,10 +205,13 @@ export default function LocationDetailClient({
             </span>
           </div>
           {score == null && votes < 10 && (
-            <p className="text-sm text-amber-400/90">
-              {locale === 'es'
-                ? `⏳ ${needed} ${needed === 1 ? 'voto más' : 'votos más'} para revelar el Conscious Score`
-                : `⏳ ${needed} more vote${needed === 1 ? '' : 's'} to reveal the Conscious Score`}
+            <p className="flex items-center gap-2 text-sm text-amber-400/90">
+              <Clock className="h-4 w-4 shrink-0" aria-hidden />
+              <span>
+                {locale === 'es'
+                  ? `${needed} ${needed === 1 ? 'voto más' : 'votos más'} para revelar el Conscious Score`
+                  : `${needed} more vote${needed === 1 ? '' : 's'} to reveal the Conscious Score`}
+              </span>
             </p>
           )}
         </div>
@@ -223,14 +231,18 @@ export default function LocationDetailClient({
               {location.city} · {locationCategoryLabel(location.category, locale)}
             </p>
             {location.certified_at && (
-              <p className="mt-1 text-sm text-emerald-400/90">
-                ✓ {locale === 'es' ? 'Certificado desde' : 'Certified since'} {fmt(location.certified_at)}
+              <p className="mt-1 flex items-center gap-1.5 text-sm text-emerald-400/90">
+                <CheckCircle className="h-4 w-4 shrink-0" aria-hidden />
+                {locale === 'es' ? 'Certificado desde' : 'Certified since'} {fmt(location.certified_at)}
               </p>
             )}
           </div>
         </div>
 
         {why ? <p className="mb-4 text-lg leading-relaxed text-slate-200">{why}</p> : null}
+        {valueKeys.length > 0 ? (
+          <ValueBadgeRow values={valueKeys} locale={locale} size="sm" className="mb-4" />
+        ) : null}
         {desc ? <p className="mb-4 text-slate-300 leading-relaxed">{desc}</p> : null}
 
         {benefits ? (
@@ -254,9 +266,10 @@ export default function LocationDetailClient({
             href={location.website_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="mb-2 block text-emerald-400 hover:text-emerald-300"
+            className="mb-2 inline-flex items-center gap-2 text-emerald-400 hover:text-emerald-300"
           >
-            🌐 {location.website_url.replace(/^https?:\/\//, '')}
+            <Globe className="h-4 w-4 shrink-0" aria-hidden />
+            {location.website_url.replace(/^https?:\/\//, '')}
           </a>
         ) : null}
         {ig ? (
@@ -437,7 +450,7 @@ export default function LocationDetailClient({
             <div className="mx-auto flex max-w-lg flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="font-semibold text-white">
-                  {locale === 'es' ? '¡Voto registrado! 🎉' : 'Vote recorded! 🎉'}
+                  {locale === 'es' ? '¡Voto registrado!' : 'Vote recorded!'}
                 </p>
                 <p className="text-sm text-slate-400">
                   {locale === 'es'

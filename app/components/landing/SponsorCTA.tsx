@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Building2 } from 'lucide-react'
+import { Building2, Trophy } from 'lucide-react'
 
 export function SponsorCTA({ locale }: { locale: 'es' | 'en' }) {
   const isEs = locale === 'es'
@@ -27,20 +27,14 @@ export function SponsorCTA({ locale }: { locale: 'es' | 'en' }) {
           )}
         </p>
         <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-6 text-left sm:text-center">
-          <p className="text-gray-200">
-            {isEs ? (
-              <>
-                🏆 Mundial 2026 en Ciudad de México.
-                <br />
-                Tu marca. Tu causa. Tu audiencia.
-              </>
-            ) : (
-              <>
-                🏆 World Cup 2026 in Mexico City.
-                <br />
-                Your brand. Your cause. Your audience.
-              </>
-            )}
+          <p className="flex flex-col items-start gap-2 text-gray-200 sm:items-center sm:text-center">
+            <span className="inline-flex items-center gap-2">
+              <Trophy className="h-5 w-5 shrink-0 text-amber-400/90" aria-hidden />
+              {isEs ? 'Mundial 2026 en Ciudad de México.' : 'World Cup 2026 in Mexico City.'}
+            </span>
+            <span>
+              {isEs ? 'Tu marca. Tu causa. Tu audiencia.' : 'Your brand. Your cause. Your audience.'}
+            </span>
           </p>
           <Link
             href="/pulse"

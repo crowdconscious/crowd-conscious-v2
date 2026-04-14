@@ -85,6 +85,10 @@ export async function POST(request: Request) {
     status,
     is_featured: Boolean(body.is_featured),
     sort_order: typeof body.sort_order === 'number' ? body.sort_order : 0,
+    metadata:
+      body.metadata != null && typeof body.metadata === 'object'
+        ? (body.metadata as Record<string, unknown>)
+        : { values: [] },
   }
 
   const { data: inserted, error: insertErr } = await admin

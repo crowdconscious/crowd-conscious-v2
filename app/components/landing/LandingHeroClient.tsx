@@ -20,15 +20,15 @@ import {
 
 const CATEGORY_CONFIG: Record<
   string,
-  { label: string; icon: React.ElementType; bg: string; text: string; emoji: string }
+  { label: string; icon: React.ElementType; bg: string; text: string }
 > = {
-  world: { label: 'World', icon: Globe, bg: 'bg-blue-500/20', text: 'text-blue-400', emoji: '🌍' },
-  government: { label: 'Government', icon: Building2, bg: 'bg-red-500/20', text: 'text-red-400', emoji: '🏛' },
-  corporate: { label: 'Corporate', icon: Briefcase, bg: 'bg-purple-500/20', text: 'text-purple-400', emoji: '🏢' },
-  community: { label: 'Community', icon: Users, bg: 'bg-emerald-500/20', text: 'text-emerald-400', emoji: '👥' },
-  cause: { label: 'Cause', icon: Heart, bg: 'bg-amber-500/20', text: 'text-amber-400', emoji: '💚' },
-  world_cup: { label: 'World Cup', icon: Trophy, bg: 'bg-emerald-500/20', text: 'text-emerald-400', emoji: '⚽' },
-  sustainability: { label: 'Sustainability', icon: Leaf, bg: 'bg-green-500/20', text: 'text-green-400', emoji: '🌱' },
+  world: { label: 'World', icon: Globe, bg: 'bg-blue-500/20', text: 'text-blue-400' },
+  government: { label: 'Government', icon: Building2, bg: 'bg-red-500/20', text: 'text-red-400' },
+  corporate: { label: 'Corporate', icon: Briefcase, bg: 'bg-purple-500/20', text: 'text-purple-400' },
+  community: { label: 'Community', icon: Users, bg: 'bg-emerald-500/20', text: 'text-emerald-400' },
+  cause: { label: 'Cause', icon: Heart, bg: 'bg-amber-500/20', text: 'text-amber-400' },
+  world_cup: { label: 'World Cup', icon: Trophy, bg: 'bg-emerald-500/20', text: 'text-emerald-400' },
+  sustainability: { label: 'Sustainability', icon: Leaf, bg: 'bg-green-500/20', text: 'text-green-400' },
 }
 
 const WORLD_CUP_DATE = new Date('2026-06-11T12:00:00Z')
@@ -313,8 +313,7 @@ export function LandingHeroClient({
                     <span
                       className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium ${config.bg} ${config.text}`}
                     >
-                      <span>{config.emoji}</span>
-                      <Icon className="w-3 h-3" />
+                      <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
                       {config.label}
                     </span>
                     <p className="font-medium text-white mt-2 line-clamp-2">{getMarketText(m, 'title', language)}</p>

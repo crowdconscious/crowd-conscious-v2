@@ -96,6 +96,18 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     patch.sort_order = body.sort_order
   }
 
+  if ('metadata' in body && body.metadata !== undefined) {
+    if (body.metadata === null) {
+      patch.metadata = {}
+    } else if (typeof body.metadata === 'object' && !Array.isArray(body.metadata)) {
+      const prev =
+        existing.metadata && typeof existing.metadata === 'object' && !Array.isArray(existing.metadata)
+          ? (existing.metadata as Record<string, unknown>)
+          : {}
+      patch.metadata = { ...prev, ...(body.metadata as Record<string, unknown>) }
+    }
+  }
+
   const nextStatus = (patch.status as string) ?? existing.status
 
   const { data: updated, error: upErr } = await admin

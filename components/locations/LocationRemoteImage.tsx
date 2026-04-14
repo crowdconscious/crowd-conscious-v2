@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { MapPin } from 'lucide-react'
 import { resolveLocationImageUrl } from '@/lib/locations/image-url'
 
 export function LocationCoverImage({
@@ -21,9 +22,7 @@ export function LocationCoverImage({
   if (!resolved || err) {
     return (
       <div className={`flex items-center justify-center bg-[#0f1419] text-slate-600 ${className ?? ''}`}>
-        <span className="text-4xl" aria-hidden>
-          📍
-        </span>
+        <MapPin className="h-12 w-12 text-emerald-500/30" aria-hidden />
       </div>
     )
   }

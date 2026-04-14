@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { BarChart3 } from 'lucide-react'
+import { IconBadge } from '@/components/ui/IconBadge'
 
 type Props = {
   locale: 'es' | 'en'
@@ -9,7 +11,10 @@ export function LandingPulseSection({ locale }: Props) {
 
   return (
     <section id="pulse" className="scroll-mt-24 px-4 py-16 text-center">
-      <span className="text-sm font-bold uppercase tracking-wider text-amber-400">📊 Conscious Pulse</span>
+      <div className="flex flex-col items-center gap-2">
+        <IconBadge icon={BarChart3} size="sm" variant="amber" />
+        <span className="text-sm font-bold uppercase tracking-wider text-amber-400">Conscious Pulse</span>
+      </div>
       <h2 className="mt-2 text-3xl font-bold text-white">
         {es ? 'Mide lo que tu comunidad realmente piensa' : 'Measure what your community really thinks'}
       </h2>

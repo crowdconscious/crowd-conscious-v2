@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { BarChart3 } from 'lucide-react'
 import { CouponRedeemSection } from '@/components/coupon/CouponRedeemSection'
 import { getMarketText } from '@/lib/i18n/market-translations'
 import { getPulseListingCopy, statusLabelPulse } from '@/lib/i18n/pulse-listing'
@@ -125,9 +126,7 @@ export default function PulseListingView({
                           />
                         ) : (
                           <div className="flex h-36 w-full items-center justify-center bg-gradient-to-br from-amber-900/20 to-[#1a2029]">
-                            <span className="text-4xl" aria-hidden>
-                              📊
-                            </span>
+                            <BarChart3 className="h-12 w-12 text-emerald-500/35" aria-hidden />
                           </div>
                         )}
                         <div className="p-4">

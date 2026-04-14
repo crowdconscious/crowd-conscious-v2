@@ -23,6 +23,7 @@ import {
   Clapperboard,
   Lightbulb,
   Sparkles,
+  Award,
 } from 'lucide-react'
 import type { InboxItem } from './page'
 
@@ -318,8 +319,9 @@ export function InboxClient({ initialItems }: Props) {
             <form onSubmit={handleSubmit} className="flex-1 overflow-auto p-4 space-y-4">
               {formType === 'location_nomination' && (
                 <div className="bg-[#0f1419] border border-emerald-500/20 rounded-lg p-3 mb-1">
-                  <p className="text-emerald-400 text-sm font-semibold mb-1">
-                    🏅 {language === 'es' ? 'Nominación de lugar' : 'Location Nomination'}
+                  <p className="mb-1 flex items-center gap-2 text-sm font-semibold text-emerald-400">
+                    <Award className="h-4 w-4 shrink-0" aria-hidden />
+                    {language === 'es' ? 'Nominación de lugar' : 'Location Nomination'}
                   </p>
                   <p className="text-gray-400 text-xs">
                     {language === 'es'

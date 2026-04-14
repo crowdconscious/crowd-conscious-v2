@@ -1,10 +1,12 @@
 'use client'
 
 import Link from 'next/link'
-import { MapPin, Instagram, Gift } from 'lucide-react'
-import type { Database } from '@/types/database'
+import { MapPin, Instagram, Gift, Clock } from 'lucide-react'
+import type { Database, Json } from '@/types/database'
 import { locationCategoryLabel } from '@/lib/locations/categories'
 import { LocationCoverImage, LocationLogoImage } from '@/components/locations/LocationRemoteImage'
+import { parseMetadataValues } from '@/lib/locations/conscious-values'
+import { ValueBadgeRow } from '@/components/locations/ValueBadge'
 
 export type LocationCardRow = {
   id: string
@@ -23,6 +25,7 @@ export type LocationCardRow = {
   conscious_score: number | null
   total_votes: number
   certified_at: string | null
+  metadata?: Json | null
 }
 
 function scoreBadgeClass(score: number | null): string {
@@ -62,6 +65,7 @@ export function LocationCard({
   const votes = location.total_votes ?? 0
   const needed = Math.max(0, 10 - votes)
   const ig = location.instagram_handle?.replace(/^@/, '') ?? ''
+  const valueKeys = parseMetadataValues(location.metadata)
 
   return (
     <article className="flex flex-col overflow-hidden rounded-xl border border-[#2d3748] bg-[#1a2029] shadow-lg">
@@ -104,6 +108,7 @@ export function LocationCard({
         </div>
 
         {why ? <p className="text-sm leading-relaxed text-slate-300 line-clamp-3">{why}</p> : null}
+        {valueKeys.length > 0 ? <ValueBadgeRow values={valueKeys} locale={locale} size="xs" /> : null}
 
         {benefits ? (
           <p className="flex items-start gap-2 text-sm text-emerald-400/95">
@@ -138,10 +143,13 @@ export function LocationCard({
         </p>
 
         {score == null && votes < 10 ? (
-          <p className="text-sm text-amber-400/90">
-            {locale === 'es'
-              ? `⏳ ${needed} ${needed === 1 ? 'voto más' : 'votos más'} para revelar el Conscious Score`
-              : `⏳ ${needed} more vote${needed === 1 ? '' : 's'} to reveal the Conscious Score`}
+          <p className="flex items-start gap-2 text-sm text-amber-400/90">
+            <Clock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+            <span>
+              {locale === 'es'
+                ? `${needed} ${needed === 1 ? 'voto más' : 'votos más'} para revelar el Conscious Score`
+                : `${needed} more vote${needed === 1 ? '' : 's'} to reveal the Conscious Score`}
+            </span>
           </p>
         ) : null}
 

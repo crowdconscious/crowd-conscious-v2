@@ -159,7 +159,7 @@ async function getLandingData() {
     supabase
       .from('conscious_locations')
       .select(
-        'id, name, slug, category, city, neighborhood, why_conscious, why_conscious_en, user_benefits, user_benefits_en, cover_image_url, logo_url, instagram_handle, conscious_score, total_votes, certified_at, is_featured, sort_order'
+        'id, name, slug, category, city, neighborhood, why_conscious, why_conscious_en, user_benefits, user_benefits_en, cover_image_url, logo_url, instagram_handle, conscious_score, total_votes, certified_at, is_featured, sort_order, metadata'
       )
       .eq('status', 'active')
       .order('is_featured', { ascending: false })
