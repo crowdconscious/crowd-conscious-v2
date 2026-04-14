@@ -404,6 +404,235 @@ export default function LocationsPage() {
           <p className="mt-2 text-slate-400">{t.heroSub}</p>
         </header>
 
+        {/* ═══════════════════════════════════════════
+            SECTION: What does it mean to be Conscious?
+            ═══════════════════════════════════════════ */}
+        <section className="mb-12 max-w-3xl mx-auto px-0">
+          <div className="text-center mb-8">
+            <h2 className="text-white text-xl sm:text-2xl font-bold mb-3">
+              {locale === 'es'
+                ? '¿Qué significa ser un Conscious Location?'
+                : 'What does it mean to be a Conscious Location?'}
+            </h2>
+            <p className="text-gray-400 text-sm sm:text-base leading-relaxed max-w-xl mx-auto">
+              {locale === 'es'
+                ? 'Un Conscious Location es un lugar, marca o persona verificada por la comunidad que se alinea con al menos uno de nuestros 5 valores fundamentales. No basta con decirlo — la comunidad vota, califica su certeza, y el Conscious Score se actualiza en tiempo real.'
+                : "A Conscious Location is a place, brand, or person verified by the community that aligns with at least one of our 5 core values. Saying it isn't enough — the community votes, rates their confidence, and the Conscious Score updates in real time."}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-8">
+            <div className="bg-[#1a2029] border border-[#2d3748] rounded-xl p-4 text-center">
+              <div className="text-3xl mb-2" aria-hidden>
+                🌬️
+              </div>
+              <h3 className="text-white text-sm font-bold mb-1">
+                {locale === 'es' ? 'Aire Limpio' : 'Clean Air'}
+              </h3>
+              <p className="text-gray-500 text-xs leading-snug">
+                {locale === 'es'
+                  ? 'Reducción de emisiones, espacios verdes, movilidad sustentable'
+                  : 'Emissions reduction, green spaces, sustainable mobility'}
+              </p>
+            </div>
+            <div className="bg-[#1a2029] border border-[#2d3748] rounded-xl p-4 text-center">
+              <div className="text-3xl mb-2" aria-hidden>
+                💧
+              </div>
+              <h3 className="text-white text-sm font-bold mb-1">
+                {locale === 'es' ? 'Agua Limpia' : 'Clean Water'}
+              </h3>
+              <p className="text-gray-500 text-xs leading-snug">
+                {locale === 'es'
+                  ? 'Uso responsable del agua, tratamiento, acceso comunitario'
+                  : 'Responsible water use, treatment, community access'}
+              </p>
+            </div>
+            <div className="bg-[#1a2029] border border-[#2d3748] rounded-xl p-4 text-center">
+              <div className="text-3xl mb-2" aria-hidden>
+                🏙️
+              </div>
+              <h3 className="text-white text-sm font-bold mb-1">
+                {locale === 'es' ? 'Ciudades Seguras' : 'Safe Cities'}
+              </h3>
+              <p className="text-gray-500 text-xs leading-snug">
+                {locale === 'es'
+                  ? 'Inclusión, seguridad comunitaria, accesibilidad, empleo local'
+                  : 'Inclusion, community safety, accessibility, local employment'}
+              </p>
+            </div>
+            <div className="bg-[#1a2029] border border-[#2d3748] rounded-xl p-4 text-center">
+              <div className="text-3xl mb-2" aria-hidden>
+                ♻️
+              </div>
+              <h3 className="text-white text-sm font-bold mb-1">
+                {locale === 'es' ? 'Cero Desperdicio' : 'Zero Waste'}
+              </h3>
+              <p className="text-gray-500 text-xs leading-snug">
+                {locale === 'es'
+                  ? 'Economía circular, reducción de plásticos, compostaje'
+                  : 'Circular economy, plastic reduction, composting'}
+              </p>
+            </div>
+            <div className="bg-[#1a2029] border border-[#2d3748] rounded-xl p-4 text-center col-span-2 sm:col-span-1 lg:col-span-1 max-w-xs sm:max-w-none mx-auto sm:mx-0 w-full lg:max-w-none">
+              <div className="text-3xl mb-2" aria-hidden>
+                🤝
+              </div>
+              <h3 className="text-white text-sm font-bold mb-1">
+                {locale === 'es' ? 'Comercio Justo' : 'Fair Trade'}
+              </h3>
+              <p className="text-gray-500 text-xs leading-snug">
+                {locale === 'es'
+                  ? 'Productores locales, precios justos, cadenas trazables'
+                  : 'Local producers, fair prices, traceable supply chains'}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════
+            SECTION: How it works
+            ═══════════════════════════════════════════ */}
+        <section className="mb-12 max-w-2xl mx-auto px-0">
+          <h2 className="text-center text-white text-lg font-bold mb-6 sm:mb-8">
+            {locale === 'es' ? 'Cómo funciona' : 'How it works'}
+          </h2>
+          <div className="flex flex-col sm:flex-row items-stretch gap-0 sm:gap-4">
+            <div className="flex-1 bg-[#1a2029] border border-[#2d3748] rounded-xl p-5 text-center">
+              <div className="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                <span className="text-emerald-400 font-bold">1</span>
+              </div>
+              <h4 className="text-white text-sm font-bold mb-1">
+                {locale === 'es' ? 'Desliza' : 'Swipe'}
+              </h4>
+              <p className="text-gray-400 text-xs whitespace-pre-line">
+                {locale === 'es'
+                  ? 'Sí = es Consciente\nNo = no estoy convencido'
+                  : 'Yes = Conscious\nNo = not convinced'}
+              </p>
+            </div>
+            <div className="flex sm:hidden justify-center py-2 text-gray-600" aria-hidden>
+              ↓
+            </div>
+            <div className="hidden sm:flex items-center text-gray-600 px-1" aria-hidden>
+              →
+            </div>
+            <div className="flex-1 bg-[#1a2029] border border-[#2d3748] rounded-xl p-5 text-center">
+              <div className="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                <span className="text-emerald-400 font-bold">2</span>
+              </div>
+              <h4 className="text-white text-sm font-bold mb-1">
+                {locale === 'es' ? 'Califica tu certeza' : 'Rate your confidence'}
+              </h4>
+              <p className="text-gray-400 text-xs">
+                {locale === 'es'
+                  ? 'Del 1 al 10. No es lo mismo "creo que sí" que "estoy seguro"'
+                  : `From 1 to 10. "I think so" isn't the same as "I'm certain"`}
+              </p>
+            </div>
+            <div className="flex sm:hidden justify-center py-2 text-gray-600" aria-hidden>
+              ↓
+            </div>
+            <div className="hidden sm:flex items-center text-gray-600 px-1" aria-hidden>
+              →
+            </div>
+            <div className="flex-1 bg-[#1a2029] border border-[#2d3748] rounded-xl p-5 text-center">
+              <div className="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                <span className="text-emerald-400 font-bold">3</span>
+              </div>
+              <h4 className="text-white text-sm font-bold mb-1">
+                {locale === 'es' ? 'El Score aparece' : 'Score revealed'}
+              </h4>
+              <p className="text-gray-400 text-xs">
+                {locale === 'es'
+                  ? 'Después de 10 votos, el Conscious Score (0-10) se muestra en vivo'
+                  : 'After 10 votes, the Conscious Score (0-10) appears live'}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-4 bg-[#1a2029]/50 border border-[#2d3748] rounded-lg p-4 text-center">
+            <p className="text-gray-400 text-xs leading-relaxed">
+              {locale === 'es'
+                ? 'El Conscious Score = aprobación × certeza promedio. Un lugar con mucha aprobación pero baja certeza obtiene un score menor que uno con menos votos pero alta convicción. Se revisa cada 90 días.'
+                : 'Conscious Score = approval × average confidence. A place with high approval but low confidence scores lower than one with fewer votes but strong conviction. Reviewed every 90 days.'}
+            </p>
+          </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════
+            SECTION: Perks for visitors
+            ═══════════════════════════════════════════ */}
+        <section className="mb-12 max-w-3xl mx-auto px-0">
+          <div className="bg-gradient-to-r from-[#1a2029] to-[#1a2029] border border-emerald-500/20 rounded-2xl p-6 sm:p-8">
+            <div className="text-center mb-6">
+              <span className="text-2xl" aria-hidden>
+                🎁
+              </span>
+              <h2 className="text-white text-lg sm:text-xl font-bold mt-2">
+                {locale === 'es' ? 'Beneficios para visitantes' : 'Perks for visitors'}
+              </h2>
+              <p className="text-gray-400 text-sm mt-1">
+                {locale === 'es'
+                  ? 'Los Conscious Locations ofrecen beneficios exclusivos a la comunidad de Crowd Conscious'
+                  : 'Conscious Locations offer exclusive perks to the Crowd Conscious community'}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="text-center">
+                <div className="text-xl mb-2" aria-hidden>
+                  🏷️
+                </div>
+                <h4 className="text-white text-sm font-semibold mb-1">
+                  {locale === 'es' ? 'Descuentos' : 'Discounts'}
+                </h4>
+                <p className="text-gray-500 text-xs">
+                  {locale === 'es'
+                    ? 'Códigos exclusivos y promociones para miembros de la comunidad'
+                    : 'Exclusive codes and promotions for community members'}
+                </p>
+              </div>
+
+              <div className="text-center">
+                <div className="text-xl mb-2" aria-hidden>
+                  ⭐
+                </div>
+                <h4 className="text-white text-sm font-semibold mb-1">
+                  {locale === 'es' ? 'Experiencias VIP' : 'VIP Experiences'}
+                </h4>
+                <p className="text-gray-500 text-xs">
+                  {locale === 'es'
+                    ? 'Acceso a eventos, degustaciones y activaciones exclusivas'
+                    : 'Access to events, tastings, and exclusive activations'}
+                </p>
+              </div>
+
+              <div className="text-center">
+                <div className="text-xl mb-2" aria-hidden>
+                  💚
+                </div>
+                <h4 className="text-white text-sm font-semibold mb-1">
+                  {locale === 'es' ? 'Impacto real' : 'Real impact'}
+                </h4>
+                <p className="text-gray-500 text-xs">
+                  {locale === 'es'
+                    ? 'Al visitar un Conscious Location, apoyas negocios que invierten en su comunidad'
+                    : 'By visiting a Conscious Location, you support businesses investing in their community'}
+                </p>
+              </div>
+            </div>
+
+            <p className="text-center text-emerald-400 text-xs mt-6">
+              {locale === 'es'
+                ? 'Cada Conscious Location muestra sus beneficios específicos en su tarjeta'
+                : 'Each Conscious Location shows its specific perks on its card'}
+            </p>
+          </div>
+        </section>
+
+        <div className="border-t border-[#2d3748] mb-8" aria-hidden />
+
         <section className="mb-12">
           <div className="mb-6 flex flex-wrap items-center gap-2">
             <span className="text-sm text-slate-500">{locale === 'es' ? 'Ciudad' : 'City'}:</span>
