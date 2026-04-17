@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Heart, Vote, Sparkles, Users, ArrowRight, Info } from 'lucide-react'
+import { FundThermometer } from '@/components/fund/FundThermometer'
 import {
   TransparencyDashboard,
   type SponsorshipLogPublic,
@@ -132,6 +133,8 @@ export function FundClient({
           </Link>
         )}
       </div>
+
+      <FundThermometer current={totalFund} variant="full" />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-cc-card border border-emerald-500/20 rounded-xl p-6">

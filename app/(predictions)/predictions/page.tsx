@@ -205,7 +205,9 @@ async function getDashboardData(userId: string) {
 
 export default async function PredictionsDashboardPage() {
   const user = await getCurrentUser()
-  if (!user) redirect('/login')
+  // Anonymous users get the public market explorer (where guest voting works)
+  // instead of a login wall. Personal dashboard requires an account.
+  if (!user) redirect('/predictions/markets')
 
   const data = await getDashboardData(user.id)
 

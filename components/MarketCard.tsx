@@ -11,6 +11,7 @@ import {
 import { toDisplayPercent } from '@/lib/probability-utils'
 import { SponsorBadge } from '@/components/SponsorBadge'
 import { isPulseLikeMarket, marketCardPredictCta, voteCountLabelPublic } from '@/lib/i18n/pulse-market-copy'
+import { PUBLIC_MARKET_MIN_VOTES } from '@/lib/predictions/engagement'
 
 export type MarketCardMarket = {
   id: string
@@ -127,6 +128,11 @@ export function MarketCard({
   compact = false,
   /** Public /markets: card links to market detail; footer "Predict" → login with redirect */
   publicPredictCta = false,
+  /**
+   * When true, always render probability bars regardless of vote count.
+   * Use on admin and user-dashboard surfaces where dead markets must be visible.
+   */
+  showLowEngagementBars = false,
 }: {
   market: MarketCardMarket
   outcomes: MarketCardOutcome[]
@@ -135,6 +141,7 @@ export function MarketCard({
   showVoteCount?: boolean
   compact?: boolean
   publicPredictCta?: boolean
+  showLowEngagementBars?: boolean
 }) {
   const router = useRouter()
   const { language } = useLanguage()
@@ -143,6 +150,7 @@ export function MarketCard({
   const votes = market.total_votes ?? 0
   const isPulse = isPulseLikeMarket(market)
   const voteLabel = voteCountLabelPublic(locale === 'en' ? 'en' : 'es', votes, isPulse)
+  const isLowEngagement = !showLowEngagementBars && votes < PUBLIC_MARKET_MIN_VOTES
 
   const raw =
     outcomes.length > 0
@@ -209,7 +217,18 @@ export function MarketCard({
         {title}
       </h3>
 
-      {isBinaryLayout ? (
+      {isLowEngagement ? (
+        <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-3 py-3 text-center">
+          <p className="text-sm font-medium text-cc-text-primary">
+            {locale === 'es' ? 'Sé una de las primeras voces' : 'Be one of the first voices'}
+          </p>
+          <p className="mt-1 text-xs text-emerald-400">
+            {locale === 'es'
+              ? `${votes}/${PUBLIC_MARKET_MIN_VOTES} votos para activar resultados`
+              : `${votes}/${PUBLIC_MARKET_MIN_VOTES} votes to activate results`}
+          </p>
+        </div>
+      ) : isBinaryLayout ? (
         <div className="grid grid-cols-2 gap-2">
           {raw.map((o) => {
             const pct = Math.round(toDisplayPercent(o.probability))

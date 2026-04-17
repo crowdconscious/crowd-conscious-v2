@@ -410,7 +410,7 @@ export default function ConcientizacionesLanding() {
               <ul className="space-y-2 text-sm text-gray-400">
                 <li><Link href="/" className="hover:text-white transition">Inicio</Link></li>
                 <li><Link href="/dashboard" className="hover:text-white transition">Dashboard</Link></li>
-                <li><Link href="/communities" className="hover:text-white transition">Comunidades</Link></li>
+                <li><Link href="/locations" className="hover:text-white transition">Lugares</Link></li>
               </ul>
             </div>
             <div>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { useLocale } from 'next-intl'
 import { motion, AnimatePresence } from 'framer-motion'
 import { setPendingVote } from '@/lib/guest-vote-storage'
 
@@ -13,6 +14,21 @@ interface GuestRegistrationPromptProps {
   guestId: string
   onDismiss: () => void
 }
+
+const COPY = {
+  es: {
+    heading: 'Tu voto cambió el consenso',
+    body: 'Tu opinión ya cuenta para la comunidad. Crea tu cuenta para conservar tu XP, ver tu racha y aparecer en el ranking.',
+    cta: 'Crear cuenta gratis',
+    dismiss: 'Seguir votando sin cuenta →',
+  },
+  en: {
+    heading: 'Your vote shifted the consensus',
+    body: 'Your opinion already counts for the community. Create an account to keep your XP, track your streak, and show up on the leaderboard.',
+    cta: 'Create a free account',
+    dismiss: 'Keep voting without an account →',
+  },
+} as const
 
 /**
  * Full-screen prompt after anonymous vote: signup to claim XP on the existing market_votes row.
@@ -27,6 +43,8 @@ export function GuestRegistrationPrompt({
   onDismiss,
 }: GuestRegistrationPromptProps) {
   const router = useRouter()
+  const locale = useLocale()
+  const t = COPY[locale === 'en' ? 'en' : 'es']
 
   const handleCreateAccount = () => {
     setPendingVote({
@@ -64,25 +82,22 @@ export function GuestRegistrationPrompt({
             exit={{ scale: 0.95, y: 12 }}
           >
             <h2 id="guest-reg-heading" className="text-2xl font-bold text-white mb-3">
-              ¿Quieres ganar XP por tus predicciones?
+              {t.heading}
             </h2>
-            <p className="text-slate-400 text-base mb-8 leading-relaxed">
-              Tu voto ya cuenta para la comunidad. Crea tu cuenta para ver tu historial, ganar XP y aparecer en el
-              ranking.
-            </p>
+            <p className="text-slate-400 text-base mb-8 leading-relaxed">{t.body}</p>
             <button
               type="button"
               onClick={handleCreateAccount}
               className="w-full py-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-lg transition-colors mb-4"
             >
-              Crear cuenta gratis
+              {t.cta}
             </button>
             <button
               type="button"
               onClick={onDismiss}
               className="text-slate-500 hover:text-slate-300 text-sm underline underline-offset-2"
             >
-              Continuar sin cuenta →
+              {t.dismiss}
             </button>
           </motion.div>
         </motion.div>

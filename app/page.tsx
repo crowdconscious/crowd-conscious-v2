@@ -13,6 +13,9 @@ import { LandingLiveSection } from './components/landing/LandingLiveSection'
 import LandingLocationsSection from './components/landing/LandingLocationsSection'
 import type { LocationCardRow } from '@/components/locations/LocationCard'
 import type { MarketCardMarket, MarketCardOutcome } from '@/components/MarketCard'
+import { PUBLIC_MARKET_MIN_VOTES } from '@/lib/predictions/engagement'
+import { CONSCIOUS_FUND_GOAL_MXN } from '@/lib/predictions/fund-goal'
+import { FundThermometer } from '@/components/fund/FundThermometer'
 
 const Footer = dynamic(() => import('../components/Footer'))
 const CookieConsent = dynamic(() => import('../components/CookieConsent'))
@@ -27,8 +30,6 @@ const ImpactTicker = dynamic(() =>
 const SponsorCTA = dynamic(() =>
   import('./components/landing/SponsorCTA').then((m) => ({ default: m.SponsorCTA }))
 )
-const NewsletterForm = dynamic(() => import('@/components/NewsletterForm'))
-
 export const revalidate = 60
 
 export const metadata: Metadata = {
@@ -112,6 +113,10 @@ async function getLandingData() {
       )
       .in('status', ['active', 'trading'])
       .is('archived_at', null)
+      // Only surface markets with enough engagement that probability bars are
+      // credible. Below-threshold markets show misleading 0% / 100% bars on
+      // the landing page and become anti-social-proof.
+      .gte('total_votes', PUBLIC_MARKET_MIN_VOTES)
       .order('total_votes', { ascending: false, nullsFirst: false })
       .limit(6),
     supabase
@@ -132,6 +137,7 @@ async function getLandingData() {
       )
       .eq('category', 'world_cup')
       .in('status', ['active', 'trading'])
+      .gte('total_votes', PUBLIC_MARKET_MIN_VOTES)
       .order('total_votes', { ascending: false, nullsFirst: false })
       .limit(4),
     supabase
@@ -250,12 +256,6 @@ async function getLandingData() {
     showLocationsSection,
     landingLocationCards,
   }
-}
-
-function formatCurrency(num: number): string {
-  if (num >= 1_000_000) return `$${(num / 1_000_000).toFixed(1)}M`
-  if (num >= 1_000) return `$${(num / 1_000).toFixed(1)}K`
-  return `$${num.toFixed(0)}`
 }
 
 const WorldCupCountdown = dynamic(() =>
@@ -474,20 +474,6 @@ export default async function LandingPage() {
 
         <LandingLiveSection locale={localeShort} />
 
-        <section className="border-t border-[#2d3748] bg-[#0f1419] px-4 py-12">
-          <div className="mx-auto max-w-xl rounded-xl border border-[#2d3748] bg-[#1a2029] p-6 text-center">
-            <h3 className="text-lg font-bold text-white">
-              {locale === 'es' ? '¿Quieres recibir análisis semanales?' : 'Want weekly analysis?'}
-            </h3>
-            <p className="mt-1 mb-4 text-sm text-gray-400">
-              {locale === 'es'
-                ? 'Inteligencia colectiva y predicciones — directo a tu correo.'
-                : 'Collective intelligence and predictions — straight to your inbox.'}
-            </p>
-            <NewsletterForm source="landing_hero" locale={localeShort} />
-          </div>
-        </section>
-
         {/* Social proof — stats from live data */}
         <section
           className="border-y border-[#2d3748] bg-[#1a2029]/50 py-10"
@@ -553,23 +539,20 @@ export default async function LandingPage() {
                       ? 'Cada patrocinio financia causas reales. Tú decides a dónde va el impacto.'
                       : 'Every sponsorship funds real causes. You decide where the impact goes.'}
                   </p>
-                  {fundBalance > 0 ? (
-                    <div className="mb-6 flex flex-wrap gap-6">
-                      <div>
-                        <p className="text-sm text-gray-500">{locale === 'es' ? 'Total del fondo' : 'Fund total'}</p>
-                        <p className="text-2xl font-bold text-emerald-400">{formatCurrency(fundBalance)} MXN</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500">{locale === 'es' ? 'Causas' : 'Causes'}</p>
-                        <p className="text-2xl font-bold text-white">{causesCount}</p>
-                      </div>
+                  <div className="mb-6">
+                    <FundThermometer
+                      current={fundBalance}
+                      goal={CONSCIOUS_FUND_GOAL_MXN}
+                      currency="MXN"
+                      variant="full"
+                      locale={localeShort}
+                    />
+                  </div>
+                  {fundBalance > 0 && (
+                    <div className="mb-6">
+                      <p className="text-sm text-gray-500">{locale === 'es' ? 'Causas activas' : 'Active causes'}</p>
+                      <p className="text-2xl font-bold text-white">{causesCount}</p>
                     </div>
-                  ) : (
-                    <p className="mb-6 max-w-xl text-slate-300 leading-relaxed">
-                      {locale === 'es'
-                        ? 'El Fondo Consciente se activa con el primer patrocinio. Cada marca que se une genera impacto directo.'
-                        : 'The Conscious Fund activates with the first sponsorship. Every brand that joins creates direct impact.'}
-                    </p>
                   )}
                   {causesWithVotes.length > 0 && (
                     <div className="mb-6 space-y-2">

@@ -395,7 +395,7 @@ export function GlobalSearch() {
                   {results.communities.map((community: any) => (
                     <a
                       key={community.id}
-                      href={`/communities/${community.id}`}
+                      href={`/locations`}
                       className="block p-2 rounded-lg hover:bg-slate-50 transition-colors"
                       onClick={() => setIsOpen(false)}
                     >
@@ -424,7 +424,7 @@ export function GlobalSearch() {
                   {results.content.map((content: any) => (
                     <a
                       key={content.id}
-                      href={`/communities/${content.community_id}/content/${content.id}`}
+                      href={`/locations`}
                       className="block p-2 rounded-lg hover:bg-slate-50 transition-colors"
                       onClick={() => setIsOpen(false)}
                     >

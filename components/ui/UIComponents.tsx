@@ -191,7 +191,7 @@ export const BottomNavigation = ({
 }) => {
   const navItems = [
     { path: '/dashboard', icon: '🏠', label: 'Home' },
-    { path: '/communities', icon: '🌍', label: 'Communities' },
+    { path: '/locations', icon: '🌍', label: 'Locations' },
     { path: '/profile', icon: '👤', label: 'Profile' },
     { path: '/settings', icon: '⚙️', label: 'Settings' }
   ]

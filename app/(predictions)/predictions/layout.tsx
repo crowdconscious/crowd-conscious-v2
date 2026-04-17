@@ -5,12 +5,27 @@ import { createClient } from '@/lib/supabase-server'
 import PredictionsShell from './PredictionsShell'
 import { PendingVoteSubmitter } from './components/PendingVoteSubmitter'
 
-/** Public: no login required (market detail pages allow guest voting) */
-const PUBLIC_PATHS = [
+/**
+ * Public: no login required.
+ *
+ * Anonymous users can browse markets and vote via guest_id (see migrations
+ * 147_guest_market_votes, 158_anonymous_alias_system, 169_xp_anonymous_resolution,
+ * 190_alias_vote_conscious_locations).
+ *
+ * `EXACT` paths must match the URL exactly — used for `/predictions` so the
+ * dashboard root is reachable without making `/predictions/admin/*` public.
+ *
+ * `PREFIX` paths match the URL or any sub-path. Authenticated-only routes
+ * (NOT listed): /predictions/wallet, /predictions/notifications, /predictions/trades,
+ * /predictions/insights, /predictions/intelligence, /predictions/admin/*.
+ */
+const PUBLIC_EXACT_PATHS = ['/predictions']
+const PUBLIC_PREFIX_PATHS = [
   '/predictions/leaderboard',
   '/predictions/fund',
   '/predictions/markets',
   '/predictions/inbox',
+  '/predictions/pulse',
 ]
 
 async function getNavCounts(supabase: Awaited<ReturnType<typeof createClient>>) {
@@ -44,7 +59,9 @@ export default async function PredictionsLayout({
 }) {
   const headersList = await headers()
   const pathname = headersList.get('x-pathname') ?? ''
-  const isPublicPath = PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + '/'))
+  const isPublicPath =
+    PUBLIC_EXACT_PATHS.includes(pathname) ||
+    PUBLIC_PREFIX_PATHS.some((p) => pathname === p || pathname.startsWith(p + '/'))
 
   const user = await getCurrentUser()
 

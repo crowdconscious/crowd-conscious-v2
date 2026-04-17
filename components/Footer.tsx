@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import Logo from '@/components/Logo'
 import NewsletterForm from '@/components/NewsletterForm'
+import { FundThermometer } from '@/components/fund/FundThermometer'
 import { useLanguage } from '@/contexts/LanguageContext'
 
 export default function Footer() {
@@ -13,12 +14,12 @@ export default function Footer() {
       platform: 'Plataforma',
       company: 'Empresa',
       legal: 'Legal',
-      markets: 'Mercados',
+      markets: 'Predicciones',
+      locations: 'Lugares',
       leaderboard: 'Leaderboard',
       consciousFund: 'Fondo Consciente',
-      sponsorCta: 'Patrocinar',
+      forBrands: 'Para Marcas',
       about: 'Acerca de',
-      sponsors: 'Patrocinadores',
       contact: 'Contacto',
       termsShort: 'Términos',
       privacyShort: 'Privacidad',
@@ -32,12 +33,12 @@ export default function Footer() {
       platform: 'Platform',
       company: 'Company',
       legal: 'Legal',
-      markets: 'Markets',
+      markets: 'Predictions',
+      locations: 'Places',
       leaderboard: 'Leaderboard',
       consciousFund: 'Conscious Fund',
-      sponsorCta: 'Sponsor',
+      forBrands: 'For Brands',
       about: 'About',
-      sponsors: 'Sponsors',
       contact: 'Contact',
       termsShort: 'Terms',
       privacyShort: 'Privacy',
@@ -54,7 +55,13 @@ export default function Footer() {
   return (
     <footer className="border-t border-cc-border bg-cc-nav-bg text-white">
       <div className="mx-auto max-w-7xl px-4 py-12">
-        {/* Logo | description | social + language */}
+        <div className="mb-10 border-b border-gray-800 pb-8">
+          <FundThermometer
+            variant="compact"
+            locale={language === 'en' ? 'en' : 'es'}
+            href="/predictions/fund"
+          />
+        </div>
         <div className="mb-10 grid grid-cols-1 gap-8 border-b border-gray-800 pb-10 lg:grid-cols-[auto_1fr_auto] lg:items-start lg:gap-12">
           <div className="shrink-0">
             <Logo size="sm" linkTo="/" />
@@ -135,6 +142,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/locations" className="text-slate-300 transition-colors hover:text-teal-400">
+                  {t.locations}
+                </Link>
+              </li>
+              <li>
                 <Link href="/predictions/leaderboard" className="text-slate-300 transition-colors hover:text-teal-400">
                   {t.leaderboard}
                 </Link>
@@ -142,11 +154,6 @@ export default function Footer() {
               <li>
                 <Link href="/predictions/fund" className="text-slate-300 transition-colors hover:text-teal-400">
                   {t.consciousFund}
-                </Link>
-              </li>
-              <li>
-                <Link href="/pulse" className="text-slate-300 transition-colors hover:text-teal-400">
-                  {t.sponsorCta}
                 </Link>
               </li>
             </ul>
@@ -161,7 +168,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link href="/pulse" className="text-slate-300 transition-colors hover:text-teal-400">
-                  {t.sponsors}
+                  {t.forBrands}
                 </Link>
               </li>
               <li>
