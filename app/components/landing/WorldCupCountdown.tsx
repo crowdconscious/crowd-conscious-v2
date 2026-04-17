@@ -15,39 +15,50 @@ function computeDiff(): Diff {
 }
 
 export function WorldCupCountdown({ locale = 'en' }: { locale?: 'en' | 'es' }) {
-  const [mounted, setMounted] = useState(false)
-  const [diff, setDiff] = useState<Diff>({ days: 0, hours: 0, minutes: 0 })
+  // Initial compute runs on both server and first client render. The numbers
+  // will differ by a few ms between SSR and hydration, which is fine — we
+  // suppressHydrationWarning on the cells and update to live values in
+  // useEffect. Avoid rendering em-dashes: they're a strictly worse UX than a
+  // slightly stale initial value, which gets replaced within one tick.
+  const [diff, setDiff] = useState<Diff>(() => computeDiff())
 
   useEffect(() => {
-    setMounted(true)
     const tick = () => setDiff(computeDiff())
     tick()
     const t = setInterval(tick, 1000)
     return () => clearInterval(t)
   }, [])
 
-  const d = mounted ? diff : { days: 0, hours: 0, minutes: 0 }
   const dayLabel = locale === 'es' ? 'días' : 'days'
   const hourLabel = locale === 'es' ? 'horas' : 'hours'
   const minLabel = locale === 'es' ? 'minutos' : 'minutes'
 
   return (
-    <div className="flex flex-wrap justify-center gap-4 md:gap-8" suppressHydrationWarning>
+    <div className="flex flex-wrap justify-center gap-4 md:gap-8">
       <div className="min-w-[100px] rounded-xl border border-cc-border bg-gray-800/80 px-6 py-4 text-center">
-        <p className="text-3xl font-bold text-emerald-400 md:text-4xl" suppressHydrationWarning>
-          {mounted ? d.days : '—'}
+        <p
+          className="text-3xl font-bold text-emerald-400 md:text-4xl"
+          suppressHydrationWarning
+        >
+          {diff.days}
         </p>
         <p className="text-sm text-slate-400">{dayLabel}</p>
       </div>
       <div className="min-w-[100px] rounded-xl border border-cc-border bg-gray-800/80 px-6 py-4 text-center">
-        <p className="text-3xl font-bold text-emerald-400 md:text-4xl" suppressHydrationWarning>
-          {mounted ? d.hours : '—'}
+        <p
+          className="text-3xl font-bold text-emerald-400 md:text-4xl"
+          suppressHydrationWarning
+        >
+          {diff.hours}
         </p>
         <p className="text-sm text-slate-400">{hourLabel}</p>
       </div>
       <div className="min-w-[100px] rounded-xl border border-cc-border bg-gray-800/80 px-6 py-4 text-center">
-        <p className="text-3xl font-bold text-emerald-400 md:text-4xl" suppressHydrationWarning>
-          {mounted ? d.minutes : '—'}
+        <p
+          className="text-3xl font-bold text-emerald-400 md:text-4xl"
+          suppressHydrationWarning
+        >
+          {diff.minutes}
         </p>
         <p className="text-sm text-slate-400">{minLabel}</p>
       </div>

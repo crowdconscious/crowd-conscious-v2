@@ -140,7 +140,10 @@ export function DashboardIntelligenceColumn({
                 className="flex items-center justify-between gap-2 rounded-[14px] border border-white/[0.07] bg-white/[0.03] p-3 transition-colors hover:border-white/10"
               >
                 <Link href={`/predictions/markets/${m.id}`} className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-white">
+                  <p
+                    className="line-clamp-2 text-sm font-medium text-white"
+                    title={getMarketText(m, 'title', locale)}
+                  >
                     {getMarketText(m, 'title', locale)}
                   </p>
                   <div className="mt-1 flex items-center gap-2">
@@ -182,7 +185,10 @@ export function DashboardIntelligenceColumn({
                 className="flex items-center justify-between gap-2 rounded-[14px] border border-white/[0.07] bg-white/[0.03] p-3 transition-colors hover:border-white/10"
               >
                 <Link href={`/predictions/markets/${m.id}`} className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-white">
+                  <p
+                    className="line-clamp-2 text-sm font-medium text-white"
+                    title={getMarketText(m, 'title', locale)}
+                  >
                     {getMarketText(m, 'title', locale)}
                   </p>
                   <p className="mt-0.5 text-xs text-slate-500">

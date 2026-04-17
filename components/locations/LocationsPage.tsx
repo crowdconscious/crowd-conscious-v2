@@ -34,6 +34,7 @@ import { ValueBadgeRow } from '@/components/locations/ValueBadge'
 import { NearestToAztecaSection } from './NearestToAztecaSection'
 import { isAztecaModuleVisible } from '@/lib/locations/geo'
 import { AnonymousVoteToast } from '@/components/anon/AnonymousVoteToast'
+import { PostVoteShare } from '@/components/sharing/PostVoteShare'
 import { AnonymousSoftGate } from '@/components/anon/AnonymousSoftGate'
 import { recordAnonVote } from '@/lib/anon-vote-tracker'
 
@@ -163,12 +164,23 @@ function SwipeCard({
   )
 }
 
-export default function LocationsPage() {
+export default function LocationsPage({
+  initialLocations,
+  initialCities,
+}: {
+  initialLocations?: ApiLocation[]
+  initialCities?: string[]
+} = {}) {
   const { language } = useLanguage()
   const locale = language
-  const [allLocations, setAllLocations] = useState<ApiLocation[]>([])
-  const [cityOptions, setCityOptions] = useState<string[]>([])
-  const [loading, setLoading] = useState(true)
+  const [allLocations, setAllLocations] = useState<ApiLocation[]>(
+    initialLocations ?? []
+  )
+  const [cityOptions, setCityOptions] = useState<string[]>(initialCities ?? [])
+  // Don't show a loading spinner when we already have SSR data — the client
+  // fetch still runs to refresh (e.g. pick up anon user's hasVoted state)
+  // but it does so in the background.
+  const [loading, setLoading] = useState((initialLocations?.length ?? 0) === 0)
   const [city, setCity] = useState<string | null>(null)
   const [category, setCategory] = useState<string>('all')
   const [verifyQuery, setVerifyQuery] = useState('')
@@ -212,21 +224,35 @@ export default function LocationsPage() {
     voteCount: number
     xpTotal: number
   }>({ open: false, alias: null, voteCount: 0, xpTotal: 0 })
+  const [postVoteShare, setPostVoteShare] = useState<{
+    locationId: string
+    slug: string
+    name: string
+    voteCount: number
+  } | null>(null)
 
   const load = useCallback(async () => {
-    setLoading(true)
+    // Keep any SSR-provided data visible while we refresh in the background.
+    const hasInitial = allLocations.length > 0
+    if (!hasInitial) setLoading(true)
     try {
       const params = new URLSearchParams()
       if (city) params.set('city', city)
       const res = await fetch(`/api/locations?${params.toString()}`)
+      if (!res.ok) {
+        // If we don't have SSR data, clear so we show the empty state.
+        if (!hasInitial) setAllLocations([])
+        return
+      }
       const json = (await res.json()) as { locations?: ApiLocation[]; cities?: string[] }
       setAllLocations(json.locations ?? [])
       if (json.cities?.length) setCityOptions(json.cities)
     } catch {
-      setAllLocations([])
+      if (!hasInitial) setAllLocations([])
     } finally {
       setLoading(false)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [city])
 
   useEffect(() => {
@@ -314,6 +340,17 @@ export default function LocationsPage() {
       }
       setPendingSwipe(null)
       setStack((prev) => prev.filter((x) => x.id !== loc.id))
+
+      // Post-vote share prompt — WhatsApp-first, auto-dismisses.
+      // Vote count is loc.total_votes + 1 because we just cast a vote.
+      setPostVoteShare({
+        locationId: loc.id,
+        slug: loc.slug,
+        name: loc.name,
+        voteCount: (loc.total_votes ?? 0) + 1,
+      })
+      window.setTimeout(() => setPostVoteShare(null), 10_000)
+
       const {
         data: { session },
       } = await createClient().auth.getSession()
@@ -1191,6 +1228,21 @@ export default function LocationsPage() {
         nextPath="/locations"
         onClose={() => setSoftGate((p) => ({ ...p, open: false }))}
       />
+
+      {postVoteShare && (
+        <div className="pointer-events-none fixed inset-x-0 bottom-4 z-40 flex justify-center px-4 sm:bottom-6">
+          <div className="pointer-events-auto w-full max-w-md shadow-2xl">
+            <PostVoteShare
+              target={{ type: 'location', locationId: postVoteShare.locationId }}
+              title={postVoteShare.name}
+              url={`https://crowdconscious.app/locations/${postVoteShare.slug}`}
+              voteCount={postVoteShare.voteCount}
+              locale={locale}
+              surface="post_vote_location"
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

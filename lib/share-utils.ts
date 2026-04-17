@@ -3,6 +3,82 @@ function getBaseUrl(): string {
   return process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'
 }
 
+export type ShareChannel =
+  | 'whatsapp'
+  | 'native_share'
+  | 'clipboard'
+  | 'twitter'
+  | 'facebook'
+  | 'story_download'
+  | 'other'
+
+export type ShareTarget =
+  | { type: 'market'; marketId: string }
+  | { type: 'location'; locationId: string }
+  | { type: 'other'; otherType: string; otherId: string }
+
+/**
+ * Fire-and-forget analytics ping. Never throws, never awaits longer
+ * than the network wants — we don't want tracking to block the user's
+ * share action. Uses `keepalive` so the request survives page nav.
+ */
+export function trackShare(
+  target: ShareTarget,
+  channel: ShareChannel,
+  surface?: string
+): void {
+  if (typeof window === 'undefined') return
+  const payload: Record<string, string> = { channel }
+  if (surface) payload.surface = surface
+  if (target.type === 'market') payload.market_id = target.marketId
+  else if (target.type === 'location') payload.location_id = target.locationId
+  else {
+    payload.other_type = target.otherType
+    payload.other_id = target.otherId
+  }
+  try {
+    void fetch('/api/share/track', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(payload),
+      keepalive: true,
+    }).catch(() => {})
+  } catch {
+    // ignore — analytics must never break a share
+  }
+}
+
+/** WhatsApp share for a Conscious Location. */
+export function shareLocationToWhatsApp(slug: string, name: string, locale: 'es' | 'en' = 'es') {
+  const base = getBaseUrl()
+  const url = `${base}/locations/${encodeURIComponent(slug)}`
+  const text =
+    locale === 'es'
+      ? `¿Es ${name} un Lugar Consciente? Vota aquí: ${url}`
+      : `Is ${name} a Conscious Location? Vote here: ${url}`
+  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
+}
+
+/** Copy a location link to the clipboard with the Spanish/English CTA line. */
+export async function copyLocationLink(
+  slug: string,
+  name: string,
+  locale: 'es' | 'en' = 'es'
+): Promise<boolean> {
+  const base = getBaseUrl()
+  const url = `${base}/locations/${encodeURIComponent(slug)}`
+  const text =
+    locale === 'es'
+      ? `¿Es ${name} un Lugar Consciente? Vota aquí: ${url}`
+      : `Is ${name} a Conscious Location? Vote here: ${url}`
+  try {
+    await navigator.clipboard.writeText(text)
+    return true
+  } catch {
+    return false
+  }
+}
+
 function getShareSuffix(sponsorName?: string | null): string {
   return sponsorName
     ? ` — Sponsored by ${sponsorName} on Crowd Conscious`

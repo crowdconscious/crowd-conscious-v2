@@ -230,9 +230,9 @@ export function MarketDetailClient({
     let cancelled = false
     setLazyExtra(null)
     fetch(`/api/predictions/markets/${market.id}/supplementary`)
-      .then((r) => r.json())
-      .then((d: { error?: string; history?: Props['history']; agentContent?: AgentContent[]; sentiment?: SentimentScore[]; trades?: TradeAnon[]; totalConsciousFromMarket?: number }) => {
-        if (cancelled || d.error) return
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { error?: string; history?: Props['history']; agentContent?: AgentContent[]; sentiment?: SentimentScore[]; trades?: TradeAnon[]; totalConsciousFromMarket?: number } | null) => {
+        if (cancelled || !d || d.error) return
         setLazyExtra({
           history: d.history ?? [],
           agentContent: d.agentContent ?? [],
@@ -972,7 +972,11 @@ export function MarketDetailClient({
             <p className="text-white text-sm mb-2">
               Sponsor-funded impact for {config.label.toLowerCase()}
             </p>
-            <UserContribution marketId={market.id} isPulse={isPulseMarket} />
+            <UserContribution
+              marketId={market.id}
+              isPulse={isPulseMarket}
+              isAuthenticated={isAuthenticated}
+            />
           </div>
         </div>
       </div>
@@ -1184,17 +1188,41 @@ function MarketDiscussion({ marketId }: { marketId: string }) {
   )
 }
 
-function UserContribution({ marketId, isPulse }: { marketId: string; isPulse: boolean }) {
+function UserContribution({
+  marketId,
+  isPulse,
+  isAuthenticated,
+}: {
+  marketId: string
+  isPulse: boolean
+  isAuthenticated: boolean
+}) {
   const locale = useLocale()
   const loc = locale === 'en' ? 'en' : 'es'
   const [contribution, setContribution] = useState<number | null>(null)
 
   useEffect(() => {
+    // Skip fetch for anonymous visitors — the /user-stats endpoint
+    // requires auth and would return 401. Render the static copy
+    // line directly.
+    if (!isAuthenticated) {
+      setContribution(0)
+      return
+    }
+    let cancelled = false
     fetch(`/api/predictions/markets/${marketId}/user-stats`)
-      .then((r) => r.json())
-      .then((d) => setContribution(d.userContribution ?? 0))
-      .catch(() => setContribution(0))
-  }, [marketId])
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (cancelled) return
+        setContribution(d?.userContribution ?? 0)
+      })
+      .catch(() => {
+        if (!cancelled) setContribution(0)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [marketId, isAuthenticated])
 
   if (contribution === null) return <p className="text-slate-400 text-sm">Loading...</p>
   return <p className="text-emerald-300 text-sm">{userContributionLine(loc, isPulse)}</p>

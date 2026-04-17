@@ -10,6 +10,7 @@ import {
   Building2,
   ChevronRight,
 } from 'lucide-react'
+import { FundThermometer } from '@/components/fund/FundThermometer'
 
 function useScrollReveal() {
   const ref = useRef<HTMLDivElement>(null)
@@ -33,10 +34,14 @@ function useScrollReveal() {
 
 export default function AboutContent({
   fundTotal,
+  fundTotalMxn,
+  fundGoalMxn,
   causesSupported,
   monthlyAllocation,
 }: {
   fundTotal: string
+  fundTotalMxn: number
+  fundGoalMxn: number
   causesSupported: number
   monthlyAllocation: string
 }) {
@@ -195,6 +200,15 @@ export default function AboutContent({
               ? 'Las marcas patrocinan mercados → entre el 20% y 40% de cada patrocinio va directamente a causas comunitarias — hasta 10× el promedio de la industria en causa marketing → los usuarios votan qué causas reciben apoyos → impacto comunitario. Un ciclo virtuoso.'
               : 'Brands sponsor markets → between 20% and 40% of every sponsorship goes directly to community causes — up to 10× the industry average for cause marketing → Users vote on which causes receive grants → Community impact. It&apos;s a virtuous cycle.'}
           </p>
+          <div className="mb-8 rounded-2xl border border-cc-border bg-cc-card/80 p-6 md:p-8">
+            <FundThermometer
+              current={fundTotalMxn}
+              goal={fundGoalMxn}
+              currency="MXN"
+              variant="full"
+              locale={locale}
+            />
+          </div>
           <div className="grid md:grid-cols-3 gap-6 mb-10">
             <div className="border border-cc-border bg-cc-card rounded-xl p-6 text-center">
               <p className="text-slate-500 text-sm mb-1">

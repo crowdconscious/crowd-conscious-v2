@@ -3,7 +3,8 @@ import { createClient } from '@/lib/supabase-server'
 import dynamic from 'next/dynamic'
 import LandingNav from '@/app/components/landing/LandingNav'
 import { SITE_URL } from '@/lib/seo/site'
-import { consciousFundBalanceMxn } from '@/lib/conscious-fund-balance'
+import { fetchConsciousFundBalanceMxn } from '@/lib/conscious-fund-balance'
+import { CONSCIOUS_FUND_GOAL_MXN } from '@/lib/predictions/fund-goal'
 
 export const metadata: Metadata = {
   title: {
@@ -29,22 +30,21 @@ export const revalidate = 60
 async function getAboutData() {
   const supabase = await createClient()
 
-  const [
-    { data: causes },
-    { data: fund },
-  ] = await Promise.all([
+  // Fund total read via admin client (bypasses RLS) so anonymous visitors
+  // see the same number the dashboard does. See migration 198.
+  const [{ data: causes }, totalFund] = await Promise.all([
     supabase.from('fund_causes').select('id').eq('active', true),
-    supabase.from('conscious_fund').select('current_balance, total_collected, total_disbursed').limit(1).single(),
+    fetchConsciousFundBalanceMxn(),
   ])
 
-  const totalFund = Math.round(consciousFundBalanceMxn(fund ?? undefined))
   const causesSupported = (causes ?? []).length
   const monthlyAllocation = totalFund > 0 ? Math.floor(totalFund / 12) : 0
 
   return {
-    totalFund,
+    totalFund: Math.round(totalFund),
     causesSupported,
     monthlyAllocation,
+    goalMxn: CONSCIOUS_FUND_GOAL_MXN,
   }
 }
 
@@ -55,7 +55,12 @@ function formatCurrency(num: number): string {
 }
 
 export default async function AboutPage() {
-  let fundData = { totalFund: 0, causesSupported: 0, monthlyAllocation: 0 }
+  let fundData = {
+    totalFund: 0,
+    causesSupported: 0,
+    monthlyAllocation: 0,
+    goalMxn: CONSCIOUS_FUND_GOAL_MXN,
+  }
   try {
     fundData = await getAboutData()
   } catch (e) {
@@ -69,6 +74,8 @@ export default async function AboutPage() {
       <main className="pt-24">
         <AboutContent
           fundTotal={formatCurrency(fundData.totalFund)}
+          fundTotalMxn={fundData.totalFund}
+          fundGoalMxn={fundData.goalMxn}
           causesSupported={fundData.causesSupported}
           monthlyAllocation={formatCurrency(fundData.monthlyAllocation)}
         />

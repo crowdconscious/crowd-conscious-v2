@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { cookies } from 'next/headers'
 import { SITE_URL } from '@/lib/seo/site'
 import { createClient } from '@/lib/supabase-server'
+import { fetchConsciousFundBalanceMxn } from '@/lib/conscious-fund-balance'
 import type { Json } from '@/types/database'
 import dynamic from 'next/dynamic'
 import { ChevronRight } from 'lucide-react'
@@ -91,7 +92,7 @@ async function getLandingData() {
   const [
     marketsRes,
     outcomesRes,
-    fundRes,
+    fundBalance,
     causesRes,
     votesRes,
     worldCupRes,
@@ -120,11 +121,9 @@ async function getLandingData() {
       .from('market_outcomes')
       .select('id, market_id, label, probability, sort_order, translations')
       .order('probability', { ascending: false }),
-    supabase
-      .from('conscious_fund')
-      .select('current_balance, total_collected, total_disbursed')
-      .limit(1)
-      .single(),
+    // Fund balance read via admin client so anon visitors see the real
+    // number regardless of `conscious_fund` RLS state (see migration 198).
+    fetchConsciousFundBalanceMxn(),
     supabase.from('fund_causes').select('id, name').eq('active', true).order('name'),
     supabase.from('fund_votes').select('cause_id').eq('cycle', cycle),
     supabase
@@ -183,7 +182,6 @@ async function getLandingData() {
   }>
   const outcomesByMarketId = groupOutcomesByMarket(outcomeRows)
 
-  const fundBalance = Number(fundRes.data?.current_balance ?? 0)
   const causes = (causesRes.data || []) as Array<{ id: string; name: string }>
   const voteCountByCause: Record<string, number> = {}
   for (const v of votesRes.data || []) {

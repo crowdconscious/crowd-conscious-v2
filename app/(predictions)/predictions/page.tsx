@@ -12,7 +12,7 @@ type PositionWithMarket = PredictionPosition & {
   prediction_markets: Pick<PredictionMarket, 'id' | 'title' | 'current_probability' | 'status'> | null
 }
 
-async function getDashboardData(userId: string) {
+async function getDashboardData(userId: string, isAdmin: boolean) {
   const supabase = await createClient()
 
   const [
@@ -25,6 +25,7 @@ async function getDashboardData(userId: string) {
     { data: fund },
     { data: userTrades },
     { data: userXp },
+    { data: userStats },
   ] = await Promise.all([
     supabase.from('profiles').select('full_name').eq('id', userId).single(),
     supabase
@@ -34,8 +35,9 @@ async function getDashboardData(userId: string) {
       .gt('shares', 0),
     supabase
       .from('market_votes')
-      .select('id, market_id, outcome_id, confidence, xp_earned, is_correct, bonus_xp')
-      .eq('user_id', userId),
+      .select('id, market_id, outcome_id, confidence, xp_earned, is_correct, bonus_xp, created_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false }),
     supabase
       .from('prediction_markets')
       .select('*')
@@ -62,12 +64,20 @@ async function getDashboardData(userId: string) {
       .eq('user_id', userId)
       .in('action_type', ['prediction_vote', 'prediction_correct']),
     supabase.from('user_xp').select('total_xp').eq('user_id', userId).single(),
+    supabase
+      .from('user_stats')
+      .select('current_streak, last_activity')
+      .eq('user_id', userId)
+      .maybeSingle(),
   ])
 
   const userName = profile?.full_name || 'Changemaker'
   const userImpactXp = (userTrades ?? []).reduce((s, t) => s + Number(t.amount), 0)
   const fundBalance = Number(fund?.current_balance ?? 0)
   const totalXp = Number(userXp?.total_xp ?? 0)
+  const currentStreak = Number(userStats?.current_streak ?? 0)
+  const lastActivityAt = userStats?.last_activity as string | null
+  const lastActivityMs = lastActivityAt ? new Date(lastActivityAt).getTime() : 0
 
   const votes = (marketVotes || []) as Array<{
     id: string
@@ -77,39 +87,63 @@ async function getDashboardData(userId: string) {
     xp_earned: number
     is_correct: boolean | null
     bonus_xp: number | null
+    created_at: string
   }>
   const marketIds = [...new Set(votes.map((v) => v.market_id))]
   const outcomeIds = [...new Set(votes.map((v) => v.outcome_id))]
 
   let outcomesData: { id: string; label: string }[] = []
-  let marketsData: { id: string; title: string; status: string }[] = []
+  let marketsData: { id: string; title: string; status: string; resolved_at: string | null }[] = []
   if (outcomeIds.length > 0) {
     const res = await supabase.from('market_outcomes').select('id, label').in('id', outcomeIds)
     outcomesData = res.data || []
   }
   if (marketIds.length > 0) {
-    const res = await supabase.from('prediction_markets').select('id, title, status').in('id', marketIds)
+    const res = await supabase
+      .from('prediction_markets')
+      .select('id, title, status, resolved_at')
+      .in('id', marketIds)
     marketsData = res.data || []
   }
 
   const outcomesMap = new Map(outcomesData.map((o) => [o.id, o.label]))
-  const marketsMap = new Map(marketsData.map((m) => [m.id, { title: m.title, status: m.status }]))
+  const marketsMap = new Map(
+    marketsData.map((m) => [
+      m.id,
+      { title: m.title, status: m.status, resolved_at: m.resolved_at },
+    ])
+  )
 
-  const userPredictions = votes.map((v) => ({
-    id: v.id,
-    market_id: v.market_id,
-    outcome_label: outcomesMap.get(v.outcome_id) ?? 'Unknown',
-    confidence: v.confidence,
-    xp_earned: v.xp_earned,
-    is_correct: v.is_correct,
-    bonus_xp: v.bonus_xp ?? 0,
-    market_title: marketsMap.get(v.market_id)?.title ?? 'Market',
-    market_status: marketsMap.get(v.market_id)?.status ?? 'active',
-  }))
+  const userPredictions = votes.map((v) => {
+    const info = marketsMap.get(v.market_id)
+    return {
+      id: v.id,
+      market_id: v.market_id,
+      outcome_label: outcomesMap.get(v.outcome_id) ?? 'Unknown',
+      confidence: v.confidence,
+      xp_earned: v.xp_earned,
+      is_correct: v.is_correct,
+      bonus_xp: v.bonus_xp ?? 0,
+      voted_at: v.created_at,
+      market_title: info?.title ?? 'Market',
+      market_status: info?.status ?? 'active',
+      resolved_at: info?.resolved_at ?? null,
+    }
+  })
 
   const resolvedVotes = userPredictions.filter((v) => v.market_status === 'resolved')
   const correctCount = resolvedVotes.filter((v) => v.is_correct === true).length
   const accuracyPct = resolvedVotes.length > 0 ? (correctCount / resolvedVotes.length) * 100 : 0
+
+  // Predictions resolved in the last 7 days where the user voted — feeds
+  // the "your attention" banner above the predictions list.
+  const sevenDaysAgoMs = Date.now() - 7 * 24 * 60 * 60 * 1000
+  const recentlyResolvedForUser = userPredictions.filter(
+    (v) =>
+      v.market_status === 'resolved' &&
+      v.resolved_at !== null &&
+      new Date(v.resolved_at).getTime() >= sevenDaysAgoMs
+  )
 
   const positionsWithMarket = (positions || []) as PositionWithMarket[]
   const activePositions = positionsWithMarket.filter(
@@ -160,6 +194,50 @@ async function getDashboardData(userId: string) {
   const oneDayAgo = now - 24 * 60 * 60 * 1000
   const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000
 
+  // Latest vote timestamp per market — powers the activity dot in the
+  // redesigned Market Overview list. One query grabbing the most recent
+  // 500 votes across all shown markets is plenty for a dashboard with
+  // ~8-20 active markets at a time.
+  const shownMarketIds = (markets ?? []).slice(0, 20).map((m) => m.id)
+  const lastVoteByMarket = new Map<string, number>()
+  if (shownMarketIds.length > 0) {
+    const { data: recentVoteRows } = await supabase
+      .from('market_votes')
+      .select('market_id, created_at')
+      .in('market_id', shownMarketIds)
+      .order('created_at', { ascending: false })
+      .limit(500)
+    for (const row of recentVoteRows ?? []) {
+      const ts = new Date(row.created_at as string).getTime()
+      const existing = lastVoteByMarket.get(row.market_id as string) ?? 0
+      if (ts > existing) lastVoteByMarket.set(row.market_id as string, ts)
+    }
+  }
+
+  // Admin-only attention counts. Only run the queries if the caller is
+  // admin — regular users don't need these.
+  let draftBlogCount = 0
+  let pendingMarketSuggestions = 0
+  if (isAdmin) {
+    const [{ count: blogCount }, { data: suggestionRows }] = await Promise.all([
+      supabase
+        .from('blog_posts')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'draft'),
+      supabase
+        .from('agent_content')
+        .select('id, content_type, metadata, published')
+        .in('content_type', ['market_suggestion', 'market_insight'])
+        .eq('published', false),
+    ])
+    draftBlogCount = blogCount ?? 0
+    pendingMarketSuggestions = (suggestionRows ?? []).filter((row) => {
+      if (row.content_type === 'market_suggestion') return true
+      const metaType = (row.metadata as { type?: string } | null)?.type
+      return row.content_type === 'market_insight' && metaType === 'market_suggestion'
+    }).length
+  }
+
   const biggestMovers = (markets || [])
     .filter((m) => m.status !== 'resolved')
     .map((m) => {
@@ -182,14 +260,18 @@ async function getDashboardData(userId: string) {
   return {
     userId,
     userName,
+    isAdmin,
     totalXp,
     accuracyPct,
     correctPredictions: correctCount,
     totalResolvedPredictions: resolvedVotes.length,
     userImpactXp,
     fundBalance,
+    currentStreak,
+    lastActivityMs,
     positions: enrichedPositions,
     userPredictions,
+    recentlyResolvedForUser,
     biggestMovers: biggestMovers.map((x) => ({
       ...x.market,
       oldProb: x.oldProb,
@@ -200,6 +282,9 @@ async function getDashboardData(userId: string) {
     agentContent: (agentContent || []) as AgentContent[],
     allMarkets: (markets || []) as PredictionMarket[],
     historyByMarket,
+    lastVoteByMarket: Object.fromEntries(lastVoteByMarket),
+    draftBlogCount,
+    pendingMarketSuggestions,
   }
 }
 
@@ -209,7 +294,8 @@ export default async function PredictionsDashboardPage() {
   // instead of a login wall. Personal dashboard requires an account.
   if (!user) redirect('/predictions/markets')
 
-  const data = await getDashboardData(user.id)
+  const isAdmin = (user as { user_type?: string } | null)?.user_type === 'admin'
+  const data = await getDashboardData(user.id, isAdmin)
 
   return <PredictionsDashboardClient data={data} />
 }
