@@ -164,7 +164,10 @@ export function MarketCard({
   const deadline = formatDeadline(market.resolution_date || new Date().toISOString(), locale)
 
   const detailHref = `/predictions/markets/${market.id}`
-  const loginHref = `/login?redirect=${encodeURIComponent(detailHref)}`
+  // The market detail page is public (see `PUBLIC_PREFIX_PATHS` in the
+  // predictions layout) and supports anonymous voting via guest_id. Send
+  // users straight there instead of bouncing them through /login, which
+  // was the #1 cause of lost anonymous votes.
   const go = () => router.push(detailHref)
 
   const pad = compact ? 'p-4' : 'p-5'
@@ -299,7 +302,7 @@ export function MarketCard({
         </Link>
         <div className="border-t border-cc-border px-5 pb-5">
           <Link
-            href={loginHref}
+            href={detailHref}
             className="flex min-h-[44px] w-full items-center justify-center rounded-lg bg-emerald-600 text-sm font-semibold text-white transition-colors hover:bg-emerald-500"
           >
             {marketCardPredictCta(locale === 'en' ? 'en' : 'es', isPulse)}

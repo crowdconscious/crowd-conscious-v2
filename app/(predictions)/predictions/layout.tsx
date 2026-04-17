@@ -1,9 +1,13 @@
 import { getCurrentUser } from '@/lib/auth-server'
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
+import dynamic from 'next/dynamic'
 import { createClient } from '@/lib/supabase-server'
 import PredictionsShell from './PredictionsShell'
 import { PendingVoteSubmitter } from './components/PendingVoteSubmitter'
+import LandingNav from '@/app/components/landing/LandingNav'
+
+const Footer = dynamic(() => import('@/components/Footer'))
 
 /**
  * Public: no login required.
@@ -83,6 +87,29 @@ export default async function PredictionsLayout({
       profileRes.data?.user_type === 'admin' ||
       (!!adminEmail && !!profileEmail && profileEmail === adminEmail)
     navCounts = counts
+  }
+
+  // Anonymous visitors landing directly on a market detail page
+  // (/predictions/markets/<id>) see the same LandingNav + Footer as the rest
+  // of the public site. Previously they got the authenticated-looking
+  // PredictionsShell sidebar which felt like a different product after tapping
+  // "Predecir" on /markets. Other public predictions routes (list,
+  // leaderboard, fund, inbox, pulse) still use the shell — the detail page is
+  // the conversion surface that needs to match the landing.
+  const isPublicMarketDetail =
+    !user && pathname.startsWith('/predictions/markets/') && pathname !== '/predictions/markets/'
+  if (isPublicMarketDetail) {
+    return (
+      <>
+        <LandingNav />
+        <main className="pt-20">
+          <div className="mx-auto w-full max-w-6xl px-4 py-6 md:px-6 md:py-8 lg:px-8">
+            {children}
+          </div>
+        </main>
+        <Footer />
+      </>
+    )
   }
 
   return (

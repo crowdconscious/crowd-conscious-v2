@@ -311,58 +311,62 @@ export function VotePanel({
     ? copy.yourHeading
     : isPulse
     ? locale === 'es'
-      ? 'Comparte tu opinión'
-      : 'Share your opinion'
+      ? 'Elige tu opinión'
+      : 'Pick your opinion'
     : locale === 'es'
-      ? 'Haz tu predicción'
-      : 'Make your prediction'
+      ? 'Elige tu respuesta'
+      : 'Pick your answer'
 
   const renderOutcomeCard = (o: Outcome) => {
     const isSelected = selectedOutcomeId === o.id
     const pct = Math.round(toDisplayPercent(o.probability || 0))
     const primary = getOutcomeCardLabel(o, locale)
     const hint = bilingualHint(o, locale)
+    // Pre-vote cards are choices, not results. The previous full-width progress
+    // bar inside each option made users think they should slide it instead of
+    // tapping. We now render a plain tappable row with the community % as a
+    // subtle social signal on the right; the detailed results bars only appear
+    // after the user has voted.
     return (
       <button
         key={o.id}
         type="button"
         onClick={() => setSelectedOutcomeId(isSelected ? null : o.id)}
+        aria-pressed={isSelected}
         className={`
-          w-full min-h-[44px] text-left rounded-xl p-4 transition-all duration-200 border
+          w-full min-h-[52px] text-left rounded-xl px-4 py-3.5 transition-all duration-200 border
           ${isSelected
-            ? 'border-emerald-500 bg-emerald-500/[0.06] shadow-[0_0_0_1px_rgba(16,185,129,0.3)]'
-            : 'border-white/10 bg-transparent hover:border-white/20 hover:bg-white/[0.02]'
+            ? 'border-emerald-500 bg-emerald-500/[0.08] shadow-[0_0_0_1px_rgba(16,185,129,0.3)]'
+            : 'border-white/10 bg-transparent hover:border-white/25 hover:bg-white/[0.03] active:bg-white/[0.05]'
           }
         `}
       >
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0 pr-2">
-            <p className="text-sm font-medium text-white leading-snug">{primary}</p>
-            {hint ? <p className="text-[11px] text-gray-500 mt-0.5">({hint})</p> : null}
-          </div>
-          <div className="text-right shrink-0" style={{ minWidth: 56 }}>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
             <span
-              className={`text-base font-medium ${isSelected ? 'text-emerald-400' : 'text-gray-400'}`}
+              aria-hidden
+              className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border transition-colors ${
+                isSelected
+                  ? 'border-emerald-500 bg-emerald-500 text-white'
+                  : 'border-white/25 bg-transparent text-transparent'
+              }`}
+            >
+              <Check className="h-3.5 w-3.5" strokeWidth={3} />
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-white leading-snug">{primary}</p>
+              {hint ? <p className="text-[11px] text-gray-500 mt-0.5">({hint})</p> : null}
+            </div>
+          </div>
+          <div className="text-right shrink-0">
+            <span
+              className={`text-xs font-medium ${
+                isSelected ? 'text-emerald-400' : 'text-gray-500'
+              }`}
             >
               {pct}%
             </span>
-            <div className="w-12 h-1 bg-white/[0.08] rounded-full mt-1.5 ml-auto">
-              <div
-                className={`h-full rounded-full transition-all duration-500 ${
-                  isSelected ? 'bg-emerald-500' : 'bg-white/20'
-                }`}
-                style={{ width: `${Math.min(100, Math.max(pct, 3))}%` }}
-              />
-            </div>
           </div>
-        </div>
-        <div className="w-full h-1.5 bg-white/[0.08] rounded-full mt-3 overflow-hidden">
-          <div
-            className={`h-full rounded-full transition-all duration-500 ${
-              isSelected ? 'bg-emerald-500' : 'bg-white/15'
-            }`}
-            style={{ width: `${Math.min(100, Math.max(pct, 2))}%` }}
-          />
         </div>
       </button>
     )
@@ -562,6 +566,35 @@ export function VotePanel({
           <div className="mt-6 pt-4 border-t border-white/5 flex justify-center">
             <ShareButton marketId={market.id} title={shareTitle} sponsorName={sponsorName ?? undefined} />
           </div>
+
+          {!isAuthenticated && (
+            <div className="mt-6 rounded-xl border border-emerald-500/30 bg-emerald-500/[0.05] p-4 text-center">
+              <p className="text-sm text-white font-medium">
+                {locale === 'es'
+                  ? '¡Voto registrado como invitado!'
+                  : 'Vote saved as guest!'}
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                {locale === 'es'
+                  ? 'Crea una cuenta para conservar tu XP, racha y medallas.'
+                  : 'Create an account to keep your XP, streak and badges.'}
+              </p>
+              <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+                <Link
+                  href={`/signup?redirect=${encodeURIComponent(`/predictions/markets/${market.id}`)}`}
+                  className="inline-flex items-center justify-center rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-400"
+                >
+                  {locale === 'es' ? 'Registrarme →' : 'Sign me up →'}
+                </Link>
+                <Link
+                  href="/markets"
+                  className="inline-flex items-center justify-center rounded-lg border border-white/15 px-4 py-2 text-sm font-medium text-slate-200 transition-colors hover:border-white/25"
+                >
+                  {locale === 'es' ? 'Seguir votando' : 'Keep voting'}
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
 
         {relatedMarkets.length > 0 && (
@@ -614,8 +647,6 @@ export function VotePanel({
             </div>
           </div>
         )}
-
-        <VotePanelFooter locale={locale} />
       </div>
     )
   }
@@ -669,27 +700,6 @@ export function VotePanel({
             : 'Vote without creating an account · Sign up to earn XP'}
         </p>
       )}
-
-      <VotePanelFooter locale={locale} />
-    </div>
-  )
-}
-
-function VotePanelFooter({ locale }: { locale: string }) {
-  return (
-    <div className="px-4 py-4 border-t border-white/5 bg-cc-bg/30">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 min-w-0">
-          <img src="/images/logo.png" alt="" className="h-4 w-auto opacity-40 shrink-0" />
-          <span className="text-xs text-gray-600 truncate">Powered by Crowd Conscious</span>
-        </div>
-        <Link
-          href="/markets"
-          className="text-xs text-emerald-400 font-medium hover:underline shrink-0"
-        >
-          {locale === 'es' ? 'Explorar más →' : 'Explore more →'}
-        </Link>
-      </div>
     </div>
   )
 }

@@ -73,33 +73,44 @@ type AgentContent = Database['public']['Tables']['agent_content']['Row']
 type SentimentScore = { score: number; source: string; recorded_at: string }
 type TradeAnon = { side: string; amount: number; price: number; shares?: number; price_per_share_mxn?: number; created_at: string }
 
-const CATEGORY_CONFIG: Record<
-  string,
-  { label: string; icon: React.ElementType; bg: string; text: string }
-> = {
-  world: { label: 'World', icon: Globe, bg: 'bg-blue-500/20', text: 'text-blue-400' },
-  pulse: { label: 'Pulse', icon: BarChart3, bg: 'bg-amber-500/10', text: 'text-amber-400' },
-  government: { label: 'Government', icon: Building2, bg: 'bg-red-500/20', text: 'text-red-400' },
-  geopolitics: { label: 'Geopolitics', icon: Map, bg: 'bg-sky-500/20', text: 'text-sky-400' },
-  corporate: { label: 'Corporate', icon: Briefcase, bg: 'bg-purple-500/20', text: 'text-purple-400' },
-  community: { label: 'Community', icon: Users, bg: 'bg-emerald-500/20', text: 'text-emerald-400' },
-  cause: { label: 'Cause', icon: Heart, bg: 'bg-amber-500/20', text: 'text-amber-400' },
-  world_cup: { label: 'World Cup', icon: Trophy, bg: 'bg-emerald-500/20', text: 'text-emerald-400' },
-  sustainability: { label: 'Sustainability', icon: Leaf, bg: 'bg-green-500/20', text: 'text-green-400' },
-  technology: { label: 'Technology', icon: Cpu, bg: 'bg-violet-500/20', text: 'text-violet-400' },
-  economy: { label: 'Economy', icon: TrendingUp, bg: 'bg-teal-500/20', text: 'text-teal-400' },
-  entertainment: { label: 'Entertainment', icon: Clapperboard, bg: 'bg-fuchsia-500/20', text: 'text-fuchsia-400' },
+type CategoryConfig = {
+  label: string
+  labelEs: string
+  icon: React.ElementType
+  bg: string
+  text: string
 }
 
-const PULSE_CATEGORY = {
+const CATEGORY_CONFIG: Record<string, CategoryConfig> = {
+  world: { label: 'World', labelEs: 'Mundo', icon: Globe, bg: 'bg-blue-500/20', text: 'text-blue-400' },
+  pulse: { label: 'Pulse', labelEs: 'Pulse', icon: BarChart3, bg: 'bg-amber-500/10', text: 'text-amber-400' },
+  government: { label: 'Government', labelEs: 'Gobierno', icon: Building2, bg: 'bg-red-500/20', text: 'text-red-400' },
+  geopolitics: { label: 'Geopolitics', labelEs: 'Geopolítica', icon: Map, bg: 'bg-sky-500/20', text: 'text-sky-400' },
+  corporate: { label: 'Corporate', labelEs: 'Corporativo', icon: Briefcase, bg: 'bg-purple-500/20', text: 'text-purple-400' },
+  community: { label: 'Community', labelEs: 'Comunidad', icon: Users, bg: 'bg-emerald-500/20', text: 'text-emerald-400' },
+  cause: { label: 'Cause', labelEs: 'Causa', icon: Heart, bg: 'bg-amber-500/20', text: 'text-amber-400' },
+  world_cup: { label: 'World Cup', labelEs: 'Mundial', icon: Trophy, bg: 'bg-emerald-500/20', text: 'text-emerald-400' },
+  sustainability: { label: 'Sustainability', labelEs: 'Sostenibilidad', icon: Leaf, bg: 'bg-green-500/20', text: 'text-green-400' },
+  technology: { label: 'Technology', labelEs: 'Tecnología', icon: Cpu, bg: 'bg-violet-500/20', text: 'text-violet-400' },
+  economy: { label: 'Economy', labelEs: 'Economía', icon: TrendingUp, bg: 'bg-teal-500/20', text: 'text-teal-400' },
+  entertainment: { label: 'Entertainment', labelEs: 'Entretenimiento', icon: Clapperboard, bg: 'bg-fuchsia-500/20', text: 'text-fuchsia-400' },
+}
+
+const PULSE_CATEGORY: CategoryConfig = {
   label: 'Conscious Pulse',
+  labelEs: 'Conscious Pulse',
   icon: BarChart3,
   bg: 'bg-amber-500/10',
   text: 'text-amber-400',
 }
 
-function formatDate(d: string): string {
-  return new Date(d).toLocaleDateString('en-US', {
+function categoryDisplay(config: CategoryConfig, locale: string): string {
+  return locale === 'es' ? config.labelEs : config.label
+}
+
+function formatDate(d: string, locale: string = 'es'): string {
+  const tag = locale === 'es' ? 'es-MX' : 'en-US'
+  return new Date(d).toLocaleDateString(tag, {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -357,16 +368,17 @@ export function MarketDetailClient({
 
   const isResolved = market.status === 'resolved'
   const resolutionLabel = (market as { resolution?: string }).resolution ?? (market.resolved_outcome ? 'YES' : 'NO')
-  const resolvedDate = market.resolved_at ? formatDate(market.resolved_at) : ''
+  const resolvedDate = market.resolved_at ? formatDate(market.resolved_at, locale) : ''
+  const categoryLabel = categoryDisplay(config, locale)
   const avgConfidenceHero = marketAvgConfidenceFromOutcomes(outcomes)
 
   return (
     <div className="space-y-6 pb-8">
       <Link
-        href="/predictions"
+        href={isAuthenticated ? '/predictions' : '/markets'}
         className="inline-flex items-center gap-1 text-sm text-cc-text-secondary transition-colors hover:text-cc-text-primary"
       >
-        ← Back to markets
+        ← {locale === 'es' ? 'Volver a mercados' : 'Back to markets'}
       </Link>
 
       {voteQuietMessage && (
@@ -388,7 +400,7 @@ export function MarketDetailClient({
                   : 'bg-emerald-500/10 text-emerald-400'
               }`}
             >
-              {isPulseMarket ? '📊 Conscious Pulse' : `🌐 ${config.label}`}
+              {isPulseMarket ? '📊 Conscious Pulse' : `🌐 ${categoryLabel}`}
             </span>
             <span className="text-xs text-gray-500">
               {engagementCount.toLocaleString()}{' '}
@@ -429,7 +441,7 @@ export function MarketDetailClient({
               </span>
             )}
             <span>
-              {locale === 'es' ? 'Cierra' : 'Closes'} {formatDate(market.resolution_date)}
+              {locale === 'es' ? 'Cierra' : 'Closes'} {formatDate(market.resolution_date, locale)}
             </span>
           </div>
           {(market as { sponsor_name?: string }).sponsor_name && (
@@ -472,7 +484,9 @@ export function MarketDetailClient({
       {isResolved && (
         <div className="bg-emerald-500/20 border border-emerald-500/50 rounded-xl p-6">
           <h2 className="text-xl font-bold text-emerald-400 mb-2">
-            RESOLVED: {resolutionLabel} on {resolvedDate}
+            {locale === 'es'
+              ? `RESUELTO: ${resolutionLabel} · ${resolvedDate}`
+              : `RESOLVED: ${resolutionLabel} on ${resolvedDate}`}
           </h2>
           {resolutionEvidence?.evidence_url && (
             <a
@@ -482,12 +496,13 @@ export function MarketDetailClient({
               className="inline-flex items-center gap-2 text-emerald-300 hover:text-emerald-200 text-sm"
             >
               <ExternalLink className="w-4 h-4" />
-              View resolution evidence
+              {locale === 'es' ? 'Ver evidencia de resolución' : 'View resolution evidence'}
             </a>
           )}
           <p className="text-slate-300 mt-2">
-            {engagementCount.toLocaleString()} participation{engagementCount !== 1 ? 's' : ''} ·{' '}
-            {registeredVoteCount.toLocaleString()} registered voter{registeredVoteCount !== 1 ? 's' : ''}
+            {locale === 'es'
+              ? `${engagementCount.toLocaleString()} participaci${engagementCount === 1 ? 'ón' : 'ones'} · ${registeredVoteCount.toLocaleString()} votante${registeredVoteCount === 1 ? '' : 's'} registrado${registeredVoteCount === 1 ? '' : 's'}`
+              : `${engagementCount.toLocaleString()} participation${engagementCount === 1 ? '' : 's'} · ${registeredVoteCount.toLocaleString()} registered voter${registeredVoteCount === 1 ? '' : 's'}`}
           </p>
         </div>
       )}
@@ -501,14 +516,16 @@ export function MarketDetailClient({
               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text} mb-3`}
             >
               <Icon className="w-3.5 h-3.5" />
-              {config.label}
+              {categoryLabel}
             </span>
             <div className="flex items-center justify-between gap-4 mb-2">
               <h2 className="text-2xl font-bold text-white flex-1 min-w-0">{getMarketText(market, 'title', locale)}</h2>
               <ShareButton marketId={market.id} title={getMarketText(market, 'title', locale)} sponsorName={(market as { sponsor_name?: string }).sponsor_name} />
             </div>
             <p className="text-slate-400 text-sm">
-              Created by {creatorName} on {formatDate(market.created_at)}
+              {locale === 'es' ? 'Creado por' : 'Created by'} {creatorName}
+              {' · '}
+              {formatDate(market.created_at, locale)}
             </p>
             <span
               className={`inline-block mt-2 px-2.5 py-1 rounded text-xs font-medium ${
@@ -840,12 +857,12 @@ export function MarketDetailClient({
                       <span className="flex items-center gap-1.5">
                         <Calendar className="w-4 h-4 text-slate-500" />
                         {locale === 'en' ? 'Resolution date' : 'Fecha de resolución'}:{' '}
-                        <span className="text-white">{formatDate(market.resolution_date)}</span>
+                        <span className="text-white">{formatDate(market.resolution_date, locale)}</span>
                       </span>
                       <span className="flex items-center gap-1.5">
                         <Tag className="w-4 h-4 text-slate-500" />
                         {locale === 'en' ? 'Category' : 'Categoría'}:{' '}
-                        <span className="text-white">{config.label}</span>
+                        <span className="text-white">{categoryLabel}</span>
                       </span>
                       <span className="flex items-center gap-1.5">
                         <User className="w-4 h-4 text-slate-500" />
@@ -928,14 +945,16 @@ export function MarketDetailClient({
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-semibold text-white flex items-center gap-2">
                 <BarChart3 className="w-4 h-4" />
-                Market Info
+                {locale === 'es' ? 'Información del mercado' : 'Market Info'}
               </h3>
               <ShareButton marketId={market.id} title={getMarketText(market, 'title', locale)} sponsorName={(market as { sponsor_name?: string }).sponsor_name} compact />
             </div>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-slate-400">Resolution date</span>
-                <span className="text-white">{formatDate(market.resolution_date)}</span>
+                <span className="text-slate-400">
+                  {locale === 'es' ? 'Fecha de resolución' : 'Resolution date'}
+                </span>
+                <span className="text-white">{formatDate(market.resolution_date, locale)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">
@@ -950,11 +969,15 @@ export function MarketDetailClient({
                 <span className="text-white">{registeredVoteCount.toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Category</span>
-                <span className="text-white">{config.label}</span>
+                <span className="text-slate-400">
+                  {locale === 'es' ? 'Categoría' : 'Category'}
+                </span>
+                <span className="text-white">{categoryLabel}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Conscious Fund</span>
+                <span className="text-slate-400">
+                  {locale === 'es' ? 'Fondo Consciente' : 'Conscious Fund'}
+                </span>
                 <span className="text-emerald-400">
                   {typeof market.conscious_fund_percentage === 'number' &&
                   Number.isFinite(market.conscious_fund_percentage)
@@ -967,10 +990,12 @@ export function MarketDetailClient({
           <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4">
             <h3 className="font-semibold text-emerald-400 mb-3 flex items-center gap-2">
               <Heart className="w-4 h-4" />
-              Conscious Impact
+              {locale === 'es' ? 'Impacto Consciente' : 'Conscious Impact'}
             </h3>
             <p className="text-white text-sm mb-2">
-              Sponsor-funded impact for {config.label.toLowerCase()}
+              {locale === 'es'
+                ? `Impacto patrocinado para ${categoryLabel.toLowerCase()}`
+                : `Sponsor-funded impact for ${categoryLabel.toLowerCase()}`}
             </p>
             <UserContribution
               marketId={market.id}
