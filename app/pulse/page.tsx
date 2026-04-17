@@ -4,6 +4,9 @@ import dynamic from 'next/dynamic'
 import PulseListingView from '@/components/pulse/PulseListingView'
 import { PulseLandingExplainer } from '@/components/pulse/PulseLandingExplainer'
 import { PulsePricingSection } from '@/components/pulse/PulsePricingSection'
+import { MundialPulseHero } from '@/components/pulse/MundialPulseHero'
+import { MundialPulsePackCard } from '@/components/pulse/MundialPulsePackCard'
+import { ClubResetCaseStudyCard } from '@/components/pulse/ClubResetCaseStudyCard'
 import { fetchPulseMarketsForListing, getPulseListingContext } from '@/lib/pulse/pulse-listing-data'
 import { fetchPulseHeroHighlight } from '@/lib/pulse/pulse-hero-data'
 import { getPulseListingCopy } from '@/lib/i18n/pulse-listing'
@@ -36,7 +39,9 @@ export default async function PulseListingPage() {
 
   return (
     <div className="min-h-screen bg-[#0f1419] text-slate-100">
-      <section id="pulse-consultations" className="scroll-mt-24 px-4 pb-8 pt-4">
+      <MundialPulseHero locale={localeShort} />
+
+      <section id="pulse-consultations" className="scroll-mt-24 px-4 pb-8 pt-10">
         <div className="mx-auto max-w-4xl">
           <h2 className="mb-6 text-center text-xl font-bold text-white sm:text-2xl">{allConsult}</h2>
           <PulseListingView
@@ -49,6 +54,10 @@ export default async function PulseListingPage() {
           />
         </div>
       </section>
+
+      <MundialPulsePackCard locale={localeShort} />
+
+      <ClubResetCaseStudyCard locale={localeShort} />
 
       <PulseLandingExplainer
         locale={localeShort}

@@ -56,6 +56,11 @@ export async function POST(request: NextRequest) {
         result = await runInboxCurator()
         break
       }
+      case 'sponsor-report': {
+        const { runSponsorReport } = await import('@/lib/agents/sponsor-report')
+        result = await runSponsorReport()
+        break
+      }
       default:
         return NextResponse.json(
           { error: `Unknown agent: ${agentName}` },

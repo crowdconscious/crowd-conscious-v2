@@ -15,6 +15,7 @@ import {
   Inbox,
   Lightbulb,
   Mail,
+  Target,
 } from 'lucide-react'
 import { ImageUpload } from '@/components/ui/ImageUpload'
 
@@ -23,6 +24,7 @@ const AGENTS = [
   { id: 'content-creator', label: 'Content Creator', icon: Bot },
   { id: 'news-monitor', label: 'News Monitor', icon: Newspaper },
   { id: 'inbox-curator', label: 'Inbox Curator', icon: Inbox },
+  { id: 'sponsor-report', label: 'Sponsor Report', icon: Target },
 ] as const
 
 type AgentRun = {

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Search,
@@ -19,6 +20,8 @@ import {
   Award,
   ChevronDown,
   ChevronRight,
+  Map as MapIcon,
+  LayoutGrid,
 } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { createClient } from '@/lib/supabase-client'
@@ -28,6 +31,17 @@ import { locationCategoryLabel, visibleLocationCategoryFilters } from '@/lib/loc
 import { IconBadge } from '@/components/ui/IconBadge'
 import { parseMetadataValues } from '@/lib/locations/conscious-values'
 import { ValueBadgeRow } from '@/components/locations/ValueBadge'
+import { NearestToAztecaSection } from './NearestToAztecaSection'
+import { isAztecaModuleVisible } from '@/lib/locations/geo'
+
+const LocationsMap = dynamic(() => import('./LocationsMap'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-[480px] items-center justify-center rounded-2xl border border-[#2d3748] bg-[#1a2029] text-sm text-slate-500">
+      Cargando mapa…
+    </div>
+  ),
+})
 
 type OutcomeRow = {
   id: string
@@ -181,6 +195,8 @@ export default function LocationsPage() {
   })
   const [nominateBusy, setNominateBusy] = useState(false)
   const [nominateBanner, setNominateBanner] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<'cards' | 'map'>('cards')
+  const showAzteca = useMemo(() => isAztecaModuleVisible(), [])
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -690,23 +706,62 @@ export default function LocationsPage() {
             </div>
           </div>
 
-          <div className="mb-8 flex flex-wrap gap-2">
-            {categoryPillDefs.map((c) => (
+          <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap gap-2">
+              {categoryPillDefs.map((c) => (
+                <button
+                  key={c.value}
+                  type="button"
+                  onClick={() => setCategory(c.value)}
+                  className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                    category === c.value ? 'bg-emerald-500/90 text-white' : 'bg-[#1a2029] text-slate-400 border border-[#2d3748]'
+                  }`}
+                >
+                  {locale === 'es' ? c.label.es : c.label.en}
+                </button>
+              ))}
+            </div>
+
+            <div
+              className="inline-flex rounded-full border border-[#2d3748] bg-[#1a2029] p-1"
+              role="tablist"
+              aria-label={locale === 'es' ? 'Modo de vista' : 'View mode'}
+            >
               <button
-                key={c.value}
                 type="button"
-                onClick={() => setCategory(c.value)}
-                className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                  category === c.value ? 'bg-emerald-500/90 text-white' : 'bg-[#1a2029] text-slate-400 border border-[#2d3748]'
+                role="tab"
+                aria-selected={viewMode === 'cards'}
+                onClick={() => setViewMode('cards')}
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                  viewMode === 'cards' ? 'bg-emerald-500 text-white' : 'text-slate-400 hover:text-white'
                 }`}
               >
-                {locale === 'es' ? c.label.es : c.label.en}
+                <LayoutGrid className="h-3.5 w-3.5" />
+                {locale === 'es' ? 'Tarjetas' : 'Cards'}
               </button>
-            ))}
+              <button
+                type="button"
+                role="tab"
+                aria-selected={viewMode === 'map'}
+                onClick={() => setViewMode('map')}
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                  viewMode === 'map' ? 'bg-emerald-500 text-white' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <MapIcon className="h-3.5 w-3.5" />
+                {locale === 'es' ? 'Mapa' : 'Map'}
+              </button>
+            </div>
           </div>
+
+          {showAzteca && !loading && filteredLocations.length > 0 ? (
+            <NearestToAztecaSection locations={filteredLocations} locale={locale} />
+          ) : null}
 
           {loading ? (
             <p className="text-center text-slate-500">{locale === 'es' ? 'Cargando…' : 'Loading…'}</p>
+          ) : viewMode === 'map' ? (
+            <LocationsMap locations={filteredLocations} locale={locale} />
           ) : (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {filteredLocations.map((loc) => (

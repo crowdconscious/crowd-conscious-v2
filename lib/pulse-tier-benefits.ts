@@ -11,6 +11,13 @@ export type PulseTierBenefitsRow = {
 }
 
 const TIER_BENEFITS: Record<PulseTierId, PulseTierBenefitsRow> = {
+  pilot: {
+    max_pulse_markets: 1,
+    max_live_events: 0,
+    has_custom_branding: false,
+    has_api_access: false,
+    has_white_label: false,
+  },
   pulse_unico: {
     max_pulse_markets: 1,
     max_live_events: 0,
@@ -30,6 +37,20 @@ const TIER_BENEFITS: Record<PulseTierId, PulseTierBenefitsRow> = {
     max_live_events: 5,
     has_custom_branding: true,
     has_api_access: true,
+    has_white_label: false,
+  },
+  mundial_pack: {
+    max_pulse_markets: 5,
+    max_live_events: 0,
+    has_custom_branding: true,
+    has_api_access: false,
+    has_white_label: false,
+  },
+  mundial_pack_founding: {
+    max_pulse_markets: 5,
+    max_live_events: 0,
+    has_custom_branding: true,
+    has_api_access: false,
     has_white_label: false,
   },
   enterprise: {

@@ -99,7 +99,14 @@ async function resolveCouponPrice(params: {
   }
 }
 
-const tierEnum = z.enum(['pulse_unico', 'pulse_pack', 'suscripcion'])
+const tierEnum = z.enum([
+  'pilot',
+  'pulse_unico',
+  'pulse_pack',
+  'suscripcion',
+  'mundial_pack',
+  'mundial_pack_founding',
+])
 
 const schema = z.object({
   tier: tierEnum,
@@ -111,9 +118,12 @@ const schema = z.object({
 })
 
 const TIER_LABELS: Record<PulseTierId, string> = {
+  pilot: 'Pilot Pulse',
   pulse_unico: 'Pulse Único',
   pulse_pack: 'Pulse Pack (3)',
   suscripcion: 'Suscripción Pulse',
+  mundial_pack: 'Mundial Pulse Pack',
+  mundial_pack_founding: 'Mundial Pulse Pack — Founding',
   enterprise: 'Enterprise',
 }
 

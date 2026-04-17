@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { MapPin, Instagram, Gift, Clock } from 'lucide-react'
+import { useState } from 'react'
+import { MapPin, Instagram, Gift, Clock, Share2, Check } from 'lucide-react'
 import type { Database, Json } from '@/types/database'
 import { locationCategoryLabel } from '@/lib/locations/categories'
 import { LocationCoverImage, LocationLogoImage } from '@/components/locations/LocationRemoteImage'
@@ -15,6 +16,8 @@ export type LocationCardRow = {
   category: Database['public']['Tables']['conscious_locations']['Row']['category']
   city: string
   neighborhood: string | null
+  latitude?: number | null
+  longitude?: number | null
   why_conscious: string | null
   why_conscious_en: string | null
   user_benefits: string | null
@@ -66,6 +69,34 @@ export function LocationCard({
   const needed = Math.max(0, 10 - votes)
   const ig = location.instagram_handle?.replace(/^@/, '') ?? ''
   const valueKeys = parseMetadataValues(location.metadata)
+  const [copied, setCopied] = useState(false)
+
+  const shareLine =
+    locale === 'es'
+      ? `¿Es ${location.name} un Lugar Consciente? Vota aquí: https://crowdconscious.app${linkPrefix}/${location.slug}`
+      : `Is ${location.name} a Conscious Location? Vote here: https://crowdconscious.app${linkPrefix}/${location.slug}`
+
+  const handleShare = async () => {
+    try {
+      const shareData = {
+        title: location.name,
+        text: shareLine,
+        url: `https://crowdconscious.app${linkPrefix}/${location.slug}`,
+      }
+      const nav = typeof navigator !== 'undefined' ? navigator : null
+      if (nav?.share) {
+        await nav.share(shareData)
+        return
+      }
+      if (nav?.clipboard) {
+        await nav.clipboard.writeText(shareLine)
+        setCopied(true)
+        window.setTimeout(() => setCopied(false), 2000)
+      }
+    } catch {
+      // User dismissed share sheet — silent.
+    }
+  }
 
   return (
     <article className="flex flex-col overflow-hidden rounded-xl border border-[#2d3748] bg-[#1a2029] shadow-lg">
@@ -129,9 +160,15 @@ export function LocationCard({
             href={`https://instagram.com/${ig}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-emerald-400"
+            className="inline-flex items-center gap-2 text-sm font-medium text-emerald-400 hover:text-emerald-300"
           >
-            <Instagram className="h-4 w-4" />@{ig}
+            <Instagram className="h-4 w-4" />
+            <span>
+              @{ig} ·{' '}
+              <span className="font-normal text-slate-400 hover:text-emerald-300">
+                {locale === 'es' ? 'Síguelos en Instagram' : 'Follow on Instagram'}
+              </span>
+            </span>
           </a>
         ) : null}
 
@@ -170,6 +207,24 @@ export function LocationCard({
               @Instagram
             </a>
           ) : null}
+          <button
+            type="button"
+            onClick={handleShare}
+            className="inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-[#2d3748] px-4 py-2 text-sm text-slate-300 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
+            aria-label={locale === 'es' ? 'Compartir lugar' : 'Share location'}
+          >
+            {copied ? (
+              <>
+                <Check className="h-4 w-4 text-emerald-400" />
+                <span>{locale === 'es' ? '¡Copiado!' : 'Copied!'}</span>
+              </>
+            ) : (
+              <>
+                <Share2 className="h-4 w-4" />
+                <span>{locale === 'es' ? 'Compartir' : 'Share'}</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
     </article>

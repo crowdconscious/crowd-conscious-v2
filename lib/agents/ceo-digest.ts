@@ -392,6 +392,42 @@ Generate today's CEO digest with these sections:
 
 Keep it under 500 words. Write in Spanish. Today is ${todayFormatted}.`
 
+    // Sponsor outreach prompt — generated separately so it can be stored and
+    // emailed as its own actionable artifact. Uses the same metrics + News
+    // Monitor context as the main digest but answers a different question:
+    // "Who do I message today, and what do I say?"
+    const sponsorOutreachUserMessage = `Here are today's platform metrics (JSON):
+
+\`\`\`json
+${JSON.stringify(metrics, null, 2)}
+\`\`\`
+
+Generate exactly 3 sponsor outreach ideas the founder can act on TODAY.
+Today is ${todayFormatted}. ~56 días hasta la inauguración del Mundial 2026.
+
+Catalog of products to pitch (use the right one for the segment):
+- **Sello de Lugar Consciente** — for cafés, bars, restaurants, gyms, coworking spaces.
+- **Pulse Single ($5,000 MXN Starter)** — single-question survey for a brand or institution.
+- **Mundial Pulse Pack ($50,000 MXN)** — 5 Pulse surveys across the tournament for a brand seeking sustained presence.
+- **Pilot Pulse ($1,500 MXN, coupon PILOTO)** — lead-magnet trial for cold prospects.
+
+For each of the 3 ideas, output in this exact markdown structure:
+
+### Idea N — [short title]
+- **Segmento:** [e.g. "Bares deportivos en CDMX", "Fintech mexicanas", "Alcaldía Coyoacán"]
+- **Hook:** [the news signal or platform datum that makes this timely — reference a specific news_monitor finding or market trend]
+- **Producto:** [Sello | Pulse Single | Mundial Pulse Pack | Pilot Pulse]
+- **Precio:** [in MXN]
+- **Mensaje listo para enviar (WhatsApp/email, en español, 3 oraciones máx, casual pero profesional):**
+> [draft message with one specific Pulse question they could run]
+
+Prioritize ideas where:
+1. A news story creates urgency (regulación, evento, crisis económica)
+2. A Conscious Location owner could upgrade to Pulse
+3. A World Cup activation angle exists
+
+No introduction, no closing summary, no extra commentary — just the 3 ideas in the format above.`
+
     const userPrompt = userMessage?.trim() ?? ''
     if (!userPrompt) {
       console.error('[CEO Digest] Empty prompt, skipping API call')
@@ -466,21 +502,92 @@ Keep it under 500 words. Write in Spanish. Today is ${todayFormatted}.`
       console.warn('ADMIN_EMAIL not set - skipping CEO digest email')
     }
 
+    // Sponsor outreach: separate Claude call so the artifact can be persisted
+    // and emailed independently of the main operational digest. Failure here
+    // must NOT fail the parent run — outreach is additive, not load-bearing.
+    let outreachOk = false
+    let outreachEmailSent = false
+    let outreachUsage = { input_tokens: 0, output_tokens: 0 }
+    try {
+      const outreachResponse = await anthropic.messages.create({
+        model: MODELS.CREATIVE,
+        max_tokens: TOKEN_LIMITS.DIGEST,
+        system: systemMessage,
+        messages: [{ role: 'user', content: sponsorOutreachUserMessage }],
+      })
+      const outreachBlock = outreachResponse.content.find((b) => b.type === 'text')
+      const outreachText = outreachBlock && 'text' in outreachBlock ? outreachBlock.text : ''
+      outreachUsage = outreachResponse.usage ?? outreachUsage
+
+      if (outreachText) {
+        outreachOk = true
+
+        try {
+          await supabase.from('agent_content').insert({
+            market_id: null,
+            agent_type: 'news_monitor',
+            content_type: 'sponsor_outreach',
+            title: `Outreach del día — ${todayFormatted}`,
+            body: outreachText,
+            language: 'es',
+            metadata: {
+              model: MODELS.CREATIVE,
+              tokens_input: outreachUsage.input_tokens,
+              tokens_output: outreachUsage.output_tokens,
+              date: today.toISOString().slice(0, 10),
+              digest_type: 'sponsor_outreach',
+            },
+            published: true,
+          })
+        } catch (e) {
+          console.error('Failed to save sponsor outreach to agent_content:', e)
+        }
+
+        if (adminEmail) {
+          const outreachEmailResult = await sendEmail(adminEmail, {
+            subject: `🎯 Outreach del día — ${todayFormatted}`,
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <div style="background: linear-gradient(135deg, #f59e0b, #ef4444); padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
+                  <h1 style="color: white; margin: 0; font-size: 22px;">🎯 Outreach del día</h1>
+                  <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0;">${todayFormatted}</p>
+                </div>
+                <div style="padding: 24px; background: #f8fafc; border-radius: 0 0 8px 8px; white-space: pre-wrap;">${outreachText.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+              </div>
+            `,
+          })
+          outreachEmailSent = outreachEmailResult.success
+          if (!outreachEmailResult.success) {
+            console.warn('Sponsor outreach email not sent:', outreachEmailResult.error)
+          }
+        }
+      }
+    } catch (outreachErr) {
+      console.error('[CEO Digest] Sponsor outreach generation failed:', outreachErr)
+    }
+
     await logAgentRun({
       agentName: 'ceo-digest',
       status: 'success',
       durationMs: Date.now() - startTime,
-      tokensInput: usage.input_tokens,
-      tokensOutput: usage.output_tokens,
-      summary: { metrics_gathered: true, email_sent: emailSent },
+      tokensInput: usage.input_tokens + outreachUsage.input_tokens,
+      tokensOutput: usage.output_tokens + outreachUsage.output_tokens,
+      summary: {
+        metrics_gathered: true,
+        email_sent: emailSent,
+        sponsor_outreach_generated: outreachOk,
+        sponsor_outreach_email_sent: outreachEmailSent,
+      },
     })
 
+    const totalIn = usage.input_tokens + outreachUsage.input_tokens
+    const totalOut = usage.output_tokens + outreachUsage.output_tokens
     const costEst =
-      (usage.input_tokens * 0.000001 + usage.output_tokens * 0.000005).toFixed(6) + ' USD'
+      (totalIn * 0.000001 + totalOut * 0.000005).toFixed(6) + ' USD'
 
     return {
       success: true,
-      tokens: { input: usage.input_tokens, output: usage.output_tokens },
+      tokens: { input: totalIn, output: totalOut },
       cost_estimate: costEst,
     }
   } catch (error: unknown) {
