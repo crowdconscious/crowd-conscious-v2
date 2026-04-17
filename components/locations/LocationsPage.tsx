@@ -33,6 +33,9 @@ import { parseMetadataValues } from '@/lib/locations/conscious-values'
 import { ValueBadgeRow } from '@/components/locations/ValueBadge'
 import { NearestToAztecaSection } from './NearestToAztecaSection'
 import { isAztecaModuleVisible } from '@/lib/locations/geo'
+import { AnonymousVoteToast } from '@/components/anon/AnonymousVoteToast'
+import { AnonymousSoftGate } from '@/components/anon/AnonymousSoftGate'
+import { recordAnonVote } from '@/lib/anon-vote-tracker'
 
 const LocationsMap = dynamic(() => import('./LocationsMap'), {
   ssr: false,
@@ -181,7 +184,6 @@ export default function LocationsPage() {
   const [confidence, setConfidence] = useState(7)
   const [reasoning, setReasoning] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [showAnonVotePrompt, setShowAnonVotePrompt] = useState(false)
   const [showAliasModal, setShowAliasModal] = useState(false)
   const [aliasInput, setAliasInput] = useState('')
   const [voteError, setVoteError] = useState<string | null>(null)
@@ -197,6 +199,19 @@ export default function LocationsPage() {
   const [nominateBanner, setNominateBanner] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<'cards' | 'map'>('cards')
   const showAzteca = useMemo(() => isAztecaModuleVisible(), [])
+
+  const [anonToast, setAnonToast] = useState<{
+    open: boolean
+    delta: number | null
+    xp: number
+    alias: string | null
+  }>({ open: false, delta: null, xp: 0, alias: null })
+  const [softGate, setSoftGate] = useState<{
+    open: boolean
+    alias: string | null
+    voteCount: number
+    xpTotal: number
+  }>({ open: false, alias: null, voteCount: 0, xpTotal: 0 })
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -260,6 +275,8 @@ export default function LocationsPage() {
     const noId = loc.outcomes[1]?.id
     const outcomeId = dir === 'yes' ? yesId : noId
     if (!loc.current_market_id || !outcomeId) return
+    const prevProbPct =
+      (loc.outcomes.find((o) => o.id === outcomeId)?.probability ?? 0) * 100
     setSubmitting(true)
     setVoteError(null)
     try {
@@ -274,7 +291,13 @@ export default function LocationsPage() {
           reasoning: reasoning.trim() || null,
         }),
       })
-      const j = (await res.json()) as { error?: string; requiresAlias?: boolean }
+      const j = (await res.json()) as {
+        error?: string
+        requiresAlias?: boolean
+        isAnonymous?: boolean
+        xp_earned?: number
+        new_probability?: number
+      }
       if (res.status === 401 && j.requiresAlias === true) {
         setShowAliasModal(true)
         return
@@ -294,7 +317,31 @@ export default function LocationsPage() {
       const {
         data: { session },
       } = await createClient().auth.getSession()
-      if (!session?.user) setShowAnonVotePrompt(true)
+      if (!session?.user) {
+        const newProbPct =
+          typeof j.new_probability === 'number' ? j.new_probability * 100 : null
+        const delta = newProbPct == null ? null : newProbPct - prevProbPct
+        const xpEarned = typeof j.xp_earned === 'number' ? j.xp_earned : 5
+
+        const alias = await fetch('/api/live/anonymous-session')
+          .then((r) => r.json() as Promise<{ participant?: { alias?: string } | null }>)
+          .then((d) => d?.participant?.alias ?? null)
+          .catch(() => null)
+
+        const { count, xpTotal, shouldShowSoftGate } = recordAnonVote(xpEarned)
+
+        setAnonToast({ open: true, delta, xp: xpEarned, alias })
+        window.setTimeout(
+          () => setAnonToast((prev) => ({ ...prev, open: false })),
+          4000
+        )
+
+        if (shouldShowSoftGate) {
+          window.setTimeout(() => {
+            setSoftGate({ open: true, alias, voteCount: count, xpTotal })
+          }, 1200)
+        }
+      }
       await load()
     } finally {
       setSubmitting(false)
@@ -404,13 +451,6 @@ export default function LocationsPage() {
     doneTitle: locale === 'es' ? 'Has votado por todos los lugares. ¡Gracias!' : "You've voted on every place. Thanks!",
     doneSub: locale === 'es' ? 'Agregamos nuevos cada semana. Síguenos → @crowdconscious' : 'We add new ones weekly. Follow → @crowdconscious',
     sheetCancel: locale === 'es' ? 'Cancelar' : 'Cancel',
-    anonVoteTitle: locale === 'es' ? '¡Voto registrado!' : 'Vote recorded!',
-    anonVoteBody:
-      locale === 'es'
-        ? 'Crea una cuenta para ganar XP y aparecer en la clasificación.'
-        : 'Create an account to earn XP and appear on the leaderboard.',
-    anonSignUp: locale === 'es' ? 'Registrarse' : 'Sign up',
-    anonKeep: locale === 'es' ? 'Seguir votando' : 'Keep voting',
     aliasTitle: locale === 'es' ? 'Elige un alias' : 'Choose an alias',
     aliasBody:
       locale === 'es'
@@ -1133,38 +1173,24 @@ export default function LocationsPage() {
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {showAnonVotePrompt && (
-          <motion.div
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 100, opacity: 0 }}
-            className="fixed inset-x-0 bottom-0 z-[45] border-t border-[#2d3748] bg-[#1a2029] p-4 shadow-2xl md:p-5"
-          >
-            <div className="mx-auto flex max-w-lg flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="font-semibold text-white">{t.anonVoteTitle}</p>
-                <p className="text-sm text-slate-400">{t.anonVoteBody}</p>
-              </div>
-              <div className="flex flex-shrink-0 gap-2">
-                <Link
-                  href="/signup"
-                  className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-xl bg-emerald-600 px-4 font-semibold text-white hover:bg-emerald-500 sm:flex-none"
-                >
-                  {t.anonSignUp}
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => setShowAnonVotePrompt(false)}
-                  className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-xl border border-[#2d3748] px-4 text-slate-300 hover:bg-[#0f1419] sm:flex-none"
-                >
-                  {t.anonKeep}
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <AnonymousVoteToast
+        open={anonToast.open}
+        delta={anonToast.delta}
+        xpEarned={anonToast.xp}
+        alias={anonToast.alias}
+        locale={locale}
+        onDismiss={() => setAnonToast((p) => ({ ...p, open: false }))}
+      />
+
+      <AnonymousSoftGate
+        open={softGate.open}
+        alias={softGate.alias}
+        voteCount={softGate.voteCount}
+        xpTotal={softGate.xpTotal}
+        locale={locale}
+        nextPath="/locations"
+        onClose={() => setSoftGate((p) => ({ ...p, open: false }))}
+      />
     </div>
   )
 }

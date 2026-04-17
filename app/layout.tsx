@@ -5,6 +5,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import "../src/app/globals.css";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { SITE_URL } from "@/lib/seo/site";
+import { ConversionCelebration } from "@/components/anon/ConversionCelebration";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -182,6 +183,7 @@ export default function RootLayout({
         />
         <LanguageProvider>
           {children}
+          <ConversionCelebration />
           <Analytics />
           <SpeedInsights />
         </LanguageProvider>

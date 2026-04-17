@@ -53,6 +53,7 @@ export async function GET(request: NextRequest) {
     }
 
     const sessionId = request.cookies.get('cc_session')?.value
+    let convertedPayload: { alias: string | null; transferredXp: number } | null = null
     if (sessionId) {
       try {
         const admin = createAdminClient()
@@ -63,11 +64,14 @@ export async function GET(request: NextRequest) {
         if (convErr) {
           console.warn('[AUTH-CALLBACK] convert_anonymous_to_user:', convErr.message)
         } else if (conv && typeof conv === 'object' && 'success' in conv && conv.success) {
+          const alias = (conv as { alias?: string }).alias ?? null
+          const transferredXp = (conv as { transferred_xp?: number }).transferred_xp ?? 0
+          convertedPayload = { alias, transferredXp }
           console.info(
             '[AUTH-CALLBACK] Anonymous converted:',
-            (conv as { alias?: string }).alias,
+            alias,
             'xp:',
-            (conv as { transferred_xp?: number }).transferred_xp
+            transferredXp
           )
         }
       } catch (e) {
@@ -87,6 +91,21 @@ export async function GET(request: NextRequest) {
     const response = NextResponse.redirect(new URL(dest, origin))
     if (sessionId) {
       clearAnonymousAliasCookies(response)
+    }
+    if (convertedPayload) {
+      // Short-lived, non-httpOnly cookie so the client banner can read
+      // it, show the celebration, and then clear it.
+      response.cookies.set(
+        'cc_just_converted',
+        JSON.stringify(convertedPayload),
+        {
+          path: '/',
+          maxAge: 120,
+          sameSite: 'lax',
+          httpOnly: false,
+          secure: process.env.NODE_ENV === 'production',
+        }
+      )
     }
     return response
   } catch (error) {

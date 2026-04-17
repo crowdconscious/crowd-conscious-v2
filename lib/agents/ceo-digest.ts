@@ -79,6 +79,38 @@ export async function runCeoDigest(): Promise<{
       metrics.anonymous_to_registered_conversion_30d_pct = 'error'
     }
 
+    // Conversion funnel at finer granularity — how many anon participants
+    // upgraded in the last 24h and last 7d, plus a 7d conversion rate.
+    try {
+      const cutoff24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+      const cutoff7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+
+      const { count: conv24h } = await supabase
+        .from('anonymous_participants')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', cutoff24h)
+        .not('converted_to_user_id', 'is', null)
+      metrics.anonymous_conversions_last_24h = conv24h ?? 0
+
+      const { count: conv7d } = await supabase
+        .from('anonymous_participants')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', cutoff7d)
+        .not('converted_to_user_id', 'is', null)
+      const { count: anon7d } = await supabase
+        .from('anonymous_participants')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', cutoff7d)
+
+      metrics.anonymous_conversions_last_7d = conv7d ?? 0
+      metrics.anonymous_to_registered_conversion_7d_pct =
+        (anon7d ?? 0) > 0 ? Math.round(((conv7d ?? 0) / (anon7d ?? 1)) * 1000) / 10 : 0
+    } catch (e) {
+      metrics.anonymous_conversions_last_24h = 'error'
+      metrics.anonymous_conversions_last_7d = 'error'
+      metrics.anonymous_to_registered_conversion_7d_pct = 'error'
+    }
+
     // b. PREDICTION ACTIVITY (market_votes = free-to-play)
     try {
       const cutoff24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
@@ -366,6 +398,36 @@ Snapshot sentimiento: ${JSON.stringify(b.sentiment_snapshot ?? {})}`
       console.warn('[CEO Digest] News Monitor context failed:', e)
     }
 
+    // Locations that recently crossed the 10-vote reveal threshold —
+    // these owners are the warmest possible Pulse leads because their
+    // community just gave them a public score.
+    try {
+      const cutoff7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+      const { data: hotLocations } = await supabase
+        .from('conscious_locations')
+        .select('name, slug, city, total_votes, conscious_score, instagram_handle, contact_email, certified_at, updated_at')
+        .eq('status', 'active')
+        .gte('total_votes', 10)
+        .not('conscious_score', 'is', null)
+        .gte('updated_at', cutoff7d)
+        .order('updated_at', { ascending: false })
+        .limit(10)
+      metrics.locations_with_live_score_last_7d = (hotLocations ?? []).map((l) => ({
+        name: l.name,
+        slug: l.slug,
+        city: l.city,
+        total_votes: l.total_votes,
+        conscious_score: l.conscious_score,
+        instagram_handle: l.instagram_handle,
+        contact_email: l.contact_email,
+        pilot_pulse_link: `https://crowdconscious.app/pulse/pilot?business=${encodeURIComponent(l.name as string)}&source=ceo_digest`,
+        insights_link: `https://crowdconscious.app/locations/${l.slug}/insights`,
+      }))
+    } catch (e) {
+      console.warn('[CEO Digest] hot locations query failed:', e)
+      metrics.locations_with_live_score_last_7d = []
+    }
+
     const systemMessage = `You are the daily briefing analyst for Crowd Conscious, a free-to-play opinion platform based in Mexico City preparing for FIFA World Cup 2026 (opening match June 11, 2026 at Estadio Azteca).
 
 RULES (strict):
@@ -423,7 +485,7 @@ For each of the 3 ideas, output in this exact markdown structure:
 
 Prioritize ideas where:
 1. A news story creates urgency (regulación, evento, crisis económica)
-2. A Conscious Location owner could upgrade to Pulse
+2. **A Conscious Location in \`locations_with_live_score_last_7d\` can be upgraded to Pulse** — if this list is non-empty, AT LEAST ONE of the 3 ideas MUST target a specific location from it. Use its exact name, score, vote count, and the provided \`pilot_pulse_link\` so the founder can forward the message directly. Recommend the **Pilot Pulse** ($1,500 MXN) product for these leads because they're already warm.
 3. A World Cup activation angle exists
 
 No introduction, no closing summary, no extra commentary — just the 3 ideas in the format above.`

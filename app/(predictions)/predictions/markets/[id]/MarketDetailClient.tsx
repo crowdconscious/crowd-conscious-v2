@@ -47,6 +47,7 @@ import { VotePanel, type GuestVotePayload } from '../../components/VotePanel'
 import VoteReasonings from '@/components/markets/VoteReasonings'
 import { GuestRegistrationPrompt } from '../../components/GuestRegistrationPrompt'
 import { CelebrationModal } from '@/components/gamification/CelebrationModal'
+import { recordAnonVote } from '@/lib/anon-vote-tracker'
 import {
   getOrCreateGuestId,
   getGuestVoteDetail,
@@ -345,7 +346,10 @@ export function MarketDetailClient({
     const wasGuest = celebration.guest
     setCelebration({ open: false })
     if (wasGuest) {
-      setRegisterPromptOpen(true)
+      // Only interrupt with the sign-up prompt once the user has built
+      // up some history. Tracks across both guest and alias anon paths.
+      const { shouldShowSoftGate } = recordAnonVote(5)
+      if (shouldShowSoftGate) setRegisterPromptOpen(true)
     } else {
       window.location.reload()
     }

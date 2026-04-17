@@ -5,12 +5,12 @@ import { SITE_URL } from '@/lib/seo/site'
 import { createClient } from '@/lib/supabase-server'
 import type { Json } from '@/types/database'
 import dynamic from 'next/dynamic'
-import { Globe, Heart, Trophy, ChevronRight } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import LandingNav from './components/landing/LandingNav'
 import { LiveEventBanner } from './components/landing/LiveEventBanner'
-import { LandingPulseSection } from './components/landing/LandingPulseSection'
-import { LandingLiveSection } from './components/landing/LandingLiveSection'
 import LandingLocationsSection from './components/landing/LandingLocationsSection'
+import { LandingHeroBlock } from './components/landing/LandingHeroBlock'
+import { BrandsMiniPitch } from './components/landing/BrandsMiniPitch'
 import type { LocationCardRow } from '@/components/locations/LocationCard'
 import type { MarketCardMarket, MarketCardOutcome } from '@/components/MarketCard'
 import { PUBLIC_MARKET_MIN_VOTES } from '@/lib/predictions/engagement'
@@ -26,9 +26,6 @@ const MarketCard = dynamic(() =>
 )
 const ImpactTicker = dynamic(() =>
   import('./components/landing/ImpactTicker').then((m) => ({ default: m.ImpactTicker }))
-)
-const SponsorCTA = dynamic(() =>
-  import('./components/landing/SponsorCTA').then((m) => ({ default: m.SponsorCTA }))
 )
 export const revalidate = 60
 
@@ -258,10 +255,6 @@ async function getLandingData() {
   }
 }
 
-const WorldCupCountdown = dynamic(() =>
-  import('./components/landing/WorldCupCountdown').then((m) => ({ default: m.WorldCupCountdown }))
-)
-
 export default async function LandingPage() {
   const cookieStore = await cookies()
   const locale = cookieStore.get('preferred-language')?.value === 'en' ? 'en' : 'es'
@@ -269,15 +262,11 @@ export default async function LandingPage() {
   let markets: MarketCardMarket[] = []
   let outcomesByMarketId: Record<string, MarketCardOutcome[]> = {}
   let fundBalance = 0
-  let causesCount = 0
   let causesWithVotes: Array<{ id: string; name: string; vote_count: number }> = []
-  let worldCupMarkets: MarketCardMarket[] = []
   let liveNowRow: Awaited<ReturnType<typeof getLandingData>>['liveNowRow'] = null
   let totalVotes = 0
   let fundTotal = 0
   let activeCauseName: string | null = null
-  let activeMarketCount = 0
-  let profileCount: number | null = null
   let showLocationsSection = false
   let landingLocationCards: Awaited<ReturnType<typeof getLandingData>>['landingLocationCards'] = []
 
@@ -286,15 +275,11 @@ export default async function LandingPage() {
     markets = data.markets
     outcomesByMarketId = data.outcomesByMarketId
     fundBalance = data.fundBalance
-    causesCount = data.causesCount
     causesWithVotes = data.causesWithVotes
-    worldCupMarkets = data.worldCupMarkets
     liveNowRow = data.liveNowRow
     totalVotes = data.totalVotes
     fundTotal = data.fundTotal
     activeCauseName = data.activeCauseName
-    activeMarketCount = data.activeMarketCount
-    profileCount = data.profileCount
     showLocationsSection = data.showLocationsSection
     landingLocationCards = data.landingLocationCards
   } catch (e) {
@@ -302,6 +287,9 @@ export default async function LandingPage() {
   }
 
   const localeShort: 'es' | 'en' = locale
+
+  const top3Markets = markets.slice(0, 3)
+  const top3Locations = landingLocationCards.slice(0, 3)
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-cc-bg text-cc-text-primary">
@@ -318,213 +306,62 @@ export default async function LandingPage() {
           />
         )}
 
+        {/* ─────────── BLOCK 1 — Hero ─────────── */}
+        <LandingHeroBlock locale={localeShort} fundBalance={fundBalance} />
+
         <ImpactTicker
           totalVotes={totalVotes}
           fundTotal={fundTotal}
           activeCauseName={activeCauseName}
         />
 
-        <section className="mx-auto max-w-7xl px-4 py-8 md:px-8 md:py-12">
-          <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-white md:text-3xl">
-                {locale === 'es' ? 'Predicciones populares' : 'Trending predictions'}
-              </h1>
-              <p className="mt-1 text-sm text-gray-400">
-                {locale === 'es'
-                  ? 'Tu opinión genera impacto real. 100% gratis.'
-                  : 'Your opinion drives real impact. 100% free.'}
-              </p>
-            </div>
-            <Link
-              href="/markets"
-              className="inline-flex min-h-[44px] items-center gap-1 text-sm font-medium text-emerald-400 hover:text-emerald-300"
-            >
-              {locale === 'es' ? 'Ver todas' : 'View all'}
-              <ChevronRight className="h-4 w-4" />
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {markets.slice(0, 6).map((market) => (
-              <MarketCard
-                key={market.id}
-                market={market}
-                outcomes={outcomesByMarketId[market.id] ?? []}
-              />
-            ))}
-          </div>
-
-          {markets.length === 0 && (
-            <div className="py-16 text-center">
-              <p className="text-lg text-gray-400">
-                {locale === 'es'
-                  ? 'Predicciones para el Mundial 2026 — próximamente'
-                  : 'World Cup 2026 predictions — coming soon'}
-              </p>
-            </div>
-          )}
-
-          <div className="mt-10 text-center">
-            <Link
-              href="/signup"
-              className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg bg-emerald-500 px-8 py-3 text-base font-semibold text-white transition-colors hover:bg-emerald-600 sm:w-auto"
-            >
-              {locale === 'es' ? 'Empieza a predecir — es gratis' : "Start predicting — it's free"}
-            </Link>
-            <p className="mt-3 text-xs text-gray-500">
-              {locale === 'es'
-                ? 'Sin dinero real. Sin tarjeta. Solo tu opinión.'
-                : 'No real money. No credit card. Just your opinion.'}
-            </p>
-          </div>
-        </section>
-
-        {showLocationsSection && landingLocationCards.length > 0 && (
-          <LandingLocationsSection
-            locations={landingLocationCards as LocationCardRow[]}
-            locale={localeShort}
-          />
-        )}
-
-        <section
-          className="relative overflow-hidden border-t border-cc-border px-4 py-16 md:px-8"
-          style={{ backgroundImage: 'url(/images/worldcup-bg%20(1).png)', backgroundSize: 'cover' }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-b from-cc-bg/90 via-cc-bg/95 to-cc-bg" />
-          <div className="relative mx-auto max-w-5xl">
-            <h2 className="mb-2 text-center text-2xl font-bold text-white md:text-3xl">
-              ⚽{' '}
-              {locale === 'es'
-                ? 'Mundial 2026 — Ciudad de México'
-                : 'World Cup 2026 — Mexico City'}
-            </h2>
-            <p className="mb-8 text-center text-sm text-gray-400">
-              {locale === 'es'
-                ? 'Partido inaugural 11 de junio en el Estadio Azteca.'
-                : 'Opening match June 11 at Estadio Azteca.'}
-            </p>
-            <div className="mb-10 flex justify-center">
-              <WorldCupCountdown locale={locale === 'es' ? 'es' : 'en'} />
-            </div>
-            {worldCupMarkets.length > 0 && (
-              <div className="mx-auto grid max-w-7xl grid-cols-1 gap-4 md:grid-cols-2">
-                {worldCupMarkets.map((m) => (
-                  <MarketCard key={m.id} market={m} outcomes={outcomesByMarketId[m.id] ?? []} />
-                ))}
+        {/* ─────────── BLOCK 2 — Top 3 live markets ─────────── */}
+        {top3Markets.length > 0 ? (
+          <section className="mx-auto max-w-6xl px-4 py-14 md:px-8">
+            <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
+                  {locale === 'es' ? 'Lo que dice la comunidad' : 'What the community says'}
+                </p>
+                <h2 className="mt-1 text-2xl font-bold text-white md:text-3xl">
+                  {locale === 'es' ? 'Top predicciones en vivo' : 'Top live predictions'}
+                </h2>
               </div>
-            )}
-            <div className="mt-10 text-center">
               <Link
-                href="/markets?category=world_cup"
-                className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-emerald-500 px-6 py-3 font-semibold text-white transition-colors hover:bg-emerald-400"
+                href="/markets"
+                className="inline-flex min-h-[44px] items-center gap-1 self-start text-sm font-medium text-emerald-400 hover:text-emerald-300 sm:self-auto"
               >
-                {locale === 'es' ? 'Ver mercados del Mundial' : 'Browse World Cup markets'}
-                <ChevronRight className="h-5 w-5" />
+                {locale === 'es' ? 'Ver todas' : 'View all'}
+                <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
-          </div>
-        </section>
 
-        <section className="mx-auto max-w-5xl border-t border-cc-border px-4 py-12 md:px-8">
-          <div className="grid grid-cols-1 gap-8 text-center md:grid-cols-3">
-            <div>
-              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10">
-                <Globe className="h-6 w-6 text-emerald-400" />
-              </div>
-              <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-emerald-400">
-                {locale === 'es' ? 'Predice' : 'Predict'}
-              </h3>
-              <p className="text-sm leading-relaxed text-gray-300">
-                {locale === 'es'
-                  ? 'Vota en predicciones sobre deportes, política y más. 100% gratis.'
-                  : 'Vote on predictions about sports, politics & more. 100% free.'}
-              </p>
+            <div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-3 md:overflow-visible md:px-0 md:pb-0">
+              {top3Markets.map((market) => (
+                <div
+                  key={market.id}
+                  className="min-w-[88%] snap-start sm:min-w-[70%] md:min-w-0"
+                >
+                  <MarketCard
+                    market={market}
+                    outcomes={outcomesByMarketId[market.id] ?? []}
+                  />
+                </div>
+              ))}
             </div>
-            <div>
-              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10">
-                <Heart className="h-6 w-6 text-emerald-400" />
-              </div>
-              <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-emerald-400">
-                {locale === 'es' ? 'Impacta' : 'Impact'}
-              </h3>
-              <p className="text-sm leading-relaxed text-gray-300">
-                {locale === 'es'
-                  ? 'Marcas patrocinan mercados. Hasta el 40% va al Fondo Consciente. Tú eliges la causa.'
-                  : 'Brands sponsor markets. Up to 40% goes to the Conscious Fund. You choose the cause.'}
-              </p>
-            </div>
-            <div>
-              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10">
-                <Trophy className="h-6 w-6 text-emerald-400" />
-              </div>
-              <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-emerald-400">
-                {locale === 'es' ? 'Gana' : 'Win'}
-              </h3>
-              <p className="text-sm leading-relaxed text-gray-300">
-                {locale === 'es'
-                  ? 'Sube en el leaderboard y gana reconocimiento por tu inteligencia colectiva.'
-                  : 'Climb the leaderboard and earn recognition for your collective intelligence.'}
-              </p>
-            </div>
-          </div>
-        </section>
+          </section>
+        ) : null}
 
-        <LandingPulseSection locale={localeShort} />
+        {/* ─────────── BLOCK 3 — Conscious Locations ─────────── */}
+        {showLocationsSection && top3Locations.length > 0 ? (
+          <LandingLocationsSection
+            locations={top3Locations as LocationCardRow[]}
+            locale={localeShort}
+          />
+        ) : null}
 
-        <LandingLiveSection locale={localeShort} />
-
-        {/* Social proof — stats from live data */}
-        <section
-          className="border-y border-[#2d3748] bg-[#1a2029]/50 py-10"
-          aria-label={locale === 'es' ? 'Cifras de la plataforma' : 'Platform stats'}
-        >
-          <div className="mx-auto grid max-w-4xl grid-cols-2 gap-6 px-4 md:grid-cols-4 md:gap-4">
-            <div className="text-center">
-              <p className="text-2xl font-bold text-white">{activeMarketCount}</p>
-              <p className="mt-1 text-xs font-medium uppercase tracking-wider text-gray-400">
-                {locale === 'es' ? 'mercados' : 'markets'}
-              </p>
-              <p className="text-xs font-medium uppercase tracking-wider text-gray-500">
-                {locale === 'es' ? 'activos' : 'active'}
-              </p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold text-white">
-                {profileCount != null && profileCount > 0
-                  ? profileCount.toLocaleString(locale === 'es' ? 'es-MX' : 'en-US')
-                  : locale === 'es'
-                    ? 'creciendo'
-                    : 'Growing'}
-              </p>
-              <p className="mt-1 text-xs font-medium uppercase tracking-wider text-gray-400">
-                {locale === 'es' ? 'usuarios' : 'users'}
-              </p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold text-white">{causesCount}</p>
-              <p className="mt-1 text-xs font-medium uppercase tracking-wider text-gray-400">
-                {locale === 'es' ? 'causas' : 'causes'}
-              </p>
-              <p className="text-xs font-medium uppercase tracking-wider text-gray-500">
-                {locale === 'es' ? 'apoyadas' : 'supported'}
-              </p>
-            </div>
-            <div className="text-center">
-              <p className="text-xl font-bold text-emerald-400 md:text-2xl">
-                {locale === 'es' ? 'Tú decides' : 'You decide'}
-              </p>
-              <p className="mt-1 text-xs font-medium uppercase tracking-wider text-gray-400">
-                {locale === 'es' ? 'el impacto' : 'the impact'}
-              </p>
-              <p className="text-xs font-medium uppercase tracking-wider text-gray-500">
-                {locale === 'es' ? 'comunidad' : 'community'}
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <SponsorCTA locale={localeShort} />
+        {/* ─────────── Below the fold ─────────── */}
+        <BrandsMiniPitch locale={localeShort} />
 
         <section className="border-t border-cc-border bg-cc-bg px-4 py-16">
           <div className="mx-auto max-w-5xl">
@@ -548,14 +385,8 @@ export default async function LandingPage() {
                       locale={localeShort}
                     />
                   </div>
-                  {fundBalance > 0 && (
-                    <div className="mb-6">
-                      <p className="text-sm text-gray-500">{locale === 'es' ? 'Causas activas' : 'Active causes'}</p>
-                      <p className="text-2xl font-bold text-white">{causesCount}</p>
-                    </div>
-                  )}
                   {causesWithVotes.length > 0 && (
-                    <div className="mb-6 space-y-2">
+                    <div className="space-y-2">
                       <p className="text-sm font-medium text-gray-500">
                         {locale === 'es' ? 'Causas con más votos' : 'Top causes by votes'}
                       </p>
@@ -565,7 +396,9 @@ export default async function LandingPage() {
                           className="flex justify-between border-b border-gray-800 py-2 last:border-0"
                         >
                           <span className="font-medium text-white">{cause.name}</span>
-                          <span className="font-semibold text-emerald-400">{cause.vote_count} votes</span>
+                          <span className="font-semibold text-emerald-400">
+                            {cause.vote_count} {locale === 'es' ? 'votos' : 'votes'}
+                          </span>
                         </div>
                       ))}
                     </div>

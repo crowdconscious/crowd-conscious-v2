@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 
 type Props = {
   locale: 'es' | 'en'
@@ -17,10 +18,17 @@ type Props = {
  */
 export function PilotCheckoutForm({ locale }: Props) {
   const es = locale === 'es'
-  const [name, setName] = useState('')
+  const searchParams = useSearchParams()
+  const businessParam = searchParams?.get('business') ?? ''
+  const source = searchParams?.get('source') ?? ''
+  const [name, setName] = useState(businessParam)
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (businessParam && !name) setName(businessParam)
+  }, [businessParam, name])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -34,6 +42,7 @@ export function PilotCheckoutForm({ locale }: Props) {
           tier: 'pilot',
           company_name: name.trim(),
           contact_email: email.trim(),
+          source: source || undefined,
         }),
       })
       const json = await res.json()

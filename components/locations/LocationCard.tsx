@@ -190,6 +190,15 @@ export function LocationCard({
           </p>
         ) : null}
 
+        <Link
+          href={`/pulse/pilot?business=${encodeURIComponent(location.name)}&source=location_card`}
+          className="text-xs text-slate-500 underline-offset-2 hover:text-emerald-400 hover:underline"
+        >
+          {locale === 'es'
+            ? '¿Eres el dueño? → Activa Pulse para tu negocio'
+            : 'Are you the owner? → Activate Pulse for your business'}
+        </Link>
+
         <div className="mt-auto flex flex-wrap gap-3">
           <Link
             href={`${linkPrefix}/${location.slug}`}
