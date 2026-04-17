@@ -99,8 +99,13 @@ export default async function PredictionsLayout({
   const isPublicMarketDetail =
     !user && pathname.startsWith('/predictions/markets/') && pathname !== '/predictions/markets/'
   if (isPublicMarketDetail) {
+    // The root body is `bg-white` (see app/layout.tsx); every "dark" page
+    // opts into it explicitly. The landing page uses
+    // `min-h-screen bg-cc-bg text-cc-text-primary`, so the anon market detail
+    // wrapper must match or the rest of the UI (which was designed against a
+    // dark backdrop) shows through as a light-theme page.
     return (
-      <>
+      <div className="min-h-screen bg-cc-bg text-cc-text-primary">
         <LandingNav />
         <main className="pt-20">
           <div className="mx-auto w-full max-w-6xl px-4 py-6 md:px-6 md:py-8 lg:px-8">
@@ -108,7 +113,7 @@ export default async function PredictionsLayout({
           </div>
         </main>
         <Footer />
-      </>
+      </div>
     )
   }
 

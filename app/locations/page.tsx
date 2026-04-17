@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import LocationsPage from '@/components/locations/LocationsPage'
 import type { ApiLocation } from '@/components/locations/LocationsPage'
-import { createClient } from '@/lib/supabase-server'
 import { createAdminClient } from '@/lib/supabase-admin'
 
 export const metadata: Metadata = {
@@ -23,7 +22,12 @@ async function getInitialLocations(): Promise<{
   cities: string[]
 }> {
   try {
-    const supabase = await createClient()
+    // Use the admin client for the SSR read so the list is ALWAYS available
+    // on the public page, even if conscious_locations RLS policies change
+    // later. Anon users were reporting a persistent "Cargando…" on
+    // /locations that turned out to be an empty SSR payload when the
+    // default client couldn't see the rows.
+    const supabase = createAdminClient()
     const { data: locations } = await supabase
       .from('conscious_locations')
       .select('*')

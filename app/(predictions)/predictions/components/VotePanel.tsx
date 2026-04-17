@@ -58,7 +58,7 @@ export type RelatedMarketBrief = {
   category: string
 }
 
-const CONFIDENCE_LABELS: Record<number, string> = {
+const CONFIDENCE_LABELS_EN: Record<number, string> = {
   1: 'Wild guess',
   2: 'Just a hunch',
   3: 'Just a hunch',
@@ -69,6 +69,19 @@ const CONFIDENCE_LABELS: Record<number, string> = {
   8: 'Very confident',
   9: 'Very confident',
   10: 'Absolutely certain',
+}
+
+const CONFIDENCE_LABELS_ES: Record<number, string> = {
+  1: 'Puro tiro al aire',
+  2: 'Una corazonada',
+  3: 'Una corazonada',
+  4: 'Creo que sí',
+  5: 'Creo que sí',
+  6: 'Bastante seguro',
+  7: 'Bastante seguro',
+  8: 'Muy seguro',
+  9: 'Muy seguro',
+  10: 'Totalmente seguro',
 }
 
 const CONFIDENCE_EMOJI: Record<number, string> = {
@@ -84,8 +97,12 @@ const CONFIDENCE_EMOJI: Record<number, string> = {
   10: '🔥',
 }
 
-function getConfidenceLabel(n: number): string {
-  return CONFIDENCE_LABELS[Math.min(10, Math.max(1, n))] || 'I think so'
+function getConfidenceLabel(n: number, locale: string): string {
+  const clamped = Math.min(10, Math.max(1, n))
+  if (locale === 'es') {
+    return CONFIDENCE_LABELS_ES[clamped] || 'Creo que sí'
+  }
+  return CONFIDENCE_LABELS_EN[clamped] || 'I think so'
 }
 
 function getConfidenceEmoji(n: number): string {
@@ -439,7 +456,7 @@ export function VotePanel({
           <span>{locale === 'es' ? 'Muy seguro' : 'Very sure'}</span>
         </div>
         <p className="text-[11px] text-gray-500 mt-2">
-          {getConfidenceLabel(confidence)}
+          {getConfidenceLabel(confidence, locale)}
         </p>
       </div>
     ) : null

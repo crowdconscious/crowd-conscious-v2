@@ -43,7 +43,11 @@ export async function GET() {
       },
       {
         headers: {
-          'Cache-Control': 's-maxage=300, stale-while-revalidate=600',
+          // Never let the CDN cache this — we were seeing the footer
+          // thermometer stuck at $0 MXN (from the first pre-seed deploy) while
+          // the SSR landing hero showed the real balance. Forcing no-store
+          // keeps every client render in sync with the admin DB read.
+          'Cache-Control': 'no-store, max-age=0, must-revalidate',
         },
       }
     )

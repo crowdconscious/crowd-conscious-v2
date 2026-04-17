@@ -507,11 +507,15 @@ export default function PulseResultClient({
             ) : null}
 
             <div className="pulse-no-print mt-10 flex flex-col gap-3 sm:flex-row">
+              {/* Deep-link to the vote section so a Pulse share lands the
+                  user on the market with the voting UI already in view,
+                  instead of requiring a scroll. The market detail page
+                  renders an id="vote" anchor around the vote panel. */}
               <Link
-                href={`/predictions/markets/${marketId}`}
-                className="inline-flex min-h-[48px] flex-1 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 px-6 py-3 text-center text-sm font-bold uppercase tracking-wide text-white shadow-lg shadow-emerald-900/30 transition hover:brightness-110"
+                href={`/predictions/markets/${marketId}#vote`}
+                className="inline-flex min-h-[48px] flex-1 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 px-6 py-3 text-center text-sm font-semibold text-white shadow-lg shadow-emerald-900/30 transition hover:brightness-110"
               >
-                {locale === 'es' ? 'Votar en Crowd Conscious' : 'Vote on Crowd Conscious'}
+                {locale === 'es' ? 'Dar mi opinión' : 'Share my take'}
               </Link>
               <Link
                 href="/pulse"

@@ -8,11 +8,22 @@ export async function GET(
 ) {
   try {
     const user = await getCurrentUser()
+
+    // Anonymous visitors on a public market page: return the neutral shape
+    // rather than a 401. A 401 here surfaced as a console error and — via
+    // unhandled promise rejections in the client — could trip the error
+    // boundary on some markets. There's nothing user-specific to expose for
+    // an anon visitor, so the "no position, no contribution" response is
+    // both correct and cheap.
+    const { id: marketId } = await params
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({
+        positions: [],
+        userContribution: 0,
+        authenticated: false,
+      })
     }
 
-    const { id: marketId } = await params
     const supabase = await createClient()
 
     const [

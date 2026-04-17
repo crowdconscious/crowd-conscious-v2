@@ -576,7 +576,7 @@ export function MarketDetailClient({
                   rel="noopener noreferrer"
                   className="shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 font-medium text-sm transition-colors"
                 >
-                  Visit <ExternalLink className="w-4 h-4" />
+                  {locale === 'es' ? 'Visitar' : 'Visit'} <ExternalLink className="w-4 h-4" />
                 </a>
               )}
             </div>
@@ -608,7 +608,7 @@ export function MarketDetailClient({
                         : 'Equal — no leading outcome yet'
                       : isMultiOutcome && leadingOutcome
                         ? `${getOutcomeLabel(leadingOutcome, locale)} ${Math.round(toDisplayPercent(leadingOutcome.probability || 0))}%`
-                        : `${Math.round(prob)}% YES`}
+                        : `${Math.round(prob)}% ${locale === 'es' ? 'SÍ' : 'YES'}`}
                   </p>
                   <p className="text-xs text-slate-500 mt-1">
                     {locale === 'en'
@@ -684,7 +684,11 @@ export function MarketDetailClient({
             {!secondaryLoading && historyChartData.length > 0 && (
               <>
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-slate-400 text-sm">Probability (from prediction_market_history)</p>
+                  <p className="text-slate-400 text-sm">
+                    {locale === 'es'
+                      ? 'Probabilidad a lo largo del tiempo'
+                      : 'Probability over time'}
+                  </p>
                   <div className="flex gap-2">
                     {(['7d', '30d', 'all'] as const).map((range) => (
                       <button
@@ -722,7 +726,9 @@ export function MarketDetailClient({
                             <div className="bg-gray-800 border border-cc-border-light rounded-lg p-3 shadow-xl">
                               <p className="text-slate-300 text-sm font-medium">{p.fullDate}</p>
                               <p className="text-emerald-400 font-semibold">{toDisplayPercent(Number(p.probability)).toFixed(1)}%</p>
-                              <p className="text-slate-400 text-xs">Votes: {Number(p.volume) || 0}</p>
+                              <p className="text-slate-400 text-xs">
+                                {locale === 'es' ? 'Votos' : 'Votes'}: {Number(p.volume) || 0}
+                              </p>
                             </div>
                           )
                         }}
@@ -737,7 +743,9 @@ export function MarketDetailClient({
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
-                <p className="text-slate-400 text-sm mt-3">Probability history</p>
+                <p className="text-slate-400 text-sm mt-3">
+                  {locale === 'es' ? 'Historial de probabilidad' : 'Probability history'}
+                </p>
                 <div className="h-32 mt-2">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={historyChartData}>
@@ -808,7 +816,9 @@ export function MarketDetailClient({
               onClick={() => setResearchOpen(!researchOpen)}
               className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-800/50 transition-colors"
             >
-              <span className="font-semibold text-white">Understand This Issue</span>
+              <span className="font-semibold text-white">
+                {locale === 'es' ? 'Contexto' : 'Understand This Issue'}
+              </span>
               {researchOpen ? (
                 <ChevronUp className="w-5 h-5 text-slate-400" />
               ) : (
@@ -922,14 +932,17 @@ export function MarketDetailClient({
           )}
 
           {/* Discussion */}
-          <MarketDiscussion marketId={market.id} />
+          <MarketDiscussion marketId={market.id} isAuthenticated={isAuthenticated} />
 
           {/* Recent Predictions */}
           <RecentPredictions marketId={market.id} isPulse={isPulseMarket} />
         </div>
 
         {/* Right Column — VotePanel first on mobile for easier voting UX */}
-        <div className="lg:sticky lg:top-6 lg:self-start space-y-6 order-1 lg:order-2">
+        <div
+          id="vote"
+          className="lg:sticky lg:top-6 lg:self-start space-y-6 order-1 lg:order-2 scroll-mt-24"
+        >
           <VotePanel
             market={market as PredictionMarket & { market_type?: string; total_votes?: number }}
             outcomes={outcomes}
@@ -1106,25 +1119,37 @@ function RecentPredictions({ marketId, isPulse }: { marketId: string; isPulse: b
     <div className="bg-cc-card border border-cc-border rounded-xl p-6">
       <h3 className="font-semibold text-white mb-4">{recentActivityHeading(loc, isPulse)}</h3>
       {loading ? (
-        <p className="text-slate-400 text-sm">Loading...</p>
+        <p className="text-slate-400 text-sm">
+          {loc === 'es' ? 'Cargando…' : 'Loading…'}
+        </p>
       ) : predictions.length === 0 ? (
         <p className="text-slate-400 text-sm">{recentActivityEmpty(loc, isPulse)}</p>
       ) : (
         <div className="space-y-2">
-          {predictions.slice(0, 10).map((p, i) => (
-            <div
-              key={i}
-              className="flex items-center justify-between py-2 border-b border-cc-border last:border-0"
-            >
-              <div>
-                <span className="text-slate-300 text-sm font-medium">{p.user_name}</span>
-                <span className="text-slate-500 text-sm"> predicted </span>
-                <span className="text-emerald-400 text-sm font-medium">{p.outcome_label}</span>
-                <span className="text-slate-500 text-sm"> (confidence {p.confidence}/10)</span>
+          {predictions.slice(0, 10).map((p, i) => {
+            const verb = isPulse
+              ? loc === 'es'
+                ? 'opinó'
+                : 'voted'
+              : loc === 'es'
+                ? 'predijo'
+                : 'predicted'
+            const confidenceLabel = loc === 'es' ? 'confianza' : 'confidence'
+            return (
+              <div
+                key={i}
+                className="flex items-center justify-between py-2 border-b border-cc-border last:border-0"
+              >
+                <div>
+                  <span className="text-slate-300 text-sm font-medium">{p.user_name}</span>
+                  <span className="text-slate-500 text-sm"> {verb} </span>
+                  <span className="text-emerald-400 text-sm font-medium">{p.outcome_label}</span>
+                  <span className="text-slate-500 text-sm"> ({confidenceLabel} {p.confidence}/10)</span>
+                </div>
+                <span className="text-slate-500 text-xs">{formatRelativeTime(p.created_at)}</span>
               </div>
-              <span className="text-slate-500 text-xs">{formatRelativeTime(p.created_at)}</span>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>
@@ -1133,7 +1158,9 @@ function RecentPredictions({ marketId, isPulse }: { marketId: string; isPulse: b
 
 type CommentEntry = { id: string; user_id: string; content: string; created_at: string; username: string }
 
-function MarketDiscussion({ marketId }: { marketId: string }) {
+function MarketDiscussion({ marketId, isAuthenticated }: { marketId: string; isAuthenticated: boolean }) {
+  const locale = useLocale()
+  const loc = locale === 'en' ? 'en' : 'es'
   const [comments, setComments] = useState<CommentEntry[]>([])
   const [content, setContent] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -1141,6 +1168,10 @@ function MarketDiscussion({ marketId }: { marketId: string }) {
   const fetchComments = useCallback(async () => {
     try {
       const res = await fetch(`/api/predictions/markets/${marketId}/comments`)
+      if (!res.ok) {
+        setComments([])
+        return
+      }
       const data = await res.json()
       setComments(data.comments ?? [])
     } catch {
@@ -1174,26 +1205,44 @@ function MarketDiscussion({ marketId }: { marketId: string }) {
 
   return (
     <div className="bg-cc-card border border-cc-border rounded-xl p-6">
-      <h3 className="font-semibold text-white mb-4">Discussion</h3>
-      <form onSubmit={handleSubmit} className="mb-4">
-        <textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="Add a comment..."
-          rows={3}
-          className="mb-2 w-full resize-none rounded-lg border border-cc-border bg-cc-card px-4 py-3 text-white placeholder:text-cc-text-muted focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20"
-        />
-        <button
-          type="submit"
-          disabled={!content.trim() || submitting}
-          className="px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {submitting ? 'Posting...' : 'Post comment'}
-        </button>
-      </form>
+      <h3 className="font-semibold text-white mb-4">
+        {loc === 'es' ? 'Discusión' : 'Discussion'}
+      </h3>
+      {isAuthenticated ? (
+        <form onSubmit={handleSubmit} className="mb-4">
+          <textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder={loc === 'es' ? 'Escribe un comentario…' : 'Add a comment…'}
+            rows={3}
+            className="mb-2 w-full resize-none rounded-lg border border-cc-border bg-cc-card px-4 py-3 text-white placeholder:text-cc-text-muted focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20"
+          />
+          <button
+            type="submit"
+            disabled={!content.trim() || submitting}
+            className="px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {submitting
+              ? loc === 'es'
+                ? 'Publicando…'
+                : 'Posting…'
+              : loc === 'es'
+                ? 'Publicar comentario'
+                : 'Post comment'}
+          </button>
+        </form>
+      ) : (
+        <div className="mb-4 rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2.5 text-xs text-cc-text-muted">
+          {loc === 'es'
+            ? 'Inicia sesión para comentar.'
+            : 'Sign in to leave a comment.'}
+        </div>
+      )}
       <div className="space-y-3">
         {comments.length === 0 ? (
-          <p className="text-slate-400 text-sm py-2">💬 Sé el primero en comentar</p>
+          <p className="text-slate-400 text-sm py-2">
+            💬 {loc === 'es' ? 'Sé el primero en comentar' : 'Be the first to comment'}
+          </p>
         ) : (
           comments.map((c) => (
             <div
@@ -1249,6 +1298,12 @@ function UserContribution({
     }
   }, [marketId, isAuthenticated])
 
-  if (contribution === null) return <p className="text-slate-400 text-sm">Loading...</p>
+  if (contribution === null) {
+    return (
+      <p className="text-slate-400 text-sm">
+        {loc === 'es' ? 'Cargando…' : 'Loading…'}
+      </p>
+    )
+  }
   return <p className="text-emerald-300 text-sm">{userContributionLine(loc, isPulse)}</p>
 }
