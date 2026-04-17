@@ -113,7 +113,7 @@ function matchSignalsToMarket(
 }
 
 /** Cap per source category so Claude sees diverse topics (not only sports / Mundial). */
-function diversifySignals(signals: Signal[], maxPerCategory: number = 8): Signal[] {
+function diversifySignals(signals: Signal[], maxPerCategory: number = 4): Signal[] {
   const byCategory: Record<string, Signal[]> = {}
 
   for (const signal of signals) {
@@ -336,7 +336,9 @@ OUTPUT FORMAT — respond as JSON only (no markdown fences):
 }
 
 RULES:
-- Focus on Mexico, CDMX, World Cup 2026, and topics relevant to prediction markets.
+- Focus on Mexico, CDMX, World Cup 2026, and topics relevant to prediction markets (sustainability, CDMX policy, economy, social impact, tech). Skip signals that don't connect.
+- Emit AT MOST 5 signals in the \`signals\` array. Quality over volume. If the input has fewer than 5 relevant signals, return fewer.
+- Consolidate duplicates: if multiple sources cover the same underlying event, emit ONE signal entry and list the source names separated by " · " in the \`source\` field (e.g. "Expansión · El Financiero"). Do NOT emit duplicate signals for the same story.
 - Every signal needs market_angle and suggested_question when possible.
 - market_suggestions: 0–3 items; only if signals justify new markets; use binary Yes/No style titles.
 - Rate relevance honestly. Keep headlines short.
@@ -391,9 +393,9 @@ async function generateStructuredDailyBrief(
     return { structured: null, tokensInput: 0, tokensOutput: 0 }
   }
 
-  const lines = allSignals.slice(0, 28).map(
+  const lines = allSignals.slice(0, 14).map(
     (s, i) =>
-      `${i + 1}. [${s.source_name}] (${s.category ?? 'general'}) ${s.title}\n   ${(s.text || '').slice(0, 280)}`
+      `${i + 1}. [${s.source_name}] (${s.category ?? 'general'}) ${s.title}\n   ${(s.text || '').slice(0, 180)}`
   )
 
   const userMessage = `${platformBlock}
@@ -552,8 +554,9 @@ export async function runNewsMonitor(options?: {
       marketsToAnalyze = activeMarkets
     }
 
-    // Limit markets to avoid 504 timeout: max 6, prioritize by signal count
-    const MAX_MARKETS_TO_ANALYZE = 6
+    // Limit markets to avoid 504 timeout and cap token spend.
+    // 3 markets × ~1K tokens ≈ 3K tokens/run on per-market analysis.
+    const MAX_MARKETS_TO_ANALYZE = 3
     const sorted = [...marketsToAnalyze].sort(
       (a, b) => (marketSignals[b.id]?.length ?? 0) - (marketSignals[a.id]?.length ?? 0)
     )

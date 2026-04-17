@@ -199,6 +199,15 @@ RULES FOR LINKS:
 - One market per line; each line is its own markdown link starting with → inside the brackets.
 - List every market you cite in "related_market_ids" (array of UUIDs, max 5, order matches reading order). Also set "related_market_id" to the primary (first) market UUID for compatibility.
 
+QUALITY REQUIREMENTS (non-negotiable — fail any and the draft is discarded):
+- MUST reference at least one live market by UUID in related_market_ids.
+- Spanish body ≤ 600 words (before the closing CTA). English body similar.
+- Must end with the closing CTA block (both Spanish and English versions).
+- Self-score (1-10): "Would I share this on LinkedIn without editing?"
+  - 9-10: sharp hook, tight data, memorable insight.
+  - 7-8: solid, publishable with light edits.
+  - 1-6: filler, abstract, or off-platform. Return honest scores <7 — the pipeline drops them automatically.
+
 OUTPUT: Respond with ONLY valid JSON (no markdown code fences, no preamble):
 {
   "title": "Spanish title",
@@ -212,7 +221,9 @@ OUTPUT: Respond with ONLY valid JSON (no markdown code fences, no preamble):
   "tags": ["tag1", "tag2", "tag3"],
   "meta_description": "Spanish SEO, max 155 chars",
   "related_market_id": "primary UUID from the market list",
-  "related_market_ids": ["uuid1", "uuid2"]
+  "related_market_ids": ["uuid1", "uuid2"],
+  "self_score": 8,
+  "self_score_reason": "One sentence explaining the score"
 }`
 
 function slugify(raw: string): string {
@@ -305,7 +316,20 @@ NO repitas el mismo ángulo ni el mismo mercado salvo que haya una noticia nueva
 ${uncovered.length ? uncovered.map((m) => `- "${m.title}" [ID: ${m.id}] — ${m.total_votes ?? 0} votos · ${m.category}`).join('\n') : '(toma un ángulo distinto usando el contexto de noticias de hoy)'}
 `
 
+    // Day-of-week steering — the cron runs M/W/F, each gets a distinct angle.
+    const dayOfWeekNum = today.getDay() // 0 = Sun, 1 = Mon, ..., 5 = Fri
+    const dayAngle =
+      dayOfWeekNum === 1
+        ? 'LUNES — Pulse Analysis: escoge un mercado Pulse con >= 10 votos y analiza qué revela la confianza ponderada que una encuesta simple no mostraría.'
+        : dayOfWeekNum === 3
+          ? 'MIÉRCOLES — News → Market: toma una señal concreta del News Monitor y conéctala con un mercado activo. El gancho debe ser la noticia, no el mercado.'
+          : dayOfWeekNum === 5
+            ? 'VIERNES — Community Spotlight: historia ligera. Un Lugar Consciente, un mercado con un patrón de votos interesante, o una predicción que se resolvió esta semana.'
+            : 'Ángulo libre — elige el enfoque que mejor encaje con los datos del día.'
+
     const userMessage = `Escribe el artículo usando esta información.
+
+ÁNGULO DEL DÍA: ${dayAngle}
 
 ${diversityBlock}
 
@@ -316,7 +340,7 @@ ${newsContext}
 
 ${platformLiveBlock}
 
-Responde con un solo objeto JSON exactamente como en tus instrucciones de sistema.`
+Responde con un solo objeto JSON exactamente como en tus instrucciones de sistema, incluyendo self_score.`
 
     const response = await anthropic.messages.create({
       model: MODELS.CREATIVE,
@@ -382,6 +406,36 @@ Responde con un solo objeto JSON exactamente como en tus instrucciones de sistem
         summary: { reason: 'missing_english_fields' },
       })
       return { success: false, error: 'missing_english_fields' }
+    }
+
+    // Self-quality gate — drop drafts the model itself wouldn't publish.
+    const selfScoreRaw = blogObj.self_score
+    const selfScore =
+      typeof selfScoreRaw === 'number'
+        ? selfScoreRaw
+        : typeof selfScoreRaw === 'string'
+          ? Number(selfScoreRaw)
+          : NaN
+    const selfScoreReason = String(blogObj.self_score_reason ?? '').trim()
+    const QUALITY_THRESHOLD = 7
+    if (Number.isFinite(selfScore) && selfScore < QUALITY_THRESHOLD) {
+      await logAgentRun({
+        agentName: 'content-creator',
+        status: 'skipped',
+        durationMs: Date.now() - startTime,
+        tokensInput: usage.input_tokens,
+        tokensOutput: usage.output_tokens,
+        summary: {
+          reason: 'quality_below_threshold',
+          self_score: selfScore,
+          self_score_reason: selfScoreReason,
+          title,
+        },
+      })
+      return {
+        success: true,
+        tokens: { input: usage.input_tokens, output: usage.output_tokens },
+      }
     }
 
     const slugBase = slugify(String(blogObj.slug ?? title))

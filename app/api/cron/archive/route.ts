@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
   const cancelledCutoff = new Date(Date.now() - 3 * 86400000).toISOString()
   const agentCutoff = new Date(Date.now() - 14 * 86400000).toISOString()
   const inboxCutoff = new Date(Date.now() - 7 * 86400000).toISOString()
+  const blogDraftCutoff = new Date(Date.now() - 14 * 86400000).toISOString()
 
   const { data: resolvedRows, error: e1 } = await admin
     .from('prediction_markets')
@@ -53,7 +54,16 @@ export async function GET(request: NextRequest) {
     .lt('created_at', inboxCutoff)
     .select('id')
 
-  const errors = [e1, e2, e3, e4].filter(Boolean).map((e) => (e as Error).message)
+  // Auto-archive stale blog drafts (14+ days old, never published) —
+  // keeps the content-creator output from accumulating forever.
+  const { data: blogDraftRows, error: e5 } = await admin
+    .from('blog_posts')
+    .update({ status: 'archived' })
+    .eq('status', 'draft')
+    .lt('created_at', blogDraftCutoff)
+    .select('id')
+
+  const errors = [e1, e2, e3, e4, e5].filter(Boolean).map((e) => (e as Error).message)
 
   return NextResponse.json({
     archived: {
@@ -61,6 +71,7 @@ export async function GET(request: NextRequest) {
       marketsCancelled: cancelledRows?.length ?? 0,
       agentContent: agentRows?.length ?? 0,
       inbox: inboxRows?.length ?? 0,
+      blogDrafts: blogDraftRows?.length ?? 0,
     },
     timestamp: now,
     errors: errors.length ? errors : undefined,

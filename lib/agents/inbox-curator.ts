@@ -41,11 +41,28 @@ export async function runInboxCurator(): Promise<{
     }>
 
     if (pending.length === 0) {
+      // Count nominations from /locations to surface them even when the
+      // curator has nothing to LLM-summarize, so the admin can tell at a
+      // glance that the inbox is empty AND why (no new submissions vs.
+      // platform needs a nomination CTA push).
+      const cutoff7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+      const { count: submissionsLast7d } = await supabase
+        .from('conscious_inbox')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', cutoff7d)
+
       await logAgentRun({
         agentName: 'inbox-curator',
         status: 'skipped',
         durationMs: Date.now() - startTime,
-        summary: { pending_count: 0, reason: 'No pending items' },
+        summary: {
+          pending_count: 0,
+          submissions_last_7d: submissionsLast7d ?? 0,
+          reason:
+            (submissionsLast7d ?? 0) === 0
+              ? 'No submissions this week. Promote the "Nominar lugar" CTA on /locations and vote confirmation screens.'
+              : 'No pending items — all submissions from this week were already triaged.',
+        },
       })
       return { success: true, skipped: true, summary: { pending_count: 0 } }
     }

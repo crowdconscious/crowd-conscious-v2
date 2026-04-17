@@ -428,31 +428,140 @@ Snapshot sentimiento: ${JSON.stringify(b.sentiment_snapshot ?? {})}`
       metrics.locations_with_live_score_last_7d = []
     }
 
-    const systemMessage = `You are the daily briefing analyst for Crowd Conscious, a free-to-play opinion platform based in Mexico City preparing for FIFA World Cup 2026 (opening match June 11, 2026 at Estadio Azteca).
+    // Week-over-week deltas — these are the heart of the weekly digest.
+    // We compare the last 7 days to the 7 days before that ("prev week")
+    // and surface only what changed. Flat metrics like "259 users (+0)"
+    // are explicitly omitted from the prompt unless a delta is non-zero.
+    try {
+      const now = Date.now()
+      const cutoff7d = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString()
+      const cutoff14d = new Date(now - 14 * 24 * 60 * 60 * 1000).toISOString()
+
+      const [
+        usersThisWeek,
+        usersLastWeek,
+        votesThisWeek,
+        votesLastWeek,
+        anonThisWeek,
+        anonLastWeek,
+        convThisWeek,
+        convLastWeek,
+        locationsThisWeek,
+        newMarketsThisWeek,
+      ] = await Promise.all([
+        supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', cutoff7d),
+        supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', cutoff14d).lt('created_at', cutoff7d),
+        supabase.from('market_votes').select('*', { count: 'exact', head: true }).gte('created_at', cutoff7d),
+        supabase.from('market_votes').select('*', { count: 'exact', head: true }).gte('created_at', cutoff14d).lt('created_at', cutoff7d),
+        supabase.from('anonymous_participants').select('*', { count: 'exact', head: true }).gte('created_at', cutoff7d),
+        supabase.from('anonymous_participants').select('*', { count: 'exact', head: true }).gte('created_at', cutoff14d).lt('created_at', cutoff7d),
+        supabase.from('anonymous_participants').select('*', { count: 'exact', head: true }).gte('created_at', cutoff7d).not('converted_to_user_id', 'is', null),
+        supabase.from('anonymous_participants').select('*', { count: 'exact', head: true }).gte('created_at', cutoff14d).lt('created_at', cutoff7d).not('converted_to_user_id', 'is', null),
+        supabase.from('conscious_locations').select('name, slug, city, created_at').gte('created_at', cutoff7d).order('created_at', { ascending: false }),
+        supabase.from('prediction_markets').select('id, title, created_at').gte('created_at', cutoff7d).is('archived_at', null).order('created_at', { ascending: false }).limit(10),
+      ])
+
+      const weekOverWeek = {
+        users: {
+          this_week: usersThisWeek.count ?? 0,
+          last_week: usersLastWeek.count ?? 0,
+          delta: (usersThisWeek.count ?? 0) - (usersLastWeek.count ?? 0),
+        },
+        votes: {
+          this_week: votesThisWeek.count ?? 0,
+          last_week: votesLastWeek.count ?? 0,
+          delta: (votesThisWeek.count ?? 0) - (votesLastWeek.count ?? 0),
+        },
+        new_anonymous: {
+          this_week: anonThisWeek.count ?? 0,
+          last_week: anonLastWeek.count ?? 0,
+        },
+        conversions: {
+          this_week: convThisWeek.count ?? 0,
+          last_week: convLastWeek.count ?? 0,
+        },
+        new_locations_this_week: (locationsThisWeek.data ?? []).map((l) => ({
+          name: l.name, slug: l.slug, city: l.city,
+        })),
+        new_markets_this_week: (newMarketsThisWeek.data ?? []).length,
+      }
+      metrics.week_over_week = weekOverWeek
+
+      const cutoff7dDate = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString()
+      const { data: byMarket7d } = await supabase
+        .from('market_votes')
+        .select('market_id')
+        .gte('created_at', cutoff7dDate)
+      const counts7d: Record<string, number> = {}
+      for (const row of byMarket7d ?? []) {
+        const mid = row.market_id
+        counts7d[mid] = (counts7d[mid] ?? 0) + 1
+      }
+      const sorted7d = Object.entries(counts7d).sort((a, b) => b[1] - a[1]).slice(0, 3)
+      const topIds = sorted7d.map(([id]) => id)
+      let titles7d: Record<string, string> = {}
+      if (topIds.length > 0) {
+        const { data: topMarkets } = await supabase
+          .from('prediction_markets')
+          .select('id, title')
+          .in('id', topIds)
+        for (const m of topMarkets ?? []) titles7d[m.id] = m.title
+      }
+      metrics.top_markets_by_new_votes_7d = sorted7d.map(([id, count]) => ({
+        market_id: id,
+        title: titles7d[id] ?? id,
+        new_votes_7d: count,
+      }))
+    } catch (e) {
+      console.warn('[CEO Digest] week-over-week block failed:', e)
+      metrics.week_over_week = 'error'
+      metrics.top_markets_by_new_votes_7d = 'error'
+    }
+
+    const systemMessage = `You are the WEEKLY operational analyst for Crowd Conscious, a free-to-play opinion platform based in Mexico City preparing for FIFA World Cup 2026 (opening match June 11, 2026 at Estadio Azteca).
 
 RULES (strict):
 - Write in Spanish. Professional, executive tone. No alarmism.
-- Use DAYS for time horizons (e.g. "~93 días hasta la inauguración"), never weeks unless it's actually weeks.
-- You have NO access to API balance or credits. NEVER infer "créditos agotados" or "recargar presupuesto" — error counts can be from parsing, model config, or transient issues. Only report what the data shows: agent status (success/error) and error messages.
-- Do NOT claim a model "no está disponible" — errors may be historical; if an agent has recent success, it is working.
-- Agent health: use the most recent run per agent. If the latest run is success, report ✅. Past errors do not mean the agent is broken now.
+- This is a WEEKLY digest. Compare THIS WEEK (last 7 days) vs LAST WEEK. Highlight what CHANGED.
+- If a delta is 0 or negligible, DO NOT mention that metric at all. Silence is the signal.
+  - Example: if week_over_week.users.delta === 0, do NOT write "se mantuvo en 259 usuarios". Skip it.
+  - Example: if week_over_week.votes.delta > 0, DO write "Los votos subieron de X a Y (+Z)".
+- Use DAYS for time horizons (e.g. "~93 días hasta la inauguración").
+- You have NO access to API balance or credits. Never say "créditos agotados" or "recargar presupuesto".
+- Agent health: use the most recent run per agent. Latest success = ✅. Past errors alone do NOT mean the agent is broken now.
 - Be precise with numbers. Double-check date math.`
 
-    const userMessage = `Here are today's platform metrics (JSON):
+    const userMessage = `Here are this week's platform metrics (JSON):
 
 \`\`\`json
 ${JSON.stringify(metrics, null, 2)}
 \`\`\`
 
-Generate today's CEO digest with these sections:
-1. RESUMEN RÁPIDO — 3-5 headline metrics with trend context
-2. MERCADOS ACTIVOS — what's hot, what's dead, probability shifts
-3. NOTICIAS Y CONTENIDO — if news_monitor_context is present: trending topics, market suggestions from News Monitor, sentiment snapshot. Use this to inform OPORTUNIDADES.
-4. ACCIONES PENDIENTES — markets to resolve, inbox to review, anything broken
-5. OPORTUNIDADES — suggested new markets based on what's trending (use News Monitor data when available), sponsor angles
-6. SALUD DE LA PLATAFORMA — agents running ok? (use most recent run status only)
+Generate the WEEKLY CEO digest for the week ending ${todayFormatted}. Use this exact structure:
 
-Keep it under 500 words. Write in Spanish. Today is ${todayFormatted}.`
+## 1. Lo que cambió esta semana
+- 3-5 bullets, each referencing a NON-ZERO delta from \`week_over_week\` or a specific item from \`top_markets_by_new_votes_7d\` or \`new_locations_this_week\`.
+- If everything is flat, write a single line: "Semana estable. Ver acciones sugeridas abajo."
+
+## 2. Mercados del momento
+- Reference \`top_markets_by_new_votes_7d\` by title. Mention vote counts.
+- Call out any market in \`markets_approaching_list\` that resolves in the next 7 days.
+- Mention \`markets_with_zero_predictions\` ONLY if it's > 5 (otherwise not worth noting).
+
+## 3. Pipeline Pulse / Lugares Conscientes
+- If \`locations_with_live_score_last_7d\` is non-empty, name the warmest 1-2 leads.
+- If new locations were added this week, name them.
+
+## 4. Salud de los agentes
+- Use \`agent_last_runs\`. Only mention agents whose latest run was NOT success. Otherwise a single line: "Todos los agentes OK."
+
+## 5. 3 acciones para esta semana
+Pick exactly 3 concrete next steps. Each should reference specific data:
+- Example: "Crear mercado sobre [X] — News Monitor señaló [signal]"
+- Example: "Contactar a [Location] — cruzó 10 votos, usar \`pilot_pulse_link\`"
+- Example: "Publicar borrador '[blog title]' — lleva 5 días en draft"
+
+Keep the entire digest under 400 words. Write in Spanish. Today is ${todayFormatted}.`
 
     // Sponsor outreach prompt — generated separately so it can be stored and
     // emailed as its own actionable artifact. Uses the same metrics + News
@@ -524,7 +633,7 @@ No introduction, no closing summary, no extra commentary — just the 3 ideas in
         market_id: null,
         agent_type: 'news_monitor',
         content_type: 'weekly_digest',
-        title: `Digest CEO - ${todayFormatted}`,
+        title: `Digest CEO semanal — ${todayFormatted}`,
         body: digestText,
         language: 'es',
         metadata: {
@@ -545,7 +654,7 @@ No introduction, no closing summary, no extra commentary — just the 3 ideas in
     const adminEmail = process.env.ADMIN_EMAIL
     if (adminEmail) {
       const emailResult = await sendEmail(adminEmail, {
-        subject: `🧠 Crowd Conscious Digest — ${todayFormatted}`,
+        subject: `🧠 Crowd Conscious Digest Semanal — ${todayFormatted}`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <div style="background: linear-gradient(135deg, #14b8a6, #3b82f6); padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">

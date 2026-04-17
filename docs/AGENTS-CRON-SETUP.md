@@ -6,15 +6,15 @@
 > is kept in sync with `vercel.json` manually — if they disagree, trust
 > `vercel.json`.
 
-### Daily agents (America/Mexico_City equivalents, CST = UTC−6)
+### Daily / weekly agents (America/Mexico_City equivalents, CST = UTC−6)
 
 | Agent | Schedule | UTC | Mexico City |
 |-------|----------|-----|-------------|
-| News Monitor | `0 14 * * *` | 14:00 | 08:00 |
-| Inbox Curator | `5 14 * * *` | 14:05 | 08:05 |
-| Content Creator | `30 14 * * *` | 14:30 | 08:30 |
+| News Monitor (daily) | `0 14 * * *` | 14:00 | 08:00 |
+| Content Creator (M/W/F) | `30 14 * * 1,3,5` | 14:30 | 08:30 |
 | Newsletter (M/W/F) | `0 14 * * 1,3,5` | 14:00 | 08:00 |
-| CEO Digest | `0 16 * * *` | 16:00 | 10:00 |
+| Inbox Curator (Mon only) | `5 14 * * 1` | 14:05 | 08:05 |
+| CEO Digest (Mon only — weekly) | `0 16 * * 1` | 16:00 | 10:00 |
 
 ### Weekly / monthly
 

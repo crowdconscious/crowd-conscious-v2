@@ -28,7 +28,7 @@
     },
     {
       "path": "/api/cron/agents/inbox-curator",
-      "schedule": "5 14 * * *"
+      "schedule": "5 14 * * 1"
     },
     {
       "path": "/api/cron/newsletter",
@@ -36,11 +36,11 @@
     },
     {
       "path": "/api/cron/agents/content-creator",
-      "schedule": "30 14 * * *"
+      "schedule": "30 14 * * 1,3,5"
     },
     {
       "path": "/api/cron/agents/ceo-digest",
-      "schedule": "0 16 * * *"
+      "schedule": "0 16 * * 1"
     },
     {
       "path": "/api/cron/reengagement-inactive",

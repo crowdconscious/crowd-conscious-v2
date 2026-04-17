@@ -133,48 +133,68 @@ function StructuredNewsBriefCard({
           </ul>
         </div>
       )}
-      {(data.signals ?? []).map((signal, i) => (
-        <div
-          key={i}
-          className="bg-slate-900/80 rounded-lg p-3 border border-slate-700/80"
-        >
-          <div className="flex flex-wrap items-center gap-2 mb-1">
-            <span
-              className={`text-xs px-2 py-0.5 rounded-full ${
-                signal.relevance === 'high'
-                  ? 'bg-red-500/20 text-red-400'
-                  : signal.relevance === 'medium'
-                    ? 'bg-amber-500/20 text-amber-400'
-                    : 'bg-slate-700 text-slate-400'
-              }`}
-            >
-              {signal.relevance ?? '—'}
-            </span>
-            {signal.source && (
-              <span className="text-slate-500 text-xs">{signal.source}</span>
+      {(data.signals ?? []).map((signal, i) => {
+        const marketPrefill = signal.suggested_question
+          ? `/predictions/admin/create-market?${new URLSearchParams({
+              title: signal.suggested_question,
+              ...(signal.category ? { category: signal.category } : {}),
+              ...(signal.market_angle ? { description: signal.market_angle } : {}),
+              ...(signal.headline ? { resolution_criteria: `Se resuelve según: ${signal.headline}` } : {}),
+            }).toString()}`
+          : null
+        return (
+          <div
+            key={i}
+            className="bg-slate-900/80 rounded-lg p-3 border border-slate-700/80"
+          >
+            <div className="flex flex-wrap items-center gap-2 mb-1">
+              <span
+                className={`text-xs px-2 py-0.5 rounded-full ${
+                  signal.relevance === 'high'
+                    ? 'bg-red-500/20 text-red-400'
+                    : signal.relevance === 'medium'
+                      ? 'bg-amber-500/20 text-amber-400'
+                      : 'bg-slate-700 text-slate-400'
+                }`}
+              >
+                {signal.relevance ?? '—'}
+              </span>
+              {signal.source && (
+                <span className="text-slate-500 text-xs">{signal.source}</span>
+              )}
+              {signal.category && (
+                <span className="text-slate-600 text-xs">{signal.category}</span>
+              )}
+            </div>
+            {signal.headline && (
+              <h4 className="text-white text-sm font-medium">{signal.headline}</h4>
             )}
-            {signal.category && (
-              <span className="text-slate-600 text-xs">{signal.category}</span>
+            {signal.key_fact && (
+              <p className="text-slate-400 text-xs mt-1">{signal.key_fact}</p>
+            )}
+            {signal.market_angle && (
+              <p className="text-emerald-400/80 text-xs mt-1 italic">
+                Ángulo mercado: {signal.market_angle}
+              </p>
+            )}
+            {signal.suggested_question && (
+              <p className="text-amber-400/80 text-xs mt-1">
+                &ldquo;{signal.suggested_question}&rdquo;
+              </p>
+            )}
+            {marketPrefill && (
+              <div className="mt-2">
+                <Link
+                  href={marketPrefill}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-medium hover:bg-emerald-500/25 transition-colors"
+                >
+                  + Crear mercado desde esta señal
+                </Link>
+              </div>
             )}
           </div>
-          {signal.headline && (
-            <h4 className="text-white text-sm font-medium">{signal.headline}</h4>
-          )}
-          {signal.key_fact && (
-            <p className="text-slate-400 text-xs mt-1">{signal.key_fact}</p>
-          )}
-          {signal.market_angle && (
-            <p className="text-emerald-400/80 text-xs mt-1 italic">
-              Ángulo mercado: {signal.market_angle}
-            </p>
-          )}
-          {signal.suggested_question && (
-            <p className="text-amber-400/80 text-xs mt-1">
-              &ldquo;{signal.suggested_question}&rdquo;
-            </p>
-          )}
-        </div>
-      ))}
+        )
+      })}
       {!item.archived_at && (
         <button
           type="button"
@@ -440,6 +460,18 @@ export default function AdminAgentsPage() {
         (c.content_type === 'market_insight' && (c.metadata as { type?: string })?.type === 'market_suggestion')) &&
       !c.published
   ).length
+  const draftBlogCount = blogPosts.filter((bp) => bp.status === 'draft').length
+
+  // Soft monthly budget for LLM spend. Adjust MONTHLY_BUDGET_USD as the
+  // platform grows — surfacing this keeps agent costs from drifting silently.
+  const MONTHLY_BUDGET_USD = 10
+  const budgetUsed = stats.totalCost / MONTHLY_BUDGET_USD
+  const budgetColor =
+    budgetUsed >= 1
+      ? 'text-red-400'
+      : budgetUsed >= 0.75
+        ? 'text-amber-400'
+        : 'text-emerald-400'
 
   return (
     <div className="space-y-8">
@@ -525,10 +557,15 @@ export default function AdminAgentsPage() {
             )
           })}
         </div>
-        <div className="mt-4 flex gap-6 p-4 bg-slate-800/30 border border-slate-700 rounded-lg">
+        <div className="mt-4 flex flex-wrap gap-6 p-4 bg-slate-800/30 border border-slate-700 rounded-lg">
           <div>
             <span className="text-slate-400">Total cost this month:</span>{' '}
-            <span className="text-white font-medium">${stats.totalCost.toFixed(4)}</span>
+            <span className={`${budgetColor} font-medium`}>
+              ${stats.totalCost.toFixed(4)}
+            </span>{' '}
+            <span className="text-slate-500 text-sm">
+              / ${MONTHLY_BUDGET_USD.toFixed(2)} budget ({Math.round(budgetUsed * 100)}%)
+            </span>
           </div>
           <div>
             <span className="text-slate-400">Total runs:</span>{' '}
@@ -538,6 +575,11 @@ export default function AdminAgentsPage() {
             <span className="text-slate-400">Errors:</span>{' '}
             <span className="text-red-400 font-medium">{stats.totalErrors}</span>
           </div>
+        </div>
+        <div className="mt-2 text-xs text-slate-500 leading-relaxed">
+          <span className="text-slate-400 font-medium">Schedules (CDMX):</span>{' '}
+          News Monitor diario 08:00 · Content Creator L/M/V 08:30 · Newsletter L/M/V 08:00 · Inbox Curator lunes 08:05 · CEO Digest semanal lunes 10:00.
+          Source of truth: <code className="text-slate-400">vercel.json</code>.
         </div>
       </section>
 
@@ -605,25 +647,42 @@ export default function AdminAgentsPage() {
             Write post
           </Link>
         </div>
+        {/* Tabs ordered by priority — items that need ACTION first, */}
+        {/* passive reads (News, CEO) last. Badge = count needing action. */}
         <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
-          {[
-            { id: 'all' as TabId, label: 'All' },
-            { id: 'ceo' as TabId, label: 'CEO Digests' },
-            { id: 'news' as TabId, label: 'News Briefs' },
-            { id: 'inbox' as TabId, label: 'Inbox Digests' },
-            { id: 'suggestions' as TabId, label: 'Market Suggestions' },
-            { id: 'blog' as TabId, label: 'Blog Posts' },
-          ].map(({ id, label }) => (
+          {([
+            { id: 'suggestions' as TabId, label: 'Market Suggestions', badge: pendingSuggestions, priority: true },
+            { id: 'blog' as TabId, label: 'Blog Posts', badge: draftBlogCount, priority: true },
+            { id: 'news' as TabId, label: 'News Briefs', badge: 0 },
+            { id: 'inbox' as TabId, label: 'Inbox Digests', badge: 0 },
+            { id: 'ceo' as TabId, label: 'CEO Digests', badge: 0 },
+            { id: 'all' as TabId, label: 'All', badge: 0 },
+          ]).map(({ id, label, badge, priority }) => (
             <button
               key={id}
               onClick={() => setActiveTab(id)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
                 activeTab === id
                   ? 'bg-emerald-600 text-white'
                   : 'bg-slate-800 text-slate-400 hover:text-white'
               }`}
             >
-              {label}
+              <span>{label}</span>
+              {badge > 0 && (
+                <span
+                  className={`inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full text-xs font-semibold ${
+                    priority
+                      ? activeTab === id
+                        ? 'bg-white text-emerald-700'
+                        : 'bg-amber-500 text-slate-900'
+                      : activeTab === id
+                        ? 'bg-white/20 text-white'
+                        : 'bg-slate-700 text-slate-300'
+                  }`}
+                >
+                  {badge}
+                </span>
+              )}
             </button>
           ))}
         </div>
