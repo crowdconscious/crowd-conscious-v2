@@ -2,14 +2,36 @@
 
 ## Schedule (UTC)
 
-| Agent | Schedule | UTC Time |
-|-------|----------|----------|
-| CEO Digest | `0 9 * * *` | 9:00 AM daily |
-| Content Creator | `0 9 * * *` | 9:00 AM daily |
-| News Monitor | `0 9 * * *` | 9:00 AM daily |
-| Inbox Curator | `0 9 * * *` | 9:00 AM daily |
-| Sponsor Report | `0 9 1 * *` | 9:00 AM on 1st of month |
-| Monthly Impact | `0 9 1 * *` | 9:00 AM on 1st of month |
+> **Source of truth:** `vercel.json` in the repo root. The table below
+> is kept in sync with `vercel.json` manually — if they disagree, trust
+> `vercel.json`.
+
+### Daily agents (America/Mexico_City equivalents, CST = UTC−6)
+
+| Agent | Schedule | UTC | Mexico City |
+|-------|----------|-----|-------------|
+| News Monitor | `0 14 * * *` | 14:00 | 08:00 |
+| Inbox Curator | `5 14 * * *` | 14:05 | 08:05 |
+| Content Creator | `30 14 * * *` | 14:30 | 08:30 |
+| Newsletter (M/W/F) | `0 14 * * 1,3,5` | 14:00 | 08:00 |
+| CEO Digest | `0 16 * * *` | 16:00 | 10:00 |
+
+### Weekly / monthly
+
+| Agent | Schedule | UTC |
+|-------|----------|-----|
+| Re-engagement (Mon) | `0 16 * * 1` | 16:00 Monday |
+| Sponsor Report (1st of month) | `0 9 1 * *` | 09:00 |
+| Monthly Impact (1st of month) | `0 10 1 * *` | 10:00 |
+| Daily archive | `0 6 * * *` | 06:00 |
+
+### Live / tight-interval
+
+| Route | Schedule |
+|-------|----------|
+| Live reminders | `*/10 * * * *` |
+| Live auto-end | `*/5 * * * *` |
+| Pulse auto-resolve | `5 * * * *` |
 
 ## Required Setup
 

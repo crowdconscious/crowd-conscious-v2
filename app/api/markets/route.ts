@@ -5,6 +5,16 @@ import { isValidMarketCategory } from '@/lib/market-categories'
 
 type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row']
 
+// Public read endpoint — cache aggressively on the edge.
+// 60s SWR is enough for market lists (individual market detail is live).
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
+const CACHE_HEADERS = {
+  'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+}
+
 export async function GET(request: Request) {
   try {
     const supabase = await createClient()
@@ -37,7 +47,10 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    return NextResponse.json({ markets: (data || []) as PredictionMarket[] })
+    return NextResponse.json(
+      { markets: (data || []) as PredictionMarket[] },
+      { headers: CACHE_HEADERS }
+    )
   } catch (err) {
     console.error('Markets API error:', err)
     return NextResponse.json({ error: 'Failed to fetch markets' }, { status: 500 })

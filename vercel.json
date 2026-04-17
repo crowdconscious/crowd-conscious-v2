@@ -63,6 +63,10 @@
       "schedule": "0 9 1 * *"
     },
     {
+      "path": "/api/cron/monthly-impact",
+      "schedule": "0 10 1 * *"
+    },
+    {
       "path": "/api/cron/archive",
       "schedule": "0 6 * * *"
     }

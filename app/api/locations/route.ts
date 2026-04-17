@@ -7,6 +7,16 @@ import { getCurrentUser } from '@/lib/auth-server'
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const CC_SESSION = 'cc_session'
 
+// Per-user response (includes hasVoted), so use a short private cache only.
+// The CDN must not cache across users.
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
+const CACHE_HEADERS = {
+  'Cache-Control': 'private, max-age=30',
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
@@ -122,7 +132,10 @@ export async function GET(request: Request) {
       hasVoted: loc.current_market_id ? hasVotedByMarket.get(loc.current_market_id) ?? false : false,
     }))
 
-    return NextResponse.json({ locations: payload, cities: citiesDistinct })
+    return NextResponse.json(
+      { locations: payload, cities: citiesDistinct },
+      { headers: CACHE_HEADERS }
+    )
   } catch (err) {
     console.error('[GET /api/locations]', err)
     return NextResponse.json({ error: 'Failed to load locations' }, { status: 500 })
