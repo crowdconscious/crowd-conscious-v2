@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
+import { Archive, ArchiveRestore } from 'lucide-react'
 import { createClient } from '@/lib/supabase-client'
 
 type Row = {
@@ -49,22 +50,53 @@ export default function AdminMarketsClient() {
     load()
   }, [load])
 
-  const archiveItem = async (id: string) => {
+  const archiveItem = async (id: string, restore = false) => {
     setArchivingId(id)
     try {
       const res = await fetch('/api/predictions/admin/archive', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resource: 'market', id }),
+        body: JSON.stringify({ resource: 'market', id, restore }),
       })
       const j = await res.json()
       if (!res.ok) {
-        alert(j.error || 'Failed to archive')
+        alert(j.error || (restore ? 'Failed to restore' : 'Failed to archive'))
         return
       }
       await load()
     } finally {
       setArchivingId(null)
+    }
+  }
+
+  const [sweepDays, setSweepDays] = useState(30)
+  const [sweepBusy, setSweepBusy] = useState(false)
+  const runSweep = async () => {
+    if (sweepBusy) return
+    if (
+      !window.confirm(
+        `Archive every resolved/cancelled market older than ${sweepDays} days? Reversible per-row.`
+      )
+    ) {
+      return
+    }
+    setSweepBusy(true)
+    try {
+      const res = await fetch('/api/predictions/admin/archive-sweep', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resource: 'market_resolved', days: sweepDays }),
+      })
+      const json = (await res.json()) as { count?: number; error?: string }
+      if (!res.ok) throw new Error(json.error ?? 'Sweep failed')
+      window.alert(
+        (json.count ?? 0) > 0 ? `Archived ${json.count} market(s).` : 'Nothing to archive.'
+      )
+      await load()
+    } catch (e) {
+      window.alert(e instanceof Error ? e.message : 'Sweep failed')
+    } finally {
+      setSweepBusy(false)
     }
   }
 
@@ -82,7 +114,7 @@ export default function AdminMarketsClient() {
         </Link>
       </div>
 
-      <div className="flex items-center gap-2 mb-2">
+      <div className="flex flex-wrap items-center gap-3 mb-2">
         <label className="flex items-center gap-2 text-gray-500 text-sm cursor-pointer">
           <input
             type="checkbox"
@@ -95,6 +127,31 @@ export default function AdminMarketsClient() {
         {showArchived && (
           <span className="text-gray-500 text-xs">({archivedInView} archived)</span>
         )}
+
+        <div className="ml-auto flex flex-wrap items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm">
+          <Archive className="w-4 h-4 text-amber-600" aria-hidden />
+          <span className="text-amber-700">Archive resolved/cancelled older than</span>
+          <input
+            type="number"
+            min={0}
+            max={3650}
+            step={1}
+            value={sweepDays}
+            onChange={(e) =>
+              setSweepDays(Math.max(0, Math.min(3650, Number(e.target.value) || 0)))
+            }
+            className="h-8 w-16 rounded border border-amber-300 bg-white px-2 text-center text-sm text-amber-900 focus:border-amber-500 focus:outline-none"
+          />
+          <span className="text-amber-700">days</span>
+          <button
+            type="button"
+            onClick={runSweep}
+            disabled={sweepBusy}
+            className="ml-1 inline-flex min-h-[32px] items-center gap-1.5 rounded-md bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-amber-500 disabled:opacity-50"
+          >
+            {sweepBusy ? '…' : 'Run sweep'}
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -147,14 +204,25 @@ export default function AdminMarketsClient() {
                     >
                       Sponsor
                     </Link>
-                    {!m.archived_at && (
+                    {m.archived_at ? (
+                      <button
+                        type="button"
+                        onClick={() => archiveItem(m.id, true)}
+                        disabled={archivingId === m.id}
+                        className="inline-flex items-center gap-1 text-emerald-600 hover:text-emerald-500 text-xs font-medium disabled:opacity-50"
+                      >
+                        <ArchiveRestore className="w-3.5 h-3.5" />
+                        {archivingId === m.id ? '…' : 'Restore'}
+                      </button>
+                    ) : (
                       <button
                         type="button"
                         onClick={() => archiveItem(m.id)}
                         disabled={archivingId === m.id}
-                        className="text-gray-500 hover:text-gray-700 text-xs disabled:opacity-50"
+                        className="inline-flex items-center gap-1 text-gray-500 hover:text-gray-700 text-xs disabled:opacity-50"
                       >
-                        {archivingId === m.id ? '…' : '📦 Archive'}
+                        <Archive className="w-3.5 h-3.5" />
+                        {archivingId === m.id ? '…' : 'Archive'}
                       </button>
                     )}
                   </td>

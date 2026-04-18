@@ -97,7 +97,11 @@ function partitionEvents(rows: LiveEventRow[]) {
   return { liveNow: liveDedup, upcoming: upcomingDedup, past: pastDedup }
 }
 
-export default async function LiveEventsPage() {
+export default async function LiveEventsPage({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>
+}) {
   const supabase = await createClient()
   const sessionProfile = await getCurrentUser()
 
@@ -110,10 +114,16 @@ export default async function LiveEventsPage() {
       (!!adminEmail && !!profileEmail && profileEmail === adminEmail)
   }
 
-  const { data, error } = await supabase
-    .from('live_events')
-    .select('*')
-    .order('match_date', { ascending: false })
+  /** Admins can opt into archived events with `?showArchived=1`. */
+  const sp = (await searchParams) ?? {}
+  const showArchivedParam = Array.isArray(sp.showArchived)
+    ? sp.showArchived[0]
+    : sp.showArchived
+  const showArchived = isAdmin && showArchivedParam === '1'
+
+  let q = supabase.from('live_events').select('*').order('match_date', { ascending: false })
+  if (!showArchived) q = q.is('archived_at', null)
+  const { data, error } = await q
 
   const h = await headers()
   const accept = h.get('accept-language') || ''
@@ -174,6 +184,8 @@ export default async function LiveEventsPage() {
             upcoming={upcoming}
             past={past}
             stats={stats}
+            isAdmin={isAdmin}
+            showArchived={showArchived}
           />
         ) : null}
       </div>

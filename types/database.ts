@@ -235,6 +235,7 @@ export interface Database {
           duration_minutes: number
           started_at: string | null
           ends_at: string | null
+          archived_at: string | null
         }
         Insert: {
           id?: string
@@ -274,6 +275,7 @@ export interface Database {
           duration_minutes?: number
           started_at?: string | null
           ends_at?: string | null
+          archived_at?: string | null
         }
         Update: {
           id?: string
@@ -313,6 +315,7 @@ export interface Database {
           duration_minutes?: number
           started_at?: string | null
           ends_at?: string | null
+          archived_at?: string | null
         }
         Relationships: []
       }

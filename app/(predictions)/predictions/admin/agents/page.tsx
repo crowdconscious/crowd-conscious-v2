@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
+  Archive,
+  ArchiveRestore,
   CheckCircle,
   XCircle,
   Minus,
@@ -94,9 +96,11 @@ type StructuredBriefPayload = {
 function StructuredNewsBriefCard({
   item,
   onArchive,
+  onRestore,
 }: {
   item: AgentContent
   onArchive: () => void
+  onRestore: () => void
 }) {
   let data: StructuredBriefPayload | null = null
   try {
@@ -195,16 +199,39 @@ function StructuredNewsBriefCard({
           </div>
         )
       })}
-      {!item.archived_at && (
-        <button
-          type="button"
-          onClick={onArchive}
-          className="text-slate-500 hover:text-slate-300 text-xs"
-        >
-          📦 Archive
-        </button>
-      )}
+      <ArchiveToggleButton archived={!!item.archived_at} onArchive={onArchive} onRestore={onRestore} />
     </div>
+  )
+}
+
+function ArchiveToggleButton({
+  archived,
+  onArchive,
+  onRestore,
+}: {
+  archived: boolean
+  onArchive: () => void
+  onRestore: () => void
+}) {
+  if (archived) {
+    return (
+      <button
+        type="button"
+        onClick={onRestore}
+        className="inline-flex items-center gap-1 text-emerald-400 hover:text-emerald-300 text-xs"
+      >
+        <ArchiveRestore className="w-3.5 h-3.5" /> Restore
+      </button>
+    )
+  }
+  return (
+    <button
+      type="button"
+      onClick={onArchive}
+      className="inline-flex items-center gap-1 text-slate-500 hover:text-slate-300 text-xs"
+    >
+      <Archive className="w-3.5 h-3.5" /> Archive
+    </button>
   )
 }
 
@@ -387,18 +414,68 @@ export default function AdminAgentsPage() {
     }
   }
 
-  const archiveAgentItem = async (id: string) => {
+  const archiveAgentItem = async (id: string, restore = false) => {
     try {
       const res = await fetch('/api/predictions/admin/archive', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resource: 'agent_content', id }),
+        body: JSON.stringify({ resource: 'agent_content', id, restore }),
       })
       const j = await res.json()
-      if (!res.ok) throw new Error(j.error || 'Archive failed')
+      if (!res.ok) throw new Error(j.error || (restore ? 'Restore failed' : 'Archive failed'))
       await fetchData()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Archive failed')
+    }
+  }
+
+  /**
+   * Tab → `content_type` value used for sweep narrowing. `null` means
+   * the sweep runs across the whole `agent_content` table (used by
+   * the "All" tab and the per-resource catch-all).
+   */
+  const sweepContentTypeFor = (tab: TabId): string | null => {
+    if (tab === 'ceo') return 'weekly_digest'
+    if (tab === 'news') return 'news_summary'
+    if (tab === 'suggestions') return 'market_suggestion'
+    return null
+  }
+
+  const [sweepDays, setSweepDays] = useState(30)
+  const [sweepBusy, setSweepBusy] = useState(false)
+
+  const runSweep = async () => {
+    if (sweepBusy) return
+    const contentType = sweepContentTypeFor(activeTab)
+    const label = contentType ?? 'all agent content'
+    if (
+      !window.confirm(
+        `Archive ${label} older than ${sweepDays} days? This is reversible per-row from the archived view.`
+      )
+    ) {
+      return
+    }
+    setSweepBusy(true)
+    try {
+      const res = await fetch('/api/predictions/admin/archive-sweep', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          resource: 'agent_content',
+          days: sweepDays,
+          contentType,
+        }),
+      })
+      const json = (await res.json()) as { count?: number; error?: string }
+      if (!res.ok) throw new Error(json.error ?? 'Sweep failed')
+      window.alert(
+        (json.count ?? 0) > 0 ? `Archived ${json.count} item(s).` : 'Nothing to archive.'
+      )
+      await fetchData()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Sweep failed')
+    } finally {
+      setSweepBusy(false)
     }
   }
 
@@ -631,6 +708,39 @@ export default function AdminAgentsPage() {
             </span>
           )}
         </div>
+
+        {/* Maintenance sweep — keeps the dashboard tidy as agents accumulate output. */}
+        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2.5">
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-amber-300">
+            <Archive className="w-3.5 h-3.5" />
+            Maintenance
+          </span>
+          <span className="text-xs text-slate-400">Archive</span>
+          <span className="rounded bg-slate-800 px-2 py-0.5 text-xs text-slate-200">
+            {sweepContentTypeFor(activeTab) ?? 'all content types'}
+          </span>
+          <span className="text-xs text-slate-400">older than</span>
+          <input
+            type="number"
+            min={0}
+            max={3650}
+            step={1}
+            value={sweepDays}
+            onChange={(e) =>
+              setSweepDays(Math.max(0, Math.min(3650, Number(e.target.value) || 0)))
+            }
+            className="h-8 w-16 rounded border border-slate-700 bg-slate-900 px-2 text-center text-sm text-white focus:border-amber-400/40 focus:outline-none"
+          />
+          <span className="text-xs text-slate-400">days</span>
+          <button
+            type="button"
+            onClick={runSweep}
+            disabled={sweepBusy}
+            className="ml-auto inline-flex min-h-[32px] items-center gap-1.5 rounded-md bg-amber-500/15 px-3 py-1.5 text-xs font-semibold text-amber-200 ring-1 ring-amber-400/30 transition hover:bg-amber-500/25 disabled:opacity-50"
+          >
+            {sweepBusy ? '…' : 'Run sweep'}
+          </button>
+        </div>
         <div className="flex gap-4 text-sm text-white/50 mb-4">
           <span>📰 {newsSummaryCount} análisis hoy</span>
           <span>💡 {pendingSuggestions} sugerencias pendientes</span>
@@ -857,15 +967,11 @@ export default function AdminAgentsPage() {
                       >
                         Dismiss
                       </button>
-                      {!item.archived_at && (
-                        <button
-                          type="button"
-                          onClick={() => archiveAgentItem(item.id)}
-                          className="text-gray-500 hover:text-gray-300 text-xs px-2 py-1.5"
-                        >
-                          📦 Archive
-                        </button>
-                      )}
+                      <ArchiveToggleButton
+                        archived={!!item.archived_at}
+                        onArchive={() => archiveAgentItem(item.id)}
+                        onRestore={() => archiveAgentItem(item.id, true)}
+                      />
                     </div>
                   </div>
                 )
@@ -919,6 +1025,7 @@ export default function AdminAgentsPage() {
                     key={item.id}
                     item={item}
                     onArchive={() => archiveAgentItem(item.id)}
+                    onRestore={() => archiveAgentItem(item.id, true)}
                   />
                 )
               }
@@ -948,17 +1055,13 @@ export default function AdminAgentsPage() {
                         Ver mercado →
                       </Link>
                     )}
-                    {!item.archived_at && (
-                      <div>
-                        <button
-                          type="button"
-                          onClick={() => archiveAgentItem(item.id)}
-                          className="text-gray-500 hover:text-gray-300 text-xs"
-                        >
-                          📦 Archive
-                        </button>
-                      </div>
-                    )}
+                    <div>
+                      <ArchiveToggleButton
+                        archived={!!item.archived_at}
+                        onArchive={() => archiveAgentItem(item.id)}
+                        onRestore={() => archiveAgentItem(item.id, true)}
+                      />
+                    </div>
                   </div>
                 )
               }
@@ -973,15 +1076,13 @@ export default function AdminAgentsPage() {
                     {item.body.slice(0, 500)}
                     {item.body.length > 500 ? '...' : ''}
                   </pre>
-                  {!item.archived_at && (
-                    <button
-                      type="button"
-                      onClick={() => archiveAgentItem(item.id)}
-                      className="mt-2 text-gray-500 hover:text-gray-300 text-xs"
-                    >
-                      📦 Archive
-                    </button>
-                  )}
+                  <div className="mt-2">
+                    <ArchiveToggleButton
+                      archived={!!item.archived_at}
+                      onArchive={() => archiveAgentItem(item.id)}
+                      onRestore={() => archiveAgentItem(item.id, true)}
+                    />
+                  </div>
                 </div>
               )
             })

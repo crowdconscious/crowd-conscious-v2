@@ -1,8 +1,9 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
-import { BarChart3, ListChecks, Tv2, Users } from 'lucide-react'
+import { Archive, ArchiveRestore, BarChart3, ListChecks, Tv2, Users } from 'lucide-react'
 import type { Database } from '@/types/database'
 import { getLiveEventTitle } from '@/lib/live-event-title'
 import { useLocale } from '@/lib/i18n/useLocale'
@@ -38,21 +39,57 @@ export function LiveEventCard({
   event,
   group,
   stats,
+  isAdmin = false,
 }: {
   event: LiveEventRow
   group: LiveEventCardGroup
   stats?: LiveEventCardStats
+  /** Reveals admin-only archive/restore controls. Server-checked. */
+  isAdmin?: boolean
 }) {
   const locale = useLocale()
+  const router = useRouter()
   const title = getLiveEventTitle(event, locale)
   const [now, setNow] = useState(() => Date.now())
+  const [archiveBusy, setArchiveBusy] = useState(false)
   const target = useMemo(() => new Date(event.match_date).getTime(), [event.match_date])
+  const isArchived = !!event.archived_at
 
   useEffect(() => {
     if (group !== 'upcoming') return
     const id = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(id)
   }, [group])
+
+  async function handleArchive(e: React.MouseEvent<HTMLButtonElement>) {
+    e.preventDefault()
+    e.stopPropagation()
+    if (archiveBusy) return
+    const restore = isArchived
+    const confirmMsg = restore
+      ? locale === 'es'
+        ? '¿Restaurar este evento al listado público?'
+        : 'Restore this event to the public listing?'
+      : locale === 'es'
+        ? '¿Archivar este evento? Se ocultará del listado de /live (los datos se conservan).'
+        : 'Archive this event? It will be hidden from /live (history is preserved).'
+    if (!window.confirm(confirmMsg)) return
+    setArchiveBusy(true)
+    try {
+      const res = await fetch('/api/predictions/admin/archive', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resource: 'live_event', id: event.id, restore }),
+      })
+      const json = (await res.json()) as { error?: string }
+      if (!res.ok) throw new Error(json.error ?? 'Failed')
+      router.refresh()
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : 'Archive failed')
+    } finally {
+      setArchiveBusy(false)
+    }
+  }
 
   const remaining = Math.max(0, target - now)
   const isLive = group === 'live'
@@ -105,10 +142,48 @@ export function LiveEventCard({
     <Link
       href={`/live/${event.id}`}
       className={cn(
-        'group block overflow-hidden rounded-xl border border-[#2d3748] bg-[#1a2029] transition-colors hover:border-teal-500/40',
-        isLive && 'border-red-500/30 ring-1 ring-red-500/20'
+        'group relative block overflow-hidden rounded-xl border border-[#2d3748] bg-[#1a2029] transition-colors hover:border-teal-500/40',
+        isLive && 'border-red-500/30 ring-1 ring-red-500/20',
+        isArchived && 'opacity-60'
       )}
     >
+      {isAdmin && (
+        <div className="absolute right-2 top-2 z-10 flex items-center gap-1.5">
+          {isArchived && (
+            <span className="rounded-md bg-amber-500/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-300">
+              {locale === 'es' ? 'Archivado' : 'Archived'}
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={handleArchive}
+            disabled={archiveBusy}
+            title={
+              isArchived
+                ? locale === 'es'
+                  ? 'Restaurar'
+                  : 'Restore'
+                : locale === 'es'
+                  ? 'Archivar evento'
+                  : 'Archive event'
+            }
+            className={cn(
+              'inline-flex h-8 w-8 items-center justify-center rounded-md border backdrop-blur transition',
+              isArchived
+                ? 'border-emerald-500/30 bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25'
+                : 'border-white/10 bg-black/50 text-slate-300 hover:bg-black/70 hover:text-white',
+              archiveBusy && 'opacity-50'
+            )}
+            aria-label={isArchived ? 'Restore event' : 'Archive event'}
+          >
+            {isArchived ? (
+              <ArchiveRestore className="h-4 w-4" aria-hidden />
+            ) : (
+              <Archive className="h-4 w-4" aria-hidden />
+            )}
+          </button>
+        </div>
+      )}
       {cover ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={cover} alt="" className="h-40 w-full object-cover" />

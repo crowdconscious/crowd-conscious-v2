@@ -1,9 +1,13 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useMemo, useState } from 'react'
 import {
+  Archive,
   Clapperboard,
+  Eye,
+  EyeOff,
   Gavel,
   Landmark,
   LayoutGrid,
@@ -133,6 +137,10 @@ export interface LiveEventsBrowserProps {
   upcoming: LiveEventRow[]
   past: LiveEventRow[]
   stats: Record<string, LiveEventCardStats>
+  /** Reveals per-card archive controls. */
+  isAdmin?: boolean
+  /** True when the parent fetched archived rows (admin `?showArchived=1`). */
+  showArchived?: boolean
 }
 
 export function LiveEventsBrowser({
@@ -141,6 +149,8 @@ export function LiveEventsBrowser({
   upcoming,
   past,
   stats,
+  isAdmin = false,
+  showArchived = false,
 }: LiveEventsBrowserProps) {
   const [active, setActive] = useState<CategoryId>('all')
   const es = locale === 'es'
@@ -257,6 +267,10 @@ export function LiveEventsBrowser({
         </div>
       </section>
 
+      {isAdmin && (
+        <AdminMaintenanceBar locale={locale} showArchived={showArchived} />
+      )}
+
       <section className="mb-4">
         <div className="mb-6 flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="text-lg font-semibold text-white">
@@ -308,7 +322,7 @@ export function LiveEventsBrowser({
             </h3>
             <div className="flex flex-col gap-4">
               {filtered.live.map((e) => (
-                <LiveEventCard key={e.id} event={e} group="live" stats={stats[e.id]} />
+                <LiveEventCard key={e.id} event={e} group="live" stats={stats[e.id]} isAdmin={isAdmin} />
               ))}
             </div>
           </div>
@@ -319,7 +333,7 @@ export function LiveEventsBrowser({
             <h3 className="mb-4 text-base font-semibold text-teal-300">{t.upcoming}</h3>
             <div className="flex flex-col gap-4">
               {filtered.upcoming.map((e) => (
-                <LiveEventCard key={e.id} event={e} group="upcoming" stats={stats[e.id]} />
+                <LiveEventCard key={e.id} event={e} group="upcoming" stats={stats[e.id]} isAdmin={isAdmin} />
               ))}
             </div>
           </div>
@@ -330,7 +344,7 @@ export function LiveEventsBrowser({
             <h3 className="mb-4 text-base font-semibold text-slate-400">{t.past}</h3>
             <div className="flex flex-col gap-4">
               {filtered.past.map((e) => (
-                <LiveEventCard key={e.id} event={e} group="past" stats={stats[e.id]} />
+                <LiveEventCard key={e.id} event={e} group="past" stats={stats[e.id]} isAdmin={isAdmin} />
               ))}
             </div>
           </div>
@@ -339,6 +353,108 @@ export function LiveEventsBrowser({
 
       <LiveB2BCTA locale={locale} variant="inline" />
     </>
+  )
+}
+
+function AdminMaintenanceBar({
+  locale,
+  showArchived,
+}: {
+  locale: 'es' | 'en'
+  showArchived: boolean
+}) {
+  const es = locale === 'es'
+  const router = useRouter()
+  const [busy, setBusy] = useState(false)
+  const [days, setDays] = useState(60)
+
+  const t = {
+    title: es ? 'Mantenimiento (admin)' : 'Maintenance (admin)',
+    subtitle: es
+      ? 'Estos controles solo son visibles para administradores.'
+      : 'These controls are only visible to admins.',
+    showArchived: es ? 'Mostrar archivados' : 'Show archived',
+    hideArchived: es ? 'Ocultar archivados' : 'Hide archived',
+    sweepLabel: es ? 'Archivar terminados/cancelados con más de' : 'Archive completed/cancelled older than',
+    days: es ? 'días' : 'days',
+    sweep: es ? 'Ejecutar' : 'Run',
+    confirm: (n: number) =>
+      es
+        ? `¿Archivar todos los eventos terminados o cancelados con más de ${n} días? Se pueden restaurar individualmente.`
+        : `Archive every completed/cancelled event older than ${n} days? Individual rows can be restored.`,
+    done: (n: number) =>
+      es ? `Listo. ${n} evento(s) archivado(s).` : `Done. Archived ${n} event(s).`,
+    nothing: es ? 'No había nada que archivar.' : 'Nothing to archive.',
+  }
+
+  async function runSweep() {
+    if (busy) return
+    if (!window.confirm(t.confirm(days))) return
+    setBusy(true)
+    try {
+      const res = await fetch('/api/predictions/admin/archive-sweep', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resource: 'live_event_completed', days }),
+      })
+      const json = (await res.json()) as { count?: number; error?: string }
+      if (!res.ok) throw new Error(json.error ?? 'Sweep failed')
+      window.alert((json.count ?? 0) > 0 ? t.done(json.count ?? 0) : t.nothing)
+      router.refresh()
+    } catch (e) {
+      window.alert(e instanceof Error ? e.message : 'Sweep failed')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const toggleHref = showArchived ? '/live' : '/live?showArchived=1'
+
+  return (
+    <div className="mb-6 flex flex-wrap items-center gap-3 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3">
+      <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-amber-300">
+        <Archive className="h-4 w-4" aria-hidden />
+        {t.title}
+      </span>
+      <span className="hidden text-xs text-slate-400 sm:inline">{t.subtitle}</span>
+      <div className="ml-auto flex flex-wrap items-center gap-2">
+        <Link
+          href={toggleHref}
+          className="inline-flex min-h-[36px] items-center gap-1.5 rounded-md border border-white/10 bg-[#1a2029] px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:border-amber-400/40 hover:text-amber-200"
+        >
+          {showArchived ? (
+            <>
+              <EyeOff className="h-3.5 w-3.5" aria-hidden />
+              {t.hideArchived}
+            </>
+          ) : (
+            <>
+              <Eye className="h-3.5 w-3.5" aria-hidden />
+              {t.showArchived}
+            </>
+          )}
+        </Link>
+        <span className="text-xs text-slate-400">{t.sweepLabel}</span>
+        <input
+          type="number"
+          min={0}
+          max={3650}
+          step={1}
+          value={days}
+          onChange={(e) => setDays(Math.max(0, Math.min(3650, Number(e.target.value) || 0)))}
+          className="h-9 w-16 rounded-md border border-white/10 bg-[#1a2029] px-2 text-center text-sm text-white focus:border-amber-400/40 focus:outline-none"
+        />
+        <span className="text-xs text-slate-400">{t.days}</span>
+        <button
+          type="button"
+          onClick={runSweep}
+          disabled={busy}
+          className="inline-flex min-h-[36px] items-center gap-1.5 rounded-md bg-amber-500/15 px-3 py-1.5 text-xs font-semibold text-amber-200 ring-1 ring-amber-400/30 transition hover:bg-amber-500/25 disabled:opacity-50"
+        >
+          {busy ? '…' : t.sweep}
+        </button>
+      </div>
+    </div>
   )
 }
 
