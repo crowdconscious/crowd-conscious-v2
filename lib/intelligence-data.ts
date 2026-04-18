@@ -65,6 +65,41 @@ export type VoteChangeLeader = {
   change_events: number
 }
 
+/** Period delta — paired (current vs previous) used by KPI cards to show WoW/MoM movement. */
+export type PeriodDelta = {
+  current: number
+  previous: number
+  /** Rounded percent change. null = no prior baseline (avoid divide-by-zero). */
+  pct_change: number | null
+}
+
+/** People-and-impact aggregates — the "so what" layer surfaced on the Impact tab + Snapshot hero. */
+export type ImpactSnapshot = {
+  /** Registered profiles + anonymous_participants (deduped across-table is best-effort: anon converted_to_user_id excluded) */
+  unique_participants: number
+  /** Lifetime predictions cast (= total_engagement) */
+  predictions_lifetime: number
+  /** Markets with status='resolved' */
+  markets_resolved_total: number
+  /** % of resolved registered votes where market_votes.is_correct = true. null if no resolved data yet. */
+  crowd_accuracy_pct: number | null
+  /** Number of resolved registered votes used to compute crowd_accuracy_pct */
+  crowd_accuracy_sample: number
+  /** Distinct active fund_causes — "communities of impact we're routing capital toward" */
+  causes_supported: number
+  /** Top causes this calendar-month cycle (YYYY-MM) */
+  top_causes_this_cycle: { id: string; name: string; organization: string | null; vote_count: number }[]
+  /** Conscious Fund (single row aggregate) */
+  fund_collected: number
+  fund_disbursed: number
+  fund_balance: number
+  /** Live event totals (excludes archived) */
+  live_events_total: number
+  live_events_completed: number
+  /** Top topics by votes in the last 30 days */
+  top_topics_30d: { category: string; vote_count: number }[]
+}
+
 export type IntelligenceDashboardData = {
   kpis: {
     /** Rows in market_votes with is_anonymous false/null */
@@ -81,6 +116,14 @@ export type IntelligenceDashboardData = {
     /** Registered votes with at least one change, updated in the last 7 days */
     vote_changes_week: number
   }
+  /** Period-over-period deltas (last 30d vs prior 30d) — used by KPI cards to show momentum. */
+  deltas: {
+    votes_30d: PeriodDelta
+    signups_30d: PeriodDelta
+    votes_7d: PeriodDelta
+  }
+  /** Impact summary — surfaced on the new Impact tab + the Snapshot hero. */
+  impact: ImpactSnapshot
   votesOverTime: VotesByDay[]
   votesByCategory: CategoryCount[]
   topMarkets: TopMarketRow[]
@@ -113,6 +156,26 @@ const empty = (): IntelligenceDashboardData => ({
     avg_confidence: null,
     fund_total: null,
     vote_changes_week: 0,
+  },
+  deltas: {
+    votes_30d: { current: 0, previous: 0, pct_change: null },
+    signups_30d: { current: 0, previous: 0, pct_change: null },
+    votes_7d: { current: 0, previous: 0, pct_change: null },
+  },
+  impact: {
+    unique_participants: 0,
+    predictions_lifetime: 0,
+    markets_resolved_total: 0,
+    crowd_accuracy_pct: null,
+    crowd_accuracy_sample: 0,
+    causes_supported: 0,
+    top_causes_this_cycle: [],
+    fund_collected: 0,
+    fund_disbursed: 0,
+    fund_balance: 0,
+    live_events_total: 0,
+    live_events_completed: 0,
+    top_topics_30d: [],
   },
   voteChangeLeaders: [],
   votesOverTime: [],
@@ -239,13 +302,146 @@ export async function fetchIntelligenceDashboard(
     }
 
     try {
-      const { data: fund } = await admin.from('conscious_fund').select('total_collected, current_balance').limit(1).maybeSingle()
+      const { data: fund } = await admin
+        .from('conscious_fund')
+        .select('total_collected, total_disbursed, current_balance')
+        .limit(1)
+        .maybeSingle()
       if (fund) {
         const bal = Number(fund.current_balance ?? 0)
         out.kpis.fund_total = Number.isFinite(bal) ? Math.max(0, bal) : null
+        out.impact.fund_collected = Math.max(0, Number(fund.total_collected ?? 0))
+        out.impact.fund_disbursed = Math.max(0, Number(fund.total_disbursed ?? 0))
+        out.impact.fund_balance = Math.max(0, Number(fund.current_balance ?? 0))
       }
     } catch (e) {
       pushErr('conscious_fund', e)
+    }
+
+    // --- Impact: unique participants (registered + non-converted anonymous) ---
+    try {
+      const { count: anonCount } = await admin
+        .from('anonymous_participants')
+        .select('*', { count: 'exact', head: true })
+        .is('converted_to_user_id', null)
+      out.impact.unique_participants = (out.kpis.total_users ?? 0) + (anonCount ?? 0)
+    } catch (e) {
+      pushErr('impact_unique_participants', e)
+      out.impact.unique_participants = out.kpis.total_users ?? 0
+    }
+    out.impact.predictions_lifetime = out.kpis.total_engagement
+
+    // --- Impact: resolved markets total + crowd accuracy ---
+    try {
+      const { count: resolvedCount } = await admin
+        .from('prediction_markets')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'resolved')
+      out.impact.markets_resolved_total = resolvedCount ?? 0
+
+      // Crowd accuracy: registered votes with is_correct not null, last 50k for cap
+      const { data: accRows } = await admin
+        .from('market_votes')
+        .select('is_correct')
+        .not('is_correct', 'is', null)
+        .or('is_anonymous.is.null,is_anonymous.eq.false')
+        .limit(50000)
+      const sample = accRows ?? []
+      if (sample.length > 0) {
+        const correct = sample.filter((r) => (r as { is_correct: boolean }).is_correct === true).length
+        out.impact.crowd_accuracy_sample = sample.length
+        out.impact.crowd_accuracy_pct = Math.round((correct / sample.length) * 1000) / 10
+      }
+    } catch (e) {
+      pushErr('impact_resolved_accuracy', e)
+    }
+
+    // --- Impact: causes supported + top causes this cycle ---
+    try {
+      const { count: causesCount } = await admin
+        .from('fund_causes')
+        .select('*', { count: 'exact', head: true })
+        .eq('active', true)
+      out.impact.causes_supported = causesCount ?? 0
+
+      const cycle = new Date().toISOString().slice(0, 7)
+      const { data: cycleVotes } = await admin
+        .from('fund_votes')
+        .select('cause_id')
+        .eq('cycle', cycle)
+      const counts = new Map<string, number>()
+      for (const v of cycleVotes ?? []) {
+        const id = (v as { cause_id: string }).cause_id
+        counts.set(id, (counts.get(id) ?? 0) + 1)
+      }
+      const topIds = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([id]) => id)
+      if (topIds.length) {
+        const { data: causeRows } = await admin
+          .from('fund_causes')
+          .select('id, name, organization')
+          .in('id', topIds)
+        const cmap = new Map(
+          (causeRows ?? []).map((c: { id: string; name: string; organization: string | null }) => [c.id, c])
+        )
+        out.impact.top_causes_this_cycle = topIds
+          .map((id) => {
+            const c = cmap.get(id)
+            if (!c) return null
+            return { id, name: c.name, organization: c.organization, vote_count: counts.get(id) ?? 0 }
+          })
+          .filter((x): x is NonNullable<typeof x> => x !== null)
+      }
+    } catch (e) {
+      pushErr('impact_causes', e)
+    }
+
+    // --- Impact: live events totals (excludes archived) ---
+    try {
+      const liveBase = admin.from('live_events').select('*', { count: 'exact', head: true }).is('archived_at', null)
+      const { count: leTotal } = await liveBase
+      out.impact.live_events_total = leTotal ?? 0
+      const { count: leDone } = await admin
+        .from('live_events')
+        .select('*', { count: 'exact', head: true })
+        .is('archived_at', null)
+        .eq('status', 'completed')
+      out.impact.live_events_completed = leDone ?? 0
+    } catch (e) {
+      pushErr('impact_live_events', e)
+    }
+
+    // --- Period-over-period deltas (votes 30d, signups 30d, votes 7d) ---
+    try {
+      const now = Date.now()
+      const d = (n: number) => new Date(now - n * 86400000).toISOString()
+
+      async function periodCount(table: 'market_votes' | 'profiles', start: string, end: string): Promise<number> {
+        const { count } = await admin!
+          .from(table)
+          .select('*', { count: 'exact', head: true })
+          .gte('created_at', start)
+          .lt('created_at', end)
+        return count ?? 0
+      }
+
+      function pct(curr: number, prev: number): number | null {
+        if (prev <= 0) return curr > 0 ? null : 0
+        return Math.round(((curr - prev) / prev) * 1000) / 10
+      }
+
+      const [v30c, v30p, v7c, v7p, s30c, s30p] = await Promise.all([
+        periodCount('market_votes', d(30), d(0)),
+        periodCount('market_votes', d(60), d(30)),
+        periodCount('market_votes', d(7), d(0)),
+        periodCount('market_votes', d(14), d(7)),
+        periodCount('profiles', d(30), d(0)),
+        periodCount('profiles', d(60), d(30)),
+      ])
+      out.deltas.votes_30d = { current: v30c, previous: v30p, pct_change: pct(v30c, v30p) }
+      out.deltas.votes_7d = { current: v7c, previous: v7p, pct_change: pct(v7c, v7p) }
+      out.deltas.signups_30d = { current: s30c, previous: s30p, pct_change: pct(s30c, s30p) }
+    } catch (e) {
+      pushErr('period_deltas', e)
     }
 
     try {
@@ -319,6 +515,27 @@ export async function fetchIntelligenceDashboard(
     out.votesByCategory = [...catCount.entries()]
       .map(([category, vote_count]) => ({ category, vote_count }))
       .sort((a, b) => b.vote_count - a.vote_count)
+
+    // Top topics last 30d — uses the same market_id → category map, filtered to recent votes.
+    try {
+      const since30 = new Date(Date.now() - 30 * 86400000).toISOString()
+      const { data: v30 } = await admin
+        .from('market_votes')
+        .select('market_id, created_at')
+        .gte('created_at', since30)
+      const topicMap = new Map<string, number>()
+      for (const v of v30 ?? []) {
+        const mid = (v as { market_id: string }).market_id
+        const c = catMap.get(mid) ?? 'unknown'
+        topicMap.set(c, (topicMap.get(c) ?? 0) + 1)
+      }
+      out.impact.top_topics_30d = [...topicMap.entries()]
+        .map(([category, vote_count]) => ({ category, vote_count }))
+        .sort((a, b) => b.vote_count - a.vote_count)
+        .slice(0, 5)
+    } catch (e) {
+      pushErr('impact_top_topics_30d', e)
+    }
 
     // --- Top markets + all markets for table ---
     let topPmQ = admin

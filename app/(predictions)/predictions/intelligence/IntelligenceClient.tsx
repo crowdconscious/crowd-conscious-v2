@@ -23,8 +23,25 @@ import {
   Doughnut,
   Radar,
 } from 'react-chartjs-2'
-import { BarChart3, Download, Shield } from 'lucide-react'
-import type { IntelligenceDashboardData, MarketRowCsv, VoteChangeLeader } from '@/lib/intelligence-data'
+import {
+  BarChart3,
+  Download,
+  Shield,
+  TrendingUp,
+  TrendingDown,
+  Users,
+  Sparkles,
+  HeartHandshake,
+  Target,
+  Trophy,
+  ArrowRight,
+} from 'lucide-react'
+import type {
+  IntelligenceDashboardData,
+  MarketRowCsv,
+  PeriodDelta,
+  VoteChangeLeader,
+} from '@/lib/intelligence-data'
 
 ChartJS.register(
   CategoryScale,
@@ -101,60 +118,82 @@ function downloadCSV(rows: MarketRowCsv[]) {
   URL.revokeObjectURL(url)
 }
 
+/**
+ * Headlines are surfaced to admins/sponsors. We hide low-sample claims (n < MIN_N)
+ * because a "100% community consensus" with 21 voters reads as marketing puffery,
+ * not insight — and would erode trust with sponsors looking at the same dashboard.
+ */
+const MIN_HEADLINE_VOTES = 25
+const MIN_CONSENSUS_VOTES = 50
+
 function generateHeadlines(data: IntelligenceDashboardData) {
   const headlines: { type: string; color: string; text: string; meta: string }[] = []
-  const topMarket = data.topMarkets[0]
-  if (topMarket) {
-    const pct = Math.round(topMarket.yes_probability * 100)
-    headlines.push({
-      type: 'Top finding',
-      color: 'green',
-      text: `"${pct}% de la comunidad inclina su predicción hacia "${topMarket.title.slice(0, 80)}${topMarket.title.length > 80 ? '…' : ''}", según datos agregados en Crowd Conscious."`,
-      meta: `Basado en: ${topMarket.total_votes} votantes registrados (probabilidad de comunidad)`,
-    })
-  }
 
-  const sorted = [...data.topMarkets].sort(
-    (a, b) => Math.abs(b.yes_probability - 0.5) - Math.abs(a.yes_probability - 0.5)
-  )
-  const consensus = sorted[0]
+  const eligible = data.topMarkets.filter((m) => m.total_votes >= MIN_HEADLINE_VOTES)
+
+  const consensus = [...eligible]
+    .filter((m) => m.total_votes >= MIN_CONSENSUS_VOTES)
+    .sort(
+      (a, b) => Math.abs(b.yes_probability - 0.5) - Math.abs(a.yes_probability - 0.5)
+    )[0]
   if (consensus) {
     headlines.push({
       type: 'Mayor consenso',
       color: 'emerald',
-      text: `El mercado más polarizado estadísticamente muestra un YES implícito de ~${Math.round(consensus.yes_probability * 100)}%.`,
-      meta: consensus.title.slice(0, 80),
+      text: `${Math.round(consensus.yes_probability * 100)}% de la comunidad se inclina hacia "${truncate(consensus.title, 90)}".`,
+      meta: `Basado en ${consensus.total_votes} votantes registrados`,
     })
   }
 
-  const contested = [...data.topMarkets].sort(
+  const contested = [...eligible].sort(
     (a, b) => Math.abs(a.yes_probability - 0.5) - Math.abs(b.yes_probability - 0.5)
   )[0]
   if (contested) {
     headlines.push({
       type: 'Más disputado',
       color: 'amber',
-      text: `Mercado más cercano al 50/50: ~${Math.round(contested.yes_probability * 100)}% YES — alta incertidumbre colectiva.`,
-      meta: contested.title.slice(0, 80),
+      text: `"${truncate(contested.title, 90)}" está en ${Math.round(contested.yes_probability * 100)}% YES — la comunidad sigue dividida.`,
+      meta: `${contested.total_votes} votantes registrados`,
     })
   }
 
-  const sent = data.sentimentByCategory
-  if (sent.length) {
-    const avgYes =
-      sent.reduce((s, c) => s + c.avg_yes_probability, 0) / sent.length
+  if (data.deltas.votes_30d.pct_change != null) {
+    const pc = data.deltas.votes_30d.pct_change
     headlines.push({
-      type: 'Índice de optimismo',
-      color: 'blue',
-      text: `La comunidad muestra un ${Math.round(avgYes * 100)}% de probabilidad YES promedio ponderada por categoría.`,
-      meta: `Basado en ${data.kpis.total_engagement.toLocaleString()} participaciones y ${data.kpis.active_markets} mercados activos`,
+      type: 'Crecimiento (30 días)',
+      color: pc >= 0 ? 'emerald' : 'amber',
+      text: `${pc >= 0 ? '+' : ''}${pc}% en participaciones vs los 30 días anteriores (${data.deltas.votes_30d.current.toLocaleString()} vs ${data.deltas.votes_30d.previous.toLocaleString()}).`,
+      meta: 'Periodo móvil de 30 días',
+    })
+  }
+
+  if (data.impact.crowd_accuracy_pct != null && data.impact.crowd_accuracy_sample > 50) {
+    headlines.push({
+      type: 'Precisión colectiva',
+      color: 'sky',
+      text: `Cuando los mercados se resuelven, la comunidad acierta ${data.impact.crowd_accuracy_pct}% de las veces.`,
+      meta: `Muestra: ${data.impact.crowd_accuracy_sample.toLocaleString()} votos resueltos de usuarios registrados`,
+    })
+  }
+
+  if (headlines.length === 0) {
+    headlines.push({
+      type: 'Sin titulares por ahora',
+      color: 'amber',
+      text: `Aún no hay suficientes datos (${MIN_HEADLINE_VOTES}+ votos por mercado) para emitir titulares con confianza estadística.`,
+      meta: `Total participaciones: ${data.kpis.total_engagement.toLocaleString()}`,
     })
   }
 
   return headlines
 }
 
+function truncate(s: string, n: number) {
+  return s.length > n ? `${s.slice(0, n - 1)}…` : s
+}
+
 type TabId =
+  | 'impact'
   | 'overview'
   | 'markets'
   | 'users'
@@ -164,6 +203,7 @@ type TabId =
   | 'sponsor'
 
 const TABS: { id: TabId; label: string }[] = [
+  { id: 'impact', label: 'Impact' },
   { id: 'overview', label: 'Overview' },
   { id: 'markets', label: 'Markets' },
   { id: 'users', label: 'Users' },
@@ -267,7 +307,7 @@ export default function IntelligenceClient({
   const [data, setData] = useState<IntelligenceDashboardData>(initialData)
   const [showArchived, setShowArchived] = useState(initialIncludeArchived)
   const [intelLoading, setIntelLoading] = useState(false)
-  const [tab, setTab] = useState<TabId>('overview')
+  const [tab, setTab] = useState<TabId>('impact')
   const [range, setRange] = useState<RangeKey>('30')
 
   useEffect(() => {
@@ -342,25 +382,46 @@ export default function IntelligenceClient({
   }, [])
 
   const sponsorBody = useMemo(() => {
-    return [
-      `Crowd Conscious — Intelligence snapshot`,
+    const i = data.impact
+    const fundFmt = (n: number) => `$${Math.round(n).toLocaleString()} MXN`
+    const lines = [
+      `Crowd Conscious — Impact Snapshot`,
       `Generated: ${new Date().toISOString().slice(0, 10)}`,
       ``,
-      `Platform KPIs`,
-      `- Registered voters: ${data.kpis.registered_votes.toLocaleString()}`,
-      `- Total engagement (all interactions): ${data.kpis.total_engagement.toLocaleString()}`,
-      `- Anonymous share of engagement: ${data.kpis.anonymous_engagement_rate_pct != null ? `${data.kpis.anonymous_engagement_rate_pct}%` : '—'}`,
-      `- Profiles (users): ${data.kpis.total_users.toLocaleString()}`,
-      `- Active markets: ${data.kpis.active_markets}`,
-      `- Markets with 0 votes: ${data.kpis.orphan_markets}`,
-      `- Avg confidence: ${data.kpis.avg_confidence != null ? data.kpis.avg_confidence.toFixed(2) : '—'}`,
-      `- Conscious fund (total_collected / balance): ${data.kpis.fund_total != null ? data.kpis.fund_total.toLocaleString() : '—'}`,
+      `REACH`,
+      `- People reached: ${i.unique_participants.toLocaleString()} (${data.kpis.total_users.toLocaleString()} registered + ${(i.unique_participants - data.kpis.total_users).toLocaleString()} anonymous)`,
+      `- Predictions cast (lifetime): ${i.predictions_lifetime.toLocaleString()}`,
+      `- Predictions (last 30d): ${data.deltas.votes_30d.current.toLocaleString()}${data.deltas.votes_30d.pct_change != null ? ` (${data.deltas.votes_30d.pct_change >= 0 ? '+' : ''}${data.deltas.votes_30d.pct_change}% vs prev 30d)` : ''}`,
+      `- New signups (last 30d): ${data.deltas.signups_30d.current.toLocaleString()}${data.deltas.signups_30d.pct_change != null ? ` (${data.deltas.signups_30d.pct_change >= 0 ? '+' : ''}${data.deltas.signups_30d.pct_change}%)` : ''}`,
       ``,
-      `Voter mix`,
-      ...data.voterSplit.map((v) => `  ${v.voter_type}: ${v.count.toLocaleString()}`),
+      `IMPACT`,
+      `- Conscious Fund raised: ${fundFmt(i.fund_collected)}`,
+      `- Conscious Fund deployed: ${fundFmt(i.fund_disbursed)}`,
+      `- Currently available: ${fundFmt(i.fund_balance)}`,
+      `- Active causes supported: ${i.causes_supported}`,
       ``,
-      `Top market: ${data.topMarkets[0]?.title ?? '—'}`,
-    ].join('\n')
+      `QUALITY`,
+      `- Markets resolved: ${i.markets_resolved_total}`,
+      `- Crowd accuracy: ${i.crowd_accuracy_pct != null ? `${i.crowd_accuracy_pct}% (n=${i.crowd_accuracy_sample.toLocaleString()})` : 'awaiting first resolutions'}`,
+      `- Avg confidence: ${data.kpis.avg_confidence != null ? data.kpis.avg_confidence.toFixed(2) : '—'} / 10`,
+      `- Live events hosted: ${i.live_events_total} (${i.live_events_completed} completed)`,
+      ``,
+    ]
+    if (i.top_topics_30d.length > 0) {
+      lines.push(`TOP TOPICS (30d)`)
+      for (const t of i.top_topics_30d) {
+        lines.push(`- ${t.category.replace(/_/g, ' ')}: ${t.vote_count.toLocaleString()} votes`)
+      }
+      lines.push(``)
+    }
+    if (i.top_causes_this_cycle.length > 0) {
+      lines.push(`LEADING CAUSES (cycle ${new Date().toISOString().slice(0, 7)})`)
+      for (const c of i.top_causes_this_cycle) {
+        lines.push(`- ${c.name}${c.organization ? ` · ${c.organization}` : ''}: ${c.vote_count} votes`)
+      }
+      lines.push(``)
+    }
+    return lines.join('\n')
   }, [data])
 
   return (
@@ -382,7 +443,9 @@ export default function IntelligenceClient({
               Admin
             </span>
           </div>
-          <p className="text-sm text-slate-500">Admin analytics · Real Supabase data</p>
+          <p className="text-sm text-slate-500">
+            People reached, predictions cast, fund deployed — the platform&apos;s real-world signal.
+          </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <label className="flex items-center gap-2 text-gray-400 text-sm cursor-pointer">
@@ -432,6 +495,8 @@ export default function IntelligenceClient({
         </div>
       )}
 
+      <SnapshotHero data={data} />
+
       <CronHealthStrip />
 
       <div className="flex flex-wrap gap-1 border-b border-white/5 pb-px">
@@ -452,11 +517,22 @@ export default function IntelligenceClient({
       </div>
 
       <main className="space-y-8 min-w-0 pb-8">
+          {tab === 'impact' && <ImpactTab data={data} />}
+
           {tab === 'overview' && (
             <>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                <Kpi label="Registered voters" value={data.kpis.registered_votes} />
-                <Kpi label="Total engagement" value={data.kpis.total_engagement} />
+                <Kpi
+                  label="Registered voters"
+                  value={data.kpis.registered_votes}
+                  hint="People who created an account and cast a vote"
+                />
+                <Kpi
+                  label="Total engagement"
+                  value={data.kpis.total_engagement}
+                  delta={data.deltas.votes_30d}
+                  hint="All votes (registered + anonymous)"
+                />
                 <Kpi
                   label="Anonymous share"
                   value={
@@ -464,26 +540,39 @@ export default function IntelligenceClient({
                       ? `${data.kpis.anonymous_engagement_rate_pct}%`
                       : '—'
                   }
+                  hint="Activation funnel — anonymous votes that haven't converted yet"
                 />
-                <Kpi label="Users" value={data.kpis.total_users} />
+                <Kpi
+                  label="New users"
+                  value={data.kpis.total_users}
+                  delta={data.deltas.signups_30d}
+                />
               </div>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 <Kpi label="Active markets" value={data.kpis.active_markets} />
                 <Kpi
                   label="Avg confidence"
                   value={data.kpis.avg_confidence != null ? data.kpis.avg_confidence.toFixed(2) : '—'}
+                  hint="1–10 scale across all votes"
                 />
                 <Kpi
                   label="Conscious fund"
-                  value={data.kpis.fund_total != null ? data.kpis.fund_total.toLocaleString() : '—'}
+                  value={data.kpis.fund_total != null ? `$${data.kpis.fund_total.toLocaleString()}` : '—'}
                   accent
+                  hint="Current balance (MXN)"
                 />
-                <Kpi label="Orphan markets (0 votes)" value={data.kpis.orphan_markets} />
+                <Kpi
+                  label="Orphan markets"
+                  value={data.kpis.orphan_markets}
+                  hint="Markets with 0 votes — content debt to address"
+                />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Kpi
-                  label="Vote updates (7d, registered)"
+                  label="Vote updates (7d)"
                   value={data.kpis.vote_changes_week}
+                  delta={data.deltas.votes_7d}
+                  hint="Registered users revisiting + changing their vote"
                 />
               </div>
               {data.voteChangeLeaders.length > 0 && (
@@ -967,22 +1056,7 @@ export default function IntelligenceClient({
             </div>
           )}
 
-          {tab === 'sponsor' && (
-            <div className="max-w-3xl space-y-4">
-              <pre className="rounded-xl border border-white/5 bg-[#0f1419] p-5 text-xs leading-relaxed text-slate-400 whitespace-pre-wrap font-mono overflow-x-auto">
-                {sponsorBody}
-              </pre>
-              <button
-                type="button"
-                onClick={() => {
-                  void navigator.clipboard.writeText(sponsorBody)
-                }}
-                className="rounded-lg bg-emerald-500 px-4 py-2.5 text-sm font-medium text-slate-950 hover:bg-emerald-400"
-              >
-                Copy report
-              </button>
-            </div>
-          )}
+          {tab === 'sponsor' && <SponsorReportTab data={data} sponsorBody={sponsorBody} />}
       </main>
     </div>
   )
@@ -992,10 +1066,16 @@ function Kpi({
   label,
   value,
   accent,
+  delta,
+  hint,
 }: {
   label: string
   value: string | number
   accent?: boolean
+  /** WoW/MoM delta — renders ↑/↓ + % below the value when provided. */
+  delta?: PeriodDelta | null
+  /** One-line subtext explaining the metric (visible to all admins, not a tooltip). */
+  hint?: string
 }) {
   return (
     <div className={`${CARD} p-5`}>
@@ -1005,7 +1085,509 @@ function Kpi({
       >
         {value}
       </div>
+      {delta && <DeltaBadge delta={delta} />}
+      {hint && <div className="mt-1.5 text-[11px] text-slate-600 leading-snug">{hint}</div>}
     </div>
+  )
+}
+
+function DeltaBadge({ delta }: { delta: PeriodDelta }) {
+  if (delta.pct_change == null) {
+    return (
+      <div className="mt-1 text-[11px] text-slate-600">
+        {delta.current.toLocaleString()} esta semana · sin comparativo
+      </div>
+    )
+  }
+  const up = delta.pct_change >= 0
+  const Icon = up ? TrendingUp : TrendingDown
+  const colorClass = up ? 'text-emerald-400' : 'text-amber-400'
+  return (
+    <div className={`mt-1 inline-flex items-center gap-1 text-[11px] ${colorClass}`}>
+      <Icon className="h-3 w-3" aria-hidden />
+      <span className="tabular-nums">
+        {up ? '+' : ''}
+        {delta.pct_change}%
+      </span>
+      <span className="text-slate-600">
+        vs prev ({delta.previous.toLocaleString()} → {delta.current.toLocaleString()})
+      </span>
+    </div>
+  )
+}
+
+/**
+ * Snapshot hero — pinned above the tabs so the four metrics that matter most
+ * (people reached, predictions cast, fund deployed, crowd accuracy) are always
+ * the first thing an admin/sponsor sees, regardless of which tab they pick.
+ */
+function SnapshotHero({ data }: { data: IntelligenceDashboardData }) {
+  const i = data.impact
+  const fundFmt = (n: number) =>
+    n >= 1000 ? `$${(n / 1000).toFixed(1)}k` : `$${Math.round(n).toLocaleString()}`
+  const items = [
+    {
+      label: 'People reached',
+      value: i.unique_participants.toLocaleString(),
+      sub: `${data.kpis.total_users.toLocaleString()} registered · ${(i.unique_participants - data.kpis.total_users).toLocaleString()} anonymous`,
+      Icon: Users,
+    },
+    {
+      label: 'Predictions cast',
+      value: i.predictions_lifetime.toLocaleString(),
+      sub: data.deltas.votes_30d.pct_change != null
+        ? `${data.deltas.votes_30d.pct_change >= 0 ? '+' : ''}${data.deltas.votes_30d.pct_change}% vs prev 30d`
+        : `${data.deltas.votes_30d.current.toLocaleString()} in last 30d`,
+      Icon: Sparkles,
+    },
+    {
+      label: 'Conscious Fund',
+      value: fundFmt(i.fund_balance),
+      sub: `${fundFmt(i.fund_collected)} raised · ${fundFmt(i.fund_disbursed)} deployed`,
+      Icon: HeartHandshake,
+    },
+    {
+      label: 'Crowd accuracy',
+      value: i.crowd_accuracy_pct != null ? `${i.crowd_accuracy_pct}%` : '—',
+      sub:
+        i.crowd_accuracy_pct != null
+          ? `${i.crowd_accuracy_sample.toLocaleString()} resolved votes · ${i.markets_resolved_total} markets`
+          : 'Awaiting first resolved markets',
+      Icon: Target,
+    },
+  ]
+  return (
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      {items.map(({ label, value, sub, Icon }) => (
+        <div
+          key={label}
+          className="rounded-xl border border-emerald-500/10 bg-gradient-to-br from-[#1a2029] to-[#0f1419] p-5"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+              {label}
+            </span>
+            <Icon className="h-4 w-4 text-emerald-500/70" aria-hidden />
+          </div>
+          <div className="text-3xl font-semibold text-[#e8e6df] tabular-nums leading-none">
+            {value}
+          </div>
+          <div className="mt-2 text-[11px] text-slate-500 leading-snug">{sub}</div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function ImpactTab({ data }: { data: IntelligenceDashboardData }) {
+  const i = data.impact
+  const fundFmt = (n: number) =>
+    n >= 1000 ? `$${(n / 1000).toFixed(1)}k MXN` : `$${Math.round(n).toLocaleString()} MXN`
+  const deployedPct =
+    i.fund_collected > 0 ? Math.round((i.fund_disbursed / i.fund_collected) * 100) : 0
+
+  return (
+    <div className="space-y-6">
+      {/* Hero row — the actual impact narrative */}
+      <div className={`${CARD} p-6`}>
+        <div className="flex items-center gap-2 text-emerald-400 mb-1">
+          <Sparkles className="h-4 w-4" aria-hidden />
+          <span className="text-[11px] font-medium uppercase tracking-wider">
+            Impact narrative
+          </span>
+        </div>
+        <h2 className="text-xl font-semibold text-[#e8e6df]">
+          {i.unique_participants > 0 ? (
+            <>
+              <span className="text-emerald-400">{i.unique_participants.toLocaleString()}</span>{' '}
+              people have shaped {i.predictions_lifetime.toLocaleString()} collective predictions on
+              Crowd Conscious.
+            </>
+          ) : (
+            'Building our first cohort of collective predictors.'
+          )}
+        </h2>
+        <p className="mt-2 text-sm text-slate-400 leading-relaxed">
+          {i.causes_supported > 0 ? (
+            <>
+              Together they&apos;ve routed{' '}
+              <span className="text-emerald-400">{fundFmt(i.fund_collected)}</span> into the
+              Conscious Fund, with{' '}
+              <span className="text-emerald-400">{fundFmt(i.fund_disbursed)}</span> already
+              deployed across{' '}
+              <span className="text-emerald-400">{i.causes_supported}</span> active causes.
+            </>
+          ) : (
+            'Conscious Fund and cause voting will appear here once the first cycle starts.'
+          )}
+        </p>
+      </div>
+
+      {/* Conscious Fund flow */}
+      <div className={`${CARD} p-6`}>
+        <div className="flex items-baseline justify-between mb-4">
+          <h3 className="text-sm font-medium text-slate-400">Conscious Fund flow</h3>
+          <span className="text-[11px] text-slate-600">% of raised funds deployed to causes</span>
+        </div>
+        <div className="grid grid-cols-3 gap-4 mb-4">
+          <FundStat label="Raised" value={fundFmt(i.fund_collected)} accent />
+          <FundStat label="Deployed" value={fundFmt(i.fund_disbursed)} />
+          <FundStat label="Available" value={fundFmt(i.fund_balance)} />
+        </div>
+        <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
+          <div
+            className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 transition-all"
+            style={{ width: `${Math.min(100, deployedPct)}%` }}
+          />
+        </div>
+        <div className="mt-2 flex justify-between text-[11px] text-slate-500">
+          <span>{deployedPct}% deployed</span>
+          <span>{100 - deployedPct}% on standby</span>
+        </div>
+      </div>
+
+      {/* Causes + topics side-by-side */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        <div className={`${CARD} p-5`}>
+          <div className="flex items-center gap-2 mb-4">
+            <HeartHandshake className="h-4 w-4 text-emerald-500/80" aria-hidden />
+            <h3 className="text-sm font-medium text-slate-400">Causes leading this cycle</h3>
+          </div>
+          {i.top_causes_this_cycle.length === 0 ? (
+            <p className="text-sm text-slate-600">
+              No cause votes yet for {new Date().toISOString().slice(0, 7)}. Causes appear here as
+              the community votes on grant allocations.
+            </p>
+          ) : (
+            <ul className="space-y-3">
+              {i.top_causes_this_cycle.map((c, idx) => (
+                <li key={c.id} className="flex items-start gap-3">
+                  <span className="text-emerald-400 font-medium tabular-nums w-6 shrink-0">
+                    #{idx + 1}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm text-[#e8e6df] truncate">{c.name}</div>
+                    {c.organization && (
+                      <div className="text-[11px] text-slate-500 truncate">{c.organization}</div>
+                    )}
+                  </div>
+                  <span className="text-xs text-slate-400 tabular-nums shrink-0">
+                    {c.vote_count} {c.vote_count === 1 ? 'voto' : 'votos'}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="mt-4 pt-4 border-t border-white/5 text-[11px] text-slate-500">
+            {i.causes_supported} active causes total · cycle {new Date().toISOString().slice(0, 7)}
+          </div>
+        </div>
+
+        <div className={`${CARD} p-5`}>
+          <div className="flex items-center gap-2 mb-4">
+            <Trophy className="h-4 w-4 text-emerald-500/80" aria-hidden />
+            <h3 className="text-sm font-medium text-slate-400">Where attention went (last 30 days)</h3>
+          </div>
+          {i.top_topics_30d.length === 0 ? (
+            <p className="text-sm text-slate-600">No votes registered in the last 30 days.</p>
+          ) : (
+            <ul className="space-y-2">
+              {i.top_topics_30d.map((t, idx) => {
+                const max = i.top_topics_30d[0]?.vote_count || 1
+                const w = Math.max(4, Math.round((t.vote_count / max) * 100))
+                return (
+                  <li key={t.category}>
+                    <div className="flex items-center justify-between text-sm mb-1">
+                      <span className="text-[#e8e6df] capitalize">
+                        <span className="text-slate-600 mr-2">#{idx + 1}</span>
+                        {t.category.replace(/_/g, ' ')}
+                      </span>
+                      <span className="text-slate-400 tabular-nums">{t.vote_count.toLocaleString()}</span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                      <div
+                        className="h-full bg-emerald-500/60"
+                        style={{ width: `${w}%` }}
+                      />
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </div>
+      </div>
+
+      {/* Live + accuracy + WoW deltas */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <Kpi
+          label="Live events hosted"
+          value={i.live_events_total}
+          hint={`${i.live_events_completed} completed · real-time prediction sessions`}
+        />
+        <Kpi
+          label="Markets resolved"
+          value={i.markets_resolved_total}
+          hint="Markets with a verified outcome"
+        />
+        <Kpi
+          label="Crowd accuracy"
+          value={i.crowd_accuracy_pct != null ? `${i.crowd_accuracy_pct}%` : '—'}
+          accent={i.crowd_accuracy_pct != null && i.crowd_accuracy_pct >= 60}
+          hint={
+            i.crowd_accuracy_sample > 0
+              ? `${i.crowd_accuracy_sample.toLocaleString()} resolved votes`
+              : 'Awaiting resolved markets'
+          }
+        />
+        <Kpi
+          label="Signups (30d)"
+          value={data.deltas.signups_30d.current.toLocaleString()}
+          delta={data.deltas.signups_30d}
+        />
+      </div>
+    </div>
+  )
+}
+
+function FundStat({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+  return (
+    <div>
+      <div className="text-[11px] font-medium uppercase tracking-wide text-slate-500">{label}</div>
+      <div
+        className={`mt-1 text-xl font-semibold tabular-nums ${
+          accent ? 'text-emerald-400' : 'text-[#e8e6df]'
+        }`}
+      >
+        {value}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Sponsor-facing deck — designed to be screenshotted/copied into pitch decks.
+ * Lives inside the admin view but is intentionally framed for an external reader,
+ * not for an admin debugging the platform.
+ */
+function SponsorReportTab({
+  data,
+  sponsorBody,
+}: {
+  data: IntelligenceDashboardData
+  sponsorBody: string
+}) {
+  const i = data.impact
+  const fundFmt = (n: number) =>
+    n >= 1000 ? `$${(n / 1000).toFixed(1)}k MXN` : `$${Math.round(n).toLocaleString()} MXN`
+  const generated = new Date().toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
+
+  return (
+    <div className="space-y-4 max-w-4xl">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h2 className="text-lg font-medium text-[#e8e6df]">Sponsor-ready snapshot</h2>
+          <p className="text-xs text-slate-500">Designed to share with partners + funders</p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              void navigator.clipboard.writeText(sponsorBody)
+            }}
+            className="rounded-lg border border-white/10 bg-[#1a2029] px-3 py-2 text-xs font-medium text-slate-200 hover:bg-white/5"
+          >
+            Copy as text
+          </button>
+          <a
+            href={`data:text/plain;charset=utf-8,${encodeURIComponent(sponsorBody)}`}
+            download={`crowd-conscious-impact-${new Date().toISOString().slice(0, 10)}.txt`}
+            className="rounded-lg bg-emerald-500 px-3 py-2 text-xs font-medium text-slate-950 hover:bg-emerald-400"
+          >
+            Download .txt
+          </a>
+        </div>
+      </div>
+
+      {/* Branded card — looks like something you can paste into a deck */}
+      <div className="rounded-2xl border border-emerald-500/15 bg-gradient-to-br from-[#1a2029] via-[#151b23] to-[#0f1419] p-7 shadow-2xl">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <div className="text-[10px] font-medium uppercase tracking-[0.18em] text-emerald-400">
+              Crowd Conscious
+            </div>
+            <h3 className="text-2xl font-semibold text-[#e8e6df] mt-1">Impact Snapshot</h3>
+          </div>
+          <span className="text-[11px] text-slate-500">{generated}</span>
+        </div>
+
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
+          <DeckStat label="People reached" value={i.unique_participants.toLocaleString()} />
+          <DeckStat label="Predictions cast" value={i.predictions_lifetime.toLocaleString()} />
+          <DeckStat label="Conscious Fund" value={fundFmt(i.fund_collected)} accent />
+          <DeckStat
+            label="Crowd accuracy"
+            value={i.crowd_accuracy_pct != null ? `${i.crowd_accuracy_pct}%` : '—'}
+          />
+        </div>
+
+        <div className="grid lg:grid-cols-2 gap-6">
+          <div>
+            <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-3">
+              Reach &amp; momentum
+            </div>
+            <ul className="space-y-2 text-sm text-slate-300">
+              <DeckLine label="Registered users" value={data.kpis.total_users.toLocaleString()} />
+              <DeckLine
+                label="Anonymous participants"
+                value={(i.unique_participants - data.kpis.total_users).toLocaleString()}
+              />
+              <DeckLine
+                label="Predictions in last 30d"
+                value={data.deltas.votes_30d.current.toLocaleString()}
+                delta={data.deltas.votes_30d.pct_change}
+              />
+              <DeckLine
+                label="New signups (30d)"
+                value={data.deltas.signups_30d.current.toLocaleString()}
+                delta={data.deltas.signups_30d.pct_change}
+              />
+              <DeckLine label="Active markets" value={data.kpis.active_markets.toLocaleString()} />
+              <DeckLine
+                label="Live events hosted"
+                value={`${i.live_events_total} (${i.live_events_completed} completed)`}
+              />
+            </ul>
+          </div>
+
+          <div>
+            <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-3">
+              Impact &amp; trust
+            </div>
+            <ul className="space-y-2 text-sm text-slate-300">
+              <DeckLine label="Fund raised" value={fundFmt(i.fund_collected)} />
+              <DeckLine label="Fund deployed" value={fundFmt(i.fund_disbursed)} />
+              <DeckLine label="Fund available" value={fundFmt(i.fund_balance)} />
+              <DeckLine label="Active causes" value={i.causes_supported.toString()} />
+              <DeckLine label="Markets resolved" value={i.markets_resolved_total.toString()} />
+              <DeckLine
+                label="Avg vote confidence"
+                value={
+                  data.kpis.avg_confidence != null
+                    ? `${data.kpis.avg_confidence.toFixed(2)} / 10`
+                    : '—'
+                }
+              />
+            </ul>
+          </div>
+        </div>
+
+        {i.top_topics_30d.length > 0 && (
+          <div className="mt-7 pt-6 border-t border-white/5">
+            <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-3">
+              Where attention went (last 30 days)
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {i.top_topics_30d.map((t) => (
+                <span
+                  key={t.category}
+                  className="rounded-full border border-emerald-500/20 bg-emerald-500/5 px-3 py-1 text-xs text-emerald-300"
+                >
+                  {t.category.replace(/_/g, ' ')} · {t.vote_count.toLocaleString()}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {i.top_causes_this_cycle.length > 0 && (
+          <div className="mt-6 pt-6 border-t border-white/5">
+            <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-3">
+              Leading causes this cycle
+            </div>
+            <ul className="space-y-2">
+              {i.top_causes_this_cycle.map((c) => (
+                <li key={c.id} className="flex items-center justify-between text-sm">
+                  <div className="min-w-0">
+                    <div className="text-[#e8e6df] truncate">{c.name}</div>
+                    {c.organization && (
+                      <div className="text-[11px] text-slate-500 truncate">{c.organization}</div>
+                    )}
+                  </div>
+                  <span className="text-emerald-400 tabular-nums shrink-0 ml-3">
+                    {c.vote_count} {c.vote_count === 1 ? 'vote' : 'votes'}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <div className="mt-7 pt-5 border-t border-white/5 flex items-center justify-between text-[11px] text-slate-500">
+          <span>crowdconscious.app · transparent collective intelligence</span>
+          <span className="inline-flex items-center gap-1 text-emerald-400">
+            Read more <ArrowRight className="h-3 w-3" aria-hidden />
+          </span>
+        </div>
+      </div>
+
+      <details className="rounded-xl border border-white/5 bg-[#0f1419]">
+        <summary className="cursor-pointer p-4 text-xs text-slate-500 hover:text-slate-300">
+          Plain-text version (for email + slides)
+        </summary>
+        <pre className="px-5 pb-5 text-xs leading-relaxed text-slate-400 whitespace-pre-wrap font-mono overflow-x-auto">
+          {sponsorBody}
+        </pre>
+      </details>
+    </div>
+  )
+}
+
+function DeckStat({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+  return (
+    <div>
+      <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500">{label}</div>
+      <div
+        className={`mt-1 text-2xl font-semibold tabular-nums ${
+          accent ? 'text-emerald-400' : 'text-[#e8e6df]'
+        }`}
+      >
+        {value}
+      </div>
+    </div>
+  )
+}
+
+function DeckLine({
+  label,
+  value,
+  delta,
+}: {
+  label: string
+  value: string
+  delta?: number | null
+}) {
+  return (
+    <li className="flex items-center justify-between gap-3 text-sm border-b border-white/5 pb-1.5 last:border-b-0">
+      <span className="text-slate-400">{label}</span>
+      <span className="flex items-center gap-2">
+        <span className="text-[#e8e6df] tabular-nums">{value}</span>
+        {delta != null && (
+          <span
+            className={`text-[10px] tabular-nums ${
+              delta >= 0 ? 'text-emerald-400' : 'text-amber-400'
+            }`}
+          >
+            {delta >= 0 ? '+' : ''}
+            {delta}%
+          </span>
+        )}
+      </span>
+    </li>
   )
 }
 
