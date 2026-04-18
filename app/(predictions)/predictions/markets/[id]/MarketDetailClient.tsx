@@ -281,14 +281,9 @@ export function MarketDetailClient({
     }
   }, [market.id, isAuthenticated])
 
-  useEffect(() => {
-    if (!celebration.open || !celebration.guest) return
-    const t = window.setTimeout(() => {
-      setCelebration({ open: false })
-      setRegisterPromptOpen(true)
-    }, 3000)
-    return () => clearTimeout(t)
-  }, [celebration.open, celebration.guest])
+  // Celebration stays open until the user closes it (X, Continue, Esc, or
+  // backdrop click). For guests we follow up with the registration prompt
+  // from `handleCelebrationClose` so the share card has time to breathe.
 
   const isPulseMarket = isPulseLikeMarket(market as Parameters<typeof isPulseLikeMarket>[0])
   const config = isPulseMarket ? PULSE_CATEGORY : CATEGORY_CONFIG[market.category] || CATEGORY_CONFIG.world
