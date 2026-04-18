@@ -1,9 +1,9 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useLocale } from 'next-intl'
 import { motion, AnimatePresence } from 'framer-motion'
 import { setPendingVote } from '@/lib/guest-vote-storage'
+import { useLocale } from '@/lib/i18n/useLocale'
 
 interface GuestRegistrationPromptProps {
   open: boolean

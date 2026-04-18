@@ -1,8 +1,8 @@
 'use client'
 
-import { useLocale } from 'next-intl'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
+import { useLocale } from '@/lib/i18n/useLocale'
 
 export default function LanguageSwitcher() {
   const locale = useLocale()
