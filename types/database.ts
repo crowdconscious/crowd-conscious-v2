@@ -350,6 +350,125 @@ export interface Database {
         Relationships: []
       }
 
+      live_auction_items: {
+        Row: {
+          id: string
+          live_event_id: string
+          location_id: string | null
+          title: string
+          description: string | null
+          category:
+            | 'food'
+            | 'drink'
+            | 'fashion'
+            | 'experience'
+            | 'art'
+            | 'merch'
+            | 'other'
+            | null
+          image_url: string | null
+          original_price: number | null
+          currency: string
+          status: 'upcoming' | 'bidding' | 'sold' | 'ended' | 'cancelled'
+          winning_discount: 20 | 30 | 50 | null
+          claim_code: string | null
+          claim_count: number
+          max_claims: number
+          bidding_opened_at: string | null
+          bidding_closes_at: string | null
+          sort_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          live_event_id: string
+          location_id?: string | null
+          title: string
+          description?: string | null
+          category?:
+            | 'food'
+            | 'drink'
+            | 'fashion'
+            | 'experience'
+            | 'art'
+            | 'merch'
+            | 'other'
+            | null
+          image_url?: string | null
+          original_price?: number | null
+          currency?: string
+          status?: 'upcoming' | 'bidding' | 'sold' | 'ended' | 'cancelled'
+          winning_discount?: 20 | 30 | 50 | null
+          claim_code?: string | null
+          claim_count?: number
+          max_claims?: number
+          bidding_opened_at?: string | null
+          bidding_closes_at?: string | null
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          live_event_id?: string
+          location_id?: string | null
+          title?: string
+          description?: string | null
+          category?:
+            | 'food'
+            | 'drink'
+            | 'fashion'
+            | 'experience'
+            | 'art'
+            | 'merch'
+            | 'other'
+            | null
+          image_url?: string | null
+          original_price?: number | null
+          currency?: string
+          status?: 'upcoming' | 'bidding' | 'sold' | 'ended' | 'cancelled'
+          winning_discount?: 20 | 30 | 50 | null
+          claim_code?: string | null
+          claim_count?: number
+          max_claims?: number
+          bidding_opened_at?: string | null
+          bidding_closes_at?: string | null
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+
+      live_auction_votes: {
+        Row: {
+          id: string
+          auction_item_id: string
+          user_id: string | null
+          anonymous_participant_id: string | null
+          discount_vote: 20 | 30 | 50
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          auction_item_id: string
+          user_id?: string | null
+          anonymous_participant_id?: string | null
+          discount_vote: 20 | 30 | 50
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          auction_item_id?: string
+          user_id?: string | null
+          anonymous_participant_id?: string | null
+          discount_vote?: 20 | 30 | 50
+          created_at?: string
+        }
+        Relationships: []
+      }
+
       market_outcomes: {
         Row: {
           id: string
