@@ -31,6 +31,11 @@ const LABELS: Record<
     action: { es: 'el evento comience', en: 'the event starts' },
     header: { es: 'Evento', en: 'Event' },
   },
+  live_auction: {
+    noun: { es: 'la subasta', en: 'the auction' },
+    action: { es: 'la subasta comience', en: 'the auction starts' },
+    header: { es: 'Subasta', en: 'Auction' },
+  },
   custom: {
     noun: { es: 'el evento', en: 'the event' },
     action: { es: 'el evento comience', en: 'the event starts' },

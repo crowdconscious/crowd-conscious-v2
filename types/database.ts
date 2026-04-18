@@ -209,6 +209,7 @@ export interface Database {
             | 'government_conference'
             | 'entertainment'
             | 'community_event'
+            | 'live_auction'
             | 'custom'
           event_subtype: string | null
           suggested_questions: Json
@@ -247,6 +248,7 @@ export interface Database {
             | 'government_conference'
             | 'entertainment'
             | 'community_event'
+            | 'live_auction'
             | 'custom'
           event_subtype?: string | null
           suggested_questions?: Json
@@ -285,6 +287,7 @@ export interface Database {
             | 'government_conference'
             | 'entertainment'
             | 'community_event'
+            | 'live_auction'
             | 'custom'
           event_subtype?: string | null
           suggested_questions?: Json

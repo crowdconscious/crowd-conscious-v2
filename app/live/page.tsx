@@ -8,10 +8,11 @@ import { getCurrentUser } from '@/lib/auth-server'
 import type { Database } from '@/types/database'
 import LandingNav from '@/app/components/landing/LandingNav'
 import Footer from '@/components/Footer'
-import { LiveEventCard } from '@/components/live/LiveEventCard'
 import { CreateLiveEventPanel } from '@/components/live/CreateLiveEventPanel'
-import { LiveB2BCTA, LiveProductSections } from '@/components/live/LiveProductSections'
+import { LiveEventsBrowser } from '@/components/live/LiveEventsBrowser'
+import { LiveProductSections } from '@/components/live/LiveProductSections'
 import { daysUntilWorldCup } from '@/lib/world-cup-kickoff'
+import { loadLiveEventStats } from '@/lib/live/event-stats'
 
 export const dynamic = 'force-dynamic'
 
@@ -109,7 +110,10 @@ export default async function LiveEventsPage() {
       (!!adminEmail && !!profileEmail && profileEmail === adminEmail)
   }
 
-  const { data, error } = await supabase.from('live_events').select('*').order('match_date', { ascending: false })
+  const { data, error } = await supabase
+    .from('live_events')
+    .select('*')
+    .order('match_date', { ascending: false })
 
   const h = await headers()
   const accept = h.get('accept-language') || ''
@@ -120,10 +124,10 @@ export default async function LiveEventsPage() {
   const { liveNow, upcoming, past } = partitionEvents(rows)
   const dWc = daysUntilWorldCup()
 
+  const visibleIds = [...liveNow, ...upcoming, ...past].map((e) => e.id)
+  const stats = await loadLiveEventStats(visibleIds)
+
   const t = {
-    live: locale === 'es' ? 'En vivo ahora' : 'Live now',
-    upcoming: locale === 'es' ? 'Próximos eventos' : 'Upcoming',
-    past: locale === 'es' ? 'Eventos anteriores' : 'Past events',
     empty: locale === 'es' ? 'No hay eventos por ahora.' : 'No events yet.',
     emptyAdminHint:
       locale === 'es'
@@ -131,7 +135,6 @@ export default async function LiveEventsPage() {
         : 'As an admin, use the form above to create your first event.',
     emptyCta: locale === 'es' ? 'Ver mercados' : 'Browse markets',
     error: locale === 'es' ? 'No se pudieron cargar los eventos.' : 'Could not load events.',
-    eventsHeading: locale === 'es' ? 'Eventos' : 'Events',
   }
 
   return (
@@ -148,10 +151,10 @@ export default async function LiveEventsPage() {
           </p>
         )}
 
-        {!error && rows.length === 0 && (
+        {!error && rows.length === 0 ? (
           <div className="mb-10 rounded-xl border border-cc-border bg-cc-card px-6 py-10 text-center">
             <div className="mb-4 flex justify-center">
-              <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/10 text-3xl">
+              <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/10">
                 <Trophy className="h-8 w-8 text-emerald-400" aria-hidden />
               </span>
             </div>
@@ -164,54 +167,15 @@ export default async function LiveEventsPage() {
             </Link>
             {isAdmin && <p className="mt-6 text-sm text-cc-text-muted">{t.emptyAdminHint}</p>}
           </div>
-        )}
-
-        {!error && rows.length > 0 && (
-          <section className="mb-4">
-            <h2 className="mb-6 text-lg font-semibold text-white">{t.eventsHeading}</h2>
-
-            {liveNow.length > 0 && (
-              <div className="mb-10">
-                <h3 className="mb-4 flex items-center gap-2 text-base font-semibold text-red-300">
-                  <span className="relative flex h-2.5 w-2.5">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
-                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
-                  </span>
-                  {t.live}
-                </h3>
-                <div className="flex flex-col gap-4">
-                  {liveNow.map((e) => (
-                    <LiveEventCard key={e.id} event={e} group="live" />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {upcoming.length > 0 && (
-              <div className="mb-10">
-                <h3 className="mb-4 text-base font-semibold text-teal-300">{t.upcoming}</h3>
-                <div className="flex flex-col gap-4">
-                  {upcoming.map((e) => (
-                    <LiveEventCard key={e.id} event={e} group="upcoming" />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {past.length > 0 && (
-              <div>
-                <h3 className="mb-4 text-base font-semibold text-slate-400">{t.past}</h3>
-                <div className="flex flex-col gap-4">
-                  {past.map((e) => (
-                    <LiveEventCard key={e.id} event={e} group="past" />
-                  ))}
-                </div>
-              </div>
-            )}
-          </section>
-        )}
-
-        <LiveB2BCTA locale={localeShort} />
+        ) : !error ? (
+          <LiveEventsBrowser
+            locale={localeShort}
+            liveNow={liveNow}
+            upcoming={upcoming}
+            past={past}
+            stats={stats}
+          />
+        ) : null}
       </div>
       <Footer />
     </div>

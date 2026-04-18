@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
-import { Tv2 } from 'lucide-react'
+import { BarChart3, ListChecks, Tv2, Users } from 'lucide-react'
 import type { Database } from '@/types/database'
 import { getLiveEventTitle } from '@/lib/live-event-title'
 import { useLocale } from '@/lib/i18n/useLocale'
@@ -27,12 +27,21 @@ function formatCountdown(ms: number) {
   return `${pad(h)}:${pad(m)}:${pad(s)}`
 }
 
+export interface LiveEventCardStats {
+  /** Total prediction markets created for this event. */
+  markets?: number
+  /** Resolved markets — useful as the "predicciones resueltas" headline stat. */
+  resolved?: number
+}
+
 export function LiveEventCard({
   event,
   group,
+  stats,
 }: {
   event: LiveEventRow
   group: LiveEventCardGroup
+  stats?: LiveEventCardStats
 }) {
   const locale = useLocale()
   const title = getLiveEventTitle(event, locale)
@@ -110,7 +119,7 @@ export function LiveEventCard({
           {renderFlag(flagB)}
         </div>
       )}
-      <div className="flex items-center justify-between gap-3 p-4">
+      <div className="flex items-start justify-between gap-3 p-4">
         <div className="min-w-0 flex-1">
           <h3 className="font-bold text-white group-hover:text-teal-200">{title}</h3>
           <p className="mt-1 text-sm text-gray-500">{dateStr}</p>
@@ -126,11 +135,66 @@ export function LiveEventCard({
               <span className="font-semibold text-teal-200">{formatCountdown(remaining)}</span>
             </p>
           )}
+          {group === 'past' && (
+            <PastStatsRow event={event} stats={stats} locale={locale} />
+          )}
         </div>
         <span className={cn('shrink-0 rounded-full px-2.5 py-1 text-xs font-medium', pillClass)}>
           {pillLabel}
         </span>
       </div>
     </Link>
+  )
+}
+
+function PastStatsRow({
+  event,
+  stats,
+  locale,
+}: {
+  event: LiveEventRow
+  stats?: LiveEventCardStats
+  locale: string
+}) {
+  const es = locale === 'es'
+  const votes = Number(event.total_votes_cast ?? 0)
+  const viewers = Number(event.viewer_count ?? 0)
+  const markets = stats?.markets ?? 0
+  const resolved = stats?.resolved ?? 0
+
+  if (votes === 0 && viewers === 0 && markets === 0) return null
+
+  return (
+    <ul className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-gray-500">
+      {votes > 0 && (
+        <li className="inline-flex items-center gap-1.5">
+          <BarChart3 className="h-3.5 w-3.5" aria-hidden />
+          <span className="tabular-nums">{votes.toLocaleString()}</span>
+          <span>{es ? 'votos' : 'votes'}</span>
+        </li>
+      )}
+      {markets > 0 && (
+        <li className="inline-flex items-center gap-1.5">
+          <ListChecks className="h-3.5 w-3.5" aria-hidden />
+          <span className="tabular-nums">{resolved > 0 ? resolved : markets}</span>
+          <span>
+            {resolved > 0
+              ? es
+                ? 'predicciones resueltas'
+                : 'predictions resolved'
+              : es
+                ? 'predicciones'
+                : 'predictions'}
+          </span>
+        </li>
+      )}
+      {viewers > 0 && (
+        <li className="inline-flex items-center gap-1.5">
+          <Users className="h-3.5 w-3.5" aria-hidden />
+          <span className="tabular-nums">{viewers.toLocaleString()}</span>
+          <span>{es ? 'espectadores' : 'viewers'}</span>
+        </li>
+      )}
+    </ul>
   )
 }

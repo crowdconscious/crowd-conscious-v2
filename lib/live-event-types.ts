@@ -4,6 +4,7 @@ export const LIVE_EVENT_TYPE_KEYS = [
   'government_conference',
   'entertainment',
   'community_event',
+  'live_auction',
   'custom',
 ] as const
 
@@ -170,6 +171,32 @@ export const EVENT_TYPE_CONFIG: Record<LiveEventTypeKey, LiveEventTypeConfig> = 
         'How many people will attend?',
         'Which proposal will have most support?',
         'Will the result be binding?',
+      ],
+    },
+  },
+
+  live_auction: {
+    icon: '🔨',
+    label: { es: 'Subasta en vivo', en: 'Live auction' },
+    description: {
+      es: 'Lugares Conscientes subastan productos exclusivos',
+      en: 'Conscious Locations auction exclusive products',
+    },
+    fields: ['eventTitle', 'startDate', 'youtubeUrl', 'organizerName', 'coverImage', 'sponsor'],
+    suggestedQuestions: {
+      es: [
+        '¿Qué producto se descuenta primero?',
+        '¿Cuál pieza se subasta más alto?',
+        '¿Habrá puja sorpresa?',
+        '¿Cuántas piezas se venderán?',
+        '¿Cuál es el precio final?',
+      ],
+      en: [
+        'Which product gets discounted first?',
+        'Which piece will sell highest?',
+        'Will there be a surprise bid?',
+        'How many items will sell?',
+        'What is the final price?',
       ],
     },
   },

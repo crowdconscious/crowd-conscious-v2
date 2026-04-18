@@ -7,5 +7,6 @@ export const DEFAULT_LIVE_EVENT_DURATION_MINUTES: Record<LiveEventTypeKey, numbe
   government_conference: 180,
   entertainment: 180,
   community_event: 120,
+  live_auction: 90,
   custom: 180,
 }
