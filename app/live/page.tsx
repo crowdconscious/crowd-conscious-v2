@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { ArrowLeft, Trophy } from 'lucide-react'
+import { Trophy } from 'lucide-react'
 import { headers } from 'next/headers'
 import { SITE_URL } from '@/lib/seo/site'
 import { createClient } from '@/lib/supabase-server'
@@ -45,6 +45,7 @@ function partitionEvents(rows: LiveEventRow[]) {
   const past: LiveEventRow[] = []
 
   for (const e of rows) {
+    if (e.status === 'cancelled') continue
     const t = new Date(e.match_date).getTime()
     if (e.status === 'live') {
       liveNow.push(e)
@@ -56,11 +57,43 @@ function partitionEvents(rows: LiveEventRow[]) {
     }
   }
 
-  liveNow.sort((a, b) => new Date(b.match_date).getTime() - new Date(a.match_date).getTime())
-  upcoming.sort((a, b) => new Date(a.match_date).getTime() - new Date(b.match_date).getTime())
-  past.sort((a, b) => new Date(b.match_date).getTime() - new Date(a.match_date).getTime())
+  /**
+   * Dedupe near-duplicates that slipped through the admin UI (e.g. two
+   * "México vs Portugal" rows on the same day). Key by normalized
+   * team names + YYYY-MM-DD — keep the most recently updated.
+   */
+  function keyOf(e: LiveEventRow) {
+    const a = (e.team_a_name ?? '').trim().toLowerCase()
+    const b = (e.team_b_name ?? '').trim().toLowerCase()
+    const day = new Date(e.match_date).toISOString().slice(0, 10)
+    return a && b ? `${a}__${b}__${day}` : `id:${e.id}`
+  }
 
-  return { liveNow, upcoming, past }
+  function dedupe(list: LiveEventRow[]): LiveEventRow[] {
+    const byKey = new Map<string, LiveEventRow>()
+    for (const e of list) {
+      const k = keyOf(e)
+      const prev = byKey.get(k)
+      if (!prev) {
+        byKey.set(k, e)
+        continue
+      }
+      const a = new Date(e.updated_at ?? e.created_at ?? 0).getTime()
+      const b = new Date(prev.updated_at ?? prev.created_at ?? 0).getTime()
+      if (a > b) byKey.set(k, e)
+    }
+    return [...byKey.values()]
+  }
+
+  const liveDedup = dedupe(liveNow)
+  const upcomingDedup = dedupe(upcoming)
+  const pastDedup = dedupe(past)
+
+  liveDedup.sort((a, b) => new Date(b.match_date).getTime() - new Date(a.match_date).getTime())
+  upcomingDedup.sort((a, b) => new Date(a.match_date).getTime() - new Date(b.match_date).getTime())
+  pastDedup.sort((a, b) => new Date(b.match_date).getTime() - new Date(a.match_date).getTime())
+
+  return { liveNow: liveDedup, upcoming: upcomingDedup, past: pastDedup }
 }
 
 export default async function LiveEventsPage() {
@@ -88,7 +121,6 @@ export default async function LiveEventsPage() {
   const dWc = daysUntilWorldCup()
 
   const t = {
-    back: locale === 'es' ? 'Volver al inicio' : 'Back to home',
     live: locale === 'es' ? 'En vivo ahora' : 'Live now',
     upcoming: locale === 'es' ? 'Próximos eventos' : 'Upcoming',
     past: locale === 'es' ? 'Eventos anteriores' : 'Past events',
@@ -105,17 +137,7 @@ export default async function LiveEventsPage() {
   return (
     <div className="min-h-screen bg-cc-bg text-cc-text-primary">
       <LandingNav />
-      <div className="mx-auto max-w-6xl px-4 pb-16 pt-24">
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-sm text-cc-text-secondary transition hover:text-cc-text-primary"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            {t.back}
-          </Link>
-        </div>
-
+      <div className="mx-auto max-w-6xl px-4 pb-16 pt-20">
         <LiveProductSections locale={localeShort} daysUntilWc={dWc} />
 
         {isAdmin && <CreateLiveEventPanel locale={locale === 'es' ? 'es' : 'en'} />}

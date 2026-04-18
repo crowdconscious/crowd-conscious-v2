@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
+import { Tv2 } from 'lucide-react'
 import type { Database } from '@/types/database'
 import { getLiveEventTitle } from '@/lib/live-event-title'
 import { useLocale } from '@/lib/i18n/useLocale'
@@ -53,8 +54,23 @@ export function LiveEventCard({
   })
 
   const cover = event.cover_image_url?.trim()
-  const flagA = event.team_a_flag?.trim() || '🏟️'
-  const flagB = event.team_b_flag?.trim() || '🏟️'
+  const flagA = event.team_a_flag?.trim() || null
+  const flagB = event.team_b_flag?.trim() || null
+
+  function renderFlag(value: string | null) {
+    if (!value) {
+      return (
+        <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/20">
+          <Tv2 className="h-5 w-5" aria-hidden />
+        </span>
+      )
+    }
+    if (value.startsWith('http://') || value.startsWith('https://')) {
+      // eslint-disable-next-line @next/next/no-img-element
+      return <img src={value} alt="" className="h-9 w-9 rounded-full object-cover ring-1 ring-white/10" />
+    }
+    return <span className="text-3xl leading-none">{value}</span>
+  }
 
   const pillClass =
     event.status === 'completed'
@@ -88,10 +104,10 @@ export function LiveEventCard({
         // eslint-disable-next-line @next/next/no-img-element
         <img src={cover} alt="" className="h-40 w-full object-cover" />
       ) : (
-        <div className="flex h-40 w-full items-center justify-center gap-4 bg-gradient-to-br from-red-900/20 to-[#1a2029]">
-          <span className="text-3xl">{flagA}</span>
+        <div className="flex h-40 w-full items-center justify-center gap-4 bg-gradient-to-br from-emerald-900/20 to-[#1a2029]">
+          {renderFlag(flagA)}
           <span className="text-lg text-gray-600">vs</span>
-          <span className="text-3xl">{flagB}</span>
+          {renderFlag(flagB)}
         </div>
       )}
       <div className="flex items-center justify-between gap-3 p-4">

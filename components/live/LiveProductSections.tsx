@@ -1,8 +1,49 @@
 import Link from 'next/link'
+import {
+  Clapperboard,
+  Landmark,
+  Megaphone,
+  Trophy,
+  type LucideIcon,
+} from 'lucide-react'
 
-const eventTypes = [
+/**
+ * Clean emerald soccer-ball mark used in the /live product intro. Consistent
+ * across OS/fonts (unlike the ⚽ emoji, which rendered in a different color
+ * set on Windows and Android).
+ */
+function SoccerBallIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className={className}
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 7l4 3-1.5 4.5h-5L8 10l4-3z" />
+      <path d="M12 2v5" />
+      <path d="M22 12l-6-2" />
+      <path d="M12 22l2.5-4.5" />
+      <path d="M2 12l6-2" />
+      <path d="M12 22l-2.5-4.5" />
+    </svg>
+  )
+}
+
+type EventType = {
+  Icon: LucideIcon | ((p: { className?: string }) => React.ReactElement)
+  title: { es: string; en: string }
+  desc: { es: string; en: string }
+}
+
+const eventTypes: readonly EventType[] = [
   {
-    icon: '⚽',
+    Icon: SoccerBallIcon,
     title: { es: 'Partidos de fútbol', en: 'Soccer matches' },
     desc: {
       es: 'Micro-predicciones durante cada partido. ¿Quién anota? ¿Gol antes del minuto 30? La audiencia predice en vivo.',
@@ -10,7 +51,7 @@ const eventTypes = [
     },
   },
   {
-    icon: '🏷️',
+    Icon: Megaphone,
     title: { es: 'Lanzamientos de marca', en: 'Brand launches' },
     desc: {
       es: 'Tu audiencia vota durante tu livestream. ¿Qué producto prefieren? ¿Cumplió expectativas? Datos en tiempo real.',
@@ -18,7 +59,7 @@ const eventTypes = [
     },
   },
   {
-    icon: '🏛️',
+    Icon: Landmark,
     title: { es: 'Conferencias y debates', en: 'Conferences & debates' },
     desc: {
       es: 'Consulta ciudadana en vivo. Proyecta resultados en pantalla. La audiencia opina mientras mira.',
@@ -26,7 +67,7 @@ const eventTypes = [
     },
   },
   {
-    icon: '🎬',
+    Icon: Clapperboard,
     title: { es: 'Entretenimiento', en: 'Entertainment' },
     desc: {
       es: 'Estrenos, premios, conciertos. ¿Quién gana? ¿Cuál será la escena más comentada? La comunidad predice.',
@@ -48,8 +89,12 @@ export function LiveProductSections({ locale, daysUntilWc }: Props) {
     <>
       <section className="px-4 pb-12 pt-8 sm:pt-10">
         <div className="mx-auto max-w-4xl text-center">
-          <span className="text-xs font-bold uppercase tracking-[0.2em] text-red-400">
-            {es ? '🔴 CONSCIOUS LIVE' : '🔴 CONSCIOUS LIVE'}
+          <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-red-400">
+            <span className="relative flex h-2.5 w-2.5" aria-hidden="true">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+            </span>
+            CONSCIOUS LIVE
           </span>
           <h1 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">
             {es
@@ -61,17 +106,18 @@ export function LiveProductSections({ locale, daysUntilWc }: Props) {
               ? 'Transmisión en vivo + micro-predicciones + leaderboard + chat. La experiencia de segunda pantalla definitiva.'
               : 'Live stream + micro-predictions + leaderboard + chat. The ultimate second-screen experience.'}
           </p>
-          <p className="mt-5 text-sm text-emerald-400/95">
+          <p className="mt-5 inline-flex items-center justify-center gap-2 text-sm text-emerald-400/95">
+            <Trophy className="h-4 w-4 shrink-0" aria-hidden="true" />
             {es ? (
-              <>
-                ⚽ Próximo: Copa del Mundo 2026 — 11 de junio, Estadio Azteca
+              <span>
+                Próximo: Copa del Mundo 2026 — 11 de junio, Estadio Azteca
                 {daysUntilWc > 0 ? ` · Faltan ${daysUntilWc} días` : ''}
-              </>
+              </span>
             ) : (
-              <>
-                ⚽ Next: 2026 World Cup — June 11, Estadio Azteca
+              <span>
+                Next: 2026 World Cup — June 11, Estadio Azteca
                 {daysUntilWc > 0 ? ` · ${daysUntilWc} days to go` : ''}
-              </>
+              </span>
             )}
           </p>
         </div>
@@ -79,14 +125,16 @@ export function LiveProductSections({ locale, daysUntilWc }: Props) {
 
       <section className="px-4 pb-14">
         <div className="mx-auto grid max-w-6xl gap-4 sm:grid-cols-2">
-          {eventTypes.map((f, i) => (
+          {eventTypes.map(({ Icon, title, desc }) => (
             <div
-              key={i}
+              key={title.en}
               className="rounded-xl border border-[#2d3748] bg-[#1a2029] p-5 transition hover:border-teal-500/25"
             >
-              <span className="text-2xl">{f.icon}</span>
-              <h3 className="mt-2 text-base font-bold text-white">{L(f.title)}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-slate-400">{L(f.desc)}</p>
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400">
+                <Icon className="h-6 w-6" />
+              </span>
+              <h3 className="mt-3 text-base font-bold text-white">{L(title)}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-slate-400">{L(desc)}</p>
             </div>
           ))}
         </div>

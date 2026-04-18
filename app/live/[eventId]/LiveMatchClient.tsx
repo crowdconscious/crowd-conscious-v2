@@ -408,7 +408,7 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
     />
   )
 
-  const leaderboardBlock = (
+  const renderLeaderboard = (opts: { isFinal?: boolean } = {}) => (
     <div className="space-y-2">
       {lbError && (
         <p className="text-sm text-red-400">
@@ -423,10 +423,12 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
           currentUserEntry={currentUserEntry}
           locale={copyLocale}
           eventType={event.event_type}
+          isFinal={opts.isFinal}
         />
       )}
     </div>
   )
+  const leaderboardBlock = renderLeaderboard()
 
   if (isCompleted) {
     return (
@@ -438,12 +440,7 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
         <div className="mx-auto w-full max-w-4xl flex-1 px-4 py-6">
           {header}
 
-          <div className="mb-6 space-y-4">
-            <h2 className="text-lg font-semibold text-teal-300">
-              {locale === 'es' ? 'Resultados finales' : 'Final results'}
-            </h2>
-            {leaderboardBlock}
-          </div>
+          <div className="mb-6">{renderLeaderboard({ isFinal: true })}</div>
 
           <div className="mb-6 space-y-4">
             {stream}

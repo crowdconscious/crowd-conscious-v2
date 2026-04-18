@@ -36,6 +36,8 @@ export interface LiveLeaderboardProps {
   locale?: 'en' | 'es'
   /** When not a soccer match, avoid "match" / "partido" in the title. */
   eventType?: string | null
+  /** When true, render the "final standings" variant (for completed events). */
+  isFinal?: boolean
 }
 
 export function LiveLeaderboard({
@@ -45,17 +47,23 @@ export function LiveLeaderboard({
   currentUserEntry,
   locale = 'es',
   eventType = null,
+  isFinal = false,
 }: LiveLeaderboardProps) {
   const top = useMemo(() => rankings.slice(0, 10), [rankings])
 
-  const leaderboardTitle =
-    eventType === 'soccer_match'
+  const leaderboardTitle = isFinal
+    ? locale === 'es'
+      ? 'Clasificación final'
+      : 'Final standings'
+    : eventType === 'soccer_match'
       ? locale === 'es'
         ? 'Leaderboard del partido'
         : 'Match leaderboard'
       : locale === 'es'
         ? 'Leaderboard del evento'
         : 'Event leaderboard'
+
+  const isEmpty = rankings.length === 0
 
   const showFooter = !!(currentUserEntry && currentUserEntry.rank > 10)
 
@@ -75,6 +83,14 @@ export function LiveLeaderboard({
         <Trophy className="h-5 w-5 text-amber-400" />
         <h3 className="font-semibold text-white">{leaderboardTitle}</h3>
       </div>
+
+      {isEmpty && (
+        <div className="px-4 py-8 text-center text-sm text-slate-500">
+          {locale === 'es'
+            ? 'Aún no hay participantes en el leaderboard.'
+            : 'No participants on the leaderboard yet.'}
+        </div>
+      )}
 
       <LayoutGroup>
         <ul className="divide-y divide-white/5">

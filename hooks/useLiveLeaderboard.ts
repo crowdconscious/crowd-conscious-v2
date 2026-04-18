@@ -53,11 +53,15 @@ async function computeRankings(
   currentUserEntry: LiveLeaderboardEntry | null
   error: Error | null
 }> {
+  /**
+   * Include archived markets so completed events keep their historical
+   * leaderboard. Archiving an event's markets after it ends should not wipe
+   * the standings — XP earned is immutable once awarded.
+   */
   const { data: markets, error: mErr } = await supabase
     .from('prediction_markets')
     .select('id')
     .eq('live_event_id', eventId)
-    .is('archived_at', null)
 
   if (mErr) return { rankings: [], currentUserEntry: null, error: new Error(mErr.message) }
 

@@ -4,7 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase-client'
 import type { Database } from '@/types/database'
 
-type MarketRow = Database['public']['Tables']['prediction_markets']['Row']
+type MarketRow = Database['public']['Tables']['prediction_markets']['Row'] & {
+  archived_at?: string | null
+}
 export type MarketOutcomeRow = Database['public']['Tables']['market_outcomes']['Row']
 
 export type MarketWithOutcomes = MarketRow & { outcomes: MarketOutcomeRow[] }
@@ -96,11 +98,15 @@ export function useLiveMarkets(eventId: string | null): UseLiveMarketsResult {
     setIsLoading(true)
     setError(null)
 
+    /**
+     * Include archived markets so completed events still show their resolved
+     * markets history. `activeMarkets` below already filters by status so
+     * archived rows won't leak into the live voting panel.
+     */
     const { data: rows, error: mErr } = await supabase
       .from('prediction_markets')
       .select('*')
       .eq('live_event_id', eventId)
-      .is('archived_at', null)
       .order('created_at', { ascending: false })
 
     if (mErr) {
@@ -239,7 +245,7 @@ export function useLiveMarkets(eventId: string | null): UseLiveMarketsResult {
   const list = useMemo(() => Object.values(marketsById), [marketsById])
 
   const activeMarkets = useMemo(
-    () => list.filter((m) => isActiveStatus(m.status)),
+    () => list.filter((m) => isActiveStatus(m.status) && !m.archived_at),
     [list]
   )
   const resolvedMarkets = useMemo(

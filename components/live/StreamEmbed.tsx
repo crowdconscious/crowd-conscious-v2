@@ -71,16 +71,50 @@ export function StreamEmbed({
     return () => clearInterval(t)
   }, [])
 
-  const remaining = Math.max(0, target - now)
-  const shouldEmbed =
-    !!resolvedVideoId && (isLive || embedReplay || (isScheduled && !isCompleted))
+  /**
+   * For completed events we preflight the recording to avoid embedding a
+   * private/removed video (which renders the YouTube player's localized
+   * error screen and is useless to the user). Live streams skip this —
+   * they embed immediately because oEmbed can lag for fresh broadcasts.
+   */
+  const [replayAvailable, setReplayAvailable] = useState<boolean | null>(null)
+  useEffect(() => {
+    setReplayAvailable(null)
+    if (!resolvedVideoId) return
+    if (!embedReplay && !isCompleted) return
+    const ac = new AbortController()
+    fetch(`/api/live/video-check?v=${encodeURIComponent(resolvedVideoId)}`, {
+      signal: ac.signal,
+      cache: 'force-cache',
+    })
+      .then((r) => (r.ok ? (r.json() as Promise<{ available: boolean }>) : { available: false }))
+      .then((json) => setReplayAvailable(json.available === true))
+      .catch(() => setReplayAvailable(false))
+    return () => ac.abort()
+  }, [resolvedVideoId, embedReplay, isCompleted])
 
-  if (isCompleted && !resolvedVideoId) {
+  const remaining = Math.max(0, target - now)
+  const replayGateOpen = !embedReplay || replayAvailable === true
+  const shouldEmbed =
+    !!resolvedVideoId && (isLive || (embedReplay && replayGateOpen) || (isScheduled && !isCompleted))
+
+  const showEndedPlaceholder =
+    isCompleted && (!resolvedVideoId || replayAvailable === false)
+
+  if (showEndedPlaceholder) {
+    const replayGone = !!resolvedVideoId && replayAvailable === false
     return (
       <div className="relative aspect-video min-h-0 w-full max-w-full overflow-hidden rounded-xl bg-[#1a2029] shadow-lg shadow-black/40 ring-1 ring-white/10">
         <div className="flex h-full min-h-[12rem] flex-col items-center justify-center gap-3 px-4 py-8 text-center sm:min-h-0">
+          <Radio className="h-10 w-10 text-slate-500" aria-hidden />
           <p className="text-sm text-gray-400">
-            {locale === 'es' ? 'Evento finalizado' : 'Event ended'}
+            {replayGone
+              ? locale === 'es'
+                ? 'La transmisión ha terminado. Revisa los resultados abajo.'
+                : 'The broadcast has ended. See the results below.'
+              : locale === 'es'
+                ? 'Evento finalizado'
+                : 'Event ended'}
           </p>
           {eventTitle ? (
             <p className="text-lg font-semibold text-white">{eventTitle}</p>
@@ -92,6 +126,16 @@ export function StreamEmbed({
               })}
             </p>
           ) : null}
+        </div>
+      </div>
+    )
+  }
+
+  if (isCompleted && resolvedVideoId && replayAvailable === null) {
+    return (
+      <div className="relative aspect-video min-h-0 w-full max-w-full overflow-hidden rounded-xl bg-[#1a2029] shadow-lg shadow-black/40 ring-1 ring-white/10">
+        <div className="flex h-full min-h-[12rem] items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
         </div>
       </div>
     )
