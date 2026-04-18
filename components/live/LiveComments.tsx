@@ -20,13 +20,23 @@ export type LiveCommentsProps = {
   locale: 'en' | 'es'
   /** Shown as “Commenting as …” (auth user or alias). */
   displayName: string
+  /** When true, hide the composer (used on completed events). */
+  readOnly?: boolean
+  /** Notifies the parent each time the comment list changes (for collapsible headers). */
+  onCountChange?: (n: number) => void
 }
 
 type Props = LiveCommentsProps
 
 const RATE_MS = 5000
 
-export function LiveComments({ eventId, displayName, locale }: Props) {
+export function LiveComments({
+  eventId,
+  displayName,
+  locale,
+  readOnly = false,
+  onCountChange,
+}: Props) {
   const es = locale === 'es'
   const [comments, setComments] = useState<LiveCommentRow[]>([])
   const [text, setText] = useState('')
@@ -67,6 +77,10 @@ export function LiveComments({ eventId, displayName, locale }: Props) {
   useEffect(() => {
     scrollToBottom()
   }, [comments, scrollToBottom])
+
+  useEffect(() => {
+    onCountChange?.(comments.length)
+  }, [comments.length, onCountChange])
 
   useEffect(() => {
     let ch: RealtimeChannel | null = null
@@ -137,11 +151,20 @@ export function LiveComments({ eventId, displayName, locale }: Props) {
   return (
     <div className="rounded-xl border border-[#2d3748] bg-[#1a2029] p-4">
       <h3 className="mb-3 text-sm font-semibold text-white">
-        {es ? '💬 Chat en vivo' : '💬 Live chat'}
+        {readOnly
+          ? es
+            ? 'Chat del evento'
+            : 'Event chat'
+          : es
+            ? '💬 Chat en vivo'
+            : '💬 Live chat'}
       </h3>
-      <p className="mb-2 text-xs text-slate-500">
-        {es ? 'Comentando como' : 'Commenting as'} <span className="text-emerald-400/90">{displayName}</span>
-      </p>
+      {!readOnly && (
+        <p className="mb-2 text-xs text-slate-500">
+          {es ? 'Comentando como' : 'Commenting as'}{' '}
+          <span className="text-emerald-400/90">{displayName}</span>
+        </p>
+      )}
 
       <div
         ref={scrollRef}
@@ -181,6 +204,7 @@ export function LiveComments({ eventId, displayName, locale }: Props) {
 
       {error && <p className="mb-2 text-xs text-red-400">{error}</p>}
 
+      {readOnly ? null : (
       <div className="flex gap-2">
         <input
           type="text"
@@ -205,6 +229,7 @@ export function LiveComments({ eventId, displayName, locale }: Props) {
           {es ? 'Enviar' : 'Send'}
         </button>
       </div>
+      )}
     </div>
   )
 }

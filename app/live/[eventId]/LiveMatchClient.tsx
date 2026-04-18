@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import type { User } from '@supabase/supabase-js'
-import { ArrowLeft, ChevronDown, Share2 } from 'lucide-react'
+import { ArrowLeft, ChevronDown, MessagesSquare, Radio, Share2, Users } from 'lucide-react'
 import { createClient } from '@/lib/supabase-client'
 import { getLiveEventTitle } from '@/lib/live-event-title'
 import { getEventTypeLabel } from '@/lib/live-event-copy'
@@ -36,6 +36,7 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
   const [gateReady, setGateReady] = useState(false)
   const [aliasParticipant, setAliasParticipant] = useState<AliasParticipantJoined | null>(null)
   const [showAliasModal, setShowAliasModal] = useState(false)
+  const [commentCount, setCommentCount] = useState(0)
 
   useEffect(() => {
     void supabase.auth.getUser().then(({ data }) => setUser(data.user ?? null))
@@ -168,24 +169,45 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
   const isCompleted = status === 'completed'
   const isCancelled = status === 'cancelled'
 
+  const participantCount = rankings.length
+  const userScore = currentUserEntry?.total_xp ?? null
+
   const share = useCallback(async () => {
     if (!event) return
     const url = typeof window !== 'undefined' ? window.location.href : ''
     const t = getLiveEventTitle(event, locale)
-    const text =
-      locale === 'es'
-        ? 'Mira mis resultados en Conscious Live'
-        : 'Check out my Conscious Live results'
+    /**
+     * Past-event share copy follows the brief:
+     *   "Participé en {title} en vivo con {N} personas. Mi score: {X} pts."
+     * Falls back to a generic line for live/scheduled events or when the
+     * leaderboard hasn't loaded yet.
+     */
+    const isCompletedNow = event.status === 'completed'
+    let text: string
+    if (isCompletedNow && participantCount > 0) {
+      if (locale === 'es') {
+        text = `Participé en ${t} en vivo con ${participantCount} personas.`
+        if (userScore != null) text += ` Mi score: ${userScore} pts.`
+      } else {
+        text = `I joined ${t} live with ${participantCount} people.`
+        if (userScore != null) text += ` My score: ${userScore} pts.`
+      }
+    } else {
+      text =
+        locale === 'es'
+          ? 'Mira mis resultados en Conscious Live'
+          : 'Check out my Conscious Live results'
+    }
     try {
       if (navigator.share) {
         await navigator.share({ title: t, text, url })
       } else {
-        await navigator.clipboard.writeText(url)
+        await navigator.clipboard.writeText(`${text} ${url}`.trim())
       }
     } catch {
       /* user cancelled or clipboard denied */
     }
-  }, [event, locale])
+  }, [event, locale, participantCount, userScore])
 
   const refreshAfterAdmin = useCallback(() => {
     void refetchEvent()
@@ -408,6 +430,25 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
     />
   )
 
+  const archivedChat = (
+    <LiveComments
+      eventId={eventId}
+      locale={locale === 'es' ? 'es' : 'en'}
+      displayName={commentDisplayName}
+      readOnly
+      onCountChange={setCommentCount}
+    />
+  )
+
+  /** Sums vote rows across all markets for a "{N} votos" footer per item. */
+  const marketVoteCount = (m: (typeof resolvedMarkets)[number]) => {
+    const fromOutcomes = m.outcomes.reduce(
+      (s, o) => s + (typeof o.vote_count === 'number' ? o.vote_count : 0),
+      0
+    )
+    return Math.max(fromOutcomes, Number((m as { total_votes?: number }).total_votes ?? 0))
+  }
+
   const renderLeaderboard = (opts: { isFinal?: boolean } = {}) => (
     <div className="space-y-2">
       {lbError && (
@@ -431,6 +472,136 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
   const leaderboardBlock = renderLeaderboard()
 
   if (isCompleted) {
+    const formattedDate = event.match_date
+      ? new Date(event.match_date).toLocaleDateString(locale === 'es' ? 'es-MX' : 'en-US', {
+          dateStyle: 'long',
+        })
+      : null
+
+    const summaryCard = (
+      <div className="overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-r from-[#1a2029] to-[#0f1419] shadow-lg shadow-black/20">
+        <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:gap-6 sm:p-6">
+          {event.cover_image_url ? (
+            <img
+              src={event.cover_image_url}
+              alt=""
+              className="h-24 w-full shrink-0 rounded-xl object-cover sm:h-24 sm:w-24"
+            />
+          ) : (
+            <div className="flex h-24 w-full shrink-0 items-center justify-center rounded-xl bg-slate-800 text-slate-500 sm:w-24">
+              <Radio className="h-8 w-8" aria-hidden />
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
+              {locale === 'es' ? 'Evento finalizado' : 'Event ended'}
+            </span>
+            <h2 className="mt-0.5 text-lg font-bold text-white sm:text-xl">{title}</h2>
+            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-400">
+              {formattedDate && <span>{formattedDate}</span>}
+              {(formattedDate && (votesCast > 0 || participantCount > 0)) ? (
+                <span className="text-slate-600" aria-hidden>·</span>
+              ) : null}
+              {votesCast > 0 && (
+                <span className="tabular-nums">
+                  {votesCast} {locale === 'es' ? 'votos' : 'votes'}
+                </span>
+              )}
+              {votesCast > 0 && participantCount > 0 && (
+                <span className="text-slate-600" aria-hidden>·</span>
+              )}
+              {participantCount > 0 && (
+                <span className="inline-flex items-center gap-1.5 tabular-nums">
+                  <Users className="h-3.5 w-3.5 text-slate-500" aria-hidden />
+                  {participantCount} {locale === 'es' ? 'participantes' : 'participants'}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+
+    /**
+     * Only attempt the YouTube embed when there's actually a stored video.
+     * StreamEmbed will render its own "broadcast ended" placeholder if the
+     * recording was taken down — but if we never had a video to begin with
+     * the rich summary card above replaces it entirely.
+     */
+    const hasReplay = !!(event.youtube_video_id || event.youtube_url)
+
+    const predictionsBlock = (
+      <div>
+        <h3 className="mb-3 text-base font-semibold text-white">
+          {locale === 'es' ? 'Predicciones del evento' : 'Event predictions'}
+        </h3>
+        <div className="space-y-3">
+          {resolvedMarkets.length === 0 && !mkLoading && (
+            <div className="rounded-xl border border-dashed border-white/10 bg-slate-950/40 px-4 py-6 text-center text-sm text-slate-500">
+              {locale === 'es'
+                ? 'No se registraron predicciones durante este evento.'
+                : 'No predictions were resolved during this event.'}
+            </div>
+          )}
+          {resolvedMarkets.map((m) => {
+            const winner = m.outcomes.find((o) => o.is_winner === true) ?? null
+            const votes = marketVoteCount(m)
+            const question = getMarketText(
+              {
+                title: m.title,
+                description: m.description,
+                resolution_criteria: m.resolution_criteria,
+                translations: (m as { translations?: unknown }).translations as Parameters<
+                  typeof getMarketText
+                >[0]['translations'],
+              },
+              'title',
+              locale
+            )
+            return (
+              <div
+                key={m.id}
+                className="rounded-xl border border-white/10 bg-[#1a2029] px-4 py-3"
+              >
+                <p className="text-sm text-slate-300">{question}</p>
+                <div className="mt-2 flex items-center justify-between gap-3">
+                  {winner ? (
+                    <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-400">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden />
+                      {winner.label}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-slate-500">
+                      {locale === 'es' ? 'Sin ganador registrado' : 'No winner recorded'}
+                    </span>
+                  )}
+                  <span className="text-xs tabular-nums text-slate-500">
+                    {votes} {locale === 'es' ? 'votos' : 'votes'}
+                  </span>
+                </div>
+                <ul className="mt-2 space-y-0.5 text-xs text-slate-400">
+                  {m.outcomes.map((o) => (
+                    <li
+                      key={o.id}
+                      className={cn(
+                        'flex justify-between gap-2',
+                        o.is_winner === true && 'text-emerald-300'
+                      )}
+                    >
+                      <span>{o.label}</span>
+                      <span className="tabular-nums">
+                        {toDisplayPercentRounded(o.probability)}%
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    )
+
     return (
       <div className="flex min-h-screen flex-col bg-[#0f1419]">
         {showAliasModal && !user && (
@@ -440,62 +611,31 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
         <div className="mx-auto w-full max-w-4xl flex-1 px-4 py-6">
           {header}
 
+          <div className="mb-6">{summaryCard}</div>
+
+          {hasReplay && <div className="mb-6">{stream}</div>}
+
+          <div className="mb-6">{ticker}</div>
+
           <div className="mb-6">{renderLeaderboard({ isFinal: true })}</div>
 
-          <div className="mb-6 space-y-4">
-            {stream}
-            {ticker}
-          </div>
+          <div className="mb-6">{predictionsBlock}</div>
 
-          <div className="mb-6">{liveChat}</div>
-
-          <div className="mb-6">
-            <h3 className="mb-3 text-base font-semibold text-white">
-              {locale === 'es' ? 'Mercados resueltos' : 'Resolved markets'}
-            </h3>
-            <div className="space-y-3">
-              {resolvedMarkets.length === 0 && !mkLoading && (
-                <p className="text-sm text-slate-500">{locale === 'es' ? 'Sin datos.' : 'No data.'}</p>
-              )}
-              {resolvedMarkets.map((m) => (
-                <div
-                  key={m.id}
-                  className="rounded-xl border border-white/10 bg-slate-950/60 px-4 py-3"
-                >
-                  <p className="font-medium text-white">
-                    {getMarketText(
-                      {
-                        title: m.title,
-                        description: m.description,
-                        resolution_criteria: m.resolution_criteria,
-                        translations: (m as { translations?: unknown }).translations as Parameters<
-                          typeof getMarketText
-                        >[0]['translations'],
-                      },
-                      'title',
-                      locale
-                    )}
-                  </p>
-                  <ul className="mt-2 space-y-1 text-sm text-slate-300">
-                    {m.outcomes.map((o) => (
-                      <li
-                        key={o.id}
-                        className={cn(
-                          'flex justify-between gap-2',
-                          o.is_winner === true && 'font-semibold text-emerald-400'
-                        )}
-                      >
-                        <span>{o.label}</span>
-                        <span className="tabular-nums text-slate-400">
-                          {toDisplayPercentRounded(o.probability)}%
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </div>
+          <details className="group mb-6 overflow-hidden rounded-xl border border-[#2d3748] bg-[#1a2029]">
+            <summary className="flex min-h-[48px] cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-medium text-slate-300 transition hover:text-white">
+              <span className="inline-flex items-center gap-2">
+                <MessagesSquare className="h-4 w-4 text-slate-500" aria-hidden />
+                {locale === 'es' ? 'Chat del evento' : 'Event chat'}
+                {commentCount > 0 && (
+                  <span className="tabular-nums text-slate-500">
+                    · {commentCount} {locale === 'es' ? 'mensajes' : 'messages'}
+                  </span>
+                )}
+              </span>
+              <ChevronDown className="h-4 w-4 shrink-0 text-slate-500 transition group-open:rotate-180" />
+            </summary>
+            <div className="border-t border-white/5 p-4 pt-3">{archivedChat}</div>
+          </details>
 
           <button
             type="button"
