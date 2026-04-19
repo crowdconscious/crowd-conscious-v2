@@ -63,6 +63,15 @@ export async function POST(request: Request) {
 
   const admin = createAdminClient()
 
+  const lat =
+    typeof body.latitude === 'number' && Number.isFinite(body.latitude)
+      ? body.latitude
+      : null
+  const lng =
+    typeof body.longitude === 'number' && Number.isFinite(body.longitude)
+      ? body.longitude
+      : null
+
   const row = {
     name,
     slug,
@@ -70,6 +79,8 @@ export async function POST(request: Request) {
     city: (body.city as string) || 'CDMX',
     neighborhood: (body.neighborhood as string) || null,
     address: (body.address as string) || null,
+    latitude: lat,
+    longitude: lng,
     description: (body.description as string) || null,
     description_en: (body.description_en as string) || null,
     why_conscious: (body.why_conscious as string) || null,

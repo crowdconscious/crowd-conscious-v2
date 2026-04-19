@@ -6,6 +6,13 @@ import { LOCATION_CATEGORY_FORM_OPTIONS } from '@/lib/locations/categories'
 
 const LIST_BASE = '/predictions/admin/locations'
 
+/**
+ * Founder target for CDMX before the World Cup. Surfaced as a progress
+ * counter at the top of the admin list — purely motivational, the platform
+ * does not enforce this number anywhere else.
+ */
+const MUNDIAL_CDMX_TARGET = 25
+
 type Loc = {
   id: string
   name: string
@@ -67,6 +74,17 @@ export default function AdminLocationsClient() {
     })
   }, [locations, filterStatus, filterCity, filterCategory])
 
+  const cdmxActiveCount = useMemo(
+    () =>
+      locations.filter((l) => l.status === 'active' && /cdmx|mexico city/i.test(l.city))
+        .length,
+    [locations]
+  )
+  const progressPct = Math.min(
+    100,
+    Math.round((cdmxActiveCount / MUNDIAL_CDMX_TARGET) * 100)
+  )
+
   const pause = async (id: string) => {
     if (!confirm('¿Suspender esta ubicación?')) return
     setPausingId(id)
@@ -106,12 +124,42 @@ export default function AdminLocationsClient() {
             Manage certified venues, brands, and influencers
           </p>
         </div>
-        <Link
-          href={`${LIST_BASE}/new`}
-          className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500"
-        >
-          + Agregar
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href={`${LIST_BASE}/bulk-import`}
+            className="rounded-lg border border-cc-border px-4 py-2 text-sm font-medium text-emerald-400 hover:bg-emerald-500/10"
+          >
+            Importar CSV
+          </Link>
+          <Link
+            href={`${LIST_BASE}/new`}
+            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500"
+          >
+            + Agregar
+          </Link>
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-cc-border bg-[#1a2029] p-4">
+        <div className="flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
+              CDMX · meta Mundial
+            </p>
+            <p className="mt-1 text-lg font-semibold text-white">
+              {cdmxActiveCount} / {MUNDIAL_CDMX_TARGET} lugares para el Mundial
+            </p>
+          </div>
+          <p className="text-xs text-cc-text-secondary">
+            Solo lugares activos en CDMX cuentan
+          </p>
+        </div>
+        <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-cc-card">
+          <div
+            className="h-full bg-emerald-500 transition-all"
+            style={{ width: `${progressPct}%` }}
+          />
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-3">

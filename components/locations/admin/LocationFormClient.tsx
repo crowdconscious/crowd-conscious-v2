@@ -9,7 +9,9 @@ import {
   LOCATION_CATEGORY_FORM_OPTIONS,
 } from '@/lib/locations/categories'
 import { CONSCIOUS_VALUE_OPTIONS, parseMetadataValues, type ConsciousValueKey } from '@/lib/locations/conscious-values'
+import { slugifyLocationName } from '@/lib/locations/slug'
 import type { Json } from '@/types/database'
+import { LocationCreatedShareCard } from './LocationCreatedShareCard'
 
 const LIST_PATH = '/predictions/admin/locations'
 
@@ -18,14 +20,7 @@ const darkInput =
 const darkTextarea = darkInput + ' resize-y min-h-[88px]'
 const labelClass = 'text-sm font-medium text-gray-300'
 
-function slugify(name: string) {
-  return name
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
-}
+const slugify = slugifyLocationName
 
 export default function LocationFormClient({ action }: { action: string }) {
   const router = useRouter()
@@ -35,6 +30,11 @@ export default function LocationFormClient({ action }: { action: string }) {
   const [showEnglish, setShowEnglish] = useState(false)
   const [showDetails, setShowDetails] = useState(false)
   const [baseMetadata, setBaseMetadata] = useState<Record<string, unknown>>({})
+  const [shareCard, setShareCard] = useState<{
+    name: string
+    slug: string
+    marketCreated: boolean
+  } | null>(null)
 
   const [name, setName] = useState('')
   const [slug, setSlug] = useState('')
@@ -198,14 +198,27 @@ export default function LocationFormClient({ action }: { action: string }) {
         alert(json.error || 'Error')
         return
       }
-      if (isNew && status === 'active') {
-        alert('Ubicación creada. Mercado de votación activo.')
+      if (isNew) {
+        const createdSlug = (json.location?.slug as string | undefined) ?? slug.trim()
+        const createdName = (json.location?.name as string | undefined) ?? name.trim()
+        setShareCard({
+          name: createdName,
+          slug: createdSlug,
+          marketCreated: status === 'active' && Boolean(json.market?.id),
+        })
+        return
       }
       router.push(LIST_PATH)
       router.refresh()
     } finally {
       setSaving(false)
     }
+  }
+
+  const closeShareCard = () => {
+    setShareCard(null)
+    router.push(LIST_PATH)
+    router.refresh()
   }
 
   if (loading) {
@@ -454,8 +467,18 @@ export default function LocationFormClient({ action }: { action: string }) {
         onClick={() => void submit()}
         className="rounded-lg bg-emerald-600 px-6 py-3 font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
       >
-        {saving ? '…' : 'Guardar'}
+        {saving ? '…' : isNew && status === 'active' ? 'Crear y lanzar mercado' : 'Guardar'}
       </button>
+
+      {shareCard && (
+        <LocationCreatedShareCard
+          isOpen
+          onClose={closeShareCard}
+          name={shareCard.name}
+          slug={shareCard.slug}
+          marketCreated={shareCard.marketCreated}
+        />
+      )}
     </div>
   )
 }
