@@ -5,6 +5,7 @@ import { createClientAuth } from '@/lib/auth'
 import Link from 'next/link'
 import { Wallet, ShoppingCart, Building2, Users, FileText, Home } from 'lucide-react'
 import MarketplaceReviewTab from './MarketplaceReviewTab'
+import CronHealthTile from '@/components/admin/CronHealthTile'
 
 interface AdminData {
   communities: Array<{
@@ -173,6 +174,12 @@ export default function AdminDashboardClient() {
               </Link>
             </div>
           </div>
+        </div>
+
+        {/* Cron Health — first thing visible on /admin so on-call can spot
+            failures within 30s. Mobile-first by design (no horizontal scroll). */}
+        <div className="mb-6">
+          <CronHealthTile />
         </div>
 
         {/* Navigation Tabs */}

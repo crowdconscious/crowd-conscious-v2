@@ -2,22 +2,15 @@ import { NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth-server'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { cronJobIsHealthy } from '@/lib/cron-health'
-
-const CRON_JOBS = [
-  'ceo-digest',
-  'content-creator',
-  'news-monitor',
-  'inbox-curator',
-  'newsletter',
-  'daily-market-digest',
-  'reengagement-inactive',
-  'monthly-impact',
-  'sponsor-report',
-] as const
+import { CRON_CATALOG } from '@/lib/cron-catalog'
 
 /**
  * GET /api/admin/cron-health
  * Last run per scheduled cron — Intelligence Hub System Health.
+ *
+ * Returns one row per entry in `lib/cron-catalog.ts`. Adding a new cron
+ * job means: (1) add the route, (2) add a vercel.json schedule, (3) add
+ * an entry to CRON_CATALOG. The tile picks it up automatically.
  */
 export async function GET() {
   try {
@@ -39,11 +32,11 @@ export async function GET() {
     }
 
     const results = await Promise.all(
-      CRON_JOBS.map(async (name) => {
+      CRON_CATALOG.map(async (job) => {
         const { data } = await supabase
           .from('cron_job_runs')
           .select('status, started_at, completed_at, error_message, summary')
-          .eq('job_name', name)
+          .eq('job_name', job.name)
           .order('started_at', { ascending: false })
           .limit(1)
           .maybeSingle()
@@ -52,12 +45,15 @@ export async function GET() {
         const status = (data?.status as string | undefined) ?? 'never_run'
 
         return {
-          agent: name,
+          agent: job.name,
+          schedule: job.schedule,
+          kind: job.kind,
+          description: job.description,
           lastRun,
           status,
           error: (data?.error_message as string | null) ?? null,
           summary: (data?.summary as string | null) ?? null,
-          isHealthy: cronJobIsHealthy(name, status, lastRun),
+          isHealthy: cronJobIsHealthy(job.name, status, lastRun),
         }
       })
     )
