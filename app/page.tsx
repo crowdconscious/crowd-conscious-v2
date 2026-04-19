@@ -103,6 +103,7 @@ async function getLandingData() {
     locActiveCountRes,
     locTopRes,
     allTimeVotesRes,
+    mundialFoundingTakenRes,
   ] = await Promise.all([
     supabase
       .from('prediction_markets')
@@ -168,6 +169,11 @@ async function getLandingData() {
       .order('sort_order', { ascending: true })
       .limit(3),
     supabase.from('prediction_markets').select('total_votes, engagement_count').is('archived_at', null),
+    supabase
+      .from('sponsorships')
+      .select('id', { count: 'exact', head: true })
+      .eq('tier', 'mundial_pack_founding')
+      .in('status', ['active', 'completed']),
   ])
 
   const markets = (marketsRes.data || []) as MarketCardMarket[]
@@ -216,6 +222,16 @@ async function getLandingData() {
   const locFeaturedCount = locFeaturedCountRes.count ?? 0
   const locActiveCount = locActiveCountRes.count ?? 0
   const showLocationsSection = locFeaturedCount >= 1 || locActiveCount >= 3
+
+  const MUNDIAL_FOUNDING_TOTAL = 5
+  const mundialFoundingTaken = Math.min(
+    MUNDIAL_FOUNDING_TOTAL,
+    mundialFoundingTakenRes.count ?? 0
+  )
+  const mundialFoundingRemaining = Math.max(
+    0,
+    MUNDIAL_FOUNDING_TOTAL - mundialFoundingTaken
+  )
   const landingLocationCards = (locTopRes.data ?? []) as Array<{
     id: string
     name: string
@@ -250,6 +266,7 @@ async function getLandingData() {
     profileCount,
     showLocationsSection,
     landingLocationCards,
+    mundialFoundingRemaining,
   }
 }
 
@@ -267,6 +284,7 @@ export default async function LandingPage() {
   let activeCauseName: string | null = null
   let showLocationsSection = false
   let landingLocationCards: Awaited<ReturnType<typeof getLandingData>>['landingLocationCards'] = []
+  let mundialFoundingRemaining = 0
 
   try {
     const data = await getLandingData()
@@ -280,6 +298,7 @@ export default async function LandingPage() {
     activeCauseName = data.activeCauseName
     showLocationsSection = data.showLocationsSection
     landingLocationCards = data.landingLocationCards
+    mundialFoundingRemaining = data.mundialFoundingRemaining
   } catch (e) {
     console.error('Landing data fetch error:', e)
   }
@@ -347,6 +366,43 @@ export default async function LandingPage() {
                 </div>
               ))}
             </div>
+          </section>
+        ) : null}
+
+        {/* ─────────── BLOCK 2.5 — Mundial Founding scarcity tile ─────────── */}
+        {mundialFoundingRemaining > 0 ? (
+          <section className="mx-auto max-w-6xl px-4 pb-6 md:px-8">
+            <Link
+              href="/pulse#mundial-pack"
+              className="group block overflow-hidden rounded-2xl border border-amber-500/40 bg-gradient-to-r from-amber-500/15 via-emerald-500/10 to-amber-500/15 p-6 transition-all hover:border-amber-400/60 hover:from-amber-500/20 hover:to-amber-500/20 md:p-8"
+            >
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div className="flex-1">
+                  <div className="mb-2 flex items-center gap-2">
+                    <span className="inline-flex h-2 w-2 animate-pulse rounded-full bg-red-500" />
+                    <p className="text-xs font-semibold uppercase tracking-wider text-amber-300">
+                      {locale === 'es'
+                        ? `Solo ${mundialFoundingRemaining} ${mundialFoundingRemaining === 1 ? 'marca Fundadora' : 'marcas Fundadoras'} restantes`
+                        : `Only ${mundialFoundingRemaining} Founding ${mundialFoundingRemaining === 1 ? 'brand' : 'brands'} left`}
+                    </p>
+                  </div>
+                  <h2 className="mb-2 text-xl font-bold text-white md:text-2xl">
+                    {locale === 'es'
+                      ? 'Edición Mundial 2026 — Solo 5 marcas Fundadoras'
+                      : 'World Cup 2026 Edition — Only 5 Founding brands'}
+                  </h2>
+                  <p className="max-w-xl text-sm text-gray-300 md:text-base">
+                    {locale === 'es'
+                      ? 'Aparece frente a 20K+ fans mexicanos durante el torneo. 50% de descuento permanente y reconocimiento de por vida.'
+                      : 'Appear in front of 20K+ Mexican fans during the tournament. 50% permanent discount and lifetime recognition.'}
+                  </p>
+                </div>
+                <span className="inline-flex min-h-[44px] shrink-0 items-center gap-2 rounded-xl bg-amber-500 px-5 py-3 text-sm font-semibold text-gray-900 shadow-lg shadow-amber-500/20 transition-all group-hover:bg-amber-400">
+                  {locale === 'es' ? 'Ver plan' : 'See plan'}
+                  <ChevronRight className="h-4 w-4" />
+                </span>
+              </div>
+            </Link>
           </section>
         ) : null}
 

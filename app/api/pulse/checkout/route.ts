@@ -108,14 +108,38 @@ const tierEnum = z.enum([
   'mundial_pack_founding',
 ])
 
-const schema = z.object({
-  tier: tierEnum,
-  company_name: z.string().min(1),
-  contact_email: z.string().email(),
-  website: z.string().optional(),
-  logo_url: z.string().optional(),
-  coupon_code: z.string().optional(),
-})
+const schema = z
+  .object({
+    tier: tierEnum,
+    company_name: z.string().min(1),
+    contact_email: z.string().email(),
+    website: z.string().optional(),
+    logo_url: z.string().optional(),
+    coupon_code: z.string().optional(),
+    contact_name: z.string().trim().optional(),
+    brand_pitch: z.string().trim().max(280).optional(),
+  })
+  .superRefine((data, ctx) => {
+    // Mundial Pack tiers warrant a real contact name + a one-sentence pitch
+    // because the founder follows up personally within 24h. Other tiers stay
+    // optional so the cheap SKUs keep their frictionless checkout.
+    const isMundial = data.tier === 'mundial_pack' || data.tier === 'mundial_pack_founding'
+    if (!isMundial) return
+    if (!data.contact_name || !data.contact_name.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['contact_name'],
+        message: 'contact_name is required for Mundial Pack',
+      })
+    }
+    if (!data.brand_pitch || !data.brand_pitch.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['brand_pitch'],
+        message: 'brand_pitch is required for Mundial Pack',
+      })
+    }
+  })
 
 const TIER_LABELS: Record<PulseTierId, string> = {
   pilot: 'Pilot Pulse',
@@ -136,8 +160,16 @@ export async function POST(request: NextRequest) {
       return ApiResponse.badRequest(msg, 'VALIDATION_ERROR')
     }
 
-    const { tier: tierId, company_name, contact_email, website, logo_url, coupon_code: couponCodeRaw } =
-      parsed.data
+    const {
+      tier: tierId,
+      company_name,
+      contact_email,
+      website,
+      logo_url,
+      coupon_code: couponCodeRaw,
+      contact_name,
+      brand_pitch,
+    } = parsed.data
 
     const tier = PULSE_TIERS[tierId]
     const basePriceMXN: number = tier.priceMXN
@@ -198,6 +230,8 @@ export async function POST(request: NextRequest) {
         tier: tierId,
         company_name,
         contact_email,
+        contact_name: contact_name?.trim() || '',
+        brand_pitch: brand_pitch?.trim() || '',
         logo_url: logo_url || '',
         website: website || '',
         coupon_id: couponId || '',

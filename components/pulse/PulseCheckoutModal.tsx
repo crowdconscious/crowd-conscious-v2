@@ -28,8 +28,12 @@ export function PulseCheckoutModal({ isOpen, onClose, tier, tierLabel, locale }:
   const [email, setEmail] = useState('')
   const [url, setUrl] = useState('')
   const [logoUrl, setLogoUrl] = useState('')
+  const [contactName, setContactName] = useState('')
+  const [brandPitch, setBrandPitch] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  const isMundial = tier === 'mundial_pack' || tier === 'mundial_pack_founding'
   const [couponCode, setCouponCode] = useState('')
   const [appliedCoupon, setAppliedCoupon] = useState<{
     coupon_id: string
@@ -120,6 +124,12 @@ export function PulseCheckoutModal({ isOpen, onClose, tier, tierLabel, locale }:
           contact_email: email.trim(),
           website: url || undefined,
           logo_url: finalLogoUrl || undefined,
+          ...(isMundial
+            ? {
+                contact_name: contactName.trim(),
+                brand_pitch: brandPitch.trim(),
+              }
+            : {}),
           ...(appliedCoupon ? { coupon_code: couponCode.trim().toUpperCase() } : {}),
         }),
       })
@@ -215,6 +225,48 @@ export function PulseCheckoutModal({ isOpen, onClose, tier, tierLabel, locale }:
             label={es ? 'Logo (opcional)' : 'Logo (optional)'}
           />
 
+          {isMundial && (
+            <>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-400">
+                  {es ? 'Nombre del contacto *' : 'Contact name *'}
+                </label>
+                <input
+                  type="text"
+                  value={contactName}
+                  onChange={(e) => setContactName(e.target.value)}
+                  required
+                  className="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500"
+                  placeholder={es ? 'Quién recibirá el seguimiento' : 'Who we should follow up with'}
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-400">
+                  {es
+                    ? 'Tu marca en una frase * (máx. 280 caracteres)'
+                    : 'Your brand in one sentence * (max 280 chars)'}
+                </label>
+                <textarea
+                  value={brandPitch}
+                  onChange={(e) => setBrandPitch(e.target.value.slice(0, 280))}
+                  required
+                  rows={2}
+                  className="w-full resize-y rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500"
+                  placeholder={
+                    es
+                      ? 'Ej: "Cerveza artesanal mexicana con presencia en 80+ bares de CDMX"'
+                      : 'e.g. "Mexican craft brewery with 80+ CDMX bars on tap"'
+                  }
+                />
+                <p className="mt-1 text-xs text-slate-500">
+                  {es
+                    ? 'Te contactamos en 24h para definir tus 5 Pulses.'
+                    : 'We follow up within 24h to scope your 5 Pulses.'}
+                </p>
+              </div>
+            </>
+          )}
+
           <div className="mt-1">
             <label className="mb-1 block text-sm font-medium text-slate-400">
               {es ? '¿Tienes un código de descuento?' : 'Have a discount code?'}
@@ -297,7 +349,10 @@ export function PulseCheckoutModal({ isOpen, onClose, tier, tierLabel, locale }:
             </button>
             <button
               type="submit"
-              disabled={loading}
+              disabled={
+                loading ||
+                (isMundial && (!contactName.trim() || !brandPitch.trim()))
+              }
               className="flex-1 rounded-lg bg-emerald-600 py-2.5 font-medium text-white transition-colors hover:bg-emerald-500 disabled:opacity-50"
             >
               {loading

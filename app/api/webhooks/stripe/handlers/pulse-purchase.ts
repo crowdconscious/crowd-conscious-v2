@@ -1,6 +1,11 @@
 import Stripe from 'stripe'
 import { getSupabase } from '../lib/stripe-webhook-utils'
-import { sendSponsorConfirmationEmail, sendSponsorshipAdminNotification } from '@/lib/resend'
+import {
+  sendSponsorConfirmationEmail,
+  sendSponsorshipAdminNotification,
+  sendMundialPackBuyerConfirmation,
+  sendMundialPackFounderAlert,
+} from '@/lib/resend'
 import {
   PULSE_TIERS,
   calculatePulseFundAllocationRounded,
@@ -8,6 +13,8 @@ import {
   type PulseTierId,
 } from '@/lib/pulse-tiers'
 import { getPulseTierBenefits } from '@/lib/pulse-tier-benefits'
+
+const MUNDIAL_FOUNDING_TOTAL = 5
 
 type SponsorAccountRow = {
   id: string
@@ -331,6 +338,60 @@ export async function handlePulsePurchase(session: Stripe.Checkout.Session) {
     fundPercent: alloc.fundPercent,
     marketTitle: 'Conscious Pulse (B2B)',
   })
+
+  if (tierId === 'mundial_pack' || tierId === 'mundial_pack_founding') {
+    const isFounding = tierId === 'mundial_pack_founding'
+    const contactNameMeta =
+      ((metadata.contact_name as string) || session.customer_details?.name || '').trim() || null
+    const brandPitch = ((metadata.brand_pitch as string) || '').trim() || null
+
+    let spotsRemainingAfter: number | null = null
+    if (isFounding) {
+      const { count } = await (supabase as any)
+        .from('sponsorships')
+        .select('id', { count: 'exact', head: true })
+        .eq('tier', 'mundial_pack_founding')
+        .in('status', ['active', 'completed'])
+      const taken = Math.min(MUNDIAL_FOUNDING_TOTAL, count ?? 0)
+      spotsRemainingAfter = Math.max(0, MUNDIAL_FOUNDING_TOTAL - taken)
+    }
+
+    if (contactEmail) {
+      try {
+        await sendMundialPackBuyerConfirmation({
+          email: contactEmail,
+          companyName,
+          contactName: contactNameMeta,
+          isFounding,
+          amountMXN,
+        })
+      } catch (e) {
+        console.error('Pulse purchase: Mundial buyer confirmation failed', e)
+      }
+    }
+
+    try {
+      const baseUrl =
+        process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') || 'https://crowdconscious.app'
+      await sendMundialPackFounderAlert({
+        companyName,
+        contactName: contactNameMeta,
+        contactEmail,
+        brandPitch,
+        website: (metadata.website as string) || null,
+        amountMXN,
+        isFounding,
+        fundAmount,
+        sponsorshipId: sponsorshipId ?? null,
+        spotsRemainingAfter,
+        dashboardUrl: sponsorAccount
+          ? `${baseUrl}/dashboard/sponsor/${sponsorAccount.access_token}`
+          : null,
+      })
+    } catch (e) {
+      console.error('Pulse purchase: Mundial founder alert failed', e)
+    }
+  }
 
   console.log('Pulse purchase completed:', {
     sessionId: session.id,

@@ -54,6 +54,8 @@ export function MundialPulsePackCard({ locale }: Props) {
   const founding = PULSE_TIERS.mundial_pack_founding
   const remaining = spots?.founding_remaining ?? 5
   const total = spots?.founding_total ?? 5
+  const soldOut = remaining <= 0
+  const lastFew = remaining > 0 && remaining <= 4
 
   const regularName = es ? regular.name : regular.nameEn
   const foundingName = es ? founding.name : founding.nameEn
@@ -84,39 +86,89 @@ export function MundialPulsePackCard({ locale }: Props) {
             </p>
           </div>
 
-          <div className="mt-10 grid gap-6 lg:grid-cols-2">
-            {/* Founding Sponsor — first 5, 50% off */}
-            <div className="relative flex flex-col rounded-2xl border-2 border-amber-500/60 bg-gradient-to-br from-[#1a2029] to-amber-950/10 p-6 shadow-lg shadow-amber-900/20">
-              <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-amber-500 px-3 py-0.5 text-xs font-semibold text-slate-900">
-                {es ? 'Founding · 50% OFF' : 'Founding · 50% OFF'}
+          <div
+            className={`mt-10 grid gap-6 ${soldOut ? 'mx-auto max-w-xl' : 'lg:grid-cols-2'}`}
+          >
+            {/* Founding Sponsor — first 5, 50% off. Once sold out, this card
+                swaps to a "last spots, full pricing" callout that mirrors the
+                regular SKU so the page never looks empty. */}
+            <div
+              className={`relative flex flex-col rounded-2xl border-2 p-6 shadow-lg ${
+                soldOut
+                  ? 'border-emerald-500/40 bg-gradient-to-br from-[#1a2029] to-emerald-950/10 shadow-emerald-900/20'
+                  : 'border-amber-500/60 bg-gradient-to-br from-[#1a2029] to-amber-950/10 shadow-amber-900/20'
+              }`}
+            >
+              <span
+                className={`absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-0.5 text-xs font-semibold ${
+                  soldOut ? 'bg-emerald-500 text-slate-900' : 'bg-amber-500 text-slate-900'
+                }`}
+              >
+                {soldOut
+                  ? es
+                    ? 'Edición Mundial 2026 — últimos espacios'
+                    : 'World Cup 2026 — last spots'
+                  : es
+                    ? 'Founding · 50% OFF permanente'
+                    : 'Founding · 50% OFF for life'}
               </span>
-              <h3 className="text-lg font-bold text-white">{foundingName}</h3>
+              <h3 className="text-lg font-bold text-white">
+                {soldOut ? regularName : foundingName}
+              </h3>
               <div className="mt-1 flex items-baseline gap-2">
-                <p className="text-3xl font-bold text-amber-400">
-                  ${founding.priceMXN.toLocaleString()} MXN
+                <p
+                  className={`text-3xl font-bold ${
+                    soldOut ? 'text-emerald-400' : 'text-amber-400'
+                  }`}
+                >
+                  ${(soldOut ? regular.priceMXN : founding.priceMXN).toLocaleString()} MXN
                 </p>
-                <p className="text-sm text-slate-500 line-through">
-                  ${regular.priceMXN.toLocaleString()}
-                </p>
+                {!soldOut && (
+                  <p className="text-sm text-slate-500 line-through">
+                    ${regular.priceMXN.toLocaleString()}
+                  </p>
+                )}
               </div>
               <p className="mt-1 text-xs text-slate-500">
-                {es ? '~$1,250 USD · pago único' : '~$1,250 USD · one-time'}
+                {soldOut
+                  ? es
+                    ? '~$2,500 USD · pago único'
+                    : '~$2,500 USD · one-time'
+                  : es
+                    ? '~$1,250 USD · pago único'
+                    : '~$1,250 USD · one-time'}
               </p>
 
-              <p className="mt-3 text-sm font-semibold text-amber-300">
-                {remaining > 0
-                  ? es
-                    ? `Solo quedan ${remaining} de ${total} espacios`
-                    : `Only ${remaining} of ${total} spots left`
-                  : es
-                    ? 'Todos los espacios fundadores están tomados'
-                    : 'All founding spots are taken'}
-              </p>
+              {!soldOut && (
+                <p
+                  className={`mt-3 inline-flex items-center gap-2 text-sm font-semibold ${
+                    lastFew ? 'text-red-400' : 'text-amber-300'
+                  }`}
+                >
+                  {lastFew && (
+                    <span className="relative flex h-2.5 w-2.5">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+                      <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+                    </span>
+                  )}
+                  {es
+                    ? `Solo quedan ${remaining} espacios Fundadores`
+                    : `Only ${remaining} Founding spots left`}
+                  <span className="text-xs font-normal text-slate-500">
+                    ({remaining}/{total})
+                  </span>
+                </p>
+              )}
 
               <ul className="mt-4 flex-1 space-y-2 text-sm text-slate-300">
-                {foundingFeatures.map((f) => (
+                {(soldOut ? regularFeatures : foundingFeatures).map((f) => (
                   <li key={f} className="flex gap-2">
-                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" aria-hidden />
+                    <Check
+                      className={`mt-0.5 h-4 w-4 shrink-0 ${
+                        soldOut ? 'text-emerald-500' : 'text-amber-500'
+                      }`}
+                      aria-hidden
+                    />
                     <span>{f}</span>
                   </li>
                 ))}
@@ -124,21 +176,26 @@ export function MundialPulsePackCard({ locale }: Props) {
 
               <button
                 type="button"
-                disabled={remaining <= 0}
-                onClick={() => setOpenTier('mundial_pack_founding')}
-                className="mt-6 w-full rounded-xl bg-amber-500 py-3 text-sm font-semibold text-slate-900 transition hover:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => setOpenTier(soldOut ? 'mundial_pack' : 'mundial_pack_founding')}
+                className={`mt-6 w-full rounded-xl py-3 text-sm font-semibold transition ${
+                  soldOut
+                    ? 'bg-emerald-600 text-white hover:bg-emerald-500'
+                    : 'bg-amber-500 text-slate-900 hover:bg-amber-400'
+                }`}
               >
-                {remaining > 0
+                {soldOut
                   ? es
-                    ? 'Reservar mi espacio fundador'
-                    : 'Claim my founding spot'
+                    ? 'Reservar mi espacio Mundial'
+                    : 'Reserve my World Cup spot'
                   : es
-                    ? 'Lista de espera'
-                    : 'Join waitlist'}
+                    ? 'Reservar mi espacio fundador'
+                    : 'Claim my founding spot'}
               </button>
             </div>
 
-            {/* Regular Mundial Pulse Pack */}
+            {/* Regular Mundial Pulse Pack — hidden once founding sells out so
+                the page doesn't show two side-by-side cards at the same price. */}
+            {!soldOut && (
             <div className="relative flex flex-col rounded-2xl border border-emerald-500/30 bg-[#1a2029] p-6">
               <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-emerald-600 px-3 py-0.5 text-xs font-semibold text-white">
                 {es ? 'Edición Mundial' : 'World Cup Edition'}
@@ -171,6 +228,7 @@ export function MundialPulsePackCard({ locale }: Props) {
                 {es ? 'Reservar mi espacio' : 'Reserve my spot'}
               </button>
             </div>
+            )}
           </div>
         </div>
       </section>

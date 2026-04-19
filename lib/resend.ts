@@ -813,3 +813,163 @@ export async function sendEmployeeInvitationEmail(
   const result = await sendEmail(email, template)
   return result.success
 }
+
+/**
+ * Mundial Pack — buyer confirmation. Reassures the brand that we'll reach
+ * out personally within 24h to scope their 5 Pulses. Kept short on purpose:
+ * the Stripe receipt already covers the financial side.
+ */
+export async function sendMundialPackBuyerConfirmation(params: {
+  email: string
+  companyName: string
+  contactName?: string | null
+  isFounding: boolean
+  amountMXN: number
+}): Promise<boolean> {
+  const { email, companyName, contactName, isFounding, amountMXN } = params
+  const greeting = contactName ? `Hola ${contactName},` : `Hola ${companyName},`
+  const tierLabel = isFounding
+    ? 'Mundial Pulse Pack — Founding'
+    : 'Mundial Pulse Pack'
+  const template = {
+    subject: `🏆 ${tierLabel} confirmado — te contactamos en 24h`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #0f1419; color: #e5e7eb;">
+        <div style="background: linear-gradient(135deg, #d97706, #10b981); padding: 24px; text-align: center;">
+          <h1 style="color: white; margin: 0; font-size: 22px;">🏆 ${tierLabel}</h1>
+          <p style="color: rgba(255,255,255,0.9); margin: 6px 0 0;">${companyName}</p>
+        </div>
+        <div style="padding: 28px 24px;">
+          <p style="margin: 0 0 14px; font-size: 15px; line-height: 1.6;">${greeting}</p>
+          <p style="margin: 0 0 14px; font-size: 14px; line-height: 1.6; color: #d1d5db;">
+            Recibimos tu pago de <strong>$${amountMXN.toLocaleString()} MXN</strong>. Eres parte de la edición Mundial 2026 de Crowd Conscious.
+          </p>
+          <p style="margin: 0 0 14px; font-size: 14px; line-height: 1.6; color: #d1d5db;">
+            <strong>Dentro de 24h te contactamos</strong> para definir tus 5 Pulses, calendarizarlos en torno al torneo y recibir tus assets de marca.
+          </p>
+          <p style="margin: 0 0 14px; font-size: 14px; line-height: 1.6; color: #d1d5db;">
+            Mientras tanto, te enviaremos por separado el enlace de acceso a tu dashboard de sponsor.
+          </p>
+          <p style="margin: 24px 0 0; font-size: 13px; color: #6b7280;">
+            Cualquier duda, responde a este correo.
+          </p>
+        </div>
+        <div style="padding: 16px 24px; text-align: center; border-top: 1px solid #2d3748;">
+          <p style="color: #6b7280; font-size: 11px; margin: 0;">Crowd Conscious · CDMX</p>
+        </div>
+      </div>
+    `,
+  }
+  const result = await sendEmail(email, template)
+  return result.success
+}
+
+/**
+ * Mundial Pack — admin alert. Loud subject + a fully drafted Spanish reply
+ * so the founder can answer the brand in <2 minutes. The reply is delivered
+ * as a `mailto:` link so a single tap pre-fills the email client.
+ */
+export async function sendMundialPackFounderAlert(params: {
+  companyName: string
+  contactName: string | null
+  contactEmail: string
+  brandPitch: string | null
+  website: string | null
+  amountMXN: number
+  isFounding: boolean
+  fundAmount: number
+  sponsorshipId: string | null
+  spotsRemainingAfter: number | null
+  dashboardUrl: string | null
+}): Promise<boolean> {
+  const adminEmail = process.env.ADMIN_EMAIL || 'comunidad@crowdconscious.app'
+  const {
+    companyName,
+    contactName,
+    contactEmail,
+    brandPitch,
+    website,
+    amountMXN,
+    isFounding,
+    fundAmount,
+    sponsorshipId,
+    spotsRemainingAfter,
+    dashboardUrl,
+  } = params
+
+  const tierLabel = isFounding
+    ? 'Mundial Pulse Pack — Founding ($25,000 MXN)'
+    : 'Mundial Pulse Pack ($50,000 MXN)'
+
+  const replyName = contactName || companyName
+  const draftReply = `Hola ${replyName},
+
+¡Bienvenido al ${tierLabel}! Soy [TU NOMBRE], fundador de Crowd Conscious.
+
+Para arrancar tus 5 Pulses, necesito 15 minutos contigo esta semana. Te paso un calendario: [LINK CAL]. La idea es que las primeras 2 preguntas salgan antes del primer partido del Mundial.
+
+Cualquier cosa, responde aquí.
+
+Saludos,
+[TU NOMBRE]`
+
+  const mailto = `mailto:${encodeURIComponent(contactEmail)}?subject=${encodeURIComponent(
+    `Re: ${tierLabel} — ${companyName}`
+  )}&body=${encodeURIComponent(draftReply)}`
+
+  const subject = `🚨 Nuevo Mundial Pack: ${companyName}`
+  const template = {
+    subject,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; color: #0f172a;">
+        <div style="background: linear-gradient(135deg, #b91c1c, #d97706); padding: 22px; text-align: center; border-radius: 8px 8px 0 0;">
+          <h1 style="color: white; margin: 0; font-size: 20px;">🚨 Nuevo Mundial Pack</h1>
+          <p style="color: rgba(255,255,255,0.9); margin: 4px 0 0; font-size: 13px;">Responder en &lt; 2 min con el draft de abajo</p>
+        </div>
+        <div style="padding: 22px; background: #f8fafc; border-radius: 0 0 8px 8px;">
+          <table style="width: 100%; font-size: 13px; line-height: 1.6;">
+            <tr><td style="padding: 4px 0; color: #475569; width: 38%;"><strong>Empresa:</strong></td><td style="padding: 4px 0;">${companyName}</td></tr>
+            <tr><td style="padding: 4px 0; color: #475569;"><strong>Contacto:</strong></td><td style="padding: 4px 0;">${contactName || '—'}</td></tr>
+            <tr><td style="padding: 4px 0; color: #475569;"><strong>Email:</strong></td><td style="padding: 4px 0;"><a href="mailto:${contactEmail}" style="color: #0f766e;">${contactEmail}</a></td></tr>
+            ${website ? `<tr><td style="padding: 4px 0; color: #475569;"><strong>Sitio:</strong></td><td style="padding: 4px 0;"><a href="${website}" style="color: #0f766e;">${website}</a></td></tr>` : ''}
+            <tr><td style="padding: 4px 0; color: #475569;"><strong>Tier:</strong></td><td style="padding: 4px 0;">${tierLabel}</td></tr>
+            <tr><td style="padding: 4px 0; color: #475569;"><strong>Pago:</strong></td><td style="padding: 4px 0;">$${amountMXN.toLocaleString()} MXN</td></tr>
+            <tr><td style="padding: 4px 0; color: #475569;"><strong>→ Fondo Consciente:</strong></td><td style="padding: 4px 0;">$${fundAmount.toLocaleString()} MXN (estimado neto)</td></tr>
+            ${
+              isFounding && spotsRemainingAfter != null
+                ? `<tr><td style="padding: 4px 0; color: #475569;"><strong>Espacios Founding restantes:</strong></td><td style="padding: 4px 0;">${spotsRemainingAfter} / 5</td></tr>`
+                : ''
+            }
+            ${sponsorshipId ? `<tr><td style="padding: 4px 0; color: #475569;"><strong>Sponsorship ID:</strong></td><td style="padding: 4px 0; font-family: monospace; font-size: 12px;">${sponsorshipId}</td></tr>` : ''}
+          </table>
+
+          ${
+            brandPitch
+              ? `<div style="margin-top: 18px; padding: 12px 14px; background: #ecfdf5; border-left: 3px solid #10b981; border-radius: 4px;">
+                  <p style="margin: 0 0 4px; font-size: 12px; font-weight: 600; color: #065f46;">Pitch de la marca:</p>
+                  <p style="margin: 0; font-size: 13px; line-height: 1.55; color: #064e3b;">${brandPitch}</p>
+                </div>`
+              : ''
+          }
+
+          <div style="margin-top: 20px; padding: 14px; background: #fff7ed; border-left: 3px solid #f59e0b; border-radius: 4px;">
+            <p style="margin: 0 0 6px; font-size: 12px; font-weight: 600; color: #92400e;">Draft listo para enviar:</p>
+            <pre style="margin: 0; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 12px; line-height: 1.55; color: #422006; white-space: pre-wrap;">${draftReply}</pre>
+            <div style="margin-top: 12px; text-align: center;">
+              <a href="${mailto}" style="display: inline-block; background: #f59e0b; color: #1f2937; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 13px;">Abrir en mi cliente de email →</a>
+            </div>
+          </div>
+
+          ${
+            dashboardUrl
+              ? `<p style="margin-top: 18px; font-size: 12px; color: #64748b; text-align: center;">Dashboard sponsor: <a href="${dashboardUrl}" style="color: #0f766e;">${dashboardUrl}</a></p>`
+              : ''
+          }
+        </div>
+      </div>
+    `,
+  }
+
+  const result = await sendEmail(adminEmail, template)
+  return result.success
+}
