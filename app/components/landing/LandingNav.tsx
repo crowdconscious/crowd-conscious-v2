@@ -7,38 +7,55 @@ import Logo from '@/components/Logo'
 import LanguageSwitcherSimple from '@/components/LanguageSwitcherSimple'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useLiveNavBadge } from '@/hooks/useLiveNavBadge'
-/** Pulsing dot when ≥1 public live event; link label is always shown separately. */
-function LiveNowIndicator({ liveCount }: { liveCount: number }) {
-  if (liveCount <= 0) return null
-  return (
-    <span className="relative flex h-2.5 w-2.5" aria-hidden>
-      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
-      <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
-    </span>
-  )
-}
 
+/**
+ * Canonical primary nav (5 items, locale-aware):
+ *   Predicciones · Lugares · Pulse · Fondo · Acerca
+ *
+ * Live is intentionally NOT a primary slot — it appears as a compact
+ * pulsing badge next to the language switcher only when there is at least
+ * one public live event. Markets is an alias of /predictions/markets and
+ * lives in the footer; Leaderboard moved inside /predictions; Sponsor /
+ * Sponsors / Contact moved to the footer.
+ */
 const NAV = {
   es: {
-    markets: 'Mercados',
+    predictions: 'Predicciones',
+    locations: 'Lugares',
+    pulse: 'Pulse',
+    fund: 'Fondo',
+    about: 'Acerca',
     live: 'En Vivo',
-    about: 'Acerca de',
-    blog: 'Blog',
     signIn: 'Iniciar Sesión',
     startPredicting: 'Empezar a Predecir',
-    pulse: 'Pulse',
-    locations: 'Lugares',
   },
   en: {
-    markets: 'Markets',
-    live: 'Live',
+    predictions: 'Predictions',
+    locations: 'Places',
+    pulse: 'Pulse',
+    fund: 'Fund',
     about: 'About',
-    blog: 'Blog',
+    live: 'Live',
     signIn: 'Sign In',
     startPredicting: 'Start Predicting',
-    pulse: 'Pulse',
-    locations: 'Locations',
   },
+} as const
+
+function LiveBadge({ liveCount, label }: { liveCount: number; label: string }) {
+  if (liveCount <= 0) return null
+  return (
+    <Link
+      href="/live"
+      className="inline-flex min-h-[44px] items-center gap-2 rounded-lg px-2 py-1 text-sm font-medium text-red-300 transition-colors hover:text-red-200"
+      aria-label={`${label} (${liveCount})`}
+    >
+      <span className="relative flex h-2.5 w-2.5">
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+        <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+      </span>
+      <span>{label}</span>
+    </Link>
+  )
 }
 
 export default function LandingNav() {
@@ -58,6 +75,14 @@ export default function LandingNav() {
     ? 'bg-[#0f1419]/95 backdrop-blur-md border-b border-[#2d3748]'
     : 'bg-[#0f1419] border-b border-[#2d3748]'
 
+  const primary: Array<{ href: string; label: string; emphasize?: boolean }> = [
+    { href: '/predictions', label: nav.predictions },
+    { href: '/locations', label: nav.locations },
+    { href: '/pulse', label: nav.pulse, emphasize: true },
+    { href: '/predictions/fund', label: nav.fund },
+    { href: '/about', label: nav.about },
+  ]
+
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all ${navBg}`}>
       <div className="max-w-6xl mx-auto px-4">
@@ -65,55 +90,23 @@ export default function LandingNav() {
           <Logo size="nav" linkTo="/" />
 
           <div className="hidden md:flex items-center gap-8">
-            <Link
-              href="/markets"
-              className="text-slate-400 hover:text-white transition-colors font-medium"
-            >
-              {nav.markets}
-            </Link>
-            <Link
-              href="/live"
-              className={`inline-flex min-h-[44px] items-center gap-2 font-medium transition-colors ${
-                liveCount > 0
-                  ? 'text-red-300 hover:text-red-200'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              {nav.live}
-              {liveCount > 0 && (
-                <span className="relative flex h-2.5 w-2.5" aria-label="Live">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
-                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
-                </span>
-              )}
-            </Link>
-            <Link
-              href="/pulse"
-              className="inline-flex min-h-[44px] items-center font-medium text-emerald-400/95 transition-colors hover:text-emerald-300"
-            >
-              {nav.pulse}
-            </Link>
-            <Link
-              href="/locations"
-              className="text-slate-400 hover:text-white transition-colors font-medium"
-            >
-              {nav.locations}
-            </Link>
-            <Link
-              href="/about"
-              className="text-slate-400 hover:text-white transition-colors font-medium"
-            >
-              {nav.about}
-            </Link>
-            <Link
-              href="/blog"
-              className="text-slate-400 hover:text-white transition-colors font-medium"
-            >
-              {nav.blog}
-            </Link>
+            {primary.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`min-h-[44px] inline-flex items-center font-medium transition-colors ${
+                  item.emphasize
+                    ? 'text-emerald-400/95 hover:text-emerald-300'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                {item.label}
+              </Link>
+            ))}
           </div>
 
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-3">
+            <LiveBadge liveCount={liveCount} label={nav.live} />
             <LanguageSwitcherSimple />
             <Link
               href="/login"
@@ -141,66 +134,36 @@ export default function LandingNav() {
 
       {mobileOpen && (
         <div className="md:hidden border-t border-[#2d3748] bg-[#0f1419]/98 backdrop-blur-md">
-          <div className="px-4 py-4 space-y-3">
-            <div className="py-2">
+          <div className="px-4 py-4 space-y-1">
+            <div className="py-2 flex items-center justify-between">
               <LanguageSwitcherSimple />
+              <LiveBadge liveCount={liveCount} label={nav.live} />
             </div>
-            <Link
-              href="/markets"
-              onClick={() => setMobileOpen(false)}
-              className="block min-h-[44px] py-3 text-slate-400 hover:text-white"
-            >
-              {nav.markets}
-            </Link>
-            <Link
-              href="/live"
-              onClick={() => setMobileOpen(false)}
-              className={`flex min-h-[44px] items-center gap-2 py-3 ${
-                liveCount > 0 ? 'text-red-300 hover:text-red-200' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <span>{nav.live}</span>
-              <LiveNowIndicator liveCount={liveCount} />
-            </Link>
-            <Link
-              href="/pulse"
-              onClick={() => setMobileOpen(false)}
-              className="block min-h-[44px] py-3 font-medium text-emerald-400 hover:text-emerald-300"
-            >
-              {nav.pulse}
-            </Link>
-            <Link
-              href="/locations"
-              onClick={() => setMobileOpen(false)}
-              className="block min-h-[44px] py-3 text-slate-400 hover:text-white"
-            >
-              {nav.locations}
-            </Link>
-            <Link
-              href="/about"
-              onClick={() => setMobileOpen(false)}
-              className="block py-2 text-slate-400 hover:text-white"
-            >
-              {nav.about}
-            </Link>
-            <Link
-              href="/blog"
-              onClick={() => setMobileOpen(false)}
-              className="block py-2 text-slate-400 hover:text-white"
-            >
-              {nav.blog}
-            </Link>
+            {primary.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setMobileOpen(false)}
+                className={`block min-h-[44px] py-3 font-medium ${
+                  item.emphasize
+                    ? 'text-emerald-400 hover:text-emerald-300'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                {item.label}
+              </Link>
+            ))}
             <Link
               href="/login"
               onClick={() => setMobileOpen(false)}
-              className="block py-2 text-slate-400 hover:text-white"
+              className="block min-h-[44px] py-3 text-slate-400 hover:text-white"
             >
               {nav.signIn}
             </Link>
             <Link
               href="/signup"
               onClick={() => setMobileOpen(false)}
-              className="block py-3 rounded-lg bg-emerald-500 text-white font-semibold text-center"
+              className="block min-h-[44px] py-3 rounded-lg bg-emerald-500 text-white font-semibold text-center"
             >
               {nav.startPredicting}
             </Link>

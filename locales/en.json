@@ -16,7 +16,15 @@
     "confirm": "Confirm"
   },
   "nav": {
+    "predictions": "Predictions",
+    "locations": "Places",
+    "pulse": "Pulse",
+    "fund": "Fund",
+    "about": "About",
+    "live": "Live",
     "dashboard": "Dashboard",
+    "signIn": "Sign In",
+    "startPredicting": "Start Predicting",
     "communities": "Communities",
     "discover": "Discover",
     "marketplace": "Marketplace",

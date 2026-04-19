@@ -8,6 +8,36 @@ import { supabaseClient } from '@/lib/supabase-client'
 import { XPBadge } from '@/components/gamification/XPBadge'
 import { NotificationsBell } from '@/app/(predictions)/predictions/components/NotificationsBell'
 import { useLiveNavBadge } from '@/hooks/useLiveNavBadge'
+import { useLanguage } from '@/contexts/LanguageContext'
+
+/**
+ * Authed primary nav (5 items, locale-aware) — mirrors the public spec but
+ * routes Predicciones at the personal dashboard. Markets, Leaderboard, and
+ * Achievements moved out of the primary slot (they live inside /predictions
+ * and the profile menu, respectively).
+ */
+const NAV = {
+  es: {
+    dashboard: 'Panel',
+    predictions: 'Predicciones',
+    locations: 'Lugares',
+    pulse: 'Pulse',
+    fund: 'Fondo',
+    live: 'En Vivo',
+    settings: 'Configuración',
+    signOut: 'Cerrar Sesión',
+  },
+  en: {
+    dashboard: 'Dashboard',
+    predictions: 'Predictions',
+    locations: 'Places',
+    pulse: 'Pulse',
+    fund: 'Fund',
+    live: 'Live',
+    settings: 'Settings',
+    signOut: 'Sign Out',
+  },
+} as const
 
 interface HeaderClientProps {
   user: any
@@ -17,6 +47,15 @@ export default function HeaderClient({ user }: HeaderClientProps) {
   const [userProfile, setUserProfile] = useState<any>(null)
   const router = useRouter()
   const { liveCount } = useLiveNavBadge()
+  const { language } = useLanguage()
+  const nav = NAV[language]
+  const primary: Array<{ href: string; label: string; emphasize?: boolean }> = [
+    { href: '/predictions', label: nav.dashboard },
+    { href: '/predictions/markets', label: nav.predictions },
+    { href: '/locations', label: nav.locations },
+    { href: '/pulse', label: nav.pulse, emphasize: true },
+    { href: '/predictions/fund', label: nav.fund },
+  ]
 
   useEffect(() => {
     if (user) {
@@ -57,50 +96,34 @@ export default function HeaderClient({ user }: HeaderClientProps) {
           <div className="flex items-center gap-8">
             <Logo size="sidebar" linkTo="/predictions" className="shrink-0" />
 
-            {/* Main Navigation - Desktop */}
+            {/* Main Navigation - Desktop (canonical 5 items) */}
             <nav className="hidden md:flex items-center gap-6">
-              <Link 
-                href="/predictions"
-                className="text-slate-400 hover:text-emerald-400 font-medium transition-colors"
-              >
-                Dashboard
-              </Link>
-              <Link 
-                href="/live"
-                className="inline-flex items-center gap-2 text-slate-400 hover:text-emerald-400 font-medium transition-colors"
-              >
-                Live
-                {liveCount > 0 && (
-                  <span className="relative flex h-2 w-2" aria-label="Live">
+              {primary.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`min-h-[44px] inline-flex items-center font-medium transition-colors ${
+                    item.emphasize
+                      ? 'text-emerald-400/95 hover:text-emerald-300'
+                      : 'text-slate-400 hover:text-emerald-400'
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              ))}
+              {liveCount > 0 && (
+                <Link
+                  href="/live"
+                  className="inline-flex items-center gap-2 text-red-300 hover:text-red-200 font-medium transition-colors"
+                  aria-label={`${nav.live} (${liveCount})`}
+                >
+                  <span className="relative flex h-2 w-2">
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
                     <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
                   </span>
-                )}
-              </Link>
-              <Link 
-                href="/predictions/markets" 
-                className="text-slate-400 hover:text-emerald-400 font-medium transition-colors"
-              >
-                Markets
-              </Link>
-              <Link 
-                href="/leaderboard" 
-                className="text-slate-400 hover:text-emerald-400 font-medium transition-colors"
-              >
-                Leaderboard
-              </Link>
-              <Link 
-                href="/predictions/fund" 
-                className="text-slate-400 hover:text-emerald-400 font-medium transition-colors"
-              >
-                Fund
-              </Link>
-              <Link 
-                href="/achievements" 
-                className="text-slate-400 hover:text-emerald-400 font-medium transition-colors"
-              >
-                Achievements
-              </Link>
+                  {nav.live}
+                </Link>
+              )}
             </nav>
           </div>
 
@@ -135,7 +158,7 @@ export default function HeaderClient({ user }: HeaderClientProps) {
               <Link
                 href="/settings"
                 className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
-                aria-label="Settings"
+                aria-label={nav.settings}
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -146,7 +169,7 @@ export default function HeaderClient({ user }: HeaderClientProps) {
                 onClick={handleSignOut}
                 className="px-3 py-1.5 text-sm text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors font-medium"
               >
-                Sign Out
+                {nav.signOut}
               </button>
             </div>
           </div>
