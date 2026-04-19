@@ -7,6 +7,7 @@ import Logo from '@/components/Logo'
 import LanguageSwitcherSimple from '@/components/LanguageSwitcherSimple'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useLiveNavBadge } from '@/hooks/useLiveNavBadge'
+import { CompactFundThermometer } from '@/components/fund/FundThermometer'
 
 /**
  * Canonical primary nav (5 items, locale-aware):
@@ -107,6 +108,7 @@ export default function LandingNav() {
 
           <div className="hidden md:flex items-center gap-3">
             <LiveBadge liveCount={liveCount} label={nav.live} />
+            <CompactFundThermometer locale={language} />
             <LanguageSwitcherSimple />
             <Link
               href="/login"
@@ -135,9 +137,12 @@ export default function LandingNav() {
       {mobileOpen && (
         <div className="md:hidden border-t border-[#2d3748] bg-[#0f1419]/98 backdrop-blur-md">
           <div className="px-4 py-4 space-y-1">
-            <div className="py-2 flex items-center justify-between">
+            <div className="py-2 flex items-center justify-between gap-2">
               <LanguageSwitcherSimple />
-              <LiveBadge liveCount={liveCount} label={nav.live} />
+              <div className="flex items-center gap-2">
+                <CompactFundThermometer locale={language} />
+                <LiveBadge liveCount={liveCount} label={nav.live} />
+              </div>
             </div>
             {primary.map((item) => (
               <Link

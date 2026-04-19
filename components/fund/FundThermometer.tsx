@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { supabaseClient } from '@/lib/supabase-client'
 
 type Locale = 'es' | 'en'
 
@@ -155,3 +156,146 @@ export function FundThermometer({
 }
 
 export default FundThermometer
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* CompactFundThermometer — 28px header pill                                */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+interface CompactFundThermometerProps {
+  /** Locale override; falls back to ES. */
+  locale?: Locale
+  /** Override the destination href; defaults to the canonical fund page. */
+  href?: string
+  className?: string
+}
+
+function formatMxnPrecise(amount: number, locale: Locale): string {
+  return amount.toLocaleString(locale === 'en' ? 'en-US' : 'es-MX', {
+    maximumFractionDigits: 0,
+  })
+}
+
+/**
+ * Header-grade fund pill: 28px tall, "$X,XXX MXN" with a pulsing 4-dot
+ * indicator when balance > 0. Subscribes to conscious_fund realtime
+ * inserts/updates so the number ticks up live during match-day donations,
+ * with a 5s debounce so a burst of writes doesn't flicker the UI.
+ *
+ * Mobile: collapses to a single emerald dot that expands the full pill on
+ * tap (state is purely local — re-collapses on next render of the parent).
+ */
+export function CompactFundThermometer({
+  locale = 'es',
+  href = '/predictions/fund',
+  className = '',
+}: CompactFundThermometerProps) {
+  const [total, setTotal] = useState<number | null>(null)
+  const [mobileExpanded, setMobileExpanded] = useState(false)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+
+    const load = async () => {
+      try {
+        const r = await fetch('/api/fund/balance', { cache: 'no-store' })
+        const d = (await r.json()) as { total_mxn?: number }
+        if (!cancelled && typeof d.total_mxn === 'number') setTotal(d.total_mxn)
+      } catch {
+        /* noop — keep showing previous value */
+      }
+    }
+
+    void load()
+
+    const channel = supabaseClient
+      .channel('compact-fund-thermometer')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'conscious_fund' },
+        () => {
+          if (debounceRef.current) clearTimeout(debounceRef.current)
+          debounceRef.current = setTimeout(load, 5000)
+        }
+      )
+      .subscribe()
+
+    return () => {
+      cancelled = true
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+      void supabaseClient.removeChannel(channel)
+    }
+  }, [])
+
+  const hasFunds = (total ?? 0) > 0
+  const display = total == null ? '—' : `$${formatMxnPrecise(total, locale)} MXN`
+  const ariaLabel =
+    locale === 'es'
+      ? `Fondo Consciente: ${display} recaudados`
+      : `Conscious Fund: ${display} raised`
+
+  return (
+    <>
+      <Link
+        href={href}
+        aria-label={ariaLabel}
+        className={`hidden md:inline-flex h-7 items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 text-xs font-semibold text-emerald-300 hover:border-emerald-400/60 hover:text-emerald-200 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500/40 ${className}`}
+      >
+        <PulseDots active={hasFunds} />
+        <span className="tabular-nums">{display}</span>
+      </Link>
+
+      <div className="md:hidden">
+        {mobileExpanded ? (
+          <Link
+            href={href}
+            onClick={() => setMobileExpanded(false)}
+            aria-label={ariaLabel}
+            className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 text-xs font-semibold text-emerald-300"
+          >
+            <PulseDots active={hasFunds} />
+            <span className="tabular-nums">{display}</span>
+          </Link>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setMobileExpanded(true)}
+            aria-label={ariaLabel}
+            className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full"
+          >
+            <span className="relative flex h-2.5 w-2.5">
+              {hasFunds && (
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-70" />
+              )}
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400" />
+            </span>
+          </button>
+        )}
+      </div>
+    </>
+  )
+}
+
+/** 4-dot pulse used inside the compact pill. */
+function PulseDots({ active }: { active: boolean }) {
+  return (
+    <span className="inline-flex items-center gap-[3px]" aria-hidden>
+      {[0, 1, 2, 3].map((i) => (
+        <motion.span
+          key={i}
+          className={`h-1.5 w-1.5 rounded-full ${active ? 'bg-emerald-400' : 'bg-emerald-700'}`}
+          animate={
+            active
+              ? { opacity: [0.35, 1, 0.35], scale: [0.85, 1.05, 0.85] }
+              : { opacity: 0.4 }
+          }
+          transition={
+            active
+              ? { duration: 1.6, repeat: Infinity, ease: 'easeInOut', delay: i * 0.18 }
+              : undefined
+          }
+        />
+      ))}
+    </span>
+  )
+}

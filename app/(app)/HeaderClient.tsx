@@ -9,6 +9,7 @@ import { XPBadge } from '@/components/gamification/XPBadge'
 import { NotificationsBell } from '@/app/(predictions)/predictions/components/NotificationsBell'
 import { useLiveNavBadge } from '@/hooks/useLiveNavBadge'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { CompactFundThermometer } from '@/components/fund/FundThermometer'
 
 /**
  * Authed primary nav (5 items, locale-aware) — mirrors the public spec but
@@ -133,6 +134,8 @@ export default function HeaderClient({ user }: HeaderClientProps) {
             <div className="hidden md:block">
               <XPBadge variant="compact" animated={false} />
             </div>
+
+            <CompactFundThermometer locale={language} />
 
             <NotificationsBell />
 
