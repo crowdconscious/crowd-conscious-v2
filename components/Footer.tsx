@@ -16,6 +16,7 @@ export default function Footer() {
       legal: 'Legal',
       markets: 'Predicciones',
       locations: 'Lugares',
+      live: 'En Vivo',
       leaderboard: 'Leaderboard',
       consciousFund: 'Fondo Consciente',
       forBrands: 'Para Marcas',
@@ -35,6 +36,7 @@ export default function Footer() {
       legal: 'Legal',
       markets: 'Predictions',
       locations: 'Places',
+      live: 'Live',
       leaderboard: 'Leaderboard',
       consciousFund: 'Conscious Fund',
       forBrands: 'For Brands',
@@ -144,6 +146,11 @@ export default function Footer() {
               <li>
                 <Link href="/locations" className="text-slate-300 transition-colors hover:text-teal-400">
                   {t.locations}
+                </Link>
+              </li>
+              <li>
+                <Link href="/live" className="text-slate-300 transition-colors hover:text-teal-400">
+                  {t.live}
                 </Link>
               </li>
               <li>

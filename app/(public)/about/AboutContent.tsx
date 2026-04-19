@@ -275,11 +275,34 @@ export default function AboutContent({
                 </>
               )}
             </p>
-            <p className="text-emerald-400/90 font-medium">
+            <p className="text-emerald-400/90 font-medium mb-6">
               {locale === 'es'
                 ? 'Estamos en Ciudad de México — este es nuestro evento en casa.'
                 : "We're based in Mexico City — this is our home event."}
             </p>
+            <div className="rounded-xl border border-cc-border bg-cc-bg/60 p-5">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+                </span>
+                <h3 className="text-lg font-semibold text-white">
+                  {locale === 'es' ? 'Conscious Live' : 'Conscious Live'}
+                </h3>
+              </div>
+              <p className="text-slate-400 text-sm leading-relaxed mb-3">
+                {locale === 'es'
+                  ? 'Durante cada partido del Mundial activamos micro-mercados en tiempo real: predice cada minuto, sube en el leaderboard y mira la transmisión junto con la multitud. Cada voto sigue alimentando el Fondo Consciente.'
+                  : 'During every World Cup match we open real-time micro-markets: predict every minute, climb the leaderboard, and watch the stream alongside the crowd. Every vote keeps feeding the Conscious Fund.'}
+              </p>
+              <Link
+                href="/live"
+                className="inline-flex items-center gap-1 text-sm font-medium text-emerald-400 hover:text-emerald-300"
+              >
+                {locale === 'es' ? 'Conoce Conscious Live' : 'Explore Conscious Live'}
+                <ChevronRight className="w-4 h-4" />
+              </Link>
+            </div>
           </div>
         </div>
       </section>
