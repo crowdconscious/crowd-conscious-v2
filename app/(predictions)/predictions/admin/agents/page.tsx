@@ -249,7 +249,12 @@ function getContentTab(item: AgentContent): TabId | null {
     item.content_type === 'news_summary'
   )
     return 'news'
-  if (digestType === 'ceo_digest' || (item.content_type === 'weekly_digest' && type === 'ceo_digest'))
+  if (
+    digestType === 'ceo_digest' ||
+    digestType === 'sponsor_outreach' ||
+    item.content_type === 'sponsor_outreach' ||
+    (item.content_type === 'weekly_digest' && type === 'ceo_digest')
+  )
     return 'ceo'
   return 'all'
 }

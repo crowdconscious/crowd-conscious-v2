@@ -566,38 +566,44 @@ Keep the entire digest under 400 words. Write in Spanish. Today is ${todayFormat
     // Sponsor outreach prompt — generated separately so it can be stored and
     // emailed as its own actionable artifact. Uses the same metrics + News
     // Monitor context as the main digest but answers a different question:
-    // "Who do I message today, and what do I say?"
-    const sponsorOutreachUserMessage = `Here are today's platform metrics (JSON):
+    // "Who do I message this week, and what do I say?"
+    const sponsorOutreachUserMessage = `Here are this week's platform metrics (JSON):
 
 \`\`\`json
 ${JSON.stringify(metrics, null, 2)}
 \`\`\`
 
-Generate exactly 3 sponsor outreach ideas the founder can act on TODAY.
-Today is ${todayFormatted}. ~56 días hasta la inauguración del Mundial 2026.
+Generate UP TO 3 sponsor outreach ideas the founder can act on THIS WEEK.
+Today is ${todayFormatted}. World Cup 2026 inaugurates June 11.
+
+Hard constraints:
+- Total length across all ideas: **under 300 words**.
+- Each idea: **80 words or less**.
+- If you cannot find 3 ideas with a real hook (news signal, platform datum, or clear segment fit), produce only 2 — or only 1. Do NOT fabricate hooks.
 
 Catalog of products to pitch (use the right one for the segment):
 - **Sello de Lugar Consciente** — for cafés, bars, restaurants, gyms, coworking spaces.
-- **Pulse Single ($5,000 MXN Starter)** — single-question survey for a brand or institution.
-- **Mundial Pulse Pack ($50,000 MXN)** — 5 Pulse surveys across the tournament for a brand seeking sustained presence.
+- **Pulse Single ($5,000 MXN)** — single-question survey for a brand or institution.
+- **Mundial Pulse Pack — Founding ($25,000 MXN, 5 spots)** — 5 Pulses across the tournament, founding tier.
+- **Mundial Pulse Pack ($50,000 MXN)** — same 5 Pulses, regular tier.
 - **Pilot Pulse ($1,500 MXN, coupon PILOTO)** — lead-magnet trial for cold prospects.
 
-For each of the 3 ideas, output in this exact markdown structure:
+For each idea, output in this exact markdown structure:
 
 ### Idea N — [short title]
 - **Segmento:** [e.g. "Bares deportivos en CDMX", "Fintech mexicanas", "Alcaldía Coyoacán"]
 - **Hook:** [the news signal or platform datum that makes this timely — reference a specific news_monitor finding or market trend]
-- **Producto:** [Sello | Pulse Single | Mundial Pulse Pack | Pilot Pulse]
-- **Precio:** [in MXN]
-- **Mensaje listo para enviar (WhatsApp/email, en español, 3 oraciones máx, casual pero profesional):**
-> [draft message with one specific Pulse question they could run]
+- **Producto + Precio:** [product name and MXN]
+- **Mensaje WhatsApp listo (3 oraciones máx, español, casual-profesional, incluye una pregunta Pulse concreta):**
+> [draft message]
+- **Warm-intro path:** [Names from Cheesecake's network (La Bikina, Jäger) or other warm contacts that plausibly connect to this segment. If none, write exactly "cold outreach only".]
 
 Prioritize ideas where:
-1. A news story creates urgency (regulación, evento, crisis económica)
-2. **A Conscious Location in \`locations_with_live_score_last_7d\` can be upgraded to Pulse** — if this list is non-empty, AT LEAST ONE of the 3 ideas MUST target a specific location from it. Use its exact name, score, vote count, and the provided \`pilot_pulse_link\` so the founder can forward the message directly. Recommend the **Pilot Pulse** ($1,500 MXN) product for these leads because they're already warm.
-3. A World Cup activation angle exists
+1. **A Conscious Location in \`locations_with_live_score_last_7d\` can be upgraded to Pulse** — if this list is non-empty, AT LEAST ONE idea MUST target a specific location from it. Use its exact name, score, vote count, and the provided \`pilot_pulse_link\`. Recommend the **Pilot Pulse** ($1,500 MXN) for these leads because they're already warm.
+2. A news story creates urgency (regulación, evento, crisis económica).
+3. A World Cup activation angle exists — if so, push the **Mundial Pulse Pack — Founding** while spots remain.
 
-No introduction, no closing summary, no extra commentary — just the 3 ideas in the format above.`
+No introduction, no closing summary, no extra commentary — just the ideas in the format above.`
 
     const userPrompt = userMessage?.trim() ?? ''
     if (!userPrompt) {
@@ -714,22 +720,88 @@ No introduction, no closing summary, no extra commentary — just the 3 ideas in
           console.error('Failed to save sponsor outreach to agent_content:', e)
         }
 
+        // Subject uses Spanish "lunes DD MMM" — the cron runs Mon 16:00 UTC,
+        // so today *is* Monday in MX time when the founder reads it.
+        const weekLabel = today.toLocaleDateString('es-MX', {
+          weekday: 'long',
+          day: '2-digit',
+          month: 'short',
+          timeZone: 'America/Mexico_City',
+        })
+        const outreachSubject = `🎯 Outreach de la semana — ${weekLabel}`
+
+        // Conversion tracking: cheap mailto-to-self links so the founder can
+        // log replies/meetings/sales without a CRM. Pre-fills the subject so
+        // counts stay searchable in the inbox.
+        const trackTo = adminEmail ?? ''
+        const trackLink = (kind: 'reply' | 'meeting' | 'sale') => {
+          const subject = `[Outreach ${weekLabel}] ${kind}`
+          return `mailto:${encodeURIComponent(trackTo)}?subject=${encodeURIComponent(subject)}`
+        }
+
         if (adminEmail) {
           const outreachEmailResult = await sendEmail(adminEmail, {
-            subject: `🎯 Outreach del día — ${todayFormatted}`,
+            subject: outreachSubject,
             html: `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto;">
                 <div style="background: linear-gradient(135deg, #f59e0b, #ef4444); padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
-                  <h1 style="color: white; margin: 0; font-size: 22px;">🎯 Outreach del día</h1>
-                  <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0;">${todayFormatted}</p>
+                  <h1 style="color: white; margin: 0; font-size: 22px;">🎯 Outreach de la semana</h1>
+                  <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0;">${weekLabel}</p>
                 </div>
-                <div style="padding: 24px; background: #f8fafc; border-radius: 0 0 8px 8px; white-space: pre-wrap;">${outreachText.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+                <div style="padding: 24px; background: #f8fafc; white-space: pre-wrap;">${outreachText.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+                <div style="padding: 14px 20px; background: #f1f5f9; border-radius: 0 0 8px 8px; border-top: 1px solid #e2e8f0;">
+                  <p style="margin: 0 0 8px; font-size: 11px; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Track conversion</p>
+                  <p style="margin: 0; font-size: 13px; color: #475569;">
+                    Cuando una idea convierte, haz click:
+                    <a href="${trackLink('reply')}" style="color: #0f766e; text-decoration: none;">reply</a> ·
+                    <a href="${trackLink('meeting')}" style="color: #0f766e; text-decoration: none;">meeting</a> ·
+                    <a href="${trackLink('sale')}" style="color: #0f766e; text-decoration: none;">sale</a>
+                  </p>
+                </div>
               </div>
             `,
           })
           outreachEmailSent = outreachEmailResult.success
           if (!outreachEmailResult.success) {
             console.warn('Sponsor outreach email not sent:', outreachEmailResult.error)
+          }
+        }
+
+        // Slack mirror — best-effort, non-blocking. Keeps the same content so
+        // the founder can act from phone Slack notifications during the week.
+        const slackUrl = process.env.SLACK_OPERATIONS_WEBHOOK_URL
+        if (slackUrl) {
+          try {
+            const slackBody = {
+              text: `🎯 *Outreach de la semana — ${weekLabel}*`,
+              blocks: [
+                {
+                  type: 'header',
+                  text: { type: 'plain_text', text: `🎯 Outreach de la semana — ${weekLabel}` },
+                },
+                {
+                  type: 'section',
+                  text: {
+                    type: 'mrkdwn',
+                    text: outreachText.length > 2900 ? outreachText.slice(0, 2900) + '…' : outreachText,
+                  },
+                },
+              ],
+            }
+            const slackRes = await fetch(slackUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(slackBody),
+            })
+            if (!slackRes.ok) {
+              console.warn(
+                '[CEO Digest] Slack outreach post failed:',
+                slackRes.status,
+                await slackRes.text().catch(() => '')
+              )
+            }
+          } catch (slackErr) {
+            console.warn('[CEO Digest] Slack outreach exception:', slackErr)
           }
         }
       }
