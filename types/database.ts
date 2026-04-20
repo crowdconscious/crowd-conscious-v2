@@ -915,6 +915,7 @@ export interface Database {
           has_custom_branding: boolean
           has_api_access: boolean
           has_white_label: boolean
+          case_study_featured: boolean
         }
         Insert: {
           id?: string
@@ -942,6 +943,7 @@ export interface Database {
           has_custom_branding?: boolean
           has_api_access?: boolean
           has_white_label?: boolean
+          case_study_featured?: boolean
         }
         Update: {
           id?: string
@@ -969,6 +971,7 @@ export interface Database {
           has_custom_branding?: boolean
           has_api_access?: boolean
           has_white_label?: boolean
+          case_study_featured?: boolean
         }
         Relationships: []
       }

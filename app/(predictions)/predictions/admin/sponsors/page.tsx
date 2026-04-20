@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import {
   ArrowLeft,
@@ -13,6 +14,7 @@ import {
   Copy,
   DollarSign,
   Calendar,
+  Star,
 } from 'lucide-react'
 
 type Sponsorship = {
@@ -124,6 +126,8 @@ export default function AdminSponsorsPage() {
       <p className="text-slate-400">
         View all sponsorships and their analytics. Share the report link with sponsors for their private dashboard.
       </p>
+
+      <BrandsOnLandingPanel />
 
       {error && (
         <div className="p-4 bg-red-500/20 border border-red-500/50 rounded-lg text-red-400">
@@ -272,6 +276,164 @@ export default function AdminSponsorsPage() {
             )
           })}
         </div>
+      )}
+    </div>
+  )
+}
+
+type SponsorAccount = {
+  id: string
+  company_name: string
+  contact_email: string
+  logo_url: string | null
+  tier: string
+  status: 'active' | 'paused' | 'cancelled' | null
+  total_spent: number | null
+  case_study_featured: boolean
+}
+
+/**
+ * "Brands on landing" — surfaces every sponsor_account so the founder can
+ * opt-in/opt-out their logo from the public Trusted Brands row. We render
+ * this above the sponsorships list because it's the highest-stakes toggle on
+ * the page (a wrong logo here goes live to every visitor) and we want it
+ * one click away from the sponsor data the founder is already reviewing.
+ */
+function BrandsOnLandingPanel() {
+  const [accounts, setAccounts] = useState<SponsorAccount[] | null>(null)
+  const [error, setError] = useState('')
+  const [savingId, setSavingId] = useState<string | null>(null)
+
+  useEffect(() => {
+    let aborted = false
+    fetch('/api/predictions/admin/sponsor-accounts')
+      .then(async (r) => {
+        if (r.status === 403) {
+          window.location.href = '/predictions'
+          return { accounts: [] }
+        }
+        return r.json()
+      })
+      .then((d: { accounts?: SponsorAccount[] }) => {
+        if (!aborted) setAccounts(Array.isArray(d.accounts) ? d.accounts : [])
+      })
+      .catch((e: unknown) => {
+        if (!aborted) setError(e instanceof Error ? e.message : 'Failed to load')
+      })
+    return () => {
+      aborted = true
+    }
+  }, [])
+
+  const toggle = async (acc: SponsorAccount) => {
+    setSavingId(acc.id)
+    try {
+      const res = await fetch('/api/predictions/admin/sponsor-accounts', {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          id: acc.id,
+          case_study_featured: !acc.case_study_featured,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error || 'Failed to update')
+      setAccounts((prev) =>
+        (prev ?? []).map((a) =>
+          a.id === acc.id
+            ? { ...a, case_study_featured: !!data.account.case_study_featured }
+            : a
+        )
+      )
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Toggle failed')
+    } finally {
+      setSavingId(null)
+    }
+  }
+
+  const featuredCount = (accounts ?? []).filter((a) => a.case_study_featured).length
+
+  return (
+    <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-semibold text-white flex items-center gap-2">
+            <Star className="w-4 h-4 text-amber-400" />
+            Brands on landing
+          </p>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Toggle which sponsors appear in the public Trusted Brands row. Min
+            3 logos required to render — fewer = the row stays hidden.
+          </p>
+        </div>
+        <span
+          className={`text-xs px-2 py-0.5 rounded ${
+            featuredCount >= 3
+              ? 'bg-emerald-500/20 text-emerald-400'
+              : 'bg-amber-500/20 text-amber-400'
+          }`}
+        >
+          {featuredCount} featured
+        </span>
+      </div>
+
+      {error && <p className="text-xs text-red-400">{error}</p>}
+
+      {!accounts ? (
+        <div className="h-16 bg-slate-800/50 rounded animate-pulse" />
+      ) : accounts.length === 0 ? (
+        <p className="text-xs text-slate-500">No sponsor accounts yet.</p>
+      ) : (
+        <ul className="divide-y divide-slate-800 -mx-4">
+          {accounts.map((a) => (
+            <li
+              key={a.id}
+              className="flex items-center gap-3 px-4 py-2.5"
+            >
+              <div className="relative h-7 w-16 shrink-0 rounded bg-slate-800/60 overflow-hidden">
+                {a.logo_url ? (
+                  <Image
+                    src={a.logo_url}
+                    alt={a.company_name}
+                    fill
+                    sizes="64px"
+                    className="object-contain"
+                    unoptimized
+                  />
+                ) : (
+                  <div className="absolute inset-0 grid place-items-center text-[10px] text-slate-500">
+                    no logo
+                  </div>
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm text-white truncate">{a.company_name}</p>
+                <p className="text-[11px] text-slate-500 truncate">
+                  {a.tier} · {a.contact_email}
+                </p>
+              </div>
+              <button
+                onClick={() => toggle(a)}
+                disabled={savingId === a.id || !a.logo_url}
+                title={
+                  !a.logo_url
+                    ? 'Sponsor has no logo — upload one before featuring.'
+                    : a.case_study_featured
+                      ? 'Hide from landing'
+                      : 'Show on landing'
+                }
+                className={`shrink-0 px-3 py-1 text-xs rounded-full border transition-colors ${
+                  a.case_study_featured
+                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30'
+                    : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700'
+                } disabled:opacity-40 disabled:cursor-not-allowed`}
+              >
+                {a.case_study_featured ? 'On landing' : 'Hidden'}
+              </button>
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   )

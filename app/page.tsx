@@ -21,6 +21,11 @@ import { FundThermometer } from '@/components/fund/FundThermometer'
 const Footer = dynamic(() => import('../components/Footer'))
 const CookieConsent = dynamic(() => import('../components/CookieConsent'))
 const SmartHomeClient = dynamic(() => import('./SmartHomeClient'))
+const TrustedBrandsRow = dynamic(() =>
+  import('@/components/landing/TrustedBrandsRow').then((m) => ({
+    default: m.TrustedBrandsRow,
+  }))
+)
 
 const MarketCard = dynamic(() =>
   import('@/components/MarketCard').then((m) => ({ default: m.MarketCard }))
@@ -325,6 +330,9 @@ export default async function LandingPage() {
 
         {/* ─────────── BLOCK 1 — Hero ─────────── */}
         <LandingHeroBlock locale={localeShort} fundBalance={fundBalance} />
+
+        {/* Trusted Brands — self-hides below 3 logos so it never looks weak. */}
+        <TrustedBrandsRow locale={localeShort} />
 
         <ImpactTicker
           totalVotes={totalVotes}
