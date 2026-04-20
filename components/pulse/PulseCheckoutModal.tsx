@@ -160,28 +160,41 @@ export function PulseCheckoutModal({ isOpen, onClose, tier, tierLabel, locale }:
   const allocPreview = calculatePulseFundAllocationRounded(discountedPreview, tier)
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    // On mobile the form can be taller than the viewport, especially
+    // for Mundial (contact name + brand pitch + coupon + fund banner).
+    // Panel is flex-col with a scrollable body between a sticky header
+    // and sticky footer so the submit button is always reachable.
+    <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
         aria-hidden="true"
       />
-      <div className="relative w-full max-w-md rounded-2xl border border-[#2d3748] bg-[#0f1419] p-6 shadow-2xl">
-        <div className="mb-6 flex items-center justify-between">
-          <h3 className="text-xl font-bold text-white">
+      <div
+        className="relative flex w-full max-w-md flex-col overflow-hidden rounded-t-2xl border border-[#2d3748] bg-[#0f1419] shadow-2xl sm:rounded-2xl"
+        style={{ maxHeight: 'min(90vh, 100dvh)' }}
+        role="dialog"
+        aria-modal="true"
+      >
+        <div className="flex shrink-0 items-center justify-between border-b border-[#2d3748] bg-[#0f1419] px-6 py-4">
+          <h3 className="text-lg font-bold text-white sm:text-xl">
             {es ? 'Conscious Pulse — ' : 'Conscious Pulse — '}
             {tierLabel}
           </h3>
           <button
             onClick={onClose}
-            className="rounded-lg p-2 text-slate-400 transition-colors hover:text-white"
-            aria-label="Close"
+            className="-mr-2 rounded-lg p-2 text-slate-400 transition-colors hover:text-white"
+            aria-label={es ? 'Cerrar' : 'Close'}
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form
+          onSubmit={handleSubmit}
+          id="pulse-checkout-form"
+          className="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 pt-4 pb-24 space-y-4"
+        >
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-400">
               {es ? 'Nombre / Empresa *' : 'Name / Company *'}
@@ -338,8 +351,10 @@ export function PulseCheckoutModal({ isOpen, onClose, tier, tierLabel, locale }:
           </p>
 
           {error && <p className="text-sm text-red-400">{error}</p>}
+        </form>
 
-          <div className="flex gap-3 pt-2">
+        <div className="shrink-0 border-t border-[#2d3748] bg-[#0f1419]/95 px-6 py-4 backdrop-blur supports-[backdrop-filter]:bg-[#0f1419]/80">
+          <div className="flex gap-3">
             <button
               type="button"
               onClick={onClose}
@@ -349,6 +364,7 @@ export function PulseCheckoutModal({ isOpen, onClose, tier, tierLabel, locale }:
             </button>
             <button
               type="submit"
+              form="pulse-checkout-form"
               disabled={
                 loading ||
                 (isMundial && (!contactName.trim() || !brandPitch.trim()))
@@ -368,7 +384,7 @@ export function PulseCheckoutModal({ isOpen, onClose, tier, tierLabel, locale }:
                     : 'Continue to payment'}
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   )

@@ -57,7 +57,9 @@ export async function handlePulseAddon(session: Stripe.Checkout.Session) {
       source_type: 'sponsorship' as const,
       source_id: null,
       market_id: null,
-      description: `Pulse add-on (+${qty} slots) — session ${session.id}`,
+      // Tag so the sponsor dashboard can surface add-on rows back to the
+      // buyer without a dedicated FK column. Queried via description ilike.
+      description: `Pulse add-on (+${qty} slots) [sponsor_account:${sponsorAccountId}] — session ${session.id}`,
     })
 
   if (fundTxError) {

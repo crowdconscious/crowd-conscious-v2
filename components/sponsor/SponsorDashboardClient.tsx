@@ -26,9 +26,12 @@ const TIER_ES: Record<string, { label: string; color: string }> = {
   growth: { label: 'Patrocinador de Categoría', color: 'text-emerald-400' },
   champion: { label: 'Socio de Impacto', color: 'text-amber-400' },
   anchor: { label: 'Patrocinador Fundador', color: 'text-purple-400' },
+  pilot: { label: 'Pilot Pulse', color: 'text-cyan-400' },
   pulse_unico: { label: 'Pulse Único', color: 'text-emerald-400' },
   pulse_pack: { label: 'Pulse Pack (3)', color: 'text-emerald-400' },
   suscripcion: { label: 'Suscripción Pulse', color: 'text-amber-400' },
+  mundial_pack: { label: 'Mundial Pulse Pack', color: 'text-amber-400' },
+  mundial_pack_founding: { label: 'Mundial Pack · Fundador', color: 'text-fuchsia-400' },
   enterprise: { label: 'Enterprise', color: 'text-purple-400' },
 }
 

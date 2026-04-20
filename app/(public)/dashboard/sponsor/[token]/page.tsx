@@ -61,15 +61,57 @@ export default async function SponsorDashboardPage({
   const totalReasonings =
     (votes ?? []).filter((v) => typeof v.reasoning === 'string' && v.reasoning.trim().length > 0).length
 
-  const { data: fundImpactRows } =
+  // Fund impact rows come from three paths, all tied to this sponsor:
+  //   (A) market-sponsored Pulses     — matched by market_id IN sponsorMarkets
+  //   (B) Pulse B2B purchases         — matched by source_id IN (sponsorships
+  //                                     for this contact_email), since the
+  //                                     webhook writes market_id = NULL.
+  //   (C) Pulse add-on slot purchases — tagged in the description with
+  //                                     [sponsor_account:<uuid>].
+  // Before this fix, a Pulse-only sponsor saw $0 "Impacto del Fondo" even
+  // though their confirmation email promised a fund contribution.
+  const { data: sponsorshipRows } = await admin
+    .from('sponsorships')
+    .select('id')
+    .eq('sponsor_email', account.contact_email)
+  const sponsorshipIds = (sponsorshipRows ?? []).map((r: { id: string }) => r.id)
+
+  const fundImpactQueries = await Promise.all([
     marketIds.length > 0
-      ? await admin
+      ? admin
           .from('conscious_fund_transactions')
           .select('amount, description, created_at')
           .eq('source_type', 'sponsorship')
           .in('market_id', marketIds)
           .order('created_at', { ascending: false })
-      : { data: [] as FundImpactRow[] }
+      : Promise.resolve({ data: [] as FundImpactRow[] }),
+    sponsorshipIds.length > 0
+      ? admin
+          .from('conscious_fund_transactions')
+          .select('amount, description, created_at')
+          .eq('source_type', 'sponsorship')
+          .in('source_id', sponsorshipIds)
+          .order('created_at', { ascending: false })
+      : Promise.resolve({ data: [] as FundImpactRow[] }),
+    admin
+      .from('conscious_fund_transactions')
+      .select('amount, description, created_at')
+      .eq('source_type', 'sponsorship')
+      .ilike('description', `%[sponsor_account:${account.id}]%`)
+      .order('created_at', { ascending: false }),
+  ])
+
+  const seen = new Set<string>()
+  const fundImpactRows: FundImpactRow[] = []
+  for (const q of fundImpactQueries) {
+    for (const row of (q.data ?? []) as FundImpactRow[]) {
+      const key = `${row.created_at}|${row.amount}|${row.description ?? ''}`
+      if (seen.has(key)) continue
+      seen.add(key)
+      fundImpactRows.push(row)
+    }
+  }
+  fundImpactRows.sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
 
   const voteRows = (votes ?? []).map((v) => ({
     market_id: v.market_id,
@@ -116,7 +158,7 @@ export default async function SponsorDashboardPage({
       activeMarketCount={activeMarketCount}
       totalReasonings={totalReasonings}
       avgConfidenceOverall={avgConfidenceOverall}
-      fundImpactRows={(fundImpactRows ?? []) as FundImpactRow[]}
+      fundImpactRows={fundImpactRows}
       token={token}
       isFirstVisit={isFirstVisit}
       appOrigin={APP_ORIGIN}

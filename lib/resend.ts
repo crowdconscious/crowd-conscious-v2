@@ -1,5 +1,15 @@
 import { Resend } from 'resend'
 import { calculateFundAllocationRounded, normalizeSponsorTierId } from '@/lib/sponsor-tiers'
+import {
+  PULSE_TIERS,
+  calculatePulseFundAllocationRounded,
+  type PulseTierId,
+} from '@/lib/pulse-tiers'
+
+const PULSE_TIER_IDS = Object.keys(PULSE_TIERS) as PulseTierId[]
+function isPulseTier(raw: string | null | undefined): raw is PulseTierId {
+  return typeof raw === 'string' && (PULSE_TIER_IDS as string[]).includes(raw)
+}
 
 if (!process.env.RESEND_API_KEY) {
   console.warn('RESEND_API_KEY is not set - email functionality will be disabled')
@@ -95,10 +105,17 @@ export const emailTemplates = {
     reportToken?: string,
     dashboardAccessToken?: string
   ) => {
-    const tierId = normalizeSponsorTierId(tier)
-    const alloc = calculateFundAllocationRounded(amountMXN, tierId)
-    const fundAmount = alloc.fundAmountRounded
-    const fundPct = Math.round(alloc.fundPercent * 100)
+    // Pulse tier strings (`pulse_unico`, `pulse_pack`, `suscripcion`,
+    // `mundial_pack`, `mundial_pack_founding`, `pilot`) are not in the
+    // market-tier map — falling through to `starter` (20%) is wrong for
+    // every Pulse SKU. Branch first, market tiers fall back to the
+    // existing sponsor-tier allocation.
+    const fundAmount = isPulseTier(tier)
+      ? calculatePulseFundAllocationRounded(amountMXN, tier).fundAmountRounded
+      : calculateFundAllocationRounded(amountMXN, normalizeSponsorTierId(tier)).fundAmountRounded
+    const fundPct = isPulseTier(tier)
+      ? Math.round(calculatePulseFundAllocationRounded(amountMXN, tier).fundPercent * 100)
+      : Math.round(calculateFundAllocationRounded(amountMXN, normalizeSponsorTierId(tier)).fundPercent * 100)
     const sponsoredLabel = marketTitle
       ? `"${marketTitle}"`
       : category

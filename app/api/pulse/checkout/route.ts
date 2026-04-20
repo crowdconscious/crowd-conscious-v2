@@ -118,6 +118,10 @@ const schema = z
     coupon_code: z.string().optional(),
     contact_name: z.string().trim().optional(),
     brand_pitch: z.string().trim().max(280).optional(),
+    // Optional attribution tag (e.g. "pilot_landing", "mundial_card") so
+    // we can tell which surface drove the checkout. Capped to keep
+    // Stripe metadata under their 500-char-per-value limit.
+    source: z.string().trim().max(64).optional(),
   })
   .superRefine((data, ctx) => {
     // Mundial Pack tiers warrant a real contact name + a one-sentence pitch
@@ -169,6 +173,7 @@ export async function POST(request: NextRequest) {
       coupon_code: couponCodeRaw,
       contact_name,
       brand_pitch,
+      source,
     } = parsed.data
 
     const tier = PULSE_TIERS[tierId]
@@ -238,6 +243,7 @@ export async function POST(request: NextRequest) {
         fund_percent: String(alloc.fundPercent),
         fund_amount_estimated_mxn: String(alloc.fundAmountRounded),
         platform_amount_estimated_mxn: String(alloc.platformAmountRounded),
+        ...(source ? { source } : {}),
         ...(couponId
           ? {
               coupon_discount_percent: String(couponDiscountPercent ?? ''),

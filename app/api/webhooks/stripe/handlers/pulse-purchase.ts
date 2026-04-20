@@ -123,6 +123,9 @@ async function upsertPulseSponsorAccount(
       has_white_label: benefits.has_white_label,
       ...(params.sponsorLogoUrl ? { logo_url: params.sponsorLogoUrl } : {}),
       ...(params.stripeCustomerId ? { stripe_customer_id: params.stripeCustomerId } : {}),
+      // Refresh contact_name on subsequent purchases (e.g. a Pulse Único
+      // buyer upgrading to Mundial now provides a real contact name).
+      ...(params.contactName ? { contact_name: params.contactName } : {}),
     }
 
     const { error: updErr } = await (supabase as any)
@@ -292,6 +295,15 @@ export async function handlePulsePurchase(session: Stripe.Checkout.Session) {
   const stripeCustomerId =
     typeof session.customer === 'string' && session.customer ? session.customer : null
 
+  // Prefer the metadata contact_name the modal sent (required for Mundial,
+  // optional elsewhere). Stripe Checkout for MXN cards rarely collects
+  // `customer_details.name`, so that alone left sponsor_accounts.contact_name
+  // null for Mundial buyers — the one segment we follow up with personally.
+  const contactNameFromForm =
+    typeof metadata.contact_name === 'string' ? metadata.contact_name.trim() : ''
+  const resolvedContactName =
+    contactNameFromForm || session.customer_details?.name?.trim() || null
+
   const sponsorAccount = await upsertPulseSponsorAccount(supabase, {
     email: contactEmail,
     companyName,
@@ -300,7 +312,7 @@ export async function handlePulsePurchase(session: Stripe.Checkout.Session) {
     amountMXN,
     fundAmount,
     stripeCustomerId,
-    contactName: session.customer_details?.name ?? null,
+    contactName: resolvedContactName,
   })
 
   if (couponId && contactEmail) {
