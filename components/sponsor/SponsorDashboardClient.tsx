@@ -1,7 +1,7 @@
 'use client'
 
 import type React from 'react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
@@ -12,27 +12,28 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { FileDown, BarChart3, Share2, BookOpen, Sparkles } from 'lucide-react'
-import { useMemo } from 'react'
+import { FileDown, BarChart3, Share2, BookOpen, Sparkles, HelpCircle } from 'lucide-react'
 import { SponsorOnboardingBanner } from '@/components/sponsor/SponsorOnboardingBanner'
 import { SponsorMarketCard } from '@/components/sponsor/SponsorMarketCard'
 import { SuggestCauseForm } from '@/components/sponsor/SuggestCauseForm'
 import type { SponsorDashboardMarketRow, FundImpactRow } from '@/components/sponsor/types'
+import { useLanguage, type Language } from '@/contexts/LanguageContext'
+import { useSponsorT } from '@/lib/i18n/sponsor-dashboard'
 
 export type { SponsorOutcomeRow, SponsorDashboardMarketRow, FundImpactRow } from '@/components/sponsor/types'
 
-const TIER_ES: Record<string, { label: string; color: string }> = {
-  starter: { label: 'Patrocinador de Mercado', color: 'text-slate-400' },
-  growth: { label: 'Patrocinador de Categoría', color: 'text-emerald-400' },
-  champion: { label: 'Socio de Impacto', color: 'text-amber-400' },
-  anchor: { label: 'Patrocinador Fundador', color: 'text-purple-400' },
-  pilot: { label: 'Pilot Pulse', color: 'text-cyan-400' },
-  pulse_unico: { label: 'Pulse Único', color: 'text-emerald-400' },
-  pulse_pack: { label: 'Pulse Pack (3)', color: 'text-emerald-400' },
-  suscripcion: { label: 'Suscripción Pulse', color: 'text-amber-400' },
-  mundial_pack: { label: 'Mundial Pulse Pack', color: 'text-amber-400' },
-  mundial_pack_founding: { label: 'Mundial Pack · Fundador', color: 'text-fuchsia-400' },
-  enterprise: { label: 'Enterprise', color: 'text-purple-400' },
+const TIER_LABELS: Record<string, { label: { es: string; en: string }; color: string }> = {
+  starter: { label: { es: 'Patrocinador de Mercado', en: 'Market Sponsor' }, color: 'text-slate-400' },
+  growth: { label: { es: 'Patrocinador de Categoría', en: 'Category Sponsor' }, color: 'text-emerald-400' },
+  champion: { label: { es: 'Socio de Impacto', en: 'Impact Partner' }, color: 'text-amber-400' },
+  anchor: { label: { es: 'Patrocinador Fundador', en: 'Founding Sponsor' }, color: 'text-purple-400' },
+  pilot: { label: { es: 'Pilot Pulse', en: 'Pulse Pilot' }, color: 'text-cyan-400' },
+  pulse_unico: { label: { es: 'Pulse Único', en: 'Pulse Single' }, color: 'text-emerald-400' },
+  pulse_pack: { label: { es: 'Pulse Pack (3)', en: 'Pulse Pack (3)' }, color: 'text-emerald-400' },
+  suscripcion: { label: { es: 'Suscripción Pulse', en: 'Pulse Subscription' }, color: 'text-amber-400' },
+  mundial_pack: { label: { es: 'Mundial Pulse Pack', en: 'Mundial Pulse Pack' }, color: 'text-amber-400' },
+  mundial_pack_founding: { label: { es: 'Mundial Pack · Fundador', en: 'Mundial Pack · Founder' }, color: 'text-fuchsia-400' },
+  enterprise: { label: { es: 'Enterprise', en: 'Enterprise' }, color: 'text-purple-400' },
 }
 
 type RawMarket = {
@@ -67,9 +68,9 @@ type Props = {
   appOrigin: string
 }
 
-function fmtDate(iso: string) {
+function fmtDate(iso: string, language: Language) {
   try {
-    return new Date(iso).toLocaleDateString('es-MX', {
+    return new Date(iso).toLocaleDateString(language === 'en' ? 'en-US' : 'es-MX', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
@@ -98,15 +99,21 @@ export default function SponsorDashboardClient({
   isFirstVisit,
   appOrigin,
 }: Props) {
+  const { t, language } = useSponsorT()
+  const { setLanguage } = useLanguage()
   const fundTotal = Number(account.total_fund_contribution ?? 0)
   const showPulse = account.is_pulse_client === true
-  const tier = TIER_ES[account.tier] ?? TIER_ES.starter
+  const tierEntry = TIER_LABELS[account.tier] ?? TIER_LABELS.starter
+  const tierLabel = tierEntry.label[language === 'en' ? 'en' : 'es']
+  const tierColor = tierEntry.color
   const maxPulse = account.max_pulse_markets ?? 1
   const usedPulse = account.used_pulse_markets ?? 0
   const unlimited = maxPulse >= 999
   const atPulseLimit = !unlimited && usedPulse >= maxPulse
   const pulsePct = unlimited ? 100 : maxPulse > 0 ? Math.min(100, Math.round((usedPulse / maxPulse) * 100)) : 0
   const [addonLoading, setAddonLoading] = useState(false)
+  const [welcomeOverrideOpen, setWelcomeOverrideOpen] = useState(false)
+  const showBanner = isFirstVisit || welcomeOverrideOpen
 
   const startPulseAddon = async () => {
     setAddonLoading(true)
@@ -134,6 +141,9 @@ export default function SponsorDashboardClient({
     })
   }, [markets, marketsRaw])
 
+  const mxnLocale = language === 'en' ? 'en-US' : 'es-MX'
+  const fundFormatted = fundTotal.toLocaleString(mxnLocale, { maximumFractionDigits: 0 })
+
   return (
     <div className="min-h-screen bg-[#0f1419] text-slate-100">
       <header className="border-b border-[#2d3748] bg-[#0f1419] px-4 py-6 sm:px-8">
@@ -151,37 +161,75 @@ export default function SponsorDashboardClient({
             ) : null}
             <div>
               <h1 className="text-xl font-semibold text-white sm:text-2xl">
-                Dashboard de {account.company_name}
+                {t('header.title_prefix')} {account.company_name}
               </h1>
               <p className="mt-1 text-sm text-slate-400">
-                <span className={tier.color}>{tier.label}</span>
+                <span className={tierColor}>{tierLabel}</span>
                 {' · '}
-                Activo desde {fmtDate(account.created_at)}
+                {t('header.active_since')} {fmtDate(account.created_at, language)}
               </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <button
+              type="button"
+              onClick={() => setWelcomeOverrideOpen(true)}
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#2d3748] text-slate-400 hover:border-emerald-500/40 hover:text-emerald-300"
+              aria-label={t('header.help_button')}
+              title={t('header.help_button')}
+            >
+              <HelpCircle className="h-4 w-4" />
+            </button>
+            <div
+              className="inline-flex overflow-hidden rounded-full border border-[#2d3748] text-xs font-semibold"
+              role="group"
+              aria-label="Language"
+            >
+              <button
+                type="button"
+                onClick={() => setLanguage('es')}
+                className={`h-11 px-3 ${language === 'es' ? 'bg-emerald-500/20 text-emerald-300' : 'text-slate-400 hover:bg-white/5'}`}
+                aria-pressed={language === 'es'}
+              >
+                {t('header.language_toggle_es')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setLanguage('en')}
+                className={`h-11 px-3 ${language === 'en' ? 'bg-emerald-500/20 text-emerald-300' : 'text-slate-400 hover:bg-white/5'}`}
+                aria-pressed={language === 'en'}
+              >
+                {t('header.language_toggle_en')}
+              </button>
             </div>
           </div>
         </div>
       </header>
 
       <main className="mx-auto max-w-5xl space-y-10 px-4 py-8 sm:px-8">
-        {isFirstVisit ? (
+        {showBanner ? (
           <SponsorOnboardingBanner
             companyName={account.company_name}
             isPulseClient={showPulse}
             token={token}
+            forceOpen={!isFirstVisit && welcomeOverrideOpen}
+            onClose={() => setWelcomeOverrideOpen(false)}
           />
         ) : null}
 
         {showPulse ? (
           <section className="rounded-xl border border-emerald-500/25 bg-[#1a2029] p-6">
-            <h2 className="text-sm font-bold uppercase tracking-wide text-slate-400">Tu plan Conscious Pulse</h2>
+            <h2 className="text-sm font-bold uppercase tracking-wide text-slate-400">
+              {t('plan.title')}
+            </h2>
             <p className="mt-2 text-lg font-semibold text-white">
-              Tu plan: <span className={tier.color}>{tier.label}</span>
+              {t('plan.your_plan')} <span className={tierColor}>{tierLabel}</span>
             </p>
             <p className="mt-2 text-sm text-slate-400">
-              Mercados Pulse:{' '}
+              {t('plan.pulse_markets_used')}{' '}
               <span className="font-medium text-white">
-                {usedPulse} de {unlimited ? '∞' : maxPulse} utilizados
+                {usedPulse} {t('plan.of')} {unlimited ? '∞' : maxPulse} {t('plan.used')}
               </span>
             </p>
             <div className="mt-3 h-2 w-full max-w-md overflow-hidden rounded-full bg-slate-800">
@@ -192,12 +240,12 @@ export default function SponsorDashboardClient({
             </div>
             {atPulseLimit ? (
               <p className="mt-3 text-sm text-amber-400/95">
-                Has alcanzado el límite de tu plan.{' '}
+                {t('plan.at_limit')}{' '}
                 <Link
                   href={`/pulse#pulse-pricing?email=${encodeURIComponent(account.contact_email)}`}
                   className="font-medium text-emerald-400 underline hover:text-emerald-300"
                 >
-                  Subir de plan →
+                  {t('plan.upgrade_cta')} →
                 </Link>
               </p>
             ) : null}
@@ -209,7 +257,7 @@ export default function SponsorDashboardClient({
                 }`}
                 aria-disabled={atPulseLimit}
               >
-                + Crear nuevo Pulse
+                {t('plan.create_new')}
               </Link>
               <button
                 type="button"
@@ -217,82 +265,82 @@ export default function SponsorDashboardClient({
                 disabled={addonLoading}
                 className="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-5 py-2.5 text-sm font-semibold text-emerald-400 transition-colors hover:bg-emerald-500/20 disabled:opacity-50"
               >
-                {addonLoading ? '…' : 'Comprar más'}
+                {addonLoading ? t('plan.loading') : t('plan.buy_more')}
               </button>
               <Link
                 href={`/pulse#pulse-pricing?email=${encodeURIComponent(account.contact_email)}`}
                 className="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-slate-600 px-5 py-2.5 text-sm font-medium text-slate-200 hover:bg-slate-800"
               >
-                Subir de plan →
+                {t('plan.upgrade_cta')} →
               </Link>
             </div>
           </section>
         ) : null}
 
         <section className="rounded-xl border border-[#2d3748] bg-[#1a2029]/80 p-6">
-          <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500">Patrocinar mercados</h2>
-          <p className="mt-2 text-sm text-slate-400">
-            También puedes asociar tu marca a mercados existentes de la plataforma.
-          </p>
+          <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500">
+            {t('sponsor_markets.title')}
+          </h2>
+          <p className="mt-2 text-sm text-slate-400">{t('sponsor_markets.subtitle')}</p>
           <Link
             href={`/markets?sponsor_mode=true&token=${encodeURIComponent(token)}`}
             className="mt-4 inline-flex min-h-[44px] items-center justify-center rounded-lg bg-slate-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-600"
           >
-            Ver mercados disponibles →
+            {t('sponsor_markets.cta')} →
           </Link>
         </section>
 
         <section className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
-          <StatCard label="Mercados activos" value={String(activeMarketCount)} />
-          <StatCard label="Votos totales" value={totalVotes.toLocaleString()} />
+          <StatCard label={t('stats.active_markets')} value={String(activeMarketCount)} />
+          <StatCard label={t('stats.total_votes')} value={totalVotes.toLocaleString(mxnLocale)} />
           <StatCard
-            label="Cert. promedio"
+            label={t('stats.avg_confidence')}
             value={avgConfidenceOverall != null ? `${avgConfidenceOverall.toFixed(1)}/10` : '—'}
           />
-          <StatCard label="Razonamientos" value={String(totalReasonings)} />
+          <StatCard label={t('stats.reasonings')} value={String(totalReasonings)} />
           <StatCard
-            label="Al Fondo (acum.)"
+            label={t('stats.to_fund')}
             accent
-            value={`$${fundTotal.toLocaleString('es-MX', { maximumFractionDigits: 0 })}`}
+            value={`$${fundFormatted}`}
           />
         </section>
 
         <section>
           <h2 className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500">
             <BarChart3 className="h-4 w-4" />
-            Qué puedes hacer
+            {t('actions.title')}
           </h2>
           <div className="grid gap-4 md:grid-cols-2">
             {showPulse ? (
               <ActionCard
                 icon={<span className="text-xl">📊</span>}
-                title="Crear un Pulse"
-                description="Nueva pregunta multi-opción para tu comunidad (certeza y resultados en vivo)."
+                title={t('actions.create_pulse')}
+                description={t('actions.create_pulse_desc')}
                 href={atPulseLimit ? '#' : `/dashboard/sponsor/${token}/create-pulse`}
-                cta="Crear Pulse →"
+                cta={`${t('actions.create_pulse_cta')} →`}
                 disabled={atPulseLimit}
               />
             ) : null}
             <ActionCard
               icon={<FileDown className="h-5 w-5 text-emerald-400" />}
-              title="Reportes"
-              description="PDF por mercado con resultados, confianza e impacto al fondo."
+              title={t('actions.reports')}
+              description={t('actions.reports_desc')}
               href={`/dashboard/sponsor/${token}/reports`}
-              cta="Ver reportes →"
+              cta={`${t('actions.reports_cta')} →`}
             />
             <ActionCard
               icon={<Share2 className="h-5 w-5 text-emerald-400" />}
-              title="Compartir"
-              description="Enlaces públicos, WhatsApp y códigos QR por mercado."
+              title={t('actions.share')}
+              description={t('actions.share_desc')}
               href={`/dashboard/sponsor/${token}/share`}
-              cta="Compartir →"
+              cta={`${t('actions.share_cta')} →`}
             />
             <ActionCard
               icon={<BookOpen className="h-5 w-5 text-emerald-400" />}
-              title="Cómo funciona"
-              description="Guía rápida del panel de patrocinador."
+              title={t('actions.how_it_works')}
+              description={t('actions.how_it_works_desc')}
               href={`/dashboard/sponsor/${token}/guide`}
-              cta="Ver guía →"
+              cta={`${t('actions.how_it_works_cta')} →`}
             />
           </div>
         </section>
@@ -301,23 +349,23 @@ export default function SponsorDashboardClient({
 
         <section>
           <h2 className="mb-4 border-b border-[#2d3748] pb-2 text-sm font-medium uppercase tracking-wide text-slate-400">
-            Tus mercados
+            {t('markets_list.title')}
           </h2>
           {enriched.length === 0 ? (
             <div className="rounded-xl border border-[#2d3748] bg-[#1a2029] p-8 text-center">
               <span className="text-3xl">📊</span>
-              <p className="mt-3 font-medium text-white">Aún no tienes mercados vinculados</p>
+              <p className="mt-3 font-medium text-white">{t('markets_list.empty_title')}</p>
               <p className="mt-1 text-sm text-slate-400">
                 {showPulse
-                  ? 'Crea tu primer Pulse o pide a Crowd Conscious que vincule un mercado existente a tu cuenta.'
-                  : 'Tu mercado patrocinado aparecerá aquí cuando esté vinculado a tu cuenta (o nombre de patrocinador).'}
+                  ? t('markets_list.empty_desc_pulse')
+                  : t('markets_list.empty_desc_classic')}
               </p>
               {showPulse ? (
                 <Link
                   href={`/dashboard/sponsor/${token}/create-pulse`}
                   className="mt-4 inline-block rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500"
                 >
-                  Crear primer Pulse →
+                  {t('markets_list.empty_cta')} →
                 </Link>
               ) : null}
             </div>
@@ -342,31 +390,28 @@ export default function SponsorDashboardClient({
         <section>
           <h2 className="mb-4 flex items-center gap-2 text-sm font-medium uppercase tracking-wide text-slate-400">
             <Sparkles className="h-4 w-4 text-amber-400" />
-            Impacto del Fondo Consciente
+            {t('fund_impact.title')}
           </h2>
           <div className="rounded-xl border border-[#2d3748] bg-[#1a2029] p-6">
-            <p className="text-slate-300">
-              Tu patrocinio contribuye al Fondo Consciente para causas comunitarias elegidas por la
-              comunidad.
-            </p>
+            <p className="text-slate-300">{t('fund_impact.description')}</p>
             {fundTotal > 0 ? (
               <p className="mt-2 text-lg font-bold text-emerald-400">
-                ${fundTotal.toLocaleString('es-MX', { maximumFractionDigits: 0 })} MXN
-                <span className="ml-2 text-sm font-normal text-slate-500">estimado acumulado</span>
+                ${fundFormatted} MXN
+                <span className="ml-2 text-sm font-normal text-slate-500">
+                  {t('fund_impact.estimated_cum')}
+                </span>
               </p>
             ) : (
-              <p className="mt-2 text-sm text-slate-500">
-                Los aportes al fondo aparecerán aquí tras el procesamiento de pagos de patrocinio.
-              </p>
+              <p className="mt-2 text-sm text-slate-500">{t('fund_impact.empty')}</p>
             )}
             {fundImpactRows.length > 0 ? (
               <ul className="mt-4 space-y-2 text-sm text-slate-400">
                 {fundImpactRows.slice(0, 8).map((row) => (
                   <li key={row.created_at + (row.description ?? '')}>
                     <span className="text-emerald-400/90">
-                      ${Number(row.amount).toLocaleString('es-MX', { maximumFractionDigits: 0 })} MXN
+                      ${Number(row.amount).toLocaleString(mxnLocale, { maximumFractionDigits: 0 })} MXN
                     </span>{' '}
-                    — {row.description ?? 'Aporte al fondo'}
+                    — {row.description ?? t('fund_impact.fund_row_default')}
                   </li>
                 ))}
               </ul>
@@ -375,18 +420,18 @@ export default function SponsorDashboardClient({
               href="/predictions/fund"
               className="mt-4 inline-block text-sm text-emerald-400 hover:underline"
             >
-              Ver causas del fondo →
+              {t('fund_impact.see_causes')} →
             </Link>
           </div>
         </section>
 
         <footer className="border-t border-[#2d3748] py-8 text-center text-sm text-slate-500">
-          <p>¿Necesitas ayuda? Tu account manager:</p>
+          <p>{t('footer.need_help')}</p>
           <a href="mailto:francisco@crowdconscious.app" className="font-medium text-emerald-400 hover:underline">
             francisco@crowdconscious.app
           </a>
           <p className="mt-4 text-xs text-slate-600">
-            Powered by Crowd Conscious · {new Date().getFullYear()}
+            {t('footer.powered_by')} · {new Date().getFullYear()}
           </p>
         </footer>
       </main>
@@ -452,6 +497,7 @@ function ActionCard({
 }
 
 function PulseMarketAnalytics({ market }: { market: SponsorDashboardMarketRow }) {
+  const { t } = useSponsorT()
   const maxBucket = Math.max(1, ...market.confidenceBuckets)
   const chartData = market.votesByDay.map((d) => ({
     date: d.date,
@@ -461,7 +507,9 @@ function PulseMarketAnalytics({ market }: { market: SponsorDashboardMarketRow })
   return (
     <div className="mt-4 space-y-6 rounded-xl border border-[#2d3748] bg-[#0f1419]/80 p-5">
       <div>
-        <h4 className="mb-2 text-sm font-medium text-slate-300">Distribución de confianza (1–10)</h4>
+        <h4 className="mb-2 text-sm font-medium text-slate-300">
+          {t('charts.confidence_dist_title')}
+        </h4>
         <div className="flex h-28 items-end gap-1">
           {market.confidenceBuckets.map((c, i) => (
             <div key={i} className="flex flex-1 flex-col items-center gap-1">
@@ -473,12 +521,16 @@ function PulseMarketAnalytics({ market }: { market: SponsorDashboardMarketRow })
             </div>
           ))}
         </div>
-        <p className="mt-2 text-xs text-slate-500">Opiniones fuertes (≥8): {market.strongOpinionCount}</p>
+        <p className="mt-2 text-xs text-slate-500">
+          {t('charts.strong_opinions')}: {market.strongOpinionCount}
+        </p>
       </div>
 
       {chartData.length > 0 ? (
         <div>
-          <h4 className="mb-2 text-sm font-medium text-slate-300">Votos en el tiempo</h4>
+          <h4 className="mb-2 text-sm font-medium text-slate-300">
+            {t('charts.votes_over_time')}
+          </h4>
           <div className="h-48 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
@@ -501,13 +553,17 @@ function PulseMarketAnalytics({ market }: { market: SponsorDashboardMarketRow })
       ) : null}
 
       <div>
-        <h4 className="mb-2 text-sm font-medium text-slate-300">Confianza promedio por resultado</h4>
+        <h4 className="mb-2 text-sm font-medium text-slate-300">
+          {t('charts.avg_conf_by_outcome')}
+        </h4>
         <ul className="space-y-1 text-sm text-slate-400">
           {market.avgConfidenceByOutcome.map((o) => (
             <li key={o.outcomeId} className="flex justify-between gap-4">
               <span>{o.label}</span>
               <span className="text-emerald-400/90">
-                {o.count > 0 ? `${o.avg.toFixed(1)}/10 (${o.count} votos)` : '—'}
+                {o.count > 0
+                  ? `${o.avg.toFixed(1)}/10 (${o.count} ${t('charts.votes')})`
+                  : '—'}
               </span>
             </li>
           ))}
