@@ -32,6 +32,7 @@ import { IconBadge } from '@/components/ui/IconBadge'
 import { parseMetadataValues } from '@/lib/locations/conscious-values'
 import { ValueBadgeRow } from '@/components/locations/ValueBadge'
 import { NearestToAztecaSection } from './NearestToAztecaSection'
+import { CausesCommunityRow } from './CausesCommunityRow'
 import { isAztecaModuleVisible } from '@/lib/locations/geo'
 import { AnonymousVoteToast } from '@/components/anon/AnonymousVoteToast'
 import { PostVoteShare } from '@/components/sharing/PostVoteShare'
@@ -834,6 +835,8 @@ export default function LocationsPage({
           {showAzteca && !loading && filteredLocations.length > 0 ? (
             <NearestToAztecaSection locations={filteredLocations} locale={locale} />
           ) : null}
+
+          <CausesCommunityRow locale={locale} city="Ciudad de México" />
 
           {loading ? (
             <p className="text-center text-slate-500">{locale === 'es' ? 'Cargando…' : 'Loading…'}</p>

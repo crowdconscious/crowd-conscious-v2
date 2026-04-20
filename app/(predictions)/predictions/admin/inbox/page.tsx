@@ -43,6 +43,7 @@ const TYPE_FILTERS = [
   { id: 'all', label: 'All' },
   { id: 'market_idea', label: 'Market Ideas' },
   { id: 'causes', label: 'Causes' },
+  { id: 'cause_suggestion_municipal', label: 'Sugerencias municipales' },
   { id: 'general', label: 'General' },
 ] as const
 
@@ -56,6 +57,11 @@ const TYPE_CONFIG: Record<string, { label: string; bg: string; text: string }> =
   market_idea: { label: 'Market Idea', bg: 'bg-emerald-500/20', text: 'text-emerald-400' },
   cause_proposal: { label: 'Cause/NGO', bg: 'bg-amber-500/20', text: 'text-amber-400' },
   ngo_suggestion: { label: 'Cause/NGO', bg: 'bg-amber-500/20', text: 'text-amber-400' },
+  cause_suggestion_municipal: {
+    label: 'Sugerencia municipal',
+    bg: 'bg-fuchsia-500/20',
+    text: 'text-fuchsia-400',
+  },
   general: { label: 'General', bg: 'bg-slate-500/20', text: 'text-slate-400' },
 }
 

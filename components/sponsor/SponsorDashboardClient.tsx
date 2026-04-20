@@ -16,6 +16,7 @@ import { FileDown, BarChart3, Share2, BookOpen, Sparkles } from 'lucide-react'
 import { useMemo } from 'react'
 import { SponsorOnboardingBanner } from '@/components/sponsor/SponsorOnboardingBanner'
 import { SponsorMarketCard } from '@/components/sponsor/SponsorMarketCard'
+import { SuggestCauseForm } from '@/components/sponsor/SuggestCauseForm'
 import type { SponsorDashboardMarketRow, FundImpactRow } from '@/components/sponsor/types'
 
 export type { SponsorOutcomeRow, SponsorDashboardMarketRow, FundImpactRow } from '@/components/sponsor/types'
@@ -292,6 +293,8 @@ export default function SponsorDashboardClient({
             />
           </div>
         </section>
+
+        <SuggestCauseForm token={token} />
 
         <section>
           <h2 className="mb-4 border-b border-[#2d3748] pb-2 text-sm font-medium uppercase tracking-wide text-slate-400">
