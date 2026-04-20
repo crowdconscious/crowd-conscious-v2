@@ -16,6 +16,8 @@ import {
   Link2,
   Check,
 } from 'lucide-react'
+import { LogoUpload } from '@/components/ui/LogoUpload'
+import { ImageUpload } from '@/components/ui/ImageUpload'
 
 type Cause = {
   id: string
@@ -660,52 +662,22 @@ export default function AdminCausesPage() {
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-400 mb-1">
-                      Logo URL
-                    </label>
-                    <input
-                      type="url"
-                      value={form.logo_url}
-                      onChange={(e) => setForm((f) => ({ ...f, logo_url: e.target.value }))}
-                      className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                      placeholder="https://..."
-                    />
-                    {form.logo_url && (
-                      <Image
-                        src={form.logo_url}
-                        alt=""
-                        width={64}
-                        height={64}
-                        className="mt-2 h-16 w-16 object-cover rounded-md border border-white/10"
-                        unoptimized
-                      />
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-400 mb-1">
-                      Cover image URL
-                    </label>
-                    <input
-                      type="url"
-                      value={form.cover_image_url}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, cover_image_url: e.target.value }))
-                      }
-                      className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                      placeholder="https://..."
-                    />
-                    {form.cover_image_url && (
-                      <Image
-                        src={form.cover_image_url}
-                        alt=""
-                        width={200}
-                        height={80}
-                        className="mt-2 h-20 w-full object-cover rounded-md border border-white/10"
-                        unoptimized
-                      />
-                    )}
-                  </div>
+                  <LogoUpload
+                    label="Logo"
+                    hint="Cuadrado funciona mejor · square logos look best"
+                    storageFolder="causes"
+                    currentLogoUrl={form.logo_url || null}
+                    onUpload={(url) => setForm((f) => ({ ...f, logo_url: url }))}
+                    onClear={() => setForm((f) => ({ ...f, logo_url: '' }))}
+                  />
+                  <ImageUpload
+                    label="Cover image"
+                    hint="Horizontal · shown on the detail page header"
+                    storagePath="causes"
+                    currentUrl={form.cover_image_url || null}
+                    onUpload={(url) => setForm((f) => ({ ...f, cover_image_url: url }))}
+                    onClear={() => setForm((f) => ({ ...f, cover_image_url: '' }))}
+                  />
                 </div>
 
                 <div className="flex gap-2 justify-end pt-2">

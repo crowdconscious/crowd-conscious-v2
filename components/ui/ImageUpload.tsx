@@ -2,7 +2,13 @@
 
 import { LogoUpload } from '@/components/ui/LogoUpload'
 
-export type ImageUploadStoragePath = 'blog' | 'pulse' | 'live' | 'sponsors'
+export type ImageUploadStoragePath =
+  | 'blog'
+  | 'pulse'
+  | 'live'
+  | 'sponsors'
+  | 'locations'
+  | 'causes'
 
 export type ImageUploadProps = {
   currentUrl: string | null

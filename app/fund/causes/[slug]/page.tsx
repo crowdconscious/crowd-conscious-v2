@@ -3,16 +3,10 @@ import Link from 'next/link'
 import Image from 'next/image'
 import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
-import {
-  ArrowRight,
-  BadgeCheck,
-  ExternalLink,
-  Heart,
-  Instagram,
-  MapPin,
-} from 'lucide-react'
+import { BadgeCheck, ExternalLink, Instagram, MapPin } from 'lucide-react'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { CauseShareBar } from '@/components/fund/CauseShareBar'
+import { CauseVoteButton } from '@/components/fund/CauseVoteButton'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -345,25 +339,7 @@ export default async function CauseDetailPage({
           </section>
         )}
 
-        <section className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-6">
-          <h2 className="text-lg font-semibold text-white inline-flex items-center gap-2">
-            <Heart className="w-5 h-5 text-emerald-400" />
-            {L('Apoya esta causa en el próximo ciclo', 'Support this cause in the next cycle')}
-          </h2>
-          <p className="text-sm text-slate-300 mt-2">
-            {L(
-              'Cada mes, quienes participan en el Fondo Consciente eligen qué causa recibe la asignación. Una opinión, un voto.',
-              'Each cycle, Conscious Fund participants choose which cause receives that month’s allocation. One opinion, one vote.'
-            )}
-          </p>
-          <Link
-            href="/predictions/fund"
-            className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium"
-          >
-            {L('Votar en el Fondo Consciente', 'Vote in the Conscious Fund')}
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </section>
+        <CauseVoteButton causeId={cause.id} locale={locale as 'es' | 'en'} />
       </div>
     </div>
   )

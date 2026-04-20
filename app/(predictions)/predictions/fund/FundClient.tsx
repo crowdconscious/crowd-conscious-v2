@@ -3,7 +3,19 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Heart, Vote, Sparkles, Users, ArrowRight, Info, BadgeCheck } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import {
+  ArrowLeft,
+  ArrowRight,
+  BadgeCheck,
+  Check,
+  Heart,
+  Info,
+  Share2,
+  Sparkles,
+  Users,
+  Vote,
+} from 'lucide-react'
 import { FundThermometer } from '@/components/fund/FundThermometer'
 import {
   TransparencyDashboard,
@@ -87,18 +99,25 @@ export function FundClient({
   causesBreakdown = [],
   isAuthenticated = true,
 }: Props) {
+  const router = useRouter()
   const [voting, setVoting] = useState<Record<string, boolean>>({})
+  const [voteError, setVoteError] = useState<string | null>(null)
   const [localVotesUsed, setLocalVotesUsed] = useState(votesUsed)
   const [localCauseVotes, setLocalCauseVotes] = useState<Record<string, number>>(myVotesByCause)
   const [localCauseTotals, setLocalCauseTotals] = useState<Record<string, number>>(
     causes.reduce((acc, c) => ({ ...acc, [c.id]: c.vote_count }), {})
   )
+  const [shareCopied, setShareCopied] = useState(false)
 
-  const canVote = localVotesUsed < votePower
+  // Anon users also get a single vote per cycle, tracked via cookie on the
+  // server. We hide "remaining votes" copy for anon to avoid implying they
+  // have an account; the server returns 400 if they've already voted.
+  const canVote = !isAuthenticated || localVotesUsed < votePower
 
   const handleVote = async (causeId: string) => {
     if (!canVote || voting[causeId]) return
     setVoting((p) => ({ ...p, [causeId]: true }))
+    setVoteError(null)
     try {
       const res = await fetch('/api/predictions/fund/vote', {
         method: 'POST',
@@ -110,16 +129,76 @@ export function FundClient({
         setLocalVotesUsed((u) => u + 1)
         setLocalCauseVotes((v) => ({ ...v, [causeId]: (v[causeId] ?? 0) + 1 }))
         setLocalCauseTotals((t) => ({ ...t, [causeId]: (t[causeId] ?? 0) + 1 }))
+      } else {
+        setVoteError(data?.error || 'No se pudo votar / Vote failed')
       }
     } catch {
-      // ignore
+      setVoteError('No se pudo votar / Vote failed')
     } finally {
       setVoting((p) => ({ ...p, [causeId]: false }))
     }
   }
 
+  const handleShare = async () => {
+    const url =
+      typeof window !== 'undefined'
+        ? `${window.location.origin}/predictions/fund`
+        : 'https://crowdconscious.app/predictions/fund'
+    const text =
+      'Vota en el Fondo Consciente — dirige apoyos reales a causas comunitarias mexicanas.'
+    try {
+      const nav = typeof navigator !== 'undefined' ? (navigator as Navigator) : null
+      if (nav && typeof nav.share === 'function') {
+        await nav.share({ title: 'Fondo Consciente', text, url })
+        return
+      }
+      if (nav?.clipboard) {
+        await nav.clipboard.writeText(`${text} ${url}`)
+        setShareCopied(true)
+        setTimeout(() => setShareCopied(false), 1800)
+      }
+    } catch {
+      /* user cancelled */
+    }
+  }
+
   return (
     <div className="max-w-4xl mx-auto space-y-10">
+      {/* Back + share */}
+      <div className="flex items-center justify-between gap-3">
+        <button
+          type="button"
+          onClick={() => {
+            if (typeof window !== 'undefined' && window.history.length > 1) {
+              router.back()
+            } else {
+              router.push('/')
+            }
+          }}
+          className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-emerald-400 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Volver
+        </button>
+        <button
+          type="button"
+          onClick={handleShare}
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-cc-border bg-cc-card/60 hover:border-emerald-500/40 text-sm text-slate-200 hover:text-emerald-300 transition-colors"
+        >
+          {shareCopied ? (
+            <>
+              <Check className="w-4 h-4 text-emerald-400" />
+              Copiado / Copied
+            </>
+          ) : (
+            <>
+              <Share2 className="w-4 h-4" />
+              Compartir
+            </>
+          )}
+        </button>
+      </div>
+
       {/* Section 1: Fund Overview */}
       <div>
         <h1 className="text-3xl font-bold text-white">Fondo Consciente</h1>
@@ -133,18 +212,28 @@ export function FundClient({
           reciben apoyos cada mes.
         </p>
         {!isAuthenticated && (
-          <Link
-            href="/signup"
-            className="inline-block mt-4 py-3 px-6 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold transition-colors"
-          >
-            Regístrate para votar por causas
-          </Link>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <Link
+              href="/signup"
+              className="inline-flex items-center gap-2 py-3 px-6 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold transition-colors"
+            >
+              Crear cuenta
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+            <span className="text-xs text-slate-400">
+              También puedes votar sin cuenta · You can also vote without signing up
+            </span>
+          </div>
         )}
       </div>
 
       <FundThermometer current={totalFund} variant="full" />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div
+        className={`grid grid-cols-1 sm:grid-cols-2 gap-4 ${
+          isAuthenticated ? 'lg:grid-cols-4' : 'lg:grid-cols-3'
+        }`}
+      >
         <div className="bg-cc-card border border-emerald-500/20 rounded-xl p-6">
           <p className="text-gray-400 text-sm mb-1">Total Fund</p>
           <p className="text-2xl font-bold text-emerald-400">
@@ -164,11 +253,13 @@ export function FundClient({
             {formatCurrency(monthlyAllocation)} MXN
           </p>
         </div>
-        <div className="bg-cc-card border border-emerald-500/20 rounded-xl p-6">
-          <p className="text-gray-400 text-sm mb-1">Your Impact</p>
-          <p className="text-2xl font-bold text-white">{yourImpactXp} XP</p>
-          <p className="text-cc-text-muted text-xs mt-1">From predictions</p>
-        </div>
+        {isAuthenticated && (
+          <div className="bg-cc-card border border-emerald-500/20 rounded-xl p-6">
+            <p className="text-gray-400 text-sm mb-1">Your Impact</p>
+            <p className="text-2xl font-bold text-white">{yourImpactXp} XP</p>
+            <p className="text-cc-text-muted text-xs mt-1">From predictions</p>
+          </div>
+        )}
       </div>
 
       {/* Section 2: Vote for Causes */}
@@ -180,16 +271,21 @@ export function FundClient({
           </h2>
           <p className="text-cc-text-secondary text-sm mt-1 flex items-center gap-1.5">
             {isAuthenticated
-              ? `Te quedan ${votePower - localVotesUsed} voto${votePower - localVotesUsed !== 1 ? 's' : ''} este mes`
-              : 'Regístrate para votar y dirigir los fondos a causas comunitarias'}
+              ? `Te quedan ${Math.max(0, votePower - localVotesUsed)} voto${
+                  Math.max(0, votePower - localVotesUsed) !== 1 ? 's' : ''
+                } este mes`
+              : 'Un voto por persona este ciclo — sin registro'}
             {cycle && ` · Ciclo ${cycle}`}
             <span
               className="inline-flex text-cc-text-muted hover:text-gray-400 cursor-help"
-              title="You earn votes by making predictions on markets. Each prediction earns XP, and your monthly vote allocation is based on your XP."
+              title="Cada persona tiene 1 voto por ciclo. Los votos anónimos se rastrean por cookie para que nadie pueda votar varias veces por la misma causa."
             >
               <Info className="w-4 h-4" />
             </span>
           </p>
+          {voteError && (
+            <p className="mt-2 text-xs text-red-400">{voteError}</p>
+          )}
         </div>
 
         {causes.length === 0 ? (
@@ -278,23 +374,14 @@ export function FundClient({
                       />
                     </div>
                   </div>
-                  {isAuthenticated ? (
-                    <button
-                      onClick={() => handleVote(cause.id)}
-                      disabled={!canVote || voting[cause.id]}
-                      className="mt-3 w-full py-2 px-3 rounded-lg border border-cc-border text-gray-300 hover:border-emerald-500/50 hover:text-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium flex items-center justify-center gap-2 transition-colors bg-transparent"
-                    >
-                      <Heart className="w-4 h-4" />
-                      Votar
-                    </button>
-                  ) : (
-                    <Link
-                      href="/signup"
-                      className="mt-3 w-full py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium flex items-center justify-center gap-2 transition-colors"
-                    >
-                      Regístrate para votar
-                    </Link>
-                  )}
+                  <button
+                    onClick={() => handleVote(cause.id)}
+                    disabled={!canVote || voting[cause.id]}
+                    className="mt-3 w-full py-2 px-3 rounded-lg border border-cc-border text-gray-300 hover:border-emerald-500/50 hover:text-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium flex items-center justify-center gap-2 transition-colors bg-transparent"
+                  >
+                    <Heart className="w-4 h-4" />
+                    {voting[cause.id] ? 'Votando…' : 'Votar'}
+                  </button>
                 </div>
               )
             })}

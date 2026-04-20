@@ -4,7 +4,7 @@ import { useState, useRef, useCallback } from 'react'
 import { Upload } from 'lucide-react'
 import { cn } from '@/lib/design-system'
 
-export type LogoStorageFolder = 'blog' | 'pulse' | 'live' | 'sponsors' | 'locations'
+export type LogoStorageFolder = 'blog' | 'pulse' | 'live' | 'sponsors' | 'locations' | 'causes'
 
 export interface LogoUploadProps {
   currentLogoUrl: string | null

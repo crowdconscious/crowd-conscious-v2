@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     const supabase = getSupabase()
     const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
     const folderRaw = formData.get('folder')
-    const allowed = ['blog', 'pulse', 'live', 'sponsors', 'locations'] as const
+    const allowed = ['blog', 'pulse', 'live', 'sponsors', 'locations', 'causes'] as const
     const folder =
       typeof folderRaw === 'string' && (allowed as readonly string[]).includes(folderRaw)
         ? folderRaw
