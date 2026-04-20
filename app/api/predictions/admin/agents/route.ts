@@ -46,7 +46,9 @@ export async function GET(request: Request) {
       contentQuery,
       supabase
         .from('blog_posts')
-        .select('id, slug, title, excerpt, status, published_at, created_at, category, cover_image_url')
+        .select(
+          'id, slug, title, excerpt, status, published_at, created_at, category, cover_image_url, generated_by, pulse_market_id'
+        )
         .order('created_at', { ascending: false })
         .limit(50),
     ])

@@ -20,6 +20,7 @@ import {
   Target,
 } from 'lucide-react'
 import { ImageUpload } from '@/components/ui/ImageUpload'
+import ShareBundle from '@/components/admin/ShareBundle'
 
 const AGENTS = [
   { id: 'ceo-digest', label: 'CEO Digest', icon: FileText },
@@ -271,6 +272,8 @@ export default function AdminAgentsPage() {
     created_at: string
     category: string
     cover_image_url: string | null
+    generated_by: string | null
+    pulse_market_id: string | null
   }
 
   const [data, setData] = useState<{
@@ -287,6 +290,7 @@ export default function AdminAgentsPage() {
   const [newsletterBusy, setNewsletterBusy] = useState<'idle' | 'send' | 'force'>('idle')
   const [activeTab, setActiveTab] = useState<TabId>('all')
   const [showArchived, setShowArchived] = useState(false)
+  const [caseStudyOnly, setCaseStudyOnly] = useState(false)
 
   const fetchData = useCallback(async () => {
     try {
@@ -803,81 +807,150 @@ export default function AdminAgentsPage() {
         </div>
         <div className="space-y-4">
           {activeTab === 'blog' ? (
-            blogPosts.length === 0 ? (
-              <div className="text-slate-500 py-8 text-center">No blog drafts yet. Run Content Creator.</div>
-            ) : (
-              blogPosts.map((bp) => (
-                <div
-                  key={bp.id}
-                  className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 space-y-3"
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <div className="mb-4 max-w-md">
-                        <span className="text-gray-300 text-sm font-medium block mb-2">Cover image</span>
-                        <ImageUpload
-                          currentUrl={bp.cover_image_url?.trim() || null}
-                          onUpload={(url) => void saveBlogCover(bp.id, url)}
-                          storagePath="blog"
-                          label="Upload cover"
-                          hint="PNG, JPG, WebP · max 2MB"
-                        />
-                      </div>
-                      <span className="text-xs uppercase text-emerald-400/90">{bp.category}</span>
-                      <h3 className="text-white font-semibold text-lg">{bp.title}</h3>
-                      <p className="text-slate-400 text-sm mt-1 line-clamp-3">{bp.excerpt}</p>
-                      <p className="text-slate-500 text-xs mt-2">
-                        {formatDate(bp.created_at)} · status:{' '}
-                        <span className="text-slate-300">{bp.status}</span>
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <Link
-                        href={`/predictions/admin/blog/edit/${bp.id}`}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 text-xs bg-emerald-900/40 hover:bg-emerald-800/50 border border-emerald-700/40 rounded text-emerald-200 font-medium"
+            (() => {
+              const visiblePosts = caseStudyOnly
+                ? blogPosts.filter(
+                    (bp) => bp.generated_by === 'case-study-draft' && bp.status === 'draft'
+                  )
+                : blogPosts
+              const caseDraftCount = blogPosts.filter(
+                (bp) => bp.generated_by === 'case-study-draft' && bp.status === 'draft'
+              ).length
+
+              return (
+                <>
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
+                    <button
+                      type="button"
+                      onClick={() => setCaseStudyOnly((v) => !v)}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs border transition-colors ${
+                        caseStudyOnly
+                          ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                          : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+                      }`}
+                    >
+                      Borradores de caso de estudio
+                      <span
+                        className={`px-1.5 rounded text-[10px] ${
+                          caseStudyOnly ? 'bg-amber-500/30' : 'bg-slate-700'
+                        }`}
                       >
-                        Edit
-                      </Link>
-                      <Link
-                        href={`/blog/${bp.slug}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1 px-3 py-1.5 text-xs bg-slate-700 hover:bg-slate-600 rounded text-slate-200"
-                      >
-                        <ExternalLink className="w-3 h-3" /> View
-                      </Link>
-                      {bp.status !== 'published' && (
-                        <button
-                          type="button"
-                          onClick={() => updateBlogPost(bp.id, 'published')}
-                          className="px-3 py-1.5 text-xs bg-emerald-600 hover:bg-emerald-500 rounded text-white font-medium"
-                        >
-                          Publish
-                        </button>
-                      )}
-                      {bp.status !== 'archived' && (
-                        <button
-                          type="button"
-                          onClick={() => updateBlogPost(bp.id, 'archived')}
-                          className="px-3 py-1.5 text-xs bg-slate-700 hover:bg-slate-600 rounded text-slate-300"
-                        >
-                          Archive
-                        </button>
-                      )}
-                      {bp.status === 'archived' && (
-                        <button
-                          type="button"
-                          onClick={() => updateBlogPost(bp.id, 'draft')}
-                          className="px-3 py-1.5 text-xs bg-slate-700 hover:bg-slate-600 rounded text-slate-300"
-                        >
-                          Restore draft
-                        </button>
-                      )}
-                    </div>
+                        {caseDraftCount}
+                      </span>
+                    </button>
+                    {caseStudyOnly && (
+                      <span className="text-[11px] text-slate-500">
+                        Auto-generados al cerrar un Pulse con ≥10 votos.
+                      </span>
+                    )}
                   </div>
-                </div>
-              ))
-            )
+
+                  {visiblePosts.length === 0 ? (
+                    <div className="text-slate-500 py-8 text-center">
+                      {caseStudyOnly
+                        ? 'No hay borradores de caso de estudio. Esperando próximo cierre de Pulse.'
+                        : 'No blog drafts yet. Run Content Creator.'}
+                    </div>
+                  ) : (
+                    visiblePosts.map((bp) => {
+                      const isCaseStudy = bp.generated_by === 'case-study-draft'
+                      return (
+                        <div
+                          key={bp.id}
+                          className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 space-y-3"
+                        >
+                          <div className="flex flex-wrap items-start justify-between gap-2">
+                            <div className="min-w-0 flex-1">
+                              <div className="mb-4 max-w-md">
+                                <span className="text-gray-300 text-sm font-medium block mb-2">
+                                  Cover image
+                                </span>
+                                <ImageUpload
+                                  currentUrl={bp.cover_image_url?.trim() || null}
+                                  onUpload={(url) => void saveBlogCover(bp.id, url)}
+                                  storagePath="blog"
+                                  label="Upload cover"
+                                  hint="PNG, JPG, WebP · max 2MB"
+                                />
+                              </div>
+                              <div className="flex flex-wrap gap-2 items-center">
+                                <span className="text-xs uppercase text-emerald-400/90">
+                                  {bp.category}
+                                </span>
+                                {isCaseStudy && (
+                                  <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                    Caso de estudio
+                                  </span>
+                                )}
+                              </div>
+                              <h3 className="text-white font-semibold text-lg">{bp.title}</h3>
+                              <p className="text-slate-400 text-sm mt-1 line-clamp-3">
+                                {bp.excerpt}
+                              </p>
+                              <p className="text-slate-500 text-xs mt-2">
+                                {formatDate(bp.created_at)} · status:{' '}
+                                <span className="text-slate-300">{bp.status}</span>
+                              </p>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              <Link
+                                href={`/predictions/admin/blog/edit/${bp.id}`}
+                                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs bg-emerald-900/40 hover:bg-emerald-800/50 border border-emerald-700/40 rounded text-emerald-200 font-medium"
+                              >
+                                Edit
+                              </Link>
+                              <Link
+                                href={`/blog/${bp.slug}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs bg-slate-700 hover:bg-slate-600 rounded text-slate-200"
+                              >
+                                <ExternalLink className="w-3 h-3" /> View
+                              </Link>
+                              {bp.status !== 'published' && (
+                                <button
+                                  type="button"
+                                  onClick={() => updateBlogPost(bp.id, 'published')}
+                                  className="px-3 py-1.5 text-xs bg-emerald-600 hover:bg-emerald-500 rounded text-white font-medium"
+                                >
+                                  Publish
+                                </button>
+                              )}
+                              {bp.status !== 'archived' && (
+                                <button
+                                  type="button"
+                                  onClick={() => updateBlogPost(bp.id, 'archived')}
+                                  className="px-3 py-1.5 text-xs bg-slate-700 hover:bg-slate-600 rounded text-slate-300"
+                                >
+                                  Archive
+                                </button>
+                              )}
+                              {bp.status === 'archived' && (
+                                <button
+                                  type="button"
+                                  onClick={() => updateBlogPost(bp.id, 'draft')}
+                                  className="px-3 py-1.5 text-xs bg-slate-700 hover:bg-slate-600 rounded text-slate-300"
+                                >
+                                  Restore draft
+                                </button>
+                              )}
+                            </div>
+                          </div>
+
+                          {bp.status === 'published' && (
+                            <ShareBundle
+                              slug={bp.slug}
+                              title={bp.title}
+                              pulseMarketId={bp.pulse_market_id}
+                            />
+                          )}
+                        </div>
+                      )
+                    })
+                  )}
+                </>
+              )
+            })()
           ) : filteredContent.length === 0 ? (
             <div className="text-slate-500 py-8 text-center">No content in this category</div>
           ) : (

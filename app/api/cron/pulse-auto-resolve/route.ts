@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { notifyMarketResolutionVoters } from '@/lib/market-resolution-notifications'
+import { runCaseStudyDraft } from '@/lib/agents/content-creator'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120
@@ -70,6 +71,14 @@ export async function GET(request: NextRequest) {
         winningLabel,
       }).catch((err) => console.error('[cron/pulse-auto-resolve] notify', err))
     }
+
+    // Fire-and-forget: queue a case_study_draft for the founder to review.
+    // The draft generator self-skips below the vote floor and is idempotent
+    // per `pulse_market_id`, so a second cron run on a slow-resolving Pulse
+    // won't spam blog_posts.
+    void runCaseStudyDraft(row.id).catch((err) =>
+      console.error('[cron/pulse-auto-resolve] case-study-draft', err)
+    )
 
     resolved++
   }

@@ -17,6 +17,8 @@ import {
   formatBlogWriterPlatformContext,
   getPlatformIntelligence,
 } from '@/lib/agents/intelligence-bridge'
+import { loadMarketVoteReasoningsWithAuthors } from '@/lib/market-vote-reasonings'
+import { DEFAULT_PULSE_EMBED_COMPONENTS } from '@/lib/pulse-embed-constants'
 
 const ALLOWED_CATEGORIES = new Set([
   'pulse_analysis',
@@ -565,6 +567,494 @@ Responde con un solo objeto JSON exactamente como en tus instrucciones de sistem
     console.error('Content creator agent error:', err)
     await logAgentRun({
       agentName: 'content-creator',
+      status: 'error',
+      durationMs: Date.now() - startTime,
+      errorMessage: err.message,
+    })
+    return { success: false, error: err.message }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CASE STUDY DRAFT — runCaseStudyDraft(marketId)
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// Triggered by the pulse-auto-resolve cron whenever a Pulse just ended with
+// ≥10 votes. Drafts a long-form blog post in `blog_posts` (status='draft')
+// using the resolved market's outcome distribution, confidence stats, and a
+// few real voter reasonings. Founder publishes manually after a quick edit.
+
+const CASE_STUDY_MIN_VOTES = 10
+const CASE_STUDY_MAX_QUOTES = 3
+
+const CASE_STUDY_SYSTEM = `You are turning a closed Crowd Conscious Pulse into a publishable case study for crowdconscious.app/blog.
+
+AUDIENCE: marketing leads, agency planners, brand managers in Mexico evaluating Conscious Pulse as a research product. They want concrete numbers and one memorable insight, not a hype piece.
+
+GOAL: a single blog post that doubles as a sales asset:
+1) Title (ES + EN) of the form "Lo que [N] personas revelaron sobre [topic]" (use the actual N).
+2) Hook (lede): 2 sentences tying the result to a current event in CDMX/Mexico/World Cup if any signal in the brief supports it.
+3) "Los números" section: total votes, average confidence, outcome distribution as % share, anonymous vs registered split, and the time window the Pulse ran.
+4) "El insight" section: explain what confidence-weighted data revealed that a flat poll would have missed. One concrete example.
+5) "La voz de los participantes" section: surface 1–3 direct quotes from the supplied reasonings. Quote them verbatim, attribute by first name only or "Invitado" if anonymous.
+6) "El método" section: 3 sentences explaining what a Conscious Pulse is — confidence-weighted poll, outcome distribution, no engagement bait.
+7) Closing CTA in BOTH content and content_en, structured exactly as below. Do NOT invent additional markets.
+
+CTA structure (Spanish then English versions inside content / content_en):
+
+ES:
+**¿Quieres este nivel de insight para tu marca?**
+
+[1 sentence on what the next Pulse could measure for them.]
+
+[→ Pulse: Ver resultados completos](BASE_URL/pulse/PULSE_ID)
+[→ Lanzar mi propio Pulse](BASE_URL/pulse#mundial-pack)
+
+EN:
+**Want this level of insight for your brand?**
+
+[1 sentence English equivalent.]
+
+[→ Pulse: See full results](BASE_URL/pulse/PULSE_ID)
+[→ Launch my own Pulse](BASE_URL/pulse#mundial-pack)
+
+LENGTH: ~500–700 words in Spanish body before the CTA. English a parallel translation, similar length.
+
+FORMAT: valid markdown. ## for section headings, **bold** sparingly. Blank line between paragraphs. No ### inside the article.
+
+RULES:
+- Use the BASE_URL from the brief exactly. Use the PULSE_ID from the brief exactly. Every market reference is a markdown link.
+- Quotes go inside Markdown blockquotes (lines starting with "> "). Never invent quotes; if no reasonings were supplied, drop section 5 silently.
+- Use the exact integer counts and percentages supplied. Do not round more than 1 decimal place.
+- No leaderboard names, no XP, no "registered users count" headlines.
+- self_score 1–10. Anything <7 is dropped automatically.
+
+OUTPUT: respond with ONLY valid JSON (no markdown code fences, no preamble):
+{
+  "title": "Spanish title",
+  "title_en": "English title",
+  "slug": "url-friendly-slug-spanish",
+  "excerpt": "Two-sentence Spanish teaser",
+  "excerpt_en": "English teaser",
+  "content": "Full Spanish markdown including closing CTA",
+  "content_en": "Full English markdown including closing CTA",
+  "tags": ["case-study", "pulse", "..."],
+  "meta_description": "Spanish SEO, max 155 chars",
+  "self_score": 8,
+  "self_score_reason": "One sentence explaining the score"
+}`
+
+type ResolvedPulseBrief = {
+  marketId: string
+  title: string
+  description: string | null
+  resolutionDateISO: string | null
+  totalVotes: number
+  registeredCount: number
+  anonymousCount: number
+  avgConfidence: number
+  outcomeRows: Array<{
+    label: string
+    votes: number
+    pct: number
+    avgConfidence: number
+  }>
+  timelineStartISO: string | null
+  timelineEndISO: string | null
+  reasonings: Array<{ text: string; author: string; confidence: number }>
+}
+
+async function buildCaseStudyBrief(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  marketId: string
+): Promise<ResolvedPulseBrief | { error: string }> {
+  const { data: market, error: mErr } = await supabase
+    .from('prediction_markets')
+    .select('id, title, description, resolution_date, is_pulse, status, total_votes')
+    .eq('id', marketId)
+    .single()
+
+  if (mErr || !market) {
+    return { error: mErr?.message || 'market_not_found' }
+  }
+
+  const [{ data: outcomes }, { data: votes }, reasonings] = await Promise.all([
+    supabase
+      .from('market_outcomes')
+      .select('id, label')
+      .eq('market_id', marketId),
+    supabase
+      .from('market_votes')
+      .select('outcome_id, confidence, user_id, anonymous_participant_id, created_at')
+      .eq('market_id', marketId),
+    loadMarketVoteReasoningsWithAuthors(supabase, marketId, 'es'),
+  ])
+
+  const voteRows = votes ?? []
+  const totalVotes = voteRows.length
+  if (totalVotes < CASE_STUDY_MIN_VOTES) {
+    return { error: `vote_floor_not_met (${totalVotes}/${CASE_STUDY_MIN_VOTES})` }
+  }
+
+  const registeredCount = voteRows.filter((v) => v.user_id).length
+  const anonymousCount = totalVotes - registeredCount
+
+  const avgConfidence =
+    voteRows.reduce(
+      (sum, v) => sum + (typeof v.confidence === 'number' ? v.confidence : 0),
+      0
+    ) / Math.max(1, totalVotes)
+
+  const outcomeMap = new Map<string, { label: string; votes: number; confSum: number }>()
+  for (const o of outcomes ?? []) {
+    outcomeMap.set(o.id as string, {
+      label: String(o.label ?? '').trim() || '—',
+      votes: 0,
+      confSum: 0,
+    })
+  }
+  for (const v of voteRows) {
+    const oid = v.outcome_id as string
+    const row = outcomeMap.get(oid)
+    if (row) {
+      row.votes += 1
+      row.confSum += typeof v.confidence === 'number' ? v.confidence : 0
+    }
+  }
+  const outcomeRows = [...outcomeMap.values()]
+    .map((r) => ({
+      label: r.label,
+      votes: r.votes,
+      pct: totalVotes > 0 ? (r.votes / totalVotes) * 100 : 0,
+      avgConfidence: r.votes > 0 ? r.confSum / r.votes : 0,
+    }))
+    .sort((a, b) => b.votes - a.votes)
+
+  const timestamps = voteRows
+    .map((v) => v.created_at)
+    .filter((t): t is string => typeof t === 'string')
+    .sort()
+  const timelineStartISO = timestamps[0] ?? null
+  const timelineEndISO = timestamps[timestamps.length - 1] ?? null
+
+  const topReasonings = reasonings.slice(0, CASE_STUDY_MAX_QUOTES).map((r) => ({
+    text: r.reasoning,
+    author: (r.author_name || 'Invitado').split(' ')[0],
+    confidence: r.confidence,
+  }))
+
+  return {
+    marketId: market.id,
+    title: String(market.title ?? '').trim() || 'Pulse',
+    description: market.description ? String(market.description) : null,
+    resolutionDateISO:
+      typeof market.resolution_date === 'string' ? market.resolution_date : null,
+    totalVotes,
+    registeredCount,
+    anonymousCount,
+    avgConfidence,
+    outcomeRows,
+    timelineStartISO,
+    timelineEndISO,
+    reasonings: topReasonings,
+  }
+}
+
+function formatCaseStudyBriefForPrompt(brief: ResolvedPulseBrief): string {
+  const fmtDate = (iso: string | null) => {
+    if (!iso) return '—'
+    try {
+      return new Date(iso).toLocaleDateString('es-MX', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      })
+    } catch {
+      return iso
+    }
+  }
+
+  const distribution = brief.outcomeRows
+    .map(
+      (r) =>
+        `- ${r.label}: ${r.votes} votos (${r.pct.toFixed(1)}%) · confianza media ${r.avgConfidence.toFixed(1)}/10`
+    )
+    .join('\n')
+
+  const quotes = brief.reasonings.length
+    ? brief.reasonings
+        .map(
+          (q) =>
+            `- "${q.text.replace(/"/g, '\\"')}" — ${q.author} (confianza ${q.confidence}/10)`
+        )
+        .join('\n')
+    : '(no hay razonamientos suficientes — omite la sección de voces)'
+
+  return `PULSE_ID: ${brief.marketId}
+TITLE: ${brief.title}
+DESCRIPTION: ${brief.description ?? '—'}
+RESOLUTION_DATE: ${fmtDate(brief.resolutionDateISO)}
+WINDOW: ${fmtDate(brief.timelineStartISO)} → ${fmtDate(brief.timelineEndISO)}
+
+NÚMEROS:
+- Total votos: ${brief.totalVotes}
+- Confianza promedio: ${brief.avgConfidence.toFixed(2)}/10
+- Registrados: ${brief.registeredCount} (${((brief.registeredCount / brief.totalVotes) * 100).toFixed(1)}%)
+- Anónimos: ${brief.anonymousCount} (${((brief.anonymousCount / brief.totalVotes) * 100).toFixed(1)}%)
+
+DISTRIBUCIÓN DE OPCIONES (orden por votos):
+${distribution}
+
+VOCES (úsalas como blockquotes, máximo ${CASE_STUDY_MAX_QUOTES}):
+${quotes}
+
+URL base para todos los enlaces: ${APP_BASE}`
+}
+
+export async function runCaseStudyDraft(marketId: string): Promise<{
+  success: boolean
+  error?: string
+  blog_post_id?: string
+  tokens?: { input: number; output: number }
+  skipped?: boolean
+}> {
+  const startTime = Date.now()
+
+  try {
+    const supabase = getSupabaseAdmin()
+
+    // Idempotency: don't draft twice for the same Pulse. We key on
+    // pulse_market_id because that's the column auto-publish UI filters on.
+    const { data: existing } = await supabase
+      .from('blog_posts')
+      .select('id')
+      .eq('pulse_market_id', marketId)
+      .eq('generated_by', 'case-study-draft')
+      .limit(1)
+      .maybeSingle()
+
+    if (existing?.id) {
+      await logAgentRun({
+        agentName: 'case-study-draft',
+        status: 'skipped',
+        durationMs: Date.now() - startTime,
+        summary: { reason: 'already_drafted', blog_post_id: existing.id, marketId },
+      })
+      return { success: true, skipped: true, blog_post_id: existing.id as string }
+    }
+
+    const brief = await buildCaseStudyBrief(supabase, marketId)
+    if ('error' in brief) {
+      await logAgentRun({
+        agentName: 'case-study-draft',
+        status: 'skipped',
+        durationMs: Date.now() - startTime,
+        summary: { reason: brief.error, marketId },
+      })
+      return { success: true, skipped: true, error: brief.error }
+    }
+
+    const anthropic = getAnthropicClient()
+    const briefText = formatCaseStudyBriefForPrompt(brief)
+    const userMessage = `Escribe el caso de estudio siguiendo tus instrucciones de sistema. Usa SOLO los datos de este brief.\n\n${briefText}\n\nResponde con un solo objeto JSON exactamente como te indiqué, incluyendo self_score.`
+
+    const response = await anthropic.messages.create({
+      model: MODELS.CREATIVE,
+      max_tokens: TOKEN_LIMITS.BLOG,
+      system: CASE_STUDY_SYSTEM,
+      messages: [{ role: 'user', content: userMessage }],
+    })
+
+    const textBlock = response.content.find((b) => b.type === 'text')
+    const rawText = textBlock && 'text' in textBlock ? textBlock.text : ''
+    const usage = response.usage ?? { input_tokens: 0, output_tokens: 0 }
+
+    let blogObj: Record<string, unknown>
+    try {
+      const parsed = parseAgentJSON(rawText)
+      blogObj = (Array.isArray(parsed) ? parsed[0] : parsed) as Record<string, unknown>
+    } catch (parseErr) {
+      console.error('[Case Study Draft] JSON parse failed:', parseErr)
+      await supabase.from('agent_content').insert({
+        market_id: brief.marketId,
+        agent_type: 'content_creator',
+        content_type: 'blog_post',
+        title: `Case study draft (parse failed) — ${brief.title}`,
+        body: rawText.slice(0, 120000),
+        language: 'es',
+        metadata: {
+          parse_error: String(parseErr),
+          model: MODELS.CREATIVE,
+          variant: 'case_study_draft',
+          pulse_market_id: brief.marketId,
+        },
+        published: false,
+      })
+      await logAgentRun({
+        agentName: 'case-study-draft',
+        status: 'error',
+        durationMs: Date.now() - startTime,
+        tokensInput: usage.input_tokens,
+        tokensOutput: usage.output_tokens,
+        errorMessage: 'parse_failed',
+      })
+      return { success: false, error: 'parse_failed' }
+    }
+
+    const title = String(blogObj.title ?? '').trim()
+    const titleEn = String(blogObj.title_en ?? '').trim()
+    const excerpt = String(blogObj.excerpt ?? '').trim()
+    const excerptEn = String(blogObj.excerpt_en ?? '').trim()
+    const content = String(blogObj.content ?? '').trim()
+    const contentEn = String(blogObj.content_en ?? '').trim()
+
+    if (!title || !content || !excerpt || !titleEn || !excerptEn || !contentEn) {
+      await logAgentRun({
+        agentName: 'case-study-draft',
+        status: 'skipped',
+        durationMs: Date.now() - startTime,
+        summary: { reason: 'missing_required_fields', marketId },
+      })
+      return { success: false, error: 'missing_required_fields' }
+    }
+
+    const selfScoreRaw = blogObj.self_score
+    const selfScore =
+      typeof selfScoreRaw === 'number'
+        ? selfScoreRaw
+        : typeof selfScoreRaw === 'string'
+          ? Number(selfScoreRaw)
+          : NaN
+    if (Number.isFinite(selfScore) && selfScore < 7) {
+      await logAgentRun({
+        agentName: 'case-study-draft',
+        status: 'skipped',
+        durationMs: Date.now() - startTime,
+        tokensInput: usage.input_tokens,
+        tokensOutput: usage.output_tokens,
+        summary: {
+          reason: 'quality_below_threshold',
+          self_score: selfScore,
+          marketId,
+        },
+      })
+      return {
+        success: true,
+        skipped: true,
+        tokens: { input: usage.input_tokens, output: usage.output_tokens },
+      }
+    }
+
+    const slugBase = slugify(String(blogObj.slug ?? title))
+    const slug = await uniqueSlug(supabase, slugBase)
+
+    const tags = Array.isArray(blogObj.tags)
+      ? (blogObj.tags as unknown[]).map((t) => String(t)).slice(0, 8)
+      : ['case-study', 'pulse']
+    if (!tags.includes('case-study')) tags.unshift('case-study')
+
+    const metaDesc = String(blogObj.meta_description ?? excerpt).slice(0, 160)
+
+    // Cover: point at the OG endpoint for this slug. The endpoint already
+    // pulls visuals from `pulse_market_id` when set, so the social card
+    // looks like a Pulse result instead of a generic blog cover.
+    const coverImageUrl = `${APP_BASE}/api/og/blog/${slug}`
+
+    const { data: inserted, error: insErr } = await supabase
+      .from('blog_posts')
+      .insert({
+        slug,
+        title,
+        title_en: titleEn,
+        excerpt,
+        excerpt_en: excerptEn,
+        content,
+        content_en: contentEn,
+        category: 'pulse_analysis',
+        tags,
+        meta_title: title,
+        meta_description: metaDesc,
+        related_market_ids: [brief.marketId],
+        pulse_market_id: brief.marketId,
+        pulse_embed_position: 'before_cta',
+        pulse_embed_components: [...DEFAULT_PULSE_EMBED_COMPONENTS],
+        cover_image_url: coverImageUrl,
+        generated_by: 'case-study-draft',
+        status: 'draft',
+      })
+      .select('id')
+      .single()
+
+    if (insErr || !inserted) {
+      console.error('[Case Study Draft] blog_posts insert', insErr)
+      return { success: false, error: insErr?.message ?? 'blog_insert_failed' }
+    }
+
+    const blogId = inserted.id as string
+
+    const { data: agentRow, error: agentErr } = await supabase
+      .from('agent_content')
+      .insert({
+        market_id: brief.marketId,
+        agent_type: 'content_creator',
+        content_type: 'blog_post',
+        title,
+        body: JSON.stringify({
+          blog_post_id: blogId,
+          slug,
+          variant: 'case_study_draft',
+          pulse_market_id: brief.marketId,
+        }),
+        language: 'es',
+        metadata: {
+          blog_post_id: blogId,
+          slug,
+          variant: 'case_study_draft',
+          pulse_market_id: brief.marketId,
+          total_votes: brief.totalVotes,
+          avg_confidence: Number(brief.avgConfidence.toFixed(2)),
+          model: MODELS.CREATIVE,
+          tokens_input: usage.input_tokens,
+          tokens_output: usage.output_tokens,
+        },
+        published: false,
+      })
+      .select('id')
+      .single()
+
+    if (agentErr) {
+      console.error('[Case Study Draft] agent_content insert', agentErr)
+    } else if (agentRow?.id) {
+      await supabase
+        .from('blog_posts')
+        .update({ agent_content_id: agentRow.id })
+        .eq('id', blogId)
+    }
+
+    await logAgentRun({
+      agentName: 'case-study-draft',
+      status: 'success',
+      durationMs: Date.now() - startTime,
+      tokensInput: usage.input_tokens,
+      tokensOutput: usage.output_tokens,
+      summary: {
+        blog_post_id: blogId,
+        slug,
+        market_id: brief.marketId,
+        total_votes: brief.totalVotes,
+      },
+    })
+
+    return {
+      success: true,
+      blog_post_id: blogId,
+      tokens: { input: usage.input_tokens, output: usage.output_tokens },
+    }
+  } catch (error: unknown) {
+    const err = error instanceof Error ? error : new Error(String(error))
+    console.error('Case study draft error:', err)
+    await logAgentRun({
+      agentName: 'case-study-draft',
       status: 'error',
       durationMs: Date.now() - startTime,
       errorMessage: err.message,
