@@ -2,10 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { notifyMarketResolutionVoters } from '@/lib/market-resolution-notifications'
 import { runCaseStudyDraft } from '@/lib/agents/content-creator'
+import { cronHealthCheck, cronHealthComplete } from '@/lib/cron-health'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120
 export const dynamic = 'force-dynamic'
+
+const JOB_NAME = 'pulse-auto-resolve'
 
 type PluralityResult = {
   success?: boolean
@@ -27,6 +30,7 @@ export async function GET(request: NextRequest) {
   }
 
   const admin = createAdminClient()
+  const { runId } = await cronHealthCheck(JOB_NAME, admin)
   const now = new Date().toISOString()
 
   const { data: rows, error: qErr } = await admin
@@ -39,6 +43,10 @@ export async function GET(request: NextRequest) {
 
   if (qErr) {
     console.error('[cron/pulse-auto-resolve]', qErr)
+    await cronHealthComplete(runId, JOB_NAME, admin, {
+      success: false,
+      error: qErr.message,
+    })
     return NextResponse.json({ error: qErr.message }, { status: 500 })
   }
 
@@ -82,6 +90,12 @@ export async function GET(request: NextRequest) {
 
     resolved++
   }
+
+  await cronHealthComplete(runId, JOB_NAME, admin, {
+    success: errors.length === 0,
+    summary: `checked=${list.length} resolved=${resolved}`,
+    error: errors.length ? errors.map((e) => `${e.marketId}: ${e.message}`).join('; ') : undefined,
+  })
 
   return NextResponse.json({
     ok: true,

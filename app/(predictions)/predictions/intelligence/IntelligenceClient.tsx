@@ -36,6 +36,8 @@ import {
   Trophy,
   ArrowRight,
 } from 'lucide-react'
+import { METRIC_LABELS } from '@/lib/i18n/metrics'
+import MetricTooltip from '@/components/ui/MetricTooltip'
 import type {
   IntelligenceDashboardData,
   MarketRowCsv,
@@ -1125,7 +1127,13 @@ function SnapshotHero({ data }: { data: IntelligenceDashboardData }) {
   const i = data.impact
   const fundFmt = (n: number) =>
     n >= 1000 ? `$${(n / 1000).toFixed(1)}k` : `$${Math.round(n).toLocaleString()}`
-  const items = [
+  const items: Array<{
+    label: string
+    value: string
+    sub: string
+    Icon: typeof Users
+    tooltip?: string
+  }> = [
     {
       label: 'People reached',
       value: i.unique_participants.toLocaleString(),
@@ -1133,12 +1141,13 @@ function SnapshotHero({ data }: { data: IntelligenceDashboardData }) {
       Icon: Users,
     },
     {
-      label: 'Predictions cast',
+      label: METRIC_LABELS.total_all_time_votes.en,
       value: i.predictions_lifetime.toLocaleString(),
       sub: data.deltas.votes_30d.pct_change != null
         ? `${data.deltas.votes_30d.pct_change >= 0 ? '+' : ''}${data.deltas.votes_30d.pct_change}% vs prev 30d`
         : `${data.deltas.votes_30d.current.toLocaleString()} in last 30d`,
       Icon: Sparkles,
+      tooltip: METRIC_LABELS.total_all_time_votes.tooltip_en,
     },
     {
       label: 'Conscious Fund',
@@ -1147,25 +1156,27 @@ function SnapshotHero({ data }: { data: IntelligenceDashboardData }) {
       Icon: HeartHandshake,
     },
     {
-      label: 'Crowd accuracy',
+      label: METRIC_LABELS.crowd_accuracy.en,
       value: i.crowd_accuracy_pct != null ? `${i.crowd_accuracy_pct}%` : '—',
       sub:
         i.crowd_accuracy_pct != null
           ? `${i.crowd_accuracy_sample.toLocaleString()} resolved votes · ${i.markets_resolved_total} markets`
           : 'Awaiting first resolved markets',
       Icon: Target,
+      tooltip: METRIC_LABELS.crowd_accuracy.tooltip_en,
     },
   ]
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-      {items.map(({ label, value, sub, Icon }) => (
+      {items.map(({ label, value, sub, Icon, tooltip }) => (
         <div
           key={label}
           className="rounded-xl border border-emerald-500/10 bg-gradient-to-br from-[#1a2029] to-[#0f1419] p-5"
         >
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+            <span className="inline-flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-slate-500">
               {label}
+              {tooltip && <MetricTooltip text={tooltip} label={`About: ${label}`} />}
             </span>
             <Icon className="h-4 w-4 text-emerald-500/70" aria-hidden />
           </div>

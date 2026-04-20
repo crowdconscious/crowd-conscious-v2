@@ -2,21 +2,29 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Heart, Vote, Sparkles, Users, ArrowRight, Info } from 'lucide-react'
+import Image from 'next/image'
+import { Heart, Vote, Sparkles, Users, ArrowRight, Info, BadgeCheck } from 'lucide-react'
 import { FundThermometer } from '@/components/fund/FundThermometer'
 import {
   TransparencyDashboard,
   type SponsorshipLogPublic,
   type CauseBreakdownRow,
 } from '@/components/fund/TransparencyDashboard'
+import { METRIC_LABELS } from '@/lib/i18n/metrics'
 
 type Cause = {
   id: string
   name: string
   description: string | null
+  short_description?: string | null
   organization: string | null
   category: string | null
   vote_count: number
+  slug?: string | null
+  logo_url?: string | null
+  cover_image_url?: string | null
+  image_url?: string | null
+  verified?: boolean | null
 }
 
 type Sponsor = {
@@ -202,26 +210,66 @@ export function FundClient({
                     myVotes > 0 ? 'border-emerald-500/40' : 'border-cc-border'
                   }`}
                 >
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-medium text-cc-text-secondary">
-                      {CATEGORY_LABELS[cause.category ?? ''] ?? cause.category ?? 'Other'}
-                    </span>
-                    {myVotes > 0 && (
-                      <span className="text-xs bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded font-medium">
-                        Your vote
-                      </span>
+                  <div className="flex items-start gap-3">
+                    {cause.logo_url ? (
+                      <Image
+                        src={cause.logo_url}
+                        alt=""
+                        width={40}
+                        height={40}
+                        className="h-10 w-10 rounded-md object-cover border border-white/5 shrink-0"
+                        unoptimized
+                      />
+                    ) : (
+                      <div className="h-10 w-10 rounded-md flex items-center justify-center bg-slate-800/70 text-slate-500 text-[10px] uppercase font-semibold shrink-0">
+                        {(cause.category ?? 'CC').slice(0, 3)}
+                      </div>
                     )}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs font-medium text-cc-text-secondary">
+                          {CATEGORY_LABELS[cause.category ?? ''] ?? cause.category ?? 'Other'}
+                        </span>
+                        {cause.verified && (
+                          <span
+                            className="inline-flex items-center gap-1 text-xs text-emerald-400"
+                            title="Verified"
+                          >
+                            <BadgeCheck className="w-3.5 h-3.5" />
+                          </span>
+                        )}
+                        {myVotes > 0 && (
+                          <span className="text-xs bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded font-medium">
+                            Your vote
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-white truncate">{cause.name}</h3>
+                        {cause.slug && (
+                          <Link
+                            href={`/fund/causes/${cause.slug}`}
+                            className="text-xs text-emerald-400/80 hover:text-emerald-300 shrink-0"
+                          >
+                            →
+                          </Link>
+                        )}
+                      </div>
+                      {cause.organization && (
+                        <p className="text-cc-text-secondary text-sm mt-0.5">{cause.organization}</p>
+                      )}
+                      {(cause.short_description || cause.description) && (
+                        <p className="text-cc-text-muted text-xs mt-1 line-clamp-2">
+                          {cause.short_description || cause.description}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <h3 className="font-semibold text-white">{cause.name}</h3>
-                  {cause.organization && (
-                    <p className="text-cc-text-secondary text-sm mt-0.5">{cause.organization}</p>
-                  )}
-                  {cause.description && (
-                    <p className="text-cc-text-muted text-xs mt-1 line-clamp-2">{cause.description}</p>
-                  )}
                   <div className="mt-3">
                     <div className="flex justify-between text-xs text-cc-text-secondary mb-1">
-                      <span>{total} votes</span>
+                      <span>
+                        {total} {METRIC_LABELS.fund_cycle_votes.en.toLowerCase()}
+                      </span>
                     </div>
                     <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
                       <div

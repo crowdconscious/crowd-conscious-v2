@@ -62,6 +62,12 @@ function getCurrentCycle(): string {
   return new Date().toISOString().slice(0, 7)
 }
 
+/** ISO timestamp of the first day of the current calendar month (UTC). */
+function cycleStartIso(): string {
+  const now = new Date()
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString()
+}
+
 function groupOutcomesByMarket(
   rows: Array<{
     id: string
@@ -109,6 +115,7 @@ async function getLandingData() {
     locTopRes,
     allTimeVotesRes,
     mundialFoundingTakenRes,
+    cycleOpinionsRes,
   ] = await Promise.all([
     supabase
       .from('prediction_markets')
@@ -130,7 +137,10 @@ async function getLandingData() {
     // Fund balance read via admin client so anon visitors see the real
     // number regardless of `conscious_fund` RLS state (see migration 198).
     fetchConsciousFundBalanceMxn(),
-    supabase.from('fund_causes').select('id, name').eq('active', true).order('name'),
+    // `slug` is added in migration 205_fund_causes_v2. `*` so this survives
+    // the brief window between deploy and migration-apply without 500-ing
+    // the landing page.
+    supabase.from('fund_causes').select('*').eq('active', true).order('name'),
     supabase.from('fund_votes').select('cause_id').eq('cycle', cycle),
     supabase
       .from('prediction_markets')
@@ -179,6 +189,13 @@ async function getLandingData() {
       .select('id', { count: 'exact', head: true })
       .eq('tier', 'mundial_pack_founding')
       .in('status', ['active', 'completed']),
+    // cycle_opinions — market_votes cast during the current calendar month.
+    // Pairs with the ticker narrative "→ $X for [cause]" which is itself
+    // cycle-scoped via `fund_votes.cycle`. See `docs/METRICS-CATALOG.md`.
+    supabase
+      .from('market_votes')
+      .select('id', { count: 'exact', head: true })
+      .gte('created_at', cycleStartIso()),
   ])
 
   const markets = (marketsRes.data || []) as MarketCardMarket[]
@@ -193,14 +210,23 @@ async function getLandingData() {
   }>
   const outcomesByMarketId = groupOutcomesByMarket(outcomeRows)
 
-  const causes = (causesRes.data || []) as Array<{ id: string; name: string }>
+  const causes = (causesRes.data || []) as Array<{
+    id: string
+    name: string
+    slug?: string | null
+  }>
   const voteCountByCause: Record<string, number> = {}
   for (const v of votesRes.data || []) {
     const id = v.cause_id
     voteCountByCause[id] = (voteCountByCause[id] ?? 0) + 1
   }
   const causesWithVotes = causes
-    .map((c) => ({ ...c, vote_count: voteCountByCause[c.id] ?? 0 }))
+    .map((c) => ({
+      id: c.id,
+      name: c.name,
+      slug: c.slug ?? null,
+      vote_count: voteCountByCause[c.id] ?? 0,
+    }))
     .sort((a, b) => b.vote_count - a.vote_count)
 
   const worldCupMarkets = (worldCupRes.data || []) as MarketCardMarket[]
@@ -209,17 +235,20 @@ async function getLandingData() {
     | { id: string; title: string; translations: Json | null; total_votes_cast?: number }
     | null
 
+  // `allTimeVotesRes` remains available for other blocks, but the ticker
+  // headline now uses cycle-scoped opinions (see `docs/METRICS-CATALOG.md`).
   const voteTotals = (allTimeVotesRes.data ?? []) as Array<{
     total_votes?: number | null
     engagement_count?: number | null
   }>
-  const totalVotes = voteTotals.reduce(
-    (sum, m) =>
-      sum + (Number(m.total_votes) || 0) + (Number(m.engagement_count) || 0),
-    0
-  )
+  // Retained for potential use elsewhere; not passed to ImpactTicker anymore.
+  void voteTotals
+  const totalVotes = cycleOpinionsRes.count ?? 0
   const fundTotal = fundBalance
-  const activeCauseName = causesWithVotes[0]?.name ?? causes[0]?.name ?? null
+  const activeCause = causesWithVotes[0] ?? causes[0] ?? null
+  const activeCauseName = activeCause?.name ?? null
+  const activeCauseSlug =
+    (activeCause as { slug?: string | null } | null)?.slug ?? null
 
   const activeMarketCount = activeMarketsCountRes.count ?? markets.length
   const profileCount = profilesCountRes.count
@@ -267,6 +296,7 @@ async function getLandingData() {
     totalVotes,
     fundTotal,
     activeCauseName,
+    activeCauseSlug,
     activeMarketCount,
     profileCount,
     showLocationsSection,
@@ -282,11 +312,17 @@ export default async function LandingPage() {
   let markets: MarketCardMarket[] = []
   let outcomesByMarketId: Record<string, MarketCardOutcome[]> = {}
   let fundBalance = 0
-  let causesWithVotes: Array<{ id: string; name: string; vote_count: number }> = []
+  let causesWithVotes: Array<{
+    id: string
+    name: string
+    slug: string | null
+    vote_count: number
+  }> = []
   let liveNowRow: Awaited<ReturnType<typeof getLandingData>>['liveNowRow'] = null
   let totalVotes = 0
   let fundTotal = 0
   let activeCauseName: string | null = null
+  let activeCauseSlug: string | null = null
   let showLocationsSection = false
   let landingLocationCards: Awaited<ReturnType<typeof getLandingData>>['landingLocationCards'] = []
   let mundialFoundingRemaining = 0
@@ -301,6 +337,7 @@ export default async function LandingPage() {
     totalVotes = data.totalVotes
     fundTotal = data.fundTotal
     activeCauseName = data.activeCauseName
+    activeCauseSlug = data.activeCauseSlug
     showLocationsSection = data.showLocationsSection
     landingLocationCards = data.landingLocationCards
     mundialFoundingRemaining = data.mundialFoundingRemaining
@@ -338,6 +375,7 @@ export default async function LandingPage() {
           totalVotes={totalVotes}
           fundTotal={fundTotal}
           activeCauseName={activeCauseName}
+          activeCauseSlug={activeCauseSlug}
         />
 
         {/* ─────────── BLOCK 2 — Top 3 live markets ─────────── */}
