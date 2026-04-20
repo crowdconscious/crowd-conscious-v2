@@ -89,21 +89,21 @@ export default async function PredictionsLayout({
     navCounts = counts
   }
 
-  // Anonymous visitors landing directly on a market detail page
-  // (/predictions/markets/<id>) see the same LandingNav + Footer as the rest
-  // of the public site. Previously they got the authenticated-looking
-  // PredictionsShell sidebar which felt like a different product after tapping
-  // "Predecir" on /markets. Other public predictions routes (list,
-  // leaderboard, fund, inbox, pulse) still use the shell — the detail page is
-  // the conversion surface that needs to match the landing.
+  // Anonymous visitors on any public-conversion surface get the LandingNav +
+  // Footer wrapper instead of the authed-looking PredictionsShell sidebar.
+  // The shell is reserved for logged-in users; showing it to anon on /fund
+  // or /markets/<id> looked like a logged-in dashboard and confused visitors
+  // who clicked the landing thermometer.
   const isPublicMarketDetail =
-    !user && pathname.startsWith('/predictions/markets/') && pathname !== '/predictions/markets/'
-  if (isPublicMarketDetail) {
+    pathname.startsWith('/predictions/markets/') && pathname !== '/predictions/markets/'
+  const isPublicFund =
+    pathname === '/predictions/fund' || pathname.startsWith('/predictions/fund/')
+  const useLandingShellForAnon = !user && (isPublicMarketDetail || isPublicFund)
+  if (useLandingShellForAnon) {
     // The root body is `bg-white` (see app/layout.tsx); every "dark" page
     // opts into it explicitly. The landing page uses
-    // `min-h-screen bg-cc-bg text-cc-text-primary`, so the anon market detail
-    // wrapper must match or the rest of the UI (which was designed against a
-    // dark backdrop) shows through as a light-theme page.
+    // `min-h-screen bg-cc-bg text-cc-text-primary`, so this wrapper must
+    // match or the dark UI shows through as a light-theme page.
     return (
       <div className="min-h-screen bg-cc-bg text-cc-text-primary">
         <LandingNav />
