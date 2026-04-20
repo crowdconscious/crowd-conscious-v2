@@ -13,6 +13,8 @@ import {
   Heart,
   BadgeCheck,
   Loader2,
+  Link2,
+  Check,
 } from 'lucide-react'
 
 type Cause = {
@@ -109,6 +111,29 @@ export default function AdminCausesPage() {
     status: 'idle' | 'checking' | 'ok' | 'bad'
     message?: string
   }>({ status: 'idle' })
+  const [copiedKitId, setCopiedKitId] = useState<string | null>(null)
+
+  // Build a public reshare-kit URL for this cause. Token is deterministic
+  // (`kit-<slug>`) so the founder can always regenerate it — it's just an
+  // attribution tag, not a secret.
+  const buildKitUrl = (cause: Cause): string | null => {
+    if (!cause.slug) return null
+    const origin =
+      typeof window !== 'undefined' ? window.location.origin : 'https://crowdconscious.app'
+    return `${origin}/fund/causes/${cause.slug}/kit?token=kit-${cause.slug}`
+  }
+
+  const handleCopyKit = async (cause: Cause) => {
+    const url = buildKitUrl(cause)
+    if (!url) return
+    try {
+      await navigator.clipboard.writeText(url)
+      setCopiedKitId(cause.id)
+      window.setTimeout(() => setCopiedKitId(null), 1500)
+    } catch {
+      /* ignore — admin will see the URL in the View public page flow */
+    }
+  }
 
   const fetchCauses = useCallback(async () => {
     setLoading(true)
@@ -395,6 +420,26 @@ export default function AdminCausesPage() {
                   >
                     View public page
                   </Link>
+                )}
+                {cause.slug && (
+                  <button
+                    type="button"
+                    onClick={() => handleCopyKit(cause)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-700/70 hover:bg-emerald-600 text-white text-sm font-medium"
+                    title="Copy the public reshare-kit URL to DM to the cause org"
+                  >
+                    {copiedKitId === cause.id ? (
+                      <>
+                        <Check className="w-3.5 h-3.5" />
+                        Copied
+                      </>
+                    ) : (
+                      <>
+                        <Link2 className="w-3.5 h-3.5" />
+                        Copy kit URL
+                      </>
+                    )}
+                  </button>
                 )}
                 {cause.active ? (
                   <button

@@ -35,6 +35,7 @@ import {
   Target,
   Trophy,
   ArrowRight,
+  Share2,
 } from 'lucide-react'
 import { METRIC_LABELS } from '@/lib/i18n/metrics'
 import MetricTooltip from '@/components/ui/MetricTooltip'
@@ -1329,6 +1330,9 @@ function ImpactTab({ data }: { data: IntelligenceDashboardData }) {
         </div>
       </div>
 
+      {/* Reshare flywheel — share_events split by surface (last 30d). */}
+      <ShareSourceSplit data={i.share_sources_30d} />
+
       {/* Live + accuracy + WoW deltas */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <Kpi
@@ -1372,6 +1376,89 @@ function FundStat({ label, value, accent }: { label: string; value: string; acce
       >
         {value}
       </div>
+    </div>
+  )
+}
+
+/**
+ * Share-events grouped by source surface over the last 30 days.
+ * Answers: "is the cause / location reshare engine actually engine-ing?"
+ * Zero cause shares after a month = rewrite the copy or the OG card.
+ */
+function ShareSourceSplit({
+  data,
+}: {
+  data: { source: 'pulse' | 'location' | 'cause' | 'other'; count: number }[]
+}) {
+  const total = data.reduce((sum, row) => sum + row.count, 0)
+  const labels: Record<'pulse' | 'location' | 'cause' | 'other', string> = {
+    pulse: 'Pulse shares',
+    location: 'Location reshares',
+    cause: 'Cause reshares',
+    other: 'Other',
+  }
+  const colors: Record<'pulse' | 'location' | 'cause' | 'other', string> = {
+    pulse: 'bg-emerald-500/70',
+    location: 'bg-cyan-500/70',
+    cause: 'bg-fuchsia-500/70',
+    other: 'bg-slate-500/60',
+  }
+  // Stable display order.
+  const ordered: Array<'pulse' | 'location' | 'cause' | 'other'> = [
+    'pulse',
+    'location',
+    'cause',
+    'other',
+  ]
+  const byKey = new Map(data.map((d) => [d.source, d.count]))
+
+  return (
+    <div className="rounded-xl border border-white/5 bg-[#1a2029] p-5">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Share2 className="h-4 w-4 text-emerald-500/80" aria-hidden />
+          <h3 className="text-sm font-medium text-slate-400">
+            Reshare flywheel (last 30 days)
+          </h3>
+        </div>
+        <span className="text-[11px] text-slate-500 tabular-nums">
+          {total.toLocaleString()} total shares
+        </span>
+      </div>
+      {total === 0 ? (
+        <p className="text-sm text-slate-600">
+          No share events in the last 30 days.
+        </p>
+      ) : (
+        <ul className="space-y-2">
+          {ordered.map((key) => {
+            const count = byKey.get(key) ?? 0
+            const pct = total > 0 ? (count / total) * 100 : 0
+            const w = Math.max(count > 0 ? 4 : 0, Math.round(pct))
+            return (
+              <li key={key}>
+                <div className="flex items-center justify-between text-sm mb-1">
+                  <span className="text-[#e8e6df]">{labels[key]}</span>
+                  <span className="text-slate-400 tabular-nums">
+                    {count.toLocaleString()} · {pct.toFixed(1)}%
+                  </span>
+                </div>
+                <div className="h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                  <div
+                    className={`h-full ${colors[key]}`}
+                    style={{ width: `${w}%` }}
+                  />
+                </div>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+      <p className="mt-4 text-[11px] text-slate-500">
+        Measures outbound share activity, not vote attribution. Use this to
+        see which surfaces are generating distribution — cause reshares are
+        the flywheel signal we seeded in April.
+      </p>
     </div>
   )
 }

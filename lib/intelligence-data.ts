@@ -98,6 +98,12 @@ export type ImpactSnapshot = {
   live_events_completed: number
   /** Top topics by votes in the last 30 days */
   top_topics_30d: { category: string; vote_count: number }[]
+  /**
+   * Share-events split by source surface, last 30d.
+   * Measures where our reshare volume comes from (pulse / location /
+   * cause / other). Not a vote metric — it's the flywheel signal.
+   */
+  share_sources_30d: { source: 'pulse' | 'location' | 'cause' | 'other'; count: number }[]
 }
 
 export type IntelligenceDashboardData = {
@@ -176,6 +182,7 @@ const empty = (): IntelligenceDashboardData => ({
     live_events_total: 0,
     live_events_completed: 0,
     top_topics_30d: [],
+    share_sources_30d: [],
   },
   voteChangeLeaders: [],
   votesOverTime: [],
@@ -535,6 +542,55 @@ export async function fetchIntelligenceDashboard(
         .slice(0, 5)
     } catch (e) {
       pushErr('impact_top_topics_30d', e)
+    }
+
+    // Share events last 30d, grouped by source_type. This tells us where
+    // the reshare flywheel is spinning (or not). If cause reshares are
+    // zero after a month the OG card or copy needs a rewrite.
+    try {
+      const since30 = new Date(Date.now() - 30 * 86400000).toISOString()
+      const { data: sh30 } = await admin
+        .from('share_events')
+        .select('source_type, market_id, location_id, other_type')
+        .gte('created_at', since30)
+      const sourceMap = new Map<
+        'pulse' | 'location' | 'cause' | 'other',
+        number
+      >([
+        ['pulse', 0],
+        ['location', 0],
+        ['cause', 0],
+        ['other', 0],
+      ])
+      for (const row of sh30 ?? []) {
+        const r = row as {
+          source_type?: string | null
+          market_id?: string | null
+          location_id?: string | null
+          other_type?: string | null
+        }
+        // Prefer the denormalized column; fall back to the derivation
+        // rule for any rows predating migration 207.
+        const key =
+          r.source_type === 'pulse' ||
+          r.source_type === 'location' ||
+          r.source_type === 'cause' ||
+          r.source_type === 'other'
+            ? r.source_type
+            : r.market_id
+              ? 'pulse'
+              : r.location_id
+                ? 'location'
+                : r.other_type === 'cause'
+                  ? 'cause'
+                  : 'other'
+        sourceMap.set(key, (sourceMap.get(key) ?? 0) + 1)
+      }
+      out.impact.share_sources_30d = [...sourceMap.entries()].map(
+        ([source, count]) => ({ source, count })
+      )
+    } catch (e) {
+      pushErr('impact_share_sources_30d', e)
     }
 
     // --- Top markets + all markets for table ---

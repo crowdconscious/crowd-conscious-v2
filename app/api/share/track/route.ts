@@ -103,6 +103,16 @@ export async function POST(request: Request) {
       }
     }
 
+    // Derive source_type from the target. Mirrors the backfill rule in
+    // migration 207 so old and new rows use the same vocabulary.
+    const sourceType: 'pulse' | 'location' | 'cause' | 'other' = marketId
+      ? 'pulse'
+      : locationId
+        ? 'location'
+        : otherType === 'cause'
+          ? 'cause'
+          : 'other'
+
     const admin = createAdminClient()
     const { error } = await admin.from('share_events').insert({
       channel,
@@ -111,6 +121,7 @@ export async function POST(request: Request) {
       location_id: locationId,
       other_type: otherType,
       other_id: otherId,
+      source_type: sourceType,
       user_id: user?.id ?? null,
       anonymous_participant_id: anonymousParticipantId,
     })

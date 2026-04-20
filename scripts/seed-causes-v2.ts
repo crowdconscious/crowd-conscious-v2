@@ -55,21 +55,22 @@ const REAL_CAUSES: SeedCause[] = [
   {
     slug: 'aqui-nadie-se-rinde',
     name: 'Aquí Nadie Se Rinde',
-    organization: 'Aquí Nadie Se Rinde A.C.',
+    // I.A.P. — Institución de Asistencia Privada. NOT A.C.
+    organization: 'Aquí Nadie Se Rinde I.A.P.',
     category: 'health',
     short_description:
-      'Prevención del suicidio y acompañamiento en salud mental en México.',
+      'Acompañamiento integral para niñas, niños y adolescentes con cáncer en México.',
     description:
-      'Organización mexicana dedicada a la prevención del suicidio y el ' +
-      'acompañamiento de personas con ideación suicida, depresión y ansiedad. ' +
-      'Ofrecen líneas de crisis, talleres y material psicoeducativo gratuito ' +
-      'para familias, escuelas y empresas. Su trabajo une clínica, activismo y ' +
-      'cultura: la salud mental deja de ser un tema tabú y se convierte en un ' +
-      'bien público que Crowd Conscious puede ayudar a financiar.',
+      'Institución de Asistencia Privada que brinda acompañamiento integral ' +
+      'a niñas, niños y adolescentes con cáncer. Cada día en México, 19 ' +
+      'familias reciben la noticia de que su hija o hijo tiene cáncer. Aquí ' +
+      'Nadie Se Rinde acompaña a esas familias con apoyo emocional, ' +
+      'logístico y médico bajo la filosofía #ActitudNoMeRindo.',
     website_url: 'https://aquinadieserinde.org.mx/',
-    logo_url: null, // upload from admin after verification
+    // Admin fills these in after the verification call / outreach.
+    instagram_handle: null,
+    logo_url: null,
     cover_image_url: null,
-    instagram_handle: 'aquinadieserinde',
     city: 'Ciudad de México',
     verified: true,
     active: true,
@@ -77,21 +78,25 @@ const REAL_CAUSES: SeedCause[] = [
   {
     slug: 'ciclica',
     name: 'Cíclica',
-    organization: 'Cíclica Movilidad',
-    category: 'mobility',
+    organization: 'Cíclica',
+    // `environment` (not `mobility`) — their program is plogging + urban
+    // gardens + environmental education for kids, not transport policy.
+    // Migration 205 still added `mobility` as a valid category for future
+    // causes where it fits.
+    category: 'environment',
     short_description:
-      'Investigación y diseño de políticas de movilidad sustentable en CDMX.',
+      'Educación ambiental y acción comunitaria: plogging, huertos urbanos y campañas de limpieza.',
     description:
-      'Consultora de movilidad sostenible en México. Investigan, diseñan y ' +
-      'evalúan políticas de transporte público, ciclismo urbano y ' +
-      'peatonalización. Aliados naturales del enfoque de Conscious Pulse: ' +
-      'decisiones basadas en data ciudadana, no en opinión editorial. Un ciclo ' +
-      'del Fondo Consciente puede financiar un estudio ciudadano o una ' +
-      'intervención piloto en una alcaldía de CDMX.',
+      'Organización mexicana que reduce la contaminación a través de ' +
+      'educación. Operan tres programas integrados: campañas de plogging y ' +
+      'limpieza masiva de residuos (incluyendo festivales), Cíclica Garden ' +
+      '— huertos urbanos y educación sobre hortalizas — y Cíclica Kids, ' +
+      'programa educativo para la próxima generación. Aliados naturales del ' +
+      'Fondo Consciente por su enfoque directo, medible y replicable.',
     website_url: 'https://www.ciclica.com.mx/',
+    instagram_handle: 'ciclica_mex',
     logo_url: null,
     cover_image_url: null,
-    instagram_handle: 'ciclica_movilidad',
     city: 'Ciudad de México',
     verified: true,
     active: true,

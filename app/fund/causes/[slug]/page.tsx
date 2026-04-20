@@ -12,6 +12,7 @@ import {
   MapPin,
 } from 'lucide-react'
 import { createAdminClient } from '@/lib/supabase-admin'
+import { CauseShareBar } from '@/components/fund/CauseShareBar'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -148,10 +149,19 @@ export async function generateMetadata(
 
 export default async function CauseDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>
+  searchParams?: Promise<Record<string, string | string[] | undefined>>
 }) {
   const { slug } = await params
+  const sp = searchParams ? await searchParams : undefined
+  const rawRef = sp?.ref
+  const refToken =
+    typeof rawRef === 'string' && rawRef.trim().length > 0
+      ? rawRef.trim().slice(0, 64)
+      : null
+
   const cookieStore = await cookies()
   const locale = cookieStore.get('preferred-language')?.value === 'en' ? 'en' : 'es'
 
@@ -235,6 +245,15 @@ export default async function CauseDetailPage({
             <p className="text-lg text-slate-200 leading-relaxed">{cause.short_description}</p>
           )}
         </header>
+
+        <CauseShareBar
+          causeId={cause.id}
+          slug={cause.slug}
+          name={cause.name}
+          shortDescription={cause.short_description}
+          locale={locale}
+          refToken={refToken}
+        />
 
         <section className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <StatCard
