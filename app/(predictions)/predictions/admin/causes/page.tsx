@@ -475,12 +475,13 @@ export default function AdminCausesPage() {
             onClick={() => !submitting && setModal(null)}
             aria-hidden="true"
           />
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
             <div
-              className="bg-[#0a0e14] border border-[rgba(255,255,255,0.07)] rounded-xl p-6 w-full max-w-2xl shadow-xl my-8"
+              className="relative flex w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl border border-[rgba(255,255,255,0.07)] bg-[#0a0e14] shadow-xl sm:rounded-2xl"
+              style={{ maxHeight: 'min(90vh, 100dvh)' }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex shrink-0 items-center justify-between border-b border-white/5 px-6 py-4">
                 <h3 className="text-lg font-semibold text-white">
                   {modal === 'add' ? 'Add New Cause' : 'Edit Cause'}
                 </h3>
@@ -491,7 +492,11 @@ export default function AdminCausesPage() {
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form
+                onSubmit={handleSubmit}
+                className="flex min-h-0 flex-1 flex-col"
+              >
+                <div className="flex-1 space-y-4 overflow-y-auto px-6 py-4">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
                     <label className="block text-sm font-medium text-slate-400 mb-1">Name *</label>
@@ -680,7 +685,8 @@ export default function AdminCausesPage() {
                   />
                 </div>
 
-                <div className="flex gap-2 justify-end pt-2">
+                </div>
+                <div className="flex shrink-0 gap-2 justify-end border-t border-white/5 bg-[#0a0e14] px-6 py-3">
                   <button
                     type="button"
                     onClick={() => setModal(null)}
