@@ -103,29 +103,62 @@ export default async function SponsorAccountsPage() {
     cookieStore.get('preferred-language')?.value === 'en' ? 'en' : 'es'
   const c = COPY[locale]
 
-  // Use the admin client + the same dual-predicate that the RLS policy uses
-  // (user_id match OR lowercase email match). One query, no round trip
-  // through JWT-email claims which aren't wired up in this project.
+  // Use the admin client + two parallel indexed lookups that mirror the
+  // RLS policy's dual predicate. We deliberately avoid a single PostgREST
+  // `.or()` filter-string here: `.or(...)` reserves `.` as a column/
+  // operator/value delimiter, which means email values (`admin@jager.mx`)
+  // silently mis-parse and every user with a `.mx`/`.com`/… TLD sees zero
+  // rows even when the data exists. `.eq()` / `.ilike()` go through a
+  // typed, properly URL-encoded code path.
   const admin = createAdminClient()
-  const userEmail = (user.email ?? '').toLowerCase()
-  const orClause = userEmail
-    ? `user_id.eq.${user.id},contact_email.ilike.${userEmail}`
-    : `user_id.eq.${user.id}`
+  const userEmail = (user.email ?? '').toLowerCase().trim()
+  const selectCols =
+    'id, company_name, contact_email, access_token, tier, status, is_pulse_client, pulse_subscription_active, max_pulse_markets, used_pulse_markets, created_at, logo_url'
 
-  const { data: accounts, error } = await admin
-    .from('sponsor_accounts')
-    .select(
-      'id, company_name, contact_email, access_token, tier, status, is_pulse_client, pulse_subscription_active, max_pulse_markets, used_pulse_markets, created_at, logo_url'
-    )
-    .or(orClause)
-    .order('created_at', { ascending: false })
-    .limit(50)
+  const [byIdRes, byEmailRes] = await Promise.all([
+    admin
+      .from('sponsor_accounts')
+      .select(selectCols)
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(50),
+    userEmail
+      ? admin
+          .from('sponsor_accounts')
+          .select(selectCols)
+          .ilike('contact_email', userEmail)
+          .order('created_at', { ascending: false })
+          .limit(50)
+      : Promise.resolve({ data: [] as SponsorRow[], error: null }),
+  ])
 
-  if (error) {
-    console.error('[sponsor-accounts] list query failed:', error)
+  if (byIdRes.error) {
+    console.error('[sponsor-accounts] user_id query failed:', byIdRes.error)
+  }
+  if (byEmailRes.error) {
+    console.error('[sponsor-accounts] contact_email query failed:', byEmailRes.error)
   }
 
-  const rows = (accounts ?? []) as SponsorRow[]
+  // Dedupe by id (a row can legitimately match on both user_id and
+  // contact_email after a backfill), then re-sort by created_at desc.
+  const merged = new Map<string, SponsorRow>()
+  for (const row of ((byIdRes.data ?? []) as SponsorRow[])) merged.set(row.id, row)
+  for (const row of ((byEmailRes.data ?? []) as SponsorRow[])) {
+    if (!merged.has(row.id)) merged.set(row.id, row)
+  }
+  const rows = Array.from(merged.values())
+    .sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''))
+    .slice(0, 50)
+
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('[sponsor-accounts] listing lookup:', {
+      userId: user.id,
+      userEmail,
+      byIdRows: byIdRes.data?.length ?? 0,
+      byEmailRows: byEmailRes.data?.length ?? 0,
+      merged: rows.length,
+    })
+  }
 
   return (
     <div className="mx-auto max-w-4xl">
