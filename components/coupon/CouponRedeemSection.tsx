@@ -83,9 +83,14 @@ export function CouponRedeemSection({ locale }: Props) {
             onClick={(e) => e.stopPropagation()}
             className="w-full max-w-md rounded-2xl border border-[#2d3748] bg-[#1a2029] p-6 shadow-xl"
           >
-            <h3 className="mb-4 text-lg font-bold text-white">
+            <h3 className="mb-2 text-lg font-bold text-white">
               {es ? 'Canjear código de acceso' : 'Redeem access code'}
             </h3>
+            <p className="mb-4 text-xs text-slate-400">
+              {es
+                ? 'Al canjear accedes a tu dashboard de patrocinador. También lo encontrarás después en "Mis cuentas" dentro de tu sesión si inicias sesión con el mismo correo.'
+                : 'Redeeming unlocks your sponsor dashboard. You\'ll also find it later under "My accounts" in the main menu, as long as you sign in with the same email.'}
+            </p>
 
             <input
               type="text"

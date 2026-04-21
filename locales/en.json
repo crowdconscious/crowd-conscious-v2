@@ -188,7 +188,8 @@
       "step_3": "Download reports",
       "step_3_desc": "Printable PDF and per-market data from each card or Reports.",
       "close": "Close",
-      "handbook_cta": "See full handbook"
+      "handbook_cta": "See full handbook",
+      "my_accounts_hint": "Your dashboard is also accessible anytime from \"My accounts\" in the main menu, whenever you're signed in as {email}."
     },
     "plan": {
       "title": "Your Conscious Pulse plan",

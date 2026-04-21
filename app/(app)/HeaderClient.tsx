@@ -12,10 +12,14 @@ import { useLanguage } from '@/contexts/LanguageContext'
 import { CompactFundThermometer } from '@/components/fund/FundThermometer'
 
 /**
- * Authed primary nav (5 items, locale-aware) — mirrors the public spec but
- * routes Predicciones at the personal dashboard. Markets, Leaderboard, and
+ * Authed primary nav (locale-aware) — mirrors the public spec but routes
+ * Predicciones at the personal dashboard. Markets, Leaderboard, and
  * Achievements moved out of the primary slot (they live inside /predictions
  * and the profile menu, respectively).
+ *
+ * "Mis cuentas" is rendered conditionally when `hasSponsorAccounts` is true
+ * (coupon redeemers, paid sponsors). Users with zero sponsor rows keep the
+ * canonical 5-item layout.
  */
 const NAV = {
   es: {
@@ -24,6 +28,7 @@ const NAV = {
     locations: 'Lugares',
     pulse: 'Pulse',
     fund: 'Fondo',
+    myAccounts: 'Mis cuentas',
     live: 'En Vivo',
     settings: 'Configuración',
     signOut: 'Cerrar Sesión',
@@ -34,6 +39,7 @@ const NAV = {
     locations: 'Places',
     pulse: 'Pulse',
     fund: 'Fund',
+    myAccounts: 'My accounts',
     live: 'Live',
     settings: 'Settings',
     signOut: 'Sign Out',
@@ -42,9 +48,13 @@ const NAV = {
 
 interface HeaderClientProps {
   user: any
+  /** When true, render the "Mis cuentas" nav entry pointing to /sponsor-accounts.
+   * Computed server-side in `app/(app)/layout.tsx` from a sponsor_accounts
+   * count query so users without any sponsor rows see an unchanged UI. */
+  hasSponsorAccounts?: boolean
 }
 
-export default function HeaderClient({ user }: HeaderClientProps) {
+export default function HeaderClient({ user, hasSponsorAccounts = false }: HeaderClientProps) {
   const [userProfile, setUserProfile] = useState<any>(null)
   const router = useRouter()
   const { liveCount } = useLiveNavBadge()
@@ -56,6 +66,7 @@ export default function HeaderClient({ user }: HeaderClientProps) {
     { href: '/locations', label: nav.locations },
     { href: '/pulse', label: nav.pulse, emphasize: true },
     { href: '/predictions/fund', label: nav.fund },
+    ...(hasSponsorAccounts ? [{ href: '/sponsor-accounts', label: nav.myAccounts }] : []),
   ]
 
   useEffect(() => {

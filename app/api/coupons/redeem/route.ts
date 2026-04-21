@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase-admin'
+import { createServerAuth } from '@/lib/auth-server'
 
 type CouponRow = {
   id: string
@@ -59,6 +60,19 @@ export async function POST(request: NextRequest) {
 
     const admin = createAdminClient()
 
+    // If the user is logged in, we'll link the sponsor_account back to their
+    // profile so they can find it from the authed /sponsor-accounts page
+    // after any logout/login cycle. Not required — logged-out redemption
+    // still works the same way as before.
+    let sessionUserId: string | null = null
+    try {
+      const supabase = await createServerAuth()
+      const { data: { user } } = await supabase.auth.getUser()
+      sessionUserId = user?.id ?? null
+    } catch {
+      // no-op: coupon redeem has always worked without a session
+    }
+
     const { data: coupon, error: couponErr } = await admin
       .from('coupon_codes')
       .select('*')
@@ -116,6 +130,10 @@ export async function POST(request: NextRequest) {
           is_pulse_client: pulse.is_pulse_client,
           pulse_subscription_active: pulse.pulse_subscription_active,
           status: 'active',
+          // Link to the logged-in user if there is a session; otherwise
+          // null and a later login by matching email will reconcile via
+          // the RLS email-match policy from migration 209.
+          user_id: sessionUserId,
         })
         .select()
         .single()
@@ -135,6 +153,10 @@ export async function POST(request: NextRequest) {
           tier: c.type === 'full_access' ? tier : account.tier,
           company_name: companyName || account.company_name,
           contact_name: name || account.contact_name,
+          // Backfill user_id if we have a session and the row wasn't linked
+          // yet. Never overwrite an existing owner — that would let a new
+          // session hijack someone else's sponsor row via shared email.
+          ...(sessionUserId && !account.user_id ? { user_id: sessionUserId } : {}),
         })
         .eq('id', account.id)
 

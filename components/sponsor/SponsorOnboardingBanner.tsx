@@ -8,6 +8,10 @@ type Props = {
   companyName: string
   isPulseClient: boolean
   token: string
+  /** Sponsor contact email. Rendered inside the "My accounts" hint so the
+   * user knows which login email surfaces this dashboard under
+   * /sponsor-accounts. Omit to hide the hint entirely. */
+  contactEmail?: string | null
   /** When true, the banner stays open and skips the server dismiss POST —
    * used by the dashboard header "?" button to re-show the welcome copy
    * without mutating `last_dashboard_visit`. */
@@ -23,6 +27,7 @@ export function SponsorOnboardingBanner({
   companyName,
   isPulseClient,
   token,
+  contactEmail,
   forceOpen,
   onClose,
 }: Props) {
@@ -58,6 +63,11 @@ export function SponsorOnboardingBanner({
             {t('welcome.greeting', { name: companyName })} 👋
           </h2>
           <p className="mt-2 max-w-2xl text-sm text-slate-300">{t('welcome.subtitle')}</p>
+          {contactEmail ? (
+            <p className="mt-2 max-w-2xl text-xs text-slate-400">
+              {t('welcome.my_accounts_hint', { email: contactEmail })}
+            </p>
+          ) : null}
         </div>
         <button
           type="button"

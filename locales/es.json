@@ -188,7 +188,8 @@
       "step_3": "Descarga reportes",
       "step_3_desc": "PDF imprimible y datos por mercado desde cada tarjeta o Reportes.",
       "close": "Cerrar",
-      "handbook_cta": "Ver manual completo"
+      "handbook_cta": "Ver manual completo",
+      "my_accounts_hint": "Tu dashboard también está disponible en cualquier momento desde \"Mis cuentas\" en el menú principal, si iniciaste sesión con el email {email}."
     },
     "plan": {
       "title": "Tu plan Conscious Pulse",

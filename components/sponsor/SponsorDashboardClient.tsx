@@ -213,6 +213,7 @@ export default function SponsorDashboardClient({
             companyName={account.company_name}
             isPulseClient={showPulse}
             token={token}
+            contactEmail={account.contact_email}
             forceOpen={!isFirstVisit && welcomeOverrideOpen}
             onClose={() => setWelcomeOverrideOpen(false)}
           />
