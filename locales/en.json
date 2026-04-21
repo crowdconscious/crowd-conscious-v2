@@ -206,6 +206,19 @@
       "manage_plan_cta_subscription": "Manage plan",
       "enterprise_contact_cta": "Contact team"
     },
+    "notifications": {
+      "title": "Email notifications",
+      "description": "Pick which transactional emails you want to receive about your Pulse markets.",
+      "sending_to": "Sending to",
+      "pulse_launch_label": "Pulse launched",
+      "pulse_launch_hint": "We'll ping you the moment your Pulse goes live, with the public link ready to share.",
+      "pulse_closure_label": "Pulse closed",
+      "pulse_closure_hint": "On close we send the leading answer, total voters, and a link to the full report.",
+      "save_button": "Save preferences",
+      "saving": "Saving…",
+      "saved_confirmation": "Saved",
+      "fine_print": "You can change these preferences anytime, or use the unsubscribe link in the footer of any email."
+    },
     "sponsor_markets": {
       "title": "Sponsor markets",
       "subtitle": "You can also attach your brand to existing markets on the platform.",

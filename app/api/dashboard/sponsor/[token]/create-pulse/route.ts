@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase-admin'
+import { dispatchSponsorPulseLaunchEmail } from '@/lib/sponsor-notifications'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -139,6 +140,21 @@ export async function POST(
       .from('sponsor_accounts')
       .update({ used_pulse_markets: used + 1 })
       .eq('id', account.id)
+
+    // Fire-and-forget the sponsor launch email. We never want a Resend
+    // outage or a malformed contact_email to break a successful Pulse
+    // publish — the user already paid for the slot, the market is live,
+    // and the email is a courtesy. `dispatchSponsorPulseLaunchEmail`
+    // internally respects the sponsor's email_preferences.pulse_launch
+    // toggle and swallows errors.
+    void dispatchSponsorPulseLaunchEmail({
+      sponsorAccountId: account.id,
+      marketId: marketId as string,
+      marketTitle: title,
+      marketQuestion: description || null,
+      endsAtIso: new Date(resolutionDate).toISOString(),
+      coverImageUrl: coverImageUrl ?? null,
+    }).catch((err) => console.warn('[create-pulse] launch email error:', err))
 
     return NextResponse.json({
       success: true,

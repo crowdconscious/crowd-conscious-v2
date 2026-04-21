@@ -16,6 +16,7 @@ import { FileDown, BarChart3, Share2, BookOpen, Sparkles, HelpCircle } from 'luc
 import { SponsorOnboardingBanner } from '@/components/sponsor/SponsorOnboardingBanner'
 import { SponsorMarketCard } from '@/components/sponsor/SponsorMarketCard'
 import { SuggestCauseForm } from '@/components/sponsor/SuggestCauseForm'
+import { SponsorEmailPreferences } from '@/components/sponsor/SponsorEmailPreferences'
 import type { SponsorDashboardMarketRow, FundImpactRow } from '@/components/sponsor/types'
 import { useLanguage, type Language } from '@/contexts/LanguageContext'
 import { useSponsorT } from '@/lib/i18n/sponsor-dashboard'
@@ -56,6 +57,8 @@ type Props = {
     contact_email: string
     max_pulse_markets: number
     used_pulse_markets: number
+    email_preferences?: Record<string, unknown> | null
+    locale?: string | null
   }
   markets: SponsorDashboardMarketRow[]
   marketsRaw: RawMarket[]
@@ -405,6 +408,22 @@ export default function SponsorDashboardClient({
             </div>
           )}
         </section>
+
+        <SponsorEmailPreferences
+          token={token}
+          contactEmail={account.contact_email}
+          initialPreferences={{
+            pulse_launch:
+              (account.email_preferences as Record<string, unknown> | null | undefined)?.pulse_launch === false
+                ? false
+                : true,
+            pulse_closure:
+              (account.email_preferences as Record<string, unknown> | null | undefined)?.pulse_closure === false
+                ? false
+                : true,
+          }}
+          initialLocale={account.locale === 'en' ? 'en' : 'es'}
+        />
 
         <section>
           <h2 className="mb-4 flex items-center gap-2 text-sm font-medium uppercase tracking-wide text-slate-400">
