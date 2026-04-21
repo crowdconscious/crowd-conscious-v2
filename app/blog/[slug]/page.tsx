@@ -41,7 +41,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   const { data: post } = await supabase
     .from('blog_posts')
     .select(
-      'title, title_en, meta_title, meta_description, excerpt, excerpt_en, cover_image_url, published_at, pulse_market_id'
+      'title, title_en, meta_title, meta_description, excerpt, excerpt_en, cover_image_url, published_at, updated_at, pulse_market_id'
     )
     .eq('slug', slug)
     .eq('status', 'published')
@@ -60,18 +60,30 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     locale === 'en' && post.excerpt_en?.trim()
       ? post.excerpt_en
       : post.meta_description || post.excerpt
+
+  const rawCover = post.cover_image_url
+  const absoluteCover =
+    rawCover && /^https?:\/\//i.test(rawCover) ? rawCover : rawCover ? `${SITE_URL}${rawCover}` : null
   const ogImage = post.pulse_market_id
     ? `${SITE_URL}/api/og/blog/${encodeURIComponent(slug)}`
-    : post.cover_image_url || `${SITE_URL}/opengraph-image`
+    : absoluteCover || `${SITE_URL}/opengraph-image`
+
+  const canonicalUrl = `${SITE_URL}/blog/${slug}`
+  const ogLocale = locale === 'en' ? 'en_US' : 'es_MX'
 
   return {
     title,
     description: description.slice(0, 160),
+    alternates: { canonical: canonicalUrl },
     openGraph: {
       title,
       description: description.slice(0, 200),
+      url: canonicalUrl,
+      siteName: 'Crowd Conscious',
       type: 'article',
+      locale: ogLocale,
       publishedTime: post.published_at ?? undefined,
+      modifiedTime: post.updated_at ?? post.published_at ?? undefined,
       images: [{ url: ogImage }],
     },
     twitter: {

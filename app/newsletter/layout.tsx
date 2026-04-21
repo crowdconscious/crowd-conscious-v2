@@ -1,7 +1,7 @@
 import LandingNav from '@/app/components/landing/LandingNav'
 import Footer from '@/components/Footer'
 
-export default function BlogLayout({ children }: { children: React.ReactNode }) {
+export default function NewsletterLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <div className="print:hidden">

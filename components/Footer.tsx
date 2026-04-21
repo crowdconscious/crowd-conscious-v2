@@ -21,6 +21,7 @@ export default function Footer() {
       consciousFund: 'Fondo Consciente',
       forBrands: 'Para Marcas',
       about: 'Acerca de',
+      blog: 'Blog',
       contact: 'Contacto',
       termsShort: 'Términos',
       privacyShort: 'Privacidad',
@@ -41,6 +42,7 @@ export default function Footer() {
       consciousFund: 'Conscious Fund',
       forBrands: 'For Brands',
       about: 'About',
+      blog: 'Blog',
       contact: 'Contact',
       termsShort: 'Terms',
       privacyShort: 'Privacy',
@@ -171,6 +173,11 @@ export default function Footer() {
               <li>
                 <Link href="/about" className="text-slate-300 transition-colors hover:text-teal-400">
                   {t.about}
+                </Link>
+              </li>
+              <li>
+                <Link href="/blog" className="text-slate-300 transition-colors hover:text-teal-400">
+                  {t.blog}
                 </Link>
               </li>
               <li>

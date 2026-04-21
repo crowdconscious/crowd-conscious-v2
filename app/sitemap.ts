@@ -5,7 +5,7 @@ import { SITE_URL } from '@/lib/seo/site'
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const supabase = await createClient()
 
-  const [{ data: markets }, { data: events }] = await Promise.all([
+  const [{ data: markets }, { data: events }, { data: posts }] = await Promise.all([
     supabase
       .from('prediction_markets')
       .select('id, updated_at')
@@ -17,6 +17,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .select('id, updated_at')
       .neq('status', 'cancelled')
       .order('match_date', { ascending: false }),
+    supabase
+      .from('blog_posts')
+      .select('slug, updated_at, published_at')
+      .eq('status', 'published')
+      .order('published_at', { ascending: false }),
   ])
 
   const now = new Date()
@@ -45,6 +50,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.85,
     },
     { url: `${SITE_URL}/live`, lastModified: now, changeFrequency: 'hourly', priority: 0.9 },
+    { url: `${SITE_URL}/blog`, lastModified: now, changeFrequency: 'daily', priority: 0.85 },
+    { url: `${SITE_URL}/newsletter`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${SITE_URL}/terms`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${SITE_URL}/privacy`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${SITE_URL}/cookies`, lastModified: now, changeFrequency: 'yearly', priority: 0.25 },
@@ -65,5 +72,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.85,
   }))
 
-  return [...staticPages, ...marketPages, ...eventPages]
+  const blogPostPages: MetadataRoute.Sitemap = (posts ?? []).map((p) => ({
+    url: `${SITE_URL}/blog/${p.slug}`,
+    lastModified: p.updated_at ? new Date(p.updated_at) : p.published_at ? new Date(p.published_at) : now,
+    changeFrequency: 'weekly' as const,
+    priority: 0.7,
+  }))
+
+  return [...staticPages, ...marketPages, ...eventPages, ...blogPostPages]
 }

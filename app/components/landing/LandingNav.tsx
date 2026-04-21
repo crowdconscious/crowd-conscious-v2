@@ -10,14 +10,15 @@ import { useLiveNavBadge } from '@/hooks/useLiveNavBadge'
 import { CompactFundThermometer } from '@/components/fund/FundThermometer'
 
 /**
- * Canonical primary nav (5 items, locale-aware):
- *   Predicciones · Lugares · Pulse · Fondo · Acerca
+ * Canonical primary nav (6 items, locale-aware):
+ *   Predicciones · Lugares · Pulse · Fondo · Blog · Acerca
  *
  * Live is intentionally NOT a primary slot — it appears as a compact
  * pulsing badge next to the language switcher only when there is at least
  * one public live event. Markets is an alias of /predictions/markets and
  * lives in the footer; Leaderboard moved inside /predictions; Sponsor /
- * Sponsors / Contact moved to the footer.
+ * Sponsors / Contact moved to the footer. Blog also lives in the footer
+ * Company column for redundancy and SEO.
  */
 const NAV = {
   es: {
@@ -25,6 +26,7 @@ const NAV = {
     locations: 'Lugares',
     pulse: 'Pulse',
     fund: 'Fondo',
+    blog: 'Blog',
     about: 'Acerca',
     live: 'En Vivo',
     signIn: 'Iniciar Sesión',
@@ -35,6 +37,7 @@ const NAV = {
     locations: 'Places',
     pulse: 'Pulse',
     fund: 'Fund',
+    blog: 'Blog',
     about: 'About',
     live: 'Live',
     signIn: 'Sign In',
@@ -81,6 +84,7 @@ export default function LandingNav() {
     { href: '/locations', label: nav.locations },
     { href: '/pulse', label: nav.pulse, emphasize: true },
     { href: '/predictions/fund', label: nav.fund },
+    { href: '/blog', label: nav.blog },
     { href: '/about', label: nav.about },
   ]
 
