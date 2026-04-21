@@ -5,7 +5,7 @@ import HeaderClient from './HeaderClient'
 import Footer from '@/components/Footer'
 import StreakTracker from './StreakTracker'
 import { TierThemeProvider } from '@/components/gamification/TierThemeProvider'
-import { createAdminClient } from '@/lib/supabase-admin'
+import { lookupSponsorAccountsForUser } from '@/lib/sponsor-account-lookup'
 
 export default async function AppLayout({
   children,
@@ -23,50 +23,12 @@ export default async function AppLayout({
   console.log('✅ AppLayout: User authenticated:', user.id)
 
   // Does this user own or have email access to any sponsor_accounts?
-  // Only used to conditionally render the "Mis cuentas" sidebar entry —
-  // users with zero sponsor rows continue to see an unchanged UI.
-  //
-  // Implementation note: we run TWO separate queries instead of a single
-  // PostgREST `.or()` filter-string because `.or()` uses a mini-language
-  // where `.` is a reserved delimiter. Email TLDs (`.mx`, `.com`, …)
-  // therefore silently mis-parse — a user who redeemed a coupon with
-  // `admin@jager.mx` would see zero rows even though the data is right
-  // there. supabase-js's typed `.eq()` / `.ilike()` methods URL-encode
-  // values correctly, so splitting into two indexed queries is both
-  // correct and cheap.
-  //
-  // Uses the admin client: service-role bypasses RLS for a count-only
-  // check, matching the pattern used elsewhere in the authed shell.
-  let hasSponsorAccounts = false
-  try {
-    const admin = createAdminClient()
-    const userEmail = (user.email ?? '').toLowerCase().trim()
-    const [byId, byEmail] = await Promise.all([
-      admin
-        .from('sponsor_accounts')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', user.id),
-      userEmail
-        ? admin
-            .from('sponsor_accounts')
-            .select('id', { count: 'exact', head: true })
-            .ilike('contact_email', userEmail)
-        : Promise.resolve({ count: 0 as number | null, error: null }),
-    ])
-    const total = (byId.count ?? 0) + (byEmail.count ?? 0)
-    hasSponsorAccounts = total > 0
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('[AppLayout] sponsor_accounts lookup:', {
-        userId: user.id,
-        userEmail,
-        byIdCount: byId.count,
-        byEmailCount: byEmail.count,
-        hasSponsorAccounts,
-      })
-    }
-  } catch (err) {
-    console.warn('[AppLayout] sponsor_accounts count failed:', err)
-  }
+  // Used to conditionally render the "Mis cuentas" sidebar entry.
+  // The lookup helper owns the PostgREST-escape-trap workaround (see
+  // lib/sponsor-account-lookup.ts) and returns the same summary shape
+  // that PredictionsShell uses, so the two shells stay in sync.
+  const sponsorSummary = await lookupSponsorAccountsForUser(user)
+  const hasSponsorAccounts = sponsorSummary.count > 0
 
   return (
     <TierThemeProvider>

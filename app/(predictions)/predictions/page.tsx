@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase-server'
 import { getCurrentUser } from '@/lib/auth-server'
 import { redirect } from 'next/navigation'
 import { PredictionsDashboardClient } from './components/PredictionsDashboardClient'
+import { lookupSponsorAccountsForUser } from '@/lib/sponsor-account-lookup'
 import type { Database } from '@/types/database'
 
 type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row']
@@ -295,7 +296,23 @@ export default async function PredictionsDashboardPage() {
   if (!user) redirect('/predictions/markets')
 
   const isAdmin = (user as { user_type?: string } | null)?.user_type === 'admin'
-  const data = await getDashboardData(user.id, isAdmin)
+  // Run the sponsor lookup in parallel with the main dashboard data.
+  // One extra round trip, amortized into the Promise.all: coupon redeemers
+  // see a first-class "go to my sponsor dashboard" CTA the moment they
+  // land here instead of having to guess where it lives.
+  const [data, sponsorSummary] = await Promise.all([
+    getDashboardData(user.id, isAdmin),
+    lookupSponsorAccountsForUser(user),
+  ])
 
-  return <PredictionsDashboardClient data={data} />
+  const sponsorCta = sponsorSummary.count > 0
+    ? {
+        count: sponsorSummary.count,
+        primaryToken: sponsorSummary.primary?.access_token ?? null,
+        primaryCompany: sponsorSummary.primary?.company_name ?? null,
+        isPulseClient: sponsorSummary.primary?.is_pulse_client ?? null,
+      }
+    : null
+
+  return <PredictionsDashboardClient data={data} sponsorCta={sponsorCta} />
 }

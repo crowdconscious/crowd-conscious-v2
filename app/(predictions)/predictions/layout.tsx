@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase-server'
 import PredictionsShell from './PredictionsShell'
 import { PendingVoteSubmitter } from './components/PendingVoteSubmitter'
 import LandingNav from '@/app/components/landing/LandingNav'
+import { lookupSponsorAccountsForUser } from '@/lib/sponsor-account-lookup'
 
 const Footer = dynamic(() => import('@/components/Footer'))
 
@@ -75,11 +76,23 @@ export default async function PredictionsLayout({
 
   let isAdmin = false
   let navCounts = { inboxPending: 0, activeMarkets: 0, liveNowCount: 0 }
+  // Sponsor nav surface: rendered only when a logged-in user owns (or
+  // has email access to) at least one sponsor_account. A coupon redeem
+  // creates a sponsor row either linked via user_id (if the redeemer
+  // was logged in) or only by contact_email (if not). Both paths are
+  // resolved by the shared helper.
+  let sponsorNav: {
+    count: number
+    primaryToken: string | null
+    primaryCompany: string | null
+  } = { count: 0, primaryToken: null, primaryCompany: null }
+
   if (user) {
     const supabase = await createClient()
-    const [profileRes, counts] = await Promise.all([
+    const [profileRes, counts, sponsorSummary] = await Promise.all([
       supabase.from('profiles').select('user_type, email').eq('id', user.id).single(),
       getNavCounts(supabase),
+      lookupSponsorAccountsForUser(user),
     ])
     const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim()
     const profileEmail = profileRes.data?.email?.toLowerCase().trim()
@@ -87,6 +100,11 @@ export default async function PredictionsLayout({
       profileRes.data?.user_type === 'admin' ||
       (!!adminEmail && !!profileEmail && profileEmail === adminEmail)
     navCounts = counts
+    sponsorNav = {
+      count: sponsorSummary.count,
+      primaryToken: sponsorSummary.primary?.access_token ?? null,
+      primaryCompany: sponsorSummary.primary?.company_name ?? null,
+    }
   }
 
   // Anonymous visitors on any public-conversion surface get the LandingNav +
@@ -118,7 +136,12 @@ export default async function PredictionsLayout({
   }
 
   return (
-    <PredictionsShell isAdmin={isAdmin} isAuthenticated={!!user} navCounts={navCounts}>
+    <PredictionsShell
+      isAdmin={isAdmin}
+      isAuthenticated={!!user}
+      navCounts={navCounts}
+      sponsorNav={sponsorNav}
+    >
       {user ? <PendingVoteSubmitter /> : null}
       {children}
     </PredictionsShell>

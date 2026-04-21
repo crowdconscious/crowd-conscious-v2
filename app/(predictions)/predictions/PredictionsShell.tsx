@@ -28,6 +28,7 @@ import {
   Newspaper,
   PenLine,
   MapPin,
+  Briefcase,
 } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import LanguageSwitcherSimple from '@/components/LanguageSwitcherSimple'
@@ -61,17 +62,45 @@ export default function PredictionsShell({
   isAdmin = false,
   isAuthenticated = true,
   navCounts = { inboxPending: 0, activeMarkets: 0, liveNowCount: 0 },
+  sponsorNav = { count: 0, primaryToken: null, primaryCompany: null },
 }: {
   children: React.ReactNode
   isAdmin?: boolean
   isAuthenticated?: boolean
   navCounts?: { inboxPending: number; activeMarkets: number; liveNowCount: number }
+  sponsorNav?: {
+    count: number
+    primaryToken: string | null
+    primaryCompany: string | null
+  }
 }) {
   const pathname = usePathname()
   const { language } = useLanguage()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const closeMobileMenu = () => setMobileMenuOpen(false)
   const NAV_ITEMS = language === 'es' ? NAV_ITEMS_ES : NAV_ITEMS_EN
+
+  // Sponsor entry in the sidebar:
+  //   - Exactly 1 account → deep-link straight into /dashboard/sponsor/[token]
+  //     so the user lands on their dashboard in one click. This is the
+  //     dominant case: a single coupon redemption creates one sponsor row.
+  //   - 2+ accounts → land on /sponsor-accounts (the chooser list).
+  //   - 0 accounts → entry is hidden entirely.
+  //   - 1 account but no access_token (legacy rows pre-migration 209)
+  //     → fall back to /sponsor-accounts so the user isn't dead-ended.
+  const showSponsorEntry = isAuthenticated && sponsorNav.count > 0
+  const sponsorHref =
+    sponsorNav.count === 1 && sponsorNav.primaryToken
+      ? `/dashboard/sponsor/${sponsorNav.primaryToken}`
+      : '/sponsor-accounts'
+  const sponsorLabel =
+    sponsorNav.count === 1 && sponsorNav.primaryCompany
+      ? language === 'es'
+        ? `Panel ${sponsorNav.primaryCompany}`
+        : `${sponsorNav.primaryCompany} dashboard`
+      : language === 'es'
+        ? 'Mis cuentas de patrocinador'
+        : 'My sponsor accounts'
 
   const getBadgeForHref = (href: string) => {
     if (href === '/predictions/inbox' && navCounts.inboxPending > 0) return navCounts.inboxPending
@@ -126,6 +155,25 @@ export default function PredictionsShell({
             )
           })}
         </nav>
+
+        {showSponsorEntry && (
+          <div className="px-4 pb-2 space-y-1">
+            <p className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-emerald-400/90">
+              {language === 'es' ? 'Patrocinador' : 'Sponsor'}
+            </p>
+            <Link
+              href={sponsorHref}
+              className={`flex min-h-[44px] items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                pathname.startsWith('/dashboard/sponsor') || pathname === '/sponsor-accounts'
+                  ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30'
+                  : 'text-cc-text-secondary hover:bg-gray-800/50 hover:text-emerald-400'
+              }`}
+            >
+              <Briefcase className="w-4 h-4" />
+              <span className="truncate">{sponsorLabel}</span>
+            </Link>
+          </div>
+        )}
 
         {isAdmin && (
           <div className="px-4 pb-2 space-y-1">
@@ -354,6 +402,25 @@ export default function PredictionsShell({
                   </Link>
                 )
               })}
+              {showSponsorEntry && (
+                <>
+                  <p className="px-3 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-emerald-400/90">
+                    {language === 'es' ? 'Patrocinador' : 'Sponsor'}
+                  </p>
+                  <Link
+                    href={sponsorHref}
+                    onClick={closeMobileMenu}
+                    className={`flex min-h-[44px] items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                      pathname.startsWith('/dashboard/sponsor') || pathname === '/sponsor-accounts'
+                        ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30'
+                        : 'text-cc-text-secondary hover:bg-gray-800/50 hover:text-emerald-400'
+                    }`}
+                  >
+                    <Briefcase className="w-4 h-4" />
+                    <span className="truncate">{sponsorLabel}</span>
+                  </Link>
+                </>
+              )}
               {isAdmin && (
                 <>
                   <p className="px-3 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-amber-500/90">

@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
-import { ArrowRight, BarChart3 } from 'lucide-react'
+import { ArrowRight, BarChart3, Briefcase } from 'lucide-react'
 import ShareButton from '@/components/ShareButton'
 import { OnboardingOverlay, shouldShowOnboarding } from './OnboardingOverlay'
 import { AttentionFeed, type AttentionItem } from '@/components/dashboard/AttentionFeed'
@@ -72,6 +72,16 @@ interface DashboardData {
 
 interface Props {
   data: DashboardData
+  // Optional because some callers / tests won't have sponsor data at hand.
+  // When present and non-null, the dashboard renders a prominent link to
+  // the user's sponsor dashboard at the very top of the page so coupon
+  // redeemers don't have to hunt through the sidebar.
+  sponsorCta?: {
+    count: number
+    primaryToken: string | null
+    primaryCompany: string | null
+    isPulseClient: boolean | null
+  } | null
 }
 
 function formatCurrency(num: number): string {
@@ -149,7 +159,7 @@ const DashboardIntelligenceColumnLazy = dynamic(
   }
 )
 
-export function PredictionsDashboardClient({ data }: Props) {
+export function PredictionsDashboardClient({ data, sponsorCta }: Props) {
   const locale = useLocale()
   const {
     userId,
@@ -308,6 +318,16 @@ export function PredictionsDashboardClient({ data }: Props) {
           onDismiss={() => setShowOnboarding(false)}
         />
       )}
+      {sponsorCta && sponsorCta.count > 0 ? (
+        <SponsorDashboardCta
+          count={sponsorCta.count}
+          primaryToken={sponsorCta.primaryToken}
+          primaryCompany={sponsorCta.primaryCompany}
+          isPulseClient={sponsorCta.isPulseClient}
+          locale={locale}
+        />
+      ) : null}
+
       {/* Section 1: Portfolio Summary */}
       <section>
         <h1 className="text-2xl font-bold text-white tracking-tight">
@@ -534,5 +554,86 @@ export function PredictionsDashboardClient({ data }: Props) {
         />
       </section>
     </div>
+  )
+}
+
+/**
+ * Sponsor-dashboard deep-link CTA shown at the top of /predictions for
+ * logged-in users who own (or have email access to) a sponsor account.
+ *
+ * - 1 account + access_token → deep-link to /dashboard/sponsor/[token]
+ *   so a coupon redeemer lands on their dashboard in one click.
+ * - 2+ accounts → route to /sponsor-accounts (the chooser list).
+ * - Pulse clients get a slightly different subcopy that surfaces the
+ *   "launch a Pulse" affordance, which is what a free-coupon user
+ *   signed up to do in the first place.
+ */
+function SponsorDashboardCta({
+  count,
+  primaryToken,
+  primaryCompany,
+  isPulseClient,
+  locale,
+}: {
+  count: number
+  primaryToken: string | null
+  primaryCompany: string | null
+  isPulseClient: boolean | null
+  locale: string
+}) {
+  const isEs = locale !== 'en'
+  const href =
+    count === 1 && primaryToken
+      ? `/dashboard/sponsor/${primaryToken}`
+      : '/sponsor-accounts'
+
+  const titleSingle = isEs
+    ? `Panel de patrocinador${primaryCompany ? ` — ${primaryCompany}` : ''}`
+    : `Sponsor dashboard${primaryCompany ? ` — ${primaryCompany}` : ''}`
+  const titleMulti = isEs ? 'Tus cuentas de patrocinador' : 'Your sponsor accounts'
+  const title = count === 1 ? titleSingle : titleMulti
+
+  const subtitle =
+    count === 1
+      ? isPulseClient
+        ? isEs
+          ? 'Lanza un Pulse, revisa resultados y administra tu plan.'
+          : 'Launch a Pulse, review results, and manage your plan.'
+        : isEs
+          ? 'Revisa métricas, reportes y administra tu plan.'
+          : 'Review metrics, reports, and manage your plan.'
+      : isEs
+        ? 'Elige la cuenta a abrir.'
+        : 'Choose which account to open.'
+
+  const ctaLabel = isEs
+    ? count === 1
+      ? 'Abrir mi dashboard'
+      : 'Ver mis cuentas'
+    : count === 1
+      ? 'Open my dashboard'
+      : 'View my accounts'
+
+  return (
+    <Link
+      href={href}
+      className="group block rounded-[14px] border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-transparent p-5 transition-colors hover:border-emerald-400/60 hover:from-emerald-500/20"
+    >
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-start gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400">
+            <Briefcase className="h-5 w-5" />
+          </span>
+          <div className="min-w-0">
+            <p className="truncate text-base font-semibold text-white">{title}</p>
+            <p className="mt-0.5 text-sm text-slate-300">{subtitle}</p>
+          </div>
+        </div>
+        <span className="inline-flex items-center gap-2 self-start rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-[#0b1018] transition-colors group-hover:bg-emerald-400 sm:self-auto">
+          {ctaLabel}
+          <ArrowRight className="h-4 w-4" />
+        </span>
+      </div>
+    </Link>
   )
 }
