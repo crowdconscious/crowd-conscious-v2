@@ -18,6 +18,52 @@ function slugify(raw: string): string {
   return s || 'post'
 }
 
+export async function GET(request: NextRequest) {
+  try {
+    const user = await getCurrentUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const admin = createAdminClient()
+    const { data: profile } = await admin
+      .from('profiles')
+      .select('user_type')
+      .eq('id', user.id)
+      .single()
+    if (profile?.user_type !== 'admin') {
+      return NextResponse.json({ error: 'Admin only' }, { status: 403 })
+    }
+
+    const { searchParams } = new URL(request.url)
+    const statusParam = searchParams.get('status')
+    const allowedStatuses = ['draft', 'published', 'archived']
+
+    let query = admin
+      .from('blog_posts')
+      .select(
+        'id, slug, title, title_en, category, status, published_at, updated_at, view_count, cover_image_url, generated_by, pulse_market_id, tags'
+      )
+      .order('updated_at', { ascending: false })
+      .limit(500)
+
+    if (statusParam && allowedStatuses.includes(statusParam)) {
+      query = query.eq('status', statusParam)
+    }
+
+    const { data: posts, error } = await query
+    if (error) {
+      console.error('[admin blog GET]', error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    return NextResponse.json({ posts: posts ?? [] })
+  } catch (e) {
+    console.error('[admin blog GET]', e)
+    return NextResponse.json({ error: 'Server error' }, { status: 500 })
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser()

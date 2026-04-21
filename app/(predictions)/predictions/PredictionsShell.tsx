@@ -199,7 +199,7 @@ export default function PredictionsShell({
               {language === 'es' ? 'Panel de Agentes' : 'Agent Dashboard'}
             </Link>
             <Link
-              href="/predictions/admin/blog/create"
+              href="/predictions/admin/blog"
               className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                 pathname.startsWith('/predictions/admin/blog')
                   ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
@@ -207,7 +207,7 @@ export default function PredictionsShell({
               }`}
             >
               <PenLine className="w-4 h-4" />
-              {language === 'es' ? 'Escribir blog' : 'Write blog'}
+              {language === 'es' ? 'Blog' : 'Blog'}
             </Link>
             <Link
               href="/predictions/admin/sponsors"
