@@ -7,6 +7,7 @@ import { handleSponsorship } from './handlers/sponsorship'
 import { handleMarketSponsorship } from './handlers/market-sponsorship'
 import { handlePulsePurchase } from './handlers/pulse-purchase'
 import { handlePulseAddon } from './handlers/pulse-addon'
+import { handleSponsorUpgrade } from './handlers/sponsor-upgrade'
 import { handleMarketSponsorAccount } from './handlers/market-sponsor-account'
 import { handleTreasuryDonation } from './handlers/treasury-donation'
 import { handlePaymentSucceeded, handlePaymentFailed } from './handlers/payment-verification'
@@ -127,6 +128,12 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
   if (metadata.product_type === 'pulse_addon') {
     console.log('➕ Processing Pulse add-on...')
     await handlePulseAddon(session)
+    return
+  }
+
+  if (metadata.product_type === 'sponsor_upgrade') {
+    console.log('⬆️  Processing sponsor in-dashboard upgrade...')
+    await handleSponsorUpgrade(session)
     return
   }
 

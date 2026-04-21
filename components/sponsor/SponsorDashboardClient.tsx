@@ -19,6 +19,7 @@ import { SuggestCauseForm } from '@/components/sponsor/SuggestCauseForm'
 import type { SponsorDashboardMarketRow, FundImpactRow } from '@/components/sponsor/types'
 import { useLanguage, type Language } from '@/contexts/LanguageContext'
 import { useSponsorT } from '@/lib/i18n/sponsor-dashboard'
+import { normalizeSponsorUpgradeTier } from '@/lib/sponsor-upgrade-tier'
 
 export type { SponsorOutcomeRow, SponsorDashboardMarketRow, FundImpactRow } from '@/components/sponsor/types'
 
@@ -111,24 +112,31 @@ export default function SponsorDashboardClient({
   const unlimited = maxPulse >= 999
   const atPulseLimit = !unlimited && usedPulse >= maxPulse
   const pulsePct = unlimited ? 100 : maxPulse > 0 ? Math.min(100, Math.round((usedPulse / maxPulse) * 100)) : 0
-  const [addonLoading, setAddonLoading] = useState(false)
   const [welcomeOverrideOpen, setWelcomeOverrideOpen] = useState(false)
   const showBanner = isFirstVisit || welcomeOverrideOpen
 
-  const startPulseAddon = async () => {
-    setAddonLoading(true)
-    try {
-      const res = await fetch(`/api/dashboard/sponsor/${encodeURIComponent(token)}/pulse-addon-checkout`, {
-        method: 'POST',
-      })
-      const data = await res.json()
-      if (data.url) window.location.href = data.url
-    } catch (e) {
-      console.error(e)
-    } finally {
-      setAddonLoading(false)
-    }
-  }
+  // Tier-aware upgrade CTA. Both the old "Comprar más" (+1 slot add-on)
+  // and "Subir de plan" buttons are consolidated into this single entry,
+  // which routes to /dashboard/sponsor/[token]/upgrade. The /upgrade page
+  // surfaces the right subset of options per tier.
+  //
+  // - Enterprise: hide the upgrade entry; show a mailto CTA instead.
+  // - Suscripción: "Gestionar plan" (neutral — see current status + Enterprise).
+  // - Everything else: "Expandir plan" (active upsell).
+  const normalizedTier = normalizeSponsorUpgradeTier(account.tier)
+  const hideUpgradeCta = normalizedTier === 'enterprise'
+  const upgradeCtaLabel =
+    normalizedTier === 'suscripcion'
+      ? t('plan.manage_plan_cta_subscription')
+      : t('plan.manage_plan_cta')
+  const enterpriseMailto = (() => {
+    const subject = encodeURIComponent(
+      language === 'en'
+        ? `Enterprise plan — ${account.company_name}`
+        : `Plan Enterprise — ${account.company_name}`
+    )
+    return `mailto:comunidad@crowdconscious.app?subject=${subject}`
+  })()
 
   const enriched = useMemo(() => {
     return markets.map((m) => {
@@ -242,12 +250,21 @@ export default function SponsorDashboardClient({
             {atPulseLimit ? (
               <p className="mt-3 text-sm text-amber-400/95">
                 {t('plan.at_limit')}{' '}
-                <Link
-                  href={`/pulse#pulse-pricing?email=${encodeURIComponent(account.contact_email)}`}
-                  className="font-medium text-emerald-400 underline hover:text-emerald-300"
-                >
-                  {t('plan.upgrade_cta')} →
-                </Link>
+                {hideUpgradeCta ? (
+                  <a
+                    href={enterpriseMailto}
+                    className="font-medium text-emerald-400 underline hover:text-emerald-300"
+                  >
+                    {t('plan.enterprise_contact_cta')} →
+                  </a>
+                ) : (
+                  <Link
+                    href={`/dashboard/sponsor/${token}/upgrade`}
+                    className="font-medium text-emerald-400 underline hover:text-emerald-300"
+                  >
+                    {upgradeCtaLabel} →
+                  </Link>
+                )}
               </p>
             ) : null}
             <div className="mt-6 flex flex-wrap gap-3">
@@ -260,20 +277,21 @@ export default function SponsorDashboardClient({
               >
                 {t('plan.create_new')}
               </Link>
-              <button
-                type="button"
-                onClick={startPulseAddon}
-                disabled={addonLoading}
-                className="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-5 py-2.5 text-sm font-semibold text-emerald-400 transition-colors hover:bg-emerald-500/20 disabled:opacity-50"
-              >
-                {addonLoading ? t('plan.loading') : t('plan.buy_more')}
-              </button>
-              <Link
-                href={`/pulse#pulse-pricing?email=${encodeURIComponent(account.contact_email)}`}
-                className="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-slate-600 px-5 py-2.5 text-sm font-medium text-slate-200 hover:bg-slate-800"
-              >
-                {t('plan.upgrade_cta')} →
-              </Link>
+              {hideUpgradeCta ? (
+                <a
+                  href={enterpriseMailto}
+                  className="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-purple-500/40 bg-purple-500/10 px-5 py-2.5 text-sm font-semibold text-purple-300 hover:bg-purple-500/20"
+                >
+                  {t('plan.enterprise_contact_cta')} →
+                </a>
+              ) : (
+                <Link
+                  href={`/dashboard/sponsor/${token}/upgrade`}
+                  className="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-5 py-2.5 text-sm font-semibold text-emerald-300 hover:bg-emerald-500/20"
+                >
+                  {upgradeCtaLabel} →
+                </Link>
+              )}
             </div>
           </section>
         ) : null}
