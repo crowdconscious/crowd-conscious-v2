@@ -68,8 +68,8 @@ export default async function SponsorGuidePage({
           <h2 className="text-lg font-semibold text-white">Soporte</h2>
           <p className="text-slate-400">
             Escríbenos a{' '}
-            <a href="mailto:francisco@crowdconscious.app" className="text-emerald-400 hover:underline">
-              francisco@crowdconscious.app
+            <a href="mailto:comunidad@crowdconscious.app" className="text-emerald-400 hover:underline">
+              comunidad@crowdconscious.app
             </a>{' '}
             para vincular mercados existentes a tu cuenta o configurar nuevos patrocinios.
           </p>

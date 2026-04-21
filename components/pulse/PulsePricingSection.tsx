@@ -50,12 +50,13 @@ export function PulsePricingSection({ locale }: Props) {
                   : `$${t.priceMXN.toLocaleString()} MXN`
               const subPrice =
                 id === 'suscripcion'
-                  ? L('~$1,000 USD / mes', '~$1,000 USD / mo')
+                  ? L('~$1,250 USD / mes', '~$1,250 USD / mo')
                   : id === 'pulse_unico'
                     ? L('~$250 USD', '~$250 USD')
                     : id === 'pulse_pack'
                       ? L('~$600 USD', '~$600 USD')
                       : ''
+              const durationLabel = es ? t.durationLabelEs : t.durationLabelEn
               const features = es ? t.featuresEs : t.featuresEn
               const bestFor = es ? t.bestForEs : t.bestForEn
               const popular = 'popular' in t && t.popular
@@ -77,9 +78,9 @@ export function PulsePricingSection({ locale }: Props) {
                   <h3 className="text-lg font-bold text-white">{name}</h3>
                   <p className="mt-1 text-2xl font-bold text-emerald-400">{priceLabel}</p>
                   {subPrice ? <p className="text-xs text-slate-500">{subPrice}</p> : null}
-                  <p className="mt-2 text-xs text-slate-500">
-                    {es ? t.durationLabelEs : t.durationLabelEn}
-                  </p>
+                  {durationLabel ? (
+                    <p className="mt-2 text-xs text-slate-500">{durationLabel}</p>
+                  ) : null}
                   <ul className="mt-4 flex-1 space-y-2 text-sm text-slate-300">
                     {features.map((f) => (
                       <li key={f} className="flex gap-2">
@@ -118,7 +119,31 @@ export function PulsePricingSection({ locale }: Props) {
             })}
           </div>
 
-          <div className="mt-12 rounded-xl border border-dashed border-white/20 bg-[#1a2029]/50 p-6 text-center">
+          <div className="mt-10 rounded-xl border border-emerald-500/30 bg-emerald-950/20 p-6 text-center sm:flex sm:items-center sm:justify-between sm:text-left">
+            <div>
+              <p className="text-base font-semibold text-white">
+                {L('¿Primera vez con Conscious Pulse?', 'First time with Conscious Pulse?')}
+              </p>
+              <p className="mt-1 text-sm text-slate-300">
+                {L(
+                  'Corremos un piloto gratuito de 14 días antes de cualquier compra.',
+                  'We run a free 14-day pilot before any purchase.'
+                )}
+              </p>
+            </div>
+            <a
+              href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(
+                es
+                  ? 'Solicitud de piloto gratuito — [organización]'
+                  : 'Free pilot request — [organization]'
+              )}`}
+              className="mt-4 inline-block w-full min-w-[44px] rounded-xl bg-emerald-600 px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-emerald-500 sm:mt-0 sm:w-auto"
+            >
+              {L('Solicitar piloto →', 'Request pilot →')}
+            </a>
+          </div>
+
+          <div className="mt-8 rounded-xl border border-dashed border-white/20 bg-[#1a2029]/50 p-6 text-center">
             <p className="text-slate-300">{L('¿Tienes un código de acceso?', 'Have an access code?')}</p>
             <p className="mt-2 text-sm text-slate-500">
               {L(

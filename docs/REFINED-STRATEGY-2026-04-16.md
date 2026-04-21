@@ -27,7 +27,7 @@
 ## 1. What is genuinely working
 
 1. **Conscious Locations as a format.** The clearest IA on the site (swipe + confidence + score after 10 votes + perks). Three seeded places, and the top market across the entire platform is a location market. **This is the wedge.**
-2. **Conscious Pulse positioning.** Public pricing ($5K / $12K / $20K / Custom MXN), clear differentiation vs. surveys/focus groups, "First consultation free for new clients." Reads like a real B2B product.
+2. **Conscious Pulse positioning.** Public pricing ($5K / $12K / $25K / Custom MXN, with a free 14-day pilot on first engagement), clear differentiation vs. surveys/focus groups. Reads like a real B2B product.
 3. **Technical foundation.** Next.js 15, Supabase RLS, modular Stripe webhooks, 5 functional AI agents with DB logging, `cron_job_runs` health table. Build passes cleanly. **Engineering is ahead of product-market fit.**
 4. **AI agent layer is operational.** CEO digest you're reading is the proof: daily, structured, actionable. News monitor already feeding actionable signals (Afores crisis, subsidios de gasolina, ESG Mundial).
 5. **World Cup framing on the landing.** Countdown, CDMX anchor, Estadio Azteca. Strong emotional hook.

@@ -427,8 +427,8 @@ export default function SponsorDashboardClient({
 
         <footer className="border-t border-[#2d3748] py-8 text-center text-sm text-slate-500">
           <p>{t('footer.need_help')}</p>
-          <a href="mailto:francisco@crowdconscious.app" className="font-medium text-emerald-400 hover:underline">
-            francisco@crowdconscious.app
+          <a href="mailto:comunidad@crowdconscious.app" className="font-medium text-emerald-400 hover:underline">
+            comunidad@crowdconscious.app
           </a>
           <p className="mt-4 text-xs text-slate-600">
             {t('footer.powered_by')} · {new Date().getFullYear()}

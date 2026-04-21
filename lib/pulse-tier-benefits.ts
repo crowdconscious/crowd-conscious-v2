@@ -32,8 +32,13 @@ const TIER_BENEFITS: Record<PulseTierId, PulseTierBenefitsRow> = {
     has_api_access: false,
     has_white_label: false,
   },
+  // Suscripción moved from "unlimited" → "up to 5 per month" on 2026-04-20
+  // (see docs/PRICING-DECISION-2026-04-20.md). Existing rows stay grandfathered
+  // at whatever their current sponsor_accounts.max_pulse_markets value is —
+  // only new checkouts (which read this map via getPulseTierBenefits in the
+  // pulse-purchase webhook) get the 5-question cap.
   suscripcion: {
-    max_pulse_markets: 999,
+    max_pulse_markets: 5,
     max_live_events: 5,
     has_custom_branding: true,
     has_api_access: true,

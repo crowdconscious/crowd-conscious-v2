@@ -148,20 +148,20 @@ export const sponsorPageCopy = {
   pulseSubTitle: { es: 'Suscripción mensual', en: 'Monthly subscription' },
   pulsePriceUnique: { es: '$5,000 MXN', en: '$5,000 MXN' },
   pulsePricePack: { es: '$12,000 MXN', en: '$12,000 MXN' },
-  pulsePriceSub: { es: '$20,000/mes', en: '$20,000/mo' },
+  pulsePriceSub: { es: '$25,000/mes', en: '$25,000/mo' },
   pulseUsdUnique: { es: '~$250 USD', en: '~$250 USD' },
   pulseUsdPack: { es: '~$600 USD', en: '~$600 USD' },
-  pulseUsdSub: { es: '~$1,000 USD/mes', en: '~$1,000 USD/mo' },
+  pulseUsdSub: { es: '~$1,250 USD/mes', en: '~$1,250 USD/mo' },
   pulseFeaturesUnique: {
     es: [
       '1 pregunta (hasta 6 opciones)',
-      '7-30 días activo',
+      '7-30 días de votación',
       'Resultados en vivo + código QR',
       'Reporte PDF descargable',
     ],
     en: [
       '1 question (up to 6 options)',
-      '7-30 days active',
+      '7-30 days of voting',
       'Live results + QR code',
       'Downloadable PDF report',
     ],
@@ -183,10 +183,22 @@ export const sponsorPageCopy = {
   },
   pulseFundPack: { es: '25% → Fondo Consciente', en: '25% → Conscious Fund' },
   pulseFeaturesSub: {
-    es: ['Preguntas ilimitadas', 'Branding personalizado', 'Acceso API a datos', 'Soporte dedicado'],
-    en: ['Unlimited questions', 'Custom branding', 'API data access', 'Dedicated support'],
+    es: [
+      'Hasta 5 preguntas por mes',
+      'Branding personalizado',
+      'Acceso API a datos',
+      'Reporte ejecutivo mensual',
+      'Soporte dedicado',
+    ],
+    en: [
+      'Up to 5 questions per month',
+      'Custom branding',
+      'API data access',
+      'Monthly executive report',
+      'Dedicated support',
+    ],
   },
-  pulseFundSub: { es: '30% → Fondo Consciente', en: '30% → Conscious Fund' },
+  pulseFundSub: { es: '40% → Fondo Consciente', en: '40% → Conscious Fund' },
   pulseIdealUnique: {
     es: 'Ideal para: prueba inicial, una consulta',
     en: 'Ideal for: initial test, one consultation',
@@ -196,8 +208,8 @@ export const sponsorPageCopy = {
     en: 'Ideal for: multi-topic consultations',
   },
   pulseIdealSub: {
-    es: 'Ideal para: municipios, medios, research continuo',
-    en: 'Ideal for: municipalities, media, ongoing research',
+    es: 'Ideal para: municipios, medios, marcas con agenda recurrente',
+    en: 'Ideal for: municipalities, media, brands with a recurring agenda',
   },
   pulseEnterpriseNote: {
     es: '¿Necesitas algo más grande? Planes Enterprise desde $50,000 MXN/mes con white-label y API completa.',

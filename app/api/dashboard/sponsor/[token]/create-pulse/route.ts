@@ -85,7 +85,7 @@ export async function POST(
       return NextResponse.json(
         {
           error:
-            'Pulse self-serve is not fully configured (missing sponsor user link). Contact francisco@crowdconscious.app.',
+            'Pulse self-serve is not fully configured (missing sponsor user link). Contact comunidad@crowdconscious.app.',
         },
         { status: 503 }
       )
