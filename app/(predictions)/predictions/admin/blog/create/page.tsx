@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { ImageUpload } from '@/components/ui/ImageUpload'
 import BlogPulseEmbedFields from '@/components/blog/BlogPulseEmbedFields'
+import { MarkdownEditor } from '@/components/admin/MarkdownEditor'
 import {
   normalizePulseEmbedComponents,
   PULSE_EMBED_COMPONENT_KEYS,
@@ -111,7 +112,10 @@ export default function AdminBlogCreatePage() {
         <ArrowLeft className="h-4 w-4" /> Back to agents
       </Link>
       <h1 className="text-2xl font-bold text-white">Write blog post</h1>
-      <p className="mt-1 text-slate-400 text-sm">Manual draft or publish. Markdown supported in body.</p>
+      <p className="mt-1 text-slate-400 text-sm">
+        Pega texto desde Google Docs, ChatGPT o la web — el formato se preserva automáticamente.
+        También puedes usar la barra de herramientas o atajos (⌘B, ⌘I, ⌘K).
+      </p>
 
       {error && (
         <div className="mt-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
@@ -150,19 +154,24 @@ export default function AdminBlogCreatePage() {
           <textarea className={`${input} min-h-[80px]`} value={excerptEn} onChange={(e) => setExcerptEn(e.target.value)} />
         </div>
         <div>
-          <label className="mb-1 block text-sm text-slate-400">Content (ES) * markdown</label>
-          <textarea
-            className={`${input} min-h-[240px] font-mono text-sm`}
+          <label className="mb-1 block text-sm text-slate-400">Contenido (ES) *</label>
+          <MarkdownEditor
             value={content}
-            onChange={(e) => setContent(e.target.value)}
+            onChange={setContent}
+            minHeight={320}
+            label="Contenido en español"
+            placeholder="Escribe, o pega desde Google Docs / ChatGPT / una página web…"
+            hint="Consejo: selecciona una línea y pulsa H2 para encabezado; selecciona palabras y pulsa ⌘K para enlace. La cita verde se renderiza con el borde esmeralda de la marca."
           />
         </div>
         <div>
-          <label className="mb-1 block text-sm text-slate-400">Content (EN)</label>
-          <textarea
-            className={`${input} min-h-[200px] font-mono text-sm`}
+          <label className="mb-1 block text-sm text-slate-400">Contenido (EN)</label>
+          <MarkdownEditor
             value={contentEn}
-            onChange={(e) => setContentEn(e.target.value)}
+            onChange={setContentEn}
+            minHeight={240}
+            label="English content"
+            placeholder="Write, or paste from Google Docs / ChatGPT / a web page…"
           />
         </div>
 
