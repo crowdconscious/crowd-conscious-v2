@@ -50,29 +50,21 @@ export const CRON_CATALOG: readonly CronJobMeta[] = [
     description: 'Resolves Pulse markets whose resolve_at has passed.',
   },
   // ── Agents (Anthropic-backed, cost-bearing) ──
+  // Only agents with an active Vercel cron belong here; it powers the
+  // Cron Health tile. Manual-only agents (content-creator, inbox-curator)
+  // still have "Run Now" buttons on /predictions/admin/agents via the
+  // AGENTS array in that page — that list is independent of this catalog.
   {
     name: 'news-monitor',
-    schedule: '0 14 * * *',
+    schedule: '0 14 * * 1',
     kind: 'agent',
-    description: 'Pulls newsworthy items into the inbox.',
-  },
-  {
-    name: 'content-creator',
-    schedule: '30 14 * * 1,3,5',
-    kind: 'agent',
-    description: 'Drafts blog content from approved inbox items.',
+    description: 'Weekly news brief for Pulse/market ideation.',
   },
   {
     name: 'ceo-digest',
     schedule: '0 16 * * 1',
     kind: 'agent',
     description: 'Weekly CEO digest of platform activity.',
-  },
-  {
-    name: 'inbox-curator',
-    schedule: '5 14 * * 1',
-    kind: 'agent',
-    description: 'Curates user-submitted inbox ideas.',
   },
   {
     name: 'sponsor-report',

@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
 
 /**
  * Crowd newsletter: blog + Pulse + trending markets.
- * Schedule: Mon/Wed/Fri 14:00 UTC (vercel.json). Default: 48h cooldown unless a new blog is featured or ?force=1.
+ * Schedule: Mon/Wed/Fri 14:00 UTC (vercel.json). Default: 36h cooldown unless a new blog is featured or ?force=1.
  * Auth: Authorization: Bearer CRON_SECRET (set in Vercel env).
  */
 export async function GET(request: NextRequest) {

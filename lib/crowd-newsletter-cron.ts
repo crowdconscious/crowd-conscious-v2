@@ -1,6 +1,15 @@
 /**
- * Crowd newsletter: blog + Pulse + trending markets, Mon/Wed/Fri cron + 48h cooldown
+ * Crowd newsletter: blog + Pulse + trending markets, Mon/Wed/Fri cron + 36h cooldown
  * (bypassed when a new published blog post has not yet been featured in a batch send).
+ *
+ * Why 36h and not 48h: the Vercel cron fires at 14:00 UTC Mon/Wed/Fri, but
+ * each run takes a few seconds so the `email_digest_log.sent_at` timestamp
+ * drifts forward (e.g. Monday 14:00:05). If the cooldown equaled the
+ * gap (48h), Wednesday's 14:00:00 trigger would compute
+ * `hoursSinceLast = 47.9999 < 48` and silently SKIP. 36h leaves comfortable
+ * slack for the M/W/F cadence while still blocking accidental rapid
+ * re-fires (e.g. someone hitting the admin "Send now" button twice).
+ * Force-send (`?force=1` / admin "ignore cooldown") bypasses entirely.
  */
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { sendEmailsWithConcurrency } from '@/lib/resend'
@@ -76,7 +85,7 @@ export async function runCrowdNewsletterCron(
       !!latestPost?.id &&
       (!lastFeaturedBlogId || latestPost.id !== lastFeaturedBlogId)
 
-    const cooldownHours = 48
+    const cooldownHours = 36
     const force = options?.force === true
     if (
       !force &&
@@ -97,7 +106,7 @@ export async function runCrowdNewsletterCron(
           hoursSinceLast,
           recipientCount: 0,
           scheduleNote:
-            'Mon/Wed/Fri 14:00 UTC — skipped until 48h after last send, unless a new blog is published or ?force=1',
+            'Mon/Wed/Fri 14:00 UTC — skipped until 36h after last send, unless a new blog is published or ?force=1',
         },
       }
     }

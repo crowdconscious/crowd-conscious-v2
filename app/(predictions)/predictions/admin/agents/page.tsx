@@ -22,12 +22,16 @@ import {
 import { ImageUpload } from '@/components/ui/ImageUpload'
 import ShareBundle from '@/components/admin/ShareBundle'
 
+/**
+ * `scheduled: false` = no Vercel cron, "Run Now" is the only way the agent
+ * executes. Kept in the list so admins can still trigger them on demand.
+ */
 const AGENTS = [
-  { id: 'ceo-digest', label: 'CEO Digest', icon: FileText },
-  { id: 'content-creator', label: 'Content Creator', icon: Bot },
-  { id: 'news-monitor', label: 'News Monitor', icon: Newspaper },
-  { id: 'inbox-curator', label: 'Inbox Curator', icon: Inbox },
-  { id: 'sponsor-report', label: 'Sponsor Report', icon: Target },
+  { id: 'ceo-digest', label: 'CEO Digest', icon: FileText, scheduled: true },
+  { id: 'news-monitor', label: 'News Monitor', icon: Newspaper, scheduled: true },
+  { id: 'content-creator', label: 'Content Creator', icon: Bot, scheduled: false },
+  { id: 'inbox-curator', label: 'Inbox Curator', icon: Inbox, scheduled: false },
+  { id: 'sponsor-report', label: 'Sponsor Report', icon: Target, scheduled: true },
 ] as const
 
 type AgentRun = {
@@ -584,7 +588,7 @@ export default function AdminAgentsPage() {
       <section>
         <h2 className="text-lg font-semibold text-white mb-4">Agent Health</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {AGENTS.map(({ id, label, icon: Icon }) => {
+          {AGENTS.map(({ id, label, icon: Icon, scheduled }) => {
             const run = lastRuns[id]
             const statusIcon =
               run?.status === 'success' ? (
@@ -603,6 +607,14 @@ export default function AdminAgentsPage() {
                   <div className="flex items-center gap-2">
                     <Icon className="w-5 h-5 text-slate-400" />
                     <span className="font-medium text-white">{label}</span>
+                    {!scheduled && (
+                      <span
+                        className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30"
+                        title="No automatic schedule — runs only via Run Now"
+                      >
+                        Manual
+                      </span>
+                    )}
                   </div>
                   {statusIcon}
                 </div>
@@ -664,8 +676,9 @@ export default function AdminAgentsPage() {
         </div>
         <div className="mt-2 text-xs text-slate-500 leading-relaxed">
           <span className="text-slate-400 font-medium">Schedules (CDMX):</span>{' '}
-          News Monitor diario 08:00 · Content Creator L/M/V 08:30 · Newsletter L/M/V 08:00 · Inbox Curator lunes 08:05 · CEO Digest semanal lunes 10:00.
-          Source of truth: <code className="text-slate-400">vercel.json</code>.
+          News Monitor lunes 08:00 · CEO Digest lunes 10:00 · Newsletter L/M/V 08:00 · Sponsor Report mensual día 1, 03:00.
+          {' '}Content Creator e Inbox Curator son <span className="text-amber-300">manuales</span> — usa «Run Now».
+          Fuente: <code className="text-slate-400">vercel.json</code>.
         </div>
       </section>
 
@@ -674,7 +687,7 @@ export default function AdminAgentsPage() {
         <h2 className="text-lg font-semibold text-white mb-2">Crowd newsletter</h2>
         <p className="text-slate-400 text-sm mb-4 max-w-2xl">
           Sends the blog + Pulse + markets digest to opted-in profiles and newsletter subscribers.
-          Respects the same rules as the scheduled job (48h cooldown unless a new blog is featured or you
+          Respects the same rules as the scheduled job (36h cooldown unless a new blog is featured or you
           force send).
         </p>
         <div className="flex flex-wrap gap-3">
