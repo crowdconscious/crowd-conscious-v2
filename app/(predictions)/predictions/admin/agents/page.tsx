@@ -955,6 +955,7 @@ export default function AdminAgentsPage() {
                               slug={bp.slug}
                               title={bp.title}
                               pulseMarketId={bp.pulse_market_id}
+                              coverImageUrl={bp.cover_image_url}
                             />
                           )}
                         </div>

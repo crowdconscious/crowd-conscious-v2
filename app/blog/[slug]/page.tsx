@@ -64,9 +64,20 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   const rawCover = post.cover_image_url
   const absoluteCover =
     rawCover && /^https?:\/\//i.test(rawCover) ? rawCover : rawCover ? `${SITE_URL}${rawCover}` : null
-  const ogImage = post.pulse_market_id
-    ? `${SITE_URL}/api/og/blog/${encodeURIComponent(slug)}`
-    : absoluteCover || `${SITE_URL}/opengraph-image`
+  /**
+   * og:image priority: author-provided cover → dynamic Pulse card →
+   * site default. Putting the cover first ensures WhatsApp / LinkedIn /
+   * Twitter show the editorial thumbnail that matches the article, even
+   * when a Pulse market is embedded. Auto-generated Pulse-analysis posts
+   * (where content-creator sets cover_image_url to /api/og/blog/{slug})
+   * still render the Pulse card because their cover IS that URL —
+   * self-consistent.
+   */
+  const ogImage =
+    absoluteCover ||
+    (post.pulse_market_id
+      ? `${SITE_URL}/api/og/blog/${encodeURIComponent(slug)}`
+      : `${SITE_URL}/opengraph-image`)
 
   const canonicalUrl = `${SITE_URL}/blog/${slug}`
   const ogLocale = locale === 'en' ? 'en_US' : 'es_MX'
@@ -84,13 +95,13 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
       locale: ogLocale,
       publishedTime: post.published_at ?? undefined,
       modifiedTime: post.updated_at ?? post.published_at ?? undefined,
-      images: [{ url: ogImage }],
+      images: [{ url: ogImage, alt: title }],
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description: description.slice(0, 200),
-      images: [ogImage],
+      images: [{ url: ogImage, alt: title }],
     },
   }
 }

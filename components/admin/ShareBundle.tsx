@@ -7,6 +7,13 @@ type Props = {
   slug: string
   title: string
   pulseMarketId: string | null
+  /**
+   * Author-uploaded cover. When set, this is the actual og:image served
+   * to WhatsApp/LinkedIn/etc — see generateMetadata in app/blog/[slug]/page.tsx.
+   * The dynamic Pulse card (`/api/og/blog/{slug}`) is only used when no cover
+   * exists, so admins should see the real thumbnail URL here.
+   */
+  coverImageUrl?: string | null
 }
 
 type Snippet = {
@@ -26,7 +33,7 @@ type Snippet = {
  * Uses NEXT_PUBLIC_APP_URL when set, otherwise window.location.origin so the
  * URLs render correctly in preview deployments.
  */
-export default function ShareBundle({ slug, title, pulseMarketId }: Props) {
+export default function ShareBundle({ slug, title, pulseMarketId, coverImageUrl }: Props) {
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
 
   const origin = useMemo(() => {
@@ -36,7 +43,13 @@ export default function ShareBundle({ slug, title, pulseMarketId }: Props) {
 
   const blogUrl = `${origin}/blog/${slug}`
   const pulseUrl = pulseMarketId ? `${origin}/pulse/${pulseMarketId}` : null
-  const ogUrl = `${origin}/api/og/blog/${slug}`
+  /** Mirror app/blog/[slug]/page.tsx generateMetadata priority exactly. */
+  const absoluteCover = coverImageUrl?.trim()
+    ? /^https?:\/\//i.test(coverImageUrl.trim())
+      ? coverImageUrl.trim()
+      : `${origin}${coverImageUrl.trim()}`
+    : null
+  const ogUrl = absoluteCover ?? `${origin}/api/og/blog/${slug}`
 
   // Copy templates use the SHORTER URL the audience clicks (blog), with the
   // pulse URL only inside variants where it adds proof.
