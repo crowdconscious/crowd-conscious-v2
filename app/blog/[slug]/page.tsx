@@ -9,6 +9,7 @@ import { BlogDraftBar } from './BlogDraftBar'
 import { EmbeddedMarketCard } from '@/components/blog/EmbeddedMarketCard'
 import { BlogComments } from '@/components/blog/BlogComments'
 import { BlogSoftSignupCta } from './BlogSoftSignupCta'
+import { BlogShareButton } from '@/components/blog/BlogShareButton'
 import PulseEmbed from '@/components/blog/PulseEmbed'
 import { splitMarkdownForPulseEmbed } from '@/lib/blog-pulse-insert'
 import { fetchPulseEmbedDataForBlog } from '@/lib/blog-fetch-pulse-embed'
@@ -168,9 +169,19 @@ export default async function BlogPostPage(props: Props) {
   return (
     <article className="mx-auto max-w-3xl px-4 py-12">
       {isAdmin && post.status === 'draft' && <BlogDraftBar postId={post.id} />}
-      <p className="text-xs font-semibold uppercase tracking-wider text-emerald-400/90">
-        {catLabel.toUpperCase()} · {formatDate(post.published_at, locale)}
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-xs font-semibold uppercase tracking-wider text-emerald-400/90">
+          {catLabel.toUpperCase()} · {formatDate(post.published_at, locale)}
+        </p>
+        <BlogShareButton
+          postId={post.id}
+          slug={slug}
+          title={displayTitle}
+          excerpt={displayExcerpt}
+          locale={locale}
+          surface="blog_post_top"
+        />
+      </div>
       <h1 className="mt-2 text-3xl font-bold tracking-tight text-white md:text-4xl">{displayTitle}</h1>
       <p className="mt-4 text-lg text-slate-400">{displayExcerpt}</p>
 
@@ -218,6 +229,22 @@ export default async function BlogPostPage(props: Props) {
         ) : (
           <BlogPostBody markdown={content} />
         )}
+      </div>
+
+      <div className="mt-12 flex flex-wrap items-center justify-between gap-3 border-t border-[#2d3748] pt-6">
+        <p className="text-sm text-slate-400">
+          {locale === 'es'
+            ? '¿Te gustó este artículo? Compártelo.'
+            : 'Enjoyed this article? Share it.'}
+        </p>
+        <BlogShareButton
+          postId={post.id}
+          slug={slug}
+          title={displayTitle}
+          excerpt={displayExcerpt}
+          locale={locale}
+          surface="blog_post_bottom"
+        />
       </div>
 
       {relatedMarketIds.length > 0 && (
