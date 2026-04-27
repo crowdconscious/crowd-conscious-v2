@@ -94,14 +94,14 @@ const translations: Translations = {
   }
 }
 
-export const t = (key: string, language: string = 'en'): string => {
-  return translations[key]?.[language] || translations[key]?.['en'] || key
+export const t = (key: string, language: string = 'es'): string => {
+  return translations[key]?.[language] || translations[key]?.['es'] || translations[key]?.['en'] || key
 }
 
 // Currency formatting
-export const formatCurrency = (amount: number, currency: string = 'USD'): string => {
+export const formatCurrency = (amount: number, currency: string = 'MXN'): string => {
   try {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('es-MX', {
       style: 'currency',
       currency: currency,
       minimumFractionDigits: 0,
@@ -115,11 +115,11 @@ export const formatCurrency = (amount: number, currency: string = 'USD'): string
 }
 
 // Date formatting based on language
-export const formatDate = (date: string | Date, language: string = 'en'): string => {
+export const formatDate = (date: string | Date, language: string = 'es'): string => {
   const dateObj = typeof date === 'string' ? new Date(date) : date
-  
+
   try {
-    const locale = language === 'es' ? 'es-ES' : 'en-US'
+    const locale = language === 'en' ? 'en-US' : 'es-MX'
     return dateObj.toLocaleDateString(locale, {
       year: 'numeric',
       month: 'long',
@@ -131,13 +131,19 @@ export const formatDate = (date: string | Date, language: string = 'en'): string
 }
 
 // Number formatting
-export const formatNumber = (num: number, language: string = 'en'): string => {
-  const locale = language === 'es' ? 'es-ES' : 'en-US'
+export const formatNumber = (num: number, language: string = 'es'): string => {
+  const locale = language === 'en' ? 'en-US' : 'es-MX'
   return num.toLocaleString(locale)
 }
 
-// Get user's preferred language from localStorage or browser
-// Uses 'preferred-language' to align with LanguageContext
+// Get user's preferred language from localStorage or browser.
+// Uses 'preferred-language' to align with LanguageContext.
+//
+// Spanish-first by design: only respect an explicit saved preference, and
+// otherwise fall back to 'es' regardless of the browser locale. See
+// LanguageContext.getInitialLanguage for the rationale (we don't want a
+// Mexican Pulse link to render in English just because the recipient is
+// in another country).
 export const getUserLanguage = (): string => {
   if (typeof window !== 'undefined') {
     const saved = localStorage.getItem('preferred-language')
@@ -146,10 +152,9 @@ export const getUserLanguage = (): string => {
     }
     const fallback = localStorage.getItem('language')
     if (fallback && ['en', 'es'].includes(fallback)) return fallback
-    const browserLang = navigator.language.split('-')[0]
-    return ['en', 'es'].includes(browserLang) ? browserLang : 'en'
+    return 'es'
   }
-  return 'en'
+  return 'es'
 }
 
 // Get user's preferred currency from localStorage

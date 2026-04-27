@@ -14,10 +14,17 @@ interface LanguageContextValue {
 const LanguageContext = createContext<LanguageContextValue | null>(null)
 
 function getInitialLanguage(): Language {
+  // Crowd Conscious is Spanish-first. Pulse markets, blog posts, and
+  // community comms are authored in Spanish for a Mexican audience; users
+  // who speak English can flip the toggle in the nav. We do NOT auto-pick
+  // the browser's `navigator.language` — that produced English-default
+  // shares for anyone outside Latin America/Spain even when the
+  // referenced content was a Spanish-only Pulse, which is the wrong
+  // first impression for a freshly shared Pulse link.
   if (typeof window === 'undefined') return 'es'
   const saved = localStorage.getItem(STORAGE_KEY) as Language | null
   if (saved && (saved === 'es' || saved === 'en')) return saved
-  return navigator.language.startsWith('es') ? 'es' : 'en'
+  return 'es'
 }
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
