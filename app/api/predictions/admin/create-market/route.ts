@@ -46,7 +46,10 @@ export async function POST(request: NextRequest) {
       pulse_client_logo,
       pulse_client_email,
       cover_image_url,
+      is_draft,
     } = body
+
+    const wantsDraft = Boolean(is_draft)
 
     if (!title?.trim()) {
       return Response.json({ error: 'Title is required' }, { status: 400 })
@@ -160,6 +163,8 @@ export async function POST(request: NextRequest) {
         conscious_fund_percentage: fundPct,
         sponsor_contribution: sponsorAmount,
         current_probability: 100 / outcomeLabels.length,
+        is_draft: wantsDraft,
+        published_at: wantsDraft ? null : new Date().toISOString(),
       }
       if (translations && typeof translations === 'object') updatePayload.translations = translations
       Object.assign(updatePayload, pulseFields)
@@ -194,6 +199,7 @@ export async function POST(request: NextRequest) {
       return Response.json({
         success: true,
         market_id: marketId,
+        is_draft: wantsDraft,
         message: 'Market created successfully',
       })
     }
@@ -224,6 +230,8 @@ export async function POST(request: NextRequest) {
       current_probability: prob,
       conscious_fund_percentage: fundPct,
       sponsor_contribution: sponsorAmount,
+      is_draft: wantsDraft,
+      published_at: wantsDraft ? null : new Date().toISOString(),
     }
     if (translations && typeof translations === 'object') updatePayload.translations = translations
     Object.assign(updatePayload, pulseFields)
@@ -258,6 +266,7 @@ export async function POST(request: NextRequest) {
     return Response.json({
       success: true,
       market_id: marketId,
+      is_draft: wantsDraft,
       message: 'Market created successfully',
     })
   } catch (err) {

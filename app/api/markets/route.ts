@@ -28,6 +28,7 @@ export async function GET(request: Request) {
       .select('*')
       .in('status', ['active', 'trading'])
       .is('archived_at', null)
+      .eq('is_draft', false)
       .order('total_votes', { ascending: false, nullsFirst: false })
       .limit(limit)
 

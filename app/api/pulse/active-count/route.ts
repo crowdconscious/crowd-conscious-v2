@@ -9,6 +9,7 @@ export async function GET() {
       .select('id', { count: 'exact', head: true })
       .is('archived_at', null)
       .in('status', ['active', 'trading'])
+      .eq('is_draft', false)
       .or('is_pulse.eq.true,category.eq.pulse')
 
     if (error) {

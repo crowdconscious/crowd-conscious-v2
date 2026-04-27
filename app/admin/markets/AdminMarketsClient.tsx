@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Archive, ArchiveRestore } from 'lucide-react'
+import { Archive, ArchiveRestore, FileEdit, Send } from 'lucide-react'
 import { createClient } from '@/lib/supabase-client'
 
 type Row = {
@@ -16,32 +16,61 @@ type Row = {
   sponsor_type: string | null
   sponsor_contribution: number | null
   archived_at: string | null
+  is_draft: boolean | null
+  is_pulse: boolean | null
+  created_at: string
+}
+
+type DraftRow = {
+  id: string
+  title: string
+  category: string | null
+  is_pulse: boolean | null
+  created_at: string
 }
 
 export default function AdminMarketsClient() {
   const [showArchived, setShowArchived] = useState(false)
   const [markets, setMarkets] = useState<Row[]>([])
+  const [drafts, setDrafts] = useState<DraftRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [archivingId, setArchivingId] = useState<string | null>(null)
+  const [publishingId, setPublishingId] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
     setError(null)
     const supabase = createClient()
-    let q = supabase
+    // Drafts and published markets live in the same table — split them in
+    // two queries so the table only renders published markets and the
+    // "Borradores" rail above stays focused on unpublished work.
+    let publishedQ = supabase
       .from('prediction_markets')
       .select(
-        'id, title, category, status, sponsor_name, sponsor_logo_url, sponsor_url, sponsor_type, sponsor_contribution, archived_at'
+        'id, title, category, status, sponsor_name, sponsor_logo_url, sponsor_url, sponsor_type, sponsor_contribution, archived_at, is_draft, is_pulse, created_at'
       )
+      .eq('is_draft', false)
       .order('created_at', { ascending: false })
-    if (!showArchived) q = q.is('archived_at', null)
-    const { data, error: err } = await q
-    if (err) {
-      setError(err.message)
+    if (!showArchived) publishedQ = publishedQ.is('archived_at', null)
+
+    const draftsQ = supabase
+      .from('prediction_markets')
+      .select('id, title, category, is_pulse, created_at')
+      .eq('is_draft', true)
+      .is('archived_at', null)
+      .order('created_at', { ascending: false })
+
+    const [{ data: pubData, error: pubErr }, { data: draftData, error: draftErr }] =
+      await Promise.all([publishedQ, draftsQ])
+
+    if (pubErr || draftErr) {
+      setError((pubErr ?? draftErr)?.message ?? 'Failed to load markets')
       setMarkets([])
+      setDrafts([])
     } else {
-      setMarkets((data ?? []) as Row[])
+      setMarkets((pubData ?? []) as Row[])
+      setDrafts((draftData ?? []) as DraftRow[])
     }
     setLoading(false)
   }, [showArchived])
@@ -49,6 +78,25 @@ export default function AdminMarketsClient() {
   useEffect(() => {
     load()
   }, [load])
+
+  const publishDraft = async (id: string) => {
+    if (publishingId) return
+    setPublishingId(id)
+    try {
+      const res = await fetch(
+        `/api/predictions/admin/markets/${id}/publish`,
+        { method: 'POST' }
+      )
+      const j = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        alert(j.error || 'Failed to publish')
+        return
+      }
+      await load()
+    } finally {
+      setPublishingId(null)
+    }
+  }
 
   const archiveItem = async (id: string, restore = false) => {
     setArchivingId(id)
@@ -156,6 +204,81 @@ export default function AdminMarketsClient() {
 
       {error && (
         <p className="text-red-600 text-sm">Error loading markets: {error}</p>
+      )}
+
+      {!loading && drafts.length > 0 && (
+        <section className="bg-amber-50 border border-amber-200 rounded-xl overflow-hidden">
+          <div className="px-4 py-3 bg-amber-100/60 border-b border-amber-200 flex items-center gap-2">
+            <FileEdit className="w-4 h-4 text-amber-700" aria-hidden />
+            <h2 className="text-sm font-semibold text-amber-900">
+              Borradores · {drafts.length}
+            </h2>
+            <span className="ml-2 text-xs text-amber-800/80">
+              Solo administradores y creador pueden ver estas páginas.
+            </span>
+          </div>
+          <table className="w-full">
+            <thead className="bg-amber-50/60 border-b border-amber-200">
+              <tr>
+                <th className="text-left px-4 py-2 text-xs font-semibold text-amber-900">
+                  Title
+                </th>
+                <th className="text-left px-4 py-2 text-xs font-semibold text-amber-900">
+                  Type
+                </th>
+                <th className="text-left px-4 py-2 text-xs font-semibold text-amber-900">
+                  Created
+                </th>
+                <th className="text-left px-4 py-2 text-xs font-semibold text-amber-900">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {drafts.map((d) => {
+                const previewHref = d.is_pulse
+                  ? `/pulse/${d.id}`
+                  : `/predictions/markets/${d.id}`
+                return (
+                  <tr key={d.id} className="border-b border-amber-100 last:border-b-0">
+                    <td className="px-4 py-2 text-sm text-amber-950 max-w-xs truncate">
+                      {d.title}
+                    </td>
+                    <td className="px-4 py-2 text-xs text-amber-900/80">
+                      {d.is_pulse ? 'Pulse' : (d.category ?? '—')}
+                    </td>
+                    <td className="px-4 py-2 text-xs text-amber-900/80">
+                      {new Date(d.created_at).toLocaleDateString()}
+                    </td>
+                    <td className="px-4 py-2 space-x-3">
+                      <Link
+                        href={previewHref}
+                        className="text-amber-800 hover:text-amber-700 text-sm font-medium"
+                      >
+                        Ver borrador
+                      </Link>
+                      <Link
+                        href={`/predictions/admin/edit-market/${d.id}`}
+                        className="text-slate-600 hover:text-slate-800 text-xs"
+                      >
+                        Edit
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => publishDraft(d.id)}
+                        disabled={publishingId === d.id}
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 hover:text-emerald-600 disabled:opacity-50"
+                      >
+                        <Send className="w-3.5 h-3.5" />
+                        {publishingId === d.id ? '…' : 'Publicar'}
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </section>
       )}
 
       {loading ? (

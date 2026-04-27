@@ -9,6 +9,7 @@ import PulseResultClient, {
   type PulseOutcomeRow,
   type PulseVoteRow,
 } from '@/components/pulse/PulseResultClient'
+import { DraftBanner } from '@/components/predictions/DraftBanner'
 import { loadMarketVoteReasoningsWithAuthors } from '@/lib/market-vote-reasonings'
 
 type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ token?: string }> }
@@ -18,9 +19,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const supabase = await createClient()
   const { data: market } = await supabase
     .from('prediction_markets')
-    .select('title, translations, pulse_client_name, is_pulse, market_type, category')
+    .select('title, translations, pulse_client_name, is_pulse, market_type, category, is_draft')
     .eq('id', id)
     .maybeSingle()
+
+  if (market?.is_draft) {
+    return {
+      title: 'Borrador | Conscious Pulse',
+      robots: { index: false, follow: false },
+    }
+  }
 
   const legacyPulse =
     market &&
@@ -76,6 +84,8 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
       is_pulse,
       market_type,
       category,
+      created_by,
+      is_draft,
       pulse_client_name,
       pulse_client_logo,
       sponsor_name,
@@ -119,6 +129,16 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
     isAdmin = ut === 'admin' || (!!adminEmail && !!em && em === adminEmail)
   }
 
+  // Draft access guard: hide the existence of a draft from anyone other than
+  // an admin or the market's creator. Returning notFound() (instead of a
+  // distinct 403) avoids leaking the fact that a draft URL exists.
+  const isDraft = (market as { is_draft?: boolean }).is_draft === true
+  const isCreator =
+    !!user && (market as { created_by?: string | null }).created_by === user.id
+  if (isDraft && !isAdmin && !isCreator) {
+    notFound()
+  }
+
   let tokenValid = false
   const sponsorAccountId = (market as { sponsor_account_id?: string | null }).sponsor_account_id
   if (token && sponsorAccountId) {
@@ -138,22 +158,25 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
   const featuredReasonings = await loadMarketVoteReasoningsWithAuthors(admin, id, locale)
 
   return (
-    <PulseResultClient
-      marketId={market.id}
-      title={market.title}
-      description={market.description}
-      translations={market.translations}
-      status={market.status}
-      resolutionDate={market.resolution_date}
-      pulseClientName={market.pulse_client_name}
-      pulseClientLogo={market.pulse_client_logo}
-      sponsorName={market.sponsor_name}
-      sponsorLogoUrl={market.sponsor_logo_url}
-      outcomes={outcomes}
-      votes={votes}
-      locale={locale}
-      isEnhancedView={isEnhancedView}
-      featuredReasonings={featuredReasonings}
-    />
+    <>
+      {isDraft && <DraftBanner marketId={market.id} />}
+      <PulseResultClient
+        marketId={market.id}
+        title={market.title}
+        description={market.description}
+        translations={market.translations}
+        status={market.status}
+        resolutionDate={market.resolution_date}
+        pulseClientName={market.pulse_client_name}
+        pulseClientLogo={market.pulse_client_logo}
+        sponsorName={market.sponsor_name}
+        sponsorLogoUrl={market.sponsor_logo_url}
+        outcomes={outcomes}
+        votes={votes}
+        locale={locale}
+        isEnhancedView={isEnhancedView}
+        featuredReasonings={featuredReasonings}
+      />
+    </>
   )
 }

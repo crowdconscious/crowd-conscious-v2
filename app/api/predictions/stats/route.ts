@@ -10,7 +10,8 @@ export async function GET() {
         .from('prediction_markets')
         .select('id, total_volume, category')
         .in('status', ['active', 'trading'])
-        .is('archived_at', null),
+        .is('archived_at', null)
+        .eq('is_draft', false),
       supabase
         .from('conscious_fund')
         .select('current_balance, total_disbursed')

@@ -19,6 +19,7 @@ export async function fetchPulseHeroHighlight(): Promise<{
     .select('id, title, translations, total_votes')
     .in('status', ['active', 'trading'])
     .is('archived_at', null)
+    .eq('is_draft', false)
     .or('is_pulse.eq.true,category.eq.pulse')
     .order('total_votes', { ascending: false, nullsFirst: false })
     .limit(1)

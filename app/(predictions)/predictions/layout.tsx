@@ -44,7 +44,8 @@ async function getNavCounts(supabase: Awaited<ReturnType<typeof createClient>>) 
       .from('prediction_markets')
       .select('id', { count: 'exact', head: true })
       .in('status', ['active', 'trading'])
-      .is('archived_at', null),
+      .is('archived_at', null)
+      .eq('is_draft', false),
     supabase
       .from('live_events')
       .select('id', { count: 'exact', head: true })

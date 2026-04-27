@@ -651,6 +651,8 @@ export interface Database {
           metadata: Json
           sponsor_account_id?: string | null
           archived_at?: string | null
+          is_draft?: boolean
+          published_at?: string | null
           created_at: string
           updated_at: string
         }
@@ -699,6 +701,8 @@ export interface Database {
           pulse_client_email?: string | null
           pulse_embed_enabled?: boolean
           cover_image_url?: string | null
+          is_draft?: boolean
+          published_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -747,6 +751,8 @@ export interface Database {
           pulse_client_email?: string | null
           pulse_embed_enabled?: boolean
           cover_image_url?: string | null
+          is_draft?: boolean
+          published_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -916,6 +922,8 @@ export interface Database {
           has_api_access: boolean
           has_white_label: boolean
           case_study_featured: boolean
+          coupon_code: string | null
+          notes: string | null
         }
         Insert: {
           id?: string
@@ -944,6 +952,8 @@ export interface Database {
           has_api_access?: boolean
           has_white_label?: boolean
           case_study_featured?: boolean
+          coupon_code?: string | null
+          notes?: string | null
         }
         Update: {
           id?: string
@@ -972,6 +982,8 @@ export interface Database {
           has_api_access?: boolean
           has_white_label?: boolean
           case_study_featured?: boolean
+          coupon_code?: string | null
+          notes?: string | null
         }
         Relationships: []
       }

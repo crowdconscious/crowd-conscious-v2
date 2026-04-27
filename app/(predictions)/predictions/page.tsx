@@ -44,6 +44,7 @@ async function getDashboardData(userId: string, isAdmin: boolean) {
       .select('*')
       .in('status', ['active', 'trading', 'resolved'])
       .is('archived_at', null)
+      .eq('is_draft', false)
       .order('total_votes', { ascending: false, nullsFirst: false }),
     supabase
       .from('prediction_market_history')

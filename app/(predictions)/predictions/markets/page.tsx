@@ -36,6 +36,7 @@ async function getMarketsPage(
     .select('*', { count: 'exact' })
     .in('status', ['active', 'trading'])
     .is('archived_at', null)
+    .eq('is_draft', false)
     .range(from, to)
 
   if (category && category !== 'all' && isValidMarketCategory(category)) {
@@ -67,6 +68,7 @@ async function getTrendingMarkets(): Promise<PredictionMarket[]> {
     .select('*')
     .in('status', ['active', 'trading'])
     .is('archived_at', null)
+    .eq('is_draft', false)
     .limit(50)
 
   if (!markets?.length) return []
@@ -118,6 +120,7 @@ async function getQuickMarkets(): Promise<{ markets: PredictionMarket[]; label: 
     .select('*')
     .in('status', ['active', 'trading'])
     .is('archived_at', null)
+    .eq('is_draft', false)
     .lte('resolution_date', in30Days)
     .gt('resolution_date', new Date().toISOString())
     .order('resolution_date', { ascending: true })
@@ -132,6 +135,7 @@ async function getQuickMarkets(): Promise<{ markets: PredictionMarket[]; label: 
     .select('*')
     .in('status', ['active', 'trading'])
     .is('archived_at', null)
+    .eq('is_draft', false)
     .lte('resolution_date', in90Days)
     .gt('resolution_date', new Date().toISOString())
     .order('resolution_date', { ascending: true })
@@ -147,6 +151,7 @@ async function getCategoryCounts(): Promise<Record<string, number>> {
     .select('category')
     .in('status', ['active', 'trading'])
     .is('archived_at', null)
+    .eq('is_draft', false)
 
   const counts: Record<string, number> = {}
   for (const m of data ?? []) {

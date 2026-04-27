@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, type CSSProperties } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import {
   ArrowLeft,
   X,
@@ -91,7 +92,8 @@ export default function CreateMarketPage() {
     prevIsPulseRef.current = isPulse
   }, [isPulse])
 
-  const [submitting, setSubmitting] = useState(false)
+  const router = useRouter()
+  const [submitting, setSubmitting] = useState<false | 'draft' | 'published'>(false)
   const [error, setError] = useState('')
   const [sourceSignals, setSourceSignals] = useState<string[]>([])
   const [suggestingCriteria, setSuggestingCriteria] = useState(false)
@@ -328,7 +330,10 @@ export default function CreateMarketPage() {
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (
+    e: React.FormEvent | React.MouseEvent,
+    mode: 'draft' | 'published' = 'published'
+  ) => {
     e.preventDefault()
     setError('')
     if (!title.trim()) {
@@ -344,12 +349,13 @@ export default function CreateMarketPage() {
       return
     }
 
-    setSubmitting(true)
+    setSubmitting(mode)
     try {
       const res = await fetch('/api/predictions/admin/create-market', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          is_draft: mode === 'draft',
           title: title.trim(),
           description: description.trim() || null,
           category: isPulse ? 'pulse' : category || 'world',
@@ -406,6 +412,17 @@ export default function CreateMarketPage() {
         } catch {
           // Non-fatal: market was created
         }
+      }
+
+      if (mode === 'draft') {
+        // Drafts redirect straight to the market URL so the admin can preview.
+        // The market view page renders the amber draft banner. We pass a
+        // ?draft=created flag that the page surfaces as a one-shot toast.
+        const target = isPulse
+          ? `/pulse/${marketId}?draft=created`
+          : `/predictions/markets/${marketId}?draft=created`
+        router.push(target)
+        return
       }
 
       setSuccessId(marketId)
@@ -1017,13 +1034,24 @@ export default function CreateMarketPage() {
             </div>
           </section>
 
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full py-3 rounded-lg font-medium bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {submitting ? 'Creating...' : 'Create market'}
-          </button>
+          <div className="flex flex-col-reverse sm:flex-row gap-3">
+            <button
+              type="button"
+              onClick={(e) => handleSubmit(e, 'draft')}
+              disabled={!!submitting}
+              className="flex-1 px-6 py-3 border-2 border-emerald-500 text-emerald-400 rounded-lg font-medium hover:bg-emerald-500/10 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {submitting === 'draft' ? 'Guardando...' : 'Guardar como borrador'}
+            </button>
+            <button
+              type="button"
+              onClick={(e) => handleSubmit(e, 'published')}
+              disabled={!!submitting}
+              className="flex-1 px-6 py-3 rounded-lg font-medium bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {submitting === 'published' ? 'Publicando...' : 'Publicar ahora'}
+            </button>
+          </div>
         </div>
 
         {/* Preview */}

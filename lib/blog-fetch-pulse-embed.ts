@@ -20,6 +20,7 @@ export async function fetchPulseEmbedDataForBlog(marketId: string): Promise<Puls
     `
     )
     .eq('id', marketId)
+    .eq('is_draft', false)
     .maybeSingle()
 
   if (error || !market) {

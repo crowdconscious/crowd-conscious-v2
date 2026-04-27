@@ -23,6 +23,7 @@ export async function GET() {
       .select('*')
       .in('status', ['active', 'trading'])
       .is('archived_at', null)
+      .eq('is_draft', false)
       .limit(50)
 
     if (!markets?.length) {

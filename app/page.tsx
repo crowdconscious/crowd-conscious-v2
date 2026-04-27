@@ -124,6 +124,7 @@ async function getLandingData() {
       )
       .in('status', ['active', 'trading'])
       .is('archived_at', null)
+      .eq('is_draft', false)
       // Only surface markets with enough engagement that probability bars are
       // credible. Below-threshold markets show misleading 0% / 100% bars on
       // the landing page and become anti-social-proof.
@@ -149,6 +150,7 @@ async function getLandingData() {
       )
       .eq('category', 'world_cup')
       .in('status', ['active', 'trading'])
+      .eq('is_draft', false)
       .gte('total_votes', PUBLIC_MARKET_MIN_VOTES)
       .order('total_votes', { ascending: false, nullsFirst: false })
       .limit(4),
@@ -163,7 +165,8 @@ async function getLandingData() {
       .from('prediction_markets')
       .select('id', { count: 'exact', head: true })
       .in('status', ['active', 'trading'])
-      .is('archived_at', null),
+      .is('archived_at', null)
+      .eq('is_draft', false),
     supabase.from('profiles').select('id', { count: 'exact', head: true }),
     supabase
       .from('conscious_locations')

@@ -28,6 +28,7 @@ export async function GET(request: Request) {
     let query = supabase
       .from('prediction_markets')
       .select('*', { count: 'exact' })
+      .eq('is_draft', false)
       .range(offset, offset + limit - 1)
 
     if (!includeArchived) {

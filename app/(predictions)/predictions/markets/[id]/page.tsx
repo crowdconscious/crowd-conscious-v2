@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase-server'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { getCurrentUser } from '@/lib/auth-server'
 import { MarketDetailClient } from './MarketDetailClient'
+import { DraftBanner } from '@/components/predictions/DraftBanner'
 import { getMarketText } from '@/lib/i18n/market-translations'
 import { SITE_URL } from '@/lib/seo/site'
 
@@ -18,15 +19,25 @@ export async function generateMetadata({
   const { id } = await params
   const cookieStore = await cookies()
   const locale = cookieStore.get('preferred-language')?.value === 'en' ? 'en' : 'es'
-  const supabase = await createClient()
-  const { data: market } = await supabase
+  // Admin client so we can detect drafts; once detected we deliberately
+  // suppress indexable metadata for them below.
+  const admin = createAdminClient()
+  const { data: market } = await admin
     .from('prediction_markets')
-    .select('title, description, translations, total_votes')
+    .select('title, description, translations, total_votes, is_draft')
     .eq('id', id)
     .single()
 
   if (!market) {
     return { title: 'Prediction Market | Crowd Conscious' }
+  }
+
+  if (market.is_draft) {
+    // Drafts must never appear in search engines.
+    return {
+      title: 'Borrador | Crowd Conscious',
+      robots: { index: false, follow: false },
+    }
   }
 
   const title = getMarketText(market, 'title', locale) || 'Prediction Market'
@@ -80,7 +91,12 @@ export default async function MarketDetailPage({
     (user.user_type === 'admin' ||
       (!!adminEmail && !!profileEmail && profileEmail === adminEmail))
 
-  const { data: market, error: marketError } = await supabase
+  // Read the market via the admin client so we can apply our own access rules
+  // (drafts are visible to admins and creators, hidden as 404 to everyone
+  // else) instead of leaking the existence of a draft via the difference
+  // between an RLS-blocked row and a real 404.
+  const admin = createAdminClient()
+  const { data: market, error: marketError } = await admin
     .from('prediction_markets')
     .select('*')
     .eq('id', id)
@@ -90,7 +106,11 @@ export default async function MarketDetailPage({
     notFound()
   }
 
-  const admin = createAdminClient()
+  const isDraft = (market as { is_draft?: boolean }).is_draft === true
+  const isCreator = !!user && market.created_by === user.id
+  if (isDraft && !isAdmin && !isCreator) {
+    notFound()
+  }
 
   const [
     { data: creator },
@@ -185,6 +205,7 @@ export default async function MarketDetailPage({
     .select('id, title, translations, total_votes, is_pulse, category')
     .in('status', ['active', 'trading'])
     .is('archived_at', null)
+    .eq('is_draft', false)
     .neq('id', id)
     .order('total_votes', { ascending: false })
     .limit(3)
@@ -199,23 +220,26 @@ export default async function MarketDetailPage({
   }))
 
   return (
-    <MarketDetailClient
-      market={market}
-      creatorName={creator?.full_name || 'Unknown'}
-      history={[]}
-      agentContent={[]}
-      sentiment={[]}
-      trades={[]}
-      engagementCount={engagementCount}
-      registeredVoteCount={registeredVoteCount}
-      totalConsciousFromMarket={0}
-      resolutionEvidence={resolutionEvidence}
-      outcomes={outcomesList}
-      myVote={myVote}
-      isAuthenticated={!!user}
-      showPulseDashboardLink={showPulseDashboardLink}
-      relatedMarkets={relatedMarkets}
-      isAdmin={isAdmin}
-    />
+    <>
+      {isDraft && <DraftBanner marketId={market.id} />}
+      <MarketDetailClient
+        market={market}
+        creatorName={creator?.full_name || 'Unknown'}
+        history={[]}
+        agentContent={[]}
+        sentiment={[]}
+        trades={[]}
+        engagementCount={engagementCount}
+        registeredVoteCount={registeredVoteCount}
+        totalConsciousFromMarket={0}
+        resolutionEvidence={resolutionEvidence}
+        outcomes={outcomesList}
+        myVote={myVote}
+        isAuthenticated={!!user}
+        showPulseDashboardLink={showPulseDashboardLink}
+        relatedMarkets={relatedMarkets}
+        isAdmin={isAdmin}
+      />
+    </>
   )
 }

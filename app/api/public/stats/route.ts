@@ -17,7 +17,8 @@ export async function GET() {
         .from('prediction_markets')
         .select('total_votes', { count: 'exact' })
         .in('status', ['active', 'trading'])
-        .is('archived_at', null),
+        .is('archived_at', null)
+        .eq('is_draft', false),
       supabase.from('conscious_fund').select('current_balance, total_collected, total_disbursed').limit(1).single(),
       supabase.from('profiles').select('id', { count: 'exact', head: true }),
     ])

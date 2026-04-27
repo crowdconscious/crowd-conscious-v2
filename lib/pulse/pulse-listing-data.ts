@@ -103,6 +103,7 @@ export async function fetchPulseMarketsForListing(ctx: PulseListingContext): Pro
     .select(PULSE_SELECT)
     .is('archived_at', null)
     .in('status', ['active', 'trading'])
+    .eq('is_draft', false)
     .or(PULSE_OR)
     .order('created_at', { ascending: false })
 

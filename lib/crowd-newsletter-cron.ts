@@ -130,6 +130,7 @@ export async function runCrowdNewsletterCron(
       .select('id, title, total_votes, category, is_pulse')
       .in('status', ['active', 'trading'])
       .is('archived_at', null)
+      .eq('is_draft', false)
       .order('total_votes', { ascending: false, nullsFirst: false })
       .limit(8)
 

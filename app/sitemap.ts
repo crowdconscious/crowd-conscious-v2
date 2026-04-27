@@ -11,6 +11,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .select('id, updated_at')
       .in('status', ['active', 'trading'])
       .is('archived_at', null)
+      .eq('is_draft', false)
       .order('created_at', { ascending: false }),
     supabase
       .from('live_events')
