@@ -83,6 +83,22 @@ export default function CreateMarketPage() {
   const [successIsPulse, setSuccessIsPulse] = useState(false)
   const prevIsPulseRef = useRef(false)
 
+  // Sponsor account picker (admin can bind a market to an existing sponsor
+  // account, which is how the sponsor dashboard recognises "their" Pulses).
+  // Loaded lazily from /api/admin/sponsor-accounts.
+  type SponsorOption = {
+    id: string
+    company_name: string
+    contact_email: string
+    contact_name: string | null
+    logo_url: string | null
+    status: string | null
+  }
+  const [sponsorAccountId, setSponsorAccountId] = useState<string>('')
+  const [sponsorOptions, setSponsorOptions] = useState<SponsorOption[]>([])
+  const [sponsorOptionsLoading, setSponsorOptionsLoading] = useState(false)
+  const [sponsorOptionsError, setSponsorOptionsError] = useState<string | null>(null)
+
   useEffect(() => {
     if (isPulse) {
       setCategory('pulse')
@@ -91,6 +107,65 @@ export default function CreateMarketPage() {
     }
     prevIsPulseRef.current = isPulse
   }, [isPulse])
+
+  // Load sponsor accounts for the dropdown. Only admins can hit this route;
+  // non-admins won't reach this page anyway (admin layout gates it).
+  useEffect(() => {
+    let cancelled = false
+    const load = async () => {
+      setSponsorOptionsLoading(true)
+      setSponsorOptionsError(null)
+      try {
+        const res = await fetch('/api/admin/sponsor-accounts', { cache: 'no-store' })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || 'Failed to load sponsors')
+        if (!cancelled) {
+          const rows = (data.accounts ?? []) as Array<SponsorOption & { pulse_count?: number }>
+          setSponsorOptions(
+            rows
+              .filter((r) => (r.status ?? 'active') !== 'cancelled')
+              .map((r) => ({
+                id: r.id,
+                company_name: r.company_name,
+                contact_email: r.contact_email,
+                contact_name: r.contact_name ?? null,
+                logo_url: r.logo_url ?? null,
+                status: r.status ?? 'active',
+              }))
+          )
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setSponsorOptionsError(e instanceof Error ? e.message : 'Failed to load sponsors')
+        }
+      } finally {
+        if (!cancelled) setSponsorOptionsLoading(false)
+      }
+    }
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  // When the admin picks a sponsor account, copy its details into the Pulse
+  // client info fields (only if the field is empty, so manual edits aren't
+  // clobbered). The canonical link is `sponsorAccountId`; the email/name/logo
+  // fields stay editable for cosmetic overrides.
+  const handleSponsorAccountChange = useCallback(
+    (id: string) => {
+      setSponsorAccountId(id)
+      if (!id) return
+      const acct = sponsorOptions.find((o) => o.id === id)
+      if (!acct) return
+      setPulseClientName((cur) => cur.trim() || acct.company_name)
+      setPulseClientEmail((cur) => cur.trim() || acct.contact_email)
+      setPulseClientLogo((cur) => cur.trim() || acct.logo_url || '')
+      setSponsorName((cur) => cur.trim() || acct.company_name)
+      setSponsorLogoUrl((cur) => cur.trim() || acct.logo_url || '')
+    },
+    [sponsorOptions]
+  )
 
   const router = useRouter()
   const [submitting, setSubmitting] = useState<false | 'draft' | 'published'>(false)
@@ -388,6 +463,7 @@ export default function CreateMarketPage() {
           pulse_client_name: isPulse ? pulseClientName.trim() || null : null,
           pulse_client_logo: isPulse ? pulseClientLogo.trim() || null : null,
           pulse_client_email: isPulse ? pulseClientEmail.trim() || null : null,
+          sponsor_account_id: sponsorAccountId || null,
           ...(isPulse
             ? {
                 cover_image_url:
@@ -529,6 +605,46 @@ export default function CreateMarketPage() {
           {isPulse && (
             <div className="space-y-4 rounded-xl border border-emerald-500/20 bg-[#0f1419]/80 p-4">
               <h3 className="text-sm font-bold text-emerald-400">Pulse client info</h3>
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-emerald-300">
+                  Sponsor account (links the Pulse to a sponsor dashboard)
+                </label>
+                <select
+                  value={sponsorAccountId}
+                  onChange={(e) => handleSponsorAccountChange(e.target.value)}
+                  className={ccInput}
+                  disabled={sponsorOptionsLoading}
+                >
+                  <option value="">
+                    {sponsorOptionsLoading
+                      ? 'Cargando sponsors…'
+                      : '— Sin sponsor account vinculado —'}
+                  </option>
+                  {sponsorOptions.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.company_name} · {s.contact_email}
+                      {s.status && s.status !== 'active' ? ` (${s.status})` : ''}
+                    </option>
+                  ))}
+                </select>
+                {sponsorOptionsError ? (
+                  <p className="mt-1 text-xs text-red-400">{sponsorOptionsError}</p>
+                ) : (
+                  <p className="mt-1 text-xs text-cc-text-muted">
+                    Al seleccionar un sponsor account se vincula el Pulse a su dashboard
+                    (campo canónico <code>sponsor_account_id</code>). Los campos abajo se
+                    autocompletan pero puedes editarlos. ¿No está en la lista?{' '}
+                    <Link
+                      href="/admin/sponsors"
+                      className="text-emerald-400 underline hover:text-emerald-300"
+                      target="_blank"
+                    >
+                      Crear sponsor account
+                    </Link>
+                    .
+                  </p>
+                )}
+              </div>
               <input
                 type="text"
                 placeholder="Client name (e.g. Alcaldía Cuauhtémoc)"

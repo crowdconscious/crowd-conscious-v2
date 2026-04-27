@@ -45,6 +45,7 @@ export async function POST(request: NextRequest) {
       pulse_client_name,
       pulse_client_logo,
       pulse_client_email,
+      sponsor_account_id,
       cover_image_url,
       is_draft,
     } = body
@@ -104,6 +105,25 @@ export async function POST(request: NextRequest) {
     if (relatedIds.length > 0) metadata.related_market_ids = relatedIds
 
     const admin = createAdminClient()
+
+    // Resolve and validate the sponsor account binding. The form sends the
+    // sponsor_accounts.id directly; we verify it exists before writing it
+    // onto prediction_markets.sponsor_account_id (FK with ON DELETE SET NULL).
+    let resolvedSponsorAccountId: string | null = null
+    if (typeof sponsor_account_id === 'string' && sponsor_account_id.trim()) {
+      const { data: sponsorAcct, error: saErr } = await admin
+        .from('sponsor_accounts')
+        .select('id, company_name, contact_email, logo_url, status')
+        .eq('id', sponsor_account_id.trim())
+        .maybeSingle()
+      if (saErr || !sponsorAcct) {
+        return Response.json(
+          { error: 'Sponsor account not found' },
+          { status: 400 }
+        )
+      }
+      resolvedSponsorAccountId = sponsorAcct.id
+    }
 
     const pulseFields = (() => {
       const pulse = Boolean(is_pulse)
@@ -165,6 +185,7 @@ export async function POST(request: NextRequest) {
         current_probability: 100 / outcomeLabels.length,
         is_draft: wantsDraft,
         published_at: wantsDraft ? null : new Date().toISOString(),
+        sponsor_account_id: resolvedSponsorAccountId,
       }
       if (translations && typeof translations === 'object') updatePayload.translations = translations
       Object.assign(updatePayload, pulseFields)
@@ -232,6 +253,7 @@ export async function POST(request: NextRequest) {
       sponsor_contribution: sponsorAmount,
       is_draft: wantsDraft,
       published_at: wantsDraft ? null : new Date().toISOString(),
+      sponsor_account_id: resolvedSponsorAccountId,
     }
     if (translations && typeof translations === 'object') updatePayload.translations = translations
     Object.assign(updatePayload, pulseFields)
