@@ -1,4 +1,3 @@
-import { randomBytes } from 'node:crypto'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 /**
@@ -6,6 +5,11 @@ import type { SupabaseClient } from '@supabase/supabase-js'
  * promo table — see migration 213 for the naming caveat.
  *
  * Format: 8 chars, A-Z + 2-9 (no 0/O/1/I to avoid manual-entry confusion).
+ *
+ * Uses the Web Crypto API (`globalThis.crypto.getRandomValues`) so this
+ * module is isomorphic — safe to import from client components for the
+ * mask/normalize helpers, even though the unique-code generator only runs
+ * on the server.
  */
 
 const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -13,7 +17,8 @@ const CODE_LENGTH = 8
 const MAX_GENERATION_ATTEMPTS = 8
 
 export function generateSponsorCouponCode(length: number = CODE_LENGTH): string {
-  const bytes = randomBytes(length)
+  const bytes = new Uint8Array(length)
+  globalThis.crypto.getRandomValues(bytes)
   let out = ''
   for (let i = 0; i < length; i++) {
     out += ALPHABET[bytes[i] % ALPHABET.length]
