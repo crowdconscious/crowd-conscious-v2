@@ -25,7 +25,7 @@ export async function generateMetadata({
   const { data: market } = await admin
     .from('prediction_markets')
     .select(
-      'title, description, translations, total_votes, is_draft, is_pulse, cover_image_url, pulse_client_logo'
+      'title, description, translations, total_votes, is_draft, is_pulse, cover_image_url'
     )
     .eq('id', id)
     .single()
@@ -52,7 +52,7 @@ export async function generateMetadata({
   // chart card. Non-Pulse markets keep the auto-generated card so the
   // share preview includes live odds.
   const uploadedCover = market.is_pulse
-    ? market.cover_image_url?.trim() || market.pulse_client_logo?.trim() || null
+    ? market.cover_image_url?.trim() || null
     : null
   const ogImage =
     uploadedCover ||

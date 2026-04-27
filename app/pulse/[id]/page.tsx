@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { data: market } = await admin
     .from('prediction_markets')
     .select(
-      'title, translations, pulse_client_name, is_pulse, market_type, category, is_draft, cover_image_url, pulse_client_logo'
+      'title, translations, pulse_client_name, is_pulse, market_type, category, is_draft, cover_image_url'
     )
     .eq('id', id)
     .maybeSingle()
@@ -63,11 +63,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const pageTitle = client ? `${title} · ${client}` : title
 
   // WhatsApp / Telegram / Twitter / iMessage all read og:image. Prefer the
-  // uploaded Pulse cover so the share card is the curated thumbnail (not
-  // the auto-generated chart). Fall back to the dynamic OG card only when
-  // no cover or sponsor logo is available.
-  const uploadedCover =
-    market.cover_image_url?.trim() || market.pulse_client_logo?.trim() || null
+  // uploaded Pulse cover (1.91:1 hero art) so the share card is the
+  // curated thumbnail. Fall back to the dynamic chart card only when no
+  // cover was uploaded — never to a small sponsor/client logo, since
+  // WhatsApp downgrades small images to its tiny "favicon" preview style.
+  const uploadedCover = market.cover_image_url?.trim() || null
   const fallbackOg = `${SITE_URL}/api/og/market/${id}`
   const ogImage = uploadedCover || fallbackOg
 
