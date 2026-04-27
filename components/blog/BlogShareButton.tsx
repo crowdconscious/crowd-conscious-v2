@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { Check, Copy, Linkedin, Share2 } from 'lucide-react'
-import { trackShare } from '@/lib/share-utils'
+import { trackShare, withShareUtm } from '@/lib/share-utils'
 
 interface BlogShareButtonProps {
   /** UUID of the blog_post row — used as `other_id` in share_events. */
@@ -97,7 +97,7 @@ export function BlogShareButton({
     }
   }, [open])
 
-  const url = `${getOrigin()}/blog/${slug}`
+  const baseUrl = `${getOrigin()}/blog/${slug}`
   const target = { type: 'other' as const, otherType: 'blog_post', otherId: postId }
 
   const tagline =
@@ -110,6 +110,7 @@ export function BlogShareButton({
   }
 
   const handleWhatsApp = () => {
+    const url = withShareUtm(baseUrl, 'whatsapp')
     const text = `${title}\n\n${url}`
     openInNewTab(`https://wa.me/?text=${encodeURIComponent(text)}`)
     trackShare(target, 'whatsapp', surface)
@@ -117,6 +118,7 @@ export function BlogShareButton({
   }
 
   const handleX = () => {
+    const url = withShareUtm(baseUrl, 'twitter')
     const text = encodeURIComponent(title)
     const u = encodeURIComponent(url)
     openInNewTab(`https://twitter.com/intent/tweet?text=${text}&url=${u}`)
@@ -125,18 +127,21 @@ export function BlogShareButton({
   }
 
   const handleLinkedIn = () => {
+    const url = withShareUtm(baseUrl, 'other')
     openInNewTab(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`)
     trackShare(target, 'other', surface)
     setOpen(false)
   }
 
   const handleFacebook = () => {
+    const url = withShareUtm(baseUrl, 'facebook')
     openInNewTab(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`)
     trackShare(target, 'facebook', surface)
     setOpen(false)
   }
 
   const handleCopy = async () => {
+    const url = withShareUtm(baseUrl, 'clipboard')
     try {
       await navigator.clipboard.writeText(url)
       setCopied(true)
@@ -149,6 +154,7 @@ export function BlogShareButton({
 
   const handleNative = async () => {
     if (!hasNativeShare) return
+    const url = withShareUtm(baseUrl, 'native_share')
     try {
       await navigator.share({ title, text: tagline, url })
       trackShare(target, 'native_share', surface)

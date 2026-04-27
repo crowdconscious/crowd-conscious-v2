@@ -12,6 +12,51 @@ export type ShareChannel =
   | 'story_download'
   | 'other'
 
+/**
+ * Append `utm_source=share&utm_medium=<channel>` to a share URL.
+ *
+ * Two reasons we always do this:
+ *
+ * 1. **Cache-busting**: WhatsApp / Telegram / iMessage cache OG previews
+ *    by full URL (including query string). If a Pulse or post was ever
+ *    scraped before its og:image was wired up, the bad preview sticks for
+ *    ~7 days globally. Adding a unique query suffix gives the scraper a
+ *    URL it has never seen, so it re-fetches and we get the curated
+ *    cover image on the first share.
+ * 2. **Attribution**: UTM params flow into GA / Plausible / Amplitude
+ *    automatically, so we can finally see how many clicks come from
+ *    WhatsApp vs LinkedIn vs X without a custom redirector.
+ *
+ * Returns the URL unchanged when an absolute URL already carries an
+ * `utm_source` (e.g. paid campaigns), so we never trample explicit UTM
+ * intent.
+ */
+export function withShareUtm(url: string, channel: ShareChannel): string {
+  // Map our internal channel taxonomy to standard UTM medium values that
+  // analytics tools recognize out of the box.
+  const utmMedium: Record<ShareChannel, string> = {
+    whatsapp: 'whatsapp',
+    twitter: 'twitter',
+    facebook: 'facebook',
+    clipboard: 'copy_link',
+    native_share: 'native',
+    story_download: 'story',
+    other: 'social',
+  }
+  try {
+    const u = new URL(url)
+    if (u.searchParams.has('utm_source')) return url
+    u.searchParams.set('utm_source', 'share')
+    u.searchParams.set('utm_medium', utmMedium[channel])
+    return u.toString()
+  } catch {
+    // Relative URL or malformed input — best effort
+    if (url.includes('utm_source=')) return url
+    const sep = url.includes('?') ? '&' : '?'
+    return `${url}${sep}utm_source=share&utm_medium=${utmMedium[channel]}`
+  }
+}
+
 export type ShareTarget =
   | { type: 'market'; marketId: string }
   | { type: 'location'; locationId: string }
@@ -51,7 +96,7 @@ export function trackShare(
 /** WhatsApp share for a Conscious Location. */
 export function shareLocationToWhatsApp(slug: string, name: string, locale: 'es' | 'en' = 'es') {
   const base = getBaseUrl()
-  const url = `${base}/locations/${encodeURIComponent(slug)}`
+  const url = withShareUtm(`${base}/locations/${encodeURIComponent(slug)}`, 'whatsapp')
   const text =
     locale === 'es'
       ? `¿Es ${name} un Lugar Consciente? Vota aquí: ${url}`
@@ -66,7 +111,7 @@ export async function copyLocationLink(
   locale: 'es' | 'en' = 'es'
 ): Promise<boolean> {
   const base = getBaseUrl()
-  const url = `${base}/locations/${encodeURIComponent(slug)}`
+  const url = withShareUtm(`${base}/locations/${encodeURIComponent(slug)}`, 'clipboard')
   const text =
     locale === 'es'
       ? `¿Es ${name} un Lugar Consciente? Vota aquí: ${url}`
@@ -89,13 +134,13 @@ export function shareToTwitter(marketId: string, title: string, sponsorName?: st
   const base = getBaseUrl()
   const suffix = getShareSuffix(sponsorName)
   const text = encodeURIComponent(`${title}${sponsorName ? suffix : `\n\nWhat do you think?`}`)
-  const url = encodeURIComponent(`${base}/predictions/markets/${marketId}`)
+  const url = encodeURIComponent(withShareUtm(`${base}/predictions/markets/${marketId}`, 'twitter'))
   window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank')
 }
 
 export function shareToWhatsApp(marketId: string, title: string, sponsorName?: string | null) {
   const base = getBaseUrl()
-  const url = `${base}/predictions/markets/${marketId}`
+  const url = withShareUtm(`${base}/predictions/markets/${marketId}`, 'whatsapp')
   const text = sponsorName
     ? `${title} — Sponsored by ${sponsorName} on Crowd Conscious. Make your prediction: ${url}`
     : `${title} — Make your prediction: ${url}`
@@ -104,13 +149,13 @@ export function shareToWhatsApp(marketId: string, title: string, sponsorName?: s
 
 export function shareToFacebook(marketId: string) {
   const base = getBaseUrl()
-  const url = encodeURIComponent(`${base}/predictions/markets/${marketId}`)
+  const url = encodeURIComponent(withShareUtm(`${base}/predictions/markets/${marketId}`, 'facebook'))
   window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank')
 }
 
 export function copyMarketLink(marketId: string) {
   const base = getBaseUrl()
-  navigator.clipboard.writeText(`${base}/predictions/markets/${marketId}`)
+  navigator.clipboard.writeText(withShareUtm(`${base}/predictions/markets/${marketId}`, 'clipboard'))
 }
 
 export async function downloadCard(marketId: string, format: 'standard' | 'story' = 'standard', locale?: string) {
@@ -202,7 +247,7 @@ export async function shareStoryImage(
 
 export async function shareNative(marketId: string, title: string, format: 'standard' | 'story' = 'standard', locale?: string, sponsorName?: string | null) {
   const base = getBaseUrl()
-  const marketUrl = `${base}/predictions/markets/${marketId}`
+  const marketUrl = withShareUtm(`${base}/predictions/markets/${marketId}`, 'native_share')
   const langParam = locale && locale !== 'es' ? (format === 'story' ? `&lang=${locale}` : `?lang=${locale}`) : ''
   const url = format === 'story' ? `/api/og/market/${marketId}?format=story${langParam}` : `/api/og/market/${marketId}${langParam}`
   const filename = format === 'story' ? 'crowd-conscious-story.png' : 'prediction.png'
