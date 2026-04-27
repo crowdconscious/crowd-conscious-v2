@@ -5,6 +5,7 @@ import {
   buildSponsorDashboardMarkets,
 } from '@/lib/sponsor-dashboard-build'
 import { fetchMarketsForSponsorAccount } from '@/lib/sponsor-account-access'
+import { getCurrentUser, AuthSessionExpiredError } from '@/lib/auth-server'
 import type { FundImpactRow } from '@/components/sponsor/types'
 
 const APP_ORIGIN = (process.env.NEXT_PUBLIC_APP_URL ?? 'https://crowdconscious.app').replace(/\/$/, '')
@@ -129,6 +130,29 @@ export default async function SponsorDashboardPage({
   const lastVisit = (account as { last_dashboard_visit?: string | null }).last_dashboard_visit
   const isFirstVisit = !lastVisit
 
+  // Detect admin impersonation: a logged-in admin (Supabase auth) hitting any
+  // sponsor's token URL gets a banner saying "Viewing as <sponsor>" and a back
+  // link to the admin panel. Sponsors themselves never have a Supabase auth
+  // session here (token-only auth), so this never affects them.
+  let isImpersonating = false
+  try {
+    const user = await getCurrentUser()
+    if (user) {
+      const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim()
+      const userEmail = (user as { email?: string | null }).email?.toLowerCase().trim()
+      if (
+        user.user_type === 'admin' ||
+        (!!adminEmail && !!userEmail && userEmail === adminEmail)
+      ) {
+        isImpersonating = true
+      }
+    }
+  } catch (e) {
+    if (!(e instanceof AuthSessionExpiredError)) {
+      console.warn('[sponsor-dashboard] admin check failed', e)
+    }
+  }
+
   const { count: pulseMarketCount } = await admin
     .from('prediction_markets')
     .select('id', { count: 'exact', head: true })
@@ -162,6 +186,7 @@ export default async function SponsorDashboardPage({
       token={token}
       isFirstVisit={isFirstVisit}
       appOrigin={APP_ORIGIN}
+      isImpersonating={isImpersonating}
     />
   )
 }

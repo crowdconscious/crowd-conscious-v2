@@ -14,6 +14,7 @@ type MarketRaw = {
   total_votes: number | null
   resolution_date: string
   is_pulse: boolean
+  is_draft?: boolean | null
   current_probability: number
   market_outcomes: OutcomeRow[] | null
 }
@@ -78,6 +79,7 @@ export function buildSponsorDashboardMarkets(
       id: m.id,
       title: m.title,
       status: m.status,
+      isDraft: Boolean(m.is_draft),
       totalVotes: m.total_votes ?? mv.length,
       resolutionDate: m.resolution_date,
       isPulse: m.is_pulse,

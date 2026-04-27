@@ -4,11 +4,22 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useCallback, useState } from 'react'
 import type { SponsorDashboardMarketRow } from '@/components/sponsor/types'
+import {
+  pulseLifecycleFromMarket,
+  PULSE_LIFECYCLE_LABELS,
+} from '@/lib/sponsor-pulse-status'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 type Props = {
   market: SponsorDashboardMarketRow & { coverImageUrl?: string | null; displayTitle?: string }
   token: string
   appOrigin: string
+}
+
+const LIFECYCLE_STYLES: Record<'active' | 'closed' | 'draft', string> = {
+  active: 'bg-emerald-500/10 text-emerald-400',
+  closed: 'bg-rose-500/10 text-rose-400',
+  draft: 'bg-slate-700 text-slate-300',
 }
 
 function formatPct(n: number) {
@@ -29,9 +40,16 @@ function fmtDate(iso: string) {
 
 export function SponsorMarketCard({ market, token, appOrigin }: Props) {
   const [copied, setCopied] = useState(false)
+  const { language } = useLanguage()
   const title = market.displayTitle ?? market.title
   const top = [...market.outcomes].sort((a, b) => b.probability - a.probability).slice(0, 3)
-  const isLive = market.status === 'active' || market.status === 'trading'
+  const lifecycle = pulseLifecycleFromMarket({
+    status: market.status,
+    isDraft: market.isDraft,
+    resolutionDate: market.resolutionDate,
+  })
+  const lifecycleMeta = PULSE_LIFECYCLE_LABELS[lifecycle]
+  const lifecycleLabel = `${lifecycleMeta.emoji} ${language === 'en' ? lifecycleMeta.en : lifecycleMeta.es}`
   const marketUrl = `${appOrigin}/predictions/markets/${market.id}`
 
   const copyLink = useCallback(() => {
@@ -69,11 +87,9 @@ export function SponsorMarketCard({ market, token, appOrigin }: Props) {
             <span>Cert. {market.avgConfidence.toFixed(1)}/10</span>
           )}
           <span
-            className={`rounded px-2 py-0.5 text-xs ${
-              isLive ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-700 text-slate-400'
-            }`}
+            className={`rounded px-2 py-0.5 text-xs font-medium ${LIFECYCLE_STYLES[lifecycle]}`}
           >
-            {isLive ? 'Activo' : market.status}
+            {lifecycleLabel}
           </span>
           <span>Cierra {fmtDate(market.resolutionDate)}</span>
         </div>

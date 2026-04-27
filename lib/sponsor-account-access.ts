@@ -13,6 +13,7 @@ type MarketLinkRow = {
   total_votes: number | null
   resolution_date: string
   is_pulse: boolean
+  is_draft?: boolean | null
   current_probability: number
   cover_image_url?: string | null
   translations?: unknown
@@ -30,6 +31,7 @@ const marketSelect = `
   total_votes,
   resolution_date,
   is_pulse,
+  is_draft,
   current_probability,
   cover_image_url,
   translations,

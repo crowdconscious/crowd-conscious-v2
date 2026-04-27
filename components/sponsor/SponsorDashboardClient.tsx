@@ -2,6 +2,7 @@
 
 import type React from 'react'
 import { useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
@@ -12,7 +13,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { FileDown, BarChart3, Share2, BookOpen, Sparkles, HelpCircle } from 'lucide-react'
+import { FileDown, BarChart3, Share2, BookOpen, Sparkles, HelpCircle, RefreshCw, ShieldCheck } from 'lucide-react'
 import { SponsorOnboardingBanner } from '@/components/sponsor/SponsorOnboardingBanner'
 import { SponsorMarketCard } from '@/components/sponsor/SponsorMarketCard'
 import { SuggestCauseForm } from '@/components/sponsor/SuggestCauseForm'
@@ -21,6 +22,11 @@ import type { SponsorDashboardMarketRow, FundImpactRow } from '@/components/spon
 import { useLanguage, type Language } from '@/contexts/LanguageContext'
 import { useSponsorT } from '@/lib/i18n/sponsor-dashboard'
 import { normalizeSponsorUpgradeTier } from '@/lib/sponsor-upgrade-tier'
+import {
+  pulseLifecycleFromMarket,
+  PULSE_LIFECYCLE_LABELS,
+  type PulseLifecycle,
+} from '@/lib/sponsor-pulse-status'
 
 export type { SponsorOutcomeRow, SponsorDashboardMarketRow, FundImpactRow } from '@/components/sponsor/types'
 
@@ -70,6 +76,7 @@ type Props = {
   token: string
   isFirstVisit: boolean
   appOrigin: string
+  isImpersonating?: boolean
 }
 
 function fmtDate(iso: string, language: Language) {
@@ -102,7 +109,9 @@ export default function SponsorDashboardClient({
   token,
   isFirstVisit,
   appOrigin,
+  isImpersonating = false,
 }: Props) {
+  const router = useRouter()
   const { t, language } = useSponsorT()
   const { setLanguage } = useLanguage()
   const fundTotal = Number(account.total_fund_contribution ?? 0)
@@ -152,11 +161,42 @@ export default function SponsorDashboardClient({
     })
   }, [markets, marketsRaw])
 
+  const pulseRows = useMemo(() => enriched.filter((m) => m.isPulse), [enriched])
+  const otherRows = useMemo(() => enriched.filter((m) => !m.isPulse), [enriched])
+
+  // The selected Pulse drives the analytics card. Default to the first
+  // assigned Pulse. If the sponsor has zero Pulses but classic markets, we
+  // skip the My Pulses block entirely.
+  const [selectedPulseId, setSelectedPulseId] = useState<string | null>(
+    pulseRows[0]?.id ?? null
+  )
+  const selectedPulse = useMemo(() => {
+    if (!selectedPulseId) return null
+    return pulseRows.find((m) => m.id === selectedPulseId) ?? pulseRows[0] ?? null
+  }, [pulseRows, selectedPulseId])
+
   const mxnLocale = language === 'en' ? 'en-US' : 'es-MX'
   const fundFormatted = fundTotal.toLocaleString(mxnLocale, { maximumFractionDigits: 0 })
 
   return (
     <div className="min-h-screen bg-[#0f1419] text-slate-100">
+      {isImpersonating ? (
+        <div className="border-b border-amber-500/40 bg-amber-500/15 px-4 py-3 text-sm text-amber-100 sm:px-8">
+          <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-3">
+            <ShieldCheck className="h-4 w-4 flex-none text-amber-300" />
+            <span>
+              <strong className="font-semibold">{t('impersonation.viewing_as')}</strong>{' '}
+              {account.company_name}
+            </span>
+            <Link
+              href="/admin/sponsors"
+              className="ml-auto inline-flex items-center rounded-full border border-amber-300/40 px-3 py-1 text-xs font-semibold text-amber-100 hover:bg-amber-300/10"
+            >
+              ← {t('impersonation.back_to_admin')}
+            </Link>
+          </div>
+        </div>
+      ) : null}
       <header className="border-b border-[#2d3748] bg-[#0f1419] px-4 py-6 sm:px-8">
         <div className="mx-auto flex max-w-5xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-4">
@@ -369,45 +409,47 @@ export default function SponsorDashboardClient({
 
         <SuggestCauseForm token={token} />
 
-        <section>
-          <h2 className="mb-4 border-b border-[#2d3748] pb-2 text-sm font-medium uppercase tracking-wide text-slate-400">
-            {t('markets_list.title')}
-          </h2>
-          {enriched.length === 0 ? (
+        <MyPulsesSection
+          pulses={pulseRows}
+          selectedPulse={selectedPulse}
+          onSelect={setSelectedPulseId}
+          onRefresh={() => router.refresh()}
+          token={token}
+          appOrigin={appOrigin}
+          showPulse={showPulse}
+          mxnLocale={mxnLocale}
+          language={language}
+        />
+
+        {otherRows.length > 0 ? (
+          <section>
+            <h2 className="mb-4 border-b border-[#2d3748] pb-2 text-sm font-medium uppercase tracking-wide text-slate-400">
+              {t('markets_list.other_title')}
+            </h2>
+            <div className="space-y-6">
+              {otherRows.map((m) => (
+                <div key={m.id}>
+                  <SponsorMarketCard market={m} token={token} appOrigin={appOrigin} />
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        {pulseRows.length === 0 && otherRows.length === 0 && !showPulse ? (
+          <section>
+            <h2 className="mb-4 border-b border-[#2d3748] pb-2 text-sm font-medium uppercase tracking-wide text-slate-400">
+              {t('markets_list.title')}
+            </h2>
             <div className="rounded-xl border border-[#2d3748] bg-[#1a2029] p-8 text-center">
               <span className="text-3xl">📊</span>
               <p className="mt-3 font-medium text-white">{t('markets_list.empty_title')}</p>
               <p className="mt-1 text-sm text-slate-400">
-                {showPulse
-                  ? t('markets_list.empty_desc_pulse')
-                  : t('markets_list.empty_desc_classic')}
+                {t('markets_list.empty_desc_classic')}
               </p>
-              {showPulse ? (
-                <Link
-                  href={`/dashboard/sponsor/${token}/create-pulse`}
-                  className="mt-4 inline-block rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500"
-                >
-                  {t('markets_list.empty_cta')} →
-                </Link>
-              ) : null}
             </div>
-          ) : (
-            <div className="space-y-6">
-              {enriched.map((m) => (
-                <div key={m.id}>
-                  <SponsorMarketCard
-                    market={m}
-                    token={token}
-                    appOrigin={appOrigin}
-                  />
-                  {(showPulse || m.isPulse) && m.totalVotes > 0 ? (
-                    <PulseMarketAnalytics market={m} />
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
+          </section>
+        ) : null}
 
         <SponsorEmailPreferences
           token={token}
@@ -531,6 +573,192 @@ function ActionCard({
     <Link href={href} className={className}>
       {inner}
     </Link>
+  )
+}
+
+type EnrichedMarket = SponsorDashboardMarketRow & {
+  coverImageUrl: string | null
+  displayTitle: string
+}
+
+const LIFECYCLE_PILL: Record<PulseLifecycle, string> = {
+  active: 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30',
+  closed: 'bg-rose-500/15 text-rose-300 border border-rose-500/30',
+  draft: 'bg-slate-700/60 text-slate-300 border border-slate-600/60',
+}
+
+function MyPulsesSection({
+  pulses,
+  selectedPulse,
+  onSelect,
+  onRefresh,
+  token,
+  appOrigin,
+  showPulse,
+  mxnLocale,
+  language,
+}: {
+  pulses: EnrichedMarket[]
+  selectedPulse: EnrichedMarket | null
+  onSelect: (id: string) => void
+  onRefresh: () => void
+  token: string
+  appOrigin: string
+  showPulse: boolean
+  mxnLocale: string
+  language: Language
+}) {
+  const { t } = useSponsorT()
+
+  // Sponsors with no Pulse entitlement (classic-only sponsors) skip this
+  // entire section. The legacy "Tus mercados" empty state handles them.
+  if (!showPulse && pulses.length === 0) return null
+
+  if (pulses.length === 0) {
+    return (
+      <section className="rounded-xl border border-emerald-500/25 bg-[#1a2029] p-6">
+        <h2 className="text-sm font-bold uppercase tracking-wide text-slate-400">
+          {t('my_pulses.title')}
+        </h2>
+        <div className="mt-4 flex flex-col items-center gap-3 rounded-xl border border-dashed border-[#2d3748] bg-[#0f1419] p-8 text-center">
+          <span className="text-3xl">🫧</span>
+          <p className="font-medium text-white">{t('my_pulses.no_assigned_title')}</p>
+          <p className="text-sm text-slate-400">{t('my_pulses.no_assigned_desc')}</p>
+          <a
+            href="mailto:comunidad@crowdconscious.app"
+            className="mt-1 inline-flex min-h-[44px] items-center justify-center rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500"
+          >
+            {t('my_pulses.no_assigned_cta')}
+          </a>
+        </div>
+      </section>
+    )
+  }
+
+  return (
+    <section className="rounded-xl border border-emerald-500/25 bg-[#1a2029] p-6">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-bold uppercase tracking-wide text-slate-400">
+            {t('my_pulses.title')}
+          </h2>
+          <p className="mt-1 text-sm text-slate-400">{t('my_pulses.subtitle')}</p>
+        </div>
+        <button
+          type="button"
+          onClick={onRefresh}
+          className="inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-[#2d3748] bg-[#0f1419] px-3 py-2 text-xs font-semibold text-slate-300 hover:border-emerald-500/40 hover:text-emerald-300"
+        >
+          <RefreshCw className="h-3.5 w-3.5" />
+          {t('my_pulses.refresh')}
+        </button>
+      </div>
+
+      {pulses.length > 1 ? (
+        <div className="mt-4 -mx-1 flex flex-wrap gap-2 px-1">
+          {pulses.map((p) => {
+            const lifecycle = pulseLifecycleFromMarket({
+              status: p.status,
+              isDraft: p.isDraft,
+              resolutionDate: p.resolutionDate,
+            })
+            const meta = PULSE_LIFECYCLE_LABELS[lifecycle]
+            const lifecycleLabel = `${meta.emoji} ${language === 'en' ? meta.en : meta.es}`
+            const isSelected = selectedPulse?.id === p.id
+            return (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => onSelect(p.id)}
+                className={`flex flex-col items-start gap-1 rounded-xl border px-4 py-3 text-left transition ${
+                  isSelected
+                    ? 'border-emerald-500/60 bg-emerald-500/10 text-white'
+                    : 'border-[#2d3748] bg-[#0f1419] text-slate-300 hover:border-emerald-500/30'
+                }`}
+                aria-pressed={isSelected}
+              >
+                <span className="text-sm font-semibold">{p.displayTitle}</span>
+                <span className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
+                  <span className={`rounded-full px-2 py-0.5 ${LIFECYCLE_PILL[lifecycle]}`}>
+                    {lifecycleLabel}
+                  </span>
+                  <span>
+                    {p.totalVotes.toLocaleString(mxnLocale)} {t('my_pulses.votes_short')}
+                  </span>
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      ) : (
+        <p className="mt-4 text-xs uppercase tracking-wide text-slate-500">
+          {t('my_pulses.showing_data_for')}{' '}
+          <span className="font-semibold text-slate-300 normal-case">
+            {selectedPulse?.displayTitle}
+          </span>
+        </p>
+      )}
+
+      {selectedPulse ? (
+        <div className="mt-6">
+          <SponsorMarketCard
+            market={selectedPulse}
+            token={token}
+            appOrigin={appOrigin}
+          />
+          {selectedPulse.totalVotes > 0 ? (
+            <PulseMarketAnalytics market={selectedPulse} />
+          ) : (
+            <PulseNoVotesYet
+              isClosed={pulseLifecycleFromMarket({
+                status: selectedPulse.status,
+                isDraft: selectedPulse.isDraft,
+                resolutionDate: selectedPulse.resolutionDate,
+              }) === 'closed'}
+              onRefresh={onRefresh}
+            />
+          )}
+        </div>
+      ) : null}
+    </section>
+  )
+}
+
+function PulseNoVotesYet({
+  isClosed,
+  onRefresh,
+}: {
+  isClosed: boolean
+  onRefresh: () => void
+}) {
+  const { t } = useSponsorT()
+  return (
+    <div className="mt-4 flex flex-col items-center gap-3 rounded-xl border border-emerald-500/20 bg-[#0f1419]/80 p-8 text-center">
+      {!isClosed ? (
+        <span className="relative inline-flex h-3 w-3">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
+          <span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-500" />
+        </span>
+      ) : (
+        <span className="text-2xl">📭</span>
+      )}
+      <p className="text-base font-semibold text-white">
+        {isClosed ? t('my_pulses.closed_no_votes_title') : t('my_pulses.no_votes_title')}
+      </p>
+      <p className="max-w-md text-sm text-slate-400">
+        {isClosed ? t('my_pulses.closed_no_votes_desc') : t('my_pulses.no_votes_desc')}
+      </p>
+      {!isClosed ? (
+        <button
+          type="button"
+          onClick={onRefresh}
+          className="mt-1 inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-4 py-2.5 text-sm font-semibold text-emerald-300 hover:bg-emerald-500/20"
+        >
+          <RefreshCw className="h-3.5 w-3.5" />
+          {t('my_pulses.refresh')}
+        </button>
+      ) : null}
+    </div>
   )
 }
 

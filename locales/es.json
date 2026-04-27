@@ -251,7 +251,27 @@
       "empty_title": "Aún no tienes mercados vinculados",
       "empty_desc_pulse": "Crea tu primer Pulse o pide a Crowd Conscious que vincule un mercado existente a tu cuenta.",
       "empty_desc_classic": "Tu mercado patrocinado aparecerá aquí cuando esté vinculado a tu cuenta (o nombre de patrocinador).",
-      "empty_cta": "Crear primer Pulse"
+      "empty_cta": "Crear primer Pulse",
+      "other_title": "Otros mercados patrocinados"
+    },
+    "my_pulses": {
+      "title": "Mis Pulses",
+      "subtitle": "Datos en vivo de los Pulses asignados a tu cuenta.",
+      "select_pulse": "Selecciona un Pulse:",
+      "votes_short": "votos",
+      "no_assigned_title": "Aún no tienes Pulses asignados",
+      "no_assigned_desc": "Contacta a Crowd Conscious para que vinculen un Pulse a tu cuenta.",
+      "no_assigned_cta": "comunidad@crowdconscious.app",
+      "showing_data_for": "Mostrando datos de:",
+      "no_votes_title": "Tu Pulse acaba de lanzar",
+      "no_votes_desc": "Los datos aparecerán aquí cuando lleguen los primeros votos.",
+      "refresh": "Actualizar",
+      "closed_no_votes_title": "Pulse cerrado sin votos",
+      "closed_no_votes_desc": "Este Pulse cerró sin recibir votos."
+    },
+    "impersonation": {
+      "viewing_as": "Viendo como",
+      "back_to_admin": "Volver al panel de administración"
     },
     "fund_impact": {
       "title": "Impacto del Fondo Consciente",

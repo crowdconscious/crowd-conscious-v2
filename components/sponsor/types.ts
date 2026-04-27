@@ -9,6 +9,7 @@ export type SponsorDashboardMarketRow = {
   id: string
   title: string
   status: string
+  isDraft: boolean
   totalVotes: number
   resolutionDate: string
   isPulse: boolean
