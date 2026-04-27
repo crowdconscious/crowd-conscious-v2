@@ -6,6 +6,7 @@ import { createAdminClient } from '@/lib/supabase-admin'
 import { getCurrentUser } from '@/lib/auth-server'
 import { MarketDetailClient } from './MarketDetailClient'
 import { DraftBanner } from '@/components/predictions/DraftBanner'
+import { AdminMarketToolbar } from '@/components/predictions/AdminMarketToolbar'
 import { getMarketText } from '@/lib/i18n/market-translations'
 import { SITE_URL } from '@/lib/seo/site'
 
@@ -238,6 +239,12 @@ export default async function MarketDetailPage({
   return (
     <>
       {isDraft && <DraftBanner marketId={market.id} />}
+      {isAdmin && (
+        <AdminMarketToolbar
+          marketId={market.id}
+          isPulse={(market as { is_pulse?: boolean }).is_pulse === true}
+        />
+      )}
       <MarketDetailClient
         market={market}
         creatorName={creator?.full_name || 'Unknown'}

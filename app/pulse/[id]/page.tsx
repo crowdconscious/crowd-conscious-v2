@@ -10,6 +10,7 @@ import PulseResultClient, {
   type PulseVoteRow,
 } from '@/components/pulse/PulseResultClient'
 import { DraftBanner } from '@/components/predictions/DraftBanner'
+import { AdminMarketToolbar } from '@/components/predictions/AdminMarketToolbar'
 import { loadMarketVoteReasoningsWithAuthors } from '@/lib/market-vote-reasonings'
 import { SITE_URL } from '@/lib/seo/site'
 
@@ -185,6 +186,7 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
   return (
     <>
       {isDraft && <DraftBanner marketId={market.id} />}
+      {isAdmin && <AdminMarketToolbar marketId={market.id} isPulse />}
       <PulseResultClient
         marketId={market.id}
         title={market.title}
