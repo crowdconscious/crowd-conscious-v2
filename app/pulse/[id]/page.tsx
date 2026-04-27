@@ -11,15 +11,21 @@ import PulseResultClient, {
 } from '@/components/pulse/PulseResultClient'
 import { DraftBanner } from '@/components/predictions/DraftBanner'
 import { loadMarketVoteReasoningsWithAuthors } from '@/lib/market-vote-reasonings'
+import { SITE_URL } from '@/lib/seo/site'
 
 type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ token?: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params
-  const supabase = await createClient()
-  const { data: market } = await supabase
+  // Use the admin client so drafts are also visible at metadata time —
+  // they're suppressed below via robots:noindex but we still need the row
+  // to compute the cover image and title for admins/creators previewing.
+  const admin = createAdminClient()
+  const { data: market } = await admin
     .from('prediction_markets')
-    .select('title, translations, pulse_client_name, is_pulse, market_type, category, is_draft')
+    .select(
+      'title, translations, pulse_client_name, is_pulse, market_type, category, is_draft, cover_image_url, pulse_client_logo'
+    )
     .eq('id', id)
     .maybeSingle()
 
@@ -56,12 +62,31 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const client = market.pulse_client_name?.trim()
   const pageTitle = client ? `${title} · ${client}` : title
 
+  // WhatsApp / Telegram / Twitter / iMessage all read og:image. Prefer the
+  // uploaded Pulse cover so the share card is the curated thumbnail (not
+  // the auto-generated chart). Fall back to the dynamic OG card only when
+  // no cover or sponsor logo is available.
+  const uploadedCover =
+    market.cover_image_url?.trim() || market.pulse_client_logo?.trim() || null
+  const fallbackOg = `${SITE_URL}/api/og/market/${id}`
+  const ogImage = uploadedCover || fallbackOg
+
   return {
     title: `${pageTitle} | Conscious Pulse`,
     description: `Resultados — ${title}. Medición de sentimiento público. Powered by Crowd Conscious.`,
     openGraph: {
       title: `${pageTitle} | Conscious Pulse`,
       description: `Resultados en vivo — ${title}`,
+      url: `${SITE_URL}/pulse/${id}`,
+      siteName: 'Crowd Conscious',
+      images: [{ url: ogImage, alt: pageTitle }],
+      type: 'article',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${pageTitle} | Conscious Pulse`,
+      description: `Resultados en vivo — ${title}`,
+      images: [ogImage],
     },
   }
 }

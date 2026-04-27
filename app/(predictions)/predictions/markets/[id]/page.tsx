@@ -24,7 +24,9 @@ export async function generateMetadata({
   const admin = createAdminClient()
   const { data: market } = await admin
     .from('prediction_markets')
-    .select('title, description, translations, total_votes, is_draft')
+    .select(
+      'title, description, translations, total_votes, is_draft, is_pulse, cover_image_url, pulse_client_logo'
+    )
     .eq('id', id)
     .single()
 
@@ -45,7 +47,16 @@ export async function generateMetadata({
     getMarketText(market, 'description', locale)?.slice(0, 160) ||
     `Predice sobre: ${title}. ${market.total_votes ?? 0} votos. 100% gratis en Crowd Conscious.`
   const description = baseDesc
-  const ogImage = `${SITE_URL}/api/og/market/${id}${locale === 'en' ? '?lang=en' : ''}`
+  // For Pulse markets prefer the curated cover image (admin-uploaded) so
+  // WhatsApp/Telegram previews show the Pulse art instead of the dynamic
+  // chart card. Non-Pulse markets keep the auto-generated card so the
+  // share preview includes live odds.
+  const uploadedCover = market.is_pulse
+    ? market.cover_image_url?.trim() || market.pulse_client_logo?.trim() || null
+    : null
+  const ogImage =
+    uploadedCover ||
+    `${SITE_URL}/api/og/market/${id}${locale === 'en' ? '?lang=en' : ''}`
   const canonical = `${SITE_URL}/predictions/markets/${id}`
 
   return {
@@ -56,7 +67,12 @@ export async function generateMetadata({
       description,
       url: canonical,
       siteName: 'Crowd Conscious',
-      images: [{ url: ogImage, width: 1200, height: 630, alt: title }],
+      // Skip width/height when we're using the uploaded cover (its
+      // intrinsic ratio may differ from 1.91:1 and explicit dimensions
+      // can make WhatsApp letterbox awkwardly).
+      images: uploadedCover
+        ? [{ url: ogImage, alt: title }]
+        : [{ url: ogImage, width: 1200, height: 630, alt: title }],
       type: 'article',
     },
     twitter: {
