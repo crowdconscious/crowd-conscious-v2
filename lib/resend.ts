@@ -34,10 +34,10 @@ export const emailTemplates = {
         <div style="padding: 32px 24px;">
           <h1 style="color: #10b981; font-size: 24px; margin: 0 0 16px;">¡Bienvenido a Crowd Conscious!</h1>
           <p style="color: #d1d5db; font-size: 14px; line-height: 1.6; margin: 0 0 14px;">
-            Hola ${userName} — ahora formas parte de una comunidad que usa inteligencia colectiva para predecir lo que importa en CDMX y México, y para impulsar causas reales.
+            Hola ${userName} — ahora formas parte de una comunidad que usa inteligencia colectiva para votar sobre lo que importa en CDMX y México, y para impulsar causas reales.
           </p>
           <p style="color: #d1d5db; font-size: 14px; line-height: 1.6; margin: 0 0 20px;">
-            Cada predicción suma al Fondo Consciente para proyectos comunitarios. Mientras más participas, más impacto generas.
+            Cada voto suma al Fondo Consciente para proyectos comunitarios. Mientras más participas, más impacto generas.
           </p>
           <div style="text-align: center; margin: 24px 0;">
             <a href="${APP_URL}/predictions" style="display: inline-block; background: #10b981; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">
@@ -57,7 +57,7 @@ export const emailTemplates = {
   },
 
   eventRegistration: (userName: string, eventTitle: string, eventDate: string, eventLocation: string, communityName: string, eventUrl: string) => ({
-    subject: `You're registered for ${eventTitle}! 📅`,
+    subject: `[Crowd Conscious] You're registered for ${eventTitle}! 📅`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: linear-gradient(135deg, #f59e0b, #14b8a6); padding: 40px 20px; text-align: center; border-radius: 10px 10px 0 0;">
@@ -193,7 +193,7 @@ export const emailTemplates = {
     marketId?: string
     category?: string
   }) => ({
-    subject: `🎉 New sponsorship: ${data.sponsorName} — $${data.amountMXN.toLocaleString()} MXN`,
+    subject: `[Crowd Conscious] 🎉 New sponsorship: ${data.sponsorName} — $${data.amountMXN.toLocaleString()} MXN`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: linear-gradient(135deg, #10b981, #14b8a6); padding: 30px 20px; text-align: center; border-radius: 10px 10px 0 0;">
@@ -221,7 +221,9 @@ export const emailTemplates = {
   }),
 
   marketResolution: (userName: string, marketTitle: string, winningOutcome: string, wasCorrect: boolean, bonusXp?: number) => ({
-    subject: wasCorrect ? `You were right! 🎯 "${marketTitle}" resolved` : `Market resolved: "${marketTitle}"`,
+    subject: wasCorrect
+      ? `[Crowd Conscious] You were right! 🎯 "${marketTitle}" resolved`
+      : `[Crowd Conscious] Market resolved: "${marketTitle}"`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: linear-gradient(135deg, ${wasCorrect ? '#10b981' : '#64748b'}, ${wasCorrect ? '#14b8a6' : '#94a3b8'}); padding: 40px 20px; text-align: center; border-radius: 10px 10px 0 0;">
@@ -242,7 +244,7 @@ export const emailTemplates = {
   }),
 
   sponsorshipApproved: (brandName: string, needTitle: string, amount: number, communityName: string, paymentUrl: string) => ({
-    subject: `Your sponsorship application has been approved! 🎉`,
+    subject: `[Crowd Conscious] Your sponsorship application has been approved! 🎉`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: linear-gradient(135deg, #10b981, #14b8a6); padding: 40px 20px; text-align: center; border-radius: 10px 10px 0 0;">
@@ -275,7 +277,7 @@ export const emailTemplates = {
   }),
 
   monthlyImpactReport: (userName: string, stats: any) => ({
-    subject: `Your Monthly Impact Report - ${stats.month || 'This Month'} 📊`,
+    subject: `[Crowd Conscious] Your Monthly Impact Report - ${stats.month || 'This Month'} 📊`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: linear-gradient(135deg, #8b5cf6, #14b8a6); padding: 40px 20px; text-align: center; border-radius: 10px 10px 0 0;">
@@ -441,7 +443,7 @@ export const emailTemplates = {
     }
 
     return {
-      subject: `${companyName} - Tu Propuesta Personalizada de Concientizaciones 🌱`,
+      subject: `[Crowd Conscious] ${companyName} - Tu Propuesta Personalizada de Concientizaciones 🌱`,
       html: `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #f8fafc;">
           <div style="background: linear-gradient(135deg, #0f766e 0%, #7c3aed 100%); padding: 40px 20px; text-align: center;">
@@ -761,7 +763,7 @@ export async function sendEmployeeInvitationEmail(
   const invitationUrl = `${APP_URL}/employee-portal-public/accept-invitation?token=${invitationToken}`
   
   const template = {
-    subject: `${companyName} te invita a Concientizaciones 🌱`,
+    subject: `[Crowd Conscious] ${companyName} te invita a Concientizaciones 🌱`,
     html: `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #f8fafc;">
         <div style="background: linear-gradient(135deg, #0f766e 0%, #7c3aed 100%); padding: 40px 20px; text-align: center;">
@@ -849,7 +851,7 @@ export async function sendMundialPackBuyerConfirmation(params: {
     ? 'Mundial Pulse Pack — Founding'
     : 'Mundial Pulse Pack'
   const template = {
-    subject: `🏆 ${tierLabel} confirmado — te contactamos en 24h`,
+    subject: `[Crowd Conscious] 🏆 ${tierLabel} confirmado — te contactamos en 24h`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #0f1419; color: #e5e7eb;">
         <div style="background: linear-gradient(135deg, #d97706, #10b981); padding: 24px; text-align: center;">

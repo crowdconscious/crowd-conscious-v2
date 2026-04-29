@@ -23,7 +23,7 @@ const COPY = {
     heading: 'Tu voto cambió el consenso',
     body: 'Ya cuenta para la comunidad. Crea tu cuenta gratuita para conservar tu XP, tu racha y tu lugar en el ranking.',
     benefits: [
-      { icon: Trophy, title: 'Gana XP', description: 'Acumula puntos por cada predicción acertada.' },
+      { icon: Trophy, title: 'Gana XP', description: 'Acumula puntos por cada voto acertado.' },
       { icon: Flame, title: 'Mantén tu racha', description: 'Vota cada día para desbloquear recompensas.' },
       { icon: ListOrdered, title: 'Aparece en el ranking', description: 'Compite con la comunidad y gana medallas.' },
     ],

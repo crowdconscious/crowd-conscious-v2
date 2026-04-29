@@ -810,7 +810,7 @@ export default function CreateMarketPage() {
                       e.target.value.slice(0, DESCRIPTION_SHORT_MAX)
                     )
                   }
-                  placeholder="Ej. La Alcaldía Miguel Hidalgo decide cómo invertir su próximo presupuesto. Tu opinión guía dónde se aplican los recursos."
+                  placeholder="Ej. La Alcaldía Miguel Hidalgo decide cómo invertir su próximo presupuesto. Tu voto guía dónde se aplican los recursos."
                   rows={3}
                   maxLength={DESCRIPTION_SHORT_MAX}
                   className={`${ccInput} resize-none`}

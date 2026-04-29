@@ -60,7 +60,7 @@ export const CelebrationModal = memo(function CelebrationModal({
   shareCardMarketId,
   isPulseMarket = false,
   guestVote = false,
-  guestMessage = 'Tu predicción fue registrada',
+  guestMessage = 'Tu voto fue registrado',
   onClose
 }: CelebrationModalProps) {
   const pulse = isPulseMarket === true

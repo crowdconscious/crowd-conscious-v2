@@ -406,13 +406,7 @@ export function MarketDetailClient({
             </span>
             <span className="text-xs text-gray-500">
               {engagementCount.toLocaleString()}{' '}
-              {isPulseMarket
-                ? locale === 'es'
-                  ? 'opiniones'
-                  : 'opinions'
-                : locale === 'es'
-                  ? 'predicciones'
-                  : 'predictions'}
+              {locale === 'es' ? 'votos' : 'votes'}
             </span>
           </div>
           <div className="flex items-start justify-between gap-3">

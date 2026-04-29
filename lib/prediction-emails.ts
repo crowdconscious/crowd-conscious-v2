@@ -77,17 +77,17 @@ export function dailyMarketDigestTemplate(opts: {
   let plainSubject: string
   switch (opts.digestVariant) {
     case 'new':
-      plainSubject = `🆕 Nuevo mercado: ${q}`
+      plainSubject = `[Crowd Conscious] 🆕 Nuevo mercado: ${q}`
       break
     case 'trending':
-      plainSubject = `📈 La comunidad está prediciendo: ${q}`
+      plainSubject = `[Crowd Conscious] 📈 La comunidad está votando: ${q}`
       break
     case 'fallback':
-      plainSubject = `¿Ya viste esto? — ${q}`
+      plainSubject = `[Crowd Conscious] ¿Ya viste esto? — ${q}`
       break
     case 'unvoted':
     default:
-      plainSubject = `${q} — La comunidad ya está votando`
+      plainSubject = `[Crowd Conscious] ${q} — La comunidad ya está votando`
       break
   }
 
@@ -107,7 +107,7 @@ export function dailyMarketDigestTemplate(opts: {
         </a>
       </div>
       <p style="color: #64748b; font-size: 14px; line-height: 1.5; text-align: center;">
-        Entra, elige tu pronóstico y suma XP.
+        Entra, emite tu voto y suma XP.
       </p>
       ${emailFooter(opts.unsubscribeUrl)}
     </div>
@@ -125,12 +125,12 @@ export function postVoteConfirmationTemplate(opts: {
   xpEarned: number
   predictionsUrl: string
 }): { subject: string; html: string } {
-  const subject = `Predijiste: ${opts.marketTitle.replace(/\s+/g, ' ').trim().slice(0, 120)}`
+  const subject = `[Crowd Conscious] Votaste: ${opts.marketTitle.replace(/\s+/g, ' ').trim().slice(0, 120)}`
 
   const html = `
   <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #f8fafc;">
     <div style="background: linear-gradient(135deg, #059669 0%, #0d9488 100%); padding: 28px 24px; text-align: center; border-radius: 12px 12px 0 0;">
-      <h1 style="color: #ffffff; font-size: 20px; margin: 0;">¡Predicción registrada!</h1>
+      <h1 style="color: #ffffff; font-size: 20px; margin: 0;">¡Voto registrado!</h1>
     </div>
     <div style="padding: 28px 24px; background: #ffffff;">
       <p style="color: #334155; font-size: 16px; margin: 0 0 16px;"><strong>${esc(opts.marketTitle)}</strong></p>
@@ -170,7 +170,11 @@ export type BlogDigestMarket = {
   category: string | null
   /** e.g. "Hospitalidad 31% · Seguridad 28%" or "90% dice Sí" */
   resultsLine?: string | null
-  /** Spec: multi-option → Opinar →; binary → Predecir → */
+  /**
+   * Kept for backward compatibility with callers that still differentiate
+   * binary vs multi markets. Both styles now render the same `Votar →` CTA
+   * after Prompt 5 — the field is no longer copy-relevant.
+   */
   marketStyle: 'binary' | 'multi'
 }
 
@@ -309,7 +313,7 @@ function buildBlogDigestSection(post: BlogPostDigest, highlightNewBlog: boolean)
 
 function marketRowHtml(m: BlogDigestMarket): string {
   const marketUrl = `${APP_URL}/predictions/markets/${m.id}`
-  const ctaLabel = m.marketStyle === 'binary' ? 'Predecir →' : 'Opinar →'
+  const ctaLabel = 'Votar →'
   const question = esc(formatMarketQuestionForSubject(m.title))
 
   if (m.resultsLine) {
@@ -330,7 +334,7 @@ function marketRowHtml(m: BlogDigestMarket): string {
         ${question}
       </p>
       <p style="color: #9ca3af; font-size: 13px; margin: 0; line-height: 1.5; font-family: ${EMAIL_FONT};">
-        ${m.total_votes ?? 0} opiniones · ${esc(String(m.category ?? '—'))} · <a href="${esc(marketUrl)}" style="color: #10b981; font-size: 13px; text-decoration: none; font-weight: bold;">Predecir →</a>
+        ${m.total_votes ?? 0} votos · ${esc(String(m.category ?? '—'))} · <a href="${esc(marketUrl)}" style="color: #10b981; font-size: 13px; text-decoration: none; font-weight: bold;">Votar →</a>
       </p>
     </div>`
 }
@@ -438,11 +442,11 @@ export function crowdNewsletterEmailTemplate(opts: {
           ${esc(formatMarketQuestionForSubject(opts.pulseMarket.title))}
         </h3>
         <p style="color: #9ca3af; font-size: 13px; font-family: ${EMAIL_FONT}; margin: 0 0 12px;">
-          ${opts.pulseMarket.total_votes ?? 0} opiniones · ¿Ya diste la tuya?
+          ${opts.pulseMarket.total_votes ?? 0} votos · ¿Ya votaste?
         </p>
         <a href="${esc(`${APP_URL}/predictions/markets/${opts.pulseMarket.id}`)}"
           style="display: inline-block; background: transparent; color: #10b981; border: 1px solid #10b981; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 13px; font-family: ${EMAIL_FONT};">
-          Opinar →
+          Votar →
         </a>
       </div>
     </div>`
@@ -477,7 +481,7 @@ export function crowdNewsletterEmailTemplate(opts: {
         💚 Fondo Consciente: $${esc(fundFormatted)} MXN para causas sociales
       </p>
       <p style="color: #9ca3af; font-size: 12px; margin: 0 0 12px; line-height: 1.5; font-family: ${EMAIL_FONT};">
-        Cada opinión y predicción impulsa el fondo.
+        Cada voto impulsa el fondo.
       </p>
       ${wc}
       <a href="${esc(fundUrl)}" style="color: #10b981; font-size: 13px; font-weight: 600; text-decoration: none; font-family: ${EMAIL_FONT};">
@@ -515,7 +519,7 @@ export function reengagementInactiveTemplate(opts: {
   markets: ReengagementMarket[]
   unsubscribeUrl: string | null
 }): { subject: string; html: string } {
-  const subject = 'Han pasado 7 días — la comunidad sigue prediciendo sin ti'
+  const subject = '[Crowd Conscious] Han pasado 7 días — la comunidad sigue votando sin ti'
 
   const rows = opts.markets
     .map(
@@ -536,7 +540,7 @@ export function reengagementInactiveTemplate(opts: {
     </div>
     <div style="padding: 24px; background: #ffffff; border-radius: 0 0 12px 12px;">
       <p style="color: #334155; font-size: 15px; line-height: 1.6; margin: 0 0 20px;">
-        Han pasado 7 días desde tu última predicción. Aquí tienes tres mercados donde la comunidad está activa — y tú aún no has votado:
+        Han pasado 7 días desde tu último voto. Aquí tienes tres mercados donde la comunidad está activa — y tú aún no has votado:
       </p>
       ${rows}
       ${emailFooter(opts.unsubscribeUrl)}

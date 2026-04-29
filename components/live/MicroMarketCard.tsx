@@ -398,7 +398,7 @@ export function MicroMarketCard({
             <p className="text-sm leading-relaxed text-slate-400">
               {locale === 'es' ? (
                 <>
-                  Crea una cuenta para ganar XP y seguir tus predicciones.{' '}
+                  Crea una cuenta para ganar XP y seguir tus votos.{' '}
                   <Link
                     href={eventId ? `/signup?redirect=${encodeURIComponent(`/live/${eventId}`)}` : '/signup'}
                     className="font-medium text-emerald-400 underline underline-offset-2 hover:text-emerald-300"

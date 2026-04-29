@@ -105,8 +105,8 @@ export function sponsorPulseLaunchTemplate(
   const dateLabel = fmtDate(input.endsAtIso, input.locale)
 
   const subject = isEn
-    ? `Your Pulse is live: "${input.marketTitle}"`
-    : `Tu Pulse ya está en vivo: "${input.marketTitle}"`
+    ? `[Crowd Conscious] Your Pulse is live: "${input.marketTitle}"`
+    : `[Crowd Conscious] Tu Pulse ya está en vivo: "${input.marketTitle}"`
 
   const previewText = isEn
     ? `Share the link to start collecting answers. Closes ${dateLabel}.`
@@ -198,8 +198,8 @@ export function sponsorPulseClosureTemplate(
   const isEn = input.locale === 'en'
 
   const subject = isEn
-    ? `Your Pulse closed: "${input.marketTitle}"`
-    : `Tu Pulse cerró: "${input.marketTitle}"`
+    ? `[Crowd Conscious] Your Pulse closed: "${input.marketTitle}"`
+    : `[Crowd Conscious] Tu Pulse cerró: "${input.marketTitle}"`
 
   const previewText = isEn
     ? `The results are ready. Open the report inside your dashboard.`

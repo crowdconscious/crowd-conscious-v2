@@ -29,7 +29,7 @@ const copy = {
   },
   livePulse: { es: '● Pulse activo ahora', en: '● Live Pulse now' },
   viewResults: { es: 'Ver resultados en vivo →', en: 'View live results →' },
-  opinions: { es: 'opiniones', en: 'opinions' },
+  opinions: { es: 'votos', en: 'votes' },
   avgConf: { es: 'Confianza promedio', en: 'Avg confidence' },
   explore: { es: 'Explorar Conscious Pulse', en: 'Explore Conscious Pulse' },
   /** Anchor on /pulse → #pulse-consultations */

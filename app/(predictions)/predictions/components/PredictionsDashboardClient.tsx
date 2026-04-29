@@ -229,7 +229,7 @@ export function PredictionsDashboardClient({ data, sponsorCta }: Props) {
         items.push({
           id: 'resolved-summary',
           kind: 'resolved_market',
-          title: `${recentlyResolvedForUser.length} predicciones se resolvieron esta semana`,
+          title: `${recentlyResolvedForUser.length} mercados donde votaste se resolvieron esta semana`,
           href: '#your-predictions',
           cta: 'Ver resultados',
           emphasis: 'urgent',
@@ -408,8 +408,8 @@ export function PredictionsDashboardClient({ data, sponsorCta }: Props) {
               <div className="mt-4 rounded-xl border border-emerald-500/25 bg-emerald-500/[0.06] px-4 py-3">
                 <p className="text-sm text-emerald-100">
                   {recentlyResolvedForUser.length === 1
-                    ? '1 predicción se resolvió esta semana'
-                    : `${recentlyResolvedForUser.length} predicciones se resolvieron esta semana`}{' '}
+                    ? '1 mercado donde votaste se resolvió esta semana'
+                    : `${recentlyResolvedForUser.length} mercados donde votaste se resolvieron esta semana`}{' '}
                   — revisa los resultados abajo.
                 </p>
               </div>
@@ -417,8 +417,8 @@ export function PredictionsDashboardClient({ data, sponsorCta }: Props) {
 
             {userPredictions.length === 0 ? (
               <div className="mt-4 rounded-xl border border-white/[0.06] bg-white/[0.02] p-8 text-center">
-                <p className="text-slate-300 text-lg">🎯 Aún no has hecho predicciones.</p>
-                <p className="text-slate-400 mt-1">¡Haz tu primera predicción!</p>
+                <p className="text-slate-300 text-lg">🎯 Aún no has votado.</p>
+                <p className="text-slate-400 mt-1">¡Vota en tu primer mercado!</p>
                 <Link
                   href="/predictions/markets"
                   className="mt-4 inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm bg-emerald-600 text-white hover:bg-emerald-500 transition-colors"
@@ -472,7 +472,7 @@ export function PredictionsDashboardClient({ data, sponsorCta }: Props) {
                     href="/predictions/trades"
                     className="block rounded-xl border border-dashed border-white/[0.06] bg-white/[0.02] px-4 py-3 text-center text-sm text-slate-300 hover:bg-white/[0.04]"
                   >
-                    Ver todas tus predicciones ({userPredictions.length}) →
+                    Ver todos tus votos ({userPredictions.length}) →
                   </Link>
                 ) : null}
               </div>

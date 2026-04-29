@@ -109,7 +109,7 @@ async function buildContentCreatorDataBrief(
     pulseBlock = Object.entries(byLabel)
       .map(([lab, confs]) => {
         const avg = confs.reduce((a, b) => a + b, 0) / confs.length
-        return `- ${lab}: ${confs.length} opiniones, confianza media ${avg.toFixed(1)}/10`
+        return `- ${lab}: ${confs.length} votos, confianza media ${avg.toFixed(1)}/10`
       })
       .join('\n')
   }
@@ -178,7 +178,7 @@ Spanish (content), example shape:
 
 [One short paragraph — 1–2 sentences framing the open questions; no bare URLs.]
 
-Tu opinión importa. Vota con tu nivel de certeza en nuestros mercados:
+Tu voto importa. Vota con tu nivel de certeza en nuestros mercados:
 
 [→ Exact link text for market 1](BASE_URL/predictions/markets/UUID_1)
 [→ Pulse: Exact link text if Pulse](BASE_URL/predictions/markets/UUID_pulse)
@@ -326,7 +326,7 @@ ${uncovered.length ? uncovered.map((m) => `- "${m.title}" [ID: ${m.id}] — ${m.
         : dayOfWeekNum === 3
           ? 'MIÉRCOLES — News → Market: toma una señal concreta del News Monitor y conéctala con un mercado activo. El gancho debe ser la noticia, no el mercado.'
           : dayOfWeekNum === 5
-            ? 'VIERNES — Community Spotlight: historia ligera. Un Lugar Consciente, un mercado con un patrón de votos interesante, o una predicción que se resolvió esta semana.'
+            ? 'VIERNES — Community Spotlight: historia ligera. Un Lugar Consciente, un mercado con un patrón de votos interesante, o un mercado que se resolvió esta semana.'
             : 'Ángulo libre — elige el enfoque que mejor encaje con los datos del día.'
 
     const userMessage = `Escribe el artículo usando esta información.

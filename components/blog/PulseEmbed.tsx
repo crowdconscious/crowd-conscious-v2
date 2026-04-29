@@ -146,7 +146,7 @@ export default function PulseEmbed({ data, locale, components, showOwnHeading }:
               href={`/predictions/markets/${marketId}#vote`}
               className="mt-3 inline-flex min-h-[44px] items-center justify-center rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-900/30 transition hover:brightness-110"
             >
-              {locale === 'es' ? 'Dar mi opinión →' : 'Cast my vote →'}
+              {locale === 'es' ? 'Votar →' : 'Vote →'}
             </Link>
           </div>
         )}

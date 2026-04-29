@@ -129,7 +129,7 @@ export async function GET(
   const L = (es: string, en: string) => (locale === 'es' ? es : en)
   const votesThisCycleLabel = L('Votos este ciclo', 'Votes this cycle')
   const supportedByLabel = L(
-    `Apoyada por ${formattedVotes} ${cycleVotes === 1 ? 'opinión' : 'opiniones'}`,
+    `Apoyada por ${formattedVotes} ${cycleVotes === 1 ? 'voto' : 'votos'}`,
     `Supported by ${formattedVotes} ${cycleVotes === 1 ? 'opinion' : 'opinions'}`
   )
   const fundLine =

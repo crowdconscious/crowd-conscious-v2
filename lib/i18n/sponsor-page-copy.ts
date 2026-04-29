@@ -245,8 +245,8 @@ export const sponsorPageCopy = {
   faqTitle: { es: 'Preguntas frecuentes', en: 'Frequently Asked Questions' },
   faq1q: { es: '¿Cómo aparece mi marca?', en: 'How does my brand appear?' },
   faq1a: {
-    es: 'Tu logo y nombre aparecen en la tarjeta del mercado, página de detalle, imágenes para compartir y leaderboard. Cada vez que alguien comparte una predicción, tu marca viaja con ella.',
-    en: 'Your logo and name appear on the market card, detail page, share images, and leaderboard. Every time someone shares a prediction, your brand travels with it.',
+    es: 'Tu logo y nombre aparecen en la tarjeta del mercado, página de detalle, imágenes para compartir y leaderboard. Cada vez que alguien comparte un voto, tu marca viaja con ella.',
+    en: 'Your logo and name appear on the market card, detail page, share images, and leaderboard. Every time someone shares a vote, your brand travels with it.',
   },
   faq2q: {
     es: '¿Qué pasa con la aportación al Fondo Consciente (20–40% según nivel)?',

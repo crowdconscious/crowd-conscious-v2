@@ -47,8 +47,8 @@ export function PendingVoteSubmitter() {
           const xp = typeof data.xp_earned === 'number' ? data.xp_earned : 0
           setToast(
             xp > 0
-              ? `Tu predicción anterior ya tiene XP — ¡bienvenido! +${xp} XP`
-              : 'Tu predicción anterior ya tiene XP — ¡bienvenido!'
+              ? `Tu voto anterior ya tiene XP — ¡bienvenido! +${xp} XP`
+              : 'Tu voto anterior ya tiene XP — ¡bienvenido!'
           )
           window.setTimeout(() => setToast(null), 6000)
         } else {

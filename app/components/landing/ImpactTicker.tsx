@@ -35,7 +35,7 @@ function formatMoney(n: number, locale: string): string {
 }
 
 /**
- * ImpactTicker — "[N] opiniones este ciclo → $X para [cause]".
+ * ImpactTicker — "[N] votos este ciclo → $X para [cause]".
  *
  * `totalVotes` is the `cycle_opinions` metric (market_votes created during
  * the current calendar month, matching `fund_votes.cycle`). See
@@ -71,8 +71,8 @@ export function ImpactTicker({
       <div className="border-b border-cc-border/50 bg-cc-card/60 px-4 py-2">
         <p className="text-center text-xs text-gray-400 md:text-sm">
           {locale === 'es'
-            ? 'Sé el primero en opinar — cada voto cuenta'
-            : 'Be the first to share your opinion — every vote counts'}
+            ? 'Sé el primero en votar — cada voto cuenta'
+            : 'Be the first to vote — every vote counts'}
         </p>
       </div>
     )
@@ -92,7 +92,7 @@ export function ImpactTicker({
     <span className="text-gray-300">{causeLabel}</span>
   )
 
-  const opinionsEs = locale === 'es' ? 'opiniones este ciclo' : 'opinions this cycle'
+  const opinionsEs = locale === 'es' ? 'votos este ciclo' : 'votes this cycle'
 
   if (hasVotes && !hasFund) {
     return (

@@ -30,7 +30,7 @@ const NAV = {
     about: 'Acerca',
     live: 'En Vivo',
     signIn: 'Iniciar Sesión',
-    startPredicting: 'Empezar a Predecir',
+    startPredicting: 'Empezar a votar',
   },
   en: {
     predictions: 'Predictions',
@@ -41,7 +41,7 @@ const NAV = {
     about: 'About',
     live: 'Live',
     signIn: 'Sign In',
-    startPredicting: 'Start Predicting',
+    startPredicting: 'Start Voting',
   },
 } as const
 

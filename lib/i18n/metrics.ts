@@ -27,18 +27,18 @@ type MetricLabelEntry = {
 
 export const METRIC_LABELS: Record<MetricKey, MetricLabelEntry> = {
   total_all_time_votes: {
-    es: 'Opiniones totales',
-    en: 'Total opinions',
-    tooltip_es: 'Todas las opiniones cuantificadas desde el lanzamiento.',
-    tooltip_en: 'All quantified opinions since launch.',
+    es: 'Votos totales',
+    en: 'Total votes',
+    tooltip_es: 'Todos los votos cuantificados desde el lanzamiento.',
+    tooltip_en: 'All quantified votes since launch.',
   },
   cycle_opinions: {
-    es: 'Opiniones este ciclo',
-    en: 'Opinions this cycle',
+    es: 'Votos este ciclo',
+    en: 'Votes this cycle',
     tooltip_es:
-      'Opiniones en el ciclo actual de asignación del Fondo Consciente (mes en curso).',
+      'Votos en el ciclo actual de asignación del Fondo Consciente (mes en curso).',
     tooltip_en:
-      'Opinions in the current Conscious Fund allocation cycle (this calendar month).',
+      'Votes in the current Conscious Fund allocation cycle (this calendar month).',
   },
   thirtyd_votes: {
     es: 'Actividad (30 días)',

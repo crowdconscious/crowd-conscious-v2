@@ -112,13 +112,13 @@ export function EmbeddedMarketCard({
         </p>
       )}
       <p className="mt-4 text-xs text-slate-500">
-        {votes ?? 0} {es ? 'opiniones' : 'votes'}
+        {votes ?? 0} {es ? 'votos' : 'votes'}
       </p>
       <Link
         href={`/predictions/markets/${marketId}`}
         className="mt-4 flex min-h-[44px] w-full items-center justify-center rounded-lg bg-emerald-600 px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-emerald-500"
       >
-        {es ? 'Opinar →' : 'Vote →'}
+        {es ? 'Votar →' : 'Vote →'}
       </Link>
     </div>
   )

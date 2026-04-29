@@ -193,7 +193,7 @@ export function LiveVotingPanel({
             className="flex min-h-[44px] items-center gap-2 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm font-medium text-emerald-200"
           >
             <Sparkles className="h-4 w-4 shrink-0 text-emerald-300" />
-            {locale === 'es' ? '¡Nueva predicción disponible!' : 'New prediction available!'}
+            {locale === 'es' ? '¡Nueva pregunta disponible!' : 'New question available!'}
           </motion.div>
         )}
       </AnimatePresence>
@@ -208,7 +208,7 @@ export function LiveVotingPanel({
           </p>
           <p className="mt-2 max-w-sm text-sm leading-relaxed text-slate-400">
             {locale === 'es'
-              ? `Cuando ${typeLabel.action}, aquí aparecerán predicciones rápidas. ¡Vuelve pronto!`
+              ? `Cuando ${typeLabel.action}, aquí aparecerán preguntas rápidas. ¡Vuelve pronto!`
               : `When ${typeLabel.action}, quick predictions will show up here. Check back soon!`}
           </p>
           {isAdmin && (
@@ -233,8 +233,8 @@ export function LiveVotingPanel({
           <div className="mb-2 flex items-center justify-between px-4">
             <span className="text-xs text-slate-500">
               {locale === 'es'
-                ? `Predicción ${activeSlide + 1} de ${sortedActive.length}`
-                : `Prediction ${activeSlide + 1} of ${sortedActive.length}`}
+                ? `Pregunta ${activeSlide + 1} de ${sortedActive.length}`
+                : `Question ${activeSlide + 1} of ${sortedActive.length}`}
             </span>
             <span className="text-xs text-slate-600">
               {locale === 'es' ? 'Desliza →' : 'Swipe →'}

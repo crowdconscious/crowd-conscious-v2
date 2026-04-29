@@ -61,7 +61,7 @@ export async function sendPostVoteConfirmation(args: {
     await admin.from('notifications').insert({
       user_id: userId,
       type: 'vote_confirmation',
-      title: `Predijiste: ${titleShort}`,
+      title: `Votaste: ${titleShort}`,
       message: msg,
       body: msg,
       link: `/predictions/markets/${marketId}`,

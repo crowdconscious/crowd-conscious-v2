@@ -255,11 +255,11 @@ function PastStatsRow({
           <span>
             {resolved > 0
               ? es
-                ? 'predicciones resueltas'
-                : 'predictions resolved'
+                ? 'votaciones resueltas'
+                : 'questions resolved'
               : es
-                ? 'predicciones'
-                : 'predictions'}
+                ? 'votaciones'
+                : 'questions'}
           </span>
         </li>
       )}

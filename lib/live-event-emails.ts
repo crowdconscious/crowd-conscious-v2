@@ -60,7 +60,7 @@ export function liveMatchResultsTemplate(opts: {
   const { eventTitle, rank, totalXp, correctCount, voteCount, resultsUrl, locale } = opts
   if (locale === 'es') {
     return {
-      subject: `Tus resultados — ${eventTitle}`,
+      subject: `[Crowd Conscious] Tus resultados — ${eventTitle}`,
       html: `
         <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: #0f172a; padding: 24px; border-radius: 12px; color: #e2e8f0;">
@@ -73,7 +73,7 @@ export function liveMatchResultsTemplate(opts: {
     }
   }
   return {
-    subject: `Your results — ${eventTitle}`,
+    subject: `[Crowd Conscious] Your results — ${eventTitle}`,
     html: `
       <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: #0f172a; padding: 24px; border-radius: 12px; color: #e2e8f0;">
@@ -91,11 +91,11 @@ export async function sendLivePredictionInviteEmail(to: string, locale: 'en' | '
   const tpl =
     locale === 'es'
       ? {
-          subject: '¡Te invitamos a predecir en vivo!',
+          subject: '[Crowd Conscious] ¡Te invitamos a votar en vivo!',
           html: `<p>Prueba <a href="${APP_URL}/live">Conscious Live</a>: micro-mercados durante partidos, XP y causa consciente.</p>`,
         }
       : {
-          subject: "You're invited to predict live!",
+          subject: "[Crowd Conscious] You're invited to vote live!",
           html: `<p>Try <a href="${APP_URL}/live">Conscious Live</a>: in-match micro-markets, XP, and fund impact.</p>`,
         }
   return sendEmail(to, tpl, FROM)

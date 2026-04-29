@@ -146,14 +146,14 @@ function bilingualHint(outcome: Outcome, locale: string): string | null {
 }
 
 function submitPrimaryLabel(
-  isPulse: boolean,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _isPulse: boolean,
   locale: string,
   isEditing: boolean,
   copy: ReturnType<typeof voteActionCopy>
 ): string {
   if (isEditing) return copy.updateVerb
-  if (isPulse) return locale === 'es' ? 'Enviar opinión' : 'Submit opinion'
-  return locale === 'es' ? 'Enviar predicción' : 'Submit prediction'
+  return locale === 'es' ? 'Enviar voto' : 'Submit vote'
 }
 
 export type GuestVotePayload = {
@@ -334,13 +334,9 @@ export function VotePanel({
 
   const sectionLead = isEditing
     ? copy.yourHeading
-    : isPulse
-    ? locale === 'es'
-      ? 'Elige tu opinión'
-      : 'Pick your opinion'
     : locale === 'es'
-      ? 'Elige tu respuesta'
-      : 'Pick your answer'
+      ? 'Elige tu voto'
+      : 'Pick your vote'
 
   const renderOutcomeCard = (o: Outcome) => {
     const isSelected = selectedOutcomeId === o.id
@@ -565,13 +561,7 @@ export function VotePanel({
           <div className="text-center mb-6">
             <span className="text-emerald-400 text-2xl">✓</span>
             <p className="text-white font-medium mt-2">
-              {isPulse
-                ? locale === 'es'
-                  ? '¡Opinión registrada!'
-                  : 'Opinion recorded!'
-                : locale === 'es'
-                  ? '¡Predicción registrada!'
-                  : 'Prediction recorded!'}
+              {locale === 'es' ? '¡Voto registrado!' : 'Vote recorded!'}
             </p>
           </div>
 
@@ -668,13 +658,7 @@ export function VotePanel({
                   locale
                 )
                 const n = m.total_votes ?? 0
-                const voteWord = m.is_pulse
-                  ? locale === 'es'
-                    ? 'opiniones'
-                    : 'opinions'
-                  : locale === 'es'
-                    ? 'predicciones'
-                    : 'predictions'
+                const voteWord = locale === 'es' ? 'votos' : 'votes'
                 return (
                   <Link
                     key={m.id}
@@ -688,13 +672,7 @@ export function VotePanel({
                       </p>
                     </div>
                     <span className="text-emerald-400 text-xs font-medium shrink-0">
-                      {m.is_pulse
-                        ? locale === 'es'
-                          ? 'Opinar →'
-                          : 'Vote →'
-                        : locale === 'es'
-                          ? 'Predecir →'
-                          : 'Predict →'}
+                      {locale === 'es' ? 'Votar →' : 'Vote →'}
                     </span>
                   </Link>
                 )

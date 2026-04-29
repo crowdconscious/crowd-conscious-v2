@@ -251,7 +251,7 @@ export async function getPlatformIntelligence(): Promise<PlatformIntelligence> {
       hooks.push(`${out.engagement.new_users_this_week} nuevos usuarios esta semana`)
     }
     if (out.overview.orphan_markets > 0) {
-      hooks.push(`${out.overview.orphan_markets} mercados sin votos esperan tu opinión`)
+      hooks.push(`${out.overview.orphan_markets} mercados sin votos esperan tu voto`)
     }
     const topShift = out.trending.biggest_probability_shifts[0]
     if (topShift?.title) {

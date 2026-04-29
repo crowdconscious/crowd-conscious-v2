@@ -46,14 +46,14 @@ export function LandingHeroBlock({ locale, fundBalance }: Props) {
           <h1 className="text-4xl font-bold leading-[1.05] text-white sm:text-5xl md:text-6xl">
             {es ? (
               <>
-                Tu opinión{' '}
+                Tu voto{' '}
                 <span className="bg-gradient-to-r from-emerald-400 to-emerald-200 bg-clip-text text-transparent">
                   financia causas reales.
                 </span>
               </>
             ) : (
               <>
-                Your opinion{' '}
+                Your vote{' '}
                 <span className="bg-gradient-to-r from-emerald-400 to-emerald-200 bg-clip-text text-transparent">
                   funds real causes.
                 </span>

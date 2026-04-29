@@ -420,7 +420,7 @@ export default function PulseResultClient({
                   href={`/predictions/markets/${marketId}#vote`}
                   className="mt-4 inline-flex min-h-[44px] items-center justify-center rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-900/30 transition hover:brightness-110"
                 >
-                  {locale === 'es' ? 'Dar mi opinión →' : 'Cast my vote →'}
+                  {locale === 'es' ? 'Votar →' : 'Vote →'}
                 </Link>
               </div>
             )}
@@ -608,7 +608,7 @@ export default function PulseResultClient({
                 href={`/predictions/markets/${marketId}#vote`}
                 className="inline-flex min-h-[48px] flex-1 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 px-6 py-3 text-center text-sm font-semibold text-white shadow-lg shadow-emerald-900/30 transition hover:brightness-110"
               >
-                {locale === 'es' ? 'Dar mi opinión' : 'Share my take'}
+                {locale === 'es' ? 'Votar' : 'Vote'}
               </Link>
               <Link
                 href="/pulse"
@@ -632,7 +632,7 @@ export default function PulseResultClient({
 
           <footer className="pulse-print-hide-footer mt-12 text-center">
             <p className="text-sm text-slate-500">
-              {locale === 'es' ? 'Parte de las predicciones impulsan el' : 'Part of predictions fund the'}{' '}
+              {locale === 'es' ? 'Parte de los votos impulsa el' : 'Part of votes fund the'}{' '}
               <Link href="/fund" className="text-emerald-400 underline-offset-2 hover:underline">
                 {locale === 'es' ? 'Fondo Consciente' : 'Conscious Fund'}
               </Link>{' '}

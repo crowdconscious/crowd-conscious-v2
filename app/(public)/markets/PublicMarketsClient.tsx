@@ -291,7 +291,7 @@ export default function PublicMarketsClient({
             href="/signup"
             className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-emerald-500 px-8 py-4 font-semibold text-white transition-colors hover:bg-emerald-400"
           >
-            {locale === 'es' ? 'Regístrate para predecir' : 'Sign up to predict'}
+            {locale === 'es' ? 'Regístrate para votar' : 'Sign up to vote'}
           </Link>
         </div>
       ) : null}

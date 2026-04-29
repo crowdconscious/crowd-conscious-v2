@@ -77,7 +77,7 @@ export const emailTemplates = {
 
 
   sponsorshipApproved: (brandName: string, needTitle: string, amount: number, communityName: string, paymentUrl: string): EmailTemplate => ({
-    subject: `Your sponsorship application has been approved! 🎉`,
+    subject: `[Crowd Conscious] Your sponsorship application has been approved! 🎉`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: linear-gradient(135deg, #10b981, #14b8a6); padding: 40px 20px; text-align: center; border-radius: 10px 10px 0 0;">
@@ -110,7 +110,7 @@ export const emailTemplates = {
   }),
 
   monthlyImpactReport: (userName: string, stats: any): EmailTemplate => ({
-    subject: `Your Monthly Impact Report 📊`,
+    subject: `[Crowd Conscious] Your Monthly Impact Report 📊`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: linear-gradient(135deg, #8b5cf6, #14b8a6); padding: 40px 20px; text-align: center; border-radius: 10px 10px 0 0;">

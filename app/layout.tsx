@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     template: "%s | Crowd Conscious",
   },
   description:
-    "Plataforma de predicciones gratuita donde tu opinión genera impacto comunitario real. Predice sobre deportes, política y más — marcas patrocinan el Fondo Consciente. Mundial 2026.",
+    "Plataforma de predicciones gratuita donde tu voto genera impacto comunitario real. Vota sobre deportes, política y más — marcas patrocinan el Fondo Consciente. Mundial 2026.",
   keywords: [
     "predicciones gratis",
     "mercado de predicciones",
@@ -75,7 +75,7 @@ export const metadata: Metadata = {
     title:
       "Crowd Conscious — Predicciones Gratis que Financian Causas Reales",
     description:
-      "Plataforma de predicciones gratuita donde tu opinión genera impacto comunitario real. Predice sobre deportes, política y más.",
+      "Plataforma de predicciones gratuita donde tu voto genera impacto comunitario real. Vota sobre deportes, política y más.",
     images: [
       {
         url: "/opengraph-image",
@@ -91,7 +91,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Crowd Conscious — Predicciones Gratis con Impacto Real",
     description:
-      "Predice sobre deportes, política y más. Marcas patrocinan el Fondo Consciente. 100% gratis.",
+      "Vota sobre deportes, política y más. Marcas patrocinan el Fondo Consciente. 100% gratis.",
     images: ["/opengraph-image"],
     creator: "@crowdconscious",
     site: "@crowdconscious",
