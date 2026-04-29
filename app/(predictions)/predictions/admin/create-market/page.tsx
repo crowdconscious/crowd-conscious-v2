@@ -58,7 +58,17 @@ export default function CreateMarketPage() {
   const [resolutionDate, setResolutionDate] = useState('')
   const [resolutionCriteria, setResolutionCriteria] = useState('')
   const [marketType, setMarketType] = useState<'binary' | 'multi'>('binary')
-  const [outcomes, setOutcomes] = useState<string[]>(['', ''])
+  // Outcomes are now structured as { title, subtitle } so the title stays the
+  // short headline and any detail goes in subtitle (rendered as a muted line
+  // below). The previous shape was `string[]` of stuffed labels — that is
+  // what produced the "Seguridad pública( Policía de…" rows in the MH Pulse.
+  type OutcomeDraft = { title: string; subtitle: string }
+  const [outcomes, setOutcomes] = useState<OutcomeDraft[]>([
+    { title: '', subtitle: '' },
+    { title: '', subtitle: '' },
+  ])
+  const OUTCOME_TITLE_MAX = 80
+  const OUTCOME_SUBTITLE_MAX = 200
   const [verificationSources, setVerificationSources] = useState<{ name: string; url: string }[]>([
     { name: '', url: '' },
   ])
@@ -218,7 +228,7 @@ export default function CreateMarketPage() {
       const parts = prefillOutcomes.split(',').map((s) => s.trim()).filter(Boolean)
       if (parts.length >= 2) {
         setMarketType('multi')
-        setOutcomes(parts)
+        setOutcomes(parts.map((title) => ({ title, subtitle: '' })))
       }
     }
   }, [])
@@ -367,11 +377,22 @@ export default function CreateMarketPage() {
   const updateLink = (i: number, field: 'url' | 'label', v: string) =>
     setLinks((prev) => prev.map((l, j) => (j === i ? { ...l, [field]: v } : l)))
 
-  const addOutcome = () => setOutcomes((prev) => [...prev, ''])
+  const addOutcome = () =>
+    setOutcomes((prev) => [...prev, { title: '', subtitle: '' }])
   const removeOutcome = (i: number) =>
     setOutcomes((prev) => (prev.length > 2 ? prev.filter((_, j) => j !== i) : prev))
-  const updateOutcome = (i: number, v: string) =>
-    setOutcomes((prev) => prev.map((o, j) => (j === i ? v : o)))
+  const updateOutcomeTitle = (i: number, v: string) =>
+    setOutcomes((prev) =>
+      prev.map((o, j) =>
+        j === i ? { ...o, title: v.slice(0, OUTCOME_TITLE_MAX) } : o
+      )
+    )
+  const updateOutcomeSubtitle = (i: number, v: string) =>
+    setOutcomes((prev) =>
+      prev.map((o, j) =>
+        j === i ? { ...o, subtitle: v.slice(0, OUTCOME_SUBTITLE_MAX) } : o
+      )
+    )
 
   const addRelatedMarket = (id: string) => {
     if (!relatedMarketIds.includes(id)) {
@@ -419,7 +440,7 @@ export default function CreateMarketPage() {
       setError('Resolution date is required')
       return
     }
-    if (marketType === 'multi' && outcomes.filter((o) => o.trim()).length < 2) {
+    if (marketType === 'multi' && outcomes.filter((o) => o.title.trim()).length < 2) {
       setError('Multi-choice requires at least 2 options')
       return
     }
@@ -438,7 +459,18 @@ export default function CreateMarketPage() {
           resolution_date: new Date(resolutionDate).toISOString(),
           resolution_criteria: resolutionCriteria.trim() || null,
           market_type: marketType,
-          outcomes: marketType === 'multi' ? outcomes.filter((o) => o.trim()) : undefined,
+          // API now accepts the structured shape `{title, subtitle?}`. The
+          // legacy string-array shape is still tolerated server-side for any
+          // out-of-band callers (cron / scripts).
+          outcomes:
+            marketType === 'multi'
+              ? outcomes
+                  .filter((o) => o.title.trim())
+                  .map((o) => ({
+                    title: o.title.trim(),
+                    subtitle: o.subtitle.trim() || null,
+                  }))
+              : undefined,
           verification_sources: verificationSources
             .filter((s) => s.name.trim())
             .map((s) => ({ name: s.name.trim(), url: s.url.trim() || undefined })),
@@ -891,38 +923,97 @@ export default function CreateMarketPage() {
 
           {marketType === 'multi' && (
             <div className={ccSection}>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Options</label>
-                  <div className="space-y-2">
-                    {outcomes.map((o, i) => (
-                      <div key={i} className="flex gap-2">
-                        <input
-                          type="text"
-                          value={o}
-                          onChange={(e) => updateOutcome(i, e.target.value)}
-                          placeholder={`Option ${i + 1}`}
-                          className={`flex-1 ${ccInputSm}`}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeOutcome(i)}
-                          disabled={outcomes.length <= 2}
-                          className="p-2 text-gray-400 hover:text-red-400 disabled:opacity-50"
+              <div className="mb-3">
+                <label className="block text-sm font-medium text-gray-300">
+                  Opciones — título + subtítulo
+                </label>
+                <p className="mt-1 text-xs text-cc-text-muted">
+                  Pon sólo el título corto en el primer campo. Si necesitas dar
+                  contexto, ponlo en el subtítulo. No metas paréntesis ni la
+                  traducción al inglés dentro del título.
+                </p>
+              </div>
+              <div className="space-y-4">
+                {outcomes.map((o, i) => (
+                  <div
+                    key={i}
+                    className="rounded-lg border border-[#2d3748] bg-[#0f1419]/60 p-3"
+                  >
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="text-[10px] uppercase tracking-wide text-gray-500">
+                        Opción {i + 1}
+                      </span>
+                      {o.subtitle.length > 0 && (
+                        <span
+                          className={`text-[10px] tabular-nums ${
+                            o.subtitle.length > OUTCOME_SUBTITLE_MAX
+                              ? 'text-red-400'
+                              : 'text-gray-500'
+                          }`}
                         >
-                          <X className="w-4 h-4" />
-                        </button>
+                          {o.subtitle.length}/{OUTCOME_SUBTITLE_MAX}
+                        </span>
+                      )}
+                    </div>
+
+                    <label className="mb-1 block text-xs font-medium text-gray-400">
+                      Título <span className="text-red-400">*</span>
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={o.title}
+                        onChange={(e) => updateOutcomeTitle(i, e.target.value)}
+                        placeholder={`Ej. Seguridad pública`}
+                        maxLength={OUTCOME_TITLE_MAX}
+                        className={`flex-1 ${ccInputSm}`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeOutcome(i)}
+                        disabled={outcomes.length <= 2}
+                        className="p-2 text-gray-400 hover:text-red-400 disabled:opacity-50"
+                        title="Quitar opción"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <label className="mb-1 mt-3 block text-xs font-medium text-gray-400">
+                      Subtítulo <span className="text-gray-600">(opcional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={o.subtitle}
+                      onChange={(e) => updateOutcomeSubtitle(i, e.target.value)}
+                      placeholder="Detalle breve, ej. 'Policía de proximidad, videovigilancia'"
+                      maxLength={OUTCOME_SUBTITLE_MAX}
+                      className={`w-full ${ccInputSm}`}
+                    />
+
+                    {o.subtitle.trim() && (
+                      <div className="mt-3 rounded-md border border-white/5 bg-black/30 px-3 py-2">
+                        <p className="text-sm font-medium text-white">
+                          {o.title || `Opción ${i + 1}`}
+                        </p>
+                        <p className="mt-1 text-sm leading-snug text-gray-400">
+                          {o.subtitle}
+                        </p>
                       </div>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={addOutcome}
-                      className="flex items-center gap-1 text-sm text-emerald-400 hover:text-emerald-300"
-                    >
-                      <Plus className="w-4 h-4" />
-                      Add option
-                    </button>
+                    )}
                   </div>
-                </div>
-              )}
+                ))}
+                <button
+                  type="button"
+                  onClick={addOutcome}
+                  className="flex items-center gap-1 text-sm text-emerald-400 hover:text-emerald-300"
+                >
+                  <Plus className="w-4 h-4" />
+                  Agregar opción
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Verification */}
           <section className={ccSection}>
@@ -1211,15 +1302,26 @@ export default function CreateMarketPage() {
                   <div className="flex flex-col gap-1.5 mt-2">
                     {outcomes
                       .map((o, i) => ({ o, i }))
-                      .filter(({ o }) => o.trim())
+                      .filter(({ o }) => o.title.trim())
                       .slice(0, 4)
                       .map(({ o, i }) => (
                         <div key={i} className="flex items-center gap-3">
-                          <span className="text-sm text-gray-300 w-[100px] truncate">{o || `Option ${i + 1}`}</span>
+                          <span className="text-sm text-gray-300 w-[100px] truncate">
+                            {o.title || `Option ${i + 1}`}
+                          </span>
                           <div className="flex-1 h-7 rounded bg-gray-800/50 relative overflow-hidden">
                             <div
                               className="absolute left-0 top-0 h-full rounded bg-emerald-500/20"
-                              style={{ width: `${Math.max(8, 100 / Math.max(2, outcomes.filter((x) => x.trim()).length))}%` }}
+                              style={{
+                                width: `${Math.max(
+                                  8,
+                                  100 /
+                                    Math.max(
+                                      2,
+                                      outcomes.filter((x) => x.title.trim()).length
+                                    )
+                                )}%`,
+                              }}
                             />
                           </div>
                           <span className="text-sm font-semibold text-white w-10 text-right">—</span>

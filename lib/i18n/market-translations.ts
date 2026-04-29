@@ -21,9 +21,12 @@ export interface MarketWithTranslations {
 
 interface OutcomeWithTranslations {
   label: string
+  /** Optional one-line detail (migration 214). Spanish lives here; other locales in `translations`. */
+  subtitle?: string | null
   translations?: {
     en?: {
       label?: string
+      subtitle?: string
     }
     [key: string]: Record<string, string> | undefined
   } | null
@@ -74,6 +77,40 @@ export function getOutcomeLabel(
   }
 
   return autoTranslations[locale]?.[outcome.label] || outcome.label
+}
+
+/**
+ * Resolve the optional outcome subtitle for a locale.
+ *
+ * Lookup order:
+ *   1. translations.[locale].subtitle (per-locale override)
+ *   2. outcome.subtitle column (canonical Spanish, since this product is ES-first)
+ *   3. null (no subtitle)
+ *
+ * Returns null when there is nothing to render — callers should `if (sub)` guard
+ * before emitting markup so we don't insert empty `<p>` tags.
+ */
+export function getOutcomeSubtitle(
+  outcome: { subtitle?: string | null; translations?: unknown },
+  locale: string
+): string | null {
+  // Per-locale override wins. We accept either {label,subtitle} object form or
+  // the legacy {label} only form — `?.subtitle` resolves to undefined safely.
+  const tr = outcome.translations as
+    | Record<string, { subtitle?: string | null } | undefined>
+    | null
+    | undefined
+  if (locale && locale !== 'es') {
+    const localized = tr?.[locale]?.subtitle
+    if (typeof localized === 'string' && localized.trim()) {
+      return localized.trim()
+    }
+  }
+  const canonical = outcome.subtitle
+  if (typeof canonical === 'string' && canonical.trim()) {
+    return canonical.trim()
+  }
+  return null
 }
 
 /** Shorter label for tight UI: use one side of "ES / EN" bilingual strings. */

@@ -15,7 +15,7 @@ export async function fetchPulseEmbedDataForBlog(marketId: string): Promise<Puls
       status,
       resolution_date,
       is_pulse,
-      market_outcomes ( id, label, probability, sort_order, translations ),
+      market_outcomes ( id, label, subtitle, probability, sort_order, translations ),
       market_votes ( id, confidence, outcome_id, created_at, user_id, anonymous_participant_id, reasoning )
     `
     )

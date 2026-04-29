@@ -35,7 +35,10 @@ type MarketRow = {
   verification_sources: string[] | null
 }
 
-type OutcomeRow = { id: string; label: string }
+type OutcomeRow = { id: string; label: string; subtitle?: string | null }
+
+const OUTCOME_TITLE_MAX = 80
+const OUTCOME_SUBTITLE_MAX = 200
 
 function toDatetimeLocal(iso: string): string {
   const d = new Date(iso)
@@ -87,6 +90,11 @@ export default function EditMarketForm({
     for (const o of initialOutcomes) m[o.id] = o.label
     return m
   })
+  const [outcomeSubtitles, setOutcomeSubtitles] = useState<Record<string, string>>(() => {
+    const m: Record<string, string> = {}
+    for (const o of initialOutcomes) m[o.id] = (o.subtitle ?? '').toString()
+    return m
+  })
 
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -105,10 +113,16 @@ export default function EditMarketForm({
       if (descriptionEn.trim()) translations.en.description = descriptionEn.trim()
       if (resolutionCriteriaEn.trim()) translations.en.resolution_criteria = resolutionCriteriaEn.trim()
 
-      const outcomesPayload = initialOutcomes.map((o) => ({
-        id: o.id,
-        label: (outcomeLabels[o.id] ?? o.label).trim(),
-      }))
+      const outcomesPayload = initialOutcomes.map((o) => {
+        const sub = (outcomeSubtitles[o.id] ?? '').trim()
+        return {
+          id: o.id,
+          label: (outcomeLabels[o.id] ?? o.label).trim(),
+          // Send null on clear so the API knows to wipe the column rather
+          // than leave it untouched. Empty string is treated as "no subtitle".
+          subtitle: sub ? sub.slice(0, OUTCOME_SUBTITLE_MAX) : null,
+        }
+      })
 
       const res = await fetch(`/api/predictions/admin/markets/${market.id}`, {
         method: 'PATCH',
@@ -391,18 +405,81 @@ export default function EditMarketForm({
         )}
 
         <section className={ccSection}>
-          <h2 className="mb-4 text-lg font-semibold text-white">Outcomes (labels only)</h2>
-          <ul className="space-y-3">
-            {initialOutcomes.map((o) => (
-              <li key={o.id}>
-                <label className="mb-1 block text-xs text-gray-500">{o.id.slice(0, 8)}…</label>
-                <input
-                  value={outcomeLabels[o.id] ?? o.label}
-                  onChange={(e) => setOutcomeLabels((prev) => ({ ...prev, [o.id]: e.target.value }))}
-                  className={ccInput}
-                />
-              </li>
-            ))}
+          <h2 className="mb-1 text-lg font-semibold text-white">Outcomes (título + subtítulo)</h2>
+          <p className="mb-4 text-xs text-gray-500">
+            Escribe sólo el título corto en la primera línea. Si necesitas dar
+            contexto, ponlo en el subtítulo opcional. No metas la traducción al
+            inglés ni paréntesis dentro del título — eso rompe la presentación.
+          </p>
+          <ul className="space-y-5">
+            {initialOutcomes.map((o) => {
+              const titleVal = outcomeLabels[o.id] ?? o.label
+              const subVal = outcomeSubtitles[o.id] ?? ''
+              return (
+                <li key={o.id} className="rounded-lg border border-[#2d3748] bg-[#0f1419]/50 p-3">
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-[10px] uppercase tracking-wide text-gray-500">
+                      {o.id.slice(0, 8)}…
+                    </span>
+                    {subVal.length > 0 && (
+                      <span
+                        className={`text-[10px] tabular-nums ${
+                          subVal.length > OUTCOME_SUBTITLE_MAX
+                            ? 'text-red-400'
+                            : 'text-gray-500'
+                        }`}
+                      >
+                        {subVal.length}/{OUTCOME_SUBTITLE_MAX}
+                      </span>
+                    )}
+                  </div>
+
+                  <label className="mb-1 block text-xs font-medium text-gray-400">
+                    Título <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    value={titleVal}
+                    onChange={(e) =>
+                      setOutcomeLabels((prev) => ({
+                        ...prev,
+                        [o.id]: e.target.value.slice(0, OUTCOME_TITLE_MAX),
+                      }))
+                    }
+                    maxLength={OUTCOME_TITLE_MAX}
+                    required
+                    className={ccInput}
+                  />
+
+                  <label className="mb-1 mt-3 block text-xs font-medium text-gray-400">
+                    Subtítulo <span className="text-gray-600">(opcional)</span>
+                  </label>
+                  <input
+                    value={subVal}
+                    onChange={(e) =>
+                      setOutcomeSubtitles((prev) => ({
+                        ...prev,
+                        [o.id]: e.target.value.slice(0, OUTCOME_SUBTITLE_MAX),
+                      }))
+                    }
+                    maxLength={OUTCOME_SUBTITLE_MAX}
+                    placeholder="Detalle breve, ej. 'Policía de proximidad, videovigilancia'"
+                    className={ccInput}
+                  />
+                  <p className="mt-1 text-[11px] text-gray-500">
+                    Aparece debajo del título en la página del Pulse y en el panel
+                    de votación.
+                  </p>
+
+                  {/* Inline preview so the admin can see what voters will see. */}
+                  <div className="mt-3 rounded-md border border-white/5 bg-black/30 px-3 py-2">
+                    <p className="text-sm font-medium text-white">{titleVal || 'Título'}</p>
+                    {subVal.trim() ? (
+                      <p className="mt-1 text-sm leading-snug text-gray-400">{subVal}</p>
+                    ) : null}
+                  </div>
+                </li>
+              )
+            })}
           </ul>
         </section>
 

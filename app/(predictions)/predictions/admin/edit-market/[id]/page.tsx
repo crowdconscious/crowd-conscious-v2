@@ -30,7 +30,7 @@ export default async function EditMarketPage({ params }: { params: Promise<{ id:
 
   const { data: outcomes } = await admin
     .from('market_outcomes')
-    .select('id, label')
+    .select('id, label, subtitle')
     .eq('market_id', id)
     .order('sort_order', { ascending: true })
 

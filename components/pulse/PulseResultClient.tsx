@@ -31,6 +31,8 @@ export type PulseFeaturedReasoning = {
 export type PulseOutcomeRow = {
   id: string
   label: string
+  /** Optional one-line detail (migration 214). Spanish lives here; non-ES locales in `translations`. */
+  subtitle?: string | null
   probability: number
   sort_order: number | null
   translations?: unknown

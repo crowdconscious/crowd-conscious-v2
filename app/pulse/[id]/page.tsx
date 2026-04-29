@@ -117,7 +117,7 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
       sponsor_name,
       sponsor_logo_url,
       sponsor_account_id,
-      market_outcomes ( id, label, probability, sort_order, translations ),
+      market_outcomes ( id, label, subtitle, probability, sort_order, translations ),
       market_votes ( id, confidence, outcome_id, created_at, user_id, anonymous_participant_id, reasoning )
     `
     )

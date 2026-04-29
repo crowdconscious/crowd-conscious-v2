@@ -477,6 +477,11 @@ export interface Database {
           id: string
           market_id: string
           label: string
+          /**
+           * Optional one-line detail rendered below the label in detail / result UI.
+           * Added by migration 214. Max 200 chars (DB check constraint).
+           */
+          subtitle: string | null
           description: string | null
           probability: number
           vote_count: number
@@ -489,6 +494,7 @@ export interface Database {
           id?: string
           market_id: string
           label: string
+          subtitle?: string | null
           description?: string | null
           probability?: number
           vote_count?: number
@@ -501,6 +507,7 @@ export interface Database {
           id?: string
           market_id?: string
           label?: string
+          subtitle?: string | null
           description?: string | null
           probability?: number
           vote_count?: number

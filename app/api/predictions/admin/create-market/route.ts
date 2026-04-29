@@ -149,12 +149,54 @@ export async function POST(request: NextRequest) {
     })()
 
     if (market_type === 'multi' && Array.isArray(outcomes) && outcomes.length >= 2) {
-      const outcomeLabels = outcomes
-        .map((o) => (typeof o === 'string' ? o : o?.label || o?.name)?.trim())
-        .filter(Boolean)
-      if (outcomeLabels.length < 2) {
-        return Response.json({ error: 'Multi-choice requires at least 2 options' }, { status: 400 })
+      // Outcomes can arrive in three shapes for backwards compatibility:
+      //   1. The new structured shape: { title, subtitle? }      ← admin UI
+      //   2. The old structured shape: { label, name? }          ← legacy callers
+      //   3. A bare string                                       ← scripts / RPC tests
+      // After this normalization we have a parallel array of titles + optional
+      // subtitles, indexed the same way the create_multi_market RPC will insert
+      // them (sort_order 0..N-1, in array order).
+      type OutcomeInput = {
+        title: string | null
+        subtitle: string | null
       }
+      const normalizedOutcomes: OutcomeInput[] = outcomes
+        .map((o): OutcomeInput | null => {
+          if (typeof o === 'string') {
+            const t = o.trim()
+            return t ? { title: t, subtitle: null } : null
+          }
+          if (o && typeof o === 'object') {
+            const titleRaw =
+              (typeof o.title === 'string' ? o.title : '') ||
+              (typeof o.label === 'string' ? o.label : '') ||
+              (typeof o.name === 'string' ? o.name : '')
+            const subRaw = typeof o.subtitle === 'string' ? o.subtitle : ''
+            const title = titleRaw.trim()
+            if (!title) return null
+            const subtitle = subRaw.trim()
+            if (subtitle.length > 200) {
+              // Mirror the DB check constraint so we fail with a useful message
+              // instead of a 500 from Postgres.
+              return null
+            }
+            return { title, subtitle: subtitle || null }
+          }
+          return null
+        })
+        .filter((o): o is OutcomeInput => o !== null && !!o.title)
+
+      if (normalizedOutcomes.length < 2) {
+        return Response.json(
+          {
+            error:
+              'Multi-choice requires at least 2 options (each with a non-empty title up to 80 chars and an optional subtitle up to 200 chars).',
+          },
+          { status: 400 }
+        )
+      }
+
+      const outcomeLabels = normalizedOutcomes.map((o) => o.title as string)
 
       const { data: marketId, error: rpcError } = await admin.rpc('create_multi_market', {
         p_title: title.trim(),
@@ -193,6 +235,37 @@ export async function POST(request: NextRequest) {
         updatePayload.cover_image_url = cover_image_url.trim() || null
       }
       await admin.from('prediction_markets').update(updatePayload).eq('id', marketId)
+
+      // Persist optional subtitles on the just-created outcomes. The RPC
+      // `create_multi_market` inserts them in array order with sort_order
+      // starting at 0, so we can match the input array index back to a row
+      // by sort_order. We only update when at least one subtitle was given;
+      // otherwise we save a network round-trip.
+      const hasAnySubtitle = normalizedOutcomes.some((o) => o.subtitle !== null)
+      if (hasAnySubtitle) {
+        const { data: createdOutcomes } = await admin
+          .from('market_outcomes')
+          .select('id, sort_order')
+          .eq('market_id', marketId)
+          .order('sort_order', { ascending: true })
+        if (createdOutcomes) {
+          for (let i = 0; i < normalizedOutcomes.length; i++) {
+            const sub = normalizedOutcomes[i].subtitle
+            if (sub === null) continue
+            const row = createdOutcomes.find((r) => (r.sort_order ?? 0) === i)
+            if (!row) continue
+            const { error: subErr } = await admin
+              .from('market_outcomes')
+              .update({ subtitle: sub })
+              .eq('id', row.id)
+            if (subErr) {
+              // Soft-fail: the market and outcomes exist; the admin can fix
+              // subtitles via the edit form. Don't 500 the whole request.
+              console.error('Outcome subtitle write failed:', subErr)
+            }
+          }
+        }
+      }
 
       // Auto-apply active category sponsor if one exists for this category
       const { data: categorySponsor } = await admin

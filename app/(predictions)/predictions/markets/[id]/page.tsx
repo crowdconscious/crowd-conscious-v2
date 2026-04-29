@@ -143,7 +143,7 @@ export default async function MarketDetailPage({
       .single(),
     supabase
       .from('market_outcomes')
-      .select('id, label, probability, vote_count, total_confidence, is_winner, sort_order, translations')
+      .select('id, label, subtitle, probability, vote_count, total_confidence, is_winner, sort_order, translations')
       .eq('market_id', id)
       .order('sort_order', { ascending: true }),
     user
@@ -168,11 +168,15 @@ export default async function MarketDetailPage({
   const outcomesList = (outcomes || []).map((o) => ({
     id: o.id,
     label: o.label,
+    subtitle: (o as { subtitle?: string | null }).subtitle ?? null,
     probability: Number(o.probability),
     vote_count: o.vote_count ?? 0,
     total_confidence: o.total_confidence ?? 0,
     is_winner: o.is_winner,
-    translations: (o as { translations?: unknown }).translations,
+    translations: (o as { translations?: unknown }).translations as
+      | Record<string, { label?: string; subtitle?: string }>
+      | null
+      | undefined,
   }))
 
   let myVote: { outcome_id: string; outcome_label: string; confidence: number; xp_earned: number; is_correct: boolean | null; bonus_xp: number } | null = null

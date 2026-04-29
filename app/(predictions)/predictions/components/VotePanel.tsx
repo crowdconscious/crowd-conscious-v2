@@ -10,6 +10,7 @@ import {
   getMarketText,
   getOutcomeCardLabel,
   getOutcomeLabel,
+  getOutcomeSubtitle,
   type MarketWithTranslations,
 } from '@/lib/i18n/market-translations'
 import { useLocale } from '@/lib/i18n/useLocale'
@@ -33,11 +34,13 @@ type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row'
 type Outcome = {
   id: string
   label: string
+  /** Optional one-line detail (migration 214). Spanish lives here; non-ES in `translations`. */
+  subtitle?: string | null
   probability: number
   vote_count: number
   total_confidence: number
   is_winner: boolean | null
-  translations?: Record<string, { label?: string }> | null
+  translations?: Record<string, { label?: string; subtitle?: string }> | null
 }
 
 type MyVote = {
@@ -339,6 +342,7 @@ export function VotePanel({
     const pct = Math.round(toDisplayPercent(o.probability || 0))
     const primary = getOutcomeCardLabel(o, locale)
     const hint = bilingualHint(o, locale)
+    const subtitle = getOutcomeSubtitle(o, locale)
     // Pre-vote cards are choices, not results. The previous full-width progress
     // bar inside each option made users think they should slide it instead of
     // tapping. We now render a plain tappable row with the community % as a
@@ -372,6 +376,15 @@ export function VotePanel({
             </span>
             <div className="min-w-0">
               <p className="text-sm font-medium text-white leading-snug">{primary}</p>
+              {/* Subtitle is the new structured detail line (migration 214).
+                  Bilingual hint is the legacy "(English label)" preview that
+                  only shows when the canonical label uses the " / " separator.
+                  Both can coexist on a row that has a subtitle AND happens to
+                  also be bilingual; we render subtitle first because it's the
+                  authoritative source going forward. */}
+              {subtitle ? (
+                <p className="mt-1 text-sm leading-snug text-gray-400">{subtitle}</p>
+              ) : null}
               {hint ? <p className="text-[11px] text-gray-500 mt-0.5">({hint})</p> : null}
             </div>
           </div>
@@ -551,14 +564,24 @@ export function VotePanel({
             {sorted.map((o) => {
               const pct = Math.round(toDisplayPercent(o.probability || 0))
               const isYours = o.id === displayOutcomeId
+              const subtitle = getOutcomeSubtitle(o, locale)
               return (
                 <div key={o.id} className="space-y-1">
                   <div className="flex justify-between text-sm gap-2">
-                    <span
-                      className={`leading-snug ${isYours ? 'text-emerald-400 font-medium' : 'text-gray-300'}`}
-                    >
-                      {getOutcomeCardLabel(o, locale)}
-                    </span>
+                    <div className="min-w-0">
+                      <span
+                        className={`block leading-snug ${
+                          isYours ? 'text-emerald-400 font-medium' : 'text-gray-300'
+                        }`}
+                      >
+                        {getOutcomeCardLabel(o, locale)}
+                      </span>
+                      {subtitle ? (
+                        <span className="block text-sm leading-snug text-gray-500">
+                          {subtitle}
+                        </span>
+                      ) : null}
+                    </div>
                     <span className={`shrink-0 ${isYours ? 'text-emerald-400' : 'text-gray-500'}`}>
                       {pct}%
                     </span>

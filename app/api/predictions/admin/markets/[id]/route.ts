@@ -141,9 +141,33 @@ export async function PATCH(
         if (!o || typeof o.id !== 'string' || typeof o.label !== 'string') continue
         const label = o.label.trim()
         if (!label) continue
+
+        // Subtitle handling:
+        //   * `subtitle: "..."` → write trimmed value (capped at 200, mirroring
+        //     the DB check constraint added in migration 214).
+        //   * `subtitle: null`   → explicitly clear the column.
+        //   * `subtitle: undefined` (key omitted) → leave column untouched.
+        // The form always sends one of the first two so we never accidentally
+        // wipe a subtitle just because the field was missing from the payload.
+        const update: Record<string, unknown> = { label }
+        if ('subtitle' in o) {
+          if (o.subtitle === null) {
+            update.subtitle = null
+          } else if (typeof o.subtitle === 'string') {
+            const sub = o.subtitle.trim()
+            if (sub.length > 200) {
+              return NextResponse.json(
+                { error: 'Outcome subtitle must be 200 characters or fewer' },
+                { status: 400 }
+              )
+            }
+            update.subtitle = sub || null
+          }
+        }
+
         const { error: oErr } = await admin
           .from('market_outcomes')
-          .update({ label })
+          .update(update)
           .eq('id', o.id)
           .eq('market_id', id)
         if (oErr) {
