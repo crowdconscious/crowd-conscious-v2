@@ -362,6 +362,11 @@ export function MarketDetailClient({
   }
 
   const isResolved = market.status === 'resolved'
+  // Pre-vote we hide all "what others think" signals (community probability,
+  // donut, multi-outcome bar, time-series charts) so the user is not anchored
+  // before they cast their own vote. Resolved markets always show full results.
+  const hasVoted = !!myVote || !!guestVoteRecord
+  const shouldRevealResults = hasVoted || isResolved
   const resolutionLabel = (market as { resolution?: string }).resolution ?? (market.resolved_outcome ? 'YES' : 'NO')
   const resolvedDate = market.resolved_at ? formatDate(market.resolved_at, locale) : ''
   const categoryLabel = categoryDisplay(config, locale)
@@ -588,38 +593,43 @@ export function MarketDetailClient({
             </div>
           )}
 
-          {/* Probability + engagement (registered vs total reach) */}
+          {/* Probability + engagement (registered vs total reach).
+              Pre-vote: render only the engagement count + a soft hint so the
+              user isn't anchored by community probability before they vote.
+              Post-vote / resolved: full charts + donut + history. */}
           <div className="bg-cc-card border border-cc-border rounded-xl p-6">
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-6">
               <div className="flex flex-wrap gap-8 items-end">
-                <div>
-                  <p className="text-slate-400 text-sm">
-                    {locale === 'en' ? 'Community probability' : 'Probabilidad de la comunidad'}
-                  </p>
-                  <p className="text-3xl font-bold text-emerald-400">
-                    {isMultiOutcome && allOutcomesTied
-                      ? locale === 'es'
-                        ? 'Empate — sin líder aún'
-                        : 'Equal — no leading outcome yet'
-                      : isMultiOutcome && leadingOutcome
-                        ? `${getOutcomeLabel(leadingOutcome, locale)} ${Math.round(toDisplayPercent(leadingOutcome.probability || 0))}%`
-                        : `${Math.round(prob)}% ${locale === 'es' ? 'SÍ' : 'YES'}`}
-                  </p>
-                  <p className="text-xs text-slate-500 mt-1">
-                    {locale === 'en'
-                      ? 'Community signal · all votes (registered + guests)'
-                      : 'Señal de la comunidad · todos los votos (registrados e invitados)'}
-                    {registeredVoteCount > 0 && registeredVoteCount < engagementCount ? (
-                      <span>
-                        {' '}
-                        · {registeredVoteCount.toLocaleString()}{' '}
-                        {locale === 'en' ? 'registered' : 'registrados'} ·{' '}
-                        {(engagementCount - registeredVoteCount).toLocaleString()}{' '}
-                        {locale === 'en' ? 'guests' : 'invitados'}
-                      </span>
-                    ) : null}
-                  </p>
-                </div>
+                {shouldRevealResults && (
+                  <div className="animate-[fade-in_300ms_ease-out]">
+                    <p className="text-slate-400 text-sm">
+                      {locale === 'en' ? 'Community probability' : 'Probabilidad de la comunidad'}
+                    </p>
+                    <p className="text-3xl font-bold text-emerald-400">
+                      {isMultiOutcome && allOutcomesTied
+                        ? locale === 'es'
+                          ? 'Empate — sin líder aún'
+                          : 'Equal — no leading outcome yet'
+                        : isMultiOutcome && leadingOutcome
+                          ? `${getOutcomeLabel(leadingOutcome, locale)} ${Math.round(toDisplayPercent(leadingOutcome.probability || 0))}%`
+                          : `${Math.round(prob)}% ${locale === 'es' ? 'SÍ' : 'YES'}`}
+                    </p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      {locale === 'en'
+                        ? 'Community signal · all votes (registered + guests)'
+                        : 'Señal de la comunidad · todos los votos (registrados e invitados)'}
+                      {registeredVoteCount > 0 && registeredVoteCount < engagementCount ? (
+                        <span>
+                          {' '}
+                          · {registeredVoteCount.toLocaleString()}{' '}
+                          {locale === 'en' ? 'registered' : 'registrados'} ·{' '}
+                          {(engagementCount - registeredVoteCount).toLocaleString()}{' '}
+                          {locale === 'en' ? 'guests' : 'invitados'}
+                        </span>
+                      ) : null}
+                    </p>
+                  </div>
+                )}
                 <div>
                   <p className="text-slate-400 text-sm">
                     {locale === 'en' ? 'Total participation' : 'Participación total'}
@@ -628,46 +638,56 @@ export function MarketDetailClient({
                     {engagementCount.toLocaleString()}
                   </p>
                   <p className="text-xs text-slate-500 mt-1">
-                    {locale === 'en' ? 'Vote rows (same pool as probability)' : 'Filas de voto (misma base que la probabilidad)'}
+                    {shouldRevealResults
+                      ? locale === 'en'
+                        ? 'Vote rows (same pool as probability)'
+                        : 'Filas de voto (misma base que la probabilidad)'
+                      : locale === 'en'
+                        ? 'Vote to unlock the community probability and charts'
+                        : 'Vota para ver la probabilidad de la comunidad y las gráficas'}
                   </p>
                 </div>
               </div>
-              <div
-                className="relative h-24 w-24 rounded-full flex items-center justify-center shrink-0 mx-auto sm:mx-0"
-                style={{
-                  background: `conic-gradient(#10b981 0% ${prob}%, #334155 ${prob}% 100%)`,
-                }}
-              >
-                <span className="absolute inset-0 m-auto flex h-16 w-16 items-center justify-center rounded-full bg-cc-bg text-2xl font-bold text-white">
-                  {Math.round(prob)}%
-                </span>
-              </div>
-            </div>
-            <div className="h-3 bg-gray-800 rounded-full overflow-hidden flex mb-6">
-              {isMultiOutcome && outcomes.length > 0 ? (
-                outcomes.map((o, i) => (
-                  <div
-                    key={o.id}
-                    className="h-full transition-all"
-                    style={{
-                      width: `${toDisplayPercent(o.probability || 0)}%`,
-                      backgroundColor: i === 0 ? '#10b981' : ['#ef4444', '#f59e0b', '#6366f1'][(i - 1) % 3] + '99',
-                    }}
-                  />
-                ))
-              ) : (
-                <>
-                  <div
-                    className="bg-emerald-500 h-full transition-all"
-                    style={{ width: `${prob}%` }}
-                  />
-                  <div
-                    className="bg-red-500/60 h-full transition-all"
-                    style={{ width: `${100 - prob}%` }}
-                  />
-                </>
+              {shouldRevealResults && (
+                <div
+                  className="relative h-24 w-24 rounded-full flex items-center justify-center shrink-0 mx-auto sm:mx-0 animate-[fade-in_300ms_ease-out]"
+                  style={{
+                    background: `conic-gradient(#10b981 0% ${prob}%, #334155 ${prob}% 100%)`,
+                  }}
+                >
+                  <span className="absolute inset-0 m-auto flex h-16 w-16 items-center justify-center rounded-full bg-cc-bg text-2xl font-bold text-white">
+                    {Math.round(prob)}%
+                  </span>
+                </div>
               )}
             </div>
+            {shouldRevealResults && (
+              <div className="h-3 bg-gray-800 rounded-full overflow-hidden flex mb-6 animate-[fade-in_300ms_ease-out]">
+                {isMultiOutcome && outcomes.length > 0 ? (
+                  outcomes.map((o, i) => (
+                    <div
+                      key={o.id}
+                      className="h-full transition-all"
+                      style={{
+                        width: `${toDisplayPercent(o.probability || 0)}%`,
+                        backgroundColor: i === 0 ? '#10b981' : ['#ef4444', '#f59e0b', '#6366f1'][(i - 1) % 3] + '99',
+                      }}
+                    />
+                  ))
+                ) : (
+                  <>
+                    <div
+                      className="bg-emerald-500 h-full transition-all"
+                      style={{ width: `${prob}%` }}
+                    />
+                    <div
+                      className="bg-red-500/60 h-full transition-all"
+                      style={{ width: `${100 - prob}%` }}
+                    />
+                  </>
+                )}
+              </div>
+            )}
 
             {secondaryLoading && (
               <div className="space-y-3 mt-4" aria-hidden>
@@ -676,7 +696,7 @@ export function MarketDetailClient({
               </div>
             )}
 
-            {!secondaryLoading && historyChartData.length > 0 && (
+            {!secondaryLoading && historyChartData.length > 0 && shouldRevealResults && (
               <>
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-slate-400 text-sm">
@@ -764,10 +784,15 @@ export function MarketDetailClient({
             )}
           </div>
 
-          <VoteReasonings marketId={market.id} outcomes={outcomes} locale={locale} />
+          {shouldRevealResults && (
+            <VoteReasonings marketId={market.id} outcomes={outcomes} locale={locale} />
+          )}
 
-          {/* Sentiment Gauge - only show when we have data */}
-          {sentiment.length > 0 && (
+          {/* Sentiment Gauge - only show when we have data AND user has voted.
+              Reading "what the room feels" before casting your own opinion is
+              a textbook anchoring source, so we hide it pre-vote alongside
+              the percentages. */}
+          {shouldRevealResults && sentiment.length > 0 && (
             <div className="bg-cc-card border border-cc-border rounded-xl p-6">
               <h3 className="font-semibold text-white mb-3">
                 Sentimiento: {getSentimentLabel(latestSentiment)}

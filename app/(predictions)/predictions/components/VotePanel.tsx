@@ -206,6 +206,11 @@ export function VotePanel({
   const isResolved = market.status === 'resolved'
   const isEditing = isAuthenticated && !!myVote
   const guestHasVoted = !isAuthenticated && !!guestVoteRecord
+  // Single source of truth for "should the per-option community % be visible".
+  // Pre-vote we hide the numbers to remove anchoring bias; resolved markets
+  // always reveal them so people can see who was right.
+  const hasVoted = isEditing || guestHasVoted
+  const shouldRevealResults = hasVoted || isResolved
   const hasYesNoLabels = outcomes.some((o) => {
     const l = getOutcomeLabel(o, locale).toLowerCase()
     return l === 'yes' || l === 'sí' || l === 'si' || l === 'no'
@@ -389,13 +394,23 @@ export function VotePanel({
             </div>
           </div>
           <div className="text-right shrink-0">
-            <span
-              className={`text-xs font-medium ${
-                isSelected ? 'text-emerald-400' : 'text-gray-500'
-              }`}
-            >
-              {pct}%
-            </span>
+            {shouldRevealResults ? (
+              <span
+                key="pct-revealed"
+                className={`text-xs font-medium animate-[fade-in_300ms_ease-out] ${
+                  isSelected ? 'text-emerald-400' : 'text-gray-500'
+                }`}
+                aria-live="polite"
+              >
+                {pct}%
+              </span>
+            ) : (
+              <span aria-hidden className="text-xs font-medium text-transparent">
+                {/* Reserve the same horizontal slot the % occupies so the row
+                    layout doesn't jump when results are revealed after vote. */}
+                00%
+              </span>
+            )}
           </div>
         </div>
       </button>
@@ -725,6 +740,14 @@ export function VotePanel({
 
       <div className="px-4 py-4">
         <div className="flex flex-col gap-2">{outcomes.map((o) => renderOutcomeCard(o))}</div>
+
+        {!shouldRevealResults && (
+          <p className="mt-3 text-[11px] text-gray-500 text-center">
+            {locale === 'es'
+              ? 'Vota para ver lo que opina la comunidad.'
+              : 'Vote to see what the community thinks.'}
+          </p>
+        )}
 
         {confidenceBlock}
 

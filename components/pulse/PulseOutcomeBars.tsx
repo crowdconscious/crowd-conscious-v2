@@ -25,10 +25,16 @@ export default function PulseOutcomeBars({
   outcomes,
   locale,
   className = '',
+  // Pre-vote (Pulse share / blog embed) we render only label + subtitle and
+  // hide both the per-option percentage AND the bar fill, so visitors can't
+  // see the community signal before they cast their own vote. The caller is
+  // expected to render a CTA hint nearby.
+  revealResults = true,
 }: {
   outcomes: PulseOutcomeRow[]
   locale: 'es' | 'en'
   className?: string
+  revealResults?: boolean
 }) {
   return (
     <div className={`space-y-5 ${className}`.trim()}>
@@ -41,19 +47,30 @@ export default function PulseOutcomeBars({
           <div key={o.id}>
             <div className="mb-1.5 flex justify-between gap-3 text-sm">
               <span className="font-medium text-slate-200">{label}</span>
-              <span className="tabular-nums text-emerald-400">{pct}%</span>
+              {revealResults ? (
+                <span className="tabular-nums text-emerald-400 animate-[fade-in_300ms_ease-out]">
+                  {pct}%
+                </span>
+              ) : null}
             </div>
             {renderSubtitle ? (
               <p className="mb-1.5 text-sm leading-snug text-gray-400">
                 {subtitle}
               </p>
             ) : null}
-            <div className="h-3 w-full overflow-hidden rounded-full bg-black/40">
+            {revealResults ? (
+              <div className="h-3 w-full overflow-hidden rounded-full bg-black/40 animate-[fade-in_300ms_ease-out]">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-emerald-600 to-emerald-400"
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+            ) : (
               <div
-                className="h-full rounded-full bg-gradient-to-r from-emerald-600 to-emerald-400"
-                style={{ width: `${pct}%` }}
+                aria-hidden
+                className="h-3 w-full overflow-hidden rounded-full bg-white/[0.04] border border-dashed border-white/10"
               />
-            </div>
+            )}
           </div>
         )
       })}

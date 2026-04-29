@@ -203,6 +203,7 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
         locale={locale}
         isEnhancedView={isEnhancedView}
         featuredReasonings={featuredReasonings}
+        currentUserId={user?.id ?? null}
       />
     </>
   )

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { getMarketText, getOutcomeLabel } from '@/lib/i18n/market-translations'
 import { createClient } from '@/lib/supabase-client'
+import { getVotedGuestIdForMarket } from '@/lib/guest-vote-storage'
 import ConfidenceHistogram from './ConfidenceHistogram'
 import VoteTimeline from './VoteTimeline'
 import PulseOutcomeBars from './PulseOutcomeBars'
@@ -54,6 +55,8 @@ type Props = {
   locale: 'es' | 'en'
   isEnhancedView: boolean
   featuredReasonings?: PulseFeaturedReasoning[]
+  /** Server-resolved auth user id; used to detect "this user has voted" via the votes payload. */
+  currentUserId?: string | null
 }
 
 export default function PulseResultClient({
@@ -72,12 +75,22 @@ export default function PulseResultClient({
   locale,
   isEnhancedView,
   featuredReasonings = [],
+  currentUserId = null,
 }: Props) {
   const [votes, setVotes] = useState<PulseVoteRow[]>(initialVotes)
+  // Guest vote detection runs only on the client (localStorage). Default to
+  // false on first render so the SSR HTML matches "not voted" and we then
+  // upgrade to "voted" inside useEffect for guests who have a local record.
+  const [guestHasVoted, setGuestHasVoted] = useState(false)
 
   useEffect(() => {
     setVotes(initialVotes)
   }, [initialVotes])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    setGuestHasVoted(!!getVotedGuestIdForMarket(marketId))
+  }, [marketId])
 
   const supabase = useMemo(() => createClient(), [])
 
@@ -133,6 +146,15 @@ export default function PulseResultClient({
       ? votes.reduce((sum, v) => sum + (typeof v.confidence === 'number' ? v.confidence : 0), 0) /
         totalVotes
       : 0
+
+  // Reveal the community signal (per-option %, charts, insights, reasonings)
+  // only to people who have already cast their vote, OR who are authorized
+  // analytics viewers (admin / sponsor token), OR when the market is
+  // resolved/closed (no more bias to introduce).
+  const isClosedOrResolved = status === 'resolved' || status === 'closed'
+  const authedHasVoted = !!currentUserId && votes.some((v) => v.user_id === currentUserId)
+  const hasVoted = authedHasVoted || guestHasVoted
+  const shouldRevealResults = isEnhancedView || isClosedOrResolved || hasVoted
 
   const strongCount = votes.filter(
     (v) => typeof v.confidence === 'number' && v.confidence >= 8
@@ -339,10 +361,35 @@ export default function PulseResultClient({
             </div>
 
             <div className="pulse-section mt-8">
-              <PulseOutcomeBars outcomes={outcomes} locale={locale} />
+              <PulseOutcomeBars
+                outcomes={outcomes}
+                locale={locale}
+                revealResults={shouldRevealResults}
+              />
             </div>
 
-            {executiveSummary ? (
+            {!shouldRevealResults && (
+              <div className="pulse-section mt-6 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.05] p-5 text-center">
+                <p className="text-sm font-medium text-emerald-300">
+                  {locale === 'es'
+                    ? 'Vota para ver lo que opina la comunidad'
+                    : 'Vote to see what the community thinks'}
+                </p>
+                <p className="mt-1 text-xs text-emerald-400/70">
+                  {locale === 'es'
+                    ? 'Mostramos las gráficas, insights y razonamientos cuando ya votaste.'
+                    : 'We unlock the charts, insights and reasonings once you cast your vote.'}
+                </p>
+                <Link
+                  href={`/predictions/markets/${marketId}#vote`}
+                  className="mt-4 inline-flex min-h-[44px] items-center justify-center rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-900/30 transition hover:brightness-110"
+                >
+                  {locale === 'es' ? 'Dar mi opinión →' : 'Cast my vote →'}
+                </Link>
+              </div>
+            )}
+
+            {shouldRevealResults && executiveSummary ? (
               <div className="pulse-section mt-6 rounded-xl border border-emerald-500/20 bg-[#1a2029] p-5">
                 <h3 className="mb-2 text-sm font-semibold text-emerald-400">
                   {'💡 '}
@@ -354,7 +401,7 @@ export default function PulseResultClient({
               </div>
             ) : null}
 
-            {pulseInsights ? (
+            {shouldRevealResults && pulseInsights ? (
               <div className="pulse-section mt-6 rounded-xl border border-white/10 bg-[#1a2029] p-5">
                 <h3 className="mb-3 text-sm font-semibold text-emerald-400">
                   {'📊 '}
@@ -431,10 +478,12 @@ export default function PulseResultClient({
               </div>
             </div>
 
-            <div className="mt-8 space-y-6">
-              <ConfidenceHistogram votes={votes} locale={locale} />
-              {totalVotes > 0 ? <VoteTimeline votes={votes} locale={locale} /> : null}
-            </div>
+            {shouldRevealResults && (
+              <div className="mt-8 space-y-6 animate-[fade-in_300ms_ease-out]">
+                <ConfidenceHistogram votes={votes} locale={locale} />
+                {totalVotes > 0 ? <VoteTimeline votes={votes} locale={locale} /> : null}
+              </div>
+            )}
 
             {isEnhancedView && (
               <div className="mt-8 space-y-6">
@@ -469,7 +518,7 @@ export default function PulseResultClient({
               </div>
             )}
 
-            {featuredReasonings.length > 0 ? (
+            {shouldRevealResults && featuredReasonings.length > 0 ? (
               <div className="pulse-section pulse-featured-reasonings mt-6 rounded-xl border border-white/10 bg-[#1a2029] p-5">
                 <h3 className="mb-4 text-sm font-bold text-white">
                   💬{' '}

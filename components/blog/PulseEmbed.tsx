@@ -1,8 +1,9 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { getMarketText } from '@/lib/i18n/market-translations'
+import { getVotedGuestIdForMarket } from '@/lib/guest-vote-storage'
 import ConfidenceHistogram from '@/components/pulse/ConfidenceHistogram'
 import VoteTimeline from '@/components/pulse/VoteTimeline'
 import PulseOutcomeBars from '@/components/pulse/PulseOutcomeBars'
@@ -48,6 +49,20 @@ export default function PulseEmbed({ data, locale, components, showOwnHeading }:
       ? votes.reduce((sum, v) => sum + (typeof v.confidence === 'number' ? v.confidence : 0), 0) /
         totalVotes
       : 0
+
+  // Hide community % / charts / insights from blog readers who haven't voted
+  // yet. We can only check guest vote status from the browser (no server
+  // user context inside an embed), so authenticated voters whose browser
+  // doesn't have the localStorage flag will also see the gated state — they
+  // can click the CTA to land on the market detail and see results there.
+  // Closed/resolved markets always reveal so historical embeds keep working.
+  const isClosedOrResolved = status === 'resolved' || status === 'closed'
+  const [hasVoted, setHasVoted] = useState(false)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    setHasVoted(!!getVotedGuestIdForMarket(marketId))
+  }, [marketId])
+  const shouldRevealResults = isClosedOrResolved || hasVoted
 
   const question = getMarketText(
     {
@@ -112,11 +127,31 @@ export default function PulseEmbed({ data, locale, components, showOwnHeading }:
 
         {show('results_bars') && outcomes.length > 0 ? (
           <div className="mt-8">
-            <PulseOutcomeBars outcomes={outcomes} locale={locale} />
+            <PulseOutcomeBars
+              outcomes={outcomes}
+              locale={locale}
+              revealResults={shouldRevealResults}
+            />
           </div>
         ) : null}
 
-        {show('executive_summary') && executiveSummary ? (
+        {!shouldRevealResults && outcomes.length > 0 && (
+          <div className="mt-6 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.05] p-5 text-center">
+            <p className="text-sm font-medium text-emerald-300">
+              {locale === 'es'
+                ? 'Vota para ver lo que opina la comunidad'
+                : 'Vote to see what the community thinks'}
+            </p>
+            <Link
+              href={`/predictions/markets/${marketId}#vote`}
+              className="mt-3 inline-flex min-h-[44px] items-center justify-center rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-900/30 transition hover:brightness-110"
+            >
+              {locale === 'es' ? 'Dar mi opinión →' : 'Cast my vote →'}
+            </Link>
+          </div>
+        )}
+
+        {shouldRevealResults && show('executive_summary') && executiveSummary ? (
           <div className="mt-6 rounded-xl border border-emerald-500/20 bg-[#1a2029] p-5">
             <h4 className="mb-2 text-sm font-semibold text-emerald-400">
               💡 {locale === 'es' ? 'Resumen ejecutivo' : 'Executive Summary'}
@@ -127,7 +162,7 @@ export default function PulseEmbed({ data, locale, components, showOwnHeading }:
           </div>
         ) : null}
 
-        {show('key_insights') && pulseInsights && totalVotes > 0 ? (
+        {shouldRevealResults && show('key_insights') && pulseInsights && totalVotes > 0 ? (
           <div className="mt-6 rounded-xl border border-white/10 bg-[#1a2029] p-5">
             <h4 className="mb-3 text-sm font-semibold text-emerald-400">
               📊 {locale === 'es' ? 'Insights clave' : 'Key insights'}
@@ -203,8 +238,8 @@ export default function PulseEmbed({ data, locale, components, showOwnHeading }:
           </div>
         ) : null}
 
-        {show('confidence_chart') || show('vote_timeline') ? (
-          <div className="mt-8 flex flex-col gap-6">
+        {shouldRevealResults && (show('confidence_chart') || show('vote_timeline')) ? (
+          <div className="mt-8 flex flex-col gap-6 animate-[fade-in_300ms_ease-out]">
             {show('confidence_chart') ? <ConfidenceHistogram votes={votes} locale={locale} /> : null}
             {show('vote_timeline') && totalVotes > 0 ? <VoteTimeline votes={votes} locale={locale} /> : null}
           </div>
