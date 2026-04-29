@@ -52,6 +52,11 @@ export default function CreateMarketPage() {
   const [successId, setSuccessId] = useState<string | null>(null)
 
   const [title, setTitle] = useState('')
+  // Short, blog-quality blurb (≤280 chars) rendered between the title and the
+  // vote panel. Required client-side for new Pulses (the DB column is nullable
+  // so old rows still load, but every new Pulse should ship with one).
+  const [descriptionShort, setDescriptionShort] = useState('')
+  const DESCRIPTION_SHORT_MAX = 280
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState('')
   const [initialProbability, setInitialProbability] = useState(50)
@@ -83,6 +88,7 @@ export default function CreateMarketPage() {
   const [consciousFundPercentage, setConsciousFundPercentage] = useState(20)
   const [enTitle, setEnTitle] = useState('')
   const [enDescription, setEnDescription] = useState('')
+  const [enDescriptionShort, setEnDescriptionShort] = useState('')
   const [enResolutionCriteria, setEnResolutionCriteria] = useState('')
 
   const [isPulse, setIsPulse] = useState(false)
@@ -203,6 +209,9 @@ export default function CreateMarketPage() {
     const prefillCriteriaEn = params.get('resolution_criteria_en')
     const prefillDesc = params.get('description') ?? params.get('description_es')
     const prefillDescEn = params.get('description_en')
+    const prefillDescShort =
+      params.get('description_short') ?? params.get('description_short_es')
+    const prefillDescShortEn = params.get('description_short_en')
     const prefillProb = params.get('probability')
     const prefillEnd = params.get('end_date')
     const prefillTags = params.get('tags')
@@ -214,6 +223,8 @@ export default function CreateMarketPage() {
     if (prefillCriteriaEn) setEnResolutionCriteria(prefillCriteriaEn)
     if (prefillDesc) setDescription(prefillDesc)
     if (prefillDescEn) setEnDescription(prefillDescEn)
+    if (prefillDescShort) setDescriptionShort(prefillDescShort.slice(0, 280))
+    if (prefillDescShortEn) setEnDescriptionShort(prefillDescShortEn.slice(0, 280))
     if (prefillTags) setTagsInput(prefillTags)
     if (prefillProb) {
       const n = parseFloat(prefillProb)
@@ -283,9 +294,15 @@ export default function CreateMarketPage() {
         setResolutionCriteria(resCritVal)
         setInitialProbability(validProb)
 
+        const descShortVal = String(
+          sug.description_short_es ?? sug.description_short ?? ''
+        ).slice(0, 280)
+        if (descShortVal) setDescriptionShort(descShortVal)
+
         // English translations
         setEnTitle(String(sug.title_en ?? ''))
         setEnDescription(String(sug.description_en ?? ''))
+        setEnDescriptionShort(String(sug.description_short_en ?? '').slice(0, 280))
         setEnResolutionCriteria(String(sug.resolution_criteria_en ?? ''))
 
         // Tags
@@ -444,6 +461,18 @@ export default function CreateMarketPage() {
       setError('Multi-choice requires at least 2 options')
       return
     }
+    if (descriptionShort.length > DESCRIPTION_SHORT_MAX) {
+      setError(
+        `La descripción corta no puede exceder ${DESCRIPTION_SHORT_MAX} caracteres.`
+      )
+      return
+    }
+    if (isPulse && !descriptionShort.trim()) {
+      setError(
+        'La descripción corta es obligatoria para nuevos Pulses (2 frases máximo).'
+      )
+      return
+    }
 
     setSubmitting(mode)
     try {
@@ -454,6 +483,7 @@ export default function CreateMarketPage() {
           is_draft: mode === 'draft',
           title: title.trim(),
           description: description.trim() || null,
+          description_short: descriptionShort.trim() || null,
           category: isPulse ? 'pulse' : category || 'world',
           initial_probability: initialProbability,
           resolution_date: new Date(resolutionDate).toISOString(),
@@ -482,11 +512,14 @@ export default function CreateMarketPage() {
           sponsorship_amount_mxn: sponsorshipAmountMxn ? Number(sponsorshipAmountMxn) : null,
           conscious_fund_percentage: consciousFundPercentage,
           translations:
-            enTitle || enDescription || enResolutionCriteria
+            enTitle || enDescription || enDescriptionShort || enResolutionCriteria
               ? {
                   en: {
                     ...(enTitle && { title: enTitle.trim() }),
                     ...(enDescription && { description: enDescription.trim() }),
+                    ...(enDescriptionShort && {
+                      description_short: enDescriptionShort.trim(),
+                    }),
                     ...(enResolutionCriteria && { resolution_criteria: enResolutionCriteria.trim() }),
                   },
                 }
@@ -749,6 +782,41 @@ export default function CreateMarketPage() {
                 />
               </div>
               <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-sm font-medium text-gray-300">
+                    Descripción corta
+                    {isPulse ? <span className="text-red-400"> *</span> : null}
+                  </label>
+                  <span
+                    className={`text-[10px] tabular-nums ${
+                      descriptionShort.length > DESCRIPTION_SHORT_MAX
+                        ? 'text-red-400'
+                        : descriptionShort.length > DESCRIPTION_SHORT_MAX - 30
+                          ? 'text-amber-400'
+                          : 'text-gray-500'
+                    }`}
+                  >
+                    {descriptionShort.length}/{DESCRIPTION_SHORT_MAX}
+                  </span>
+                </div>
+                <p className="text-xs text-cc-text-muted mb-1.5">
+                  2 frases máximo. Lo primero que verán los votantes. Estilo: claro,
+                  sin jargon.
+                </p>
+                <textarea
+                  value={descriptionShort}
+                  onChange={(e) =>
+                    setDescriptionShort(
+                      e.target.value.slice(0, DESCRIPTION_SHORT_MAX)
+                    )
+                  }
+                  placeholder="Ej. La Alcaldía Miguel Hidalgo decide cómo invertir su próximo presupuesto. Tu opinión guía dónde se aplican los recursos."
+                  rows={3}
+                  maxLength={DESCRIPTION_SHORT_MAX}
+                  className={`${ccInput} resize-none`}
+                />
+              </div>
+              <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1.5">
                   Descripción del mercado
                 </label>
@@ -896,6 +964,26 @@ export default function CreateMarketPage() {
                   onChange={(e) => setEnTitle(e.target.value)}
                   placeholder="English version of the market question"
                   className={`mt-1 ${ccInput}`}
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-cc-text-secondary">
+                  English Short Description
+                </label>
+                <p className="text-xs text-cc-text-muted">
+                  ≤280 chars. Shown above the vote panel for English locale.
+                </p>
+                <textarea
+                  value={enDescriptionShort}
+                  onChange={(e) =>
+                    setEnDescriptionShort(
+                      e.target.value.slice(0, DESCRIPTION_SHORT_MAX)
+                    )
+                  }
+                  placeholder="2-sentence English version of the short description"
+                  rows={2}
+                  maxLength={DESCRIPTION_SHORT_MAX}
+                  className={`mt-1 ${ccInput} resize-none`}
                 />
               </div>
               <div>
@@ -1341,7 +1429,19 @@ export default function CreateMarketPage() {
               <p className="text-xs text-cc-text-muted mb-1">Detail (description & criteria)</p>
               <div className="bg-cc-card border border-cc-border rounded-xl p-4 space-y-3">
                 <div>
-                  <p className="text-cc-text-muted text-xs font-medium mb-1">Description</p>
+                  <p className="text-cc-text-muted text-xs font-medium mb-1">
+                    Short description (above vote)
+                  </p>
+                  <p className="text-base leading-relaxed text-gray-200">
+                    {descriptionShort.trim() || (
+                      <span className="italic text-cc-text-muted">—</span>
+                    )}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-cc-text-muted text-xs font-medium mb-1">
+                    Description (collapsible Contexto card)
+                  </p>
                   <p className="text-white text-sm line-clamp-3">
                     {description || <span className="italic text-cc-text-muted">—</span>}
                   </p>

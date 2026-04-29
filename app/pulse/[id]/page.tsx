@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { data: market } = await admin
     .from('prediction_markets')
     .select(
-      'title, translations, pulse_client_name, is_pulse, market_type, category, is_draft, cover_image_url'
+      'title, translations, description_short, pulse_client_name, is_pulse, market_type, category, is_draft, cover_image_url'
     )
     .eq('id', id)
     .maybeSingle()
@@ -72,12 +72,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const fallbackOg = `${SITE_URL}/api/og/market/${id}`
   const ogImage = uploadedCover || fallbackOg
 
+  // Prefer the curated short description (migration 215) for social previews —
+  // it's exactly what we wrote for human readers. Fall back to the generic
+  // "Resultados en vivo" line when no short description is set.
+  const trShort = (market.translations as { en?: { description_short?: string } } | null)
+    ?.en?.description_short
+  const shortEs = market.description_short?.trim() || null
+  const shortBlurb = shortEs || trShort?.trim() || `Resultados en vivo — ${title}`
+
   return {
     title: `${pageTitle} | Conscious Pulse`,
-    description: `Resultados — ${title}. Medición de sentimiento público. Powered by Crowd Conscious.`,
+    description: shortBlurb,
     openGraph: {
       title: `${pageTitle} | Conscious Pulse`,
-      description: `Resultados en vivo — ${title}`,
+      description: shortBlurb,
       url: `${SITE_URL}/pulse/${id}`,
       siteName: 'Crowd Conscious',
       images: [{ url: ogImage, alt: pageTitle }],
@@ -86,7 +94,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     twitter: {
       card: 'summary_large_image',
       title: `${pageTitle} | Conscious Pulse`,
-      description: `Resultados en vivo — ${title}`,
+      description: shortBlurb,
       images: [ogImage],
     },
   }
@@ -104,6 +112,7 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
       id,
       title,
       description,
+      description_short,
       translations,
       status,
       resolution_date,
@@ -191,6 +200,9 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
         marketId={market.id}
         title={market.title}
         description={market.description}
+        descriptionShort={
+          (market as { description_short?: string | null }).description_short ?? null
+        }
         translations={market.translations}
         status={market.status}
         resolutionDate={market.resolution_date}

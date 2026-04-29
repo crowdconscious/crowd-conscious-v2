@@ -3,16 +3,24 @@
  * Falls back to the original Spanish field if no translation exists.
  */
 
-type TranslatableMarketField = 'title' | 'description' | 'resolution_criteria'
+type TranslatableMarketField =
+  | 'title'
+  | 'description'
+  /** Migration 215 — short 2-sentence blurb shown above the vote UI. */
+  | 'description_short'
+  | 'resolution_criteria'
 
 export interface MarketWithTranslations {
   title: string
   description?: string | null
+  /** Migration 215 — Spanish lives here; non-ES locales in `translations`. */
+  description_short?: string | null
   resolution_criteria?: string | null
   translations?: {
     en?: {
       title?: string
       description?: string
+      description_short?: string
       resolution_criteria?: string
     }
     [key: string]: Record<string, string> | undefined

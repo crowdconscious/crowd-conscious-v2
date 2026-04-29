@@ -17,6 +17,8 @@ type MarketRow = {
   id: string
   title: string
   description: string | null
+  /** Migration 215. */
+  description_short?: string | null
   resolution_criteria: string | null
   resolution_date: string
   category: string
@@ -39,6 +41,7 @@ type OutcomeRow = { id: string; label: string; subtitle?: string | null }
 
 const OUTCOME_TITLE_MAX = 80
 const OUTCOME_SUBTITLE_MAX = 200
+const DESCRIPTION_SHORT_MAX = 280
 
 function toDatetimeLocal(iso: string): string {
   const d = new Date(iso)
@@ -57,13 +60,26 @@ export default function EditMarketForm({
 }) {
   const router = useRouter()
   const tr = market.translations as {
-    en?: { title?: string; description?: string; resolution_criteria?: string }
+    en?: {
+      title?: string
+      description?: string
+      description_short?: string
+      resolution_criteria?: string
+    }
   } | null
 
   const [title, setTitle] = useState(market.title)
   const [titleEn, setTitleEn] = useState(tr?.en?.title ?? '')
   const [description, setDescription] = useState(market.description ?? '')
   const [descriptionEn, setDescriptionEn] = useState(tr?.en?.description ?? '')
+  // Migration 215. Required client-side for new Pulses; on the edit form we
+  // allow saving without it so legacy markets aren't blocked.
+  const [descriptionShort, setDescriptionShort] = useState(
+    market.description_short ?? ''
+  )
+  const [descriptionShortEn, setDescriptionShortEn] = useState(
+    tr?.en?.description_short ?? ''
+  )
   const [resolutionCriteria, setResolutionCriteria] = useState(market.resolution_criteria ?? '')
   const [resolutionCriteriaEn, setResolutionCriteriaEn] = useState(tr?.en?.resolution_criteria ?? '')
   const [category, setCategory] = useState(market.category)
@@ -107,10 +123,19 @@ export default function EditMarketForm({
     setSaving(true)
     try {
       const translations: {
-        en: { title?: string; description?: string; resolution_criteria?: string }
+        en: {
+          title?: string
+          description?: string
+          description_short?: string
+          resolution_criteria?: string
+        }
       } = { en: {} }
       if (titleEn.trim()) translations.en.title = titleEn.trim()
       if (descriptionEn.trim()) translations.en.description = descriptionEn.trim()
+      if (descriptionShortEn.trim())
+        translations.en.description_short = descriptionShortEn
+          .trim()
+          .slice(0, DESCRIPTION_SHORT_MAX)
       if (resolutionCriteriaEn.trim()) translations.en.resolution_criteria = resolutionCriteriaEn.trim()
 
       const outcomesPayload = initialOutcomes.map((o) => {
@@ -130,6 +155,7 @@ export default function EditMarketForm({
         body: JSON.stringify({
           title: title.trim(),
           description: description.trim() || null,
+          description_short: descriptionShort.trim().slice(0, DESCRIPTION_SHORT_MAX) || null,
           resolution_criteria: resolutionCriteria.trim() || null,
           resolution_date: new Date(resolutionDate).toISOString(),
           category,
@@ -191,6 +217,68 @@ export default function EditMarketForm({
             <div>
               <label className="mb-1.5 block text-sm font-medium text-gray-300">Title (EN)</label>
               <input value={titleEn} onChange={(e) => setTitleEn(e.target.value)} className={ccInput} />
+            </div>
+            <div>
+              <div className="mb-1.5 flex items-center justify-between">
+                <label className="block text-sm font-medium text-gray-300">
+                  Descripción corta (ES)
+                </label>
+                <span
+                  className={`text-[10px] tabular-nums ${
+                    descriptionShort.length > DESCRIPTION_SHORT_MAX
+                      ? 'text-red-400'
+                      : descriptionShort.length > DESCRIPTION_SHORT_MAX - 30
+                        ? 'text-amber-400'
+                        : 'text-gray-500'
+                  }`}
+                >
+                  {descriptionShort.length}/{DESCRIPTION_SHORT_MAX}
+                </span>
+              </div>
+              <p className="mb-1.5 text-xs text-cc-text-muted">
+                2 frases máximo. Lo primero que verán los votantes. Estilo: claro,
+                sin jargon.
+              </p>
+              <textarea
+                value={descriptionShort}
+                onChange={(e) =>
+                  setDescriptionShort(
+                    e.target.value.slice(0, DESCRIPTION_SHORT_MAX)
+                  )
+                }
+                rows={3}
+                maxLength={DESCRIPTION_SHORT_MAX}
+                className={`${ccInput} resize-none`}
+              />
+            </div>
+            <div>
+              <div className="mb-1.5 flex items-center justify-between">
+                <label className="block text-sm font-medium text-gray-300">
+                  Descripción corta (EN)
+                </label>
+                <span
+                  className={`text-[10px] tabular-nums ${
+                    descriptionShortEn.length > DESCRIPTION_SHORT_MAX
+                      ? 'text-red-400'
+                      : descriptionShortEn.length > DESCRIPTION_SHORT_MAX - 30
+                        ? 'text-amber-400'
+                        : 'text-gray-500'
+                  }`}
+                >
+                  {descriptionShortEn.length}/{DESCRIPTION_SHORT_MAX}
+                </span>
+              </div>
+              <textarea
+                value={descriptionShortEn}
+                onChange={(e) =>
+                  setDescriptionShortEn(
+                    e.target.value.slice(0, DESCRIPTION_SHORT_MAX)
+                  )
+                }
+                rows={2}
+                maxLength={DESCRIPTION_SHORT_MAX}
+                className={`${ccInput} resize-none`}
+              />
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium text-gray-300">Description (ES)</label>

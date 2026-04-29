@@ -26,6 +26,7 @@ export async function POST(request: NextRequest) {
     const {
       title,
       description,
+      description_short,
       category,
       initial_probability,
       resolution_date,
@@ -57,6 +58,20 @@ export async function POST(request: NextRequest) {
     }
     if (!resolution_date) {
       return Response.json({ error: 'Resolution date is required' }, { status: 400 })
+    }
+    // Mirror the DB check constraint from migration 215. The form already
+    // caps + counts; this is defense-in-depth so an out-of-band caller
+    // (script, RPC test) gets a useful 400 instead of a Postgres 500.
+    let resolvedDescriptionShort: string | null = null
+    if (typeof description_short === 'string') {
+      const trimmed = description_short.trim()
+      if (trimmed.length > 280) {
+        return Response.json(
+          { error: 'description_short must be 280 characters or fewer' },
+          { status: 400 }
+        )
+      }
+      resolvedDescriptionShort = trimmed || null
     }
 
     const categoryResolved: string = Boolean(is_pulse) ? 'pulse' : String(category ?? '').trim()
@@ -218,6 +233,7 @@ export async function POST(request: NextRequest) {
 
       const updatePayload: Record<string, unknown> = {
         description: description?.trim() || 'Standard description',
+        description_short: resolvedDescriptionShort,
         resolution_criteria: resolution_criteria?.trim() || 'Standard resolution',
         verification_sources: verificationStrings,
         tags: tagArray,
@@ -317,6 +333,7 @@ export async function POST(request: NextRequest) {
 
     const updatePayload: Record<string, unknown> = {
       description: description?.trim() || null,
+      description_short: resolvedDescriptionShort,
       resolution_criteria: resolution_criteria?.trim() || null,
       verification_sources: verificationStrings,
       tags: tagArray,

@@ -43,6 +43,8 @@ type Props = {
   marketId: string
   title: string
   description: string | null
+  /** Migration 215. 2-sentence blurb rendered above the vote/outcome bars. */
+  descriptionShort?: string | null
   translations: unknown
   status: string
   resolutionDate: string
@@ -63,6 +65,7 @@ export default function PulseResultClient({
   marketId,
   title,
   description,
+  descriptionShort = null,
   translations,
   status,
   resolutionDate,
@@ -133,6 +136,20 @@ export default function PulseResultClient({
     'title',
     locale
   )
+
+  // Resolve the short blurb honouring the same translations.[locale] override
+  // that title/description use. Empty string when neither column nor override
+  // is set; the JSX guards against rendering an empty <p>.
+  const shortBlurb = getMarketText(
+    {
+      title,
+      description: description ?? undefined,
+      description_short: descriptionShort ?? undefined,
+      translations: translations as Parameters<typeof getMarketText>[0]['translations'],
+    },
+    'description_short',
+    locale
+  ).trim()
 
   const outcomes = useMemo(() => {
     const o = [...initialOutcomes]
@@ -339,6 +356,11 @@ export default function PulseResultClient({
             <h1 className="text-balance text-2xl font-bold leading-tight text-white sm:text-3xl">
               {question}
             </h1>
+            {shortBlurb ? (
+              <p className="mt-3 mb-1 max-w-2xl text-base md:text-lg leading-relaxed text-gray-300">
+                {shortBlurb}
+              </p>
+            ) : null}
             {description ? (
               <p className="mt-3 text-sm text-slate-400 line-clamp-4">
                 {getMarketText(

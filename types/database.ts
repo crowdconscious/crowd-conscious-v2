@@ -612,6 +612,8 @@ export interface Database {
           id: string
           title: string
           description: string
+          /** Optional 2-sentence blurb (≤280 chars) rendered above the vote panel. Migration 215. */
+          description_short?: string | null
           category:
             | 'world'
             | 'world_cup'
@@ -667,6 +669,7 @@ export interface Database {
           id?: string
           title: string
           description: string
+          description_short?: string | null
           category:
             | 'world'
             | 'world_cup'
@@ -717,6 +720,7 @@ export interface Database {
           id?: string
           title?: string
           description?: string
+          description_short?: string | null
           category?:
             | 'world'
             | 'world_cup'

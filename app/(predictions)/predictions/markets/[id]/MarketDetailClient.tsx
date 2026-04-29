@@ -434,6 +434,17 @@ export function MarketDetailClient({
               />
             </div>
           </div>
+          {/* Short blurb (migration 215). Render nothing when null so we don't
+              leave an empty white-space gap above the meta line / vote panel. */}
+          {(() => {
+            const shortBlurb = getMarketText(market, 'description_short', locale).trim()
+            if (!shortBlurb) return null
+            return (
+              <p className="mt-3 mb-1 max-w-2xl text-base md:text-lg leading-relaxed text-gray-300">
+                {shortBlurb}
+              </p>
+            )
+          })()}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-3 text-xs text-gray-500">
             {isPulseMarket && avgConfidenceHero != null && (
               <span>
@@ -522,6 +533,15 @@ export function MarketDetailClient({
               <h2 className="text-2xl font-bold text-white flex-1 min-w-0">{getMarketText(market, 'title', locale)}</h2>
               <ShareButton marketId={market.id} title={getMarketText(market, 'title', locale)} sponsorName={(market as { sponsor_name?: string }).sponsor_name} />
             </div>
+            {(() => {
+              const shortBlurb = getMarketText(market, 'description_short', locale).trim()
+              if (!shortBlurb) return null
+              return (
+                <p className="mt-3 mb-3 max-w-2xl text-base md:text-lg leading-relaxed text-gray-300">
+                  {shortBlurb}
+                </p>
+              )
+            })()}
             <p className="text-slate-400 text-sm">
               {locale === 'es' ? 'Creado por' : 'Created by'} {creatorName}
               {' · '}

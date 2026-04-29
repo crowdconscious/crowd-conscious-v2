@@ -120,7 +120,7 @@ async function getLandingData() {
     supabase
       .from('prediction_markets')
       .select(
-        'id, title, category, current_probability, total_votes, image_url, sponsor_name, sponsor_logo_url, sponsor_url, translations, resolution_date, market_type, status'
+        'id, title, description_short, category, current_probability, total_votes, image_url, sponsor_name, sponsor_logo_url, sponsor_url, translations, resolution_date, market_type, status'
       )
       .in('status', ['active', 'trading'])
       .is('archived_at', null)
@@ -146,7 +146,7 @@ async function getLandingData() {
     supabase
       .from('prediction_markets')
       .select(
-        'id, title, category, current_probability, total_votes, translations, resolution_date, market_type, status, image_url, sponsor_name, sponsor_logo_url, sponsor_url'
+        'id, title, description_short, category, current_probability, total_votes, translations, resolution_date, market_type, status, image_url, sponsor_name, sponsor_logo_url, sponsor_url'
       )
       .eq('category', 'world_cup')
       .in('status', ['active', 'trading'])

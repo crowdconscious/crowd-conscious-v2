@@ -84,6 +84,25 @@ export async function PATCH(
 
     const marketIsPulse = existing.is_pulse === true
 
+    // Migration 215: optional 2-sentence blurb. Mirror the DB check
+    // constraint (≤280) to fail fast with a useful message.
+    let descriptionShortValue: string | null | undefined = undefined
+    if ('description_short' in body) {
+      const ds = body.description_short
+      if (ds === null || ds === '') {
+        descriptionShortValue = null
+      } else if (typeof ds === 'string') {
+        const trimmed = ds.trim()
+        if (trimmed.length > 280) {
+          return NextResponse.json(
+            { error: 'description_short must be 280 characters or fewer' },
+            { status: 400 }
+          )
+        }
+        descriptionShortValue = trimmed || null
+      }
+    }
+
     const updateRow: Record<string, unknown> = {
       title,
       description: typeof body.description === 'string' ? body.description.trim() || null : null,
@@ -100,6 +119,10 @@ export async function PATCH(
         typeof body.sponsor_logo_url === 'string' ? body.sponsor_logo_url.trim() || null : null,
       sponsor_url: typeof body.sponsor_url === 'string' ? body.sponsor_url.trim() || null : null,
       conscious_fund_percentage: fundPct,
+    }
+
+    if (descriptionShortValue !== undefined) {
+      updateRow.description_short = descriptionShortValue
     }
 
     if (body.sponsor_account_id !== undefined) {

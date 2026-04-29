@@ -282,9 +282,19 @@ export function MarketCard({ market, history = [], outcomes: outcomesProp, varia
           </div>
         )}
 
-        <h3 className="text-white font-semibold line-clamp-2 mb-4 min-h-[2.5rem]">
+        <h3 className="text-white font-semibold line-clamp-2 mb-2 min-h-[2.5rem]">
           {getMarketText(market, 'title', locale)}
         </h3>
+
+        {(() => {
+          const blurb = getMarketText(market, 'description_short', locale).trim()
+          if (!blurb) return null
+          return (
+            <p className="mb-3 line-clamp-2 text-sm leading-snug text-slate-400">
+              {blurb}
+            </p>
+          )
+        })()}
 
         <div className="mb-4">
           {isBinaryLayout ? (

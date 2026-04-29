@@ -17,6 +17,8 @@ export type MarketCardMarket = {
   id: string
   title: string
   translations?: unknown
+  /** Migration 215. 2-line clamp shown under the title when present. */
+  description_short?: string | null
   total_votes?: number | null
   current_probability: number
   category: string
@@ -213,12 +215,30 @@ export function MarketCard({
       ) : null}
 
       <h3
-        className={`mb-4 font-semibold leading-snug text-cc-text-primary line-clamp-3 ${
+        className={`mb-2 font-semibold leading-snug text-cc-text-primary line-clamp-3 ${
           compact ? 'text-sm' : 'text-base'
         }`}
       >
         {title}
       </h3>
+
+      {/* Optional 2-line blurb from migration 215. We use getMarketText so EN
+          users see the locale override when present. Compact cards skip it to
+          stay scannable; non-compact cards reserve a tight 2-line slot. */}
+      {!compact &&
+        (() => {
+          const blurb = getMarketText(
+            market as MarketWithTranslations,
+            'description_short',
+            locale
+          ).trim()
+          if (!blurb) return null
+          return (
+            <p className="mb-3 line-clamp-2 text-sm leading-snug text-cc-text-secondary">
+              {blurb}
+            </p>
+          )
+        })()}
 
       {isLowEngagement ? (
         <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-3 py-3 text-center">
