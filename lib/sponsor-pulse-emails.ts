@@ -275,3 +275,105 @@ export function sponsorPulseClosureTemplate(
     }),
   }
 }
+
+export type SponsorPulseReportReadyEmailInput = {
+  sponsorName: string
+  marketTitle: string
+  marketId: string
+  /** 1-2 sentence preview of the executive summary (truncated). */
+  previewSummary: string | null
+  /** /dashboard/sponsor/[token]/report/[marketId] absolute URL. */
+  dashboardReportUrl: string
+  /** Absolute URL to the PDF (server route, not signed storage URL). */
+  pdfDownloadUrl: string
+  locale: Locale
+  unsubscribeUrl: string
+  manageUrl: string
+}
+
+/**
+ * Sent when a Pulse executive report has been generated and is ready for
+ * the sponsor to review. Body links to the dashboard report and the PDF
+ * download. The cron sends this only when SPONSOR_PULSE_REPORT_AUTO_EMAIL=1
+ * (off by default during the MH pilot — see app/api/cron/pulse-auto-resolve).
+ */
+export function sponsorPulseReportReadyTemplate(
+  input: SponsorPulseReportReadyEmailInput
+): { subject: string; html: string } {
+  const isEn = input.locale === 'en'
+
+  const subject = isEn
+    ? `[Crowd Conscious] Executive report ready: "${input.marketTitle}"`
+    : `[Crowd Conscious] Reporte ejecutivo listo: "${input.marketTitle}"`
+
+  const previewText = isEn
+    ? 'Your sponsor report is ready. Open the dashboard or download the PDF.'
+    : 'Tu reporte ejecutivo está listo. Ábrelo en el dashboard o descarga el PDF.'
+
+  const heading = isEn
+    ? 'Your executive report is ready 📑'
+    : 'Tu reporte ejecutivo está listo 📑'
+
+  const intro = isEn
+    ? `Hi ${escapeHtml(input.sponsorName)} — Crowd Conscious has generated the executive report for your sponsored Pulse. It includes the agent-written summary, conviction analysis, anonymised voter reasoning, and recommended next steps.`
+    : `Hola ${escapeHtml(input.sponsorName)} — Crowd Conscious generó el reporte ejecutivo de tu Pulse patrocinado. Incluye el resumen ejecutivo escrito por el agente, análisis de convicción, razones anonimizadas de los votantes y recomendaciones de siguientes pasos.`
+
+  const previewBlock = input.previewSummary
+    ? `<div style="background:${BRAND.bg};border:1px solid ${BRAND.border};border-left:3px solid ${BRAND.accent};padding:14px 16px;margin:20px 0;border-radius:8px;">
+        <p style="margin:0;color:${BRAND.muted};font-size:13px;line-height:1.6;font-style:italic;">${escapeHtml(input.previewSummary)}</p>
+      </div>`
+    : ''
+
+  const ctaReport = isEn ? 'Open report in dashboard' : 'Abrir reporte en el dashboard'
+  const ctaPdf = isEn ? 'Download PDF' : 'Descargar PDF'
+
+  const insideHead = isEn ? "What's inside" : 'Qué incluye'
+  const insideList = isEn
+    ? `
+        <li style="margin:4px 0;">~150-word executive summary in Spanish</li>
+        <li style="margin:4px 0;">Vote breakdown with per-option average confidence</li>
+        <li style="margin:4px 0;">Conviction analysis — votes vs. confidence divergence</li>
+        <li style="margin:4px 0;">Anonymised voter reasoning, sortable</li>
+        <li style="margin:4px 0;">Daily participation timeline</li>
+        <li style="margin:4px 0;">3–5 recommended next steps tied to your data</li>
+      `
+    : `
+        <li style="margin:4px 0;">Resumen ejecutivo de ~150 palabras en español</li>
+        <li style="margin:4px 0;">Distribución de votos con confianza promedio por opción</li>
+        <li style="margin:4px 0;">Análisis de convicción — divergencia entre votos y confianza</li>
+        <li style="margin:4px 0;">Razones de los votantes (anonimizadas, ordenables)</li>
+        <li style="margin:4px 0;">Línea de tiempo diaria de participación</li>
+        <li style="margin:4px 0;">3–5 recomendaciones siguientes basadas en tus datos</li>
+      `
+
+  const body = `
+    <h1 style="margin:0 0 16px 0;color:${BRAND.text};font-size:22px;line-height:1.3;">${heading}</h1>
+    <p style="margin:0 0 12px 0;color:${BRAND.muted};font-size:14px;line-height:1.6;">${intro}</p>
+    <h2 style="margin:18px 0 6px 0;color:${BRAND.text};font-size:17px;line-height:1.3;">${escapeHtml(input.marketTitle)}</h2>
+    ${previewBlock}
+    <div style="margin:24px 0 12px 0;text-align:center;">
+      <a href="${input.dashboardReportUrl}" style="display:inline-block;background:${BRAND.accent};color:#fff;text-decoration:none;padding:12px 22px;border-radius:10px;font-weight:600;font-size:14px;">${ctaReport}</a>
+    </div>
+    <div style="margin:0 0 24px 0;text-align:center;">
+      <a href="${input.pdfDownloadUrl}" style="display:inline-block;color:${BRAND.accent};text-decoration:none;font-size:13px;">${ctaPdf} →</a>
+    </div>
+    <div style="border-top:1px solid ${BRAND.border};padding-top:16px;margin-top:20px;">
+      <h3 style="margin:0 0 8px 0;color:${BRAND.text};font-size:14px;">${insideHead}</h3>
+      <ul style="margin:0;padding:0 0 0 18px;color:${BRAND.muted};font-size:13px;line-height:1.6;">
+        ${insideList}
+      </ul>
+    </div>
+  `
+
+  return {
+    subject,
+    html: shell({
+      title: subject,
+      previewText,
+      body,
+      locale: input.locale,
+      unsubscribeUrl: input.unsubscribeUrl,
+      manageUrl: input.manageUrl,
+    }),
+  }
+}

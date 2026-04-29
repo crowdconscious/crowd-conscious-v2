@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase-admin'
 import { notifyMarketResolutionVoters } from '@/lib/market-resolution-notifications'
 import { runCaseStudyDraft } from '@/lib/agents/content-creator'
 import { cronHealthCheck, cronHealthComplete } from '@/lib/cron-health'
+import { generateSponsorReportAndMaybeEmail } from '@/lib/sponsor-pulse-report-pipeline'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120
@@ -86,6 +87,16 @@ export async function GET(request: NextRequest) {
     // won't spam blog_posts.
     void runCaseStudyDraft(row.id).catch((err) =>
       console.error('[cron/pulse-auto-resolve] case-study-draft', err)
+    )
+
+    // Fire-and-forget: generate the sponsor executive report. UNIQUE on
+    // market_id makes a second run an in-place UPDATE, so a delayed
+    // resolve cron pass won't double-bill the Anthropic call (the agent
+    // will still re-run, but the table stays single-row). Email send is
+    // gated by SPONSOR_PULSE_REPORT_AUTO_EMAIL — default OFF during the
+    // MH pilot so we can review before sending.
+    void generateSponsorReportAndMaybeEmail(row.id).catch((err) =>
+      console.error('[cron/pulse-auto-resolve] sponsor-pulse-report', err)
     )
 
     resolved++

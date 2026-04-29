@@ -31,7 +31,8 @@ const AGENTS = [
   { id: 'news-monitor', label: 'News Monitor', icon: Newspaper, scheduled: true },
   { id: 'content-creator', label: 'Content Creator', icon: Bot, scheduled: false },
   { id: 'inbox-curator', label: 'Inbox Curator', icon: Inbox, scheduled: false },
-  { id: 'sponsor-report', label: 'Sponsor Report', icon: Target, scheduled: true },
+  { id: 'sponsor-report', label: 'Sponsor Report (monthly)', icon: Target, scheduled: true },
+  { id: 'sponsor-pulse-report', label: 'Sponsor Pulse Report (per market)', icon: Target, scheduled: false },
 ] as const
 
 type AgentRun = {
@@ -318,6 +319,21 @@ export default function AdminAgentsPage() {
   }, [fetchData])
 
   const runAgent = async (agentId: string) => {
+    // sponsor-pulse-report needs a target marketId. Prompt inline rather
+    // than building a full picker — admins paste the UUID from the
+    // markets dashboard and we ship.
+    let body: Record<string, unknown> = { agent: agentId }
+    if (agentId === 'sponsor-pulse-report') {
+      const raw = typeof window !== 'undefined'
+        ? window.prompt('Pulse market UUID a procesar:')
+        : null
+      const marketId = raw?.trim()
+      if (!marketId) {
+        return
+      }
+      body = { agent: agentId, marketId }
+    }
+
     setRunning(agentId)
     setRunResult(null)
     setError('')
@@ -325,7 +341,7 @@ export default function AdminAgentsPage() {
       const res = await fetch('/api/predictions/admin/run-agent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ agent: agentId }),
+        body: JSON.stringify(body),
       })
       let json: { error?: string; result?: { summary?: Record<string, unknown> } }
       try {

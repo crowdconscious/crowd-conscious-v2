@@ -1,10 +1,15 @@
 import Link from 'next/link'
-import Image from 'next/image'
-import { createAdminClient } from '@/lib/supabase-admin'
-import SponsorReportPrintButton from '@/components/sponsor/SponsorReportPrintButton'
-import { buildSponsorDashboardMarkets } from '@/lib/sponsor-dashboard-build'
-import { marketBelongsToSponsorAccount } from '@/lib/sponsor-account-access'
 import { notFound } from 'next/navigation'
+
+import SponsorReportView, {
+  type SponsorReportPayload,
+} from '@/components/sponsor/SponsorReportView'
+import SponsorReportPrintButton from '@/components/sponsor/SponsorReportPrintButton'
+import { getSponsorPulseReport } from '@/lib/agents/sponsor-pulse-report-agent'
+import type { SponsorPulseReportSnapshot } from '@/lib/agents/sponsor-pulse-report-agent'
+import { AuthSessionExpiredError, getCurrentUser } from '@/lib/auth-server'
+import { marketBelongsToSponsorAccount } from '@/lib/sponsor-account-access'
+import { createAdminClient } from '@/lib/supabase-admin'
 
 export const dynamic = 'force-dynamic'
 
@@ -38,14 +43,16 @@ export default async function SponsorMarketReportPage({
       id,
       title,
       status,
+      created_at,
+      resolution_date,
+      resolved_at,
+      description_short,
       total_votes,
       current_probability,
-      resolution_date,
       is_pulse,
       sponsor_account_id,
       sponsor_name,
-      pulse_client_email,
-      market_outcomes(id, label, probability, vote_count)
+      pulse_client_email
     `
     )
     .eq('id', marketId)
@@ -62,24 +69,50 @@ export default async function SponsorMarketReportPage({
     notFound()
   }
 
-  const { data: votes } = await admin
-    .from('market_votes')
-    .select('market_id, confidence, created_at, outcome_id')
-    .eq('market_id', marketId)
+  // Admin impersonation flag — same pattern as the main dashboard.
+  let isAdminViewer = false
+  try {
+    const user = await getCurrentUser()
+    if (user) {
+      const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim()
+      const userEmail = (user as { email?: string | null }).email?.toLowerCase().trim()
+      if (
+        user.user_type === 'admin' ||
+        (!!adminEmail && !!userEmail && userEmail === adminEmail)
+      ) {
+        isAdminViewer = true
+      }
+    }
+  } catch (e) {
+    if (!(e instanceof AuthSessionExpiredError)) {
+      console.warn('[sponsor-report] admin check failed', e)
+    }
+  }
 
-  const { data: fundRows } = await admin
-    .from('conscious_fund_transactions')
-    .select('amount, description, created_at')
-    .eq('source_type', 'sponsorship')
-    .eq('market_id', marketId)
-    .order('created_at', { ascending: false })
+  const cached = await getSponsorPulseReport(marketId)
 
-  const [row] = buildSponsorDashboardMarkets(
-    [market] as Parameters<typeof buildSponsorDashboardMarkets>[0],
-    votes ?? []
-  )
+  const snapshot =
+    cached?.snapshot_data && typeof cached.snapshot_data === 'object'
+      ? (cached.snapshot_data as unknown as SponsorPulseReportSnapshot)
+      : null
 
-  const generated = new Date().toLocaleString('es-MX')
+  const nextSteps = Array.isArray(cached?.next_steps)
+    ? (cached!.next_steps as string[])
+    : []
+
+  const report: SponsorReportPayload = {
+    executiveSummary: cached?.executive_summary ?? null,
+    convictionAnalysis: cached?.conviction_analysis ?? null,
+    nextSteps,
+    snapshot,
+    generatedAt: cached?.generated_at ?? null,
+    pdfPath: cached?.pdf_path ?? null,
+  }
+
+  const pdfDownloadUrl = `/api/dashboard/sponsor/${token}/report/${marketId}/pdf`
+  const regenerateUrl = isAdminViewer
+    ? `/api/dashboard/sponsor/${token}/report/${marketId}/regenerate`
+    : null
 
   return (
     <>
@@ -99,119 +132,37 @@ export default async function SponsorMarketReportPage({
             >
               ← Volver al dashboard
             </Link>
-            <SponsorReportPrintButton />
+            <div className="flex flex-wrap items-center gap-2">
+              {isAdminViewer ? (
+                <span className="inline-flex items-center rounded-full border border-amber-500/40 bg-amber-500/[0.08] px-2.5 py-0.5 text-xs font-medium text-amber-200">
+                  Vista admin
+                </span>
+              ) : null}
+              <SponsorReportPrintButton />
+            </div>
           </div>
         </div>
 
-        <div className="report-shell mx-auto max-w-3xl px-4 py-10 print:py-6">
-          <header className="mb-8 flex flex-col gap-4 border-b border-[#2d3748] pb-6 print:border-slate-300">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                {account.logo_url ? (
-                  <Image
-                    src={account.logo_url}
-                    alt=""
-                    width={140}
-                    height={42}
-                    className="max-h-10 w-auto rounded object-contain print:max-h-12"
-                    unoptimized
-                  />
-                ) : null}
-                <h1 className="mt-4 text-2xl font-semibold text-white print:text-slate-900">
-                  {account.company_name}
-                </h1>
-                <p className="mt-1 text-sm text-slate-400 print:text-slate-600">
-                  Reporte de mercado · {generated}
-                </p>
-              </div>
-              <div className="text-right text-xs text-slate-500 print:text-slate-600">
-                <div>Crowd Conscious</div>
-                <div>crowdconscious.app</div>
-              </div>
-            </div>
-          </header>
-
-          <section className="mb-8">
-            <h2 className="text-lg font-medium text-emerald-400 print:text-emerald-700">
-              {row.title}
-            </h2>
-            <p className="mt-2 text-sm text-slate-400 print:text-slate-600">
-              Estado: {row.status} · Cierra:{' '}
-              {new Date(row.resolutionDate).toLocaleDateString('es-MX')}
-            </p>
-          </section>
-
-          <section className="mb-8">
-            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-400 print:text-slate-700">
-              Resultados (probabilidad modelo)
-            </h3>
-            <div className="space-y-2">
-              {row.outcomes.map((o) => (
-                <div
-                  key={o.id}
-                  className="flex items-center justify-between rounded-lg bg-[#1a2029] px-3 py-2 print:bg-slate-100"
-                >
-                  <span>{o.label}</span>
-                  <span className="text-emerald-400 print:text-emerald-700">
-                    {Math.round(o.probability * 100)}%
-                  </span>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="mb-8">
-            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-400 print:text-slate-700">
-              Confianza de votos
-            </h3>
-            <p className="text-slate-300 print:text-slate-800">
-              Promedio:{' '}
-              {row.avgConfidence != null
-                ? `${row.avgConfidence.toFixed(1)} / 10`
-                : '—'}{' '}
-              · Votos con confianza ≥8: {row.strongOpinionCount} · Total votos:{' '}
-              {row.totalVotes}
-            </p>
-          </section>
-
-          <section className="mb-8">
-            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-400 print:text-slate-700">
-              Línea de tiempo (votos por día)
-            </h3>
-            <ul className="text-sm text-slate-400 print:text-slate-700">
-              {row.votesByDay.length === 0 ? (
-                <li>Sin votos aún.</li>
-              ) : (
-                row.votesByDay.map((d) => (
-                  <li key={d.date}>
-                    {d.date}: {d.count} voto(s)
-                  </li>
-                ))
-              )}
-            </ul>
-          </section>
-
-          <section className="mb-8">
-            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-400 print:text-slate-700">
-              Impacto al Fondo Consciente
-            </h3>
-            <ul className="space-y-1 text-sm text-slate-400 print:text-slate-700">
-              {(fundRows ?? []).length === 0 ? (
-                <li>—</li>
-              ) : (
-                (fundRows ?? []).map((f) => (
-                  <li key={f.created_at + (f.description ?? '')}>
-                    ${Number(f.amount).toLocaleString('es-MX')} MXN —{' '}
-                    {f.description ?? 'Patrocinio'}
-                  </li>
-                ))
-              )}
-            </ul>
-          </section>
-
-          <footer className="border-t border-[#2d3748] pt-6 text-center text-xs text-slate-600 print:border-slate-300 print:text-slate-500">
-            Powered by Crowd Conscious · Generado {generated}
-          </footer>
+        <div className="report-shell mx-auto max-w-3xl px-4 py-8 print:py-6">
+          <SponsorReportView
+            sponsor={{
+              companyName: account.company_name ?? 'Patrocinador',
+              logoUrl: account.logo_url ?? null,
+            }}
+            market={{
+              id: market.id,
+              title: market.title,
+              status: market.status ?? null,
+              createdAt: market.created_at,
+              resolutionDate: market.resolution_date ?? null,
+              resolvedAt: market.resolved_at ?? null,
+              descriptionShort: market.description_short ?? null,
+            }}
+            report={report}
+            pdfDownloadUrl={pdfDownloadUrl}
+            regenerateUrl={regenerateUrl}
+            showAdminControls={isAdminViewer}
+          />
         </div>
       </div>
     </>

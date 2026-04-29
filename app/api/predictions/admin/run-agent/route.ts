@@ -61,6 +61,25 @@ export async function POST(request: NextRequest) {
         result = await runSponsorReport()
         break
       }
+      case 'sponsor-pulse-report': {
+        // Per-Pulse executive report. Requires a marketId in the body so
+        // admins can target a specific Pulse from the agents dashboard.
+        const marketId =
+          typeof body.marketId === 'string' && body.marketId.trim().length > 0
+            ? body.marketId.trim()
+            : null
+        if (!marketId) {
+          return NextResponse.json(
+            { error: 'sponsor-pulse-report requires a marketId in the body' },
+            { status: 400 }
+          )
+        }
+        const { generateSponsorReportAndMaybeEmail } = await import(
+          '@/lib/sponsor-pulse-report-pipeline'
+        )
+        result = await generateSponsorReportAndMaybeEmail(marketId)
+        break
+      }
       default:
         return NextResponse.json(
           { error: `Unknown agent: ${agentName}` },
