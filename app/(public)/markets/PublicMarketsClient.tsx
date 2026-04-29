@@ -274,7 +274,8 @@ export default function PublicMarketsClient({
               <MarketCard
                 market={market}
                 outcomes={outcomesByMarketId[market.id] ?? []}
-                publicPredictCta={!sponsorMode}
+                context="public"
+                showPredictCta={!sponsorMode}
               />
               {sponsorMode && sponsorToken ? (
                 <SponsorMarketButton marketId={market.id} token={sponsorToken} locale={locale} />

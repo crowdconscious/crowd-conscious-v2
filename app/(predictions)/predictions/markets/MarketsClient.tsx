@@ -22,7 +22,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react'
-import { MarketCard } from '../components/MarketCard'
+import { MarketCard } from '@/components/MarketCard'
 import type { Database } from '@/types/database'
 
 type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row'] & { recent_votes?: number }
@@ -282,6 +282,7 @@ export function MarketsClient({
                         market={market}
                         history={historyByMarket[market.id] ?? []}
                         outcomes={outcomesByMarket[market.id]}
+                        context="auth"
                         variant="trending"
                       />
                     </div>
@@ -306,6 +307,7 @@ export function MarketsClient({
                         market={market}
                         history={historyByMarket[market.id] ?? []}
                         outcomes={outcomesByMarket[market.id]}
+                        context="auth"
                         variant="quick"
                       />
                     </div>
@@ -384,6 +386,7 @@ export function MarketsClient({
               market={market}
               history={historyByMarket[market.id] ?? []}
               outcomes={outcomesByMarket[market.id]}
+              context="auth"
             />
           ))}
         </div>
