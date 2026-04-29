@@ -8,6 +8,7 @@ import { getVotedGuestIdForMarket } from '@/lib/guest-vote-storage'
 import ConfidenceHistogram from './ConfidenceHistogram'
 import VoteTimeline from './VoteTimeline'
 import PulseOutcomeBars from './PulseOutcomeBars'
+import PulseResultsCard from './PulseResultsCard'
 import OutcomeConfidenceTable from './OutcomeConfidenceTable'
 import { exportPulseVotesCsv, type PulseCsvVote } from './pulse-export-csv'
 
@@ -383,11 +384,24 @@ export default function PulseResultClient({
             </div>
 
             <div className="pulse-section mt-8">
-              <PulseOutcomeBars
-                outcomes={outcomes}
-                locale={locale}
-                revealResults={shouldRevealResults}
-              />
+              {shouldRevealResults ? (
+                <PulseResultsCard
+                  outcomes={outcomes}
+                  totalVotes={totalVotes}
+                  avgConfidence={totalVotes > 0 ? avgConfidence : null}
+                  locale={locale}
+                  className="animate-[fade-in_300ms_ease-out]"
+                />
+              ) : (
+                // Pre-vote: keep the label/subtitle list (no %, no bar) so the
+                // user can read every option before they vote. Replaces the
+                // older `PulseOutcomeBars` revealResults={false} rendering.
+                <PulseOutcomeBars
+                  outcomes={outcomes}
+                  locale={locale}
+                  revealResults={false}
+                />
+              )}
             </div>
 
             {!shouldRevealResults && (
@@ -480,25 +494,31 @@ export default function PulseResultClient({
               </div>
             ) : null}
 
-            <div className="pulse-section mt-10 grid gap-4 sm:grid-cols-2">
-              <div className="rounded-xl border border-white/5 bg-black/20 px-4 py-3">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                  {locale === 'es' ? 'Votos totales' : 'Total votes'}
-                </p>
-                <p className="mt-1 text-2xl font-bold tabular-nums text-white">
-                  {totalVotes}
-                </p>
+            {/* Pre-vote we still surface participation numbers so the page
+                doesn't feel empty (totals are not a per-option bias signal).
+                Post-vote, the same numbers live inside PulseResultsCard, so
+                we hide this row to avoid double-printing the same metric. */}
+            {!shouldRevealResults && totalVotes > 0 && (
+              <div className="pulse-section mt-10 grid gap-4 sm:grid-cols-2">
+                <div className="rounded-xl border border-white/5 bg-black/20 px-4 py-3">
+                  <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                    {locale === 'es' ? 'Votos totales' : 'Total votes'}
+                  </p>
+                  <p className="mt-1 text-2xl font-bold tabular-nums text-white">
+                    {totalVotes}
+                  </p>
+                </div>
+                <div className="rounded-xl border border-white/5 bg-black/20 px-4 py-3">
+                  <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                    {locale === 'es' ? 'Confianza promedio' : 'Average confidence'}
+                  </p>
+                  <p className="mt-1 text-2xl font-bold tabular-nums text-emerald-400">
+                    {avgConfidence.toFixed(1)}
+                    <span className="text-lg text-slate-400">/10</span>
+                  </p>
+                </div>
               </div>
-              <div className="rounded-xl border border-white/5 bg-black/20 px-4 py-3">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                  {locale === 'es' ? 'Confianza promedio' : 'Average confidence'}
-                </p>
-                <p className="mt-1 text-2xl font-bold tabular-nums text-emerald-400">
-                  {totalVotes > 0 ? avgConfidence.toFixed(1) : '—'}
-                  {totalVotes > 0 && <span className="text-lg text-slate-400">/10</span>}
-                </p>
-              </div>
-            </div>
+            )}
 
             {shouldRevealResults && (
               <div className="mt-8 space-y-6 animate-[fade-in_300ms_ease-out]">

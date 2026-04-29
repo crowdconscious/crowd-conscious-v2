@@ -1,0 +1,38 @@
+/**
+ * DEPRECATED — kept for historical reference only.
+ *
+ * Originally lived inside PulseResultClient.tsx (the always-visible 2-column
+ * grid that printed "Votos totales" and "Confianza promedio" below the
+ * outcome bars). After Prompt 4 we fold those numbers into
+ * PulseResultsCard's subtitle line ("N votos · confianza promedio X/10")
+ * to avoid printing the same metric twice on the post-vote view.
+ *
+ * Pre-vote we still render this grid in-place so the page doesn't feel
+ * empty before the user has voted (totals are not a per-option bias signal).
+ *
+ * Do NOT import this file. See ./README.md for context.
+ */
+
+/* eslint-disable */
+// @ts-nocheck
+export const _legacyPulseTotalsGrid = `
+<div className="pulse-section mt-10 grid gap-4 sm:grid-cols-2">
+  <div className="rounded-xl border border-white/5 bg-black/20 px-4 py-3">
+    <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+      {locale === 'es' ? 'Votos totales' : 'Total votes'}
+    </p>
+    <p className="mt-1 text-2xl font-bold tabular-nums text-white">
+      {totalVotes}
+    </p>
+  </div>
+  <div className="rounded-xl border border-white/5 bg-black/20 px-4 py-3">
+    <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+      {locale === 'es' ? 'Confianza promedio' : 'Average confidence'}
+    </p>
+    <p className="mt-1 text-2xl font-bold tabular-nums text-emerald-400">
+      {totalVotes > 0 ? avgConfidence.toFixed(1) : '—'}
+      {totalVotes > 0 && <span className="text-lg text-slate-400">/10</span>}
+    </p>
+  </div>
+</div>
+`

@@ -45,6 +45,7 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { VotePanel, type GuestVotePayload } from '../../components/VotePanel'
 import VoteReasonings from '@/components/markets/VoteReasonings'
+import PulseResultsCard from '@/components/pulse/PulseResultsCard'
 import { GuestRegistrationPrompt } from '../../components/GuestRegistrationPrompt'
 import { CelebrationModal } from '@/components/gamification/CelebrationModal'
 import { recordAnonVote } from '@/lib/anon-vote-tracker'
@@ -56,7 +57,7 @@ import {
 } from '@/lib/guest-vote-storage'
 import ShareButton from '@/components/ShareButton'
 import { toDisplayPercent } from '@/lib/probability-utils'
-import { getMarketText, getOutcomeLabel } from '@/lib/i18n/market-translations'
+import { getMarketText } from '@/lib/i18n/market-translations'
 import { useLocale } from '@/lib/i18n/useLocale'
 import {
   celebrationRecordedMessage,
@@ -159,7 +160,19 @@ const AGENT_ICONS: Record<string, React.ElementType> = {
   content_creator: PenLine,
 }
 
-type Outcome = { id: string; label: string; probability: number; vote_count: number; total_confidence: number; is_winner: boolean | null }
+type Outcome = {
+  id: string
+  label: string
+  /** Migration 214 — optional one-line detail rendered below the title. */
+  subtitle?: string | null
+  probability: number
+  vote_count: number
+  total_confidence: number
+  is_winner: boolean | null
+  /** Migration 214 — per-locale {label,subtitle} overrides. Shape matches
+      what VotePanel expects so the same array can flow into both. */
+  translations?: Record<string, { label?: string; subtitle?: string }> | null
+}
 type MyVote = { outcome_id: string; outcome_label: string; confidence: number; xp_earned: number; is_correct: boolean | null; bonus_xp: number } | null
 
 export type RelatedMarketSummary = {
@@ -288,17 +301,6 @@ export function MarketDetailClient({
   const isPulseMarket = isPulseLikeMarket(market as Parameters<typeof isPulseLikeMarket>[0])
   const config = isPulseMarket ? PULSE_CATEGORY : CATEGORY_CONFIG[market.category] || CATEGORY_CONFIG.world
   const Icon = config.icon
-  const prob = toDisplayPercent(Number(market.current_probability))
-  const isMultiOutcome = (market as { market_type?: string }).market_type === 'multi' && outcomes.length > 2
-  const probs = outcomes.map((o) => Number(o.probability ?? 0))
-  const maxP = probs.length ? Math.max(...probs) : 0
-  const minP = probs.length ? Math.min(...probs) : 0
-  const allOutcomesTied = outcomes.length >= 2 && maxP === minP
-  const leadingOutcome =
-    outcomes.length > 0 && !allOutcomesTied
-      ? outcomes.reduce((a, b) => ((a?.probability ?? 0) > (b?.probability ?? 0) ? a : b))
-      : null
-
   const now = Date.now()
   const filteredHistory = history.filter((h) => {
     if (timeRange === 'all') return true
@@ -613,104 +615,50 @@ export function MarketDetailClient({
             </div>
           )}
 
-          {/* Probability + engagement (registered vs total reach).
-              Pre-vote: render only the engagement count + a soft hint so the
-              user isn't anchored by community probability before they vote.
-              Post-vote / resolved: full charts + donut + history. */}
-          <div className="bg-cc-card border border-cc-border rounded-xl p-6">
-            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-6">
-              <div className="flex flex-wrap gap-8 items-end">
-                {shouldRevealResults && (
-                  <div className="animate-[fade-in_300ms_ease-out]">
-                    <p className="text-slate-400 text-sm">
-                      {locale === 'en' ? 'Community probability' : 'Probabilidad de la comunidad'}
-                    </p>
-                    <p className="text-3xl font-bold text-emerald-400">
-                      {isMultiOutcome && allOutcomesTied
-                        ? locale === 'es'
-                          ? 'Empate — sin líder aún'
-                          : 'Equal — no leading outcome yet'
-                        : isMultiOutcome && leadingOutcome
-                          ? `${getOutcomeLabel(leadingOutcome, locale)} ${Math.round(toDisplayPercent(leadingOutcome.probability || 0))}%`
-                          : `${Math.round(prob)}% ${locale === 'es' ? 'SÍ' : 'YES'}`}
-                    </p>
-                    <p className="text-xs text-slate-500 mt-1">
-                      {locale === 'en'
-                        ? 'Community signal · all votes (registered + guests)'
-                        : 'Señal de la comunidad · todos los votos (registrados e invitados)'}
-                      {registeredVoteCount > 0 && registeredVoteCount < engagementCount ? (
-                        <span>
-                          {' '}
-                          · {registeredVoteCount.toLocaleString()}{' '}
-                          {locale === 'en' ? 'registered' : 'registrados'} ·{' '}
-                          {(engagementCount - registeredVoteCount).toLocaleString()}{' '}
-                          {locale === 'en' ? 'guests' : 'invitados'}
-                        </span>
-                      ) : null}
-                    </p>
-                  </div>
-                )}
-                <div>
-                  <p className="text-slate-400 text-sm">
-                    {locale === 'en' ? 'Total participation' : 'Participación total'}
-                  </p>
-                  <p className="text-2xl font-semibold text-white">
-                    {engagementCount.toLocaleString()}
-                  </p>
-                  <p className="text-xs text-slate-500 mt-1">
-                    {shouldRevealResults
-                      ? locale === 'en'
-                        ? 'Vote rows (same pool as probability)'
-                        : 'Filas de voto (misma base que la probabilidad)'
-                      : locale === 'en'
-                        ? 'Vote to unlock the community probability and charts'
-                        : 'Vota para ver la probabilidad de la comunidad y las gráficas'}
-                  </p>
-                </div>
-              </div>
-              {shouldRevealResults && (
-                <div
-                  className="relative h-24 w-24 rounded-full flex items-center justify-center shrink-0 mx-auto sm:mx-0 animate-[fade-in_300ms_ease-out]"
-                  style={{
-                    background: `conic-gradient(#10b981 0% ${prob}%, #334155 ${prob}% 100%)`,
-                  }}
-                >
-                  <span className="absolute inset-0 m-auto flex h-16 w-16 items-center justify-center rounded-full bg-cc-bg text-2xl font-bold text-white">
-                    {Math.round(prob)}%
-                  </span>
-                </div>
-              )}
-            </div>
-            {shouldRevealResults && (
-              <div className="h-3 bg-gray-800 rounded-full overflow-hidden flex mb-6 animate-[fade-in_300ms_ease-out]">
-                {isMultiOutcome && outcomes.length > 0 ? (
-                  outcomes.map((o, i) => (
-                    <div
-                      key={o.id}
-                      className="h-full transition-all"
-                      style={{
-                        width: `${toDisplayPercent(o.probability || 0)}%`,
-                        backgroundColor: i === 0 ? '#10b981' : ['#ef4444', '#f59e0b', '#6366f1'][(i - 1) % 3] + '99',
-                      }}
-                    />
-                  ))
-                ) : (
-                  <>
-                    <div
-                      className="bg-emerald-500 h-full transition-all"
-                      style={{ width: `${prob}%` }}
-                    />
-                    <div
-                      className="bg-red-500/60 h-full transition-all"
-                      style={{ width: `${100 - prob}%` }}
-                    />
-                  </>
-                )}
-              </div>
-            )}
+          {/* Post-vote: a single consolidated PulseResultsCard. Replaces the
+              older "Probabilidad de la comunidad" headline + donut chart +
+              horizontal stacked outcome bar + leaked QA copy ("Filas de
+              voto"). The history time-series stays in a separate panel
+              below — it's an orthogonal signal, not a redundancy.
+              Pre-vote: a soft hint card so the user isn't anchored by the
+              community probability before casting their own vote. */}
+          {shouldRevealResults && outcomes.length > 0 && (
+            <PulseResultsCard
+              outcomes={outcomes}
+              totalVotes={engagementCount}
+              avgConfidence={avgConfidenceHero}
+              locale={loc}
+              className="animate-[fade-in_300ms_ease-out]"
+            />
+          )}
 
+          {!shouldRevealResults && (
+            <div className="bg-cc-card border border-cc-border rounded-xl p-6">
+              <div className="flex flex-col gap-1">
+                <p className="text-slate-400 text-sm">
+                  {locale === 'en' ? 'Total participation' : 'Participación total'}
+                </p>
+                <p className="text-2xl font-semibold text-white">
+                  {engagementCount.toLocaleString()}
+                </p>
+                <p className="text-xs text-slate-500 mt-1">
+                  {locale === 'en'
+                    ? 'Vote to unlock the community probability and charts'
+                    : 'Vota para ver la probabilidad de la comunidad y las gráficas'}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* History / probability over time — kept as a separate, orthogonal
+              signal. Not part of the per-option redundancy that the new
+              PulseResultsCard absorbs. We only render the wrapper when there
+              is actual content (loading skeleton OR data + voted) so we
+              don't leave an empty card on the page. */}
+          {(secondaryLoading || (historyChartData.length > 0 && shouldRevealResults)) && (
+          <div className="bg-cc-card border border-cc-border rounded-xl p-6">
             {secondaryLoading && (
-              <div className="space-y-3 mt-4" aria-hidden>
+              <div className="space-y-3" aria-hidden>
                 <div className="h-40 rounded-lg bg-slate-800/60 animate-pulse" />
                 <div className="h-24 rounded-lg bg-slate-800/40 animate-pulse" />
               </div>
@@ -803,6 +751,7 @@ export function MarketDetailClient({
               </>
             )}
           </div>
+          )}
 
           {shouldRevealResults && (
             <VoteReasonings marketId={market.id} outcomes={outcomes} locale={locale} />

@@ -15,6 +15,15 @@
     "success": "Éxito",
     "confirm": "Confirmar"
   },
+  "pulseResults": {
+    "heading": "Resultados",
+    "subtitleWithConfidence": "{n} votos · confianza promedio {x}/10",
+    "subtitleNoConfidence": "{n} votos",
+    "voteToReveal": "Vota para ver lo que opina la comunidad",
+    "_deprecated_communityProbability": "Probabilidad de la comunidad",
+    "_deprecated_communitySignal": "Señal de la comunidad · todos los votos (registrados e invitados)",
+    "_deprecated_voteRows": "Filas de voto (misma base que la probabilidad)"
+  },
   "nav": {
     "predictions": "Predicciones",
     "locations": "Lugares",

@@ -15,6 +15,15 @@
     "success": "Success",
     "confirm": "Confirm"
   },
+  "pulseResults": {
+    "heading": "Results",
+    "subtitleWithConfidence": "{n} votes · avg confidence {x}/10",
+    "subtitleNoConfidence": "{n} votes",
+    "voteToReveal": "Vote to see what the community thinks",
+    "_deprecated_communityProbability": "Community probability",
+    "_deprecated_communitySignal": "Community signal · all votes (registered + guests)",
+    "_deprecated_voteRows": "Vote rows (same pool as probability)"
+  },
   "nav": {
     "predictions": "Predictions",
     "locations": "Places",
