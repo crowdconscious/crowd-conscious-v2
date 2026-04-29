@@ -47,7 +47,7 @@ import { VotePanel, type GuestVotePayload } from '../../components/VotePanel'
 import VoteReasonings from '@/components/markets/VoteReasonings'
 import PulseResultsCard from '@/components/pulse/PulseResultsCard'
 import { GuestRegistrationPrompt } from '../../components/GuestRegistrationPrompt'
-import { CelebrationModal } from '@/components/gamification/CelebrationModal'
+import PostVoteScreen, { type PostVoteOutcomeStat } from '@/components/pulse/PostVoteScreen'
 import { recordAnonVote } from '@/lib/anon-vote-tracker'
 import {
   getOrCreateGuestId,
@@ -57,10 +57,13 @@ import {
 } from '@/lib/guest-vote-storage'
 import ShareButton from '@/components/ShareButton'
 import { toDisplayPercent } from '@/lib/probability-utils'
-import { getMarketText } from '@/lib/i18n/market-translations'
+import {
+  getMarketText,
+  getOutcomeLabel,
+  getOutcomeSubtitle,
+} from '@/lib/i18n/market-translations'
 import { useLocale } from '@/lib/i18n/useLocale'
 import {
-  celebrationRecordedMessage,
   isPulseLikeMarket,
   recentActivityEmpty,
   recentActivityHeading,
@@ -240,6 +243,8 @@ export function MarketDetailClient({
     open: boolean
     xpGained?: number
     guest?: boolean
+    outcomeId?: string
+    confidence?: number
   }>({ open: false })
   const [voteQuietMessage, setVoteQuietMessage] = useState<string | null>(null)
   const [lazyExtra, setLazyExtra] = useState<{
@@ -327,6 +332,8 @@ export function MarketDetailClient({
     xpEarned?: number
     isUpdate?: boolean
     noChange?: boolean
+    outcomeId?: string
+    confidence?: number
   }) => {
     if (payload?.noChange) {
       setVoteQuietMessage(locale === 'es' ? 'Sin cambios' : 'No changes')
@@ -339,14 +346,25 @@ export function MarketDetailClient({
       router.refresh()
       return
     }
-    setCelebration({ open: true, xpGained: payload?.xpEarned, guest: false })
+    setCelebration({
+      open: true,
+      xpGained: payload?.xpEarned,
+      guest: false,
+      outcomeId: payload?.outcomeId,
+      confidence: payload?.confidence,
+    })
   }
 
   const handleAnonymousVoteSuccess = (payload: GuestVotePayload, _meta?: { total_votes?: number }) => {
     if (!guestId) return
     setMarketGuestVote(market.id, guestId, payload)
     setGuestVoteRecord(payload)
-    setCelebration({ open: true, guest: true })
+    setCelebration({
+      open: true,
+      guest: true,
+      outcomeId: payload.outcomeId,
+      confidence: payload.confidence,
+    })
     router.refresh()
   }
 
@@ -373,6 +391,32 @@ export function MarketDetailClient({
   const resolvedDate = market.resolved_at ? formatDate(market.resolved_at, locale) : ''
   const categoryLabel = categoryDisplay(config, locale)
   const avgConfidenceHero = marketAvgConfidenceFromOutcomes(outcomes)
+
+  // Stats fed into PostVoteScreen. We snapshot the outcome the user just
+  // voted for so the post-vote validation copy can echo the choice ("Votaste:
+  // X · 59% coincide contigo") without re-fetching. Numbers are pre-vote
+  // because router.refresh() runs after the modal opens; that's fine — the
+  // post-vote screen reflects the community state the user joined.
+  const postVoteOutcomeStat: PostVoteOutcomeStat | null = celebration.outcomeId
+    ? (() => {
+        const o = outcomes.find((x) => x.id === celebration.outcomeId)
+        if (!o) return null
+        const vc = o.vote_count ?? 0
+        const avg =
+          vc > 0 ? Math.round((Number(o.total_confidence ?? 0) / vc) * 10) / 10 : null
+        return {
+          outcomeId: o.id,
+          label: getOutcomeLabel(o, locale),
+          subtitle: getOutcomeSubtitle(o, locale),
+          probability: Number(o.probability ?? 0),
+          avgConfidence: avg,
+        }
+      })()
+    : null
+  const postVoteTotalVotes = outcomes.reduce(
+    (sum, o) => sum + (o.vote_count ?? 0),
+    0
+  )
 
   return (
     <div className="space-y-6 pb-8">
@@ -1002,25 +1046,16 @@ export function MarketDetailClient({
         </div>
       </div>
 
-      <CelebrationModal
+      <PostVoteScreen
         isOpen={celebration.open}
-        type="prediction_trade"
-        title="Nice!"
-        message={
-          celebration.guest
-            ? ''
-            : celebration.xpGained
-              ? `You earned ${celebration.xpGained} XP`
-              : celebrationRecordedMessage(loc, isPulseMarket)
-        }
-        xpGained={celebration.guest ? undefined : celebration.xpGained}
-        guestVote={celebration.guest === true}
-        guestMessage={celebrationRecordedMessage(loc, isPulseMarket)}
-        isPulseMarket={isPulseMarket}
-        sharePath={`/predictions/markets/${market.id}`}
-        shareTitle={getMarketText(market, 'title', locale)}
-        shareSponsorName={(market as { sponsor_name?: string }).sponsor_name}
-        shareCardMarketId={market.id}
+        marketId={market.id}
+        marketTitle={getMarketText(market, 'title', locale)}
+        votedOutcome={postVoteOutcomeStat}
+        userType={celebration.guest ? 'guest' : 'registered'}
+        locale={loc}
+        totalVotes={postVoteTotalVotes}
+        xpEarned={celebration.guest ? null : celebration.xpGained ?? null}
+        sponsorName={(market as { sponsor_name?: string | null }).sponsor_name ?? null}
         onClose={handleCelebrationClose}
       />
 

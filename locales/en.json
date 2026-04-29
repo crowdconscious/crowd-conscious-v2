@@ -424,6 +424,34 @@
       "avg_conf_by_outcome": "Avg. confidence by outcome",
       "votes": "votes"
     }
+  },
+  "post_vote": {
+    "validation_heading": "Your vote counts",
+    "voted_label": "You voted: {label}",
+    "crowd_agrees": "{pct}% of the community agrees with you.",
+    "crowd_agrees_with_total": "{pct}% of the community agrees with you (of {total} votes).",
+    "crowd_minority": "Your view is in the minority — only {pct}% voted this way. Diverse opinions enrich the consultation.",
+    "avg_confidence": "Average confidence on this option: {value}/10",
+    "newsletter_heading": "Get results and new consultations",
+    "newsletter_helper": "No account. Just email. Unsubscribe anytime.",
+    "newsletter_email_placeholder": "you@email.com",
+    "newsletter_submit": "Subscribe to newsletter",
+    "newsletter_submitting": "Submitting…",
+    "newsletter_success": "✓ You're subscribed",
+    "newsletter_already": "✓ You're already subscribed",
+    "newsletter_success_helper": "We'll let you know when new consultations launch.",
+    "newsletter_invalid_email": "Invalid email",
+    "newsletter_error": "We couldn't subscribe you. Please try again.",
+    "explore_more": "See more active consultations →",
+    "share_heading": "Share your vote",
+    "share_copy_link": "Copy link",
+    "share_native": "Share…",
+    "share_card": "Share card",
+    "share_stories": "To Stories",
+    "share_download_story": "Download Story",
+    "share_more_options": "More share options",
+    "share_fewer_options": "Fewer options",
+    "close": "Close"
   }
 }
 

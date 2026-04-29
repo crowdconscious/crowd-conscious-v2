@@ -170,6 +170,10 @@ interface VotePanelProps {
     xpEarned?: number
     isUpdate?: boolean
     noChange?: boolean
+    /** Outcome the user just voted for — surfaced for the post-vote screen. */
+    outcomeId?: string
+    /** Confidence (1..10) the user just submitted. */
+    confidence?: number
   }) => void
   isAuthenticated?: boolean
   guestId?: string | null
@@ -315,6 +319,8 @@ export function VotePanel({
           xpEarned: data.xp_earned,
           isUpdate: data.is_update === true,
           noChange: data.no_change === true,
+          outcomeId: selectedOutcomeId,
+          confidence: effectiveConfidence,
         })
       } else {
         alert(data.error || 'Vote failed')

@@ -424,6 +424,34 @@
       "avg_conf_by_outcome": "Confianza promedio por resultado",
       "votes": "votos"
     }
+  },
+  "post_vote": {
+    "validation_heading": "Tu voto cuenta",
+    "voted_label": "Votaste: {label}",
+    "crowd_agrees": "El {pct}% de la comunidad coincide contigo.",
+    "crowd_agrees_with_total": "El {pct}% de la comunidad coincide contigo (de {total} votos).",
+    "crowd_minority": "Tu opinión es minoritaria — solo {pct}% votó así. Las opiniones diversas hacen más rica la consulta.",
+    "avg_confidence": "Confianza promedio en esta opción: {value}/10",
+    "newsletter_heading": "Recibe los resultados y nuevas consultas",
+    "newsletter_helper": "Sin cuenta. Solo correo. Cancela cuando quieras.",
+    "newsletter_email_placeholder": "tu@email.com",
+    "newsletter_submit": "Suscribirme al newsletter",
+    "newsletter_submitting": "Enviando…",
+    "newsletter_success": "✓ Estás suscrito",
+    "newsletter_already": "✓ Ya estás suscrito",
+    "newsletter_success_helper": "Te avisaremos cuando haya nuevas consultas.",
+    "newsletter_invalid_email": "Correo inválido",
+    "newsletter_error": "No pudimos suscribirte. Intenta de nuevo.",
+    "explore_more": "Ver más consultas activas →",
+    "share_heading": "Comparte tu voto",
+    "share_copy_link": "Copiar enlace",
+    "share_native": "Compartir…",
+    "share_card": "Tarjeta",
+    "share_stories": "Stories",
+    "share_download_story": "Descargar Story",
+    "share_more_options": "Más opciones de compartir",
+    "share_fewer_options": "Menos opciones",
+    "close": "Cerrar"
   }
 }
 
