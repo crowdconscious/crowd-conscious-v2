@@ -1,6 +1,14 @@
 /**
- * Content Creator: reader-first blog drafts (Spanish primary).
- * Saves to `blog_posts` (draft) and `agent_content`.
+ * Content Creator v4 + Case Study Draft.
+ *
+ * - runContentPackageV4({ topic?, marketId?, source? }):
+ *   Manual-only. Single Sonnet 4.5 call producing the full Crowd Conscious v4
+ *   content package: ES + EN blog, IG carousel, IG reel script, 5 social
+ *   variants, optional Pulse market proposal. Persists as agent_content
+ *   (metadata.package_v4) and also drops the ES blog as a draft blog_post.
+ *
+ * - runCaseStudyDraft(marketId): Triggered by pulse-auto-resolve cron when a
+ *   Pulse with ≥10 votes ends. Drafts a sales-focused case study blog post.
  */
 import {
   getAnthropicClient,
@@ -12,11 +20,6 @@ import {
   formatDateMX,
   mexicoCityNow,
 } from '@/lib/agents/config'
-import {
-  emptyPlatformIntelligence,
-  formatBlogWriterPlatformContext,
-  getPlatformIntelligence,
-} from '@/lib/agents/intelligence-bridge'
 import { loadMarketVoteReasoningsWithAuthors } from '@/lib/market-vote-reasonings'
 import { DEFAULT_PULSE_EMBED_COMPONENTS } from '@/lib/pulse-embed-constants'
 
@@ -29,204 +32,6 @@ const ALLOWED_CATEGORIES = new Set([
 ])
 
 const APP_BASE = process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'
-
-type MarketRow = {
-  id: string
-  title: string
-  total_votes: number | null
-  current_probability: number | null
-  category: string | null
-  is_pulse: boolean | null
-}
-
-async function buildContentCreatorDataBrief(
-  supabase: ReturnType<typeof getSupabaseAdmin>,
-  todayFormatted: string
-): Promise<{ text: string; marketList: MarketRow[] }> {
-  const wcOpening = new Date('2026-06-11T12:00:00Z')
-  const daysUntil = Math.ceil((wcOpening.getTime() - Date.now()) / 86400000)
-
-  const since24h = new Date(Date.now() - 86400000).toISOString()
-
-  const [{ data: markets }, { count: vote24h }] = await Promise.all([
-    supabase
-      .from('prediction_markets')
-      .select('id, title, total_votes, current_probability, category, is_pulse')
-      .in('status', ['active', 'trading'])
-      .is('archived_at', null)
-      .order('total_votes', { ascending: false, nullsFirst: false })
-      .limit(8),
-    supabase
-      .from('market_votes')
-      .select('id', { count: 'exact', head: true })
-      .gte('created_at', since24h),
-  ])
-
-  const marketList = (markets ?? []) as MarketRow[]
-  const mids = marketList.map((m) => m.id)
-
-  const outcomesByMarket = new Map<string, Array<{ label: string; probability: number }>>()
-  if (mids.length > 0) {
-    const { data: orows } = await supabase
-      .from('market_outcomes')
-      .select('market_id, label, probability')
-      .in('market_id', mids)
-    for (const row of orows ?? []) {
-      const mid = row.market_id as string
-      const list = outcomesByMarket.get(mid) ?? []
-      list.push({
-        label: String(row.label ?? '').trim() || '—',
-        probability: Number(row.probability) ?? 0,
-      })
-      outcomesByMarket.set(mid, list)
-    }
-    for (const [id, list] of outcomesByMarket) {
-      list.sort((a, b) => b.probability - a.probability)
-      outcomesByMarket.set(id, list)
-    }
-  }
-
-  const pulseIds = marketList.filter((m) => m.is_pulse).map((m) => m.id)
-  let pulseBlock = ''
-  if (pulseIds.length > 0) {
-    const { data: pvotes } = await supabase
-      .from('market_votes')
-      .select('confidence, outcome_id')
-      .in('market_id', pulseIds)
-      .limit(2500)
-    const { data: poutcomes } = await supabase
-      .from('market_outcomes')
-      .select('id, label')
-      .in('market_id', pulseIds)
-    const oidToLabel = new Map((poutcomes ?? []).map((o) => [o.id as string, String(o.label ?? '')]))
-    const byLabel: Record<string, number[]> = {}
-    for (const v of pvotes ?? []) {
-      const full = oidToLabel.get(v.outcome_id as string) ?? ''
-      const lab = full.split(' / ')[0]?.trim() || full || '—'
-      if (!byLabel[lab]) byLabel[lab] = []
-      byLabel[lab].push(Number(v.confidence))
-    }
-    pulseBlock = Object.entries(byLabel)
-      .map(([lab, confs]) => {
-        const avg = confs.reduce((a, b) => a + b, 0) / confs.length
-        return `- ${lab}: ${confs.length} votos, confianza media ${avg.toFixed(1)}/10`
-      })
-      .join('\n')
-  }
-
-  const marketLines = marketList.map((m) => {
-    const outs = outcomesByMarket.get(m.id) ?? []
-    const top = outs[0]
-    const p = top?.probability ?? 0
-    const pct = p > 0 && p <= 1 ? Math.round(p * 100) : Math.round(Math.min(100, p))
-    return `- "${m.title}" [ID: ${m.id}] — ${m.total_votes ?? 0} votos; opción líder: ${top?.label ?? '—'} (~${pct}%)`
-  })
-
-  let text = `FECHA: ${todayFormatted}\nDÍAS HASTA INICIO MUNDIAL 2026 (referencia ~11 jun 2026): ${daysUntil}\n`
-  text += `ACTIVIDAD AGREGADA (últimas 24h): ${vote24h ?? 'N/A'} votos en plataforma (sin nombres).\n\n`
-  text += `MERCADOS CON MÁS PARTICIPACIÓN — elige related_market_id SOLO de estos IDs:\n${marketLines.join('\n')}\n`
-  if (pulseBlock) {
-    text += `\nPULSE — CONFIANZA POR OPCIÓN (solo mercados pulse):\n${pulseBlock}\n`
-  }
-  text += `\nURL base para el cierre del artículo: ${APP_BASE}\n`
-
-  return { text, marketList }
-}
-
-const CONTENT_CREATOR_SYSTEM = `You are the blog writer for Crowd Conscious, a collective intelligence platform in Mexico City. Posts publish at crowdconscious.app/blog.
-
-AUDIENCE: Everyday people in CDMX and Mexico who care about the city, World Cup 2026, and social issues. They are NOT prediction-market traders or developers.
-
-GOAL: One post that:
-1) Opens with a HOOK (stop scrolling)
-2) Tells a STORY, not a dashboard recap
-3) Connects to one or more LIVE markets from the data brief (usually 1–3; use more only when the story naturally ties them together)
-4) Ends with the CLOSING CTA block below (same structure in Spanish AND English)
-5) "content" = full article in Spanish; "content_en" = full article in English (not a summary — full parallel post)
-
-STRUCTURE:
-- Title: provocative question or surprise (~12 words) in both languages
-- Opening: hook — local fact, question, or CDMX reference anyone recognizes
-- Body: 3–4 sections with ## headings only (no ###). Short paragraphs (2–4 sentences), separated by blank lines
-- Close: the mandatory CTA section below (append to BOTH content and content_en)
-- Length: ~400–600 words in Spanish body (before the CTA); similar length in English
-
-PRIORITY TOPICS (pick one angle — avoid repeating the same market/category as in RECENT POSTS below):
-1) News Monitor context — tie to live market(s) that are NOT Pulse if Pulse was covered recently
-2) A non-Pulse market with meaningful probability or participation shift — what it means for the city
-3) Active Pulse only if Pulse was not the focus of the last 1–2 posts
-4) Else: short educational piece on collective intelligence (Galton-style) tied to market(s) from the brief
-
-TONE (CRITICAL):
-- Smart friend over coffee, not a CEO briefing
-- CDMX neighborhoods, Metro, Reforma, daily life when it fits
-- NO corporate or marketing jargon
-- NO leaderboard names, NO usernames, NO XP, NO agent/error counts, NO "registered user totals" as the headline
-- NO bullet lists in the main body — prose only (numbered lists OK only inside the closing CTA if needed; prefer separate markdown links per line)
-- Spanish body: use Spanish outcome labels where relevant; English body: natural English
-
-FORMATTING (content and content_en):
-- Valid markdown: ## for H2, **bold** sparingly
-- Blank line between paragraphs
-- No ### headings in the main article
-
-CLOSING CTA — copy this structure (adapt wording; keep markdown link pattern). Append AFTER the main body to BOTH "content" (Spanish) and "content_en" (English).
-
-Spanish (content), example shape:
----
-**¿Y tú qué opinas?**
-
-[One short paragraph — 1–2 sentences framing the open questions; no bare URLs.]
-
-Tu voto importa. Vota con tu nivel de certeza en nuestros mercados:
-
-[→ Exact link text for market 1](BASE_URL/predictions/markets/UUID_1)
-[→ Pulse: Exact link text if Pulse](BASE_URL/predictions/markets/UUID_pulse)
-
-English (content_en), same layout:
----
-**What do you think?**
-
-[One short paragraph in English.]
-
-Your opinion matters. Vote with your level of confidence in our markets:
-
-[→ English link text for market 1](BASE_URL/predictions/markets/UUID_1)
-[→ Pulse: English link text if Pulse](BASE_URL/predictions/markets/UUID_pulse)
-
-RULES FOR LINKS:
-- BASE_URL is given in the data brief (e.g. https://crowdconscious.app). Use it exactly; every market line MUST be a markdown link [label](url).
-- Do NOT paste raw URLs as plain text. Do NOT use bare "https://..." without markdown.
-- For Pulse markets, prefix the link text with "Pulse: " (Spanish) or "Pulse: " (English).
-- One market per line; each line is its own markdown link starting with → inside the brackets.
-- List every market you cite in "related_market_ids" (array of UUIDs, max 5, order matches reading order). Also set "related_market_id" to the primary (first) market UUID for compatibility.
-
-QUALITY REQUIREMENTS (non-negotiable — fail any and the draft is discarded):
-- MUST reference at least one live market by UUID in related_market_ids.
-- Spanish body ≤ 600 words (before the closing CTA). English body similar.
-- Must end with the closing CTA block (both Spanish and English versions).
-- Self-score (1-10): "Would I share this on LinkedIn without editing?"
-  - 9-10: sharp hook, tight data, memorable insight.
-  - 7-8: solid, publishable with light edits.
-  - 1-6: filler, abstract, or off-platform. Return honest scores <7 — the pipeline drops them automatically.
-
-OUTPUT: Respond with ONLY valid JSON (no markdown code fences, no preamble):
-{
-  "title": "Spanish title",
-  "title_en": "English title",
-  "slug": "url-friendly-slug-spanish",
-  "excerpt": "Two-sentence Spanish teaser",
-  "excerpt_en": "English teaser",
-  "content": "Full Spanish markdown including closing CTA",
-  "content_en": "Full English markdown including closing CTA (complete translation)",
-  "category": "pulse_analysis | market_story | world_cup | insight | behind_data",
-  "tags": ["tag1", "tag2", "tag3"],
-  "meta_description": "Spanish SEO, max 155 chars",
-  "related_market_id": "primary UUID from the market list",
-  "related_market_ids": ["uuid1", "uuid2"],
-  "self_score": 8,
-  "self_score_reason": "One sentence explaining the score"
-}`
 
 function slugify(raw: string): string {
   const s = raw
@@ -252,102 +57,285 @@ async function uniqueSlug(
   return `${base}-${Date.now()}`
 }
 
-export async function runContentCreator(): Promise<{
+// ─────────────────────────────────────────────────────────────────────────────
+// CONTENT PACKAGE v4 — runContentPackageV4({ topic?, marketId?, source? })
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// One Sonnet 4.5 call. The model gets:
+//   - The seed topic (free-text or derived from a marketId)
+//   - A short list of related/active markets (for in-text linking)
+//   - The brand voice + structural rules from the v4 template
+// And returns ONE JSON package with all deliverables. We persist to
+// agent_content with metadata.package_v4 so the admin UI can render every
+// piece, and we also drop the ES blog into blog_posts as a draft so existing
+// blog admin tooling continues to work.
+
+type V4Input = {
+  topic?: string
+  marketId?: string
+  source?: string
+}
+
+type ActiveMarketSnippet = {
+  id: string
+  title: string
+  description_short: string | null
+  is_pulse: boolean
+  total_votes: number
+  category: string | null
+  status: string | null
+  resolution_date: string | null
+}
+
+const V4_SYSTEM = `Eres el writer principal de CROWD CONSCIOUS — una plataforma colectiva de inteligencia en CDMX (mercados de predicción + Pulse: encuestas ponderadas por confianza). Publicas en crowdconscious.app/blog y en redes (@crowdconscious).
+
+OBJETIVO: producir UN paquete de contenido completo y publicable en bilingüe (ES primario / EN paralelo) listo para usar SIN reescritura. Cada pieza tiene que poder copiarse y publicarse.
+
+AUDIENCIA:
+- Audiencia consumidora (ES): Personas en CDMX/Mexico que quieren entender qué pasa en su ciudad, World Cup 2026, sociedad. NO traders, NO devs.
+- Audiencia B2B (EN/ES, sólo para market_proposal): marcas, agencias, planners.
+
+VOZ:
+- Smart friend over coffee. Curiosa, directa, sin jerga corporativa.
+- Sin "leverage", "synergy", "engagement", "stakeholders". Sin emojis salvo en social media.
+- En ES: tuteo, expresiones CDMX cuando aplique (Reforma, Metro, colonias, chilango si fluye natural).
+- En EN: natural, no traducción literal. Mantén el insight, no la sintaxis.
+
+ESTRUCTURA OBLIGATORIA — el JSON de salida tiene EXACTAMENTE estos campos. Cualquier campo faltante hace que se descarte:
+
+{
+  "topic_summary": "1-2 frases en español describiendo el ángulo elegido y por qué importa AHORA",
+  "hook_score": 1-10,
+  "hook_score_reason": "1 frase justificando el score (¿pararía el scroll en LinkedIn/IG?)",
+
+  "blog_es": {
+    "title": "Pregunta o sorpresa, ~10-14 palabras",
+    "slug": "slug-amigable-en-espanol",
+    "excerpt": "2 frases que vendan el clic (max 220 caracteres)",
+    "meta_description": "SEO ES, max 155 caracteres",
+    "category": "pulse_analysis | market_story | world_cup | behind_data | insight",
+    "tags": ["3-5 tags en español, kebab-case"],
+    "content": "Markdown completo: gancho → 3-4 secciones con ## (NO ###) → cierre con CTA. 800-1200 palabras. Párrafos cortos (2-4 frases). Sin bullet lists en el cuerpo (solo en el CTA). Termina SIEMPRE con el bloque CTA descrito abajo."
+  },
+
+  "blog_en": {
+    "title": "English version, parallel — not literal translation",
+    "slug": "english-friendly-slug",
+    "excerpt": "2 sentences",
+    "meta_description": "SEO EN, max 155 chars",
+    "content": "Same structure as blog_es. Full parallel translation, similar length (800-1200 words). Same closing CTA structure but in English."
+  },
+
+  "carousel_ig": {
+    "slides_es": [
+      { "n": 1, "headline": "Hook 4-7 palabras", "body": "1-2 frases. Max 80 caracteres en body." },
+      "...8-10 slides total..."
+    ],
+    "slides_en": [
+      "...8-10 slides paralelas en inglés, mismo número y orden que slides_es..."
+    ],
+    "cta_slide_es": "Texto del último slide CTA en español (1 frase + 'Vota en crowdconscious.app/pulse')",
+    "cta_slide_en": "English CTA last slide",
+    "design_notes": "1-2 frases sobre paleta/estilo (ej. 'fondos sólidos contraste alto, 1 dato grande por slide')"
+  },
+
+  "reel_ig": {
+    "duration_seconds": 15-45,
+    "hook_es": "Primera línea hablada, 2-3 segundos. DEBE parar scroll.",
+    "script_es": [
+      { "t_start": 0, "t_end": 3, "voice": "Texto hablado", "on_screen": "Texto en pantalla (caps, max 5 palabras)" },
+      "...5-8 beats hasta cumplir duration_seconds..."
+    ],
+    "cta_es": "1 frase final que mande a votar/leer",
+    "caption_es": "Caption del reel ES, 2-3 frases + 5-7 hashtags relevantes",
+    "caption_en": "English caption (lite — para audiencias bilingües)"
+  },
+
+  "social_posts": [
+    {
+      "platform": "twitter|threads|linkedin|instagram_post",
+      "lang": "es|en",
+      "text": "Post listo para publicar. Respeta límites: twitter 280, threads 500, linkedin 1300, instagram 2200.",
+      "hashtags": ["..."]
+    },
+    "...5 posts en total cubriendo MÍNIMO 2 idiomas y 2 plataformas..."
+  ],
+
+  "pulse_market_proposal": {
+    "should_create": true | false,
+    "reasoning": "1-2 frases — ¿este tópico tiene una pregunta verificable, time-bound, donde la confianza ponderada cambiaría la lectura?",
+    "proposal": {
+      "title": "Pregunta del Pulse, max 120 caracteres, terminando con ?",
+      "description_short": "1 frase explicando qué se está midiendo",
+      "outcomes": [
+        { "label_es": "Opción 1", "label_en": "Option 1" },
+        "...3-5 opciones..."
+      ],
+      "resolution_window_days": 7-30,
+      "sponsor_pitch": "1 párrafo (2-3 frases) explicándole a una marca por qué este Pulse es valioso comprar como insight de mercado."
+    }
+  },
+
+  "image_prompts": {
+    "blog_cover": "Prompt en inglés para Midjourney/DALL-E. Estilo editorial, sin texto en imagen, fotorealista o ilustración minimal. Incluye paleta y mood.",
+    "carousel_template": "Prompt para template base de carrusel (estilo, paleta, tipografía sugerida)",
+    "social_image": "Prompt para imagen cuadrada de twitter/linkedin"
+  },
+
+  "self_score": 1-10,
+  "self_score_reason": "Honesto. ¿Lo publicarías sin editar? <7 = se descarta automáticamente."
+}
+
+REGLAS DURAS (no negociables):
+1. ENLACES en blog_es/blog_en: cada referencia a un mercado de la lista DEBE ser markdown link [texto](BASE_URL/predictions/markets/UUID) o [texto](BASE_URL/pulse/UUID) si is_pulse=true. NUNCA URLs en plano. BASE_URL te lo paso en el contexto.
+2. Si el contexto incluye un mercado activo relevante, ENLAZA. Si no hay mercado claramente relacionado, NO inventes uno — deja el blog sin link de mercado pero con el CTA general.
+3. CTA cierre del blog (ES y EN): "**¿Y tú qué opinas?** [1 frase] / **What do you think?** [1 sentence]" + 1-3 markdown links a mercados/Pulses concretos del contexto.
+4. Pulse market proposal: should_create=true SOLO si el tópico naturalmente plantea una pregunta verificable con fecha de resolución clara. Si no, should_create=false y omite el resto del proposal.
+5. social_posts: mínimo 5 ítems. DEBES incluir al menos 1 post en español Y al menos 1 en inglés. Cada plataforma respeta su límite de caracteres EXACTO.
+6. Sin nombres reales de usuarios, sin XP, sin leaderboards, sin "ya somos N usuarios".
+7. self_score < 7 → la pipeline lo descarta. Sé honesto.
+
+OUTPUT: SOLO el objeto JSON. Sin code fences, sin texto antes o después.`
+
+async function buildV4ContextBlock(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  input: V4Input
+): Promise<{ contextText: string; markets: ActiveMarketSnippet[]; seedTopic: string; primaryMarketId: string | null }> {
+  const today = mexicoCityNow()
+  const todayFormatted = formatDateMX(today)
+
+  let primaryMarket: ActiveMarketSnippet | null = null
+  if (input.marketId) {
+    const { data: m } = await supabase
+      .from('prediction_markets')
+      .select('id, title, description_short, is_pulse, total_votes, category, status, resolution_date')
+      .eq('id', input.marketId)
+      .maybeSingle()
+    if (m) {
+      primaryMarket = {
+        id: m.id as string,
+        title: String(m.title ?? '').trim(),
+        description_short: m.description_short ? String(m.description_short) : null,
+        is_pulse: Boolean(m.is_pulse),
+        total_votes: Number(m.total_votes ?? 0),
+        category: m.category ? String(m.category) : null,
+        status: m.status ? String(m.status) : null,
+        resolution_date: m.resolution_date ? String(m.resolution_date) : null,
+      }
+    }
+  }
+
+  const { data: activeRows } = await supabase
+    .from('prediction_markets')
+    .select('id, title, description_short, is_pulse, total_votes, category, status, resolution_date')
+    .in('status', ['active', 'trading'])
+    .is('archived_at', null)
+    .order('total_votes', { ascending: false, nullsFirst: false })
+    .limit(8)
+
+  const active: ActiveMarketSnippet[] = (activeRows ?? []).map((m) => ({
+    id: m.id as string,
+    title: String(m.title ?? '').trim(),
+    description_short: m.description_short ? String(m.description_short) : null,
+    is_pulse: Boolean(m.is_pulse),
+    total_votes: Number(m.total_votes ?? 0),
+    category: m.category ? String(m.category) : null,
+    status: m.status ? String(m.status) : null,
+    resolution_date: m.resolution_date ? String(m.resolution_date) : null,
+  }))
+
+  const allMarkets: ActiveMarketSnippet[] = []
+  if (primaryMarket) allMarkets.push(primaryMarket)
+  for (const m of active) {
+    if (!allMarkets.find((x) => x.id === m.id)) allMarkets.push(m)
+  }
+
+  const seedTopic =
+    (input.topic && input.topic.trim()) ||
+    (primaryMarket
+      ? `Pulse activo: "${primaryMarket.title}" — ${primaryMarket.total_votes} votos. ¿Qué revela esta pregunta sobre la ciudad/Mundial 2026 ahora mismo?`
+      : '')
+
+  if (!seedTopic) {
+    return { contextText: '', markets: allMarkets, seedTopic: '', primaryMarketId: input.marketId ?? null }
+  }
+
+  const marketLines = allMarkets.map((m) => {
+    const linkPath = m.is_pulse ? `/pulse/${m.id}` : `/predictions/markets/${m.id}`
+    const tag = m.is_pulse ? 'PULSE' : 'MARKET'
+    const desc = m.description_short ? ` — ${m.description_short}` : ''
+    return `- [${tag}] "${m.title}" (id: ${m.id}, votos: ${m.total_votes})${desc}\n    URL: ${APP_BASE}${linkPath}`
+  })
+
+  const contextText = `FECHA: ${todayFormatted}
+BASE_URL: ${APP_BASE}
+
+TÓPICO SEMILLA${input.source ? ` (origen: ${input.source})` : ''}:
+${seedTopic}
+
+${primaryMarket ? `MERCADO PRIMARIO (úsalo como ancla narrativa si encaja con el tópico):\n- "${primaryMarket.title}" (id: ${primaryMarket.id}, ${primaryMarket.is_pulse ? 'PULSE' : 'MARKET'}, ${primaryMarket.total_votes} votos)${primaryMarket.description_short ? `\n  ${primaryMarket.description_short}` : ''}\n` : ''}
+MERCADOS ACTIVOS (úsalos para enlazar SOLO si encajan con el tópico — no fuerces):
+${marketLines.length ? marketLines.join('\n') : '(no hay mercados activos en este momento)'}
+
+RECORDATORIO: BASE_URL es ${APP_BASE}. Cada link a mercado en el blog debe ser markdown link a esa URL exacta. No inventes IDs.`
+
+  return { contextText, markets: allMarkets, seedTopic, primaryMarketId: primaryMarket?.id ?? input.marketId ?? null }
+}
+
+export type V4PackageResult = {
   success: boolean
   error?: string
+  agent_content_id?: string
   blog_post_id?: string
+  package?: Record<string, unknown>
   tokens?: { input: number; output: number }
-}> {
+}
+
+export async function runContentPackageV4(input: V4Input = {}): Promise<V4PackageResult> {
   const startTime = Date.now()
 
+  if (!input.topic && !input.marketId) {
+    await logAgentRun({
+      agentName: 'content-creator',
+      status: 'skipped',
+      durationMs: Date.now() - startTime,
+      summary: { reason: 'missing_topic_or_marketId' },
+    })
+    return {
+      success: false,
+      error: 'Provide either { topic } or { marketId } to run Content Creator v4.',
+    }
+  }
+
   try {
-    const anthropic = getAnthropicClient()
     const supabase = getSupabaseAdmin()
-    const today = mexicoCityNow()
-    const todayFormatted = formatDateMX(today)
+    const anthropic = getAnthropicClient()
 
-    let platformIntel = emptyPlatformIntelligence()
-    try {
-      platformIntel = await getPlatformIntelligence()
-    } catch (e) {
-      console.warn('[Content Creator] getPlatformIntelligence failed:', e)
-    }
-    const platformLiveBlock = formatBlogWriterPlatformContext(platformIntel)
-
-    const { data: newsRows } = await supabase
-      .from('agent_content')
-      .select('body, content_type, created_at, metadata')
-      .eq('agent_type', 'news_monitor')
-      .order('created_at', { ascending: false })
-      .limit(24)
-
-    const structuredRow = (newsRows ?? []).find(
-      (r) => (r.metadata as { type?: string } | null)?.type === 'structured_news_brief'
+    const { contextText, markets, seedTopic, primaryMarketId } = await buildV4ContextBlock(
+      supabase,
+      input
     )
-    const newsRow = structuredRow ?? (newsRows ?? [])[0]
 
-    let newsContext = 'No hay señales recientes del monitor de noticias en esta corrida.'
-    if (newsRow?.body) {
-      const b = newsRow.body
-      const raw = typeof b === 'string' ? b : JSON.stringify(b)
-      newsContext = raw.slice(0, 2000)
+    if (!seedTopic) {
+      await logAgentRun({
+        agentName: 'content-creator',
+        status: 'skipped',
+        durationMs: Date.now() - startTime,
+        summary: { reason: 'could_not_resolve_topic', input },
+      })
+      return { success: false, error: 'Could not resolve topic from input.' }
     }
 
-    const { text: dataBrief, marketList } = await buildContentCreatorDataBrief(supabase, todayFormatted)
+    const userMessage = `Genera el paquete de contenido v4 completo para este tópico.
 
-    const { data: recentBlogRows } = await supabase
-      .from('blog_posts')
-      .select('title, related_market_ids, category, created_at')
-      .order('created_at', { ascending: false })
-      .limit(3)
+${contextText}
 
-    const recentTitles = (recentBlogRows ?? []).map((r) => String(r.title ?? '').trim()).filter(Boolean)
-    const recentMarketIds = new Set(
-      (recentBlogRows ?? []).flatMap((r) =>
-        Array.isArray(r.related_market_ids) ? (r.related_market_ids as string[]) : []
-      )
-    )
-    const recentCategories = (recentBlogRows ?? []).map((r) => String(r.category ?? '')).filter(Boolean)
-    const uncovered = marketList.filter((m) => !recentMarketIds.has(m.id))
-    const diversityBlock = `IMPORTANTE — VARIEDAD DE CONTENIDO:
-Últimos títulos en el blog: ${recentTitles.length ? recentTitles.join(' | ') : '(ninguno aún)'}
-Categorías recientes: ${recentCategories.length ? recentCategories.join(', ') : '—'}
-Mercados ya enlazados recientemente (evitar repetir): ${recentMarketIds.size ? [...recentMarketIds].join(', ') : 'ninguno'}
-
-NO repitas el mismo ángulo ni el mismo mercado salvo que haya una noticia nueva decisiva. Prioriza mercados aún no cubiertos en esa lista:
-${uncovered.length ? uncovered.map((m) => `- "${m.title}" [ID: ${m.id}] — ${m.total_votes ?? 0} votos · ${m.category}`).join('\n') : '(toma un ángulo distinto usando el contexto de noticias de hoy)'}
-`
-
-    // Day-of-week steering — the cron runs M/W/F, each gets a distinct angle.
-    const dayOfWeekNum = today.getDay() // 0 = Sun, 1 = Mon, ..., 5 = Fri
-    const dayAngle =
-      dayOfWeekNum === 1
-        ? 'LUNES — Pulse Analysis: escoge un mercado Pulse con >= 10 votos y analiza qué revela la confianza ponderada que una encuesta simple no mostraría.'
-        : dayOfWeekNum === 3
-          ? 'MIÉRCOLES — News → Market: toma una señal concreta del News Monitor y conéctala con un mercado activo. El gancho debe ser la noticia, no el mercado.'
-          : dayOfWeekNum === 5
-            ? 'VIERNES — Community Spotlight: historia ligera. Un Lugar Consciente, un mercado con un patrón de votos interesante, o un mercado que se resolvió esta semana.'
-            : 'Ángulo libre — elige el enfoque que mejor encaje con los datos del día.'
-
-    const userMessage = `Escribe el artículo usando esta información.
-
-ÁNGULO DEL DÍA: ${dayAngle}
-
-${diversityBlock}
-
-${dataBrief}
-
-CONTEXTO DE NOTICIAS (News Monitor — úsalo si encaja con un mercado activo):
-${newsContext}
-
-${platformLiveBlock}
-
-Responde con un solo objeto JSON exactamente como en tus instrucciones de sistema, incluyendo self_score.`
+Devuelve EXCLUSIVAMENTE el objeto JSON descrito en tus instrucciones de sistema, con TODOS los campos requeridos. No agregues comentarios ni texto fuera del JSON.`
 
     const response = await anthropic.messages.create({
       model: MODELS.CREATIVE,
-      max_tokens: TOKEN_LIMITS.BLOG,
-      system: CONTENT_CREATOR_SYSTEM,
+      max_tokens: TOKEN_LIMITS.PACKAGE_V4,
+      system: V4_SYSTEM,
       messages: [{ role: 'user', content: userMessage }],
     })
 
@@ -355,144 +343,153 @@ Responde con un solo objeto JSON exactamente como en tus instrucciones de sistem
     const rawText = textBlock && 'text' in textBlock ? textBlock.text : ''
     const usage = response.usage ?? { input_tokens: 0, output_tokens: 0 }
 
-    let blogObj: Record<string, unknown>
+    let pkg: Record<string, unknown>
     try {
       const parsed = parseAgentJSON(rawText)
-      blogObj = (Array.isArray(parsed) ? parsed[0] : parsed) as Record<string, unknown>
+      pkg = (Array.isArray(parsed) ? parsed[0] : parsed) as Record<string, unknown>
     } catch (parseErr) {
-      console.error('[Content Creator] JSON parse failed:', parseErr)
-      await supabase.from('agent_content').insert({
-        market_id: null,
-        agent_type: 'content_creator',
-        content_type: 'blog_post',
-        title: 'Blog draft (parse failed)',
-        body: rawText.slice(0, 120000),
-        language: 'es',
-        metadata: { parse_error: String(parseErr), model: MODELS.CREATIVE },
-        published: false,
-      })
+      console.error('[Content v4] JSON parse failed:', parseErr)
+      const { data: failedRow } = await supabase
+        .from('agent_content')
+        .insert({
+          market_id: primaryMarketId,
+          agent_type: 'content_creator',
+          content_type: 'blog_post',
+          title: `Content v4 (parse failed) — ${seedTopic.slice(0, 80)}`,
+          body: rawText.slice(0, 120000),
+          language: 'es',
+          metadata: {
+            type: 'package_v4_parse_failed',
+            parse_error: String(parseErr),
+            model: MODELS.CREATIVE,
+            input,
+            seed_topic: seedTopic,
+          },
+          published: false,
+        })
+        .select('id')
+        .single()
       await logAgentRun({
         agentName: 'content-creator',
-        status: 'success',
+        status: 'error',
         durationMs: Date.now() - startTime,
         tokensInput: usage.input_tokens,
         tokensOutput: usage.output_tokens,
-        summary: { parse_failed: true },
+        errorMessage: 'parse_failed',
       })
-      return {
-        success: true,
-        tokens: { input: usage.input_tokens, output: usage.output_tokens },
-      }
+      return { success: false, error: 'parse_failed', agent_content_id: failedRow?.id as string | undefined }
     }
 
-    const title = String(blogObj.title ?? 'Sin título').trim()
-    const excerpt = String(blogObj.excerpt ?? '').trim()
-    const content = String(blogObj.content ?? '').trim()
-    const titleEn = String(blogObj.title_en ?? '').trim()
-    const excerptEn = String(blogObj.excerpt_en ?? '').trim()
-    const contentEn = String(blogObj.content_en ?? '').trim()
-    if (!content || !excerpt) {
+    const blogEs = (pkg.blog_es ?? {}) as Record<string, unknown>
+    const blogEn = (pkg.blog_en ?? {}) as Record<string, unknown>
+
+    const titleEs = String(blogEs.title ?? '').trim()
+    const contentEs = String(blogEs.content ?? '').trim()
+    const excerptEs = String(blogEs.excerpt ?? '').trim()
+    const titleEn = String(blogEn.title ?? '').trim()
+    const contentEn = String(blogEn.content ?? '').trim()
+    const excerptEn = String(blogEn.excerpt ?? '').trim()
+
+    if (!titleEs || !contentEs || !excerptEs || !titleEn || !contentEn || !excerptEn) {
       await logAgentRun({
         agentName: 'content-creator',
         status: 'skipped',
         durationMs: Date.now() - startTime,
-        summary: { reason: 'missing_content_or_excerpt' },
+        tokensInput: usage.input_tokens,
+        tokensOutput: usage.output_tokens,
+        summary: { reason: 'missing_blog_fields', input },
       })
-      return { success: false, error: 'missing_content_or_excerpt' }
-    }
-    if (!titleEn || !excerptEn || !contentEn) {
-      await logAgentRun({
-        agentName: 'content-creator',
-        status: 'skipped',
-        durationMs: Date.now() - startTime,
-        summary: { reason: 'missing_english_fields' },
-      })
-      return { success: false, error: 'missing_english_fields' }
+      return { success: false, error: 'missing_blog_fields' }
     }
 
-    // Self-quality gate — drop drafts the model itself wouldn't publish.
-    const selfScoreRaw = blogObj.self_score
+    const selfScoreRaw = pkg.self_score
     const selfScore =
       typeof selfScoreRaw === 'number'
         ? selfScoreRaw
         : typeof selfScoreRaw === 'string'
           ? Number(selfScoreRaw)
           : NaN
-    const selfScoreReason = String(blogObj.self_score_reason ?? '').trim()
-    const QUALITY_THRESHOLD = 7
-    if (Number.isFinite(selfScore) && selfScore < QUALITY_THRESHOLD) {
+
+    if (Number.isFinite(selfScore) && selfScore < 7) {
+      // Save the package so the admin can still inspect it, but don't create a draft blog post.
+      const { data: lowRow } = await supabase
+        .from('agent_content')
+        .insert({
+          market_id: primaryMarketId,
+          agent_type: 'content_creator',
+          content_type: 'blog_post',
+          title: `[low-score ${selfScore}] ${titleEs}`,
+          body: JSON.stringify({ seed_topic: seedTopic, low_score: selfScore }),
+          language: 'es',
+          metadata: {
+            type: 'package_v4',
+            package_v4: pkg,
+            self_score: selfScore,
+            self_score_reason: pkg.self_score_reason ?? '',
+            seed_topic: seedTopic,
+            input,
+            model: MODELS.CREATIVE,
+            tokens_input: usage.input_tokens,
+            tokens_output: usage.output_tokens,
+            quality_gate: 'below_threshold',
+          },
+          published: false,
+        })
+        .select('id')
+        .single()
+
       await logAgentRun({
         agentName: 'content-creator',
         status: 'skipped',
         durationMs: Date.now() - startTime,
         tokensInput: usage.input_tokens,
         tokensOutput: usage.output_tokens,
-        summary: {
-          reason: 'quality_below_threshold',
-          self_score: selfScore,
-          self_score_reason: selfScoreReason,
-          title,
-        },
+        summary: { reason: 'quality_below_threshold', self_score: selfScore, title: titleEs },
       })
       return {
         success: true,
+        agent_content_id: lowRow?.id as string | undefined,
+        package: pkg,
         tokens: { input: usage.input_tokens, output: usage.output_tokens },
       }
     }
 
-    const slugBase = slugify(String(blogObj.slug ?? title))
+    const slugBase = slugify(String(blogEs.slug ?? titleEs))
     const slug = await uniqueSlug(supabase, slugBase)
 
-    let category = String(blogObj.category ?? 'insight').trim()
+    let category = String(blogEs.category ?? 'insight').trim()
     if (!ALLOWED_CATEGORIES.has(category)) category = 'insight'
 
-    const tags = Array.isArray(blogObj.tags) ? (blogObj.tags as unknown[]).map((t) => String(t)) : []
-
-    const allowedMarketIds = new Set(marketList.map((m) => m.id))
-    const rawSingle =
-      typeof blogObj.related_market_id === 'string' ? blogObj.related_market_id.trim() : ''
-    const fromArray = Array.isArray(blogObj.related_market_ids)
-      ? (blogObj.related_market_ids as unknown[])
-          .map((x) => String(x).trim())
-          .filter((id) => allowedMarketIds.has(id))
+    const tags = Array.isArray(blogEs.tags)
+      ? (blogEs.tags as unknown[]).map((t) => String(t)).slice(0, 8)
       : []
+
+    const allowedMarketIds = new Set(markets.map((m) => m.id))
     const relatedIds: string[] = []
-    if (rawSingle && allowedMarketIds.has(rawSingle)) relatedIds.push(rawSingle)
-    for (const id of fromArray) {
-      if (!relatedIds.includes(id)) relatedIds.push(id)
+    if (primaryMarketId && allowedMarketIds.has(primaryMarketId)) {
+      relatedIds.push(primaryMarketId)
     }
-    const relatedTitles = Array.isArray(blogObj.related_market_titles)
-      ? (blogObj.related_market_titles as unknown[]).map((t) => String(t).trim()).filter(Boolean)
-      : []
-    const titleToId = new Map(marketList.map((m) => [m.title.trim().toLowerCase(), m.id]))
-    if (relatedIds.length === 0) {
-      for (const rt of relatedTitles) {
-        const id = titleToId.get(rt.toLowerCase())
-        if (id) relatedIds.push(id)
-      }
-      for (const m of marketList) {
-        if (relatedIds.length >= 5) break
-        const fuzzy = relatedTitles.some(
-          (rt) =>
-            m.title.toLowerCase().includes(rt.toLowerCase()) ||
-            rt.toLowerCase().includes(m.title.toLowerCase().slice(0, 20))
-        )
-        if (fuzzy && !relatedIds.includes(m.id)) relatedIds.push(m.id)
+    // Scrape any UUIDs the model linked into the ES content as related markets.
+    const uuidMatches = contentEs.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi) ?? []
+    for (const id of uuidMatches) {
+      const lowerId = id.toLowerCase()
+      if (allowedMarketIds.has(lowerId) && !relatedIds.includes(lowerId)) {
+        relatedIds.push(lowerId)
       }
     }
-    const finalRelated = [...new Set(relatedIds)].slice(0, 5)
+    const finalRelated = relatedIds.slice(0, 5)
 
-    const metaDesc = String(blogObj.meta_description ?? excerpt).slice(0, 160)
+    const metaDesc = String(blogEs.meta_description ?? excerptEs).slice(0, 160)
 
     const { data: inserted, error: insErr } = await supabase
       .from('blog_posts')
       .insert({
         slug,
-        title,
+        title: titleEs,
         title_en: titleEn,
-        excerpt,
+        excerpt: excerptEs,
         excerpt_en: excerptEn,
-        content,
+        content: contentEs,
         content_en: contentEn,
         category: category as
           | 'insight'
@@ -501,18 +498,48 @@ Responde con un solo objeto JSON exactamente como en tus instrucciones de sistem
           | 'world_cup'
           | 'behind_data',
         tags,
-        meta_title: title,
+        meta_title: titleEs,
         meta_description: metaDesc,
         related_market_ids: finalRelated,
-        generated_by: 'content-creator',
+        generated_by: 'content-creator-v4',
         status: 'draft',
       })
       .select('id')
       .single()
 
     if (insErr || !inserted) {
-      console.error('[Content Creator] blog_posts insert', insErr)
-      return { success: false, error: insErr?.message ?? 'blog_insert_failed' }
+      console.error('[Content v4] blog_posts insert', insErr)
+      // Even if blog insert fails, save the package to agent_content so it isn't lost.
+      const { data: fallback } = await supabase
+        .from('agent_content')
+        .insert({
+          market_id: primaryMarketId,
+          agent_type: 'content_creator',
+          content_type: 'blog_post',
+          title: titleEs,
+          body: JSON.stringify({ seed_topic: seedTopic, blog_insert_error: insErr?.message ?? 'unknown' }),
+          language: 'es',
+          metadata: {
+            type: 'package_v4',
+            package_v4: pkg,
+            self_score: selfScore,
+            seed_topic: seedTopic,
+            input,
+            model: MODELS.CREATIVE,
+            tokens_input: usage.input_tokens,
+            tokens_output: usage.output_tokens,
+            blog_insert_error: insErr?.message ?? 'unknown',
+          },
+          published: false,
+        })
+        .select('id')
+        .single()
+      return {
+        success: false,
+        error: insErr?.message ?? 'blog_insert_failed',
+        agent_content_id: fallback?.id as string | undefined,
+        package: pkg,
+      }
     }
 
     const blogId = inserted.id as string
@@ -520,19 +547,23 @@ Responde con un solo objeto JSON exactamente como en tus instrucciones de sistem
     const { data: agentRow, error: agentErr } = await supabase
       .from('agent_content')
       .insert({
-        market_id: finalRelated[0] ?? null,
+        market_id: primaryMarketId,
         agent_type: 'content_creator',
         content_type: 'blog_post',
-        title,
-        body: JSON.stringify({
-          blog_post_id: blogId,
-          slug,
-        }),
+        title: titleEs,
+        body: JSON.stringify({ blog_post_id: blogId, slug }),
         language: 'es',
         metadata: {
+          type: 'package_v4',
+          package_v4: pkg,
           blog_post_id: blogId,
           slug,
           category,
+          self_score: selfScore,
+          self_score_reason: pkg.self_score_reason ?? '',
+          hook_score: pkg.hook_score ?? null,
+          seed_topic: seedTopic,
+          input,
           model: MODELS.CREATIVE,
           tokens_input: usage.input_tokens,
           tokens_output: usage.output_tokens,
@@ -543,7 +574,7 @@ Responde con un solo objeto JSON exactamente como en tus instrucciones de sistem
       .single()
 
     if (agentErr) {
-      console.error('[Content Creator] agent_content insert', agentErr)
+      console.error('[Content v4] agent_content insert', agentErr)
     } else if (agentRow?.id) {
       await supabase.from('blog_posts').update({ agent_content_id: agentRow.id }).eq('id', blogId)
     }
@@ -554,17 +585,27 @@ Responde con un solo objeto JSON exactamente como en tus instrucciones de sistem
       durationMs: Date.now() - startTime,
       tokensInput: usage.input_tokens,
       tokensOutput: usage.output_tokens,
-      summary: { blog_post_id: blogId, slug },
+      summary: {
+        version: 'v4',
+        blog_post_id: blogId,
+        agent_content_id: agentRow?.id ?? null,
+        slug,
+        self_score: selfScore,
+        seed_topic: seedTopic.slice(0, 200),
+        source: input.source ?? null,
+      },
     })
 
     return {
       success: true,
       blog_post_id: blogId,
+      agent_content_id: agentRow?.id as string | undefined,
+      package: pkg,
       tokens: { input: usage.input_tokens, output: usage.output_tokens },
     }
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error(String(error))
-    console.error('Content creator agent error:', err)
+    console.error('Content creator v4 error:', err)
     await logAgentRun({
       agentName: 'content-creator',
       status: 'error',
@@ -823,8 +864,6 @@ export async function runCaseStudyDraft(marketId: string): Promise<{
   try {
     const supabase = getSupabaseAdmin()
 
-    // Idempotency: don't draft twice for the same Pulse. We key on
-    // pulse_market_id because that's the column auto-publish UI filters on.
     const { data: existing } = await supabase
       .from('blog_posts')
       .select('id')
@@ -955,9 +994,6 @@ export async function runCaseStudyDraft(marketId: string): Promise<{
 
     const metaDesc = String(blogObj.meta_description ?? excerpt).slice(0, 160)
 
-    // Cover: point at the OG endpoint for this slug. The endpoint already
-    // pulls visuals from `pulse_market_id` when set, so the social card
-    // looks like a Pulse result instead of a generic blog cover.
     const coverImageUrl = `${APP_BASE}/api/og/blog/${slug}`
 
     const { data: inserted, error: insErr } = await supabase

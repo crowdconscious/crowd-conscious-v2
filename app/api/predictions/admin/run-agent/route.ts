@@ -42,8 +42,28 @@ export async function POST(request: NextRequest) {
         break
       }
       case 'content-creator': {
-        const { runContentCreator } = await import('@/lib/agents/content-creator')
-        result = await runContentCreator()
+        // Content Creator v4 — manual only. Requires either a `topic` or
+        // `marketId` so the model has a concrete seed instead of guessing.
+        const topic =
+          typeof body.topic === 'string' && body.topic.trim().length > 0
+            ? body.topic.trim()
+            : undefined
+        const cMarketId =
+          typeof body.marketId === 'string' && body.marketId.trim().length > 0
+            ? body.marketId.trim()
+            : undefined
+        const source =
+          typeof body.source === 'string' && body.source.trim().length > 0
+            ? body.source.trim()
+            : undefined
+        if (!topic && !cMarketId) {
+          return NextResponse.json(
+            { error: 'content-creator requires either { topic } or { marketId } in the body.' },
+            { status: 400 }
+          )
+        }
+        const { runContentPackageV4 } = await import('@/lib/agents/content-creator')
+        result = await runContentPackageV4({ topic, marketId: cMarketId, source })
         break
       }
       case 'news-monitor': {
@@ -54,11 +74,6 @@ export async function POST(request: NextRequest) {
       case 'inbox-curator': {
         const { runInboxCurator } = await import('@/lib/agents/inbox-curator')
         result = await runInboxCurator()
-        break
-      }
-      case 'sponsor-report': {
-        const { runSponsorReport } = await import('@/lib/agents/sponsor-report')
-        result = await runSponsorReport()
         break
       }
       case 'sponsor-pulse-report': {

@@ -1,3 +1,7 @@
+// MOVED FROM: lib/agents/sponsor-report.ts
+// RETIRED: April 2026 (Pulse-first agent re-prompting)
+// See README.md in this folder for restore instructions.
+
 import {
   getAnthropicClient,
   getSupabaseAdmin,

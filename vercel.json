@@ -8,9 +8,7 @@
   "functions": {
     "app/api/cron/agents/ceo-digest/route.ts": { "maxDuration": 300 },
     "app/api/cron/agents/inbox-curator/route.ts": { "maxDuration": 300 },
-    "app/api/cron/agents/content-creator/route.ts": { "maxDuration": 300 },
     "app/api/cron/agents/news-monitor/route.ts": { "maxDuration": 300 },
-    "app/api/cron/agents/sponsor-report/route.ts": { "maxDuration": 300 },
     "app/api/cron/newsletter/route.ts": { "maxDuration": 300 },
     "app/api/predictions/admin/send-newsletter/route.ts": { "maxDuration": 300 },
     "app/api/cron/live-reminders/route.ts": { "maxDuration": 120 },
@@ -22,10 +20,6 @@
     "app/api/**/*.ts": { "maxDuration": 30 }
   },
   "crons": [
-    {
-      "path": "/api/cron/agents/news-monitor",
-      "schedule": "0 14 * * 1"
-    },
     {
       "path": "/api/cron/newsletter",
       "schedule": "0 14 * * 1,3,5"
@@ -49,10 +43,6 @@
     {
       "path": "/api/cron/pulse-auto-resolve",
       "schedule": "5 * * * *"
-    },
-    {
-      "path": "/api/cron/agents/sponsor-report",
-      "schedule": "0 9 1 * *"
     },
     {
       "path": "/api/cron/monthly-impact",

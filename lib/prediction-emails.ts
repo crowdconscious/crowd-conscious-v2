@@ -411,11 +411,19 @@ export function crowdNewsletterEmailTemplate(opts: {
   daysUntilWorldCup?: number
   /** Active Conscious Locations (max 3 in cron); rendered between Mercados and Fondo */
   activeLocations?: NewsletterConsciousLocation[] | null
+  /** Optional 1-2 sentence ES intro from the newsletter agent — rendered above the blog block. */
+  intro?: string | null
+  /** Optional Haiku-generated subject line. Falls back to the deterministic default. */
+  subjectOverride?: string | null
 }): { subject: string; html: string } {
-  const subject =
+  const fallbackSubject =
     opts.post && opts.highlightNewBlog
       ? `${opts.post.title.replace(/\s+/g, ' ').trim().slice(0, 90)} | Crowd Conscious`
       : 'Lo que CDMX piensa esta semana | Crowd Conscious'
+  const subject =
+    opts.subjectOverride && opts.subjectOverride.trim().length > 0
+      ? opts.subjectOverride.trim().slice(0, 110)
+      : fallbackSubject
 
   const fundFormatted = Math.round(opts.fundTotalMxn).toLocaleString('es-MX', {
     maximumFractionDigits: 0,
@@ -460,11 +468,22 @@ export function crowdNewsletterEmailTemplate(opts: {
       ? `<p style="color: #6b7280; font-size: 12px; text-align: center; font-family: ${EMAIL_FONT}; margin: 0 0 8px;">⚽ Mundial 2026: ~${opts.daysUntilWorldCup} días</p>`
       : ''
 
+  const introBlock =
+    opts.intro && opts.intro.trim().length > 0
+      ? `
+    <div style="padding: 18px 24px 0;">
+      <p style="color: #e2e8f0; font-size: 14px; line-height: 1.55; font-family: ${EMAIL_FONT}; margin: 0; font-style: italic;">
+        ${esc(opts.intro.trim().slice(0, 280))}
+      </p>
+    </div>`
+      : ''
+
   const html = `
   <div style="font-family: ${EMAIL_FONT}; max-width: 600px; margin: 0 auto; background: #0f1419; color: #f9fafb;">
     <div style="padding: 24px; text-align: center; border-bottom: 1px solid #2d3748;">
       <img src="${LOGO_URL}" alt="Crowd Conscious" width="120" style="height: auto; margin: 0 auto;" />
     </div>
+    ${introBlock}
     ${blogBlock}
     ${pulseBlock}
     ${divider}

@@ -1,3 +1,16 @@
+/**
+ * CEO Digest — weekly operational dashboard for the founder.
+ *
+ * v2 (Apr 2026 re-prompting): one Claude call that returns a structured
+ * JSON dashboard. The email template renders cards (no more markdown
+ * narrative). Schema:
+ *   - key_metrics[]      5 numbers with non-zero deltas only (silence = signal)
+ *   - do_this_week[]     3 dated, actionable next steps with cta_url
+ *   - watch              0-1 risk/surprise to flag
+ *   - sponsor_outreach   0-1 warm-lead pitch (Pulse Pilot / Single / Pack)
+ *
+ * Cron: weekly Mon 16:00 UTC (10:00 CDMX) per vercel.json.
+ */
 import {
   getAnthropicClient,
   getSupabaseAdmin,
@@ -6,12 +19,144 @@ import {
   TOKEN_LIMITS,
   formatDateMX,
   mexicoCityNow,
+  parseAgentJSON,
 } from '@/lib/agents/config'
 import { sendEmail } from '@/lib/resend'
 import { CONSCIOUS_FUND_PERCENT } from '@/lib/fund-allocation'
 
+const APP_URL = (process.env.NEXT_PUBLIC_APP_URL ?? 'https://crowdconscious.app').replace(/\/$/, '')
+
+interface CeoDigestPayload {
+  week_label: string
+  key_metrics: Array<{
+    label: string
+    value: string
+    delta?: string | null
+  }>
+  do_this_week: Array<{
+    id: string
+    title: string
+    deadline?: string | null
+    context?: string | null
+    cta_url?: string | null
+    cta_label?: string | null
+  }>
+  watch?: {
+    title: string
+    detail: string
+  } | null
+  sponsor_outreach?: {
+    segment: string
+    specific_target?: string | null
+    rationale: string
+    product: string
+    whatsapp_message: string
+    cta_url?: string | null
+  } | null
+}
+
 function getCurrentCycle(): string {
   return new Date().toISOString().slice(0, 7)
+}
+
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
+function renderDigestHtml(payload: CeoDigestPayload, weekLabel: string, trackTo: string): string {
+  const metricCards = (payload.key_metrics ?? [])
+    .slice(0, 5)
+    .map((m) => {
+      const deltaHtml = m.delta
+        ? `<div style="font-size:11px;color:#10b981;margin-top:2px;">${escapeHtml(m.delta)}</div>`
+        : ''
+      return `
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 14px;flex:1;min-width:140px;">
+          <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">${escapeHtml(m.label)}</div>
+          <div style="font-size:18px;color:#0f172a;font-weight:700;margin-top:4px;">${escapeHtml(m.value)}</div>
+          ${deltaHtml}
+        </div>`
+    })
+    .join('\n')
+
+  const doItems = (payload.do_this_week ?? [])
+    .slice(0, 3)
+    .map((item, i) => {
+      const cta =
+        item.cta_url && item.cta_label
+          ? `<a href="${escapeHtml(item.cta_url)}" style="display:inline-block;margin-top:6px;padding:6px 12px;background:#10b981;color:white;border-radius:6px;text-decoration:none;font-size:13px;font-weight:600;">${escapeHtml(item.cta_label)}</a>`
+          : ''
+      const deadline = item.deadline
+        ? `<span style="background:#fee2e2;color:#b91c1c;font-size:10px;padding:2px 6px;border-radius:4px;margin-left:6px;font-weight:600;">${escapeHtml(item.deadline)}</span>`
+        : ''
+      const context = item.context
+        ? `<div style="color:#64748b;font-size:13px;margin-top:4px;">${escapeHtml(item.context)}</div>`
+        : ''
+      return `
+        <div style="border-left:3px solid #10b981;padding:10px 14px;background:white;border-radius:0 6px 6px 0;margin-bottom:8px;">
+          <div style="color:#0f172a;font-weight:600;font-size:14px;">${i + 1}. ${escapeHtml(item.title)}${deadline}</div>
+          ${context}
+          ${cta}
+        </div>`
+    })
+    .join('\n')
+
+  const watchBlock = payload.watch
+    ? `
+      <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:14px;margin:18px 0;">
+        <div style="color:#92400e;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;">⚠ Watch</div>
+        <div style="color:#78350f;font-size:14px;font-weight:600;margin-top:4px;">${escapeHtml(payload.watch.title)}</div>
+        <div style="color:#92400e;font-size:13px;margin-top:4px;">${escapeHtml(payload.watch.detail)}</div>
+      </div>`
+    : ''
+
+  const outreachBlock = payload.sponsor_outreach
+    ? (() => {
+        const o = payload.sponsor_outreach!
+        const trackLink = (kind: 'reply' | 'meeting' | 'sale') => {
+          const subject = `[Outreach ${weekLabel}] ${kind}`
+          return `mailto:${encodeURIComponent(trackTo)}?subject=${encodeURIComponent(subject)}`
+        }
+        return `
+          <div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;padding:14px;margin:18px 0;">
+            <div style="color:#047857;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;">🎯 Sponsor outreach</div>
+            <div style="color:#064e3b;font-size:14px;font-weight:600;margin-top:6px;">
+              ${escapeHtml(o.specific_target ?? o.segment)} — <span style="color:#047857;">${escapeHtml(o.product)}</span>
+            </div>
+            <div style="color:#065f46;font-size:13px;margin-top:4px;">${escapeHtml(o.rationale)}</div>
+            <div style="background:white;border-radius:6px;padding:10px 12px;margin-top:10px;font-size:13px;color:#0f172a;white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${escapeHtml(o.whatsapp_message)}</div>
+            ${o.cta_url ? `<a href="${escapeHtml(o.cta_url)}" style="display:inline-block;margin-top:8px;padding:6px 12px;background:#10b981;color:white;border-radius:6px;text-decoration:none;font-size:13px;font-weight:600;">Abrir contexto</a>` : ''}
+            <div style="margin-top:10px;font-size:11px;color:#475569;">
+              Si convierte:
+              <a href="${trackLink('reply')}" style="color:#0f766e;text-decoration:none;">reply</a> ·
+              <a href="${trackLink('meeting')}" style="color:#0f766e;text-decoration:none;">meeting</a> ·
+              <a href="${trackLink('sale')}" style="color:#0f766e;text-decoration:none;">sale</a>
+            </div>
+          </div>`
+      })()
+    : ''
+
+  return `
+    <div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;max-width:640px;margin:0 auto;color:#0f172a;">
+      <div style="background:linear-gradient(135deg,#10b981,#0ea5e9);padding:22px;text-align:center;border-radius:8px 8px 0 0;">
+        <h1 style="color:white;margin:0;font-size:22px;font-weight:700;">Crowd Conscious — Digest semanal</h1>
+        <p style="color:rgba(255,255,255,0.9);margin:6px 0 0;font-size:14px;">${escapeHtml(payload.week_label || weekLabel)}</p>
+      </div>
+      <div style="padding:24px;background:#f8fafc;">
+        <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;margin-bottom:10px;">Métricas clave</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">${metricCards || '<div style="color:#94a3b8;font-size:13px;">(sin métricas con cambios significativos)</div>'}</div>
+
+        <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;margin:22px 0 8px;">Hacer esta semana</div>
+        ${doItems || '<div style="color:#94a3b8;font-size:13px;">(sin acciones priorizadas — semana de mantenimiento)</div>'}
+
+        ${watchBlock}
+        ${outreachBlock}
+      </div>
+      <div style="padding:14px 24px;background:#f1f5f9;border-radius:0 0 8px 8px;border-top:1px solid #e2e8f0;font-size:11px;color:#64748b;">
+        Generado por el agente CEO Digest. Edita el prompt en <code>lib/agents/ceo-digest.ts</code>.
+      </div>
+    </div>
+  `
 }
 
 export async function runCeoDigest(): Promise<{
@@ -30,14 +175,13 @@ export async function runCeoDigest(): Promise<{
 
     const metrics: Record<string, unknown> = {}
 
-    // a. USER METRICS — profiles count (fast). Avoid loading entire market_votes into memory.
+    // a. USER METRICS — profiles count
     try {
       const { count: profileCount } = await supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true })
       metrics.total_registered_users = profileCount ?? 0
-    } catch (e) {
-      console.warn('[CEO Digest] profiles user count failed:', e)
+    } catch {
       metrics.total_registered_users = 0
     }
 
@@ -48,70 +192,18 @@ export async function runCeoDigest(): Promise<{
         .select('user_id, anonymous_participant_id')
         .gte('created_at', cutoff24h)
       const rows = votes24h ?? []
-      const distinctUsers = new Set(
+      metrics.users_with_predictions_last_24h = new Set(
         rows.filter((v) => v.user_id != null).map((v) => v.user_id as string)
-      )
-      const distinctAnonymous = new Set(
+      ).size
+      metrics.unique_anonymous_voters_last_24h = new Set(
         rows.filter((v) => v.anonymous_participant_id != null).map((v) => v.anonymous_participant_id as string)
-      )
-      metrics.users_with_predictions_last_24h = distinctUsers.size
-      metrics.unique_anonymous_voters_last_24h = distinctAnonymous.size
-    } catch (e) {
-      metrics.users_with_predictions_last_24h = 'error'
-      metrics.unique_anonymous_voters_last_24h = 'error'
+      ).size
+    } catch {
+      metrics.users_with_predictions_last_24h = 0
+      metrics.unique_anonymous_voters_last_24h = 0
     }
 
-    try {
-      const since30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
-      const { count: totalAnon } = await supabase
-        .from('anonymous_participants')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', since30d)
-      const { count: convertedAnon } = await supabase
-        .from('anonymous_participants')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', since30d)
-        .not('converted_to_user_id', 'is', null)
-      const t = totalAnon ?? 0
-      const c = convertedAnon ?? 0
-      metrics.anonymous_to_registered_conversion_30d_pct = t > 0 ? Math.round((c / t) * 1000) / 10 : 0
-    } catch (e) {
-      metrics.anonymous_to_registered_conversion_30d_pct = 'error'
-    }
-
-    // Conversion funnel at finer granularity — how many anon participants
-    // upgraded in the last 24h and last 7d, plus a 7d conversion rate.
-    try {
-      const cutoff24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-      const cutoff7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
-
-      const { count: conv24h } = await supabase
-        .from('anonymous_participants')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', cutoff24h)
-        .not('converted_to_user_id', 'is', null)
-      metrics.anonymous_conversions_last_24h = conv24h ?? 0
-
-      const { count: conv7d } = await supabase
-        .from('anonymous_participants')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', cutoff7d)
-        .not('converted_to_user_id', 'is', null)
-      const { count: anon7d } = await supabase
-        .from('anonymous_participants')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', cutoff7d)
-
-      metrics.anonymous_conversions_last_7d = conv7d ?? 0
-      metrics.anonymous_to_registered_conversion_7d_pct =
-        (anon7d ?? 0) > 0 ? Math.round(((conv7d ?? 0) / (anon7d ?? 1)) * 1000) / 10 : 0
-    } catch (e) {
-      metrics.anonymous_conversions_last_24h = 'error'
-      metrics.anonymous_conversions_last_7d = 'error'
-      metrics.anonymous_to_registered_conversion_7d_pct = 'error'
-    }
-
-    // b. PREDICTION ACTIVITY (market_votes = free-to-play)
+    // b. PREDICTION ACTIVITY
     try {
       const cutoff24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
       const { count: votes24h } = await supabase
@@ -119,51 +211,8 @@ export async function runCeoDigest(): Promise<{
         .select('id', { count: 'exact', head: true })
         .gte('created_at', cutoff24h)
       metrics.predictions_last_24h = votes24h ?? 0
-    } catch (e) {
-      metrics.predictions_last_24h = 'error'
-    }
-
-    try {
-      const cutoff24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-      const { data: byMarket } = await supabase
-        .from('market_votes')
-        .select('market_id')
-        .gte('created_at', cutoff24h)
-      const counts: Record<string, number> = {}
-      for (const row of byMarket ?? []) {
-        const mid = row.market_id
-        counts[mid] = (counts[mid] ?? 0) + 1
-      }
-      const sorted = Object.entries(counts)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5)
-      const marketIds = sorted.map(([id]) => id)
-      let titleMap: Record<string, string> = {}
-      if (marketIds.length > 0) {
-        const { data: markets } = await supabase
-          .from('prediction_markets')
-          .select('id, title')
-          .in('id', marketIds)
-        for (const m of markets ?? []) {
-          titleMap[m.id] = m.title
-        }
-      }
-      metrics.top_markets_last_24h = sorted.map(([id, count]) => ({
-        market_id: id,
-        title: titleMap[id] ?? id,
-        count,
-      }))
-    } catch (e) {
-      metrics.top_markets_last_24h = 'error'
-    }
-
-    try {
-      const { count: total } = await supabase
-        .from('market_votes')
-        .select('id', { count: 'exact', head: true })
-      metrics.total_predictions_all_time = total ?? 0
-    } catch (e) {
-      metrics.total_predictions_all_time = 'error'
+    } catch {
+      metrics.predictions_last_24h = 0
     }
 
     // c. MARKET HEALTH
@@ -174,8 +223,8 @@ export async function runCeoDigest(): Promise<{
         .in('status', ['active', 'trading'])
         .is('archived_at', null)
       metrics.total_active_markets = active ?? 0
-    } catch (e) {
-      metrics.total_active_markets = 'error'
+    } catch {
+      metrics.total_active_markets = 0
     }
 
     try {
@@ -183,18 +232,21 @@ export async function runCeoDigest(): Promise<{
       const in7 = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
       const { data: approaching } = await supabase
         .from('prediction_markets')
-        .select('id, title, resolution_date')
+        .select('id, title, resolution_date, is_pulse')
         .in('status', ['active', 'trading'])
         .is('archived_at', null)
         .gte('resolution_date', now.toISOString())
         .lte('resolution_date', in7.toISOString())
       metrics.markets_approaching_resolution_7d = (approaching ?? []).length
       metrics.markets_approaching_list = (approaching ?? []).map((m) => ({
+        id: m.id,
         title: m.title,
+        is_pulse: m.is_pulse,
         resolution_date: m.resolution_date,
       }))
-    } catch (e) {
-      metrics.markets_approaching_resolution_7d = 'error'
+    } catch {
+      metrics.markets_approaching_resolution_7d = 0
+      metrics.markets_approaching_list = []
     }
 
     try {
@@ -205,44 +257,40 @@ export async function runCeoDigest(): Promise<{
         .is('archived_at', null)
         .or('total_votes.is.null,total_votes.eq.0')
       metrics.markets_with_zero_predictions = zeroPred ?? 0
-    } catch (e) {
-      metrics.markets_with_zero_predictions = 'error'
+    } catch {
+      metrics.markets_with_zero_predictions = 0
     }
 
-    // d. CONSCIOUS FUND (conscious_fund, sponsor columns may not exist)
+    // d. CONSCIOUS FUND
     try {
       let legacyBalance = 0
-      const { data: fund, error: fundErr } = await supabase
+      const { data: fund } = await supabase
         .from('conscious_fund')
         .select('total_collected, total_disbursed')
         .limit(1)
         .single()
-      if (!fundErr && fund) {
+      if (fund) {
         legacyBalance = Math.max(
           0,
           Number(fund.total_collected ?? 0) - Number(fund.total_disbursed ?? 0)
         )
       }
       let totalFromSponsors = 0
-      const { data: sponsorMarkets, error: sponsorErr } = await supabase
+      const { data: sponsorMarkets } = await supabase
         .from('prediction_markets')
         .select('sponsor_contribution')
         .not('sponsor_name', 'is', null)
         .gt('sponsor_contribution', 0)
         .is('archived_at', null)
-      if (!sponsorErr && sponsorMarkets) {
-        totalFromSponsors =
-          sponsorMarkets.reduce(
-            (sum, m) =>
-              sum +
-              Number((m as { sponsor_contribution?: number }).sponsor_contribution ?? 0) *
-                CONSCIOUS_FUND_PERCENT,
-            0
-          ) ?? 0
+      if (sponsorMarkets) {
+        totalFromSponsors = sponsorMarkets.reduce(
+          (sum, m) =>
+            sum + Number((m as { sponsor_contribution?: number }).sponsor_contribution ?? 0) * CONSCIOUS_FUND_PERCENT,
+          0
+        )
       }
       metrics.total_fund_value = legacyBalance + totalFromSponsors
-    } catch (e) {
-      console.warn('[CEO Digest] conscious_fund failed:', e)
+    } catch {
       metrics.total_fund_value = 0
     }
 
@@ -253,8 +301,8 @@ export async function runCeoDigest(): Promise<{
         .select('id', { count: 'exact', head: true })
         .eq('cycle', cycle)
       metrics.fund_votes_this_cycle = votes ?? 0
-    } catch (e) {
-      metrics.fund_votes_this_cycle = 'error'
+    } catch {
+      metrics.fund_votes_this_cycle = 0
     }
 
     // e. INBOX ACTIVITY
@@ -265,8 +313,8 @@ export async function runCeoDigest(): Promise<{
         .select('id', { count: 'exact', head: true })
         .gte('created_at', cutoff24h)
       metrics.inbox_new_last_24h = new24h ?? 0
-    } catch (e) {
-      metrics.inbox_new_last_24h = 'error'
+    } catch {
+      metrics.inbox_new_last_24h = 0
     }
 
     try {
@@ -274,29 +322,32 @@ export async function runCeoDigest(): Promise<{
         .from('conscious_inbox')
         .select('id', { count: 'exact', head: true })
         .eq('status', 'pending')
+        .is('archived_at', null)
       metrics.inbox_pending_total = pending ?? 0
-    } catch (e) {
-      metrics.inbox_pending_total = 'error'
+    } catch {
+      metrics.inbox_pending_total = 0
     }
 
     try {
       const { data: top3 } = await supabase
         .from('conscious_inbox')
-        .select('id, title, upvotes, status')
+        .select('id, title, upvotes, status, type, category')
+        .eq('status', 'pending')
+        .is('archived_at', null)
         .order('upvotes', { ascending: false })
-        .limit(3)
-      metrics.inbox_top_3_by_upvotes = top3 ?? []
-    } catch (e) {
-      metrics.inbox_top_3_by_upvotes = 'error'
+        .limit(5)
+      metrics.inbox_top_pending = top3 ?? []
+    } catch {
+      metrics.inbox_top_pending = []
     }
 
-    // f. AGENT HEALTH
+    // f. AGENT HEALTH (latest run per agent)
     try {
       const { data: runs } = await supabase
         .from('agent_runs')
         .select('agent_name, created_at, status, error_message')
         .order('created_at', { ascending: false })
-        .limit(100)
+        .limit(60)
       const byAgent: Record<string, { last_run: string; status: string; error?: string }> = {}
       for (const r of runs ?? []) {
         if (!byAgent[r.agent_name]) {
@@ -308,111 +359,95 @@ export async function runCeoDigest(): Promise<{
         }
       }
       metrics.agent_last_runs = byAgent
-    } catch (e) {
-      metrics.agent_last_runs = 'error'
+    } catch {
+      metrics.agent_last_runs = {}
     }
 
+    // g. NEWS MONITOR — pulse opportunities + blog topic ideas (latest brief)
     try {
-      const cutoff24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-      const { data: errors } = await supabase
-        .from('agent_runs')
-        .select('agent_name, error_message, created_at')
-        .eq('status', 'error')
-        .gte('created_at', cutoff24h)
-      metrics.agent_errors_last_24h = (errors ?? []).length
-      metrics.agent_errors_list = (errors ?? []).map((e) => ({
-        agent: e.agent_name,
-        error: e.error_message,
-      }))
-    } catch (e) {
-      metrics.agent_errors_last_24h = 'error'
-    }
-
-    // g. NEWS MONITOR & CONTENT (content briefs, market suggestions, recent news)
-    let newsMonitorContext = ''
-    try {
-      const cutoff24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-      const { data: briefs } = await supabase
+      const cutoff7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+      const { data: latestBrief } = await supabase
         .from('agent_content')
-        .select('body, created_at, content_type, metadata')
-        .eq('agent_type', 'news_monitor')
-        .in('content_type', ['content_brief', 'market_insight'])
-        .gte('created_at', cutoff24h)
-        .order('created_at', { ascending: false })
-        .limit(5)
-      const contentBrief = (briefs ?? []).find(
-        (r: { content_type?: string; metadata?: { type?: string } }) =>
-          r.content_type === 'content_brief' || r.metadata?.type === 'content_brief'
-      )
-      if (contentBrief?.body) {
-        try {
-          const b = JSON.parse(contentBrief.body) as {
-            trending_topics?: string[]
-            new_market_suggestions?: string[]
-            sentiment_snapshot?: unknown
-          }
-          newsMonitorContext = `
-Temas trending (News Monitor): ${(b.trending_topics ?? []).join(', ') || 'N/A'}
-Sugerencias de mercados nuevos: ${(b.new_market_suggestions ?? []).join(', ') || 'N/A'}
-Snapshot sentimiento: ${JSON.stringify(b.sentiment_snapshot ?? {})}`
-        } catch {
-          newsMonitorContext = '\n(Brief del News Monitor disponible pero no parseable)'
-        }
-      }
-
-      const { data: newsBriefs } = await supabase
-        .from('agent_content')
-        .select('title, body, created_at')
+        .select('body, metadata, created_at')
         .eq('agent_type', 'news_monitor')
         .eq('content_type', 'news_summary')
-        .eq('published', true)
-        .gte('created_at', cutoff24h)
+        .gte('created_at', cutoff7d)
         .order('created_at', { ascending: false })
-        .limit(2)
-      if ((newsBriefs ?? []).length > 0) {
-        newsMonitorContext += `\n\nResúmenes de noticias recientes:\n${(newsBriefs ?? [])
-          .map((n) => `• ${n.title}: ${(n.body ?? '').slice(0, 150)}...`)
-          .join('\n')}`
-      }
-
-      const { data: suggestions } = await supabase
-        .from('agent_content')
-        .select('title, body, content_type, metadata')
-        .eq('agent_type', 'news_monitor')
-        .in('content_type', ['market_suggestion', 'market_insight'])
-        .eq('published', false)
-        .gte('created_at', cutoff24h)
-        .limit(8)
-      const sugRows = (suggestions ?? []).filter(
-        (r: { content_type?: string; metadata?: { type?: string } }) =>
-          r.content_type === 'market_suggestion' || r.metadata?.type === 'market_suggestion'
+        .limit(3)
+      const v2Brief = (latestBrief ?? []).find(
+        (r) => (r.metadata as { type?: string } | null)?.type === 'pulse_opportunities'
       )
-      if (sugRows.length > 0) {
-        newsMonitorContext += `\n\nSugerencias pendientes de aprobación: ${sugRows.map((s: { title?: string }) => s.title).join('; ')}`
+      if (v2Brief?.body) {
+        try {
+          const parsed = JSON.parse(v2Brief.body) as {
+            pulse_opportunities?: unknown[]
+            blog_topic_ideas?: unknown[]
+            summary?: string
+          }
+          metrics.latest_news_monitor = {
+            generated_at: v2Brief.created_at,
+            summary: parsed.summary,
+            pulse_opportunity_count: (parsed.pulse_opportunities ?? []).length,
+            pulse_opportunities: (parsed.pulse_opportunities ?? []).slice(0, 3),
+            blog_topic_count: (parsed.blog_topic_ideas ?? []).length,
+            blog_topic_ideas: (parsed.blog_topic_ideas ?? []).slice(0, 3),
+          }
+        } catch {
+          /* ignore */
+        }
       }
-
-      if (newsMonitorContext) {
-        metrics.news_monitor_context = newsMonitorContext.trim()
-      }
-    } catch (e) {
-      console.warn('[CEO Digest] News Monitor context failed:', e)
+    } catch {
+      /* ignore */
     }
 
-    // Locations that recently crossed the 10-vote reveal threshold —
-    // these owners are the warmest possible Pulse leads because their
-    // community just gave them a public score.
+    // h. INBOX TRIAGE — latest curator decision
+    try {
+      const cutoff7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+      const { data: latestTriage } = await supabase
+        .from('agent_content')
+        .select('body, metadata, created_at')
+        .eq('agent_type', 'news_monitor')
+        .eq('content_type', 'weekly_digest')
+        .gte('created_at', cutoff7d)
+        .order('created_at', { ascending: false })
+        .limit(3)
+      const triage = (latestTriage ?? []).find(
+        (r) => (r.metadata as { type?: string } | null)?.type === 'inbox_triage_v2'
+      )
+      if (triage?.body) {
+        try {
+          const items = JSON.parse(triage.body) as Array<{
+            action?: string
+            title?: string
+            reason?: string
+          }>
+          metrics.latest_inbox_triage = {
+            generated_at: triage.created_at,
+            respond_today: items.filter((i) => i.action === 'respond_today').slice(0, 3),
+            park_count: items.filter((i) => i.action === 'park').length,
+            archive_count: items.filter((i) => i.action === 'archive').length,
+          }
+        } catch {
+          /* ignore */
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+
+    // i. HOT LOCATIONS — Pulse upgrade leads
     try {
       const cutoff7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
       const { data: hotLocations } = await supabase
         .from('conscious_locations')
-        .select('name, slug, city, total_votes, conscious_score, instagram_handle, contact_email, certified_at, updated_at')
+        .select('name, slug, city, total_votes, conscious_score, instagram_handle, contact_email, updated_at')
         .eq('status', 'active')
         .gte('total_votes', 10)
         .not('conscious_score', 'is', null)
         .gte('updated_at', cutoff7d)
         .order('updated_at', { ascending: false })
-        .limit(10)
-      metrics.locations_with_live_score_last_7d = (hotLocations ?? []).map((l) => ({
+        .limit(5)
+      metrics.hot_locations_last_7d = (hotLocations ?? []).map((l) => ({
         name: l.name,
         slug: l.slug,
         city: l.city,
@@ -420,18 +455,14 @@ Snapshot sentimiento: ${JSON.stringify(b.sentiment_snapshot ?? {})}`
         conscious_score: l.conscious_score,
         instagram_handle: l.instagram_handle,
         contact_email: l.contact_email,
-        pilot_pulse_link: `https://crowdconscious.app/para-marcas/pilot?business=${encodeURIComponent(l.name as string)}&source=ceo_digest`,
-        insights_link: `https://crowdconscious.app/locations/${l.slug}/insights`,
+        pilot_pulse_link: `${APP_URL}/para-marcas/pilot?business=${encodeURIComponent(l.name as string)}&source=ceo_digest`,
+        insights_link: `${APP_URL}/locations/${l.slug}/insights`,
       }))
-    } catch (e) {
-      console.warn('[CEO Digest] hot locations query failed:', e)
-      metrics.locations_with_live_score_last_7d = []
+    } catch {
+      metrics.hot_locations_last_7d = []
     }
 
-    // Week-over-week deltas — these are the heart of the weekly digest.
-    // We compare the last 7 days to the 7 days before that ("prev week")
-    // and surface only what changed. Flat metrics like "259 users (+0)"
-    // are explicitly omitted from the prompt unless a delta is non-zero.
+    // j. WEEK-OVER-WEEK DELTAS
     try {
       const now = Date.now()
       const cutoff7d = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString()
@@ -461,7 +492,7 @@ Snapshot sentimiento: ${JSON.stringify(b.sentiment_snapshot ?? {})}`
         supabase.from('prediction_markets').select('id, title, created_at').gte('created_at', cutoff7d).is('archived_at', null).order('created_at', { ascending: false }).limit(10),
       ])
 
-      const weekOverWeek = {
+      metrics.week_over_week = {
         users: {
           this_week: usersThisWeek.count ?? 0,
           last_week: usersLastWeek.count ?? 0,
@@ -485,8 +516,8 @@ Snapshot sentimiento: ${JSON.stringify(b.sentiment_snapshot ?? {})}`
         })),
         new_markets_this_week: (newMarketsThisWeek.data ?? []).length,
       }
-      metrics.week_over_week = weekOverWeek
 
+      // Top markets by NEW votes in last 7d
       const cutoff7dDate = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString()
       const { data: byMarket7d } = await supabase
         .from('market_votes')
@@ -499,148 +530,134 @@ Snapshot sentimiento: ${JSON.stringify(b.sentiment_snapshot ?? {})}`
       }
       const sorted7d = Object.entries(counts7d).sort((a, b) => b[1] - a[1]).slice(0, 3)
       const topIds = sorted7d.map(([id]) => id)
-      let titles7d: Record<string, string> = {}
+      let titles7d: Record<string, { title: string; is_pulse: boolean }> = {}
       if (topIds.length > 0) {
         const { data: topMarkets } = await supabase
           .from('prediction_markets')
-          .select('id, title')
+          .select('id, title, is_pulse')
           .in('id', topIds)
-        for (const m of topMarkets ?? []) titles7d[m.id] = m.title
+        for (const m of topMarkets ?? []) {
+          titles7d[m.id] = { title: m.title, is_pulse: !!m.is_pulse }
+        }
       }
       metrics.top_markets_by_new_votes_7d = sorted7d.map(([id, count]) => ({
         market_id: id,
-        title: titles7d[id] ?? id,
+        title: titles7d[id]?.title ?? id,
+        is_pulse: titles7d[id]?.is_pulse ?? false,
         new_votes_7d: count,
       }))
-    } catch (e) {
-      console.warn('[CEO Digest] week-over-week block failed:', e)
-      metrics.week_over_week = 'error'
-      metrics.top_markets_by_new_votes_7d = 'error'
+    } catch {
+      metrics.week_over_week = null
+      metrics.top_markets_by_new_votes_7d = []
     }
 
-    const systemMessage = `You are the WEEKLY operational analyst for Crowd Conscious, a free-to-play opinion platform based in Mexico City preparing for FIFA World Cup 2026 (opening match June 11, 2026 at Estadio Azteca).
+    const systemMessage = `You are the WEEKLY operational analyst for Crowd Conscious, a free-to-play opinion + Pulse platform in Mexico City. World Cup 2026 opens June 11 at Estadio Azteca.
 
-RULES (strict):
-- Write in Spanish. Professional, executive tone. No alarmism.
-- This is a WEEKLY digest. Compare THIS WEEK (last 7 days) vs LAST WEEK. Highlight what CHANGED.
-- If a delta is 0 or negligible, DO NOT mention that metric at all. Silence is the signal.
-  - Example: if week_over_week.users.delta === 0, do NOT write "se mantuvo en 259 usuarios". Skip it.
-  - Example: if week_over_week.votes.delta > 0, DO write "Los votos subieron de X a Y (+Z)".
-- Use DAYS for time horizons (e.g. "~93 días hasta la inauguración").
-- You have NO access to API balance or credits. Never say "créditos agotados" or "recargar presupuesto".
-- Agent health: use the most recent run per agent. Latest success = ✅. Past errors alone do NOT mean the agent is broken now.
-- Be precise with numbers. Double-check date math.`
+Your output is a JSON dashboard that the email template renders as cards. There is NO room for narrative, motivation, or padding. The founder is solo and reads this in 60 seconds.
 
-    const userMessage = `Here are this week's platform metrics (JSON):
+OUTPUT FORMAT — respond with ONLY a single JSON object, no markdown fences, no preamble:
+
+{
+  "week_label": "<short ES label, e.g. 'Semana del 27 abr al 3 may'>",
+  "key_metrics": [
+    { "label": "<short ES, max 18 chars>", "value": "<short, e.g. '47 votos'>", "delta": "<optional: '+12 vs semana pasada' OR null>" }
+  ],
+  "do_this_week": [
+    {
+      "id": "<stable kebab-case slug, e.g. 'contact-bar-bikina'>",
+      "title": "<imperative ES sentence>",
+      "deadline": "<optional: 'mié', 'vie', 'esta semana'>",
+      "context": "<optional: 1 ES sentence with the data hook>",
+      "cta_url": "<optional: absolute or path URL admin can click, e.g. '${APP_URL}/predictions/admin/inbox'>",
+      "cta_label": "<optional: button label, e.g. 'Abrir Buzón'>"
+    }
+  ],
+  "watch": { "title": "<ES short>", "detail": "<1 ES sentence>" } | null,
+  "sponsor_outreach": {
+    "segment": "<who the lead segment is, ES>",
+    "specific_target": "<exact name from data, e.g. 'Bar Bikina' OR null>",
+    "rationale": "<1 ES sentence: why now>",
+    "product": "<one of: 'Pulse Pilot ($1,500 MXN)' | 'Pulse Single ($5,000 MXN)' | 'Mundial Pulse Pack — Founding ($25,000 MXN)' | 'Mundial Pulse Pack ($50,000 MXN)'>",
+    "whatsapp_message": "<3 ES sentences max, casual-pro, includes a Pulse question, ready to copy-send>",
+    "cta_url": "<optional: pilot_pulse_link from hot_locations OR null>"
+  } | null
+}
+
+HARD RULES
+- Exactly 5 key_metrics MAX, fewer if there isn't material to say. PREFER metrics with non-zero deltas. Examples: 'Votos esta semana', 'Nuevas conversiones', 'Top Pulse', 'Pendientes en buzón', 'Lugares calientes'.
+- Exactly 3 do_this_week items MAX. Each must reference a SPECIFIC datum from the JSON below. NEVER write "considera revisar" or "mantén el momentum". If you don't have 3 concrete actions, return fewer.
+- 'cta_url' for actions: use ${APP_URL}/predictions/admin/inbox if action is reviewing inbox, ${APP_URL}/predictions/admin/agents for content, ${APP_URL}/dashboard/sponsor/<token> if known. If unsure, omit.
+- 'watch' is null if everything is fine. Don't invent risks.
+- 'sponsor_outreach': if 'hot_locations_last_7d' has items, AT LEAST ONE outreach must target a specific location from it (use its name + pilot_pulse_link as cta_url). Default product for warm Conscious Locations: 'Pulse Pilot ($1,500 MXN)'. Use Mundial Pulse Pack only when there's a World Cup activation angle. Set to null if no warm leads exist AND no plausible cold pitch from the data.
+- All Spanish. No English. No emojis.
+- DO NOT comment on agent runs, costs, or platform internals — those have their own dashboard.`
+
+    const userMessage = `Here are this week's metrics. Today is ${todayFormatted}.
 
 \`\`\`json
 ${JSON.stringify(metrics, null, 2)}
 \`\`\`
 
-Generate the WEEKLY CEO digest for the week ending ${todayFormatted}. Use this exact structure:
-
-## 1. Lo que cambió esta semana
-- 3-5 bullets, each referencing a NON-ZERO delta from \`week_over_week\` or a specific item from \`top_markets_by_new_votes_7d\` or \`new_locations_this_week\`.
-- If everything is flat, write a single line: "Semana estable. Ver acciones sugeridas abajo."
-
-## 2. Mercados del momento
-- Reference \`top_markets_by_new_votes_7d\` by title. Mention vote counts.
-- Call out any market in \`markets_approaching_list\` that resolves in the next 7 days.
-- Mention \`markets_with_zero_predictions\` ONLY if it's > 5 (otherwise not worth noting).
-
-## 3. Pipeline Pulse / Lugares Conscientes
-- If \`locations_with_live_score_last_7d\` is non-empty, name the warmest 1-2 leads.
-- If new locations were added this week, name them.
-
-## 4. Salud de los agentes
-- Use \`agent_last_runs\`. Only mention agents whose latest run was NOT success. Otherwise a single line: "Todos los agentes OK."
-
-## 5. 3 acciones para esta semana
-Pick exactly 3 concrete next steps. Each should reference specific data:
-- Example: "Crear mercado sobre [X] — News Monitor señaló [signal]"
-- Example: "Contactar a [Location] — cruzó 10 votos, usar \`pilot_pulse_link\`"
-- Example: "Publicar borrador '[blog title]' — lleva 5 días en draft"
-
-Keep the entire digest under 400 words. Write in Spanish. Today is ${todayFormatted}.`
-
-    // Sponsor outreach prompt — generated separately so it can be stored and
-    // emailed as its own actionable artifact. Uses the same metrics + News
-    // Monitor context as the main digest but answers a different question:
-    // "Who do I message this week, and what do I say?"
-    const sponsorOutreachUserMessage = `Here are this week's platform metrics (JSON):
-
-\`\`\`json
-${JSON.stringify(metrics, null, 2)}
-\`\`\`
-
-Generate UP TO 3 sponsor outreach ideas the founder can act on THIS WEEK.
-Today is ${todayFormatted}. World Cup 2026 inaugurates June 11.
-
-Hard constraints:
-- Total length across all ideas: **under 300 words**.
-- Each idea: **80 words or less**.
-- If you cannot find 3 ideas with a real hook (news signal, platform datum, or clear segment fit), produce only 2 — or only 1. Do NOT fabricate hooks.
-
-Catalog of products to pitch (use the right one for the segment):
-- **Sello de Lugar Consciente** — for cafés, bars, restaurants, gyms, coworking spaces.
-- **Pulse Single ($5,000 MXN)** — single-question survey for a brand or institution.
-- **Mundial Pulse Pack — Founding ($25,000 MXN, 5 spots)** — 5 Pulses across the tournament, founding tier.
-- **Mundial Pulse Pack ($50,000 MXN)** — same 5 Pulses, regular tier.
-- **Pilot Pulse ($1,500 MXN, coupon PILOTO)** — lead-magnet trial for cold prospects.
-
-For each idea, output in this exact markdown structure:
-
-### Idea N — [short title]
-- **Segmento:** [e.g. "Bares deportivos en CDMX", "Fintech mexicanas", "Alcaldía Coyoacán"]
-- **Hook:** [the news signal or platform datum that makes this timely — reference a specific news_monitor finding or market trend]
-- **Producto + Precio:** [product name and MXN]
-- **Mensaje WhatsApp listo (3 oraciones máx, español, casual-profesional, incluye una pregunta Pulse concreta):**
-> [draft message]
-- **Warm-intro path:** [Names from Cheesecake's network (La Bikina, Jäger) or other warm contacts that plausibly connect to this segment. If none, write exactly "cold outreach only".]
-
-Prioritize ideas where:
-1. **A Conscious Location in \`locations_with_live_score_last_7d\` can be upgraded to Pulse** — if this list is non-empty, AT LEAST ONE idea MUST target a specific location from it. Use its exact name, score, vote count, and the provided \`pilot_pulse_link\`. Recommend the **Pilot Pulse** ($1,500 MXN) for these leads because they're already warm.
-2. A news story creates urgency (regulación, evento, crisis económica).
-3. A World Cup activation angle exists — if so, push the **Mundial Pulse Pack — Founding** while spots remain.
-
-No introduction, no closing summary, no extra commentary — just the ideas in the format above.`
-
-    const userPrompt = userMessage?.trim() ?? ''
-    if (!userPrompt) {
-      console.error('[CEO Digest] Empty prompt, skipping API call')
-      await logAgentRun({
-        agentName: 'ceo-digest',
-        status: 'skipped',
-        durationMs: Date.now() - startTime,
-        summary: { reason: 'empty_prompt' },
-      })
-      return { success: false, error: 'empty_prompt' }
-    }
+Produce the JSON dashboard exactly per system instructions.`
 
     const response = await anthropic.messages.create({
       model: MODELS.CREATIVE,
       max_tokens: TOKEN_LIMITS.DIGEST,
       system: systemMessage,
-      messages: [{ role: 'user', content: userPrompt }],
+      messages: [{ role: 'user', content: userMessage }],
     })
 
     const textBlock = response.content.find((b) => b.type === 'text')
-    const digestText = textBlock && 'text' in textBlock ? textBlock.text : ''
-
-    if (!digestText) {
+    const rawText = textBlock && 'text' in textBlock ? textBlock.text : ''
+    if (!rawText) {
       throw new Error('No text in Claude response')
     }
-
     const usage = response.usage ?? { input_tokens: 0, output_tokens: 0 }
 
-    // Save to agent_content (use weekly_digest as content_type - ceo_digest not in schema)
+    let payload: CeoDigestPayload
+    try {
+      const raw = parseAgentJSON(rawText)
+      const candidate = (Array.isArray(raw) ? raw[0] : raw) as Record<string, unknown>
+      payload = {
+        week_label: String(candidate.week_label ?? `Semana al ${todayFormatted}`),
+        key_metrics: Array.isArray(candidate.key_metrics)
+          ? (candidate.key_metrics as CeoDigestPayload['key_metrics'])
+          : [],
+        do_this_week: Array.isArray(candidate.do_this_week)
+          ? (candidate.do_this_week as CeoDigestPayload['do_this_week'])
+          : [],
+        watch:
+          candidate.watch && typeof candidate.watch === 'object'
+            ? (candidate.watch as CeoDigestPayload['watch'])
+            : null,
+        sponsor_outreach:
+          candidate.sponsor_outreach && typeof candidate.sponsor_outreach === 'object'
+            ? (candidate.sponsor_outreach as CeoDigestPayload['sponsor_outreach'])
+            : null,
+      }
+    } catch (parseErr) {
+      console.error('[CEO Digest] JSON parse failed:', parseErr)
+      await logAgentRun({
+        agentName: 'ceo-digest',
+        status: 'error',
+        durationMs: Date.now() - startTime,
+        tokensInput: usage.input_tokens,
+        tokensOutput: usage.output_tokens,
+        errorMessage: 'parse_failed',
+        summary: { raw_preview: rawText.slice(0, 200) },
+      })
+      return { success: false, error: 'parse_failed' }
+    }
+
+    // Persist (use weekly_digest content_type as before — admin dashboard
+    // already classifies these to the CEO Digests tab via metadata.digest_type).
     try {
       await supabase.from('agent_content').insert({
         market_id: null,
         agent_type: 'news_monitor',
         content_type: 'weekly_digest',
         title: `Digest CEO semanal — ${todayFormatted}`,
-        body: digestText,
+        body: JSON.stringify(payload),
         language: 'es',
         metadata: {
           model: MODELS.CREATIVE,
@@ -648,28 +665,27 @@ No introduction, no closing summary, no extra commentary — just the ideas in t
           tokens_output: usage.output_tokens,
           date: today.toISOString().slice(0, 10),
           digest_type: 'ceo_digest',
+          schema_version: 'v2_dashboard',
         },
         published: true,
       })
     } catch (e) {
       console.error('Failed to save digest to agent_content:', e)
-      // Continue - don't fail the whole run
     }
 
     let emailSent = false
     const adminEmail = process.env.ADMIN_EMAIL
+    const weekLabel = today.toLocaleDateString('es-MX', {
+      weekday: 'long',
+      day: '2-digit',
+      month: 'short',
+      timeZone: 'America/Mexico_City',
+    })
     if (adminEmail) {
+      const html = renderDigestHtml(payload, weekLabel, adminEmail)
       const emailResult = await sendEmail(adminEmail, {
-        subject: `🧠 Crowd Conscious Digest Semanal — ${todayFormatted}`,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <div style="background: linear-gradient(135deg, #14b8a6, #3b82f6); padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
-              <h1 style="color: white; margin: 0; font-size: 22px;">🧠 Crowd Conscious Digest</h1>
-              <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0;">${todayFormatted}</p>
-            </div>
-            <div style="padding: 24px; background: #f8fafc; border-radius: 0 0 8px 8px; white-space: pre-wrap;">${digestText.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
-          </div>
-        `,
+        subject: `🧠 Digest CEO — ${weekLabel}`,
+        html,
       })
       emailSent = emailResult.success
       if (!emailResult.success) {
@@ -679,154 +695,25 @@ No introduction, no closing summary, no extra commentary — just the ideas in t
       console.warn('ADMIN_EMAIL not set - skipping CEO digest email')
     }
 
-    // Sponsor outreach: separate Claude call so the artifact can be persisted
-    // and emailed independently of the main operational digest. Failure here
-    // must NOT fail the parent run — outreach is additive, not load-bearing.
-    let outreachOk = false
-    let outreachEmailSent = false
-    let outreachUsage = { input_tokens: 0, output_tokens: 0 }
-    try {
-      const outreachResponse = await anthropic.messages.create({
-        model: MODELS.CREATIVE,
-        max_tokens: TOKEN_LIMITS.DIGEST,
-        system: systemMessage,
-        messages: [{ role: 'user', content: sponsorOutreachUserMessage }],
-      })
-      const outreachBlock = outreachResponse.content.find((b) => b.type === 'text')
-      const outreachText = outreachBlock && 'text' in outreachBlock ? outreachBlock.text : ''
-      outreachUsage = outreachResponse.usage ?? outreachUsage
-
-      if (outreachText) {
-        outreachOk = true
-
-        try {
-          await supabase.from('agent_content').insert({
-            market_id: null,
-            agent_type: 'news_monitor',
-            content_type: 'sponsor_outreach',
-            title: `Outreach del día — ${todayFormatted}`,
-            body: outreachText,
-            language: 'es',
-            metadata: {
-              model: MODELS.CREATIVE,
-              tokens_input: outreachUsage.input_tokens,
-              tokens_output: outreachUsage.output_tokens,
-              date: today.toISOString().slice(0, 10),
-              digest_type: 'sponsor_outreach',
-            },
-            published: true,
-          })
-        } catch (e) {
-          console.error('Failed to save sponsor outreach to agent_content:', e)
-        }
-
-        // Subject uses Spanish "lunes DD MMM" — the cron runs Mon 16:00 UTC,
-        // so today *is* Monday in MX time when the founder reads it.
-        const weekLabel = today.toLocaleDateString('es-MX', {
-          weekday: 'long',
-          day: '2-digit',
-          month: 'short',
-          timeZone: 'America/Mexico_City',
-        })
-        const outreachSubject = `🎯 Outreach de la semana — ${weekLabel}`
-
-        // Conversion tracking: cheap mailto-to-self links so the founder can
-        // log replies/meetings/sales without a CRM. Pre-fills the subject so
-        // counts stay searchable in the inbox.
-        const trackTo = adminEmail ?? ''
-        const trackLink = (kind: 'reply' | 'meeting' | 'sale') => {
-          const subject = `[Outreach ${weekLabel}] ${kind}`
-          return `mailto:${encodeURIComponent(trackTo)}?subject=${encodeURIComponent(subject)}`
-        }
-
-        if (adminEmail) {
-          const outreachEmailResult = await sendEmail(adminEmail, {
-            subject: outreachSubject,
-            html: `
-              <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto;">
-                <div style="background: linear-gradient(135deg, #f59e0b, #ef4444); padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
-                  <h1 style="color: white; margin: 0; font-size: 22px;">🎯 Outreach de la semana</h1>
-                  <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0;">${weekLabel}</p>
-                </div>
-                <div style="padding: 24px; background: #f8fafc; white-space: pre-wrap;">${outreachText.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
-                <div style="padding: 14px 20px; background: #f1f5f9; border-radius: 0 0 8px 8px; border-top: 1px solid #e2e8f0;">
-                  <p style="margin: 0 0 8px; font-size: 11px; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Track conversion</p>
-                  <p style="margin: 0; font-size: 13px; color: #475569;">
-                    Cuando una idea convierte, haz click:
-                    <a href="${trackLink('reply')}" style="color: #0f766e; text-decoration: none;">reply</a> ·
-                    <a href="${trackLink('meeting')}" style="color: #0f766e; text-decoration: none;">meeting</a> ·
-                    <a href="${trackLink('sale')}" style="color: #0f766e; text-decoration: none;">sale</a>
-                  </p>
-                </div>
-              </div>
-            `,
-          })
-          outreachEmailSent = outreachEmailResult.success
-          if (!outreachEmailResult.success) {
-            console.warn('Sponsor outreach email not sent:', outreachEmailResult.error)
-          }
-        }
-
-        // Slack mirror — best-effort, non-blocking. Keeps the same content so
-        // the founder can act from phone Slack notifications during the week.
-        const slackUrl = process.env.SLACK_OPERATIONS_WEBHOOK_URL
-        if (slackUrl) {
-          try {
-            const slackBody = {
-              text: `🎯 *Outreach de la semana — ${weekLabel}*`,
-              blocks: [
-                {
-                  type: 'header',
-                  text: { type: 'plain_text', text: `🎯 Outreach de la semana — ${weekLabel}` },
-                },
-                {
-                  type: 'section',
-                  text: {
-                    type: 'mrkdwn',
-                    text: outreachText.length > 2900 ? outreachText.slice(0, 2900) + '…' : outreachText,
-                  },
-                },
-              ],
-            }
-            const slackRes = await fetch(slackUrl, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(slackBody),
-            })
-            if (!slackRes.ok) {
-              console.warn(
-                '[CEO Digest] Slack outreach post failed:',
-                slackRes.status,
-                await slackRes.text().catch(() => '')
-              )
-            }
-          } catch (slackErr) {
-            console.warn('[CEO Digest] Slack outreach exception:', slackErr)
-          }
-        }
-      }
-    } catch (outreachErr) {
-      console.error('[CEO Digest] Sponsor outreach generation failed:', outreachErr)
-    }
-
     await logAgentRun({
       agentName: 'ceo-digest',
       status: 'success',
       durationMs: Date.now() - startTime,
-      tokensInput: usage.input_tokens + outreachUsage.input_tokens,
-      tokensOutput: usage.output_tokens + outreachUsage.output_tokens,
+      tokensInput: usage.input_tokens,
+      tokensOutput: usage.output_tokens,
       summary: {
         metrics_gathered: true,
         email_sent: emailSent,
-        sponsor_outreach_generated: outreachOk,
-        sponsor_outreach_email_sent: outreachEmailSent,
+        key_metric_count: payload.key_metrics.length,
+        action_count: payload.do_this_week.length,
+        has_watch: !!payload.watch,
+        has_sponsor_outreach: !!payload.sponsor_outreach,
       },
     })
 
-    const totalIn = usage.input_tokens + outreachUsage.input_tokens
-    const totalOut = usage.output_tokens + outreachUsage.output_tokens
-    const costEst =
-      (totalIn * 0.000001 + totalOut * 0.000005).toFixed(6) + ' USD'
+    const totalIn = usage.input_tokens
+    const totalOut = usage.output_tokens
+    const costEst = (totalIn * 0.000003 + totalOut * 0.000015).toFixed(6) + ' USD'
 
     return {
       success: true,
@@ -835,28 +722,22 @@ No introduction, no closing summary, no extra commentary — just the ideas in t
     }
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error(String(error))
-    const apiErr = error as { status?: number; error?: { type?: string; error?: { message?: string }; message?: string }; message?: string }
-    const fullError = error instanceof Error ? `${error.message} | ${error.stack ?? ''}` : String(error)
-    console.error('[CEO Digest] Anthropic API error:', JSON.stringify({
-      status: apiErr?.status,
-      type: apiErr?.error?.type,
-      message: apiErr?.error?.error?.message ?? apiErr?.error?.message ?? apiErr?.message,
-      full: apiErr?.error ?? apiErr,
-    }, null, 2))
-    console.error('CEO Digest agent error:', err)
-
+    const apiErr = error as {
+      status?: number
+      error?: { type?: string; error?: { message?: string }; message?: string }
+      message?: string
+    }
+    console.error('[CEO Digest] error:', err)
     try {
       await logAgentRun({
         agentName: 'ceo-digest',
         status: 'error',
         durationMs: Date.now() - startTime,
         errorMessage: `API ${apiErr?.status ?? '?'}: ${apiErr?.error?.error?.message ?? apiErr?.error?.message ?? err.message}`,
-        summary: { step: 'identify which step failed', metrics_gathered: false, email_sent: false },
       })
-    } catch (logErr) {
-      console.error('Failed to log agent run:', logErr)
+    } catch {
+      /* ignore */
     }
-
     return { success: false, error: err.message }
   }
 }

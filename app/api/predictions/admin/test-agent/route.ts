@@ -45,8 +45,20 @@ export async function GET(request: NextRequest) {
         break
       }
       case 'content-creator': {
-        const { runContentCreator } = await import('@/lib/agents/content-creator')
-        result = await runContentCreator()
+        // v4 needs a topic or marketId; the test endpoint accepts both via query.
+        const topic = searchParams.get('topic') || undefined
+        const cMarketId = searchParams.get('marketId') || undefined
+        if (!topic && !cMarketId) {
+          return Response.json(
+            {
+              error:
+                'content-creator v4 requires &topic=... or &marketId=... in the query string.',
+            },
+            { status: 400 }
+          )
+        }
+        const { runContentPackageV4 } = await import('@/lib/agents/content-creator')
+        result = await runContentPackageV4({ topic, marketId: cMarketId, source: 'test-agent' })
         break
       }
       case 'news-monitor': {

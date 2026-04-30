@@ -1,3 +1,22 @@
+/**
+ * News Monitor — daily Pulse-opportunity scout.
+ *
+ * v2 (Apr 2026 re-prompting): one Haiku call. Outputs three buckets the
+ * founder actually uses:
+ *   1. pulse_opportunities[] — 0-3 actionable Pulse pitches (segment, hook,
+ *      product+price, draft message). Drives the "Generate content" button
+ *      in the admin dashboard.
+ *   2. blog_topic_ideas[] — 0-3 weekly-topical seeds. Each is a topic the
+ *      founder can hand straight to Content Creator v4.
+ *   3. skip_summary — one line saying "X signals scanned, Y skipped because
+ *      <reason>" so the absence of items is a SIGNAL not a bug.
+ *
+ * If nothing meets the bar in either bucket, returns empty arrays. We
+ * explicitly do NOT pad with weak topics.
+ *
+ * Manual trigger only (Run Now). Cron removed in vercel.json. Cost: ~1
+ * Haiku call per run, 4k token cap, ~$0.005/run.
+ */
 import {
   getAnthropicClient,
   getSupabaseAdmin,
@@ -8,7 +27,7 @@ import {
 } from '@/lib/agents/config'
 import { fetchRSSSignals } from '@/lib/agents/fetchers/rss-fetcher'
 import { fetchSocialSignals } from '@/lib/agents/fetchers/social-fetcher'
-import { CATEGORY_TO_TAGS, Signal } from '@/lib/agents/sources-config'
+import { Signal } from '@/lib/agents/sources-config'
 import {
   emptyPlatformIntelligence,
   formatNewsMonitorPlatformContext,
@@ -35,114 +54,20 @@ function articleToSignal(a: NewsArticle): Signal {
   }
 }
 
-function extractKeywords(title: string, tags: string[] = [], category?: string): string[] {
-  const stopWords = new Set([
-    'el', 'la', 'los', 'las', 'un', 'una', 'unos', 'unas', 'de', 'del', 'a', 'al', 'en', 'y', 'o',
-    'que', 'se', 'por', 'para', 'con', 'the', 'a', 'an', 'is', 'are', 'will', 'would', 'who', 'what',
-    'when', 'where', 'how', '¿', '?', 'bajara', 'bajará',
-  ])
-  const words = (title + ' ' + (tags || []).join(' '))
-    .toLowerCase()
-    .replace(/[¿?¡!.,;:()"']/g, ' ')
-    .split(/\s+/)
-    .filter((w) => w.length > 2 && !stopWords.has(w))
-  const seen = new Set<string>()
-  const result: string[] = []
-  for (const w of words) {
-    if (!seen.has(w)) {
-      seen.add(w)
-      result.push(w)
-    }
-  }
-  if (category) result.push(category.toLowerCase())
-  result.push('mexico')
-  return result
-}
-
-/** Broader matching: keywords from title + tags, category expansion from tags, generous threshold */
-function matchSignalsToMarket(
-  market: { title: string; tags: string[]; category?: string },
-  allSignals: Signal[]
-): Signal[] {
-  const titleKeywords = extractKeywords(market.title, [], market.category)
-  const tagKeywords = (market.tags || []).map((t) => t.toLowerCase().trim()).filter(Boolean)
-  const allKeywords = [...new Set([...titleKeywords, ...tagKeywords])]
-
-  const relevantCategories = tagKeywords.flatMap((tag) =>
-    Object.entries(CATEGORY_TO_TAGS).filter(([, tags]) =>
-      tags.some((t) => t.includes(tag) || tag.includes(t))
-    ).map(([cat]) => cat)
-  )
-  const marketCatMap: Record<string, string> = {
-    government: 'politics',
-    corporate: 'business',
-    community: 'culture',
-    cause: 'general',
-    world_cup: 'sports',
-    sustainability: 'sustainability',
-  }
-  const mappedCat = market.category ? (marketCatMap[market.category] ?? market.category) : ''
-  if (mappedCat && !relevantCategories.includes(mappedCat)) {
-    relevantCategories.push(mappedCat)
-  }
-  const expandedTags = [...new Set(relevantCategories.flatMap((c) => CATEGORY_TO_TAGS[c] ?? []))]
-
-  const scored = allSignals.map((signal) => {
-    let score = 0
-    const signalText = `${signal.title} ${signal.text}`.toLowerCase()
-    const titleLower = signal.title.toLowerCase()
-
-    for (const kw of allKeywords) {
-      const kwLower = kw.toLowerCase()
-      if (titleLower.includes(kwLower)) score += 3
-      else if (signalText.includes(kwLower)) score += 1
-    }
-
-    if (relevantCategories.includes(signal.category?.toLowerCase())) score += 2
-    if (expandedTags.some((t) => signalText.includes(t))) score += 2
-
-    score += (signal.engagement ?? 0) * 0.001
-    return { ...signal, _score: score }
-  })
-
-  return scored
-    .filter((s) => s._score >= 1)
-    .sort((a, b) => (b._score ?? 0) - (a._score ?? 0))
-    .slice(0, 8)
-    .map(({ _score, ...s }) => s)
-}
-
-/** Cap per source category so Claude sees diverse topics (not only sports / Mundial). */
 function diversifySignals(signals: Signal[], maxPerCategory: number = 4): Signal[] {
   const byCategory: Record<string, Signal[]> = {}
-
   for (const signal of signals) {
     const cat = signal.category?.trim() || 'general'
     if (!byCategory[cat]) byCategory[cat] = []
     byCategory[cat].push(signal)
   }
-
   const diverse: Signal[] = []
   for (const [, catSignals] of Object.entries(byCategory)) {
     diverse.push(...catSignals.slice(0, maxPerCategory))
   }
-
   return diverse
     .sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime())
-    .slice(0, 40)
-}
-
-function getEndOfWeek(): string {
-  const now = new Date()
-  const daysUntilSunday = 7 - now.getDay()
-  const sunday = new Date(now.getTime() + daysUntilSunday * 86400000)
-  return sunday.toISOString().split('T')[0]
-}
-
-function getEndOfMonth(): string {
-  const now = new Date()
-  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-  return lastDay.toISOString().split('T')[0]
+    .slice(0, 30)
 }
 
 function normalizeTitleForDedup(title: string): string {
@@ -174,38 +99,19 @@ function deduplicateArticles(articles: NewsArticle[]): NewsArticle[] {
   return result
 }
 
-type NewsDataFetchOptions = { country?: string; language?: string }
-
-async function fetchNewsData(
-  query: string,
-  limit: number,
-  options: NewsDataFetchOptions = {}
-): Promise<NewsArticle[]> {
+async function fetchNewsData(query: string, limit: number): Promise<NewsArticle[]> {
   const key = process.env.NEWSDATA_API_KEY
-  if (!key) {
-    console.warn('[NEWS-MONITOR] NEWSDATA_API_KEY not found in env')
-    return []
-  }
+  if (!key) return []
   const params = new URLSearchParams({
     apikey: key,
     q: query,
     size: String(Math.min(limit, 10)),
   })
-  if (options.country) params.set('country', options.country)
-  if (options.language) params.set('language', options.language)
   const url = `https://newsdata.io/api/1/latest?${params.toString()}`
   try {
     const res = await fetch(url)
-    const data = (await res.json()) as {
-      results?: Array<Record<string, unknown>>
-      status?: string
-      totalResults?: number
-      message?: string
-      error?: string
-      code?: string
-    }
+    const data = (await res.json()) as { results?: Array<Record<string, unknown>> }
     const raw = Array.isArray(data) ? data : (data.results ?? [])
-    console.log(`[NEWS-MONITOR] NewsData.io response:`, raw.length, 'query:', query.slice(0, 50))
     return raw.slice(0, limit).map((r: Record<string, unknown>) => ({
       title: String(r.title ?? ''),
       description: String(r.description ?? r.content ?? ''),
@@ -213,24 +119,19 @@ async function fetchNewsData(
       url: String(r.link ?? r.url ?? ''),
       published_at: String(r.pubDate ?? r.publishedAt ?? ''),
     }))
-  } catch (e) {
-    console.warn('[NEWS-MONITOR] NewsData fetch error:', e)
+  } catch {
     return []
   }
 }
 
 async function fetchGNews(query: string, limit: number): Promise<NewsArticle[]> {
   const key = process.env.GNEWS_API_KEY
-  if (!key) {
-    console.log('[NEWS-MONITOR] GNEWS_API_KEY not set, skipping GNews')
-    return []
-  }
+  if (!key) return []
   const url = `https://gnews.io/api/v4/search?q=${encodeURIComponent(query)}&lang=es&country=mx&max=${limit}&apikey=${encodeURIComponent(key)}`
   try {
     const res = await fetch(url)
-    const data = (await res.json()) as { articles?: Array<Record<string, unknown>>; errors?: unknown }
+    const data = (await res.json()) as { articles?: Array<Record<string, unknown>> }
     const raw = data.articles ?? []
-    console.log(`[NEWS-MONITOR] GNews response:`, raw.length, 'query:', query.slice(0, 50))
     return raw.slice(0, limit).map((a: Record<string, unknown>) => ({
       title: String(a.title ?? ''),
       description: String(a.description ?? a.content ?? ''),
@@ -238,213 +139,128 @@ async function fetchGNews(query: string, limit: number): Promise<NewsArticle[]> 
       url: String(a.url ?? ''),
       published_at: String(a.publishedAt ?? ''),
     }))
-  } catch (e) {
-    console.warn('[NEWS-MONITOR] GNews fetch error:', e)
+  } catch {
     return []
   }
 }
 
-/** Fallback: fetch from NewsData.io + GNews when RSS+social returns < 3 signals */
-async function fetchFallbackSignals(activeMarkets: { title: string; tags: string[]; category?: string }[]): Promise<Signal[]> {
+async function fetchFallbackSignals(): Promise<Signal[]> {
   const newsDataKey = process.env.NEWSDATA_API_KEY
   const gnewsKey = process.env.GNEWS_API_KEY
   if (!newsDataKey && !gnewsKey) return []
 
-  const searchQueries = new Set<string>()
-  for (const m of activeMarkets) {
-    const terms = extractKeywords(m.title, m.tags, m.category).slice(0, 4)
-    if (terms.length > 0) searchQueries.add(terms.join(' '))
-  }
-  if (searchQueries.size === 0) searchQueries.add('Mexico economia politica sociedad')
-
+  const queries = [
+    'Mexico CDMX politica',
+    'Mexico economia Banxico',
+    'Mexico Mundial 2026',
+    'Mexico sustentabilidad',
+  ]
   const newsArticles: NewsArticle[] = []
-  for (const q of Array.from(searchQueries).slice(0, 5)) {
+  for (const q of queries) {
     let articles: NewsArticle[] = []
-    if (newsDataKey) articles = await fetchNewsData(q, 5, {})
+    if (newsDataKey) articles = await fetchNewsData(q, 5)
     if (articles.length === 0 && gnewsKey) articles = await fetchGNews(q, 5)
     newsArticles.push(...articles)
   }
-
   if (newsArticles.length === 0 && newsDataKey) {
-    const fallback = await fetchNewsData('Mexico', 10, {})
+    const fallback = await fetchNewsData('Mexico', 10)
     newsArticles.push(...fallback)
   }
-
-  const deduped = deduplicateArticles(newsArticles)
-  return deduped.map(articleToSignal)
+  return deduplicateArticles(newsArticles).map(articleToSignal)
 }
 
-type MarketAnalysis = {
-  market_analysis: {
-    summary: string
-    sentiment_score: number
-    relevance: 'high' | 'medium' | 'low'
-    probability_suggestion: number
-  }
-  suggested_markets: Array<{
-    title_es: string
-    title_en: string
-    description_es: string
-    description_en: string
-    category: string
-    resolution_criteria_es: string
-    resolution_criteria_en: string
-    resolution_date: string
-    initial_probability: number
-    tags: string[]
-    reasoning: string
-    source_signals: string[]
-  }>
-}
+const SYSTEM_PROMPT = `You are the News Monitor for Crowd Conscious, a collective intelligence + opinion platform in Mexico City. You scan today's news signals and surface ONLY items that translate into platform value: a Pulse opportunity, or a blog topic worth writing about this week.
 
-const STRUCTURED_BRIEF_SYSTEM = `You are the News Monitor for Crowd Conscious, a collective intelligence platform in Mexico City focused on the 2026 World Cup and public opinion.
+Your job is to be USEFUL TO ONE PERSON (the founder) — not exhaustive. Quality over volume. Empty arrays are fine. Do not pad.
 
-Your job: Scan the provided news signals and produce a STRUCTURED daily brief that the platform admin can act on.
+OUTPUT FORMAT — respond with ONLY a single JSON object, no markdown fences, no preamble:
 
-OUTPUT FORMAT — respond as JSON only (no markdown fences):
 {
-  "summary": "One sentence: X signals reviewed, Y are actionable",
-  "signals": [
+  "summary": "Single short sentence: signals scanned, why most were skipped",
+  "skip_reason": "Single phrase explaining the dominant skip reason (e.g. 'mostly partido reports', 'mostly national politics without CDMX angle')",
+  "pulse_opportunities": [
     {
-      "headline": "Short headline (max ~15 words)",
-      "source": "Source name",
-      "relevance": "high|medium|low",
-      "category": "world_cup|government|economy|sustainability|geopolitics|technology|environment|community",
-      "market_angle": "How this connects to prediction markets",
-      "suggested_question": "A prediction market question in Spanish (¿...?)",
-      "key_fact": "Most important data point or quote"
+      "title": "Short ES title (~12 words). The Pulse question someone could ask.",
+      "category": "world_cup | government | sustainability | corporate | community | cause | culture",
+      "target_segment": "Who would sponsor this Pulse — be specific. e.g. 'Bares deportivos en CDMX', 'Alcaldía Cuauhtémoc', 'Fintech mexicanas'.",
+      "urgency": "high | medium | low",
+      "rationale": "1-2 ES sentences: why now, what makes the segment care.",
+      "suggested_product": "Pulse Single | Pulse Pilot | Mundial Pulse Pack",
+      "source_url": "Primary source URL from the signals provided.",
+      "draft_whatsapp_message": "3 sentences max in Spanish, casual-professional, includes one Pulse question. Sponsor outreach copy ready to send."
     }
   ],
-  "top_3_actionable": ["Brief item 1", "Brief item 2", "Brief item 3"],
-  "market_suggestions": [
+  "blog_topic_ideas": [
     {
-      "title_es": "¿Yes/No question in Spanish?",
-      "title_en": "English version",
-      "description_es": "Context and why it matters",
-      "description_en": "English context",
-      "category": "world_cup|government|economy|sustainability|geopolitics|technology|entertainment|community|corporate|cause|pulse",
-      "resolution_criteria_es": "Verifiable resolution criteria in Spanish",
-      "resolution_criteria_en": "English criteria",
-      "resolution_date": "YYYY-MM-DD",
-      "initial_probability": 45,
-      "tags": ["tag1", "tag2"],
-      "reasoning": "Why this market matters now",
-      "source": "Which signal inspired this",
-      "urgency": "high|medium|low"
+      "title_es": "ES title in question form (~12 words).",
+      "title_en": "EN parallel title.",
+      "angle": "1 ES sentence: the non-obvious angle that makes this worth writing.",
+      "weekly_topical": true,
+      "mexican_angle": "1 ES sentence: the CDMX/Mexico hook.",
+      "tied_to_market_id": "(optional) UUID of an active market this story connects to. Pulled from ACTIVE MARKETS list. Empty if none.",
+      "source_url": "Primary source URL.",
+      "expected_reader_question": "1 ES sentence: the question this post would answer."
     }
   ]
 }
 
-RULES:
-- Focus on Mexico, CDMX, World Cup 2026, and topics relevant to prediction markets (sustainability, CDMX policy, economy, social impact, tech). Skip signals that don't connect.
-- Emit AT MOST 5 signals in the \`signals\` array. Quality over volume. If the input has fewer than 5 relevant signals, return fewer.
-- Consolidate duplicates: if multiple sources cover the same underlying event, emit ONE signal entry and list the source names separated by " · " in the \`source\` field (e.g. "Expansión · El Financiero"). Do NOT emit duplicate signals for the same story.
-- Every signal needs market_angle and suggested_question when possible.
-- market_suggestions: 0–3 items; only if signals justify new markets; use binary Yes/No style titles.
-- Rate relevance honestly. Keep headlines short.
-- If fewer than 3 signals are relevant, say so in summary — do not pad.`
+HARD RULES
+- "pulse_opportunities" — emit 0-3 items. Each must satisfy ALL of:
+  * Real news signal in the input (cite source_url).
+  * Identifiable buyer segment (no "everyone", no "general public").
+  * Concrete urgency (deadline, event date, or news cycle window <14 days).
+  * If you cannot satisfy all three for at least one item, return [].
+- "blog_topic_ideas" — emit 0-3 items. Each must satisfy ALL of:
+  * Real news event in the last 7 days OR an evergreen angle with a fresh data point.
+  * Mexican angle (CDMX preferred but national OK if specific).
+  * NOT a repeat of an active market topic from the platform context above.
+  * If you cannot satisfy all three for at least one item, return [].
+- Skip the World Cup unless the signal is non-obvious (don't include match recaps).
+- Skip US politics, Trump quotes, foreign-only news.
+- "summary" + "skip_reason" must reflect what you ACTUALLY did — if you returned 0 items, say so.
 
-function mapCategoryToMarket(s: string): string {
-  const c = (s || 'world').toLowerCase()
-  const map: Record<string, string> = {
-    politics: 'government',
-    sports: 'world_cup',
-    environment: 'sustainability',
-  }
-  return map[c] ?? c
+PLATFORM PRICING (use suggested_product field):
+- Pulse Pilot — $1,500 MXN — for cold prospects / first-time buyers (cafés, bars, small NGOs).
+- Pulse Single — $5,000 MXN — single-question survey for medium brands or institutions.
+- Mundial Pulse Pack — $25,000-50,000 MXN — for brands with World Cup activation.`
+
+export interface NewsMonitorOutput {
+  summary: string
+  skip_reason?: string
+  pulse_opportunities: Array<{
+    title: string
+    category: string
+    target_segment: string
+    urgency: 'high' | 'medium' | 'low'
+    rationale: string
+    suggested_product?: string
+    source_url?: string
+    draft_whatsapp_message?: string
+  }>
+  blog_topic_ideas: Array<{
+    title_es: string
+    title_en?: string
+    angle: string
+    weekly_topical?: boolean
+    mexican_angle?: string
+    tied_to_market_id?: string | null
+    source_url?: string
+    expected_reader_question?: string
+  }>
 }
 
-function mapGlobalSuggestionToSuggestedMarket(
-  raw: Record<string, unknown>
-): MarketAnalysis['suggested_markets'][0] | null {
-  const title_es = String(raw.title_es ?? raw.title ?? '').trim()
-  if (!title_es) return null
-  const tags = Array.isArray(raw.tags) ? (raw.tags as unknown[]).map((t) => String(t).toLowerCase()) : []
-  const urgency = String(raw.urgency ?? '')
-  const src = String(raw.source ?? '')
-  return {
-    title_es,
-    title_en: String(raw.title_en ?? ''),
-    description_es: String(raw.description_es ?? ''),
-    description_en: String(raw.description_en ?? ''),
-    category: mapCategoryToMarket(String(raw.category ?? 'world')),
-    resolution_criteria_es: String(raw.resolution_criteria_es ?? ''),
-    resolution_criteria_en: String(raw.resolution_criteria_en ?? ''),
-    resolution_date: String(raw.resolution_date ?? '').slice(0, 10) || getEndOfWeek(),
-    initial_probability: Math.min(99, Math.max(1, Number(raw.initial_probability) || 50)),
-    tags,
-    reasoning: [String(raw.reasoning ?? ''), urgency && `urgency:${urgency}`, src && `source:${src}`]
-      .filter(Boolean)
-      .join(' · '),
-    source_signals: src ? [src] : [],
-  }
-}
-
-async function generateStructuredDailyBrief(
-  anthropic: ReturnType<typeof getAnthropicClient>,
-  allSignals: Signal[],
-  platformBlock: string
-): Promise<{
-  structured: Record<string, unknown> | null
-  tokensInput: number
-  tokensOutput: number
-}> {
-  if (allSignals.length === 0) {
-    return { structured: null, tokensInput: 0, tokensOutput: 0 }
-  }
-
-  const lines = allSignals.slice(0, 14).map(
-    (s, i) =>
-      `${i + 1}. [${s.source_name}] (${s.category ?? 'general'}) ${s.title}\n   ${(s.text || '').slice(0, 180)}`
-  )
-
-  const userMessage = `${platformBlock}
-
-SEÑALES (${allSignals.length} total, mostrando hasta 28):
-${lines.join('\n\n')}
-
-Produce the JSON brief as specified.`
-
-  try {
-    const response = await anthropic.messages.create({
-      model: MODELS.FAST,
-      max_tokens: TOKEN_LIMITS.NEWS_BRIEF,
-      system: STRUCTURED_BRIEF_SYSTEM,
-      messages: [{ role: 'user', content: userMessage }],
-    })
-    const textBlock = response.content.find((b) => b.type === 'text')
-    const rawText = textBlock && 'text' in textBlock ? textBlock.text : ''
-    const usage = response.usage ?? { input_tokens: 0, output_tokens: 0 }
-    const parsed = parseAgentJSON(rawText) as Record<string, unknown>
-    if (!parsed?.summary && !Array.isArray(parsed?.signals)) {
-      return { structured: null, tokensInput: usage.input_tokens, tokensOutput: usage.output_tokens }
-    }
-    return {
-      structured: parsed,
-      tokensInput: usage.input_tokens,
-      tokensOutput: usage.output_tokens,
-    }
-  } catch (e) {
-    console.error('[NEWS-MONITOR] Structured brief failed:', e)
-    return { structured: null, tokensInput: 0, tokensOutput: 0 }
-  }
-}
-
-export async function runNewsMonitor(options?: {
-  includeSocial?: boolean
-  forceRun?: boolean
-}): Promise<{
+export async function runNewsMonitor(options?: { includeSocial?: boolean }): Promise<{
   success: boolean
   error?: string
   summary?: {
-    articles_fetched: number
-    brief_saved: boolean
-    suggestions_saved: number
-    relevance_saved: boolean
+    signals_fetched: number
+    pulse_opportunities: number
+    blog_topic_ideas: number
+    skip_reason?: string
   }
 }> {
   const startTime = Date.now()
-  console.log('[NEWS-MONITOR] Starting run...', { includeSocial: options?.includeSocial })
+  console.log('[NEWS-MONITOR v2] Starting run...')
 
   try {
     const anthropic = getAnthropicClient()
@@ -458,449 +274,141 @@ export async function runNewsMonitor(options?: {
     }
     const platformBlock = formatNewsMonitorPlatformContext(platformIntel)
 
-    // Step 1: Fetch signals (parallel)
     const [rssSignals, socialSignals] = await Promise.all([
       fetchRSSSignals(),
       options?.includeSocial ? fetchSocialSignals() : Promise.resolve([]),
     ])
     let allSignals: Signal[] = [...rssSignals, ...socialSignals]
-    console.log('[NEWS-MONITOR] Signals:', { rss: rssSignals.length, social: socialSignals.length, total: allSignals.length })
+    console.log('[NEWS-MONITOR] Signals:', {
+      rss: rssSignals.length,
+      social: socialSignals.length,
+      total: allSignals.length,
+    })
 
-    // Step 2: Get active markets
-    const { data: markets } = await supabase
-      .from('prediction_markets')
-      .select('id, title, category, tags, resolution_criteria, current_probability')
-      .in('status', ['active', 'trading'])
-      .is('archived_at', null)
-
-    const activeMarkets = (markets ?? []).map((m) => ({
-      id: m.id,
-      title: m.title,
-      category: m.category,
-      tags: (m.tags ?? []) as string[],
-      resolution_criteria: m.resolution_criteria ?? '',
-      current_probability: Number(m.current_probability ?? 50),
-    }))
-
-    console.log('[NEWS-MONITOR] Active markets:', activeMarkets.length)
-
-    // Fallback: if < 3 signals, use NewsData/GNews
     if (allSignals.length < 3) {
-      console.log('[NEWS-MONITOR] Few signals, falling back to NewsData/GNews')
-      const fallback = await fetchFallbackSignals(activeMarkets)
+      const fallback = await fetchFallbackSignals()
       allSignals = [...allSignals, ...fallback]
-      console.log('[NEWS-MONITOR] After fallback:', allSignals.length, 'signals')
+    }
+    allSignals = diversifySignals(allSignals)
+
+    if (allSignals.length === 0) {
+      await logAgentRun({
+        agentName: 'news-monitor',
+        status: 'skipped',
+        durationMs: Date.now() - startTime,
+        summary: { reason: 'no_signals' },
+      })
+      return {
+        success: true,
+        summary: {
+          signals_fetched: 0,
+          pulse_opportunities: 0,
+          blog_topic_ideas: 0,
+          skip_reason: 'no_signals',
+        },
+      }
     }
 
-    allSignals = diversifySignals(allSignals)
-    console.log('[NEWS-MONITOR] After diversity filter:', allSignals.length, 'signals')
+    const { data: activeMarkets } = await supabase
+      .from('prediction_markets')
+      .select('id, title, category, is_pulse')
+      .in('status', ['active', 'trading'])
+      .is('archived_at', null)
+      .eq('is_draft', false)
+      .order('total_votes', { ascending: false })
+      .limit(15)
+
+    const activeBlock = (activeMarkets ?? [])
+      .map((m) => `- [${m.id}] (${m.is_pulse ? 'PULSE' : m.category}) ${m.title}`)
+      .join('\n')
+
+    const signalsBlock = allSignals
+      .slice(0, 18)
+      .map(
+        (s, i) =>
+          `${i + 1}. [${s.source_name}] (${s.category ?? 'general'}) ${s.title}\n   ${(s.text || '').slice(0, 200)}\n   URL: ${s.url}`
+      )
+      .join('\n\n')
+
+    const userMessage = `${platformBlock}
+
+ACTIVE MARKETS (use these IDs for "tied_to_market_id"):
+${activeBlock || '(none)'}
+
+SIGNALS FROM TODAY (${allSignals.length} total, showing first 18):
+${signalsBlock}
+
+Produce the JSON exactly per your system instructions. If a bucket has no items that pass the hard rules, return []. Do not pad.`
 
     let totalTokensInput = 0
     let totalTokensOutput = 0
+    let parsed: NewsMonitorOutput | null = null
 
-    let structuredBriefJson: Record<string, unknown> | null = null
-    const briefGen = await generateStructuredDailyBrief(anthropic, allSignals, platformBlock)
-    totalTokensInput += briefGen.tokensInput
-    totalTokensOutput += briefGen.tokensOutput
-    const structuredForSuggestions = briefGen.structured
-    if (structuredForSuggestions) {
-      const { error: sbErr } = await supabase.from('agent_content').insert({
+    try {
+      const response = await anthropic.messages.create({
+        model: MODELS.FAST,
+        max_tokens: TOKEN_LIMITS.NEWS_BRIEF,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: userMessage }],
+      })
+      const usage = response.usage ?? { input_tokens: 0, output_tokens: 0 }
+      totalTokensInput = usage.input_tokens
+      totalTokensOutput = usage.output_tokens
+
+      const textBlock = response.content.find((b) => b.type === 'text')
+      const rawText = textBlock && 'text' in textBlock ? textBlock.text : ''
+      const raw = parseAgentJSON(rawText)
+      const candidate = (Array.isArray(raw) ? raw[0] : raw) as Record<string, unknown>
+      parsed = {
+        summary: String(candidate.summary ?? ''),
+        skip_reason: candidate.skip_reason ? String(candidate.skip_reason) : undefined,
+        pulse_opportunities: Array.isArray(candidate.pulse_opportunities)
+          ? (candidate.pulse_opportunities as NewsMonitorOutput['pulse_opportunities'])
+          : [],
+        blog_topic_ideas: Array.isArray(candidate.blog_topic_ideas)
+          ? (candidate.blog_topic_ideas as NewsMonitorOutput['blog_topic_ideas'])
+          : [],
+      }
+    } catch (e) {
+      console.error('[NEWS-MONITOR] Generate/parse failed:', e)
+    }
+
+    if (!parsed) {
+      await logAgentRun({
+        agentName: 'news-monitor',
+        status: 'error',
+        durationMs: Date.now() - startTime,
+        tokensInput: totalTokensInput,
+        tokensOutput: totalTokensOutput,
+        errorMessage: 'parse_failed_or_empty_response',
+      })
+      return { success: false, error: 'parse_failed_or_empty_response' }
+    }
+
+    // Persist as a single agent_content row with metadata.type='pulse_opportunities'
+    // so the admin dashboard renders the new card. We keep agent_type='news_monitor'
+    // and content_type='news_summary' for compatibility with existing tabs.
+    try {
+      await supabase.from('agent_content').insert({
         market_id: null,
         agent_type: 'news_monitor',
         content_type: 'news_summary',
-        title: 'Brief diario — señales',
-        body: JSON.stringify(structuredForSuggestions),
+        title: 'Brief diario — oportunidades Pulse + ideas blog',
+        body: JSON.stringify(parsed),
         language: 'es',
         metadata: {
-          type: 'structured_news_brief',
+          type: 'pulse_opportunities',
           model: MODELS.FAST,
           signal_count: allSignals.length,
-          tokens_input: briefGen.tokensInput,
-          tokens_output: briefGen.tokensOutput,
-        },
-        published: true,
-      })
-      if (sbErr) {
-        console.error('[NEWS-MONITOR] structured brief insert:', sbErr)
-      } else {
-        structuredBriefJson = structuredForSuggestions
-      }
-    }
-
-    const globalFromBrief: MarketAnalysis['suggested_markets'] = []
-    const rawGlobal = structuredForSuggestions?.market_suggestions
-    if (Array.isArray(rawGlobal)) {
-      for (const g of rawGlobal) {
-        if (g && typeof g === 'object') {
-          const m = mapGlobalSuggestionToSuggestedMarket(g as Record<string, unknown>)
-          if (m) globalFromBrief.push(m)
-        }
-      }
-    }
-
-    // Step 3: Match signals to markets (generous: 1+ signal is enough for analysis)
-    const marketSignals: Record<string, Signal[]> = {}
-    for (const market of activeMarkets) {
-      marketSignals[market.id] = matchSignalsToMarket(market, allSignals)
-    }
-
-    let marketsToAnalyze = activeMarkets.filter((m) => (marketSignals[m.id]?.length ?? 0) >= 1)
-    if (marketsToAnalyze.length === 0 && allSignals.length > 0 && activeMarkets.length > 0) {
-      console.log('[NEWS-MONITOR] No market-specific matches; using top 5 signals for all markets as fallback')
-      const fallbackSignals = allSignals.slice(0, 5)
-      for (const m of activeMarkets) {
-        marketSignals[m.id] = fallbackSignals
-      }
-      marketsToAnalyze = activeMarkets
-    }
-
-    // Limit markets to avoid 504 timeout and cap token spend.
-    // 3 markets × ~1K tokens ≈ 3K tokens/run on per-market analysis.
-    const MAX_MARKETS_TO_ANALYZE = 3
-    const sorted = [...marketsToAnalyze].sort(
-      (a, b) => (marketSignals[b.id]?.length ?? 0) - (marketSignals[a.id]?.length ?? 0)
-    )
-    const limitedMarkets = sorted.slice(0, MAX_MARKETS_TO_ANALYZE)
-
-    console.log('[NEWS-MONITOR] Markets to analyze:', limitedMarkets.length, 'of', marketsToAnalyze.length, '(capped to', MAX_MARKETS_TO_ANALYZE, 'to stay within timeout)')
-    for (const m of limitedMarkets) {
-      const n = marketSignals[m.id]?.length ?? 0
-      console.log(`[NEWS-MONITOR]   "${m.title.slice(0, 50)}...": ${n} signals`)
-    }
-
-    const marketAnalyses: Array<{
-      market_id: string
-      market_title: string
-      analysis: MarketAnalysis['market_analysis']
-      suggestions: MarketAnalysis['suggested_markets']
-    }> = []
-    const allSuggestions: MarketAnalysis['suggested_markets'] = []
-
-    // Step 4: Analyze with Claude — process in parallel batches of 3 to stay within timeout
-    const BATCH_SIZE = 3
-    const analyzeMarket = async (market: typeof limitedMarkets[0]): Promise<{
-      analysis?: MarketAnalysis['market_analysis']
-      suggestions?: MarketAnalysis['suggested_markets']
-      tokensInput: number
-      tokensOutput: number
-    }> => {
-      const matchedSignals = marketSignals[market.id] ?? []
-      const signalsText = matchedSignals
-        .map(
-          (s) =>
-            `[${s.source_type.toUpperCase()} | ${s.source_name}] ${s.title}\n   ${s.text.substring(0, 200)}\n   Engagement: ${s.engagement ?? 'N/A'} | ${s.published_at}`
-        )
-        .join('\n\n')
-
-      const today = new Date().toISOString().split('T')[0]
-      const endOfWeek = getEndOfWeek()
-      const endOfMonth = getEndOfMonth()
-
-      const userMessage = `Eres el analista de inteligencia de Crowd Conscious, una plataforma de predicciones en México. Tu trabajo NO es solo resumir noticias — es identificar oportunidades de mercados de predicción.
-
-${platformBlock}
-
-FECHA DE HOY: ${today}
-FIN DE ESTA SEMANA: ${endOfWeek}
-FIN DE ESTE MES: ${endOfMonth}
-
-MERCADO EXISTENTE: ${market.title}
-CRITERIO: ${market.resolution_criteria}
-PROBABILIDAD ACTUAL: ${market.current_probability}%
-TAGS: ${market.tags?.join(', ') ?? ''}
-
-SEÑALES RECIENTES:
-${signalsText}
-
-REGLA CRÍTICA DE DIVERSIDAD:
-- NO sugieras mercados sobre el Mundial FIFA a menos que las señales
-  sean MUY específicas (ejemplo: resultado de un partido, fecha de venta
-  de boletos). El Mundial ya tiene suficientes mercados.
-- PRIORIZA estos temas para sugerencias:
-  1. TRENDING: Lo que está en tendencia HOY en México (política, viral, cultura)
-  2. ECONOMÍA: Tipo de cambio, Banxico, empleo, inflación, nearshoring
-  3. GEOPOLÍTICA: Trump/México, aranceles, migración, relaciones internacionales
-  4. SUSTENTABILIDAD: Calidad del aire, agua, cambio climático, energía
-  5. TECNOLOGÍA: IA, regulación tech, startups mexicanas
-  6. SOCIEDAD: Seguridad, educación, salud pública, protestas
-- El Mundial es solo UNO de muchos temas. Máximo 1 de cada 5 sugerencias
-  puede ser sobre el Mundial.
-
-Responde SOLO en JSON válido:
-{
-  "market_analysis": {
-    "summary": "2-3 párrafos en español: qué dicen las señales sobre este mercado",
-    "sentiment_score": <número de -100 a 100>,
-    "relevance": "high|medium|low",
-    "probability_suggestion": <número 1-99, tu estimación basada en las señales>
-  },
-  "suggested_markets": [
-    {
-      "title_es": "¿Pregunta de predicción en español?",
-      "title_en": "Prediction question in English?",
-      "description_es": "2-3 oraciones explicando el contexto y por qué es relevante",
-      "description_en": "2-3 sentences explaining context and relevance",
-      "category": "sports|politics|economy|culture|world|technology",
-      "resolution_criteria_es": "Criterio claro y verificable de cómo se resuelve este mercado",
-      "resolution_criteria_en": "Clear, verifiable criteria for how this market resolves",
-      "resolution_date": "YYYY-MM-DD (dentro de días o pocas semanas; ver REGLAS resolution_date)",
-      "initial_probability": <número 1-99, tu estimación inicial>,
-      "tags": ["tag1", "tag2", "tag3"],
-      "reasoning": "Por qué este mercado sería interesante para la comunidad",
-      "source_signals": ["fuente 1", "fuente 2"]
-    }
-  ]
-}
-
-REGLAS PARA resolution_date — ESTO ES CRÍTICO:
-- Al menos 50% de las sugerencias deben resolverse en los próximos 7 DÍAS (desde HOY: ${today})
-- El resto puede resolverse en 2-4 semanas máximo
-- NUNCA sugieras una fecha más allá de 3 meses en el futuro (desde ${today})
-- Usa las señales para identificar EVENTOS CONCRETOS con fecha:
-  • Partidos deportivos → fecha del partido
-  • Reuniones de Banxico → fecha de la reunión
-  • Elecciones/votaciones → fecha de la votación
-  • Lanzamientos de datos (INEGI, encuestas) → fecha de publicación
-  • Eventos culturales → fecha del evento
-- Si no hay un evento con fecha clara, usa como máximo fin de esta semana (${endOfWeek}) o fin de este mes (${endOfMonth})
-- Fecha de hoy: ${today}
-- Fin de esta semana: ${endOfWeek}
-- Fin de este mes: ${endOfMonth}
-
-EJEMPLOS DE BUENAS FECHAS (ilustrativos; usa la fecha real según señales y calendario):
-- Señal: "Banxico se reúne el jueves" → resolution_date: la fecha ISO del jueves más próximo
-- Señal: "Cruz Azul juega el domingo" → resolution_date: la fecha ISO de ese domingo
-- Señal: "INEGI publica PIB el viernes" → resolution_date: la fecha ISO de ese viernes
-- Señal: "Tendencia viral hoy" → resolution_date: 2-7 días desde ${today} (urgencia)
-
-REGLAS PARA suggested_markets:
-- Sugiere 0-2 mercados NUEVOS que NO existan ya en la plataforma
-- Solo sugiere si las señales realmente lo justifican (no inventes)
-- El título DEBE ser una pregunta con ¿? que se responda Sí/No
-- resolution_criteria debe ser VERIFICABLE con fuentes públicas
-- Cada resolution_date debe cumplir las REGLAS PARA resolution_date de arriba (corto plazo, urgencia)
-- initial_probability debe reflejar lo que sugieren las señales
-- tags deben ser lowercase, sin acentos, separados por coma
-- Si no hay buenas sugerencias, devuelve "suggested_markets": []`
-
-      try {
-        console.log(`[NEWS-MONITOR] Analyzing "${market.title.slice(0, 50)}..." with ${matchedSignals.length} signals`)
-
-        const response = await anthropic.messages.create({
-          model: MODELS.FAST,
-          max_tokens: TOKEN_LIMITS.NEWS,
-          messages: [{ role: 'user', content: userMessage }],
-        })
-
-        const textBlock = response.content.find((b) => b.type === 'text')
-        const rawText = textBlock && 'text' in textBlock ? textBlock.text : ''
-        const usage = response.usage ?? { input_tokens: 0, output_tokens: 0 }
-
-        let parsed: MarketAnalysis
-        try {
-          const raw = parseAgentJSON(rawText)
-          parsed = (Array.isArray(raw) && raw.length > 0 && typeof raw[0] === 'object'
-            ? raw[0]
-            : raw) as MarketAnalysis
-        } catch (parseErr) {
-          console.error(`[NEWS-MONITOR] JSON parse failed for "${market.title}":`, parseErr)
-          return { tokensInput: usage.input_tokens, tokensOutput: usage.output_tokens }
-        }
-
-        if (parsed?.market_analysis) {
-          const suggestions = parsed.suggested_markets ?? []
-          for (const sug of suggestions) {
-            if (sug?.title_es) {
-              sug.source_signals = sug.source_signals ?? matchedSignals.map((s) => s.source_name).slice(0, 5)
-            }
-          }
-          return {
-            analysis: parsed.market_analysis,
-            suggestions,
-            tokensInput: usage.input_tokens,
-            tokensOutput: usage.output_tokens,
-          }
-        }
-        return { tokensInput: usage.input_tokens, tokensOutput: usage.output_tokens }
-      } catch (e) {
-        console.error(`[NEWS-MONITOR] Claude error for market "${market.title}":`, e)
-        return { tokensInput: 0, tokensOutput: 0 }
-      }
-    }
-
-    // Run analyses in parallel batches of BATCH_SIZE
-    for (let i = 0; i < limitedMarkets.length; i += BATCH_SIZE) {
-      const batch = limitedMarkets.slice(i, i + BATCH_SIZE)
-      const results = await Promise.all(batch.map((m) => analyzeMarket(m)))
-      for (let j = 0; j < batch.length; j++) {
-        const market = batch[j]
-        const res = results[j]
-        if (res) {
-          totalTokensInput += res.tokensInput
-          totalTokensOutput += res.tokensOutput
-          if (res.analysis) {
-            marketAnalyses.push({
-              market_id: market.id,
-              market_title: market.title,
-              analysis: res.analysis,
-              suggestions: res.suggestions ?? [],
-            })
-            if (Array.isArray(res.suggestions)) {
-              for (const sug of res.suggestions) {
-                if (sug?.title_es) allSuggestions.push(sug)
-              }
-            }
-          }
-        }
-      }
-    }
-
-    for (const g of globalFromBrief) {
-      if (!g?.title_es) continue
-      const key = normalizeTitleForDedup(g.title_es)
-      if (!allSuggestions.some((x) => normalizeTitleForDedup(x.title_es) === key)) {
-        allSuggestions.push(g)
-      }
-    }
-
-    // Step 5: Save analysis
-    let briefSaved = !!structuredBriefJson
-    let relevanceSaved = false
-
-    // Build brief from first analysis (or generic if none) — skip if structured daily brief already saved
-    const firstAnalysis = marketAnalyses[0]?.analysis
-    const brief = firstAnalysis?.summary ?? (allSignals.length > 0
-      ? `Se han recopilado ${allSignals.length} señales recientes. Revisa el análisis por mercado en los detalles.`
-      : 'No hay señales recientes suficientes para generar un resumen.')
-
-    const hasNoSignals = allSignals.length === 0
-    const isPurelyNoNews = /^(no hay noticias|no recent news|no news in the feed|empty feed)[.\s]*$/i.test(brief.trim())
-    const isNoNewsPlaceholder = hasNoSignals
-      ? !brief || brief.length < 40
-      : !brief ||
-        brief.length < 60 ||
-        (brief.length < 120 && (isPurelyNoNews || /no hay noticias|no recent news|no news in the feed|empty feed/i.test(brief)))
-
-    if (brief && !isNoNewsPlaceholder && !structuredForSuggestions) {
-      const { error: briefErr } = await supabase.from('agent_content').insert({
-        market_id: null,
-        agent_type: 'news_monitor',
-        content_type: 'news_summary',
-        title: 'Resumen de noticias del día',
-        body: brief,
-        language: 'es',
-        metadata: {
-          type: 'news_brief',
-          model: MODELS.FAST,
+          pulse_opportunity_count: parsed.pulse_opportunities.length,
+          blog_topic_count: parsed.blog_topic_ideas.length,
           tokens_input: totalTokensInput,
           tokens_output: totalTokensOutput,
         },
         published: true,
       })
-      if (!briefErr) briefSaved = true
-    }
-
-    // Save sentiment_scores and relevance per market
-    for (const ma of marketAnalyses) {
-      const { error: sentErr } = await supabase.from('sentiment_scores').insert({
-        market_id: ma.market_id,
-        score: Math.max(-100, Math.min(100, ma.analysis.sentiment_score)),
-        source: 'news_monitor',
-        keywords: [],
-      })
-      if (!sentErr) relevanceSaved = true
-
-      // Save per-market news summary (published so it shows in News Briefs)
-      await supabase.from('agent_content').insert({
-        market_id: ma.market_id,
-        agent_type: 'news_monitor',
-        content_type: 'news_summary',
-        title: `Análisis: ${ma.market_title}`,
-        body: ma.analysis.summary,
-        language: 'es',
-        metadata: {
-          type: 'market_analysis',
-          relevance: ma.analysis.relevance,
-          probability_suggestion: ma.analysis.probability_suggestion,
-        },
-        published: true,
-      })
-    }
-
-    // Step 6: Save market suggestions (market_suggestion or market_insight fallback)
-    let suggestionsSaved = 0
-    for (const s of allSuggestions) {
-      if (!s?.title_es) continue
-      const body = JSON.stringify({
-        title_es: s.title_es,
-        title_en: s.title_en,
-        description_es: s.description_es,
-        description_en: s.description_en,
-        category: s.category,
-        resolution_criteria_es: s.resolution_criteria_es,
-        resolution_criteria_en: s.resolution_criteria_en,
-        resolution_date: s.resolution_date,
-        initial_probability: s.initial_probability,
-        tags: s.tags ?? [],
-        reasoning: s.reasoning,
-        source_signals: s.source_signals ?? [],
-        created_by_agent: true,
-      })
-      const payload = {
-        market_id: null,
-        agent_type: 'news_monitor' as const,
-        title: s.title_es,
-        body,
-        language: 'es',
-        metadata: { type: 'market_suggestion', model: MODELS.FAST },
-        published: false,
-      }
-      let { error } = await supabase.from('agent_content').insert({
-        ...payload,
-        content_type: 'market_suggestion',
-      })
-      if (error) {
-        // Fallback if migration not run: use market_insight
-        const fallback = await supabase.from('agent_content').insert({
-          ...payload,
-          content_type: 'market_insight',
-        })
-        error = fallback.error
-      }
-      if (!error) suggestionsSaved++
-    }
-
-    // Step 7: Signal to Content Creator (content_brief) — always when we have signals or analyses
-    if (marketAnalyses.length > 0 || allSignals.length > 0) {
-      const briefPayload = {
-        market_id: null,
-        agent_type: 'news_monitor' as const,
-        title: 'Brief para Content Creator',
-        body: JSON.stringify({
-          trending_topics: allSignals.slice(0, 5).map((s) => s.title),
-          new_market_suggestions: allSuggestions.map((s) => s.title_es),
-          sentiment_snapshot: marketAnalyses.map((a) => ({
-            market: a.market_title,
-            sentiment: a.analysis.sentiment_score,
-            probability_suggestion: a.analysis.probability_suggestion,
-          })),
-          generated_at: new Date().toISOString(),
-        }),
-        language: 'es',
-        metadata: { type: 'content_brief' },
-        published: false,
-      }
-      const { error } = await supabase.from('agent_content').insert({
-        ...briefPayload,
-        content_type: 'content_brief',
-      })
-      if (error) {
-        // Fallback if migration not run
-        await supabase.from('agent_content').insert({
-          ...briefPayload,
-          content_type: 'market_insight',
-        })
-      }
+    } catch (e) {
+      console.error('[NEWS-MONITOR] Failed to save brief:', e)
     }
 
     await logAgentRun({
@@ -911,19 +419,19 @@ REGLAS PARA suggested_markets:
       tokensOutput: totalTokensOutput,
       summary: {
         signals_fetched: allSignals.length,
-        brief_saved: briefSaved,
-        suggestions_saved: suggestionsSaved,
-        relevance_saved: relevanceSaved,
+        pulse_opportunities: parsed.pulse_opportunities.length,
+        blog_topic_ideas: parsed.blog_topic_ideas.length,
+        skip_reason: parsed.skip_reason,
       },
     })
 
     return {
       success: true,
       summary: {
-        articles_fetched: allSignals.length,
-        brief_saved: briefSaved,
-        suggestions_saved: suggestionsSaved,
-        relevance_saved: relevanceSaved,
+        signals_fetched: allSignals.length,
+        pulse_opportunities: parsed.pulse_opportunities.length,
+        blog_topic_ideas: parsed.blog_topic_ideas.length,
+        skip_reason: parsed.skip_reason,
       },
     }
   } catch (error: unknown) {
@@ -933,7 +441,7 @@ REGLAS PARA suggested_markets:
       error?: { type?: string; error?: { message?: string }; message?: string }
       message?: string
     }
-    console.error('[News Monitor] Error:', err)
+    console.error('[News Monitor v2] Error:', err)
 
     try {
       await logAgentRun({
@@ -941,10 +449,9 @@ REGLAS PARA suggested_markets:
         status: 'error',
         durationMs: Date.now() - startTime,
         errorMessage: `API ${apiErr?.status ?? '?'}: ${apiErr?.error?.error?.message ?? apiErr?.error?.message ?? err.message}`,
-        summary: { step: 'identify which step failed' },
       })
-    } catch (logErr) {
-      console.error('Failed to log agent run:', logErr)
+    } catch {
+      /* ignore */
     }
 
     return { success: false, error: err.message }

@@ -1,3 +1,14 @@
+/**
+ * Inbox Curator — public submission triage.
+ *
+ * v2 (Apr 2026 re-prompting): outputs Action / Park / Archive per pending
+ * `conscious_inbox` item with a one-sentence rationale. The admin dashboard
+ * renders these inline so triage is one click ("Approve" → create market,
+ * "Park" → leave pending, "Archive" → mark archived).
+ *
+ * Manual trigger only (Run Now). No cron — there's no fresh-submission
+ * volume yet that justifies daily LLM spend.
+ */
 import {
   getAnthropicClient,
   getSupabaseAdmin,
@@ -7,11 +18,41 @@ import {
   parseAgentJSON,
 } from '@/lib/agents/config'
 
+const AGENT_NAME = 'inbox-curator'
+
+type PendingItem = {
+  id: string
+  type: string
+  title: string
+  description: string | null
+  category: string | null
+  upvotes: number
+  created_at: string
+}
+
+type TriageDecision = {
+  /** matches conscious_inbox.id */
+  id: string
+  /** What the founder should do with this item this week. */
+  action: 'respond_today' | 'park' | 'archive'
+  /** One sentence in Spanish explaining the decision. */
+  reason: string
+  /** Optional: short Spanish title to use if action=respond_today and item should become a market. */
+  suggested_market_title?: string
+  /** Optional: name of an existing active market this overlaps with. */
+  duplicates_existing?: string
+}
+
 export async function runInboxCurator(): Promise<{
   success: boolean
   error?: string
   skipped?: boolean
-  summary?: { pending_count: number; top_recommendation?: string }
+  summary?: {
+    pending_count: number
+    respond_today_count?: number
+    park_count?: number
+    archive_count?: number
+  }
 }> {
   const startTime = Date.now()
 
@@ -24,27 +65,15 @@ export async function runInboxCurator(): Promise<{
       .eq('status', 'pending')
       .is('archived_at', null)
       .order('upvotes', { ascending: false })
+      .limit(40)
 
     if (pendingErr) {
-      console.warn('[Inbox Curator] conscious_inbox fetch failed:', pendingErr.message)
       throw new Error(`Failed to fetch pending items: ${pendingErr.message}`)
     }
 
-    const pending = (pendingItems ?? []) as Array<{
-      id: string
-      type: string
-      title: string
-      description: string | null
-      category: string | null
-      upvotes: number
-      created_at: string
-    }>
+    const pending = (pendingItems ?? []) as PendingItem[]
 
     if (pending.length === 0) {
-      // Count nominations from /locations to surface them even when the
-      // curator has nothing to LLM-summarize, so the admin can tell at a
-      // glance that the inbox is empty AND why (no new submissions vs.
-      // platform needs a nomination CTA push).
       const cutoff7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
       const { count: submissionsLast7d } = await supabase
         .from('conscious_inbox')
@@ -52,7 +81,7 @@ export async function runInboxCurator(): Promise<{
         .gte('created_at', cutoff7d)
 
       await logAgentRun({
-        agentName: 'inbox-curator',
+        agentName: AGENT_NAME,
         status: 'skipped',
         durationMs: Date.now() - startTime,
         summary: {
@@ -60,8 +89,8 @@ export async function runInboxCurator(): Promise<{
           submissions_last_7d: submissionsLast7d ?? 0,
           reason:
             (submissionsLast7d ?? 0) === 0
-              ? 'No submissions this week. Promote the "Nominar lugar" CTA on /locations and vote confirmation screens.'
-              : 'No pending items — all submissions from this week were already triaged.',
+              ? 'no_submissions_this_week'
+              : 'no_pending_items',
         },
       })
       return { success: true, skipped: true, summary: { pending_count: 0 } }
@@ -73,92 +102,92 @@ export async function runInboxCurator(): Promise<{
       .select('title')
       .in('status', ['active', 'trading'])
       .is('archived_at', null)
+      .limit(80)
     if (!marketsErr) {
       activeTitles = (activeMarkets ?? []).map((m) => m.title)
-    } else {
-      console.warn('[Inbox Curator] prediction_markets fetch failed:', marketsErr.message)
-    }
-
-    let recentDecisionsList: Array<{ title: string; status: string }> = []
-    const cutoff7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
-    const { data: recentDecisions, error: decisionsErr } = await supabase
-      .from('conscious_inbox')
-      .select('title, status')
-      .in('status', ['approved', 'rejected'])
-      .is('archived_at', null)
-      .gte('updated_at', cutoff7d)
-    if (!decisionsErr) {
-      recentDecisionsList = (recentDecisions ?? []).map((r) => ({
-        title: r.title,
-        status: r.status,
-      }))
-    } else {
-      console.warn('[Inbox Curator] recent decisions fetch failed:', decisionsErr.message)
     }
 
     const anthropic = getAnthropicClient()
 
-    const systemMessage = `You are the community curator for Crowd Conscious, a free-to-play opinion platform in Mexico City. Your job is to review user-submitted ideas and help the admin decide which ones to act on. Be practical — the platform has limited bandwidth. Prioritize ideas that would drive engagement, are timely, and align with the platform categories (World Cup, World, Government, Sustainability, Corporate, Community, Cause).`
+    const systemMessage = `Eres el curador del Buzón Consciente de Crowd Conscious, una plataforma de opinión colectiva en CDMX. Tu trabajo es triar las propuestas pendientes del público y devolver una decisión clara por cada una. Sé práctico — la plataforma es operada por una sola persona y prioriza señal sobre volumen.
 
-    const userMessage = `Here are the pending community submissions (sorted by upvotes):
+REGLAS DE DECISIÓN
+- "respond_today" — el ítem es accionable ESTA SEMANA. Cumple TODOS estos criterios:
+  * Encaja en una categoría real de la plataforma (Mundial 2026, gobierno CDMX, sustentabilidad, sociedad, tecnología, cultura).
+  * Tiene >= 5 upvotes O fue creado en las últimas 72h Y representa un evento concreto con fecha.
+  * NO duplica un mercado activo (lista provista abajo).
+  * Si se vuelve mercado, la pregunta resuelve en 7-30 días con criterio verificable.
+
+- "park" — interesante pero no urgente. Vale la pena revisarlo de nuevo en 1-2 semanas. Ejemplos: idea válida sin gancho noticioso, propuesta esperando datos, evento >30 días al futuro.
+
+- "archive" — no procede. Ejemplos: duplica un mercado existente, está fuera de las categorías de la plataforma, es spam o muy ambiguo, o promueve a una persona/marca específica sin valor para la comunidad.
+
+DEFAULT: cuando dudes, "park". No fuerces "respond_today" para inflar la lista.`
+
+    const userMessage = `PROPUESTAS PENDIENTES (ordenadas por upvotes desc):
 ${JSON.stringify(pending, null, 2)}
 
-Currently active markets (avoid duplicates):
+MERCADOS ACTIVOS EN LA PLATAFORMA (evita duplicar):
 ${JSON.stringify(activeTitles, null, 2)}
 
-Recently approved/rejected (admin's taste):
-${JSON.stringify(recentDecisionsList, null, 2)}
+Devuelve SÓLO un array JSON. Sin markdown, sin texto antes o después. Una entrada por cada propuesta pendiente:
 
-For each pending submission, provide:
-1. relevance_score (1-10): based on timeliness, engagement potential, upvote count
-2. recommendation: one of 'create_market', 'add_to_fund', 'needs_editing', 'merge_with_existing', 'not_suitable'
-3. reason: 1 sentence explaining why
-4. If 'create_market': suggest resolution_criteria and resolution_date
-5. If 'merge_with_existing': which existing market title it overlaps with
+[
+  {
+    "id": "<uuid del item exactamente como aparece arriba>",
+    "action": "respond_today" | "park" | "archive",
+    "reason": "Una oración en español, concreta, que explique por qué esta acción.",
+    "suggested_market_title": "(sólo si action=respond_today y el ítem debería volverse mercado) Título de pregunta sí/no en español, ~12 palabras",
+    "duplicates_existing": "(sólo si action=archive por duplicado) Título exacto del mercado activo que duplica"
+  }
+]
 
-Return ONLY a valid JSON array. No markdown code blocks, no explanation before or after. Sorted by relevance_score descending.
-Write reasons in Spanish.`
-
-    const userPrompt = userMessage?.trim() ?? ''
-    if (!userPrompt) {
-      console.error('[Inbox Curator] Empty prompt, skipping API call')
-      await logAgentRun({
-        agentName: 'inbox-curator',
-        status: 'skipped',
-        durationMs: Date.now() - startTime,
-        summary: { reason: 'empty_prompt' },
-      })
-      return { success: false, error: 'empty_prompt' }
-    }
+NO devuelvas más entradas que las propuestas reales (${pending.length}).
+Ordena por urgencia descendente: respond_today primero, luego park, luego archive.`
 
     const response = await anthropic.messages.create({
       model: MODELS.FAST,
       max_tokens: TOKEN_LIMITS.DIGEST,
       system: systemMessage,
-      messages: [{ role: 'user', content: userPrompt }],
+      messages: [{ role: 'user', content: userMessage }],
     })
 
     const textBlock = response.content.find((b) => b.type === 'text')
     const rawText = textBlock && 'text' in textBlock ? textBlock.text : ''
     const usage = response.usage ?? { input_tokens: 0, output_tokens: 0 }
 
-    let analysis: unknown[]
+    let decisions: TriageDecision[]
     try {
       const parsed = parseAgentJSON(rawText)
-      analysis = Array.isArray(parsed) ? parsed : [parsed]
+      decisions = (Array.isArray(parsed) ? parsed : [parsed]).map((d): TriageDecision => {
+        const action = String((d as Record<string, unknown>).action ?? '').toLowerCase()
+        return {
+          id: String((d as Record<string, unknown>).id ?? ''),
+          action:
+            action === 'respond_today' || action === 'park' || action === 'archive'
+              ? (action as TriageDecision['action'])
+              : 'park',
+          reason: String((d as Record<string, unknown>).reason ?? '').trim(),
+          suggested_market_title: (d as Record<string, unknown>).suggested_market_title
+            ? String((d as Record<string, unknown>).suggested_market_title).trim()
+            : undefined,
+          duplicates_existing: (d as Record<string, unknown>).duplicates_existing
+            ? String((d as Record<string, unknown>).duplicates_existing).trim()
+            : undefined,
+        }
+      }).filter((d) => d.id)
     } catch (e) {
-      console.error('[Inbox Curator] JSON parse failed. Raw response (first 500 chars):', rawText.slice(0, 500))
-      // Save raw response so admin can review; don't fail the run
+      console.error('[Inbox Curator] JSON parse failed:', String(e).slice(0, 200))
       try {
         await supabase.from('agent_content').insert({
           market_id: null,
           agent_type: 'news_monitor',
           content_type: 'weekly_digest',
-          title: 'Inbox Curator Digest (parse failed)',
-          body: rawText,
+          title: 'Inbox Curator Triage (parse failed)',
+          body: rawText.slice(0, 8000),
           language: 'es',
           metadata: {
-            type: 'inbox_digest',
+            type: 'inbox_triage_v2',
             parse_error: String(e),
             pending_count: pending.length,
             model: MODELS.FAST,
@@ -167,11 +196,11 @@ Write reasons in Spanish.`
           },
           published: false,
         })
-      } catch (saveErr) {
-        console.error('[Inbox Curator] Failed to save raw content:', saveErr)
+      } catch {
+        /* ignore */
       }
       await logAgentRun({
-        agentName: 'inbox-curator',
+        agentName: AGENT_NAME,
         status: 'error',
         durationMs: Date.now() - startTime,
         errorMessage: `JSON parse failed: ${String(e)}`,
@@ -179,28 +208,37 @@ Write reasons in Spanish.`
         tokensOutput: usage.output_tokens,
         summary: { pending_count: pending.length, parse_failed: true },
       })
-      return { success: false, error: `JSON parse failed: ${String(e)}` }
+      return { success: false, error: 'parse_failed' }
     }
 
-    const topItem = analysis[0] as Record<string, unknown> | undefined
-    let topRecommendation: string = String(topItem?.title ?? topItem?.submission_title ?? '')
-    if (!topRecommendation && topItem?.id) {
-      const match = pending.find((p) => p.id === topItem.id)
-      topRecommendation = match?.title ?? String(topItem.id)
-    }
+    const respondToday = decisions.filter((d) => d.action === 'respond_today').length
+    const park = decisions.filter((d) => d.action === 'park').length
+    const archive = decisions.filter((d) => d.action === 'archive').length
 
+    // Persist with the new metadata.type so the admin dashboard can pick the
+    // v2 renderer. We keep agent_type='news_monitor' / content_type='weekly_digest'
+    // because the admin page already classifies those rows under "Inbox Digests"
+    // (no schema migration needed for an op-level prompt change).
     try {
+      const titleById = new Map(pending.map((p) => [p.id, p.title]))
+      const enriched = decisions.map((d) => ({
+        ...d,
+        title: titleById.get(d.id) ?? '(unknown)',
+      }))
+
       await supabase.from('agent_content').insert({
         market_id: null,
         agent_type: 'news_monitor',
         content_type: 'weekly_digest',
-        title: 'Inbox Curator Digest',
-        body: JSON.stringify(analysis),
+        title: 'Triage del Buzón Consciente',
+        body: JSON.stringify(enriched),
         language: 'es',
         metadata: {
-          type: 'inbox_digest',
+          type: 'inbox_triage_v2',
           pending_count: pending.length,
-          top_recommendation: topRecommendation || undefined,
+          respond_today_count: respondToday,
+          park_count: park,
+          archive_count: archive,
           model: MODELS.FAST,
           tokens_input: usage.input_tokens,
           tokens_output: usage.output_tokens,
@@ -208,18 +246,20 @@ Write reasons in Spanish.`
         published: false,
       })
     } catch (e) {
-      console.error('Failed to save inbox digest:', e)
+      console.error('[Inbox Curator] Failed to save triage:', e)
     }
 
     await logAgentRun({
-      agentName: 'inbox-curator',
+      agentName: AGENT_NAME,
       status: 'success',
       durationMs: Date.now() - startTime,
       tokensInput: usage.input_tokens,
       tokensOutput: usage.output_tokens,
       summary: {
         pending_count: pending.length,
-        top_recommendation: topRecommendation,
+        respond_today_count: respondToday,
+        park_count: park,
+        archive_count: archive,
       },
     })
 
@@ -227,30 +267,29 @@ Write reasons in Spanish.`
       success: true,
       summary: {
         pending_count: pending.length,
-        top_recommendation: topRecommendation,
+        respond_today_count: respondToday,
+        park_count: park,
+        archive_count: archive,
       },
     }
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error(String(error))
-    const apiErr = error as { status?: number; error?: { type?: string; error?: { message?: string }; message?: string }; message?: string }
-    console.error('[Inbox Curator] Anthropic API error:', JSON.stringify({
-      status: apiErr?.status,
-      type: apiErr?.error?.type,
-      message: apiErr?.error?.error?.message ?? apiErr?.error?.message ?? apiErr?.message,
-      full: apiErr?.error ?? apiErr,
-    }, null, 2))
-    console.error('Inbox curator agent error:', err)
+    const apiErr = error as {
+      status?: number
+      error?: { type?: string; error?: { message?: string }; message?: string }
+      message?: string
+    }
+    console.error('[Inbox Curator] error:', err)
 
     try {
       await logAgentRun({
-        agentName: 'inbox-curator',
+        agentName: AGENT_NAME,
         status: 'error',
         durationMs: Date.now() - startTime,
         errorMessage: `API ${apiErr?.status ?? '?'}: ${apiErr?.error?.error?.message ?? apiErr?.error?.message ?? err.message}`,
-        summary: { step: 'identify which step failed' },
       })
-    } catch (logErr) {
-      console.error('Failed to log agent run:', logErr)
+    } catch {
+      /* ignore */
     }
 
     return { success: false, error: err.message }

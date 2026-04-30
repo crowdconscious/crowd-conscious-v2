@@ -22,6 +22,7 @@ import {
 import { ImageUpload } from '@/components/ui/ImageUpload'
 import ShareBundle from '@/components/admin/ShareBundle'
 import SponsorPulseReportRunner from './SponsorPulseReportRunner'
+import ContentCreatorRunner from './ContentCreatorRunner'
 
 /**
  * `scheduled: false` = no Vercel cron, "Run Now" is the only way the agent
@@ -29,10 +30,9 @@ import SponsorPulseReportRunner from './SponsorPulseReportRunner'
  */
 const AGENTS = [
   { id: 'ceo-digest', label: 'CEO Digest', icon: FileText, scheduled: true },
-  { id: 'news-monitor', label: 'News Monitor', icon: Newspaper, scheduled: true },
-  { id: 'content-creator', label: 'Content Creator', icon: Bot, scheduled: false },
+  { id: 'news-monitor', label: 'News Monitor', icon: Newspaper, scheduled: false },
+  { id: 'content-creator', label: 'Content Creator v4 (per topic)', icon: Bot, scheduled: false },
   { id: 'inbox-curator', label: 'Inbox Curator', icon: Inbox, scheduled: false },
-  { id: 'sponsor-report', label: 'Sponsor Report (monthly)', icon: Target, scheduled: true },
   { id: 'sponsor-pulse-report', label: 'Sponsor Pulse Report (per market)', icon: Target, scheduled: false },
 ] as const
 
@@ -211,6 +211,224 @@ function StructuredNewsBriefCard({
   )
 }
 
+type PulseOpportunitiesPayload = {
+  summary?: string
+  skip_reason?: string
+  pulse_opportunities?: Array<{
+    title?: string
+    category?: string
+    target_segment?: string
+    urgency?: 'high' | 'medium' | 'low'
+    rationale?: string
+    suggested_product?: string
+    source_url?: string
+    draft_whatsapp_message?: string
+  }>
+  blog_topic_ideas?: Array<{
+    title_es?: string
+    title_en?: string
+    angle?: string
+    weekly_topical?: boolean
+    mexican_angle?: string
+    tied_to_market_id?: string | null
+    source_url?: string
+    expected_reader_question?: string
+  }>
+}
+
+function PulseOpportunitiesCard({
+  item,
+  onGenerateContent,
+  contentBusy,
+  onArchive,
+  onRestore,
+}: {
+  item: AgentContent
+  onGenerateContent: (topic: string, marketId?: string | null) => void
+  contentBusy: boolean
+  onArchive: () => void
+  onRestore: () => void
+}) {
+  let data: PulseOpportunitiesPayload | null = null
+  try {
+    data = JSON.parse(item.body) as PulseOpportunitiesPayload
+  } catch {
+    data = null
+  }
+  if (!data) {
+    return (
+      <div className="border border-white/10 rounded-lg p-4 space-y-3">
+        <h4 className="text-white font-medium text-sm">{item.title}</h4>
+        <p className="text-white/70 text-sm whitespace-pre-wrap">{item.body}</p>
+      </div>
+    )
+  }
+  const opps = data.pulse_opportunities ?? []
+  const blogs = data.blog_topic_ideas ?? []
+  return (
+    <div className="border border-white/10 rounded-lg p-4 space-y-4">
+      <div className="flex items-center justify-between">
+        <h4 className="text-white font-medium text-sm">{item.title}</h4>
+        <span className="text-white/40 text-xs">{formatRelativeTime(item.created_at)}</span>
+      </div>
+      {data.summary && (
+        <p className="text-slate-300 text-sm leading-relaxed">{data.summary}</p>
+      )}
+      {data.skip_reason && (
+        <p className="text-slate-500 text-xs italic">Saltadas: {data.skip_reason}</p>
+      )}
+
+      {opps.length > 0 && (
+        <div className="space-y-3">
+          <h5 className="text-emerald-400 text-xs font-semibold uppercase tracking-wider">
+            Oportunidades Pulse ({opps.length})
+          </h5>
+          {opps.map((opp, i) => {
+            const urgencyStyle =
+              opp.urgency === 'high'
+                ? 'bg-red-500/15 text-red-300 border-red-500/30'
+                : opp.urgency === 'medium'
+                  ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                  : 'bg-slate-700/40 text-slate-400 border-slate-600'
+            return (
+              <div
+                key={i}
+                className="bg-slate-900/80 rounded-lg p-3 border border-emerald-500/20 space-y-2"
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className={`text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded border ${urgencyStyle}`}>
+                    {opp.urgency ?? '—'}
+                  </span>
+                  {opp.category && (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-slate-700/50 text-slate-300">
+                      {opp.category}
+                    </span>
+                  )}
+                  {opp.suggested_product && (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300">
+                      {opp.suggested_product}
+                    </span>
+                  )}
+                </div>
+                {opp.title && <h6 className="text-white text-sm font-medium">{opp.title}</h6>}
+                {opp.target_segment && (
+                  <p className="text-slate-300 text-xs">
+                    <span className="text-slate-400 font-medium">Segmento:</span> {opp.target_segment}
+                  </p>
+                )}
+                {opp.rationale && <p className="text-slate-400 text-xs italic">{opp.rationale}</p>}
+                {opp.draft_whatsapp_message && (
+                  <details className="text-xs">
+                    <summary className="text-slate-400 cursor-pointer hover:text-slate-300">
+                      WhatsApp draft
+                    </summary>
+                    <pre className="mt-2 p-2 bg-slate-950 rounded text-slate-300 whitespace-pre-wrap font-sans">
+                      {opp.draft_whatsapp_message}
+                    </pre>
+                  </details>
+                )}
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {opp.title && (
+                    <button
+                      type="button"
+                      onClick={() => onGenerateContent(opp.title ?? '')}
+                      disabled={contentBusy}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-medium hover:bg-emerald-500/25 transition-colors disabled:opacity-50"
+                    >
+                      ✨ Generar contenido (v4)
+                    </button>
+                  )}
+                  {opp.title && (
+                    <Link
+                      href={`/predictions/admin/create-market?${new URLSearchParams({
+                        title: opp.title,
+                        ...(opp.category ? { category: opp.category } : {}),
+                      }).toString()}`}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs"
+                    >
+                      + Crear mercado
+                    </Link>
+                  )}
+                  {opp.source_url && (
+                    <a
+                      href={opp.source_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-slate-500 hover:text-slate-300 text-xs"
+                    >
+                      <ExternalLink className="w-3 h-3" /> Fuente
+                    </a>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {blogs.length > 0 && (
+        <div className="space-y-3">
+          <h5 className="text-amber-400 text-xs font-semibold uppercase tracking-wider">
+            Ideas para blog ({blogs.length})
+          </h5>
+          {blogs.map((b, i) => (
+            <div
+              key={i}
+              className="bg-slate-900/80 rounded-lg p-3 border border-amber-500/20 space-y-2"
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                {b.weekly_topical && (
+                  <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                    Weekly topical
+                  </span>
+                )}
+              </div>
+              {b.title_es && <h6 className="text-white text-sm font-medium">{b.title_es}</h6>}
+              {b.title_en && <p className="text-slate-500 text-xs italic">EN: {b.title_en}</p>}
+              {b.angle && <p className="text-slate-300 text-xs">{b.angle}</p>}
+              {b.mexican_angle && (
+                <p className="text-slate-400 text-xs">
+                  <span className="text-slate-500">Mexican angle:</span> {b.mexican_angle}
+                </p>
+              )}
+              <div className="flex flex-wrap gap-2 pt-1">
+                {b.title_es && (
+                  <button
+                    type="button"
+                    onClick={() => onGenerateContent(b.title_es ?? '', b.tied_to_market_id ?? null)}
+                    disabled={contentBusy}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-medium hover:bg-emerald-500/25 transition-colors disabled:opacity-50"
+                  >
+                    ✨ Generar contenido (v4)
+                  </button>
+                )}
+                {b.source_url && (
+                  <a
+                    href={b.source_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-slate-500 hover:text-slate-300 text-xs"
+                  >
+                    <ExternalLink className="w-3 h-3" /> Fuente
+                  </a>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {opps.length === 0 && blogs.length === 0 && (
+        <p className="text-slate-500 text-xs italic">
+          Sin oportunidades ni temas accionables hoy. Esto es señal, no error.
+        </p>
+      )}
+
+      <ArchiveToggleButton archived={!!item.archived_at} onArchive={onArchive} onRestore={onRestore} />
+    </div>
+  )
+}
+
 function ArchiveToggleButton({
   archived,
   onArchive,
@@ -247,7 +465,7 @@ function getContentTab(item: AgentContent): TabId | null {
   const type = meta.type as string
   const digestType = meta.digest_type as string
   if (item.content_type === 'blog_post') return 'blog'
-  if (type === 'inbox_digest') return 'inbox'
+  if (type === 'inbox_digest' || type === 'inbox_triage_v2') return 'inbox'
   if (item.content_type === 'market_suggestion' || (item.content_type === 'market_insight' && type === 'market_suggestion')) return 'suggestions'
   if (
     type === 'news_brief' ||
@@ -280,6 +498,7 @@ export default function AdminAgentsPage() {
     cover_image_url: string | null
     generated_by: string | null
     pulse_market_id: string | null
+    agent_content_id: string | null
   }
 
   const [data, setData] = useState<{
@@ -297,6 +516,7 @@ export default function AdminAgentsPage() {
   const [activeTab, setActiveTab] = useState<TabId>('all')
   const [showArchived, setShowArchived] = useState(false)
   const [caseStudyOnly, setCaseStudyOnly] = useState(false)
+  const [contentRunning, setContentRunning] = useState<string | null>(null)
 
   const fetchData = useCallback(async () => {
     try {
@@ -314,6 +534,50 @@ export default function AdminAgentsPage() {
       setLoading(false)
     }
   }, [showArchived])
+
+  /**
+   * Kick off Content Creator v4 with a topic from a News Monitor opportunity
+   * (or a free-form topic). Posts to the same /run-agent endpoint that the
+   * "Run Now" buttons use, with a `topic` field the agent will pick up.
+   */
+  const generateContentFromTopic = useCallback(
+    async (topic: string, marketId: string | null) => {
+      if (!topic.trim() || contentRunning) return
+      setContentRunning(topic)
+      setRunResult(null)
+      setError('')
+      try {
+        const body: Record<string, unknown> = {
+          agent: 'content-creator',
+          topic: topic.trim(),
+          source: 'news_monitor',
+        }
+        if (marketId) body.marketId = marketId
+        const res = await fetch('/api/predictions/admin/run-agent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        })
+        const json = (await res.json()) as {
+          error?: string
+          result?: { blog_post_id?: string; agent_content_id?: string; success?: boolean }
+        }
+        if (!res.ok) {
+          throw new Error(json.error ?? `Generation failed (${res.status})`)
+        }
+        await fetchData()
+        setRunResult(
+          `Contenido v4 generado para «${topic.slice(0, 60)}${topic.length > 60 ? '…' : ''}». Revisa en la pestaña Blog Posts o All.`
+        )
+        setTimeout(() => setRunResult(null), 12000)
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Generación falló')
+      } finally {
+        setContentRunning(null)
+      }
+    },
+    [contentRunning, fetchData]
+  )
 
   useEffect(() => {
     fetchData()
@@ -613,6 +877,22 @@ export default function AdminAgentsPage() {
                 />
               )
             }
+            if (id === 'content-creator') {
+              return (
+                <ContentCreatorRunner
+                  key={id}
+                  parentBusy={!!running}
+                  onAfterRun={fetchData}
+                  lastRunMeta={{
+                    lastRunAt: run?.created_at ?? null,
+                    status: run?.status ?? null,
+                    tokensTotal: run ? run.tokens_input + run.tokens_output : 0,
+                    cost: Number(run?.cost_estimate ?? 0),
+                    error: run?.error_message ?? null,
+                  }}
+                />
+              )
+            }
             const statusIcon =
               run?.status === 'success' ? (
                 <CheckCircle className="w-5 h-5 text-emerald-500" />
@@ -699,8 +979,8 @@ export default function AdminAgentsPage() {
         </div>
         <div className="mt-2 text-xs text-slate-500 leading-relaxed">
           <span className="text-slate-400 font-medium">Schedules (CDMX):</span>{' '}
-          News Monitor lunes 08:00 · CEO Digest lunes 10:00 · Newsletter L/M/V 08:00 · Sponsor Report mensual día 1, 03:00.
-          {' '}Content Creator e Inbox Curator son <span className="text-amber-300">manuales</span> — usa «Run Now».
+          CEO Digest lunes 10:00 · Newsletter L/M/V 08:00 · Sponsor Pulse Report dispara al cerrar el Pulse (vía pulse-auto-resolve).
+          {' '}News Monitor, Content Creator, Inbox Curator y Sponsor Pulse Report son <span className="text-amber-300">manuales</span> — usa «Run Now».
           Fuente: <code className="text-slate-400">vercel.json</code>.
         </div>
       </section>
@@ -935,6 +1215,14 @@ export default function AdminAgentsPage() {
                               >
                                 Edit
                               </Link>
+                              {bp.generated_by === 'content-creator-v4' && bp.agent_content_id && (
+                                <Link
+                                  href={`/predictions/admin/agents/v4-package/${bp.agent_content_id}`}
+                                  className="inline-flex items-center gap-1 px-3 py-1.5 text-xs bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 rounded text-emerald-200 font-medium"
+                                >
+                                  ✨ Ver paquete v4
+                                </Link>
+                              )}
                               <Link
                                 href={`/blog/${bp.slug}`}
                                 target="_blank"
@@ -996,6 +1284,141 @@ export default function AdminAgentsPage() {
               const type = meta.type as string
 
               if ((meta.digest_type as string) === 'ceo_digest' || (item.content_type === 'weekly_digest' && type === 'ceo_digest')) {
+                const isV2 = (meta.schema_version as string) === 'v2_dashboard'
+                if (isV2) {
+                  let payload: {
+                    week_label?: string
+                    key_metrics?: Array<{ label?: string; value?: string; delta?: string | null }>
+                    do_this_week?: Array<{
+                      id?: string
+                      title?: string
+                      deadline?: string | null
+                      context?: string | null
+                      cta_url?: string | null
+                      cta_label?: string | null
+                    }>
+                    watch?: { title?: string; detail?: string } | null
+                    sponsor_outreach?: {
+                      segment?: string
+                      specific_target?: string | null
+                      rationale?: string
+                      product?: string
+                      whatsapp_message?: string
+                      cta_url?: string | null
+                    } | null
+                  } | null = null
+                  try {
+                    payload = JSON.parse(item.body)
+                  } catch {
+                    payload = null
+                  }
+                  if (!payload) {
+                    return (
+                      <div key={item.id} className="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
+                        <div className="text-slate-400 text-sm mb-2">{formatDate(item.created_at)}</div>
+                        <pre className="text-white whitespace-pre-wrap font-sans text-xs leading-relaxed">
+                          {item.body}
+                        </pre>
+                      </div>
+                    )
+                  }
+                  return (
+                    <div
+                      key={item.id}
+                      className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 space-y-4"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="text-white font-semibold">{payload.week_label ?? 'Digest semanal'}</h4>
+                          <p className="text-slate-500 text-xs">{formatDate(item.created_at)}</p>
+                        </div>
+                      </div>
+                      {(payload.key_metrics ?? []).length > 0 && (
+                        <div>
+                          <h5 className="text-slate-400 text-xs uppercase tracking-wider font-semibold mb-2">Métricas clave</h5>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                            {(payload.key_metrics ?? []).slice(0, 5).map((m, i) => (
+                              <div key={i} className="bg-slate-900/50 rounded-lg p-3 border border-slate-700/60">
+                                <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">{m.label}</div>
+                                <div className="text-white text-base font-bold mt-1">{m.value}</div>
+                                {m.delta && <div className="text-emerald-400 text-xs mt-0.5">{m.delta}</div>}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {(payload.do_this_week ?? []).length > 0 && (
+                        <div>
+                          <h5 className="text-emerald-400 text-xs uppercase tracking-wider font-semibold mb-2">Hacer esta semana</h5>
+                          <div className="space-y-2">
+                            {(payload.do_this_week ?? []).slice(0, 3).map((act, i) => (
+                              <div key={i} className="border-l-2 border-emerald-500/60 pl-3 py-1.5">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="text-white text-sm font-medium">{i + 1}. {act.title}</span>
+                                  {act.deadline && (
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-500/15 text-red-300 font-semibold uppercase">{act.deadline}</span>
+                                  )}
+                                </div>
+                                {act.context && <p className="text-slate-400 text-xs mt-1">{act.context}</p>}
+                                {act.cta_url && act.cta_label && (
+                                  <a
+                                    href={act.cta_url}
+                                    className="inline-block mt-1.5 px-2.5 py-1 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-medium hover:bg-emerald-500/25"
+                                    target={act.cta_url.startsWith('http') ? '_blank' : undefined}
+                                    rel={act.cta_url.startsWith('http') ? 'noreferrer' : undefined}
+                                  >
+                                    {act.cta_label}
+                                  </a>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {payload.watch && (
+                        <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
+                          <div className="text-amber-400 text-[10px] uppercase tracking-wider font-bold">⚠ Watch</div>
+                          <div className="text-amber-200 text-sm font-medium mt-1">{payload.watch.title}</div>
+                          {payload.watch.detail && (
+                            <div className="text-amber-300/80 text-xs mt-1">{payload.watch.detail}</div>
+                          )}
+                        </div>
+                      )}
+                      {payload.sponsor_outreach && (
+                        <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-3 space-y-2">
+                          <div className="text-emerald-400 text-[10px] uppercase tracking-wider font-bold">🎯 Sponsor outreach</div>
+                          <div className="text-white text-sm font-medium">
+                            {payload.sponsor_outreach.specific_target ?? payload.sponsor_outreach.segment} — <span className="text-emerald-300">{payload.sponsor_outreach.product}</span>
+                          </div>
+                          {payload.sponsor_outreach.rationale && (
+                            <div className="text-emerald-200/80 text-xs">{payload.sponsor_outreach.rationale}</div>
+                          )}
+                          {payload.sponsor_outreach.whatsapp_message && (
+                            <pre className="bg-slate-950 rounded-md p-2 text-slate-200 text-xs whitespace-pre-wrap font-sans">
+                              {payload.sponsor_outreach.whatsapp_message}
+                            </pre>
+                          )}
+                          {payload.sponsor_outreach.cta_url && (
+                            <a
+                              href={payload.sponsor_outreach.cta_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-block px-2.5 py-1 rounded-md bg-emerald-500/20 border border-emerald-500/40 text-emerald-200 text-xs font-medium"
+                            >
+                              Abrir contexto →
+                            </a>
+                          )}
+                        </div>
+                      )}
+                      <ArchiveToggleButton
+                        archived={!!item.archived_at}
+                        onArchive={() => archiveAgentItem(item.id)}
+                        onRestore={() => archiveAgentItem(item.id, true)}
+                      />
+                    </div>
+                  )
+                }
+                // Legacy v1 markdown digest
                 return (
                   <div
                     key={item.id}
@@ -1092,6 +1515,113 @@ export default function AdminAgentsPage() {
                 )
               }
 
+              if (type === 'inbox_triage_v2') {
+                let items: Array<{
+                  id: string
+                  title?: string
+                  action?: 'respond_today' | 'park' | 'archive'
+                  reason?: string
+                  suggested_market_title?: string
+                  duplicates_existing?: string
+                }> = []
+                try {
+                  items = JSON.parse(item.body)
+                } catch {
+                  items = []
+                }
+                const meta = (item.metadata ?? {}) as {
+                  respond_today_count?: number
+                  park_count?: number
+                  archive_count?: number
+                  pending_count?: number
+                }
+                const actionStyles: Record<string, { bg: string; text: string; label: string }> = {
+                  respond_today: {
+                    bg: 'bg-emerald-500/15 border-emerald-500/40',
+                    text: 'text-emerald-300',
+                    label: 'Responder hoy',
+                  },
+                  park: {
+                    bg: 'bg-amber-500/15 border-amber-500/40',
+                    text: 'text-amber-300',
+                    label: 'Park (revisar luego)',
+                  },
+                  archive: {
+                    bg: 'bg-slate-700/40 border-slate-600',
+                    text: 'text-slate-400',
+                    label: 'Archivar',
+                  },
+                }
+                return (
+                  <div
+                    key={item.id}
+                    className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 space-y-3"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-white font-medium text-sm">{item.title}</h4>
+                        <p className="text-slate-500 text-xs mt-0.5">
+                          {formatDate(item.created_at)} · {meta.pending_count ?? items.length} pendientes
+                        </p>
+                      </div>
+                      <Link
+                        href="/predictions/admin/inbox"
+                        className="flex items-center gap-1 text-emerald-400 hover:text-emerald-300 text-xs"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" /> Abrir Buzón
+                      </Link>
+                    </div>
+                    <div className="flex gap-2 text-xs">
+                      <span className="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300">
+                        {meta.respond_today_count ?? 0} hoy
+                      </span>
+                      <span className="px-2 py-0.5 rounded bg-amber-500/15 text-amber-300">
+                        {meta.park_count ?? 0} park
+                      </span>
+                      <span className="px-2 py-0.5 rounded bg-slate-700/60 text-slate-400">
+                        {meta.archive_count ?? 0} archive
+                      </span>
+                    </div>
+                    <div className="space-y-2">
+                      {items.map((entry, i) => {
+                        const style = actionStyles[entry.action ?? 'park'] ?? actionStyles.park
+                        return (
+                          <div
+                            key={i}
+                            className={`border rounded-lg p-3 space-y-1.5 ${style.bg}`}
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <span className="text-white text-sm flex-1">
+                                {entry.title ?? '(sin título)'}
+                              </span>
+                              <span className={`text-xs uppercase tracking-wide font-semibold ${style.text}`}>
+                                {style.label}
+                              </span>
+                            </div>
+                            {entry.reason && (
+                              <p className="text-slate-300 text-xs">{entry.reason}</p>
+                            )}
+                            {entry.suggested_market_title && (
+                              <Link
+                                href={`/predictions/admin/create-market?title=${encodeURIComponent(entry.suggested_market_title)}`}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-medium hover:bg-emerald-500/25 transition-colors"
+                              >
+                                + Crear: &ldquo;{entry.suggested_market_title}&rdquo;
+                              </Link>
+                            )}
+                            {entry.duplicates_existing && (
+                              <p className="text-slate-400 text-xs italic">
+                                Duplica: {entry.duplicates_existing}
+                              </p>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              }
+
               if (type === 'inbox_digest') {
                 let items: unknown[] = []
                 try {
@@ -1131,6 +1661,21 @@ export default function AdminAgentsPage() {
                       })}
                     </div>
                   </div>
+                )
+              }
+
+              if (item.content_type === 'news_summary' && type === 'pulse_opportunities') {
+                return (
+                  <PulseOpportunitiesCard
+                    key={item.id}
+                    item={item}
+                    contentBusy={!!contentRunning}
+                    onGenerateContent={(topic, marketId) =>
+                      void generateContentFromTopic(topic, marketId ?? null)
+                    }
+                    onArchive={() => archiveAgentItem(item.id)}
+                    onRestore={() => archiveAgentItem(item.id, true)}
+                  />
                 )
               }
 

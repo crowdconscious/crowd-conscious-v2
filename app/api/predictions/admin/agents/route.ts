@@ -47,7 +47,7 @@ export async function GET(request: Request) {
       supabase
         .from('blog_posts')
         .select(
-          'id, slug, title, excerpt, status, published_at, created_at, category, cover_image_url, generated_by, pulse_market_id'
+          'id, slug, title, excerpt, status, published_at, created_at, category, cover_image_url, generated_by, pulse_market_id, agent_content_id'
         )
         .order('created_at', { ascending: false })
         .limit(50),
