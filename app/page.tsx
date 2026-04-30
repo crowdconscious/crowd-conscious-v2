@@ -37,23 +37,21 @@ export const revalidate = 60
 
 export const metadata: Metadata = {
   title: {
-    absolute:
-      'Crowd Conscious — Predicciones Gratis que Financian Causas Reales | Mundial 2026',
+    absolute: 'Crowd Conscious — Consultas con confianza ponderada',
   },
   description:
-    "Plataforma gratuita de predicciones donde cada voto genera impacto. Cada patrocinio financia causas reales; tú decides a dónde va el impacto. Mundial 2026, política, deportes y más.",
+    'Vota en consultas públicas sobre el Mundial 2026, tu ciudad y lo que te importa. Tu certeza pondera el resultado. Las marcas patrocinan el impacto.',
   alternates: {
     canonical: SITE_URL,
     languages: {
-      "es-MX": SITE_URL,
-      "en-US": SITE_URL,
+      'es-MX': SITE_URL,
+      'en-US': SITE_URL,
     },
   },
   openGraph: {
-    title:
-      "Crowd Conscious — Predicciones Gratis que Financian Causas Reales | Mundial 2026",
+    title: 'Crowd Conscious — Consultas con confianza ponderada',
     description:
-      "Plataforma gratuita de predicciones donde cada voto genera impacto. Cada patrocinio financia causas reales; tú decides el impacto. Mundial 2026, política, deportes y más.",
+      'Vota en consultas públicas sobre el Mundial 2026, tu ciudad y lo que te importa. Tu certeza pondera el resultado. Las marcas patrocinan el impacto.',
     url: SITE_URL,
   },
 }
@@ -390,7 +388,7 @@ export default async function LandingPage() {
                   {locale === 'es' ? 'Lo que dice la comunidad' : 'What the community says'}
                 </p>
                 <h2 className="mt-1 text-2xl font-bold text-white md:text-3xl">
-                  {locale === 'es' ? 'Top predicciones en vivo' : 'Top live predictions'}
+                  {locale === 'es' ? 'Consultas activas' : 'Active consultations'}
                 </h2>
               </div>
               <Link

@@ -26,11 +26,17 @@ export async function generateMetadata(): Promise<Metadata> {
   const cookieStore = await cookies()
   const locale = cookieStore.get('preferred-language')?.value === 'en' ? 'en' : 'es'
   const t = getPulseListingCopy(locale)
+  const pageTitle =
+    locale === 'es' ? 'Para marcas | Crowd Conscious' : 'For brands | Crowd Conscious'
+  const description =
+    locale === 'es'
+      ? 'Conscious Pulse: lanza consultas con confianza ponderada y mide el sentimiento de tu comunidad en tiempo real. Pack Mundial 2026 disponible.'
+      : 'Conscious Pulse: launch confidence-weighted consultations and measure your community’s sentiment in real time. World Cup 2026 pack available.'
   return {
-    title: t.metaTitle,
-    description: t.metaDescription,
+    title: pageTitle,
+    description,
     openGraph: {
-      title: 'Conscious Pulse — Medición de sentimiento en tiempo real',
+      title: pageTitle,
       description: t.ogDescription,
     },
   }

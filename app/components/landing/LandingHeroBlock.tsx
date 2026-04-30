@@ -46,14 +46,14 @@ export function LandingHeroBlock({ locale, fundBalance }: Props) {
           <h1 className="text-4xl font-bold leading-[1.05] text-white sm:text-5xl md:text-6xl">
             {es ? (
               <>
-                Tu voto{' '}
+                Tu opinión{' '}
                 <span className="bg-gradient-to-r from-emerald-400 to-emerald-200 bg-clip-text text-transparent">
                   financia causas reales.
                 </span>
               </>
             ) : (
               <>
-                Your vote{' '}
+                Your opinion{' '}
                 <span className="bg-gradient-to-r from-emerald-400 to-emerald-200 bg-clip-text text-transparent">
                   funds real causes.
                 </span>
@@ -63,8 +63,8 @@ export function LandingHeroBlock({ locale, fundBalance }: Props) {
 
           <p className="mt-5 max-w-xl text-lg text-slate-300 sm:text-xl">
             {es
-              ? 'Empieza con un voto. Sin dinero real, sin tarjeta, sin bots. Solo inteligencia colectiva.'
-              : 'Start with a vote. No real money, no credit card, no bots. Just collective intelligence.'}
+              ? 'Vota en consultas con confianza ponderada. Tu certeza importa, no solo tu opinión. Las marcas patrocinan el impacto.'
+              : 'Vote in confidence-weighted consultations. Your certainty matters, not just your opinion. Brands sponsor the impact.'}
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -72,14 +72,14 @@ export function LandingHeroBlock({ locale, fundBalance }: Props) {
               href="/pulse"
               className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-xl bg-emerald-500 px-6 py-3 text-base font-semibold text-white shadow-lg shadow-emerald-500/20 transition-colors hover:bg-emerald-400"
             >
-              {es ? 'Ver Pulses' : 'Browse Pulses'}
+              {es ? 'Empezar a votar' : 'Start voting'}
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
-              href="/locations"
+              href="/pulse"
               className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-xl border border-[#2d3748] bg-[#1a2029] px-6 py-3 text-base font-medium text-slate-200 transition-colors hover:border-emerald-500/40"
             >
-              {es ? 'Lugares Conscientes' : 'Conscious Locations'}
+              {es ? 'Ver consultas activas' : 'Browse active consultations'}
             </Link>
           </div>
 

@@ -8,11 +8,10 @@ import { CONSCIOUS_FUND_GOAL_MXN } from '@/lib/predictions/fund-goal'
 
 export const metadata: Metadata = {
   title: {
-    absolute:
-      'Quiénes Somos — Consciencia Colectiva para el Bien Social | Crowd Conscious',
+    absolute: 'Acerca de | Crowd Conscious',
   },
   description:
-    'Crowd Conscious combina mercados de predicción con impacto social. Entre el 20% y 40% de cada patrocinio va directamente a causas comunitarias — hasta 10× el promedio de la industria en causa marketing. Basados en Ciudad de México.',
+    'Crowd Conscious combina consultas con confianza ponderada e impacto social. Entre el 20% y 40% de cada patrocinio va directamente a causas comunitarias — hasta 10× el promedio de la industria en causa marketing. Basados en Ciudad de México.',
   alternates: {
     canonical: `${SITE_URL}/about`,
     languages: {

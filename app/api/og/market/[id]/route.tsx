@@ -114,7 +114,7 @@ export async function GET(
     const { data: market, error } = await supabase
       .from('prediction_markets')
       .select(
-        'id, title, category, current_probability, total_votes, engagement_count, translations, sponsor_name, sponsor_logo_url'
+        'id, title, category, current_probability, total_votes, engagement_count, translations, sponsor_name, sponsor_logo_url, is_pulse'
       )
       .eq('id', marketId)
       .single()
@@ -152,6 +152,28 @@ export async function GET(
       .eq('market_id', marketId)
       .order('probability', { ascending: false })
 
+    // Avg confidence (Pulse signature stat). Fast for typical Pulses
+    // (≤ ~1k votes). We only need the numeric column.
+    const isPulseQuery =
+      Boolean((market as { is_pulse?: boolean }).is_pulse) || market.category === 'pulse'
+    let avgConfidence: number | null = null
+    let voteCount: number | null = null
+    if (isPulseQuery) {
+      const { data: voteRows } = await supabase
+        .from('market_votes')
+        .select('confidence')
+        .eq('market_id', marketId)
+        .limit(5000)
+      if (voteRows && voteRows.length > 0) {
+        const total = voteRows.reduce(
+          (sum, v) => sum + (typeof v.confidence === 'number' ? v.confidence : 0),
+          0
+        )
+        avgConfidence = total / voteRows.length
+        voteCount = voteRows.length
+      }
+    }
+
     const outcomeRows = (outcomes ?? []) as OutcomeRow[]
     const sortedByProb = [...outcomeRows].sort((a, b) => Number(b.probability) - Number(a.probability))
     const probs = sortedByProb.map((o) => Number(o.probability))
@@ -187,6 +209,15 @@ export async function GET(
           ? 'Yes'
           : 'Undecided'
     const engagement = Number((market as { engagement_count?: number }).engagement_count) || Number(market.total_votes) || 0
+    const totalVotesDisplay = voteCount ?? Number(market.total_votes) ?? 0
+    // Localized "votes" / "votos" tag — defaults to ES, switches to EN
+    // when ?lang=en is present (matches the rest of the OG copy).
+    const votesLabel = locale === 'en' ? 'votes' : 'votos'
+    const confidenceLabel = locale === 'en' ? 'confidence' : 'confianza'
+    const pulseStatLine =
+      avgConfidence != null
+        ? `${totalVotesDisplay.toLocaleString()} ${votesLabel} · ${avgConfidence.toFixed(1)}/10 ${confidenceLabel}`
+        : `${engagement.toLocaleString()} ${votesLabel}`
     const emoji = isPulseMarket ? '📊' : CATEGORY_EMOJI[market.category || ''] || '🔮'
     const displayTitle = getMarketText(market, 'title', locale)
     const titleLength = displayTitle.length
@@ -367,7 +398,7 @@ export async function GET(
                   {outcomeName}
                 </div>
                 <div style={{ display: 'flex', fontSize: '22px', color: '#64748b' }}>
-                  {engagement.toLocaleString()} participaciones
+                  {pulseStatLine}
                 </div>
                 <div style={{ display: 'flex', fontSize: '26px', fontWeight: 700, color: '#ffffff', marginTop: '8px' }}>
                   crowdconscious.app
@@ -554,7 +585,7 @@ export async function GET(
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '4px' }}>
                 <div style={{ display: 'flex', fontSize: '13px', color: '#64748b' }}>
-                  {engagement.toLocaleString()} participaciones
+                  {pulseStatLine}
                 </div>
                 <div style={{ display: 'flex', fontSize: '14px', fontWeight: 600, color: '#94a3b8' }}>crowdconscious.app</div>
               </div>

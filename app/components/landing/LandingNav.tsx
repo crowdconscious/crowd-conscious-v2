@@ -27,8 +27,8 @@ const NAV = {
     blog: 'Blog',
     about: 'Acerca',
     live: 'En Vivo',
-    signIn: 'Iniciar Sesión',
-    startPredicting: 'Empezar a votar',
+    signIn: 'Iniciar sesión',
+    signUp: 'Crear cuenta',
   },
   en: {
     pulse: 'Pulse',
@@ -36,8 +36,8 @@ const NAV = {
     blog: 'Blog',
     about: 'About',
     live: 'Live',
-    signIn: 'Sign In',
-    startPredicting: 'Start Voting',
+    signIn: 'Sign in',
+    signUp: 'Create account',
   },
 } as const
 
@@ -110,15 +110,15 @@ export default function LandingNav() {
             <LanguageSwitcherSimple />
             <Link
               href="/login"
-              className="text-slate-400 hover:text-white transition-colors font-medium"
+              className="text-slate-400 hover:text-white transition-colors font-medium text-sm"
             >
               {nav.signIn}
             </Link>
             <Link
               href="/signup"
-              className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-white font-semibold transition-colors"
+              className="text-emerald-400 hover:text-emerald-300 transition-colors font-medium text-sm"
             >
-              {nav.startPredicting}
+              {nav.signUp}
             </Link>
           </div>
 
@@ -166,9 +166,9 @@ export default function LandingNav() {
             <Link
               href="/signup"
               onClick={() => setMobileOpen(false)}
-              className="block min-h-[44px] py-3 rounded-lg bg-emerald-500 text-white font-semibold text-center"
+              className="block min-h-[44px] py-3 text-emerald-400 hover:text-emerald-300 font-medium"
             >
-              {nav.startPredicting}
+              {nav.signUp}
             </Link>
           </div>
         </div>

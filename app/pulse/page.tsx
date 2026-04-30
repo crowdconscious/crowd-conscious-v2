@@ -25,11 +25,15 @@ export async function generateMetadata(): Promise<Metadata> {
   const cookieStore = await cookies()
   const locale = cookieStore.get('preferred-language')?.value === 'en' ? 'en' : 'es'
   const t = getPulseListingCopy(locale)
+  const pageTitle =
+    locale === 'es'
+      ? 'Consultas activas | Crowd Conscious'
+      : 'Active consultations | Crowd Conscious'
   return {
-    title: t.metaTitle,
+    title: pageTitle,
     description: t.metaDescription,
     openGraph: {
-      title: 'Conscious Pulse — Resultados en vivo',
+      title: pageTitle,
       description: t.ogDescription,
     },
   }

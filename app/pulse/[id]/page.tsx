@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (market?.is_draft) {
     return {
-      title: 'Borrador | Conscious Pulse',
+      title: 'Borrador | Pulse Crowd Conscious',
       robots: { index: false, follow: false },
     }
   }
@@ -49,7 +49,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     (market.is_pulse || market.category === 'pulse' || legacyPulse)
 
   if (!showPulse) {
-    return { title: 'Conscious Pulse' }
+    return { title: 'Pulse Crowd Conscious' }
   }
 
   const title = getMarketText(
@@ -80,11 +80,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const shortEs = market.description_short?.trim() || null
   const shortBlurb = shortEs || trShort?.trim() || `Resultados en vivo — ${title}`
 
+  const fullTitle = `${pageTitle} | Pulse Crowd Conscious`
   return {
-    title: `${pageTitle} | Conscious Pulse`,
+    title: fullTitle,
     description: shortBlurb,
     openGraph: {
-      title: `${pageTitle} | Conscious Pulse`,
+      title: fullTitle,
       description: shortBlurb,
       url: `${SITE_URL}/pulse/${id}`,
       siteName: 'Crowd Conscious',
@@ -93,7 +94,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${pageTitle} | Conscious Pulse`,
+      title: fullTitle,
       description: shortBlurb,
       images: [ogImage],
     },

@@ -14,12 +14,12 @@ export default function Footer() {
       platform: 'Plataforma',
       company: 'Empresa',
       legal: 'Legal',
-      markets: 'Predicciones',
+      pulse: 'Pulse',
       locations: 'Lugares',
       live: 'En Vivo',
       leaderboard: 'Leaderboard',
       consciousFund: 'Fondo Consciente',
-      forBrands: 'Para Marcas',
+      forBrands: 'Para marcas',
       about: 'Acerca de',
       blog: 'Blog',
       contact: 'Contacto',
@@ -27,20 +27,20 @@ export default function Footer() {
       privacyShort: 'Privacidad',
       cookiesShort: 'Cookies',
       description:
-        'Predicciones gratuitas sobre el Mundial, tu ciudad y lo que te importa. Las marcas patrocinan el impacto.',
-      tagline: 'Predicciones con propósito.',
+        'Consultas con confianza ponderada sobre el Mundial 2026, tu ciudad y lo que te importa. Las marcas patrocinan el impacto.',
+      tagline: 'Consultas con propósito.',
       madeIn: 'Hecho con ❤️ en México',
     },
     en: {
       platform: 'Platform',
       company: 'Company',
       legal: 'Legal',
-      markets: 'Predictions',
+      pulse: 'Pulse',
       locations: 'Places',
       live: 'Live',
       leaderboard: 'Leaderboard',
       consciousFund: 'Conscious Fund',
-      forBrands: 'For Brands',
+      forBrands: 'For brands',
       about: 'About',
       blog: 'Blog',
       contact: 'Contact',
@@ -48,8 +48,8 @@ export default function Footer() {
       privacyShort: 'Privacy',
       cookiesShort: 'Cookies',
       description:
-        'Free predictions on the World Cup, your city, and what matters. Brands sponsor the impact.',
-      tagline: 'Predictions with purpose.',
+        'Confidence-weighted consultations on the World Cup 2026, your city, and what matters. Brands sponsor the impact.',
+      tagline: 'Consultations with purpose.',
       madeIn: 'Made with ❤️ in Mexico',
     },
   }
@@ -142,7 +142,7 @@ export default function Footer() {
             <ul className="space-y-2 text-sm">
               <li>
                 <Link href="/pulse" className="text-slate-300 transition-colors hover:text-teal-400">
-                  {t.markets}
+                  {t.pulse}
                 </Link>
               </li>
               <li>
@@ -181,7 +181,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/pulse" className="text-slate-300 transition-colors hover:text-teal-400">
+                <Link href="/para-marcas" className="text-slate-300 transition-colors hover:text-teal-400">
                   {t.forBrands}
                 </Link>
               </li>
