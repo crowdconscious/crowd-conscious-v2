@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import { ImageUpload } from '@/components/ui/ImageUpload'
 import ShareBundle from '@/components/admin/ShareBundle'
+import SponsorPulseReportRunner from './SponsorPulseReportRunner'
 
 /**
  * `scheduled: false` = no Vercel cron, "Run Now" is the only way the agent
@@ -319,20 +320,12 @@ export default function AdminAgentsPage() {
   }, [fetchData])
 
   const runAgent = async (agentId: string) => {
-    // sponsor-pulse-report needs a target marketId. Prompt inline rather
-    // than building a full picker — admins paste the UUID from the
-    // markets dashboard and we ship.
-    let body: Record<string, unknown> = { agent: agentId }
-    if (agentId === 'sponsor-pulse-report') {
-      const raw = typeof window !== 'undefined'
-        ? window.prompt('Pulse market UUID a procesar:')
-        : null
-      const marketId = raw?.trim()
-      if (!marketId) {
-        return
-      }
-      body = { agent: agentId, marketId }
-    }
+    // sponsor-pulse-report has its own runner card with a picker UI
+    // (see SponsorPulseReportRunner). It calls /api/predictions/admin/run-agent
+    // directly, so this generic handler should never be invoked for it.
+    if (agentId === 'sponsor-pulse-report') return
+
+    const body: Record<string, unknown> = { agent: agentId }
 
     setRunning(agentId)
     setRunResult(null)
@@ -606,6 +599,20 @@ export default function AdminAgentsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {AGENTS.map(({ id, label, icon: Icon, scheduled }) => {
             const run = lastRuns[id]
+            // sponsor-pulse-report has a richer per-market runner card with
+            // a Pulse picker dropdown and inline preview of the agent's
+            // narrative output. It owns its own running state and calls
+            // run-agent directly, so it bypasses the shared `runAgent()`
+            // and Run Now button below.
+            if (id === 'sponsor-pulse-report') {
+              return (
+                <SponsorPulseReportRunner
+                  key={id}
+                  parentBusy={!!running}
+                  onAfterRun={fetchData}
+                />
+              )
+            }
             const statusIcon =
               run?.status === 'success' ? (
                 <CheckCircle className="w-5 h-5 text-emerald-500" />
