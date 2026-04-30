@@ -420,7 +420,7 @@ Snapshot sentimiento: ${JSON.stringify(b.sentiment_snapshot ?? {})}`
         conscious_score: l.conscious_score,
         instagram_handle: l.instagram_handle,
         contact_email: l.contact_email,
-        pilot_pulse_link: `https://crowdconscious.app/pulse/pilot?business=${encodeURIComponent(l.name as string)}&source=ceo_digest`,
+        pilot_pulse_link: `https://crowdconscious.app/para-marcas/pilot?business=${encodeURIComponent(l.name as string)}&source=ceo_digest`,
         insights_link: `https://crowdconscious.app/locations/${l.slug}/insights`,
       }))
     } catch (e) {

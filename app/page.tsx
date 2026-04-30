@@ -394,7 +394,7 @@ export default async function LandingPage() {
                 </h2>
               </div>
               <Link
-                href="/markets"
+                href="/pulse"
                 className="inline-flex min-h-[44px] items-center gap-1 self-start text-sm font-medium text-emerald-400 hover:text-emerald-300 sm:self-auto"
               >
                 {locale === 'es' ? 'Ver todas' : 'View all'}
@@ -422,7 +422,7 @@ export default async function LandingPage() {
         {mundialFoundingRemaining > 0 ? (
           <section className="mx-auto max-w-6xl px-4 pb-6 md:px-8">
             <Link
-              href="/pulse#mundial-pack"
+              href="/para-marcas#pulse-mundial-pack"
               className="group block overflow-hidden rounded-2xl border border-amber-500/40 bg-gradient-to-r from-amber-500/15 via-emerald-500/10 to-amber-500/15 p-6 transition-all hover:border-amber-400/60 hover:from-amber-500/20 hover:to-amber-500/20 md:p-8"
             >
               <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">

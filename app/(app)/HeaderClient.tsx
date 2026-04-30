@@ -12,33 +12,36 @@ import { useLanguage } from '@/contexts/LanguageContext'
 import { CompactFundThermometer } from '@/components/fund/FundThermometer'
 
 /**
- * Authed primary nav (locale-aware) — mirrors the public spec but routes
- * Predicciones at the personal dashboard. Markets, Leaderboard, and
- * Achievements moved out of the primary slot (they live inside /predictions
- * and the profile menu, respectively).
+ * Authed primary nav (locale-aware, 3 canonical items):
+ *   Pulse · Mi actividad · Blog
  *
- * "Mis cuentas" is rendered conditionally when `hasSponsorAccounts` is true
- * (coupon redeemers, paid sponsors). Users with zero sponsor rows keep the
- * canonical 5-item layout.
+ * Pulse (the consumer Pulse listing) is the emphasized slot; Mi actividad
+ * routes to /predictions which is the personal dashboard (votes, trades,
+ * notifications, fund, locations all reachable from there). Blog is in the
+ * primary nav for content discoverability.
+ *
+ * Markets, Predicciones, Lugares, Fondo, Leaderboard, and Achievements
+ * moved out of the primary slot — they live inside /predictions and the
+ * profile menu, respectively.
+ *
+ * "Mis cuentas" is rendered conditionally when `hasSponsorAccounts` is
+ * true (coupon redeemers, paid sponsors); users with zero sponsor rows
+ * keep the canonical 3-item layout.
  */
 const NAV = {
   es: {
-    dashboard: 'Panel',
-    predictions: 'Predicciones',
-    locations: 'Lugares',
     pulse: 'Pulse',
-    fund: 'Fondo',
+    activity: 'Mi actividad',
+    blog: 'Blog',
     myAccounts: 'Mis cuentas',
     live: 'En Vivo',
     settings: 'Configuración',
     signOut: 'Cerrar Sesión',
   },
   en: {
-    dashboard: 'Dashboard',
-    predictions: 'Predictions',
-    locations: 'Places',
     pulse: 'Pulse',
-    fund: 'Fund',
+    activity: 'My activity',
+    blog: 'Blog',
     myAccounts: 'My accounts',
     live: 'Live',
     settings: 'Settings',
@@ -61,11 +64,9 @@ export default function HeaderClient({ user, hasSponsorAccounts = false }: Heade
   const { language } = useLanguage()
   const nav = NAV[language]
   const primary: Array<{ href: string; label: string; emphasize?: boolean }> = [
-    { href: '/predictions', label: nav.dashboard },
-    { href: '/predictions/markets', label: nav.predictions },
-    { href: '/locations', label: nav.locations },
     { href: '/pulse', label: nav.pulse, emphasize: true },
-    { href: '/predictions/fund', label: nav.fund },
+    { href: '/predictions', label: nav.activity },
+    { href: '/blog', label: nav.blog },
     ...(hasSponsorAccounts ? [{ href: '/sponsor-accounts', label: nav.myAccounts }] : []),
   ]
 

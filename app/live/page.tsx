@@ -170,7 +170,7 @@ export default async function LiveEventsPage({
             </div>
             <p className="text-cc-text-secondary">{t.empty}</p>
             <Link
-              href="/markets"
+              href="/pulse"
               className="mt-6 inline-flex min-h-[44px] items-center justify-center rounded-lg border border-cc-border bg-cc-bg px-6 py-2.5 text-sm font-medium text-emerald-400 transition hover:border-emerald-500/40 hover:text-emerald-300"
             >
               ← {t.emptyCta}

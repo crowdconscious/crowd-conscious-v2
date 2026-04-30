@@ -141,7 +141,7 @@ export default function Footer() {
             <h3 className="mb-4 text-sm font-semibold text-white">{t.platform}</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/markets" className="text-slate-300 transition-colors hover:text-teal-400">
+                <Link href="/pulse" className="text-slate-300 transition-colors hover:text-teal-400">
                   {t.markets}
                 </Link>
               </li>

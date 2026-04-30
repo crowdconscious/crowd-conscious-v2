@@ -44,11 +44,11 @@ export default function MarketDetailError({
           Intentar de nuevo
         </button>
         <Link
-          href="/predictions/markets"
+          href="/pulse"
           className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-4 py-2.5 text-sm font-medium text-slate-200 transition-colors hover:border-white/25"
         >
           <ArrowLeft className="h-4 w-4" />
-          Ver todos los mercados
+          Ver todos los Pulses
         </Link>
       </div>
     </div>

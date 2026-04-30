@@ -89,11 +89,11 @@ export function OnboardingOverlay({ trendingMarkets, onDismiss }: OnboardingOver
 
           <div className="flex gap-3">
             <Link
-              href="/predictions/markets"
+              href="/pulse"
               onClick={handleDismiss}
               className="flex-1 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold text-center transition-colors"
             >
-              Browse markets
+              Browse Pulses
             </Link>
             <button
               onClick={handleDismiss}

@@ -122,10 +122,10 @@ export default function PredictionsTradesPage() {
           <div className="p-12 text-center text-slate-400">
             <p>No predictions yet</p>
             <Link
-              href="/predictions/markets"
+              href="/pulse"
               className="mt-2 inline-block text-emerald-400 hover:text-emerald-300"
             >
-              Browse markets and make your first prediction
+              Browse Pulses and make your first prediction
             </Link>
           </div>
         ) : (

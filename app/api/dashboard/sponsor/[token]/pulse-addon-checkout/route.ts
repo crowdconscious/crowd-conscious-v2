@@ -55,7 +55,7 @@ export async function POST(
         },
       ],
       mode: 'payment',
-      success_url: `${baseUrl}/pulse/welcome?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${baseUrl}/para-marcas/welcome?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/dashboard/sponsor/${encodeURIComponent(token)}`,
       customer_email: account.contact_email ?? undefined,
       allow_promotion_codes: true,

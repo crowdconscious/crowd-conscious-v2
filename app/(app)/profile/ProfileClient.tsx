@@ -514,10 +514,10 @@ export default function ProfileClient({
               You haven&apos;t made any predictions yet.
             </p>
             <Link
-              href="/predictions/markets"
+              href="/pulse"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-medium transition-colors"
             >
-              Browse Markets
+              Browse Pulses
             </Link>
           </div>
         )}

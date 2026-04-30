@@ -65,9 +65,9 @@ export default function DashboardNavigation({
             🔮 Predictions
           </AnimatedButton>
         </Link>
-        <Link href="/predictions/markets">
+        <Link href="/pulse">
           <AnimatedButton variant="ghost" size="sm">
-            📊 Markets
+            📊 Pulse
           </AnimatedButton>
         </Link>
         <Link href="/leaderboard">

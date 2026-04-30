@@ -420,10 +420,10 @@ export function PredictionsDashboardClient({ data, sponsorCta }: Props) {
                 <p className="text-slate-300 text-lg">🎯 Aún no has votado.</p>
                 <p className="text-slate-400 mt-1">¡Vota en tu primer mercado!</p>
                 <Link
-                  href="/predictions/markets"
+                  href="/pulse"
                   className="mt-4 inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm bg-emerald-600 text-white hover:bg-emerald-500 transition-colors"
                 >
-                  Explorar mercados <ArrowRight className="h-4 w-4" />
+                  Explorar Pulses <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
             ) : (
@@ -490,7 +490,7 @@ export function PredictionsDashboardClient({ data, sponsorCta }: Props) {
                 </p>
               </div>
               <Link
-                href="/predictions/markets"
+                href="/pulse"
                 className="flex shrink-0 items-center gap-1 text-sm font-medium text-emerald-400 hover:text-emerald-300"
               >
                 Ver todos <ArrowRight className="h-4 w-4" />

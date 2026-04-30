@@ -10,22 +10,20 @@ import { useLiveNavBadge } from '@/hooks/useLiveNavBadge'
 import { CompactFundThermometer } from '@/components/fund/FundThermometer'
 
 /**
- * Canonical primary nav (6 items, locale-aware):
- *   Predicciones · Lugares · Pulse · Fondo · Blog · Acerca
+ * Canonical logged-out primary nav (4 items, locale-aware):
+ *   Pulse · Para marcas · Blog · Acerca
  *
- * Live is intentionally NOT a primary slot — it appears as a compact
- * pulsing badge next to the language switcher only when there is at least
- * one public live event. Markets is an alias of /predictions/markets and
- * lives in the footer; Leaderboard moved inside /predictions; Sponsor /
- * Sponsors / Contact moved to the footer. Blog also lives in the footer
- * Company column for redundancy and SEO.
+ * Pulse (consumer Pulse listing) is the emphasized slot; Para marcas is
+ * the B2B landing (formerly the /pulse URL). Predicciones, Lugares, and
+ * Fondo moved into the authed surface — they're reachable via /predictions
+ * once logged in. Live is a compact pulsing badge that only appears when
+ * a public live event is happening. Sponsor / Sponsors / Contact /
+ * Markets live in the footer.
  */
 const NAV = {
   es: {
-    predictions: 'Predicciones',
-    locations: 'Lugares',
     pulse: 'Pulse',
-    fund: 'Fondo',
+    paraMarcas: 'Para marcas',
     blog: 'Blog',
     about: 'Acerca',
     live: 'En Vivo',
@@ -33,10 +31,8 @@ const NAV = {
     startPredicting: 'Empezar a votar',
   },
   en: {
-    predictions: 'Predictions',
-    locations: 'Places',
     pulse: 'Pulse',
-    fund: 'Fund',
+    paraMarcas: 'For brands',
     blog: 'Blog',
     about: 'About',
     live: 'Live',
@@ -80,10 +76,8 @@ export default function LandingNav() {
     : 'bg-[#0f1419] border-b border-[#2d3748]'
 
   const primary: Array<{ href: string; label: string; emphasize?: boolean }> = [
-    { href: '/predictions', label: nav.predictions },
-    { href: '/locations', label: nav.locations },
     { href: '/pulse', label: nav.pulse, emphasize: true },
-    { href: '/predictions/fund', label: nav.fund },
+    { href: '/para-marcas', label: nav.paraMarcas },
     { href: '/blog', label: nav.blog },
     { href: '/about', label: nav.about },
   ]

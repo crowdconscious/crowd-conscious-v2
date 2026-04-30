@@ -2,16 +2,24 @@ import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import dynamic from 'next/dynamic'
 import PulseListingView from '@/components/pulse/PulseListingView'
-import { PulseLandingExplainer } from '@/components/pulse/PulseLandingExplainer'
-import { PulsePricingSection } from '@/components/pulse/PulsePricingSection'
-import { MundialPulseHero } from '@/components/pulse/MundialPulseHero'
-import { MundialPulsePackCard } from '@/components/pulse/MundialPulsePackCard'
-import { ClubResetCaseStudyCard } from '@/components/pulse/ClubResetCaseStudyCard'
 import { fetchPulseMarketsForListing, getPulseListingContext } from '@/lib/pulse/pulse-listing-data'
-import { fetchPulseHeroHighlight } from '@/lib/pulse/pulse-hero-data'
 import { getPulseListingCopy } from '@/lib/i18n/pulse-listing'
 
 const Footer = dynamic(() => import('@/components/Footer'))
+
+/**
+ * /pulse — consumer Pulse listing (formerly the B2B landing).
+ *
+ * The B2B landing moved to /para-marcas. /pulse is now the public, consumer-
+ * facing list of every active and recent Pulse: voters land here from the
+ * nav, from a Pulse share link with the back-button, from /markets (legacy
+ * alias), and from the marketing pages. Pulse share URLs (/pulse/[id]) are
+ * unchanged.
+ *
+ * Functionally this is a public mirror of the in-shell view at
+ * /predictions/pulse — same component, same data, same admin/sponsor
+ * affordances — wrapped in the LandingNav layout instead of the auth shell.
+ */
 
 export async function generateMetadata(): Promise<Metadata> {
   const cookieStore = await cookies()
@@ -21,7 +29,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: t.metaTitle,
     description: t.metaDescription,
     openGraph: {
-      title: 'Conscious Pulse — Medición de sentimiento en tiempo real',
+      title: 'Conscious Pulse — Resultados en vivo',
       description: t.ogDescription,
     },
   }
@@ -29,44 +37,20 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function PulseListingPage() {
   const ctx = await getPulseListingContext()
-  const localeShort: 'es' | 'en' = ctx.locale === 'en' ? 'en' : 'es'
-  const [markets, heroData] = await Promise.all([
-    fetchPulseMarketsForListing(ctx),
-    fetchPulseHeroHighlight(),
-  ])
-  const { market: heroMarket, avgConfidence, strongOpinions } = heroData
-  const allConsult = localeShort === 'es' ? 'Todas las consultas' : 'All consultations'
+  const markets = await fetchPulseMarketsForListing(ctx)
 
   return (
     <div className="min-h-screen bg-[#0f1419] text-slate-100">
-      <MundialPulseHero locale={localeShort} />
-
-      <section id="pulse-consultations" className="scroll-mt-24 px-4 pb-8 pt-10">
-        <div className="mx-auto max-w-4xl">
-          <h2 className="mb-6 text-center text-xl font-bold text-white sm:text-2xl">{allConsult}</h2>
-          <PulseListingView
-            variant="public"
-            listOnly
-            locale={ctx.locale}
-            markets={markets}
-            isAdmin={ctx.isAdmin}
-            sponsorCompanyName={ctx.sponsorAccount?.company_name ?? null}
-          />
-        </div>
-      </section>
-
-      <MundialPulsePackCard locale={localeShort} />
-
-      <ClubResetCaseStudyCard locale={localeShort} />
-
-      <PulseLandingExplainer
-        locale={localeShort}
-        heroMarket={heroMarket}
-        avgConfidence={avgConfidence}
-        strongOpinions={strongOpinions}
-      />
-
-      <PulsePricingSection locale={localeShort} />
+      <main className="mx-auto max-w-4xl px-4 py-10 sm:py-14">
+        <PulseListingView
+          variant="public"
+          listOnly
+          locale={ctx.locale}
+          markets={markets}
+          isAdmin={ctx.isAdmin}
+          sponsorCompanyName={ctx.sponsorAccount?.company_name ?? null}
+        />
+      </main>
 
       <Footer />
     </div>

@@ -2,13 +2,28 @@ import type { MetadataRoute } from 'next'
 import { createClient } from '@/lib/supabase-server'
 import { SITE_URL } from '@/lib/seo/site'
 
+/**
+ * Sitemap emits canonical URLs only.
+ *
+ * Removed (now redirected by next.config.ts so they should NOT appear in
+ * the sitemap):
+ *   - /markets             -> /pulse
+ *   - /markets/[id]        -> /pulse/[id]
+ *   - /predictions/markets -> /predictions
+ *
+ * Per-market URLs use /pulse/[id] for Pulse markets (canonical consumer
+ * share URL — what we send to WhatsApp/Telegram/X) and stay at
+ * /predictions/markets/[id] for non-Pulse legacy markets (different page
+ * with vote panel + chart). The two routes serve different content;
+ * keeping both in the sitemap reflects reality.
+ */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const supabase = await createClient()
 
   const [{ data: markets }, { data: events }, { data: posts }] = await Promise.all([
     supabase
       .from('prediction_markets')
-      .select('id, updated_at')
+      .select('id, updated_at, is_pulse')
       .in('status', ['active', 'trading'])
       .is('archived_at', null)
       .eq('is_draft', false)
@@ -29,28 +44,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const staticPages: MetadataRoute.Sitemap = [
     { url: SITE_URL, lastModified: now, changeFrequency: 'daily', priority: 1 },
-    { url: `${SITE_URL}/sponsor`, lastModified: now, changeFrequency: 'weekly', priority: 0.85 },
+    { url: `${SITE_URL}/pulse`, lastModified: now, changeFrequency: 'hourly', priority: 0.9 },
+    { url: `${SITE_URL}/para-marcas`, lastModified: now, changeFrequency: 'weekly', priority: 0.85 },
+    { url: `${SITE_URL}/sponsor`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${SITE_URL}/about`, lastModified: now, changeFrequency: 'monthly', priority: 0.75 },
-    { url: `${SITE_URL}/markets`, lastModified: now, changeFrequency: 'hourly', priority: 0.9 },
+    { url: `${SITE_URL}/predictions`, lastModified: now, changeFrequency: 'hourly', priority: 0.8 },
     {
       url: `${SITE_URL}/predictions/leaderboard`,
       lastModified: now,
       changeFrequency: 'hourly',
-      priority: 0.75,
+      priority: 0.7,
     },
     {
       url: `${SITE_URL}/predictions/fund`,
       lastModified: now,
       changeFrequency: 'weekly',
-      priority: 0.8,
+      priority: 0.75,
     },
-    {
-      url: `${SITE_URL}/predictions/markets`,
-      lastModified: now,
-      changeFrequency: 'hourly',
-      priority: 0.85,
-    },
-    { url: `${SITE_URL}/live`, lastModified: now, changeFrequency: 'hourly', priority: 0.9 },
+    { url: `${SITE_URL}/live`, lastModified: now, changeFrequency: 'hourly', priority: 0.85 },
     { url: `${SITE_URL}/blog`, lastModified: now, changeFrequency: 'daily', priority: 0.85 },
     { url: `${SITE_URL}/newsletter`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${SITE_URL}/terms`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
@@ -60,7 +71,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ]
 
   const marketPages: MetadataRoute.Sitemap = (markets ?? []).map((m) => ({
-    url: `${SITE_URL}/predictions/markets/${m.id}`,
+    url: m.is_pulse
+      ? `${SITE_URL}/pulse/${m.id}`
+      : `${SITE_URL}/predictions/markets/${m.id}`,
     lastModified: m.updated_at ? new Date(m.updated_at) : now,
     changeFrequency: 'hourly' as const,
     priority: 0.8,

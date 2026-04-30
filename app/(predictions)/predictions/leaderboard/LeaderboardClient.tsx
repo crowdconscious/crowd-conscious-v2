@@ -239,10 +239,10 @@ export function LeaderboardClient({
               <p>No one on the leaderboard yet</p>
               <p className="text-sm mt-2">Make your first prediction to get started</p>
               <Link
-                href="/predictions/markets"
+                href="/pulse"
                 className="inline-block mt-4 text-emerald-400 hover:text-emerald-300 font-medium"
               >
-                Browse markets →
+                Browse Pulses →
               </Link>
             </div>
           ) : (

@@ -69,10 +69,10 @@ export function LandingHeroBlock({ locale, fundBalance }: Props) {
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link
-              href="/markets"
+              href="/pulse"
               className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-xl bg-emerald-500 px-6 py-3 text-base font-semibold text-white shadow-lg shadow-emerald-500/20 transition-colors hover:bg-emerald-400"
             >
-              {es ? 'Ver predicciones' : 'Browse predictions'}
+              {es ? 'Ver Pulses' : 'Browse Pulses'}
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link

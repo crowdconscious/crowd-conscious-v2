@@ -226,7 +226,7 @@ export async function POST(request: NextRequest) {
         },
       ],
       mode: 'payment',
-      success_url: `${baseUrl}/pulse/welcome?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${baseUrl}/para-marcas/welcome?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/pulse`,
       customer_email: contact_email,
       allow_promotion_codes: true,

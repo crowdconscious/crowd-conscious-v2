@@ -10,11 +10,11 @@ type Props = {
 
 /**
  * Conversion CTA on the Location Insights page. Deep-links into the
- * /pulse/pilot checkout with `business` prefilled from the location
+ * /para-marcas/pilot checkout with `business` prefilled from the location
  * name so the owner doesn't have to retype it.
  */
 export function LocationInsightsCta({ locationName, locale }: Props) {
-  const href = `/pulse/pilot?business=${encodeURIComponent(locationName)}&source=location_insights`
+  const href = `/para-marcas/pilot?business=${encodeURIComponent(locationName)}&source=location_insights`
 
   return (
     <section className="overflow-hidden rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 via-[#1a2029] to-[#1a2029] p-6 sm:p-8">
