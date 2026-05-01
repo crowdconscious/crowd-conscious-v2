@@ -32,6 +32,7 @@ import {
   ArchiveRestore,
 } from 'lucide-react'
 import type { InboxItem } from './page'
+import { parseNominationDescription } from '@/lib/inbox/parse-nomination'
 
 const INBOX_TYPES = [
   'market_idea',
@@ -56,13 +57,18 @@ const CATEGORIES = [
   { id: 'entertainment', label: 'Entertainment', icon: Clapperboard },
 ] as const
 
-/** Allowed `fund_causes.category` values — must mirror the Promote API + admin page. */
+/** Allowed `fund_causes.category` values — must mirror the CHECK constraint in migration 205. */
 const FUND_CATEGORIES = [
   { id: 'water', label: 'Water' },
   { id: 'education', label: 'Education' },
   { id: 'environment', label: 'Environment' },
   { id: 'social_justice', label: 'Social Justice' },
   { id: 'health', label: 'Health' },
+  { id: 'mobility', label: 'Mobility' },
+  { id: 'housing', label: 'Housing' },
+  { id: 'hunger', label: 'Hunger' },
+  { id: 'culture', label: 'Culture' },
+  { id: 'emergency', label: 'Emergency' },
   { id: 'other', label: 'Other' },
 ] as const
 
@@ -73,6 +79,17 @@ const TYPE_CONFIG: Record<
   market_idea: { label: 'Market Idea', bg: 'bg-emerald-500/10', text: 'text-emerald-400' },
   cause_proposal: { label: 'Cause/NGO', bg: 'bg-pink-500/10', text: 'text-pink-400' },
   ngo_suggestion: { label: 'Cause/NGO', bg: 'bg-pink-500/10', text: 'text-pink-400' },
+  /**
+   * Sponsor / municipality nominations submitted via the sponsor dashboard
+   * (POST /api/inbox/nominate). They live in the same table as consumer
+   * noms — same admin actions, same Promote flow — only the badge differs
+   * so we can spot brand-sourced suggestions at a glance.
+   */
+  cause_suggestion_municipal: {
+    label: 'Sponsor nomination',
+    bg: 'bg-fuchsia-500/10',
+    text: 'text-fuchsia-300',
+  },
   general: { label: 'General', bg: 'bg-gray-700/50', text: 'text-gray-300' },
   location_nomination: {
     label: 'Location Nomination',
@@ -317,12 +334,20 @@ export function InboxClient({ initialItems, isAdmin }: Props) {
   const openPromoteModal = (item: InboxItem) => {
     setAdminError('')
     setPromoteItem(item)
+    // Sponsor noms encode `Organization`, `Website`, and a `Sponsor account: <id>`
+    // stamp inside the description. Pull them apart so the modal pre-fills
+    // those fields directly and the description shown to the admin is the
+    // *narrative* — not the audit-trail metadata that would otherwise leak
+    // straight into fund_causes.description.
+    const parsed = parseNominationDescription(item.description)
+    // Best link from the inbox row's links[] when description didn't carry a Website line.
+    const linkUrl = item.links.find((l) => l.url)?.url ?? null
     setPromoteForm({
       name: item.title,
-      organization: '',
+      organization: parsed.organization ?? '',
       category: 'other',
-      description: item.description || '',
-      website_url: '',
+      description: parsed.narrative || item.description || '',
+      website_url: parsed.website_url ?? linkUrl ?? '',
     })
   }
 
@@ -764,7 +789,17 @@ export function InboxClient({ initialItems, isAdmin }: Props) {
                 ? language === 'es'
                   ? 'Nominación de lugar'
                   : 'Location Nomination'
-                : typeConfig.label
+                : item.type === 'cause_suggestion_municipal'
+                  ? language === 'es'
+                    ? 'Nominación de patrocinador'
+                    : 'Sponsor nomination'
+                  : typeConfig.label
+            // Strip the structured metadata header + "Sponsor account: <uuid>"
+            // stamp from the body before showing it on the card. Falls back
+            // to the raw description for plain consumer submissions.
+            const parsedDescription = parseNominationDescription(item.description)
+            const displayDescription =
+              parsedDescription.narrative || item.description || ''
             const statusConfig = item.status !== 'pending' ? STATUS_CONFIG[item.status] : null
             const voted = myVotes.has(item.id)
             const isLoading = voteLoading === item.id
@@ -828,9 +863,28 @@ export function InboxClient({ initialItems, isAdmin }: Props) {
                       )}
                     </div>
                     <h3 className="text-white font-semibold mb-1">{item.title}</h3>
-                    {item.description && (
+                    {displayDescription && (
                       <p className="text-cc-text-secondary text-sm mb-3 line-clamp-2">
-                        {truncate(item.description, 200)}
+                        {truncate(displayDescription, 200)}
+                      </p>
+                    )}
+                    {isAdmin && parsedDescription.organization && (
+                      <p className="text-cc-text-muted text-xs mb-2">
+                        <span className="text-gray-500">Org:</span>{' '}
+                        <span className="text-gray-300">{parsedDescription.organization}</span>
+                        {parsedDescription.website_url && (
+                          <>
+                            {' · '}
+                            <a
+                              href={parsedDescription.website_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-emerald-400 hover:text-emerald-300 underline-offset-2 hover:underline"
+                            >
+                              {parsedDescription.website_url.replace(/^https?:\/\//, '')}
+                            </a>
+                          </>
+                        )}
                       </p>
                     )}
                     <p className="text-cc-text-muted text-xs">

@@ -43,7 +43,15 @@ export async function GET(request: NextRequest) {
 
     if (type && type !== 'all') {
       if (type === 'causes') {
-        query = query.in('type', ['cause_proposal', 'ngo_suggestion'])
+        // Both consumer-side (cause_proposal / ngo_suggestion) and
+        // sponsor-side (cause_suggestion_municipal, posted via
+        // /api/inbox/nominate) noms surface under one "Causas" tab so
+        // admins triage them in a single queue.
+        query = query.in('type', [
+          'cause_proposal',
+          'ngo_suggestion',
+          'cause_suggestion_municipal',
+        ])
       } else {
         query = query.eq('type', type)
       }

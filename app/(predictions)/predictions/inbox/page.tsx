@@ -15,7 +15,17 @@ export const metadata: Metadata = {
 export type InboxItem = {
   id: string
   user_id: string | null
-  type: 'market_idea' | 'cause_proposal' | 'ngo_suggestion' | 'general' | 'location_nomination'
+  type:
+    | 'market_idea'
+    | 'cause_proposal'
+    | 'ngo_suggestion'
+    | 'general'
+    | 'location_nomination'
+    /**
+     * Posted by the sponsor dashboard via /api/inbox/nominate. Same admin /
+     * promote flow as consumer-side rows; the type just controls the badge.
+     */
+    | 'cause_suggestion_municipal'
   title: string
   description: string | null
   category: string | null
