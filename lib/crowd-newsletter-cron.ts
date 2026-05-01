@@ -53,6 +53,10 @@ export async function runCrowdNewsletterCron(
     hoursSinceLast: number | null
     recipientCount: number
     scheduleNote: string
+    /** Helps diagnose "why did it skip / why did it pick THIS post" without re-reading the DB. */
+    publishedPostsTotal?: number
+    publishedPostsUnsent?: number
+    selectedPost?: { id: string; slug: string; title: string; viewCount: number | null } | null
   }
 }> {
   const { runId } = await cronHealthCheck(healthJobName, admin)
@@ -71,20 +75,47 @@ export async function runCrowdNewsletterCron(
       ? (Date.now() - new Date(lastSentAt).getTime()) / 3600000
       : null
 
-    const lastFeaturedBlogId = (lastRow?.blog_post_id as string | null) ?? null
+    // Pick the highest-engagement published post that has NEVER been featured
+    // in a past digest. `email_digest_log` retains every prior `blog_post_id`,
+    // so this is a hard guarantee against repeats. Trending signal:
+    // view_count first, then published_at as tiebreaker. We pull the top 100
+    // by trending, then filter unsent in JS — keeps the URL short and avoids
+    // a giant `not.in.()` query string when the used set grows.
+    const { data: featuredRows } = await admin
+      .from('email_digest_log')
+      .select('blog_post_id')
+      .in('email_type', [...DIGEST_TYPES])
+      .not('blog_post_id', 'is', null)
 
-    const { data: latestPost } = await admin
+    const usedBlogIds = new Set(
+      (featuredRows ?? [])
+        .map((r) => (r as { blog_post_id: string | null }).blog_post_id)
+        .filter((x): x is string => !!x)
+    )
+
+    const { data: candidates } = await admin
       .from('blog_posts')
-      .select('id, slug, title, excerpt, category, published_at, content, cover_image_url')
+      .select(
+        'id, slug, title, excerpt, category, published_at, content, cover_image_url, view_count'
+      )
       .eq('status', 'published')
+      .order('view_count', { ascending: false, nullsFirst: false })
       .order('published_at', { ascending: false, nullsFirst: false })
-      .limit(1)
-      .maybeSingle()
+      .limit(100)
 
-    /** New post since last newsletter batch — do not block on 48h cooldown so M/W/F can feature fresh posts. */
-    const hasNewBlogSinceLastSend =
-      !!latestPost?.id &&
-      (!lastFeaturedBlogId || latestPost.id !== lastFeaturedBlogId)
+    const allCandidates = candidates ?? []
+    const unsentCandidates = allCandidates.filter(
+      (p) => !usedBlogIds.has(p.id as string)
+    )
+    const latestPost = unsentCandidates[0] ?? null
+
+    /**
+     * "New" here means an unsent trending post is available. When true, we
+     * bypass the cooldown so M/W/F always ships fresh content. When false
+     * (no unsent post), we still send if cooldown has elapsed — Pulses,
+     * markets, locations, and a polished intro carry the edition.
+     */
+    const hasNewBlogSinceLastSend = !!latestPost?.id
 
     const cooldownHours = 36
     const force = options?.force === true
@@ -96,7 +127,7 @@ export async function runCrowdNewsletterCron(
     ) {
       await cronHealthComplete(runId, healthJobName, admin, {
         success: true,
-        summary: `skipped: cooldown ${Math.round(hoursSinceLast)}h (need ${cooldownHours}h; last ${lastSentAt})`,
+        summary: `skipped: cooldown ${Math.round(hoursSinceLast)}h (need ${cooldownHours}h; last ${lastSentAt}; unsent posts: ${unsentCandidates.length}/${allCandidates.length})`,
       })
       return {
         ok: true,
@@ -107,7 +138,10 @@ export async function runCrowdNewsletterCron(
           hoursSinceLast,
           recipientCount: 0,
           scheduleNote:
-            'Mon/Wed/Fri 14:00 UTC — skipped until 36h after last send, unless a new blog is published or ?force=1',
+            'Mon/Wed/Fri 14:00 UTC — skipped until 36h after last send, unless an unsent trending post exists or ?force=1',
+          publishedPostsTotal: allCandidates.length,
+          publishedPostsUnsent: unsentCandidates.length,
+          selectedPost: null,
         },
       }
     }
@@ -239,7 +273,7 @@ export async function runCrowdNewsletterCron(
     if (!post && !pulseDigest && marketDigests.length === 0 && activeLocations.length === 0) {
       await cronHealthComplete(runId, healthJobName, admin, {
         success: true,
-        summary: 'skipped: no_content (no published blog + no active markets + no conscious locations)',
+        summary: `skipped: no_content (unsent posts: ${unsentCandidates.length}/${allCandidates.length}, no active markets, no conscious locations)`,
       })
       return {
         ok: true,
@@ -250,6 +284,9 @@ export async function runCrowdNewsletterCron(
           hoursSinceLast,
           recipientCount: 0,
           scheduleNote: 'Mon/Wed/Fri 14:00 UTC',
+          publishedPostsTotal: allCandidates.length,
+          publishedPostsUnsent: unsentCandidates.length,
+          selectedPost: null,
         },
       }
     }
@@ -301,8 +338,8 @@ export async function runCrowdNewsletterCron(
     const recipients = Array.from(byEmail.values())
     if (recipients.length === 0) {
       await cronHealthComplete(runId, healthJobName, admin, {
-        success: true,
-        summary: 'skipped: no_subscribers (profiles with email_notifications + newsletter_subscribers)',
+        success: false,
+        error: `no_subscribers — profiles fetched: ${(profiles ?? []).length}, newsletter_subscribers: ${newsletterOnly.length}. Likely a Supabase RLS / service-role issue, not zero users.`,
       })
       return {
         ok: true,
@@ -313,6 +350,9 @@ export async function runCrowdNewsletterCron(
           hoursSinceLast,
           recipientCount: 0,
           scheduleNote: 'Mon/Wed/Fri 14:00 UTC',
+          publishedPostsTotal: allCandidates.length,
+          publishedPostsUnsent: unsentCandidates.length,
+          selectedPost: null,
         },
       }
     }
@@ -403,6 +443,16 @@ export async function runCrowdNewsletterCron(
         hoursSinceLast,
         recipientCount: recipients.length,
         scheduleNote: 'Mon/Wed/Fri 14:00 UTC',
+        publishedPostsTotal: allCandidates.length,
+        publishedPostsUnsent: unsentCandidates.length,
+        selectedPost: latestPost
+          ? {
+              id: latestPost.id as string,
+              slug: latestPost.slug as string,
+              title: latestPost.title as string,
+              viewCount: (latestPost as { view_count: number | null }).view_count ?? null,
+            }
+          : null,
       },
     }
   } catch (e) {
