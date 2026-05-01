@@ -7,14 +7,39 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient()
     const { searchParams } = new URL(request.url)
     const type = searchParams.get('type') // all | market_idea | cause_proposal | ngo_suggestion | general
+    const includeArchivedRaw = searchParams.get('includeArchived') === '1'
+
+    // Honor `?includeArchived=1` only for admins. Non-admins always see the
+    // live queue (archived hidden, rejected hidden) — same behavior as before.
+    let isAdmin = false
+    if (includeArchivedRaw) {
+      const user = await getCurrentUser()
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('user_type, email')
+          .eq('id', user.id)
+          .maybeSingle()
+        const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim()
+        const profileEmail = (profile?.email as string | null)?.toLowerCase().trim() ?? null
+        isAdmin =
+          profile?.user_type === 'admin' ||
+          (!!adminEmail && !!profileEmail && profileEmail === adminEmail)
+      }
+    }
+    const includeArchived = includeArchivedRaw && isAdmin
 
     let query = supabase
       .from('conscious_inbox')
-      .select('id, user_id, type, title, description, category, links, status, upvotes, created_at')
-      .is('archived_at', null)
-      .neq('status', 'rejected')
+      .select(
+        'id, user_id, type, title, description, category, links, status, upvotes, created_at, archived_at'
+      )
       .order('upvotes', { ascending: false })
       .order('created_at', { ascending: false })
+
+    if (!includeArchived) {
+      query = query.is('archived_at', null).neq('status', 'rejected')
+    }
 
     if (type && type !== 'all') {
       if (type === 'causes') {

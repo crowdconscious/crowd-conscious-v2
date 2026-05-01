@@ -24,6 +24,12 @@ import {
   Lightbulb,
   Sparkles,
   Award,
+  Archive,
+  CheckCircle,
+  XCircle,
+  ShieldCheck,
+  ExternalLink,
+  ArchiveRestore,
 } from 'lucide-react'
 import type { InboxItem } from './page'
 
@@ -48,6 +54,16 @@ const CATEGORIES = [
   { id: 'community', label: 'Community', icon: Users },
   { id: 'cause', label: 'Cause', icon: Heart },
   { id: 'entertainment', label: 'Entertainment', icon: Clapperboard },
+] as const
+
+/** Allowed `fund_causes.category` values — must mirror the Promote API + admin page. */
+const FUND_CATEGORIES = [
+  { id: 'water', label: 'Water' },
+  { id: 'education', label: 'Education' },
+  { id: 'environment', label: 'Environment' },
+  { id: 'social_justice', label: 'Social Justice' },
+  { id: 'health', label: 'Health' },
+  { id: 'other', label: 'Other' },
 ] as const
 
 const TYPE_CONFIG: Record<
@@ -101,9 +117,18 @@ function truncate(str: string | null, max: number): string {
 
 interface Props {
   initialItems: InboxItem[]
+  isAdmin: boolean
 }
 
-export function InboxClient({ initialItems }: Props) {
+interface PromoteFormState {
+  name: string
+  organization: string
+  category: string
+  description: string
+  website_url: string
+}
+
+export function InboxClient({ initialItems, isAdmin }: Props) {
   const { language } = useLanguage()
   const searchParams = useSearchParams()
   const [items, setItems] = useState<InboxItem[]>(initialItems)
@@ -113,7 +138,21 @@ export function InboxClient({ initialItems }: Props) {
   const [submitting, setSubmitting] = useState(false)
   const [voteLoading, setVoteLoading] = useState<string | null>(null)
 
-  // Form state
+  // Admin-only state
+  const [showArchived, setShowArchived] = useState(false)
+  const [adminBusyId, setAdminBusyId] = useState<string | null>(null)
+  const [promoteItem, setPromoteItem] = useState<InboxItem | null>(null)
+  const [promoteForm, setPromoteForm] = useState<PromoteFormState>({
+    name: '',
+    organization: '',
+    category: 'other',
+    description: '',
+    website_url: '',
+  })
+  const [promoteSubmitting, setPromoteSubmitting] = useState(false)
+  const [adminError, setAdminError] = useState('')
+
+  // Form state (Submit Idea)
   const [formType, setFormType] = useState<string>('market_idea')
   const [formTitle, setFormTitle] = useState('')
   const [formDescription, setFormDescription] = useState('')
@@ -163,10 +202,11 @@ export function InboxClient({ initialItems }: Props) {
   const fetchItems = useCallback(async () => {
     const params = new URLSearchParams()
     if (filter !== 'all') params.set('type', filter)
+    if (isAdmin && showArchived) params.set('includeArchived', '1')
     const res = await fetch(`/api/predictions/inbox${params.toString() ? '?' + params : ''}`)
     const data = await res.json()
     if (data.items) setItems(data.items)
-  }, [filter])
+  }, [filter, isAdmin, showArchived])
 
   const fetchMyVotes = useCallback(async () => {
     const res = await fetch('/api/predictions/inbox/my-votes')
@@ -212,6 +252,115 @@ export function InboxClient({ initialItems }: Props) {
       setVoteLoading(null)
     }
   }
+
+  // ---------- Admin actions ----------
+
+  const updateAdminStatus = useCallback(
+    async (id: string, status: 'reviewed' | 'approved' | 'rejected') => {
+      setAdminBusyId(id)
+      setAdminError('')
+      try {
+        const res = await fetch(`/api/predictions/admin/inbox/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status }),
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || 'Update failed')
+        setItems((prev) => prev.map((i) => (i.id === id ? { ...i, status } : i)))
+      } catch (err) {
+        setAdminError(err instanceof Error ? err.message : 'Update failed')
+      } finally {
+        setAdminBusyId(null)
+      }
+    },
+    []
+  )
+
+  const archiveItem = useCallback(
+    async (id: string, restore: boolean) => {
+      setAdminBusyId(id)
+      setAdminError('')
+      try {
+        const res = await fetch('/api/predictions/admin/archive', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ resource: 'inbox', id, restore }),
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || 'Archive failed')
+        if (restore) {
+          // Restored items stay visible; just clear archived_at locally.
+          setItems((prev) =>
+            prev.map((i) => (i.id === id ? { ...i, archived_at: null } : i))
+          )
+        } else if (showArchived) {
+          // Admin is viewing the archived queue — keep the row, mark archived.
+          setItems((prev) =>
+            prev.map((i) =>
+              i.id === id ? { ...i, archived_at: new Date().toISOString() } : i
+            )
+          )
+        } else {
+          // Default live view — drop the row from the visible list.
+          setItems((prev) => prev.filter((i) => i.id !== id))
+        }
+      } catch (err) {
+        setAdminError(err instanceof Error ? err.message : 'Archive failed')
+      } finally {
+        setAdminBusyId(null)
+      }
+    },
+    [showArchived]
+  )
+
+  const openPromoteModal = (item: InboxItem) => {
+    setAdminError('')
+    setPromoteItem(item)
+    setPromoteForm({
+      name: item.title,
+      organization: '',
+      category: 'other',
+      description: item.description || '',
+      website_url: '',
+    })
+  }
+
+  const handlePromoteToCause = async () => {
+    if (!promoteItem) return
+    setPromoteSubmitting(true)
+    setAdminError('')
+    try {
+      const res = await fetch(
+        `/api/predictions/admin/inbox/${promoteItem.id}/promote-to-cause`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: promoteForm.name.trim(),
+            organization: promoteForm.organization.trim(),
+            category: promoteForm.category,
+            description: promoteForm.description.trim(),
+            website_url: promoteForm.website_url.trim() || undefined,
+          }),
+        }
+      )
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Promote failed')
+      setItems((prev) =>
+        prev.map((i) =>
+          i.id === promoteItem.id ? { ...i, status: 'promoted_to_cause' } : i
+        )
+      )
+      setPromoteItem(null)
+    } catch (err) {
+      setAdminError(err instanceof Error ? err.message : 'Promote failed')
+    } finally {
+      setPromoteSubmitting(false)
+    }
+  }
+
+  // ---------- Submit Idea form ----------
 
   const addLink = () => setFormLinks((prev) => [...prev, { url: '', label: '' }])
   const removeLink = (idx: number) =>
@@ -263,14 +412,26 @@ export function InboxClient({ initialItems }: Props) {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-          <Lightbulb className="w-7 h-7 text-amber-400" />
-          Conscious Inbox
-        </h1>
-        <p className="text-cc-text-secondary mt-1">
-          Suggest markets, causes, and ideas. The community decides what matters.
-        </p>
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+            <Lightbulb className="w-7 h-7 text-amber-400" />
+            Conscious Inbox
+          </h1>
+          <p className="text-cc-text-secondary mt-1">
+            Suggest markets, causes, and ideas. The community decides what matters.
+          </p>
+        </div>
+        {isAdmin && (
+          <Link
+            href="/predictions/admin/inbox"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-300 text-xs font-medium hover:bg-amber-500/20 transition-colors"
+          >
+            <ShieldCheck className="w-4 h-4" />
+            Admin review
+            <ExternalLink className="w-3 h-3" />
+          </Link>
+        )}
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
@@ -296,7 +457,24 @@ export function InboxClient({ initialItems }: Props) {
             </button>
           ))}
         </div>
+        {isAdmin && (
+          <label className="ml-auto flex items-center gap-2 text-gray-400 text-xs cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={showArchived}
+              onChange={(e) => setShowArchived(e.target.checked)}
+              className="accent-amber-500"
+            />
+            Show archived &amp; rejected
+          </label>
+        )}
       </div>
+
+      {isAdmin && adminError && (
+        <div className="px-4 py-2 bg-red-500/10 border border-red-500/40 rounded-lg text-red-300 text-sm">
+          {adminError}
+        </div>
+      )}
 
       {/* Modal */}
       {modalOpen && (
@@ -440,6 +618,129 @@ export function InboxClient({ initialItems }: Props) {
         </>
       )}
 
+      {/* Promote to Cause modal (admin only) */}
+      {promoteItem && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+            onClick={() => !promoteSubmitting && setPromoteItem(null)}
+            aria-hidden="true"
+          />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+            <div
+              className="bg-cc-nav-bg border border-cc-border rounded-xl p-6 w-full max-w-md shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="text-lg font-semibold text-white mb-1">Promote to Cause</h3>
+              <p className="text-cc-text-muted text-xs mb-4">
+                Creates a row in <code>fund_causes</code>. The original inbox item is
+                marked <em>promoted_to_cause</em> and stays linked from this view.
+              </p>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-400 mb-1">Name *</label>
+                  <input
+                    type="text"
+                    value={promoteForm.name}
+                    onChange={(e) => setPromoteForm((f) => ({ ...f, name: e.target.value }))}
+                    required
+                    className="w-full px-3 py-2 bg-cc-card border border-cc-border rounded-lg text-white text-sm"
+                    placeholder="Cause name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-400 mb-1">
+                    Organization *
+                  </label>
+                  <input
+                    type="text"
+                    value={promoteForm.organization}
+                    onChange={(e) =>
+                      setPromoteForm((f) => ({ ...f, organization: e.target.value }))
+                    }
+                    required
+                    className="w-full px-3 py-2 bg-cc-card border border-cc-border rounded-lg text-white text-sm"
+                    placeholder="Who runs this on the ground"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-400 mb-1">
+                    Category *
+                  </label>
+                  <select
+                    value={promoteForm.category}
+                    onChange={(e) =>
+                      setPromoteForm((f) => ({ ...f, category: e.target.value }))
+                    }
+                    className="w-full px-3 py-2 bg-cc-card border border-cc-border rounded-lg text-white text-sm"
+                  >
+                    {FUND_CATEGORIES.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-400 mb-1">
+                    Description *
+                  </label>
+                  <textarea
+                    value={promoteForm.description}
+                    onChange={(e) =>
+                      setPromoteForm((f) => ({ ...f, description: e.target.value }))
+                    }
+                    required
+                    maxLength={500}
+                    rows={4}
+                    className="w-full px-3 py-2 bg-cc-card border border-cc-border rounded-lg text-white text-sm resize-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-400 mb-1">
+                    Website URL
+                  </label>
+                  <input
+                    type="url"
+                    value={promoteForm.website_url}
+                    onChange={(e) =>
+                      setPromoteForm((f) => ({ ...f, website_url: e.target.value }))
+                    }
+                    className="w-full px-3 py-2 bg-cc-card border border-cc-border rounded-lg text-white text-sm"
+                    placeholder="https://..."
+                  />
+                </div>
+              </div>
+              {adminError && (
+                <p className="mt-3 text-xs text-red-400">{adminError}</p>
+              )}
+              <div className="flex gap-2 justify-end mt-5">
+                <button
+                  onClick={() => setPromoteItem(null)}
+                  disabled={promoteSubmitting}
+                  className="px-4 py-2 rounded-lg bg-cc-card border border-cc-border text-gray-300 text-sm hover:border-cc-border-light"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handlePromoteToCause}
+                  disabled={
+                    promoteSubmitting ||
+                    !promoteForm.name.trim() ||
+                    !promoteForm.organization.trim() ||
+                    !promoteForm.description.trim()
+                  }
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium disabled:opacity-50"
+                >
+                  <Heart className="w-4 h-4" />
+                  {promoteSubmitting ? 'Creating…' : 'Create Cause'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
       {/* Feed */}
       {items.length === 0 ? (
         <div className="text-center py-16 rounded-xl border border-cc-border bg-cc-card/80">
@@ -467,22 +768,31 @@ export function InboxClient({ initialItems }: Props) {
             const statusConfig = item.status !== 'pending' ? STATUS_CONFIG[item.status] : null
             const voted = myVotes.has(item.id)
             const isLoading = voteLoading === item.id
+            const isArchived = !!item.archived_at
+            const adminBusy = adminBusyId === item.id
+            const alreadyPromoted = item.status === 'promoted_to_cause'
 
             return (
               <article
                 key={item.id}
-                className="bg-cc-card border border-cc-border rounded-xl p-5 transition-colors hover:border-cc-border-light"
+                className={`bg-cc-card border rounded-xl p-5 transition-colors ${
+                  isArchived
+                    ? 'border-amber-500/20 opacity-70'
+                    : 'border-cc-border hover:border-cc-border-light'
+                }`}
               >
                 <div className="flex gap-4">
                   <div className="flex flex-col items-center flex-shrink-0">
                     <button
                       onClick={() => handleVote(item.id)}
-                      disabled={isLoading}
+                      disabled={isLoading || isArchived}
                       className={`flex flex-col items-center p-2 rounded-lg transition-colors ${
                         voted
                           ? 'bg-emerald-500/10 text-emerald-400'
                           : 'text-gray-400 hover:text-emerald-400 hover:bg-emerald-500/5'
-                      } ${isLoading ? 'opacity-50 cursor-wait' : ''}`}
+                      } ${isLoading ? 'opacity-50 cursor-wait' : ''} ${
+                        isArchived ? 'opacity-40 cursor-not-allowed' : ''
+                      }`}
                     >
                       <ChevronUp className="w-6 h-6" />
                       <span className="text-sm font-medium mt-0.5 text-gray-300">{item.upvotes}</span>
@@ -510,6 +820,12 @@ export function InboxClient({ initialItems }: Props) {
                           {statusConfig.label}
                         </span>
                       ) : null}
+                      {isArchived && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-amber-500/10 text-amber-300 border border-amber-500/30">
+                          <Archive className="w-3 h-3" />
+                          Archived
+                        </span>
+                      )}
                     </div>
                     <h3 className="text-white font-semibold mb-1">{item.title}</h3>
                     {item.description && (
@@ -520,6 +836,74 @@ export function InboxClient({ initialItems }: Props) {
                     <p className="text-cc-text-muted text-xs">
                       Submitted by {item.submitter_name} · {formatRelativeTime(item.created_at)}
                     </p>
+
+                    {isAdmin && (
+                      <div className="mt-3 flex flex-wrap gap-2 pt-3 border-t border-cc-border/60">
+                        {!alreadyPromoted && !isArchived && (
+                          <button
+                            type="button"
+                            onClick={() => openPromoteModal(item)}
+                            disabled={adminBusy}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-600/90 hover:bg-amber-500 text-white text-xs font-medium disabled:opacity-50"
+                          >
+                            <Heart className="w-3.5 h-3.5" />
+                            Promote to Cause
+                          </button>
+                        )}
+                        {item.type === 'market_idea' && !isArchived && (
+                          <Link
+                            href={`/predictions/admin/create-market?from_inbox=${item.id}`}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium"
+                          >
+                            <Sparkles className="w-3.5 h-3.5" />
+                            Create market
+                          </Link>
+                        )}
+                        {!isArchived && item.status === 'pending' && (
+                          <button
+                            type="button"
+                            onClick={() => updateAdminStatus(item.id, 'approved')}
+                            disabled={adminBusy}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cc-card border border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/10 text-xs font-medium disabled:opacity-50"
+                          >
+                            <CheckCircle className="w-3.5 h-3.5" />
+                            Approve
+                          </button>
+                        )}
+                        {!isArchived && item.status !== 'rejected' && (
+                          <button
+                            type="button"
+                            onClick={() => updateAdminStatus(item.id, 'rejected')}
+                            disabled={adminBusy}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cc-card border border-red-500/30 text-red-300 hover:bg-red-500/10 text-xs font-medium disabled:opacity-50"
+                          >
+                            <XCircle className="w-3.5 h-3.5" />
+                            Reject
+                          </button>
+                        )}
+                        {isArchived ? (
+                          <button
+                            type="button"
+                            onClick={() => archiveItem(item.id, true)}
+                            disabled={adminBusy}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cc-card border border-cc-border text-gray-300 hover:border-amber-400 hover:text-amber-300 text-xs font-medium disabled:opacity-50"
+                          >
+                            <ArchiveRestore className="w-3.5 h-3.5" />
+                            Restore
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => archiveItem(item.id, false)}
+                            disabled={adminBusy}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cc-card border border-cc-border text-gray-400 hover:border-cc-border-light hover:text-white text-xs font-medium disabled:opacity-50"
+                          >
+                            <Archive className="w-3.5 h-3.5" />
+                            Archive
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </article>
