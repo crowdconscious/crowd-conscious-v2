@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 
 import {
   getSponsorPulseReport,
+  runSponsorPulseReport,
   type SponsorPulseReportSnapshot,
 } from '@/lib/agents/sponsor-pulse-report-agent'
 import { generateSponsorPulseReportPDF } from '@/lib/sponsor-pulse-report-pdf'
@@ -10,23 +11,29 @@ import { createAdminClient } from '@/lib/supabase-admin'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
-export const maxDuration = 60
+// Bumped from 60s — we now auto-run the agent inline when no narrative is
+// cached. Sonnet completion + PDF render fits comfortably in 90s; we
+// reserve 120s for safety against cold starts.
+export const maxDuration = 120
 
 const STORAGE_BUCKET = 'sponsor-reports'
 
 /**
  * Token-gated PDF download for the sponsor executive report.
  *
- * Validation flow mirrors the parent dashboard route:
+ * Validation flow:
  *   1. Resolve sponsor by access_token, status=active.
  *   2. Verify the requested market belongs to that account
  *      (sponsor_account_id match, or fallback by company_name / email).
- *   3. Read the cached agent narrative + snapshot. If absent, return
- *      503 with an explicit message instead of an empty PDF.
- *   4. Render PDF with jsPDF.
- *   5. Best-effort upload to `sponsor-reports/{market_id}-{ts}.pdf` for
+ *   3. Read the cached agent narrative + snapshot. If missing, run the
+ *      agent inline so the sponsor never sees a "not_ready" 503 — the
+ *      whole point of the dashboard is they can pull a fresh,
+ *      analysis-bearing PDF on demand. If the market still has too few
+ *      votes to produce a narrative (<5), we render a clearly-labelled
+ *      preliminary PDF instead of failing.
+ *   4. Best-effort upload to `sponsor-reports/{market_id}-{ts}.pdf` for
  *      audit + email-attachment use; failures are non-fatal.
- *   6. Stream the PDF back inline so the browser can preview it.
+ *   5. Stream the PDF back inline so the browser can preview it.
  */
 export async function GET(
   _request: Request,
@@ -64,26 +71,54 @@ export async function GET(
     return NextResponse.json({ error: 'not_found' }, { status: 404 })
   }
 
-  const cached = await getSponsorPulseReport(marketId)
-  if (!cached || (!cached.executive_summary && !cached.conviction_analysis)) {
-    return NextResponse.json(
-      {
-        error: 'report_not_ready',
-        message:
-          'El reporte aún no se ha generado. Crowd Conscious avisará cuando esté listo.',
-      },
-      { status: 503 }
-    )
+  // Try the cache first. If the narrative is missing or only partially
+  // filled, run the agent right here so the sponsor's download always
+  // includes analysis (when possible) without bouncing through admin.
+  let cached = await getSponsorPulseReport(marketId)
+  let preliminaryReason: 'insufficient_votes' | 'agent_failed' | null = null
+
+  const hasNarrative = !!(
+    cached?.executive_summary && cached?.conviction_analysis
+  )
+
+  if (!hasNarrative) {
+    const runResult = await runSponsorPulseReport(marketId)
+    if (runResult.status === 'success') {
+      cached = await getSponsorPulseReport(marketId)
+    } else if (runResult.status === 'skipped') {
+      // Most common skip reason: insufficient_votes (<5). The caller
+      // still gets a real PDF, just labelled as "preliminary" with the
+      // snapshot we have so far.
+      preliminaryReason = 'insufficient_votes'
+    } else {
+      // Don't block the download on agent / Anthropic / network errors;
+      // the sponsor still deserves the data part. We log + label the
+      // PDF preliminary so they understand the analysis is missing for
+      // a transient reason, not because we have nothing to say.
+      console.error(
+        '[sponsor-report-pdf] inline agent run failed:',
+        runResult.error
+      )
+      preliminaryReason = 'agent_failed'
+    }
   }
 
   const snapshot =
-    cached.snapshot_data && typeof cached.snapshot_data === 'object'
+    cached?.snapshot_data && typeof cached.snapshot_data === 'object'
       ? (cached.snapshot_data as unknown as SponsorPulseReportSnapshot)
       : null
 
-  const nextSteps = Array.isArray(cached.next_steps)
-    ? (cached.next_steps as string[])
+  const nextSteps = Array.isArray(cached?.next_steps)
+    ? (cached!.next_steps as string[])
     : []
+
+  // Mid-pulse PDFs get a "PRELIMINAR" stamp so a sponsor reading the file
+  // a week later knows whether it's an interim or final view. Markets
+  // that have actually closed (status=resolved/closed) get the unmarked
+  // version because by then the report IS final.
+  const marketIsClosed =
+    market.status === 'resolved' || market.status === 'closed'
+  const isPreliminary = !marketIsClosed || !!preliminaryReason
 
   const logoBase64 = await fetchLogoAsDataUrl(account.logo_url ?? null)
 
@@ -101,11 +136,15 @@ export async function GET(
       resolvedAt: market.resolved_at ?? null,
     },
     report: {
-      executiveSummary: cached.executive_summary ?? null,
-      convictionAnalysis: cached.conviction_analysis ?? null,
+      executiveSummary: cached?.executive_summary ?? null,
+      convictionAnalysis: cached?.conviction_analysis ?? null,
       nextSteps,
       snapshot,
-      generatedAt: cached.generated_at,
+      generatedAt: cached?.generated_at ?? new Date().toISOString(),
+    },
+    flags: {
+      isPreliminary,
+      preliminaryReason,
     },
   })
 

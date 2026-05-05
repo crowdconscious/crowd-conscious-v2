@@ -35,6 +35,19 @@ export interface SponsorPulseReportPdfInput {
     snapshot: SponsorPulseReportSnapshot | null
     generatedAt: string | null
   }
+  /**
+   * Surface metadata about *why* the analysis sections may be missing or
+   * partial. Driven by the route layer:
+   *  - `isPreliminary=true` while the underlying market is still active,
+   *    OR when the agent couldn't produce a narrative for this run.
+   *  - `preliminaryReason` adds a one-line callout under the title block
+   *    so the sponsor knows whether to wait for more votes or for a
+   *    transient retry.
+   */
+  flags?: {
+    isPreliminary?: boolean
+    preliminaryReason?: 'insufficient_votes' | 'agent_failed' | null
+  }
 }
 
 const PAGE_W = 210 // A4 mm
@@ -85,7 +98,28 @@ export function generateSponsorPulseReportPDF(
   drawHeader(ctx, input)
   ctx.y = 50
   drawTitleBlock(ctx, input)
+  // Preliminary callout sits between the title block and the stats grid
+  // so a sponsor can see in one glance whether they're holding a final
+  // or interim view. Quietly absent for resolved Pulses so finished
+  // reports stay clean.
+  if (input.flags?.isPreliminary) {
+    drawPreliminaryBanner(ctx, input)
+  }
   drawStats(ctx, input.report.snapshot)
+
+  // No narrative AND too-few votes means there's literally nothing to say
+  // yet. Render a single placeholder section instead of silently skipping
+  // every block — the sponsor opens a one-page PDF that explains what
+  // they'll see when the analysis is ready.
+  const noNarrative =
+    !input.report.executiveSummary && !input.report.convictionAnalysis
+  const tooFewVotes = (input.report.snapshot?.totalVotes ?? 0) < 5
+  if (noNarrative && tooFewVotes) {
+    drawAwaitingVotesBlock(ctx, input)
+    drawFooterAllPages(doc, input)
+    const ab = doc.output('arraybuffer') as ArrayBuffer
+    return Buffer.from(ab)
+  }
 
   if (input.report.executiveSummary) {
     drawSection(ctx, 'RESUMEN EJECUTIVO')
@@ -441,6 +475,67 @@ function drawNextSteps(ctx: PdfCtx, steps: string[]): void {
     ctx.y += blockH
   })
   ctx.y += 2
+}
+
+function drawPreliminaryBanner(
+  ctx: PdfCtx,
+  input: SponsorPulseReportPdfInput
+): void {
+  const reason = input.flags?.preliminaryReason ?? null
+  const headline =
+    reason === 'insufficient_votes'
+      ? 'PRELIMINAR · datos insuficientes para análisis'
+      : reason === 'agent_failed'
+        ? 'PRELIMINAR · análisis pendiente'
+        : 'PRELIMINAR · consulta en curso'
+
+  const detail =
+    reason === 'insufficient_votes'
+      ? 'La consulta aún no alcanza el mínimo de 5 votos para generar resumen ejecutivo y análisis de convicción. Vuelve a descargar el reporte cuando se acumulen más respuestas.'
+      : reason === 'agent_failed'
+        ? 'El motor de análisis no respondió en este intento. Los datos de participación y razones siguen disponibles. Vuelve a descargar en unos minutos para obtener el análisis narrativo.'
+        : 'Estos resultados representan un corte parcial mientras la consulta sigue abierta. Las cifras pueden moverse antes del cierre.'
+
+  const { doc } = ctx
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(9)
+  const lines = doc.splitTextToSize(detail, CONTENT_W - 8) as string[]
+  const blockH = lines.length * 4.5 + 12
+  ensureSpace(ctx, blockH)
+
+  doc.setFillColor(...COLOR_BG_AMBER)
+  doc.roundedRect(MARGIN_X, ctx.y, CONTENT_W, blockH, 2, 2, 'F')
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(9)
+  doc.setTextColor(...COLOR_AMBER)
+  doc.text(headline, MARGIN_X + 4, ctx.y + 5.5)
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(...COLOR_TEXT)
+  doc.text(lines, MARGIN_X + 4, ctx.y + 11)
+  ctx.y += blockH + 4
+}
+
+function drawAwaitingVotesBlock(
+  ctx: PdfCtx,
+  input: SponsorPulseReportPdfInput
+): void {
+  drawSection(ctx, 'ANÁLISIS PENDIENTE')
+  const total = input.report.snapshot?.totalVotes ?? 0
+  drawParagraph(
+    ctx,
+    `Con ${total} ${total === 1 ? 'voto registrado' : 'votos registrados'} hasta el ${fmtDate(new Date().toISOString())}, la consulta todavía no tiene la masa estadística mínima (5 votos) para que nuestro motor de inteligencia colectiva produzca un resumen ejecutivo, un análisis de convicción y recomendaciones accionables. Cuando la consulta alcance ese umbral, vuelve a descargar el reporte y aparecerá aquí el análisis narrativo completo: hallazgos contraintuitivos, divergencia entre votos y convicción, y una lista priorizada de próximos pasos.`
+  )
+  drawSection(ctx, 'QUÉ INCLUIRÁ EL REPORTE FINAL')
+  drawParagraph(
+    ctx,
+    [
+      '• Resumen ejecutivo de ~150 palabras con cifras reales del Pulse.',
+      '• Análisis de convicción: divergencia entre la opción más votada y la de mayor confianza.',
+      '• Citas anonimizadas de las razones escritas por los votantes.',
+      '• Curva de participación día a día.',
+      '• Entre 3 y 5 acciones recomendadas para activar el resultado.',
+    ].join('\n')
+  )
 }
 
 function drawFooterAllPages(

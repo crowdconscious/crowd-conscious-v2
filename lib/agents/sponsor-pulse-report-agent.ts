@@ -269,7 +269,19 @@ function buildPrompt(market: MarketRow, snap: SponsorPulseReportSnapshot): strin
       ? `MARCAR: la opción más votada ("${voteWinner.label}") NO es la de mayor convicción ("${confWinner.label}", ${confWinner.avgConfidence?.toFixed(1)}/10 vs ${voteWinner.avgConfidence?.toFixed(1)}/10).`
       : 'Sin divergencia notable entre votos y convicción.'
 
+  // Status-aware framing. An "active" pulse needs interim language ("hasta
+  // ahora", "señales tempranas") and recommended *mid-pulse* moves; a
+  // "resolved" or "closed" pulse can speak in past tense and recommend
+  // post-pulse actions. Without this branch, mid-pulse reports read like
+  // they were written about a closed survey, which sponsors find jarring.
+  const isClosed = market.status === 'resolved' || market.status === 'closed'
+  const phaseFraming = isClosed
+    ? `FASE: cerrado. Habla en pasado ("la consulta mostró"). Las recomendaciones son post-pulse: cómo activar el resultado en producto, comunicación, alianzas o decisión pública.`
+    : `FASE: en curso (datos parciales hasta hoy). Habla en presente o pretérito perfecto ("hasta ahora hemos visto", "la mitad de los participantes ha votado por"). Marca explícitamente que es un corte preliminar. Las recomendaciones son acciones de mid-pulse: ajustes de comunicación, nichos a empujar, ángulos a probar antes del cierre. Evita conclusiones definitivas — el voto sigue abierto.`
+
   return `Eres un analista de inteligencia colectiva escribiendo un reporte ejecutivo para ${sponsorName} sobre una consulta participativa (Pulse) en Crowd Conscious.
+
+${phaseFraming}
 
 CONTEXTO DEL PULSE
 Título: ${market.title}
@@ -290,16 +302,16 @@ TAREAS
 Devuelve SÓLO un objeto JSON con esta forma exacta — nada más, sin texto fuera del JSON:
 
 {
-  "executiveSummary": "Ensayo en español de aproximadamente 150 palabras (3 oraciones de narrativa + 1 hallazgo contraintuitivo + 1 acción recomendada). Cita números reales del Pulse. Voz profesional, directa, sin marketing.",
-  "convictionAnalysis": "Un párrafo que explique el balance entre cantidad de votos y nivel de convicción (confianza ponderada). Si hay divergencia entre la opción más votada y la de mayor convicción, hazlo explícito en lenguaje plano (no jerga). Si no hay divergencia, di que la mayoría votó con convicción consistente.",
-  "nextSteps": ["Acción 1 ligada a un dato específico del Pulse", "Acción 2", "Acción 3", "Acción 4 (opcional)", "Acción 5 (opcional)"]
+  "executiveSummary": "Ensayo en español de aproximadamente 150 palabras (3 oraciones de narrativa + 1 hallazgo contraintuitivo + 1 acción recomendada${isClosed ? '' : ' viable durante la consulta'}). Cita números reales del Pulse. Voz profesional, directa, sin marketing${isClosed ? '' : '. Si la consulta sigue abierta, dilo en la primera oración: \\"Con N votos hasta ahora…\\"'}",
+  "convictionAnalysis": "Un párrafo que explique el balance entre cantidad de votos y nivel de convicción (confianza ponderada). Si hay divergencia entre la opción más votada y la de mayor convicción, hazlo explícito en lenguaje plano (no jerga). Si no hay divergencia, di que la mayoría votó con convicción consistente.${isClosed ? '' : ' Aclara que estos números pueden moverse antes del cierre.'}",
+  "nextSteps": ["Acción 1 ligada a un dato específico del Pulse${isClosed ? '' : ' (mid-pulse: algo accionable HOY mientras siguen votando)'}", "Acción 2", "Acción 3", "Acción 4 (opcional)", "Acción 5 (opcional)"]
 }
 
 REGLAS
 - Español profesional, claro, sin emojis.
 - "executiveSummary" debe estar entre 120 y 180 palabras.
 - "nextSteps" debe tener entre 3 y 5 elementos. Cada uno debe referirse a un dato del Pulse, no consejo genérico.
-- No menciones marca/sponsor en imperativo ("ustedes deberían"). Habla del patrocinador en tercera persona si es necesario.
+${isClosed ? '' : '- Cuando la consulta sigue abierta, al menos UNA de las acciones debe ser una palanca para alargar/profundizar la consulta (campaña dirigida, copy nuevo, nicho a invitar). El resto pueden ser preparativos para activar el resultado al cierre.\n'}- No menciones marca/sponsor en imperativo ("ustedes deberían"). Habla del patrocinador en tercera persona si es necesario.
 - No copies citas textuales de los votantes — parafraséalas si las usas.
 `
 }
