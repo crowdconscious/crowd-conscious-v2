@@ -7,6 +7,7 @@ import { ArrowLeft } from 'lucide-react'
 import { ImageUpload } from '@/components/ui/ImageUpload'
 import type { Database } from '@/types/database'
 import BlogPulseEmbedFields from '@/components/blog/BlogPulseEmbedFields'
+import SuggestTldrButton from '@/components/blog/SuggestTldrButton'
 import { MarkdownEditor } from '@/components/admin/MarkdownEditor'
 import {
   normalizePulseEmbedComponents,
@@ -36,6 +37,12 @@ export default function EditBlogPostClient({ post }: { post: Row }) {
   const [slug, setSlug] = useState(post.slug)
   const [excerpt, setExcerpt] = useState(post.excerpt)
   const [excerptEn, setExcerptEn] = useState(post.excerpt_en ?? '')
+  const [tldr, setTldr] = useState(
+    (post as { tldr?: string | null }).tldr ?? ''
+  )
+  const [tldrEn, setTldrEn] = useState(
+    (post as { tldr_en?: string | null }).tldr_en ?? ''
+  )
   const [content, setContent] = useState(post.content)
   const [contentEn, setContentEn] = useState(post.content_en ?? '')
   const [category, setCategory] = useState<string>(post.category)
@@ -83,6 +90,8 @@ export default function EditBlogPostClient({ post }: { post: Row }) {
           slug,
           excerpt,
           excerpt_en: excerptEn,
+          tldr,
+          tldr_en: tldrEn,
           content,
           content_en: contentEn,
           category,
@@ -118,6 +127,8 @@ export default function EditBlogPostClient({ post }: { post: Row }) {
       slug,
       excerpt,
       excerptEn,
+      tldr,
+      tldrEn,
       content,
       contentEn,
       category,
@@ -172,6 +183,40 @@ export default function EditBlogPostClient({ post }: { post: Row }) {
         <div>
           <label className="mb-1 block text-sm text-slate-400">Excerpt (EN)</label>
           <textarea className={`${input} min-h-[80px]`} value={excerptEn} onChange={(e) => setExcerptEn(e.target.value)} />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm text-slate-400">
+            TL;DR (ES) — &ldquo;En 30 segundos&rdquo;
+          </label>
+          <textarea
+            className={`${input} min-h-[110px]`}
+            value={tldr}
+            onChange={(e) => setTldr(e.target.value)}
+            placeholder={'3–5 líneas cortas, una por bullet.'}
+          />
+          <SuggestTldrButton
+            title={title}
+            titleEn={titleEn}
+            content={content}
+            contentEn={contentEn}
+            pulseMarketId={embedEnabled ? pulseMarketId : null}
+            onSuggested={(es, en) => {
+              setTldr(es)
+              if (en) setTldrEn(en)
+            }}
+          />
+          <p className="mt-2 text-xs text-slate-500">
+            Se muestra debajo de la imagen de portada. Si escribes varias líneas, se renderiza como bullets; una sola línea se muestra como párrafo. Es el gancho para lectores que no van a leer todo.
+          </p>
+        </div>
+        <div>
+          <label className="mb-1 block text-sm text-slate-400">TL;DR (EN)</label>
+          <textarea
+            className={`${input} min-h-[110px]`}
+            value={tldrEn}
+            onChange={(e) => setTldrEn(e.target.value)}
+            placeholder="3–5 short lines, one per bullet."
+          />
         </div>
         <div>
           <label className="mb-1 block text-sm text-slate-400">Contenido (ES) *</label>

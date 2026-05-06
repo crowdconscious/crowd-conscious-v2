@@ -139,6 +139,9 @@ export async function POST(request: NextRequest) {
       if (arr.length > 0) pulse_embed_components = arr
     }
 
+    const tldrRaw = typeof body.tldr === 'string' ? body.tldr.trim() : ''
+    const tldrEnRaw = typeof body.tldr_en === 'string' ? body.tldr_en.trim() : ''
+
     const { data: row, error } = await admin
       .from('blog_posts')
       .insert({
@@ -147,6 +150,8 @@ export async function POST(request: NextRequest) {
         title_en: String(body.title_en ?? '').trim() || null,
         excerpt,
         excerpt_en: String(body.excerpt_en ?? '').trim() || null,
+        tldr: tldrRaw || null,
+        tldr_en: tldrEnRaw || null,
         content,
         content_en: String(body.content_en ?? '').trim() || null,
         cover_image_url: typeof body.cover_image_url === 'string' ? body.cover_image_url.trim() || null : null,

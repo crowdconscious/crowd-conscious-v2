@@ -60,6 +60,8 @@ export async function PATCH(
       patch.excerpt = e
     }
     if (typeof body.excerpt_en === 'string') patch.excerpt_en = body.excerpt_en.trim() || null
+    if (typeof body.tldr === 'string') patch.tldr = body.tldr.trim() || null
+    if (typeof body.tldr_en === 'string') patch.tldr_en = body.tldr_en.trim() || null
     if (typeof body.content === 'string') {
       const c = body.content.trim()
       if (!c) return NextResponse.json({ error: 'Content cannot be empty' }, { status: 400 })

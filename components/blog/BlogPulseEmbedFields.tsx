@@ -11,6 +11,10 @@ import {
 } from '@/lib/pulse-embed-constants'
 
 const POSITION_OPTIONS: { id: PulseEmbedPosition; label: string }[] = [
+  {
+    id: 'after_tldr',
+    label: 'After TL;DR (top of article — best for vote conversion)',
+  },
   { id: 'after_intro', label: 'After introduction (after first ## heading)' },
   { id: 'before_cta', label: 'Before CTA (before last ## heading)' },
   { id: 'full_section', label: 'Full data section (dedicated section)' },

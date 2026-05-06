@@ -1,4 +1,9 @@
-export const PULSE_EMBED_POSITIONS = ['after_intro', 'before_cta', 'full_section'] as const
+export const PULSE_EMBED_POSITIONS = [
+  'after_tldr',
+  'after_intro',
+  'before_cta',
+  'full_section',
+] as const
 export type PulseEmbedPosition = (typeof PULSE_EMBED_POSITIONS)[number]
 
 export function parsePulseEmbedPosition(raw: string | null | undefined): PulseEmbedPosition {

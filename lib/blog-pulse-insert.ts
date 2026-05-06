@@ -12,11 +12,13 @@ export function splitMarkdownByH2(markdown: string): string[] {
 
 export type PulseMarkdownSplit =
   | { position: 'full_section'; before: string; after: '' }
-  | { position: 'after_intro' | 'before_cta'; before: string; after: string }
+  | { position: 'after_tldr' | 'after_intro' | 'before_cta'; before: string; after: string }
 
 /**
  * Returns markdown fragments to render before/after the Pulse embed.
  * For `full_section`, `before` is the full article; embed is appended after it.
+ * For `after_tldr`, the TL;DR + embed are rendered above; the entire markdown
+ * body is rendered below — `before` is empty.
  */
 export function splitMarkdownForPulseEmbed(
   markdown: string,
@@ -26,6 +28,10 @@ export function splitMarkdownForPulseEmbed(
 
   if (position === 'full_section') {
     return { position: 'full_section', before: markdown, after: '' }
+  }
+
+  if (position === 'after_tldr') {
+    return { position: 'after_tldr', before: '', after: markdown }
   }
 
   if (position === 'after_intro') {

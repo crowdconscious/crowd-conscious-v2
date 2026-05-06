@@ -14,6 +14,12 @@ import PulseEmbed from '@/components/blog/PulseEmbed'
 import { splitMarkdownForPulseEmbed } from '@/lib/blog-pulse-insert'
 import { fetchPulseEmbedDataForBlog } from '@/lib/blog-fetch-pulse-embed'
 import { normalizePulseEmbedComponents, parsePulseEmbedPosition } from '@/lib/pulse-embed-constants'
+import BlogTldrCard from '@/components/blog/BlogTldrCard'
+import BlogPulseStickyCta from '@/components/blog/BlogPulseStickyCta'
+import BlogCoverWithQuestion from '@/components/blog/BlogCoverWithQuestion'
+import { getMarketText } from '@/lib/i18n/market-translations'
+
+const PULSE_EMBED_ANCHOR_ID = 'pulse-vote'
 
 type Props = { params: Promise<{ slug: string }> }
 
@@ -42,7 +48,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   const { data: post } = await supabase
     .from('blog_posts')
     .select(
-      'title, title_en, meta_title, meta_description, excerpt, excerpt_en, cover_image_url, published_at, updated_at, pulse_market_id'
+      'title, title_en, meta_title, meta_description, excerpt, excerpt_en, tldr, tldr_en, cover_image_url, published_at, updated_at, pulse_market_id'
     )
     .eq('slug', slug)
     .eq('status', 'published')
@@ -57,10 +63,29 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
       ? post.title_en
       : post.meta_title || post.title
   const title = headTitle
+
+  // Description priority for share previews:
+  //   1. Author-set meta_description (explicit override)
+  //   2. TL;DR (joined into a single line — purpose-built for share blurbs)
+  //   3. Excerpt (the historic fallback)
+  // We prefer TL;DR over excerpt because it's denser, action-oriented, and
+  // matches what a share-receiver actually needs to decide whether to click.
+  const tldrRaw =
+    locale === 'en' && post.tldr_en?.trim()
+      ? post.tldr_en
+      : post.tldr?.trim() || null
+  const tldrSingleLine = tldrRaw
+    ? tldrRaw
+        .split(/\r?\n+/)
+        .map((l: string) => l.replace(/^\s*[-*•·]\s*/, '').trim())
+        .filter((l: string) => l.length > 0)
+        .join(' · ')
+    : null
+
   const description =
-    locale === 'en' && post.excerpt_en?.trim()
-      ? post.excerpt_en
-      : post.meta_description || post.excerpt
+    post.meta_description ||
+    tldrSingleLine ||
+    (locale === 'en' && post.excerpt_en?.trim() ? post.excerpt_en : post.excerpt)
 
   const rawCover = post.cover_image_url
   const absoluteCover =
@@ -147,6 +172,14 @@ export default async function BlogPostPage(props: Props) {
   const content =
     locale === 'en' && post.content_en?.trim() ? post.content_en : post.content || ''
 
+  const tldrRaw = post as { tldr?: string | null; tldr_en?: string | null }
+  const displayTldr =
+    (locale === 'en' && tldrRaw.tldr_en?.trim()
+      ? tldrRaw.tldr_en
+      : tldrRaw.tldr?.trim()
+        ? tldrRaw.tldr
+        : null) ?? null
+
   const pulseMarketId = (post as { pulse_market_id?: string | null }).pulse_market_id ?? null
   const embedPosition = parsePulseEmbedPosition(
     (post as { pulse_embed_position?: string | null }).pulse_embed_position
@@ -157,6 +190,41 @@ export default async function BlogPostPage(props: Props) {
 
   const pulseData =
     pulseMarketId && typeof pulseMarketId === 'string' ? await fetchPulseEmbedDataForBlog(pulseMarketId) : null
+
+  // Localized question text + lightweight live stats for the TL;DR card.
+  // Both are derived purely from data we already fetched above (no extra
+  // queries) so this is essentially free.
+  const pulseQuestion = pulseData
+    ? getMarketText(
+        {
+          title: pulseData.title,
+          description: pulseData.description ?? undefined,
+          translations: pulseData.translations as Parameters<typeof getMarketText>[0]['translations'],
+        },
+        'title',
+        locale
+      )
+    : null
+
+  const pulseLiveStats = pulseData
+    ? (() => {
+        const totalVotes = pulseData.votes.length
+        const confidences = pulseData.votes
+          .map((v) => Number(v.confidence))
+          .filter((n) => Number.isFinite(n))
+        const avgConfidence =
+          confidences.length > 0
+            ? confidences.reduce((a, b) => a + b, 0) / confidences.length
+            : null
+        const closed = ['resolved', 'cancelled', 'disputed'].includes(pulseData.status)
+        return {
+          marketId: pulseData.marketId,
+          totalVotes,
+          avgConfidence,
+          status: closed ? ('closed' as const) : ('active' as const),
+        }
+      })()
+    : null
 
   const relatedMarketIds = (post.related_market_ids ?? []).filter(Boolean) as string[]
 
@@ -186,15 +254,22 @@ export default async function BlogPostPage(props: Props) {
       <p className="mt-4 text-lg text-slate-400">{displayExcerpt}</p>
 
       {post.cover_image_url && (
-        <div className="relative mt-8 aspect-[2/1] w-full overflow-hidden rounded-xl border border-[#2d3748] bg-[#1a2029]">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={post.cover_image_url}
-            alt=""
-            className="h-full w-full object-cover"
-          />
-        </div>
+        <BlogCoverWithQuestion
+          imageUrl={post.cover_image_url}
+          question={pulseQuestion}
+          locale={locale}
+        />
       )}
+
+      {displayTldr ? (
+        <BlogTldrCard
+          tldr={displayTldr}
+          locale={locale}
+          voteAnchorId={pulseMarketId && pulseData ? PULSE_EMBED_ANCHOR_ID : null}
+          blogSlug={slug}
+          stats={pulseLiveStats}
+        />
+      ) : null}
 
       <div className="mt-10">
         {pulseMarketId && pulseData ? (
@@ -204,24 +279,28 @@ export default async function BlogPostPage(props: Props) {
               return (
                 <>
                   <BlogPostBody markdown={split.before} />
-                  <PulseEmbed
-                    data={pulseData}
-                    locale={locale}
-                    components={pulseComponents}
-                    showOwnHeading
-                  />
+                  <div id={PULSE_EMBED_ANCHOR_ID} className="scroll-mt-24">
+                    <PulseEmbed
+                      data={pulseData}
+                      locale={locale}
+                      components={pulseComponents}
+                      showOwnHeading
+                    />
+                  </div>
                 </>
               )
             }
             return (
               <>
                 {split.before ? <BlogPostBody markdown={split.before} /> : null}
-                <PulseEmbed
-                  data={pulseData}
-                  locale={locale}
-                  components={pulseComponents}
-                  showOwnHeading={false}
-                />
+                <div id={PULSE_EMBED_ANCHOR_ID} className="scroll-mt-24">
+                  <PulseEmbed
+                    data={pulseData}
+                    locale={locale}
+                    components={pulseComponents}
+                    showOwnHeading={false}
+                  />
+                </div>
                 {split.after ? <BlogPostBody markdown={split.after} /> : null}
               </>
             )
@@ -263,6 +342,15 @@ export default async function BlogPostPage(props: Props) {
       {!isAuthenticated && <BlogSoftSignupCta slug={slug} />}
 
       <BlogComments blogPostId={post.id} locale={locale} />
+
+      {pulseMarketId && pulseData ? (
+        <BlogPulseStickyCta
+          embedAnchorId={PULSE_EMBED_ANCHOR_ID}
+          locale={locale}
+          blogSlug={slug}
+          marketId={pulseData.marketId}
+        />
+      ) : null}
     </article>
   )
 }

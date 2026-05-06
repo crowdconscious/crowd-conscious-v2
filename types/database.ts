@@ -1366,6 +1366,8 @@ export interface Database {
           title_en: string | null
           excerpt: string
           excerpt_en: string | null
+          tldr: string | null
+          tldr_en: string | null
           content: string
           content_en: string | null
           cover_image_url: string | null
@@ -1394,6 +1396,8 @@ export interface Database {
           title_en?: string | null
           excerpt: string
           excerpt_en?: string | null
+          tldr?: string | null
+          tldr_en?: string | null
           content: string
           content_en?: string | null
           cover_image_url?: string | null
@@ -1422,6 +1426,8 @@ export interface Database {
           title_en?: string | null
           excerpt?: string
           excerpt_en?: string | null
+          tldr?: string | null
+          tldr_en?: string | null
           content?: string
           content_en?: string | null
           cover_image_url?: string | null

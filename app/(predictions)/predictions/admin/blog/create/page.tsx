@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { ImageUpload } from '@/components/ui/ImageUpload'
 import BlogPulseEmbedFields from '@/components/blog/BlogPulseEmbedFields'
+import SuggestTldrButton from '@/components/blog/SuggestTldrButton'
 import { MarkdownEditor } from '@/components/admin/MarkdownEditor'
 import {
   normalizePulseEmbedComponents,
@@ -30,6 +31,8 @@ export default function AdminBlogCreatePage() {
   const [slug, setSlug] = useState('')
   const [excerpt, setExcerpt] = useState('')
   const [excerptEn, setExcerptEn] = useState('')
+  const [tldr, setTldr] = useState('')
+  const [tldrEn, setTldrEn] = useState('')
   const [content, setContent] = useState('')
   const [contentEn, setContentEn] = useState('')
   const [category, setCategory] = useState<string>('insight')
@@ -38,7 +41,7 @@ export default function AdminBlogCreatePage() {
   const [coverUrl, setCoverUrl] = useState<string | null>(null)
   const [embedEnabled, setEmbedEnabled] = useState(false)
   const [pulseMarketId, setPulseMarketId] = useState<string | null>(null)
-  const [pulseEmbedPosition, setPulseEmbedPosition] = useState<PulseEmbedPosition>('before_cta')
+  const [pulseEmbedPosition, setPulseEmbedPosition] = useState<PulseEmbedPosition>('after_tldr')
   const [pulseComponents, setPulseComponents] = useState<PulseEmbedComponentKey[]>(() =>
     normalizePulseEmbedComponents(null)
   )
@@ -80,6 +83,8 @@ export default function AdminBlogCreatePage() {
           slug: slug.trim() || undefined,
           excerpt,
           excerpt_en: excerptEn,
+          tldr,
+          tldr_en: tldrEn,
           content,
           content_en: contentEn,
           category,
@@ -152,6 +157,40 @@ export default function AdminBlogCreatePage() {
         <div>
           <label className="mb-1 block text-sm text-slate-400">Excerpt (EN)</label>
           <textarea className={`${input} min-h-[80px]`} value={excerptEn} onChange={(e) => setExcerptEn(e.target.value)} />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm text-slate-400">
+            TL;DR (ES) — &ldquo;En 30 segundos&rdquo;
+          </label>
+          <textarea
+            className={`${input} min-h-[110px]`}
+            value={tldr}
+            onChange={(e) => setTldr(e.target.value)}
+            placeholder={'3–5 líneas cortas, una por bullet. Por ejemplo:\nMiguel Hidalgo recibe el Mundial 2026.\nLa alcaldía pregunta qué priorizar.\nVota en 30 segundos. Cierra el 12 de mayo.'}
+          />
+          <SuggestTldrButton
+            title={title}
+            titleEn={titleEn}
+            content={content}
+            contentEn={contentEn}
+            pulseMarketId={embedEnabled ? pulseMarketId : null}
+            onSuggested={(es, en) => {
+              setTldr(es)
+              if (en) setTldrEn(en)
+            }}
+          />
+          <p className="mt-2 text-xs text-slate-500">
+            Se muestra debajo de la imagen de portada. Si escribes varias líneas, se renderiza como bullets; una sola línea se muestra como párrafo. Mantenlo corto: este es el gancho para lectores que no van a leer todo.
+          </p>
+        </div>
+        <div>
+          <label className="mb-1 block text-sm text-slate-400">TL;DR (EN)</label>
+          <textarea
+            className={`${input} min-h-[110px]`}
+            value={tldrEn}
+            onChange={(e) => setTldrEn(e.target.value)}
+            placeholder={'3–5 short lines, one per bullet.'}
+          />
         </div>
         <div>
           <label className="mb-1 block text-sm text-slate-400">Contenido (ES) *</label>
