@@ -87,23 +87,26 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     tldrSingleLine ||
     (locale === 'en' && post.excerpt_en?.trim() ? post.excerpt_en : post.excerpt)
 
-  const rawCover = post.cover_image_url
-  const absoluteCover =
-    rawCover && /^https?:\/\//i.test(rawCover) ? rawCover : rawCover ? `${SITE_URL}${rawCover}` : null
   /**
-   * og:image priority: author-provided cover → dynamic Pulse card →
-   * site default. Putting the cover first ensures WhatsApp / LinkedIn /
-   * Twitter show the editorial thumbnail that matches the article, even
-   * when a Pulse market is embedded. Auto-generated Pulse-analysis posts
-   * (where content-creator sets cover_image_url to /api/og/blog/{slug})
-   * still render the Pulse card because their cover IS that URL —
-   * self-consistent.
+   * og:image — always the dynamic /api/og/blog/[slug] endpoint.
+   *
+   * Why this is the source of truth (and not cover_image_url):
+   *   - Editor-uploaded covers come in any aspect ratio + dimension.
+   *     WhatsApp / Facebook downgrade to the small thumbnail layout
+   *     when the image is < 600×315, and Instagram drops the preview
+   *     entirely. The dynamic endpoint always returns a 1200×630 PNG.
+   *   - Even when a cover is large enough, declaring explicit width /
+   *     height / type in the meta tag is what convinces scrapers to
+   *     render the large-preview variant. The dynamic URL guarantees
+   *     those dimensions match reality.
+   *   - The endpoint itself decides whether to use the cover photo as
+   *     a background (Layout 2 in route.tsx) or fall back to a title
+   *     card. So the editorial photo still shows up in the preview —
+   *     just inside a frame that's always the right size.
    */
-  const ogImage =
-    absoluteCover ||
-    (post.pulse_market_id
-      ? `${SITE_URL}/api/og/blog/${encodeURIComponent(slug)}`
-      : `${SITE_URL}/opengraph-image`)
+  const ogImage = `${SITE_URL}/api/og/blog/${encodeURIComponent(slug)}${
+    locale === 'en' ? '?lang=en' : ''
+  }`
 
   const canonicalUrl = `${SITE_URL}/blog/${slug}`
   const ogLocale = locale === 'en' ? 'en_US' : 'es_MX'
@@ -121,13 +124,28 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
       locale: ogLocale,
       publishedTime: post.published_at ?? undefined,
       modifiedTime: post.updated_at ?? post.published_at ?? undefined,
-      images: [{ url: ogImage, alt: title }],
+      images: [
+        {
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: title,
+          type: 'image/png',
+        },
+      ],
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description: description.slice(0, 200),
-      images: [{ url: ogImage, alt: title }],
+      images: [
+        {
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
     },
   }
 }
