@@ -200,7 +200,7 @@ export default function AdminBlogCreatePage() {
             minHeight={320}
             label="Contenido en español"
             placeholder="Escribe, o pega desde Google Docs / ChatGPT / una página web…"
-            hint="Consejo: selecciona una línea y pulsa H2 para encabezado; selecciona palabras y pulsa ⌘K para enlace. La cita verde se renderiza con el borde esmeralda de la marca."
+            hint="Consejos: H2 para encabezados, ⌘K para enlace, cita verde para resaltar. Imágenes: clic en el ícono de imagen, arrastra un archivo al editor o pega un screenshot (JPG/PNG/WebP/GIF, hasta 5MB). Para añadir un pie de foto usa ![alt](url &quot;Pie de foto&quot;)."
           />
         </div>
         <div>

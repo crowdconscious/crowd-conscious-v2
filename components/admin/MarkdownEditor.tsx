@@ -15,9 +15,21 @@ import {
   Minus,
   Eye,
   Pencil,
+  Image as ImageIcon,
+  Loader2,
 } from 'lucide-react'
 import { htmlToMarkdown } from '@/lib/html-to-markdown'
 import { normalizeBlogMarkdownForDisplay } from '@/lib/blog-markdown'
+import { markdownImageComponents } from '@/components/blog/blog-image-components'
+
+const IMAGE_UPLOAD_ENDPOINT = '/api/predictions/admin/blog-posts/upload-image'
+const ALLOWED_IMAGE_MIME = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+])
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024
 
 /**
  * Markdown-backed rich editor for the admin blog flow.
@@ -57,7 +69,11 @@ export function MarkdownEditor({
   id?: string
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const imageInputRef = useRef<HTMLInputElement>(null)
   const [mode, setMode] = useState<'write' | 'preview'>('write')
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [dragActive, setDragActive] = useState(false)
 
   // Wrap the current selection (or insert placeholder text when nothing
   // is selected). Works for inline markers like `**bold**`, `*italic*`,
@@ -142,6 +158,106 @@ export function MarkdownEditor({
     [value, onChange]
   )
 
+  // Insert markdown image syntax at the current caret position. We deliberately
+  // omit the alt text so the user can fill it in by selecting the inserted
+  // placeholder — accessible alt text matters and forcing a prompt up front
+  // makes the toolbar feel slow. Caption is the markdown `title` attribute
+  // (`"…"`) so authors can add a figcaption inline if they want.
+  const insertImageMarkdown = useCallback(
+    (url: string) => {
+      const ta = textareaRef.current
+      const altPlaceholder = 'descripción de la imagen'
+      const snippet = `\n\n![${altPlaceholder}](${url})\n\n`
+      if (!ta) {
+        onChange(value + snippet)
+        return
+      }
+      const start = ta.selectionStart
+      const end = ta.selectionEnd
+      const next = value.slice(0, start) + snippet + value.slice(end)
+      onChange(next)
+      requestAnimationFrame(() => {
+        ta.focus()
+        // Select the placeholder so the user can immediately type real alt text.
+        const altStart = start + 3 // after "\n\n!["
+        const altEnd = altStart + altPlaceholder.length
+        ta.setSelectionRange(altStart, altEnd)
+      })
+    },
+    [value, onChange]
+  )
+
+  const uploadImageFile = useCallback(
+    async (file: File): Promise<void> => {
+      setUploadError(null)
+      if (!ALLOWED_IMAGE_MIME.has(file.type)) {
+        setUploadError('Formato no soportado. Usa JPG, PNG, WebP o GIF.')
+        return
+      }
+      if (file.size > MAX_IMAGE_BYTES) {
+        setUploadError(
+          `La imagen pesa ${(file.size / 1024 / 1024).toFixed(1)}MB. Máximo 5MB.`
+        )
+        return
+      }
+      setUploading(true)
+      try {
+        const fd = new FormData()
+        fd.append('file', file)
+        const res = await fetch(IMAGE_UPLOAD_ENDPOINT, {
+          method: 'POST',
+          body: fd,
+        })
+        const json = (await res.json().catch(() => ({}))) as {
+          ok?: boolean
+          url?: string
+          error?: string
+        }
+        if (!res.ok || !json.url) {
+          throw new Error(json.error ?? `Subida falló (${res.status})`)
+        }
+        insertImageMarkdown(json.url)
+      } catch (e) {
+        setUploadError(e instanceof Error ? e.message : 'Error al subir')
+      } finally {
+        setUploading(false)
+      }
+    },
+    [insertImageMarkdown]
+  )
+
+  const handleImagePickerChange = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0]
+      e.target.value = ''
+      if (!file) return
+      await uploadImageFile(file)
+    },
+    [uploadImageFile]
+  )
+
+  const onDrop = useCallback(
+    (e: React.DragEvent<HTMLTextAreaElement>) => {
+      e.preventDefault()
+      setDragActive(false)
+      const file = Array.from(e.dataTransfer.files).find((f) =>
+        f.type.startsWith('image/')
+      )
+      if (!file) return
+      void uploadImageFile(file)
+    },
+    [uploadImageFile]
+  )
+
+  const onDragOver = useCallback((e: React.DragEvent<HTMLTextAreaElement>) => {
+    if (Array.from(e.dataTransfer.items).some((it) => it.kind === 'file')) {
+      e.preventDefault()
+      setDragActive(true)
+    }
+  }, [])
+
+  const onDragLeave = useCallback(() => setDragActive(false), [])
+
   const linkPrompt = useCallback(() => {
     const ta = textareaRef.current
     if (!ta) return
@@ -159,6 +275,18 @@ export function MarkdownEditor({
 
   const onPaste = useCallback(
     (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+      // 1) Pasted image (screenshot / "copy image"): upload + insert.
+      // We check this BEFORE the HTML path because some clipboards include
+      // both an HTML wrapper and a file — we always prefer the file.
+      const pastedFile = Array.from(e.clipboardData.files).find((f) =>
+        f.type.startsWith('image/')
+      )
+      if (pastedFile) {
+        e.preventDefault()
+        void uploadImageFile(pastedFile)
+        return
+      }
+
       const html = e.clipboardData.getData('text/html')
       if (!html || !html.trim()) return
       // Ignore HTML that is already a single code block (<pre>/<code>) —
@@ -188,7 +316,7 @@ export function MarkdownEditor({
         ta.setSelectionRange(cursor, cursor)
       })
     },
-    [value, onChange]
+    [value, onChange, uploadImageFile]
   )
 
   const onKeyDown = useCallback(
@@ -239,6 +367,24 @@ export function MarkdownEditor({
           onClick={linkPrompt}
           icon={<LinkIcon className="h-4 w-4" />}
         />
+        <ToolbarButton
+          label="Insertar imagen"
+          onClick={() => imageInputRef.current?.click()}
+          icon={
+            uploading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <ImageIcon className="h-4 w-4" />
+            )
+          }
+        />
+        <input
+          ref={imageInputRef}
+          type="file"
+          accept="image/png,image/jpeg,image/webp,image/gif"
+          className="hidden"
+          onChange={handleImagePickerChange}
+        />
         <ToolbarDivider />
         <ToolbarButton
           label="Cita / Callout verde"
@@ -280,19 +426,33 @@ export function MarkdownEditor({
 
       {/* Body */}
       {mode === 'write' ? (
-        <textarea
-          ref={textareaRef}
-          id={id}
-          aria-label={label}
-          className="block w-full resize-y rounded-b-lg bg-[#1a2029] px-4 py-3 font-mono text-sm text-white placeholder:text-gray-500 focus:outline-none"
-          style={{ minHeight }}
-          value={value}
-          placeholder={placeholder}
-          onChange={(e) => onChange(e.target.value)}
-          onPaste={onPaste}
-          onKeyDown={onKeyDown}
-          spellCheck
-        />
+        <div className="relative">
+          <textarea
+            ref={textareaRef}
+            id={id}
+            aria-label={label}
+            className={`block w-full resize-y rounded-b-lg bg-[#1a2029] px-4 py-3 font-mono text-sm text-white placeholder:text-gray-500 focus:outline-none transition-colors ${
+              dragActive ? 'ring-2 ring-emerald-500/60 ring-inset' : ''
+            }`}
+            style={{ minHeight }}
+            value={value}
+            placeholder={placeholder}
+            onChange={(e) => onChange(e.target.value)}
+            onPaste={onPaste}
+            onKeyDown={onKeyDown}
+            onDrop={onDrop}
+            onDragOver={onDragOver}
+            onDragLeave={onDragLeave}
+            spellCheck
+          />
+          {dragActive ? (
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-b-lg bg-emerald-500/10 backdrop-blur-[1px]">
+              <div className="rounded-full border border-emerald-500/40 bg-[#0f1419]/95 px-4 py-2 text-sm text-emerald-300">
+                Suelta para subir imagen
+              </div>
+            </div>
+          ) : null}
+        </div>
       ) : (
         <div
           className="rounded-b-lg bg-[#1a2029] px-4 py-4 overflow-auto"
@@ -318,13 +478,26 @@ export function MarkdownEditor({
                 prose-hr:border-emerald-500/30
                 prose-ul:marker:text-emerald-500/80"
             >
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownImageComponents}>
                 {normalizeBlogMarkdownForDisplay(value)}
               </ReactMarkdown>
             </div>
           )}
         </div>
       )}
+
+      {uploading || uploadError ? (
+        <div className="border-t border-[#2d3748] px-3 py-2 text-[11px] leading-snug">
+          {uploading ? (
+            <span className="inline-flex items-center gap-2 text-emerald-300/90">
+              <Loader2 className="h-3 w-3 animate-spin" /> Subiendo imagen…
+            </span>
+          ) : null}
+          {uploadError ? (
+            <span className="text-amber-400">{uploadError}</span>
+          ) : null}
+        </div>
+      ) : null}
 
       {hint ? (
         <div className="border-t border-[#2d3748] px-3 py-2 text-[11px] leading-snug text-slate-500">

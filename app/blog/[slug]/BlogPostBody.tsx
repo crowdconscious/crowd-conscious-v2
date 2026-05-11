@@ -3,6 +3,7 @@
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { normalizeBlogMarkdownForDisplay } from '@/lib/blog-markdown'
+import { markdownImageComponents } from '@/components/blog/blog-image-components'
 
 export function BlogPostBody({ markdown }: { markdown: string }) {
   const md = normalizeBlogMarkdownForDisplay(markdown)
@@ -20,9 +21,13 @@ export function BlogPostBody({ markdown }: { markdown: string }) {
         prose-pre:bg-[#1a2029] prose-pre:text-gray-300
         prose-li:text-gray-300
         prose-hr:border-gray-700
-        prose-ul:marker:text-emerald-500/80"
+        prose-ul:marker:text-emerald-500/80
+        prose-figure:my-8
+        prose-figcaption:text-center prose-figcaption:text-xs prose-figcaption:text-slate-400"
     >
-      <ReactMarkdown remarkPlugins={[remarkGfm]}>{md}</ReactMarkdown>
+      <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownImageComponents}>
+        {md}
+      </ReactMarkdown>
     </div>
   )
 }
