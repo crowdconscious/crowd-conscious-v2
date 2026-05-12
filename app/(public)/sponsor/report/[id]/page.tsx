@@ -184,10 +184,10 @@ export default async function SponsorReportPage({
 
             <div className="text-center pt-4">
               <a
-                href={`${baseUrl}/predictions/markets`}
+                href={`${baseUrl}/pulse`}
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition-colors"
               >
-                Browse all markets
+                Browse all Pulse
                 <ExternalLink className="w-4 h-4" />
               </a>
             </div>

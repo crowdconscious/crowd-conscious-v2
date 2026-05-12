@@ -236,7 +236,7 @@ export const emailTemplates = {
           </p>
           ${wasCorrect ? `<p style="color: #10b981; font-weight: bold;">${bonusXp ? `+${bonusXp} bonus XP earned!` : 'Your prediction was correct!'}</p>` : '<p style="color: #64748b;">Better luck next time — keep predicting!</p>'}
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${APP_URL}/predictions/markets" style="background: #14b8a6; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Browse Markets</a>
+            <a href="${APP_URL}/pulse" style="background: #14b8a6; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Browse Pulse</a>
           </div>
         </div>
       </div>

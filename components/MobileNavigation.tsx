@@ -14,7 +14,7 @@ export default function MobileNavigation() {
   const navItems = [
     { path: '/predictions', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/live', icon: Radio, label: 'Live' },
-    { path: '/predictions/markets', icon: TrendingUp, label: 'Markets' },
+    { path: '/predictions/pulse', icon: TrendingUp, label: 'Pulse' },
     { path: '/predictions/notifications', icon: Bell, label: 'Alerts' },
     { path: '/leaderboard', icon: Trophy, label: 'Leaderboard' },
     { path: '/profile', icon: User, label: 'Profile' },

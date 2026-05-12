@@ -38,7 +38,7 @@ const NAV_ITEMS_EN = [
   { href: '/predictions', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/live', label: 'Live', icon: Radio },
   { href: '/predictions/notifications', label: 'Notifications', icon: Bell },
-  { href: '/predictions/markets', label: 'Pulse', icon: TrendingUp },
+  { href: '/predictions/pulse', label: 'Pulse', icon: TrendingUp },
   { href: '/predictions/trades', label: 'My Votes', icon: Receipt },
   { href: '/predictions/leaderboard', label: 'Leaderboard', icon: Trophy },
   { href: '/predictions/inbox', label: 'Conscious Inbox', icon: Lightbulb },
@@ -49,7 +49,7 @@ const NAV_ITEMS_ES = [
   { href: '/predictions', label: 'Panel', icon: LayoutDashboard },
   { href: '/live', label: 'En Vivo', icon: Radio },
   { href: '/predictions/notifications', label: 'Notificaciones', icon: Bell },
-  { href: '/predictions/markets', label: 'Pulse', icon: TrendingUp },
+  { href: '/predictions/pulse', label: 'Pulse', icon: TrendingUp },
   { href: '/predictions/trades', label: 'Mis votos', icon: Receipt },
   { href: '/predictions/leaderboard', label: 'Clasificación', icon: Trophy },
   { href: '/predictions/inbox', label: 'Buzón Consciente', icon: Lightbulb },
@@ -104,7 +104,7 @@ export default function PredictionsShell({
 
   const getBadgeForHref = (href: string) => {
     if (href === '/predictions/inbox' && navCounts.inboxPending > 0) return navCounts.inboxPending
-    if (href === '/predictions/markets' && navCounts.activeMarkets > 0) return navCounts.activeMarkets
+    if (href === '/predictions/pulse' && navCounts.activeMarkets > 0) return navCounts.activeMarkets
     return null
   }
 

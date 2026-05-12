@@ -292,9 +292,13 @@ async function getDashboardData(userId: string, isAdmin: boolean) {
 
 export default async function PredictionsDashboardPage() {
   const user = await getCurrentUser()
-  // Anonymous users get the public market explorer (where guest voting works)
+  // Anonymous users get the consumer Pulse listing (where guest voting works)
   // instead of a login wall. Personal dashboard requires an account.
-  if (!user) redirect('/predictions/markets')
+  //
+  // We used to redirect to /predictions/markets here, but that route is now
+  // 308-redirected to /predictions in next.config.ts, which would loop us
+  // straight back into this auth check. /pulse is the public listing surface.
+  if (!user) redirect('/pulse')
 
   const isAdmin = (user as { user_type?: string } | null)?.user_type === 'admin'
   // Run the sponsor lookup in parallel with the main dashboard data.

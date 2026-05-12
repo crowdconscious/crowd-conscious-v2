@@ -28,7 +28,7 @@ const PUBLIC_EXACT_PATHS = ['/predictions']
 const PUBLIC_PREFIX_PATHS = [
   '/predictions/leaderboard',
   '/predictions/fund',
-  '/predictions/markets',
+  '/predictions/markets', // detail route /predictions/markets/[id] only — list page is redirected
   '/predictions/inbox',
   '/predictions/pulse',
 ]

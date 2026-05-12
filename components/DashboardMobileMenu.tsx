@@ -59,7 +59,7 @@ export default function DashboardMobileMenu() {
 
   const navItems = [
     { path: '/predictions', icon: Home, label: 'Dashboard' },
-    { path: '/predictions/markets', icon: BarChart3, label: 'Markets' },
+    { path: '/predictions/pulse', icon: BarChart3, label: 'Pulse' },
     { path: '/leaderboard', icon: Trophy, label: 'Leaderboard' },
     { path: '/achievements', icon: Award, label: 'Achievements' },
     { path: '/predictions/fund', icon: DollarSign, label: 'Fund' },

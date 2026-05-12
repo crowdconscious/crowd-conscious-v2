@@ -242,7 +242,7 @@ export function PredictionsDashboardClient({ data, sponsorCta }: Props) {
         id: 'streak',
         kind: 'streak',
         title: `Racha de ${currentStreak} días — vota hoy para mantenerla`,
-        href: '/predictions/markets',
+        href: '/predictions/pulse',
         cta: 'Votar',
         emphasis: 'urgent',
       })
@@ -375,8 +375,8 @@ export function PredictionsDashboardClient({ data, sponsorCta }: Props) {
             <AttentionFeed
               items={attentionItems}
               emptyMessage="Todo al día. Nada urgente por ahora."
-              emptyHref="/predictions/markets"
-              emptyCta="Explorar mercados nuevos"
+              emptyHref="/predictions/pulse"
+              emptyCta="Explorar Pulse nuevos"
             />
           </div>
 
