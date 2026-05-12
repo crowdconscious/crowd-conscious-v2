@@ -217,7 +217,7 @@ export async function POST(request: NextRequest) {
                       </div>
                       
                       <div style="text-align: center;">
-                        <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'}/communities/${module.creator_community_id}/modules" class="button">
+                        <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'}/locations" class="button">
                           Editar Mi Módulo →
                         </a>
                       </div>

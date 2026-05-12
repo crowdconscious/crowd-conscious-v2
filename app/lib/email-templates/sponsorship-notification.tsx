@@ -356,7 +356,7 @@ export const SponsorshipNotification = ({
               </Button>
 
               <Button
-                href={`${APP_URL}/communities/${communityName.toLowerCase().replace(/\s+/g, '-')}`}
+                href={`${APP_URL}/locations`}
                 style={{
                   display: 'inline-block',
                   padding: '14px 35px',

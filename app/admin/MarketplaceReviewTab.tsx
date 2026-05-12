@@ -213,10 +213,10 @@ export default function MarketplaceReviewTab() {
                   <p className="text-sm font-medium text-slate-500 mb-1">Comunidad</p>
                   <p className="text-slate-900 font-medium">{module.communities?.name || 'Desconocida'}</p>
                   <Link
-                    href={`/communities/${module.communities?.slug || ''}`}
+                    href="/locations"
                     className="text-sm text-purple-600 hover:text-purple-700 flex items-center gap-1"
                   >
-                    Ver comunidad <ExternalLink className="w-3 h-3" />
+                    Ver en Lugares Conscientes <ExternalLink className="w-3 h-3" />
                   </Link>
                 </div>
               </div>

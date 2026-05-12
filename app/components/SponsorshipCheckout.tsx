@@ -817,11 +817,13 @@ export default function SponsorshipCheckout({
           achievements={celebration.achievements}
           onClose={() => {
             setCelebration(null)
-            // Call onSuccess after closing celebration
+            // Call onSuccess after closing celebration. Legacy fallback
+            // pointed at /communities/{id}/content/{id} which now 308s
+            // to /locations; surface that directly to avoid the hop.
             if (onSuccess) {
               onSuccess()
-            } else if (communityId) {
-              window.location.href = `/communities/${communityId}/content/${contentId}`
+            } else {
+              window.location.href = '/locations'
             }
           }}
         />

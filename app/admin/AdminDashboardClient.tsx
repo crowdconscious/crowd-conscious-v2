@@ -304,7 +304,7 @@ function OverviewTab({
                     </div>
                     <div className="flex items-center gap-2">
                       <Link
-                        href={`/communities/${community.id}`}
+                        href="/locations"
                         className="text-teal-600 hover:text-teal-700 text-sm font-medium"
                       >
                         View
@@ -344,7 +344,7 @@ function OverviewTab({
                     </div>
                     <div className="flex items-center gap-2">
                       <Link
-                        href={`/communities/${item.community_id}/content/${item.id}`}
+                        href="/locations"
                         className="text-teal-600 hover:text-teal-700 text-sm font-medium"
                       >
                         View

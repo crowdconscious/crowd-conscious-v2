@@ -255,7 +255,7 @@ export default function DashboardCalendar({ userId }: DashboardCalendarProps) {
                     </div>
                   </div>
                   <a
-                    href={`/communities/${event.community_id}`}
+                    href="/locations"
                     className="text-teal-600 hover:text-teal-700 text-sm font-medium"
                   >
                     View →

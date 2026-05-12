@@ -100,12 +100,12 @@ export default function SimpleDashboard({ user, userCommunities }: SimpleDashboa
           </Link>
 
           <Link
-            href="/communities/new"
+            href="/locations"
             className="p-4 border-2 border-dashed border-slate-300 rounded-lg hover:border-teal-500 hover:bg-teal-50 transition-colors text-center group"
           >
             <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">➕</div>
-            <h3 className="font-semibold text-slate-900">Create Community</h3>
-            <p className="text-sm text-slate-600">Start something new</p>
+            <h3 className="font-semibold text-slate-900">Conscious Locations</h3>
+            <p className="text-sm text-slate-600">Browse or suggest a place</p>
           </Link>
 
           <div className="p-4 border-2 border-dashed border-slate-300 rounded-lg hover:border-teal-500 hover:bg-teal-50 transition-colors text-center group cursor-pointer">
@@ -134,7 +134,7 @@ export default function SimpleDashboard({ user, userCommunities }: SimpleDashboa
           {userCommunities.length > 0 ? (
             <div className="space-y-3">
               {userCommunities.slice(0, 5).map((community) => (
-                <Link key={community.id} href={`/communities/${community.id}`}>
+                <Link key={community.id} href="/locations">
                   <div className="p-4 border border-slate-200 rounded-lg hover:border-teal-500 hover:bg-teal-50 transition-colors">
                     <h3 className="font-semibold text-slate-900 mb-1">{community.name}</h3>
                     <p className="text-sm text-slate-600 mb-2 line-clamp-2">
