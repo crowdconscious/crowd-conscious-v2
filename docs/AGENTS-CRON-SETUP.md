@@ -2,36 +2,37 @@
 
 ## Schedule (UTC)
 
-> **Source of truth:** `vercel.json` in the repo root. The table below
-> is kept in sync with `vercel.json` manually — if they disagree, trust
-> `vercel.json`.
+> **Source of truth:** `vercel.json` in the repo root. The tables below
+> are kept in sync with `vercel.json` manually — if they disagree, trust
+> `vercel.json`. CDMX times shown are CST (UTC−6); during DST add an hour.
 
-### Daily / weekly agents (America/Mexico_City equivalents, CST = UTC−6)
+### Scheduled crons (from `vercel.json`)
 
-| Agent | Schedule | UTC | Mexico City |
-|-------|----------|-----|-------------|
-| News Monitor (daily) | `0 14 * * *` | 14:00 | 08:00 |
-| Content Creator (M/W/F) | `30 14 * * 1,3,5` | 14:30 | 08:30 |
-| Newsletter (M/W/F) | `0 14 * * 1,3,5` | 14:00 | 08:00 |
-| Inbox Curator (Mon only) | `5 14 * * 1` | 14:05 | 08:05 |
-| CEO Digest (Mon only — weekly) | `0 16 * * 1` | 16:00 | 10:00 |
+| Agent / route | Schedule | UTC | CDMX |
+|-------|----------|-----|------|
+| Newsletter (M/W/F) — `/api/cron/newsletter` | `0 14 * * 1,3,5` | 14:00 | 08:00 |
+| CEO Digest (Mon) — `/api/cron/agents/ceo-digest` | `0 16 * * 1` | 16:00 | 10:00 |
+| Re-engagement (Mon) — `/api/cron/reengagement-inactive` | `0 16 * * 1` | 16:00 | 10:00 |
+| Monthly Impact (1st of month) — `/api/cron/monthly-impact` | `0 10 1 * *` | 10:00 | 04:00 |
+| Daily archive — `/api/cron/archive` | `0 6 * * *` | 06:00 | 00:00 |
+| Live reminders — `/api/cron/live-reminders` | `*/10 * * * *` | every 10 min | — |
+| Live auto-end — `/api/cron/live-auto-end` | `*/5 * * * *` | every 5 min | — |
+| Pulse auto-resolve — `/api/cron/pulse-auto-resolve` | `5 * * * *` | hourly | — |
 
-### Weekly / monthly
+### Manual-only agents (no cron — admins click "Run Now")
 
-| Agent | Schedule | UTC |
-|-------|----------|-----|
-| Re-engagement (Mon) | `0 16 * * 1` | 16:00 Monday |
-| Sponsor Report (1st of month) | `0 9 1 * *` | 09:00 |
-| Monthly Impact (1st of month) | `0 10 1 * *` | 10:00 |
-| Daily archive | `0 6 * * *` | 06:00 |
+These agents have full route + agent code, but are intentionally **not
+scheduled** in `vercel.json`. They are run on demand from the Agent
+Dashboard (`/predictions/admin/agents`) so an editor can review output
+before it goes anywhere:
 
-### Live / tight-interval
+- News Monitor — `/api/predictions/admin/run-agent` with `agent: news-monitor`
+- Content Creator — `/api/predictions/admin/run-agent` with `agent: content-creator`
+- Inbox Curator — `/api/predictions/admin/run-agent` with `agent: inbox-curator`
+- Sponsor Pulse Report — auto-runs on demand when a sponsor opens / re-downloads a report; also runnable from the agent dashboard
 
-| Route | Schedule |
-|-------|----------|
-| Live reminders | `*/10 * * * *` |
-| Live auto-end | `*/5 * * * *` |
-| Pulse auto-resolve | `5 * * * *` |
+If you want any of them on a schedule, add the route under `functions`
++ `crons` in `vercel.json` and add a row to the table above.
 
 ## Required Setup
 
