@@ -48,7 +48,7 @@ const COPY = {
     empty_cta: 'Ver planes de Conscious Pulse',
     active_since: 'Activa desde',
     plan_label: 'Plan',
-    pulse_usage: 'Mercados Pulse',
+    pulse_usage: 'Pulse activos',
     pulse_of: 'de',
     pulse_used: 'utilizados',
     unlimited: 'Ilimitado',

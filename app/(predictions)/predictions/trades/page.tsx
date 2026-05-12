@@ -73,7 +73,7 @@ export default function PredictionsTradesPage() {
         Back to dashboard
       </Link>
 
-      <h1 className="text-2xl font-bold text-white">My Predictions</h1>
+      <h1 className="text-2xl font-bold text-white">My Votes</h1>
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">

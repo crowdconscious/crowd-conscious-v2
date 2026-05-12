@@ -38,7 +38,7 @@ const NAV_ITEMS_EN = [
   { href: '/predictions', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/live', label: 'Live', icon: Radio },
   { href: '/predictions/notifications', label: 'Notifications', icon: Bell },
-  { href: '/predictions/markets', label: 'Markets', icon: TrendingUp },
+  { href: '/predictions/markets', label: 'Pulse', icon: TrendingUp },
   { href: '/predictions/trades', label: 'My Votes', icon: Receipt },
   { href: '/predictions/leaderboard', label: 'Leaderboard', icon: Trophy },
   { href: '/predictions/inbox', label: 'Conscious Inbox', icon: Lightbulb },
@@ -49,7 +49,7 @@ const NAV_ITEMS_ES = [
   { href: '/predictions', label: 'Panel', icon: LayoutDashboard },
   { href: '/live', label: 'En Vivo', icon: Radio },
   { href: '/predictions/notifications', label: 'Notificaciones', icon: Bell },
-  { href: '/predictions/markets', label: 'Mercados', icon: TrendingUp },
+  { href: '/predictions/markets', label: 'Pulse', icon: TrendingUp },
   { href: '/predictions/trades', label: 'Mis votos', icon: Receipt },
   { href: '/predictions/leaderboard', label: 'Clasificación', icon: Trophy },
   { href: '/predictions/inbox', label: 'Buzón Consciente', icon: Lightbulb },
@@ -233,7 +233,7 @@ export default function PredictionsShell({
               }`}
             >
               <ShieldCheck className="w-4 h-4" />
-              {language === 'es' ? 'Resolver Mercados' : 'Resolve Markets'}
+              {language === 'es' ? 'Resolver Pulse' : 'Resolve Pulse'}
             </Link>
             <Link
               href="/predictions/admin/agents"
@@ -484,7 +484,7 @@ export default function PredictionsShell({
                     }`}
                   >
                     <ShieldCheck className="w-4 h-4" />
-                    {language === 'es' ? 'Resolver Mercados' : 'Resolve Markets'}
+                    {language === 'es' ? 'Resolver Pulse' : 'Resolve Pulse'}
                   </Link>
                   <Link
                     href="/predictions/admin/agents"

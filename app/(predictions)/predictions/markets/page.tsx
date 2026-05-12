@@ -7,9 +7,9 @@ import { MARKETS_PAGE_SIZE } from '@/lib/predictions/markets-page'
 import { isValidMarketCategory } from '@/lib/market-categories'
 
 export const metadata: Metadata = {
-  title: { absolute: 'Mercados | Crowd Conscious' },
+  title: { absolute: 'Pulse | Crowd Conscious' },
   description:
-    'Lista completa de mercados de predicción en Crowd Conscious: filtra por categoría, ordena por actividad o cierre.',
+    'Lista completa de Pulse activos en Crowd Conscious: filtra por categoría, ordena por actividad o cierre.',
   alternates: {
     canonical: `${SITE_URL}/predictions/markets`,
     languages: {

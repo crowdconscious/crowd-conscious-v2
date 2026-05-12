@@ -459,7 +459,7 @@ export default function ProfileClient({
 
       {/* Recent Predictions */}
       <div>
-        <h2 className="text-2xl font-bold text-white mb-6">My Predictions</h2>
+        <h2 className="text-2xl font-bold text-white mb-6">My Votes</h2>
 
         {recentPredictions.length > 0 ? (
           <div className="space-y-3">

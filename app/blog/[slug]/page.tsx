@@ -250,7 +250,7 @@ export default async function BlogPostPage(props: Props) {
     CATEGORY_LABEL[post.category]?.[locale] ?? CATEGORY_LABEL[post.category]?.en ?? post.category
 
   const relatedSectionTitle =
-    locale === 'es' ? 'Mercados relacionados' : 'Related markets'
+    locale === 'es' ? 'Pulse relacionados' : 'Related Pulse'
 
   return (
     <article className="mx-auto max-w-3xl px-4 py-12">
