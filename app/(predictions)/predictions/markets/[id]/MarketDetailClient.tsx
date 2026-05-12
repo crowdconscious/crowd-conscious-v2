@@ -421,7 +421,7 @@ export function MarketDetailClient({
   return (
     <div className="space-y-6 pb-8">
       <Link
-        href={isAuthenticated ? '/predictions' : '/markets'}
+        href={isAuthenticated ? '/predictions' : '/pulse'}
         className="inline-flex items-center gap-1 text-sm text-cc-text-secondary transition-colors hover:text-cc-text-primary"
       >
         ← {locale === 'es' ? 'Volver a mercados' : 'Back to markets'}

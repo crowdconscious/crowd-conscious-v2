@@ -57,7 +57,7 @@ export default async function SponsorSuccessPage({
   const shareText = encodeURIComponent(
     session?.marketTitle
       ? `I just sponsored "${session.marketTitle}" on Crowd Conscious! 🎯`
-      : 'I just sponsored a prediction market on Crowd Conscious! 🎯'
+      : 'I just sponsored a Pulse on Crowd Conscious! 🎯'
   )
   const twitterShare = `https://twitter.com/intent/tweet?text=${shareText}&url=${encodeURIComponent(shareUrl)}`
   const linkedInShare = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`

@@ -24,7 +24,7 @@ const organizationJsonLd = {
   url: SITE_URL,
   logo: `${SITE_URL}/images/logo-small.png`,
   description:
-    "Free-to-play prediction markets platform where your opinion drives real community impact.",
+    "Consultas públicas con confianza ponderada — tu voto y tu certeza importan. Las marcas patrocinan el impacto.",
   sameAs: [
     "https://twitter.com/crowdconscious",
     "https://instagram.com/crowdconscious",
@@ -39,27 +39,26 @@ const organizationJsonLd = {
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default:
-      "Crowd Conscious — Predicciones Gratis que Financian Causas Reales",
+    default: "Crowd Conscious — Consultas con confianza ponderada",
     template: "%s | Crowd Conscious",
   },
   description:
-    "Plataforma de predicciones gratuita donde tu voto genera impacto comunitario real. Vota sobre deportes, política y más — marcas patrocinan el Fondo Consciente. Mundial 2026.",
+    "Vota en consultas públicas sobre el Mundial 2026, tu ciudad y lo que te importa. Tu certeza pondera el resultado. Las marcas patrocinan el impacto.",
   keywords: [
-    "predicciones gratis",
-    "mercado de predicciones",
-    "prediction market",
+    "consultas públicas",
+    "conscious pulse",
+    "confianza ponderada",
+    "weighted confidence",
     "mundial 2026",
     "world cup 2026",
     "inteligencia colectiva",
     "collective intelligence",
-    "cause marketing",
     "impacto social",
-    "predicciones deportivas",
     "crowd conscious",
     "fondo consciente",
-    "free prediction platform",
-    "predicciones mundial mexico",
+    "consulta ciudadana",
+    "voto ponderado",
+    "ciudad de méxico",
   ],
   authors: [{ name: "Crowd Conscious" }],
   creator: "Crowd Conscious",
@@ -72,16 +71,15 @@ export const metadata: Metadata = {
     alternateLocale: ["en_US"],
     url: SITE_URL,
     siteName: "Crowd Conscious",
-    title:
-      "Crowd Conscious — Predicciones Gratis que Financian Causas Reales",
+    title: "Crowd Conscious — Consultas con confianza ponderada",
     description:
-      "Plataforma de predicciones gratuita donde tu voto genera impacto comunitario real. Vota sobre deportes, política y más.",
+      "Vota en consultas públicas sobre el Mundial 2026, tu ciudad y lo que te importa. Tu certeza pondera el resultado.",
     images: [
       {
         url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt: "Crowd Conscious — Predicciones con Propósito",
+        alt: "Crowd Conscious — Consultas con confianza ponderada",
         type: "image/png",
       },
     ],
@@ -89,9 +87,9 @@ export const metadata: Metadata = {
 
   twitter: {
     card: "summary_large_image",
-    title: "Crowd Conscious — Predicciones Gratis con Impacto Real",
+    title: "Crowd Conscious — Consultas con confianza ponderada",
     description:
-      "Vota sobre deportes, política y más. Marcas patrocinan el Fondo Consciente. 100% gratis.",
+      "Vota en consultas públicas. Tu certeza pondera el resultado. Las marcas patrocinan el impacto.",
     images: ["/opengraph-image"],
     creator: "@crowdconscious",
     site: "@crowdconscious",
