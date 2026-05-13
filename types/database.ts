@@ -38,6 +38,7 @@ export interface Database {
           email_notifications?: boolean | null
           created_at?: string
         }
+        Relationships: []
       }
       course_enrollments: {
         Row: {
@@ -85,6 +86,7 @@ export interface Database {
           enrolled_at?: string
           last_accessed_at?: string | null
         }
+        Relationships: []
       }
       coupon_codes: {
         Row: {
@@ -516,6 +518,7 @@ export interface Database {
           is_winner?: boolean | null
           created_at?: string
         }
+        Relationships: []
       }
 
       anonymous_participants: {
@@ -555,6 +558,7 @@ export interface Database {
           converted_to_user_id?: string | null
           ip_hash?: string | null
         }
+        Relationships: []
       }
 
       market_votes: {
@@ -605,6 +609,7 @@ export interface Database {
           created_at?: string
           reasoning?: string | null
         }
+        Relationships: []
       }
 
       prediction_markets: {
@@ -662,6 +667,22 @@ export interface Database {
           archived_at?: string | null
           is_draft?: boolean
           published_at?: string | null
+          /** Display name of the sponsor on the market card (migration 126). */
+          sponsor_name?: string | null
+          /** Sponsor logo URL rendered on the market card (migration 126). */
+          sponsor_logo_url?: string | null
+          /** Stripe sponsorship FK (migration 140). */
+          sponsor_id?: string | null
+          /** Sponsor's external link, surfaced on the market card (migration 129). */
+          sponsor_url?: string | null
+          /** Amount the sponsor paid for THIS market in MXN (migration 126). */
+          sponsor_contribution?: number | null
+          /** Display category for the sponsor badge: 'business' | 'individual' | … (migration 129). */
+          sponsor_type?: string | null
+          /** Free-form image URL — legacy alongside cover_image_url (migration 126). */
+          image_url?: string | null
+          /** Free-form resolution prose set after admin resolves (migration 126). */
+          resolution?: string | null
           created_at: string
           updated_at: string
         }
@@ -713,6 +734,14 @@ export interface Database {
           cover_image_url?: string | null
           is_draft?: boolean
           published_at?: string | null
+          sponsor_name?: string | null
+          sponsor_logo_url?: string | null
+          sponsor_id?: string | null
+          sponsor_url?: string | null
+          sponsor_contribution?: number | null
+          sponsor_type?: string | null
+          image_url?: string | null
+          resolution?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -764,9 +793,18 @@ export interface Database {
           cover_image_url?: string | null
           is_draft?: boolean
           published_at?: string | null
+          sponsor_name?: string | null
+          sponsor_logo_url?: string | null
+          sponsor_id?: string | null
+          sponsor_url?: string | null
+          sponsor_contribution?: number | null
+          sponsor_type?: string | null
+          image_url?: string | null
+          resolution?: string | null
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       prediction_trades: {
         Row: {
@@ -805,6 +843,7 @@ export interface Database {
           status?: 'pending' | 'filled' | 'cancelled'
           created_at?: string
         }
+        Relationships: []
       }
       prediction_positions: {
         Row: {
@@ -837,6 +876,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       prediction_wallets: {
         Row: {
@@ -875,6 +915,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       prediction_deposits: {
         Row: {
@@ -904,6 +945,7 @@ export interface Database {
           status?: string
           created_at?: string
         }
+        Relationships: []
       }
       sponsor_accounts: {
         Row: {
@@ -1056,6 +1098,85 @@ export interface Database {
           is_public?: boolean
           created_at?: string
         }
+        Relationships: []
+      }
+      sponsorships: {
+        // Schema source: supabase/migrations/140_sponsorships_table.sql
+        // + 142_sponsorships_report_token.sql. Hand-rolled (vs generated)
+        // intentionally — see CHANGELOG entry for the Tier 1 type sweep.
+        //
+        // tier/status are typed as plain `string` because the CHECK
+        // constraints written in migration 140 use the OLD names
+        // ('market'|'category'|'impact'|'patron') while the live codebase
+        // canonicalized to the NEW names ('starter'|'growth'|'champion'|
+        // 'anchor') via lib/sponsor-tiers.ts. The DB constraint was
+        // relaxed/updated outside the migrations folder we have, so a
+        // strict literal union here would lie. Once `supabase gen types`
+        // can be run, the actual DB enum will replace this.
+        Row: {
+          id: string
+          stripe_session_id: string | null
+          stripe_payment_intent_id: string | null
+          amount_mxn: number
+          tier: string
+          status: string
+          sponsor_name: string
+          sponsor_email: string
+          sponsor_url: string | null
+          sponsor_logo_url: string | null
+          market_id: string | null
+          category: string | null
+          fund_amount: number | null
+          platform_amount: number | null
+          start_date: string
+          end_date: string | null
+          created_at: string
+          updated_at: string
+          report_token: string | null
+        }
+        Insert: {
+          id?: string
+          stripe_session_id?: string | null
+          stripe_payment_intent_id?: string | null
+          amount_mxn: number
+          tier: string
+          status?: string
+          sponsor_name: string
+          sponsor_email: string
+          sponsor_url?: string | null
+          sponsor_logo_url?: string | null
+          market_id?: string | null
+          category?: string | null
+          fund_amount?: number | null
+          platform_amount?: number | null
+          start_date?: string
+          end_date?: string | null
+          created_at?: string
+          updated_at?: string
+          report_token?: string | null
+        }
+        Update: {
+          id?: string
+          stripe_session_id?: string | null
+          stripe_payment_intent_id?: string | null
+          amount_mxn?: number
+          tier?: string
+          status?: string
+          sponsor_name?: string
+          sponsor_email?: string
+          sponsor_url?: string | null
+          sponsor_logo_url?: string | null
+          market_id?: string | null
+          category?: string | null
+          fund_amount?: number | null
+          platform_amount?: number | null
+          start_date?: string
+          end_date?: string | null
+          created_at?: string
+          updated_at?: string
+          report_token?: string | null
+        }
+        Relationships: []
       }
       conscious_locations: {
         Row: {
@@ -1238,6 +1359,7 @@ export interface Database {
           updated_at?: string
           metadata?: Json
         }
+        Relationships: []
       }
       conscious_fund: {
         Row: {
@@ -1261,6 +1383,7 @@ export interface Database {
           current_balance?: number
           updated_at?: string
         }
+        Relationships: []
       }
       conscious_fund_transactions: {
         Row: {
@@ -1290,6 +1413,7 @@ export interface Database {
           description?: string | null
           created_at?: string
         }
+        Relationships: []
       }
       prediction_market_history: {
         Row: {
@@ -1316,6 +1440,7 @@ export interface Database {
           trade_count?: number
           recorded_at?: string
         }
+        Relationships: []
       }
       agent_content: {
         Row: {
@@ -1357,6 +1482,7 @@ export interface Database {
           archived_at?: string | null
           created_at?: string
         }
+        Relationships: []
       }
       blog_posts: {
         Row: {
@@ -1449,6 +1575,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       blog_comments: {
         Row: {
@@ -1481,6 +1608,46 @@ export interface Database {
           content?: string
           created_at?: string
         }
+        Relationships: []
+      }
+      cart_items: {
+        // Legacy corporate-marketplace cart. Schema source:
+        // sql-migrations/archive/create-cart-items-table.sql (since archived,
+        // table is still live in prod for the module_purchase webhook path).
+        // Only the columns currently touched by handlers are typed — this
+        // is a minimal stub to satisfy the typed supabase client; a full
+        // regen via `supabase gen types` will fill in the rest.
+        Row: {
+          id: string
+          user_id: string | null
+          corporate_account_id: string | null
+          module_id: string | null
+          employee_count: number | null
+          price_snapshot: number | null
+          added_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          corporate_account_id?: string | null
+          module_id?: string | null
+          employee_count?: number | null
+          price_snapshot?: number | null
+          added_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          corporate_account_id?: string | null
+          module_id?: string | null
+          employee_count?: number | null
+          price_snapshot?: number | null
+          added_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       sentiment_scores: {
         Row: {
@@ -1510,6 +1677,7 @@ export interface Database {
           sample_size?: number | null
           recorded_at?: string
         }
+        Relationships: []
       }
     }
     Views: {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth-server'
 import { findCronMeta } from '@/lib/cron-catalog'
+import { isAdminUser } from '@/lib/auth/is-admin'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -24,12 +25,7 @@ export async function POST(request: NextRequest) {
   if (!profile) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
-  const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim()
-  const sessionEmail = profile.email?.toLowerCase().trim()
-  const isAdmin =
-    profile.user_type === 'admin' ||
-    (!!adminEmail && !!sessionEmail && sessionEmail === adminEmail)
-  if (!isAdmin) {
+  if (!isAdminUser(profile)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 

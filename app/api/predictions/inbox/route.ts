@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { getCurrentUser } from '@/lib/auth-server'
+import { isAdminUser } from '@/lib/auth/is-admin'
 
 export async function GET(request: NextRequest) {
   try {
@@ -20,11 +21,7 @@ export async function GET(request: NextRequest) {
           .select('user_type, email')
           .eq('id', user.id)
           .maybeSingle()
-        const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim()
-        const profileEmail = (profile?.email as string | null)?.toLowerCase().trim() ?? null
-        isAdmin =
-          profile?.user_type === 'admin' ||
-          (!!adminEmail && !!profileEmail && profileEmail === adminEmail)
+        isAdmin = isAdminUser(profile)
       }
     }
     const includeArchived = includeArchivedRaw && isAdmin

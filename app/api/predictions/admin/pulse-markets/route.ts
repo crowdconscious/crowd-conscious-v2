@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth-server'
 import { createAdminClient } from '@/lib/supabase-admin'
+import { isAdminUser } from '@/lib/auth/is-admin'
 
 /** Pulse markets for blog admin dropdown: title, vote count, status. */
 export async function GET() {
@@ -11,8 +12,8 @@ export async function GET() {
     }
 
     const admin = createAdminClient()
-    const { data: profile } = await admin.from('profiles').select('user_type').eq('id', user.id).single()
-    if (profile?.user_type !== 'admin') {
+    const { data: profile } = await admin.from('profiles').select('user_type, email').eq('id', user.id).single()
+    if (!isAdminUser(profile)) {
       return NextResponse.json({ error: 'Admin only' }, { status: 403 })
     }
 

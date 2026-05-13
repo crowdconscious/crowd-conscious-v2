@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth-server'
 import { createClient } from '@/lib/supabase-server'
 import { createAdminClient } from '@/lib/supabase-admin'
+import { isAdminUser } from '@/lib/auth/is-admin'
 
 type Resource =
   | 'agent_content'
@@ -10,12 +11,6 @@ type Resource =
 
 const MAX_DAYS = 365 * 5
 const DEFAULT_DAYS = 30
-
-function isAdmin(profile: { user_type?: string } | null, email: string | null | undefined) {
-  const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim()
-  const em = email?.toLowerCase().trim()
-  return profile?.user_type === 'admin' || (!!adminEmail && !!em && em === adminEmail)
-}
 
 /**
  * Bulk-archive maintenance sweep. Lets the admin clean out long tails
@@ -47,7 +42,7 @@ export async function POST(request: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    if (!isAdmin(profile as { user_type?: string }, (user as { email?: string | null }).email)) {
+    if (!isAdminUser(profile)) {
       return NextResponse.json({ error: 'Admin only' }, { status: 403 })
     }
 

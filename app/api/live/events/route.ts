@@ -5,6 +5,7 @@ import { getCurrentUser } from '@/lib/auth-server'
 import { extractYoutubeVideoId } from '@/lib/youtube'
 import { LIVE_EVENT_TYPE_KEYS, type LiveEventTypeKey } from '@/lib/live-event-types'
 import { DEFAULT_LIVE_EVENT_DURATION_MINUTES } from '@/lib/live-event-default-durations'
+import { isAdminUser } from '@/lib/auth/is-admin'
 
 export async function GET(request: NextRequest) {
   try {
@@ -48,11 +49,11 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient()
     const { data: profile } = await supabase
       .from('profiles')
-      .select('user_type')
+      .select('user_type, email')
       .eq('id', user.id)
       .single()
 
-    if (profile?.user_type !== 'admin') {
+    if (!isAdminUser(profile)) {
       return Response.json({ error: 'Admin only' }, { status: 403 })
     }
 

@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase-admin'
 import { getCurrentUser } from '@/lib/auth-server'
 import { createClient } from '@/lib/supabase-server'
 import { createConsciousLocationVotingMarket } from '@/lib/locations/create-voting-market'
+import { isAdminUser } from '@/lib/auth/is-admin'
 
 async function requireAdmin() {
   const user = await getCurrentUser()
@@ -10,8 +11,8 @@ async function requireAdmin() {
     return { user: null, supabase: null, error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }
   }
   const supabase = await createClient()
-  const { data: profile } = await supabase.from('profiles').select('user_type').eq('id', user.id).single()
-  if (profile?.user_type !== 'admin') {
+  const { data: profile } = await supabase.from('profiles').select('user_type, email').eq('id', user.id).single()
+  if (!isAdminUser(profile)) {
     return { user: null, supabase: null, error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) }
   }
   return { user, supabase, error: null }

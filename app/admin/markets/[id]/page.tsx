@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import AdminMarketEditClient from './AdminMarketEditClient'
+import { isAdminUser } from '@/lib/auth/is-admin'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,11 +19,11 @@ export default async function AdminMarketEditPage({
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('user_type')
+    .select('user_type, email')
     .eq('id', (user as any).id)
     .single()
 
-  if (profile?.user_type !== 'admin') {
+  if (!isAdminUser(profile)) {
     redirect('/dashboard')
   }
 

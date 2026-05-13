@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { fetchIntelligenceDashboard } from '@/lib/intelligence-data'
+import { isAdminUser } from '@/lib/auth/is-admin'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,13 +20,7 @@ export async function GET(request: NextRequest) {
     .eq('id', user.id)
     .single()
 
-  const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim()
-  const sessionEmail = user.email?.toLowerCase().trim()
-  const isAdmin =
-    profile?.user_type === 'admin' ||
-    (!!adminEmail && !!sessionEmail && sessionEmail === adminEmail)
-
-  if (!isAdmin) {
+  if (!isAdminUser(profile)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 

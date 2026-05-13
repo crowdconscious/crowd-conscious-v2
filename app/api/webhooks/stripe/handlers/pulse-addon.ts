@@ -21,7 +21,7 @@ export async function handlePulseAddon(session: Stripe.Checkout.Session) {
 
   const supabase = getSupabase()
 
-  const { data: account, error: accErr } = await (supabase as any)
+  const { data: account, error: accErr } = await supabase
     .from('sponsor_accounts')
     .select('id, max_pulse_markets, total_spent, total_fund_contribution')
     .eq('id', sponsorAccountId)
@@ -36,7 +36,7 @@ export async function handlePulseAddon(session: Stripe.Checkout.Session) {
   const alloc = calculatePulseFundAllocationRounded(amountMXN, tierId)
   const fundAmount = alloc.fundAmountRounded
 
-  const { error: updErr } = await (supabase as any)
+  const { error: updErr } = await supabase
     .from('sponsor_accounts')
     .update({
       max_pulse_markets: Number(account.max_pulse_markets ?? 1) + qty,
@@ -50,11 +50,11 @@ export async function handlePulseAddon(session: Stripe.Checkout.Session) {
     throw new Error(updErr.message)
   }
 
-  const { error: fundTxError } = await (supabase as any)
+  const { error: fundTxError } = await supabase
     .from('conscious_fund_transactions')
     .insert({
       amount: fundAmount,
-      source_type: 'sponsorship' as const,
+      source_type: 'sponsorship',
       source_id: null,
       market_id: null,
       // Tag so the sponsor dashboard can surface add-on rows back to the
@@ -66,14 +66,14 @@ export async function handlePulseAddon(session: Stripe.Checkout.Session) {
     console.error('pulse_addon: fund insert failed', fundTxError)
   }
 
-  const { data: fundRow } = await (supabase as any)
+  const { data: fundRow } = await supabase
     .from('conscious_fund')
     .select('id, total_collected, current_balance')
     .limit(1)
     .single()
 
   if (fundRow) {
-    await (supabase as any)
+    await supabase
       .from('conscious_fund')
       .update({
         total_collected: Number(fundRow.total_collected) + fundAmount,

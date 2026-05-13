@@ -2,6 +2,7 @@ import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase-server'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { getCurrentUser } from '@/lib/auth-server'
+import { isAdminUser } from '@/lib/auth/is-admin'
 import type { PulseListingLocale } from '@/lib/i18n/pulse-listing'
 
 export type PulseListingMarketRow = {
@@ -54,10 +55,7 @@ export async function getPulseListingContext(): Promise<PulseListingContext> {
     .eq('id', user.id)
     .single()
 
-  const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim()
-  const em = prof?.email?.toLowerCase().trim()
-  const isAdmin =
-    prof?.user_type === 'admin' || (!!adminEmail && !!em && em === adminEmail)
+  const isAdmin = isAdminUser(prof)
 
   let sponsorAccount: { id: string; company_name: string } | null = null
   if (!isAdmin && prof?.email?.trim()) {

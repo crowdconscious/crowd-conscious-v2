@@ -63,7 +63,7 @@ export async function handleSponsorUpgrade(session: Stripe.Checkout.Session) {
 
   const supabase = getSupabase()
 
-  const { data: existing, error: fetchErr } = (await (supabase as any)
+  const { data: existing, error: fetchErr } = (await supabase
     .from('sponsor_accounts')
     .select(
       'id, access_token, tier, company_name, contact_email, total_spent, total_fund_contribution, used_pulse_markets, last_upgrade_session_id'
@@ -110,7 +110,7 @@ export async function handleSponsorUpgrade(session: Stripe.Checkout.Session) {
     total_fund_contribution: Number(existing.total_fund_contribution ?? 0) + fundAmount,
   }
 
-  const { error: updErr } = await (supabase as any)
+  const { error: updErr } = await supabase
     .from('sponsor_accounts')
     .update(patch)
     .eq('id', sponsorAccountId)
@@ -130,7 +130,7 @@ export async function handleSponsorUpgrade(session: Stripe.Checkout.Session) {
   endDate.setMonth(endDate.getMonth() + months)
   const reportToken = crypto.randomUUID()
 
-  const { data: sponsorship, error: sponsorError } = await (supabase as any)
+  const { data: sponsorship, error: sponsorError } = await supabase
     .from('sponsorships')
     .insert({
       stripe_session_id: session.id,
@@ -161,7 +161,7 @@ export async function handleSponsorUpgrade(session: Stripe.Checkout.Session) {
 
   const sponsorshipId = sponsorship?.id ?? null
 
-  const { error: sponsorshipLogError } = await (supabase as any)
+  const { error: sponsorshipLogError } = await supabase
     .from('sponsorship_log')
     .upsert(
       {
@@ -188,7 +188,7 @@ export async function handleSponsorUpgrade(session: Stripe.Checkout.Session) {
     console.error('[sponsor_upgrade] sponsorship_log upsert failed', sponsorshipLogError)
   }
 
-  const { error: fundTxError } = await (supabase as any)
+  const { error: fundTxError } = await supabase
     .from('conscious_fund_transactions')
     .insert({
       amount: fundAmount,
@@ -202,14 +202,14 @@ export async function handleSponsorUpgrade(session: Stripe.Checkout.Session) {
     console.error('[sponsor_upgrade] fund transaction insert failed', fundTxError)
   }
 
-  const { data: fundRow } = await (supabase as any)
+  const { data: fundRow } = await supabase
     .from('conscious_fund')
     .select('id, total_collected, current_balance')
     .limit(1)
     .single()
 
   if (fundRow) {
-    await (supabase as any)
+    await supabase
       .from('conscious_fund')
       .update({
         total_collected: Number(fundRow.total_collected) + fundAmount,

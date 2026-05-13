@@ -5,6 +5,7 @@ import { getCurrentUser } from '@/lib/auth-server'
 import { createClient } from '@/lib/supabase-server'
 import { LOCATION_CATEGORY_FORM_OPTIONS } from '@/lib/locations/categories'
 import { slugifyLocationName } from '@/lib/locations/slug'
+import { isAdminUser } from '@/lib/auth/is-admin'
 
 export const dynamic = 'force-dynamic'
 
@@ -73,10 +74,10 @@ async function requireAdmin() {
   const supabase = await createClient()
   const { data: profile } = await supabase
     .from('profiles')
-    .select('user_type')
+    .select('user_type, email')
     .eq('id', user.id)
     .single()
-  if (profile?.user_type !== 'admin') {
+  if (!isAdminUser(profile)) {
     return {
       user: null,
       error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }),

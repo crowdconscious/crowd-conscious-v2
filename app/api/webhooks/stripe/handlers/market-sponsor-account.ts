@@ -24,7 +24,7 @@ export async function handleMarketSponsorAccount(session: Stripe.Checkout.Sessio
 
   const supabase = getSupabase()
 
-  const { data: account, error: accErr } = await (supabase as any)
+  const { data: account, error: accErr } = await supabase
     .from('sponsor_accounts')
     .select('id, company_name, contact_email, logo_url, access_token, total_spent, total_fund_contribution')
     .eq('id', sponsorAccountId)
@@ -35,7 +35,7 @@ export async function handleMarketSponsorAccount(session: Stripe.Checkout.Sessio
     throw new Error('market_sponsor: account not found')
   }
 
-  const { data: market, error: mErr } = await (supabase as any)
+  const { data: market, error: mErr } = await supabase
     .from('prediction_markets')
     .select('id, title, sponsor_name')
     .eq('id', marketId)
@@ -61,7 +61,7 @@ export async function handleMarketSponsorAccount(session: Stripe.Checkout.Sessio
   endDate.setMonth(endDate.getMonth() + months)
   const reportToken = crypto.randomUUID()
 
-  const { data: sponsorship, error: sponsorError } = await (supabase as any)
+  const { data: sponsorship, error: sponsorError } = await supabase
     .from('sponsorships')
     .insert({
       stripe_session_id: session.id,
@@ -91,7 +91,7 @@ export async function handleMarketSponsorAccount(session: Stripe.Checkout.Sessio
 
   const sponsorshipId = sponsorship?.id
 
-  await (supabase as any)
+  await supabase
     .from('sponsorship_log')
     .upsert(
       {
@@ -114,7 +114,7 @@ export async function handleMarketSponsorAccount(session: Stripe.Checkout.Sessio
       { onConflict: 'stripe_session_id' }
     )
 
-  const { error: fundTxError } = await (supabase as any)
+  const { error: fundTxError } = await supabase
     .from('conscious_fund_transactions')
     .insert({
       amount: fundAmount,
@@ -128,14 +128,14 @@ export async function handleMarketSponsorAccount(session: Stripe.Checkout.Sessio
     console.error('market_sponsor: fund tx failed', fundTxError)
   }
 
-  const { data: fundRow } = await (supabase as any)
+  const { data: fundRow } = await supabase
     .from('conscious_fund')
     .select('id, total_collected, current_balance')
     .limit(1)
     .single()
 
   if (fundRow) {
-    await (supabase as any)
+    await supabase
       .from('conscious_fund')
       .update({
         total_collected: Number(fundRow.total_collected) + fundAmount,
@@ -145,7 +145,7 @@ export async function handleMarketSponsorAccount(session: Stripe.Checkout.Sessio
       .eq('id', fundRow.id)
   }
 
-  await (supabase as any)
+  await supabase
     .from('sponsor_accounts')
     .update({
       total_spent: Number(account.total_spent ?? 0) + amountMXN,
@@ -164,7 +164,7 @@ export async function handleMarketSponsorAccount(session: Stripe.Checkout.Sessio
     updated_at: new Date().toISOString(),
   }
 
-  const { error: marketError } = await (supabase as any)
+  const { error: marketError } = await supabase
     .from('prediction_markets')
     .update(sponsorPayload)
     .eq('id', marketId)

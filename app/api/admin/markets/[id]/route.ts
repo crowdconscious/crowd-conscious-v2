@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth-server'
 import { createClient } from '@/lib/supabase-server'
 import { supabase } from '@/lib/supabase'
+import { isAdminUser } from '@/lib/auth/is-admin'
 
 export async function PATCH(
   request: Request,
@@ -15,11 +16,11 @@ export async function PATCH(
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('user_type')
+      .select('user_type, email')
       .eq('id', (user as any).id)
       .single()
 
-    if (profile?.user_type !== 'admin') {
+    if (!isAdminUser(profile)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 

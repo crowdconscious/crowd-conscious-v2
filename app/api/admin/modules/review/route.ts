@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { ApiResponse } from '@/lib/api-responses'
 import { getCurrentUser } from '@/lib/auth-server'
+import { isAdminUser } from '@/lib/auth/is-admin'
 import { Resend } from 'resend'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
@@ -10,7 +11,7 @@ export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser()
 
-    if (!user || user.user_type !== 'admin') {
+    if (!user || !isAdminUser(user)) {
       return ApiResponse.unauthorized('Admin access required', 'NOT_ADMIN')
     }
 

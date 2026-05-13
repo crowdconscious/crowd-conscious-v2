@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth-server'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { parseNominationDescription } from '@/lib/inbox/parse-nomination'
+import { isAdminUser } from '@/lib/auth/is-admin'
 
 /** Mirrors the CHECK constraint on fund_causes.category (migration 205). */
 const CATEGORIES = [
@@ -40,11 +41,11 @@ export async function POST(
     const admin = createAdminClient()
     const { data: profile } = await admin
       .from('profiles')
-      .select('user_type')
+      .select('user_type, email')
       .eq('id', user.id)
       .single()
 
-    if (profile?.user_type !== 'admin') {
+    if (!isAdminUser(profile)) {
       return Response.json({ error: 'Admin only' }, { status: 403 })
     }
 

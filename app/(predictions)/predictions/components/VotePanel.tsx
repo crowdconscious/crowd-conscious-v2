@@ -25,11 +25,11 @@ import {
   voteReasoningMaxForMarket,
 } from '@/lib/vote-reasoning'
 
-type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row'] & {
-  market_type?: string
-  total_votes?: number
-  resolution?: string
-}
+// All three fields are now first-class columns on prediction_markets (see
+// migrations 126/129/140 + types/database.ts). Re-declaring them here as
+// nullable aliases is just a local-readability nicety so the rest of this
+// file can write `market.resolution` etc. without the wider Row union noise.
+type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row']
 
 type Outcome = {
   id: string

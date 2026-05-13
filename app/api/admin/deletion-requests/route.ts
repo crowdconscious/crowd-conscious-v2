@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { createServerAuth, getCurrentUser } from '@/lib/auth-server'
 import { ApiResponse } from '@/lib/api-responses'
+import { isAdminUser } from '@/lib/auth/is-admin'
 
 // Get all deletion requests (admin only)
 export async function GET() {
@@ -15,11 +16,11 @@ export async function GET() {
     // Check if user is admin
     const { data: profile } = await (supabase as any)
       .from('profiles')
-      .select('user_type')
+      .select('user_type, email')
       .eq('id', (user as any).id)
       .single()
 
-    if ((profile as any)?.user_type !== 'admin') {
+    if (!isAdminUser(profile as { user_type?: string | null; email?: string | null } | null)) {
       return ApiResponse.forbidden('Admin access required', 'NOT_ADMIN')
     }
 
@@ -82,11 +83,11 @@ export async function POST(request: NextRequest) {
     // For user deletion, only admins can request
     const { data: profile } = await (supabase as any)
       .from('profiles')
-      .select('user_type')
+      .select('user_type, email')
       .eq('id', (user as any).id)
       .single()
 
-    if ((profile as any)?.user_type !== 'admin') {
+    if (!isAdminUser(profile as { user_type?: string | null; email?: string | null } | null)) {
       return ApiResponse.forbidden('Only admins can request user deletion', 'INSUFFICIENT_PERMISSIONS')
     }
 

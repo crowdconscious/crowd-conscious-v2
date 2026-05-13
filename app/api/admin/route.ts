@@ -1,11 +1,7 @@
 import { NextRequest } from 'next/server'
 import { createServerAuth, getCurrentUser } from '@/lib/auth-server'
 import { ApiResponse } from '@/lib/api-responses'
-
-async function checkAdminPermission(user: any): Promise<boolean> {
-  if (!user) return false
-  return user.user_type === 'admin'
-}
+import { isAdminUser } from '@/lib/auth/is-admin'
 
 // DELETE /api/admin - Legacy community/content delete removed
 export async function DELETE(request: NextRequest) {
@@ -42,8 +38,7 @@ export async function GET(request: NextRequest) {
       return ApiResponse.unauthorized('Authentication required', 'AUTHENTICATION_REQUIRED')
     }
 
-    const isAdmin = await checkAdminPermission(user)
-    if (!isAdmin) {
+    if (!isAdminUser(user)) {
       return ApiResponse.forbidden('Admin permissions required', 'NOT_ADMIN')
     }
 

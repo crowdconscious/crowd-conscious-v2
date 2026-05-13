@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth-server'
 import { createClient } from '@/lib/supabase-server'
 import { createAdminClient } from '@/lib/supabase-admin'
+import { isAdminUser } from '@/lib/auth/is-admin'
 
 export async function GET(
   _request: NextRequest,
@@ -16,11 +17,11 @@ export async function GET(
     const client = await createClient()
     const { data: profile } = await client
       .from('profiles')
-      .select('user_type')
+      .select('user_type, email')
       .eq('id', user.id)
       .single()
 
-    if (profile?.user_type !== 'admin') {
+    if (!isAdminUser(profile)) {
       return NextResponse.json({ error: 'Admin only' }, { status: 403 })
     }
 
@@ -59,11 +60,11 @@ export async function PATCH(
     const client = await createClient()
     const { data: profile } = await client
       .from('profiles')
-      .select('user_type')
+      .select('user_type, email')
       .eq('id', user.id)
       .single()
 
-    if (profile?.user_type !== 'admin') {
+    if (!isAdminUser(profile)) {
       return NextResponse.json({ error: 'Admin only' }, { status: 403 })
     }
 

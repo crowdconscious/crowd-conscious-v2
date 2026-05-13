@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase-server'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { getCurrentUser } from '@/lib/auth-server'
 import { notifyMarketResolutionVoters } from '@/lib/market-resolution-notifications'
+import { isAdminUser } from '@/lib/auth/is-admin'
 
 export async function POST(request: Request) {
   try {
@@ -14,11 +15,11 @@ export async function POST(request: Request) {
     const supabase = await createClient()
     const { data: profile } = await supabase
       .from('profiles')
-      .select('user_type')
+      .select('user_type, email')
       .eq('id', user.id)
       .single()
 
-    if (profile?.user_type !== 'admin') {
+    if (!isAdminUser(profile)) {
       return NextResponse.json({ error: 'Admin only' }, { status: 403 })
     }
 

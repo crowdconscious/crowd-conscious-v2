@@ -3,6 +3,7 @@ import { getCurrentUser } from '@/lib/auth-server'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { cronJobIsHealthy } from '@/lib/cron-health'
 import { CRON_CATALOG } from '@/lib/cron-catalog'
+import { isAdminUser } from '@/lib/auth/is-admin'
 
 /**
  * GET /api/admin/cron-health
@@ -21,13 +22,7 @@ export async function GET() {
 
     const supabase = createAdminClient()
 
-    const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim()
-    const sessionEmail = profile.email?.toLowerCase().trim()
-    const isAdmin =
-      profile.user_type === 'admin' ||
-      (!!adminEmail && !!sessionEmail && sessionEmail === adminEmail)
-
-    if (!isAdmin) {
+    if (!isAdminUser(profile)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 

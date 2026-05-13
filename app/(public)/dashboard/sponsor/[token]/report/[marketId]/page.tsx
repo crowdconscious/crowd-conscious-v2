@@ -10,6 +10,7 @@ import type { SponsorPulseReportSnapshot } from '@/lib/agents/sponsor-pulse-repo
 import { AuthSessionExpiredError, getCurrentUser } from '@/lib/auth-server'
 import { marketBelongsToSponsorAccount } from '@/lib/sponsor-account-access'
 import { createAdminClient } from '@/lib/supabase-admin'
+import { isAdminUser } from '@/lib/auth/is-admin'
 
 export const dynamic = 'force-dynamic'
 
@@ -73,16 +74,7 @@ export default async function SponsorMarketReportPage({
   let isAdminViewer = false
   try {
     const user = await getCurrentUser()
-    if (user) {
-      const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim()
-      const userEmail = (user as { email?: string | null }).email?.toLowerCase().trim()
-      if (
-        user.user_type === 'admin' ||
-        (!!adminEmail && !!userEmail && userEmail === adminEmail)
-      ) {
-        isAdminViewer = true
-      }
-    }
+    if (isAdminUser(user)) isAdminViewer = true
   } catch (e) {
     if (!(e instanceof AuthSessionExpiredError)) {
       console.warn('[sponsor-report] admin check failed', e)

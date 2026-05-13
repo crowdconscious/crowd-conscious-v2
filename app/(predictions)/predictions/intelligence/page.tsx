@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 import { fetchIntelligenceDashboard } from '@/lib/intelligence-data'
+import { isAdminUser } from '@/lib/auth/is-admin'
 import IntelligenceClient from './IntelligenceClient'
 
 export const dynamic = 'force-dynamic'
@@ -32,13 +33,7 @@ export default async function IntelligencePage({
     .eq('id', user.id)
     .single()
 
-  const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim()
-  const sessionEmail = user.email?.toLowerCase().trim()
-  const isAdmin =
-    profile?.user_type === 'admin' ||
-    (!!adminEmail && !!sessionEmail && sessionEmail === adminEmail)
-
-  if (!isAdmin) {
+  if (!isAdminUser(profile)) {
     redirect('/predictions')
   }
 

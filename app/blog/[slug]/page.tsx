@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase-server'
 import { getCurrentUser } from '@/lib/auth-server'
+import { isAdminUser } from '@/lib/auth/is-admin'
 import { SITE_URL } from '@/lib/seo/site'
 import { BlogPostBody } from './BlogPostBody'
 import { BlogDraftBar } from './BlogDraftBar'
@@ -157,11 +158,7 @@ export default async function BlogPostPage(props: Props) {
   const supabase = await createClient()
 
   const user = await getCurrentUser()
-  let isAdmin = false
-  if (user) {
-    const { data: prof } = await supabase.from('profiles').select('user_type').eq('id', user.id).maybeSingle()
-    isAdmin = prof?.user_type === 'admin'
-  }
+  const isAdmin = isAdminUser(user)
 
   const { data: publishedPost } = await supabase
     .from('blog_posts')

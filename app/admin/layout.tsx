@@ -1,39 +1,6 @@
 import { getCurrentUser } from '@/lib/auth-server'
-import { supabase } from '@/lib/supabase'
 import { redirect } from 'next/navigation'
-
-async function checkAdminAccess(userId: string, email: string | null | undefined) {
-  try {
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select('user_type, email')
-      .eq('id', userId)
-      .single()
-
-    if (error) {
-      console.error('Error fetching profile for admin check:', error)
-      return false
-    }
-
-    if ((profile as { user_type?: string })?.user_type === 'admin') {
-      return true
-    }
-
-    const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim()
-    const em =
-      (email || (profile as { email?: string | null })?.email || '')
-        .toLowerCase()
-        .trim()
-    if (adminEmail && em && em === adminEmail) {
-      return true
-    }
-
-    return false
-  } catch (error) {
-    console.error('Admin check failed:', error)
-    return false
-  }
-}
+import { isAdminUser } from '@/lib/auth/is-admin'
 
 export default async function AdminLayout({
   children,
@@ -46,12 +13,7 @@ export default async function AdminLayout({
     redirect('/login')
   }
 
-  const hasAdminAccess = await checkAdminAccess(
-    (user as { id: string }).id,
-    (user as { email?: string | null }).email
-  )
-
-  if (!hasAdminAccess) {
+  if (!isAdminUser(user)) {
     redirect('/dashboard?error=unauthorized')
   }
 

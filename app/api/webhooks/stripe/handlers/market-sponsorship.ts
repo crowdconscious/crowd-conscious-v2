@@ -6,6 +6,7 @@ import {
   calculateFundAllocationRounded,
   TIER_DURATION_MONTHS,
 } from '@/lib/sponsor-tiers'
+import type { Database } from '@/types/database'
 
 type SponsorAccountRow = {
   id: string
@@ -27,7 +28,7 @@ async function recordStripeCouponRedemption(
   const email = params.email.trim().toLowerCase()
   if (!email) return
 
-  const { data: coupon, error: fetchErr } = await (supabase as any)
+  const { data: coupon, error: fetchErr } = await supabase
     .from('coupon_codes')
     .select('id, current_uses, max_uses')
     .eq('id', params.couponId)
@@ -40,7 +41,7 @@ async function recordStripeCouponRedemption(
 
   const c = coupon as { id: string; current_uses: number; max_uses: number }
 
-  const { error: insErr } = await (supabase as any).from('coupon_redemptions').insert({
+  const { error: insErr } = await supabase.from('coupon_redemptions').insert({
     coupon_id: params.couponId,
     redeemed_by_email: email,
     redeemed_by_name: params.sponsorName,
@@ -56,7 +57,7 @@ async function recordStripeCouponRedemption(
     return
   }
 
-  const { data: bumped, error: bumpErr } = await (supabase as any)
+  const { data: bumped, error: bumpErr } = await supabase
     .from('coupon_codes')
     .update({ current_uses: c.current_uses + 1 })
     .eq('id', c.id)
@@ -87,7 +88,7 @@ async function upsertSponsorAccount(
   const email = params.email.trim().toLowerCase()
   if (!email) return null
 
-  const { data: existing } = (await (supabase as any)
+  const { data: existing } = (await supabase
     .from('sponsor_accounts')
     .select('id, access_token, total_spent, total_fund_contribution, is_pulse_client')
     .eq('contact_email', email)
@@ -105,7 +106,7 @@ async function upsertSponsorAccount(
       ...(params.stripeCustomerId ? { stripe_customer_id: params.stripeCustomerId } : {}),
     }
 
-    const { error: updErr } = await (supabase as any)
+    const { error: updErr } = await supabase
       .from('sponsor_accounts')
       .update(patch)
       .eq('id', existing.id)
@@ -116,7 +117,7 @@ async function upsertSponsorAccount(
     return { id: existing.id, access_token: existing.access_token }
   }
 
-  const { data: created, error } = await (supabase as any)
+  const { data: created, error } = await supabase
     .from('sponsor_accounts')
     .insert({
       company_name: params.sponsorName,
@@ -176,7 +177,7 @@ export async function handleMarketSponsorship(session: Stripe.Checkout.Session) 
 
   const reportToken = crypto.randomUUID()
 
-  const { data: sponsorship, error: sponsorError } = await (supabase as any)
+  const { data: sponsorship, error: sponsorError } = await supabase
     .from('sponsorships')
     .insert({
       stripe_session_id: session.id,
@@ -211,7 +212,7 @@ export async function handleMarketSponsorship(session: Stripe.Checkout.Session) 
     metadata.anonymous === 'true' ||
     metadata.hide_sponsor_name === 'true'
 
-  const { error: sponsorshipLogError } = await (supabase as any)
+  const { error: sponsorshipLogError } = await supabase
     .from('sponsorship_log')
     .upsert(
       {
@@ -238,7 +239,7 @@ export async function handleMarketSponsorship(session: Stripe.Checkout.Session) 
     console.error('Market sponsorship: sponsorship_log upsert failed', sponsorshipLogError)
   }
 
-  const { error: fundTxError } = await (supabase as any)
+  const { error: fundTxError } = await supabase
     .from('conscious_fund_transactions')
     .insert({
       amount: fundAmount,
@@ -252,14 +253,14 @@ export async function handleMarketSponsorship(session: Stripe.Checkout.Session) 
     console.error('Market sponsorship: failed to insert fund transaction', fundTxError)
   }
 
-  const { data: fundRow } = await (supabase as any)
+  const { data: fundRow } = await supabase
     .from('conscious_fund')
     .select('id, total_collected, current_balance')
     .limit(1)
     .single()
 
   if (fundRow) {
-    await (supabase as any)
+    await supabase
       .from('conscious_fund')
       .update({
         total_collected: Number(fundRow.total_collected) + fundAmount,
@@ -309,7 +310,7 @@ export async function handleMarketSponsorship(session: Stripe.Checkout.Session) 
   }
 
   if (market_id && sponsor_name) {
-    const { error: marketError } = await (supabase as any)
+    const { error: marketError } = await supabase
       .from('prediction_markets')
       .update(sponsorPayload)
       .eq('id', market_id)
@@ -319,12 +320,15 @@ export async function handleMarketSponsorship(session: Stripe.Checkout.Session) 
     }
   }
 
-  // Category tier: update ALL active markets in that category
+  // Category tier: update ALL active markets in that category. Cast the
+  // string from Stripe metadata to the prediction_markets.category union;
+  // a bad value just filters to zero rows (no rows updated, no error).
   if (tierId === 'growth' && category && sponsor_name) {
-    const { error: categoryError } = await (supabase as any)
+    type MarketCategory = Database['public']['Tables']['prediction_markets']['Row']['category']
+    const { error: categoryError } = await supabase
       .from('prediction_markets')
       .update(sponsorPayload)
-      .eq('category', category)
+      .eq('category', category as MarketCategory)
       .in('status', ['active', 'trading', 'approved'])
 
     if (categoryError) {
@@ -334,7 +338,7 @@ export async function handleMarketSponsorship(session: Stripe.Checkout.Session) 
 
   let marketTitle: string | undefined
   if (market_id) {
-    const { data: market } = await (supabase as any)
+    const { data: market } = await supabase
       .from('prediction_markets')
       .select('title')
       .eq('id', market_id)

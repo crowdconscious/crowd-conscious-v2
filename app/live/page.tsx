@@ -5,6 +5,7 @@ import { headers } from 'next/headers'
 import { SITE_URL } from '@/lib/seo/site'
 import { createClient } from '@/lib/supabase-server'
 import { getCurrentUser } from '@/lib/auth-server'
+import { isAdminUser } from '@/lib/auth/is-admin'
 import type { Database } from '@/types/database'
 import LandingNav from '@/app/components/landing/LandingNav'
 import Footer from '@/components/Footer'
@@ -105,14 +106,7 @@ export default async function LiveEventsPage({
   const supabase = await createClient()
   const sessionProfile = await getCurrentUser()
 
-  let isAdmin = false
-  if (sessionProfile) {
-    const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim()
-    const profileEmail = sessionProfile.email?.toLowerCase().trim()
-    isAdmin =
-      sessionProfile.user_type === 'admin' ||
-      (!!adminEmail && !!profileEmail && profileEmail === adminEmail)
-  }
+  const isAdmin = isAdminUser(sessionProfile)
 
   /** Admins can opt into archived events with `?showArchived=1`. */
   const sp = (await searchParams) ?? {}

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { createClient } from '@/lib/supabase-server'
 import { getCurrentUser } from '@/lib/auth-server'
+import { isAdminUser } from '@/lib/auth/is-admin'
 import { InboxClient } from './InboxClient'
 import { SITE_URL } from '@/lib/seo/site'
 
@@ -89,12 +90,7 @@ async function detectAdmin(): Promise<boolean> {
     .select('user_type, email')
     .eq('id', user.id)
     .maybeSingle()
-  const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim()
-  const profileEmail = (profile?.email as string | null)?.toLowerCase().trim() ?? null
-  return (
-    profile?.user_type === 'admin' ||
-    (!!adminEmail && !!profileEmail && profileEmail === adminEmail)
-  )
+  return isAdminUser(profile)
 }
 
 export default async function InboxPage() {

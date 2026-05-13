@@ -12,6 +12,12 @@ import {
 } from '@/lib/vote-reasoning'
 import { persistVoteReasoning } from '@/lib/persist-vote-reasoning'
 import { recalculateLocationScoreByMarketId } from '@/lib/locations/recalculate-score'
+import {
+  standardRateLimit,
+  getRateLimitIdentifier,
+  checkRateLimit,
+  rateLimitResponse,
+} from '@/lib/rate-limit'
 
 /** USD attributed to Conscious Fund cause per sponsored micro-market vote (env override). */
 function sponsoredMicroMarketVoteImpactUsd(): number {
@@ -59,6 +65,17 @@ async function applySponsoredMicroFundIfNeeded(
 
 export async function POST(request: Request) {
   try {
+    // Rate limit by IP as the first defensive check. Vote is the highest-traffic
+    // write endpoint and accepts anonymous traffic, so we throttle before doing
+    // any auth or DB work. Standard tier = 20 req/min/IP, comfortable for real
+    // humans voting on a sequence of pulses, tight enough to stop scripted spam.
+    // Falls open if Upstash isn't configured (dev / preview without Redis).
+    const rlIdentifier = await getRateLimitIdentifier(request, null)
+    const rl = await checkRateLimit(standardRateLimit, rlIdentifier)
+    if (rl && !rl.allowed) {
+      return rateLimitResponse(rl.limit, rl.remaining, rl.reset)
+    }
+
     const body = await request.json()
     const { market_id, outcome_id, confidence, reasoning: rawReasoning } = body
 

@@ -2,12 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth-server'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { isValidMarketCategory } from '@/lib/market-categories'
-
-function isAdminUser(user: NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>): boolean {
-  const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim()
-  const em = user.email?.toLowerCase().trim()
-  return user.user_type === 'admin' || (!!adminEmail && !!em && em === adminEmail)
-}
+import { isAdminUser } from '@/lib/auth/is-admin'
 
 export async function PATCH(
   request: NextRequest,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth-server'
 import { createAdminClient } from '@/lib/supabase-admin'
+import { isAdminUser } from '@/lib/auth/is-admin'
 
 const CATEGORIES = [
   'water',
@@ -46,7 +47,7 @@ function requireAdmin() {
   return async () => {
     const user = await getCurrentUser()
     if (!user) return { error: 'Unauthorized', status: 401 as const }
-    if (user.user_type !== 'admin') return { error: 'Admin only', status: 403 as const }
+    if (!isAdminUser(user)) return { error: 'Admin only', status: 403 as const }
     return { user }
   }
 }

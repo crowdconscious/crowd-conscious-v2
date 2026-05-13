@@ -9,6 +9,7 @@ import { DraftBanner } from '@/components/predictions/DraftBanner'
 import { AdminMarketToolbar } from '@/components/predictions/AdminMarketToolbar'
 import { getMarketText } from '@/lib/i18n/market-translations'
 import { SITE_URL } from '@/lib/seo/site'
+import { isAdminUser } from '@/lib/auth/is-admin'
 
 export const dynamic = 'force-dynamic'
 
@@ -101,12 +102,7 @@ export default async function MarketDetailPage({
   const supabase = await createClient()
   const user = await getCurrentUser()
 
-  const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim()
-  const profileEmail = user?.email?.toLowerCase().trim()
-  const isAdmin =
-    !!user &&
-    (user.user_type === 'admin' ||
-      (!!adminEmail && !!profileEmail && profileEmail === adminEmail))
+  const isAdmin = isAdminUser(user)
 
   // Read the market via the admin client so we can apply our own access rules
   // (drafts are visible to admins and creators, hidden as 404 to everyone
@@ -199,11 +195,7 @@ export default async function MarketDetailPage({
     (market as { is_pulse?: boolean }).is_pulse === true ||
     (market as { category?: string }).category === 'pulse'
   if (isPulseLike) {
-    const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim()
-    const profileEmail = (user as { email?: string | null } | null)?.email?.toLowerCase().trim()
-    const isAdmin =
-      (user as { user_type?: string } | null)?.user_type === 'admin' ||
-      (!!adminEmail && !!profileEmail && profileEmail === adminEmail)
+    const isAdmin = isAdminUser(user)
 
     let isSponsorOwner = false
     const sponsorAccountId = (market as { sponsor_account_id?: string | null }).sponsor_account_id

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth-server'
 import { createAdminClient } from '@/lib/supabase-admin'
+import { isAdminUser } from '@/lib/auth/is-admin'
 import {
   DEFAULT_PULSE_EMBED_COMPONENTS,
   PULSE_EMBED_POSITIONS,
@@ -28,10 +29,10 @@ export async function GET(request: NextRequest) {
     const admin = createAdminClient()
     const { data: profile } = await admin
       .from('profiles')
-      .select('user_type')
+      .select('user_type, email')
       .eq('id', user.id)
       .single()
-    if (profile?.user_type !== 'admin') {
+    if (!isAdminUser(profile)) {
       return NextResponse.json({ error: 'Admin only' }, { status: 403 })
     }
 
@@ -72,8 +73,8 @@ export async function POST(request: NextRequest) {
     }
 
     const admin = createAdminClient()
-    const { data: profile } = await admin.from('profiles').select('user_type').eq('id', user.id).single()
-    if (profile?.user_type !== 'admin') {
+    const { data: profile } = await admin.from('profiles').select('user_type, email').eq('id', user.id).single()
+    if (!isAdminUser(profile)) {
       return NextResponse.json({ error: 'Admin only' }, { status: 403 })
     }
 

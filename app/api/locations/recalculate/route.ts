@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase-admin'
 import { getCurrentUser } from '@/lib/auth-server'
 import { createClient } from '@/lib/supabase-server'
 import { recalculateLocationScore } from '@/lib/locations/recalculate-score'
+import { isAdminUser } from '@/lib/auth/is-admin'
 
 /**
  * POST /api/locations/recalculate
@@ -14,16 +15,18 @@ export async function POST(request: Request) {
     const authHeader = request.headers.get('authorization')
     const cronOk = authHeader === `Bearer ${process.env.CRON_SECRET}`
 
-    let adminUser = false
     if (!cronOk) {
       const user = await getCurrentUser()
       if (!user) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
       }
       const supabase = await createClient()
-      const { data: profile } = await supabase.from('profiles').select('user_type').eq('id', user.id).single()
-      adminUser = profile?.user_type === 'admin'
-      if (!adminUser) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('user_type, email')
+        .eq('id', user.id)
+        .single()
+      if (!isAdminUser(profile)) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
       }
     }

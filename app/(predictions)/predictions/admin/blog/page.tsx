@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase-server'
 import { getCurrentUser } from '@/lib/auth-server'
 import BlogAdminList, { type BlogAdminRow } from './BlogAdminList'
+import { isAdminUser } from '@/lib/auth/is-admin'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,10 +14,10 @@ export default async function AdminBlogIndexPage() {
   const supabase = await createClient()
   const { data: profile } = await supabase
     .from('profiles')
-    .select('user_type')
+    .select('user_type, email')
     .eq('id', user.id)
     .maybeSingle()
-  if (profile?.user_type !== 'admin') {
+  if (!isAdminUser(profile)) {
     redirect('/predictions')
   }
 

@@ -7,6 +7,7 @@ import PredictionsShell from './PredictionsShell'
 import { PendingVoteSubmitter } from './components/PendingVoteSubmitter'
 import LandingNav from '@/app/components/landing/LandingNav'
 import { lookupSponsorAccountsForUser } from '@/lib/sponsor-account-lookup'
+import { isAdminUser } from '@/lib/auth/is-admin'
 
 const Footer = dynamic(() => import('@/components/Footer'))
 
@@ -95,11 +96,7 @@ export default async function PredictionsLayout({
       getNavCounts(supabase),
       lookupSponsorAccountsForUser(user),
     ])
-    const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim()
-    const profileEmail = profileRes.data?.email?.toLowerCase().trim()
-    isAdmin =
-      profileRes.data?.user_type === 'admin' ||
-      (!!adminEmail && !!profileEmail && profileEmail === adminEmail)
+    isAdmin = isAdminUser(profileRes.data)
     navCounts = counts
     sponsorNav = {
       count: sponsorSummary.count,

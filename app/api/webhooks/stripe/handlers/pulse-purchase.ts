@@ -37,7 +37,7 @@ async function recordStripeCouponRedemption(
   const email = params.email.trim().toLowerCase()
   if (!email) return
 
-  const { data: coupon, error: fetchErr } = await (supabase as any)
+  const { data: coupon, error: fetchErr } = await supabase
     .from('coupon_codes')
     .select('id, current_uses, max_uses')
     .eq('id', params.couponId)
@@ -50,7 +50,7 @@ async function recordStripeCouponRedemption(
 
   const c = coupon as { id: string; current_uses: number; max_uses: number }
 
-  const { error: insErr } = await (supabase as any).from('coupon_redemptions').insert({
+  const { error: insErr } = await supabase.from('coupon_redemptions').insert({
     coupon_id: params.couponId,
     redeemed_by_email: email,
     redeemed_by_name: params.sponsorName,
@@ -66,7 +66,7 @@ async function recordStripeCouponRedemption(
     return
   }
 
-  const { data: bumped, error: bumpErr } = await (supabase as any)
+  const { data: bumped, error: bumpErr } = await supabase
     .from('coupon_codes')
     .update({ current_uses: c.current_uses + 1 })
     .eq('id', c.id)
@@ -99,7 +99,7 @@ async function upsertPulseSponsorAccount(
   const subscriptionActive = params.tierId === 'suscripcion'
   const benefits = getPulseTierBenefits(params.tierId)
 
-  const { data: existing } = (await (supabase as any)
+  const { data: existing } = (await supabase
     .from('sponsor_accounts')
     .select(
       'id, access_token, total_spent, total_fund_contribution, is_pulse_client, pulse_subscription_active'
@@ -128,7 +128,7 @@ async function upsertPulseSponsorAccount(
       ...(params.contactName ? { contact_name: params.contactName } : {}),
     }
 
-    const { error: updErr } = await (supabase as any)
+    const { error: updErr } = await supabase
       .from('sponsor_accounts')
       .update(patch)
       .eq('id', existing.id)
@@ -139,7 +139,7 @@ async function upsertPulseSponsorAccount(
     return { id: existing.id, access_token: existing.access_token }
   }
 
-  const { data: created, error } = await (supabase as any)
+  const { data: created, error } = await supabase
     .from('sponsor_accounts')
     .insert({
       company_name: params.companyName,
@@ -204,7 +204,7 @@ export async function handlePulsePurchase(session: Stripe.Checkout.Session) {
 
   const reportToken = crypto.randomUUID()
 
-  const { data: sponsorship, error: sponsorError } = await (supabase as any)
+  const { data: sponsorship, error: sponsorError } = await supabase
     .from('sponsorships')
     .insert({
       stripe_session_id: session.id,
@@ -234,7 +234,7 @@ export async function handlePulsePurchase(session: Stripe.Checkout.Session) {
 
   const sponsorshipId = sponsorship?.id
 
-  const { error: sponsorshipLogError } = await (supabase as any)
+  const { error: sponsorshipLogError } = await supabase
     .from('sponsorship_log')
     .upsert(
       {
@@ -261,7 +261,7 @@ export async function handlePulsePurchase(session: Stripe.Checkout.Session) {
     console.error('Pulse purchase: sponsorship_log upsert failed', sponsorshipLogError)
   }
 
-  const { error: fundTxError } = await (supabase as any)
+  const { error: fundTxError } = await supabase
     .from('conscious_fund_transactions')
     .insert({
       amount: fundAmount,
@@ -275,14 +275,14 @@ export async function handlePulsePurchase(session: Stripe.Checkout.Session) {
     console.error('Pulse purchase: failed to insert fund transaction', fundTxError)
   }
 
-  const { data: fundRow } = await (supabase as any)
+  const { data: fundRow } = await supabase
     .from('conscious_fund')
     .select('id, total_collected, current_balance')
     .limit(1)
     .single()
 
   if (fundRow) {
-    await (supabase as any)
+    await supabase
       .from('conscious_fund')
       .update({
         total_collected: Number(fundRow.total_collected) + fundAmount,
@@ -359,7 +359,7 @@ export async function handlePulsePurchase(session: Stripe.Checkout.Session) {
 
     let spotsRemainingAfter: number | null = null
     if (isFounding) {
-      const { count } = await (supabase as any)
+      const { count } = await supabase
         .from('sponsorships')
         .select('id', { count: 'exact', head: true })
         .eq('tier', 'mundial_pack_founding')

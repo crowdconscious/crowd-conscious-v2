@@ -3,6 +3,7 @@ import { getCurrentUser } from '@/lib/auth-server'
 import { redirect } from 'next/navigation'
 import { PredictionsDashboardClient } from './components/PredictionsDashboardClient'
 import { lookupSponsorAccountsForUser } from '@/lib/sponsor-account-lookup'
+import { isAdminUser } from '@/lib/auth/is-admin'
 import type { Database } from '@/types/database'
 
 type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row']
@@ -300,7 +301,7 @@ export default async function PredictionsDashboardPage() {
   // straight back into this auth check. /pulse is the public listing surface.
   if (!user) redirect('/pulse')
 
-  const isAdmin = (user as { user_type?: string } | null)?.user_type === 'admin'
+  const isAdmin = isAdminUser(user)
   // Run the sponsor lookup in parallel with the main dashboard data.
   // One extra round trip, amortized into the Promise.all: coupon redeemers
   // see a first-class "go to my sponsor dashboard" CTA the moment they

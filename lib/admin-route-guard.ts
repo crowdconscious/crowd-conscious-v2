@@ -1,12 +1,15 @@
 import { NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth-server'
+import { isAdminUser } from '@/lib/auth/is-admin'
 
 type AdminUser = NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>
 
 /**
- * Gate API routes to admin users. Mirrors the layout-side check in
- * app/admin/layout.tsx (profiles.user_type === 'admin' OR ADMIN_EMAIL match).
- * Returns the user on success or a NextResponse to short-circuit on failure.
+ * Gate API routes to admin users using the shared `isAdminUser` policy
+ * (`profiles.user_type === 'admin'` OR `ADMIN_EMAIL` match). Returns the
+ * user on success or a NextResponse to short-circuit on failure.
+ *
+ * See lib/auth/is-admin.ts for the canonical policy definition.
  */
 export async function requireAdmin(): Promise<
   { ok: true; user: AdminUser } | { ok: false; response: NextResponse }
@@ -19,12 +22,7 @@ export async function requireAdmin(): Promise<
     }
   }
 
-  const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim()
-  const em = (user as { email?: string | null }).email?.toLowerCase().trim()
-  const isAdmin =
-    user.user_type === 'admin' || (!!adminEmail && !!em && em === adminEmail)
-
-  if (!isAdmin) {
+  if (!isAdminUser(user)) {
     return {
       ok: false,
       response: NextResponse.json({ error: 'Forbidden' }, { status: 403 }),

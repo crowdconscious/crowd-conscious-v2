@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { getCurrentUser } from '@/lib/auth-server'
 import { ApiResponse } from '@/lib/api-responses'
 import { supabase } from '@/lib/supabase'
+import { isAdminUser } from '@/lib/auth/is-admin'
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,14 +11,16 @@ export async function POST(request: NextRequest) {
       return ApiResponse.unauthorized('Please log in to moderate users')
     }
 
-    // Check if user is admin
+    // Check admin status + active (non-suspended) — suspended admins
+    // cannot moderate other users regardless of how they obtained admin
+    // (DB user_type or ADMIN_EMAIL env).
     const { data: profile } = await supabase
       .from('profiles')
-      .select('user_type, admin_level, suspended')
+      .select('user_type, email, admin_level, suspended')
       .eq('id', (user as any).id)
       .single()
 
-    if (!profile || (profile as any).user_type !== 'admin' || (profile as any).suspended) {
+    if (!isAdminUser(profile as { user_type?: string | null; email?: string | null } | null) || (profile as any)?.suspended) {
       return ApiResponse.forbidden('Admin access required', 'NOT_ADMIN')
     }
 

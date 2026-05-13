@@ -6,6 +6,7 @@ import {
 } from '@/lib/sponsor-dashboard-build'
 import { fetchMarketsForSponsorAccount } from '@/lib/sponsor-account-access'
 import { getCurrentUser, AuthSessionExpiredError } from '@/lib/auth-server'
+import { isAdminUser } from '@/lib/auth/is-admin'
 import type { FundImpactRow } from '@/components/sponsor/types'
 
 const APP_ORIGIN = (process.env.NEXT_PUBLIC_APP_URL ?? 'https://crowdconscious.app').replace(/\/$/, '')
@@ -137,16 +138,7 @@ export default async function SponsorDashboardPage({
   let isImpersonating = false
   try {
     const user = await getCurrentUser()
-    if (user) {
-      const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim()
-      const userEmail = (user as { email?: string | null }).email?.toLowerCase().trim()
-      if (
-        user.user_type === 'admin' ||
-        (!!adminEmail && !!userEmail && userEmail === adminEmail)
-      ) {
-        isImpersonating = true
-      }
-    }
+    if (isAdminUser(user)) isImpersonating = true
   } catch (e) {
     if (!(e instanceof AuthSessionExpiredError)) {
       console.warn('[sponsor-dashboard] admin check failed', e)

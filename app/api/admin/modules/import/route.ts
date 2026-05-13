@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { ApiResponse } from '@/lib/api-responses'
 import { getCurrentUser } from '@/lib/auth-server'
+import { isAdminUser } from '@/lib/auth/is-admin'
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,11 +18,11 @@ export async function POST(request: NextRequest) {
     // Check if user is admin in profiles table
     const { data: profile } = await supabase
       .from('profiles')
-      .select('user_type')
+      .select('user_type, email')
       .eq('id', user.id)
       .single()
     
-    if (!profile || profile.user_type !== 'admin') {
+    if (!isAdminUser(profile)) {
       return ApiResponse.forbidden('Admin access required', 'NOT_ADMIN')
     }
 
