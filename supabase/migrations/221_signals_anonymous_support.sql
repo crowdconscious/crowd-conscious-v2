@@ -192,6 +192,12 @@ CREATE POLICY citizen_signal_anonymous_supports_public_select
 -- Anything that selected from the view before this migration continues
 -- to work; we are strictly additive. The view is recreated rather than
 -- altered because Postgres does not allow ALTER VIEW … ADD COLUMN.
+--
+-- IMPORTANT: CREATE OR REPLACE VIEW only allows APPENDING new columns at
+-- the end of the SELECT list. Reordering or renaming any existing column
+-- raises 42P16 ("cannot change name of view column …"). The pre-existing
+-- column order from migration 219 must therefore be preserved verbatim
+-- and `anonymous_support_count` appended as the final column.
 
 CREATE OR REPLACE VIEW public.citizen_signals_public AS
 SELECT
@@ -210,11 +216,11 @@ SELECT
   cs.anonymous_display_mode,
   cs.threshold_stage,
   cs.cosign_count,
-  cs.anonymous_support_count,
   cs.stage1_met_at,
   cs.stage2_met_at,
   cs.created_at,
-  cs.updated_at
+  cs.updated_at,
+  cs.anonymous_support_count
 FROM public.citizen_signals cs
 WHERE cs.publication_status = 'published';
 
