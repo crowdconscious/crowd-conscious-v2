@@ -1,10 +1,32 @@
+import type { ReactElement } from 'react'
 import { Resend } from 'resend'
+import { render as renderEmail } from '@react-email/render'
 import { calculateFundAllocationRounded, normalizeSponsorTierId } from '@/lib/sponsor-tiers'
 import {
   PULSE_TIERS,
   calculatePulseFundAllocationRounded,
   type PulseTierId,
 } from '@/lib/pulse-tiers'
+import {
+  getCitizenSignalsCopy,
+  type CitizenSignalsLocale,
+} from '@/lib/i18n/citizen-signals'
+import { FilerReceivedEmail } from '@/lib/emails/signals/FilerReceivedEmail'
+import { FilerPublishedEmail } from '@/lib/emails/signals/FilerPublishedEmail'
+import { FilerRejectedEmail } from '@/lib/emails/signals/FilerRejectedEmail'
+import { FilerNeedsEditEmail } from '@/lib/emails/signals/FilerNeedsEditEmail'
+import { TargetNotifiedStage1Email } from '@/lib/emails/signals/TargetNotifiedStage1Email'
+import {
+  TargetRepliedEmail,
+  type TargetReplyStatus,
+} from '@/lib/emails/signals/TargetRepliedEmail'
+import {
+  ModeratorDailyDigestEmail,
+  type PendingSignalSummary,
+} from '@/lib/emails/signals/ModeratorDailyDigestEmail'
+
+export type { PendingSignalSummary } from '@/lib/emails/signals/ModeratorDailyDigestEmail'
+export type { TargetReplyStatus } from '@/lib/emails/signals/TargetRepliedEmail'
 
 const PULSE_TIER_IDS = Object.keys(PULSE_TIERS) as PulseTierId[]
 function isPulseTier(raw: string | null | undefined): raw is PulseTierId {
@@ -17,7 +39,9 @@ if (!process.env.RESEND_API_KEY) {
 
 export const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 
-const FROM_EMAIL = 'Crowd Conscious <comunidad@crowdconscious.app>' // Using verified domain
+const FROM_EMAIL =
+  process.env.RESEND_FROM_EMAIL ||
+  'Crowd Conscious <comunidad@crowdconscious.app>' // Using verified domain
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
 // Email templates
@@ -991,4 +1015,260 @@ Saludos,
 
   const result = await sendEmail(adminEmail, template)
   return result.success
+}
+
+// =============================================================================
+// Citizen Signals — F13 transactional helpers
+// =============================================================================
+//
+// All helpers:
+//   - Return { ok, id?, error? } and NEVER throw.
+//   - Short-circuit (ok=false, error='disabled') when RESEND_ENABLED === 'false'.
+//   - Short-circuit (ok=false, error='no_api_key') when RESEND_API_KEY is missing.
+//   - Render React Email components to HTML before delegating to Resend.
+//
+// They are designed to be called fire-and-forget by API routes:
+//   void sendSignalFilerReceived({...}).catch(console.error)
+//
+// so a Resend outage never 500s the user-facing request.
+
+export type SignalEmailResult = { ok: boolean; id?: string; error?: string }
+
+function signalEmailEnabled(): boolean {
+  return process.env.RESEND_ENABLED !== 'false'
+}
+
+async function sendSignalEmail(args: {
+  to: string
+  subject: string
+  react: ReactElement
+  replyTo?: string
+  context: string
+}): Promise<SignalEmailResult> {
+  const { to, subject, react, replyTo, context } = args
+
+  if (!signalEmailEnabled()) {
+    return { ok: false, error: 'disabled' }
+  }
+  if (!resend) {
+    console.warn(
+      `[resend:${context}] RESEND_API_KEY not set — email skipped (to=${to})`
+    )
+    return { ok: false, error: 'no_api_key' }
+  }
+  if (!to || !to.includes('@')) {
+    console.warn(`[resend:${context}] invalid recipient — skipped (to=${to})`)
+    return { ok: false, error: 'invalid_recipient' }
+  }
+
+  try {
+    const html = await renderEmail(react)
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [to],
+      subject,
+      html,
+      ...(replyTo ? { replyTo } : {}),
+    })
+    if (error) {
+      console.error(`[resend:${context}] send error`, error)
+      return { ok: false, error: error.message }
+    }
+    return { ok: true, id: data?.id }
+  } catch (err) {
+    console.error(`[resend:${context}] fatal`, err)
+    const message = err instanceof Error ? err.message : 'unknown_error'
+    return { ok: false, error: message }
+  }
+}
+
+export interface SendSignalFilerReceivedArgs {
+  to: string
+  locale: CitizenSignalsLocale
+  signalSlug: string
+  signalTitle: string
+  filerName?: string | null
+}
+
+export async function sendSignalFilerReceived(
+  args: SendSignalFilerReceivedArgs
+): Promise<SignalEmailResult> {
+  const t = getCitizenSignalsCopy(args.locale)
+  return sendSignalEmail({
+    to: args.to,
+    subject: t.emails.filerReceived.subject(args.signalTitle),
+    context: 'signals/filer-received',
+    react: FilerReceivedEmail({
+      locale: args.locale,
+      signalTitle: args.signalTitle,
+      signalSlug: args.signalSlug,
+      filerName: args.filerName ?? null,
+    }),
+  })
+}
+
+export type SendSignalFilerPublishedArgs = SendSignalFilerReceivedArgs
+
+export async function sendSignalFilerPublished(
+  args: SendSignalFilerPublishedArgs
+): Promise<SignalEmailResult> {
+  const t = getCitizenSignalsCopy(args.locale)
+  return sendSignalEmail({
+    to: args.to,
+    subject: t.emails.filerPublished.subject(args.signalTitle),
+    context: 'signals/filer-published',
+    react: FilerPublishedEmail({
+      locale: args.locale,
+      signalTitle: args.signalTitle,
+      signalSlug: args.signalSlug,
+      filerName: args.filerName ?? null,
+    }),
+  })
+}
+
+export interface SendSignalFilerRejectedArgs
+  extends SendSignalFilerReceivedArgs {
+  /**
+   * Free-form reason from the moderation event detail (admin's `reason`
+   * field). When omitted, the body says only "your signal was not
+   * published" without quoting a specific reason.
+   */
+  reason?: string | null
+}
+
+export async function sendSignalFilerRejected(
+  args: SendSignalFilerRejectedArgs
+): Promise<SignalEmailResult> {
+  const t = getCitizenSignalsCopy(args.locale)
+  return sendSignalEmail({
+    to: args.to,
+    subject: t.emails.filerRejected.subject(args.signalTitle),
+    context: 'signals/filer-rejected',
+    react: FilerRejectedEmail({
+      locale: args.locale,
+      signalTitle: args.signalTitle,
+      signalSlug: args.signalSlug,
+      filerName: args.filerName ?? null,
+      reason: args.reason ?? null,
+    }),
+  })
+}
+
+export interface SendSignalFilerNeedsEditArgs
+  extends SendSignalFilerReceivedArgs {
+  /** The moderator note from `needs_edit_message` (REQUIRED — without a
+   * note this email has no value, so the helper returns ok=false). */
+  moderatorNote: string
+}
+
+export async function sendSignalFilerNeedsEdit(
+  args: SendSignalFilerNeedsEditArgs
+): Promise<SignalEmailResult> {
+  if (!args.moderatorNote || !args.moderatorNote.trim()) {
+    return { ok: false, error: 'missing_moderator_note' }
+  }
+  const t = getCitizenSignalsCopy(args.locale)
+  return sendSignalEmail({
+    to: args.to,
+    subject: t.emails.filerNeedsEdit.subject(args.signalTitle),
+    context: 'signals/filer-needs-edit',
+    react: FilerNeedsEditEmail({
+      locale: args.locale,
+      signalTitle: args.signalTitle,
+      signalSlug: args.signalSlug,
+      filerName: args.filerName ?? null,
+      moderatorNote: args.moderatorNote,
+    }),
+  })
+}
+
+export interface SendSignalTargetNotifiedStage1Args {
+  to: string
+  locale: CitizenSignalsLocale
+  /** The citizen_target.display_name — used in the greeting + subject. */
+  targetDisplayName: string
+  signalSlug: string
+  signalTitle: string
+  /** Optional short summary of the signal body (preview only — long body
+   * is omitted to keep the email scannable). */
+  signalSummary?: string | null
+  cosignCount: number
+  magicLinkUrl: string
+  expiryDays?: number
+}
+
+export async function sendSignalTargetNotifiedStage1(
+  args: SendSignalTargetNotifiedStage1Args
+): Promise<SignalEmailResult> {
+  const t = getCitizenSignalsCopy(args.locale)
+  return sendSignalEmail({
+    to: args.to,
+    subject: t.emails.targetNotifiedStage1.subject(args.targetDisplayName),
+    context: 'signals/target-notified-stage1',
+    react: TargetNotifiedStage1Email({
+      locale: args.locale,
+      targetDisplayName: args.targetDisplayName,
+      signalTitle: args.signalTitle,
+      signalSummary: args.signalSummary ?? null,
+      cosignCount: args.cosignCount,
+      magicLinkUrl: args.magicLinkUrl,
+      expiryDays: args.expiryDays ?? 7,
+    }),
+  })
+}
+
+export interface SendSignalTargetRepliedArgs {
+  to: string
+  locale: CitizenSignalsLocale
+  signalSlug: string
+  signalTitle: string
+  filerName?: string | null
+  authorLabel: string
+  officialStatus: TargetReplyStatus
+  responseBody: string
+}
+
+export async function sendSignalTargetReplied(
+  args: SendSignalTargetRepliedArgs
+): Promise<SignalEmailResult> {
+  const t = getCitizenSignalsCopy(args.locale)
+  return sendSignalEmail({
+    to: args.to,
+    subject: t.emails.targetReplied.subject(args.signalTitle),
+    context: 'signals/target-replied',
+    react: TargetRepliedEmail({
+      locale: args.locale,
+      signalTitle: args.signalTitle,
+      signalSlug: args.signalSlug,
+      filerName: args.filerName ?? null,
+      authorLabel: args.authorLabel,
+      officialStatus: args.officialStatus,
+      responseBody: args.responseBody,
+    }),
+  })
+}
+
+export interface SendSignalModeratorDailyDigestArgs {
+  signals: PendingSignalSummary[]
+  /** Defaults to ADMIN_EMAIL env var; falls back to comunidad@. */
+  to?: string
+  generatedAt?: Date
+}
+
+export async function sendSignalModeratorDailyDigest(
+  args: SendSignalModeratorDailyDigestArgs
+): Promise<SignalEmailResult> {
+  const to =
+    args.to || process.env.ADMIN_EMAIL || 'comunidad@crowdconscious.app'
+  // Subject + preview are always Spanish per founder decision.
+  const t = getCitizenSignalsCopy('es')
+  return sendSignalEmail({
+    to,
+    subject: t.emails.moderatorDigest.subject(args.signals.length),
+    context: 'signals/moderator-digest',
+    react: ModeratorDailyDigestEmail({
+      signals: args.signals,
+      generatedAt: args.generatedAt,
+    }),
+  })
 }

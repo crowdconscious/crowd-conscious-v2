@@ -3,6 +3,13 @@ import { z } from 'zod'
 import { getCurrentUser } from '@/lib/auth-server'
 import { createSignalsAdminClient } from '@/lib/signals/supabase'
 import { isAdminUser } from '@/lib/auth/is-admin'
+import {
+  sendSignalFilerPublished,
+  sendSignalFilerRejected,
+  sendSignalFilerNeedsEdit,
+} from '@/lib/resend'
+import type { CitizenSignalsLocale } from '@/lib/i18n/citizen-signals'
+import { runSignalsModerator } from '@/lib/agents/signals-moderator'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -24,6 +31,15 @@ export const dynamic = 'force-dynamic'
  *
  * Every PATCH that changes state writes one citizen_signal_moderation_events
  * row so the audit log stays complete.
+ *
+ * POST /api/admin/signals/[id]
+ *
+ * Manually re-runs the F14 AI moderator for a single signal. Synchronous
+ * (the admin is staring at the spinner). Returns the parsed
+ * `SignalsModeratorOutput` and persists it to `citizen_signals.ai_scores`
+ * + appends a fresh `ai_assessed` moderation event. Useful when the
+ * initial fire-and-forget run errored or when prompt iteration is in
+ * flight.
  */
 
 async function requireAdmin() {
@@ -93,9 +109,13 @@ export async function PATCH(
 
     // Read the row first so we can record the prior state in the audit log
     // and reject pre-conditions (e.g. merge target must exist + be published).
+    // We also fetch title/language/author_user_id so we can fire the F13
+    // transactional emails after the transition without a second roundtrip.
     const { data: row, error: rowErr } = await admin
       .from('citizen_signals')
-      .select('id, public_slug, publication_status, threshold_stage')
+      .select(
+        'id, public_slug, publication_status, threshold_stage, title, language, author_user_id'
+      )
       .eq('id', signalId)
       .maybeSingle()
     if (rowErr) {
@@ -213,6 +233,81 @@ export async function PATCH(
       },
     })
 
+    // F13: fire-and-forget filer notification when the row transitions to
+    // a state the filer should hear about. We only email on the *first*
+    // transition into each state (skip if the row was already in the
+    // target state) so re-running the same action is idempotent. Failures
+    // are logged but never affect the API response.
+    const stateChanged = nextStatus !== row.publication_status
+    if (
+      stateChanged &&
+      (nextStatus === 'published' ||
+        nextStatus === 'rejected' ||
+        nextStatus === 'needs_edit')
+    ) {
+      const locale: CitizenSignalsLocale =
+        row.language === 'en' ? 'en' : 'es'
+      const transitioned = nextStatus
+      const reasonText = body.reason ?? null
+      const needsEditMessage = body.needs_edit_message ?? null
+      const signalSlug = row.public_slug
+      const signalTitle = row.title
+      const authorId = row.author_user_id
+
+      void (async () => {
+        try {
+          const { data: profile } = await admin
+            .from('profiles')
+            .select('email, full_name')
+            .eq('id', authorId)
+            .maybeSingle()
+          const recipient = profile?.email
+          if (!recipient) return
+          const filerName = profile?.full_name ?? null
+
+          if (transitioned === 'published') {
+            await sendSignalFilerPublished({
+              to: recipient,
+              locale,
+              signalSlug,
+              signalTitle,
+              filerName,
+            })
+          } else if (transitioned === 'rejected') {
+            await sendSignalFilerRejected({
+              to: recipient,
+              locale,
+              signalSlug,
+              signalTitle,
+              filerName,
+              reason: reasonText,
+            })
+          } else if (transitioned === 'needs_edit') {
+            // Fall back to a neutral note if the admin forgot to include
+            // a `needs_edit_message`. The helper otherwise returns
+            // ok=false with 'missing_moderator_note' and the filer would
+            // never see anything.
+            const note =
+              needsEditMessage && needsEditMessage.trim().length > 0
+                ? needsEditMessage
+                : locale === 'es'
+                  ? 'Un moderador pidió ajustes en tu señal. Abre el envío para ver los detalles.'
+                  : 'A moderator requested edits on your signal. Open the submission for details.'
+            await sendSignalFilerNeedsEdit({
+              to: recipient,
+              locale,
+              signalSlug,
+              signalTitle,
+              filerName,
+              moderatorNote: note,
+            })
+          }
+        } catch (e) {
+          console.error('[api/admin/signals PATCH] filer email', e)
+        }
+      })()
+    }
+
     return NextResponse.json({
       id: row.id,
       slug: row.public_slug,
@@ -220,6 +315,42 @@ export async function PATCH(
     })
   } catch (err) {
     console.error('[api/admin/signals PATCH] fatal', err)
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 })
+  }
+}
+
+const postSchema = z.object({
+  action: z.literal('rerun_ai'),
+})
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const auth = await requireAdmin()
+    if ('error' in auth) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status })
+    }
+
+    const { id: signalId } = await params
+    if (!z.string().uuid().safeParse(signalId).success) {
+      return NextResponse.json({ error: 'Bad id' }, { status: 400 })
+    }
+
+    const json = await request.json().catch(() => null)
+    const parsed = postSchema.safeParse(json)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Invalid payload', details: parsed.error.flatten() },
+        { status: 400 }
+      )
+    }
+
+    const result = await runSignalsModerator(signalId)
+    return NextResponse.json({ ai_scores: result })
+  } catch (err) {
+    console.error('[api/admin/signals POST] fatal', err)
     return NextResponse.json({ error: 'Internal error' }, { status: 500 })
   }
 }

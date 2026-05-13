@@ -3,6 +3,9 @@ import { z } from 'zod'
 import { createSignalsAdminClient } from '@/lib/signals/supabase'
 import { hashTargetToken, safeHashEquals } from '@/lib/target-token-hash'
 import { moderateRateLimit, getRateLimitIdentifier } from '@/lib/rate-limit'
+import { sendSignalTargetReplied } from '@/lib/resend'
+import type { CitizenSignalsLocale } from '@/lib/i18n/citizen-signals'
+import type { TargetReplyStatus } from '@/lib/emails/signals/TargetRepliedEmail'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -75,9 +78,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Confirm the signal exists, is published, and belongs to this target.
+    // We also fetch title/slug/language/author so we can fire the F13
+    // "your signal got a reply" email without a second roundtrip.
     const { data: signal } = await admin
       .from('citizen_signals')
-      .select('id, citizen_target_id, publication_status')
+      .select(
+        'id, citizen_target_id, publication_status, public_slug, title, language, author_user_id'
+      )
       .eq('id', payload.signal_id)
       .maybeSingle()
     if (!signal) {
@@ -115,6 +122,35 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       )
     }
+
+    // F13: fire-and-forget "target replied" email to the filer. We use
+    // profiles.email like the other Signal email paths. Failures are
+    // logged but never affect the API response.
+    void (async () => {
+      try {
+        const { data: profile } = await admin
+          .from('profiles')
+          .select('email, full_name')
+          .eq('id', signal.author_user_id)
+          .maybeSingle()
+        const recipient = profile?.email
+        if (!recipient) return
+        const locale: CitizenSignalsLocale =
+          signal.language === 'en' ? 'en' : 'es'
+        await sendSignalTargetReplied({
+          to: recipient,
+          locale,
+          signalSlug: signal.public_slug,
+          signalTitle: signal.title,
+          filerName: profile?.full_name ?? null,
+          authorLabel: payload.author_label,
+          officialStatus: payload.official_status as TargetReplyStatus,
+          responseBody: payload.body,
+        })
+      } catch (e) {
+        console.error('[api/target/respond POST] target-replied email', e)
+      }
+    })()
 
     return NextResponse.json(inserted, { status: 201 })
   } catch (err) {

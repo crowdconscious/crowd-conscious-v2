@@ -411,6 +411,108 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
         : 'Crowd Conscious does not offer legal advice. A signal is not a substitute for a formal complaint before the competent authority.',
     },
 
+    // Transactional email copy. The body strings are rendered by the React
+    // Email templates in lib/emails/signals/*; this block centralises the
+    // subject lines + the recurring greeting/button labels so the cron and
+    // route callers can keep one source of truth. Moderator-internal emails
+    // (digest, agent alerts) are ES-only by founder decision.
+    emails: {
+      footer: {
+        filerDisclosure: isEs
+          ? 'Recibes este correo porque presentaste una señal ciudadana.'
+          : "You're receiving this because you filed a citizen signal.",
+        targetDisclosure: isEs
+          ? 'Recibes este correo porque eres el destinatario registrado de una señal ciudadana.'
+          : "You're receiving this because you are the registered recipient of a citizen signal.",
+        unsubscribe: isEs ? 'Preferencias de correo' : 'Email preferences',
+        help: isEs ? 'Ayuda' : 'Help',
+      },
+      greeting: (name?: string | null) =>
+        name
+          ? isEs
+            ? `Hola ${name},`
+            : `Hi ${name},`
+          : isEs
+            ? 'Hola,'
+            : 'Hi there,',
+      cta: {
+        viewSubmission: isEs ? 'Ver tu envío' : 'View your submission',
+        viewSignal: isEs ? 'Ver la señal' : 'View the signal',
+        viewAndShare: isEs
+          ? 'Ver y compartir la señal'
+          : 'View and share the signal',
+        openTargetDashboard: isEs
+          ? 'Abrir mi panel privado'
+          : 'Open my private dashboard',
+        reviewDecision: isEs ? 'Revisar la decisión' : 'Review the decision',
+        openAndEdit: isEs ? 'Abrir y editar' : 'Open and edit',
+        readReply: isEs
+          ? 'Leer la respuesta pública'
+          : 'Read the public reply',
+      },
+      filerReceived: {
+        subject: (signalTitle: string) =>
+          isEs
+            ? `Recibimos tu señal: ${signalTitle}`
+            : `We received your signal: ${signalTitle}`,
+        preview: isEs
+          ? 'Tu señal está en revisión.'
+          : 'Your signal is under review.',
+      },
+      filerPublished: {
+        subject: (signalTitle: string) =>
+          isEs
+            ? `Tu señal ya es pública: ${signalTitle}`
+            : `Your signal is now public: ${signalTitle}`,
+        preview: isEs
+          ? 'La aprobamos y ya aparece en el feed.'
+          : 'We approved it — it is live in the feed.',
+      },
+      filerRejected: {
+        subject: (signalTitle: string) =>
+          isEs
+            ? `No pudimos publicar tu señal: ${signalTitle}`
+            : `We could not publish your signal: ${signalTitle}`,
+        preview: isEs
+          ? 'Un moderador rechazó la señal.'
+          : 'A moderator rejected the signal.',
+      },
+      filerNeedsEdit: {
+        subject: (signalTitle: string) =>
+          isEs
+            ? `Tu señal necesita un ajuste: ${signalTitle}`
+            : `Your signal needs a quick edit: ${signalTitle}`,
+        preview: isEs
+          ? 'Un moderador pidió cambios antes de publicarla.'
+          : 'A moderator asked for edits before publishing.',
+      },
+      targetNotifiedStage1: {
+        subject: (targetName: string) =>
+          isEs
+            ? `Crowd Conscious · Señal ciudadana dirigida a ${targetName}`
+            : `Crowd Conscious · Citizen signal addressed to ${targetName}`,
+        preview: isEs
+          ? 'Responde oficialmente desde tu enlace privado.'
+          : 'Reply officially from your private link.',
+      },
+      targetReplied: {
+        subject: (signalTitle: string) =>
+          isEs
+            ? `Recibiste una respuesta oficial sobre tu señal: ${signalTitle}`
+            : `Your signal got an official reply: ${signalTitle}`,
+        preview: isEs
+          ? 'El destinatario respondió oficialmente.'
+          : 'The target posted an official reply.',
+      },
+      moderatorDigest: {
+        // ES-only by founder decision; locale toggle is ignored.
+        subject: (count: number) =>
+          `Crowd Conscious · ${count} señales pendientes de moderación`,
+        preview: (count: number) =>
+          `${count} señales pendientes en la cola de moderación.`,
+      },
+    },
+
     categoryLabel: (cat: SignalCategory): string => {
       const map: Record<SignalCategory, [string, string]> = {
         environment:          ['Medio ambiente', 'Environment'],

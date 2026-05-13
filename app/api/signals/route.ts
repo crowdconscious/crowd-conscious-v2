@@ -14,6 +14,8 @@ import {
   moderateRateLimit,
   getRateLimitIdentifier,
 } from '@/lib/rate-limit'
+import { sendSignalFilerReceived } from '@/lib/resend'
+import { enqueueSignalsModerator } from '@/lib/agents/signals-moderator'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -344,6 +346,37 @@ export async function POST(request: NextRequest) {
       action: 'submitted',
       detail: { source: 'api/signals POST' },
     })
+
+    // F14: fire-and-forget AI moderator. Runs after the response is
+    // flushed (via Next 15 `after()`), populates `ai_scores`, appends an
+    // `ai_assessed` moderation event. Must NEVER block this POST.
+    enqueueSignalsModerator(insertedSignal.id)
+
+    // F13: fire-and-forget filer "received" email. We look up
+    // profiles.email (NOT auth.users) because every signed-in user
+    // already has a profile row created by the auth trigger. Email
+    // failures are logged but do NOT affect the API response so a Resend
+    // outage does not 500 the submission flow.
+    void (async () => {
+      try {
+        const { data: profile } = await admin
+          .from('profiles')
+          .select('email, full_name')
+          .eq('id', user.id)
+          .maybeSingle()
+        const recipient = profile?.email
+        if (!recipient) return
+        await sendSignalFilerReceived({
+          to: recipient,
+          locale: payload.language,
+          signalSlug: insertedSignal.public_slug,
+          signalTitle: payload.title,
+          filerName: profile?.full_name ?? null,
+        })
+      } catch (e) {
+        console.error('[api/signals POST] filer-received email', e)
+      }
+    })()
 
     return NextResponse.json(
       {
