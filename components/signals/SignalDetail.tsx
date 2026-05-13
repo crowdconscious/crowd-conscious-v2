@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { MapPin } from 'lucide-react'
 import {
   getCitizenSignalsCopy,
   type CitizenSignalsLocale,
@@ -13,7 +14,11 @@ import {
 import CoSignButton from './CoSignButton'
 import EvidenceGallery, { type EvidenceItem } from './EvidenceGallery'
 import TimelineRail from './TimelineRail'
-import Comments from './Comments'
+import CommentsThread from './CommentsThread'
+import OfficialResponses, {
+  type OfficialResponseRow,
+} from './OfficialResponses'
+import SignalShareBar from './SignalShareBar'
 
 type SignalCore = {
   id: string
@@ -49,21 +54,13 @@ type Location = {
   city: string | null
 } | null
 
-type ResponseRow = {
-  id: string
-  author_label: string
-  body: string
-  official_status: string
-  created_at: string
-}
-
 type Props = {
   locale: CitizenSignalsLocale
   signal: SignalCore
   target: Target
   location: Location
   evidence: EvidenceItem[]
-  responses: ResponseRow[]
+  responses: OfficialResponseRow[]
   viewerSignedIn: boolean
   viewerHasCosigned: boolean
 }
@@ -82,17 +79,30 @@ function severityClasses(severity: string): string {
   }
 }
 
-function officialStatusClasses(status: string) {
-  switch (status) {
-    case 'resolved':
-      return 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
-    case 'in_progress':
-      return 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
-    default:
-      return 'bg-slate-500/15 text-slate-300 border border-slate-500/30'
-  }
+function locationLabel(loc: Location): string | null {
+  if (!loc) return null
+  const parts = [loc.name, loc.neighborhood, loc.city].filter(
+    (s): s is string => Boolean(s)
+  )
+  return parts.length > 0 ? parts.join(' · ') : null
 }
 
+/**
+ * Public detail view for a single Citizen Signal.
+ *
+ * Server component (`app/signals/[slug]/page.tsx`) fetches the entire
+ * payload and hands it down so this client wrapper only owns the
+ * engagement state (cosign count + cosign toggle echo). Comments
+ * remain self-loading because they need viewer-bound writes.
+ *
+ * Layout strategy:
+ * - Mobile: single column. The narrative renders first, the engagement
+ *   widgets (co-sign + timeline + share) follow. A sticky bottom share
+ *   row docks to the viewport so the share intents are always reachable.
+ * - Desktop ≥ lg: two columns. Narrative on the left, engagement aside
+ *   pinned with `lg:sticky` so it travels with the reader as they
+ *   scroll the body.
+ */
 export default function SignalDetail({
   locale,
   signal,
@@ -108,8 +118,13 @@ export default function SignalDetail({
   const [cosignCount, setCosignCount] = useState(signal.cosign_count)
   const [cosigned, setCosigned] = useState(viewerHasCosigned)
 
+  const heroByline = signal.anonymous_display_mode
+    ? signal.display_name ?? t.detail.anonymous
+    : signal.display_name ?? null
+  const locLabel = locationLabel(location)
+
   return (
-    <article>
+    <article className="pb-24 sm:pb-0">
       <header>
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <span className="rounded-full bg-emerald-500/15 px-2.5 py-0.5 font-semibold uppercase tracking-wide text-emerald-300">
@@ -118,33 +133,56 @@ export default function SignalDetail({
           <span className="rounded-full bg-slate-500/15 px-2.5 py-0.5 text-slate-300">
             {t.categoryLabel(signal.category as SignalCategory)}
           </span>
-          <span className={`rounded-full px-2.5 py-0.5 ${severityClasses(signal.severity)}`}>
+          <span
+            className={`rounded-full px-2.5 py-0.5 ${severityClasses(signal.severity)}`}
+          >
             {t.severityLabel(signal.severity as SignalSeverity)}
           </span>
         </div>
+
         <h1 className="mt-3 text-3xl font-bold text-white sm:text-4xl">
           {signal.title}
         </h1>
-        <p className="mt-3 text-sm text-slate-500">
-          {signal.anonymous_display_mode
-            ? (signal.display_name ?? t.detail.anonymous) + ' · '
-            : ''}
-          {t.detail.filedOn}{' '}
-          {new Date(signal.created_at).toLocaleDateString(dateLocale, {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric',
-          })}
-        </p>
+
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-400">
+          {target && (
+            <span>
+              <span className="text-slate-500">{t.detail.target}:</span>{' '}
+              <span className="text-slate-200">{target.display_name}</span>
+            </span>
+          )}
+          {locLabel && (
+            <span className="inline-flex items-center gap-1">
+              <MapPin className="h-3.5 w-3.5 text-slate-500" aria-hidden />
+              <span className="text-slate-200">{locLabel}</span>
+            </span>
+          )}
+          <span className="text-slate-500">
+            {t.detail.filedOn}{' '}
+            <time dateTime={signal.created_at} className="text-slate-300">
+              {new Date(signal.created_at).toLocaleDateString(dateLocale, {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+              })}
+            </time>
+          </span>
+          {heroByline && (
+            <span>
+              <span className="text-slate-500">{t.detail.filedBy}:</span>{' '}
+              <span className="text-slate-200">{heroByline}</span>
+            </span>
+          )}
+        </div>
       </header>
 
-      <section className="mt-8 grid gap-6 lg:grid-cols-[1fr_320px]">
-        <div>
-          <p className="whitespace-pre-line text-base leading-relaxed text-slate-200">
+      <section className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="min-w-0">
+          <p className="max-w-prose whitespace-pre-line text-base leading-relaxed text-slate-200">
             {signal.body}
           </p>
 
-          {evidence.length > 0 ? (
+          {evidence.length > 0 && (
             <div className="mt-8">
               <h2 className="text-lg font-semibold text-white">
                 {t.detail.evidenceTitle}
@@ -153,52 +191,26 @@ export default function SignalDetail({
                 <EvidenceGallery locale={locale} items={evidence} />
               </div>
             </div>
-          ) : null}
+          )}
 
           <div className="mt-10">
             <h2 className="text-lg font-semibold text-white">
               {t.detail.officialResponses}
             </h2>
-            {responses.length === 0 ? (
-              <p className="mt-2 rounded-lg border border-[#2d3748] bg-[#11161f] p-4 text-sm text-slate-400">
-                {t.detail.noOfficialResponse}
-              </p>
-            ) : (
-              <ul className="mt-3 space-y-3">
-                {responses.map((r) => (
-                  <li
-                    key={r.id}
-                    className="rounded-lg border border-[#2d3748] bg-[#11161f] p-4"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <p className="text-sm font-semibold text-white">
-                        {r.author_label}
-                      </p>
-                      <span
-                        className={`rounded-full px-2.5 py-0.5 text-xs ${officialStatusClasses(r.official_status)}`}
-                      >
-                        {t.targetDash.statusOptions[
-                          r.official_status as
-                            | 'acknowledged'
-                            | 'in_progress'
-                            | 'resolved'
-                        ] ?? r.official_status}
-                      </span>
-                    </div>
-                    <p className="mt-2 whitespace-pre-line text-sm text-slate-300">
-                      {r.body}
-                    </p>
-                    <p className="mt-2 text-xs text-slate-500">
-                      {new Date(r.created_at).toLocaleString(dateLocale)}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <OfficialResponses locale={locale} responses={responses} />
+          </div>
+
+          <div className="mt-10 lg:hidden">
+            <SignalShareBar
+              locale={locale}
+              signalId={signal.id}
+              slug={signal.public_slug}
+              title={signal.title}
+            />
           </div>
 
           <div className="mt-10">
-            <Comments
+            <CommentsThread
               locale={locale}
               slug={signal.public_slug}
               viewerSignedIn={viewerSignedIn}
@@ -206,7 +218,7 @@ export default function SignalDetail({
           </div>
         </div>
 
-        <aside className="space-y-5">
+        <aside className="space-y-5 lg:sticky lg:top-24 lg:self-start">
           <div className="rounded-2xl border border-[#2d3748] bg-[#11161f] p-5">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
               {t.detail.cosignsLabel(cosignCount)}
@@ -248,10 +260,21 @@ export default function SignalDetail({
               </p>
               <p className="mt-1 text-white">{location.name}</p>
               <p className="text-xs text-slate-500">
-                {[location.neighborhood, location.city].filter(Boolean).join(' · ')}
+                {[location.neighborhood, location.city]
+                  .filter(Boolean)
+                  .join(' · ')}
               </p>
             </div>
           )}
+
+          <div className="hidden lg:block">
+            <SignalShareBar
+              locale={locale}
+              signalId={signal.id}
+              slug={signal.public_slug}
+              title={signal.title}
+            />
+          </div>
 
           <Link
             href="/signals"
@@ -261,6 +284,16 @@ export default function SignalDetail({
           </Link>
         </aside>
       </section>
+
+      {/* Mobile-only sticky bottom share row. Hidden ≥ sm because the
+          inline gallery + aside surface already exposes the same intents. */}
+      <SignalShareBar
+        locale={locale}
+        signalId={signal.id}
+        slug={signal.public_slug}
+        title={signal.title}
+        sticky
+      />
     </article>
   )
 }

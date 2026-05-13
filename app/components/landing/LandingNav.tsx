@@ -24,6 +24,7 @@ const NAV = {
   es: {
     pulse: 'Pulse',
     signals: 'Señales',
+    signalsBeta: 'Beta',
     paraMarcas: 'Para marcas',
     blog: 'Blog',
     about: 'Acerca',
@@ -34,6 +35,7 @@ const NAV = {
   en: {
     pulse: 'Pulse',
     signals: 'Signals',
+    signalsBeta: 'Beta',
     paraMarcas: 'For brands',
     blog: 'Blog',
     about: 'About',
@@ -81,9 +83,16 @@ export default function LandingNav() {
     ? 'bg-[#0f1419]/95 backdrop-blur-md border-b border-[#2d3748]'
     : 'bg-[#0f1419] border-b border-[#2d3748]'
 
-  const primary: Array<{ href: string; label: string; emphasize?: boolean }> = [
+  const primary: Array<{
+    href: string
+    label: string
+    emphasize?: boolean
+    badge?: string
+  }> = [
     { href: '/pulse', label: nav.pulse, emphasize: true },
-    ...(SIGNALS_ENABLED ? [{ href: '/signals', label: nav.signals }] : []),
+    ...(SIGNALS_ENABLED
+      ? [{ href: '/signals', label: nav.signals, badge: nav.signalsBeta }]
+      : []),
     { href: '/para-marcas', label: nav.paraMarcas },
     { href: '/blog', label: nav.blog },
     { href: '/about', label: nav.about },
@@ -100,13 +109,18 @@ export default function LandingNav() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`min-h-[44px] inline-flex items-center font-medium transition-colors ${
+                className={`min-h-[44px] inline-flex items-center gap-1.5 font-medium transition-colors ${
                   item.emphasize
                     ? 'text-emerald-400/95 hover:text-emerald-300'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
-                {item.label}
+                <span>{item.label}</span>
+                {item.badge && (
+                  <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-300 ring-1 ring-inset ring-emerald-400/30">
+                    {item.badge}
+                  </span>
+                )}
               </Link>
             ))}
           </div>
@@ -154,13 +168,18 @@ export default function LandingNav() {
                 key={item.href}
                 href={item.href}
                 onClick={() => setMobileOpen(false)}
-                className={`block min-h-[44px] py-3 font-medium ${
+                className={`flex min-h-[44px] items-center gap-2 py-3 font-medium ${
                   item.emphasize
                     ? 'text-emerald-400 hover:text-emerald-300'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
-                {item.label}
+                <span>{item.label}</span>
+                {item.badge && (
+                  <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-300 ring-1 ring-inset ring-emerald-400/30">
+                    {item.badge}
+                  </span>
+                )}
               </Link>
             ))}
             <Link

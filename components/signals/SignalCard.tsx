@@ -1,172 +1,118 @@
 'use client'
 
 import Link from 'next/link'
+import { formatDistanceToNow } from 'date-fns'
+import { es as esLocale, enUS as enLocale } from 'date-fns/locale'
+import { MapPin, MegaphoneIcon, Users } from 'lucide-react'
 import {
   getCitizenSignalsCopy,
   type CitizenSignalsLocale,
-  type SignalCategory,
-  type SignalPostType,
   type SignalSeverity,
-  type SignalTargetKind,
 } from '@/lib/i18n/citizen-signals'
+import type { SignalListItem } from '@/lib/signals/list'
 
-export type SignalCardData = {
-  id: string
-  public_slug: string
-  post_type: string
-  category: string
-  severity: string
-  target_kind: string
-  citizen_target_id: string
-  title: string
-  body: string
-  language: string
-  conscious_location_id: string
-  display_name: string | null
-  anonymous_display_mode: boolean
-  threshold_stage: number
-  cosign_count: number
-  stage1_met_at: string | null
-  stage2_met_at: string | null
-  created_at: string
-  updated_at: string
-  target?: {
-    id: string
-    slug: string
-    display_name: string
-    target_kind: string
-  } | null
-  location?: {
-    id: string
-    slug: string
-    name: string
-    neighborhood: string | null
-    city: string | null
-  } | null
-}
-
-const STAGE1 = Number(process.env.NEXT_PUBLIC_SIGNALS_STAGE1 ?? '50')
-const STAGE2 = Number(process.env.NEXT_PUBLIC_SIGNALS_STAGE2 ?? '200')
-
-function severityClasses(severity: string): string {
-  switch (severity) {
-    case 'critical':
-      return 'bg-rose-500/15 text-rose-300 border border-rose-500/30'
-    case 'high':
-      return 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
-    case 'medium':
-      return 'bg-sky-500/15 text-sky-300 border border-sky-500/30'
-    case 'low':
-    default:
-      return 'bg-slate-500/15 text-slate-300 border border-slate-500/30'
-  }
-}
-
-export default function SignalCard({
-  locale,
-  signal,
-}: {
+type Props = {
+  signal: SignalListItem
   locale: CitizenSignalsLocale
-  signal: SignalCardData
-}) {
+  stage1Threshold: number
+}
+
+const SEVERITY_CHIP: Record<SignalSeverity, string> = {
+  low: 'bg-slate-700/40 text-slate-200 ring-1 ring-inset ring-slate-500/40',
+  medium: 'bg-amber-300/10 text-amber-200 ring-1 ring-inset ring-amber-300/40',
+  high: 'bg-orange-400/10 text-orange-300 ring-1 ring-inset ring-orange-400/40',
+  critical: 'bg-rose-500/10 text-rose-300 ring-1 ring-inset ring-rose-500/50',
+}
+
+const SEVERITY_BAR: Record<SignalSeverity, string> = {
+  low: 'bg-slate-400',
+  medium: 'bg-amber-300',
+  high: 'bg-orange-400',
+  critical: 'bg-rose-500',
+}
+
+export default function SignalCard({ signal, locale, stage1Threshold }: Props) {
   const t = getCitizenSignalsCopy(locale)
-  const dateLocale = locale === 'es' ? 'es-MX' : 'en-US'
-  const created = new Date(signal.created_at).toLocaleDateString(dateLocale, {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
+  const dateLocale = locale === 'es' ? esLocale : enLocale
+
+  const cosigns = Math.max(0, signal.cosignCount)
+  const pct = Math.min(100, Math.round((cosigns / stage1Threshold) * 100))
+  const relTime = formatDistanceToNow(new Date(signal.createdAt), {
+    addSuffix: true,
+    locale: dateLocale,
   })
 
-  const stageThreshold = signal.threshold_stage >= 2 ? STAGE2 : STAGE1
-  const progressPct = Math.min(
-    100,
-    Math.round((signal.cosign_count / stageThreshold) * 100)
-  )
-
-  const bodyExcerpt =
-    signal.body.length > 220 ? `${signal.body.slice(0, 220).trim()}…` : signal.body
-
-  const filer = signal.anonymous_display_mode
-    ? signal.display_name ?? t.detail.anonymous
-    : null
+  const targetLabel =
+    signal.targetName ?? t.targetKindLabel(signal.targetKind)
 
   return (
     <Link
-      href={`/signals/${signal.public_slug}`}
-      className="group block rounded-2xl border border-[#2d3748] bg-[#11161f] p-5 transition-colors hover:border-emerald-400/50"
+      href={`/signals/${signal.publicSlug}`}
+      className="group block overflow-hidden rounded-xl border border-[#2d3748] bg-[#1a2029] p-5 transition-colors hover:border-emerald-500/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60"
     >
       <div className="flex flex-wrap items-center gap-2">
-        <span className="rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-emerald-300">
-          {t.postTypeLabel(signal.post_type as SignalPostType)}
-        </span>
-        <span className="rounded-full bg-slate-500/15 px-2.5 py-0.5 text-xs text-slate-300">
-          {t.categoryLabel(signal.category as SignalCategory)}
+        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-300 ring-1 ring-inset ring-emerald-500/30">
+          <MegaphoneIcon className="h-3 w-3" aria-hidden />
+          {t.categoryLabel(signal.category)}
         </span>
         <span
-          className={`rounded-full px-2.5 py-0.5 text-xs ${severityClasses(signal.severity)}`}
+          className={`rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${SEVERITY_CHIP[signal.severity]}`}
         >
-          {t.severityLabel(signal.severity as SignalSeverity)}
+          {t.severityLabel(signal.severity)}
         </span>
-        {signal.threshold_stage >= 1 && (
-          <span className="rounded-full bg-amber-500/15 px-2.5 py-0.5 text-xs text-amber-200">
-            {signal.threshold_stage >= 2
-              ? t.stages.stage2.label
-              : t.stages.stage1.label}
-          </span>
-        )}
+        <span className="rounded-full bg-slate-800/60 px-2 py-0.5 text-[11px] font-medium text-slate-300 ring-1 ring-inset ring-slate-600/40">
+          {t.targetKindLabel(signal.targetKind)}
+        </span>
       </div>
 
-      <h2 className="mt-3 text-lg font-semibold text-white group-hover:text-emerald-200">
+      <h3 className="mt-3 text-lg font-semibold leading-snug text-white group-hover:text-emerald-200">
         {signal.title}
-      </h2>
-      <p className="mt-2 text-sm text-slate-400">{bodyExcerpt}</p>
+      </h3>
 
-      <dl className="mt-4 grid grid-cols-1 gap-2 text-xs text-slate-400 sm:grid-cols-2">
-        {signal.target && (
-          <div>
-            <dt className="font-semibold uppercase tracking-wide text-slate-500">
-              {t.detail.target}
-            </dt>
-            <dd className="text-slate-300">
-              {signal.target.display_name}{' '}
-              <span className="text-slate-500">
-                ({t.targetKindLabel(signal.target.target_kind as SignalTargetKind)})
-              </span>
-            </dd>
-          </div>
-        )}
-        {signal.location && (
-          <div>
-            <dt className="font-semibold uppercase tracking-wide text-slate-500">
-              {t.detail.location}
-            </dt>
-            <dd className="text-slate-300">
-              {[signal.location.name, signal.location.neighborhood]
-                .filter(Boolean)
-                .join(' · ')}
-            </dd>
+      <p className="mt-1 line-clamp-2 text-sm text-slate-400">{signal.body}</p>
+
+      <dl className="mt-3 space-y-1 text-xs text-slate-400">
+        <div className="flex items-center gap-1.5">
+          <MegaphoneIcon className="h-3.5 w-3.5 text-slate-500" aria-hidden />
+          <dt className="sr-only">{t.detail.target}</dt>
+          <dd className="truncate">{targetLabel}</dd>
+        </div>
+        {signal.locationName && (
+          <div className="flex items-center gap-1.5">
+            <MapPin className="h-3.5 w-3.5 text-slate-500" aria-hidden />
+            <dt className="sr-only">{t.detail.location}</dt>
+            <dd className="truncate">{signal.locationName}</dd>
           </div>
         )}
       </dl>
 
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-[#1e2531] pt-4 text-xs">
-        <span className="text-slate-500">
-          {filer ? `${filer} · ` : ''}
-          {t.detail.filedOn} {created}
-        </span>
-        <div className="flex items-center gap-3">
-          <span className="font-semibold text-emerald-300">
-            {t.detail.cosignsLabel(signal.cosign_count)}
+      <div className="mt-4">
+        <div className="flex items-center justify-between text-xs text-slate-300">
+          <span className="inline-flex items-center gap-1.5">
+            <Users className="h-3.5 w-3.5 text-emerald-400" aria-hidden />
+            {t.detail.cosignsLabel(cosigns)}
           </span>
-          <div className="relative h-1.5 w-24 overflow-hidden rounded-full bg-[#1e2531]">
-            <div
-              className="absolute inset-y-0 left-0 bg-emerald-400"
-              style={{ width: `${progressPct}%` }}
-              aria-hidden
-            />
-          </div>
+          <span className="text-slate-500">
+            {t.feed.card.cosignProgress(cosigns, stage1Threshold)}
+          </span>
+        </div>
+        <div
+          className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-800"
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={stage1Threshold}
+          aria-valuenow={cosigns}
+        >
+          <div
+            className={`h-full rounded-full transition-all ${SEVERITY_BAR[signal.severity]}`}
+            style={{ width: `${pct}%` }}
+          />
         </div>
       </div>
+
+      <p className="mt-3 text-[11px] text-slate-500">
+        {t.feed.card.publishedAgo(relTime)}
+      </p>
     </Link>
   )
 }

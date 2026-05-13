@@ -1,284 +1,206 @@
 'use client'
 
-import { useEffect, useMemo, useState, useTransition } from 'react'
+import Link from 'next/link'
+import { useMemo, useState, useTransition } from 'react'
 import {
   getCitizenSignalsCopy,
-  SIGNAL_CATEGORIES,
-  SIGNAL_SEVERITIES,
-  SIGNAL_TARGET_KINDS,
   type CitizenSignalsLocale,
-  type SignalCategory,
-  type SignalSeverity,
-  type SignalTargetKind,
 } from '@/lib/i18n/citizen-signals'
-import SignalCard, { type SignalCardData } from './SignalCard'
+import type { SignalListItem, SignalLookups } from '@/lib/signals/list'
+import SignalCard from './SignalCard'
+import SignalsFilters, {
+  DEFAULT_FILTERS,
+  type SignalsFilterState,
+} from './SignalsFilters'
 
 type Props = {
   locale: CitizenSignalsLocale
-  initialSignals: SignalCardData[]
+  initialSignals: SignalListItem[]
+  initialLookups: SignalLookups
   initialNextCursor: string | null
+  stage1Threshold: number
 }
 
-type Filters = {
-  category: SignalCategory | null
-  severity: SignalSeverity | null
-  targetKind: SignalTargetKind | null
-  stage: number | null
+type ApiSignalRow = {
+  id: string
+  public_slug: string
+  post_type: string
+  category: string
+  severity: string
+  target_kind: string
+  citizen_target_id: string
+  title: string
+  body: string
+  language: string
+  conscious_location_id: string
+  anonymous_display_mode: boolean
+  display_name: string | null
+  threshold_stage: number
+  cosign_count: number
+  stage1_met_at: string | null
+  stage2_met_at: string | null
+  created_at: string
+  updated_at: string
 }
 
-const DEFAULT_FILTERS: Filters = {
-  category: null,
-  severity: null,
-  targetKind: null,
-  stage: null,
+type ApiResponse = {
+  signals: ApiSignalRow[]
+  nextCursor: string | null
 }
 
 export default function SignalsFeed({
   locale,
   initialSignals,
+  initialLookups,
   initialNextCursor,
+  stage1Threshold,
 }: Props) {
   const t = getCitizenSignalsCopy(locale)
-  const [signals, setSignals] = useState<SignalCardData[]>(initialSignals)
-  const [nextCursor, setNextCursor] = useState<string | null>(initialNextCursor)
-  const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS)
-  const [loadingMore, startMore] = useTransition()
-  const [error, setError] = useState<string | null>(null)
-  const [fetching, setFetching] = useState(false)
 
-  // Refetch from the API whenever filters change. We start over from the
-  // first page; we don't try to filter the SSR'd list in place because
-  // pagination cursors would lose meaning.
-  useEffect(() => {
-    const allDefault =
-      filters.category === DEFAULT_FILTERS.category &&
-      filters.severity === DEFAULT_FILTERS.severity &&
-      filters.targetKind === DEFAULT_FILTERS.targetKind &&
-      filters.stage === DEFAULT_FILTERS.stage
-    if (allDefault) {
-      setSignals(initialSignals)
-      setNextCursor(initialNextCursor)
-      return
+  const [signals, setSignals] = useState<SignalListItem[]>(initialSignals)
+  const [lookups] = useState<SignalLookups>(initialLookups)
+  const [cursor, setCursor] = useState<string | null>(initialNextCursor)
+  const [filters, setFilters] = useState<SignalsFilterState>(DEFAULT_FILTERS)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
+
+  const visible = useMemo(() => {
+    const filtered = signals.filter((s) => {
+      if (filters.category !== 'all' && s.category !== filters.category) return false
+      if (filters.severity !== 'all' && s.severity !== filters.severity) return false
+      if (filters.targetKind !== 'all' && s.targetKind !== filters.targetKind)
+        return false
+      return true
+    })
+    if (filters.sort === 'cosigns') {
+      return [...filtered].sort((a, b) => {
+        if (b.cosignCount !== a.cosignCount) return b.cosignCount - a.cosignCount
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      })
     }
-    const abort = new AbortController()
-    setFetching(true)
-    setError(null)
-    void (async () => {
-      try {
-        const params = new URLSearchParams()
-        if (filters.category) params.set('category', filters.category)
-        if (filters.severity) params.set('severity', filters.severity)
-        if (filters.targetKind) params.set('target_kind', filters.targetKind)
-        if (filters.stage !== null) params.set('stage', String(filters.stage))
-        const res = await fetch(`/api/signals?${params.toString()}`, {
-          signal: abort.signal,
-        })
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
-        const json = (await res.json()) as {
-          signals: SignalCardData[]
-          nextCursor: string | null
-        }
-        setSignals(json.signals)
-        setNextCursor(json.nextCursor)
-      } catch (e: unknown) {
-        if ((e as { name?: string }).name === 'AbortError') return
-        setError((e as Error).message ?? 'Error')
-      } finally {
-        setFetching(false)
-      }
-    })()
-    return () => abort.abort()
-  }, [filters, initialSignals, initialNextCursor])
+    return [...filtered].sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )
+  }, [signals, filters])
 
-  const loadMore = () => {
-    if (!nextCursor || loadingMore) return
-    startMore(async () => {
+  async function handleLoadMore() {
+    if (!cursor) return
+    setLoadError(null)
+    startTransition(async () => {
       try {
-        const params = new URLSearchParams()
-        if (filters.category) params.set('category', filters.category)
-        if (filters.severity) params.set('severity', filters.severity)
-        if (filters.targetKind) params.set('target_kind', filters.targetKind)
-        if (filters.stage !== null) params.set('stage', String(filters.stage))
-        params.set('cursor', nextCursor)
-        const res = await fetch(`/api/signals?${params.toString()}`)
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
-        const json = (await res.json()) as {
-          signals: SignalCardData[]
-          nextCursor: string | null
+        const params = new URLSearchParams({ cursor, limit: '20' })
+        const res = await fetch(`/api/signals?${params.toString()}`, {
+          cache: 'no-store',
+        })
+        if (!res.ok) {
+          setLoadError(t.feed.loadMoreError)
+          return
         }
-        setSignals((prev) => [...prev, ...json.signals])
-        setNextCursor(json.nextCursor)
-      } catch (e: unknown) {
-        setError((e as Error).message ?? 'Error')
+        const json = (await res.json()) as ApiResponse
+        const newRows = (json.signals ?? []).map((r) =>
+          mapApiRow(r, lookups)
+        )
+        setSignals((prev) => mergeUnique(prev, newRows))
+        setCursor(json.nextCursor ?? null)
+      } catch (err) {
+        console.error('[SignalsFeed] load more', err)
+        setLoadError(t.feed.loadMoreError)
       }
     })
   }
 
-  const showEmpty = !fetching && signals.length === 0
-
-  const categoryOptions = useMemo(
-    () =>
-      SIGNAL_CATEGORIES.map((c) => ({
-        value: c,
-        label: t.categoryLabel(c),
-      })),
-    [t]
-  )
-  const severityOptions = useMemo(
-    () =>
-      SIGNAL_SEVERITIES.map((s) => ({
-        value: s,
-        label: t.severityLabel(s),
-      })),
-    [t]
-  )
-  const targetKindOptions = useMemo(
-    () =>
-      SIGNAL_TARGET_KINDS.map((tk) => ({
-        value: tk,
-        label: t.targetKindLabel(tk),
-      })),
-    [t]
-  )
-
   return (
     <div>
-      {/* Filters */}
-      <div className="mb-6 flex flex-wrap items-center gap-3">
-        <FilterSelect
-          label={t.feed.filters.category}
-          value={filters.category}
-          options={categoryOptions}
-          onChange={(v) =>
-            setFilters((f) => ({ ...f, category: v as SignalCategory | null }))
-          }
-        />
-        <FilterSelect
-          label={t.feed.filters.severity}
-          value={filters.severity}
-          options={severityOptions}
-          onChange={(v) =>
-            setFilters((f) => ({ ...f, severity: v as SignalSeverity | null }))
-          }
-        />
-        <FilterSelect
-          label={t.feed.filters.target}
-          value={filters.targetKind}
-          options={targetKindOptions}
-          onChange={(v) =>
-            setFilters((f) => ({ ...f, targetKind: v as SignalTargetKind | null }))
-          }
-        />
-        <FilterSelect
-          label={t.feed.filters.stage}
-          value={filters.stage === null ? null : String(filters.stage)}
-          options={[
-            { value: '0', label: locale === 'es' ? 'Etapa 0' : 'Stage 0' },
-            { value: '1', label: locale === 'es' ? 'Etapa 1' : 'Stage 1' },
-            { value: '2', label: locale === 'es' ? 'Etapa 2' : 'Stage 2' },
-          ]}
-          onChange={(v) =>
-            setFilters((f) => ({ ...f, stage: v === null ? null : Number(v) }))
-          }
-        />
-        {(filters.category ||
-          filters.severity ||
-          filters.targetKind ||
-          filters.stage !== null) && (
-          <button
-            type="button"
-            onClick={() => setFilters(DEFAULT_FILTERS)}
-            className="text-xs text-slate-400 underline hover:text-emerald-300"
-          >
-            {locale === 'es' ? 'Limpiar filtros' : 'Clear filters'}
-          </button>
-        )}
-        {fetching && (
-          <span className="text-xs text-slate-500">
-            {locale === 'es' ? 'Cargando…' : 'Loading…'}
-          </span>
-        )}
-      </div>
+      <SignalsFilters locale={locale} value={filters} onChange={setFilters} />
 
-      {error && (
-        <p className="mb-4 rounded border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-300">
-          {error}
-        </p>
-      )}
-
-      {showEmpty ? (
-        <div className="rounded-2xl border border-[#2d3748] bg-[#11161f] p-10 text-center">
-          <h2 className="text-lg font-semibold text-white">{t.feed.empty.title}</h2>
-          <p className="mt-2 text-sm text-slate-400">{t.feed.empty.subtitle}</p>
-          <a
-            href="/signals/nueva"
-            className="mt-5 inline-flex min-h-[44px] items-center rounded-lg bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-400"
-          >
-            {t.feed.empty.cta}
-          </a>
-        </div>
+      {visible.length === 0 ? (
+        <EmptyState locale={locale} />
       ) : (
-        <ul className="grid gap-4">
-          {signals.map((s) => (
+        <ul className="grid gap-4 sm:grid-cols-2">
+          {visible.map((s) => (
             <li key={s.id}>
-              <SignalCard locale={locale} signal={s} />
+              <SignalCard
+                signal={s}
+                locale={locale}
+                stage1Threshold={stage1Threshold}
+              />
             </li>
           ))}
         </ul>
       )}
 
-      {nextCursor && !showEmpty && (
+      {cursor && visible.length > 0 && (
         <div className="mt-8 flex justify-center">
           <button
             type="button"
-            onClick={loadMore}
-            disabled={loadingMore}
-            className="inline-flex min-h-[44px] items-center rounded-lg border border-[#2d3748] px-5 py-2.5 text-sm font-medium text-slate-300 transition-colors hover:border-emerald-400 hover:text-white disabled:opacity-60"
+            onClick={handleLoadMore}
+            disabled={isPending}
+            className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-[#2d3748] bg-[#1a2029] px-6 py-3 text-sm font-semibold text-slate-100 transition hover:border-emerald-500/50 hover:text-emerald-300 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {loadingMore
-              ? locale === 'es'
-                ? 'Cargando…'
-                : 'Loading…'
-              : locale === 'es'
-                ? 'Cargar más'
-                : 'Load more'}
+            {isPending ? t.feed.loading : t.feed.loadMore}
           </button>
         </div>
       )}
+
+      {loadError && (
+        <p className="mt-4 text-center text-sm text-rose-400">{loadError}</p>
+      )}
+
+      <p className="mt-12 text-center text-xs text-slate-500">
+        {t.feed.betaBanner}
+      </p>
     </div>
   )
 }
 
-function FilterSelect({
-  label,
-  value,
-  options,
-  onChange,
-}: {
-  label: string
-  value: string | null
-  options: { value: string; label: string }[]
-  onChange: (v: string | null) => void
-}) {
+function EmptyState({ locale }: { locale: CitizenSignalsLocale }) {
+  const t = getCitizenSignalsCopy(locale)
   return (
-    <label className="inline-flex items-center gap-2 rounded-lg border border-[#2d3748] bg-[#11161f] px-3 py-2 text-xs text-slate-300">
-      <span className="font-semibold uppercase tracking-wide text-slate-500">
-        {label}
-      </span>
-      <select
-        value={value ?? ''}
-        onChange={(e) => onChange(e.target.value || null)}
-        className="bg-transparent text-slate-100 focus:outline-none"
+    <div className="rounded-2xl border border-dashed border-white/15 bg-[#1a2029] px-6 py-16 text-center">
+      <p className="text-lg font-semibold text-slate-200">{t.feed.empty.title}</p>
+      <p className="mt-2 text-sm text-slate-500">{t.feed.empty.subtitle}</p>
+      <Link
+        href="/signals/nueva"
+        className="mt-6 inline-flex min-h-[44px] items-center justify-center rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-500"
       >
-        <option value="" className="bg-[#11161f] text-slate-300">
-          —
-        </option>
-        {options.map((o) => (
-          <option key={o.value} value={o.value} className="bg-[#11161f] text-slate-100">
-            {o.label}
-          </option>
-        ))}
-      </select>
-    </label>
+        {t.feed.empty.cta}
+      </Link>
+    </div>
   )
+}
+
+function mergeUnique(
+  prev: SignalListItem[],
+  next: SignalListItem[]
+): SignalListItem[] {
+  const seen = new Set(prev.map((s) => s.id))
+  const additions = next.filter((s) => !seen.has(s.id))
+  return [...prev, ...additions]
+}
+
+function mapApiRow(row: ApiSignalRow, lookups: SignalLookups): SignalListItem {
+  return {
+    id: row.id,
+    publicSlug: row.public_slug,
+    postType: row.post_type,
+    category: row.category as SignalListItem['category'],
+    severity: row.severity as SignalListItem['severity'],
+    targetKind: row.target_kind as SignalListItem['targetKind'],
+    citizenTargetId: row.citizen_target_id,
+    title: row.title,
+    body: row.body,
+    language: row.language,
+    consciousLocationId: row.conscious_location_id,
+    displayName: row.display_name,
+    anonymousDisplayMode: row.anonymous_display_mode,
+    thresholdStage: row.threshold_stage,
+    cosignCount: row.cosign_count,
+    stage1MetAt: row.stage1_met_at,
+    stage2MetAt: row.stage2_met_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    targetName: lookups.targets[row.citizen_target_id]?.displayName ?? null,
+    locationName: lookups.locations[row.conscious_location_id]?.name ?? null,
+  }
 }

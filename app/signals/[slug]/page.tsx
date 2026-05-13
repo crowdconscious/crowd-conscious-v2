@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import { notFound } from 'next/navigation'
-import dynamic from 'next/dynamic'
 import { getCurrentUser } from '@/lib/auth-server'
 import { createSignalsAdminClient } from '@/lib/signals/supabase'
 import {
@@ -9,8 +8,6 @@ import {
   type CitizenSignalsLocale,
 } from '@/lib/i18n/citizen-signals'
 import SignalDetail from '@/components/signals/SignalDetail'
-
-const Footer = dynamic(() => import('@/components/Footer'))
 
 function readLocale(c: {
   get: (k: string) => { value?: string } | undefined
@@ -135,24 +132,26 @@ export default async function SignalsDetailPage({ params }: PageProps) {
     viewerHasCosigned = !!cosignRow
   }
 
+  // The surrounding `app/signals/layout.tsx` already provides the dark
+  // chrome (LandingNav + Footer + `data-theme="dark"`), so this page
+  // only owns the inner reading column. Width opens up at `lg` so the
+  // detail's two-column grid (narrative + 320px aside) fits without
+  // crowding either column.
   return (
-    <div className="min-h-screen bg-[#0f1419] text-slate-100">
-      <main className="mx-auto max-w-3xl px-4 py-10 sm:py-14">
-        <SignalDetail
-          locale={locale}
-          signal={signal}
-          target={target ?? null}
-          location={location ?? null}
-          evidence={evidenceWithUrls}
-          responses={responses ?? []}
-          viewerSignedIn={!!user}
-          viewerHasCosigned={viewerHasCosigned}
-        />
-        <p className="mt-10 text-center text-xs text-slate-500">
-          {t.legal.noLegalAdviceBody}
-        </p>
-      </main>
-      <Footer />
-    </div>
+    <main className="mx-auto max-w-3xl px-4 py-10 sm:py-14 lg:max-w-5xl">
+      <SignalDetail
+        locale={locale}
+        signal={signal}
+        target={target ?? null}
+        location={location ?? null}
+        evidence={evidenceWithUrls}
+        responses={responses ?? []}
+        viewerSignedIn={!!user}
+        viewerHasCosigned={viewerHasCosigned}
+      />
+      <p className="mt-10 text-center text-xs text-slate-500">
+        {t.legal.noLegalAdviceBody}
+      </p>
+    </main>
   )
 }

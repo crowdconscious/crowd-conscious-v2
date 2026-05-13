@@ -64,6 +64,7 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
       brand: isEs ? 'Señales Ciudadanas' : 'Citizen Signals',
       feed: isEs ? 'Señales' : 'Signals',
       newSignal: isEs ? 'Crear señal' : 'Create signal',
+      beta: isEs ? 'Beta' : 'Beta',
     },
 
     meta: {
@@ -90,6 +91,13 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
         severity: isEs ? 'Urgencia' : 'Severity',
         target: isEs ? 'Destinatario' : 'Target',
         stage: isEs ? 'Etapa' : 'Stage',
+        sort: isEs ? 'Orden' : 'Sort',
+        sortRecent: isEs ? 'Más recientes' : 'Most recent',
+        sortCosigns: isEs ? 'Más co-firmadas' : 'Most co-signed',
+        clear: isEs ? 'Limpiar filtros' : 'Clear filters',
+        allCategories: isEs ? 'Todas las categorías' : 'All categories',
+        allSeverities: isEs ? 'Cualquier urgencia' : 'Any severity',
+        allTargets: isEs ? 'Cualquier destinatario' : 'Any target',
       },
       empty: {
         title: isEs
@@ -100,6 +108,23 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
           : 'Be the first to report something worth changing.',
         cta: isEs ? 'Crear la primera señal' : 'Create the first signal',
       },
+      card: {
+        cosignProgress: (n: number, threshold: number) =>
+          isEs
+            ? `${n} de ${threshold} co-firmas hacia el umbral`
+            : `${n} of ${threshold} co-signs toward threshold`,
+        publishedAgo: (rel: string) =>
+          isEs ? `Publicada ${rel}` : `Published ${rel}`,
+        viewSignal: isEs ? 'Ver señal' : 'View signal',
+      },
+      loadMore: isEs ? 'Cargar más' : 'Load more',
+      loading: isEs ? 'Cargando…' : 'Loading…',
+      loadMoreError: isEs
+        ? 'No se pudieron cargar más señales.'
+        : 'Could not load more signals.',
+      betaBanner: isEs
+        ? 'Esta superficie está en beta. La moderación es manual y los tiempos de respuesta pueden variar.'
+        : 'This surface is in beta. Moderation is manual and response times may vary.',
     },
 
     compose: {
@@ -115,6 +140,92 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
         evidence: isEs ? 'Evidencia' : 'Evidence',
         review: isEs ? 'Revisar y enviar' : 'Review & submit',
       },
+      wizard: {
+        stepLabel: (n: number, total: number) =>
+          isEs ? `Paso ${n} de ${total}` : `Step ${n} of ${total}`,
+        next: isEs ? 'Siguiente' : 'Next',
+        back: isEs ? 'Atrás' : 'Back',
+        previewHeading: isEs ? 'Vista previa' : 'Preview',
+        editStep: isEs ? 'Editar' : 'Edit',
+        draftRestored: isEs
+          ? 'Restauramos tu borrador anterior.'
+          : 'We restored your previous draft.',
+        clearDraft: isEs ? 'Borrar borrador' : 'Clear draft',
+        uploadCta: isEs ? 'Subir archivo' : 'Upload file',
+        uploadingCta: isEs ? 'Subiendo…' : 'Uploading…',
+        dropHere: isEs
+          ? 'Arrastra archivos aquí o haz clic para seleccionar'
+          : 'Drag files here or click to select',
+        addLink: isEs ? 'Adjuntar enlace' : 'Attach a link',
+        addLinkCta: isEs ? 'Agregar' : 'Add',
+        removeItem: isEs ? 'Quitar' : 'Remove',
+        captionPlaceholder: isEs
+          ? 'Descripción opcional (qué muestra esta evidencia)'
+          : 'Optional caption (what this evidence shows)',
+        searchPlaceholder: isEs ? 'Buscar…' : 'Search…',
+        noResults: isEs ? 'Sin resultados.' : 'No results.',
+        anonymousToggle: isEs
+          ? 'Publicar bajo un alias'
+          : 'Publish under an alias',
+        anonymousHelp: isEs
+          ? 'Tu identidad real sigue siendo visible para moderación.'
+          : 'Your real identity is still visible to moderation.',
+        aliasPlaceholder: isEs ? 'Vecino de la Roma' : 'Neighbour from Roma',
+        languageLabel: isEs ? 'Idioma del relato' : 'Narrative language',
+        evidenceCount: (n: number, max: number) =>
+          isEs ? `${n} de ${max} archivos` : `${n} of ${max} files`,
+      },
+      validation: {
+        titleTooShort: isEs
+          ? 'El título debe tener al menos 10 caracteres.'
+          : 'Title must be at least 10 characters.',
+        titleTooLong: isEs
+          ? 'El título no puede pasar de 120 caracteres.'
+          : 'Title can be at most 120 characters.',
+        bodyTooShort: isEs
+          ? 'La descripción debe tener al menos 50 caracteres.'
+          : 'Description must be at least 50 characters.',
+        bodyTooLong: isEs
+          ? 'La descripción no puede pasar de 4000 caracteres.'
+          : 'Description can be at most 4000 characters.',
+        targetRequired: isEs
+          ? 'Selecciona un destinatario para continuar.'
+          : 'Select a target to continue.',
+        locationRequired: isEs
+          ? 'Selecciona una ubicación para continuar.'
+          : 'Select a location to continue.',
+        aliasRequired: isEs
+          ? 'Escribe el alias público que prefieres.'
+          : 'Write the public alias you prefer.',
+        aliasTooShort: isEs
+          ? 'El alias debe tener al menos 2 caracteres.'
+          : 'Alias must be at least 2 characters.',
+        aliasTooLong: isEs
+          ? 'El alias no puede pasar de 60 caracteres.'
+          : 'Alias can be at most 60 characters.',
+        attestationRequired: isEs
+          ? 'Debes aceptar el aviso legal antes de enviar.'
+          : 'You must accept the legal notice before submitting.',
+        fileTooLarge: isEs
+          ? 'Cada archivo debe pesar 10MB o menos.'
+          : 'Each file must be 10MB or smaller.',
+        fileWrongType: isEs
+          ? 'Solo aceptamos imágenes (JPG, PNG, WEBP, GIF) o PDF.'
+          : 'We only accept images (JPG, PNG, WEBP, GIF) or PDF.',
+        evidenceMax: (n: number) =>
+          isEs
+            ? `Máximo ${n} archivos por señal.`
+            : `Maximum ${n} files per signal.`,
+        invalidUrl: isEs
+          ? 'Pega una URL válida (https://…).'
+          : 'Paste a valid URL (https://…).',
+        submitFailed: isEs
+          ? 'No pudimos enviar la señal. Intenta de nuevo.'
+          : 'We could not submit the signal. Try again.',
+      },
+      legalDisclaimerLong: isEs
+        ? 'Al enviar esta señal afirmas que la información es verdadera al mejor de tu conocimiento, que no incluye datos personales de terceros (nombres, direcciones, teléfonos) ni afirmaciones difamatorias. Crowd Conscious puede moderar, editar o rechazar el contenido antes de publicarlo. Una señal no sustituye una denuncia formal ante autoridad competente.'
+        : 'By submitting this signal you confirm the information is true to the best of your knowledge, contains no third-party personal data (names, addresses, phone numbers) and no defamatory claims. Crowd Conscious may moderate, edit or reject the content before publishing. A signal is not a substitute for a formal complaint before the competent authority.',
       typeChoices: {
         complaint: {
           label: isEs ? 'Denuncia' : 'Complaint',
@@ -181,6 +292,11 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
           ? 'Tu señal está en revisión. Recibirás un correo cuando un moderador la apruebe o pida ajustes.'
           : 'Your signal is under review. You will get an email when a moderator approves it or requests edits.',
         backToFeed: isEs ? 'Ver el feed' : 'Back to feed',
+        viewSubmission: isEs ? 'Ver tu envío' : 'View your submission',
+        slugCaption: isEs
+          ? 'Guarda este enlace; estará público una vez aprobado.'
+          : 'Save this link; it goes public once approved.',
+        createAnother: isEs ? 'Crear otra señal' : 'Create another signal',
       },
     },
 
