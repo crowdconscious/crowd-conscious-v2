@@ -23,6 +23,7 @@ import { CompactFundThermometer } from '@/components/fund/FundThermometer'
 const NAV = {
   es: {
     pulse: 'Pulse',
+    signals: 'Señales',
     paraMarcas: 'Para marcas',
     blog: 'Blog',
     about: 'Acerca',
@@ -32,6 +33,7 @@ const NAV = {
   },
   en: {
     pulse: 'Pulse',
+    signals: 'Signals',
     paraMarcas: 'For brands',
     blog: 'Blog',
     about: 'About',
@@ -40,6 +42,10 @@ const NAV = {
     signUp: 'Create account',
   },
 } as const
+
+// Read at module init — the flag is set at build time on Vercel so this
+// matches what the page-level routes return (404 when off).
+const SIGNALS_ENABLED = process.env.NEXT_PUBLIC_SIGNALS_ENABLED === 'true'
 
 function LiveBadge({ liveCount, label }: { liveCount: number; label: string }) {
   if (liveCount <= 0) return null
@@ -77,6 +83,7 @@ export default function LandingNav() {
 
   const primary: Array<{ href: string; label: string; emphasize?: boolean }> = [
     { href: '/pulse', label: nav.pulse, emphasize: true },
+    ...(SIGNALS_ENABLED ? [{ href: '/signals', label: nav.signals }] : []),
     { href: '/para-marcas', label: nav.paraMarcas },
     { href: '/blog', label: nav.blog },
     { href: '/about', label: nav.about },

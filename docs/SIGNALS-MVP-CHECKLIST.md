@@ -90,7 +90,8 @@ Cross-reference: `docs/SIGNALS-DESIGN-2026.md` (scope), `sql-migrations/citizens
 
 | Var | Notes |
 |---|---|
-| `SIGNALS_ENABLED` | `true` in all envs per founder decision. |
+| `SIGNALS_ENABLED` | `true` in all envs per founder decision. Server-side gate (API routes return 404 when off). |
+| `NEXT_PUBLIC_SIGNALS_ENABLED` | `true` in all envs. Client-side mirror of the same flag — needed because the `LandingNav` link to `/signals` is rendered in a client component. Keep this value in sync with `SIGNALS_ENABLED`. |
 | `NEXT_PUBLIC_SIGNALS_STAGE1` | `50`. |
 | `NEXT_PUBLIC_SIGNALS_STAGE2` | `200`. |
 | `SIGNALS_ALLOWED_LOCATION_IDS` | Optional comma-separated allow-list. If unset, F5 enforces "city = Ciudad de México" via DB query. |
