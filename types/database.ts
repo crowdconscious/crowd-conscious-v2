@@ -1161,6 +1161,7 @@ export interface Database {
           publication_status: string
           threshold_stage: number
           cosign_count: number
+          anonymous_support_count: number
           ai_scores: Json
           stage1_met_at: string | null
           stage2_met_at: string | null
@@ -1188,6 +1189,7 @@ export interface Database {
           publication_status?: string
           threshold_stage?: number
           cosign_count?: number
+          anonymous_support_count?: number
           ai_scores?: Json
           stage1_met_at?: string | null
           stage2_met_at?: string | null
@@ -1215,6 +1217,7 @@ export interface Database {
           publication_status?: string
           threshold_stage?: number
           cosign_count?: number
+          anonymous_support_count?: number
           ai_scores?: Json
           stage1_met_at?: string | null
           stage2_met_at?: string | null
@@ -1223,6 +1226,37 @@ export interface Database {
           edited_at?: string | null
           created_at?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      citizen_signal_anonymous_supports: {
+        // Schema source: supabase/migrations/221_signals_anonymous_support.sql.
+        // One row per (signal, device_fingerprint). The trigger keeps
+        // citizen_signals.anonymous_support_count in sync. These rows do
+        // NOT count toward escalation thresholds.
+        Row: {
+          id: string
+          signal_id: string
+          device_fingerprint: string
+          ip_hash: string | null
+          pending_user_promotion: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          signal_id: string
+          device_fingerprint: string
+          ip_hash?: string | null
+          pending_user_promotion?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          signal_id?: string
+          device_fingerprint?: string
+          ip_hash?: string | null
+          pending_user_promotion?: boolean
+          created_at?: string
         }
         Relationships: []
       }
@@ -2084,6 +2118,7 @@ export interface Database {
           anonymous_display_mode: boolean
           threshold_stage: number
           cosign_count: number
+          anonymous_support_count: number
           stage1_met_at: string | null
           stage2_met_at: string | null
           created_at: string

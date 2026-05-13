@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { MapPin } from 'lucide-react'
 import {
   getCitizenSignalsCopy,
@@ -12,6 +13,7 @@ import {
   type SignalTargetKind,
 } from '@/lib/i18n/citizen-signals'
 import CoSignButton from './CoSignButton'
+import SupportButton from './SupportButton'
 import EvidenceGallery, { type EvidenceItem } from './EvidenceGallery'
 import TimelineRail from './TimelineRail'
 import CommentsThread from './CommentsThread'
@@ -34,6 +36,7 @@ type SignalCore = {
   anonymous_display_mode: boolean
   threshold_stage: number
   cosign_count: number
+  anonymous_support_count: number
   stage1_met_at: string | null
   stage2_met_at: string | null
   created_at: string
@@ -117,6 +120,67 @@ export default function SignalDetail({
   const dateLocale = locale === 'es' ? 'es-MX' : 'en-US'
   const [cosignCount, setCosignCount] = useState(signal.cosign_count)
   const [cosigned, setCosigned] = useState(viewerHasCosigned)
+  const [supportCount, setSupportCount] = useState(signal.anonymous_support_count)
+  const [promoteToast, setPromoteToast] = useState<string | null>(null)
+
+  // Post-login promotion: if we arrived back at /signals/[slug]?promote=1
+  // after the auth modal flow, try to convert the visitor's anonymous
+  // support into a verified cosign. We swallow non-fatal errors (the
+  // user can still cosign manually) and always strip the query param.
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const promoteAttempted = useRef(false)
+  useEffect(() => {
+    if (!viewerSignedIn) return
+    if (promoteAttempted.current) return
+    if (searchParams.get('promote') !== '1') return
+    promoteAttempted.current = true
+
+    const slug = signal.public_slug
+    let cancelled = false
+    void (async () => {
+      if (!cosigned) {
+        try {
+          const res = await fetch(`/api/signals/${slug}/cosign`, {
+            method: 'POST',
+          })
+          if (res.ok) {
+            const j = (await res.json()) as { cosign_count?: number }
+            if (!cancelled) {
+              setCosigned(true)
+              if (typeof j.cosign_count === 'number') {
+                setCosignCount(j.cosign_count)
+              }
+              setPromoteToast(t.support.promotedToast)
+            }
+          } else if (res.status === 409 && !cancelled) {
+            setCosigned(true)
+            setPromoteToast(t.support.promotedToast)
+          }
+        } catch {
+          // best-effort — surface nothing
+        }
+      }
+      // Drop the query param regardless so refresh doesn't re-fire.
+      const params = new URLSearchParams(searchParams.toString())
+      params.delete('promote')
+      const qs = params.toString()
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [
+    viewerSignedIn,
+    cosigned,
+    searchParams,
+    signal.public_slug,
+    router,
+    pathname,
+    t.support.promotedToast,
+  ])
 
   const heroByline = signal.anonymous_display_mode
     ? signal.display_name ?? t.detail.anonymous
@@ -221,18 +285,37 @@ export default function SignalDetail({
         <aside className="space-y-5 lg:sticky lg:top-24 lg:self-start">
           <div className="rounded-2xl border border-[#2d3748] bg-[#11161f] p-5">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              {t.detail.cosignsLabel(cosignCount)}
+              {t.support.combinedCount(cosignCount, supportCount)}
             </p>
-            <CoSignButton
-              locale={locale}
-              slug={signal.public_slug}
-              viewerSignedIn={viewerSignedIn}
-              initiallyCosigned={cosigned}
-              onChange={(d) => {
-                setCosigned(d.cosigned)
-                if (typeof d.count === 'number') setCosignCount(d.count)
-              }}
-            />
+            {promoteToast && (
+              <p
+                className="mt-2 rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-200"
+                role="status"
+              >
+                {promoteToast}
+              </p>
+            )}
+            <div className="mt-3 space-y-3">
+              <SupportButton
+                locale={locale}
+                slug={signal.public_slug}
+                viewerSignedIn={viewerSignedIn}
+                initialCount={supportCount}
+                onChange={(d) => {
+                  if (typeof d.count === 'number') setSupportCount(d.count)
+                }}
+              />
+              <CoSignButton
+                locale={locale}
+                slug={signal.public_slug}
+                viewerSignedIn={viewerSignedIn}
+                initiallyCosigned={cosigned}
+                onChange={(d) => {
+                  setCosigned(d.cosigned)
+                  if (typeof d.count === 'number') setCosignCount(d.count)
+                }}
+              />
+            </div>
           </div>
 
           <TimelineRail

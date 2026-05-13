@@ -36,6 +36,7 @@ export type SignalListItem = {
   anonymousDisplayMode: boolean
   thresholdStage: number
   cosignCount: number
+  anonymousSupportCount: number
   stage1MetAt: string | null
   stage2MetAt: string | null
   createdAt: string
@@ -66,7 +67,7 @@ export async function fetchInitialSignals(): Promise<{
   const { data: rows, error } = await admin
     .from('citizen_signals_public')
     .select(
-      'id, public_slug, post_type, category, severity, target_kind, citizen_target_id, title, body, language, conscious_location_id, anonymous_display_mode, display_name, threshold_stage, cosign_count, stage1_met_at, stage2_met_at, created_at, updated_at'
+      'id, public_slug, post_type, category, severity, target_kind, citizen_target_id, title, body, language, conscious_location_id, anonymous_display_mode, display_name, threshold_stage, cosign_count, anonymous_support_count, stage1_met_at, stage2_met_at, created_at, updated_at'
     )
     .order('created_at', { ascending: false })
     .limit(FEED_PAGE_SIZE)
@@ -134,6 +135,7 @@ type PublicViewRow = {
   display_name: string | null
   threshold_stage: number
   cosign_count: number
+  anonymous_support_count: number
   stage1_met_at: string | null
   stage2_met_at: string | null
   created_at: string
@@ -160,6 +162,7 @@ export function mapRowToItem(
     anonymousDisplayMode: row.anonymous_display_mode,
     thresholdStage: row.threshold_stage,
     cosignCount: row.cosign_count,
+    anonymousSupportCount: row.anonymous_support_count,
     stage1MetAt: row.stage1_met_at,
     stage2MetAt: row.stage2_met_at,
     createdAt: row.created_at,

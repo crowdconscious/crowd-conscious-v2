@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
     let query = admin
       .from('citizen_signals_public')
       .select(
-        'id, public_slug, post_type, category, severity, target_kind, citizen_target_id, title, body, language, conscious_location_id, anonymous_display_mode, display_name, threshold_stage, cosign_count, stage1_met_at, stage2_met_at, created_at, updated_at'
+        'id, public_slug, post_type, category, severity, target_kind, citizen_target_id, title, body, language, conscious_location_id, anonymous_display_mode, display_name, threshold_stage, cosign_count, anonymous_support_count, stage1_met_at, stage2_met_at, created_at, updated_at'
       )
       .order('created_at', { ascending: false })
       .limit(q.limit)

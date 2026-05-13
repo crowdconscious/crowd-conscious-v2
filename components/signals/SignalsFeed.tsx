@@ -37,6 +37,7 @@ type ApiSignalRow = {
   display_name: string | null
   threshold_stage: number
   cosign_count: number
+  anonymous_support_count: number
   stage1_met_at: string | null
   stage2_met_at: string | null
   created_at: string
@@ -196,6 +197,7 @@ function mapApiRow(row: ApiSignalRow, lookups: SignalLookups): SignalListItem {
     anonymousDisplayMode: row.anonymous_display_mode,
     thresholdStage: row.threshold_stage,
     cosignCount: row.cosign_count,
+    anonymousSupportCount: row.anonymous_support_count,
     stage1MetAt: row.stage1_met_at,
     stage2MetAt: row.stage2_met_at,
     createdAt: row.created_at,

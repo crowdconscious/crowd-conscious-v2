@@ -13,6 +13,9 @@ import LandingLocationsSection from './components/landing/LandingLocationsSectio
 import { LandingHeroBlock } from './components/landing/LandingHeroBlock'
 import { BrandsMiniPitch } from './components/landing/BrandsMiniPitch'
 import { SignalsTeaser } from './components/landing/SignalsTeaser'
+import LandingSignalCard from '@/components/landing/LandingSignalCard'
+import { fetchLandingSignals, type LandingSignal } from '@/lib/signals/landing'
+import { getCitizenSignalsCopy } from '@/lib/i18n/citizen-signals'
 import type { LocationCardRow } from '@/components/locations/LocationCard'
 import type { MarketCardMarket, MarketCardOutcome } from '@/components/MarketCard'
 import { PUBLIC_MARKET_MIN_VOTES } from '@/lib/predictions/engagement'
@@ -328,6 +331,7 @@ export default async function LandingPage() {
   let showLocationsSection = false
   let landingLocationCards: Awaited<ReturnType<typeof getLandingData>>['landingLocationCards'] = []
   let mundialFoundingRemaining = 0
+  let landingSignals: LandingSignal[] = []
 
   try {
     const data = await getLandingData()
@@ -348,6 +352,18 @@ export default async function LandingPage() {
   }
 
   const localeShort: 'es' | 'en' = locale
+
+  // Active Signals showcase — flag-gated and silently hidden when no
+  // published signals exist (no empty state on the landing).
+  if (process.env.NEXT_PUBLIC_SIGNALS_ENABLED === 'true') {
+    try {
+      landingSignals = await fetchLandingSignals(localeShort)
+    } catch (e) {
+      console.error('Landing signals fetch error:', e)
+      landingSignals = []
+    }
+  }
+  const showcaseCopy = getCitizenSignalsCopy(localeShort).landing.showcase
 
   const top3Markets = markets.slice(0, 3)
   const top3Locations = landingLocationCards.slice(0, 3)
@@ -411,6 +427,43 @@ export default async function LandingPage() {
                     market={market}
                     outcomes={outcomesByMarketId[market.id] ?? []}
                   />
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        {/* ─────────── BLOCK 2.2 — Active Signals showcase ─────────── */}
+        {process.env.NEXT_PUBLIC_SIGNALS_ENABLED === 'true' &&
+        landingSignals.length > 0 ? (
+          <section className="mx-auto max-w-6xl px-4 py-14 md:px-8">
+            <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
+                  {showcaseCopy.eyebrow}
+                </p>
+                <h2 className="mt-1 text-2xl font-bold text-white md:text-3xl">
+                  {showcaseCopy.title}
+                </h2>
+                <p className="mt-1 max-w-xl text-sm text-slate-400">
+                  {showcaseCopy.subtitle}
+                </p>
+              </div>
+              <Link
+                href="/signals"
+                className="inline-flex min-h-[44px] items-center gap-1 self-start text-sm font-medium text-emerald-400 hover:text-emerald-300 sm:self-auto"
+              >
+                {showcaseCopy.viewAll}
+              </Link>
+            </div>
+
+            <div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-3 md:overflow-visible md:px-0 md:pb-0">
+              {landingSignals.map((sig) => (
+                <div
+                  key={sig.id}
+                  className="min-w-[88%] snap-start sm:min-w-[70%] md:min-w-0"
+                >
+                  <LandingSignalCard locale={localeShort} signal={sig} />
                 </div>
               ))}
             </div>

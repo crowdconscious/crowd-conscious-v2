@@ -339,6 +339,63 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
         ? 'Inicia sesión para co-firmar.'
         : 'Sign in to co-sign.',
       already: isEs ? 'Ya co-firmaste' : 'You already co-signed',
+      verifiedLabel: isEs ? 'Co-firma verificada' : 'Verified co-sign',
+      verifiedHint: isEs
+        ? 'Las co-firmas verificadas son las que activan los umbrales.'
+        : 'Verified co-signs are what trigger the escalation thresholds.',
+    },
+
+    // Anonymous "Apoyo" surface — paired with cosign for casual visitors
+    // who won't create an account to co-sign. See migration 221.
+    support: {
+      label: isEs ? 'Apoyo esta señal' : 'Support this signal',
+      labelGiven: isEs ? 'Ya apoyaste · Gracias' : 'Supported · Thank you',
+      sending: isEs ? 'Enviando apoyo…' : 'Sending support…',
+      countLabel: (n: number) =>
+        n === 1
+          ? isEs ? '1 apoyo anónimo' : '1 anonymous support'
+          : isEs ? `${n} apoyos anónimos` : `${n} anonymous supports`,
+      combinedCount: (cosigns: number, supports: number) =>
+        isEs
+          ? `${cosigns} co-firmas · ${supports} apoyos`
+          : `${cosigns} co-signs · ${supports} supports`,
+      helper: isEs
+        ? 'Cualquier visitante puede apoyar anónimamente. No cuenta para los umbrales.'
+        : 'Anyone can support anonymously. Does not count toward escalation thresholds.',
+      thanksToast: isEs
+        ? 'Gracias por apoyar esta señal.'
+        : 'Thanks for supporting this signal.',
+      promotedToast: isEs
+        ? 'Tu apoyo se convirtió en una co-firma verificada.'
+        : 'Your support has been promoted to a verified co-sign.',
+      errorGeneric: isEs
+        ? 'No pudimos registrar tu apoyo. Inténtalo de nuevo.'
+        : 'We could not record your support. Please try again.',
+      modal: {
+        title: isEs
+          ? 'Tu co-firma cuenta más'
+          : 'Your verified co-sign carries more weight',
+        body: isEs
+          ? 'Las co-firmas verificadas son las que activan el aviso a la autoridad (50) y abren el dossier público (200). Crear una cuenta toma 30 segundos.'
+          : 'Verified co-signs trigger the alert to the authority (50) and unlock the public dossier (200). Creating an account takes 30 seconds.',
+        google: isEs ? 'Continuar con Google' : 'Continue with Google',
+        magic: isEs
+          ? 'Recibir enlace mágico por correo'
+          : 'Email me a magic link',
+        magicPlaceholder: isEs ? 'tu@correo.com' : 'you@email.com',
+        magicSending: isEs ? 'Enviando enlace…' : 'Sending link…',
+        magicSent: isEs
+          ? 'Revisa tu correo y haz clic en el enlace.'
+          : 'Check your inbox and click the link.',
+        magicError: isEs
+          ? 'No pudimos enviar el enlace. Intenta otra vez.'
+          : 'We could not send the link. Please try again.',
+        invalidEmail: isEs ? 'Email inválido.' : 'Invalid email.',
+        dismiss: isEs ? 'Cerrar' : 'Close',
+        keepAnon: isEs
+          ? 'Seguir solo con apoyo anónimo'
+          : 'Keep going with anonymous support only',
+      },
     },
 
     stages: {
@@ -441,6 +498,22 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
       pilotNote: isEs
         ? 'Piloto activo en las 16 alcaldías de Ciudad de México.'
         : 'Pilot live across the 16 boroughs of Mexico City.',
+      // Active Signals showcase on the homepage (3 cards section).
+      showcase: {
+        eyebrow: isEs ? 'En vivo · CDMX' : 'Live · CDMX',
+        title: isEs
+          ? 'Señales Activas en CDMX'
+          : 'Active Signals in CDMX',
+        subtitle: isEs
+          ? 'Lo que la ciudadanía está pidiendo cambiar.'
+          : 'What citizens are pushing to change.',
+        countLabel: (cosigns: number, supports: number) =>
+          isEs
+            ? `${cosigns} co-firmas · ${supports} apoyos`
+            : `${cosigns} co-signs · ${supports} supports`,
+        viewSignal: isEs ? 'Ver señal →' : 'View signal →',
+        viewAll: isEs ? 'Ver todas las señales →' : 'View all signals →',
+      },
     },
 
     about: {
