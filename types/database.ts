@@ -1100,6 +1100,333 @@ export interface Database {
         }
         Relationships: []
       }
+      citizen_targets: {
+        // Schema source: supabase/migrations/219_citizen_signals_mvp.sql.
+        // Registry of municipalities + institutions a Signal can target.
+        // MVP gate: target_kind constrained to municipality | institution.
+        Row: {
+          id: string
+          slug: string
+          display_name: string
+          target_kind: string
+          conscious_location_id: string | null
+          notification_email: string | null
+          metadata: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          slug: string
+          display_name: string
+          target_kind: string
+          conscious_location_id?: string | null
+          notification_email?: string | null
+          metadata?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          slug?: string
+          display_name?: string
+          target_kind?: string
+          conscious_location_id?: string | null
+          notification_email?: string | null
+          metadata?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      citizen_signals: {
+        // Schema source: supabase/migrations/219_citizen_signals_mvp.sql.
+        // Public reads should go via the citizen_signals_public view, not
+        // this row type, so author_user_id and ai_scores never leak.
+        Row: {
+          id: string
+          public_slug: string
+          post_type: string
+          category: string
+          severity: string
+          target_kind: string
+          citizen_target_id: string
+          title: string
+          body: string
+          language: string
+          conscious_location_id: string
+          author_user_id: string
+          anonymous_display_mode: boolean
+          anonymous_display_name: string | null
+          publication_status: string
+          threshold_stage: number
+          cosign_count: number
+          ai_scores: Json
+          stage1_met_at: string | null
+          stage2_met_at: string | null
+          private_target_notify_at: string | null
+          canonical_duplicate_of: string | null
+          edited_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          public_slug: string
+          post_type: string
+          category: string
+          severity: string
+          target_kind: string
+          citizen_target_id: string
+          title: string
+          body: string
+          language: string
+          conscious_location_id: string
+          author_user_id: string
+          anonymous_display_mode?: boolean
+          anonymous_display_name?: string | null
+          publication_status?: string
+          threshold_stage?: number
+          cosign_count?: number
+          ai_scores?: Json
+          stage1_met_at?: string | null
+          stage2_met_at?: string | null
+          private_target_notify_at?: string | null
+          canonical_duplicate_of?: string | null
+          edited_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          public_slug?: string
+          post_type?: string
+          category?: string
+          severity?: string
+          target_kind?: string
+          citizen_target_id?: string
+          title?: string
+          body?: string
+          language?: string
+          conscious_location_id?: string
+          author_user_id?: string
+          anonymous_display_mode?: boolean
+          anonymous_display_name?: string | null
+          publication_status?: string
+          threshold_stage?: number
+          cosign_count?: number
+          ai_scores?: Json
+          stage1_met_at?: string | null
+          stage2_met_at?: string | null
+          private_target_notify_at?: string | null
+          canonical_duplicate_of?: string | null
+          edited_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      citizen_signal_evidence: {
+        // Schema source: supabase/migrations/219_citizen_signals_mvp.sql.
+        // Exactly one of storage_path / external_url is set (CHECK at DB).
+        Row: {
+          id: string
+          signal_id: string
+          kind: string
+          storage_path: string | null
+          external_url: string | null
+          caption: string | null
+          visibility: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          signal_id: string
+          kind: string
+          storage_path?: string | null
+          external_url?: string | null
+          caption?: string | null
+          visibility?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          signal_id?: string
+          kind?: string
+          storage_path?: string | null
+          external_url?: string | null
+          caption?: string | null
+          visibility?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      citizen_signal_cosigns: {
+        // Schema source: supabase/migrations/219_citizen_signals_mvp.sql.
+        // UNIQUE(signal_id, user_id); trigger maintains
+        // citizen_signals.cosign_count.
+        Row: {
+          id: string
+          signal_id: string
+          user_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          signal_id: string
+          user_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          signal_id?: string
+          user_id?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      citizen_signal_comments: {
+        // Schema source: supabase/migrations/219_citizen_signals_mvp.sql.
+        // API rejects writes when parent signal is not published.
+        Row: {
+          id: string
+          signal_id: string
+          author_user_id: string
+          body: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          signal_id: string
+          author_user_id: string
+          body: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          signal_id?: string
+          author_user_id?: string
+          body?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      citizen_signal_responses: {
+        // Schema source: supabase/migrations/219_citizen_signals_mvp.sql.
+        // Posted from /dashboard/target/[token] by the target rep.
+        Row: {
+          id: string
+          signal_id: string
+          citizen_target_id: string
+          author_label: string
+          body: string
+          official_status: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          signal_id: string
+          citizen_target_id: string
+          author_label: string
+          body: string
+          official_status: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          signal_id?: string
+          citizen_target_id?: string
+          author_label?: string
+          body?: string
+          official_status?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      citizen_signal_moderation_events: {
+        // Schema source: supabase/migrations/219_citizen_signals_mvp.sql.
+        // Append-only audit log; corrections are new events.
+        Row: {
+          id: string
+          signal_id: string
+          admin_user_id: string
+          action: string
+          detail: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          signal_id: string
+          admin_user_id: string
+          action: string
+          detail?: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          signal_id?: string
+          admin_user_id?: string
+          action?: string
+          detail?: Json
+          created_at?: string
+        }
+        Relationships: []
+      }
+      citizen_signal_subscriptions: {
+        // Schema source: supabase/migrations/219_citizen_signals_mvp.sql.
+        // UNIQUE(signal_id, user_id); frequency: immediate | daily | off.
+        Row: {
+          id: string
+          signal_id: string
+          user_id: string
+          frequency: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          signal_id: string
+          user_id: string
+          frequency?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          signal_id?: string
+          user_id?: string
+          frequency?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      citizen_target_access_tokens: {
+        // Schema source: supabase/migrations/219_citizen_signals_mvp.sql.
+        // Stores SHA-256 hash of the raw token only; raw token never persists.
+        Row: {
+          id: string
+          citizen_target_id: string
+          token_hash: string
+          expires_at: string
+          created_at: string
+          revoked_at: string | null
+        }
+        Insert: {
+          id?: string
+          citizen_target_id: string
+          token_hash: string
+          expires_at: string
+          created_at?: string
+          revoked_at?: string | null
+        }
+        Update: {
+          id?: string
+          citizen_target_id?: string
+          token_hash?: string
+          expires_at?: string
+          created_at?: string
+          revoked_at?: string | null
+        }
+        Relationships: []
+      }
       sponsor_pulse_reports: {
         // Schema source: supabase/migrations/216_sponsor_pulse_reports.sql.
         // One row per Pulse (UNIQUE on market_id); regeneration is an
