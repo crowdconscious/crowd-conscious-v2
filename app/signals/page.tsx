@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import {
   fetchInitialSignals,
@@ -45,6 +46,20 @@ export default async function SignalsFeedPage() {
           {t.feed.heroTitle}
         </h1>
         <p className="mt-3 max-w-2xl text-slate-400">{t.feed.heroSubtitle}</p>
+        <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
+          <Link
+            href="/signals/nueva"
+            className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-white transition-colors hover:bg-emerald-400"
+          >
+            {t.feed.ctaPrimary}
+          </Link>
+          <Link
+            href="/signals/acerca"
+            className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg border border-[#2d3748] bg-[#1a2029] px-4 py-2 font-medium text-slate-200 transition-colors hover:border-emerald-500/40"
+          >
+            {t.landing.ctaSecondary}
+          </Link>
+        </div>
       </header>
 
       <SignalsFeed

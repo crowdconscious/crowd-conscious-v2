@@ -15,6 +15,8 @@ export default function Footer() {
       company: 'Empresa',
       legal: 'Legal',
       pulse: 'Pulse',
+      signals: 'Señales',
+      signalsBeta: 'Beta',
       locations: 'Lugares',
       live: 'En Vivo',
       leaderboard: 'Leaderboard',
@@ -36,6 +38,8 @@ export default function Footer() {
       company: 'Company',
       legal: 'Legal',
       pulse: 'Pulse',
+      signals: 'Signals',
+      signalsBeta: 'Beta',
       locations: 'Places',
       live: 'Live',
       leaderboard: 'Leaderboard',
@@ -53,6 +57,11 @@ export default function Footer() {
       madeIn: 'Made with ❤️ in Mexico',
     },
   }
+
+  // The footer is a client component, so we read the public env at module
+  // init (same pattern as LandingNav). Vercel inlines NEXT_PUBLIC_* at
+  // build time; preview/prod toggles cleanly without code changes.
+  const signalsEnabled = process.env.NEXT_PUBLIC_SIGNALS_ENABLED === 'true'
 
   const t = content[language]
 
@@ -145,6 +154,19 @@ export default function Footer() {
                   {t.pulse}
                 </Link>
               </li>
+              {signalsEnabled && (
+                <li>
+                  <Link
+                    href="/signals"
+                    className="inline-flex items-center gap-1.5 text-slate-300 transition-colors hover:text-teal-400"
+                  >
+                    {t.signals}
+                    <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-300 ring-1 ring-inset ring-emerald-400/30">
+                      {t.signalsBeta}
+                    </span>
+                  </Link>
+                </li>
+              )}
               <li>
                 <Link href="/locations" className="text-slate-300 transition-colors hover:text-teal-400">
                   {t.locations}

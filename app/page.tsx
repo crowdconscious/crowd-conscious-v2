@@ -12,6 +12,7 @@ import { LiveEventBanner } from './components/landing/LiveEventBanner'
 import LandingLocationsSection from './components/landing/LandingLocationsSection'
 import { LandingHeroBlock } from './components/landing/LandingHeroBlock'
 import { BrandsMiniPitch } from './components/landing/BrandsMiniPitch'
+import { SignalsTeaser } from './components/landing/SignalsTeaser'
 import type { LocationCardRow } from '@/components/locations/LocationCard'
 import type { MarketCardMarket, MarketCardOutcome } from '@/components/MarketCard'
 import { PUBLIC_MARKET_MIN_VOTES } from '@/lib/predictions/engagement'
@@ -414,6 +415,11 @@ export default async function LandingPage() {
               ))}
             </div>
           </section>
+        ) : null}
+
+        {/* ─────────── BLOCK 2.25 — Citizen Signals teaser ─────────── */}
+        {process.env.NEXT_PUBLIC_SIGNALS_ENABLED === 'true' ? (
+          <SignalsTeaser locale={localeShort} />
         ) : null}
 
         {/* ─────────── BLOCK 2.5 — Mundial Founding scarcity tile ─────────── */}

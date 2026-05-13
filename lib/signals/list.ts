@@ -174,3 +174,9 @@ export function getStage1Threshold(): number {
   const n = raw ? Number.parseInt(raw, 10) : NaN
   return Number.isFinite(n) && n > 0 ? n : 50
 }
+
+export function getStage2Threshold(): number {
+  const raw = process.env.NEXT_PUBLIC_SIGNALS_STAGE2
+  const n = raw ? Number.parseInt(raw, 10) : NaN
+  return Number.isFinite(n) && n > 0 ? n : 200
+}

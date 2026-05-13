@@ -411,6 +411,168 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
         : 'Crowd Conscious does not offer legal advice. A signal is not a substitute for a formal complaint before the competent authority.',
     },
 
+    // Surfaces that introduce Signals to people who haven't filed one yet:
+    //   - The teaser tile we render on the homepage (`landing.*`)
+    //   - The standalone `/signals/acerca` product page (`about.*`)
+    //
+    // Both live under `NEXT_PUBLIC_SIGNALS_ENABLED` so the surfaces vanish
+    // cleanly when the flag is off (matches the nav + page-level guards).
+    landing: {
+      eyebrow: isEs ? 'Nuevo · Beta · CDMX' : 'New · Beta · CDMX',
+      title: isEs
+        ? 'Reporta lo que debe cambiar. Y haz que llegue.'
+        : 'Signal what needs to change. And make sure it lands.',
+      subtitle: isEs
+        ? 'Una nueva forma de reportar a tu alcaldía o institución. Si suficientes vecinos co-firman, sale a la luz pública y el destinatario recibe un enlace para responder oficialmente.'
+        : 'A new way to report to your municipality or institution. If enough neighbours co-sign, it goes public and the recipient gets a magic link to respond officially.',
+      bullets: [
+        isEs
+          ? 'Modera un equipo humano antes de publicar — nada de doxxing ni difamación.'
+          : 'A human team moderates before publishing — no doxxing, no defamation.',
+        isEs
+          ? 'Co-firmas anónimas. Cuando se cruza el umbral, la autoridad recibe la señal.'
+          : 'Anonymous co-signs. Once the threshold is crossed, the authority gets the signal.',
+        isEs
+          ? 'Respuesta oficial pública. Cero buzones perdidos.'
+          : 'Public official replies. No more black-hole inboxes.',
+      ],
+      ctaPrimary: isEs ? 'Ver señales activas' : 'Browse active signals',
+      ctaSecondary: isEs ? 'Cómo funciona' : 'How it works',
+      pilotNote: isEs
+        ? 'Piloto activo en las 16 alcaldías de Ciudad de México.'
+        : 'Pilot live across the 16 boroughs of Mexico City.',
+    },
+
+    about: {
+      heroEyebrow: isEs ? 'Producto · Beta CDMX' : 'Product · CDMX beta',
+      heroTitle: isEs
+        ? 'Señales Ciudadanas'
+        : 'Citizen Signals',
+      heroTagline: isEs
+        ? 'Reporta. Co-firma. Obtén respuesta oficial.'
+        : 'Report. Co-sign. Get an official reply.',
+      heroLead: isEs
+        ? 'Las quejas que se pierden en formularios oficiales rara vez se resuelven. Señales Ciudadanas es un canal moderado, colectivo y trazable que conecta a vecinos con su alcaldía o institución — y deja constancia pública de la respuesta.'
+        : 'Complaints that vanish into official portals rarely get resolved. Citizen Signals is a moderated, collective, traceable channel that connects neighbours with their municipality or institution — and leaves a public record of the reply.',
+      heroCtaPrimary: isEs ? 'Crear una señal' : 'Create a signal',
+      heroCtaSecondary: isEs ? 'Ver señales activas' : 'Browse signals',
+      flowTitle: isEs ? '¿Cómo funciona?' : 'How it works',
+      flowSteps: [
+        {
+          n: 1,
+          title: isEs ? 'Tú reportas' : 'You report',
+          body: isEs
+            ? 'Eliges destinatario, ubicación y categoría. Adjuntas evidencia opcional (fotos, PDFs, enlaces). Puedes publicar bajo un alias — tu identidad real solo la ve el equipo de moderación.'
+            : 'Pick a target, a location and a category. Attach optional evidence (photos, PDFs, links). You can publish under an alias — only the moderation team sees your real identity.',
+        },
+        {
+          n: 2,
+          title: isEs ? 'Moderamos' : 'We moderate',
+          body: isEs
+            ? 'Un humano (con apoyo de un agente IA que marca PII, riesgo de difamación y duplicados) revisa cada señal. Si todo está en orden se publica; si necesita ajustes te lo decimos por correo.'
+            : 'A human (assisted by an AI agent that flags PII, defamation risk and duplicates) reviews every signal. If everything checks out we publish it; if it needs edits we email you why.',
+        },
+        {
+          n: 3,
+          title: isEs ? 'La comunidad co-firma' : 'The community co-signs',
+          body: isEs
+            ? 'Tus vecinos co-firman lo que les importa. Las co-firmas son anónimas — sumar tu nombre no compromete tu identidad pública.'
+            : 'Your neighbours co-sign what matters to them. Co-signs are anonymous — adding your name does not compromise your public identity.',
+        },
+        {
+          n: 4,
+          title: isEs ? 'Sube de etapa' : 'It escalates',
+          // {stage1} / {stage2} are replaced at render time by the values
+          // from NEXT_PUBLIC_SIGNALS_STAGE1 / NEXT_PUBLIC_SIGNALS_STAGE2.
+          body: isEs
+            ? 'Al cruzar {stage1} co-firmas la señal entra en Etapa 1 y el destinatario recibe un enlace privado para responder oficialmente. Al cruzar {stage2} la señal queda destacada como prioridad pública.'
+            : 'At {stage1} co-signs the signal enters Stage 1 and the recipient gets a private link to respond officially. At {stage2} the signal becomes a featured public priority.',
+        },
+        {
+          n: 5,
+          title: isEs ? 'Respuesta pública' : 'Public reply',
+          body: isEs
+            ? 'El destinatario responde desde su enlace mágico. La respuesta queda asociada a la señal — visible a quien la firmó y a cualquiera que la consulte.'
+            : 'The recipient replies from their magic link. The reply is attached to the signal — visible to every co-signer and anyone who looks it up.',
+        },
+      ],
+      whoTitle: isEs ? '¿Para quién es?' : 'Who is this for?',
+      whoLeft: {
+        title: isEs ? 'Personas' : 'Residents',
+        body: isEs
+          ? 'Vives en CDMX, viste algo que debe cambiar, ya hablaste con tu alcaldía y nadie te contestó. Aquí tu reporte se vuelve un caso colectivo con trazabilidad.'
+          : 'You live in Mexico City, you saw something that needs to change, you already talked to your borough and got no reply. Here your report becomes a collective, traceable case.',
+      },
+      whoRight: {
+        title: isEs ? 'Funcionarios públicos' : 'Public officials',
+        body: isEs
+          ? 'Eres alcaldía o institución y quieres responder con orden a lo que reporta tu comunidad. Te damos un tablero privado y un canal pre-curado.'
+          : "You're a borough or institution that wants to respond with clarity to what your community reports. We give you a private dashboard and a pre-curated channel.",
+      },
+      pillarsTitle: isEs ? 'Lo que sí, lo que no' : 'What it is, what it is not',
+      pillarsIs: isEs ? 'Señales Ciudadanas es' : 'Citizen Signals is',
+      pillarsIsBullets: [
+        isEs
+          ? 'Un canal moderado para reportar problemas reales a tu alcaldía o institución.'
+          : 'A moderated channel to report real problems to your municipality or institution.',
+        isEs
+          ? 'Un registro público de respuesta oficial, con trazabilidad.'
+          : 'A public record of the official response, with traceability.',
+        isEs ? 'Anónimo por diseño para quienes lo necesitan.' : 'Anonymous by design for those who need it.',
+      ],
+      pillarsIsNot: isEs ? 'Señales Ciudadanas no es' : 'Citizen Signals is not',
+      pillarsIsNotBullets: [
+        isEs
+          ? 'Una vía para denuncias penales — eso es ante MP / FGJCDMX.'
+          : 'A channel for criminal complaints — that goes through MP / FGJCDMX.',
+        isEs
+          ? 'Una plataforma para difamar a personas o negocios.'
+          : 'A platform to defame people or businesses.',
+        isEs
+          ? 'Un sustituto del 911 ni de servicios de emergencia.'
+          : 'A substitute for 911 or emergency services.',
+      ],
+      faqTitle: isEs ? 'Preguntas frecuentes' : 'FAQ',
+      faqs: [
+        {
+          q: isEs ? '¿Es anónimo?' : 'Is it anonymous?',
+          a: isEs
+            ? 'Sí, puedes publicar bajo un alias. Solo el equipo de moderación ve tu identidad real, y nunca la compartimos con el destinatario.'
+            : 'Yes, you can publish under an alias. Only the moderation team sees your real identity, and we never share it with the recipient.',
+        },
+        {
+          q: isEs ? '¿Cuánto tardan en moderar?' : 'How long does moderation take?',
+          a: isEs
+            ? 'El SLA de moderación durante la beta es 72 horas. La gran mayoría salen mucho más rápido.'
+            : 'The moderation SLA during beta is 72 hours. Most signals are reviewed much faster.',
+        },
+        {
+          q: isEs ? '¿Qué pasa si no me responden?' : 'What if no one replies?',
+          a: isEs
+            ? 'La falta de respuesta también es señal. Tu reporte permanece público y co-firmable; cuando cruza la Etapa 2 entra a la lista pública de prioridades sin respuesta.'
+            : 'Silence is also a signal. Your report stays public and co-signable; once it crosses Stage 2 it joins the public list of unanswered priorities.',
+        },
+        {
+          q: isEs ? '¿Por qué solo CDMX?' : 'Why only Mexico City?',
+          a: isEs
+            ? 'Empezamos donde podemos curar destinatarios reales y dar un SLA serio. Si quieres traerlo a tu ciudad, escríbenos.'
+            : 'We start where we can curate real targets and offer a serious SLA. Want it in your city? Write to us.',
+        },
+      ],
+      footerEyebrow: isEs ? '¿Listo?' : 'Ready?',
+      footerTitle: isEs
+        ? 'Tu vecindario está esperando que alguien diga algo.'
+        : 'Your neighbourhood is waiting for someone to speak up.',
+      footerCtaPrimary: isEs ? 'Crear una señal' : 'Create a signal',
+      footerCtaSecondary: isEs ? 'Ver señales activas' : 'Browse active signals',
+      metaTitle: isEs
+        ? 'Señales Ciudadanas · Cómo funciona | Crowd Conscious'
+        : 'Citizen Signals · How it works | Crowd Conscious',
+      metaDescription: isEs
+        ? 'Conoce Señales Ciudadanas: un canal moderado y colectivo para reportar a tu alcaldía o institución en Ciudad de México y obtener respuesta oficial.'
+        : 'Meet Citizen Signals: a moderated, collective channel to report to your municipality or institution in Mexico City and get an official reply.',
+    },
+
     // Transactional email copy. The body strings are rendered by the React
     // Email templates in lib/emails/signals/*; this block centralises the
     // subject lines + the recurring greeting/button labels so the cron and
