@@ -10,6 +10,11 @@ import { NotificationsBell } from '@/app/(predictions)/predictions/components/No
 import { useLiveNavBadge } from '@/hooks/useLiveNavBadge'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { CompactFundThermometer } from '@/components/fund/FundThermometer'
+import { getCitizenSignalsCopy } from '@/lib/i18n/citizen-signals'
+
+// Mirrors LandingNav: build-time flag, read at module scope so the link
+// silently disappears when Signals is disabled in production.
+const SIGNALS_ENABLED = process.env.NEXT_PUBLIC_SIGNALS_ENABLED === 'true'
 
 /**
  * Authed primary nav (locale-aware, 3 canonical items):
@@ -63,8 +68,12 @@ export default function HeaderClient({ user, hasSponsorAccounts = false }: Heade
   const { liveCount } = useLiveNavBadge()
   const { language } = useLanguage()
   const nav = NAV[language]
-  const primary: Array<{ href: string; label: string; emphasize?: boolean }> = [
+  const signalsCopy = getCitizenSignalsCopy(language)
+  const primary: Array<{ href: string; label: string; emphasize?: boolean; badge?: string }> = [
     { href: '/pulse', label: nav.pulse, emphasize: true },
+    ...(SIGNALS_ENABLED
+      ? [{ href: '/signals', label: signalsCopy.nav.feed, badge: signalsCopy.nav.beta }]
+      : []),
     { href: '/predictions', label: nav.activity },
     { href: '/blog', label: nav.blog },
     ...(hasSponsorAccounts ? [{ href: '/sponsor-accounts', label: nav.myAccounts }] : []),
@@ -115,13 +124,18 @@ export default function HeaderClient({ user, hasSponsorAccounts = false }: Heade
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`min-h-[44px] inline-flex items-center font-medium transition-colors ${
+                  className={`min-h-[44px] inline-flex items-center gap-1.5 font-medium transition-colors ${
                     item.emphasize
                       ? 'text-emerald-400/95 hover:text-emerald-300'
                       : 'text-slate-400 hover:text-emerald-400'
                   }`}
                 >
-                  {item.label}
+                  <span>{item.label}</span>
+                  {item.badge && (
+                    <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-300 ring-1 ring-inset ring-emerald-400/30">
+                      {item.badge}
+                    </span>
+                  )}
                 </Link>
               ))}
               {liveCount > 0 && (

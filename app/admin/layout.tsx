@@ -2,6 +2,10 @@ import { getCurrentUser } from '@/lib/auth-server'
 import { redirect } from 'next/navigation'
 import { isAdminUser } from '@/lib/auth/is-admin'
 
+// Mirrors LandingNav: build-time flag, read at module scope so the link
+// silently disappears when Signals is disabled in production.
+const SIGNALS_ENABLED = process.env.NEXT_PUBLIC_SIGNALS_ENABLED === 'true'
+
 export default async function AdminLayout({
   children,
 }: {
@@ -49,6 +53,17 @@ export default async function AdminLayout({
             >
               📍 Locations
             </a>
+            {SIGNALS_ENABLED && (
+              <a
+                href="/admin/signals"
+                className="bg-emerald-700 hover:bg-emerald-600 px-3 py-1 rounded text-sm transition-colors font-medium inline-flex items-center gap-1.5"
+              >
+                <span>📢 Signals</span>
+                <span className="rounded-full bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-200 ring-1 ring-inset ring-emerald-300/40">
+                  Beta
+                </span>
+              </a>
+            )}
             <a 
               href="/admin/promo-codes" 
               className="bg-purple-600 hover:bg-purple-500 px-3 py-1 rounded text-sm transition-colors font-medium"

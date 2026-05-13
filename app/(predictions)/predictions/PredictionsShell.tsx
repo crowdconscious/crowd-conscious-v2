@@ -29,27 +29,46 @@ import {
   PenLine,
   MapPin,
   Briefcase,
+  MessageSquareWarning,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import LanguageSwitcherSimple from '@/components/LanguageSwitcherSimple'
 import { NotificationsBell } from './components/NotificationsBell'
 
-const NAV_ITEMS_EN = [
+// Mirrors LandingNav: build-time flag, read at module scope so the entry
+// silently disappears when Signals is disabled in production.
+const SIGNALS_ENABLED = process.env.NEXT_PUBLIC_SIGNALS_ENABLED === 'true'
+
+type ShellNavItem = {
+  href: string
+  label: string
+  icon: LucideIcon
+  beta?: boolean
+}
+
+const NAV_ITEMS_EN: ShellNavItem[] = [
   { href: '/predictions', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/live', label: 'Live', icon: Radio },
   { href: '/predictions/notifications', label: 'Notifications', icon: Bell },
   { href: '/predictions/pulse', label: 'Pulse', icon: TrendingUp },
+  ...(SIGNALS_ENABLED
+    ? [{ href: '/signals', label: 'Signals', icon: MessageSquareWarning, beta: true } as ShellNavItem]
+    : []),
   { href: '/predictions/trades', label: 'My Votes', icon: Receipt },
   { href: '/predictions/leaderboard', label: 'Leaderboard', icon: Trophy },
   { href: '/predictions/inbox', label: 'Conscious Inbox', icon: Lightbulb },
   { href: '/predictions/fund', label: 'Conscious Fund', icon: Heart },
   { href: '/blog', label: 'Blog', icon: Newspaper },
 ]
-const NAV_ITEMS_ES = [
+const NAV_ITEMS_ES: ShellNavItem[] = [
   { href: '/predictions', label: 'Panel', icon: LayoutDashboard },
   { href: '/live', label: 'En Vivo', icon: Radio },
   { href: '/predictions/notifications', label: 'Notificaciones', icon: Bell },
   { href: '/predictions/pulse', label: 'Pulse', icon: TrendingUp },
+  ...(SIGNALS_ENABLED
+    ? [{ href: '/signals', label: 'Señales', icon: MessageSquareWarning, beta: true } as ShellNavItem]
+    : []),
   { href: '/predictions/trades', label: 'Mis votos', icon: Receipt },
   { href: '/predictions/leaderboard', label: 'Clasificación', icon: Trophy },
   { href: '/predictions/inbox', label: 'Buzón Consciente', icon: Lightbulb },
@@ -139,7 +158,12 @@ export default function PredictionsShell({
               >
                 <span className="flex items-center gap-3">
                   <Icon className="w-4 h-4" />
-                  {item.label}
+                  <span>{item.label}</span>
+                  {item.beta && (
+                    <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-emerald-300 ring-1 ring-inset ring-emerald-400/30">
+                      Beta
+                    </span>
+                  )}
                 </span>
                 {item.href === '/live' && showLivePulse ? (
                   <span className="relative flex h-3 w-3 shrink-0 items-center justify-center" aria-label="Live">
@@ -387,7 +411,12 @@ export default function PredictionsShell({
                   >
                     <span className="flex items-center gap-3">
                       <Icon className="w-4 h-4" />
-                      {item.label}
+                      <span>{item.label}</span>
+                      {item.beta && (
+                        <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-emerald-300 ring-1 ring-inset ring-emerald-400/30">
+                          Beta
+                        </span>
+                      )}
                     </span>
                     {item.href === '/live' && showLivePulse ? (
                       <span className="relative flex h-3 w-3 shrink-0 items-center justify-center" aria-label="Live">

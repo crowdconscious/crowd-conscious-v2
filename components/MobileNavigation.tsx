@@ -2,19 +2,34 @@
 
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { LayoutDashboard, TrendingUp, Trophy, User, LogOut, Bell, Radio } from 'lucide-react'
+import { LayoutDashboard, TrendingUp, Trophy, User, LogOut, Bell, Radio, MessageSquareWarning } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { supabaseClient } from '@/lib/supabase-client'
 import { useLiveNavBadge } from '@/hooks/useLiveNavBadge'
+
+// Mirrors LandingNav: build-time flag, read at module scope so the slot
+// silently disappears when Signals is disabled in production.
+const SIGNALS_ENABLED = process.env.NEXT_PUBLIC_SIGNALS_ENABLED === 'true'
+
+type MobileNavItem = {
+  path: string
+  icon: LucideIcon
+  label: string
+  beta?: boolean
+}
 
 export default function MobileNavigation() {
   const pathname = usePathname()
   const router = useRouter()
   const { liveCount } = useLiveNavBadge()
 
-  const navItems = [
+  const navItems: MobileNavItem[] = [
     { path: '/predictions', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/live', icon: Radio, label: 'Live' },
     { path: '/predictions/pulse', icon: TrendingUp, label: 'Pulse' },
+    ...(SIGNALS_ENABLED
+      ? [{ path: '/signals', icon: MessageSquareWarning, label: 'Signals', beta: true } as MobileNavItem]
+      : []),
     { path: '/predictions/notifications', icon: Bell, label: 'Alerts' },
     { path: '/leaderboard', icon: Trophy, label: 'Leaderboard' },
     { path: '/profile', icon: User, label: 'Profile' },
@@ -45,6 +60,9 @@ export default function MobileNavigation() {
             >
               {item.path === '/live' && liveCount > 0 && (
                 <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-red-500 ring-2 ring-[#0f1419]" />
+              )}
+              {item.beta && (
+                <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-emerald-400 ring-2 ring-[#0f1419]" aria-label="Beta" />
               )}
               <Icon className="h-5 w-5 mb-0.5 shrink-0" strokeWidth={2} />
               <span className="text-xs font-medium truncate">{item.label}</span>
