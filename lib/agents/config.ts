@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { createClient } from '@supabase/supabase-js';
+import { createAdminClient } from '@/lib/supabase-admin';
 
 // --- Model Selection ---
 // Haiku 4.5: Fast, cheap ($1/$5 per MTok) — use for data digestion, summarization, ranking
@@ -33,14 +33,14 @@ export function getAnthropicClient(): Anthropic {
   return new Anthropic({ apiKey });
 }
 
+/**
+ * Service-role client for agents. Prefer importing `createAdminClient` from
+ * `@/lib/supabase-admin` directly in new code — this wrapper keeps existing
+ * agent imports stable and adds a one-line diagnostic log.
+ */
 export function getSupabaseAdmin() {
   console.log('[AGENT] SUPABASE_SERVICE_ROLE_KEY exists:', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) {
-    throw new Error('Supabase env vars missing. Check NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.');
-  }
-  return createClient(url, key);
+  return createAdminClient();
 }
 
 // --- Logging ---

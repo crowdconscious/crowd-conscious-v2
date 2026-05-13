@@ -161,11 +161,11 @@ export const WelcomeEmail = ({
                   }}>
                     {isBrand 
                       ? 'Find community needs that align with your brand values and create meaningful partnerships.'
-                      : 'Explore local communities working on environmental and social impact projects near you.'
+                      : 'Vote on consultations about the World Cup 2026, your city, and what matters to you.'
                     }
                   </Text>
                   <Link
-                    href={isBrand ? `${APP_URL}/brand/discover` : `${APP_URL}/communities`}
+                    href={isBrand ? `${APP_URL}/brand/discover` : `${APP_URL}/pulse`}
                     style={{
                       display: 'inline-block',
                       padding: '8px 16px',
@@ -177,7 +177,7 @@ export const WelcomeEmail = ({
                       fontWeight: '500'
                     }}
                   >
-                    {isBrand ? 'Browse Needs' : 'Explore Communities'}
+                    {isBrand ? 'Browse Needs' : 'Explore Pulse'}
                   </Link>
                 </Column>
               </Row>
@@ -330,7 +330,7 @@ export const WelcomeEmail = ({
         </Heading>
         
         <Button
-          href={isBrand ? `${APP_URL}/brand/discover` : `${APP_URL}/communities`}
+          href={isBrand ? `${APP_URL}/brand/discover` : `${APP_URL}/pulse`}
           style={{
             display: 'inline-block',
             padding: '12px 30px',
@@ -344,7 +344,7 @@ export const WelcomeEmail = ({
             cursor: 'pointer'
           }}
         >
-          {isBrand ? 'Start Sponsoring' : 'Join a Community'}
+          {isBrand ? 'Start Sponsoring' : 'Start Voting'}
         </Button>
         
         <Text style={{

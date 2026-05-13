@@ -440,7 +440,7 @@ export const MonthlyImpactReport = ({
         </Button>
 
         <Button
-          href={`${APP_URL}/communities`}
+          href={`${APP_URL}/pulse`}
           style={{
             display: 'inline-block',
             padding: '12px 30px',
@@ -454,7 +454,7 @@ export const MonthlyImpactReport = ({
             cursor: 'pointer'
           }}
         >
-          Explore Communities
+          Explore Pulse
         </Button>
         
         <Text style={{

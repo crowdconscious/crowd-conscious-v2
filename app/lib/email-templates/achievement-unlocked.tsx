@@ -467,7 +467,7 @@ export const AchievementUnlocked = ({
         </Button>
 
         <Button
-          href={`${APP_URL}/communities`}
+          href={`${APP_URL}/pulse`}
           style={{
             display: 'inline-block',
             padding: '12px 30px',

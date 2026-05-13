@@ -68,7 +68,7 @@ export const emailTemplates = {
             <li>📊 Track measurable impact</li>
           </ul>
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${APP_URL}/communities" style="background: #14b8a6; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Discover Communities</a>
+            <a href="${APP_URL}/pulse" style="background: #14b8a6; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Explore Pulse</a>
           </div>
         </div>
       </div>

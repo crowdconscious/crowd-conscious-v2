@@ -38,14 +38,14 @@ export default function Navigation() {
           {/* Navigation Links */}
           <div className="hidden md:flex items-center space-x-8">
             <Link 
-              href="/communities" 
+              href="/pulse" 
               className={`font-medium transition-colors ${
                 isScrolled 
                   ? 'text-slate-700 hover:text-teal-600' 
                   : 'text-white/90 hover:text-white'
               }`}
             >
-              Communities
+              Pulse
             </Link>
             <Link 
               href="/about" 

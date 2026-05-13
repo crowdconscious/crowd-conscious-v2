@@ -197,12 +197,12 @@ export const BaseEmailTemplate = ({
                   fontSize: '12px',
                   color: '#6b7280'
                 }}>
-                  <Link href={`${APP_URL}/communities`} style={{ color: '#14b8a6', textDecoration: 'none', margin: '0 8px' }}>
-                    Browse Communities
+                  <Link href={`${APP_URL}/pulse`} style={{ color: '#14b8a6', textDecoration: 'none', margin: '0 8px' }}>
+                    Pulse
                   </Link>
                   •
-                  <Link href={`${APP_URL}/brand/discover`} style={{ color: '#14b8a6', textDecoration: 'none', margin: '0 8px' }}>
-                    Brand Partners
+                  <Link href={`${APP_URL}/para-marcas`} style={{ color: '#14b8a6', textDecoration: 'none', margin: '0 8px' }}>
+                    For Brands
                   </Link>
                   •
                   <Link href={`${APP_URL}/about`} style={{ color: '#14b8a6', textDecoration: 'none', margin: '0 8px' }}>

@@ -1100,6 +1100,63 @@ export interface Database {
         }
         Relationships: []
       }
+      sponsor_pulse_reports: {
+        // Schema source: supabase/migrations/216_sponsor_pulse_reports.sql.
+        // One row per Pulse (UNIQUE on market_id); regeneration is an
+        // ON CONFLICT (market_id) DO UPDATE so the table stays single-row.
+        Row: {
+          id: string
+          market_id: string
+          sponsor_account_id: string | null
+          executive_summary: string | null
+          conviction_analysis: string | null
+          next_steps: Json
+          snapshot_data: Json
+          generated_at: string
+          model: string | null
+          tokens_in: number
+          tokens_out: number
+          cost: number
+          pdf_path: string | null
+          pdf_generated_at: string | null
+          email_sent_at: string | null
+        }
+        Insert: {
+          id?: string
+          market_id: string
+          sponsor_account_id?: string | null
+          executive_summary?: string | null
+          conviction_analysis?: string | null
+          next_steps?: Json
+          snapshot_data?: Json
+          generated_at?: string
+          model?: string | null
+          tokens_in?: number
+          tokens_out?: number
+          cost?: number
+          pdf_path?: string | null
+          pdf_generated_at?: string | null
+          email_sent_at?: string | null
+        }
+        Update: {
+          id?: string
+          market_id?: string
+          sponsor_account_id?: string | null
+          executive_summary?: string | null
+          conviction_analysis?: string | null
+          next_steps?: Json
+          snapshot_data?: Json
+          generated_at?: string
+          model?: string | null
+          tokens_in?: number
+          tokens_out?: number
+          cost?: number
+          pdf_path?: string | null
+          pdf_generated_at?: string | null
+          email_sent_at?: string | null
+        }
+        Relationships: []
+      }
       sponsorships: {
         // Schema source: supabase/migrations/140_sponsorships_table.sql
         // + 142_sponsorships_report_token.sql. Hand-rolled (vs generated)
