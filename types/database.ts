@@ -2065,7 +2065,32 @@ export interface Database {
       }
     }
     Views: {
-      [_ in never]: never
+      citizen_signals_public: {
+        // Anon-safe projection of citizen_signals where publication_status =
+        // 'published'. Source: supabase/migrations/219_citizen_signals_mvp.sql.
+        Row: {
+          id: string
+          public_slug: string
+          post_type: string
+          category: string
+          severity: string
+          target_kind: string
+          citizen_target_id: string
+          title: string
+          body: string
+          language: string
+          conscious_location_id: string
+          display_name: string | null
+          anonymous_display_mode: boolean
+          threshold_stage: number
+          cosign_count: number
+          stage1_met_at: string | null
+          stage2_met_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_profiles_public: {
