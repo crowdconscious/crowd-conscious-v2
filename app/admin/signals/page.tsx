@@ -8,6 +8,7 @@ import {
   type CitizenSignalsLocale,
 } from '@/lib/i18n/citizen-signals'
 import SignalsTriage, {
+  type AdminLocationLookup,
   type AdminSignalRow,
   type AdminTargetRow,
 } from '@/components/admin/SignalsTriage'
@@ -43,7 +44,7 @@ export default async function AdminSignalsPage() {
     admin
       .from('citizen_signals')
       .select(
-        'id, public_slug, post_type, category, severity, target_kind, citizen_target_id, conscious_location_id, title, body, language, anonymous_display_mode, anonymous_display_name, publication_status, threshold_stage, cosign_count, canonical_duplicate_of, ai_scores, created_at, updated_at'
+        'id, public_slug, post_type, category, severity, target_kind, citizen_target_id, conscious_location_id, partner_location_id, street_reference, title, body, language, anonymous_display_mode, anonymous_display_name, publication_status, threshold_stage, cosign_count, anonymous_support_count, canonical_duplicate_of, ai_scores, created_at, updated_at'
       )
       .order('created_at', { ascending: false })
       .limit(200),
@@ -53,6 +54,31 @@ export default async function AdminSignalsPage() {
       .order('display_name', { ascending: true })
       .limit(500),
   ])
+
+  // Resolve location names in a single batch so the triage card can render
+  // "alcaldía · partner" without per-row joins. Migration 222 introduced the
+  // optional partner_location_id refinement which lives in the same
+  // conscious_locations table as the broad alcaldía.
+  const locationIds = Array.from(
+    new Set(
+      (signals ?? []).flatMap((s) =>
+        [s.conscious_location_id, s.partner_location_id].filter(
+          (id): id is string => typeof id === 'string' && id.length > 0
+        )
+      )
+    )
+  )
+  const { data: locations } = locationIds.length
+    ? await admin
+        .from('conscious_locations')
+        .select('id, name, city')
+        .in('id', locationIds)
+    : { data: [] as Array<{ id: string; name: string; city: string | null }> }
+
+  const locationsLookup: Record<string, AdminLocationLookup> = {}
+  for (const l of locations ?? []) {
+    locationsLookup[l.id] = { name: l.name, city: l.city ?? null }
+  }
 
   return (
     <div className="min-h-screen bg-[#0f1419] text-slate-100">
@@ -75,6 +101,7 @@ export default async function AdminSignalsPage() {
           locale={locale}
           initialSignals={(signals ?? []) as AdminSignalRow[]}
           targets={(targets ?? []) as AdminTargetRow[]}
+          locations={locationsLookup}
         />
       </main>
     </div>

@@ -21,6 +21,10 @@ export type AdminSignalRow = {
   target_kind: string
   citizen_target_id: string
   conscious_location_id: string
+  /** Optional partner-spot refinement inside the parent alcaldía (migration 222). */
+  partner_location_id: string | null
+  /** Optional citizen-typed street/intersection landmark (migration 222). */
+  street_reference: string | null
   title: string
   body: string
   language: string
@@ -29,6 +33,8 @@ export type AdminSignalRow = {
   publication_status: string
   threshold_stage: number
   cosign_count: number
+  /** Anonymous device-supports from migration 221; do NOT count toward escalation thresholds. */
+  anonymous_support_count: number
   canonical_duplicate_of: string | null
   ai_scores: Record<string, unknown> | null
   created_at: string
@@ -41,6 +47,11 @@ export type AdminTargetRow = {
   display_name: string
   target_kind: string
   notification_email: string | null
+}
+
+export type AdminLocationLookup = {
+  name: string
+  city: string | null
 }
 
 const TABS: SignalPublicationStatus[] = [
@@ -56,12 +67,15 @@ type Props = {
   locale: CitizenSignalsLocale
   initialSignals: AdminSignalRow[]
   targets: AdminTargetRow[]
+  /** id → {name, city} for both conscious_location_id and partner_location_id. */
+  locations?: Record<string, AdminLocationLookup>
 }
 
 export default function SignalsTriage({
   locale,
   initialSignals,
   targets,
+  locations = {},
 }: Props) {
   const t = getCitizenSignalsCopy(locale)
   const [signals, setSignals] = useState<AdminSignalRow[]>(initialSignals)
@@ -185,6 +199,17 @@ export default function SignalsTriage({
             const target = targetMap.get(s.citizen_target_id)
             const pending = !!pendingByRow[s.id]
             const error = errorByRow[s.id] ?? null
+            const alcaldia = locations[s.conscious_location_id]?.name ?? null
+            const partner =
+              s.partner_location_id != null
+                ? (locations[s.partner_location_id]?.name ?? null)
+                : null
+            // Total engagement = registered co-signs (escalation-eligible)
+            // plus anonymous device-supports (migration 221, non-eligible).
+            // The split matters for moderation; show both numbers but lead
+            // with the sum so total reach is one glance.
+            const totalEngagement = s.cosign_count + s.anonymous_support_count
+            const aiAssessment = parseAiScores(s.ai_scores)
             return (
               <li
                 key={s.id}
@@ -225,10 +250,44 @@ export default function SignalsTriage({
                         locale === 'es' ? 'es-MX' : 'en-US'
                       )}
                     </p>
+                    {(alcaldia || partner || s.street_reference) && (
+                      <p className="mt-1 text-xs text-slate-400">
+                        <span className="text-slate-500">
+                          {locale === 'es' ? 'Ubicación: ' : 'Location: '}
+                        </span>
+                        {alcaldia ?? (locale === 'es' ? 'Sin alcaldía' : 'No alcaldía')}
+                        {partner && (
+                          <>
+                            <span className="text-slate-600"> · </span>
+                            {partner}
+                          </>
+                        )}
+                        {s.street_reference && (
+                          <>
+                            <span className="text-slate-600"> · </span>
+                            <span className="italic">{s.street_reference}</span>
+                          </>
+                        )}
+                      </p>
+                    )}
                   </div>
-                  <div className="flex items-center gap-3 text-xs">
-                    <span className="font-semibold text-emerald-300">
-                      {t.detail.cosignsLabel(s.cosign_count)}
+                  <div className="flex flex-col items-end gap-1 text-xs">
+                    <span
+                      className="font-semibold text-emerald-300"
+                      title={
+                        locale === 'es'
+                          ? `${s.cosign_count} co-firmas + ${s.anonymous_support_count} anónimas`
+                          : `${s.cosign_count} co-signs + ${s.anonymous_support_count} anonymous`
+                      }
+                    >
+                      {locale === 'es'
+                        ? `${totalEngagement} de apoyo`
+                        : `${totalEngagement} support`}
+                    </span>
+                    <span className="text-slate-500">
+                      {locale === 'es'
+                        ? `(${s.cosign_count} co-firmas · ${s.anonymous_support_count} anón.)`
+                        : `(${s.cosign_count} co-signs · ${s.anonymous_support_count} anon.)`}
                     </span>
                     {s.publication_status === 'published' && (
                       <Link
@@ -245,6 +304,13 @@ export default function SignalsTriage({
                 <p className="mt-3 whitespace-pre-line text-sm text-slate-300">
                   {s.body}
                 </p>
+
+                {aiAssessment && (
+                  <AiAssessmentCard
+                    locale={locale}
+                    assessment={aiAssessment}
+                  />
+                )}
 
                 {/* Actions row */}
                 <div className="mt-4 flex flex-wrap gap-2">
@@ -630,4 +696,241 @@ function TargetTokenPanel({
       )}
     </div>
   )
+}
+
+// -----------------------------------------------------------------------------
+// AI assessment card (F14: lib/agents/signals-moderator.ts).
+//
+// The moderator agent writes a structured `SignalsModeratorOutput` to
+// `citizen_signals.ai_scores` (jsonb). We parse the subset the triage UI
+// surfaces inline, defensively narrowing each field so a malformed or
+// partial row never crashes the queue. Unrecognised shapes simply hide
+// the card.
+// -----------------------------------------------------------------------------
+
+type ParsedAiAssessment = {
+  recommendedAction:
+    | 'auto_publish'
+    | 'human_review'
+    | 'request_edit'
+    | 'reject'
+    | null
+  categoryGuess: string | null
+  categoryConfidence: number | null
+  severityGuess: 'low' | 'medium' | 'high' | 'critical' | null
+  severityConfidence: number | null
+  piiCount: number | null
+  defamationRisk: 'low' | 'medium' | 'high' | null
+  summaryEs: string | null
+  summaryEn: string | null
+  rationale: string | null
+}
+
+function parseAiScores(
+  raw: Record<string, unknown> | null
+): ParsedAiAssessment | null {
+  if (!raw || typeof raw !== 'object') return null
+  // Schema-version sanity check: only render assessments that match the
+  // shape we know how to display. Agent emits schema_version: 1 today; if
+  // the prompt is rev'd to a breaking schema we want this card to hide
+  // gracefully rather than render garbage.
+  const sv = raw.schema_version
+  if (sv !== 1 && sv !== undefined) return null
+
+  const recommendedAction = pickEnum(raw.recommended_action, [
+    'auto_publish',
+    'human_review',
+    'request_edit',
+    'reject',
+  ])
+  const severityGuess = pickEnum(raw.severity_guess, [
+    'low',
+    'medium',
+    'high',
+    'critical',
+  ])
+  const defamationRisk = pickEnum(raw.defamation_risk, ['low', 'medium', 'high'])
+
+  const categoryGuess =
+    typeof raw.category_guess === 'string' ? raw.category_guess : null
+  const categoryConfidence = numberOrNull(raw.category_confidence)
+  const severityConfidence = numberOrNull(raw.severity_confidence)
+  const piiCount = Array.isArray(raw.pii_detected)
+    ? raw.pii_detected.length
+    : null
+  const summaryEs = typeof raw.summary_es === 'string' ? raw.summary_es : null
+  const summaryEn = typeof raw.summary_en === 'string' ? raw.summary_en : null
+  const rationale =
+    typeof raw.recommendation_rationale === 'string'
+      ? raw.recommendation_rationale
+      : null
+
+  // If nothing useful parsed, hide the card.
+  if (
+    !recommendedAction &&
+    !categoryGuess &&
+    !severityGuess &&
+    !defamationRisk &&
+    !summaryEs &&
+    !summaryEn
+  ) {
+    return null
+  }
+
+  return {
+    recommendedAction,
+    categoryGuess,
+    categoryConfidence,
+    severityGuess,
+    severityConfidence,
+    piiCount,
+    defamationRisk,
+    summaryEs,
+    summaryEn,
+    rationale,
+  }
+}
+
+function pickEnum<T extends string>(
+  value: unknown,
+  allowed: readonly T[]
+): T | null {
+  return typeof value === 'string' && (allowed as readonly string[]).includes(value)
+    ? (value as T)
+    : null
+}
+
+function numberOrNull(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null
+}
+
+function AiAssessmentCard({
+  locale,
+  assessment,
+}: {
+  locale: CitizenSignalsLocale
+  assessment: ParsedAiAssessment
+}) {
+  const a = assessment
+  const summary = locale === 'es' ? a.summaryEs : a.summaryEn
+
+  return (
+    <div className="mt-4 rounded-lg border border-indigo-500/30 bg-indigo-500/5 p-3 text-xs">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="rounded-full bg-indigo-500/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-indigo-200">
+          {locale === 'es' ? 'IA · Evaluación' : 'AI · Assessment'}
+        </span>
+        {a.recommendedAction && (
+          <span
+            className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${recommendedActionTone(a.recommendedAction)}`}
+            title={a.rationale ?? undefined}
+          >
+            {recommendedActionLabel(locale, a.recommendedAction)}
+          </span>
+        )}
+        {a.severityGuess && (
+          <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-amber-200">
+            {locale === 'es' ? 'Urgencia' : 'Severity'}: {a.severityGuess}
+            {a.severityConfidence != null && (
+              <span className="ml-1 text-amber-300/60">
+                ({Math.round(a.severityConfidence * 100)}%)
+              </span>
+            )}
+          </span>
+        )}
+        {a.categoryGuess && (
+          <span className="rounded-full bg-slate-500/15 px-2 py-0.5 text-slate-300">
+            {locale === 'es' ? 'Categoría' : 'Category'}: {a.categoryGuess}
+            {a.categoryConfidence != null && (
+              <span className="ml-1 text-slate-400/70">
+                ({Math.round(a.categoryConfidence * 100)}%)
+              </span>
+            )}
+          </span>
+        )}
+        {a.piiCount != null && a.piiCount > 0 && (
+          <span className="rounded-full bg-rose-500/15 px-2 py-0.5 text-rose-200">
+            {locale === 'es' ? 'PII detectada' : 'PII detected'}: {a.piiCount}
+          </span>
+        )}
+        {a.defamationRisk && (
+          <span
+            className={`rounded-full px-2 py-0.5 ${defamationTone(a.defamationRisk)}`}
+          >
+            {locale === 'es' ? 'Riesgo difamación' : 'Defamation risk'}:{' '}
+            {a.defamationRisk}
+          </span>
+        )}
+      </div>
+      {summary && (
+        <p className="mt-2 text-slate-300">
+          {summary}
+        </p>
+      )}
+      {a.rationale && (
+        <p className="mt-1 text-slate-500">
+          <span className="text-slate-600">
+            {locale === 'es' ? 'Razonamiento: ' : 'Rationale: '}
+          </span>
+          {a.rationale}
+        </p>
+      )}
+    </div>
+  )
+}
+
+function recommendedActionLabel(
+  locale: CitizenSignalsLocale,
+  action: NonNullable<ParsedAiAssessment['recommendedAction']>
+): string {
+  if (locale === 'es') {
+    switch (action) {
+      case 'auto_publish':
+        return 'Auto-publicar'
+      case 'human_review':
+        return 'Revisión humana'
+      case 'request_edit':
+        return 'Pedir edición'
+      case 'reject':
+        return 'Rechazar'
+    }
+  }
+  switch (action) {
+    case 'auto_publish':
+      return 'Auto-publish'
+    case 'human_review':
+      return 'Human review'
+    case 'request_edit':
+      return 'Request edit'
+    case 'reject':
+      return 'Reject'
+  }
+}
+
+function recommendedActionTone(
+  action: NonNullable<ParsedAiAssessment['recommendedAction']>
+): string {
+  switch (action) {
+    case 'auto_publish':
+      return 'bg-emerald-500/20 text-emerald-200'
+    case 'human_review':
+      return 'bg-amber-500/20 text-amber-200'
+    case 'request_edit':
+      return 'bg-sky-500/20 text-sky-200'
+    case 'reject':
+      return 'bg-rose-500/20 text-rose-200'
+  }
+}
+
+function defamationTone(
+  risk: NonNullable<ParsedAiAssessment['defamationRisk']>
+): string {
+  switch (risk) {
+    case 'low':
+      return 'bg-emerald-500/15 text-emerald-200'
+    case 'medium':
+      return 'bg-amber-500/15 text-amber-200'
+    case 'high':
+      return 'bg-rose-500/15 text-rose-200'
+  }
 }

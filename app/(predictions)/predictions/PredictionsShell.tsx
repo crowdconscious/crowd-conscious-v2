@@ -237,6 +237,24 @@ export default function PredictionsShell({
               <FileText className="w-4 h-4" />
               {language === 'es' ? 'Revisar Buzón' : 'Review Inbox'}
             </Link>
+            {SIGNALS_ENABLED && (
+              <Link
+                href="/admin/signals"
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                  pathname === '/admin/signals' || pathname.startsWith('/admin/signals/')
+                    ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
+                    : 'text-cc-text-secondary hover:bg-gray-800/50 hover:text-amber-400'
+                }`}
+              >
+                <MessageSquareWarning className="w-4 h-4" />
+                <span className="flex items-center gap-2">
+                  {language === 'es' ? 'Revisar Señales' : 'Review Signals'}
+                  <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-emerald-300 ring-1 ring-inset ring-emerald-400/30">
+                    Beta
+                  </span>
+                </span>
+              </Link>
+            )}
             <Link
               href="/predictions/admin/causes"
               className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
@@ -491,6 +509,25 @@ export default function PredictionsShell({
                     <FileText className="w-4 h-4" />
                     {language === 'es' ? 'Revisar Buzón' : 'Review Inbox'}
                   </Link>
+                  {SIGNALS_ENABLED && (
+                    <Link
+                      href="/admin/signals"
+                      onClick={closeMobileMenu}
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                        pathname === '/admin/signals' || pathname.startsWith('/admin/signals/')
+                          ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
+                          : 'text-cc-text-secondary hover:bg-gray-800/50 hover:text-amber-400'
+                      }`}
+                    >
+                      <MessageSquareWarning className="w-4 h-4" />
+                      <span className="flex items-center gap-2">
+                        {language === 'es' ? 'Revisar Señales' : 'Review Signals'}
+                        <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-emerald-300 ring-1 ring-inset ring-emerald-400/30">
+                          Beta
+                        </span>
+                      </span>
+                    </Link>
+                  )}
                   <Link
                     href="/predictions/admin/causes"
                     onClick={closeMobileMenu}
