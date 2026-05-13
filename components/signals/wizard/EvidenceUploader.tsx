@@ -8,7 +8,7 @@ import {
 
 export type EvidenceItem =
   | {
-      kind: 'image' | 'pdf'
+      kind: 'image'
       storage_path: string
       caption: string
       preview_url?: string
@@ -16,13 +16,16 @@ export type EvidenceItem =
     }
   | { kind: 'link'; external_url: string; caption: string }
 
-const ACCEPT = 'image/jpeg,image/png,image/webp,image/gif,application/pdf'
+// Pilot scope is images-only. HEIC/HEIF are included so iPhone photos taken
+// with the default camera format upload without manual conversion. Keep in
+// lock-step with `ALLOWED_TYPES` in app/api/signals/upload/route.ts.
+const ACCEPT = 'image/jpeg,image/png,image/webp,image/heic,image/heif'
 const ALLOWED_TYPES = new Set([
   'image/jpeg',
   'image/png',
   'image/webp',
-  'image/gif',
-  'application/pdf',
+  'image/heic',
+  'image/heif',
 ])
 const MAX_FILES = 5
 const MAX_BYTES = 10 * 1024 * 1024
@@ -83,15 +86,14 @@ export default function EvidenceUploader({ locale, items, onChange }: Props) {
         }
         const j = (await res.json()) as {
           storage_path: string
-          kind: 'image' | 'pdf'
+          kind: 'image'
         }
         const next: EvidenceItem = {
-          kind: j.kind,
+          kind: 'image',
           storage_path: j.storage_path,
           caption: '',
           filename: file.name,
-          preview_url:
-            j.kind === 'image' ? URL.createObjectURL(file) : undefined,
+          preview_url: URL.createObjectURL(file),
         }
         onChange([...items, next])
       } catch (err: unknown) {

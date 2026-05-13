@@ -17,12 +17,17 @@ export const dynamic = 'force-dynamic'
  * Bucket: citizen-signals-evidence (private; signed URLs handed out at read).
  */
 
+// Pilot scope is images-only. The storage bucket (`citizen-signals-evidence`,
+// migration 219) allows a slightly wider mime list at the storage layer, but
+// the application contract is enforced here: anything outside this set is
+// rejected with a 400 before it ever reaches Supabase Storage. HEIC/HEIF
+// support is included for iPhone users (default camera format).
 const ALLOWED_TYPES = [
   'image/jpeg',
   'image/png',
   'image/webp',
-  'image/gif',
-  'application/pdf',
+  'image/heic',
+  'image/heif',
 ]
 const MAX_SIZE_BYTES = 10 * 1024 * 1024 // 10MB; matches storage bucket limit.
 
@@ -99,7 +104,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       storage_path: path,
-      kind: file.type === 'application/pdf' ? 'pdf' : 'image',
+      kind: 'image',
       size: file.size,
       content_type: file.type,
     })

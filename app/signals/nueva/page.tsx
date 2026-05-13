@@ -75,9 +75,21 @@ export default async function SignalsComposePage() {
     .order('name', { ascending: true })
     .limit(500)
 
+  // When the pilot env var is not set we fall back to a broad CDMX match.
+  // Real rows have been seen with `city` as "Ciudad de México", "CDMX", or
+  // "Mexico City"; the old `.ilike('city', 'ciudad de m%xico')` filter
+  // returned 0 rows for installs that store any of the alternate spellings
+  // (see scripts/seed-conscious-locations-cdmx.ts, which normalises to
+  // "Ciudad de México" going forward).
   const locationsQuery = allowedLocationIds
     ? locationsBase.in('id', allowedLocationIds)
-    : locationsBase.ilike('city', 'ciudad de m%xico')
+    : locationsBase.or(
+        [
+          'city.ilike.%méxico%',
+          'city.ilike.%mexico%',
+          'city.ilike.%cdmx%',
+        ].join(',')
+      )
 
   const [{ data: targets }, { data: locations }] = await Promise.all([
     targetsQuery,
