@@ -45,6 +45,10 @@ if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
 }
 
 import { createAdminClient } from '../lib/supabase-admin'
+import {
+  CDMX_ALCALDIA_SLUGS,
+  type CdmxAlcaldiaSlug,
+} from '../lib/signals/cdmx-alcaldias'
 
 type ConsciousLocationCategory =
   | 'restaurant'
@@ -77,7 +81,7 @@ type ConsciousLocationStatus =
   | 'revoked'
 
 type SeedLocation = {
-  slug: string
+  slug: CdmxAlcaldiaSlug
   name: string
   neighborhood: string | null
   latitude: number
@@ -110,6 +114,26 @@ const CITY = 'Ciudad de México'
 const COUNTRY_TAG = 'México'
 const CATEGORY: ConsciousLocationCategory = 'other'
 const STATUS: ConsciousLocationStatus = 'active'
+
+// Belt-and-braces: ensure the local list and the shared constant stay
+// aligned. If a slug ever drifts (a rename here without updating
+// lib/signals/cdmx-alcaldias.ts, or vice versa) we want a loud failure
+// at seed time, not a silently-empty alcaldía picker in the wizard.
+{
+  const localSlugs = ALCALDIAS.map((a) => a.slug).sort()
+  const sharedSlugs = [...CDMX_ALCALDIA_SLUGS].sort()
+  const sameLength = localSlugs.length === sharedSlugs.length
+  const sameMembers =
+    sameLength && localSlugs.every((s, i) => s === sharedSlugs[i])
+  if (!sameMembers) {
+    console.error(
+      '[seed-conscious-locations-cdmx] CDMX_ALCALDIA_SLUGS drift detected.\n' +
+        `  local:  ${localSlugs.join(',')}\n` +
+        `  shared: ${sharedSlugs.join(',')}`
+    )
+    process.exit(1)
+  }
+}
 
 async function main() {
   const admin = createAdminClient()

@@ -1155,6 +1155,10 @@ export interface Database {
           body: string
           language: string
           conscious_location_id: string
+          partner_location_id: string | null
+          street_reference: string | null
+          precise_latitude: number | null
+          precise_longitude: number | null
           author_user_id: string
           anonymous_display_mode: boolean
           anonymous_display_name: string | null
@@ -1183,6 +1187,10 @@ export interface Database {
           body: string
           language: string
           conscious_location_id: string
+          partner_location_id?: string | null
+          street_reference?: string | null
+          precise_latitude?: number | null
+          precise_longitude?: number | null
           author_user_id: string
           anonymous_display_mode?: boolean
           anonymous_display_name?: string | null
@@ -1211,6 +1219,10 @@ export interface Database {
           body?: string
           language?: string
           conscious_location_id?: string
+          partner_location_id?: string | null
+          street_reference?: string | null
+          precise_latitude?: number | null
+          precise_longitude?: number | null
           author_user_id?: string
           anonymous_display_mode?: boolean
           anonymous_display_name?: string | null
@@ -2114,6 +2126,8 @@ export interface Database {
           body: string
           language: string
           conscious_location_id: string
+          partner_location_id: string | null
+          street_reference: string | null
           display_name: string | null
           anonymous_display_mode: boolean
           threshold_stage: number

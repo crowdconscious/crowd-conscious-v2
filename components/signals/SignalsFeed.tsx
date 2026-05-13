@@ -33,6 +33,8 @@ type ApiSignalRow = {
   body: string
   language: string
   conscious_location_id: string
+  partner_location_id: string | null
+  street_reference: string | null
   anonymous_display_mode: boolean
   display_name: string | null
   threshold_stage: number
@@ -193,6 +195,8 @@ function mapApiRow(row: ApiSignalRow, lookups: SignalLookups): SignalListItem {
     body: row.body,
     language: row.language,
     consciousLocationId: row.conscious_location_id,
+    partnerLocationId: row.partner_location_id,
+    streetReference: row.street_reference,
     displayName: row.display_name,
     anonymousDisplayMode: row.anonymous_display_mode,
     thresholdStage: row.threshold_stage,
@@ -204,5 +208,13 @@ function mapApiRow(row: ApiSignalRow, lookups: SignalLookups): SignalListItem {
     updatedAt: row.updated_at,
     targetName: lookups.targets[row.citizen_target_id]?.displayName ?? null,
     locationName: lookups.locations[row.conscious_location_id]?.name ?? null,
+    // Partner name may be missing from the lookups cache after pagination
+    // (the initial server fetch primes it for the first page only). When
+    // that happens the SignalCard falls through to the street_reference
+    // path or just the alcaldía label — both acceptable.
+    partnerLocationName:
+      row.partner_location_id != null
+        ? (lookups.locations[row.partner_location_id]?.name ?? null)
+        : null,
   }
 }

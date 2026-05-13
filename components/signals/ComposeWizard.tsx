@@ -21,6 +21,7 @@ import TargetPicker, {
 } from '@/components/signals/wizard/TargetPicker'
 import LocationPicker, {
   type LocationOption,
+  type RefinementMode,
 } from '@/components/signals/wizard/LocationPicker'
 import EvidenceUploader, {
   type EvidenceItem,
@@ -32,7 +33,10 @@ export type ComposeLocation = LocationOption
 type Props = {
   locale: CitizenSignalsLocale
   targets: ReadonlyArray<ComposeTarget>
-  locations: ReadonlyArray<ComposeLocation>
+  /** The 16 CDMX alcaldías (Stage A of the location picker). */
+  alcaldias: ReadonlyArray<ComposeLocation>
+  /** Other active CDMX conscious_locations (Stage B partner options). */
+  partnerLocations: ReadonlyArray<ComposeLocation>
   userDefaultLanguage: CitizenSignalsLocale
   /** Used to scope the localStorage draft so multiple accounts don't collide. */
   userId: string
@@ -40,7 +44,10 @@ type Props = {
 
 type Step = 0 | 1 | 2 | 3 | 4 | 5
 const TOTAL_STEPS = 6
-const DRAFT_VERSION = 1
+// Bumped to v2 with migration 222 (street-level precision). Older v1
+// drafts simply get discarded — the rehydration check is `parsed.v ===
+// DRAFT_VERSION` so a v1 payload yields the default empty draft.
+const DRAFT_VERSION = 2
 
 type DraftState = {
   v: number
@@ -50,6 +57,12 @@ type DraftState = {
   targetKind: SignalTargetKind
   targetId: string
   locationId: string
+  /** RefinementMode for step 3 stage B. */
+  refinementMode: RefinementMode
+  /** Set when refinementMode === 'partner'. */
+  partnerLocationId: string | null
+  /** Set when refinementMode === 'street'. */
+  streetReference: string
   title: string
   body: string
   language: CitizenSignalsLocale
@@ -61,7 +74,11 @@ type DraftState = {
 type StepErrors = {
   type?: { category?: string; severity?: string }
   target?: { targetId?: string }
-  location?: { locationId?: string }
+  location?: {
+    locationId?: string
+    partnerLocationId?: string
+    streetReference?: string
+  }
   narrative?: { title?: string; body?: string }
   review?: { aliasName?: string; attestation?: string }
 }
@@ -89,6 +106,9 @@ function emptyDraft(language: CitizenSignalsLocale): DraftState {
     targetKind: 'municipality',
     targetId: '',
     locationId: '',
+    refinementMode: 'none',
+    partnerLocationId: null,
+    streetReference: '',
     title: '',
     body: '',
     language,
@@ -120,7 +140,8 @@ function draftStorageKey(userId: string) {
 export default function ComposeWizard({
   locale,
   targets,
-  locations,
+  alcaldias,
+  partnerLocations,
   userDefaultLanguage,
   userId,
 }: Props) {
@@ -199,11 +220,71 @@ export default function ComposeWizard({
           .string()
           .uuid({ message: t.compose.validation.targetRequired }),
       }),
-      location: z.object({
-        locationId: z
-          .string()
-          .uuid({ message: t.compose.validation.locationRequired }),
-      }),
+      location: z
+        .object({
+          locationId: z.string().uuid({
+            message: t.compose.location.validation.alcaldiaRequired,
+          }),
+          refinementMode: z.enum(['none', 'partner', 'street']),
+          partnerLocationId: z.string().uuid().nullable(),
+          streetReference: z.string(),
+        })
+        .superRefine((value, ctx) => {
+          if (value.refinementMode === 'partner') {
+            if (!value.partnerLocationId) {
+              ctx.addIssue({
+                code: 'custom',
+                path: ['partnerLocationId'],
+                message: t.compose.location.validation.alcaldiaRequired,
+              })
+            }
+          } else if (value.refinementMode === 'street') {
+            const trimmed = value.streetReference.trim()
+            if (trimmed.length === 0) {
+              ctx.addIssue({
+                code: 'custom',
+                path: ['streetReference'],
+                message:
+                  t.compose.location.validation.streetAllWhitespace,
+              })
+            } else if (trimmed.length < 3) {
+              ctx.addIssue({
+                code: 'custom',
+                path: ['streetReference'],
+                message: t.compose.location.validation.streetTooShort,
+              })
+            } else if (trimmed.length > 160) {
+              ctx.addIssue({
+                code: 'custom',
+                path: ['streetReference'],
+                message: t.compose.location.validation.streetTooLong,
+              })
+            }
+          }
+          // Defense-in-depth — UI prevents this, but the schema rejects
+          // both at once anyway so the server never sees a malformed
+          // payload from a misbehaving client.
+          if (
+            value.refinementMode === 'partner' &&
+            value.streetReference.trim().length > 0
+          ) {
+            ctx.addIssue({
+              code: 'custom',
+              path: ['streetReference'],
+              message: t.compose.location.validation.bothPrecisionsSet,
+            })
+          }
+          if (
+            value.refinementMode === 'street' &&
+            value.partnerLocationId
+          ) {
+            ctx.addIssue({
+              code: 'custom',
+              path: ['partnerLocationId'],
+              message: t.compose.location.validation.bothPrecisionsSet,
+            })
+          }
+        }),
       narrative: z.object({
         title: z
           .string()
@@ -290,15 +371,21 @@ export default function ComposeWizard({
         case 2: {
           const r = schemas.location.safeParse({
             locationId: draft.locationId,
+            refinementMode: draft.refinementMode,
+            partnerLocationId: draft.partnerLocationId,
+            streetReference: draft.streetReference,
           })
           if (r.success) {
             setErrors((prev) => ({ ...prev, location: undefined }))
             return true
           }
+          const flat = r.error.flatten().fieldErrors
           setErrors((prev) => ({
             ...prev,
             location: {
-              locationId: r.error.issues[0]?.message,
+              locationId: flat.locationId?.[0],
+              partnerLocationId: flat.partnerLocationId?.[0],
+              streetReference: flat.streetReference?.[0],
             },
           }))
           return false
@@ -389,6 +476,15 @@ export default function ComposeWizard({
         }
       })
 
+      // Refinement (mutually exclusive). The API also enforces this; we
+      // shape it client-side so payload inspection stays self-explanatory.
+      const partner_location_id =
+        draft.refinementMode === 'partner' ? draft.partnerLocationId : null
+      const street_reference =
+        draft.refinementMode === 'street'
+          ? draft.streetReference.trim()
+          : null
+
       const payload = {
         post_type: draft.postType,
         category: draft.category,
@@ -399,6 +495,8 @@ export default function ComposeWizard({
         body: draft.body.trim(),
         language: draft.language,
         conscious_location_id: draft.locationId,
+        partner_location_id,
+        street_reference,
         anonymous_display_mode: draft.anonymousMode,
         anonymous_display_name: draft.anonymousMode
           ? draft.aliasName.trim()
@@ -470,9 +568,18 @@ export default function ComposeWizard({
     () => targets.find((target) => target.id === draft.targetId) ?? null,
     [targets, draft.targetId]
   )
-  const selectedLocation = useMemo(
-    () => locations.find((loc) => loc.id === draft.locationId) ?? null,
-    [locations, draft.locationId]
+  const selectedAlcaldia = useMemo(
+    () => alcaldias.find((loc) => loc.id === draft.locationId) ?? null,
+    [alcaldias, draft.locationId]
+  )
+  const selectedPartner = useMemo(
+    () =>
+      draft.partnerLocationId
+        ? partnerLocations.find(
+            (loc) => loc.id === draft.partnerLocationId
+          ) ?? null
+        : null,
+    [partnerLocations, draft.partnerLocationId]
   )
 
   return (
@@ -530,10 +637,43 @@ export default function ComposeWizard({
             <p className="text-sm text-slate-400">{t.compose.locationIntro}</p>
             <LocationPicker
               locale={locale}
-              locations={locations}
-              selectedId={draft.locationId}
-              onChange={(id) => update('locationId', id)}
-              error={errors.location?.locationId}
+              alcaldias={alcaldias}
+              partnerLocations={partnerLocations}
+              selectedAlcaldiaId={draft.locationId}
+              refinementMode={draft.refinementMode}
+              selectedPartnerLocationId={draft.partnerLocationId}
+              streetReference={draft.streetReference}
+              onChangeAlcaldia={(id) => {
+                // Clear any refinement when the alcaldía changes — the
+                // partner list is alcaldía-scoped and a street typed for
+                // a different alcaldía is meaningless.
+                setDraft((d) => ({
+                  ...d,
+                  locationId: id,
+                  refinementMode: 'none',
+                  partnerLocationId: null,
+                  streetReference: '',
+                }))
+              }}
+              onChangeRefinementMode={(mode) => {
+                setDraft((d) => ({
+                  ...d,
+                  refinementMode: mode,
+                  partnerLocationId: mode === 'partner' ? d.partnerLocationId : null,
+                  streetReference: mode === 'street' ? d.streetReference : '',
+                }))
+              }}
+              onChangePartnerLocation={(id) =>
+                update('partnerLocationId', id)
+              }
+              onChangeStreetReference={(value) =>
+                update('streetReference', value)
+              }
+              errors={{
+                alcaldia: errors.location?.locationId,
+                partner: errors.location?.partnerLocationId,
+                street: errors.location?.streetReference,
+              }}
             />
           </section>
         )}
@@ -569,7 +709,8 @@ export default function ComposeWizard({
             onChangeAttestation={setAttestation}
             errors={errors.review}
             target={selectedTarget}
-            location={selectedLocation}
+            alcaldia={selectedAlcaldia}
+            partner={selectedPartner}
             submitError={submitError}
             onEditStep={(idx) => setStep(idx as Step)}
           />
@@ -864,7 +1005,8 @@ function StepReview({
   onChangeAttestation,
   errors,
   target,
-  location,
+  alcaldia,
+  partner,
   submitError,
   onEditStep,
 }: {
@@ -876,11 +1018,26 @@ function StepReview({
   onChangeAttestation: (v: boolean) => void
   errors?: { aliasName?: string; attestation?: string }
   target: TargetOption | null
-  location: LocationOption | null
+  alcaldia: LocationOption | null
+  partner: LocationOption | null
   submitError: string | null
   onEditStep: (idx: number) => void
 }) {
   const t = getCitizenSignalsCopy(locale)
+  const locationCopy = t.compose.location.preview
+  const locationSummary = (() => {
+    if (!alcaldia) return '—'
+    if (draft.refinementMode === 'partner' && partner) {
+      return locationCopy.withPartner(alcaldia.name, partner.name)
+    }
+    if (draft.refinementMode === 'street' && draft.streetReference.trim()) {
+      return locationCopy.withStreet(
+        alcaldia.name,
+        draft.streetReference.trim()
+      )
+    }
+    return locationCopy.alcaldiaOnly(alcaldia.name)
+  })()
 
   const previewRow = (
     label: string,
@@ -927,15 +1084,7 @@ function StepReview({
             : '—',
           1
         )}
-        {previewRow(
-          t.detail.location,
-          location
-            ? `${location.name}${
-                location.neighborhood ? ` · ${location.neighborhood}` : ''
-              }`
-            : '—',
-          2
-        )}
+        {previewRow(t.detail.location, locationSummary, 2)}
         {previewRow(
           t.compose.narrative.titleLabel,
           draft.title.trim() || '—',

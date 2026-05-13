@@ -59,15 +59,22 @@ export default async function SignalsDetailPage({ params }: PageProps) {
   const { data: signal } = await admin
     .from('citizen_signals_public')
     .select(
-      'id, public_slug, post_type, category, severity, target_kind, citizen_target_id, title, body, language, conscious_location_id, display_name, anonymous_display_mode, threshold_stage, cosign_count, anonymous_support_count, stage1_met_at, stage2_met_at, created_at, updated_at'
+      'id, public_slug, post_type, category, severity, target_kind, citizen_target_id, title, body, language, conscious_location_id, partner_location_id, street_reference, display_name, anonymous_display_mode, threshold_stage, cosign_count, anonymous_support_count, stage1_met_at, stage2_met_at, created_at, updated_at'
     )
     .eq('public_slug', slug)
     .maybeSingle()
 
   if (!signal) notFound()
 
-  // Hydrate target + location + evidence (public-only) + responses.
-  const [{ data: target }, { data: location }, { data: evidence }, { data: responses }] = await Promise.all([
+  // Hydrate target + alcaldía + partner location (if any) + evidence
+  // (public-only) + responses.
+  const [
+    { data: target },
+    { data: location },
+    { data: partnerLocation },
+    { data: evidence },
+    { data: responses },
+  ] = await Promise.all([
     admin
       .from('citizen_targets')
       .select('id, slug, display_name, target_kind')
@@ -78,6 +85,13 @@ export default async function SignalsDetailPage({ params }: PageProps) {
       .select('id, slug, name, neighborhood, city, latitude, longitude')
       .eq('id', signal.conscious_location_id)
       .maybeSingle(),
+    signal.partner_location_id
+      ? admin
+          .from('conscious_locations')
+          .select('id, slug, name, neighborhood, city')
+          .eq('id', signal.partner_location_id)
+          .maybeSingle()
+      : Promise.resolve({ data: null } as const),
     admin
       .from('citizen_signal_evidence')
       .select('id, kind, storage_path, external_url, caption, created_at')
@@ -144,6 +158,7 @@ export default async function SignalsDetailPage({ params }: PageProps) {
         signal={signal}
         target={target ?? null}
         location={location ?? null}
+        partnerLocation={partnerLocation ?? null}
         evidence={evidenceWithUrls}
         responses={responses ?? []}
         viewerSignedIn={!!user}

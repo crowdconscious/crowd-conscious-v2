@@ -45,7 +45,7 @@ export async function GET(
     const { data: signal, error: sErr } = await admin
       .from('citizen_signals_public')
       .select(
-        'id, public_slug, post_type, category, severity, target_kind, citizen_target_id, title, body, language, conscious_location_id, display_name, anonymous_display_mode, threshold_stage, cosign_count, anonymous_support_count, stage1_met_at, stage2_met_at, created_at, updated_at'
+        'id, public_slug, post_type, category, severity, target_kind, citizen_target_id, title, body, language, conscious_location_id, partner_location_id, street_reference, display_name, anonymous_display_mode, threshold_stage, cosign_count, anonymous_support_count, stage1_met_at, stage2_met_at, created_at, updated_at'
       )
       .eq('public_slug', slug)
       .maybeSingle()
@@ -70,6 +70,17 @@ export async function GET(
       .eq('id', signal.conscious_location_id)
       .maybeSingle()
 
+    // Denormalised partner-location lookup so clients can render the
+    // "{alcaldía} · {partner name}" label without a second round-trip.
+    // Only fired when the row carries a refinement.
+    const { data: partnerLocation } = signal.partner_location_id
+      ? await admin
+          .from('conscious_locations')
+          .select('id, slug, name, city, neighborhood')
+          .eq('id', signal.partner_location_id)
+          .maybeSingle()
+      : { data: null }
+
     const { data: evidence } = await admin
       .from('citizen_signal_evidence')
       .select('id, kind, storage_path, external_url, caption, created_at')
@@ -87,6 +98,8 @@ export async function GET(
       signal,
       target: target ?? null,
       location: location ?? null,
+      partner_location: partnerLocation ?? null,
+      partner_location_name: partnerLocation?.name ?? null,
       evidence: evidence ?? [],
       responses: responses ?? [],
     })

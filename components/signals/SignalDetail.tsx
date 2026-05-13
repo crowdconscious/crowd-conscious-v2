@@ -40,6 +40,8 @@ type SignalCore = {
   stage1_met_at: string | null
   stage2_met_at: string | null
   created_at: string
+  partner_location_id: string | null
+  street_reference: string | null
 }
 
 type Target = {
@@ -57,11 +59,23 @@ type Location = {
   city: string | null
 } | null
 
+/** Partner location (the optional refinement inside an alcaldía). */
+type PartnerLocation = {
+  id: string
+  slug: string
+  name: string
+  neighborhood: string | null
+  city: string | null
+} | null
+
 type Props = {
   locale: CitizenSignalsLocale
   signal: SignalCore
   target: Target
+  /** The alcaldía (broad bucket). */
   location: Location
+  /** Optional sub-location inside the alcaldía. */
+  partnerLocation: PartnerLocation
   evidence: EvidenceItem[]
   responses: OfficialResponseRow[]
   viewerSignedIn: boolean
@@ -82,12 +96,25 @@ function severityClasses(severity: string): string {
   }
 }
 
-function locationLabel(loc: Location): string | null {
+/**
+ * Build the hero / aside location string from the alcaldía + optional
+ * refinement. Returns null only when there's no alcaldía at all (a data
+ * integrity bug, since the column is NOT NULL — but we guard anyway).
+ *   alcaldía + partner -> "Álvaro Obregón · Acapulco Vintage Store"
+ *   alcaldía + street  -> "Álvaro Obregón · Calle Tonalá entre Yucatán y Mérida"
+ *   alcaldía alone     -> "Álvaro Obregón"
+ */
+function locationLabel(
+  loc: Location,
+  partner: PartnerLocation,
+  streetReference: string | null
+): string | null {
   if (!loc) return null
-  const parts = [loc.name, loc.neighborhood, loc.city].filter(
-    (s): s is string => Boolean(s)
-  )
-  return parts.length > 0 ? parts.join(' · ') : null
+  if (partner) return `${loc.name} · ${partner.name}`
+  if (streetReference && streetReference.trim().length > 0) {
+    return `${loc.name} · ${streetReference.trim()}`
+  }
+  return loc.name
 }
 
 /**
@@ -111,6 +138,7 @@ export default function SignalDetail({
   signal,
   target,
   location,
+  partnerLocation,
   evidence,
   responses,
   viewerSignedIn,
@@ -185,7 +213,13 @@ export default function SignalDetail({
   const heroByline = signal.anonymous_display_mode
     ? signal.display_name ?? t.detail.anonymous
     : signal.display_name ?? null
-  const locLabel = locationLabel(location)
+  const locLabel = locationLabel(
+    location,
+    partnerLocation,
+    signal.street_reference
+  )
+  const showCitizenReportedNote =
+    !!signal.street_reference && signal.street_reference.trim().length > 0
 
   return (
     <article className="pb-24 sm:pb-0">
@@ -342,7 +376,22 @@ export default function SignalDetail({
                 {t.detail.location}
               </p>
               <p className="mt-1 text-white">{location.name}</p>
-              <p className="text-xs text-slate-500">
+              {partnerLocation && (
+                <p className="mt-1 text-sm text-slate-200">
+                  · {partnerLocation.name}
+                </p>
+              )}
+              {showCitizenReportedNote && signal.street_reference && (
+                <>
+                  <p className="mt-1 text-sm text-slate-200">
+                    · {signal.street_reference}
+                  </p>
+                  <p className="mt-1 text-xs italic text-slate-500">
+                    {t.compose.location.stageB.citizenReportedNote}
+                  </p>
+                </>
+              )}
+              <p className="mt-2 text-xs text-slate-500">
                 {[location.neighborhood, location.city]
                   .filter(Boolean)
                   .join(' · ')}

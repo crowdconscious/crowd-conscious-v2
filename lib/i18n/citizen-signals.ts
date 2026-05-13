@@ -246,6 +246,92 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
       locationIntro: isEs
         ? 'Selecciona la ubicación en CDMX donde aplica la señal.'
         : 'Pick the CDMX location where this applies.',
+      location: {
+        stageA: {
+          heading: isEs
+            ? 'Elige la alcaldía'
+            : 'Pick the alcaldía',
+          subtitle: isEs
+            ? 'Selecciona la alcaldía donde aplica tu señal. Es el agrupador principal.'
+            : 'Select the alcaldía where your signal applies. This is the broad bucket.',
+          searchPlaceholder: isEs
+            ? 'Buscar alcaldía…'
+            : 'Search alcaldía…',
+          cdmxSubtitle: 'CDMX',
+          empty: isEs
+            ? 'No encontramos esa alcaldía. Limpia la búsqueda para ver las 16.'
+            : 'No alcaldía matched. Clear the search to see all 16.',
+          changeCta: isEs ? 'cambiar' : 'change',
+        },
+        stageB: {
+          heading: isEs
+            ? 'Afina la ubicación (opcional)'
+            : 'Refine the location (optional)',
+          subtitle: isEs
+            ? 'Si quieres ser más específico, elige un lugar registrado, escribe una calle o referencia, o salta este paso.'
+            : 'If you want to be more specific, pick a registered spot, type a street or landmark, or skip this step.',
+          modes: {
+            partner: {
+              label: isEs ? 'Una ubicación conocida' : 'A known location',
+              help: isEs
+                ? 'Selecciona un lugar registrado dentro de esta alcaldía.'
+                : 'Pick a registered place inside this alcaldía.',
+              empty: isEs
+                ? 'No hay ubicaciones registradas en esta alcaldía aún.'
+                : 'No registered locations in this alcaldía yet.',
+              searchPlaceholder: isEs
+                ? 'Buscar por nombre o colonia…'
+                : 'Search by name or neighbourhood…',
+            },
+            street: {
+              label: isEs ? 'Una calle o referencia' : 'A street or landmark',
+              help: isEs
+                ? 'Sé específico. Si tienes una intersección o número exterior, inclúyelo.'
+                : 'Be specific. If you have an intersection or street number, include it.',
+              placeholder: isEs
+                ? 'Ej: Calle Tonalá entre Yucatán y Mérida'
+                : 'E.g. Calle Tonalá between Yucatán and Mérida',
+              hint: isEs
+                ? 'Entre 3 y 160 caracteres.'
+                : 'Between 3 and 160 characters.',
+            },
+            none: {
+              label: isEs ? 'Solo la alcaldía' : 'Just the alcaldía',
+              help: isEs
+                ? 'Tu señal aplicará a toda la alcaldía.'
+                : 'Your signal will apply to the whole alcaldía.',
+            },
+          },
+          skipCta: isEs ? 'Saltar' : 'Skip',
+          citizenReportedNote: isEs
+            ? 'Reportado por la ciudadanía'
+            : 'Citizen-reported',
+        },
+        validation: {
+          alcaldiaRequired: isEs
+            ? 'Selecciona una alcaldía para continuar.'
+            : 'Select an alcaldía to continue.',
+          streetTooShort: isEs
+            ? 'Escribe al menos 3 caracteres.'
+            : 'Type at least 3 characters.',
+          streetTooLong: isEs
+            ? 'La referencia no puede pasar de 160 caracteres.'
+            : 'The reference can be at most 160 characters.',
+          streetAllWhitespace: isEs
+            ? 'La referencia no puede ser solo espacios.'
+            : 'The reference cannot be only whitespace.',
+          bothPrecisionsSet: isEs
+            ? 'Elige una ubicación conocida o una calle/referencia, no ambas.'
+            : 'Choose either a known location or a street/landmark, not both.',
+        },
+        preview: {
+          alcaldiaOnly: (alcaldia: string) => alcaldia,
+          withPartner: (alcaldia: string, partner: string) =>
+            `${alcaldia} · ${partner}`,
+          withStreet: (alcaldia: string, street: string) =>
+            `${alcaldia} · ${street}`,
+        },
+      },
       narrative: {
         titleLabel: isEs ? 'Título corto' : 'Short title',
         titlePlaceholder: isEs

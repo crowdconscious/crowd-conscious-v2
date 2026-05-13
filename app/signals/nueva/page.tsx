@@ -8,6 +8,7 @@ import {
   SIGNAL_TARGET_KINDS,
   type CitizenSignalsLocale,
 } from '@/lib/i18n/citizen-signals'
+import { CDMX_ALCALDIA_SLUGS } from '@/lib/signals/cdmx-alcaldias'
 import ComposeWizard, {
   type ComposeTarget,
   type ComposeLocation,
@@ -31,11 +32,22 @@ function readLocale(c: {
  * instant first paint. The wizard then drives POST /api/signals from the
  * client side via fetch.
  *
- * Pilot scope: targets restricted to MVP kinds (municipality, institution),
- * locations restricted to CDMX. Operators can narrow the location list to
- * a specific pilot polygon by setting SIGNALS_ALLOWED_LOCATION_IDS to a
- * comma-separated list of conscious_locations.id values; the API enforces
- * the same allow-list on POST so the two stay aligned.
+ * Step 3 of the wizard is a TWO-STAGE location picker:
+ *   1. Pick an alcaldía (the broad bucket). We always hydrate the picker
+ *      from the 16 CDMX alcaldías seeded by
+ *      scripts/seed-conscious-locations-cdmx.ts. SIGNALS_ALLOWED_LOCATION_IDS
+ *      does NOT narrow this list — the alcaldía is the citizen's anchor
+ *      and must always be available, even in a pilot polygon.
+ *   2. Optionally refine: pick a "partner" location inside that alcaldía,
+ *      type a street/landmark, or skip. Partner locations are every
+ *      other active `conscious_locations` row (i.e. not the 16 alcaldías).
+ *
+ * Known limitation: the schema does not yet have a parent-child link
+ * from a partner location to its alcaldía, so we pass ALL active
+ * non-alcaldía CDMX rows to the wizard and let the client filter by
+ * neighborhood/city text match against the selected alcaldía. The API
+ * intentionally does NOT enforce parent-alcaldía match either; see the
+ * TODO(signals-precision) comment in app/api/signals/route.ts.
  */
 export default async function SignalsComposePage() {
   if (process.env.SIGNALS_ENABLED !== 'true') notFound()
@@ -68,22 +80,31 @@ export default async function SignalsComposePage() {
     .order('display_name', { ascending: true })
     .limit(500)
 
-  const locationsBase = admin
+  // Stage A: always pull the 16 CDMX alcaldías by slug. This list is the
+  // source of truth for the "broad bucket" picker and must NOT be
+  // narrowed by SIGNALS_ALLOWED_LOCATION_IDS.
+  const alcaldiasQuery = admin
+    .from('conscious_locations')
+    .select('id, slug, name, neighborhood, city, status')
+    .in('slug', CDMX_ALCALDIA_SLUGS as unknown as string[])
+    .order('name', { ascending: true })
+
+  // Stage B: every OTHER active CDMX `conscious_locations` row. The
+  // wizard surfaces these as "partner locations" inside the chosen
+  // alcaldía. We exclude the alcaldía rows by slug so we don't double-list
+  // them, and apply the same CDMX city heuristic as before so installs
+  // that have "Mexico City" / "CDMX" still light up.
+  const partnerLocationsBase = admin
     .from('conscious_locations')
     .select('id, slug, name, neighborhood, city, status')
     .eq('status', 'active')
+    .not('slug', 'in', `(${CDMX_ALCALDIA_SLUGS.map((s) => `"${s}"`).join(',')})`)
     .order('name', { ascending: true })
     .limit(500)
 
-  // When the pilot env var is not set we fall back to a broad CDMX match.
-  // Real rows have been seen with `city` as "Ciudad de México", "CDMX", or
-  // "Mexico City"; the old `.ilike('city', 'ciudad de m%xico')` filter
-  // returned 0 rows for installs that store any of the alternate spellings
-  // (see scripts/seed-conscious-locations-cdmx.ts, which normalises to
-  // "Ciudad de México" going forward).
-  const locationsQuery = allowedLocationIds
-    ? locationsBase.in('id', allowedLocationIds)
-    : locationsBase.or(
+  const partnerLocationsQuery = allowedLocationIds
+    ? partnerLocationsBase.in('id', allowedLocationIds)
+    : partnerLocationsBase.or(
         [
           'city.ilike.%méxico%',
           'city.ilike.%mexico%',
@@ -91,9 +112,14 @@ export default async function SignalsComposePage() {
         ].join(',')
       )
 
-  const [{ data: targets }, { data: locations }] = await Promise.all([
+  const [
+    { data: targets },
+    { data: alcaldias },
+    { data: partnerLocations },
+  ] = await Promise.all([
     targetsQuery,
-    locationsQuery,
+    alcaldiasQuery,
+    partnerLocationsQuery,
   ])
 
   const targetOptions: ComposeTarget[] = (targets ?? []).map((row) => ({
@@ -103,13 +129,23 @@ export default async function SignalsComposePage() {
     target_kind: row.target_kind,
   }))
 
-  const locationOptions: ComposeLocation[] = (locations ?? []).map((row) => ({
+  const alcaldiaOptions: ComposeLocation[] = (alcaldias ?? []).map((row) => ({
     id: row.id,
     slug: row.slug,
     name: row.name,
     neighborhood: row.neighborhood,
     city: row.city,
   }))
+
+  const partnerOptions: ComposeLocation[] = (partnerLocations ?? []).map(
+    (row) => ({
+      id: row.id,
+      slug: row.slug,
+      name: row.name,
+      neighborhood: row.neighborhood,
+      city: row.city,
+    })
+  )
 
   // Force a dark wrapper on the route — `src/app/globals.css` ships
   // body-light overrides that would otherwise flash white on first paint.
@@ -131,7 +167,8 @@ export default async function SignalsComposePage() {
         <ComposeWizard
           locale={locale}
           targets={targetOptions}
-          locations={locationOptions}
+          alcaldias={alcaldiaOptions}
+          partnerLocations={partnerOptions}
           userDefaultLanguage={locale}
           userId={user.id}
         />

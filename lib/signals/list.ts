@@ -32,6 +32,8 @@ export type SignalListItem = {
   body: string
   language: string
   consciousLocationId: string
+  partnerLocationId: string | null
+  streetReference: string | null
   displayName: string | null
   anonymousDisplayMode: boolean
   thresholdStage: number
@@ -42,7 +44,10 @@ export type SignalListItem = {
   createdAt: string
   updatedAt: string
   targetName: string | null
+  /** Broad alcaldía bucket — always present when the lookup resolves. */
   locationName: string | null
+  /** Partner refinement (sub-location inside the alcaldía), if any. */
+  partnerLocationName: string | null
 }
 
 export type SignalLookups = {
@@ -67,7 +72,7 @@ export async function fetchInitialSignals(): Promise<{
   const { data: rows, error } = await admin
     .from('citizen_signals_public')
     .select(
-      'id, public_slug, post_type, category, severity, target_kind, citizen_target_id, title, body, language, conscious_location_id, anonymous_display_mode, display_name, threshold_stage, cosign_count, anonymous_support_count, stage1_met_at, stage2_met_at, created_at, updated_at'
+      'id, public_slug, post_type, category, severity, target_kind, citizen_target_id, title, body, language, conscious_location_id, partner_location_id, street_reference, anonymous_display_mode, display_name, threshold_stage, cosign_count, anonymous_support_count, stage1_met_at, stage2_met_at, created_at, updated_at'
     )
     .order('created_at', { ascending: false })
     .limit(FEED_PAGE_SIZE)
@@ -79,8 +84,16 @@ export async function fetchInitialSignals(): Promise<{
 
   const signalsRaw = rows ?? []
   const targetIds = Array.from(new Set(signalsRaw.map((r) => r.citizen_target_id)))
+  // Look up both the alcaldía and the partner refinement in a single batch
+  // so the feed card can render "alcaldía · partner" without per-row joins.
   const locationIds = Array.from(
-    new Set(signalsRaw.map((r) => r.conscious_location_id))
+    new Set(
+      signalsRaw.flatMap((r) =>
+        [r.conscious_location_id, r.partner_location_id].filter(
+          (id): id is string => typeof id === 'string' && id.length > 0
+        )
+      )
+    )
   )
 
   const [targetsRes, locationsRes] = await Promise.all([
@@ -131,6 +144,8 @@ type PublicViewRow = {
   body: string
   language: string
   conscious_location_id: string
+  partner_location_id: string | null
+  street_reference: string | null
   anonymous_display_mode: boolean
   display_name: string | null
   threshold_stage: number
@@ -158,6 +173,8 @@ export function mapRowToItem(
     body: row.body,
     language: row.language,
     consciousLocationId: row.conscious_location_id,
+    partnerLocationId: row.partner_location_id,
+    streetReference: row.street_reference,
     displayName: row.display_name,
     anonymousDisplayMode: row.anonymous_display_mode,
     thresholdStage: row.threshold_stage,
@@ -169,6 +186,10 @@ export function mapRowToItem(
     updatedAt: row.updated_at,
     targetName: lookups.targets[row.citizen_target_id]?.displayName ?? null,
     locationName: lookups.locations[row.conscious_location_id]?.name ?? null,
+    partnerLocationName:
+      row.partner_location_id != null
+        ? (lookups.locations[row.partner_location_id]?.name ?? null)
+        : null,
   }
 }
 

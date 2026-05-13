@@ -81,7 +81,13 @@ export default function SignalCard({ signal, locale, stage1Threshold }: Props) {
           <div className="flex items-center gap-1.5">
             <MapPin className="h-3.5 w-3.5 text-slate-500" aria-hidden />
             <dt className="sr-only">{t.detail.location}</dt>
-            <dd className="truncate">{signal.locationName}</dd>
+            <dd className="truncate">
+              {signal.partnerLocationName
+                ? `${signal.locationName} · ${signal.partnerLocationName}`
+                : signal.streetReference
+                  ? `${signal.locationName} · ${signal.streetReference}`
+                  : signal.locationName}
+            </dd>
           </div>
         )}
       </dl>

@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
     let query = admin
       .from('citizen_signals_public')
       .select(
-        'id, public_slug, post_type, category, severity, target_kind, citizen_target_id, title, body, language, conscious_location_id, anonymous_display_mode, display_name, threshold_stage, cosign_count, anonymous_support_count, stage1_met_at, stage2_met_at, created_at, updated_at'
+        'id, public_slug, post_type, category, severity, target_kind, citizen_target_id, title, body, language, conscious_location_id, partner_location_id, street_reference, anonymous_display_mode, display_name, threshold_stage, cosign_count, anonymous_support_count, stage1_met_at, stage2_met_at, created_at, updated_at'
       )
       .order('created_at', { ascending: false })
       .limit(q.limit)
@@ -133,6 +133,19 @@ const createBodySchema = z.object({
   body: z.string().trim().min(20).max(8000),
   language: z.enum(['es', 'en']),
   conscious_location_id: z.string().uuid(),
+  // Optional precision (mutually exclusive — enforced after parse):
+  //   partner_location_id: another conscious_locations row (a partner spot)
+  //   street_reference:    free-text street/intersection/landmark
+  // See supabase/migrations/222_signals_location_precision.sql for the
+  // DB-level CHECK that backs this up.
+  partner_location_id: z.string().uuid().nullable().optional(),
+  street_reference: z
+    .string()
+    .trim()
+    .min(3)
+    .max(160)
+    .nullable()
+    .optional(),
   anonymous_display_mode: z.boolean().optional().default(false),
   anonymous_display_name: z
     .string()
@@ -221,6 +234,38 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Location precision: at most ONE of partner_location_id /
+    // street_reference. We normalise empty/whitespace-only values to null
+    // so the client can send `street_reference: ""` for "skip refinement"
+    // and we won't accidentally count it as set.
+    const partnerLocationId = payload.partner_location_id ?? null
+    let streetReference: string | null = null
+    if (
+      payload.street_reference !== undefined &&
+      payload.street_reference !== null
+    ) {
+      const trimmed = payload.street_reference.trim()
+      if (trimmed.length > 0) {
+        if (trimmed.length < 3) {
+          return NextResponse.json(
+            { error: 'street_reference must be at least 3 characters' },
+            { status: 400 }
+          )
+        }
+        streetReference = trimmed
+      }
+    }
+
+    if (partnerLocationId && streetReference) {
+      return NextResponse.json(
+        {
+          error:
+            'Choose either a partner location or a street reference, not both',
+        },
+        { status: 400 }
+      )
+    }
+
     const admin = createSignalsAdminClient()
 
     // Pilot geography gate: the conscious_locations row must live in CDMX.
@@ -269,6 +314,52 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Partner-location refinement check: must reference an active
+    // conscious_locations row. We deliberately do NOT verify the row is
+    // geographically inside the parent alcaldía in MVP — the
+    // `conscious_locations` schema has no parent-child link to alcaldías
+    // today, so any heuristic (city / neighborhood text match) would be
+    // brittle. The wizard does a best-effort filter client-side, and we
+    // accept whatever it lands with. TODO(signals-precision): once the
+    // schema introduces an explicit parent_id / alcaldia_id column on
+    // conscious_locations, tighten this server-side check to enforce the
+    // parent match.
+    if (partnerLocationId) {
+      const { data: partner, error: partnerErr } = await admin
+        .from('conscious_locations')
+        .select('id, status')
+        .eq('id', partnerLocationId)
+        .maybeSingle()
+      if (partnerErr) {
+        console.error('[api/signals POST] partner lookup', partnerErr)
+        return NextResponse.json(
+          { error: 'Partner location check failed' },
+          { status: 500 }
+        )
+      }
+      if (!partner) {
+        return NextResponse.json(
+          { error: 'Unknown partner_location_id' },
+          { status: 400 }
+        )
+      }
+      if (partner.status !== 'active') {
+        return NextResponse.json(
+          { error: 'Partner location is not active' },
+          { status: 400 }
+        )
+      }
+      if (partner.id === payload.conscious_location_id) {
+        return NextResponse.json(
+          {
+            error:
+              'partner_location_id must differ from conscious_location_id (alcaldía)',
+          },
+          { status: 400 }
+        )
+      }
+    }
+
     // Target sanity-check: target_kind on the signal must match the target row.
     const { data: target, error: tErr } = await admin
       .from('citizen_targets')
@@ -304,6 +395,8 @@ export async function POST(request: NextRequest) {
         body: payload.body,
         language: payload.language,
         conscious_location_id: payload.conscious_location_id,
+        partner_location_id: partnerLocationId,
+        street_reference: streetReference,
         author_user_id: user.id,
         anonymous_display_mode: payload.anonymous_display_mode ?? false,
         anonymous_display_name: payload.anonymous_display_name ?? null,
