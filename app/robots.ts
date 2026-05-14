@@ -13,8 +13,6 @@ export default function robots(): MetadataRoute.Robots {
         '/settings/',
         '/profile/',
         '/notifications/',
-        '/employee-portal/',
-        '/corporate/',
       ],
     },
     sitemap: `${SITE_URL}/sitemap.xml`,

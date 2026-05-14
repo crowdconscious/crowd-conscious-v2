@@ -258,10 +258,10 @@ function VerifyContent() {
             ¿Quieres obtener tu propia certificación?
           </p>
           <Link
-            href="/concientizaciones"
+            href="/predictions"
             className="inline-block bg-gradient-to-r from-teal-600 to-purple-600 text-white px-8 py-3 rounded-xl font-bold hover:scale-105 transition-transform shadow-lg"
           >
-            Explorar Módulos
+            Explorar Crowd Conscious
           </Link>
         </div>
       </div>

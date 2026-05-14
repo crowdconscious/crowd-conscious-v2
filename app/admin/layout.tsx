@@ -1,11 +1,20 @@
 import { getCurrentUser } from '@/lib/auth-server'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
 import { isAdminUser } from '@/lib/auth/is-admin'
 
-// Mirrors LandingNav: build-time flag, read at module scope so the link
-// silently disappears when Signals is disabled in production.
-const SIGNALS_ENABLED = process.env.NEXT_PUBLIC_SIGNALS_ENABLED === 'true'
-
+/**
+ * Minimal admin shell.
+ *
+ * The canonical admin surface is the predictions sidebar
+ * (app/(predictions)/predictions/PredictionsShell.tsx). This layout exists only
+ * to keep the few admin URLs that still live under /admin/* working —
+ * primarily /admin/signals — without the old red-banner tile dashboard.
+ *
+ * Server-side auth gate matches the rest of the app: profiles.user_type === 'admin'
+ * via isAdminUser.
+ */
 export default async function AdminLayout({
   children,
 }: {
@@ -22,86 +31,20 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Admin Header */}
-      <div className="bg-red-600 text-white p-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">⚠️</span>
-            <div>
-              <h1 className="text-xl font-bold">Admin Dashboard</h1>
-              <p className="text-red-100 text-sm">Community & Sponsorship Moderation</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-red-100 text-sm">Logged in as Admin</span>
-            <a
-              href="/predictions/intelligence"
-              className="bg-slate-800 hover:bg-slate-700 border border-emerald-500/40 px-3 py-1 rounded text-sm transition-colors font-medium"
-            >
-              📈 Intelligence Hub
-            </a>
-            <a 
-              href="/admin/markets" 
-              className="bg-emerald-600 hover:bg-emerald-500 px-3 py-1 rounded text-sm transition-colors font-medium"
-            >
-              📊 Markets
-            </a>
-            <a
-              href="/predictions/admin/locations"
-              className="bg-teal-600 hover:bg-teal-500 px-3 py-1 rounded text-sm transition-colors font-medium"
-            >
-              📍 Locations
-            </a>
-            {SIGNALS_ENABLED && (
-              <a
-                href="/admin/signals"
-                className="bg-emerald-700 hover:bg-emerald-600 px-3 py-1 rounded text-sm transition-colors font-medium inline-flex items-center gap-1.5"
-              >
-                <span>📢 Signals</span>
-                <span className="rounded-full bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-200 ring-1 ring-inset ring-emerald-300/40">
-                  Beta
-                </span>
-              </a>
-            )}
-            <a 
-              href="/admin/promo-codes" 
-              className="bg-purple-600 hover:bg-purple-500 px-3 py-1 rounded text-sm transition-colors font-medium"
-            >
-              🎁 Promo Codes
-            </a>
-            <a
-              href="/admin/sponsors"
-              className="bg-orange-600 hover:bg-orange-500 px-3 py-1 rounded text-sm transition-colors font-medium"
-            >
-              🤝 Sponsors
-            </a>
-            <a 
-              href="/admin/deletions" 
-              className="bg-red-700 hover:bg-red-600 px-3 py-1 rounded text-sm transition-colors"
-            >
-              🗑️ Deletions
-            </a>
-            <a 
-              href="/admin/test-systems" 
-              className="bg-yellow-600 hover:bg-yellow-500 px-3 py-1 rounded text-sm transition-colors"
-            >
-              🧪 Test Systems
-            </a>
-            <a 
-              href="/dashboard" 
-              className="bg-red-500 hover:bg-red-400 px-3 py-1 rounded text-sm transition-colors"
-            >
-              Back to App
-            </a>
-          </div>
+    <div className="min-h-screen bg-[#0f1419] text-slate-100">
+      <div className="border-b border-slate-800 bg-[#0f1419]/95 backdrop-blur supports-[backdrop-filter]:bg-[#0f1419]/80">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
+          <Link
+            href="/predictions"
+            className="inline-flex items-center gap-2 text-sm text-slate-400 transition-colors hover:text-emerald-400"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Back to dashboard</span>
+          </Link>
+          <span className="text-xs uppercase tracking-wider text-slate-500">Admin</span>
         </div>
       </div>
-
-      {/* Admin Content */}
-      <main className="max-w-7xl mx-auto p-6">
-        {children}
-      </main>
+      <main className="mx-auto max-w-7xl px-4 py-6">{children}</main>
     </div>
   )
 }
