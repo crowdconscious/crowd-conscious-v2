@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { getCurrentUser } from '@/lib/auth-server'
+import { getCurrentUserFromRequest } from '@/lib/auth-server'
 import { createSignalsAdminClient } from '@/lib/signals/supabase'
 import { mintSignalSlug } from '@/lib/signals/slug'
 import {
@@ -29,8 +29,9 @@ export const dynamic = 'force-dynamic'
  *
  * GET reads from `citizen_signals_public` — an anon-safe view that strips
  * author_user_id and ai_scores. POST writes through the service-role
- * admin client (bypasses RLS) after `getCurrentUser()` confirms the caller
- * is signed in.
+ * admin client (bypasses RLS) after `getCurrentUserFromRequest()` confirms
+ * the caller is signed in (cookie session OR Authorization: Bearer JWT
+ * for the mobile app).
  */
 
 function flagOn() {
@@ -172,7 +173,7 @@ export async function POST(request: NextRequest) {
   if (!flagOn()) return notFound()
 
   try {
-    const user = await getCurrentUser()
+    const user = await getCurrentUserFromRequest(request)
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }

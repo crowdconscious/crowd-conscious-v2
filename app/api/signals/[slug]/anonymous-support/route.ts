@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getCurrentUser } from '@/lib/auth-server'
+import { getCurrentUserFromRequest } from '@/lib/auth-server'
 import { createSignalsAdminClient } from '@/lib/signals/supabase'
 import {
   standardRateLimit,
@@ -47,7 +47,9 @@ export async function POST(
   }
 
   try {
-    const user = await getCurrentUser()
+    // Use the request-aware variant so a Bearer-authenticated mobile
+    // user is also detected as signed-in and gets the USE_COSIGN error.
+    const user = await getCurrentUserFromRequest(request)
     if (user) {
       return NextResponse.json(
         {
