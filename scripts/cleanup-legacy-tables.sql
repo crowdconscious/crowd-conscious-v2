@@ -51,20 +51,20 @@ DROP TABLE IF EXISTS neighborhood_partnerships CASCADE;
 --       poll_votes(16), event_registrations(9), content_shares(683),
 --       sponsorships(10), module_sales(29), weekly_challenges(2)
 -- ============================================================
--- DROP TABLE IF EXISTS poll_votes CASCADE;
--- DROP TABLE IF EXISTS poll_options CASCADE;
--- DROP TABLE IF EXISTS need_activities CASCADE;
--- DROP TABLE IF EXISTS event_registrations CASCADE;
--- DROP TABLE IF EXISTS content_shares CASCADE;
--- DROP TABLE IF EXISTS community_content CASCADE;
--- DROP TABLE IF EXISTS community_members CASCADE;
--- DROP TABLE IF EXISTS community_treasury CASCADE;
--- DROP TABLE IF EXISTS sponsorships CASCADE;
--- DROP TABLE IF EXISTS communities CASCADE;
--- DROP TABLE IF EXISTS module_sales CASCADE;
--- DROP TABLE IF EXISTS weekly_challenges CASCADE;
+ DROP TABLE IF EXISTS poll_votes CASCADE;
+ DROP TABLE IF EXISTS poll_options CASCADE;
+ DROP TABLE IF EXISTS need_activities CASCADE;
+ DROP TABLE IF EXISTS event_registrations CASCADE;
+ DROP TABLE IF EXISTS content_shares CASCADE;
+ DROP TABLE IF EXISTS community_content CASCADE;
+ DROP TABLE IF EXISTS community_members CASCADE;
+ DROP TABLE IF EXISTS community_treasury CASCADE;
+ DROP TABLE IF EXISTS sponsorships CASCADE;
+ DROP TABLE IF EXISTS communities CASCADE;
+ DROP TABLE IF EXISTS module_sales CASCADE;
+ DROP TABLE IF EXISTS weekly_challenges CASCADE;
 
 -- ============================================================
 -- STEP 3: Verify remaining tables
 -- ============================================================
--- SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename;
+SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename;

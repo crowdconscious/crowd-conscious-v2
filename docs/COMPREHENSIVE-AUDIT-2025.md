@@ -325,7 +325,7 @@ lib/
 6. **Legacy tables** — Community tables (communities, community_content, etc.) still used; plan deprecation if needed
 
 ### Low Priority
-7. **Function search_path** — Fix 889 warnings incrementally when touching functions
+7. **Function search_path** — Fix 89 warnings incrementally when touching functions
 8. **Materialized view in API** — Review user_progress_summary exposure if sensitive
 
 ---
