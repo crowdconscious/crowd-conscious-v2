@@ -202,19 +202,58 @@ export async function getCurrentUserFromRequest(request: NextRequest) {
       })
 
       const { data: { user }, error } = await supabase.auth.getUser(jwt)
-      if (!error && user) {
-        const { createAdminClient } = await import('./supabase-admin')
-        const admin = createAdminClient()
-        const { data: profile, error: profileError } = await admin
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single()
-        return await ensureProfileFallback(user, profile, profileError)
+      if (error || !user) {
+        // Bearer was supplied but invalid/expired. Per spec, fall through
+        // to the cookie path — for mobile clients (no cookies) this just
+        // resolves to null and the route returns 401.
+        console.warn(
+          '[getCurrentUserFromRequest] bearer JWT did not verify',
+          {
+            hasError: !!error,
+            errorMessage: error?.message,
+            errorStatus: (error as { status?: number } | null)?.status,
+          }
+        )
+      } else {
+        // CRITICAL: JWT verified → user is authenticated. From here on,
+        // profile-row loading must NEVER cause a 401. The route handlers
+        // only need `user.id`; the rest of the AuthProfileRow shape is a
+        // convenience for legacy callers. So we always return a usable
+        // profile-like object derived from the verified JWT, and try to
+        // hydrate the real profile row best-effort on top of it.
+        const userStub: AuthProfileRow = {
+          id: user.id,
+          email: user.email ?? null,
+          full_name:
+            (user.user_metadata?.full_name as string | undefined) ?? null,
+          user_type: null,
+          avatar_url:
+            (user.user_metadata?.avatar_url as string | undefined) ?? null,
+        }
+
+        try {
+          const { createAdminClient } = await import('./supabase-admin')
+          const admin = createAdminClient()
+          const { data: profile, error: profileError } = await admin
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single()
+          const hydrated = await ensureProfileFallback(
+            user,
+            profile,
+            profileError
+          )
+          return hydrated ?? userStub
+        } catch (profileErr) {
+          console.warn(
+            '[getCurrentUserFromRequest] profile hydration failed; ' +
+              'returning JWT-only userStub so route can authenticate',
+            profileErr
+          )
+          return userStub
+        }
       }
-      // Bearer was supplied but invalid/expired. Per spec, fall through
-      // to the cookie path — for mobile clients (no cookies) this just
-      // resolves to null and the route returns 401.
     } catch (err) {
       console.warn(
         '[getCurrentUserFromRequest] bearer verification threw, falling back to cookie path',
