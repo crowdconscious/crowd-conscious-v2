@@ -27,13 +27,13 @@ export default function SoportePage() {
   const esFaq: FAQItem[] = [
     {
       q: '¿Cómo creo una cuenta?',
-      a: 'En la app móvil o en crowdconscious.app, podés registrarte con tu correo electrónico (te enviamos un magic link) o con tu Apple ID. No necesitás contraseña.',
+      a: 'En la app móvil o en crowdconscious.app, puedes registrarte con tu correo electrónico (te enviamos un magic link) o con tu Apple ID. No necesitas contraseña.',
     },
     {
       q: 'No me llega el correo del magic link.',
       a: (
         <>
-          Verificá tu carpeta de spam/correo no deseado. Si tras 5 minutos sigue sin llegar, escribinos a{' '}
+          Verifica tu carpeta de spam/correo no deseado. Si tras 5 minutos sigue sin llegar, escríbenos a{' '}
           <a className="text-teal-700 hover:underline" href="mailto:comunidad@crowdconscious.app">
             comunidad@crowdconscious.app
           </a>{' '}
@@ -47,19 +47,19 @@ export default function SoportePage() {
     },
     {
       q: '¿Cómo voto en un Pulse?',
-      a: 'Tab Pulses → seleccioná un Pulse → elegí tu predicción y nivel de confianza (1-10) → tocá "Votar". Ganás XP cada vez que votás.',
+      a: 'Tab Pulses → selecciona un Pulse → elige tu predicción y nivel de confianza (1-10) → toca "Votar". Ganas XP cada vez que votas.',
     },
     {
       q: '¿Puedo cambiar mi voto?',
-      a: 'Sí. Volvé al mismo Pulse y tocá "Cambiar voto". El XP del voto original se mantiene; cambios sucesivos no acumulan XP adicional.',
+      a: 'Sí. Vuelve al mismo Pulse y toca "Cambiar voto". El XP del voto original se mantiene; cambios sucesivos no acumulan XP adicional.',
     },
     {
       q: '¿Cómo reporto contenido inapropiado?',
-      a: 'En cualquier señal, tocá el ícono de bandera desde el detalle o mantené presionada la tarjeta en la lista para abrir el menú "Reportar". Eligí motivo y agregá una nota si querés. Respondemos en menos de 24 horas hábiles.',
+      a: 'En cualquier señal, toca el ícono de bandera desde el detalle o mantén presionada la tarjeta en la lista para abrir el menú "Reportar". Elige un motivo y agrega una nota si quieres. Respondemos en menos de 24 horas hábiles.',
     },
     {
       q: '¿Cómo bloqueo a otro usuario?',
-      a: 'En el detalle de cualquier señal, tocá "Bloquear usuario". No volverás a ver su contenido en tu feed.',
+      a: 'En el detalle de cualquier señal, toca "Bloquear usuario". No volverás a ver su contenido en tu feed.',
     },
     {
       q: '¿Cómo borro mi cuenta?',
@@ -187,7 +187,7 @@ export default function SoportePage() {
       faqHeading: '2. Preguntas frecuentes',
       backHome: '← Volver a Crowd Conscious',
       footerNote:
-        'Estamos para ayudarte. Si no encontrás respuesta acá, escribinos y un humano te responde.',
+        'Estamos para ayudarte. Si no encuentras respuesta aquí, escríbenos y un humano te responde.',
       sections: [
         {
           title: '1. Contacto directo',
@@ -225,7 +225,7 @@ export default function SoportePage() {
           body: (
             <>
               <p className="text-gray-700 leading-relaxed mb-3">
-                Si encontrás un bug, escribinos con:
+                Si encuentras un bug, escríbenos con:
               </p>
               <ol className="list-decimal list-inside space-y-1 text-gray-700 leading-relaxed mb-3">
                 <li>Modelo de teléfono y versión del sistema operativo.</li>
@@ -245,7 +245,7 @@ export default function SoportePage() {
                 >
                   comunidad@crowdconscious.app
                 </a>{' '}
-                si preferís).
+                si prefieres).
               </p>
             </>
           ),
