@@ -173,16 +173,6 @@ export async function POST(request: NextRequest) {
   if (!flagOn()) return notFound()
 
   try {
-    // TODO(signals-auth-debug): remove after the next mobile QA pass
-    // confirms POST /api/signals authenticates via Bearer. Kept for one
-    // deploy cycle so Vercel logs surface whether the Authorization
-    // header is reaching the handler vs. being stripped upstream.
-    console.log('[api/signals POST] auth check', {
-      hasAuthHeader: !!request.headers.get('authorization'),
-      hasCookies: request.cookies.getAll().length > 0,
-      ip: request.headers.get('x-forwarded-for') ?? 'unknown',
-    })
-
     const user = await getCurrentUserFromRequest(request)
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
