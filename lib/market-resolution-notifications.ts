@@ -63,7 +63,7 @@ export async function notifyMarketResolutionVoters(
       .eq('id', v.user_id)
       .single()
     if (profile?.email) {
-      sendMarketResolutionEmail(
+      void sendMarketResolutionEmail(
         profile.email,
         profile.full_name || 'Predictor',
         marketTitle,

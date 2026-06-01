@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth-server'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { PULSE_EMBED_POSITIONS, type PulseEmbedPosition } from '@/lib/pulse-embed-constants'
-import { isAdminUser } from '@/lib/auth/is-admin'
+import { isBlogEditorUser } from '@/lib/auth/is-blog-editor'
+import { canManageBlogPost } from '@/lib/auth/blog-post-access'
 
 type Status = 'draft' | 'published' | 'archived'
 
@@ -37,15 +38,33 @@ export async function PATCH(
 
     const admin = createAdminClient()
     const { data: profile } = await admin.from('profiles').select('user_type, email').eq('id', user.id).single()
-    if (!isAdminUser(profile)) {
-      return NextResponse.json({ error: 'Admin only' }, { status: 403 })
+    if (!isBlogEditorUser(profile)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     const { id } = await context.params
+
+    const { data: existingPost, error: loadError } = await admin
+      .from('blog_posts')
+      .select('id, author_id')
+      .eq('id', id)
+      .maybeSingle()
+    if (loadError) {
+      console.error('[admin/blog-posts PATCH load]', loadError)
+      return NextResponse.json({ error: loadError.message }, { status: 500 })
+    }
+    if (!existingPost) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    }
+    if (!canManageBlogPost(profile, user.id, existingPost)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     const body = await request.json()
 
     const patch: Record<string, unknown> = {
       updated_at: new Date().toISOString(),
+      edited_by: user.id,
     }
 
     if (typeof body.title === 'string') {

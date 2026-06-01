@@ -111,10 +111,10 @@ export default function AdminBlogCreatePage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
       <Link
-        href="/predictions/admin/agents"
+        href="/predictions/admin/blog"
         className="mb-6 inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white"
       >
-        <ArrowLeft className="h-4 w-4" /> Back to agents
+        <ArrowLeft className="h-4 w-4" /> Back to blog
       </Link>
       <h1 className="text-2xl font-bold text-white">Write blog post</h1>
       <p className="mt-1 text-slate-400 text-sm">

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth-server'
 import { createAdminClient } from '@/lib/supabase-admin'
-import { isAdminUser } from '@/lib/auth/is-admin'
+import { isBlogEditorUser } from '@/lib/auth/is-blog-editor'
 
 export const maxDuration = 30
 
@@ -19,7 +19,8 @@ const BUCKET = 'blog-images'
  *
  * Unlike `/api/sponsor/upload-logo` (which is intentionally unauthenticated
  * because it's called during the public sponsor onboarding flow), this
- * endpoint requires an admin session. Inline blog images are a write
+ * endpoint requires a blog-editor session (admin or influencer).
+ * Inline blog images are a write
  * surface we don't want to expose to anonymous callers.
  */
 export async function POST(request: NextRequest) {
@@ -35,8 +36,8 @@ export async function POST(request: NextRequest) {
       .select('user_type, email')
       .eq('id', user.id)
       .single()
-    if (!isAdminUser(profile)) {
-      return NextResponse.json({ error: 'Admin only' }, { status: 403 })
+    if (!isBlogEditorUser(profile)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     const form = await request.formData()

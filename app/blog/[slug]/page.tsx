@@ -3,7 +3,8 @@ import { notFound } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase-server'
 import { getCurrentUser } from '@/lib/auth-server'
-import { isAdminUser } from '@/lib/auth/is-admin'
+import { isBlogEditorUser } from '@/lib/auth/is-blog-editor'
+import { canManageBlogPost } from '@/lib/auth/blog-post-access'
 import { SITE_URL } from '@/lib/seo/site'
 import { BlogPostBody } from './BlogPostBody'
 import { BlogDraftBar } from './BlogDraftBar'
@@ -158,7 +159,12 @@ export default async function BlogPostPage(props: Props) {
   const supabase = await createClient()
 
   const user = await getCurrentUser()
-  const isAdmin = isAdminUser(user)
+  const isBlogEditor = isBlogEditorUser(user)
+  const profile = user
+    ? (
+        await supabase.from('profiles').select('user_type, email').eq('id', user.id).maybeSingle()
+      ).data
+    : null
 
   const { data: publishedPost } = await supabase
     .from('blog_posts')
@@ -168,9 +174,11 @@ export default async function BlogPostPage(props: Props) {
     .maybeSingle()
 
   let post = publishedPost
-  if (!post && isAdmin) {
+  if (!post && isBlogEditor && user) {
     const { data: draftRow } = await supabase.from('blog_posts').select('*').eq('slug', slug).maybeSingle()
-    post = draftRow
+    if (draftRow && canManageBlogPost(profile, user.id, draftRow)) {
+      post = draftRow
+    }
   }
 
   if (!post) notFound()
@@ -251,7 +259,9 @@ export default async function BlogPostPage(props: Props) {
 
   return (
     <article className="mx-auto max-w-3xl px-4 py-12">
-      {isAdmin && post.status === 'draft' && <BlogDraftBar postId={post.id} />}
+      {user && canManageBlogPost(profile, user.id, post) && post.status === 'draft' && (
+        <BlogDraftBar postId={post.id} />
+      )}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-xs font-semibold uppercase tracking-wider text-emerald-400/90">
           {catLabel.toUpperCase()} · {formatDate(post.published_at, locale)}

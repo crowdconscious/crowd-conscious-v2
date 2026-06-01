@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth-server'
 import { createAdminClient } from '@/lib/supabase-admin'
-import { isAdminUser } from '@/lib/auth/is-admin'
+import { isBlogEditorUser } from '@/lib/auth/is-blog-editor'
+import { isInfluencerOnlyBlogEditor } from '@/lib/auth/blog-post-access'
 import {
   DEFAULT_PULSE_EMBED_COMPONENTS,
   PULSE_EMBED_POSITIONS,
@@ -32,8 +33,8 @@ export async function GET(request: NextRequest) {
       .select('user_type, email')
       .eq('id', user.id)
       .single()
-    if (!isAdminUser(profile)) {
-      return NextResponse.json({ error: 'Admin only' }, { status: 403 })
+    if (!isBlogEditorUser(profile)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     const { searchParams } = new URL(request.url)
@@ -43,10 +44,14 @@ export async function GET(request: NextRequest) {
     let query = admin
       .from('blog_posts')
       .select(
-        'id, slug, title, title_en, category, status, published_at, updated_at, view_count, cover_image_url, generated_by, pulse_market_id, tags'
+        'id, slug, title, title_en, category, status, published_at, updated_at, view_count, cover_image_url, generated_by, pulse_market_id, tags, author_id'
       )
       .order('updated_at', { ascending: false })
       .limit(500)
+
+    if (isInfluencerOnlyBlogEditor(profile)) {
+      query = query.eq('author_id', user.id)
+    }
 
     if (statusParam && allowedStatuses.includes(statusParam)) {
       query = query.eq('status', statusParam)
@@ -74,8 +79,8 @@ export async function POST(request: NextRequest) {
 
     const admin = createAdminClient()
     const { data: profile } = await admin.from('profiles').select('user_type, email').eq('id', user.id).single()
-    if (!isAdminUser(profile)) {
-      return NextResponse.json({ error: 'Admin only' }, { status: 403 })
+    if (!isBlogEditorUser(profile)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     const body = await request.json()
@@ -146,6 +151,7 @@ export async function POST(request: NextRequest) {
     const { data: row, error } = await admin
       .from('blog_posts')
       .insert({
+        author_id: user.id,
         slug,
         title,
         title_en: String(body.title_en ?? '').trim() || null,

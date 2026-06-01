@@ -8,6 +8,7 @@ import { PendingVoteSubmitter } from './components/PendingVoteSubmitter'
 import LandingNav from '@/app/components/landing/LandingNav'
 import { lookupSponsorAccountsForUser } from '@/lib/sponsor-account-lookup'
 import { isAdminUser } from '@/lib/auth/is-admin'
+import { isBlogEditorUser } from '@/lib/auth/is-blog-editor'
 
 const Footer = dynamic(() => import('@/components/Footer'))
 
@@ -77,6 +78,7 @@ export default async function PredictionsLayout({
   }
 
   let isAdmin = false
+  let isBlogEditor = false
   let navCounts = { inboxPending: 0, activeMarkets: 0, liveNowCount: 0 }
   // Sponsor nav surface: rendered only when a logged-in user owns (or
   // has email access to) at least one sponsor_account. A coupon redeem
@@ -97,6 +99,7 @@ export default async function PredictionsLayout({
       lookupSponsorAccountsForUser(user),
     ])
     isAdmin = isAdminUser(profileRes.data)
+    isBlogEditor = isBlogEditorUser(profileRes.data)
     navCounts = counts
     sponsorNav = {
       count: sponsorSummary.count,
@@ -136,6 +139,7 @@ export default async function PredictionsLayout({
   return (
     <PredictionsShell
       isAdmin={isAdmin}
+      isBlogEditor={isBlogEditor}
       isAuthenticated={!!user}
       navCounts={navCounts}
       sponsorNav={sponsorNav}

@@ -2,6 +2,7 @@ import type { ReactElement } from 'react'
 import { Resend } from 'resend'
 import { render as renderEmail } from '@react-email/render'
 import { calculateFundAllocationRounded, normalizeSponsorTierId } from '@/lib/sponsor-tiers'
+import { isPredictionResolutionEmailEnabled } from '@/lib/email-flags'
 import {
   PULSE_TIERS,
   calculatePulseFundAllocationRounded,
@@ -690,6 +691,10 @@ export async function sendMarketResolutionEmail(
   wasCorrect: boolean,
   bonusXp?: number
 ): Promise<boolean> {
+  if (!isPredictionResolutionEmailEnabled()) {
+    console.info('[resend] market resolution email skipped (PREDICTION_RESOLUTION_EMAIL_ENABLED)')
+    return false
+  }
   const template = emailTemplates.marketResolution(userName, marketTitle, winningOutcome, wasCorrect, bonusXp)
   const result = await sendEmail(email, template)
   return result.success

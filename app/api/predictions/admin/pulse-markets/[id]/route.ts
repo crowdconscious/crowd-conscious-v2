@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth-server'
 import { createAdminClient } from '@/lib/supabase-admin'
-import { isAdminUser } from '@/lib/auth/is-admin'
+import { isBlogEditorUser } from '@/lib/auth/is-blog-editor'
 
 /** Full Pulse market + outcomes + votes for admin blog embed preview. */
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
@@ -13,8 +13,8 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
 
     const admin = createAdminClient()
     const { data: profile } = await admin.from('profiles').select('user_type, email').eq('id', user.id).single()
-    if (!isAdminUser(profile)) {
-      return NextResponse.json({ error: 'Admin only' }, { status: 403 })
+    if (!isBlogEditorUser(profile)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     const { id } = await context.params

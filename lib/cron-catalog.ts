@@ -85,7 +85,7 @@ export const CRON_CATALOG: readonly CronJobMeta[] = [
     schedule: '0 16 * * 1',
     kind: 'operational',
     routePath: 'app/api/cron/reengagement-inactive/route',
-    description: 'Re-engages dormant users with a digest email.',
+    description: 'Re-engages dormant users with a digest email (disable: REENGAGEMENT_EMAIL_ENABLED=false).',
   },
   {
     name: 'monthly-impact',

@@ -413,13 +413,18 @@ export function crowdNewsletterEmailTemplate(opts: {
   activeLocations?: NewsletterConsciousLocation[] | null
   /** Optional 1-2 sentence ES intro from the newsletter agent — rendered above the blog block. */
   intro?: string | null
-  /** Optional Haiku-generated subject line. Falls back to the deterministic default. */
+  /**
+   * Resolved subject from cron (deterministic or validated Haiku + brand suffix).
+   * When set, always wins over the local fallback.
+   */
   subjectOverride?: string | null
 }): { subject: string; html: string } {
   const fallbackSubject =
     opts.post && opts.highlightNewBlog
       ? `${opts.post.title.replace(/\s+/g, ' ').trim().slice(0, 90)} | Crowd Conscious`
-      : 'Lo que CDMX piensa esta semana | Crowd Conscious'
+      : opts.pulseMarket
+        ? `${formatMarketQuestionForSubject(opts.pulseMarket.title).slice(0, 90)} | Crowd Conscious`
+        : 'Lo que CDMX piensa esta semana | Crowd Conscious'
   const subject =
     opts.subjectOverride && opts.subjectOverride.trim().length > 0
       ? opts.subjectOverride.trim().slice(0, 110)

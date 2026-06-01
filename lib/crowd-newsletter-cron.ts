@@ -25,7 +25,12 @@ import {
 } from '@/lib/email-unsubscribe'
 import { cronHealthCheck, cronHealthComplete } from '@/lib/cron-health'
 import { consciousFundBalanceMxn } from '@/lib/conscious-fund-balance'
-import { generateNewsletterIntroAndSubject } from '@/lib/agents/newsletter-polish'
+import {
+  generateNewsletterIntroAndSubject,
+  resolveNewsletterSubject,
+  validateNewsletterPolish,
+  type NewsletterPrimaryFeature,
+} from '@/lib/agents/newsletter-polish'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'
 
@@ -357,35 +362,51 @@ export async function runCrowdNewsletterCron(
       }
     }
 
-    // Optional Haiku polish: 1 intro paragraph + 3 subject candidates rotated
-    // by week. Falls back silently to the deterministic subject + no intro if
-    // ANTHROPIC_API_KEY is missing or the call fails. Keeps the newsletter
-    // deterministic-first; LLM is additive.
-    let subjectOverride: string | null = null
+    // Lead story drives subject + intro. Secondary sections (Pulse, mercados)
+    // stay in the body but must not hijack the subject line.
+    const primaryFeature: NewsletterPrimaryFeature =
+      highlightNewBlog && post ? 'blog' : pulseDigest ? 'pulse' : 'markets'
+
     let intro: string | null = null
+    let polishValid = false
+    let polishSubject: string | null = null
+    const polishInput = {
+      primaryFeature,
+      postTitle: post?.title ?? null,
+      postExcerpt: post?.excerpt ?? null,
+      pulseTitle: pulseDigest?.title ?? null,
+      marketTitles: marketDigests.map((m) => m.title),
+      daysUntilWorldCup: wcDaysUntil(),
+    }
     try {
-      const polish = await generateNewsletterIntroAndSubject({
-        postTitle: post?.title ?? null,
-        postExcerpt: post?.excerpt ?? null,
-        pulseTitle: pulseDigest?.title ?? null,
-        marketTitles: marketDigests.map((m) => m.title),
-        daysUntilWorldCup: wcDaysUntil(),
-      })
+      const polish = await generateNewsletterIntroAndSubject(polishInput)
       if (polish) {
-        intro = polish.intro
-        // Rotate subject by ISO week so M/W/F editions don't repeat the same
-        // hook. Falls back to first candidate if list is too short.
-        const weekIdx = Math.floor(Date.now() / (1000 * 60 * 60 * 24 * 7))
-        const candidates = polish.subject_candidates ?? []
-        if (candidates.length > 0) {
-          subjectOverride = candidates[weekIdx % candidates.length]
+        polishValid = validateNewsletterPolish(polish, polishInput)
+        if (polishValid) {
+          polishSubject = polish.subject
+          intro = polish.intro
+        } else {
+          console.warn('[newsletter] polish rejected (subject/intro misaligned)', {
+            primaryFeature,
+            subject: polish.subject,
+            post: post?.title ?? null,
+            pulse: pulseDigest?.title ?? null,
+          })
         }
       }
     } catch (e) {
       console.warn('[newsletter] polish call failed; using deterministic subject:', e)
     }
 
-    let subjectUsed = 'Lo que CDMX piensa esta semana | Crowd Conscious'
+    const subjectOverride = resolveNewsletterSubject({
+      primaryFeature,
+      postTitle: post?.title ?? null,
+      pulseTitle: pulseDigest?.title ?? null,
+      polishSubject,
+      polishValid,
+    })
+
+    let subjectUsed = subjectOverride
     const messages = recipients.map((rec) => {
       const tpl = crowdNewsletterEmailTemplate({
         post,

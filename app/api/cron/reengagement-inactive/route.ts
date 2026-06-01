@@ -5,6 +5,7 @@ import { reengagementInactiveTemplate, type ReengagementMarket } from '@/lib/pre
 import { createUnsubscribeToken } from '@/lib/email-unsubscribe'
 import { getMarketYesPercentForCard } from '@/lib/market-email-helpers'
 import { cronHealthCheck, cronHealthComplete } from '@/lib/cron-health'
+import { isReengagementEmailEnabled } from '@/lib/email-flags'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120
@@ -28,6 +29,18 @@ export async function GET(request: NextRequest) {
 
   const admin = createAdminClient()
   const { runId } = await cronHealthCheck('reengagement-inactive', admin)
+
+  if (!isReengagementEmailEnabled()) {
+    await cronHealthComplete(runId, 'reengagement-inactive', admin, {
+      success: true,
+      summary: 'disabled: REENGAGEMENT_EMAIL_ENABLED=false',
+    })
+    return NextResponse.json({
+      ok: true,
+      skipped: true,
+      reason: 'reengagement_email_disabled',
+    })
+  }
 
   try {
     const cutoffIso = new Date(Date.now() - MS_7D).toISOString()

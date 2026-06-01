@@ -79,12 +79,14 @@ const NAV_ITEMS_ES: ShellNavItem[] = [
 export default function PredictionsShell({
   children,
   isAdmin = false,
+  isBlogEditor = false,
   isAuthenticated = true,
   navCounts = { inboxPending: 0, activeMarkets: 0, liveNowCount: 0 },
   sponsorNav = { count: 0, primaryToken: null, primaryCompany: null },
 }: {
   children: React.ReactNode
   isAdmin?: boolean
+  isBlogEditor?: boolean
   isAuthenticated?: boolean
   navCounts?: { inboxPending: number; activeMarkets: number; liveNowCount: number }
   sponsorNav?: {
@@ -195,6 +197,37 @@ export default function PredictionsShell({
             >
               <Briefcase className="w-4 h-4" />
               <span className="truncate">{sponsorLabel}</span>
+            </Link>
+          </div>
+        )}
+
+        {isBlogEditor && !isAdmin && (
+          <div className="px-4 pb-2 space-y-1">
+            <p className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-emerald-500/90">
+              {language === 'es' ? 'Contenido' : 'Content'}
+            </p>
+            <Link
+              href="/predictions/admin/blog"
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                pathname.startsWith('/predictions/admin/blog') &&
+                pathname !== '/predictions/admin/blog/create'
+                  ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30'
+                  : 'text-cc-text-secondary hover:bg-gray-800/50 hover:text-emerald-400'
+              }`}
+            >
+              <PenLine className="w-4 h-4" />
+              {language === 'es' ? 'Mis artículos' : 'My articles'}
+            </Link>
+            <Link
+              href="/predictions/admin/blog/create"
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                pathname === '/predictions/admin/blog/create'
+                  ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30'
+                  : 'text-cc-text-secondary hover:bg-gray-800/50 hover:text-emerald-400'
+              }`}
+            >
+              <PlusCircle className="w-4 h-4" />
+              {language === 'es' ? 'Escribir artículo' : 'Write article'}
             </Link>
           </div>
         )}
@@ -465,6 +498,38 @@ export default function PredictionsShell({
                   >
                     <Briefcase className="w-4 h-4" />
                     <span className="truncate">{sponsorLabel}</span>
+                  </Link>
+                </>
+              )}
+              {isBlogEditor && !isAdmin && (
+                <>
+                  <p className="px-3 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-emerald-500/90">
+                    {language === 'es' ? 'Contenido' : 'Content'}
+                  </p>
+                  <Link
+                    href="/predictions/admin/blog"
+                    onClick={closeMobileMenu}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                      pathname.startsWith('/predictions/admin/blog') &&
+                      pathname !== '/predictions/admin/blog/create'
+                        ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30'
+                        : 'text-cc-text-secondary hover:bg-gray-800/50 hover:text-emerald-400'
+                    }`}
+                  >
+                    <PenLine className="w-4 h-4" />
+                    {language === 'es' ? 'Mis artículos' : 'My articles'}
+                  </Link>
+                  <Link
+                    href="/predictions/admin/blog/create"
+                    onClick={closeMobileMenu}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                      pathname === '/predictions/admin/blog/create'
+                        ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30'
+                        : 'text-cc-text-secondary hover:bg-gray-800/50 hover:text-emerald-400'
+                    }`}
+                  >
+                    <PlusCircle className="w-4 h-4" />
+                    {language === 'es' ? 'Escribir artículo' : 'Write article'}
                   </Link>
                 </>
               )}

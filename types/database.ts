@@ -15,7 +15,7 @@ export interface Database {
           email: string | null
           full_name: string | null
           avatar_url: string | null
-          user_type: 'user' | 'brand' | 'admin'
+          user_type: 'user' | 'brand' | 'admin' | 'influencer'
           /** When false, marketing prediction emails are skipped (see cron + unsubscribe). */
           email_notifications: boolean | null
           created_at: string
@@ -25,7 +25,7 @@ export interface Database {
           email?: string | null
           full_name?: string | null
           avatar_url?: string | null
-          user_type?: 'user' | 'brand' | 'admin'
+          user_type?: 'user' | 'brand' | 'admin' | 'influencer'
           email_notifications?: boolean | null
           created_at?: string
         }
@@ -34,7 +34,7 @@ export interface Database {
           email?: string | null
           full_name?: string | null
           avatar_url?: string | null
-          user_type?: 'user' | 'brand' | 'admin'
+          user_type?: 'user' | 'brand' | 'admin' | 'influencer'
           email_notifications?: boolean | null
           created_at?: string
         }
@@ -1939,6 +1939,7 @@ export interface Database {
           generated_by: string | null
           agent_content_id: string | null
           edited_by: string | null
+          author_id: string | null
           status: 'draft' | 'published' | 'archived'
           published_at: string | null
           view_count: number
@@ -1969,6 +1970,7 @@ export interface Database {
           generated_by?: string | null
           agent_content_id?: string | null
           edited_by?: string | null
+          author_id?: string | null
           status?: 'draft' | 'published' | 'archived'
           published_at?: string | null
           view_count?: number
@@ -1999,6 +2001,7 @@ export interface Database {
           generated_by?: string | null
           agent_content_id?: string | null
           edited_by?: string | null
+          author_id?: string | null
           status?: 'draft' | 'published' | 'archived'
           published_at?: string | null
           view_count?: number
