@@ -220,7 +220,7 @@ export function CreateLiveEventPanel({ locale }: CreateLiveEventPanelProps) {
       event_subtype = speakerName.trim() || null
     } else if (selectedType === 'entertainment') {
       event_subtype = showName.trim() || null
-    } else if (selectedType === 'community_event') {
+    } else if (selectedType === 'community_event' || selectedType === 'live_auction') {
       event_subtype = organizerName.trim() || null
     }
 
@@ -640,6 +640,75 @@ export function CreateLiveEventPanel({ locale }: CreateLiveEventPanelProps) {
                 label={t.fields.cover}
                 value={coverImageUrl}
                 onChange={setCoverImageUrl}
+                es={es}
+              />
+            </>
+          )}
+
+          {selectedType === 'live_auction' && (
+            <>
+              <label className="block">
+                <span className="mb-1 block text-sm font-medium text-slate-300">{t.fields.eventTitle}</span>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className={INPUT_CLASS}
+                  autoComplete="off"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-sm font-medium text-slate-300">{t.fields.organizer}</span>
+                <input
+                  type="text"
+                  value={organizerName}
+                  onChange={(e) => setOrganizerName(e.target.value)}
+                  className={INPUT_CLASS}
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-sm font-medium text-slate-300">{t.fields.startDate}</span>
+                <input
+                  type="datetime-local"
+                  value={matchDate}
+                  onChange={(e) => setMatchDate(e.target.value)}
+                  className={INPUT_CLASS}
+                />
+              </label>
+              <LiveEventDurationField
+                value={durationMinutes}
+                onChange={setDurationMinutes}
+                locale={locale}
+              />
+              <label className="block">
+                <span className="mb-1 block text-sm font-medium text-slate-300">{t.fields.youtube}</span>
+                <input
+                  type="url"
+                  value={youtubeUrl}
+                  onChange={(e) => setYoutubeUrl(e.target.value)}
+                  className={INPUT_CLASS}
+                  placeholder="https://www.youtube.com/watch?v=..."
+                />
+              </label>
+              <CoverImageField
+                label={t.fields.cover}
+                value={coverImageUrl}
+                onChange={setCoverImageUrl}
+                es={es}
+              />
+              <label className="block">
+                <span className="mb-1 block text-sm font-medium text-slate-300">{t.fields.sponsor}</span>
+                <input
+                  type="text"
+                  value={sponsorName}
+                  onChange={(e) => setSponsorName(e.target.value)}
+                  className={INPUT_CLASS}
+                />
+              </label>
+              <SponsorLogoField
+                label={t.fields.sponsorLogo}
+                value={sponsorLogoUrl}
+                onChange={setSponsorLogoUrl}
                 es={es}
               />
             </>
