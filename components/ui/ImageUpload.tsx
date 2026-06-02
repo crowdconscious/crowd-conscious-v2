@@ -6,6 +6,7 @@ export type ImageUploadStoragePath =
   | 'blog'
   | 'pulse'
   | 'live'
+  | 'auction'
   | 'sponsors'
   | 'locations'
   | 'causes'

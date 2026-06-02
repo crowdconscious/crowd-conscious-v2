@@ -378,42 +378,44 @@ export function AdminLiveControls({
                 className="mt-0.5 min-h-[44px] w-full rounded-lg border border-white/10 bg-black/40 px-2 py-2 text-sm text-white"
               />
             </label>
-            <div className="grid gap-2 sm:grid-cols-2">
-              <label className="block">
-                <span className="text-sm text-slate-400">
-                  {t.teamA} · {t.flagHint}
-                </span>
-                <input
-                  value={teamAName}
-                  onChange={(e) => setTeamAName(e.target.value)}
-                  className="mt-0.5 min-h-[44px] w-full rounded-lg border border-white/10 bg-black/40 px-2 py-2 text-sm"
-                  placeholder={locale === 'es' ? 'Nombre' : 'Name'}
-                />
-                <input
-                  value={teamAFlag}
-                  onChange={(e) => setTeamAFlag(e.target.value)}
-                  className="mt-1 min-h-[44px] w-full rounded-lg border border-white/10 bg-black/40 px-2 py-2 text-sm"
-                  placeholder="🇲🇽"
-                />
-              </label>
-              <label className="block">
-                <span className="text-sm text-slate-400">
-                  {t.teamB} · {t.flagHint}
-                </span>
-                <input
-                  value={teamBName}
-                  onChange={(e) => setTeamBName(e.target.value)}
-                  className="mt-0.5 min-h-[44px] w-full rounded-lg border border-white/10 bg-black/40 px-2 py-2 text-sm"
-                  placeholder={locale === 'es' ? 'Nombre' : 'Name'}
-                />
-                <input
-                  value={teamBFlag}
-                  onChange={(e) => setTeamBFlag(e.target.value)}
-                  className="mt-1 min-h-[44px] w-full rounded-lg border border-white/10 bg-black/40 px-2 py-2 text-sm"
-                  placeholder="🇩🇪"
-                />
-              </label>
-            </div>
+            {event.event_type !== 'live_auction' && (
+              <div className="grid gap-2 sm:grid-cols-2">
+                <label className="block">
+                  <span className="text-sm text-slate-400">
+                    {t.teamA} · {t.flagHint}
+                  </span>
+                  <input
+                    value={teamAName}
+                    onChange={(e) => setTeamAName(e.target.value)}
+                    className="mt-0.5 min-h-[44px] w-full rounded-lg border border-white/10 bg-black/40 px-2 py-2 text-sm"
+                    placeholder={locale === 'es' ? 'Nombre' : 'Name'}
+                  />
+                  <input
+                    value={teamAFlag}
+                    onChange={(e) => setTeamAFlag(e.target.value)}
+                    className="mt-1 min-h-[44px] w-full rounded-lg border border-white/10 bg-black/40 px-2 py-2 text-sm"
+                    placeholder="🇲🇽"
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-sm text-slate-400">
+                    {t.teamB} · {t.flagHint}
+                  </span>
+                  <input
+                    value={teamBName}
+                    onChange={(e) => setTeamBName(e.target.value)}
+                    className="mt-0.5 min-h-[44px] w-full rounded-lg border border-white/10 bg-black/40 px-2 py-2 text-sm"
+                    placeholder={locale === 'es' ? 'Nombre' : 'Name'}
+                  />
+                  <input
+                    value={teamBFlag}
+                    onChange={(e) => setTeamBFlag(e.target.value)}
+                    className="mt-1 min-h-[44px] w-full rounded-lg border border-white/10 bg-black/40 px-2 py-2 text-sm"
+                    placeholder="🇩🇪"
+                  />
+                </label>
+              </div>
+            )}
             <button
               type="button"
               disabled={busy !== null}

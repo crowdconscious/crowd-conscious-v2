@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { Gavel, Loader2, Plus } from 'lucide-react'
+import { ImageUpload } from '@/components/ui/ImageUpload'
 import type { LiveAuctionItemWithBids } from '@/lib/live/auction-types'
 
 export interface AdminAuctionControlsProps {
@@ -33,7 +34,9 @@ export function AdminAuctionControls({
           reset: 'Próxima',
           title: 'Título',
           desc: 'Descripción',
-          image: 'URL imagen',
+          image: 'Imagen de la pieza',
+          imageHint: 'PNG, JPG, WebP · máx. 2MB',
+          uploadImage: 'Sube imagen de la pieza',
           price: 'Valor referencia (opc.)',
           empty: 'Sin piezas. Agrega la primera lot.',
           high: 'Puja alta',
@@ -47,7 +50,9 @@ export function AdminAuctionControls({
           reset: 'Upcoming',
           title: 'Title',
           desc: 'Description',
-          image: 'Image URL',
+          image: 'Lot image',
+          imageHint: 'PNG, JPG, WebP · max 2MB',
+          uploadImage: 'Upload lot image',
           price: 'Reference value (opt.)',
           empty: 'No lots yet. Add the first piece.',
           high: 'High bid',
@@ -138,12 +143,17 @@ export function AdminAuctionControls({
           placeholder={t.desc}
           className="min-h-[40px] w-full rounded-lg border border-white/10 bg-black/40 px-2 py-2 text-sm text-white"
         />
-        <input
-          value={imageUrl}
-          onChange={(e) => setImageUrl(e.target.value)}
-          placeholder={t.image}
-          className="min-h-[40px] w-full rounded-lg border border-white/10 bg-black/40 px-2 py-2 text-sm text-white"
-        />
+        <div>
+          <span className="mb-1 block text-sm text-slate-400">{t.image}</span>
+          <ImageUpload
+            currentUrl={imageUrl.trim() || null}
+            onUpload={(url) => setImageUrl(url)}
+            onClear={() => setImageUrl('')}
+            storagePath="auction"
+            label={t.uploadImage}
+            hint={t.imageHint}
+          />
+        </div>
         <input
           value={originalPrice}
           onChange={(e) => setOriginalPrice(e.target.value)}
