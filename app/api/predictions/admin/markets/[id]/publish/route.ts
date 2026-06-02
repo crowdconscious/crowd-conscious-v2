@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth-server'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { isAdminUser } from '@/lib/auth/is-admin'
+import { notifyPulsePublished } from '@/lib/expo-push'
 
 export async function POST(
   _request: NextRequest,
@@ -18,7 +19,7 @@ export async function POST(
 
     const { data: market, error: fetchErr } = await admin
       .from('prediction_markets')
-      .select('id, is_draft, created_by')
+      .select('id, is_draft, created_by, is_pulse, title')
       .eq('id', id)
       .maybeSingle()
 
@@ -52,6 +53,14 @@ export async function POST(
     if (upErr) {
       console.error('Publish market update error:', upErr)
       return NextResponse.json({ error: upErr.message }, { status: 500 })
+    }
+
+    if (market.is_pulse) {
+      void notifyPulsePublished(admin, {
+        marketId: id,
+        title: market.title ?? 'Pulse',
+        mode: 'announce',
+      }).catch((err) => console.warn('[publish-market] pulse push error:', err))
     }
 
     return NextResponse.json({ success: true })

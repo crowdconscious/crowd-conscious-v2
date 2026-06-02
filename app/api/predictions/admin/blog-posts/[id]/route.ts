@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase-admin'
 import { PULSE_EMBED_POSITIONS, type PulseEmbedPosition } from '@/lib/pulse-embed-constants'
 import { isBlogEditorUser } from '@/lib/auth/is-blog-editor'
 import { canManageBlogPost } from '@/lib/auth/blog-post-access'
+import { notifyBlogPublished } from '@/lib/expo-push'
 
 type Status = 'draft' | 'published' | 'archived'
 
@@ -46,7 +47,7 @@ export async function PATCH(
 
     const { data: existingPost, error: loadError } = await admin
       .from('blog_posts')
-      .select('id, author_id')
+      .select('id, author_id, status, published_at, slug, title')
       .eq('id', id)
       .maybeSingle()
     if (loadError) {
@@ -127,13 +128,14 @@ export async function PATCH(
     }
 
     const status = body.status as Status | undefined
+    const isFirstPublish =
+      status === 'published' &&
+      existingPost.status !== 'published' &&
+      !existingPost.published_at
     if (typeof status === 'string' && ['draft', 'published', 'archived'].includes(status)) {
       patch.status = status
-      if (status === 'published') {
-        const { data: existing } = await admin.from('blog_posts').select('published_at').eq('id', id).maybeSingle()
-        if (existing && !(existing as { published_at?: string | null }).published_at) {
-          patch.published_at = new Date().toISOString()
-        }
+      if (status === 'published' && isFirstPublish) {
+        patch.published_at = new Date().toISOString()
       }
     }
 
@@ -175,6 +177,14 @@ export async function PATCH(
     if (error) {
       console.error('[admin/blog-posts PATCH]', error)
       return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    if (isFirstPublish) {
+      const slug = (typeof patch.slug === 'string' ? patch.slug : existingPost.slug) as string
+      const title = (typeof patch.title === 'string' ? patch.title : existingPost.title) as string
+      void notifyBlogPublished(admin, { slug, title }).catch((err) =>
+        console.warn('[admin/blog-posts PATCH] push error:', err)
+      )
     }
 
     return NextResponse.json({ ok: true, post: data })

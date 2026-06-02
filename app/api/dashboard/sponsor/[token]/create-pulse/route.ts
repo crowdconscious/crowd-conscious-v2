@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { dispatchSponsorPulseLaunchEmail } from '@/lib/sponsor-notifications'
+import { notifyPulsePublished } from '@/lib/expo-push'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -155,6 +156,12 @@ export async function POST(
       endsAtIso: new Date(resolutionDate).toISOString(),
       coverImageUrl: coverImageUrl ?? null,
     }).catch((err) => console.warn('[create-pulse] launch email error:', err))
+
+    void notifyPulsePublished(admin, {
+      marketId: marketId as string,
+      title,
+      mode: 'announce',
+    }).catch((err) => console.warn('[create-pulse] push error:', err))
 
     return NextResponse.json({
       success: true,

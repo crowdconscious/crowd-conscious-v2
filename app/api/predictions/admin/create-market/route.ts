@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase-admin'
 import { getCurrentUser } from '@/lib/auth-server'
 import { isValidMarketCategory } from '@/lib/market-categories'
 import { isAdminUser } from '@/lib/auth/is-admin'
+import { notifyPulsePublished } from '@/lib/expo-push'
 
 export async function POST(request: NextRequest) {
   try {
@@ -307,6 +308,14 @@ export async function POST(request: NextRequest) {
           .eq('id', marketId)
       }
 
+      if (pulseFields.is_pulse && !wantsDraft) {
+        void notifyPulsePublished(admin, {
+          marketId: marketId as string,
+          title: title.trim(),
+          mode: 'announce',
+        }).catch((err) => console.warn('[create-market] pulse push error:', err))
+      }
+
       return Response.json({
         success: true,
         market_id: marketId,
@@ -374,6 +383,14 @@ export async function POST(request: NextRequest) {
           sponsor_url: categorySponsor.sponsor_url,
         })
         .eq('id', marketId)
+    }
+
+    if (pulseFields.is_pulse && !wantsDraft) {
+      void notifyPulsePublished(admin, {
+        marketId: marketId as string,
+        title: title.trim(),
+        mode: 'announce',
+      }).catch((err) => console.warn('[create-market] pulse push error:', err))
     }
 
     return Response.json({

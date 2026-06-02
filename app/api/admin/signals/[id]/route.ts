@@ -10,6 +10,7 @@ import {
 } from '@/lib/resend'
 import type { CitizenSignalsLocale } from '@/lib/i18n/citizen-signals'
 import { runSignalsModerator } from '@/lib/agents/signals-moderator'
+import { notifySignalPublished } from '@/lib/expo-push'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -306,6 +307,18 @@ export async function PATCH(
           console.error('[api/admin/signals PATCH] filer email', e)
         }
       })()
+    }
+
+    if (
+      stateChanged &&
+      nextStatus === 'published' &&
+      row.publication_status !== 'published'
+    ) {
+      void notifySignalPublished(admin, {
+        slug: row.public_slug,
+        title: row.title,
+        excludeUserId: row.author_user_id,
+      }).catch((err) => console.warn('[api/admin/signals PATCH] cosign push error:', err))
     }
 
     return NextResponse.json({

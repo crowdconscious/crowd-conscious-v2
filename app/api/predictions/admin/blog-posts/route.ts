@@ -8,6 +8,7 @@ import {
   PULSE_EMBED_POSITIONS,
   type PulseEmbedPosition,
 } from '@/lib/pulse-embed-constants'
+import { notifyBlogPublished } from '@/lib/expo-push'
 
 function slugify(raw: string): string {
   const s = raw
@@ -180,6 +181,13 @@ export async function POST(request: NextRequest) {
     if (error) {
       console.error('[admin blog POST]', error)
       return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    if (publishNow && row?.slug) {
+      void notifyBlogPublished(admin, {
+        slug: row.slug,
+        title,
+      }).catch((err) => console.warn('[admin blog POST] push error:', err))
     }
 
     return NextResponse.json({ ok: true, post: row })
