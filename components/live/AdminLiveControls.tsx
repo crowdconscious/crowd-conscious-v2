@@ -7,6 +7,7 @@ import type { Database } from '@/types/database'
 import type { MarketWithOutcomes } from '@/hooks/useLiveMarkets'
 import { ImageUpload } from '@/components/ui/ImageUpload'
 import { LiveEventDurationField } from '@/components/live/LiveEventDurationField'
+import { AdminAuctionControls } from '@/components/live/AdminAuctionControls'
 type LiveEventRow = Database['public']['Tables']['live_events']['Row']
 
 type DurationChoice = '5' | '10' | '15' | 'halftime' | 'fulltime'
@@ -94,6 +95,7 @@ export function AdminLiveControls({
   const [teamBName, setTeamBName] = useState(event.team_b_name ?? '')
   const [teamBFlag, setTeamBFlag] = useState(event.team_b_flag ?? '')
   const [eventDurationMinutes, setEventDurationMinutes] = useState(() => event.duration_minutes ?? 120)
+  const [youtubeUrl, setYoutubeUrl] = useState(event.youtube_url ?? '')
 
   useEffect(() => {
     const id = setInterval(() => setTick((t) => t + 1), 1000)
@@ -107,6 +109,7 @@ export function AdminLiveControls({
     setTeamBName(event.team_b_name ?? '')
     setTeamBFlag(event.team_b_flag ?? '')
     setEventDurationMinutes(event.duration_minutes ?? 120)
+    setYoutubeUrl(event.youtube_url ?? '')
   }, [
     event.id,
     event.cover_image_url,
@@ -115,6 +118,7 @@ export function AdminLiveControls({
     event.team_b_name,
     event.team_b_flag,
     event.duration_minutes,
+    event.youtube_url,
   ])
 
   const t = useMemo(
@@ -145,6 +149,7 @@ export function AdminLiveControls({
       teamA: locale === 'es' ? 'Equipo A' : 'Team A',
       teamB: locale === 'es' ? 'Equipo B' : 'Team B',
       flagHint: locale === 'es' ? 'Emoji o URL de imagen' : 'Emoji or image URL',
+      youtube: locale === 'es' ? 'URL de YouTube (live o replay)' : 'YouTube URL (live or replay)',
     }),
     [locale]
   )
@@ -364,6 +369,15 @@ export function AdminLiveControls({
                 hint={locale === 'es' ? 'PNG, JPG, WebP · máx. 2MB' : 'PNG, JPG, WebP · max 2MB'}
               />
             </div>
+            <label className="mb-2 block">
+              <span className="text-sm text-slate-400">{t.youtube}</span>
+              <input
+                value={youtubeUrl}
+                onChange={(e) => setYoutubeUrl(e.target.value)}
+                placeholder="https://youtube.com/watch?v=… or youtu.be/…"
+                className="mt-0.5 min-h-[44px] w-full rounded-lg border border-white/10 bg-black/40 px-2 py-2 text-sm text-white"
+              />
+            </label>
             <div className="grid gap-2 sm:grid-cols-2">
               <label className="block">
                 <span className="text-sm text-slate-400">
@@ -407,6 +421,7 @@ export function AdminLiveControls({
                 patchEvent(
                   {
                     cover_image_url: coverImageUrl.trim() || null,
+                    youtube_url: youtubeUrl.trim() || null,
                     team_a_name: teamAName.trim() || null,
                     team_a_flag: teamAFlag.trim() || null,
                     team_b_name: teamBName.trim() || null,
@@ -420,6 +435,10 @@ export function AdminLiveControls({
               {busy === 'branding' ? <Loader2 className="h-4 w-4 animate-spin" /> : t.saveBranding}
             </button>
           </section>
+
+          {event.event_type === 'live_auction' && (
+            <AdminAuctionControls eventId={eventId} locale={locale} onUpdated={onUpdated} />
+          )}
 
           <section className="border-t border-white/10 pt-3">
             <h3 className="mb-2 font-semibold text-teal-300">{t.template}</h3>

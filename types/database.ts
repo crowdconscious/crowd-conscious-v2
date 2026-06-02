@@ -376,6 +376,7 @@ export interface Database {
           currency: string
           status: 'upcoming' | 'bidding' | 'sold' | 'ended' | 'cancelled'
           winning_discount: 20 | 30 | 50 | null
+          winning_bid_amount: number | null
           claim_code: string | null
           claim_count: number
           max_claims: number
@@ -405,6 +406,7 @@ export interface Database {
           currency?: string
           status?: 'upcoming' | 'bidding' | 'sold' | 'ended' | 'cancelled'
           winning_discount?: 20 | 30 | 50 | null
+          winning_bid_amount?: number | null
           claim_code?: string | null
           claim_count?: number
           max_claims?: number
@@ -434,6 +436,7 @@ export interface Database {
           currency?: string
           status?: 'upcoming' | 'bidding' | 'sold' | 'ended' | 'cancelled'
           winning_discount?: 20 | 30 | 50 | null
+          winning_bid_amount?: number | null
           claim_code?: string | null
           claim_count?: number
           max_claims?: number
@@ -452,7 +455,8 @@ export interface Database {
           auction_item_id: string
           user_id: string | null
           anonymous_participant_id: string | null
-          discount_vote: 20 | 30 | 50
+          discount_vote: 20 | 30 | 50 | null
+          bid_amount: number | null
           created_at: string
         }
         Insert: {
@@ -460,7 +464,8 @@ export interface Database {
           auction_item_id: string
           user_id?: string | null
           anonymous_participant_id?: string | null
-          discount_vote: 20 | 30 | 50
+          discount_vote?: 20 | 30 | 50 | null
+          bid_amount?: number | null
           created_at?: string
         }
         Update: {
@@ -468,7 +473,8 @@ export interface Database {
           auction_item_id?: string
           user_id?: string | null
           anonymous_participant_id?: string | null
-          discount_vote?: 20 | 30 | 50
+          discount_vote?: 20 | 30 | 50 | null
+          bid_amount?: number | null
           created_at?: string
         }
         Relationships: []

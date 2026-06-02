@@ -25,6 +25,7 @@ import { LiveConnectionBanner } from '@/components/live/LiveConnectionBanner'
 import { AliasEntry, type AliasParticipantJoined } from '@/components/live/AliasEntry'
 import { LiveComments } from '@/components/live/LiveComments'
 import { LiveCountdown } from '@/components/live/LiveCountdown'
+import { LiveAuctionPanel } from '@/components/live/LiveAuctionPanel'
 
 export function LiveMatchClient({ eventId }: { eventId: string }) {
   const supabase = useMemo(() => createClient(), [])
@@ -277,6 +278,7 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
   const embedReplay = isCompleted && !!(event.youtube_video_id || event.youtube_url)
 
   const isSoccerMatch = event.event_type === 'soccer_match'
+  const isLiveAuction = event.event_type === 'live_auction'
 
   function teamFlagEl(value: string | null) {
     if (!value) return <span className="text-2xl leading-none">🏟️</span>
@@ -409,7 +411,15 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
       </div>
     )
 
-  const votingPanel = (
+  const votingPanel = isLiveAuction ? (
+    <LiveAuctionPanel
+      eventId={eventId}
+      locale={copyLocale}
+      currentUserId={user?.id ?? null}
+      anonymousParticipantId={aliasParticipant?.id ?? null}
+      onRequiresAlias={onRequiresAlias}
+    />
+  ) : (
     <LiveVotingPanel
       activeMarkets={activeMarkets}
       resolvedMarkets={resolvedMarkets}
@@ -619,7 +629,18 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
 
           <div className="mb-6">{renderLeaderboard({ isFinal: true })}</div>
 
-          <div className="mb-6">{predictionsBlock}</div>
+          {isLiveAuction ? (
+            <div className="mb-6">
+              <LiveAuctionPanel
+                eventId={eventId}
+                locale={copyLocale}
+                currentUserId={user?.id ?? null}
+                anonymousParticipantId={aliasParticipant?.id ?? null}
+              />
+            </div>
+          ) : (
+            <div className="mb-6">{predictionsBlock}</div>
+          )}
 
           <details className="group mb-6 overflow-hidden rounded-xl border border-[#2d3748] bg-[#1a2029]">
             <summary className="flex min-h-[48px] cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-medium text-slate-300 transition hover:text-white">
