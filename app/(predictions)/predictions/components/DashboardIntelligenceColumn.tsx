@@ -62,6 +62,8 @@ export function DashboardIntelligenceColumn({
   fundBalance,
   userImpactXp,
 }: DashboardIntelligenceColumnProps) {
+  const isEs = locale !== 'en'
+
   return (
     <div className="space-y-5">
       {agentContent && agentContent.length > 0 && (
@@ -173,11 +175,13 @@ export function DashboardIntelligenceColumn({
       <div>
         <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-white">
           <Sparkles className="h-5 w-5 text-blue-400" />
-          New Markets
+          {isEs ? 'Nuevos Pulses' : 'New Pulses'}
         </h2>
         <div className="space-y-2">
           {newMarkets.length === 0 ? (
-            <p className="text-sm text-slate-500">No new markets this week</p>
+            <p className="text-sm text-slate-500">
+              {isEs ? 'No hay Pulses nuevos esta semana' : 'No new Pulses this week'}
+            </p>
           ) : (
             newMarkets.slice(0, 5).map((m) => (
               <div

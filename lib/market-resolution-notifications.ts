@@ -43,14 +43,14 @@ export async function notifyMarketResolutionVoters(
 
     const won = v.outcome_id === winningOutcomeId
     const message = won
-      ? `Correct! You earned ${v.bonus_xp ?? 0} bonus XP.`
-      : `The market resolved as ${winningLabel}.`
+      ? `Your vote matched the community outcome.${v.bonus_xp ? ` +${v.bonus_xp} bonus XP.` : ''}`
+      : `Community outcome: ${winningLabel}. Your vote was recorded.`
     try {
       await admin.from('notifications').insert({
         user_id: v.user_id,
         type: 'market_resolved',
-        title: `Market resolved: ${marketTitle}`,
-        message: `"${marketTitle}" resolved as ${winningLabel}. ${message}`,
+        title: `Pulse closed: ${marketTitle}`,
+        message: `"${marketTitle}" closed. ${message}`,
         link: `/predictions/markets/${marketId}`,
       })
     } catch (notifErr) {

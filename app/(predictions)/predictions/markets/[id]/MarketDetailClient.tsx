@@ -893,7 +893,7 @@ export function MarketDetailClient({
                     <div className="flex flex-wrap gap-x-6 gap-y-2 pt-2 text-sm text-slate-400">
                       <span className="flex items-center gap-1.5">
                         <Calendar className="w-4 h-4 text-slate-500" />
-                        {locale === 'en' ? 'Resolution date' : 'Fecha de resolución'}:{' '}
+                        {locale === 'en' ? 'Closing date' : 'Fecha de cierre'}:{' '}
                         <span className="text-white">{formatDate(market.resolution_date, locale)}</span>
                       </span>
                       <span className="flex items-center gap-1.5">
@@ -992,7 +992,7 @@ export function MarketDetailClient({
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-slate-400">
-                  {locale === 'es' ? 'Fecha de resolución' : 'Resolution date'}
+                  {locale === 'es' ? 'Fecha de cierre' : 'Closing date'}
                 </span>
                 <span className="text-white">{formatDate(market.resolution_date, locale)}</span>
               </div>

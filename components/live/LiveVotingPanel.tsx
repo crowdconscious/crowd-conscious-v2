@@ -79,11 +79,11 @@ function RecentResolvedRow({
           >
             {mine.is_correct
               ? locale === 'es'
-                ? '✓ Acertaste'
-                : '✓ Correct'
+                ? '✓ Coincidiste con la mayoría'
+                : '✓ Matched community outcome'
               : locale === 'es'
-                ? '✗ No acertaste'
-                : '✗ Miss'}
+                ? 'Tu voto quedó registrado'
+                : 'Vote recorded'}
           </span>
         )}
       </p>

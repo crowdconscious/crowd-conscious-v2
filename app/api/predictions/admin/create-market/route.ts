@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: 'Title is required' }, { status: 400 })
     }
     if (!resolution_date) {
-      return Response.json({ error: 'Resolution date is required' }, { status: 400 })
+      return Response.json({ error: 'Closing date is required' }, { status: 400 })
     }
     // Mirror the DB check constraint from migration 215. The form already
     // caps + counts; this is defense-in-depth so an out-of-band caller

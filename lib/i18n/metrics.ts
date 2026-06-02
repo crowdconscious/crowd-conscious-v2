@@ -50,9 +50,9 @@ export const METRIC_LABELS: Record<MetricKey, MetricLabelEntry> = {
     es: 'Precisión del crowd',
     en: 'Crowd accuracy',
     tooltip_es:
-      'Porcentaje de votos que acertaron el resultado final del mercado resuelto.',
+      'Porcentaje de votos que coincidieron con el resultado de la comunidad en Pulses cerrados.',
     tooltip_en:
-      'Percentage of votes that matched the resolved market outcome.',
+      'Percentage of votes that matched the community outcome on closed Pulses.',
   },
   fund_cycle_votes: {
     es: 'Votos este ciclo',

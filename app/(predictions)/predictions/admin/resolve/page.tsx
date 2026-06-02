@@ -186,7 +186,7 @@ export default function AdminResolvePage() {
           <p className="text-slate-400">
             Resolve or cancel prediction markets. Select the winning outcome for free-to-play markets.{' '}
             <span className="text-slate-500">
-              Pulse markets are not listed here—they resolve automatically to the outcome with the most votes after the resolution date.
+              Pulse markets are not listed here—they close automatically to the outcome with the most votes after the closing date.
             </span>
           </p>
         </div>
@@ -229,7 +229,7 @@ export default function AdminResolvePage() {
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-white mb-1">{m.title}</h3>
                   <p className="text-slate-400 text-sm mb-2">
-                    Resolution date: {formatDate(m.resolution_date)}
+                    Closing date: {formatDate(m.resolution_date)}
                     {isPastDue(m.resolution_date) && (
                       <span className="ml-2 text-amber-400">(Past due)</span>
                     )}

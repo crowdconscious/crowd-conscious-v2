@@ -126,8 +126,8 @@ export async function POST(request: Request) {
       await admin.from('notifications').insert({
         user_id: userId,
         type: 'market_resolved',
-        title: `Market resolved: ${market?.title || 'Prediction'}`,
-        message: `"${market?.title || 'Market'}" resolved as ${winningSide.toUpperCase()}. ${message}`,
+        title: `Pulse closed: ${market?.title || 'Pulse'}`,
+        message: `"${market?.title || 'Pulse'}" closed. Community outcome: ${winningSide.toUpperCase()}. ${message}`,
         data: { market_id, outcome: winningSide, won, payout: won ? payout : 0, cost_basis: costBasis },
       })
     }

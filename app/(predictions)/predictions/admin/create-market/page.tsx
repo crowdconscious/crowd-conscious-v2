@@ -454,7 +454,7 @@ export default function CreateMarketPage() {
       return
     }
     if (!resolutionDate) {
-      setError('Resolution date is required')
+      setError('Closing date is required')
       return
     }
     if (marketType === 'multi' && outcomes.filter((o) => o.title.trim()).length < 2) {
@@ -879,13 +879,13 @@ export default function CreateMarketPage() {
             </div>
           </section>
 
-          {/* Resolution */}
+          {/* Closing */}
           <section className={ccSection}>
-            <h2 className="text-lg font-semibold text-white mb-4">Resolution</h2>
+            <h2 className="text-lg font-semibold text-white mb-4">Closing</h2>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                  Resolution date *
+                  Closing date *
                 </label>
                 <input
                   type="datetime-local"
@@ -1419,8 +1419,8 @@ export default function CreateMarketPage() {
                 )}
                 <div className="mt-3 text-xs text-gray-500">
                   {resolutionDate
-                    ? `Resolves ${new Date(resolutionDate).toLocaleDateString()}`
-                    : 'No resolution date'}
+                    ? `Closes ${new Date(resolutionDate).toLocaleDateString()}`
+                    : 'No closing date'}
                 </div>
               </div>
             </div>

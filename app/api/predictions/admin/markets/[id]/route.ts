@@ -32,7 +32,7 @@ export async function PATCH(
 
     const resolutionDate = body.resolution_date
     if (!resolutionDate || typeof resolutionDate !== 'string') {
-      return NextResponse.json({ error: 'Resolution date is required' }, { status: 400 })
+      return NextResponse.json({ error: 'Closing date is required' }, { status: 400 })
     }
 
     const rawFund = Number(body.conscious_fund_percentage)

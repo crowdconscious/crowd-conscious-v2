@@ -220,7 +220,7 @@ export function PredictionsDashboardClient({ data, sponsorCta }: Props) {
         items.push({
           id: `resolved-${only.id}`,
           kind: 'resolved_market',
-          title: `Se resolvió: ${only.market_title}`,
+          title: `Pulse cerrado: ${only.market_title}`,
           href: `/predictions/markets/${only.market_id}`,
           cta: 'Ver resultado',
           emphasis: 'urgent',
@@ -229,7 +229,7 @@ export function PredictionsDashboardClient({ data, sponsorCta }: Props) {
         items.push({
           id: 'resolved-summary',
           kind: 'resolved_market',
-          title: `${recentlyResolvedForUser.length} mercados donde votaste se resolvieron esta semana`,
+          title: `${recentlyResolvedForUser.length} Pulses donde votaste cerraron esta semana`,
           href: '#your-predictions',
           cta: 'Ver resultados',
           emphasis: 'urgent',
@@ -253,7 +253,7 @@ export function PredictionsDashboardClient({ data, sponsorCta }: Props) {
         items.push({
           id: 'market-suggestions',
           kind: 'market_suggestions',
-          title: `${pendingMarketSuggestions} sugerencias de mercados por revisar`,
+          title: `${pendingMarketSuggestions} sugerencias de Pulses por revisar`,
           href: '/predictions/admin/agents',
           cta: 'Revisar',
         })
@@ -352,8 +352,8 @@ export function PredictionsDashboardClient({ data, sponsorCta }: Props) {
             </p>
             <p className="text-slate-500 text-xs mt-0.5">
               {totalResolvedPredictions === 0
-                ? 'Aún sin mercados resueltos'
-                : `${correctPredictions} de ${totalResolvedPredictions} acertadas`}
+                ? 'Aún sin Pulses cerrados'
+                : `${correctPredictions} de ${totalResolvedPredictions} coincidieron con la mayoría`}
             </p>
           </div>
           <div className="rounded-[14px] border border-white/[0.07] bg-white/[0.03] p-5">
@@ -361,7 +361,7 @@ export function PredictionsDashboardClient({ data, sponsorCta }: Props) {
             <p className="text-2xl font-bold text-emerald-400 mt-1">
               {userImpactXp.toLocaleString()} XP
             </p>
-            <p className="text-slate-500 text-xs mt-0.5">Ganado por votar + acertar</p>
+            <p className="text-slate-500 text-xs mt-0.5">Ganado por votar y participar</p>
           </div>
         </div>
       </section>
@@ -388,7 +388,7 @@ export function PredictionsDashboardClient({ data, sponsorCta }: Props) {
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <BarChart3 className="h-5 w-5 text-emerald-400" />
-                <h2 className="text-lg font-semibold text-white">Your Predictions</h2>
+                <h2 className="text-lg font-semibold text-white">Tus Pulses</h2>
                 <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-medium text-emerald-400">
                   {userPredictions.length}
                 </span>
@@ -408,8 +408,8 @@ export function PredictionsDashboardClient({ data, sponsorCta }: Props) {
               <div className="mt-4 rounded-xl border border-emerald-500/25 bg-emerald-500/[0.06] px-4 py-3">
                 <p className="text-sm text-emerald-100">
                   {recentlyResolvedForUser.length === 1
-                    ? '1 mercado donde votaste se resolvió esta semana'
-                    : `${recentlyResolvedForUser.length} mercados donde votaste se resolvieron esta semana`}{' '}
+                    ? '1 Pulse donde votaste cerró esta semana'
+                    : `${recentlyResolvedForUser.length} Pulses donde votaste cerraron esta semana`}{' '}
                   — revisa los resultados abajo.
                 </p>
               </div>
@@ -418,7 +418,7 @@ export function PredictionsDashboardClient({ data, sponsorCta }: Props) {
             {userPredictions.length === 0 ? (
               <div className="mt-4 rounded-xl border border-white/[0.06] bg-white/[0.02] p-8 text-center">
                 <p className="text-slate-300 text-lg">🎯 Aún no has votado.</p>
-                <p className="text-slate-400 mt-1">¡Vota en tu primer mercado!</p>
+                <p className="text-slate-400 mt-1">¡Vota en tu primer Pulse!</p>
                 <Link
                   href="/pulse"
                   className="mt-4 inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm bg-emerald-600 text-white hover:bg-emerald-500 transition-colors"
@@ -432,8 +432,8 @@ export function PredictionsDashboardClient({ data, sponsorCta }: Props) {
                   const resolvedBadge =
                     v.market_status === 'resolved'
                       ? v.is_correct
-                        ? { label: '✓ Acertaste', tone: 'text-emerald-400' }
-                        : { label: '✗ Fallaste', tone: 'text-red-400' }
+                        ? { label: '✓ Coincidiste con la mayoría', tone: 'text-emerald-400' }
+                        : { label: 'Tu voto quedó registrado', tone: 'text-slate-400' }
                       : null
 
                   return (
@@ -483,7 +483,7 @@ export function PredictionsDashboardClient({ data, sponsorCta }: Props) {
           <div>
             <div className="mb-4 flex items-end justify-between gap-3">
               <div>
-                <h2 className="text-lg font-semibold text-white">Resumen de mercados</h2>
+                <h2 className="text-lg font-semibold text-white">Resumen de Pulses</h2>
                 <p className="mt-0.5 text-xs text-slate-500">
                   Ordenados por votos. El punto verde = actividad en 24h · ámbar = sin votos en 3+
                   días · rojo = 7+ días.
@@ -498,7 +498,7 @@ export function PredictionsDashboardClient({ data, sponsorCta }: Props) {
             </div>
             {overviewMarkets.length === 0 ? (
               <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-6 text-center text-sm text-slate-400">
-                No hay mercados activos por ahora.
+                No hay Pulses activos por ahora.
               </div>
             ) : (
               <div className="space-y-1">

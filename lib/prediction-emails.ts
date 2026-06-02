@@ -77,7 +77,7 @@ export function dailyMarketDigestTemplate(opts: {
   let plainSubject: string
   switch (opts.digestVariant) {
     case 'new':
-      plainSubject = `[Crowd Conscious] 🆕 Nuevo mercado: ${q}`
+      plainSubject = `[Crowd Conscious] 🆕 Nuevo Pulse: ${q}`
       break
     case 'trending':
       plainSubject = `[Crowd Conscious] 📈 La comunidad está votando: ${q}`
@@ -94,7 +94,7 @@ export function dailyMarketDigestTemplate(opts: {
   const html = `
   <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #f8fafc;">
     <div style="background: linear-gradient(135deg, #059669 0%, #0d9488 100%); padding: 32px 24px; text-align: center; border-radius: 12px 12px 0 0;">
-      <p style="color: rgba(255,255,255,0.9); font-size: 14px; margin: 0 0 8px;">Mercado destacado hoy</p>
+      <p style="color: rgba(255,255,255,0.9); font-size: 14px; margin: 0 0 8px;">Pulse destacado hoy</p>
       <h1 style="color: #ffffff; font-size: 22px; margin: 0; line-height: 1.35;">${esc(opts.marketTitle)}</h1>
     </div>
     <div style="padding: 28px 24px; background: #ffffff; border-radius: 0 0 12px 12px;">
@@ -142,7 +142,7 @@ export function postVoteConfirmationTemplate(opts: {
       </table>
       <div style="text-align: center; margin: 28px 0 0;">
         <a href="${esc(opts.predictionsUrl)}" style="background: #059669; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 10px; font-weight: 600; display: inline-block;">
-          Ver más mercados
+          Ver más Pulses
         </a>
       </div>
       <div style="margin-top: 28px; text-align: center;">
@@ -494,9 +494,9 @@ export function crowdNewsletterEmailTemplate(opts: {
     ${divider}
     <div style="padding: 22px 24px 8px;">
       <h2 style="color: #ffffff; font-size: 15px; margin: 0 0 14px; font-weight: 700; font-family: ${EMAIL_FONT};">
-        🔥 Mercados activos
+        🔥 Pulses activos
       </h2>
-      ${marketRows || '<p style="color:#64748b;font-size:14px;font-family: Arial, sans-serif;">Pronto más mercados.</p>'}
+      ${marketRows || '<p style="color:#64748b;font-size:14px;font-family: Arial, sans-serif;">Pronto más Pulses.</p>'}
     </div>
     ${consciousLocationsBlock}
     ${divider}
@@ -564,7 +564,7 @@ export function reengagementInactiveTemplate(opts: {
     </div>
     <div style="padding: 24px; background: #ffffff; border-radius: 0 0 12px 12px;">
       <p style="color: #334155; font-size: 15px; line-height: 1.6; margin: 0 0 20px;">
-        Han pasado 7 días desde tu último voto. Aquí tienes tres mercados donde la comunidad está activa — y tú aún no has votado:
+        Han pasado 7 días desde tu último voto. Aquí tienes tres Pulses donde la comunidad está activa — y tú aún no has votado:
       </p>
       ${rows}
       ${emailFooter(opts.unsubscribeUrl)}

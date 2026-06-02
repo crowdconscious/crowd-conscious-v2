@@ -193,7 +193,7 @@ export function MicroMarketCard({
           setSelectedOutcomeId(v.outcome_id)
           setConfidence(v.confidence)
         } else {
-          setErrorMsg(locale === 'es' ? 'Ya votaste en este mercado' : 'Already voted on this market')
+          setErrorMsg(locale === 'es' ? 'Ya votaste en este Pulse' : 'Already voted on this Pulse')
         }
         onVoteSuccess?.()
         return
@@ -261,9 +261,9 @@ export function MicroMarketCard({
       <div className="mt-2 flex items-center gap-2 text-sm text-slate-400">
         <span aria-hidden>⏱</span>
         {isResolved ? (
-          <span>{locale === 'es' ? 'Mercado resuelto' : 'Market resolved'}</span>
+          <span>{locale === 'es' ? 'Pulse cerrado' : 'Pulse closed'}</span>
         ) : isClosed ? (
-          <span className="text-amber-400">{locale === 'es' ? 'Mercado cerrado' : 'Market closed'}</span>
+          <span className="text-amber-400">{locale === 'es' ? 'Pulse cerrado' : 'Pulse closed'}</span>
         ) : (
           <span>
             {fmtTime(timeRemainingSec)} {locale === 'es' ? 'restantes' : 'remaining'}

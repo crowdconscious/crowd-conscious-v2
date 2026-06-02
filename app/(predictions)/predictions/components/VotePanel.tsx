@@ -260,7 +260,7 @@ export function VotePanel({
           return
         }
         if (typeof window !== 'undefined' && hasGuestVotedMarket(market.id)) {
-          alert(locale === 'es' ? 'Ya votaste en este mercado' : 'You already voted on this market')
+          alert(locale === 'es' ? 'Ya votaste en este Pulse' : 'You already voted on this Pulse')
           return
         }
         const label = getOutcomeLabel(
@@ -288,7 +288,7 @@ export function VotePanel({
         })
         const data = await res.json()
         if (data.already_voted) {
-          alert(data.message || (locale === 'es' ? 'Ya votaste en este mercado' : 'You already voted on this market'))
+          alert(data.message || (locale === 'es' ? 'Ya votaste en este Pulse' : 'You already voted on this Pulse'))
           return
         }
         if (!res.ok) {
@@ -516,8 +516,8 @@ export function VotePanel({
         <h3 className="font-semibold text-white mb-2">{copy.resolvedTitle}</h3>
         <p className="text-cc-text-secondary text-sm mb-4">
           {loc === 'en'
-            ? 'This market has been resolved. Winning outcome:'
-            : 'Este mercado está resuelto. Resultado ganador:'}{' '}
+            ? 'Voting is closed. Community outcome:'
+            : 'La votación cerró. Resultado de la comunidad:'}{' '}
           <span className="text-emerald-400 font-medium">
             {winningOutcome ? getOutcomeLabel(winningOutcome, locale) : (market.resolution ?? '—')}
           </span>

@@ -66,7 +66,7 @@ export const emailTemplates = {
           </p>
           <div style="text-align: center; margin: 24px 0;">
             <a href="${APP_URL}/predictions" style="display: inline-block; background: #10b981; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">
-              Explorar mercados →
+              Explorar Pulses →
             </a>
           </div>
           <p style="color: #6b7280; font-size: 12px; text-align: center; margin: 0;">
@@ -247,19 +247,19 @@ export const emailTemplates = {
 
   marketResolution: (userName: string, marketTitle: string, winningOutcome: string, wasCorrect: boolean, bonusXp?: number) => ({
     subject: wasCorrect
-      ? `[Crowd Conscious] You were right! 🎯 "${marketTitle}" resolved`
-      : `[Crowd Conscious] Market resolved: "${marketTitle}"`,
+      ? `[Crowd Conscious] Pulse closed — your vote matched: "${marketTitle}"`
+      : `[Crowd Conscious] Pulse closed: "${marketTitle}"`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: linear-gradient(135deg, ${wasCorrect ? '#10b981' : '#64748b'}, ${wasCorrect ? '#14b8a6' : '#94a3b8'}); padding: 40px 20px; text-align: center; border-radius: 10px 10px 0 0;">
-          <h1 style="color: white; margin: 0; font-size: 28px;">${wasCorrect ? 'You were right! 🎯' : 'Market resolved'}</h1>
+          <h1 style="color: white; margin: 0; font-size: 28px;">${wasCorrect ? 'Your vote matched the community' : 'Pulse closed'}</h1>
         </div>
         <div style="padding: 30px 20px; background: #f8fafc; border-radius: 0 0 10px 10px;">
           <p style="color: #475569; line-height: 1.6;">Hi ${userName},</p>
           <p style="color: #475569; line-height: 1.6;">
-            The market <strong>"${marketTitle}"</strong> has been resolved as <strong>${winningOutcome}</strong>.
+            The Pulse <strong>"${marketTitle}"</strong> has closed. Community outcome: <strong>${winningOutcome}</strong>.
           </p>
-          ${wasCorrect ? `<p style="color: #10b981; font-weight: bold;">${bonusXp ? `+${bonusXp} bonus XP earned!` : 'Your prediction was correct!'}</p>` : '<p style="color: #64748b;">Better luck next time — keep predicting!</p>'}
+          ${wasCorrect ? `<p style="color: #10b981; font-weight: bold;">${bonusXp ? `+${bonusXp} bonus XP earned!` : 'Thanks for participating — your vote was recorded.'}</p>` : '<p style="color: #64748b;">Your vote was recorded. Thanks for sharing your perspective.</p>'}
           <div style="text-align: center; margin: 30px 0;">
             <a href="${APP_URL}/pulse" style="background: #14b8a6; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Browse Pulse</a>
           </div>
