@@ -26,13 +26,21 @@ import { AliasEntry, type AliasParticipantJoined } from '@/components/live/Alias
 import { LiveComments } from '@/components/live/LiveComments'
 import { LiveCountdown } from '@/components/live/LiveCountdown'
 import { LiveAuctionPanel } from '@/components/live/LiveAuctionPanel'
+import { isAdminUser } from '@/lib/auth/is-admin'
 
-export function LiveMatchClient({ eventId }: { eventId: string }) {
+export function LiveMatchClient({
+  eventId,
+  isAdmin: isAdminFromServer = false,
+}: {
+  eventId: string
+  isAdmin?: boolean
+}) {
   const supabase = useMemo(() => createClient(), [])
   const locale = useLocale()
   const [user, setUser] = useState<User | null>(null)
   const [lbOpen, setLbOpen] = useState(false)
-  const [isAdmin, setIsAdmin] = useState(false)
+  const [clientAdmin, setClientAdmin] = useState(false)
+  const isAdmin = isAdminFromServer || clientAdmin
   const [leadingCauseName, setLeadingCauseName] = useState<string | null>(null)
   const [gateReady, setGateReady] = useState(false)
   const [aliasParticipant, setAliasParticipant] = useState<AliasParticipantJoined | null>(null)
@@ -48,17 +56,17 @@ export function LiveMatchClient({ eventId }: { eventId: string }) {
   }, [supabase])
 
   useEffect(() => {
-    if (!user?.id) {
-      setIsAdmin(false)
+    if (isAdminFromServer || !user?.id) {
+      setClientAdmin(false)
       return
     }
     void supabase
       .from('profiles')
-      .select('user_type')
+      .select('user_type, email')
       .eq('id', user.id)
       .maybeSingle()
-      .then(({ data }) => setIsAdmin(data?.user_type === 'admin'))
-  }, [user?.id, supabase])
+      .then(({ data }) => setClientAdmin(isAdminUser(data)))
+  }, [user?.id, supabase, isAdminFromServer])
 
   useEffect(() => {
     void fetch('/api/live/fund-context', { cache: 'no-store' })

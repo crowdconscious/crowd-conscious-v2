@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase-server'
+import { getCurrentUser } from '@/lib/auth-server'
+import { isAdminUser } from '@/lib/auth/is-admin'
 import { getLiveEventTitle } from '@/lib/live-event-title'
 import { LiveMatchClient } from './LiveMatchClient'
 import { SITE_URL } from '@/lib/seo/site'
@@ -58,5 +60,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function LiveEventMatchPage({ params }: Props) {
   const { eventId } = await params
-  return <LiveMatchClient eventId={eventId} />
+  const sessionProfile = await getCurrentUser()
+  const isAdmin = isAdminUser(sessionProfile)
+  return <LiveMatchClient eventId={eventId} isAdmin={isAdmin} />
 }
