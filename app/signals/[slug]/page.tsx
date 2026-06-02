@@ -75,16 +75,20 @@ export default async function SignalsDetailPage({ params }: PageProps) {
     { data: evidence },
     { data: responses },
   ] = await Promise.all([
-    admin
-      .from('citizen_targets')
-      .select('id, slug, display_name, target_kind')
-      .eq('id', signal.citizen_target_id)
-      .maybeSingle(),
-    admin
-      .from('conscious_locations')
-      .select('id, slug, name, neighborhood, city, latitude, longitude')
-      .eq('id', signal.conscious_location_id)
-      .maybeSingle(),
+    signal.citizen_target_id
+      ? admin
+          .from('citizen_targets')
+          .select('id, slug, display_name, target_kind')
+          .eq('id', signal.citizen_target_id)
+          .maybeSingle()
+      : Promise.resolve({ data: null } as const),
+    signal.conscious_location_id
+      ? admin
+          .from('conscious_locations')
+          .select('id, slug, name, neighborhood, city, latitude, longitude')
+          .eq('id', signal.conscious_location_id)
+          .maybeSingle()
+      : Promise.resolve({ data: null } as const),
     signal.partner_location_id
       ? admin
           .from('conscious_locations')

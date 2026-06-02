@@ -87,10 +87,18 @@ export async function fetchLandingSignals(
   const top = ranked.slice(0, LIMIT)
 
   const targetIds = Array.from(
-    new Set(top.map((r) => r.citizen_target_id))
+    new Set(
+      top
+        .map((r) => r.citizen_target_id)
+        .filter((id): id is string => typeof id === 'string' && id.length > 0)
+    )
   )
   const locationIds = Array.from(
-    new Set(top.map((r) => r.conscious_location_id))
+    new Set(
+      top
+        .map((r) => r.conscious_location_id)
+        .filter((id): id is string => typeof id === 'string' && id.length > 0)
+    )
   )
 
   const [targetsRes, locationsRes] = await Promise.all([
@@ -124,8 +132,14 @@ export async function fetchLandingSignals(
     category: r.category as SignalCategory,
     severity: r.severity as SignalSeverity,
     targetKind: r.target_kind as SignalTargetKind,
-    targetName: targetMap.get(r.citizen_target_id) ?? null,
-    locationName: locationMap.get(r.conscious_location_id) ?? null,
+    targetName:
+      r.citizen_target_id != null
+        ? (targetMap.get(r.citizen_target_id) ?? null)
+        : null,
+    locationName:
+      r.conscious_location_id != null
+        ? (locationMap.get(r.conscious_location_id) ?? null)
+        : null,
     cosignCount: r.cosign_count ?? 0,
     anonymousSupportCount: r.anonymous_support_count ?? 0,
     createdAt: r.created_at,

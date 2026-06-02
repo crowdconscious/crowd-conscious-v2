@@ -2204,7 +2204,7 @@ export interface Database {
       }
     }
     Enums: {
-      [_ in never]: never
+      signal_routing_mode: 'routed' | 'observation'
     }
     CompositeTypes: {
       [_ in never]: never

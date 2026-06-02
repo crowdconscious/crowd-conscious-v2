@@ -58,17 +58,21 @@ export async function GET(
       return NextResponse.json({ error: 'Not found' }, { status: 404 })
     }
 
-    const { data: target } = await admin
-      .from('citizen_targets')
-      .select('id, slug, display_name, target_kind, conscious_location_id')
-      .eq('id', signal.citizen_target_id)
-      .maybeSingle()
+    const { data: target } = signal.citizen_target_id
+      ? await admin
+          .from('citizen_targets')
+          .select('id, slug, display_name, target_kind, conscious_location_id')
+          .eq('id', signal.citizen_target_id)
+          .maybeSingle()
+      : { data: null }
 
-    const { data: location } = await admin
-      .from('conscious_locations')
-      .select('id, slug, name, city, neighborhood, latitude, longitude')
-      .eq('id', signal.conscious_location_id)
-      .maybeSingle()
+    const { data: location } = signal.conscious_location_id
+      ? await admin
+          .from('conscious_locations')
+          .select('id, slug, name, city, neighborhood, latitude, longitude')
+          .eq('id', signal.conscious_location_id)
+          .maybeSingle()
+      : { data: null }
 
     // Denormalised partner-location lookup so clients can render the
     // "{alcaldía} · {partner name}" label without a second round-trip.

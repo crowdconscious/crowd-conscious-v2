@@ -28,7 +28,7 @@ type SignalCore = {
   post_type: string
   category: string
   severity: string
-  target_kind: string
+  target_kind: string | null
   title: string
   body: string
   language: string

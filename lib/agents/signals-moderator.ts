@@ -218,19 +218,25 @@ export async function runSignalsModerator(
     })
   }
 
-  // Step 2: load duplicate context (best-effort).
+  // Step 2: load duplicate context (best-effort). Observation signals have no
+  // target_kind — skip sibling lookup rather than querying with NULL.
   const since = new Date(
     Date.now() - DUPLICATE_CONTEXT_WINDOW_DAYS * 24 * 60 * 60 * 1000
   ).toISOString()
-  const { data: siblings } = await supabase
-    .from('citizen_signals')
-    .select('id, title, body, category, severity, citizen_target_id, created_at')
-    .eq('target_kind', signal.target_kind)
-    .eq('publication_status', 'published')
-    .neq('id', signal.id)
-    .gte('created_at', since)
-    .order('created_at', { ascending: false })
-    .limit(DUPLICATE_CONTEXT_LIMIT)
+  const { data: siblings } =
+    signal.target_kind != null
+      ? await supabase
+          .from('citizen_signals')
+          .select(
+            'id, title, body, category, severity, citizen_target_id, created_at'
+          )
+          .eq('target_kind', signal.target_kind)
+          .eq('publication_status', 'published')
+          .neq('id', signal.id)
+          .gte('created_at', since)
+          .order('created_at', { ascending: false })
+          .limit(DUPLICATE_CONTEXT_LIMIT)
+      : { data: [] as const }
 
   // Trim sibling bodies aggressively — we only need enough text to
   // judge overlap. Long verbatim bodies blow the prompt out for no win.
@@ -422,9 +428,9 @@ type ModeratorSignalContext = {
   language: string
   category_self_reported: string
   severity_self_reported: string
-  target_kind: string
-  citizen_target_id: string
-  conscious_location_id: string
+  target_kind: string | null
+  citizen_target_id: string | null
+  conscious_location_id: string | null
   created_at: string
 }
 
@@ -434,7 +440,7 @@ type ModeratorSibling = {
   body: string
   category: string
   severity: string
-  citizen_target_id: string
+  citizen_target_id: string | null
   created_at: string
 }
 

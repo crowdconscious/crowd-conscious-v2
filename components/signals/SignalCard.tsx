@@ -43,7 +43,12 @@ export default function SignalCard({ signal, locale, stage1Threshold }: Props) {
   })
 
   const targetLabel =
-    signal.targetName ?? t.targetKindLabel(signal.targetKind)
+    signal.targetName ??
+    (signal.targetKind != null
+      ? t.targetKindLabel(signal.targetKind)
+      : locale === 'es'
+        ? 'En observación'
+        : 'Under observation')
 
   return (
     <Link
@@ -60,9 +65,11 @@ export default function SignalCard({ signal, locale, stage1Threshold }: Props) {
         >
           {t.severityLabel(signal.severity)}
         </span>
-        <span className="rounded-full bg-slate-800/60 px-2 py-0.5 text-[11px] font-medium text-slate-300 ring-1 ring-inset ring-slate-600/40">
-          {t.targetKindLabel(signal.targetKind)}
-        </span>
+        {signal.targetKind != null ? (
+          <span className="rounded-full bg-slate-800/60 px-2 py-0.5 text-[11px] font-medium text-slate-300 ring-1 ring-inset ring-slate-600/40">
+            {t.targetKindLabel(signal.targetKind)}
+          </span>
+        ) : null}
       </div>
 
       <h3 className="mt-3 text-lg font-semibold leading-snug text-white group-hover:text-emerald-200">

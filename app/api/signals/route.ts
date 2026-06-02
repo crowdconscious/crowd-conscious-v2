@@ -1,11 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getCurrentUserFromRequest } from '@/lib/auth-server'
+import {
+  firstSignalContentPolicyViolation,
+  observationPayloadHasForbiddenRoutedFields,
+} from '@/lib/contentPolicy'
+import {
+  createSignalBodySchema,
+  normalizeLocality,
+  normalizeStreetReference,
+  validateSignalEvidence,
+  type ObservationCreateBody,
+  type RoutedCreateBody,
+} from '@/lib/signals/create-signal-schema'
 import { createSignalsAdminClient } from '@/lib/signals/supabase'
 import { mintSignalSlug } from '@/lib/signals/slug'
 import {
   SIGNAL_CATEGORIES,
-  SIGNAL_POST_TYPES,
   SIGNAL_SEVERITIES,
   SIGNAL_TARGET_KINDS,
 } from '@/lib/i18n/citizen-signals'
@@ -16,6 +27,8 @@ import {
 } from '@/lib/rate-limit'
 import { sendSignalFilerReceived } from '@/lib/resend'
 import { enqueueSignalsModerator } from '@/lib/agents/signals-moderator'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/types/database'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -124,50 +137,142 @@ export async function GET(request: NextRequest) {
 // POST /api/signals  — authenticated create
 // =============================================================================
 
-const createBodySchema = z.object({
-  post_type: z.enum(SIGNAL_POST_TYPES),
-  category: z.enum(SIGNAL_CATEGORIES),
-  severity: z.enum(SIGNAL_SEVERITIES),
-  target_kind: z.enum(SIGNAL_TARGET_KINDS),
-  citizen_target_id: z.string().uuid(),
-  title: z.string().trim().min(8).max(160),
-  body: z.string().trim().min(20).max(8000),
-  language: z.enum(['es', 'en']),
-  conscious_location_id: z.string().uuid(),
-  // Optional precision (mutually exclusive — enforced after parse):
-  //   partner_location_id: another conscious_locations row (a partner spot)
-  //   street_reference:    free-text street/intersection/landmark
-  // See supabase/migrations/222_signals_location_precision.sql for the
-  // DB-level CHECK that backs this up.
-  partner_location_id: z.string().uuid().nullable().optional(),
-  street_reference: z
-    .string()
-    .trim()
-    .min(3)
-    .max(160)
-    .nullable()
-    .optional(),
-  anonymous_display_mode: z.boolean().optional().default(false),
-  anonymous_display_name: z
-    .string()
-    .trim()
-    .min(2)
-    .max(60)
-    .optional()
-    .nullable(),
-  evidence: z
-    .array(
-      z.object({
-        kind: z.enum(['image', 'pdf', 'link']),
-        storage_path: z.string().trim().min(1).max(1024).optional().nullable(),
-        external_url: z.string().trim().url().max(2000).optional().nullable(),
-        caption: z.string().trim().max(500).optional().nullable(),
-      })
-    )
-    .max(5)
-    .optional()
-    .default([]),
-})
+type SignalsAdminClient = SupabaseClient<Database>
+
+/** Post-B1 geography insert shape; regenerate database.ts when convenient. */
+type CitizenSignalGeographyInsert = {
+  public_slug: string
+  routing_mode: 'routed' | 'observation'
+  country_code: string
+  city_slug: string
+  locality: string | null
+  post_type: string
+  category: string
+  severity: string
+  target_kind: string | null
+  citizen_target_id: string | null
+  title: string
+  body: string
+  language: string
+  conscious_location_id: string | null
+  partner_location_id: string | null
+  street_reference: string | null
+  author_user_id: string
+  anonymous_display_mode: boolean
+  anonymous_display_name: string | null
+  publication_status: 'pending_review'
+}
+
+async function validateRoutedGeographyAndTarget(
+  admin: SignalsAdminClient,
+  payload: RoutedCreateBody
+): Promise<
+  | { ok: true; partnerLocationId: string | null; streetReference: string | null }
+  | { ok: false; status: number; error: string }
+> {
+  const partnerLocationId = payload.partner_location_id ?? null
+  const streetNorm = normalizeStreetReference(payload.street_reference)
+  if (streetNorm.error) {
+    return { ok: false, status: 400, error: streetNorm.error }
+  }
+  const streetReference = streetNorm.value
+
+  if (partnerLocationId && streetReference) {
+    return {
+      ok: false,
+      status: 400,
+      error: 'Choose either a partner location or a street reference, not both',
+    }
+  }
+
+  const allowedIdsRaw = process.env.SIGNALS_ALLOWED_LOCATION_IDS?.trim()
+  const allowedIds = allowedIdsRaw
+    ? allowedIdsRaw.split(',').map((s) => s.trim()).filter(Boolean)
+    : null
+
+  if (allowedIds && !allowedIds.includes(payload.conscious_location_id)) {
+    return {
+      ok: false,
+      status: 400,
+      error: 'Location is not in the Signals pilot allow-list',
+    }
+  }
+
+  const { data: location, error: locErr } = await admin
+    .from('conscious_locations')
+    .select('id, city, status')
+    .eq('id', payload.conscious_location_id)
+    .maybeSingle()
+
+  if (locErr) {
+    console.error('[api/signals POST] location lookup', locErr)
+    return { ok: false, status: 500, error: 'Location check failed' }
+  }
+  if (!location) {
+    return { ok: false, status: 400, error: 'Unknown location' }
+  }
+  if (location.status !== 'active') {
+    return { ok: false, status: 400, error: 'Location is not active' }
+  }
+  if (!allowedIds) {
+    const city = (location.city ?? '').toLowerCase().trim()
+    const isCdmx =
+      city === 'ciudad de méxico' ||
+      city === 'ciudad de mexico' ||
+      city === 'cdmx'
+    if (!isCdmx) {
+      return { ok: false, status: 400, error: 'MVP pilot is CDMX-only' }
+    }
+  }
+
+  if (partnerLocationId) {
+    const { data: partner, error: partnerErr } = await admin
+      .from('conscious_locations')
+      .select('id, status')
+      .eq('id', partnerLocationId)
+      .maybeSingle()
+    if (partnerErr) {
+      console.error('[api/signals POST] partner lookup', partnerErr)
+      return { ok: false, status: 500, error: 'Partner location check failed' }
+    }
+    if (!partner) {
+      return { ok: false, status: 400, error: 'Unknown partner_location_id' }
+    }
+    if (partner.status !== 'active') {
+      return { ok: false, status: 400, error: 'Partner location is not active' }
+    }
+    if (partner.id === payload.conscious_location_id) {
+      return {
+        ok: false,
+        status: 400,
+        error:
+          'partner_location_id must differ from conscious_location_id (alcaldía)',
+      }
+    }
+  }
+
+  const { data: target, error: tErr } = await admin
+    .from('citizen_targets')
+    .select('id, target_kind')
+    .eq('id', payload.citizen_target_id)
+    .maybeSingle()
+  if (tErr) {
+    console.error('[api/signals POST] target lookup', tErr)
+    return { ok: false, status: 500, error: 'Target check failed' }
+  }
+  if (!target) {
+    return { ok: false, status: 400, error: 'Unknown target' }
+  }
+  if (target.target_kind !== payload.target_kind) {
+    return {
+      ok: false,
+      status: 400,
+      error: 'target_kind mismatch with citizen_targets row',
+    }
+  }
+
+  return { ok: true, partnerLocationId, streetReference }
+}
 
 export async function POST(request: NextRequest) {
   if (!flagOn()) return notFound()
@@ -190,7 +295,7 @@ export async function POST(request: NextRequest) {
     }
 
     const json = await request.json().catch(() => null)
-    const parsed = createBodySchema.safeParse(json)
+    const parsed = createSignalBodySchema.safeParse(json)
     if (!parsed.success) {
       return NextResponse.json(
         { error: 'Invalid payload', details: parsed.error.flatten() },
@@ -199,31 +304,22 @@ export async function POST(request: NextRequest) {
     }
     const payload = parsed.data
 
-    // Belt-and-suspenders evidence validation: exactly one source per row.
-    for (const ev of payload.evidence) {
-      const hasPath = !!ev.storage_path
-      const hasUrl = !!ev.external_url
-      if (hasPath === hasUrl) {
-        return NextResponse.json(
-          {
-            error:
-              'Each evidence item must have exactly one of storage_path or external_url',
-          },
-          { status: 400 }
-        )
-      }
-      if (ev.kind === 'link' && !hasUrl) {
-        return NextResponse.json(
-          { error: 'kind=link requires external_url' },
-          { status: 400 }
-        )
-      }
-      if ((ev.kind === 'image' || ev.kind === 'pdf') && !hasPath) {
-        return NextResponse.json(
-          { error: `kind=${ev.kind} requires storage_path` },
-          { status: 400 }
-        )
-      }
+    if (
+      payload.routing_mode === 'observation' &&
+      observationPayloadHasForbiddenRoutedFields(json)
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            'Observation signals must not include target or location FK fields',
+        },
+        { status: 400 }
+      )
+    }
+
+    const evidenceError = validateSignalEvidence(payload.evidence)
+    if (evidenceError) {
+      return NextResponse.json({ error: evidenceError }, { status: 400 })
     }
 
     if (payload.anonymous_display_mode && !payload.anonymous_display_name) {
@@ -235,174 +331,93 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Location precision: at most ONE of partner_location_id /
-    // street_reference. We normalise empty/whitespace-only values to null
-    // so the client can send `street_reference: ""` for "skip refinement"
-    // and we won't accidentally count it as set.
-    const partnerLocationId = payload.partner_location_id ?? null
-    let streetReference: string | null = null
-    if (
-      payload.street_reference !== undefined &&
-      payload.street_reference !== null
-    ) {
-      const trimmed = payload.street_reference.trim()
-      if (trimmed.length > 0) {
-        if (trimmed.length < 3) {
-          return NextResponse.json(
-            { error: 'street_reference must be at least 3 characters' },
-            { status: 400 }
-          )
-        }
-        streetReference = trimmed
-      }
-    }
-
-    if (partnerLocationId && streetReference) {
-      return NextResponse.json(
-        {
-          error:
-            'Choose either a partner location or a street reference, not both',
-        },
-        { status: 400 }
-      )
+    const contentPolicyError = firstSignalContentPolicyViolation([
+      payload.title,
+      payload.body,
+      payload.anonymous_display_name,
+      payload.routing_mode === 'observation'
+        ? normalizeLocality(payload.locality)
+        : null,
+    ])
+    if (contentPolicyError) {
+      return NextResponse.json({ error: contentPolicyError }, { status: 400 })
     }
 
     const admin = createSignalsAdminClient()
 
-    // Pilot geography gate: the conscious_locations row must live in CDMX.
-    // We accept any active CDMX row; the SIGNALS_ALLOWED_LOCATION_IDS env
-    // var (optional) can narrow it further once we know the pilot polygon.
-    const allowedIdsRaw = process.env.SIGNALS_ALLOWED_LOCATION_IDS?.trim()
-    const allowedIds = allowedIdsRaw
-      ? allowedIdsRaw.split(',').map((s) => s.trim()).filter(Boolean)
-      : null
+    let insertRow: CitizenSignalGeographyInsert
 
-    if (allowedIds && !allowedIds.includes(payload.conscious_location_id)) {
-      return NextResponse.json(
-        { error: 'Location is not in the Signals pilot allow-list' },
-        { status: 400 }
-      )
-    }
-
-    const { data: location, error: locErr } = await admin
-      .from('conscious_locations')
-      .select('id, city, status')
-      .eq('id', payload.conscious_location_id)
-      .maybeSingle()
-
-    if (locErr) {
-      console.error('[api/signals POST] location lookup', locErr)
-      return NextResponse.json({ error: 'Location check failed' }, { status: 500 })
-    }
-    if (!location) {
-      return NextResponse.json({ error: 'Unknown location' }, { status: 400 })
-    }
-    if (location.status !== 'active') {
-      return NextResponse.json({ error: 'Location is not active' }, { status: 400 })
-    }
-    if (!allowedIds) {
-      // No explicit allow-list — enforce city = Ciudad de México (case-insensitive).
-      const city = (location.city ?? '').toLowerCase().trim()
-      const isCdmx =
-        city === 'ciudad de méxico' ||
-        city === 'ciudad de mexico' ||
-        city === 'cdmx'
-      if (!isCdmx) {
+    if (payload.routing_mode === 'observation') {
+      const observation = payload as ObservationCreateBody
+      insertRow = {
+        public_slug: mintSignalSlug(observation.title),
+        routing_mode: 'observation',
+        country_code: observation.country_code,
+        city_slug: observation.city_slug,
+        locality: normalizeLocality(observation.locality),
+        post_type: observation.post_type,
+        category: observation.category,
+        severity: observation.severity,
+        target_kind: null,
+        citizen_target_id: null,
+        title: observation.title,
+        body: observation.body,
+        language: observation.language,
+        conscious_location_id: null,
+        partner_location_id: null,
+        street_reference: null,
+        author_user_id: user.id,
+        anonymous_display_mode: observation.anonymous_display_mode ?? false,
+        anonymous_display_name: observation.anonymous_display_name ?? null,
+        publication_status: 'pending_review',
+      }
+    } else {
+      const routed = payload as RoutedCreateBody
+      const routedCheck = await validateRoutedGeographyAndTarget(admin, routed)
+      if (!routedCheck.ok) {
         return NextResponse.json(
-          { error: 'MVP pilot is CDMX-only' },
+          { error: routedCheck.error },
+          { status: routedCheck.status }
+        )
+      }
+
+      const routedContentPolicyError = firstSignalContentPolicyViolation([
+        routedCheck.streetReference,
+      ])
+      if (routedContentPolicyError) {
+        return NextResponse.json(
+          { error: routedContentPolicyError },
           { status: 400 }
         )
       }
-    }
 
-    // Partner-location refinement check: must reference an active
-    // conscious_locations row. We deliberately do NOT verify the row is
-    // geographically inside the parent alcaldía in MVP — the
-    // `conscious_locations` schema has no parent-child link to alcaldías
-    // today, so any heuristic (city / neighborhood text match) would be
-    // brittle. The wizard does a best-effort filter client-side, and we
-    // accept whatever it lands with. TODO(signals-precision): once the
-    // schema introduces an explicit parent_id / alcaldia_id column on
-    // conscious_locations, tighten this server-side check to enforce the
-    // parent match.
-    if (partnerLocationId) {
-      const { data: partner, error: partnerErr } = await admin
-        .from('conscious_locations')
-        .select('id, status')
-        .eq('id', partnerLocationId)
-        .maybeSingle()
-      if (partnerErr) {
-        console.error('[api/signals POST] partner lookup', partnerErr)
-        return NextResponse.json(
-          { error: 'Partner location check failed' },
-          { status: 500 }
-        )
-      }
-      if (!partner) {
-        return NextResponse.json(
-          { error: 'Unknown partner_location_id' },
-          { status: 400 }
-        )
-      }
-      if (partner.status !== 'active') {
-        return NextResponse.json(
-          { error: 'Partner location is not active' },
-          { status: 400 }
-        )
-      }
-      if (partner.id === payload.conscious_location_id) {
-        return NextResponse.json(
-          {
-            error:
-              'partner_location_id must differ from conscious_location_id (alcaldía)',
-          },
-          { status: 400 }
-        )
+      insertRow = {
+        public_slug: mintSignalSlug(routed.title),
+        routing_mode: 'routed',
+        country_code: routed.country_code ?? 'MX',
+        city_slug: routed.city_slug ?? 'cdmx',
+        locality: null,
+        post_type: routed.post_type,
+        category: routed.category,
+        severity: routed.severity,
+        target_kind: routed.target_kind,
+        citizen_target_id: routed.citizen_target_id,
+        title: routed.title,
+        body: routed.body,
+        language: routed.language,
+        conscious_location_id: routed.conscious_location_id,
+        partner_location_id: routedCheck.partnerLocationId,
+        street_reference: routedCheck.streetReference,
+        author_user_id: user.id,
+        anonymous_display_mode: routed.anonymous_display_mode ?? false,
+        anonymous_display_name: routed.anonymous_display_name ?? null,
+        publication_status: 'pending_review',
       }
     }
-
-    // Target sanity-check: target_kind on the signal must match the target row.
-    const { data: target, error: tErr } = await admin
-      .from('citizen_targets')
-      .select('id, target_kind')
-      .eq('id', payload.citizen_target_id)
-      .maybeSingle()
-    if (tErr) {
-      console.error('[api/signals POST] target lookup', tErr)
-      return NextResponse.json({ error: 'Target check failed' }, { status: 500 })
-    }
-    if (!target) {
-      return NextResponse.json({ error: 'Unknown target' }, { status: 400 })
-    }
-    if (target.target_kind !== payload.target_kind) {
-      return NextResponse.json(
-        { error: 'target_kind mismatch with citizen_targets row' },
-        { status: 400 }
-      )
-    }
-
-    const slug = mintSignalSlug(payload.title)
 
     const { data: insertedSignal, error: insertErr } = await admin
       .from('citizen_signals')
-      .insert({
-        public_slug: slug,
-        post_type: payload.post_type,
-        category: payload.category,
-        severity: payload.severity,
-        target_kind: payload.target_kind,
-        citizen_target_id: payload.citizen_target_id,
-        title: payload.title,
-        body: payload.body,
-        language: payload.language,
-        conscious_location_id: payload.conscious_location_id,
-        partner_location_id: partnerLocationId,
-        street_reference: streetReference,
-        author_user_id: user.id,
-        anonymous_display_mode: payload.anonymous_display_mode ?? false,
-        anonymous_display_name: payload.anonymous_display_name ?? null,
-        publication_status: 'pending_review',
-      })
+      .insert(insertRow as Database['public']['Tables']['citizen_signals']['Insert'])
       .select('id, public_slug')
       .single()
 

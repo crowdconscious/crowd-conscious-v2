@@ -26,12 +26,12 @@ export type SignalListItem = {
   postType: string
   category: SignalCategory
   severity: SignalSeverity
-  targetKind: SignalTargetKind
-  citizenTargetId: string
+  targetKind: SignalTargetKind | null
+  citizenTargetId: string | null
   title: string
   body: string
   language: string
-  consciousLocationId: string
+  consciousLocationId: string | null
   partnerLocationId: string | null
   streetReference: string | null
   displayName: string | null
@@ -83,7 +83,13 @@ export async function fetchInitialSignals(): Promise<{
   }
 
   const signalsRaw = rows ?? []
-  const targetIds = Array.from(new Set(signalsRaw.map((r) => r.citizen_target_id)))
+  const targetIds = Array.from(
+    new Set(
+      signalsRaw
+        .map((r) => r.citizen_target_id)
+        .filter((id): id is string => typeof id === 'string' && id.length > 0)
+    )
+  )
   // Look up both the alcaldía and the partner refinement in a single batch
   // so the feed card can render "alcaldía · partner" without per-row joins.
   const locationIds = Array.from(
@@ -138,12 +144,12 @@ type PublicViewRow = {
   post_type: string
   category: string
   severity: string
-  target_kind: string
-  citizen_target_id: string
+  target_kind: string | null
+  citizen_target_id: string | null
   title: string
   body: string
   language: string
-  conscious_location_id: string
+  conscious_location_id: string | null
   partner_location_id: string | null
   street_reference: string | null
   anonymous_display_mode: boolean
@@ -184,8 +190,14 @@ export function mapRowToItem(
     stage2MetAt: row.stage2_met_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-    targetName: lookups.targets[row.citizen_target_id]?.displayName ?? null,
-    locationName: lookups.locations[row.conscious_location_id]?.name ?? null,
+    targetName:
+      row.citizen_target_id != null
+        ? (lookups.targets[row.citizen_target_id]?.displayName ?? null)
+        : null,
+    locationName:
+      row.conscious_location_id != null
+        ? (lookups.locations[row.conscious_location_id]?.name ?? null)
+        : null,
     partnerLocationName:
       row.partner_location_id != null
         ? (lookups.locations[row.partner_location_id]?.name ?? null)
