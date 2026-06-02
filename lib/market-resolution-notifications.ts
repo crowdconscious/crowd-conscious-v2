@@ -1,4 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import {
+  buildPulseResolutionPush,
+  resolvePushLocale,
+  sendPushToUser,
+} from '@/lib/expo-push'
 import { sendMarketResolutionEmail } from '@/lib/resend'
 import { dispatchSponsorPulseClosureEmail } from '@/lib/sponsor-notifications'
 
@@ -55,6 +60,21 @@ export async function notifyMarketResolutionVoters(
       })
     } catch (notifErr) {
       console.error('Notification insert error:', notifErr)
+    }
+
+    if (market?.is_pulse) {
+      const locale = await resolvePushLocale(admin, v.user_id)
+      const pushPayload = buildPulseResolutionPush({
+        marketId,
+        marketTitle,
+        winningLabel,
+        won,
+        bonusXp: v.bonus_xp ?? 0,
+        locale,
+      })
+      void sendPushToUser(admin, v.user_id, pushPayload).catch((err) =>
+        console.warn('[market-resolution] expo push error:', err)
+      )
     }
 
     const { data: profile } = await admin
