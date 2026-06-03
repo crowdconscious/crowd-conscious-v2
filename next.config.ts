@@ -88,6 +88,22 @@ const nextConfig: NextConfig = {
       },
     ]
   },
+
+  /**
+   * Serve the iOS Universal Links association file with the correct
+   * `application/json` content type. The file lives at
+   * `public/.well-known/apple-app-site-association` (no extension), so
+   * Next would otherwise serve it as octet-stream. (`assetlinks.json`
+   * already gets `application/json` from its `.json` extension.)
+   */
+  async headers() {
+    return [
+      {
+        source: '/.well-known/apple-app-site-association',
+        headers: [{ key: 'Content-Type', value: 'application/json' }],
+      },
+    ]
+  },
 };
 
 export default nextConfig;

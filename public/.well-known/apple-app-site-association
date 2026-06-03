@@ -1,0 +1,15 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "263M25R887.app.crowdconscious.mobile",
+        "paths": [
+          "/signals/*",
+          "/pulse/*",
+          "/blog/*"
+        ]
+      }
+    ]
+  }
+}
