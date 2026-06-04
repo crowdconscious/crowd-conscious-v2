@@ -9,6 +9,12 @@ export type SendPushPayload = {
   title: string
   body: string
   data?: ExpoPushData
+  /**
+   * iOS/Android app-icon badge count. We set `1` for new-content pushes so the
+   * app shows the red dot; the mobile app clears it (setBadgeCountAsync(0)) on
+   * foreground/open. Precise unread counts are out of scope.
+   */
+  badge?: number
 }
 
 type PushTokenRow = {
@@ -128,6 +134,7 @@ export async function sendPushToUser(
       title: payload.title,
       body: payload.body,
       data: payload.data,
+      badge: payload.badge,
     })
     messageTokenRows.push(row)
   }
@@ -245,6 +252,7 @@ export function buildNewPulsePush(params: {
       title: `New Pulse: ${titleShort}`,
       body: 'Tell us what you think',
       data: { route, marketId, type: 'pulse_published' },
+      badge: 1,
     }
   }
 
@@ -252,6 +260,7 @@ export function buildNewPulsePush(params: {
     title: `Nuevo Pulse: ${titleShort}`,
     body: 'Cuéntanos qué piensas',
     data: { route, marketId, type: 'pulse_published' },
+    badge: 1,
   }
 }
 
@@ -269,6 +278,7 @@ export function buildPulseVoteInvitePush(params: {
       title: `Your opinion matters — vote on: ${titleShort}`,
       body: 'Share your perspective',
       data: { route, marketId, type: 'pulse_vote_invite' },
+      badge: 1,
     }
   }
 
@@ -276,6 +286,7 @@ export function buildPulseVoteInvitePush(params: {
     title: `Tu opinión cuenta — vota en: ${titleShort}`,
     body: 'Comparte tu perspectiva',
     data: { route, marketId, type: 'pulse_vote_invite' },
+    badge: 1,
   }
 }
 
@@ -293,6 +304,7 @@ export function buildNewBlogPush(params: {
       title: `New article: ${titleShort}`,
       body: 'Read it on Crowd Conscious',
       data: { route, slug, type: 'blog_published' },
+      badge: 1,
     }
   }
 
@@ -300,6 +312,7 @@ export function buildNewBlogPush(params: {
     title: `Nuevo artículo: ${titleShort}`,
     body: 'Léelo en Crowd Conscious',
     data: { route, slug, type: 'blog_published' },
+    badge: 1,
   }
 }
 
@@ -317,6 +330,7 @@ export function buildSignalCosignInvitePush(params: {
       title: `New signal — add your co-sign: ${titleShort}`,
       body: 'Support this community signal',
       data: { route, slug, type: 'signal_cosign_invite' },
+      badge: 1,
     }
   }
 
@@ -324,6 +338,7 @@ export function buildSignalCosignInvitePush(params: {
     title: `Nueva señal — apoya con tu co-firma: ${titleShort}`,
     body: 'Apoya esta señal ciudadana',
     data: { route, slug, type: 'signal_cosign_invite' },
+    badge: 1,
   }
 }
 
