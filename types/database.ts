@@ -490,6 +490,12 @@ export interface Database {
            * Added by migration 214. Max 200 chars (DB check constraint).
            */
           subtitle: string | null
+          /**
+           * Per-locale overrides (migration 139). Spanish lives in `label` /
+           * `subtitle`; non-ES locales here, e.g.
+           * { "en": { "label": "Public safety", "subtitle": "…" } }.
+           */
+          translations: Json
           description: string | null
           probability: number
           vote_count: number
@@ -503,6 +509,7 @@ export interface Database {
           market_id: string
           label: string
           subtitle?: string | null
+          translations?: Json
           description?: string | null
           probability?: number
           vote_count?: number
@@ -516,6 +523,7 @@ export interface Database {
           market_id?: string
           label?: string
           subtitle?: string | null
+          translations?: Json
           description?: string | null
           probability?: number
           vote_count?: number

@@ -18,8 +18,11 @@ type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row'
     [key: string]: Record<string, string> | undefined
   } | null
 }
-type MarketOutcome = Database['public']['Tables']['market_outcomes']['Row'] & {
-  translations?: { en?: { label?: string }; [key: string]: { label?: string } | undefined } | null
+export type MarketOutcome = Omit<
+  Database['public']['Tables']['market_outcomes']['Row'],
+  'translations'
+> & {
+  translations?: unknown
 }
 
 type MyVote = {

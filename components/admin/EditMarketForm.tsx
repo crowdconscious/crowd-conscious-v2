@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { ImageUpload } from '@/components/ui/ImageUpload'
 import { LogoUpload } from '@/components/ui/LogoUpload'
-import { MARKET_CATEGORY_IDS } from '@/lib/market-categories'
+import { PULSE_FORM_CATEGORIES } from '@/lib/market-categories'
 import type { Json } from '@/types/database'
 
 const ccInput =
@@ -301,9 +301,9 @@ export default function EditMarketForm({
             <div>
               <label className="mb-1.5 block text-sm font-medium text-gray-300">Category *</label>
               <select value={category} onChange={(e) => setCategory(e.target.value)} required className={ccInput}>
-                {MARKET_CATEGORY_IDS.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
+                {PULSE_FORM_CATEGORIES.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.labelEs}
                   </option>
                 ))}
               </select>

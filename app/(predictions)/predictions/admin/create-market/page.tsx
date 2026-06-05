@@ -1,42 +1,21 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef, type CSSProperties } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import {
-  ArrowLeft,
-  X,
-  Link2,
-  Plus,
-  Sparkles,
-} from 'lucide-react'
+import { ArrowLeft, X, Link2, Plus } from 'lucide-react'
 import { LogoUpload } from '@/components/ui/LogoUpload'
 import { ImageUpload } from '@/components/ui/ImageUpload'
-const CATEGORIES = [
-  { id: 'pulse', label: 'Pulse' },
-  { id: 'world_cup', label: 'World Cup' },
-  { id: 'world', label: 'World' },
-  { id: 'government', label: 'Government' },
-  { id: 'geopolitics', label: 'Geopolitics' },
-  { id: 'sustainability', label: 'Sustainability' },
-  { id: 'technology', label: 'Technology' },
-  { id: 'economy', label: 'Economy' },
-  { id: 'corporate', label: 'Corporate' },
-  { id: 'community', label: 'Community' },
-  { id: 'cause', label: 'Cause' },
-  { id: 'entertainment', label: 'Entertainment' },
-] as const
+import { PULSE_FORM_CATEGORIES, getPulseCategoryLabel } from '@/lib/market-categories'
 
-/** Unified dark inputs (#1a2029 / #2d3748) */
 const ccInput =
   'w-full px-4 py-2.5 bg-[#1a2029] border border-[#2d3748] rounded-lg text-white placeholder:text-gray-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20'
 const ccInputSm =
   'px-3 py-2 bg-[#1a2029] border border-[#2d3748] rounded-lg text-white text-sm placeholder:text-gray-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20'
 const ccSection = 'bg-[#1a2029] border border-[#2d3748] rounded-xl p-6'
 
-// Map suggestion category (from News Monitor) to form category
 const CATEGORY_MAP: Record<string, string> = {
-  sports: 'world_cup',
+  sports: 'community',
   politics: 'government',
   economy: 'economy',
   culture: 'community',
@@ -46,32 +25,31 @@ const CATEGORY_MAP: Record<string, string> = {
 
 type MarketOption = { id: string; title: string }
 
-export default function CreateMarketPage() {
+type OutcomeDraft = {
+  title: string
+  subtitle: string
+  titleEn: string
+  subtitleEn: string
+}
+
+const EMPTY_OUTCOME = (): OutcomeDraft => ({
+  title: '',
+  subtitle: '',
+  titleEn: '',
+  subtitleEn: '',
+})
+
+export default function CreatePulsePage() {
   const [fromInboxId, setFromInboxId] = useState<string | null>(null)
   const [suggestionId, setSuggestionId] = useState<string | null>(null)
   const [successId, setSuccessId] = useState<string | null>(null)
 
   const [title, setTitle] = useState('')
-  // Short, blog-quality blurb (≤280 chars) rendered between the title and the
-  // vote panel. Required client-side for new Pulses (the DB column is nullable
-  // so old rows still load, but every new Pulse should ship with one).
   const [descriptionShort, setDescriptionShort] = useState('')
   const DESCRIPTION_SHORT_MAX = 280
   const [description, setDescription] = useState('')
-  const [category, setCategory] = useState('')
-  const [initialProbability, setInitialProbability] = useState(50)
-  const [resolutionDate, setResolutionDate] = useState('')
-  const [resolutionCriteria, setResolutionCriteria] = useState('')
-  const [marketType, setMarketType] = useState<'binary' | 'multi'>('binary')
-  // Outcomes are now structured as { title, subtitle } so the title stays the
-  // short headline and any detail goes in subtitle (rendered as a muted line
-  // below). The previous shape was `string[]` of stuffed labels — that is
-  // what produced the "Seguridad pública( Policía de…" rows in the MH Pulse.
-  type OutcomeDraft = { title: string; subtitle: string }
-  const [outcomes, setOutcomes] = useState<OutcomeDraft[]>([
-    { title: '', subtitle: '' },
-    { title: '', subtitle: '' },
-  ])
+  const [category, setCategory] = useState('community')
+  const [outcomes, setOutcomes] = useState<OutcomeDraft[]>([EMPTY_OUTCOME(), EMPTY_OUTCOME()])
   const OUTCOME_TITLE_MAX = 80
   const OUTCOME_SUBTITLE_MAX = 200
   const [verificationSources, setVerificationSources] = useState<{ name: string; url: string }[]>([
@@ -89,19 +67,12 @@ export default function CreateMarketPage() {
   const [enTitle, setEnTitle] = useState('')
   const [enDescription, setEnDescription] = useState('')
   const [enDescriptionShort, setEnDescriptionShort] = useState('')
-  const [enResolutionCriteria, setEnResolutionCriteria] = useState('')
 
-  const [isPulse, setIsPulse] = useState(false)
   const [pulseClientName, setPulseClientName] = useState('')
   const [pulseClientLogo, setPulseClientLogo] = useState('')
   const [pulseClientEmail, setPulseClientEmail] = useState('')
   const [pulseCoverUrl, setPulseCoverUrl] = useState('')
-  const [successIsPulse, setSuccessIsPulse] = useState(false)
-  const prevIsPulseRef = useRef(false)
 
-  // Sponsor account picker (admin can bind a market to an existing sponsor
-  // account, which is how the sponsor dashboard recognises "their" Pulses).
-  // Loaded lazily from /api/admin/sponsor-accounts.
   type SponsorOption = {
     id: string
     company_name: string
@@ -115,17 +86,6 @@ export default function CreateMarketPage() {
   const [sponsorOptionsLoading, setSponsorOptionsLoading] = useState(false)
   const [sponsorOptionsError, setSponsorOptionsError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (isPulse) {
-      setCategory('pulse')
-    } else if (prevIsPulseRef.current) {
-      setCategory((c) => (c === 'pulse' ? 'world' : c))
-    }
-    prevIsPulseRef.current = isPulse
-  }, [isPulse])
-
-  // Load sponsor accounts for the dropdown. Only admins can hit this route;
-  // non-admins won't reach this page anyway (admin layout gates it).
   useEffect(() => {
     let cancelled = false
     const load = async () => {
@@ -164,10 +124,6 @@ export default function CreateMarketPage() {
     }
   }, [])
 
-  // When the admin picks a sponsor account, copy its details into the Pulse
-  // client info fields (only if the field is empty, so manual edits aren't
-  // clobbered). The canonical link is `sponsorAccountId`; the email/name/logo
-  // fields stay editable for cosmetic overrides.
   const handleSponsorAccountChange = useCallback(
     (id: string) => {
       setSponsorAccountId(id)
@@ -187,7 +143,6 @@ export default function CreateMarketPage() {
   const [submitting, setSubmitting] = useState<false | 'draft' | 'published'>(false)
   const [error, setError] = useState('')
   const [sourceSignals, setSourceSignals] = useState<string[]>([])
-  const [suggestingCriteria, setSuggestingCriteria] = useState(false)
 
   useEffect(() => {
     const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '')
@@ -204,42 +159,28 @@ export default function CreateMarketPage() {
     const prefillTitle = params.get('title')
     const prefillTitleEn = params.get('title_en')
     const prefillCategory = params.get('category')
-    const prefillCriteria =
-      params.get('resolution_criteria') ?? params.get('resolution')
-    const prefillCriteriaEn = params.get('resolution_criteria_en')
     const prefillDesc = params.get('description') ?? params.get('description_es')
     const prefillDescEn = params.get('description_en')
     const prefillDescShort =
       params.get('description_short') ?? params.get('description_short_es')
     const prefillDescShortEn = params.get('description_short_en')
-    const prefillProb = params.get('probability')
-    const prefillEnd = params.get('end_date')
     const prefillTags = params.get('tags')
     const prefillOutcomes = params.get('outcomes')
     if (prefillTitle) setTitle(prefillTitle)
     if (prefillTitleEn) setEnTitle(prefillTitleEn)
-    if (prefillCategory) setCategory(prefillCategory)
-    if (prefillCriteria) setResolutionCriteria(prefillCriteria)
-    if (prefillCriteriaEn) setEnResolutionCriteria(prefillCriteriaEn)
+    if (prefillCategory) {
+      const mapped = CATEGORY_MAP[prefillCategory.toLowerCase()] ?? prefillCategory
+      if (PULSE_FORM_CATEGORIES.some((c) => c.id === mapped)) setCategory(mapped)
+    }
     if (prefillDesc) setDescription(prefillDesc)
     if (prefillDescEn) setEnDescription(prefillDescEn)
     if (prefillDescShort) setDescriptionShort(prefillDescShort.slice(0, 280))
     if (prefillDescShortEn) setEnDescriptionShort(prefillDescShortEn.slice(0, 280))
     if (prefillTags) setTagsInput(prefillTags)
-    if (prefillProb) {
-      const n = parseFloat(prefillProb)
-      const pct = n > 0 && n <= 1 ? Math.round(n * 100) : Math.round(n)
-      if (pct >= 1 && pct <= 99) setInitialProbability(pct)
-    }
-    if (prefillEnd) {
-      const d = new Date(prefillEnd)
-      if (!isNaN(d.getTime())) setResolutionDate(d.toISOString().slice(0, 16))
-    }
     if (prefillOutcomes) {
       const parts = prefillOutcomes.split(',').map((s) => s.trim()).filter(Boolean)
       if (parts.length >= 2) {
-        setMarketType('multi')
-        setOutcomes(parts.map((title) => ({ title, subtitle: '' })))
+        setOutcomes(parts.map((t) => ({ ...EMPTY_OUTCOME(), title: t })))
       }
     }
   }, [])
@@ -252,7 +193,8 @@ export default function CreateMarketPage() {
         const item = data.item
         setTitle(item.title || '')
         setDescription(item.description || '')
-        setCategory(item.category || '')
+        const cat = item.category || ''
+        if (PULSE_FORM_CATEGORIES.some((c) => c.id === cat)) setCategory(cat)
         setLinks(
           Array.isArray(item.links) && item.links.length > 0
             ? item.links.map((l: { url: string; label: string }) => ({
@@ -279,56 +221,30 @@ export default function CreateMarketPage() {
         } catch {
           sug = { title: item.title }
         }
-        // Pre-fill ALL fields (News Monitor v2 format: title_es, description_es, etc.)
         const titleVal = String(sug.title_es ?? sug.title ?? item.title ?? '')
         const descVal = String(sug.description_es ?? sug.description ?? '')
         const catRaw = String(sug.category ?? '').toLowerCase()
-        const mappedCat = catRaw ? (CATEGORY_MAP[catRaw] ?? catRaw) : ''
-        const resCritVal = String(sug.resolution_criteria_es ?? sug.resolution_criteria ?? '')
-        const initProb = Number(sug.initial_probability)
-        const validProb = initProb >= 1 && initProb <= 99 ? initProb : 50
-
+        const mappedCat = catRaw ? (CATEGORY_MAP[catRaw] ?? catRaw) : 'community'
         setTitle(titleVal)
         setDescription(descVal)
-        setCategory(mappedCat)
-        setResolutionCriteria(resCritVal)
-        setInitialProbability(validProb)
+        if (PULSE_FORM_CATEGORIES.some((c) => c.id === mappedCat)) setCategory(mappedCat)
 
         const descShortVal = String(
           sug.description_short_es ?? sug.description_short ?? ''
         ).slice(0, 280)
         if (descShortVal) setDescriptionShort(descShortVal)
 
-        // English translations
         setEnTitle(String(sug.title_en ?? ''))
         setEnDescription(String(sug.description_en ?? ''))
         setEnDescriptionShort(String(sug.description_short_en ?? '').slice(0, 280))
-        setEnResolutionCriteria(String(sug.resolution_criteria_en ?? ''))
 
-        // Tags
         const tags = sug.tags
-        if (typeof tags === 'string') {
-          setTagsInput(tags)
-        } else if (Array.isArray(tags)) {
-          setTagsInput((tags as string[]).join(', '))
-        } else {
-          setTagsInput('')
-        }
+        if (typeof tags === 'string') setTagsInput(tags)
+        else if (Array.isArray(tags)) setTagsInput((tags as string[]).join(', '))
 
-        // Resolution date
-        const resDate = sug.resolution_date
-        if (resDate) {
-          const d = new Date(String(resDate))
-          if (!isNaN(d.getTime())) {
-            setResolutionDate(d.toISOString().slice(0, 16))
-          }
-        }
-
-        // Source signals (News Monitor v2)
         const signals = Array.isArray(sug.source_signals) ? (sug.source_signals as string[]) : []
         setSourceSignals(signals)
 
-        // Legacy: source_urls → verification sources & links
         const sourceUrls = Array.isArray(sug.source_urls)
           ? (sug.source_urls as Array<{ url?: string; label?: string }>)
           : []
@@ -394,21 +310,18 @@ export default function CreateMarketPage() {
   const updateLink = (i: number, field: 'url' | 'label', v: string) =>
     setLinks((prev) => prev.map((l, j) => (j === i ? { ...l, [field]: v } : l)))
 
-  const addOutcome = () =>
-    setOutcomes((prev) => [...prev, { title: '', subtitle: '' }])
+  const addOutcome = () => setOutcomes((prev) => [...prev, EMPTY_OUTCOME()])
   const removeOutcome = (i: number) =>
     setOutcomes((prev) => (prev.length > 2 ? prev.filter((_, j) => j !== i) : prev))
-  const updateOutcomeTitle = (i: number, v: string) =>
+  const updateOutcome = (i: number, field: keyof OutcomeDraft, v: string) =>
     setOutcomes((prev) =>
-      prev.map((o, j) =>
-        j === i ? { ...o, title: v.slice(0, OUTCOME_TITLE_MAX) } : o
-      )
-    )
-  const updateOutcomeSubtitle = (i: number, v: string) =>
-    setOutcomes((prev) =>
-      prev.map((o, j) =>
-        j === i ? { ...o, subtitle: v.slice(0, OUTCOME_SUBTITLE_MAX) } : o
-      )
+      prev.map((o, j) => {
+        if (j !== i) return o
+        if (field === 'title') return { ...o, title: v.slice(0, OUTCOME_TITLE_MAX) }
+        if (field === 'subtitle') return { ...o, subtitle: v.slice(0, OUTCOME_SUBTITLE_MAX) }
+        if (field === 'titleEn') return { ...o, titleEn: v.slice(0, OUTCOME_TITLE_MAX) }
+        return { ...o, subtitleEn: v.slice(0, OUTCOME_SUBTITLE_MAX) }
+      })
     )
 
   const addRelatedMarket = (id: string) => {
@@ -421,28 +334,6 @@ export default function CreateMarketPage() {
   const removeRelatedMarket = (id: string) =>
     setRelatedMarketIds((prev) => prev.filter((x) => x !== id))
 
-  const handleSuggestCriteria = async () => {
-    if (!title.trim()) return
-    setSuggestingCriteria(true)
-    try {
-      const res = await fetch('/api/predictions/admin/suggest-criteria', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: title.trim(), description: description.trim() || undefined }),
-      })
-      const data = await res.json()
-      if (res.ok && data.suggested) {
-        setResolutionCriteria(data.suggested)
-      } else {
-        setError(data.error || 'Failed to suggest criteria')
-      }
-    } catch {
-      setError('Failed to suggest criteria')
-    } finally {
-      setSuggestingCriteria(false)
-    }
-  }
-
   const handleSubmit = async (
     e: React.FormEvent | React.MouseEvent,
     mode: 'draft' | 'published' = 'published'
@@ -450,27 +341,19 @@ export default function CreateMarketPage() {
     e.preventDefault()
     setError('')
     if (!title.trim()) {
-      setError('Title is required')
+      setError('El título es obligatorio')
       return
     }
-    if (!resolutionDate) {
-      setError('Closing date is required')
-      return
-    }
-    if (marketType === 'multi' && outcomes.filter((o) => o.title.trim()).length < 2) {
-      setError('Multi-choice requires at least 2 options')
+    if (!descriptionShort.trim()) {
+      setError('La descripción corta es obligatoria (2 frases máximo).')
       return
     }
     if (descriptionShort.length > DESCRIPTION_SHORT_MAX) {
-      setError(
-        `La descripción corta no puede exceder ${DESCRIPTION_SHORT_MAX} caracteres.`
-      )
+      setError(`La descripción corta no puede exceder ${DESCRIPTION_SHORT_MAX} caracteres.`)
       return
     }
-    if (isPulse && !descriptionShort.trim()) {
-      setError(
-        'La descripción corta es obligatoria para nuevos Pulses (2 frases máximo).'
-      )
+    if (outcomes.filter((o) => o.title.trim()).length < 2) {
+      setError('Se requieren al menos 2 opciones de comunidad')
       return
     }
 
@@ -483,36 +366,30 @@ export default function CreateMarketPage() {
           is_draft: mode === 'draft',
           title: title.trim(),
           description: description.trim() || null,
-          description_short: descriptionShort.trim() || null,
-          category: isPulse ? 'pulse' : category || 'world',
-          initial_probability: initialProbability,
-          resolution_date: new Date(resolutionDate).toISOString(),
-          resolution_criteria: resolutionCriteria.trim() || null,
-          market_type: marketType,
-          // API now accepts the structured shape `{title, subtitle?}`. The
-          // legacy string-array shape is still tolerated server-side for any
-          // out-of-band callers (cron / scripts).
-          outcomes:
-            marketType === 'multi'
-              ? outcomes
-                  .filter((o) => o.title.trim())
-                  .map((o) => ({
-                    title: o.title.trim(),
-                    subtitle: o.subtitle.trim() || null,
-                  }))
-              : undefined,
+          description_short: descriptionShort.trim(),
+          category: category || 'community',
+          outcomes: outcomes
+            .filter((o) => o.title.trim())
+            .map((o) => ({
+              title: o.title.trim(),
+              subtitle: o.subtitle.trim() || null,
+              labelEn: o.titleEn.trim() || null,
+              subtitleEn: o.subtitleEn.trim() || null,
+            })),
           verification_sources: verificationSources
             .filter((s) => s.name.trim())
             .map((s) => ({ name: s.name.trim(), url: s.url.trim() || undefined })),
           tags: tagsInput,
-          links: links.filter((l) => l.url.trim()).map((l) => ({ url: l.url.trim(), label: l.label.trim() || l.url })),
+          links: links
+            .filter((l) => l.url.trim())
+            .map((l) => ({ url: l.url.trim(), label: l.label.trim() || l.url })),
           related_market_ids: relatedMarketIds,
           sponsor_name: sponsorName.trim() || null,
           sponsor_logo_url: sponsorLogoUrl.trim() || null,
           sponsorship_amount_mxn: sponsorshipAmountMxn ? Number(sponsorshipAmountMxn) : null,
           conscious_fund_percentage: consciousFundPercentage,
           translations:
-            enTitle || enDescription || enDescriptionShort || enResolutionCriteria
+            enTitle || enDescription || enDescriptionShort
               ? {
                   en: {
                     ...(enTitle && { title: enTitle.trim() }),
@@ -520,29 +397,20 @@ export default function CreateMarketPage() {
                     ...(enDescriptionShort && {
                       description_short: enDescriptionShort.trim(),
                     }),
-                    ...(enResolutionCriteria && { resolution_criteria: enResolutionCriteria.trim() }),
                   },
                 }
               : undefined,
-          is_pulse: isPulse,
-          pulse_client_name: isPulse ? pulseClientName.trim() || null : null,
-          pulse_client_logo: isPulse ? pulseClientLogo.trim() || null : null,
-          pulse_client_email: isPulse ? pulseClientEmail.trim() || null : null,
+          pulse_client_name: pulseClientName.trim() || null,
+          pulse_client_logo: pulseClientLogo.trim() || null,
+          pulse_client_email: pulseClientEmail.trim() || null,
           sponsor_account_id: sponsorAccountId || null,
-          ...(isPulse
-            ? {
-                cover_image_url:
-                  pulseCoverUrl.trim() || sponsorLogoUrl.trim() || null,
-              }
-            : {}),
+          cover_image_url: pulseCoverUrl.trim() || sponsorLogoUrl.trim() || null,
         }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Failed to create market')
+      if (!res.ok) throw new Error(data.error || 'Failed to create pulse')
       const marketId = data.market_id
-      setSuccessIsPulse(isPulse)
 
-      // Mark suggestion as used when created from suggestion_id
       if (suggestionId) {
         try {
           await fetch(`/api/predictions/admin/agent-content/${suggestionId}`, {
@@ -551,24 +419,18 @@ export default function CreateMarketPage() {
             body: JSON.stringify({ published: true, market_id: marketId }),
           })
         } catch {
-          // Non-fatal: market was created
+          // non-fatal
         }
       }
 
       if (mode === 'draft') {
-        // Drafts redirect straight to the market URL so the admin can preview.
-        // The market view page renders the amber draft banner. We pass a
-        // ?draft=created flag that the page surfaces as a one-shot toast.
-        const target = isPulse
-          ? `/pulse/${marketId}?draft=created`
-          : `/predictions/markets/${marketId}?draft=created`
-        router.push(target)
+        router.push(`/pulse/${marketId}?draft=created`)
         return
       }
 
       setSuccessId(marketId)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create market')
+      setError(err instanceof Error ? err.message : 'Failed to create pulse')
     } finally {
       setSubmitting(false)
     }
@@ -583,28 +445,22 @@ export default function CreateMarketPage() {
     return (
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="bg-emerald-500/20 border border-emerald-500/50 rounded-xl p-8 text-center">
-          <h2 className="text-xl font-bold text-emerald-400 mb-2">Market created successfully</h2>
-          <p className="text-cc-text-secondary mb-6">Your prediction market is now live.</p>
+          <h2 className="text-xl font-bold text-emerald-400 mb-2">Pulse publicado</h2>
+          <p className="text-cc-text-secondary mb-6">
+            Tu consulta de sentimiento público ya está activa para la comunidad.
+          </p>
           <div className="flex gap-4 justify-center flex-wrap">
             <Link
-              href={`/predictions/markets/${successId}`}
+              href={`/pulse/${successId}`}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 text-white font-medium hover:bg-emerald-500"
             >
-              View market
+              Ver Pulse
             </Link>
-            {successIsPulse && (
-              <Link
-                href={`/pulse/${successId}`}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-emerald-500/50 bg-emerald-950/50 text-emerald-200 font-medium hover:bg-emerald-900/40"
-              >
-                Pulse results page
-              </Link>
-            )}
             <Link
               href="/predictions/admin/create-market"
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-800 text-gray-200 font-medium hover:bg-gray-700 border border-cc-border"
             >
-              Create another
+              Crear otro
             </Link>
           </div>
         </div>
@@ -619,27 +475,26 @@ export default function CreateMarketPage() {
         className="inline-flex items-center gap-2 text-sm text-cc-text-secondary hover:text-emerald-400"
       >
         <ArrowLeft className="w-4 h-4" />
-        Back to dashboard
+        Volver al panel
       </Link>
 
-      <h1 className="text-2xl font-bold text-white">Create New Market</h1>
+      <h1 className="text-2xl font-bold text-white">Crear Pulse</h1>
       <p className="text-cc-text-secondary">
-        Manually create a new prediction market. All fields support the community voting system.
+        Consulta de sentimiento público: pregunta, contexto y opciones para que la comunidad vote
+        con nivel de certeza.
       </p>
 
       {fromInboxId && (
-        <p className="text-sm text-emerald-400">
-          Pre-filled from inbox submission. Edit as needed.
-        </p>
+        <p className="text-sm text-emerald-400">Prellenado desde inbox. Edita lo que necesites.</p>
       )}
       {suggestionId && !fromInboxId && (
         <div className="space-y-1">
           <p className="text-sm text-emerald-400">
-            Pre-filled from News Monitor suggestion (title, description, resolution, English translation, tags). Edit as needed.
+            Prellenado desde sugerencia del News Monitor. Edita lo que necesites.
           </p>
           {sourceSignals.length > 0 && (
             <p className="text-xs text-cc-text-muted">
-              Based on signals from: {sourceSignals.join(', ')}
+              Basado en señales de: {sourceSignals.join(', ')}
             </p>
           )}
         </div>
@@ -653,130 +508,94 @@ export default function CreateMarketPage() {
 
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
-          <div className="flex items-center gap-3">
-            <label className="flex cursor-pointer items-center gap-2">
-              <input
-                type="checkbox"
-                checked={isPulse}
-                onChange={(e) => setIsPulse(e.target.checked)}
-                className="h-4 w-4 accent-emerald-500"
+          <div className="space-y-4 rounded-xl border border-emerald-500/20 bg-[#0f1419]/80 p-4">
+            <h3 className="text-sm font-bold text-emerald-400">Cliente / patrocinador</h3>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-emerald-300">
+                Sponsor account (vincula al dashboard del cliente)
+              </label>
+              <select
+                value={sponsorAccountId}
+                onChange={(e) => handleSponsorAccountChange(e.target.value)}
+                className={ccInput}
+                disabled={sponsorOptionsLoading}
+              >
+                <option value="">
+                  {sponsorOptionsLoading
+                    ? 'Cargando sponsors…'
+                    : '— Sin sponsor account vinculado —'}
+                </option>
+                {sponsorOptions.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.company_name} · {s.contact_email}
+                    {s.status && s.status !== 'active' ? ` (${s.status})` : ''}
+                  </option>
+                ))}
+              </select>
+              {sponsorOptionsError ? (
+                <p className="mt-1 text-xs text-red-400">{sponsorOptionsError}</p>
+              ) : (
+                <p className="mt-1 text-xs text-cc-text-muted">
+                  Al seleccionar un sponsor account se vincula el Pulse a su dashboard.{' '}
+                  <Link
+                    href="/admin/sponsors"
+                    className="text-emerald-400 underline hover:text-emerald-300"
+                    target="_blank"
+                  >
+                    Crear sponsor account
+                  </Link>
+                  .
+                </p>
+              )}
+            </div>
+            <input
+              type="text"
+              placeholder="Nombre del cliente (ej. Alcaldía Cuauhtémoc)"
+              value={pulseClientName}
+              onChange={(e) => setPulseClientName(e.target.value)}
+              className={ccInput}
+            />
+            <LogoUpload
+              currentLogoUrl={pulseClientLogo.trim() || null}
+              onUpload={(u) => setPulseClientLogo(u)}
+              onClear={() => setPulseClientLogo('')}
+              label="Logo del cliente"
+              hint="PNG, JPG, WebP, GIF · máx. 2MB"
+            />
+            <input
+              type="email"
+              placeholder="Email del cliente"
+              value={pulseClientEmail}
+              onChange={(e) => setPulseClientEmail(e.target.value)}
+              className={ccInput}
+            />
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-300">
+                Imagen de portada
+              </label>
+              <ImageUpload
+                currentUrl={pulseCoverUrl.trim() || null}
+                onUpload={(url) => setPulseCoverUrl(url)}
+                onClear={() => setPulseCoverUrl('')}
+                storagePath="pulse"
+                label="Subir portada"
+                hint="PNG, JPG, WebP · máx. 2MB"
               />
-              <span className="text-sm font-medium text-white">
-                Conscious Pulse (B2B sentiment)
-              </span>
-            </label>
+            </div>
           </div>
 
-          {isPulse && (
-            <div className="space-y-4 rounded-xl border border-emerald-500/20 bg-[#0f1419]/80 p-4">
-              <h3 className="text-sm font-bold text-emerald-400">Pulse client info</h3>
-              <div>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-emerald-300">
-                  Sponsor account (links the Pulse to a sponsor dashboard)
-                </label>
-                <select
-                  value={sponsorAccountId}
-                  onChange={(e) => handleSponsorAccountChange(e.target.value)}
-                  className={ccInput}
-                  disabled={sponsorOptionsLoading}
-                >
-                  <option value="">
-                    {sponsorOptionsLoading
-                      ? 'Cargando sponsors…'
-                      : '— Sin sponsor account vinculado —'}
-                  </option>
-                  {sponsorOptions.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.company_name} · {s.contact_email}
-                      {s.status && s.status !== 'active' ? ` (${s.status})` : ''}
-                    </option>
-                  ))}
-                </select>
-                {sponsorOptionsError ? (
-                  <p className="mt-1 text-xs text-red-400">{sponsorOptionsError}</p>
-                ) : (
-                  <p className="mt-1 text-xs text-cc-text-muted">
-                    Al seleccionar un sponsor account se vincula el Pulse a su dashboard
-                    (campo canónico <code>sponsor_account_id</code>). Los campos abajo se
-                    autocompletan pero puedes editarlos. ¿No está en la lista?{' '}
-                    <Link
-                      href="/admin/sponsors"
-                      className="text-emerald-400 underline hover:text-emerald-300"
-                      target="_blank"
-                    >
-                      Crear sponsor account
-                    </Link>
-                    .
-                  </p>
-                )}
-              </div>
-              <input
-                type="text"
-                placeholder="Client name (e.g. Alcaldía Cuauhtémoc)"
-                value={pulseClientName}
-                onChange={(e) => setPulseClientName(e.target.value)}
-                className={ccInput}
-              />
-              <LogoUpload
-                currentLogoUrl={pulseClientLogo.trim() || null}
-                onUpload={(u) => setPulseClientLogo(u)}
-                onClear={() => setPulseClientLogo('')}
-                label="Client logo"
-                hint="PNG, JPG, WebP, GIF · máx. 2MB / max 2MB — or paste a URL below"
-              />
-              <div>
-                <label className="mb-1 block text-xs text-cc-text-muted">
-                  Or paste a public image URL
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://…"
-                  value={pulseClientLogo}
-                  onChange={(e) => setPulseClientLogo(e.target.value)}
-                  className={ccInput}
-                />
-              </div>
-              <input
-                type="email"
-                placeholder="Client email"
-                value={pulseClientEmail}
-                onChange={(e) => setPulseClientEmail(e.target.value)}
-                className={ccInput}
-              />
-              <div className="mb-4">
-                <label className="mb-2 block text-sm font-medium text-gray-300">
-                  Pulse cover image
-                </label>
-                <ImageUpload
-                  currentUrl={pulseCoverUrl.trim() || null}
-                  onUpload={(url) => setPulseCoverUrl(url)}
-                  onClear={() => setPulseCoverUrl('')}
-                  storagePath="pulse"
-                  label="Upload cover (or paste URL below)"
-                  hint="PNG, JPG, WebP · máx. 2MB"
-                />
-                <input
-                  type="url"
-                  placeholder="https://… (optional URL instead of upload)"
-                  value={pulseCoverUrl}
-                  onChange={(e) => setPulseCoverUrl(e.target.value)}
-                  className={`${ccInput} mt-2`}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Basic info */}
           <section className={ccSection}>
-            <h2 className="text-lg font-semibold text-white mb-4">Basic info</h2>
+            <h2 className="text-lg font-semibold text-white mb-4">Pregunta y contexto</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">Title *</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">
+                  Pregunta / título *
+                </label>
                 <input
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g. ¿Bajará Banxico la tasa..."
+                  placeholder="Ej. ¿Cuál debería ser la prioridad #1 del presupuesto?"
                   required
                   className={ccInput}
                 />
@@ -784,8 +603,7 @@ export default function CreateMarketPage() {
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="block text-sm font-medium text-gray-300">
-                    Descripción corta
-                    {isPulse ? <span className="text-red-400"> *</span> : null}
+                    Descripción corta <span className="text-red-400">*</span>
                   </label>
                   <span
                     className={`text-[10px] tabular-nums ${
@@ -800,17 +618,14 @@ export default function CreateMarketPage() {
                   </span>
                 </div>
                 <p className="text-xs text-cc-text-muted mb-1.5">
-                  2 frases máximo. Lo primero que verán los votantes. Estilo: claro,
-                  sin jargon.
+                  2 frases máximo. Lo primero que verán los votantes antes del panel de voto.
                 </p>
                 <textarea
                   value={descriptionShort}
                   onChange={(e) =>
-                    setDescriptionShort(
-                      e.target.value.slice(0, DESCRIPTION_SHORT_MAX)
-                    )
+                    setDescriptionShort(e.target.value.slice(0, DESCRIPTION_SHORT_MAX))
                   }
-                  placeholder="Ej. La Alcaldía Miguel Hidalgo decide cómo invertir su próximo presupuesto. Tu voto guía dónde se aplican los recursos."
+                  placeholder="Ej. La comunidad decide cómo priorizar el próximo presupuesto. Tu voto guía dónde se aplican los recursos."
                   rows={3}
                   maxLength={DESCRIPTION_SHORT_MAX}
                   className={`${ccInput} resize-none`}
@@ -818,298 +633,198 @@ export default function CreateMarketPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                  Descripción del mercado
+                  Contexto ampliado
                 </label>
                 <p className="text-xs text-cc-text-muted mb-1.5">
-                  Contexto y por qué es relevante. ¿Qué factores influyen?
+                  Antecedentes y por qué importa esta pregunta para la comunidad.
                 </p>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Explica el contexto de este mercado. ¿Por qué es relevante? ¿Qué factores influyen?"
+                  placeholder="Explica el contexto. ¿Qué está en juego? ¿Qué factores influyen?"
                   rows={4}
                   className={`${ccInput} resize-none`}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">Category</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">
+                  Tema / categoría *
+                </label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                   className={ccInput}
+                  required
                 >
-                  <option value="">Select category</option>
-                  {CATEGORIES.map((c) => (
+                  {PULSE_FORM_CATEGORIES.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.label}
+                      {c.labelEs}
                     </option>
                   ))}
                 </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                  Initial probability (1–99)
-                </label>
-                <div className="flex items-center gap-4">
-                  <input
-                    type="range"
-                    min={1}
-                    max={99}
-                    value={initialProbability}
-                    onChange={(e) => setInitialProbability(Number(e.target.value))}
-                    className="cc-range-slider flex-1 min-w-0"
-                    style={
-                      {
-                        '--cc-range-pct': `${((initialProbability - 1) / 98) * 100}%`,
-                      } as CSSProperties
-                    }
-                  />
-                  <input
-                    type="number"
-                    min={1}
-                    max={99}
-                    value={initialProbability}
-                    onChange={(e) =>
-                      setInitialProbability(Math.min(99, Math.max(1, Number(e.target.value) || 50)))
-                    }
-                    className="w-16 shrink-0 px-2 py-1.5 bg-[#1a2029] border border-[#2d3748] rounded-lg text-white text-sm text-center focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20"
-                  />
-                </div>
-              </div>
             </div>
           </section>
 
-          {/* Closing */}
           <section className={ccSection}>
-            <h2 className="text-lg font-semibold text-white mb-4">Closing</h2>
+            <div className="mb-3">
+              <h2 className="text-lg font-semibold text-white">Opciones de comunidad *</h2>
+              <p className="mt-1 text-xs text-cc-text-muted">
+                Mínimo 2 opciones mutuamente excluyentes. Título en español + traducción opcional
+                en inglés.
+              </p>
+            </div>
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                  Closing date *
-                </label>
-                <input
-                  type="datetime-local"
-                  value={resolutionDate}
-                  onChange={(e) => setResolutionDate(e.target.value)}
-                  required
-                  className={`${ccInput} [color-scheme:dark]`}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                  Criterio de resolución
-                </label>
-                <p className="text-xs text-cc-text-muted mb-1.5">
-                  Condiciones específicas y verificables. Ejemplo: Resuelve SÍ si el tipo de cambio MXN/USD baja de 19.00 según Banxico antes del 31 de diciembre de 2026.
-                </p>
-                <div className="flex gap-2">
-                  <textarea
-                    value={resolutionCriteria}
-                    onChange={(e) => setResolutionCriteria(e.target.value)}
-                    placeholder="Define exactamente cómo se resuelve. Ejemplo: Resuelve SÍ si el tipo de cambio MXN/USD baja de 19.00 según datos de Banxico antes del 31 de diciembre de 2026."
-                    rows={3}
-                    className={`flex-1 ${ccInput} resize-none`}
+              {outcomes.map((o, i) => (
+                <div
+                  key={i}
+                  className="rounded-lg border border-[#2d3748] bg-[#0f1419]/60 p-3"
+                >
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-[10px] uppercase tracking-wide text-gray-500">
+                      Opción {i + 1}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => removeOutcome(i)}
+                      disabled={outcomes.length <= 2}
+                      className="p-1 text-gray-400 hover:text-red-400 disabled:opacity-50"
+                      title="Quitar opción"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <label className="mb-1 block text-xs font-medium text-gray-400">
+                    Título (ES) <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={o.title}
+                    onChange={(e) => updateOutcome(i, 'title', e.target.value)}
+                    placeholder="Ej. Seguridad pública"
+                    maxLength={OUTCOME_TITLE_MAX}
+                    className={`w-full ${ccInputSm}`}
                   />
-                  <button
-                    type="button"
-                    onClick={handleSuggestCriteria}
-                    disabled={suggestingCriteria || !title.trim()}
-                    title="Generate AI suggestion from title and description"
-                    className="shrink-0 self-start px-3 py-2 rounded-lg bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center gap-1.5"
-                  >
-                    <Sparkles className="w-4 h-4" />
-                    {suggestingCriteria ? '...' : 'Suggest'}
-                  </button>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">Market type</label>
-                <div className="flex gap-4">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="marketType"
-                      checked={marketType === 'binary'}
-                      onChange={() => setMarketType('binary')}
-                      className="text-emerald-600 accent-emerald-500"
-                    />
-                    <span className="text-gray-300">Yes/No</span>
+                  <label className="mb-1 mt-3 block text-xs font-medium text-gray-400">
+                    Título (EN) <span className="text-gray-600">(opcional)</span>
                   </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="marketType"
-                      checked={marketType === 'multi'}
-                      onChange={() => setMarketType('multi')}
-                      className="text-emerald-600 accent-emerald-500"
-                    />
-                    <span className="text-gray-300">Multiple choice</span>
+                  <input
+                    type="text"
+                    value={o.titleEn}
+                    onChange={(e) => updateOutcome(i, 'titleEn', e.target.value)}
+                    placeholder="e.g. Public safety"
+                    maxLength={OUTCOME_TITLE_MAX}
+                    className={`w-full ${ccInputSm}`}
+                  />
+                  <label className="mb-1 mt-3 block text-xs font-medium text-gray-400">
+                    Subtítulo (ES) <span className="text-gray-600">(opcional)</span>
                   </label>
+                  <input
+                    type="text"
+                    value={o.subtitle}
+                    onChange={(e) => updateOutcome(i, 'subtitle', e.target.value)}
+                    placeholder="Detalle breve"
+                    maxLength={OUTCOME_SUBTITLE_MAX}
+                    className={`w-full ${ccInputSm}`}
+                  />
+                  <label className="mb-1 mt-3 block text-xs font-medium text-gray-400">
+                    Subtítulo (EN) <span className="text-gray-600">(opcional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={o.subtitleEn}
+                    onChange={(e) => updateOutcome(i, 'subtitleEn', e.target.value)}
+                    placeholder="Brief detail"
+                    maxLength={OUTCOME_SUBTITLE_MAX}
+                    className={`w-full ${ccInputSm}`}
+                  />
                 </div>
-              </div>
+              ))}
+              <button
+                type="button"
+                onClick={addOutcome}
+                className="flex items-center gap-1 text-sm text-emerald-400 hover:text-emerald-300"
+              >
+                <Plus className="w-4 h-4" />
+                Agregar opción
+              </button>
             </div>
           </section>
 
-          {/* English Translation */}
-          <details className="mt-6 border border-cc-border rounded-lg p-4 bg-cc-bg/80">
+          <details className="border border-cc-border rounded-lg p-4 bg-cc-bg/80">
             <summary className="text-gray-300 cursor-pointer font-medium">
-              🌐 English Translation (optional)
+              Traducción al inglés (opcional)
             </summary>
             <div className="mt-4 space-y-4">
               <div>
-                <label className="block text-sm text-cc-text-secondary">English Title</label>
+                <label className="block text-sm text-cc-text-secondary">Título en inglés</label>
                 <input
                   type="text"
                   value={enTitle}
                   onChange={(e) => setEnTitle(e.target.value)}
-                  placeholder="English version of the market question"
                   className={`mt-1 ${ccInput}`}
                 />
               </div>
               <div>
                 <label className="block text-sm text-cc-text-secondary">
-                  English Short Description
+                  Descripción corta en inglés
                 </label>
-                <p className="text-xs text-cc-text-muted">
-                  ≤280 chars. Shown above the vote panel for English locale.
-                </p>
                 <textarea
                   value={enDescriptionShort}
                   onChange={(e) =>
-                    setEnDescriptionShort(
-                      e.target.value.slice(0, DESCRIPTION_SHORT_MAX)
-                    )
+                    setEnDescriptionShort(e.target.value.slice(0, DESCRIPTION_SHORT_MAX))
                   }
-                  placeholder="2-sentence English version of the short description"
                   rows={2}
                   maxLength={DESCRIPTION_SHORT_MAX}
                   className={`mt-1 ${ccInput} resize-none`}
                 />
               </div>
               <div>
-                <label className="block text-sm text-cc-text-secondary">English Description</label>
+                <label className="block text-sm text-cc-text-secondary">Contexto en inglés</label>
                 <textarea
                   value={enDescription}
                   onChange={(e) => setEnDescription(e.target.value)}
-                  placeholder="English description"
                   rows={3}
-                  className={`mt-1 ${ccInput} resize-none`}
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-cc-text-secondary">English Resolution Criteria</label>
-                <textarea
-                  value={enResolutionCriteria}
-                  onChange={(e) => setEnResolutionCriteria(e.target.value)}
-                  placeholder="English resolution criteria"
-                  rows={2}
                   className={`mt-1 ${ccInput} resize-none`}
                 />
               </div>
             </div>
           </details>
 
-          {marketType === 'multi' && (
-            <div className={ccSection}>
-              <div className="mb-3">
-                <label className="block text-sm font-medium text-gray-300">
-                  Opciones — título + subtítulo
-                </label>
-                <p className="mt-1 text-xs text-cc-text-muted">
-                  Pon sólo el título corto en el primer campo. Si necesitas dar
-                  contexto, ponlo en el subtítulo. No metas paréntesis ni la
-                  traducción al inglés dentro del título.
-                </p>
-              </div>
-              <div className="space-y-4">
-                {outcomes.map((o, i) => (
-                  <div
-                    key={i}
-                    className="rounded-lg border border-[#2d3748] bg-[#0f1419]/60 p-3"
-                  >
-                    <div className="mb-2 flex items-center justify-between">
-                      <span className="text-[10px] uppercase tracking-wide text-gray-500">
-                        Opción {i + 1}
-                      </span>
-                      {o.subtitle.length > 0 && (
-                        <span
-                          className={`text-[10px] tabular-nums ${
-                            o.subtitle.length > OUTCOME_SUBTITLE_MAX
-                              ? 'text-red-400'
-                              : 'text-gray-500'
-                          }`}
-                        >
-                          {o.subtitle.length}/{OUTCOME_SUBTITLE_MAX}
-                        </span>
-                      )}
-                    </div>
-
-                    <label className="mb-1 block text-xs font-medium text-gray-400">
-                      Título <span className="text-red-400">*</span>
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={o.title}
-                        onChange={(e) => updateOutcomeTitle(i, e.target.value)}
-                        placeholder={`Ej. Seguridad pública`}
-                        maxLength={OUTCOME_TITLE_MAX}
-                        className={`flex-1 ${ccInputSm}`}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeOutcome(i)}
-                        disabled={outcomes.length <= 2}
-                        className="p-2 text-gray-400 hover:text-red-400 disabled:opacity-50"
-                        title="Quitar opción"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    <label className="mb-1 mt-3 block text-xs font-medium text-gray-400">
-                      Subtítulo <span className="text-gray-600">(opcional)</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={o.subtitle}
-                      onChange={(e) => updateOutcomeSubtitle(i, e.target.value)}
-                      placeholder="Detalle breve, ej. 'Policía de proximidad, videovigilancia'"
-                      maxLength={OUTCOME_SUBTITLE_MAX}
-                      className={`w-full ${ccInputSm}`}
-                    />
-
-                    {o.subtitle.trim() && (
-                      <div className="mt-3 rounded-md border border-white/5 bg-black/30 px-3 py-2">
-                        <p className="text-sm font-medium text-white">
-                          {o.title || `Opción ${i + 1}`}
-                        </p>
-                        <p className="mt-1 text-sm leading-snug text-gray-400">
-                          {o.subtitle}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  onClick={addOutcome}
-                  className="flex items-center gap-1 text-sm text-emerald-400 hover:text-emerald-300"
-                >
-                  <Plus className="w-4 h-4" />
-                  Agregar opción
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Verification */}
           <section className={ccSection}>
-            <h2 className="text-lg font-semibold text-white mb-4">Verification</h2>
+            <h2 className="text-lg font-semibold text-white mb-4">Relevancia y fuentes</h2>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                  Verification sources
+                  Etiquetas de relevancia
+                </label>
+                <p className="text-xs text-cc-text-muted mb-1.5">
+                  Palabras clave que ayudan a descubrir y filtrar este Pulse (ej. presupuesto,
+                  movilidad, clima).
+                </p>
+                <input
+                  type="text"
+                  value={tagsInput}
+                  onChange={(e) => setTagsInput(e.target.value)}
+                  placeholder="presupuesto, movilidad, participación"
+                  className={ccInput}
+                />
+                {tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {tags.map((tag, i) => (
+                      <span
+                        key={i}
+                        className="px-2 py-1 bg-gray-800 rounded text-xs text-gray-300 border border-cc-border/50"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">
+                  Fuentes de verificación
                 </label>
                 <div className="space-y-2">
                   {verificationSources.map((s, i) => (
@@ -1118,14 +833,14 @@ export default function CreateMarketPage() {
                         type="text"
                         value={s.name}
                         onChange={(e) => updateVerificationSource(i, 'name', e.target.value)}
-                        placeholder="Source name"
+                        placeholder="Nombre de la fuente"
                         className={`flex-1 ${ccInputSm}`}
                       />
                       <input
                         type="url"
                         value={s.url}
                         onChange={(e) => updateVerificationSource(i, 'url', e.target.value)}
-                        placeholder="URL (optional)"
+                        placeholder="URL (opcional)"
                         className={`flex-1 ${ccInputSm}`}
                       />
                       <button
@@ -1143,41 +858,18 @@ export default function CreateMarketPage() {
                     className="flex items-center gap-1 text-sm text-emerald-400 hover:text-emerald-300"
                   >
                     <Plus className="w-4 h-4" />
-                    Add source
+                    Agregar fuente
                   </button>
                 </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">Tags</label>
-                <input
-                  type="text"
-                  value={tagsInput}
-                  onChange={(e) => setTagsInput(e.target.value)}
-                  placeholder="economia, banxico, tasas"
-                  className={ccInput}
-                />
-                {tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {tags.map((tag, i) => (
-                      <span
-                        key={i}
-                        className="px-2 py-1 bg-gray-800 rounded text-xs text-gray-300 border border-cc-border/50"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                )}
               </div>
             </div>
           </section>
 
-          {/* Rich content */}
           <section className={ccSection}>
-            <h2 className="text-lg font-semibold text-white mb-4">Rich content</h2>
+            <h2 className="text-lg font-semibold text-white mb-4">Contenido adicional</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">Links</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Enlaces</label>
                 <div className="space-y-2">
                   {links.map((l, i) => (
                     <div key={i} className="flex gap-2">
@@ -1192,7 +884,7 @@ export default function CreateMarketPage() {
                         type="text"
                         value={l.label}
                         onChange={(e) => updateLink(i, 'label', e.target.value)}
-                        placeholder="Label"
+                        placeholder="Etiqueta"
                         className={`w-28 ${ccInputSm}`}
                       />
                       <button
@@ -1210,19 +902,19 @@ export default function CreateMarketPage() {
                     className="flex items-center gap-1 text-sm text-emerald-400 hover:text-emerald-300"
                   >
                     <Link2 className="w-4 h-4" />
-                    Add link
+                    Agregar enlace
                   </button>
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                  Related markets
+                  Pulses relacionados
                 </label>
                 <input
                   type="text"
                   value={relatedSearch}
                   onChange={(e) => setRelatedSearch(e.target.value)}
-                  placeholder="Search markets..."
+                  placeholder="Buscar pulses..."
                   className={`${ccInput} mb-2`}
                 />
                 {relatedOptions.length > 0 && (
@@ -1262,70 +954,44 @@ export default function CreateMarketPage() {
             </div>
           </section>
 
-          {/* Sponsorship */}
           <section className={ccSection}>
-            <h2 className="text-lg font-semibold text-white mb-4">Sponsorship</h2>
+            <h2 className="text-lg font-semibold text-white mb-4">Patrocinio</h2>
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                  Sponsor name
-                </label>
-                <input
-                  type="text"
-                  value={sponsorName}
-                  onChange={(e) => setSponsorName(e.target.value)}
-                  placeholder="Optional"
-                  className={ccInput}
-                />
-              </div>
+              <input
+                type="text"
+                value={sponsorName}
+                onChange={(e) => setSponsorName(e.target.value)}
+                placeholder="Nombre del patrocinador (opcional)"
+                className={ccInput}
+              />
               <LogoUpload
                 currentLogoUrl={sponsorLogoUrl.trim() || null}
                 onUpload={(u) => setSponsorLogoUrl(u)}
                 onClear={() => setSponsorLogoUrl('')}
-                label="Sponsor logo"
-                hint="Upload or paste a URL in the field below after upload if needed."
+                label="Logo del patrocinador"
               />
-              <div>
-                <label className="mb-1 block text-xs text-cc-text-muted">
-                  Or paste sponsor logo URL
-                </label>
-                <input
-                  type="url"
-                  value={sponsorLogoUrl}
-                  onChange={(e) => setSponsorLogoUrl(e.target.value)}
-                  placeholder="https://..."
-                  className={ccInput}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                  Sponsorship amount (MXN)
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  value={sponsorshipAmountMxn}
-                  onChange={(e) => setSponsorshipAmountMxn(e.target.value)}
-                  placeholder="Optional"
-                  className={ccInput}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                  Conscious Fund allocation %
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  max={100}
-                  step={0.1}
-                  value={consciousFundPercentage}
-                  onChange={(e) =>
-                    setConsciousFundPercentage(Math.min(100, Math.max(0, Number(e.target.value) || 20)))
-                  }
-                  className={ccInput}
-                />
-              </div>
+              <input
+                type="number"
+                min={0}
+                value={sponsorshipAmountMxn}
+                onChange={(e) => setSponsorshipAmountMxn(e.target.value)}
+                placeholder="Monto de patrocinio (MXN, opcional)"
+                className={ccInput}
+              />
+              <input
+                type="number"
+                min={0}
+                max={100}
+                step={0.1}
+                value={consciousFundPercentage}
+                onChange={(e) =>
+                  setConsciousFundPercentage(
+                    Math.min(100, Math.max(0, Number(e.target.value) || 20))
+                  )
+                }
+                placeholder="Porcentaje al Conscious Fund"
+                className={ccInput}
+              />
             </div>
           </section>
 
@@ -1334,125 +1000,47 @@ export default function CreateMarketPage() {
               type="button"
               onClick={(e) => handleSubmit(e, 'draft')}
               disabled={!!submitting}
-              className="flex-1 px-6 py-3 border-2 border-emerald-500 text-emerald-400 rounded-lg font-medium hover:bg-emerald-500/10 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-6 py-3 border-2 border-emerald-500 text-emerald-400 rounded-lg font-medium hover:bg-emerald-500/10 transition disabled:opacity-50"
             >
-              {submitting === 'draft' ? 'Guardando...' : 'Guardar como borrador'}
+              {submitting === 'draft' ? 'Guardando...' : 'Guardar borrador'}
             </button>
             <button
               type="button"
               onClick={(e) => handleSubmit(e, 'published')}
               disabled={!!submitting}
-              className="flex-1 px-6 py-3 rounded-lg font-medium bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-6 py-3 rounded-lg font-medium bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-50"
             >
-              {submitting === 'published' ? 'Publicando...' : 'Publicar ahora'}
+              {submitting === 'published' ? 'Publicando...' : 'Publicar Pulse'}
             </button>
           </div>
         </div>
 
-        {/* Preview */}
         <div className="lg:col-span-1">
           <div className="sticky top-6 space-y-4">
-            <h3 className="text-sm font-medium text-cc-text-secondary">Preview</h3>
-            {/* Card preview (markets list) */}
-            <div className="pointer-events-none select-none">
-              <p className="text-xs text-cc-text-muted mb-1">Card (markets list)</p>
-              <div className="bg-cc-card border border-cc-border rounded-xl p-5 hover:border-emerald-500/30 transition-colors">
-                <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 mb-3">
-                  {CATEGORIES.find((c) => c.id === (category || 'world'))?.label || 'Category'}
-                </span>
-                <h3 className="text-white font-semibold line-clamp-2 mb-3 min-h-[2.5rem] text-base leading-snug">
-                  {title || 'Market title'}
-                </h3>
-                {marketType === 'binary' ? (
-                  <div className="grid grid-cols-2 gap-2 mt-1">
-                    <div className="h-9 rounded-lg bg-gray-800/50 relative overflow-hidden">
-                      <div
-                        className="absolute left-0 top-0 h-full rounded-lg bg-emerald-500/20"
-                        style={{ width: `${initialProbability}%` }}
-                      />
-                      <div className="relative z-10 flex justify-between items-center px-3 h-full">
-                        <span className="text-sm text-gray-200">YES</span>
-                        <span className="text-sm font-semibold text-white">{initialProbability}%</span>
-                      </div>
-                    </div>
-                    <div className="h-9 rounded-lg bg-gray-800/50 relative overflow-hidden">
-                      <div
-                        className="absolute left-0 top-0 h-full rounded-lg bg-emerald-500/20"
-                        style={{ width: `${100 - initialProbability}%` }}
-                      />
-                      <div className="relative z-10 flex justify-between items-center px-3 h-full">
-                        <span className="text-sm text-gray-200">NO</span>
-                        <span className="text-sm font-semibold text-white">{100 - initialProbability}%</span>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-1.5 mt-2">
-                    {outcomes
-                      .map((o, i) => ({ o, i }))
-                      .filter(({ o }) => o.title.trim())
-                      .slice(0, 4)
-                      .map(({ o, i }) => (
-                        <div key={i} className="flex items-center gap-3">
-                          <span className="text-sm text-gray-300 w-[100px] truncate">
-                            {o.title || `Option ${i + 1}`}
-                          </span>
-                          <div className="flex-1 h-7 rounded bg-gray-800/50 relative overflow-hidden">
-                            <div
-                              className="absolute left-0 top-0 h-full rounded bg-emerald-500/20"
-                              style={{
-                                width: `${Math.max(
-                                  8,
-                                  100 /
-                                    Math.max(
-                                      2,
-                                      outcomes.filter((x) => x.title.trim()).length
-                                    )
-                                )}%`,
-                              }}
-                            />
-                          </div>
-                          <span className="text-sm font-semibold text-white w-10 text-right">—</span>
-                        </div>
-                      ))}
-                  </div>
+            <h3 className="text-sm font-medium text-cc-text-secondary">Vista previa</h3>
+            <div className="pointer-events-none select-none bg-cc-card border border-cc-border rounded-xl p-5">
+              <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 mb-3">
+                {getPulseCategoryLabel(category, 'es')}
+              </span>
+              <h3 className="text-white font-semibold line-clamp-2 mb-3 text-base leading-snug">
+                {title || 'Pregunta del Pulse'}
+              </h3>
+              <p className="text-sm text-gray-300 mb-3 line-clamp-3">
+                {descriptionShort.trim() || (
+                  <span className="italic text-cc-text-muted">Descripción corta</span>
                 )}
-                <div className="mt-3 text-xs text-gray-500">
-                  {resolutionDate
-                    ? `Closes ${new Date(resolutionDate).toLocaleDateString()}`
-                    : 'No closing date'}
-                </div>
+              </p>
+              <div className="flex flex-col gap-1.5">
+                {outcomes
+                  .filter((o) => o.title.trim())
+                  .slice(0, 4)
+                  .map((o, i) => (
+                    <div key={i} className="text-sm text-gray-400 truncate">
+                      · {o.title}
+                    </div>
+                  ))}
               </div>
-            </div>
-            {/* Detail preview (description + resolution criteria) */}
-            <div className="pointer-events-none select-none">
-              <p className="text-xs text-cc-text-muted mb-1">Detail (description & criteria)</p>
-              <div className="bg-cc-card border border-cc-border rounded-xl p-4 space-y-3">
-                <div>
-                  <p className="text-cc-text-muted text-xs font-medium mb-1">
-                    Short description (above vote)
-                  </p>
-                  <p className="text-base leading-relaxed text-gray-200">
-                    {descriptionShort.trim() || (
-                      <span className="italic text-cc-text-muted">—</span>
-                    )}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-cc-text-muted text-xs font-medium mb-1">
-                    Description (collapsible Contexto card)
-                  </p>
-                  <p className="text-white text-sm line-clamp-3">
-                    {description || <span className="italic text-cc-text-muted">—</span>}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-cc-text-muted text-xs font-medium mb-1">Resolution criteria</p>
-                  <p className="text-white text-sm line-clamp-3">
-                    {resolutionCriteria || <span className="italic text-cc-text-muted">—</span>}
-                  </p>
-                </div>
-              </div>
+              <p className="mt-3 text-xs text-emerald-400">Votar con certeza →</p>
             </div>
           </div>
         </div>

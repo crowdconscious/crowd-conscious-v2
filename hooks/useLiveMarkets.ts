@@ -7,7 +7,9 @@ import type { Database } from '@/types/database'
 type MarketRow = Database['public']['Tables']['prediction_markets']['Row'] & {
   archived_at?: string | null
 }
-export type MarketOutcomeRow = Database['public']['Tables']['market_outcomes']['Row']
+import type { MarketOutcome } from '@/components/live/MicroMarketCard'
+
+export type MarketOutcomeRow = MarketOutcome
 
 export type MarketWithOutcomes = MarketRow & { outcomes: MarketOutcomeRow[] }
 

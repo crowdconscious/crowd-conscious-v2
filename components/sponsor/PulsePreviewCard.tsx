@@ -19,23 +19,7 @@ type Props = {
   sponsorName: string
   sponsorLogoUrl: string | null
   options: string[]
-  resolutionDate: string
   language: Language
-}
-
-function formatCloseDate(iso: string, language: Language): string {
-  if (!iso) return '—'
-  try {
-    const d = new Date(iso)
-    if (Number.isNaN(d.getTime())) return iso
-    return d.toLocaleDateString(language === 'es' ? 'es-MX' : 'en-US', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    })
-  } catch {
-    return iso
-  }
 }
 
 export function PulsePreviewCard({
@@ -44,7 +28,6 @@ export function PulsePreviewCard({
   sponsorName,
   sponsorLogoUrl,
   options,
-  resolutionDate,
   language,
 }: Props) {
   const trimmedTitle = title.trim() || (language === 'es' ? 'Tu pregunta aquí' : 'Your question here')
@@ -97,9 +80,6 @@ export function PulsePreviewCard({
             {language === 'es' ? 'Agrega opciones para tus votantes.' : 'Add options for voters.'}
           </p>
         )}
-        <p className="text-xs text-slate-500">
-          {language === 'es' ? 'Cierra el' : 'Closes'} {formatCloseDate(resolutionDate, language)}
-        </p>
         <span className="inline-block text-xs font-medium text-emerald-400">
           {language === 'es' ? 'Ver resultados en vivo →' : 'View live results →'}
         </span>

@@ -11,40 +11,51 @@ import { useSponsorT } from '@/lib/i18n/sponsor-dashboard'
 type PulseAiSuggestion = {
   context: string
   options: string[]
-  resolution_criteria: string
-  suggested_duration_days: number
   improved_title?: string
 }
+
+type OutcomeDraft = {
+  title: string
+  subtitle: string
+  titleEn: string
+  subtitleEn: string
+}
+
+const emptyOutcome = (): OutcomeDraft => ({
+  title: '',
+  subtitle: '',
+  titleEn: '',
+  subtitleEn: '',
+})
 
 const inputClass =
   'w-full bg-[#0f1419] border border-[#2d3748] rounded-lg px-4 py-3 text-white placeholder:text-gray-500 focus:border-emerald-500/50 focus:outline-none focus:ring-1 focus:ring-emerald-500/20'
 const textareaClass =
   'w-full bg-[#0f1419] border border-[#2d3748] rounded-lg px-4 py-3 text-white placeholder:text-gray-500 resize-y min-h-[80px] focus:border-emerald-500/50 focus:outline-none focus:ring-1 focus:ring-emerald-500/20'
-const dateClass =
-  'w-full bg-[#0f1419] border border-[#2d3748] rounded-lg px-4 py-3 text-white [color-scheme:dark] focus:border-emerald-500/50 focus:outline-none focus:ring-1 focus:ring-emerald-500/20'
+const inputSmClass =
+  'w-full bg-[#0f1419] border border-[#2d3748] rounded-lg px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:border-emerald-500/50 focus:outline-none focus:ring-1 focus:ring-emerald-500/20'
 const helpClass = 'text-gray-500 text-xs mt-1'
+
+const OUTCOME_TITLE_MAX = 80
+const OUTCOME_SUBTITLE_MAX = 200
 
 type Props = {
   token: string
   companyName: string
   initialLogoUrl: string | null
-  /** Absolute origin of the app — `${NEXT_PUBLIC_APP_URL}` normalised. Used
-   * for share links + QR rendering in the success modal. */
   appOrigin: string
 }
 
 type DraftShape = {
   title: string
   description: string
-  resolutionCriteria: string
-  resolutionDate: string
-  options: string[]
+  options: OutcomeDraft[]
   logoUrl: string
   coverImageUrl: string
   savedAt: string
 }
 
-const DRAFT_STALE_MS = 1000 * 60 * 60 * 24 * 14 // 14 days — past this we discard silently
+const DRAFT_STALE_MS = 1000 * 60 * 60 * 24 * 14
 const draftKeyFor = (token: string) => `sponsor_pulse_draft_${token.slice(0, 8)}`
 
 function FieldLabel({
@@ -79,9 +90,7 @@ export default function CreatePulseForm({
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [resolutionCriteria, setResolutionCriteria] = useState('')
-  const [resolutionDate, setResolutionDate] = useState('')
-  const [options, setOptions] = useState<string[]>(['', ''])
+  const [options, setOptions] = useState<OutcomeDraft[]>([emptyOutcome(), emptyOutcome()])
   const [logoUrl, setLogoUrl] = useState(() => initialLogoUrl?.trim() || '')
   const [coverImageUrl, setCoverImageUrl] = useState('')
 
@@ -116,7 +125,7 @@ export default function CreatePulseForm({
     try {
       const raw = window.localStorage.getItem(draftKey)
       if (!raw) return
-      const parsed = JSON.parse(raw) as DraftShape
+      const parsed = JSON.parse(raw) as DraftShape & { resolutionCriteria?: string; resolutionDate?: string; options?: unknown }
       if (!parsed || typeof parsed !== 'object') return
       const savedAt = parsed.savedAt ? new Date(parsed.savedAt).getTime() : 0
       if (!savedAt || Date.now() - savedAt > DRAFT_STALE_MS) {
@@ -126,11 +135,13 @@ export default function CreatePulseForm({
       const hasContent =
         parsed.title?.trim() ||
         parsed.description?.trim() ||
-        parsed.options?.some((o) => o?.trim())
+        parsed.options?.some((o: unknown) =>
+          typeof o === 'string' ? o.trim() : (o as OutcomeDraft)?.title?.trim()
+        )
       if (!hasContent) return
       setDraftPrompt(parsed)
     } catch {
-      /* ignore corrupted draft */
+      /* ignore */
     }
   }, [draftKey])
 
@@ -138,12 +149,10 @@ export default function CreatePulseForm({
     formDirtyRef.current = Boolean(
       title.trim() ||
         description.trim() ||
-        resolutionCriteria.trim() ||
-        resolutionDate ||
-        options.some((o) => o.trim()) ||
+        options.some((o) => o.title.trim() || o.subtitle.trim()) ||
         coverImageUrl.trim()
     )
-  }, [title, description, resolutionCriteria, resolutionDate, options, coverImageUrl])
+  }, [title, description, options, coverImageUrl])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -154,8 +163,6 @@ export default function CreatePulseForm({
       const payload: DraftShape = {
         title,
         description,
-        resolutionCriteria,
-        resolutionDate,
         options,
         logoUrl,
         coverImageUrl,
@@ -166,22 +173,11 @@ export default function CreatePulseForm({
         setDraftIndicator(true)
         window.setTimeout(() => setDraftIndicator(false), 1500)
       } catch {
-        /* localStorage disabled — ignore */
+        /* ignore */
       }
     }, 10_000)
     return () => window.clearInterval(id)
-  }, [
-    title,
-    description,
-    resolutionCriteria,
-    resolutionDate,
-    options,
-    logoUrl,
-    coverImageUrl,
-    draftKey,
-    marketId,
-    draftPrompt,
-  ])
+  }, [title, description, options, logoUrl, coverImageUrl, draftKey, marketId, draftPrompt])
 
   const clearDraft = useCallback(() => {
     if (typeof window === 'undefined') return
@@ -192,17 +188,28 @@ export default function CreatePulseForm({
     }
   }, [draftKey])
 
+  const normalizeLegacyOptions = (raw: unknown): OutcomeDraft[] => {
+    if (!Array.isArray(raw) || raw.length < 2) return [emptyOutcome(), emptyOutcome()]
+    return raw.map((item) => {
+      if (typeof item === 'string') return { ...emptyOutcome(), title: item }
+      if (item && typeof item === 'object' && 'title' in item) {
+        const o = item as OutcomeDraft
+        return {
+          title: o.title ?? '',
+          subtitle: o.subtitle ?? '',
+          titleEn: o.titleEn ?? '',
+          subtitleEn: o.subtitleEn ?? '',
+        }
+      }
+      return emptyOutcome()
+    })
+  }
+
   const applyDraft = useCallback(() => {
     if (!draftPrompt) return
     setTitle(draftPrompt.title ?? '')
     setDescription(draftPrompt.description ?? '')
-    setResolutionCriteria(draftPrompt.resolutionCriteria ?? '')
-    setResolutionDate(draftPrompt.resolutionDate ?? '')
-    setOptions(
-      Array.isArray(draftPrompt.options) && draftPrompt.options.length >= 2
-        ? draftPrompt.options
-        : ['', '']
-    )
+    setOptions(normalizeLegacyOptions(draftPrompt.options))
     if (draftPrompt.logoUrl) setLogoUrl(draftPrompt.logoUrl)
     if (draftPrompt.coverImageUrl) setCoverImageUrl(draftPrompt.coverImageUrl)
     setDraftPrompt(null)
@@ -220,18 +227,16 @@ export default function CreatePulseForm({
       const res = await fetch('/api/sponsor/ai-assist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: title.trim(),
-          token,
-          companyName,
-        }),
+        body: JSON.stringify({ title: title.trim(), token, companyName }),
       })
       const data = (await res.json()) as PulseAiSuggestion & { error?: string }
       if (!res.ok) throw new Error(data.error || 'Error')
       if (data.context && Array.isArray(data.options) && data.options.length >= 2) {
         setAiSuggestion(data as PulseAiSuggestion)
       } else {
-        setAiError(language === 'es' ? 'Respuesta incompleta. Intenta de nuevo.' : 'Incomplete response. Try again.')
+        setAiError(
+          language === 'es' ? 'Respuesta incompleta. Intenta de nuevo.' : 'Incomplete response. Try again.'
+        )
       }
     } catch (err) {
       setAiError(err instanceof Error ? err.message : 'Error')
@@ -243,27 +248,31 @@ export default function CreatePulseForm({
   const applyAISuggestion = () => {
     if (!aiSuggestion) return
     if (aiSuggestion.context) setDescription(aiSuggestion.context)
-    if (aiSuggestion.resolution_criteria) setResolutionCriteria(aiSuggestion.resolution_criteria)
     if (aiSuggestion.improved_title?.trim()) setTitle(aiSuggestion.improved_title.trim())
     if (aiSuggestion.options?.length) {
-      const next = aiSuggestion.options.map((o) => o.trim()).filter(Boolean)
+      const next = aiSuggestion.options.map((o) => ({ ...emptyOutcome(), title: o.trim() })).filter((o) => o.title)
       if (next.length >= 2) setOptions(next.length <= 6 ? next : next.slice(0, 6))
     }
-    if (aiSuggestion.suggested_duration_days) {
-      const close = new Date()
-      close.setDate(close.getDate() + aiSuggestion.suggested_duration_days)
-      const pad = (n: number) => String(n).padStart(2, '0')
-      const local = `${close.getFullYear()}-${pad(close.getMonth() + 1)}-${pad(close.getDate())}T${pad(close.getHours())}:${pad(close.getMinutes())}`
-      setResolutionDate(local)
-    }
     setAiSuggestion(null)
+  }
+
+  const updateOption = (i: number, field: keyof OutcomeDraft, value: string) => {
+    setOptions((prev) =>
+      prev.map((o, j) => {
+        if (j !== i) return o
+        if (field === 'title') return { ...o, title: value.slice(0, OUTCOME_TITLE_MAX) }
+        if (field === 'subtitle') return { ...o, subtitle: value.slice(0, OUTCOME_SUBTITLE_MAX) }
+        if (field === 'titleEn') return { ...o, titleEn: value.slice(0, OUTCOME_TITLE_MAX) }
+        return { ...o, subtitleEn: value.slice(0, OUTCOME_SUBTITLE_MAX) }
+      })
+    )
   }
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     setLoading(true)
-    const outcomeLabels = options.map((s) => s.trim()).filter(Boolean)
+    const clean = options.filter((o) => o.title.trim())
     try {
       const res = await fetch(`/api/dashboard/sponsor/${encodeURIComponent(token)}/create-pulse`, {
         method: 'POST',
@@ -271,9 +280,12 @@ export default function CreatePulseForm({
         body: JSON.stringify({
           title: title.trim(),
           description: description.trim(),
-          resolution_criteria: resolutionCriteria.trim(),
-          resolution_date: resolutionDate,
-          outcomes: outcomeLabels,
+          outcomes: clean.map((o) => ({
+            title: o.title.trim(),
+            subtitle: o.subtitle.trim() || null,
+            labelEn: o.titleEn.trim() || null,
+            subtitleEn: o.subtitleEn.trim() || null,
+          })),
           cover_image_url: coverImageUrl.trim() || null,
           sponsor_logo_url: logoUrl.trim() || null,
         }),
@@ -289,8 +301,9 @@ export default function CreatePulseForm({
     }
   }
 
-  const cleanOptionCount = options.filter((o) => o.trim()).length
+  const cleanOptionCount = options.filter((o) => o.title.trim()).length
   const previewReady = title.trim().length > 0 && cleanOptionCount >= 2
+  const previewOptions = options.map((o) => o.title).filter((s) => s.trim())
 
   if (marketId) {
     return (
@@ -303,9 +316,7 @@ export default function CreatePulseForm({
           setMarketId(null)
           setTitle('')
           setDescription('')
-          setResolutionCriteria('')
-          setResolutionDate('')
-          setOptions(['', ''])
+          setOptions([emptyOutcome(), emptyOutcome()])
           setCoverImageUrl('')
           setError('')
         }}
@@ -414,10 +425,6 @@ export default function CreatePulseForm({
                     ))}
                   </div>
                 </div>
-                <div className="rounded-lg bg-[#0f1419] p-3">
-                  <span className="text-xs text-gray-500">{t('create_form.ai_resolution')}</span>
-                  <p className="mt-1 text-sm text-gray-300">{aiSuggestion.resolution_criteria}</p>
-                </div>
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
@@ -440,10 +447,7 @@ export default function CreatePulseForm({
         ) : null}
 
         <div>
-          <FieldLabel
-            label={t('create_form.field_logo_label')}
-            tip={t('create_form.field_logo_tip')}
-          />
+          <FieldLabel label={t('create_form.field_logo_label')} tip={t('create_form.field_logo_tip')} />
           <ImageUpload
             currentUrl={logoUrl.trim() || null}
             onUpload={(url) => setLogoUrl(url)}
@@ -456,10 +460,7 @@ export default function CreatePulseForm({
         </div>
 
         <div>
-          <FieldLabel
-            label={t('create_form.field_cover_label')}
-            tip={t('create_form.field_cover_tip')}
-          />
+          <FieldLabel label={t('create_form.field_cover_label')} tip={t('create_form.field_cover_tip')} />
           <ImageUpload
             currentUrl={coverImageUrl.trim() || null}
             onUpload={(url) => setCoverImageUrl(url)}
@@ -489,70 +490,74 @@ export default function CreatePulseForm({
 
         <div>
           <FieldLabel
-            label={t('create_form.field_resolution_label')}
-            tip={t('create_form.field_resolution_tip')}
-            htmlFor="pulse-resolution"
-          />
-          <textarea
-            id="pulse-resolution"
-            value={resolutionCriteria}
-            onChange={(e) => setResolutionCriteria(e.target.value)}
-            rows={3}
-            placeholder={t('create_form.field_resolution_placeholder')}
-            className={textareaClass}
-          />
-        </div>
-
-        <div>
-          <FieldLabel
-            label={t('create_form.field_close_label')}
-            tip={t('create_form.field_close_tip')}
-            required
-            htmlFor="pulse-close"
-          />
-          <input
-            id="pulse-close"
-            type="datetime-local"
-            value={resolutionDate}
-            onChange={(e) => setResolutionDate(e.target.value)}
-            required
-            className={dateClass}
-          />
-        </div>
-
-        <div>
-          <FieldLabel
             label={t('create_form.field_options_label')}
             tip={t('create_form.field_options_tip')}
             required
           />
-          <div className="space-y-2">
+          <div className="space-y-4">
             {options.map((opt, i) => {
               const placeholder =
                 optionPlaceholders[i] ??
                 t('create_form.field_options_placeholder_n', { n: i + 1 })
               return (
-                <div key={i} className="flex gap-2">
+                <div
+                  key={i}
+                  className="rounded-lg border border-[#2d3748] bg-[#0f1419]/50 p-3"
+                >
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-[10px] uppercase tracking-wide text-gray-500">
+                      {t('create_form.field_options_label')} {i + 1}
+                    </span>
+                    {options.length > 2 ? (
+                      <button
+                        type="button"
+                        onClick={() => setOptions(options.filter((_, j) => j !== i))}
+                        className="text-gray-500 hover:text-red-400"
+                        aria-label={t('create_form.field_options_remove')}
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    ) : null}
+                  </div>
+                  <label className="mb-1 block text-xs text-gray-400">
+                    {t('create_form.field_options_title_label')} (ES) *
+                  </label>
                   <input
-                    value={opt}
-                    onChange={(e) => {
-                      const next = [...options]
-                      next[i] = e.target.value
-                      setOptions(next)
-                    }}
+                    value={opt.title}
+                    onChange={(e) => updateOption(i, 'title', e.target.value)}
                     placeholder={placeholder}
-                    className={`${inputClass} flex-1`}
+                    className={inputSmClass}
                   />
-                  {options.length > 2 ? (
-                    <button
-                      type="button"
-                      onClick={() => setOptions(options.filter((_, j) => j !== i))}
-                      className="shrink-0 px-2 text-gray-500 hover:text-red-400"
-                      aria-label={t('create_form.field_options_remove')}
-                    >
-                      ✕
-                    </button>
-                  ) : null}
+                  <label className="mb-1 mt-2 block text-xs text-gray-400">
+                    {t('create_form.field_options_title_label')} (EN){' '}
+                    {t('create_form.field_options_subtitle_optional')}
+                  </label>
+                  <input
+                    value={opt.titleEn}
+                    onChange={(e) => updateOption(i, 'titleEn', e.target.value)}
+                    placeholder="e.g. Public safety"
+                    className={inputSmClass}
+                  />
+                  <label className="mb-1 mt-2 block text-xs text-gray-400">
+                    {t('create_form.field_options_subtitle_label')} (ES){' '}
+                    {t('create_form.field_options_subtitle_optional')}
+                  </label>
+                  <input
+                    value={opt.subtitle}
+                    onChange={(e) => updateOption(i, 'subtitle', e.target.value)}
+                    placeholder={t('create_form.field_options_subtitle_placeholder')}
+                    className={inputSmClass}
+                  />
+                  <label className="mb-1 mt-2 block text-xs text-gray-400">
+                    {t('create_form.field_options_subtitle_label')} (EN){' '}
+                    {t('create_form.field_options_subtitle_optional')}
+                  </label>
+                  <input
+                    value={opt.subtitleEn}
+                    onChange={(e) => updateOption(i, 'subtitleEn', e.target.value)}
+                    placeholder="Brief detail"
+                    className={inputSmClass}
+                  />
                 </div>
               )
             })}
@@ -560,7 +565,7 @@ export default function CreatePulseForm({
           {options.length < 6 ? (
             <button
               type="button"
-              onClick={() => setOptions([...options, ''])}
+              onClick={() => setOptions([...options, emptyOutcome()])}
               className="mt-2 text-sm text-emerald-400 hover:underline"
             >
               {t('create_form.field_options_add')}
@@ -599,8 +604,8 @@ export default function CreatePulseForm({
           coverImageUrl={coverImageUrl || null}
           sponsorName={companyName}
           sponsorLogoUrl={logoUrl || null}
-          options={options}
-          resolutionDate={resolutionDate}
+          options={previewOptions}
+          language={language}
         />
       ) : null}
     </>
@@ -615,7 +620,7 @@ function PreviewModal({
   sponsorName,
   sponsorLogoUrl,
   options,
-  resolutionDate,
+  language,
 }: {
   onClose: () => void
   ready: boolean
@@ -624,9 +629,9 @@ function PreviewModal({
   sponsorName: string
   sponsorLogoUrl: string | null
   options: string[]
-  resolutionDate: string
+  language: 'es' | 'en'
 }) {
-  const { t, language } = useSponsorT()
+  const { t } = useSponsorT()
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
@@ -667,7 +672,6 @@ function PreviewModal({
               sponsorName={sponsorName}
               sponsorLogoUrl={sponsorLogoUrl}
               options={options}
-              resolutionDate={resolutionDate}
               language={language}
             />
           ) : (
@@ -837,10 +841,10 @@ function PublishedSuccess({
             {t('create_form.published_create_another')}
           </button>
           <Link
-            href={`/predictions/markets/${marketId}`}
+            href={`/pulse/${marketId}`}
             className="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-200 hover:bg-slate-800"
           >
-            {t('create_form.success_view_market')}
+            {t('create_form.success_view_pulse')}
           </Link>
         </div>
       </div>

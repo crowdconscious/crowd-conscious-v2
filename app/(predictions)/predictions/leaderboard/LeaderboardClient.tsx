@@ -49,7 +49,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   world_cup: 'World Cup',
   world: 'World',
   pulse: 'Pulse',
-  government: 'Government',
+  government: 'Politics',
   geopolitics: 'Geopolitics',
   sustainability: 'Sustainability',
   technology: 'Technology',

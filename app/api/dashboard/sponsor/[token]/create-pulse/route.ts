@@ -2,6 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { dispatchSponsorPulseLaunchEmail } from '@/lib/sponsor-notifications'
 import { notifyPulsePublished } from '@/lib/expo-push'
+import {
+  PULSE_DEFAULT_RESOLUTION_CRITERIA,
+  pulseDefaultEndDateIso,
+} from '@/lib/market-categories'
+import {
+  normalizePulseOutcomes,
+  outcomeTranslationsPayload,
+} from '@/lib/pulse/outcome-input'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -56,26 +64,17 @@ export async function POST(
     const body = await request.json().catch(() => ({}))
     const title = typeof body.title === 'string' ? body.title.trim() : ''
     const description = typeof body.description === 'string' ? body.description.trim() : ''
-    const resolutionCriteria =
-      typeof body.resolution_criteria === 'string' ? body.resolution_criteria.trim() : ''
-    const resolutionDate = typeof body.resolution_date === 'string' ? body.resolution_date.trim() : ''
     const coverImageUrl =
       typeof body.cover_image_url === 'string' ? body.cover_image_url.trim() || null : null
     const sponsorLogoUrl =
       typeof body.sponsor_logo_url === 'string' ? body.sponsor_logo_url.trim() || null : null
-    const outcomesRaw = body.outcomes
-    const outcomeLabels: string[] = Array.isArray(outcomesRaw)
-      ? outcomesRaw.map((o: unknown) => String(o ?? '').trim()).filter(Boolean)
-      : []
+    const normalizedOutcomes = normalizePulseOutcomes(body.outcomes)
 
-    if (!title || outcomeLabels.length < 2) {
+    if (!title || normalizedOutcomes.length < 2) {
       return NextResponse.json(
-        { error: 'Title and at least two outcome options are required' },
+        { error: 'Title and at least two community options are required' },
         { status: 400 }
       )
-    }
-    if (!resolutionDate || Number.isNaN(new Date(resolutionDate).getTime())) {
-      return NextResponse.json({ error: 'Valid end date is required' }, { status: 400 })
     }
 
     const createdBy =
@@ -94,18 +93,20 @@ export async function POST(
     }
 
     const effectiveSponsorLogo = sponsorLogoUrl ?? (account.logo_url as string | null) ?? null
+    const endDateIso = pulseDefaultEndDateIso()
+    const outcomeLabels = normalizedOutcomes.map((o) => o.title)
 
     const { data: marketId, error: rpcError } = await admin.rpc('create_multi_market', {
       p_title: title,
       p_description: description || null,
-      p_category: 'pulse',
+      p_category: 'community',
       p_created_by: createdBy,
-      p_end_date: new Date(resolutionDate).toISOString(),
+      p_end_date: endDateIso,
       p_outcomes: outcomeLabels,
       p_sponsor_name: account.company_name,
       p_sponsor_logo_url: effectiveSponsorLogo,
       p_image_url: coverImageUrl,
-      p_resolution_criteria: resolutionCriteria || description || null,
+      p_resolution_criteria: PULSE_DEFAULT_RESOLUTION_CRITERIA,
     })
 
     if (rpcError || !marketId) {
@@ -125,12 +126,37 @@ export async function POST(
         conscious_fund_percentage: 20,
         cover_image_url: coverImageUrl,
         sponsor_logo_url: effectiveSponsorLogo,
+        resolution_criteria: PULSE_DEFAULT_RESOLUTION_CRITERIA,
       })
       .eq('id', marketId as string)
 
     if (upErr) {
       console.error('[create-pulse] update', upErr)
       return NextResponse.json({ error: upErr.message }, { status: 500 })
+    }
+
+    const hasSubtitlesOrTranslations = normalizedOutcomes.some(
+      (o) => o.subtitle !== null || o.labelEn !== null || o.subtitleEn !== null
+    )
+    if (hasSubtitlesOrTranslations) {
+      const { data: createdOutcomes } = await admin
+        .from('market_outcomes')
+        .select('id, sort_order')
+        .eq('market_id', marketId)
+        .order('sort_order', { ascending: true })
+      if (createdOutcomes) {
+        for (let i = 0; i < normalizedOutcomes.length; i++) {
+          const o = normalizedOutcomes[i]
+          const row = createdOutcomes.find((r) => (r.sort_order ?? 0) === i)
+          if (!row) continue
+          const patch: Record<string, unknown> = {}
+          if (o.subtitle !== null) patch.subtitle = o.subtitle
+          const tr = outcomeTranslationsPayload(o.labelEn, o.subtitleEn)
+          if (tr) patch.translations = tr
+          if (Object.keys(patch).length === 0) continue
+          await admin.from('market_outcomes').update(patch).eq('id', row.id)
+        }
+      }
     }
 
     if (sponsorLogoUrl && sponsorLogoUrl !== (account.logo_url ?? '')) {
@@ -142,18 +168,12 @@ export async function POST(
       .update({ used_pulse_markets: used + 1 })
       .eq('id', account.id)
 
-    // Fire-and-forget the sponsor launch email. We never want a Resend
-    // outage or a malformed contact_email to break a successful Pulse
-    // publish — the user already paid for the slot, the market is live,
-    // and the email is a courtesy. `dispatchSponsorPulseLaunchEmail`
-    // internally respects the sponsor's email_preferences.pulse_launch
-    // toggle and swallows errors.
     void dispatchSponsorPulseLaunchEmail({
       sponsorAccountId: account.id,
       marketId: marketId as string,
       marketTitle: title,
       marketQuestion: description || null,
-      endsAtIso: new Date(resolutionDate).toISOString(),
+      endsAtIso: endDateIso,
       coverImageUrl: coverImageUrl ?? null,
     }).catch((err) => console.warn('[create-pulse] launch email error:', err))
 

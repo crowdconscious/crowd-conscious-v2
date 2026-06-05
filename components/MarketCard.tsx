@@ -107,8 +107,8 @@ const CATEGORY_CONFIG: Record<
     hoverGlow: 'group-hover:shadow-[0_0_20px_rgba(96,165,250,0.35)]',
   },
   government: {
-    labelEn: 'Government',
-    labelEs: 'Gobierno',
+    labelEn: 'Politics & government',
+    labelEs: 'Política y gobierno',
     icon: Building2,
     bg: 'bg-slate-500/20',
     text: 'text-slate-400',
