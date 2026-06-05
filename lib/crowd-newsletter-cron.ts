@@ -80,12 +80,13 @@ export async function runCrowdNewsletterCron(
       ? (Date.now() - new Date(lastSentAt).getTime()) / 3600000
       : null
 
-    // Pick the highest-engagement published post that has NEVER been featured
-    // in a past digest. `email_digest_log` retains every prior `blog_post_id`,
-    // so this is a hard guarantee against repeats. Trending signal:
-    // view_count first, then published_at as tiebreaker. We pull the top 100
-    // by trending, then filter unsent in JS — keeps the URL short and avoids
-    // a giant `not.in.()` query string when the used set grows.
+    // Pick the NEWEST published post that has NEVER been featured in a past
+    // digest. `email_digest_log` retains every prior `blog_post_id`, so this is
+    // a hard guarantee against repeats. Selection is recency-driven:
+    // published_at first, then view_count only as a same-day tiebreaker.
+    // (Ordering by view_count first used to let an old-but-popular article —
+    // e.g. an April post — outrank fresh June posts and ship labeled "Nuevo en
+    // el blog", which is the staleness bug this fixes.)
     const { data: featuredRows } = await admin
       .from('email_digest_log')
       .select('blog_post_id')
@@ -98,14 +99,26 @@ export async function runCrowdNewsletterCron(
         .filter((x): x is string => !!x)
     )
 
+    // Recency window so a never-featured stale post can't be surfaced as "new":
+    // only posts published since the last send, or within the last 7 days when
+    // there is no prior send (or the cron has been dark longer than 7 days).
+    const BLOG_RECENCY_MS = 7 * 86400000
+    const blogRecencyThreshold = new Date(
+      Math.max(
+        lastSentAt ? new Date(lastSentAt).getTime() : 0,
+        Date.now() - BLOG_RECENCY_MS
+      )
+    ).toISOString()
+
     const { data: candidates } = await admin
       .from('blog_posts')
       .select(
         'id, slug, title, excerpt, category, published_at, content, cover_image_url, view_count'
       )
       .eq('status', 'published')
-      .order('view_count', { ascending: false, nullsFirst: false })
+      .gte('published_at', blogRecencyThreshold)
       .order('published_at', { ascending: false, nullsFirst: false })
+      .order('view_count', { ascending: false, nullsFirst: false })
       .limit(100)
 
     const allCandidates = candidates ?? []
@@ -115,10 +128,11 @@ export async function runCrowdNewsletterCron(
     const latestPost = unsentCandidates[0] ?? null
 
     /**
-     * "New" here means an unsent trending post is available. When true, we
-     * bypass the cooldown so M/W/F always ships fresh content. When false
-     * (no unsent post), we still send if cooldown has elapsed — Pulses,
-     * markets, locations, and a polished intro carry the edition.
+     * "New" here means an unsent, recently-published post is available (within
+     * the recency window above). When true, we bypass the cooldown so M/W/F
+     * always ships genuinely fresh content. When false (no recent unsent post),
+     * we still send if cooldown has elapsed — Pulses, markets, locations, and a
+     * polished intro carry the edition.
      */
     const hasNewBlogSinceLastSend = !!latestPost?.id
 
@@ -143,7 +157,7 @@ export async function runCrowdNewsletterCron(
           hoursSinceLast,
           recipientCount: 0,
           scheduleNote:
-            'Mon/Wed/Fri 14:00 UTC — skipped until 36h after last send, unless an unsent trending post exists or ?force=1',
+            'Mon/Wed/Fri 14:00 UTC — skipped until 36h after last send, unless a recent unsent post exists or ?force=1',
           publishedPostsTotal: allCandidates.length,
           publishedPostsUnsent: unsentCandidates.length,
           selectedPost: null,
