@@ -20,10 +20,11 @@ export type ProfileRoleRow = {
 
 /**
  * `admin_level` values that hide a profile from public leaderboards.
- * `super` is the real DB value for the founder; `super_admin` is kept as a
- * synonym for safety. `standard` is intentionally NOT staff.
+ * Only super admins are hidden (`super` is the real DB value for the founder;
+ * `super_admin` is kept as a synonym). Regular `moderator` accounts are NOT
+ * hidden — they remain on the public leaderboard. `standard` is NOT staff.
  */
-const LEADERBOARD_STAFF_ADMIN_LEVELS = new Set(['moderator', 'super', 'super_admin'])
+const LEADERBOARD_STAFF_ADMIN_LEVELS = new Set(['super', 'super_admin'])
 
 /**
  * Returns true if a profile should be hidden from public leaderboards.
