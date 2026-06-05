@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { ApiResponse } from '@/lib/api-responses'
+import {
+  fetchProfileRolesByUserIds,
+  filterLeaderboardExcluded,
+} from '@/lib/leaderboard-exclusions'
 
 /**
  * GET /api/gamification/leaderboard
@@ -197,6 +201,16 @@ export async function GET(request: NextRequest) {
       }))
       console.log('Mapped leaderboard from view:', leaderboard.length, 'entries')
     }
+
+    // Exclude admins / staff (incl. the super-admin founder whose
+    // user_type is 'user' but admin_level is 'super') before ranking, so
+    // positions renumber contiguously. The leaderboard_view does not expose
+    // roles, so we fetch them from profiles.
+    const rolesByUserId = await fetchProfileRolesByUserIds(
+      supabase,
+      leaderboard.map((entry: any) => entry.user_id)
+    )
+    leaderboard = filterLeaderboardExcluded(leaderboard, rolesByUserId)
 
     // Add rank numbers
     const leaderboardWithRanks = leaderboard.map((entry, index) => ({

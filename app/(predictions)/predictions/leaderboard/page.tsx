@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase-admin'
 import { getCurrentUser } from '@/lib/auth-server'
 import { LeaderboardClient } from './LeaderboardClient'
 import { SITE_URL } from '@/lib/seo/site'
+import { isLeaderboardExcludedRole } from '@/lib/leaderboard-exclusions'
 
 export const metadata: Metadata = {
   title: 'Leaderboard — Los Mejores Predictores',
@@ -89,10 +90,10 @@ async function getLeaderboardData(category: string) {
 
   const userIds = xpRows.map((r) => r.user_id)
 
-  // Fetch profiles (with email for dedup)
+  // Fetch profiles (with email for dedup, roles for admin exclusion)
   const { data: profiles } = await supabase
     .from('profiles')
-    .select('id, full_name, email, avatar_url')
+    .select('id, full_name, email, avatar_url, user_type, admin_level')
     .in('id', userIds)
 
   const profileMap = new Map(
@@ -105,6 +106,20 @@ async function getLeaderboardData(category: string) {
       },
     ])
   )
+
+  // Exclude admins / staff (incl. the super-admin founder whose user_type is
+  // 'user' but admin_level is 'super'). Read/display filter only.
+  const excludedUserIds = new Set(
+    (profiles ?? [])
+      .filter((p) =>
+        isLeaderboardExcludedRole({
+          user_type: (p as { user_type?: string | null }).user_type ?? null,
+          admin_level: (p as { admin_level?: string | null }).admin_level ?? null,
+        })
+      )
+      .map((p) => p.id)
+  )
+  xpRows = xpRows.filter((row) => !excludedUserIds.has(row.user_id))
 
   // Deduplicate by email (case-insensitive): keep higher XP
   const byEmail = new Map<string, { user_id: string; total_xp: number }>()

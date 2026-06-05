@@ -1,32 +1,54 @@
 import { createClient } from '@/lib/supabase-server'
 import { getCurrentUser } from '@/lib/auth-server'
+import { isLeaderboardExcludedRole } from '@/lib/leaderboard-exclusions'
 
 export async function GET() {
   try {
     const supabase = await createClient()
     const user = await getCurrentUser()
 
-    const { data: xpRows, error: xpError } = await supabase
+    const { data: rawXpRows, error: xpError } = await supabase
       .from('user_xp')
       .select('user_id, total_xp')
       .gt('total_xp', 0)
       .order('total_xp', { ascending: false })
       .limit(25)
 
-    if (xpError || !xpRows?.length) {
+    if (xpError || !rawXpRows?.length) {
       return Response.json({ leaderboard: [], currentUserRank: null })
     }
 
-    const userIds = xpRows.map((r) => r.user_id)
+    const userIds = rawXpRows.map((r) => r.user_id)
 
     const [profilesRes, votesRes] = await Promise.all([
-      supabase.from('profiles').select('id, full_name').in('id', userIds),
+      supabase
+        .from('profiles')
+        .select('id, full_name, user_type, admin_level')
+        .in('id', userIds),
       supabase
         .from('market_votes')
         .select('user_id, market_id, is_correct')
         .in('user_id', userIds)
         .eq('is_anonymous', false),
     ])
+
+    // Exclude admins / staff (incl. the super-admin founder whose user_type is
+    // 'user' but admin_level is 'super'). Read/display filter only.
+    const excludedUserIds = new Set(
+      (profilesRes.data ?? [])
+        .filter((p) =>
+          isLeaderboardExcludedRole({
+            user_type: (p as { user_type?: string | null }).user_type ?? null,
+            admin_level: (p as { admin_level?: string | null }).admin_level ?? null,
+          })
+        )
+        .map((p) => p.id)
+    )
+    const xpRows = rawXpRows.filter((r) => !excludedUserIds.has(r.user_id))
+
+    if (!xpRows.length) {
+      return Response.json({ leaderboard: [], currentUserRank: null })
+    }
 
     const marketIds = [...new Set((votesRes.data ?? []).map((v) => v.market_id))]
     const { data: markets } =
