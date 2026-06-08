@@ -1,5 +1,5 @@
 /**
- * Crowd newsletter: blog + Pulse + trending markets, Mon/Wed/Fri cron + 36h cooldown
+ * Crowd newsletter: blog + recent Pulses + new conscious locations, Mon/Wed/Fri cron + 36h cooldown
  * (bypassed when a new published blog post has not yet been featured in a batch send).
  *
  * Why 36h and not 48h: the Vercel cron fires at 14:00 UTC Mon/Wed/Fri, but
@@ -179,20 +179,48 @@ export async function runCrowdNewsletterCron(
 
     const highlightNewBlog = hasNewBlogSinceLastSend
 
-    const { data: trending } = await admin
+    // Pulses-only: the product measures public sentiment, so the newsletter
+    // only ever features Pulses (is_pulse=true) — never legacy prediction
+    // markets. Selection is recency-driven (created_at desc) so a months-old
+    // Pulse can never be surfaced as the hero. If nothing was created in the
+    // recency window, we degrade gracefully to the most-active Pulses, framed
+    // honestly as "activo" (not "new").
+    type PulseRow = {
+      id: string
+      title: string
+      total_votes: number | null
+      category: string | null
+      created_at: string | null
+    }
+    const PULSE_RECENCY_MS = 30 * 86400000
+    const pulseRecencyThreshold = new Date(Date.now() - PULSE_RECENCY_MS).toISOString()
+
+    const { data: pulseRows } = await admin
       .from('prediction_markets')
-      .select('id, title, total_votes, category, is_pulse')
+      .select('id, title, total_votes, category, created_at')
+      .eq('is_pulse', true)
       .in('status', ['active', 'trading'])
       .is('archived_at', null)
       .eq('is_draft', false)
-      .order('total_votes', { ascending: false, nullsFirst: false })
-      .limit(8)
+      .order('created_at', { ascending: false, nullsFirst: false })
+      .limit(12)
 
-    const list = trending ?? []
-    const pulseMarket = list.find((m) => m.is_pulse === true) ?? null
-    const nonPulse = list.filter((m) => !m.is_pulse).slice(0, 3)
+    const allPulses = (pulseRows ?? []) as PulseRow[]
+    const recentPulses = allPulses.filter(
+      (p) => !!p.created_at && p.created_at >= pulseRecencyThreshold
+    )
+    // newest-first when recent content exists; otherwise most-active so the
+    // edition still has something live to point at (honest "activo" framing).
+    const orderedPulses =
+      recentPulses.length > 0
+        ? recentPulses
+        : [...allPulses].sort((a, b) => (b.total_votes ?? 0) - (a.total_votes ?? 0))
+    const hasRecentPulse = recentPulses.length > 0
 
-    const marketIds = [...new Set([...nonPulse.map((m) => m.id), ...(pulseMarket ? [pulseMarket.id] : [])])]
+    const pulseMarket = orderedPulses[0] ?? null
+    const otherPulses = orderedPulses.slice(1, 3)
+
+    const marketIds = [...new Set([...(pulseMarket ? [pulseMarket.id] : []), ...otherPulses.map((m) => m.id)])]
     const outcomesByMarket = new Map<string, { label: string; probability: number }[]>()
     if (marketIds.length > 0) {
       const { data: outcomeRows } = await admin
@@ -246,7 +274,7 @@ export async function runCrowdNewsletterCron(
       }
     }
 
-    function toDigestMarket(m: (typeof list)[0]): BlogDigestMarket {
+    function toDigestMarket(m: PulseRow): BlogDigestMarket {
       const { line, style } = formatResultsLine(m.id)
       return {
         id: m.id,
@@ -259,7 +287,7 @@ export async function runCrowdNewsletterCron(
     }
 
     const pulseDigest = pulseMarket ? toDigestMarket(pulseMarket) : null
-    const marketDigests: BlogDigestMarket[] = nonPulse.slice(0, 2).map(toDigestMarket)
+    const marketDigests: BlogDigestMarket[] = otherPulses.map(toDigestMarket)
 
     let fundTotalMxn = 0
     try {
@@ -271,10 +299,13 @@ export async function runCrowdNewsletterCron(
 
     let activeLocations: NewsletterConsciousLocation[] = []
     try {
+      // Newest-first so genuinely new locations get surfaced (a recency-driven
+      // digest should not keep showing the same old featured spots forever).
       const { data: locRows } = await admin
         .from('conscious_locations')
         .select('id, name, slug, neighborhood, why_conscious')
         .eq('status', 'active')
+        .order('created_at', { ascending: false, nullsFirst: false })
         .order('is_featured', { ascending: false })
         .order('total_votes', { ascending: false })
         .limit(3)
@@ -378,8 +409,12 @@ export async function runCrowdNewsletterCron(
 
     // Lead story drives subject + intro. Secondary sections (Pulse, mercados)
     // stay in the body but must not hijack the subject line.
+    // Only let a Pulse drive the subject/intro when it is genuinely recent —
+    // otherwise a months-old (but still active) Pulse could headline the
+    // edition as if it were new. Stale-but-active content stays in the body
+    // under the honest "Pulse activo" framing.
     const primaryFeature: NewsletterPrimaryFeature =
-      highlightNewBlog && post ? 'blog' : pulseDigest ? 'pulse' : 'markets'
+      highlightNewBlog && post ? 'blog' : pulseDigest && hasRecentPulse ? 'pulse' : 'markets'
 
     let intro: string | null = null
     let polishValid = false
@@ -450,7 +485,7 @@ export async function runCrowdNewsletterCron(
       try {
         await admin.from('email_digest_log').insert({
           user_id: null,
-          market_id: nonPulse[0]?.id ?? pulseMarket?.id ?? null,
+          market_id: pulseMarket?.id ?? null,
           blog_post_id: latestPost?.id ?? null,
           email_type: 'newsletter',
         })

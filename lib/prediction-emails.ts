@@ -24,7 +24,7 @@ function emailFooter(unsubscribeUrl: string | null): string {
     <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #e2e8f0; text-align: center;">
       <img src="${LOGO_URL}" alt="Crowd Conscious" width="120" style="margin: 0 auto 12px; display: block;" />
       <p style="color: #64748b; font-size: 12px; margin: 0;">
-        Crowd Conscious · Predicciones con impacto
+        Crowd Conscious · Sentimiento público con impacto
       </p>
       ${
         unsubscribeUrl
@@ -42,7 +42,7 @@ function blogDigestEmailFooter(unsubscribeUrl: string | null): string {
   return `
     <div style="padding: 20px 24px 28px; border-top: 1px solid #2d3748; text-align: center;">
       <p style="color: #94a3b8; font-size: 12px; margin: 0;">
-        Crowd Conscious · Predicciones con impacto
+        Crowd Conscious · Sentimiento público con impacto
       </p>
       ${
         unsubscribeUrl
@@ -550,7 +550,7 @@ export function reengagementInactiveTemplate(opts: {
       (m) => `
     <div style="border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin-bottom: 14px; background: #f8fafc;">
       <p style="margin: 0 0 8px; font-weight: 600; color: #0f172a; font-size: 15px;">${esc(m.title)}</p>
-      <p style="margin: 0 0 12px; color: #64748b; font-size: 14px;">La comunidad: <strong>${Math.round(m.yesPercent)}% YES</strong></p>
+      <p style="margin: 0 0 12px; color: #64748b; font-size: 14px;">La comunidad opina: <strong>${Math.round(m.yesPercent)}% a favor</strong></p>
       <a href="${esc(m.url)}" style="display: inline-block; background: #059669; color: #fff; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">Votar</a>
     </div>
   `

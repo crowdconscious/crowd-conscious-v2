@@ -90,9 +90,12 @@ export async function GET(request: NextRequest) {
 
       const emailedSet = new Set((digestRows ?? []).map((r) => (r as { market_id: string }).market_id))
 
+      // Pulses-only: only surface genuinely active Pulses (public sentiment),
+      // never legacy prediction markets.
       const { data: pool } = await admin
         .from('prediction_markets')
         .select('id, title, current_probability, market_type, total_votes')
+        .eq('is_pulse', true)
         .in('status', ['active', 'trading'])
         .is('archived_at', null)
         .gt('total_votes', 0)
@@ -140,7 +143,7 @@ export async function GET(request: NextRequest) {
           await admin.from('notifications').insert({
             user_id: p.id,
             type: 'reengagement_weekly',
-            title: 'La comunidad sigue prediciendo',
+            title: 'La comunidad sigue opinando',
             message: summary.slice(0, 500),
             body: summary.slice(0, 500),
             link: `/predictions/markets/${picks[0].id}`,

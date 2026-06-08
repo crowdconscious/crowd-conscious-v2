@@ -192,73 +192,64 @@ export async function runCeoDigest(): Promise<{
         .select('user_id, anonymous_participant_id')
         .gte('created_at', cutoff24h)
       const rows = votes24h ?? []
-      metrics.users_with_predictions_last_24h = new Set(
+      metrics.users_who_voted_last_24h = new Set(
         rows.filter((v) => v.user_id != null).map((v) => v.user_id as string)
       ).size
       metrics.unique_anonymous_voters_last_24h = new Set(
         rows.filter((v) => v.anonymous_participant_id != null).map((v) => v.anonymous_participant_id as string)
       ).size
     } catch {
-      metrics.users_with_predictions_last_24h = 0
+      metrics.users_who_voted_last_24h = 0
       metrics.unique_anonymous_voters_last_24h = 0
     }
 
-    // b. PREDICTION ACTIVITY
+    // b. VOTE ACTIVITY
     try {
       const cutoff24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
       const { count: votes24h } = await supabase
         .from('market_votes')
         .select('id', { count: 'exact', head: true })
         .gte('created_at', cutoff24h)
-      metrics.predictions_last_24h = votes24h ?? 0
+      metrics.votes_last_24h = votes24h ?? 0
     } catch {
-      metrics.predictions_last_24h = 0
+      metrics.votes_last_24h = 0
     }
 
-    // c. MARKET HEALTH
+    // c. PULSE HEALTH — Pulses measure public sentiment; they do NOT resolve
+    // or close on a date, so there is no "approaching resolution" metric.
     try {
       const { count: active } = await supabase
         .from('prediction_markets')
         .select('id', { count: 'exact', head: true })
+        .eq('is_pulse', true)
         .in('status', ['active', 'trading'])
         .is('archived_at', null)
-      metrics.total_active_markets = active ?? 0
+      metrics.active_pulses = active ?? 0
     } catch {
-      metrics.total_active_markets = 0
+      metrics.active_pulses = 0
     }
 
+    // Low-engagement Pulses worth PROMOTING (zero votes) — listed by title so
+    // actions can name them. (Replaces the old resolve/close action items.)
     try {
-      const now = new Date()
-      const in7 = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
-      const { data: approaching } = await supabase
+      const { data: zeroVotePulses } = await supabase
         .from('prediction_markets')
-        .select('id, title, resolution_date, is_pulse')
-        .in('status', ['active', 'trading'])
-        .is('archived_at', null)
-        .gte('resolution_date', now.toISOString())
-        .lte('resolution_date', in7.toISOString())
-      metrics.markets_approaching_resolution_7d = (approaching ?? []).length
-      metrics.markets_approaching_list = (approaching ?? []).map((m) => ({
-        id: m.id,
-        title: m.title,
-        is_pulse: m.is_pulse,
-        resolution_date: m.resolution_date,
-      }))
-    } catch {
-      metrics.markets_approaching_resolution_7d = 0
-      metrics.markets_approaching_list = []
-    }
-
-    try {
-      const { count: zeroPred } = await supabase
-        .from('prediction_markets')
-        .select('id', { count: 'exact', head: true })
+        .select('id, title')
+        .eq('is_pulse', true)
         .in('status', ['active', 'trading'])
         .is('archived_at', null)
         .or('total_votes.is.null,total_votes.eq.0')
-      metrics.markets_with_zero_predictions = zeroPred ?? 0
+        .order('created_at', { ascending: false, nullsFirst: false })
+        .limit(8)
+      metrics.pulses_with_zero_votes = (zeroVotePulses ?? []).length
+      metrics.low_engagement_pulses = (zeroVotePulses ?? []).map((m) => ({
+        id: m.id,
+        title: m.title,
+        url: `${APP_URL}/predictions/markets/${m.id}`,
+      }))
     } catch {
-      metrics.markets_with_zero_predictions = 0
+      metrics.pulses_with_zero_votes = 0
+      metrics.low_engagement_pulses = []
     }
 
     // d. CONSCIOUS FUND
@@ -478,7 +469,8 @@ export async function runCeoDigest(): Promise<{
         convThisWeek,
         convLastWeek,
         locationsThisWeek,
-        newMarketsThisWeek,
+        newPulsesThisWeek,
+        newBlogsThisWeek,
       ] = await Promise.all([
         supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', cutoff7d),
         supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', cutoff14d).lt('created_at', cutoff7d),
@@ -489,7 +481,8 @@ export async function runCeoDigest(): Promise<{
         supabase.from('anonymous_participants').select('*', { count: 'exact', head: true }).gte('created_at', cutoff7d).not('converted_to_user_id', 'is', null),
         supabase.from('anonymous_participants').select('*', { count: 'exact', head: true }).gte('created_at', cutoff14d).lt('created_at', cutoff7d).not('converted_to_user_id', 'is', null),
         supabase.from('conscious_locations').select('name, slug, city, created_at').gte('created_at', cutoff7d).order('created_at', { ascending: false }),
-        supabase.from('prediction_markets').select('id, title, created_at').gte('created_at', cutoff7d).is('archived_at', null).order('created_at', { ascending: false }).limit(10),
+        supabase.from('prediction_markets').select('id, title, created_at').eq('is_pulse', true).gte('created_at', cutoff7d).is('archived_at', null).order('created_at', { ascending: false }).limit(10),
+        supabase.from('blog_posts').select('title, slug, published_at').eq('status', 'published').gte('published_at', cutoff7d).order('published_at', { ascending: false }).limit(10),
       ])
 
       metrics.week_over_week = {
@@ -514,7 +507,10 @@ export async function runCeoDigest(): Promise<{
         new_locations_this_week: (locationsThisWeek.data ?? []).map((l) => ({
           name: l.name, slug: l.slug, city: l.city,
         })),
-        new_markets_this_week: (newMarketsThisWeek.data ?? []).length,
+        new_pulses_this_week: (newPulsesThisWeek.data ?? []).length,
+        new_blogs_this_week: (newBlogsThisWeek.data ?? []).map((b) => ({
+          title: b.title, slug: b.slug,
+        })),
       }
 
       // Top markets by NEW votes in last 7d
@@ -551,9 +547,13 @@ export async function runCeoDigest(): Promise<{
       metrics.top_markets_by_new_votes_7d = []
     }
 
-    const systemMessage = `You are the WEEKLY operational analyst for Crowd Conscious, a free-to-play opinion + Pulse platform in Mexico City. World Cup 2026 opens June 11 at Estadio Azteca.
+    const systemMessage = `You are the WEEKLY operational analyst for Crowd Conscious, a free-to-play PUBLIC-SENTIMENT platform in Mexico City. The core product is the Pulse: a community votes to express public sentiment ("la comunidad opina"). World Cup 2026 opens June 11 at Estadio Azteca.
 
 Your output is a JSON dashboard that the email template renders as cards. There is NO room for narrative, motivation, or padding. The founder is solo and reads this in 60 seconds.
+
+PRODUCT MODEL — READ CAREFULLY:
+- Pulses measure public sentiment. They do NOT "resolve", they are NOT "predictions" or "bets", and they do NOT "close" on a date. There are no winners, no "right/wrong" votes.
+- Therefore there are NEVER any "resolve before X" or "closes on date" action items. If you find yourself writing one, you are wrong — replace it with a sentiment/engagement action (e.g. promote a low-traffic Pulse, publish content, reach out to a sponsor).
 
 OUTPUT FORMAT — respond with ONLY a single JSON object, no markdown fences, no preamble:
 
@@ -583,11 +583,16 @@ OUTPUT FORMAT — respond with ONLY a single JSON object, no markdown fences, no
   } | null
 }
 
+TERMINOLOGY — STRICTLY ENFORCED (Spanish):
+- Use: "Pulse", "sentimiento público", "comunidad", "votos/votar", "opina/opinión", "co-firmar".
+- NEVER use any of these words or their inflections: "predicción/predicciones", "mercado/mercados" (in the betting sense), "resolver/resolución", "cierra/cierran/cerrar", "fecha de resolución", "acertar/acertaste", "apuesta". A digest containing any of these is INVALID.
+- Frame results as sentiment ("la comunidad opina X%"), never as forecasts or outcomes.
+
 HARD RULES
-- Exactly 5 key_metrics MAX, fewer if there isn't material to say. PREFER metrics with non-zero deltas. Examples: 'Votos esta semana', 'Nuevas conversiones', 'Top Pulse', 'Pendientes en buzón', 'Lugares calientes'.
-- Exactly 3 do_this_week items MAX. Each must reference a SPECIFIC datum from the JSON below. NEVER write "considera revisar" or "mantén el momentum". If you don't have 3 concrete actions, return fewer.
-- 'cta_url' for actions: use ${APP_URL}/predictions/admin/inbox if action is reviewing inbox, ${APP_URL}/predictions/admin/agents for content, ${APP_URL}/dashboard/sponsor/<token> if known. If unsure, omit.
-- 'watch' is null if everything is fine. Don't invent risks.
+- Exactly 5 key_metrics MAX, fewer if there isn't material to say. PREFER metrics with non-zero deltas. Examples: 'Votos esta semana', 'Nuevas conversiones', 'Pulse top', 'Nuevos Pulses', 'Pendientes en buzón', 'Lugares calientes'.
+- Exactly 3 do_this_week items MAX. Each must reference a SPECIFIC datum from the JSON below. NEVER write "considera revisar" or "mantén el momentum". If you don't have 3 concrete actions, return fewer. Good action shapes: promover un Pulse con pocos/cero votos (use 'low_engagement_pulses' — name it + use its url as cta_url), publicar contenido para llenar un vacío, dar seguimiento a un lead de sponsor, revisar el buzón. NEVER an action about resolving/closing a Pulse.
+- 'cta_url' for actions: use a low_engagement_pulses[].url to promote a Pulse, ${APP_URL}/predictions/admin/inbox to review inbox, ${APP_URL}/predictions/admin/agents for content, ${APP_URL}/dashboard/sponsor/<token> if known. If unsure, omit.
+- 'watch' is null if everything is fine. Don't invent risks. A drop in engagement (votos/votantes vs la semana pasada, using 'week_over_week') is a good thing to flag here.
 - 'sponsor_outreach': if 'hot_locations_last_7d' has items, AT LEAST ONE outreach must target a specific location from it (use its name + pilot_pulse_link as cta_url). Default product for warm Conscious Locations: 'Pulse Pilot ($1,500 MXN)'. Use Mundial Pulse Pack only when there's a World Cup activation angle. Set to null if no warm leads exist AND no plausible cold pitch from the data.
 - All Spanish. No English. No emojis.
 - DO NOT comment on agent runs, costs, or platform internals — those have their own dashboard.`

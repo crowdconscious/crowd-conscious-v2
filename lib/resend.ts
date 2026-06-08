@@ -74,7 +74,7 @@ export const emailTemplates = {
           </p>
         </div>
         <div style="padding: 16px 24px; text-align: center; border-top: 1px solid #2d3748;">
-          <p style="color: #6b7280; font-size: 11px; margin: 0;">Crowd Conscious · Predicciones con impacto · CDMX</p>
+          <p style="color: #6b7280; font-size: 11px; margin: 0;">Crowd Conscious · Sentimiento público con impacto · CDMX</p>
         </div>
       </div>
     `,
