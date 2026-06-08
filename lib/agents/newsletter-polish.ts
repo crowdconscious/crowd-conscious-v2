@@ -151,7 +151,9 @@ function subjectAlignsWithPrimary(
     return (
       sub.includes('cdmx') ||
       sub.includes('piensa') ||
-      sub.includes('mercado') ||
+      sub.includes('opina') ||
+      sub.includes('comunidad') ||
+      sub.includes('sentimiento') ||
       sub.includes('voto')
     )
   }
@@ -219,7 +221,9 @@ export function resolveNewsletterSubject(opts: {
 
 const SYSTEM = `Eres el editor de la newsletter de Crowd Conscious (CDMX): opinión colectiva, Pulses y blog. Escribes en español mexicano, tono de revista digital — directo, curioso, humano. Nunca suenas a chatbot corporativo ni a "dato curioso".
 
-Recibirás qué historia es la PORTADA de esta edición (primary_feature). El asunto y el intro SOLO pueden vender esa portada. El correo incluirá otras secciones (Pulse, mercados, lugares), pero el lector no debe creer que el asunto habla de otra cosa.
+Recibirás qué historia es la PORTADA de esta edición (primary_feature). El asunto y el intro SOLO pueden vender esa portada. El correo incluirá otras secciones (Pulses, lugares conscientes), pero el lector no debe creer que el asunto habla de otra cosa.
+
+Los Pulses miden el sentimiento público de la comunidad: NO son predicciones ni apuestas, no se resuelven ni cierran. Nunca uses "predicción/predicciones", "mercado/mercados", "resolver", "cierra/cierran". Habla de opinión, sentimiento, votos y comunidad.
 
 Responde ÚNICAMENTE con un objeto JSON (sin markdown, sin texto extra):
 
@@ -233,7 +237,7 @@ REGLAS DURAS
 - Copia primary_feature del mensaje del usuario; no lo cambies.
 - Si primary_feature es "blog": el subject debe ser una variante breve del título del post (misma historia, mismas ideas clave). No mezcles otro tema (otro Pulse, otro artículo).
 - Si primary_feature es "pulse": el subject debe girar en torno a esa pregunta del Pulse (puede acortar, no inventar otro tema).
-- Si primary_feature es "markets": asunto sobre opinión / votos en CDMX, sin inventar un artículo concreto.
+- Si primary_feature es "markets": asunto sobre el sentimiento / la opinión / los votos de la comunidad en CDMX, sin inventar un artículo concreto.
 - Prohibido: metáforas forzadas, "¿sabías que…", "fun facts", "en esta edición", clickbait vacío, inglés innecesario.
 - intro: una sola idea, la de la portada.`
 
@@ -250,13 +254,13 @@ export async function generateNewsletterIntroAndSubject(
         ? `Artículo portada: ${input.postTitle ?? '(ninguno)'}`
         : input.primaryFeature === 'pulse'
           ? `Pulse portada: ${input.pulseTitle ?? '(ninguno)'}`
-          : 'Portada: edición de mercados / opinión CDMX (sin artículo nuevo)'
+          : 'Portada: edición de opinión / sentimiento de la comunidad CDMX (sin artículo nuevo)'
 
     const userMessage = `primary_feature (OBLIGATORIO, no cambiar): ${input.primaryFeature}
 ${portada}
 Extracto del artículo (solo contexto): ${input.postExcerpt?.slice(0, 280) ?? '(ninguno)'}
 Pulse en el correo (secundario, NO usar en subject si portada es blog): ${input.pulseTitle ?? '(ninguno)'}
-Mercados en el correo (secundario): ${input.marketTitles.slice(0, 3).join(' · ') || '(ninguno)'}
+Otros Pulses en el correo (secundario): ${input.marketTitles.slice(0, 3).join(' · ') || '(ninguno)'}
 Días hasta Mundial 2026: ${input.daysUntilWorldCup ?? '—'}
 
 Escribe subject + intro solo para la portada indicada. JSON únicamente.`

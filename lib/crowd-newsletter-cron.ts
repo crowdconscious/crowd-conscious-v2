@@ -407,7 +407,7 @@ export async function runCrowdNewsletterCron(
       }
     }
 
-    // Lead story drives subject + intro. Secondary sections (Pulse, mercados)
+    // Lead story drives subject + intro. Secondary sections (Pulses, lugares)
     // stay in the body but must not hijack the subject line.
     // Only let a Pulse drive the subject/intro when it is genuinely recent —
     // otherwise a months-old (but still active) Pulse could headline the
