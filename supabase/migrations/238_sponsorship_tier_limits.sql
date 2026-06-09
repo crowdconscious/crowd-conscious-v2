@@ -11,10 +11,10 @@
 -- (237). Public read (checkout/profile UI uses these to render the min/max and
 -- the platform default for creators who have not set a custom price). Admin write.
 --
--- !!! PLACEHOLDER PRICING — FOUNDER MUST SET REAL NUMBERS !!!
--- The seeded min/max/default values below are PLACEHOLDERS for wiring/testing
--- only. The founder will overwrite them with real MXN pricing. They are NOT
--- product decisions.
+-- LAUNCH PRICING (research-backed, founder-approved Jun 2026). MXN.
+-- These are real launch numbers, tuned to early-stage reach; revisit as traffic
+-- grows (raise floors once creators close consistently; add a CPM crossover).
+-- Admins can adjust per-tier limits later via the admin UI / this table.
 --
 -- Enforcement of a creator's price against [min_price, max_price] is primarily
 -- APP-LEVEL. An OPTIONAL trigger (commented at the bottom) can enforce it in the
@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS public.sponsorship_tier_limits (
 );
 
 COMMENT ON TABLE public.sponsorship_tier_limits IS
-  'Platform-wide price guardrails per sponsorship tier. Bounds creator_sponsorship_tiers.price. Public read; admin write. Seed values are PLACEHOLDERS — the founder sets real MXN pricing.';
+  'Platform-wide price guardrails per sponsorship tier. Bounds creator_sponsorship_tiers.price. Public read; admin write. Seed values are founder-approved launch pricing (MXN).';
 
 ALTER TABLE public.sponsorship_tier_limits ENABLE ROW LEVEL SECURITY;
 
@@ -57,14 +57,14 @@ CREATE POLICY sponsorship_tier_limits_admin_write
   WITH CHECK (public.is_admin());
 
 -- ---------------------------------------------------------------------------
--- SEED — PLACEHOLDER VALUES ONLY. Founder must replace with real pricing.
--- DO NOTHING on conflict so a re-run never clobbers founder-edited values.
+-- SEED — founder-approved launch pricing (MXN).
+-- DO NOTHING on conflict so a re-run never clobbers later founder-edited values.
 -- ---------------------------------------------------------------------------
 INSERT INTO public.sponsorship_tier_limits (tier, min_price, max_price, default_price, currency)
 VALUES
-  ('support',    50,   500,   100, 'MXN'),   -- PLACEHOLDER pending founder pricing
-  ('sponsor',   500,  5000,  1000, 'MXN'),   -- PLACEHOLDER pending founder pricing
-  ('featured', 2000, 20000,  5000, 'MXN')    -- PLACEHOLDER pending founder pricing
+  ('support',    50,  1000,   150, 'MXN'),   -- launch pricing (research-backed, founder-approved)
+  ('sponsor',   750,  5000,  1500, 'MXN'),   -- launch pricing (research-backed, founder-approved)
+  ('featured', 2000, 12000,  4000, 'MXN')    -- launch pricing (research-backed, founder-approved)
 ON CONFLICT (tier) DO NOTHING;
 
 -- ---------------------------------------------------------------------------
