@@ -18,7 +18,8 @@
 -- separate, commented file — review before running.
 --
 -- TABLES:
---   * sponsorships          — ALTERED (legacy table already exists). See note A.
+--   * creator_sponsorships  — NEW, clean table. The legacy public.sponsorships
+--                             table is UNRELATED and left UNTOUCHED. See note A.
 --   * revenue_split_configs — NEW. Four split labels, CHECK(sum = 100).
 --   * conscious_fund_contributions — NEW single fund ledger.
 --   * conscious_fund_distributions — NEW outflow ledger to causes.
@@ -29,135 +30,66 @@
 -- =============================================================================
 
 -- ===========================================================================
--- NOTE A — sponsorships is ALTERED, not created.
--- A legacy `public.sponsorships` table already exists (creation predates this
--- migrations folder; see docs/archives/database-schema.sql + migration 142
--- report_token + migration 155 sponsorship_log FK). Its legacy shape is the old
--- communities model: NOT NULL content_id -> community_content, sponsor_id ->
--- profiles, amount. We DO NOT recreate it. We:
---   1) ensure the table exists (no-op if present),
---   2) ADD the creator-market columns (all nullable / defaulted),
---   3) RELAX the legacy NOT NULLs so creator-market rows can be inserted,
---   4) WIDEN the status CHECK to a superset (keeps legacy values valid),
---   5) require disclosure (sponsor_name) for creator-market rows via a CHECK.
+-- NOTE A — creator_sponsorships is a CLEAN, SEPARATE NEW table.
+-- The legacy `public.sponsorships` table (old communities/content model:
+-- NOT NULL content_id -> community_content, sponsor_id -> profiles, amount;
+-- see docs/archives/database-schema.sql + migration 142 + migration 155) is
+-- UNRELATED to the creator market and is left COMPLETELY UNTOUCHED by this
+-- batch. We do NOT alter it, add columns to it, change its constraints, or
+-- attach RLS to it. All creator-market sponsorship records live here instead.
 -- ===========================================================================
 
--- Safety: create a minimal table if (and only if) it does not already exist.
-CREATE TABLE IF NOT EXISTS public.sponsorships (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  created_at timestamptz NOT NULL DEFAULT now()
+CREATE TABLE IF NOT EXISTS public.creator_sponsorships (
+  id                    uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  sponsor_name          text NOT NULL,
+  sponsor_logo_url      text,
+  sponsor_contact       text,
+  sponsor_email         text,
+  surface_type          text NOT NULL CHECK (surface_type IN ('pulse', 'blog', 'signal')),
+  source_id             uuid,
+  sourced_by            text NOT NULL CHECK (sourced_by IN ('creator', 'platform', 'editorial')),
+  creator_id            uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+  gross_amount          numeric(12, 2),
+  currency              text NOT NULL DEFAULT 'MXN',
+  fund_amount           numeric(12, 2),
+  creator_amount        numeric(12, 2),
+  platform_amount       numeric(12, 2),
+  status                text NOT NULL DEFAULT 'active'
+                          CHECK (status IN ('active', 'refunded', 'disputed', 'ended')),
+  stripe_session_id     text UNIQUE,
+  stripe_payment_intent text,
+  stripe_event_id       text,
+  flagged_self_sponsor  boolean NOT NULL DEFAULT false,
+  created_at            timestamptz NOT NULL DEFAULT now(),
+  -- Disclosure: a sponsor_name is mandatory so the "Patrocinado" label is never
+  -- empty (sponsor_name is NOT NULL above; this also forbids blank/whitespace).
+  CONSTRAINT creator_sponsorships_disclosure_chk
+    CHECK (length(btrim(sponsor_name)) > 0)
 );
 
-ALTER TABLE public.sponsorships
-  ADD COLUMN IF NOT EXISTS sponsor_name          text,
-  ADD COLUMN IF NOT EXISTS sponsor_logo_url      text,
-  ADD COLUMN IF NOT EXISTS sponsor_contact       text,
-  ADD COLUMN IF NOT EXISTS sponsor_email         text,
-  ADD COLUMN IF NOT EXISTS surface_type          text,
-  ADD COLUMN IF NOT EXISTS source_id             uuid,
-  ADD COLUMN IF NOT EXISTS sourced_by            text,
-  ADD COLUMN IF NOT EXISTS creator_id            uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
-  ADD COLUMN IF NOT EXISTS gross_amount          numeric(12, 2),
-  ADD COLUMN IF NOT EXISTS currency              text NOT NULL DEFAULT 'MXN',
-  ADD COLUMN IF NOT EXISTS fund_amount           numeric(12, 2),
-  ADD COLUMN IF NOT EXISTS creator_amount        numeric(12, 2),
-  ADD COLUMN IF NOT EXISTS platform_amount       numeric(12, 2),
-  ADD COLUMN IF NOT EXISTS stripe_session_id     text,
-  ADD COLUMN IF NOT EXISTS stripe_payment_intent text,
-  ADD COLUMN IF NOT EXISTS stripe_event_id       text,
-  ADD COLUMN IF NOT EXISTS flagged_self_sponsor  boolean NOT NULL DEFAULT false,
-  ADD COLUMN IF NOT EXISTS status                text NOT NULL DEFAULT 'active',
-  ADD COLUMN IF NOT EXISTS created_at            timestamptz NOT NULL DEFAULT now();
+CREATE INDEX IF NOT EXISTS idx_creator_sponsorships_surface
+  ON public.creator_sponsorships (surface_type, source_id);
+CREATE INDEX IF NOT EXISTS idx_creator_sponsorships_creator
+  ON public.creator_sponsorships (creator_id);
 
--- surface_type / sourced_by validity (NOT VALID so legacy rows are not re-checked).
-ALTER TABLE public.sponsorships
-  DROP CONSTRAINT IF EXISTS sponsorships_surface_type_chk;
-ALTER TABLE public.sponsorships
-  ADD CONSTRAINT sponsorships_surface_type_chk
-  CHECK (surface_type IS NULL OR surface_type IN ('pulse', 'blog', 'signal'))
-  NOT VALID;
+COMMENT ON TABLE public.creator_sponsorships IS
+  'Creator-market sponsorship records. surface_type, sourced_by, creator_id and the fund/creator/platform amounts are snapshotted by the Stripe webhook at creation. Unrelated to the legacy public.sponsorships table. Money writes = service role only.';
 
-ALTER TABLE public.sponsorships
-  DROP CONSTRAINT IF EXISTS sponsorships_sourced_by_chk;
-ALTER TABLE public.sponsorships
-  ADD CONSTRAINT sponsorships_sourced_by_chk
-  CHECK (sourced_by IS NULL OR sourced_by IN ('creator', 'platform', 'editorial'))
-  NOT VALID;
+-- Money writes are service-role only (no INSERT/UPDATE/DELETE policy => denied
+-- for anon/auth; the service role bypasses RLS).
+ALTER TABLE public.creator_sponsorships ENABLE ROW LEVEL SECURITY;
 
--- Disclosure: every creator-market sponsorship (identified by surface_type set)
--- MUST carry a sponsor_name so the "Patrocinado" label is never empty. Legacy
--- rows (surface_type IS NULL) are exempt. NOT VALID = enforced for new rows only.
-ALTER TABLE public.sponsorships
-  DROP CONSTRAINT IF EXISTS sponsorships_disclosure_chk;
-ALTER TABLE public.sponsorships
-  ADD CONSTRAINT sponsorships_disclosure_chk
-  CHECK (surface_type IS NULL OR (sponsor_name IS NOT NULL AND length(btrim(sponsor_name)) > 0))
-  NOT VALID;
-
--- stripe_session_id is unique when present (idempotent webhook key).
-CREATE UNIQUE INDEX IF NOT EXISTS sponsorships_stripe_session_id_key
-  ON public.sponsorships (stripe_session_id)
-  WHERE stripe_session_id IS NOT NULL;
-
-CREATE INDEX IF NOT EXISTS idx_sponsorships_surface
-  ON public.sponsorships (surface_type, source_id);
-CREATE INDEX IF NOT EXISTS idx_sponsorships_creator
-  ON public.sponsorships (creator_id);
-
--- Relax legacy NOT NULLs (guarded; only if the legacy column exists) so
--- creator-market rows without content_id/sponsor_id/amount can be inserted.
-DO $$
-BEGIN
-  IF EXISTS (SELECT 1 FROM information_schema.columns
-             WHERE table_schema = 'public' AND table_name = 'sponsorships' AND column_name = 'content_id') THEN
-    ALTER TABLE public.sponsorships ALTER COLUMN content_id DROP NOT NULL;
-  END IF;
-  IF EXISTS (SELECT 1 FROM information_schema.columns
-             WHERE table_schema = 'public' AND table_name = 'sponsorships' AND column_name = 'sponsor_id') THEN
-    ALTER TABLE public.sponsorships ALTER COLUMN sponsor_id DROP NOT NULL;
-  END IF;
-  IF EXISTS (SELECT 1 FROM information_schema.columns
-             WHERE table_schema = 'public' AND table_name = 'sponsorships' AND column_name = 'amount') THEN
-    ALTER TABLE public.sponsorships ALTER COLUMN amount DROP NOT NULL;
-  END IF;
-END $$;
-
--- Status: superset of legacy ('pending','approved','rejected','paid') + the new
--- lifecycle ('active','refunded','disputed','ended'). New rows default 'active'.
-ALTER TABLE public.sponsorships
-  DROP CONSTRAINT IF EXISTS sponsorships_status_check;
-ALTER TABLE public.sponsorships
-  DROP CONSTRAINT IF EXISTS sponsorships_status_chk;
-ALTER TABLE public.sponsorships
-  ADD CONSTRAINT sponsorships_status_chk
-  CHECK (status IN (
-    'pending', 'approved', 'rejected', 'paid',         -- legacy
-    'active', 'refunded', 'disputed', 'ended'          -- creator-market
-  ))
-  NOT VALID;
-
-ALTER TABLE public.sponsorships
-  ALTER COLUMN status SET DEFAULT 'active';
-
-COMMENT ON TABLE public.sponsorships IS
-  'Sponsorship rows. Creator-market columns (surface_type, sourced_by, creator_id, fund/creator/platform amounts) are snapshotted by the Stripe webhook at creation. Money writes = service role only.';
-
--- Money writes are service-role only. The legacy migration 155 granted
--- admins manage rights via "Admins can manage sponsorship logs" on a different
--- table; here we (re)assert RLS is enabled and add an admin read for dashboards.
-ALTER TABLE public.sponsorships ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS sponsorships_admin_select ON public.sponsorships;
-CREATE POLICY sponsorships_admin_select
-  ON public.sponsorships
+DROP POLICY IF EXISTS creator_sponsorships_admin_select ON public.creator_sponsorships;
+CREATE POLICY creator_sponsorships_admin_select
+  ON public.creator_sponsorships
   FOR SELECT
   TO authenticated
   USING (public.is_admin());
 
 -- A creator may read their OWN sponsorship rows (earnings transparency).
-DROP POLICY IF EXISTS sponsorships_creator_select_own ON public.sponsorships;
-CREATE POLICY sponsorships_creator_select_own
-  ON public.sponsorships
+DROP POLICY IF EXISTS creator_sponsorships_creator_select_own ON public.creator_sponsorships;
+CREATE POLICY creator_sponsorships_creator_select_own
+  ON public.creator_sponsorships
   FOR SELECT
   TO authenticated
   USING (creator_id = auth.uid());
@@ -178,7 +110,7 @@ CREATE TABLE IF NOT EXISTS public.revenue_split_configs (
 );
 
 COMMENT ON TABLE public.revenue_split_configs IS
-  'Named revenue splits resolved by the Stripe webhook from checkout metadata and snapshotted onto sponsorships. Fund is always 20%.';
+  'Named revenue splits resolved by the Stripe webhook from checkout metadata and snapshotted onto creator_sponsorships. Fund is always 20%.';
 
 -- Seed the four canonical labels. DO NOTHING on conflict so a re-run never
 -- clobbers a live config edit (history lives on the snapshotted sponsorship rows).
@@ -222,7 +154,7 @@ CREATE TABLE IF NOT EXISTS public.conscious_fund_contributions (
   amount         numeric(12, 2) NOT NULL CHECK (amount >= 0),
   currency       text NOT NULL DEFAULT 'MXN',
   fund_pillar    text CHECK (fund_pillar IN ('clean_air', 'clean_water', 'safe_cities', 'zero_waste', 'fair_trade')),
-  sponsorship_id uuid REFERENCES public.sponsorships(id) ON DELETE SET NULL,
+  sponsorship_id uuid REFERENCES public.creator_sponsorships(id) ON DELETE SET NULL,
   created_at     timestamptz NOT NULL DEFAULT now()
 );
 

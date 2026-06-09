@@ -15,7 +15,7 @@ review separately. Prompt 4 adds **no** new tables beyond `influencer_payouts`
 | File | Prompt | Summary |
 |------|--------|---------|
 | `232_creator_blog_trust.sql` | 1 | Blog `author_id`/`sources`/`pending_review`; `profiles.handle` + `creator_trust_level` + `social_links`; creator blog RLS (own drafts, self-publish gated to trust ≥ 2). |
-| `233_monetization_core.sql` | 2 | **ALTERs** legacy `sponsorships` to the creator-market shape; new `revenue_split_configs` (4 labels), `conscious_fund_contributions` (inflow ledger), `conscious_fund_distributions` (outflow) + public aggregate views. |
+| `233_monetization_core.sql` | 2 | New `creator_sponsorships` table (legacy `sponsorships` left untouched); new `revenue_split_configs` (4 labels), `conscious_fund_contributions` (inflow ledger), `conscious_fund_distributions` (outflow) + public aggregate views. |
 | `234_influencer_payouts.sql` | 3 | New `influencer_payouts` ledger; creators read own, writes service-role only. |
 | `235_sponsored_signals.sql` | 5 | `citizen_signals.sponsorable` (admin-only via trigger) + new `signal_sponsorships` badge join enforcing the integrity boundary. |
 | `OPTIONAL_backfill_pulse_fund_contributions.sql` | 2 | **Optional, fully commented.** Backfills historical Pulse fund from `sponsorship_log.fund_allocation`. Review before running. |
@@ -26,7 +26,7 @@ review separately. Prompt 4 adds **no** new tables beyond `influencer_payouts`
 
 - **Conscious Fund = flat 20% of gross on everything.**
 - The creator/fund/platform split is resolved by the **Stripe webhook** from
-  checkout metadata and **snapshotted** onto the `sponsorships` row at creation.
+  checkout metadata and **snapshotted** onto the `creator_sponsorships` row at creation.
   Config changes never rewrite history.
 - Split labels (`revenue_split_configs`, percentages ordered **fund / creator / platform**):
 
@@ -96,40 +96,42 @@ RLS (additive to existing "Anyone read published" + "Admins manage all"):
 - `blog_posts_author_delete` — own `{draft,pending_review}` only.
 - Admins publish/moderate via the existing "Admins manage all posts" policy.
 
-### `sponsorships` (ALTERED, 233) ⚠️ pre-existing legacy table
+### `creator_sponsorships` (NEW, 233) — clean separate table
 
-The legacy `sponsorships` (old communities model: NOT NULL `content_id`,
-`sponsor_id`, `amount`) is **altered, not recreated**. Legacy NOT NULLs are
-dropped so creator-market rows can insert; status CHECK is widened to a superset.
-
-Creator-market columns (all nullable/defaulted, snapshotted by the webhook):
+> The legacy `public.sponsorships` table (old communities/content model: NOT NULL
+> `content_id`, `sponsor_id`, `amount`) is **unrelated and left completely
+> untouched** by this batch — no ALTERs, no new columns, no RLS changes. All
+> creator-market sponsorship records live in `creator_sponsorships`.
 
 | column | type | notes |
 |--------|------|-------|
-| `sponsor_name` | `text` | required for creator-market rows (disclosure CHECK) |
+| `id` | `uuid PK` | |
+| `sponsor_name` | `text NOT NULL` | non-empty (disclosure CHECK) |
 | `sponsor_logo_url` | `text` | |
 | `sponsor_contact` | `text` | |
 | `sponsor_email` | `text` | |
-| `surface_type` | `text` | CHECK ∈ `{pulse,blog,signal}` (nullable for legacy) |
-| `source_id` | `uuid` | id of the pulse/blog/signal |
-| `sourced_by` | `text` | CHECK ∈ `{creator,platform,editorial}` |
-| `creator_id` | `uuid → profiles(id)` | nullable |
+| `surface_type` | `text NOT NULL` | CHECK ∈ `{pulse,blog,signal}` |
+| `source_id` | `uuid` | id of the pulse/blog/signal (nullable) |
+| `sourced_by` | `text NOT NULL` | CHECK ∈ `{creator,platform,editorial}` |
+| `creator_id` | `uuid → profiles(id)` ON DELETE SET NULL | nullable |
 | `gross_amount` | `numeric(12,2)` | |
 | `currency` | `text NOT NULL DEFAULT 'MXN'` | |
 | `fund_amount` | `numeric(12,2)` | snapshot |
 | `creator_amount` | `numeric(12,2)` | snapshot |
 | `platform_amount` | `numeric(12,2)` | snapshot |
-| `stripe_session_id` | `text` | unique (partial, where not null) |
+| `status` | `text NOT NULL DEFAULT 'active'` | CHECK ∈ `{active,refunded,disputed,ended}` |
+| `stripe_session_id` | `text UNIQUE` | |
 | `stripe_payment_intent` | `text` | |
 | `stripe_event_id` | `text` | |
 | `flagged_self_sponsor` | `boolean NOT NULL DEFAULT false` | |
-| `status` | `text DEFAULT 'active'` | CHECK superset incl. `active,refunded,disputed,ended` (+ legacy `pending,approved,rejected,paid`) |
+| `created_at` | `timestamptz` | |
 
-- **Disclosure:** `sponsorships_disclosure_chk` (NOT VALID) requires non-empty
-  `sponsor_name` whenever `surface_type` is set ⇒ no creator-market sponsorship
-  can render without a "Patrocinado" label.
-- RLS: `sponsorships_admin_select` (admins read all); `sponsorships_creator_select_own`
-  (`creator_id = auth.uid()`). **No write policy** — service role only.
+- **Disclosure:** `sponsor_name` is `NOT NULL` + `creator_sponsorships_disclosure_chk`
+  forbids blank/whitespace ⇒ no creator-market sponsorship can render without a
+  "Patrocinado" label.
+- RLS: `creator_sponsorships_admin_select` (admins read all);
+  `creator_sponsorships_creator_select_own` (`creator_id = auth.uid()`).
+  **No write policy** — service role only.
 
 ### `revenue_split_configs` (NEW, 233)
 
@@ -156,7 +158,7 @@ above (`ON CONFLICT (label) DO NOTHING`). RLS: **public read**; admin write.
 | `amount` | `numeric(12,2) NOT NULL` | ≥ 0 |
 | `currency` | `text NOT NULL DEFAULT 'MXN'` | |
 | `fund_pillar` | `text` | CHECK ∈ `{clean_air,clean_water,safe_cities,zero_waste,fair_trade}`, nullable |
-| `sponsorship_id` | `uuid → sponsorships(id)` ON DELETE SET NULL | nullable link |
+| `sponsorship_id` | `uuid → creator_sponsorships(id)` ON DELETE SET NULL | nullable link |
 | `created_at` | `timestamptz` | |
 
 RLS: admin read of raw rows; **no write policy** (service role only). **Public
@@ -215,7 +217,7 @@ All other `citizen_signals` columns/RLS unchanged.
 |--------|------|-------|
 | `id` | `uuid PK` | |
 | `signal_id` | `uuid NOT NULL → citizen_signals(id)` ON DELETE CASCADE | |
-| `sponsorship_id` | `uuid NOT NULL → sponsorships(id)` ON DELETE CASCADE | |
+| `sponsorship_id` | `uuid NOT NULL → creator_sponsorships(id)` ON DELETE CASCADE | |
 | `fund_pillar` | `text NOT NULL` | CHECK ∈ the 5 pillars |
 | `badge_message` | `text NOT NULL` | non-empty (disclosure) |
 | `created_at` | `timestamptz` | |
@@ -251,12 +253,14 @@ status, thresholds, or co-firma counts:
 ## Flags for the founder
 
 - **(a) ALTERed vs created.**
-  - **ALTERed (pre-existing):** `sponsorships` (legacy communities table — NOT NULLs
-    relaxed, status widened, creator-market columns added), `profiles`, `blog_posts`,
-    `citizen_signals`.
-  - **Created new:** `revenue_split_configs`, `conscious_fund_contributions`,
-    `conscious_fund_distributions`, `influencer_payouts`, `signal_sponsorships`
-    (+ two aggregate views).
+  - **Legacy `sponsorships` (old communities/content model): UNTOUCHED.** Zero
+    changes — no ALTERs, columns, constraints, indexes, or RLS. It is unrelated to
+    the creator market.
+  - **ALTERed (pre-existing):** `profiles`, `blog_posts`, `citizen_signals` (additive
+    columns + RLS only).
+  - **Created new:** `creator_sponsorships`, `revenue_split_configs`,
+    `conscious_fund_contributions`, `conscious_fund_distributions`,
+    `influencer_payouts`, `signal_sponsorships` (+ two aggregate views).
   - `conscious_fund_contributions`/`_distributions` did **not** previously exist
     (only the legacy `conscious_fund` balance + `conscious_fund_transactions`).
 - **(b) Optional/uncertain backfill.** `OPTIONAL_backfill_pulse_fund_contributions.sql`

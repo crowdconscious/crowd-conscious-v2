@@ -88,7 +88,7 @@ CREATE TRIGGER citizen_signals_sponsorable_guard
 CREATE TABLE IF NOT EXISTS public.signal_sponsorships (
   id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   signal_id      uuid NOT NULL REFERENCES public.citizen_signals(id) ON DELETE CASCADE,
-  sponsorship_id uuid NOT NULL REFERENCES public.sponsorships(id) ON DELETE CASCADE,
+  sponsorship_id uuid NOT NULL REFERENCES public.creator_sponsorships(id) ON DELETE CASCADE,
   -- Which fund pillar this sponsorship's 20% is tagged to.
   fund_pillar    text NOT NULL CHECK (fund_pillar IN ('clean_air', 'clean_water', 'safe_cities', 'zero_waste', 'fair_trade')),
   -- Disclosure copy shown with the "Patrocinado" badge. NOT NULL so a sponsored

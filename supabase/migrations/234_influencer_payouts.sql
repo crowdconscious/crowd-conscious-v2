@@ -9,7 +9,7 @@
 --
 -- Per-creator, per-period payout ledger. The Stripe webhook / payout job (CODE
 -- lands in a LATER round) computes total_earned from the snapshotted creator_amount
--- on sponsorships and advances status. This migration only provisions the table
+-- on creator_sponsorships and advances status. This migration only provisions the table
 -- + RLS. Prompt 4 adds NO new tables beyond this one.
 --
 -- RLS: a creator reads ONLY their own payout rows. All writes are service-role
@@ -46,7 +46,7 @@ CREATE INDEX IF NOT EXISTS idx_influencer_payouts_status
   ON public.influencer_payouts (status);
 
 COMMENT ON TABLE public.influencer_payouts IS
-  'Per-creator, per-period payout ledger. total_earned derived from snapshotted sponsorships.creator_amount by the payout job. Creators read own only; writes = service role only.';
+  'Per-creator, per-period payout ledger. total_earned derived from snapshotted creator_sponsorships.creator_amount by the payout job. Creators read own only; writes = service role only.';
 COMMENT ON COLUMN public.influencer_payouts.flagged_self_sponsor IS
   'True when the period contains a sponsorship the creator sourced for their own surface (self-deal); finance reviews before release.';
 
