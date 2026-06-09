@@ -6,103 +6,94 @@ export type CreatorLocale = 'es' | 'en'
  * ES is the primary language; EN is the secondary fallback. Follows the same
  * `getXCopy(locale)` pattern as lib/i18n/pulse-listing.ts.
  *
- * NOTE: the brief referenced verbatim landing copy in
- * `docs/context-for-creator-market-additions.md`, which is NOT present in the
- * repo. The landing copy below was authored to match the section structure and
- * intent described in the brief (instant account + drafting, quick editorial
- * review on the first post, then auto-publish). Replace with the verbatim copy
- * if/when that document lands.
+ * The /creators landing strings (hero → closing CTA) are the APPROVED VERBATIM
+ * copy from the "CREATOR LANDING PAGE COPY (ES primary / EN secondary)" section
+ * of the shared brief. Map onto the existing 7 sections; do not paraphrase.
  */
 export function getCreatorCopy(locale: CreatorLocale) {
   const es = locale === 'es'
   return {
     // --- Landing (/creators, /escribe) -------------------------------------
+    // APPROVED VERBATIM COPY — see brief "CREATOR LANDING PAGE COPY". Do not
+    // paraphrase. metaTitle/metaDescription derive from the verbatim Hero.
     metaTitle: es
-      ? 'Escribe en Crowd Conscious — Plataforma para creadores'
-      : 'Write on Crowd Conscious — Creator Platform',
+      ? 'Escribe con propósito. Monetiza con impacto. | Crowd Conscious'
+      : 'Write with purpose. Monetize with impact. | Crowd Conscious',
     metaDescription: es
-      ? 'Publica artículos sobre lo que le importa a tu comunidad, gana con patrocinios transparentes y aporta al Fondo Consciente. Cuenta instantánea, primer artículo con revisión editorial rápida, luego auto-publicación.'
-      : 'Publish articles about what matters to your community, earn from transparent sponsorships, and contribute to the Conscious Fund. Instant account, first post with a quick editorial review, then auto-publish.',
+      ? 'Crowd Conscious abre su Blog a creadores. Publica análisis sobre lo que de verdad importa, gana con patrocinios en tus publicaciones, y destina impacto real a causas comunitarias — en cada post.'
+      : 'Crowd Conscious is opening its Blog to creators. Publish analysis on what actually matters, earn from sponsorships on your posts, and send real impact to community causes — with every post.',
 
     // 1) Hero
-    heroEyebrow: es ? 'Plataforma para creadores' : 'Creator platform',
+    heroEyebrow: es ? 'Para creadores' : 'For creators',
     heroTitle: es
-      ? 'Escribe sobre lo que de verdad le importa a tu comunidad'
-      : 'Write about what truly matters to your community',
+      ? 'Escribe con propósito. Monetiza con impacto.'
+      : 'Write with purpose. Monetize with impact.',
     heroSubtitle: es
-      ? 'Crowd Conscious te da una casa editorial con datos en vivo, patrocinios transparentes y un reparto justo de ingresos. Tú escribes; nosotros nos encargamos de la infraestructura, el pago y la transparencia.'
-      : 'Crowd Conscious gives you an editorial home with live data, transparent sponsorships, and a fair revenue split. You write; we handle the infrastructure, the payouts, and the transparency.',
+      ? 'Crowd Conscious abre su Blog a creadores. Publica análisis sobre lo que de verdad importa, gana con patrocinios en tus publicaciones, y destina impacto real a causas comunitarias — en cada post.'
+      : 'Crowd Conscious is opening its Blog to creators. Publish analysis on what actually matters, earn from sponsorships on your posts, and send real impact to community causes — with every post.',
     heroCta: es ? 'Crear cuenta de creador' : 'Create creator account',
     heroSecondaryCta: es ? 'Ver cómo funciona' : 'See how it works',
     heroExpectations: es
-      ? 'Cuenta y borradores al instante. Tu primer artículo pasa por una revisión editorial rápida; después publicas en automático.'
-      : 'Instant account and drafts. Your first article gets a quick editorial review; after that you auto-publish.',
+      ? 'Acceso de creador al instante. Tu primera publicación pasa por una revisión editorial rápida; después publicas tú.'
+      : 'Instant creator access. Your first post gets a quick editorial review; after that you publish yourself.',
 
     // 2) Cómo funciona
     howTitle: es ? 'Cómo funciona' : 'How it works',
     howSteps: es
       ? [
           {
-            title: 'Crea tu cuenta',
-            body: 'Regístrate como creador en segundos. Eliges tu handle público y empiezas a escribir borradores de inmediato.',
+            title: 'Crea tu cuenta y escribe.',
+            body: 'Acceso de creador al instante. Publicas análisis con fuentes, en español e inglés. Tu primera publicación pasa por una revisión editorial rápida; después publicas tú.',
           },
           {
-            title: 'Escribe y cita',
-            body: 'Editor en markdown, soporte bilingüe (ES/EN) y un bloque de fuentes para respaldar cada afirmación con enlaces verificables.',
+            title: 'Trae tu marca — o deja que la traigamos.',
+            body: 'Comparte tu enlace de patrocinio (lleva tu ID) y quien patrocina por ahí cuenta como tuyo. Si la marca llega sola, la trajo la plataforma.',
           },
           {
-            title: 'Revisión rápida, luego auto-publicación',
-            body: 'Tu primer artículo pasa por una revisión editorial breve. Una vez aprobado, ganas confianza y publicas en automático.',
-          },
-          {
-            title: 'Gana con transparencia',
-            body: 'Genera enlaces de patrocinio para tus artículos. Las marcas patrocinan, tú ganas, y el 20% siempre va al Fondo Consciente.',
+            title: 'Ganas, con impacto incluido.',
+            body: 'El 20% de cada peso va directo al Fondo Consciente, automáticamente.',
           },
         ]
       : [
           {
-            title: 'Create your account',
-            body: 'Sign up as a creator in seconds. Pick your public handle and start drafting right away.',
+            title: 'Create your account and write.',
+            body: 'Instant creator access. Publish sourced analysis in Spanish and English. Your first post gets a quick editorial review; after that you publish yourself.',
           },
           {
-            title: 'Write and cite',
-            body: 'Markdown editor, bilingual support (ES/EN), and a sources block to back every claim with verifiable links.',
+            title: 'Bring your brand — or let us.',
+            body: 'Share your sponsorship link (it carries your ID); anyone who sponsors through it counts as yours. If the brand arrives on its own, the platform brought it.',
           },
           {
-            title: 'Quick review, then auto-publish',
-            body: 'Your first article gets a short editorial review. Once approved, you earn trust and publish automatically.',
-          },
-          {
-            title: 'Earn transparently',
-            body: 'Generate sponsorship links for your articles. Brands sponsor, you earn, and 20% always goes to the Conscious Fund.',
+            title: 'You earn, with impact built in.',
+            body: '20% of every peso goes straight to the Conscious Fund, automatically.',
           },
         ],
 
     // 3) El reparto (split cards)
     splitTitle: es ? 'El reparto' : 'The split',
     splitSubtitle: es
-      ? 'El Fondo Consciente recibe siempre el 20% del bruto. El resto depende de quién trajo al patrocinador.'
-      : 'The Conscious Fund always receives 20% of gross. The rest depends on who brought the sponsor.',
+      ? 'Transparente, siempre. El Fondo recibe 20% del bruto en cada patrocinio. El resto depende de quién cierra el trato:'
+      : 'Transparent, always. The Fund takes 20% of gross on every sponsorship. The rest depends on who closes the deal:',
     splitCreatorSourced: {
-      label: es ? 'Patrocinio que tú traes' : 'Sponsor you bring',
-      tagline: es
-        ? 'Tú conseguiste al patrocinador para tu artículo.'
-        : 'You brought the sponsor to your article.',
+      label: es
+        ? 'Tú traes la marca (tu enlace) → te quedas con el 60%.'
+        : 'You bring the brand (your link) → you keep 60%.',
+      tagline: es ? 'El 80% sale de nuestro bolsillo.' : '80% leaves our pocket.',
       rows: [
         { label: es ? 'Creador' : 'Creator', pct: 60 },
-        { label: es ? 'Fondo Consciente' : 'Conscious Fund', pct: 20 },
+        { label: es ? 'Fondo' : 'Fund', pct: 20 },
         { label: es ? 'Plataforma' : 'Platform', pct: 20 },
       ],
     },
     splitPlatformSourced: {
-      label: es ? 'Patrocinio de la plataforma' : 'Platform-sourced sponsor',
-      tagline: es
-        ? 'Crowd Conscious consiguió al patrocinador.'
-        : 'Crowd Conscious brought the sponsor.',
+      label: es
+        ? 'La marca llega sola → recibes el 20%.'
+        : 'The brand arrives on its own → you get 20%.',
+      tagline: es ? 'Ingreso pasivo: nosotros vendemos.' : 'Passive income: we sell.',
       rows: [
-        { label: es ? 'Plataforma' : 'Platform', pct: 60 },
         { label: es ? 'Creador' : 'Creator', pct: 20 },
-        { label: es ? 'Fondo Consciente' : 'Conscious Fund', pct: 20 },
+        { label: es ? 'Fondo' : 'Fund', pct: 20 },
+        { label: es ? 'Plataforma' : 'Platform', pct: 60 },
       ],
     },
 
@@ -111,38 +102,38 @@ export function getCreatorCopy(locale: CreatorLocale) {
     whyPoints: es
       ? [
           {
-            title: 'Datos en vivo, no opiniones vacías',
-            body: 'Incrusta consultas Pulse y resultados reales de la comunidad dentro de tus artículos.',
+            title: 'Audiencia cívica, no scroll vacío.',
+            body: 'Lectores que vienen a pensar.',
           },
           {
-            title: 'Patrocinios honestos',
-            body: 'Tarjetas de patrocinio acotadas y siempre etiquetadas como “Patrocinado”. Sin formatos engañosos.',
+            title: 'Distribución hecha.',
+            body: 'Tu pieza vive junto a Pulses, Señales y una app móvil.',
           },
           {
-            title: 'Impacto real',
-            body: 'El 20% de cada patrocinio financia causas ambientales a través del Fondo Consciente.',
+            title: 'Credibilidad real.',
+            body: 'Primera plataforma de inteligencia colectiva con certificación Hecho en México.',
           },
           {
-            title: 'Reparto justo y claro',
-            body: 'Ves exactamente cuánto ganas por periodo y el estado de cada pago.',
+            title: 'Impacto que se ve.',
+            body: 'Cada patrocinio financia causas votadas por la comunidad.',
           },
         ]
       : [
           {
-            title: 'Live data, not empty takes',
-            body: 'Embed Pulse consultations and real community results inside your articles.',
+            title: 'A civic audience, not empty scroll.',
+            body: 'Readers who come to think.',
           },
           {
-            title: 'Honest sponsorships',
-            body: 'Constrained sponsor cards always labelled “Patrocinado.” No deceptive formats.',
+            title: 'Distribution, done.',
+            body: 'Your piece lives next to Pulses, Signals, and a mobile app.',
           },
           {
-            title: 'Real impact',
-            body: '20% of every sponsorship funds environmental causes through the Conscious Fund.',
+            title: 'Real credibility.',
+            body: 'The first collective-intelligence platform with the Hecho en México certification.',
           },
           {
-            title: 'Fair, clear split',
-            body: 'See exactly how much you earn per period and the status of every payout.',
+            title: 'Visible impact.',
+            body: 'Every sponsorship funds community-voted causes.',
           },
         ],
 
@@ -150,16 +141,18 @@ export function getCreatorCopy(locale: CreatorLocale) {
     lookingTitle: es ? 'Qué buscamos' : 'What we look for',
     lookingPoints: es
       ? [
-          'Voces que escriben con rigor y citan sus fuentes.',
-          'Temas con impacto local: medio ambiente, ciudades, consumo consciente.',
-          'Honestidad por encima del clickbait.',
-          'Ganas de construir comunidad, no sólo audiencia.',
+          'Análisis original con fuentes citadas',
+          'Español e inglés (ambos se publican juntos)',
+          'Apolítico y seguro para marcas',
+          'Revisión editorial en tus primeras piezas',
+          'Calidad sobre volumen.',
         ]
       : [
-          'Voices that write with rigor and cite their sources.',
-          'Topics with local impact: environment, cities, conscious consumption.',
-          'Honesty over clickbait.',
-          'A drive to build community, not just an audience.',
+          'Original analysis with cited sources',
+          'Spanish and English (both ship together)',
+          'Apolitical and brand-safe',
+          'Editorial review on your first pieces',
+          'Quality over volume.',
         ],
 
     // 6) Proof strip
@@ -169,11 +162,11 @@ export function getCreatorCopy(locale: CreatorLocale) {
       : 'Real communities voting with real confidence.',
     proofReadsLabel: es ? 'lecturas en el blog' : 'blog reads',
 
-    // 7) Signup CTA
-    finalCtaTitle: es ? '¿List@ para escribir?' : 'Ready to write?',
-    finalCtaSubtitle: es
-      ? 'Crea tu cuenta de creador y publica tu primer borrador hoy mismo.'
-      : 'Create your creator account and publish your first draft today.',
+    // 7) Cierre / Closing CTA
+    finalCtaTitle: es
+      ? '¿Listo para escribir con propósito?'
+      : 'Ready to write with purpose?',
+    finalCtaSubtitle: es ? 'Empieza a escribir hoy.' : 'Start writing today.',
     finalCta: es ? 'Crear cuenta de creador' : 'Create creator account',
 
     // --- Roles / byline -----------------------------------------------------
