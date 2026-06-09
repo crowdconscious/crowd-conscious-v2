@@ -11,6 +11,12 @@ import { handleSponsorUpgrade } from './handlers/sponsor-upgrade'
 import { handleMarketSponsorAccount } from './handlers/market-sponsor-account'
 import { handleTreasuryDonation } from './handlers/treasury-donation'
 import { handlePaymentSucceeded, handlePaymentFailed } from './handlers/payment-verification'
+import { handleSponsorshipCheckout } from './handlers/sponsorship-checkout'
+import {
+  handleSponsorshipRefund,
+  handleSponsorshipDispute,
+} from './handlers/sponsorship-refund'
+import { SPONSORSHIP_KIND } from './lib/sponsorship-money'
 
 /**
  * Stripe Webhook Handler
@@ -50,10 +56,21 @@ export async function POST(request: NextRequest) {
     return ApiResponse.badRequest(`Webhook Error: ${err.message}`, 'WEBHOOK_SIGNATURE_ERROR')
   }
 
+  // Idempotency / audit: log every event id we receive so re-deliveries are
+  // traceable. The per-row UNIQUE constraints (creator_sponsorships
+  // .stripe_session_id) and status guards make the actual writes idempotent.
+  console.log('[stripe-webhook] event received', {
+    eventId: event.id,
+    eventType: event.type,
+  })
+
   try {
     switch (event.type) {
       case 'checkout.session.completed':
-        await handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session)
+        await handleCheckoutSessionCompleted(
+          event.data.object as Stripe.Checkout.Session,
+          event.id
+        )
         break
 
       case 'payment_intent.succeeded':
@@ -62,6 +79,15 @@ export async function POST(request: NextRequest) {
 
       case 'payment_intent.payment_failed':
         await handlePaymentFailed(event.data.object as Stripe.PaymentIntent)
+        break
+
+      // Creator-market sponsorship reversals (Prompt 3).
+      case 'charge.refunded':
+        await handleSponsorshipRefund(event.data.object as Stripe.Charge)
+        break
+
+      case 'charge.dispute.created':
+        await handleSponsorshipDispute(event.data.object as Stripe.Dispute)
         break
 
       default:
@@ -90,9 +116,23 @@ export async function POST(request: NextRequest) {
 /**
  * Route checkout.session.completed events to appropriate handler
  */
-async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
+async function handleCheckoutSessionCompleted(
+  session: Stripe.Checkout.Session,
+  eventId: string
+) {
   const metadata = session.metadata || {}
   const { type: purchaseType } = metadata
+
+  // Creator-market sponsorship (Prompt 3). Shared metadata contract:
+  // { kind: 'sponsorship', surface_type, source_id, creator_id? }. Checked
+  // first so it owns blog/signal/pulse sponsorship sessions from both workers.
+  if (metadata.kind === SPONSORSHIP_KIND) {
+    await handleSponsorshipCheckout({
+      ...session,
+      metadata: { ...metadata, stripe_event_id: eventId },
+    })
+    return
+  }
 
   if (metadata.product_type === 'pulse') {
     await handlePulsePurchase(session)
