@@ -9,6 +9,7 @@ import {
   type SurfaceType,
 } from '../lib/sponsorship-money'
 import { signalCategoryToPillar, isFundPillar, type FundPillar } from '@/lib/fund/pillars'
+import { isSponsorshipTier, round2 } from '@/lib/sponsorship-tiers'
 
 /**
  * Prompt 3 — the automation core.
@@ -83,6 +84,21 @@ export async function handleSponsorshipCheckout(session: Stripe.Checkout.Session
 
   const creatorIdFromMetadata =
     (metadata.creator_id as string | undefined)?.trim() || null
+
+  // ---- Tier metadata (migrations 237–239, additive). ----
+  // gross = tier_price + top_up_amount. `gross` above already equals the Stripe
+  // amount_total (tier_price + top_up), so we persist the raw top-up + tier for
+  // placement; the split below is still computed on gross. tier is nullable for
+  // legacy / non-tiered rows.
+  const tier = isSponsorshipTier(metadata.tier) ? metadata.tier : null
+  const topUpRaw = Number((metadata.top_up_amount as string | undefined) ?? '')
+  const topUpAmount =
+    Number.isFinite(topUpRaw) && topUpRaw > 0 ? round2(topUpRaw) : 0
+  // Supporter shout-out only carries meaning for the support tier (no logo).
+  const supporterMessage =
+    tier === 'support'
+      ? (metadata.supporter_message as string | undefined)?.trim() || null
+      : null
 
   // For a blog with no explicit creator_id, the split depends on whether the
   // post has a creator author. (Signals never carry a creator_id; pulse uses
@@ -182,6 +198,10 @@ export async function handleSponsorshipCheckout(session: Stripe.Checkout.Session
       stripe_payment_intent: paymentIntentId,
       stripe_event_id: (metadata.stripe_event_id as string | undefined) ?? null,
       flagged_self_sponsor: flaggedSelfSponsor,
+      // Tier placement metadata (additive; NULL for legacy/non-tiered rows).
+      tier,
+      supporter_message: supporterMessage,
+      top_up_amount: topUpAmount,
     })
     .select('id')
     .single()
@@ -251,6 +271,8 @@ export async function handleSponsorshipCheckout(session: Stripe.Checkout.Session
     sessionId: session.id,
     sponsorshipId,
     surfaceType,
+    tier,
+    topUpAmount,
     label,
     sourcedBy,
     gross: amounts.gross,

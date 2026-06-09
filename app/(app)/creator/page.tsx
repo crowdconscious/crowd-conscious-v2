@@ -2,6 +2,9 @@ import { cookies } from 'next/headers'
 import { getCurrentUser } from '@/lib/auth-server'
 import { createAdminClient } from '@/lib/supabase-admin'
 import type { CreatorLocale } from '@/lib/i18n/creator'
+import { SPONSORSHIP_TIERS } from '@/lib/sponsorship-tiers'
+import { loadCreatorTiers, loadTierLimits } from '@/lib/sponsorship-tiers-data'
+import type { TierPricingItem } from './CreatorTierPricing'
 import CreatorDashboardClient, {
   type DashboardPost,
   type DashboardPayout,
@@ -66,6 +69,24 @@ export default async function CreatorDashboardPage() {
     referredClicks = count ?? 0
   }
 
+  // Tier pricing settings: platform guardrails + this creator's own prices.
+  // Both tier tables are public-read; the admin client is just a reader here.
+  const tierLimits = await loadTierLimits(admin)
+  const creatorTiers = await loadCreatorTiers(admin, userId)
+  const tierPricing: TierPricingItem[] = SPONSORSHIP_TIERS.map((tier) => {
+    const limit = tierLimits[tier]
+    const own = creatorTiers.find((r) => r.tier === tier)
+    return {
+      tier,
+      price: own ? own.price : limit.defaultPrice,
+      enabled: own ? own.enabled : false,
+      min: limit.minPrice,
+      max: limit.maxPrice,
+      default: limit.defaultPrice,
+      currency: limit.currency,
+    }
+  })
+
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.crowdconscious.app'
 
   return (
@@ -78,6 +99,7 @@ export default async function CreatorDashboardPage() {
       payouts={payouts}
       referredClicks={referredClicks}
       baseUrl={baseUrl}
+      tierPricing={tierPricing}
     />
   )
 }

@@ -11,6 +11,7 @@ import {
   normalizeHandle,
   type CreatorLocale,
 } from '@/lib/i18n/creator'
+import CreatorTierPricing, { type TierPricingItem } from './CreatorTierPricing'
 
 export type DashboardPost = {
   id: string
@@ -38,6 +39,7 @@ type Props = {
   payouts: DashboardPayout[]
   referredClicks: number
   baseUrl: string
+  tierPricing: TierPricingItem[]
 }
 
 export default function CreatorDashboardClient({
@@ -49,6 +51,7 @@ export default function CreatorDashboardClient({
   payouts,
   referredClicks,
   baseUrl,
+  tierPricing,
 }: Props) {
   const t = getCreatorCopy(locale)
   const router = useRouter()
@@ -270,6 +273,9 @@ export default function CreatorDashboardClient({
           </div>
         )}
       </section>
+
+      {/* Sponsorship tier pricing */}
+      <CreatorTierPricing locale={locale} items={tierPricing} />
 
       {/* Posts + sponsorship links */}
       <section className="rounded-xl border border-[#2d3748] bg-[#1a2029] p-5">

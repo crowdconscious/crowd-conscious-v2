@@ -7,7 +7,13 @@ import { getCurrentUser } from '@/lib/auth-server'
 import { isBlogEditorUser } from '@/lib/auth/is-blog-editor'
 import { BlogByline } from '@/components/blog/BlogByline'
 import { BlogSources } from '@/components/blog/BlogSources'
-import { BlogSponsorCard, type BlogSponsorData } from '@/components/sponsor/BlogSponsorCard'
+import {
+  BlogSponsorCard,
+  SponsorShoutout,
+  SponsorBylineCredit,
+  type BlogSponsorData,
+} from '@/components/sponsor/BlogSponsorCard'
+import { isSponsorshipTier, sponsorSlotPlan } from '@/lib/sponsorship-tiers'
 import { getCreatorCopy } from '@/lib/i18n/creator'
 import { canManageBlogPost } from '@/lib/auth/blog-post-access'
 import { SITE_URL } from '@/lib/seo/site'
@@ -223,7 +229,7 @@ export default async function BlogPostPage(props: Props) {
     if (post.status === 'published') {
       const { data: sponsorship } = await admin
         .from('creator_sponsorships')
-        .select('sponsor_name, sponsor_logo_url, sponsor_contact')
+        .select('sponsor_name, sponsor_logo_url, sponsor_contact, tier, supporter_message')
         .eq('surface_type', 'blog')
         .eq('source_id', post.id)
         .eq('status', 'active')
@@ -231,10 +237,14 @@ export default async function BlogPostPage(props: Props) {
         .limit(1)
         .maybeSingle()
       if (sponsorship?.sponsor_name) {
+        const tierRaw = (sponsorship as { tier?: string | null }).tier ?? null
         sponsorData = {
           sponsorName: sponsorship.sponsor_name,
           logoUrl: sponsorship.sponsor_logo_url ?? null,
           targetUrl: sponsorship.sponsor_contact ?? null,
+          tier: isSponsorshipTier(tierRaw) ? tierRaw : null,
+          supporterMessage:
+            (sponsorship as { supporter_message?: string | null }).supporter_message ?? null,
         }
       }
     }
@@ -338,6 +348,10 @@ export default async function BlogPostPage(props: Props) {
         locale={locale}
       />
 
+      {sponsorData && sponsorSlotPlan(sponsorData.tier).byline ? (
+        <SponsorBylineCredit sponsor={sponsorData} locale={locale} />
+      ) : null}
+
       {post.cover_image_url && (
         <BlogCoverWithQuestion
           imageUrl={post.cover_image_url}
@@ -356,7 +370,12 @@ export default async function BlogPostPage(props: Props) {
         />
       ) : null}
 
-      {sponsorData ? <BlogSponsorCard sponsor={sponsorData} locale={locale} slot="inline" /> : null}
+      {sponsorData && sponsorSlotPlan(sponsorData.tier).shoutout ? (
+        <SponsorShoutout sponsor={sponsorData} locale={locale} />
+      ) : null}
+      {sponsorData && sponsorSlotPlan(sponsorData.tier).inlineCard ? (
+        <BlogSponsorCard sponsor={sponsorData} locale={locale} slot="inline" />
+      ) : null}
 
       <div className="mt-10">
         {pulseMarketId && pulseData ? (
@@ -399,9 +418,9 @@ export default async function BlogPostPage(props: Props) {
 
       <BlogSources sources={(post as { sources?: unknown }).sources} locale={locale} />
 
-      {sponsorData ? (
+      {sponsorData && sponsorSlotPlan(sponsorData.tier).footerCard ? (
         <BlogSponsorCard sponsor={sponsorData} locale={locale} slot="footer" />
-      ) : post.status === 'published' ? (
+      ) : !sponsorData && post.status === 'published' ? (
         <div className="mt-10 flex flex-col items-start gap-2 rounded-xl border border-dashed border-[#2d3748] p-4">
           <p className="text-sm text-slate-400">
             {locale === 'es'

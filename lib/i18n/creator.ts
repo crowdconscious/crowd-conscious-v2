@@ -318,6 +318,75 @@ export function getCreatorCopy(locale: CreatorLocale) {
     reviewAuthor: es ? 'Autor' : 'Author',
     reviewTrust: es ? 'Confianza' : 'Trust',
     reviewSubmitted: es ? 'Enviado' : 'Submitted',
+
+    // --- Sponsorship tiers (migrations 237–239) -----------------------------
+    // Tier labels + one-line placement descriptions.
+    tierSupportLabel: es ? 'Apoyo' : 'Supporter',
+    tierSponsorLabel: es ? 'Patrocinador' : 'Sponsor',
+    tierFeaturedLabel: es ? 'Patrocinador destacado' : 'Featured',
+    tierSupportDesc: es
+      ? 'Mensaje de apoyo moderado. Sin logo.'
+      : 'Moderated shout-out. No logo.',
+    tierSponsorDesc: es
+      ? 'Tarjeta de patrocinio con tu logo y enlace.'
+      : 'Sponsor card with your logo and link.',
+    tierFeaturedDesc: es
+      ? 'Tarjeta destacada en dos lugares + crédito en la firma.'
+      : 'Featured card in two slots + byline credit.',
+
+    // --- Sponsor checkout (tier picker) -------------------------------------
+    sponsorTierPickerTitle: es ? 'Elige tu tipo de patrocinio' : 'Choose your sponsorship',
+    sponsorTierPlatformPrice: es ? 'Precio de la plataforma' : 'Platform price',
+    sponsorBrandName: es ? 'Nombre de la marca' : 'Brand name',
+    sponsorLogoUrl: es ? 'URL del logo (opcional)' : 'Logo URL (optional)',
+    sponsorTargetUrl: es ? 'URL de destino' : 'Target URL',
+    sponsorContactEmail: es ? 'Correo de contacto' : 'Contact email',
+    sponsorTopUp: es ? 'Aporte adicional (opcional)' : 'Optional top-up',
+    sponsorTopUpHint: es
+      ? 'Suma un extra a tu patrocinio. El 20% también va al Fondo Consciente.'
+      : 'Add extra to your sponsorship. 20% also goes to the Conscious Fund.',
+    sponsorSupporterMessage: es ? 'Mensaje de apoyo (opcional)' : 'Supporter message (optional)',
+    sponsorSupporterMessageHint: es
+      ? 'Se muestra como un reconocimiento moderado. Sin logo.'
+      : 'Shown as a moderated shout-out. No logo.',
+    sponsorTotalLabel: es ? 'Total' : 'Total',
+    sponsorFundPreview: (amount: string) =>
+      es ? `${amount} al Fondo Consciente` : `${amount} to the Conscious Fund`,
+    sponsorContinue: es ? 'Continuar al pago' : 'Continue to payment',
+    sponsorRedirecting: es ? 'Redirigiendo a Stripe...' : 'Redirecting to Stripe...',
+    sponsorSecureNote: es
+      ? 'Pago seguro con Stripe. 20% al Fondo Consciente.'
+      : 'Secure payment with Stripe. 20% to the Conscious Fund.',
+    sponsorErrorRequired: es
+      ? 'Completa los campos obligatorios.'
+      : 'Please complete the required fields.',
+    sponsorErrorGeneric: es
+      ? 'No se pudo iniciar el pago. Intenta de nuevo.'
+      : 'Could not start checkout. Try again.',
+
+    // --- Sponsor card / placement -------------------------------------------
+    sponsorSupportedBy: es ? 'Con el apoyo de' : 'With the support of',
+
+    // --- Creator tier pricing (dashboard settings) --------------------------
+    tierSettingsTitle: es ? 'Precios de patrocinio' : 'Sponsorship pricing',
+    tierSettingsIntro: es
+      ? 'Define tu precio por nivel. Los patrocinadores verán estos precios al patrocinar tus publicaciones.'
+      : 'Set your price per tier. Sponsors see these prices when sponsoring your posts.',
+    tierSettingsOffer: es ? 'Ofrecer este nivel' : 'Offer this tier',
+    tierSettingsPrice: es ? 'Precio (MXN)' : 'Price (MXN)',
+    tierSettingsRange: (min: string, max: string) =>
+      es ? `Entre ${min} y ${max}` : `Between ${min} and ${max}`,
+    tierSettingsDefault: (amount: string) =>
+      es ? `Predeterminado de la plataforma: ${amount}` : `Platform default: ${amount}`,
+    tierSettingsSave: es ? 'Guardar precios' : 'Save pricing',
+    tierSettingsSaving: es ? 'Guardando...' : 'Saving...',
+    tierSettingsSaved: es ? 'Precios guardados' : 'Pricing saved',
+    tierSettingsErrorRange: es
+      ? 'Algún precio está fuera del rango permitido.'
+      : 'A price is outside the allowed range.',
+    tierSettingsErrorGeneric: es
+      ? 'No se pudieron guardar los precios. Intenta de nuevo.'
+      : 'Could not save pricing. Try again.',
   }
 }
 
