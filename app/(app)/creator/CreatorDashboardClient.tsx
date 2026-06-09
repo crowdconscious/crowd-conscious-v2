@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Copy, Check, PenSquare, Link2, MousePointerClick } from 'lucide-react'
+import { Copy, Check, PenSquare, Link2, MousePointerClick, Share2 } from 'lucide-react'
 import { inputBaseClass } from '@/components/ui/input'
 import {
   getCreatorCopy,
@@ -61,6 +61,8 @@ export default function CreatorDashboardClient({
 
   const refToken = currentHandle || creatorId
   const referralLink = currentHandle ? `${baseUrl}/app?ref=${currentHandle}` : null
+  // Public creator profile (articles), distinct from the /app?ref install link.
+  const publicPageLink = currentHandle ? `${baseUrl}/creators/${currentHandle}` : null
 
   const statusLabel = (status: string) => {
     switch (status) {
@@ -156,6 +158,27 @@ export default function CreatorDashboardClient({
         {currentHandle ? (
           <div className="mt-3 space-y-3">
             <p className="text-sm text-emerald-300">@{currentHandle}</p>
+            {publicPageLink && (
+              <div>
+                <p className="mb-1 flex items-center gap-1 text-xs text-slate-400">
+                  <Share2 className="h-3.5 w-3.5" /> {t.dashSharePage}
+                </p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 truncate rounded-lg border border-[#2d3748] bg-[#0f1419] px-3 py-2 text-xs text-slate-300">
+                    {publicPageLink}
+                  </code>
+                  <button
+                    type="button"
+                    onClick={() => void copy('page', publicPageLink)}
+                    className="inline-flex items-center gap-1 rounded-lg border border-slate-600 px-3 py-2 text-xs text-slate-300 hover:bg-slate-800"
+                  >
+                    {copiedKey === 'page' ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                    {copiedKey === 'page' ? t.dashCopied : t.dashCopyLink}
+                  </button>
+                </div>
+                <p className="mt-1 text-xs text-slate-500">{t.dashSharePageHint}</p>
+              </div>
+            )}
             {referralLink && (
               <div>
                 <p className="mb-1 text-xs text-slate-400">{t.dashReferralLink}</p>

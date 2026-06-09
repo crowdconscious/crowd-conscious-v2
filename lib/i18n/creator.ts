@@ -246,6 +246,17 @@ export function getCreatorCopy(locale: CreatorLocale) {
     dashCopied: es ? '¡Copiado!' : 'Copied!',
     dashSponsorLink: es ? 'Enlace de patrocinio' : 'Sponsorship link',
     dashReferralLink: es ? 'Enlace de referido (app)' : 'Referral link (app)',
+    dashSharePage: es ? 'Compartir mi página' : 'Share my page',
+    dashSharePageHint: es
+      ? 'Tu página pública de creador con tus artículos publicados.'
+      : 'Your public creator page with your published articles.',
+
+    // --- Public creator profile (/creators/[handle]) ------------------------
+    profilePostsTitle: es ? 'Artículos publicados' : 'Published articles',
+    profileNoPosts: es
+      ? 'Este creador aún no tiene artículos publicados.'
+      : 'This creator has no published articles yet.',
+    profileRoleBadge: es ? 'Creador' : 'Creator',
     dashEdit: es ? 'Editar' : 'Edit',
     dashView: es ? 'Ver' : 'View',
 
