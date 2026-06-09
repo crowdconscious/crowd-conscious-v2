@@ -554,6 +554,77 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
         : 'Crowd Conscious does not offer legal advice. A signal is not a substitute for a formal complaint before the competent authority.',
     },
 
+    // Sponsored Signals (Prompt 5). A signal can carry a transparent
+    // "Patrocinado" badge whose 20% routes to the Conscious Fund. The
+    // sponsorship is display-only metadata — it NEVER affects the signal's
+    // content, status, thresholds or co-firma counts.
+    sponsor: {
+      badgeLabel: isEs ? 'Patrocinado' : 'Sponsored',
+      sponsoredBy: (name: string) =>
+        isEs ? `Patrocinado por ${name}` : `Sponsored by ${name}`,
+      // pillarLabel comes from lib/fund/pillars.ts (bilingual).
+      transparency: (pillarLabel: string) =>
+        isEs
+          ? `Esta señal apoya al Fondo Consciente · pilar ${pillarLabel}.`
+          : `This signal supports the Conscious Fund · ${pillarLabel} pillar.`,
+      integrityNote: isEs
+        ? 'El patrocinio no afecta el contenido, las co-firmas ni el avance de la señal.'
+        : 'Sponsorship does not affect the signal’s content, co-signs or escalation.',
+
+      // Admin toggle (only admins may set citizen_signals.sponsorable; the DB
+      // trigger enforces it structurally).
+      admin: {
+        toggleLabel: isEs ? 'Patrocinable' : 'Sponsorable',
+        enable: isEs ? 'Habilitar patrocinio' : 'Enable sponsorship',
+        disable: isEs ? 'Deshabilitar patrocinio' : 'Disable sponsorship',
+        on: isEs ? 'Patrocinable: sí' : 'Sponsorable: yes',
+        off: isEs ? 'Patrocinable: no' : 'Sponsorable: no',
+        help: isEs
+          ? 'Solo administradores. Permite que una marca patrocine esta señal.'
+          : 'Admins only. Lets a brand sponsor this signal.',
+        copyLink: isEs ? 'Copiar enlace de patrocinio' : 'Copy sponsor link',
+        copied: isEs ? 'Enlace copiado' : 'Link copied',
+      },
+
+      // Public sponsor checkout (/sponsor/signal/[id]).
+      checkout: {
+        eyebrow: isEs ? 'Patrocinio transparente' : 'Transparent sponsorship',
+        title: isEs ? 'Patrocina esta señal' : 'Sponsor this signal',
+        subtitle: isEs
+          ? 'Tu marca aparece con una insignia transparente. El 20% va directo al Fondo Consciente. No influye en el contenido ni en las co-firmas.'
+          : 'Your brand appears with a transparent badge. 20% goes straight to the Conscious Fund. It never influences the content or the co-signs.',
+        signalLabel: isEs ? 'Señal' : 'Signal',
+        sponsorName: isEs ? 'Nombre de la marca' : 'Brand name',
+        sponsorNamePlaceholder: isEs ? 'Ej. Café Consciente' : 'E.g. Conscious Coffee',
+        sponsorEmail: isEs ? 'Correo de contacto' : 'Contact email',
+        sponsorLogo: isEs ? 'URL del logo (opcional)' : 'Logo URL (optional)',
+        badgeMessage: isEs ? 'Mensaje de la insignia' : 'Badge message',
+        badgeMessagePlaceholder: isEs
+          ? 'Ej. Patrocinado por Café Consciente'
+          : 'E.g. Sponsored by Conscious Coffee',
+        amount: isEs ? 'Monto (MXN)' : 'Amount (MXN)',
+        amountHelp: isEs
+          ? 'El 20% se asigna al Fondo Consciente. Mínimo $500 MXN.'
+          : '20% is allocated to the Conscious Fund. Minimum $500 MXN.',
+        submit: isEs ? 'Continuar al pago' : 'Continue to payment',
+        submitting: isEs ? 'Redirigiendo…' : 'Redirecting…',
+        disclosure: isEs
+          ? 'Todo patrocinio se muestra públicamente con la etiqueta “Patrocinado”.'
+          : 'Every sponsorship is shown publicly with a “Sponsored” label.',
+        notSponsorable: isEs
+          ? 'Esta señal no está habilitada para patrocinio.'
+          : 'This signal is not enabled for sponsorship.',
+        notFound: isEs ? 'Señal no encontrada.' : 'Signal not found.',
+        error: isEs
+          ? 'No pudimos iniciar el pago. Intenta de nuevo.'
+          : 'We could not start the payment. Please try again.',
+        success: isEs
+          ? 'Gracias. Tu patrocinio se activará cuando se confirme el pago.'
+          : 'Thank you. Your sponsorship activates once the payment is confirmed.',
+        cancelled: isEs ? 'Pago cancelado.' : 'Payment cancelled.',
+      },
+    },
+
     // Surfaces that introduce Signals to people who haven't filed one yet:
     //   - The teaser tile we render on the homepage (`landing.*`)
     //   - The standalone `/signals/acerca` product page (`about.*`)

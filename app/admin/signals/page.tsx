@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { getCurrentUser } from '@/lib/auth-server'
 import { isAdminUser } from '@/lib/auth/is-admin'
 import { createSignalsAdminClient } from '@/lib/signals/supabase'
+import { createAdminClient } from '@/lib/supabase-admin'
 import {
   getCitizenSignalsCopy,
   type CitizenSignalsLocale,
@@ -80,6 +81,26 @@ export default async function AdminSignalsPage() {
     locationsLookup[l.id] = { name: l.name, city: l.city ?? null }
   }
 
+  // `sponsorable` (migration 235) is not yet modelled in types/database.ts, so
+  // fetch it via the untyped service-role client and merge by id.
+  const signalIds = (signals ?? []).map((s) => s.id)
+  const sponsorableById = new Map<string, boolean>()
+  if (signalIds.length > 0) {
+    const moneyAdmin = createAdminClient()
+    const { data: flagRows } = await moneyAdmin
+      .from('citizen_signals')
+      .select('id, sponsorable')
+      .in('id', signalIds)
+    for (const r of (flagRows ?? []) as Array<{ id: string; sponsorable: boolean | null }>) {
+      sponsorableById.set(r.id, !!r.sponsorable)
+    }
+  }
+
+  const enrichedSignals = (signals ?? []).map((s) => ({
+    ...s,
+    sponsorable: sponsorableById.get(s.id) ?? false,
+  }))
+
   return (
     <div className="min-h-screen bg-[#0f1419] text-slate-100">
       <main className="mx-auto max-w-6xl px-4 py-10">
@@ -99,7 +120,7 @@ export default async function AdminSignalsPage() {
 
         <SignalsTriage
           locale={locale}
-          initialSignals={(signals ?? []) as AdminSignalRow[]}
+          initialSignals={enrichedSignals as AdminSignalRow[]}
           targets={(targets ?? []) as AdminTargetRow[]}
           locations={locationsLookup}
         />

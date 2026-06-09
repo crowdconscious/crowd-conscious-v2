@@ -21,6 +21,7 @@ import OfficialResponses, {
   type OfficialResponseRow,
 } from './OfficialResponses'
 import SignalShareBar from './SignalShareBar'
+import SponsorBadge, { type SignalSponsorInfo } from './SponsorBadge'
 
 type SignalCore = {
   id: string
@@ -80,6 +81,8 @@ type Props = {
   responses: OfficialResponseRow[]
   viewerSignedIn: boolean
   viewerHasCosigned: boolean
+  /** Active sponsorship (display-only "Patrocinado" badge), or null. */
+  sponsor?: SignalSponsorInfo | null
 }
 
 function severityClasses(severity: string): string {
@@ -143,6 +146,7 @@ export default function SignalDetail({
   responses,
   viewerSignedIn,
   viewerHasCosigned,
+  sponsor = null,
 }: Props) {
   const t = getCitizenSignalsCopy(locale)
   const dateLocale = locale === 'es' ? 'es-MX' : 'en-US'
@@ -317,6 +321,8 @@ export default function SignalDetail({
         </div>
 
         <aside className="space-y-5 lg:sticky lg:top-24 lg:self-start">
+          {sponsor && <SponsorBadge locale={locale} sponsor={sponsor} />}
+
           <div className="rounded-2xl border border-[#2d3748] bg-[#11161f] p-5">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
               {t.support.combinedCount(cosignCount, supportCount)}

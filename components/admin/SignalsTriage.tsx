@@ -37,6 +37,8 @@ export type AdminSignalRow = {
   anonymous_support_count: number
   canonical_duplicate_of: string | null
   ai_scores: Record<string, unknown> | null
+  /** Admin-only eligibility flag for sponsorship (migration 235). */
+  sponsorable: boolean
   created_at: string
   updated_at: string
 }
@@ -148,6 +150,32 @@ export default function SignalsTriage({
     }
   }
 
+  async function toggleSponsorable(signalId: string, next: boolean) {
+    setPendingByRow((p) => ({ ...p, [signalId]: true }))
+    setErrorByRow((e) => ({ ...e, [signalId]: null }))
+    try {
+      const res = await fetch(`/api/admin/signals/${signalId}/sponsorable`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sponsorable: next }),
+      })
+      if (!res.ok) {
+        const j = (await res.json().catch(() => ({}))) as { error?: string }
+        throw new Error(j.error ?? `HTTP ${res.status}`)
+      }
+      setSignals((prev) =>
+        prev.map((s) => (s.id === signalId ? { ...s, sponsorable: next } : s))
+      )
+    } catch (e: unknown) {
+      setErrorByRow((er) => ({
+        ...er,
+        [signalId]: (e as Error).message ?? 'Error',
+      }))
+    } finally {
+      setPendingByRow((p) => ({ ...p, [signalId]: false }))
+    }
+  }
+
   async function loadLog(signalId: string) {
     if (logRowsById[signalId]) return
     const res = await fetch(`/api/admin/signals/${signalId}/moderation`)
@@ -230,6 +258,11 @@ export default function SignalsTriage({
                       <span className="rounded-full bg-slate-500/15 px-2.5 py-0.5 text-slate-300">
                         {t.statusLabel(s.publication_status as SignalPublicationStatus)}
                       </span>
+                      {s.sponsorable && (
+                        <span className="rounded-full bg-emerald-500/15 px-2.5 py-0.5 font-semibold text-emerald-300">
+                          {t.sponsor.admin.on}
+                        </span>
+                      )}
                     </div>
                     <h2 className="mt-2 text-base font-semibold text-white">
                       {s.title}
@@ -424,6 +457,28 @@ export default function SignalsTriage({
                       })()
                     }}
                   />
+                  <ActionBtn
+                    label={
+                      s.sponsorable
+                        ? t.sponsor.admin.disable
+                        : t.sponsor.admin.enable
+                    }
+                    tone={s.sponsorable ? 'amber' : 'slate'}
+                    pending={pending}
+                    onClick={() => void toggleSponsorable(s.id, !s.sponsorable)}
+                  />
+                  {s.sponsorable && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const url = `${window.location.origin}/sponsor/signal/${s.id}`
+                        void navigator.clipboard?.writeText(url)
+                      }}
+                      className="rounded-lg border border-emerald-500/40 px-3 py-1.5 text-xs text-emerald-200 hover:bg-emerald-500/10"
+                    >
+                      {t.sponsor.admin.copyLink}
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => {

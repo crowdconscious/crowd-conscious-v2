@@ -3,11 +3,13 @@ import { cookies } from 'next/headers'
 import { notFound } from 'next/navigation'
 import { getCurrentUser } from '@/lib/auth-server'
 import { createSignalsAdminClient } from '@/lib/signals/supabase'
+import { createAdminClient } from '@/lib/supabase-admin'
 import {
   getCitizenSignalsCopy,
   type CitizenSignalsLocale,
 } from '@/lib/i18n/citizen-signals'
 import SignalDetail from '@/components/signals/SignalDetail'
+import type { SignalSponsorInfo } from '@/components/signals/SponsorBadge'
 
 function readLocale(c: {
   get: (k: string) => { value?: string } | undefined
@@ -138,6 +140,11 @@ export default async function SignalsDetailPage({ params }: PageProps) {
   // Resolve the viewer's cosign state so the button can render the
   // correct verb on first paint. Anonymous viewers always get the
   // "co-sign" prompt; signed-in viewers get accurate state.
+  // Resolve the active sponsorship (display-only) for the "Patrocinado" badge.
+  // Uses the untyped admin client because the creator-market tables are not
+  // modelled in types/database.ts. READ-ONLY: this never writes the signal.
+  const sponsor = await resolveSignalSponsor(signal.id)
+
   const user = await getCurrentUser()
   let viewerHasCosigned = false
   if (user) {
@@ -167,10 +174,63 @@ export default async function SignalsDetailPage({ params }: PageProps) {
         responses={responses ?? []}
         viewerSignedIn={!!user}
         viewerHasCosigned={viewerHasCosigned}
+        sponsor={sponsor}
       />
       <p className="mt-10 text-center text-xs text-slate-500">
         {t.legal.noLegalAdviceBody}
       </p>
     </main>
   )
+}
+
+/**
+ * Resolve the active sponsorship for a signal (display-only). Returns null when
+ * the signal is not sponsored. Two cheap reads against the un-modelled creator-
+ * market tables via the untyped admin client.
+ */
+async function resolveSignalSponsor(
+  signalId: string
+): Promise<SignalSponsorInfo | null> {
+  const admin = createAdminClient()
+
+  const { data: joins } = await admin
+    .from('signal_sponsorships')
+    .select('sponsorship_id, fund_pillar, badge_message')
+    .eq('signal_id', signalId)
+    .order('created_at', { ascending: false })
+
+  const rows = (joins ?? []) as Array<{
+    sponsorship_id: string
+    fund_pillar: string
+    badge_message: string
+  }>
+  if (rows.length === 0) return null
+
+  const ids = rows.map((r) => r.sponsorship_id)
+  const { data: sponsorships } = await admin
+    .from('creator_sponsorships')
+    .select('id, sponsor_name, sponsor_logo_url, status')
+    .in('id', ids)
+    .eq('status', 'active')
+
+  const active = (sponsorships ?? []) as Array<{
+    id: string
+    sponsor_name: string
+    sponsor_logo_url: string | null
+    status: string
+  }>
+  if (active.length === 0) return null
+
+  // Prefer the most recent join whose sponsorship is still active.
+  const join = rows.find((r) => active.some((s) => s.id === r.sponsorship_id))
+  if (!join) return null
+  const sponsorship = active.find((s) => s.id === join.sponsorship_id)
+  if (!sponsorship) return null
+
+  return {
+    sponsorName: sponsorship.sponsor_name,
+    sponsorLogoUrl: sponsorship.sponsor_logo_url,
+    fundPillar: join.fund_pillar,
+    badgeMessage: join.badge_message,
+  }
 }
