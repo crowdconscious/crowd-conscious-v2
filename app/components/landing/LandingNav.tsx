@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Menu, X } from 'lucide-react'
+import { Menu, X, Download } from 'lucide-react'
 import Logo from '@/components/Logo'
 import LanguageSwitcherSimple from '@/components/LanguageSwitcherSimple'
 import { useLanguage } from '@/contexts/LanguageContext'
@@ -31,6 +31,8 @@ const NAV = {
     live: 'En Vivo',
     signIn: 'Iniciar sesión',
     signUp: 'Crear cuenta',
+    downloadApp: 'Descargar la app',
+    androidSoon: 'Android próximamente',
   },
   en: {
     pulse: 'Pulse',
@@ -42,6 +44,8 @@ const NAV = {
     live: 'Live',
     signIn: 'Sign in',
     signUp: 'Create account',
+    downloadApp: 'Download the app',
+    androidSoon: 'Android coming soon',
   },
 } as const
 
@@ -129,6 +133,14 @@ export default function LandingNav() {
             <LiveBadge liveCount={liveCount} label={nav.live} />
             <CompactFundThermometer locale={language} />
             <LanguageSwitcherSimple />
+            <a
+              href="/app"
+              title={nav.androidSoon}
+              className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-sm font-medium text-emerald-300 transition-colors hover:bg-emerald-500/20"
+            >
+              <Download className="h-4 w-4" />
+              <span>{nav.downloadApp}</span>
+            </a>
             <Link
               href="/login"
               className="text-slate-400 hover:text-white transition-colors font-medium text-sm"
@@ -182,6 +194,17 @@ export default function LandingNav() {
                 )}
               </Link>
             ))}
+            <a
+              href="/app"
+              onClick={() => setMobileOpen(false)}
+              className="mt-1 flex min-h-[44px] items-center gap-2 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-3 font-medium text-emerald-300"
+            >
+              <Download className="h-4 w-4 shrink-0" />
+              <span>{nav.downloadApp}</span>
+              <span className="ml-auto text-xs font-normal text-slate-500">
+                {nav.androidSoon}
+              </span>
+            </a>
             <Link
               href="/login"
               onClick={() => setMobileOpen(false)}

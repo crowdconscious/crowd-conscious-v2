@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { Download } from 'lucide-react'
 import Logo from '@/components/Logo'
 import NewsletterForm from '@/components/NewsletterForm'
 import { FundThermometer } from '@/components/fund/FundThermometer'
@@ -32,6 +33,8 @@ export default function Footer() {
         'Consultas con confianza ponderada sobre tu ciudad y lo que te importa. Las marcas patrocinan el impacto.',
       tagline: 'Consultas con propósito.',
       madeIn: 'Hecho con ❤️ en México',
+      downloadApp: 'Descargar la app',
+      androidSoon: 'Android próximamente',
     },
     en: {
       platform: 'Platform',
@@ -55,6 +58,8 @@ export default function Footer() {
         'Confidence-weighted consultations on your city and what matters. Brands sponsor the impact.',
       tagline: 'Consultations with purpose.',
       madeIn: 'Made with ❤️ in Mexico',
+      downloadApp: 'Download the app',
+      androidSoon: 'Android coming soon',
     },
   }
 
@@ -79,7 +84,19 @@ export default function Footer() {
           <div className="shrink-0">
             <Logo size="sm" linkTo="/" />
           </div>
-          <p className="max-w-xl text-sm leading-relaxed text-slate-300">{t.description}</p>
+          <div className="max-w-xl">
+            <p className="text-sm leading-relaxed text-slate-300">{t.description}</p>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <a
+                href="/app"
+                className="inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-300 transition-colors hover:bg-emerald-500/20"
+              >
+                <Download className="h-4 w-4" />
+                <span>{t.downloadApp}</span>
+              </a>
+              <span className="text-xs text-slate-500">{t.androidSoon}</span>
+            </div>
+          </div>
           <div className="flex flex-col gap-4 lg:items-end">
             <div className="flex gap-4">
               <a
