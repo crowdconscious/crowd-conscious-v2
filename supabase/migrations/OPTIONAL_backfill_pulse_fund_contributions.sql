@@ -1,0 +1,88 @@
+-- =============================================================================
+-- ⚠️  OPTIONAL — NOT part of the 232 -> 233 -> 234 -> 235 apply chain.
+-- ⚠️  REVIEW BEFORE RUNNING. Every statement below is COMMENTED OUT on purpose.
+--     Running this file as-is does NOTHING. Uncomment deliberately, one step at
+--     a time, after the founder has reviewed the dry-run counts.
+-- =============================================================================
+-- Purpose: backfill HISTORICAL Pulse fund inflow into the new
+--          public.conscious_fund_contributions ledger (created in migration 233)
+--          from the existing public.sponsorship_log transparency rows.
+--
+-- WHY sponsorship_log: migration 155 records, per historical payment, the ACTUAL
+-- fund amount that was allocated at the time:
+--     sponsorship_log.fund_allocation  (numeric, the historical fund $)
+--     sponsorship_log.fund_percent     (the % that was applied THEN)
+--     sponsorship_log.market_id        (the pulse/market it funded)
+-- So we do NOT need to assume a historical percentage — we copy the recorded
+-- fund_allocation verbatim. This is the only safe source of truth.
+--
+-- ASSUMPTIONS (must be confirmed before running):
+--   (1) sponsorship_log.fund_allocation is the canonical historical fund amount
+--       and is denominated in the same currency you want in the ledger (assume
+--       'MXN' below; change if historical rows were USD).
+--   (2) These historical contributions are NOT already present in
+--       conscious_fund_contributions (this file has no dedupe key — if you run
+--       it twice you WILL double-count). Consider adding a unique marker first.
+--   (3) Historical Pulse fund was NOT necessarily 20%. fund_percent on each row
+--       shows what was actually applied. The in-flight flat-20% code change
+--       (lib/pulse-tiers.ts, owned by another worker) affects FUTURE splits only
+--       and must NOT be retro-applied here. Do not "normalize" history to 20%.
+--   (4) fund_pillar is left NULL for historical rows (the old model did not tag a
+--       pillar per payment). Leave NULL unless you have a mapping.
+--
+-- =============================================================================
+
+-- STEP 0 — DRY RUN. How many rows / how much money would be backfilled?
+-- (Read-only; safe to run.)
+--
+-- SELECT
+--   count(*)                       AS rows_to_backfill,
+--   sum(sl.fund_allocation)        AS total_fund_to_backfill,
+--   min(sl.paid_at)                AS earliest,
+--   max(sl.paid_at)                AS latest
+-- FROM public.sponsorship_log sl
+-- WHERE sl.fund_allocation IS NOT NULL
+--   AND sl.fund_allocation > 0;
+
+-- STEP 1 — INSPECT a sample of the exact rows that would be inserted.
+-- (Read-only; safe to run.)
+--
+-- SELECT
+--   'pulse'::text          AS source_type,
+--   sl.market_id           AS source_id,
+--   sl.fund_allocation     AS amount,
+--   'MXN'::text            AS currency,
+--   NULL::text             AS fund_pillar,
+--   sl.sponsorship_id      AS sponsorship_id,
+--   sl.paid_at             AS created_at
+-- FROM public.sponsorship_log sl
+-- WHERE sl.fund_allocation IS NOT NULL
+--   AND sl.fund_allocation > 0
+-- ORDER BY sl.paid_at
+-- LIMIT 50;
+
+-- STEP 2 — THE ACTUAL BACKFILL. ⚠️ DESTRUCTIVE-ADJACENT (writes ledger rows).
+-- Only uncomment after STEP 0/1 look correct AND you have confirmed this has not
+-- already been run. Consider wrapping in a transaction and reviewing row count
+-- before COMMIT.
+--
+-- BEGIN;
+--
+-- INSERT INTO public.conscious_fund_contributions
+--   (source_type, source_id, amount, currency, fund_pillar, sponsorship_id, created_at)
+-- SELECT
+--   'pulse',
+--   sl.market_id,
+--   sl.fund_allocation,
+--   'MXN',
+--   NULL,
+--   sl.sponsorship_id,
+--   sl.paid_at
+-- FROM public.sponsorship_log sl
+-- WHERE sl.fund_allocation IS NOT NULL
+--   AND sl.fund_allocation > 0;
+--
+-- -- Verify the inserted total matches STEP 0 before committing:
+-- -- SELECT count(*), sum(amount) FROM public.conscious_fund_contributions WHERE source_type = 'pulse';
+--
+-- COMMIT;   -- or ROLLBACK; if the numbers look wrong.
