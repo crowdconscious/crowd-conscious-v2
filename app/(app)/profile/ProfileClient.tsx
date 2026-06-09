@@ -4,8 +4,10 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { AnimatedButton } from '@/components/ui/UIComponents'
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, ArrowRight } from 'lucide-react'
 import { getTierByXP } from '@/lib/tier-config'
+import BecomeCreatorCard from '@/components/creators/BecomeCreatorCard'
+import { getCreatorCopy, type CreatorLocale } from '@/lib/i18n/creator'
 
 interface ProfileClientProps {
   user: any
@@ -36,6 +38,9 @@ interface ProfileClientProps {
     unlocked_at: string
   }>
   impactVotes?: Array<{ cause_id: string; cause_name: string }>
+  locale?: CreatorLocale
+  isCreator?: boolean
+  canUpgradeToCreator?: boolean
 }
 
 export default function ProfileClient({
@@ -45,7 +50,11 @@ export default function ProfileClient({
   recentPredictions,
   topAchievements = [],
   impactVotes = [],
+  locale = 'es',
+  isCreator = false,
+  canUpgradeToCreator = false,
 }: ProfileClientProps) {
+  const ct = getCreatorCopy(locale)
   const router = useRouter()
   const [isEditing, setIsEditing] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -390,6 +399,27 @@ export default function ProfileClient({
             </AnimatedButton>
           </div>
         </div>
+      )}
+
+      {/* Become a creator (self-serve upgrade) */}
+      {canUpgradeToCreator && (
+        <div id="become-creator">
+          <BecomeCreatorCard locale={locale} />
+        </div>
+      )}
+
+      {/* Already a creator → straight to the creator dashboard */}
+      {isCreator && (
+        <Link
+          href="/creator"
+          className="flex items-center justify-between gap-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-5 transition-colors hover:border-emerald-500/50 hover:bg-emerald-500/10"
+        >
+          <div className="min-w-0">
+            <p className="font-semibold text-white">{ct.dashTitle}</p>
+            <p className="text-sm text-slate-400">{ct.upgradeGoToDashboard}</p>
+          </div>
+          <ArrowRight className="h-5 w-5 shrink-0 text-emerald-400" />
+        </Link>
       )}
 
       {/* Achievements */}

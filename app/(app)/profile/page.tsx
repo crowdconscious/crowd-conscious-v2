@@ -1,7 +1,10 @@
 import type { Metadata } from 'next'
+import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { getCurrentUser } from '@/lib/auth-server'
 import { createClient } from '@/lib/supabase-server'
+import { isAdminUser } from '@/lib/auth/is-admin'
+import type { CreatorLocale } from '@/lib/i18n/creator'
 import { SITE_URL } from '@/lib/seo/site'
 import ProfileClient from './ProfileClient'
 
@@ -168,6 +171,17 @@ export default async function ProfilePage() {
     cause_name: causeNames[i],
   }))
 
+  const cookieStore = await cookies()
+  const locale: CreatorLocale =
+    cookieStore.get('preferred-language')?.value === 'en' ? 'en' : 'es'
+
+  const profileRow = profile as { user_type?: string | null; is_corporate_user?: boolean | null } | null
+  const isCreator = profileRow?.user_type === 'influencer'
+  const isAdmin = isAdminUser(user)
+  const isCorporate = profileRow?.is_corporate_user === true
+  // Only existing non-creator, non-admin, non-corporate users can self-upgrade.
+  const canUpgradeToCreator = !isCreator && !isAdmin && !isCorporate
+
   return (
     <ProfileClient
       user={user}
@@ -176,6 +190,9 @@ export default async function ProfilePage() {
       recentPredictions={recentPredictions}
       topAchievements={topAchievements}
       impactVotes={impactVotes}
+      locale={locale}
+      isCreator={isCreator}
+      canUpgradeToCreator={canUpgradeToCreator}
     />
   )
 }

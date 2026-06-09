@@ -4,6 +4,8 @@ import Link from 'next/link'
 import nextDynamic from 'next/dynamic'
 import { ArrowRight, CheckCircle2, PenSquare, FileText, ShieldCheck, Coins } from 'lucide-react'
 import { createAdminClient } from '@/lib/supabase-admin'
+import { getCurrentUser } from '@/lib/auth-server'
+import { isBlogEditorUser } from '@/lib/auth/is-blog-editor'
 import LandingNav from '@/app/components/landing/LandingNav'
 import { ClubResetCaseStudyCard } from '@/components/pulse/ClubResetCaseStudyCard'
 import { getCreatorCopy, type CreatorLocale } from '@/lib/i18n/creator'
@@ -47,6 +49,24 @@ export default async function CreatorsLandingPage() {
   const t = getCreatorCopy(locale)
   const totalReads = await getBlogReadStats()
 
+  // Adaptive CTA for logged-in visitors: creators (and admins) go straight to
+  // their dashboard; existing non-creators see the upgrade label but still land
+  // on /creators/signup, which itself swaps the create-account form for the
+  // self-serve upgrade card when a session is present.
+  const user = await getCurrentUser().catch(() => null)
+  const hasCreatorAccess = user ? isBlogEditorUser(user) : false
+  const ctaHref = hasCreatorAccess ? '/creator' : '/creators/signup'
+  const heroCtaLabel = hasCreatorAccess
+    ? t.upgradeGoToDashboard
+    : user
+      ? t.upgradeCta
+      : t.heroCta
+  const finalCtaLabel = hasCreatorAccess
+    ? t.upgradeGoToDashboard
+    : user
+      ? t.upgradeCta
+      : t.finalCta
+
   const splitCards = [t.splitCreatorSourced, t.splitPlatformSourced]
 
   return (
@@ -65,10 +85,10 @@ export default async function CreatorsLandingPage() {
           <p className="mx-auto mt-5 max-w-2xl text-lg text-slate-300">{t.heroSubtitle}</p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Link
-              href="/creators/signup"
+              href={ctaHref}
               className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-500"
             >
-              {t.heroCta} <ArrowRight className="h-4 w-4" />
+              {heroCtaLabel} <ArrowRight className="h-4 w-4" />
             </Link>
             <a
               href="#como-funciona"
@@ -184,10 +204,10 @@ export default async function CreatorsLandingPage() {
           <h2 className="text-3xl font-bold text-white">{t.finalCtaTitle}</h2>
           <p className="mt-3 text-slate-300">{t.finalCtaSubtitle}</p>
           <Link
-            href="/creators/signup"
+            href={ctaHref}
             className="mt-8 inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-7 py-3.5 text-sm font-semibold text-white transition hover:bg-emerald-500"
           >
-            {t.finalCta} <ArrowRight className="h-4 w-4" />
+            {finalCtaLabel} <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       </section>

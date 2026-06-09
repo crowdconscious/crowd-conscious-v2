@@ -205,6 +205,22 @@ export function getCreatorCopy(locale: CreatorLocale) {
       ? 'Handle inválido. Usa 3–30 caracteres: a-z, 0-9, _.'
       : 'Invalid handle. Use 3–30 chars: a-z, 0-9, _.',
 
+    // --- Become a creator (self-serve upgrade for existing users) ----------
+    upgradeTitle: es ? 'Conviértete en creador' : 'Become a creator',
+    upgradeBody: es
+      ? 'Abre tu cuenta de creador y empieza a escribir análisis con propósito. Gana con patrocinios en tus publicaciones y destina impacto real al Fondo Consciente — en cada post.'
+      : 'Open your creator account and start writing analysis with purpose. Earn from sponsorships on your posts and send real impact to the Conscious Fund — with every post.',
+    upgradeLearnMore: es ? 'Conoce el programa' : 'Learn about the program',
+    upgradeCta: es ? 'Conviértete en creador' : 'Become a creator',
+    upgradeSubmitting: es ? 'Activando...' : 'Activating...',
+    upgradeError: es
+      ? 'No se pudo activar tu cuenta de creador. Intenta de nuevo.'
+      : 'We could not activate your creator account. Try again.',
+    upgradeForbidden: es
+      ? 'Esta cuenta no puede convertirse en cuenta de creador.'
+      : 'This account cannot be converted to a creator account.',
+    upgradeGoToDashboard: es ? 'Ir a mi panel de creador' : 'Go to creator dashboard',
+
     // --- Creator dashboard --------------------------------------------------
     dashTitle: es ? 'Panel de creador' : 'Creator dashboard',
     dashNewPost: es ? 'Nuevo artículo' : 'New article',
