@@ -30,8 +30,8 @@ export async function generateMetadata(): Promise<Metadata> {
     locale === 'es' ? 'Para marcas | Crowd Conscious' : 'For brands | Crowd Conscious'
   const description =
     locale === 'es'
-      ? 'Conscious Pulse: lanza consultas con confianza ponderada y mide el sentimiento de tu comunidad en tiempo real. Pack Mundial 2026 disponible.'
-      : 'Conscious Pulse: launch confidence-weighted consultations and measure your community’s sentiment in real time. World Cup 2026 pack available.'
+      ? 'Conscious Pulse: lanza consultas con confianza ponderada y mide el sentimiento de tu comunidad en tiempo real. Paquete Fundador disponible.'
+      : 'Conscious Pulse: launch confidence-weighted consultations and measure your community’s sentiment in real time. Founding Pack available.'
   return {
     title: pageTitle,
     description,

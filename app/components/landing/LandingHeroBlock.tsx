@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { ArrowRight } from 'lucide-react'
-import { WorldCupCountdown } from './WorldCupCountdown'
 import { FundThermometer } from '@/components/fund/FundThermometer'
 import { CONSCIOUS_FUND_GOAL_MXN } from '@/lib/predictions/fund-goal'
 
@@ -15,8 +14,7 @@ type Props = {
 /**
  * Block 1 of the 3-block homepage.
  * Full viewport on mobile, two-column on desktop. Headline + CTAs on
- * the left, live data (Mundial countdown + Conscious Fund thermometer)
- * on the right.
+ * the left, live data (Conscious Fund thermometer) on the right.
  */
 export function LandingHeroBlock({ locale, fundBalance }: Props) {
   const es = locale === 'es'
@@ -40,7 +38,7 @@ export function LandingHeroBlock({ locale, fundBalance }: Props) {
         >
           <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-emerald-300">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
-            {es ? 'Mundial 2026 · En vivo' : 'World Cup 2026 · Live'}
+            {es ? 'Inteligencia colectiva · En vivo' : 'Collective intelligence · Live'}
           </p>
 
           <h1 className="text-4xl font-bold leading-[1.05] text-white sm:text-5xl md:text-6xl">
@@ -96,13 +94,6 @@ export function LandingHeroBlock({ locale, fundBalance }: Props) {
           transition={{ duration: 0.6, ease: 'easeOut', delay: 0.12 }}
           className="flex flex-col gap-4"
         >
-          <div className="rounded-2xl border border-[#2d3748] bg-[#0f1419]/80 p-5 shadow-xl backdrop-blur-sm">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
-              {es ? 'Faltan para el Mundial' : 'Until the World Cup'}
-            </p>
-            <WorldCupCountdown locale={locale} />
-          </div>
-
           <div className="rounded-2xl border border-[#2d3748] bg-[#0f1419]/80 p-5 shadow-xl backdrop-blur-sm">
             <FundThermometer
               current={fundBalance}

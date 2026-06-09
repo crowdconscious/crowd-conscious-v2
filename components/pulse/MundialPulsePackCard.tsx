@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { Check } from 'lucide-react'
 import { PULSE_TIERS } from '@/lib/pulse-tiers'
 import { PulseCheckoutModal } from '@/components/pulse/PulseCheckoutModal'
-import { daysUntilWorldCup } from '@/lib/world-cup-kickoff'
 
 type Props = {
   locale: 'es' | 'en'
@@ -17,7 +16,7 @@ type SpotsResponse = {
 }
 
 /**
- * Hero pricing card for the Mundial Pulse Pack. Renders BOTH the regular
+ * Hero pricing card for the Founding Pack. Renders BOTH the regular
  * $50,000 SKU and the discounted "Founding Sponsor" $25,000 SKU side by side
  * so a prospect sees the discount and the urgency in the same scan.
  *
@@ -28,7 +27,6 @@ export function MundialPulsePackCard({ locale }: Props) {
   const es = locale === 'es'
   const [openTier, setOpenTier] = useState<'mundial_pack' | 'mundial_pack_founding' | null>(null)
   const [spots, setSpots] = useState<SpotsResponse | null>(null)
-  const [days, setDays] = useState<number>(() => daysUntilWorldCup())
 
   useEffect(() => {
     let aborted = false
@@ -43,11 +41,6 @@ export function MundialPulsePackCard({ locale }: Props) {
     return () => {
       aborted = true
     }
-  }, [])
-
-  useEffect(() => {
-    const id = setInterval(() => setDays(daysUntilWorldCup()), 60_000)
-    return () => clearInterval(id)
   }, [])
 
   const regular = PULSE_TIERS.mundial_pack
@@ -71,18 +64,15 @@ export function MundialPulsePackCard({ locale }: Props) {
         <div className="mx-auto max-w-6xl">
           <div className="text-center">
             <span className="inline-block rounded-full bg-amber-500/15 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-amber-400">
-              {es ? 'Edición Mundial 2026' : 'World Cup 2026 Edition'}
+              {es ? 'Paquete Fundador' : 'Founding Pack'}
             </span>
             <h2 className="mt-3 text-2xl font-bold text-white sm:text-3xl">
-              {es ? 'Mundial Pulse Pack' : 'World Cup Pulse Pack'}
+              {es ? 'Paquete Fundador' : 'Founding Pack'}
             </h2>
             <p className="mx-auto mt-3 max-w-2xl text-slate-400">
               {es
-                ? '5 Pulses durante el torneo, presencia destacada en plataforma, y 40% de cada peso al Fondo Consciente.'
-                : '5 Pulses across the tournament, featured platform presence, and 40% of every peso to the Conscious Fund.'}
-            </p>
-            <p className="mt-2 text-sm text-amber-400">
-              {es ? `Faltan ${days} días para la inauguración` : `${days} days until kickoff`}
+                ? '5 Pulses, presencia destacada en plataforma, y 40% de cada peso al Fondo Consciente.'
+                : '5 Pulses, featured platform presence, and 40% of every peso to the Conscious Fund.'}
             </p>
           </div>
 
@@ -106,8 +96,8 @@ export function MundialPulsePackCard({ locale }: Props) {
               >
                 {soldOut
                   ? es
-                    ? 'Edición Mundial 2026 — últimos espacios'
-                    : 'World Cup 2026 — last spots'
+                    ? 'Últimos espacios fundadores'
+                    : 'Last founding spots'
                   : es
                     ? 'Founding · 50% OFF permanente'
                     : 'Founding · 50% OFF for life'}
@@ -185,20 +175,20 @@ export function MundialPulsePackCard({ locale }: Props) {
               >
                 {soldOut
                   ? es
-                    ? 'Reservar mi espacio Mundial'
-                    : 'Reserve my World Cup spot'
+                    ? 'Reservar mi espacio'
+                    : 'Reserve my spot'
                   : es
                     ? 'Reservar mi espacio fundador'
                     : 'Claim my founding spot'}
               </button>
             </div>
 
-            {/* Regular Mundial Pulse Pack — hidden once founding sells out so
+            {/* Regular 5-Pulse pack — hidden once founding sells out so
                 the page doesn't show two side-by-side cards at the same price. */}
             {!soldOut && (
             <div className="relative flex flex-col rounded-2xl border border-emerald-500/30 bg-[#1a2029] p-6">
               <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-emerald-600 px-3 py-0.5 text-xs font-semibold text-white">
-                {es ? 'Edición Mundial' : 'World Cup Edition'}
+                {es ? 'Paquete completo' : 'Full pack'}
               </span>
               <h3 className="text-lg font-bold text-white">{regularName}</h3>
               <p className="mt-1 text-3xl font-bold text-emerald-400">
@@ -209,8 +199,8 @@ export function MundialPulsePackCard({ locale }: Props) {
               </p>
               <p className="mt-3 text-sm text-slate-400">
                 {es
-                  ? '5 Pulses durante todo el Mundial — sin lista de espera.'
-                  : '5 Pulses across the entire World Cup — no waitlist.'}
+                  ? '5 Pulses · sin lista de espera.'
+                  : '5 Pulses · no waitlist.'}
               </p>
               <ul className="mt-4 flex-1 space-y-2 text-sm text-slate-300">
                 {regularFeatures.map((f) => (

@@ -68,7 +68,7 @@ export default async function Image() {
             textAlign: 'center',
           }}
         >
-          Mundial 2026 · Ciudad de México
+          Inteligencia colectiva · Ciudad de México
         </div>
       </div>
     ),

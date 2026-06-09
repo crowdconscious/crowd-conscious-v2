@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     absolute: 'Crowd Conscious — Consultas con confianza ponderada',
   },
   description:
-    'Vota en consultas públicas sobre el Mundial 2026, tu ciudad y lo que te importa. Tu certeza pondera el resultado. Las marcas patrocinan el impacto.',
+    'Vota en consultas públicas sobre tu ciudad y lo que te importa. Tu certeza pondera el resultado. Las marcas patrocinan el impacto.',
   alternates: {
     canonical: SITE_URL,
     languages: {
@@ -55,7 +55,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Crowd Conscious — Consultas con confianza ponderada',
     description:
-      'Vota en consultas públicas sobre el Mundial 2026, tu ciudad y lo que te importa. Tu certeza pondera el resultado. Las marcas patrocinan el impacto.',
+      'Vota en consultas públicas sobre tu ciudad y lo que te importa. Tu certeza pondera el resultado. Las marcas patrocinan el impacto.',
     url: SITE_URL,
   },
 }
@@ -494,13 +494,13 @@ export default async function LandingPage() {
                   </div>
                   <h2 className="mb-2 text-xl font-bold text-white md:text-2xl">
                     {locale === 'es'
-                      ? 'Edición Mundial 2026 — Solo 5 marcas Fundadoras'
-                      : 'World Cup 2026 Edition — Only 5 Founding brands'}
+                      ? 'Paquete Fundador — Solo 5 marcas'
+                      : 'Founding Pack — Only 5 brands'}
                   </h2>
                   <p className="max-w-xl text-sm text-gray-300 md:text-base">
                     {locale === 'es'
-                      ? 'Aparece frente a 20K+ fans mexicanos durante el torneo. 50% de descuento permanente y reconocimiento de por vida.'
-                      : 'Appear in front of 20K+ Mexican fans during the tournament. 50% permanent discount and lifetime recognition.'}
+                      ? 'Apoya la inteligencia colectiva desde el inicio. 50% de descuento permanente, logo en homepage y reconocimiento de por vida.'
+                      : 'Back collective intelligence from day one. 50% permanent discount, homepage logo, and lifetime recognition.'}
                   </p>
                 </div>
                 <span className="inline-flex min-h-[44px] shrink-0 items-center gap-2 rounded-xl bg-amber-500 px-5 py-3 text-sm font-semibold text-gray-900 shadow-lg shadow-amber-500/20 transition-all group-hover:bg-amber-400">

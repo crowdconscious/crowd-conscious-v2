@@ -30,8 +30,8 @@ export function BrandsMiniPitch({ locale }: Props) {
               </h2>
               <p className="mt-1 text-sm text-slate-400">
                 {es
-                  ? 'Encuestas con confianza medida, no likes. Desde $1,500 MXN.'
-                  : 'Surveys with measured confidence, not likes. From $1,500 MXN.'}
+                  ? 'Encuestas con confianza medida, no likes. Desde $5,000 MXN.'
+                  : 'Surveys with measured confidence, not likes. From $5,000 MXN.'}
               </p>
             </div>
           </div>

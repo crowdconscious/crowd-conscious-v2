@@ -43,16 +43,16 @@ export const metadata: Metadata = {
     template: "%s | Crowd Conscious",
   },
   description:
-    "Vota en consultas públicas sobre el Mundial 2026, tu ciudad y lo que te importa. Tu certeza pondera el resultado. Las marcas patrocinan el impacto.",
+    "Vota en consultas públicas sobre tu ciudad y lo que te importa. Tu certeza pondera el resultado. Las marcas patrocinan el impacto.",
   keywords: [
     "consultas públicas",
     "conscious pulse",
     "confianza ponderada",
     "weighted confidence",
-    "mundial 2026",
-    "world cup 2026",
     "inteligencia colectiva",
     "collective intelligence",
+    "prioridades ciudadanas",
+    "civic priorities",
     "impacto social",
     "crowd conscious",
     "fondo consciente",
@@ -73,7 +73,7 @@ export const metadata: Metadata = {
     siteName: "Crowd Conscious",
     title: "Crowd Conscious — Consultas con confianza ponderada",
     description:
-      "Vota en consultas públicas sobre el Mundial 2026, tu ciudad y lo que te importa. Tu certeza pondera el resultado.",
+      "Vota en consultas públicas sobre tu ciudad y lo que te importa. Tu certeza pondera el resultado.",
     images: [
       {
         url: "/opengraph-image",

@@ -29,7 +29,7 @@ export default function Footer() {
       privacyShort: 'Privacidad',
       cookiesShort: 'Cookies',
       description:
-        'Consultas con confianza ponderada sobre el Mundial 2026, tu ciudad y lo que te importa. Las marcas patrocinan el impacto.',
+        'Consultas con confianza ponderada sobre tu ciudad y lo que te importa. Las marcas patrocinan el impacto.',
       tagline: 'Consultas con propósito.',
       madeIn: 'Hecho con ❤️ en México',
     },
@@ -52,7 +52,7 @@ export default function Footer() {
       privacyShort: 'Privacy',
       cookiesShort: 'Cookies',
       description:
-        'Confidence-weighted consultations on the World Cup 2026, your city, and what matters. Brands sponsor the impact.',
+        'Confidence-weighted consultations on your city and what matters. Brands sponsor the impact.',
       tagline: 'Consultations with purpose.',
       madeIn: 'Made with ❤️ in Mexico',
     },
