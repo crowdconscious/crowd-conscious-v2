@@ -44,17 +44,17 @@ export const sponsorPageCopy = {
   },
   step3Title: { es: 'Financia impacto real', en: 'Fund Real Impact' },
   step3Desc: {
-    es: 'Entre el 20% y 40% de cada patrocinio va directamente a causas comunitarias — hasta 10× el promedio de la industria en causa marketing. La comunidad elige a dónde va el fondo.',
-    en: 'Between 20% and 40% of every sponsorship goes directly to community causes — up to 10× the industry average for cause marketing. Users vote on where the fund goes.',
+    es: 'El 20% de cada patrocinio va directamente a causas comunitarias — hasta 10× el promedio de la industria en causa marketing. La comunidad elige a dónde va el fondo.',
+    en: '20% of every sponsorship goes directly to community causes — up to 10× the industry average for cause marketing. Users vote on where the fund goes.',
   },
   tiersSectionTitle: { es: 'Niveles de patrocinio', en: 'Sponsorship Tiers' },
   tiersIntro: {
-    es: 'Precios claros. Cada nivel incluye aportación al Fondo Consciente (20–40% según el nivel).',
-    en: 'Clean pricing. Every tier includes a Conscious Fund contribution (20–40% by tier).',
+    es: 'Precios claros. Cada nivel incluye 20% de aportación al Fondo Consciente.',
+    en: 'Clean pricing. Every tier includes a 20% Conscious Fund contribution.',
   },
   fundBanner: {
-    es: 'Entre el 20% y 40% de cada patrocinio va directamente a causas comunitarias — hasta 10× el promedio de la industria en causa marketing.',
-    en: 'Between 20% and 40% of every sponsorship goes directly to community causes — up to 10× the industry average for cause marketing.',
+    es: 'El 20% de cada patrocinio va directamente a causas comunitarias — hasta 10× el promedio de la industria en causa marketing.',
+    en: '20% of every sponsorship goes directly to community causes — up to 10× the industry average for cause marketing.',
   },
   includesFund: { es: 'Incluye donación al Fondo Consciente', en: 'Includes Conscious Fund donation' },
   includesFundPct: { es: 'Incluye', en: 'Includes' },
@@ -249,8 +249,8 @@ export const sponsorPageCopy = {
     en: 'Your logo and name appear on the market card, detail page, share images, and leaderboard. Every time someone shares a vote, your brand travels with it.',
   },
   faq2q: {
-    es: '¿Qué pasa con la aportación al Fondo Consciente (20–40% según nivel)?',
-    en: 'What happens to the Conscious Fund contribution (20–40% by tier)?',
+    es: '¿Qué pasa con la aportación del 20% al Fondo Consciente?',
+    en: 'What happens to the 20% Conscious Fund contribution?',
   },
   faq2a: {
     es: 'Los usuarios votan qué causas comunitarias reciben fondos cada mes. Tu marca recibe crédito por el impacto. Te enviamos un reporte trimestral.',

@@ -97,8 +97,8 @@ export function TransparencyDashboard({
     emptyCta: locale === 'es' ? 'Ver planes de patrocinio' : 'View sponsorship plans',
     footnote:
       locale === 'es'
-        ? 'Cada patrocinio aporta entre 20% y 40% al Fondo Consciente, dependiendo del nivel del patrocinio.'
-        : 'Each sponsorship contributes between 20% and 40% to the Conscious Fund, depending on tier.',
+        ? 'Cada patrocinio aporta 20% al Fondo Consciente.'
+        : 'Each sponsorship contributes 20% to the Conscious Fund.',
     colDate: locale === 'es' ? 'Fecha' : 'Date',
     colSponsor: locale === 'es' ? 'Patrocinador' : 'Sponsor',
     colTier: locale === 'es' ? 'Nivel' : 'Tier',

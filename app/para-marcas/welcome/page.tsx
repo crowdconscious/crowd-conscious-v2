@@ -106,8 +106,8 @@ export default async function ParaMarcasWelcomePage({
           ? `${data.fundPct}% of estimated net from your payment supports the Conscious Fund.`
           : `El ${data.fundPct}% estimado del neto de tu pago apoya al Fondo Consciente.`
         : en
-          ? 'A portion of your payment supports the Conscious Fund (by tier).'
-          : 'Una parte de tu pago apoya al Fondo Consciente (según plan).',
+          ? '20% of your payment supports the Conscious Fund.'
+          : 'El 20% de tu pago apoya al Fondo Consciente.',
     private: en ? 'Private access URL' : 'URL de acceso privado',
   }
 

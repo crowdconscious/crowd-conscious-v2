@@ -25,8 +25,8 @@ export const SPONSOR_TIERS = {
     name: 'Category Sponsor',
     nameEs: 'Patrocinador de Categoría',
     price: 10000,
-    fundPercent: 0.3,
-    platformPercent: 0.7,
+    fundPercent: 0.2,
+    platformPercent: 0.8,
     features: [
       'Brand on ALL markets in a category',
       'Featured placement on markets list',
@@ -45,8 +45,8 @@ export const SPONSOR_TIERS = {
     name: 'Impact Partner',
     nameEs: 'Socio de Impacto',
     price: 25000,
-    fundPercent: 0.4,
-    platformPercent: 0.6,
+    fundPercent: 0.2,
+    platformPercent: 0.8,
     features: [
       'All Category Sponsor benefits',
       'Name a cause in the Conscious Fund',
@@ -65,8 +65,8 @@ export const SPONSOR_TIERS = {
     name: 'Founding Patron',
     nameEs: 'Patrón Fundador',
     price: 60000,
-    fundPercent: 0.4,
-    platformPercent: 0.6,
+    fundPercent: 0.2,
+    platformPercent: 0.8,
     features: [
       'All Impact Partner benefits',
       'Co-create market strategy',

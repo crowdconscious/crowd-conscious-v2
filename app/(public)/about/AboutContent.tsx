@@ -197,8 +197,8 @@ export default function AboutContent({
           </h2>
           <p className="text-slate-400 text-lg leading-relaxed text-center mb-12 max-w-2xl mx-auto">
             {locale === 'es'
-              ? 'Las marcas patrocinan mercados → entre el 20% y 40% de cada patrocinio va directamente a causas comunitarias — hasta 10× el promedio de la industria en causa marketing → los usuarios votan qué causas reciben apoyos → impacto comunitario. Un ciclo virtuoso.'
-              : 'Brands sponsor markets → between 20% and 40% of every sponsorship goes directly to community causes — up to 10× the industry average for cause marketing → Users vote on which causes receive grants → Community impact. It&apos;s a virtuous cycle.'}
+              ? 'Las marcas patrocinan mercados → el 20% de cada patrocinio va directamente a causas comunitarias — hasta 10× el promedio de la industria en causa marketing → los usuarios votan qué causas reciben apoyos → impacto comunitario. Un ciclo virtuoso.'
+              : 'Brands sponsor markets → 20% of every sponsorship goes directly to community causes — up to 10× the industry average for cause marketing → Users vote on which causes receive grants → Community impact. It&apos;s a virtuous cycle.'}
           </p>
           <div className="mb-8 rounded-2xl border border-cc-border bg-cc-card/80 p-6 md:p-8">
             <FundThermometer

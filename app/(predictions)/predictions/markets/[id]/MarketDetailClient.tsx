@@ -624,8 +624,8 @@ export function MarketDetailClient({
                   </p>
                   <p className="text-slate-400 text-sm">
                     {locale === 'es'
-                      ? `Patrocinado por ${(market as { sponsor_name?: string }).sponsor_name}. Hasta el 40% financia causas comunitarias.`
-                      : `Sponsored by ${(market as { sponsor_name?: string }).sponsor_name}. Up to 40% funds community causes.`}
+                      ? `Patrocinado por ${(market as { sponsor_name?: string }).sponsor_name}. El 20% financia causas comunitarias.`
+                      : `Sponsored by ${(market as { sponsor_name?: string }).sponsor_name}. 20% funds community causes.`}
                   </p>
                 </div>
               </div>

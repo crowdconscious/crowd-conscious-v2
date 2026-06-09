@@ -31,19 +31,19 @@ export default function CookieConsent() {
   const content = {
     es: {
       title: "🍪 Usamos Cookies",
-      description: "Utilizamos cookies para mejorar su experiencia, analizar el tráfico del sitio y personalizar el contenido. Hasta el 40% del neto estimado de patrocinios al Fondo Consciente (según nivel).",
+      description: "Utilizamos cookies para mejorar su experiencia, analizar el tráfico del sitio y personalizar el contenido. El 20% del neto estimado de patrocinios va al Fondo Consciente.",
       essential: "Solo Esenciales",
       acceptAll: "Aceptar Todas",
       learnMore: "Más información",
-      platformFee: "📋 Transparencia: entre el 20% y el 40% del neto estimado al Fondo Consciente (según nivel)."
+      platformFee: "📋 Transparencia: 20% del neto estimado al Fondo Consciente."
     },
     en: {
       title: "🍪 We Use Cookies",
-      description: "We use cookies to improve your experience, analyze site traffic, and personalize content. Up to 40% of estimated net sponsorship proceeds go to the Conscious Fund (by tier).",
+      description: "We use cookies to improve your experience, analyze site traffic, and personalize content. 20% of estimated net sponsorship proceeds go to the Conscious Fund.",
       essential: "Essential Only",
       acceptAll: "Accept All",
       learnMore: "Learn more",
-      platformFee: "📋 Transparency: 20–40% of estimated net to Conscious Fund (by tier)."
+      platformFee: "📋 Transparency: 20% of estimated net to Conscious Fund."
     }
   }
 

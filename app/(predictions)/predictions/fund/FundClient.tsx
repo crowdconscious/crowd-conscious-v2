@@ -206,10 +206,9 @@ export function FundClient({
           Impulsado por patrocinadores. Dirigido por ti.
         </p>
         <p className="text-cc-text-muted mt-2 text-sm max-w-2xl">
-          Cuando las marcas patrocinan mercados de predicción en Crowd Conscious, entre el 20% y hasta el
-          40% de la parte neta de cada patrocinio (según el nivel) va al Fondo Consciente, además de
-          las aportaciones por comisiones de operación. Los usuarios votan qué causas comunitarias
-          reciben apoyos cada mes.
+          Cuando las marcas patrocinan mercados de predicción en Crowd Conscious, el 20% de la parte
+          neta de cada patrocinio va al Fondo Consciente, además de las aportaciones por comisiones de
+          operación. Los usuarios votan qué causas comunitarias reciben apoyos cada mes.
         </p>
         {!isAuthenticated && (
           <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -240,7 +239,7 @@ export function FundClient({
             {formatCurrency(totalFund)} MXN
           </p>
           <p className="text-cc-text-muted text-xs mt-1">
-            From sponsorships (up to 40% of net by tier) + trade fees
+            From sponsorships (20% of net) + trade fees
           </p>
         </div>
         <div className="bg-cc-card border border-emerald-500/20 rounded-xl p-6">
