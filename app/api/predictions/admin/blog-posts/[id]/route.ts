@@ -182,9 +182,11 @@ export async function PATCH(
     if (isFirstPublish) {
       const slug = (typeof patch.slug === 'string' ? patch.slug : existingPost.slug) as string
       const title = (typeof patch.title === 'string' ? patch.title : existingPost.title) as string
-      void notifyBlogPublished(admin, { slug, title }).catch((err) =>
+      try {
+        await notifyBlogPublished(admin, { slug, title })
+      } catch (err) {
         console.warn('[admin/blog-posts PATCH] push error:', err)
-      )
+      }
     }
 
     return NextResponse.json({ ok: true, post: data })

@@ -244,11 +244,15 @@ export async function POST(request: NextRequest) {
     }
 
     if (!wantsDraft) {
-      void notifyPulsePublished(admin, {
-        marketId: marketId as string,
-        title: title.trim(),
-        mode: 'announce',
-      }).catch((err) => console.warn('[create-market] pulse push error:', err))
+      try {
+        await notifyPulsePublished(admin, {
+          marketId: marketId as string,
+          title: title.trim(),
+          mode: 'announce',
+        })
+      } catch (err) {
+        console.warn('[create-market] pulse push error:', err)
+      }
     }
 
     return Response.json({

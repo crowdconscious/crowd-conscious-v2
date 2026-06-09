@@ -314,11 +314,15 @@ export async function PATCH(
       nextStatus === 'published' &&
       row.publication_status !== 'published'
     ) {
-      void notifySignalPublished(admin, {
-        slug: row.public_slug,
-        title: row.title,
-        excludeUserId: row.author_user_id,
-      }).catch((err) => console.warn('[api/admin/signals PATCH] cosign push error:', err))
+      try {
+        await notifySignalPublished(admin, {
+          slug: row.public_slug,
+          title: row.title,
+          excludeUserId: row.author_user_id,
+        })
+      } catch (err) {
+        console.warn('[api/admin/signals PATCH] cosign push error:', err)
+      }
     }
 
     return NextResponse.json({

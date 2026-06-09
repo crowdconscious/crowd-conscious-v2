@@ -184,10 +184,14 @@ export async function POST(request: NextRequest) {
     }
 
     if (publishNow && row?.slug) {
-      void notifyBlogPublished(admin, {
-        slug: row.slug,
-        title,
-      }).catch((err) => console.warn('[admin blog POST] push error:', err))
+      try {
+        await notifyBlogPublished(admin, {
+          slug: row.slug,
+          title,
+        })
+      } catch (err) {
+        console.warn('[admin blog POST] push error:', err)
+      }
     }
 
     return NextResponse.json({ ok: true, post: row })

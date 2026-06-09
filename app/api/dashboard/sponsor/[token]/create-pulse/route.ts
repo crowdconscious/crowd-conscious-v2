@@ -177,11 +177,15 @@ export async function POST(
       coverImageUrl: coverImageUrl ?? null,
     }).catch((err) => console.warn('[create-pulse] launch email error:', err))
 
-    void notifyPulsePublished(admin, {
-      marketId: marketId as string,
-      title,
-      mode: 'announce',
-    }).catch((err) => console.warn('[create-pulse] push error:', err))
+    try {
+      await notifyPulsePublished(admin, {
+        marketId: marketId as string,
+        title,
+        mode: 'announce',
+      })
+    } catch (err) {
+      console.warn('[create-pulse] push error:', err)
+    }
 
     return NextResponse.json({
       success: true,

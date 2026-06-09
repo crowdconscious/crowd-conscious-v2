@@ -28,7 +28,7 @@ type UserSettingsRow = {
   language: string | null
 }
 
-const expo = new Expo()
+const expo = new Expo({ accessToken: process.env.EXPO_ACCESS_TOKEN })
 const SEND_CONCURRENCY = 10
 
 function normalizeLocale(raw: string | null | undefined): PushLocale {
@@ -103,11 +103,11 @@ export async function sendPushToUser(
   userId: string,
   payload: SendPushPayload
 ): Promise<void> {
-  if (!process.env.EXPO_ACCESS_TOKEN) {
-    console.warn('[expo-push] EXPO_ACCESS_TOKEN not set — skipping push')
-    return
-  }
-
+  // NOTE: expo-server-sdk does NOT require an access token to deliver pushes
+  // (it's only needed when "Enhanced Push Security" is enabled on the Expo
+  // project). We intentionally do NOT short-circuit when the env var is
+  // missing — doing so silently disabled every push when EXPO_ACCESS_TOKEN
+  // was not configured in the deploy environment.
   if (!(await isPushEnabledForUser(admin, userId))) return
 
   const { data: rows, error } = await admin

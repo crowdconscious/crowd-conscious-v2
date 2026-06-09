@@ -56,11 +56,15 @@ export async function POST(
     }
 
     if (market.is_pulse) {
-      void notifyPulsePublished(admin, {
-        marketId: id,
-        title: market.title ?? 'Pulse',
-        mode: 'announce',
-      }).catch((err) => console.warn('[publish-market] pulse push error:', err))
+      try {
+        await notifyPulsePublished(admin, {
+          marketId: id,
+          title: market.title ?? 'Pulse',
+          mode: 'announce',
+        })
+      } catch (err) {
+        console.warn('[publish-market] pulse push error:', err)
+      }
     }
 
     return NextResponse.json({ success: true })
