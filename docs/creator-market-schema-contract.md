@@ -5,7 +5,8 @@ migrations manually, once, in order. This document is the contract that the
 app-code workers (Agents B and C) build against. If a name/type here disagrees
 with the SQL, the SQL in `supabase/migrations/` wins — flag it.
 
-**Apply order (founder, manual, once):** `232 → 233 → 234 → 235`.
+**Apply order (founder, manual, once):** `232 → 233 → 234 → 235`, then the
+**creator-tiers batch** `237 → 238 → 239` (depends on 233).
 The `OPTIONAL_backfill_pulse_fund_contributions.sql` file is **not** in that chain —
 review separately. Prompt 4 adds **no** new tables beyond `influencer_payouts`
 (in the 234 file).
@@ -19,6 +20,9 @@ review separately. Prompt 4 adds **no** new tables beyond `influencer_payouts`
 | `234_influencer_payouts.sql` | 3 | New `influencer_payouts` ledger; creators read own, writes service-role only. |
 | `235_sponsored_signals.sql` | 5 | `citizen_signals.sponsorable` (admin-only via trigger) + new `signal_sponsorships` badge join enforcing the integrity boundary. |
 | `OPTIONAL_backfill_pulse_fund_contributions.sql` | 2 | **Optional, fully commented.** Backfills historical Pulse fund from `sponsorship_log.fund_allocation`. Review before running. |
+| `237_creator_sponsorship_tiers.sql` | tiers | NEW `creator_sponsorship_tiers` (per-creator price per tier). Public read; owning creator writes own rows; admin manage. |
+| `238_sponsorship_tier_limits.sql` | tiers | NEW `sponsorship_tier_limits` (platform-wide min/max/default per tier). Public read; admin write. **PLACEHOLDER seed prices.** |
+| `239_creator_sponsorships_tier_columns.sql` | tiers | ALTER `creator_sponsorships`: additive `tier`, `supporter_message`, `top_up_amount`. Writes stay service-role only. |
 
 ---
 
@@ -250,6 +254,104 @@ status, thresholds, or co-firma counts:
 
 ---
 
+## Creator sponsorship tiers (migrations 237–239)
+
+Tiered creator-sponsorship model. **Three constrained tiers, no advertorial.**
+Each creator sets their own price per tier within platform-wide guardrails; a
+sponsor may add an optional top-up at checkout. **Tiers set price + placement
+only — they do NOT change the revenue split.**
+
+### Tier enum (`'support' | 'sponsor' | 'featured'`) — meaning / placement
+
+| tier | label (ES / EN) | placement |
+|------|-----------------|-----------|
+| `support`  | Apoyo / Supporter | **No logo placement.** Optional moderated `supporter_message` shout-out only. |
+| `sponsor`  | Patrocinador / Sponsor | Constrained card, **1 slot**. |
+| `featured` | Patrocinador destacado / Featured | Constrained card in **2 slots** + a "Con el apoyo de [logo]" byline line. |
+
+The card renderer keys placement off `creator_sponsorships.tier` (see below).
+
+### `creator_sponsorship_tiers` (NEW, 237) — per-creator price per tier
+
+Creator-**owned config**, *not* a money row.
+
+| column | type | notes |
+|--------|------|-------|
+| `id` | `uuid PK` | |
+| `creator_id` | `uuid NOT NULL → profiles(id)` ON DELETE CASCADE | |
+| `tier` | `text NOT NULL` | CHECK ∈ `{support,sponsor,featured}` |
+| `price` | `numeric(12,2) NOT NULL` | CHECK `>= 0`; bounded by `sponsorship_tier_limits` |
+| `currency` | `text NOT NULL DEFAULT 'MXN'` | |
+| `enabled` | `boolean NOT NULL DEFAULT true` | creator toggles offering a tier without deleting the price |
+| `updated_at` | `timestamptz NOT NULL DEFAULT now()` | |
+
+UNIQUE `(creator_id, tier)`. RLS:
+- **Public SELECT** (`anon, authenticated`, `USING (true)`) — the sponsor checkout
+  page must show a creator's tier prices.
+- Owning creator INSERT/UPDATE/DELETE their own rows (`creator_id = auth.uid()`).
+- Admin manage all (`is_admin()`).
+
+**Fallback rule:** a creator with **no row** for a tier (or `enabled = false`) is
+**not offering that tier**. With no rows at all, the creator's tiers are disabled
+and the UI falls back to the platform `default_price` from `sponsorship_tier_limits`.
+
+### `sponsorship_tier_limits` (NEW, 238) — platform guardrails
+
+One row per tier. **Public read; admin write.**
+
+| column | type | notes |
+|--------|------|-------|
+| `tier` | `text PK` | CHECK ∈ `{support,sponsor,featured}` |
+| `min_price` | `numeric(12,2) NOT NULL` | `>= 0` |
+| `max_price` | `numeric(12,2) NOT NULL` | `>= 0`, `>= min_price` |
+| `default_price` | `numeric(12,2) NOT NULL` | within `[min_price, max_price]` |
+| `currency` | `text NOT NULL DEFAULT 'MXN'` | |
+| `updated_at` | `timestamptz NOT NULL DEFAULT now()` | |
+
+Range CHECK: `max_price >= min_price AND min_price <= default_price <= max_price`.
+
+Enforcement of creator price against `[min_price, max_price]` is **app-level**
+(primary). 238 also ships an **optional, commented** DB trigger
+(`enforce_sponsorship_tier_price_bounds`) that reads from this table — uncomment to
+enforce in the database too.
+
+> **⚠ PLACEHOLDER PRICES — founder must set real numbers.** Seed values are wiring
+> placeholders only, **not** product decisions:
+>
+> | tier | min | max | default | currency |
+> |------|----:|----:|--------:|----------|
+> | `support`  |   50 |   500 |  100 | MXN |
+> | `sponsor`  |  500 |  5000 | 1000 | MXN |
+> | `featured` | 2000 | 20000 | 5000 | MXN |
+>
+> Seeded with `ON CONFLICT (tier) DO NOTHING` so a re-run never clobbers
+> founder-edited values.
+
+### `creator_sponsorships` (ALTERED, 239) — additive tier columns
+
+New columns (all nullable / defaulted; legacy & non-tiered rows stay valid):
+
+| column | type | notes |
+|--------|------|-------|
+| `tier` | `text` | CHECK `tier IS NULL OR tier IN (support,sponsor,featured)`. NULL for legacy/non-tiered. **Renderer keys placement off this.** |
+| `supporter_message` | `text` | optional moderated shout-out; only meaningful for `support` tier (no logo). App moderates. |
+| `top_up_amount` | `numeric(12,2) DEFAULT 0` | CHECK `>= 0`. Optional checkout top-up. |
+
+Money math: **`gross_amount = tier_price + top_up_amount`**. Writes to
+`creator_sponsorships` remain **service-role only** (233 RLS unchanged) — these are
+money rows set by the webhook, not creator config.
+
+### Splits are UNCHANGED by tiers
+
+Tiers set **price + placement only**. The revenue split % is still resolved by
+**sourcing** via `revenue_split_configs`:
+creator-link → `creator_sourced` (20/60/20), organic → `platform_sourced`
+(20/20/60); the **Fund is always 20%**. The webhook still snapshots
+`fund_amount` / `creator_amount` / `platform_amount` onto the row. A tier never
+changes those percentages.
+
+---
+
 ## Flags for the founder
 
 - **(a) ALTERed vs created.**
@@ -272,6 +374,11 @@ status, thresholds, or co-firma counts:
   those files; the new 20% economics are encoded in `revenue_split_configs` +
   resolved by the (later) webhook code.
 - **(d) Canonical creator `user_type` string = `'influencer'`** (not `'creator'`).
-- **(e) Apply order = `232 → 233 → 234 → 235`.** Prompt 4 adds no tables beyond
+- **(e) Apply order = `232 → 233 → 234 → 235`**, then the creator-tiers batch
+  `237 → 238 → 239` (depends on 233). Prompt 4 adds no tables beyond
   `influencer_payouts` (in 234). The backfill is separate/manual.
+- **(f) PLACEHOLDER tier prices.** `sponsorship_tier_limits` (238) is seeded with
+  placeholder min/max/default values (support 50/500/100, sponsor 500/5000/1000,
+  featured 2000/20000/5000 MXN). **Set real numbers before launch.** Tiers set
+  price + placement only; they do **not** change the revenue split %.
 - **Leaderboards:** untouched — founder/super-admin exclusion is not regressed.
