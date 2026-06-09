@@ -37,9 +37,12 @@ const schema = z.object({
  *
  * Additional brand fields (sponsor_name, sponsor_logo_url, sponsor_contact,
  * sponsor_email) are passed so the webhook can persist them onto the
- * creator_sponsorships row that the sponsor card renders from. (See FLAG in the
- * PR notes — the routing keys are locked by the contract; these descriptive
- * keys are additive and may need name-alignment with the webhook.)
+ * creator_sponsorships row that the sponsor card renders from. These key names
+ * are VERIFIED to match exactly what the webhook reads
+ * (handlers/sponsorship-checkout.ts) and the columns it writes
+ * (creator_sponsorships.sponsor_name / sponsor_logo_url / sponsor_contact /
+ * sponsor_email). sponsor_contact carries the verified target URL the card
+ * links to.
  */
 export async function POST(request: NextRequest) {
   try {
