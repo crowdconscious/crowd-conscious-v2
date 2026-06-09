@@ -42,17 +42,23 @@ function periodForSponsorship(row: CreatorSponsorshipRow): string {
 }
 
 /**
- * charge.refunded → mark the sponsorship 'refunded' and void the accrued payout.
+ * charge.refunded → mark the sponsorship 'refunded', void the accrued payout,
+ * and DECREMENT the Conscious Fund ledger with a negative reversing
+ * contribution row.
  *
- * IDEMPOTENT: a sponsorship already in 'refunded' short-circuits.
+ * IDEMPOTENT (double-decrement safe): a sponsorship already in 'refunded'
+ * short-circuits before any write, so a re-delivered charge.refunded never
+ * reaches the reversal. As a belt-and-suspenders guard, the reversal write also
+ * checks for an existing negative row for this sponsorship_id first.
  *
- * NOTE / FLAGGED: the contract asks for a NEGATIVE reversing
- * conscious_fund_contributions row, but migration 233 puts a
- * `CHECK (amount >= 0)` on that table, so a negative inflow row is rejected by
- * the database. We therefore DO NOT write a negative contribution here (it would
- * throw). The reversal is recorded by flipping the sponsorship status; the fund
- * aggregate view will need a signed-reversal column (or a paired distributions
- * row) before negative reversals can be ledgered. Surfaced to the founder.
+ * FULL vs PARTIAL: this codebase only models FULL refunds (charge.refunded flips
+ * status to 'refunded' and voids the whole creator_amount; there is no partial-
+ * refund path). So the reversal undoes the FULL original fund_amount.
+ *
+ * MIGRATION DEPENDENCY: the negative INSERT requires migration
+ * 236_fund_contributions_allow_reversals to have been applied (it drops the
+ * old `amount >= 0` CHECK). Until then the DB rejects the row; we log and
+ * continue (no throw) so the webhook still returns 200.
  */
 export async function handleSponsorshipRefund(charge: Stripe.Charge) {
   const supabase = getMoneyClient()
@@ -78,6 +84,10 @@ export async function handleSponsorshipRefund(charge: Stripe.Charge) {
     throw new Error(`creator_sponsorships refund update failed: ${updErr.message}`)
   }
 
+  // Decrement the Conscious Fund ledger: write a paired NEGATIVE contribution
+  // that exactly reverses the 20% inflow booked at checkout.
+  await reverseFundContribution(supabase, sponsorship)
+
   // Void the accrued payout line: subtract this sponsorship's creator_amount
   // from the period bucket (floored at 0). Buckets already 'paid' are left
   // untouched (money already left) and only annotated.
@@ -87,6 +97,84 @@ export async function handleSponsorshipRefund(charge: Stripe.Charge) {
     sponsorshipId: sponsorship.id,
     chargeId: charge.id,
   })
+}
+
+/**
+ * Write the negative reversing row into conscious_fund_contributions so
+ * SUM(amount) (and the public `conscious_fund_contributions_totals` view) nets
+ * down by the refunded sponsorship's fund cut.
+ *
+ *   amount = -(creator_sponsorships.fund_amount)   ← reversed, NOT recomputed
+ *
+ * The other ledger fields are MIRRORED from the original positive contribution
+ * row (source_type / source_id / fund_pillar / currency) so the reversal is an
+ * exact mirror; we fall back to the sponsorship row's snapshot if the original
+ * contribution can't be found.
+ *
+ * Idempotency: skip if a negative row for this sponsorship_id already exists.
+ * Failure is non-fatal (logged, not thrown) so the webhook still returns 200 —
+ * notably while migration 236 has not yet been applied.
+ */
+async function reverseFundContribution(
+  supabase: ReturnType<typeof getMoneyClient>,
+  sponsorship: CreatorSponsorshipRow
+) {
+  const fundAmount = Number(sponsorship.fund_amount ?? 0)
+  // Nothing was booked into the fund (e.g. fund_amount 0/null) ⇒ nothing to reverse.
+  if (!(fundAmount > 0)) return
+
+  // Belt-and-suspenders idempotency: never write a second reversal for the same
+  // sponsorship even if the top-level status guard is somehow bypassed.
+  const { data: existingReversal, error: existingErr } = await supabase
+    .from('conscious_fund_contributions')
+    .select('id')
+    .eq('sponsorship_id', sponsorship.id)
+    .lt('amount', 0)
+    .maybeSingle()
+  if (existingErr) {
+    console.error('[sponsorship-refund] reversal lookup failed', existingErr)
+    return
+  }
+  if (existingReversal) {
+    console.log('[sponsorship-refund] fund reversal already recorded (idempotent skip)', {
+      sponsorshipId: sponsorship.id,
+    })
+    return
+  }
+
+  // Mirror the original positive contribution row's tagging where possible.
+  const { data: original } = await supabase
+    .from('conscious_fund_contributions')
+    .select('source_type, source_id, fund_pillar, currency')
+    .eq('sponsorship_id', sponsorship.id)
+    .gt('amount', 0)
+    .maybeSingle()
+
+  const sourceType =
+    (original?.source_type as string | null) ?? sponsorship.source_type
+  const sourceId =
+    (original?.source_id as string | null) ?? sponsorship.source_id
+  const fundPillar = (original?.fund_pillar as string | null) ?? null
+  const currency =
+    (original?.currency as string | null) ?? sponsorship.currency ?? 'MXN'
+
+  const { error: reversalErr } = await supabase
+    .from('conscious_fund_contributions')
+    .insert({
+      source_type: sourceType,
+      source_id: sourceId,
+      amount: -fundAmount,
+      currency,
+      fund_pillar: fundPillar,
+      sponsorship_id: sponsorship.id,
+    })
+  if (reversalErr) {
+    // Most likely cause before migration 236 is applied: the old
+    // `amount >= 0` CHECK rejects the negative row (Postgres 23514). We log and
+    // continue so the webhook still succeeds; the reversal can be re-driven once
+    // the migration is live.
+    console.error('[sponsorship-refund] fund contribution reversal failed', reversalErr)
+  }
 }
 
 /**
