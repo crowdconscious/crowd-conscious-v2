@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
 
     const { data: existing } = await admin
       .from('profiles')
-      .select('full_name, avatar_url')
+      .select('full_name, avatar_url, user_type')
       .eq('id', userId)
       .maybeSingle()
 
@@ -44,6 +44,15 @@ export async function POST(request: NextRequest) {
       (existing?.full_name?.trim() ||
         (email.includes('@') ? email.split('@')[0] : ''))
     const avatarUrl = avatarFromOAuth || existing?.avatar_url || null
+
+    // Preserve an already-assigned role. A self-serve creator gets
+    // user_type='influencer' at signup (see /api/auth/ensure-creator); this
+    // idempotent upsert runs again on email-confirm via the auth callback, so
+    // it must NOT downgrade an existing non-'user' role back to 'user'.
+    const userType =
+      existing?.user_type && existing.user_type !== 'user'
+        ? existing.user_type
+        : 'user'
 
     // UPSERT profile — idempotent; merge OAuth name/avatar when present
     const { error: profileErr } = await admin
@@ -54,7 +63,7 @@ export async function POST(request: NextRequest) {
           email,
           full_name: fullName,
           avatar_url: avatarUrl,
-          user_type: 'user',
+          user_type: userType,
         },
         { onConflict: 'id' }
       )

@@ -2,8 +2,13 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase-server'
+import { createAdminClient } from '@/lib/supabase-admin'
 import { getCurrentUser } from '@/lib/auth-server'
 import { isBlogEditorUser } from '@/lib/auth/is-blog-editor'
+import { BlogByline } from '@/components/blog/BlogByline'
+import { BlogSources } from '@/components/blog/BlogSources'
+import { BlogSponsorCard, type BlogSponsorData } from '@/components/sponsor/BlogSponsorCard'
+import { getCreatorCopy } from '@/lib/i18n/creator'
 import { canManageBlogPost } from '@/lib/auth/blog-post-access'
 import { SITE_URL } from '@/lib/seo/site'
 import { BlogPostBody } from './BlogPostBody'
@@ -188,6 +193,53 @@ export default async function BlogPostPage(props: Props) {
   }
 
   const isAuthenticated = !!user
+
+  // Author byline data. Posts with an influencer author render a "Creador"
+  // badge; legacy/platform posts (no author_id) render "Editorial".
+  const authorId = (post as { author_id?: string | null }).author_id ?? null
+  let bylineName: string | null = null
+  let bylineAvatar: string | null = null
+  let bylineRole: 'creator' | 'editorial' = 'editorial'
+
+  // Active sponsor card data. creator_sponsorships has no public RLS read, so
+  // we read it server-side with the admin client (read-only, scoped to this
+  // published post). The webhook writes the row; we only render it.
+  let sponsorData: BlogSponsorData | null = null
+
+  if (post.status === 'published' || authorId) {
+    const admin = createAdminClient()
+    if (authorId) {
+      const { data: author } = await admin
+        .from('profiles')
+        .select('full_name, avatar_url, user_type')
+        .eq('id', authorId)
+        .maybeSingle()
+      if (author) {
+        bylineName = author.full_name ?? null
+        bylineAvatar = author.avatar_url ?? null
+        bylineRole = author.user_type === 'influencer' ? 'creator' : 'editorial'
+      }
+    }
+    if (post.status === 'published') {
+      const { data: sponsorship } = await admin
+        .from('creator_sponsorships')
+        .select('sponsor_name, sponsor_logo_url, sponsor_contact')
+        .eq('surface_type', 'blog')
+        .eq('source_id', post.id)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      if (sponsorship?.sponsor_name) {
+        sponsorData = {
+          sponsorName: sponsorship.sponsor_name,
+          logoUrl: sponsorship.sponsor_logo_url ?? null,
+          targetUrl: sponsorship.sponsor_contact ?? null,
+        }
+      }
+    }
+  }
+
   const displayTitle =
     locale === 'en' && post.title_en?.trim() ? post.title_en : post.title
   const displayExcerpt =
@@ -278,6 +330,14 @@ export default async function BlogPostPage(props: Props) {
       <h1 className="mt-2 text-3xl font-bold tracking-tight text-white md:text-4xl">{displayTitle}</h1>
       <p className="mt-4 text-lg text-slate-400">{displayExcerpt}</p>
 
+      <BlogByline
+        authorName={bylineName}
+        avatarUrl={bylineAvatar}
+        role={bylineRole}
+        dateLabel={formatDate(post.published_at, locale)}
+        locale={locale}
+      />
+
       {post.cover_image_url && (
         <BlogCoverWithQuestion
           imageUrl={post.cover_image_url}
@@ -295,6 +355,8 @@ export default async function BlogPostPage(props: Props) {
           stats={pulseLiveStats}
         />
       ) : null}
+
+      {sponsorData ? <BlogSponsorCard sponsor={sponsorData} locale={locale} slot="inline" /> : null}
 
       <div className="mt-10">
         {pulseMarketId && pulseData ? (
@@ -334,6 +396,26 @@ export default async function BlogPostPage(props: Props) {
           <BlogPostBody markdown={content} />
         )}
       </div>
+
+      <BlogSources sources={(post as { sources?: unknown }).sources} locale={locale} />
+
+      {sponsorData ? (
+        <BlogSponsorCard sponsor={sponsorData} locale={locale} slot="footer" />
+      ) : post.status === 'published' ? (
+        <div className="mt-10 flex flex-col items-start gap-2 rounded-xl border border-dashed border-[#2d3748] p-4">
+          <p className="text-sm text-slate-400">
+            {locale === 'es'
+              ? '¿Tu marca quiere apoyar este contenido?'
+              : 'Does your brand want to support this content?'}
+          </p>
+          <a
+            href={`/sponsor/blog/${post.id}`}
+            className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500"
+          >
+            {getCreatorCopy(locale).sponsorThisPost}
+          </a>
+        </div>
+      ) : null}
 
       <div className="mt-12 flex flex-wrap items-center justify-between gap-3 border-t border-[#2d3748] pt-6">
         <p className="text-sm text-slate-400">
