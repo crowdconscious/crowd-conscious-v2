@@ -207,21 +207,20 @@ export default function PredictionsShell({
               {language === 'es' ? 'Contenido' : 'Content'}
             </p>
             <Link
-              href="/predictions/admin/blog"
+              href="/creator"
               className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                pathname.startsWith('/predictions/admin/blog') &&
-                pathname !== '/predictions/admin/blog/create'
+                pathname === '/creator'
                   ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30'
                   : 'text-cc-text-secondary hover:bg-gray-800/50 hover:text-emerald-400'
               }`}
             >
-              <PenLine className="w-4 h-4" />
-              {language === 'es' ? 'Mis artículos' : 'My articles'}
+              <LayoutDashboard className="w-4 h-4" />
+              {language === 'es' ? 'Panel de creador' : 'Creator dashboard'}
             </Link>
             <Link
-              href="/predictions/admin/blog/create"
+              href="/creator/posts/new"
               className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                pathname === '/predictions/admin/blog/create'
+                pathname.startsWith('/creator/posts')
                   ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30'
                   : 'text-cc-text-secondary hover:bg-gray-800/50 hover:text-emerald-400'
               }`}
@@ -507,23 +506,22 @@ export default function PredictionsShell({
                     {language === 'es' ? 'Contenido' : 'Content'}
                   </p>
                   <Link
-                    href="/predictions/admin/blog"
+                    href="/creator"
                     onClick={closeMobileMenu}
                     className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                      pathname.startsWith('/predictions/admin/blog') &&
-                      pathname !== '/predictions/admin/blog/create'
+                      pathname === '/creator'
                         ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30'
                         : 'text-cc-text-secondary hover:bg-gray-800/50 hover:text-emerald-400'
                     }`}
                   >
-                    <PenLine className="w-4 h-4" />
-                    {language === 'es' ? 'Mis artículos' : 'My articles'}
+                    <LayoutDashboard className="w-4 h-4" />
+                    {language === 'es' ? 'Panel de creador' : 'Creator dashboard'}
                   </Link>
                   <Link
-                    href="/predictions/admin/blog/create"
+                    href="/creator/posts/new"
                     onClick={closeMobileMenu}
                     className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                      pathname === '/predictions/admin/blog/create'
+                      pathname.startsWith('/creator/posts')
                         ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30'
                         : 'text-cc-text-secondary hover:bg-gray-800/50 hover:text-emerald-400'
                     }`}
