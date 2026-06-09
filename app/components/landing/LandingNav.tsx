@@ -26,6 +26,7 @@ const NAV = {
     signals: 'Señales',
     signalsBeta: 'Beta',
     paraMarcas: 'Para marcas',
+    creators: 'Para creadores',
     blog: 'Blog',
     about: 'Acerca',
     live: 'En Vivo',
@@ -39,6 +40,7 @@ const NAV = {
     signals: 'Signals',
     signalsBeta: 'Beta',
     paraMarcas: 'For brands',
+    creators: 'For creators',
     blog: 'Blog',
     about: 'About',
     live: 'Live',
@@ -98,6 +100,7 @@ export default function LandingNav() {
       ? [{ href: '/signals', label: nav.signals, badge: nav.signalsBeta }]
       : []),
     { href: '/para-marcas', label: nav.paraMarcas },
+    { href: '/creators', label: nav.creators },
     { href: '/blog', label: nav.blog },
     { href: '/about', label: nav.about },
   ]

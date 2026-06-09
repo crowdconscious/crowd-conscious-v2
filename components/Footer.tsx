@@ -23,6 +23,7 @@ export default function Footer() {
       leaderboard: 'Leaderboard',
       consciousFund: 'Fondo Consciente',
       forBrands: 'Para marcas',
+      forCreators: 'Para creadores',
       about: 'Acerca de',
       blog: 'Blog',
       contact: 'Contacto',
@@ -48,6 +49,7 @@ export default function Footer() {
       leaderboard: 'Leaderboard',
       consciousFund: 'Conscious Fund',
       forBrands: 'For brands',
+      forCreators: 'For creators',
       about: 'About',
       blog: 'Blog',
       contact: 'Contact',
@@ -222,6 +224,11 @@ export default function Footer() {
               <li>
                 <Link href="/para-marcas" className="text-slate-300 transition-colors hover:text-teal-400">
                   {t.forBrands}
+                </Link>
+              </li>
+              <li>
+                <Link href="/creators" className="text-slate-300 transition-colors hover:text-teal-400">
+                  {t.forCreators}
                 </Link>
               </li>
               <li>

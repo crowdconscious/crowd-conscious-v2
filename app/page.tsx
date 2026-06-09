@@ -12,6 +12,7 @@ import { LiveEventBanner } from './components/landing/LiveEventBanner'
 import LandingLocationsSection from './components/landing/LandingLocationsSection'
 import { LandingHeroBlock } from './components/landing/LandingHeroBlock'
 import { BrandsMiniPitch } from './components/landing/BrandsMiniPitch'
+import { CreatorsMiniPitch } from './components/landing/CreatorsMiniPitch'
 import { SignalsTeaser } from './components/landing/SignalsTeaser'
 import LandingSignalCard from '@/components/landing/LandingSignalCard'
 import { fetchLandingSignals, type LandingSignal } from '@/lib/signals/landing'
@@ -522,6 +523,9 @@ export default async function LandingPage() {
 
         {/* ─────────── Below the fold ─────────── */}
         <BrandsMiniPitch locale={localeShort} />
+
+        {/* ─────────── Creators program teaser ─────────── */}
+        <CreatorsMiniPitch locale={localeShort} />
 
         <section className="border-t border-cc-border bg-cc-bg px-4 py-16">
           <div className="mx-auto max-w-5xl">
