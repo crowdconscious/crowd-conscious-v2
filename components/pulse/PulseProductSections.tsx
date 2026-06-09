@@ -24,8 +24,8 @@ const copy = {
   },
   impactTitle: { es: 'Impacto social incluido', en: 'Social impact included' },
   impactDesc: {
-    es: 'Hasta el 40% financia causas comunitarias. Tu investigación genera impacto real y transparente.',
-    en: 'Up to 40% funds community causes. Your research generates real, transparent impact.',
+    es: 'El 20% financia causas comunitarias. Tu investigación genera impacto real y transparente.',
+    en: '20% funds community causes. Your research generates real, transparent impact.',
   },
   livePulse: { es: '● Pulse activo ahora', en: '● Live Pulse now' },
   viewResults: { es: 'Ver resultados en vivo →', en: 'View live results →' },

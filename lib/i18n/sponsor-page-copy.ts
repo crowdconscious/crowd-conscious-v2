@@ -181,7 +181,7 @@ export const sponsorPageCopy = {
       'Featured placement on platform',
     ],
   },
-  pulseFundPack: { es: '25% → Fondo Consciente', en: '25% → Conscious Fund' },
+  pulseFundPack: { es: '20% → Fondo Consciente', en: '20% → Conscious Fund' },
   pulseFeaturesSub: {
     es: [
       'Hasta 5 preguntas por mes',
@@ -198,7 +198,7 @@ export const sponsorPageCopy = {
       'Dedicated support',
     ],
   },
-  pulseFundSub: { es: '40% → Fondo Consciente', en: '40% → Conscious Fund' },
+  pulseFundSub: { es: '20% → Fondo Consciente', en: '20% → Conscious Fund' },
   pulseIdealUnique: {
     es: 'Ideal para: prueba inicial, una consulta',
     en: 'Ideal for: initial test, one consultation',

@@ -71,8 +71,8 @@ export function MundialPulsePackCard({ locale }: Props) {
             </h2>
             <p className="mx-auto mt-3 max-w-2xl text-slate-400">
               {es
-                ? '5 Pulses, presencia destacada en plataforma, y 40% de cada peso al Fondo Consciente.'
-                : '5 Pulses, featured platform presence, and 40% of every peso to the Conscious Fund.'}
+                ? '5 Pulses, presencia destacada en plataforma, y 20% de cada peso al Fondo Consciente.'
+                : '5 Pulses, featured platform presence, and 20% of every peso to the Conscious Fund.'}
             </p>
           </div>
 

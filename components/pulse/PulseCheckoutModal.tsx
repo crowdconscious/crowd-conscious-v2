@@ -323,7 +323,7 @@ export function PulseCheckoutModal({ isOpen, onClose, tier, tierLabel, locale }:
 
           <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm">
             <p className="font-medium text-emerald-400">
-              {es ? `Hasta ${fundPct}% → Fondo Consciente` : `Up to ${fundPct}% → Conscious Fund`}
+              {es ? `${fundPct}% → Fondo Consciente` : `${fundPct}% → Conscious Fund`}
             </p>
             <p className="mt-0.5 text-xs text-slate-400">
               {es ? (
