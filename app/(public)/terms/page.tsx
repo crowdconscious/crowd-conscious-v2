@@ -10,7 +10,7 @@ export default function TermsPage() {
   const content = {
     es: {
       title: "Términos y Condiciones de Uso",
-      lastUpdated: "Última actualización: 25 de febrero de 2026",
+      lastUpdated: "Última actualización: 10 de junio de 2026",
       sections: [
         {
           title: "1. Aceptación de los Términos",
@@ -30,7 +30,7 @@ export default function TermsPage() {
         },
         {
           title: "5. Participación Free-to-Play y XP",
-          content: "La participación en Crowd Conscious es gratuita. No se requiere dinero real para participar. Cada voto genera puntos de experiencia (XP) que contribuyen a su puntuación y clasificación en el leaderboard. El XP y los logros son elementos gamificados de la Plataforma y no tienen valor monetario ni pueden canjearse por dinero."
+          content: "La participación en Crowd Conscious es gratuita. No se requiere dinero real para participar. Cada voto y otras acciones elegibles generan puntos de experiencia (XP) que contribuyen a su puntuación, nivel (tier) y clasificación en el leaderboard. El XP no tiene valor monetario, no es transferible entre cuentas y no puede canjearse por dinero en efectivo. Crowd Conscious puede permitirle canjear XP acumulado por beneficios, descuentos o experiencias ofrecidos por Lugares Conscientes certificados (\"Conscious Perks\"), sujetos a disponibilidad del establecimiento, reglas de cada oferta (incluidos límites de stock, vigencia y nivel mínimo), y confirmación en el lugar por personal autorizado del establecimiento. Los canjes se procesan a través de la Plataforma mediante códigos de un solo uso; usted es responsable de presentar su código válido en el momento acordado. Crowd Conscious no garantiza la disponibilidad de ninguna oferta ni responde por incumplimientos del establecimiento más allá de facilitar el mecanismo de canje. Gastar XP en un canje no reduce su XP acumulado para efectos de clasificación en el leaderboard."
         },
         {
           title: "6. Fondo Consciente y Patrocinios",
@@ -68,7 +68,7 @@ export default function TermsPage() {
     },
     en: {
       title: "Terms and Conditions of Use",
-      lastUpdated: "Last updated: February 25, 2026",
+      lastUpdated: "Last updated: June 10, 2026",
       sections: [
         {
           title: "1. Acceptance of Terms",
@@ -88,7 +88,7 @@ export default function TermsPage() {
         },
         {
           title: "5. Free-to-Play Participation and XP",
-          content: "Participation on Crowd Conscious is free. No real money is required to participate. Each vote generates experience points (XP) that contribute to your score and leaderboard ranking. XP and achievements are gamification elements of the Platform and have no monetary value and cannot be redeemed for money."
+          content: "Participation on Crowd Conscious is free. No real money is required to participate. Each vote and other eligible actions generate experience points (XP) that contribute to your score, tier, and leaderboard ranking. XP has no monetary value, is non-transferable between accounts, and cannot be redeemed for cash. Crowd Conscious may allow you to redeem accumulated XP for benefits, discounts, or experiences offered by certified Conscious Locations (\"Conscious Perks\"), subject to venue availability, each offer's rules (including stock limits, validity windows, and minimum tier requirements), and on-site confirmation by authorized venue staff. Redemptions are processed through the Platform via single-use codes; you are responsible for presenting a valid code at the agreed time. Crowd Conscious does not guarantee the availability of any offer and is not liable for venue non-performance beyond facilitating the redemption mechanism. Spending XP on a redemption does not reduce your accumulated XP for leaderboard ranking purposes."
         },
         {
           title: "6. Conscious Fund and Sponsorships",
