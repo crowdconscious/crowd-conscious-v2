@@ -224,7 +224,8 @@ export function ResharePacket({
                 trackShare(
                   { type: 'other', otherType: 'cause', otherId: causeId },
                   'story_download',
-                  'kit'
+                  'kit',
+                  'png'
                 )
               }
             >
@@ -262,7 +263,8 @@ export function ResharePacket({
               trackShare(
                 { type: 'other', otherType: 'cause', otherId: causeId },
                 'clipboard',
-                'kit_qr'
+                'kit_qr',
+                'link'
               )
             }
             label={L('Copiar enlace directo', 'Copy direct link')}
@@ -289,7 +291,8 @@ export function ResharePacket({
                     trackShare(
                       { type: 'other', otherType: 'cause', otherId: causeId },
                       'clipboard',
-                      `kit_${b.id}`
+                      `kit_${b.id}`,
+                      'link'
                     )
                   }
                 />
@@ -316,7 +319,8 @@ export function ResharePacket({
             trackShare(
               { type: 'other', otherType: 'cause', otherId: causeId },
               'whatsapp',
-              'kit_wa'
+              'kit_wa',
+              'link'
             )
           }
         >

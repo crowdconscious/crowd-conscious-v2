@@ -62,7 +62,7 @@ export function CauseShareBar({
   const target = { type: 'other' as const, otherType: 'cause', otherId: causeId }
   const surface = 'cause_detail'
 
-  const record = (channel: ShareChannel) => trackShare(target, channel, surface)
+  const record = (channel: ShareChannel) => trackShare(target, channel, surface, 'link')
 
   const onWhatsApp = () => {
     window.open(`https://wa.me/?text=${encodeURIComponent(waText)}`, '_blank')

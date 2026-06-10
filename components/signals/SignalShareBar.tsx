@@ -63,7 +63,7 @@ export default function SignalShareBar({
     otherId: signalId,
   }
   const surface = 'signal_detail'
-  const record = (channel: ShareChannel) => trackShare(target, channel, surface)
+  const record = (channel: ShareChannel) => trackShare(target, channel, surface, 'link')
 
   const onWhatsApp = () => {
     const url = buildUrl('whatsapp')

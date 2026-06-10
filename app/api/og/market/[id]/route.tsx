@@ -114,7 +114,7 @@ export async function GET(
     const { data: market, error } = await supabase
       .from('prediction_markets')
       .select(
-        'id, title, category, current_probability, total_votes, engagement_count, translations, sponsor_name, sponsor_logo_url, is_pulse'
+        'id, title, category, current_probability, total_votes, engagement_count, translations, sponsor_name, sponsor_logo_url, is_pulse, cover_image_url'
       )
       .eq('id', marketId)
       .single()
@@ -183,6 +183,25 @@ export async function GET(
       probs.every((p) => Math.abs(p - probs[0]) < 1e-5)
     const topOutcome = sortedByProb[0]
     const probRaw = topOutcome?.probability ?? market.current_probability ?? 0.5
+    // Fetch the cover as base64 so it can be painted as a hero layer.
+    // Same pattern as /api/og/location — silent fallback to the text-only
+    // layout when there is no cover or the fetch fails (never render a
+    // broken/placeholder hero).
+    let coverBase64 = ''
+    const coverUrl = (market as { cover_image_url?: string | null }).cover_image_url
+    if (coverUrl) {
+      try {
+        const res = await fetch(coverUrl)
+        if (res.ok) {
+          const buf = await res.arrayBuffer()
+          const contentType = res.headers.get('content-type') || 'image/jpeg'
+          coverBase64 = `data:${contentType};base64,${Buffer.from(buf).toString('base64')}`
+        }
+      } catch {
+        // silent — OG falls back to the chart-only layout
+      }
+    }
+
     let sponsorLogoBase64 = ''
     if ((market as { sponsor_logo_url?: string }).sponsor_logo_url) {
       try {
@@ -253,12 +272,48 @@ export async function GET(
               display: 'flex',
               flexDirection: 'column',
               background: '#0f1419',
-              padding: '72px 56px 100px',
               fontFamily: 'sans-serif',
               position: 'relative',
-              justifyContent: 'space-between',
             }}
           >
+            {coverBase64 ? (
+              <div
+                style={{
+                  display: 'flex',
+                  width: '100%',
+                  height: 820,
+                  position: 'relative',
+                }}
+              >
+                <img
+                  src={coverBase64}
+                  width={1080}
+                  height={820}
+                  alt=""
+                  style={{ display: 'flex', objectFit: 'cover', width: 1080, height: 820 }}
+                />
+                {/* Scrim is mandatory: fade the hero into the canvas so the
+                    title below never sits on raw image. */}
+                <div
+                  style={{
+                    display: 'flex',
+                    position: 'absolute',
+                    inset: 0,
+                    background:
+                      'linear-gradient(180deg, rgba(15,20,25,0) 45%, rgba(15,20,25,1) 100%)',
+                  }}
+                />
+              </div>
+            ) : null}
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                flex: 1,
+                padding: coverBase64 ? '8px 56px 100px' : '72px 56px 100px',
+                justifyContent: 'space-between',
+              }}
+            >
             <div
               style={{
                 display: 'flex',
@@ -435,6 +490,7 @@ export async function GET(
                 )}
               </div>
             </div>
+            </div>
           </div>
         ),
         { width: WIDTH, height: HEIGHT, headers: { 'Cache-Control': 'public, max-age=60, s-maxage=300' } }
@@ -450,7 +506,10 @@ export async function GET(
             display: 'flex',
             flexDirection: 'row',
             background: '#0f1419',
-            padding: '40px 48px',
+            // The hero column must bleed to the canvas edge, so padding moves
+            // into the content column when a cover exists. Canvas stays full
+            // 1200x630 either way — WhatsApp downgrades small og:images.
+            padding: coverBase64 ? '0' : '40px 48px',
             fontFamily: 'sans-serif',
             position: 'relative',
           }}
@@ -466,13 +525,41 @@ export async function GET(
               display: 'flex',
             }}
           />
+          {coverBase64 ? (
+            <div
+              style={{
+                display: 'flex',
+                width: '440px',
+                height: '100%',
+                position: 'relative',
+                background: '#1e293b',
+              }}
+            >
+              <img
+                src={coverBase64}
+                width={440}
+                height={630}
+                alt=""
+                style={{ display: 'flex', objectFit: 'cover', width: 440, height: 630 }}
+              />
+              <div
+                style={{
+                  display: 'flex',
+                  position: 'absolute',
+                  inset: 0,
+                  background:
+                    'linear-gradient(90deg, rgba(15,20,25,0) 55%, rgba(15,20,25,0.85) 100%)',
+                }}
+              />
+            </div>
+          ) : null}
           {(market as { sponsor_name?: string }).sponsor_name && (
             <div
               style={{
                 display: 'flex',
                 position: 'absolute',
                 bottom: '10px',
-                left: '48px',
+                left: coverBase64 ? '480px' : '48px',
                 fontSize: '12px',
                 color: '#64748b',
                 alignItems: 'center',
@@ -490,7 +577,7 @@ export async function GET(
               display: 'flex',
               flexDirection: 'column',
               flex: '1',
-              paddingRight: '36px',
+              padding: coverBase64 ? '40px 48px' : '0 36px 0 0',
               justifyContent: 'space-between',
             }}
           >
@@ -591,6 +678,9 @@ export async function GET(
               </div>
             </div>
           </div>
+          {/* Right stat column only fits in the text-only layout; with the
+              hero the same numbers already live in the main column. */}
+          {coverBase64 ? null : (
           <div
             style={{
               display: 'flex',
@@ -634,6 +724,7 @@ export async function GET(
               </div>
             )}
           </div>
+          )}
         </div>
       ),
       { width: WIDTH, height: HEIGHT, headers: { 'Cache-Control': 'public, max-age=60, s-maxage=300' } }

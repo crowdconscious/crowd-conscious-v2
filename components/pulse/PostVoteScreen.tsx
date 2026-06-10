@@ -184,46 +184,53 @@ export default function PostVoteScreen({
     }
   }
 
-  const trackShareClick = (channel: string) => {
+  const trackShareClick = (channel: string, format: 'link' | 'png') => {
     trackPostVoteEvent('share_click_post_vote', {
       marketId,
       userType,
       locale,
       channel,
     })
-    trackShare({ type: 'market', marketId }, channel as Parameters<typeof trackShare>[1], 'post_vote_screen')
+    trackShare(
+      { type: 'market', marketId },
+      channel as Parameters<typeof trackShare>[1],
+      'post_vote_screen',
+      format
+    )
   }
 
+  // This screen only renders after a vote, so the first-person voted
+  // variant of the share copy is always correct here.
   const handleShareTwitter = () => {
-    trackShareClick('twitter')
-    shareToTwitter(marketId, marketTitle, sponsorName ?? null)
+    trackShareClick('twitter', 'link')
+    shareToTwitter(marketId, marketTitle, sponsorName ?? null, locale, true)
   }
   const handleShareWhatsApp = () => {
-    trackShareClick('whatsapp')
-    shareToWhatsApp(marketId, marketTitle, sponsorName ?? null)
+    trackShareClick('whatsapp', 'link')
+    shareToWhatsApp(marketId, marketTitle, sponsorName ?? null, locale, true)
   }
   const handleShareFacebook = () => {
-    trackShareClick('facebook')
+    trackShareClick('facebook', 'link')
     shareToFacebook(marketId)
   }
   const handleCopy = () => {
-    trackShareClick('clipboard')
+    trackShareClick('clipboard', 'link')
     copyMarketLink(marketId)
   }
   const handleNative = () => {
-    trackShareClick('native_share')
+    trackShareClick('native_share', 'png')
     void shareNative(marketId, marketTitle, 'standard', locale, sponsorName ?? null)
   }
   const handleDownloadCard = () => {
-    trackShareClick('story_download')
+    trackShareClick('story_download', 'png')
     void downloadCard(marketId, 'standard', locale)
   }
   const handleShareStory = () => {
-    trackShareClick('story_download')
+    trackShareClick('story_download', 'png')
     void shareStoryImage(marketId, { title: marketTitle, locale })
   }
   const handleDownloadStory = () => {
-    trackShareClick('story_download')
+    trackShareClick('story_download', 'png')
     void downloadCard(marketId, 'story', locale)
   }
 

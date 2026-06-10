@@ -197,14 +197,14 @@ export const CelebrationModal = memo(function CelebrationModal({
   const handleCopyLink = useCallback(() => {
     if (shareCardMarketId) {
       copyMarketLink(shareCardMarketId)
-      trackShare({ type: 'market', marketId: shareCardMarketId }, 'clipboard', 'celebration_modal')
+      trackShare({ type: 'market', marketId: shareCardMarketId }, 'clipboard', 'celebration_modal', 'link')
     }
   }, [shareCardMarketId])
 
   const trackModalShare = useCallback(
     (channel: 'whatsapp' | 'twitter' | 'facebook') => {
       if (shareCardMarketId) {
-        trackShare({ type: 'market', marketId: shareCardMarketId }, channel, 'celebration_modal')
+        trackShare({ type: 'market', marketId: shareCardMarketId }, channel, 'celebration_modal', 'link')
       }
     },
     [shareCardMarketId]
@@ -233,7 +233,7 @@ export const CelebrationModal = memo(function CelebrationModal({
         undefined,
         shareSponsorName
       )
-      trackShare({ type: 'market', marketId: shareCardMarketId }, 'native_share', 'celebration_modal')
+      trackShare({ type: 'market', marketId: shareCardMarketId }, 'native_share', 'celebration_modal', 'png')
     } finally {
       setShareCardLoading(false)
     }
@@ -244,7 +244,7 @@ export const CelebrationModal = memo(function CelebrationModal({
     setShareCardLoading(true)
     try {
       await downloadCard(shareCardMarketId, 'standard')
-      trackShare({ type: 'market', marketId: shareCardMarketId }, 'story_download', 'celebration_modal')
+      trackShare({ type: 'market', marketId: shareCardMarketId }, 'story_download', 'celebration_modal', 'png')
     } finally {
       setShareCardLoading(false)
     }
@@ -264,9 +264,9 @@ export const CelebrationModal = memo(function CelebrationModal({
         title: shareTitle || 'Crowd Conscious',
       })
       if (result === 'shared') {
-        trackShare({ type: 'market', marketId: shareCardMarketId }, 'native_share', 'celebration_modal_story')
+        trackShare({ type: 'market', marketId: shareCardMarketId }, 'native_share', 'celebration_modal_story', 'png')
       } else if (result === 'downloaded') {
-        trackShare({ type: 'market', marketId: shareCardMarketId }, 'story_download', 'celebration_modal_story')
+        trackShare({ type: 'market', marketId: shareCardMarketId }, 'story_download', 'celebration_modal_story', 'png')
         showStoryHint()
       }
     } catch (err) {
@@ -281,7 +281,7 @@ export const CelebrationModal = memo(function CelebrationModal({
     setShareCardLoading(true)
     try {
       await downloadCard(shareCardMarketId, 'story')
-      trackShare({ type: 'market', marketId: shareCardMarketId }, 'story_download', 'celebration_modal_story')
+      trackShare({ type: 'market', marketId: shareCardMarketId }, 'story_download', 'celebration_modal_story', 'png')
       showStoryHint()
     } finally {
       setShareCardLoading(false)

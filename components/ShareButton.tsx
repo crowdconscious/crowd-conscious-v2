@@ -49,7 +49,7 @@ export default function ShareButton({
     copyMarketLink(marketId)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
-    trackShare(target, 'clipboard', surface)
+    trackShare(target, 'clipboard', surface, 'link')
   }
 
   return (
@@ -85,8 +85,8 @@ export default function ShareButton({
         <div className="absolute right-0 top-full mt-2 w-56 bg-slate-800 border border-slate-700 rounded-xl shadow-xl z-50 py-2">
           <button
             onClick={() => {
-              shareToTwitter(marketId, title)
-              trackShare(target, 'twitter', surface)
+              shareToTwitter(marketId, title, sponsorName, locale)
+              trackShare(target, 'twitter', surface, 'link')
               setOpen(false)
             }}
             className="w-full px-4 py-2 text-left text-sm text-slate-200 hover:bg-slate-700 flex items-center gap-3"
@@ -95,8 +95,8 @@ export default function ShareButton({
           </button>
           <button
             onClick={() => {
-              shareToWhatsApp(marketId, title, sponsorName)
-              trackShare(target, 'whatsapp', surface)
+              shareToWhatsApp(marketId, title, sponsorName, locale)
+              trackShare(target, 'whatsapp', surface, 'link')
               setOpen(false)
             }}
             className="w-full px-4 py-2 text-left text-sm text-slate-200 hover:bg-slate-700 flex items-center gap-3"
@@ -106,7 +106,7 @@ export default function ShareButton({
           <button
             onClick={() => {
               shareToFacebook(marketId)
-              trackShare(target, 'facebook', surface)
+              trackShare(target, 'facebook', surface, 'link')
               setOpen(false)
             }}
             className="w-full px-4 py-2 text-left text-sm text-slate-200 hover:bg-slate-700 flex items-center gap-3"
@@ -123,7 +123,7 @@ export default function ShareButton({
           <button
             onClick={() => {
               downloadCard(marketId, 'standard', locale)
-              trackShare(target, 'story_download', surface)
+              trackShare(target, 'story_download', surface, 'png')
               setOpen(false)
             }}
             className="w-full px-4 py-2 text-left text-sm text-slate-200 hover:bg-slate-700 flex items-center gap-3"
@@ -133,7 +133,7 @@ export default function ShareButton({
           <button
             onClick={() => {
               downloadCard(marketId, 'story', locale)
-              trackShare(target, 'story_download', surface)
+              trackShare(target, 'story_download', surface, 'png')
               setOpen(false)
             }}
             className="w-full px-4 py-2 text-left text-sm text-slate-200 hover:bg-slate-700 flex items-center gap-3"
@@ -144,7 +144,7 @@ export default function ShareButton({
           <button
             onClick={() => {
               shareNative(marketId, title, 'standard', locale, sponsorName)
-              trackShare(target, 'native_share', surface)
+              trackShare(target, 'native_share', surface, 'png')
               setOpen(false)
             }}
             className="w-full px-4 py-2 text-left text-sm text-emerald-400 hover:bg-slate-700 flex items-center gap-3 font-medium"

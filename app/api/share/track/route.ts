@@ -21,11 +21,15 @@ const CHANNELS = new Set([
   'other',
 ])
 
+const FORMATS = new Set(['link', 'png'])
+
 type Body = {
   channel?: string
   surface?: string
+  format?: string
   market_id?: string
   location_id?: string
+  creator_profile_id?: string
   other_type?: string
   other_id?: string
 }
@@ -52,6 +56,10 @@ export async function POST(request: Request) {
   const marketId = body.market_id && UUID_REGEX.test(body.market_id) ? body.market_id : null
   const locationId =
     body.location_id && UUID_REGEX.test(body.location_id) ? body.location_id : null
+  const creatorProfileId =
+    body.creator_profile_id && UUID_REGEX.test(body.creator_profile_id)
+      ? body.creator_profile_id
+      : null
   const otherType =
     typeof body.other_type === 'string' && body.other_type.trim().length > 0
       ? body.other_type.trim().slice(0, 40)
@@ -62,13 +70,20 @@ export async function POST(request: Request) {
       : null
 
   // At least one target is required; otherwise drop silently.
-  if (!marketId && !locationId && !(otherType && otherId)) {
+  if (!marketId && !locationId && !creatorProfileId && !(otherType && otherId)) {
     return NextResponse.json({ ok: true })
   }
 
   const surface =
     typeof body.surface === 'string' && body.surface.trim().length > 0
       ? body.surface.trim().slice(0, 40)
+      : null
+
+  // Optional artifact dimension (migration 240). Unknown values are dropped
+  // to null rather than rejecting the event — tracking must never fail.
+  const format =
+    typeof body.format === 'string' && FORMATS.has(body.format.trim())
+      ? body.format.trim()
       : null
 
   // Cheap rate limit: 50 shares / min per IP (or user). Failures are
@@ -104,21 +119,26 @@ export async function POST(request: Request) {
     }
 
     // Derive source_type from the target. Mirrors the backfill rule in
-    // migration 207 so old and new rows use the same vocabulary.
-    const sourceType: 'pulse' | 'location' | 'cause' | 'other' = marketId
+    // migration 207 (extended with 'creator' in 241) so old and new rows
+    // use the same vocabulary.
+    const sourceType: 'pulse' | 'location' | 'cause' | 'creator' | 'other' = marketId
       ? 'pulse'
       : locationId
         ? 'location'
-        : otherType === 'cause'
-          ? 'cause'
-          : 'other'
+        : creatorProfileId
+          ? 'creator'
+          : otherType === 'cause'
+            ? 'cause'
+            : 'other'
 
     const admin = createAdminClient()
     const { error } = await admin.from('share_events').insert({
       channel,
       surface,
+      format,
       market_id: marketId,
       location_id: locationId,
+      creator_profile_id: creatorProfileId,
       other_type: otherType,
       other_id: otherId,
       source_type: sourceType,

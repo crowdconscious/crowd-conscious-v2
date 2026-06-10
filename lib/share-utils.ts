@@ -60,7 +60,15 @@ export function withShareUtm(url: string, channel: ShareChannel): string {
 export type ShareTarget =
   | { type: 'market'; marketId: string }
   | { type: 'location'; locationId: string }
+  | { type: 'creator'; creatorProfileId: string }
   | { type: 'other'; otherType: string; otherId: string }
+
+/**
+ * What artifact actually left the device: a tappable link (WhatsApp, X,
+ * clipboard, ...) or a PNG card (story download / image share). This is
+ * the dimension that settles the "links convert, PNGs spread" hypothesis.
+ */
+export type ShareFormat = 'link' | 'png'
 
 /**
  * Fire-and-forget analytics ping. Never throws, never awaits longer
@@ -70,13 +78,16 @@ export type ShareTarget =
 export function trackShare(
   target: ShareTarget,
   channel: ShareChannel,
-  surface?: string
+  surface?: string,
+  format?: ShareFormat
 ): void {
   if (typeof window === 'undefined') return
   const payload: Record<string, string> = { channel }
   if (surface) payload.surface = surface
+  if (format) payload.format = format
   if (target.type === 'market') payload.market_id = target.marketId
   else if (target.type === 'location') payload.location_id = target.locationId
+  else if (target.type === 'creator') payload.creator_profile_id = target.creatorProfileId
   else {
     payload.other_type = target.otherType
     payload.other_id = target.otherId
@@ -124,26 +135,69 @@ export async function copyLocationLink(
   }
 }
 
-function getShareSuffix(sponsorName?: string | null): string {
-  return sponsorName
-    ? ` — Sponsored by ${sponsorName} on Crowd Conscious`
-    : ' — What do you think?'
+/**
+ * First-person share text per the share-cards copy matrix
+ * (docs/SHARE-CARDS-STRATEGY-2026-06-09.md §6). `hasVoted` switches to the
+ * post-vote variant; callers that don't know the vote state get the
+ * generic line. ES is the default locale.
+ */
+function pulseShareText(
+  title: string,
+  url: string,
+  locale: string,
+  hasVoted: boolean,
+  sponsorName?: string | null
+): string {
+  const en = locale === 'en'
+  const body = hasVoted
+    ? en
+      ? `I just voted on this Pulse. What do you think? ${url}`
+      : `Yo ya voté en este Pulse. ¿Tú qué opinas? ${url}`
+    : en
+      ? `Check out this Pulse on Crowd Conscious: ${title} ${url}`
+      : `Mira este Pulse en Crowd Conscious: ${title} ${url}`
+  if (sponsorName) {
+    return `${body}${en ? ` — Sponsored by ${sponsorName}` : ` — Patrocinado por ${sponsorName}`}`
+  }
+  return body
 }
 
-export function shareToTwitter(marketId: string, title: string, sponsorName?: string | null) {
+export function shareToTwitter(
+  marketId: string,
+  title: string,
+  sponsorName?: string | null,
+  locale: string = 'es',
+  hasVoted: boolean = false
+) {
   const base = getBaseUrl()
-  const suffix = getShareSuffix(sponsorName)
-  const text = encodeURIComponent(`${title}${sponsorName ? suffix : `\n\nWhat do you think?`}`)
-  const url = encodeURIComponent(withShareUtm(`${base}/predictions/markets/${marketId}`, 'twitter'))
-  window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank')
+  const url = withShareUtm(`${base}/predictions/markets/${marketId}`, 'twitter')
+  const en = locale === 'en'
+  const body = hasVoted
+    ? en
+      ? 'I just voted on this Pulse. What do you think?'
+      : 'Yo ya voté en este Pulse. ¿Tú qué opinas?'
+    : en
+      ? `Check out this Pulse on Crowd Conscious: ${title}`
+      : `Mira este Pulse en Crowd Conscious: ${title}`
+  const text = sponsorName
+    ? `${body}${en ? ` — Sponsored by ${sponsorName}` : ` — Patrocinado por ${sponsorName}`}`
+    : body
+  window.open(
+    `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
+    '_blank'
+  )
 }
 
-export function shareToWhatsApp(marketId: string, title: string, sponsorName?: string | null) {
+export function shareToWhatsApp(
+  marketId: string,
+  title: string,
+  sponsorName?: string | null,
+  locale: string = 'es',
+  hasVoted: boolean = false
+) {
   const base = getBaseUrl()
   const url = withShareUtm(`${base}/predictions/markets/${marketId}`, 'whatsapp')
-  const text = sponsorName
-    ? `${title} — Sponsored by ${sponsorName} on Crowd Conscious. Make your prediction: ${url}`
-    : `${title} — Make your prediction: ${url}`
+  const text = pulseShareText(title, url, locale, hasVoted, sponsorName)
   window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
 }
 
@@ -251,7 +305,12 @@ export async function shareNative(marketId: string, title: string, format: 'stan
   const langParam = locale && locale !== 'es' ? (format === 'story' ? `&lang=${locale}` : `?lang=${locale}`) : ''
   const url = format === 'story' ? `/api/og/market/${marketId}?format=story${langParam}` : `/api/og/market/${marketId}${langParam}`
   const filename = format === 'story' ? 'crowd-conscious-story.png' : 'prediction.png'
-  const shareText = `${title}${getShareSuffix(sponsorName)}`
+  const en = locale === 'en'
+  const shareText = sponsorName
+    ? `${title}${en ? ` — Sponsored by ${sponsorName}` : ` — Patrocinado por ${sponsorName}`}`
+    : en
+      ? `${title} — What do you think?`
+      : `${title} — ¿Tú qué opinas?`
   try {
     const response = await fetch(url)
     const blob = await response.blob()

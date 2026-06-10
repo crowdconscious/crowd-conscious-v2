@@ -113,7 +113,7 @@ export function BlogShareButton({
     const url = withShareUtm(baseUrl, 'whatsapp')
     const text = `${title}\n\n${url}`
     openInNewTab(`https://wa.me/?text=${encodeURIComponent(text)}`)
-    trackShare(target, 'whatsapp', surface)
+    trackShare(target, 'whatsapp', surface, 'link')
     setOpen(false)
   }
 
@@ -122,21 +122,21 @@ export function BlogShareButton({
     const text = encodeURIComponent(title)
     const u = encodeURIComponent(url)
     openInNewTab(`https://twitter.com/intent/tweet?text=${text}&url=${u}`)
-    trackShare(target, 'twitter', surface)
+    trackShare(target, 'twitter', surface, 'link')
     setOpen(false)
   }
 
   const handleLinkedIn = () => {
     const url = withShareUtm(baseUrl, 'other')
     openInNewTab(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`)
-    trackShare(target, 'other', surface)
+    trackShare(target, 'other', surface, 'link')
     setOpen(false)
   }
 
   const handleFacebook = () => {
     const url = withShareUtm(baseUrl, 'facebook')
     openInNewTab(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`)
-    trackShare(target, 'facebook', surface)
+    trackShare(target, 'facebook', surface, 'link')
     setOpen(false)
   }
 
@@ -146,7 +146,7 @@ export function BlogShareButton({
       await navigator.clipboard.writeText(url)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
-      trackShare(target, 'clipboard', surface)
+      trackShare(target, 'clipboard', surface, 'link')
     } catch {
       window.prompt(t.copy, url)
     }
@@ -157,7 +157,7 @@ export function BlogShareButton({
     const url = withShareUtm(baseUrl, 'native_share')
     try {
       await navigator.share({ title, text: tagline, url })
-      trackShare(target, 'native_share', surface)
+      trackShare(target, 'native_share', surface, 'link')
     } catch (err) {
       if ((err as Error)?.name !== 'AbortError') {
         console.warn('[BlogShareButton] native share failed:', err)

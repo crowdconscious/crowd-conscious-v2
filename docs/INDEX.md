@@ -34,6 +34,8 @@
 | [`COMPREHENSIVE-AUDIT-2025.md`](COMPREHENSIVE-AUDIT-2025.md) | 2025 comprehensive audit |
 | [`CLEANUP-PLAN-REVIEW.md`](CLEANUP-PLAN-REVIEW.md) | Cleanup plan review |
 | [`inbox+moreadditions.md`](inbox+moreadditions.md) | Inbox + extra additions spec |
+| [`CONSCIOUS-CREATORS-STRATEGY-2026-06-09.md`](CONSCIOUS-CREATORS-STRATEGY-2026-06-09.md) | Conscious Creators feature strategy — people cards, verification tiers, share cards, web + mobile rollout |
+| [`SHARE-CARDS-STRATEGY-2026-06-09.md`](SHARE-CARDS-STRATEGY-2026-06-09.md) | Share cards v2 — thumbnail heroes, WhatsApp-link vs story-PNG channel split, QR decision, per-feature copy, web + mobile plan |
 
 ## Phase tracking (Mundial 2026 prep)
 

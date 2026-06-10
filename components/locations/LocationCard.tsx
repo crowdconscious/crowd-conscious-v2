@@ -82,7 +82,7 @@ export function LocationCard({
 
   const handleWhatsApp = () => {
     window.open(`https://wa.me/?text=${encodeURIComponent(shareLine)}`, '_blank')
-    trackShare(shareTarget, 'whatsapp', 'location_card')
+    trackShare(shareTarget, 'whatsapp', 'location_card', 'link')
   }
 
   const handleShare = async () => {
@@ -95,14 +95,14 @@ export function LocationCard({
       const nav = typeof navigator !== 'undefined' ? navigator : null
       if (nav?.share) {
         await nav.share(shareData)
-        trackShare(shareTarget, 'native_share', 'location_card')
+        trackShare(shareTarget, 'native_share', 'location_card', 'link')
         return
       }
       if (nav?.clipboard) {
         await nav.clipboard.writeText(shareLine)
         setCopied(true)
         window.setTimeout(() => setCopied(false), 2000)
-        trackShare(shareTarget, 'clipboard', 'location_card')
+        trackShare(shareTarget, 'clipboard', 'location_card', 'link')
       }
     } catch {
       // User dismissed share sheet — silent.

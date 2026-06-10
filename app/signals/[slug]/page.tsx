@@ -10,6 +10,7 @@ import {
 } from '@/lib/i18n/citizen-signals'
 import SignalDetail from '@/components/signals/SignalDetail'
 import type { SignalSponsorInfo } from '@/components/signals/SponsorBadge'
+import { SITE_URL } from '@/lib/seo/site'
 
 function readLocale(c: {
   get: (k: string) => { value?: string } | undefined
@@ -37,6 +38,10 @@ export async function generateMetadata({
   const locale = readLocale(cookieStore)
   const description =
     row.body.length > 160 ? `${row.body.slice(0, 157).trim()}…` : row.body
+  // Composed 1200x630 card with the first evidence image as hero (or the
+  // branded text layout when none). Absolute URL so scrapers don't depend
+  // on metadataBase.
+  const ogImage = `${SITE_URL}/api/og/signal/${encodeURIComponent(slug)}${locale === 'en' ? '?lang=en' : ''}`
   return {
     title: `${row.title} | ${locale === 'es' ? 'Señales Ciudadanas' : 'Citizen Signals'}`,
     description,
@@ -44,6 +49,13 @@ export async function generateMetadata({
       title: row.title,
       description,
       type: 'article',
+      images: [{ url: ogImage, width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: row.title,
+      description,
+      images: [ogImage],
     },
   }
 }
