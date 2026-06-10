@@ -29,14 +29,14 @@ export function AdminMarketToolbar({ marketId, isPulse }: Props) {
         className="inline-flex items-center gap-1.5 text-emerald-300 hover:text-emerald-200 font-medium"
       >
         <Pencil className="w-3.5 h-3.5" aria-hidden />
-        Editar mercado
+        Editar Pulse
       </Link>
       <Link
         href={`/admin/markets`}
         className="inline-flex items-center gap-1.5 text-slate-300 hover:text-white"
       >
         <ExternalLink className="w-3.5 h-3.5" aria-hidden />
-        Panel de mercados
+        Panel de Pulses
       </Link>
       {isPulse && (
         <Link

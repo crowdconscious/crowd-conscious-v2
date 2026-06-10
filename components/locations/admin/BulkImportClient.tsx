@@ -256,7 +256,7 @@ export default function BulkImportClient() {
         <p className="mt-1 text-sm text-cc-text-secondary">
           Sube un CSV con hasta 200 filas. Cada lugar entra como{' '}
           <span className="font-mono text-amber-300">pending</span> — vuelve al editor para
-          activar el mercado de votación.
+          activar la votación de la comunidad.
         </p>
       </div>
 

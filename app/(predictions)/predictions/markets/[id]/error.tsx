@@ -25,11 +25,11 @@ export default function MarketDetailError({
     <div className="mx-auto flex min-h-[60vh] max-w-2xl flex-col items-center justify-center px-4 py-16 text-center">
       <AlertTriangle className="mb-4 h-12 w-12 text-amber-400" aria-hidden />
       <h1 className="text-2xl font-semibold text-white">
-        No pudimos cargar este mercado
+        No pudimos cargar este Pulse
       </h1>
       <p className="mt-2 text-sm text-slate-400">
-        Tuvimos un problema al mostrar la información del mercado. Ya lo estamos
-        registrando. Puedes intentar de nuevo o volver a la lista de mercados.
+        Tuvimos un problema al mostrar la información del Pulse. Ya lo estamos
+        registrando. Puedes intentar de nuevo o volver a la lista de Pulses.
       </p>
       {error.digest ? (
         <p className="mt-3 text-xs text-slate-600">Ref: {error.digest}</p>

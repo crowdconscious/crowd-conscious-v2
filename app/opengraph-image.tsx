@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og'
 
-export const alt = 'Crowd Conscious — Predicciones con propósito'
+export const alt = 'Crowd Conscious — Tu voz con propósito'
 
 export const size = {
   width: 1200,
@@ -58,7 +58,7 @@ export default async function Image() {
             marginBottom: 20,
           }}
         >
-          Predicciones Gratis que Financian Causas Reales
+          Tu Voz Financia Causas Reales
         </div>
         <div
           style={{

@@ -92,7 +92,7 @@ Te paso una tarjeta lista para compartir en historias o reels. ¿Quieres que te 
 
         <div className="border-b border-cc-border p-5">
           <p className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
-            ✓ {marketCreated ? 'Lugar creado · mercado activo' : 'Lugar creado'}
+            ✓ {marketCreated ? 'Lugar creado · votación activa' : 'Lugar creado'}
           </p>
           <h2 className="mt-1 text-lg font-bold text-white">{name}</h2>
           <p className="mt-1 text-xs text-cc-text-secondary">

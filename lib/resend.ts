@@ -163,7 +163,7 @@ export const emailTemplates = {
         <div style="padding: 30px 20px; background: #f8fafc; border-radius: 0 0 10px 10px;">
           <p style="color: #475569; line-height: 1.6;">Hi ${sponsorName},</p>
           <p style="color: #475569; line-height: 1.6;">
-            Thank you for sponsoring ${sponsoredLabel}. Your brand will appear on the market card, detail page, and share images.
+            Thank you for sponsoring ${sponsoredLabel}. Your brand will appear on the Pulse card, detail page, and share images.
           </p>
           <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;">
             <p style="margin: 0 0 10px 0; color: #1e293b;"><strong>💰 Your impact</strong></p>
@@ -229,7 +229,7 @@ export const emailTemplates = {
           <p style="color: #475569; margin: 5px 0;">Email: ${data.sponsorEmail}</p>
           ${data.sponsorUrl ? `<p style="color: #475569; margin: 5px 0;">Website: <a href="${data.sponsorUrl}">${data.sponsorUrl}</a></p>` : ''}
           <p style="color: #475569; margin: 5px 0;">Tier: ${data.tier}</p>
-          ${data.marketTitle ? `<p style="color: #475569; margin: 5px 0;">Market: ${data.marketTitle}</p>` : ''}
+          ${data.marketTitle ? `<p style="color: #475569; margin: 5px 0;">Pulse: ${data.marketTitle}</p>` : ''}
           ${data.category ? `<p style="color: #475569; margin: 5px 0;">Category: ${data.category}</p>` : ''}
           <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e2e8f0;">
             <p style="margin: 0 0 8px 0; color: #1e293b;"><strong>Amounts</strong></p>

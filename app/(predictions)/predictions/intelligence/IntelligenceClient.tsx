@@ -174,7 +174,7 @@ function generateHeadlines(data: IntelligenceDashboardData) {
     headlines.push({
       type: 'Precisión colectiva',
       color: 'sky',
-      text: `Cuando los mercados se resuelven, la comunidad acierta ${data.impact.crowd_accuracy_pct}% de las veces.`,
+      text: `Cuando los Pulses concluyen, la comunidad coincide con el resultado ${data.impact.crowd_accuracy_pct}% de las veces.`,
       meta: `Muestra: ${data.impact.crowd_accuracy_sample.toLocaleString()} votos resueltos de usuarios registrados`,
     })
   }
@@ -183,7 +183,7 @@ function generateHeadlines(data: IntelligenceDashboardData) {
     headlines.push({
       type: 'Sin titulares por ahora',
       color: 'amber',
-      text: `Aún no hay suficientes datos (${MIN_HEADLINE_VOTES}+ votos por mercado) para emitir titulares con confianza estadística.`,
+      text: `Aún no hay suficientes datos (${MIN_HEADLINE_VOTES}+ votos por Pulse) para emitir titulares con confianza estadística.`,
       meta: `Total participaciones: ${data.kpis.total_engagement.toLocaleString()}`,
     })
   }

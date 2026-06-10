@@ -236,13 +236,13 @@ export default function ProfileClient({
                 <div className="text-2xl font-bold text-white">
                   {predictionStats.predictions}
                 </div>
-                <div className="text-sm text-slate-400">Predictions</div>
+                <div className="text-sm text-slate-400">Votes</div>
               </div>
               <div className="min-w-0 rounded-lg border border-[#2d3748] bg-[#1a2029]/90 p-3 text-center sm:p-4">
                 <div className="text-2xl font-bold text-white">
                   {predictionStats.accuracy}%
                 </div>
-                <div className="text-sm text-slate-400">Accuracy</div>
+                <div className="text-sm text-slate-400">Majority match</div>
               </div>
               <div className="min-w-0 rounded-lg border border-[#2d3748] bg-[#1a2029]/90 p-3 text-center sm:p-4">
                 <div className="text-2xl font-bold text-emerald-400">
@@ -426,7 +426,7 @@ export default function ProfileClient({
       {topAchievements.length > 0 && (
         <div>
           <h2 className="text-2xl font-bold text-white mb-2">Impact Achievements</h2>
-          <p className="text-slate-400 text-sm mb-6">Milestones from predictions, fund votes, and contributions</p>
+          <p className="text-slate-400 text-sm mb-6">Milestones from Pulse votes, fund votes, and contributions</p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
             {topAchievements.map((a) => (
               <div
@@ -467,7 +467,7 @@ export default function ProfileClient({
         <p className="text-slate-400 text-sm mb-6">Contributions to collective intelligence and the Conscious Fund</p>
         <div className="rounded-xl border border-cc-border bg-cc-card/80 p-6">
           <p className="text-slate-300">
-            Your predictions have contributed{' '}
+            Your votes have contributed{' '}
             <span className="font-bold text-emerald-400">{predictionStats.totalXp} XP</span> to
             collective intelligence.
           </p>
@@ -533,7 +533,7 @@ export default function ProfileClient({
                 href="/predictions/trades"
                 className="inline-flex items-center gap-2 text-emerald-400 hover:text-emerald-300 font-medium"
               >
-                See all predictions
+                See all votes
                 <ChevronRight className="w-5 h-5" />
               </Link>
             </div>
@@ -541,7 +541,7 @@ export default function ProfileClient({
         ) : (
           <div className="rounded-xl border border-cc-border bg-cc-card/80 p-12 text-center">
             <p className="text-slate-400 mb-4">
-              You haven&apos;t made any predictions yet.
+              You haven&apos;t voted in any Pulses yet.
             </p>
             <Link
               href="/pulse"

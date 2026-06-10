@@ -19,7 +19,7 @@ const COPY = {
     valueTitle: '¿Qué vas a recibir?',
     value1Title: 'Análisis con datos reales',
     value1Body:
-      'Lecturas basadas en lo que la comunidad está votando en Conscious Pulse, mercados de predicción y lugares conscientes.',
+      'Lecturas basadas en lo que la comunidad está votando en Conscious Pulse y lugares conscientes.',
     value2Title: 'Contexto internacional',
     value2Body:
       'Conexiones entre lo que pasa en México y los movimientos de opinión globales — sin ruido, sin clickbait.',
@@ -43,7 +43,7 @@ const COPY = {
     valueTitle: "What you'll get",
     value1Title: 'Analysis grounded in real data',
     value1Body:
-      "Reads built on what the community is voting on in Conscious Pulse, prediction markets, and conscious places.",
+      "Reads built on what the community is voting on in Conscious Pulse and conscious places.",
     value2Title: 'International context',
     value2Body:
       'Connections between what happens in Mexico and global opinion movements — no noise, no clickbait.',

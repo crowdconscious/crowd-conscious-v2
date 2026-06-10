@@ -153,7 +153,7 @@ export default function AdminMarketsClient() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
-        <h1 className="text-2xl font-bold text-slate-900">Prediction Markets</h1>
+        <h1 className="text-2xl font-bold text-slate-900">Pulses</h1>
         <Link
           href="/predictions/admin/resolve"
           className="px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-500"

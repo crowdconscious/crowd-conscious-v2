@@ -206,7 +206,7 @@ export function FundClient({
           Impulsado por patrocinadores. Dirigido por ti.
         </p>
         <p className="text-cc-text-muted mt-2 text-sm max-w-2xl">
-          Cuando las marcas patrocinan mercados de predicción en Crowd Conscious, el 20% de la parte
+          Cuando las marcas patrocinan Pulses en Crowd Conscious, el 20% de la parte
           neta de cada patrocinio va al Fondo Consciente, además de las aportaciones por comisiones de
           operación. Los usuarios votan qué causas comunitarias reciben apoyos cada mes.
         </p>
@@ -256,7 +256,7 @@ export function FundClient({
           <div className="bg-cc-card border border-emerald-500/20 rounded-xl p-6">
             <p className="text-gray-400 text-sm mb-1">Your Impact</p>
             <p className="text-2xl font-bold text-white">{yourImpactXp} XP</p>
-            <p className="text-cc-text-muted text-xs mt-1">From predictions</p>
+            <p className="text-cc-text-muted text-xs mt-1">From your votes</p>
           </div>
         )}
       </div>

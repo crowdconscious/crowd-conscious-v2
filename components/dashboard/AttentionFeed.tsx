@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { ArrowRight, CheckCircle2, Flame, FileText, Lightbulb } from 'lucide-react'
+import { useLocale } from '@/lib/i18n/useLocale'
 
 export type AttentionItem = {
   id: string
@@ -40,13 +41,15 @@ function iconFor(kind: AttentionItem['kind']) {
  * four items; caller has already prioritized them.
  */
 export function AttentionFeed({ items, emptyMessage, emptyHref, emptyCta }: Props) {
+  const locale = useLocale()
+  const heading = locale !== 'en' ? 'Requiere tu atención' : 'Needs your attention'
   const shown = items.slice(0, 4)
 
   if (shown.length === 0) {
     return (
       <div className="space-y-2">
         <p className="text-xs font-medium uppercase tracking-wider text-slate-500">
-          Needs your attention
+          {heading}
         </p>
         <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
           <p className="text-sm text-slate-300">
@@ -69,7 +72,7 @@ export function AttentionFeed({ items, emptyMessage, emptyHref, emptyCta }: Prop
   return (
     <div className="space-y-2">
       <p className="text-xs font-medium uppercase tracking-wider text-slate-500">
-        Needs your attention
+        {heading}
       </p>
       <ul className="space-y-2">
         {shown.map((item) => (

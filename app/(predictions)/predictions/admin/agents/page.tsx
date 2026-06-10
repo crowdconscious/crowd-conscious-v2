@@ -185,7 +185,7 @@ function StructuredNewsBriefCard({
             )}
             {signal.market_angle && (
               <p className="text-emerald-400/80 text-xs mt-1 italic">
-                Ángulo mercado: {signal.market_angle}
+                Ángulo de Pulse: {signal.market_angle}
               </p>
             )}
             {signal.suggested_question && (
@@ -199,7 +199,7 @@ function StructuredNewsBriefCard({
                   href={marketPrefill}
                   className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-medium hover:bg-emerald-500/25 transition-colors"
                 >
-                  + Crear mercado desde esta señal
+                  + Crear Pulse desde esta señal
                 </Link>
               </div>
             )}
@@ -346,7 +346,7 @@ function PulseOpportunitiesCard({
                       }).toString()}`}
                       className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs"
                     >
-                      + Crear mercado
+                      + Crear Pulse
                     </Link>
                   )}
                   {opp.source_url && (
@@ -1712,7 +1712,7 @@ export default function AdminAgentsPage() {
                         href={`/predictions/markets/${item.market_id}`}
                         className="text-emerald-400 text-xs hover:underline"
                       >
-                        Ver mercado →
+                        Ver Pulse →
                       </Link>
                     )}
                     <div>

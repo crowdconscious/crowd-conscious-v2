@@ -25,21 +25,21 @@ interface Achievement {
 const ACHIEVEMENT_DEFINITIONS = {
   FIRST_VOTE: {
     name: 'Voice Heard',
-    description: 'Cast your first prediction',
+    description: 'Cast your first vote',
     icon: '🗳️',
     category: 'impact',
     rarity: 'common'
   },
   VOTE_10: {
     name: 'Active Predictor',
-    description: 'Make 10 predictions',
+    description: 'Cast 10 votes',
     icon: '📊',
     category: 'impact',
     rarity: 'common'
   },
   VOTE_50: {
     name: 'Democracy Champion',
-    description: 'Cast 50 predictions',
+    description: 'Cast 50 votes',
     icon: '🏛️',
     category: 'impact',
     rarity: 'rare'
@@ -74,14 +74,14 @@ const ACHIEVEMENT_DEFINITIONS = {
   },
   FIRST_CORRECT: {
     name: 'Sharp Insight',
-    description: 'Get your first correct prediction',
+    description: 'Match the final result for the first time',
     icon: '🎯',
     category: 'accuracy',
     rarity: 'common'
   },
   CORRECT_10: {
     name: 'Accurate Mind',
-    description: 'Get 10 correct predictions',
+    description: 'Match the final result 10 times',
     icon: '✨',
     category: 'accuracy',
     rarity: 'uncommon'
@@ -256,7 +256,7 @@ export default function AchievementsClient({ user }: AchievementsClientProps) {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">🏆 Achievements</h1>
-              <p className="text-slate-400">Track your impact through predictions, fund votes, and contributions</p>
+              <p className="text-slate-400">Track your impact through Pulse votes, fund votes, and contributions</p>
             </div>
             <div className="hidden md:block">
               <XPBadge variant="compact" />
@@ -369,7 +369,7 @@ export default function AchievementsClient({ user }: AchievementsClientProps) {
                               {(achievement.type === 'VOTE_10' || achievement.type === 'VOTE_50') && (
                                 <div className="text-xs">
                                   <div className="flex justify-between text-slate-500 mb-1">
-                                    <span>Predictions</span>
+                                    <span>Votes</span>
                                     <span>{userStats.votes_cast || 0} / {achievement.type === 'VOTE_10' ? 10 : 50}</span>
                                   </div>
                                   <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
@@ -397,7 +397,7 @@ export default function AchievementsClient({ user }: AchievementsClientProps) {
                               {(achievement.type === 'FIRST_CORRECT' || achievement.type === 'CORRECT_10') && (
                                 <div className="text-xs">
                                   <div className="flex justify-between text-slate-500 mb-1">
-                                    <span>Correct predictions</span>
+                                    <span>Result matches</span>
                                     <span>{userStats.correct_predictions || 0} / {achievement.type === 'CORRECT_10' ? 10 : 1}</span>
                                   </div>
                                   <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">

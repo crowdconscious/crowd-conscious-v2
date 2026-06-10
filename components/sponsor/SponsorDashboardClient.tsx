@@ -31,7 +31,7 @@ import {
 export type { SponsorOutcomeRow, SponsorDashboardMarketRow, FundImpactRow } from '@/components/sponsor/types'
 
 const TIER_LABELS: Record<string, { label: { es: string; en: string }; color: string }> = {
-  starter: { label: { es: 'Patrocinador de Mercado', en: 'Market Sponsor' }, color: 'text-slate-400' },
+  starter: { label: { es: 'Patrocinador de Pulse', en: 'Pulse Sponsor' }, color: 'text-slate-400' },
   growth: { label: { es: 'Patrocinador de Categoría', en: 'Category Sponsor' }, color: 'text-emerald-400' },
   champion: { label: { es: 'Socio de Impacto', en: 'Impact Partner' }, color: 'text-amber-400' },
   anchor: { label: { es: 'Patrocinador Fundador', en: 'Founding Sponsor' }, color: 'text-purple-400' },

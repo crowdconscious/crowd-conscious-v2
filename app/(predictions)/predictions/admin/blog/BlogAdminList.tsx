@@ -104,7 +104,7 @@ const COPY = {
 const CATEGORY_LABEL: Record<string, { es: string; en: string }> = {
   insight: { es: 'Insight', en: 'Insight' },
   pulse_analysis: { es: 'Análisis Pulse', en: 'Pulse analysis' },
-  market_story: { es: 'Historia de mercado', en: 'Market story' },
+  market_story: { es: 'Historia de Pulse', en: 'Pulse story' },
   world_cup: { es: 'Mundial', en: 'World Cup' },
   behind_data: { es: 'Detrás de los datos', en: 'Behind the data' },
 }

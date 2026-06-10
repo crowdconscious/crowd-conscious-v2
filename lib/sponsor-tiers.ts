@@ -4,18 +4,18 @@ export const STRIPE_FEE_RATE = 0.036
 export const SPONSOR_TIERS = {
   starter: {
     id: 'starter' as const,
-    name: 'Market Sponsor',
-    nameEs: 'Patrocinador de Mercado',
+    name: 'Pulse Sponsor',
+    nameEs: 'Patrocinador de Pulse',
     price: 3000,
     fundPercent: 0.2,
     platformPercent: 0.8,
     features: [
-      'Logo on one market card + detail page',
+      'Logo on one Pulse card + detail page',
       'Link to your website/social',
       '"Sponsored by" badge',
     ],
     featuresEs: [
-      'Logo en una tarjeta de mercado + página de detalle',
+      'Logo en una tarjeta de Pulse + página de detalle',
       'Enlace a tu sitio web/redes',
       'Insignia "Patrocinado por"',
     ],
@@ -28,14 +28,14 @@ export const SPONSOR_TIERS = {
     fundPercent: 0.2,
     platformPercent: 0.8,
     features: [
-      'Brand on ALL markets in a category',
-      'Featured placement on markets list',
+      'Brand on ALL Pulses in a category',
+      'Featured placement on the Pulses list',
       'Sponsor analytics dashboard',
       'Social media shoutout',
     ],
     featuresEs: [
-      'Marca en TODOS los mercados de una categoría',
-      'Ubicación destacada en lista de mercados',
+      'Marca en TODOS los Pulses de una categoría',
+      'Ubicación destacada en lista de Pulses',
       'Panel de analíticas de patrocinio',
       'Mención en redes sociales',
     ],
@@ -51,13 +51,13 @@ export const SPONSOR_TIERS = {
       'All Category Sponsor benefits',
       'Name a cause in the Conscious Fund',
       'Quarterly impact report',
-      'Custom branded market(s)',
+      'Custom branded Pulse(s)',
     ],
     featuresEs: [
       'Todos los beneficios de Categoría',
       'Nombra una causa en el Fondo Consciente',
       'Reporte trimestral de impacto',
-      'Mercado(s) personalizados con tu marca',
+      'Pulse(s) personalizados con tu marca',
     ],
   },
   anchor: {
@@ -69,13 +69,13 @@ export const SPONSOR_TIERS = {
     platformPercent: 0.8,
     features: [
       'All Impact Partner benefits',
-      'Co-create market strategy',
+      'Co-create Pulse strategy',
       'VIP platform analytics',
       'Speaking slot at events',
     ],
     featuresEs: [
       'Todos los beneficios de Socio de Impacto',
-      'Co-creación de estrategia de mercados',
+      'Co-creación de estrategia de Pulses',
       'Acceso VIP a analíticas',
       'Espacio en eventos de Crowd Conscious',
     ],

@@ -161,6 +161,7 @@ const DashboardIntelligenceColumnLazy = dynamic(
 
 export function PredictionsDashboardClient({ data, sponsorCta }: Props) {
   const locale = useLocale()
+  const isEs = locale !== 'en'
   const {
     userId,
     userName,
@@ -331,37 +332,43 @@ export function PredictionsDashboardClient({ data, sponsorCta }: Props) {
       {/* Section 1: Portfolio Summary */}
       <section>
         <h1 className="text-2xl font-bold text-white tracking-tight">
-          Welcome back, {userName}
+          {isEs ? `Hola de nuevo, ${userName}` : `Welcome back, ${userName}`}
         </h1>
         <p className="text-slate-400 mt-1 text-sm">
-          Your personalized intelligence hub
+          {isEs ? 'Tu centro de inteligencia personalizado' : 'Your personalized intelligence hub'}
         </p>
 
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="rounded-[14px] border border-white/[0.07] bg-white/[0.03] p-5">
-            <p className="text-slate-400 text-sm">Prediction Score</p>
+            <p className="text-slate-400 text-sm">{isEs ? 'XP Consciente' : 'Conscious XP'}</p>
             <p className="text-2xl font-bold text-white mt-1">
               {totalXp.toLocaleString()} XP
             </p>
-            <p className="text-slate-500 text-xs mt-0.5">XP total de la plataforma</p>
+            <p
+              className="text-slate-500 text-xs mt-0.5"
+              title={
+                isEs
+                  ? `Incluye ${userImpactXp.toLocaleString()} XP ganado por votar`
+                  : `Includes ${userImpactXp.toLocaleString()} XP earned from voting`
+              }
+            >
+              {isEs ? 'XP total de la plataforma' : 'Total platform XP'}
+            </p>
           </div>
           <div className="rounded-[14px] border border-white/[0.07] bg-white/[0.03] p-5">
-            <p className="text-slate-400 text-sm">Accuracy</p>
+            <p className="text-slate-400 text-sm">{isEs ? 'Coincidencia' : 'Majority match'}</p>
             <p className="text-2xl font-bold text-emerald-400 mt-1">
               {totalResolvedPredictions === 0 ? '—' : `${accuracyPct.toFixed(0)}%`}
             </p>
             <p className="text-slate-500 text-xs mt-0.5">
               {totalResolvedPredictions === 0
-                ? 'Aún sin Pulses cerrados'
-                : `${correctPredictions} de ${totalResolvedPredictions} coincidieron con la mayoría`}
+                ? isEs
+                  ? 'Aún sin Pulses cerrados'
+                  : 'No closed Pulses yet'
+                : isEs
+                  ? `${correctPredictions} de ${totalResolvedPredictions} coincidieron con la mayoría`
+                  : `${correctPredictions} of ${totalResolvedPredictions} matched the majority`}
             </p>
-          </div>
-          <div className="rounded-[14px] border border-white/[0.07] bg-white/[0.03] p-5">
-            <p className="text-slate-400 text-sm">Prediction XP</p>
-            <p className="text-2xl font-bold text-emerald-400 mt-1">
-              {userImpactXp.toLocaleString()} XP
-            </p>
-            <p className="text-slate-500 text-xs mt-0.5">Ganado por votar y participar</p>
           </div>
         </div>
       </section>
@@ -388,7 +395,9 @@ export function PredictionsDashboardClient({ data, sponsorCta }: Props) {
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <BarChart3 className="h-5 w-5 text-emerald-400" />
-                <h2 className="text-lg font-semibold text-white">Tus Pulses</h2>
+                <h2 className="text-lg font-semibold text-white">
+                  {isEs ? 'Tus Pulses' : 'Your Pulses'}
+                </h2>
                 <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-medium text-emerald-400">
                   {userPredictions.length}
                 </span>
@@ -483,10 +492,13 @@ export function PredictionsDashboardClient({ data, sponsorCta }: Props) {
           <div>
             <div className="mb-4 flex items-end justify-between gap-3">
               <div>
-                <h2 className="text-lg font-semibold text-white">Resumen de Pulses</h2>
+                <h2 className="text-lg font-semibold text-white">
+                  {isEs ? 'Resumen de Pulses' : 'Pulse overview'}
+                </h2>
                 <p className="mt-0.5 text-xs text-slate-500">
-                  Ordenados por votos. El punto verde = actividad en 24h · ámbar = sin votos en 3+
-                  días · rojo = 7+ días.
+                  {isEs
+                    ? 'Ordenados por votos. El punto verde = actividad en 24h · ámbar = sin votos en 3+ días · rojo = 7+ días.'
+                    : 'Sorted by votes. Green dot = activity in 24h · amber = no votes in 3+ days · red = 7+ days.'}
                 </p>
               </div>
               <Link

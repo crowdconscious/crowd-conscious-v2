@@ -68,21 +68,21 @@ export async function POST(request: NextRequest) {
       {
         type: 'FIRST_VOTE',
         name: 'Voice Heard',
-        description: 'Cast your first prediction',
+        description: 'Cast your first vote',
         icon: '🗳️',
         condition: (votesCast || 0) >= 1
       },
       {
         type: 'VOTE_10',
         name: 'Active Predictor',
-        description: 'Make 10 predictions',
+        description: 'Cast 10 votes',
         icon: '📊',
         condition: (votesCast || 0) >= 10
       },
       {
         type: 'VOTE_50',
         name: 'Democracy Champion',
-        description: 'Cast 50 predictions',
+        description: 'Cast 50 votes',
         icon: '🏛️',
         condition: (votesCast || 0) >= 50
       },
@@ -117,14 +117,14 @@ export async function POST(request: NextRequest) {
       {
         type: 'FIRST_CORRECT',
         name: 'Sharp Insight',
-        description: 'Get your first correct prediction',
+        description: 'Match the final result for the first time',
         icon: '🎯',
         condition: correctPredictions >= 1
       },
       {
         type: 'CORRECT_10',
         name: 'Accurate Mind',
-        description: 'Get 10 correct predictions',
+        description: 'Match the final result 10 times',
         icon: '✨',
         condition: correctPredictions >= 10
       },

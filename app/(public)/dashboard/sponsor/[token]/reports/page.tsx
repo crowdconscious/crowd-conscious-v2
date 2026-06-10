@@ -41,12 +41,12 @@ export default async function SponsorReportsPage({
         </Link>
         <h1 className="text-2xl font-bold text-white">Reportes</h1>
         <p className="mt-2 text-sm text-slate-400">
-          Descarga un PDF imprimible por mercado. Incluye resultados, confianza y votos en el tiempo.
+          Descarga un PDF imprimible por Pulse. Incluye resultados, confianza y votos en el tiempo.
         </p>
         <ul className="mt-8 space-y-3">
           {markets.length === 0 ? (
             <li className="rounded-xl border border-[#2d3748] bg-[#1a2029] p-6 text-slate-400">
-              Aún no hay mercados vinculados a tu cuenta.
+              Aún no hay Pulses vinculados a tu cuenta.
             </li>
           ) : (
             markets.map((m) => (

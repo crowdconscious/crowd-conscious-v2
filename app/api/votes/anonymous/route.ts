@@ -92,7 +92,7 @@ export async function POST(request: Request) {
       return NextResponse.json({
         success: false,
         already_voted: true,
-        message: 'Ya votaste en este mercado desde este dispositivo',
+        message: 'Ya votaste en este Pulse desde este dispositivo',
         outcomes: outcomes ?? [],
         engagement_count: m?.engagement_count ?? 0,
         total_votes: m?.total_votes ?? 0,

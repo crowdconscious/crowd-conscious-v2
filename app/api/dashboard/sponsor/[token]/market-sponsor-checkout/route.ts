@@ -77,7 +77,7 @@ export async function POST(
           price_data: {
             currency: 'mxn',
             product_data: {
-              name: `Patrocinar mercado — ${(market.title as string).slice(0, 80)}`,
+              name: `Patrocinar Pulse — ${(market.title as string).slice(0, 80)}`,
               description: `Market Sponsor. ~${Math.round(alloc.fundPercent * 100)}% estimado al Fondo Consciente.`,
               images: account.logo_url ? [account.logo_url] : undefined,
             },

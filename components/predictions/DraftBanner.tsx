@@ -50,14 +50,14 @@ export function DraftBanner({ marketId, canPublish = true }: Props) {
       )
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        setToast(data?.error || 'No se pudo publicar el mercado.')
+        setToast(data?.error || 'No se pudo publicar el Pulse.')
         setPublishing(false)
         return
       }
-      setToast('Mercado publicado.')
+      setToast('Pulse publicado.')
       router.refresh()
     } catch {
-      setToast('No se pudo publicar el mercado.')
+      setToast('No se pudo publicar el Pulse.')
       setPublishing(false)
     }
   }

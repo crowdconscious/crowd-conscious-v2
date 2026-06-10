@@ -467,7 +467,7 @@ export default function LocationFormClient({ action }: { action: string }) {
         onClick={() => void submit()}
         className="rounded-lg bg-emerald-600 px-6 py-3 font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
       >
-        {saving ? '…' : isNew && status === 'active' ? 'Crear y lanzar mercado' : 'Guardar'}
+        {saving ? '…' : isNew && status === 'active' ? 'Crear y lanzar votación' : 'Guardar'}
       </button>
 
       {shareCard && (

@@ -130,7 +130,7 @@ export default async function SponsorReportPage({
               <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
                 <div className="flex items-center gap-2 text-slate-400 text-sm mb-1">
                   <BarChart3 className="w-4 h-4" />
-                  Total predictions
+                  Total votes
                 </div>
                 <p className="text-2xl font-bold text-white">{totalPredictions.toLocaleString()}</p>
                 <p className="text-slate-500 text-xs mt-1">on your sponsored market(s)</p>

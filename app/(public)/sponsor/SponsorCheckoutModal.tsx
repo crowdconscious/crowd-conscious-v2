@@ -204,7 +204,7 @@ export function SponsorCheckoutModal({
 
         {marketTitle && (
           <p className="mb-4 text-sm text-slate-400">
-            {es ? 'Mercado:' : 'Market:'} {marketTitle}
+            Pulse: {marketTitle}
           </p>
         )}
 
@@ -378,7 +378,7 @@ export function SponsorCheckoutModal({
           {marketTitle && (
             <div className="rounded-lg border border-slate-600 bg-slate-800/50 p-3">
               <p className="mb-2 text-xs text-slate-500">
-                {es ? 'Vista previa: tarjeta de mercado' : 'Preview: Your sponsored market card'}
+                {es ? 'Vista previa: tarjeta de Pulse' : 'Preview: Your sponsored Pulse card'}
               </p>
               <div className="rounded-lg bg-[#0f1419] p-3 text-sm">
                 <p className="line-clamp-2 font-medium text-white">{marketTitle}</p>

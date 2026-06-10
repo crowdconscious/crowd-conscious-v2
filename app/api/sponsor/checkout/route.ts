@@ -104,7 +104,7 @@ async function resolveCouponPrice(params: {
 }
 
 const TIER_LABELS: Record<SponsorTierId, string> = {
-  starter: 'Market Sponsor',
+  starter: 'Pulse Sponsor',
   growth: 'Category Sponsor',
   champion: 'Impact Partner',
   anchor: 'Founding Patron',

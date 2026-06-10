@@ -12,17 +12,17 @@ export const sponsorPageCopy = {
     en: 'Put Your Brand in Front of the World Cup',
   },
   heroSubtitle: {
-    es: 'Patrocina un mercado de predicciones. Conecta con millones de fans. Financia impacto social real.',
-    en: 'Sponsor a prediction market. Engage millions of fans. Fund real social impact.',
+    es: 'Patrocina un Pulse. Conecta con millones de fans. Financia impacto social real.',
+    en: 'Sponsor a Pulse. Engage millions of fans. Fund real social impact.',
   },
-  browseCta: { es: 'Ver mercados disponibles', en: 'Browse Available Markets' },
+  browseCta: { es: 'Ver Pulses disponibles', en: 'Browse Available Pulses' },
   contactCta: { es: 'Contáctanos', en: 'Contact Us' },
-  cardMockupCaption: { es: 'Tu marca en una tarjeta de mercado', en: 'Your brand on a market card' },
+  cardMockupCaption: { es: 'Tu marca en una tarjeta de Pulse', en: 'Your brand on a Pulse card' },
   sponsoredBy: { es: 'Patrocinado por', en: 'Sponsored by' },
-  whyTitle: { es: '¿Por qué mercados de predicción?', en: 'Why Prediction Markets?' },
+  whyTitle: { es: '¿Por qué Conscious Pulse?', en: 'Why Conscious Pulse?' },
   whyIntro: {
-    es: 'Los mercados de predicción han demostrado ser sorprendentemente precisos para anticipar eventos del mundo real.',
-    en: 'Prediction markets have proven remarkably accurate at forecasting real-world events.',
+    es: 'Las consultas ponderadas por confianza han demostrado ser sorprendentemente precisas para anticipar eventos del mundo real.',
+    en: 'Confidence-weighted consultations have proven remarkably accurate at forecasting real-world events.',
   },
   stat94: { es: 'precisión en pronósticos de eventos', en: 'accurate at forecasting events' },
   stat94Note: { es: 'Polymarket, investigación académica', en: 'Polymarket, academic research' },
@@ -32,15 +32,15 @@ export const sponsorPageCopy = {
     en: 'Mexico City hosts the opening match — the global spotlight will be here',
   },
   howTitle: { es: 'Cómo funciona el patrocinio', en: 'How Sponsorship Works' },
-  step1Title: { es: 'Elige un mercado', en: 'Choose a Market' },
+  step1Title: { es: 'Elige un Pulse', en: 'Choose a Pulse' },
   step1Desc: {
-    es: 'Elige entre nuestros mercados activos — partidos del Mundial, metas de sustentabilidad, política pública, eventos de la ciudad. O propón un mercado personalizado.',
-    en: 'Pick from our active prediction markets — World Cup matches, sustainability goals, policy outcomes, city events. Or propose a custom market that aligns with your brand.',
+    es: 'Elige entre nuestros Pulses activos — partidos del Mundial, metas de sustentabilidad, política pública, eventos de la ciudad. O propón un Pulse personalizado.',
+    en: 'Pick from our active Pulses — World Cup matches, sustainability goals, policy outcomes, city events. Or propose a custom Pulse that aligns with your brand.',
   },
   step2Title: { es: 'Tu marca al frente', en: 'Your Brand, Front & Center' },
   step2Desc: {
-    es: 'Tu logo y nombre aparecen en la tarjeta del mercado, página de detalle y resultados. Enlace a tu sitio web o redes. Cada usuario que predice ve tu marca.',
-    en: 'Your logo and name appear on the market card, detail page, and results. Link to your website, social media, or campaign. Every user who predicts sees your brand.',
+    es: 'Tu logo y nombre aparecen en la tarjeta del Pulse, página de detalle y resultados. Enlace a tu sitio web o redes. Cada usuario que vota ve tu marca.',
+    en: 'Your logo and name appear on the Pulse card, detail page, and results. Link to your website, social media, or campaign. Every user who votes sees your brand.',
   },
   step3Title: { es: 'Financia impacto real', en: 'Fund Real Impact' },
   step3Desc: {
@@ -80,30 +80,30 @@ export const sponsorPageCopy = {
   },
   starterFeatures: {
     es: [
-      'Logo en una tarjeta de mercado + página de detalle',
-      'Tu marca llega a cada usuario que ve o comparte este mercado',
+      'Logo en una tarjeta de Pulse + página de detalle',
+      'Tu marca llega a cada usuario que ve o comparte este Pulse',
       'Enlace a tu sitio web / redes sociales',
       'Insignia "Patrocinado por [Marca]"',
     ],
     en: [
-      'Logo on one market card + detail page',
-      'Your brand reaches every user who views or shares this market',
+      'Logo on one Pulse card + detail page',
+      'Your brand reaches every user who views or shares this Pulse',
       'Link to your website/social',
       '"Sponsored by [Brand]" badge',
     ],
   },
   growthFeatures: {
     es: [
-      'Tu marca aparece en TODOS los mercados de una categoría',
-      'Alcance promedio: 5–15 mercados × cientos de compartidos cada uno',
-      'Ubicación destacada en la lista de mercados',
+      'Tu marca aparece en TODOS los Pulses de una categoría',
+      'Alcance promedio: 5–15 Pulses × cientos de compartidos cada uno',
+      'Ubicación destacada en la lista de Pulses',
       'Panel de analíticas de patrocinio',
       'Mención en redes sociales',
     ],
     en: [
-      'Your brand appears on ALL markets in an entire category',
-      'Average reach: 5-15 markets × hundreds of shares each',
-      'Featured placement on markets list',
+      'Your brand appears on ALL Pulses in an entire category',
+      'Average reach: 5-15 Pulses × hundreds of shares each',
+      'Featured placement on the Pulses list',
       'Sponsor analytics dashboard',
       'Social media shoutout',
     ],
@@ -113,25 +113,25 @@ export const sponsorPageCopy = {
       'Todos los beneficios de Patrocinador de Categoría',
       'Nombra una causa en el Fondo Consciente con tu marca',
       'Reporte trimestral de impacto con métricas de tu marca',
-      'Mercado(s) personalizado(s) con tu marca + destacado en la página principal',
+      'Pulse(s) personalizado(s) con tu marca + destacado en la página principal',
     ],
     en: [
       'All Category Sponsor benefits',
       'Name a cause in the Conscious Fund after your brand',
       "Quarterly impact report with your brand's contribution metrics",
-      'Custom branded market(s) + featured on landing page',
+      'Custom branded Pulse(s) + featured on landing page',
     ],
   },
   anchorFeatures: {
     es: [
       'Todos los beneficios de Socio de Impacto',
-      'Co-creación de estrategia de mercados para eventos',
+      'Co-creación de estrategia de Pulses para eventos',
       'Acceso VIP a analíticas de la plataforma',
       'Participación como speaker en eventos de Crowd Conscious',
     ],
     en: [
       'All Impact Partner benefits',
-      'Co-create market strategy for events',
+      'Co-create Pulse strategy for events',
       'VIP access to platform analytics',
       'Speaking slot at Crowd Conscious events',
     ],
@@ -216,37 +216,37 @@ export const sponsorPageCopy = {
     en: 'Need something bigger? Enterprise plans from $50,000 MXN/month with white-label and full API.',
   },
   tierNames: {
-    starter: { es: 'Patrocinador de Mercado (Starter)', en: 'Market Sponsor (Starter)' },
+    starter: { es: 'Patrocinador de Pulse (Starter)', en: 'Pulse Sponsor (Starter)' },
     growth: { es: 'Patrocinador de Categoría', en: 'Category Sponsor' },
     champion: { es: 'Socio de Impacto', en: 'Impact Partner' },
     anchor: { es: 'Patrón Fundador', en: 'Founding Patron' },
   },
   approxUsd: { es: 'aprox.', en: '~' },
-  availableTitle: { es: 'Mercados disponibles para patrocinar', en: 'Available Markets to Sponsor' },
+  availableTitle: { es: 'Pulses disponibles para patrocinar', en: 'Available Pulses to Sponsor' },
   availableDesc: {
-    es: 'Mercados activos sin patrocinador. Elige uno y paga con Stripe.',
-    en: 'Active markets without a sponsor. Choose one and sponsor with Stripe checkout.',
+    es: 'Pulses activos sin patrocinador. Elige uno y paga con Stripe.',
+    en: 'Active Pulses without a sponsor. Choose one and sponsor with Stripe checkout.',
   },
   filterLabel: { es: 'Filtrar por categoría:', en: 'Filter by category:' },
   filterAll: { es: 'Todos', en: 'All' },
   hot: { es: '🔥 Popular', en: '🔥 Hot' },
-  sponsorThis: { es: 'Patrocinar este mercado →', en: 'Sponsor this market →' },
-  predictions: { es: 'predicciones', en: 'predictions' },
+  sponsorThis: { es: 'Patrocinar este Pulse →', en: 'Sponsor this Pulse →' },
+  predictions: { es: 'votos', en: 'votes' },
   emptyUnsponsored: {
-    es: 'Todos los mercados tienen patrocinador. Contáctanos para proponer un mercado personalizado.',
-    en: 'All markets are currently sponsored. Contact us to propose a custom market.',
+    es: 'Todos los Pulses tienen patrocinador. Contáctanos para proponer un Pulse personalizado.',
+    en: 'All Pulses are currently sponsored. Contact us to propose a custom Pulse.',
   },
   currentSponsorsTitle: { es: 'Patrocinadores actuales', en: 'Current Sponsors' },
   emptySponsored: {
-    es: 'Sé la primera marca en patrocinar un mercado en Crowd Conscious. Los primeros patrocinadores obtienen reconocimiento de socio fundador.',
-    en: 'Be the first brand to sponsor a market on Crowd Conscious. Early sponsors get founding partner recognition.',
+    es: 'Sé la primera marca en patrocinar un Pulse en Crowd Conscious. Los primeros patrocinadores obtienen reconocimiento de socio fundador.',
+    en: 'Be the first brand to sponsor a Pulse on Crowd Conscious. Early sponsors get founding partner recognition.',
   },
   visit: { es: 'Visitar', en: 'Visit' },
   faqTitle: { es: 'Preguntas frecuentes', en: 'Frequently Asked Questions' },
   faq1q: { es: '¿Cómo aparece mi marca?', en: 'How does my brand appear?' },
   faq1a: {
-    es: 'Tu logo y nombre aparecen en la tarjeta del mercado, página de detalle, imágenes para compartir y leaderboard. Cada vez que alguien comparte un voto, tu marca viaja con ella.',
-    en: 'Your logo and name appear on the market card, detail page, share images, and leaderboard. Every time someone shares a vote, your brand travels with it.',
+    es: 'Tu logo y nombre aparecen en la tarjeta del Pulse, página de detalle, imágenes para compartir y leaderboard. Cada vez que alguien comparte un voto, tu marca viaja con ella.',
+    en: 'Your logo and name appear on the Pulse card, detail page, share images, and leaderboard. Every time someone shares a vote, your brand travels with it.',
   },
   faq2q: {
     es: '¿Qué pasa con la aportación del 20% al Fondo Consciente?',
@@ -256,10 +256,10 @@ export const sponsorPageCopy = {
     es: 'Los usuarios votan qué causas comunitarias reciben fondos cada mes. Tu marca recibe crédito por el impacto. Te enviamos un reporte trimestral.',
     en: 'Users vote on which community causes receive grants each month. Your brand gets credited for the impact. We send you a quarterly report.',
   },
-  faq3q: { es: '¿Puedo elegir qué mercado patrocinar?', en: 'Can I choose which market to sponsor?' },
+  faq3q: { es: '¿Puedo elegir qué Pulse patrocinar?', en: 'Can I choose which Pulse to sponsor?' },
   faq3a: {
-    es: '¡Sí! Explora los mercados disponibles arriba o contáctanos para crear un mercado personalizado alineado con tu marca.',
-    en: 'Yes! Browse available markets above, or contact us to create a custom market aligned with your brand.',
+    es: '¡Sí! Explora los Pulses disponibles arriba o contáctanos para crear un Pulse personalizado alineado con tu marca.',
+    en: 'Yes! Browse available Pulses above, or contact us to create a custom Pulse aligned with your brand.',
   },
   faq4q: { es: '¿Esto es apuestas?', en: 'Is this gambling?' },
   faq4a: {
@@ -276,8 +276,8 @@ export const sponsorPageCopy = {
     en: 'Not a business? You can still make an impact.',
   },
   influencerBody: {
-    es: 'Las personas pueden patrocinar un mercado desde $500 MXN. Tu nombre (o red social) aparece en el mercado. Ideal para creadores de contenido.',
-    en: 'Individual supporters can sponsor a single market starting at $500 MXN. Your name (or social handle) appears on the market. Perfect for influencers, content creators, and anyone who wants to put their reputation behind a prediction.',
+    es: 'Las personas pueden patrocinar un Pulse desde $500 MXN. Tu nombre (o red social) aparece en el Pulse. Ideal para creadores de contenido.',
+    en: 'Individual supporters can sponsor a single Pulse starting at $500 MXN. Your name (or social handle) appears on the Pulse. Perfect for influencers, content creators, and anyone who wants to put their name behind a question that matters.',
   },
   influencerCta: { es: 'Patrocinar como persona', en: 'Sponsor as Individual' },
   wcTitle: { es: 'Lanzamiento con la Copa Mundial FIFA 2026', en: 'Launching with the 2026 FIFA World Cup' },
@@ -331,7 +331,7 @@ export function sponsorMailtoQuery(marketTitle: string | undefined, tier: string
       : 'Sponsorship Inquiry - Crowd Conscious'
   const body =
     lang === 'es'
-      ? `Hola, me interesa patrocinar un mercado en Crowd Conscious.\n\nMercado: ${marketTitle || '(no especificado)'}\nNivel: ${tier || '(no especificado)'}\nEmpresa/Nombre: \n`
-      : `Hi, I'm interested in sponsoring a market on Crowd Conscious.\n\nMarket: ${marketTitle || '(not specified)'}\nTier: ${tier || '(not specified)'}\nCompany/Name: \n`
+      ? `Hola, me interesa patrocinar un Pulse en Crowd Conscious.\n\nPulse: ${marketTitle || '(no especificado)'}\nNivel: ${tier || '(no especificado)'}\nEmpresa/Nombre: \n`
+      : `Hi, I'm interested in sponsoring a Pulse on Crowd Conscious.\n\nPulse: ${marketTitle || '(not specified)'}\nTier: ${tier || '(not specified)'}\nCompany/Name: \n`
   return `mailto:comunidad@crowdconscious.app?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
 }

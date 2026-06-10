@@ -22,7 +22,7 @@ export default function SponsorShareClient({ markets }: { markets: Item[] }) {
   if (markets.length === 0) {
     return (
       <p className="mt-8 rounded-xl border border-[#2d3748] bg-[#1a2029] p-6 text-slate-400">
-        Cuando tengas mercados vinculados, aparecerán aquí los enlaces y QR.
+        Cuando tengas Pulses vinculados, aparecerán aquí los enlaces y QR.
       </p>
     )
   }

@@ -18,7 +18,7 @@ export default function TermsPage() {
         },
         {
           title: "2. Descripción del Servicio",
-          content: "Crowd Conscious es una plataforma de predicción gratuita (free-to-play) que canaliza la inteligencia colectiva hacia el impacto social. La Plataforma permite a los usuarios: (a) Participar en mercados de predicción sobre temas como Copa Mundial, economía, política, sostenibilidad y más, sin arriesgar dinero; (b) Ganar XP y logros por sus predicciones; (c) Votar democráticamente sobre qué causas comunitarias reciben fondos del Fondo Consciente; (d) Sugerir ideas de mercados en el Buzón Consciente. Las marcas pueden patrocinar mercados; el 20% del neto estimado de cada patrocinio se destina al Fondo Consciente para causas elegidas por la comunidad."
+          content: "Crowd Conscious es una plataforma de consulta pública gratuita (free-to-play) que canaliza la inteligencia colectiva hacia el impacto social. La Plataforma permite a los usuarios: (a) Participar en Pulses (consultas ponderadas por confianza) sobre temas como Copa Mundial, economía, política, sostenibilidad y más, sin arriesgar dinero; (b) Ganar XP y logros por sus votos; (c) Votar democráticamente sobre qué causas comunitarias reciben fondos del Fondo Consciente; (d) Sugerir ideas de Pulses en el Buzón Consciente. Las marcas pueden patrocinar Pulses; el 20% del neto estimado de cada patrocinio se destina al Fondo Consciente para causas elegidas por la comunidad."
         },
         {
           title: "3. Registro y Cuentas de Usuario",
@@ -26,11 +26,11 @@ export default function TermsPage() {
         },
         {
           title: "4. Tipos de Usuario",
-          content: "La Plataforma admite varios tipos de usuarios: (a) Predictores: individuos que participan en mercados de predicción, ganan XP y votan en causas; (b) Marcas/Patrocinadores: empresas que patrocinan mercados y reciben reportes de impacto; (c) Usuarios Corporativos: empleados invitados que acceden a módulos de aprendizaje y certificaciones; (d) Administradores: personal autorizado que gestiona mercados, agentes y configuraciones de la Plataforma."
+          content: "La Plataforma admite varios tipos de usuarios: (a) Participantes: individuos que votan en Pulses, ganan XP y votan en causas; (b) Marcas/Patrocinadores: empresas que patrocinan Pulses y reciben reportes de impacto; (c) Usuarios Corporativos: empleados invitados que acceden a módulos de aprendizaje y certificaciones; (d) Administradores: personal autorizado que gestiona Pulses, agentes y configuraciones de la Plataforma."
         },
         {
-          title: "5. Predicciones Free-to-Play y XP",
-          content: "Las predicciones en Crowd Conscious son gratuitas. No se requiere dinero real para participar. Cada voto genera puntos de experiencia (XP) que contribuyen a su puntuación y clasificación en el leaderboard. El XP y los logros son elementos gamificados de la Plataforma y no tienen valor monetario ni pueden canjearse por dinero."
+          title: "5. Participación Free-to-Play y XP",
+          content: "La participación en Crowd Conscious es gratuita. No se requiere dinero real para participar. Cada voto genera puntos de experiencia (XP) que contribuyen a su puntuación y clasificación en el leaderboard. El XP y los logros son elementos gamificados de la Plataforma y no tienen valor monetario ni pueden canjearse por dinero."
         },
         {
           title: "6. Fondo Consciente y Patrocinios",
@@ -38,7 +38,7 @@ export default function TermsPage() {
         },
         {
           title: "7. Pagos y Transacciones",
-          content: "Los pagos de patrocinio se procesan a través de Stripe. La Plataforma no almacena información de tarjetas de crédito. Los reembolsos están sujetos a las políticas de Stripe y la legislación aplicable. Las predicciones de usuarios no implican pagos; son gratuitas."
+          content: "Los pagos de patrocinio se procesan a través de Stripe. La Plataforma no almacena información de tarjetas de crédito. Los reembolsos están sujetos a las políticas de Stripe y la legislación aplicable. Los votos de usuarios no implican pagos; son gratuitos."
         },
         {
           title: "8. Contenido del Usuario",
@@ -46,7 +46,7 @@ export default function TermsPage() {
         },
         {
           title: "9. Prohibiciones",
-          content: "Está prohibido: (a) Usar la Plataforma para actividades ilegales; (b) Publicar contenido falso o engañoso; (c) Intentar comprometer la seguridad de la Plataforma; (d) Usar la Plataforma para spam o actividades comerciales no autorizadas; (e) Manipular mercados de predicción o votaciones de causas de forma fraudulenta."
+          content: "Está prohibido: (a) Usar la Plataforma para actividades ilegales; (b) Publicar contenido falso o engañoso; (c) Intentar comprometer la seguridad de la Plataforma; (d) Usar la Plataforma para spam o actividades comerciales no autorizadas; (e) Manipular Pulses o votaciones de causas de forma fraudulenta."
         },
         {
           title: "10. Privacidad y Protección de Datos",
@@ -76,7 +76,7 @@ export default function TermsPage() {
         },
         {
           title: "2. Service Description",
-          content: "Crowd Conscious is a free-to-play prediction platform that channels collective intelligence toward social impact. The Platform enables users to: (a) Participate in prediction markets on topics such as World Cup, economy, policy, sustainability, and more, without risking money; (b) Earn XP and achievements for their predictions; (c) Vote democratically on which community causes receive grants from the Conscious Fund; (d) Suggest market ideas in the Conscious Inbox. Brands may sponsor markets; 20% of estimated net proceeds from each sponsorship goes to the Conscious Fund for causes chosen by the community."
+          content: "Crowd Conscious is a free-to-play public consultation platform that channels collective intelligence toward social impact. The Platform enables users to: (a) Participate in Pulses (confidence-weighted consultations) on topics such as World Cup, economy, policy, sustainability, and more, without risking money; (b) Earn XP and achievements for their votes; (c) Vote democratically on which community causes receive grants from the Conscious Fund; (d) Suggest Pulse ideas in the Conscious Inbox. Brands may sponsor Pulses; 20% of estimated net proceeds from each sponsorship goes to the Conscious Fund for causes chosen by the community."
         },
         {
           title: "3. User Registration and Accounts",
@@ -84,11 +84,11 @@ export default function TermsPage() {
         },
         {
           title: "4. User Types",
-          content: "The Platform supports several user types: (a) Predictors: individuals who participate in prediction markets, earn XP, and vote on causes; (b) Brands/Sponsors: companies that sponsor markets and receive impact reports; (c) Corporate Users: invited employees who access learning modules and certifications; (d) Administrators: authorized personnel who manage markets, agents, and Platform settings."
+          content: "The Platform supports several user types: (a) Participants: individuals who vote in Pulses, earn XP, and vote on causes; (b) Brands/Sponsors: companies that sponsor Pulses and receive impact reports; (c) Corporate Users: invited employees who access learning modules and certifications; (d) Administrators: authorized personnel who manage Pulses, agents, and Platform settings."
         },
         {
-          title: "5. Free-to-Play Predictions and XP",
-          content: "Predictions on Crowd Conscious are free. No real money is required to participate. Each vote generates experience points (XP) that contribute to your score and leaderboard ranking. XP and achievements are gamification elements of the Platform and have no monetary value and cannot be redeemed for money."
+          title: "5. Free-to-Play Participation and XP",
+          content: "Participation on Crowd Conscious is free. No real money is required to participate. Each vote generates experience points (XP) that contribute to your score and leaderboard ranking. XP and achievements are gamification elements of the Platform and have no monetary value and cannot be redeemed for money."
         },
         {
           title: "6. Conscious Fund and Sponsorships",
@@ -96,7 +96,7 @@ export default function TermsPage() {
         },
         {
           title: "7. Payments and Transactions",
-          content: "Sponsorship payments are processed through Stripe. The Platform does not store credit card information. Refunds are subject to Stripe's policies and applicable legislation. User predictions do not involve payments; they are free."
+          content: "Sponsorship payments are processed through Stripe. The Platform does not store credit card information. Refunds are subject to Stripe's policies and applicable legislation. User votes do not involve payments; they are free."
         },
         {
           title: "8. User Content",
@@ -104,7 +104,7 @@ export default function TermsPage() {
         },
         {
           title: "9. Prohibitions",
-          content: "It is prohibited to: (a) Use the Platform for illegal activities; (b) Post false or misleading content; (c) Attempt to compromise the Platform's security; (d) Use the Platform for spam or unauthorized commercial activities; (e) Fraudulently manipulate prediction markets or cause voting."
+          content: "It is prohibited to: (a) Use the Platform for illegal activities; (b) Post false or misleading content; (c) Attempt to compromise the Platform's security; (d) Use the Platform for spam or unauthorized commercial activities; (e) Fraudulently manipulate Pulses or cause voting."
         },
         {
           title: "10. Privacy and Data Protection",

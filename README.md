@@ -1,7 +1,7 @@
 # Crowd Conscious
 
-Confidence-weighted public consultations ("**Conscious Pulse**") + sponsored
-prediction markets. Based in Mexico City. Every sponsorship funds real causes
+Confidence-weighted public consultations ("**Conscious Pulse**") + live-event
+voting. Based in Mexico City. Every sponsorship funds real causes
 through the Conscious Fund; every vote feeds collective intelligence about
 Mexico and — for 2026 — the FIFA World Cup hosted at Estadio Azteca.
 

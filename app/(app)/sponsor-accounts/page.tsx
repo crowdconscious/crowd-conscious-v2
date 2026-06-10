@@ -26,7 +26,7 @@ type SponsorRow = {
 }
 
 const TIER_LABELS: Record<string, { es: string; en: string; color: string }> = {
-  starter: { es: 'Patrocinador de Mercado', en: 'Market Sponsor', color: 'text-slate-300' },
+  starter: { es: 'Patrocinador de Pulse', en: 'Pulse Sponsor', color: 'text-slate-300' },
   growth: { es: 'Patrocinador de Categoría', en: 'Category Sponsor', color: 'text-emerald-400' },
   champion: { es: 'Socio de Impacto', en: 'Impact Partner', color: 'text-amber-400' },
   anchor: { es: 'Patrocinador Fundador', en: 'Founding Sponsor', color: 'text-purple-400' },
@@ -68,7 +68,7 @@ const COPY = {
     empty_cta: 'See Conscious Pulse plans',
     active_since: 'Active since',
     plan_label: 'Plan',
-    pulse_usage: 'Pulse markets',
+    pulse_usage: 'Active Pulses',
     pulse_of: 'of',
     pulse_used: 'used',
     unlimited: 'Unlimited',

@@ -154,32 +154,32 @@ export const CelebrationModal = memo(function CelebrationModal({
     ? shareSponsorName
       ? pulse
         ? `I shared my opinion on "${shareTitle}" — Sponsored by ${shareSponsorName} on Crowd Conscious! 🎯`
-        : `I just predicted on "${shareTitle}" — Sponsored by ${shareSponsorName} on Crowd Conscious! 🎯`
+        : `I just voted on "${shareTitle}" — Sponsored by ${shareSponsorName} on Crowd Conscious! 🎯`
       : pulse
         ? `I shared my opinion on "${shareTitle}" on Crowd Conscious! 🎯`
-        : `I just predicted on "${shareTitle}" on Crowd Conscious! 🎯`
+        : `I just voted on "${shareTitle}" on Crowd Conscious! 🎯`
     : pulse
       ? 'I shared my opinion on Crowd Conscious! 🎯'
-      : 'I just made a prediction on Crowd Conscious! 🎯'
+      : 'I just made my voice count on Crowd Conscious! 🎯'
   const shareTextX = shareTitle
     ? shareSponsorName
       ? pulse
         ? `${shareTitle} — Sponsored by ${shareSponsorName}\n\nShare your opinion:`
-        : `${shareTitle} — Sponsored by ${shareSponsorName}\n\nMake your prediction:`
+        : `${shareTitle} — Sponsored by ${shareSponsorName}\n\nCast your vote:`
       : pulse
         ? `${shareTitle}\n\nShare your opinion:`
-        : `${shareTitle}\n\nMake your prediction:`
+        : `${shareTitle}\n\nCast your vote:`
     : pulse
       ? 'Share your opinion on Crowd Conscious'
-      : 'Make your prediction on Crowd Conscious'
+      : 'Cast your vote on Crowd Conscious'
   const shareTextWhatsApp = shareTitle
     ? shareSponsorName
       ? pulse
         ? `${shareTitle} — Sponsored by ${shareSponsorName} on Crowd Conscious. Share your opinion: ${shareUrl}`
-        : `${shareTitle} — Sponsored by ${shareSponsorName} on Crowd Conscious. Make your prediction: ${shareUrl}`
+        : `${shareTitle} — Sponsored by ${shareSponsorName} on Crowd Conscious. Cast your vote: ${shareUrl}`
       : pulse
         ? `${shareTitle} — Share your opinion: ${shareUrl}`
-        : `${shareTitle} — Make your prediction: ${shareUrl}`
+        : `${shareTitle} — Cast your vote: ${shareUrl}`
     : shareUrl
   const shareCardUrl = shareCardMarketId && typeof window !== 'undefined'
     ? `${window.location.origin}/api/og/market/${shareCardMarketId}`
@@ -228,7 +228,7 @@ export const CelebrationModal = memo(function CelebrationModal({
     try {
       await shareNative(
         shareCardMarketId,
-        shareTitle || (pulse ? 'My opinion on Crowd Conscious' : 'My prediction on Crowd Conscious'),
+        shareTitle || (pulse ? 'My opinion on Crowd Conscious' : 'My vote on Crowd Conscious'),
         'standard',
         undefined,
         shareSponsorName
@@ -418,7 +418,7 @@ export const CelebrationModal = memo(function CelebrationModal({
                       )}
                       <img
                         src={`/api/og/market/${shareCardMarketId}`}
-                        alt={pulse ? 'Your opinion card' : 'Your prediction card'}
+                        alt={pulse ? 'Your opinion card' : 'Your vote card'}
                         className={`w-full rounded-xl border border-slate-700 ${cardLoaded ? 'block' : 'hidden'}`}
                         onLoad={() => setCardLoaded(true)}
                         onError={() => setCardError(true)}
@@ -426,7 +426,7 @@ export const CelebrationModal = memo(function CelebrationModal({
                     </div>
                   )}
                   <p className="text-sm font-medium text-slate-600 mb-2 text-center">
-                    {pulse ? 'Share your opinion' : 'Share your prediction'}
+                    {pulse ? 'Share your opinion' : 'Share your vote'}
                   </p>
                   <div className="flex flex-wrap justify-center gap-2">
                     <a

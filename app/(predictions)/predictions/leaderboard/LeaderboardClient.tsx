@@ -162,7 +162,7 @@ export function LeaderboardClient({
             <div>
               <h1 className="text-2xl font-bold text-white">Leaderboard</h1>
               <p className="text-slate-400 mt-0.5">
-                Top predictors by XP. Make predictions to climb the ranks.
+                Top voices by XP. Vote in Pulses to climb the ranks.
               </p>
             </div>
           </div>
@@ -219,9 +219,9 @@ export function LeaderboardClient({
               </div>
               <div className="flex items-center gap-4 text-sm">
                 <span className="text-emerald-400 font-bold">{currentUserRank.total_xp} XP</span>
-                <span className="text-slate-400">{currentUserRank.prediction_count} predictions</span>
+                <span className="text-slate-400">{currentUserRank.prediction_count} votes</span>
                 <span className="text-slate-400">
-                  <AccuracyBadge pct={currentUserRank.accuracy_pct} /> accuracy
+                  <AccuracyBadge pct={currentUserRank.accuracy_pct} /> majority match
                 </span>
               </div>
             </div>
@@ -237,7 +237,7 @@ export function LeaderboardClient({
             <div className="p-12 text-center text-slate-400">
               <Trophy className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p>No one on the leaderboard yet</p>
-              <p className="text-sm mt-2">Make your first prediction to get started</p>
+              <p className="text-sm mt-2">Cast your first vote to get started</p>
               <Link
                 href="/pulse"
                 className="inline-block mt-4 text-emerald-400 hover:text-emerald-300 font-medium"
@@ -310,9 +310,9 @@ export function LeaderboardClient({
                           <span className="font-bold text-emerald-400">
                             <XPCounter value={entry.total_xp} /> XP
                           </span>
-                          <span className="text-slate-500 hidden sm:inline">{entry.prediction_count} predictions</span>
+                          <span className="text-slate-500 hidden sm:inline">{entry.prediction_count} votes</span>
                           <span className="text-slate-500 hidden sm:inline">
-                            <AccuracyBadge pct={entry.accuracy_pct} /> accuracy
+                            <AccuracyBadge pct={entry.accuracy_pct} /> majority match
                           </span>
                         </div>
                       </div>
@@ -320,7 +320,7 @@ export function LeaderboardClient({
 
                     {/* Secondary: tier, recent, streak, share - desktop inline, mobile row */}
                     <div className="flex flex-wrap items-center gap-2 sm:gap-3 pl-[52px] sm:pl-0">
-                      <span className="sm:hidden text-slate-500 text-sm">{entry.prediction_count} predictions · <AccuracyBadge pct={entry.accuracy_pct} /></span>
+                      <span className="sm:hidden text-slate-500 text-sm">{entry.prediction_count} votes · <AccuracyBadge pct={entry.accuracy_pct} /></span>
                       <div
                         className={`shrink-0 px-3 py-1 rounded-lg text-xs font-medium ${tierConfig.color} text-white ${tierConfig.glow ?? ''}`}
                       >

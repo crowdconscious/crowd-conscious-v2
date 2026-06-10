@@ -77,7 +77,7 @@ export function SponsorPageClient({
     marketId?: string
     marketTitle?: string
     category?: string
-  }>({ open: false, tier: 'starter', tierLabel: 'Market Sponsor' })
+  }>({ open: false, tier: 'starter', tierLabel: 'Pulse Sponsor' })
 
   const openModal = (
     tier: SponsorTierId,

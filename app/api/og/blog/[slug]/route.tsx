@@ -30,7 +30,7 @@ type OutcomeRow = {
 const CATEGORY_LABEL: Record<string, { en: string; es: string }> = {
   insight: { en: 'Insight', es: 'Insight' },
   pulse_analysis: { en: 'Pulse Analysis', es: 'Análisis Pulse' },
-  market_story: { en: 'Market Story', es: 'Historia de mercado' },
+  market_story: { en: 'Pulse Story', es: 'Historia de Pulse' },
   world_cup: { en: 'World Cup', es: 'Mundial 2026' },
   behind_data: { en: 'Behind the Data', es: 'Detrás de los datos' },
 }

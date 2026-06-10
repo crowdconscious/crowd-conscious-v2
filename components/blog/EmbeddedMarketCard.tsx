@@ -34,7 +34,7 @@ export function EmbeddedMarketCard({
         .eq('id', marketId)
         .maybeSingle()
       if (e1 || !m) {
-        if (!cancelled) setErr(es ? 'Mercado no disponible' : 'Market unavailable')
+        if (!cancelled) setErr(es ? 'Pulse no disponible' : 'Pulse unavailable')
         setLoading(false)
         return
       }
@@ -77,7 +77,7 @@ export function EmbeddedMarketCard({
   if (err || !title) {
     return (
       <div className="rounded-xl border border-white/10 bg-[#1a2029] p-4 text-sm text-slate-500">
-        {err ?? (es ? 'Mercado no encontrado' : 'Market not found')}
+        {err ?? (es ? 'Pulse no encontrado' : 'Pulse not found')}
       </div>
     )
   }
@@ -85,7 +85,7 @@ export function EmbeddedMarketCard({
   return (
     <div className="my-6 rounded-xl border border-emerald-500/20 bg-[#1a2029] p-5 shadow-lg shadow-black/20">
       <p className="text-xs font-bold uppercase tracking-wider text-emerald-400">
-        {es ? 'Mercado relacionado' : 'Related market'}
+        {es ? 'Pulse relacionado' : 'Related Pulse'}
       </p>
       <h3 className="mt-2 text-lg font-bold text-white">{title}</h3>
       <ul className="mt-4 space-y-3">

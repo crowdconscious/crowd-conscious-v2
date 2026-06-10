@@ -234,7 +234,7 @@ export default function AdminLocationsClient() {
                   href={`/predictions/markets/${l.current_market_id}`}
                   className="rounded-lg border border-cc-border px-3 py-1.5 text-sm text-cc-text-secondary hover:bg-cc-card"
                 >
-                  Ver mercado
+                  Ver votación
                 </Link>
               )}
               {l.status === 'active' && (

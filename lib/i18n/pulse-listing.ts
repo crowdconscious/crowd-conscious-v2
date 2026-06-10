@@ -20,8 +20,8 @@ export function getPulseListingCopy(locale: PulseListingLocale) {
       ? 'Consultas activas impulsadas por Crowd Conscious. Resultados en vivo con analíticas de confianza.'
       : 'Active consultations powered by Crowd Conscious. Live results with confidence analytics.',
     adminView: isEs
-      ? 'Vista administrador: todos los mercados Pulse'
-      : 'Admin view: all Pulse markets',
+      ? 'Vista administrador: todos los Pulses'
+      : 'Admin view: all Pulses',
     sponsorView: (company: string) =>
       isEs
         ? `Pulse para ${company}: tus consultas activas`
@@ -39,9 +39,9 @@ export function getPulseListingCopy(locale: PulseListingLocale) {
     closes: isEs ? 'Cierra' : 'Closes',
     emptyTitle: isEs ? 'Aún no hay consultas Pulse activas.' : 'No active Pulse consultations yet.',
     emptySubtitle: isEs
-      ? 'Vuelve pronto o explora los mercados de predicción.'
-      : 'Check back soon or explore prediction markets.',
-    browseMarkets: isEs ? 'Ver mercados' : 'Browse markets',
+      ? 'Vuelve pronto o explora más consultas en la plataforma.'
+      : 'Check back soon or explore more consultations on the platform.',
+    browseMarkets: isEs ? 'Explorar la plataforma' : 'Explore the platform',
     ctaQuestion: isEs
       ? '¿Quieres medir el sentimiento de tu comunidad?'
       : 'Want to measure your community’s sentiment?',

@@ -125,8 +125,8 @@ export function NotificationsPageClient() {
           <Bell className="w-12 h-12 text-slate-600 mx-auto mb-4" />
           <p className="text-slate-400">
             {locale === 'es'
-              ? 'Aún no tienes notificaciones. Cuando votes, recibas resúmenes por email o haya novedades en tus mercados, aparecerán aquí.'
-              : 'No notifications yet. When you vote, get email digests, or markets update, they will show up here.'}
+              ? 'Aún no tienes notificaciones. Cuando votes, recibas resúmenes por email o haya novedades en tus Pulses, aparecerán aquí.'
+              : 'No notifications yet. When you vote, get email digests, or your Pulses update, they will show up here.'}
           </p>
         </div>
       ) : (

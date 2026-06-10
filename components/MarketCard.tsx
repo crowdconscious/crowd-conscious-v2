@@ -567,7 +567,7 @@ export function MarketCard({
             {moreCount > 0 && (
               <p className="text-xs text-emerald-400/90">
                 +{moreCount}{' '}
-                {loc === 'es' ? 'más en el mercado' : 'more on market page'}
+                {loc === 'es' ? 'más en el Pulse' : 'more on the Pulse page'}
               </p>
             )}
           </div>

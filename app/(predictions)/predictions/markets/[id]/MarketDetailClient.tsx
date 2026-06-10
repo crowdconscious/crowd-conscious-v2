@@ -424,7 +424,7 @@ export function MarketDetailClient({
         href={isAuthenticated ? '/predictions' : '/pulse'}
         className="inline-flex items-center gap-1 text-sm text-cc-text-secondary transition-colors hover:text-cc-text-primary"
       >
-        ← {locale === 'es' ? 'Volver a mercados' : 'Back to markets'}
+        ← {locale === 'es' ? 'Volver a Pulses' : 'Back to Pulses'}
       </Link>
 
       {voteQuietMessage && (
@@ -985,7 +985,7 @@ export function MarketDetailClient({
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-semibold text-white flex items-center gap-2">
                 <BarChart3 className="w-4 h-4" />
-                {locale === 'es' ? 'Información del mercado' : 'Market Info'}
+                {locale === 'es' ? 'Información del Pulse' : 'Pulse Info'}
               </h3>
               <ShareButton marketId={market.id} title={getMarketText(market, 'title', locale)} sponsorName={(market as { sponsor_name?: string }).sponsor_name} compact />
             </div>

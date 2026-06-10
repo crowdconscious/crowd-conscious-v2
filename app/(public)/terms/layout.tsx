@@ -4,7 +4,7 @@ import { SITE_URL } from '@/lib/seo/site'
 export const metadata: Metadata = {
   title: 'Términos y Condiciones',
   description:
-    'Términos y condiciones de uso de Crowd Conscious — plataforma de predicciones gratuita con impacto social.',
+    'Términos y condiciones de uso de Crowd Conscious — plataforma de consultas gratuita con impacto social.',
   robots: { index: true, follow: true },
   alternates: {
     canonical: `${SITE_URL}/terms`,

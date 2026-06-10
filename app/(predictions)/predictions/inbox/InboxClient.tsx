@@ -179,7 +179,7 @@ export function InboxClient({ initialItems, isAdmin }: Props) {
   const filterTabs = useMemo(
     () => [
       { id: 'all', label: language === 'es' ? 'Todos' : 'All' },
-      { id: 'market_idea', label: language === 'es' ? 'Ideas de mercado' : 'Market Ideas' },
+      { id: 'market_idea', label: language === 'es' ? 'Ideas de Pulse' : 'Pulse Ideas' },
       { id: 'causes', label: language === 'es' ? 'Causas' : 'Causes' },
       { id: 'general', label: language === 'es' ? 'General' : 'General' },
       {
@@ -192,7 +192,7 @@ export function InboxClient({ initialItems, isAdmin }: Props) {
 
   const typeOptions = useMemo(
     () => [
-      { value: 'market_idea', label: language === 'es' ? 'Idea de mercado' : 'Market Idea' },
+      { value: 'market_idea', label: language === 'es' ? 'Idea de Pulse' : 'Pulse Idea' },
       { value: 'cause_proposal', label: language === 'es' ? 'Causa / ONG' : 'Cause/NGO' },
       { value: 'ngo_suggestion', label: language === 'es' ? 'Sugerencia ONG' : 'NGO suggestion' },
       { value: 'general', label: language === 'es' ? 'Sugerencia general' : 'General Suggestion' },
@@ -770,7 +770,7 @@ export function InboxClient({ initialItems, isAdmin }: Props) {
       {items.length === 0 ? (
         <div className="text-center py-16 rounded-xl border border-cc-border bg-cc-card/80">
           <span className="text-4xl">💡</span>
-          <p className="text-lg text-gray-300 mt-3">¿Tienes una idea para un mercado?</p>
+          <p className="text-lg text-gray-300 mt-3">¿Tienes una idea para un Pulse?</p>
           <p className="text-cc-text-secondary mt-1">¡Compártela con la comunidad!</p>
           <button
             onClick={() => setModalOpen(true)}

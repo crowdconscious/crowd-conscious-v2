@@ -45,7 +45,7 @@ export default async function SponsorSharePage({
         </Link>
         <h1 className="text-2xl font-bold text-white">Compartir</h1>
         <p className="mt-2 text-sm text-slate-400">
-          Enlaces públicos, WhatsApp y códigos QR para cada mercado.
+          Enlaces públicos, WhatsApp y códigos QR para cada Pulse.
         </p>
         <SponsorShareClient markets={items} />
       </div>

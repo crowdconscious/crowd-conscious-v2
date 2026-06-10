@@ -15,8 +15,8 @@ export function BlogSoftSignupCta({ slug }: { slug: string }) {
       </p>
       <p className="mt-1 mb-4 text-sm text-gray-400">
         {es
-          ? 'Recibe análisis semanales y vota en mercados activos.'
-          : 'Get weekly analysis and vote on active markets.'}
+          ? 'Recibe análisis semanales y vota en Pulses activos.'
+          : 'Get weekly analysis and vote on active Pulses.'}
       </p>
       <div className="mx-auto flex max-w-sm flex-col justify-center gap-3 sm:flex-row">
         <GoogleLoginButton redirectTo={redirectTo} />

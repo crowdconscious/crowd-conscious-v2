@@ -91,7 +91,7 @@ export default function AboutContent({
           <p className="text-slate-400 text-lg leading-relaxed">
             {locale === 'es' ? (
               <>
-                Los mercados de predicción han demostrado ser sorprendentemente precisos para anticipar
+                La inteligencia colectiva ha demostrado ser sorprendentemente precisa para anticipar
                 eventos reales. Pero plataformas como Polymarket están pensadas para la especulación.
                 Nos preguntamos:{' '}
                 <span className="text-white font-medium">
@@ -100,7 +100,7 @@ export default function AboutContent({
               </>
             ) : (
               <>
-                Prediction markets have proven remarkably accurate at forecasting real-world events. But
+                Collective intelligence has proven remarkably accurate at forecasting real-world events. But
                 platforms like Polymarket are built for speculation. We asked:{' '}
                 <span className="text-white font-medium">
                   what if we channeled that same engagement toward social impact?
@@ -132,8 +132,8 @@ export default function AboutContent({
               </h3>
               <p className="text-slate-400 text-sm">
                 {locale === 'es'
-                  ? 'Vota en mercados — Mundial, economía, política, sostenibilidad. Sin dinero real.'
-                  : 'Users vote on markets — World Cup, economy, policy, sustainability. No money required.'}
+                  ? 'Vota en Pulses — Mundial, economía, política, sostenibilidad. Sin dinero real.'
+                  : 'Users vote on Pulses — World Cup, economy, policy, sustainability. No money required.'}
               </p>
             </div>
             <div className="border border-cc-border bg-cc-card/90 rounded-xl p-6 hover:border-emerald-500/30 transition-colors">
@@ -154,12 +154,12 @@ export default function AboutContent({
                 <Building2 className="w-7 h-7 text-emerald-400" />
               </div>
               <h3 className="text-lg font-semibold text-white mb-2">
-                {locale === 'es' ? 'Las marcas patrocinan mercados' : 'Brands sponsor markets'}
+                {locale === 'es' ? 'Las marcas patrocinan Pulses' : 'Brands sponsor Pulses'}
               </h3>
               <p className="text-slate-400 text-sm">
                 {locale === 'es'
-                  ? 'Los patrocinadores financian mercados — sus logos aparecen en las tarjetas. Un porcentaje va al Fondo Consciente.'
-                  : 'Sponsors fund markets — their logos appear on market cards. A percentage goes to the Conscious Fund.'}
+                  ? 'Los patrocinadores financian Pulses — sus logos aparecen en las tarjetas. Un porcentaje va al Fondo Consciente.'
+                  : 'Sponsors fund Pulses — their logos appear on Pulse cards. A percentage goes to the Conscious Fund.'}
               </p>
             </div>
             <div className="border border-cc-border bg-cc-card/90 rounded-xl p-6 hover:border-emerald-500/30 transition-colors md:col-span-2 lg:col-span-1">
@@ -171,15 +171,15 @@ export default function AboutContent({
               </h3>
               <p className="text-slate-400 text-sm">
                 {locale === 'es'
-                  ? 'Los usuarios votan qué causas comunitarias reciben apoyos. Predicción democrática y donación democrática.'
-                  : 'Users vote on which community causes receive grants. Democratic prediction meets democratic giving.'}
+                  ? 'Los usuarios votan qué causas comunitarias reciben apoyos. Voz democrática y donación democrática.'
+                  : 'Users vote on which community causes receive grants. Democratic voice meets democratic giving.'}
               </p>
             </div>
           </div>
           <p className="text-center text-emerald-400/90 font-medium text-lg italic">
             {locale === 'es'
-              ? '«Predicción democrática y donación democrática.»'
-              : '“Democratic prediction meets democratic giving.”'}
+              ? '«Voz democrática y donación democrática.»'
+              : '“Democratic voice meets democratic giving.”'}
           </p>
         </div>
       </section>
@@ -197,8 +197,8 @@ export default function AboutContent({
           </h2>
           <p className="text-slate-400 text-lg leading-relaxed text-center mb-12 max-w-2xl mx-auto">
             {locale === 'es'
-              ? 'Las marcas patrocinan mercados → el 20% de cada patrocinio va directamente a causas comunitarias — hasta 10× el promedio de la industria en causa marketing → los usuarios votan qué causas reciben apoyos → impacto comunitario. Un ciclo virtuoso.'
-              : 'Brands sponsor markets → 20% of every sponsorship goes directly to community causes — up to 10× the industry average for cause marketing → Users vote on which causes receive grants → Community impact. It&apos;s a virtuous cycle.'}
+              ? 'Las marcas patrocinan Pulses → el 20% de cada patrocinio va directamente a causas comunitarias — hasta 10× el promedio de la industria en causa marketing → los usuarios votan qué causas reciben apoyos → impacto comunitario. Un ciclo virtuoso.'
+              : 'Brands sponsor Pulses → 20% of every sponsorship goes directly to community causes — up to 10× the industry average for cause marketing → Users vote on which causes receive grants → Community impact. It&apos;s a virtuous cycle.'}
           </p>
           <div className="mb-8 rounded-2xl border border-cc-border bg-cc-card/80 p-6 md:p-8">
             <FundThermometer

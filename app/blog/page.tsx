@@ -7,11 +7,11 @@ import NewsletterForm from '@/components/NewsletterForm'
 export const metadata: Metadata = {
   title: 'Blog',
   description:
-    'Insights de inteligencia colectiva, predicciones y opinión pública en CDMX — Crowd Conscious.',
+    'Insights de inteligencia colectiva, Pulses y opinión pública en CDMX — Crowd Conscious.',
   openGraph: {
     title: 'Blog | Crowd Conscious',
     description:
-      'Insights de inteligencia colectiva, predicciones y opinión pública en CDMX.',
+      'Insights de inteligencia colectiva, Pulses y opinión pública en CDMX.',
   },
 }
 

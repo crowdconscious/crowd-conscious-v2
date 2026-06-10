@@ -32,10 +32,10 @@ const contentTypeLabels: Record<string, string> = {
   daily_digest: 'Daily Digest',
   news_summary: 'News Brief',
   social_post: 'Social Post',
-  market_suggestion: 'Market Suggestion',
+  market_suggestion: 'Pulse Suggestion',
   inbox_digest: 'Inbox Digest',
   weekly_digest: 'Weekly Digest',
-  market_insight: 'Market Insight',
+  market_insight: 'Pulse Insight',
   sponsor_report: 'Sponsor Report',
 }
 
@@ -130,11 +130,13 @@ export function DashboardIntelligenceColumn({
       <div>
         <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-white">
           <TrendingUp className="h-5 w-5 text-amber-400" />
-          Biggest Movers
+          {isEs ? 'Mayores cambios' : 'Biggest Movers'}
         </h2>
         <div className="space-y-2">
           {biggestMovers.length === 0 ? (
-            <p className="text-sm text-slate-500">No significant moves in last 24h</p>
+            <p className="text-sm text-slate-500">
+              {isEs ? 'Sin cambios significativos en las últimas 24h' : 'No significant moves in last 24h'}
+            </p>
           ) : (
             biggestMovers.map((m) => (
               <div
@@ -196,7 +198,8 @@ export function DashboardIntelligenceColumn({
                     {getMarketText(m, 'title', locale)}
                   </p>
                   <p className="mt-0.5 text-xs text-slate-500">
-                    {Math.round(toDisplayPercent(Number(m.current_probability)))}% probability
+                    {Math.round(toDisplayPercent(Number(m.current_probability)))}%{' '}
+                    {isEs ? 'probabilidad' : 'probability'}
                   </p>
                 </Link>
                 <div onClick={(e) => e.stopPropagation()}>
@@ -211,12 +214,12 @@ export function DashboardIntelligenceColumn({
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-[14px] border border-white/[0.07] bg-white/[0.03] px-5 py-4">
         <div className="flex items-center gap-6">
           <div>
-            <p className="text-xs text-slate-400">Fund Balance</p>
+            <p className="text-xs text-slate-400">{isEs ? 'Fondo Consciente' : 'Fund Balance'}</p>
             <p className="text-lg font-bold text-emerald-400">{formatCurrency(fundBalance)}</p>
           </div>
           <div className="h-8 w-px bg-slate-700" />
           <div>
-            <p className="text-xs text-slate-400">Your impact</p>
+            <p className="text-xs text-slate-400">{isEs ? 'Tu impacto' : 'Your impact'}</p>
             <p className="text-lg font-bold text-white">{userImpactXp} XP</p>
           </div>
         </div>
@@ -225,7 +228,7 @@ export function DashboardIntelligenceColumn({
           className="inline-flex items-center gap-2 font-medium text-emerald-400 hover:text-emerald-300"
         >
           <Vote className="h-4 w-4" />
-          Vote for causes <ArrowRight className="h-4 w-4" />
+          {isEs ? 'Vota por causas' : 'Vote for causes'} <ArrowRight className="h-4 w-4" />
         </Link>
       </div>
     </div>

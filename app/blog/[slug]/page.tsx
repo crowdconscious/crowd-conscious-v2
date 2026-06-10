@@ -39,7 +39,7 @@ type Props = { params: Promise<{ slug: string }> }
 const CATEGORY_LABEL: Record<string, { en: string; es: string }> = {
   insight: { en: 'Insight', es: 'Insight' },
   pulse_analysis: { en: 'Pulse analysis', es: 'Análisis Pulse' },
-  market_story: { en: 'Market story', es: 'Historia de mercado' },
+  market_story: { en: 'Pulse story', es: 'Historia de Pulse' },
   world_cup: { en: 'World Cup', es: 'Mundial' },
   behind_data: { en: 'Behind the data', es: 'Detrás de los datos' },
 }

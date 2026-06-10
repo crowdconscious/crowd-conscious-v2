@@ -14,15 +14,15 @@ export default function CookiesPage() {
       sections: [
         {
           title: "1. ¿Qué son las Cookies?",
-          content: "Las cookies son pequeños archivos de texto que se almacenan en su dispositivo cuando visita Crowd Conscious. Estas cookies nos ayudan a proporcionar, proteger y mejorar nuestros servicios de predicción, autenticación y experiencia de usuario."
+          content: "Las cookies son pequeños archivos de texto que se almacenan en su dispositivo cuando visita Crowd Conscious. Estas cookies nos ayudan a proporcionar, proteger y mejorar nuestros servicios de consulta y votación, autenticación y experiencia de usuario."
         },
         {
           title: "2. Tipos de Cookies que Utilizamos",
-          content: "Utilizamos diferentes tipos de cookies: (a) Cookies esenciales: necesarias para el funcionamiento de la plataforma (autenticación, sesión, predicciones); (b) Cookies de rendimiento: nos ayudan a entender cómo interactúa con la plataforma; (c) Cookies de funcionalidad: recuerdan sus preferencias (idioma español/inglés, tema); (d) Cookies de seguridad: protegen contra actividades fraudulentas y limitación de tasa."
+          content: "Utilizamos diferentes tipos de cookies: (a) Cookies esenciales: necesarias para el funcionamiento de la plataforma (autenticación, sesión, votos en Pulses); (b) Cookies de rendimiento: nos ayudan a entender cómo interactúa con la plataforma; (c) Cookies de funcionalidad: recuerdan sus preferencias (idioma español/inglés, tema); (d) Cookies de seguridad: protegen contra actividades fraudulentas y limitación de tasa."
         },
         {
           title: "3. Cookies Específicas de Crowd Conscious",
-          content: "Las cookies que utilizamos incluyen: (a) Cookies de autenticación de Supabase para mantener su sesión activa y permitir predicciones, votos y acceso al Fondo Consciente; (b) Cookies de preferencias de idioma (español/inglés); (c) Cookies de consentimiento (cookie-consent, analytics-cookies, marketing-cookies) para recordar sus preferencias del banner; (d) Cookies de análisis para mejorar la experiencia en mercados de predicción y la plataforma."
+          content: "Las cookies que utilizamos incluyen: (a) Cookies de autenticación de Supabase para mantener su sesión activa y permitir votos en Pulses, votos en causas y acceso al Fondo Consciente; (b) Cookies de preferencias de idioma (español/inglés); (c) Cookies de consentimiento (cookie-consent, analytics-cookies, marketing-cookies) para recordar sus preferencias del banner; (d) Cookies de análisis para mejorar la experiencia en Pulses y la plataforma."
         },
         {
           title: "4. Cookies de Terceros",
@@ -30,11 +30,11 @@ export default function CookiesPage() {
         },
         {
           title: "5. Gestión de Cookies",
-          content: "Puede gestionar sus preferencias de cookies: (a) A través del banner de consentimiento al visitar la plataforma (Aceptar Todas / Solo Esenciales); (b) A través de la configuración de su navegador; (c) Contactándonos en comunidad@crowdconscious.app para solicitudes específicas. Tenga en cuenta que rechazar cookies esenciales puede afectar su capacidad para iniciar sesión y participar en predicciones."
+          content: "Puede gestionar sus preferencias de cookies: (a) A través del banner de consentimiento al visitar la plataforma (Aceptar Todas / Solo Esenciales); (b) A través de la configuración de su navegador; (c) Contactándonos en comunidad@crowdconscious.app para solicitudes específicas. Tenga en cuenta que rechazar cookies esenciales puede afectar su capacidad para iniciar sesión y votar en Pulses."
         },
         {
           title: "6. Cookies Esenciales",
-          content: "Algunas cookies son esenciales y no pueden desactivarse sin afectar la funcionalidad: (a) Cookies de autenticación de Supabase (sesión de usuario); (b) Cookies de seguridad y prevención de fraude; (c) Cookies necesarias para guardar predicciones, votos en causas y acceso al leaderboard."
+          content: "Algunas cookies son esenciales y no pueden desactivarse sin afectar la funcionalidad: (a) Cookies de autenticación de Supabase (sesión de usuario); (b) Cookies de seguridad y prevención de fraude; (c) Cookies necesarias para guardar sus votos en Pulses, votos en causas y acceso al leaderboard."
         },
         {
           title: "7. Retención",
@@ -60,15 +60,15 @@ export default function CookiesPage() {
       sections: [
         {
           title: "1. What are Cookies?",
-          content: "Cookies are small text files stored on your device when you visit Crowd Conscious. These cookies help us provide, protect, and improve our prediction services, authentication, and user experience."
+          content: "Cookies are small text files stored on your device when you visit Crowd Conscious. These cookies help us provide, protect, and improve our consultation and voting services, authentication, and user experience."
         },
         {
           title: "2. Types of Cookies We Use",
-          content: "We use different types of cookies: (a) Essential cookies: necessary for platform functionality (authentication, session, predictions); (b) Performance cookies: help us understand how you interact with the platform; (c) Functionality cookies: remember your preferences (Spanish/English language, theme); (d) Security cookies: protect against fraudulent activities and rate limiting."
+          content: "We use different types of cookies: (a) Essential cookies: necessary for platform functionality (authentication, session, Pulse votes); (b) Performance cookies: help us understand how you interact with the platform; (c) Functionality cookies: remember your preferences (Spanish/English language, theme); (d) Security cookies: protect against fraudulent activities and rate limiting."
         },
         {
           title: "3. Crowd Conscious-Specific Cookies",
-          content: "Cookies we use include: (a) Supabase authentication cookies to maintain your active session and enable predictions, votes, and Conscious Fund access; (b) Language preference cookies (Spanish/English); (c) Consent cookies (cookie-consent, analytics-cookies, marketing-cookies) to remember your banner preferences; (d) Analytics cookies to improve the prediction market and platform experience."
+          content: "Cookies we use include: (a) Supabase authentication cookies to maintain your active session and enable Pulse votes, cause votes, and Conscious Fund access; (b) Language preference cookies (Spanish/English); (c) Consent cookies (cookie-consent, analytics-cookies, marketing-cookies) to remember your banner preferences; (d) Analytics cookies to improve the Pulse and platform experience."
         },
         {
           title: "4. Third-Party Cookies",
@@ -76,11 +76,11 @@ export default function CookiesPage() {
         },
         {
           title: "5. Cookie Management",
-          content: "You can manage your cookie preferences: (a) Through the consent banner when visiting the platform (Accept All / Essential Only); (b) Through your browser settings; (c) By contacting us at comunidad@crowdconscious.app for specific requests. Note that rejecting essential cookies may affect your ability to log in and participate in predictions."
+          content: "You can manage your cookie preferences: (a) Through the consent banner when visiting the platform (Accept All / Essential Only); (b) Through your browser settings; (c) By contacting us at comunidad@crowdconscious.app for specific requests. Note that rejecting essential cookies may affect your ability to log in and vote in Pulses."
         },
         {
           title: "6. Essential Cookies",
-          content: "Some cookies are essential and cannot be disabled without affecting functionality: (a) Supabase authentication cookies (user session); (b) Security and fraud prevention cookies; (c) Cookies required to save predictions, cause votes, and leaderboard access."
+          content: "Some cookies are essential and cannot be disabled without affecting functionality: (a) Supabase authentication cookies (user session); (b) Security and fraud prevention cookies; (c) Cookies required to save your Pulse votes, cause votes, and leaderboard access."
         },
         {
           title: "7. Retention",

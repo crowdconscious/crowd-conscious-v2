@@ -24,8 +24,12 @@ URL conventions:
   ground; performance, SEO, and OG metadata matter most here.
 - `/para-marcas` — B2B landing. Performance + conversion matter.
 - `/predictions/...` — authed shell (dashboard, fund, leaderboard, market
-  detail for non-Pulse rows, admin tooling). Power-user terminology
-  (e.g. "Predictions" header) is acceptable here.
+  detail for non-Pulse rows, admin tooling). URLs keep the historical
+  `/predictions` prefix, but **visible copy uses Pulse language**: user-facing
+  "prediction(s)/predicción(es)/mercado(s)/market(s)" wording is allowed ONLY
+  in live-events contexts (live match outcomes, brand launches, auction bids —
+  `app/live`, live auctions). Everywhere else, including this shell, use
+  "Pulse"/"Pulses", "vota", "consulta", "tu voz".
 - `/dashboard/sponsor/[token]` — sponsor private link.
 - `/blog`, `/about`, `/locations`, `/live` — public, self-explanatory.
 

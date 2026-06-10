@@ -78,7 +78,7 @@ export function SponsorMarketCard({ market, token, appOrigin }: Props) {
             market.isPulse ? 'bg-amber-500/10 text-amber-400' : 'bg-emerald-500/10 text-emerald-400'
           }`}
         >
-          {market.isPulse ? 'Pulse' : 'Mercado'}
+          {market.isPulse ? 'Pulse' : 'Consulta'}
         </span>
         <h3 className="mt-2 text-lg font-semibold text-white">{title}</h3>
         <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-slate-400">

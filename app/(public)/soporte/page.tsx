@@ -47,7 +47,7 @@ export default function SoportePage() {
     },
     {
       q: '¿Cómo voto en un Pulse?',
-      a: 'Tab Pulses → selecciona un Pulse → elige tu predicción y nivel de confianza (1-10) → toca "Votar". Ganas XP cada vez que votas.',
+      a: 'Tab Pulses → selecciona un Pulse → elige tu respuesta y nivel de confianza (1-10) → toca "Votar". Ganas XP cada vez que votas.',
     },
     {
       q: '¿Puedo cambiar mi voto?',
@@ -115,7 +115,7 @@ export default function SoportePage() {
     },
     {
       q: 'How do I vote on a Pulse?',
-      a: 'Pulses tab → pick a Pulse → choose your prediction and confidence level (1–10) → tap "Vote". You earn XP every time you vote.',
+      a: 'Pulses tab → pick a Pulse → choose your answer and confidence level (1–10) → tap "Vote". You earn XP every time you vote.',
     },
     {
       q: 'Can I change my vote?',

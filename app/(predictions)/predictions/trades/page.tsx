@@ -86,13 +86,13 @@ export default function PredictionsTradesPage() {
         </div>
         <div className="rounded-xl border border-[#2d3748] bg-[#1a2029] p-4">
           <div className="flex items-center gap-2 text-slate-400 text-sm mb-1">
-            Accuracy
+            Majority match
           </div>
           <p className="text-xl font-bold text-emerald-400">
             {resolvedItems.length === 0 ? '—' : `${accuracy.toFixed(0)}%`}
           </p>
           {resolvedItems.length === 0 && (
-            <p className="text-slate-500 text-xs mt-0.5">No resolved markets yet</p>
+            <p className="text-slate-500 text-xs mt-0.5">No closed Pulses yet</p>
           )}
         </div>
         <div className="rounded-xl border border-[#2d3748] bg-[#1a2029] p-4">
@@ -125,7 +125,7 @@ export default function PredictionsTradesPage() {
               href="/pulse"
               className="mt-2 inline-block text-emerald-400 hover:text-emerald-300"
             >
-              Browse Pulses and make your first prediction
+              Browse Pulses and cast your first vote
             </Link>
           </div>
         ) : (

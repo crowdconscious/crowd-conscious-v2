@@ -68,7 +68,7 @@ export default function MySponsorships({ userId }: { userId: string }) {
         </p>
         <Link href="/predictions">
           <button className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors">
-            Explore Predictions
+            Explore Pulses
           </button>
         </Link>
       </div>
@@ -231,7 +231,7 @@ export default function MySponsorships({ userId }: { userId: string }) {
                 <div className="mt-3">
                   <Link href="/predictions">
                     <button className="text-sm text-teal-600 hover:text-teal-700 font-medium">
-                      Explore Predictions →
+                      Explore Pulses →
                     </button>
                   </Link>
                 </div>

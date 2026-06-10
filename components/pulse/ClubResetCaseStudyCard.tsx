@@ -71,8 +71,8 @@ export function ClubResetCaseStudyCard({
         </p>
         <p className="mt-2 text-sm text-slate-400">
           {es
-            ? 'El mercado más activo de toda la plataforma. Esto es lo que sucede cuando un Lugar Consciente abre su comunidad a votar con confianza real.'
-            : 'The most active market on the entire platform. This is what happens when a Conscious Location lets its community vote with real confidence.'}
+            ? 'El Pulse más activo de toda la plataforma. Esto es lo que sucede cuando un Lugar Consciente abre su comunidad a votar con confianza real.'
+            : 'The most active Pulse on the entire platform. This is what happens when a Conscious Location lets its community vote with real confidence.'}
         </p>
 
         <div className="mt-6 flex flex-wrap gap-3">
@@ -86,7 +86,7 @@ export function ClubResetCaseStudyCard({
             href={marketHref}
             className="rounded-xl border border-slate-600 px-5 py-2.5 text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
           >
-            {es ? 'Ver el mercado →' : 'See the market →'}
+            {es ? 'Ver el Pulse →' : 'See the Pulse →'}
           </Link>
         </div>
       </div>

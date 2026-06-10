@@ -143,7 +143,7 @@ export default function ContentCreatorRunner({
             type="text"
             value={marketId}
             onChange={(e) => setMarketId(e.target.value)}
-            placeholder="UUID del mercado/Pulse"
+            placeholder="UUID del Pulse"
             disabled={busy}
             className="mt-2 w-full px-3 py-2 rounded-md bg-slate-900 border border-slate-700 text-white text-xs font-mono placeholder:text-slate-600 focus:border-emerald-500/50 focus:outline-none disabled:opacity-60"
           />
