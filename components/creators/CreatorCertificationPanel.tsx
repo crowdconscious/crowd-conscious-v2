@@ -6,6 +6,7 @@ import { Award, CheckCircle, Clock } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createClient } from '@/lib/supabase-client'
 import { ValueBadgeRow } from '@/components/locations/ValueBadge'
+import VoteForMeShareRow from '@/components/creators/VoteForMeShareRow'
 import { getCreatorCopy, type CreatorLocale } from '@/lib/i18n/creator'
 import {
   creatorTier,
@@ -82,10 +83,13 @@ export default function CreatorCertificationPanel({
   cert,
   outcomes,
   locale,
+  ownerShare = null,
 }: {
   cert: CreatorCertificationSummary
   outcomes: OutcomeRow[]
   locale: CreatorLocale
+  /** Set when the viewer owns this profile — unlocks the "vota por mí" share row pre-reveal. */
+  ownerShare?: { profileId: string; handle: string } | null
 }) {
   const t = getCreatorCopy(locale)
   const [confidence, setConfidence] = useState(7)
@@ -247,6 +251,17 @@ export default function CreatorCertificationPanel({
       {why ? <p className="mt-4 text-slate-200 leading-relaxed">{why}</p> : null}
       {cert.values.length > 0 ? (
         <ValueBadgeRow values={cert.values} locale={locale} size="sm" />
+      ) : null}
+
+      {ownerShare && !scoreRevealed ? (
+        <div className="mt-6">
+          <VoteForMeShareRow
+            profileId={ownerShare.profileId}
+            handle={ownerShare.handle}
+            locale={locale}
+            surface="creator_profile"
+          />
+        </div>
       ) : null}
 
       {cert.current_market_id && yesId && noId && (

@@ -108,7 +108,7 @@ export default function CreatorTierPricing({ locale, items }: Props) {
   }
 
   return (
-    <section className="rounded-xl border border-[#2d3748] bg-[#1a2029] p-5">
+    <section id="tier-pricing" className="scroll-mt-24 rounded-xl border border-[#2d3748] bg-[#1a2029] p-5">
       <h2 className="flex items-center gap-2 text-sm font-semibold text-white">
         <Tag className="h-4 w-4" /> {t.tierSettingsTitle}
       </h2>
@@ -119,9 +119,16 @@ export default function CreatorTierPricing({ locale, items }: Props) {
           const row = rows[item.tier]
           const meta = tierMeta[item.tier]
           return (
-            <div key={item.tier} className="rounded-lg border border-[#2d3748] bg-[#0f1419]/60 p-4">
+            <div
+              key={item.tier}
+              className={`rounded-lg border p-4 transition-opacity ${
+                row.enabled
+                  ? 'border-[#2d3748] bg-[#0f1419]/60'
+                  : 'border-dashed border-[#2d3748]/80 bg-[#0f1419]/30'
+              }`}
+            >
               <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
+                <div className={`min-w-0 ${row.enabled ? '' : 'opacity-60'}`}>
                   <p className="font-medium text-white">{meta.label}</p>
                   <p className="mt-0.5 text-xs text-slate-400">{meta.desc}</p>
                 </div>
@@ -136,7 +143,7 @@ export default function CreatorTierPricing({ locale, items }: Props) {
                 </label>
               </div>
 
-              <div className="mt-3">
+              <div className={`mt-3 ${row.enabled ? '' : 'opacity-60'}`}>
                 <label className="mb-1 block text-xs font-medium text-slate-400">
                   {t.tierSettingsPrice}
                 </label>
@@ -155,6 +162,11 @@ export default function CreatorTierPricing({ locale, items }: Props) {
                   {t.tierSettingsDefault(fmtMoney(item.default, item.currency))}
                 </p>
               </div>
+              {!row.enabled && (
+                <p className="mt-2 text-xs font-medium text-emerald-400/80">
+                  {t.tierSettingsActivateHint}
+                </p>
+              )}
             </div>
           )
         })}

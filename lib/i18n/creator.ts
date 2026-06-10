@@ -307,6 +307,79 @@ export function getCreatorCopy(locale: CreatorLocale) {
         : `Is ${name} a Conscious Creator? Vote here: ${url}`,
     creatorShare: es ? 'Compartir' : 'Share',
     creatorShareCopied: es ? '¡Copiado!' : 'Copied!',
+
+    // --- Share copy matrix (docs/SHARE-CARDS-STRATEGY-2026-06-09.md §6) -----
+    voteForMeShareLine: (url: string) =>
+      es
+        ? `¿Soy un creador consciente? Vota y ayúdame a verificarme: ${url}`
+        : `Am I a conscious creator? Vote and help me get verified: ${url}`,
+    verifiedShareLine: (url: string) =>
+      es
+        ? `Ya soy Creador Consciente verificado. La comunidad votó: ${url}`
+        : `I'm now a verified Conscious Creator. The community voted: ${url}`,
+
+    // --- "Vota por mí" owner share (pre-reveal) ------------------------------
+    voteForMeTitle: es ? 'Pide votos a tu comunidad' : 'Ask your community for votes',
+    voteForMeBody: es
+      ? 'Comparte tu tarjeta para juntar los votos que faltan y revelar tu Conscious Score.'
+      : 'Share your card to gather the missing votes and reveal your Conscious Score.',
+    voteForMeWhatsApp: es ? 'Compartir en WhatsApp' : 'Share on WhatsApp',
+    voteForMeStory: es ? 'Descargar tarjeta para historias' : 'Download story card',
+    voteForMeCopy: es ? 'Copiar mensaje' : 'Copy message',
+
+    // --- Verified celebration modal -----------------------------------------
+    celebrationEyebrow: es ? 'Certificación activa' : 'Certification active',
+    celebrationTitle: es
+      ? 'Ya eres Creador Consciente Certificado'
+      : 'You are now a Certified Conscious Creator',
+    celebrationBody: es
+      ? 'La comunidad votó y el sello es tuyo. Comparte tu tarjeta con tu audiencia — es tu momento.'
+      : 'The community voted and the seal is yours. Share your card with your audience — this is your moment.',
+    celebrationWhatsApp: es ? 'Compartir en WhatsApp' : 'Share on WhatsApp',
+    celebrationDownloadStory: es ? 'Descargar tarjeta para historias' : 'Download story card',
+    celebrationCopyLink: es ? 'Copiar enlace' : 'Copy link',
+    celebrationClose: es ? 'Cerrar' : 'Close',
+
+    // --- Dashboard certification panel ---------------------------------------
+    dashCertTitle: es ? 'Tu certificación Conscious Creator' : 'Your Conscious Creator certification',
+    dashCertNoneTitle: es ? 'Conviértete en Creador Consciente' : 'Become a Conscious Creator',
+    dashCertNoneBody: es
+      ? 'La comunidad vota si mereces el sello de Creador Consciente: una tarjeta pública, un Conscious Score y un sello verificado que puedes compartir.'
+      : 'The community votes on whether you earn the Conscious Creator seal: a public card, a Conscious Score, and a verified badge you can share.',
+    dashCertNoneCta: es ? 'Conoce el programa' : 'Learn about the program',
+    dashCertStatusPending: es
+      ? 'Tu nominación está en revisión. Te avisaremos cuando tu votación esté activa.'
+      : 'Your nomination is under review. We will let you know when your vote goes live.',
+    dashCertStatusUnderReview: es
+      ? 'Tu certificación está en revisión por el equipo.'
+      : 'Your certification is under team review.',
+    dashCertStatusSuspended: es
+      ? 'Tu certificación está pausada. Escríbenos si crees que es un error.'
+      : 'Your certification is paused. Contact us if you think this is a mistake.',
+    dashCertStatusRevoked: es
+      ? 'Tu certificación fue revocada.'
+      : 'Your certification was revoked.',
+    dashCertKeepSharing: es
+      ? 'Tu score está revelado. Sigue compartiendo tu tarjeta para sumar votos.'
+      : 'Your score is revealed. Keep sharing your card to gather more votes.',
+    dashCertViewPublic: es ? 'Ver mi página pública' : 'View my public page',
+
+    // --- Dashboard polish -----------------------------------------------------
+    dashViews: es ? 'vistas' : 'views',
+    dashNoEarningsCta: es ? 'Activa tus niveles de patrocinio' : 'Activate your sponsorship tiers',
+    dashNoPostsCta: es ? 'Escribir mi primer artículo' : 'Write my first article',
+
+    // --- Public verify lookup -------------------------------------------------
+    verifyCreatorTitle: es ? 'Verificar un creador' : 'Verify a creator',
+    verifyCreatorSub: es
+      ? 'Confirma que el sello de Creador Consciente está vigente.'
+      : 'Confirm the Conscious Creator seal is valid.',
+    verifyCreatorPh: es ? 'Busca por handle…' : 'Search by handle…',
+    verifyCreatorBtn: es ? 'Verificar' : 'Verify',
+    verifyCreatorNotFound: es
+      ? 'No encontramos una certificación activa con ese handle.'
+      : 'No active certification found for that handle.',
+    verifyCreatorError: es ? 'No se pudo verificar. Intenta de nuevo.' : 'Verification failed. Try again.',
     dashEdit: es ? 'Editar' : 'Edit',
     dashView: es ? 'Ver' : 'View',
 
@@ -427,6 +500,9 @@ export function getCreatorCopy(locale: CreatorLocale) {
       ? 'Define tu precio por nivel. Los patrocinadores verán estos precios al patrocinar tus publicaciones.'
       : 'Set your price per tier. Sponsors see these prices when sponsoring your posts.',
     tierSettingsOffer: es ? 'Ofrecer este nivel' : 'Offer this tier',
+    tierSettingsActivateHint: es
+      ? 'Activa este nivel para definir tu precio.'
+      : 'Activate this tier to set your price.',
     tierSettingsPrice: es ? 'Precio (MXN)' : 'Price (MXN)',
     tierSettingsRange: (min: string, max: string) =>
       es ? `Entre ${min} y ${max}` : `Between ${min} and ${max}`,

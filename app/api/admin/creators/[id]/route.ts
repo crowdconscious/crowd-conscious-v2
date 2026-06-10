@@ -4,6 +4,7 @@ import { getCurrentUser } from '@/lib/auth-server'
 import { createClient } from '@/lib/supabase-server'
 import { createConsciousCreatorVotingMarket } from '@/lib/creators/create-voting-market'
 import { isAdminUser } from '@/lib/auth/is-admin'
+import { sendCreatorVerifiedEmail } from '@/lib/resend'
 
 async function requireAdmin() {
   const user = await getCurrentUser()
@@ -174,7 +175,42 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
   }
 
-  return NextResponse.json({ certification, market })
+  // Verification-moment email (Creators Phase 2). Fires only on the first
+  // certification of this row; awaited so Vercel doesn't freeze the lambda
+  // mid-send, but fail-soft — an email failure must never fail the certify.
+  let emailSent = false
+  if (certify && !existing.certified_at) {
+    try {
+      const { data: recipient } = await admin
+        .from('profiles')
+        .select('email, handle, full_name')
+        .eq('id', String(existing.profile_id))
+        .maybeSingle()
+      const email = (recipient?.email as string | null) ?? null
+      const recipientHandle = (recipient?.handle as string | null) ?? null
+      if (email && recipientHandle) {
+        // ES default — profiles carry no locale signal today.
+        const result = await sendCreatorVerifiedEmail(email, {
+          name: (recipient?.full_name as string | null) || `@${recipientHandle}`,
+          handle: recipientHandle,
+          locale: 'es',
+        })
+        emailSent = result.success
+        if (!result.success) {
+          console.error('[admin/creators PATCH] verified email failed:', result.error)
+        }
+      } else {
+        console.warn(
+          '[admin/creators PATCH] verified email skipped — missing email or handle for profile',
+          existing.profile_id
+        )
+      }
+    } catch (e) {
+      console.error('[admin/creators PATCH] verified email error:', e)
+    }
+  }
+
+  return NextResponse.json({ certification, market, emailSent })
 }
 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {

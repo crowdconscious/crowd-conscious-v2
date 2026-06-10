@@ -5,6 +5,7 @@ import Link from 'next/link'
 import nextDynamic from 'next/dynamic'
 import { Globe, Instagram, Newspaper } from 'lucide-react'
 import { createAdminClient } from '@/lib/supabase-admin'
+import { getCurrentUser } from '@/lib/auth-server'
 import LandingNav from '@/app/components/landing/LandingNav'
 import { getCreatorCopy, normalizeHandle, type CreatorLocale } from '@/lib/i18n/creator'
 import { SITE_URL } from '@/lib/seo/site'
@@ -14,6 +15,7 @@ import type { CreatorCertificationRow } from '@/lib/creators/types'
 import CreatorCertificationPanel, {
   CreatorTierBadge,
 } from '@/components/creators/CreatorCertificationPanel'
+import CreatorVerifiedCelebration from '@/components/creators/CreatorVerifiedCelebration'
 
 const Footer = nextDynamic(() => import('@/components/Footer'))
 
@@ -183,10 +185,12 @@ export default async function CreatorPublicProfilePage(props: Props) {
     notFound()
   }
 
-  const [posts, certification] = await Promise.all([
+  const [posts, certification, viewer] = await Promise.all([
     loadPublishedPosts(creator.id),
     loadActiveCertification(creator.id),
+    getCurrentUser().catch(() => null),
   ])
+  const isOwner = viewer?.id === creator.id
   const outcomes = certification
     ? await loadMarketOutcomes(certification.current_market_id)
     : []
@@ -318,6 +322,21 @@ export default async function CreatorPublicProfilePage(props: Props) {
               }}
               outcomes={outcomes}
               locale={locale}
+              ownerShare={
+                isOwner && creator.handle
+                  ? { profileId: creator.id, handle: creator.handle }
+                  : null
+              }
+            />
+          )}
+
+          {isOwner && creator.handle && certification?.certified_at && (
+            <CreatorVerifiedCelebration
+              profileId={creator.id}
+              handle={creator.handle}
+              certifiedAt={certification.certified_at}
+              locale={locale}
+              surface="creator_profile"
             />
           )}
         </div>

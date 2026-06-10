@@ -5,9 +5,11 @@ import type { CreatorLocale } from '@/lib/i18n/creator'
 import { SPONSORSHIP_TIERS } from '@/lib/sponsorship-tiers'
 import { loadCreatorTiers, loadTierLimits } from '@/lib/sponsorship-tiers-data'
 import type { TierPricingItem } from './CreatorTierPricing'
+import type { CreatorCertificationStatus } from '@/lib/creators/types'
 import CreatorDashboardClient, {
   type DashboardPost,
   type DashboardPayout,
+  type DashboardCertification,
 } from './CreatorDashboardClient'
 
 export const dynamic = 'force-dynamic'
@@ -71,6 +73,8 @@ export default async function CreatorDashboardPage() {
 
   // Tier pricing settings: platform guardrails + this creator's own prices.
   // Both tier tables are public-read; the admin client is just a reader here.
+  // New creators (no saved rows) get the recommended middle tier ("Sponsor")
+  // pre-checked so the pricing section never renders fully disabled/grey.
   const tierLimits = await loadTierLimits(admin)
   const creatorTiers = await loadCreatorTiers(admin, userId)
   const tierPricing: TierPricingItem[] = SPONSORSHIP_TIERS.map((tier) => {
@@ -79,13 +83,32 @@ export default async function CreatorDashboardPage() {
     return {
       tier,
       price: own ? own.price : limit.defaultPrice,
-      enabled: own ? own.enabled : false,
+      enabled: own ? own.enabled : tier === 'sponsor',
       min: limit.minPrice,
       max: limit.maxPrice,
       default: limit.defaultPrice,
       currency: limit.currency,
     }
   })
+
+  // Conscious Creator certification — own row, any status (the owner sees
+  // their pending/under_review state; the public RLS policy only exposes
+  // active rows, hence the scoped admin read).
+  const { data: certRow } = await admin
+    .from('creator_certifications')
+    .select('status, conscious_score, total_votes, certified_at, next_review_date')
+    .eq('profile_id', userId)
+    .maybeSingle()
+  const certification: DashboardCertification | null = certRow
+    ? {
+        status: certRow.status as CreatorCertificationStatus,
+        consciousScore:
+          certRow.conscious_score == null ? null : Number(certRow.conscious_score),
+        totalVotes: Number(certRow.total_votes ?? 0),
+        certifiedAt: certRow.certified_at ?? null,
+        nextReviewDate: certRow.next_review_date ?? null,
+      }
+    : null
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.crowdconscious.app'
 
@@ -100,6 +123,7 @@ export default async function CreatorDashboardPage() {
       referredClicks={referredClicks}
       baseUrl={baseUrl}
       tierPricing={tierPricing}
+      certification={certification}
     />
   )
 }

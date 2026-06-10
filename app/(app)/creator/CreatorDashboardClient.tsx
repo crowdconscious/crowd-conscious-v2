@@ -3,7 +3,17 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Copy, Check, PenSquare, Link2, MousePointerClick, Share2 } from 'lucide-react'
+import {
+  Copy,
+  Check,
+  PenSquare,
+  Link2,
+  MousePointerClick,
+  Share2,
+  Award,
+  Eye,
+  ExternalLink,
+} from 'lucide-react'
 import { inputBaseClass } from '@/components/ui/input'
 import {
   getCreatorCopy,
@@ -11,6 +21,13 @@ import {
   normalizeHandle,
   type CreatorLocale,
 } from '@/lib/i18n/creator'
+import {
+  CREATOR_SCORE_REVEAL_THRESHOLD,
+  type CreatorCertificationStatus,
+} from '@/lib/creators/types'
+import { CreatorTierBadge } from '@/components/creators/CreatorCertificationPanel'
+import VoteForMeShareRow from '@/components/creators/VoteForMeShareRow'
+import CreatorVerifiedCelebration from '@/components/creators/CreatorVerifiedCelebration'
 import CreatorTierPricing, { type TierPricingItem } from './CreatorTierPricing'
 
 export type DashboardPost = {
@@ -30,6 +47,14 @@ export type DashboardPayout = {
   status: string
 }
 
+export type DashboardCertification = {
+  status: CreatorCertificationStatus
+  consciousScore: number | null
+  totalVotes: number
+  certifiedAt: string | null
+  nextReviewDate: string | null
+}
+
 type Props = {
   locale: CreatorLocale
   handle: string | null
@@ -40,6 +65,7 @@ type Props = {
   referredClicks: number
   baseUrl: string
   tierPricing: TierPricingItem[]
+  certification: DashboardCertification | null
 }
 
 export default function CreatorDashboardClient({
@@ -52,6 +78,7 @@ export default function CreatorDashboardClient({
   referredClicks,
   baseUrl,
   tierPricing,
+  certification,
 }: Props) {
   const t = getCreatorCopy(locale)
   const router = useRouter()
@@ -143,6 +170,27 @@ export default function CreatorDashboardClient({
       maximumFractionDigits: 0,
     }).format(n)
 
+  const certVotes = certification?.totalVotes ?? 0
+  const certScoreRevealed =
+    certification != null &&
+    certification.consciousScore != null &&
+    certVotes >= CREATOR_SCORE_REVEAL_THRESHOLD
+  const certStatusMessage = (() => {
+    if (!certification) return null
+    switch (certification.status) {
+      case 'pending':
+        return t.dashCertStatusPending
+      case 'under_review':
+        return t.dashCertStatusUnderReview
+      case 'suspended':
+        return t.dashCertStatusSuspended
+      case 'revoked':
+        return t.dashCertStatusRevoked
+      default:
+        return null
+    }
+  })()
+
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -227,6 +275,96 @@ export default function CreatorDashboardClient({
         )}
       </section>
 
+      {/* Conscious Creator certification */}
+      <section className="rounded-xl border border-[#2d3748] bg-[#1a2029] p-5">
+        {certification ? (
+          <>
+            <h2 className="flex items-center gap-2 text-sm font-semibold text-white">
+              <Award className="h-4 w-4" /> {t.dashCertTitle}
+            </h2>
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <CreatorTierBadge
+                cert={{
+                  conscious_score: certification.consciousScore,
+                  total_votes: certification.totalVotes,
+                  certified_at: certification.certifiedAt,
+                }}
+                locale={locale}
+              />
+              <span className="text-sm text-slate-300">
+                {certScoreRevealed
+                  ? `${certification.consciousScore!.toFixed(1)}/10 · `
+                  : ''}
+                {certVotes} {t.certVotes}
+              </span>
+            </div>
+            {certStatusMessage ? (
+              <p className="mt-3 text-sm text-amber-400/90">{certStatusMessage}</p>
+            ) : null}
+            {certification.status === 'active' && !certScoreRevealed ? (
+              <p className="mt-3 text-sm text-slate-400">
+                {t.certVotesToReveal(Math.max(0, CREATOR_SCORE_REVEAL_THRESHOLD - certVotes))}
+              </p>
+            ) : null}
+            {certification.status === 'active' &&
+            certScoreRevealed &&
+            !certification.certifiedAt ? (
+              <p className="mt-3 text-sm text-slate-400">{t.dashCertKeepSharing}</p>
+            ) : null}
+            {certification.status === 'active' && !certScoreRevealed && currentHandle ? (
+              <div className="mt-4">
+                <VoteForMeShareRow
+                  profileId={creatorId}
+                  handle={currentHandle}
+                  locale={locale}
+                  surface="creator_dashboard"
+                />
+              </div>
+            ) : null}
+            {certification.certifiedAt && certification.nextReviewDate ? (
+              <p className="mt-3 text-xs text-slate-500">
+                {t.certNextReview}:{' '}
+                {new Date(certification.nextReviewDate).toLocaleDateString(
+                  locale === 'es' ? 'es-MX' : 'en-US',
+                  { month: 'long', year: 'numeric' }
+                )}
+              </p>
+            ) : null}
+            {currentHandle ? (
+              <Link
+                href={`/creators/${currentHandle}`}
+                className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-400 hover:text-emerald-300"
+              >
+                <ExternalLink className="h-3.5 w-3.5" /> {t.dashCertViewPublic}
+              </Link>
+            ) : null}
+          </>
+        ) : (
+          <>
+            <h2 className="flex items-center gap-2 text-sm font-semibold text-white">
+              <Award className="h-4 w-4 text-amber-300" /> {t.dashCertNoneTitle}
+            </h2>
+            <p className="mt-2 text-sm text-slate-400">{t.dashCertNoneBody}</p>
+            <Link
+              href="/creators#creadores-conscientes"
+              className="mt-4 inline-flex items-center gap-2 rounded-lg border border-emerald-500/50 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-300 hover:bg-emerald-500/20"
+            >
+              {t.dashCertNoneCta}
+            </Link>
+          </>
+        )}
+      </section>
+
+      {certification?.certifiedAt && certification.status === 'active' && currentHandle ? (
+        <CreatorVerifiedCelebration
+          profileId={creatorId}
+          handle={currentHandle}
+          certifiedAt={certification.certifiedAt}
+          locale={locale}
+          surface="creator_dashboard"
+        />
+      ) : null}
+
       {/* Stats: referred clicks */}
       <section className="grid gap-4 sm:grid-cols-3">
         <div className="rounded-xl border border-[#2d3748] bg-[#1a2029] p-5">
@@ -243,7 +381,15 @@ export default function CreatorDashboardClient({
       <section className="rounded-xl border border-[#2d3748] bg-[#1a2029] p-5">
         <h2 className="text-sm font-semibold text-white">{t.dashEarnings}</h2>
         {payouts.length === 0 ? (
-          <p className="mt-3 text-sm text-slate-500">{t.dashNoEarnings}</p>
+          <div className="mt-3">
+            <p className="text-sm text-slate-500">{t.dashNoEarnings}</p>
+            <a
+              href="#tier-pricing"
+              className="mt-3 inline-flex items-center gap-2 rounded-lg border border-emerald-500/50 bg-emerald-500/10 px-4 py-2 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/20"
+            >
+              {t.dashNoEarningsCta}
+            </a>
+          </div>
         ) : (
           <div className="mt-3 overflow-x-auto">
             <table className="w-full text-sm">
@@ -281,7 +427,15 @@ export default function CreatorDashboardClient({
       <section className="rounded-xl border border-[#2d3748] bg-[#1a2029] p-5">
         <h2 className="text-sm font-semibold text-white">{t.dashYourPosts}</h2>
         {posts.length === 0 ? (
-          <p className="mt-3 text-sm text-slate-500">{t.dashNoPosts}</p>
+          <div className="mt-3">
+            <p className="text-sm text-slate-500">{t.dashNoPosts}</p>
+            <Link
+              href="/creator/posts/new"
+              className="mt-3 inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-500"
+            >
+              <PenSquare className="h-3.5 w-3.5" /> {t.dashNoPostsCta}
+            </Link>
+          </div>
         ) : (
           <div className="mt-3 space-y-3">
             {posts.map((p) => {
@@ -298,6 +452,12 @@ export default function CreatorDashboardClient({
                     </span>
                   </div>
                   <div className="mt-2 flex flex-wrap items-center gap-3 text-xs">
+                    {p.status === 'published' && (
+                      <span className="inline-flex items-center gap-1 text-slate-400">
+                        <Eye className="h-3.5 w-3.5" />
+                        {p.views.toLocaleString()} {t.dashViews}
+                      </span>
+                    )}
                     <Link href={`/creator/posts/${p.id}/edit`} className="text-emerald-400 hover:text-emerald-300">
                       {t.dashEdit}
                     </Link>

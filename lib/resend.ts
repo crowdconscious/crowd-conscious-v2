@@ -572,6 +572,114 @@ export const emailTemplates = {
   }
 }
 
+/**
+ * Conscious Creator certification email (Creators Phase 2 — the
+ * "verification moment"). Sent by the admin Certificar action; congratulates
+ * the creator, links their public page, and hands them ready-to-paste share
+ * artifacts: both card URLs (landscape + story) plus the IG caption and
+ * WhatsApp message from the share-cards copy matrix (§6).
+ *
+ * Locale: ES default. Profiles carry no language column today, so callers
+ * pass 'en' only when a locale signal exists elsewhere.
+ */
+export function creatorVerifiedEmail(params: {
+  name: string
+  handle: string
+  locale?: 'es' | 'en'
+}): { subject: string; html: string } {
+  const { name, handle } = params
+  const es = (params.locale ?? 'es') !== 'en'
+  const pageUrl = `${APP_URL}/creators/${encodeURIComponent(handle)}`
+  const cardLandscapeUrl = `${APP_URL}/api/og/creator/${encodeURIComponent(handle)}`
+  const cardStoryUrl = `${cardLandscapeUrl}?format=story`
+  // Share-cards copy matrix: "Creator verified moment" row.
+  const whatsappMessage = es
+    ? `Ya soy Creador Consciente verificado. La comunidad votó: ${pageUrl}`
+    : `I'm now a verified Conscious Creator. The community voted: ${pageUrl}`
+  // IG can't carry tappable links from a caption — the URL is the recall
+  // mechanism and "link en bio" is the guidance (share-cards doc §4).
+  const igCaption = es
+    ? `Ya soy Creador Consciente verificado en Crowd Conscious. La comunidad votó. Encuéntrame en crowdconscious.app/creators/${handle} (link en bio)`
+    : `I'm now a verified Conscious Creator on Crowd Conscious. The community voted. Find me at crowdconscious.app/creators/${handle} (link in bio)`
+
+  const t = es
+    ? {
+        subject: 'Ya eres Creador Consciente Certificado',
+        title: 'Ya eres Creador Consciente Certificado',
+        intro: `Hola ${name} — la comunidad votó y el equipo confirmó tu certificación. Tu sello dorado ya está activo en tu página pública.`,
+        cta: 'Ver mi página de creador →',
+        cardsTitle: 'Tus tarjetas listas para compartir',
+        cardLandscape: 'Tarjeta para WhatsApp / enlaces (1200×630)',
+        cardStory: 'Tarjeta para historias de Instagram / TikTok (1080×1920)',
+        copyTitle: 'Copia y pega',
+        whatsappLabel: 'Mensaje para WhatsApp',
+        igLabel: 'Caption para Instagram',
+        outro: 'Tu certificación se revisa cada 90 días. Sigue compartiendo tu tarjeta: cada voto la mantiene viva.',
+        footer: 'Crowd Conscious · Sentimiento público con impacto · CDMX',
+      }
+    : {
+        subject: 'You are now a Certified Conscious Creator',
+        title: 'You are now a Certified Conscious Creator',
+        intro: `Hi ${name} — the community voted and the team confirmed your certification. Your gold seal is now live on your public page.`,
+        cta: 'View my creator page →',
+        cardsTitle: 'Your share-ready cards',
+        cardLandscape: 'Card for WhatsApp / links (1200×630)',
+        cardStory: 'Card for Instagram / TikTok stories (1080×1920)',
+        copyTitle: 'Copy and paste',
+        whatsappLabel: 'WhatsApp message',
+        igLabel: 'Instagram caption',
+        outro: 'Your certification is reviewed every 90 days. Keep sharing your card — every vote keeps it alive.',
+        footer: 'Crowd Conscious · Public sentiment with impact · CDMX',
+      }
+
+  return {
+    subject: t.subject,
+    html: `
+      <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto; background: #0f1419; color: #e5e7eb;">
+        <div style="padding: 24px; text-align: center; border-bottom: 1px solid #2d3748;">
+          <img src="${APP_URL}/images/logo.png" alt="Crowd Conscious" width="120" style="height: auto;" />
+        </div>
+        <div style="padding: 32px 24px;">
+          <p style="color: #fbbf24; font-size: 12px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; margin: 0 0 8px;">Conscious Creator</p>
+          <h1 style="color: #10b981; font-size: 24px; margin: 0 0 16px;">${t.title}</h1>
+          <p style="color: #d1d5db; font-size: 14px; line-height: 1.6; margin: 0 0 20px;">${t.intro}</p>
+          <div style="text-align: center; margin: 24px 0;">
+            <a href="${pageUrl}" style="display: inline-block; background: #10b981; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">${t.cta}</a>
+          </div>
+          <div style="margin: 28px 0 0; padding: 18px; background: #1a2029; border: 1px solid #2d3748; border-radius: 10px;">
+            <p style="color: #ffffff; font-size: 14px; font-weight: bold; margin: 0 0 12px;">${t.cardsTitle}</p>
+            <p style="margin: 0 0 8px;">
+              <a href="${cardLandscapeUrl}" style="color: #34d399; font-size: 13px;">${t.cardLandscape}</a>
+            </p>
+            <p style="margin: 0;">
+              <a href="${cardStoryUrl}" style="color: #34d399; font-size: 13px;">${t.cardStory}</a>
+            </p>
+          </div>
+          <div style="margin: 16px 0 0; padding: 18px; background: #1a2029; border: 1px solid #2d3748; border-radius: 10px;">
+            <p style="color: #ffffff; font-size: 14px; font-weight: bold; margin: 0 0 12px;">${t.copyTitle}</p>
+            <p style="color: #94a3b8; font-size: 12px; margin: 0 0 6px;">${t.whatsappLabel}</p>
+            <p style="color: #d1d5db; font-size: 13px; line-height: 1.5; background: #0f1419; border: 1px solid #2d3748; border-radius: 8px; padding: 10px 12px; margin: 0 0 14px;">${whatsappMessage}</p>
+            <p style="color: #94a3b8; font-size: 12px; margin: 0 0 6px;">${t.igLabel}</p>
+            <p style="color: #d1d5db; font-size: 13px; line-height: 1.5; background: #0f1419; border: 1px solid #2d3748; border-radius: 8px; padding: 10px 12px; margin: 0;">${igCaption}</p>
+          </div>
+          <p style="color: #6b7280; font-size: 12px; line-height: 1.6; margin: 20px 0 0;">${t.outro}</p>
+        </div>
+        <div style="padding: 16px 24px; text-align: center; border-top: 1px solid #2d3748;">
+          <p style="color: #6b7280; font-size: 11px; margin: 0;">${t.footer}</p>
+        </div>
+      </div>
+    `,
+  }
+}
+
+/** Verification-moment email. Returns success=false instead of throwing — callers must stay fail-soft. */
+export async function sendCreatorVerifiedEmail(
+  email: string,
+  params: { name: string; handle: string; locale?: 'es' | 'en' }
+): Promise<{ success: boolean; error?: string }> {
+  return sendEmail(email, creatorVerifiedEmail(params))
+}
+
 // Send email function with error handling
 export async function sendEmail(
   to: string,
