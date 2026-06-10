@@ -7,8 +7,8 @@ import { getVotedGuestIdForMarket } from '@/lib/guest-vote-storage'
 import ConfidenceHistogram from '@/components/pulse/ConfidenceHistogram'
 import VoteTimeline from '@/components/pulse/VoteTimeline'
 import PulseOutcomeBars from '@/components/pulse/PulseOutcomeBars'
-import type { PulseOutcomeRow, PulseVoteRow } from '@/components/pulse/PulseResultClient'
-import { aggregatePulseVotes } from '@/lib/pulse-vote-aggregates'
+import type { PulseOutcomeRow } from '@/components/pulse/PulseResultClient'
+import { aggregatePulseVotes, type PulseVoteLike } from '@/lib/pulse-vote-aggregates'
 import {
   computePulseEmbedExecutiveSummary,
   computePulseEmbedInsights,
@@ -23,7 +23,12 @@ export type PulseEmbedData = {
   status: string
   resolutionDate: string
   outcomes: PulseOutcomeRow[]
-  votes: PulseVoteRow[]
+  /**
+   * Identity-free vote rows: confidence + outcome + timestamp only. The
+   * blog page is public — never widen this back to full market_votes rows
+   * (no vote ids, no user_id / anonymous_participant_id, no reasoning).
+   */
+  votes: PulseVoteLike[]
 }
 
 type Props = {
@@ -45,7 +50,8 @@ export default function PulseEmbed({ data, locale, components, showOwnHeading }:
 
   const votes = data.votes
   // Chart components consume aggregates (the /pulse/[id] payload fix changed
-  // their props); the blog embed still receives full rows, so convert here.
+  // their props); the blog embed receives identity-free vote rows, so
+  // convert here.
   const voteAggregates = useMemo(() => aggregatePulseVotes(votes), [votes])
   const totalVotes = votes.length
   const avgConfidence =
