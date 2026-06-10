@@ -22,6 +22,17 @@ type PushTokenRow = {
   expo_push_token: string
 }
 
+type PushLogInsert = {
+  user_id: string
+  push_token_id: string | null
+  expo_ticket_id: string | null
+  title: string
+  body: string
+  data_type: string | null
+  status: 'pending' | 'ok' | 'error'
+  error_detail: string | null
+}
+
 type UserSettingsRow = {
   user_id: string
   push_notifications: boolean | null
@@ -76,6 +87,22 @@ async function deleteStalePushTokens(
   const { error } = await admin.from('push_tokens').delete().in('id', tokenIds)
   if (error) {
     console.warn('[expo-push] failed to delete stale tokens:', error.message)
+  }
+}
+
+/**
+ * Records one push_log row per device message so the push-receipts cron can
+ * verify delivery later (migration 242). Logging must never break a send —
+ * failures are warned and swallowed.
+ */
+async function insertPushLogRows(
+  admin: SupabaseClient,
+  rows: PushLogInsert[]
+): Promise<void> {
+  if (rows.length === 0) return
+  const { error } = await admin.from('push_log').insert(rows)
+  if (error) {
+    console.warn('[expo-push] push_log insert failed:', error.message)
   }
 }
 
@@ -143,6 +170,8 @@ export async function sendPushToUser(
 
   const chunks = expo.chunkPushNotifications(messages)
   const staleIds: string[] = []
+  const logRows: PushLogInsert[] = []
+  const dataType = payload.data?.type ?? null
   let offset = 0
 
   for (const chunk of chunks) {
@@ -151,11 +180,43 @@ export async function sendPushToUser(
     try {
       const tickets = await expo.sendPushNotificationsAsync(chunk)
       staleIds.push(...collectDeviceNotRegisteredIds(tickets, chunkRows))
+      tickets.forEach((ticket, i) => {
+        const row = chunkRows[i]
+        logRows.push({
+          user_id: userId,
+          push_token_id: row?.id ?? null,
+          expo_ticket_id: ticket.status === 'ok' ? ticket.id : null,
+          title: payload.title,
+          body: payload.body,
+          data_type: dataType,
+          status: ticket.status === 'ok' ? 'pending' : 'error',
+          error_detail:
+            ticket.status === 'error'
+              ? ticket.details?.error
+                ? `${ticket.details.error}: ${ticket.message}`
+                : ticket.message
+              : null,
+        })
+      })
     } catch (err) {
       console.warn('[expo-push] send chunk failed:', err)
+      const detail = err instanceof Error ? err.message : String(err)
+      for (const row of chunkRows) {
+        logRows.push({
+          user_id: userId,
+          push_token_id: row.id,
+          expo_ticket_id: null,
+          title: payload.title,
+          body: payload.body,
+          data_type: dataType,
+          status: 'error',
+          error_detail: `send failed: ${detail}`,
+        })
+      }
     }
   }
 
+  await insertPushLogRows(admin, logRows)
   await deleteStalePushTokens(admin, [...new Set(staleIds)])
 }
 
@@ -338,6 +399,82 @@ export function buildSignalCosignInvitePush(params: {
     title: `Nueva señal — apoya con tu co-firma: ${titleShort}`,
     body: 'Apoya esta señal ciudadana',
     data: { route, slug, type: 'signal_cosign_invite' },
+    badge: 1,
+  }
+}
+
+/**
+ * Results push for users who voted on a Pulse that just resolved (audit
+ * item P5; originally shipped in dfdff0d, removed in 1f7d99b). This is the
+ * retention hook: close the loop on every vote.
+ */
+export function buildPulseResolutionPush(params: {
+  marketId: string
+  marketTitle: string
+  winningLabel: string
+  won: boolean
+  bonusXp: number
+  locale: PushLocale
+}): SendPushPayload {
+  const { marketId, marketTitle, winningLabel, won, bonusXp, locale } = params
+  const titleShort = truncateTitle(marketTitle)
+  const route = `/(drawer)/(tabs)/pulses/${marketId}`
+
+  if (locale === 'en') {
+    const body = won
+      ? bonusXp > 0
+        ? `"${titleShort}" — you matched the community and earned ${bonusXp} bonus XP.`
+        : `"${titleShort}" — you matched the community outcome.`
+      : `"${titleShort}" resolved as ${winningLabel}.`
+    return {
+      title: 'Your Pulse closed — see the results',
+      body,
+      data: { route, marketId, type: 'pulse_resolved' },
+      badge: 1,
+    }
+  }
+
+  const body = won
+    ? bonusXp > 0
+      ? `"${titleShort}" — coincidiste con la comunidad y ganaste ${bonusXp} XP bonus.`
+      : `"${titleShort}" — coincidiste con el resultado de la comunidad.`
+    : `"${titleShort}" se resolvió como ${winningLabel}.`
+  return {
+    title: 'Tu Pulse cerró — mira los resultados',
+    body,
+    data: { route, marketId, type: 'pulse_resolved' },
+    badge: 1,
+  }
+}
+
+/**
+ * Milestone push for a signal author when their signal crosses a cosign
+ * threshold stage (audit item P5). Stages reuse the signal-threshold-check
+ * cron's escalation ladder.
+ */
+export function buildSignalMilestonePush(params: {
+  slug: string
+  title: string
+  cosignCount: number
+  locale: PushLocale
+}): SendPushPayload {
+  const { slug, title, cosignCount, locale } = params
+  const titleShort = truncateTitle(title)
+  const route = `/(drawer)/(tabs)/signals/${slug}`
+
+  if (locale === 'en') {
+    return {
+      title: `Your signal reached ${cosignCount} co-signs`,
+      body: `"${titleShort}" keeps growing. Share it to reach further.`,
+      data: { route, slug, type: 'signal_milestone' },
+      badge: 1,
+    }
+  }
+
+  return {
+    title: `Tu señal alcanzó ${cosignCount} co-firmas`,
+    body: `"${titleShort}" sigue creciendo. Compártela para llegar más lejos.`,
+    data: { route, slug, type: 'signal_milestone' },
     badge: 1,
   }
 }

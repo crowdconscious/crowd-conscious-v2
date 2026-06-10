@@ -1,35 +1,29 @@
 'use client'
 
-type VoteLike = { confidence: number | null }
+import {
+  histogramConfidenceSum,
+  histogramCountAtLeast,
+  histogramCountAtMost,
+  histogramValidCount,
+} from '@/lib/pulse-vote-aggregates'
 
 /** Fixed chart height (px) so bar heights resolve in print (flex % heights often collapse). */
 const BAR_AREA_PX = 112
 
 export default function ConfidenceHistogram({
-  votes,
+  histogram,
   locale = 'es',
 }: {
-  votes: VoteLike[]
+  /** Index 0 = confidence 1 … index 9 = confidence 10. */
+  histogram: number[]
   locale?: 'es' | 'en'
 }) {
   const es = locale === 'es'
-  const confDist = Array.from({ length: 10 }, () => 0)
-  let sum = 0
-  let n = 0
-  let strong = 0
-  let weak = 0
-  for (const v of votes) {
-    const c = typeof v.confidence === 'number' ? v.confidence : 0
-    if (c >= 1 && c <= 10) {
-      confDist[c - 1]++
-      sum += c
-      n++
-      if (c >= 8) strong++
-      if (c <= 3) weak++
-    }
-  }
-  const maxCount = Math.max(...confDist, 1)
-  const avg = n > 0 ? sum / n : 0
+  const n = histogramValidCount(histogram)
+  const avg = n > 0 ? histogramConfidenceSum(histogram) / n : 0
+  const strong = histogramCountAtLeast(histogram, 8)
+  const weak = histogramCountAtMost(histogram, 3)
+  const maxCount = Math.max(...histogram, 1)
 
   return (
     <div className="pulse-section chart-container rounded-xl border border-white/10 bg-black/20 p-4">
@@ -37,7 +31,7 @@ export default function ConfidenceHistogram({
         {es ? 'Distribución de confianza' : 'Confidence distribution'}
       </h3>
       <div className="flex h-28 items-end gap-1">
-        {confDist.map((count, i) => {
+        {histogram.map((count, i) => {
           const barPx =
             maxCount > 0 ? Math.round((count / maxCount) * BAR_AREA_PX) : 0
           const h = count > 0 ? Math.max(barPx, 4) : 0

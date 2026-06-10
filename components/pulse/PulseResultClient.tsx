@@ -11,6 +11,14 @@ import PulseOutcomeBars from './PulseOutcomeBars'
 import PulseResultsCard from './PulseResultsCard'
 import OutcomeConfidenceTable from './OutcomeConfidenceTable'
 import { exportPulseVotesCsv, type PulseCsvVote } from './pulse-export-csv'
+import {
+  aggregatePulseVotes,
+  histogramConfidenceSum,
+  histogramCountAtLeast,
+  histogramCountAtMost,
+  outcomeAvgConfidence,
+  type PulseVoteAggregates,
+} from '@/lib/pulse-vote-aggregates'
 
 export type PulseVoteRow = {
   id: string
@@ -20,6 +28,12 @@ export type PulseVoteRow = {
   user_id: string | null
   anonymous_participant_id: string | null
   reasoning?: string | null
+}
+
+/** The only per-vote data a public viewer receives: their own vote. */
+export type PulseViewerVote = {
+  outcomeId: string
+  confidence: number | null
 }
 
 export type PulseFeaturedReasoning = {
@@ -54,12 +68,23 @@ type Props = {
   sponsorName: string | null
   sponsorLogoUrl: string | null
   outcomes: PulseOutcomeRow[]
-  votes: PulseVoteRow[]
+  /**
+   * Server-side vote aggregation. The public payload deliberately carries no
+   * per-vote rows (no voter user_ids, bounded size) — see
+   * lib/pulse-vote-aggregates.ts.
+   */
+  aggregates: PulseVoteAggregates
+  /** The current viewer's own vote, when authed and they voted. */
+  viewerVote?: PulseViewerVote | null
+  /**
+   * Full vote rows for authorized analytics viewers (admin / sponsor token)
+   * only — powers CSV export and the realtime live view. Never passed for
+   * public viewers.
+   */
+  enhancedVotes?: PulseVoteRow[]
   locale: 'es' | 'en'
   isEnhancedView: boolean
   featuredReasonings?: PulseFeaturedReasoning[]
-  /** Server-resolved auth user id; used to detect "this user has voted" via the votes payload. */
-  currentUserId?: string | null
 }
 
 export default function PulseResultClient({
@@ -75,21 +100,24 @@ export default function PulseResultClient({
   sponsorName,
   sponsorLogoUrl,
   outcomes: initialOutcomes,
-  votes: initialVotes,
+  aggregates: serverAggregates,
+  viewerVote = null,
+  enhancedVotes,
   locale,
   isEnhancedView,
   featuredReasonings = [],
-  currentUserId = null,
 }: Props) {
-  const [votes, setVotes] = useState<PulseVoteRow[]>(initialVotes)
+  // Full rows exist only in the enhanced (admin/sponsor) view, where they
+  // feed CSV export and grow via the realtime subscription below.
+  const [votes, setVotes] = useState<PulseVoteRow[]>(enhancedVotes ?? [])
   // Guest vote detection runs only on the client (localStorage). Default to
   // false on first render so the SSR HTML matches "not voted" and we then
   // upgrade to "voted" inside useEffect for guests who have a local record.
   const [guestHasVoted, setGuestHasVoted] = useState(false)
 
   useEffect(() => {
-    setVotes(initialVotes)
-  }, [initialVotes])
+    setVotes(enhancedVotes ?? [])
+  }, [enhancedVotes])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -158,11 +186,18 @@ export default function PulseResultClient({
     return o
   }, [initialOutcomes])
 
-  const totalVotes = votes.length
+  // Enhanced views recompute aggregates from the live vote rows so the
+  // realtime subscription keeps charts current; public views render the
+  // server-computed aggregates as-is.
+  const aggregates = useMemo(
+    () => (isEnhancedView ? aggregatePulseVotes(votes) : serverAggregates),
+    [isEnhancedView, votes, serverAggregates]
+  )
+
+  const totalVotes = aggregates.totalVotes
   const avgConfidence =
     totalVotes > 0
-      ? votes.reduce((sum, v) => sum + (typeof v.confidence === 'number' ? v.confidence : 0), 0) /
-        totalVotes
+      ? histogramConfidenceSum(aggregates.confidenceHistogram) / totalVotes
       : 0
 
   // Reveal the community signal (per-option %, charts, insights, reasonings)
@@ -170,16 +205,12 @@ export default function PulseResultClient({
   // analytics viewers (admin / sponsor token), OR when the market is
   // resolved/closed (no more bias to introduce).
   const isClosedOrResolved = status === 'resolved' || status === 'closed'
-  const authedHasVoted = !!currentUserId && votes.some((v) => v.user_id === currentUserId)
+  const authedHasVoted = !!viewerVote
   const hasVoted = authedHasVoted || guestHasVoted
   const shouldRevealResults = isEnhancedView || isClosedOrResolved || hasVoted
 
-  const strongCount = votes.filter(
-    (v) => typeof v.confidence === 'number' && v.confidence >= 8
-  ).length
-  const weakCount = votes.filter(
-    (v) => typeof v.confidence === 'number' && v.confidence <= 3
-  ).length
+  const strongCount = histogramCountAtLeast(aggregates.confidenceHistogram, 8)
+  const weakCount = histogramCountAtMost(aggregates.confidenceHistogram, 3)
 
   const outcomeLabelById = useCallback(
     (id: string) => {
@@ -211,24 +242,13 @@ export default function PulseResultClient({
     const lead = sorted[0]
     const second = sorted[1]
     const leadingPct = Math.round(lead.probability * 100)
-    const avgForOutcome = (oid: string) => {
-      const arr = votes.filter(
-        (v) =>
-          v.outcome_id === oid &&
-          typeof v.confidence === 'number' &&
-          v.confidence >= 1 &&
-          v.confidence <= 10
-      )
-      if (!arr.length) return null
-      return arr.reduce((s, v) => s + (v.confidence as number), 0) / arr.length
-    }
+    const avgForOutcome = (oid: string) =>
+      outcomeAvgConfidence(aggregates.byOutcome[oid])
     const leadingConf = avgForOutcome(lead.id)
     const secondConf = second ? avgForOutcome(second.id) : null
     const leadingLabel = getOutcomeLabel(lead, locale).split(' / ')[0]
     const secondLabel = second ? getOutcomeLabel(second, locale).split(' / ')[0] : null
-    const strongOpinions = votes.filter(
-      (v) => typeof v.confidence === 'number' && v.confidence >= 8
-    ).length
+    const strongOpinions = histogramCountAtLeast(aggregates.confidenceHistogram, 8)
     let lowest: { label: string; conf: number } | null = null
     for (const o of outcomes) {
       const a = avgForOutcome(o.id)
@@ -247,23 +267,16 @@ export default function PulseResultClient({
       lowestLabel: lowest?.label ?? null,
       lowestConf: lowest?.conf ?? null,
     }
-  }, [outcomes, votes, locale, totalVotes])
+  }, [outcomes, aggregates, locale, totalVotes])
 
   const executiveSummary = useMemo(() => {
     if (!leadingOutcome || totalVotes === 0) return null
     const avgConfStr = avgConfidence.toFixed(1)
     const pct = Math.round(leadingOutcome.probability * 100)
     const shortLabel = getOutcomeLabel(leadingOutcome, locale).split(' / ')[0]
-    const votesForLeading = votes.filter(
-      (v) => v.outcome_id === leadingOutcome.id && typeof v.confidence === 'number'
-    )
-    const leadingConf =
-      votesForLeading.length > 0
-        ? (
-            votesForLeading.reduce((s, v) => s + (v.confidence as number), 0) /
-            votesForLeading.length
-          ).toFixed(1)
-        : '0.0'
+    const leadingConf = (
+      outcomeAvgConfidence(aggregates.byOutcome[leadingOutcome.id]) ?? 0
+    ).toFixed(1)
     const strongPhraseEs =
       parseFloat(leadingConf) >= 7
         ? 'Esto indica una preferencia fuerte y clara de la comunidad.'
@@ -275,7 +288,7 @@ export default function PulseResultClient({
     const summaryEs = `Con ${totalVotes} participaciones y una confianza promedio de ${avgConfStr}/10, "${shortLabel}" lidera con ${pct}% de los votos y una certeza de ${leadingConf}/10. ${strongPhraseEs}`
     const summaryEn = `With ${totalVotes} participation${totalVotes !== 1 ? 's' : ''} and an average confidence of ${avgConfStr}/10, "${shortLabel}" leads with ${pct}% of the vote and an average certainty of ${leadingConf}/10. ${strongPhraseEn}`
     return { summaryEs, summaryEn }
-  }, [avgConfidence, leadingOutcome, locale, totalVotes, votes])
+  }, [avgConfidence, leadingOutcome, locale, totalVotes, aggregates])
 
   const handleExport = () => {
     exportPulseVotesCsv(csvRows, question)
@@ -522,8 +535,13 @@ export default function PulseResultClient({
 
             {shouldRevealResults && (
               <div className="mt-8 space-y-6 animate-[fade-in_300ms_ease-out]">
-                <ConfidenceHistogram votes={votes} locale={locale} />
-                {totalVotes > 0 ? <VoteTimeline votes={votes} locale={locale} /> : null}
+                <ConfidenceHistogram
+                  histogram={aggregates.confidenceHistogram}
+                  locale={locale}
+                />
+                {totalVotes > 0 ? (
+                  <VoteTimeline timeline={aggregates.timeline} locale={locale} />
+                ) : null}
               </div>
             )}
 
@@ -532,7 +550,7 @@ export default function PulseResultClient({
                 <div className="pulse-section">
                   <OutcomeConfidenceTable
                     outcomes={outcomes.map((o) => ({ id: o.id, label: getOutcomeLabel(o, locale) }))}
-                    votes={votes}
+                    statsByOutcome={aggregates.byOutcome}
                     locale={locale}
                   />
                 </div>

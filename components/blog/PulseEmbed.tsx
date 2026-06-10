@@ -8,6 +8,7 @@ import ConfidenceHistogram from '@/components/pulse/ConfidenceHistogram'
 import VoteTimeline from '@/components/pulse/VoteTimeline'
 import PulseOutcomeBars from '@/components/pulse/PulseOutcomeBars'
 import type { PulseOutcomeRow, PulseVoteRow } from '@/components/pulse/PulseResultClient'
+import { aggregatePulseVotes } from '@/lib/pulse-vote-aggregates'
 import {
   computePulseEmbedExecutiveSummary,
   computePulseEmbedInsights,
@@ -43,6 +44,9 @@ export default function PulseEmbed({ data, locale, components, showOwnHeading }:
   }, [data.outcomes])
 
   const votes = data.votes
+  // Chart components consume aggregates (the /pulse/[id] payload fix changed
+  // their props); the blog embed still receives full rows, so convert here.
+  const voteAggregates = useMemo(() => aggregatePulseVotes(votes), [votes])
   const totalVotes = votes.length
   const avgConfidence =
     totalVotes > 0
@@ -240,8 +244,15 @@ export default function PulseEmbed({ data, locale, components, showOwnHeading }:
 
         {shouldRevealResults && (show('confidence_chart') || show('vote_timeline')) ? (
           <div className="mt-8 flex flex-col gap-6 animate-[fade-in_300ms_ease-out]">
-            {show('confidence_chart') ? <ConfidenceHistogram votes={votes} locale={locale} /> : null}
-            {show('vote_timeline') && totalVotes > 0 ? <VoteTimeline votes={votes} locale={locale} /> : null}
+            {show('confidence_chart') ? (
+              <ConfidenceHistogram
+                histogram={voteAggregates.confidenceHistogram}
+                locale={locale}
+              />
+            ) : null}
+            {show('vote_timeline') && totalVotes > 0 ? (
+              <VoteTimeline timeline={voteAggregates.timeline} locale={locale} />
+            ) : null}
           </div>
         ) : null}
 

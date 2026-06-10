@@ -1,49 +1,50 @@
 'use client'
 
 import { useMemo } from 'react'
-
-type VoteLike = { created_at: string }
+import type { PulseTimelineBucket } from '@/lib/pulse-vote-aggregates'
 
 const BAR_AREA_PX = 128
 
 export default function VoteTimeline({
-  votes,
+  timeline,
   locale = 'es',
 }: {
-  votes: VoteLike[]
+  /** Hour-level buckets ('YYYY-MM-DDTHH', UTC) from aggregatePulseVotes. */
+  timeline: PulseTimelineBucket[]
   locale?: 'es' | 'en'
 }) {
   const es = locale === 'es'
 
   const { buckets, labels, peakLabel } = useMemo(() => {
     const loc = es ? 'es-MX' : 'en-US'
-    if (votes.length === 0) {
+    if (timeline.length === 0) {
       return { buckets: [] as number[], labels: [] as string[], peakLabel: '—' }
     }
-    const times = votes.map((v) => new Date(v.created_at).getTime())
+
+    const hourToMs = (hour: string) => new Date(`${hour}:00:00Z`).getTime()
+    const times = timeline.map((b) => hourToMs(b.hour))
     const spanMs = Math.max(...times) - Math.min(...times)
     const threeDays = 3 * 24 * 60 * 60 * 1000
     const byHour = spanMs > 0 && spanMs < threeDays
 
+    // Short campaigns render hourly bars; longer ones merge to day buckets.
     const map = new Map<string, number>()
     const order: string[] = []
-
-    for (const v of votes) {
-      const d = new Date(v.created_at)
-      const key = byHour
-        ? `${d.toISOString().slice(0, 13)}:00`
-        : d.toISOString().slice(0, 10)
+    for (const b of timeline) {
+      const key = byHour ? b.hour : b.hour.slice(0, 10)
       if (!map.has(key)) {
         map.set(key, 0)
         order.push(key)
       }
-      map.set(key, (map.get(key) ?? 0) + 1)
+      map.set(key, (map.get(key) ?? 0) + b.count)
     }
 
     order.sort()
+    const keyToDate = (k: string) =>
+      new Date(byHour ? `${k}:00:00Z` : `${k}T12:00:00Z`)
     const buckets = order.map((k) => map.get(k) ?? 0)
     const labels = order.map((k) => {
-      const d = new Date(byHour ? k : k + 'T12:00:00Z')
+      const d = keyToDate(k)
       return byHour
         ? d.toLocaleString(loc, { month: 'short', day: 'numeric', hour: '2-digit' })
         : d.toLocaleDateString(loc, { month: 'short', day: 'numeric' })
@@ -55,18 +56,18 @@ export default function VoteTimeline({
     }
     const peakLabel =
       order.length > 0
-        ? new Date(byHour ? order[peakIdx] : order[peakIdx] + 'T12:00:00Z').toLocaleString(loc, {
+        ? keyToDate(order[peakIdx]).toLocaleString(loc, {
             dateStyle: 'medium',
             timeStyle: byHour ? 'short' : undefined,
           })
         : '—'
 
     return { buckets, labels, peakLabel }
-  }, [votes, es])
+  }, [timeline, es])
 
   const maxB = Math.max(...buckets, 1)
 
-  if (votes.length === 0) {
+  if (timeline.length === 0) {
     return (
       <div className="pulse-section chart-container rounded-xl border border-white/10 bg-black/20 p-4">
         <h3 className="mb-2 text-sm font-semibold text-white">

@@ -1,4 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import {
+  buildPulseResolutionPush,
+  resolvePushLocale,
+  sendPushToUser,
+} from '@/lib/expo-push'
 import { sendMarketResolutionEmail } from '@/lib/resend'
 import { dispatchSponsorPulseClosureEmail } from '@/lib/sponsor-notifications'
 
@@ -55,6 +60,30 @@ export async function notifyMarketResolutionVoters(
       })
     } catch (notifErr) {
       console.error('Notification insert error:', notifErr)
+    }
+
+    // Results push to the voter (audit P5; restored from dfdff0d). MUST be
+    // awaited — fire-and-forget sends are dropped when the lambda freezes
+    // (the b8cb7a4 lesson). sendPushToUser respects the user's push
+    // opt-out and logs to push_log.
+    if (market?.is_pulse) {
+      try {
+        const locale = await resolvePushLocale(admin, v.user_id)
+        await sendPushToUser(
+          admin,
+          v.user_id,
+          buildPulseResolutionPush({
+            marketId,
+            marketTitle,
+            winningLabel,
+            won,
+            bonusXp: v.bonus_xp ?? 0,
+            locale,
+          })
+        )
+      } catch (pushErr) {
+        console.warn('[market-resolution] expo push error:', pushErr)
+      }
     }
 
     const { data: profile } = await admin

@@ -1,26 +1,28 @@
 'use client'
 
+import {
+  outcomeAvgConfidence,
+  type PulseOutcomeVoteStats,
+} from '@/lib/pulse-vote-aggregates'
+
 type Outcome = { id: string; label: string }
-type Vote = { outcome_id: string; confidence: number | null }
 
 export default function OutcomeConfidenceTable({
   outcomes,
-  votes,
+  statsByOutcome,
   locale,
 }: {
   outcomes: Outcome[]
-  votes: Vote[]
+  statsByOutcome: Record<string, PulseOutcomeVoteStats>
   locale: 'es' | 'en'
 }) {
   const rows = outcomes.map((o) => {
-    const vs = votes.filter((v) => v.outcome_id === o.id)
-    const confs = vs
-      .map((v) => (typeof v.confidence === 'number' ? v.confidence : 0))
-      .filter((c) => c >= 1 && c <= 10)
-    const avg: number | null = confs.length
-      ? confs.reduce((a, b) => a + b, 0) / confs.length
-      : null
-    return { label: o.label, avg, count: vs.length }
+    const stats = statsByOutcome[o.id]
+    return {
+      label: o.label,
+      avg: outcomeAvgConfidence(stats),
+      count: stats?.count ?? 0,
+    }
   })
 
   return (

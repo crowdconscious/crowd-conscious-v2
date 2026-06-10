@@ -5,6 +5,11 @@ import {
 } from '@/lib/signals/supabase'
 import { cronHealthCheck, cronHealthComplete } from '@/lib/cron-health'
 import { issueTargetToken } from '@/lib/signals/issue-target-token'
+import {
+  buildSignalMilestonePush,
+  resolvePushLocale,
+  sendPushToUser,
+} from '@/lib/expo-push'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -141,7 +146,41 @@ type SignalRow = {
   cosign_count: number
   threshold_stage: number
   citizen_target_id: string
+  author_user_id: string
   private_target_notify_at: string | null
+}
+
+/**
+ * Milestone push to the signal author when their signal crosses a cosign
+ * stage (audit P5). Awaited (never fire-and-forget in serverless) and
+ * fail-soft: a push failure must not abort the stage promotion that
+ * already happened. sendPushToUser honors the author's push opt-out and
+ * logs to push_log. Locale comes from the author's user_settings (the
+ * same per-user signal every other push uses), not the signal's language.
+ */
+async function sendAuthorMilestonePush(
+  admin: SignalsAdminClient,
+  row: SignalRow
+): Promise<void> {
+  try {
+    const locale = await resolvePushLocale(admin, row.author_user_id)
+    await sendPushToUser(
+      admin,
+      row.author_user_id,
+      buildSignalMilestonePush({
+        slug: row.public_slug,
+        title: row.title,
+        cosignCount: row.cosign_count,
+        locale,
+      })
+    )
+  } catch (err) {
+    console.warn(
+      '[cron/signal-threshold-check] milestone push failed',
+      row.id,
+      err
+    )
+  }
 }
 
 type CronError = {
@@ -192,7 +231,7 @@ export async function GET(request: NextRequest) {
     const { data: stage1Rows, error: stage1QueryErr } = await admin
       .from('citizen_signals')
       .select(
-        'id, public_slug, title, language, cosign_count, threshold_stage, citizen_target_id, private_target_notify_at'
+        'id, public_slug, title, language, cosign_count, threshold_stage, citizen_target_id, author_user_id, private_target_notify_at'
       )
       .eq('publication_status', 'published')
       .lt('threshold_stage', 1)
@@ -235,7 +274,7 @@ export async function GET(request: NextRequest) {
     const { data: stage2Rows, error: stage2QueryErr } = await admin
       .from('citizen_signals')
       .select(
-        'id, public_slug, title, language, cosign_count, threshold_stage, citizen_target_id, private_target_notify_at'
+        'id, public_slug, title, language, cosign_count, threshold_stage, citizen_target_id, author_user_id, private_target_notify_at'
       )
       .eq('publication_status', 'published')
       .lt('threshold_stage', 2)
@@ -318,6 +357,10 @@ async function promoteStage1(args: {
     // Lost the race — another cron pass got here first.
     return
   }
+
+  // The race-safe flip above guarantees this runs once per stage, so the
+  // author gets exactly one milestone push per threshold.
+  await sendAuthorMilestonePush(admin, row)
 
   // Mint the magic-link token. We always mint fresh at the stage transition
   // so the email body has a usable raw token (we cannot read the prior
@@ -437,6 +480,8 @@ async function promoteStage2(args: {
   if (!updated) {
     return
   }
+
+  await sendAuthorMilestonePush(admin, row)
 
   // TODO(F15-followup): trigger the public dossier email blast to all
   // citizen_signal_subscriptions for this signal + a press packet PDF

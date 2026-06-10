@@ -7,8 +7,10 @@ import { getCurrentUser } from '@/lib/auth-server'
 import { getMarketText } from '@/lib/i18n/market-translations'
 import PulseResultClient, {
   type PulseOutcomeRow,
+  type PulseViewerVote,
   type PulseVoteRow,
 } from '@/components/pulse/PulseResultClient'
+import { aggregatePulseVotes } from '@/lib/pulse-vote-aggregates'
 import { DraftBanner } from '@/components/predictions/DraftBanner'
 import { AdminMarketToolbar } from '@/components/predictions/AdminMarketToolbar'
 import { loadMarketVoteReasoningsWithAuthors } from '@/lib/market-vote-reasonings'
@@ -191,6 +193,16 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
   const votes = (market.market_votes ?? []) as PulseVoteRow[]
   const outcomes = (market.market_outcomes ?? []) as PulseOutcomeRow[]
 
+  // Privacy + payload size: the public client payload carries only
+  // server-side aggregates plus the viewer's own vote — never the raw
+  // vote rows with every voter's user_id. Full rows go only to authorized
+  // analytics viewers (admin / valid sponsor token).
+  const aggregates = aggregatePulseVotes(votes)
+  const viewerVoteRow = user ? votes.find((v) => v.user_id === user.id) : undefined
+  const viewerVote: PulseViewerVote | null = viewerVoteRow
+    ? { outcomeId: viewerVoteRow.outcome_id, confidence: viewerVoteRow.confidence }
+    : null
+
   const featuredReasonings = await loadMarketVoteReasoningsWithAuthors(admin, id, locale)
 
   return (
@@ -212,11 +224,12 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
         sponsorName={market.sponsor_name}
         sponsorLogoUrl={market.sponsor_logo_url}
         outcomes={outcomes}
-        votes={votes}
+        aggregates={aggregates}
+        viewerVote={viewerVote}
+        enhancedVotes={isEnhancedView ? votes : undefined}
         locale={locale}
         isEnhancedView={isEnhancedView}
         featuredReasonings={featuredReasonings}
-        currentUserId={user?.id ?? null}
       />
     </>
   )

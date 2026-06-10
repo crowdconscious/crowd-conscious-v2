@@ -17,6 +17,7 @@
     "app/api/cron/pulse-auto-resolve/route.ts": { "maxDuration": 120 },
     "app/api/cron/reengagement-inactive/route.ts": { "maxDuration": 120 },
     "app/api/cron/signal-threshold-check/route.ts": { "maxDuration": 60 },
+    "app/api/cron/push-receipts/route.ts": { "maxDuration": 60 },
     "app/api/predictions/admin/run-agent/route.ts": { "maxDuration": 300 },
     "app/api/dashboard/sponsor/[token]/report/[marketId]/pdf/route.ts": { "maxDuration": 120 },
     "app/api/dashboard/sponsor/[token]/report/[marketId]/regenerate/route.ts": { "maxDuration": 120 },
@@ -58,6 +59,10 @@
     {
       "path": "/api/cron/signal-threshold-check",
       "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/push-receipts",
+      "schedule": "*/30 * * * *"
     }
   ],
   "headers": [

@@ -74,11 +74,19 @@ export async function GET(request: NextRequest) {
     const winningOutcomeId = data?.winning_outcome_id
     const winningLabel = data?.winning_outcome || 'Unknown'
     if (winningOutcomeId) {
-      void notifyMarketResolutionVoters(admin, {
-        marketId: row.id,
-        winningOutcomeId,
-        winningLabel,
-      }).catch((err) => console.error('[cron/pulse-auto-resolve] notify', err))
+      // Awaited on purpose: voter fan-out now includes Expo pushes, and
+      // fire-and-forget work is dropped when the serverless function
+      // freezes after the response (the b8cb7a4 lesson). Errors are caught
+      // so one market's notification failure doesn't block the rest.
+      try {
+        await notifyMarketResolutionVoters(admin, {
+          marketId: row.id,
+          winningOutcomeId,
+          winningLabel,
+        })
+      } catch (err) {
+        console.error('[cron/pulse-auto-resolve] notify', err)
+      }
     }
 
     // Fire-and-forget: queue a case_study_draft for the founder to review.
