@@ -1,14 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser, createServerAuth } from '@/lib/auth-server'
 import { isBlogEditorUser } from '@/lib/auth/is-blog-editor'
-
-const ALLOWED_CATEGORIES = [
-  'insight',
-  'pulse_analysis',
-  'market_story',
-  'world_cup',
-  'behind_data',
-] as const
+import { isValidBlogCategory } from '@/lib/blog-categories'
 
 function sanitizeSources(raw: unknown): { label: string; url: string }[] {
   if (!Array.isArray(raw)) return []
@@ -60,7 +53,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     }
     if (typeof body.content_en === 'string') patch.content_en = body.content_en.trim() || null
     if (typeof body.category === 'string') {
-      patch.category = ALLOWED_CATEGORIES.includes(body.category) ? body.category : 'insight'
+      patch.category = isValidBlogCategory(body.category) ? body.category : 'insight'
     }
     if ('cover_image_url' in body) {
       patch.cover_image_url =

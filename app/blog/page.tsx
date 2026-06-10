@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase-server'
 import NewsletterForm from '@/components/NewsletterForm'
+import { getBlogCategoryLabel } from '@/lib/blog-categories'
 
 export const metadata: Metadata = {
   title: 'Blog',
@@ -13,14 +14,6 @@ export const metadata: Metadata = {
     description:
       'Insights de inteligencia colectiva, Pulses y opinión pública en CDMX.',
   },
-}
-
-const CATEGORY_LABEL: Record<string, string> = {
-  insight: 'Insight',
-  pulse_analysis: 'Pulse analysis',
-  market_story: 'Market story',
-  world_cup: 'World Cup',
-  behind_data: 'Behind the data',
 }
 
 function formatDate(iso: string | null, locale: 'en' | 'es') {
@@ -90,7 +83,7 @@ export default async function BlogPage() {
           )}
           <div className="p-5">
             <span className="text-xs font-bold uppercase text-emerald-400">
-              {CATEGORY_LABEL[featured.category] ?? featured.category} ·{' '}
+              {getBlogCategoryLabel(featured.category, locale)} ·{' '}
               {formatDate(featured.published_at, locale)}
             </span>
             <h2 className="mt-2 text-xl font-bold text-white group-hover:text-emerald-200 md:text-2xl">
@@ -126,7 +119,7 @@ export default async function BlogPage() {
               )}
               <div className="p-5">
                 <span className="text-xs font-bold uppercase text-emerald-400">
-                  {CATEGORY_LABEL[post.category] ?? post.category} ·{' '}
+                  {getBlogCategoryLabel(post.category, locale)} ·{' '}
                   {formatDate(post.published_at, locale)}
                 </span>
                 <h3 className="mt-2 text-lg font-bold text-white group-hover:text-emerald-200">

@@ -13,14 +13,7 @@ import {
   type PulseEmbedComponentKey,
   type PulseEmbedPosition,
 } from '@/lib/pulse-embed-constants'
-
-const CATEGORIES = [
-  { id: 'insight', label: 'Insight' },
-  { id: 'pulse_analysis', label: 'Pulse analysis' },
-  { id: 'market_story', label: 'Market story' },
-  { id: 'world_cup', label: 'World Cup' },
-  { id: 'behind_data', label: 'Behind the data' },
-] as const
+import { BLOG_FORM_CATEGORIES } from '@/lib/blog-categories'
 
 const input =
   'w-full px-4 py-2.5 bg-[#1a2029] border border-[#2d3748] rounded-lg text-white placeholder:text-gray-500 focus:outline-none focus:border-emerald-500/50'
@@ -231,9 +224,9 @@ export default function AdminBlogCreatePage() {
         <div>
           <label className="mb-1 block text-sm text-slate-400">Category</label>
           <select className={input} value={category} onChange={(e) => setCategory(e.target.value)}>
-            {CATEGORIES.map((c) => (
+            {BLOG_FORM_CATEGORIES.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.label}
+                {c.labelEs === c.labelEn ? c.labelEs : `${c.labelEs} / ${c.labelEn}`}
               </option>
             ))}
           </select>

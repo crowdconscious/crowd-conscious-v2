@@ -1,14 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser, createServerAuth } from '@/lib/auth-server'
 import { isBlogEditorUser } from '@/lib/auth/is-blog-editor'
-
-const ALLOWED_CATEGORIES = [
-  'insight',
-  'pulse_analysis',
-  'market_story',
-  'world_cup',
-  'behind_data',
-] as const
+import { isValidBlogCategory } from '@/lib/blog-categories'
 
 function slugify(raw: string): string {
   const s = raw
@@ -65,7 +58,10 @@ export async function POST(request: NextRequest) {
     // Insert status must be draft/pending_review (RLS). Publishing happens below.
     const insertStatus = requestedStatus === 'published' ? 'draft' : requestedStatus
 
-    const category = ALLOWED_CATEGORIES.includes(body.category) ? body.category : 'insight'
+    const category =
+      typeof body.category === 'string' && isValidBlogCategory(body.category)
+        ? body.category
+        : 'insight'
     const baseSlug = typeof body.slug === 'string' && body.slug.trim() ? slugify(body.slug) : slugify(title)
     const slug = `${baseSlug}-${randomSuffix()}`
 

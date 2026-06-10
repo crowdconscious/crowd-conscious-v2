@@ -339,10 +339,14 @@ export function getCreatorCopy(locale: CreatorLocale) {
     editorCover: es ? 'Imagen de portada' : 'Cover image',
     editorSources: es ? 'Fuentes' : 'Sources',
     editorSourcesHint: es
-      ? 'Respalda tu artículo con enlaces verificables. Se muestran al pie del artículo.'
-      : 'Back your article with verifiable links. Shown at the foot of the article.',
-    editorSourceLabel: es ? 'Etiqueta' : 'Label',
+      ? 'Respalda tu artículo con enlaces verificables. Cada fuente lleva una URL y un título corto opcional; se muestran al pie del artículo.'
+      : 'Back your article with verifiable links. Each source takes a URL and an optional short title; they are shown at the foot of the article.',
+    editorSourceLabel: es ? 'Título de la fuente (opcional)' : 'Source title (optional)',
     editorSourceUrl: 'URL',
+    editorSourceInvalidUrl: es
+      ? 'URL inválida — debe empezar con http:// o https://'
+      : 'Invalid URL — must start with http:// or https://',
+    editorRemoveSource: es ? 'Quitar fuente' : 'Remove source',
     editorAddSource: es ? 'Agregar fuente' : 'Add source',
     editorSaveDraft: es ? 'Guardar borrador' : 'Save draft',
     editorSubmitReview: es ? 'Enviar a revisión' : 'Submit for review',

@@ -14,6 +14,7 @@ import {
   Bot,
   Hash,
 } from 'lucide-react'
+import { getBlogCategoryLabel } from '@/lib/blog-categories'
 
 export type BlogAdminRow = {
   id: string
@@ -100,14 +101,6 @@ const COPY = {
     errorSave: 'Could not save. Try again.',
   },
 } as const
-
-const CATEGORY_LABEL: Record<string, { es: string; en: string }> = {
-  insight: { es: 'Insight', en: 'Insight' },
-  pulse_analysis: { es: 'Análisis Pulse', en: 'Pulse analysis' },
-  market_story: { es: 'Historia de Pulse', en: 'Pulse story' },
-  world_cup: { es: 'Mundial', en: 'World Cup' },
-  behind_data: { es: 'Detrás de los datos', en: 'Behind the data' },
-}
 
 function formatDate(iso: string | null, locale: Locale) {
   if (!iso) return '—'
@@ -276,8 +269,7 @@ export default function BlogAdminList({
                 {filtered.map((row) => {
                   const displayTitle =
                     locale === 'en' && row.title_en?.trim() ? row.title_en : row.title
-                  const categoryLabel =
-                    CATEGORY_LABEL[row.category]?.[locale] ?? row.category
+                  const categoryLabel = getBlogCategoryLabel(row.category, locale)
                   const isAi = row.generated_by && row.generated_by !== 'manual'
                   const hasPulse = !!row.pulse_market_id
                   const busy = savingId === row.id

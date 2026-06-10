@@ -9,6 +9,7 @@ import {
   type PulseEmbedPosition,
 } from '@/lib/pulse-embed-constants'
 import { notifyBlogPublished } from '@/lib/expo-push'
+import { isValidBlogCategory, type BlogCategoryId } from '@/lib/blog-categories'
 
 function slugify(raw: string): string {
   const s = raw
@@ -98,8 +99,7 @@ export async function POST(request: NextRequest) {
 
     const publishNow = Boolean(body.publish_now)
     const category = String(body.category ?? 'insight').trim()
-    const allowed = ['insight', 'pulse_analysis', 'market_story', 'world_cup', 'behind_data']
-    const cat = allowed.includes(category) ? category : 'insight'
+    const cat: BlogCategoryId = isValidBlogCategory(category) ? category : 'insight'
 
     const tagsRaw = body.tags
     const tags: string[] =
@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
         content,
         content_en: String(body.content_en ?? '').trim() || null,
         cover_image_url: typeof body.cover_image_url === 'string' ? body.cover_image_url.trim() || null : null,
-        category: cat as 'insight' | 'pulse_analysis' | 'market_story' | 'world_cup' | 'behind_data',
+        category: cat,
         tags,
         meta_title: title,
         meta_description: metaDesc,

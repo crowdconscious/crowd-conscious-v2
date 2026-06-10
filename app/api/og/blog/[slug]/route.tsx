@@ -1,6 +1,7 @@
 import { ImageResponse } from 'next/og'
 import { createClient } from '@supabase/supabase-js'
 import { getMarketText, getOutcomeLabel } from '@/lib/i18n/market-translations'
+import { getBlogCategoryLabel } from '@/lib/blog-categories'
 
 /**
  * Dynamic Open Graph image for blog posts.
@@ -27,17 +28,9 @@ type OutcomeRow = {
   translations?: unknown
 }
 
-const CATEGORY_LABEL: Record<string, { en: string; es: string }> = {
-  insight: { en: 'Insight', es: 'Insight' },
-  pulse_analysis: { en: 'Pulse Analysis', es: 'Análisis Pulse' },
-  market_story: { en: 'Pulse Story', es: 'Historia de Pulse' },
-  world_cup: { en: 'World Cup', es: 'Mundial 2026' },
-  behind_data: { en: 'Behind the Data', es: 'Detrás de los datos' },
-}
-
 function categoryLabel(cat: string | null | undefined, locale: 'es' | 'en'): string {
-  if (!cat) return locale === 'en' ? 'Insight' : 'Insight'
-  return CATEGORY_LABEL[cat]?.[locale] ?? CATEGORY_LABEL[cat]?.en ?? cat
+  if (!cat) return 'Insight'
+  return getBlogCategoryLabel(cat, locale)
 }
 
 function pickTldrLine(raw: string | null | undefined): string | null {

@@ -31,18 +31,11 @@ import BlogTldrCard from '@/components/blog/BlogTldrCard'
 import BlogPulseStickyCta from '@/components/blog/BlogPulseStickyCta'
 import BlogCoverWithQuestion from '@/components/blog/BlogCoverWithQuestion'
 import { getMarketText } from '@/lib/i18n/market-translations'
+import { getBlogCategoryLabel } from '@/lib/blog-categories'
 
 const PULSE_EMBED_ANCHOR_ID = 'pulse-vote'
 
 type Props = { params: Promise<{ slug: string }> }
-
-const CATEGORY_LABEL: Record<string, { en: string; es: string }> = {
-  insight: { en: 'Insight', es: 'Insight' },
-  pulse_analysis: { en: 'Pulse analysis', es: 'Análisis Pulse' },
-  market_story: { en: 'Pulse story', es: 'Historia de Pulse' },
-  world_cup: { en: 'World Cup', es: 'Mundial' },
-  behind_data: { en: 'Behind the data', es: 'Detrás de los datos' },
-}
 
 function formatDate(iso: string | null, locale: 'en' | 'es') {
   if (!iso) return ''
@@ -313,8 +306,7 @@ export default async function BlogPostPage(props: Props) {
 
   const relatedMarketIds = (post.related_market_ids ?? []).filter(Boolean) as string[]
 
-  const catLabel =
-    CATEGORY_LABEL[post.category]?.[locale] ?? CATEGORY_LABEL[post.category]?.en ?? post.category
+  const catLabel = getBlogCategoryLabel(post.category, locale)
 
   const relatedSectionTitle =
     locale === 'es' ? 'Pulse relacionados' : 'Related Pulse'

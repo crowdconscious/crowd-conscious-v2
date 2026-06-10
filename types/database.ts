@@ -1941,7 +1941,17 @@ export interface Database {
           content: string
           content_en: string | null
           cover_image_url: string | null
-          category: 'insight' | 'pulse_analysis' | 'market_story' | 'world_cup' | 'behind_data'
+          category: 'insight'
+            | 'pulse_analysis'
+            | 'market_story'
+            | 'world_cup'
+            | 'behind_data'
+            | 'sustainability'
+            | 'city_mobility'
+            | 'civic_culture'
+            | 'conscious_places'
+            | 'creators'
+            | 'causes_fund'
           tags: string[]
           meta_title: string | null
           meta_description: string | null
@@ -1972,7 +1982,17 @@ export interface Database {
           content: string
           content_en?: string | null
           cover_image_url?: string | null
-          category?: 'insight' | 'pulse_analysis' | 'market_story' | 'world_cup' | 'behind_data'
+          category?: 'insight'
+            | 'pulse_analysis'
+            | 'market_story'
+            | 'world_cup'
+            | 'behind_data'
+            | 'sustainability'
+            | 'city_mobility'
+            | 'civic_culture'
+            | 'conscious_places'
+            | 'creators'
+            | 'causes_fund'
           tags?: string[]
           meta_title?: string | null
           meta_description?: string | null
@@ -2003,7 +2023,17 @@ export interface Database {
           content?: string
           content_en?: string | null
           cover_image_url?: string | null
-          category?: 'insight' | 'pulse_analysis' | 'market_story' | 'world_cup' | 'behind_data'
+          category?: 'insight'
+            | 'pulse_analysis'
+            | 'market_story'
+            | 'world_cup'
+            | 'behind_data'
+            | 'sustainability'
+            | 'city_mobility'
+            | 'civic_culture'
+            | 'conscious_places'
+            | 'creators'
+            | 'causes_fund'
           tags?: string[]
           meta_title?: string | null
           meta_description?: string | null

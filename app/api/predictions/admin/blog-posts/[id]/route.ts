@@ -5,6 +5,7 @@ import { PULSE_EMBED_POSITIONS, type PulseEmbedPosition } from '@/lib/pulse-embe
 import { isBlogEditorUser } from '@/lib/auth/is-blog-editor'
 import { canManageBlogPost } from '@/lib/auth/blog-post-access'
 import { notifyBlogPublished } from '@/lib/expo-push'
+import { isValidBlogCategory } from '@/lib/blog-categories'
 
 type Status = 'draft' | 'published' | 'archived'
 
@@ -18,14 +19,6 @@ function slugify(raw: string): string {
     .slice(0, 120)
   return s || 'post'
 }
-
-const ALLOWED_CATEGORIES = [
-  'insight',
-  'pulse_analysis',
-  'market_story',
-  'world_cup',
-  'behind_data',
-] as const
 
 export async function PATCH(
   request: NextRequest,
@@ -94,9 +87,7 @@ export async function PATCH(
 
     if (typeof body.category === 'string') {
       const c = body.category.trim()
-      patch.category = ALLOWED_CATEGORIES.includes(c as (typeof ALLOWED_CATEGORIES)[number])
-        ? c
-        : 'insight'
+      patch.category = isValidBlogCategory(c) ? c : 'insight'
     }
 
     if (body.tags !== undefined) {
