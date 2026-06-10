@@ -257,6 +257,56 @@ export function getCreatorCopy(locale: CreatorLocale) {
       ? 'Este creador aún no tiene artículos publicados.'
       : 'This creator has no published articles yet.',
     profileRoleBadge: es ? 'Creador' : 'Creator',
+
+    // --- Conscious Creator certification (Phase 1) ---------------------------
+    certTierNominated: es ? 'Nominado' : 'Nominated',
+    certTierCommunityVerified: es ? 'Verificado por la comunidad' : 'Community-Verified',
+    certTierCertified: es ? 'Certificado' : 'Certified',
+    certCertifiedSince: es ? 'Certificado desde' : 'Certified since',
+    certScoreLabel: 'Conscious Score',
+    certVotes: es ? 'votos' : 'votes',
+    certVotesToReveal: (n: number) =>
+      es
+        ? `${n} ${n === 1 ? 'voto más' : 'votos más'} para revelar el Conscious Score`
+        : `${n} more vote${n === 1 ? '' : 's'} to reveal the Conscious Score`,
+    certVoteTitle: es ? '¿Es un Creador Consciente?' : 'Is this a Conscious Creator?',
+    certVoteConfidence: es ? '¿Qué tan seguro/a estás? (1-10)' : 'How confident are you? (1-10)',
+    certVoteWhy: es ? '¿Por qué? (opcional)' : 'Why? (optional)',
+    certVoteSubmit: es ? 'Votar' : 'Vote',
+    certVoteYou: es ? 'Ya votaste' : 'You voted',
+    certVoteChange: es ? 'Cambiar voto' : 'Change vote',
+    certVoteFailed: es ? 'No se pudo registrar el voto' : 'Vote failed',
+    certNextReview: es ? 'Próxima revisión' : 'Next review',
+
+    // --- Creators directory (/creators) ---------------------------------------
+    directoryTitle: es ? 'Creadores Conscientes' : 'Conscious Creators',
+    directorySubtitle: es
+      ? 'Personas verificadas por la comunidad: chefs, artistas, activistas y más.'
+      : 'People verified by the community: chefs, artists, activists, and more.',
+    directoryViewProfile: es ? 'Ver perfil ↗' : 'View profile ↗',
+    directoryNominateCta: es ? 'Nomina a un creador' : 'Nominate a creator',
+    nominateTitle: es ? 'Nominar a un creador' : 'Nominate a creator',
+    nominateSub: es
+      ? 'Las nominaciones son revisadas por nuestro equipo. También puedes nominarte a ti mismo/a.'
+      : 'Nominations are reviewed by our team. You can also nominate yourself.',
+    nominateName: es ? 'Nombre del creador *' : 'Creator name *',
+    nominateCraft: es ? '¿Qué hace? (chef, muralista, ...) *' : 'What do they do? (chef, muralist, ...) *',
+    nominateWhy: es ? '¿Por qué es Consciente? *' : 'Why are they Conscious? *',
+    nominateInstagram: 'Instagram',
+    nominateEmail: es ? 'Tu correo (opcional)' : 'Your email (optional)',
+    nominateSend: es ? 'Enviar nominación' : 'Submit nomination',
+    nominateCancel: es ? 'Cancelar' : 'Cancel',
+    nominateRequired: es ? 'Completa los campos obligatorios' : 'Fill in the required fields',
+    nominateError: es ? 'Error al enviar' : 'Submit failed',
+    nominateSuccess: es
+      ? '¡Nominación enviada! La revisaremos pronto.'
+      : "Nomination submitted! We'll review it soon.",
+    creatorShareLine: (name: string, url: string) =>
+      es
+        ? `¿Es ${name} un Creador Consciente? Vota aquí: ${url}`
+        : `Is ${name} a Conscious Creator? Vote here: ${url}`,
+    creatorShare: es ? 'Compartir' : 'Share',
+    creatorShareCopied: es ? '¡Copiado!' : 'Copied!',
     dashEdit: es ? 'Editar' : 'Edit',
     dashView: es ? 'Ver' : 'View',
 

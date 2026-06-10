@@ -122,6 +122,8 @@ REGLAS DE DECISIÓN
 
 - "archive" — no procede. Ejemplos: duplica un mercado existente, está fuera de las categorías de la plataforma, es spam o muy ambiguo, o promueve a una persona/marca específica sin valor para la comunidad.
 
+CASO ESPECIAL — type "creator_nomination": son nominaciones de Creadores Conscientes (personas: chefs, artistas, activistas), NO ideas de mercado. No sugieras suggested_market_title. "respond_today" si la nominación trae nombre + oficio + razones concretas y verificables; "archive" si es spam o autopromoción vacía; "park" en lo demás.
+
 DEFAULT: cuando dudes, "park". No fuerces "respond_today" para inflar la lista.`
 
     const userMessage = `PROPUESTAS PENDIENTES (ordenadas por upvotes desc):

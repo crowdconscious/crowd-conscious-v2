@@ -12,6 +12,7 @@ export type LogoStorageFolder =
   | 'sponsors'
   | 'locations'
   | 'causes'
+  | 'creators'
 
 export interface LogoUploadProps {
   currentLogoUrl: string | null

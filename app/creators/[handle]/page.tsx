@@ -8,6 +8,12 @@ import { createAdminClient } from '@/lib/supabase-admin'
 import LandingNav from '@/app/components/landing/LandingNav'
 import { getCreatorCopy, normalizeHandle, type CreatorLocale } from '@/lib/i18n/creator'
 import { SITE_URL } from '@/lib/seo/site'
+import { parseMetadataValues } from '@/lib/locations/conscious-values'
+import { creatorCraftLabel } from '@/lib/creators/crafts'
+import type { CreatorCertificationRow } from '@/lib/creators/types'
+import CreatorCertificationPanel, {
+  CreatorTierBadge,
+} from '@/components/creators/CreatorCertificationPanel'
 
 const Footer = nextDynamic(() => import('@/components/Footer'))
 
@@ -61,6 +67,33 @@ async function loadCreator(handleParam: string): Promise<CreatorProfile | null> 
   return (data as CreatorProfile | null) ?? null
 }
 
+/** Active certification only — same visibility rule as the public RLS policy. */
+async function loadActiveCertification(
+  profileId: string
+): Promise<CreatorCertificationRow | null> {
+  const admin = createAdminClient()
+  const { data } = await admin
+    .from('creator_certifications')
+    .select('*')
+    .eq('profile_id', profileId)
+    .eq('status', 'active')
+    .maybeSingle()
+  return (data as CreatorCertificationRow | null) ?? null
+}
+
+type OutcomeRow = { id: string; label: string; sort_order: number | null }
+
+async function loadMarketOutcomes(marketId: string | null): Promise<OutcomeRow[]> {
+  if (!marketId) return []
+  const admin = createAdminClient()
+  const { data } = await admin
+    .from('market_outcomes')
+    .select('id, label, sort_order')
+    .eq('market_id', marketId)
+    .order('sort_order', { ascending: true })
+  return (data as OutcomeRow[] | null) ?? []
+}
+
 async function loadPublishedPosts(authorId: string): Promise<CreatorPost[]> {
   const admin = createAdminClient()
   const { data } = await admin
@@ -80,6 +113,41 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     return { title: 'Crowd Conscious' }
   }
   const name = creator.full_name || `@${creator.handle}`
+  const certification = await loadActiveCertification(creator.id)
+
+  if (certification) {
+    const title = `${name} — Conscious Creator | Crowd Conscious`
+    const votes = certification.total_votes ?? 0
+    const score = certification.conscious_score
+    const description =
+      score != null && votes >= 10
+        ? `Conscious Score ${Number(score).toFixed(1)}/10 · ${votes} votos. ¿Tú qué opinas?`
+        : votes > 0
+          ? `${votes} ${votes === 1 ? 'voto' : 'votos'}. ¿Es un Creador Consciente? Vota tú también.`
+          : certification.why_conscious || creator.bio || undefined
+    const ogImage = `${SITE_URL}/api/og/creator/${encodeURIComponent(creator.handle ?? handle)}`
+    const canonical = `${SITE_URL}/creators/${creator.handle}`
+    return {
+      title,
+      description,
+      alternates: { canonical },
+      openGraph: {
+        title,
+        description,
+        url: canonical,
+        siteName: 'Crowd Conscious',
+        images: [{ url: ogImage, width: 1200, height: 630, alt: name }],
+        type: 'profile',
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title,
+        description,
+        images: [ogImage],
+      },
+    }
+  }
+
   const title = `${name} | Crowd Conscious`
   const description = creator.bio || undefined
   return {
@@ -115,7 +183,16 @@ export default async function CreatorPublicProfilePage(props: Props) {
     notFound()
   }
 
-  const posts = await loadPublishedPosts(creator.id)
+  const [posts, certification] = await Promise.all([
+    loadPublishedPosts(creator.id),
+    loadActiveCertification(creator.id),
+  ])
+  const outcomes = certification
+    ? await loadMarketOutcomes(certification.current_market_id)
+    : []
+  const craftLabel = certification
+    ? creatorCraftLabel(certification.craft, certification.craft_en, locale)
+    : ''
   const displayName = creator.full_name || `@${creator.handle}`
   const social = creator.social_links ?? {}
 
@@ -179,7 +256,25 @@ export default async function CreatorPublicProfilePage(props: Props) {
               </p>
               <h1 className="mt-1 text-3xl font-bold text-white">{displayName}</h1>
               {creator.handle && (
-                <p className="mt-1 text-sm text-slate-400">@{creator.handle}</p>
+                <p className="mt-1 text-sm text-slate-400">
+                  @{creator.handle}
+                  {craftLabel ? ` · ${craftLabel}` : ''}
+                </p>
+              )}
+              {certification && (
+                <div className="mt-3 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+                  <CreatorTierBadge
+                    cert={{
+                      conscious_score:
+                        certification.conscious_score == null
+                          ? null
+                          : Number(certification.conscious_score),
+                      total_votes: certification.total_votes ?? 0,
+                      certified_at: certification.certified_at,
+                    }}
+                    locale={locale}
+                  />
+                </div>
               )}
               {creator.bio && (
                 <p className="mt-4 max-w-2xl text-slate-300">{creator.bio}</p>
@@ -202,6 +297,29 @@ export default async function CreatorPublicProfilePage(props: Props) {
               )}
             </div>
           </div>
+
+          {certification && (
+            <CreatorCertificationPanel
+              cert={{
+                conscious_score:
+                  certification.conscious_score == null
+                    ? null
+                    : Number(certification.conscious_score),
+                total_votes: certification.total_votes ?? 0,
+                certified_at: certification.certified_at,
+                next_review_date: certification.next_review_date,
+                why_conscious: certification.why_conscious,
+                why_conscious_en: certification.why_conscious_en,
+                craft: certification.craft,
+                craft_en: certification.craft_en,
+                city: certification.city,
+                values: parseMetadataValues(certification.metadata),
+                current_market_id: certification.current_market_id,
+              }}
+              outcomes={outcomes}
+              locale={locale}
+            />
+          )}
         </div>
       </section>
 

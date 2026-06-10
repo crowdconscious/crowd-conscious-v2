@@ -39,6 +39,7 @@ export async function POST(request: NextRequest) {
       'sponsors',
       'locations',
       'causes',
+      'creators',
     ] as const
     const folder =
       typeof folderRaw === 'string' && (allowed as readonly string[]).includes(folderRaw)

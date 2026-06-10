@@ -9,6 +9,10 @@ import { isBlogEditorUser } from '@/lib/auth/is-blog-editor'
 import LandingNav from '@/app/components/landing/LandingNav'
 import { ClubResetCaseStudyCard } from '@/components/pulse/ClubResetCaseStudyCard'
 import { getCreatorCopy, type CreatorLocale } from '@/lib/i18n/creator'
+import { parseMetadataValues } from '@/lib/locations/conscious-values'
+import type { CreatorCertificationRow, CreatorPublicProfile } from '@/lib/creators/types'
+import CreatorsDirectorySection from '@/components/creators/CreatorsDirectorySection'
+import type { CreatorCardRow } from '@/components/creators/CreatorCard'
 
 const Footer = nextDynamic(() => import('@/components/Footer'))
 
@@ -43,11 +47,96 @@ async function getBlogReadStats(): Promise<number | null> {
   }
 }
 
+/**
+ * Active Conscious Creator certifications for the directory grid.
+ * Certified-first sort: gold seals lead, then featured/sort_order/score.
+ */
+async function getConsciousCreators(): Promise<CreatorCardRow[]> {
+  try {
+    const admin = createAdminClient()
+    const { data: certs } = await admin
+      .from('creator_certifications')
+      .select(
+        'profile_id, conscious_score, total_votes, certified_at, craft, craft_en, city, metadata, is_featured, sort_order'
+      )
+      .eq('status', 'active')
+      .limit(60)
+    const rows = (certs ?? []) as Array<
+      Pick<
+        CreatorCertificationRow,
+        | 'profile_id'
+        | 'conscious_score'
+        | 'total_votes'
+        | 'certified_at'
+        | 'craft'
+        | 'craft_en'
+        | 'city'
+        | 'metadata'
+        | 'is_featured'
+        | 'sort_order'
+      >
+    >
+    if (rows.length === 0) return []
+
+    const { data: profiles } = await admin
+      .from('profiles')
+      .select('id, handle, full_name, avatar_url')
+      .in(
+        'id',
+        rows.map((r) => r.profile_id)
+      )
+    const profileById = new Map(
+      ((profiles ?? []) as Omit<CreatorPublicProfile, 'bio'>[]).map((p) => [p.id, p])
+    )
+
+    const cards = rows
+      .map((r): CreatorCardRow | null => {
+        const p = profileById.get(r.profile_id)
+        if (!p?.handle) return null
+        return {
+          profile_id: r.profile_id,
+          handle: p.handle,
+          full_name: p.full_name,
+          avatar_url: p.avatar_url,
+          conscious_score: r.conscious_score == null ? null : Number(r.conscious_score),
+          total_votes: r.total_votes ?? 0,
+          certified_at: r.certified_at,
+          craft: r.craft,
+          craft_en: r.craft_en,
+          city: r.city,
+          values: parseMetadataValues(r.metadata),
+        }
+      })
+      .filter((c): c is CreatorCardRow => c != null)
+
+    const featuredOf = new Map(rows.map((r) => [r.profile_id, r.is_featured]))
+    const sortOrderOf = new Map(rows.map((r) => [r.profile_id, r.sort_order]))
+    cards.sort((a, b) => {
+      const certDiff = Number(Boolean(b.certified_at)) - Number(Boolean(a.certified_at))
+      if (certDiff !== 0) return certDiff
+      const featDiff =
+        Number(Boolean(featuredOf.get(b.profile_id))) -
+        Number(Boolean(featuredOf.get(a.profile_id)))
+      if (featDiff !== 0) return featDiff
+      const orderDiff =
+        (sortOrderOf.get(a.profile_id) ?? 0) - (sortOrderOf.get(b.profile_id) ?? 0)
+      if (orderDiff !== 0) return orderDiff
+      return (b.conscious_score ?? -1) - (a.conscious_score ?? -1)
+    })
+    return cards
+  } catch {
+    return []
+  }
+}
+
 export default async function CreatorsLandingPage() {
   const cookieStore = await cookies()
   const locale: CreatorLocale = cookieStore.get('preferred-language')?.value === 'en' ? 'en' : 'es'
   const t = getCreatorCopy(locale)
-  const totalReads = await getBlogReadStats()
+  const [totalReads, consciousCreators] = await Promise.all([
+    getBlogReadStats(),
+    getConsciousCreators(),
+  ])
 
   // Adaptive CTA for logged-in visitors: creators (and admins) go straight to
   // their dashboard; existing non-creators see the upgrade label but still land
@@ -197,6 +286,9 @@ export default async function CreatorsLandingPage() {
         </div>
         <ClubResetCaseStudyCard locale={locale} />
       </div>
+
+      {/* 6.5) Creadores Conscientes — community-verified creator directory */}
+      <CreatorsDirectorySection creators={consciousCreators} locale={locale} />
 
       {/* 7) Signup CTA */}
       <section className="border-t border-white/10 px-4 py-16">

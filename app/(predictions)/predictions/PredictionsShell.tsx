@@ -30,6 +30,7 @@ import {
   MapPin,
   Briefcase,
   MessageSquareWarning,
+  Users,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
@@ -256,7 +257,7 @@ export default function PredictionsShell({
               }`}
             >
               <PlusCircle className="w-4 h-4" />
-              {language === 'es' ? 'Crear Mercado' : 'Create Market'}
+              {language === 'es' ? 'Crear Pulse' : 'Create Pulse'}
             </Link>
             <Link
               href="/predictions/admin/inbox"
@@ -363,6 +364,17 @@ export default function PredictionsShell({
             >
               <MapPin className="w-4 h-4" />
               Locations
+            </Link>
+            <Link
+              href="/predictions/admin/creators"
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                pathname.startsWith('/predictions/admin/creators')
+                  ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
+                  : 'text-cc-text-secondary hover:bg-gray-800/50 hover:text-amber-400'
+              }`}
+            >
+              <Users className="w-4 h-4" />
+              {language === 'es' ? 'Creadores' : 'Creators'}
             </Link>
             <Link
               href="/predictions/pulse"
@@ -558,7 +570,7 @@ export default function PredictionsShell({
                     }`}
                   >
                     <PlusCircle className="w-4 h-4" />
-                    {language === 'es' ? 'Crear Mercado' : 'Create Market'}
+                    {language === 'es' ? 'Crear Pulse' : 'Create Pulse'}
                   </Link>
                   <Link
                     href="/predictions/admin/inbox"
@@ -674,6 +686,18 @@ export default function PredictionsShell({
                   >
                     <MapPin className="w-4 h-4" />
                     Locations
+                  </Link>
+                  <Link
+                    href="/predictions/admin/creators"
+                    onClick={closeMobileMenu}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                      pathname.startsWith('/predictions/admin/creators')
+                        ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
+                        : 'text-cc-text-secondary hover:bg-gray-800/50 hover:text-amber-400'
+                    }`}
+                  >
+                    <Users className="w-4 h-4" />
+                    {language === 'es' ? 'Creadores' : 'Creators'}
                   </Link>
                   <Link
                     href="/predictions/pulse"

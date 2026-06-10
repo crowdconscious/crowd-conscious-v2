@@ -12,6 +12,7 @@ import {
 } from '@/lib/vote-reasoning'
 import { persistVoteReasoning } from '@/lib/persist-vote-reasoning'
 import { recalculateLocationScoreByMarketId } from '@/lib/locations/recalculate-score'
+import { recalculateCreatorScoreByMarketId } from '@/lib/creators/recalculate-score'
 import {
   standardRateLimit,
   getRateLimitIdentifier,
@@ -146,6 +147,12 @@ export async function POST(request: Request) {
         .eq('current_market_id', market_id)
         .maybeSingle()
 
+      const { data: creatorCertRow } = await admin
+        .from('creator_certifications')
+        .select('id')
+        .eq('current_market_id', market_id)
+        .maybeSingle()
+
       const reasoningNorm = normalizeVoteReasoning(
         rawReasoning,
         voteReasoningMaxForMarket(marketCheck?.is_micro_market)
@@ -163,11 +170,12 @@ export async function POST(request: Request) {
         marketCheck.live_event_id != null ||
         marketCheck.is_micro_market === true ||
         marketCheck.is_pulse === true ||
-        consciousLocRow != null
+        consciousLocRow != null ||
+        creatorCertRow != null
 
       if (!allowsAnonymous) {
         return NextResponse.json(
-          { error: 'Sign up to vote on this market', requiresSignup: true },
+          { error: 'Sign up to vote on this Pulse', requiresSignup: true },
           { status: 401 }
         )
       }
@@ -230,6 +238,9 @@ export async function POST(request: Request) {
       if (result.no_change !== true) {
         await recalculateLocationScoreByMarketId(market_id).catch((e) =>
           console.error('[vote] recalculateLocationScore', e)
+        )
+        await recalculateCreatorScoreByMarketId(market_id).catch((e) =>
+          console.error('[vote] recalculateCreatorScore', e)
         )
       }
 
@@ -314,6 +325,9 @@ export async function POST(request: Request) {
     if (result.no_change !== true) {
       await recalculateLocationScoreByMarketId(market_id).catch((e) =>
         console.error('[vote] recalculateLocationScore', e)
+      )
+      await recalculateCreatorScoreByMarketId(market_id).catch((e) =>
+        console.error('[vote] recalculateCreatorScore', e)
       )
     }
 
