@@ -12,6 +12,7 @@ import type { Json } from '@/types/database'
 import { parseMetadataValues } from '@/lib/locations/conscious-values'
 import { ValueBadgeRow } from '@/components/locations/ValueBadge'
 import { LocationCoverImage, LocationLogoImage } from '@/components/locations/LocationRemoteImage'
+import LocationOffersSection from '@/components/perks/LocationOffersSection'
 
 type OutcomeRow = {
   id: string
@@ -24,6 +25,7 @@ export default function LocationDetailClient({
   outcomes,
 }: {
   location: LocationCardRow & {
+    status?: string
     address: string | null
     website_url: string | null
     description: string | null
@@ -284,6 +286,10 @@ export default function LocationDetailClient({
         ) : (
           <div className="mb-8" />
         )}
+
+        {location.status === 'active' ? (
+          <LocationOffersSection slug={location.slug} />
+        ) : null}
 
         {location.current_market_id && yesId && noId && (
           <div className="rounded-xl border border-[#2d3748] bg-[#1a2029] p-6">
