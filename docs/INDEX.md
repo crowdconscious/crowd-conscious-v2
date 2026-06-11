@@ -36,7 +36,7 @@
 | [`inbox+moreadditions.md`](inbox+moreadditions.md) | Inbox + extra additions spec |
 | [`CONSCIOUS-CREATORS-STRATEGY-2026-06-09.md`](CONSCIOUS-CREATORS-STRATEGY-2026-06-09.md) | Conscious Creators feature strategy — people cards, verification tiers, share cards, web + mobile rollout |
 | [`CONSCIOUS-PERKS-STRATEGY-2026-06-10.md`](CONSCIOUS-PERKS-STRATEGY-2026-06-10.md) | Conscious Perks — location offers, XP redemption, owner dashboard, verify flow (web MVP) |
-| [`PLATFORM-AUDIT-AND-IMPROVEMENT-PLAN-2026-06-10.md`](PLATFORM-AUDIT-AND-IMPROVEMENT-PLAN-2026-06-10.md) | Cross-repo audit + plan — push fix, Pulse-language sweep, UX quick wins, XP rewards (Conscious Perks) |
+| [`PLATFORM-AUDIT-AND-IMPROVEMENT-PLAN-2026-06-10.md`](PLATFORM-AUDIT-AND-IMPROVEMENT-PLAN-2026-06-10.md) | Cross-repo audit + plan — push fix, Pulse-language sweep, UX quick wins, XP rewards (Conscious Perks); deferred personalization/filters noted in §Deferred |
 | [`SHARE-CARDS-STRATEGY-2026-06-09.md`](SHARE-CARDS-STRATEGY-2026-06-09.md) | Share cards v2 — thumbnail heroes, WhatsApp-link vs story-PNG channel split, QR decision, per-feature copy, web + mobile plan |
 
 ## Phase tracking (Mundial 2026 prep)

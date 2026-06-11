@@ -199,3 +199,15 @@ tangible and the certification funnel already exists.
 
 Phases A and B are independent and can run in parallel. C and D both touch the
 web app but different surfaces; D needs its own short spec round before code.
+
+---
+
+## Deferred — Personalization & filters
+
+The founder's longer-term vision is user-driven discovery: saved favorite
+subjects/topics and location/geo filters applied consistently across Pulses, blog,
+Conscious Creators, and Conscious Locations. That likely needs a `user_preferences`
+table (or equivalent), an onboarding preference step, and filter UI on each tab's
+feed. This work is explicitly deferred until Conscious Perks and Conscious Creators
+pilots validate demand; it may ship with Phase E (next binary) or later. No
+filtering or personalization code should land before that validation gate.
