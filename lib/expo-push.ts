@@ -148,7 +148,10 @@ export async function sendPushToUser(
   }
 
   const tokenRows = (rows ?? []) as PushTokenRow[]
-  if (tokenRows.length === 0) return
+  if (tokenRows.length === 0) {
+    console.warn('[expo-push] sendPushToUser: no tokens for user', userId)
+    return
+  }
 
   const messages: ExpoPushMessage[] = []
   const messageTokenRows: PushTokenRow[] = []
@@ -500,6 +503,14 @@ export async function notifyPulsePublished(
         .filter((id): id is string => Boolean(id))
     )
     recipients = recipients.filter((r) => !voterIds.has(r.userId))
+  }
+
+  if (recipients.length === 0) {
+    console.warn(
+      '[expo-push] notifyPulsePublished: no push-enabled recipients with tokens',
+      { marketId, mode }
+    )
+    return
   }
 
   const build =
