@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { Expo } from 'expo-server-sdk'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { cronHealthCheck, cronHealthComplete } from '@/lib/cron-health'
+import {
+  chunkPushNotificationReceiptIds,
+  getPushNotificationReceiptsAsync,
+} from '@/lib/expo-push'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -34,9 +37,6 @@ type PendingLogRow = {
   expo_ticket_id: string
   push_token_id: string | null
 }
-
-const expo = new Expo({ accessToken: process.env.EXPO_ACCESS_TOKEN })
-
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get('authorization')
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -98,16 +98,12 @@ export async function GET(request: NextRequest) {
   const okIds: string[] = []
   const staleTokenIds = new Set<string>()
 
-  const ticketChunks = expo.chunkPushNotificationReceiptIds([
-    ...rowsByTicket.keys(),
-  ])
+  const ticketChunks = chunkPushNotificationReceiptIds([...rowsByTicket.keys()])
 
   for (const chunk of ticketChunks) {
-    let receipts: Awaited<
-      ReturnType<typeof expo.getPushNotificationReceiptsAsync>
-    >
+    let receipts: Awaited<ReturnType<typeof getPushNotificationReceiptsAsync>>
     try {
-      receipts = await expo.getPushNotificationReceiptsAsync(chunk)
+      receipts = await getPushNotificationReceiptsAsync(chunk)
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       console.error('[cron/push-receipts] receipt fetch failed:', message)

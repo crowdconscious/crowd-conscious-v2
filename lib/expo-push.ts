@@ -1,5 +1,113 @@
-import { Expo, type ExpoPushMessage, type ExpoPushTicket } from 'expo-server-sdk'
 import type { SupabaseClient } from '@supabase/supabase-js'
+
+const EXPO_SEND_URL = 'https://exp.host/--/api/v2/push/send'
+const EXPO_RECEIPTS_URL = 'https://exp.host/--/api/v2/push/getReceipts'
+const PUSH_CHUNK_LIMIT = 100
+const RECEIPT_CHUNK_LIMIT = 300
+
+type ExpoPushMessage = {
+  to: string
+  sound?: 'default' | null
+  title?: string
+  body?: string
+  data?: Record<string, unknown>
+  badge?: number
+  priority?: 'default' | 'normal' | 'high'
+}
+
+type ExpoPushTicket =
+  | { status: 'ok'; id: string }
+  | { status: 'error'; message: string; details?: { error?: string } }
+
+export type ExpoPushReceipt =
+  | { status: 'ok' }
+  | { status: 'error'; message: string; details?: { error?: string } }
+
+function isExpoPushToken(token: string): boolean {
+  return (
+    typeof token === 'string' &&
+    (((token.startsWith('ExponentPushToken[') || token.startsWith('ExpoPushToken[')) &&
+      token.endsWith(']')) ||
+      /^[a-z\d]{8}-[a-z\d]{4}-[a-z\d]{4}-[a-z\d]{4}-[a-z\d]{12}$/i.test(token))
+  )
+}
+
+function chunkItems<T>(items: T[], chunkSize: number): T[][] {
+  const chunks: T[][] = []
+  for (let i = 0; i < items.length; i += chunkSize) {
+    chunks.push(items.slice(i, i + chunkSize))
+  }
+  return chunks
+}
+
+function chunkPushNotifications(messages: ExpoPushMessage[]): ExpoPushMessage[][] {
+  return chunkItems(messages, PUSH_CHUNK_LIMIT)
+}
+
+export function chunkPushNotificationReceiptIds(ids: string[]): string[][] {
+  return chunkItems(ids, RECEIPT_CHUNK_LIMIT)
+}
+
+function expoAuthHeaders(): HeadersInit {
+  const headers: Record<string, string> = {
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+    'User-Agent': 'crowd-conscious-expo-push/1.0',
+  }
+  const token = process.env.EXPO_ACCESS_TOKEN
+  if (token) {
+    headers.Authorization = `Bearer ${token}`
+  }
+  return headers
+}
+
+async function expoRequest<T>(url: string, body: unknown): Promise<T> {
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: expoAuthHeaders(),
+    body: JSON.stringify(body),
+  })
+  const text = await response.text()
+  let result: { data?: T; errors?: Array<{ message: string }> }
+  try {
+    result = JSON.parse(text) as typeof result
+  } catch {
+    throw new Error(`Expo responded with status ${response.status}: ${text}`)
+  }
+  if (!response.ok || result.errors?.length) {
+    const msg = result.errors?.[0]?.message ?? text
+    throw new Error(`Expo API error (${response.status}): ${msg}`)
+  }
+  if (result.data === undefined) {
+    throw new Error(`Expo API returned no data (${response.status})`)
+  }
+  return result.data
+}
+
+async function sendPushNotificationsAsync(
+  messages: ExpoPushMessage[]
+): Promise<ExpoPushTicket[]> {
+  const data = await expoRequest<ExpoPushTicket[]>(EXPO_SEND_URL, messages)
+  if (!Array.isArray(data) || data.length !== messages.length) {
+    throw new Error(
+      `Expected ${messages.length} push tickets but got ${data?.length ?? 0}`
+    )
+  }
+  return data
+}
+
+export async function getPushNotificationReceiptsAsync(
+  receiptIds: string[]
+): Promise<Record<string, ExpoPushReceipt>> {
+  const data = await expoRequest<Record<string, ExpoPushReceipt>>(
+    EXPO_RECEIPTS_URL,
+    { ids: receiptIds }
+  )
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    throw new Error('Expected Expo to respond with a map from receipt IDs to receipts')
+  }
+  return data
+}
 
 export type PushLocale = 'es' | 'en'
 
@@ -39,7 +147,6 @@ type UserSettingsRow = {
   language: string | null
 }
 
-const expo = new Expo({ accessToken: process.env.EXPO_ACCESS_TOKEN })
 const SEND_CONCURRENCY = 10
 
 function normalizeLocale(raw: string | null | undefined): PushLocale {
@@ -130,11 +237,10 @@ export async function sendPushToUser(
   userId: string,
   payload: SendPushPayload
 ): Promise<void> {
-  // NOTE: expo-server-sdk does NOT require an access token to deliver pushes
-  // (it's only needed when "Enhanced Push Security" is enabled on the Expo
-  // project). We intentionally do NOT short-circuit when the env var is
-  // missing — doing so silently disabled every push when EXPO_ACCESS_TOKEN
-  // was not configured in the deploy environment.
+  // Expo push delivery does NOT require an access token unless "Enhanced Push
+  // Security" is enabled on the Expo project. We intentionally do NOT
+  // short-circuit when EXPO_ACCESS_TOKEN is missing — doing so silently
+  // disabled every push when the env var was not configured in deploy.
   if (!(await isPushEnabledForUser(admin, userId))) return
 
   const { data: rows, error } = await admin
@@ -157,7 +263,7 @@ export async function sendPushToUser(
   const messageTokenRows: PushTokenRow[] = []
 
   for (const row of tokenRows) {
-    if (!Expo.isExpoPushToken(row.expo_push_token)) continue
+    if (!isExpoPushToken(row.expo_push_token)) continue
     messages.push({
       to: row.expo_push_token,
       sound: 'default',
@@ -171,7 +277,7 @@ export async function sendPushToUser(
 
   if (messages.length === 0) return
 
-  const chunks = expo.chunkPushNotifications(messages)
+  const chunks = chunkPushNotifications(messages)
   const staleIds: string[] = []
   const logRows: PushLogInsert[] = []
   const dataType = payload.data?.type ?? null
@@ -181,7 +287,7 @@ export async function sendPushToUser(
     const chunkRows = messageTokenRows.slice(offset, offset + chunk.length)
     offset += chunk.length
     try {
-      const tickets = await expo.sendPushNotificationsAsync(chunk)
+      const tickets = await sendPushNotificationsAsync(chunk)
       staleIds.push(...collectDeviceNotRegisteredIds(tickets, chunkRows))
       tickets.forEach((ticket, i) => {
         const row = chunkRows[i]
