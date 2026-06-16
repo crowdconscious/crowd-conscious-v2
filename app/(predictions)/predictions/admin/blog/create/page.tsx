@@ -13,6 +13,7 @@ import {
   type PulseEmbedComponentKey,
   type PulseEmbedPosition,
 } from '@/lib/pulse-embed-constants'
+import { SourcesInput, type SourceItem } from '@/components/blog/SourcesInput'
 import { BLOG_FORM_CATEGORIES } from '@/lib/blog-categories'
 
 const input =
@@ -38,6 +39,7 @@ export default function AdminBlogCreatePage() {
   const [pulseComponents, setPulseComponents] = useState<PulseEmbedComponentKey[]>(() =>
     normalizePulseEmbedComponents(null)
   )
+  const [sources, setSources] = useState<SourceItem[]>([])
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
@@ -88,6 +90,7 @@ export default function AdminBlogCreatePage() {
           pulse_market_id: embedEnabled ? pulseMarketId : null,
           pulse_embed_position: pulseEmbedPosition,
           pulse_embed_components: pulseComponents,
+          sources: sources.filter((s) => s.url.trim()),
         }),
       })
       const json = await res.json().catch(() => ({}))
@@ -221,6 +224,14 @@ export default function AdminBlogCreatePage() {
           onToggleComponent={togglePulseComponent}
         />
 
+        <div>
+          <label className="mb-1 block text-sm text-slate-400">Sources / Fuentes</label>
+          <p className="mb-2 text-xs text-slate-500">
+            Verifiable links at the foot of the article. Each row: URL + optional title (link text). /
+            Enlaces verificables al pie del artículo. Cada fila: URL + título opcional.
+          </p>
+          <SourcesInput value={sources} onChange={setSources} locale="es" />
+        </div>
         <div>
           <label className="mb-1 block text-sm text-slate-400">Category</label>
           <select className={input} value={category} onChange={(e) => setCategory(e.target.value)}>

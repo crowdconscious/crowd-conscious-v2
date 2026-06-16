@@ -16,6 +16,8 @@ import {
   type PulseEmbedComponentKey,
   type PulseEmbedPosition,
 } from '@/lib/pulse-embed-constants'
+import { parseBlogSources } from '@/components/blog/BlogSources'
+import { SourcesInput, type SourceItem } from '@/components/blog/SourcesInput'
 import { BLOG_FORM_CATEGORIES } from '@/lib/blog-categories'
 
 type Row = Database['public']['Tables']['blog_posts']['Row']
@@ -50,6 +52,9 @@ export default function EditBlogPostClient({ post }: { post: Row }) {
   )
   const [pulseComponents, setPulseComponents] = useState<PulseEmbedComponentKey[]>(() =>
     normalizePulseEmbedComponents(post.pulse_embed_components)
+  )
+  const [sources, setSources] = useState<SourceItem[]>(() =>
+    parseBlogSources((post as { sources?: unknown }).sources)
   )
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -95,6 +100,7 @@ export default function EditBlogPostClient({ post }: { post: Row }) {
           pulse_market_id: embedEnabled ? pulseMarketId : null,
           pulse_embed_position: pulseEmbedPosition,
           pulse_embed_components: pulseComponents,
+          sources: sources.filter((s) => s.url.trim()),
         }
         if (opts.publish) body.status = 'published'
         if (opts.archive) body.status = 'archived'
@@ -133,6 +139,7 @@ export default function EditBlogPostClient({ post }: { post: Row }) {
       pulseMarketId,
       pulseEmbedPosition,
       pulseComponents,
+      sources,
       post.id,
       router,
     ]
@@ -245,6 +252,14 @@ export default function EditBlogPostClient({ post }: { post: Row }) {
           onToggleComponent={togglePulseComponent}
         />
 
+        <div>
+          <label className="mb-1 block text-sm text-slate-400">Sources / Fuentes</label>
+          <p className="mb-2 text-xs text-slate-500">
+            Verifiable links at the foot of the article. Each row: URL + optional title (link text). /
+            Enlaces verificables al pie del artículo. Cada fila: URL + título opcional.
+          </p>
+          <SourcesInput value={sources} onChange={setSources} locale="es" />
+        </div>
         <div>
           <label className="mb-1 block text-sm text-slate-400">Related market IDs (UUIDs, comma-separated)</label>
           <input

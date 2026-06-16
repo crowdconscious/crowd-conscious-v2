@@ -9,6 +9,19 @@ import { isValidBlogCategory } from '@/lib/blog-categories'
 
 type Status = 'draft' | 'published' | 'archived'
 
+function sanitizeSources(raw: unknown): { label: string; url: string }[] {
+  if (!Array.isArray(raw)) return []
+  return raw
+    .map((s) => {
+      const item = s as { label?: unknown; url?: unknown }
+      const url = typeof item.url === 'string' ? item.url.trim() : ''
+      const label = typeof item.label === 'string' ? item.label.trim() : ''
+      return { label: label || url, url }
+    })
+    .filter((s) => s.url.length > 0)
+    .slice(0, 20)
+}
+
 function slugify(raw: string): string {
   const s = raw
     .toLowerCase()
@@ -156,6 +169,10 @@ export async function PATCH(
         ? body.pulse_embed_components.map((x: unknown) => String(x).trim()).filter(Boolean)
         : []
       patch.pulse_embed_components = arr.length > 0 ? arr : []
+    }
+
+    if ('sources' in body) {
+      patch.sources = sanitizeSources(body.sources)
     }
 
     const keys = Object.keys(patch).filter((k) => k !== 'updated_at')

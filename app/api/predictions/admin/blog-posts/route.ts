@@ -11,6 +11,19 @@ import {
 import { notifyBlogPublished } from '@/lib/expo-push'
 import { isValidBlogCategory, type BlogCategoryId } from '@/lib/blog-categories'
 
+function sanitizeSources(raw: unknown): { label: string; url: string }[] {
+  if (!Array.isArray(raw)) return []
+  return raw
+    .map((s) => {
+      const item = s as { label?: unknown; url?: unknown }
+      const url = typeof item.url === 'string' ? item.url.trim() : ''
+      const label = typeof item.label === 'string' ? item.label.trim() : ''
+      return { label: label || url, url }
+    })
+    .filter((s) => s.url.length > 0)
+    .slice(0, 20)
+}
+
 function slugify(raw: string): string {
   const s = raw
     .toLowerCase()
@@ -171,6 +184,7 @@ export async function POST(request: NextRequest) {
         pulse_market_id,
         pulse_embed_position,
         pulse_embed_components,
+        sources: sanitizeSources(body.sources),
         generated_by: 'manual',
         status: publishNow ? 'published' : 'draft',
         published_at: publishNow ? now : null,
