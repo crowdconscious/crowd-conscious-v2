@@ -225,14 +225,6 @@ export default function AdminBlogCreatePage() {
         />
 
         <div>
-          <label className="mb-1 block text-sm text-slate-400">Sources / Fuentes</label>
-          <p className="mb-2 text-xs text-slate-500">
-            Verifiable links at the foot of the article. Each row: URL + optional title (link text). /
-            Enlaces verificables al pie del artículo. Cada fila: URL + título opcional.
-          </p>
-          <SourcesInput value={sources} onChange={setSources} locale="es" />
-        </div>
-        <div>
           <label className="mb-1 block text-sm text-slate-400">Category</label>
           <select className={input} value={category} onChange={(e) => setCategory(e.target.value)}>
             {BLOG_FORM_CATEGORIES.map((c) => (
@@ -249,6 +241,14 @@ export default function AdminBlogCreatePage() {
         <div>
           <label className="mb-1 block text-sm text-slate-400">Meta description</label>
           <input className={input} value={metaDescription} onChange={(e) => setMetaDescription(e.target.value)} />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm text-slate-400">Sources / Fuentes</label>
+          <p className="mb-2 text-xs text-slate-500">
+            Verifiable links at the foot of the article. Each row: URL + optional title (link text). /
+            Enlaces verificables al pie del artículo. Cada fila: URL + título opcional.
+          </p>
+          <SourcesInput value={sources} onChange={setSources} locale="es" />
         </div>
         <div>
           <span className="mb-2 block text-sm text-slate-400">Cover image</span>
