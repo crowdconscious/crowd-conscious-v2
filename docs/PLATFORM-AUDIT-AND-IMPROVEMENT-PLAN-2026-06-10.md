@@ -202,6 +202,50 @@ web app but different surfaces; D needs its own short spec round before code.
 
 ---
 
+## 7. Phase F — Mobile content parity
+
+Cross-surface goal: a user who discovers Crowd Conscious on web and opens the
+companion app should see the **same facts** on Signals and Blog detail — not a
+stripped-down subset. Ship via **OTA only** (runtime 1.1.1); no native config
+or dependency changes unless a future binary explicitly requires them.
+
+### Mobile UX principles (apply to every F item)
+
+- Prefer **collapsible sections** over long scroll walls on small screens.
+- Put **primary CTAs at the bottom** (co-sign, sponsor, share) where thumbs reach.
+- **External sponsor / donation flows** open in `expo-web-browser` — never Apple
+  IAP for brand sponsorship or Stripe checkout.
+- Do **not** cram web-only charts, sticky multi-column layouts, or admin chrome
+  into phone screens; aggregate or link out instead.
+
+| Item | Scope | Status |
+|------|-------|--------|
+| **F1 — Pulse detail** | Post-vote results breakdown, sponsor badge, "Understand this issue" explainer, related content | **Deferred** — next sprint (Pulse detail already has vote + comments; parity gaps are results viz + sponsor + explainer) |
+| **F2 — Signals** | Target authority (`citizen_targets`), alcaldía / location line (`conscious_locations`), target type pill, filed-by, official responses; list cards show geo subline | **This sprint (Jun 2026)** |
+| **F3 — Blog** | Author byline (avatar, role badge), sources footnote list, "Sponsor this post" → web Stripe at `/sponsor/blog/[postId]`, share + discussion (already on mobile) | **This sprint (Jun 2026)** |
+| **F4 — Personalization filters** | Saved topics + geo filters across Pulses, blog, creators, locations | **Deferred** — see §Deferred — Personalization & filters |
+
+### F2 acceptance (Signals)
+
+- Detail and list cards show **target label** (e.g. "Alcaldía Cuauhtémoc") when
+  `citizen_target_id` is set.
+- Location line follows web: `{alcaldía or neighborhood} · {city}` (not city alone).
+- **Target type** pill when `target_kind` is present (`municipality` / `institution`).
+- **Filed by** + **official response** section visible on detail (empty state when none).
+- Hooks select/join `citizen_target_id`, `conscious_location_id`, `partner_location_id`
+  from `citizen_signals_public` + `citizen_targets_public` + `conscious_locations`.
+
+### F3 acceptance (Blog)
+
+- **Author block** after title: avatar, name, Editorial / Creator badge; tappable
+  → `https://www.crowdconscious.app/creators/{handle}` when handle known.
+- **Sources** list after body (jsonb `sources` column).
+- **Sponsor CTA** before comments: opens
+  `https://www.crowdconscious.app/sponsor/blog/{postId}?source=mobile_app` in
+  in-app browser (no IAP).
+
+---
+
 ## Deferred — Personalization & filters
 
 The founder's longer-term vision is user-driven discovery: saved favorite
