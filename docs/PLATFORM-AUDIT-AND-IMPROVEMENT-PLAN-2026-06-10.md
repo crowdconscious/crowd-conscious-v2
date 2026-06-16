@@ -220,7 +220,7 @@ or dependency changes unless a future binary explicitly requires them.
 
 | Item | Scope | Status |
 |------|-------|--------|
-| **F1 — Pulse detail** | Post-vote results breakdown, sponsor badge, "Understand this issue" explainer, related content | **Deferred** — next sprint (Pulse detail already has vote + comments; parity gaps are results viz + sponsor + explainer) |
+| **F1 — Pulse detail** | Post-vote results breakdown, sponsor badge, "Understand this issue" explainer, related content | **Done (Jun 2026, mobile OTA)** — results bars, sponsor banner, collapsible explainer, post-vote celebration modal |
 | **F2 — Signals** | Target authority (`citizen_targets`), alcaldía / location line (`conscious_locations`), target type pill, filed-by, official responses; list cards show geo subline | **This sprint (Jun 2026)** |
 | **F3 — Blog** | Author byline (avatar, role badge), sources footnote list, "Sponsor this post" → web Stripe at `/sponsor/blog/[postId]`, share + discussion (already on mobile) | **This sprint (Jun 2026)** |
 | **F4 — Personalization filters** | Saved topics + geo filters across Pulses, blog, creators, locations | **Deferred** — see §Deferred — Personalization & filters |
