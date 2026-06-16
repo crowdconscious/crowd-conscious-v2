@@ -128,6 +128,66 @@ export type SendPushPayload = {
 type PushTokenRow = {
   id: string
   expo_push_token: string
+  device_id?: string | null
+  updated_at?: string | null
+}
+
+/** Prefer the row with the latest `updated_at`; fall back to array order. */
+function preferNewerPushTokenRow(a: PushTokenRow, b: PushTokenRow): PushTokenRow {
+  if (a.updated_at && b.updated_at) {
+    return a.updated_at >= b.updated_at ? a : b
+  }
+  if (a.updated_at) return a
+  if (b.updated_at) return b
+  return a
+}
+
+/**
+ * Collapses duplicate registrations before send: same `expo_push_token` string
+ * must only produce one Expo message, and the same physical device should not
+ * receive multiple pushes when stale rows linger after re-registration.
+ */
+function dedupePushTokenRows(rows: PushTokenRow[]): {
+  toSend: PushTokenRow[]
+  duplicateIds: string[]
+} {
+  const duplicateIds: string[] = []
+
+  const byToken = new Map<string, PushTokenRow>()
+  for (const row of rows) {
+    if (!isExpoPushToken(row.expo_push_token)) continue
+    const existing = byToken.get(row.expo_push_token)
+    if (!existing) {
+      byToken.set(row.expo_push_token, row)
+      continue
+    }
+    const kept = preferNewerPushTokenRow(existing, row)
+    duplicateIds.push(kept.id === existing.id ? row.id : existing.id)
+    byToken.set(row.expo_push_token, kept)
+  }
+
+  const byDevice = new Map<string, PushTokenRow>()
+  const withoutDevice: PushTokenRow[] = []
+  for (const row of byToken.values()) {
+    const deviceId = row.device_id?.trim()
+    if (!deviceId) {
+      withoutDevice.push(row)
+      continue
+    }
+    const existing = byDevice.get(deviceId)
+    if (!existing) {
+      byDevice.set(deviceId, row)
+      continue
+    }
+    const kept = preferNewerPushTokenRow(existing, row)
+    duplicateIds.push(kept.id === existing.id ? row.id : existing.id)
+    byDevice.set(deviceId, kept)
+  }
+
+  return {
+    toSend: [...withoutDevice, ...byDevice.values()],
+    duplicateIds: [...new Set(duplicateIds)],
+  }
 }
 
 type PushLogInsert = {
@@ -245,37 +305,33 @@ export async function sendPushToUser(
 
   const { data: rows, error } = await admin
     .from('push_tokens')
-    .select('id, expo_push_token')
+    .select('id, expo_push_token, device_id, updated_at')
     .eq('user_id', userId)
+    .order('updated_at', { ascending: false, nullsFirst: false })
 
   if (error) {
     console.warn('[expo-push] token fetch error:', error.message)
     return
   }
 
-  const tokenRows = (rows ?? []) as PushTokenRow[]
-  if (tokenRows.length === 0) {
+  const rawRows = (rows ?? []) as PushTokenRow[]
+  if (rawRows.length === 0) {
     console.warn('[expo-push] sendPushToUser: no tokens for user', userId)
     return
   }
 
-  const messages: ExpoPushMessage[] = []
-  const messageTokenRows: PushTokenRow[] = []
+  const { toSend: tokenRows, duplicateIds } = dedupePushTokenRows(rawRows)
+  if (tokenRows.length === 0) return
 
-  for (const row of tokenRows) {
-    if (!isExpoPushToken(row.expo_push_token)) continue
-    messages.push({
-      to: row.expo_push_token,
-      sound: 'default',
-      title: payload.title,
-      body: payload.body,
-      data: payload.data,
-      badge: payload.badge,
-    })
-    messageTokenRows.push(row)
-  }
-
-  if (messages.length === 0) return
+  const messages: ExpoPushMessage[] = tokenRows.map((row) => ({
+    to: row.expo_push_token,
+    sound: 'default',
+    title: payload.title,
+    body: payload.body,
+    data: payload.data,
+    badge: payload.badge,
+  }))
+  const messageTokenRows = tokenRows
 
   const chunks = chunkPushNotifications(messages)
   const staleIds: string[] = []
@@ -326,7 +382,7 @@ export async function sendPushToUser(
   }
 
   await insertPushLogRows(admin, logRows)
-  await deleteStalePushTokens(admin, [...new Set(staleIds)])
+  await deleteStalePushTokens(admin, [...new Set([...staleIds, ...duplicateIds])])
 }
 
 async function runWithConcurrency<T>(
