@@ -21,6 +21,9 @@
     "app/api/predictions/admin/run-agent/route.ts": { "maxDuration": 300 },
     "app/api/dashboard/sponsor/[token]/report/[marketId]/pdf/route.ts": { "maxDuration": 120 },
     "app/api/dashboard/sponsor/[token]/report/[marketId]/regenerate/route.ts": { "maxDuration": 120 },
+    "app/api/predictions/admin/blog-posts/route.ts": { "maxDuration": 120 },
+    "app/api/predictions/admin/blog-posts/[id]/route.ts": { "maxDuration": 120 },
+    "app/api/admin/blog/[id]/approve/route.ts": { "maxDuration": 120 },
     "app/api/**/*.ts": { "maxDuration": 30 }
   },
   "crons": [

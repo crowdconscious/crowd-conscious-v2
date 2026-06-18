@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth-server'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { isAdminUser } from '@/lib/auth/is-admin'
-import { notifyBlogPublished } from '@/lib/expo-push'
+import { scheduleNotifyBlogPublished } from '@/lib/expo-push'
 
 /**
  * POST /api/admin/blog/[id]/approve
@@ -64,11 +64,7 @@ export async function POST(_request: NextRequest, context: { params: Promise<{ i
     }
 
     if (isFirstPublish && post.slug && post.title) {
-      try {
-        await notifyBlogPublished(admin, { slug: post.slug, title: post.title })
-      } catch (err) {
-        console.warn('[admin/blog approve] push error:', err)
-      }
+      scheduleNotifyBlogPublished(admin, { slug: post.slug, title: post.title })
     }
 
     return NextResponse.json({ ok: true, slug: post.slug, newTrust })

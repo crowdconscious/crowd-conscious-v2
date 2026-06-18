@@ -29,6 +29,14 @@ const ALLOWED_CATEGORIES = new Set([
   'world_cup',
   'behind_data',
   'insight',
+  'sustainability',
+  'city_mobility',
+  'civic_culture',
+  'conscious_places',
+  'creators',
+  'causes_fund',
+  'consciousness',
+  'science',
 ])
 
 const APP_BASE = process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'

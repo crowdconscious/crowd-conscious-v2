@@ -4,7 +4,7 @@ import { createAdminClient } from '@/lib/supabase-admin'
 import { PULSE_EMBED_POSITIONS, type PulseEmbedPosition } from '@/lib/pulse-embed-constants'
 import { isBlogEditorUser } from '@/lib/auth/is-blog-editor'
 import { canManageBlogPost } from '@/lib/auth/blog-post-access'
-import { notifyBlogPublished } from '@/lib/expo-push'
+import { scheduleNotifyBlogPublished } from '@/lib/expo-push'
 import { isValidBlogCategory } from '@/lib/blog-categories'
 
 type Status = 'draft' | 'published' | 'archived'
@@ -190,11 +190,7 @@ export async function PATCH(
     if (isFirstPublish) {
       const slug = (typeof patch.slug === 'string' ? patch.slug : existingPost.slug) as string
       const title = (typeof patch.title === 'string' ? patch.title : existingPost.title) as string
-      try {
-        await notifyBlogPublished(admin, { slug, title })
-      } catch (err) {
-        console.warn('[admin/blog-posts PATCH] push error:', err)
-      }
+      scheduleNotifyBlogPublished(admin, { slug, title })
     }
 
     return NextResponse.json({ ok: true, post: data })

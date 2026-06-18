@@ -1952,6 +1952,8 @@ export interface Database {
             | 'conscious_places'
             | 'creators'
             | 'causes_fund'
+            | 'consciousness'
+            | 'science'
           tags: string[]
           meta_title: string | null
           meta_description: string | null
@@ -1993,6 +1995,8 @@ export interface Database {
             | 'conscious_places'
             | 'creators'
             | 'causes_fund'
+            | 'consciousness'
+            | 'science'
           tags?: string[]
           meta_title?: string | null
           meta_description?: string | null
@@ -2034,6 +2038,8 @@ export interface Database {
             | 'conscious_places'
             | 'creators'
             | 'causes_fund'
+            | 'consciousness'
+            | 'science'
           tags?: string[]
           meta_title?: string | null
           meta_description?: string | null

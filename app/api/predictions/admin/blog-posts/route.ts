@@ -8,7 +8,7 @@ import {
   PULSE_EMBED_POSITIONS,
   type PulseEmbedPosition,
 } from '@/lib/pulse-embed-constants'
-import { notifyBlogPublished } from '@/lib/expo-push'
+import { scheduleNotifyBlogPublished } from '@/lib/expo-push'
 import { isValidBlogCategory, type BlogCategoryId } from '@/lib/blog-categories'
 
 function sanitizeSources(raw: unknown): { label: string; url: string }[] {
@@ -198,14 +198,10 @@ export async function POST(request: NextRequest) {
     }
 
     if (publishNow && row?.slug) {
-      try {
-        await notifyBlogPublished(admin, {
-          slug: row.slug,
-          title,
-        })
-      } catch (err) {
-        console.warn('[admin blog POST] push error:', err)
-      }
+      scheduleNotifyBlogPublished(admin, {
+        slug: row.slug,
+        title,
+      })
     }
 
     return NextResponse.json({ ok: true, post: row })

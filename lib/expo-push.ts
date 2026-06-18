@@ -1,3 +1,4 @@
+import { after } from 'next/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 const EXPO_SEND_URL = 'https://exp.host/--/api/v2/push/send'
@@ -693,6 +694,14 @@ export async function notifyBlogPublished(
   const { slug, title } = params
   const recipients = await fetchPushEnabledRecipients(admin)
 
+  if (recipients.length === 0) {
+    console.warn(
+      '[expo-push] notifyBlogPublished: no push-enabled recipients with tokens',
+      { slug }
+    )
+    return
+  }
+
   await runWithConcurrency(
     recipients,
     ({ userId, locale }) =>
@@ -703,6 +712,30 @@ export async function notifyBlogPublished(
       ),
     SEND_CONCURRENCY
   )
+}
+
+/**
+ * Schedules blog publish pushes after the HTTP response is flushed. Blog
+ * fan-out can exceed the default 30s route limit when awaited inline; `after()`
+ * keeps the lambda alive without blocking the admin publish response.
+ */
+export function scheduleNotifyBlogPublished(
+  admin: SupabaseClient,
+  params: { slug: string; title: string }
+): void {
+  const task = async () => {
+    try {
+      await notifyBlogPublished(admin, params)
+    } catch (err) {
+      console.warn('[expo-push] notifyBlogPublished failed:', err)
+    }
+  }
+
+  try {
+    after(task)
+  } catch {
+    void task()
+  }
 }
 
 export async function notifySignalPublished(

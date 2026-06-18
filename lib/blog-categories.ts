@@ -18,6 +18,8 @@ export const BLOG_CATEGORY_IDS = [
   'conscious_places',
   'creators',
   'causes_fund',
+  'consciousness',
+  'science',
 ] as const
 
 export type BlogCategoryId = (typeof BLOG_CATEGORY_IDS)[number]
@@ -40,6 +42,8 @@ export const BLOG_CATEGORY_LABELS: Record<BlogCategoryId, { es: string; en: stri
   conscious_places: { es: 'Lugares Conscientes', en: 'Conscious Places' },
   creators: { es: 'Creadores', en: 'Creators' },
   causes_fund: { es: 'Causas y fondo', en: 'Causes & fund' },
+  consciousness: { es: 'Consciencia', en: 'Consciousness' },
+  science: { es: 'Ciencia', en: 'Science' },
 }
 
 export function getBlogCategoryLabel(id: string, locale: 'es' | 'en' = 'es'): string {
