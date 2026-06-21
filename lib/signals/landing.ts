@@ -26,7 +26,7 @@ export type LandingSignal = {
   title: string
   category: SignalCategory
   severity: SignalSeverity
-  targetKind: SignalTargetKind
+  targetKind: SignalTargetKind | null
   targetName: string | null
   locationName: string | null
   cosignCount: number
@@ -131,7 +131,10 @@ export async function fetchLandingSignals(
     title: r.title,
     category: r.category as SignalCategory,
     severity: r.severity as SignalSeverity,
-    targetKind: r.target_kind as SignalTargetKind,
+    targetKind:
+      r.target_kind != null
+        ? (r.target_kind as SignalTargetKind)
+        : null,
     targetName:
       r.citizen_target_id != null
         ? (targetMap.get(r.citizen_target_id) ?? null)

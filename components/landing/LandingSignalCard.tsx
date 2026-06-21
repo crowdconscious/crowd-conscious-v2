@@ -32,6 +32,14 @@ export default function LandingSignalCard({ locale, signal }: Props) {
   const t = getCitizenSignalsCopy(locale)
   const showcase = t.landing.showcase
 
+  const targetLabel =
+    signal.targetName ??
+    (signal.targetKind != null
+      ? t.targetKindLabel(signal.targetKind)
+      : locale === 'es'
+        ? 'En observación'
+        : 'Under observation')
+
   return (
     <Link
       href={`/signals/${signal.slug}`}
@@ -43,13 +51,15 @@ export default function LandingSignalCard({ locale, signal }: Props) {
         >
           {t.severityLabel(signal.severity)}
         </span>
-        <span className="rounded-full bg-slate-800/60 px-2 py-0.5 text-[11px] font-medium text-slate-300 ring-1 ring-inset ring-slate-600/40">
-          {t.targetKindLabel(signal.targetKind)}
-        </span>
+        {signal.targetKind != null ? (
+          <span className="rounded-full bg-slate-800/60 px-2 py-0.5 text-[11px] font-medium text-slate-300 ring-1 ring-inset ring-slate-600/40">
+            {t.targetKindLabel(signal.targetKind)}
+          </span>
+        ) : null}
       </div>
 
       <p className="mt-3 text-[11px] font-medium uppercase tracking-wider text-emerald-300">
-        {signal.targetName ?? t.targetKindLabel(signal.targetKind)}
+        {targetLabel}
       </p>
 
       <h3 className="mt-1 line-clamp-3 text-lg font-semibold leading-snug text-white group-hover:text-emerald-200">
