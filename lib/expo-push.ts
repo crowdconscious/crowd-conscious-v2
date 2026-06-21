@@ -130,16 +130,17 @@ type PushTokenRow = {
   id: string
   expo_push_token: string
   device_id?: string | null
-  updated_at?: string | null
+  /** Mobile upserts `last_seen_at` on every token refresh (no `updated_at` column). */
+  last_seen_at?: string | null
 }
 
-/** Prefer the row with the latest `updated_at`; fall back to array order. */
+/** Prefer the row with the latest `last_seen_at`; fall back to array order. */
 function preferNewerPushTokenRow(a: PushTokenRow, b: PushTokenRow): PushTokenRow {
-  if (a.updated_at && b.updated_at) {
-    return a.updated_at >= b.updated_at ? a : b
+  if (a.last_seen_at && b.last_seen_at) {
+    return a.last_seen_at >= b.last_seen_at ? a : b
   }
-  if (a.updated_at) return a
-  if (b.updated_at) return b
+  if (a.last_seen_at) return a
+  if (b.last_seen_at) return b
   return a
 }
 
@@ -306,9 +307,9 @@ export async function sendPushToUser(
 
   const { data: rows, error } = await admin
     .from('push_tokens')
-    .select('id, expo_push_token, device_id, updated_at')
+    .select('id, expo_push_token, device_id, last_seen_at')
     .eq('user_id', userId)
-    .order('updated_at', { ascending: false, nullsFirst: false })
+    .order('last_seen_at', { ascending: false, nullsFirst: false })
 
   if (error) {
     console.warn('[expo-push] token fetch error:', error.message)
