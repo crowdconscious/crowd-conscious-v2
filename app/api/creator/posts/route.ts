@@ -18,6 +18,19 @@ function randomSuffix(): string {
   return Math.random().toString(36).slice(2, 8)
 }
 
+function parseTags(raw: unknown): string[] {
+  if (typeof raw === 'string') {
+    return raw
+      .split(',')
+      .map((t) => t.trim().toLowerCase())
+      .filter(Boolean)
+  }
+  if (Array.isArray(raw)) {
+    return raw.map((t) => String(t).trim().toLowerCase()).filter(Boolean)
+  }
+  return []
+}
+
 function sanitizeSources(raw: unknown): { label: string; url: string }[] {
   if (!Array.isArray(raw)) return []
   return raw
@@ -71,6 +84,9 @@ export async function POST(request: NextRequest) {
       slug,
       excerpt,
       excerpt_en: typeof body.excerpt_en === 'string' ? body.excerpt_en.trim() || null : null,
+      tldr: typeof body.tldr === 'string' ? body.tldr.trim() || null : null,
+      tldr_en: typeof body.tldr_en === 'string' ? body.tldr_en.trim() || null : null,
+      tags: parseTags(body.tags),
       content,
       content_en: typeof body.content_en === 'string' ? body.content_en.trim() || null : null,
       category,

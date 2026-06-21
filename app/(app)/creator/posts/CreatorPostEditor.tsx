@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { ImageUpload } from '@/components/ui/ImageUpload'
+import SuggestTldrButton from '@/components/blog/SuggestTldrButton'
 import { MarkdownEditor } from '@/components/admin/MarkdownEditor'
 import { SourcesInput, type SourceItem } from '@/components/blog/SourcesInput'
 import { BLOG_FORM_CATEGORIES } from '@/lib/blog-categories'
@@ -16,6 +17,9 @@ export type CreatorEditablePost = {
   title_en: string | null
   excerpt: string | null
   excerpt_en: string | null
+  tldr: string | null
+  tldr_en: string | null
+  tags: string[]
   content: string | null
   content_en: string | null
   category: string
@@ -45,6 +49,9 @@ export default function CreatorPostEditor({ locale, post, canPublish }: Props) {
   const [titleEn, setTitleEn] = useState(post?.title_en ?? '')
   const [excerpt, setExcerpt] = useState(post?.excerpt ?? '')
   const [excerptEn, setExcerptEn] = useState(post?.excerpt_en ?? '')
+  const [tldr, setTldr] = useState(post?.tldr ?? '')
+  const [tldrEn, setTldrEn] = useState(post?.tldr_en ?? '')
+  const [tags, setTags] = useState(post?.tags?.join(', ') ?? '')
   const [content, setContent] = useState(post?.content ?? '')
   const [contentEn, setContentEn] = useState(post?.content_en ?? '')
   const [category, setCategory] = useState<string>(post?.category ?? 'insight')
@@ -69,6 +76,9 @@ export default function CreatorPostEditor({ locale, post, canPublish }: Props) {
           title_en: titleEn,
           excerpt,
           excerpt_en: excerptEn,
+          tldr,
+          tldr_en: tldrEn,
+          tags,
           content,
           content_en: contentEn,
           category,
@@ -126,6 +136,9 @@ export default function CreatorPostEditor({ locale, post, canPublish }: Props) {
       titleEn,
       excerpt,
       excerptEn,
+      tldr,
+      tldrEn,
+      tags,
       content,
       contentEn,
       category,
@@ -175,6 +188,39 @@ export default function CreatorPostEditor({ locale, post, canPublish }: Props) {
           <textarea className={`${input} min-h-[80px]`} value={excerptEn} onChange={(e) => setExcerptEn(e.target.value)} />
         </div>
         <div>
+          <label className="mb-1 block text-sm text-slate-400">{t.editorTldrEs}</label>
+          <textarea
+            className={`${input} min-h-[110px]`}
+            value={tldr}
+            onChange={(e) => setTldr(e.target.value)}
+            placeholder={t.editorTldrPlaceholderEs}
+          />
+          <SuggestTldrButton
+            title={title}
+            titleEn={titleEn}
+            content={content}
+            contentEn={contentEn}
+            pulseMarketId={null}
+            onSuggested={(es, en) => {
+              setTldr(es)
+              if (en) setTldrEn(en)
+            }}
+            preserveExisting={isEdit}
+            currentTldr={tldr}
+            currentTldrEn={tldrEn}
+          />
+          <p className="mt-2 text-xs text-slate-500">{t.editorTldrHint}</p>
+        </div>
+        <div>
+          <label className="mb-1 block text-sm text-slate-400">{t.editorTldrEn}</label>
+          <textarea
+            className={`${input} min-h-[110px]`}
+            value={tldrEn}
+            onChange={(e) => setTldrEn(e.target.value)}
+            placeholder={t.editorTldrPlaceholderEn}
+          />
+        </div>
+        <div>
           <label className="mb-1 block text-sm text-slate-400">{t.editorContentEs}</label>
           <MarkdownEditor value={content} onChange={setContent} minHeight={320} label={t.editorContentEs} />
         </div>
@@ -191,6 +237,10 @@ export default function CreatorPostEditor({ locale, post, canPublish }: Props) {
               </option>
             ))}
           </select>
+        </div>
+        <div>
+          <label className="mb-1 block text-sm text-slate-400">{t.editorTags}</label>
+          <input className={input} value={tags} onChange={(e) => setTags(e.target.value)} />
         </div>
         <div>
           <label className="mb-1 block text-sm text-slate-400">{t.editorSources}</label>

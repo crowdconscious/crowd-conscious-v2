@@ -3,6 +3,19 @@ import { getCurrentUser, createServerAuth } from '@/lib/auth-server'
 import { isBlogEditorUser } from '@/lib/auth/is-blog-editor'
 import { isValidBlogCategory } from '@/lib/blog-categories'
 
+function parseTags(raw: unknown): string[] {
+  if (typeof raw === 'string') {
+    return raw
+      .split(',')
+      .map((t) => t.trim().toLowerCase())
+      .filter(Boolean)
+  }
+  if (Array.isArray(raw)) {
+    return raw.map((t) => String(t).trim().toLowerCase()).filter(Boolean)
+  }
+  return []
+}
+
 function sanitizeSources(raw: unknown): { label: string; url: string }[] {
   if (!Array.isArray(raw)) return []
   return raw
@@ -46,6 +59,9 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       patch.excerpt = e
     }
     if (typeof body.excerpt_en === 'string') patch.excerpt_en = body.excerpt_en.trim() || null
+    if (typeof body.tldr === 'string') patch.tldr = body.tldr.trim() || null
+    if (typeof body.tldr_en === 'string') patch.tldr_en = body.tldr_en.trim() || null
+    if ('tags' in body) patch.tags = parseTags(body.tags)
     if (typeof body.content === 'string') {
       const c = body.content.trim()
       if (!c) return NextResponse.json({ error: 'Content cannot be empty' }, { status: 400 })

@@ -406,6 +406,15 @@ export function getCreatorCopy(locale: CreatorLocale) {
     editorSlug: 'Slug',
     editorExcerptEs: es ? 'Extracto (ES) *' : 'Excerpt (ES) *',
     editorExcerptEn: es ? 'Extracto (EN)' : 'Excerpt (EN)',
+    editorTldrEs: es ? 'TL;DR (ES) — "En 30 segundos"' : 'TL;DR (ES) — "In 30 seconds"',
+    editorTldrEn: es ? 'TL;DR (EN)' : 'TL;DR (EN)',
+    editorTldrHint: es
+      ? 'Se muestra debajo de la imagen de portada. Varias líneas se renderizan como bullets; una sola línea como párrafo. Mantenlo corto: es el gancho para lectores que no van a leer todo.'
+      : 'Shown below the cover image. Multiple lines render as bullets; a single line as a paragraph. Keep it short — this is the hook for readers who will not read the full piece.',
+    editorTldrPlaceholderEs:
+      '3–5 líneas cortas, una por bullet. Por ejemplo:\nMiguel Hidalgo recibe el Mundial 2026.\nLa alcaldía pregunta qué priorizar.\nVota en 30 segundos. Cierra el 12 de mayo.',
+    editorTldrPlaceholderEn: '3–5 short lines, one per bullet.',
+    editorTags: es ? 'Etiquetas (separadas por comas)' : 'Tags (comma-separated)',
     editorContentEs: es ? 'Contenido (ES) *' : 'Content (ES) *',
     editorContentEn: es ? 'Contenido (EN)' : 'Content (EN)',
     editorCategory: es ? 'Categoría' : 'Category',
