@@ -186,8 +186,24 @@ function dedupePushTokenRows(rows: PushTokenRow[]): {
     byDevice.set(deviceId, kept)
   }
 
+  const candidates = [...withoutDevice, ...byDevice.values()]
+  if (candidates.length <= 1) {
+    return { toSend: candidates, duplicateIds: [...new Set(duplicateIds)] }
+  }
+
+  // One physical user should receive at most one push per event. Stale rows
+  // with different device_id values (token refresh, unstable Expo device ids)
+  // must not fan out multiple notifications to the same phone.
+  let newest = candidates[0]
+  for (let i = 1; i < candidates.length; i++) {
+    const row = candidates[i]
+    const kept = preferNewerPushTokenRow(newest, row)
+    duplicateIds.push(kept.id === newest.id ? row.id : newest.id)
+    newest = kept
+  }
+
   return {
-    toSend: [...withoutDevice, ...byDevice.values()],
+    toSend: [newest],
     duplicateIds: [...new Set(duplicateIds)],
   }
 }
