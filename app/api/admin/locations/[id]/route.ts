@@ -4,6 +4,7 @@ import { getCurrentUser } from '@/lib/auth-server'
 import { createClient } from '@/lib/supabase-server'
 import { createConsciousLocationVotingMarket } from '@/lib/locations/create-voting-market'
 import { isAdminUser } from '@/lib/auth/is-admin'
+import { scheduleNotifyLocationPublished } from '@/lib/expo-push'
 
 async function requireAdmin() {
   const user = await getCurrentUser()
@@ -156,6 +157,21 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         { error: e instanceof Error ? e.message : 'Failed to create voting market', location },
         { status: 500 }
       )
+    }
+  }
+
+  // Fan out a "new Conscious Place" push on the FIRST activation only
+  // (status transitions to 'active'). Deferred via after() so the admin
+  // response stays fast and the all-users fan-out doesn't hit the 30s limit.
+  if (nextStatus === 'active' && existing.status !== 'active') {
+    const slug = String(location.slug ?? existing.slug ?? '')
+    const name = String(location.name ?? existing.name ?? '')
+    if (slug && name) {
+      scheduleNotifyLocationPublished(admin, {
+        slug,
+        name,
+        excludeUserId: user.id,
+      })
     }
   }
 

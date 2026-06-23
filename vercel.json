@@ -24,6 +24,7 @@
     "app/api/predictions/admin/blog-posts/route.ts": { "maxDuration": 120 },
     "app/api/predictions/admin/blog-posts/[id]/route.ts": { "maxDuration": 120 },
     "app/api/admin/blog/[id]/approve/route.ts": { "maxDuration": 120 },
+    "app/api/admin/locations/[id]/route.ts": { "maxDuration": 120 },
     "app/api/**/*.ts": { "maxDuration": 30 }
   },
   "crons": [

@@ -758,3 +758,83 @@ export async function notifySignalPublished(
     SEND_CONCURRENCY
   )
 }
+
+export function buildNewLocationPush(params: {
+  slug: string
+  name: string
+  locale: PushLocale
+}): SendPushPayload {
+  const { slug, name, locale } = params
+  const nameShort = truncateTitle(name)
+  const route = `/(drawer)/(tabs)/locations/${slug}`
+
+  if (locale === 'en') {
+    return {
+      title: `New Conscious Place: ${nameShort}`,
+      body: 'Discover it on Crowd Conscious',
+      data: { route, slug, type: 'location_published' },
+      badge: 1,
+    }
+  }
+
+  return {
+    title: `Nuevo Lugar Consciente: ${nameShort}`,
+    body: 'Descúbrelo en Crowd Conscious',
+    data: { route, slug, type: 'location_published' },
+    badge: 1,
+  }
+}
+
+/**
+ * Fans out a "new Conscious Location" push to all push-enabled users when a
+ * location is first certified (status → active). NGOs/communities are
+ * nominated as conscious_locations, so this covers both. Fire only on the
+ * first activation transition to avoid re-notifying on later edits.
+ */
+export async function notifyLocationPublished(
+  admin: SupabaseClient,
+  params: { slug: string; name: string; excludeUserId?: string | null }
+): Promise<void> {
+  const { slug, name, excludeUserId } = params
+  const exclude = excludeUserId ? [excludeUserId] : []
+  const recipients = await fetchPushEnabledRecipients(admin, exclude)
+
+  if (recipients.length === 0) {
+    console.warn(
+      '[expo-push] notifyLocationPublished: no push-enabled recipients with tokens',
+      { slug }
+    )
+    return
+  }
+
+  await runWithConcurrency(
+    recipients,
+    ({ userId, locale }) =>
+      sendPushToUser(admin, userId, buildNewLocationPush({ slug, name, locale })),
+    SEND_CONCURRENCY
+  )
+}
+
+/**
+ * Schedules the location push after the HTTP response is flushed so the admin
+ * activation request returns fast and the all-users fan-out doesn't risk the
+ * default 30s route limit (mirrors scheduleNotifyBlogPublished).
+ */
+export function scheduleNotifyLocationPublished(
+  admin: SupabaseClient,
+  params: { slug: string; name: string; excludeUserId?: string | null }
+): void {
+  const task = async () => {
+    try {
+      await notifyLocationPublished(admin, params)
+    } catch (err) {
+      console.warn('[expo-push] notifyLocationPublished failed:', err)
+    }
+  }
+
+  try {
+    after(task)
+  } catch {
+    void task()
+  }
+}
