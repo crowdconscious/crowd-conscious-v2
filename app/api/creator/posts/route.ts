@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser, createServerAuth } from '@/lib/auth-server'
+import { createAdminClient } from '@/lib/supabase-admin'
 import { isBlogEditorUser } from '@/lib/auth/is-blog-editor'
 import { isValidBlogCategory } from '@/lib/blog-categories'
+import { scheduleNotifyBlogPublished } from '@/lib/expo-push'
 
 function slugify(raw: string): string {
   const s = raw
@@ -122,6 +124,10 @@ export async function POST(request: NextRequest) {
         publishBlocked = true
       } else {
         finalStatus = 'published'
+        scheduleNotifyBlogPublished(createAdminClient(), {
+          slug: created.slug,
+          title,
+        })
       }
     }
 

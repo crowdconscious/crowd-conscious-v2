@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser, createServerAuth } from '@/lib/auth-server'
+import { createAdminClient } from '@/lib/supabase-admin'
 import { isBlogEditorUser } from '@/lib/auth/is-blog-editor'
 import { isValidBlogCategory } from '@/lib/blog-categories'
+import { scheduleNotifyBlogPublished } from '@/lib/expo-push'
 
 function parseTags(raw: unknown): string[] {
   if (typeof raw === 'string') {
@@ -88,9 +90,27 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
 
     const supabase = await createServerAuth()
 
+    const { data: existing, error: loadErr } = await supabase
+      .from('blog_posts')
+      .select('status, published_at, slug, title')
+      .eq('id', id)
+      .maybeSingle()
+    if (loadErr) {
+      console.error('[creator/posts PATCH load]', loadErr)
+      return NextResponse.json({ error: loadErr.message }, { status: 500 })
+    }
+    if (!existing) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    }
+
+    const isFirstPublish =
+      wantsPublish && existing.status !== 'published' && !existing.published_at
+
     if (wantsPublish) {
       patch.status = 'published'
-      patch.published_at = new Date().toISOString()
+      if (isFirstPublish) {
+        patch.published_at = new Date().toISOString()
+      }
     }
 
     const { data, error } = await supabase
@@ -107,6 +127,17 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     if (!data) {
       // RLS rejected the write (not owner, already published, or publish gate).
       return NextResponse.json({ error: 'forbidden_or_locked' }, { status: 403 })
+    }
+
+    if (isFirstPublish && data.slug) {
+      const notifyTitle =
+        typeof patch.title === 'string' ? patch.title : existing.title
+      if (notifyTitle) {
+        scheduleNotifyBlogPublished(createAdminClient(), {
+          slug: data.slug,
+          title: notifyTitle,
+        })
+      }
     }
 
     return NextResponse.json({ ok: true, id: data.id, slug: data.slug, status: data.status })
