@@ -518,13 +518,14 @@ export async function runCrowdNewsletterCron(
       return { to: rec.email, subject: tpl.subject, html: tpl.html }
     })
 
-    const { sent, failed } = await sendEmailsWithConcurrency(messages, 8)
+    const { sent, failed, firstError } = await sendEmailsWithConcurrency(messages)
 
     if (failed > 0) {
-      console.warn('[newsletter] send failures', failed, 'of', recipients.length)
+      console.warn('[newsletter] send failures', failed, 'of', recipients.length, firstError ?? '')
     }
 
     const allFailed = sent === 0 && recipients.length > 0
+    const partialFailure = failed > 0 && sent > 0
 
     if (sent > 0) {
       try {
@@ -544,7 +545,9 @@ export async function runCrowdNewsletterCron(
       error: allFailed ? 'All newsletter sends failed (Resend / API key / domain)' : undefined,
       summary: allFailed
         ? `FAILED: 0 sent, ${failed} failed, ${recipients.length} recipients — check RESEND_API_KEY and Resend dashboard`
-        : `newsletter sent ${sent}, failed ${failed}, recipients ${recipients.length}, post ${latestPost?.slug ?? 'none'}`,
+        : partialFailure
+          ? `newsletter partial: sent ${sent}, failed ${failed}, recipients ${recipients.length}, post ${latestPost?.slug ?? 'none'}${firstError ? ` — ${firstError}` : ''}`
+          : `newsletter sent ${sent}, failed ${failed}, recipients ${recipients.length}, post ${latestPost?.slug ?? 'none'}`,
     })
 
     return {

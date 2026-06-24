@@ -680,6 +680,41 @@ export async function sendCreatorVerifiedEmail(
   return sendEmail(email, creatorVerifiedEmail(params))
 }
 
+// Resend Pro allows 5 requests/second on /emails. Newsletter fan-out must stay
+// under that or most recipients get 429 "Too many requests".
+const RESEND_MAX_REQUESTS_PER_SECOND = 4
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+function isResendRateLimitError(message?: string): boolean {
+  if (!message) return false
+  const m = message.toLowerCase()
+  return (
+    m.includes('rate limit') ||
+    m.includes('too many requests') ||
+    m.includes('429')
+  )
+}
+
+async function sendEmailWithRetry(
+  to: string,
+  template: { subject: string; html: string },
+  from: string = FROM_EMAIL
+): Promise<{ success: boolean; error?: string }> {
+  const maxAttempts = 4
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const result = await sendEmail(to, template, from)
+    if (result.success) return result
+    if (!isResendRateLimitError(result.error) || attempt === maxAttempts - 1) {
+      return result
+    }
+    await sleep(1000 * (attempt + 1))
+  }
+  return { success: false, error: 'rate limit retries exhausted' }
+}
+
 // Send email function with error handling
 export async function sendEmail(
   to: string,
@@ -712,24 +747,34 @@ export async function sendEmail(
   }
 }
 
-/** Newsletter sends one HTML per recipient (unsubscribe URL differs). Bounded concurrency to avoid Vercel timeouts. */
+/** Newsletter sends one HTML per recipient (unsubscribe URL differs). Rate-limited for Resend (5 req/s). */
 export async function sendEmailsWithConcurrency(
   messages: Array<{ to: string; subject: string; html: string }>,
-  concurrency: number = 8
-): Promise<{ sent: number; failed: number }> {
+  concurrency: number = RESEND_MAX_REQUESTS_PER_SECOND
+): Promise<{ sent: number; failed: number; firstError?: string }> {
   let sent = 0
   let failed = 0
-  for (let i = 0; i < messages.length; i += concurrency) {
-    const slice = messages.slice(i, i + concurrency)
+  let firstError: string | undefined
+  const batchSize = Math.max(1, Math.min(concurrency, RESEND_MAX_REQUESTS_PER_SECOND))
+
+  for (let i = 0; i < messages.length; i += batchSize) {
+    const slice = messages.slice(i, i + batchSize)
     const results = await Promise.all(
-      slice.map((m) => sendEmail(m.to, { subject: m.subject, html: m.html }))
+      slice.map((m) => sendEmailWithRetry(m.to, { subject: m.subject, html: m.html }))
     )
     for (const r of results) {
       if (r.success) sent++
-      else failed++
+      else {
+        failed++
+        if (!firstError && r.error) firstError = r.error
+      }
+    }
+    // Pace batches so we never exceed Resend's 5 req/s ceiling.
+    if (i + batchSize < messages.length) {
+      await sleep(1000)
     }
   }
-  return { sent, failed }
+  return { sent, failed, firstError }
 }
 
 // Send welcome email
