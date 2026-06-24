@@ -36,6 +36,20 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'
 
 const DIGEST_TYPES = ['newsletter', 'blog_digest'] as const
 
+/** Mon/Wed/Fri — must match vercel.json `0 14 * * 1,3,5`. */
+function isNewsletterSendDayUTC(d = new Date()): boolean {
+  const dow = d.getUTCDay()
+  return dow === 1 || dow === 3 || dow === 5
+}
+
+/** True when the last batch send was on a different UTC calendar day. */
+function lastSendWasOnDifferentDay(lastSentAt: string): boolean {
+  return (
+    new Date(lastSentAt).toISOString().slice(0, 10) !==
+    new Date().toISOString().slice(0, 10)
+  )
+}
+
 function wcDaysUntil(): number {
   return Math.ceil((new Date('2026-06-11T12:00:00Z').getTime() - Date.now()) / 86400000)
 }
@@ -138,9 +152,19 @@ export async function runCrowdNewsletterCron(
 
     const cooldownHours = 36
     const force = options?.force === true
+    // On scheduled M/W/F runs, always send if we have not already sent today —
+    // the 36h cooldown is for blocking accidental rapid re-fires (admin double-
+    // click), not for silencing Wed when Mon already went out (~48h apart).
+    const scheduledSendDay = isNewsletterSendDayUTC()
+    const alreadySentToday =
+      lastSentAt != null && !lastSendWasOnDifferentDay(lastSentAt)
+    const bypassCooldownForSchedule =
+      scheduledSendDay && lastSentAt != null && !alreadySentToday
+
     if (
       !force &&
       !hasNewBlogSinceLastSend &&
+      !bypassCooldownForSchedule &&
       hoursSinceLast != null &&
       hoursSinceLast < cooldownHours
     ) {
@@ -399,7 +423,28 @@ export async function runCrowdNewsletterCron(
           lastSentAt,
           hoursSinceLast,
           recipientCount: 0,
-          scheduleNote: 'Mon/Wed/Fri 14:00 UTC',
+          scheduleNote: 'Mon/Wed/Fri 14:00 UTC (08:00 CDMX)',
+          publishedPostsTotal: allCandidates.length,
+          publishedPostsUnsent: unsentCandidates.length,
+          selectedPost: null,
+        },
+      }
+    }
+
+    if (!force && alreadySentToday) {
+      await cronHealthComplete(runId, healthJobName, admin, {
+        success: true,
+        summary: `skipped: already_sent_today (last ${lastSentAt})`,
+      })
+      return {
+        ok: true,
+        skipped: true,
+        reason: 'already_sent_today',
+        debug: {
+          lastSentAt,
+          hoursSinceLast,
+          recipientCount: recipients.length,
+          scheduleNote: 'Mon/Wed/Fri 14:00 UTC — duplicate same-day guard',
           publishedPostsTotal: allCandidates.length,
           publishedPostsUnsent: unsentCandidates.length,
           selectedPost: null,
