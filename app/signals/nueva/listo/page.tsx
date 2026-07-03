@@ -24,12 +24,8 @@ type PageProps = {
 /**
  * /signals/nueva/listo — success surface after a successful POST /api/signals.
  *
- * The signal is `pending_review` at this point, so the public detail
- * route would return notFound for anonymous users. We still render the
- * `/signals/<slug>` link as a "view your submission" affordance because
- * the author can read their own pending signals once F10 (detail page
- * with author override) ships. For MVP it's a soft promise — the link
- * may render an "under review" preview state.
+ * Signals publish immediately, so the public detail route and feed both
+ * show the new row right away.
  */
 export default async function SignalsComposeSuccess({
   searchParams,

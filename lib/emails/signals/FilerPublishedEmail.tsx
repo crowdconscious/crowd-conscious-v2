@@ -16,9 +16,9 @@ export interface FilerPublishedEmailProps {
 }
 
 /**
- * Sent when a moderator approves/publishes a signal. Encourages the filer
- * to share the public URL so the signal can collect co-signs toward the
- * stage 1 threshold.
+ * Sent when a signal is published (auto on submit or admin approve). Encourages
+ * the filer to share the public URL so the signal can collect co-signs toward
+ * the stage 1 threshold.
  */
 export function FilerPublishedEmail({
   locale,
@@ -39,8 +39,8 @@ export function FilerPublishedEmail({
     ? 'Tu señal ya es pública'
     : 'Your signal is now public'
   const preview = isEs
-    ? 'La aprobamos y ya aparece en el feed.'
-    : 'We approved it — it is live in the feed.'
+    ? 'Ya aparece en el feed.'
+    : 'It is live in the feed.'
 
   return (
     <SignalsEmailLayout
@@ -68,8 +68,8 @@ export function FilerPublishedEmail({
         }}
       >
         {isEs
-          ? 'Aprobamos tu señal y ya está visible en el feed público. Comparte el enlace con vecinos: las co-firmas son las que llevan tu señal al destinatario.'
-          : 'We approved your signal and it is now visible in the public feed. Share the link with neighbours — co-signs are what carry your signal to the target.'}
+          ? 'Tu señal ya está visible en el feed público. Comparte el enlace con vecinos: las co-firmas son las que llevan tu señal al destinatario.'
+          : 'Your signal is now visible in the public feed. Share the link with neighbours — co-signs are what carry your signal to the target.'}
       </Text>
 
       <Section

@@ -113,8 +113,8 @@ export default async function AdminSignalsPage() {
           </h1>
           <p className="mt-2 text-sm text-slate-400">
             {locale === 'es'
-              ? 'Aprueba, rechaza o pide edición. Emite enlaces mágicos para destinatarios oficiales.'
-              : 'Approve, reject or request edit. Issue magic links to official targets.'}
+              ? 'Revisa reportes, despublica o pide edición. Emite enlaces mágicos para destinatarios oficiales.'
+              : 'Review reports, unpublish or request edits. Issue magic links to official targets.'}
           </p>
         </header>
 

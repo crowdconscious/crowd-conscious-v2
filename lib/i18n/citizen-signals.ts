@@ -366,22 +366,22 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
           ? 'Afirmo que la información que envío es verdadera al mejor de mi conocimiento.'
           : 'I confirm the information I am submitting is true to the best of my knowledge.',
         legalDisclaimer: isEs
-          ? 'Crowd Conscious modera cada señal antes de publicarla. No ofrecemos asesoría legal. No publiques afirmaciones falsas sobre hechos.'
-          : 'Crowd Conscious moderates every signal before publishing. We do not offer legal advice. Do not publish false factual claims.',
+          ? 'Crowd Conscious puede retirar señales que reciban reportes o violen las reglas. No ofrecemos asesoría legal. No publiques afirmaciones falsas sobre hechos.'
+          : 'Crowd Conscious may remove signals that receive reports or break the rules. We do not offer legal advice. Do not publish false factual claims.',
         termsLink: isEs ? 'Términos y condiciones' : 'Terms & conditions',
-        submit: isEs ? 'Enviar para revisión' : 'Submit for review',
+        submit: isEs ? 'Publicar señal' : 'Publish signal',
         submitting: isEs ? 'Enviando…' : 'Submitting…',
       },
       success: {
-        title: isEs ? 'Recibimos tu señal' : 'We received your signal',
+        title: isEs ? 'Tu señal ya está publicada' : 'Your signal is live',
         body: isEs
-          ? 'Tu señal está en revisión. Recibirás un correo cuando un moderador la apruebe o pida ajustes.'
-          : 'Your signal is under review. You will get an email when a moderator approves it or requests edits.',
+          ? 'Tu señal ya aparece en el feed público. Compártela con vecinos — las co-firmas son las que la llevan al destinatario.'
+          : 'Your signal is now in the public feed. Share it with neighbours — co-signs are what carry it to the target.',
         backToFeed: isEs ? 'Ver el feed' : 'Back to feed',
-        viewSubmission: isEs ? 'Ver tu envío' : 'View your submission',
+        viewSubmission: isEs ? 'Ver mi señal' : 'View my signal',
         slugCaption: isEs
-          ? 'Guarda este enlace; estará público una vez aprobado.'
-          : 'Save this link; it goes public once approved.',
+          ? 'Guarda este enlace para compartirla.'
+          : 'Save this link to share it.',
         createAnother: isEs ? 'Crear otra señal' : 'Create another signal',
       },
     },
@@ -641,8 +641,8 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
         : 'A new way to report to your municipality or institution. If enough neighbours co-sign, it goes public and the recipient gets a magic link to respond officially.',
       bullets: [
         isEs
-          ? 'Modera un equipo humano antes de publicar — nada de doxxing ni difamación.'
-          : 'A human team moderates before publishing — no doxxing, no defamation.',
+          ? 'Se publica al instante. Las co-firmas llevan la señal al destinatario — sin doxxing ni difamación.'
+          : 'Goes live instantly. Co-signs carry the signal to the target — no doxxing, no defamation.',
         isEs
           ? 'Co-firmas anónimas. Cuando se cruza el umbral, la autoridad recibe la señal.'
           : 'Anonymous co-signs. Once the threshold is crossed, the authority gets the signal.',
@@ -697,10 +697,10 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
         },
         {
           n: 2,
-          title: isEs ? 'Moderamos' : 'We moderate',
+          title: isEs ? 'Se publica al instante' : 'Goes live instantly',
           body: isEs
-            ? 'Un humano (con apoyo de un agente IA que marca PII, riesgo de difamación y duplicados) revisa cada señal. Si todo está en orden se publica; si necesita ajustes te lo decimos por correo.'
-            : 'A human (assisted by an AI agent that flags PII, defamation risk and duplicates) reviews every signal. If everything checks out we publish it; if it needs edits we email you why.',
+            ? 'Tu señal aparece en el feed en cuanto la envías. Un agente IA la evalúa en segundo plano; si recibe reportes o viola las reglas, podemos retirarla.'
+            : 'Your signal appears in the feed as soon as you submit. An AI agent assesses it in the background; if it gets reports or breaks the rules, we may unpublish it.',
         },
         {
           n: 3,
@@ -773,8 +773,8 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
         {
           q: isEs ? '¿Cuánto tardan en moderar?' : 'How long does moderation take?',
           a: isEs
-            ? 'El SLA de moderación durante la beta es 72 horas. La gran mayoría salen mucho más rápido.'
-            : 'The moderation SLA during beta is 72 hours. Most signals are reviewed much faster.',
+            ? 'Las señales nuevas se publican al instante. Revisamos reportes y contenido marcado en menos de 72 horas hábiles.'
+            : 'New signals publish instantly. We review reports and flagged content within 72 business hours.',
         },
         {
           q: isEs ? '¿Qué pasa si no me responden?' : 'What if no one replies?',
@@ -857,8 +857,8 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
             ? `Tu señal ya es pública: ${signalTitle}`
             : `Your signal is now public: ${signalTitle}`,
         preview: isEs
-          ? 'La aprobamos y ya aparece en el feed.'
-          : 'We approved it — it is live in the feed.',
+          ? 'Ya aparece en el feed.'
+          : 'It is live in the feed.',
       },
       filerRejected: {
         subject: (signalTitle: string) =>

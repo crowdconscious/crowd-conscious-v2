@@ -25,7 +25,8 @@ import {
   moderateRateLimit,
   getRateLimitIdentifier,
 } from '@/lib/rate-limit'
-import { sendSignalFilerReceived } from '@/lib/resend'
+import { sendSignalFilerPublished } from '@/lib/resend'
+import { notifySignalPublished } from '@/lib/expo-push'
 import { enqueueSignalsModerator } from '@/lib/agents/signals-moderator'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
@@ -160,7 +161,7 @@ type CitizenSignalGeographyInsert = {
   author_user_id: string
   anonymous_display_mode: boolean
   anonymous_display_name: string | null
-  publication_status: 'pending_review'
+  publication_status: 'published'
 }
 
 async function validateRoutedGeographyAndTarget(
@@ -369,7 +370,7 @@ export async function POST(request: NextRequest) {
         author_user_id: user.id,
         anonymous_display_mode: observation.anonymous_display_mode ?? false,
         anonymous_display_name: observation.anonymous_display_name ?? null,
-        publication_status: 'pending_review',
+        publication_status: 'published',
       }
     } else {
       const routed = payload as RoutedCreateBody
@@ -411,7 +412,7 @@ export async function POST(request: NextRequest) {
         author_user_id: user.id,
         anonymous_display_mode: routed.anonymous_display_mode ?? false,
         anonymous_display_name: routed.anonymous_display_name ?? null,
-        publication_status: 'pending_review',
+        publication_status: 'published',
       }
     }
 
@@ -438,7 +439,7 @@ export async function POST(request: NextRequest) {
         storage_path: ev.storage_path ?? null,
         external_url: ev.external_url ?? null,
         caption: ev.caption ?? null,
-        visibility: 'moderators_only' as const,
+        visibility: 'public' as const,
       }))
       const { error: evErr } = await admin
         .from('citizen_signal_evidence')
@@ -448,24 +449,28 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Append moderation event: submitted.
-    await admin.from('citizen_signal_moderation_events').insert({
-      signal_id: insertedSignal.id,
-      admin_user_id: user.id, // submitter recorded; admin override on approve
-      action: 'submitted',
-      detail: { source: 'api/signals POST' },
-    })
+    // Append moderation events: submitted + auto-published.
+    await admin.from('citizen_signal_moderation_events').insert([
+      {
+        signal_id: insertedSignal.id,
+        admin_user_id: user.id,
+        action: 'submitted',
+        detail: { source: 'api/signals POST' },
+      },
+      {
+        signal_id: insertedSignal.id,
+        admin_user_id: user.id,
+        action: 'published',
+        detail: { source: 'api/signals POST', auto: true },
+      },
+    ])
 
     // F14: fire-and-forget AI moderator. Runs after the response is
     // flushed (via Next 15 `after()`), populates `ai_scores`, appends an
     // `ai_assessed` moderation event. Must NEVER block this POST.
     enqueueSignalsModerator(insertedSignal.id)
 
-    // F13: fire-and-forget filer "received" email. We look up
-    // profiles.email (NOT auth.users) because every signed-in user
-    // already has a profile row created by the auth trigger. Email
-    // failures are logged but do NOT affect the API response so a Resend
-    // outage does not 500 the submission flow.
+    // F13: fire-and-forget filer "published" email + cosign-invite push.
     void (async () => {
       try {
         const { data: profile } = await admin
@@ -474,16 +479,22 @@ export async function POST(request: NextRequest) {
           .eq('id', user.id)
           .maybeSingle()
         const recipient = profile?.email
-        if (!recipient) return
-        await sendSignalFilerReceived({
-          to: recipient,
-          locale: payload.language,
-          signalSlug: insertedSignal.public_slug,
-          signalTitle: payload.title,
-          filerName: profile?.full_name ?? null,
+        if (recipient) {
+          await sendSignalFilerPublished({
+            to: recipient,
+            locale: payload.language,
+            signalSlug: insertedSignal.public_slug,
+            signalTitle: payload.title,
+            filerName: profile?.full_name ?? null,
+          })
+        }
+        await notifySignalPublished(admin, {
+          slug: insertedSignal.public_slug,
+          title: payload.title,
+          excludeUserId: user.id,
         })
       } catch (e) {
-        console.error('[api/signals POST] filer-received email', e)
+        console.error('[api/signals POST] filer-published notify', e)
       }
     })()
 
@@ -491,7 +502,7 @@ export async function POST(request: NextRequest) {
       {
         slug: insertedSignal.public_slug,
         id: insertedSignal.id,
-        status: 'pending_review',
+        status: 'published',
       },
       { status: 201 }
     )
