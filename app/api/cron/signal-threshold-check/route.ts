@@ -10,6 +10,10 @@ import {
   resolvePushLocale,
   sendPushToUser,
 } from '@/lib/expo-push'
+import {
+  inAppRowFromPush,
+  insertInAppNotifications,
+} from '@/lib/in-app-notifications'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -164,16 +168,22 @@ async function sendAuthorMilestonePush(
 ): Promise<void> {
   try {
     const locale = await resolvePushLocale(admin, row.author_user_id)
-    await sendPushToUser(
-      admin,
-      row.author_user_id,
-      buildSignalMilestonePush({
-        slug: row.public_slug,
-        title: row.title,
-        cosignCount: row.cosign_count,
-        locale,
-      })
-    )
+    const payload = buildSignalMilestonePush({
+      slug: row.public_slug,
+      title: row.title,
+      cosignCount: row.cosign_count,
+      locale,
+    })
+    // Mirror the milestone as an in-app notification row (best-effort).
+    await insertInAppNotifications(admin, [
+      inAppRowFromPush({
+        userId: row.author_user_id,
+        type: 'signal_milestone',
+        payload,
+        webLink: `/signals/${row.public_slug}`,
+      }),
+    ])
+    await sendPushToUser(admin, row.author_user_id, payload)
   } catch (err) {
     console.warn(
       '[cron/signal-threshold-check] milestone push failed',

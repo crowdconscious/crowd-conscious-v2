@@ -1,5 +1,9 @@
 import { after } from 'next/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import {
+  inAppRowFromPush,
+  insertInAppNotifications,
+} from '@/lib/in-app-notifications'
 
 const EXPO_SEND_URL = 'https://exp.host/--/api/v2/push/send'
 const EXPO_RECEIPTS_URL = 'https://exp.host/--/api/v2/push/getReceipts'
@@ -695,6 +699,21 @@ export async function notifyPulsePublished(
 
   const build =
     mode === 'vote_invite' ? buildPulseVoteInvitePush : buildNewPulsePush
+  const type = mode === 'vote_invite' ? 'pulse_vote_invite' : 'pulse_published'
+
+  // Mirror every push as an in-app notification row (best-effort, never
+  // blocks the push fan-out). Mobile deep-links via data.route.
+  await insertInAppNotifications(
+    admin,
+    recipients.map(({ userId, locale }) =>
+      inAppRowFromPush({
+        userId,
+        type,
+        payload: build({ marketId, title, locale }),
+        webLink: `/pulse/${marketId}`,
+      })
+    )
+  )
 
   await runWithConcurrency(
     recipients,
@@ -718,6 +737,18 @@ export async function notifyBlogPublished(
     )
     return
   }
+
+  await insertInAppNotifications(
+    admin,
+    recipients.map(({ userId, locale }) =>
+      inAppRowFromPush({
+        userId,
+        type: 'blog_published',
+        payload: buildNewBlogPush({ slug, title, locale }),
+        webLink: `/blog/${slug}`,
+      })
+    )
+  )
 
   await runWithConcurrency(
     recipients,
@@ -762,6 +793,18 @@ export async function notifySignalPublished(
   const { slug, title, excludeUserId } = params
   const exclude = excludeUserId ? [excludeUserId] : []
   const recipients = await fetchPushEnabledRecipients(admin, exclude)
+
+  await insertInAppNotifications(
+    admin,
+    recipients.map(({ userId, locale }) =>
+      inAppRowFromPush({
+        userId,
+        type: 'signal_cosign_invite',
+        payload: buildSignalCosignInvitePush({ slug, title, locale }),
+        webLink: `/signals/${slug}`,
+      })
+    )
+  )
 
   await runWithConcurrency(
     recipients,
@@ -822,6 +865,18 @@ export async function notifyLocationPublished(
     )
     return
   }
+
+  await insertInAppNotifications(
+    admin,
+    recipients.map(({ userId, locale }) =>
+      inAppRowFromPush({
+        userId,
+        type: 'location_published',
+        payload: buildNewLocationPush({ slug, name, locale }),
+        webLink: `/locations/${slug}`,
+      })
+    )
+  )
 
   await runWithConcurrency(
     recipients,

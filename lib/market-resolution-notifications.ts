@@ -47,16 +47,40 @@ export async function notifyMarketResolutionVoters(
     if (!v.user_id) continue
 
     const won = v.outcome_id === winningOutcomeId
-    const message = won
+
+    // For Pulses, the in-app row reuses the exact push payload so title/body
+    // are localized once and mobile can deep-link via data.route. Non-Pulse
+    // markets keep the legacy English copy.
+    let pulsePayload: ReturnType<typeof buildPulseResolutionPush> | null = null
+    if (market?.is_pulse) {
+      try {
+        const locale = await resolvePushLocale(admin, v.user_id)
+        pulsePayload = buildPulseResolutionPush({
+          marketId,
+          marketTitle,
+          winningLabel,
+          won,
+          bonusXp: v.bonus_xp ?? 0,
+          locale,
+        })
+      } catch (localeErr) {
+        console.warn('[market-resolution] locale resolve error:', localeErr)
+      }
+    }
+
+    const fallbackMessage = won
       ? `Your vote matched the community outcome.${v.bonus_xp ? ` +${v.bonus_xp} bonus XP.` : ''}`
       : `Community outcome: ${winningLabel}. Your vote was recorded.`
     try {
       await admin.from('notifications').insert({
         user_id: v.user_id,
         type: 'market_resolved',
-        title: `Pulse closed: ${marketTitle}`,
-        message: `"${marketTitle}" closed. ${message}`,
-        link: `/predictions/markets/${marketId}`,
+        title: pulsePayload?.title ?? `Pulse closed: ${marketTitle}`,
+        message: pulsePayload?.body ?? `"${marketTitle}" closed. ${fallbackMessage}`,
+        link: market?.is_pulse
+          ? `/pulse/${marketId}`
+          : `/predictions/markets/${marketId}`,
+        data: pulsePayload?.data ?? null,
       })
     } catch (notifErr) {
       console.error('Notification insert error:', notifErr)
@@ -66,21 +90,9 @@ export async function notifyMarketResolutionVoters(
     // awaited — fire-and-forget sends are dropped when the lambda freezes
     // (the b8cb7a4 lesson). sendPushToUser respects the user's push
     // opt-out and logs to push_log.
-    if (market?.is_pulse) {
+    if (market?.is_pulse && pulsePayload) {
       try {
-        const locale = await resolvePushLocale(admin, v.user_id)
-        await sendPushToUser(
-          admin,
-          v.user_id,
-          buildPulseResolutionPush({
-            marketId,
-            marketTitle,
-            winningLabel,
-            won,
-            bonusXp: v.bonus_xp ?? 0,
-            locale,
-          })
-        )
+        await sendPushToUser(admin, v.user_id, pulsePayload)
       } catch (pushErr) {
         console.warn('[market-resolution] expo push error:', pushErr)
       }
