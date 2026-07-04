@@ -1173,6 +1173,10 @@ export interface Database {
           street_reference: string | null
           precise_latitude: number | null
           precise_longitude: number | null
+          // Direct targets — migration 248_signals_expanded_targets.sql.
+          target_name: string | null
+          target_contact_email: string | null
+          target_location_id: string | null
           author_user_id: string
           anonymous_display_mode: boolean
           anonymous_display_name: string | null
@@ -1205,6 +1209,9 @@ export interface Database {
           street_reference?: string | null
           precise_latitude?: number | null
           precise_longitude?: number | null
+          target_name?: string | null
+          target_contact_email?: string | null
+          target_location_id?: string | null
           author_user_id: string
           anonymous_display_mode?: boolean
           anonymous_display_name?: string | null
@@ -1237,6 +1244,9 @@ export interface Database {
           street_reference?: string | null
           precise_latitude?: number | null
           precise_longitude?: number | null
+          target_name?: string | null
+          target_contact_email?: string | null
+          target_location_id?: string | null
           author_user_id?: string
           anonymous_display_mode?: boolean
           anonymous_display_name?: string | null
@@ -2166,19 +2176,21 @@ export interface Database {
     Views: {
       citizen_signals_public: {
         // Anon-safe projection of citizen_signals where publication_status =
-        // 'published'. Source: supabase/migrations/219_citizen_signals_mvp.sql.
+        // 'published'. Source: supabase/migrations/219_citizen_signals_mvp.sql
+        // + 248_signals_expanded_targets.sql (target_name/target_location_id;
+        // target/location FKs nullable since the B1 geography update).
         Row: {
           id: string
           public_slug: string
           post_type: string
           category: string
           severity: string
-          target_kind: string
-          citizen_target_id: string
+          target_kind: string | null
+          citizen_target_id: string | null
           title: string
           body: string
           language: string
-          conscious_location_id: string
+          conscious_location_id: string | null
           partner_location_id: string | null
           street_reference: string | null
           display_name: string | null
@@ -2190,6 +2202,8 @@ export interface Database {
           stage2_met_at: string | null
           created_at: string
           updated_at: string
+          target_name: string | null
+          target_location_id: string | null
         }
         Relationships: []
       }

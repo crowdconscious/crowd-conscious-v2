@@ -19,7 +19,9 @@ import {
   SIGNAL_CATEGORIES,
   SIGNAL_SEVERITIES,
   SIGNAL_TARGET_KINDS,
+  isRegistryTargetKind,
 } from '@/lib/i18n/citizen-signals'
+import { CDMX_ALCALDIA_SLUGS } from '@/lib/signals/cdmx-alcaldias'
 import {
   lenientRateLimit,
   moderateRateLimit,
@@ -105,7 +107,7 @@ export async function GET(request: NextRequest) {
     let query = admin
       .from('citizen_signals_public')
       .select(
-        'id, public_slug, post_type, category, severity, target_kind, citizen_target_id, title, body, language, conscious_location_id, partner_location_id, street_reference, anonymous_display_mode, display_name, threshold_stage, cosign_count, anonymous_support_count, stage1_met_at, stage2_met_at, created_at, updated_at'
+        'id, public_slug, post_type, category, severity, target_kind, citizen_target_id, title, body, language, conscious_location_id, partner_location_id, street_reference, target_name, target_location_id, anonymous_display_mode, display_name, threshold_stage, cosign_count, anonymous_support_count, stage1_met_at, stage2_met_at, created_at, updated_at'
       )
       .order('created_at', { ascending: false })
       .limit(q.limit)
@@ -158,6 +160,10 @@ type CitizenSignalGeographyInsert = {
   conscious_location_id: string | null
   partner_location_id: string | null
   street_reference: string | null
+  // Direct targets (migration 248): company/neighborhood/conscious_location.
+  target_name: string | null
+  target_contact_email: string | null
+  target_location_id: string | null
   author_user_id: string
   anonymous_display_mode: boolean
   anonymous_display_name: string | null
@@ -168,9 +174,17 @@ async function validateRoutedGeographyAndTarget(
   admin: SignalsAdminClient,
   payload: RoutedCreateBody
 ): Promise<
-  | { ok: true; partnerLocationId: string | null; streetReference: string | null }
+  | {
+      ok: true
+      partnerLocationId: string | null
+      streetReference: string | null
+      /** Denormalised name for target_kind=conscious_location. */
+      targetLocationName: string | null
+    }
   | { ok: false; status: number; error: string }
 > {
+  const isRegistryKind = isRegistryTargetKind(payload.target_kind)
+  const alcaldiaId = payload.conscious_location_id ?? null
   const partnerLocationId = payload.partner_location_id ?? null
   const streetNorm = normalizeStreetReference(payload.street_reference)
   if (streetNorm.error) {
@@ -186,93 +200,141 @@ async function validateRoutedGeographyAndTarget(
     }
   }
 
-  const allowedIdsRaw = process.env.SIGNALS_ALLOWED_LOCATION_IDS?.trim()
-  const allowedIds = allowedIdsRaw
-    ? allowedIdsRaw.split(',').map((s) => s.trim()).filter(Boolean)
-    : null
+  // Alcaldía checks. Required for registry kinds (the zod schema already
+  // guarantees presence); optional geo context for direct kinds — when
+  // omitted we skip the pilot gate entirely (a company target does not
+  // depend on municipal routing).
+  if (alcaldiaId) {
+    const allowedIdsRaw = process.env.SIGNALS_ALLOWED_LOCATION_IDS?.trim()
+    const allowedIds = allowedIdsRaw
+      ? allowedIdsRaw.split(',').map((s) => s.trim()).filter(Boolean)
+      : null
 
-  if (allowedIds && !allowedIds.includes(payload.conscious_location_id)) {
-    return {
-      ok: false,
-      status: 400,
-      error: 'Location is not in the Signals pilot allow-list',
-    }
-  }
-
-  const { data: location, error: locErr } = await admin
-    .from('conscious_locations')
-    .select('id, city, status')
-    .eq('id', payload.conscious_location_id)
-    .maybeSingle()
-
-  if (locErr) {
-    console.error('[api/signals POST] location lookup', locErr)
-    return { ok: false, status: 500, error: 'Location check failed' }
-  }
-  if (!location) {
-    return { ok: false, status: 400, error: 'Unknown location' }
-  }
-  if (location.status !== 'active') {
-    return { ok: false, status: 400, error: 'Location is not active' }
-  }
-  if (!allowedIds) {
-    const city = (location.city ?? '').toLowerCase().trim()
-    const isCdmx =
-      city === 'ciudad de méxico' ||
-      city === 'ciudad de mexico' ||
-      city === 'cdmx'
-    if (!isCdmx) {
-      return { ok: false, status: 400, error: 'MVP pilot is CDMX-only' }
-    }
-  }
-
-  if (partnerLocationId) {
-    const { data: partner, error: partnerErr } = await admin
-      .from('conscious_locations')
-      .select('id, status')
-      .eq('id', partnerLocationId)
-      .maybeSingle()
-    if (partnerErr) {
-      console.error('[api/signals POST] partner lookup', partnerErr)
-      return { ok: false, status: 500, error: 'Partner location check failed' }
-    }
-    if (!partner) {
-      return { ok: false, status: 400, error: 'Unknown partner_location_id' }
-    }
-    if (partner.status !== 'active') {
-      return { ok: false, status: 400, error: 'Partner location is not active' }
-    }
-    if (partner.id === payload.conscious_location_id) {
+    if (allowedIds && !allowedIds.includes(alcaldiaId)) {
       return {
         ok: false,
         status: 400,
-        error:
-          'partner_location_id must differ from conscious_location_id (alcaldía)',
+        error: 'Location is not in the Signals pilot allow-list',
+      }
+    }
+
+    const { data: location, error: locErr } = await admin
+      .from('conscious_locations')
+      .select('id, city, status')
+      .eq('id', alcaldiaId)
+      .maybeSingle()
+
+    if (locErr) {
+      console.error('[api/signals POST] location lookup', locErr)
+      return { ok: false, status: 500, error: 'Location check failed' }
+    }
+    if (!location) {
+      return { ok: false, status: 400, error: 'Unknown location' }
+    }
+    if (location.status !== 'active') {
+      return { ok: false, status: 400, error: 'Location is not active' }
+    }
+    if (!allowedIds) {
+      const city = (location.city ?? '').toLowerCase().trim()
+      const isCdmx =
+        city === 'ciudad de méxico' ||
+        city === 'ciudad de mexico' ||
+        city === 'cdmx'
+      if (!isCdmx) {
+        return { ok: false, status: 400, error: 'MVP pilot is CDMX-only' }
+      }
+    }
+
+    if (partnerLocationId) {
+      const { data: partner, error: partnerErr } = await admin
+        .from('conscious_locations')
+        .select('id, status')
+        .eq('id', partnerLocationId)
+        .maybeSingle()
+      if (partnerErr) {
+        console.error('[api/signals POST] partner lookup', partnerErr)
+        return { ok: false, status: 500, error: 'Partner location check failed' }
+      }
+      if (!partner) {
+        return { ok: false, status: 400, error: 'Unknown partner_location_id' }
+      }
+      if (partner.status !== 'active') {
+        return { ok: false, status: 400, error: 'Partner location is not active' }
+      }
+      if (partner.id === alcaldiaId) {
+        return {
+          ok: false,
+          status: 400,
+          error:
+            'partner_location_id must differ from conscious_location_id (alcaldía)',
+        }
       }
     }
   }
 
-  const { data: target, error: tErr } = await admin
-    .from('citizen_targets')
-    .select('id, target_kind')
-    .eq('id', payload.citizen_target_id)
-    .maybeSingle()
-  if (tErr) {
-    console.error('[api/signals POST] target lookup', tErr)
-    return { ok: false, status: 500, error: 'Target check failed' }
+  if (isRegistryKind) {
+    const { data: target, error: tErr } = await admin
+      .from('citizen_targets')
+      .select('id, target_kind')
+      .eq('id', payload.citizen_target_id ?? '')
+      .maybeSingle()
+    if (tErr) {
+      console.error('[api/signals POST] target lookup', tErr)
+      return { ok: false, status: 500, error: 'Target check failed' }
+    }
+    if (!target) {
+      return { ok: false, status: 400, error: 'Unknown target' }
+    }
+    if (target.target_kind !== payload.target_kind) {
+      return {
+        ok: false,
+        status: 400,
+        error: 'target_kind mismatch with citizen_targets row',
+      }
+    }
+    return { ok: true, partnerLocationId, streetReference, targetLocationName: null }
   }
-  if (!target) {
-    return { ok: false, status: 400, error: 'Unknown target' }
-  }
-  if (target.target_kind !== payload.target_kind) {
+
+  // Direct kind: conscious_location — the targeted place must exist and be
+  // active in the certified directory. We denormalise its name onto the
+  // signal row so feeds render without an extra join.
+  if (payload.target_kind === 'conscious_location') {
+    const { data: targetLocation, error: tlErr } = await admin
+      .from('conscious_locations')
+      .select('id, slug, name, status')
+      .eq('id', payload.target_location_id ?? '')
+      .maybeSingle()
+    if (tlErr) {
+      console.error('[api/signals POST] target location lookup', tlErr)
+      return { ok: false, status: 500, error: 'Target location check failed' }
+    }
+    if (!targetLocation) {
+      return { ok: false, status: 400, error: 'Unknown target_location_id' }
+    }
+    if (targetLocation.status !== 'active') {
+      return { ok: false, status: 400, error: 'Target location is not active' }
+    }
+    if (
+      (CDMX_ALCALDIA_SLUGS as readonly string[]).includes(targetLocation.slug)
+    ) {
+      return {
+        ok: false,
+        status: 400,
+        error:
+          'Alcaldías are targeted via target_kind=municipality, not conscious_location',
+      }
+    }
     return {
-      ok: false,
-      status: 400,
-      error: 'target_kind mismatch with citizen_targets row',
+      ok: true,
+      partnerLocationId,
+      streetReference,
+      targetLocationName: targetLocation.name,
     }
   }
 
-  return { ok: true, partnerLocationId, streetReference }
+  // company / neighborhood: nothing else to check — target_name presence is
+  // enforced by the zod schema.
+  return { ok: true, partnerLocationId, streetReference, targetLocationName: null }
 }
 
 export async function POST(request: NextRequest) {
@@ -367,6 +429,9 @@ export async function POST(request: NextRequest) {
         conscious_location_id: null,
         partner_location_id: null,
         street_reference: null,
+        target_name: null,
+        target_contact_email: null,
+        target_location_id: null,
         author_user_id: user.id,
         anonymous_display_mode: observation.anonymous_display_mode ?? false,
         anonymous_display_name: observation.anonymous_display_name ?? null,
@@ -382,8 +447,19 @@ export async function POST(request: NextRequest) {
         )
       }
 
+      const isRegistryKind = isRegistryTargetKind(routed.target_kind)
+      // For conscious_location targets, denormalise the directory name so
+      // feeds render without an extra join; for company/neighborhood use
+      // the citizen-typed name.
+      const targetName = isRegistryKind
+        ? null
+        : routed.target_kind === 'conscious_location'
+          ? routedCheck.targetLocationName
+          : (routed.target_name ?? null)
+
       const routedContentPolicyError = firstSignalContentPolicyViolation([
         routedCheck.streetReference,
+        targetName,
       ])
       if (routedContentPolicyError) {
         return NextResponse.json(
@@ -402,13 +478,24 @@ export async function POST(request: NextRequest) {
         category: routed.category,
         severity: routed.severity,
         target_kind: routed.target_kind,
-        citizen_target_id: routed.citizen_target_id,
+        citizen_target_id: isRegistryKind
+          ? (routed.citizen_target_id ?? null)
+          : null,
         title: routed.title,
         body: routed.body,
         language: routed.language,
-        conscious_location_id: routed.conscious_location_id,
+        conscious_location_id: routed.conscious_location_id ?? null,
         partner_location_id: routedCheck.partnerLocationId,
         street_reference: routedCheck.streetReference,
+        target_name: targetName,
+        target_contact_email:
+          routed.target_kind === 'company'
+            ? (routed.target_contact_email ?? null)
+            : null,
+        target_location_id:
+          routed.target_kind === 'conscious_location'
+            ? (routed.target_location_id ?? null)
+            : null,
         author_user_id: user.id,
         anonymous_display_mode: routed.anonymous_display_mode ?? false,
         anonymous_display_name: routed.anonymous_display_name ?? null,

@@ -112,14 +112,27 @@ export default async function SignalsComposePage() {
         ].join(',')
       )
 
+  // Direct-target picker ("Lugar Consciente", migration 248): every active
+  // non-alcaldía location, NOT narrowed to CDMX or the pilot allow-list —
+  // any certified location can receive a signal regardless of routing.
+  const targetLocationsQuery = admin
+    .from('conscious_locations')
+    .select('id, slug, name, neighborhood, city, status')
+    .eq('status', 'active')
+    .not('slug', 'in', `(${CDMX_ALCALDIA_SLUGS.map((s) => `"${s}"`).join(',')})`)
+    .order('name', { ascending: true })
+    .limit(500)
+
   const [
     { data: targets },
     { data: alcaldias },
     { data: partnerLocations },
+    { data: targetLocations },
   ] = await Promise.all([
     targetsQuery,
     alcaldiasQuery,
     partnerLocationsQuery,
+    targetLocationsQuery,
   ])
 
   const targetOptions: ComposeTarget[] = (targets ?? []).map((row) => ({
@@ -138,6 +151,16 @@ export default async function SignalsComposePage() {
   }))
 
   const partnerOptions: ComposeLocation[] = (partnerLocations ?? []).map(
+    (row) => ({
+      id: row.id,
+      slug: row.slug,
+      name: row.name,
+      neighborhood: row.neighborhood,
+      city: row.city,
+    })
+  )
+
+  const targetLocationOptions: ComposeLocation[] = (targetLocations ?? []).map(
     (row) => ({
       id: row.id,
       slug: row.slug,
@@ -169,6 +192,7 @@ export default async function SignalsComposePage() {
           targets={targetOptions}
           alcaldias={alcaldiaOptions}
           partnerLocations={partnerOptions}
+          targetLocations={targetLocationOptions}
           userDefaultLanguage={locale}
           userId={user.id}
         />

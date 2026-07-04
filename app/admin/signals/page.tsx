@@ -45,7 +45,7 @@ export default async function AdminSignalsPage() {
     admin
       .from('citizen_signals')
       .select(
-        'id, public_slug, post_type, category, severity, target_kind, citizen_target_id, conscious_location_id, partner_location_id, street_reference, title, body, language, anonymous_display_mode, anonymous_display_name, publication_status, threshold_stage, cosign_count, anonymous_support_count, canonical_duplicate_of, ai_scores, created_at, updated_at'
+        'id, public_slug, post_type, category, severity, target_kind, citizen_target_id, conscious_location_id, partner_location_id, street_reference, target_name, target_contact_email, target_location_id, title, body, language, anonymous_display_mode, anonymous_display_name, publication_status, threshold_stage, cosign_count, anonymous_support_count, canonical_duplicate_of, ai_scores, created_at, updated_at'
       )
       .order('created_at', { ascending: false })
       .limit(200),
@@ -63,7 +63,11 @@ export default async function AdminSignalsPage() {
   const locationIds = Array.from(
     new Set(
       (signals ?? []).flatMap((s) =>
-        [s.conscious_location_id, s.partner_location_id].filter(
+        [
+          s.conscious_location_id,
+          s.partner_location_id,
+          s.target_location_id,
+        ].filter(
           (id): id is string => typeof id === 'string' && id.length > 0
         )
       )

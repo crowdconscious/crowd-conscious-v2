@@ -18,13 +18,19 @@ export type AdminSignalRow = {
   post_type: string
   category: string
   severity: string
-  target_kind: string
-  citizen_target_id: string
-  conscious_location_id: string
+  /** Null for observation-mode signals (B1 geography). */
+  target_kind: string | null
+  /** Null for observation signals and direct targets (migration 248). */
+  citizen_target_id: string | null
+  conscious_location_id: string | null
   /** Optional partner-spot refinement inside the parent alcaldía (migration 222). */
   partner_location_id: string | null
   /** Optional citizen-typed street/intersection landmark (migration 222). */
   street_reference: string | null
+  /** Direct-target fields (migration 248). */
+  target_name: string | null
+  target_contact_email: string | null
+  target_location_id: string | null
   title: string
   body: string
   language: string
@@ -224,10 +230,17 @@ export default function SignalsTriage({
       ) : (
         <ul className="space-y-4">
           {visibleSignals.map((s) => {
-            const target = targetMap.get(s.citizen_target_id)
+            const target = s.citizen_target_id
+              ? targetMap.get(s.citizen_target_id)
+              : undefined
             const pending = !!pendingByRow[s.id]
             const error = errorByRow[s.id] ?? null
-            const alcaldia = locations[s.conscious_location_id]?.name ?? null
+            const alcaldia = s.conscious_location_id
+              ? (locations[s.conscious_location_id]?.name ?? null)
+              : null
+            const targetLocationName = s.target_location_id
+              ? (locations[s.target_location_id]?.name ?? null)
+              : null
             const partner =
               s.partner_location_id != null
                 ? (locations[s.partner_location_id]?.name ?? null)
@@ -275,14 +288,42 @@ export default function SignalsTriage({
                             ({t.targetKindLabel(target.target_kind as SignalTargetKind)})
                           </span>
                         </>
+                      ) : s.target_name || targetLocationName ? (
+                        // Direct target (migration 248): name lives on the row.
+                        <>
+                          {targetLocationName ?? s.target_name}{' '}
+                          <span className="text-slate-600">
+                            (
+                            {s.target_kind
+                              ? t.targetKindLabel(s.target_kind as SignalTargetKind)
+                              : '—'}
+                            )
+                          </span>
+                        </>
                       ) : (
-                        s.target_kind
+                        (s.target_kind ??
+                          (locale === 'es' ? 'Observación' : 'Observation'))
                       )}{' '}
                       ·{' '}
                       {new Date(s.created_at).toLocaleString(
                         locale === 'es' ? 'es-MX' : 'en-US'
                       )}
                     </p>
+                    {s.target_contact_email && (
+                      <p className="mt-1 text-xs text-slate-400">
+                        <span className="text-slate-500">
+                          {locale === 'es'
+                            ? 'Contacto del destinatario: '
+                            : 'Target contact: '}
+                        </span>
+                        <a
+                          href={`mailto:${s.target_contact_email}`}
+                          className="text-emerald-300 underline hover:text-emerald-200"
+                        >
+                          {s.target_contact_email}
+                        </a>
+                      </p>
+                    )}
                     {(alcaldia || partner || s.street_reference) && (
                       <p className="mt-1 text-xs text-slate-400">
                         <span className="text-slate-500">
@@ -496,19 +537,21 @@ export default function SignalsTriage({
                         ? 'Ver log'
                         : 'View log'}
                   </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setOpenTokensFor(
-                        openTokensFor === s.citizen_target_id
-                          ? null
-                          : s.citizen_target_id
-                      )
-                    }
-                    className="rounded-lg border border-[#2d3748] px-3 py-1.5 text-xs text-slate-300 hover:text-white"
-                  >
-                    {locale === 'es' ? 'Enlace mágico al destinatario' : 'Target magic link'}
-                  </button>
+                  {s.citizen_target_id && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setOpenTokensFor(
+                          openTokensFor === s.citizen_target_id
+                            ? null
+                            : s.citizen_target_id
+                        )
+                      }
+                      className="rounded-lg border border-[#2d3748] px-3 py-1.5 text-xs text-slate-300 hover:text-white"
+                    >
+                      {locale === 'es' ? 'Enlace mágico al destinatario' : 'Target magic link'}
+                    </button>
+                  )}
                 </div>
 
                 {error && (
@@ -541,12 +584,13 @@ export default function SignalsTriage({
                   </details>
                 )}
 
-                {openTokensFor === s.citizen_target_id && (
-                  <TargetTokenPanel
-                    locale={locale}
-                    target={targetMap.get(s.citizen_target_id) ?? null}
-                  />
-                )}
+                {s.citizen_target_id != null &&
+                  openTokensFor === s.citizen_target_id && (
+                    <TargetTokenPanel
+                      locale={locale}
+                      target={targetMap.get(s.citizen_target_id) ?? null}
+                    />
+                  )}
               </li>
             )
           })}

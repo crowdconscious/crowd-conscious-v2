@@ -58,7 +58,7 @@ export async function fetchLandingSignals(
   const { data: rows, error } = await admin
     .from('citizen_signals_public')
     .select(
-      'id, public_slug, category, severity, target_kind, citizen_target_id, title, conscious_location_id, cosign_count, anonymous_support_count, created_at'
+      'id, public_slug, category, severity, target_kind, citizen_target_id, title, conscious_location_id, target_name, cosign_count, anonymous_support_count, created_at'
     )
     .gte('created_at', sinceIso)
     .order('cosign_count', { ascending: false })
@@ -138,7 +138,8 @@ export async function fetchLandingSignals(
     targetName:
       r.citizen_target_id != null
         ? (targetMap.get(r.citizen_target_id) ?? null)
-        : null,
+        : // Direct targets (migration 248) carry their name on the row.
+          (r.target_name ?? null),
     locationName:
       r.conscious_location_id != null
         ? (locationMap.get(r.conscious_location_id) ?? null)

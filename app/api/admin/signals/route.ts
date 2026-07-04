@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
     let query = admin
       .from('citizen_signals')
       .select(
-        'id, public_slug, post_type, category, severity, target_kind, citizen_target_id, title, body, language, conscious_location_id, author_user_id, anonymous_display_mode, anonymous_display_name, publication_status, threshold_stage, cosign_count, canonical_duplicate_of, ai_scores, created_at, updated_at, edited_at'
+        'id, public_slug, post_type, category, severity, target_kind, citizen_target_id, title, body, language, conscious_location_id, target_name, target_contact_email, target_location_id, author_user_id, anonymous_display_mode, anonymous_display_name, publication_status, threshold_stage, cosign_count, canonical_duplicate_of, ai_scores, created_at, updated_at, edited_at'
       )
       .limit(q.limit)
 

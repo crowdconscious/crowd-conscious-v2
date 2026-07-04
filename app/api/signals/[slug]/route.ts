@@ -45,7 +45,7 @@ export async function GET(
     const { data: signal, error: sErr } = await admin
       .from('citizen_signals_public')
       .select(
-        'id, public_slug, post_type, category, severity, target_kind, citizen_target_id, title, body, language, conscious_location_id, partner_location_id, street_reference, display_name, anonymous_display_mode, threshold_stage, cosign_count, anonymous_support_count, stage1_met_at, stage2_met_at, created_at, updated_at'
+        'id, public_slug, post_type, category, severity, target_kind, citizen_target_id, title, body, language, conscious_location_id, partner_location_id, street_reference, target_name, target_location_id, display_name, anonymous_display_mode, threshold_stage, cosign_count, anonymous_support_count, stage1_met_at, stage2_met_at, created_at, updated_at'
       )
       .eq('public_slug', slug)
       .maybeSingle()
@@ -85,6 +85,16 @@ export async function GET(
           .maybeSingle()
       : { data: null }
 
+    // Direct target: the certified place this signal is aimed at
+    // (target_kind=conscious_location, migration 248).
+    const { data: targetLocation } = signal.target_location_id
+      ? await admin
+          .from('conscious_locations')
+          .select('id, slug, name, city, neighborhood')
+          .eq('id', signal.target_location_id)
+          .maybeSingle()
+      : { data: null }
+
     const { data: evidence } = await admin
       .from('citizen_signal_evidence')
       .select('id, kind, storage_path, external_url, caption, created_at')
@@ -104,6 +114,7 @@ export async function GET(
       location: location ?? null,
       partner_location: partnerLocation ?? null,
       partner_location_name: partnerLocation?.name ?? null,
+      target_location: targetLocation ?? null,
       evidence: evidence ?? [],
       responses: responses ?? [],
     })

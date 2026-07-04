@@ -9,6 +9,8 @@ import {
   SIGNAL_CATEGORIES,
   SIGNAL_POST_TYPES,
   SIGNAL_SEVERITIES,
+  isDirectTargetKind,
+  isRegistryTargetKind,
   type CitizenSignalsLocale,
   type SignalCategory,
   type SignalPostType,
@@ -37,6 +39,12 @@ type Props = {
   alcaldias: ReadonlyArray<ComposeLocation>
   /** Other active CDMX conscious_locations (Stage B partner options). */
   partnerLocations: ReadonlyArray<ComposeLocation>
+  /**
+   * Active conscious_locations offered as direct targets ("Lugar
+   * Consciente" kind, migration 248). Unlike partnerLocations this list is
+   * NOT narrowed to CDMX — any active location can receive a signal.
+   */
+  targetLocations: ReadonlyArray<ComposeLocation>
   userDefaultLanguage: CitizenSignalsLocale
   /** Used to scope the localStorage draft so multiple accounts don't collide. */
   userId: string
@@ -44,10 +52,11 @@ type Props = {
 
 type Step = 0 | 1 | 2 | 3 | 4 | 5
 const TOTAL_STEPS = 6
-// Bumped to v2 with migration 222 (street-level precision). Older v1
-// drafts simply get discarded — the rehydration check is `parsed.v ===
-// DRAFT_VERSION` so a v1 payload yields the default empty draft.
-const DRAFT_VERSION = 2
+// v2: migration 222 (street-level precision). v3: migration 248 (direct
+// target kinds — company/neighborhood/conscious_location). Older drafts
+// simply get discarded — the rehydration check is `parsed.v ===
+// DRAFT_VERSION` so an old payload yields the default empty draft.
+const DRAFT_VERSION = 3
 
 type DraftState = {
   v: number
@@ -56,6 +65,12 @@ type DraftState = {
   severity: SignalSeverity
   targetKind: SignalTargetKind
   targetId: string
+  /** Free-text name for company/neighborhood targets (248). */
+  targetName: string
+  /** Optional contact email for company targets (248). */
+  targetContactEmail: string
+  /** conscious_locations FK for conscious_location targets (248). */
+  targetLocationId: string
   locationId: string
   /** RefinementMode for step 3 stage B. */
   refinementMode: RefinementMode
@@ -73,7 +88,12 @@ type DraftState = {
 
 type StepErrors = {
   type?: { category?: string; severity?: string }
-  target?: { targetId?: string }
+  target?: {
+    targetId?: string
+    targetName?: string
+    targetContactEmail?: string
+    targetLocationId?: string
+  }
   location?: {
     locationId?: string
     partnerLocationId?: string
@@ -105,6 +125,9 @@ function emptyDraft(language: CitizenSignalsLocale): DraftState {
     severity: 'medium',
     targetKind: 'municipality',
     targetId: '',
+    targetName: '',
+    targetContactEmail: '',
+    targetLocationId: '',
     locationId: '',
     refinementMode: 'none',
     partnerLocationId: null,
@@ -142,6 +165,7 @@ export default function ComposeWizard({
   targets,
   alcaldias,
   partnerLocations,
+  targetLocations,
   userDefaultLanguage,
   userId,
 }: Props) {
@@ -215,21 +239,98 @@ export default function ComposeWizard({
         category: z.enum(SIGNAL_CATEGORIES),
         severity: z.enum(SIGNAL_SEVERITIES),
       }),
-      target: z.object({
-        targetId: z
-          .string()
-          .uuid({ message: t.compose.validation.targetRequired }),
-      }),
+      target: z
+        .object({
+          targetKind: z.string(),
+          targetId: z.string(),
+          targetName: z.string(),
+          targetContactEmail: z.string(),
+          targetLocationId: z.string(),
+        })
+        .superRefine((value, ctx) => {
+          if (isRegistryTargetKind(value.targetKind)) {
+            if (!z.string().uuid().safeParse(value.targetId).success) {
+              ctx.addIssue({
+                code: 'custom',
+                path: ['targetId'],
+                message: t.compose.validation.targetRequired,
+              })
+            }
+            return
+          }
+          if (
+            value.targetKind === 'company' ||
+            value.targetKind === 'neighborhood'
+          ) {
+            const name = value.targetName.trim()
+            if (name.length < 2) {
+              ctx.addIssue({
+                code: 'custom',
+                path: ['targetName'],
+                message:
+                  value.targetKind === 'company'
+                    ? t.compose.validation.companyNameRequired
+                    : t.compose.validation.neighborhoodNameRequired,
+              })
+            } else if (name.length > 160) {
+              ctx.addIssue({
+                code: 'custom',
+                path: ['targetName'],
+                message: t.compose.validation.targetNameTooLong,
+              })
+            }
+          }
+          if (value.targetKind === 'company') {
+            const email = value.targetContactEmail.trim()
+            if (
+              email.length > 0 &&
+              !z.string().email().safeParse(email).success
+            ) {
+              ctx.addIssue({
+                code: 'custom',
+                path: ['targetContactEmail'],
+                message: t.compose.validation.contactEmailInvalid,
+              })
+            }
+          }
+          if (value.targetKind === 'conscious_location') {
+            if (
+              !z.string().uuid().safeParse(value.targetLocationId).success
+            ) {
+              ctx.addIssue({
+                code: 'custom',
+                path: ['targetLocationId'],
+                message: t.compose.validation.locationTargetRequired,
+              })
+            }
+          }
+        }),
       location: z
         .object({
-          locationId: z.string().uuid({
-            message: t.compose.location.validation.alcaldiaRequired,
-          }),
+          // Direct target kinds (248) treat the alcaldía as optional geo
+          // context; registry kinds still require it.
+          targetKind: z.string(),
+          locationId: z.string(),
           refinementMode: z.enum(['none', 'partner', 'street']),
           partnerLocationId: z.string().uuid().nullable(),
           streetReference: z.string(),
         })
         .superRefine((value, ctx) => {
+          const alcaldiaSelected = z
+            .string()
+            .uuid()
+            .safeParse(value.locationId).success
+          if (
+            !alcaldiaSelected &&
+            (isRegistryTargetKind(value.targetKind) ||
+              value.refinementMode !== 'none')
+          ) {
+            ctx.addIssue({
+              code: 'custom',
+              path: ['locationId'],
+              message: t.compose.location.validation.alcaldiaRequired,
+            })
+          }
           if (value.refinementMode === 'partner') {
             if (!value.partnerLocationId) {
               ctx.addIssue({
@@ -355,21 +456,32 @@ export default function ComposeWizard({
           return false
         }
         case 1: {
-          const r = schemas.target.safeParse({ targetId: draft.targetId })
+          const r = schemas.target.safeParse({
+            targetKind: draft.targetKind,
+            targetId: draft.targetId,
+            targetName: draft.targetName,
+            targetContactEmail: draft.targetContactEmail,
+            targetLocationId: draft.targetLocationId,
+          })
           if (r.success) {
             setErrors((prev) => ({ ...prev, target: undefined }))
             return true
           }
+          const flat = r.error.flatten().fieldErrors
           setErrors((prev) => ({
             ...prev,
             target: {
-              targetId: r.error.issues[0]?.message,
+              targetId: flat.targetId?.[0],
+              targetName: flat.targetName?.[0],
+              targetContactEmail: flat.targetContactEmail?.[0],
+              targetLocationId: flat.targetLocationId?.[0],
             },
           }))
           return false
         }
         case 2: {
           const r = schemas.location.safeParse({
+            targetKind: draft.targetKind,
             locationId: draft.locationId,
             refinementMode: draft.refinementMode,
             partnerLocationId: draft.partnerLocationId,
@@ -485,16 +597,33 @@ export default function ComposeWizard({
           ? draft.streetReference.trim()
           : null
 
+      const isDirect = isDirectTargetKind(draft.targetKind)
+      const contactEmail = draft.targetContactEmail.trim()
+
       const payload = {
         post_type: draft.postType,
         category: draft.category,
         severity: draft.severity,
         target_kind: draft.targetKind,
-        citizen_target_id: draft.targetId,
+        citizen_target_id: isDirect ? null : draft.targetId,
+        target_name:
+          draft.targetKind === 'company' ||
+          draft.targetKind === 'neighborhood'
+            ? draft.targetName.trim()
+            : null,
+        target_contact_email:
+          draft.targetKind === 'company' && contactEmail.length > 0
+            ? contactEmail
+            : null,
+        target_location_id:
+          draft.targetKind === 'conscious_location'
+            ? draft.targetLocationId
+            : null,
         title: draft.title.trim(),
         body: draft.body.trim(),
         language: draft.language,
-        conscious_location_id: draft.locationId,
+        // Direct kinds may skip the alcaldía entirely (optional geo context).
+        conscious_location_id: draft.locationId || null,
         partner_location_id,
         street_reference,
         anonymous_display_mode: draft.anonymousMode,
@@ -622,12 +751,29 @@ export default function ComposeWizard({
             <TargetPicker
               locale={locale}
               targets={targets}
+              targetLocations={targetLocations}
               selectedId={draft.targetId}
               selectedKind={draft.targetKind}
-              onChange={({ id, kind }) =>
-                setDraft((d) => ({ ...d, targetId: id, targetKind: kind }))
+              targetName={draft.targetName}
+              targetContactEmail={draft.targetContactEmail}
+              targetLocationId={draft.targetLocationId}
+              onChange={(patch) =>
+                setDraft((d) => ({
+                  ...d,
+                  ...(patch.kind !== undefined ? { targetKind: patch.kind } : {}),
+                  ...(patch.id !== undefined ? { targetId: patch.id } : {}),
+                  ...(patch.targetName !== undefined
+                    ? { targetName: patch.targetName }
+                    : {}),
+                  ...(patch.targetContactEmail !== undefined
+                    ? { targetContactEmail: patch.targetContactEmail }
+                    : {}),
+                  ...(patch.targetLocationId !== undefined
+                    ? { targetLocationId: patch.targetLocationId }
+                    : {}),
+                }))
               }
-              error={errors.target?.targetId}
+              errors={errors.target}
             />
           </section>
         )}
@@ -635,6 +781,11 @@ export default function ComposeWizard({
         {step === 2 && (
           <section className="space-y-4">
             <p className="text-sm text-slate-400">{t.compose.locationIntro}</p>
+            {isDirectTargetKind(draft.targetKind) && (
+              <p className="rounded-lg border border-[#2d3748] bg-[#0f1419] px-3 py-2 text-xs text-slate-400">
+                {t.compose.targetKinds.locationOptionalNote}
+              </p>
+            )}
             <LocationPicker
               locale={locale}
               alcaldias={alcaldias}
@@ -1077,11 +1228,14 @@ function StepReview({
         )}
         {previewRow(
           t.detail.target,
-          target
-            ? `${target.display_name} (${t.targetKindLabel(
-                draft.targetKind
-              )})`
-            : '—',
+          (() => {
+            const kindLabel = t.targetKindLabel(draft.targetKind)
+            if (isRegistryTargetKind(draft.targetKind)) {
+              return target ? `${target.display_name} (${kindLabel})` : '—'
+            }
+            const directName = draft.targetName.trim()
+            return directName ? `${directName} (${kindLabel})` : '—'
+          })(),
           1
         )}
         {previewRow(t.detail.location, locationSummary, 2)}

@@ -72,7 +72,7 @@ export async function fetchInitialSignals(): Promise<{
   const { data: rows, error } = await admin
     .from('citizen_signals_public')
     .select(
-      'id, public_slug, post_type, category, severity, target_kind, citizen_target_id, title, body, language, conscious_location_id, partner_location_id, street_reference, anonymous_display_mode, display_name, threshold_stage, cosign_count, anonymous_support_count, stage1_met_at, stage2_met_at, created_at, updated_at'
+      'id, public_slug, post_type, category, severity, target_kind, citizen_target_id, title, body, language, conscious_location_id, partner_location_id, street_reference, target_name, target_location_id, anonymous_display_mode, display_name, threshold_stage, cosign_count, anonymous_support_count, stage1_met_at, stage2_met_at, created_at, updated_at'
     )
     .order('created_at', { ascending: false })
     .limit(FEED_PAGE_SIZE)
@@ -152,6 +152,9 @@ type PublicViewRow = {
   conscious_location_id: string | null
   partner_location_id: string | null
   street_reference: string | null
+  /** Direct-target name (company/neighborhood/conscious_location) — 248. */
+  target_name?: string | null
+  target_location_id?: string | null
   anonymous_display_mode: boolean
   display_name: string | null
   threshold_stage: number
@@ -193,7 +196,9 @@ export function mapRowToItem(
     targetName:
       row.citizen_target_id != null
         ? (lookups.targets[row.citizen_target_id]?.displayName ?? null)
-        : null,
+        : // Direct targets (company/neighborhood/conscious_location) carry
+          // their display name on the row itself (migration 248).
+          (row.target_name ?? null),
     locationName:
       row.conscious_location_id != null
         ? (lookups.locations[row.conscious_location_id]?.name ?? null)

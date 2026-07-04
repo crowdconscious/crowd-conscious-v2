@@ -1273,6 +1273,9 @@ export interface SendSignalTargetNotifiedStage1Args {
   cosignCount: number
   magicLinkUrl: string
   expiryDays?: number
+  /** 'dashboard' (registry targets, default) or 'public' (direct targets
+   * — company/conscious_location, migration 248: public signal link). */
+  ctaMode?: 'dashboard' | 'public'
 }
 
 export async function sendSignalTargetNotifiedStage1(
@@ -1291,6 +1294,7 @@ export async function sendSignalTargetNotifiedStage1(
       cosignCount: args.cosignCount,
       magicLinkUrl: args.magicLinkUrl,
       expiryDays: args.expiryDays ?? 7,
+      ctaMode: args.ctaMode ?? 'dashboard',
     }),
   })
 }

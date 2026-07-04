@@ -77,6 +77,8 @@ type Stage1EmailHelper = (args: {
   cosignCount: number
   magicLinkUrl: string
   language: string
+  /** 'dashboard' for registry targets; 'public' for direct targets (248). */
+  ctaMode: 'dashboard' | 'public'
 }) => Promise<unknown>
 
 /**
@@ -102,6 +104,7 @@ async function loadStage1EmailHelper(): Promise<Stage1EmailHelper | null> {
     cosignCount: number
     magicLinkUrl: string
     expiryDays?: number
+    ctaMode?: 'dashboard' | 'public'
   }) => Promise<unknown>
   const real = fn as RealHelper
   return (args) =>
@@ -114,6 +117,7 @@ async function loadStage1EmailHelper(): Promise<Stage1EmailHelper | null> {
       cosignCount: args.cosignCount,
       magicLinkUrl: args.magicLinkUrl,
       expiryDays: 7,
+      ctaMode: args.ctaMode,
     })
 }
 
@@ -149,7 +153,12 @@ type SignalRow = {
   language: string
   cosign_count: number
   threshold_stage: number
-  citizen_target_id: string
+  /** Null for observation signals and direct targets (migration 248). */
+  citizen_target_id: string | null
+  target_kind: string | null
+  target_name: string | null
+  target_contact_email: string | null
+  target_location_id: string | null
   author_user_id: string
   private_target_notify_at: string | null
 }
@@ -241,7 +250,7 @@ export async function GET(request: NextRequest) {
     const { data: stage1Rows, error: stage1QueryErr } = await admin
       .from('citizen_signals')
       .select(
-        'id, public_slug, title, language, cosign_count, threshold_stage, citizen_target_id, author_user_id, private_target_notify_at'
+        'id, public_slug, title, language, cosign_count, threshold_stage, citizen_target_id, target_kind, target_name, target_contact_email, target_location_id, author_user_id, private_target_notify_at'
       )
       .eq('publication_status', 'published')
       .lt('threshold_stage', 1)
@@ -284,7 +293,7 @@ export async function GET(request: NextRequest) {
     const { data: stage2Rows, error: stage2QueryErr } = await admin
       .from('citizen_signals')
       .select(
-        'id, public_slug, title, language, cosign_count, threshold_stage, citizen_target_id, author_user_id, private_target_notify_at'
+        'id, public_slug, title, language, cosign_count, threshold_stage, citizen_target_id, target_kind, target_name, target_contact_email, target_location_id, author_user_id, private_target_notify_at'
       )
       .eq('publication_status', 'published')
       .lt('threshold_stage', 2)
@@ -372,39 +381,101 @@ async function promoteStage1(args: {
   // author gets exactly one milestone push per threshold.
   await sendAuthorMilestonePush(admin, row)
 
-  // Mint the magic-link token. We always mint fresh at the stage transition
-  // so the email body has a usable raw token (we cannot read the prior
-  // hash-only row back to re-send it).
-  const issued = await issueTargetToken(admin, row.citizen_target_id, {
-    ttlDays: 7,
-  })
+  // Resolve who to notify and with which link. Registry targets
+  // (municipality/institution) get the private magic-link dashboard; direct
+  // targets (migration 248) have no dashboard, so company targets with a
+  // citizen-provided email and conscious_location targets with a directory
+  // contact_email get the PUBLIC signal link instead. Neighborhood targets
+  // have no inbox — the signal still escalates publicly.
+  let recipientEmail: string | null = null
+  let targetName: string | null = null
+  let linkUrl: string | null = null
+  let ctaMode: 'dashboard' | 'public' = 'dashboard'
+  let tokenId: string | null = null
 
-  // Look up the target's notification email + display name for the mail body.
-  const { data: target } = await admin
-    .from('citizen_targets')
-    .select('id, display_name, notification_email')
-    .eq('id', row.citizen_target_id)
-    .maybeSingle()
+  if (row.citizen_target_id) {
+    // Mint the magic-link token. We always mint fresh at the stage
+    // transition so the email body has a usable raw token (we cannot read
+    // the prior hash-only row back to re-send it).
+    const issued = await issueTargetToken(admin, row.citizen_target_id, {
+      ttlDays: 7,
+    })
+    tokenId = issued.token_id
 
-  const magicLinkUrl = `${baseUrl}/dashboard/target/${issued.token}`
+    const { data: target } = await admin
+      .from('citizen_targets')
+      .select('id, display_name, notification_email')
+      .eq('id', row.citizen_target_id)
+      .maybeSingle()
+
+    recipientEmail = target?.notification_email ?? null
+    targetName = target?.display_name ?? null
+    linkUrl = `${baseUrl}/dashboard/target/${issued.token}`
+    ctaMode = 'dashboard'
+    if (!recipientEmail) {
+      console.warn(
+        '[cron/signal-threshold-check] stage1: no notification_email for target',
+        row.citizen_target_id,
+        'signal',
+        row.id
+      )
+    }
+  } else if (row.target_kind === 'company') {
+    recipientEmail = row.target_contact_email
+    targetName = row.target_name
+    linkUrl = `${baseUrl}/signals/${row.public_slug}`
+    ctaMode = 'public'
+    if (!recipientEmail) {
+      console.log(
+        '[cron/signal-threshold-check] stage1: company target without contact email — skipping notify',
+        row.id
+      )
+    }
+  } else if (row.target_kind === 'conscious_location') {
+    targetName = row.target_name
+    linkUrl = `${baseUrl}/signals/${row.public_slug}`
+    ctaMode = 'public'
+    if (row.target_location_id) {
+      const { data: targetLocation } = await admin
+        .from('conscious_locations')
+        .select('id, name, contact_email')
+        .eq('id', row.target_location_id)
+        .maybeSingle()
+      recipientEmail = targetLocation?.contact_email ?? null
+      targetName = targetLocation?.name ?? row.target_name
+    }
+    if (!recipientEmail) {
+      console.log(
+        '[cron/signal-threshold-check] stage1: conscious_location target without contact_email — skipping notify',
+        row.id,
+        row.target_location_id
+      )
+    }
+  } else {
+    // neighborhood targets and observation-mode signals: public escalation
+    // only, no target email.
+    console.log(
+      '[cron/signal-threshold-check] stage1: no notifiable target for kind',
+      row.target_kind,
+      'signal',
+      row.id
+    )
+  }
 
   let emailSent = false
   let emailError: string | null = null
 
-  if (
-    stage1Helper &&
-    target?.notification_email &&
-    target.notification_email.length > 0
-  ) {
+  if (stage1Helper && recipientEmail && targetName && linkUrl) {
     try {
       await stage1Helper({
-        to: target.notification_email,
-        targetName: target.display_name,
+        to: recipientEmail,
+        targetName,
         signalTitle: row.title,
         signalSlug: row.public_slug,
         cosignCount: row.cosign_count,
-        magicLinkUrl,
+        magicLinkUrl: linkUrl,
         language: row.language,
+        ctaMode,
       })
       emailSent = true
     } catch (err) {
@@ -415,13 +486,6 @@ async function promoteStage1(args: {
         emailError
       )
     }
-  } else if (!target?.notification_email) {
-    console.warn(
-      '[cron/signal-threshold-check] stage1: no notification_email for target',
-      row.citizen_target_id,
-      'signal',
-      row.id
-    )
   }
 
   if (emailSent) {
@@ -449,10 +513,13 @@ async function promoteStage1(args: {
           source: 'cron/signal-threshold-check',
           cosign_count: row.cosign_count,
           target_id: row.citizen_target_id,
-          token_id: issued.token_id,
+          target_kind: row.target_kind,
+          target_name: targetName,
+          token_id: tokenId,
+          cta_mode: ctaMode,
           email_sent: emailSent,
           email_error: emailError,
-          notification_email_present: Boolean(target?.notification_email),
+          notification_email_present: Boolean(recipientEmail),
         },
       })
     if (evErr) {

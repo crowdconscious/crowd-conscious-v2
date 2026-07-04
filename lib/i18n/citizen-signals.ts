@@ -43,8 +43,49 @@ export type SignalSeverity = (typeof SIGNAL_SEVERITIES)[number]
 export const SIGNAL_POST_TYPES = ['complaint', 'suggestion'] as const
 export type SignalPostType = (typeof SIGNAL_POST_TYPES)[number]
 
-export const SIGNAL_TARGET_KINDS = ['municipality', 'institution'] as const
+export const SIGNAL_TARGET_KINDS = [
+  'municipality',
+  'institution',
+  'company',
+  'neighborhood',
+  'conscious_location',
+] as const
 export type SignalTargetKind = (typeof SIGNAL_TARGET_KINDS)[number]
+
+// Kinds that resolve against the citizen_targets registry (magic-link
+// dashboard, official responses). The other kinds are "direct" targets
+// stored on the signal row itself (target_name / target_location_id) —
+// see migration 248.
+export const SIGNAL_REGISTRY_TARGET_KINDS = [
+  'municipality',
+  'institution',
+] as const
+export type SignalRegistryTargetKind =
+  (typeof SIGNAL_REGISTRY_TARGET_KINDS)[number]
+
+export const SIGNAL_DIRECT_TARGET_KINDS = [
+  'company',
+  'neighborhood',
+  'conscious_location',
+] as const
+export type SignalDirectTargetKind =
+  (typeof SIGNAL_DIRECT_TARGET_KINDS)[number]
+
+export function isRegistryTargetKind(
+  kind: string | null | undefined
+): kind is SignalRegistryTargetKind {
+  return kind === 'municipality' || kind === 'institution'
+}
+
+export function isDirectTargetKind(
+  kind: string | null | undefined
+): kind is SignalDirectTargetKind {
+  return (
+    kind === 'company' ||
+    kind === 'neighborhood' ||
+    kind === 'conscious_location'
+  )
+}
 
 export const SIGNAL_PUBLICATION_STATUSES = [
   'draft',
@@ -191,6 +232,21 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
         targetRequired: isEs
           ? 'Selecciona un destinatario para continuar.'
           : 'Select a target to continue.',
+        companyNameRequired: isEs
+          ? 'Escribe el nombre de la empresa (mínimo 2 caracteres).'
+          : 'Write the company name (at least 2 characters).',
+        neighborhoodNameRequired: isEs
+          ? 'Escribe el nombre de la colonia (mínimo 2 caracteres).'
+          : 'Write the neighborhood name (at least 2 characters).',
+        targetNameTooLong: isEs
+          ? 'El nombre no puede pasar de 160 caracteres.'
+          : 'The name can be at most 160 characters.',
+        locationTargetRequired: isEs
+          ? 'Selecciona un Lugar Consciente para continuar.'
+          : 'Select a Conscious Location to continue.',
+        contactEmailInvalid: isEs
+          ? 'Escribe un correo válido o deja el campo vacío.'
+          : 'Write a valid email or leave the field empty.',
         locationRequired: isEs
           ? 'Selecciona una ubicación para continuar.'
           : 'Select a location to continue.',
@@ -243,6 +299,51 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
       targetIntro: isEs
         ? 'Elige a quién va dirigida la señal. Recibirán una notificación si suficientes vecinos co-firman.'
         : 'Pick who this signal is for. They are notified once enough neighbours co-sign.',
+      // Direct target kinds (company / neighborhood / conscious_location) —
+      // added with migration 248.
+      targetKinds: {
+        company: {
+          nameLabel: isEs ? 'Nombre de la empresa' : 'Company name',
+          namePlaceholder: isEs
+            ? 'Ej. Panadería La Espiga'
+            : 'E.g. La Espiga Bakery',
+          emailLabel: isEs
+            ? 'Correo de contacto (opcional)'
+            : 'Contact email (optional)',
+          emailPlaceholder: isEs
+            ? 'contacto@empresa.com'
+            : 'contact@company.com',
+          emailHelp: isEs
+            ? 'Si conoces a alguien en la empresa, agrega su correo: le avisaremos cuando la señal cruce el umbral de co-firmas.'
+            : 'If you know someone at the company, add their email: we notify them when the signal crosses the co-sign threshold.',
+        },
+        neighborhood: {
+          nameLabel: isEs ? 'Nombre de la colonia' : 'Neighborhood name',
+          namePlaceholder: isEs
+            ? 'Ej. Colonia Roma Norte'
+            : 'E.g. Roma Norte',
+          help: isEs
+            ? 'Para asuntos de convivencia o mejora a nivel colonia. La señal escala públicamente; no se envía correo.'
+            : 'For community-level issues. The signal escalates publicly; no email is sent.',
+        },
+        consciousLocation: {
+          pickerLabel: isEs
+            ? 'Elige un Lugar Consciente'
+            : 'Pick a Conscious Location',
+          searchPlaceholder: isEs
+            ? 'Buscar lugar por nombre…'
+            : 'Search locations by name…',
+          help: isEs
+            ? 'Negocios certificados por Crowd Conscious. Puedes enviarles una propuesta o una denuncia.'
+            : 'Businesses certified by Crowd Conscious. You can send them a suggestion or a complaint.',
+          empty: isEs
+            ? 'No encontramos lugares activos con ese nombre.'
+            : 'No active locations matched.',
+        },
+        locationOptionalNote: isEs
+          ? 'Para este destinatario la alcaldía es opcional — puedes saltar el paso de lugar.'
+          : 'For this target the alcaldía is optional — you can skip the location step.',
+      },
       locationIntro: isEs
         ? 'Selecciona la ubicación en CDMX donde aplica la señal.'
         : 'Pick the CDMX location where this applies.',
@@ -949,8 +1050,13 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
       const map: Record<SignalTargetKind, [string, string]> = {
         municipality: ['Alcaldía', 'Municipality'],
         institution: ['Institución', 'Institution'],
+        company: ['Empresa', 'Company'],
+        neighborhood: ['Colonia', 'Neighborhood'],
+        conscious_location: ['Lugar Consciente', 'Conscious Location'],
       }
-      return map[tk][isEs ? 0 : 1]
+      // Defensive fallback: rows written before migration 248 (or by a
+      // future kind this bundle doesn't know) must never 500 a page.
+      return (map[tk] ?? ['Destinatario', 'Target'])[isEs ? 0 : 1]
     },
 
     statusLabel: (status: SignalPublicationStatus): string => {

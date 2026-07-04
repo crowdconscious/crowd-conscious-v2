@@ -73,7 +73,7 @@ export default async function SignalsDetailPage({ params }: PageProps) {
   const { data: signal } = await admin
     .from('citizen_signals_public')
     .select(
-      'id, public_slug, post_type, category, severity, target_kind, citizen_target_id, title, body, language, conscious_location_id, partner_location_id, street_reference, display_name, anonymous_display_mode, threshold_stage, cosign_count, anonymous_support_count, stage1_met_at, stage2_met_at, created_at, updated_at'
+      'id, public_slug, post_type, category, severity, target_kind, citizen_target_id, title, body, language, conscious_location_id, partner_location_id, street_reference, target_name, target_location_id, display_name, anonymous_display_mode, threshold_stage, cosign_count, anonymous_support_count, stage1_met_at, stage2_met_at, created_at, updated_at'
     )
     .eq('public_slug', slug)
     .maybeSingle()
@@ -157,6 +157,20 @@ export default async function SignalsDetailPage({ params }: PageProps) {
   // modelled in types/database.ts. READ-ONLY: this never writes the signal.
   const sponsor = await resolveSignalSponsor(signal.id)
 
+  // Direct targets (company/neighborhood/conscious_location — migration 248)
+  // have no citizen_targets row; synthesize a display-only target from the
+  // denormalised name so the detail header/aside render uniformly.
+  const displayTarget =
+    target ??
+    (signal.target_kind && signal.target_name
+      ? {
+          id: signal.target_location_id ?? '',
+          slug: '',
+          display_name: signal.target_name,
+          target_kind: signal.target_kind,
+        }
+      : null)
+
   const user = await getCurrentUser()
   let viewerHasCosigned = false
   if (user) {
@@ -179,7 +193,7 @@ export default async function SignalsDetailPage({ params }: PageProps) {
       <SignalDetail
         locale={locale}
         signal={signal}
-        target={target ?? null}
+        target={displayTarget}
         location={location ?? null}
         partnerLocation={partnerLocation ?? null}
         evidence={evidenceWithUrls}

@@ -27,14 +27,16 @@ type ApiSignalRow = {
   post_type: string
   category: string
   severity: string
-  target_kind: string
-  citizen_target_id: string
+  target_kind: string | null
+  citizen_target_id: string | null
   title: string
   body: string
   language: string
-  conscious_location_id: string
+  conscious_location_id: string | null
   partner_location_id: string | null
   street_reference: string | null
+  target_name?: string | null
+  target_location_id?: string | null
   anonymous_display_mode: boolean
   display_name: string | null
   threshold_stage: number
@@ -206,8 +208,15 @@ function mapApiRow(row: ApiSignalRow, lookups: SignalLookups): SignalListItem {
     stage2MetAt: row.stage2_met_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-    targetName: lookups.targets[row.citizen_target_id]?.displayName ?? null,
-    locationName: lookups.locations[row.conscious_location_id]?.name ?? null,
+    targetName:
+      (row.citizen_target_id
+        ? lookups.targets[row.citizen_target_id]?.displayName
+        : null) ??
+      row.target_name ??
+      null,
+    locationName: row.conscious_location_id
+      ? (lookups.locations[row.conscious_location_id]?.name ?? null)
+      : null,
     // Partner name may be missing from the lookups cache after pagination
     // (the initial server fetch primes it for the first page only). When
     // that happens the SignalCard falls through to the street_reference

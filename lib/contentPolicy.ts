@@ -21,6 +21,9 @@ const OBSERVATION_FORBIDDEN_ROUTED_KEYS = [
   'target_kind',
   'partner_location_id',
   'street_reference',
+  'target_name',
+  'target_contact_email',
+  'target_location_id',
 ] as const
 
 export function observationPayloadHasForbiddenRoutedFields(
