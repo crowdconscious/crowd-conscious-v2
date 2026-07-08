@@ -1964,6 +1964,10 @@ export interface Database {
             | 'causes_fund'
             | 'consciousness'
             | 'science'
+            | 'economy'
+            | 'health'
+            | 'community'
+            | 'culture'
           tags: string[]
           meta_title: string | null
           meta_description: string | null
@@ -2007,6 +2011,10 @@ export interface Database {
             | 'causes_fund'
             | 'consciousness'
             | 'science'
+            | 'economy'
+            | 'health'
+            | 'community'
+            | 'culture'
           tags?: string[]
           meta_title?: string | null
           meta_description?: string | null
@@ -2050,6 +2058,10 @@ export interface Database {
             | 'causes_fund'
             | 'consciousness'
             | 'science'
+            | 'economy'
+            | 'health'
+            | 'community'
+            | 'culture'
           tags?: string[]
           meta_title?: string | null
           meta_description?: string | null

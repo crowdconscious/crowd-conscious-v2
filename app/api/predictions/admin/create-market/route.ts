@@ -192,7 +192,32 @@ export async function POST(request: NextRequest) {
     if (typeof cover_image_url === 'string') {
       updatePayload.cover_image_url = cover_image_url.trim() || null
     }
-    await admin.from('prediction_markets').update(updatePayload).eq('id', marketId)
+
+    const { error: updateErr } = await admin
+      .from('prediction_markets')
+      .update(updatePayload)
+      .eq('id', marketId)
+
+    if (updateErr) {
+      console.error('Create pulse metadata update error:', updateErr)
+      await admin.from('prediction_markets').delete().eq('id', marketId)
+      return Response.json({ error: updateErr.message }, { status: 500 })
+    }
+
+    const { data: verified, error: verifyErr } = await admin
+      .from('prediction_markets')
+      .select('is_pulse, is_draft')
+      .eq('id', marketId)
+      .single()
+
+    if (verifyErr || verified?.is_pulse !== true) {
+      console.error('Create pulse is_pulse verification failed:', verifyErr, verified)
+      await admin.from('prediction_markets').delete().eq('id', marketId)
+      return Response.json(
+        { error: 'Pulse was created but could not be marked as a Pulse. Please try again.' },
+        { status: 500 }
+      )
+    }
 
     const hasSubtitlesOrTranslations = normalizedOutcomes.some(
       (o) => o.subtitle !== null || o.labelEn !== null || o.subtitleEn !== null

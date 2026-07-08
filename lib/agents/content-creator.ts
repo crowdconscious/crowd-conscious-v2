@@ -37,6 +37,10 @@ const ALLOWED_CATEGORIES = new Set([
   'causes_fund',
   'consciousness',
   'science',
+  'economy',
+  'health',
+  'community',
+  'culture',
 ])
 
 const APP_BASE = process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'

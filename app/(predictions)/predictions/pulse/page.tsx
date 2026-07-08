@@ -4,6 +4,8 @@ import PulseListingView from '@/components/pulse/PulseListingView'
 import { fetchPulseMarketsForListing, getPulseListingContext } from '@/lib/pulse/pulse-listing-data'
 import { getPulseListingCopy } from '@/lib/i18n/pulse-listing'
 
+export const dynamic = 'force-dynamic'
+
 export async function generateMetadata(): Promise<Metadata> {
   const cookieStore = await cookies()
   const locale = cookieStore.get('preferred-language')?.value === 'en' ? 'en' : 'es'

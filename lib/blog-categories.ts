@@ -2,7 +2,7 @@
  * Canonical blog post categories.
  *
  * IDs must match the `blog_posts.category` DB CHECK constraint
- * (migration 168, extended in 243). IDs are stable DB values — never rename
+ * (migration 168, extended in 243, 245, 249). IDs are stable DB values — never rename
  * them; only labels change. `market_story` keeps its historical key but is
  * displayed with Pulse-first language ("Historia de Pulse" / "Pulse story").
  */
@@ -20,6 +20,10 @@ export const BLOG_CATEGORY_IDS = [
   'causes_fund',
   'consciousness',
   'science',
+  'economy',
+  'health',
+  'community',
+  'culture',
 ] as const
 
 export type BlogCategoryId = (typeof BLOG_CATEGORY_IDS)[number]
@@ -44,6 +48,10 @@ export const BLOG_CATEGORY_LABELS: Record<BlogCategoryId, { es: string; en: stri
   causes_fund: { es: 'Causas y fondo', en: 'Causes & fund' },
   consciousness: { es: 'Consciencia', en: 'Consciousness' },
   science: { es: 'Ciencia', en: 'Science' },
+  economy: { es: 'Economía', en: 'Economy' },
+  health: { es: 'Salud', en: 'Health' },
+  community: { es: 'Comunidad', en: 'Community' },
+  culture: { es: 'Cultura', en: 'Culture' },
 }
 
 export function getBlogCategoryLabel(id: string, locale: 'es' | 'en' = 'es'): string {

@@ -1,11 +1,13 @@
 import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
-import dynamic from 'next/dynamic'
+import nextDynamic from 'next/dynamic'
 import PulseListingView from '@/components/pulse/PulseListingView'
 import { fetchPulseMarketsForListing, getPulseListingContext } from '@/lib/pulse/pulse-listing-data'
 import { getPulseListingCopy } from '@/lib/i18n/pulse-listing'
 
-const Footer = dynamic(() => import('@/components/Footer'))
+export const dynamic = 'force-dynamic'
+
+const Footer = nextDynamic(() => import('@/components/Footer'))
 
 /**
  * /pulse — consumer Pulse listing (formerly the B2B landing).

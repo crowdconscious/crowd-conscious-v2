@@ -114,11 +114,14 @@ export async function POST(
       return NextResponse.json({ error: rpcError?.message ?? 'Failed to create Pulse' }, { status: 500 })
     }
 
+    const nowIso = new Date().toISOString()
     const { error: upErr } = await admin
       .from('prediction_markets')
       .update({
         sponsor_account_id: account.id,
         is_pulse: true,
+        is_draft: false,
+        published_at: nowIso,
         pulse_client_name: account.company_name,
         pulse_client_logo: effectiveSponsorLogo,
         pulse_client_email: account.contact_email,
