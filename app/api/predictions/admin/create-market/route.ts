@@ -13,6 +13,7 @@ import {
   normalizePulseOutcomes,
   outcomeTranslationsPayload,
 } from '@/lib/pulse/outcome-input'
+import { firstPulseBrandingViolation } from '@/lib/contentPolicy'
 
 export async function POST(request: NextRequest) {
   try {
@@ -94,6 +95,25 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Reject FIFA / World Cup / Mundial branding at creation so the Pulse can't
+    // publish on web while the mobile content filter hides it (App Store 5.2.1).
+    const translationsEn =
+      translations && typeof translations === 'object'
+        ? (translations as { en?: { title?: string; description?: string; description_short?: string } }).en
+        : undefined
+    const brandingViolation = firstPulseBrandingViolation([
+      title,
+      description,
+      resolvedDescriptionShort,
+      translationsEn?.title,
+      translationsEn?.description,
+      translationsEn?.description_short,
+      ...normalizedOutcomes.flatMap((o) => [o.title, o.subtitle, o.labelEn, o.subtitleEn]),
+    ])
+    if (brandingViolation) {
+      return Response.json({ error: brandingViolation }, { status: 400 })
+    }
+
     const fundPct = Math.min(100, Math.max(0, Number(conscious_fund_percentage) ?? 20))
     const sponsorAmount = Number(sponsorship_amount_mxn) || 0
     const endDateIso = pulseDefaultEndDateIso()
@@ -166,20 +186,37 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: rpcError.message }, { status: 500 })
     }
 
-    const updatePayload: Record<string, unknown> = {
-      description: description?.trim() || null,
-      description_short: resolvedDescriptionShort,
-      resolution_criteria: PULSE_DEFAULT_RESOLUTION_CRITERIA,
+    // Identity fields first — a single fat UPDATE can fail atomically (e.g. numeric
+    // overflow on conscious_fund_percentage) and leave is_pulse=false while the RPC
+    // row already exists. Listing feeds filter on is_pulse, so this must never be
+    // bundled with optional metadata.
+    const publishedAt = wantsDraft ? null : new Date().toISOString()
+    const { error: identityErr } = await admin
+      .from('prediction_markets')
+      .update({
+        is_pulse: true,
+        is_draft: wantsDraft,
+        published_at: publishedAt,
+        description: description?.trim() || null,
+        description_short: resolvedDescriptionShort,
+        resolution_criteria: PULSE_DEFAULT_RESOLUTION_CRITERIA,
+      })
+      .eq('id', marketId)
+
+    if (identityErr) {
+      console.error('Create pulse identity update error:', identityErr)
+      await admin.from('prediction_markets').delete().eq('id', marketId)
+      return Response.json({ error: identityErr.message }, { status: 500 })
+    }
+
+    const metadataPayload: Record<string, unknown> = {
       verification_sources: verificationStrings,
       tags: tagArray,
       metadata,
       conscious_fund_percentage: fundPct,
       sponsor_contribution: sponsorAmount,
       current_probability: 100 / outcomeLabels.length,
-      is_draft: wantsDraft,
-      published_at: wantsDraft ? null : new Date().toISOString(),
       sponsor_account_id: resolvedSponsorAccountId,
-      is_pulse: true,
       pulse_client_name:
         typeof pulse_client_name === 'string' ? pulse_client_name.trim() || null : null,
       pulse_client_logo:
@@ -188,35 +225,18 @@ export async function POST(request: NextRequest) {
         typeof pulse_client_email === 'string' ? pulse_client_email.trim() || null : null,
       pulse_embed_enabled: false,
     }
-    if (translations && typeof translations === 'object') updatePayload.translations = translations
+    if (translations && typeof translations === 'object') metadataPayload.translations = translations
     if (typeof cover_image_url === 'string') {
-      updatePayload.cover_image_url = cover_image_url.trim() || null
+      metadataPayload.cover_image_url = cover_image_url.trim() || null
     }
 
-    const { error: updateErr } = await admin
+    const { error: metadataErr } = await admin
       .from('prediction_markets')
-      .update(updatePayload)
+      .update(metadataPayload)
       .eq('id', marketId)
 
-    if (updateErr) {
-      console.error('Create pulse metadata update error:', updateErr)
-      await admin.from('prediction_markets').delete().eq('id', marketId)
-      return Response.json({ error: updateErr.message }, { status: 500 })
-    }
-
-    const { data: verified, error: verifyErr } = await admin
-      .from('prediction_markets')
-      .select('is_pulse, is_draft')
-      .eq('id', marketId)
-      .single()
-
-    if (verifyErr || verified?.is_pulse !== true) {
-      console.error('Create pulse is_pulse verification failed:', verifyErr, verified)
-      await admin.from('prediction_markets').delete().eq('id', marketId)
-      return Response.json(
-        { error: 'Pulse was created but could not be marked as a Pulse. Please try again.' },
-        { status: 500 }
-      )
+    if (metadataErr) {
+      console.error('Create pulse metadata update error (pulse identity saved):', metadataErr)
     }
 
     const hasSubtitlesOrTranslations = normalizedOutcomes.some(

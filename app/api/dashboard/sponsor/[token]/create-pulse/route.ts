@@ -10,6 +10,7 @@ import {
   normalizePulseOutcomes,
   outcomeTranslationsPayload,
 } from '@/lib/pulse/outcome-input'
+import { firstPulseBrandingViolation } from '@/lib/contentPolicy'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -75,6 +76,17 @@ export async function POST(
         { error: 'Title and at least two community options are required' },
         { status: 400 }
       )
+    }
+
+    // Reject FIFA / World Cup / Mundial branding so the Pulse can't publish on
+    // web while the mobile content filter hides it (App Store 5.2.1).
+    const brandingViolation = firstPulseBrandingViolation([
+      title,
+      description,
+      ...normalizedOutcomes.flatMap((o) => [o.title, o.subtitle, o.labelEn, o.subtitleEn]),
+    ])
+    if (brandingViolation) {
+      return NextResponse.json({ error: brandingViolation }, { status: 400 })
     }
 
     const createdBy =
