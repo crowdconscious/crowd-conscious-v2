@@ -68,11 +68,54 @@ export const PULSE_FORM_CATEGORIES = PULSE_FORM_CATEGORY_IDS.map((id) => ({
   labelEn: PULSE_CATEGORY_LABELS[id].en,
 }))
 
-/** Default closing horizon when admins/sponsors do not set a date (RPC requires a value). */
-export function pulseDefaultEndDateIso(): string {
+/** Default Pulse duration in days when a creator does not pick one. */
+export const PULSE_DEFAULT_DURATION_DAYS = 30
+
+/** Duration presets offered in the create forms (custom = explicit date). */
+export const PULSE_DURATION_PRESETS = [7, 14, 30] as const
+
+/**
+ * Closing horizon for a Pulse. Pulses must end so the auto-resolver can fire, so
+ * we default to 30 days out (was +1 year, which meant they never closed). Callers
+ * may pass 7/14/30 or a custom day count. Returns an ISO string (RPC requires a value).
+ */
+export function pulseDefaultEndDateIso(days: number = PULSE_DEFAULT_DURATION_DAYS): string {
+  const safeDays = Number.isFinite(days) && days > 0 ? days : PULSE_DEFAULT_DURATION_DAYS
   const d = new Date()
-  d.setFullYear(d.getFullYear() + 1)
+  d.setDate(d.getDate() + safeDays)
   return d.toISOString()
+}
+
+/**
+ * Resolve the Pulse close date from create-form input, validating it is in the future.
+ * Accepts either an explicit ISO `end_date` (custom) or a `duration_days` preset;
+ * falls back to the 30-day default when neither is provided. Returns `{ error }`
+ * when the supplied date is invalid or not in the future so callers can 400.
+ */
+export function resolvePulseEndDateIso(input: {
+  end_date?: unknown
+  duration_days?: unknown
+}): { iso: string } | { error: string } {
+  if (typeof input.end_date === 'string' && input.end_date.trim()) {
+    const parsed = new Date(input.end_date.trim())
+    if (Number.isNaN(parsed.getTime())) {
+      return { error: 'Fecha de cierre inválida' }
+    }
+    if (parsed.getTime() <= Date.now()) {
+      return { error: 'La fecha de cierre debe estar en el futuro' }
+    }
+    return { iso: parsed.toISOString() }
+  }
+
+  if (input.duration_days !== undefined && input.duration_days !== null) {
+    const days = Number(input.duration_days)
+    if (!Number.isFinite(days) || days <= 0) {
+      return { error: 'Duración inválida' }
+    }
+    return { iso: pulseDefaultEndDateIso(days) }
+  }
+
+  return { iso: pulseDefaultEndDateIso() }
 }
 
 /** Server-side fallback when creation forms omit resolution criteria. */

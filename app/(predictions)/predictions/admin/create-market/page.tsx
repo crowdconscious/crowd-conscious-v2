@@ -6,7 +6,13 @@ import { useRouter } from 'next/navigation'
 import { ArrowLeft, X, Link2, Plus } from 'lucide-react'
 import { LogoUpload } from '@/components/ui/LogoUpload'
 import { ImageUpload } from '@/components/ui/ImageUpload'
-import { PULSE_FORM_CATEGORIES, getPulseCategoryLabel } from '@/lib/market-categories'
+import {
+  PULSE_FORM_CATEGORIES,
+  getPulseCategoryLabel,
+  PULSE_DEFAULT_DURATION_DAYS,
+  PULSE_DURATION_PRESETS,
+} from '@/lib/market-categories'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 const ccInput =
   'w-full px-4 py-2.5 bg-[#1a2029] border border-[#2d3748] rounded-lg text-white placeholder:text-gray-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20'
@@ -40,6 +46,7 @@ const EMPTY_OUTCOME = (): OutcomeDraft => ({
 })
 
 export default function CreatePulsePage() {
+  const { language } = useLanguage()
   const [fromInboxId, setFromInboxId] = useState<string | null>(null)
   const [suggestionId, setSuggestionId] = useState<string | null>(null)
   const [successId, setSuccessId] = useState<string | null>(null)
@@ -49,6 +56,9 @@ export default function CreatePulsePage() {
   const DESCRIPTION_SHORT_MAX = 280
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState('community')
+  const [durationDays, setDurationDays] = useState<number>(PULSE_DEFAULT_DURATION_DAYS)
+  const [customDate, setCustomDate] = useState('')
+  const [durationMode, setDurationMode] = useState<'preset' | 'custom'>('preset')
   const [outcomes, setOutcomes] = useState<OutcomeDraft[]>([EMPTY_OUTCOME(), EMPTY_OUTCOME()])
   const OUTCOME_TITLE_MAX = 80
   const OUTCOME_SUBTITLE_MAX = 200
@@ -368,6 +378,9 @@ export default function CreatePulsePage() {
           description: description.trim() || null,
           description_short: descriptionShort.trim(),
           category: category || 'community',
+          ...(durationMode === 'custom'
+            ? { end_date: customDate ? new Date(customDate).toISOString() : null }
+            : { duration_days: durationDays }),
           outcomes: outcomes
             .filter((o) => o.title.trim())
             .map((o) => ({
@@ -662,6 +675,58 @@ export default function CreatePulsePage() {
                     </option>
                   ))}
                 </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">
+                  {language === 'es' ? 'Duración del Pulse' : 'Pulse duration'}
+                </label>
+                <p className="text-xs text-cc-text-muted mb-1.5">
+                  {language === 'es'
+                    ? 'Cuándo se cierra la votación y se revelan los resultados.'
+                    : 'When voting closes and results are revealed.'}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {PULSE_DURATION_PRESETS.map((days) => {
+                    const active = durationMode === 'preset' && durationDays === days
+                    return (
+                      <button
+                        key={days}
+                        type="button"
+                        onClick={() => {
+                          setDurationMode('preset')
+                          setDurationDays(days)
+                        }}
+                        className={`rounded-lg border px-4 py-2 text-sm font-medium transition ${
+                          active
+                            ? 'border-emerald-500 bg-emerald-500/15 text-emerald-300'
+                            : 'border-[#2d3748] bg-[#1a2029] text-gray-300 hover:border-emerald-500/40'
+                        }`}
+                      >
+                        {language === 'es' ? `${days} días` : `${days} days`}
+                      </button>
+                    )
+                  })}
+                  <button
+                    type="button"
+                    onClick={() => setDurationMode('custom')}
+                    className={`rounded-lg border px-4 py-2 text-sm font-medium transition ${
+                      durationMode === 'custom'
+                        ? 'border-emerald-500 bg-emerald-500/15 text-emerald-300'
+                        : 'border-[#2d3748] bg-[#1a2029] text-gray-300 hover:border-emerald-500/40'
+                    }`}
+                  >
+                    {language === 'es' ? 'Personalizada' : 'Custom'}
+                  </button>
+                </div>
+                {durationMode === 'custom' ? (
+                  <input
+                    type="date"
+                    value={customDate}
+                    min={new Date(Date.now() + 86_400_000).toISOString().slice(0, 10)}
+                    onChange={(e) => setCustomDate(e.target.value)}
+                    className={`${ccInput} mt-2`}
+                  />
+                ) : null}
               </div>
             </div>
           </section>

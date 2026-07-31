@@ -21,12 +21,13 @@ export async function GET() {
       return NextResponse.json({ error: 'Admin only' }, { status: 403 })
     }
 
-    const { data: markets, error } = await supabase
+    const now = new Date().toISOString()
+
+    const { data: allMarkets, error } = await supabase
       .from('prediction_markets')
       .select('*')
       .in('status', ['active', 'trading'])
       .is('archived_at', null)
-      .or('is_pulse.is.null,is_pulse.eq.false')
       .order('resolution_date', { ascending: true })
 
     if (error) {
@@ -36,12 +37,16 @@ export async function GET() {
       )
     }
 
-    const now = new Date().toISOString()
-    const pastDue = (markets || []).filter((m) => m.resolution_date < now)
-    const upcoming = (markets || []).filter((m) => m.resolution_date >= now)
+    // Pulses are normally auto-resolved by the hourly pulse-auto-resolve cron, so
+    // they're kept out of this list to avoid clutter. We DO surface pulses that
+    // are past their resolution_date but still active/trading — a manual fallback
+    // so an admin can resolve a closed Pulse by hand when the cron fails.
+    const markets = (allMarkets || []).filter(
+      (m) => !m.is_pulse || (m.resolution_date != null && m.resolution_date < now)
+    )
 
     const withCounts = await Promise.all(
-      (markets || []).map(async (m) => {
+      markets.map(async (m) => {
         const { count: voteCount } = await supabase
           .from('market_votes')
           .select('id', { count: 'exact', head: true })

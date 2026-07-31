@@ -107,3 +107,28 @@ export async function fetchPulseMarketsForListing(ctx: PulseListingContext): Pro
 
   return (rows ?? []) as PulseListingMarketRow[]
 }
+
+/**
+ * Resolved Pulses for the public /pulse/results page.
+ *
+ * Uses the admin client so the archive stays browsable regardless of RLS on
+ * resolved rows; the read is tightly scoped to resolved, published Pulses and
+ * only returns the same non-sensitive listing columns as the active listing.
+ *
+ * Deliberately does NOT filter on `archived_at`: the daily archive cron stamps
+ * `archived_at` on resolved markets after 7 days, so filtering it out would make
+ * the results page empty over time. We want results to remain a permanent public
+ * record, so we ignore the archive flag here (the active listing still hides them).
+ */
+export async function fetchResolvedPulseMarketsForListing(): Promise<PulseListingMarketRow[]> {
+  const admin = createAdminClient()
+  const { data: rows } = await admin
+    .from('prediction_markets')
+    .select(PULSE_SELECT)
+    .eq('status', 'resolved')
+    .eq('is_draft', false)
+    .or(PULSE_OR)
+    .order('resolved_at', { ascending: false, nullsFirst: false })
+
+  return (rows ?? []) as PulseListingMarketRow[]
+}

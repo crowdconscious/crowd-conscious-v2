@@ -7,6 +7,7 @@ import { ImageUpload } from '@/components/ui/ImageUpload'
 import { MetricTooltip } from '@/components/ui/MetricTooltip'
 import { PulsePreviewCard } from '@/components/sponsor/PulsePreviewCard'
 import { useSponsorT } from '@/lib/i18n/sponsor-dashboard'
+import { PULSE_DEFAULT_DURATION_DAYS, PULSE_DURATION_PRESETS } from '@/lib/market-categories'
 
 type PulseAiSuggestion = {
   context: string
@@ -93,6 +94,10 @@ export default function CreatePulseForm({
   const [options, setOptions] = useState<OutcomeDraft[]>([emptyOutcome(), emptyOutcome()])
   const [logoUrl, setLogoUrl] = useState(() => initialLogoUrl?.trim() || '')
   const [coverImageUrl, setCoverImageUrl] = useState('')
+  // Duration: a preset number of days, or 'custom' with an explicit close date.
+  const [durationDays, setDurationDays] = useState<number>(PULSE_DEFAULT_DURATION_DAYS)
+  const [customDate, setCustomDate] = useState('')
+  const [durationMode, setDurationMode] = useState<'preset' | 'custom'>('preset')
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -288,6 +293,9 @@ export default function CreatePulseForm({
           })),
           cover_image_url: coverImageUrl.trim() || null,
           sponsor_logo_url: logoUrl.trim() || null,
+          ...(durationMode === 'custom'
+            ? { end_date: customDate ? new Date(customDate).toISOString() : null }
+            : { duration_days: durationDays }),
         }),
       })
       const data = await res.json()
@@ -486,6 +494,59 @@ export default function CreatePulseForm({
             placeholder={t('create_form.field_context_placeholder')}
             className={textareaClass}
           />
+        </div>
+
+        <div>
+          <FieldLabel
+            label={language === 'es' ? 'Duración del Pulse' : 'Pulse duration'}
+            tip={
+              language === 'es'
+                ? 'Cuándo se cierra la votación y se revelan los resultados.'
+                : 'When voting closes and results are revealed.'
+            }
+          />
+          <div className="flex flex-wrap gap-2">
+            {PULSE_DURATION_PRESETS.map((days) => {
+              const active = durationMode === 'preset' && durationDays === days
+              return (
+                <button
+                  key={days}
+                  type="button"
+                  onClick={() => {
+                    setDurationMode('preset')
+                    setDurationDays(days)
+                  }}
+                  className={`min-h-[44px] rounded-lg border px-4 py-2 text-sm font-medium transition ${
+                    active
+                      ? 'border-emerald-500 bg-emerald-500/15 text-emerald-300'
+                      : 'border-[#2d3748] bg-[#0f1419] text-gray-300 hover:border-emerald-500/40'
+                  }`}
+                >
+                  {language === 'es' ? `${days} días` : `${days} days`}
+                </button>
+              )
+            })}
+            <button
+              type="button"
+              onClick={() => setDurationMode('custom')}
+              className={`min-h-[44px] rounded-lg border px-4 py-2 text-sm font-medium transition ${
+                durationMode === 'custom'
+                  ? 'border-emerald-500 bg-emerald-500/15 text-emerald-300'
+                  : 'border-[#2d3748] bg-[#0f1419] text-gray-300 hover:border-emerald-500/40'
+              }`}
+            >
+              {language === 'es' ? 'Personalizada' : 'Custom'}
+            </button>
+          </div>
+          {durationMode === 'custom' ? (
+            <input
+              type="date"
+              value={customDate}
+              min={new Date(Date.now() + 86_400_000).toISOString().slice(0, 10)}
+              onChange={(e) => setCustomDate(e.target.value)}
+              className={`${inputClass} mt-2`}
+            />
+          ) : null}
         </div>
 
         <div>

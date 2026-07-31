@@ -4,7 +4,7 @@ import { dispatchSponsorPulseLaunchEmail } from '@/lib/sponsor-notifications'
 import { notifyPulsePublished } from '@/lib/expo-push'
 import {
   PULSE_DEFAULT_RESOLUTION_CRITERIA,
-  pulseDefaultEndDateIso,
+  resolvePulseEndDateIso,
 } from '@/lib/market-categories'
 import {
   normalizePulseOutcomes,
@@ -105,7 +105,14 @@ export async function POST(
     }
 
     const effectiveSponsorLogo = sponsorLogoUrl ?? (account.logo_url as string | null) ?? null
-    const endDateIso = pulseDefaultEndDateIso()
+    const endDateResult = resolvePulseEndDateIso({
+      end_date: body.end_date,
+      duration_days: body.duration_days,
+    })
+    if ('error' in endDateResult) {
+      return NextResponse.json({ error: endDateResult.error }, { status: 400 })
+    }
+    const endDateIso = endDateResult.iso
     const outcomeLabels = normalizedOutcomes.map((o) => o.title)
 
     const { data: marketId, error: rpcError } = await admin.rpc('create_multi_market', {

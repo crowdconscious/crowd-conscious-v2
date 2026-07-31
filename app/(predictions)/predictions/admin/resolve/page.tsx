@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, CheckCircle, XCircle, Ban, ExternalLink, PlusCircle } from 'lucide-react'
 import { toDisplayPercent } from '@/lib/probability-utils'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 type Outcome = { id: string; label: string; probability: number; vote_count: number }
 
@@ -24,6 +25,7 @@ type Market = {
 type ModalType = 'resolve_outcome' | 'resolve_yes' | 'resolve_no' | 'cancel' | null
 
 export default function AdminResolvePage() {
+  const { language } = useLanguage()
   const [markets, setMarkets] = useState<Market[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -184,9 +186,13 @@ export default function AdminResolvePage() {
         <div>
           <h1 className="text-2xl font-bold text-white">Resolve Markets</h1>
           <p className="text-slate-400">
-            Resolve or cancel prediction markets. Select the winning outcome for free-to-play markets.{' '}
+            {language === 'es'
+              ? 'Resuelve o cancela consultas. Selecciona la opción ganadora.'
+              : 'Resolve or cancel consultations. Select the winning outcome.'}{' '}
             <span className="text-slate-500">
-              Pulse markets are not listed here—they close automatically to the outcome with the most votes after the closing date.
+              {language === 'es'
+                ? 'Los Pulses se cierran automáticamente a la opción con mayor certeza acumulada tras la fecha de cierre; aquí solo aparecen los Pulses vencidos que el proceso automático no resolvió, para resolverlos a mano.'
+                : 'Pulses close automatically to the outcome with the highest accumulated confidence after the closing date; only past-due Pulses the automatic process failed to resolve appear here, so you can resolve them by hand.'}
             </span>
           </p>
         </div>

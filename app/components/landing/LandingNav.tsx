@@ -23,6 +23,7 @@ import { CompactFundThermometer } from '@/components/fund/FundThermometer'
 const NAV = {
   es: {
     pulse: 'Pulse',
+    resultados: 'Resultados',
     signals: 'Señales',
     signalsBeta: 'Beta',
     paraMarcas: 'Para marcas',
@@ -37,6 +38,7 @@ const NAV = {
   },
   en: {
     pulse: 'Pulse',
+    resultados: 'Results',
     signals: 'Signals',
     signalsBeta: 'Beta',
     paraMarcas: 'For brands',
@@ -96,6 +98,7 @@ export default function LandingNav() {
     badge?: string
   }> = [
     { href: '/pulse', label: nav.pulse, emphasize: true },
+    { href: '/pulse/results', label: nav.resultados },
     ...(SIGNALS_ENABLED
       ? [{ href: '/signals', label: nav.signals, badge: nav.signalsBeta }]
       : []),

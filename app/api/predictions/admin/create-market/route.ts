@@ -5,7 +5,7 @@ import { getCurrentUser } from '@/lib/auth-server'
 import {
   isValidMarketCategory,
   PULSE_DEFAULT_RESOLUTION_CRITERIA,
-  pulseDefaultEndDateIso,
+  resolvePulseEndDateIso,
 } from '@/lib/market-categories'
 import { isAdminUser } from '@/lib/auth/is-admin'
 import { notifyPulsePublished } from '@/lib/expo-push'
@@ -55,6 +55,8 @@ export async function POST(request: NextRequest) {
       sponsor_account_id,
       cover_image_url,
       is_draft,
+      end_date,
+      duration_days,
     } = body
 
     const wantsDraft = Boolean(is_draft)
@@ -116,7 +118,11 @@ export async function POST(request: NextRequest) {
 
     const fundPct = Math.min(100, Math.max(0, Number(conscious_fund_percentage) ?? 20))
     const sponsorAmount = Number(sponsorship_amount_mxn) || 0
-    const endDateIso = pulseDefaultEndDateIso()
+    const endDateResult = resolvePulseEndDateIso({ end_date, duration_days })
+    if ('error' in endDateResult) {
+      return Response.json({ error: endDateResult.error }, { status: 400 })
+    }
+    const endDateIso = endDateResult.iso
 
     const verificationStrings: string[] = []
     if (Array.isArray(verification_sources)) {

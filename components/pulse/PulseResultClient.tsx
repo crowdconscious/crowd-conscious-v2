@@ -204,7 +204,14 @@ export default function PulseResultClient({
   // only to people who have already cast their vote, OR who are authorized
   // analytics viewers (admin / sponsor token), OR when the market is
   // resolved/closed (no more bias to introduce).
-  const isClosedOrResolved = status === 'resolved' || status === 'closed'
+  // A Pulse is closed once its status flips OR its advertised end date passes,
+  // even before the auto-resolve cron flips status to 'resolved'. Treat both the
+  // same way: reveal results, stop inviting votes.
+  const isPastCloseDate = useMemo(() => {
+    const t = new Date(resolutionDate).getTime()
+    return Number.isFinite(t) && t <= Date.now()
+  }, [resolutionDate])
+  const isClosedOrResolved = status === 'resolved' || status === 'closed' || isPastCloseDate
   const authedHasVoted = !!viewerVote
   const hasVoted = authedHasVoted || guestHasVoted
   const shouldRevealResults = isEnhancedView || isClosedOrResolved || hasVoted
@@ -621,13 +628,16 @@ export default function PulseResultClient({
               {/* Deep-link to the vote section so a Pulse share lands the
                   user on the market with the voting UI already in view,
                   instead of requiring a scroll. The market detail page
-                  renders an id="vote" anchor around the vote panel. */}
-              <Link
-                href={`/predictions/markets/${marketId}#vote`}
-                className="inline-flex min-h-[48px] flex-1 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 px-6 py-3 text-center text-sm font-semibold text-white shadow-lg shadow-emerald-900/30 transition hover:brightness-110"
-              >
-                {locale === 'es' ? 'Votar' : 'Vote'}
-              </Link>
+                  renders an id="vote" anchor around the vote panel. Hidden once
+                  the Pulse is closed/resolved — voting is no longer possible. */}
+              {!isClosedOrResolved ? (
+                <Link
+                  href={`/predictions/markets/${marketId}#vote`}
+                  className="inline-flex min-h-[48px] flex-1 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 px-6 py-3 text-center text-sm font-semibold text-white shadow-lg shadow-emerald-900/30 transition hover:brightness-110"
+                >
+                  {locale === 'es' ? 'Votar' : 'Vote'}
+                </Link>
+              ) : null}
               <Link
                 href="/pulse"
                 className="inline-flex min-h-[48px] flex-1 items-center justify-center rounded-xl border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-slate-200 transition hover:bg-white/10"

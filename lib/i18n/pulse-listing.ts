@@ -52,6 +52,21 @@ export function getPulseListingCopy(locale: PulseListingLocale) {
     ctaLearnMore: isEs ? 'Conocer Conscious Pulse →' : 'Learn about Conscious Pulse →',
     home: isEs ? 'Inicio' : 'Home',
     consciousFund: isEs ? 'Fondo Consciente' : 'Conscious Fund',
+    resultsMetaTitle: isEs
+      ? 'Resultados de consultas Pulse | Crowd Conscious'
+      : 'Pulse consultation results | Crowd Conscious',
+    resultsMetaDescription: isEs
+      ? 'Resultados finales de consultas ciudadanas Pulse, ponderados por el nivel de certeza de la comunidad. Powered by Crowd Conscious.'
+      : 'Final results of Pulse citizen consultations, weighted by community confidence. Powered by Crowd Conscious.',
+    resultsBadge: isEs ? '📊 Resultados' : '📊 Results',
+    resultsTitle: isEs ? 'Resultados de consultas Pulse' : 'Pulse consultation results',
+    resultsSubtitle: isEs
+      ? 'Consultas cerradas con su resultado final, ponderado por el nivel de certeza de la comunidad.'
+      : 'Closed consultations with their final outcome, weighted by community confidence.',
+    resultsEmptyTitle: isEs ? 'Aún no hay consultas cerradas.' : 'No closed consultations yet.',
+    resultsEmptySubtitle: isEs
+      ? 'Cuando una consulta Pulse cierra, su resultado aparece aquí.'
+      : 'When a Pulse consultation closes, its result shows up here.',
   }
 }
 

@@ -208,13 +208,22 @@ export function VotePanel({
   const reasoningMax = voteReasoningMaxForMarket(market.is_micro_market)
 
   const isResolved = market.status === 'resolved'
+  // Closed by date: the advertised end date has passed but the auto-resolve
+  // cron may not have flipped status to 'resolved' yet. Voting is blocked in the
+  // RPCs at this point, so the UI must stop inviting votes too.
+  const resolutionDateMs = market.resolution_date
+    ? new Date(market.resolution_date).getTime()
+    : NaN
+  const isPastCloseDate =
+    !isResolved && Number.isFinite(resolutionDateMs) && resolutionDateMs <= Date.now()
+  const isClosed = isResolved || isPastCloseDate
   const isEditing = isAuthenticated && !!myVote
   const guestHasVoted = !isAuthenticated && !!guestVoteRecord
   // Single source of truth for "should the per-option community % be visible".
-  // Pre-vote we hide the numbers to remove anchoring bias; resolved markets
-  // always reveal them so people can see who was right.
+  // Pre-vote we hide the numbers to remove anchoring bias; resolved/closed
+  // markets always reveal them so people can see the community outcome.
   const hasVoted = isEditing || guestHasVoted
-  const shouldRevealResults = hasVoted || isResolved
+  const shouldRevealResults = hasVoted || isClosed
   const hasYesNoLabels = outcomes.some((o) => {
     const l = getOutcomeLabel(o, locale).toLowerCase()
     return l === 'yes' || l === 'sí' || l === 'si' || l === 'no'
@@ -249,7 +258,7 @@ export function VotePanel({
       : 7
 
   const handleVote = async () => {
-    if (!selectedOutcomeId || loading || isResolved) return
+    if (!selectedOutcomeId || loading || isClosed) return
     if (!isAuthenticated && guestHasVoted) return
 
     setLoading(true)
@@ -547,6 +556,58 @@ export function VotePanel({
             </p>
           </div>
         )}
+      </div>
+    )
+  }
+
+  if (isPastCloseDate) {
+    const sorted = [...outcomes].sort(
+      (a, b) => toDecimal(b.probability || 0) - toDecimal(a.probability || 0)
+    )
+    return (
+      <div className="bg-cc-card border border-cc-border rounded-xl p-6">
+        <h3 className="font-semibold text-white mb-2">
+          {loc === 'en' ? 'Pulse closed' : 'Pulse cerrado'}
+        </h3>
+        <p className="text-cc-text-secondary text-sm mb-4">
+          {loc === 'en'
+            ? 'Voting has closed. Final community results are being tallied.'
+            : 'La votación cerró. Se están contabilizando los resultados finales de la comunidad.'}
+        </p>
+        <div className="space-y-3">
+          {sorted.map((o) => {
+            const pct = Math.round(toDisplayPercent(o.probability || 0))
+            const subtitle = getOutcomeSubtitle(o, locale)
+            const isYours = myVote?.outcome_id === o.id
+            return (
+              <div key={o.id} className="space-y-1">
+                <div className="flex justify-between text-sm gap-2">
+                  <div className="min-w-0">
+                    <span
+                      className={`block leading-snug ${
+                        isYours ? 'text-emerald-400 font-medium' : 'text-gray-300'
+                      }`}
+                    >
+                      {getOutcomeCardLabel(o, locale)}
+                    </span>
+                    {subtitle ? (
+                      <span className="block text-sm leading-snug text-gray-500">{subtitle}</span>
+                    ) : null}
+                  </div>
+                  <span className={`shrink-0 ${isYours ? 'text-emerald-400' : 'text-gray-500'}`}>
+                    {pct}%
+                  </span>
+                </div>
+                <div className="w-full h-2 bg-white/[0.06] rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full ${isYours ? 'bg-emerald-500' : 'bg-white/15'}`}
+                    style={{ width: `${Math.min(100, Math.max(pct, 2))}%` }}
+                  />
+                </div>
+              </div>
+            )
+          })}
+        </div>
       </div>
     )
   }
