@@ -91,6 +91,17 @@ node_modules/.bin/tsc --noEmit          # must be clean
 
 After substantive edits, also call `ReadLints` on any file you touched.
 
+**`types/database.ts` is hand-tightened — never regenerate it as a blind
+overwrite.** The committed file narrows several columns beyond what `supabase
+gen types` emits (e.g. `translations` is a precise shape, not `Json`; some
+view columns are non-null; `side` is `'yes' | 'no'`). Running
+`supabase gen types typescript ... > types/database.ts` wholesale reverts those
+and introduces ~50 tsc regressions across unrelated files. After a migration,
+**surgically inject only the new tables/views** from the generated output into
+the curated file (restore with `git checkout -- types/database.ts`, then paste
+just the new `Tables`/`Views` blocks), and run `tsc --noEmit` app-wide to
+confirm zero collateral.
+
 ## Git etiquette
 
 - Don't commit unless the user asked you to.
