@@ -107,6 +107,55 @@ export async function GET(request: NextRequest) {
       console.error('[cron/pulse-auto-resolve] sponsor-pulse-report', err)
     )
 
+    // On real Pulse close (§5.5 item 3): compute + store the Divergence Index
+    // (§5.6) for any COMPLETE simulation run tied to this market, now that the
+    // real winner + real aggregates are final. Divergence is pure math over
+    // stored sim aggregates + real votes (no model call); the only write is
+    // `simulation_runs.divergence` via `computeAndStoreDivergence` — real vote
+    // data stays untouched (§1). The common case is ZERO sim runs → clean
+    // no-op. The ENTIRE step is isolated in try/catch so a divergence failure
+    // for one run never breaks resolution/push/archive or any other pulse.
+    try {
+      // TODO(once migrations 252-254 applied + types/database.ts regenerated):
+      // drop the local interface + cast and lean on the generated Database
+      // types (mirrors lib/simulation/run.ts + the admin sim routes).
+      interface EligibleSimRunRow {
+        id: string
+      }
+      const { data: simRuns, error: simErr } = await admin
+        .from('simulation_runs')
+        .select('id')
+        .eq('market_id', row.id)
+        .eq('status', 'complete')
+        .eq('is_brand_pretest', false)
+        .is('divergence', null)
+      if (simErr) {
+        console.warn('[cron/pulse-auto-resolve] divergence query', row.id, simErr.message)
+      } else if (simRuns && simRuns.length > 0) {
+        const eligible = simRuns as unknown as EligibleSimRunRow[]
+        // Lazy import so the cron's cold path isn't burdened by the heavy
+        // server-only simulation module (matches the repo convention).
+        const { computeAndStoreDivergence } = await import('@/lib/simulation/run')
+        for (const simRun of eligible) {
+          try {
+            await computeAndStoreDivergence(simRun.id, { adminClient: admin })
+          } catch (err) {
+            console.warn(
+              '[cron/pulse-auto-resolve] divergence run',
+              simRun.id,
+              err instanceof Error ? err.message : String(err),
+            )
+          }
+        }
+      }
+    } catch (err) {
+      console.warn(
+        '[cron/pulse-auto-resolve] divergence',
+        row.id,
+        err instanceof Error ? err.message : String(err),
+      )
+    }
+
     resolved++
   }
 
