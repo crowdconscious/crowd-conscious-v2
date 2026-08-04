@@ -10,6 +10,8 @@ import VoteTimeline from './VoteTimeline'
 import PulseOutcomeBars from './PulseOutcomeBars'
 import PulseResultsCard from './PulseResultsCard'
 import OutcomeConfidenceTable from './OutcomeConfidenceTable'
+import PulseSimRevealModule, { type PulseSimReveal } from './PulseSimRevealModule'
+import PulseSimTeaser from './PulseSimTeaser'
 import { exportPulseVotesCsv, type PulseCsvVote } from './pulse-export-csv'
 import {
   aggregatePulseVotes,
@@ -85,6 +87,19 @@ type Props = {
   locale: 'es' | 'en'
   isEnhancedView: boolean
   featuredReasonings?: PulseFeaturedReasoning[]
+  /**
+   * Pulse Simulation reveal payload (§5.7), attached by the loader ONLY when the
+   * full-reveal gate holds (SIM_REVEAL_ENABLED on + revealed run + Pulse closed).
+   * Null/absent otherwise. The no-anchoring guardrail is enforced in the data
+   * layer — this component never receives sim aggregates pre-reveal.
+   */
+  simReveal?: PulseSimReveal | null
+  /**
+   * Content-free pre-vote teaser flag (§5.7). True only when the flag is on, a
+   * revealed run exists, the viewer has not voted, and the Pulse is still open.
+   * No sim numbers ever ride along with it.
+   */
+  simTeaser?: boolean
 }
 
 export default function PulseResultClient({
@@ -106,6 +121,8 @@ export default function PulseResultClient({
   locale,
   isEnhancedView,
   featuredReasonings = [],
+  simReveal = null,
+  simTeaser = false,
 }: Props) {
   // Full rows exist only in the enhanced (admin/sponsor) view, where they
   // feed CSV export and grow via the realtime subscription below.
@@ -445,6 +462,14 @@ export default function PulseResultClient({
               </div>
             )}
 
+            {/* Pre-vote simulation teaser (§5.7): content-free amber module — the
+                only sim-related surface a user may see before voting on an open
+                Pulse. The `!shouldRevealResults` guard also covers the local
+                guest-vote case (a guest who voted sees results, not the teaser). */}
+            {simTeaser && !shouldRevealResults ? (
+              <PulseSimTeaser marketId={marketId} locale={locale} />
+            ) : null}
+
             {shouldRevealResults && executiveSummary ? (
               <div className="pulse-section mt-6 rounded-xl border border-emerald-500/20 bg-[#1a2029] p-5">
                 <h3 className="mb-2 text-sm font-semibold text-emerald-400">
@@ -622,6 +647,14 @@ export default function PulseResultClient({
                   )
                 })}
               </div>
+            ) : null}
+
+            {/* "IA vs. Realidad" reveal module (§5.7). Rendered only when the
+                loader passed the full-reveal payload (flag on + revealed run +
+                Pulse closed). Additive; the payload is absent in every other
+                state, so nothing sim-related renders. */}
+            {shouldRevealResults && simReveal ? (
+              <PulseSimRevealModule locale={locale} reveal={simReveal} />
             ) : null}
 
             <div className="pulse-no-print mt-10 flex flex-col gap-3 sm:flex-row">

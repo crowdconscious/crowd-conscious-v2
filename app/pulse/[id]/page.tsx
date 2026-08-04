@@ -10,11 +10,14 @@ import PulseResultClient, {
   type PulseViewerVote,
   type PulseVoteRow,
 } from '@/components/pulse/PulseResultClient'
+import type { PulseSimReveal } from '@/components/pulse/PulseSimRevealModule'
 import { aggregatePulseVotes } from '@/lib/pulse-vote-aggregates'
 import { DraftBanner } from '@/components/predictions/DraftBanner'
 import { AdminMarketToolbar } from '@/components/predictions/AdminMarketToolbar'
 import { loadMarketVoteReasoningsWithAuthors } from '@/lib/market-vote-reasonings'
 import { SITE_URL } from '@/lib/seo/site'
+import type { RunAggregates } from '@/lib/simulation/run'
+import type { DivergenceResult } from '@/lib/simulation/divergence'
 
 type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ token?: string }> }
 
@@ -205,6 +208,100 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
 
   const featuredReasonings = await loadMarketVoteReasoningsWithAuthors(admin, id, locale)
 
+  // ---------------------------------------------------------------------------
+  // Pulse Simulation reveal gate (§5.7 / §5.2) — behind SIM_REVEAL_ENABLED.
+  //
+  // THE anchoring guardrail (§1) lives HERE, in the data layer: an AI
+  // prediction's direction must never reach a user before they've voted. The
+  // gate is computed server-side and sim aggregates are serialized into the
+  // client payload ONLY inside the full-reveal branch below. Pre-reveal, the
+  // client receives at most a content-free `simTeaser` boolean — zero numbers,
+  // option names, shares, confidence, or anything directional.
+  //
+  // Read path: EXCLUSIVELY the `revealed_simulation_runs` view (§5.2), through
+  // the anon/user-context client (RLS/grant-respecting) — NEVER the raw
+  // simulation_* tables. The view only returns runs whose `revealed_at` is set,
+  // so a returned row already means "revealed".
+  //
+  // SIM_REVEAL_ENABLED is a SERVER env var so the gate can run here; unset or
+  // anything but the string 'true' is OFF (feature invisible, not an error).
+  //
+  // TODO(A5): the September Pulse-close push carries this reveal on the A5
+  // `reveal` payload field — not built here.
+  let simReveal: PulseSimReveal | null = null
+  let simTeaser = false
+
+  if (process.env.SIM_REVEAL_ENABLED === 'true') {
+    const resolutionMs = new Date(market.resolution_date as string).getTime()
+    const isPastCloseDate = Number.isFinite(resolutionMs) && resolutionMs <= Date.now()
+    const isClosedOrResolved =
+      market.status === 'resolved' || market.status === 'closed' || isPastCloseDate
+    const authedHasVoted = !!viewerVote
+
+    try {
+      // Anon/user-context client: the read is gated by the DB grant on the view
+      // (§5.2) exactly as any client would be — never the service-role path.
+      const supabasePublic = await createClient()
+
+      // TODO(once migrations 252-254 applied + types/database.ts regenerated):
+      // drop this local interface and the `as unknown as` cast in favor of the
+      // generated Database types (mirrors lib/simulation/run.ts + the admin sim
+      // routes) to keep `tsc --noEmit` clean.
+      interface RevealedSimulationRunRow {
+        id: string
+        market_id: string | null
+        aggregates: RunAggregates | null
+        divergence: DivergenceResult | null
+        revealed_at: string | null
+      }
+
+      const { data: revealedRow } = await supabasePublic
+        .from('revealed_simulation_runs')
+        .select('id, market_id, aggregates, divergence, revealed_at')
+        .eq('market_id', id)
+        .order('revealed_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      const run = (revealedRow ?? null) as unknown as RevealedSimulationRunRow | null
+
+      // A row from the view is, by construction, a revealed run (revealed_at set).
+      if (run) {
+        // Full reveal requires ALL of: flag on (checked above) + revealed run +
+        // Pulse closed/resolved + (user voted OR Pulse closed). Since the last
+        // clause is satisfied whenever the Pulse is closed, this reduces to
+        // "revealed run + closed" — but we keep the condition explicit to mirror
+        // the §5.7 spec exactly.
+        const fullReveal = isClosedOrResolved && (authedHasVoted || isClosedOrResolved)
+
+        if (fullReveal && run.divergence) {
+          // ONLY the minimal comparison crosses to the client: the index,
+          // per-option real vs sim shares, and one representative quote. No raw
+          // votes, no reasonings, no confidence maps — nothing else is attached.
+          simReveal = {
+            divergenceIndex: run.divergence.id,
+            perOption: (run.divergence.per_option ?? []).map((po) => ({
+              option: po.option,
+              real_share: po.real_share,
+              sim_share: po.sim_share,
+            })),
+            cita: run.aggregates?.synthesis?.cita_sim_representativa ?? null,
+          }
+        } else if (!isClosedOrResolved && !authedHasVoted) {
+          // Pre-vote, Pulse still open: content-free teaser ONLY. Not a single
+          // sim number reaches the client on this path.
+          simTeaser = true
+        }
+      }
+    } catch {
+      // The view may not exist yet in every environment (migrations 252-254).
+      // Never let the sim gate break the load-bearing consumer Pulse page
+      // (CLAUDE.md "Things to never break") — fall back to attaching nothing.
+      simReveal = null
+      simTeaser = false
+    }
+  }
+
   return (
     <>
       {isDraft && <DraftBanner marketId={market.id} />}
@@ -230,6 +327,8 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
         locale={locale}
         isEnhancedView={isEnhancedView}
         featuredReasonings={featuredReasonings}
+        simReveal={simReveal}
+        simTeaser={simTeaser}
       />
     </>
   )
