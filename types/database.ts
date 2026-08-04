@@ -2184,6 +2184,174 @@ export interface Database {
         }
         Relationships: []
       }
+      simulation_personas: {
+        Row: {
+          age: number
+          alcaldia: string
+          colonia: string | null
+          created_at: string | null
+          education: string
+          gender: string
+          household: string | null
+          id: string
+          income_band: string
+          media_diet: string[] | null
+          occupation: string
+          persona_narrative: string
+          transport_mode: string | null
+          values_profile: Json | null
+          version: string
+        }
+        Insert: {
+          age: number
+          alcaldia: string
+          colonia?: string | null
+          created_at?: string | null
+          education: string
+          gender: string
+          household?: string | null
+          id?: string
+          income_band: string
+          media_diet?: string[] | null
+          occupation: string
+          persona_narrative: string
+          transport_mode?: string | null
+          values_profile?: Json | null
+          version: string
+        }
+        Update: {
+          age?: number
+          alcaldia?: string
+          colonia?: string | null
+          created_at?: string | null
+          education?: string
+          gender?: string
+          household?: string | null
+          id?: string
+          income_band?: string
+          media_diet?: string[] | null
+          occupation?: string
+          persona_narrative?: string
+          transport_mode?: string | null
+          values_profile?: Json | null
+          version?: string
+        }
+        Relationships: []
+      }
+      simulation_runs: {
+        Row: {
+          aggregates: Json | null
+          batch_id: string | null
+          created_at: string | null
+          divergence: Json | null
+          id: string
+          is_brand_pretest: boolean | null
+          market_id: string | null
+          model: string
+          n_agents: number
+          persona_version: string
+          prompt_version: string
+          question_override: string | null
+          revealed_at: string | null
+          status: string
+        }
+        Insert: {
+          aggregates?: Json | null
+          batch_id?: string | null
+          created_at?: string | null
+          divergence?: Json | null
+          id?: string
+          is_brand_pretest?: boolean | null
+          market_id?: string | null
+          model: string
+          n_agents: number
+          persona_version: string
+          prompt_version: string
+          question_override?: string | null
+          revealed_at?: string | null
+          status?: string
+        }
+        Update: {
+          aggregates?: Json | null
+          batch_id?: string | null
+          created_at?: string | null
+          divergence?: Json | null
+          id?: string
+          is_brand_pretest?: boolean | null
+          market_id?: string | null
+          model?: string
+          n_agents?: number
+          persona_version?: string
+          prompt_version?: string
+          question_override?: string | null
+          revealed_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "simulation_runs_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "prediction_markets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      simulation_votes: {
+        Row: {
+          confidence: number
+          created_at: string | null
+          id: string
+          option_chosen: string
+          persona_id: string | null
+          raw_response: Json | null
+          reasoning_es: string | null
+          run_id: string | null
+        }
+        Insert: {
+          confidence: number
+          created_at?: string | null
+          id?: string
+          option_chosen: string
+          persona_id?: string | null
+          raw_response?: Json | null
+          reasoning_es?: string | null
+          run_id?: string | null
+        }
+        Update: {
+          confidence?: number
+          created_at?: string | null
+          id?: string
+          option_chosen?: string
+          persona_id?: string | null
+          raw_response?: Json | null
+          reasoning_es?: string | null
+          run_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "simulation_votes_persona_id_fkey"
+            columns: ["persona_id"]
+            isOneToOne: false
+            referencedRelation: "simulation_personas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "simulation_votes_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "revealed_simulation_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "simulation_votes_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "simulation_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       citizen_signals_public: {
@@ -2218,6 +2386,38 @@ export interface Database {
           target_location_id: string | null
         }
         Relationships: []
+      }
+      revealed_simulation_runs: {
+        Row: {
+          aggregates: Json | null
+          divergence: Json | null
+          id: string | null
+          market_id: string | null
+          revealed_at: string | null
+        }
+        Insert: {
+          aggregates?: Json | null
+          divergence?: Json | null
+          id?: string | null
+          market_id?: string | null
+          revealed_at?: string | null
+        }
+        Update: {
+          aggregates?: Json | null
+          divergence?: Json | null
+          id?: string | null
+          market_id?: string | null
+          revealed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "simulation_runs_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "prediction_markets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Functions: {

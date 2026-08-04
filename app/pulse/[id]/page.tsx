@@ -16,6 +16,8 @@ import { DraftBanner } from '@/components/predictions/DraftBanner'
 import { AdminMarketToolbar } from '@/components/predictions/AdminMarketToolbar'
 import { loadMarketVoteReasoningsWithAuthors } from '@/lib/market-vote-reasonings'
 import { SITE_URL } from '@/lib/seo/site'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/types/database'
 import type { RunAggregates } from '@/lib/simulation/run'
 import type { DivergenceResult } from '@/lib/simulation/divergence'
 
@@ -241,19 +243,10 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
     try {
       // Anon/user-context client: the read is gated by the DB grant on the view
       // (§5.2) exactly as any client would be — never the service-role path.
-      const supabasePublic = await createClient()
-
-      // TODO(once migrations 252-254 applied + types/database.ts regenerated):
-      // drop this local interface and the `as unknown as` cast in favor of the
-      // generated Database types (mirrors lib/simulation/run.ts + the admin sim
-      // routes) to keep `tsc --noEmit` clean.
-      interface RevealedSimulationRunRow {
-        id: string
-        market_id: string | null
-        aggregates: RunAggregates | null
-        divergence: DivergenceResult | null
-        revealed_at: string | null
-      }
+      // `createClient()` is untyped in this repo; assert the `Database` generic
+      // so the `revealed_simulation_runs` view row is typed.
+      const supabasePublic =
+        (await createClient()) as unknown as SupabaseClient<Database>
 
       const { data: revealedRow } = await supabasePublic
         .from('revealed_simulation_runs')
@@ -263,7 +256,15 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
         .limit(1)
         .maybeSingle()
 
-      const run = (revealedRow ?? null) as unknown as RevealedSimulationRunRow | null
+      // `aggregates`/`divergence` are jsonb columns (typed `Json`); narrow them
+      // to their domain shapes so the reveal fields below read cleanly.
+      const run = revealedRow
+        ? {
+            ...revealedRow,
+            aggregates: revealedRow.aggregates as unknown as RunAggregates | null,
+            divergence: revealedRow.divergence as unknown as DivergenceResult | null,
+          }
+        : null
 
       // A row from the view is, by construction, a revealed run (revealed_at set).
       if (run) {

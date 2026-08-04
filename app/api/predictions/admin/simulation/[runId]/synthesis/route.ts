@@ -1,7 +1,6 @@
 export const maxDuration = 300
 
 import { NextResponse } from 'next/server'
-import type { SupabaseClient } from '@supabase/supabase-js'
 
 import { requireAdmin } from '@/lib/admin-route-guard'
 import { createAdminClient } from '@/lib/supabase-admin'
@@ -27,7 +26,7 @@ export async function POST(
     return NextResponse.json({ error: 'missing runId' }, { status: 400 })
   }
 
-  const admin = createAdminClient() as unknown as SupabaseClient
+  const admin = createAdminClient()
 
   try {
     const { runSynthesis } = await import('@/lib/simulation/run')

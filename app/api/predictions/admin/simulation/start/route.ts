@@ -1,7 +1,6 @@
 export const maxDuration = 300
 
 import { NextRequest, NextResponse } from 'next/server'
-import type { SupabaseClient } from '@supabase/supabase-js'
 
 import { requireAdmin } from '@/lib/admin-route-guard'
 import { createAdminClient } from '@/lib/supabase-admin'
@@ -49,7 +48,7 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const admin = createAdminClient() as unknown as SupabaseClient
+  const admin = createAdminClient()
 
   try {
     const { startRun, startBacktestRun } = await import('@/lib/simulation/run')

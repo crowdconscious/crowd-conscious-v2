@@ -4,6 +4,7 @@ import { notifyMarketResolutionVoters } from '@/lib/market-resolution-notificati
 import { runCaseStudyDraft } from '@/lib/agents/content-creator'
 import { cronHealthCheck, cronHealthComplete } from '@/lib/cron-health'
 import { generateSponsorReportAndMaybeEmail } from '@/lib/sponsor-pulse-report-pipeline'
+import type { Database } from '@/types/database'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120
@@ -116,12 +117,6 @@ export async function GET(request: NextRequest) {
     // no-op. The ENTIRE step is isolated in try/catch so a divergence failure
     // for one run never breaks resolution/push/archive or any other pulse.
     try {
-      // TODO(once migrations 252-254 applied + types/database.ts regenerated):
-      // drop the local interface + cast and lean on the generated Database
-      // types (mirrors lib/simulation/run.ts + the admin sim routes).
-      interface EligibleSimRunRow {
-        id: string
-      }
       const { data: simRuns, error: simErr } = await admin
         .from('simulation_runs')
         .select('id')
@@ -132,7 +127,13 @@ export async function GET(request: NextRequest) {
       if (simErr) {
         console.warn('[cron/pulse-auto-resolve] divergence query', row.id, simErr.message)
       } else if (simRuns && simRuns.length > 0) {
-        const eligible = simRuns as unknown as EligibleSimRunRow[]
+        // `admin` is the untyped service-role client here (the route also issues
+        // RPCs not modeled in the generated types), so annotate the eligible rows
+        // with the generated `simulation_runs` shape instead of typing the client.
+        const eligible: Pick<
+          Database['public']['Tables']['simulation_runs']['Row'],
+          'id'
+        >[] = simRuns
         // Lazy import so the cron's cold path isn't burdened by the heavy
         // server-only simulation module (matches the repo convention).
         const { computeAndStoreDivergence } = await import('@/lib/simulation/run')

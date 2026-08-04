@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 import { requireAdmin } from '@/lib/admin-route-guard'
 import { createAdminClient } from '@/lib/supabase-admin'
-import type { RunAggregates } from '@/lib/simulation/run'
-import type { DivergenceResult } from '@/lib/simulation/divergence'
+import type { Database } from '@/types/database'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -13,36 +13,15 @@ export const runtime = 'nodejs'
  * `simulation_*` tables through the service-role admin client (RLS bypass, §1.2)
  * — these rows are ADMIN-ONLY here; user-facing surfaces read exclusively via
  * the `revealed_simulation_runs` view (§5.2), never this route.
- *
- * TODO(once migrations 252-254 are applied + `types/database.ts` regenerated):
- * drop the local `SimulationRunListRow` interface and the `as unknown as` cast
- * and lean on the generated `Database` types. Until then the admin client is
- * untyped for `simulation_runs`, so we shape the rows locally (mirroring
- * `lib/simulation/run.ts`'s approach) to keep `tsc --noEmit` clean.
  */
-
-interface SimulationRunListRow {
-  id: string
-  market_id: string | null
-  persona_version: string
-  model: string
-  prompt_version: string
-  n_agents: number
-  status: string
-  is_brand_pretest: boolean
-  question_override: string | null
-  aggregates: RunAggregates | null
-  divergence: DivergenceResult | null
-  revealed_at: string | null
-  batch_id: string | null
-  created_at: string | null
-}
 
 export async function GET() {
   const guard = await requireAdmin()
   if (!guard.ok) return guard.response
 
-  const admin = createAdminClient()
+  // `createAdminClient()` is created without the `Database` generic
+  // (lib/supabase-admin); assert it here so `simulation_runs` rows are typed.
+  const admin = createAdminClient() as unknown as SupabaseClient<Database>
 
   const { data, error } = await admin
     .from('simulation_runs')
@@ -56,7 +35,7 @@ export async function GET() {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  const runs = (data ?? []) as unknown as SimulationRunListRow[]
+  const runs = data ?? []
 
   // Attach market metadata (title + status) for runs tied to a real Pulse so the
   // panel can label rows and know whether divergence is available (market closed).

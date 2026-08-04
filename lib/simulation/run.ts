@@ -27,15 +27,15 @@
  * under the `node --test` TypeScript runner (which does not resolve the `@/`
  * path alias) never triggers those imports for the pure-function tests.
  *
- * TODO(once migrations 252-254 are applied + `types/database.ts` regenerated):
- * tighten the loosely-typed `simulation_*` table access below. Those tables do
- * not yet exist in `types/database.ts`, so we define local row/insert interfaces
- * and read/write them through the (untyped) admin client with narrowly-scoped
- * casts. When the generated types include them, drop the local interfaces and
- * the `as` casts in favor of a `SupabaseClient<Database>`.
+ * The `simulation_*` tables (migrations 252-254) are modeled in the generated
+ * `Database` types, so the admin client is typed as `SupabaseClient<Database>`
+ * and `.from('simulation_*')` flows those types. The only casts that remain are
+ * narrow jsonb⇄domain narrowings for the `aggregates`/`divergence` columns,
+ * which the generator can only see as `Json`.
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database, Json } from '../../types/database.ts'
 import type AnthropicClient from '@anthropic-ai/sdk'
 // Type-only imports from the SDK subpaths (erased at runtime; keeps the module
 // loadable by the `node --test` type-stripping runner without pulling the SDK).
@@ -57,32 +57,23 @@ import {
   type PromptPersona,
   type SampledReasoning,
 } from './prompts.ts'
-import { computeDivergence, type AggregateSnapshot } from './divergence.ts'
+import {
+  computeDivergence,
+  type AggregateSnapshot,
+  type DivergenceResult,
+} from './divergence.ts'
 import { allocatePersonaCounts } from './persona-allocation.ts'
 
 // ---------------------------------------------------------------------------
-// Loosely-typed simulation_* row shapes (see the module-level TODO). These mirror
-// the columns in migrations 252/253/254 exactly.
+// simulation_* row shapes. The tables live in the generated `Database` types
+// (migrations 252-254), so we derive from them directly. The only shapes we
+// still model by hand are the DOMAIN types for the two `jsonb` columns
+// (`aggregates`, `divergence`), which the generator can only see as `Json`.
 // ---------------------------------------------------------------------------
 
 /** `simulation_personas` row (migration 252). */
-export interface SimulationPersonaRow {
-  id: string
-  version: string
-  alcaldia: string
-  colonia: string | null
-  age: number
-  gender: string
-  education: string
-  occupation: string
-  income_band: string
-  household: string | null
-  transport_mode: string | null
-  media_diet: string[] | null
-  values_profile: unknown
-  persona_narrative: string
-  created_at?: string
-}
+export type SimulationPersonaRow =
+  Database['public']['Tables']['simulation_personas']['Row']
 
 /** `simulation_runs.aggregates` jsonb shape (§5.5). */
 export interface RunAggregates {
@@ -107,36 +98,29 @@ export interface RunRequestContext {
   options: string[]
 }
 
-/** `simulation_runs` row (migration 253). */
-export interface SimulationRunRow {
-  id: string
-  market_id: string | null
-  persona_version: string
-  model: string
-  prompt_version: string
-  n_agents: number
-  status: 'pending' | 'running' | 'complete' | 'failed'
-  is_brand_pretest: boolean
-  question_override: string | null
+/**
+ * `simulation_runs` row (migration 253) with the two `jsonb` columns narrowed
+ * from `Json` to their domain shapes (`aggregates`, `divergence`). Every other
+ * field flows straight from the generated row type.
+ */
+export type SimulationRunRow = Omit<
+  Database['public']['Tables']['simulation_runs']['Row'],
+  'aggregates' | 'divergence'
+> & {
   aggregates: RunAggregates | null
-  divergence: unknown
-  revealed_at: string | null
-  batch_id: string | null
-  created_at?: string
+  divergence: DivergenceResult | null
 }
 
 /** `simulation_votes` insert shape (migration 254). */
-interface SimulationVoteInsert {
-  run_id: string
-  persona_id: string
-  option_chosen: string
-  confidence: number
-  reasoning_es: string | null
-  raw_response: unknown
-}
+type SimulationVoteInsert =
+  Database['public']['Tables']['simulation_votes']['Insert']
 
-/** Loosely-typed admin client (the untyped service-role client, §1.2). */
-type AdminClient = SupabaseClient
+/**
+ * Service-role admin client (§1.2). `createAdminClient()` is created without the
+ * `Database` generic (lib/supabase-admin), so `loadAdmin` asserts the generic
+ * here to get typed `.from('simulation_*')` access.
+ */
+type AdminClient = SupabaseClient<Database>
 
 // ---------------------------------------------------------------------------
 // Cost-envelope guard (§5.5)
@@ -564,16 +548,17 @@ export async function startRun(input: StartRunInput): Promise<StartRunResult> {
     request_context: requestContext,
   }
 
-  const insertRow = {
+  const insertRow: Database['public']['Tables']['simulation_runs']['Insert'] = {
     market_id: isBrandPretest ? null : input.marketId!,
     persona_version: input.personaVersion,
     model: MODELS.FAST,
     prompt_version: PROMPT_VERSION,
     n_agents: nAgents,
-    status: 'running' as const,
+    status: 'running',
     is_brand_pretest: isBrandPretest,
     question_override: isBrandPretest ? requestContext.question : null,
-    aggregates,
+    // `aggregates` is a jsonb column (typed `Json`); store the domain object.
+    aggregates: aggregates as unknown as Json,
     batch_id: batch.id,
   }
 
@@ -589,7 +574,7 @@ export async function startRun(input: StartRunInput): Promise<StartRunResult> {
     )
   }
 
-  const runId = (data as { id: string }).id
+  const runId = data.id
   return { runId, batchId: batch.id, nAgents, requestContext, costEstimate }
 }
 
@@ -745,7 +730,8 @@ export async function checkRun(
       option_chosen: v.option_chosen,
       confidence: v.confidence,
       reasoning_es: v.reasoning_es,
-      raw_response: v.raw_response,
+      // `raw_response` is a jsonb column (typed `Json`); persist the raw message.
+      raw_response: v.raw_response as Json,
     }))
     const { error: voteErr } = await admin.from('simulation_votes').insert(voteRows)
     if (voteErr) {
@@ -759,7 +745,8 @@ export async function checkRun(
 
   const { error: updErr } = await admin
     .from('simulation_runs')
-    .update({ aggregates, status: 'complete' })
+    // `aggregates` is a jsonb column (typed `Json`); store the domain object.
+    .update({ aggregates: aggregates as unknown as Json, status: 'complete' })
     .eq('id', runId)
   if (updErr) {
     throw new Error(`checkRun: failed to store aggregates: ${updErr.message}`)
@@ -827,7 +814,8 @@ export async function computeAndStoreDivergence(
 
   const { error } = await admin
     .from('simulation_runs')
-    .update({ divergence })
+    // `divergence` is a jsonb column (typed `Json`); store the domain object.
+    .update({ divergence: divergence as unknown as Json })
     .eq('id', runId)
   if (error) {
     throw new Error(`computeAndStoreDivergence: failed to store divergence: ${error.message}`)
@@ -913,7 +901,8 @@ export async function runSynthesis(
   const nextAggregates: RunAggregates = { ...run.aggregates, synthesis }
   const { error } = await admin
     .from('simulation_runs')
-    .update({ aggregates: nextAggregates })
+    // `aggregates` is a jsonb column (typed `Json`); store the domain object.
+    .update({ aggregates: nextAggregates as unknown as Json })
     .eq('id', runId)
   if (error) {
     throw new Error(`runSynthesis: failed to store synthesis: ${error.message}`)
@@ -964,7 +953,7 @@ async function readPersonas(
     .select('*')
     .eq('version', version)
   if (error) throw new Error(`readPersonas: ${error.message}`)
-  return (data ?? []) as unknown as SimulationPersonaRow[]
+  return data ?? []
 }
 
 async function readRun(admin: AdminClient, runId: string): Promise<SimulationRunRow> {
@@ -976,7 +965,13 @@ async function readRun(admin: AdminClient, runId: string): Promise<SimulationRun
   if (error || !data) {
     throw new Error(`readRun: run ${runId} not found${error ? `: ${error.message}` : ''}`)
   }
-  return data as unknown as SimulationRunRow
+  // `aggregates`/`divergence` are jsonb columns (typed `Json`); narrow them to
+  // their domain shapes. Everything else flows from the generated row type.
+  return {
+    ...data,
+    aggregates: data.aggregates as unknown as RunAggregates | null,
+    divergence: data.divergence as unknown as DivergenceResult | null,
+  }
 }
 
 /** Read a market's question/description/options (READ-ONLY). */
@@ -1141,8 +1136,7 @@ async function retryFailedAgents(args: RetryArgs): Promise<{
   if (error) return { votes, inputTokens, outputTokens }
   const personaById = new Map<string, SimulationPersonaRow>()
   for (const p of data ?? []) {
-    const row = p as unknown as SimulationPersonaRow
-    personaById.set(row.id, row)
+    personaById.set(p.id, p)
   }
 
   const ctx = run.aggregates?.request_context
