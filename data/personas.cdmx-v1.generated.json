@@ -1,0 +1,3764 @@
+{
+  "version": "cdmx-v1",
+  "generated_at": "2026-08-04T16:07:14.125Z",
+  "model": "claude-sonnet-4-5-20250929",
+  "source_targets": "data/persona-targets.cdmx-v1.json",
+  "counts": {
+    "target": 150,
+    "generated": 150,
+    "failed": 0
+  },
+  "personas": [
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Condesa",
+      "age": 26,
+      "gender": "masculino",
+      "education": "licenciatura",
+      "occupation": "analista de datos en fintech",
+      "income_band": "A/B",
+      "household": "vive solo en departamento rentado",
+      "transport_mode": "bicicleta y metrobús",
+      "media_diet": [
+        "Twitter",
+        "podcasts de tecnología"
+      ],
+      "values_profile": {
+        "seguridad": 0.7,
+        "vivienda": 0.8,
+        "movilidad": 0.9,
+        "medio_ambiente": 0.85,
+        "economia": 0.75,
+        "cultura": 0.6
+      },
+      "persona_narrative": "Renta un departamento de una recámara por 14,000 pesos al mes cerca de Parque México. Trabaja de forma híbrida para una startup, tres días desde casa y dos en oficinas de Reforma. Le preocupa que cada año le suben la renta 15% y no puede ahorrar para enganche de vivienda propia."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Condesa",
+      "age": 26,
+      "gender": "masculino",
+      "education": "licenciatura",
+      "occupation": "Analista de datos en fintech",
+      "income_band": "A/B",
+      "household": "Vive solo en departamento rentado",
+      "transport_mode": "Bicicleta y Metro",
+      "media_diet": [
+        "Twitter",
+        "El Financiero"
+      ],
+      "values_profile": {
+        "seguridad": 0.7,
+        "vivienda": 0.8,
+        "movilidad": 0.9,
+        "medio_ambiente": 0.85,
+        "economia": 0.75,
+        "cultura": 0.6
+      },
+      "persona_narrative": "Renta un departamento de 45m² por $14,500 al mes en la Condesa y trabaja en Reforma desde las 9 hasta las 7. Va en bici al metro Patriotismo y de ahí se baja en Insurgentes para llegar a la oficina. Le preocupa que los precios de renta suban tanto que tenga que irse a vivir más lejos y perder el tiempo que ahora usa para hacer ejercicio o ver a sus amigos."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "age": 26,
+      "gender": "femenino",
+      "education": "licenciatura",
+      "occupation": "diseñadora UX en startup fintech",
+      "income_band": "A/B",
+      "household": "vive sola en departamento rentado",
+      "transport_mode": "bicicleta y Uber",
+      "media_diet": [
+        "Instagram",
+        "podcasts de The New York Times en español"
+      ],
+      "values_profile": {
+        "seguridad": 0.7,
+        "vivienda": 0.9,
+        "movilidad": 0.8,
+        "medio_ambiente": 0.85,
+        "economia": 0.6,
+        "cultura": 0.75
+      },
+      "persona_narrative": "Renta un monoambiente en Roma Norte por $14,500 mensuales, casi el 40% de su sueldo. Trabaja de forma híbrida y tres días a la semana va en bici a la oficina en Reforma, aunque la falta de ciclovías seguras la obliga a tomar rutas largas. Le preocupa que los desarrollos inmobiliarios nuevos estén desplazando las cafeterías y librerías independientes que le gustaban del barrio."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Condesa",
+      "age": 26,
+      "gender": "femenino",
+      "education": "licenciatura",
+      "occupation": "diseñadora UX en startup fintech",
+      "income_band": "A/B",
+      "household": "vive sola en departamento rentado",
+      "transport_mode": "bicicleta y apps de transporte",
+      "media_diet": [
+        "Twitter",
+        "podcasts de diseño y tecnología"
+      ],
+      "values_profile": {
+        "seguridad": 0.7,
+        "vivienda": 0.8,
+        "movilidad": 0.9,
+        "medio_ambiente": 0.85,
+        "economia": 0.6,
+        "cultura": 0.75
+      },
+      "persona_narrative": "Renta un departamento de una recámara por 14 mil pesos al mes cerca de Parque México. Trabaja remoto tres días a la semana y va en bici a la oficina en Reforma los otros dos. Le preocupa que cada año le suben la renta 15% y no sabe hasta cuándo podrá quedarse en la zona."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "age": 26,
+      "gender": "masculino",
+      "education": "licenciatura",
+      "occupation": "diseñador UX/UI en una startup de fintech",
+      "income_band": "C+",
+      "household": "vive con dos roommates en un departamento rentado",
+      "transport_mode": "bicicleta y Metrobús",
+      "media_diet": [
+        "Twitter/X",
+        "newsletters de tecnología"
+      ],
+      "values_profile": {
+        "seguridad": 0.6,
+        "vivienda": 0.8,
+        "movilidad": 0.9,
+        "medio_ambiente": 0.7,
+        "economia": 0.75,
+        "cultura": 0.65
+      },
+      "persona_narrative": "Renta un cuarto en un depa de la Roma Norte por $8,500 al mes, casi la mitad de su sueldo. Va en bici al WeWork de Insurgentes donde trabaja remoto tres días a la semana. Le preocupa que cada año el contrato suba 10% y está considerando irse a Narvarte donde es más barato."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "age": 26,
+      "gender": "masculino",
+      "education": "licenciatura",
+      "occupation": "diseñador gráfico freelance",
+      "income_band": "C+",
+      "household": "comparte departamento con dos roommates",
+      "transport_mode": "bicicleta y metro",
+      "media_diet": [
+        "Twitter",
+        "podcasts de tecnología"
+      ],
+      "values_profile": {
+        "seguridad": 0.6,
+        "vivienda": 0.8,
+        "movilidad": 0.7,
+        "medio_ambiente": 0.5,
+        "economia": 0.9,
+        "cultura": 0.7
+      },
+      "persona_narrative": "Renta una habitación por 6,500 pesos al mes y trabaja desde casa para tres clientes fijos. Se mueve en bici a las juntas en Condesa pero usa el metro cuando llueve. Le preocupa que cada año le suben la renta 15% y está considerando buscar algo más barato en Narvarte."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "age": 26,
+      "gender": "femenino",
+      "education": "licenciatura",
+      "occupation": "coordinadora de redes sociales en una agencia de publicidad",
+      "income_band": "C+",
+      "household": "renta un departamento con dos compañeras de la universidad",
+      "transport_mode": "metrobús y bicicleta compartida",
+      "media_diet": [
+        "Twitter/X",
+        "podcasts de noticias"
+      ],
+      "values_profile": {
+        "seguridad": 0.7,
+        "vivienda": 0.8,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.5,
+        "economia": 0.7,
+        "cultura": 0.6
+      },
+      "persona_narrative": "Paga 8,500 pesos de renta por un cuarto en un departamento de tres recámaras. Sale de casa a las 8 am para llegar a la oficina en Polanco, combina metrobús Línea 1 y ecobici. Le preocupa que el aumento de rentas la obligue a mudarse más lejos de su trabajo."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "age": 26,
+      "gender": "femenino",
+      "education": "licenciatura",
+      "occupation": "coordinadora de redes sociales en una agencia de marketing digital",
+      "income_band": "C+",
+      "household": "renta un departamento con dos roommates de la universidad",
+      "transport_mode": "bicicleta y Metrobús",
+      "media_diet": [
+        "Instagram",
+        "Spotify podcasts"
+      ],
+      "values_profile": {
+        "seguridad": 0.7,
+        "vivienda": 0.8,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.75,
+        "economia": 0.85,
+        "cultura": 0.9
+      },
+      "persona_narrative": "Paga 8,500 pesos de renta por un cuarto en un departamento de los años 50 sin elevador. Trabaja desde casa tres días a la semana y los otros va en bici hasta Polanco, donde está la oficina. Le preocupa que su contrato es por honorarios y no tiene prestaciones, además de que el año pasado subió 15% la renta."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 24,
+      "gender": "masculino",
+      "education": "prepa",
+      "occupation": "Técnico en reparación de celulares en Plaza Meave",
+      "income_band": "C",
+      "household": "Renta un cuarto en departamento compartido con dos compañeros de Oaxaca",
+      "transport_mode": "Metrobús Línea 4 y caminata",
+      "media_diet": [
+        "TikTok",
+        "El Universal en línea"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.9,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.3,
+        "economia": 0.85,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Trabaja de martes a domingo en un local donde repara pantallas y desbloquea equipos, gana entre 4 mil y 6 mil pesos al mes dependiendo de las comisiones. Paga 2,800 de renta por su cuarto sin baño propio en un edificio de los años 50 cerca del Metro Obrera. Le gustaría juntar para poner su propio taller pero los precios de renta de locales subieron mucho después de la pandemia."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "age": 26,
+      "gender": "masculino",
+      "education": "licenciatura",
+      "occupation": "analista de datos en startup fintech",
+      "income_band": "C",
+      "household": "vive con dos roommates en departamento rentado",
+      "transport_mode": "bicicleta y Metro",
+      "media_diet": [
+        "Twitter",
+        "podcasts de tecnología"
+      ],
+      "values_profile": {
+        "seguridad": 0.7,
+        "vivienda": 0.9,
+        "movilidad": 0.8,
+        "medio_ambiente": 0.6,
+        "economia": 0.8,
+        "cultura": 0.5
+      },
+      "persona_narrative": "Renta un cuarto en un depa de la Roma por $6,500 mensuales y gana $18,000 en una empresa de préstamos digitales donde hace análisis con Python. Va en bici al trabajo en la Condesa pero le robaron su segunda bicicleta el mes pasado, ahora usa el Metro cuando llueve. Le preocupa que los precios de renta suban tanto que tenga que irse a vivir más lejos de su trabajo."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Santa María la Ribera",
+      "age": 24,
+      "gender": "femenino",
+      "education": "prepa",
+      "occupation": "recepcionista en consultorio dental",
+      "income_band": "C",
+      "household": "renta un cuarto en departamento compartido con dos compañeras de trabajo",
+      "transport_mode": "metrobús y metro",
+      "media_diet": [
+        "TikTok",
+        "noticieros de Televisa en YouTube"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.9,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.4,
+        "economia": 0.85,
+        "cultura": 0.5
+      },
+      "persona_narrative": "Sale de casa a las 6:30 am para llegar al consultorio en Polanco antes de las 8. Ahorra cada quincena porque quiere dejar de rentar y conseguir un crédito para un departamento propio, aunque los precios la desaniman. Le molesta que el metrobús Insurgentes siempre vaya saturado y últimamente ha tenido que esperar hasta tres convoyes para poder subir."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "age": 26,
+      "gender": "femenino",
+      "education": "licenciatura",
+      "occupation": "coordinadora de redes sociales en una agencia de marketing digital",
+      "income_band": "C",
+      "household": "vive con dos roommates en un departamento rentado",
+      "transport_mode": "Metrobús y bicicleta compartida",
+      "media_diet": [
+        "Instagram",
+        "podcasts de noticias"
+      ],
+      "values_profile": {
+        "seguridad": 0.7,
+        "vivienda": 0.9,
+        "movilidad": 0.8,
+        "medio_ambiente": 0.6,
+        "economia": 0.85,
+        "cultura": 0.7
+      },
+      "persona_narrative": "Renta un cuarto en un departamento de Roma Norte por 6,500 pesos al mes, casi el 40% de su sueldo. Trabaja desde casa tres días a la semana manejando campañas para marcas de ropa, y los otros dos va a la oficina en la Condesa en Metrobús. Le preocupa que su casero quiera subir la renta el próximo año porque varios edificios de la calle ya se convirtieron en Airbnbs."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 24,
+      "gender": "masculino",
+      "education": "prepa",
+      "occupation": "repartidor en una app de entregas a domicilio",
+      "income_band": "C-",
+      "household": "vive con su mamá y dos hermanos menores en un departamento rentado",
+      "transport_mode": "motocicleta prestada de la empresa",
+      "media_diet": [
+        "TikTok",
+        "Facebook"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.6,
+        "movilidad": 0.7,
+        "medio_ambiente": 0.3,
+        "economia": 0.9,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Trabaja 10 horas diarias haciendo entregas en la Condesa y Roma, junta para comprar su propia moto porque la que usa es de la app. Renta con su mamá un departamento de dos cuartos por 6,500 pesos al mes y necesita que le alcance para ayudarle con los gastos de sus hermanos que van en la secundaria. Le preocupa que cada vez hay más tráfico y pierde tiempo entre pedidos, lo que le baja sus ingresos semanales."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 26,
+      "gender": "masculino",
+      "education": "licenciatura",
+      "occupation": "Diseñador gráfico freelance para agencias de marketing digital",
+      "income_band": "C-",
+      "household": "Comparte departamento de dos cuartos con un amigo de la universidad",
+      "transport_mode": "Metrobús y bicicleta",
+      "media_diet": [
+        "Twitter",
+        "YouTube"
+      ],
+      "values_profile": {
+        "seguridad": 0.7,
+        "vivienda": 0.8,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.5,
+        "economia": 0.9,
+        "cultura": 0.7
+      },
+      "persona_narrative": "Rentan un depa en la Doctores por 6,500 pesos al mes entre los dos. Trabaja desde casa armando campañas visuales para marcas de ropa y apps, cobrando por proyecto, y le preocupa no tener prestaciones ni forma de ahorrar para un enganche. Los fines de semana va en bici al Centro a buscar libros usados o a alguna expo, pero cada vez le cuesta más cubrir la renta cuando no tiene chambas fijas."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 24,
+      "gender": "femenino",
+      "education": "prepa",
+      "occupation": "cajera en farmacia del ahorro",
+      "income_band": "C-",
+      "household": "renta un cuarto con dos amigas en vecindad",
+      "transport_mode": "metro y microbús",
+      "media_diet": [
+        "TikTok",
+        "Radio Fórmula"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.8,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.3,
+        "economia": 0.9,
+        "cultura": 0.5
+      },
+      "persona_narrative": "Trabaja turno matutino en la farmacia y por las tardes toma curso en línea de administración. Renta desde hace un año porque el cuarto le cuesta 2,800 mensuales y le queda cerca de la Línea 3. Le preocupa que cada vez hay más asaltos afuera del metro Niños Héroes cuando regresa de noche."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 26,
+      "gender": "femenino",
+      "education": "licenciatura",
+      "occupation": "diseñadora gráfica freelance",
+      "income_band": "C-",
+      "household": "comparte departamento con dos compañeras de la universidad",
+      "transport_mode": "metro y bicicleta",
+      "media_diet": [
+        "Instagram",
+        "podcasts de Spotify"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.9,
+        "movilidad": 0.7,
+        "medio_ambiente": 0.6,
+        "economia": 0.85,
+        "cultura": 0.7
+      },
+      "persona_narrative": "Renta un cuarto en un departamento de los años 50 por $4,500 al mes. Trabaja desde casa para clientes que consigue por redes sociales, facturando unos $12,000 mensuales cuando hay proyectos. Le preocupa que el casero amenace con subirle la renta cada seis meses porque sabe que el edificio está en zona de renovación."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 24,
+      "gender": "masculino",
+      "education": "prepa",
+      "occupation": "despachador en gasolinera sobre Eje Central",
+      "income_band": "D+",
+      "household": "renta un cuarto en vecindad con dos compañeros de Oaxaca",
+      "transport_mode": "metro Línea 3 y camión",
+      "media_diet": [
+        "Facebook",
+        "Radio Fórmula en el trabajo"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.7,
+        "movilidad": 0.5,
+        "medio_ambiente": 0.3,
+        "economia": 0.9,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Trabaja turnos de 12 horas en la gasolinera y lleva dos años ahorrando para poner un changarro de celulares usados. Renta con $2,800 al mes y le quedan $150 semanales después de mandar dinero a su familia. Le preocupa que cada vez hay más asaltos en la estación del metro Niños Héroes cuando sale de madrugada."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 24,
+      "gender": "masculino",
+      "education": "licenciatura",
+      "occupation": "asistente administrativo en una clínica dental",
+      "income_band": "D+",
+      "household": "renta un cuarto en departamento compartido con otros dos estudiantes",
+      "transport_mode": "metro y camión",
+      "media_diet": [
+        "TikTok",
+        "Radio Beats"
+      ],
+      "values_profile": {
+        "seguridad": 0.7,
+        "vivienda": 0.9,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.4,
+        "economia": 0.8,
+        "cultura": 0.5
+      },
+      "persona_narrative": "Recién egresado de Administración de Empresas, trabaja de lunes a viernes ganando 8,500 mensuales y estudia inglés los sábados porque quiere conseguir un mejor empleo. Paga 3,200 de renta por su cuarto en la colonia Doctores y le cuesta llegar a fin de mes, por lo que a veces hace trabajos freelance de diseño gráfico los domingos. Le preocupa que el metro esté cada vez más saturado en la Línea 3 porque llega tarde a la clínica."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 24,
+      "gender": "femenino",
+      "education": "prepa",
+      "occupation": "cajera en farmacia del ahorro",
+      "income_band": "D+",
+      "household": "vive con su mamá y dos hermanos menores en departamento rentado",
+      "transport_mode": "metro línea 3 y microbús",
+      "media_diet": [
+        "TikTok",
+        "Facebook"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.7,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.3,
+        "economia": 0.9,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Sale de su casa en Doctores a las 6:30 am para abrir la farmacia en Balderas, trabaja turnos de 8 horas por $4,200 al mes y ayuda a pagar la renta de $5,500. Su hermano de 16 dejó la escuela el año pasado y eso la preocupa porque anda en malas juntas por la colonia. Se entera de las noticias por videos en TikTok mientras regresa en el metro."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 24,
+      "gender": "femenino",
+      "education": "licenciatura",
+      "occupation": "asistente administrativa en una clínica dental privada",
+      "income_band": "D+",
+      "household": "vive con su mamá y su hermano menor en un departamento rentado",
+      "transport_mode": "metrobús y metro",
+      "media_diet": [
+        "TikTok",
+        "Facebook"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.7,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.4,
+        "economia": 0.9,
+        "cultura": 0.5
+      },
+      "persona_narrative": "Rentan un departamento de dos recuartos por $6,500 al mes en Doctores, y entre ella y su mamá que trabaja en una tintorería juntan para los gastos. Sale a las 6:30 am para llegar a la clínica en Polanco, hace como hora y media de camino, y anda buscando un segundo trabajo los fines de semana porque quiere ahorrar para titularse. Le preocupa que cada vez hay más asaltos en la estación Obrera del metrobús cuando regresa de noche."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Morelos",
+      "age": 24,
+      "gender": "masculino",
+      "education": "secundaria",
+      "occupation": "ayudante general en taller mecánico",
+      "income_band": "D/E",
+      "household": "vive con su mamá y dos hermanos menores en un departamento rentado",
+      "transport_mode": "metro y camión",
+      "media_diet": [
+        "Facebook",
+        "TikTok"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.7,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.3,
+        "economia": 0.9,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Trabaja de lunes a sábado en un taller sobre Eje 1 Norte ganando 3,200 pesos al mes, ayuda a su mamá con la renta de 4,500 mensuales. Sale a las 7 de la mañana para llegar al trabajo porque la Línea B se satura horrible. Le preocupa que cada vez está más caro el pasaje de los micros que toma desde Tepito."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Morelos",
+      "age": 24,
+      "gender": "masculino",
+      "education": "prepa",
+      "occupation": "repartidor en aplicación de comida",
+      "income_band": "D/E",
+      "household": "comparte cuarto en vecindad con dos primos que también trabajan de repartidores",
+      "transport_mode": "motocicleta prestada",
+      "media_diet": [
+        "TikTok",
+        "grupos de WhatsApp"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.8,
+        "movilidad": 0.7,
+        "medio_ambiente": 0.3,
+        "economia": 0.95,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Reparte entre 8 y 12 horas diarias en una moto que le presta su primo a cambio de 200 pesos semanales. Paga 1,800 al mes por un cuarto que comparte con otros dos, sin contrato formal. Le preocupa que cada vez hay más asaltos a repartidores en la zona de Tepito y la Merced, especialmente después de las 9 pm."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 24,
+      "gender": "femenino",
+      "education": "licenciatura",
+      "occupation": "asistente administrativa en consultorio dental",
+      "income_band": "D/E",
+      "household": "renta un cuarto en departamento compartido con dos compañeras de la universidad",
+      "transport_mode": "metro y microbús",
+      "media_diet": [
+        "TikTok",
+        "Facebook"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.8,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.4,
+        "economia": 0.9,
+        "cultura": 0.5
+      },
+      "persona_narrative": "Terminó la licenciatura en administración hace un año pero gana $7,500 al mes en el consultorio, apenas le alcanza para pagar $3,200 de renta y ayudar a su mamá en Chalco. Sale a las 7 pm y camina rápido las cuatro cuadras del metro Niños Héroes a su casa porque le han seguido dos veces. Está juntando para un diplomado en recursos humanos pero lleva seis meses en los mismos $2,800 ahorrados."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Morelos",
+      "age": 24,
+      "gender": "femenino",
+      "education": "secundaria",
+      "occupation": "empacadora en tienda de autoservicio",
+      "income_band": "D/E",
+      "household": "vive con su mamá, su hermana y dos sobrinos en departamento rentado",
+      "transport_mode": "metro y microbús",
+      "media_diet": [
+        "Facebook",
+        "TikTok"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.8,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.3,
+        "economia": 0.9,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Jessica trabaja turnos de 8 horas en Aurrerá y gana $6,200 al mes, de los cuales aporta $3,000 para la renta del depa en la Morelos. Hace un año dejó de caminar sola de noche desde el metro Tepito porque dos veces le quisieron arrebatar el celular. Se entera de las noticias por videos cortos en TikTok y por lo que comparten sus compañeras en grupos de WhatsApp del trabajo."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "age": 37,
+      "gender": "masculino",
+      "education": "prepa",
+      "occupation": "gerente de ventas en concesionaria automotriz",
+      "income_band": "A/B",
+      "household": "vive con su pareja y un perro en departamento rentado",
+      "transport_mode": "auto propio",
+      "media_diet": [
+        "El Financiero",
+        "podcasts de negocios"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.7,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.4,
+        "economia": 0.9,
+        "cultura": 0.5
+      },
+      "persona_narrative": "Renta un departamento de dos recámaras por 18,000 pesos al mes. Maneja diario de Roma a Santa Fe donde vende autos BMW y Mercedes. Le preocupa que el costo de vida suba tanto que no pueda ahorrar para el enganche de un departamento propio."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Condesa",
+      "age": 37,
+      "gender": "masculino",
+      "education": "licenciatura",
+      "occupation": "Director de marketing digital en fintech",
+      "income_band": "A/B",
+      "household": "Vive con su pareja en departamento propio",
+      "transport_mode": "Auto propio y bicicleta",
+      "media_diet": [
+        "El Financiero",
+        "Podcasts de tecnología"
+      ],
+      "values_profile": {
+        "seguridad": 0.7,
+        "vivienda": 0.5,
+        "movilidad": 0.8,
+        "medio_ambiente": 0.9,
+        "economia": 0.6,
+        "cultura": 0.8
+      },
+      "persona_narrative": "Compró su departamento de dos recámaras hace tres años con crédito hipotecario y ahora paga 18 mil pesos mensuales. Trabaja desde casa dos días a la semana y va en bici a Polanco cuando tiene juntas presenciales, pero le frustra que no haya ciclovías bien conectadas. Le preocupa que la ciclovía de Álvaro Obregón esté mal mantenida y tenga tantos baches."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Condesa",
+      "age": 37,
+      "gender": "femenino",
+      "education": "secundaria",
+      "occupation": "Dueña de una tienda de ropa vintage en la Roma",
+      "income_band": "A/B",
+      "household": "Vive con su pareja y dos gatos",
+      "transport_mode": "Bicicleta y Metrobús",
+      "media_diet": [
+        "Instagram",
+        "Reforma online"
+      ],
+      "values_profile": {
+        "seguridad": 0.7,
+        "vivienda": 0.5,
+        "movilidad": 0.8,
+        "medio_ambiente": 0.9,
+        "economia": 0.8,
+        "cultura": 0.9
+      },
+      "persona_narrative": "Abrió su negocio hace tres años en un local rentado de la Roma Norte, invirtiendo los ahorros de trabajar en boutiques desde los 19. Sale todos los días en bicicleta a proveedores de Portales y La Lagunilla, aunque le preocupa que las ciclovías no conecten bien con el Centro. Lee noticias sobre comercio local en Reforma mientras desayuna, y por las tardes revisa Instagram para ver tendencias de moda sustentable."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "age": 37,
+      "gender": "femenino",
+      "education": "prepa",
+      "occupation": "Gerente de ventas en empresa de software",
+      "income_band": "A/B",
+      "household": "Vive con su pareja y su hijo de 8 años",
+      "transport_mode": "Auto propio y Uber",
+      "media_diet": [
+        "El Financiero",
+        "Spotify podcasts"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.6,
+        "movilidad": 0.7,
+        "medio_ambiente": 0.5,
+        "economia": 0.9,
+        "cultura": 0.6
+      },
+      "persona_narrative": "Renta un departamento de dos recámaras en un edificio de los años 50 que necesita mantenimiento constante. Maneja su Mazda 3 para llevar a su hijo a la escuela en Polanco antes de ir a la oficina en Santa Fe, el trayecto le toma hora y media. Le preocupa que las colegiaturas suban más rápido que su sueldo y está considerando cambiar de trabajo."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "age": 37,
+      "gender": "masculino",
+      "education": "licenciatura",
+      "occupation": "diseñador gráfico freelance",
+      "income_band": "C+",
+      "household": "vive con su pareja y un perro adoptado",
+      "transport_mode": "bicicleta y metro",
+      "media_diet": [
+        "Animal Político",
+        "podcasts de Spotify"
+      ],
+      "values_profile": {
+        "seguridad": 0.6,
+        "vivienda": 0.8,
+        "movilidad": 0.7,
+        "medio_ambiente": 0.75,
+        "economia": 0.65,
+        "cultura": 0.85
+      },
+      "persona_narrative": "Renta un departamento de 55m² por $14,500 mensuales en un edificio de los años 50. Trabaja desde casa diseñando para tres clientes fijos y le preocupa que el ruido de las obras en la calle le complica las videollamadas. Los fines de semana va en bici al Parque México y a veces vende ilustraciones en el tianguis cultural de la Lagunilla."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 37,
+      "gender": "masculino",
+      "education": "secundaria",
+      "occupation": "Técnico en mantenimiento de elevadores",
+      "income_band": "C+",
+      "household": "Vive con su esposa y dos hijos de 8 y 5 años",
+      "transport_mode": "Metro y camión",
+      "media_diet": [
+        "El Universal en línea",
+        "Noticieros de TV Azteca"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.7,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.4,
+        "economia": 0.9,
+        "cultura": 0.3
+      },
+      "persona_narrative": "Renta un departamento de dos recámaras cerca del Metro Obrera por 6,500 pesos al mes. Trabaja para una empresa que da servicio a edificios corporativos en Reforma, sale de su casa a las 6 AM para llegar a tiempo. Le preocupa que los precios de la canasta básica siguen subiendo mientras su sueldo apenas alcanza para pagar renta, colegiaturas y el súper."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "age": 37,
+      "gender": "masculino",
+      "education": "prepa",
+      "occupation": "supervisor de mantenimiento en torre de oficinas",
+      "income_band": "C+",
+      "household": "vive con su pareja y un hijo de 8 años en departamento rentado",
+      "transport_mode": "metrobús y a veces bicicleta",
+      "media_diet": [
+        "Facebook",
+        "noticieros de TV abierta"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.9,
+        "movilidad": 0.7,
+        "medio_ambiente": 0.5,
+        "economia": 0.85,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Renta un departamento de dos recámaras por $12,000 mensuales y lleva tres años ahorrando para el enganche de algo propio, pero los precios suben más rápido que su ahorro. Supervisa a cuatro técnicos que mantienen elevadores y sistemas eléctricos en un edificio corporativo cerca de Reforma. Le preocupa que su hijo tenga que cambiarse de escuela si encuentran vivienda más lejos del centro porque aquí ya no alcanza."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "age": 37,
+      "gender": "femenino",
+      "education": "licenciatura",
+      "occupation": "coordinadora de recursos humanos en empresa farmacéutica",
+      "income_band": "C+",
+      "household": "vive con su pareja y un gato",
+      "transport_mode": "metrobús y bicicleta compartida",
+      "media_diet": [
+        "El País México",
+        "podcasts de Spotify"
+      ],
+      "values_profile": {
+        "seguridad": 0.7,
+        "vivienda": 0.8,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.75,
+        "economia": 0.65,
+        "cultura": 0.8
+      },
+      "persona_narrative": "Renta un departamento de dos recámbadas en un edificio de los años 50, paga 14,500 pesos al mes. Trabaja en Polanco y hace 45 minutos en metrobús desde Álvaro Obregón. Le preocupa que su casero quiera vender el departamento porque ya no encuentra rentas a ese precio en la colonia."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 37,
+      "gender": "femenino",
+      "education": "secundaria",
+      "occupation": "encargada de mostrador en farmacia del Ahorro",
+      "income_band": "C+",
+      "household": "vive con su esposo y dos hijos de 8 y 12 años",
+      "transport_mode": "metrobús y metro",
+      "media_diet": [
+        "noticieros de Televisa",
+        "grupos de Facebook de colonos"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.7,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.4,
+        "economia": 0.8,
+        "cultura": 0.3
+      },
+      "persona_narrative": "Renta un departamento de dos recámaras en un edificio de los años 60, paga 6,500 pesos al mes. Sale a las 6:30 am para abrir la farmacia a las 8, hace turnos de 9 horas y gana 8,200 mensuales más comisiones por ventas. Le preocupa que sus hijos salgan solos porque han asaltado tres veces la tienda Oxxo de la esquina en los últimos cuatro meses."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "age": 37,
+      "gender": "femenino",
+      "education": "prepa",
+      "occupation": "supervisora de tienda departamental",
+      "income_band": "C+",
+      "household": "vive con su hija de 12 años en departamento rentado",
+      "transport_mode": "metrobús y camión",
+      "media_diet": [
+        "Facebook",
+        "noticieros de televisión abierta"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.7,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.4,
+        "economia": 0.8,
+        "cultura": 0.5
+      },
+      "persona_narrative": "Sale de su casa en Roma Norte a las 6:30 am para llegar a la tienda en Polanco donde supervisa a 15 empleados, ganando $14,500 mensuales de los cuales $6,800 se van en renta. Recoge a su hija de la secundaria pública tres veces por semana y le preocupa que el camino del metrobús Insurgentes a su colonia está cada vez más oscuro y solitario después de las 9 pm."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "age": 37,
+      "gender": "masculino",
+      "education": "licenciatura",
+      "occupation": "Coordinador de logística en una empresa de paquetería",
+      "income_band": "C",
+      "household": "Vive con su pareja y un hijo de 6 años en un departamento rentado",
+      "transport_mode": "Metro y bicicleta",
+      "media_diet": [
+        "El Universal en línea",
+        "Twitter"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.7,
+        "movilidad": 0.9,
+        "medio_ambiente": 0.5,
+        "economia": 0.8,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Renta un departamento de dos recámbras por $11,500 mensuales y lleva dos años buscando alguna opción viable para comprar. Cada mañana lleva a su hijo a la escuela en bicicleta antes de tomar el Metro Insurgentes hacia su trabajo en Vallejo, donde coordina las rutas de 23 repartidores. Le urge que amplíen los horarios del Metrobús porque a las 6:30 am ya va saturado y necesita reportarse a las 7."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 37,
+      "gender": "masculino",
+      "education": "secundaria",
+      "occupation": "mecánico automotriz en taller familiar",
+      "income_band": "C",
+      "household": "vive con su esposa y dos hijos de 8 y 5 años en departamento rentado",
+      "transport_mode": "microbús y metro",
+      "media_diet": [
+        "Facebook",
+        "noticieros de TV Azteca"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.7,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.3,
+        "economia": 0.9,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Repara autos de lunes a sábado en el taller de su cuñado sobre Arcos de Belén, donde atienden principalmente taxis y particulares del rumbo. Paga 4,500 pesos de renta mensual y le preocupa que los repuestos cada vez cuestan más mientras los clientes regatean por cualquier servicio. Los domingos lleva a sus hijos al parque de la colonia y revisa ofertas de refacciones en grupos de Facebook mientras su esposa vende tuppers por catálogo."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 37,
+      "gender": "masculino",
+      "education": "prepa",
+      "occupation": "técnico en refrigeración de supermercados",
+      "income_band": "C",
+      "household": "vive con su pareja y dos hijos de 8 y 5 años",
+      "transport_mode": "metrobús y bicicleta",
+      "media_diet": [
+        "Facebook",
+        "noticieros de televisión abierta"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.7,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.4,
+        "economia": 0.9,
+        "cultura": 0.3
+      },
+      "persona_narrative": "Renta un departamento de dos recámaras cerca del metro Obrera por 6,500 pesos al mes. Sale a las 5:30 AM para dar mantenimiento a equipos de refrigeración en tiendas Soriana y Walmart de la zona sur. Le preocupa que los precios de la canasta básica suban más rápido que su sueldo de 12,000 pesos mensuales."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "age": 37,
+      "gender": "femenino",
+      "education": "licenciatura",
+      "occupation": "coordinadora de recursos humanos en una empresa de logística",
+      "income_band": "C",
+      "household": "vive con su pareja y su hija de 8 años en un departamento rentado",
+      "transport_mode": "metro y bicicleta",
+      "media_diet": [
+        "El Universal digital",
+        "podcasts de noticias"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.9,
+        "movilidad": 0.7,
+        "medio_ambiente": 0.6,
+        "economia": 0.85,
+        "cultura": 0.5
+      },
+      "persona_narrative": "Renta un departamento de dos recámaras por $14,500 mensuales y le preocupa que los aumentos anuales sean más altos que su incremento salarial. Sale de casa a las 7 am para dejar a su hija en la escuela antes de ir a la oficina en Santa Fe, combinando metro Línea 1 y bicicleta desde Balderas. Cada tres meses revisa vacantes en otras empresas porque necesita un sueldo que le permita ahorrar para el enganche de un departamento propio."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 37,
+      "gender": "femenino",
+      "education": "secundaria",
+      "occupation": "encargada de turno en farmacia Guadalajara",
+      "income_band": "C",
+      "household": "vive con su hijo de 12 años y su madre jubilada",
+      "transport_mode": "metrobús y metro",
+      "media_diet": [
+        "Facebook",
+        "noticieros de Televisa en las mañanas"
+      ],
+      "values_profile": {
+        "seguridad": 0.85,
+        "vivienda": 0.7,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.4,
+        "economia": 0.9,
+        "cultura": 0.5
+      },
+      "persona_narrative": "Renta un departamento de dos recámaras cerca de la estación Hospital General. Sale a las 5:30 am para abrir la farmacia a las 7, y su mamá lleva a su hijo a la secundaria. Le preocupa que los precios de la canasta básica suban cada mes porque su sueldo ya no alcanza como antes."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 37,
+      "gender": "femenino",
+      "education": "prepa",
+      "occupation": "Supervisora de ventas en tienda departamental",
+      "income_band": "C",
+      "household": "Vive con su hijo de 12 años y su madre de 65 años en un departamento rentado",
+      "transport_mode": "Metro y microbús",
+      "media_diet": [
+        "Facebook",
+        "Noticieros de TV abierta"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.7,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.3,
+        "economia": 0.8,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Sale de su casa en Doctores a las 6:30 am para llevar a su hijo a la secundaria antes de entrar a su turno de 8 horas en Liverpool. Paga 6,500 pesos de renta mensual y desde hace dos años busca crédito Infonavit pero no le alcanza el puntaje. Le preocupa que su hijo tenga que caminar solo tres cuadras del metro a la escuela porque han asaltado a varios vecinos en esa zona."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 37,
+      "gender": "masculino",
+      "education": "licenciatura",
+      "occupation": "supervisor de bodega en empresa de logística",
+      "income_band": "C-",
+      "household": "vive con su pareja y dos hijos de 8 y 5 años en departamento rentado",
+      "transport_mode": "metrobús y metro",
+      "media_diet": [
+        "Facebook",
+        "noticieros de TV abierta"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.9,
+        "movilidad": 0.7,
+        "medio_ambiente": 0.4,
+        "economia": 0.85,
+        "cultura": 0.3
+      },
+      "persona_narrative": "Renta un departamento de dos recuadras por 6,500 pesos al mes desde hace cuatro años. Sale de casa a las 6 am para llegar a la bodega en Vallejo y regresa después de las 7 pm, por lo que sus hijos ya están dormidos entre semana. Le preocupa no poder ahorrar para el enganche de una vivienda propia porque los salarios no alcanzan y los precios siguen subiendo."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 37,
+      "gender": "masculino",
+      "education": "secundaria",
+      "occupation": "Técnico en refrigeración y aire acondicionado",
+      "income_band": "C-",
+      "household": "Vive con su pareja y dos hijos de 8 y 11 años en un departamento rentado",
+      "transport_mode": "Metrobús y metro",
+      "media_diet": [
+        "Facebook",
+        "Noticieros de TV abierta"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.9,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.3,
+        "economia": 0.85,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Sale de su casa en Doctores a las 6:30 am para llegar a tiempo a instalaciones en Polanco o Santa Fe, donde repara minisplits en oficinas. Paga 6,500 pesos de renta y está buscando un crédito Infonavit porque el dueño les avisó que va a vender el departamento. Los fines de semana lleva a sus hijos al parque de la colonia y se entera de las noticias por el celular mientras espera el Metrobús en Balderas."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 37,
+      "gender": "masculino",
+      "education": "prepa",
+      "occupation": "técnico en mantenimiento de refrigeración en un hospital privado",
+      "income_band": "C-",
+      "household": "vive con su pareja y dos hijos de 8 y 4 años en un departamento rentado",
+      "transport_mode": "metrobús y metro",
+      "media_diet": [
+        "Facebook",
+        "noticieros de TV abierta"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.9,
+        "movilidad": 0.7,
+        "medio_ambiente": 0.4,
+        "economia": 0.85,
+        "cultura": 0.3
+      },
+      "persona_narrative": "Renta un departamento de dos recámbros por $6,500 al mes y el dueño acaba de avisar que subirá a $7,200. Sale de su casa a las 6:30 am para llegar al hospital en Polanco donde repara equipos de aire acondicionado y cámaras frías. Su esposa trabaja medio tiempo en una tienda de abarrotes y él cubre los gastos de la escuela y útiles de sus hijos, aunque le preocupa no poder ahorrar nada para el enganche de una vivienda propia."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 37,
+      "gender": "femenino",
+      "education": "licenciatura",
+      "occupation": "coordinadora de recursos humanos en una empresa de logística",
+      "income_band": "C-",
+      "household": "vive con su hijo de 9 años y su madre de 62 años",
+      "transport_mode": "metro y metrobús",
+      "media_diet": [
+        "noticieros de Televisa",
+        "Facebook"
+      ],
+      "values_profile": {
+        "seguridad": 0.85,
+        "vivienda": 0.75,
+        "movilidad": 0.65,
+        "medio_ambiente": 0.45,
+        "economia": 0.8,
+        "cultura": 0.5
+      },
+      "persona_narrative": "Renta un departamento de dos recámbras por $8,500 al mes cerca de la estación Obrera. Sale a las 6:30 am para dejar a su hijo en la escuela antes de llegar a su trabajo en Naucalpan, regresando después de las 7 pm. Le preocupa que los aumentos del transporte y la renta están consumiendo más de la mitad de su sueldo mensual de $14,000."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 37,
+      "gender": "femenino",
+      "education": "primaria",
+      "occupation": "ayudante de cocina en una fonda",
+      "income_band": "C-",
+      "household": "vive con sus dos hijos de 9 y 12 años en un departamento rentado",
+      "transport_mode": "microbús y metro",
+      "media_diet": [
+        "Facebook",
+        "Radio Fórmula"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.8,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.3,
+        "economia": 0.95,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Trabaja de lunes a sábado desde las 7 am pelando verdura y lavando trastes, gana 3,500 al mes. Paga 2,800 de renta por un departamento de dos cuartos donde duerme con su hija y su hijo mayor se queda en la sala. Le preocupa que el edificio tiene grietas desde el sismo del 2017 y el dueño no quiere arreglar nada."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 37,
+      "gender": "femenino",
+      "education": "secundaria",
+      "occupation": "vendedora en tianguis de ropa usada",
+      "income_band": "C-",
+      "household": "vive con sus dos hijos de 12 y 8 años en departamento rentado",
+      "transport_mode": "metro y microbús",
+      "media_diet": [
+        "Facebook",
+        "noticieros de TV abierta"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.8,
+        "movilidad": 0.5,
+        "medio_ambiente": 0.3,
+        "economia": 0.95,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Renta un departamento de dos cuartos por 4,500 pesos al mes cerca del metro Obrera. Pone su puesto los fines de semana en el tianguis de la Lagunilla vendiendo ropa de paca, y entre semana trabaja limpiando casas en la Condesa. Le preocupa que los precios de la canasta básica suban cada mes y apenas le alcanza para cubrir la renta y los gastos escolares de sus hijos."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 37,
+      "gender": "masculino",
+      "education": "prepa",
+      "occupation": "repartidor en plataforma de entregas a domicilio",
+      "income_band": "D+",
+      "household": "vive con su pareja y dos hijos de 8 y 5 años en departamento rentado",
+      "transport_mode": "motocicleta",
+      "media_diet": [
+        "Facebook",
+        "TikTok"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.7,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.3,
+        "economia": 0.9,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Reparte comida 10 horas al día en su moto por toda la ciudad, desde Polanco hasta Iztapalapa. Renta un departamento de dos cuartos por 6,500 pesos al mes y cada que suben las gasolinas siente que gana menos. Le preocupa que los asaltos a repartidores van en aumento y que su seguro de la app no cubre robos de la moto."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 37,
+      "gender": "masculino",
+      "education": "licenciatura",
+      "occupation": "técnico en mantenimiento de refrigeración industrial",
+      "income_band": "D+",
+      "household": "vive con su pareja y dos hijos de 8 y 5 años en un departamento rentado",
+      "transport_mode": "metrobús y metro",
+      "media_diet": [
+        "Facebook",
+        "noticieros de TV abierta"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.9,
+        "movilidad": 0.7,
+        "medio_ambiente": 0.4,
+        "economia": 0.85,
+        "cultura": 0.3
+      },
+      "persona_narrative": "Rentan un departamento de dos recámaras por 6,500 pesos al mes, pero el casero amenaza con subir la renta cada año. Sale a las 6 am para revisar equipos de refrigeración en mercados y restaurantes del centro, regresa a las 7 pm. Está ahorrando para el enganche de una vivienda en Ecatepec porque aquí ya no alcanza para comprar."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 37,
+      "gender": "femenino",
+      "education": "primaria",
+      "occupation": "ayudante en puesto de jugos y tortas sobre Eje Central",
+      "income_band": "D+",
+      "household": "vive con sus dos hijos de 9 y 12 años en un departamento rentado",
+      "transport_mode": "microbús y metro",
+      "media_diet": [
+        "Facebook en celular",
+        "canal de noticias local en TV abierta"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.8,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.3,
+        "economia": 0.95,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Entra a trabajar a las 7 am y sale después de las 6 pm, gana 2,800 pesos a la quincena. Paga 3,200 de renta mensual por un departamento de dos cuartos donde duerme con su hija mientras su hijo usa el otro cuarto. Le preocupa que los precios de la canasta básica suban cada mes y que el dueño quiera aumentar la renta."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 37,
+      "gender": "femenino",
+      "education": "secundaria",
+      "occupation": "Vendedora en tianguis de ropa usada",
+      "income_band": "D+",
+      "household": "Vive con sus dos hijos de 9 y 12 años en departamento rentado",
+      "transport_mode": "Metro y microbús",
+      "media_diet": [
+        "Facebook",
+        "Radio Fórmula"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.8,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.3,
+        "economia": 0.95,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Renta un departamento de dos cuartos por $4,500 mensuales y paga $800 de luz cada dos meses. Pone su puesto de ropa los martes y domingos en el tianguis de Tepito, vendiendo pantalones de mezclilla a $80 y blusas a $50. Le preocupa que los precios del pasaje suban porque sus hijos toman dos camiones para llegar a la escuela secundaria."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Morelos",
+      "age": 37,
+      "gender": "masculino",
+      "education": "prepa",
+      "occupation": "repartidor en bicicleta para apps de comida",
+      "income_band": "D/E",
+      "household": "vive con su pareja y dos hijos en un departamento rentado",
+      "transport_mode": "bicicleta y metro",
+      "media_diet": [
+        "Facebook",
+        "noticieros de TV abierta"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.8,
+        "movilidad": 0.7,
+        "medio_ambiente": 0.3,
+        "economia": 0.95,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Renta un departamento de dos cuartos por $4,500 al mes en la Morelos y hace hasta 12 horas diarias en bicicleta entregando pedidos de Rappi y Uber Eats. Su pareja trabaja limpiando casas en la Condesa y entre los dos apenas completan para la renta, la comida y la colegiatura de sus hijos de 8 y 11 años. Le preocupa que cada vez hay más asaltos a repartidores en la zona de Tepito y que los accidentes en bici van en aumento porque no hay ciclovías seguras."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 37,
+      "gender": "masculino",
+      "education": "licenciatura",
+      "occupation": "supervisor de limpieza en un hospital privado",
+      "income_band": "D/E",
+      "household": "vive con su esposa y dos hijos en un departamento rentado",
+      "transport_mode": "metrobús y metro",
+      "media_diet": [
+        "Facebook",
+        "noticieros de TV abierta"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.9,
+        "movilidad": 0.7,
+        "medio_ambiente": 0.4,
+        "economia": 0.95,
+        "cultura": 0.3
+      },
+      "persona_narrative": "Renta un departamento de dos cuartos por $6,500 mensuales y lleva tres años intentando ahorrar para un enganche pero la inflación se come lo que junta. Sale de casa a las 5:30 am para supervisar al personal de limpieza del turno matutino en un hospital de la Roma. Le preocupa que sus hijos no tengan espacio para estudiar y que el edificio donde viven tenga problemas estructurales desde el sismo del 2017."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Buenos Aires",
+      "age": 37,
+      "gender": "femenino",
+      "education": "primaria",
+      "occupation": "empleada doméstica por horas en tres casas",
+      "income_band": "D/E",
+      "household": "vive con sus dos hijos de 9 y 12 años en un cuarto rentado",
+      "transport_mode": "microbús y metro",
+      "media_diet": [
+        "Facebook",
+        "canal 5"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.85,
+        "movilidad": 0.7,
+        "medio_ambiente": 0.3,
+        "economia": 0.95,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Renta un cuarto de 3x4 metros por $2,800 al mes en una vecindad sobre Eje 1 Norte. Sale a las 5:30 am para limpiar la primera casa en Polanco y regresa a las 8 pm, gasta $50 diarios en transporte. Le preocupa que sus hijos se queden solos después de la escuela porque no puede pagar a nadie que los cuide."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Morelos",
+      "age": 37,
+      "gender": "femenino",
+      "education": "secundaria",
+      "occupation": "vendedora de jugos y licuados en puesto semifijo",
+      "income_band": "D/E",
+      "household": "vive con sus dos hijos de 9 y 14 años en cuarto rentado",
+      "transport_mode": "metro y microbús",
+      "media_diet": [
+        "Facebook",
+        "radio mientras trabaja"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.8,
+        "movilidad": 0.5,
+        "medio_ambiente": 0.3,
+        "economia": 0.95,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Renta un cuarto de 3x4 metros en vecindad por $2,800 al mes. Sale a las 5:30 am para montar su puesto de jugos en La Lagunilla antes de que lleguen los inspectores, gana entre $250 y $400 diarios según el día. Le preocupa que su hijo mayor está juntándose con chavos que no estudian y andan en la calle hasta tarde."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "age": 52,
+      "gender": "masculino",
+      "education": "prepa",
+      "occupation": "gerente de ventas en una distribuidora de equipo médico",
+      "income_band": "A/B",
+      "household": "vive con su esposa y un hijo de 23 años que estudia posgrado",
+      "transport_mode": "auto propio",
+      "media_diet": [
+        "El Financiero",
+        "podcasts de negocios"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.4,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.5,
+        "economia": 0.9,
+        "cultura": 0.6
+      },
+      "persona_narrative": "Es dueño de un departamento de tres recámaras que compró en 2005. Sale a las 7 am hacia sus citas con hospitales privados en distintas zonas de la ciudad. Le preocupa que las regulaciones fiscales cambien cada año y afecten las importaciones de su empresa."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Condesa",
+      "age": 52,
+      "gender": "masculino",
+      "education": "licenciatura",
+      "occupation": "director de operaciones en empresa fintech",
+      "income_band": "A/B",
+      "household": "vive con su esposa y un hijo de 17 años",
+      "transport_mode": "auto propio y Uber",
+      "media_diet": [
+        "El Financiero",
+        "podcasts de negocios"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.4,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.5,
+        "economia": 0.9,
+        "cultura": 0.6
+      },
+      "persona_narrative": "Es dueño de un departamento de tres recámaras que compró hace 12 años. Trabaja desde casa tres días a la semana y los otros dos va a oficinas en Santa Fe, tardando entre 45 minutos y hora y media según el tráfico. Le preocupa que su hijo pueda estudiar una carrera en el extranjero sin que el tipo de cambio afecte demasiado sus ahorros."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "age": 52,
+      "gender": "femenino",
+      "education": "primaria",
+      "occupation": "dueña de puesto de tacos en mercado Medellín",
+      "income_band": "A/B",
+      "household": "vive con su esposo y su madre de 78 años",
+      "transport_mode": "metrobús y taxi",
+      "media_diet": [
+        "Facebook",
+        "noticieros de TV Azteca"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.7,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.4,
+        "economia": 0.95,
+        "cultura": 0.5
+      },
+      "persona_narrative": "Heredó el puesto de tacos de su padre hace 15 años y ahora emplea a tres personas. Es dueña de un departamento de dos recámbros que compró en los años 90. Le preocupa que los nuevos restaurantes gourmet eleven la renta del local en el mercado."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Condesa",
+      "age": 52,
+      "gender": "femenino",
+      "education": "secundaria",
+      "occupation": "dueña de una boutique de ropa vintage",
+      "income_band": "A/B",
+      "household": "vive con su pareja y su madre de 78 años",
+      "transport_mode": "auto propio y Uber",
+      "media_diet": [
+        "El Universal digital",
+        "Instagram"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.5,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.7,
+        "economia": 0.9,
+        "cultura": 0.8
+      },
+      "persona_narrative": "Es dueña de un departamento de dos recámaras que compró en 2005. Abrió su boutique hace 12 años en la calle Amsterdam y le preocupa que las rentas comerciales sigan subiendo porque varios locales vecinos ya cerraron. Cuida a su madre que tiene diabetes y cada semana la lleva a consulta en el Seguro Social de Doctores."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "age": 52,
+      "gender": "masculino",
+      "education": "prepa",
+      "occupation": "técnico en refrigeración y aire acondicionado",
+      "income_band": "C+",
+      "household": "vive con su esposa y su hijo de 23 años que estudia en la universidad",
+      "transport_mode": "camioneta de trabajo propia y Metro",
+      "media_diet": [
+        "noticieros de TV Azteca",
+        "Facebook"
+      ],
+      "values_profile": {
+        "seguridad": 0.7,
+        "vivienda": 0.8,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.4,
+        "economia": 0.9,
+        "cultura": 0.3
+      },
+      "persona_narrative": "Renta un departamento de dos recámaras desde hace 12 años y cada año le suben la renta 8%. Sale todos los días a las 6:30 am para instalar o reparar equipos en negocios por toda la ciudad, regresa cerca de las 8 pm. Le preocupa que su hijo consiga trabajo al terminar la carrera porque él ya no puede ahorrar nada con los gastos actuales."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "age": 52,
+      "gender": "masculino",
+      "education": "licenciatura",
+      "occupation": "coordinador de logística en empresa de distribución farmacéutica",
+      "income_band": "C+",
+      "household": "vive con su esposa y un hijo de 22 años que estudia posgrado",
+      "transport_mode": "auto propio y metrobús ocasionalmente",
+      "media_diet": [
+        "El Universal digital",
+        "noticieros de Radio Fórmula"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.5,
+        "movilidad": 0.7,
+        "medio_ambiente": 0.4,
+        "economia": 0.9,
+        "cultura": 0.3
+      },
+      "persona_narrative": "Renté el mismo departamento en la Roma durante 15 años pero hace dos logré comprar uno más pequeño en la misma zona. Coordino la distribución de medicamentos a farmacias del centro y oriente de la ciudad, salgo a las 6 am para evitar tráfico. Me preocupa que la inflación esté subiendo más rápido que mi sueldo y que mi hijo consiga trabajo estable cuando termine la maestría."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 52,
+      "gender": "femenino",
+      "education": "primaria",
+      "occupation": "encargada de limpieza en un edificio de oficinas",
+      "income_band": "C+",
+      "household": "vive con su hijo de 28 años y dos nietos de 6 y 9 años",
+      "transport_mode": "metrobús y camión",
+      "media_diet": [
+        "noticieros de televisión abierta",
+        "grupos de WhatsApp del edificio"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.8,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.3,
+        "economia": 0.85,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Renta un departamento de dos recámaras desde hace 15 años y cada año la renta sube más que su sueldo. Entra a trabajar a las 6 de la mañana limpiando cuatro pisos de oficinas, y por las tardes cuida a sus nietos mientras su hijo trabaja de repartidor. Le preocupa que la patrulla ya no pasa seguido por su calle y han asaltado a tres vecinos en el último mes."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Santa María la Ribera",
+      "age": 52,
+      "gender": "femenino",
+      "education": "secundaria",
+      "occupation": "encargada de mostrador en tintorería",
+      "income_band": "C+",
+      "household": "vive con su hijo de 23 años y su madre de 78",
+      "transport_mode": "metrobús y camión",
+      "media_diet": [
+        "noticieros de Televisa",
+        "Facebook"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.6,
+        "movilidad": 0.7,
+        "medio_ambiente": 0.4,
+        "economia": 0.9,
+        "cultura": 0.5
+      },
+      "persona_narrative": "Renta un departamento de dos recámbras desde hace 15 años, donde ahora cuida a su mamá que tiene diabetes. Sale a las 7 de la mañana para abrir la tintorería en la Doctores y regresa hasta las 8 de la noche. Le preocupa que los aumentos de luz y gas le coman más de la mitad de su sueldo cada mes."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Santa María la Ribera",
+      "age": 52,
+      "gender": "masculino",
+      "education": "prepa",
+      "occupation": "técnico en refrigeración y aire acondicionado",
+      "income_band": "C",
+      "household": "vive con su esposa y su hijo de 24 años que estudia ingeniería",
+      "transport_mode": "camioneta de trabajo y metro",
+      "media_diet": [
+        "El Universal en línea",
+        "noticieros de TV Azteca"
+      ],
+      "values_profile": {
+        "seguridad": 0.7,
+        "vivienda": 0.5,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.4,
+        "economia": 0.8,
+        "cultura": 0.3
+      },
+      "persona_narrative": "Sale a las 6:30 am en su camioneta a dar servicio a negocios y oficinas por toda la ciudad, lleva 18 años con el mismo equipo pero últimamente le cuesta conseguir refacciones porque aumentaron los precios. Renta un departamento de dos recámaras desde hace 12 años y le preocupa que el casero quiera subir la renta más allá de lo que puede pagar con sus ingresos irregulares."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "age": 52,
+      "gender": "masculino",
+      "education": "licenciatura",
+      "occupation": "contador independiente con cuatro clientes fijos",
+      "income_band": "C",
+      "household": "vive con su esposa y su madre de 78 años",
+      "transport_mode": "metro y metrobús",
+      "media_diet": [
+        "El Financiero digital",
+        "noticieros de Once TV"
+      ],
+      "values_profile": {
+        "seguridad": 0.7,
+        "vivienda": 0.5,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.4,
+        "economia": 0.9,
+        "cultura": 0.5
+      },
+      "persona_narrative": "Renta un departamento de dos recámaras desde hace doce años y trabaja desde casa elaborando declaraciones fiscales. Su esposa es maestra de primaria y juntos cuidan a su mamá que tiene diabetes. Le preocupa que cada año sus clientes le pidan bajar honorarios porque dicen que la economía está difícil."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "age": 52,
+      "gender": "femenino",
+      "education": "posgrado",
+      "occupation": "Coordinadora de proyectos educativos en una ONG",
+      "income_band": "C",
+      "household": "Vive con su pareja y su madre de 78 años",
+      "transport_mode": "Metro y Metrobús, ocasionalmente Uber",
+      "media_diet": [
+        "Animal Político",
+        "La Jornada"
+      ],
+      "values_profile": {
+        "seguridad": 0.7,
+        "vivienda": 0.5,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.8,
+        "economia": 0.6,
+        "cultura": 0.9
+      },
+      "persona_narrative": "Renta un departamento de dos recámaras a 14 mil pesos mensuales desde hace ocho años. Trabaja en Coyoacán coordinando talleres de lectura en escuelas públicas y regresa a casa para preparar la cena de su mamá que tiene diabetes. Le preocupa que cada vez hay más basura acumulada en la banqueta de Álvaro Obregón y que el camión recolector pasa de forma irregular."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 52,
+      "gender": "femenino",
+      "education": "primaria",
+      "occupation": "vendedora de tamales en puesto semifijo sobre avenida Cuauhtémoc",
+      "income_band": "C",
+      "household": "vive con su esposo albañil y su hijo menor de 19 años que estudia preparatoria abierta",
+      "transport_mode": "metro y microbús",
+      "media_diet": [
+        "noticieros de Televisión Azteca",
+        "grupos de WhatsApp del barrio"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.6,
+        "movilidad": 0.5,
+        "medio_ambiente": 0.3,
+        "economia": 0.95,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Renta un departamento de dos cuartos donde el gas y la luz suben cada mes. Sale a las 5 de la mañana a preparar el nixtamal y armar los tamales que vende hasta las 11, ganando entre 300 y 500 pesos diarios dependiendo del día. Le preocupa que los inspectores de vía pública cada vez cobran más mordida y que su esposo ya no encuentra tanta chamba como antes."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 52,
+      "gender": "femenino",
+      "education": "secundaria",
+      "occupation": "encargada de mostrador en farmacia",
+      "income_band": "C",
+      "household": "vive con su hijo de 28 años que estudia en la noche",
+      "transport_mode": "metro y microbús",
+      "media_diet": [
+        "noticieros de Televisa",
+        "Facebook"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.7,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.4,
+        "economia": 0.8,
+        "cultura": 0.3
+      },
+      "persona_narrative": "Renta un departamento de dos cuartos en un edificio de los años 70, paga 4,500 al mes. Trabaja turnos de 8 horas en una farmacia del Ahorro sobre Cuauhtémoc, lleva 14 años ahí. Le preocupa que los asaltos cerca del metro Obrera han aumentado y ahora regresa antes de las 8 de la noche."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 52,
+      "gender": "masculino",
+      "education": "prepa",
+      "occupation": "Técnico en refrigeración y aire acondicionado",
+      "income_band": "C-",
+      "household": "Vive con su esposa y su hijo de 19 años que estudia en la UNAM",
+      "transport_mode": "Metro y camión",
+      "media_diet": [
+        "Facebook",
+        "Noticieros de TV Azteca"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.7,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.3,
+        "economia": 0.9,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Renta un departamento de dos recuadras en la colonia Doctores desde hace 15 años y el dueño acaba de subir la renta 18%. Sale a las 6 am para llegar a las instalaciones donde da mantenimiento a equipos de refrigeración en supermercados de la zona sur. Le preocupa que su hijo consiga trabajo cuando termine la carrera porque él conoce varios ingenieros manejando Uber."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 52,
+      "gender": "masculino",
+      "education": "licenciatura",
+      "occupation": "contador independiente para comercios locales",
+      "income_band": "C-",
+      "household": "vive con su esposa y su madre de 78 años",
+      "transport_mode": "metrobús y metro",
+      "media_diet": [
+        "El Universal digital",
+        "noticieros de radio por las mañanas"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.6,
+        "movilidad": 0.7,
+        "medio_ambiente": 0.4,
+        "economia": 0.9,
+        "cultura": 0.5
+      },
+      "persona_narrative": "Renta un departamento de dos recámaras desde hace doce años y lleva las cuentas de tres papelerías y una tlapalería en la colonia. Su esposa trabaja en el IMSS y entre los dos cubren los gastos de medicamentos para su mamá que tiene diabetes. Le preocupa que cada vez le cueste más conseguir clientes porque las rentas comerciales suben y los negocios cierran."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Santa María la Ribera",
+      "age": 52,
+      "gender": "femenino",
+      "education": "posgrado",
+      "occupation": "profesora de secundaria en escuela pública",
+      "income_band": "C-",
+      "household": "vive con su madre de 78 años y su hijo de 22 que estudia en la UNAM",
+      "transport_mode": "metro y metrobús",
+      "media_diet": [
+        "noticieros de televisión abierta",
+        "Facebook"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.6,
+        "movilidad": 0.7,
+        "medio_ambiente": 0.5,
+        "economia": 0.9,
+        "cultura": 0.7
+      },
+      "persona_narrative": "Renta un departamento de dos recámaras por $8,500 mensuales cerca del Kiosco Morisco. Da clases de Historia en la secundaria 49 desde hace 23 años y gana $14,800 al mes. Cuida a su mamá que tiene diabetes y presión alta, por lo que necesita comprar medicamentos cada quincena que no siempre están en el Seguro Social."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 52,
+      "gender": "femenino",
+      "education": "primaria",
+      "occupation": "limpia casas tres días a la semana en Polanco",
+      "income_band": "C-",
+      "household": "vive con su esposo que vende tacos afuera del metro y su hijo de 23 años desempleado",
+      "transport_mode": "metro y microbús",
+      "media_diet": [
+        "noticieros de TV Azteca",
+        "radio mientras trabaja"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.8,
+        "movilidad": 0.7,
+        "medio_ambiente": 0.3,
+        "economia": 0.95,
+        "cultura": 0.2
+      },
+      "persona_narrative": "Renta un departamento de dos cuartos por 4,500 pesos al mes y cada vez le cuesta más porque el dueño sube la renta cada año. Sale de su casa a las 5:30 am para llegar a tiempo a Polanco y a veces su patrón le da ropa usada que revende en el tianguis del domingo. Le preocupa que su hijo no encuentra trabajo y que los asaltos en el metro van en aumento."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Morelos",
+      "age": 52,
+      "gender": "masculino",
+      "education": "secundaria",
+      "occupation": "ayudante de carpintería en taller de muebles sobre medida",
+      "income_band": "D+",
+      "household": "vive con su esposa y su madre de 78 años",
+      "transport_mode": "metro y microbús",
+      "media_diet": [
+        "noticieros de TV Azteca",
+        "Facebook"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.7,
+        "movilidad": 0.5,
+        "medio_ambiente": 0.3,
+        "economia": 0.9,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Renta un departamento de dos cuartos en un edificio de los años 60. Trabaja de lunes a sábado lijando y barnizando muebles, gana por semana. Su esposa cuida a su mamá que tiene diabetes y necesita medicamentos caros cada mes, por eso está viendo si consigue chambas extra los domingos."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 52,
+      "gender": "masculino",
+      "education": "prepa",
+      "occupation": "chofer de taxi de sitio",
+      "income_band": "D+",
+      "household": "vive con su esposa y dos hijos adultos que aún no se independizan",
+      "transport_mode": "taxi propio (Nissan Tsuru)",
+      "media_diet": [
+        "Radio Fórmula en el taxi",
+        "Facebook en el celular"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.6,
+        "movilidad": 0.8,
+        "medio_ambiente": 0.3,
+        "economia": 0.85,
+        "cultura": 0.2
+      },
+      "persona_narrative": "Maneja su taxi 12 horas diarias en la zona centro, renta un departamento de dos recámaras por $6,500 mensuales. Su hijo mayor estudió gastronomía pero trabaja en un Oxxo porque no encuentra empleo en su área. Le preocupa que cada vez hay más aplicaciones como Uber que le quitan clientes del sitio."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 52,
+      "gender": "femenino",
+      "education": "licenciatura",
+      "occupation": "enfermera en turno nocturno en el Hospital General",
+      "income_band": "D+",
+      "household": "vive con su madre de 78 años y su hijo de 24 que estudia posgrado",
+      "transport_mode": "metro y microbús",
+      "media_diet": [
+        "noticieros de TV abierta",
+        "grupos de WhatsApp del trabajo"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.6,
+        "movilidad": 0.7,
+        "medio_ambiente": 0.4,
+        "economia": 0.8,
+        "cultura": 0.3
+      },
+      "persona_narrative": "Renta un departamento de dos recámaras desde hace 15 años porque el dueño no ha subido mucho la renta. Sale a las 9 PM rumbo al hospital y regresa a las 8 AM, cuando el metro ya va lleno. Le preocupa que los asaltos en la estación Balderas han aumentado en el último año y ahora pide a su hijo que la acompañe hasta la entrada cuando puede."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "age": 52,
+      "gender": "femenino",
+      "education": "posgrado",
+      "occupation": "profesora de inglés en secundaria pública",
+      "income_band": "D+",
+      "household": "vive con su madre de 78 años y su hijo de 24 que estudia en la UNAM",
+      "transport_mode": "metrobús y metro",
+      "media_diet": [
+        "Aristegui Noticias",
+        "Facebook"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.7,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.5,
+        "economia": 0.9,
+        "cultura": 0.7
+      },
+      "persona_narrative": "Renta un departamento de dos recámaras por 9,500 pesos al mes y da clases particulares los sábados para completar el gasto. Cuida a su madre que tiene diabetes y necesita consultas médicas cada mes. Le preocupa que el aumento en el pasaje del transporte público le quite más presupuesto para los medicamentos."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Morelos",
+      "age": 52,
+      "gender": "masculino",
+      "education": "primaria",
+      "occupation": "viene-viene en estacionamiento de San Cosme",
+      "income_band": "D/E",
+      "household": "vive con su pareja y dos hijos adolescentes en cuarto rentado",
+      "transport_mode": "camión y metro",
+      "media_diet": [
+        "radio AM",
+        "Facebook en celular prestado"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.85,
+        "movilidad": 0.4,
+        "medio_ambiente": 0.2,
+        "economia": 0.95,
+        "cultura": 0.3
+      },
+      "persona_narrative": "Lleva 15 años cuidando autos en la misma cuadra, gana entre 80 y 150 pesos diarios dependiendo del día. Renta un cuarto de 3x4 metros en vecindad por 2,800 al mes y debe tres meses de renta. Su hijo mayor dejó la secundaria para trabajar de ayudante de albañil porque no alcanza el dinero."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 52,
+      "gender": "femenino",
+      "education": "secundaria",
+      "occupation": "Empleada de limpieza en consultorio médico",
+      "income_band": "D/E",
+      "household": "Vive con su hijo de 28 años y dos nietos de 6 y 9 años",
+      "transport_mode": "Metrobús y camión",
+      "media_diet": [
+        "Noticieros de televisión abierta",
+        "Facebook"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.8,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.3,
+        "economia": 0.95,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Renta un departamento de dos cuartos en un edificio de los años 60 que tiene problemas de humedad. Trabaja de lunes a sábado limpiando tres consultorios diferentes, y los domingos vende tamales en el tianguis de la colonia. Cuida a sus nietos mientras su hijo trabaja de velador, y le preocupa que el dinero ya no alcanza para la despensa como antes."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Morelos",
+      "age": 52,
+      "gender": "femenino",
+      "education": "prepa",
+      "occupation": "ayudante de cocina en fonda",
+      "income_band": "D/E",
+      "household": "vive con su hijo de 28 años y dos nietos de 6 y 9 años",
+      "transport_mode": "metro y microbús",
+      "media_diet": [
+        "Facebook",
+        "noticieros de televisión abierta"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.7,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.3,
+        "economia": 0.95,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Renta un departamento de dos cuartos en la Morelos por 3,500 pesos al mes. Trabaja seis días a la semana picando verdura y lavando trastes en una fonda cerca de Garibaldi, ganando 1,200 pesos semanales. Cuida a sus nietos después del trabajo porque su hijo maneja un taxi toda la tarde, y le preocupa que los precios de la tortilla y el frijol suben cada mes mientras su sueldo sigue igual."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Hipódromo Condesa",
+      "age": 67,
+      "gender": "masculino",
+      "education": "licenciatura",
+      "occupation": "Arquitecto jubilado que asesora proyectos de restauración patrimonial",
+      "income_band": "A/B",
+      "household": "Vive con su esposa en un departamento propio",
+      "transport_mode": "Auto particular y caminata",
+      "media_diet": [
+        "Reforma",
+        "podcasts de arquitectura"
+      ],
+      "values_profile": {
+        "seguridad": 0.7,
+        "vivienda": 0.8,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.7,
+        "economia": 0.5,
+        "cultura": 0.9
+      },
+      "persona_narrative": "Compró su departamento en la Condesa hace 30 años y ahora ve cómo los edificios históricos se convierten en Airbnbs. Asesora sin cobrar a vecinos que quieren defender fachadas art déco ante desarrollos nuevos. Le preocupa que su nieta de 28 años no pueda quedarse en el barrio porque rentar un lugar similar le cuesta 25 mil pesos al mes."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Hipódromo Condesa",
+      "age": 67,
+      "gender": "femenino",
+      "education": "posgrado",
+      "occupation": "Consultora en desarrollo organizacional jubilada de la UNAM",
+      "income_band": "A/B",
+      "household": "Vive sola en un departamento propio con dos gatos persas",
+      "transport_mode": "Uber y ocasionalmente Metrobús",
+      "media_diet": [
+        "El País",
+        "Reforma"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.4,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.7,
+        "economia": 0.5,
+        "cultura": 0.9
+      },
+      "persona_narrative": "Tiene maestría en psicología organizacional y da talleres esporádicos desde su casa. Sus dos hijos viven en Querétaro y la visitan cada mes. Lee tres periódicos diarios mientras desayuna y le preocupa que cada vez hay menos librerías independientes en la Condesa."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Hipódromo Condesa",
+      "age": 68,
+      "gender": "femenino",
+      "education": "primaria",
+      "occupation": "dueña de una tintorería",
+      "income_band": "A/B",
+      "household": "vive sola, sus tres hijos ya están casados",
+      "transport_mode": "taxi y ocasionalmente Uber",
+      "media_diet": [
+        "Milenio televisión",
+        "WhatsApp"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.7,
+        "movilidad": 0.4,
+        "medio_ambiente": 0.3,
+        "economia": 0.8,
+        "cultura": 0.5
+      },
+      "persona_narrative": "Doña Lupita heredó el departamento donde vive y la tintorería que opera desde hace 35 años en la planta baja del mismo edificio. Con primaria terminada, aprendió el negocio de su difunto esposo y ahora emplea a dos personas que le ayudan con las planchas industriales. Le preocupa que los asaltos en la colonia aumentaron y que sus clientes de toda la vida ahora prefieren las lavanderías nuevas con app."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 67,
+      "gender": "masculino",
+      "education": "secundaria",
+      "occupation": "Técnico jubilado del Metro, da mantenimiento a bicicletas en su garage",
+      "income_band": "C+",
+      "household": "Vive con su esposa y su hija divorciada que regresó a casa",
+      "transport_mode": "Metro y caminata",
+      "media_diet": [
+        "Noticieros de TV Azteca",
+        "Periódico gratuito del Metro"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.6,
+        "movilidad": 0.7,
+        "medio_ambiente": 0.4,
+        "economia": 0.9,
+        "cultura": 0.5
+      },
+      "persona_narrative": "Heredó el departamento de sus padres hace 15 años y ahora lo comparte con su hija que perdió su trabajo en pandemia. Su pensión del Metro alcanza para lo básico, por eso arregla bicicletas los fines de semana y cobra 150 pesos por servicio. Le preocupa que los precios del mercado de La Merced suban cada mes mientras su pensión se queda igual."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "San Rafael",
+      "age": 67,
+      "gender": "masculino",
+      "education": "prepa",
+      "occupation": "Supervisor de mantenimiento en edificio de oficinas",
+      "income_band": "C+",
+      "household": "Vive con su esposa y su hijo desempleado de 32 años",
+      "transport_mode": "Metrobús y caminata",
+      "media_diet": [
+        "Noticieros de TV abierta",
+        "Radio AM en las mañanas"
+      ],
+      "values_profile": {
+        "seguridad": 0.85,
+        "vivienda": 0.6,
+        "movilidad": 0.7,
+        "medio_ambiente": 0.4,
+        "economia": 0.8,
+        "cultura": 0.3
+      },
+      "persona_narrative": "Lleva 22 años rentando el mismo departamento en San Rafael y el dueño acaba de subir la renta 15%. Sale a las 6 am para supervisar la limpieza y mantenimiento de tres edificios en Reforma, llega a casa a las 7 pm. Su hijo perdió su trabajo en una imprenta hace ocho meses y ahora depende de su sueldo y la pensión pequeña de su esposa."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "age": 67,
+      "gender": "femenino",
+      "education": "licenciatura",
+      "occupation": "Contadora jubilada que da asesorías fiscales a pequeños negocios",
+      "income_band": "C+",
+      "household": "Vive sola en un departamento de su propiedad, su hija la visita los fines de semana",
+      "transport_mode": "Metro y Metrobús, ocasionalmente Uber",
+      "media_diet": [
+        "Noticieros de TV Azteca",
+        "Facebook"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.4,
+        "movilidad": 0.7,
+        "medio_ambiente": 0.5,
+        "economia": 0.8,
+        "cultura": 0.6
+      },
+      "persona_narrative": "Compró su departamento de dos recámaras en 1992 y ahora recibe pensión del IMSS más ingresos por tres clientes fijos a quienes les lleva la contabilidad desde su casa. Sale temprano al mercado de Medellín porque después de las 10 am ya no aguanta el ruido de las motos que circulan sin placas por Álvaro Obregón. Le preocupa que sus ahorros en Cetes alcancen para los gastos médicos que van aumentando cada año."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "age": 67,
+      "gender": "femenino",
+      "education": "posgrado",
+      "occupation": "Profesora jubilada de literatura en la UNAM",
+      "income_band": "C+",
+      "household": "Vive sola en un departamento que heredó de sus padres",
+      "transport_mode": "Metrobús y caminata",
+      "media_diet": [
+        "La Jornada impreso",
+        "Noticieros de Canal 11"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.5,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.7,
+        "economia": 0.6,
+        "cultura": 0.9
+      },
+      "persona_narrative": "Dejó de dar clases hace cinco años pero sigue yendo dos veces por semana a la Biblioteca Central para asesorar tesistas. Es dueña de su departamento de dos recámaras en la calle Orizaba, donde paga 3,200 pesos de predial bimestral. Le preocupa que cada vez hay más asaltos a mujeres mayores cuando salen del banco en Álvaro Obregón."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 67,
+      "gender": "masculino",
+      "education": "primaria",
+      "occupation": "velador en estacionamiento privado",
+      "income_band": "C",
+      "household": "vive con su esposa y su hijo desempleado de 42 años",
+      "transport_mode": "metro y camión",
+      "media_diet": [
+        "radio AM",
+        "televisión abierta"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.7,
+        "movilidad": 0.5,
+        "medio_ambiente": 0.3,
+        "economia": 0.8,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Trabaja de velador nocturno en un estacionamiento de la colonia Roma desde hace 12 años, gana 6,500 pesos al mes. Renta un departamento de dos cuartos donde vive con su esposa que vende gelatinas y su hijo que perdió su trabajo en una imprenta. Le preocupa que los asaltos en la zona han aumentado y que su patrón amenaza con contratar a alguien más joven."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 67,
+      "gender": "masculino",
+      "education": "secundaria",
+      "occupation": "Vigilante nocturno en estacionamiento público",
+      "income_band": "C",
+      "household": "Vive con su esposa y un hijo desempleado de 35 años",
+      "transport_mode": "Metro y camión",
+      "media_diet": [
+        "Noticieros de TV Azteca",
+        "Radio Fórmula en el trabajo"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.7,
+        "movilidad": 0.5,
+        "medio_ambiente": 0.3,
+        "economia": 0.8,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Rentan un departamento de dos recámaras desde hace 22 años, el dueño quiere venderlo y temen desalojo. Trabaja turnos de 10 PM a 6 AM seis días a la semana, gana 7,500 pesos al mes. Su esposa vende tamales en la esquina de Arcos de Belén para completar el gasto, y le preocupa que los asaltos en la colonia aumentaron desde que cerraron el módulo de policía."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 67,
+      "gender": "femenino",
+      "education": "prepa",
+      "occupation": "Encargada de farmacia en turno matutino",
+      "income_band": "C",
+      "household": "Vive con su hija de 42 años y dos nietos adolescentes",
+      "transport_mode": "Metrobús y caminata",
+      "media_diet": [
+        "Noticieros de televisión abierta",
+        "Grupos de WhatsApp del edificio"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.7,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.4,
+        "economia": 0.8,
+        "cultura": 0.5
+      },
+      "persona_narrative": "Lleva 22 años trabajando en la misma farmacia sobre Cuauhtémoc, atiende desde las 7 am y conoce a los clientes por nombre. Renta un departamento de dos recámaras que cada año sube más y le preocupa porque con su sueldo y lo que aporta su hija apenas alcanza. Los fines de semana cuida a sus nietos mientras su hija trabaja en un restaurante de la Roma."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "age": 67,
+      "gender": "femenino",
+      "education": "licenciatura",
+      "occupation": "contadora jubilada que da asesorías fiscales a negocios pequeños",
+      "income_band": "C",
+      "household": "vive sola en un departamento rentado desde hace 15 años",
+      "transport_mode": "metro y metrobús, ocasionalmente taxi",
+      "media_diet": [
+        "noticieros de TV abierta",
+        "WhatsApp familiar"
+      ],
+      "values_profile": {
+        "seguridad": 0.85,
+        "vivienda": 0.75,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.5,
+        "economia": 0.9,
+        "cultura": 0.7
+      },
+      "persona_narrative": "Renta un departamento de 50m² por $8,500 mensuales y cada año teme que le suban más. Tres días a la semana visita a sus dos clientes fijos, un taller mecánico en la Doctores y una papelería en la Condesa, para llevarles su contabilidad. Le preocupa que su pensión del IMSS no alcance si tiene que mudarse porque los propietarios están vendiendo edificios viejos a desarrolladores."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Santa María la Ribera",
+      "age": 67,
+      "gender": "femenino",
+      "education": "posgrado",
+      "occupation": "profesora jubilada de química de la UNAM",
+      "income_band": "C",
+      "household": "vive sola en un departamento heredado",
+      "transport_mode": "metrobús y camión",
+      "media_diet": [
+        "La Jornada impreso",
+        "noticieros de Canal Once"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.5,
+        "movilidad": 0.7,
+        "medio_ambiente": 0.9,
+        "economia": 0.6,
+        "cultura": 0.8
+      },
+      "persona_narrative": "Da clases particulares de matemáticas a estudiantes de preparatoria dos veces por semana para complementar su pensión del ISSSTE. Cada jueves asiste al cineclub del Faro de Oriente y le preocupa que los parques de su colonia estén cada vez más descuidados desde que cerraron el kiosco del Alameda."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 67,
+      "gender": "masculino",
+      "education": "primaria",
+      "occupation": "Viene de boleros en Eje Central",
+      "income_band": "C-",
+      "household": "Vive con su esposa y un nieto de 12 años",
+      "transport_mode": "Metro y camión",
+      "media_diet": [
+        "Radio Fórmula en las mañanas",
+        "Noticieros de TV Azteca"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.7,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.3,
+        "economia": 0.85,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Renta un departamento de dos cuartos desde hace 23 años y cada vez le cuesta más cubrir los 3,200 pesos mensuales con lo que saca de boleadas. Su nieto va a la secundaria técnica y él lo lleva en las mañanas antes de instalarse con su caja en la esquina de Arcos de Belén. Le preocupa que los asaltos cerca del metro Niños Héroes estén aumentando porque varios clientes ya no bajan por ahí."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 67,
+      "gender": "masculino",
+      "education": "secundaria",
+      "occupation": "velador en estacionamiento privado",
+      "income_band": "C-",
+      "household": "vive con su esposa y un hijo desempleado de 32 años",
+      "transport_mode": "metro y camión",
+      "media_diet": [
+        "noticieros de tv abierta",
+        "radio en el trabajo"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.7,
+        "movilidad": 0.5,
+        "medio_ambiente": 0.3,
+        "economia": 0.8,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Trabaja de velador nocturno en un estacionamiento de Insurgentes desde hace 12 años, gana 5,200 pesos al mes. Renta un departamento de dos cuartos por 3,800 pesos y le preocupa que el casero quiera subir la renta porque ya van dos edificios nuevos en la cuadra. Su esposa vende tamales en el metro Niños Héroes y entre los dos mantienen a su hijo que perdió su trabajo de mensajero."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 67,
+      "gender": "femenino",
+      "education": "prepa",
+      "occupation": "vendedora de quesadillas en puesto semifijo",
+      "income_band": "C-",
+      "household": "vive con su hija divorciada y dos nietos de 8 y 11 años",
+      "transport_mode": "metro y microbús",
+      "media_diet": [
+        "noticieros de TV abierta",
+        "Facebook en celular"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.7,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.3,
+        "economia": 0.95,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Renta un departamento de dos recámaras por $4,500 mensuales desde hace 12 años. Sale a las 6 am para instalar su puesto en la esquina de Arcos de Belén antes de que lleguen los inspectores. Le preocupa que los aumentos del gas y la tortilla reduzcan sus ganancias porque mantiene a sus nietos mientras su hija trabaja en un call center."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 67,
+      "gender": "femenino",
+      "education": "licenciatura",
+      "occupation": "maestra de primaria jubilada que da clases particulares de español",
+      "income_band": "C-",
+      "household": "vive sola en un departamento rentado desde hace 15 años",
+      "transport_mode": "metrobús y metro",
+      "media_diet": [
+        "noticieros de Televisa",
+        "Facebook"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.8,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.5,
+        "economia": 0.7,
+        "cultura": 0.6
+      },
+      "persona_narrative": "Renta un departamento de dos cuartos por $6,500 mensuales y complementa su pensión de $8,200 dando clases particulares a tres niños de la colonia. Usa su credencial del INAPAM para el transporte pero le preocupa que cada vez haya más asaltos en el metro Obrera cuando regresa de dar clases en las tardes. Dejó de ir al mercado de Medellín los domingos porque le robaron el celular hace cuatro meses."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Santa María la Ribera",
+      "age": 67,
+      "gender": "masculino",
+      "education": "posgrado",
+      "occupation": "profesor jubilado de filosofía que da clases particulares de preparación para examen de admisión",
+      "income_band": "D+",
+      "household": "vive solo en un departamento rentado desde hace 23 años",
+      "transport_mode": "metrobús y ocasionalmente taxi de sitio",
+      "media_diet": [
+        "La Jornada impreso",
+        "noticieros de Once TV"
+      ],
+      "values_profile": {
+        "seguridad": 0.6,
+        "vivienda": 0.8,
+        "movilidad": 0.5,
+        "medio_ambiente": 0.7,
+        "economia": 0.9,
+        "cultura": 0.8
+      },
+      "persona_narrative": "Renta un departamento de dos recambras por 4,800 pesos mensuales y su pensión del ISSSTE apenas le alcanza, por lo que da tres clases particulares a la semana por 300 pesos cada una. El aumento en el precio del gas y la luz le ha obligado a reducir gastos en libros, que antes compraba cada mes en el Fondo de Cultura Económica. Le preocupa que el dueño del edificio venda y lo desalojen, porque a su edad y con su ingreso no podría pagar una renta más alta en la zona."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 67,
+      "gender": "femenino",
+      "education": "primaria",
+      "occupation": "vendedora de quesadillas en puesto callejero",
+      "income_band": "D+",
+      "household": "vive sola en un cuarto rentado",
+      "transport_mode": "metro y camión",
+      "media_diet": [
+        "radio comunitaria",
+        "Facebook en celular que le regaló su hija"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.8,
+        "movilidad": 0.5,
+        "medio_ambiente": 0.3,
+        "economia": 0.95,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Renta un cuarto por 2,500 pesos al mes cerca del metro Obrera y lleva 12 años vendiendo quesadillas de papa y chicharrón en la esquina de Arcos de Belén. Sale a las 6 de la mañana para comprar el queso en La Merced y regresa a su puesto hasta las 8 de la noche porque necesita juntar para los medicamentos de la presión. Le preocupa que los inspectores le quiten su anafre cada vez con más frecuencia."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 67,
+      "gender": "femenino",
+      "education": "secundaria",
+      "occupation": "vendedora de tamales en puesto fijo sobre Eje Central",
+      "income_band": "D+",
+      "household": "vive con su hija divorciada y dos nietos de 8 y 11 años",
+      "transport_mode": "microbús y metro línea 3",
+      "media_diet": [
+        "noticieros de TV Azteca",
+        "Facebook en celular de su hija"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.7,
+        "movilidad": 0.5,
+        "medio_ambiente": 0.3,
+        "economia": 0.85,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Renta un departamento de dos cuartos en un edificio de los años 50 donde lleva viviendo 22 años. Sale a las 5 de la mañana para preparar sus tamales de rajas y dulce, vende hasta las 11 cerca del Hospital General y regala lo que sobra a los barrenderos. Le preocupa que los inspectores la multen porque ya no puede pagar 2,500 pesos cada vez que le quitan la mercancía."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Morelos",
+      "age": 67,
+      "gender": "masculino",
+      "education": "prepa",
+      "occupation": "vendedor de dulces y cigarros en puesto ambulante",
+      "income_band": "D/E",
+      "household": "vive solo en cuarto rentado",
+      "transport_mode": "metro y camión",
+      "media_diet": [
+        "radio AM",
+        "Facebook en celular prestado"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.8,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.3,
+        "economia": 0.95,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Renta un cuarto de 3x3 metros en vecindad sobre Eje 1 Norte por $2,800 al mes. Lleva 12 años con su puesto afuera del metro Tepito vendiendo Halls, Marlboro sueltos y chicles, ganando entre $150 y $300 diarios según el día. Le preocupa que los operativos de la alcaldía cada vez son más seguidos y ya le quitaron mercancía dos veces este año."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 67,
+      "gender": "femenino",
+      "education": "licenciatura",
+      "occupation": "profesora de primaria jubilada que vende gelatinas y flanes por encargo",
+      "income_band": "D/E",
+      "household": "vive sola en un departamento rentado desde hace 15 años",
+      "transport_mode": "Metro y metrobús",
+      "media_diet": [
+        "noticieros de televisión abierta",
+        "Facebook"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.8,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.4,
+        "economia": 0.9,
+        "cultura": 0.5
+      },
+      "persona_narrative": "Con su pensión de 6,800 pesos mensuales y lo que saca vendiendo postres a vecinos y exalumnos, apenas cubre la renta de 4,500 pesos y servicios. Sale temprano al mercado de Medellín a comprar ingredientes más baratos y regresa cargando bolsas en el Metro Niños Héroes. Le preocupa que cada vez más seguido le suben la renta y teme tener que irse de la colonia donde conoce a todos."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "age": 67,
+      "gender": "femenino",
+      "education": "posgrado",
+      "occupation": "Profesora jubilada de primaria que da clases particulares de matemáticas",
+      "income_band": "D/E",
+      "household": "Vive sola en un departamento rentado",
+      "transport_mode": "Metro y metrobús",
+      "media_diet": [
+        "Noticias de radio por la mañana",
+        "Facebook"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.8,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.4,
+        "economia": 0.9,
+        "cultura": 0.5
+      },
+      "persona_narrative": "Tiene una maestría en educación pero renta un departamento de dos cuartos donde recibe a tres alumnos por las tardes, cobrando 150 pesos la hora. Su pensión del ISSSTE es de 4,800 pesos mensuales y le preocupa que el dueño quiera subir la renta porque varios edificios cercanos ya se vendieron para oficinas."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Polanco",
+      "age": 26,
+      "gender": "masculino",
+      "education": "licenciatura",
+      "occupation": "analista financiero en una casa de bolsa",
+      "income_band": "A/B",
+      "household": "vive solo en un departamento que sus padres le ayudaron a comprar",
+      "transport_mode": "auto propio (BMW) y Uber",
+      "media_diet": [
+        "Twitter/X",
+        "podcasts de finanzas y emprendimiento"
+      ],
+      "values_profile": {
+        "seguridad": 0.7,
+        "vivienda": 0.4,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.5,
+        "economia": 0.9,
+        "cultura": 0.6
+      },
+      "persona_narrative": "Trabaja en Reforma desde las 8 am, revisa portafolios de inversión y atiende a clientes de alto patrimonio. Le preocupa que la inflación afecte sus ahorros para independizarse completamente de sus padres. Se informa principalmente por threads de analistas en X y el podcast de Dólar Cripto mientras maneja."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Polanco",
+      "age": 26,
+      "gender": "femenino",
+      "education": "licenciatura",
+      "occupation": "analista de riesgo financiero en banco internacional",
+      "income_band": "A/B",
+      "household": "vive sola en departamento rentado",
+      "transport_mode": "auto propio y Uber",
+      "media_diet": [
+        "El Financiero",
+        "podcasts de negocios"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.6,
+        "movilidad": 0.5,
+        "medio_ambiente": 0.7,
+        "economia": 0.9,
+        "cultura": 0.6
+      },
+      "persona_narrative": "Renta un departamento de una recámara en Polanco por 22 mil pesos al mes. Trabaja en Torre Mayor y hace home office dos días a la semana. Le preocupa que su salario no alcance para el enganche de un departamento propio en la zona donde vive."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Polanco",
+      "age": 26,
+      "gender": "femenino",
+      "education": "licenciatura",
+      "occupation": "analista de riesgos en banco de inversión",
+      "income_band": "A/B",
+      "household": "vive sola en un departamento rentado de un cuarto",
+      "transport_mode": "Uber y ocasionalmente Metro Polanco",
+      "media_diet": [
+        "El Financiero",
+        "podcasts de Spotify"
+      ],
+      "values_profile": {
+        "seguridad": 0.7,
+        "vivienda": 0.8,
+        "movilidad": 0.5,
+        "medio_ambiente": 0.6,
+        "economia": 0.9,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Renta un departamento en Polanco por $18,000 mensuales y le cuesta casi la mitad de su sueldo. Trabaja de 9 a 7 en Reforma analizando portafolios de inversión y llega a su casa directo a preparar cena. Le preocupa que los precios de renta suban tanto que tenga que irse a Naucalpan o buscar roomies."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Polanco",
+      "age": 26,
+      "gender": "masculino",
+      "education": "licenciatura",
+      "occupation": "analista de marketing digital en una agencia boutique",
+      "income_band": "C+",
+      "household": "vive con un roommate en un departamento rentado",
+      "transport_mode": "Uber y Metrobús",
+      "media_diet": [
+        "podcasts de negocios",
+        "Twitter/X"
+      ],
+      "values_profile": {
+        "seguridad": 0.7,
+        "vivienda": 0.8,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.5,
+        "economia": 0.9,
+        "cultura": 0.6
+      },
+      "persona_narrative": "Renta un departamento de una recámara en Polanco por 18,000 pesos al mes que divide con su roommate de la universidad. Trabaja en una agencia cerca de Masaryk gestionando campañas de Instagram para marcas de moda, y casi siempre pide Uber porque el Metrobús Reforma le queda de paso solo cuando va al centro. Le preocupa que cada año el contrato de renta suba 10% y no sabe hasta cuándo podrá quedarse en la zona."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Polanco",
+      "age": 26,
+      "gender": "femenino",
+      "education": "licenciatura",
+      "occupation": "coordinadora de marketing digital en una agencia boutique",
+      "income_band": "C+",
+      "household": "vive con una roommate en departamento rentado",
+      "transport_mode": "Uber y Metro Polanco cuando hay tiempo",
+      "media_diet": [
+        "Instagram",
+        "podcasts de Spotify"
+      ],
+      "values_profile": {
+        "seguridad": 0.7,
+        "vivienda": 0.8,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.5,
+        "economia": 0.9,
+        "cultura": 0.7
+      },
+      "persona_narrative": "Renta un departamento de dos recámaras en Polanco por 18 mil pesos al mes, dividido con su roommate. Trabaja de 9 a 7 gestionando redes sociales para marcas de moda y belleza, con salario de 22 mil pesos mensuales. Le preocupa que el dueño del departamento quiera subir la renta otro 15% este año porque ya apenas le alcanza para ahorrar después de pagar servicios, transporte y salir los fines de semana."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Anáhuac",
+      "age": 26,
+      "gender": "masculino",
+      "education": "licenciatura",
+      "occupation": "diseñador gráfico freelance para agencias de publicidad",
+      "income_band": "C",
+      "household": "renta un departamento con dos roommates que conoció en la universidad",
+      "transport_mode": "metrobús y bicicleta",
+      "media_diet": [
+        "Twitter",
+        "podcasts de tecnología y cultura"
+      ],
+      "values_profile": {
+        "seguridad": 0.6,
+        "vivienda": 0.8,
+        "movilidad": 0.7,
+        "medio_ambiente": 0.5,
+        "economia": 0.9,
+        "cultura": 0.7
+      },
+      "persona_narrative": "Paga 6,500 pesos de renta más servicios en un depa de dos recámaras cerca de Tacuba. Trabaja desde casa tres días a la semana y los otros va a las oficinas de sus clientes en Polanco o Santa Fe. Le preocupa que cada vez le cuesta más ahorrar porque los proyectos freelance son irregulares y el mes pasado tuvo que pedir prestado para el depósito de la luz."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Tacuba",
+      "age": 26,
+      "gender": "femenino",
+      "education": "licenciatura",
+      "occupation": "diseñadora gráfica freelance en una agencia digital",
+      "income_band": "C",
+      "household": "vive con su pareja en un departamento rentado",
+      "transport_mode": "Metro Línea 7 y Metrobús",
+      "media_diet": [
+        "Instagram",
+        "Spotify podcasts"
+      ],
+      "values_profile": {
+        "seguridad": 0.7,
+        "vivienda": 0.9,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.5,
+        "economia": 0.8,
+        "cultura": 0.7
+      },
+      "persona_narrative": "Renta un departamento de dos recámbras en Tacuba por $11,500 mensuales con su novio. Trabaja desde casa tres días a la semana y va a la oficina en Polanco los martes y jueves. Le preocupa que cada año el arrendador suba la renta más que su incremento salarial."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Anáhuac",
+      "age": 26,
+      "gender": "masculino",
+      "education": "licenciatura",
+      "occupation": "asistente administrativo en una empresa de logística",
+      "income_band": "C-",
+      "household": "vive con dos roommates en un departamento rentado",
+      "transport_mode": "metrobús y bicicleta",
+      "media_diet": [
+        "Twitter",
+        "podcasts de Spotify"
+      ],
+      "values_profile": {
+        "seguridad": 0.6,
+        "vivienda": 0.8,
+        "movilidad": 0.7,
+        "medio_ambiente": 0.5,
+        "economia": 0.9,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Renta un cuarto en un depa de la Anáhuac por 5,500 al mes, casi el 40% de su sueldo. Trabaja en Polanco pero usa metrobús desde Rosario porque el estacionamiento le saldría carísimo. Los fines de semana hace entregas en Rappi con su bici para completar gastos porque quiere ahorrar para un coche usado."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Anáhuac",
+      "age": 26,
+      "gender": "femenino",
+      "education": "licenciatura",
+      "occupation": "diseñadora gráfica freelance para agencias digitales",
+      "income_band": "C-",
+      "household": "renta un departamento con dos amigas de la universidad",
+      "transport_mode": "metrobús y bicicleta",
+      "media_diet": [
+        "Instagram",
+        "Spotify podcasts"
+      ],
+      "values_profile": {
+        "seguridad": 0.7,
+        "vivienda": 0.9,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.5,
+        "economia": 0.8,
+        "cultura": 0.7
+      },
+      "persona_narrative": "Paga 6,500 pesos de renta por un cuarto en la Anáhuac y le quedan 3,000 después de gastos fijos. Trabaja desde casa tres días a la semana y los otros va a oficinas de clientes en Polanco. Se entera de las noticias por threads de Twitter y le preocupa que suban las rentas porque varios edificios viejos de su calle ya los están demoliendo para hacer torres nuevas."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Anáhuac",
+      "age": 24,
+      "gender": "femenino",
+      "education": "licenciatura",
+      "occupation": "Asistente administrativa en despacho contable en Polanco",
+      "income_band": "D+",
+      "household": "Renta un cuarto en departamento compartido con dos compañeras",
+      "transport_mode": "Metrobús Línea 1 y camión",
+      "media_diet": [
+        "TikTok",
+        "El Universal en línea"
+      ],
+      "values_profile": {
+        "seguridad": 0.7,
+        "vivienda": 0.9,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.4,
+        "economia": 0.8,
+        "cultura": 0.5
+      },
+      "persona_narrative": "Se levanta a las 6:30 para alcanzar el Metrobús en Refinería y llegar antes de las 9 a la oficina. Gana 9,500 pesos al mes y paga 3,800 de renta más servicios. Le urge juntar para el enganche de un departamento propio porque su casera ya subió la renta dos veces este año."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Polanco",
+      "age": 37,
+      "gender": "masculino",
+      "education": "licenciatura",
+      "occupation": "Director de marketing digital en una agencia boutique",
+      "income_band": "A/B",
+      "household": "Vive con su esposa arquitecta y su hijo de 4 años en un departamento propio",
+      "transport_mode": "Auto propio (Tesla) y ocasionalmente Uber",
+      "media_diet": [
+        "The New York Times",
+        "Reforma"
+      ],
+      "values_profile": {
+        "seguridad": 0.7,
+        "vivienda": 0.5,
+        "movilidad": 0.8,
+        "medio_ambiente": 0.9,
+        "economia": 0.6,
+        "cultura": 0.7
+      },
+      "persona_narrative": "Compró su departamento de 120m² en Polanco hace tres años con un crédito hipotecario que paga mensualmente. Sale a las 8am para evitar el tráfico de Ejército Nacional rumbo a su oficina en Santa Fe, aunque dos días a la semana trabaja desde casa. Le preocupa la calidad del aire porque su hijo tiene asma y ha notado que los días de contingencia han aumentado."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Polanco",
+      "age": 37,
+      "gender": "masculino",
+      "education": "prepa",
+      "occupation": "gerente de ventas en una distribuidora de equipos médicos",
+      "income_band": "A/B",
+      "household": "vive con su pareja y su hijo de 8 años en un departamento rentado",
+      "transport_mode": "auto propio (BMW)",
+      "media_diet": [
+        "El Financiero",
+        "podcasts de negocios en Spotify"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.6,
+        "movilidad": 0.7,
+        "medio_ambiente": 0.4,
+        "economia": 0.9,
+        "cultura": 0.5
+      },
+      "persona_narrative": "Renta un departamento de dos recámaras por 28 mil pesos mensuales cerca de Parque Lincoln. Sale a las 7 am hacia su oficina en Santa Fe y tarda hora y media por el tráfico de Constituyentes. Le preocupa que su hijo entre a una primaria privada el próximo año porque las colegiaturas subieron 15% y su comisión de ventas ha bajado por la inflación."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Polanco",
+      "age": 37,
+      "gender": "femenino",
+      "education": "licenciatura",
+      "occupation": "Directora de cuentas en agencia de publicidad",
+      "income_band": "A/B",
+      "household": "Vive con su esposo y un hijo de 8 años",
+      "transport_mode": "Auto propio (BMW) y Uber ocasional",
+      "media_diet": [
+        "El Financiero",
+        "Spotify podcasts"
+      ],
+      "values_profile": {
+        "seguridad": 0.85,
+        "vivienda": 0.4,
+        "movilidad": 0.7,
+        "medio_ambiente": 0.65,
+        "economia": 0.75,
+        "cultura": 0.6
+      },
+      "persona_narrative": "Es dueña de un departamento de 120 m² que compró con crédito hipotecario hace 5 años. Trabaja en Insurgentes Sur y tarda 45 minutos en llegar por la mañana. Le preocupa que su hijo no pueda jugar seguro en los parques cercanos por la presencia de personas en situación de calle."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Polanco",
+      "age": 37,
+      "gender": "femenino",
+      "education": "prepa",
+      "occupation": "supervisora de ventas en boutique de lujo",
+      "income_band": "A/B",
+      "household": "vive con su pareja y una hija de 8 años",
+      "transport_mode": "auto propio",
+      "media_diet": [
+        "Instagram",
+        "El Universal"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.5,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.4,
+        "economia": 0.7,
+        "cultura": 0.6
+      },
+      "persona_narrative": "Renta un departamento de tres recámaras en Polanco por 28 mil pesos al mes. Maneja diario de Polanco a Santa Fe donde supervisa el equipo de ventas de una boutique en el centro comercial. Le preocupa que la escuela privada de su hija subió las colegiaturas 15% este año y está evaluando opciones más accesibles."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Polanco",
+      "age": 37,
+      "gender": "masculino",
+      "education": "licenciatura",
+      "occupation": "gerente de ventas en empresa farmacéutica",
+      "income_band": "C+",
+      "household": "vive con su esposa y dos hijas de 5 y 8 años",
+      "transport_mode": "auto propio y metro ocasionalmente",
+      "media_diet": [
+        "El Financiero",
+        "podcasts de negocios"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.5,
+        "movilidad": 0.7,
+        "medio_ambiente": 0.4,
+        "economia": 0.9,
+        "cultura": 0.3
+      },
+      "persona_narrative": "Renta un departamento de dos recámaras por 18,000 pesos mensuales desde hace tres años. Trabaja en Santa Fe y sale de casa a las 6:30 am para evitar el tráfico de Constituyentes. Le preocupa que los aumentos de renta superen sus bonos anuales y está considerando mudarse a Naucalpan."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Tacuba",
+      "age": 37,
+      "gender": "femenino",
+      "education": "prepa",
+      "occupation": "supervisora de piso en tienda departamental Liverpool Polanco",
+      "income_band": "C+",
+      "household": "vive con su pareja y dos hijos de 8 y 12 años",
+      "transport_mode": "metrobús y a veces Uber",
+      "media_diet": [
+        "Facebook",
+        "noticieros de TV Azteca"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.6,
+        "movilidad": 0.7,
+        "medio_ambiente": 0.4,
+        "economia": 0.9,
+        "cultura": 0.5
+      },
+      "persona_narrative": "Renta un departamento de dos recuadras en unidad habitacional cerca del Metro Tacuba desde hace seis años. Sale a las 9 am para llegar a Polanco antes de las 11, coordina a 12 vendedores y regresa después de las 8 pm. Le preocupa que los precios de la canasta básica suban cada mes porque su sueldo base no aumenta al mismo ritmo, aunque sí recibe comisiones variables."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Escandón",
+      "age": 37,
+      "gender": "femenino",
+      "education": "licenciatura",
+      "occupation": "coordinadora de recursos humanos en empresa de logística",
+      "income_band": "C+",
+      "household": "vive con su pareja y un hijo de 8 años",
+      "transport_mode": "auto propio y ocasionalmente Metrobús",
+      "media_diet": [
+        "El Universal digital",
+        "podcasts de noticias"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.6,
+        "movilidad": 0.7,
+        "medio_ambiente": 0.5,
+        "economia": 0.7,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Renta un departamento de dos recámaras por 18,000 pesos mensuales. Sale de casa a las 7:30 am para dejar a su hijo en la escuela en Condesa antes de llegar a su oficina en Santa Fe, donde maneja procesos de contratación para 200 empleados. Le preocupa que el estacionamiento de su edificio aumentó de precio y ahora paga 2,500 pesos extra al mes."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Tacuba",
+      "age": 37,
+      "gender": "masculino",
+      "education": "prepa",
+      "occupation": "supervisor de mantenimiento en una plaza comercial",
+      "income_band": "C",
+      "household": "vive con su esposa y dos hijos de 8 y 5 años en un departamento rentado",
+      "transport_mode": "microbús y Metro",
+      "media_diet": [
+        "Facebook",
+        "noticieros de televisión abierta"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.9,
+        "movilidad": 0.7,
+        "medio_ambiente": 0.4,
+        "economia": 0.85,
+        "cultura": 0.3
+      },
+      "persona_narrative": "Sale de su casa en Tacuba a las 6 am para llegar a Polanco donde supervisa a seis técnicos que mantienen escaleras eléctricas y sistemas de clima. Renta un departamento de dos recámaras por 8,500 pesos y su esposa vende postres por Facebook para completar el gasto. Le preocupa que los dueños quieran subir la renta porque ya vio tres edificios nuevos en su cuadra."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "San Miguel Chapultepec",
+      "age": 37,
+      "gender": "femenino",
+      "education": "licenciatura",
+      "occupation": "coordinadora de recursos humanos en empresa de consultoría",
+      "income_band": "C",
+      "household": "vive con su pareja y un hijo de 8 años",
+      "transport_mode": "auto propio y ocasionalmente Metrobús",
+      "media_diet": [
+        "Animal Político",
+        "Instagram"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.6,
+        "movilidad": 0.7,
+        "medio_ambiente": 0.5,
+        "economia": 0.7,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Renta un departamento de dos recámaras por $14,500 mensuales desde hace cuatro años. Trabaja en Polanco y lleva a su hijo a la escuela en Observatorio antes de ir a la oficina. Le preocupa que los aumentos de renta estén consumiendo el dinero que quería ahorrar para el enganche de un departamento propio."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Tacuba",
+      "age": 37,
+      "gender": "masculino",
+      "education": "secundaria",
+      "occupation": "encargado de almacén en tienda de autoservicio",
+      "income_band": "C-",
+      "household": "vive con su esposa y dos hijos de 8 y 5 años",
+      "transport_mode": "pesero y Metro línea 7",
+      "media_diet": [
+        "Facebook",
+        "noticieros de TV Azteca"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.7,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.3,
+        "economia": 0.9,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Renta un departamento de dos recámaras desde hace cuatro años y ahorra para el enganche de algo propio en Tultitlán o Ecatepec. Sale a las 5:30 AM para llegar a tiempo a Polanco, donde supervisa las entregas de mercancía y maneja el inventario. Su esposa cuida a una señora mayor entre semana, pero les preocupa que el dinero no alcance cuando ambos niños entren a secundaria y necesiten uniformes nuevos y pasajes."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Ampliación Granada",
+      "age": 37,
+      "gender": "femenino",
+      "education": "prepa",
+      "occupation": "supervisora de limpieza en oficinas corporativas",
+      "income_band": "C-",
+      "household": "vive con sus dos hijas adolescentes en un departamento rentado",
+      "transport_mode": "microbús y metro",
+      "media_diet": [
+        "Facebook",
+        "noticieros de TV abierta"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.8,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.4,
+        "economia": 0.85,
+        "cultura": 0.3
+      },
+      "persona_narrative": "Renta un departamento de dos recuadros por 6,500 pesos mensuales y coordina a 12 personas en la limpieza de tres edificios en Reforma. Sale de su casa a las 5:30 am para dejar a su hija menor en la secundaria antes de entrar a las 7, y regresa pasadas las 8 de la noche. Le preocupa que el dueño quiera subir la renta porque varios vecinos ya se fueron del edificio."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Tacuba",
+      "age": 37,
+      "gender": "masculino",
+      "education": "licenciatura",
+      "occupation": "supervisor de almacén en empresa de logística",
+      "income_band": "D+",
+      "household": "vive con su esposa y dos hijos de 8 y 5 años",
+      "transport_mode": "microbús y metro",
+      "media_diet": [
+        "Facebook",
+        "noticieros de TV abierta"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.7,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.3,
+        "economia": 0.9,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Renta un departamento de dos recuadras en Tacuba por 6,500 pesos al mes y coordina el turno nocturno en una bodega de Azcapotzalco. Sale de su casa a las 9 pm y regresa a las 8 am, por lo que casi no ve a sus hijos entre semana. Le preocupa que los precios de la canasta básica suban más rápido que su sueldo de 14,000 pesos mensuales."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Popo",
+      "age": 37,
+      "gender": "femenino",
+      "education": "secundaria",
+      "occupation": "Encargada de mostrador en tintorería",
+      "income_band": "D+",
+      "household": "Vive con sus dos hijos de 12 y 8 años en departamento rentado",
+      "transport_mode": "Pesero y metro",
+      "media_diet": [
+        "Facebook",
+        "Noticieros en canal abierto"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.8,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.3,
+        "economia": 0.9,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Renta un departamento de dos cuartos por $5,800 al mes y necesita que le aumenten el sueldo porque la colegiatura de sus hijos subió. Sale a las 6:30 am para dejar a los niños en la escuela antes de abrir la tintorería a las 9, y regresa en pesero pasadas las 7 pm. Le preocupa que el dueño del edificio quiera vender y la corran, porque en la zona ya no encuentra rentas que alcance."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Popotla",
+      "age": 37,
+      "gender": "masculino",
+      "education": "prepa",
+      "occupation": "repartidor de gas LP en cilindros",
+      "income_band": "D/E",
+      "household": "vive con su pareja y dos hijos de 8 y 5 años en un departamento rentado",
+      "transport_mode": "camioneta de la empresa para trabajo, microbús para lo demás",
+      "media_diet": [
+        "Facebook",
+        "Radio Fórmula en la camioneta"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.9,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.3,
+        "economia": 0.95,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Reparte cilindros de gas desde las 6 AM y regresa pasadas las 7 PM seis días a la semana, ganando por comisión según cuántos tanques logre vender. Paga 4,500 al mes de renta por un departamento de dos cuartos cerca de la Refinería y cada vez que suben los precios del gas su jefe le descuenta más por los cilindros que debe cargar. Le preocupa que su hijo mayor necesita lentes y el Seguro Popular ya no existe como antes."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Tacuba",
+      "age": 37,
+      "gender": "femenino",
+      "education": "licenciatura",
+      "occupation": "Auxiliar administrativa en clínica veterinaria",
+      "income_band": "D/E",
+      "household": "Vive con sus dos hijos de 8 y 12 años en departamento rentado",
+      "transport_mode": "Microbús y Metro",
+      "media_diet": [
+        "Facebook",
+        "Noticieros de TV abierta"
+      ],
+      "values_profile": {
+        "seguridad": 0.85,
+        "vivienda": 0.9,
+        "movilidad": 0.7,
+        "medio_ambiente": 0.4,
+        "economia": 0.95,
+        "cultura": 0.5
+      },
+      "persona_narrative": "Renta un departamento de dos recuadros en $6,500 mensuales y cada año le suben la renta. Trabaja en la veterinaria de lunes a sábado ganando $9,000 al mes, y su ex marido le deposita $2,000 para los niños cuando puede. Le preocupa que el dueño del departamento le pidió desocupar en seis meses porque quiere venderlo."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Polanco",
+      "age": 52,
+      "gender": "masculino",
+      "education": "posgrado",
+      "occupation": "Director de Innovación en empresa fintech",
+      "income_band": "A/B",
+      "household": "vive con su esposa y un hijo de 19 años que estudia en el extranjero pero regresa en vacaciones",
+      "transport_mode": "auto propio (BMW) y ocasionalmente Uber",
+      "media_diet": [
+        "El Financiero",
+        "podcasts de negocios y tecnología"
+      ],
+      "values_profile": {
+        "seguridad": 0.85,
+        "vivienda": 0.4,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.55,
+        "economia": 0.9,
+        "cultura": 0.65
+      },
+      "persona_narrative": "Es dueño de un departamento de tres recámaras en Polanco que compró hace 12 años. Sale de casa a las 8 am hacia Santa Fe, trayecto que le toma entre 45 minutos y hora y media dependiendo del tráfico. Lee sobre regulación fintech y política económica durante el desayuno, y le preocupa que la incertidumbre regulatoria esté frenando la inversión extranjera en el sector."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Polanco",
+      "age": 52,
+      "gender": "masculino",
+      "education": "secundaria",
+      "occupation": "supervisor de mantenimiento en corporativo",
+      "income_band": "A/B",
+      "household": "vive con su esposa y su hijo de 21 años que estudia universidad",
+      "transport_mode": "auto propio",
+      "media_diet": [
+        "noticieros de televisión abierta",
+        "Facebook"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.6,
+        "movilidad": 0.7,
+        "medio_ambiente": 0.4,
+        "economia": 0.9,
+        "cultura": 0.3
+      },
+      "persona_narrative": "Lleva 18 años trabajando en el mismo edificio de oficinas en Santa Fe, coordina a 12 personas en mantenimiento y gana lo suficiente para pagar la hipoteca de su departamento de dos recámaras. Su esposa trabaja como administrativa en una escuela privada y entre los dos cubren la colegiatura de su hijo. Le preocupa que los aumentos al predial afecten su capacidad de ahorro para el retiro."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Polanco",
+      "age": 52,
+      "gender": "femenino",
+      "education": "prepa",
+      "occupation": "Gerente de ventas en empresa farmacéutica",
+      "income_band": "A/B",
+      "household": "Vive con su esposo y su hijo de 22 años que estudia maestría",
+      "transport_mode": "Auto propio (BMW)",
+      "media_diet": [
+        "El Financiero",
+        "Reforma"
+      ],
+      "values_profile": {
+        "seguridad": 0.85,
+        "vivienda": 0.4,
+        "movilidad": 0.65,
+        "medio_ambiente": 0.55,
+        "economia": 0.75,
+        "cultura": 0.6
+      },
+      "persona_narrative": "Es dueña de un departamento de tres recámaras que compró hace 15 años. Maneja su equipo de ocho representantes médicos desde su oficina en Santa Fe, haciendo el trayecto diario por Periférico. Cada mes destina parte de su sueldo para pagar la colegiatura de posgrado de su hijo y desde que hubo dos asaltos en su cuadra, contrataron vigilancia privada adicional."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Polanco",
+      "age": 52,
+      "gender": "femenino",
+      "education": "licenciatura",
+      "occupation": "directora de recursos humanos en empresa farmacéutica",
+      "income_band": "A/B",
+      "household": "vive con su esposo arquitecto y su hijo de 23 años que estudia posgrado",
+      "transport_mode": "auto propio (BMW X3)",
+      "media_diet": [
+        "El País",
+        "LinkedIn"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.4,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.7,
+        "economia": 0.5,
+        "cultura": 0.6
+      },
+      "persona_narrative": "Es dueña de un departamento de tres recámaras en Polanco que compró hace 15 años. Maneja todos los días 40 minutos hasta Santa Fe donde trabaja coordinando un equipo de 18 personas. Le preocupa que el aire contaminado le está empeorando su asma que desarrolló hace tres años."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Polanco",
+      "age": 52,
+      "gender": "masculino",
+      "education": "posgrado",
+      "occupation": "Gerente de operaciones en empresa farmacéutica",
+      "income_band": "C+",
+      "household": "Vive con su esposa y su hijo de 17 años",
+      "transport_mode": "Auto propio y ocasionalmente Uber",
+      "media_diet": [
+        "El Financiero",
+        "podcasts de economía"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.5,
+        "movilidad": 0.7,
+        "medio_ambiente": 0.6,
+        "economia": 0.9,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Paga hipoteca de un departamento de 120m2 que compró hace 8 años. Sale a las 7am para evitar el tráfico de Periférico rumbo a su oficina en Santa Fe. Le preocupa que su hijo entre a una universidad privada el próximo año y el costo está aumentando más rápido que su sueldo."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Popotla",
+      "age": 52,
+      "gender": "femenino",
+      "education": "primaria",
+      "occupation": "encargada de limpieza en edificio de oficinas",
+      "income_band": "C+",
+      "household": "vive con su esposo y dos hijos adultos que trabajan",
+      "transport_mode": "microbús y metro",
+      "media_diet": [
+        "noticieros de televisión abierta",
+        "grupos de WhatsApp del edificio"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.7,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.3,
+        "economia": 0.8,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Trabaja de lunes a sábado en un corporativo cerca de Polanco desde las 6 am, sale de su casa en Popotla a las 4:30 am para alcanzar dos micros y el metro. Renta un departamento de dos cuartos con su familia desde hace 18 años y le preocupa que el dueño suba la renta porque varios vecinos ya fueron desalojados para remodelar el edificio."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Tacuba",
+      "age": 52,
+      "gender": "masculino",
+      "education": "secundaria",
+      "occupation": "chofer de Uber y DiDi",
+      "income_band": "C",
+      "household": "vive con su esposa y dos hijos adolescentes en un departamento rentado",
+      "transport_mode": "automóvil propio (Nissan Versa 2016)",
+      "media_diet": [
+        "Facebook",
+        "noticieros de TV Azteca"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.7,
+        "movilidad": 0.9,
+        "medio_ambiente": 0.3,
+        "economia": 0.9,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Maneja entre 10 y 12 horas diarias para completar sus metas semanales en las plataformas. La renta del departamento subió 15% este año y necesita que su hijo mayor entre a trabajar porque la colegiatura de la secundaria de la hija pesa mucho. Le molesta que cierren carriles en Reforma porque le quita rutas rápidas para los viajes al aeropuerto."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Tacuba",
+      "age": 52,
+      "gender": "femenino",
+      "education": "prepa",
+      "occupation": "Supervisora de limpieza en oficinas corporativas",
+      "income_band": "C",
+      "household": "Vive con su esposo taxista y su madre de 78 años",
+      "transport_mode": "Metrobús y pesero",
+      "media_diet": [
+        "Noticieros de Televisa",
+        "Facebook"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.7,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.4,
+        "economia": 0.9,
+        "cultura": 0.3
+      },
+      "persona_narrative": "Renta un departamento de dos recámaras desde hace 15 años y cada año la renta sube más que su sueldo. Coordina a seis personas que limpian tres edificios en Polanco, entra a las 6 am y regresa a casa pasadas las 4 pm. Le preocupa que su mamá necesita medicamentos para diabetes que cada vez cuestan más y que su esposo ha tenido menos carreras porque la gente usa apps."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Ampliación Granada",
+      "age": 52,
+      "gender": "masculino",
+      "education": "licenciatura",
+      "occupation": "supervisor de mantenimiento en un hospital privado",
+      "income_band": "C-",
+      "household": "vive con su esposa y su madre de 78 años",
+      "transport_mode": "metrobús y camión",
+      "media_diet": [
+        "noticieros de Televisa",
+        "Facebook"
+      ],
+      "values_profile": {
+        "seguridad": 0.7,
+        "vivienda": 0.8,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.4,
+        "economia": 0.9,
+        "cultura": 0.3
+      },
+      "persona_narrative": "Renta un departamento de dos recámaras desde hace 12 años y el casero acaba de avisar que subirá la renta 18%. Coordina a cinco técnicos de mantenimiento en el turno matutino y sale a las 3 PM para cuidar a su mamá que tiene diabetes. Le preocupa que el predial suba porque aunque no es dueño, sabe que el casero le va a pasar el aumento completo."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Ampliación Granada",
+      "age": 52,
+      "gender": "femenino",
+      "education": "posgrado",
+      "occupation": "Coordinadora de recursos humanos en empresa farmacéutica",
+      "income_band": "C-",
+      "household": "Vive con su madre de 78 años y su hijo de 24 que estudia maestría",
+      "transport_mode": "Metrobús y ocasionalmente Uber",
+      "media_diet": [
+        "El Universal digital",
+        "Noticieros Televisa"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.6,
+        "movilidad": 0.7,
+        "medio_ambiente": 0.5,
+        "economia": 0.9,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Renta un departamento de dos recámaras desde hace 12 años y cada año le suben 8% la mensualidad, lo que la tiene buscando opciones más económicas. En su trabajo acaba de implementar un sistema de nómina digital que redujo su carga administrativa pero le preocupa que despidan a dos personas de su equipo. Los fines de semana cuida a su madre que tiene diabetes y necesita acompañamiento constante a consultas en el Seguro Social de Tacuba."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Popotla",
+      "age": 52,
+      "gender": "masculino",
+      "education": "primaria",
+      "occupation": "velador en estacionamiento público",
+      "income_band": "D+",
+      "household": "vive con su esposa y su madre de 78 años",
+      "transport_mode": "pesero y a pie",
+      "media_diet": [
+        "noticieros de TV abierta",
+        "radio en el trabajo"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.7,
+        "movilidad": 0.5,
+        "medio_ambiente": 0.3,
+        "economia": 0.8,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Trabaja turnos de noche cuidando un estacionamiento cerca de Polanco, gana 6,500 pesos al mes. Renta un departamento de dos cuartos donde vive con su esposa que vende tamales y su mamá que necesita medicinas para la diabetes. Le preocupa que los precios del mandado suban cada semana y que la renta ya llegó a 4,200 pesos."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Popo",
+      "age": 52,
+      "gender": "femenino",
+      "education": "secundaria",
+      "occupation": "encargada de limpieza en oficinas corporativas",
+      "income_band": "D+",
+      "household": "vive con su esposo albañil y su hijo de 23 años que estudia en la noche",
+      "transport_mode": "microbús y metro",
+      "media_diet": [
+        "noticieros de Televisión Abierta",
+        "Facebook"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.7,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.3,
+        "economia": 0.9,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Renta un departamento de dos cuartos en Popo desde hace 18 años y cada año la renta sube más que su sueldo. Sale de su casa a las 5:30 am para llegar a Polanco donde limpia tres pisos de oficinas antes de las 9. Le preocupa que su hijo consiga trabajo estable porque ya terminó la preparatoria abierta y no encuentra nada que pague más de 5 mil pesos al mes."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Tacuba",
+      "age": 52,
+      "gender": "femenino",
+      "education": "prepa",
+      "occupation": "empleada en tintorería",
+      "income_band": "D/E",
+      "household": "vive con su hijo de 28 años y dos nietos pequeños",
+      "transport_mode": "microbús y metro",
+      "media_diet": [
+        "Canal de las Estrellas",
+        "Facebook"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.7,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.3,
+        "economia": 0.95,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Renta un departamento de dos cuartos en Tacuba desde hace 15 años, donde cuida a sus nietos de 3 y 5 años mientras su hijo trabaja en construcción. Trabaja de lunes a sábado en una tintorería sobre Ingenieros Militares ganando 3,800 pesos al mes. Le preocupa que cada vez más negocios cierren en su calle y que los asaltos a mano armada aumentaron en la ruta del microbús que toma."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Polanco",
+      "age": 68,
+      "gender": "masculino",
+      "education": "licenciatura",
+      "occupation": "consultor financiero independiente",
+      "income_band": "A/B",
+      "household": "vive con su esposa en departamento propio",
+      "transport_mode": "automóvil propio y Uber",
+      "media_diet": [
+        "El Financiero",
+        "podcasts de economía"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.4,
+        "movilidad": 0.5,
+        "medio_ambiente": 0.6,
+        "economia": 0.9,
+        "cultura": 0.7
+      },
+      "persona_narrative": "Es dueño de un departamento de tres recámaras en Polanco donde vive desde hace 25 años. Atiende a cuatro clientes por semana desde su oficina en casa, revisando portafolios de inversión. Le preocupa el aumento del predial porque varios vecinos mayores han tenido que vender sus propiedades por no poder pagarlo."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Polanco",
+      "age": 67,
+      "gender": "femenino",
+      "education": "posgrado",
+      "occupation": "Consultora en derecho corporativo retirada",
+      "income_band": "A/B",
+      "household": "Vive sola en departamento propio, su hijo menor vive en Monterrey",
+      "transport_mode": "Auto propio con chofer ocasional",
+      "media_diet": [
+        "Reforma",
+        "The New York Times"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.3,
+        "movilidad": 0.5,
+        "medio_ambiente": 0.6,
+        "economia": 0.7,
+        "cultura": 0.8
+      },
+      "persona_narrative": "Es dueña de un departamento de tres recámaras en Polanco desde 1998 y paga 8,500 pesos de predial al trimestre. Asiste dos veces por semana al Museo Tamayo y da clases de arbitraje comercial en el ITAM los martes por la tarde. Le preocupa el aumento de asaltos a mano armada en Masaryk y que su banco le recomendó no caminar sola después de las 7 pm."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Polanco",
+      "age": 67,
+      "gender": "femenino",
+      "education": "primaria",
+      "occupation": "Dueña de una tintorería",
+      "income_band": "A/B",
+      "household": "Vive sola, sus hijos ya están casados",
+      "transport_mode": "Taxi y Uber",
+      "media_diet": [
+        "Televisa",
+        "Radio Fórmula"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.4,
+        "movilidad": 0.5,
+        "medio_ambiente": 0.3,
+        "economia": 0.8,
+        "cultura": 0.6
+      },
+      "persona_narrative": "Es dueña del departamento donde vive desde hace 40 años y del local de su tintorería en Anzures. Mantiene a su nieta de 15 años que estudia la prepa porque su hija se fue a trabajar a Monterrey. Le preocupa que los asaltos en la zona hayan aumentado desde que cerraron varios negocios después de la pandemia."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Tacuba",
+      "age": 67,
+      "gender": "masculino",
+      "education": "secundaria",
+      "occupation": "Técnico jubilado de Telmex, hace reparaciones de electrodomésticos a domicilio",
+      "income_band": "C+",
+      "household": "Vive con su esposa y ocasionalmente con su nieto de 12 años",
+      "transport_mode": "Metrobús Línea 7 y camión",
+      "media_diet": [
+        "Noticieros de TV Azteca",
+        "Radio Fórmula"
+      ],
+      "values_profile": {
+        "seguridad": 0.8,
+        "vivienda": 0.6,
+        "movilidad": 0.7,
+        "medio_ambiente": 0.3,
+        "economia": 0.9,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Después de 32 años en Telmex recibe pensión de $8,500 mensuales que complementa reparando lavadoras y refrigeradores. Renta un departamento de dos recámaras desde hace 15 años en $4,200 al mes. Le preocupa que los repuestos de electrodomésticos han subido 40% en dos años y sus clientes ya no quieren pagar lo justo por el servicio."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Popotla",
+      "age": 67,
+      "gender": "femenino",
+      "education": "prepa",
+      "occupation": "Empleada administrativa en farmacia de cadena",
+      "income_band": "C+",
+      "household": "Vive sola desde que enviudó hace 4 años, su hija la visita los fines de semana",
+      "transport_mode": "Metro y microbús",
+      "media_diet": [
+        "Noticieros de TV abierta",
+        "Grupo de WhatsApp de vecinos"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.7,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.4,
+        "economia": 0.8,
+        "cultura": 0.5
+      },
+      "persona_narrative": "Trabaja medio turno en la Farmacia Guadalajara de la colonia desde hace 12 años y renta un departamento de dos cuartos por $5,800 mensuales. Cuida a su nieto los martes y jueves mientras su hija trabaja doble turno en un hospital. Le preocupa que los asaltos en el Metro Cuitláhuac han aumentado en los últimos meses y ahora prefiere salir antes de que oscurezca."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Polanco",
+      "age": 67,
+      "gender": "femenino",
+      "education": "licenciatura",
+      "occupation": "Contadora jubilada que da asesorías fiscales a pequeños negocios",
+      "income_band": "C+",
+      "household": "Vive sola en departamento propio, su hija la visita los fines de semana",
+      "transport_mode": "Auto propio y Uber",
+      "media_diet": [
+        "Noticieros de Televisa",
+        "Reforma digital"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.4,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.5,
+        "economia": 0.8,
+        "cultura": 0.7
+      },
+      "persona_narrative": "Compró su departamento de dos recámaras en 1995 y ahora paga 4,800 pesos de predial al bimestre. Tres veces por semana asesora a dueños de papelerías y misceláneas en sus declaraciones, cobrando entre 2,500 y 4,000 pesos por cliente. Le preocupa que los asaltos en Polanco hayan aumentado desde que cerraron el módulo de policía de Horacio."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Tacuba",
+      "age": 67,
+      "gender": "masculino",
+      "education": "posgrado",
+      "occupation": "profesor jubilado de química del IPN",
+      "income_band": "C",
+      "household": "vive solo, sus hijos viven en Querétaro y Guadalajara",
+      "transport_mode": "metro y microbús",
+      "media_diet": [
+        "La Jornada",
+        "noticieros de Canal Once"
+      ],
+      "values_profile": {
+        "seguridad": 0.7,
+        "vivienda": 0.5,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.8,
+        "economia": 0.6,
+        "cultura": 0.9
+      },
+      "persona_narrative": "Renta un departamento de dos recámaras desde hace 12 años porque su pensión no le alcanzó para comprar. Da clases particulares de matemáticas los martes y jueves para complementar sus 8,500 pesos mensuales. Lee el periódico completo cada mañana en el café de la esquina y le preocupa que cierren la Casa de Cultura donde toma su taller de ajedrez."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Tacuba",
+      "age": 67,
+      "gender": "femenino",
+      "education": "primaria",
+      "occupation": "vendedora de tamales en puesto fijo",
+      "income_band": "C",
+      "household": "vive con su hija divorciada y dos nietos",
+      "transport_mode": "microbús y metro",
+      "media_diet": [
+        "noticieros de televisión abierta",
+        "radio comunitaria"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.7,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.3,
+        "economia": 0.85,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Vende tamales desde las 6 de la mañana en la esquina de Reforma y Marina Nacional, donde renta un espacio por 150 pesos diarios. Vive en un departamento de dos cuartos que está pagando su hija, y ella cuida a sus nietos de 8 y 11 años cuando salen de la escuela. Le preocupa que los inspectores amenacen constantemente con quitarle su puesto si no paga más mordida."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Popotla",
+      "age": 67,
+      "gender": "masculino",
+      "education": "secundaria",
+      "occupation": "velador en bodega de materiales de construcción",
+      "income_band": "C-",
+      "household": "vive con su esposa y un nieto de 12 años",
+      "transport_mode": "camión y metro",
+      "media_diet": [
+        "noticieros de TV abierta",
+        "radio AM"
+      ],
+      "values_profile": {
+        "seguridad": 0.85,
+        "vivienda": 0.75,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.3,
+        "economia": 0.9,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Trabaja turnos nocturnos de velador seis días a la semana ganando 6,500 pesos al mes. Renta un departamento de dos cuartos donde vive con su esposa que vende tamales en las mañanas y su nieto que dejó su hija cuando migró a Estados Unidos. Le preocupa que el gas LP suba cada mes porque ya gasta casi 400 pesos cada tres semanas."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Tacuba",
+      "age": 67,
+      "gender": "femenino",
+      "education": "prepa",
+      "occupation": "Encargada de limpieza en oficinas corporativas",
+      "income_band": "C-",
+      "household": "Vive con su hija divorciada y dos nietos adolescentes",
+      "transport_mode": "Metrobús y camión",
+      "media_diet": [
+        "Noticieros de Televisa",
+        "Grupos de WhatsApp del edificio"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.7,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.3,
+        "economia": 0.8,
+        "cultura": 0.4
+      },
+      "persona_narrative": "Entra a trabajar a las 6 AM en Santa Fe, sale a las 2 PM y regresa a Tacuba para cuidar a sus nietos mientras su hija trabaja en un call center. Renta un departamento de dos recámaras por $6,500 al mes desde hace 12 años. Le preocupa que el dueño quiera vender porque varios edificios de la zona los están tumbando para construir torres nuevas."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Popotla",
+      "age": 67,
+      "gender": "femenino",
+      "education": "licenciatura",
+      "occupation": "maestra de primaria jubilada que da asesorías particulares de matemáticas",
+      "income_band": "D+",
+      "household": "vive sola en un departamento rentado",
+      "transport_mode": "metrobús y camión",
+      "media_diet": [
+        "noticiero de Televisa",
+        "Facebook"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.7,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.4,
+        "economia": 0.8,
+        "cultura": 0.5
+      },
+      "persona_narrative": "Renta un departamento de dos recámaras por $6,500 al mes desde hace 12 años. Da clases particulares a niños de primaria tres tardes por semana para complementar su pensión del ISSSTE. Le preocupa que los asaltos en la estación del metrobús han aumentado y ahora evita regresar después de las 7 de la noche."
+    },
+    {
+      "version": "cdmx-v1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Tacuba",
+      "age": 67,
+      "gender": "femenino",
+      "education": "posgrado",
+      "occupation": "profesora jubilada de secundaria que da clases particulares de inglés",
+      "income_band": "D/E",
+      "household": "vive sola en un departamento rentado",
+      "transport_mode": "pesero y metro",
+      "media_diet": [
+        "noticieros de televisión abierta",
+        "Facebook"
+      ],
+      "values_profile": {
+        "seguridad": 0.9,
+        "vivienda": 0.8,
+        "movilidad": 0.6,
+        "medio_ambiente": 0.5,
+        "economia": 0.95,
+        "cultura": 0.7
+      },
+      "persona_narrative": "Renta un departamento de dos cuartos en Tacuba desde hace 15 años y cada año le suben la renta 8%. Da clases de inglés a domicilio tres veces por semana para complementar su pensión del ISSSTE que apenas le alcanza para medicinas y servicios. Le preocupa que si su casero decide vender el edificio no va a poder pagar otro lugar en la zona."
+    }
+  ],
+  "failed": []
+}
