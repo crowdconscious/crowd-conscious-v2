@@ -56,7 +56,7 @@
 - **Apolitical by construction:** no output endorses parties/candidates/officials or accuses named individuals. We judge conditions, not administrations.
 - **Kill switches:** every user-facing feature checks its env flag at the top of its route(s); flag off = invisible (not an error state), APIs 503.
 
-**Env flags:** `SIM_REVEAL_ENABLED` (false until Sep 15) · `POST_AGENT_ENABLED` · `POST_AGENT_MODEL` · `SENAL_EXPRESS_ENABLED` · `ADIVINA_ENABLED` · `ADIVINA_IA_ENABLED` (false until Sep 15) · `MI_COLONIA_ENABLED` · `LEADERBOARD_ENABLED` (false) · `NEXT_PUBLIC_FUND_EVENT_DATE`
+**Env flags:** `SIM_REVEAL_ENABLED` (LIVE in prod as of Aug 2026 — reveal published early; still per-run gated by `revealed_at`/the Revelar action, so nothing shows until a run is explicitly revealed) · `POST_AGENT_ENABLED` · `POST_AGENT_MODEL` · `SENAL_EXPRESS_ENABLED` · `ADIVINA_ENABLED` · `ADIVINA_IA_ENABLED` (false until Sep 15) · `MI_COLONIA_ENABLED` · `LEADERBOARD_ENABLED` (false) · `NEXT_PUBLIC_FUND_EVENT_DATE`
 
 ---
 
@@ -93,7 +93,7 @@ Commercial logic lives in `lib/pulse-tiers.ts` only. Pulse Sim tier (~$2,500 MXN
 
 ## 5. WORKSTREAM B — PULSE SIMULATION 🟢 (launch-critical)
 
-**Product:** for every real Pulse, a panel of 100–200 LLM agents — each a demographically grounded persona of a real CDMX resident profile — votes with the same mechanics (option + confidence 1–10 + one-line reasoning). Results stored separately, revealed only at Pulse close alongside real results with a **Divergence Index**. Silent calibration Jul 27–Sep 13 (nothing public); public Sep 15.
+**Product:** for every real Pulse, a panel of 100–200 LLM agents — each a demographically grounded persona of a real CDMX resident profile — votes with the same mechanics (option + confidence 1–10 + one-line reasoning). Results stored separately, revealed only at Pulse close alongside real results with a **Divergence Index**. Originally planned as silent calibration Jul 27–Sep 13 with a Sep 15 public launch; **owner decided (Aug 2026) to publish the reveal early** — `SIM_REVEAL_ENABLED` is on in prod. Reveals stay per-run gated (a run only shows after Divergencia + Revelar set `revealed_at`), so the anti-anchoring and total-separation guarantees still hold; publish only runs you're happy with.
 
 ### 5.1 Data model — simulation tables (verbatim)
 Filenames below use the next free numbers as of Aug 2026 — re-verify with `ls supabase/migrations | sort | tail` at session start and renumber if anything shipped since.
@@ -221,7 +221,7 @@ ID = 100 × (0.6 × Δshares + 0.4 × Δconfidence)
 ```
 Return `{id, delta_shares, delta_confidence, per_option[]}`. Read: 0 = la IA nos leyó perfecto · 100 = no nos conoce en absoluto. Unit tests: identical inputs → 0; disjoint → high; hand-computed fixture matches.
 
-### 5.7 Reveal UI (behind `SIM_REVEAL_ENABLED`, false until Sep 15)
+### 5.7 Reveal UI (behind `SIM_REVEAL_ENABLED`, default ON in prod as of Aug 2026 — published early per owner decision; per-run reveal still gated by `revealed_at`)
 - `/pulse/[id]` post-close module "IA vs. Realidad": renders ONLY when flag on AND `revealed_at` set AND pulse closed AND user has voted (or pulse closed). AMBER palette + persistent `SIMULACIÓN IA` badge; headline ID number + 0–100 explainer; per-option comparison bars; one `cita_sim_representativa`.
 - Pre-vote teaser (flag on, run exists, user NOT voted): "La IA ya votó este Pulse. Vota para ver si nos conoce." — ZERO direction leakage: no numbers, no option names, nothing proportional. **Enforced in the data layer: the loader must not send sim aggregates to the client until reveal conditions are met** (✅ verify in the network tab).
 - `/metodologia-simulacion` static page: INEGI/AMAI persona method, total-separation guarantees, purpose = auditing AI not replacing people, the stereotype-flattening limitation stated plainly ("when the sim caricatures a neighborhood, that's a finding"), + the Conversa privacy note (§6.6).
