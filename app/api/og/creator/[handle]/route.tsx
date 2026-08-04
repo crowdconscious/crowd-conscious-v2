@@ -6,6 +6,7 @@ import { CONSCIOUS_VALUE_OPTIONS, parseMetadataValues } from '@/lib/locations/co
 import { creatorTier, CREATOR_SCORE_REVEAL_THRESHOLD } from '@/lib/creators/types'
 import { creatorCraftLabel } from '@/lib/creators/crafts'
 import { normalizeHandle } from '@/lib/i18n/creator'
+import { scoreInVotingLabel } from '@/lib/display/participation'
 
 // Mirrors /api/og/location — Node runtime so we can read the local logo
 // file and fetch the avatar as a buffer. Uses the admin client (instead of
@@ -180,11 +181,7 @@ export async function GET(
         : 'Is this a Conscious Creator? Vote →'
     const voteLabel = locale === 'es' ? 'votos' : 'votes'
     const neededToReveal = Math.max(0, CREATOR_SCORE_REVEAL_THRESHOLD - votes)
-    const scoreCaption = scoreRevealed
-      ? 'Conscious Score'
-      : locale === 'es'
-        ? `${neededToReveal} ${neededToReveal === 1 ? 'voto' : 'votos'} para revelar`
-        : `${neededToReveal} ${neededToReveal === 1 ? 'vote' : 'votes'} to reveal`
+    const scoreCaption = scoreRevealed ? 'Conscious Score' : scoreInVotingLabel(locale)
 
     // Vote variant: progress toward the reveal threshold (10) replaces the
     // score block — the card's job is to recruit voters, not show the number.
@@ -194,9 +191,7 @@ export async function GET(
     )
     const progressCaption =
       neededToReveal > 0
-        ? locale === 'es'
-          ? `${neededToReveal} ${neededToReveal === 1 ? 'voto más' : 'votos más'} para revelar el Conscious Score`
-          : `${neededToReveal} more vote${neededToReveal === 1 ? '' : 's'} to reveal the Conscious Score`
+        ? scoreInVotingLabel(locale)
         : locale === 'es'
           ? 'Score revelado — tu voto sigue contando'
           : 'Score revealed — your vote still counts'

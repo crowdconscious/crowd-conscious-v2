@@ -13,6 +13,7 @@ import { parseMetadataValues } from '@/lib/locations/conscious-values'
 import { ValueBadgeRow } from '@/components/locations/ValueBadge'
 import { LocationCoverImage, LocationLogoImage } from '@/components/locations/LocationRemoteImage'
 import LocationOffersSection from '@/components/perks/LocationOffersSection'
+import { scoreInVotingLabel } from '@/lib/display/participation'
 
 type OutcomeRow = {
   id: string
@@ -164,7 +165,6 @@ export default function LocationDetailClient({
 
   const score = location.conscious_score
   const votes = location.total_votes ?? 0
-  const needed = Math.max(0, 10 - votes)
   const ig = location.instagram_handle?.replace(/^@/, '') ?? ''
   const valueKeys = parseMetadataValues(location.metadata)
 
@@ -209,11 +209,7 @@ export default function LocationDetailClient({
           {score == null && votes < 10 && (
             <p className="flex items-center gap-2 text-sm text-amber-400/90">
               <Clock className="h-4 w-4 shrink-0" aria-hidden />
-              <span>
-                {locale === 'es'
-                  ? `${needed} ${needed === 1 ? 'voto más' : 'votos más'} para revelar el Conscious Score`
-                  : `${needed} more vote${needed === 1 ? '' : 's'} to reveal the Conscious Score`}
-              </span>
+              <span>{scoreInVotingLabel(locale)}</span>
             </p>
           )}
         </div>

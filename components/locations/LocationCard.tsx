@@ -9,6 +9,7 @@ import { LocationCoverImage, LocationLogoImage } from '@/components/locations/Lo
 import { parseMetadataValues } from '@/lib/locations/conscious-values'
 import { ValueBadgeRow } from '@/components/locations/ValueBadge'
 import { trackShare } from '@/lib/share-utils'
+import { scoreInVotingLabel } from '@/lib/display/participation'
 
 export type LocationCardRow = {
   id: string
@@ -67,7 +68,6 @@ export function LocationCard({
   const placeLine = [neighborhood, location.city].filter(Boolean).join(', ')
   const score = location.conscious_score
   const votes = location.total_votes ?? 0
-  const needed = Math.max(0, 10 - votes)
   const ig = location.instagram_handle?.replace(/^@/, '') ?? ''
   const valueKeys = parseMetadataValues(location.metadata)
   const [copied, setCopied] = useState(false)
@@ -193,11 +193,7 @@ export function LocationCard({
         {score == null && votes < 10 ? (
           <p className="flex items-start gap-2 text-sm text-amber-400/90">
             <Clock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-            <span>
-              {locale === 'es'
-                ? `${needed} ${needed === 1 ? 'voto más' : 'votos más'} para revelar el Conscious Score`
-                : `${needed} more vote${needed === 1 ? '' : 's'} to reveal the Conscious Score`}
-            </span>
+            <span>{scoreInVotingLabel(locale)}</span>
           </p>
         ) : null}
 

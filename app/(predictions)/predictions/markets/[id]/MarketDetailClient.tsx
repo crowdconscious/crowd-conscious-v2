@@ -63,6 +63,7 @@ import {
   getOutcomeSubtitle,
 } from '@/lib/i18n/market-translations'
 import { useLocale } from '@/lib/i18n/useLocale'
+import { formatParticipationCount } from '@/lib/display/participation'
 import {
   isPulseLikeMarket,
   recentActivityEmpty,
@@ -449,8 +450,7 @@ export function MarketDetailClient({
               {isPulseMarket ? '📊 Conscious Pulse' : `🌐 ${categoryLabel}`}
             </span>
             <span className="text-xs text-gray-500">
-              {engagementCount.toLocaleString()}{' '}
-              {locale === 'es' ? 'votos' : 'votes'}
+              {formatParticipationCount(engagementCount, locale === 'es' ? 'es' : 'en')}
             </span>
           </div>
           <div className="flex items-start justify-between gap-3">

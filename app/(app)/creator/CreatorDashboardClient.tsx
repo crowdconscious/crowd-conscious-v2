@@ -25,6 +25,7 @@ import {
   CREATOR_SCORE_REVEAL_THRESHOLD,
   type CreatorCertificationStatus,
 } from '@/lib/creators/types'
+import { scoreInVotingLabel } from '@/lib/display/participation'
 import { CreatorTierBadge } from '@/components/creators/CreatorCertificationPanel'
 import VoteForMeShareRow from '@/components/creators/VoteForMeShareRow'
 import CreatorVerifiedCelebration from '@/components/creators/CreatorVerifiedCelebration'
@@ -303,7 +304,7 @@ export default function CreatorDashboardClient({
             ) : null}
             {certification.status === 'active' && !certScoreRevealed ? (
               <p className="mt-3 text-sm text-slate-400">
-                {t.certVotesToReveal(Math.max(0, CREATOR_SCORE_REVEAL_THRESHOLD - certVotes))}
+                {scoreInVotingLabel(locale)}
               </p>
             ) : null}
             {certification.status === 'active' &&

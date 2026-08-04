@@ -5,6 +5,11 @@ import Link from 'next/link'
 import { BarChart3 } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { normalizeSponsorTierId, SPONSOR_TIERS } from '@/lib/sponsor-tiers'
+import {
+  formatParticipationCount,
+  fundCountdownText,
+  fundCycleInProgressNote,
+} from '@/lib/display/participation'
 
 export type SponsorshipLogPublic = {
   id: string
@@ -108,9 +113,10 @@ export function TransparencyDashboard({
     showAll: locale === 'es' ? 'Ver todo' : 'Show all',
     showLess: locale === 'es' ? 'Ver menos' : 'Show less',
     illustrative:
-      locale === 'es'
-        ? 'Montos por causa = fondos ya distribuidos (proporción según votos). Hasta el primer ciclo de asignación, figuran en $0.'
-        : 'Per-cause amounts reflect funds already disbursed (vote-weighted). Until the first grant cycle, they show $0.',
+      (locale === 'es'
+        ? 'Los montos por causa reflejan fondos ya distribuidos (proporción según votos). '
+        : 'Per-cause amounts reflect funds already disbursed (vote-weighted). ') +
+      fundCycleInProgressNote(locale),
   }
 
   const hasRows = sponsorships.length > 0
@@ -131,7 +137,13 @@ export function TransparencyDashboard({
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
         <div className="bg-[#1a2029] border border-emerald-500/20 rounded-xl p-5">
           <p className="text-gray-400 text-sm mb-1">{t.statDistributed}</p>
-          <p className="text-2xl font-bold text-emerald-400">{formatMoneyFull(totalDistributed)} MXN</p>
+          {totalDistributed > 0 ? (
+            <p className="text-2xl font-bold text-emerald-400">{formatMoneyFull(totalDistributed)} MXN</p>
+          ) : (
+            // "$0 Repartido" would be a zero next to a promise (§4/A2) — show
+            // the countdown to the first Fund allocation instead.
+            <p className="text-base font-semibold text-amber-400">{fundCountdownText(locale)}</p>
+          )}
         </div>
         <div className="bg-[#1a2029] border border-emerald-500/20 rounded-xl p-5">
           <p className="text-gray-400 text-sm mb-1">{t.statCauses}</p>
@@ -161,7 +173,7 @@ export function TransparencyDashboard({
                 <div className="flex justify-between items-center gap-3 text-sm mb-1">
                   <span className="text-gray-200 truncate">{row.name}</span>
                   <span className="text-emerald-400 font-semibold shrink-0 tabular-nums">
-                    {formatMoney(row.amount)}
+                    {row.amount > 0 ? formatMoney(row.amount) : '—'}
                   </span>
                 </div>
                 <div className="w-full bg-gray-800/50 h-8 rounded-lg relative overflow-hidden">
@@ -172,7 +184,7 @@ export function TransparencyDashboard({
                 </div>
                 {row.votes > 0 && (
                   <p className="text-xs text-gray-500 mt-0.5">
-                    {row.votes} {locale === 'es' ? 'votos' : 'votes'}
+                    {formatParticipationCount(row.votes, locale)}
                   </p>
                 )}
               </div>

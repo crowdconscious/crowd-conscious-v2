@@ -9,6 +9,7 @@ import { CREATOR_SCORE_REVEAL_THRESHOLD } from '@/lib/creators/types'
 import { CreatorTierBadge } from '@/components/creators/CreatorCertificationPanel'
 import { ValueBadgeRow } from '@/components/locations/ValueBadge'
 import { trackShare } from '@/lib/share-utils'
+import { scoreInVotingLabel } from '@/lib/display/participation'
 
 export type CreatorCardRow = {
   profile_id: string
@@ -139,7 +140,7 @@ export function CreatorCard({
       {score == null && needed > 0 ? (
         <p className="mt-2 flex items-start gap-2 text-sm text-amber-400/90">
           <Clock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-          <span>{t.certVotesToReveal(needed)}</span>
+          <span>{scoreInVotingLabel(locale)}</span>
         </p>
       ) : null}
 

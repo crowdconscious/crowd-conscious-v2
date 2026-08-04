@@ -10,6 +10,10 @@ import PulseOutcomeBars from '@/components/pulse/PulseOutcomeBars'
 import type { PulseOutcomeRow } from '@/components/pulse/PulseResultClient'
 import { aggregatePulseVotes, type PulseVoteLike } from '@/lib/pulse-vote-aggregates'
 import {
+  formatParticipationCount,
+  shouldRevealCount,
+} from '@/lib/display/participation'
+import {
   computePulseEmbedExecutiveSummary,
   computePulseEmbedInsights,
 } from '@/lib/pulse-embed-compute'
@@ -234,7 +238,13 @@ export default function PulseEmbed({ data, locale, components, showOwnHeading }:
               <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
                 {locale === 'es' ? 'Votos totales' : 'Total votes'}
               </p>
-              <p className="mt-1 text-2xl font-bold tabular-nums text-white">{totalVotes}</p>
+              <p
+                className={`mt-1 font-bold text-white ${
+                  shouldRevealCount(totalVotes) ? 'text-2xl tabular-nums' : 'text-lg'
+                }`}
+              >
+                {formatParticipationCount(totalVotes, locale, { withUnit: false })}
+              </p>
             </div>
             <div className="rounded-xl border border-white/5 bg-black/20 px-4 py-3">
               <p className="text-xs font-medium uppercase tracking-wide text-slate-500">

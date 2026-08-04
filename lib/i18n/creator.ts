@@ -265,10 +265,9 @@ export function getCreatorCopy(locale: CreatorLocale) {
     certCertifiedSince: es ? 'Certificado desde' : 'Certified since',
     certScoreLabel: 'Conscious Score',
     certVotes: es ? 'votos' : 'votes',
-    certVotesToReveal: (n: number) =>
-      es
-        ? `${n} ${n === 1 ? 'voto más' : 'votos más'} para revelar el Conscious Score`
-        : `${n} more vote${n === 1 ? '' : 's'} to reveal the Conscious Score`,
+    // Pre-reveal score copy is centralized in lib/display/participation.ts
+    // (scoreInVotingLabel) per §4/A2 — do not reintroduce a "faltan N votos"
+    // string here.
     certVoteTitle: es ? '¿Es un Creador Consciente?' : 'Is this a Conscious Creator?',
     certVoteConfidence: es ? '¿Qué tan seguro/a estás? (1-10)' : 'How confident are you? (1-10)',
     certVoteWhy: es ? '¿Por qué? (opcional)' : 'Why? (optional)',

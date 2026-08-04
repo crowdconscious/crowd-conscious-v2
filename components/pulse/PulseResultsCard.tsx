@@ -5,6 +5,10 @@ import {
   getOutcomeSubtitle,
 } from '@/lib/i18n/market-translations'
 import { toDisplayPercentRounded } from '@/lib/probability-utils'
+import {
+  formatParticipationCount,
+  shouldRevealCount,
+} from '@/lib/display/participation'
 
 /**
  * PulseResultsCard
@@ -57,24 +61,17 @@ function formatSubtitle(
   avgConfidence: number | null | undefined,
   locale: 'es' | 'en'
 ): string {
-  const voteWord =
-    locale === 'es'
-      ? totalVotes === 1
-        ? 'voto'
-        : 'votos'
-      : totalVotes === 1
-        ? 'vote'
-        : 'votes'
-  const confLabel = locale === 'es' ? 'confianza promedio' : 'avg confidence'
-  const totalStr = totalVotes.toLocaleString(locale === 'es' ? 'es-MX' : 'en-US')
-  if (
-    typeof avgConfidence === 'number' &&
-    Number.isFinite(avgConfidence) &&
-    totalVotes > 0
-  ) {
-    return `${totalStr} ${voteWord} · ${confLabel} ${avgConfidence.toFixed(1)}/10`
+  // Below the reveal threshold the count is a promise-adjacent zero: show
+  // "Votación abierta" (and suppress the noisy small-N average) instead.
+  if (!shouldRevealCount(totalVotes)) {
+    return formatParticipationCount(totalVotes, locale)
   }
-  return `${totalStr} ${voteWord}`
+  const countStr = formatParticipationCount(totalVotes, locale)
+  const confLabel = locale === 'es' ? 'confianza promedio' : 'avg confidence'
+  if (typeof avgConfidence === 'number' && Number.isFinite(avgConfidence)) {
+    return `${countStr} · ${confLabel} ${avgConfidence.toFixed(1)}/10`
+  }
+  return countStr
 }
 
 export default function PulseResultsCard({

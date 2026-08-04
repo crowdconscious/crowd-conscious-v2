@@ -22,7 +22,7 @@ import {
   type SponsorshipLogPublic,
   type CauseBreakdownRow,
 } from '@/components/fund/TransparencyDashboard'
-import { METRIC_LABELS } from '@/lib/i18n/metrics'
+import { formatParticipationCount } from '@/lib/display/participation'
 
 type Cause = {
   id: string
@@ -362,9 +362,7 @@ export function FundClient({
                   </div>
                   <div className="mt-3">
                     <div className="flex justify-between text-xs text-cc-text-secondary mb-1">
-                      <span>
-                        {total} {METRIC_LABELS.fund_cycle_votes.en.toLowerCase()}
-                      </span>
+                      <span>{formatParticipationCount(total, 'es')}</span>
                     </div>
                     <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
                       <div

@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase-client'
 import { ValueBadgeRow } from '@/components/locations/ValueBadge'
 import VoteForMeShareRow from '@/components/creators/VoteForMeShareRow'
 import { getCreatorCopy, type CreatorLocale } from '@/lib/i18n/creator'
+import { scoreInVotingLabel } from '@/lib/display/participation'
 import {
   creatorTier,
   CREATOR_SCORE_REVEAL_THRESHOLD,
@@ -197,7 +198,6 @@ export default function CreatorCertificationPanel({
 
   const score = cert.conscious_score
   const votes = cert.total_votes ?? 0
-  const needed = Math.max(0, CREATOR_SCORE_REVEAL_THRESHOLD - votes)
   const scoreRevealed = score != null && votes >= CREATOR_SCORE_REVEAL_THRESHOLD
 
   const why =
@@ -243,7 +243,7 @@ export default function CreatorCertificationPanel({
         {!scoreRevealed && (
           <p className="flex items-center gap-2 text-sm text-amber-400/90">
             <Clock className="h-4 w-4 shrink-0" aria-hidden />
-            <span>{t.certVotesToReveal(needed)}</span>
+            <span>{scoreInVotingLabel(locale)}</span>
           </p>
         )}
       </div>
