@@ -23,6 +23,7 @@ import { ImageUpload } from '@/components/ui/ImageUpload'
 import ShareBundle from '@/components/admin/ShareBundle'
 import SponsorPulseReportRunner from './SponsorPulseReportRunner'
 import ContentCreatorRunner from './ContentCreatorRunner'
+import SimulationRunner from './SimulationRunner'
 
 /**
  * `scheduled: false` = no Vercel cron, "Run Now" is the only way the agent
@@ -984,6 +985,10 @@ export default function AdminAgentsPage() {
           Fuente: <code className="text-slate-400">vercel.json</code>.
         </div>
       </section>
+
+      {/* SIMULACIÓN — Pulse Simulation admin panel (§5.5). Self-contained: it
+          calls its own admin-guarded /api/predictions/admin/simulation routes. */}
+      <SimulationRunner parentBusy={!!running} />
 
       {/* Crowd newsletter (same pipeline as cron /api/cron/newsletter) */}
       <section>
