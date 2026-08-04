@@ -164,6 +164,7 @@ Every user-facing consumer (reveal UI, Adivina three-way, reports) reads this vi
 
 ### 5.3 Persona library (`cdmx-v1` = 150: 100 Cuauhtémoc, 50 Miguel Hidalgo)
 - Marginal distributions matched to INEGI Censo 2020 (age, sex, education, household per alcaldía), ENIGH income texture, AMAI NSE bands. I provide targets as `data/persona-targets.cdmx-v1.json` cells: `{alcaldia, count, age_range, gender, education, income_band}`.
+- Persona-target `count`s are proportional WEIGHTS (owner population estimates), not final counts; they are normalized to the 100/50/150 set via a deterministic largest-remainder (Hamilton) allocator (`lib/simulation/persona-allocation.ts`) whose 100/50/150 contract is enforced by tests (`lib/simulation/persona-allocation.test.ts`) — so `count`s need NOT sum to 150.
 - Generator script `scripts/generate-personas.ts` (tsx): per cell, call `claude-sonnet-4-6` → strict JSON personas with all schema fields. `persona_narrative` = 2–3 sentences of CONCRETE daily life in Mexican Spanish (rent/own, job specifics, who they care for, how they get informed, one worry). BANNED: generic adjectives ("tradicional", "preocupado por la comunidad"). Validate against cell constraints; one retry; output JSON + SQL inserts; print distribution report (deltas <5% per marginal). Support `--from-json` re-emit (I hand-edit ~20%).
 - Versions never mutate; improvements ship as `cdmx-v2` with a documented change note.
 

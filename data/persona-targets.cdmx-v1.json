@@ -1,0 +1,854 @@
+{
+  "_meta": {
+    "version": "cdmx-v1",
+    "total_target": 150,
+    "per_alcaldia": {
+      "Cuauhtémoc": 100,
+      "Miguel Hidalgo": 50
+    },
+    "normalization": {
+      "method": "largest-remainder (Hamilton)",
+      "targets": {
+        "Cuauhtémoc": 100,
+        "Miguel Hidalgo": 50
+      },
+      "count_semantics": "cell.count es un PESO proporcional (estimación de población adulta del dueño), no un conteo final de personas.",
+      "allocator": "lib/simulation/persona-allocation.ts",
+      "tests": "lib/simulation/persona-allocation.test.ts",
+      "note": "La garantía 100/50/150 vive en el asignador determinista probado, NO en este archivo: los count NO tienen que sumar 100/50/150."
+    },
+    "sources": [
+      "INEGI — Censo de Población y Vivienda 2020: marginales de edad, sexo, escolaridad y hogar por alcaldía (Cuauhtémoc, Miguel Hidalgo).",
+      "INEGI — ENIGH (Encuesta Nacional de Ingresos y Gastos de los Hogares): textura de ingreso del hogar.",
+      "AMAI — Regla NSE (Niveles Socioeconómicos): bandas A/B, C+, C, C-, D+, D/E."
+    ],
+    "instructions": "Este archivo es la ENTRADA del generador de personas (§5.3). Cada cell.count es un PESO PROPORCIONAL: la estimación de población adulta del dueño para esa celda, NO un conteo final de personas. El generador normaliza esos pesos al set cdmx-v1 = 150 personas (100 Cuauhtémoc + 50 Miguel Hidalgo) con un asignador determinista de mayor-residuo (Hamilton), por alcaldía, implementado y verificado en código (ver _meta.normalization). Por eso los count NO tienen que sumar 100/50/150: la garantía 100/50/150 vive en ese código probado, no en este archivo. Lo que el dueño SÍ debe cuidar: (1) cada distribución MARGINAL — edad, sexo e ingreso (AMAI) — debe quedar dentro de <5% respecto a INEGI Censo 2020 / ENIGH / AMAI para esa alcaldía; (2) la escolaridad NO se fija por celda: se define como marginal en _meta.education_marginals (el dueño llena esos valores con el % o el conteo objetivo por nivel), y el generador reparte la escolaridad dentro de cada celda para respetar esa marginal con delta <5%. No inventar cifras: todo count/marginal proviene de las fuentes citadas.",
+    "schema": {
+      "description": "Cada elemento de `cells` usa exactamente los campos de §5.3: { alcaldia, count, age_range, gender, education, income_band }.",
+      "fields": {
+        "alcaldia": "\"Cuauhtémoc\" | \"Miguel Hidalgo\" — alcaldía de la celda.",
+        "count": "Entero: PESO proporcional de la celda (estimación de población adulta del dueño), NO el conteo final de personas. El generador lo normaliza a la N objetivo por alcaldía con el asignador de mayor-residuo probado (ver _meta.normalization).",
+        "age_range": "\"18-29\" | \"30-44\" | \"45-59\" | \"60+\" — bucket de edad.",
+        "gender": "\"masculino\" | \"femenino\". Ver _meta.gender_note para la asignación opcional de \"otro\".",
+        "education": "null en este scaffold. La escolaridad se trata como MARGINAL (ver _meta.education_marginals); al materializar personas, valores permitidos: primaria | secundaria | prepa | licenciatura | posgrado.",
+        "income_band": "\"A/B\" | \"C+\" | \"C\" | \"C-\" | \"D+\" | \"D/E\" — banda AMAI de nivel socioeconómico."
+      }
+    },
+    "dimensions": {
+      "age_range": [
+        "18-29",
+        "30-44",
+        "45-59",
+        "60+"
+      ],
+      "income_band": [
+        "A/B",
+        "C+",
+        "C",
+        "C-",
+        "D+",
+        "D/E"
+      ],
+      "gender": [
+        "masculino",
+        "femenino"
+      ],
+      "education_levels": [
+        "primaria",
+        "secundaria",
+        "prepa",
+        "licenciatura",
+        "posgrado"
+      ]
+    },
+    "education_marginals": {
+      "Cuauhtémoc": {
+        "primaria": 12,
+        "secundaria": 20,
+        "prepa": 26,
+        "licenciatura": 34,
+        "posgrado": 8
+      },
+      "Miguel Hidalgo": {
+        "primaria": 8,
+        "secundaria": 14,
+        "prepa": 22,
+        "licenciatura": 44,
+        "posgrado": 12
+      }
+    },
+    "gender_note": "Las celdas solo cruzan masculino/femenino para mantener el set fillable. Si el dueño desea incluir una pequeña cuota de género \"otro\", puede reservar un número reducido (p. ej. 1-3 personas) tomándolo de los totales femenino/masculino de una alcaldía, documentándolo aquí; no debe romper el total_target de 150.",
+    "cross_note": "Cruce primario = age_range (4) x income_band (6) x gender (2) por alcaldía = 48 celdas/alcaldía, 96 en total. Escolaridad como marginal para no explotar a cientos de celdas casi vacías.",
+    "generated_note": "Estructura generada como scaffold; todos los valores objetivo son \"TODO\" o null a propósito. Ningún dato demográfico real fue inventado por el agente."
+  },
+  "cells": [
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 7369,
+      "age_range": "18-29",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "A/B"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 7670,
+      "age_range": "18-29",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "A/B"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 9475,
+      "age_range": "18-29",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "C+"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 9862,
+      "age_range": "18-29",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "C+"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 10528,
+      "age_range": "18-29",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "C"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 10957,
+      "age_range": "18-29",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "C"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 9475,
+      "age_range": "18-29",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "C-"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 9862,
+      "age_range": "18-29",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "C-"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 8422,
+      "age_range": "18-29",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "D+"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 8766,
+      "age_range": "18-29",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "D+"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 7369,
+      "age_range": "18-29",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "D/E"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 7670,
+      "age_range": "18-29",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "D/E"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 9024,
+      "age_range": "30-44",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "A/B"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 9776,
+      "age_range": "30-44",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "A/B"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 11602,
+      "age_range": "30-44",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "C+"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 12569,
+      "age_range": "30-44",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "C+"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 12891,
+      "age_range": "30-44",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "C"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 13965,
+      "age_range": "30-44",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "C"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 11602,
+      "age_range": "30-44",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "C-"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 12569,
+      "age_range": "30-44",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "C-"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 10313,
+      "age_range": "30-44",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "D+"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 11172,
+      "age_range": "30-44",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "D+"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 9024,
+      "age_range": "30-44",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "D/E"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 9776,
+      "age_range": "30-44",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "D/E"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 6918,
+      "age_range": "45-59",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "A/B"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 8121,
+      "age_range": "45-59",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "A/B"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 8895,
+      "age_range": "45-59",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "C+"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 10442,
+      "age_range": "45-59",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "C+"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 9883,
+      "age_range": "45-59",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "C"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 11602,
+      "age_range": "45-59",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "C"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 8895,
+      "age_range": "45-59",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "C-"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 10442,
+      "age_range": "45-59",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "C-"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 7906,
+      "age_range": "45-59",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "D+"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 9281,
+      "age_range": "45-59",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "D+"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 6918,
+      "age_range": "45-59",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "D/E"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 8121,
+      "age_range": "45-59",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "D/E"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 5790,
+      "age_range": "60+",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "A/B"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 7996,
+      "age_range": "60+",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "A/B"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 7444,
+      "age_range": "60+",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "C+"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 10280,
+      "age_range": "60+",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "C+"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 8272,
+      "age_range": "60+",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "C"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 11423,
+      "age_range": "60+",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "C"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 7444,
+      "age_range": "60+",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "C-"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 10280,
+      "age_range": "60+",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "C-"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 6617,
+      "age_range": "60+",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "D+"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 9138,
+      "age_range": "60+",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "D+"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 5790,
+      "age_range": "60+",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "D/E"
+    },
+    {
+      "alcaldia": "Cuauhtémoc",
+      "count": 7996,
+      "age_range": "60+",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "D/E"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 10050,
+      "age_range": "18-29",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "A/B"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 10888,
+      "age_range": "18-29",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "A/B"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 7897,
+      "age_range": "18-29",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "C+"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 8555,
+      "age_range": "18-29",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "C+"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 6820,
+      "age_range": "18-29",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "C"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 7388,
+      "age_range": "18-29",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "C"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 4666,
+      "age_range": "18-29",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "C-"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 5055,
+      "age_range": "18-29",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "C-"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 3589,
+      "age_range": "18-29",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "D+"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 3888,
+      "age_range": "18-29",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "D+"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 2871,
+      "age_range": "18-29",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "D/E"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 3111,
+      "age_range": "18-29",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "D/E"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 12972,
+      "age_range": "30-44",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "A/B"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 14628,
+      "age_range": "30-44",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "A/B"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 10192,
+      "age_range": "30-44",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "C+"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 11493,
+      "age_range": "30-44",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "C+"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 8802,
+      "age_range": "30-44",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "C"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 9926,
+      "age_range": "30-44",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "C"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 6023,
+      "age_range": "30-44",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "C-"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 6792,
+      "age_range": "30-44",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "C-"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 4633,
+      "age_range": "30-44",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "D+"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 5224,
+      "age_range": "30-44",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "D+"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 3706,
+      "age_range": "30-44",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "D/E"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 4179,
+      "age_range": "30-44",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "D/E"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 10707,
+      "age_range": "45-59",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "A/B"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 13086,
+      "age_range": "45-59",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "A/B"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 8413,
+      "age_range": "45-59",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "C+"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 10282,
+      "age_range": "45-59",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "C+"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 7265,
+      "age_range": "45-59",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "C"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 8880,
+      "age_range": "45-59",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "C"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 4971,
+      "age_range": "45-59",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "C-"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 6076,
+      "age_range": "45-59",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "C-"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 3824,
+      "age_range": "45-59",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "D+"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 4674,
+      "age_range": "45-59",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "D+"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 3059,
+      "age_range": "45-59",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "D/E"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 3739,
+      "age_range": "45-59",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "D/E"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 9365,
+      "age_range": "60+",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "A/B"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 13476,
+      "age_range": "60+",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "A/B"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 7358,
+      "age_range": "60+",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "C+"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 10589,
+      "age_range": "60+",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "C+"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 6355,
+      "age_range": "60+",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "C"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 9145,
+      "age_range": "60+",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "C"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 4348,
+      "age_range": "60+",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "C-"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 6257,
+      "age_range": "60+",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "C-"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 3345,
+      "age_range": "60+",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "D+"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 4813,
+      "age_range": "60+",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "D+"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 2676,
+      "age_range": "60+",
+      "gender": "masculino",
+      "education": null,
+      "income_band": "D/E"
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "count": 3850,
+      "age_range": "60+",
+      "gender": "femenino",
+      "education": null,
+      "income_band": "D/E"
+    }
+  ]
+}

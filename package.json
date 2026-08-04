@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "seed:predictions": "tsx scripts/seed-prediction-markets.ts"
+    "seed:predictions": "tsx scripts/seed-prediction-markets.ts",
+    "test": "node --test \"lib/**/*.test.ts\""
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

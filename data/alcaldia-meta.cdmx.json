@@ -1,0 +1,38 @@
+{
+  "_meta": {
+    "scope": "Solo las dos alcaldías de lanzamiento: Cuauhtémoc y Miguel Hidalgo.",
+    "purpose": "Scaffold de datos para el destinatario del oficio de Señal Express (§7.1). Provee los campos que necesita el oficio formal: a quién va dirigido, la dependencia, dirección y contacto.",
+    "instructions": "Rellena cada campo con valor \"TODO_FILL_FROM_OFFICIAL_SOURCE\" (direccion, email y cualquier campo de nombre oficial) usando fuentes oficiales de la alcaldía y la correspondencia existente. No inventar direcciones, correos ni nombres de funcionarios: son exactamente los campos TODO. `destinatario_titulo` ya trae un rol genérico seguro (no es una persona) y `dependencia` trae el nombre institucional; ambos pueden ajustarse si la fuente oficial indica otra cosa.",
+    "note_workstream_d": "Workstream D (Señal Express) importará este archivo a ALCALDIA_META en lib/geo/cdmx.ts (§2). Este scaffold NO pre-construye ese módulo ni sus funciones resolve*(); solo aloja los datos para no bloquear el llenado del dueño.",
+    "schema": {
+      "description": "Cada elemento de `entries` usa los campos que Señal Express necesita para el destinatario del oficio.",
+      "fields": {
+        "alcaldia": "\"Cuauhtémoc\" | \"Miguel Hidalgo\".",
+        "destinatario_titulo": "Rol genérico al que se dirige el oficio (p. ej. \"Alcaldesa/Alcalde de Cuauhtémoc\"). No es un nombre propio.",
+        "dependencia": "Nombre institucional de la dependencia (p. ej. \"Alcaldía Cuauhtémoc\").",
+        "direccion": "TODO_FILL_FROM_OFFICIAL_SOURCE — domicilio oficial para recepción de oficios.",
+        "email": "TODO_FILL_FROM_OFFICIAL_SOURCE — correo oficial de contacto/atención ciudadana.",
+        "notas": "Notas internas para el dueño (p. ej. confirmar titular vigente, ventanilla de recepción, referencias de correspondencia previa)."
+      }
+    },
+    "guardrail": "El agente nunca inventa direcciones, correos ni nombres de funcionarios (§2). Los campos correspondientes quedan como TODO_FILL_FROM_OFFICIAL_SOURCE."
+  },
+  "entries": [
+    {
+      "alcaldia": "Cuauhtémoc",
+      "destinatario_titulo": "Alcaldesa/Alcalde de Cuauhtémoc",
+      "dependencia": "Alcaldía Cuauhtémoc",
+      "direccion": "TODO_FILL_FROM_OFFICIAL_SOURCE",
+      "email": "TODO_FILL_FROM_OFFICIAL_SOURCE",
+      "notas": "TODO_FILL_FROM_OFFICIAL_SOURCE — confirmar titular vigente, domicilio de recepción de oficios y correo de atención ciudadana en fuente oficial de la alcaldía."
+    },
+    {
+      "alcaldia": "Miguel Hidalgo",
+      "destinatario_titulo": "Alcaldesa/Alcalde de Miguel Hidalgo",
+      "dependencia": "Alcaldía Miguel Hidalgo",
+      "direccion": "TODO_FILL_FROM_OFFICIAL_SOURCE",
+      "email": "TODO_FILL_FROM_OFFICIAL_SOURCE",
+      "notas": "TODO_FILL_FROM_OFFICIAL_SOURCE — confirmar titular vigente, domicilio de recepción de oficios y correo de atención ciudadana en fuente oficial de la alcaldía."
+    }
+  ]
+}
