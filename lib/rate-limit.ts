@@ -74,6 +74,41 @@ export const lenientRateLimit = redis
   : null
 
 /**
+ * Señal Express draft limiter: fixed window of 3 requests per day (§7.1).
+ * Fixed-window (not sliding) so the cap is a clean "3 drafts per calendar day"
+ * per identity. Keyed by user id / guest device id, with an IP backstop — see
+ * `getSenalExpressIdentifier`. Only the `draft` endpoint (the LLM call) is
+ * rate-limited; `confirm` is cheap PDF rendering.
+ */
+export const senalExpressDraftRateLimit = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.fixedWindow(3, '1 d'),
+      analytics: true,
+      prefix: '@ratelimit/senal-express-draft',
+    })
+  : null
+
+/**
+ * Rate-limit identity for Señal Express: prefer the authenticated user id, then
+ * the web guest device id (localStorage `cc_guest_id`), and finally the request
+ * IP as a backstop when neither is present.
+ */
+export function getSenalExpressIdentifier(
+  request: Request,
+  userId?: string | null,
+  deviceId?: string | null
+): string {
+  if (userId) return `user:${userId}`
+  if (deviceId && deviceId.trim().length > 0) return `guest:${deviceId.trim()}`
+  const forwarded = request.headers.get('x-forwarded-for')
+  const ip = forwarded
+    ? forwarded.split(',')[0]
+    : request.headers.get('x-real-ip') || 'unknown'
+  return `ip:${ip}`
+}
+
+/**
  * Get identifier for rate limiting
  * Uses IP address for anonymous users, user ID for authenticated users
  */
