@@ -131,6 +131,14 @@ function conf(n: number | null | undefined): string {
   return `${n.toFixed(1)}/10`
 }
 
+/** Non-empty string body for a synthesis field. Skips schema-key echoes. */
+function synthesisText(value: unknown, key: string): string | null {
+  if (typeof value !== 'string') return null
+  const s = value.trim()
+  if (!s || s === key) return null
+  return s
+}
+
 export default function SimulationRunner({ parentBusy }: Props) {
   const { language } = useLanguage()
   const t = useCallback(
@@ -745,6 +753,21 @@ function RunDetail({
   }
 
   const options = Object.keys(agg.option_shares)
+  const resumenEs = synthesis ? synthesisText(synthesis.resumen_es, 'resumen_es') : null
+  const resumenEn = synthesis ? synthesisText(synthesis.resumen_en, 'resumen_en') : null
+  const hipotesis = synthesis
+    ? synthesisText(synthesis.hipotesis_divergencia, 'hipotesis_divergencia')
+    : null
+  const cita = synthesis
+    ? synthesisText(synthesis.cita_sim_representativa, 'cita_sim_representativa')
+    : null
+  const angulo = synthesis ? synthesisText(synthesis.angulo_contenido, 'angulo_contenido') : null
+  const divergencias = (synthesis?.divergencias_clave ?? []).filter(
+    (d) => typeof d === 'string' && d.trim().length > 0 && d.trim() !== 'divergencias_clave',
+  )
+  const hasSynthesisBody = Boolean(
+    resumenEs || resumenEn || hipotesis || cita || angulo || divergencias.length > 0,
+  )
 
   return (
     <div className="space-y-5">
@@ -823,46 +846,52 @@ function RunDetail({
       {synthesis && (
         <div className="space-y-2">
           <div className="text-xs uppercase tracking-wider text-slate-400">{t('Síntesis', 'Synthesis')}</div>
-          {synthesis.resumen_es && (
+          {!hasSynthesisBody && (
+            <p className="text-sm text-slate-500 italic">
+              {t(
+                'La síntesis no tiene texto. Vuelve a correr «Síntesis».',
+                'Synthesis has no text. Run "Synthesis" again.',
+              )}
+            </p>
+          )}
+          {resumenEs && (
             <div>
-              <div className="text-[11px] text-slate-500">resumen_es</div>
-              <p className="text-sm text-slate-200 leading-relaxed">{synthesis.resumen_es}</p>
+              <div className="text-[11px] text-slate-500">{t('Resumen', 'Summary')} (ES)</div>
+              <p className="text-sm text-slate-200 leading-relaxed">{resumenEs}</p>
             </div>
           )}
-          {synthesis.resumen_en && (
+          {resumenEn && (
             <div>
-              <div className="text-[11px] text-slate-500">resumen_en</div>
-              <p className="text-sm text-slate-200 leading-relaxed">{synthesis.resumen_en}</p>
+              <div className="text-[11px] text-slate-500">{t('Resumen', 'Summary')} (EN)</div>
+              <p className="text-sm text-slate-200 leading-relaxed">{resumenEn}</p>
             </div>
           )}
-          {synthesis.divergencias_clave?.length > 0 && (
+          {divergencias.length > 0 && (
             <div>
-              <div className="text-[11px] text-slate-500">divergencias_clave</div>
+              <div className="text-[11px] text-slate-500">{t('Divergencias clave', 'Key divergences')}</div>
               <ul className="list-disc list-inside text-sm text-slate-200 space-y-0.5">
-                {synthesis.divergencias_clave.map((d, i) => (
+                {divergencias.map((d, i) => (
                   <li key={i}>{d}</li>
                 ))}
               </ul>
             </div>
           )}
-          {synthesis.hipotesis_divergencia && (
+          {hipotesis && (
             <div>
-              <div className="text-[11px] text-slate-500">hipotesis_divergencia</div>
-              <p className="text-sm text-slate-200 leading-relaxed">{synthesis.hipotesis_divergencia}</p>
+              <div className="text-[11px] text-slate-500">{t('Hipótesis', 'Hypothesis')}</div>
+              <p className="text-sm text-slate-200 leading-relaxed">{hipotesis}</p>
             </div>
           )}
-          {synthesis.cita_sim_representativa && (
+          {cita && (
             <div>
-              <div className="text-[11px] text-slate-500">cita_sim_representativa</div>
-              <p className="text-sm text-slate-200 italic leading-relaxed">
-                &ldquo;{synthesis.cita_sim_representativa}&rdquo;
-              </p>
+              <div className="text-[11px] text-slate-500">{t('Cita simulada', 'Simulated quote')}</div>
+              <p className="text-sm text-slate-200 italic leading-relaxed">&ldquo;{cita}&rdquo;</p>
             </div>
           )}
-          {synthesis.angulo_contenido && (
+          {angulo && (
             <div>
-              <div className="text-[11px] text-slate-500">angulo_contenido</div>
-              <p className="text-sm text-slate-200 leading-relaxed">{synthesis.angulo_contenido}</p>
+              <div className="text-[11px] text-slate-500">{t('Ángulo de contenido', 'Content angle')}</div>
+              <p className="text-sm text-slate-200 leading-relaxed">{angulo}</p>
             </div>
           )}
         </div>
