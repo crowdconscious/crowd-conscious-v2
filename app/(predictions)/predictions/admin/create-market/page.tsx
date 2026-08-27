@@ -60,6 +60,8 @@ export default function CreatePulsePage() {
   const [customDate, setCustomDate] = useState('')
   const [durationMode, setDurationMode] = useState<'preset' | 'custom'>('preset')
   const [outcomes, setOutcomes] = useState<OutcomeDraft[]>([EMPTY_OUTCOME(), EMPTY_OUTCOME()])
+  const [voteModeRanked, setVoteModeRanked] = useState(false)
+  const [allowOther, setAllowOther] = useState(false)
   const OUTCOME_TITLE_MAX = 80
   const OUTCOME_SUBTITLE_MAX = 200
   const [verificationSources, setVerificationSources] = useState<{ name: string; url: string }[]>([
@@ -320,7 +322,8 @@ export default function CreatePulsePage() {
   const updateLink = (i: number, field: 'url' | 'label', v: string) =>
     setLinks((prev) => prev.map((l, j) => (j === i ? { ...l, [field]: v } : l)))
 
-  const addOutcome = () => setOutcomes((prev) => [...prev, EMPTY_OUTCOME()])
+  const addOutcome = () =>
+    setOutcomes((prev) => (prev.length >= 6 ? prev : [...prev, EMPTY_OUTCOME()]))
   const removeOutcome = (i: number) =>
     setOutcomes((prev) => (prev.length > 2 ? prev.filter((_, j) => j !== i) : prev))
   const updateOutcome = (i: number, field: keyof OutcomeDraft, v: string) =>
@@ -418,6 +421,8 @@ export default function CreatePulsePage() {
           pulse_client_email: pulseClientEmail.trim() || null,
           sponsor_account_id: sponsorAccountId || null,
           cover_image_url: pulseCoverUrl.trim() || sponsorLogoUrl.trim() || null,
+          vote_mode: voteModeRanked ? 'ranked' : 'single',
+          allow_other: allowOther,
         }),
       })
       const data = await res.json()
@@ -808,11 +813,59 @@ export default function CreatePulsePage() {
               <button
                 type="button"
                 onClick={addOutcome}
-                className="flex items-center gap-1 text-sm text-emerald-400 hover:text-emerald-300"
+                disabled={outcomes.length >= 6}
+                className="flex items-center gap-1 text-sm text-emerald-400 hover:text-emerald-300 disabled:opacity-40"
               >
                 <Plus className="w-4 h-4" />
-                Agregar opción
+                {language === 'es' ? 'Agregar opción' : 'Add option'}
               </button>
+              {allowOther ? (
+                <p className="mt-3 rounded-lg border border-dashed border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-slate-400">
+                  {language === 'es'
+                    ? 'Otro (la persona escribe su respuesta)'
+                    : 'Other (the voter types their answer)'}
+                </p>
+              ) : null}
+              <label className="mt-4 flex cursor-pointer items-start gap-3">
+                <input
+                  type="checkbox"
+                  checked={voteModeRanked}
+                  onChange={(e) => setVoteModeRanked(e.target.checked)}
+                  className="mt-1 h-4 w-4 rounded border-white/20 bg-transparent text-emerald-500"
+                />
+                <span>
+                  <span className="block text-sm font-medium text-gray-200">
+                    {language === 'es'
+                      ? 'Voto ordenado (hasta 3 opciones)'
+                      : 'Ranked vote (up to 3 options)'}
+                  </span>
+                  <span className="mt-1 block text-xs text-gray-500">
+                    {language === 'es'
+                      ? 'Solo la primera opción recibe el peso de confianza; la 2 y 3 son señal de preferencia.'
+                      : 'Only first choice gets the confidence weight; 2nd and 3rd are preference signal.'}
+                  </span>
+                </span>
+              </label>
+              <label className="mt-3 flex cursor-pointer items-start gap-3">
+                <input
+                  type="checkbox"
+                  checked={allowOther}
+                  onChange={(e) => setAllowOther(e.target.checked)}
+                  className="mt-1 h-4 w-4 rounded border-white/20 bg-transparent text-emerald-500"
+                />
+                <span>
+                  <span className="block text-sm font-medium text-gray-200">
+                    {language === 'es'
+                      ? 'Incluir opción "Otro"'
+                      : 'Include an "Other" option'}
+                  </span>
+                  <span className="mt-1 block text-xs text-gray-500">
+                    {language === 'es'
+                      ? 'Opción extra (no cuenta en el límite de 2 a 6). Quien la elija debe escribir su respuesta (máx. 120).'
+                      : 'Extra option (does not count toward the 2–6 cap). Voters who pick it must type an answer (max 120).'}
+                  </span>
+                </span>
+              </label>
             </div>
           </section>
 

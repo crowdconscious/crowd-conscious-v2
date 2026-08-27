@@ -39,13 +39,15 @@ export async function GET(
             is_correct: boolean | null
             bonus_xp: number | null
             created_at: string
+            rankings?: unknown
+            other_text?: string | null
           }
         | null = null
 
       if (participant?.id) {
         const { data } = await admin
           .from('market_votes')
-          .select('id, outcome_id, confidence, xp_earned, is_correct, bonus_xp, created_at')
+          .select('id, outcome_id, confidence, xp_earned, is_correct, bonus_xp, created_at, rankings, other_text')
           .eq('market_id', id)
           .eq('anonymous_participant_id', participant.id)
           .maybeSingle()
@@ -55,7 +57,7 @@ export async function GET(
       if (!voteRow) {
         const { data: legacy } = await admin
           .from('market_votes')
-          .select('id, outcome_id, confidence, xp_earned, is_correct, bonus_xp, created_at')
+          .select('id, outcome_id, confidence, xp_earned, is_correct, bonus_xp, created_at, rankings, other_text')
           .eq('market_id', id)
           .eq('user_id', guestId)
           .eq('is_anonymous', true)
@@ -82,6 +84,8 @@ export async function GET(
         bonus_xp: voteRow.bonus_xp ?? 0,
         created_at: voteRow.created_at,
         is_anonymous: true as const,
+        rankings: voteRow.rankings ?? null,
+        other_text: voteRow.other_text ?? null,
       }
 
       return NextResponse.json({ vote })
@@ -90,7 +94,7 @@ export async function GET(
     const supabase = await createClient()
     const { data: voteRow, error } = await supabase
       .from('market_votes')
-      .select('id, outcome_id, confidence, xp_earned, is_correct, bonus_xp, created_at')
+      .select('id, outcome_id, confidence, xp_earned, is_correct, bonus_xp, created_at, rankings, other_text')
       .eq('market_id', id)
       .eq('user_id', user.id)
       .single()
@@ -114,6 +118,8 @@ export async function GET(
       bonus_xp: voteRow.bonus_xp ?? 0,
       created_at: voteRow.created_at,
       is_anonymous: false as const,
+      rankings: (voteRow as { rankings?: unknown }).rankings ?? null,
+      other_text: (voteRow as { other_text?: string | null }).other_text ?? null,
     }
 
     return NextResponse.json({ vote })

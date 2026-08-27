@@ -10,6 +10,7 @@ import { AdminMarketToolbar } from '@/components/predictions/AdminMarketToolbar'
 import { getMarketText } from '@/lib/i18n/market-translations'
 import { SITE_URL } from '@/lib/seo/site'
 import { isAdminUser } from '@/lib/auth/is-admin'
+import { parseRankings } from '@/lib/pulse-vote-ranking'
 
 export const dynamic = 'force-dynamic'
 
@@ -139,13 +140,13 @@ export default async function MarketDetailPage({
       .single(),
     supabase
       .from('market_outcomes')
-      .select('id, label, subtitle, probability, vote_count, total_confidence, is_winner, sort_order, translations')
+      .select('id, label, subtitle, probability, vote_count, total_confidence, is_winner, sort_order, translations, is_other')
       .eq('market_id', id)
       .order('sort_order', { ascending: true }),
     user
       ? supabase
           .from('market_votes')
-          .select('outcome_id, confidence, xp_earned, is_correct, bonus_xp')
+          .select('outcome_id, confidence, xp_earned, is_correct, bonus_xp, rankings, other_text')
           .eq('market_id', id)
           .eq('user_id', user.id)
           .single()
@@ -169,13 +170,23 @@ export default async function MarketDetailPage({
     vote_count: o.vote_count ?? 0,
     total_confidence: o.total_confidence ?? 0,
     is_winner: o.is_winner,
+    is_other: (o as { is_other?: boolean | null }).is_other === true,
     translations: (o as { translations?: unknown }).translations as
       | Record<string, { label?: string; subtitle?: string }>
       | null
       | undefined,
   }))
 
-  let myVote: { outcome_id: string; outcome_label: string; confidence: number; xp_earned: number; is_correct: boolean | null; bonus_xp: number } | null = null
+  let myVote: {
+    outcome_id: string
+    outcome_label: string
+    confidence: number
+    xp_earned: number
+    is_correct: boolean | null
+    bonus_xp: number
+    rankings?: { outcome_id: string; rank: number }[] | null
+    other_text?: string | null
+  } | null = null
   if (myVoteRow) {
     const outcomeLabel = (outcomes || []).find((o) => o.id === myVoteRow.outcome_id)?.label ?? null
     myVote = {
@@ -185,6 +196,8 @@ export default async function MarketDetailPage({
       xp_earned: myVoteRow.xp_earned,
       is_correct: myVoteRow.is_correct,
       bonus_xp: myVoteRow.bonus_xp ?? 0,
+      rankings: parseRankings(myVoteRow.rankings),
+      other_text: myVoteRow.other_text ?? null,
     }
   }
 

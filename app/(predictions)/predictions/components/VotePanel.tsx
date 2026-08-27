@@ -24,6 +24,14 @@ import {
   normalizeVoteReasoning,
   voteReasoningMaxForMarket,
 } from '@/lib/vote-reasoning'
+import {
+  MAX_RANKED_CHOICES,
+  OTHER_TEXT_MAX,
+  orderedIdsToRankings,
+  parseRankings,
+  parseVoteMode,
+  rankingsToOrderedIds,
+} from '@/lib/pulse-vote-ranking'
 
 // All three fields are now first-class columns on prediction_markets (see
 // migrations 126/129/140 + types/database.ts). Re-declaring them here as
@@ -41,6 +49,7 @@ type Outcome = {
   total_confidence: number
   is_winner: boolean | null
   translations?: Record<string, { label?: string; subtitle?: string }> | null
+  is_other?: boolean | null
 }
 
 type MyVote = {
@@ -50,6 +59,8 @@ type MyVote = {
   xp_earned: number
   is_correct: boolean | null
   bonus_xp: number
+  rankings?: { outcome_id: string; rank: number }[] | null
+  other_text?: string | null
 }
 
 export type RelatedMarketBrief = {
@@ -160,6 +171,8 @@ export type GuestVotePayload = {
   outcomeId: string
   confidence: number
   voteYesNo: 'yes' | 'no' | null
+  rankings?: { outcome_id: string; rank: number }[]
+  otherText?: string | null
 }
 
 interface VotePanelProps {
@@ -201,9 +214,13 @@ export function VotePanel({
   const isPulse = isPulseLikeMarket(market)
   const copy = voteActionCopy(loc, isPulse)
   const [selectedOutcomeId, setSelectedOutcomeId] = useState<string | null>(null)
+  const [rankedIds, setRankedIds] = useState<string[]>([])
   const [confidence, setConfidence] = useState(7)
   const [reasoning, setReasoning] = useState('')
+  const [otherText, setOtherText] = useState('')
   const [loading, setLoading] = useState(false)
+
+  const isRanked = parseVoteMode((market as { vote_mode?: string }).vote_mode) === 'ranked'
 
   const reasoningMax = voteReasoningMaxForMarket(market.is_micro_market)
 
@@ -238,10 +255,15 @@ export function VotePanel({
     if (myVote && isAuthenticated) {
       setSelectedOutcomeId(myVote.outcome_id)
       setConfidence(myVote.confidence)
+      const fromRankings = rankingsToOrderedIds(parseRankings(myVote.rankings))
+      setRankedIds(fromRankings.length > 0 ? fromRankings : [myVote.outcome_id])
+      setOtherText(myVote.other_text ?? '')
     }
     if (!myVote && isAuthenticated) {
       setSelectedOutcomeId(null)
+      setRankedIds([])
       setConfidence(7)
+      setOtherText('')
     }
   }, [myVote?.outcome_id, myVote?.confidence, myVote, isAuthenticated])
 
@@ -250,16 +272,34 @@ export function VotePanel({
   }, [selectedOutcomeId])
 
   const selectedOutcome = selectedOutcomeId ? outcomes.find((o) => o.id === selectedOutcomeId) : null
-  const selectedProb = selectedOutcome ? toDecimal(selectedOutcome.probability) : 0
+  const primaryOutcomeId = isRanked ? (rankedIds[0] ?? null) : selectedOutcomeId
+  const primaryOutcome = primaryOutcomeId ? outcomes.find((o) => o.id === primaryOutcomeId) : null
+  const includesOther = isRanked
+    ? rankedIds.some((id) => outcomes.find((o) => o.id === id)?.is_other)
+    : Boolean(selectedOutcome?.is_other)
+  const otherTextOk = !includesOther || otherText.trim().length > 0
+  const canSubmit = Boolean(primaryOutcomeId) && otherTextOk
   const effectiveConfidence = needsUserConfidence
     ? confidence
-    : selectedOutcome
-      ? autoConfidence(selectedProb)
+    : primaryOutcome
+      ? autoConfidence(toDecimal(primaryOutcome.probability))
       : 7
 
+  const toggleRankedOutcome = (id: string) => {
+    setRankedIds((prev) => {
+      const idx = prev.indexOf(id)
+      if (idx >= 0) return prev.filter((x) => x !== id)
+      if (prev.length >= MAX_RANKED_CHOICES) return prev
+      return [...prev, id]
+    })
+  }
+
   const handleVote = async () => {
-    if (!selectedOutcomeId || loading || isClosed) return
+    if (!primaryOutcomeId || loading || isClosed || !canSubmit) return
     if (!isAuthenticated && guestHasVoted) return
+
+    const rankingsPayload = isRanked ? orderedIdsToRankings(rankedIds) : undefined
+    const otherPayload = includesOther ? otherText.trim() : undefined
 
     setLoading(true)
     try {
@@ -273,26 +313,30 @@ export function VotePanel({
           return
         }
         const label = getOutcomeLabel(
-          outcomes.find((o) => o.id === selectedOutcomeId)!,
+          outcomes.find((o) => o.id === primaryOutcomeId)!,
           locale
         ).toLowerCase()
         let voteYesNo: 'yes' | 'no' | null = null
         if (label === 'yes' || label === 'sí' || label === 'si') voteYesNo = 'yes'
         else if (label === 'no') voteYesNo = 'no'
         const payload: GuestVotePayload = {
-          outcomeId: selectedOutcomeId,
+          outcomeId: primaryOutcomeId,
           confidence: effectiveConfidence,
           voteYesNo: isBinary ? voteYesNo : null,
+          rankings: rankingsPayload,
+          otherText: otherPayload ?? null,
         }
         const res = await fetch('/api/votes/anonymous', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             market_id: market.id,
-            outcome_id: selectedOutcomeId,
+            outcome_id: primaryOutcomeId,
             confidence: effectiveConfidence,
             guest_id: guestId,
             reasoning: normalizeVoteReasoning(reasoning, reasoningMax),
+            rankings: rankingsPayload,
+            other_text: otherPayload,
           }),
         })
         const data = await res.json()
@@ -316,9 +360,11 @@ export function VotePanel({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           market_id: market.id,
-          outcome_id: selectedOutcomeId,
+          outcome_id: primaryOutcomeId,
           confidence: effectiveConfidence,
           reasoning: normalizeVoteReasoning(reasoning, reasoningMax),
+          rankings: rankingsPayload,
+          other_text: otherPayload,
         }),
       })
 
@@ -328,7 +374,7 @@ export function VotePanel({
           xpEarned: data.xp_earned,
           isUpdate: data.is_update === true,
           noChange: data.no_change === true,
-          outcomeId: selectedOutcomeId,
+          outcomeId: primaryOutcomeId,
           confidence: effectiveConfidence,
         })
       } else {
@@ -343,32 +389,36 @@ export function VotePanel({
 
   const submitLoadingLabel = locale === 'es' ? 'Enviando…' : 'Submitting...'
   const pickMessageNonPulse =
-    selectedOutcomeId && !needsUserConfidence && selectedOutcome
-      ? getPickMessageNonPulse(toDecimal(selectedOutcome.probability), loc)
+    primaryOutcomeId && !needsUserConfidence && primaryOutcome
+      ? getPickMessageNonPulse(toDecimal(primaryOutcome.probability), loc)
       : null
 
   const sectionLead = isEditing
     ? copy.yourHeading
-    : locale === 'es'
-      ? 'Elige tu voto'
-      : 'Pick your vote'
+    : isRanked
+      ? locale === 'es'
+        ? 'Elige hasta 3 opciones, en orden'
+        : 'Pick up to 3 options, in order'
+      : locale === 'es'
+        ? 'Elige tu voto'
+        : 'Pick your vote'
 
   const renderOutcomeCard = (o: Outcome) => {
-    const isSelected = selectedOutcomeId === o.id
+    const rankIndex = isRanked ? rankedIds.indexOf(o.id) : -1
+    const isSelected = isRanked ? rankIndex >= 0 : selectedOutcomeId === o.id
+    const rankNumber = rankIndex >= 0 ? rankIndex + 1 : null
     const pct = Math.round(toDisplayPercent(o.probability || 0))
     const primary = getOutcomeCardLabel(o, locale)
     const hint = bilingualHint(o, locale)
     const subtitle = getOutcomeSubtitle(o, locale)
-    // Pre-vote cards are choices, not results. The previous full-width progress
-    // bar inside each option made users think they should slide it instead of
-    // tapping. We now render a plain tappable row with the community % as a
-    // subtle social signal on the right; the detailed results bars only appear
-    // after the user has voted.
     return (
       <button
         key={o.id}
         type="button"
-        onClick={() => setSelectedOutcomeId(isSelected ? null : o.id)}
+        onClick={() => {
+          if (isRanked) toggleRankedOutcome(o.id)
+          else setSelectedOutcomeId(isSelected ? null : o.id)
+        }}
         aria-pressed={isSelected}
         className={`
           w-full min-h-[52px] text-left rounded-xl px-4 py-3.5 transition-all duration-200 border
@@ -382,26 +432,39 @@ export function VotePanel({
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <span
               aria-hidden
-              className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border transition-colors ${
+              className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border text-[11px] font-semibold transition-colors ${
                 isSelected
                   ? 'border-emerald-500 bg-emerald-500 text-white'
                   : 'border-white/25 bg-transparent text-transparent'
               }`}
             >
-              <Check className="h-3.5 w-3.5" strokeWidth={3} />
+              {isRanked && rankNumber ? (
+                rankNumber
+              ) : (
+                <Check className="h-3.5 w-3.5" strokeWidth={3} />
+              )}
             </span>
             <div className="min-w-0">
               <p className="text-sm font-medium text-white leading-snug">{primary}</p>
-              {/* Subtitle is the new structured detail line (migration 214).
-                  Bilingual hint is the legacy "(English label)" preview that
-                  only shows when the canonical label uses the " / " separator.
-                  Both can coexist on a row that has a subtitle AND happens to
-                  also be bilingual; we render subtitle first because it's the
-                  authoritative source going forward. */}
               {subtitle ? (
                 <p className="mt-1 text-sm leading-snug text-gray-400">{subtitle}</p>
               ) : null}
               {hint ? <p className="text-[11px] text-gray-500 mt-0.5">({hint})</p> : null}
+              {isRanked && isSelected ? (
+                <p className="mt-0.5 text-[11px] text-emerald-400/80">
+                  {rankNumber === 1
+                    ? locale === 'es'
+                      ? '1.ª preferencia'
+                      : '1st preference'
+                    : rankNumber === 2
+                      ? locale === 'es'
+                        ? '2.ª preferencia'
+                        : '2nd preference'
+                      : locale === 'es'
+                        ? '3.ª preferencia'
+                        : '3rd preference'}
+                </p>
+              ) : null}
             </div>
           </div>
           <div className="text-right shrink-0">
@@ -417,8 +480,6 @@ export function VotePanel({
               </span>
             ) : (
               <span aria-hidden className="text-xs font-medium text-transparent">
-                {/* Reserve the same horizontal slot the % occupies so the row
-                    layout doesn't jump when results are revealed after vote. */}
                 00%
               </span>
             )}
@@ -429,7 +490,7 @@ export function VotePanel({
   }
 
   const reasoningBlock =
-    selectedOutcomeId && !isResolved && (!guestHasVoted || isAuthenticated) ? (
+    primaryOutcomeId && !isResolved && (!guestHasVoted || isAuthenticated) ? (
       <div className="mt-3 rounded-xl border border-white/[0.08] bg-white/[0.02] p-4">
         <div className="mb-2 flex items-center justify-between">
           <span className="text-sm text-gray-400">
@@ -464,8 +525,43 @@ export function VotePanel({
       </div>
     ) : null
 
+  const otherTextBlock =
+    includesOther && !isResolved && (!guestHasVoted || isAuthenticated) ? (
+      <div className="mt-3 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.04] p-4">
+        <div className="mb-2 flex items-center justify-between">
+          <span className="text-sm text-gray-300">
+            {locale === 'es' ? 'Tu respuesta en Otro' : 'Your Other answer'}
+            <span className="ml-1 text-red-400">*</span>
+          </span>
+          <span className="text-xs text-gray-600">
+            {otherText.length}/{OTHER_TEXT_MAX}
+          </span>
+        </div>
+        <input
+          type="text"
+          value={otherText}
+          onChange={(e) => {
+            const v = e.target.value
+            if (v.length <= OTHER_TEXT_MAX) setOtherText(v)
+          }}
+          placeholder={
+            locale === 'es' ? 'Escribe tu opción (máx. 120)' : 'Type your option (max 120)'
+          }
+          maxLength={OTHER_TEXT_MAX}
+          className="w-full rounded-lg border border-white/[0.1] bg-white/[0.03] px-3 py-2.5 text-sm text-white placeholder:text-gray-600 focus:border-emerald-500/30 focus:outline-none"
+        />
+        {!otherTextOk ? (
+          <p className="mt-1.5 text-[11px] text-amber-400/90">
+            {locale === 'es'
+              ? 'Requerido si eliges Otro'
+              : 'Required when you pick Other'}
+          </p>
+        ) : null}
+      </div>
+    ) : null
+
   const confidenceBlock =
-    selectedOutcomeId && needsUserConfidence ? (
+    primaryOutcomeId && needsUserConfidence ? (
       <div className="mt-4 p-4 bg-white/[0.03] rounded-xl border border-white/5">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs text-gray-400">
@@ -502,7 +598,7 @@ export function VotePanel({
 
   const primarySubmitLabel = submitPrimaryLabel(isPulse, locale, isEditing, copy)
 
-  const submitBlock = selectedOutcomeId ? (
+  const submitBlock = primaryOutcomeId ? (
     <div className="mt-4 space-y-3">
       {!needsUserConfidence && pickMessageNonPulse ? (
         <p className="text-amber-400/90 text-sm font-medium">{pickMessageNonPulse}</p>
@@ -510,7 +606,7 @@ export function VotePanel({
       <button
         type="button"
         onClick={handleVote}
-        disabled={loading}
+        disabled={loading || !canSubmit}
         className="w-full min-h-[48px] bg-emerald-500 text-white py-3.5 rounded-xl font-semibold text-sm hover:bg-emerald-600 active:scale-[0.98] transition-all disabled:opacity-50 disabled:active:scale-100"
       >
         {loading ? submitLoadingLabel : primarySubmitLabel}
@@ -785,6 +881,13 @@ export function VotePanel({
 
       <div className="px-4 py-4">
         <div className="flex flex-col gap-2">{outcomes.map((o) => renderOutcomeCard(o))}</div>
+        {isRanked && !shouldRevealResults ? (
+          <p className="mt-2 text-[11px] text-gray-500 text-center">
+            {locale === 'es'
+              ? 'Toca para ordenar (1, 2, 3). Solo la primera cuenta para el resultado ponderado.'
+              : 'Tap to order (1, 2, 3). Only first choice counts toward the weighted result.'}
+          </p>
+        ) : null}
 
         {!shouldRevealResults && (
           <p className="mt-3 text-[11px] text-gray-500 text-center">
@@ -795,6 +898,8 @@ export function VotePanel({
         )}
 
         {confidenceBlock}
+
+        {otherTextBlock}
 
         {reasoningBlock}
 

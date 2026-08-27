@@ -7,17 +7,33 @@ export type PulseCsvVote = {
   confidence: number
   kind: 'registered' | 'anonymous'
   reasoning?: string | null
+  rank2_label?: string
+  rank3_label?: string
+  other_text?: string | null
 }
 
 export function exportPulseVotesCsv(votes: PulseCsvVote[], marketTitle: string) {
-  const headers = ['Date_UTC', 'Date_CDMX', 'Outcome', 'Confidence', 'Type', 'Reasoning']
+  const headers = [
+    'Date_UTC',
+    'Date_CDMX',
+    'Outcome',
+    'Rank_2',
+    'Rank_3',
+    'Confidence',
+    'Type',
+    'Reasoning',
+    'Other_text',
+  ]
   const rows = votes.map((v) => [
     new Date(v.created_at).toISOString(),
     `"${formatVoteTimestampCdmx(v.created_at, 'es').replace(/"/g, '""')}"`,
     `"${(v.outcome_label || v.outcome_id).replace(/"/g, '""')}"`,
+    `"${String(v.rank2_label ?? '').replace(/"/g, '""')}"`,
+    `"${String(v.rank3_label ?? '').replace(/"/g, '""')}"`,
     String(v.confidence),
     v.kind,
     `"${String(v.reasoning ?? '').replace(/"/g, '""')}"`,
+    `"${String(v.other_text ?? '').replace(/"/g, '""')}"`,
   ])
   const csv = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n')
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })

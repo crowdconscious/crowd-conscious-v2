@@ -1,3 +1,5 @@
+import { groupOtherTexts, parseRankings } from '@/lib/pulse-vote-ranking'
+
 /**
  * Server-side vote aggregation for the public /pulse/[id] surface.
  *
@@ -13,10 +15,23 @@
  * inserts in the enhanced view.
  */
 
+export type PulsePreferenceStats = {
+  rank2Count: number
+  rank3Count: number
+}
+
+export type PulseOtherTextGroup = {
+  text: string
+  count: number
+}
+
 export type PulseVoteLike = {
   confidence: number | null
   outcome_id: string
   created_at: string
+  /** Ranked mode jsonb; ignored for rank-1 bars (those use outcome_id). */
+  rankings?: unknown
+  other_text?: string | null
 }
 
 export type PulseOutcomeVoteStats = {
@@ -37,6 +52,9 @@ export type PulseVoteAggregates = {
   confidenceHistogram: number[]
   byOutcome: Record<string, PulseOutcomeVoteStats>
   timeline: PulseTimelineBucket[]
+  /** Rank 2/3 mention counts — preference signal, not confidence weight. */
+  preferenceByOutcome: Record<string, PulsePreferenceStats>
+  otherTextGroups: PulseOtherTextGroup[]
 }
 
 function isValidConfidence(c: number | null): c is number {
@@ -46,7 +64,9 @@ function isValidConfidence(c: number | null): c is number {
 export function aggregatePulseVotes(votes: PulseVoteLike[]): PulseVoteAggregates {
   const confidenceHistogram = Array.from({ length: 10 }, () => 0)
   const byOutcome: Record<string, PulseOutcomeVoteStats> = {}
+  const preferenceByOutcome: Record<string, PulsePreferenceStats> = {}
   const timelineMap = new Map<string, number>()
+  const otherTexts: Array<string | null | undefined> = []
 
   for (const v of votes) {
     const stats = (byOutcome[v.outcome_id] ??= {
@@ -64,6 +84,18 @@ export function aggregatePulseVotes(votes: PulseVoteLike[]): PulseVoteAggregates
 
     const hour = new Date(v.created_at).toISOString().slice(0, 13)
     timelineMap.set(hour, (timelineMap.get(hour) ?? 0) + 1)
+
+    const rankings = parseRankings(v.rankings)
+    if (rankings) {
+      for (const r of rankings) {
+        if (r.rank !== 2 && r.rank !== 3) continue
+        const pref = (preferenceByOutcome[r.outcome_id] ??= { rank2Count: 0, rank3Count: 0 })
+        if (r.rank === 2) pref.rank2Count++
+        else pref.rank3Count++
+      }
+    }
+
+    otherTexts.push(v.other_text)
   }
 
   const timeline = [...timelineMap.entries()]
@@ -75,6 +107,8 @@ export function aggregatePulseVotes(votes: PulseVoteLike[]): PulseVoteAggregates
     confidenceHistogram,
     byOutcome,
     timeline,
+    preferenceByOutcome,
+    otherTextGroups: groupOtherTexts(otherTexts),
   }
 }
 

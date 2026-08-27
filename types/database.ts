@@ -503,6 +503,8 @@ export interface Database {
           sort_order: number | null
           is_winner: boolean | null
           created_at: string
+          /** Special "Otro"/"Other" bucket. Migration 256. */
+          is_other: boolean
         }
         Insert: {
           id?: string
@@ -517,6 +519,7 @@ export interface Database {
           sort_order?: number | null
           is_winner?: boolean | null
           created_at?: string
+          is_other?: boolean
         }
         Update: {
           id?: string
@@ -531,6 +534,7 @@ export interface Database {
           sort_order?: number | null
           is_winner?: boolean | null
           created_at?: string
+          is_other?: boolean
         }
         Relationships: []
       }
@@ -592,6 +596,10 @@ export interface Database {
           updated_at?: string | null
           change_count?: number | null
           reasoning?: string | null
+          /** Ranked mode: [{outcome_id, rank}]. Rank 1 matches outcome_id. Migration 256. */
+          rankings?: Json | null
+          /** Required when a selected/ranked outcome has is_other. Max 120. Migration 256. */
+          other_text?: string | null
         }
         Insert: {
           id?: string
@@ -607,6 +615,8 @@ export interface Database {
           is_anonymous?: boolean
           created_at?: string
           reasoning?: string | null
+          rankings?: Json | null
+          other_text?: string | null
         }
         Update: {
           id?: string
@@ -622,6 +632,8 @@ export interface Database {
           is_anonymous?: boolean
           created_at?: string
           reasoning?: string | null
+          rankings?: Json | null
+          other_text?: string | null
         }
         Relationships: []
       }
@@ -665,6 +677,10 @@ export interface Database {
           sponsor_label: string | null
           expires_in_minutes: number | null
           is_pulse: boolean
+          /** single (default) | ranked. Migration 256. Existing Pulses stay single. */
+          vote_mode?: 'single' | 'ranked'
+          /** Extra "Otro" outcome beyond the 2–6 listed options. Migration 256. */
+          allow_other?: boolean
           pulse_client_name: string | null
           pulse_client_logo: string | null
           pulse_client_email: string | null
@@ -741,6 +757,8 @@ export interface Database {
           sponsor_label?: string | null
           expires_in_minutes?: number | null
           is_pulse?: boolean
+          vote_mode?: 'single' | 'ranked'
+          allow_other?: boolean
           pulse_client_name?: string | null
           pulse_client_logo?: string | null
           pulse_client_email?: string | null
@@ -800,6 +818,8 @@ export interface Database {
           sponsor_label?: string | null
           expires_in_minutes?: number | null
           is_pulse?: boolean
+          vote_mode?: 'single' | 'ranked'
+          allow_other?: boolean
           pulse_client_name?: string | null
           pulse_client_logo?: string | null
           pulse_client_email?: string | null
@@ -2452,6 +2472,30 @@ export interface Database {
           p_market_id: string
           p_outcome_id: string
           p_confidence: number
+          p_rankings?: Json | null
+          p_other_text?: string | null
+        }
+        Returns: Json
+      }
+      execute_market_vote: {
+        Args: {
+          p_user_id: string
+          p_market_id: string
+          p_outcome_id: string
+          p_confidence: number
+          p_rankings?: Json | null
+          p_other_text?: string | null
+        }
+        Returns: Json
+      }
+      execute_anonymous_market_vote: {
+        Args: {
+          p_guest_id: string
+          p_market_id: string
+          p_outcome_id: string
+          p_confidence: number
+          p_rankings?: Json | null
+          p_other_text?: string | null
         }
         Returns: Json
       }

@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { normalizeVoteReasoning, voteReasoningMaxForMarket } from '@/lib/vote-reasoning'
 import { persistVoteReasoning } from '@/lib/persist-vote-reasoning'
+import {
+  normalizeOtherText,
+  parseRankings,
+} from '@/lib/pulse-vote-ranking'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -17,6 +21,11 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
     const { market_id, outcome_id, confidence, guest_id, reasoning: rawReasoning } = body
+    const rankings = parseRankings(body.rankings)
+    const otherNorm = normalizeOtherText(body.other_text ?? body.otherText)
+    if (!otherNorm.ok) {
+      return NextResponse.json({ error: otherNorm.error }, { status: 400 })
+    }
 
     if (!market_id || !outcome_id || !guest_id) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -60,6 +69,8 @@ export async function POST(request: Request) {
       p_market_id: market_id,
       p_outcome_id: outcome_id,
       p_confidence: conf,
+      p_rankings: rankings,
+      p_other_text: otherNorm.text,
     })
 
     if (rpcError) {

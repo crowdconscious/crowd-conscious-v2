@@ -14,6 +14,8 @@ export type GuestVoteRecord = {
   outcomeId: string
   confidence: number
   voteYesNo: 'yes' | 'no' | null
+  rankings?: { outcome_id: string; rank: number }[]
+  otherText?: string | null
 }
 
 /** Stable per-browser guest id (not an auth user). */

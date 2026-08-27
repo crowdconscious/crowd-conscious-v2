@@ -12,6 +12,7 @@ import PulseResultClient, {
 } from '@/components/pulse/PulseResultClient'
 import type { PulseSimReveal } from '@/components/pulse/PulseSimRevealModule'
 import { aggregatePulseVotes } from '@/lib/pulse-vote-aggregates'
+import { parseVoteMode } from '@/lib/pulse-vote-ranking'
 import { DraftBanner } from '@/components/predictions/DraftBanner'
 import { AdminMarketToolbar } from '@/components/predictions/AdminMarketToolbar'
 import { loadMarketVoteReasoningsWithAuthors } from '@/lib/market-vote-reasonings'
@@ -131,13 +132,15 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
       category,
       created_by,
       is_draft,
+      vote_mode,
+      allow_other,
       pulse_client_name,
       pulse_client_logo,
       sponsor_name,
       sponsor_logo_url,
       sponsor_account_id,
-      market_outcomes ( id, label, subtitle, probability, sort_order, translations ),
-      market_votes ( id, confidence, outcome_id, created_at, user_id, anonymous_participant_id, reasoning )
+      market_outcomes ( id, label, subtitle, probability, sort_order, translations, is_other ),
+      market_votes ( id, confidence, outcome_id, created_at, user_id, anonymous_participant_id, reasoning, rankings, other_text )
     `
     )
     .eq('id', id)
@@ -329,6 +332,8 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
         sponsorName={market.sponsor_name}
         sponsorLogoUrl={market.sponsor_logo_url}
         outcomes={outcomes}
+        voteMode={parseVoteMode((market as { vote_mode?: string }).vote_mode)}
+        allowOther={(market as { allow_other?: boolean }).allow_other === true}
         aggregates={aggregates}
         viewerVote={viewerVote}
         enhancedVotes={isEnhancedView ? votes : undefined}

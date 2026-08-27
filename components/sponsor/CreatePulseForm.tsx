@@ -98,6 +98,8 @@ export default function CreatePulseForm({
   const [durationDays, setDurationDays] = useState<number>(PULSE_DEFAULT_DURATION_DAYS)
   const [customDate, setCustomDate] = useState('')
   const [durationMode, setDurationMode] = useState<'preset' | 'custom'>('preset')
+  const [voteModeRanked, setVoteModeRanked] = useState(false)
+  const [allowOther, setAllowOther] = useState(false)
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -296,6 +298,8 @@ export default function CreatePulseForm({
           ...(durationMode === 'custom'
             ? { end_date: customDate ? new Date(customDate).toISOString() : null }
             : { duration_days: durationDays }),
+          vote_mode: voteModeRanked ? 'ranked' : 'single',
+          allow_other: allowOther,
         }),
       })
       const data = await res.json()
@@ -326,6 +330,8 @@ export default function CreatePulseForm({
           setDescription('')
           setOptions([emptyOutcome(), emptyOutcome()])
           setCoverImageUrl('')
+          setVoteModeRanked(false)
+          setAllowOther(false)
           setError('')
         }}
       />
@@ -632,6 +638,41 @@ export default function CreatePulseForm({
               {t('create_form.field_options_add')}
             </button>
           ) : null}
+
+          {allowOther ? (
+            <p className="mt-3 rounded-lg border border-dashed border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-slate-400">
+              {t('create_form.field_other_preview')}
+            </p>
+          ) : null}
+
+          <label className="mt-4 flex cursor-pointer items-start gap-3">
+            <input
+              type="checkbox"
+              checked={voteModeRanked}
+              onChange={(e) => setVoteModeRanked(e.target.checked)}
+              className="mt-1 h-4 w-4 rounded border-white/20 bg-transparent text-emerald-500"
+            />
+            <span>
+              <span className="block text-sm font-medium text-gray-200">
+                {t('create_form.field_ranked_label')}
+              </span>
+              <span className={helpClass}>{t('create_form.field_ranked_help')}</span>
+            </span>
+          </label>
+          <label className="mt-3 flex cursor-pointer items-start gap-3">
+            <input
+              type="checkbox"
+              checked={allowOther}
+              onChange={(e) => setAllowOther(e.target.checked)}
+              className="mt-1 h-4 w-4 rounded border-white/20 bg-transparent text-emerald-500"
+            />
+            <span>
+              <span className="block text-sm font-medium text-gray-200">
+                {t('create_form.field_allow_other_label')}
+              </span>
+              <span className={helpClass}>{t('create_form.field_allow_other_help')}</span>
+            </span>
+          </label>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">

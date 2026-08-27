@@ -176,8 +176,18 @@ type Outcome = {
   /** Migration 214 — per-locale {label,subtitle} overrides. Shape matches
       what VotePanel expects so the same array can flow into both. */
   translations?: Record<string, { label?: string; subtitle?: string }> | null
+  is_other?: boolean
 }
-type MyVote = { outcome_id: string; outcome_label: string; confidence: number; xp_earned: number; is_correct: boolean | null; bonus_xp: number } | null
+type MyVote = {
+  outcome_id: string
+  outcome_label: string
+  confidence: number
+  xp_earned: number
+  is_correct: boolean | null
+  bonus_xp: number
+  rankings?: { outcome_id: string; rank: number }[] | null
+  other_text?: string | null
+} | null
 
 export type RelatedMarketSummary = {
   id: string

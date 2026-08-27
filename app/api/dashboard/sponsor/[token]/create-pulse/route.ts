@@ -11,6 +11,12 @@ import {
   outcomeTranslationsPayload,
 } from '@/lib/pulse/outcome-input'
 import { firstPulseBrandingViolation } from '@/lib/contentPolicy'
+import {
+  LISTED_OUTCOMES_MAX,
+  otherOutcomeInsertRow,
+  parseAllowOther,
+  parseVoteMode,
+} from '@/lib/pulse-vote-ranking'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -70,10 +76,18 @@ export async function POST(
     const sponsorLogoUrl =
       typeof body.sponsor_logo_url === 'string' ? body.sponsor_logo_url.trim() || null : null
     const normalizedOutcomes = normalizePulseOutcomes(body.outcomes)
+    const voteMode = parseVoteMode(body.vote_mode ?? body.voteMode)
+    const allowOther = parseAllowOther(body.allow_other ?? body.allowOther)
 
     if (!title || normalizedOutcomes.length < 2) {
       return NextResponse.json(
         { error: 'Title and at least two community options are required' },
+        { status: 400 }
+      )
+    }
+    if (normalizedOutcomes.length > LISTED_OUTCOMES_MAX) {
+      return NextResponse.json(
+        { error: `Maximum ${LISTED_OUTCOMES_MAX} listed options. Other is extra.` },
         { status: 400 }
       )
     }
@@ -149,6 +163,8 @@ export async function POST(
         cover_image_url: coverImageUrl,
         sponsor_logo_url: effectiveSponsorLogo,
         resolution_criteria: PULSE_DEFAULT_RESOLUTION_CRITERIA,
+        vote_mode: voteMode,
+        allow_other: allowOther,
       })
       .eq('id', marketId as string)
 
@@ -178,6 +194,27 @@ export async function POST(
           if (Object.keys(patch).length === 0) continue
           await admin.from('market_outcomes').update(patch).eq('id', row.id)
         }
+      }
+    }
+
+    if (allowOther) {
+      const { error: otherErr } = await admin
+        .from('market_outcomes')
+        .insert(otherOutcomeInsertRow(marketId as string, normalizedOutcomes.length))
+      if (otherErr) {
+        console.error('[create-pulse] other outcome', otherErr)
+        return NextResponse.json({ error: otherErr.message }, { status: 500 })
+      }
+      const { data: allOutcomes } = await admin
+        .from('market_outcomes')
+        .select('id')
+        .eq('market_id', marketId)
+      const n = allOutcomes?.length ?? 0
+      if (n > 0) {
+        await admin
+          .from('market_outcomes')
+          .update({ probability: 1 / n })
+          .eq('market_id', marketId)
       }
     }
 

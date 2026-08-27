@@ -14,6 +14,8 @@ import OutcomeConfidenceTable from './OutcomeConfidenceTable'
 import PulseSimRevealModule, { type PulseSimReveal } from './PulseSimRevealModule'
 import PulseSimTeaser from './PulseSimTeaser'
 import { exportPulseVotesCsv, type PulseCsvVote } from './pulse-export-csv'
+import { parseRankings } from '@/lib/pulse-vote-ranking'
+import { shouldRevealCount } from '@/lib/display/participation'
 import {
   aggregatePulseVotes,
   histogramConfidenceSum,
@@ -31,6 +33,8 @@ export type PulseVoteRow = {
   user_id: string | null
   anonymous_participant_id: string | null
   reasoning?: string | null
+  rankings?: unknown
+  other_text?: string | null
 }
 
 /** The only per-vote data a public viewer receives: their own vote. */
@@ -55,6 +59,7 @@ export type PulseOutcomeRow = {
   probability: number
   sort_order: number | null
   translations?: unknown
+  is_other?: boolean | null
 }
 
 type Props = {
@@ -73,6 +78,8 @@ type Props = {
   sponsorName: string | null
   sponsorLogoUrl: string | null
   outcomes: PulseOutcomeRow[]
+  voteMode?: 'single' | 'ranked'
+  allowOther?: boolean
   /**
    * Server-side vote aggregation. The public payload deliberately carries no
    * per-vote rows (no voter user_ids, bounded size) — see
@@ -119,6 +126,8 @@ export default function PulseResultClient({
   sponsorName,
   sponsorLogoUrl,
   outcomes: initialOutcomes,
+  voteMode = 'single',
+  allowOther = false,
   aggregates: serverAggregates,
   viewerVote = null,
   enhancedVotes,
@@ -249,14 +258,22 @@ export default function PulseResultClient({
   )
 
   const csvRows = useMemo((): PulseCsvVote[] => {
-    return votes.map((v) => ({
-      created_at: v.created_at,
-      outcome_id: v.outcome_id,
-      outcome_label: outcomeLabelById(v.outcome_id),
-      confidence: typeof v.confidence === 'number' ? v.confidence : 0,
-      kind: v.user_id ? 'registered' : 'anonymous',
-      reasoning: v.reasoning ?? null,
-    }))
+    return votes.map((v) => {
+      const ranks = parseRankings(v.rankings)
+      const rank2 = ranks?.find((r) => r.rank === 2)?.outcome_id
+      const rank3 = ranks?.find((r) => r.rank === 3)?.outcome_id
+      return {
+        created_at: v.created_at,
+        outcome_id: v.outcome_id,
+        outcome_label: outcomeLabelById(v.outcome_id),
+        confidence: typeof v.confidence === 'number' ? v.confidence : 0,
+        kind: v.user_id ? 'registered' : 'anonymous',
+        reasoning: v.reasoning ?? null,
+        rank2_label: rank2 ? outcomeLabelById(rank2) : '',
+        rank3_label: rank3 ? outcomeLabelById(rank3) : '',
+        other_text: v.other_text ?? '',
+      }
+    })
   }, [votes, outcomeLabelById])
 
   const leadingOutcome = useMemo(() => {
@@ -426,6 +443,7 @@ export default function PulseResultClient({
 
             <div className="pulse-section mt-8">
               {shouldRevealResults ? (
+                <>
                 <PulseResultsCard
                   outcomes={outcomes}
                   totalVotes={totalVotes}
@@ -433,6 +451,81 @@ export default function PulseResultClient({
                   locale={locale}
                   className="animate-[fade-in_300ms_ease-out]"
                 />
+                {voteMode === 'ranked' &&
+                Object.values(aggregates.preferenceByOutcome ?? {}).some(
+                  (p) => p.rank2Count + p.rank3Count > 0
+                ) ? (
+                  <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.02] p-4">
+                    <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      {locale === 'es'
+                        ? 'También eligieron como 2.ª o 3.ª'
+                        : 'Also ranked 2nd or 3rd'}
+                    </h4>
+                    <p className="mt-1 text-[11px] text-slate-500">
+                      {locale === 'es'
+                        ? 'Señal de preferencia. No suma al peso de confianza de los resultados de arriba.'
+                        : 'Preference signal. Does not add confidence weight to the results above.'}
+                    </p>
+                    <ul className="mt-3 space-y-1.5">
+                      {outcomes.map((o) => {
+                        const pref = aggregates.preferenceByOutcome?.[o.id]
+                        const n = (pref?.rank2Count ?? 0) + (pref?.rank3Count ?? 0)
+                        if (n === 0) return null
+                        return (
+                          <li
+                            key={o.id}
+                            className="flex justify-between gap-3 text-sm text-slate-300"
+                          >
+                            <span className="min-w-0 truncate">
+                              {getOutcomeLabel(o, locale)}
+                            </span>
+                            <span className="shrink-0 tabular-nums text-slate-500">
+                              {shouldRevealCount(n)
+                                ? locale === 'es'
+                                  ? `${n} mención${n === 1 ? '' : 'es'}`
+                                  : `${n} mention${n === 1 ? '' : 's'}`
+                                : locale === 'es'
+                                  ? 'Menciones'
+                                  : 'Mentions'}
+                            </span>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  </div>
+                ) : null}
+                {(allowOther || (aggregates.otherTextGroups?.length ?? 0) > 0) &&
+                (aggregates.otherTextGroups?.length ?? 0) > 0 ? (
+                  <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.02] p-4">
+                    <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      {locale === 'es' ? 'Respuestas en Otro' : 'Other answers'}
+                    </h4>
+                    <p className="mt-1 text-[11px] text-slate-500">
+                      {locale === 'es'
+                        ? 'Textos únicos. El peso de confianza de "Otro" está en la barra de arriba.'
+                        : 'Unique texts. The confidence weight for Other is in the bar above.'}
+                    </p>
+                    <ul className="mt-3 space-y-1.5">
+                      {aggregates.otherTextGroups.map((g) => {
+                        const showCount = shouldRevealCount(g.count)
+                        return (
+                          <li
+                            key={g.text}
+                            className="flex justify-between gap-3 text-sm text-slate-300"
+                          >
+                            <span className="min-w-0 break-words">{g.text}</span>
+                            {showCount ? (
+                              <span className="shrink-0 tabular-nums text-slate-500">
+                                {g.count}
+                              </span>
+                            ) : null}
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  </div>
+                ) : null}
+                </>
               ) : (
                 // Pre-vote: keep the label/subtitle list (no %, no bar) so the
                 // user can read every option before they vote. Replaces the
