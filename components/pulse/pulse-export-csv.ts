@@ -1,3 +1,5 @@
+import { formatVoteTimestampCdmx } from '@/lib/pulse-vote-timing'
+
 export type PulseCsvVote = {
   created_at: string
   outcome_id: string
@@ -8,9 +10,10 @@ export type PulseCsvVote = {
 }
 
 export function exportPulseVotesCsv(votes: PulseCsvVote[], marketTitle: string) {
-  const headers = ['Date', 'Outcome', 'Confidence', 'Type', 'Reasoning']
+  const headers = ['Date_UTC', 'Date_CDMX', 'Outcome', 'Confidence', 'Type', 'Reasoning']
   const rows = votes.map((v) => [
     new Date(v.created_at).toISOString(),
+    `"${formatVoteTimestampCdmx(v.created_at, 'es').replace(/"/g, '""')}"`,
     `"${(v.outcome_label || v.outcome_id).replace(/"/g, '""')}"`,
     String(v.confidence),
     v.kind,

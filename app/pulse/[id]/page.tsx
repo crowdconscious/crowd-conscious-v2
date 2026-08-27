@@ -124,6 +124,8 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
       translations,
       status,
       resolution_date,
+      created_at,
+      published_at,
       is_pulse,
       market_type,
       category,
@@ -317,6 +319,11 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
         translations={market.translations}
         status={market.status}
         resolutionDate={market.resolution_date}
+        openedAt={
+          (market as { published_at?: string | null }).published_at ??
+          (market as { created_at?: string }).created_at ??
+          null
+        }
         pulseClientName={market.pulse_client_name}
         pulseClientLogo={market.pulse_client_logo}
         sponsorName={market.sponsor_name}

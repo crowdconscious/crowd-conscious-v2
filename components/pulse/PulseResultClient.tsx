@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase-client'
 import { getVotedGuestIdForMarket } from '@/lib/guest-vote-storage'
 import ConfidenceHistogram from './ConfidenceHistogram'
 import VoteTimeline from './VoteTimeline'
+import VoteTimingSummary from './VoteTimingSummary'
 import PulseOutcomeBars from './PulseOutcomeBars'
 import PulseResultsCard from './PulseResultsCard'
 import OutcomeConfidenceTable from './OutcomeConfidenceTable'
@@ -65,6 +66,8 @@ type Props = {
   translations: unknown
   status: string
   resolutionDate: string
+  /** Market created_at / published_at — Pulse duration context for analytics. */
+  openedAt?: string | null
   pulseClientName: string | null
   pulseClientLogo: string | null
   sponsorName: string | null
@@ -110,6 +113,7 @@ export default function PulseResultClient({
   translations,
   status,
   resolutionDate,
+  openedAt = null,
   pulseClientName,
   pulseClientLogo,
   sponsorName,
@@ -579,6 +583,14 @@ export default function PulseResultClient({
 
             {isEnhancedView && (
               <div className="mt-8 space-y-6">
+                {votes.length > 0 ? (
+                  <VoteTimingSummary
+                    votes={votes}
+                    locale={locale}
+                    openAt={openedAt}
+                    closeAt={resolutionDate}
+                  />
+                ) : null}
                 <div className="pulse-section">
                   <OutcomeConfidenceTable
                     outcomes={outcomes.map((o) => ({ id: o.id, label: getOutcomeLabel(o, locale) }))}
