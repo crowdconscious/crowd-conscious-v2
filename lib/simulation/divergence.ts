@@ -15,10 +15,15 @@
  *
  * Both inputs use the same shape the pipeline stores on `simulation_runs.aggregates`
  * (§5.1/§5.5): `option_shares` (option → share in 0–1) and `avg_confidence_by_option`
- * (option → average confidence in 1–10). The REAL side is built by the caller from
- * `lib/pulse-vote-aggregates.ts` (outcome count / total for shares,
- * `outcomeAvgConfidence` for the confidence map) so the real and simulated numbers
- * are computed identically — otherwise the comparison is invalid (§1.5).
+ * (option → average confidence in 1–10). The `option_shares` the caller feeds here
+ * is the CONFIDENCE-WEIGHTED share (Σconfidence(o) / Σconfidence(all)) — the same
+ * quantity Pulses resolve on (migration 251) and the same quantity the public
+ * Results card renders (`market_outcomes.probability`) — so the reveal's "Real"
+ * column, the Results card, and this index all describe the IDENTICAL real number.
+ * Both sides are built by the caller from `lib/pulse-vote-aggregates.ts`
+ * (`computeAggregateSnapshot` for shares, `outcomeAvgConfidence` for the confidence
+ * map) so the real and simulated numbers are computed identically — otherwise the
+ * comparison is invalid (§1.5).
  *
  * Pure and deterministic: no I/O, no clock, no randomness.
  */
@@ -30,7 +35,11 @@
  * real snapshot and the simulated snapshot are the identical shape.
  */
 export interface AggregateSnapshot {
-  /** option label → share of the vote in 0–1. Options not present count as 0. */
+  /**
+   * option label → the canonical DISPLAY share of the vote in 0–1 (the
+   * confidence-weighted share for Pulses, matching `market_outcomes.probability`
+   * and the Results card). Options not present count as 0.
+   */
   option_shares: Readonly<Record<string, number>>;
   /**
    * option label → average confidence in 1–10. An option may be absent here even
@@ -70,6 +79,11 @@ export interface DivergenceResult {
   /** Normalized mean confidence gap, 0–1. */
   delta_confidence: number;
   per_option: DivergencePerOption[];
+  /**
+   * ISO timestamp attached when the result is stored on `simulation_runs`.
+   * The pure `computeDivergence` function never sets this (no clock).
+   */
+  computed_at?: string;
 }
 
 /** Confidence scale is 1–10, so the maximum possible gap is 9 (§5.6 divisor). */
@@ -143,6 +157,17 @@ export function computeDivergence(
 
   const id =
     100 * (WEIGHT_SHARES * deltaShares + WEIGHT_CONFIDENCE * deltaConfidence);
+
+  // Order rows by REAL share descending so the reveal UI lists options in the
+  // same order as the public Results card (which sorts by the confidence-weighted
+  // `probability`). Deterministic tie-breaks (sim share, then label) keep the
+  // stored order stable. Order does not affect the index — it's a sum.
+  perOption.sort(
+    (a, b) =>
+      b.real_share - a.real_share ||
+      b.sim_share - a.sim_share ||
+      (a.option < b.option ? -1 : a.option > b.option ? 1 : 0),
+  );
 
   return {
     id,

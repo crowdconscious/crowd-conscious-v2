@@ -11,7 +11,6 @@ import PulseResultClient, {
   type PulseVoteRow,
 } from '@/components/pulse/PulseResultClient'
 import type { PulseSimReveal } from '@/components/pulse/PulseSimRevealModule'
-import { aggregatePulseVotes } from '@/lib/pulse-vote-aggregates'
 import { parseVoteMode } from '@/lib/pulse-vote-ranking'
 import { DraftBanner } from '@/components/predictions/DraftBanner'
 import { AdminMarketToolbar } from '@/components/predictions/AdminMarketToolbar'
@@ -20,7 +19,16 @@ import { SITE_URL } from '@/lib/seo/site'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 import type { RunAggregates } from '@/lib/simulation/run'
-import type { DivergenceResult } from '@/lib/simulation/divergence'
+import {
+  computeDivergence,
+  type AggregateSnapshot,
+  type DivergenceResult,
+} from '@/lib/simulation/divergence'
+import {
+  aggregatePulseVotes,
+  outcomeAvgConfidence,
+  type PulseVoteAggregates,
+} from '@/lib/pulse-vote-aggregates'
 
 type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ token?: string }> }
 
@@ -216,40 +224,58 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
   const featuredReasonings = await loadMarketVoteReasoningsWithAuthors(admin, id, locale)
 
   // ---------------------------------------------------------------------------
-  // Pulse Simulation reveal gate (§5.7 / §5.2) — behind SIM_REVEAL_ENABLED.
+  // Pulse Simulation reveal gate (§5.7 / §5.2).
   //
   // THE anchoring guardrail (§1) lives HERE, in the data layer: an AI
-  // prediction's direction must never reach a user before they've voted. The
-  // gate is computed server-side and sim aggregates are serialized into the
-  // client payload ONLY inside the full-reveal branch below. Pre-reveal, the
-  // client receives at most a content-free `simTeaser` boolean — zero numbers,
-  // option names, shares, confidence, or anything directional.
+  // prediction's direction must never reach a non-admin user before they've
+  // voted, and sim numbers stay hidden from the public until the Pulse ends.
   //
-  // Read path: EXCLUSIVELY the `revealed_simulation_runs` view (§5.2), through
-  // the anon/user-context client (RLS/grant-respecting) — NEVER the raw
-  // simulation_* tables. The view only returns runs whose `revealed_at` is set,
-  // so a returned row already means "revealed".
+  // Admin path: service-role read of `simulation_runs` (same pattern as the
+  // admin Simulación APIs). Non-admins NEVER receive this payload while the
+  // Pulse is open.
   //
-  // SIM_REVEAL_ENABLED is a SERVER env var so the gate can run here; unset or
-  // anything but the string 'true' is OFF (feature invisible, not an error).
-  //
-  // TODO(A5): the September Pulse-close push carries this reveal on the A5
-  // `reveal` payload field — not built here.
+  // Public path: EXCLUSIVELY the `revealed_simulation_runs` view (§5.2), through
+  // the anon/user-context client — NEVER the raw simulation_* tables. Requires
+  // SIM_REVEAL_ENABLED + revealed_at + Pulse closed/resolved.
   let simReveal: PulseSimReveal | null = null
   let simTeaser = false
 
-  if (process.env.SIM_REVEAL_ENABLED === 'true') {
-    const resolutionMs = new Date(market.resolution_date as string).getTime()
-    const isPastCloseDate = Number.isFinite(resolutionMs) && resolutionMs <= Date.now()
-    const isClosedOrResolved =
-      market.status === 'resolved' || market.status === 'closed' || isPastCloseDate
+  const resolutionMs = new Date(market.resolution_date as string).getTime()
+  const isPastCloseDate = Number.isFinite(resolutionMs) && resolutionMs <= Date.now()
+  const isClosedOrResolved =
+    market.status === 'resolved' || market.status === 'closed' || isPastCloseDate
+
+  if (isAdmin) {
+    try {
+      const { data: adminRow } = await admin
+        .from('simulation_runs')
+        .select('id, aggregates, divergence, revealed_at, status')
+        .eq('market_id', id)
+        .eq('status', 'complete')
+        .eq('is_brand_pretest', false)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (adminRow) {
+        const runAggregates = adminRow.aggregates as unknown as RunAggregates | null
+        if (runAggregates) {
+          simReveal = buildAdminSimReveal({
+            aggregates: runAggregates,
+            votes,
+            outcomes,
+            pulseOpen: !isClosedOrResolved,
+            unpublished: !adminRow.revealed_at,
+          })
+        }
+      }
+    } catch {
+      simReveal = null
+    }
+  } else if (process.env.SIM_REVEAL_ENABLED === 'true') {
     const authedHasVoted = !!viewerVote
 
     try {
-      // Anon/user-context client: the read is gated by the DB grant on the view
-      // (§5.2) exactly as any client would be — never the service-role path.
-      // `createClient()` is untyped in this repo; assert the `Database` generic
-      // so the `revealed_simulation_runs` view row is typed.
       const supabasePublic =
         (await createClient()) as unknown as SupabaseClient<Database>
 
@@ -261,8 +287,6 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
         .limit(1)
         .maybeSingle()
 
-      // `aggregates`/`divergence` are jsonb columns (typed `Json`); narrow them
-      // to their domain shapes so the reveal fields below read cleanly.
       const run = revealedRow
         ? {
             ...revealedRow,
@@ -271,19 +295,10 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
           }
         : null
 
-      // A row from the view is, by construction, a revealed run (revealed_at set).
       if (run) {
-        // Full reveal requires ALL of: flag on (checked above) + revealed run +
-        // Pulse closed/resolved + (user voted OR Pulse closed). Since the last
-        // clause is satisfied whenever the Pulse is closed, this reduces to
-        // "revealed run + closed" — but we keep the condition explicit to mirror
-        // the §5.7 spec exactly.
         const fullReveal = isClosedOrResolved && (authedHasVoted || isClosedOrResolved)
 
         if (fullReveal && run.divergence) {
-          // ONLY the minimal comparison crosses to the client: the index,
-          // per-option real vs sim shares, and one representative quote. No raw
-          // votes, no reasonings, no confidence maps — nothing else is attached.
           simReveal = {
             divergenceIndex: run.divergence.id,
             perOption: (run.divergence.per_option ?? []).map((po) => ({
@@ -294,15 +309,10 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
             cita: run.aggregates?.synthesis?.cita_sim_representativa ?? null,
           }
         } else if (!isClosedOrResolved && !authedHasVoted) {
-          // Pre-vote, Pulse still open: content-free teaser ONLY. Not a single
-          // sim number reaches the client on this path.
           simTeaser = true
         }
       }
     } catch {
-      // The view may not exist yet in every environment (migrations 252-254).
-      // Never let the sim gate break the load-bearing consumer Pulse page
-      // (CLAUDE.md "Things to never break") — fall back to attaching nothing.
       simReveal = null
       simTeaser = false
     }
@@ -311,7 +321,7 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
   return (
     <>
       {isDraft && <DraftBanner marketId={market.id} />}
-      {isAdmin && <AdminMarketToolbar marketId={market.id} isPulse />}
+      {isAdmin && <AdminMarketToolbar marketId={market.id} isPulse locale={locale} />}
       <PulseResultClient
         marketId={market.id}
         title={market.title}
@@ -345,4 +355,89 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
       />
     </>
   )
+}
+
+/**
+ * Admin-only live comparison. Built on the server from the latest complete
+ * sim run + the current real vote mix. Never attached to non-admin payloads.
+ */
+function buildAdminSimReveal(args: {
+  aggregates: RunAggregates
+  votes: PulseVoteRow[]
+  outcomes: PulseOutcomeRow[]
+  pulseOpen: boolean
+  unpublished: boolean
+}): PulseSimReveal {
+  const simSnapshot = sharesFromRunAggregates(args.aggregates)
+  const realSnapshot = labeledRealSnapshot(args.votes, args.outcomes)
+  const hasReal = Object.values(realSnapshot.option_shares).some(
+    (n) => typeof n === 'number' && Number.isFinite(n) && n > 0,
+  )
+
+  let divergenceIndex: number | null = null
+  let perOption: PulseSimReveal['perOption']
+
+  if (hasReal) {
+    const live = computeDivergence(realSnapshot, simSnapshot)
+    divergenceIndex = live.id
+    perOption = live.per_option.map((po) => ({
+      option: po.option,
+      real_share: po.real_share,
+      sim_share: po.sim_share,
+    }))
+  } else {
+    perOption = Object.entries(simSnapshot.option_shares).map(([option, simShare]) => ({
+      option,
+      real_share: 0,
+      sim_share: simShare,
+    }))
+  }
+
+  return {
+    divergenceIndex,
+    perOption,
+    cita: args.aggregates.synthesis?.cita_sim_representativa ?? null,
+    adminPreview: args.pulseOpen || args.unpublished,
+    pulseOpen: args.pulseOpen,
+    unpublished: args.unpublished,
+  }
+}
+
+function sharesFromRunAggregates(agg: RunAggregates): AggregateSnapshot {
+  const weighted = agg.confidence_weighted_shares ?? {}
+  const weightedTotal = Object.values(weighted).reduce(
+    (sum, n) => sum + (typeof n === 'number' && Number.isFinite(n) ? n : 0),
+    0,
+  )
+  return {
+    option_shares: weightedTotal > 0 ? weighted : (agg.option_shares ?? {}),
+    avg_confidence_by_option: agg.avg_confidence_by_option ?? {},
+  }
+}
+
+function labeledRealSnapshot(
+  votes: PulseVoteRow[],
+  outcomes: PulseOutcomeRow[],
+): AggregateSnapshot {
+  const labelById = new Map(outcomes.map((o) => [o.id, o.label]))
+  const labeled = votes.map((v) => ({
+    outcome_id: labelById.get(v.outcome_id) ?? v.outcome_id,
+    confidence: v.confidence,
+    created_at: v.created_at,
+  }))
+  const agg: PulseVoteAggregates = aggregatePulseVotes(labeled)
+  const option_shares: Record<string, number> = {}
+  const avg_confidence_by_option: Record<string, number> = {}
+  let totalConfidence = 0
+  for (const stats of Object.values(agg.byOutcome)) {
+    totalConfidence += stats.confidenceSum
+  }
+  for (const [option, stats] of Object.entries(agg.byOutcome)) {
+    const countShare = agg.totalVotes > 0 ? stats.count / agg.totalVotes : 0
+    const weighted = totalConfidence > 0 ? stats.confidenceSum / totalConfidence : 0
+    option_shares[option] = totalConfidence > 0 ? weighted : countShare
+    const avg = outcomeAvgConfidence(stats)
+    if (avg !== null) avg_confidence_by_option[option] = avg
+  }
+  return { option_shares, avg_confidence_by_option }
 }

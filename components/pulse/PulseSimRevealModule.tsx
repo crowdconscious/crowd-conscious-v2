@@ -27,9 +27,13 @@ export type PulseSimPerOption = {
  * reasonings, no confidence maps ever cross to the client.
  */
 export type PulseSimReveal = {
-  divergenceIndex: number
+  divergenceIndex: number | null
   perOption: PulseSimPerOption[]
   cita: string | null
+  /** Admin-only live preview (Pulse may still be open / run unrevealed). */
+  adminPreview?: boolean
+  pulseOpen?: boolean
+  unpublished?: boolean
 }
 
 const SIM_BADGE_CLASS =
@@ -47,9 +51,10 @@ export default function PulseSimRevealModule({
   locale: 'es' | 'en'
   reveal: PulseSimReveal
 }) {
-  const index = Math.round(
-    Number.isFinite(reveal.divergenceIndex) ? reveal.divergenceIndex : 0
-  )
+  const hasIndex =
+    reveal.divergenceIndex !== null && Number.isFinite(reveal.divergenceIndex)
+  const index = hasIndex ? Math.round(reveal.divergenceIndex as number) : null
+  const adminPreview = reveal.adminPreview === true
 
   return (
     <section className="pulse-section mt-6 rounded-xl border border-amber-500/25 bg-amber-500/[0.05] p-5">
@@ -58,7 +63,28 @@ export default function PulseSimRevealModule({
         <h3 className="text-sm font-semibold text-amber-200">
           {locale === 'es' ? 'IA vs. Realidad' : 'AI vs. Reality'}
         </h3>
+        {adminPreview ? (
+          <span className={SIM_BADGE_CLASS}>
+            {locale === 'es' ? 'Solo admin' : 'Admin only'}
+          </span>
+        ) : null}
       </div>
+
+      {adminPreview ? (
+        <p className="mb-3 text-xs leading-relaxed text-amber-100/80 rounded-lg border border-amber-500/25 bg-amber-500/10 px-3 py-2">
+          {reveal.pulseOpen
+            ? locale === 'es'
+              ? 'Vista previa admin — estos números no están publicados. El Pulse sigue abierto; el público no ve esta simulación.'
+              : 'Admin preview — these numbers are unpublished. The Pulse is still open; the public cannot see this simulation.'
+            : reveal.unpublished
+              ? locale === 'es'
+                ? 'Vista previa admin — corrida completa, aún no revelada al público.'
+                : 'Admin preview — run complete, not yet revealed to the public.'
+              : locale === 'es'
+                ? 'Vista previa admin de la simulación.'
+                : 'Admin preview of the simulation.'}
+        </p>
+      ) : null}
 
       <p className="text-xs leading-relaxed text-amber-200/70">
         {locale === 'es'
@@ -73,14 +99,20 @@ export default function PulseSimRevealModule({
             {locale === 'es' ? 'Índice de Divergencia' : 'Divergence Index'}
           </p>
           <p className="mt-0.5 text-3xl font-bold tabular-nums text-amber-300">
-            {index}
-            <span className="text-lg text-amber-400/60">/100</span>
+            {index === null ? '—' : index}
+            {index !== null ? (
+              <span className="text-lg text-amber-400/60">/100</span>
+            ) : null}
           </p>
         </div>
         <p className="max-w-xs text-xs leading-relaxed text-amber-200/70">
-          {locale === 'es'
-            ? '0 = la IA nos leyó perfecto · 100 = no nos conoce en absoluto.'
-            : '0 = the AI read us perfectly · 100 = it doesn\u2019t know us at all.'}
+          {index === null
+            ? locale === 'es'
+              ? 'Aún no hay votos reales para comparar. Se muestran solo las participaciones simuladas.'
+              : 'No real votes to compare yet. Showing simulated shares only.'
+            : locale === 'es'
+              ? '0 = la IA nos leyó perfecto · 100 = no nos conoce en absoluto.'
+              : '0 = the AI read us perfectly · 100 = it doesn\u2019t know us at all.'}
         </p>
       </div>
 

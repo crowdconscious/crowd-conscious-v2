@@ -98,10 +98,10 @@ type Props = {
   isEnhancedView: boolean
   featuredReasonings?: PulseFeaturedReasoning[]
   /**
-   * Pulse Simulation reveal payload (§5.7), attached by the loader ONLY when the
-   * full-reveal gate holds (SIM_REVEAL_ENABLED on + revealed run + Pulse closed).
-   * Null/absent otherwise. The no-anchoring guardrail is enforced in the data
-   * layer — this component never receives sim aggregates pre-reveal.
+   * Pulse Simulation reveal payload (§5.7). The loader attaches this:
+   *  - Public: ONLY when SIM_REVEAL_ENABLED + revealed run + Pulse closed.
+   *  - Admin: live preview even while the Pulse is open (adminPreview flag).
+   * Null/absent otherwise. Non-admins never receive sim aggregates on an open Pulse.
    */
   simReveal?: PulseSimReveal | null
   /**
@@ -754,10 +754,8 @@ export default function PulseResultClient({
               </div>
             ) : null}
 
-            {/* "IA vs. Realidad" reveal module (§5.7). Rendered only when the
-                loader passed the full-reveal payload (flag on + revealed run +
-                Pulse closed). Additive; the payload is absent in every other
-                state, so nothing sim-related renders. */}
+            {/* "IA vs. Realidad" reveal module (§5.7). Public: only after close
+                + revealed run. Admin: live preview payload even while open. */}
             {shouldRevealResults && simReveal ? (
               <PulseSimRevealModule locale={locale} reveal={simReveal} />
             ) : null}

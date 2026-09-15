@@ -5,9 +5,10 @@
  * via the Anthropic **Message Batches API** (Haiku, 50% batch discount), parses
  * their votes, and computes aggregates + a Divergence Index against the real
  * Pulse. This module is SERVER-ONLY: every DB touch goes through the service-role
- * admin client (RLS bypass, §1.2) and NOTHING here is ever sent to a client —
- * user-facing surfaces read exclusively through the `revealed_simulation_runs`
- * view (§5.2), never these functions.
+ * admin client (RLS bypass, §1.2). Public user-facing surfaces read exclusively
+ * through the `revealed_simulation_runs` view (§5.2). The admin Simulación panel
+ * and admin preview on `/pulse/[id]` read via admin APIs / this module — never
+ * leak sim aggregates to non-admins while a Pulse is still open.
  *
  * Hard guardrails honored here (release-blockers, §1/§5/§10):
  *  - Real vote data is sacred: this module NEVER writes to `prediction_markets`
@@ -310,15 +311,45 @@ export function computeRunAggregates(
   return { ...snapshot, completion_rate }
 }
 
-/** The subset of a run's aggregates that divergence consumes. */
-function toAggregateSnapshot(a: {
+/**
+ * The subset of a run's aggregates that divergence consumes.
+ *
+ * The share basis is the CONFIDENCE-WEIGHTED share, NOT the raw count share.
+ * Pulses resolve confidence-weighted (migration 251:
+ * `market_outcomes.probability = Σconfidence(o) / Σconfidence(all)`) and the
+ * public Results card renders exactly that `probability`. Divergence must be
+ * computed against — and the reveal UI must render — the IDENTICAL "real"
+ * quantity the Results card shows, or the two "real" columns on `/pulse/[id]`
+ * disagree and the index is incoherent with its own bars (§1.5). So we feed
+ * `confidence_weighted_shares` on BOTH the real and simulated sides (both
+ * produced by the same `computeAggregateSnapshot` math). The count share is
+ * used only as a degenerate fallback when a side has no valid confidence at all
+ * (weighted map all-zero), which never happens for real Pulses (confidence 1–10
+ * is enforced) but keeps brand pre-tests / empty panels well-defined.
+ */
+export function toAggregateSnapshot(a: {
   option_shares: Record<string, number>
+  confidence_weighted_shares: Record<string, number>
   avg_confidence_by_option: Record<string, number>
 }): AggregateSnapshot {
+  const weightedTotal = Object.values(a.confidence_weighted_shares).reduce(
+    (sum, v) => sum + (Number.isFinite(v) ? v : 0),
+    0,
+  )
   return {
-    option_shares: a.option_shares,
+    option_shares:
+      weightedTotal > 0 ? a.confidence_weighted_shares : a.option_shares,
     avg_confidence_by_option: a.avg_confidence_by_option,
   }
+}
+
+/** True when the real snapshot has at least one option with a positive share. */
+export function realSnapshotHasVotes(snapshot: {
+  option_shares: Record<string, number>
+}): boolean {
+  return Object.values(snapshot.option_shares).some(
+    (n) => typeof n === 'number' && Number.isFinite(n) && n > 0,
+  )
 }
 
 // ---------------------------------------------------------------------------
@@ -772,19 +803,29 @@ export interface DivergenceStoreOptions {
   realVotesOverride?: { option_chosen: string; confidence: number | null }[]
 }
 
+export type DivergenceStoreResult =
+  | { stored: true; divergence: DivergenceResult }
+  | { stored: false; reason: 'no_real_votes' }
+
 /**
  * Compute + store the Divergence Index for a completed run against the REAL
- * Pulse aggregates (§5.5.3 / §5.6). Called on real Pulse close (by the
- * `pulse-auto-resolve` cron — NOT wired here) or as a manual admin fallback.
+ * Pulse aggregates (§5.5.3 / §5.6). Allowed on OPEN Pulses (admin live snapshot)
+ * as well as after close. The `pulse-auto-resolve` cron always recomputes on
+ * close so the public reveal uses the final mix, even if an admin computed a
+ * mid-flight snapshot earlier.
+ *
+ * The Pulse does not have to be resolved — we read the current `market_votes`
+ * snapshot (READ-ONLY). If there are zero real votes, we skip storing (sim-only
+ * aggregates remain; a 0-vote "divergence" would be misleading).
  *
  * The real snapshot is built from `market_votes` using the SAME canonical math
  * as the sim side (§1.5), keyed by option label so the two snapshots align.
- * READ-ONLY on all real tables. Returns the stored `DivergenceResult`.
+ * READ-ONLY on all real tables. Writes ONLY `simulation_runs.divergence`.
  */
 export async function computeAndStoreDivergence(
   runId: string,
   options: DivergenceStoreOptions = {},
-): Promise<ReturnType<typeof computeDivergence>> {
+): Promise<DivergenceStoreResult> {
   const admin = options.adminClient ?? (await loadAdmin())
   const run = await readRun(admin, runId)
 
@@ -807,10 +848,18 @@ export async function computeAndStoreDivergence(
       )
     : await readRealAggregateSnapshot(admin, run.market_id!)
 
-  const divergence = computeDivergence(
-    toAggregateSnapshot(realSnapshot),
-    toAggregateSnapshot(run.aggregates),
-  )
+  if (!realSnapshotHasVotes(realSnapshot)) {
+    return { stored: false, reason: 'no_real_votes' }
+  }
+
+  const computedAt = new Date().toISOString()
+  const divergence: DivergenceResult = {
+    ...computeDivergence(
+      toAggregateSnapshot(realSnapshot),
+      toAggregateSnapshot(run.aggregates),
+    ),
+    computed_at: computedAt,
+  }
 
   const { error } = await admin
     .from('simulation_runs')
@@ -820,7 +869,7 @@ export async function computeAndStoreDivergence(
   if (error) {
     throw new Error(`computeAndStoreDivergence: failed to store divergence: ${error.message}`)
   }
-  return divergence
+  return { stored: true, divergence }
 }
 
 /** Strict-JSON synthesis output (§5.4). */

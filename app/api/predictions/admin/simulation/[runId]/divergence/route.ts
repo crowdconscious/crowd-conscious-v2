@@ -9,10 +9,10 @@ export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
 /**
- * Compute + store the Divergence Index for a completed run against the REAL
- * Pulse aggregates (§5.5 item 3 / §5.6). Intended for runs whose market has
- * CLOSED (there must be real votes to compare). Admin-only manual fallback to
- * the `pulse-auto-resolve` hook (which is NOT modified here). Delegates to
+ * Compute + store the Divergence Index for a completed run against the CURRENT
+ * real Pulse mix (§5.5 item 3 / §5.6). Allowed on open Pulses (live snapshot)
+ * and after close. Admin-only; the `pulse-auto-resolve` cron still recomputes
+ * on close so the public reveal uses the final mix. Delegates to
  * `computeAndStoreDivergence`; READ-ONLY on real tables, writes ONLY
  * `simulation_runs.divergence`.
  */
@@ -33,7 +33,14 @@ export async function POST(
   try {
     const { computeAndStoreDivergence } = await import('@/lib/simulation/run')
     const result = await computeAndStoreDivergence(runId, { adminClient: admin })
-    return NextResponse.json({ ok: true, result })
+    if (!result.stored) {
+      return NextResponse.json({
+        ok: true,
+        skipped: true,
+        reason: result.reason,
+      })
+    }
+    return NextResponse.json({ ok: true, result: result.divergence })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error)
     return NextResponse.json({ error: message }, { status: 500 })

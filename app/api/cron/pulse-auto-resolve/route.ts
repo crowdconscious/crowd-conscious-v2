@@ -108,14 +108,15 @@ export async function GET(request: NextRequest) {
       console.error('[cron/pulse-auto-resolve] sponsor-pulse-report', err)
     )
 
-    // On real Pulse close (§5.5 item 3): compute + store the Divergence Index
-    // (§5.6) for any COMPLETE simulation run tied to this market, now that the
-    // real winner + real aggregates are final. Divergence is pure math over
-    // stored sim aggregates + real votes (no model call); the only write is
-    // `simulation_runs.divergence` via `computeAndStoreDivergence` — real vote
-    // data stays untouched (§1). The common case is ZERO sim runs → clean
-    // no-op. The ENTIRE step is isolated in try/catch so a divergence failure
-    // for one run never breaks resolution/push/archive or any other pulse.
+    // On real Pulse close (§5.5 item 3): ALWAYS recompute + store the Divergence
+    // Index (§5.6) for COMPLETE simulation runs tied to this market, now that
+    // the real mix is final. Admins may have stored a mid-flight snapshot while
+    // the Pulse was still live; public reveal must use the closing mix. Pure
+    // math over stored sim aggregates + real votes (no model call); the only
+    // write is `simulation_runs.divergence` via `computeAndStoreDivergence` —
+    // real vote data stays untouched (§1). The common case is ZERO sim runs →
+    // clean no-op. Isolated in try/catch so a divergence failure for one run
+    // never breaks resolution/push/archive or any other pulse.
     try {
       const { data: simRuns, error: simErr } = await admin
         .from('simulation_runs')
@@ -123,7 +124,6 @@ export async function GET(request: NextRequest) {
         .eq('market_id', row.id)
         .eq('status', 'complete')
         .eq('is_brand_pretest', false)
-        .is('divergence', null)
       if (simErr) {
         console.warn('[cron/pulse-auto-resolve] divergence query', row.id, simErr.message)
       } else if (simRuns && simRuns.length > 0) {

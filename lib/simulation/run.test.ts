@@ -14,6 +14,7 @@ import {
   COST_ALERT_MULTIPLIER,
   EXPECTED_INPUT_TOKENS_PER_AGENT,
   EXPECTED_OUTPUT_TOKENS_PER_AGENT,
+  realSnapshotHasVotes,
   type ParsedVoteLike,
 } from "./run.ts";
 
@@ -271,4 +272,10 @@ test("agentCostUsd: batch is exactly half the synchronous price", () => {
   const sync = agentCostUsd(1000, 200, { batch: false });
   const batch = agentCostUsd(1000, 200, { batch: true });
   approx(batch, sync * 0.5, "batch discount");
+});
+
+test("realSnapshotHasVotes: empty or all-zero shares skip divergence", () => {
+  assert.equal(realSnapshotHasVotes({ option_shares: {} }), false);
+  assert.equal(realSnapshotHasVotes({ option_shares: { A: 0, B: 0 } }), false);
+  assert.equal(realSnapshotHasVotes({ option_shares: { A: 0.6, B: 0.4 } }), true);
 });

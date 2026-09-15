@@ -1,9 +1,11 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import Link from 'next/link'
 import {
   ChevronDown,
   ChevronRight,
+  ExternalLink,
   Eye,
   EyeOff,
   FlaskConical,
@@ -20,8 +22,8 @@ import { useLanguage } from '@/contexts/LanguageContext'
  *
  * The founder-facing control surface for Workstream B's "B pipeline": start a
  * run (against a real Pulse or as a free-text brand pre-test), poll it, run the
- * Sonnet synthesis, compute the Divergence Index once the Pulse has closed, and
- * MANUALLY reveal/hide a run (the §5.2 gate — automated only after Sep 15).
+ * Sonnet synthesis, compute the Divergence Index against the current real mix
+ * (open or closed), and MANUALLY reveal/hide a run (the §5.2 public gate).
  *
  * Every action calls an admin-guarded route under
  * `/api/predictions/admin/simulation/...`; this component never touches the raw
@@ -83,6 +85,7 @@ type DivergenceResult = {
   delta_shares: number
   delta_confidence: number
   per_option: DivergencePerOption[]
+  computed_at?: string
 }
 
 type SimulationRun = {
@@ -172,6 +175,7 @@ export default function SimulationRunner({ parentBusy }: Props) {
   const [busyAction, setBusyAction] = useState<string | null>(null) // `${runId}:${action}`
   const [rowError, setRowError] = useState<string | null>(null)
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
+  const focusedMarketOnce = useRef(false)
 
   const fetchRuns = useCallback(async () => {
     try {
@@ -195,6 +199,18 @@ export default function SimulationRunner({ parentBusy }: Props) {
   useEffect(() => {
     fetchRuns()
   }, [fetchRuns])
+
+  useEffect(() => {
+    if (focusedMarketOnce.current || runs.length === 0) return
+    const params = new URLSearchParams(window.location.search)
+    const focusMarketId = params.get('simMarket')
+    if (!focusMarketId) return
+    const matching = runs.filter((r) => r.market_id === focusMarketId).map((r) => r.id)
+    if (matching.length === 0) return
+    focusedMarketOnce.current = true
+    setExpanded(new Set(matching))
+    document.getElementById('simulacion')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [runs])
 
   // Reuse the existing admin Pulse picker endpoint for the market dropdown.
   useEffect(() => {
@@ -302,8 +318,22 @@ export default function SimulationRunner({ parentBusy }: Props) {
         headers: { 'Content-Type': 'application/json' },
         body: action === 'reveal' ? JSON.stringify({ reveal }) : undefined,
       })
-      const json = (await res.json().catch(() => ({}))) as { error?: string }
+      const json = (await res.json().catch(() => ({}))) as {
+        error?: string
+        skipped?: boolean
+        reason?: string
+      }
       if (!res.ok) throw new Error(json.error ?? `${action} failed (${res.status})`)
+      if (action === 'divergence' && json.skipped) {
+        setRowError(
+          json.reason === 'no_real_votes'
+            ? t(
+                'Sin votos reales todavía — se muestran solo los agregados simulados. Vuelve a calcular cuando haya votos.',
+                'No real votes yet — showing simulated aggregates only. Recompute once votes exist.',
+              )
+            : t('Divergencia omitida.', 'Divergence skipped.'),
+        )
+      }
       await fetchRuns()
     } catch (e) {
       setRowError(e instanceof Error ? e.message : `${action} failed`)
@@ -334,7 +364,7 @@ export default function SimulationRunner({ parentBusy }: Props) {
   }
 
   return (
-    <section>
+    <section id="simulacion">
       <div className="flex flex-wrap items-center gap-2 mb-1">
         <FlaskConical className="w-5 h-5 text-amber-400" />
         <h2 className="text-lg font-semibold text-white">Simulación</h2>
@@ -395,7 +425,7 @@ export default function SimulationRunner({ parentBusy }: Props) {
               >
                 <option value="">{t('— Selecciona un Pulse —', '— Select a Pulse —')}</option>
                 {groupedMarkets.resolved.length > 0 && (
-                  <optgroup label={t('Cerrados (backtest / divergencia lista)', 'Closed (backtest / divergence ready)')}>
+                  <optgroup label={t('Cerrados (backtest)', 'Closed (backtest)')}>
                     {groupedMarkets.resolved.map((m) => (
                       <option key={m.id} value={m.id}>
                         {`${m.title} · ${m.totalVotes} votos`}
@@ -404,7 +434,7 @@ export default function SimulationRunner({ parentBusy }: Props) {
                   </optgroup>
                 )}
                 {groupedMarkets.active.length > 0 && (
-                  <optgroup label={t('Activos (todavía votando)', 'Active (still voting)')}>
+                  <optgroup label={t('Activos (sim + divergencia en vivo)', 'Live (sim + live divergence)')}>
                     {groupedMarkets.active.map((m) => (
                       <option key={m.id} value={m.id}>
                         {`${m.title} · ${m.totalVotes} votos`}
@@ -560,7 +590,8 @@ export default function SimulationRunner({ parentBusy }: Props) {
               {runs.map((run) => {
                 const isOpen = expanded.has(run.id)
                 const complete = run.status === 'complete'
-                const divergenceReady = complete && !run.is_brand_pretest && run.market_closed
+                const divergenceReady =
+                  complete && !run.is_brand_pretest && Boolean(run.market_id)
                 const revealed = !!run.revealed_at
                 return (
                   <FragmentRow
@@ -659,7 +690,18 @@ function FragmentRow({
           {complete ? pct(run.aggregates?.completion_rate) : '—'}
         </td>
         <td className="px-3 py-3 text-slate-300">
-          {run.divergence ? Math.round(run.divergence.id) : '—'}
+          {run.divergence ? (
+            <span>
+              {Math.round(run.divergence.id)}
+              {run.divergence.computed_at && (
+                <span className="block text-[11px] text-slate-500">
+                  {formatDateTime(run.divergence.computed_at, locale)}
+                </span>
+              )}
+            </span>
+          ) : (
+            '—'
+          )}
         </td>
         <td className="px-3 py-3">
           {revealed ? (
@@ -696,14 +738,16 @@ function FragmentRow({
               className="inline-flex items-center gap-1 px-2 py-1 rounded bg-slate-700 hover:bg-slate-600 disabled:opacity-40 text-slate-200 text-xs"
               title={
                 divergenceReady
-                  ? t('Calcular Índice de Divergencia', 'Compute Divergence Index')
+                  ? run.divergence
+                    ? t('Recalcular contra la mezcla real actual', 'Recompute against the current real mix')
+                    : t('Calcular Índice de Divergencia contra la mezcla real actual', 'Compute Divergence Index against the current real mix')
                   : run.is_brand_pretest
                     ? t('Los brand pre-tests no tienen Pulse real que comparar', 'Brand pre-tests have no real Pulse to compare')
-                    : t('Disponible cuando el Pulse cierra y la corrida está completa', 'Available once the Pulse closes and the run is complete')
+                    : t('Disponible cuando la corrida está completa y tiene un Pulse', 'Available once the run is complete and has a Pulse')
               }
             >
               <GitCompare className="w-3 h-3" />
-              {busy('divergence') ? '…' : t('Divergencia', 'Divergence')}
+              {busy('divergence') ? '…' : run.divergence ? t('Recalcular', 'Recompute') : t('Divergencia', 'Divergence')}
             </button>
             <button
               type="button"
@@ -725,7 +769,7 @@ function FragmentRow({
       {isOpen && (
         <tr className="border-t border-slate-800 bg-slate-900/40">
           <td colSpan={10} className="px-4 py-4">
-            <RunDetail run={run} t={t} />
+            <RunDetail run={run} t={t} locale={locale} />
           </td>
         </tr>
       )}
@@ -736,13 +780,17 @@ function FragmentRow({
 function RunDetail({
   run,
   t,
+  locale,
 }: {
   run: SimulationRun
   t: (es: string, en: string) => string
+  locale: string
 }) {
   const agg = run.aggregates
   const synthesis = agg?.synthesis
   const div = run.divergence
+  const pulseOpen = !run.market_closed && Boolean(run.market_id)
+  const unpublished = !run.revealed_at
 
   if (!agg) {
     return (
@@ -771,6 +819,32 @@ function RunDetail({
 
   return (
     <div className="space-y-5">
+      {run.market_id && (pulseOpen || unpublished) && (
+        <p className="text-xs text-amber-200/80 bg-amber-500/10 border border-amber-500/25 rounded-lg px-3 py-2">
+          {pulseOpen
+            ? t(
+                'Vista previa admin — números no publicados. El Pulse sigue abierto; el público no ve esta simulación.',
+                'Admin preview — unpublished numbers. The Pulse is still open; the public cannot see this simulation.',
+              )
+            : t(
+                'Vista previa admin — corrida completa, aún no revelada al público.',
+                'Admin preview — run complete, not yet revealed to the public.',
+              )}
+        </p>
+      )}
+
+      {run.market_id && (
+        <div className="flex flex-wrap gap-3 text-xs">
+          <Link
+            href={`/pulse/${run.market_id}`}
+            className="inline-flex items-center gap-1 text-amber-300 hover:text-amber-200"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            {t('Ver resultados en el Pulse', 'View results on the Pulse')}
+          </Link>
+        </div>
+      )}
+
       {/* Aggregates */}
       <div>
         <div className="text-xs uppercase tracking-wider text-amber-300 mb-2 flex items-center gap-1.5">
@@ -796,7 +870,7 @@ function RunDetail({
                   <td className="py-1 pr-4 text-slate-200 max-w-[18rem] truncate" title={opt}>{opt}</td>
                   <td className="py-1 pr-4 text-slate-300">{pct(agg.option_shares[opt])}</td>
                   <td className="py-1 pr-4 text-slate-300">{conf(agg.avg_confidence_by_option[opt])}</td>
-                  <td className="py-1 pr-4 text-slate-300">{pct(agg.confidence_weighted_shares[opt])}</td>
+                  <td className="py-1 pr-4 text-amber-300">{pct(agg.confidence_weighted_shares[opt])}</td>
                 </tr>
               ))}
             </tbody>
@@ -804,13 +878,34 @@ function RunDetail({
         </div>
       </div>
 
-      {/* Divergence */}
-      {div && (
+      {/* Divergence / IA vs Realidad preview */}
+      {div ? (
         <div>
           <div className="text-xs uppercase tracking-wider text-slate-400 mb-2">
             {t('Índice de Divergencia', 'Divergence Index')}: <span className="text-white font-semibold">{div.id.toFixed(1)}</span>
             <span className="text-slate-500 normal-case tracking-normal">
               {' '}· Δshares {div.delta_shares.toFixed(3)} · Δconfidence {div.delta_confidence.toFixed(3)}
+            </span>
+          </div>
+          {div.computed_at && (
+            <p className="text-[11px] text-slate-500 mb-2">
+              {t('Último cálculo', 'Last computed')}: {formatDateTime(div.computed_at, locale)}
+              {pulseOpen
+                ? t(
+                    ' · mezcla real en vivo (se recalcula al cerrar el Pulse)',
+                    ' · live real mix (recomputed when the Pulse closes)',
+                  )
+                : ''}
+            </p>
+          )}
+          <div className="flex items-center gap-4 text-[11px] text-slate-400 mb-2">
+            <span className="inline-flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-sm bg-emerald-500" />
+              {t('Real', 'Real')}
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-sm bg-amber-400" />
+              {t('Simulación IA', 'AI simulation')}
             </span>
           </div>
           <div className="overflow-x-auto">
@@ -840,6 +935,15 @@ function RunDetail({
             </table>
           </div>
         </div>
+      ) : (
+        run.market_id && (
+          <p className="text-xs text-slate-500 italic">
+            {t(
+              'Sin divergencia guardada. Corre «Divergencia» para comparar contra la mezcla real actual (aunque el Pulse siga abierto).',
+              'No stored divergence. Run "Divergence" to compare against the current real mix (even while the Pulse is still open).',
+            )}
+          </p>
+        )
       )}
 
       {/* Synthesis */}

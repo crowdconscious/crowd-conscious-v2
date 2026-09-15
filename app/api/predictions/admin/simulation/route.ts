@@ -38,7 +38,8 @@ export async function GET() {
   const runs = data ?? []
 
   // Attach market metadata (title + status) for runs tied to a real Pulse so the
-  // panel can label rows and know whether divergence is available (market closed).
+  // panel can label rows. Divergence is available on OPEN Pulses too (live mix);
+  // `market_closed` is only a label, not a button gate.
   // READ-ONLY on `prediction_markets` (§1: real vote data is sacred).
   const marketIds = [
     ...new Set(
@@ -65,9 +66,10 @@ export async function GET() {
         market_id: r.market_id,
         market_title: market?.title ?? null,
         market_status: market?.status ?? null,
-        // A closed Pulse (status 'resolved') has real aggregates to diverge
-        // against. Everything else disables the Divergencia action in the UI.
-        market_closed: market?.status === 'resolved',
+        // Informational: Pulse has closed. Divergencia no longer requires this —
+        // admins can compute against the current live mix on an open Pulse.
+        market_closed:
+          market?.status === 'resolved' || market?.status === 'closed',
         persona_version: r.persona_version,
         model: r.model,
         prompt_version: r.prompt_version,
