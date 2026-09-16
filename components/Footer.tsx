@@ -26,6 +26,7 @@ export default function Footer() {
       forCreators: 'Para creadores',
       about: 'Acerca de',
       blog: 'Blog',
+      podcast: 'Podcast',
       contact: 'Contacto',
       termsShort: 'Términos',
       privacyShort: 'Privacidad',
@@ -52,6 +53,7 @@ export default function Footer() {
       forCreators: 'For creators',
       about: 'About',
       blog: 'Blog',
+      podcast: 'Podcast',
       contact: 'Contact',
       termsShort: 'Terms',
       privacyShort: 'Privacy',
@@ -219,6 +221,11 @@ export default function Footer() {
               <li>
                 <Link href="/blog" className="text-slate-300 transition-colors hover:text-teal-400">
                   {t.blog}
+                </Link>
+              </li>
+              <li>
+                <Link href="/podcast" className="text-slate-300 transition-colors hover:text-teal-400">
+                  {t.podcast}
                 </Link>
               </li>
               <li>

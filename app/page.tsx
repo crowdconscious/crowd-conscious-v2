@@ -13,6 +13,7 @@ import LandingLocationsSection from './components/landing/LandingLocationsSectio
 import { LandingHeroBlock } from './components/landing/LandingHeroBlock'
 import { BrandsMiniPitch } from './components/landing/BrandsMiniPitch'
 import { CreatorsMiniPitch } from './components/landing/CreatorsMiniPitch'
+import { PodcastMiniPitch } from './components/landing/PodcastMiniPitch'
 import { SignalsTeaser } from './components/landing/SignalsTeaser'
 import LandingSignalCard from '@/components/landing/LandingSignalCard'
 import { fetchLandingSignals, type LandingSignal } from '@/lib/signals/landing'
@@ -526,6 +527,9 @@ export default async function LandingPage() {
 
         {/* ─────────── Creators program teaser ─────────── */}
         <CreatorsMiniPitch locale={localeShort} />
+
+        {/* ─────────── Podcast hub teaser (footer link + this; nav stays lean) ─────────── */}
+        <PodcastMiniPitch locale={localeShort} />
 
         <section className="border-t border-cc-border bg-cc-bg px-4 py-16">
           <div className="mx-auto max-w-5xl">
