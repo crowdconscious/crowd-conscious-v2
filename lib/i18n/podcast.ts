@@ -7,12 +7,14 @@ import type { PodcastLocale } from '@/lib/podcast/episodes'
 export function getPodcastCopy(locale: PodcastLocale) {
   const es = locale === 'es'
   return {
-    metaTitle: es
-      ? 'Podcast | TOCAYOS — Crowd Conscious'
-      : 'Podcast | TOCAYOS — Crowd Conscious',
+    metaTitle: es ? 'Podcast | TOCAYOS' : 'Podcast | TOCAYOS',
     metaDescription: es
       ? 'Escucha TOCAYOS, el podcast de Crowd Conscious. Episodio 1 gratis en YouTube y Spotify — escuchar apoya causas vía el Fondo Consciente.'
       : 'Listen to TOCAYOS, the Crowd Conscious podcast. Episode 1 free on YouTube and Spotify — listening supports causes via the Conscious Fund.',
+    /** OG/twitter titles include brand (no layout title template). */
+    ogTitle: es
+      ? 'Podcast | TOCAYOS — Crowd Conscious'
+      : 'Podcast | TOCAYOS — Crowd Conscious',
     eyebrow: es ? 'Podcast' : 'Podcast',
     hubTitle: es ? 'TOCAYOS' : 'TOCAYOS',
     hubSubtitle: es

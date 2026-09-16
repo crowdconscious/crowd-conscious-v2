@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 import {
   episodeBlurb,
   episodeTitle,
+  getLatestPodcastEpisode,
   getPodcastEpisodes,
   spotifyEmbedUrl,
   youtubeEmbedUrl,
@@ -12,18 +13,33 @@ import {
 import { getPodcastCopy } from '@/lib/i18n/podcast'
 import { SITE_URL } from '@/lib/seo/site'
 
-export const metadata: Metadata = {
-  title: 'Podcast | TOCAYOS',
-  description:
-    'Escucha TOCAYOS, el podcast de Crowd Conscious. Episodio 1 gratis en YouTube y Spotify — escuchar apoya causas vía el Fondo Consciente.',
-  alternates: { canonical: `${SITE_URL}/podcast` },
-  openGraph: {
-    title: 'Podcast | TOCAYOS — Crowd Conscious',
-    description:
-      'Escucha TOCAYOS Ep. 1 gratis en YouTube y Spotify. Escuchar apoya causas vía el Fondo Consciente.',
-    url: `${SITE_URL}/podcast`,
-    type: 'website',
-  },
+export async function generateMetadata(): Promise<Metadata> {
+  const cookieStore = await cookies()
+  const locale = cookieStore.get('preferred-language')?.value === 'en' ? 'en' : 'es'
+  const copy = getPodcastCopy(locale)
+  const latest = getLatestPodcastEpisode()
+  const ogImages = latest?.coverImageUrl
+    ? [{ url: latest.coverImageUrl, alt: episodeTitle(latest, locale) }]
+    : undefined
+
+  return {
+    title: copy.metaTitle,
+    description: copy.metaDescription,
+    alternates: { canonical: `${SITE_URL}/podcast` },
+    openGraph: {
+      title: copy.ogTitle,
+      description: copy.metaDescription,
+      url: `${SITE_URL}/podcast`,
+      type: 'website',
+      ...(ogImages ? { images: ogImages } : {}),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: copy.ogTitle,
+      description: copy.metaDescription,
+      ...(latest?.coverImageUrl ? { images: [latest.coverImageUrl] } : {}),
+    },
+  }
 }
 
 function formatEpisodeDate(iso: string, locale: 'en' | 'es') {

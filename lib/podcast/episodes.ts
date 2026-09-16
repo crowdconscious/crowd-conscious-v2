@@ -65,8 +65,9 @@ export function getLatestPodcastEpisode(): PodcastEpisode | undefined {
   return PODCAST_EPISODES[0]
 }
 
+/** Prefer privacy-enhanced domain; same videoId as youtube.com/embed. */
 export function youtubeEmbedUrl(videoId: string): string {
-  return `https://www.youtube.com/embed/${videoId}`
+  return `https://www.youtube-nocookie.com/embed/${videoId}`
 }
 
 export function spotifyEmbedUrl(episodeId: string): string {
