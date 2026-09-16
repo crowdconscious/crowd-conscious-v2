@@ -30,6 +30,8 @@ export function getPodcastCopy(locale: PodcastLocale) {
       : 'Listening supports real causes through the Conscious Fund.',
     fundCta: es ? 'Conoce el Fondo' : 'About the Fund',
     // Landing teaser
+    /** Primary-nav + footer label. Keep "Podcast" (findable), not TOCAYOS. */
+    navLabel: es ? 'Podcast' : 'Podcast',
     teaserEyebrow: es ? 'Podcast' : 'Podcast',
     teaserTitle: es
       ? 'TOCAYOS Ep. 1 — ¿La IA nos conoce?'

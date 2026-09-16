@@ -8,8 +8,8 @@ type Props = {
 
 /**
  * Compact below-the-fold podcast teaser. Mirrors CreatorsMiniPitch /
- * BrandsMiniPitch so the homepage surfaces /podcast without cluttering
- * the primary nav (already dense after locale consolidation).
+ * BrandsMiniPitch so the homepage also surfaces /podcast (primary nav
+ * already has a Podcast item; this is a second, branded TOCAYOS pitch).
  */
 export function PodcastMiniPitch({ locale }: Props) {
   const copy = getPodcastCopy(locale)

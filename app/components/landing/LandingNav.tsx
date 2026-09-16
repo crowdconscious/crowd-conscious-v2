@@ -8,17 +8,21 @@ import LanguageSwitcherSimple from '@/components/LanguageSwitcherSimple'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useLiveNavBadge } from '@/hooks/useLiveNavBadge'
 import { CompactFundThermometer } from '@/components/fund/FundThermometer'
+import { getPodcastCopy } from '@/lib/i18n/podcast'
 
 /**
- * Canonical logged-out primary nav (4 items, locale-aware):
- *   Pulse · Para marcas · Blog · Acerca
+ * Canonical logged-out primary nav (locale-aware):
+ *   Pulse · Resultados · (Señales) · Para marcas · Para creadores ·
+ *   Blog · Podcast · Acerca
  *
  * Pulse (consumer Pulse listing) is the emphasized slot; Para marcas is
- * the B2B landing (formerly the /pulse URL). Predicciones, Lugares, and
- * Fondo moved into the authed surface — they're reachable via /predictions
- * once logged in. Live is a compact pulsing badge that only appears when
- * a public live event is happening. Sponsor / Sponsors / Contact /
- * Markets live in the footer.
+ * the B2B landing (formerly the /pulse URL). Podcast sits with Blog as
+ * public content — label is "Podcast" (not TOCAYOS) so the path is
+ * findable; the hub itself is branded TOCAYOS. Predicciones, Lugares,
+ * and Fondo moved into the authed surface — they're reachable via
+ * /predictions once logged in. Live is a compact pulsing badge that
+ * only appears when a public live event is happening. Sponsor /
+ * Sponsors / Contact / Markets live in the footer.
  */
 const NAV = {
   es: {
@@ -105,6 +109,7 @@ export default function LandingNav() {
     { href: '/para-marcas', label: nav.paraMarcas },
     { href: '/creators', label: nav.creators },
     { href: '/blog', label: nav.blog },
+    { href: '/podcast', label: getPodcastCopy(language).navLabel },
     { href: '/about', label: nav.about },
   ]
 
@@ -114,7 +119,7 @@ export default function LandingNav() {
         <div className="flex justify-between items-center h-20">
           <Logo size="nav" linkTo="/" />
 
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-5 lg:gap-7 xl:gap-8">
             {primary.map((item) => (
               <Link
                 key={item.href}

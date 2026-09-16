@@ -9,7 +9,8 @@
           "/pulse/*",
           "/blog/*",
           "/locations/*",
-          "/creators/*"
+          "/creators/*",
+          "/podcast"
         ]
       }
     ]
