@@ -35,7 +35,7 @@ export const PODCAST_EPISODES: PodcastEpisode[] = [
   {
     slug: 'tocayos-ep-1-la-ia-nos-conoce',
     number: 1,
-    publishedAt: '2026-09-01',
+    publishedAt: '2026-09-15',
     title: {
       es: '¿La IA nos conoce? — TOCAYOS Ep. 1',
       en: 'Does AI know us? — TOCAYOS Ep. 1',
