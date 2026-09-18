@@ -76,7 +76,8 @@ export default async function QuejaPage() {
     cookieStore.get('preferred-language')?.value === 'en' ? 'en' : 'es'
   const t = getQuejaCopy(locale)
 
-  const flagOn = process.env.SENAL_EXPRESS_ENABLED === 'true'
+  const flagOn =
+    process.env.SENAL_EXPRESS_ENABLED?.trim().toLowerCase() === 'true'
 
   if (!flagOn) {
     return (

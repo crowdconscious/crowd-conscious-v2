@@ -38,7 +38,9 @@ export const dynamic = 'force-dynamic'
  */
 
 function flagOn() {
-  return process.env.SENAL_EXPRESS_ENABLED === 'true'
+  // Vercel env vars are always strings. Trim + case-fold so `true`, `True`,
+  // and `true ` (dashboard whitespace) all enable the feature.
+  return process.env.SENAL_EXPRESS_ENABLED?.trim().toLowerCase() === 'true'
 }
 
 const confirmBodySchema = z.object({
@@ -183,7 +185,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Logged-in but Signals surface is off ⇒ PDF only + clear flag.
-    if (process.env.SIGNALS_ENABLED !== 'true') {
+    if (process.env.SIGNALS_ENABLED?.trim().toLowerCase() !== 'true') {
       await updateExpressOficio(admin, oficio.id, {
         status: 'confirmed',
         pdf_path: pdfPath,
