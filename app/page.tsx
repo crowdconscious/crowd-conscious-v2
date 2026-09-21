@@ -24,6 +24,7 @@ import { PUBLIC_MARKET_MIN_VOTES } from '@/lib/predictions/engagement'
 import { CONSCIOUS_FUND_GOAL_MXN } from '@/lib/predictions/fund-goal'
 import { FundThermometer } from '@/components/fund/FundThermometer'
 import { formatParticipationCount } from '@/lib/display/participation'
+import { getMarketText } from '@/lib/i18n/market-translations'
 
 const Footer = dynamic(() => import('../components/Footer'))
 const CookieConsent = dynamic(() => import('../components/CookieConsent'))
@@ -107,6 +108,7 @@ async function getLandingData() {
 
   const [
     marketsRes,
+    liveActionRes,
     outcomesRes,
     fundBalance,
     causesRes,
@@ -136,6 +138,19 @@ async function getLandingData() {
       .gte('total_votes', PUBLIC_MARKET_MIN_VOTES)
       .order('total_votes', { ascending: false, nullsFirst: false })
       .limit(6),
+    // Phase 1 ATF live action card — may be low-n (density honesty on the card).
+    supabase
+      .from('prediction_markets')
+      .select(
+        'id, title, total_votes, sponsor_name, sponsor_logo_url, translations, is_pulse, category, market_type'
+      )
+      .in('status', ['active', 'trading'])
+      .is('archived_at', null)
+      .eq('is_draft', false)
+      .or('is_pulse.eq.true,category.eq.pulse')
+      .order('total_votes', { ascending: false, nullsFirst: false })
+      .limit(1)
+      .maybeSingle(),
     supabase
       .from('market_outcomes')
       .select('id, market_id, label, probability, sort_order, translations')
@@ -207,6 +222,15 @@ async function getLandingData() {
   ])
 
   const markets = (marketsRes.data || []) as MarketCardMarket[]
+
+  const liveActionMarket = (liveActionRes.data ?? null) as {
+    id: string
+    title: string
+    total_votes: number | null
+    sponsor_name: string | null
+    sponsor_logo_url: string | null
+    translations: unknown
+  } | null
 
   const outcomeRows = (outcomesRes.data || []) as Array<{
     id: string
@@ -295,6 +319,7 @@ async function getLandingData() {
 
   return {
     markets,
+    liveActionMarket,
     outcomesByMarketId,
     fundBalance,
     causesCount: causes.length,
@@ -318,6 +343,7 @@ export default async function LandingPage() {
   const locale = cookieStore.get('preferred-language')?.value === 'en' ? 'en' : 'es'
 
   let markets: MarketCardMarket[] = []
+  let liveActionMarket: Awaited<ReturnType<typeof getLandingData>>['liveActionMarket'] = null
   let outcomesByMarketId: Record<string, MarketCardOutcome[]> = {}
   let fundBalance = 0
   let causesWithVotes: Array<{
@@ -339,6 +365,7 @@ export default async function LandingPage() {
   try {
     const data = await getLandingData()
     markets = data.markets
+    liveActionMarket = data.liveActionMarket
     outcomesByMarketId = data.outcomesByMarketId
     fundBalance = data.fundBalance
     causesWithVotes = data.causesWithVotes
@@ -371,6 +398,19 @@ export default async function LandingPage() {
   const top3Markets = markets.slice(0, 3)
   const top3Locations = landingLocationCards.slice(0, 3)
 
+  const liveActionQuestion = liveActionMarket
+    ? getMarketText(
+        {
+          title: liveActionMarket.title,
+          translations: liveActionMarket.translations as Parameters<
+            typeof getMarketText
+          >[0]['translations'],
+        },
+        'title',
+        localeShort
+      )
+    : ''
+
   return (
     <div className="min-h-screen overflow-x-hidden bg-cc-bg text-cc-text-primary">
       <SmartHomeClient />
@@ -386,8 +426,22 @@ export default async function LandingPage() {
           />
         )}
 
-        {/* ─────────── BLOCK 1 — Hero ─────────── */}
-        <LandingHeroBlock locale={localeShort} fundBalance={fundBalance} />
+        {/* ─────────── BLOCK 1 — Live action card (Phase 1) ─────────── */}
+        <LandingHeroBlock
+          locale={localeShort}
+          market={
+            liveActionMarket
+              ? {
+                  id: liveActionMarket.id,
+                  title: liveActionMarket.title,
+                  total_votes: liveActionMarket.total_votes,
+                  sponsor_name: liveActionMarket.sponsor_name,
+                  sponsor_logo_url: liveActionMarket.sponsor_logo_url,
+                }
+              : null
+          }
+          question={liveActionQuestion}
+        />
 
         {/* Trusted Brands — self-hides below 3 logos so it never looks weak. */}
         <TrustedBrandsRow locale={localeShort} />
