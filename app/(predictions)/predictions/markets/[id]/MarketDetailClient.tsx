@@ -257,6 +257,15 @@ export function MarketDetailClient({
     outcomeId?: string
     confidence?: number
   }>({ open: false })
+  const [postVoteReasons, setPostVoteReasons] = useState<
+    Array<{
+      id: string
+      reasoning: string
+      confidence: number
+      outcome_id: string
+      alcaldia?: string | null
+    }>
+  >([])
   const [voteQuietMessage, setVoteQuietMessage] = useState<string | null>(null)
   const [lazyExtra, setLazyExtra] = useState<{
     history: Props['history']
@@ -309,6 +318,48 @@ export function MarketDetailClient({
       setGuestVoteRecord(null)
     }
   }, [market.id, isAuthenticated])
+
+  useEffect(() => {
+    if (!celebration.open || !celebration.outcomeId) {
+      setPostVoteReasons([])
+      return
+    }
+    let cancelled = false
+    fetch(
+      `/api/predictions/markets/${market.id}/vote-reasonings?lang=${loc}`
+    )
+      .then((r) => (r.ok ? r.json() : null))
+      .then(
+        (data: {
+          reasonings?: Array<{
+            id: string
+            reasoning: string
+            confidence: number
+            outcome_id: string
+          }>
+        } | null) => {
+          if (cancelled || !data?.reasonings) return
+          // Phase 1 reveal: alcaldía + certainty, never a personal name.
+          setPostVoteReasons(
+            data.reasonings
+              .filter((r) => r.outcome_id !== celebration.outcomeId)
+              .map((r) => ({
+                id: r.id,
+                reasoning: r.reasoning,
+                confidence: r.confidence,
+                outcome_id: r.outcome_id,
+                alcaldia: loc === 'es' ? 'CDMX' : 'Mexico City',
+              }))
+          )
+        }
+      )
+      .catch(() => {
+        if (!cancelled) setPostVoteReasons([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [celebration.open, celebration.outcomeId, market.id, loc])
 
   // Celebration stays open until the user closes it (X, Continue, Esc, or
   // backdrop click). For guests we follow up with the registration prompt
@@ -413,8 +464,9 @@ export function MarketDetailClient({
         const o = outcomes.find((x) => x.id === celebration.outcomeId)
         if (!o) return null
         const vc = o.vote_count ?? 0
-        const avg =
-          vc > 0 ? Math.round((Number(o.total_confidence ?? 0) / vc) * 10) / 10 : null
+        const tc = Number(o.total_confidence ?? 0)
+        // Avg over votes that contributed weight (0-confidence "No lo sé" add 0).
+        const avg = tc > 0 && vc > 0 ? Math.round((tc / vc) * 10) / 10 : null
         return {
           outcomeId: o.id,
           label: getOutcomeLabel(o, locale),
@@ -428,6 +480,17 @@ export function MarketDetailClient({
     (sum, o) => sum + (o.vote_count ?? 0),
     0
   )
+  const postVoteAllOutcomes: PostVoteOutcomeStat[] = outcomes.map((o) => {
+    const vc = o.vote_count ?? 0
+    const tc = Number(o.total_confidence ?? 0)
+    return {
+      outcomeId: o.id,
+      label: getOutcomeLabel(o, locale),
+      subtitle: getOutcomeSubtitle(o, locale),
+      probability: Number(o.probability ?? 0),
+      avgConfidence: tc > 0 && vc > 0 ? Math.round((tc / vc) * 10) / 10 : null,
+    }
+  })
 
   return (
     <div className="space-y-6 pb-8">
@@ -1064,8 +1127,10 @@ export function MarketDetailClient({
         userType={celebration.guest ? 'guest' : 'registered'}
         locale={loc}
         totalVotes={postVoteTotalVotes}
-        xpEarned={celebration.guest ? null : celebration.xpGained ?? null}
+        xpEarned={null}
         sponsorName={(market as { sponsor_name?: string | null }).sponsor_name ?? null}
+        allOutcomes={postVoteAllOutcomes}
+        otherReasons={postVoteReasons}
         onClose={handleCelebrationClose}
       />
 

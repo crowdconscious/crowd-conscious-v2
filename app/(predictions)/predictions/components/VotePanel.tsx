@@ -32,6 +32,7 @@ import {
   parseVoteMode,
   rankingsToOrderedIds,
 } from '@/lib/pulse-vote-ranking'
+import { CONFIDENCE_UNKNOWN } from '@/lib/post-vote-reveal'
 
 // All three fields are now first-class columns on prediction_markets (see
 // migrations 126/129/140 + types/database.ts). Re-declaring them here as
@@ -215,7 +216,11 @@ export function VotePanel({
   const copy = voteActionCopy(loc, isPulse)
   const [selectedOutcomeId, setSelectedOutcomeId] = useState<string | null>(null)
   const [rankedIds, setRankedIds] = useState<string[]>([])
-  const [confidence, setConfidence] = useState(7)
+  // Phase 1: untouched slider is not a vote. Visual rest position is 5;
+  // submission requires an explicit touch or "No lo sé" (confidence 0).
+  const [confidence, setConfidence] = useState(5)
+  const [confidenceTouched, setConfidenceTouched] = useState(false)
+  const [confidenceUnknown, setConfidenceUnknown] = useState(false)
   const [reasoning, setReasoning] = useState('')
   const [otherText, setOtherText] = useState('')
   const [loading, setLoading] = useState(false)
@@ -254,7 +259,10 @@ export function VotePanel({
   useEffect(() => {
     if (myVote && isAuthenticated) {
       setSelectedOutcomeId(myVote.outcome_id)
-      setConfidence(myVote.confidence)
+      const known = myVote.confidence >= 1 && myVote.confidence <= 10
+      setConfidence(known ? myVote.confidence : 5)
+      setConfidenceTouched(known)
+      setConfidenceUnknown(myVote.confidence === CONFIDENCE_UNKNOWN)
       const fromRankings = rankingsToOrderedIds(parseRankings(myVote.rankings))
       setRankedIds(fromRankings.length > 0 ? fromRankings : [myVote.outcome_id])
       setOtherText(myVote.other_text ?? '')
@@ -262,7 +270,9 @@ export function VotePanel({
     if (!myVote && isAuthenticated) {
       setSelectedOutcomeId(null)
       setRankedIds([])
-      setConfidence(7)
+      setConfidence(5)
+      setConfidenceTouched(false)
+      setConfidenceUnknown(false)
       setOtherText('')
     }
   }, [myVote?.outcome_id, myVote?.confidence, myVote, isAuthenticated])
@@ -278,12 +288,16 @@ export function VotePanel({
     ? rankedIds.some((id) => outcomes.find((o) => o.id === id)?.is_other)
     : Boolean(selectedOutcome?.is_other)
   const otherTextOk = !includesOther || otherText.trim().length > 0
-  const canSubmit = Boolean(primaryOutcomeId) && otherTextOk
+  const confidenceReady =
+    !needsUserConfidence || confidenceTouched || confidenceUnknown
+  const canSubmit = Boolean(primaryOutcomeId) && otherTextOk && confidenceReady
   const effectiveConfidence = needsUserConfidence
-    ? confidence
+    ? confidenceUnknown
+      ? CONFIDENCE_UNKNOWN
+      : confidence
     : primaryOutcome
       ? autoConfidence(toDecimal(primaryOutcome.probability))
-      : 7
+      : 5
 
   const toggleRankedOutcome = (id: string) => {
     setRankedIds((prev) => {
@@ -568,8 +582,18 @@ export function VotePanel({
             {locale === 'es' ? '¿Qué tan seguro estás?' : 'How confident are you?'}
           </span>
           <span className="text-sm font-medium text-emerald-400 flex items-center gap-1.5">
-            <span className="text-lg">{getConfidenceEmoji(confidence)}</span>
-            {confidence}/10
+            {confidenceUnknown ? (
+              locale === 'es' ? 'No lo sé' : "I don't know"
+            ) : confidenceTouched ? (
+              <>
+                <span className="text-lg">{getConfidenceEmoji(confidence)}</span>
+                {confidence}/10
+              </>
+            ) : (
+              <span className="text-gray-500">
+                {locale === 'es' ? 'Elige tu certeza' : 'Set your certainty'}
+              </span>
+            )}
           </span>
         </div>
         <input
@@ -578,8 +602,13 @@ export function VotePanel({
           max={10}
           step={1}
           value={confidence}
-          onChange={(e) => setConfidence(parseInt(e.target.value, 10))}
-          className="cc-range-slider w-full min-h-[44px]"
+          disabled={confidenceUnknown}
+          onChange={(e) => {
+            setConfidenceUnknown(false)
+            setConfidenceTouched(true)
+            setConfidence(parseInt(e.target.value, 10))
+          }}
+          className="cc-range-slider w-full min-h-[44px] disabled:opacity-40"
           style={
             {
               '--cc-range-pct': `${((confidence - 1) / 9) * 100}%`,
@@ -587,12 +616,41 @@ export function VotePanel({
           }
         />
         <div className="flex justify-between text-[10px] text-gray-600 mt-1">
-          <span>{locale === 'es' ? 'No muy seguro' : 'Not very sure'}</span>
-          <span>{locale === 'es' ? 'Muy seguro' : 'Very sure'}</span>
+          <span>{locale === 'es' ? 'No estoy seguro' : 'Not sure'}</span>
+          <span>{locale === 'es' ? 'Totalmente seguro' : 'Absolutely certain'}</span>
         </div>
-        <p className="text-[11px] text-gray-500 mt-2">
-          {getConfidenceLabel(confidence, locale)}
+        {confidenceTouched && !confidenceUnknown ? (
+          <p className="text-[11px] text-gray-500 mt-2">
+            {getConfidenceLabel(confidence, locale)}
+          </p>
+        ) : null}
+        <button
+          type="button"
+          onClick={() => {
+            setConfidenceUnknown(true)
+            setConfidenceTouched(false)
+          }}
+          aria-pressed={confidenceUnknown}
+          className={`mt-3 inline-flex min-h-[44px] items-center rounded-lg border px-3 text-xs transition-colors ${
+            confidenceUnknown
+              ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
+              : 'border-white/10 text-gray-400 hover:border-white/25 hover:text-gray-200'
+          }`}
+        >
+          {locale === 'es' ? 'No lo sé' : "I don't know"}
+        </button>
+        <p className="mt-1.5 text-[11px] text-gray-600">
+          {locale === 'es'
+            ? 'Registra tu opción sin sumar a la certeza promedio.'
+            : 'Records your option without adding to the confidence average.'}
         </p>
+        {!confidenceReady ? (
+          <p className="mt-2 text-[11px] text-amber-400/90">
+            {locale === 'es'
+              ? 'Mueve el control o elige “No lo sé” para enviar.'
+              : 'Move the slider or choose “I don’t know” to submit.'}
+          </p>
+        ) : null}
       </div>
     ) : null
 
@@ -781,9 +839,14 @@ export function VotePanel({
             })}
           </div>
 
-          {needsUserConfidence && displayConfidence != null && (
+          {needsUserConfidence && displayConfidence != null && displayConfidence >= 1 && (
             <p className="text-xs text-gray-500 mt-4 text-center">
               {locale === 'es' ? 'Tu confianza' : 'Your confidence'}: {displayConfidence}/10
+            </p>
+          )}
+          {needsUserConfidence && displayConfidence === CONFIDENCE_UNKNOWN && (
+            <p className="text-xs text-gray-500 mt-4 text-center">
+              {locale === 'es' ? 'Certeza: No lo sé' : 'Certainty: I don’t know'}
             </p>
           )}
 
@@ -795,20 +858,20 @@ export function VotePanel({
             <div className="mt-6 rounded-xl border border-emerald-500/30 bg-emerald-500/[0.05] p-4 text-center">
               <p className="text-sm text-white font-medium">
                 {locale === 'es'
-                  ? '¡Voto registrado como invitado!'
-                  : 'Vote saved as guest!'}
+                  ? '¡Voto registrado!'
+                  : 'Vote saved!'}
               </p>
               <p className="text-xs text-gray-400 mt-1">
                 {locale === 'es'
-                  ? 'Crea una cuenta para conservar tu XP, racha y medallas.'
-                  : 'Create an account to keep your XP, streak and badges.'}
+                  ? 'Crea tu cuenta para que podamos avisarte cuando esto se mueva.'
+                  : 'Create an account so we can tell you when this moves.'}
               </p>
               <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
                 <Link
                   href={`/signup?redirect=${encodeURIComponent(`/predictions/markets/${market.id}`)}`}
                   className="inline-flex items-center justify-center rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-400"
                 >
-                  {locale === 'es' ? 'Registrarme →' : 'Sign me up →'}
+                  {locale === 'es' ? 'Crear cuenta →' : 'Create account →'}
                 </Link>
                 <Link
                   href="/pulse"
@@ -925,8 +988,8 @@ export function VotePanel({
       {!isAuthenticated && (
         <p className="text-[11px] text-gray-600 text-center px-4 pb-4">
           {locale === 'es'
-            ? 'Vota sin crear cuenta · Regístrate para ganar XP'
-            : 'Vote without creating an account · Sign up to earn XP'}
+            ? 'Vota sin crear cuenta · Regístrate después para recordar lo que respaldaste'
+            : 'Vote without an account · Sign up later to remember what you supported'}
         </p>
       )}
     </div>

@@ -105,13 +105,14 @@ export async function POST(request: Request) {
 
     const conf =
       confidence == null || confidence === ''
-        ? 5
+        ? NaN
         : typeof confidence === 'number'
           ? confidence
           : parseInt(String(confidence), 10)
-    if (isNaN(conf) || conf < 1 || conf > 10) {
+    // 0 = "No lo sé" (excluded from confidence average). Never impute 5.
+    if (isNaN(conf) || conf < 0 || conf > 10) {
       return NextResponse.json(
-        { error: 'Confidence must be a number between 1 and 10' },
+        { error: 'Confidence must be a number between 0 and 10' },
         { status: 400 }
       )
     }
