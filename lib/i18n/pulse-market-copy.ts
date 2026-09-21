@@ -12,6 +12,8 @@
  * surface it through a *separate* helper rather than re-forking these
  * primitives.
  */
+import { formatParticipationCount } from '@/lib/display/participation'
+
 export function isPulseLikeMarket(m: {
   is_pulse?: boolean | null
   category?: string | null
@@ -76,8 +78,8 @@ export function voteCountLabelPublic(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _isPulse: boolean
 ) {
-  const n = votes.toLocaleString(locale === 'es' ? 'es-MX' : 'en-US')
-  return locale === 'es' ? `${n} votos` : `${n} votes`
+  // Density honesty (Phase 0): never show raw low counts / "0 votos".
+  return formatParticipationCount(votes, locale)
 }
 
 export function recentActivityHeading(
@@ -93,7 +95,8 @@ export function recentActivityEmpty(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _isPulse: boolean
 ) {
-  return locale === 'es' ? 'Aún no hay votos' : 'No votes yet'
+  // Avoid "0 votos" / empty-count framing next to a vote CTA.
+  return locale === 'es' ? 'Votación abierta' : 'Voting open'
 }
 
 export function voteUpdatedToast(

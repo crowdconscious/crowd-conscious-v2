@@ -23,6 +23,7 @@ import type { MarketCardMarket, MarketCardOutcome } from '@/components/MarketCar
 import { PUBLIC_MARKET_MIN_VOTES } from '@/lib/predictions/engagement'
 import { CONSCIOUS_FUND_GOAL_MXN } from '@/lib/predictions/fund-goal'
 import { FundThermometer } from '@/components/fund/FundThermometer'
+import { formatParticipationCount } from '@/lib/display/participation'
 
 const Footer = dynamic(() => import('../components/Footer'))
 const CookieConsent = dynamic(() => import('../components/CookieConsent'))
@@ -565,18 +566,21 @@ export default async function LandingPage() {
                         >
                           <span className="font-medium text-white">{cause.name}</span>
                           <span className="font-semibold text-emerald-400">
-                            {cause.vote_count} {locale === 'es' ? 'votos' : 'votes'}
+                            {formatParticipationCount(
+                              cause.vote_count,
+                              locale === 'es' ? 'es' : 'en'
+                            )}
                           </span>
                         </div>
                       ))}
                     </div>
                   )}
                 </div>
-                <Link
+                  <Link
                   href="/predictions/fund"
                   className="inline-flex min-h-[44px] shrink-0 items-center gap-2 rounded-xl border border-emerald-500/50 bg-emerald-500/20 px-6 py-3 font-medium text-emerald-400 transition-colors hover:bg-emerald-500/30"
                 >
-                  {locale === 'es' ? 'Conoce el Fondo Consciente' : 'Learn about the Conscious Fund'}
+                  {locale === 'es' ? 'Decidir en el Fondo' : 'Decide in the Fund'}
                   <ChevronRight className="h-5 w-5" />
                 </Link>
               </div>

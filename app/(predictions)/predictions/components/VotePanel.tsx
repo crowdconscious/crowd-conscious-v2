@@ -654,11 +654,15 @@ export function VotePanel({
                     ? 'Recorded — thanks for voting'
                     : 'Registrado — gracias por votar'}
                 </span>
-              ) : (
+              ) : myVote.xp_earned > 0 ? (
                 <span className="text-cc-text-secondary">
                   {loc === 'en'
                     ? `+${myVote.xp_earned} XP for participating`
                     : `+${myVote.xp_earned} XP por participar`}
+                </span>
+              ) : (
+                <span className="text-cc-text-secondary">
+                  {loc === 'en' ? 'Thanks for voting' : 'Gracias por votar'}
                 </span>
               )}
             </p>
@@ -882,7 +886,7 @@ export function VotePanel({
         {isEditing && (
           <p className="text-cc-text-muted text-xs">
             {copy.editSubtitle}
-            {myVote ? (
+            {myVote && myVote.xp_earned > 0 ? (
               <span className="block mt-1.5 text-gray-600">
                 +{myVote.xp_earned} XP {copy.firstXpNote}
               </span>

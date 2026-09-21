@@ -509,9 +509,7 @@ export function MarketCard({
                 : 'Be one of the first voices'}
             </p>
             <p className="mt-1 text-xs text-emerald-400">
-              {loc === 'es'
-                ? `${engagement}/${PUBLIC_MARKET_MIN_VOTES} votos para activar resultados`
-                : `${engagement}/${PUBLIC_MARKET_MIN_VOTES} votes to activate results`}
+              {loc === 'es' ? 'Votación abierta' : 'Voting open'}
             </p>
           </div>
         ) : isBinaryLayout ? (

@@ -12,13 +12,12 @@ import { getPodcastCopy } from '@/lib/i18n/podcast'
 
 /**
  * Canonical logged-out primary nav (locale-aware):
- *   Votar · Resultados · (Reportar) · Para marcas · Para creadores ·
+ *   Votar · Resultados · (Reportar) · Evaluar · Para marcas · Para creadores ·
  *   Blog · Podcast · Acerca
  *
  * Verb-first chrome (Phase 0): primary action labels lead with verbs;
- * product nouns (Pulse, Señales) stay on secondary taxonomy / after
- * first action. Routes stay `/pulse`, `/signals`, `/para-marcas`.
- * Predicciones, Lugares, and Fondo live in the authed shell.
+ * product nouns (Pulse, Señales, Lugares) stay on secondary taxonomy / after
+ * first action. Routes stay `/pulse`, `/signals`, `/locations`, `/para-marcas`.
  */
 const NAV = {
   es: {
@@ -26,6 +25,7 @@ const NAV = {
     resultados: 'Resultados',
     signals: 'Reportar',
     signalsBeta: 'Beta',
+    evaluar: 'Evaluar',
     paraMarcas: 'Para marcas',
     creators: 'Para creadores',
     blog: 'Blog',
@@ -41,6 +41,7 @@ const NAV = {
     resultados: 'Results',
     signals: 'Report',
     signalsBeta: 'Beta',
+    evaluar: 'Evaluate',
     paraMarcas: 'For brands',
     creators: 'For creators',
     blog: 'Blog',
@@ -102,6 +103,7 @@ export default function LandingNav() {
     ...(SIGNALS_ENABLED
       ? [{ href: '/signals', label: nav.signals, badge: nav.signalsBeta }]
       : []),
+    { href: '/locations', label: nav.evaluar },
     { href: '/para-marcas', label: nav.paraMarcas },
     { href: '/creators', label: nav.creators },
     { href: '/blog', label: nav.blog },

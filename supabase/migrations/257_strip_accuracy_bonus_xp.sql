@@ -6,14 +6,13 @@
 --
 -- Keeps:
 --   - is_correct flags for analytics / UI match indicators
---   - participation XP on vote cast (prediction_vote) elsewhere
 -- Does NOT award:
 --   - bonus_xp on correct votes
 --   - xp_transactions action_type = 'prediction_correct'
 --   - total_xp bumps from accuracy
 --
--- Live PARTICIPATION_REVEAL_THRESHOLD (25) is unrelated and untouched.
--- Apply in Supabase before relying on this in production.
+-- Cast-time volume/option/confidence XP is stripped separately in
+-- migration 258_strip_vote_volume_option_confidence_xp.sql.
 
 CREATE OR REPLACE FUNCTION public.resolve_market_free(
   p_market_id uuid,

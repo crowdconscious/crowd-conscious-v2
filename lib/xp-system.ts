@@ -1,10 +1,9 @@
 // XP System Utilities
 //
-// Phase 0 policy (UX Product Spec): do NOT award XP for vote accuracy,
-// option choice, or confidence gaming. Participation XP (e.g. prediction_vote
-// on cast) and civic actions (report, co-sign, etc.) remain valid.
-// Accuracy bonus was stripped in migration 257_strip_accuracy_bonus_xp.sql
-// (resolve_market_free no longer inserts prediction_correct / bonus_xp).
+// Phase 0 sacred-data policy (UX Product Spec + Strategist addendum):
+// do NOT award XP for vote volume, option chosen, OR confidence (or
+// accuracy-on-resolve). Migrations 257 + 258 zero cast/resolve vote XP.
+// Civic XP (Señales report/co-sign, etc.) remains valid.
 import { createClient } from '@/lib/supabase-server'
 
 export interface XPReward {

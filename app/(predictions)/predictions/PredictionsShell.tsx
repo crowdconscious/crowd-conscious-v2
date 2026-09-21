@@ -58,6 +58,7 @@ const NAV_ITEMS_EN: ShellNavItem[] = [
   ...(SIGNALS_ENABLED
     ? [{ href: '/signals', label: 'Report', icon: MessageSquareWarning, beta: true } as ShellNavItem]
     : []),
+  { href: '/locations', label: 'Evaluate', icon: MapPin },
   { href: '/predictions/trades', label: 'My Votes', icon: Receipt },
   { href: '/predictions/leaderboard', label: 'Leaderboard', icon: Trophy },
   { href: '/predictions/inbox', label: 'Conscious Inbox', icon: Lightbulb },
@@ -72,6 +73,7 @@ const NAV_ITEMS_ES: ShellNavItem[] = [
   ...(SIGNALS_ENABLED
     ? [{ href: '/signals', label: 'Reportar', icon: MessageSquareWarning, beta: true } as ShellNavItem]
     : []),
+  { href: '/locations', label: 'Evaluar', icon: MapPin },
   { href: '/predictions/trades', label: 'Mis votos', icon: Receipt },
   { href: '/predictions/leaderboard', label: 'Clasificación', icon: Trophy },
   { href: '/predictions/inbox', label: 'Buzón Consciente', icon: Lightbulb },
