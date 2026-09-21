@@ -9,6 +9,7 @@ import {
   formatParticipationCount,
   shouldRevealCount,
 } from '@/lib/display/participation'
+import { lowNRevealCopy } from '@/lib/post-vote-reveal'
 
 /**
  * PulseResultsCard
@@ -17,28 +18,8 @@ import {
  * trio of "Probabilidad de la comunidad" headline + donut + horizontal
  * stacked bar that used to live on MarketDetailClient and PulseResultClient.
  *
- * Layout (mobile-first, max-w-2xl on desktop):
- *
- *   Resultados
- *   {N} votos · confianza promedio {X}/10
- *   ────────────────────────────────────
- *   <option title>                 {pct}%
- *   ▓▓▓▓▓▓▓▓▓▓░░░░░░░
- *   <option subtitle, muted>
- *
- *   <option title>                 {pct}%
- *   ▓▓▓▓▓░░░░░░░░░░░░
- *   <option subtitle, muted>
- *
- * Sorted descending by probability. Winning row uses the primary emerald
- * gradient; the rest use a neutral track so the eye lands on the leader
- * without producing a rainbow.
- *
- * Defensive against legacy "stuffed-label" rows where the subtitle was
- * jammed into the label as `Label(detail without close paren`. Same logic
- * as PulseOutcomeBars: if the label has an unclosed `(`, we don't render
- * the (likely-truncated) subtitle, since the user's text is already in
- * the label and clipping it would lose information.
+ * Below PARTICIPATION_REVEAL_THRESHOLD: first-voices / "Votación abierta"
+ * only — never option %, bars, or a thin raw count (density honesty §3.3).
  */
 type PulseResultsCardOutcome = {
   id: string
@@ -87,6 +68,27 @@ export default function PulseResultsCard({
   locale: 'es' | 'en'
   className?: string
 }) {
+  const lowN = !shouldRevealCount(totalVotes)
+  const lowNCopy = lowNRevealCopy(locale)
+
+  if (lowN) {
+    const heading = locale === 'es' ? 'Resultados' : 'Results'
+    return (
+      <section
+        className={`rounded-2xl border border-white/10 bg-cc-card p-5 sm:p-6 ${className}`.trim()}
+        aria-label={heading}
+      >
+        <header className="mb-3">
+          <h3 className="text-lg font-semibold text-white">{lowNCopy.headline}</h3>
+          <p className="mt-2 text-sm text-slate-300 leading-snug">{lowNCopy.body}</p>
+          <p className="mt-3 text-sm text-gray-400">
+            {formatParticipationCount(totalVotes, locale)}
+          </p>
+        </header>
+      </section>
+    )
+  }
+
   const sorted = [...outcomes].sort((a, b) => {
     const ap = Number(a.probability ?? 0)
     const bp = Number(b.probability ?? 0)

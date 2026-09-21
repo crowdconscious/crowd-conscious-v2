@@ -16,7 +16,12 @@ import PulseSimTeaser from './PulseSimTeaser'
 import PulseInlineVote from './PulseInlineVote'
 import { exportPulseVotesCsv, type PulseCsvVote } from './pulse-export-csv'
 import { parseRankings } from '@/lib/pulse-vote-ranking'
-import { shouldRevealCount } from '@/lib/display/participation'
+import {
+  formatParticipationCount,
+  shouldRevealCount,
+} from '@/lib/display/participation'
+import { lowNRevealCopy } from '@/lib/post-vote-reveal'
+import ShareButton from '@/components/ShareButton'
 import {
   aggregatePulseVotes,
   histogramConfidenceSum,
@@ -255,6 +260,12 @@ export default function PulseResultClient({
   const authedHasVoted = !!viewerVote
   const hasVoted = authedHasVoted || guestHasVoted
   const shouldRevealResults = isEnhancedView || isClosedOrResolved || hasVoted
+  // Density honesty: below PARTICIPATION_REVEAL_THRESHOLD never show raw
+  // counts, option %, or majority copy — first-voices / "Votación abierta".
+  const densityRevealed = shouldRevealCount(totalVotes)
+  const showFullCommunityResults = shouldRevealResults && densityRevealed
+  const showLowNPostVote = shouldRevealResults && !densityRevealed && !isEnhancedView
+  const lowNCopy = lowNRevealCopy(locale)
 
   const strongCount = histogramCountAtLeast(aggregates.confidenceHistogram, 8)
   const weakCount = histogramCountAtMost(aggregates.confidenceHistogram, 3)
@@ -424,8 +435,10 @@ export default function PulseResultClient({
               </span>
             </div>
 
-            {/* Primary verb — options tappable immediately on shared links. */}
-            {!shouldRevealResults && voteMarket && !isClosedOrResolved ? (
+            {/* Primary verb — keep mounted while open so PostVoteScreen can
+                open on guest/registered success even after hasVoted flips.
+                Unmounting on shouldRevealResults was wiping the Phase 1 reveal. */}
+            {voteMarket && !isClosedOrResolved ? (
               <PulseInlineVote
                 market={voteMarket}
                 outcomes={outcomes.map((o) => ({
@@ -448,6 +461,9 @@ export default function PulseResultClient({
                 myVote={panelMyVote}
                 aggregates={aggregates}
                 featuredReasonings={featuredReasonings}
+                onVoted={() => {
+                  if (!isAuthenticated) setGuestHasVoted(true)
+                }}
               />
             ) : !shouldRevealResults ? (
               <div className="pulse-section mt-6 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.05] p-5 text-center">
@@ -466,7 +482,7 @@ export default function PulseResultClient({
             ) : null}
 
             <div className="pulse-section mt-8">
-              {shouldRevealResults ? (
+              {showFullCommunityResults ? (
                 <>
                 <PulseResultsCard
                   outcomes={outcomes}
@@ -550,6 +566,25 @@ export default function PulseResultClient({
                   </div>
                 ) : null}
                 </>
+              ) : showLowNPostVote ? (
+                <div className="rounded-2xl border border-white/10 bg-cc-card p-5 sm:p-6 animate-[fade-in_300ms_ease-out]">
+                  <h3 className="text-lg font-semibold text-white">
+                    {lowNCopy.headline}
+                  </h3>
+                  <p className="mt-2 text-sm text-slate-300 leading-snug">
+                    {lowNCopy.body}
+                  </p>
+                  <p className="mt-3 text-sm text-slate-500">
+                    {formatParticipationCount(totalVotes, locale)}
+                  </p>
+                  <div className="mt-5 flex flex-wrap items-center gap-3">
+                    <ShareButton
+                      marketId={marketId}
+                      title={question}
+                      sponsorName={sponsorName ?? undefined}
+                    />
+                  </div>
+                </div>
               ) : (
                 // Pre-vote: keep the label/subtitle list (no %, no bar) so the
                 // user can read every option before they vote. Replaces the
@@ -613,7 +648,7 @@ export default function PulseResultClient({
               <PulseSimTeaser marketId={marketId} locale={locale} />
             ) : null}
 
-            {shouldRevealResults && executiveSummary ? (
+            {showFullCommunityResults && executiveSummary ? (
               <div className="pulse-section mt-6 rounded-xl border border-emerald-500/20 bg-[#1a2029] p-5">
                 <h3 className="mb-2 text-sm font-semibold text-emerald-400">
                   {'💡 '}
@@ -625,7 +660,7 @@ export default function PulseResultClient({
               </div>
             ) : null}
 
-            {shouldRevealResults && pulseInsights ? (
+            {showFullCommunityResults && pulseInsights ? (
               <div className="pulse-section mt-6 rounded-xl border border-white/10 bg-[#1a2029] p-5">
                 <h3 className="mb-3 text-sm font-semibold text-emerald-400">
                   {'📊 '}
@@ -682,33 +717,46 @@ export default function PulseResultClient({
               </div>
             ) : null}
 
-            {/* Pre-vote we still surface participation numbers so the page
-                doesn't feel empty (totals are not a per-option bias signal).
-                Post-vote, the same numbers live inside PulseResultsCard, so
-                we hide this row to avoid double-printing the same metric. */}
-            {!shouldRevealResults && totalVotes > 0 && (
+            {/* Pre-vote participation — density-honest label, never a raw
+                thin count or average confidence next to a vote CTA. */}
+            {!shouldRevealResults && (
               <div className="pulse-section mt-10 grid gap-4 sm:grid-cols-2">
                 <div className="rounded-xl border border-white/5 bg-black/20 px-4 py-3">
                   <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                    {locale === 'es' ? 'Votos totales' : 'Total votes'}
+                    {locale === 'es' ? 'Participación' : 'Participation'}
                   </p>
-                  <p className="mt-1 text-2xl font-bold tabular-nums text-white">
-                    {totalVotes}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-white/5 bg-black/20 px-4 py-3">
-                  <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                    {locale === 'es' ? 'Confianza promedio' : 'Average confidence'}
-                  </p>
-                  <p className="mt-1 text-2xl font-bold tabular-nums text-emerald-400">
-                    {avgConfidence.toFixed(1)}
-                    <span className="text-lg text-slate-400">/10</span>
+                  <p
+                    className={`mt-1 font-bold text-white ${
+                      densityRevealed ? 'text-2xl tabular-nums' : 'text-lg'
+                    }`}
+                  >
+                    {formatParticipationCount(totalVotes, locale)}
                   </p>
                 </div>
+                {densityRevealed ? (
+                  <div className="rounded-xl border border-white/5 bg-black/20 px-4 py-3">
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                      {locale === 'es' ? 'Confianza promedio' : 'Average confidence'}
+                    </p>
+                    <p className="mt-1 text-2xl font-bold tabular-nums text-emerald-400">
+                      {avgConfidence.toFixed(1)}
+                      <span className="text-lg text-slate-400">/10</span>
+                    </p>
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-white/5 bg-black/20 px-4 py-3">
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                      {locale === 'es' ? 'Estado' : 'Status'}
+                    </p>
+                    <p className="mt-1 text-lg font-bold text-emerald-400">
+                      {locale === 'es' ? 'Sé de los primeros' : 'Be among the first'}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
-            {shouldRevealResults && (
+            {showFullCommunityResults && (
               <div className="mt-8 space-y-6 animate-[fade-in_300ms_ease-out]">
                 <ConfidenceHistogram
                   histogram={aggregates.confidenceHistogram}
@@ -761,7 +809,7 @@ export default function PulseResultClient({
               </div>
             )}
 
-            {shouldRevealResults && featuredReasonings.length > 0 ? (
+            {showFullCommunityResults && featuredReasonings.length > 0 ? (
               <div className="pulse-section pulse-featured-reasonings mt-6 rounded-xl border border-white/10 bg-[#1a2029] p-5">
                 <h3 className="mb-4 text-sm font-bold text-white">
                   💬{' '}
@@ -802,7 +850,7 @@ export default function PulseResultClient({
 
             {/* "IA vs. Realidad" reveal module (§5.7). Public: only after close
                 + revealed run. Admin: live preview payload even while open. */}
-            {shouldRevealResults && simReveal ? (
+            {showFullCommunityResults && simReveal ? (
               <PulseSimRevealModule locale={locale} reveal={simReveal} />
             ) : null}
 

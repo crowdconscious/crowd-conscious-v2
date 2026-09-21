@@ -63,7 +63,7 @@ import {
   getOutcomeSubtitle,
 } from '@/lib/i18n/market-translations'
 import { useLocale } from '@/lib/i18n/useLocale'
-import { formatParticipationCount } from '@/lib/display/participation'
+import { formatParticipationCount, shouldRevealCount } from '@/lib/display/participation'
 import {
   isPulseLikeMarket,
   recentActivityEmpty,
@@ -418,8 +418,12 @@ export function MarketDetailClient({
   }
 
   const handleAnonymousVoteSuccess = (payload: GuestVotePayload, _meta?: { total_votes?: number }) => {
-    if (!guestId) return
-    setMarketGuestVote(market.id, guestId, payload)
+    // Never skip the reveal for guests — resolve guest id if state raced.
+    const gid = guestId || getOrCreateGuestId()
+    if (gid && !guestId) setGuestId(gid)
+    if (gid) {
+      setMarketGuestVote(market.id, gid, payload)
+    }
     setGuestVoteRecord(payload)
     setCelebration({
       open: true,
@@ -427,19 +431,18 @@ export function MarketDetailClient({
       outcomeId: payload.outcomeId,
       confidence: payload.confidence,
     })
-    router.refresh()
+    // Defer refresh until close so remount cannot wipe celebration.open.
   }
 
   const handleCelebrationClose = () => {
     const wasGuest = celebration.guest
     setCelebration({ open: false })
+    router.refresh()
     if (wasGuest) {
       // Only interrupt with the sign-up prompt once the user has built
       // up some history. Tracks across both guest and alias anon paths.
       const { shouldShowSoftGate } = recordAnonVote(5)
       if (shouldShowSoftGate) setRegisterPromptOpen(true)
-    } else {
-      window.location.reload()
     }
   }
 
@@ -453,6 +456,7 @@ export function MarketDetailClient({
   const resolvedDate = market.resolved_at ? formatDate(market.resolved_at, locale) : ''
   const categoryLabel = categoryDisplay(config, locale)
   const avgConfidenceHero = marketAvgConfidenceFromOutcomes(outcomes)
+  const densityRevealed = shouldRevealCount(engagementCount)
 
   // Stats fed into PostVoteScreen. We snapshot the outcome the user just
   // voted for so the post-vote validation copy can echo the choice ("Votaste:
@@ -476,10 +480,10 @@ export function MarketDetailClient({
         }
       })()
     : null
-  const postVoteTotalVotes = outcomes.reduce(
-    (sum, o) => sum + (o.vote_count ?? 0),
-    0
-  )
+  const postVoteTotalVotes = Math.max(
+    outcomes.reduce((sum, o) => sum + (o.vote_count ?? 0), 0),
+    engagementCount
+  ) + (celebration.open ? 1 : 0)
   const postVoteAllOutcomes: PostVoteOutcomeStat[] = outcomes.map((o) => {
     const vc = o.vote_count ?? 0
     const tc = Number(o.total_confidence ?? 0)
@@ -559,7 +563,9 @@ export function MarketDetailClient({
             )
           })()}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-3 text-xs text-gray-500">
-            {isPulseMarket && avgConfidenceHero != null && (
+            {isPulseMarket &&
+              densityRevealed &&
+              avgConfidenceHero != null && (
               <span>
                 {locale === 'es' ? 'Confianza promedio' : 'Avg confidence'}: {avgConfidenceHero}/10
               </span>
@@ -625,8 +631,8 @@ export function MarketDetailClient({
           )}
           <p className="text-slate-300 mt-2">
             {locale === 'es'
-              ? `${engagementCount.toLocaleString()} participaci${engagementCount === 1 ? 'ón' : 'ones'} · ${registeredVoteCount.toLocaleString()} votante${registeredVoteCount === 1 ? '' : 's'} registrado${registeredVoteCount === 1 ? '' : 's'}`
-              : `${engagementCount.toLocaleString()} participation${engagementCount === 1 ? '' : 's'} · ${registeredVoteCount.toLocaleString()} registered voter${registeredVoteCount === 1 ? '' : 's'}`}
+              ? `${formatParticipationCount(engagementCount, 'es')} · ${registeredVoteCount.toLocaleString()} votante${registeredVoteCount === 1 ? '' : 's'} registrado${registeredVoteCount === 1 ? '' : 's'}`
+              : `${formatParticipationCount(engagementCount, 'en')} · ${registeredVoteCount.toLocaleString()} registered voter${registeredVoteCount === 1 ? '' : 's'}`}
           </p>
         </div>
       )}
@@ -737,7 +743,7 @@ export function MarketDetailClient({
             <PulseResultsCard
               outcomes={outcomes}
               totalVotes={engagementCount}
-              avgConfidence={avgConfidenceHero}
+              avgConfidence={densityRevealed ? avgConfidenceHero : null}
               locale={loc}
               className="animate-[fade-in_300ms_ease-out]"
             />
@@ -749,8 +755,8 @@ export function MarketDetailClient({
                 <p className="text-slate-400 text-sm">
                   {locale === 'en' ? 'Total participation' : 'Participación total'}
                 </p>
-                <p className="text-2xl font-semibold text-white">
-                  {engagementCount.toLocaleString()}
+                <p className={`font-semibold text-white ${densityRevealed ? 'text-2xl' : 'text-lg'}`}>
+                  {formatParticipationCount(engagementCount, loc)}
                 </p>
                 <p className="text-xs text-slate-500 mt-1">
                   {locale === 'en'
@@ -766,7 +772,8 @@ export function MarketDetailClient({
               PulseResultsCard absorbs. We only render the wrapper when there
               is actual content (loading skeleton OR data + voted) so we
               don't leave an empty card on the page. */}
-          {(secondaryLoading || (historyChartData.length > 0 && shouldRevealResults)) && (
+          {((secondaryLoading && shouldRevealResults && densityRevealed) ||
+            (historyChartData.length > 0 && shouldRevealResults && densityRevealed)) && (
           <div className="bg-cc-card border border-cc-border rounded-xl p-6">
             {secondaryLoading && (
               <div className="space-y-3" aria-hidden>
@@ -1073,7 +1080,9 @@ export function MarketDetailClient({
                 <span className="text-slate-400">
                   {locale === 'en' ? 'Engagement' : 'Participación'}
                 </span>
-                <span className="text-white">{engagementCount.toLocaleString()}</span>
+                <span className="text-white">
+                  {formatParticipationCount(engagementCount, loc)}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">

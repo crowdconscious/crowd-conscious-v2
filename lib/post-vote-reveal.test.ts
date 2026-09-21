@@ -5,6 +5,7 @@ import {
   canShowFullReveal,
   CONFIDENCE_UNKNOWN,
   isStatedConfidence,
+  lowNRevealCopy,
   type RevealOutcome,
 } from './post-vote-reveal.ts'
 import { PARTICIPATION_REVEAL_THRESHOLD } from './display/participation.ts'
@@ -14,6 +15,15 @@ describe('post-vote-reveal', () => {
     assert.equal(PARTICIPATION_REVEAL_THRESHOLD, 25)
     assert.equal(canShowFullReveal(24), false)
     assert.equal(canShowFullReveal(25), true)
+  })
+
+  it('low-n copy is first-voices + notify CTA in ES and EN', () => {
+    const es = lowNRevealCopy('es')
+    assert.match(es.headline, /primeros/i)
+    assert.match(es.notifyCta, /Avísame/)
+    const en = lowNRevealCopy('en')
+    assert.match(en.headline, /first/i)
+    assert.match(en.notifyCta, /Notify/i)
   })
 
   it('treats confidence 0 as unknown, not stated', () => {
