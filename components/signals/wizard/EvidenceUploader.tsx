@@ -96,10 +96,9 @@ export default function EvidenceUploader({ locale, items, onChange }: Props) {
           preview_url: URL.createObjectURL(file),
         }
         onChange([...items, next])
-      } catch (err: unknown) {
-        const message =
-          err instanceof Error ? err.message : 'Upload failed'
-        setError(message)
+      } catch {
+        // Never surface raw EN API strings in the wizard — ES-first catalog.
+        setError(t.compose.validation.uploadFailed)
       } finally {
         setUploading(false)
       }

@@ -86,6 +86,15 @@ const nextConfig: NextConfig = {
         destination: '/para-marcas/pilot',
         permanent: true,
       },
+
+      // Phase 0: kill Señales feature-intro page. Land on the feed
+      // (verb-first: Reportar lives at /signals/nueva). Francisco must OK
+      // before production — inbound/SEO risk on /signals/acerca.
+      {
+        source: '/signals/acerca',
+        destination: '/signals',
+        permanent: true,
+      },
     ]
   },
 

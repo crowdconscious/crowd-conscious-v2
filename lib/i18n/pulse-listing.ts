@@ -27,7 +27,10 @@ export function getPulseListingCopy(locale: PulseListingLocale) {
         ? `Pulse para ${company}: tus consultas activas`
         : `Pulse for ${company}: your active consultations`,
     viewResults: isEs ? 'Ver resultados →' : 'View results →',
+    // Verb-first card CTA for open consultations (Phase 0).
+    voteCta: isEs ? 'Votar →' : 'Vote →',
     votes: isEs ? 'votos' : 'votes',
+    browseMarkets: isEs ? 'Votar en consultas →' : 'Vote on consultations →',
     poweredBy: isEs ? 'Impulsado por Crowd Conscious' : 'Powered by Crowd Conscious',
     active: isEs ? 'Activo' : 'Active',
     resolved: isEs ? 'Resuelto' : 'Resolved',
@@ -41,7 +44,6 @@ export function getPulseListingCopy(locale: PulseListingLocale) {
     emptySubtitle: isEs
       ? 'Vuelve pronto o explora más consultas en la plataforma.'
       : 'Check back soon or explore more consultations on the platform.',
-    browseMarkets: isEs ? 'Explorar la plataforma' : 'Explore the platform',
     ctaQuestion: isEs
       ? '¿Quieres medir el sentimiento de tu comunidad?'
       : 'Want to measure your community’s sentiment?',
@@ -49,7 +51,7 @@ export function getPulseListingCopy(locale: PulseListingLocale) {
       ? 'Primera consulta gratuita para nuevos clientes.'
       : 'First consultation free for new clients.',
     ctaViewPlans: isEs ? 'Ver planes →' : 'View plans →',
-    ctaLearnMore: isEs ? 'Conocer Conscious Pulse →' : 'Learn about Conscious Pulse →',
+    ctaLearnMore: isEs ? 'Medir con Pulse →' : 'Measure with Pulse →',
     home: isEs ? 'Inicio' : 'Home',
     consciousFund: isEs ? 'Fondo Consciente' : 'Conscious Fund',
     resultsMetaTitle: isEs

@@ -53,12 +53,6 @@ export default async function SignalsFeedPage() {
           >
             {t.feed.ctaPrimary}
           </Link>
-          <Link
-            href="/signals/acerca"
-            className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg border border-[#2d3748] bg-[#1a2029] px-4 py-2 font-medium text-slate-200 transition-colors hover:border-emerald-500/40"
-          >
-            {t.landing.ctaSecondary}
-          </Link>
         </div>
       </header>
 

@@ -26,7 +26,7 @@ export default function TimelineRail({ locale, stage, cosignCount }: Props) {
   return (
     <div className="rounded-2xl border border-[#2d3748] bg-[#11161f] p-5 text-xs">
       <p className="font-semibold uppercase tracking-wide text-slate-500">
-        {locale === 'es' ? 'Línea de tiempo' : 'Timeline'}
+        {t.stages.timelineHeading}
       </p>
 
       <ol className="mt-3 space-y-3">

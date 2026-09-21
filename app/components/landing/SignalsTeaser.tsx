@@ -52,14 +52,14 @@ export function SignalsTeaser({ locale }: Props) {
 
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
               <Link
-                href="/signals"
+                href="/signals/nueva"
                 className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 transition-colors hover:bg-emerald-400"
               >
                 {t.ctaPrimary}
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
-                href="/signals/acerca"
+                href="/signals"
                 className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl border border-[#2d3748] bg-[#1a2029] px-5 py-3 text-sm font-medium text-slate-200 transition-colors hover:border-emerald-500/40"
               >
                 {t.ctaSecondary}

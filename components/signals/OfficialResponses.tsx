@@ -16,6 +16,8 @@ export type OfficialResponseRow = {
 type Props = {
   locale: CitizenSignalsLocale
   responses: OfficialResponseRow[]
+  /** Current threshold stage (0/1/2). Stage ≥1 empty = published silence. */
+  stage?: number
 }
 
 function statusClasses(status: string): string {
@@ -35,19 +37,30 @@ function statusClasses(status: string): string {
  * The visual treatment intentionally diverges from regular comments —
  * an emerald left border + a status pill — so the public can tell at a
  * glance which replies came from the actual destinatario versus a
- * neighbour weighing in. Empty state is rendered separately so the
- * detail page can hide the section entirely if it prefers.
+ * neighbour weighing in.
+ *
+ * Empty state is dual-outcome (Phase 0): before Stage 1 it reads as
+ * waiting; at/after Stage 1 with no reply it reads as published
+ * institutional silence — not a dead end.
  */
-export default function OfficialResponses({ locale, responses }: Props) {
+export default function OfficialResponses({
+  locale,
+  responses,
+  stage = 0,
+}: Props) {
   const t = getCitizenSignalsCopy(locale)
   const dateLocale = locale === 'es' ? 'es-MX' : 'en-US'
 
   if (responses.length === 0) {
-    return (
-      <p className="mt-2 rounded-lg border border-[#2d3748] bg-[#11161f] p-4 text-sm text-slate-400">
-        {t.detail.noOfficialResponse}
-      </p>
-    )
+    const emptyCopy =
+      stage >= 1
+        ? t.detail.noOfficialResponseSilence
+        : t.detail.noOfficialResponseWaiting
+    const emptyClass =
+      stage >= 1
+        ? 'mt-2 rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 text-sm text-amber-100/90'
+        : 'mt-2 rounded-lg border border-[#2d3748] bg-[#11161f] p-4 text-sm text-slate-400'
+    return <p className={emptyClass}>{emptyCopy}</p>
   }
 
   return (

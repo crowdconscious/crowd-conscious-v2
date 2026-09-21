@@ -48,32 +48,34 @@ type ShellNavItem = {
   beta?: boolean
 }
 
+// Verb-first primary chrome (Phase 0). Product nouns stay secondary
+// (Fondo, Blog, Buzón). Routes unchanged.
 const NAV_ITEMS_EN: ShellNavItem[] = [
   { href: '/predictions', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/live', label: 'Live', icon: Radio },
   { href: '/predictions/notifications', label: 'Notifications', icon: Bell },
-  { href: '/predictions/pulse', label: 'Pulse', icon: TrendingUp },
+  { href: '/predictions/pulse', label: 'Vote', icon: TrendingUp },
   ...(SIGNALS_ENABLED
-    ? [{ href: '/signals', label: 'Signals', icon: MessageSquareWarning, beta: true } as ShellNavItem]
+    ? [{ href: '/signals', label: 'Report', icon: MessageSquareWarning, beta: true } as ShellNavItem]
     : []),
   { href: '/predictions/trades', label: 'My Votes', icon: Receipt },
   { href: '/predictions/leaderboard', label: 'Leaderboard', icon: Trophy },
   { href: '/predictions/inbox', label: 'Conscious Inbox', icon: Lightbulb },
-  { href: '/predictions/fund', label: 'Conscious Fund', icon: Heart },
+  { href: '/predictions/fund', label: 'Decide', icon: Heart },
   { href: '/blog', label: 'Blog', icon: Newspaper },
 ]
 const NAV_ITEMS_ES: ShellNavItem[] = [
   { href: '/predictions', label: 'Panel', icon: LayoutDashboard },
   { href: '/live', label: 'En Vivo', icon: Radio },
   { href: '/predictions/notifications', label: 'Notificaciones', icon: Bell },
-  { href: '/predictions/pulse', label: 'Pulse', icon: TrendingUp },
+  { href: '/predictions/pulse', label: 'Votar', icon: TrendingUp },
   ...(SIGNALS_ENABLED
-    ? [{ href: '/signals', label: 'Señales', icon: MessageSquareWarning, beta: true } as ShellNavItem]
+    ? [{ href: '/signals', label: 'Reportar', icon: MessageSquareWarning, beta: true } as ShellNavItem]
     : []),
   { href: '/predictions/trades', label: 'Mis votos', icon: Receipt },
   { href: '/predictions/leaderboard', label: 'Clasificación', icon: Trophy },
   { href: '/predictions/inbox', label: 'Buzón Consciente', icon: Lightbulb },
-  { href: '/predictions/fund', label: 'Fondo Consciente', icon: Heart },
+  { href: '/predictions/fund', label: 'Decidir', icon: Heart },
   { href: '/blog', label: 'Blog', icon: Newspaper },
 ]
 

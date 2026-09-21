@@ -114,20 +114,7 @@ export async function POST(request: NextRequest) {
         icon: '🎁',
         condition: (sponsorshipsMade || 0) >= 10
       },
-      {
-        type: 'FIRST_CORRECT',
-        name: 'Sharp Insight',
-        description: 'Match the final result for the first time',
-        icon: '🎯',
-        condition: correctPredictions >= 1
-      },
-      {
-        type: 'CORRECT_10',
-        name: 'Accurate Mind',
-        description: 'Match the final result 10 times',
-        icon: '✨',
-        condition: correctPredictions >= 10
-      },
+      // FIRST_CORRECT / CORRECT_10 retired Phase 0 — no XP/achievements for accuracy.
       {
         type: 'TIER_2',
         name: 'Contributor',

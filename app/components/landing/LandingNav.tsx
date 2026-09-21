@@ -12,23 +12,19 @@ import { getPodcastCopy } from '@/lib/i18n/podcast'
 
 /**
  * Canonical logged-out primary nav (locale-aware):
- *   Pulse · Resultados · (Señales) · Para marcas · Para creadores ·
+ *   Votar · Resultados · (Reportar) · Para marcas · Para creadores ·
  *   Blog · Podcast · Acerca
  *
- * Pulse (consumer Pulse listing) is the emphasized slot; Para marcas is
- * the B2B landing (formerly the /pulse URL). Podcast sits with Blog as
- * public content — label is "Podcast" (not TOCAYOS) so the path is
- * findable; the hub itself is branded TOCAYOS. Predicciones, Lugares,
- * and Fondo moved into the authed surface — they're reachable via
- * /predictions once logged in. Live is a compact pulsing badge that
- * only appears when a public live event is happening. Sponsor /
- * Sponsors / Contact / Markets live in the footer.
+ * Verb-first chrome (Phase 0): primary action labels lead with verbs;
+ * product nouns (Pulse, Señales) stay on secondary taxonomy / after
+ * first action. Routes stay `/pulse`, `/signals`, `/para-marcas`.
+ * Predicciones, Lugares, and Fondo live in the authed shell.
  */
 const NAV = {
   es: {
-    pulse: 'Pulse',
+    pulse: 'Votar',
     resultados: 'Resultados',
-    signals: 'Señales',
+    signals: 'Reportar',
     signalsBeta: 'Beta',
     paraMarcas: 'Para marcas',
     creators: 'Para creadores',
@@ -41,9 +37,9 @@ const NAV = {
     androidSoon: 'Android próximamente',
   },
   en: {
-    pulse: 'Pulse',
+    pulse: 'Vote',
     resultados: 'Results',
-    signals: 'Signals',
+    signals: 'Report',
     signalsBeta: 'Beta',
     paraMarcas: 'For brands',
     creators: 'For creators',

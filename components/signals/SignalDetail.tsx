@@ -299,7 +299,11 @@ export default function SignalDetail({
             <h2 className="text-lg font-semibold text-white">
               {t.detail.officialResponses}
             </h2>
-            <OfficialResponses locale={locale} responses={responses} />
+            <OfficialResponses
+              locale={locale}
+              responses={responses}
+              stage={signal.threshold_stage}
+            />
           </div>
 
           <div className="mt-10 lg:hidden">
