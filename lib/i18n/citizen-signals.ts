@@ -525,6 +525,10 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
       noOfficialResponseSilence: isEs
         ? 'Silencio institucional — resultado publicado. El destinatario fue notificado y no ha respondido en este canal.'
         : 'Institutional silence — published result. The target was notified and has not replied on this channel.',
+      // Phase 0 dual-outcome framing (thresholds stay 50 / 200).
+      dualOutcomeBlurb: isEs
+        ? 'Tu señal está viva. 50 respaldos → la institución recibe la solicitud formal y un enlace para responder públicamente. 200 respaldos → prioridad pública. Si no responde, su silencio queda en el registro público.'
+        : 'Your signal is live. 50 backings → the institution receives the formal request and a link to reply publicly. 200 backings → public priority. If they do not reply, their silence stays on the public record.',
       commentsTitle: isEs ? 'Comentarios' : 'Comments',
       addCommentPlaceholder: isEs
         ? 'Aporta contexto o detalles…'
@@ -536,25 +540,25 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
     },
 
     cosign: {
-      add: isEs ? 'Co-firmar esta señal' : 'Co-sign this signal',
+      add: isEs ? 'Respaldar' : 'Back this',
       remove: isEs ? 'Quitar co-firma' : 'Remove co-sign',
       adding: isEs ? 'Co-firmando…' : 'Co-signing…',
       requireAuth: isEs
         ? 'Inicia sesión para co-firmar.'
         : 'Sign in to co-sign.',
       already: isEs ? 'Ya co-firmaste' : 'You already co-signed',
-      verifiedLabel: isEs ? 'Co-firma verificada' : 'Verified co-sign',
+      verifiedLabel: isEs ? 'Respaldar' : 'Back this',
       verifiedHint: isEs
-        ? 'Las co-firmas verificadas son las que activan los umbrales.'
-        : 'Verified co-signs are what trigger the escalation thresholds.',
+        ? 'Los respaldos verificados son los que activan los umbrales (50 y 200).'
+        : 'Verified backings are what trigger the thresholds (50 and 200).',
     },
 
     // Anonymous "Apoyo" surface — paired with cosign for casual visitors
     // who won't create an account to co-sign. See migration 221.
     support: {
-      label: isEs ? 'Apoyo esta señal' : 'Support this signal',
-      labelGiven: isEs ? 'Ya apoyaste · Gracias' : 'Supported · Thank you',
-      sending: isEs ? 'Enviando apoyo…' : 'Sending support…',
+      label: isEs ? 'Respaldar' : 'Back this',
+      labelGiven: isEs ? 'Ya respaldaste · Gracias' : 'Backed · Thank you',
+      sending: isEs ? 'Enviando respaldo…' : 'Sending backing…',
       countLabel: (n: number) =>
         n === 1
           ? isEs ? '1 apoyo anónimo' : '1 anonymous support'

@@ -279,7 +279,7 @@ export default function SignalDetail({
       </header>
 
       <section className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="min-w-0">
+        <div className="order-2 min-w-0 lg:order-1">
           <p className="max-w-prose whitespace-pre-line text-base leading-relaxed text-slate-200">
             {signal.body}
           </p>
@@ -324,12 +324,14 @@ export default function SignalDetail({
           </div>
         </div>
 
-        <aside className="space-y-5 lg:sticky lg:top-24 lg:self-start">
-          {sponsor && <SponsorBadge locale={locale} sponsor={sponsor} />}
-
+        {/* Phase 0 shared-link: engagement first on mobile; sponsor below verb. */}
+        <aside className="order-1 space-y-5 lg:order-2 lg:sticky lg:top-24 lg:self-start">
           <div className="rounded-2xl border border-[#2d3748] bg-[#11161f] p-5">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
               {t.support.combinedCount(cosignCount, supportCount)}
+            </p>
+            <p className="mt-2 text-xs leading-relaxed text-slate-400">
+              {t.detail.dualOutcomeBlurb}
             </p>
             {promoteToast && (
               <p
@@ -361,6 +363,8 @@ export default function SignalDetail({
               />
             </div>
           </div>
+
+          {sponsor && <SponsorBadge locale={locale} sponsor={sponsor} />}
 
           <TimelineRail
             locale={locale}

@@ -667,6 +667,10 @@ export default function QuejaFlow({ isLoggedIn, userName }: QuejaFlowProps) {
             />
           </div>
 
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-relaxed text-emerald-900 whitespace-pre-line">
+            {t.flow.review.dualOutcome}
+          </div>
+
           <div className="flex justify-between pt-2">
             <button
               type="button"
@@ -704,6 +708,9 @@ export default function QuejaFlow({ isLoggedIn, userName }: QuejaFlowProps) {
           </div>
 
           <p className="text-sm text-slate-600">{t.flow.done.pdfReady}</p>
+          <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-relaxed text-slate-700">
+            {t.flow.done.dualOutcome}
+          </p>
           <button
             type="button"
             className={secondaryBtn}

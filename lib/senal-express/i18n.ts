@@ -193,6 +193,9 @@ export function getQuejaCopy(locale: QuejaLocale) {
           : 'Download PDF and publish señal',
         confirmAnon: es ? 'Descargar PDF' : 'Download PDF',
         confirming: es ? 'Generando…' : 'Generating…',
+        dualOutcome: es
+          ? 'Tu señal está viva.\n50 respaldos → la institución recibe la solicitud formal y un enlace para responder públicamente.\n200 respaldos → prioridad pública.\nSi no responde, su silencio queda en el registro público.'
+          : 'Your signal is live.\n50 backings → the institution receives the formal request and a link to reply publicly.\n200 backings → public priority.\nIf they do not reply, their silence stays on the public record.',
       },
 
       done: {
@@ -202,8 +205,11 @@ export function getQuejaCopy(locale: QuejaLocale) {
           : 'Your oficio PDF was downloaded. Download it again anytime:',
         downloadAgain: es ? 'Descargar PDF de nuevo' : 'Download PDF again',
         signalCreated: es
-          ? 'Tu señal se publicó y está dirigida a tu alcaldía. Compártela para sumar co-firmas.'
-          : 'Your señal was published and is addressed to your borough. Share it to gather co-signs.',
+          ? 'Tu señal se publicó y está dirigida a tu alcaldía. Compártela para sumar respaldos.'
+          : 'Your señal was published and is addressed to your borough. Share it to gather backings.',
+        dualOutcome: es
+          ? 'Tu señal está viva. 50 respaldos → la institución recibe la solicitud formal y un enlace para responder públicamente. 200 respaldos → prioridad pública. Si no responde, su silencio queda en el registro público.'
+          : 'Your signal is live. 50 backings → the institution receives the formal request and a link to reply publicly. 200 backings → public priority. If they do not reply, their silence stays on the public record.',
         viewSignal: es ? 'Ver mi señal' : 'View my señal',
         publishUnavailable: es
           ? 'La publicación de la señal no está disponible en este momento. Tu PDF sí se generó.'
