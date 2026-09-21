@@ -33,6 +33,7 @@ import {
   voteCountLabelPublic,
 } from '@/lib/i18n/pulse-market-copy'
 import { PUBLIC_MARKET_MIN_VOTES } from '@/lib/predictions/engagement'
+import { PARTICIPATION_REVEAL_THRESHOLD } from '@/lib/display/participation'
 import { SponsorBadge } from '@/components/SponsorBadge'
 import { hasGuestVotedMarket } from '@/lib/guest-vote-storage'
 import { MiniSparkline } from '@/app/(predictions)/predictions/components/MiniSparkline'
@@ -262,33 +263,41 @@ function categoryLabel(
   return locale === 'es' ? config.labelEs : config.labelEn
 }
 
-/** Localized "Resolves in …" / "Cierra en …" — 24h precision near term, then
- *  months / years. Resolved markets get "Resuelto" / "Resolved". */
-function getCountdown(resolutionDate: string, locale: string): string {
+/**
+ * Localized close copy. Phase 0 density honesty: never show multi-year
+ * "Cierra en N años" urgency on near-empty Pulses (most live rows are
+ * n=2–10 with 2027 closes that look like data bugs). Prefer open-voting
+ * framing until participation is trustworthy OR the close is near-term.
+ */
+function getCountdown(
+  resolutionDate: string,
+  locale: string,
+  engagement: number
+): string {
   const end = new Date(resolutionDate).getTime()
   const now = Date.now()
   const diffMs = end - now
   const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
   const es = locale === 'es'
   if (diffDays < 0) return es ? 'Resuelto' : 'Resolved'
+
+  const lowDensity = engagement < PARTICIPATION_REVEAL_THRESHOLD
+  // Far closes (esp. 2027 placeholders) + low n → no fake urgency countdown.
+  if (lowDensity || diffDays >= 90) {
+    return es ? 'Votación abierta' : 'Voting open'
+  }
+
   if (diffDays === 0) return es ? 'Termina hoy' : 'Ends today'
   if (diffDays === 1) return es ? 'Cierra mañana' : 'Resolves tomorrow'
-  if (diffDays < 30) {
-    return es ? `Cierra en ${diffDays} días` : `Resolves in ${diffDays} days`
-  }
-  if (diffDays < 365) {
-    const months = Math.round(diffDays / 30)
-    if (es) return `Cierra en ${months} ${months > 1 ? 'meses' : 'mes'}`
-    return `Resolves in ${months} month${months > 1 ? 's' : ''}`
-  }
-  const years = Math.round(diffDays / 365)
-  if (es) return `Cierra en ${years} ${years > 1 ? 'años' : 'año'}`
-  return `Resolves in ${years} year${years > 1 ? 's' : ''}`
+  return es ? `Cierra en ${diffDays} días` : `Resolves in ${diffDays} days`
 }
 
 type UrgencyLevel = 'critical' | 'soon' | 'medium' | 'far'
 
-function getUrgency(resolutionDate: string): {
+function getUrgency(
+  resolutionDate: string,
+  engagement: number
+): {
   level: UrgencyLevel
   days: number
 } {
@@ -296,10 +305,13 @@ function getUrgency(resolutionDate: string): {
   const diffMs = end - Date.now()
   const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
   if (diffDays < 0) return { level: 'far', days: 0 }
+  // No urgency chrome when density is dishonest or close is far out.
+  if (engagement < PARTICIPATION_REVEAL_THRESHOLD || diffDays >= 90) {
+    return { level: 'far', days: diffDays }
+  }
   if (diffDays < 7) return { level: 'critical', days: diffDays }
   if (diffDays < 30) return { level: 'soon', days: diffDays }
-  if (diffDays < 90) return { level: 'medium', days: diffDays }
-  return { level: 'far', days: diffDays }
+  return { level: 'medium', days: diffDays }
 }
 
 function syntheticBinaryOutcomes(
@@ -378,7 +390,10 @@ export function MarketCard({
     Number(market.total_volume) ||
     0
   const recentVotes = Number(market.recent_votes ?? 0)
-  const urgency = getUrgency(market.resolution_date || new Date().toISOString())
+  const urgency = getUrgency(
+    market.resolution_date || new Date().toISOString(),
+    engagement
+  )
   const isTrending = variant === 'trending'
 
   const isLowEngagement =
@@ -633,7 +648,9 @@ export function MarketCard({
                   </span>
                 )}
                 <Calendar className="h-4 w-4 text-slate-500" />
-                <span>{getCountdown(market.resolution_date, locale)}</span>
+                <span>
+                  {getCountdown(market.resolution_date, locale, engagement)}
+                </span>
               </div>
             )}
           </div>
