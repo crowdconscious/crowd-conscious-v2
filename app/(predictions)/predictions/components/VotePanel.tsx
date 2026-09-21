@@ -33,6 +33,10 @@ import {
   rankingsToOrderedIds,
 } from '@/lib/pulse-vote-ranking'
 import { CONFIDENCE_UNKNOWN } from '@/lib/post-vote-reveal'
+import {
+  formatParticipationCount,
+  shouldRevealCount,
+} from '@/lib/display/participation'
 
 // All three fields are now first-class columns on prediction_markets (see
 // migrations 126/129/140 + types/database.ts). Re-declaring them here as
@@ -785,12 +789,16 @@ export function VotePanel({
   if (guestHasVoted) {
     const displayOutcomeId = guestVoteRecord?.outcomeId
     const displayConfidence = guestVoteRecord?.confidence
-    const outcomeForDisplay = outcomes.find((o) => o.id === displayOutcomeId)
     const sorted = [...outcomes].sort(
       (a, b) => toDecimal(b.probability || 0) - toDecimal(a.probability || 0)
     )
     const shareTitle = getMarketText(market, 'title', locale)
     const sponsorName = (market as { sponsor_name?: string | null }).sponsor_name
+    const voteN = Math.max(
+      Number(market.total_votes ?? 0),
+      outcomes.reduce((s, o) => s + (o.vote_count ?? 0), 0)
+    )
+    const showBars = shouldRevealCount(voteN)
 
     return (
       <div className="bg-cc-card border border-white/10 rounded-2xl overflow-hidden">
@@ -800,44 +808,61 @@ export function VotePanel({
             <p className="text-white font-medium mt-2">
               {locale === 'es' ? '¡Voto registrado!' : 'Vote recorded!'}
             </p>
+            <p className="mt-2 text-xs text-gray-500">
+              {showBars
+                ? formatParticipationCount(voteN, loc)
+                : locale === 'es'
+                  ? 'Eres de los primeros en opinar.'
+                  : 'You’re one of the first voices.'}
+            </p>
           </div>
 
-          <div className="space-y-3">
-            {sorted.map((o) => {
-              const pct = Math.round(toDisplayPercent(o.probability || 0))
-              const isYours = o.id === displayOutcomeId
-              const subtitle = getOutcomeSubtitle(o, locale)
-              return (
-                <div key={o.id} className="space-y-1">
-                  <div className="flex justify-between text-sm gap-2">
-                    <div className="min-w-0">
-                      <span
-                        className={`block leading-snug ${
-                          isYours ? 'text-emerald-400 font-medium' : 'text-gray-300'
-                        }`}
-                      >
-                        {getOutcomeCardLabel(o, locale)}
-                      </span>
-                      {subtitle ? (
-                        <span className="block text-sm leading-snug text-gray-500">
-                          {subtitle}
+          {showBars ? (
+            <div className="space-y-3">
+              {sorted.map((o) => {
+                const pct = Math.round(toDisplayPercent(o.probability || 0))
+                const isYours = o.id === displayOutcomeId
+                const subtitle = getOutcomeSubtitle(o, locale)
+                return (
+                  <div key={o.id} className="space-y-1">
+                    <div className="flex justify-between text-sm gap-2">
+                      <div className="min-w-0">
+                        <span
+                          className={`block leading-snug ${
+                            isYours ? 'text-emerald-400 font-medium' : 'text-gray-300'
+                          }`}
+                        >
+                          {getOutcomeCardLabel(o, locale)}
                         </span>
-                      ) : null}
+                        {subtitle ? (
+                          <span className="block text-sm leading-snug text-gray-500">
+                            {subtitle}
+                          </span>
+                        ) : null}
+                      </div>
+                      <span
+                        className={`shrink-0 ${isYours ? 'text-emerald-400' : 'text-gray-500'}`}
+                      >
+                        {pct}%
+                      </span>
                     </div>
-                    <span className={`shrink-0 ${isYours ? 'text-emerald-400' : 'text-gray-500'}`}>
-                      {pct}%
-                    </span>
+                    <div className="w-full h-2 bg-white/[0.06] rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${isYours ? 'bg-emerald-500' : 'bg-white/15'}`}
+                        style={{ width: `${Math.min(100, Math.max(pct, 2))}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="w-full h-2 bg-white/[0.06] rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full ${isYours ? 'bg-emerald-500' : 'bg-white/15'}`}
-                      style={{ width: `${Math.min(100, Math.max(pct, 2))}%` }}
-                    />
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+                )
+              })}
+            </div>
+          ) : (
+            <p className="text-center text-sm text-gray-400">
+              {locale === 'es'
+                ? 'Te avisamos cuando haya suficientes votos para comparar certezas.'
+                : 'We’ll let you know when there are enough votes to compare certainty.'}
+            </p>
+          )}
 
           {needsUserConfidence && displayConfidence != null && displayConfidence >= 1 && (
             <p className="text-xs text-gray-500 mt-4 text-center">
@@ -857,9 +882,7 @@ export function VotePanel({
           {!isAuthenticated && (
             <div className="mt-6 rounded-xl border border-emerald-500/30 bg-emerald-500/[0.05] p-4 text-center">
               <p className="text-sm text-white font-medium">
-                {locale === 'es'
-                  ? '¡Voto registrado!'
-                  : 'Vote saved!'}
+                {locale === 'es' ? '¡Voto registrado!' : 'Vote saved!'}
               </p>
               <p className="text-xs text-gray-400 mt-1">
                 {locale === 'es'
@@ -900,7 +923,6 @@ export function VotePanel({
                   locale
                 )
                 const n = m.total_votes ?? 0
-                const voteWord = locale === 'es' ? 'votos' : 'votes'
                 return (
                   <Link
                     key={m.id}
@@ -910,7 +932,7 @@ export function VotePanel({
                     <div className="flex-1 pr-3 min-w-0">
                       <p className="text-sm text-white font-medium leading-snug">{title}</p>
                       <p className="text-xs text-gray-500 mt-1">
-                        {n.toLocaleString()} {voteWord}
+                        {formatParticipationCount(n, loc)}
                       </p>
                     </div>
                     <span className="text-emerald-400 text-xs font-medium shrink-0">
