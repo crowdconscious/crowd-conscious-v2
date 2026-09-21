@@ -103,8 +103,9 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
   return {
     nav: {
       brand: isEs ? 'Señales Ciudadanas' : 'Citizen Signals',
+      // Secondary taxonomy noun (after first action). Primary CTAs use Reportar.
       feed: isEs ? 'Señales' : 'Signals',
-      newSignal: isEs ? 'Crear señal' : 'Create signal',
+      newSignal: isEs ? 'Reportar' : 'Report',
       beta: isEs ? 'Beta' : 'Beta',
     },
 
@@ -124,8 +125,8 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
       heroSubtitle: isEs
         ? 'Tu reporte llega a la autoridad correcta. Si suficientes vecinos co-firman, sale a la luz pública.'
         : 'Your report reaches the right authority. If enough neighbours co-sign, it goes public.',
-      ctaPrimary: isEs ? 'Crear una señal' : 'Create a signal',
-      ctaSecondary: isEs ? 'Ver señales activas' : 'Browse active signals',
+      ctaPrimary: isEs ? 'Reportar' : 'Report',
+      ctaSecondary: isEs ? 'Ver reportes activos' : 'Browse active reports',
       filters: {
         all: isEs ? 'Todas' : 'All',
         category: isEs ? 'Categoría' : 'Category',
@@ -147,7 +148,7 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
         subtitle: isEs
           ? 'Sé la primera persona en reportar algo que debe cambiar.'
           : 'Be the first to report something worth changing.',
-        cta: isEs ? 'Crear la primera señal' : 'Create the first signal',
+        cta: isEs ? 'Sé el primero en reportar' : 'Be the first to report',
       },
       card: {
         cosignProgress: (n: number, threshold: number) =>
@@ -156,7 +157,12 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
             : `${n} of ${threshold} co-signs toward threshold`,
         publishedAgo: (rel: string) =>
           isEs ? `Publicada ${rel}` : `Published ${rel}`,
-        viewSignal: isEs ? 'Ver señal' : 'View signal',
+        viewSignal: isEs ? 'Abrir reporte' : 'Open report',
+        // Used when feed rows know stage≥1 and zero official replies
+        // (detail page is the primary silence surface today).
+        silenceBadge: isEs
+          ? 'Sin respuesta · público'
+          : 'No reply · public',
       },
       loadMore: isEs ? 'Cargar más' : 'Load more',
       loading: isEs ? 'Cargando…' : 'Loading…',
@@ -169,7 +175,7 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
     },
 
     compose: {
-      title: isEs ? 'Crear una señal' : 'Create a signal',
+      title: isEs ? 'Reportar' : 'Report',
       requireAuth: isEs
         ? 'Inicia sesión para crear una señal. Tu identidad solo es visible para el equipo de moderación.'
         : 'Sign in to create a signal. Your identity is only visible to the moderation team.',
@@ -184,6 +190,7 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
       wizard: {
         stepLabel: (n: number, total: number) =>
           isEs ? `Paso ${n} de ${total}` : `Step ${n} of ${total}`,
+        stepsAriaLabel: isEs ? 'Pasos del asistente' : 'Wizard steps',
         next: isEs ? 'Siguiente' : 'Next',
         back: isEs ? 'Atrás' : 'Back',
         previewHeading: isEs ? 'Vista previa' : 'Preview',
@@ -278,6 +285,9 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
         submitFailed: isEs
           ? 'No pudimos enviar la señal. Intenta de nuevo.'
           : 'We could not submit the signal. Try again.',
+        uploadFailed: isEs
+          ? 'No pudimos subir el archivo. Intenta de nuevo.'
+          : 'We could not upload the file. Try again.',
       },
       legalDisclaimerLong: isEs
         ? 'Al enviar esta señal afirmas que la información es verdadera al mejor de tu conocimiento, que no incluye datos personales de terceros (nombres, direcciones, teléfonos) ni afirmaciones difamatorias. Crowd Conscious puede moderar, editar o rechazar el contenido antes de publicarlo. Una señal no sustituye una denuncia formal ante autoridad competente.'
@@ -470,20 +480,20 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
           ? 'Crowd Conscious puede retirar señales que reciban reportes o violen las reglas. No ofrecemos asesoría legal. No publiques afirmaciones falsas sobre hechos.'
           : 'Crowd Conscious may remove signals that receive reports or break the rules. We do not offer legal advice. Do not publish false factual claims.',
         termsLink: isEs ? 'Términos y condiciones' : 'Terms & conditions',
-        submit: isEs ? 'Publicar señal' : 'Publish signal',
+        submit: isEs ? 'Enviar reporte' : 'Submit report',
         submitting: isEs ? 'Enviando…' : 'Submitting…',
       },
       success: {
-        title: isEs ? 'Tu señal ya está publicada' : 'Your signal is live',
+        title: isEs ? 'Tu reporte ya está publicado' : 'Your report is live',
         body: isEs
-          ? 'Tu señal ya aparece en el feed público. Compártela con vecinos — las co-firmas son las que la llevan al destinatario.'
-          : 'Your signal is now in the public feed. Share it with neighbours — co-signs are what carry it to the target.',
+          ? 'Tu reporte ya aparece en el feed público. Compártelo con vecinos — las co-firmas lo llevan al destinatario. Si la autoridad no responde tras el umbral, ese silencio también queda publicado como resultado.'
+          : 'Your report is now in the public feed. Share it with neighbours — co-signs carry it to the target. If the authority does not reply after the threshold, that silence is also published as a result.',
         backToFeed: isEs ? 'Ver el feed' : 'Back to feed',
-        viewSubmission: isEs ? 'Ver mi señal' : 'View my signal',
+        viewSubmission: isEs ? 'Ver mi reporte' : 'View my report',
         slugCaption: isEs
-          ? 'Guarda este enlace para compartirla.'
+          ? 'Guarda este enlace para compartirlo.'
           : 'Save this link to share it.',
-        createAnother: isEs ? 'Crear otra señal' : 'Create another signal',
+        createAnother: isEs ? 'Reportar otra vez' : 'Report again',
       },
     },
 
@@ -499,15 +509,26 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
         n === 1
           ? isEs ? '1 co-firma' : '1 co-sign'
           : isEs ? `${n} co-firmas` : `${n} co-signs`,
-      shareTitle: isEs ? 'Comparte esta señal' : 'Share this signal',
+      shareTitle: isEs ? 'Comparte este reporte' : 'Share this report',
       evidenceTitle: isEs ? 'Evidencia' : 'Evidence',
       noEvidence: isEs
         ? 'Sin evidencia pública adjunta.'
         : 'No public evidence attached.',
       officialResponses: isEs ? 'Respuesta oficial' : 'Official response',
+      // Dual-outcome empty state: waiting before Stage 1; published silence after.
       noOfficialResponse: isEs
         ? 'El destinatario aún no responde públicamente.'
         : 'The target has not replied publicly yet.',
+      noOfficialResponseWaiting: isEs
+        ? 'Aún sin respuesta oficial. Las co-firmas activan el aviso al destinatario.'
+        : 'No official reply yet. Co-signs trigger the notice to the target.',
+      noOfficialResponseSilence: isEs
+        ? 'Silencio institucional — resultado publicado. El destinatario fue notificado y no ha respondido en este canal.'
+        : 'Institutional silence — published result. The target was notified and has not replied on this channel.',
+      // Phase 0 dual-outcome framing (thresholds stay 50 / 200).
+      dualOutcomeBlurb: isEs
+        ? 'Tu señal está viva. 50 respaldos → la institución recibe la solicitud formal y un enlace para responder públicamente. 200 respaldos → prioridad pública. Si no responde, su silencio queda en el registro público.'
+        : 'Your signal is live. 50 backings → the institution receives the formal request and a link to reply publicly. 200 backings → public priority. If they do not reply, their silence stays on the public record.',
       commentsTitle: isEs ? 'Comentarios' : 'Comments',
       addCommentPlaceholder: isEs
         ? 'Aporta contexto o detalles…'
@@ -519,25 +540,25 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
     },
 
     cosign: {
-      add: isEs ? 'Co-firmar esta señal' : 'Co-sign this signal',
+      add: isEs ? 'Respaldar' : 'Back this',
       remove: isEs ? 'Quitar co-firma' : 'Remove co-sign',
       adding: isEs ? 'Co-firmando…' : 'Co-signing…',
       requireAuth: isEs
         ? 'Inicia sesión para co-firmar.'
         : 'Sign in to co-sign.',
       already: isEs ? 'Ya co-firmaste' : 'You already co-signed',
-      verifiedLabel: isEs ? 'Co-firma verificada' : 'Verified co-sign',
+      verifiedLabel: isEs ? 'Respaldar' : 'Back this',
       verifiedHint: isEs
-        ? 'Las co-firmas verificadas son las que activan los umbrales.'
-        : 'Verified co-signs are what trigger the escalation thresholds.',
+        ? 'Los respaldos verificados son los que activan los umbrales (50 y 200).'
+        : 'Verified backings are what trigger the thresholds (50 and 200).',
     },
 
     // Anonymous "Apoyo" surface — paired with cosign for casual visitors
     // who won't create an account to co-sign. See migration 221.
     support: {
-      label: isEs ? 'Apoyo esta señal' : 'Support this signal',
-      labelGiven: isEs ? 'Ya apoyaste · Gracias' : 'Supported · Thank you',
-      sending: isEs ? 'Enviando apoyo…' : 'Sending support…',
+      label: isEs ? 'Respaldar' : 'Back this',
+      labelGiven: isEs ? 'Ya respaldaste · Gracias' : 'Backed · Thank you',
+      sending: isEs ? 'Enviando respaldo…' : 'Sending backing…',
       countLabel: (n: number) =>
         n === 1
           ? isEs ? '1 apoyo anónimo' : '1 anonymous support'
@@ -596,15 +617,16 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
       stage1: {
         label: isEs ? 'Destinatario notificado' : 'Target notified',
         help: isEs
-          ? 'Le enviamos un correo privado al destinatario.'
-          : 'We emailed the target privately.',
+          ? 'Notificado en privado. Resultado posible: respuesta oficial o silencio documentado.'
+          : 'Notified privately. Possible outcome: official reply or documented silence.',
       },
       stage2: {
         label: isEs ? 'Dossier público' : 'Public dossier',
         help: isEs
-          ? 'La señal cruzó el umbral público; se exhibe en el dossier.'
-          : 'The signal crossed the public threshold; the dossier is live.',
+          ? 'Prioridad pública. La constancia queda: respuesta oficial o silencio institucional publicado.'
+          : 'Public priority. The record stands: official reply or published institutional silence.',
       },
+      timelineHeading: isEs ? 'Línea de tiempo' : 'Timeline',
     },
 
     moderation: {
@@ -748,11 +770,11 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
           ? 'Co-firmas anónimas. Cuando se cruza el umbral, la autoridad recibe la señal.'
           : 'Anonymous co-signs. Once the threshold is crossed, the authority gets the signal.',
         isEs
-          ? 'Respuesta oficial pública. Cero buzones perdidos.'
-          : 'Public official replies. No more black-hole inboxes.',
+          ? 'Constancia pública: respuesta oficial o silencio institucional publicado. Cero buzones perdidos.'
+          : 'Public record: official reply or published institutional silence. No more black-hole inboxes.',
       ],
-      ctaPrimary: isEs ? 'Ver señales activas' : 'Browse active signals',
-      ctaSecondary: isEs ? 'Cómo funciona' : 'How it works',
+      ctaPrimary: isEs ? 'Reportar' : 'Report',
+      ctaSecondary: isEs ? 'Ver reportes activos' : 'Browse active reports',
       pilotNote: isEs
         ? 'Piloto activo en las 16 alcaldías de Ciudad de México.'
         : 'Pilot live across the 16 boroughs of Mexico City.',
@@ -760,8 +782,8 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
       showcase: {
         eyebrow: isEs ? 'En vivo · CDMX' : 'Live · CDMX',
         title: isEs
-          ? 'Señales Activas en CDMX'
-          : 'Active Signals in CDMX',
+          ? 'Reportes activos en CDMX'
+          : 'Active reports in CDMX',
         subtitle: isEs
           ? 'Lo que la ciudadanía está pidiendo cambiar.'
           : 'What citizens are pushing to change.',
@@ -769,8 +791,8 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
           isEs
             ? `${cosigns} co-firmas · ${supports} apoyos`
             : `${cosigns} co-signs · ${supports} supports`,
-        viewSignal: isEs ? 'Ver señal →' : 'View signal →',
-        viewAll: isEs ? 'Ver todas las señales →' : 'View all signals →',
+        viewSignal: isEs ? 'Abrir reporte →' : 'Open report →',
+        viewAll: isEs ? 'Ver todos los reportes →' : 'View all reports →',
       },
     },
 
@@ -780,13 +802,13 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
         ? 'Señales Ciudadanas'
         : 'Citizen Signals',
       heroTagline: isEs
-        ? 'Reporta. Co-firma. Obtén respuesta oficial.'
-        : 'Report. Co-sign. Get an official reply.',
+        ? 'Reporta. Co-firma. Obtén constancia pública (respuesta o silencio).'
+        : 'Report. Co-sign. Get a public record (reply or silence).',
       heroLead: isEs
-        ? 'Las quejas que se pierden en formularios oficiales rara vez se resuelven. Señales Ciudadanas es un canal moderado, colectivo y trazable que conecta a vecinos con su alcaldía o institución — y deja constancia pública de la respuesta.'
-        : 'Complaints that vanish into official portals rarely get resolved. Citizen Signals is a moderated, collective, traceable channel that connects neighbours with their municipality or institution — and leaves a public record of the reply.',
-      heroCtaPrimary: isEs ? 'Crear una señal' : 'Create a signal',
-      heroCtaSecondary: isEs ? 'Ver señales activas' : 'Browse signals',
+        ? 'Las quejas que se pierden en formularios oficiales rara vez se resuelven. Señales Ciudadanas es un canal moderado, colectivo y trazable que conecta a vecinos con su alcaldía o institución — y deja constancia pública de la respuesta o del silencio.'
+        : 'Complaints that vanish into official portals rarely get resolved. Citizen Signals is a moderated, collective, traceable channel that connects neighbours with their municipality or institution — and leaves a public record of the reply or the silence.',
+      heroCtaPrimary: isEs ? 'Reportar' : 'Report',
+      heroCtaSecondary: isEs ? 'Ver reportes activos' : 'Browse reports',
       flowTitle: isEs ? '¿Cómo funciona?' : 'How it works',
       flowSteps: [
         {
@@ -821,10 +843,12 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
         },
         {
           n: 5,
-          title: isEs ? 'Respuesta pública' : 'Public reply',
+          title: isEs
+            ? 'Constancia pública (respuesta o silencio)'
+            : 'Public record (reply or silence)',
           body: isEs
-            ? 'El destinatario responde desde su enlace mágico. La respuesta queda asociada a la señal — visible a quien la firmó y a cualquiera que la consulte.'
-            : 'The recipient replies from their magic link. The reply is attached to the signal — visible to every co-signer and anyone who looks it up.',
+            ? 'El destinatario puede responder desde su enlace mágico — o no. En ambos casos queda registro público: respuesta oficial o silencio institucional publicado.'
+            : 'The recipient can reply from their magic link — or not. Either way there is a public record: official reply or published institutional silence.',
         },
       ],
       whoTitle: isEs ? '¿Para quién es?' : 'Who is this for?',
@@ -847,8 +871,8 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
           ? 'Un canal moderado para reportar problemas reales a tu alcaldía o institución.'
           : 'A moderated channel to report real problems to your municipality or institution.',
         isEs
-          ? 'Un registro público de respuesta oficial, con trazabilidad.'
-          : 'A public record of the official response, with traceability.',
+          ? 'Un registro público de respuesta oficial o de silencio institucional, con trazabilidad.'
+          : 'A public record of the official response or of institutional silence, with traceability.',
         isEs ? 'Anónimo por diseño para quienes lo necesitan.' : 'Anonymous by design for those who need it.',
       ],
       pillarsIsNot: isEs ? 'Señales Ciudadanas no es' : 'Citizen Signals is not',
@@ -880,8 +904,8 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
         {
           q: isEs ? '¿Qué pasa si no me responden?' : 'What if no one replies?',
           a: isEs
-            ? 'La falta de respuesta también es señal. Tu reporte permanece público y co-firmable; cuando cruza la Etapa 2 entra a la lista pública de prioridades sin respuesta.'
-            : 'Silence is also a signal. Your report stays public and co-signable; once it crosses Stage 2 it joins the public list of unanswered priorities.',
+            ? 'El silencio también es un resultado publicado. Tu reporte permanece público y co-firmable; tras el aviso al destinatario, la falta de respuesta queda como constancia institucional visible.'
+            : 'Silence is also a published result. Your report stays public and co-signable; after the target is notified, non-reply stands as visible institutional record.',
         },
         {
           q: isEs ? '¿Por qué solo CDMX?' : 'Why only Mexico City?',
@@ -894,14 +918,14 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
       footerTitle: isEs
         ? 'Tu vecindario está esperando que alguien diga algo.'
         : 'Your neighbourhood is waiting for someone to speak up.',
-      footerCtaPrimary: isEs ? 'Crear una señal' : 'Create a signal',
-      footerCtaSecondary: isEs ? 'Ver señales activas' : 'Browse active signals',
+      footerCtaPrimary: isEs ? 'Reportar' : 'Report',
+      footerCtaSecondary: isEs ? 'Ver reportes activos' : 'Browse active reports',
       metaTitle: isEs
         ? 'Señales Ciudadanas · Cómo funciona | Crowd Conscious'
         : 'Citizen Signals · How it works | Crowd Conscious',
       metaDescription: isEs
-        ? 'Conoce Señales Ciudadanas: un canal moderado y colectivo para reportar a tu alcaldía o institución en Ciudad de México y obtener respuesta oficial.'
-        : 'Meet Citizen Signals: a moderated, collective channel to report to your municipality or institution in Mexico City and get an official reply.',
+        ? 'Conoce Señales Ciudadanas: un canal moderado y colectivo para reportar a tu alcaldía o institución en Ciudad de México y obtener constancia pública.'
+        : 'Meet Citizen Signals: a moderated, collective channel to report to your municipality or institution in Mexico City and get a public record.',
     },
 
     // Transactional email copy. The body strings are rendered by the React

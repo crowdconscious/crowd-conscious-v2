@@ -662,8 +662,8 @@ export default function LocationsPage({
               </h4>
               <p className="text-gray-400 text-xs">
                 {locale === 'es'
-                  ? 'Después de 10 votos, el Conscious Score (0-10) se muestra en vivo'
-                  : 'After 10 votes, the Conscious Score (0-10) appears live'}
+                  ? 'El Conscious Score (0-10) se revela cuando hay suficiente participación.'
+                  : 'The Conscious Score (0-10) reveals once participation is strong enough.'}
               </p>
             </div>
           </div>

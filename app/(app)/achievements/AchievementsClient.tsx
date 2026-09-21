@@ -73,18 +73,20 @@ const ACHIEVEMENT_DEFINITIONS = {
     rarity: 'uncommon'
   },
   FIRST_CORRECT: {
-    name: 'Sharp Insight',
-    description: 'Match the final result for the first time',
+    name: 'Sharp Insight (retired)',
+    description: 'Retired — no achievements for vote accuracy (Phase 0)',
     icon: '🎯',
     category: 'accuracy',
-    rarity: 'common'
+    rarity: 'common',
+    retired: true,
   },
   CORRECT_10: {
-    name: 'Accurate Mind',
-    description: 'Match the final result 10 times',
+    name: 'Accurate Mind (retired)',
+    description: 'Retired — no achievements for vote accuracy (Phase 0)',
     icon: '✨',
     category: 'accuracy',
-    rarity: 'uncommon'
+    rarity: 'uncommon',
+    retired: true,
   },
   TIER_2: {
     name: 'Contributor',
@@ -203,8 +205,9 @@ export default function AchievementsClient({ user }: AchievementsClientProps) {
   const unlockedAchievements = achievements || []
   const unlockedTypes = new Set(unlockedAchievements.map((a: Achievement) => a.achievement_type))
 
-  // Group achievements by category
+  // Group achievements by category (skip Phase 0 retired accuracy defs)
   const achievementsByCategory = Object.entries(ACHIEVEMENT_DEFINITIONS).reduce((acc, [type, def]) => {
+    if ('retired' in def && def.retired) return acc
     const category = def.category
     if (!acc[category]) {
       acc[category] = []
@@ -223,9 +226,15 @@ export default function AchievementsClient({ user }: AchievementsClientProps) {
     ? achievementsByCategory[selectedCategory]
     : Object.values(achievementsByCategory).flat()
 
-  const totalAchievements = Object.keys(ACHIEVEMENT_DEFINITIONS).length
-  const unlockedCount = unlockedAchievements.length
-  const progressPercent = (unlockedCount / totalAchievements) * 100
+  const activeAchievementCount = Object.values(ACHIEVEMENT_DEFINITIONS).filter(
+    (d) => !('retired' in d && d.retired)
+  ).length
+  const totalAchievements = activeAchievementCount
+  const unlockedCount = unlockedAchievements.filter(
+    (a: Achievement) =>
+      !(a.achievement_type === 'FIRST_CORRECT' || a.achievement_type === 'CORRECT_10')
+  ).length
+  const progressPercent = totalAchievements > 0 ? (unlockedCount / totalAchievements) * 100 : 0
 
   return (
     <div className="space-y-8">

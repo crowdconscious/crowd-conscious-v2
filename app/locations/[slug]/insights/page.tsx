@@ -5,6 +5,10 @@ import { cookies } from 'next/headers'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { LocationCoverImage } from '@/components/locations/LocationRemoteImage'
 import { LocationInsightsCta } from '@/components/locations/LocationInsightsCta'
+import {
+  formatParticipationCount,
+  scoreInVotingLabel,
+} from '@/lib/display/participation'
 
 type Props = { params: Promise<{ slug: string }> }
 
@@ -119,8 +123,8 @@ export default async function LocationInsightsPage({ params }: Props) {
 
         <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <StatCard
-            label={locale === 'es' ? 'Votos totales' : 'Total votes'}
-            value={String(totalVotes)}
+            label={locale === 'es' ? 'Participación' : 'Participation'}
+            value={formatParticipationCount(totalVotes, locale)}
           />
           <StatCard
             label={locale === 'es' ? 'Confianza promedio' : 'Avg. confidence'}
@@ -129,13 +133,7 @@ export default async function LocationInsightsPage({ params }: Props) {
           <StatCard
             label="Conscious Score"
             value={hasScore ? `${consciousScore!.toFixed(1)}/10` : '—'}
-            hint={
-              hasScore
-                ? null
-                : locale === 'es'
-                  ? `Se revela a los 10 votos (${Math.max(0, 10 - totalVotes)} restantes)`
-                  : `Unlocks at 10 votes (${Math.max(0, 10 - totalVotes)} to go)`
-            }
+            hint={hasScore ? null : scoreInVotingLabel(locale)}
           />
           <StatCard
             label={locale === 'es' ? 'Registrados / anónimos' : 'Registered / anonymous'}

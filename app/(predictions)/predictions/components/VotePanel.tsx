@@ -644,10 +644,26 @@ export function VotePanel({
             <p className="text-cc-text-secondary text-sm mt-1">
               {myVote.is_correct ? (
                 <span className="text-emerald-400">
-                  ✓ Correct! +{myVote.xp_earned + (myVote.bonus_xp || 0)} XP total
+                  {loc === 'en'
+                    ? '✓ Matched the community outcome'
+                    : '✓ Coincide con el resultado de la comunidad'}
+                </span>
+              ) : myVote.is_correct === false ? (
+                <span className="text-cc-text-secondary">
+                  {loc === 'en'
+                    ? 'Recorded — thanks for voting'
+                    : 'Registrado — gracias por votar'}
+                </span>
+              ) : myVote.xp_earned > 0 ? (
+                <span className="text-cc-text-secondary">
+                  {loc === 'en'
+                    ? `+${myVote.xp_earned} XP for participating`
+                    : `+${myVote.xp_earned} XP por participar`}
                 </span>
               ) : (
-                <span className="text-cc-text-secondary">+{myVote.xp_earned} XP earned</span>
+                <span className="text-cc-text-secondary">
+                  {loc === 'en' ? 'Thanks for voting' : 'Gracias por votar'}
+                </span>
               )}
             </p>
           </div>
@@ -870,7 +886,7 @@ export function VotePanel({
         {isEditing && (
           <p className="text-cc-text-muted text-xs">
             {copy.editSubtitle}
-            {myVote ? (
+            {myVote && myVote.xp_earned > 0 ? (
               <span className="block mt-1.5 text-gray-600">
                 +{myVote.xp_earned} XP {copy.firstXpNote}
               </span>

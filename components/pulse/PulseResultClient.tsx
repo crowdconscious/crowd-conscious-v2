@@ -371,46 +371,7 @@ export default function PulseResultClient({
             <hr className="mt-4 border-gray-700" />
           </div>
 
-          <header className="pulse-no-print mb-10 border-b border-white/10 pb-8">
-            <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-center">
-                {clientLogo ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={clientLogo}
-                    alt={clientName || 'Client'}
-                    className="h-12 max-w-[200px] object-contain object-left"
-                  />
-                ) : sponsorLogo ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={sponsorLogo}
-                    alt={sponsor || ''}
-                    className="h-12 max-w-[200px] object-contain object-left"
-                  />
-                ) : (
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/15 text-lg font-bold text-emerald-400 ring-1 ring-emerald-500/30">
-                    P
-                  </div>
-                )}
-                <div className="text-center sm:text-left">
-                  {(clientName || sponsor) && (
-                    <p className="text-sm font-semibold uppercase tracking-wide text-emerald-400/90">
-                      {clientName || sponsor}
-                    </p>
-                  )}
-                  <p className="text-xs text-slate-500">Powered by Crowd Conscious</p>
-                </div>
-              </div>
-              <Link
-                href="/"
-                className="text-sm text-slate-400 transition hover:text-emerald-400"
-              >
-                crowdconscious.app →
-              </Link>
-            </div>
-          </header>
-
+          {/* Phase 0 shared-link rule: object + verb first; sponsor/fund below. */}
           <article className="rounded-2xl border border-white/10 bg-[#1a2029] p-6 shadow-xl shadow-black/40 sm:p-8 print:shadow-none">
             <h1 className="text-balance text-2xl font-bold leading-tight text-white sm:text-3xl">
               {question}
@@ -440,6 +401,33 @@ export default function PulseResultClient({
                 {locale === 'es' ? 'Cierra' : 'Closes'} {closeDate}
               </span>
             </div>
+
+            {/* Primary verb — above sponsor chrome on shared links. */}
+            {!shouldRevealResults && (
+              <div className="pulse-section mt-6 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.05] p-5 text-center">
+                <p className="text-sm font-medium text-emerald-300">
+                  {locale === 'es'
+                    ? 'Vota para ver lo que opina la comunidad'
+                    : 'Vote to see what the community thinks'}
+                </p>
+                <p className="mt-1 text-xs text-emerald-400/70">
+                  {locale === 'es'
+                    ? 'Mostramos las gráficas, insights y razonamientos cuando ya votaste.'
+                    : 'We unlock the charts, insights and reasonings once you cast your vote.'}
+                </p>
+                <Link
+                  href={`/predictions/markets/${marketId}#vote`}
+                  className="mt-4 inline-flex min-h-[48px] w-full items-center justify-center rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 px-5 py-2.5 text-base font-semibold text-white shadow-lg shadow-emerald-900/30 transition hover:brightness-110 sm:w-auto"
+                >
+                  {locale === 'es' ? 'Votar' : 'Vote'}
+                </Link>
+                <p className="mt-2 text-xs text-slate-500">
+                  {locale === 'es'
+                    ? 'Unos 30 segundos. Sin cuenta para votar.'
+                    : 'About 30 seconds. No account needed to vote.'}
+                </p>
+              </div>
+            )}
 
             <div className="pulse-section mt-8">
               {shouldRevealResults ? (
@@ -538,24 +526,46 @@ export default function PulseResultClient({
               )}
             </div>
 
-            {!shouldRevealResults && (
-              <div className="pulse-section mt-6 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.05] p-5 text-center">
-                <p className="text-sm font-medium text-emerald-300">
-                  {locale === 'es'
-                    ? 'Vota para ver lo que opina la comunidad'
-                    : 'Vote to see what the community thinks'}
-                </p>
-                <p className="mt-1 text-xs text-emerald-400/70">
-                  {locale === 'es'
-                    ? 'Mostramos las gráficas, insights y razonamientos cuando ya votaste.'
-                    : 'We unlock the charts, insights and reasonings once you cast your vote.'}
-                </p>
-                <Link
-                  href={`/predictions/markets/${marketId}#vote`}
-                  className="mt-4 inline-flex min-h-[44px] items-center justify-center rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-900/30 transition hover:brightness-110"
-                >
-                  {locale === 'es' ? 'Votar →' : 'Vote →'}
-                </Link>
+            {/* Sponsor / client chrome — below the verb (Phase 0 shared-link rule). */}
+            {(clientName || sponsor || clientLogo || sponsorLogo) && (
+              <div className="pulse-no-print mt-8 border-t border-white/10 pt-6">
+                <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-3">
+                    {clientLogo ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={clientLogo}
+                        alt={clientName || 'Client'}
+                        className="h-10 max-w-[160px] object-contain object-left"
+                      />
+                    ) : sponsorLogo ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={sponsorLogo}
+                        alt={sponsor || ''}
+                        className="h-10 max-w-[160px] object-contain object-left"
+                      />
+                    ) : null}
+                    <div>
+                      {(clientName || sponsor) && (
+                        <p className="text-sm font-semibold uppercase tracking-wide text-emerald-400/90">
+                          {clientName || sponsor}
+                        </p>
+                      )}
+                      <p className="text-xs text-slate-500">
+                        {locale === 'es'
+                          ? 'Consulta impulsada con Crowd Conscious'
+                          : 'Survey powered by Crowd Conscious'}
+                      </p>
+                    </div>
+                  </div>
+                  <Link
+                    href="/"
+                    className="text-sm text-slate-400 transition hover:text-emerald-400"
+                  >
+                    crowdconscious.app →
+                  </Link>
+                </div>
               </div>
             )}
 
