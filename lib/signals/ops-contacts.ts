@@ -122,6 +122,8 @@ export const authorSuggestedContactsSchema = z
   .array(authorSuggestedContactSchema)
   .max(MAX_AUTHOR_SUGGESTED_CONTACTS)
 
+// Re-exported for create-signal-schema (keeps leaf schemas discriminable).
+
 export const opsRoutingFieldsSchema = z
   .object({
     ops_routing_mode: z.enum(OPS_ROUTING_MODES).optional().default('crowd_conscious'),
