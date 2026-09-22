@@ -168,6 +168,9 @@ type CitizenSignalGeographyInsert = {
   anonymous_display_mode: boolean
   anonymous_display_name: string | null
   publication_status: 'published'
+  // Ops routing (migration 261) — not exposed on citizen_signals_public.
+  author_contact_routing: 'crowd_conscious' | 'author_provided'
+  author_suggested_contacts: unknown
 }
 
 async function validateRoutedGeographyAndTarget(
@@ -436,6 +439,8 @@ export async function POST(request: NextRequest) {
         anonymous_display_mode: observation.anonymous_display_mode ?? false,
         anonymous_display_name: observation.anonymous_display_name ?? null,
         publication_status: 'published',
+        author_contact_routing: observation.author_contact_routing,
+        author_suggested_contacts: observation.author_suggested_contacts,
       }
     } else {
       const routed = payload as RoutedCreateBody
@@ -500,6 +505,8 @@ export async function POST(request: NextRequest) {
         anonymous_display_mode: routed.anonymous_display_mode ?? false,
         anonymous_display_name: routed.anonymous_display_name ?? null,
         publication_status: 'published',
+        author_contact_routing: routed.author_contact_routing,
+        author_suggested_contacts: routed.author_suggested_contacts,
       }
     }
 

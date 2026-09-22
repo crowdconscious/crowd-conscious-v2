@@ -482,6 +482,42 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
         submit: isEs ? 'Enviar reporte' : 'Submit report',
         submitting: isEs ? 'Enviando…' : 'Submitting…',
       },
+      authorContactRouting: {
+        heading: isEs
+          ? '¿Quién gestiona el contacto?'
+          : 'Who should manage outreach?',
+        help: isEs
+          ? 'Al cruzar umbrales, Crowd Conscious reenvía el paquete. Tus contactos son sugerencias — nunca To: automático a instituciones.'
+          : 'When thresholds are crossed, Crowd Conscious forwards the packet. Your contacts are suggestions — never auto-To institutions.',
+        crowdConscious: isEs
+          ? 'Que Crowd Conscious lo gestione'
+          : 'Let Crowd Conscious handle it',
+        crowdConsciousHelp: isEs
+          ? 'Francisco / Comunidad reenvía a contactos oficiales verificados.'
+          : 'Francisco / Comunidad forwards to verified official contacts.',
+        authorProvided: isEs
+          ? 'Sé a quién contactar'
+          : 'I know who to contact',
+        authorProvidedHelp: isEs
+          ? 'Agrega hasta 5 canales (correo, teléfono, WhatsApp, Instagram, X). Solo aparecen en el paquete interno.'
+          : 'Add up to 5 channels (email, phone, WhatsApp, Instagram, X). They only appear in the internal packet.',
+        kindLabel: isEs ? 'Tipo de contacto' : 'Contact kind',
+        valuePlaceholder: isEs
+          ? 'correo, teléfono o @handle'
+          : 'email, phone, or @handle',
+        addContact: isEs ? 'Agregar contacto' : 'Add contact',
+        removeContact: isEs ? 'Quitar' : 'Remove',
+        contactsRequired: isEs
+          ? 'Agrega al menos un contacto, o elige que Crowd Conscious lo gestione.'
+          : 'Add at least one contact, or let Crowd Conscious handle it.',
+        kindOptions: {
+          email: isEs ? 'Correo' : 'Email',
+          phone: isEs ? 'Teléfono' : 'Phone',
+          whatsapp: 'WhatsApp',
+          instagram: 'Instagram',
+          x: 'X / Twitter',
+        },
+      },
       success: {
         title: isEs ? 'Tu reporte ya está publicado' : 'Your report is live',
         body: isEs

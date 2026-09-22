@@ -1116,37 +1116,61 @@ function signalEmailEnabled(): boolean {
   return process.env.RESEND_ENABLED !== 'false'
 }
 
+function normalizeSignalEmailRecipients(
+  to: string | string[]
+): string[] {
+  const list = Array.isArray(to) ? to : [to]
+  return list
+    .map((s) => s.trim().toLowerCase())
+    .filter((s) => s.includes('@'))
+}
+
+function normalizeSignalEmailBcc(bcc: string[] | undefined): string[] {
+  if (!bcc || bcc.length === 0) return []
+  return bcc
+    .map((s) => s.trim().toLowerCase())
+    .filter((s) => s.includes('@'))
+}
+
 async function sendSignalEmail(args: {
-  to: string
+  to: string | string[]
   subject: string
   react: ReactElement
   replyTo?: string
+  bcc?: string[]
   context: string
 }): Promise<SignalEmailResult> {
-  const { to, subject, react, replyTo, context } = args
+  const { to, subject, react, replyTo, bcc, context } = args
 
   if (!signalEmailEnabled()) {
     return { ok: false, error: 'disabled' }
   }
   if (!resend) {
     console.warn(
-      `[resend:${context}] RESEND_API_KEY not set — email skipped (to=${to})`
+      `[resend:${context}] RESEND_API_KEY not set — email skipped (to=${JSON.stringify(to)})`
     )
     return { ok: false, error: 'no_api_key' }
   }
-  if (!to || !to.includes('@')) {
-    console.warn(`[resend:${context}] invalid recipient — skipped (to=${to})`)
+
+  const recipients = normalizeSignalEmailRecipients(to)
+  if (recipients.length === 0) {
+    console.warn(
+      `[resend:${context}] invalid recipient — skipped (to=${JSON.stringify(to)})`
+    )
     return { ok: false, error: 'invalid_recipient' }
   }
+
+  const bccList = normalizeSignalEmailBcc(bcc)
 
   try {
     const html = await renderEmail(react)
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
-      to: [to],
+      to: recipients,
       subject,
       html,
       ...(replyTo ? { replyTo } : {}),
+      ...(bccList.length > 0 ? { bcc: bccList } : {}),
     })
     if (error) {
       console.error(`[resend:${context}] send error`, error)
@@ -1276,6 +1300,8 @@ export interface SendSignalTargetNotifiedStage1Args {
   /** 'dashboard' (registry targets, default) or 'public' (direct targets
    * — company/conscious_location, migration 248: public signal link). */
   ctaMode?: 'dashboard' | 'public'
+  /** Ops inboxes (francisco@ / comunidad@) — never author-suggested contacts. */
+  bcc?: string[]
 }
 
 export async function sendSignalTargetNotifiedStage1(
@@ -1286,6 +1312,7 @@ export async function sendSignalTargetNotifiedStage1(
     to: args.to,
     subject: t.emails.targetNotifiedStage1.subject(args.targetDisplayName),
     context: 'signals/target-notified-stage1',
+    bcc: args.bcc,
     react: TargetNotifiedStage1Email({
       locale: args.locale,
       targetDisplayName: args.targetDisplayName,
@@ -1296,6 +1323,25 @@ export async function sendSignalTargetNotifiedStage1(
       expiryDays: args.expiryDays ?? 7,
       ctaMode: args.ctaMode ?? 'dashboard',
     }),
+  })
+}
+
+export interface SendSignalOpsPacketArgs {
+  to: string | string[]
+  subject: string
+  react: ReactElement
+  context: string
+}
+
+/** Internal ops packet (Stage 1/2) — To: francisco@ + comunidad@ only. */
+export async function sendSignalOpsPacket(
+  args: SendSignalOpsPacketArgs
+): Promise<SignalEmailResult> {
+  return sendSignalEmail({
+    to: args.to,
+    subject: args.subject,
+    react: args.react,
+    context: args.context,
   })
 }
 
