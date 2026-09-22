@@ -215,17 +215,17 @@ export default function LandingNav() {
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all ${navBg}`}>
       <div className="mx-auto max-w-6xl px-4 sm:px-5">
-        <div className="flex h-20 items-center gap-4 md:gap-6">
+        <div className="flex h-20 items-center gap-5 md:gap-8">
           <Logo size="nav" linkTo="/" />
 
-          <div className="hidden min-w-0 flex-1 items-center justify-center gap-6 lg:gap-8 md:flex">
+          <div className="hidden min-w-0 flex-1 items-center gap-6 lg:gap-8 md:flex">
             {primary.map((item) => (
-              <NavLink key={item.href} item={item} className="text-sm lg:text-base" />
+              <NavLink key={item.href} item={item} className="text-sm lg:text-[15px]" />
             ))}
             <MoreMenu label={nav.more} items={secondary} />
           </div>
 
-          <div className="ml-auto hidden shrink-0 items-center gap-2 lg:gap-3 md:flex">
+          <div className="ml-auto hidden shrink-0 items-center gap-2.5 lg:gap-3 md:flex">
             <LiveBadge liveCount={liveCount} label={nav.live} />
             <CompactFundThermometer locale={language} />
             <LanguageSwitcherSimple />

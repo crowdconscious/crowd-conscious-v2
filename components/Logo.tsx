@@ -16,7 +16,7 @@ const sizes = {
   lg: { width: 220, height: 66, className: 'h-[66px] w-auto' },
   // h-10 for public nav bars — keep width auto so the stacked wordmark
   // isn't squashed when the flex row is tight.
-  nav: { width: 160, height: 40, className: 'h-10 w-auto' },
+  nav: { width: 176, height: 44, className: 'h-11 w-auto' },
   sidebar: { width: 120, height: 32, className: 'h-8 w-auto' },
 }
 
@@ -39,7 +39,7 @@ export default function Logo({
         width={width}
         height={height}
         className={`${sizeClass} shrink-0 object-contain object-left`}
-        style={{ maxHeight: height }}
+        style={{ width: 'auto', height: 'auto', maxHeight: height }}
         priority
         onError={(e) => {
           const img = e.target as HTMLImageElement
