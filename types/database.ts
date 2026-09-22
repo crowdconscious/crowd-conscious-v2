@@ -1344,6 +1344,121 @@ export interface Database {
         }
         Relationships: []
       }
+      civic_reputation_events: {
+        // Phase 3 civic reputation ledger (migration 261_civic_reputation.sql).
+        // Private: SELECT own via RLS. Writes via award_civic_reputation RPC.
+        Row: {
+          id: string
+          user_id: string
+          domain:
+            | 'agua'
+            | 'espacio_publico'
+            | 'residuos'
+            | 'desarrollo_urbano'
+          alcaldia: string
+          reason:
+            | 'signal_cosign_stage_50'
+            | 'signal_cosign_stage_200'
+            | 'signal_author_cosigned'
+            | 'signal_author_stage_50'
+            | 'signal_author_stage_200'
+            | 'location_evaluated'
+            | 'neighbour_participated'
+            | 'sustained_presence'
+          points: number
+          object_type: 'signal' | 'location' | 'referral' | 'presence' | null
+          object_id: string | null
+          meta: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          domain:
+            | 'agua'
+            | 'espacio_publico'
+            | 'residuos'
+            | 'desarrollo_urbano'
+          alcaldia: string
+          reason:
+            | 'signal_cosign_stage_50'
+            | 'signal_cosign_stage_200'
+            | 'signal_author_cosigned'
+            | 'signal_author_stage_50'
+            | 'signal_author_stage_200'
+            | 'location_evaluated'
+            | 'neighbour_participated'
+            | 'sustained_presence'
+          points: number
+          object_type?: 'signal' | 'location' | 'referral' | 'presence' | null
+          object_id?: string | null
+          meta?: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          domain?:
+            | 'agua'
+            | 'espacio_publico'
+            | 'residuos'
+            | 'desarrollo_urbano'
+          alcaldia?: string
+          reason?:
+            | 'signal_cosign_stage_50'
+            | 'signal_cosign_stage_200'
+            | 'signal_author_cosigned'
+            | 'signal_author_stage_50'
+            | 'signal_author_stage_200'
+            | 'location_evaluated'
+            | 'neighbour_participated'
+            | 'sustained_presence'
+          points?: number
+          object_type?: 'signal' | 'location' | 'referral' | 'presence' | null
+          object_id?: string | null
+          meta?: Json
+          created_at?: string
+        }
+        Relationships: []
+      }
+      civic_reputation_totals: {
+        // Aggregated civic reputation per user × alcaldía × domain.
+        // Private: SELECT own via RLS. Not a public leaderboard.
+        Row: {
+          user_id: string
+          alcaldia: string
+          domain:
+            | 'agua'
+            | 'espacio_publico'
+            | 'residuos'
+            | 'desarrollo_urbano'
+          points: number
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          alcaldia: string
+          domain:
+            | 'agua'
+            | 'espacio_publico'
+            | 'residuos'
+            | 'desarrollo_urbano'
+          points?: number
+          updated_at?: string
+        }
+        Update: {
+          user_id?: string
+          alcaldia?: string
+          domain?:
+            | 'agua'
+            | 'espacio_publico'
+            | 'residuos'
+            | 'desarrollo_urbano'
+          points?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       citizen_signal_anonymous_supports: {
         // Schema source: supabase/migrations/221_signals_anonymous_support.sql.
         // One row per (signal, device_fingerprint). The trigger keeps
@@ -2501,6 +2616,24 @@ export interface Database {
       }
     }
     Functions: {
+      award_civic_reputation: {
+        // Phase 3 — migration 261_civic_reputation.sql
+        Args: {
+          p_user_id: string
+          p_domain: string
+          p_alcaldia: string
+          p_reason: string
+          p_points: number
+          p_object_type?: string | null
+          p_object_id?: string | null
+          p_meta?: Json
+        }
+        Returns: Json
+      }
+      get_my_civic_reputation: {
+        Args: Record<string, never>
+        Returns: Json
+      }
       get_profiles_public: {
         Args: { p_ids: string[] }
         Returns: {
