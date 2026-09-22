@@ -1214,7 +1214,7 @@ export interface Database {
           created_at: string
           updated_at: string
           // Ops routing — migration 261_signals_ops_notify.sql (PII; not on public view).
-          ops_routing_mode: 'crowd_conscious' | 'author_provided'
+          author_contact_routing: 'crowd_conscious' | 'author_provided'
           author_suggested_contacts: Json
         }
         Insert: {
@@ -1252,7 +1252,7 @@ export interface Database {
           edited_at?: string | null
           created_at?: string
           updated_at?: string
-          ops_routing_mode?: 'crowd_conscious' | 'author_provided'
+          author_contact_routing?: 'crowd_conscious' | 'author_provided'
           author_suggested_contacts?: Json
         }
         Update: {
@@ -1290,7 +1290,7 @@ export interface Database {
           edited_at?: string | null
           created_at?: string
           updated_at?: string
-          ops_routing_mode?: 'crowd_conscious' | 'author_provided'
+          author_contact_routing?: 'crowd_conscious' | 'author_provided'
           author_suggested_contacts?: Json
         }
         Relationships: []

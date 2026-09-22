@@ -27,7 +27,7 @@ export interface OpsPacketStage1EmailProps {
   category: string
   cosignCount: number
   stageThreshold: number
-  opsRoutingMode: 'crowd_conscious' | 'author_provided'
+  authorContactRouting: 'crowd_conscious' | 'author_provided'
   targetDisplayName: string | null
   /** Verified registry / Conscious Location email only — never author-suggested */
   officialEmail: string | null
@@ -53,7 +53,7 @@ export function OpsPacketStage1Email(props: OpsPacketStage1EmailProps) {
     category,
     cosignCount,
     stageThreshold,
-    opsRoutingMode,
+    authorContactRouting,
     targetDisplayName,
     officialEmail,
     authorSuggestedContacts,
@@ -97,7 +97,7 @@ export function OpsPacketStage1Email(props: OpsPacketStage1EmailProps) {
       />
 
       <DestinoBlock
-        opsRoutingMode={opsRoutingMode}
+        authorContactRouting={authorContactRouting}
         targetDisplayName={targetDisplayName}
         officialEmail={officialEmail}
       />
@@ -105,7 +105,7 @@ export function OpsPacketStage1Email(props: OpsPacketStage1EmailProps) {
       <AutorSugeridosBlock
         contacts={authorSuggestedContacts}
         companyContactEmail={companyContactEmail}
-        opsRoutingMode={opsRoutingMode}
+        authorContactRouting={authorContactRouting}
       />
 
       <Section style={box}>
@@ -166,7 +166,7 @@ export function OpsPacketStage2Email(props: OpsPacketStage2EmailProps) {
     category,
     cosignCount,
     stageThreshold,
-    opsRoutingMode,
+    authorContactRouting,
     targetDisplayName,
     officialEmail,
     authorSuggestedContacts,
@@ -218,7 +218,7 @@ export function OpsPacketStage2Email(props: OpsPacketStage2EmailProps) {
       />
 
       <DestinoBlock
-        opsRoutingMode={opsRoutingMode}
+        authorContactRouting={authorContactRouting}
         targetDisplayName={targetDisplayName}
         officialEmail={officialEmail}
       />
@@ -226,7 +226,7 @@ export function OpsPacketStage2Email(props: OpsPacketStage2EmailProps) {
       <AutorSugeridosBlock
         contacts={authorSuggestedContacts}
         companyContactEmail={companyContactEmail}
-        opsRoutingMode={opsRoutingMode}
+        authorContactRouting={authorContactRouting}
       />
 
       <Section style={box}>
@@ -330,17 +330,17 @@ function SignalFactsBlock(props: {
 }
 
 function DestinoBlock(props: {
-  opsRoutingMode: 'crowd_conscious' | 'author_provided'
+  authorContactRouting: 'crowd_conscious' | 'author_provided'
   targetDisplayName: string | null
   officialEmail: string | null
 }) {
-  const { opsRoutingMode, targetDisplayName, officialEmail } = props
+  const { authorContactRouting, targetDisplayName, officialEmail } = props
   return (
     <Section style={box}>
       <Text style={label}>2) Destino</Text>
       <Text style={pTight}>
         Modo:{' '}
-        {opsRoutingMode === 'crowd_conscious'
+        {authorContactRouting === 'crowd_conscious'
           ? 'crowd_conscious (Crowd Conscious gestiona)'
           : 'author_provided (autor sugirió contactos)'}
       </Text>
@@ -358,9 +358,9 @@ function DestinoBlock(props: {
 function AutorSugeridosBlock(props: {
   contacts: AuthorSuggestedContact[]
   companyContactEmail: string | null
-  opsRoutingMode: 'crowd_conscious' | 'author_provided'
+  authorContactRouting: 'crowd_conscious' | 'author_provided'
 }) {
-  const { contacts, companyContactEmail, opsRoutingMode } = props
+  const { contacts, companyContactEmail, authorContactRouting } = props
   const byKind = {
     email: contacts.filter((c) => c.kind === 'email'),
     phone: contacts.filter((c) => c.kind === 'phone'),
@@ -376,7 +376,7 @@ function AutorSugeridosBlock(props: {
       <Text style={label}>3) Autor sugeridos (solo display — nunca To: automático)</Text>
       {!hasAny ? (
         <Text style={pTight}>
-          {opsRoutingMode === 'crowd_conscious'
+          {authorContactRouting === 'crowd_conscious'
             ? 'Ninguno — Crowd Conscious gestiona.'
             : 'Ninguno listado — Crowd Conscious gestiona / buscar contacto.'}
         </Text>

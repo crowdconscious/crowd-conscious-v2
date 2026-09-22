@@ -8,8 +8,8 @@
 
 import { z } from 'zod'
 
-export const OPS_ROUTING_MODES = ['crowd_conscious', 'author_provided'] as const
-export type OpsRoutingMode = (typeof OPS_ROUTING_MODES)[number]
+export const AUTHOR_CONTACT_ROUTING_MODES = ['crowd_conscious', 'author_provided'] as const
+export type AuthorContactRouting = (typeof AUTHOR_CONTACT_ROUTING_MODES)[number]
 
 export const AUTHOR_CONTACT_KINDS = [
   'email',
@@ -50,10 +50,11 @@ function normalizeSocialHandle(raw: string): string | null {
   return v
 }
 
+/** Optional label; max 120 matches mobile PR #8. */
 const contactLabelSchema = z
   .string()
   .trim()
-  .max(80)
+  .max(120)
   .optional()
   .nullable()
   .transform((v) => (v && v.length > 0 ? v : null))
@@ -124,36 +125,29 @@ export const authorSuggestedContactsSchema = z
 
 // Re-exported for create-signal-schema (keeps leaf schemas discriminable).
 
-export const opsRoutingFieldsSchema = z
+/**
+ * Matches mobile PR #8: author_provided may ship with an empty contacts
+ * array (UI starts with a blank row; empty values are stripped before POST).
+ * crowd_conscious always clears contacts.
+ */
+export const authorContactRoutingFieldsSchema = z
   .object({
-    ops_routing_mode: z.enum(OPS_ROUTING_MODES).optional().default('crowd_conscious'),
+    author_contact_routing: z.enum(AUTHOR_CONTACT_ROUTING_MODES).optional().default('crowd_conscious'),
     author_suggested_contacts: authorSuggestedContactsSchema
       .optional()
       .default([]),
   })
-  .superRefine((val, ctx) => {
-    if (val.ops_routing_mode === 'author_provided') {
-      if (val.author_suggested_contacts.length === 0) {
-        ctx.addIssue({
-          code: 'custom',
-          path: ['author_suggested_contacts'],
-          message:
-            'author_suggested_contacts requires at least one contact when ops_routing_mode=author_provided',
-        })
-      }
-    }
-  })
   .transform((val) => {
-    if (val.ops_routing_mode === 'crowd_conscious') {
+    if (val.author_contact_routing === 'crowd_conscious') {
       return {
-        ops_routing_mode: val.ops_routing_mode,
+        author_contact_routing: val.author_contact_routing,
         author_suggested_contacts: [] as AuthorSuggestedContact[],
       }
     }
     return val
   })
 
-export type OpsRoutingFields = z.infer<typeof opsRoutingFieldsSchema>
+export type AuthorContactRoutingFields = z.infer<typeof authorContactRoutingFieldsSchema>
 
 /** Default ops inboxes — Francisco personally forwards while alcaldía contacts are gathered. */
 export const DEFAULT_SIGNALS_OPS_RECIPIENTS = [

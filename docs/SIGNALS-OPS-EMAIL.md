@@ -30,7 +30,7 @@ removes the two locked ops inboxes.
 - **Authority Stage-1 To:** only verified
   `citizen_targets.notification_email` or
   `conscious_locations.contact_email`. Ops recipients go in BCC.
-- **Author-suggested contacts** (`ops_routing_mode=author_provided`) appear
+- **Author-suggested contacts** (`author_contact_routing=author_provided`) appear
   in the ops email body for manual forward / social pressure. They are
   **never** Resend To:.
 - `private_target_notify_at` is stamped **only** when Resend returns
@@ -73,6 +73,19 @@ Create flow: composer radio “Crowd Conscious gestiona” vs “Sé a quién
 contactar” (up to 5 contact rows). Fields persist on `citizen_signals` but
 stay off `citizen_signals_public`.
 
+### Mobile contract (PR #8)
+
+Do **not** reuse `routing_mode` (already `routed` | `observation`). Exact
+wire names:
+
+| Field | Shape |
+|-------|--------|
+| `author_contact_routing` | `'crowd_conscious'` \| `'author_provided'` (default `crowd_conscious`) |
+| `author_suggested_contacts` | jsonb `[{ kind, value, label? }]` — `kind` ∈ email\|phone\|whatsapp\|instagram\|x (max 5) |
+
+`author_provided` may arrive with `[]` (mobile strips empty rows). `crowd_conscious`
+always stores `[]`. Label max 120.
+
 ## Code map
 
 - Migration: `supabase/migrations/261_signals_ops_notify.sql`
@@ -80,3 +93,4 @@ stay off `citizen_signals_public`.
 - Send + ledger: `lib/signals/ops-notify.ts`
 - Templates: `lib/emails/signals/OpsPacketStage1Email.tsx`
 - Cron: `app/api/cron/signal-threshold-check/route.ts`
+- Mobile sibling: https://github.com/crowdconscious/crowd-conscious-mobile/pull/8

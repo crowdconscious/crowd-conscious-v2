@@ -1,11 +1,11 @@
 -- Señal ops email hardening (Stage 50 / Stage 200)
 --
--- 1. ops_routing_mode + author_suggested_contacts on citizen_signals
---    (named ops_* because routing_mode already means geography
---    routed|observation from the mobile geography migration).
+-- 1. author_contact_routing + author_suggested_contacts on citizen_signals
+--    Named author_contact_routing (NOT routing_mode) because routing_mode
+--    already means geography routed|observation. Matches mobile PR #8.
 -- 2. citizen_signal_ops_notify_log — durable send ledger per (signal, stage)
 --    so cron can retry when Resend fails (fixes stamp-without-ok bug).
--- 3. Public view stays PII-free: do NOT append contacts / ops mode.
+-- 3. Public view stays PII-free: do NOT append contacts / contact routing.
 --
 -- Service role writes the log. No anon/authenticated SELECT on contacts
 -- or the notify log.
@@ -14,26 +14,47 @@
 -- 1. Author contact routing (ops packet, not auto Resend To:)
 -- =============================================================================
 
+-- If an earlier draft of this migration added ops_routing_mode, rename it.
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'citizen_signals'
+      AND column_name = 'ops_routing_mode'
+  ) AND NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'citizen_signals'
+      AND column_name = 'author_contact_routing'
+  ) THEN
+    ALTER TABLE public.citizen_signals
+      RENAME COLUMN ops_routing_mode TO author_contact_routing;
+  END IF;
+END $$;
+
 ALTER TABLE public.citizen_signals
-  ADD COLUMN IF NOT EXISTS ops_routing_mode text
+  ADD COLUMN IF NOT EXISTS author_contact_routing text
     NOT NULL DEFAULT 'crowd_conscious';
 
 ALTER TABLE public.citizen_signals
   DROP CONSTRAINT IF EXISTS citizen_signals_ops_routing_mode_check;
+ALTER TABLE public.citizen_signals
+  DROP CONSTRAINT IF EXISTS citizen_signals_author_contact_routing_check;
 
 ALTER TABLE public.citizen_signals
-  ADD CONSTRAINT citizen_signals_ops_routing_mode_check
-  CHECK (ops_routing_mode IN ('crowd_conscious', 'author_provided'));
+  ADD CONSTRAINT citizen_signals_author_contact_routing_check
+  CHECK (author_contact_routing IN ('crowd_conscious', 'author_provided'));
 
-COMMENT ON COLUMN public.citizen_signals.ops_routing_mode IS
-  'Who should manage Stage 50/200 outreach: crowd_conscious (ops forwards) or author_provided (author listed suggested contacts for Francisco to use manually). Never auto-To author-supplied institution emails.';
+COMMENT ON COLUMN public.citizen_signals.author_contact_routing IS
+  'Who should manage Stage 50/200 outreach: crowd_conscious (ops forwards) or author_provided (author listed suggested contacts for Francisco to use manually). Never auto-To author-supplied institution emails. Distinct from routing_mode (routed|observation geography).';
 
 ALTER TABLE public.citizen_signals
   ADD COLUMN IF NOT EXISTS author_suggested_contacts jsonb
     NOT NULL DEFAULT '[]'::jsonb;
 
 COMMENT ON COLUMN public.citizen_signals.author_suggested_contacts IS
-  'Optional author-suggested contacts for ops forwarding / social pressure. Shape: [{ "kind": "email"|"phone"|"whatsapp"|"instagram"|"x", "value": "...", "label": "optional" }]. PII — never expose via citizen_signals_public.';
+  'Optional author-suggested contacts for ops forwarding / social pressure. Shape: [{ "kind": "email"|"phone"|"whatsapp"|"instagram"|"x", "value": "...", "label": "optional" }]. Max 5. PII — never expose via citizen_signals_public.';
 
 -- =============================================================================
 -- 2. Ops notify ledger (idempotent + retry)
@@ -67,13 +88,13 @@ ALTER TABLE public.citizen_signal_ops_notify_log ENABLE ROW LEVEL SECURITY;
 -- API paths bypass RLS. Admins may use service role for debugging.
 
 -- =============================================================================
--- 3. Public view — explicitly do NOT leak contacts / ops mode
+-- 3. Public view — explicitly do NOT leak contacts / contact routing
 -- =============================================================================
 --
 -- CREATE OR REPLACE VIEW only allows appending columns (42P16). We leave
--- the view unchanged so author_suggested_contacts and ops_routing_mode
+-- the view unchanged so author_suggested_contacts and author_contact_routing
 -- remain table-only (moderator / service role). Comment documents the
 -- contract.
 
 COMMENT ON VIEW public.citizen_signals_public IS
-  'Anon-safe projection of published Citizen Signals. Migration 261: ops_routing_mode and author_suggested_contacts stay off this view (PII / ops-only).';
+  'Anon-safe projection of published Citizen Signals. Migration 261: author_contact_routing and author_suggested_contacts stay off this view (PII / ops-only).';

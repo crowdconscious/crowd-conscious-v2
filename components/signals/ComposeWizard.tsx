@@ -20,9 +20,9 @@ import {
 import {
   AUTHOR_CONTACT_KINDS,
   MAX_AUTHOR_SUGGESTED_CONTACTS,
-  OPS_ROUTING_MODES,
+  AUTHOR_CONTACT_ROUTING_MODES,
   type AuthorContactKind,
-  type OpsRoutingMode,
+  type AuthorContactRouting,
 } from '@/lib/signals/ops-contacts'
 import StepProgress from '@/components/signals/wizard/StepProgress'
 import TargetPicker, {
@@ -61,7 +61,7 @@ type Step = 0 | 1 | 2 | 3 | 4 | 5
 const TOTAL_STEPS = 6
 // v2: migration 222 (street-level precision). v3: migration 248 (direct
 // target kinds — company/neighborhood/conscious_location). v4: migration
-// 261 (ops_routing_mode + author_suggested_contacts). Older drafts
+// 261 (author_contact_routing + author_suggested_contacts). Older drafts
 // simply get discarded — the rehydration check is `parsed.v ===
 // DRAFT_VERSION` so an old payload yields the default empty draft.
 const DRAFT_VERSION = 4
@@ -99,7 +99,7 @@ type DraftState = {
   aliasName: string
   evidence: EvidenceItem[]
   /** Who should manage Stage 50/200 outreach (migration 261). */
-  opsRoutingMode: OpsRoutingMode
+  authorContactRouting: AuthorContactRouting
   /** Author-suggested contacts — listed in ops packet only, never auto-To. */
   authorSuggestedContacts: DraftContactRow[]
 }
@@ -160,7 +160,7 @@ function emptyDraft(language: CitizenSignalsLocale): DraftState {
     anonymousMode: false,
     aliasName: '',
     evidence: [],
-    opsRoutingMode: 'crowd_conscious',
+    authorContactRouting: 'crowd_conscious',
     authorSuggestedContacts: [],
   }
 }
@@ -429,7 +429,7 @@ export default function ComposeWizard({
           attestation: z.literal(true, {
             message: t.compose.validation.attestationRequired,
           }),
-          opsRoutingMode: z.enum(OPS_ROUTING_MODES),
+          authorContactRouting: z.enum(AUTHOR_CONTACT_ROUTING_MODES),
           authorSuggestedContacts: z.array(
             z.object({
               kind: z.enum(AUTHOR_CONTACT_KINDS),
@@ -460,7 +460,7 @@ export default function ComposeWizard({
               })
             }
           }
-          if (value.opsRoutingMode === 'author_provided') {
+          if (value.authorContactRouting === 'author_provided') {
             const filled = value.authorSuggestedContacts.filter(
               (c) => c.value.trim().length > 0
             )
@@ -468,7 +468,7 @@ export default function ComposeWizard({
               ctx.addIssue({
                 code: 'custom',
                 path: ['opsContacts'],
-                message: t.compose.opsRouting.contactsRequired,
+                message: t.compose.authorContactRouting.contactsRequired,
               })
             }
           }
@@ -575,7 +575,7 @@ export default function ComposeWizard({
             anonymousMode: draft.anonymousMode,
             aliasName: draft.aliasName.trim(),
             attestation,
-            opsRoutingMode: draft.opsRoutingMode,
+            authorContactRouting: draft.authorContactRouting,
             authorSuggestedContacts: draft.authorSuggestedContacts,
           })
           if (r.success) {
@@ -652,7 +652,7 @@ export default function ComposeWizard({
       const contactEmail = draft.targetContactEmail.trim()
 
       const authorSuggestedContacts =
-        draft.opsRoutingMode === 'author_provided'
+        draft.authorContactRouting === 'author_provided'
           ? draft.authorSuggestedContacts
               .map((c) => ({
                 kind: c.kind,
@@ -694,7 +694,7 @@ export default function ComposeWizard({
           ? draft.aliasName.trim()
           : null,
         evidence: evidencePayload,
-        ops_routing_mode: draft.opsRoutingMode,
+        author_contact_routing: draft.authorContactRouting,
         author_suggested_contacts: authorSuggestedContacts,
       }
 
@@ -923,10 +923,10 @@ export default function ComposeWizard({
             onChangeAnonymous={(mode) => update('anonymousMode', mode)}
             onChangeAlias={(v) => update('aliasName', v)}
             onChangeAttestation={setAttestation}
-            onChangeOpsRoutingMode={(mode) => {
+            onChangeAuthorContactRouting={(mode) => {
               setDraft((d) => ({
                 ...d,
-                opsRoutingMode: mode,
+                authorContactRouting: mode,
                 authorSuggestedContacts:
                   mode === 'crowd_conscious'
                     ? []
@@ -1234,7 +1234,7 @@ function StepReview({
   onChangeAnonymous,
   onChangeAlias,
   onChangeAttestation,
-  onChangeOpsRoutingMode,
+  onChangeAuthorContactRouting,
   onChangeAuthorContacts,
   errors,
   target,
@@ -1249,7 +1249,7 @@ function StepReview({
   onChangeAnonymous: (mode: boolean) => void
   onChangeAlias: (v: string) => void
   onChangeAttestation: (v: boolean) => void
-  onChangeOpsRoutingMode: (mode: OpsRoutingMode) => void
+  onChangeAuthorContactRouting: (mode: AuthorContactRouting) => void
   onChangeAuthorContacts: (rows: DraftContactRow[]) => void
   errors?: { aliasName?: string; attestation?: string; opsContacts?: string }
   target: TargetOption | null
@@ -1371,26 +1371,26 @@ function StepReview({
       <div className="rounded-lg border border-[#2d3748] bg-[#0f1419] p-4 space-y-3">
         <div>
           <p className="text-sm font-medium text-white">
-            {t.compose.opsRouting.heading}
+            {t.compose.authorContactRouting.heading}
           </p>
           <p className="mt-1 text-xs text-slate-400">
-            {t.compose.opsRouting.help}
+            {t.compose.authorContactRouting.help}
           </p>
         </div>
         <label className="flex items-start gap-2 text-sm text-slate-300">
           <input
             type="radio"
             name="ops-routing-mode"
-            checked={draft.opsRoutingMode === 'crowd_conscious'}
-            onChange={() => onChangeOpsRoutingMode('crowd_conscious')}
+            checked={draft.authorContactRouting === 'crowd_conscious'}
+            onChange={() => onChangeAuthorContactRouting('crowd_conscious')}
             className="mt-1 h-4 w-4 accent-emerald-500"
           />
           <span>
             <span className="font-medium text-white">
-              {t.compose.opsRouting.crowdConscious}
+              {t.compose.authorContactRouting.crowdConscious}
             </span>
             <span className="mt-0.5 block text-xs text-slate-400">
-              {t.compose.opsRouting.crowdConsciousHelp}
+              {t.compose.authorContactRouting.crowdConsciousHelp}
             </span>
           </span>
         </label>
@@ -1398,21 +1398,21 @@ function StepReview({
           <input
             type="radio"
             name="ops-routing-mode"
-            checked={draft.opsRoutingMode === 'author_provided'}
-            onChange={() => onChangeOpsRoutingMode('author_provided')}
+            checked={draft.authorContactRouting === 'author_provided'}
+            onChange={() => onChangeAuthorContactRouting('author_provided')}
             className="mt-1 h-4 w-4 accent-emerald-500"
           />
           <span>
             <span className="font-medium text-white">
-              {t.compose.opsRouting.authorProvided}
+              {t.compose.authorContactRouting.authorProvided}
             </span>
             <span className="mt-0.5 block text-xs text-slate-400">
-              {t.compose.opsRouting.authorProvidedHelp}
+              {t.compose.authorContactRouting.authorProvidedHelp}
             </span>
           </span>
         </label>
 
-        {draft.opsRoutingMode === 'author_provided' && (
+        {draft.authorContactRouting === 'author_provided' && (
           <div className="space-y-3 border-t border-[#1e2531] pt-3">
             {draft.authorSuggestedContacts.map((row, index) => (
               <div
@@ -1427,11 +1427,11 @@ function StepReview({
                     })
                   }
                   className="rounded-lg border border-[#2d3748] bg-[#0b1018] px-2 py-2 text-sm text-slate-100"
-                  aria-label={t.compose.opsRouting.kindLabel}
+                  aria-label={t.compose.authorContactRouting.kindLabel}
                 >
                   {AUTHOR_CONTACT_KINDS.map((kind) => (
                     <option key={kind} value={kind}>
-                      {t.compose.opsRouting.kindOptions[kind]}
+                      {t.compose.authorContactRouting.kindOptions[kind]}
                     </option>
                   ))}
                 </select>
@@ -1441,7 +1441,7 @@ function StepReview({
                   onChange={(e) =>
                     updateContactRow(index, { value: e.target.value })
                   }
-                  placeholder={t.compose.opsRouting.valuePlaceholder}
+                  placeholder={t.compose.authorContactRouting.valuePlaceholder}
                   className="rounded-lg border border-[#2d3748] bg-[#0b1018] px-3 py-2 text-sm text-slate-100 focus:border-emerald-400 focus:outline-none"
                 />
                 <button
@@ -1449,7 +1449,7 @@ function StepReview({
                   onClick={() => removeContactRow(index)}
                   className="text-xs text-slate-400 underline hover:text-slate-200"
                 >
-                  {t.compose.opsRouting.removeContact}
+                  {t.compose.authorContactRouting.removeContact}
                 </button>
               </div>
             ))}
@@ -1460,7 +1460,7 @@ function StepReview({
                 onClick={addContactRow}
                 className="text-xs text-emerald-300 underline hover:text-emerald-200"
               >
-                {t.compose.opsRouting.addContact}
+                {t.compose.authorContactRouting.addContact}
               </button>
             )}
             {errors?.opsContacts && (

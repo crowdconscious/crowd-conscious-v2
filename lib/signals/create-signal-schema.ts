@@ -7,10 +7,10 @@ import {
   isRegistryTargetKind,
 } from '@/lib/i18n/citizen-signals'
 import {
-  OPS_ROUTING_MODES,
+  AUTHOR_CONTACT_ROUTING_MODES,
   authorSuggestedContactsSchema,
   type AuthorSuggestedContact,
-  type OpsRoutingMode,
+  type AuthorContactRouting,
 } from '@/lib/signals/ops-contacts'
 
 export const SIGNAL_ROUTING_MODES = ['routed', 'observation'] as const
@@ -43,31 +43,15 @@ const signalEvidenceSchema = z.object({
   caption: z.string().trim().max(500).optional().nullable(),
 })
 
-/** Inlined from opsRoutingFieldsSchema so leaf schemas stay discriminable. */
-type OpsRoutingShape = {
-  ops_routing_mode: OpsRoutingMode
+/** Inlined from authorContactRoutingFieldsSchema so leaf schemas stay discriminable. */
+type AuthorContactRoutingShape = {
+  author_contact_routing: AuthorContactRouting
   author_suggested_contacts: AuthorSuggestedContact[]
 }
 
-function refineOpsRoutingFields(
-  value: OpsRoutingShape,
-  ctx: z.RefinementCtx
-): void {
-  if (
-    value.ops_routing_mode === 'author_provided' &&
-    value.author_suggested_contacts.length === 0
-  ) {
-    ctx.addIssue({
-      code: 'custom',
-      path: ['author_suggested_contacts'],
-      message:
-        'author_suggested_contacts requires at least one contact when ops_routing_mode=author_provided',
-    })
-  }
-}
-
-function normalizeOpsRoutingFields<T extends OpsRoutingShape>(value: T): T {
-  if (value.ops_routing_mode === 'crowd_conscious') {
+/** Mobile PR #8 allows author_provided with []; crowd_conscious always clears contacts. */
+function normalizeAuthorContactRoutingFields<T extends AuthorContactRoutingShape>(value: T): T {
+  if (value.author_contact_routing === 'crowd_conscious') {
     return { ...value, author_suggested_contacts: [] }
   }
   return value
@@ -89,8 +73,8 @@ const sharedCreateFields = {
     .optional()
     .nullable(),
   evidence: z.array(signalEvidenceSchema).max(5).optional().default([]),
-  ops_routing_mode: z
-    .enum(OPS_ROUTING_MODES)
+  author_contact_routing: z
+    .enum(AUTHOR_CONTACT_ROUTING_MODES)
     .optional()
     .default('crowd_conscious'),
   author_suggested_contacts: authorSuggestedContactsSchema
@@ -106,8 +90,7 @@ export const observationCreateBodySchema = z
     locality: z.string().trim().min(1).max(160).nullable().optional(),
     ...sharedCreateFields,
   })
-  .superRefine(refineOpsRoutingFields)
-  .transform(normalizeOpsRoutingFields)
+  .transform(normalizeAuthorContactRoutingFields)
 
 const routedCreateBodyBaseSchema = z.object({
   routing_mode: z.literal('routed'),
@@ -227,15 +210,13 @@ function routedTargetRefinement(
 // per-kind requirements and treat the alcaldía as optional geo context.
 export const routedCreateBodySchema = routedCreateBodyBaseSchema
   .superRefine(routedTargetRefinement)
-  .superRefine(refineOpsRoutingFields)
-  .transform(normalizeOpsRoutingFields)
+  .transform(normalizeAuthorContactRoutingFields)
 
 /** Legacy clients omit routing_mode; treat as routed when required FKs are present. */
 export const legacyRoutedCreateBodySchema = routedCreateBodyBaseSchema
   .omit({ routing_mode: true })
   .superRefine(routedTargetRefinement)
-  .superRefine(refineOpsRoutingFields)
-  .transform(normalizeOpsRoutingFields)
+  .transform(normalizeAuthorContactRoutingFields)
 
 function defaultRoutingMode(input: unknown): unknown {
   if (typeof input !== 'object' || input === null) return input

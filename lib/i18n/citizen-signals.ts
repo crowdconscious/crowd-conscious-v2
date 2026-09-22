@@ -482,7 +482,7 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
         submit: isEs ? 'Enviar reporte' : 'Submit report',
         submitting: isEs ? 'Enviando…' : 'Submitting…',
       },
-      opsRouting: {
+      authorContactRouting: {
         heading: isEs
           ? '¿Quién gestiona el contacto?'
           : 'Who should manage outreach?',

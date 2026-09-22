@@ -10,7 +10,7 @@
 import type { SignalsAdminClient } from '@/lib/signals/supabase'
 import {
   type AuthorSuggestedContact,
-  type OpsRoutingMode,
+  type AuthorContactRouting,
   isSignalsOpsEmailEnabled,
   resolveSignalsOpsRecipients,
 } from '@/lib/signals/ops-contacts'
@@ -43,7 +43,7 @@ export type OpsNotifySignal = {
   target_contact_email: string | null
   target_location_id: string | null
   private_target_notify_at: string | null
-  ops_routing_mode?: OpsRoutingMode | null
+  author_contact_routing?: AuthorContactRouting | null
   author_suggested_contacts?: unknown
 }
 
@@ -272,8 +272,8 @@ export async function sendOrRetryOpsPacket(args: {
     }
   }
 
-  const opsRoutingMode: OpsRoutingMode =
-    row.ops_routing_mode === 'author_provided'
+  const authorContactRouting: AuthorContactRouting =
+    row.author_contact_routing === 'author_provided'
       ? 'author_provided'
       : 'crowd_conscious'
   const authorSuggestedContacts = parseSuggestedContacts(
@@ -297,7 +297,7 @@ export async function sendOrRetryOpsPacket(args: {
     category: row.category?.trim() || '—',
     cosignCount: row.cosign_count,
     stageThreshold,
-    opsRoutingMode,
+    authorContactRouting,
     targetDisplayName,
     officialEmail,
     authorSuggestedContacts,

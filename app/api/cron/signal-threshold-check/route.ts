@@ -12,7 +12,7 @@ import {
   sendVerifiedAuthorityStage1,
   type OpsNotifySignal,
 } from '@/lib/signals/ops-notify'
-import type { OpsRoutingMode } from '@/lib/signals/ops-contacts'
+import type { AuthorContactRouting } from '@/lib/signals/ops-contacts'
 import type { SignalEmailResult } from '@/lib/resend'
 
 export const runtime = 'nodejs'
@@ -52,7 +52,7 @@ const STAGE2_DEFAULT = 200
 const ROW_LIMIT = 200
 
 const SIGNAL_SELECT =
-  'id, public_slug, title, language, cosign_count, threshold_stage, category, street_reference, conscious_location_id, citizen_target_id, target_kind, target_name, target_contact_email, target_location_id, author_user_id, private_target_notify_at, ops_routing_mode, author_suggested_contacts'
+  'id, public_slug, title, language, cosign_count, threshold_stage, category, street_reference, conscious_location_id, citizen_target_id, target_kind, target_name, target_contact_email, target_location_id, author_user_id, private_target_notify_at, author_contact_routing, author_suggested_contacts'
 
 function readStageThreshold(envName: string, fallback: number): number {
   const raw = process.env[envName]
@@ -165,7 +165,7 @@ type SignalRow = {
   target_location_id: string | null
   author_user_id: string
   private_target_notify_at: string | null
-  ops_routing_mode: OpsRoutingMode | null
+  author_contact_routing: AuthorContactRouting | null
   author_suggested_contacts: unknown
 }
 
@@ -186,7 +186,7 @@ function toOpsNotifySignal(row: SignalRow): OpsNotifySignal {
     target_contact_email: row.target_contact_email,
     target_location_id: row.target_location_id,
     private_target_notify_at: row.private_target_notify_at,
-    ops_routing_mode: row.ops_routing_mode,
+    author_contact_routing: row.author_contact_routing,
     author_suggested_contacts: row.author_suggested_contacts,
   }
 }
