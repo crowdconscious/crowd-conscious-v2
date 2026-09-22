@@ -115,11 +115,11 @@ export default function SoportePage() {
     },
     {
       q: 'How do I vote on a Pulse?',
-      a: 'Pulses tab → pick a Pulse → choose your answer and confidence level (1–10) → tap "Vote". You earn XP every time you vote.',
+      a: 'Pulses tab → pick a Pulse → choose your answer and confidence level (1–10) → tap "Vote". Opinion votes do not earn points or level you up — the reward is seeing what the community thinks.',
     },
     {
       q: 'Can I change my vote?',
-      a: 'Yes. Go back to the same Pulse and tap "Change vote". The XP from your original vote is preserved; subsequent changes do not earn additional XP.',
+      a: 'Yes. Go back to the same Pulse and tap "Change vote".',
     },
     {
       q: 'How do I report inappropriate content?',
@@ -134,8 +134,8 @@ export default function SoportePage() {
       a: 'From the app: Profile → Account → Delete my account. We process the request within 7 business days. Your public content (signals, votes) may be kept in anonymized logs for historical integrity, in accordance with Mexico’s LFPDPPP.',
     },
     {
-      q: 'How much XP do I need to level up?',
-      a: 'Tier 1 → Tier 2: 500 XP. Tier 2 → Tier 3: 1,500 XP. Tier 3 → Tier 4: 5,000 XP. Tier 4 → Tier 5: 15,000 XP.',
+      q: 'What is civic reputation?',
+      a: 'A private score on your own profile for civic actions that move the city (co-signing a señal that reaches a stage, publishing a señal others back, evaluating a location, sustained presence). It is never awarded for opinion-vote volume, which option you chose, or confidence. There is no public leaderboard.',
     },
     {
       q: 'What is the Conscious Fund for?',

@@ -21,11 +21,11 @@ interface GuestRegistrationPromptProps {
 const COPY = {
   es: {
     heading: 'Tu voto cambió el consenso',
-    body: 'Ya cuenta para la comunidad. Crea tu cuenta gratuita para conservar tu XP, tu racha y tu lugar en el ranking.',
+    body: 'Ya cuenta para la comunidad. Crea tu cuenta gratuita para guardar tu actividad y enterarte cuando algo que tocaste se mueva.',
     benefits: [
-      { icon: Trophy, title: 'Gana XP', description: 'Acumula puntos por cada voto acertado.' },
-      { icon: Flame, title: 'Mantén tu racha', description: 'Vota cada día para desbloquear recompensas.' },
-      { icon: ListOrdered, title: 'Aparece en el ranking', description: 'Compite con la comunidad y gana medallas.' },
+      { icon: Trophy, title: 'Tu actividad', description: 'Guarda lo que respaldaste y votaste.' },
+      { icon: Flame, title: 'Cuando se mueve', description: 'Te avisamos si una señal avanza o un Pulse cierra.' },
+      { icon: ListOrdered, title: 'Tu voz en la ciudad', description: 'Participá en Señales, Lugares y el Fondo.' },
     ],
     ctaPrimary: 'Crear cuenta gratis',
     newsletterTitle: '¿Solo quieres el resumen?',
@@ -40,11 +40,11 @@ const COPY = {
   },
   en: {
     heading: 'Your vote shifted the consensus',
-    body: 'Your opinion already counts. Create your free account to keep your XP, streak and spot on the leaderboard.',
+    body: 'Your opinion already counts. Create your free account to keep your activity and get notified when something you touched moves.',
     benefits: [
-      { icon: Trophy, title: 'Earn XP', description: 'Score points for every prediction you make.' },
-      { icon: Flame, title: 'Keep your streak', description: 'Vote every day to unlock rewards.' },
-      { icon: ListOrdered, title: 'Show up on the leaderboard', description: 'Compete with the community and earn badges.' },
+      { icon: Trophy, title: 'Your activity', description: 'Keep what you backed and voted on.' },
+      { icon: Flame, title: 'When it moves', description: 'We notify you if a signal advances or a Pulse closes.' },
+      { icon: ListOrdered, title: 'Your voice in the city', description: 'Take part in Señales, Locations, and the Fund.' },
     ],
     ctaPrimary: 'Create a free account',
     newsletterTitle: 'Just want the recap?',

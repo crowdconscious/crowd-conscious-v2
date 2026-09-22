@@ -266,8 +266,8 @@ Each phase ships alone. Earliest work is copy and routing.
 
 ### Phase 3 — reputation, perks, ranking
 
-- [ ] Civic reputation, private, domain + alcaldía, under §3.6.
-- [ ] Perks as redemption at certified locations.
+- [x] Civic reputation, private, domain + alcaldía, under §3.6. (web: `/predictions/reputacion`, migration `261_civic_reputation.sql`, flag `CIVIC_REPUTATION_ENABLED`)
+- [ ] Perks as redemption at certified locations. (data model exists; full UX deferred)
 - [ ] Scored ranking only after Phase 1 events show which card types convert. Until then, hand-curated order.
 
 ---

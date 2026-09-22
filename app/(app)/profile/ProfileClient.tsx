@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { AnimatedButton } from '@/components/ui/UIComponents'
 import { ChevronRight, ArrowRight } from 'lucide-react'
-import { getTierByXP } from '@/lib/tier-config'
 import BecomeCreatorCard from '@/components/creators/BecomeCreatorCard'
 import { getCreatorCopy, type CreatorLocale } from '@/lib/i18n/creator'
 
@@ -117,8 +116,6 @@ export default function ProfileClient({
     })
   }
 
-  const tier = getTierByXP(predictionStats.totalXp)
-
   return (
     <div className="space-y-8 w-full min-w-0 max-w-full overflow-hidden">
       {/* Profile Header */}
@@ -144,18 +141,13 @@ export default function ProfileClient({
                 </h1>
                 <p className="text-slate-400 mb-2 break-all">{user.email}</p>
                 <div className="mt-3">
-                  <div
-                    className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r ${tier.colors.gradient} text-white text-sm font-medium shadow-sm`}
-                    style={{ animation: 'none' }}
+                  <Link
+                    href="/predictions/actividad"
+                    className="inline-flex items-center gap-2 rounded-xl border border-[#2d3748] bg-[#1a2029] px-3 py-2 text-sm text-slate-200 transition-colors hover:border-emerald-500/40"
                   >
-                    <span className="text-lg">{tier.icon}</span>
-                    <div>
-                      <div className="font-bold text-xs leading-tight">{tier.name}</div>
-                      <div className="text-xs opacity-90 leading-tight">
-                        {predictionStats.totalXp.toLocaleString()} XP
-                      </div>
-                    </div>
-                  </div>
+                    Tu actividad
+                    <ArrowRight className="h-4 w-4 text-emerald-400" />
+                  </Link>
                 </div>
                 {profile?.bio && (
                   <p className="text-slate-400 mt-3 max-w-2xl break-words">{profile.bio}</p>
@@ -230,8 +222,8 @@ export default function ProfileClient({
               </div>
             )}
 
-            {/* Prediction Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 mt-6 w-full min-w-0 overflow-hidden">
+            {/* Forecast majority-match (separate from civic reputation) + activity links */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4 mt-6 w-full min-w-0 overflow-hidden">
               <div className="min-w-0 overflow-hidden rounded-lg border border-[#2d3748] bg-[#1a2029]/90 p-3 text-center sm:p-4">
                 <div className="text-2xl font-bold text-white">
                   {predictionStats.predictions}
@@ -242,19 +234,20 @@ export default function ProfileClient({
                 <div className="text-2xl font-bold text-white">
                   {predictionStats.accuracy}%
                 </div>
-                <div className="text-sm text-slate-400">Majority match</div>
-              </div>
-              <div className="min-w-0 rounded-lg border border-[#2d3748] bg-[#1a2029]/90 p-3 text-center sm:p-4">
-                <div className="text-2xl font-bold text-emerald-400">
-                  {predictionStats.totalXp}
+                <div className="text-sm text-slate-400">
+                  Forecast match
                 </div>
-                <div className="text-sm text-slate-400">Total XP</div>
               </div>
-              <div className="min-w-0 rounded-lg border border-[#2d3748] bg-[#1a2029]/90 p-3 text-center sm:p-4">
-                <div className="text-2xl font-bold text-white">
-                  {predictionStats.rank ?? '—'}
+              <div className="min-w-0 col-span-2 md:col-span-1 rounded-lg border border-[#2d3748] bg-[#1a2029]/90 p-3 text-center sm:p-4">
+                <Link
+                  href="/predictions/actividad"
+                  className="text-sm font-medium text-emerald-400 hover:text-emerald-300"
+                >
+                  Tu actividad →
+                </Link>
+                <div className="mt-1 text-xs text-slate-500">
+                  Civic reputation is private when enabled
                 </div>
-                <div className="text-sm text-slate-400">Rank</div>
               </div>
             </div>
           </div>
@@ -467,9 +460,8 @@ export default function ProfileClient({
         <p className="text-slate-400 text-sm mb-6">Contributions to collective intelligence and the Conscious Fund</p>
         <div className="rounded-xl border border-cc-border bg-cc-card/80 p-6">
           <p className="text-slate-300">
-            Your votes have contributed{' '}
-            <span className="font-bold text-emerald-400">{predictionStats.totalXp} XP</span> to
-            collective intelligence.
+            Your votes shape collective intelligence. Civic reputation (when enabled)
+            lives on your private profile — never for picking an option or raising confidence.
           </p>
           {impactVotes.length > 0 && (
             <div className="mt-4 border-t border-cc-border pt-4">
@@ -509,18 +501,18 @@ export default function ProfileClient({
                     </p>
                   </div>
                   <div className="flex items-center gap-4 shrink-0">
-                    <span className="text-emerald-400 font-medium">
-                      +{pred.xp_earned} XP
+                    <span className="text-slate-500 text-sm">
+                      Conf {pred.confidence}/10
                     </span>
                     {pred.market_status === 'resolved' && pred.is_correct !== null && (
                       <span
                         className={
                           pred.is_correct
                             ? 'text-emerald-400'
-                            : 'text-red-400'
+                            : 'text-slate-500'
                         }
                       >
-                        {pred.is_correct ? '✓' : '✗'}
+                        {pred.is_correct ? 'Matched' : 'Recorded'}
                       </span>
                     )}
                     <ChevronRight className="w-5 h-5 text-slate-500" />

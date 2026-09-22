@@ -141,12 +141,12 @@ export default function AboutContent({
                 <Vote className="w-7 h-7 text-emerald-400" />
               </div>
               <h3 className="text-lg font-semibold text-white mb-2">
-                {locale === 'es' ? 'Gana XP, cambia la probabilidad' : 'Earn XP, shift probability'}
+                {locale === 'es' ? 'Tu voz mueve el consenso' : 'Your voice shapes the consensus'}
               </h3>
               <p className="text-slate-400 text-sm">
                 {locale === 'es'
-                  ? 'Cada voto suma XP y mueve la probabilidad de la multitud. Tu voz forma el consenso.'
-                  : 'Every vote earns XP and shifts the crowd probability. Your voice shapes the consensus.'}
+                  ? 'Cada voto con confianza mueve la probabilidad de la multitud. No hay puntos por acertar una opinión.'
+                  : 'Every confidence-weighted vote shifts the crowd probability. No points for “getting an opinion right.”'}
               </p>
             </div>
             <div className="border border-cc-border bg-cc-card/90 rounded-xl p-6 hover:border-emerald-500/30 transition-colors">

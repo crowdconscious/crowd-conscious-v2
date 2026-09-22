@@ -85,7 +85,7 @@ export function TierProgressionCard() {
                     <span className="font-semibold text-teal-600">{xpNeeded.toLocaleString()} XP</span> more to unlock
                   </>
                 ) : (
-                  <span className="font-semibold text-green-600">Ready to level up!</span>
+                  <span className="font-semibold text-green-600">Keep going</span>
                 )}
               </p>
             </div>
@@ -140,7 +140,7 @@ export function TierProgressionCard() {
               ) : xpNeeded <= 500 ? (
                 <>💪 Keep going! You're making great progress toward {nextTier.name}.</>
               ) : (
-                <>🚀 Every action counts! Complete lessons, vote, and create content to level up.</>
+                <>Every civic action that moves the city counts — not opinion votes for points.</>
               )}
             </p>
           </div>

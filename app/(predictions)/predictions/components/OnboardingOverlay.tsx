@@ -69,7 +69,7 @@ export function OnboardingOverlay({ trendingMarkets, onDismiss }: OnboardingOver
             Welcome to Crowd Conscious!
           </h2>
           <p className="text-slate-400 mb-6">
-            Cast your first vote to earn XP and climb the leaderboard.
+            Cast your first vote. The reward is seeing what your community thinks — not points or a public ranking.
           </p>
 
           <p className="text-sm font-medium text-slate-300 mb-3">Trending markets to try:</p>

@@ -84,7 +84,7 @@ export default function TermsPage() {
         },
         {
           title: "4. User Types",
-          content: "The Platform supports several user types: (a) Participants: individuals who vote in Pulses, earn XP, and vote on causes; (b) Brands/Sponsors: companies that sponsor Pulses and receive impact reports; (c) Corporate Users: invited employees who access learning modules and certifications; (d) Administrators: authorized personnel who manage Pulses, agents, and Platform settings."
+          content: "The Platform supports several user types: (a) Participants: individuals who vote in Pulses, co-sign Señales, evaluate Conscious Locations, and vote on fund causes; (b) Brands/Sponsors: companies that sponsor Pulses and receive impact reports; (c) Corporate Users: invited employees who access learning modules and certifications; (d) Administrators: authorized personnel who manage Pulses, agents, and Platform settings. Opinion votes do not earn points or levels. Civic reputation, when enabled, is private to each participant."
         },
         {
           title: "5. Free-to-Play Participation and XP",
