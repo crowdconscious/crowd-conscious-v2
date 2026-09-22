@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { Menu, X, Download } from 'lucide-react'
+import { Menu, X, Download, ChevronDown } from 'lucide-react'
 import Logo from '@/components/Logo'
 import LanguageSwitcherSimple from '@/components/LanguageSwitcherSimple'
 import { useLanguage } from '@/contexts/LanguageContext'
@@ -12,8 +12,8 @@ import { getPodcastCopy } from '@/lib/i18n/podcast'
 
 /**
  * Canonical logged-out primary nav (locale-aware):
- *   Votar · Resultados · (Reportar) · Evaluar · Para marcas · Para creadores ·
- *   Blog · Podcast · Acerca
+ *   Primary (always visible on desktop): Votar · Resultados · (Reportar) · Evaluar
+ *   Secondary (Más menu on desktop): Para marcas · Para creadores · Blog · Podcast · Acerca
  *
  * Verb-first chrome (Phase 0): primary action labels lead with verbs;
  * product nouns (Pulse, Señales, Lugares) stay on secondary taxonomy / after
@@ -30,6 +30,7 @@ const NAV = {
     creators: 'Para creadores',
     blog: 'Blog',
     about: 'Acerca',
+    more: 'Más',
     live: 'En Vivo',
     signIn: 'Iniciar sesión',
     signUp: 'Crear cuenta',
@@ -46,6 +47,7 @@ const NAV = {
     creators: 'For creators',
     blog: 'Blog',
     about: 'About',
+    more: 'More',
     live: 'Live',
     signIn: 'Sign in',
     signUp: 'Create account',
@@ -57,6 +59,13 @@ const NAV = {
 // Read at module init — the flag is set at build time on Vercel so this
 // matches what the page-level routes return (404 when off).
 const SIGNALS_ENABLED = process.env.NEXT_PUBLIC_SIGNALS_ENABLED === 'true'
+
+type NavItem = {
+  href: string
+  label: string
+  emphasize?: boolean
+  badge?: string
+}
 
 function LiveBadge({ liveCount, label }: { liveCount: number; label: string }) {
   if (liveCount <= 0) return null
@@ -72,6 +81,100 @@ function LiveBadge({ liveCount, label }: { liveCount: number; label: string }) {
       </span>
       <span>{label}</span>
     </Link>
+  )
+}
+
+function NavLink({
+  item,
+  onClick,
+  className = '',
+}: {
+  item: NavItem
+  onClick?: () => void
+  className?: string
+}) {
+  return (
+    <Link
+      href={item.href}
+      onClick={onClick}
+      className={`inline-flex min-h-[44px] items-center gap-1.5 font-medium transition-colors ${
+        item.emphasize
+          ? 'text-emerald-400/95 hover:text-emerald-300'
+          : 'text-slate-400 hover:text-white'
+      } ${className}`}
+    >
+      <span>{item.label}</span>
+      {item.badge && (
+        <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-300 ring-1 ring-inset ring-emerald-400/30">
+          {item.badge}
+        </span>
+      )}
+    </Link>
+  )
+}
+
+function MoreMenu({
+  label,
+  items,
+}: {
+  label: string
+  items: NavItem[]
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const onPointerDown = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        setOpen(false)
+      }
+    }
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('mousedown', onPointerDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex min-h-[44px] items-center gap-1 font-medium text-slate-400 transition-colors hover:text-white"
+        aria-expanded={open}
+        aria-haspopup="menu"
+      >
+        <span>{label}</span>
+        <ChevronDown
+          className={`h-4 w-4 transition-transform ${open ? 'rotate-180' : ''}`}
+          aria-hidden
+        />
+      </button>
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 top-full z-50 mt-1 min-w-[12rem] rounded-lg border border-[#2d3748] bg-[#0f1419]/98 py-1 shadow-lg backdrop-blur-md"
+        >
+          {items.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              className="block px-4 py-2.5 text-sm font-medium text-slate-300 transition-colors hover:bg-white/5 hover:text-white"
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -92,18 +195,16 @@ export default function LandingNav() {
     ? 'bg-[#0f1419]/95 backdrop-blur-md border-b border-[#2d3748]'
     : 'bg-[#0f1419] border-b border-[#2d3748]'
 
-  const primary: Array<{
-    href: string
-    label: string
-    emphasize?: boolean
-    badge?: string
-  }> = [
+  const primary: NavItem[] = [
     { href: '/pulse', label: nav.pulse, emphasize: true },
     { href: '/pulse/results', label: nav.resultados },
     ...(SIGNALS_ENABLED
       ? [{ href: '/signals', label: nav.signals, badge: nav.signalsBeta }]
       : []),
     { href: '/locations', label: nav.evaluar },
+  ]
+
+  const secondary: NavItem[] = [
     { href: '/para-marcas', label: nav.paraMarcas },
     { href: '/creators', label: nav.creators },
     { href: '/blog', label: nav.blog },
@@ -113,52 +214,39 @@ export default function LandingNav() {
 
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all ${navBg}`}>
-      <div className="max-w-6xl mx-auto px-4">
-        <div className="flex justify-between items-center h-20">
+      <div className="mx-auto max-w-6xl px-4 sm:px-5">
+        <div className="flex h-20 items-center gap-5 md:gap-8">
           <Logo size="nav" linkTo="/" />
 
-          <div className="hidden md:flex items-center gap-5 lg:gap-7 xl:gap-8">
+          <div className="hidden min-w-0 flex-1 items-center gap-6 lg:gap-8 md:flex">
             {primary.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`min-h-[44px] inline-flex items-center gap-1.5 font-medium transition-colors ${
-                  item.emphasize
-                    ? 'text-emerald-400/95 hover:text-emerald-300'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <span>{item.label}</span>
-                {item.badge && (
-                  <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-300 ring-1 ring-inset ring-emerald-400/30">
-                    {item.badge}
-                  </span>
-                )}
-              </Link>
+              <NavLink key={item.href} item={item} className="text-sm lg:text-[15px]" />
             ))}
+            <MoreMenu label={nav.more} items={secondary} />
           </div>
 
-          <div className="hidden md:flex items-center gap-3">
+          <div className="ml-auto hidden shrink-0 items-center gap-2.5 lg:gap-3 md:flex">
             <LiveBadge liveCount={liveCount} label={nav.live} />
             <CompactFundThermometer locale={language} />
             <LanguageSwitcherSimple />
             <a
               href="/app"
               title={nav.androidSoon}
-              className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-sm font-medium text-emerald-300 transition-colors hover:bg-emerald-500/20"
+              className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-1.5 text-sm font-medium text-emerald-300 transition-colors hover:bg-emerald-500/20 lg:px-3"
             >
-              <Download className="h-4 w-4" />
-              <span>{nav.downloadApp}</span>
+              <Download className="h-4 w-4 shrink-0" />
+              <span className="hidden xl:inline">{nav.downloadApp}</span>
+              <span className="xl:hidden">App</span>
             </a>
             <Link
               href="/login"
-              className="text-slate-400 hover:text-white transition-colors font-medium text-sm"
+              className="text-sm font-medium text-slate-400 transition-colors hover:text-white"
             >
               {nav.signIn}
             </Link>
             <Link
               href="/signup"
-              className="text-emerald-400 hover:text-emerald-300 transition-colors font-medium text-sm"
+              className="text-sm font-medium text-emerald-400 transition-colors hover:text-emerald-300"
             >
               {nav.signUp}
             </Link>
@@ -166,18 +254,18 @@ export default function LandingNav() {
 
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="md:hidden p-2 text-slate-400 hover:text-white"
+            className="ml-auto p-2 text-slate-400 hover:text-white md:hidden"
             aria-label="Toggle menu"
           >
-            {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </div>
       </div>
 
       {mobileOpen && (
-        <div className="md:hidden border-t border-[#2d3748] bg-[#0f1419]/98 backdrop-blur-md">
-          <div className="px-4 py-4 space-y-1">
-            <div className="py-2 flex items-center justify-between gap-2">
+        <div className="border-t border-[#2d3748] bg-[#0f1419]/98 backdrop-blur-md md:hidden">
+          <div className="space-y-1 px-4 py-4">
+            <div className="flex items-center justify-between gap-2 py-2">
               <LanguageSwitcherSimple />
               <div className="flex items-center gap-2">
                 <CompactFundThermometer locale={language} />
@@ -185,23 +273,21 @@ export default function LandingNav() {
               </div>
             </div>
             {primary.map((item) => (
-              <Link
+              <NavLink
                 key={item.href}
-                href={item.href}
+                item={item}
                 onClick={() => setMobileOpen(false)}
-                className={`flex min-h-[44px] items-center gap-2 py-3 font-medium ${
-                  item.emphasize
-                    ? 'text-emerald-400 hover:text-emerald-300'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <span>{item.label}</span>
-                {item.badge && (
-                  <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-300 ring-1 ring-inset ring-emerald-400/30">
-                    {item.badge}
-                  </span>
-                )}
-              </Link>
+                className="flex w-full py-3"
+              />
+            ))}
+            <div className="my-2 border-t border-[#2d3748]" />
+            {secondary.map((item) => (
+              <NavLink
+                key={item.href}
+                item={item}
+                onClick={() => setMobileOpen(false)}
+                className="flex w-full py-3 text-sm"
+              />
             ))}
             <a
               href="/app"
@@ -224,7 +310,7 @@ export default function LandingNav() {
             <Link
               href="/signup"
               onClick={() => setMobileOpen(false)}
-              className="block min-h-[44px] py-3 text-emerald-400 hover:text-emerald-300 font-medium"
+              className="block min-h-[44px] py-3 font-medium text-emerald-400 hover:text-emerald-300"
             >
               {nav.signUp}
             </Link>
