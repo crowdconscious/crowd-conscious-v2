@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase-server'
 import { createAdminClient } from '@/lib/supabase-admin'
@@ -185,7 +185,24 @@ export default async function BlogPostPage(props: Props) {
     }
   }
 
-  if (!post) notFound()
+  // Same durable-preview pattern as /pulse/[id]: unauthenticated visitors who
+  // hit a draft slug are sent to login (with return path) instead of a bare 404.
+  // Draft body is never rendered for anonymous users.
+  if (!post) {
+    if (!user) {
+      const admin = createAdminClient()
+      const { data: draftOnly } = await admin
+        .from('blog_posts')
+        .select('id, status')
+        .eq('slug', slug)
+        .eq('status', 'draft')
+        .maybeSingle()
+      if (draftOnly) {
+        redirect(`/login?redirect=${encodeURIComponent(`/blog/${slug}`)}`)
+      }
+    }
+    notFound()
+  }
 
   if (post.status === 'published') {
     void supabase.rpc('increment_blog_post_view', { p_slug: slug }).then(() => {})
