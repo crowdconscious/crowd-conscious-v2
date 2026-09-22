@@ -81,11 +81,18 @@ export const CRON_CATALOG: readonly CronJobMeta[] = [
     description: 'Sends scheduled newsletter to subscribers.',
   },
   {
-    name: 'reengagement-inactive',
-    schedule: '0 16 * * 1',
+    name: 'signal-threshold-check',
+    schedule: '*/15 * * * *',
     kind: 'operational',
-    routePath: 'app/api/cron/reengagement-inactive/route',
-    description: 'Re-engages dormant users with a digest email (disable: REENGAGEMENT_EMAIL_ENABLED=false).',
+    routePath: 'app/api/cron/signal-threshold-check/route',
+    description: 'Promotes Señales across 50/200 cosign stages and notifies stakeholders.',
+  },
+  {
+    name: 'signal-silence-30d',
+    schedule: '0 7 * * *',
+    kind: 'operational',
+    routePath: 'app/api/cron/signal-silence-30d/route',
+    description: 'Publishes 30-day institutional silence as a public result and notifies author + co-signers.',
   },
   {
     name: 'monthly-impact',
@@ -100,6 +107,13 @@ export const CRON_CATALOG: readonly CronJobMeta[] = [
     kind: 'operational',
     routePath: 'app/api/cron/archive/route',
     description: 'Soft-archives stale rows across the platform.',
+  },
+  {
+    name: 'push-receipts',
+    schedule: '*/30 * * * *',
+    kind: 'operational',
+    routePath: 'app/api/cron/push-receipts/route',
+    description: 'Verifies Expo push delivery receipts and prunes stale tokens.',
   },
 ] as const
 

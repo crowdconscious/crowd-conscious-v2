@@ -40,6 +40,7 @@ type SignalCore = {
   anonymous_support_count: number
   stage1_met_at: string | null
   stage2_met_at: string | null
+  silence_published_at?: string | null
   created_at: string
   partner_location_id: string | null
   street_reference: string | null
@@ -303,6 +304,8 @@ export default function SignalDetail({
               locale={locale}
               responses={responses}
               stage={signal.threshold_stage}
+              silencePublishedAt={signal.silence_published_at}
+              stage1MetAt={signal.stage1_met_at}
             />
           </div>
 

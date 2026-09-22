@@ -54,6 +54,7 @@ const NAV_ITEMS_EN: ShellNavItem[] = [
   { href: '/predictions', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/live', label: 'Live', icon: Radio },
   { href: '/predictions/notifications', label: 'Notifications', icon: Bell },
+  { href: '/predictions/actividad', label: 'Your activity', icon: Activity },
   { href: '/predictions/pulse', label: 'Vote', icon: TrendingUp },
   ...(SIGNALS_ENABLED
     ? [{ href: '/signals', label: 'Report', icon: MessageSquareWarning, beta: true } as ShellNavItem]
@@ -69,6 +70,7 @@ const NAV_ITEMS_ES: ShellNavItem[] = [
   { href: '/predictions', label: 'Panel', icon: LayoutDashboard },
   { href: '/live', label: 'En Vivo', icon: Radio },
   { href: '/predictions/notifications', label: 'Notificaciones', icon: Bell },
+  { href: '/predictions/actividad', label: 'Tu actividad', icon: Activity },
   { href: '/predictions/pulse', label: 'Votar', icon: TrendingUp },
   ...(SIGNALS_ENABLED
     ? [{ href: '/signals', label: 'Reportar', icon: MessageSquareWarning, beta: true } as ShellNavItem]

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Bell, ArrowLeft, RefreshCw } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { trackUxEvent } from '@/lib/ux-overhaul-analytics'
 
 type Notification = {
   id: string
@@ -15,7 +16,20 @@ type Notification = {
   link: string | null
   read: boolean
   created_at: string
+  data?: Record<string, string> | null
 }
+
+const RESOLUTION_TYPES = new Set([
+  'signal_stage_50',
+  'signal_stage_200',
+  'signal_official_response',
+  'signal_silence_30d',
+  'pulse_resolved',
+  'location_certified',
+  'signal_milestone',
+  'market_resolved',
+])
+
 
 function formatTime(iso: string, locale: string): string {
   const d = new Date(iso)
@@ -137,6 +151,15 @@ export function NotificationsPageClient() {
                 href={n.link || '#'}
                 onClick={() => {
                   if (!n.read) markAsRead(n.id)
+                  if (RESOLUTION_TYPES.has(n.type)) {
+                    trackUxEvent('resolution_push_opened', {
+                      surface: 'web',
+                      trigger:
+                        (n.data?.trigger as string | undefined) ?? n.type,
+                      object_id:
+                        n.data?.marketId ?? n.data?.slug ?? n.data?.object_id,
+                    })
+                  }
                 }}
                 className={`block rounded-xl border p-4 transition-colors ${
                   !n.read

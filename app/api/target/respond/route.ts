@@ -6,6 +6,8 @@ import { moderateRateLimit, getRateLimitIdentifier } from '@/lib/rate-limit'
 import { sendSignalTargetReplied } from '@/lib/resend'
 import type { CitizenSignalsLocale } from '@/lib/i18n/citizen-signals'
 import type { TargetReplyStatus } from '@/lib/emails/signals/TargetRepliedEmail'
+import { notifySignalOfficialResponse } from '@/lib/resolution-notify'
+import { userHasPushToken } from '@/lib/resolution-hook'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -123,32 +125,47 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // F13: fire-and-forget "target replied" email to the filer. We use
-    // profiles.email like the other Signal email paths. Failures are
-    // logged but never affect the API response.
+    // Phase 2: resolution hook notifies author + co-signers (push preferred;
+    // email only when no push token; max one resolution notify per user/day).
+    // Legacy author-only email is folded into the hook's emailFallback.
     void (async () => {
       try {
-        const { data: profile } = await admin
-          .from('profiles')
-          .select('email, full_name')
-          .eq('id', signal.author_user_id)
-          .maybeSingle()
-        const recipient = profile?.email
-        if (!recipient) return
-        const locale: CitizenSignalsLocale =
-          signal.language === 'en' ? 'en' : 'es'
-        await sendSignalTargetReplied({
-          to: recipient,
-          locale,
-          signalSlug: signal.public_slug,
-          signalTitle: signal.title,
-          filerName: profile?.full_name ?? null,
+        await notifySignalOfficialResponse(admin, {
+          signalId: signal.id,
+          slug: signal.public_slug,
+          title: signal.title,
+          language: signal.language,
           authorLabel: payload.author_label,
           officialStatus: payload.official_status as TargetReplyStatus,
           responseBody: payload.body,
         })
       } catch (e) {
-        console.error('[api/target/respond POST] target-replied email', e)
+        console.error('[api/target/respond POST] resolution notify', e)
+        // Fail-soft fallback: author email if hook blew up and they have no push.
+        try {
+          if (await userHasPushToken(admin, signal.author_user_id)) return
+          const { data: profile } = await admin
+            .from('profiles')
+            .select('email, full_name')
+            .eq('id', signal.author_user_id)
+            .maybeSingle()
+          const recipient = profile?.email
+          if (!recipient) return
+          const locale: CitizenSignalsLocale =
+            signal.language === 'en' ? 'en' : 'es'
+          await sendSignalTargetReplied({
+            to: recipient,
+            locale,
+            signalSlug: signal.public_slug,
+            signalTitle: signal.title,
+            filerName: profile?.full_name ?? null,
+            authorLabel: payload.author_label,
+            officialStatus: payload.official_status as TargetReplyStatus,
+            responseBody: payload.body,
+          })
+        } catch (e2) {
+          console.error('[api/target/respond POST] target-replied email', e2)
+        }
       }
     })()
 

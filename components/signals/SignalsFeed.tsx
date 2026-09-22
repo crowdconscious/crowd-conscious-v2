@@ -44,6 +44,7 @@ type ApiSignalRow = {
   anonymous_support_count: number
   stage1_met_at: string | null
   stage2_met_at: string | null
+  silence_published_at?: string | null
   created_at: string
   updated_at: string
 }
@@ -206,6 +207,7 @@ function mapApiRow(row: ApiSignalRow, lookups: SignalLookups): SignalListItem {
     anonymousSupportCount: row.anonymous_support_count,
     stage1MetAt: row.stage1_met_at,
     stage2MetAt: row.stage2_met_at,
+    silencePublishedAt: row.silence_published_at ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     targetName:

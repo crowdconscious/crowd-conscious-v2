@@ -158,11 +158,10 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
         publishedAgo: (rel: string) =>
           isEs ? `Publicada ${rel}` : `Published ${rel}`,
         viewSignal: isEs ? 'Abrir reporte' : 'Open report',
-        // Used when feed rows know stage≥1 and zero official replies
-        // (detail page is the primary silence surface today).
+        // Feed badge when silence_published_at is set (or stage1+30d client fallback).
         silenceBadge: isEs
-          ? 'Sin respuesta · público'
-          : 'No reply · public',
+          ? 'Silencio · resultado publicado'
+          : 'Silence · published result',
       },
       loadMore: isEs ? 'Cargar más' : 'Load more',
       loading: isEs ? 'Cargando…' : 'Loading…',
@@ -522,9 +521,12 @@ export function getCitizenSignalsCopy(locale: CitizenSignalsLocale) {
       noOfficialResponseWaiting: isEs
         ? 'Aún sin respuesta oficial. Las co-firmas activan el aviso al destinatario.'
         : 'No official reply yet. Co-signs trigger the notice to the target.',
+      noOfficialResponseAwaiting: isEs
+        ? 'El destinatario fue notificado. Si no responde en 30 días, el silencio queda publicado en el registro público.'
+        : 'The target was notified. If there is no reply within 30 days, that silence is published on the public record.',
       noOfficialResponseSilence: isEs
-        ? 'Silencio institucional — resultado publicado. El destinatario fue notificado y no ha respondido en este canal.'
-        : 'Institutional silence — published result. The target was notified and has not replied on this channel.',
+        ? 'Silencio institucional — resultado publicado. Han pasado 30 días desde la notificación formal sin respuesta en este canal.'
+        : 'Institutional silence — published result. 30 days have passed since the formal notice with no reply on this channel.',
       // Phase 0 dual-outcome framing (thresholds stay 50 / 200).
       dualOutcomeBlurb: isEs
         ? 'Tu señal está viva. 50 respaldos → la institución recibe la solicitud formal y un enlace para responder públicamente. 200 respaldos → prioridad pública. Si no responde, su silencio queda en el registro público.'
