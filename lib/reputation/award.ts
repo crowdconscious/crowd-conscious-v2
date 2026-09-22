@@ -1,45 +1,46 @@
 /**
- * Phase 3 civic reputation awards — server-only helpers.
+ * Phase 3 civic reputation — server helpers aligned to mobile-canonical schema.
  *
- * Call from service-role / admin paths after allowed civic actions.
- * Never call from opinion-vote cast/resolve paths.
+ * Shared Supabase: apply ONLY
+ *   crowd-conscious-mobile/supabase/migrations/20260922_civic_reputation.sql
+ * Never apply web 261 (retired). See docs/PHASE-3-CIVIC-REPUTATION.md.
+ *
+ * Cosign / signal-stage / location-evaluation awards are DB triggers.
+ * App-layer awards are only for reserved paths (neighbor, sustained presence).
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   CIVIC_REPUTATION_POINTS,
   isCivicReputationEnabled,
-  locationEvaluationDomain,
-  signalCategoryToReputationDomain,
+  type CivicReputationActionType,
   type CivicReputationDomain,
-  type CivicReputationReason,
 } from '@/lib/reputation/domains'
-import {
-  CDMX_ALCALDIA_DISPLAY_NAMES,
-  isCdmxAlcaldiaSlug,
-} from '@/lib/signals/cdmx-alcaldias'
 
 export type AwardCivicReputationResult = {
   success: boolean
   error?: string
-  event_id?: string
-  points?: number
-  domain?: string
-  alcaldia?: string
-  reason?: string
+  /** Mobile RPC returns boolean; true means a new event was inserted. */
+  awarded?: boolean
 }
 
 type AwardArgs = {
   userId: string
+  actionType: CivicReputationActionType
+  /** Idempotency key — unique with (user_id, action_type) in mobile schema. */
+  actionId: string
   domain: CivicReputationDomain
-  alcaldia: string
-  reason: CivicReputationReason
+  alcaldiaSlug: string
+  alcaldiaLabel?: string | null
   points?: number
-  objectType?: 'signal' | 'location' | 'referral' | 'presence' | null
   objectId?: string | null
-  meta?: Record<string, unknown>
+  metadata?: Record<string, unknown>
 }
 
+/**
+ * Service-role write via mobile `award_civic_reputation`.
+ * Prefer DB triggers for cosign / stage / location — do not double-award those.
+ */
 export async function awardCivicReputation(
   admin: SupabaseClient,
   args: AwardArgs
@@ -48,219 +49,48 @@ export async function awardCivicReputation(
     return { success: false, error: 'feature_disabled' }
   }
 
-  const points = args.points ?? CIVIC_REPUTATION_POINTS[args.reason]
-  const alcaldia = args.alcaldia.trim() || 'Ciudad de México'
+  const points =
+    args.points ?? CIVIC_REPUTATION_POINTS[args.actionType] ?? 0
+  if (points <= 0 || points > 100) {
+    return { success: false, error: 'invalid_points' }
+  }
+
+  const alcaldiaSlug = args.alcaldiaSlug.trim() || 'cdmx'
 
   const { data, error } = await admin.rpc('award_civic_reputation', {
     p_user_id: args.userId,
-    p_domain: args.domain,
-    p_alcaldia: alcaldia,
-    p_reason: args.reason,
+    p_action_type: args.actionType,
+    p_action_id: args.actionId,
     p_points: points,
-    p_object_type: args.objectType ?? null,
+    p_domain: args.domain,
+    p_alcaldia_slug: alcaldiaSlug,
+    p_alcaldia_label: args.alcaldiaLabel ?? null,
     p_object_id: args.objectId ?? null,
-    p_meta: args.meta ?? {},
+    p_metadata: args.metadata ?? {},
   })
 
   if (error) {
     console.warn('[civic-reputation] award rpc failed', {
-      reason: args.reason,
+      actionType: args.actionType,
       userId: args.userId,
       error: error.message,
     })
     return { success: false, error: error.message }
   }
 
-  const result = (data ?? {}) as AwardCivicReputationResult
-  return result
-}
-
-/** Resolve display alcaldía from a conscious_locations row (slug or name). */
-export function alcaldiaFromLocationRow(row: {
-  slug?: string | null
-  name?: string | null
-  neighborhood?: string | null
-} | null): string {
-  if (!row) return 'Ciudad de México'
-  const slug = row.slug ?? ''
-  if (isCdmxAlcaldiaSlug(slug)) {
-    return CDMX_ALCALDIA_DISPLAY_NAMES[slug]
+  const awarded = data === true
+  return {
+    success: awarded,
+    awarded,
+    error: awarded ? undefined : 'already_awarded_or_skipped',
   }
-  // Alcaldía bucket rows use names like "Cuauhtémoc"
-  if (row.name && row.name.trim()) return row.name.trim()
-  if (row.neighborhood && row.neighborhood.trim()) {
-    return row.neighborhood.trim()
-  }
-  return 'Ciudad de México'
-}
-
-type SignalContext = {
-  id: string
-  category: string | null
-  author_user_id: string
-  conscious_location_id: string | null
-}
-
-/**
- * When a señal crosses stage 1 or 2: award every co-signer + the author.
- * Idempotent per (user, reason, signal_id). Fail-soft.
- */
-export async function awardReputationForSignalStage(
-  admin: SupabaseClient,
-  params: {
-    signalId: string
-    stage: 1 | 2
-  }
-): Promise<{ awarded: number; skipped: number }> {
-  if (!isCivicReputationEnabled()) return { awarded: 0, skipped: 0 }
-
-  const { data: signal, error: signalErr } = await admin
-    .from('citizen_signals')
-    .select('id, category, author_user_id, conscious_location_id')
-    .eq('id', params.signalId)
-    .maybeSingle()
-
-  if (signalErr || !signal) {
-    console.warn(
-      '[civic-reputation] signal lookup failed',
-      params.signalId,
-      signalErr?.message
-    )
-    return { awarded: 0, skipped: 0 }
-  }
-
-  const ctx = signal as SignalContext
-  const domain = signalCategoryToReputationDomain(ctx.category)
-  const alcaldia = await resolveAlcaldiaForSignal(admin, ctx)
-
-  const cosignReason: CivicReputationReason =
-    params.stage === 1 ? 'signal_cosign_stage_50' : 'signal_cosign_stage_200'
-  const authorReason: CivicReputationReason =
-    params.stage === 1 ? 'signal_author_stage_50' : 'signal_author_stage_200'
-
-  const { data: cosigners } = await admin
-    .from('citizen_signal_cosigns')
-    .select('user_id')
-    .eq('signal_id', params.signalId)
-
-  let awarded = 0
-  let skipped = 0
-
-  for (const row of cosigners ?? []) {
-    const uid = (row as { user_id: string }).user_id
-    if (!uid || uid === ctx.author_user_id) continue
-    const res = await awardCivicReputation(admin, {
-      userId: uid,
-      domain,
-      alcaldia,
-      reason: cosignReason,
-      objectType: 'signal',
-      objectId: params.signalId,
-      meta: { stage: params.stage },
-    })
-    if (res.success) awarded++
-    else skipped++
-  }
-
-  if (ctx.author_user_id) {
-    const res = await awardCivicReputation(admin, {
-      userId: ctx.author_user_id,
-      domain,
-      alcaldia,
-      reason: authorReason,
-      objectType: 'signal',
-      objectId: params.signalId,
-      meta: { stage: params.stage },
-    })
-    if (res.success) awarded++
-    else skipped++
-  }
-
-  return { awarded, skipped }
-}
-
-/**
- * Author award when someone else co-signs their published señal (once).
- */
-export async function awardReputationForAuthorCosigned(
-  admin: SupabaseClient,
-  params: {
-    signalId: string
-    cosignerUserId: string
-  }
-): Promise<AwardCivicReputationResult> {
-  if (!isCivicReputationEnabled()) {
-    return { success: false, error: 'feature_disabled' }
-  }
-
-  const { data: signal } = await admin
-    .from('citizen_signals')
-    .select('id, category, author_user_id, conscious_location_id, publication_status')
-    .eq('id', params.signalId)
-    .maybeSingle()
-
-  if (!signal || signal.publication_status !== 'published') {
-    return { success: false, error: 'not_found' }
-  }
-  if (!signal.author_user_id || signal.author_user_id === params.cosignerUserId) {
-    return { success: false, error: 'skip_self' }
-  }
-
-  const ctx = signal as SignalContext
-  const domain = signalCategoryToReputationDomain(ctx.category)
-  const alcaldia = await resolveAlcaldiaForSignal(admin, ctx)
-
-  return awardCivicReputation(admin, {
-    userId: ctx.author_user_id,
-    domain,
-    alcaldia,
-    reason: 'signal_author_cosigned',
-    objectType: 'signal',
-    objectId: params.signalId,
-    meta: { cosigner_user_id: params.cosignerUserId },
-  })
-}
-
-/**
- * Award once per location market evaluation (authenticated voters only).
- * Does NOT look at option or confidence.
- */
-export async function awardReputationForLocationEvaluation(
-  admin: SupabaseClient,
-  params: {
-    userId: string
-    marketId: string
-  }
-): Promise<AwardCivicReputationResult> {
-  if (!isCivicReputationEnabled()) {
-    return { success: false, error: 'feature_disabled' }
-  }
-
-  const { data: loc } = await admin
-    .from('conscious_locations')
-    .select('id, slug, name, neighborhood, current_market_id')
-    .eq('current_market_id', params.marketId)
-    .maybeSingle()
-
-  if (!loc?.id) {
-    return { success: false, error: 'not_a_location_market' }
-  }
-
-  return awardCivicReputation(admin, {
-    userId: params.userId,
-    domain: locationEvaluationDomain(),
-    alcaldia: alcaldiaFromLocationRow(loc),
-    reason: 'location_evaluated',
-    objectType: 'location',
-    objectId: loc.id,
-    meta: { market_id: params.marketId },
-  })
 }
 
 /**
  * Sustained presence: if the user has civic events in ≥2 distinct ISO weeks
  * in the trailing 35 days (excluding prior sustained_presence awards), grant
- * one monthly presence award under desarrollo_urbano / Ciudad de México.
+ * one monthly presence award under desarrollo_urbano / cdmx.
+ * Idempotent via action_id = YYYY-MM (UTC).
  */
 export async function maybeAwardSustainedPresence(
   admin: SupabaseClient,
@@ -275,16 +105,17 @@ export async function maybeAwardSustainedPresence(
 
   const { data: events } = await admin
     .from('civic_reputation_events')
-    .select('created_at, reason')
+    .select('created_at, action_type')
     .eq('user_id', userId)
-    .neq('reason', 'sustained_presence')
+    .neq('action_type', 'sustained_presence')
     .gte('created_at', since.toISOString())
 
   const weeks = new Set<string>()
   for (const ev of events ?? []) {
     const d = new Date((ev as { created_at: string }).created_at)
-    // ISO week key: YYYY-Www
-    const tmp = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()))
+    const tmp = new Date(
+      Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())
+    )
     const dayNum = tmp.getUTCDay() || 7
     tmp.setUTCDate(tmp.getUTCDate() + 4 - dayNum)
     const yearStart = new Date(Date.UTC(tmp.getUTCFullYear(), 0, 1))
@@ -298,34 +129,26 @@ export async function maybeAwardSustainedPresence(
     return { success: false, error: 'insufficient_presence' }
   }
 
+  const now = new Date()
+  const monthKey = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`
+
   return awardCivicReputation(admin, {
     userId,
+    actionType: 'sustained_presence',
+    actionId: `month:${monthKey}`,
     domain: 'desarrollo_urbano',
-    alcaldia: 'Ciudad de México',
-    reason: 'sustained_presence',
-    objectType: 'presence',
-    objectId: null,
-    meta: { weeks: weeks.size },
+    alcaldiaSlug: 'cdmx',
+    alcaldiaLabel: 'Ciudad de México',
+    metadata: { weeks: weeks.size },
   })
-}
-
-async function resolveAlcaldiaForSignal(
-  admin: SupabaseClient,
-  signal: SignalContext
-): Promise<string> {
-  if (!signal.conscious_location_id) return 'Ciudad de México'
-  const { data: loc } = await admin
-    .from('conscious_locations')
-    .select('slug, name, neighborhood')
-    .eq('id', signal.conscious_location_id)
-    .maybeSingle()
-  return alcaldiaFromLocationRow(loc)
 }
 
 export type CivicReputationBreakdownRow = {
   alcaldia: string
+  alcaldiaSlug: string
   domain: CivicReputationDomain
   points: number
+  eventCount: number
   updated_at: string
 }
 
@@ -336,50 +159,114 @@ export type CivicReputationSnapshot = {
     id: string
     domain: CivicReputationDomain
     alcaldia: string
-    reason: CivicReputationReason
+    actionType: CivicReputationActionType
     points: number
     created_at: string
   }>
 }
 
-/** Load private reputation for the authenticated user (user-context client). */
+/**
+ * Load private reputation for the authenticated user.
+ * Prefers mobile read RPCs; falls back to RLS selects on scores/events.
+ */
 export async function fetchOwnCivicReputation(
   supabase: SupabaseClient,
   userId: string
 ): Promise<CivicReputationSnapshot> {
-  const [{ data: totals }, { data: recent }] = await Promise.all([
-    supabase
-      .from('civic_reputation_totals')
-      .select('alcaldia, domain, points, updated_at')
-      .eq('user_id', userId)
-      .order('points', { ascending: false }),
-    supabase
-      .from('civic_reputation_events')
-      .select('id, domain, alcaldia, reason, points, created_at')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(20),
-  ])
+  const [{ data: scoreRows, error: scoresErr }, { data: recent, error: recentErr }] =
+    await Promise.all([
+      supabase.rpc('get_my_civic_reputation'),
+      supabase
+        .from('civic_reputation_events')
+        .select(
+          'id, domain, alcaldia_slug, alcaldia_label, action_type, points, created_at'
+        )
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(20),
+    ])
 
-  const breakdown = (totals ?? []).map((row) => ({
-    alcaldia: row.alcaldia as string,
-    domain: row.domain as CivicReputationDomain,
-    points: Number(row.points) || 0,
-    updated_at: row.updated_at as string,
-  }))
+  let breakdown: CivicReputationBreakdownRow[] = []
 
-  const totalPoints = breakdown.reduce((sum, r) => sum + r.points, 0)
+  if (!scoresErr && Array.isArray(scoreRows) && scoreRows.length > 0) {
+    breakdown = scoreRows.map((row) => {
+      const r = row as {
+        alcaldia_slug: string
+        alcaldia_label: string | null
+        domain: string
+        points: number
+        event_count: number
+        updated_at: string
+      }
+      return {
+        alcaldiaSlug: r.alcaldia_slug,
+        alcaldia: r.alcaldia_label?.trim() || r.alcaldia_slug,
+        domain: r.domain as CivicReputationDomain,
+        points: Number(r.points) || 0,
+        eventCount: Number(r.event_count) || 0,
+        updated_at: r.updated_at,
+      }
+    })
+  } else {
+    // RLS fallback if RPC unavailable
+    const { data: scores } = await supabase
+      .from('civic_reputation_scores')
+      .select(
+        'alcaldia_slug, alcaldia_label, domain, points, event_count, updated_at'
+      )
+      .eq('user_id', userId)
+      .order('points', { ascending: false })
+
+    breakdown = (scores ?? []).map((row) => ({
+      alcaldiaSlug: row.alcaldia_slug as string,
+      alcaldia:
+        ((row.alcaldia_label as string | null)?.trim() ||
+          (row.alcaldia_slug as string)) ??
+        'cdmx',
+      domain: row.domain as CivicReputationDomain,
+      points: Number(row.points) || 0,
+      eventCount: Number(row.event_count) || 0,
+      updated_at: row.updated_at as string,
+    }))
+  }
+
+  let totalPoints = breakdown.reduce((sum, r) => sum + r.points, 0)
+
+  const { data: totalsRpc } = await supabase.rpc(
+    'get_my_civic_reputation_totals'
+  )
+  if (Array.isArray(totalsRpc) && totalsRpc[0]) {
+    const t = totalsRpc[0] as { total_points?: number }
+    if (typeof t.total_points === 'number') {
+      totalPoints = t.total_points
+    }
+  }
+
+  if (recentErr) {
+    console.warn('[civic-reputation] recent events read failed', recentErr.message)
+  }
 
   return {
     totalPoints,
     breakdown,
-    recent: (recent ?? []).map((ev) => ({
-      id: ev.id as string,
-      domain: ev.domain as CivicReputationDomain,
-      alcaldia: ev.alcaldia as string,
-      reason: ev.reason as CivicReputationReason,
-      points: Number(ev.points) || 0,
-      created_at: ev.created_at as string,
-    })),
+    recent: (recent ?? []).map((ev) => {
+      const e = ev as {
+        id: string
+        domain: string
+        alcaldia_slug: string
+        alcaldia_label: string | null
+        action_type: string
+        points: number
+        created_at: string
+      }
+      return {
+        id: e.id,
+        domain: e.domain as CivicReputationDomain,
+        alcaldia: e.alcaldia_label?.trim() || e.alcaldia_slug,
+        actionType: e.action_type as CivicReputationActionType,
+        points: Number(e.points) || 0,
+        created_at: e.created_at,
+      }
+    }),
   }
 }

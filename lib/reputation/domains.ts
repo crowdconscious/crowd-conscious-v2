@@ -1,9 +1,9 @@
 /**
  * Civic reputation domains + signal-category mapping (UX overhaul §3.6).
  *
+ * Canonical schema = mobile `20260922_civic_reputation.sql` (shared Supabase).
  * Domains from day one: Agua, espacio público, residuos, desarrollo urbano.
- * Signal categories are broader — this map is editorial, same spirit as
- * signalCategoryToPillar in lib/fund/pillars.ts.
+ * See docs/PHASE-3-CIVIC-REPUTATION.md.
  */
 
 export const CIVIC_REPUTATION_DOMAINS = [
@@ -15,28 +15,23 @@ export const CIVIC_REPUTATION_DOMAINS = [
 
 export type CivicReputationDomain = (typeof CIVIC_REPUTATION_DOMAINS)[number]
 
-export const CIVIC_REPUTATION_REASONS = [
-  'signal_cosign_stage_50',
-  'signal_cosign_stage_200',
+/** Mobile-canonical action_type values on civic_reputation_events. */
+export const CIVIC_REPUTATION_ACTION_TYPES = [
+  'signal_stage_cosign',
   'signal_author_cosigned',
-  'signal_author_stage_50',
-  'signal_author_stage_200',
-  'location_evaluated',
-  'neighbour_participated',
+  'location_evaluation',
+  'neighbor_participation',
   'sustained_presence',
 ] as const
 
-export type CivicReputationReason = (typeof CIVIC_REPUTATION_REASONS)[number]
+export type CivicReputationActionType =
+  (typeof CIVIC_REPUTATION_ACTION_TYPES)[number]
 
-/** Default points per allowed reason. Modest — insight is the reward, not XP. */
-export const CIVIC_REPUTATION_POINTS: Record<CivicReputationReason, number> = {
-  signal_cosign_stage_50: 5,
-  signal_cosign_stage_200: 10,
-  signal_author_cosigned: 3,
-  signal_author_stage_50: 8,
-  signal_author_stage_200: 15,
-  location_evaluated: 4,
-  neighbour_participated: 5,
+/** Default points for app-layer awards (neighbor / sustained). DB triggers use their own amounts. */
+export const CIVIC_REPUTATION_POINTS: Partial<
+  Record<CivicReputationActionType, number>
+> = {
+  neighbor_participation: 5,
   sustained_presence: 2,
 }
 
@@ -48,23 +43,29 @@ export function isCivicReputationDomain(
 
 /**
  * Map a Citizen Signal category → civic reputation domain.
- * Fallback: desarrollo_urbano (broadest civic-built-environment bucket).
+ * Aligns with mobile `civic_reputation_map_domain` spirit; fallback desarrollo_urbano.
  */
 export function signalCategoryToReputationDomain(
   category: string | null | undefined
 ): CivicReputationDomain {
   switch (category) {
     case 'water_sanitation':
+    case 'agua':
+    case 'public_health':
       return 'agua'
     case 'public_space':
+    case 'banqueta':
+    case 'bache':
+    case 'luminaria':
+    case 'arbol':
     case 'accessibility':
     case 'noise_pollution':
-    case 'safety_security':
     case 'culture_sport':
+    case 'animal_welfare':
       return 'espacio_publico'
     case 'environment':
-    case 'animal_welfare':
-    case 'public_health':
+    case 'basura':
+    case 'residuos':
       return 'residuos'
     case 'housing':
     case 'mobility_transport':
@@ -72,6 +73,7 @@ export function signalCategoryToReputationDomain(
     case 'corruption_ethics':
     case 'consumer_protection':
     case 'gender_rights':
+    case 'safety_security':
     case 'other':
     default:
       return 'desarrollo_urbano'
@@ -96,36 +98,24 @@ export function civicReputationDomainLabel(
   return map[domain][locale === 'es' ? 0 : 1]
 }
 
-export function civicReputationReasonLabel(
-  reason: CivicReputationReason,
+export function civicReputationActionLabel(
+  actionType: CivicReputationActionType,
   locale: 'es' | 'en'
 ): string {
-  const map: Record<CivicReputationReason, [string, string]> = {
-    signal_cosign_stage_50: [
-      'Respaldo que alcanzó el primer umbral',
-      'Co-sign that reached the first stage',
-    ],
-    signal_cosign_stage_200: [
-      'Respaldo que alcanzó el segundo umbral',
-      'Co-sign that reached the second stage',
+  const map: Record<CivicReputationActionType, [string, string]> = {
+    signal_stage_cosign: [
+      'Respaldo que alcanzó un umbral',
+      'Co-sign that reached a stage',
     ],
     signal_author_cosigned: [
       'Señal publicada que otros respaldaron',
       'Published señal others co-signed',
     ],
-    signal_author_stage_50: [
-      'Tu señal alcanzó el primer umbral',
-      'Your señal reached the first stage',
-    ],
-    signal_author_stage_200: [
-      'Tu señal alcanzó el segundo umbral',
-      'Your señal reached the second stage',
-    ],
-    location_evaluated: [
+    location_evaluation: [
       'Evaluaste un lugar',
       'You evaluated a location',
     ],
-    neighbour_participated: [
+    neighbor_participation: [
       'Un vecino participó gracias a ti',
       'A neighbour participated because of you',
     ],
@@ -134,8 +124,11 @@ export function civicReputationReasonLabel(
       'Sustained presence this month',
     ],
   }
-  return map[reason][locale === 'es' ? 0 : 1]
+  return map[actionType][locale === 'es' ? 0 : 1]
 }
+
+/** @deprecated Use civicReputationActionLabel — kept for any leftover imports. */
+export const civicReputationReasonLabel = civicReputationActionLabel
 
 /** Feature flag — off by default until Francisco enables in Vercel. */
 export function isCivicReputationEnabled(): boolean {

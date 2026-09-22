@@ -6,7 +6,6 @@ import {
 import { cronHealthCheck, cronHealthComplete } from '@/lib/cron-health'
 import { issueTargetToken } from '@/lib/signals/issue-target-token'
 import { notifySignalStageCrossed } from '@/lib/resolution-notify'
-import { awardReputationForSignalStage } from '@/lib/reputation/award'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -193,30 +192,9 @@ async function sendStageResolutionNotify(
     )
   }
 
-  // Phase 3: civic reputation for cosigners + author when a stage is reached.
-  // Never awards opinion-vote volume/option/confidence. Fail-soft.
-  try {
-    const rep = await awardReputationForSignalStage(admin, {
-      signalId: row.id,
-      stage,
-    })
-    if (rep.awarded > 0) {
-      console.info('[civic-reputation]', {
-        event: 'signal_stage_awarded',
-        signal_id: row.id,
-        stage,
-        awarded: rep.awarded,
-        skipped: rep.skipped,
-      })
-    }
-  } catch (err) {
-    console.warn(
-      '[cron/signal-threshold-check] civic reputation award failed',
-      row.id,
-      stage,
-      err
-    )
-  }
+  // Civic reputation for stage cosigners is awarded by mobile DB trigger
+  // trg_civic_rep_on_signal_stage when threshold_stage updates — do not
+  // award here (double-award risk). See docs/PHASE-3-CIVIC-REPUTATION.md.
 }
 
 type CronError = {

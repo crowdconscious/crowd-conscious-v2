@@ -1345,116 +1345,116 @@ export interface Database {
         Relationships: []
       }
       civic_reputation_events: {
-        // Phase 3 civic reputation ledger (migration 261_civic_reputation.sql).
-        // Private: SELECT own via RLS. Writes via award_civic_reputation RPC.
+        // Phase 3 ledger — mobile-canonical 20260922_civic_reputation.sql.
+        // Private: SELECT own via RLS. Writes via award_civic_reputation RPC / DB triggers.
         Row: {
           id: string
           user_id: string
+          action_type:
+            | 'signal_stage_cosign'
+            | 'signal_author_cosigned'
+            | 'location_evaluation'
+            | 'neighbor_participation'
+            | 'sustained_presence'
+          action_id: string
+          points: number
           domain:
             | 'agua'
             | 'espacio_publico'
             | 'residuos'
             | 'desarrollo_urbano'
-          alcaldia: string
-          reason:
-            | 'signal_cosign_stage_50'
-            | 'signal_cosign_stage_200'
-            | 'signal_author_cosigned'
-            | 'signal_author_stage_50'
-            | 'signal_author_stage_200'
-            | 'location_evaluated'
-            | 'neighbour_participated'
-            | 'sustained_presence'
-          points: number
-          object_type: 'signal' | 'location' | 'referral' | 'presence' | null
+          alcaldia_slug: string
+          alcaldia_label: string | null
           object_id: string | null
-          meta: Json
+          metadata: Json
           created_at: string
         }
         Insert: {
           id?: string
           user_id: string
+          action_type:
+            | 'signal_stage_cosign'
+            | 'signal_author_cosigned'
+            | 'location_evaluation'
+            | 'neighbor_participation'
+            | 'sustained_presence'
+          action_id: string
+          points: number
           domain:
             | 'agua'
             | 'espacio_publico'
             | 'residuos'
             | 'desarrollo_urbano'
-          alcaldia: string
-          reason:
-            | 'signal_cosign_stage_50'
-            | 'signal_cosign_stage_200'
-            | 'signal_author_cosigned'
-            | 'signal_author_stage_50'
-            | 'signal_author_stage_200'
-            | 'location_evaluated'
-            | 'neighbour_participated'
-            | 'sustained_presence'
-          points: number
-          object_type?: 'signal' | 'location' | 'referral' | 'presence' | null
+          alcaldia_slug?: string
+          alcaldia_label?: string | null
           object_id?: string | null
-          meta?: Json
+          metadata?: Json
           created_at?: string
         }
         Update: {
           id?: string
           user_id?: string
+          action_type?:
+            | 'signal_stage_cosign'
+            | 'signal_author_cosigned'
+            | 'location_evaluation'
+            | 'neighbor_participation'
+            | 'sustained_presence'
+          action_id?: string
+          points?: number
           domain?:
             | 'agua'
             | 'espacio_publico'
             | 'residuos'
             | 'desarrollo_urbano'
-          alcaldia?: string
-          reason?:
-            | 'signal_cosign_stage_50'
-            | 'signal_cosign_stage_200'
-            | 'signal_author_cosigned'
-            | 'signal_author_stage_50'
-            | 'signal_author_stage_200'
-            | 'location_evaluated'
-            | 'neighbour_participated'
-            | 'sustained_presence'
-          points?: number
-          object_type?: 'signal' | 'location' | 'referral' | 'presence' | null
+          alcaldia_slug?: string
+          alcaldia_label?: string | null
           object_id?: string | null
-          meta?: Json
+          metadata?: Json
           created_at?: string
         }
         Relationships: []
       }
-      civic_reputation_totals: {
-        // Aggregated civic reputation per user × alcaldía × domain.
+      civic_reputation_scores: {
+        // Aggregated civic reputation per user × alcaldía × domain (mobile canonical).
         // Private: SELECT own via RLS. Not a public leaderboard.
         Row: {
           user_id: string
-          alcaldia: string
+          alcaldia_slug: string
           domain:
             | 'agua'
             | 'espacio_publico'
             | 'residuos'
             | 'desarrollo_urbano'
           points: number
+          event_count: number
+          alcaldia_label: string | null
           updated_at: string
         }
         Insert: {
           user_id: string
-          alcaldia: string
+          alcaldia_slug: string
           domain:
             | 'agua'
             | 'espacio_publico'
             | 'residuos'
             | 'desarrollo_urbano'
           points?: number
+          event_count?: number
+          alcaldia_label?: string | null
           updated_at?: string
         }
         Update: {
           user_id?: string
-          alcaldia?: string
+          alcaldia_slug?: string
           domain?:
             | 'agua'
             | 'espacio_publico'
             | 'residuos'
             | 'desarrollo_urbano'
           points?: number
+          event_count?: number
+          alcaldia_label?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -2617,22 +2617,38 @@ export interface Database {
     }
     Functions: {
       award_civic_reputation: {
-        // Phase 3 — migration 261_civic_reputation.sql
+        // Phase 3 — mobile-canonical 20260922_civic_reputation.sql (service_role)
         Args: {
           p_user_id: string
-          p_domain: string
-          p_alcaldia: string
-          p_reason: string
+          p_action_type: string
+          p_action_id: string
           p_points: number
-          p_object_type?: string | null
+          p_domain: string
+          p_alcaldia_slug: string
+          p_alcaldia_label?: string | null
           p_object_id?: string | null
-          p_meta?: Json
+          p_metadata?: Json
         }
-        Returns: Json
+        Returns: boolean
       }
       get_my_civic_reputation: {
         Args: Record<string, never>
-        Returns: Json
+        Returns: {
+          alcaldia_slug: string
+          alcaldia_label: string | null
+          domain: string
+          points: number
+          event_count: number
+          updated_at: string
+        }[]
+      }
+      get_my_civic_reputation_totals: {
+        Args: Record<string, never>
+        Returns: {
+          total_points: number
+          alcaldia_count: number
+          domain_count: number
+        }[]
       }
       get_profiles_public: {
         Args: { p_ids: string[] }
