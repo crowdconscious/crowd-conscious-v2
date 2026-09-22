@@ -185,13 +185,17 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
     isAdmin = ut === 'admin' || (!!adminEmail && !!em && em === adminEmail)
   }
 
-  // Draft access guard: hide the existence of a draft from anyone other than
-  // an admin or the market's creator. Returning notFound() (instead of a
-  // distinct 403) avoids leaking the fact that a draft URL exists.
+  // Draft access guard: only admin/creator may see draft content. Unauthenticated
+  // visitors get a login redirect (so staff-shared review links work after sign-in
+  // instead of a hard 404). Logged-in non-staff still get notFound() so we don't
+  // confirm draft existence to arbitrary accounts. No draft HTML is rendered here.
   const isDraft = (market as { is_draft?: boolean }).is_draft === true
   const isCreator =
     !!user && (market as { created_by?: string | null }).created_by === user.id
   if (isDraft && !isAdmin && !isCreator) {
+    if (!user) {
+      redirect(`/login?redirect=${encodeURIComponent(`/pulse/${id}`)}`)
+    }
     notFound()
   }
 
