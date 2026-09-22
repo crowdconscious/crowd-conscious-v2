@@ -6,6 +6,7 @@ import {
   SIGNAL_TARGET_KINDS,
   isRegistryTargetKind,
 } from '@/lib/i18n/citizen-signals'
+import { opsRoutingFieldsSchema } from '@/lib/signals/ops-contacts'
 
 export const SIGNAL_ROUTING_MODES = ['routed', 'observation'] as const
 export type SignalRoutingMode = (typeof SIGNAL_ROUTING_MODES)[number]
@@ -55,13 +56,15 @@ const sharedCreateFields = {
   evidence: z.array(signalEvidenceSchema).max(5).optional().default([]),
 }
 
-export const observationCreateBodySchema = z.object({
-  routing_mode: z.literal('observation'),
-  country_code: countryCodeSchema,
-  city_slug: citySlugSchema,
-  locality: z.string().trim().min(1).max(160).nullable().optional(),
-  ...sharedCreateFields,
-})
+export const observationCreateBodySchema = z
+  .object({
+    routing_mode: z.literal('observation'),
+    country_code: countryCodeSchema,
+    city_slug: citySlugSchema,
+    locality: z.string().trim().min(1).max(160).nullable().optional(),
+    ...sharedCreateFields,
+  })
+  .and(opsRoutingFieldsSchema)
 
 const routedCreateBodyBaseSchema = z.object({
   routing_mode: z.literal('routed'),
@@ -179,13 +182,15 @@ function routedTargetRefinement(
 // citizen_target_id + conscious_location_id required. Direct kinds
 // (company/neighborhood/conscious_location, migration 248) carry their own
 // per-kind requirements and treat the alcaldía as optional geo context.
-export const routedCreateBodySchema =
-  routedCreateBodyBaseSchema.superRefine(routedTargetRefinement)
+export const routedCreateBodySchema = routedCreateBodyBaseSchema
+  .superRefine(routedTargetRefinement)
+  .and(opsRoutingFieldsSchema)
 
 /** Legacy clients omit routing_mode; treat as routed when required FKs are present. */
 export const legacyRoutedCreateBodySchema = routedCreateBodyBaseSchema
   .omit({ routing_mode: true })
   .superRefine(routedTargetRefinement)
+  .and(opsRoutingFieldsSchema)
 
 function defaultRoutingMode(input: unknown): unknown {
   if (typeof input !== 'object' || input === null) return input

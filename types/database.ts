@@ -1213,6 +1213,9 @@ export interface Database {
           edited_at: string | null
           created_at: string
           updated_at: string
+          // Ops routing — migration 261_signals_ops_notify.sql (PII; not on public view).
+          ops_routing_mode: 'crowd_conscious' | 'author_provided'
+          author_suggested_contacts: Json
         }
         Insert: {
           id?: string
@@ -1249,6 +1252,8 @@ export interface Database {
           edited_at?: string | null
           created_at?: string
           updated_at?: string
+          ops_routing_mode?: 'crowd_conscious' | 'author_provided'
+          author_suggested_contacts?: Json
         }
         Update: {
           id?: string
@@ -1283,6 +1288,49 @@ export interface Database {
           silence_published_at?: string | null
           canonical_duplicate_of?: string | null
           edited_at?: string | null
+          created_at?: string
+          updated_at?: string
+          ops_routing_mode?: 'crowd_conscious' | 'author_provided'
+          author_suggested_contacts?: Json
+        }
+        Relationships: []
+      }
+      citizen_signal_ops_notify_log: {
+        // Durable Stage 1/2 ops packet ledger — migration 261_signals_ops_notify.sql.
+        // Service-role only — RLS on, no anon/authenticated policies.
+        Row: {
+          id: string
+          signal_id: string
+          stage: 1 | 2
+          status: 'sent' | 'failed' | 'skipped'
+          resend_id: string | null
+          error: string | null
+          recipients: Json
+          sent_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          signal_id: string
+          stage: 1 | 2
+          status: 'sent' | 'failed' | 'skipped'
+          resend_id?: string | null
+          error?: string | null
+          recipients?: Json
+          sent_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          signal_id?: string
+          stage?: 1 | 2
+          status?: 'sent' | 'failed' | 'skipped'
+          resend_id?: string | null
+          error?: string | null
+          recipients?: Json
+          sent_at?: string | null
           created_at?: string
           updated_at?: string
         }

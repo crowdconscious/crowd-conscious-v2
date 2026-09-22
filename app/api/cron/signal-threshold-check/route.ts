@@ -6,6 +6,14 @@ import {
 import { cronHealthCheck, cronHealthComplete } from '@/lib/cron-health'
 import { issueTargetToken } from '@/lib/signals/issue-target-token'
 import { notifySignalStageCrossed } from '@/lib/resolution-notify'
+import {
+  resolveVerifiedAuthority,
+  sendOrRetryOpsPacket,
+  sendVerifiedAuthorityStage1,
+  type OpsNotifySignal,
+} from '@/lib/signals/ops-notify'
+import type { OpsRoutingMode } from '@/lib/signals/ops-contacts'
+import type { SignalEmailResult } from '@/lib/resend'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -18,17 +26,16 @@ export const dynamic = 'force-dynamic'
  * `citizen_signals` rows through the escalation ladder:
  *
  *   threshold_stage 0 → 1 — once cosign_count >= STAGE1, mark stage 1,
- *     mint a magic-link token for the target and email
- *     `notification_email` via `sendSignalTargetNotifiedStage1` (when
- *     present — F13 may not be merged yet, so we runtime-check).
+ *     email verified authority only (citizen_targets.notification_email
+ *     or conscious_locations.contact_email — NEVER company
+ *     target_contact_email), always send/retry the ops packet, and stamp
+ *     private_target_notify_at only when Resend result.ok === true.
  *
- *   threshold_stage 1 → 2 — once cosign_count >= STAGE2, mark stage 2.
- *     **No mass mail in MVP** — the "publish dossier" email blast is the
- *     follow-up F-task; see TODO below.
+ *   threshold_stage 1 → 2 — once cosign_count >= STAGE2, mark stage 2
+ *     and always send/retry the Stage 2 ops packet (social checklist).
  *
- * Idempotency: the `threshold_stage <` filter on every pass plus the
- * stage*_met_at timestamp guards mean a re-run within the same window
- * is a no-op for already-promoted signals.
+ * Retry pass: re-attempt missing/failed ops ledger rows and Stage-1
+ * authority mail when private_target_notify_at is still null.
  *
  * Auth: Bearer `process.env.CRON_SECRET` (mirrors pulse-auto-resolve).
  *
@@ -43,6 +50,9 @@ const STAGE1_DEFAULT = 50
 const STAGE2_DEFAULT = 200
 
 const ROW_LIMIT = 200
+
+const SIGNAL_SELECT =
+  'id, public_slug, title, language, cosign_count, threshold_stage, citizen_target_id, target_kind, target_name, target_contact_email, target_location_id, author_user_id, private_target_notify_at, ops_routing_mode, author_suggested_contacts'
 
 function readStageThreshold(envName: string, fallback: number): number {
   const raw = process.env[envName]
@@ -71,17 +81,12 @@ type Stage1EmailHelper = (args: {
   language: string
   /** 'dashboard' for registry targets; 'public' for direct targets (248). */
   ctaMode: 'dashboard' | 'public'
-}) => Promise<unknown>
+  bcc?: string[]
+}) => Promise<SignalEmailResult>
 
 /**
- * Soft-load `sendSignalTargetNotifiedStage1` from `@/lib/resend`. F13 ships
- * the helper; if it merges after F15 the cron must not crash — it should
- * skip the email and continue updating the DB state.
- *
- * The cron speaks a small intermediate shape (`targetName` + `language`) so
- * it can keep the same interface even if the underlying helper's argument
- * names change. We adapt to the F13 helper's `targetDisplayName` + `locale`
- * keys here.
+ * Soft-load `sendSignalTargetNotifiedStage1` from `@/lib/resend`.
+ * Must honor result.ok — the helper returns { ok:false } without throwing.
  */
 async function loadStage1EmailHelper(): Promise<Stage1EmailHelper | null> {
   const mod = (await import('@/lib/resend')) as Record<string, unknown>
@@ -97,10 +102,11 @@ async function loadStage1EmailHelper(): Promise<Stage1EmailHelper | null> {
     magicLinkUrl: string
     expiryDays?: number
     ctaMode?: 'dashboard' | 'public'
-  }) => Promise<unknown>
+    bcc?: string[]
+  }) => Promise<SignalEmailResult>
   const real = fn as RealHelper
-  return (args) =>
-    real({
+  return async (args) => {
+    const result = await real({
       to: args.to,
       locale: args.language === 'en' ? 'en' : 'es',
       targetDisplayName: args.targetName,
@@ -110,7 +116,10 @@ async function loadStage1EmailHelper(): Promise<Stage1EmailHelper | null> {
       magicLinkUrl: args.magicLinkUrl,
       expiryDays: 7,
       ctaMode: args.ctaMode,
+      bcc: args.bcc,
     })
+    return result
+  }
 }
 
 /**
@@ -153,6 +162,27 @@ type SignalRow = {
   target_location_id: string | null
   author_user_id: string
   private_target_notify_at: string | null
+  ops_routing_mode: OpsRoutingMode | null
+  author_suggested_contacts: unknown
+}
+
+function toOpsNotifySignal(row: SignalRow): OpsNotifySignal {
+  return {
+    id: row.id,
+    public_slug: row.public_slug,
+    title: row.title,
+    language: row.language,
+    cosign_count: row.cosign_count,
+    threshold_stage: row.threshold_stage,
+    citizen_target_id: row.citizen_target_id,
+    target_kind: row.target_kind,
+    target_name: row.target_name,
+    target_contact_email: row.target_contact_email,
+    target_location_id: row.target_location_id,
+    private_target_notify_at: row.private_target_notify_at,
+    ops_routing_mode: row.ops_routing_mode,
+    author_suggested_contacts: row.author_suggested_contacts,
+  }
 }
 
 /**
@@ -199,7 +229,7 @@ async function sendStageResolutionNotify(
 
 type CronError = {
   signalId: string
-  stage: 1 | 2
+  stage: 1 | 2 | 'retry'
   message: string
 }
 
@@ -225,6 +255,8 @@ export async function GET(request: NextRequest) {
   const errors: CronError[] = []
   let stage1Promoted = 0
   let stage2Promoted = 0
+  let opsRetried = 0
+  let authorityRetried = 0
 
   const adminUserId = await resolveSystemAdminUserId(admin)
   if (!adminUserId) {
@@ -233,20 +265,21 @@ export async function GET(request: NextRequest) {
     )
   }
 
+  // Soft-load kept for diagnostics / future callers; promote paths use
+  // sendVerifiedAuthorityStage1 which already checks result.ok.
   const stage1Helper = await loadStage1EmailHelper()
   if (!stage1Helper) {
     console.warn(
-      '[cron/signal-threshold-check] sendSignalTargetNotifiedStage1 not exported from @/lib/resend — F13 likely not merged yet; skipping stage 1 email send'
+      '[cron/signal-threshold-check] sendSignalTargetNotifiedStage1 not exported from @/lib/resend — authority mail may fail until resend helpers load'
     )
   }
+  void stage1Helper
 
   // ===== Stage 1 pass =====
   try {
     const { data: stage1Rows, error: stage1QueryErr } = await admin
       .from('citizen_signals')
-      .select(
-        'id, public_slug, title, language, cosign_count, threshold_stage, citizen_target_id, target_kind, target_name, target_contact_email, target_location_id, author_user_id, private_target_notify_at'
-      )
+      .select(SIGNAL_SELECT)
       .eq('publication_status', 'published')
       .lt('threshold_stage', 1)
       .gte('cosign_count', stage1Threshold)
@@ -264,7 +297,7 @@ export async function GET(request: NextRequest) {
           row,
           baseUrl,
           adminUserId,
-          stage1Helper,
+          stage1Threshold,
         })
         stage1Promoted++
       } catch (err) {
@@ -287,9 +320,7 @@ export async function GET(request: NextRequest) {
   try {
     const { data: stage2Rows, error: stage2QueryErr } = await admin
       .from('citizen_signals')
-      .select(
-        'id, public_slug, title, language, cosign_count, threshold_stage, citizen_target_id, target_kind, target_name, target_contact_email, target_location_id, author_user_id, private_target_notify_at'
-      )
+      .select(SIGNAL_SELECT)
       .eq('publication_status', 'published')
       .lt('threshold_stage', 2)
       .gte('cosign_count', stage2Threshold)
@@ -302,7 +333,13 @@ export async function GET(request: NextRequest) {
 
     for (const row of (stage2Rows ?? []) as SignalRow[]) {
       try {
-        await promoteStage2({ admin, row, adminUserId })
+        await promoteStage2({
+          admin,
+          row,
+          adminUserId,
+          baseUrl,
+          stage2Threshold,
+        })
         stage2Promoted++
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err)
@@ -320,9 +357,28 @@ export async function GET(request: NextRequest) {
     errors.push({ signalId: 'batch', stage: 2, message })
   }
 
+  // ===== Retry pass (ops ledger + missed authority stamp) =====
+  try {
+    const retryResult = await runOpsRetryPass({
+      admin,
+      baseUrl,
+      stage1Threshold,
+      stage2Threshold,
+    })
+    opsRetried = retryResult.opsRetried
+    authorityRetried = retryResult.authorityRetried
+    for (const e of retryResult.errors) {
+      errors.push(e)
+    }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    console.error('[cron/signal-threshold-check] retry batch error', message)
+    errors.push({ signalId: 'batch', stage: 'retry', message })
+  }
+
   await cronHealthComplete(runId, JOB_NAME, admin, {
     success: errors.length === 0,
-    summary: `stage1=${stage1Promoted} stage2=${stage2Promoted} errors=${errors.length}`,
+    summary: `stage1=${stage1Promoted} stage2=${stage2Promoted} ops_retried=${opsRetried} authority_retried=${authorityRetried} errors=${errors.length}`,
     error: errors.length
       ? errors
           .map((e) => `s${e.stage} ${e.signalId}: ${e.message}`)
@@ -335,10 +391,29 @@ export async function GET(request: NextRequest) {
       ok: true,
       stage1_promoted: stage1Promoted,
       stage2_promoted: stage2Promoted,
+      ops_retried: opsRetried,
+      authority_retried: authorityRetried,
       errors: errors.length ? errors : undefined,
     },
     { status: 200 }
   )
+}
+
+async function mintRegistryMagicLink(
+  admin: SignalsAdminClient,
+  row: SignalRow,
+  baseUrl: string
+): Promise<{ magicLinkUrl: string | null; tokenId: string | null }> {
+  if (!row.citizen_target_id) {
+    return { magicLinkUrl: null, tokenId: null }
+  }
+  const issued = await issueTargetToken(admin, row.citizen_target_id, {
+    ttlDays: 7,
+  })
+  return {
+    magicLinkUrl: `${baseUrl}/dashboard/target/${issued.token}`,
+    tokenId: issued.token_id,
+  }
 }
 
 async function promoteStage1(args: {
@@ -346,9 +421,9 @@ async function promoteStage1(args: {
   row: SignalRow
   baseUrl: string
   adminUserId: string | null
-  stage1Helper: Stage1EmailHelper | null
+  stage1Threshold: number
 }): Promise<void> {
-  const { admin, row, baseUrl, adminUserId, stage1Helper } = args
+  const { admin, row, baseUrl, adminUserId, stage1Threshold } = args
   const nowIso = new Date().toISOString()
 
   // Race-safe state flip: only update if still below stage 1. A second cron
@@ -375,125 +450,72 @@ async function promoteStage1(args: {
   // Phase 2: author + co-signers (resolution hook, daily-capped).
   await sendStageResolutionNotify(admin, row, 1)
 
-  // Resolve who to notify and with which link. Registry targets
-  // (municipality/institution) get the private magic-link dashboard; direct
-  // targets (migration 248) have no dashboard, so company targets with a
-  // citizen-provided email and conscious_location targets with a directory
-  // contact_email get the PUBLIC signal link instead. Neighborhood targets
-  // have no inbox — the signal still escalates publicly.
-  let recipientEmail: string | null = null
-  let targetName: string | null = null
-  let linkUrl: string | null = null
-  let ctaMode: 'dashboard' | 'public' = 'dashboard'
-  let tokenId: string | null = null
+  const { magicLinkUrl, tokenId } = await mintRegistryMagicLink(
+    admin,
+    row,
+    baseUrl
+  )
 
-  if (row.citizen_target_id) {
-    // Mint the magic-link token. We always mint fresh at the stage
-    // transition so the email body has a usable raw token (we cannot read
-    // the prior hash-only row back to re-send it).
-    const issued = await issueTargetToken(admin, row.citizen_target_id, {
-      ttlDays: 7,
-    })
-    tokenId = issued.token_id
-
-    const { data: target } = await admin
-      .from('citizen_targets')
-      .select('id, display_name, notification_email')
-      .eq('id', row.citizen_target_id)
-      .maybeSingle()
-
-    recipientEmail = target?.notification_email ?? null
-    targetName = target?.display_name ?? null
-    linkUrl = `${baseUrl}/dashboard/target/${issued.token}`
-    ctaMode = 'dashboard'
-    if (!recipientEmail) {
-      console.warn(
-        '[cron/signal-threshold-check] stage1: no notification_email for target',
-        row.citizen_target_id,
-        'signal',
-        row.id
-      )
-    }
-  } else if (row.target_kind === 'company') {
-    recipientEmail = row.target_contact_email
-    targetName = row.target_name
-    linkUrl = `${baseUrl}/signals/${row.public_slug}`
-    ctaMode = 'public'
-    if (!recipientEmail) {
-      console.log(
-        '[cron/signal-threshold-check] stage1: company target without contact email — skipping notify',
-        row.id
-      )
-    }
-  } else if (row.target_kind === 'conscious_location') {
-    targetName = row.target_name
-    linkUrl = `${baseUrl}/signals/${row.public_slug}`
-    ctaMode = 'public'
-    if (row.target_location_id) {
-      const { data: targetLocation } = await admin
-        .from('conscious_locations')
-        .select('id, name, contact_email')
-        .eq('id', row.target_location_id)
-        .maybeSingle()
-      recipientEmail = targetLocation?.contact_email ?? null
-      targetName = targetLocation?.name ?? row.target_name
-    }
-    if (!recipientEmail) {
-      console.log(
-        '[cron/signal-threshold-check] stage1: conscious_location target without contact_email — skipping notify',
-        row.id,
-        row.target_location_id
-      )
-    }
-  } else {
-    // neighborhood targets and observation-mode signals: public escalation
-    // only, no target email.
-    console.log(
-      '[cron/signal-threshold-check] stage1: no notifiable target for kind',
-      row.target_kind,
-      'signal',
-      row.id
-    )
-  }
+  const opsRow = toOpsNotifySignal({ ...row, threshold_stage: 1 })
+  const verified = await resolveVerifiedAuthority(
+    admin,
+    opsRow,
+    baseUrl,
+    magicLinkUrl
+  )
 
   let emailSent = false
   let emailError: string | null = null
+  let authorityMailStatus: 'sent' | 'pending' | 'skipped' | 'failed' =
+    'skipped'
 
-  if (stage1Helper && recipientEmail && targetName && linkUrl) {
-    try {
-      await stage1Helper({
-        to: recipientEmail,
-        targetName,
-        signalTitle: row.title,
-        signalSlug: row.public_slug,
-        cosignCount: row.cosign_count,
-        magicLinkUrl: linkUrl,
-        language: row.language,
-        ctaMode,
-      })
+  // Company target_contact_email is NEVER auto-To — only verified registry
+  // / Conscious Location emails.
+  if (verified) {
+    const authResult = await sendVerifiedAuthorityStage1({
+      admin,
+      row: opsRow,
+      verified,
+      locale: row.language === 'en' ? 'en' : 'es',
+    })
+    if (authResult.sent) {
       emailSent = true
-    } catch (err) {
-      emailError = err instanceof Error ? err.message : String(err)
+      authorityMailStatus = 'sent'
+    } else if (authResult.error === 'already_stamped') {
+      authorityMailStatus = 'skipped'
+    } else {
+      authorityMailStatus = 'failed'
+      emailError = authResult.error ?? 'send_failed'
       console.error(
-        '[cron/signal-threshold-check] stage1 email failed',
+        '[cron/signal-threshold-check] stage1 authority email failed',
         row.id,
         emailError
       )
     }
+  } else {
+    console.log(
+      '[cron/signal-threshold-check] stage1: no verified authority email — ops packet only',
+      row.id,
+      row.target_kind
+    )
   }
 
-  if (emailSent) {
-    const { error: notifyErr } = await admin
-      .from('citizen_signals')
-      .update({ private_target_notify_at: nowIso })
-      .eq('id', row.id)
-    if (notifyErr) {
-      console.error(
-        '[cron/signal-threshold-check] stamp private_target_notify_at failed',
-        row.id,
-        notifyErr.message
-      )
-    }
+  const opsResult = await sendOrRetryOpsPacket({
+    admin,
+    row: opsRow,
+    stage: 1,
+    stageThreshold: stage1Threshold,
+    baseUrl,
+    verifiedAuthority: verified,
+    authorityMailStatus,
+    magicLinkUrl: verified?.magicLinkUrl ?? magicLinkUrl,
+  })
+  if (opsResult.status === 'failed') {
+    console.error(
+      '[cron/signal-threshold-check] stage1 ops packet failed',
+      row.id,
+      opsResult.error
+    )
   }
 
   if (adminUserId) {
@@ -508,12 +530,15 @@ async function promoteStage1(args: {
           cosign_count: row.cosign_count,
           target_id: row.citizen_target_id,
           target_kind: row.target_kind,
-          target_name: targetName,
+          target_name: verified?.displayName ?? row.target_name,
           token_id: tokenId,
-          cta_mode: ctaMode,
+          cta_mode: verified?.ctaMode ?? null,
           email_sent: emailSent,
           email_error: emailError,
-          notification_email_present: Boolean(recipientEmail),
+          notification_email_present: Boolean(verified?.email),
+          verified_authority_source: verified?.source ?? null,
+          ops_packet_status: opsResult.status,
+          ops_packet_error: opsResult.error ?? null,
         },
       })
     if (evErr) {
@@ -530,8 +555,10 @@ async function promoteStage2(args: {
   admin: SignalsAdminClient
   row: SignalRow
   adminUserId: string | null
+  baseUrl: string
+  stage2Threshold: number
 }): Promise<void> {
-  const { admin, row, adminUserId } = args
+  const { admin, row, adminUserId, baseUrl, stage2Threshold } = args
   const nowIso = new Date().toISOString()
 
   const { data: updated, error: updErr } = await admin
@@ -554,10 +581,31 @@ async function promoteStage2(args: {
 
   await sendStageResolutionNotify(admin, row, 2)
 
-  // TODO(F15-followup): trigger the public dossier email blast to all
-  // citizen_signal_subscriptions for this signal + a press packet PDF
-  // build. Out of scope for the MVP cron (see SIGNALS-MVP-CHECKLIST.md
-  // "Out of scope" note in the cron section).
+  const opsRow = toOpsNotifySignal({ ...row, threshold_stage: 2 })
+  const verified = await resolveVerifiedAuthority(
+    admin,
+    opsRow,
+    baseUrl,
+    null
+  )
+
+  const opsResult = await sendOrRetryOpsPacket({
+    admin,
+    row: opsRow,
+    stage: 2,
+    stageThreshold: stage2Threshold,
+    baseUrl,
+    verifiedAuthority: verified,
+    authorityMailStatus: row.private_target_notify_at ? 'sent' : 'skipped',
+    magicLinkUrl: null,
+  })
+  if (opsResult.status === 'failed') {
+    console.error(
+      '[cron/signal-threshold-check] stage2 ops packet failed',
+      row.id,
+      opsResult.error
+    )
+  }
 
   if (adminUserId) {
     const { error: evErr } = await admin
@@ -570,6 +618,8 @@ async function promoteStage2(args: {
           source: 'cron/signal-threshold-check',
           cosign_count: row.cosign_count,
           target_id: row.citizen_target_id,
+          ops_packet_status: opsResult.status,
+          ops_packet_error: opsResult.error ?? null,
         },
       })
     if (evErr) {
@@ -580,4 +630,164 @@ async function promoteStage2(args: {
       )
     }
   }
+}
+
+async function runOpsRetryPass(args: {
+  admin: SignalsAdminClient
+  baseUrl: string
+  stage1Threshold: number
+  stage2Threshold: number
+}): Promise<{
+  opsRetried: number
+  authorityRetried: number
+  errors: CronError[]
+}> {
+  const { admin, baseUrl, stage1Threshold, stage2Threshold } = args
+  const errors: CronError[] = []
+  let opsRetried = 0
+  let authorityRetried = 0
+
+  // Stage-1 ops: already at threshold_stage >= 1, missing or failed log.
+  const { data: stage1Candidates, error: s1Err } = await admin
+    .from('citizen_signals')
+    .select(SIGNAL_SELECT)
+    .eq('publication_status', 'published')
+    .gte('threshold_stage', 1)
+    .order('updated_at', { ascending: false })
+    .limit(ROW_LIMIT)
+
+  if (s1Err) {
+    throw new Error(`retry stage1 query: ${s1Err.message}`)
+  }
+
+  for (const row of (stage1Candidates ?? []) as SignalRow[]) {
+    try {
+      const needsOps = await needsOpsRetry(admin, row.id, 1)
+      if (needsOps) {
+        const { magicLinkUrl } = await mintRegistryMagicLink(
+          admin,
+          row,
+          baseUrl
+        )
+        const opsRow = toOpsNotifySignal(row)
+        const verified = await resolveVerifiedAuthority(
+          admin,
+          opsRow,
+          baseUrl,
+          magicLinkUrl
+        )
+        const result = await sendOrRetryOpsPacket({
+          admin,
+          row: opsRow,
+          stage: 1,
+          stageThreshold: stage1Threshold,
+          baseUrl,
+          verifiedAuthority: verified,
+          authorityMailStatus: row.private_target_notify_at
+            ? 'sent'
+            : verified
+              ? 'pending'
+              : 'skipped',
+          magicLinkUrl: verified?.magicLinkUrl ?? magicLinkUrl,
+        })
+        if (result.attempted) opsRetried++
+      }
+
+      // Authority mail retry: stage >= 1, stamp missing, verified email.
+      if (!row.private_target_notify_at) {
+        const { magicLinkUrl } = await mintRegistryMagicLink(
+          admin,
+          row,
+          baseUrl
+        )
+        const opsRow = toOpsNotifySignal(row)
+        const verified = await resolveVerifiedAuthority(
+          admin,
+          opsRow,
+          baseUrl,
+          magicLinkUrl
+        )
+        if (verified?.magicLinkUrl) {
+          const authResult = await sendVerifiedAuthorityStage1({
+            admin,
+            row: opsRow,
+            verified,
+            locale: row.language === 'en' ? 'en' : 'es',
+          })
+          if (authResult.sent) authorityRetried++
+        }
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      console.error(
+        '[cron/signal-threshold-check] retry stage1 failed',
+        row.id,
+        message
+      )
+      errors.push({ signalId: row.id, stage: 'retry', message })
+    }
+  }
+
+  // Stage-2 ops: already at threshold_stage >= 2, missing or failed log.
+  const { data: stage2Candidates, error: s2Err } = await admin
+    .from('citizen_signals')
+    .select(SIGNAL_SELECT)
+    .eq('publication_status', 'published')
+    .gte('threshold_stage', 2)
+    .order('updated_at', { ascending: false })
+    .limit(ROW_LIMIT)
+
+  if (s2Err) {
+    throw new Error(`retry stage2 query: ${s2Err.message}`)
+  }
+
+  for (const row of (stage2Candidates ?? []) as SignalRow[]) {
+    try {
+      const needsOps = await needsOpsRetry(admin, row.id, 2)
+      if (!needsOps) continue
+      const opsRow = toOpsNotifySignal(row)
+      const verified = await resolveVerifiedAuthority(
+        admin,
+        opsRow,
+        baseUrl,
+        null
+      )
+      const result = await sendOrRetryOpsPacket({
+        admin,
+        row: opsRow,
+        stage: 2,
+        stageThreshold: stage2Threshold,
+        baseUrl,
+        verifiedAuthority: verified,
+        authorityMailStatus: row.private_target_notify_at ? 'sent' : 'skipped',
+        magicLinkUrl: null,
+      })
+      if (result.attempted) opsRetried++
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      console.error(
+        '[cron/signal-threshold-check] retry stage2 failed',
+        row.id,
+        message
+      )
+      errors.push({ signalId: row.id, stage: 'retry', message })
+    }
+  }
+
+  return { opsRetried, authorityRetried, errors }
+}
+
+async function needsOpsRetry(
+  admin: SignalsAdminClient,
+  signalId: string,
+  stage: 1 | 2
+): Promise<boolean> {
+  const { data } = await admin
+    .from('citizen_signal_ops_notify_log')
+    .select('status')
+    .eq('signal_id', signalId)
+    .eq('stage', stage)
+    .maybeSingle()
+  if (!data) return true
+  return data.status === 'failed'
 }

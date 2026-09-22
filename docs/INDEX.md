@@ -21,6 +21,9 @@
 | [`../lib/agents/`](../lib/agents/) | AI agent source (ceo-digest, content-creator, news-monitor, inbox-curator, sponsor-report) |
 | [`RESEND-SMTP-SETUP.md`](RESEND-SMTP-SETUP.md) | Email sending setup (Resend + Supabase Auth SMTP) |
 | [`EMAIL-RATE-LIMIT-DEBUG.md`](EMAIL-RATE-LIMIT-DEBUG.md) | Email debugging playbook |
+| [`SIGNALS-OPS-EMAIL.md`](SIGNALS-OPS-EMAIL.md) | Señal Stage 50/200 ops packets — env flags, recipients, shadow model |
+| [`SIGNALS-DESIGN-2026.md`](SIGNALS-DESIGN-2026.md) | Citizen Signals product / data model overview |
+| [`SIGNALS-MVP-CHECKLIST.md`](SIGNALS-MVP-CHECKLIST.md) | Signals MVP checklist |
 | [`SIGNUP-PROFILE-FIX.md`](SIGNUP-PROFILE-FIX.md) | Signup / profile row recovery |
 | [`ACHIEVEMENTS-FIX.md`](ACHIEVEMENTS-FIX.md) | Achievements system notes |
 

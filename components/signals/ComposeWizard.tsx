@@ -17,6 +17,13 @@ import {
   type SignalSeverity,
   type SignalTargetKind,
 } from '@/lib/i18n/citizen-signals'
+import {
+  AUTHOR_CONTACT_KINDS,
+  MAX_AUTHOR_SUGGESTED_CONTACTS,
+  OPS_ROUTING_MODES,
+  type AuthorContactKind,
+  type OpsRoutingMode,
+} from '@/lib/signals/ops-contacts'
 import StepProgress from '@/components/signals/wizard/StepProgress'
 import TargetPicker, {
   type TargetOption,
@@ -53,10 +60,17 @@ type Props = {
 type Step = 0 | 1 | 2 | 3 | 4 | 5
 const TOTAL_STEPS = 6
 // v2: migration 222 (street-level precision). v3: migration 248 (direct
-// target kinds — company/neighborhood/conscious_location). Older drafts
+// target kinds — company/neighborhood/conscious_location). v4: migration
+// 261 (ops_routing_mode + author_suggested_contacts). Older drafts
 // simply get discarded — the rehydration check is `parsed.v ===
 // DRAFT_VERSION` so an old payload yields the default empty draft.
-const DRAFT_VERSION = 3
+const DRAFT_VERSION = 4
+
+type DraftContactRow = {
+  kind: AuthorContactKind
+  value: string
+  label: string
+}
 
 type DraftState = {
   v: number
@@ -84,6 +98,10 @@ type DraftState = {
   anonymousMode: boolean
   aliasName: string
   evidence: EvidenceItem[]
+  /** Who should manage Stage 50/200 outreach (migration 261). */
+  opsRoutingMode: OpsRoutingMode
+  /** Author-suggested contacts — listed in ops packet only, never auto-To. */
+  authorSuggestedContacts: DraftContactRow[]
 }
 
 type StepErrors = {
@@ -100,7 +118,11 @@ type StepErrors = {
     streetReference?: string
   }
   narrative?: { title?: string; body?: string }
-  review?: { aliasName?: string; attestation?: string }
+  review?: {
+    aliasName?: string
+    attestation?: string
+    opsContacts?: string
+  }
 }
 
 const SEVERITY_ACCENTS: Record<SignalSeverity, string> = {
@@ -138,6 +160,8 @@ function emptyDraft(language: CitizenSignalsLocale): DraftState {
     anonymousMode: false,
     aliasName: '',
     evidence: [],
+    opsRoutingMode: 'crowd_conscious',
+    authorSuggestedContacts: [],
   }
 }
 
@@ -405,6 +429,14 @@ export default function ComposeWizard({
           attestation: z.literal(true, {
             message: t.compose.validation.attestationRequired,
           }),
+          opsRoutingMode: z.enum(OPS_ROUTING_MODES),
+          authorSuggestedContacts: z.array(
+            z.object({
+              kind: z.enum(AUTHOR_CONTACT_KINDS),
+              value: z.string(),
+              label: z.string(),
+            })
+          ),
         })
         .superRefine((value, ctx) => {
           if (value.anonymousMode) {
@@ -425,6 +457,18 @@ export default function ComposeWizard({
                 code: 'custom',
                 path: ['aliasName'],
                 message: t.compose.validation.aliasTooLong,
+              })
+            }
+          }
+          if (value.opsRoutingMode === 'author_provided') {
+            const filled = value.authorSuggestedContacts.filter(
+              (c) => c.value.trim().length > 0
+            )
+            if (filled.length === 0) {
+              ctx.addIssue({
+                code: 'custom',
+                path: ['opsContacts'],
+                message: t.compose.opsRouting.contactsRequired,
               })
             }
           }
@@ -531,17 +575,24 @@ export default function ComposeWizard({
             anonymousMode: draft.anonymousMode,
             aliasName: draft.aliasName.trim(),
             attestation,
+            opsRoutingMode: draft.opsRoutingMode,
+            authorSuggestedContacts: draft.authorSuggestedContacts,
           })
           if (r.success) {
             setErrors((prev) => ({ ...prev, review: undefined }))
             return true
           }
           const flat = r.error.flatten().fieldErrors
+          const formErrors = r.error.flatten().formErrors
+          const opsContactsIssue = r.error.issues.find(
+            (i) => i.path[0] === 'opsContacts'
+          )
           setErrors((prev) => ({
             ...prev,
             review: {
               aliasName: flat.aliasName?.[0],
-              attestation: flat.attestation?.[0],
+              attestation: flat.attestation?.[0] ?? formErrors[0],
+              opsContacts: opsContactsIssue?.message,
             },
           }))
           return false
@@ -600,6 +651,18 @@ export default function ComposeWizard({
       const isDirect = isDirectTargetKind(draft.targetKind)
       const contactEmail = draft.targetContactEmail.trim()
 
+      const authorSuggestedContacts =
+        draft.opsRoutingMode === 'author_provided'
+          ? draft.authorSuggestedContacts
+              .map((c) => ({
+                kind: c.kind,
+                value: c.value.trim(),
+                label: c.label.trim() || null,
+              }))
+              .filter((c) => c.value.length > 0)
+              .slice(0, MAX_AUTHOR_SUGGESTED_CONTACTS)
+          : []
+
       const payload = {
         post_type: draft.postType,
         category: draft.category,
@@ -631,6 +694,8 @@ export default function ComposeWizard({
           ? draft.aliasName.trim()
           : null,
         evidence: evidencePayload,
+        ops_routing_mode: draft.opsRoutingMode,
+        author_suggested_contacts: authorSuggestedContacts,
       }
 
       const res = await fetch('/api/signals', {
@@ -858,6 +923,21 @@ export default function ComposeWizard({
             onChangeAnonymous={(mode) => update('anonymousMode', mode)}
             onChangeAlias={(v) => update('aliasName', v)}
             onChangeAttestation={setAttestation}
+            onChangeOpsRoutingMode={(mode) => {
+              setDraft((d) => ({
+                ...d,
+                opsRoutingMode: mode,
+                authorSuggestedContacts:
+                  mode === 'crowd_conscious'
+                    ? []
+                    : d.authorSuggestedContacts.length > 0
+                      ? d.authorSuggestedContacts
+                      : [{ kind: 'email', value: '', label: '' }],
+              }))
+            }}
+            onChangeAuthorContacts={(rows) =>
+              update('authorSuggestedContacts', rows)
+            }
             errors={errors.review}
             target={selectedTarget}
             alcaldia={selectedAlcaldia}
@@ -1154,6 +1234,8 @@ function StepReview({
   onChangeAnonymous,
   onChangeAlias,
   onChangeAttestation,
+  onChangeOpsRoutingMode,
+  onChangeAuthorContacts,
   errors,
   target,
   alcaldia,
@@ -1167,7 +1249,9 @@ function StepReview({
   onChangeAnonymous: (mode: boolean) => void
   onChangeAlias: (v: string) => void
   onChangeAttestation: (v: boolean) => void
-  errors?: { aliasName?: string; attestation?: string }
+  onChangeOpsRoutingMode: (mode: OpsRoutingMode) => void
+  onChangeAuthorContacts: (rows: DraftContactRow[]) => void
+  errors?: { aliasName?: string; attestation?: string; opsContacts?: string }
   target: TargetOption | null
   alcaldia: LocationOption | null
   partner: LocationOption | null
@@ -1212,6 +1296,32 @@ function StepReview({
     </div>
   )
 
+  const updateContactRow = (
+    index: number,
+    patch: Partial<DraftContactRow>
+  ) => {
+    const next = draft.authorSuggestedContacts.map((row, i) =>
+      i === index ? { ...row, ...patch } : row
+    )
+    onChangeAuthorContacts(next)
+  }
+
+  const addContactRow = () => {
+    if (draft.authorSuggestedContacts.length >= MAX_AUTHOR_SUGGESTED_CONTACTS) {
+      return
+    }
+    onChangeAuthorContacts([
+      ...draft.authorSuggestedContacts,
+      { kind: 'email', value: '', label: '' },
+    ])
+  }
+
+  const removeContactRow = (index: number) => {
+    onChangeAuthorContacts(
+      draft.authorSuggestedContacts.filter((_, i) => i !== index)
+    )
+  }
+
   return (
     <section className="space-y-5">
       <h2 className="text-lg font-semibold text-white">
@@ -1255,6 +1365,110 @@ function StepReview({
             ? `${draft.evidence.length}`
             : t.detail.noEvidence,
           4
+        )}
+      </div>
+
+      <div className="rounded-lg border border-[#2d3748] bg-[#0f1419] p-4 space-y-3">
+        <div>
+          <p className="text-sm font-medium text-white">
+            {t.compose.opsRouting.heading}
+          </p>
+          <p className="mt-1 text-xs text-slate-400">
+            {t.compose.opsRouting.help}
+          </p>
+        </div>
+        <label className="flex items-start gap-2 text-sm text-slate-300">
+          <input
+            type="radio"
+            name="ops-routing-mode"
+            checked={draft.opsRoutingMode === 'crowd_conscious'}
+            onChange={() => onChangeOpsRoutingMode('crowd_conscious')}
+            className="mt-1 h-4 w-4 accent-emerald-500"
+          />
+          <span>
+            <span className="font-medium text-white">
+              {t.compose.opsRouting.crowdConscious}
+            </span>
+            <span className="mt-0.5 block text-xs text-slate-400">
+              {t.compose.opsRouting.crowdConsciousHelp}
+            </span>
+          </span>
+        </label>
+        <label className="flex items-start gap-2 text-sm text-slate-300">
+          <input
+            type="radio"
+            name="ops-routing-mode"
+            checked={draft.opsRoutingMode === 'author_provided'}
+            onChange={() => onChangeOpsRoutingMode('author_provided')}
+            className="mt-1 h-4 w-4 accent-emerald-500"
+          />
+          <span>
+            <span className="font-medium text-white">
+              {t.compose.opsRouting.authorProvided}
+            </span>
+            <span className="mt-0.5 block text-xs text-slate-400">
+              {t.compose.opsRouting.authorProvidedHelp}
+            </span>
+          </span>
+        </label>
+
+        {draft.opsRoutingMode === 'author_provided' && (
+          <div className="space-y-3 border-t border-[#1e2531] pt-3">
+            {draft.authorSuggestedContacts.map((row, index) => (
+              <div
+                key={`ops-contact-${index}`}
+                className="grid gap-2 sm:grid-cols-[140px_1fr_auto]"
+              >
+                <select
+                  value={row.kind}
+                  onChange={(e) =>
+                    updateContactRow(index, {
+                      kind: e.target.value as AuthorContactKind,
+                    })
+                  }
+                  className="rounded-lg border border-[#2d3748] bg-[#0b1018] px-2 py-2 text-sm text-slate-100"
+                  aria-label={t.compose.opsRouting.kindLabel}
+                >
+                  {AUTHOR_CONTACT_KINDS.map((kind) => (
+                    <option key={kind} value={kind}>
+                      {t.compose.opsRouting.kindOptions[kind]}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="text"
+                  value={row.value}
+                  onChange={(e) =>
+                    updateContactRow(index, { value: e.target.value })
+                  }
+                  placeholder={t.compose.opsRouting.valuePlaceholder}
+                  className="rounded-lg border border-[#2d3748] bg-[#0b1018] px-3 py-2 text-sm text-slate-100 focus:border-emerald-400 focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeContactRow(index)}
+                  className="text-xs text-slate-400 underline hover:text-slate-200"
+                >
+                  {t.compose.opsRouting.removeContact}
+                </button>
+              </div>
+            ))}
+            {draft.authorSuggestedContacts.length <
+              MAX_AUTHOR_SUGGESTED_CONTACTS && (
+              <button
+                type="button"
+                onClick={addContactRow}
+                className="text-xs text-emerald-300 underline hover:text-emerald-200"
+              >
+                {t.compose.opsRouting.addContact}
+              </button>
+            )}
+            {errors?.opsContacts && (
+              <p role="alert" className="text-xs text-rose-300">
+                {errors.opsContacts}
+              </p>
+            )}
+          </div>
         )}
       </div>
 
