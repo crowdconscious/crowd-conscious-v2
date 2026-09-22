@@ -3,10 +3,10 @@
 import Link from 'next/link'
 import { ArrowLeft, Shield } from 'lucide-react'
 import {
+  civicReputationActionLabel,
   civicReputationDomainLabel,
-  civicReputationReasonLabel,
+  type CivicReputationActionType,
   type CivicReputationDomain,
-  type CivicReputationReason,
 } from '@/lib/reputation/domains'
 
 type BreakdownRow = {
@@ -20,7 +20,7 @@ type RecentRow = {
   id: string
   domain: CivicReputationDomain
   alcaldia: string
-  reason: CivicReputationReason
+  actionType: CivicReputationActionType
   points: number
   created_at: string
 }
@@ -155,7 +155,7 @@ export function ReputacionClient({
                 className="rounded-xl border border-slate-800 bg-slate-900/40 p-4"
               >
                 <p className="text-sm font-medium text-emerald-300/90">
-                  {civicReputationReasonLabel(ev.reason, locale)}
+                  {civicReputationActionLabel(ev.actionType, locale)}
                 </p>
                 <p className="mt-1 text-sm text-slate-300">
                   {ev.alcaldia} ·{' '}

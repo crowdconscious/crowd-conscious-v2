@@ -17,7 +17,6 @@ import {
 } from '@/lib/pulse-vote-ranking'
 import { recalculateLocationScoreByMarketId } from '@/lib/locations/recalculate-score'
 import { recalculateCreatorScoreByMarketId } from '@/lib/creators/recalculate-score'
-import { awardReputationForLocationEvaluation } from '@/lib/reputation/award'
 import {
   standardRateLimit,
   getRateLimitIdentifier,
@@ -346,16 +345,8 @@ export async function POST(request: Request) {
         console.error('[vote] recalculateCreatorScore', e)
       )
 
-      // Phase 3: civic reputation for evaluating a location (once per location).
-      // Does not inspect option or confidence. Fail-soft.
-      try {
-        await awardReputationForLocationEvaluation(admin, {
-          userId: user.id,
-          marketId: market_id,
-        })
-      } catch (repErr) {
-        console.warn('[vote] civic reputation location eval', repErr)
-      }
+      // Civic reputation for location evaluation is awarded by mobile DB
+      // trigger trg_civic_rep_on_location_vote — do not award here.
     }
 
     return NextResponse.json({

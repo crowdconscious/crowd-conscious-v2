@@ -2,8 +2,9 @@
  * Neighbour-participated reputation award.
  *
  * Spec §3.6 allows awarding when a neighbour you invited then participates.
- * Attribution beyond `app_referral_clicks` (click log only) is not wired yet —
- * call this from the first civic action of a referred user once that chain exists.
+ * Mobile schema reserves `neighbor_participation` (no auto trigger yet).
+ * Attribution beyond `app_referral_clicks` is not wired — call from the first
+ * civic action of a referred user once that chain exists.
  *
  * Never award for opinion-vote volume/option/confidence of the neighbour.
  */
@@ -18,7 +19,8 @@ export async function awardReputationForNeighbourParticipated(
     referrerUserId: string
     neighbourUserId: string
     domain: CivicReputationDomain
-    alcaldia: string
+    alcaldiaSlug: string
+    alcaldiaLabel?: string | null
     /** Stable id for idempotency — e.g. neighbour user id or referral row id. */
     attributionObjectId: string
   }
@@ -29,11 +31,12 @@ export async function awardReputationForNeighbourParticipated(
 
   return awardCivicReputation(admin, {
     userId: params.referrerUserId,
+    actionType: 'neighbor_participation',
+    actionId: `neighbor:${params.attributionObjectId}`,
     domain: params.domain,
-    alcaldia: params.alcaldia,
-    reason: 'neighbour_participated',
-    objectType: 'referral',
+    alcaldiaSlug: params.alcaldiaSlug,
+    alcaldiaLabel: params.alcaldiaLabel ?? null,
     objectId: params.attributionObjectId,
-    meta: { neighbour_user_id: params.neighbourUserId },
+    metadata: { neighbour_user_id: params.neighbourUserId },
   })
 }

@@ -5,7 +5,6 @@ import {
   standardRateLimit,
   getRateLimitIdentifier,
 } from '@/lib/rate-limit'
-import { awardReputationForAuthorCosigned } from '@/lib/reputation/award'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -90,16 +89,8 @@ export async function POST(
       return NextResponse.json({ error: insertErr.message }, { status: 500 })
     }
 
-    // Phase 3: author earns civic reputation when others co-sign (once).
-    // Fail-soft — never block the cosign response.
-    try {
-      await awardReputationForAuthorCosigned(admin, {
-        signalId: signal.id,
-        cosignerUserId: user.id,
-      })
-    } catch (repErr) {
-      console.warn('[api/signals/cosign POST] civic reputation', repErr)
-    }
+    // Civic reputation for author co-sign is awarded by mobile DB trigger
+    // trg_civic_rep_on_cosign — do not award here (double-award risk).
 
     // Read the fresh counter (the trigger has already updated it).
     const { data: fresh } = await admin

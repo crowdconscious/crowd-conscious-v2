@@ -1,6 +1,9 @@
 /**
  * Private civic reputation page data loader.
  * Auth-only; never exposes other users' totals.
+ *
+ * Sustained-presence is the only app-layer award checked here — cosign / stage /
+ * location awards come from mobile DB triggers.
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js'
