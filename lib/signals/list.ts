@@ -41,6 +41,8 @@ export type SignalListItem = {
   anonymousSupportCount: number
   stage1MetAt: string | null
   stage2MetAt: string | null
+  /** Published institutional silence (30d past stage 1, no reply). */
+  silencePublishedAt: string | null
   createdAt: string
   updatedAt: string
   targetName: string | null
@@ -72,7 +74,7 @@ export async function fetchInitialSignals(): Promise<{
   const { data: rows, error } = await admin
     .from('citizen_signals_public')
     .select(
-      'id, public_slug, post_type, category, severity, target_kind, citizen_target_id, title, body, language, conscious_location_id, partner_location_id, street_reference, target_name, target_location_id, anonymous_display_mode, display_name, threshold_stage, cosign_count, anonymous_support_count, stage1_met_at, stage2_met_at, created_at, updated_at'
+      'id, public_slug, post_type, category, severity, target_kind, citizen_target_id, title, body, language, conscious_location_id, partner_location_id, street_reference, target_name, target_location_id, anonymous_display_mode, display_name, threshold_stage, cosign_count, anonymous_support_count, stage1_met_at, stage2_met_at, silence_published_at, created_at, updated_at'
     )
     .order('created_at', { ascending: false })
     .limit(FEED_PAGE_SIZE)
@@ -162,6 +164,7 @@ type PublicViewRow = {
   anonymous_support_count: number
   stage1_met_at: string | null
   stage2_met_at: string | null
+  silence_published_at?: string | null
   created_at: string
   updated_at: string
 }
@@ -191,6 +194,7 @@ export function mapRowToItem(
     anonymousSupportCount: row.anonymous_support_count,
     stage1MetAt: row.stage1_met_at,
     stage2MetAt: row.stage2_met_at,
+    silencePublishedAt: row.silence_published_at ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     targetName:

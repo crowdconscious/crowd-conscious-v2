@@ -617,7 +617,12 @@ export function buildPulseResolutionPush(params: {
     return {
       title: 'Your Pulse closed — see the results',
       body,
-      data: { route, marketId, type: 'pulse_resolved' },
+      data: {
+        route,
+        marketId,
+        type: 'pulse_resolved',
+        trigger: 'pulse_close',
+      },
       badge: 1,
     }
   }
@@ -628,7 +633,12 @@ export function buildPulseResolutionPush(params: {
   return {
     title: 'Tu Pulse cerró — mira los resultados',
     body,
-    data: { route, marketId, type: 'pulse_resolved' },
+    data: {
+      route,
+      marketId,
+      type: 'pulse_resolved',
+      trigger: 'pulse_close',
+    },
     badge: 1,
   }
 }
@@ -661,6 +671,182 @@ export function buildSignalMilestonePush(params: {
     title: `Tu señal alcanzó ${cosignCount} co-firmas`,
     body: `"${titleShort}" sigue creciendo. Compártela para llegar más lejos.`,
     data: { route, slug, type: 'signal_milestone' },
+    badge: 1,
+  }
+}
+
+/**
+ * Phase 2 — señal crossed stage 1 (50): institution now has the formal request.
+ * Recipients: author + co-signers (via resolution hook).
+ */
+export function buildSignalStage50Push(params: {
+  slug: string
+  title: string
+  locale: PushLocale
+}): SendPushPayload {
+  const { slug, title, locale } = params
+  const titleShort = truncateTitle(title)
+  const route = `/(drawer)/(tabs)/signals/${slug}`
+
+  if (locale === 'en') {
+    return {
+      title: 'Something you backed moved',
+      body: `"${titleShort}" reached 50 backings — the institution now has the formal request.`,
+      data: { route, slug, type: 'signal_stage_50', trigger: 'signal_stage_50' },
+      badge: 1,
+    }
+  }
+
+  return {
+    title: 'Algo que respaldaste se movió',
+    body: `"${titleShort}" llegó a 50 respaldos — la institución ya tiene la solicitud formal.`,
+    data: { route, slug, type: 'signal_stage_50', trigger: 'signal_stage_50' },
+    badge: 1,
+  }
+}
+
+/**
+ * Phase 2 — señal crossed stage 2 (200): public priority.
+ */
+export function buildSignalStage200Push(params: {
+  slug: string
+  title: string
+  locale: PushLocale
+}): SendPushPayload {
+  const { slug, title, locale } = params
+  const titleShort = truncateTitle(title)
+  const route = `/(drawer)/(tabs)/signals/${slug}`
+
+  if (locale === 'en') {
+    return {
+      title: 'Something you backed moved',
+      body: `"${titleShort}" reached public priority (200 backings).`,
+      data: { route, slug, type: 'signal_stage_200', trigger: 'signal_stage_200' },
+      badge: 1,
+    }
+  }
+
+  return {
+    title: 'Algo que respaldaste se movió',
+    body: `"${titleShort}" alcanzó prioridad pública (200 respaldos).`,
+    data: { route, slug, type: 'signal_stage_200', trigger: 'signal_stage_200' },
+    badge: 1,
+  }
+}
+
+/**
+ * Phase 2 — official response filed on a señal the user authored or co-signed.
+ */
+export function buildSignalOfficialResponsePush(params: {
+  slug: string
+  title: string
+  locale: PushLocale
+}): SendPushPayload {
+  const { slug, title, locale } = params
+  const titleShort = truncateTitle(title)
+  const route = `/(drawer)/(tabs)/signals/${slug}`
+
+  if (locale === 'en') {
+    return {
+      title: 'They answered',
+      body: `Official reply on "${titleShort}". See the public record.`,
+      data: {
+        route,
+        slug,
+        type: 'signal_official_response',
+        trigger: 'signal_official_response',
+      },
+      badge: 1,
+    }
+  }
+
+  return {
+    title: 'Respondieron',
+    body: `Hay respuesta oficial en "${titleShort}". Mira el registro público.`,
+    data: {
+      route,
+      slug,
+      type: 'signal_official_response',
+      trigger: 'signal_official_response',
+    },
+    badge: 1,
+  }
+}
+
+/**
+ * Phase 2 — 30-day institutional silence published as a result.
+ */
+export function buildSignalSilencePush(params: {
+  slug: string
+  title: string
+  locale: PushLocale
+}): SendPushPayload {
+  const { slug, title, locale } = params
+  const titleShort = truncateTitle(title)
+  const route = `/(drawer)/(tabs)/signals/${slug}`
+
+  if (locale === 'en') {
+    return {
+      title: 'Silence is on the public record',
+      body: `30 days with no reply on "${titleShort}". That silence is now published.`,
+      data: {
+        route,
+        slug,
+        type: 'signal_silence_30d',
+        trigger: 'signal_silence_30d',
+      },
+      badge: 1,
+    }
+  }
+
+  return {
+    title: 'El silencio quedó en el registro',
+    body: `30 días sin respuesta en "${titleShort}". Ese silencio ya es público.`,
+    data: {
+      route,
+      slug,
+      type: 'signal_silence_30d',
+      trigger: 'signal_silence_30d',
+    },
+    badge: 1,
+  }
+}
+
+/**
+ * Phase 2 — a Conscious Location the user scored was certified.
+ */
+export function buildLocationCertifiedPush(params: {
+  slug: string
+  name: string
+  locale: PushLocale
+}): SendPushPayload {
+  const { slug, name, locale } = params
+  const nameShort = truncateTitle(name)
+  const route = `/(drawer)/(tabs)/locations/${slug}`
+
+  if (locale === 'en') {
+    return {
+      title: 'A place you scored was certified',
+      body: `"${nameShort}" is now a Conscious Place.`,
+      data: {
+        route,
+        slug,
+        type: 'location_certified',
+        trigger: 'location_certified',
+      },
+      badge: 1,
+    }
+  }
+
+  return {
+    title: 'Un lugar que evaluaste fue certificado',
+    body: `"${nameShort}" ya es un Lugar Consciente.`,
+    data: {
+      route,
+      slug,
+      type: 'location_certified',
+      trigger: 'location_certified',
+    },
     badge: 1,
   }
 }

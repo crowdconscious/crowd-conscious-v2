@@ -16,9 +16,19 @@ export type OfficialResponseRow = {
 type Props = {
   locale: CitizenSignalsLocale
   responses: OfficialResponseRow[]
-  /** Current threshold stage (0/1/2). Stage ≥1 empty = published silence. */
+  /** Current threshold stage (0/1/2). */
   stage?: number
+  /**
+   * When institutional silence was stamped as a published public-record
+   * result (stage1 + 30d, no reply). Until then, stage ≥1 empty state reads
+   * as "notified, waiting" — not as published silence.
+   */
+  silencePublishedAt?: string | null
+  /** stage1_met_at — used as a client-side fallback if cron has not stamped yet. */
+  stage1MetAt?: string | null
 }
+
+const MS_30D = 30 * 24 * 60 * 60 * 1000
 
 function statusClasses(status: string): string {
   switch (status) {
@@ -32,34 +42,58 @@ function statusClasses(status: string): string {
 }
 
 /**
+ * True when silence is a published result: cron stamp, or stage1 + 30d
+ * elapsed with no responses (client fallback so the public record does not
+ * wait on the next daily cron tick).
+ */
+export function isSilencePublishedResult(params: {
+  silencePublishedAt?: string | null
+  stage1MetAt?: string | null
+  stage?: number
+  hasResponses: boolean
+}): boolean {
+  if (params.hasResponses) return false
+  if (params.silencePublishedAt) return true
+  if ((params.stage ?? 0) < 1 || !params.stage1MetAt) return false
+  const met = new Date(params.stage1MetAt).getTime()
+  if (!Number.isFinite(met)) return false
+  return Date.now() - met >= MS_30D
+}
+
+/**
  * Renders the official replies the target has filed against a signal.
  *
- * The visual treatment intentionally diverges from regular comments —
- * an emerald left border + a status pill — so the public can tell at a
- * glance which replies came from the actual destinatario versus a
- * neighbour weighing in.
- *
- * Empty state is dual-outcome (Phase 0): before Stage 1 it reads as
- * waiting; at/after Stage 1 with no reply it reads as published
- * institutional silence — not a dead end.
+ * Empty state is dual-outcome (Phase 0/2):
+ *   - before Stage 1: waiting (co-signs trigger notice)
+ *   - Stage ≥1, <30d, no reply: notified, awaiting reply
+ *   - Stage ≥1, ≥30d or silence_published_at: published institutional silence
  */
 export default function OfficialResponses({
   locale,
   responses,
   stage = 0,
+  silencePublishedAt = null,
+  stage1MetAt = null,
 }: Props) {
   const t = getCitizenSignalsCopy(locale)
   const dateLocale = locale === 'es' ? 'es-MX' : 'en-US'
 
   if (responses.length === 0) {
-    const emptyCopy =
-      stage >= 1
-        ? t.detail.noOfficialResponseSilence
-        : t.detail.noOfficialResponseWaiting
-    const emptyClass =
-      stage >= 1
-        ? 'mt-2 rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 text-sm text-amber-100/90'
-        : 'mt-2 rounded-lg border border-[#2d3748] bg-[#11161f] p-4 text-sm text-slate-400'
+    const silence = isSilencePublishedResult({
+      silencePublishedAt,
+      stage1MetAt,
+      stage,
+      hasResponses: false,
+    })
+    let emptyCopy = t.detail.noOfficialResponseWaiting
+    if (silence) {
+      emptyCopy = t.detail.noOfficialResponseSilence
+    } else if (stage >= 1) {
+      emptyCopy = t.detail.noOfficialResponseAwaiting
+    }
+    const emptyClass = silence
+      ? 'mt-2 rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 text-sm text-amber-100/90'
+      : 'mt-2 rounded-lg border border-[#2d3748] bg-[#11161f] p-4 text-sm text-slate-400'
     return <p className={emptyClass}>{emptyCopy}</p>
   }
 

@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase-server'
 import { createConsciousLocationVotingMarket } from '@/lib/locations/create-voting-market'
 import { isAdminUser } from '@/lib/auth/is-admin'
 import { scheduleNotifyLocationPublished } from '@/lib/expo-push'
+import { notifyLocationCertifiedEvaluators } from '@/lib/resolution-notify'
 
 async function requireAdmin() {
   const user = await getCurrentUser()
@@ -160,13 +161,25 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
   }
 
-  // Fan out a "new Conscious Place" push on the FIRST activation only
-  // (status transitions to 'active'). Deferred via after() so the admin
-  // response stays fast and the all-users fan-out doesn't hit the 30s limit.
+  // Phase 2: resolution notify for evaluators who voted on this location's
+  // market (re-cert / under_review → active with prior votes). Discovery
+  // fan-out to all push users remains for first activation only.
   if (nextStatus === 'active' && existing.status !== 'active') {
     const slug = String(location.slug ?? existing.slug ?? '')
     const name = String(location.name ?? existing.name ?? '')
+    const marketId =
+      (location.current_market_id as string | null) ??
+      (existing.current_market_id as string | null) ??
+      null
     if (slug && name) {
+      void notifyLocationCertifiedEvaluators(admin, {
+        locationId: id,
+        slug,
+        name,
+        marketId,
+      }).catch((err) =>
+        console.warn('[admin/locations PATCH] location certified notify', err)
+      )
       scheduleNotifyLocationPublished(admin, {
         slug,
         name,

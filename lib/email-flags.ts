@@ -8,7 +8,10 @@ export function isPredictionResolutionEmailEnabled(): boolean {
   return process.env.PREDICTION_RESOLUTION_EMAIL_ENABLED === 'true'
 }
 
-/** "Te extrañamos / 7 días" weekly re-engagement cron. Disable with REENGAGEMENT_EMAIL_ENABLED=false. */
+/**
+ * Inactivity re-engagement ("Te extrañamos / 7 días") — RETIRED in Phase 2.
+ * Always false. Env var is ignored. See .deprecated/reengagement-inactive/.
+ */
 export function isReengagementEmailEnabled(): boolean {
-  return process.env.REENGAGEMENT_EMAIL_ENABLED !== 'false'
+  return false
 }

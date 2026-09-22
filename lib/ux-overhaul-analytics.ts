@@ -1,5 +1,5 @@
 /**
- * UX overhaul Phase 1 analytics — fire-and-forget with surface=web.
+ * UX overhaul analytics — fire-and-forget with surface=web.
  *
  * Events match docs/UX-OVERHAUL-v1.md §4. Server route logs to Vercel
  * (same pattern as post-vote-analytics). Never throws; never blocks UI.
@@ -18,6 +18,14 @@ export type UxPhase1Event =
   | 'reasons_block_shown'
   | 'permission_prompted'
   | 'permission_granted'
+
+export type UxPhase2Event =
+  | 'resolution_push_sent'
+  | 'resolution_push_opened'
+  | 'signal_stage_changed'
+  | 'signal_no_response_30d'
+
+export type UxEvent = UxPhase1Event | UxPhase2Event
 
 export type UxEventPayload = {
   surface?: UxSurface
@@ -44,6 +52,13 @@ export type UxEventPayload = {
   /** permission_* */
   type?: string
   trigger_point?: string
+  /** resolution_* / signal_* (Phase 2) */
+  trigger?: string
+  days_since_action?: number
+  stage?: number | string
+  days_to_stage?: number
+  alcaldia?: string
+  recipient?: string
 }
 
 function sessionId(): string | null {
@@ -71,7 +86,7 @@ function anonId(): string | null {
 }
 
 export function trackUxEvent(
-  event: UxPhase1Event,
+  event: UxEvent,
   payload: UxEventPayload = {}
 ): void {
   if (typeof window === 'undefined') return

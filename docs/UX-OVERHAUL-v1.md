@@ -259,10 +259,10 @@ Each phase ships alone. Earliest work is copy and routing.
 
 ### Phase 2 — memory
 
-- [ ] Resolution hook on señal stage, official response, Pulse close, location certification, and 30-day silence.
-- [ ] Tu impacto, hidden until two completed actions.
-- [ ] Resolution pushes with the suppression rules.
-- [ ] Remove inactivity re-engagement. Suppress email when a push token exists.
+- [x] Resolution hook on señal stage, official response, Pulse close, location certification, and 30-day silence.
+- [x] Tu impacto / thin Tu actividad (web: `/predictions/actividad`; full mobile Impact Home is mobile Phase 2).
+- [x] Resolution pushes with the suppression rules.
+- [x] Remove inactivity re-engagement. Suppress email when a push token exists.
 
 ### Phase 3 — reputation, perks, ranking
 

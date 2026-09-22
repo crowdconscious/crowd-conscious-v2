@@ -70,6 +70,11 @@ export default function SignalCard({ signal, locale, stage1Threshold }: Props) {
             {t.targetKindLabel(signal.targetKind)}
           </span>
         ) : null}
+        {signal.silencePublishedAt ? (
+          <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-200 ring-1 ring-inset ring-amber-400/40">
+            {t.feed.card.silenceBadge}
+          </span>
+        ) : null}
       </div>
 
       <h3 className="mt-3 text-lg font-semibold leading-snug text-white group-hover:text-emerald-200">

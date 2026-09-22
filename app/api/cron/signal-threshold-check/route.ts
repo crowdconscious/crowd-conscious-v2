@@ -5,15 +5,7 @@ import {
 } from '@/lib/signals/supabase'
 import { cronHealthCheck, cronHealthComplete } from '@/lib/cron-health'
 import { issueTargetToken } from '@/lib/signals/issue-target-token'
-import {
-  buildSignalMilestonePush,
-  resolvePushLocale,
-  sendPushToUser,
-} from '@/lib/expo-push'
-import {
-  inAppRowFromPush,
-  insertInAppNotifications,
-} from '@/lib/in-app-notifications'
+import { notifySignalStageCrossed } from '@/lib/resolution-notify'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -164,39 +156,38 @@ type SignalRow = {
 }
 
 /**
- * Milestone push to the signal author when their signal crosses a cosign
- * stage (audit P5). Awaited (never fire-and-forget in serverless) and
- * fail-soft: a push failure must not abort the stage promotion that
- * already happened. sendPushToUser honors the author's push opt-out and
- * logs to push_log. Locale comes from the author's user_settings (the
- * same per-user signal every other push uses), not the signal's language.
+ * Phase 2 resolution notify: author + co-signers when a señal crosses a
+ * cosign stage. Fail-soft — never abort the stage promotion that already
+ * happened. Daily cap + push-over-email live in the resolution hook.
  */
-async function sendAuthorMilestonePush(
+async function sendStageResolutionNotify(
   admin: SignalsAdminClient,
-  row: SignalRow
+  row: SignalRow,
+  stage: 1 | 2
 ): Promise<void> {
   try {
-    const locale = await resolvePushLocale(admin, row.author_user_id)
-    const payload = buildSignalMilestonePush({
+    const result = await notifySignalStageCrossed(admin, {
+      signalId: row.id,
       slug: row.public_slug,
       title: row.title,
-      cosignCount: row.cosign_count,
-      locale,
+      stage,
     })
-    // Mirror the milestone as an in-app notification row (best-effort).
-    await insertInAppNotifications(admin, [
-      inAppRowFromPush({
-        userId: row.author_user_id,
-        type: 'signal_milestone',
-        payload,
-        webLink: `/signals/${row.public_slug}`,
-      }),
-    ])
-    await sendPushToUser(admin, row.author_user_id, payload)
+    console.info('[ux-overhaul-analytics]', {
+      event: 'signal_stage_changed',
+      surface: 'web',
+      object_id: row.id,
+      stage,
+      cosign_count: row.cosign_count,
+      notified_push: result.sentPush,
+      notified_email: result.sentEmail,
+      suppressed_daily: result.suppressedDaily,
+      timestamp: new Date().toISOString(),
+    })
   } catch (err) {
     console.warn(
-      '[cron/signal-threshold-check] milestone push failed',
+      '[cron/signal-threshold-check] stage resolution notify failed',
       row.id,
+      stage,
       err
     )
   }
@@ -377,9 +368,8 @@ async function promoteStage1(args: {
     return
   }
 
-  // The race-safe flip above guarantees this runs once per stage, so the
-  // author gets exactly one milestone push per threshold.
-  await sendAuthorMilestonePush(admin, row)
+  // Phase 2: author + co-signers (resolution hook, daily-capped).
+  await sendStageResolutionNotify(admin, row, 1)
 
   // Resolve who to notify and with which link. Registry targets
   // (municipality/institution) get the private magic-link dashboard; direct
@@ -558,7 +548,7 @@ async function promoteStage2(args: {
     return
   }
 
-  await sendAuthorMilestonePush(admin, row)
+  await sendStageResolutionNotify(admin, row, 2)
 
   // TODO(F15-followup): trigger the public dossier email blast to all
   // citizen_signal_subscriptions for this signal + a press packet PDF

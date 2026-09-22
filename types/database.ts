@@ -1208,6 +1208,7 @@ export interface Database {
           stage1_met_at: string | null
           stage2_met_at: string | null
           private_target_notify_at: string | null
+          silence_published_at: string | null
           canonical_duplicate_of: string | null
           edited_at: string | null
           created_at: string
@@ -1243,6 +1244,7 @@ export interface Database {
           stage1_met_at?: string | null
           stage2_met_at?: string | null
           private_target_notify_at?: string | null
+          silence_published_at?: string | null
           canonical_duplicate_of?: string | null
           edited_at?: string | null
           created_at?: string
@@ -1278,10 +1280,67 @@ export interface Database {
           stage1_met_at?: string | null
           stage2_met_at?: string | null
           private_target_notify_at?: string | null
+          silence_published_at?: string | null
           canonical_duplicate_of?: string | null
           edited_at?: string | null
           created_at?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      resolution_notify_log: {
+        // Phase 2 resolution hook send log (migration 260_resolution_memory.sql).
+        // Service-role only — RLS on, no public policies.
+        Row: {
+          id: string
+          user_id: string
+          trigger:
+            | 'signal_stage_50'
+            | 'signal_stage_200'
+            | 'signal_official_response'
+            | 'signal_silence_30d'
+            | 'pulse_close'
+            | 'location_certified'
+          object_type: 'signal' | 'pulse' | 'location'
+          object_id: string
+          channel: 'push' | 'email' | 'in_app_only'
+          days_since_action: number | null
+          sent_at: string
+          meta: Json
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          trigger:
+            | 'signal_stage_50'
+            | 'signal_stage_200'
+            | 'signal_official_response'
+            | 'signal_silence_30d'
+            | 'pulse_close'
+            | 'location_certified'
+          object_type: 'signal' | 'pulse' | 'location'
+          object_id: string
+          channel: 'push' | 'email' | 'in_app_only'
+          days_since_action?: number | null
+          sent_at?: string
+          meta?: Json
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          trigger?:
+            | 'signal_stage_50'
+            | 'signal_stage_200'
+            | 'signal_official_response'
+            | 'signal_silence_30d'
+            | 'pulse_close'
+            | 'location_certified'
+          object_type?: 'signal' | 'pulse' | 'location'
+          object_id?: string
+          channel?: 'push' | 'email' | 'in_app_only'
+          days_since_action?: number | null
+          sent_at?: string
+          meta?: Json
         }
         Relationships: []
       }
@@ -2404,6 +2463,7 @@ export interface Database {
           updated_at: string
           target_name: string | null
           target_location_id: string | null
+          silence_published_at: string | null
         }
         Relationships: []
       }
