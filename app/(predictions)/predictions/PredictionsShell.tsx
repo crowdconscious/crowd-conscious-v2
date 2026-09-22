@@ -31,6 +31,7 @@ import {
   Briefcase,
   MessageSquareWarning,
   Users,
+  Shield,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
@@ -40,6 +41,12 @@ import { NotificationsBell } from './components/NotificationsBell'
 // Mirrors LandingNav: build-time flag, read at module scope so the entry
 // silently disappears when Signals is disabled in production.
 const SIGNALS_ENABLED = process.env.NEXT_PUBLIC_SIGNALS_ENABLED === 'true'
+// Phase 3: civic reputation nav (private). Off until Francisco enables.
+const CIVIC_REPUTATION_ENABLED =
+  process.env.NEXT_PUBLIC_CIVIC_REPUTATION_ENABLED === 'true'
+// LEADERBOARD_ENABLED stays false — public XP/accuracy ranking stays dark.
+const LEADERBOARD_ENABLED =
+  process.env.NEXT_PUBLIC_LEADERBOARD_ENABLED === 'true'
 
 type ShellNavItem = {
   href: string
@@ -55,13 +62,18 @@ const NAV_ITEMS_EN: ShellNavItem[] = [
   { href: '/live', label: 'Live', icon: Radio },
   { href: '/predictions/notifications', label: 'Notifications', icon: Bell },
   { href: '/predictions/actividad', label: 'Your activity', icon: Activity },
+  ...(CIVIC_REPUTATION_ENABLED
+    ? [{ href: '/predictions/reputacion', label: 'Your reputation', icon: Shield } as ShellNavItem]
+    : []),
   { href: '/predictions/pulse', label: 'Vote', icon: TrendingUp },
   ...(SIGNALS_ENABLED
     ? [{ href: '/signals', label: 'Report', icon: MessageSquareWarning, beta: true } as ShellNavItem]
     : []),
   { href: '/locations', label: 'Evaluate', icon: MapPin },
   { href: '/predictions/trades', label: 'My Votes', icon: Receipt },
-  { href: '/predictions/leaderboard', label: 'Leaderboard', icon: Trophy },
+  ...(LEADERBOARD_ENABLED
+    ? [{ href: '/predictions/leaderboard', label: 'Leaderboard', icon: Trophy } as ShellNavItem]
+    : []),
   { href: '/predictions/inbox', label: 'Conscious Inbox', icon: Lightbulb },
   { href: '/predictions/fund', label: 'Decide', icon: Heart },
   { href: '/blog', label: 'Blog', icon: Newspaper },
@@ -71,13 +83,18 @@ const NAV_ITEMS_ES: ShellNavItem[] = [
   { href: '/live', label: 'En Vivo', icon: Radio },
   { href: '/predictions/notifications', label: 'Notificaciones', icon: Bell },
   { href: '/predictions/actividad', label: 'Tu actividad', icon: Activity },
+  ...(CIVIC_REPUTATION_ENABLED
+    ? [{ href: '/predictions/reputacion', label: 'Tu reputación', icon: Shield } as ShellNavItem]
+    : []),
   { href: '/predictions/pulse', label: 'Votar', icon: TrendingUp },
   ...(SIGNALS_ENABLED
     ? [{ href: '/signals', label: 'Reportar', icon: MessageSquareWarning, beta: true } as ShellNavItem]
     : []),
   { href: '/locations', label: 'Evaluar', icon: MapPin },
   { href: '/predictions/trades', label: 'Mis votos', icon: Receipt },
-  { href: '/predictions/leaderboard', label: 'Clasificación', icon: Trophy },
+  ...(LEADERBOARD_ENABLED
+    ? [{ href: '/predictions/leaderboard', label: 'Clasificación', icon: Trophy } as ShellNavItem]
+    : []),
   { href: '/predictions/inbox', label: 'Buzón Consciente', icon: Lightbulb },
   { href: '/predictions/fund', label: 'Decidir', icon: Heart },
   { href: '/blog', label: 'Blog', icon: Newspaper },

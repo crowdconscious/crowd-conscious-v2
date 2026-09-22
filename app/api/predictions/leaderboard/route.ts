@@ -1,8 +1,13 @@
 import { createClient } from '@/lib/supabase-server'
 import { getCurrentUser } from '@/lib/auth-server'
 import { isLeaderboardExcludedRole } from '@/lib/leaderboard-exclusions'
+import { isLeaderboardEnabled } from '@/lib/reputation/domains'
 
 export async function GET() {
+  if (!isLeaderboardEnabled()) {
+    return Response.json({ error: 'Not found' }, { status: 404 })
+  }
+
   try {
     const supabase = await createClient()
     const user = await getCurrentUser()

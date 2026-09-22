@@ -17,6 +17,7 @@ import {
 } from '@/lib/pulse-vote-ranking'
 import { recalculateLocationScoreByMarketId } from '@/lib/locations/recalculate-score'
 import { recalculateCreatorScoreByMarketId } from '@/lib/creators/recalculate-score'
+import { awardReputationForLocationEvaluation } from '@/lib/reputation/award'
 import {
   standardRateLimit,
   getRateLimitIdentifier,
@@ -264,7 +265,8 @@ export async function POST(request: Request) {
         no_change: result.no_change === true,
         xp_earned: xpEarned,
         isAnonymous: true,
-        signupNudge: 'Regístrate para conservar tu XP permanentemente',
+        signupNudge:
+          'Regístrate para guardar tu actividad y ver cuando esto se mueva.',
       })
     }
 
@@ -343,6 +345,17 @@ export async function POST(request: Request) {
       await recalculateCreatorScoreByMarketId(market_id).catch((e) =>
         console.error('[vote] recalculateCreatorScore', e)
       )
+
+      // Phase 3: civic reputation for evaluating a location (once per location).
+      // Does not inspect option or confidence. Fail-soft.
+      try {
+        await awardReputationForLocationEvaluation(admin, {
+          userId: user.id,
+          marketId: market_id,
+        })
+      } catch (repErr) {
+        console.warn('[vote] civic reputation location eval', repErr)
+      }
     }
 
     return NextResponse.json({

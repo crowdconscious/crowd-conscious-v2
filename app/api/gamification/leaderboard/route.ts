@@ -5,13 +5,17 @@ import {
   fetchProfileRolesByUserIds,
   filterLeaderboardExcluded,
 } from '@/lib/leaderboard-exclusions'
+import { isLeaderboardEnabled } from '@/lib/reputation/domains'
 
 /**
  * GET /api/gamification/leaderboard
- * Get leaderboard (top users by XP)
- * Public endpoint - no authentication required
+ * Public XP leaderboard — dark unless LEADERBOARD_ENABLED=true (Phase 3).
  */
 export async function GET(request: NextRequest) {
+  if (!isLeaderboardEnabled()) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  }
+
   try {
     const supabase = await createClient()
     

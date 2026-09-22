@@ -5,6 +5,7 @@ import {
   standardRateLimit,
   getRateLimitIdentifier,
 } from '@/lib/rate-limit'
+import { awardReputationForAuthorCosigned } from '@/lib/reputation/award'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -28,7 +29,7 @@ async function resolvePublishedSignal(slug: string) {
   const admin = createSignalsAdminClient()
   const { data, error } = await admin
     .from('citizen_signals')
-    .select('id, publication_status')
+    .select('id, publication_status, author_user_id')
     .eq('public_slug', slug)
     .maybeSingle()
   if (error) {
@@ -87,6 +88,17 @@ export async function POST(
       }
       console.error('[api/signals/cosign POST] insert', insertErr)
       return NextResponse.json({ error: insertErr.message }, { status: 500 })
+    }
+
+    // Phase 3: author earns civic reputation when others co-sign (once).
+    // Fail-soft — never block the cosign response.
+    try {
+      await awardReputationForAuthorCosigned(admin, {
+        signalId: signal.id,
+        cosignerUserId: user.id,
+      })
+    } catch (repErr) {
+      console.warn('[api/signals/cosign POST] civic reputation', repErr)
     }
 
     // Read the fresh counter (the trigger has already updated it).

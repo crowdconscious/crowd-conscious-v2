@@ -1,15 +1,17 @@
 import type { Metadata } from 'next'
+import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase-server'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { getCurrentUser } from '@/lib/auth-server'
 import { LeaderboardClient } from './LeaderboardClient'
 import { SITE_URL } from '@/lib/seo/site'
 import { isLeaderboardExcludedRole } from '@/lib/leaderboard-exclusions'
+import { isLeaderboardEnabled } from '@/lib/reputation/domains'
 
 export const metadata: Metadata = {
-  title: 'Leaderboard — Los Mejores Predictores',
+  title: 'Leaderboard — Crowd Conscious',
   description:
-    'Ranking de los predictores más acertados en Crowd Conscious. Gana XP, sube de nivel y demuestra tu inteligencia colectiva.',
+    'Participación cívica en Crowd Conscious. La reputación cívica es privada; no hay ranking público de votos de opinión.',
   alternates: {
     canonical: `${SITE_URL}/predictions/leaderboard`,
     languages: {
@@ -17,6 +19,7 @@ export const metadata: Metadata = {
       'en-US': `${SITE_URL}/predictions/leaderboard`,
     },
   },
+  robots: { index: false, follow: false },
 }
 
 const CATEGORIES = [
@@ -340,6 +343,11 @@ export default async function LeaderboardPage({
 }: {
   searchParams: Promise<{ category?: string }>
 }) {
+  // Phase 3: public XP/accuracy leaderboard stays dark unless explicitly enabled.
+  if (!isLeaderboardEnabled()) {
+    notFound()
+  }
+
   const params = await searchParams
   const category = params.category && CATEGORIES.includes(params.category as (typeof CATEGORIES)[number])
     ? params.category

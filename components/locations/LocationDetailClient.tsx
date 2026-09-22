@@ -456,8 +456,8 @@ export default function LocationDetailClient({
                 </p>
                 <p className="text-sm text-slate-400">
                   {locale === 'es'
-                    ? 'Crea una cuenta para ganar XP y aparecer en la clasificación.'
-                    : 'Create an account to earn XP and appear on the leaderboard.'}
+                    ? 'Crea una cuenta para guardar tu evaluación y enterarte cuando el lugar se certifique.'
+                    : 'Create an account to keep your evaluation and get notified when the place is certified.'}
                 </p>
               </div>
               <div className="flex flex-shrink-0 gap-2">

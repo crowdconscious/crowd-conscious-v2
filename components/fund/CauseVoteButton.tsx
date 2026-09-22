@@ -116,8 +116,8 @@ export function CauseVoteButton({ causeId, locale }: Props) {
       )}
       <p className="mt-3 text-xs text-slate-500">
         {L(
-          '¿Prefieres acumular XP y ver todas tus votaciones?',
-          'Prefer to earn XP and track all your votes?'
+          '¿Quieres guardar tus votos y ver tu actividad?',
+          'Want to keep your votes and see your activity?'
         )}{' '}
         <Link href="/signup" className="text-emerald-400 hover:text-emerald-300 underline">
           {L('Crea una cuenta', 'Create an account')}
