@@ -171,15 +171,21 @@ export function isSignalsOpsEmailEnabled(): boolean {
   return true
 }
 
+/**
+ * Ops packet recipients. Defaults (and always-include baseline) are
+ * francisco@crowdconscious.app + comunidad@crowdconscious.app.
+ * SIGNALS_OPS_EMAIL_TO may add extra shadow inboxes for testing; the two
+ * locked ops addresses are always kept.
+ */
 export function resolveSignalsOpsRecipients(): string[] {
+  const locked = DEFAULT_SIGNALS_OPS_RECIPIENTS.map((e) => e.toLowerCase())
   const raw = process.env.SIGNALS_OPS_EMAIL_TO?.trim()
-  if (raw) {
-    return raw
-      .split(',')
-      .map((s) => s.trim().toLowerCase())
-      .filter((s) => s.includes('@'))
-  }
-  return [...DEFAULT_SIGNALS_OPS_RECIPIENTS]
+  if (!raw) return [...locked]
+  const extra = raw
+    .split(',')
+    .map((s) => s.trim().toLowerCase())
+    .filter((s) => s.includes('@'))
+  return [...new Set([...locked, ...extra])]
 }
 
 export function kindLabelEs(kind: AuthorContactKind): string {

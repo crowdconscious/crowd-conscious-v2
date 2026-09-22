@@ -34,6 +34,9 @@ export type OpsNotifySignal = {
   language: string
   cosign_count: number
   threshold_stage: number
+  category: string | null
+  street_reference: string | null
+  conscious_location_id: string | null
   citizen_target_id: string | null
   target_kind: string | null
   target_name: string | null
@@ -54,6 +57,47 @@ export type VerifiedAuthority = {
 
 function appBaseUrl(baseUrl: string): string {
   return baseUrl.replace(/\/$/, '')
+}
+
+/** Subject short title — keep subjects scannable in crowded inboxes. */
+export function shortSignalTitle(title: string, max = 72): string {
+  const trimmed = title.trim().replace(/\s+/g, ' ')
+  if (trimmed.length <= max) return trimmed
+  return `${trimmed.slice(0, Math.max(1, max - 1)).trimEnd()}…`
+}
+
+export function opsPacketSubject(
+  stage: OpsNotifyStage,
+  stageThreshold: number,
+  title: string
+): string {
+  const short = shortSignalTitle(title)
+  if (stage === 1) {
+    return `Señal lista para enviar · ${stageThreshold} respaldos · ${short}`
+  }
+  return `Prioridad pública · ${stageThreshold} respaldos · ${short} · presión social`
+}
+
+async function resolvePlaceLabel(
+  admin: SignalsAdminClient,
+  row: OpsNotifySignal
+): Promise<string> {
+  const street = row.street_reference?.trim() || null
+  const locationId = row.conscious_location_id || row.target_location_id
+  let locationName: string | null = null
+  if (locationId) {
+    const { data: loc } = await admin
+      .from('conscious_locations')
+      .select('id, name')
+      .eq('id', locationId)
+      .maybeSingle()
+    locationName = loc?.name?.trim() || null
+  }
+  if (street && locationName) return `${street} · ${locationName}`
+  if (street) return street
+  if (locationName) return locationName
+  if (row.target_name?.trim()) return row.target_name.trim()
+  return '—'
 }
 
 function parseSuggestedContacts(raw: unknown): AuthorSuggestedContact[] {
@@ -235,42 +279,42 @@ export async function sendOrRetryOpsPacket(args: {
   const authorSuggestedContacts = parseSuggestedContacts(
     row.author_suggested_contacts
   )
-  const signalUrl = `${appBaseUrl(baseUrl)}/signals/${row.public_slug}`
-  const verifiedForEmail: OpsVerifiedAuthority | null = verifiedAuthority
-    ? {
-        email: verifiedAuthority.email,
-        displayName: verifiedAuthority.displayName,
-        source: verifiedAuthority.source,
-        authorityMailStatus,
-      }
-    : null
+  const root = appBaseUrl(baseUrl)
+  const signalUrl = `${root}/signals/${row.public_slug}`
+  const adminUrl = `${root}/admin/signals`
+  const placeLabel = await resolvePlaceLabel(admin, row)
+  const officialEmail = verifiedAuthority?.email ?? null
+  const targetDisplayName =
+    verifiedAuthority?.displayName ?? row.target_name ?? null
 
   const common = {
+    signalId: row.id,
     signalTitle: row.title,
     signalSlug: row.public_slug,
     signalUrl,
+    adminUrl,
+    placeLabel,
+    category: row.category?.trim() || '—',
     cosignCount: row.cosign_count,
     stageThreshold,
-    targetKind: row.target_kind,
-    targetDisplayName:
-      verifiedAuthority?.displayName ?? row.target_name ?? null,
     opsRoutingMode,
+    targetDisplayName,
+    officialEmail,
     authorSuggestedContacts,
     companyContactEmail:
       row.target_kind === 'company' ? row.target_contact_email : null,
-    verifiedAuthority: verifiedForEmail,
   }
 
-  const subject =
-    stage === 1
-      ? `[Ops] Señal Stage 1 (${stageThreshold}) — ${row.title}`
-      : `[Ops] Señal Stage 2 (${stageThreshold}) — presión social — ${row.title}`
+  // Francisco-locked subjects (ES).
+  const subject = opsPacketSubject(stage, stageThreshold, row.title)
 
   const react =
     stage === 1
       ? OpsPacketStage1Email({ ...common, magicLinkUrl })
       : OpsPacketStage2Email(common)
 
+  // Recipients are always francisco@ + comunidad@ (or SIGNALS_OPS_EMAIL_TO).
+  // Author-suggested contacts are never included in `to`.
   const result: SignalEmailResult = await sendSignalOpsPacket({
     to: recipients,
     subject,

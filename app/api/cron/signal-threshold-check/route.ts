@@ -52,7 +52,7 @@ const STAGE2_DEFAULT = 200
 const ROW_LIMIT = 200
 
 const SIGNAL_SELECT =
-  'id, public_slug, title, language, cosign_count, threshold_stage, citizen_target_id, target_kind, target_name, target_contact_email, target_location_id, author_user_id, private_target_notify_at, ops_routing_mode, author_suggested_contacts'
+  'id, public_slug, title, language, cosign_count, threshold_stage, category, street_reference, conscious_location_id, citizen_target_id, target_kind, target_name, target_contact_email, target_location_id, author_user_id, private_target_notify_at, ops_routing_mode, author_suggested_contacts'
 
 function readStageThreshold(envName: string, fallback: number): number {
   const raw = process.env[envName]
@@ -154,6 +154,9 @@ type SignalRow = {
   language: string
   cosign_count: number
   threshold_stage: number
+  category: string | null
+  street_reference: string | null
+  conscious_location_id: string | null
   /** Null for observation signals and direct targets (migration 248). */
   citizen_target_id: string | null
   target_kind: string | null
@@ -174,6 +177,9 @@ function toOpsNotifySignal(row: SignalRow): OpsNotifySignal {
     language: row.language,
     cosign_count: row.cosign_count,
     threshold_stage: row.threshold_stage,
+    category: row.category,
+    street_reference: row.street_reference,
+    conscious_location_id: row.conscious_location_id,
     citizen_target_id: row.citizen_target_id,
     target_kind: row.target_kind,
     target_name: row.target_name,
