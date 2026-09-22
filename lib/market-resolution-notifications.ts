@@ -69,7 +69,7 @@ export async function notifyMarketResolutionVoters(
     }
 
     const fallbackMessage = won
-      ? `Your vote matched the community outcome.${v.bonus_xp ? ` +${v.bonus_xp} bonus XP.` : ''}`
+      ? 'Your vote matched the community outcome. Thanks for participating.'
       : `Community outcome: ${winningLabel}. Your vote was recorded.`
     try {
       await admin.from('notifications').insert({

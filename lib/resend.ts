@@ -259,7 +259,7 @@ export const emailTemplates = {
           <p style="color: #475569; line-height: 1.6;">
             The Pulse <strong>"${marketTitle}"</strong> has closed. Community outcome: <strong>${winningOutcome}</strong>.
           </p>
-          ${wasCorrect ? `<p style="color: #10b981; font-weight: bold;">${bonusXp ? `+${bonusXp} bonus XP earned!` : 'Thanks for participating — your vote was recorded.'}</p>` : '<p style="color: #64748b;">Your vote was recorded. Thanks for sharing your perspective.</p>'}
+          ${wasCorrect ? `<p style="color: #10b981; font-weight: bold;">Thanks for participating — your vote matched the community.</p>` : '<p style="color: #64748b;">Your vote was recorded. Thanks for sharing your perspective.</p>'}
           <div style="text-align: center; margin: 30px 0;">
             <a href="${APP_URL}/pulse" style="background: #14b8a6; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Browse Pulse</a>
           </div>

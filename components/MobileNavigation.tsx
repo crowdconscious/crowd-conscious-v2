@@ -6,6 +6,7 @@ import { LayoutDashboard, TrendingUp, Trophy, User, LogOut, Bell, Radio, Message
 import type { LucideIcon } from 'lucide-react'
 import { supabaseClient } from '@/lib/supabase-client'
 import { useLiveNavBadge } from '@/hooks/useLiveNavBadge'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 // Mirrors LandingNav: build-time flag, read at module scope so the slot
 // silently disappears when Signals is disabled in production.
@@ -22,17 +23,20 @@ export default function MobileNavigation() {
   const pathname = usePathname()
   const router = useRouter()
   const { liveCount } = useLiveNavBadge()
+  const { language } = useLanguage()
+  const es = language === 'es'
 
+  // Verb-first chrome (Phase 0). Routes unchanged.
   const navItems: MobileNavItem[] = [
-    { path: '/predictions', icon: LayoutDashboard, label: 'Dashboard' },
-    { path: '/live', icon: Radio, label: 'Live' },
-    { path: '/predictions/pulse', icon: TrendingUp, label: 'Pulse' },
+    { path: '/predictions', icon: LayoutDashboard, label: es ? 'Panel' : 'Dashboard' },
+    { path: '/live', icon: Radio, label: es ? 'En vivo' : 'Live' },
+    { path: '/predictions/pulse', icon: TrendingUp, label: es ? 'Votar' : 'Vote' },
     ...(SIGNALS_ENABLED
-      ? [{ path: '/signals', icon: MessageSquareWarning, label: 'Signals', beta: true } as MobileNavItem]
+      ? [{ path: '/signals', icon: MessageSquareWarning, label: es ? 'Reportar' : 'Report', beta: true } as MobileNavItem]
       : []),
-    { path: '/predictions/notifications', icon: Bell, label: 'Alerts' },
-    { path: '/leaderboard', icon: Trophy, label: 'Leaderboard' },
-    { path: '/profile', icon: User, label: 'Profile' },
+    { path: '/predictions/notifications', icon: Bell, label: es ? 'Alertas' : 'Alerts' },
+    { path: '/leaderboard', icon: Trophy, label: es ? 'Clasificación' : 'Leaderboard' },
+    { path: '/profile', icon: User, label: es ? 'Perfil' : 'Profile' },
   ]
 
   const handleSignOut = async () => {

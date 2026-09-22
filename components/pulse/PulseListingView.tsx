@@ -5,6 +5,7 @@ import { getMarketText } from '@/lib/i18n/market-translations'
 import { getPulseListingCopy, statusLabelPulse } from '@/lib/i18n/pulse-listing'
 import type { PulseListingLocale } from '@/lib/i18n/pulse-listing'
 import type { PulseListingMarketRow } from '@/lib/pulse/pulse-listing-data'
+import { formatParticipationCount } from '@/lib/display/participation'
 
 type Props = {
   locale: PulseListingLocale
@@ -88,6 +89,8 @@ export default function PulseListingView({
                     locale
                   )
                   const votes = m.total_votes ?? 0
+                  const isOpen =
+                    m.status === 'active' || m.status === 'trading'
                   const closeDate = m.resolution_date
                     ? new Date(m.resolution_date).toLocaleDateString(dateLocale, {
                         month: 'short',
@@ -135,13 +138,13 @@ export default function PulseListingView({
                           </h3>
                           <p className="mt-1 text-xs text-slate-500">
                             {byLine}
-                            {votes} {locale === 'es' ? 'votos' : 'votes'}
+                            {formatParticipationCount(votes, locale)}
                           </p>
                           <p className="mt-2 text-xs text-slate-400">
                             {statusLabelPulse(m.status, locale)} · {t.closes} {closeDate}
                           </p>
                           <span className="mt-2 inline-block text-xs font-medium text-emerald-400">
-                            {t.viewResults}
+                            {isOpen ? t.voteCta : t.viewResults}
                           </span>
                         </div>
                       </Link>

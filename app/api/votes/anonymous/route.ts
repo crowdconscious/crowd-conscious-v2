@@ -37,11 +37,12 @@ export async function POST(request: Request) {
 
     const conf =
       confidence == null || confidence === ''
-        ? 5
+        ? NaN
         : typeof confidence === 'number'
           ? confidence
           : parseInt(String(confidence), 10)
-    if (isNaN(conf) || conf < 1 || conf > 10) {
+    // 0 = "No lo sé" (excluded from confidence average). Never impute 5.
+    if (isNaN(conf) || conf < 0 || conf > 10) {
       return NextResponse.json({ error: 'Invalid confidence value' }, { status: 400 })
     }
 

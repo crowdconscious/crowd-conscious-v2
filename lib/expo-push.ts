@@ -603,15 +603,16 @@ export function buildPulseResolutionPush(params: {
   bonusXp: number
   locale: PushLocale
 }): SendPushPayload {
-  const { marketId, marketTitle, winningLabel, won, bonusXp, locale } = params
+  const { marketId, marketTitle, winningLabel, won, locale } = params
+  // bonusXp retained on the params type for call-site compatibility; Phase 0
+  // no longer surfaces accuracy bonus XP in push copy.
+  void params.bonusXp
   const titleShort = truncateTitle(marketTitle)
   const route = `/(drawer)/(tabs)/pulses/${marketId}`
 
   if (locale === 'en') {
     const body = won
-      ? bonusXp > 0
-        ? `"${titleShort}" — you matched the community and earned ${bonusXp} bonus XP.`
-        : `"${titleShort}" — you matched the community outcome.`
+      ? `"${titleShort}" — you matched the community outcome.`
       : `"${titleShort}" resolved as ${winningLabel}.`
     return {
       title: 'Your Pulse closed — see the results',
@@ -622,9 +623,7 @@ export function buildPulseResolutionPush(params: {
   }
 
   const body = won
-    ? bonusXp > 0
-      ? `"${titleShort}" — coincidiste con la comunidad y ganaste ${bonusXp} XP bonus.`
-      : `"${titleShort}" — coincidiste con el resultado de la comunidad.`
+    ? `"${titleShort}" — coincidiste con el resultado de la comunidad.`
     : `"${titleShort}" se resolvió como ${winningLabel}.`
   return {
     title: 'Tu Pulse cerró — mira los resultados',

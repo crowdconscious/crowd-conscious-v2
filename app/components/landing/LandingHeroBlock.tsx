@@ -1,110 +1,18 @@
 'use client'
 
-import Link from 'next/link'
-import { motion } from 'framer-motion'
-import { ArrowRight } from 'lucide-react'
-import { FundThermometer } from '@/components/fund/FundThermometer'
-import { CONSCIOUS_FUND_GOAL_MXN } from '@/lib/predictions/fund-goal'
+import { LiveActionCard, type LiveActionCardMarket } from '@/components/landing/LiveActionCard'
 
 type Props = {
   locale: 'es' | 'en'
-  fundBalance: number
+  market: LiveActionCardMarket | null
+  question: string
 }
 
 /**
- * Block 1 of the 3-block homepage.
- * Full viewport on mobile, two-column on desktop. Headline + CTAs on
- * the left, live data (Conscious Fund thermometer) on the right.
+ * Block 1 of the homepage (Phase 1).
+ * One live action card replaces the fund thermometer above the fold.
+ * Fund chrome remains below the fold on the landing page.
  */
-export function LandingHeroBlock({ locale, fundBalance }: Props) {
-  const es = locale === 'es'
-
-  return (
-    <section className="relative flex min-h-[calc(100vh-5rem)] items-center overflow-hidden border-b border-cc-border bg-gradient-to-b from-[#0b1017] via-cc-bg to-cc-bg px-4 py-12 md:px-8 md:py-16">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -left-1/4 -top-1/4 h-[40rem] w-[40rem] rounded-full bg-emerald-500/10 blur-[120px]"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -bottom-1/3 -right-1/4 h-[36rem] w-[36rem] rounded-full bg-amber-500/10 blur-[140px]"
-      />
-
-      <div className="relative mx-auto grid max-w-6xl grid-cols-1 gap-10 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] md:items-center md:gap-12">
-        <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
-        >
-          <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-emerald-300">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
-            {es ? 'Inteligencia colectiva · En vivo' : 'Collective intelligence · Live'}
-          </p>
-
-          <h1 className="text-4xl font-bold leading-[1.05] text-white sm:text-5xl md:text-6xl">
-            {es ? (
-              <>
-                Tu opinión{' '}
-                <span className="bg-gradient-to-r from-emerald-400 to-emerald-200 bg-clip-text text-transparent">
-                  financia causas reales.
-                </span>
-              </>
-            ) : (
-              <>
-                Your opinion{' '}
-                <span className="bg-gradient-to-r from-emerald-400 to-emerald-200 bg-clip-text text-transparent">
-                  funds real causes.
-                </span>
-              </>
-            )}
-          </h1>
-
-          <p className="mt-5 max-w-xl text-lg text-slate-300 sm:text-xl">
-            {es
-              ? 'Vota en consultas con confianza ponderada. Tu certeza importa, no solo tu opinión. Las marcas patrocinan el impacto.'
-              : 'Vote in confidence-weighted consultations. Your certainty matters, not just your opinion. Brands sponsor the impact.'}
-          </p>
-
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Link
-              href="/pulse"
-              className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-xl bg-emerald-500 px-6 py-3 text-base font-semibold text-white shadow-lg shadow-emerald-500/20 transition-colors hover:bg-emerald-400"
-            >
-              {es ? 'Empezar a votar' : 'Start voting'}
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link
-              href="/pulse"
-              className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-xl border border-[#2d3748] bg-[#1a2029] px-6 py-3 text-base font-medium text-slate-200 transition-colors hover:border-emerald-500/40"
-            >
-              {es ? 'Ver consultas activas' : 'Browse active consultations'}
-            </Link>
-          </div>
-
-          <p className="mt-4 text-xs text-slate-500">
-            {es
-              ? 'Gratis · anónimo para empezar · crea cuenta cuando quieras.'
-              : 'Free · anonymous to start · create an account whenever you want.'}
-          </p>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: 'easeOut', delay: 0.12 }}
-          className="flex flex-col gap-4"
-        >
-          <div className="rounded-2xl border border-[#2d3748] bg-[#0f1419]/80 p-5 shadow-xl backdrop-blur-sm">
-            <FundThermometer
-              current={fundBalance}
-              goal={CONSCIOUS_FUND_GOAL_MXN}
-              currency="MXN"
-              variant="full"
-              locale={locale}
-            />
-          </div>
-        </motion.div>
-      </div>
-    </section>
-  )
+export function LandingHeroBlock({ locale, market, question }: Props) {
+  return <LiveActionCard locale={locale} market={market} question={question} />
 }

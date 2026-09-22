@@ -4,6 +4,7 @@ import type { LucideIcon } from 'lucide-react'
 import { getMarketText } from '@/lib/i18n/market-translations'
 import type { PulseHeroMarket } from '@/lib/pulse/pulse-hero-data'
 import { IconBadge } from '@/components/ui/IconBadge'
+import { formatParticipationCount, PARTICIPATION_REVEAL_THRESHOLD } from '@/lib/display/participation'
 
 type Locale = 'es' | 'en'
 
@@ -182,15 +183,23 @@ export function PulseLandingExplainer({ locale, heroMarket, avgConfidence, stron
               <p className="mt-3 text-base font-medium text-white">{title}</p>
               <div className="mt-6 flex flex-wrap justify-center gap-6 text-sm">
                 <div>
-                  <p className="text-2xl font-bold text-emerald-400">{votes}</p>
-                  <p className="text-slate-500">{L('votos', 'votes')}</p>
+                  <p className="text-2xl font-bold text-emerald-400">
+                    {formatParticipationCount(votes, locale, { withUnit: false })}
+                  </p>
+                  <p className="text-slate-500">
+                    {votes < PARTICIPATION_REVEAL_THRESHOLD
+                      ? L('participación', 'participation')
+                      : L('votos', 'votes')}
+                  </p>
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-emerald-400">{avg}</p>
                   <p className="text-slate-500">{L('confianza prom. /10', 'avg confidence /10')}</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-emerald-400">{strongOpinions}</p>
+                  <p className="text-2xl font-bold text-emerald-400">
+                    {votes < PARTICIPATION_REVEAL_THRESHOLD ? '—' : strongOpinions}
+                  </p>
                   <p className="text-slate-500">{L('opiniones fuertes (8–10)', 'strong opinions (8–10)')}</p>
                 </div>
               </div>
@@ -198,7 +207,7 @@ export function PulseLandingExplainer({ locale, heroMarket, avgConfidence, stron
                 href={`/pulse/${heroMarket.id}`}
                 className="mt-8 inline-flex min-h-[44px] items-center justify-center rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-500"
               >
-                {L('Ver resultados →', 'View results →')}
+                {L('Votar →', 'Vote →')}
               </Link>
             </>
           ) : (

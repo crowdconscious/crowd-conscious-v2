@@ -38,7 +38,7 @@ export default function StepProgress({
         {steps[currentStep]}
       </p>
       <ol
-        aria-label={locale === 'es' ? 'Pasos del asistente' : 'Wizard steps'}
+        aria-label={t.compose.wizard.stepsAriaLabel}
         className="flex flex-wrap items-center gap-2 text-xs sm:gap-3"
       >
         {steps.map((label, idx) => {

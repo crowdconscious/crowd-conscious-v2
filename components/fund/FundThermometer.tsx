@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
 import { supabaseClient } from '@/lib/supabase-client'
+import { fundCountdownText } from '@/lib/display/participation'
 
 type Locale = 'es' | 'en'
 
@@ -82,6 +83,10 @@ export function FundThermometer({
   const target = goal ?? fetched?.goal ?? 100_000
   const pct = target > 0 ? Math.min(100, (total / target) * 100) : 0
   const hasFunds = total > 0
+  // Density honesty: never show "$0" next to a fund promise.
+  const amountLabel = hasFunds
+    ? `${formatMxn(total, locale)} ${currency}`
+    : fundCountdownText(locale)
 
   const compact = variant === 'compact'
 
@@ -94,11 +99,13 @@ export function FundThermometer({
       <div className={`flex items-baseline justify-between gap-3 ${compact ? 'mb-2' : 'mb-3'}`}>
         <div className="min-w-0">
           <p className={`font-semibold text-white ${compact ? 'text-sm' : 'text-base'}`}>
-            {formatMxn(total, locale)} {currency}
+            {amountLabel}
           </p>
-          <p className={`text-emerald-400/80 ${compact ? 'text-[10px]' : 'text-xs'} uppercase tracking-wider`}>
-            {t.raised}
-          </p>
+          {hasFunds ? (
+            <p className={`text-emerald-400/80 ${compact ? 'text-[10px]' : 'text-xs'} uppercase tracking-wider`}>
+              {t.raised}
+            </p>
+          ) : null}
         </div>
         <div className="text-right">
           <p className={`text-gray-400 ${compact ? 'text-[10px]' : 'text-xs'}`}>{t.goal}</p>
@@ -116,7 +123,11 @@ export function FundThermometer({
         aria-valuenow={Math.round(pct)}
         aria-valuemin={0}
         aria-valuemax={100}
-        aria-label={`${formatMxn(total, locale)} ${currency} ${t.raised}`}
+        aria-label={
+          hasFunds
+            ? `${formatMxn(total, locale)} ${currency} ${t.raised}`
+            : amountLabel
+        }
       >
         <motion.div
           className="absolute left-0 top-0 h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400"
@@ -228,11 +239,19 @@ export function CompactFundThermometer({
   }, [])
 
   const hasFunds = (total ?? 0) > 0
-  const display = total == null ? '—' : `$${formatMxnPrecise(total, locale)} MXN`
+  // Density honesty: never render "$0 MXN" in the header pill.
+  const display =
+    total == null
+      ? '—'
+      : hasFunds
+        ? `$${formatMxnPrecise(total, locale)} MXN`
+        : locale === 'es'
+          ? 'Ciclo en curso'
+          : 'Cycle underway'
   const ariaLabel =
     locale === 'es'
-      ? `Fondo Consciente: ${display} recaudados`
-      : `Conscious Fund: ${display} raised`
+      ? `Fondo Consciente: ${display}`
+      : `Conscious Fund: ${display}`
 
   return (
     <>
