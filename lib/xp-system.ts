@@ -1,9 +1,11 @@
 // XP System Utilities
 //
-// Phase 0 sacred-data policy (UX Product Spec + Strategist addendum):
+// Phase 0/3 sacred-data policy (UX Product Spec §3.6):
 // do NOT award XP for vote volume, option chosen, OR confidence (or
 // accuracy-on-resolve). Migrations 257 + 258 zero cast/resolve vote XP.
-// Civic XP (Señales report/co-sign, etc.) remains valid.
+// Phase 3 civic reputation (lib/reputation/*) is the replacement surface —
+// private, per alcaldía + domain. Legacy awardXP remains for non-vote paths
+// (e.g. live events) until those are retargeted.
 import { createClient } from '@/lib/supabase-server'
 
 export interface XPReward {
