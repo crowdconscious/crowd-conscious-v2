@@ -2,8 +2,9 @@
 
 import { useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { motion } from 'framer-motion'
-import { ArrowRight, MessageCircle, MapPin, Wallet, Vote } from 'lucide-react'
+import { ArrowRight, BarChart3, MessageCircle, MapPin, Wallet, Vote } from 'lucide-react'
 import {
   formatParticipationCount,
   shouldRevealCount,
@@ -14,6 +15,8 @@ export type LiveActionCardMarket = {
   id: string
   title: string
   total_votes: number | null
+  /** Pulse hero cover (`prediction_markets.cover_image_url`, with image_url fallback). */
+  cover_image_url?: string | null
   sponsor_name?: string | null
   sponsor_logo_url?: string | null
 }
@@ -27,7 +30,7 @@ type Props = {
 
 /**
  * Phase 1 ATF live action card — verb first, object second, sponsor below.
- * Replaces the fund thermometer that used to sit above the fold.
+ * Desktop: copy + CTA left, Pulse cover right. Mobile: cover above the question.
  */
 export function LiveActionCard({ locale, market, question }: Props) {
   const es = locale === 'es'
@@ -75,26 +78,23 @@ export function LiveActionCard({ locale, market, question }: Props) {
       : 'Be the first to weigh in · about 30 seconds'
 
   const href = `/pulse/${market.id}`
+  const cover = market.cover_image_url?.trim() || null
 
   return (
     <section className="relative overflow-hidden border-b border-cc-border bg-gradient-to-b from-[#0b1017] via-cc-bg to-cc-bg px-4 py-12 md:px-8 md:py-16">
       <Atmosphere />
 
-      <div className="relative mx-auto max-w-3xl">
-        <motion.p
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45 }}
-          className="mb-3 text-sm font-medium text-emerald-400/90"
-        >
-          Crowd Conscious
-        </motion.p>
-
+      <div className="relative mx-auto grid max-w-6xl items-center gap-8 md:grid-cols-2 md:gap-12 lg:gap-16">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.55, ease: 'easeOut' }}
+          transition={{ duration: 0.45, ease: 'easeOut' }}
+          className="order-2 md:order-1"
         >
+          <p className="mb-3 text-sm font-medium text-emerald-400/90">
+            Crowd Conscious
+          </p>
+
           <Link
             href={href}
             onClick={() =>
@@ -134,9 +134,46 @@ export function LiveActionCard({ locale, market, question }: Props) {
               </p>
             </div>
           ) : null}
+
+          <TaxonomyLinks locale={locale} className="mt-10" />
         </motion.div>
 
-        <TaxonomyLinks locale={locale} className="mt-10" />
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: 'easeOut', delay: 0.05 }}
+          className="order-1 md:order-2"
+        >
+          <Link
+            href={href}
+            aria-hidden
+            tabIndex={-1}
+            onClick={() =>
+              trackUxEvent('card_tapped', {
+                surface: 'web',
+                card_type: 'A',
+                position: 0,
+                object_id: market.id,
+              })
+            }
+            className="relative block aspect-[4/3] overflow-hidden rounded-2xl border border-white/10 bg-[#141a22] shadow-[0_24px_60px_-28px_rgba(0,0,0,0.75)] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 md:aspect-[5/4]"
+          >
+            {cover ? (
+              <Image
+                src={cover}
+                alt=""
+                fill
+                priority
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-cover"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-emerald-900/30 via-[#141a22] to-sky-900/20">
+                <BarChart3 className="h-14 w-14 text-emerald-500/40" aria-hidden />
+              </div>
+            )}
+          </Link>
+        </motion.div>
       </div>
     </section>
   )
