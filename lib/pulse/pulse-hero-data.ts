@@ -21,7 +21,7 @@ export async function fetchPulseHeroHighlight(): Promise<{
     .is('archived_at', null)
     .eq('is_draft', false)
     .or('is_pulse.eq.true,category.eq.pulse')
-    .order('total_votes', { ascending: false, nullsFirst: false })
+    .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle()
 
