@@ -20,7 +20,6 @@ import { fetchLandingSignals, type LandingSignal } from '@/lib/signals/landing'
 import { getCitizenSignalsCopy } from '@/lib/i18n/citizen-signals'
 import type { LocationCardRow } from '@/components/locations/LocationCard'
 import type { MarketCardMarket, MarketCardOutcome } from '@/components/MarketCard'
-import { PUBLIC_MARKET_MIN_VOTES } from '@/lib/predictions/engagement'
 import { CONSCIOUS_FUND_GOAL_MXN } from '@/lib/predictions/fund-goal'
 import { FundThermometer } from '@/components/fund/FundThermometer'
 import { formatParticipationCount } from '@/lib/display/participation'
@@ -124,21 +123,21 @@ async function getLandingData() {
     mundialFoundingTakenRes,
     cycleOpinionsRes,
   ] = await Promise.all([
+    // Consultas activas: newest open Pulses first. Do not hide below
+    // PUBLIC_MARKET_MIN_VOTES — MarketCard uses first-voices UI for low-n.
+    // Pulse-only so Conscious Location polls don't crowd the strip.
     supabase
       .from('prediction_markets')
       .select(
-        'id, title, description_short, category, current_probability, total_votes, image_url, sponsor_name, sponsor_logo_url, sponsor_url, translations, resolution_date, market_type, status'
+        'id, title, description_short, category, current_probability, total_votes, image_url, sponsor_name, sponsor_logo_url, sponsor_url, translations, resolution_date, market_type, status, is_pulse, created_at'
       )
       .in('status', ['active', 'trading'])
       .is('archived_at', null)
       .eq('is_draft', false)
-      // Only surface markets with enough engagement that probability bars are
-      // credible. Below-threshold markets show misleading 0% / 100% bars on
-      // the landing page and become anti-social-proof.
-      .gte('total_votes', PUBLIC_MARKET_MIN_VOTES)
-      .order('total_votes', { ascending: false, nullsFirst: false })
+      .or('is_pulse.eq.true,category.eq.pulse')
+      .order('created_at', { ascending: false })
       .limit(6),
-    // Phase 1 ATF live action card — may be low-n (density honesty on the card).
+    // Phase 1 ATF live action card — newest open Pulse (first-voices on low-n).
     supabase
       .from('prediction_markets')
       .select(
@@ -148,7 +147,7 @@ async function getLandingData() {
       .is('archived_at', null)
       .eq('is_draft', false)
       .or('is_pulse.eq.true,category.eq.pulse')
-      .order('total_votes', { ascending: false, nullsFirst: false })
+      .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle(),
     supabase
@@ -171,8 +170,7 @@ async function getLandingData() {
       .eq('category', 'world_cup')
       .in('status', ['active', 'trading'])
       .eq('is_draft', false)
-      .gte('total_votes', PUBLIC_MARKET_MIN_VOTES)
-      .order('total_votes', { ascending: false, nullsFirst: false })
+      .order('created_at', { ascending: false })
       .limit(4),
     supabase
       .from('live_events')

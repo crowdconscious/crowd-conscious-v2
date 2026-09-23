@@ -1,10 +1,10 @@
 /**
- * Engagement thresholds used to gate UI on public surfaces.
+ * Engagement thresholds used to gate probability UI on public surfaces.
  *
- * Markets with very few votes show misleading 0%/100% bars and act as
- * anti-social-proof on the landing page and feed. Below the threshold we
- * either hide the market entirely (landing) or replace the bars with a
- * "be one of the first voices" treatment (cards, feed).
+ * Markets with very few votes show misleading 0%/100% bars. Below the
+ * threshold, cards and feed replace bars with a "be one of the first
+ * voices" treatment — discovery surfaces must not hide open markets
+ * solely for low vote counts.
  */
 
 /** Minimum votes a market needs before its outcome probabilities are
