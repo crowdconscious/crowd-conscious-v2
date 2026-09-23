@@ -129,7 +129,7 @@ async function getLandingData() {
     supabase
       .from('prediction_markets')
       .select(
-        'id, title, description_short, category, current_probability, total_votes, image_url, sponsor_name, sponsor_logo_url, sponsor_url, translations, resolution_date, market_type, status, is_pulse, created_at'
+        'id, title, description_short, category, current_probability, total_votes, cover_image_url, image_url, sponsor_name, sponsor_logo_url, sponsor_url, translations, resolution_date, market_type, status, is_pulse, created_at'
       )
       .in('status', ['active', 'trading'])
       .is('archived_at', null)
@@ -141,7 +141,7 @@ async function getLandingData() {
     supabase
       .from('prediction_markets')
       .select(
-        'id, title, total_votes, sponsor_name, sponsor_logo_url, translations, is_pulse, category, market_type'
+        'id, title, total_votes, cover_image_url, image_url, sponsor_name, sponsor_logo_url, translations, is_pulse, category, market_type'
       )
       .in('status', ['active', 'trading'])
       .is('archived_at', null)
@@ -225,6 +225,8 @@ async function getLandingData() {
     id: string
     title: string
     total_votes: number | null
+    cover_image_url: string | null
+    image_url?: string | null
     sponsor_name: string | null
     sponsor_logo_url: string | null
     translations: unknown
@@ -433,6 +435,10 @@ export default async function LandingPage() {
                   id: liveActionMarket.id,
                   title: liveActionMarket.title,
                   total_votes: liveActionMarket.total_votes,
+                  cover_image_url:
+                    liveActionMarket.cover_image_url?.trim() ||
+                    liveActionMarket.image_url?.trim() ||
+                    null,
                   sponsor_name: liveActionMarket.sponsor_name,
                   sponsor_logo_url: liveActionMarket.sponsor_logo_url,
                 }
@@ -481,6 +487,7 @@ export default async function LandingPage() {
                   <MarketCard
                     market={market}
                     outcomes={outcomesByMarketId[market.id] ?? []}
+                    showCover
                   />
                 </div>
               ))}

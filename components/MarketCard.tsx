@@ -78,8 +78,9 @@ import { MiniSparkline } from '@/app/(predictions)/predictions/components/MiniSp
  *      the Spanish equivalents in ES.
  *   8) Sponsor badge sits in the header row (right side), next to the
  *      category pill, matching the older public layout.
- *   9) Cover image is opt-in via `showCover`. Off by default to keep
- *      dense grids scannable.
+ *   9) Cover image is opt-in via `showCover`. Uses `cover_image_url`
+ *      (canonical) with `image_url` fallback; missing → gradient + icon.
+ *      Off by default to keep dense grids scannable.
  *  10) Locale comes from `useLocale()` everywhere — same hook the rest
  *      of the predictions surface uses.
  *  11) `context` + a small bag of optional flags replaces the older
@@ -238,7 +239,12 @@ export type MarketCardMarket = {
   sponsor_name?: string | null
   sponsor_logo_url?: string | null
   sponsor_url?: string | null
-  /** Optional cover image (only rendered when `showCover` is true). */
+  /**
+   * Canonical Pulse hero art (`prediction_markets.cover_image_url`).
+   * Prefer this over legacy `image_url` when `showCover` is true.
+   */
+  cover_image_url?: string | null
+  /** Legacy free-form image — fallback alongside cover_image_url. */
   image_url?: string | null
   is_pulse?: boolean | null
 }
@@ -338,7 +344,7 @@ export interface MarketCardProps {
   context?: MarketCardContext
   /** Tighter padding; `description_short` is suppressed in compact mode. */
   compact?: boolean
-  /** Render `market.image_url` as a 96px cover banner above the title. */
+  /** Render cover (`cover_image_url` || `image_url`) as a banner above the title. */
   showCover?: boolean
   showCategory?: boolean
   showDeadline?: boolean
@@ -415,7 +421,10 @@ export function MarketCard({
 
   const padX = isTrending ? 'p-6 min-w-[280px]' : compact ? 'p-4' : 'p-5'
   const coverNegMx = isTrending ? '-mx-6' : compact ? '-mx-4' : '-mx-5'
+  const coverNegMt = isTrending ? '-mt-6' : compact ? '-mt-4' : '-mt-5'
   const barFill = 'bg-emerald-500/20'
+  const coverSrc =
+    market.cover_image_url?.trim() || market.image_url?.trim() || null
 
   const detailHref = `/predictions/markets/${market.id}`
   const isResolved = market.status === 'resolved'
@@ -424,8 +433,31 @@ export function MarketCard({
   return (
     <Link href={detailHref} className="block text-inherit no-underline">
       <div
-        className={`group flex h-full flex-col rounded-xl border border-[#2d3748] bg-[#1a2029] border-t-2 ${config.accent} ${config.hoverGlow} transition-all duration-200 hover:-translate-y-0.5 hover:border-[#3d4a5c] hover:shadow-lg ${padX}`}
+        className={`group flex h-full flex-col overflow-hidden rounded-xl border border-[#2d3748] bg-[#1a2029] border-t-2 ${config.accent} ${config.hoverGlow} transition-all duration-200 hover:-translate-y-0.5 hover:border-[#3d4a5c] hover:shadow-lg ${padX}`}
       >
+        {showCover ? (
+          <div
+            className={`relative mb-3 h-32 ${coverNegMx} ${coverNegMt}`}
+          >
+            {coverSrc ? (
+              <Image
+                src={coverSrc}
+                alt=""
+                fill
+                sizes="(max-width: 768px) 88vw, 33vw"
+                className="object-cover"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-emerald-900/25 via-[#1a2029] to-sky-900/15">
+                <BarChart3
+                  className="h-10 w-10 text-emerald-500/35"
+                  aria-hidden
+                />
+              </div>
+            )}
+          </div>
+        ) : null}
+
         {/* Header row — category pill (left) + auth pills + sponsor (right).
             Wraps when narrow so a sponsored auth card with a "Voted" pill
             still degrades gracefully instead of overflowing. */}
@@ -473,18 +505,6 @@ export function MarketCard({
               sponsorLogoUrl={market.sponsor_logo_url}
               className="justify-end"
               size="sm"
-            />
-          </div>
-        ) : null}
-
-        {showCover && market.image_url ? (
-          <div className={`relative -mt-1 mb-3 h-24 ${coverNegMx}`}>
-            <Image
-              src={market.image_url}
-              alt=""
-              fill
-              sizes="(max-width: 768px) 100vw, 33vw"
-              className="rounded-t-xl object-cover"
             />
           </div>
         ) : null}
