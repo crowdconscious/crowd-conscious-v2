@@ -500,6 +500,11 @@ export interface Database {
           probability: number
           vote_count: number
           total_confidence: number
+          /**
+           * Picks with confidence >= 1 (excludes No lo sé). Migration 262.
+           * Avg certainty = total_confidence / confident_pick_count.
+           */
+          confident_pick_count?: number
           sort_order: number | null
           is_winner: boolean | null
           created_at: string
@@ -516,6 +521,7 @@ export interface Database {
           probability?: number
           vote_count?: number
           total_confidence?: number
+          confident_pick_count?: number
           sort_order?: number | null
           is_winner?: boolean | null
           created_at?: string
@@ -531,6 +537,7 @@ export interface Database {
           probability?: number
           vote_count?: number
           total_confidence?: number
+          confident_pick_count?: number
           sort_order?: number | null
           is_winner?: boolean | null
           created_at?: string
@@ -638,6 +645,35 @@ export interface Database {
         Relationships: []
       }
 
+      /** Per-option picks for a market_votes row. Migration 262. */
+      market_vote_selections: {
+        Row: {
+          id: string
+          vote_id: string
+          market_id: string
+          outcome_id: string
+          confidence: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          vote_id: string
+          market_id: string
+          outcome_id: string
+          confidence: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          vote_id?: string
+          market_id?: string
+          outcome_id?: string
+          confidence?: number
+          created_at?: string
+        }
+        Relationships: []
+      }
+
       prediction_markets: {
         Row: {
           id: string
@@ -677,8 +713,10 @@ export interface Database {
           sponsor_label: string | null
           expires_in_minutes: number | null
           is_pulse: boolean
-          /** single (default) | ranked. Migration 256. Existing Pulses stay single. */
-          vote_mode?: 'single' | 'ranked'
+          /** single (default) | ranked | multi. Migrations 256/262. Existing Pulses stay single. */
+          vote_mode?: 'single' | 'ranked' | 'multi'
+          /** For vote_mode=multi: max picks per voter (2–5, default 3). Migration 262. */
+          max_selections?: number
           /** Extra "Otro" outcome beyond the 2–6 listed options. Migration 256. */
           allow_other?: boolean
           pulse_client_name: string | null
@@ -757,7 +795,8 @@ export interface Database {
           sponsor_label?: string | null
           expires_in_minutes?: number | null
           is_pulse?: boolean
-          vote_mode?: 'single' | 'ranked'
+          vote_mode?: 'single' | 'ranked' | 'multi'
+          max_selections?: number
           allow_other?: boolean
           pulse_client_name?: string | null
           pulse_client_logo?: string | null
@@ -818,7 +857,8 @@ export interface Database {
           sponsor_label?: string | null
           expires_in_minutes?: number | null
           is_pulse?: boolean
-          vote_mode?: 'single' | 'ranked'
+          vote_mode?: 'single' | 'ranked' | 'multi'
+          max_selections?: number
           allow_other?: boolean
           pulse_client_name?: string | null
           pulse_client_logo?: string | null
@@ -2731,6 +2771,8 @@ export interface Database {
           p_confidence: number
           p_rankings?: Json | null
           p_other_text?: string | null
+          /** Multi: [{outcome_id, confidence}]. Migration 262. */
+          p_selections?: Json | null
         }
         Returns: Json
       }
@@ -2742,6 +2784,7 @@ export interface Database {
           p_confidence: number
           p_rankings?: Json | null
           p_other_text?: string | null
+          p_selections?: Json | null
         }
         Returns: Json
       }
@@ -2753,7 +2796,13 @@ export interface Database {
           p_confidence: number
           p_rankings?: Json | null
           p_other_text?: string | null
+          p_selections?: Json | null
         }
+        Returns: Json
+      }
+      /** Public Pulse aggregates (no per-user data). Migration 262. */
+      get_pulse_outcome_aggregates: {
+        Args: { p_market_id: string }
         Returns: Json
       }
       convert_anonymous_to_user: {

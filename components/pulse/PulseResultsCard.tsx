@@ -10,6 +10,12 @@ import {
   shouldRevealCount,
 } from '@/lib/display/participation'
 import { lowNRevealCopy } from '@/lib/post-vote-reveal'
+import {
+  outcomeChooserShare,
+  resolveOutcomeAvgConfidence,
+  type PulseOutcomeVoteStats,
+} from '@/lib/pulse-vote-aggregates'
+import type { VoteMode } from '@/lib/pulse-vote-ranking'
 
 /**
  * PulseResultsCard
@@ -20,14 +26,19 @@ import { lowNRevealCopy } from '@/lib/post-vote-reveal'
  *
  * Below PARTICIPATION_REVEAL_THRESHOLD: first-voices / "Votación abierta"
  * only — never option %, bars, or a thin raw count (density honesty §3.3).
+ *
+ * Multi mode: headline % = share of people who chose the option (does NOT
+ * sum to 100). Labelled "eligieron". Options with 0 pickers are omitted.
  */
 type PulseResultsCardOutcome = {
   id: string
   label: string
   subtitle?: string | null
-  /** Stored 0..1 (current_probability) */
+  /** Stored 0..1 (current_probability) — certainty share for single/ranked. */
   probability: number
   vote_count?: number | null
+  total_confidence?: number | null
+  confident_pick_count?: number | null
   translations?: unknown
 }
 
@@ -42,8 +53,6 @@ function formatSubtitle(
   avgConfidence: number | null | undefined,
   locale: 'es' | 'en'
 ): string {
-  // Below the reveal threshold the count is a promise-adjacent zero: show
-  // "Votación abierta" (and suppress the noisy small-N average) instead.
   if (!shouldRevealCount(totalVotes)) {
     return formatParticipationCount(totalVotes, locale)
   }
@@ -61,15 +70,20 @@ export default function PulseResultsCard({
   avgConfidence,
   locale,
   className = '',
+  voteMode = 'single',
+  byOutcome,
 }: {
   outcomes: PulseResultsCardOutcome[]
   totalVotes: number
   avgConfidence?: number | null
   locale: 'es' | 'en'
   className?: string
+  voteMode?: VoteMode
+  byOutcome?: Record<string, PulseOutcomeVoteStats>
 }) {
   const lowN = !shouldRevealCount(totalVotes)
   const lowNCopy = lowNRevealCopy(locale)
+  const isMulti = voteMode === 'multi'
 
   if (lowN) {
     const heading = locale === 'es' ? 'Resultados' : 'Results'
@@ -89,22 +103,64 @@ export default function PulseResultsCard({
     )
   }
 
-  const sorted = [...outcomes].sort((a, b) => {
-    const ap = Number(a.probability ?? 0)
-    const bp = Number(b.probability ?? 0)
-    return bp - ap
-  })
-  const probs = sorted.map((o) => Number(o.probability ?? 0))
-  const maxP = probs.length ? Math.max(...probs) : 0
-  const minP = probs.length ? Math.min(...probs) : 0
-  const tied = sorted.length >= 2 && maxP === minP
-  // Only highlight a winner when there's an actual leader. If everyone is
-  // tied, render every row in the muted style — calling one a "winner" by
-  // sort order would be misleading.
-  const winnerId = !tied && sorted.length ? sorted[0].id : null
+  type Row = {
+    id: string
+    outcome: PulseResultsCardOutcome
+    barPct: number
+    headlinePct: number
+    avgConf: number | null
+    sortKey: number
+  }
+
+  const rows: Row[] = outcomes
+    .map((o) => {
+      const stats = byOutcome?.[o.id]
+      if (isMulti) {
+        const count = stats?.count ?? 0
+        if (count <= 0) return null
+        const share = outcomeChooserShare(stats, totalVotes) ?? 0
+        const pct = Math.round(share * 100)
+        return {
+          id: o.id,
+          outcome: o,
+          barPct: pct,
+          headlinePct: pct,
+          avgConf: resolveOutcomeAvgConfidence({
+            totalConfidence: o.total_confidence,
+            confidentPickCount: o.confident_pick_count,
+            stats,
+          }),
+          sortKey: count,
+        }
+      }
+      const prob = Number(o.probability ?? 0)
+      return {
+        id: o.id,
+        outcome: o,
+        barPct: toDisplayPercentRounded(prob),
+        headlinePct: toDisplayPercentRounded(prob),
+        avgConf: resolveOutcomeAvgConfidence({
+          totalConfidence: o.total_confidence,
+          confidentPickCount: o.confident_pick_count,
+          stats,
+        }),
+        sortKey: prob,
+      }
+    })
+    .filter((r): r is Row => r != null)
+    .sort((a, b) => b.sortKey - a.sortKey)
+
+  const maxKey = rows.length ? Math.max(...rows.map((r) => r.sortKey)) : 0
+  const minKey = rows.length ? Math.min(...rows.map((r) => r.sortKey)) : 0
+  const tied = rows.length >= 2 && maxKey === minKey
+  const winnerId = !tied && rows.length ? rows[0].id : null
 
   const subtitleLine = formatSubtitle(totalVotes, avgConfidence, locale)
   const heading = locale === 'es' ? 'Resultados' : 'Results'
+  const multiHint =
+    locale === 'es'
+      ? 'Porcentaje de personas que eligieron cada opción (puede sumar más de 100%).'
+      : 'Share of people who chose each option (can sum to more than 100%).'
 
   return (
     <section
@@ -114,28 +170,35 @@ export default function PulseResultsCard({
       <header className="mb-5">
         <h3 className="text-lg font-semibold text-white">{heading}</h3>
         <p className="mt-1 text-sm text-gray-400">{subtitleLine}</p>
+        {isMulti ? (
+          <p className="mt-1.5 text-[11px] text-slate-500">{multiHint}</p>
+        ) : null}
       </header>
       <ul className="space-y-5">
-        {sorted.map((o) => {
-          const pct = toDisplayPercentRounded(o.probability)
-          const label = getOutcomeLabel(o, locale)
-          const subtitle = getOutcomeSubtitle(o, locale)
+        {rows.map((r) => {
+          const label = getOutcomeLabel(r.outcome, locale)
+          const subtitle = getOutcomeSubtitle(r.outcome, locale)
           const renderSubtitle = subtitle && !hasUnclosedParen(label)
-          const isWinner = o.id === winnerId
+          const isWinner = r.id === winnerId
+          const pctLabel = isMulti
+            ? locale === 'es'
+              ? `${r.headlinePct}% eligieron`
+              : `${r.headlinePct}% chose`
+            : `${r.headlinePct}%`
           return (
-            <li key={o.id}>
+            <li key={r.id}>
               <div className="mb-1.5 flex items-baseline justify-between gap-3 text-sm sm:text-base">
                 <span className="font-medium text-white break-words pr-2">
                   {label}
                 </span>
                 <span className="shrink-0 tabular-nums font-semibold text-white">
-                  {pct}%
+                  {pctLabel}
                 </span>
               </div>
               <div
                 className="h-3 w-full overflow-hidden rounded-full bg-black/40"
                 role="progressbar"
-                aria-valuenow={pct}
+                aria-valuenow={r.barPct}
                 aria-valuemin={0}
                 aria-valuemax={100}
                 aria-label={label}
@@ -146,14 +209,20 @@ export default function PulseResultsCard({
                       ? 'bg-gradient-to-r from-emerald-600 to-emerald-400'
                       : 'bg-white/15'
                   }`}
-                  style={{ width: `${pct}%` }}
+                  style={{ width: `${Math.min(100, r.barPct)}%` }}
                 />
               </div>
-              {renderSubtitle ? (
-                <p className="mt-1.5 text-sm leading-snug text-gray-500">
-                  {subtitle}
-                </p>
-              ) : null}
+              <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-sm text-gray-500">
+                {renderSubtitle ? (
+                  <span className="leading-snug">{subtitle}</span>
+                ) : null}
+                {r.avgConf != null ? (
+                  <span className="tabular-nums">
+                    {locale === 'es' ? 'certeza' : 'certainty'} {r.avgConf.toFixed(1)}
+                    /10
+                  </span>
+                ) : null}
+              </div>
             </li>
           )
         })}

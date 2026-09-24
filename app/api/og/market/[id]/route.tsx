@@ -114,7 +114,7 @@ export async function GET(
     const { data: market, error } = await supabase
       .from('prediction_markets')
       .select(
-        'id, title, category, current_probability, total_votes, engagement_count, translations, sponsor_name, sponsor_logo_url, is_pulse, cover_image_url'
+        'id, title, category, current_probability, total_votes, engagement_count, translations, sponsor_name, sponsor_logo_url, is_pulse, cover_image_url, vote_mode'
       )
       .eq('id', marketId)
       .single()
@@ -146,14 +146,17 @@ export async function GET(
       )
     }
 
+    const isMultiVote =
+      (market as { vote_mode?: string }).vote_mode === 'multi'
+
     const { data: outcomes } = await supabase
       .from('market_outcomes')
-      .select('label, probability, translations')
+      .select('label, probability, vote_count, translations')
       .eq('market_id', marketId)
-      .order('probability', { ascending: false })
+      .order(isMultiVote ? 'vote_count' : 'probability', { ascending: false })
 
     // Avg confidence (Pulse signature stat). Fast for typical Pulses
-    // (≤ ~1k votes). We only need the numeric column.
+    // (≤ ~1k votes). Exclude confidence 0 ("No lo sé").
     const isPulseQuery =
       Boolean((market as { is_pulse?: boolean }).is_pulse) || market.category === 'pulse'
     let avgConfidence: number | null = null
@@ -165,24 +168,45 @@ export async function GET(
         .eq('market_id', marketId)
         .limit(5000)
       if (voteRows && voteRows.length > 0) {
-        const total = voteRows.reduce(
-          (sum, v) => sum + (typeof v.confidence === 'number' ? v.confidence : 0),
-          0
+        const stated = voteRows.filter(
+          (v) => typeof v.confidence === 'number' && v.confidence >= 1 && v.confidence <= 10
         )
-        avgConfidence = total / voteRows.length
+        if (stated.length > 0) {
+          const total = stated.reduce((sum, v) => sum + (v.confidence as number), 0)
+          avgConfidence = total / stated.length
+        }
         voteCount = voteRows.length
       }
     }
 
-    const outcomeRows = (outcomes ?? []) as OutcomeRow[]
-    const sortedByProb = [...outcomeRows].sort((a, b) => Number(b.probability) - Number(a.probability))
-    const probs = sortedByProb.map((o) => Number(o.probability))
+    const outcomeRows = (outcomes ?? []) as (OutcomeRow & { vote_count?: number | null })[]
+    const totalVoters =
+      typeof market.total_votes === 'number' && market.total_votes > 0
+        ? market.total_votes
+        : voteCount ?? 0
+    const sortedByProb = [...outcomeRows].sort((a, b) => {
+      if (isMultiVote) {
+        return Number(b.vote_count ?? 0) - Number(a.vote_count ?? 0)
+      }
+      return Number(b.probability) - Number(a.probability)
+    })
+    const displayPct = (o: OutcomeRow & { vote_count?: number | null }) => {
+      if (isMultiVote && totalVoters > 0) {
+        return Math.min(100, Math.max(0, Math.round((Number(o.vote_count ?? 0) / totalVoters) * 100)))
+      }
+      return Math.min(100, Math.max(0, Math.round(Number(o.probability) * 100)))
+    }
+    const probs = sortedByProb.map((o) =>
+      isMultiVote ? Number(o.vote_count ?? 0) : Number(o.probability)
+    )
     const multiOutcomeTie =
       sortedByProb.length > 2 &&
       probs.length > 0 &&
       probs.every((p) => Math.abs(p - probs[0]) < 1e-5)
     const topOutcome = sortedByProb[0]
-    const probRaw = topOutcome?.probability ?? market.current_probability ?? 0.5
+    const probRaw = isMultiVote
+      ? (totalVoters > 0 ? Number(topOutcome?.vote_count ?? 0) / totalVoters : 0.5)
+      : (topOutcome?.probability ?? market.current_probability ?? 0.5)
     // Fetch the cover as base64 so it can be painted as a hero layer.
     // Same pattern as /api/og/location — silent fallback to the text-only
     // layout when there is no cover or the fetch fails (never render a
@@ -370,7 +394,7 @@ export async function GET(
                       >
                         <span style={{ flex: 1, minWidth: 0 }}>{getOutcomeLabel(o, locale)}</span>
                         <span style={{ color: '#10b981', flexShrink: 0 }}>
-                          {Math.round(Number(o.probability) * 100)}%
+                          {displayPct(o)}%
                         </span>
                       </div>
                     ))}
@@ -634,7 +658,7 @@ export async function GET(
                     >
                       <span style={{ flex: 1, minWidth: 0 }}>{getOutcomeLabel(o, locale)}</span>
                       <span style={{ color: '#10b981', flexShrink: 0 }}>
-                        {Math.round(Number(o.probability) * 100)}%
+                        {displayPct(o)}%
                       </span>
                     </div>
                   ))}

@@ -21,7 +21,7 @@ import {
   getOutcomeLabel,
   getOutcomeSubtitle,
 } from '@/lib/i18n/market-translations'
-import { outcomeAvgConfidence, type PulseVoteAggregates } from '@/lib/pulse-vote-aggregates'
+import { resolveOutcomeAvgConfidence, type PulseVoteAggregates } from '@/lib/pulse-vote-aggregates'
 import { trackUxEvent } from '@/lib/ux-overhaul-analytics'
 
 type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row']
@@ -33,6 +33,7 @@ type Outcome = {
   probability: number
   vote_count: number
   total_confidence: number
+  confident_pick_count?: number | null
   is_winner: boolean | null
   translations?: Record<string, { label?: string; subtitle?: string }> | null
   is_other?: boolean | null
@@ -53,6 +54,7 @@ type Props = {
     bonus_xp: number
     rankings?: { outcome_id: string; rank: number }[] | null
     other_text?: string | null
+    selections?: { outcome_id: string; confidence: number }[] | null
   } | null
   aggregates: PulseVoteAggregates
   featuredReasonings: Array<{
@@ -145,7 +147,11 @@ export default function PulseInlineVote({
         label: getOutcomeLabel(o, locale),
         subtitle: getOutcomeSubtitle(o, locale),
         probability: Number(o.probability ?? 0),
-        avgConfidence: outcomeAvgConfidence(aggregates.byOutcome[o.id]),
+        avgConfidence: resolveOutcomeAvgConfidence({
+          totalConfidence: o.total_confidence,
+          confidentPickCount: o.confident_pick_count,
+          stats: aggregates.byOutcome[o.id],
+        }),
       })),
     [outcomes, locale, aggregates]
   )

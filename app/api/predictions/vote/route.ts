@@ -15,6 +15,10 @@ import {
   normalizeOtherText,
   parseRankings,
 } from '@/lib/pulse-vote-ranking'
+import {
+  parseSelections,
+  primaryFromSelections,
+} from '@/lib/multi-select-pulses'
 import { recalculateLocationScoreByMarketId } from '@/lib/locations/recalculate-score'
 import { recalculateCreatorScoreByMarketId } from '@/lib/creators/recalculate-score'
 import {
@@ -82,11 +86,32 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { market_id, outcome_id, confidence, reasoning: rawReasoning } = body
+    const { market_id, reasoning: rawReasoning } = body
     const rankings = parseRankings(body.rankings)
     const otherNorm = normalizeOtherText(body.other_text ?? body.otherText)
     if (!otherNorm.ok) {
       return NextResponse.json({ error: otherNorm.error }, { status: 400 })
+    }
+
+    const selParsed = parseSelections(body.selections)
+    if (!selParsed.ok) {
+      return NextResponse.json({ error: selParsed.error }, { status: 400 })
+    }
+    const selections = selParsed.selections
+
+    let outcome_id: string | undefined =
+      typeof body.outcome_id === 'string' ? body.outcome_id : undefined
+    let conf: number =
+      body.confidence == null || body.confidence === ''
+        ? NaN
+        : typeof body.confidence === 'number'
+          ? body.confidence
+          : parseInt(String(body.confidence), 10)
+
+    if (selections && selections.length > 0) {
+      const primary = primaryFromSelections(selections)
+      outcome_id = primary.outcome_id
+      conf = primary.confidence
     }
 
     if (!market_id || !outcome_id) {
@@ -103,12 +128,6 @@ export async function POST(request: Request) {
       )
     }
 
-    const conf =
-      confidence == null || confidence === ''
-        ? NaN
-        : typeof confidence === 'number'
-          ? confidence
-          : parseInt(String(confidence), 10)
     // 0 = "No lo sé" (excluded from confidence average). Never impute 5.
     if (isNaN(conf) || conf < 0 || conf > 10) {
       return NextResponse.json(
@@ -197,6 +216,7 @@ export async function POST(request: Request) {
         p_confidence: conf,
         p_rankings: rankings,
         p_other_text: otherNorm.text,
+        p_selections: selections,
       })
 
       if (error) {
@@ -291,6 +311,7 @@ export async function POST(request: Request) {
       p_confidence: conf,
       p_rankings: rankings,
       p_other_text: otherNorm.text,
+      p_selections: selections,
     })
 
     if (error) {
