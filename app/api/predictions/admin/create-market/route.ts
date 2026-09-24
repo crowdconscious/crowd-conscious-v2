@@ -104,6 +104,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // prediction_markets.description is NOT NULL; long context is optional in the
+    // admin form, so fall back to the required short description.
+    const resolvedDescription =
+      (typeof description === 'string' ? description.trim() : '') ||
+      resolvedDescriptionShort ||
+      null
+    if (!resolvedDescription) {
+      return Response.json(
+        { error: 'La descripción es obligatoria para crear un Pulse.' },
+        { status: 400 }
+      )
+    }
+
     const categoryResolved = String(category ?? 'community').trim()
     if (!categoryResolved || !isValidMarketCategory(categoryResolved)) {
       return Response.json({ error: 'Valid category is required' }, { status: 400 })
@@ -131,7 +144,7 @@ export async function POST(request: NextRequest) {
         : undefined
     const brandingViolation = firstPulseBrandingViolation([
       title,
-      description,
+      resolvedDescription,
       resolvedDescriptionShort,
       translationsEn?.title,
       translationsEn?.description,
@@ -202,7 +215,7 @@ export async function POST(request: NextRequest) {
 
     const { data: marketId, error: rpcError } = await admin.rpc('create_multi_market', {
       p_title: title.trim(),
-      p_description: description?.trim() || null,
+      p_description: resolvedDescription,
       p_category: categoryResolved,
       p_created_by: user.id,
       p_end_date: endDateIso,
@@ -229,7 +242,7 @@ export async function POST(request: NextRequest) {
         is_pulse: true,
         is_draft: wantsDraft,
         published_at: publishedAt,
-        description: description?.trim() || null,
+        description: resolvedDescription,
         description_short: resolvedDescriptionShort,
         resolution_criteria: PULSE_DEFAULT_RESOLUTION_CRITERIA,
         vote_mode: voteMode,
