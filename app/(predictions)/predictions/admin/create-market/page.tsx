@@ -872,8 +872,8 @@ export default function CreatePulsePage() {
                       </span>
                       <span className="mt-1 block text-xs text-gray-500">
                         {language === 'es'
-                          ? 'La persona elige varias opciones y da certeza a cada una. No se puede combinar con voto ordenado.'
-                          : 'Voters pick several options and set certainty on each. Cannot combine with ranked.'}
+                          ? 'Quien vote podrá elegir varias opciones y marcar la certeza de cada una (incluye “No lo sé”). No se combina con voto ordenado.'
+                          : 'Voters can pick several options and set certainty on each (including “I don’t know”). Cannot combine with ranked.'}
                       </span>
                     </span>
                   </label>

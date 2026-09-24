@@ -679,21 +679,15 @@ export default function CreatePulseForm({
                 />
                 <span>
                   <span className="block text-sm font-medium text-gray-200">
-                    {language === 'es'
-                      ? 'Selección múltiple (certeza por opción)'
-                      : 'Multi-select (certainty per option)'}
+                    {t('create_form.field_multi_label')}
                   </span>
-                  <span className={helpClass}>
-                    {language === 'es'
-                      ? 'Elige varias opciones con certeza en cada una (2–5).'
-                      : 'Pick several options with certainty on each (2–5).'}
-                  </span>
+                  <span className={helpClass}>{t('create_form.field_multi_help')}</span>
                 </span>
               </label>
               {voteModeMulti ? (
                 <label className="mt-3 block pl-7">
                   <span className="text-sm text-gray-300">
-                    {language === 'es' ? 'Máximo de opciones' : 'Max selections'}: {maxSelections}
+                    {t('create_form.field_multi_max_label')}: {maxSelections}
                   </span>
                   <input
                     type="range"

@@ -501,8 +501,8 @@ export function VotePanel({
     ? copy.yourHeading
     : isMulti
       ? locale === 'es'
-        ? `Elige hasta ${maxSelections} opciones`
-        : `Pick up to ${maxSelections} options`
+        ? `Puedes elegir hasta ${maxSelections} opciones`
+        : `You can pick up to ${maxSelections} options`
       : isRanked
         ? locale === 'es'
           ? 'Elige hasta 3 opciones, en orden'
@@ -1173,8 +1173,8 @@ export function VotePanel({
         {isMulti && !shouldRevealResults ? (
           <p className="mt-2 text-[11px] text-gray-500 text-center">
             {locale === 'es'
-              ? `Toca para elegir hasta ${maxSelections} opciones (sin orden).`
-              : `Tap to pick up to ${maxSelections} options (unordered).`}
+              ? 'Marca la certeza de cada opción que elijas (o “No lo sé”).'
+              : 'Set certainty on each option you pick (or “I don’t know”).'}
           </p>
         ) : null}
 
