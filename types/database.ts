@@ -500,6 +500,11 @@ export interface Database {
           probability: number
           vote_count: number
           total_confidence: number
+          /**
+           * Picks with confidence >= 1 (excludes No lo sé). Migration 262.
+           * Avg certainty = total_confidence / confident_pick_count.
+           */
+          confident_pick_count?: number
           sort_order: number | null
           is_winner: boolean | null
           created_at: string
@@ -516,6 +521,7 @@ export interface Database {
           probability?: number
           vote_count?: number
           total_confidence?: number
+          confident_pick_count?: number
           sort_order?: number | null
           is_winner?: boolean | null
           created_at?: string
@@ -531,6 +537,7 @@ export interface Database {
           probability?: number
           vote_count?: number
           total_confidence?: number
+          confident_pick_count?: number
           sort_order?: number | null
           is_winner?: boolean | null
           created_at?: string
@@ -2791,6 +2798,11 @@ export interface Database {
           p_other_text?: string | null
           p_selections?: Json | null
         }
+        Returns: Json
+      }
+      /** Public Pulse aggregates (no per-user data). Migration 262. */
+      get_pulse_outcome_aggregates: {
+        Args: { p_market_id: string }
         Returns: Json
       }
       convert_anonymous_to_user: {

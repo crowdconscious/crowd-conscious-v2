@@ -181,3 +181,39 @@ export function outcomeAvgConfidence(
   if (!stats || stats.confidenceCount === 0) return null
   return stats.confidenceSum / stats.confidenceCount
 }
+
+/**
+ * Canonical public avg certainty from maintained outcome columns
+ * (same formula mobile must use after mig 262):
+ *   total_confidence / confident_pick_count
+ * where confident_pick_count excludes confidence 0 ("No lo sé").
+ */
+export function outcomeAvgConfidenceFromTotals(
+  totalConfidence: number | null | undefined,
+  confidentPickCount: number | null | undefined
+): number | null {
+  const sum = typeof totalConfidence === 'number' ? totalConfidence : 0
+  const n = typeof confidentPickCount === 'number' ? confidentPickCount : 0
+  if (n <= 0) return null
+  return sum / n
+}
+
+/**
+ * Prefer DB-maintained totals when present so web matches mobile
+ * (`get_pulse_outcome_aggregates` / outcome columns); fall back to
+ * row-aggregated stats.
+ */
+export function resolveOutcomeAvgConfidence(args: {
+  totalConfidence?: number | null
+  confidentPickCount?: number | null
+  stats?: PulseOutcomeVoteStats
+}): number | null {
+  if (
+    typeof args.confidentPickCount === 'number' &&
+    args.confidentPickCount > 0 &&
+    typeof args.totalConfidence === 'number'
+  ) {
+    return outcomeAvgConfidenceFromTotals(args.totalConfidence, args.confidentPickCount)
+  }
+  return outcomeAvgConfidence(args.stats)
+}

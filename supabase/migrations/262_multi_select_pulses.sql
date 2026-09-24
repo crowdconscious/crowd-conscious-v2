@@ -43,6 +43,22 @@ COMMENT ON COLUMN public.prediction_markets.vote_mode IS
 COMMENT ON COLUMN public.prediction_markets.max_selections IS
   'For vote_mode=multi only: max options a voter may pick (2–5, default 3). Ignored for single/ranked.';
 
+-- Public per-outcome denominator for avg certainty (excludes confidence 0).
+-- Mobile/web: avg = total_confidence / NULLIF(confident_pick_count, 0).
+-- Readable via existing "Anyone can view outcomes" RLS on market_outcomes.
+ALTER TABLE public.market_outcomes
+  ADD COLUMN IF NOT EXISTS confident_pick_count integer NOT NULL DEFAULT 0;
+
+ALTER TABLE public.market_outcomes
+  DROP CONSTRAINT IF EXISTS market_outcomes_confident_pick_count_check;
+
+ALTER TABLE public.market_outcomes
+  ADD CONSTRAINT market_outcomes_confident_pick_count_check
+  CHECK (confident_pick_count >= 0);
+
+COMMENT ON COLUMN public.market_outcomes.confident_pick_count IS
+  'Picks with confidence >= 1 (excludes No lo sé). Avg certainty = total_confidence / confident_pick_count. Migration 262.';
+
 -- Mode + max_selections lock after the first vote (people, not picks).
 CREATE OR REPLACE FUNCTION public.prevent_pulse_vote_mode_change_after_votes()
 RETURNS trigger
@@ -122,6 +138,68 @@ WHERE NOT EXISTS (
 )
 ON CONFLICT (vote_id, outcome_id) DO NOTHING;
 
+-- Backfill confident_pick_count from selections (idempotent recompute).
+UPDATE public.market_outcomes o
+SET confident_pick_count = COALESCE((
+  SELECT COUNT(*)::integer
+  FROM public.market_vote_selections s
+  WHERE s.outcome_id = o.id AND s.confidence >= 1
+), 0);
+
+-- ---------------------------------------------------------------------------
+-- Public read RPC: privacy-safe per-outcome aggregates (no per-user data).
+-- Prefer for mobile; same numbers as market_outcomes columns + market.total_votes.
+-- ---------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.get_pulse_outcome_aggregates(p_market_id uuid)
+RETURNS jsonb
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_total_voters integer;
+  v_outcomes jsonb;
+BEGIN
+  IF p_market_id IS NULL THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'market_id required');
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM public.prediction_markets WHERE id = p_market_id) THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'Market not found');
+  END IF;
+
+  SELECT COALESCE(total_votes, 0)::integer INTO v_total_voters
+  FROM public.prediction_markets WHERE id = p_market_id;
+
+  SELECT COALESCE(jsonb_agg(
+           jsonb_build_object(
+             'outcome_id', o.id,
+             'pickers', o.vote_count,
+             'confident_pickers', o.confident_pick_count,
+             'confidence_sum', o.total_confidence
+           )
+           ORDER BY o.sort_order NULLS LAST, o.created_at
+         ), '[]'::jsonb)
+  INTO v_outcomes
+  FROM public.market_outcomes o
+  WHERE o.market_id = p_market_id;
+
+  RETURN jsonb_build_object(
+    'ok', true,
+    'market_id', p_market_id,
+    'total_voters', v_total_voters,
+    'outcomes', v_outcomes
+  );
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.get_pulse_outcome_aggregates(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.get_pulse_outcome_aggregates(uuid) TO anon, authenticated, service_role;
+
+COMMENT ON FUNCTION public.get_pulse_outcome_aggregates(uuid) IS
+  'Public Pulse aggregates: total_voters + per outcome pickers / confident_pickers / confidence_sum. No per-user data. Migration 262.';
+
 -- ---------------------------------------------------------------------------
 -- Shared: renormalize probabilities from total_confidence
 -- ---------------------------------------------------------------------------
@@ -193,7 +271,11 @@ BEGIN
     v_w := CASE WHEN r.confidence >= 1 THEN r.confidence ELSE 0 END;
     UPDATE public.market_outcomes
     SET vote_count = GREATEST(0, vote_count - 1),
-        total_confidence = GREATEST(0, total_confidence - v_w)
+        total_confidence = GREATEST(0, total_confidence - v_w),
+        confident_pick_count = GREATEST(
+          0,
+          confident_pick_count - CASE WHEN r.confidence >= 1 THEN 1 ELSE 0 END
+        )
     WHERE id = r.outcome_id;
   END LOOP;
 
@@ -237,7 +319,9 @@ BEGIN
 
     UPDATE public.market_outcomes
     SET vote_count = vote_count + 1,
-        total_confidence = total_confidence + v_w
+        total_confidence = total_confidence + v_w,
+        confident_pick_count = confident_pick_count
+          + CASE WHEN v_conf >= 1 THEN 1 ELSE 0 END
     WHERE id = v_oid;
   END LOOP;
 END;

@@ -27,21 +27,73 @@ Rollout:
 - `prediction_markets.max_selections` int NOT NULL DEFAULT 3, CHECK 2–5.
 - Trigger: `vote_mode` / `max_selections` locked after the first `market_votes` row.
 - Child table `market_vote_selections` (`vote_id`, `market_id`, `outcome_id`, `confidence` 0–10, UNIQUE(vote_id, outcome_id)).
-- Backfill: every existing `market_votes` row → one selection.
+- `market_outcomes.confident_pick_count` — picks with confidence ≥ 1; maintained on vote insert/change; backfilled.
+- RPC `get_pulse_outcome_aggregates(market_id)` — public read for mobile/web (anon + authenticated).
+- Backfill: every existing `market_votes` row → one selection; then recompute `confident_pick_count`.
 - `market_votes.outcome_id` + `confidence` = highest-certainty pick (tie: first in submitted selections array) so single-option consumers keep working.
 
 ## Aggregation math
 
 Per option (multi):
 
-- `vote_count` = number of **people** who picked it (not exclusive).
-- `total_confidence` = sum of certainty across those picks (0 adds nothing).
+- `vote_count` (**pickers**) = number of **people** who picked it (not exclusive).
+- `total_confidence` (**confidence_sum**) = sum of certainty across those picks (0 adds nothing).
+- `confident_pick_count` (**confident_pickers**) = picks with confidence ≥ 1 (excludes “No lo sé”).
+- **Average certainty** (web + mobile must match):
+
+  ```text
+  avg = total_confidence / confident_pick_count
+      = confidence_sum / confident_pickers
+  ```
+
+  Never use `total_confidence / vote_count` — that dilutes the average when some picks are 0.
 - `probability` = `total_confidence / Σ total_confidence` (sums to 1) — internal / resolution.
 - Display headline = **% of people who chose it** = `vote_count / total_votes` (does **not** sum to 100). Label: “eligieron” / “chose”.
-- Average certainty among pickers excludes confidence 0.
 - Reveal threshold (`PARTICIPATION_REVEAL_THRESHOLD = 25`) counts **people**.
 - Density honesty: never show 0-picker bars next to a results promise.
 - Winner (unchanged spirit): max total certainty across options (`resolve_pulse_market_by_plurality`).
+
+### Public aggregates for mobile (no per-user data)
+
+`market_vote_selections` is RLS own-only — mobile must **not** read it for public averages.
+
+**Maintained column** on `market_outcomes` (already SELECT-able via “Anyone can view outcomes”):
+
+| Column | Meaning |
+|--------|---------|
+| `vote_count` | pickers |
+| `total_confidence` | confidence_sum |
+| `confident_pick_count` | confident_pickers (conf ≥ 1) |
+
+**Read RPC** (recommended for mobile — one call, granted to `anon` + `authenticated`):
+
+```
+get_pulse_outcome_aggregates(p_market_id uuid) → jsonb
+```
+
+Success shape:
+
+```json
+{
+  "ok": true,
+  "market_id": "<uuid>",
+  "total_voters": 42,
+  "outcomes": [
+    {
+      "outcome_id": "<uuid>",
+      "pickers": 18,
+      "confident_pickers": 15,
+      "confidence_sum": 112
+    }
+  ]
+}
+```
+
+- `avg` for an option = `confidence_sum / confident_pickers` when `confident_pickers > 0`, else null.
+- Chooser share = `pickers / total_voters`.
+- Error: `{ "ok": false, "error": "..." }`.
+
+Web prefers the same column/RPC math via `resolveOutcomeAvgConfidence` in `lib/pulse-vote-aggregates.ts`.
 
 ## RPC contract (mobile / web)
 

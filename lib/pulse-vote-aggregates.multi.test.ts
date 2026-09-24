@@ -3,7 +3,9 @@ import { describe, it } from 'node:test'
 import {
   aggregatePulseVotes,
   outcomeAvgConfidence,
+  outcomeAvgConfidenceFromTotals,
   outcomeChooserShare,
+  resolveOutcomeAvgConfidence,
 } from './pulse-vote-aggregates.ts'
 import { canShowFullReveal } from './post-vote-reveal.ts'
 import { PARTICIPATION_REVEAL_THRESHOLD } from './display/participation.ts'
@@ -74,6 +76,22 @@ describe('multi-select aggregation', () => {
     assert.equal(
       outcomeAvgConfidence(agg.byOutcome['aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa']),
       7
+    )
+  })
+
+  it('outcomeAvgConfidenceFromTotals matches mobile formula (excludes 0)', () => {
+    // 2 pickers, one stated 8 and one No lo sé → sum 8, confident_pickers 1
+    assert.equal(outcomeAvgConfidenceFromTotals(8, 1), 8)
+    assert.equal(outcomeAvgConfidenceFromTotals(8, 0), null)
+    // Diluted wrong formula would be 8/2 = 4
+    assert.notEqual(outcomeAvgConfidenceFromTotals(8, 1), 8 / 2)
+    assert.equal(
+      resolveOutcomeAvgConfidence({
+        totalConfidence: 12,
+        confidentPickCount: 2,
+        stats: { count: 3, confidenceSum: 12, confidenceCount: 2 },
+      }),
+      6
     )
   })
 

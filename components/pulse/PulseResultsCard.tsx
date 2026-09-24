@@ -11,8 +11,8 @@ import {
 } from '@/lib/display/participation'
 import { lowNRevealCopy } from '@/lib/post-vote-reveal'
 import {
-  outcomeAvgConfidence,
   outcomeChooserShare,
+  resolveOutcomeAvgConfidence,
   type PulseOutcomeVoteStats,
 } from '@/lib/pulse-vote-aggregates'
 import type { VoteMode } from '@/lib/pulse-vote-ranking'
@@ -37,6 +37,8 @@ type PulseResultsCardOutcome = {
   /** Stored 0..1 (current_probability) — certainty share for single/ranked. */
   probability: number
   vote_count?: number | null
+  total_confidence?: number | null
+  confident_pick_count?: number | null
   translations?: unknown
 }
 
@@ -123,7 +125,11 @@ export default function PulseResultsCard({
           outcome: o,
           barPct: pct,
           headlinePct: pct,
-          avgConf: outcomeAvgConfidence(stats),
+          avgConf: resolveOutcomeAvgConfidence({
+            totalConfidence: o.total_confidence,
+            confidentPickCount: o.confident_pick_count,
+            stats,
+          }),
           sortKey: count,
         }
       }
@@ -133,7 +139,11 @@ export default function PulseResultsCard({
         outcome: o,
         barPct: toDisplayPercentRounded(prob),
         headlinePct: toDisplayPercentRounded(prob),
-        avgConf: outcomeAvgConfidence(stats),
+        avgConf: resolveOutcomeAvgConfidence({
+          totalConfidence: o.total_confidence,
+          confidentPickCount: o.confident_pick_count,
+          stats,
+        }),
         sortKey: prob,
       }
     })

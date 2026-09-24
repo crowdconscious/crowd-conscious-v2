@@ -27,7 +27,8 @@ import {
   histogramConfidenceSum,
   histogramCountAtLeast,
   histogramCountAtMost,
-  outcomeAvgConfidence,
+  histogramValidCount,
+  resolveOutcomeAvgConfidence,
   type PulseVoteAggregates,
 } from '@/lib/pulse-vote-aggregates'
 import type { Database } from '@/types/database'
@@ -72,6 +73,8 @@ export type PulseOutcomeRow = {
   is_other?: boolean | null
   vote_count?: number | null
   total_confidence?: number | null
+  /** Picks with confidence >= 1. Migration 262. */
+  confident_pick_count?: number | null
   is_winner?: boolean | null
 }
 
@@ -246,9 +249,10 @@ export default function PulseResultClient({
   )
 
   const totalVotes = aggregates.totalVotes
+  const statedConfN = histogramValidCount(aggregates.confidenceHistogram)
   const avgConfidence =
-    totalVotes > 0
-      ? histogramConfidenceSum(aggregates.confidenceHistogram) / totalVotes
+    statedConfN > 0
+      ? histogramConfidenceSum(aggregates.confidenceHistogram) / statedConfN
       : 0
 
   // Reveal the community signal (per-option %, charts, insights, reasonings)
@@ -322,8 +326,14 @@ export default function PulseResultClient({
     const lead = sorted[0]
     const second = sorted[1]
     const leadingPct = Math.round(lead.probability * 100)
-    const avgForOutcome = (oid: string) =>
-      outcomeAvgConfidence(aggregates.byOutcome[oid])
+    const avgForOutcome = (oid: string) => {
+      const o = outcomes.find((x) => x.id === oid)
+      return resolveOutcomeAvgConfidence({
+        totalConfidence: o?.total_confidence,
+        confidentPickCount: o?.confident_pick_count,
+        stats: aggregates.byOutcome[oid],
+      })
+    }
     const leadingConf = avgForOutcome(lead.id)
     const secondConf = second ? avgForOutcome(second.id) : null
     const leadingLabel = getOutcomeLabel(lead, locale).split(' / ')[0]
@@ -355,7 +365,11 @@ export default function PulseResultClient({
     const pct = Math.round(leadingOutcome.probability * 100)
     const shortLabel = getOutcomeLabel(leadingOutcome, locale).split(' / ')[0]
     const leadingConf = (
-      outcomeAvgConfidence(aggregates.byOutcome[leadingOutcome.id]) ?? 0
+      resolveOutcomeAvgConfidence({
+        totalConfidence: leadingOutcome.total_confidence,
+        confidentPickCount: leadingOutcome.confident_pick_count,
+        stats: aggregates.byOutcome[leadingOutcome.id],
+      }) ?? 0
     ).toFixed(1)
     const strongPhraseEs =
       parseFloat(leadingConf) >= 7
@@ -463,6 +477,7 @@ export default function PulseResultClient({
                   probability: o.probability,
                   vote_count: o.vote_count ?? 0,
                   total_confidence: o.total_confidence ?? 0,
+                  confident_pick_count: o.confident_pick_count ?? 0,
                   is_winner: o.is_winner ?? null,
                   translations: o.translations as
                     | Record<string, { label?: string; subtitle?: string }>
