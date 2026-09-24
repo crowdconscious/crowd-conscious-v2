@@ -280,8 +280,16 @@ export default function CreatePulseForm({
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    setLoading(true)
     const clean = options.filter((o) => o.title.trim())
+    if (!description.trim()) {
+      setError(
+        language === 'es'
+          ? 'La descripción / contexto es obligatorio para crear un Pulse.'
+          : 'Description / context is required to create a Pulse.'
+      )
+      return
+    }
+    setLoading(true)
     try {
       const res = await fetch(`/api/dashboard/sponsor/${encodeURIComponent(token)}/create-pulse`, {
         method: 'POST',
@@ -493,6 +501,7 @@ export default function CreatePulseForm({
           <FieldLabel
             label={t('create_form.field_context_label')}
             tip={t('create_form.field_context_tip')}
+            required
             htmlFor="pulse-context"
           />
           <textarea
@@ -500,6 +509,7 @@ export default function CreatePulseForm({
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={4}
+            required
             placeholder={t('create_form.field_context_placeholder')}
             className={textareaClass}
           />

@@ -96,6 +96,13 @@ export async function POST(
         { status: 400 }
       )
     }
+    // prediction_markets.description is NOT NULL; empty context used to 500 via RPC.
+    if (!description) {
+      return NextResponse.json(
+        { error: 'La descripción / contexto es obligatorio para crear un Pulse.' },
+        { status: 400 }
+      )
+    }
     if (normalizedOutcomes.length > LISTED_OUTCOMES_MAX) {
       return NextResponse.json(
         { error: `Maximum ${LISTED_OUTCOMES_MAX} listed options. Other is extra.` },
@@ -142,7 +149,7 @@ export async function POST(
 
     const { data: marketId, error: rpcError } = await admin.rpc('create_multi_market', {
       p_title: title,
-      p_description: description || null,
+      p_description: description,
       p_category: 'community',
       p_created_by: createdBy,
       p_end_date: endDateIso,

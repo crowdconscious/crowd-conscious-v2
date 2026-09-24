@@ -380,7 +380,8 @@ export default function CreatePulsePage() {
         body: JSON.stringify({
           is_draft: mode === 'draft',
           title: title.trim(),
-          description: description.trim() || null,
+          // Contexto ampliado is optional; fall back to short so description stays NOT NULL.
+          description: description.trim() || descriptionShort.trim() || null,
           description_short: descriptionShort.trim(),
           category: category || 'community',
           ...(durationMode === 'custom'
