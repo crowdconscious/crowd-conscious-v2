@@ -43,17 +43,32 @@ export async function GET(
 
     const labelById = new Map((outcomes ?? []).map((o) => [o.id, o.label]))
 
+    const headers = ['created_at', 'outcome_label', 'confidence', 'anonymous', 'reasoning', 'selections']
+    const escape = (s: string) => `"${s.replace(/"/g, '""')}"`
+    const lines = [headers.join(',')]
+
+    const { data: selectionRows } = await admin
+      .from('market_vote_selections')
+      .select('vote_id, outcome_id, confidence')
+      .eq('market_id', marketId)
+    const selsByVote = new Map<string, string>()
+    for (const row of selectionRows ?? []) {
+      const r = row as { vote_id: string; outcome_id: string; confidence: number }
+      const label = labelById.get(r.outcome_id) ?? r.outcome_id
+      const prev = selsByVote.get(r.vote_id)
+      const piece = `${label}:${r.confidence}`
+      selsByVote.set(r.vote_id, prev ? `${prev}; ${piece}` : piece)
+    }
+
     const { data: votes } = await admin
       .from('market_votes')
-      .select('created_at, outcome_id, confidence, reasoning, is_anonymous')
+      .select('id, created_at, outcome_id, confidence, reasoning, is_anonymous')
       .eq('market_id', marketId)
       .order('created_at', { ascending: true })
 
-    const headers = ['created_at', 'outcome_label', 'confidence', 'anonymous', 'reasoning']
-    const escape = (s: string) => `"${s.replace(/"/g, '""')}"`
-    const lines = [headers.join(',')]
     for (const v of votes ?? []) {
       const label = labelById.get(v.outcome_id as string) ?? v.outcome_id
+      const voteId = (v as { id?: string }).id
       lines.push(
         [
           new Date(v.created_at as string).toISOString(),
@@ -61,6 +76,7 @@ export async function GET(
           String(v.confidence ?? ''),
           v.is_anonymous ? 'yes' : 'no',
           escape(String((v as { reasoning?: string }).reasoning ?? '')),
+          escape(voteId ? selsByVote.get(voteId) ?? '' : ''),
         ].join(',')
       )
     }

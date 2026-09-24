@@ -6,6 +6,16 @@ import {
   normalizeOtherText,
   parseRankings,
 } from '@/lib/pulse-vote-ranking'
+import {
+  parseSelections,
+  primaryFromSelections,
+} from '@/lib/multi-select-pulses'
+import {
+  standardRateLimit,
+  getRateLimitIdentifier,
+  checkRateLimit,
+  rateLimitResponse,
+} from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -14,17 +24,47 @@ export const maxDuration = 30
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 /**
- * Browser guest vote (localStorage guest UUID): inserts market_votes and updates
- * market_outcomes probabilities via execute_anonymous_market_vote (service role).
+ * Guest vote for browsers and native apps (no cookies required).
+ * Body JSON → execute_anonymous_market_vote via service_role.
+ * Rate limit: same standard tier as /api/predictions/vote (20 req/min/IP).
+ *
+ * See docs/MULTI-SELECT-PULSES.md for the mobile request/response contract.
  */
 export async function POST(request: Request) {
   try {
+    const rlIdentifier = await getRateLimitIdentifier(request, null)
+    const rl = await checkRateLimit(standardRateLimit, rlIdentifier)
+    if (rl && !rl.allowed) {
+      return rateLimitResponse(rl.limit, rl.remaining, rl.reset)
+    }
+
     const body = await request.json()
-    const { market_id, outcome_id, confidence, guest_id, reasoning: rawReasoning } = body
+    const { market_id, guest_id, reasoning: rawReasoning } = body
     const rankings = parseRankings(body.rankings)
     const otherNorm = normalizeOtherText(body.other_text ?? body.otherText)
     if (!otherNorm.ok) {
       return NextResponse.json({ error: otherNorm.error }, { status: 400 })
+    }
+
+    const selParsed = parseSelections(body.selections)
+    if (!selParsed.ok) {
+      return NextResponse.json({ error: selParsed.error }, { status: 400 })
+    }
+    const selections = selParsed.selections
+
+    let outcome_id: string | undefined =
+      typeof body.outcome_id === 'string' ? body.outcome_id : undefined
+    let conf: number =
+      body.confidence == null || body.confidence === ''
+        ? NaN
+        : typeof body.confidence === 'number'
+          ? body.confidence
+          : parseInt(String(body.confidence), 10)
+
+    if (selections && selections.length > 0) {
+      const primary = primaryFromSelections(selections)
+      outcome_id = primary.outcome_id
+      conf = primary.confidence
     }
 
     if (!market_id || !outcome_id || !guest_id) {
@@ -35,12 +75,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid UUID' }, { status: 400 })
     }
 
-    const conf =
-      confidence == null || confidence === ''
-        ? NaN
-        : typeof confidence === 'number'
-          ? confidence
-          : parseInt(String(confidence), 10)
     // 0 = "No lo sé" (excluded from confidence average). Never impute 5.
     if (isNaN(conf) || conf < 0 || conf > 10) {
       return NextResponse.json({ error: 'Invalid confidence value' }, { status: 400 })
@@ -72,6 +106,7 @@ export async function POST(request: Request) {
       p_confidence: conf,
       p_rankings: rankings,
       p_other_text: otherNorm.text,
+      p_selections: selections,
     })
 
     if (rpcError) {
@@ -146,6 +181,8 @@ export async function POST(request: Request) {
       xp_earned: 0,
       outcome_label: (rpcData as { outcome_label?: string })?.outcome_label,
       new_probability: (rpcData as { new_probability?: number })?.new_probability,
+      vote_id: voteId,
+      confidence: (rpcData as { confidence?: number })?.confidence ?? conf,
     })
   } catch (err) {
     console.error('[anonymous vote]', err)

@@ -10,6 +10,8 @@ export type PulseCsvVote = {
   rank2_label?: string
   rank3_label?: string
   other_text?: string | null
+  /** Multi: "label:conf; label:conf" — keeps old columns for primary. */
+  selections?: string | null
 }
 
 export function exportPulseVotesCsv(votes: PulseCsvVote[], marketTitle: string) {
@@ -23,6 +25,7 @@ export function exportPulseVotesCsv(votes: PulseCsvVote[], marketTitle: string) 
     'Type',
     'Reasoning',
     'Other_text',
+    'Selections',
   ]
   const rows = votes.map((v) => [
     new Date(v.created_at).toISOString(),
@@ -34,6 +37,7 @@ export function exportPulseVotesCsv(votes: PulseCsvVote[], marketTitle: string) 
     v.kind,
     `"${String(v.reasoning ?? '').replace(/"/g, '""')}"`,
     `"${String(v.other_text ?? '').replace(/"/g, '""')}"`,
+    `"${String(v.selections ?? '').replace(/"/g, '""')}"`,
   ])
   const csv = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n')
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })

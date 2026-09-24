@@ -42,12 +42,15 @@ export type PulseVoteRow = {
   reasoning?: string | null
   rankings?: unknown
   other_text?: string | null
+  /** Multi picks; also present for single/ranked after mig 262 backfill. */
+  selections?: { outcome_id: string; confidence: number }[] | null
 }
 
 /** The only per-vote data a public viewer receives: their own vote. */
 export type PulseViewerVote = {
   outcomeId: string
   confidence: number | null
+  selections?: { outcome_id: string; confidence: number }[] | null
 }
 
 export type PulseFeaturedReasoning = {
@@ -88,7 +91,9 @@ type Props = {
   sponsorName: string | null
   sponsorLogoUrl: string | null
   outcomes: PulseOutcomeRow[]
-  voteMode?: 'single' | 'ranked'
+  voteMode?: 'single' | 'ranked' | 'multi'
+  /** For vote_mode=multi (2–5). */
+  maxSelections?: number
   allowOther?: boolean
   /**
    * Server-side vote aggregation. The public payload deliberately carries no
@@ -140,6 +145,7 @@ export default function PulseResultClient({
   sponsorLogoUrl,
   outcomes: initialOutcomes,
   voteMode = 'single',
+  maxSelections = 3,
   allowOther = false,
   aggregates: serverAggregates,
   viewerVote = null,
@@ -283,6 +289,13 @@ export default function PulseResultClient({
       const ranks = parseRankings(v.rankings)
       const rank2 = ranks?.find((r) => r.rank === 2)?.outcome_id
       const rank3 = ranks?.find((r) => r.rank === 3)?.outcome_id
+      const sels = v.selections
+      const selectionsStr =
+        Array.isArray(sels) && sels.length > 0
+          ? sels
+              .map((s) => `${outcomeLabelById(s.outcome_id)}:${s.confidence}`)
+              .join('; ')
+          : ''
       return {
         created_at: v.created_at,
         outcome_id: v.outcome_id,
@@ -293,6 +306,7 @@ export default function PulseResultClient({
         rank2_label: rank2 ? outcomeLabelById(rank2) : '',
         rank3_label: rank3 ? outcomeLabelById(rank3) : '',
         other_text: v.other_text ?? '',
+        selections: selectionsStr,
       }
     })
   }, [votes, outcomeLabelById])
@@ -369,6 +383,7 @@ export default function PulseResultClient({
         xp_earned: 0,
         is_correct: null as boolean | null,
         bonus_xp: 0,
+        selections: viewerVote.selections ?? null,
       }
     : null
 
@@ -489,6 +504,8 @@ export default function PulseResultClient({
                   totalVotes={totalVotes}
                   avgConfidence={totalVotes > 0 ? avgConfidence : null}
                   locale={locale}
+                  voteMode={voteMode}
+                  byOutcome={aggregates.byOutcome}
                   className="animate-[fade-in_300ms_ease-out]"
                 />
                 {voteMode === 'ranked' &&

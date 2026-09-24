@@ -522,6 +522,20 @@ export async function startRun(input: StartRunInput): Promise<StartRunResult> {
   const { getAnthropicClient, MODELS } = await loadConfig()
   const admin = input.adminClient ?? (await loadAdmin())
 
+  // Multi-select Pulses are excluded from simulation / divergence for now.
+  if (!isBrandPretest && input.marketId) {
+    const { data: modeRow } = await admin
+      .from('prediction_markets')
+      .select('vote_mode')
+      .eq('id', input.marketId)
+      .maybeSingle()
+    if ((modeRow as { vote_mode?: string } | null)?.vote_mode === 'multi') {
+      throw new Error(
+        'startRun: multi-select Pulses (vote_mode=multi) are not supported by Pulse Simulation yet',
+      )
+    }
+  }
+
   // Resolve the exact question + options shown to the panel (what a real voter
   // sees). Market runs read metadata READ-ONLY; brand pre-tests use overrides.
   const requestContext = isBrandPretest
@@ -805,7 +819,7 @@ export interface DivergenceStoreOptions {
 
 export type DivergenceStoreResult =
   | { stored: true; divergence: DivergenceResult }
-  | { stored: false; reason: 'no_real_votes' }
+  | { stored: false; reason: 'no_real_votes' | 'multi_select_unsupported' }
 
 /**
  * Compute + store the Divergence Index for a completed run against the REAL
@@ -836,6 +850,17 @@ export async function computeAndStoreDivergence(
     throw new Error(
       `computeAndStoreDivergence: run ${runId} has no market_id (brand pre-tests have no real Pulse to compare)`,
     )
+  }
+
+  if (run.market_id && !options.realVotesOverride) {
+    const { data: modeRow } = await admin
+      .from('prediction_markets')
+      .select('vote_mode')
+      .eq('id', run.market_id)
+      .maybeSingle()
+    if ((modeRow as { vote_mode?: string } | null)?.vote_mode === 'multi') {
+      return { stored: false, reason: 'multi_select_unsupported' }
+    }
   }
 
   const realSnapshot = options.realVotesOverride

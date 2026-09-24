@@ -141,6 +141,7 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
       created_by,
       is_draft,
       vote_mode,
+      max_selections,
       allow_other,
       pulse_client_name,
       pulse_client_logo,
@@ -212,8 +213,26 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
 
   const isEnhancedView = isAdmin || tokenValid
 
-  const votes = (market.market_votes ?? []) as PulseVoteRow[]
+  const rawVotes = (market.market_votes ?? []) as PulseVoteRow[]
   const outcomes = (market.market_outcomes ?? []) as PulseOutcomeRow[]
+
+  // Attach multi-select picks (migration 262). Public aggregates need per-option
+  // people counts; single/ranked rows have one selection after backfill.
+  const { data: selectionRows } = await admin
+    .from('market_vote_selections')
+    .select('vote_id, outcome_id, confidence')
+    .eq('market_id', id)
+  const selectionsByVote = new Map<string, { outcome_id: string; confidence: number }[]>()
+  for (const row of selectionRows ?? []) {
+    const r = row as { vote_id: string; outcome_id: string; confidence: number }
+    const list = selectionsByVote.get(r.vote_id) ?? []
+    list.push({ outcome_id: r.outcome_id, confidence: r.confidence })
+    selectionsByVote.set(r.vote_id, list)
+  }
+  const votes: PulseVoteRow[] = rawVotes.map((v) => ({
+    ...v,
+    selections: selectionsByVote.get(v.id) ?? null,
+  }))
 
   // Privacy + payload size: the public client payload carries only
   // server-side aggregates plus the viewer's own vote — never the raw
@@ -222,7 +241,11 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
   const aggregates = aggregatePulseVotes(votes)
   const viewerVoteRow = user ? votes.find((v) => v.user_id === user.id) : undefined
   const viewerVote: PulseViewerVote | null = viewerVoteRow
-    ? { outcomeId: viewerVoteRow.outcome_id, confidence: viewerVoteRow.confidence }
+    ? {
+        outcomeId: viewerVoteRow.outcome_id,
+        confidence: viewerVoteRow.confidence,
+        selections: viewerVoteRow.selections ?? null,
+      }
     : null
 
   const featuredReasonings = await loadMarketVoteReasoningsWithAuthors(admin, id, locale)
@@ -347,6 +370,11 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
         sponsorLogoUrl={market.sponsor_logo_url}
         outcomes={outcomes}
         voteMode={parseVoteMode((market as { vote_mode?: string }).vote_mode)}
+        maxSelections={
+          typeof (market as { max_selections?: number }).max_selections === 'number'
+            ? (market as { max_selections: number }).max_selections
+            : 3
+        }
         allowOther={(market as { allow_other?: boolean }).allow_other === true}
         aggregates={aggregates}
         viewerVote={viewerVote}

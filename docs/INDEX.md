@@ -22,6 +22,7 @@
 | [`RESEND-SMTP-SETUP.md`](RESEND-SMTP-SETUP.md) | Email sending setup (Resend + Supabase Auth SMTP) |
 | [`EMAIL-RATE-LIMIT-DEBUG.md`](EMAIL-RATE-LIMIT-DEBUG.md) | Email debugging playbook |
 | [`SIGNALS-OPS-EMAIL.md`](SIGNALS-OPS-EMAIL.md) | Señal Stage 50/200 ops packets — env flags, recipients, shadow model |
+| [`MULTI-SELECT-PULSES.md`](MULTI-SELECT-PULSES.md) | Multi-select Pulse votes — schema, RPC/HTTP contract, flag, rollout |
 | [`SIGNALS-DESIGN-2026.md`](SIGNALS-DESIGN-2026.md) | Citizen Signals product / data model overview |
 | [`SIGNALS-MVP-CHECKLIST.md`](SIGNALS-MVP-CHECKLIST.md) | Signals MVP checklist |
 | [`SIGNUP-PROFILE-FIX.md`](SIGNUP-PROFILE-FIX.md) | Signup / profile row recovery |

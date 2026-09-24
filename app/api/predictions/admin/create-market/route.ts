@@ -67,6 +67,17 @@ export async function POST(request: NextRequest) {
 
     const voteMode = parseVoteMode(body.vote_mode ?? body.voteMode)
     const allowOther = parseAllowOther(body.allow_other ?? body.allowOther)
+    const { parseMaxSelections, isMultiSelectPulsesEnabled } = await import(
+      '@/lib/multi-select-pulses'
+    )
+    const maxSelections = parseMaxSelections(body.max_selections ?? body.maxSelections)
+
+    if (voteMode === 'multi' && !isMultiSelectPulsesEnabled()) {
+      return Response.json(
+        { error: 'Multi-select Pulses are not enabled' },
+        { status: 400 }
+      )
+    }
 
     const wantsDraft = Boolean(is_draft)
 
@@ -223,6 +234,7 @@ export async function POST(request: NextRequest) {
         resolution_criteria: PULSE_DEFAULT_RESOLUTION_CRITERIA,
         vote_mode: voteMode,
         allow_other: allowOther,
+        ...(voteMode === 'multi' ? { max_selections: maxSelections } : {}),
       })
       .eq('id', marketId)
 

@@ -18,7 +18,7 @@ export const LISTED_OUTCOMES_MAX = 6
 export const OTHER_OUTCOME_LABEL_ES = 'Otro'
 export const OTHER_OUTCOME_LABEL_EN = 'Other'
 
-export type VoteMode = 'single' | 'ranked'
+export type VoteMode = 'single' | 'ranked' | 'multi'
 
 export type RankingEntry = {
   outcome_id: string
@@ -28,7 +28,9 @@ export type RankingEntry = {
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export function parseVoteMode(raw: unknown): VoteMode {
-  return raw === 'ranked' ? 'ranked' : 'single'
+  if (raw === 'ranked') return 'ranked'
+  if (raw === 'multi') return 'multi'
+  return 'single'
 }
 
 export function parseAllowOther(raw: unknown): boolean {
