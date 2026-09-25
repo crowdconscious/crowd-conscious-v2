@@ -2634,8 +2634,157 @@ export interface Database {
           },
         ]
       }
+      /**
+       * Reconocimientos intake rows. Public reads must use
+       * `recognitions_public` so `contact` / `user_id` never leak.
+       * Source: supabase/migrations/263_recognitions.sql
+       */
+      recognitions: {
+        Row: {
+          id: string
+          created_at: string
+          user_id: string | null
+          photo_path: string
+          what: string
+          where_text: string
+          who_type: string
+          how_known: string
+          credit_handle: string | null
+          contact: string | null
+          consent_at: string
+          consent_version: string
+          src: string
+          status: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reject_reason: string | null
+          reject_detail: string | null
+          admin_notes: string | null
+          share_slug: string
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          user_id?: string | null
+          photo_path: string
+          what: string
+          where_text: string
+          who_type: string
+          how_known: string
+          credit_handle?: string | null
+          contact?: string | null
+          consent_at: string
+          consent_version: string
+          src?: string
+          status?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reject_reason?: string | null
+          reject_detail?: string | null
+          admin_notes?: string | null
+          share_slug: string
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          user_id?: string | null
+          photo_path?: string
+          what?: string
+          where_text?: string
+          who_type?: string
+          how_known?: string
+          credit_handle?: string | null
+          contact?: string | null
+          consent_at?: string
+          consent_version?: string
+          src?: string
+          status?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reject_reason?: string | null
+          reject_detail?: string | null
+          admin_notes?: string | null
+          share_slug?: string
+        }
+        Relationships: []
+      }
+      /**
+       * Internal share/download events for Reconocimientos.
+       * Source: supabase/migrations/264_recognition_events.sql
+       * No anon read — service-role inserts + admin SELECT policy.
+       */
+      recognition_events: {
+        Row: {
+          id: string
+          recognition_id: string | null
+          event_type: string
+          created_at: string
+          src: string | null
+        }
+        Insert: {
+          id?: string
+          recognition_id?: string | null
+          event_type: string
+          created_at?: string
+          src?: string | null
+        }
+        Update: {
+          id?: string
+          recognition_id?: string | null
+          event_type?: string
+          created_at?: string
+          src?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recognition_events_recognition_id_fkey"
+            columns: ["recognition_id"]
+            isOneToOne: false
+            referencedRelation: "recognitions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
+      /**
+       * Approved recognitions only — no contact / user_id / reject fields.
+       * Source: supabase/migrations/263_recognitions.sql
+       */
+      recognitions_public: {
+        Row: {
+          id: string
+          created_at: string
+          photo_path: string
+          what: string
+          where_text: string
+          who_type: string
+          how_known: string
+          credit_handle: string | null
+          src: string
+          share_slug: string
+          reviewed_at: string | null
+        }
+        Relationships: []
+      }
+      /**
+       * Admin/service-role weekly funnel + share metrics.
+       * Source: supabase/migrations/264_recognition_events.sql
+       */
+      recognitions_weekly_stats: {
+        Row: {
+          week_start: string | null
+          src: string | null
+          status: string | null
+          submissions: number | null
+          reject_reason: string | null
+          rejects: number | null
+          event_type: string | null
+          event_src: string | null
+          events: number | null
+        }
+        Relationships: []
+      }
       citizen_signals_public: {
         // Anon-safe projection of citizen_signals where publication_status =
         // 'published'. Source: supabase/migrations/219_citizen_signals_mvp.sql
