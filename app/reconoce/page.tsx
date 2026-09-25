@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { headers } from 'next/headers'
 import {
+  insertRecognitionEvent,
   isReconocimientosEnabled,
   sanitizeSrc,
 } from '@/lib/reconocimientos'
@@ -16,6 +18,13 @@ export const metadata: Metadata = {
 
 type PageProps = {
   searchParams: Promise<{ src?: string }>
+}
+
+/** Lightweight bot/UA filter — skip intake_view for obvious crawlers. */
+function isBotUserAgent(ua: string): boolean {
+  return /bot|crawler|spider|slurp|facebookexternalhit|whatsapp|telegram|preview|headless|pingdom|uptimerobot/i.test(
+    ua
+  )
 }
 
 export default async function ReconocePage({ searchParams }: PageProps) {
@@ -43,6 +52,21 @@ export default async function ReconocePage({ searchParams }: PageProps) {
         </main>
       </div>
     )
+  }
+
+  // Server-side intake_view — no PII / no IP. Skip obvious bots.
+  try {
+    const h = await headers()
+    const ua = h.get('user-agent') ?? ''
+    if (!isBotUserAgent(ua)) {
+      await insertRecognitionEvent({
+        recognition_id: null,
+        event_type: 'intake_view',
+        src,
+      })
+    }
+  } catch (err) {
+    console.warn('[reconoce] intake_view failed', err)
   }
 
   return (

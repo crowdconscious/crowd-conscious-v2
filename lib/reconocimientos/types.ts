@@ -19,6 +19,8 @@ export type RecognitionRow = {
   reviewed_at: string | null
   reviewed_by: string | null
   reject_reason: string | null
+  reject_detail: string | null
+  admin_notes: string | null
   share_slug: string
 }
 

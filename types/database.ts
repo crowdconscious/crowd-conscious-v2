@@ -2658,6 +2658,8 @@ export interface Database {
           reviewed_at: string | null
           reviewed_by: string | null
           reject_reason: string | null
+          reject_detail: string | null
+          admin_notes: string | null
           share_slug: string
         }
         Insert: {
@@ -2678,6 +2680,8 @@ export interface Database {
           reviewed_at?: string | null
           reviewed_by?: string | null
           reject_reason?: string | null
+          reject_detail?: string | null
+          admin_notes?: string | null
           share_slug: string
         }
         Update: {
@@ -2698,6 +2702,8 @@ export interface Database {
           reviewed_at?: string | null
           reviewed_by?: string | null
           reject_reason?: string | null
+          reject_detail?: string | null
+          admin_notes?: string | null
           share_slug?: string
         }
         Relationships: []
@@ -2710,21 +2716,21 @@ export interface Database {
       recognition_events: {
         Row: {
           id: string
-          recognition_id: string
+          recognition_id: string | null
           event_type: string
           created_at: string
           src: string | null
         }
         Insert: {
           id?: string
-          recognition_id: string
+          recognition_id?: string | null
           event_type: string
           created_at?: string
           src?: string | null
         }
         Update: {
           id?: string
-          recognition_id?: string
+          recognition_id?: string | null
           event_type?: string
           created_at?: string
           src?: string | null
@@ -2771,7 +2777,10 @@ export interface Database {
           src: string | null
           status: string | null
           submissions: number | null
+          reject_reason: string | null
+          rejects: number | null
           event_type: string | null
+          event_src: string | null
           events: number | null
         }
         Relationships: []

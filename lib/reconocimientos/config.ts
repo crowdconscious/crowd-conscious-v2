@@ -37,13 +37,16 @@ export function withReconocimientosSrc(baseUrl: string, src: string): string {
   return parsed.toString()
 }
 
-/** Sanitize src attribution: [a-z0-9_], max 40, default 'web'. */
+/**
+ * Sanitize src attribution: [a-z0-9_], max 40.
+ * Missing/empty → `unknown` (web footer still passes src=web explicitly).
+ */
 export function sanitizeSrc(raw: unknown): string {
-  if (typeof raw !== 'string') return 'web'
+  if (typeof raw !== 'string') return 'unknown'
   const cleaned = raw
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9_]/g, '')
     .slice(0, 40)
-  return cleaned || 'web'
+  return cleaned || 'unknown'
 }

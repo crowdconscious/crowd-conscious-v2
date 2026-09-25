@@ -73,6 +73,50 @@ export const RECOGNITION_EVENT_TYPES = [
   'share_copy',
   'card_download_portrait',
   'card_download_story',
+  'intake_view',
 ] as const
 
 export type RecognitionEventType = (typeof RECOGNITION_EVENT_TYPES)[number]
+
+/** Admin reject presets (stored in reject_reason). */
+export const REJECT_REASONS = [
+  'promo',
+  'selfie',
+  'autonominacion',
+  'menores',
+  'queja_senal',
+  'politica',
+  'otro',
+] as const
+
+export type RejectReason = (typeof REJECT_REASONS)[number]
+
+export const REJECT_REASON_LABELS_ES: Record<RejectReason, string> = {
+  promo: 'Promo / publicidad',
+  selfie: 'Selfie',
+  autonominacion: 'Autonominación',
+  menores: 'Menores',
+  queja_senal: 'Queja (pertenece a Señales)',
+  politica: 'Política',
+  otro: 'Otro',
+}
+
+export const MAX_REJECT_DETAIL_LEN = 500
+export const MAX_ADMIN_NOTES_LEN = 2000
+
+/**
+ * Common src values (free-form after sanitize). Documented for Social.
+ * Missing/empty → `unknown`. Footer passes `web` explicitly.
+ */
+export const COMMON_SRC_VALUES = [
+  'web',
+  'share',
+  'app',
+  'unknown',
+  'social_ig',
+  'social_tiktok',
+  'social_fb',
+  'papalote',
+  'dm',
+  // loc_<id> also allowed (e.g. loc_roma)
+] as const

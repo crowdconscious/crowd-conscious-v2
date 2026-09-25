@@ -65,7 +65,12 @@ export async function updateRecognitionStatus(
   patch: Partial<
     Pick<
       RecognitionRow,
-      'status' | 'reviewed_at' | 'reviewed_by' | 'reject_reason'
+      | 'status'
+      | 'reviewed_at'
+      | 'reviewed_by'
+      | 'reject_reason'
+      | 'reject_detail'
+      | 'admin_notes'
     >
   >
 ) {
@@ -127,17 +132,18 @@ export async function listApprovedPublic(
 }
 
 export async function insertRecognitionEvent(args: {
-  recognition_id: string
+  recognition_id?: string | null
   event_type:
     | 'share_whatsapp'
     | 'share_native'
     | 'share_copy'
     | 'card_download_portrait'
     | 'card_download_story'
+    | 'intake_view'
   src?: string | null
 }) {
   const { error } = await db().from('recognition_events').insert({
-    recognition_id: args.recognition_id,
+    recognition_id: args.recognition_id ?? null,
     event_type: args.event_type,
     src: args.src ?? null,
   })
@@ -162,16 +168,21 @@ export type WeeklyRecognitionStat = {
   src: string | null
   status: string | null
   submissions: number
+  reject_reason: string | null
+  rejects: number
   event_type: string | null
+  event_src: string | null
   events: number
 }
 
 export async function getWeeklyRecognitionStats(
-  limit = 24
+  limit = 48
 ): Promise<WeeklyRecognitionStat[]> {
   const { data, error } = await db()
     .from('recognitions_weekly_stats')
-    .select('week_start, src, status, submissions, event_type, events')
+    .select(
+      'week_start, src, status, submissions, reject_reason, rejects, event_type, event_src, events'
+    )
     .order('week_start', { ascending: false })
     .limit(limit)
   if (error) throw error

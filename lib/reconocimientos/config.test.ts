@@ -50,8 +50,8 @@ describe('reconocimientos config', () => {
   it('sanitizes src', () => {
     assert.equal(sanitizeSrc('Web'), 'web')
     assert.equal(sanitizeSrc('ios-app!!!'), 'iosapp')
-    assert.equal(sanitizeSrc(''), 'web')
-    assert.equal(sanitizeSrc(null), 'web')
+    assert.equal(sanitizeSrc(''), 'unknown')
+    assert.equal(sanitizeSrc(null), 'unknown')
     assert.equal(sanitizeSrc('a'.repeat(50)).length, 40)
   })
 

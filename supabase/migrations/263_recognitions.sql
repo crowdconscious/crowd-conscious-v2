@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS public.recognitions (
   consent_version text NOT NULL,
 
   -- Attribution source (web / ios / android / papalote / …). Sanitized in API.
-  src text NOT NULL DEFAULT 'web'
+  src text NOT NULL DEFAULT 'unknown'
     CHECK (src ~ '^[a-z0-9_]{1,40}$'),
 
   status text NOT NULL DEFAULT 'pending'

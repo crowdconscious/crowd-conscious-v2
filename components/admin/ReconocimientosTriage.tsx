@@ -1,11 +1,14 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   HOW_KNOWN_LABELS_ES,
+  REJECT_REASON_LABELS_ES,
+  REJECT_REASONS,
   WHO_TYPE_LABELS_ES,
   type HowKnown,
   type RecognitionStatus,
+  type RejectReason,
   type WhoType,
 } from '@/lib/reconocimientos/constants'
 import type { RecognitionRow } from '@/lib/reconocimientos/types'
@@ -28,7 +31,10 @@ type WeeklyRow = {
   src: string | null
   status: string | null
   submissions: number
+  reject_reason: string | null
+  rejects: number
   event_type: string | null
+  event_src: string | null
   events: number
 }
 
@@ -42,6 +48,10 @@ export default function ReconocimientosTriage() {
   const [error, setError] = useState<string | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [rejectReasons, setRejectReasons] = useState<Record<string, string>>({})
+  const [rejectDetails, setRejectDetails] = useState<Record<string, string>>({})
+  const [adminNotesDraft, setAdminNotesDraft] = useState<Record<string, string>>(
+    {}
+  )
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -62,9 +72,19 @@ export default function ReconocimientosTriage() {
         setItems([])
         return
       }
-      setItems(data?.items ?? [])
+      const nextItems = data?.items ?? []
+      setItems(nextItems)
       setEventCounts(data?.eventCounts ?? [])
       setWeekly(data?.weekly ?? [])
+      setAdminNotesDraft((prev) => {
+        const next = { ...prev }
+        for (const item of nextItems) {
+          if (next[item.id] === undefined) {
+            next[item.id] = item.admin_notes ?? ''
+          }
+        }
+        return next
+      })
     } catch {
       setError('Error de red')
       setItems([])
@@ -77,16 +97,57 @@ export default function ReconocimientosTriage() {
     void load()
   }, [load])
 
+  const conversionRows = useMemo(() => {
+    const byWeekSrc = new Map<
+      string,
+      { week_start: string; src: string; views: number; submissions: number }
+    >()
+    for (const w of weekly) {
+      if (w.event_type === 'intake_view' && w.event_src) {
+        const key = `${w.week_start}::${w.event_src}`
+        const row = byWeekSrc.get(key) ?? {
+          week_start: w.week_start,
+          src: w.event_src,
+          views: 0,
+          submissions: 0,
+        }
+        row.views += w.events
+        byWeekSrc.set(key, row)
+      }
+      if (w.src && w.submissions > 0) {
+        const key = `${w.week_start}::${w.src}`
+        const row = byWeekSrc.get(key) ?? {
+          week_start: w.week_start,
+          src: w.src,
+          views: 0,
+          submissions: 0,
+        }
+        row.submissions += w.submissions
+        byWeekSrc.set(key, row)
+      }
+    }
+    return Array.from(byWeekSrc.values()).slice(0, 12)
+  }, [weekly])
+
   async function act(id: string, action: 'approve' | 'reject') {
     setBusyId(id)
     setError(null)
     try {
-      const body: { action: 'approve' | 'reject'; reject_reason?: string } = {
-        action,
-      }
+      const body: {
+        action: 'approve' | 'reject'
+        reject_reason?: string
+        reject_detail?: string
+      } = { action }
       if (action === 'reject') {
         const reason = rejectReasons[id]?.trim()
-        if (reason) body.reject_reason = reason
+        if (!reason) {
+          setError('Elige un motivo de rechazo')
+          setBusyId(null)
+          return
+        }
+        body.reject_reason = reason
+        const detail = rejectDetails[id]?.trim()
+        if (detail) body.reject_detail = detail
       }
       const res = await fetch(`/api/admin/reconocimientos/${id}`, {
         method: 'POST',
@@ -108,6 +169,33 @@ export default function ReconocimientosTriage() {
     }
   }
 
+  async function saveNotes(id: string) {
+    setBusyId(id)
+    setError(null)
+    try {
+      const res = await fetch(`/api/admin/reconocimientos/${id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'notes',
+          admin_notes: adminNotesDraft[id] ?? '',
+        }),
+      })
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as {
+          error?: string
+        } | null
+        setError(data?.error ?? 'No se pudieron guardar las notas')
+        return
+      }
+      await load()
+    } catch {
+      setError('Error de red')
+    } finally {
+      setBusyId(null)
+    }
+  }
+
   function eventsFor(id: string): string {
     const rows = eventCounts.filter((e) => e.recognition_id === id)
     if (rows.length === 0) return ''
@@ -117,37 +205,82 @@ export default function ReconocimientosTriage() {
   return (
     <div>
       {weekly.length > 0 && (
-        <div className="mb-6 overflow-x-auto rounded-xl border border-slate-800 bg-[#151c26] p-4">
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-            Métricas internas (semanal)
-          </p>
-          <table className="mt-3 w-full min-w-[520px] text-left text-xs text-slate-400">
-            <thead>
-              <tr className="border-b border-slate-800 text-slate-500">
-                <th className="py-1 pr-3 font-medium">Semana</th>
-                <th className="py-1 pr-3 font-medium">src</th>
-                <th className="py-1 pr-3 font-medium">status</th>
-                <th className="py-1 pr-3 font-medium">envíos</th>
-                <th className="py-1 pr-3 font-medium">evento</th>
-                <th className="py-1 font-medium">n</th>
-              </tr>
-            </thead>
-            <tbody>
-              {weekly.slice(0, 12).map((w, i) => (
-                <tr
-                  key={`${w.week_start}-${w.src}-${w.status}-${w.event_type}-${i}`}
-                  className="border-b border-slate-800/60"
-                >
-                  <td className="py-1 pr-3">{w.week_start}</td>
-                  <td className="py-1 pr-3">{w.src ?? '—'}</td>
-                  <td className="py-1 pr-3">{w.status ?? '—'}</td>
-                  <td className="py-1 pr-3">{w.submissions}</td>
-                  <td className="py-1 pr-3">{w.event_type ?? '—'}</td>
-                  <td className="py-1">{w.events}</td>
+        <div className="mb-6 space-y-4">
+          {conversionRows.length > 0 && (
+            <div className="overflow-x-auto rounded-xl border border-slate-800 bg-[#151c26] p-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Conversión intake (vistas → envíos) por src
+              </p>
+              <table className="mt-3 w-full min-w-[420px] text-left text-xs text-slate-400">
+                <thead>
+                  <tr className="border-b border-slate-800 text-slate-500">
+                    <th className="py-1 pr-3 font-medium">Semana</th>
+                    <th className="py-1 pr-3 font-medium">src</th>
+                    <th className="py-1 pr-3 font-medium">vistas</th>
+                    <th className="py-1 pr-3 font-medium">envíos</th>
+                    <th className="py-1 font-medium">conv.</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {conversionRows.map((row) => (
+                    <tr
+                      key={`${row.week_start}-${row.src}`}
+                      className="border-b border-slate-800/60"
+                    >
+                      <td className="py-1 pr-3">{row.week_start}</td>
+                      <td className="py-1 pr-3">{row.src}</td>
+                      <td className="py-1 pr-3">{row.views}</td>
+                      <td className="py-1 pr-3">{row.submissions}</td>
+                      <td className="py-1">
+                        {row.views > 0
+                          ? `${Math.round((row.submissions / row.views) * 100)}%`
+                          : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          <div className="overflow-x-auto rounded-xl border border-slate-800 bg-[#151c26] p-4">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+              Métricas internas (semanal)
+            </p>
+            <table className="mt-3 w-full min-w-[640px] text-left text-xs text-slate-400">
+              <thead>
+                <tr className="border-b border-slate-800 text-slate-500">
+                  <th className="py-1 pr-3 font-medium">Semana</th>
+                  <th className="py-1 pr-3 font-medium">src</th>
+                  <th className="py-1 pr-3 font-medium">status</th>
+                  <th className="py-1 pr-3 font-medium">envíos</th>
+                  <th className="py-1 pr-3 font-medium">rechazo</th>
+                  <th className="py-1 pr-3 font-medium">n rej.</th>
+                  <th className="py-1 pr-3 font-medium">evento</th>
+                  <th className="py-1 pr-3 font-medium">ev.src</th>
+                  <th className="py-1 font-medium">n</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {weekly.slice(0, 16).map((w, i) => (
+                  <tr
+                    key={`${w.week_start}-${w.src}-${w.status}-${w.reject_reason}-${w.event_type}-${w.event_src}-${i}`}
+                    className="border-b border-slate-800/60"
+                  >
+                    <td className="py-1 pr-3">{w.week_start}</td>
+                    <td className="py-1 pr-3">{w.src ?? '—'}</td>
+                    <td className="py-1 pr-3">{w.status ?? '—'}</td>
+                    <td className="py-1 pr-3">{w.submissions}</td>
+                    <td className="py-1 pr-3">{w.reject_reason ?? '—'}</td>
+                    <td className="py-1 pr-3">{w.rejects}</td>
+                    <td className="py-1 pr-3">{w.event_type ?? '—'}</td>
+                    <td className="py-1 pr-3">{w.event_src ?? '—'}</td>
+                    <td className="py-1">{w.events}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -176,7 +309,7 @@ export default function ReconocimientosTriage() {
             type="text"
             value={src}
             onChange={(e) => setSrc(e.target.value)}
-            placeholder="web, ios…"
+            placeholder="web, share…"
             className="mt-1 w-32 rounded-lg border border-slate-700 bg-[#151c26] px-3 py-2 text-sm text-slate-100"
           />
         </div>
@@ -208,6 +341,11 @@ export default function ReconocimientosTriage() {
               HOW_KNOWN_LABELS_ES[item.how_known as HowKnown] ?? item.how_known
             const busy = busyId === item.id
             const metrics = eventsFor(item.id)
+            const rejectLabel = item.reject_reason
+              ? (REJECT_REASON_LABELS_ES[
+                  item.reject_reason as RejectReason
+                ] ?? item.reject_reason)
+              : null
 
             return (
               <li
@@ -262,11 +400,40 @@ export default function ReconocimientosTriage() {
                         eventos: {metrics}
                       </p>
                     )}
-                    {item.reject_reason && (
+                    {rejectLabel && (
                       <p className="mt-1 text-xs text-red-400/80">
-                        rechazo: {item.reject_reason}
+                        rechazo: {rejectLabel}
+                        {item.reject_detail ? ` — ${item.reject_detail}` : ''}
                       </p>
                     )}
+
+                    <div className="mt-3">
+                      <label className="block text-xs font-medium text-slate-500">
+                        Notas internas (consentimiento DM, etc.)
+                      </label>
+                      <div className="mt-1 flex flex-wrap gap-2">
+                        <textarea
+                          value={adminNotesDraft[item.id] ?? ''}
+                          onChange={(e) =>
+                            setAdminNotesDraft((prev) => ({
+                              ...prev,
+                              [item.id]: e.target.value,
+                            }))
+                          }
+                          rows={2}
+                          placeholder='Ej. DM: respondió "Acepto"'
+                          className="min-w-[220px] flex-1 rounded-lg border border-slate-700 bg-[#0f1419] px-2 py-1.5 text-xs text-slate-200"
+                        />
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => void saveNotes(item.id)}
+                          className="self-start rounded-lg border border-slate-700 px-3 py-1.5 text-xs text-slate-300 hover:border-emerald-500/40 hover:text-emerald-300 disabled:opacity-50"
+                        >
+                          Guardar notas
+                        </button>
+                      </div>
+                    </div>
 
                     <div className="mt-3 flex flex-wrap items-center gap-2">
                       {item.status !== 'approved' && (
@@ -281,8 +448,7 @@ export default function ReconocimientosTriage() {
                       )}
                       {item.status !== 'rejected' && (
                         <>
-                          <input
-                            type="text"
+                          <select
                             value={rejectReasons[item.id] ?? ''}
                             onChange={(e) =>
                               setRejectReasons((prev) => ({
@@ -290,7 +456,25 @@ export default function ReconocimientosTriage() {
                                 [item.id]: e.target.value,
                               }))
                             }
-                            placeholder="Motivo (opcional)"
+                            className="rounded-lg border border-slate-700 bg-[#0f1419] px-2 py-1.5 text-xs text-slate-200"
+                          >
+                            <option value="">Motivo…</option>
+                            {REJECT_REASONS.map((reason) => (
+                              <option key={reason} value={reason}>
+                                {REJECT_REASON_LABELS_ES[reason]}
+                              </option>
+                            ))}
+                          </select>
+                          <input
+                            type="text"
+                            value={rejectDetails[item.id] ?? ''}
+                            onChange={(e) =>
+                              setRejectDetails((prev) => ({
+                                ...prev,
+                                [item.id]: e.target.value,
+                              }))
+                            }
+                            placeholder="Detalle (opcional)"
                             className="w-40 rounded-lg border border-slate-700 bg-[#0f1419] px-2 py-1.5 text-xs text-slate-200"
                           />
                           <button
