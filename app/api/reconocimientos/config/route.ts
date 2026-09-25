@@ -1,15 +1,20 @@
+import { NextResponse } from 'next/server'
 import { getReconocimientosConfig } from '@/lib/reconocimientos'
 
 /**
- * Public config for Reconocimientos Phase 0 (external form link-out).
+ * Public config for Reconocimientos.
  * Mobile reads this so one Vercel env change lights up web + app.
- * No auth. No secrets — only the public form URL when enabled.
+ * Contract: { enabled: boolean, intakeUrl: string | null }
+ * intakeUrl is the absolute /reconoce URL (no src). No auth. No secrets.
  */
 export async function GET() {
   const config = getReconocimientosConfig()
-  return Response.json(config, {
-    headers: {
-      'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60',
-    },
-  })
+  return NextResponse.json(
+    { enabled: config.enabled, intakeUrl: config.intakeUrl },
+    {
+      headers: {
+        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60',
+      },
+    }
+  )
 }

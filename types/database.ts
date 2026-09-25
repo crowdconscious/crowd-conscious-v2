@@ -2634,8 +2634,96 @@ export interface Database {
           },
         ]
       }
+      /**
+       * Reconocimientos intake rows. Public reads must use
+       * `recognitions_public` so `contact` / `user_id` never leak.
+       * Source: supabase/migrations/263_recognitions.sql
+       */
+      recognitions: {
+        Row: {
+          id: string
+          created_at: string
+          user_id: string | null
+          photo_path: string
+          what: string
+          where_text: string
+          who_type: string
+          how_known: string
+          credit_handle: string | null
+          contact: string | null
+          consent_at: string
+          consent_version: string
+          src: string
+          status: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reject_reason: string | null
+          share_slug: string
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          user_id?: string | null
+          photo_path: string
+          what: string
+          where_text: string
+          who_type: string
+          how_known: string
+          credit_handle?: string | null
+          contact?: string | null
+          consent_at: string
+          consent_version: string
+          src?: string
+          status?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reject_reason?: string | null
+          share_slug: string
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          user_id?: string | null
+          photo_path?: string
+          what?: string
+          where_text?: string
+          who_type?: string
+          how_known?: string
+          credit_handle?: string | null
+          contact?: string | null
+          consent_at?: string
+          consent_version?: string
+          src?: string
+          status?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reject_reason?: string | null
+          share_slug?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
+      /**
+       * Approved recognitions only — no contact / user_id / reject fields.
+       * Source: supabase/migrations/263_recognitions.sql
+       */
+      recognitions_public: {
+        Row: {
+          id: string
+          created_at: string
+          photo_path: string
+          what: string
+          where_text: string
+          who_type: string
+          how_known: string
+          credit_handle: string | null
+          src: string
+          share_slug: string
+          reviewed_at: string | null
+        }
+        Relationships: []
+      }
       citizen_signals_public: {
         // Anon-safe projection of citizen_signals where publication_status =
         // 'published'. Source: supabase/migrations/219_citizen_signals_mvp.sql

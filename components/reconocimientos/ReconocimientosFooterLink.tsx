@@ -1,12 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useLanguage } from '@/contexts/LanguageContext'
-import { withReconocimientosSrc } from '@/lib/reconocimientos'
+import { withReconocimientosSrc } from '@/lib/reconocimientos/config'
 
 type ConfigResponse = {
   enabled: boolean
-  url: string | null
+  intakeUrl: string | null
 }
 
 const COPY = {
@@ -21,10 +22,10 @@ const COPY = {
 } as const
 
 /**
- * Quiet footer entry for Reconocimientos Phase 0.
- * Fetches the public config endpoint so `RECONOCIMIENTOS_FORM_URL` can stay
- * server-only (one Vercel env change, no NEXT_PUBLIC / no mobile OTA).
- * Renders nothing while loading or when disabled.
+ * Quiet footer entry for Reconocimientos.
+ * Fetches the public config endpoint so `RECONOCIMIENTOS_ENABLED` can stay
+ * server-only. Renders nothing while loading or when disabled.
+ * Links internally to intake (same tab, no target=_blank).
  */
 export default function ReconocimientosFooterLink() {
   const { language } = useLanguage()
@@ -35,8 +36,14 @@ export default function ReconocimientosFooterLink() {
     fetch('/api/reconocimientos/config')
       .then((res) => (res.ok ? res.json() : null))
       .then((data: ConfigResponse | null) => {
-        if (cancelled || !data?.enabled || !data.url) return
-        setHref(withReconocimientosSrc(data.url, 'web'))
+        if (cancelled || !data?.enabled || !data.intakeUrl) return
+        const withSrc = withReconocimientosSrc(data.intakeUrl, 'web')
+        try {
+          const u = new URL(withSrc)
+          setHref(`${u.pathname}${u.search}`)
+        } catch {
+          setHref(withSrc)
+        }
       })
       .catch(() => {
         // Feature stays invisible on fetch failure.
@@ -52,15 +59,13 @@ export default function ReconocimientosFooterLink() {
 
   return (
     <li>
-      <a
+      <Link
         href={href}
-        target="_blank"
-        rel="noopener noreferrer"
         className="text-slate-300 transition-colors hover:text-teal-400"
         title={t.helper}
       >
         {t.label}
-      </a>
+      </Link>
       <p className="mt-0.5 text-xs text-slate-500">{t.helper}</p>
     </li>
   )
