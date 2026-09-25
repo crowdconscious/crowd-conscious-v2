@@ -5,6 +5,7 @@ import { Download } from 'lucide-react'
 import Logo from '@/components/Logo'
 import NewsletterForm from '@/components/NewsletterForm'
 import { FundThermometer } from '@/components/fund/FundThermometer'
+import ReconocimientosFooterLink from '@/components/reconocimientos/ReconocimientosFooterLink'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { getPodcastCopy } from '@/lib/i18n/podcast'
 
@@ -245,6 +246,8 @@ export default function Footer() {
                   {t.contact}
                 </a>
               </li>
+              {/* Reconocimientos Phase 0: config-gated external form. Renders nothing when unset. */}
+              <ReconocimientosFooterLink />
             </ul>
           </div>
           <div>
