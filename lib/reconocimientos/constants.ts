@@ -60,3 +60,19 @@ export const ALLOWED_IMAGE_TYPES = [
 ] as const
 
 export const STORAGE_BUCKET = 'recognitions'
+
+/** CTA on public recognition pages + share cards (no confirmation promise). */
+export const SHARE_CTA_TEXT_ES =
+  '¿Conoces algo así? Reconócelo en crowdconscious.app/reconoce'
+
+export const SHARE_CTA_PATH = '/reconoce?src=share'
+
+export const RECOGNITION_EVENT_TYPES = [
+  'share_whatsapp',
+  'share_native',
+  'share_copy',
+  'card_download_portrait',
+  'card_download_story',
+] as const
+
+export type RecognitionEventType = (typeof RECOGNITION_EVENT_TYPES)[number]

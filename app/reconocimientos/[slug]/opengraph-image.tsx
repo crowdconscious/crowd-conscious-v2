@@ -1,5 +1,6 @@
 import { ImageResponse } from 'next/og'
 import {
+  SHARE_CTA_TEXT_ES,
   downloadRecognitionPhoto,
   getPublicRecognitionBySlug,
 } from '@/lib/reconocimientos'
@@ -17,27 +18,9 @@ export default async function Image({ params }: Props) {
   const { slug } = await params
   const row = await getPublicRecognitionBySlug(slug)
 
+  // Pending/rejected (incl. reject-after-approve) must not resolve publicly.
   if (!row) {
-    return new ImageResponse(
-      (
-        <div
-          style={{
-            width: '100%',
-            height: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: '#0f1419',
-            color: '#fff',
-            fontSize: 48,
-            fontWeight: 700,
-          }}
-        >
-          Crowd Conscious
-        </div>
-      ),
-      { ...size }
-    )
+    return new Response('Not Found', { status: 404 })
   }
 
   let photoSrc: string | null = null
@@ -121,7 +104,19 @@ export default async function Image({ params }: Props) {
           >
             {what}
           </div>
-          <div style={{ fontSize: 22, color: '#94a3b8' }}>{row.where_text}</div>
+          <div style={{ fontSize: 22, color: '#94a3b8', marginBottom: 28 }}>
+            {row.where_text}
+          </div>
+          <div
+            style={{
+              fontSize: 20,
+              fontWeight: 600,
+              color: '#10b981',
+              lineHeight: 1.35,
+            }}
+          >
+            {SHARE_CTA_TEXT_ES}
+          </div>
         </div>
       </div>
     ),

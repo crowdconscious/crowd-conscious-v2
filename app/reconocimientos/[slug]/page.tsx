@@ -3,7 +3,10 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import {
   getPublicRecognitionBySlug,
+  SHARE_CTA_PATH,
+  SHARE_CTA_TEXT_ES,
   WHO_TYPE_LABELS_ES,
+  withShareSrc,
 } from '@/lib/reconocimientos'
 import { SITE_URL } from '@/lib/seo/site'
 import RecognitionShareButtons from '@/components/reconocimientos/RecognitionShareButtons'
@@ -23,7 +26,9 @@ export async function generateMetadata({
 
   const title = row.what.length > 80 ? `${row.what.slice(0, 77)}…` : row.what
   const description = `${row.where_text} · Crowd Conscious`
-  const pageUrl = `${SITE_URL.replace(/\/$/, '')}/reconocimientos/${row.share_slug}`
+  const pageUrl = withShareSrc(
+    `${SITE_URL.replace(/\/$/, '')}/reconocimientos/${row.share_slug}`
+  )
 
   return {
     title: `${title} | Crowd Conscious`,
@@ -42,14 +47,17 @@ export async function generateMetadata({
   }
 }
 
-export default async function RecognitionPublicPage({ params }: PageProps) {
+export default async function RecognitionPublicPage({
+  params,
+}: PageProps) {
   const { slug } = await params
   const row = await getPublicRecognitionBySlug(slug)
   if (!row) notFound()
 
   const whoLabel = WHO_TYPE_LABELS_ES[row.who_type] ?? row.who_type
-  const pageUrl = `${SITE_URL.replace(/\/$/, '')}/reconocimientos/${row.share_slug}`
-  const appHref = '/app'
+  const pageUrl = withShareSrc(
+    `${SITE_URL.replace(/\/$/, '')}/reconocimientos/${row.share_slug}`
+  )
 
   return (
     <div className="min-h-screen bg-[#0f1419] text-slate-100">
@@ -79,19 +87,23 @@ export default async function RecognitionPublicPage({ params }: PageProps) {
         )}
 
         <div className="mt-8">
-          <a
-            href={appHref}
-            className="flex w-full items-center justify-center rounded-xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-[#0f1419] transition hover:bg-emerald-400"
+          <Link
+            href={SHARE_CTA_PATH}
+            className="flex w-full items-center justify-center rounded-xl bg-emerald-500 px-4 py-3 text-center text-sm font-semibold text-[#0f1419] transition hover:bg-emerald-400"
           >
-            ¿Lo has visto? Confírmalo en la app.
-          </a>
+            {SHARE_CTA_TEXT_ES}
+          </Link>
         </div>
 
         <div className="mt-8">
           <p className="mb-3 text-xs font-medium uppercase tracking-wider text-slate-500">
             Compartir
           </p>
-          <RecognitionShareButtons url={pageUrl} title={row.what} />
+          <RecognitionShareButtons
+            url={pageUrl}
+            title={row.what}
+            recognitionId={row.id}
+          />
         </div>
 
         <p className="mt-10 text-center text-xs text-slate-600">

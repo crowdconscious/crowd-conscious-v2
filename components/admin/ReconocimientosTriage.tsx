@@ -17,10 +17,27 @@ const STATUSES: Array<RecognitionStatus | 'all'> = [
   'rejected',
 ]
 
+type EventCount = {
+  recognition_id: string
+  event_type: string
+  count: number
+}
+
+type WeeklyRow = {
+  week_start: string
+  src: string | null
+  status: string | null
+  submissions: number
+  event_type: string | null
+  events: number
+}
+
 export default function ReconocimientosTriage() {
   const [status, setStatus] = useState<RecognitionStatus | 'all'>('pending')
   const [src, setSrc] = useState('')
   const [items, setItems] = useState<RecognitionRow[]>([])
+  const [eventCounts, setEventCounts] = useState<EventCount[]>([])
+  const [weekly, setWeekly] = useState<WeeklyRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
@@ -36,6 +53,8 @@ export default function ReconocimientosTriage() {
       const res = await fetch(`/api/admin/reconocimientos?${q.toString()}`)
       const data = (await res.json().catch(() => null)) as {
         items?: RecognitionRow[]
+        eventCounts?: EventCount[]
+        weekly?: WeeklyRow[]
         error?: string
       } | null
       if (!res.ok) {
@@ -44,6 +63,8 @@ export default function ReconocimientosTriage() {
         return
       }
       setItems(data?.items ?? [])
+      setEventCounts(data?.eventCounts ?? [])
+      setWeekly(data?.weekly ?? [])
     } catch {
       setError('Error de red')
       setItems([])
@@ -87,8 +108,49 @@ export default function ReconocimientosTriage() {
     }
   }
 
+  function eventsFor(id: string): string {
+    const rows = eventCounts.filter((e) => e.recognition_id === id)
+    if (rows.length === 0) return ''
+    return rows.map((r) => `${r.event_type}:${r.count}`).join(' · ')
+  }
+
   return (
     <div>
+      {weekly.length > 0 && (
+        <div className="mb-6 overflow-x-auto rounded-xl border border-slate-800 bg-[#151c26] p-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            Métricas internas (semanal)
+          </p>
+          <table className="mt-3 w-full min-w-[520px] text-left text-xs text-slate-400">
+            <thead>
+              <tr className="border-b border-slate-800 text-slate-500">
+                <th className="py-1 pr-3 font-medium">Semana</th>
+                <th className="py-1 pr-3 font-medium">src</th>
+                <th className="py-1 pr-3 font-medium">status</th>
+                <th className="py-1 pr-3 font-medium">envíos</th>
+                <th className="py-1 pr-3 font-medium">evento</th>
+                <th className="py-1 font-medium">n</th>
+              </tr>
+            </thead>
+            <tbody>
+              {weekly.slice(0, 12).map((w, i) => (
+                <tr
+                  key={`${w.week_start}-${w.src}-${w.status}-${w.event_type}-${i}`}
+                  className="border-b border-slate-800/60"
+                >
+                  <td className="py-1 pr-3">{w.week_start}</td>
+                  <td className="py-1 pr-3">{w.src ?? '—'}</td>
+                  <td className="py-1 pr-3">{w.status ?? '—'}</td>
+                  <td className="py-1 pr-3">{w.submissions}</td>
+                  <td className="py-1 pr-3">{w.event_type ?? '—'}</td>
+                  <td className="py-1">{w.events}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
       <div className="mb-6 flex flex-wrap items-end gap-3">
         <div>
           <label className="block text-xs font-medium text-slate-400">
@@ -109,9 +171,7 @@ export default function ReconocimientosTriage() {
           </select>
         </div>
         <div>
-          <label className="block text-xs font-medium text-slate-400">
-            Src
-          </label>
+          <label className="block text-xs font-medium text-slate-400">Src</label>
           <input
             type="text"
             value={src}
@@ -147,6 +207,7 @@ export default function ReconocimientosTriage() {
             const how =
               HOW_KNOWN_LABELS_ES[item.how_known as HowKnown] ?? item.how_known
             const busy = busyId === item.id
+            const metrics = eventsFor(item.id)
 
             return (
               <li
@@ -196,6 +257,11 @@ export default function ReconocimientosTriage() {
                         contacto: {item.contact}
                       </p>
                     )}
+                    {metrics && (
+                      <p className="mt-1 text-xs text-slate-500">
+                        eventos: {metrics}
+                      </p>
+                    )}
                     {item.reject_reason && (
                       <p className="mt-1 text-xs text-red-400/80">
                         rechazo: {item.reject_reason}
@@ -238,24 +304,32 @@ export default function ReconocimientosTriage() {
                         </>
                       )}
                       {item.status === 'approved' && (
-                        <a
-                          href={`/api/reconocimientos/${item.share_slug}/card?format=portrait`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="rounded-lg border border-slate-700 px-3 py-1.5 text-xs text-slate-300 hover:border-emerald-500/40 hover:text-emerald-300"
-                        >
-                          Descargar card
-                        </a>
-                      )}
-                      {item.status === 'approved' && (
-                        <a
-                          href={`/reconocimientos/${item.share_slug}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="rounded-lg border border-slate-700 px-3 py-1.5 text-xs text-slate-300 hover:border-emerald-500/40 hover:text-emerald-300"
-                        >
-                          Ver público
-                        </a>
+                        <>
+                          <a
+                            href={`/api/reconocimientos/${item.share_slug}/card?format=portrait&dl=1`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded-lg border border-slate-700 px-3 py-1.5 text-xs text-slate-300 hover:border-emerald-500/40 hover:text-emerald-300"
+                          >
+                            Card portrait
+                          </a>
+                          <a
+                            href={`/api/reconocimientos/${item.share_slug}/card?format=story&dl=1`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded-lg border border-slate-700 px-3 py-1.5 text-xs text-slate-300 hover:border-emerald-500/40 hover:text-emerald-300"
+                          >
+                            Card story
+                          </a>
+                          <a
+                            href={`/reconocimientos/${item.share_slug}?src=share`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded-lg border border-slate-700 px-3 py-1.5 text-xs text-slate-300 hover:border-emerald-500/40 hover:text-emerald-300"
+                          >
+                            Ver público
+                          </a>
+                        </>
                       )}
                     </div>
                   </div>

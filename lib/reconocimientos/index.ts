@@ -14,9 +14,13 @@ export {
   MAX_IMAGE_EDGE,
   ALLOWED_IMAGE_TYPES,
   STORAGE_BUCKET,
+  SHARE_CTA_TEXT_ES,
+  SHARE_CTA_PATH,
+  RECOGNITION_EVENT_TYPES,
   type WhoType,
   type HowKnown,
   type RecognitionStatus,
+  type RecognitionEventType,
 } from './constants'
 
 export {
@@ -45,4 +49,15 @@ export {
   downloadRecognitionPhoto,
   createSignedPhotoUrl,
   listApprovedPublic,
+  insertRecognitionEvent,
+  getRecognitionIdByShareSlug,
+  getWeeklyRecognitionStats,
+  getRecognitionEventCounts,
 } from './db'
+
+/** Ensure a public URL carries src=share (for share buttons / OG landings). */
+export function withShareSrc(url: string): string {
+  const parsed = new URL(url)
+  parsed.searchParams.set('src', 'share')
+  return parsed.toString()
+}

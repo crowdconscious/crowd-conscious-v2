@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import sharp from 'sharp'
 import {
+  SHARE_CTA_TEXT_ES,
   downloadRecognitionPhoto,
   getPublicRecognitionBySlug,
+  insertRecognitionEvent,
+  sanitizeSrc,
 } from '@/lib/reconocimientos'
 
 export const runtime = 'nodejs'
@@ -37,7 +40,6 @@ function wrapLines(text: string, maxChars: number, maxLines: number): string[] {
     if (current) lines.push(current)
     current = word
     if (lines.length >= maxLines - 1) {
-      // Last line: take remaining and truncate.
       const rest = [current, ...words.slice(words.indexOf(word) + 1)].join(' ')
       lines.push(
         rest.length > maxChars ? `${rest.slice(0, maxChars - 1)}…` : rest
@@ -50,8 +52,10 @@ function wrapLines(text: string, maxChars: number, maxLines: number): string[] {
 }
 
 /**
- * GET /api/reconocimientos/[slug]/card?format=portrait|story
- * Shareable PNG card for approved recognitions only.
+ * GET /api/reconocimientos/[slug]/card?format=portrait|story&dl=1
+ * Shareable PNG for approved recognitions only (404 otherwise).
+ * Pass dl=1 from admin download links to count card_download_* events
+ * (OG crawlers hit opengraph-image, not this route).
  */
 export async function GET(
   request: NextRequest,
@@ -59,9 +63,10 @@ export async function GET(
 ) {
   try {
     const { slug } = await params
-    const formatParam = new URL(request.url).searchParams.get('format')
+    const url = new URL(request.url)
     const format: CardFormat =
-      formatParam === 'story' ? 'story' : 'portrait'
+      url.searchParams.get('format') === 'story' ? 'story' : 'portrait'
+    const countDownload = url.searchParams.get('dl') === '1'
     const { width, height } = SIZES[format]
 
     const recognition = await getPublicRecognitionBySlug(slug)
@@ -69,12 +74,26 @@ export async function GET(
       return NextResponse.json({ error: 'Not found' }, { status: 404 })
     }
 
+    if (countDownload) {
+      try {
+        await insertRecognitionEvent({
+          recognition_id: recognition.id,
+          event_type:
+            format === 'story'
+              ? 'card_download_story'
+              : 'card_download_portrait',
+          src: sanitizeSrc(url.searchParams.get('src') ?? 'web'),
+        })
+      } catch (err) {
+        console.error('[api/reconocimientos/card] event', err)
+      }
+    }
+
     const { buffer: photoBuffer } = await downloadRecognitionPhoto(
       recognition.photo_path
     )
 
-    // Photo fills the top ~72% as a cover crop; text band below.
-    const photoH = Math.round(height * 0.72)
+    const photoH = Math.round(height * 0.68)
     const photoLayer = await sharp(photoBuffer)
       .resize(width, photoH, { fit: 'cover', position: 'centre' })
       .jpeg({ quality: 90 })
@@ -82,12 +101,20 @@ export async function GET(
 
     const whatLines = wrapLines(recognition.what, 36, 3)
     const whereLine = recognition.where_text.slice(0, 48)
+    const ctaLines = wrapLines(SHARE_CTA_TEXT_ES, 42, 2)
 
-    const textY = photoH + 48
+    const textY = photoH + 44
     const whatTspans = whatLines
       .map(
         (line, i) =>
-          `<tspan x="56" dy="${i === 0 ? 0 : 44}">${escapeXml(line)}</tspan>`
+          `<tspan x="56" dy="${i === 0 ? 0 : 42}">${escapeXml(line)}</tspan>`
+      )
+      .join('')
+    const ctaY = height - 88
+    const ctaTspans = ctaLines
+      .map(
+        (line, i) =>
+          `<tspan x="56" dy="${i === 0 ? 0 : 28}">${escapeXml(line)}</tspan>`
       )
       .join('')
 
@@ -96,11 +123,13 @@ export async function GET(
         <rect width="100%" height="100%" fill="#0f1419"/>
         <rect y="${photoH}" width="100%" height="${height - photoH}" fill="#0f1419"/>
         <rect y="${photoH}" width="100%" height="4" fill="#10b981"/>
-        <text x="56" y="${textY}" fill="#ffffff" font-size="36" font-weight="700"
+        <text x="56" y="${textY}" fill="#ffffff" font-size="34" font-weight="700"
           font-family="system-ui, -apple-system, sans-serif">${whatTspans}</text>
-        <text x="56" y="${textY + whatLines.length * 44 + 28}" fill="#94a3b8" font-size="26"
+        <text x="56" y="${textY + whatLines.length * 42 + 26}" fill="#94a3b8" font-size="24"
           font-family="system-ui, -apple-system, sans-serif">${escapeXml(whereLine)}</text>
-        <text x="56" y="${height - 48}" fill="#10b981" font-size="24" font-weight="600"
+        <text x="56" y="${ctaY}" fill="#10b981" font-size="22" font-weight="600"
+          font-family="system-ui, -apple-system, sans-serif">${ctaTspans}</text>
+        <text x="56" y="${height - 36}" fill="#64748b" font-size="20"
           font-family="system-ui, -apple-system, sans-serif">Crowd Conscious</text>
       </svg>
     `
@@ -124,7 +153,10 @@ export async function GET(
       status: 200,
       headers: {
         'Content-Type': 'image/png',
-        'Cache-Control': 'public, max-age=3600, s-maxage=86400',
+        'Cache-Control': countDownload
+          ? 'private, no-store'
+          : // Short TTL so reject-after-approve stops resolving quickly.
+            'public, max-age=60, s-maxage=300',
       },
     })
   } catch (err) {

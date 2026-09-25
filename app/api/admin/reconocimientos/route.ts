@@ -1,43 +1,44 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin-route-guard'
 import {
+  getRecognitionEventCounts,
+  getWeeklyRecognitionStats,
   listRecognitions,
-  RECOGNITION_STATUSES,
-  sanitizeSrc,
 } from '@/lib/reconocimientos'
 
-export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 /**
  * GET /api/admin/reconocimientos?status=&src=
- * Admin triage queue for Reconocimientos.
+ * Admin list + lightweight share/download metrics for visible rows.
  */
-export async function GET(request: NextRequest) {
-  const auth = await requireAdmin()
-  if (!auth.ok) return auth.response
+export async function GET(request: Request) {
+  const gate = await requireAdmin()
+  if (!gate.ok) return gate.response
 
   try {
     const { searchParams } = new URL(request.url)
-    const statusRaw = searchParams.get('status')
-    const srcRaw = searchParams.get('src')
-
-    const status =
-      statusRaw &&
-      (RECOGNITION_STATUSES as readonly string[]).includes(statusRaw)
-        ? statusRaw
-        : undefined
-    const src = srcRaw ? sanitizeSrc(srcRaw) : undefined
+    const status = searchParams.get('status') ?? undefined
+    const src = searchParams.get('src') ?? undefined
 
     const items = await listRecognitions({
-      status,
-      src: srcRaw ? src : undefined,
+      status: status && status !== 'all' ? status : undefined,
+      src: src || undefined,
       limit: 100,
     })
 
-    return NextResponse.json({ items })
+    const eventCounts = await getRecognitionEventCounts(items.map((i) => i.id))
+    let weekly: Awaited<ReturnType<typeof getWeeklyRecognitionStats>> = []
+    try {
+      weekly = await getWeeklyRecognitionStats(12)
+    } catch (err) {
+      // View may not exist until migration 264 is applied.
+      console.warn('[admin/reconocimientos] weekly stats unavailable', err)
+    }
+
+    return NextResponse.json({ items, eventCounts, weekly })
   } catch (err) {
-    console.error('[api/admin/reconocimientos GET]', err)
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 })
+    console.error('[admin/reconocimientos]', err)
+    return NextResponse.json({ error: 'Error al listar' }, { status: 500 })
   }
 }

@@ -35,6 +35,9 @@ export const dynamic = 'force-dynamic'
  * POST /api/reconocimientos/submit
  * Multipart intake. Guests allowed. Service-role writes only.
  * Rate limit: 5/hour/IP. Honeypot field `website` must stay empty.
+ *
+ * Consent + text fields are validated BEFORE any image processing or storage
+ * write so rejected requests never leave bytes in the bucket.
  */
 export async function POST(request: NextRequest) {
   if (!isReconocimientosEnabled()) {
@@ -59,20 +62,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true })
     }
 
-    const photo = form.get('photo')
-    if (!(photo instanceof File)) {
-      return NextResponse.json({ error: 'La foto es obligatoria' }, { status: 400 })
-    }
-    if (!(ALLOWED_IMAGE_TYPES as readonly string[]).includes(photo.type)) {
-      return NextResponse.json(
-        { error: 'Formato no válido (JPG, PNG, WebP o HEIC)' },
-        { status: 400 }
-      )
-    }
-    if (photo.size > MAX_PHOTO_BYTES) {
-      return NextResponse.json({ error: 'La foto supera 10 MB' }, { status: 400 })
-    }
-
+    // --- Validate consent + fields BEFORE touching the image / storage ---
     const whatRaw = form.get('what')
     const whereRaw = form.get('where_text')
     const whoRaw = form.get('who_type')
@@ -82,6 +72,12 @@ export async function POST(request: NextRequest) {
     const consentRaw = form.get('consent')
     const srcRaw = form.get('src')
 
+    if (consentRaw !== 'true' && consentRaw !== 'on' && consentRaw !== '1') {
+      return NextResponse.json(
+        { error: 'Debes aceptar el consentimiento' },
+        { status: 400 }
+      )
+    }
     if (!isNonEmptyString(whatRaw)) {
       return NextResponse.json({ error: 'Cuéntanos qué está pasando' }, { status: 400 })
     }
@@ -93,12 +89,6 @@ export async function POST(request: NextRequest) {
     }
     if (!isNonEmptyString(howRaw) || !(HOW_KNOWN as readonly string[]).includes(howRaw)) {
       return NextResponse.json({ error: 'Selecciona cómo te enteraste' }, { status: 400 })
-    }
-    if (consentRaw !== 'true' && consentRaw !== 'on' && consentRaw !== '1') {
-      return NextResponse.json(
-        { error: 'Debes aceptar el consentimiento' },
-        { status: 400 }
-      )
     }
 
     const what = clampText(whatRaw, MAX_WHAT_LEN)
@@ -114,6 +104,21 @@ export async function POST(request: NextRequest) {
       ? clampText(contactRaw, MAX_CONTACT_LEN)
       : null
     const src = sanitizeSrc(srcRaw)
+
+    // --- Photo checks only after consent/fields pass ---
+    const photo = form.get('photo')
+    if (!(photo instanceof File)) {
+      return NextResponse.json({ error: 'La foto es obligatoria' }, { status: 400 })
+    }
+    if (!(ALLOWED_IMAGE_TYPES as readonly string[]).includes(photo.type)) {
+      return NextResponse.json(
+        { error: 'Formato no válido (JPG, PNG, WebP o HEIC)' },
+        { status: 400 }
+      )
+    }
+    if (photo.size > MAX_PHOTO_BYTES) {
+      return NextResponse.json({ error: 'La foto supera 10 MB' }, { status: 400 })
+    }
 
     let processed
     try {

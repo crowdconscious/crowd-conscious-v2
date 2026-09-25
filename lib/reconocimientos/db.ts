@@ -125,3 +125,83 @@ export async function listApprovedPublic(
   if (error) throw error
   return (data ?? []) as RecognitionPublic[]
 }
+
+export async function insertRecognitionEvent(args: {
+  recognition_id: string
+  event_type:
+    | 'share_whatsapp'
+    | 'share_native'
+    | 'share_copy'
+    | 'card_download_portrait'
+    | 'card_download_story'
+  src?: string | null
+}) {
+  const { error } = await db().from('recognition_events').insert({
+    recognition_id: args.recognition_id,
+    event_type: args.event_type,
+    src: args.src ?? null,
+  })
+  if (error) throw error
+}
+
+export async function getRecognitionIdByShareSlug(
+  slug: string
+): Promise<string | null> {
+  const { data, error } = await db()
+    .from('recognitions')
+    .select('id')
+    .eq('share_slug', slug)
+    .eq('status', 'approved')
+    .maybeSingle()
+  if (error) throw error
+  return (data as { id: string } | null)?.id ?? null
+}
+
+export type WeeklyRecognitionStat = {
+  week_start: string
+  src: string | null
+  status: string | null
+  submissions: number
+  event_type: string | null
+  events: number
+}
+
+export async function getWeeklyRecognitionStats(
+  limit = 24
+): Promise<WeeklyRecognitionStat[]> {
+  const { data, error } = await db()
+    .from('recognitions_weekly_stats')
+    .select('week_start, src, status, submissions, event_type, events')
+    .order('week_start', { ascending: false })
+    .limit(limit)
+  if (error) throw error
+  return (data ?? []) as WeeklyRecognitionStat[]
+}
+
+export type RecognitionEventCount = {
+  recognition_id: string
+  event_type: string
+  count: number
+}
+
+/** Per-item event totals for approved rows currently in the admin list. */
+export async function getRecognitionEventCounts(
+  recognitionIds: string[]
+): Promise<RecognitionEventCount[]> {
+  if (recognitionIds.length === 0) return []
+  const { data, error } = await db()
+    .from('recognition_events')
+    .select('recognition_id, event_type')
+    .in('recognition_id', recognitionIds)
+  if (error) throw error
+  const map = new Map<string, number>()
+  for (const row of data ?? []) {
+    const r = row as { recognition_id: string; event_type: string }
+    const key = `${r.recognition_id}::${r.event_type}`
+    map.set(key, (map.get(key) ?? 0) + 1)
+  }
+  return Array.from(map.entries()).map(([key, count]) => {
+    const [recognition_id, event_type] = key.split('::')
+    return { recognition_id, event_type, count }
+  })
+}

@@ -2702,6 +2702,43 @@ export interface Database {
         }
         Relationships: []
       }
+      /**
+       * Internal share/download events for Reconocimientos.
+       * Source: supabase/migrations/264_recognition_events.sql
+       * No anon read — service-role inserts + admin SELECT policy.
+       */
+      recognition_events: {
+        Row: {
+          id: string
+          recognition_id: string
+          event_type: string
+          created_at: string
+          src: string | null
+        }
+        Insert: {
+          id?: string
+          recognition_id: string
+          event_type: string
+          created_at?: string
+          src?: string | null
+        }
+        Update: {
+          id?: string
+          recognition_id?: string
+          event_type?: string
+          created_at?: string
+          src?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recognition_events_recognition_id_fkey"
+            columns: ["recognition_id"]
+            isOneToOne: false
+            referencedRelation: "recognitions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       /**
@@ -2721,6 +2758,21 @@ export interface Database {
           src: string
           share_slug: string
           reviewed_at: string | null
+        }
+        Relationships: []
+      }
+      /**
+       * Admin/service-role weekly funnel + share metrics.
+       * Source: supabase/migrations/264_recognition_events.sql
+       */
+      recognitions_weekly_stats: {
+        Row: {
+          week_start: string | null
+          src: string | null
+          status: string | null
+          submissions: number | null
+          event_type: string | null
+          events: number | null
         }
         Relationships: []
       }

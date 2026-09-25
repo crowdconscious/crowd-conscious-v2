@@ -35,7 +35,8 @@ export async function GET(
       status: 200,
       headers: {
         'Content-Type': contentType,
-        'Cache-Control': 'public, max-age=86400, s-maxage=604800, immutable',
+        // Short TTL so reject-after-approve stops resolving quickly.
+        'Cache-Control': 'public, max-age=60, s-maxage=300',
       },
     })
   } catch (err) {
