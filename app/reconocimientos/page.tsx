@@ -11,7 +11,12 @@ export const metadata: Metadata = {
 }
 
 export default async function ReconocimientosIndexPage() {
-  const items = await listApprovedPublic(48)
+  let items: Awaited<ReturnType<typeof listApprovedPublic>> = []
+  try {
+    items = await listApprovedPublic(48)
+  } catch (err) {
+    console.error('[reconocimientos index]', err)
+  }
 
   return (
     <div className="min-h-screen bg-[#0f1419] text-slate-100">

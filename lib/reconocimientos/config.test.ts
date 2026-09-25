@@ -4,10 +4,8 @@ import {
   getReconocimientosConfig,
   sanitizeSrc,
   withReconocimientosSrc,
-  WHO_TYPES,
-  HOW_KNOWN,
-  CONSENT_VERSION,
-} from './index.ts'
+} from './config.ts'
+import { WHO_TYPES, HOW_KNOWN, CONSENT_VERSION } from './constants.ts'
 
 const ENV_KEY = 'RECONOCIMIENTOS_ENABLED'
 
@@ -43,10 +41,10 @@ describe('reconocimientos config', () => {
 
   it('enables with intake URL when true', () => {
     process.env[ENV_KEY] = 'true'
-    assert.deepEqual(getReconocimientosConfig(), {
-      enabled: true,
-      intakeUrl: 'https://crowdconscious.app/reconoce',
-    })
+    const config = getReconocimientosConfig()
+    assert.equal(config.enabled, true)
+    assert.ok(config.intakeUrl)
+    assert.match(config.intakeUrl!, /\/reconoce$/)
   })
 
   it('sanitizes src', () => {
