@@ -197,7 +197,8 @@ export async function GET(req: Request, ctx: Ctx) {
         education,
         occupation,
         household_size,
-        persona_narrative
+        persona_narrative,
+        grounding
       )
     `,
     )

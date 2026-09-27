@@ -211,3 +211,53 @@ test('includeRealAggregates=true populates realAggregates on resolved pulse', ()
   assert.equal(payload.realAggregates!.length, 2)
   assert.equal(payload.isFixture, false)
 })
+
+test('persona grounding passes through unchanged when present', () => {
+  const grounding = {
+    sources: [
+      {
+        name: 'INEGI Censo (FIXTURE)',
+        year: 2020,
+        url: 'https://www.inegi.org.mx/',
+        table: 'FIXTURE',
+      },
+    ],
+    ageb: {
+      code: 'FIX-001',
+      population: 1200,
+      marginals: [{ label: 'FIXTURE NSE', value: 'C', share: 0.2 }],
+    },
+    method: 'FIXTURE sampling',
+    isExample: true as const,
+  }
+
+  const mapped = mapVotesOrdered([
+    vote(0, 'opt-a', {
+      persona: persona({ persona_key: 'p-0', grounding }),
+    }),
+  ])
+
+  assert.equal(mapped.length, 1)
+  assert.deepEqual(mapped[0]!.persona.grounding, grounding)
+  // Same object identity not required, but values must be unchanged.
+  assert.equal(mapped[0]!.persona.grounding?.isExample, true)
+  assert.equal(mapped[0]!.persona.grounding?.ageb.code, 'FIX-001')
+})
+
+test('persona grounding omitted when null or absent', () => {
+  const withNull = mapVotesOrdered([
+    vote(0, 'opt-a', {
+      persona: persona({ persona_key: 'p-null', grounding: null }),
+    }),
+  ])
+  assert.equal(withNull[0]!.persona.grounding, undefined)
+  assert.equal('grounding' in withNull[0]!.persona, false)
+
+  const absent = mapVotesOrdered([
+    vote(1, 'opt-b', {
+      persona: persona({ persona_key: 'p-absent' }),
+    }),
+  ])
+  assert.equal(absent[0]!.persona.grounding, undefined)
+  assert.equal('grounding' in absent[0]!.persona, false)
+})

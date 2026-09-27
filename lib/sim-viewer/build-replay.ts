@@ -8,6 +8,7 @@
 import type {
   DivergenceMeta,
   OptionAgg,
+  PersonaGrounding,
   SimulationReplayOption,
   SimulationReplayPayload,
   SimulationReplayPersona,
@@ -38,6 +39,11 @@ export type ReplayPersonaRow = {
   occupation: string
   household_size: number | null
   persona_narrative: string
+  /**
+   * Nullable jsonb from migration 266. Null/absent → omit on the wire.
+   * Shape owned by Task 1 (`PersonaGrounding`); passed through unchanged.
+   */
+  grounding?: PersonaGrounding | null
 }
 
 export type ReplayVoteRow = {
@@ -153,11 +159,23 @@ export function abstractPersonaDisplayName(
   return `agente-${sequenceIndex}`
 }
 
+/**
+ * Pass Task 1's grounding jsonb through unchanged.
+ * Null / absent / non-object → omit (do not invent a conflicting shape).
+ */
+export function passThroughGrounding(
+  raw: PersonaGrounding | null | undefined | unknown,
+): PersonaGrounding | undefined {
+  if (raw == null) return undefined
+  if (typeof raw !== 'object' || Array.isArray(raw)) return undefined
+  return raw as PersonaGrounding
+}
+
 export function mapPersona(
   persona: ReplayPersonaRow,
   sequenceIndex: number,
 ): SimulationReplayPersona {
-  return {
+  const mapped: SimulationReplayPersona = {
     personaKey: persona.persona_key ?? `persona-${sequenceIndex}`,
     displayName: abstractPersonaDisplayName(persona, sequenceIndex),
     alcaldia: persona.alcaldia,
@@ -173,6 +191,11 @@ export function mapPersona(
     householdSize: persona.household_size,
     personaSummary: persona.persona_narrative,
   }
+  const grounding = passThroughGrounding(persona.grounding)
+  if (grounding !== undefined) {
+    mapped.grounding = grounding
+  }
+  return mapped
 }
 
 /**
