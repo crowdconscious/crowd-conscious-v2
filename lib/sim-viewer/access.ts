@@ -23,9 +23,9 @@ export type ReplayAccessInput = {
   /** Fixture/seed runs must never leak to non-admins. */
   runIsFixture: boolean
   /**
-   * Server-side switch `SIM_VIEWER_PUBLIC_CLOSED === 'true'`.
-   * Until Francisco decides public-vs-sales, this stays false so every
-   * non-admin request 404s even on resolved Pulses.
+   * Server-side switch `SIM_VIEWER_PUBLIC_CLOSED`.
+   * Default ON (public on closed). Set to the string `'false'` to make
+   * resolved-Pulse replays sales-only again.
    */
   publicClosedEnabled: boolean
 }
@@ -93,7 +93,7 @@ export function decideReplayAccess(
   }
 
   // Non-admin: every gate must pass. Stricter-of-status-and-revealed wins
-  // (both must allow). Public switch off → always 404.
+  // (both must allow). Public switch off → always 404 (sales-only mode).
   if (!input.publicClosedEnabled) {
     return { allow: false, status: 404 }
   }

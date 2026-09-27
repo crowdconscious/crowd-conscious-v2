@@ -8,7 +8,8 @@
  * Access gate (404, never 403):
  *   - Flag NEXT_PUBLIC_SIM_VIEWER_ENABLED must be true
  *   - Non-admin: only when status=resolved AND run.revealed_at set AND
- *     SIM_VIEWER_PUBLIC_CLOSED=true AND run is not a fixture
+ *     SIM_VIEWER_PUBLIC_CLOSED is not 'false' (default ON = public on closed)
+ *     AND run is not a fixture
  *   - Admin (profiles.user_type === 'admin' | ADMIN_EMAIL): always
  */
 

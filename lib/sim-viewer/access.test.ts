@@ -15,7 +15,8 @@ function base(over: Partial<ReplayAccessInput> = {}): ReplayAccessInput {
     pulseStatus: 'active',
     runRevealedAt: null,
     runIsFixture: false,
-    publicClosedEnabled: false,
+    // Default ON (Francisco: public on closed). Override per-test.
+    publicClosedEnabled: true,
     ...over,
   }
 }
@@ -119,8 +120,25 @@ test('admin + resolved pulse → allow with realAggregates', () => {
 })
 
 // ---------------------------------------------------------------------------
-// Resolved + non-admin → 404 while public switch is off
+// Resolved + public (default) — logged-out / non-admin → 200
 // ---------------------------------------------------------------------------
+
+test('resolved + revealed + logged-out (non-admin) → allow (public on closed)', () => {
+  const d = decideReplayAccess(
+    base({
+      pulseStatus: 'resolved',
+      isAdmin: false,
+      publicClosedEnabled: true,
+      runRevealedAt: '2026-09-01T00:00:00.000Z',
+      runIsFixture: false,
+    }),
+  )
+  assert.equal(d.allow, true)
+  if (d.allow) {
+    assert.equal(d.includeRealAggregates, true)
+    assert.equal(d.cachePublic, true)
+  }
+})
 
 test('resolved + non-admin + public switch OFF → 404', () => {
   const d = decideReplayAccess(
@@ -136,20 +154,20 @@ test('resolved + non-admin + public switch OFF → 404', () => {
   if (!d.allow) assert.equal(d.status, 404)
 })
 
-test('resolved + non-admin + public switch ON + revealed → allow', () => {
+test('resolved + fixture run + non-admin → 404 (fixtures admin-only)', () => {
   const d = decideReplayAccess(
     base({
       pulseStatus: 'resolved',
       isAdmin: false,
       publicClosedEnabled: true,
       runRevealedAt: '2026-09-01T00:00:00.000Z',
-      runIsFixture: false,
+      runIsFixture: true,
     }),
   )
-  assert.equal(d.allow, true)
-  if (d.allow) {
-    assert.equal(d.includeRealAggregates, true)
-    assert.equal(d.cachePublic, true)
+  assert.equal(d.allow, false)
+  if (!d.allow) {
+    assert.equal(d.status, 404)
+    assert.notEqual(d.status, 403)
   }
 })
 
@@ -177,24 +195,6 @@ test('revealed_at set but status active + non-admin → 404 (stricter)', () => {
       isAdmin: false,
       publicClosedEnabled: true,
       runRevealedAt: '2026-09-01T00:00:00.000Z',
-    }),
-  )
-  assert.equal(d.allow, false)
-  if (!d.allow) assert.equal(d.status, 404)
-})
-
-// ---------------------------------------------------------------------------
-// Fixture runs are admin-only
-// ---------------------------------------------------------------------------
-
-test('fixture run + non-admin even when resolved/public → 404', () => {
-  const d = decideReplayAccess(
-    base({
-      pulseStatus: 'resolved',
-      isAdmin: false,
-      publicClosedEnabled: true,
-      runRevealedAt: '2026-09-01T00:00:00.000Z',
-      runIsFixture: true,
     }),
   )
   assert.equal(d.allow, false)
