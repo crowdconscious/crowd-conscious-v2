@@ -201,8 +201,6 @@ function ColumnFrame({
   showReveal,
 }: {
   option: SimulationReplayOption
-  colIdx: number
-  colCount: number
   sim: SimulationOptionAggregate | undefined
   real: SimulationOptionAggregate | undefined
   showPercents: boolean
