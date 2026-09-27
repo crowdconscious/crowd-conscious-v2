@@ -68,6 +68,11 @@ export interface DivergenceMeta extends DivergenceScores {
 
 export interface SimulationReplayPersona {
   personaKey: string
+  /**
+   * Abstract label for the reasoning feed (Task 3). Not a real person's
+   * name — typically the persona_key. Optional for older fixtures.
+   */
+  displayName?: string
   alcaldia: string
   colonia: string | null
   agebCode: string | null
@@ -99,7 +104,7 @@ export interface SimulationReplayOption {
 /**
  * Pulse status as the viewer/API understands it.
  * Repo stores prediction_markets.status as active|resolved|… — Task 2 maps
- * active→open / resolved→closed. Parked: confirm that mapping.
+ * resolved→closed; every other status→open (CTO: non-admin only on resolved).
  */
 export type SimulationPulseStatus = 'open' | 'closed'
 
@@ -108,6 +113,8 @@ export interface SimulationReplayPulse {
   question: string
   closesAt: string | null
   status: SimulationPulseStatus
+  /** Display-only location line (e.g. alcaldías in the panel). Task 3. */
+  locationLabel?: string | null
   options: SimulationReplayOption[]
 }
 
@@ -128,8 +135,13 @@ export interface SimulationReplayRun {
  * GET /api/pulses/[pulseId]/simulation response (Task 2).
  * `votes` MUST be ordered by sequenceIndex ascending.
  * `realAggregates` is null while the Pulse is open (unless admin ?includeReal=1).
+ *
+ * Top-level `isFixture` mirrors `run.isFixture` so Task 3's client
+ * `isPayload()` accepts the live API without glue changes.
  */
 export interface SimulationReplayPayload {
+  /** True for seed/fixture runs — also mirrored on `run.isFixture`. */
+  isFixture: boolean
   run: SimulationReplayRun
   pulse: SimulationReplayPulse
   votes: SimulationReplayVote[]
