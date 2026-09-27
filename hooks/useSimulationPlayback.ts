@@ -1,12 +1,15 @@
 'use client'
 
 /**
- * Playback clock for the four narrative beats:
- *   populate → vote → settle → reveal → done
+ * Playback clock for the narrative beats:
+ *   populate → vote → settle → reveal → endcard → done
  *
  * Positions are driven imperatively via callbacks so 150 dots do not force
  * a full React re-render every frame. UI chrome (feed, readouts, controls)
  * subscribes to throttled React state.
+ *
+ * Capture mode (Task 6): seed all geometry from the run id (see positions.ts);
+ * "cinemático" pacing + endcard live here.
  */
 
 import {
@@ -22,6 +25,14 @@ import type {
   SimulationReplayVote,
   SimulationViewerBeat,
 } from '@/types/simulation-replay'
+import {
+  BASE_POPULATE_MS,
+  BASE_REVEAL_COUNT_MS,
+  BASE_VOTE_INTERVAL_MS,
+  ENDCARD_HOLD_MS,
+  effectiveDeltaMs,
+  settleDurationMs,
+} from '@/lib/sim-viewer/pacing'
 
 export type PlaybackSnapshot = {
   beat: SimulationViewerBeat
@@ -35,11 +46,6 @@ export type PlaybackSnapshot = {
   displayedDivergence: number | null
   reducedMotion: boolean
 }
-
-const POPULATE_MS = 1200
-const VOTE_INTERVAL_MS = 70
-const SETTLE_MS = 900
-const REVEAL_COUNT_MS = 1600
 
 function prefersReducedMotion(): boolean {
   if (typeof window === 'undefined') return false
@@ -62,6 +68,15 @@ export type UseSimulationPlaybackOptions = {
   /** Called when a new vote lands (for imperative dot updates + feed). */
   onVoteLand?: (vote: SimulationReplayVote, index: number) => void
   autoplay?: boolean
+  /**
+   * When true (capture mode), default speed is cinemático and the endcard
+   * beat runs after reveal. Non-capture keeps 4× and skips endcard.
+   */
+  captureMode?: boolean
+  /** Cap on reasoning-feed rows (capture phone presets want fewer, larger). */
+  feedCap?: number
+  /** Initial speed override. */
+  initialSpeed?: SimulationPlaybackSpeed
 }
 
 export type UseSimulationPlaybackResult = PlaybackSnapshot & {
@@ -78,33 +93,41 @@ export function useSimulationPlayback({
   data,
   onVoteLand,
   autoplay = true,
+  captureMode = false,
+  feedCap = 16,
+  initialSpeed,
 }: UseSimulationPlaybackOptions): UseSimulationPlaybackResult {
   const reducedMotion = useReducedMotion()
   const total = data.votes.length
   const targetDivergence = data.run.divergenceIndex
+  const defaultSpeed: SimulationPlaybackSpeed =
+    initialSpeed ?? (captureMode ? 'cinematic' : 4)
+  const feedLimit = feedCap
 
   const [beat, setBeat] = useState<SimulationViewerBeat>(
     reducedMotion ? 'done' : 'populate'
   )
   const [votedCount, setVotedCount] = useState(reducedMotion ? total : 0)
   const [playing, setPlaying] = useState(!reducedMotion && autoplay)
-  const [speed, setSpeed] = useState<SimulationPlaybackSpeed>(4)
+  const [speed, setSpeed] = useState<SimulationPlaybackSpeed>(defaultSpeed)
   const [displayedDivergence, setDisplayedDivergence] = useState<number | null>(
     reducedMotion ? targetDivergence : null
   )
   const [feedVotes, setFeedVotes] = useState<SimulationReplayVote[]>(
-    reducedMotion ? data.votes.slice().reverse().slice(0, 12) : []
+    reducedMotion ? data.votes.slice().reverse().slice(0, feedLimit) : []
   )
 
   const votedCountRef = useRef(votedCount)
   const beatRef = useRef(beat)
   const playingRef = useRef(playing)
   const speedRef = useRef(speed)
+  const captureRef = useRef(captureMode)
   const rafRef = useRef<number | null>(null)
   const lastTsRef = useRef<number | null>(null)
   const accMsRef = useRef(0)
   const onVoteLandRef = useRef(onVoteLand)
   onVoteLandRef.current = onVoteLand
+  captureRef.current = captureMode
 
   useEffect(() => {
     votedCountRef.current = votedCount
@@ -119,6 +142,18 @@ export function useSimulationPlayback({
     speedRef.current = speed
   }, [speed])
 
+  useEffect(() => {
+    setFeedVotes((prev) => prev.slice(0, feedLimit))
+  }, [feedLimit])
+
+  // When entering capture mode mid-session, prefer cinemático if still on the
+  // non-capture default (4×). Leave an explicit 1×/2× choice alone.
+  useEffect(() => {
+    if (captureMode && speedRef.current !== 'cinematic' && !initialSpeed) {
+      setSpeed((s) => (s === 4 ? 'cinematic' : s))
+    }
+  }, [captureMode, initialSpeed])
+
   const landVote = useCallback(
     (index: number) => {
       const vote = data.votes[index]
@@ -130,10 +165,10 @@ export function useSimulationPlayback({
       setVotedCount(index + 1)
       setFeedVotes((prev) => {
         if (prev.some((v) => v.sequenceIndex === vote.sequenceIndex)) return prev
-        return [vote, ...prev].slice(0, 16)
+        return [vote, ...prev].slice(0, feedLimit)
       })
     },
-    [data.votes]
+    [data.votes, feedLimit]
   )
 
   const restart = useCallback(() => {
@@ -143,7 +178,7 @@ export function useSimulationPlayback({
       setBeat('done')
       setVotedCount(total)
       setDisplayedDivergence(targetDivergence)
-      setFeedVotes(data.votes.slice().reverse().slice(0, 12))
+      setFeedVotes(data.votes.slice().reverse().slice(0, feedLimit))
       setPlaying(false)
       return
     }
@@ -158,10 +193,10 @@ export function useSimulationPlayback({
     setDisplayedDivergence(null)
     setFeedVotes([])
     setPlaying(true)
-  }, [data.votes, targetDivergence, total])
+  }, [data.votes, feedLimit, targetDivergence, total])
 
   const play = useCallback(() => {
-    if (beatRef.current === 'done') {
+    if (beatRef.current === 'done' || beatRef.current === 'endcard') {
       restart()
       return
     }
@@ -183,14 +218,21 @@ export function useSimulationPlayback({
         return
       }
       const last = lastTsRef.current ?? ts
-      const dt = (ts - last) * speedRef.current
+      const wallDt = ts - last
       lastTsRef.current = ts
+      const dt = effectiveDeltaMs(
+        wallDt,
+        speedRef.current,
+        votedCountRef.current,
+        total,
+        beatRef.current
+      )
       accMsRef.current += dt
 
       const currentBeat = beatRef.current
 
       if (currentBeat === 'populate') {
-        if (accMsRef.current >= POPULATE_MS) {
+        if (accMsRef.current >= BASE_POPULATE_MS) {
           accMsRef.current = 0
           setBeat('vote')
         }
@@ -198,8 +240,8 @@ export function useSimulationPlayback({
       }
 
       if (currentBeat === 'vote') {
-        while (accMsRef.current >= VOTE_INTERVAL_MS) {
-          accMsRef.current -= VOTE_INTERVAL_MS
+        while (accMsRef.current >= BASE_VOTE_INTERVAL_MS) {
+          accMsRef.current -= BASE_VOTE_INTERVAL_MS
           const next = votedCountRef.current
           if (next >= total) {
             setBeat('settle')
@@ -212,7 +254,8 @@ export function useSimulationPlayback({
       }
 
       if (currentBeat === 'settle') {
-        if (accMsRef.current >= SETTLE_MS) {
+        const settleMs = settleDurationMs(speedRef.current)
+        if (accMsRef.current >= settleMs) {
           accMsRef.current = 0
           setBeat('reveal')
           setDisplayedDivergence(0)
@@ -222,12 +265,25 @@ export function useSimulationPlayback({
 
       if (currentBeat === 'reveal') {
         const target = targetDivergence ?? 0
-        const t = Math.min(1, accMsRef.current / REVEAL_COUNT_MS)
+        const t = Math.min(1, accMsRef.current / BASE_REVEAL_COUNT_MS)
         // ease-out
         const eased = 1 - Math.pow(1 - t, 3)
         setDisplayedDivergence(Math.round(target * eased))
         if (t >= 1) {
           setDisplayedDivergence(target)
+          if (captureRef.current) {
+            accMsRef.current = 0
+            setBeat('endcard')
+          } else {
+            setBeat('done')
+            setPlaying(false)
+          }
+        }
+        return
+      }
+
+      if (currentBeat === 'endcard') {
+        if (accMsRef.current >= ENDCARD_HOLD_MS) {
           setBeat('done')
           setPlaying(false)
         }

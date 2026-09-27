@@ -20,6 +20,8 @@ type Props = {
   votedCount: number
   lastLandedIndex: number | null
   compact?: boolean
+  /** Capture 9:16 / 1:1 — larger dots + labels for phone Reels. */
+  phoneScale?: boolean
   onDotActivate?: (personaKey: string) => void
 }
 
@@ -45,6 +47,7 @@ export function SimCanvas({
   beat,
   votedCount,
   compact = false,
+  phoneScale = false,
   onDotActivate,
 }: Props) {
   const positions = useMemo(
@@ -99,38 +102,50 @@ export function SimCanvas({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- mount / data identity
   }, [data.run.id])
 
-  const showPercents = beat === 'settle' || beat === 'reveal' || beat === 'done'
-  const showReveal = beat === 'reveal' || beat === 'done'
+  const showPercents = beat === 'settle' || beat === 'reveal' || beat === 'endcard' || beat === 'done'
+  const showReveal = beat === 'reveal' || beat === 'endcard' || beat === 'done'
   const options = data.pulse.options
+  const footerH = phoneScale ? '3.75rem' : compact ? '2.75rem' : '3.25rem'
+  const axisW = phoneScale ? 'w-11' : compact ? 'w-8' : 'w-10 sm:w-12'
+  const axisLabelCls = phoneScale
+    ? 'text-[11px]'
+    : compact
+      ? 'text-[8px]'
+      : 'text-[9px] sm:text-[10px]'
+  const tickCls = phoneScale
+    ? 'text-[11px]'
+    : compact
+      ? 'text-[8px]'
+      : 'text-[9px] sm:text-[10px]'
+  const dotCls = phoneScale
+    ? 'h-3.5 w-3.5 sm:h-4 sm:w-4'
+    : compact
+      ? 'h-2 w-2'
+      : 'h-2.5 w-2.5 sm:h-3 sm:w-3'
+  const padCls = phoneScale
+    ? 'px-2 pb-2 pt-10'
+    : compact
+      ? 'px-1.5 pb-1.5 pt-8'
+      : 'px-2 pb-2 pt-9 sm:px-3 sm:pt-10'
 
   return (
     <div
       className="sim-canvas relative flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-amber-500/25 bg-gradient-to-b from-[#121820] via-[#0f1419] to-[#0c1015]"
       data-sim-canvas="true"
     >
-      <SimMark subtitle="reproducción" compact={compact} />
+      <SimMark subtitle="reproducción" compact={compact} phoneScale={phoneScale} />
 
-      <div
-        className={`relative flex min-h-0 flex-1 ${
-          compact ? 'px-1.5 pb-1.5 pt-8' : 'px-2 pb-2 pt-9 sm:px-3 sm:pt-10'
-        }`}
-      >
+      <div className={`relative flex min-h-0 flex-1 ${padCls}`}>
         {/* Y axis — vertical label in its own gutter (no overlap with dots) */}
-        <div
-          className={`relative flex shrink-0 items-stretch ${
-            compact ? 'w-8' : 'w-10 sm:w-12'
-          }`}
-        >
+        <div className={`relative flex shrink-0 items-stretch ${axisW}`}>
           <div
             className={`flex w-3 shrink-0 items-center justify-center ${
-              compact ? 'mr-0.5' : 'mr-1'
+              phoneScale ? 'mr-1' : compact ? 'mr-0.5' : 'mr-1'
             }`}
             aria-hidden="true"
           >
             <span
-              className={`origin-center whitespace-nowrap font-medium uppercase tracking-wider text-slate-500 ${
-                compact ? 'text-[8px]' : 'text-[9px] sm:text-[10px]'
-              }`}
+              className={`origin-center whitespace-nowrap font-medium uppercase tracking-wider text-slate-500 ${axisLabelCls}`}
               style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
             >
               certeza declarada
@@ -140,9 +155,7 @@ export function SimCanvas({
             {AXIS_TICKS.map((t) => (
               <span
                 key={t}
-                className={`text-right font-mono text-slate-500 ${
-                  compact ? 'text-[8px]' : 'text-[9px] sm:text-[10px]'
-                }`}
+                className={`text-right font-mono text-slate-500 ${tickCls}`}
               >
                 {t}
               </span>
@@ -154,7 +167,7 @@ export function SimCanvas({
         <div className="relative min-h-0 flex-1">
           <div
             className="absolute inset-x-0 top-0"
-            style={{ bottom: compact ? '2.75rem' : '3.25rem' }}
+            style={{ bottom: footerH }}
           >
             {AXIS_TICKS.map((t) => {
               const top = confidenceToTopFraction(t) * 100
@@ -209,7 +222,11 @@ export function SimCanvas({
                             <div className="h-0.5 w-full bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.55)]" />
                             <div
                               className={`mt-0.5 text-center font-mono font-semibold text-emerald-300 ${
-                                compact ? 'text-[8px]' : 'text-[9px] sm:text-[10px]'
+                                phoneScale
+                                  ? 'text-[11px] sm:text-xs'
+                                  : compact
+                                    ? 'text-[8px]'
+                                    : 'text-[9px] sm:text-[10px]'
                               }`}
                             >
                               real {pctLabel(real.share)} ·{' '}
@@ -235,9 +252,7 @@ export function SimCanvas({
                   data-persona-key={vote.persona.personaKey}
                   data-sequence={vote.sequenceIndex}
                   aria-label={`${vote.persona.displayName}, ${vote.persona.colonia ?? vote.persona.alcaldia}`}
-                  className={`sim-dot absolute left-0 top-0 -translate-x-1/2 -translate-y-1/2 rounded-full border border-amber-300/60 bg-transparent opacity-70 transition-[left,top,opacity,box-shadow] duration-500 ease-out will-change-[left,top] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400 ${
-                    compact ? 'h-2 w-2' : 'h-2.5 w-2.5 sm:h-3 sm:w-3'
-                  }`}
+                  className={`sim-dot absolute left-0 top-0 -translate-x-1/2 -translate-y-1/2 rounded-full border border-amber-300/60 bg-transparent opacity-70 transition-[left,top,opacity,box-shadow] duration-500 ease-out will-change-[left,top] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400 ${dotCls}`}
                   style={{ transform: 'translate(-50%, -50%)' }}
                   onClick={() => onDotActivate?.(vote.persona.personaKey)}
                 />
@@ -250,7 +265,7 @@ export function SimCanvas({
             className="absolute inset-x-0 bottom-0 grid"
             style={{
               gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))`,
-              height: compact ? '2.75rem' : '3.25rem',
+              height: footerH,
             }}
           >
             {options.map((opt) => {
@@ -262,6 +277,7 @@ export function SimCanvas({
                   sim={sim}
                   showPercents={showPercents}
                   compact={compact}
+                  phoneScale={phoneScale}
                 />
               )
             })}
@@ -277,24 +293,36 @@ function ColumnFooter({
   sim,
   showPercents,
   compact,
+  phoneScale,
 }: {
   option: SimulationReplayOption
   sim: SimulationOptionAggregate | undefined
   showPercents: boolean
   compact: boolean
+  phoneScale: boolean
 }) {
   return (
     <div className="flex flex-col items-center justify-end px-0.5 pb-0.5 text-center">
       <div
         className={`font-semibold tabular-nums text-amber-200 transition-opacity duration-500 ${
           showPercents ? 'opacity-100' : 'opacity-0'
-        } ${compact ? 'text-sm' : 'text-base sm:text-xl'}`}
+        } ${
+          phoneScale
+            ? 'text-xl sm:text-2xl'
+            : compact
+              ? 'text-sm'
+              : 'text-base sm:text-xl'
+        }`}
       >
         {sim ? pctLabel(sim.share) : '—'}
       </div>
       <div
         className={`max-w-full text-balance leading-tight text-slate-400 ${
-          compact ? 'text-[9px]' : 'text-[10px] sm:text-xs'
+          phoneScale
+            ? 'text-xs sm:text-sm'
+            : compact
+              ? 'text-[9px]'
+              : 'text-[10px] sm:text-xs'
         }`}
       >
         {option.label}

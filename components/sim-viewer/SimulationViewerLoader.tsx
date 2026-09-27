@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import SimulationViewer from '@/components/sim-viewer/SimulationViewer'
 import '@/components/sim-viewer/sim-viewer.css'
 import {
@@ -19,8 +19,23 @@ type Props = {
 
 /**
  * Client loader: one data hook so swapping fixture → Task 2 API is local.
+ * Suspense wraps the viewer because it reads useSearchParams for ?captura=.
  */
-export default function SimulationViewerLoader({
+export default function SimulationViewerLoader(props: Props) {
+  return (
+    <Suspense
+      fallback={
+        <div className="mx-auto max-w-6xl py-20 text-center text-sm text-slate-400">
+          Cargando simulación…
+        </div>
+      }
+    >
+      <SimulationViewerLoaderInner {...props} />
+    </Suspense>
+  )
+}
+
+function SimulationViewerLoaderInner({
   pulseId,
   initialData,
   captureMode = false,

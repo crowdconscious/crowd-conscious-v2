@@ -32,7 +32,10 @@ export default async function AdminLayout({
 
   return (
     <div className="min-h-screen bg-[#0f1419] text-slate-100">
-      <div className="border-b border-slate-800 bg-[#0f1419]/95 backdrop-blur supports-[backdrop-filter]:bg-[#0f1419]/80">
+      <div
+        className="sim-admin-chrome border-b border-slate-800 bg-[#0f1419]/95 backdrop-blur supports-[backdrop-filter]:bg-[#0f1419]/80"
+        data-site-chrome="admin-nav"
+      >
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
           <Link
             href="/predictions"
@@ -44,7 +47,7 @@ export default async function AdminLayout({
           <span className="text-xs uppercase tracking-wider text-slate-500">Admin</span>
         </div>
       </div>
-      <main className="mx-auto max-w-7xl px-4 py-6">{children}</main>
+      <main className="sim-admin-chrome-pad mx-auto max-w-7xl px-4 py-6">{children}</main>
     </div>
   )
 }

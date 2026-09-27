@@ -104,13 +104,15 @@ export type SimulationReplayPayload = {
 
 export type SimulationAspectRatio = '16:9' | '9:16' | '1:1'
 
-export type SimulationPlaybackSpeed = 1 | 2 | 4
+/** Numeric multipliers, or the capture-mode "cinemático" paced preset. */
+export type SimulationPlaybackSpeed = 1 | 2 | 4 | 'cinematic'
 
 export type SimulationViewerBeat =
   | 'populate'
   | 'vote'
   | 'settle'
   | 'reveal'
+  | 'endcard'
   | 'done'
 
 /**
