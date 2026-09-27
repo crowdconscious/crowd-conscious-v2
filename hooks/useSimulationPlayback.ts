@@ -146,6 +146,20 @@ export function useSimulationPlayback({
     setFeedVotes((prev) => prev.slice(0, feedLimit))
   }, [feedLimit])
 
+  // Hydration: useSyncExternalStore may report reduced-motion only after
+  // mount. Jump straight to the settled / endcard-ready state when it does.
+  useEffect(() => {
+    if (!reducedMotion) return
+    beatRef.current = 'done'
+    votedCountRef.current = total
+    playingRef.current = false
+    setBeat('done')
+    setVotedCount(total)
+    setDisplayedDivergence(targetDivergence)
+    setFeedVotes(data.votes.slice().reverse().slice(0, feedLimit))
+    setPlaying(false)
+  }, [reducedMotion, total, targetDivergence, data.votes, feedLimit])
+
   // When entering capture mode mid-session, prefer cinemático if still on the
   // non-capture default (4×). Leave an explicit 1×/2× choice alone.
   useEffect(() => {

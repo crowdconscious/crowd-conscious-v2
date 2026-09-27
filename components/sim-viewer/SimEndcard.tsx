@@ -15,7 +15,7 @@ type Props = {
 /**
  * Capture-mode endcard: logo + question + divergence + crowdconscious.app.
  * Held 3s. Full-stage overlay so a crop still shows the SIMULACIÓN mark.
- * Logo + brighter URL so 9:16 clips feel postable (not sparse).
+ * White logo + large bright URL so clips feel postable (not sparse).
  */
 export function SimEndcard({
   question,
@@ -24,41 +24,47 @@ export function SimEndcard({
   phoneScale = false,
   aspectRatio = '16:9',
 }: Props) {
+  const isPortrait = aspectRatio === '9:16'
   const isSquare = aspectRatio === '1:1'
-  const logoSize = phoneScale ? 72 : isSquare ? 56 : 48
+
+  // Keep the stack inside the letterboxed stage — portrait is the tightest.
+  const logoSize = phoneScale ? (isPortrait ? 64 : 72) : isSquare ? 72 : 64
+
   const urlCls = phoneScale
-    ? 'mt-12 text-2xl font-semibold tracking-wide text-slate-100 sm:text-3xl'
+    ? isPortrait
+      ? 'mt-5 text-2xl font-semibold tracking-wide text-white'
+      : 'mt-6 text-3xl font-semibold tracking-wide text-white'
     : isSquare
-      ? 'mt-10 text-xl font-semibold tracking-wide text-slate-100'
-      : 'mt-10 text-lg font-semibold tracking-wide text-slate-100 sm:text-xl'
+      ? 'mt-8 text-2xl font-semibold tracking-wide text-white'
+      : 'mt-8 text-2xl font-semibold tracking-wide text-white sm:text-3xl'
 
   return (
     <div
-      className={`sim-endcard absolute inset-0 z-40 flex flex-col items-center justify-center bg-[#0a0f14] px-6 text-center transition-opacity duration-500 ${
+      className={`sim-endcard absolute inset-0 z-40 flex flex-col items-center justify-center bg-[#0a0f14] text-center transition-opacity duration-500 ${
         visible ? 'opacity-100' : 'pointer-events-none opacity-0'
-      }`}
+      } ${phoneScale && isPortrait ? 'px-5 py-5' : 'px-6'}`}
       data-sim-endcard={visible ? '1' : '0'}
       aria-hidden={!visible}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/images/logo-small.png"
+        src="/images/logo%20white.png"
         alt="Crowd Conscious"
         width={logoSize}
         height={logoSize}
-        className="mb-5 shrink-0 rounded-full shadow-[0_0_0_1px_rgba(148,163,184,0.25)]"
+        className={`shrink-0 ${phoneScale && isPortrait ? 'mb-3' : 'mb-4'}`}
         data-sim-endcard-logo="1"
       />
 
       <div
-        className={`mb-5 rounded border border-dashed border-amber-400/70 ${
-          phoneScale ? 'px-3 py-2' : 'px-3 py-1.5'
+        className={`rounded border border-dashed border-amber-400/70 ${
+          phoneScale && isPortrait ? 'mb-3 px-3 py-1.5' : 'mb-4 px-3 py-1.5'
         }`}
         data-sim-mark="true"
       >
         <div
           className={`font-bold uppercase tracking-[0.14em] text-amber-300 ${
-            phoneScale ? 'text-xs sm:text-sm' : 'text-[11px]'
+            phoneScale ? 'text-xs sm:text-sm' : 'text-[11px] sm:text-xs'
           }`}
         >
           {SIM_MARK_LABEL}
@@ -67,13 +73,15 @@ export function SimEndcard({
       <p
         className={`max-w-2xl text-balance font-semibold leading-snug text-emerald-300 ${
           phoneScale
-            ? 'text-3xl leading-tight sm:text-4xl'
+            ? isPortrait
+              ? 'text-2xl leading-tight'
+              : 'text-3xl leading-tight'
             : 'text-xl sm:text-2xl md:text-3xl'
         }`}
       >
         {question}
       </p>
-      <div className={phoneScale ? 'mt-10' : 'mt-8'}>
+      <div className={phoneScale && isPortrait ? 'mt-5' : 'mt-6'}>
         <div
           className={`uppercase tracking-[0.18em] text-slate-500 ${
             phoneScale ? 'text-sm' : 'text-[11px]'
@@ -82,8 +90,12 @@ export function SimEndcard({
           Índice de divergencia
         </div>
         <div
-          className={`mt-2 font-mono font-semibold tabular-nums text-amber-200 ${
-            phoneScale ? 'text-7xl sm:text-8xl' : 'text-5xl sm:text-6xl'
+          className={`mt-1.5 font-mono font-semibold tabular-nums text-amber-200 ${
+            phoneScale
+              ? isPortrait
+                ? 'text-6xl'
+                : 'text-7xl'
+              : 'text-5xl sm:text-6xl'
           }`}
         >
           {divergence === null ? '—' : divergence}
