@@ -2495,6 +2495,11 @@ export interface Database {
           nse_band: string | null
           household_size: number | null
           active: boolean
+          /**
+           * Per-persona source data for the viewer inspector.
+           * Shape: PersonaGrounding in types/simulation.ts. Migration 266.
+           */
+          grounding: Json | null
         }
         Insert: {
           age: number
@@ -2519,6 +2524,7 @@ export interface Database {
           nse_band?: string | null
           household_size?: number | null
           active?: boolean
+          grounding?: Json | null
         }
         Update: {
           age?: number
@@ -2543,6 +2549,7 @@ export interface Database {
           nse_band?: string | null
           household_size?: number | null
           active?: boolean
+          grounding?: Json | null
         }
         Relationships: []
       }

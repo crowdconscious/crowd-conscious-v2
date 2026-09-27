@@ -40,7 +40,8 @@ alter table simulation_personas
   add column if not exists centroid_lng double precision,
   add column if not exists nse_band text,
   add column if not exists household_size integer,
-  add column if not exists active boolean not null default true;
+  add column if not exists active boolean not null default true,
+  add column if not exists grounding jsonb;
 
 -- Stable slug for deep-links (?persona=<personaKey>). Nullable so existing
 -- cdmx-v1 rows remain valid; new / fixture rows must set it.
@@ -63,6 +64,8 @@ comment on column simulation_personas.nse_band is
   'AMAI NSE band (A/B, C+, C, C-, D+, D). Prefer over income_band for viewer copy when set.';
 comment on column simulation_personas.active is
   'When false, persona is excluded from new simulation runs. Visor Task 1.';
+comment on column simulation_personas.grounding is
+  'Per-persona source data for the viewer inspector: INEGI Censo 2020 AGEB marginals, ENIGH, AMAI references, sampling method. Shape: PersonaGrounding in types/simulation.ts.';
 
 -- =============================================================================
 -- 2. simulation_runs — replay metadata (additive; keep market_id / n_agents / …)
