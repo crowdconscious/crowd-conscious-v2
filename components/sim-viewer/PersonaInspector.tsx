@@ -1,11 +1,21 @@
 'use client'
 
 import { useEffect, useId, useRef } from 'react'
-import type { SimulationReplayVote } from '@/types/simulation-replay'
+import type {
+  PersonaGrounding,
+  SimulationReplayVote,
+} from '@/types/simulation-replay'
 import { PersonaAbstractMark } from '@/components/sim-viewer/PersonaAbstractMark'
 import { PERSONA_GROUNDING_LINE } from '@/lib/sim-viewer/persona-mark'
 
 export { PERSONA_GROUNDING_LINE }
+
+const MISSING_GROUNDING_COPY =
+  'Datos de origen no disponibles para esta corrida'
+
+const EXAMPLE_GROUNDING_BANNER =
+  'Valores de ejemplo, no son cifras reales del Censo'
+
 type Props = {
   vote: SimulationReplayVote | null
   optionLabel: string | null
@@ -183,6 +193,13 @@ export function PersonaInspector({
               {vote.reasoning}
             </p>
           </section>
+
+          <PersonaDataBasis
+            grounding={persona.grounding}
+            alcaldia={persona.alcaldia}
+            colonia={persona.colonia}
+            agebCode={persona.agebCode}
+          />
         </div>
 
         <p
@@ -193,6 +210,137 @@ export function PersonaInspector({
         </p>
       </div>
     </div>
+  )
+}
+
+function PersonaDataBasis({
+  grounding,
+  alcaldia,
+  colonia,
+  agebCode,
+}: {
+  grounding: PersonaGrounding | undefined
+  alcaldia: string
+  colonia: string | null
+  agebCode: string | null
+}) {
+  return (
+    <section
+      aria-label="Datos de origen"
+      className="rounded-lg border border-slate-700/70 bg-slate-900/40 p-3 sm:p-3.5"
+      data-persona-data-basis="1"
+      data-example={grounding?.isExample ? '1' : undefined}
+    >
+      <h3 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+        ¿En qué datos se basa?
+      </h3>
+
+      {!grounding ? (
+        <p className="mt-2 text-sm leading-relaxed text-slate-400">
+          {MISSING_GROUNDING_COPY}
+        </p>
+      ) : (
+        <div className="mt-2.5 space-y-3.5">
+          {grounding.isExample ? (
+            <p
+              className="rounded border border-amber-500/30 bg-amber-500/10 px-2.5 py-1.5 text-[11px] font-medium leading-snug text-amber-100"
+              role="status"
+              data-grounding-example="1"
+            >
+              {EXAMPLE_GROUNDING_BANNER}
+            </p>
+          ) : null}
+
+          <div>
+            <h4 className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+              Fuente(s)
+            </h4>
+            <ul className="mt-1.5 space-y-1.5">
+              {grounding.sources.map((src) => (
+                <li
+                  key={`${src.name}-${src.year}`}
+                  className="text-sm leading-snug"
+                >
+                  <a
+                    href={src.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-sky-300 underline-offset-2 hover:text-sky-200 hover:underline"
+                  >
+                    {src.name} {src.year}
+                  </a>
+                  {src.table ? (
+                    <span className="text-slate-500"> · {src.table}</span>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+              Su AGEB
+            </h4>
+            <p className="mt-1 font-mono text-[12px] text-slate-300">
+              {grounding.ageb.code || agebCode || '—'}
+              <span className="text-slate-500">
+                {' '}
+                · {alcaldia}
+                {colonia ? ` · ${colonia}` : ''}
+              </span>
+              {grounding.ageb.population != null ? (
+                <span className="text-slate-500">
+                  {' '}
+                  · pob. {grounding.ageb.population.toLocaleString('es-MX')}
+                </span>
+              ) : null}
+            </p>
+            {grounding.ageb.marginals.length > 0 ? (
+              <ul className="mt-2 space-y-2">
+                {grounding.ageb.marginals.map((m) => (
+                  <li key={m.label}>
+                    <div className="flex items-baseline justify-between gap-2 text-sm">
+                      <span className="text-slate-400">{m.label}</span>
+                      <span className="shrink-0 font-medium tabular-nums text-slate-200">
+                        {m.value}
+                      </span>
+                    </div>
+                    {typeof m.share === 'number' ? (
+                      <div
+                        className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-800"
+                        role="meter"
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-valuenow={Math.round(
+                          Math.max(0, Math.min(1, m.share)) * 100
+                        )}
+                        aria-label={m.label}
+                      >
+                        <div
+                          className="h-full rounded-full bg-slate-400/70"
+                          style={{
+                            width: `${Math.max(0, Math.min(1, m.share)) * 100}%`,
+                          }}
+                        />
+                      </div>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+
+          <div>
+            <h4 className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+              Cómo se construyó
+            </h4>
+            <p className="mt-1 text-sm leading-relaxed text-slate-300">
+              {grounding.method}
+            </p>
+          </div>
+        </div>
+      )}
+    </section>
   )
 }
 

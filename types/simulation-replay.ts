@@ -7,6 +7,10 @@
  * API boundary — do not change this viewer contract lightly.
  */
 
+import type { PersonaGrounding } from '@/types/simulation'
+
+export type { PersonaGrounding } from '@/types/simulation'
+
 export type SimulationRunStatus =
   | 'pending'
   | 'running'
@@ -66,6 +70,12 @@ export type SimulationReplayPersona = {
   householdSize: number | null
   occupation: string
   personaSummary: string
+  /**
+   * Optional inspector grounding (Task 5 scope addition).
+   * Missing on older runs → inspector shows "Datos de origen no disponibles…".
+   * Fixture rows set `isExample: true`.
+   */
+  grounding?: PersonaGrounding
 }
 
 export type SimulationReplayVote = {

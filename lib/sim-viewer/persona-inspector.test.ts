@@ -5,6 +5,7 @@ import {
   alcaldiaGlyph,
   nseBandColor,
 } from './persona-mark.ts'
+import type { PersonaGrounding } from '../../types/simulation.ts'
 
 describe('persona inspector grounding', () => {
   it('exports the verbatim Prompt Pack grounding line', () => {
@@ -26,5 +27,33 @@ describe('persona abstract mark keys', () => {
     assert.equal(alcaldiaGlyph('Miguel Hidalgo'), 'diamond')
     assert.equal(alcaldiaGlyph('Cuauhtémoc'), 'hexagon')
     assert.equal(alcaldiaGlyph('Benito Juárez'), 'square')
+  })
+})
+
+describe('PersonaGrounding contract', () => {
+  it('accepts the shared Task 5 shape with isExample', () => {
+    const g: PersonaGrounding = {
+      isExample: true,
+      sources: [
+        {
+          name: 'INEGI Censo de Población y Vivienda',
+          year: 2020,
+          url: 'https://www.inegi.org.mx/programas/ccpv/2020/',
+          table: 'AGEB urbana',
+        },
+      ],
+      ageb: {
+        code: '091000',
+        population: 3200,
+        marginals: [
+          { label: 'Grupo de edad 18–29', value: '22%', share: 0.22 },
+          { label: 'Tamaño medio del hogar', value: '3.1 pers.' },
+        ],
+      },
+      method: 'Muestreo de celda demográfica a partir de marginales del AGEB.',
+    }
+    assert.equal(g.isExample, true)
+    assert.equal(g.sources.length, 1)
+    assert.equal(g.ageb.marginals.length, 2)
   })
 })
