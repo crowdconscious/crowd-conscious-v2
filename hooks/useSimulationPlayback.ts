@@ -134,10 +134,6 @@ export function useSimulationPlayback({
   )
 
   const restart = useCallback(() => {
-    if (rafRef.current !== null) {
-      cancelAnimationFrame(rafRef.current)
-      rafRef.current = null
-    }
     lastTsRef.current = null
     accMsRef.current = 0
     if (prefersReducedMotion()) {
@@ -148,6 +144,12 @@ export function useSimulationPlayback({
       setPlaying(false)
       return
     }
+    // Keep the rAF loop alive — only reset clock state. Cancelling the
+    // frame here used to leave playback dead until a full remount.
+    // Update refs synchronously so the in-flight tick sees the new beat.
+    beatRef.current = 'populate'
+    votedCountRef.current = 0
+    playingRef.current = true
     setBeat('populate')
     setVotedCount(0)
     setDisplayedDivergence(null)

@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import { useMemo, useState } from 'react'
 import type {
   SimulationAspectRatio,
@@ -101,14 +100,15 @@ export default function SimulationViewer({
       {/* Stage — everything that must survive a crop lives inside here */}
       <div
         className={`sim-viewer-stage relative flex flex-col overflow-hidden rounded-2xl border border-slate-700/70 bg-[#0f1419] shadow-[0_0_0_1px_rgba(16,185,129,0.08)] ${
-          isPortrait ? 'min-h-[720px]' : 'min-h-[560px]'
+          isPortrait ? 'min-h-[640px]' : 'min-h-[520px]'
         }`}
       >
         {/* Header */}
         <header className="relative z-10 flex items-start justify-between gap-3 border-b border-slate-800/80 px-4 pb-3 pt-4 sm:px-5">
-          <div className="min-w-0 flex-1 pr-24 sm:pr-32">
-            <div className="mb-2 flex items-center gap-2">
-              <Image
+          <div className="min-w-0 flex-1 pr-4">
+            <div className="mb-2 flex items-center gap-2.5">
+              {/* eslint-disable-next-line @next/next/no-img-element -- small brand mark; avoid next/image layout shift in capture crops */}
+              <img
                 src="/images/logo-small.png"
                 alt="Crowd Conscious"
                 width={28}
@@ -123,9 +123,6 @@ export default function SimulationViewer({
               {data.pulse.question}
             </h1>
           </div>
-          {/* In-canvas mark also lives inside SimCanvas; header keeps brand
-              weight. The dashed SIMULACIÓN mark is rendered on the canvas so
-              a 9:16 crop of the chart still shows it. */}
         </header>
 
         {/* Body: canvas + feed */}

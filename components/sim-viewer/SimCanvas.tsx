@@ -153,10 +153,11 @@ export function SimCanvas({
               gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))`,
             }}
           >
-            {options.map((opt) => (
+            {options.map((opt, colIdx) => (
               <ColumnFrame
                 key={opt.id}
                 option={opt}
+                showLatticeHint={colIdx === 0}
                 sim={optionAggregate(data.simAggregates, opt.id)}
                 real={
                   data.realAggregates
@@ -199,30 +200,33 @@ function ColumnFrame({
   real,
   showPercents,
   showReveal,
+  showLatticeHint,
 }: {
   option: SimulationReplayOption
   sim: SimulationOptionAggregate | undefined
   real: SimulationOptionAggregate | undefined
   showPercents: boolean
   showReveal: boolean
+  showLatticeHint: boolean
 }) {
   return (
     <div className="relative border-r border-slate-700/50 last:border-r-0">
-      {/* Empty lattice hint circles in first column feel — subtle density guide */}
-      <div className="pointer-events-none absolute inset-x-2 inset-y-3 opacity-[0.12]">
-        {Array.from({ length: 8 }).map((_, r) =>
-          Array.from({ length: 3 }).map((_, c) => (
-            <span
-              key={`${r}-${c}`}
-              className="absolute h-2 w-2 rounded-full border border-slate-400"
-              style={{
-                left: `${20 + c * 30}%`,
-                top: `${10 + r * 11}%`,
-              }}
-            />
-          ))
-        )}
-      </div>
+      {showLatticeHint ? (
+        <div className="pointer-events-none absolute inset-x-2 inset-y-3 opacity-[0.1]">
+          {Array.from({ length: 6 }).map((_, r) =>
+            Array.from({ length: 2 }).map((_, c) => (
+              <span
+                key={`${r}-${c}`}
+                className="absolute h-1.5 w-1.5 rounded-full border border-slate-500"
+                style={{
+                  left: `${25 + c * 35}%`,
+                  top: `${12 + r * 13}%`,
+                }}
+              />
+            ))
+          )}
+        </div>
+      ) : null}
 
       {/* Real share rule (Beat 4) */}
       {showReveal && real ? (
