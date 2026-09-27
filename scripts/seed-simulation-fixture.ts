@@ -27,6 +27,7 @@ import { resolve } from 'node:path'
 import { computeDivergence } from '../lib/divergence.ts'
 import type {
   OptionAgg,
+  PersonaGrounding,
   SimulationReplayPayload,
   SimulationReplayPersona,
   SimulationReplayVote,
@@ -89,6 +90,49 @@ const EDUCATION = [
   'posgrado',
 ] as const
 
+/**
+ * Illustrative grounding only — isExample: true. Numbers/shares are NOT real
+ * INEGI/ENIGH/AMAI census figures and must never be presented as such.
+ */
+function buildFixtureGrounding(agebCode: string, nse: string): PersonaGrounding {
+  return {
+    sources: [
+      {
+        name: 'INEGI Censo de Población y Vivienda (FIXTURE example)',
+        year: 2020,
+        url: 'https://www.inegi.org.mx/',
+        table: 'FIXTURE — not a real AGEB table',
+      },
+      {
+        name: 'ENIGH (FIXTURE example)',
+        year: 2020,
+        url: 'https://www.inegi.org.mx/',
+      },
+      {
+        name: 'AMAI NSE (FIXTURE example)',
+        year: 2022,
+        url: 'https://www.amai.org/',
+      },
+    ],
+    ageb: {
+      code: agebCode,
+      population: 1000,
+      marginals: [
+        { label: 'FIXTURE sex split', value: 'illustrative only', share: 0.5 },
+        { label: 'FIXTURE NSE band', value: nse, share: 0.2 },
+        {
+          label: 'FIXTURE education',
+          value: 'illustrative only',
+          share: 0.3,
+        },
+      ],
+    },
+    method:
+      'FIXTURE sampling — stratified illustration for the visor. Not a real draw from census microdata.',
+    isExample: true,
+  }
+}
+
 function buildFixturePersonas(rand: () => number): BuiltPersona[] {
   const out: BuiltPersona[] = []
   let idx = 0
@@ -119,6 +163,7 @@ function buildFixturePersonas(rand: () => number): BuiltPersona[] {
         householdSize: 1 + (i % 5),
         personaSummary:
           'FIXTURE persona sintetica — no representa a una persona real. Generada para el visor de simulacion.',
+        grounding: buildFixtureGrounding(agebCode, nse),
       })
       idx += 1
     }
@@ -193,6 +238,7 @@ function buildVotes(
         occupation: row.persona.occupation,
         householdSize: row.persona.householdSize,
         personaSummary: row.persona.personaSummary,
+        grounding: row.persona.grounding,
       },
     }
   })
@@ -377,6 +423,7 @@ async function seedDatabase(pulseId: string): Promise<void> {
     nse_band: p.nseBand,
     household_size: p.householdSize,
     active: true,
+    grounding: p.grounding ?? null,
   }))
 
   // Delete prior fixture personas/runs for this version to keep re-runs clean.

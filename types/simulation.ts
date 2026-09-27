@@ -34,6 +34,23 @@ export type SimulationRunMode = 'batch' | 'live'
 /** Pack AMAI bands; `income_band` on older rows may also carry these. */
 export type NseBand = 'A/B' | 'C+' | 'C' | 'C-' | 'D+' | 'D' | 'D/E'
 
+/**
+ * Per-persona source data for the viewer inspector (Task 5).
+ * Stored on `simulation_personas.grounding` (migration 266).
+ * Fixture rows MUST set `isExample: true` — values are illustrative, not
+ * real census figures.
+ */
+export type PersonaGrounding = {
+  sources: { name: string; year: number; url: string; table?: string }[]
+  ageb: {
+    code: string
+    population?: number
+    marginals: { label: string; value: string; share?: number }[]
+  }
+  method: string
+  isExample?: boolean
+}
+
 // ---------------------------------------------------------------------------
 // Divergence (viewer-facing OptionAgg API — see lib/divergence.ts)
 // ---------------------------------------------------------------------------
@@ -85,6 +102,8 @@ export interface SimulationReplayPersona {
   occupation: string
   householdSize: number | null
   personaSummary: string
+  /** Optional inspector grounding; fixture sets isExample: true. */
+  grounding?: PersonaGrounding
 }
 
 export interface SimulationReplayVote {
