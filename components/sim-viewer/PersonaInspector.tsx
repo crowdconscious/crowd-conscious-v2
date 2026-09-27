@@ -183,14 +183,14 @@ export function PersonaInspector({
               {vote.reasoning}
             </p>
           </section>
-
-          <p
-            className="border-t border-slate-800 pt-4 text-[11px] leading-relaxed text-slate-500"
-            data-persona-grounding="1"
-          >
-            {PERSONA_GROUNDING_LINE}
-          </p>
         </div>
+
+        <p
+          className="shrink-0 border-t border-slate-800 px-4 py-3 text-[11px] leading-relaxed text-slate-500 sm:px-5"
+          data-persona-grounding="1"
+        >
+          {PERSONA_GROUNDING_LINE}
+        </p>
       </div>
     </div>
   )
