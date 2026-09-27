@@ -1,9 +1,11 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { getCurrentUser } from '@/lib/auth-server'
+import { AuthSessionExpiredError, getCurrentUser } from '@/lib/auth-server'
 import { isAdminUser } from '@/lib/auth/is-admin'
 import { createAdminClient } from '@/lib/supabase-admin'
+import { decideReplayAccess } from '@/lib/sim-viewer/access'
 import { isSimViewerEnabled } from '@/lib/sim-viewer/is-enabled'
+import { isSimViewerPublicClosedEnabled } from '@/lib/sim-viewer/public-closed-flag'
 import SimulationViewerLoader from '@/components/sim-viewer/SimulationViewerLoader'
 
 export const dynamic = 'force-dynamic'
@@ -13,6 +15,15 @@ type Props = {
   searchParams: Promise<{ captura?: string; persona?: string }>
 }
 
+/** Minimal run row for the page gate (mirrors Task 2 / PR #19). */
+type RunGateRow = {
+  id: string
+  status: string
+  revealed_at: string | null
+  /** Task 1 column — absent on older schemas; treat missing as false. */
+  is_fixture?: boolean | null
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   return {
     title: 'Visor de simulación',
@@ -20,14 +31,30 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
+async function resolveIsAdmin(): Promise<boolean> {
+  try {
+    const user = await getCurrentUser()
+    return isAdminUser(user)
+  } catch (err) {
+    // Expired / invalid session → treat as anonymous (404, not 401/403).
+    if (err instanceof AuthSessionExpiredError) return false
+    return false
+  }
+}
+
 /**
  * /pulse/[id]/simulacion — Visor de simulación (Task 3).
  *
- * Open-pulse gate (product rule): while the Pulse is open, only admins may
- * reach this page. Non-admin / anonymous get 404 (not 403) so we do not
- * confirm a simulation exists to someone who has not voted yet.
+ * Access gate mirrors Task 2 (`decideReplayAccess` from PR #19), copied
+ * into this branch as `lib/sim-viewer/access.ts` so we do not hard-depend
+ * on unmerged code. Denied callers always get Next.js `notFound()` → HTTP
+ * 404 (never 403).
  *
- * Auth/RLS edge cases parked in the PR — see draft description.
+ *   - Feature flag off → 404
+ *   - No complete run → 404
+ *   - Non-admin: only `status=resolved` + revealed_at + non-fixture +
+ *     SIM_VIEWER_PUBLIC_CLOSED ≠ 'false' (default ON)
+ *   - Admin: always (fixtures included)
  */
 export default async function PulseSimulacionPage({ params, searchParams }: Props) {
   if (!isSimViewerEnabled()) {
@@ -40,7 +67,7 @@ export default async function PulseSimulacionPage({ params, searchParams }: Prop
   const admin = createAdminClient()
   const { data: market } = await admin
     .from('prediction_markets')
-    .select('id, title, status, closes_at, is_pulse, category, market_type')
+    .select('id, title, status, resolution_date, is_pulse, category, market_type')
     .eq('id', id)
     .maybeSingle()
 
@@ -61,22 +88,55 @@ export default async function PulseSimulacionPage({ params, searchParams }: Prop
     notFound()
   }
 
-  const closesAt = market.closes_at ? new Date(market.closes_at) : null
-  const isPastClose = closesAt !== null && closesAt.getTime() < Date.now()
-  const isClosed =
-    market.status === 'closed' ||
-    market.status === 'resolved' ||
-    isPastClose
-  // Treat anything not clearly closed as open for the anchoring gate.
-  // Draft / other edge statuses: parked question in the PR.
-  const isOpen = !isClosed
+  // Most recent complete run — same default as Task 2's API.
+  // `is_fixture` lands with Task 1; selecting it keeps the page gate correct
+  // once that column exists. On older DBs without the column the query may
+  // error — fall back to a revealed_at-only select below.
+  let run: RunGateRow | null = null
+  {
+    const withFixture = await admin
+      .from('simulation_runs')
+      .select('id, status, revealed_at, is_fixture')
+      .eq('market_id', id)
+      .eq('status', 'complete')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
 
-  if (isOpen) {
-    const user = await getCurrentUser()
-    if (!user || !isAdminUser(user)) {
-      // Deliberate 404 — do not confirm simulation existence.
-      notFound()
+    if (!withFixture.error && withFixture.data) {
+      run = withFixture.data as RunGateRow
+    } else {
+      const legacy = await admin
+        .from('simulation_runs')
+        .select('id, status, revealed_at')
+        .eq('market_id', id)
+        .eq('status', 'complete')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      if (legacy.data) {
+        run = { ...(legacy.data as RunGateRow), is_fixture: false }
+      }
     }
+  }
+
+  if (!run) {
+    notFound()
+  }
+
+  const isAdmin = await resolveIsAdmin()
+  const decision = decideReplayAccess({
+    isAdmin,
+    includeRealParam: false,
+    pulseStatus: market.status,
+    runRevealedAt: run.revealed_at,
+    runIsFixture: run.is_fixture === true,
+    publicClosedEnabled: isSimViewerPublicClosedEnabled(),
+  })
+
+  if (!decision.allow) {
+    // Deliberate 404 — do not confirm simulation existence (never 403).
+    notFound()
   }
 
   return (
