@@ -1,0 +1,35 @@
+.sim-dot--landed {
+  background-color: rgba(251, 191, 36, 0.85);
+  border-color: rgb(252, 211, 77);
+  box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.25);
+}
+
+.sim-dot--glow {
+  box-shadow:
+    0 0 0 3px rgba(251, 191, 36, 0.35),
+    0 0 14px 4px rgba(251, 191, 36, 0.45);
+}
+
+.sim-feed-item {
+  animation: sim-feed-in 280ms ease-out;
+}
+
+@keyframes sim-feed-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sim-dot {
+    transition: none !important;
+  }
+  .sim-feed-item {
+    animation: none !important;
+  }
+}
