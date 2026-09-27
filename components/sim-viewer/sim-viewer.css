@@ -10,6 +10,30 @@
     0 0 14px 4px rgba(251, 191, 36, 0.45);
 }
 
+.sim-dot--selected {
+  outline: 2px solid rgb(252, 211, 77);
+  outline-offset: 3px;
+  box-shadow:
+    0 0 0 3px rgba(251, 191, 36, 0.45),
+    0 0 18px 6px rgba(251, 191, 36, 0.55);
+  opacity: 1 !important;
+  z-index: 5;
+}
+
+/* Persona inspector — bottom sheet on narrow, side sheet from sm up */
+.sim-persona-sheet {
+  border-radius: 1rem 1rem 0 0;
+  margin-top: auto;
+}
+
+@media (min-width: 640px) {
+  .sim-persona-sheet {
+    border-radius: 0;
+    margin-top: 0;
+    height: 100%;
+  }
+}
+
 .sim-feed-item {
   animation: sim-feed-in 280ms ease-out;
 }

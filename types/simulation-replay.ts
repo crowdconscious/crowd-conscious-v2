@@ -62,6 +62,8 @@ export type SimulationReplayPersona = {
   age: number
   sex: string
   education: string
+  /** Household size (persons). Null when the source row has no count. */
+  householdSize: number | null
   occupation: string
   personaSummary: string
 }

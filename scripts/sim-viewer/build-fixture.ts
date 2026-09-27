@@ -27,6 +27,7 @@ type SourcePersona = {
   education: string
   occupation: string
   income_band: string
+  household: string | null
   persona_narrative: string
 }
 
@@ -107,6 +108,36 @@ const COLONIAS_CQ = [
 function normalizeNse(band: string): string {
   if (band === 'D/E' || band === 'E') return 'D'
   return band
+}
+
+/**
+ * Derive a household size (1–7) from the free-text household field, with a
+ * seeded fallback so every fixture persona has a count for the inspector.
+ */
+function householdSizeFromText(
+  household: string | null,
+  rng: ReturnType<typeof createSeededRng>
+): number {
+  if (household) {
+    const lower = household.toLowerCase()
+    const nums = lower.match(/\b([1-9]|1[0-2])\b/g)
+    if (nums && nums.length > 0) {
+      // Prefer counts of children / roommates mentioned, + self/partner heuristics.
+      const mentioned = nums.map(Number)
+      const maxMentioned = Math.max(...mentioned)
+      if (/solo|sola/.test(lower)) return 1
+      if (/pareja|espos[oa]|compañer/.test(lower)) {
+        return Math.min(7, Math.max(2, maxMentioned + 1))
+      }
+      if (/roommate|compañer|amigo|prima|primo/.test(lower)) {
+        return Math.min(7, maxMentioned + 1)
+      }
+      return Math.min(7, Math.max(1, maxMentioned))
+    }
+    if (/solo|sola/.test(lower)) return 1
+    if (/pareja|espos[oa]/.test(lower)) return 2
+  }
+  return Math.round(rng.nextFloat(1, 5))
 }
 
 /**
@@ -413,6 +444,7 @@ function main(): void {
         age,
         sex: p.gender,
         education: p.education,
+        householdSize: householdSizeFromText(p.household, rng),
         occupation: p.occupation,
         personaSummary: p.persona_narrative,
       },

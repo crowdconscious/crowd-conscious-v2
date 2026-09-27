@@ -22,6 +22,12 @@ type Props = {
   compact?: boolean
   /** Capture 9:16 / 1:1 — larger dots + labels for phone Reels. */
   phoneScale?: boolean
+  /** Task 5 — highlighted while the persona inspector is open. */
+  selectedPersonaKey?: string | null
+  /**
+   * Task 5 — open inspector. Prefer wiring the same callback into the
+   * future map view (Task 4) so both modes share selection.
+   */
   onDotActivate?: (personaKey: string) => void
 }
 
@@ -48,6 +54,7 @@ export function SimCanvas({
   votedCount,
   compact = false,
   phoneScale = false,
+  selectedPersonaKey = null,
   onDotActivate,
 }: Props) {
   const positions = useMemo(
@@ -242,21 +249,37 @@ export function SimCanvas({
 
             {/* Dots layer — only over the plot band, not the footer labels */}
             <div className="absolute inset-0">
-              {data.votes.map((vote, i) => (
-                <button
-                  key={vote.persona.personaKey}
-                  type="button"
-                  ref={(el) => {
-                    dotRefs.current[i] = el
-                  }}
-                  data-persona-key={vote.persona.personaKey}
-                  data-sequence={vote.sequenceIndex}
-                  aria-label={`${vote.persona.displayName}, ${vote.persona.colonia ?? vote.persona.alcaldia}`}
-                  className={`sim-dot absolute left-0 top-0 -translate-x-1/2 -translate-y-1/2 rounded-full border border-amber-300/60 bg-transparent opacity-70 transition-[left,top,opacity,box-shadow] duration-500 ease-out will-change-[left,top] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400 ${dotCls}`}
-                  style={{ transform: 'translate(-50%, -50%)' }}
-                  onClick={() => onDotActivate?.(vote.persona.personaKey)}
-                />
-              ))}
+              {data.votes.map((vote, i) => {
+                const selected =
+                  selectedPersonaKey === vote.persona.personaKey
+                return (
+                  <button
+                    key={vote.persona.personaKey}
+                    type="button"
+                    ref={(el) => {
+                      dotRefs.current[i] = el
+                    }}
+                    data-persona-key={vote.persona.personaKey}
+                    data-sequence={vote.sequenceIndex}
+                    data-selected={selected ? '1' : undefined}
+                    aria-label={`Inspeccionar persona ${vote.persona.displayName}, ${vote.persona.colonia ?? vote.persona.alcaldia}`}
+                    aria-pressed={selected}
+                    className={`sim-dot absolute left-0 top-0 -translate-x-1/2 -translate-y-1/2 rounded-full border border-amber-300/60 bg-transparent opacity-70 transition-[left,top,opacity,box-shadow] duration-500 ease-out will-change-[left,top] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400 ${dotCls}${
+                      selected ? ' sim-dot--selected' : ''
+                    }`}
+                    style={{ transform: 'translate(-50%, -50%)' }}
+                    onClick={() => onDotActivate?.(vote.persona.personaKey)}
+                    onKeyDown={(e) => {
+                      // Enter / Space already activate buttons; keep Escape
+                      // bubbling so the inspector can close when focused here.
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        onDotActivate?.(vote.persona.personaKey)
+                      }
+                    }}
+                  />
+                )
+              })}
             </div>
           </div>
 

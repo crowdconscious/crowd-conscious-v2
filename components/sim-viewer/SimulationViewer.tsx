@@ -21,6 +21,7 @@ import { SimReasoningFeed } from '@/components/sim-viewer/SimReasoningFeed'
 import { SimTransport } from '@/components/sim-viewer/SimTransport'
 import { SimReadouts } from '@/components/sim-viewer/SimReadouts'
 import { SimEndcard } from '@/components/sim-viewer/SimEndcard'
+import { PersonaInspector } from '@/components/sim-viewer/PersonaInspector'
 import {
   useCaptureChrome,
   useCaptureControlsVisibility,
@@ -61,6 +62,7 @@ export default function SimulationViewer({
   const searchParams = useSearchParams()
 
   const urlCapture = searchParams.get('captura') === '1'
+  const urlPersona = searchParams.get('persona')
   const [internalCapture, setInternalCapture] = useState(
     () => urlCapture || captureModeProp === true
   )
@@ -72,9 +74,14 @@ export default function SimulationViewer({
   const [internalViewMode, setInternalViewMode] = useState<'columns' | 'map'>(
     'columns'
   )
+  const [internalPersona, setInternalPersona] = useState<string | null>(
+    () => selectedPersonaKey ?? urlPersona ?? null
+  )
 
   const aspectRatio = aspectRatioProp ?? internalAspect
   const viewMode = viewModeProp ?? internalViewMode
+  const activePersonaKey =
+    selectedPersonaKey !== undefined ? selectedPersonaKey : internalPersona
 
   const setAspect = (r: SimulationAspectRatio) => {
     onAspectRatioChange?.(r)
@@ -96,15 +103,31 @@ export default function SimulationViewer({
     [pathname, router, searchParams]
   )
 
+  const syncPersonaUrl = useCallback(
+    (key: string | null) => {
+      const params = new URLSearchParams(searchParams.toString())
+      if (key) params.set('persona', key)
+      else params.delete('persona')
+      const qs = params.toString()
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+    },
+    [pathname, router, searchParams]
+  )
+
   const setCaptureMode = (on: boolean) => {
     setInternalCapture(on)
     syncCaptureUrl(on)
   }
 
-  // Keep internal state in sync if URL changes externally.
+  // Keep internal state in sync if URL / props change externally.
   useEffect(() => {
     setInternalCapture(urlCapture || captureModeProp === true)
   }, [urlCapture, captureModeProp])
+
+  useEffect(() => {
+    if (selectedPersonaKey !== undefined) return
+    if (urlPersona) setInternalPersona(urlPersona)
+  }, [urlPersona, selectedPersonaKey])
 
   useCaptureChrome(captureMode)
   const { controlsVisible, onPointerActivity } =
@@ -118,16 +141,60 @@ export default function SimulationViewer({
 
   const playback = useSimulationPlayback({
     data,
-    autoplay: true,
+    autoplay: !activePersonaKey,
     captureMode,
     feedCap,
   })
+
+  const pausedByInspectorRef = useRef(false)
+
+  const selectPersona = useCallback(
+    (key: string | null) => {
+      onPersonaSelect?.(key)
+      if (selectedPersonaKey === undefined) setInternalPersona(key)
+      syncPersonaUrl(key)
+    },
+    [onPersonaSelect, selectedPersonaKey, syncPersonaUrl]
+  )
+
+  /**
+   * Task 5 click handler. In capture mode, ignore stray clicks — only a
+   * ?persona= deep link may open the inspector (demo / clip hygiene).
+   */
+  const handleDotActivate = useCallback(
+    (key: string) => {
+      if (captureMode) return
+      selectPersona(key)
+    },
+    [captureMode, selectPersona]
+  )
+
+  // Pause while inspector is open; resume on close (spec behaviour).
+  useEffect(() => {
+    if (activePersonaKey) {
+      pausedByInspectorRef.current = true
+      playback.pause()
+      return
+    }
+    if (pausedByInspectorRef.current) {
+      pausedByInspectorRef.current = false
+      playback.play()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- drive off selection only
+  }, [activePersonaKey])
 
   const optionsById = useMemo(() => {
     const map = new Map<string, string>()
     for (const o of data.pulse.options) map.set(o.id, o.label)
     return map
   }, [data.pulse.options])
+
+  const selectedVote = useMemo(() => {
+    if (!activePersonaKey) return null
+    return (
+      data.votes.find((v) => v.persona.personaKey === activePersonaKey) ?? null
+    )
+  }, [activePersonaKey, data.votes])
 
   const location =
     data.pulse.locationLabel ??
@@ -180,6 +247,9 @@ export default function SimulationViewer({
         maxHeight: '100%',
       }
 
+  /** Shared activate hook for columns now; map (Task 4) should call the same. */
+  const onPersonaActivateFromView = handleDotActivate
+
   return (
     <div
       ref={shellRef}
@@ -188,7 +258,7 @@ export default function SimulationViewer({
       }`}
       data-capture={captureMode ? '1' : '0'}
       data-view-mode={viewMode}
-      data-persona={selectedPersonaKey ?? undefined}
+      data-persona={activePersonaKey ?? undefined}
       data-aspect={aspectRatio}
       data-phone-scale={phoneScale ? '1' : '0'}
       data-beat={playback.beat}
@@ -277,9 +347,28 @@ export default function SimulationViewer({
             }`}
           >
             {viewMode === 'map' ? (
-              <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-slate-600 bg-[#121820] p-4 text-center text-xs text-slate-400">
-                Vista mapa (Task 4) — el reloj de reproducción se conserva al
-                cambiar de modo.
+              <div
+                className="flex h-full flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-slate-600 bg-[#121820] p-4 text-center text-xs text-slate-400"
+                data-sim-map-hook="1"
+              >
+                <p>
+                  Vista mapa (Task 4) — el reloj de reproducción se conserva al
+                  cambiar de modo.
+                </p>
+                <p className="max-w-xs text-[11px] text-slate-500">
+                  Hook Task 5: al montar el mapa, pasar{' '}
+                  <code className="text-slate-400">onPersonaActivate</code> y{' '}
+                  <code className="text-slate-400">selectedPersonaKey</code>{' '}
+                  a cada punto AGEB (misma selección que columnas).
+                </p>
+                {/*
+                  Task 4 map dots should call:
+                  onPersonaActivateFromView(personaKey)
+                  and highlight when selectedPersonaKey matches.
+                */}
+                <span className="sr-only" data-on-persona-activate="ready">
+                  ready
+                </span>
               </div>
             ) : (
               <SimCanvas
@@ -291,7 +380,8 @@ export default function SimulationViewer({
                 }
                 compact={isPortrait && !phoneScale}
                 phoneScale={phoneScale}
-                onDotActivate={(key) => onPersonaSelect?.(key)}
+                selectedPersonaKey={activePersonaKey}
+                onDotActivate={onPersonaActivateFromView}
               />
             )}
           </div>
@@ -365,8 +455,20 @@ export default function SimulationViewer({
           divergence={playback.displayedDivergence}
           visible={showEndcard}
           phoneScale={phoneScale}
+          aspectRatio={aspectRatio}
         />
       </div>
+
+      <PersonaInspector
+        vote={selectedVote}
+        optionLabel={
+          selectedVote
+            ? (optionsById.get(selectedVote.optionId) ?? null)
+            : null
+        }
+        open={Boolean(activePersonaKey && selectedVote)}
+        onClose={() => selectPersona(null)}
+      />
     </div>
   )
 }

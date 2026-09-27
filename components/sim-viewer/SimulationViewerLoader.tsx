@@ -14,12 +14,17 @@ type Props = {
   /** When set, skip the fetch and render this payload (fixture routes). */
   initialData?: SimulationReplayPayload
   captureMode?: boolean
+  /**
+   * Seeds the Task 5 inspector via ?persona= (also read from the URL inside
+   * the viewer). Kept as a prop so server pages can forward searchParams.
+   */
   initialPersonaKey?: string | null
 }
 
 /**
  * Client loader: one data hook so swapping fixture → Task 2 API is local.
- * Suspense wraps the viewer because it reads useSearchParams for ?captura=.
+ * Suspense wraps the viewer because it reads useSearchParams for ?captura=
+ * and ?persona=.
  */
 export default function SimulationViewerLoader(props: Props) {
   return (
@@ -39,14 +44,17 @@ function SimulationViewerLoaderInner({
   pulseId,
   initialData,
   captureMode = false,
-  initialPersonaKey = null,
+  initialPersonaKey: _initialPersonaKey = null,
 }: Props) {
+  // Deep link: pages forward ?persona=; the viewer reads it from the URL
+  // via useSearchParams (Task 5). Prop kept so call sites stay typed.
+  void _initialPersonaKey
+
   const [result, setResult] = useState<SimulationDataResult | null>(
     initialData
       ? { ok: true, source: initialData.isFixture ? 'fixture' : 'api', data: initialData }
       : null
   )
-  const [personaKey, setPersonaKey] = useState<string | null>(initialPersonaKey)
 
   useEffect(() => {
     if (initialData) return
@@ -97,8 +105,6 @@ function SimulationViewerLoaderInner({
     <SimulationViewer
       data={result.data}
       captureMode={captureMode}
-      selectedPersonaKey={personaKey}
-      onPersonaSelect={setPersonaKey}
     />
   )
 }
