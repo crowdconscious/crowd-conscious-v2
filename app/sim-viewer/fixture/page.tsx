@@ -16,12 +16,7 @@ export const metadata: Metadata = {
 
 /**
  * Standalone fixture preview — no LandingNav / Supabase chrome.
- *
- * Requires BOTH:
- *   NEXT_PUBLIC_SIM_VIEWER_ENABLED=true
- *   and (NODE_ENV=development OR SIM_VIEWER_FIXTURE_OPEN=true)
- *
- * Production demos: /admin/sim-viewer/fixture (admin session).
+ * Fills the viewport for screen-recording frames.
  */
 export default function SimViewerFixturePage() {
   if (!isSimViewerEnabled() || !isSimViewerFixtureOpen()) {
@@ -31,7 +26,7 @@ export default function SimViewerFixturePage() {
   const data = loadSimulationFixture()
 
   return (
-    <div className="min-h-screen bg-[#0f1419] px-3 py-6 font-sans sm:px-6 sm:py-10">
+    <div className="h-dvh max-h-dvh overflow-hidden bg-[#0a0f14] font-sans">
       <SimulationViewerLoader pulseId="fixture" initialData={data} />
     </div>
   )

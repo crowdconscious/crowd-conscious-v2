@@ -18,12 +18,12 @@ export type SimulationViewerProps = {
   pulseNumber?: number | null
 } & SimulationViewerExtensionSlots
 
-const ASPECT_CLASS: Record<SimulationAspectRatio, string> = {
-  '16:9': 'aspect-video max-w-6xl',
-  '9:16': 'aspect-[9/16] max-w-md',
-  '1:1': 'aspect-square max-w-2xl',
-}
-
+/**
+ * Frame-locked viewer for demos / screen recordings.
+ *
+ * 16:9 and 9:16 stages are sized to fit the viewport (no page scroll).
+ * Header + canvas/feed + transport/readouts all live inside the stage.
+ */
 export default function SimulationViewer({
   data,
   pulseNumber = null,
@@ -72,68 +72,79 @@ export default function SimulationViewer({
     `panel sintético ${data.run.personaCount} agentes`,
   ].join(' · ')
 
-  const stageClass = captureMode
-    ? ASPECT_CLASS[aspectRatio]
-    : aspectRatio === '9:16'
-      ? 'w-full max-w-md'
-      : 'w-full max-w-6xl'
-
   const isPortrait = aspectRatio === '9:16'
+  const isSquare = aspectRatio === '1:1'
+
+  // Stage fills the viewport without scrolling. Aspect is enforced via
+  // max-width/max-height so 1920×1080 and 1280×720 both show the full UI.
+  const stageSizeClass = isPortrait
+    ? 'h-[calc(100dvh-0.5rem)] max-h-[calc(100dvh-0.5rem)] w-auto max-w-[min(100%,calc((100dvh-0.5rem)*9/16))] aspect-[9/16]'
+    : isSquare
+      ? 'h-[calc(100dvh-0.5rem)] max-h-[calc(100dvh-0.5rem)] w-auto max-w-[min(100%,calc(100dvh-0.5rem))] aspect-square'
+      : 'w-[min(100%,calc((100dvh-0.5rem)*16/9))] max-w-full aspect-video max-h-[calc(100dvh-0.5rem)]'
 
   return (
     <div
-      className={`sim-viewer mx-auto flex w-full flex-col gap-3 text-slate-100 ${stageClass}`}
+      className={`sim-viewer flex h-dvh max-h-dvh w-full flex-col items-center justify-center overflow-hidden bg-[#0a0f14] text-slate-100 ${
+        captureMode ? 'p-0' : 'p-1 sm:p-2'
+      }`}
       data-capture={captureMode ? '1' : '0'}
       data-view-mode={viewMode}
       data-persona={selectedPersonaKey ?? undefined}
+      data-aspect={aspectRatio}
     >
-      {/* Fixture banner — never present fixture numbers as real results */}
-      {data.isFixture ? (
-        <div
-          className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-center text-xs text-amber-200"
-          role="status"
-        >
-          Datos de ejemplo (fixture) — no son resultados reales de un Pulse.
-        </div>
-      ) : null}
-
-      {/* Stage — everything that must survive a crop lives inside here */}
       <div
-        className={`sim-viewer-stage relative flex flex-col overflow-hidden rounded-2xl border border-slate-700/70 bg-[#0f1419] shadow-[0_0_0_1px_rgba(16,185,129,0.08)] ${
-          isPortrait ? 'min-h-[640px]' : 'min-h-[520px]'
-        }`}
+        className={`sim-viewer-stage relative flex min-h-0 flex-col overflow-hidden rounded-xl border border-slate-700/70 bg-[#0f1419] shadow-[0_0_0_1px_rgba(16,185,129,0.08)] ${stageSizeClass}`}
       >
-        {/* Header */}
-        <header className="relative z-10 flex items-start justify-between gap-3 border-b border-slate-800/80 px-4 pb-3 pt-4 sm:px-5">
-          <div className="min-w-0 flex-1 pr-4">
-            <div className="mb-2 flex items-center gap-2.5">
-              {/* eslint-disable-next-line @next/next/no-img-element -- small brand mark; avoid next/image layout shift in capture crops */}
-              <img
-                src="/images/logo-small.png"
-                alt="Crowd Conscious"
-                width={28}
-                height={28}
-                className="h-7 w-7 shrink-0 rounded-full"
-              />
-              <p className="truncate text-[11px] text-slate-500 sm:text-xs">
-                {metaLine}
-              </p>
-            </div>
-            <h1 className="text-balance text-xl font-semibold leading-snug tracking-tight text-emerald-300 sm:text-2xl md:text-3xl">
-              {data.pulse.question}
-            </h1>
+        {/* Fixture banner — inside the stage so a crop still shows it */}
+        {data.isFixture ? (
+          <div
+            className="shrink-0 border-b border-amber-500/30 bg-amber-500/10 px-2 py-1 text-center text-[10px] leading-tight text-amber-200 sm:text-[11px]"
+            role="status"
+          >
+            Datos de ejemplo (fixture) — no son resultados reales de un Pulse.
           </div>
+        ) : null}
+
+        {/* Header — compact so the canvas stays dominant */}
+        <header className="relative z-10 shrink-0 border-b border-slate-800/80 px-3 py-1.5 sm:px-4 sm:py-2">
+          <div className="flex items-center gap-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/logo-small.png"
+              alt="Crowd Conscious"
+              width={22}
+              height={22}
+              className="h-5 w-5 shrink-0 rounded-full sm:h-6 sm:w-6"
+            />
+            <p className="min-w-0 truncate text-[10px] text-slate-500 sm:text-[11px]">
+              {metaLine}
+            </p>
+          </div>
+          <h1
+            className={`mt-0.5 text-balance font-semibold leading-snug tracking-tight text-emerald-300 ${
+              isPortrait
+                ? 'text-sm sm:text-base'
+                : 'text-base sm:text-lg md:text-xl lg:text-2xl'
+            }`}
+          >
+            {data.pulse.question}
+          </h1>
         </header>
 
-        {/* Body: canvas + feed */}
+        {/* Body: canvas dominates; feed matches canvas height */}
         <div
-          className={`flex min-h-0 flex-1 gap-0 p-3 sm:p-4 ${
-            isPortrait ? 'flex-col' : 'flex-col lg:flex-row'
+          className={`flex h-full min-h-0 flex-1 items-stretch gap-2 overflow-hidden p-2 sm:gap-3 sm:p-3 ${
+            isPortrait ? 'flex-col' : 'flex-row'
           }`}
         >
-          <div className={`min-h-0 ${isPortrait ? 'h-[42%]' : 'flex-[1.4]'}`}>
+          <div
+            className={`flex h-full min-h-0 min-w-0 flex-col ${
+              isPortrait ? 'min-h-0 flex-[1.35]' : 'min-h-0 flex-[1.6]'
+            }`}
+          >
             {viewMode === 'map' ? (
-              <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-slate-600 bg-[#121820] p-6 text-center text-sm text-slate-400">
+              <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-slate-600 bg-[#121820] p-4 text-center text-xs text-slate-400">
                 Vista mapa (Task 4) — el reloj de reproducción se conserva al
                 cambiar de modo.
               </div>
@@ -145,25 +156,29 @@ export default function SimulationViewer({
                 lastLandedIndex={
                   playback.votedCount > 0 ? playback.votedCount - 1 : null
                 }
+                compact={isPortrait}
                 onDotActivate={(key) => onPersonaSelect?.(key)}
               />
             )}
           </div>
           <div
-            className={`min-h-0 ${
-              isPortrait ? 'mt-3 h-[38%]' : 'mt-3 lg:ml-3 lg:mt-0 lg:w-[320px] lg:flex-none'
+            className={`flex h-full min-h-0 min-w-0 flex-col ${
+              isPortrait
+                ? 'min-h-0 flex-1'
+                : 'w-[min(32%,320px)] shrink-0'
             }`}
           >
             <SimReasoningFeed
               votes={playback.feedVotes}
               optionsById={optionsById}
+              compact={isPortrait}
             />
           </div>
         </div>
 
-        {/* Footer controls + readouts */}
+        {/* Footer — always visible inside the frame */}
         <footer
-          className={`sim-viewer-chrome space-y-3 border-t border-slate-800/80 px-3 py-3 sm:px-4 ${
+          className={`sim-viewer-chrome shrink-0 space-y-1.5 border-t border-slate-800/80 px-2 py-1.5 sm:space-y-2 sm:px-3 sm:py-2 ${
             captureMode ? 'transition-opacity' : ''
           }`}
         >
@@ -178,13 +193,17 @@ export default function SimulationViewer({
             onAspectRatio={setAspect}
             viewMode={viewMode}
             onViewModeChange={setViewMode}
-            showMapToggle={Boolean(onViewModeChange) || viewModeProp !== undefined}
+            showMapToggle={
+              Boolean(onViewModeChange) || viewModeProp !== undefined
+            }
+            compact
           />
           <SimReadouts
             votedCount={playback.votedCount}
             total={data.run.personaCount}
             meanConfidence={playback.meanConfidence}
             divergence={playback.displayedDivergence}
+            compact
           />
         </footer>
       </div>

@@ -80,7 +80,7 @@ export default async function PulseSimulacionPage({ params, searchParams }: Prop
   }
 
   return (
-    <div className="min-h-screen bg-[#0f1419] px-3 py-6 sm:px-6 sm:py-10">
+    <div className="h-dvh max-h-dvh overflow-hidden bg-[#0a0f14]">
       <SimulationViewerLoader
         pulseId={id}
         captureMode={sp.captura === '1'}

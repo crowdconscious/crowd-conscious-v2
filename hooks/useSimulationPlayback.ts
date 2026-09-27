@@ -123,11 +123,14 @@ export function useSimulationPlayback({
     (index: number) => {
       const vote = data.votes[index]
       if (!vote) return
+      // Advance the ref synchronously so a single rAF tick that lands
+      // multiple votes never re-uses the same index (duplicate feed keys).
+      votedCountRef.current = index + 1
       onVoteLandRef.current?.(vote, index)
       setVotedCount(index + 1)
       setFeedVotes((prev) => {
-        const next = [vote, ...prev]
-        return next.slice(0, 16)
+        if (prev.some((v) => v.sequenceIndex === vote.sequenceIndex)) return prev
+        return [vote, ...prev].slice(0, 16)
       })
     },
     [data.votes]

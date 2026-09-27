@@ -18,8 +18,8 @@ type Props = {
   data: SimulationReplayPayload
   beat: SimulationViewerBeat
   votedCount: number
-  /** Imperative land notification — kept for future capture hooks. */
   lastLandedIndex: number | null
+  compact?: boolean
   onDotActivate?: (personaKey: string) => void
 }
 
@@ -37,13 +37,14 @@ function optionAggregate(
 }
 
 /**
- * Column scatter canvas. Dots use CSS transforms; landing updates mutate
- * DOM class/style via refs to avoid re-rendering all 150 nodes per vote.
+ * Column scatter canvas. Dots use CSS left/top; landing updates mutate
+ * DOM via refs to avoid re-rendering all 150 nodes per vote.
  */
 export function SimCanvas({
   data,
   beat,
   votedCount,
+  compact = false,
   onDotActivate,
 }: Props) {
   const positions = useMemo(
@@ -59,11 +60,9 @@ export function SimCanvas({
   const dotRefs = useRef<(HTMLButtonElement | null)[]>([])
   const prevVoted = useRef(0)
 
-  // Reset / advance dots imperatively when votedCount changes
   useEffect(() => {
     const prev = prevVoted.current
     if (votedCount < prev) {
-      // Restart — return all to lattice
       for (let i = 0; i < data.votes.length; i++) {
         const el = dotRefs.current[i]
         if (!el) continue
@@ -89,15 +88,12 @@ export function SimCanvas({
     prevVoted.current = votedCount
   }, [votedCount, data.votes, data.pulse.options.length, optionIndex, positions])
 
-  // Initial lattice placement
   useEffect(() => {
     for (let i = 0; i < data.votes.length; i++) {
       const el = dotRefs.current[i]
       const pos = positions[i]
       if (!el || !pos) continue
-      if ((Number(el.dataset.votedIndex ?? -1) || -1) >= 0 && votedCount > i) {
-        continue
-      }
+      if (votedCount > i) continue
       applyLatticeTransform(el, pos)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- mount / data identity
@@ -109,22 +105,44 @@ export function SimCanvas({
 
   return (
     <div
-      className="sim-canvas relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-amber-500/25 bg-gradient-to-b from-[#121820] via-[#0f1419] to-[#0c1015]"
+      className="sim-canvas relative flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-amber-500/25 bg-gradient-to-b from-[#121820] via-[#0f1419] to-[#0c1015]"
       data-sim-canvas="true"
     >
-      <SimMark subtitle="reproducción" />
+      <SimMark subtitle="reproducción" compact={compact} />
 
-      <div className="relative flex min-h-0 flex-1 px-2 pb-2 pt-10 sm:px-3 sm:pt-11">
-        {/* Y axis */}
-        <div className="relative mr-1 flex w-10 shrink-0 flex-col justify-between py-2 sm:w-14">
-          <span className="absolute -left-1 top-1/2 origin-center -translate-y-1/2 -rotate-90 whitespace-nowrap text-[9px] uppercase tracking-wider text-slate-500 sm:text-[10px]">
-            certeza declarada
-          </span>
-          <div className="flex h-full flex-col justify-between py-1 pl-0 sm:pl-1">
+      <div
+        className={`relative flex min-h-0 flex-1 ${
+          compact ? 'px-1.5 pb-1.5 pt-8' : 'px-2 pb-2 pt-9 sm:px-3 sm:pt-10'
+        }`}
+      >
+        {/* Y axis — vertical label in its own gutter (no overlap with dots) */}
+        <div
+          className={`relative flex shrink-0 items-stretch ${
+            compact ? 'w-8' : 'w-10 sm:w-12'
+          }`}
+        >
+          <div
+            className={`flex w-3 shrink-0 items-center justify-center ${
+              compact ? 'mr-0.5' : 'mr-1'
+            }`}
+            aria-hidden="true"
+          >
+            <span
+              className={`origin-center whitespace-nowrap font-medium uppercase tracking-wider text-slate-500 ${
+                compact ? 'text-[8px]' : 'text-[9px] sm:text-[10px]'
+              }`}
+              style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
+            >
+              certeza declarada
+            </span>
+          </div>
+          <div className="flex min-h-0 flex-1 flex-col justify-between py-1">
             {AXIS_TICKS.map((t) => (
               <span
                 key={t}
-                className="text-right font-mono text-[9px] text-slate-500 sm:text-[10px]"
+                className={`text-right font-mono text-slate-500 ${
+                  compact ? 'text-[8px]' : 'text-[9px] sm:text-[10px]'
+                }`}
               >
                 {t}
               </span>
@@ -132,61 +150,121 @@ export function SimCanvas({
           </div>
         </div>
 
-        {/* Plot */}
-        <div className="relative min-h-[220px] flex-1 sm:min-h-[280px]">
-          {/* Horizontal grid */}
-          {AXIS_TICKS.map((t) => {
-            const top = confidenceToTopFraction(t) * 100
-            return (
-              <div
-                key={t}
-                className="pointer-events-none absolute left-0 right-0 border-t border-slate-700/40"
-                style={{ top: `${top}%` }}
-              />
-            )
-          })}
-
-          {/* Columns */}
+        {/* Plot — reserve bottom band for % + labels so dots don't collide */}
+        <div className="relative min-h-0 flex-1">
           <div
-            className="absolute inset-0 grid"
-            style={{
-              gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))`,
-            }}
+            className="absolute inset-x-0 top-0"
+            style={{ bottom: compact ? '2.75rem' : '3.25rem' }}
           >
-            {options.map((opt, colIdx) => (
-              <ColumnFrame
-                key={opt.id}
-                option={opt}
-                showLatticeHint={colIdx === 0}
-                sim={optionAggregate(data.simAggregates, opt.id)}
-                real={
-                  data.realAggregates
-                    ? optionAggregate(data.realAggregates, opt.id)
-                    : undefined
-                }
-                showPercents={showPercents}
-                showReveal={showReveal}
-              />
-            ))}
+            {AXIS_TICKS.map((t) => {
+              const top = confidenceToTopFraction(t) * 100
+              return (
+                <div
+                  key={t}
+                  className="pointer-events-none absolute left-0 right-0 border-t border-slate-700/40"
+                  style={{ top: `${top}%` }}
+                />
+              )
+            })}
+
+            <div
+              className="absolute inset-0 grid"
+              style={{
+                gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))`,
+              }}
+            >
+              {options.map((opt, colIdx) => (
+                <div
+                  key={opt.id}
+                  className="relative border-r border-slate-700/50 last:border-r-0"
+                >
+                  {colIdx === 0 ? (
+                    <div className="pointer-events-none absolute inset-x-2 inset-y-3 opacity-[0.1]">
+                      {Array.from({ length: 5 }).map((_, r) =>
+                        Array.from({ length: 2 }).map((_, c) => (
+                          <span
+                            key={`${r}-${c}`}
+                            className="absolute h-1.5 w-1.5 rounded-full border border-slate-500"
+                            style={{
+                              left: `${25 + c * 35}%`,
+                              top: `${14 + r * 16}%`,
+                            }}
+                          />
+                        ))
+                      )}
+                    </div>
+                  ) : null}
+
+                  {showReveal
+                    ? (() => {
+                        const real = data.realAggregates
+                          ? optionAggregate(data.realAggregates, opt.id)
+                          : undefined
+                        if (!real) return null
+                        return (
+                          <div
+                            className="pointer-events-none absolute left-1 right-1 z-10"
+                            style={{ top: `${(1 - real.share) * 78 + 6}%` }}
+                          >
+                            <div className="h-0.5 w-full bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.55)]" />
+                            <div
+                              className={`mt-0.5 text-center font-mono font-semibold text-emerald-300 ${
+                                compact ? 'text-[8px]' : 'text-[9px] sm:text-[10px]'
+                              }`}
+                            >
+                              real {pctLabel(real.share)} ·{' '}
+                              {real.meanConfidence.toFixed(1)}
+                            </div>
+                          </div>
+                        )
+                      })()
+                    : null}
+                </div>
+              ))}
+            </div>
+
+            {/* Dots layer — only over the plot band, not the footer labels */}
+            <div className="absolute inset-0">
+              {data.votes.map((vote, i) => (
+                <button
+                  key={vote.persona.personaKey}
+                  type="button"
+                  ref={(el) => {
+                    dotRefs.current[i] = el
+                  }}
+                  data-persona-key={vote.persona.personaKey}
+                  data-sequence={vote.sequenceIndex}
+                  aria-label={`${vote.persona.displayName}, ${vote.persona.colonia ?? vote.persona.alcaldia}`}
+                  className={`sim-dot absolute left-0 top-0 -translate-x-1/2 -translate-y-1/2 rounded-full border border-amber-300/60 bg-transparent opacity-70 transition-[left,top,opacity,box-shadow] duration-500 ease-out will-change-[left,top] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400 ${
+                    compact ? 'h-2 w-2' : 'h-2.5 w-2.5 sm:h-3 sm:w-3'
+                  }`}
+                  style={{ transform: 'translate(-50%, -50%)' }}
+                  onClick={() => onDotActivate?.(vote.persona.personaKey)}
+                />
+              ))}
+            </div>
           </div>
 
-          {/* Dots layer */}
-          <div className="absolute inset-0">
-            {data.votes.map((vote, i) => (
-              <button
-                key={vote.persona.personaKey}
-                type="button"
-                ref={(el) => {
-                  dotRefs.current[i] = el
-                }}
-                data-persona-key={vote.persona.personaKey}
-                data-sequence={vote.sequenceIndex}
-                aria-label={`${vote.persona.displayName}, ${vote.persona.colonia ?? vote.persona.alcaldia}`}
-                className="sim-dot absolute left-0 top-0 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-amber-300/60 bg-transparent opacity-70 transition-[left,top,opacity,transform,box-shadow] duration-500 ease-out will-change-[left,top] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400 sm:h-3 sm:w-3"
-                style={{ transform: 'translate(-50%, -50%)' }}
-                onClick={() => onDotActivate?.(vote.persona.personaKey)}
-              />
-            ))}
+          {/* Column footers — wrap labels, never truncate Espacio público */}
+          <div
+            className="absolute inset-x-0 bottom-0 grid"
+            style={{
+              gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))`,
+              height: compact ? '2.75rem' : '3.25rem',
+            }}
+          >
+            {options.map((opt) => {
+              const sim = optionAggregate(data.simAggregates, opt.id)
+              return (
+                <ColumnFooter
+                  key={opt.id}
+                  option={opt}
+                  sim={sim}
+                  showPercents={showPercents}
+                  compact={compact}
+                />
+              )
+            })}
           </div>
         </div>
       </div>
@@ -194,65 +272,32 @@ export function SimCanvas({
   )
 }
 
-function ColumnFrame({
+function ColumnFooter({
   option,
   sim,
-  real,
   showPercents,
-  showReveal,
-  showLatticeHint,
+  compact,
 }: {
   option: SimulationReplayOption
   sim: SimulationOptionAggregate | undefined
-  real: SimulationOptionAggregate | undefined
   showPercents: boolean
-  showReveal: boolean
-  showLatticeHint: boolean
+  compact: boolean
 }) {
   return (
-    <div className="relative border-r border-slate-700/50 last:border-r-0">
-      {showLatticeHint ? (
-        <div className="pointer-events-none absolute inset-x-2 inset-y-3 opacity-[0.1]">
-          {Array.from({ length: 6 }).map((_, r) =>
-            Array.from({ length: 2 }).map((_, c) => (
-              <span
-                key={`${r}-${c}`}
-                className="absolute h-1.5 w-1.5 rounded-full border border-slate-500"
-                style={{
-                  left: `${25 + c * 35}%`,
-                  top: `${12 + r * 13}%`,
-                }}
-              />
-            ))
-          )}
-        </div>
-      ) : null}
-
-      {/* Real share rule (Beat 4) */}
-      {showReveal && real ? (
-        <div
-          className="pointer-events-none absolute left-1 right-1 z-10"
-          style={{ top: `${(1 - real.share) * 72 + 8}%` }}
-        >
-          <div className="h-0.5 w-full bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.55)]" />
-          <div className="mt-0.5 text-center font-mono text-[9px] font-semibold text-emerald-300 sm:text-[10px]">
-            real {pctLabel(real.share)} · {real.meanConfidence.toFixed(1)}
-          </div>
-        </div>
-      ) : null}
-
-      {/* Footer labels */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-[#0f1419] via-[#0f1419]/90 to-transparent px-1 pb-1 pt-6 text-center">
-        <div
-          className={`font-semibold tabular-nums transition-opacity duration-500 ${
-            showPercents ? 'opacity-100' : 'opacity-0'
-          } text-lg text-amber-200 sm:text-2xl`}
-        >
-          {sim ? pctLabel(sim.share) : '—'}
-        </div>
-        <div className="truncate text-[10px] text-slate-400 sm:text-xs">
-          {option.label}
-        </div>
+    <div className="flex flex-col items-center justify-end px-0.5 pb-0.5 text-center">
+      <div
+        className={`font-semibold tabular-nums text-amber-200 transition-opacity duration-500 ${
+          showPercents ? 'opacity-100' : 'opacity-0'
+        } ${compact ? 'text-sm' : 'text-base sm:text-xl'}`}
+      >
+        {sim ? pctLabel(sim.share) : '—'}
+      </div>
+      <div
+        className={`max-w-full text-balance leading-tight text-slate-400 ${
+          compact ? 'text-[9px]' : 'text-[10px] sm:text-xs'
+        }`}
+      >
+        {option.label}
       </div>
     </div>
   )
@@ -261,7 +306,6 @@ function ColumnFrame({
 type Pos = ReturnType<typeof computeAgentPositions>[number]
 
 function applyLatticeTransform(el: HTMLElement, pos: Pos): void {
-  // Waiting bay on the left ~18% of the plot (Beat 1 lattice).
   const x = 4 + pos.latticeX * 14
   const y = 8 + pos.latticeY * 70
   el.style.left = `${x}%`

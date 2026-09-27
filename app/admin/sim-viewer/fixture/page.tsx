@@ -18,7 +18,6 @@ export const metadata: Metadata = {
  * Flag: NEXT_PUBLIC_SIM_VIEWER_ENABLED=true required, else 404.
  *
  * Preview path on Vercel: /admin/sim-viewer/fixture
- * (set NEXT_PUBLIC_SIM_VIEWER_ENABLED=true on the preview deployment).
  */
 export default function AdminSimViewerFixturePage() {
   if (!isSimViewerEnabled()) {
@@ -28,12 +27,7 @@ export default function AdminSimViewerFixturePage() {
   const data = loadSimulationFixture()
 
   return (
-    <div className="min-h-screen bg-[#0f1419] px-3 py-6 sm:px-6 sm:py-8">
-      <div className="mx-auto mb-4 max-w-6xl">
-        <h1 className="text-sm font-medium text-slate-400">
-          Admin · Visor de simulación · datos de ejemplo
-        </h1>
-      </div>
+    <div className="h-dvh max-h-dvh overflow-hidden bg-[#0a0f14]">
       <SimulationViewerLoader pulseId="fixture" initialData={data} />
     </div>
   )
