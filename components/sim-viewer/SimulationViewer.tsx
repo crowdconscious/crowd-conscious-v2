@@ -114,7 +114,7 @@ export default function SimulationViewer({
   const isSquare = aspectRatio === '1:1'
   /** Phone-legible scale for vertical / square capture frames. */
   const phoneScale = captureMode && (isPortrait || isSquare)
-  const feedCap = phoneScale ? 6 : isPortrait ? 10 : 16
+  const feedCap = phoneScale ? 4 : isPortrait ? 10 : 16
 
   const playback = useSimulationPlayback({
     data,
@@ -191,6 +191,8 @@ export default function SimulationViewer({
       data-persona={selectedPersonaKey ?? undefined}
       data-aspect={aspectRatio}
       data-phone-scale={phoneScale ? '1' : '0'}
+      data-beat={playback.beat}
+      data-voted={String(playback.votedCount)}
       onPointerMove={onPointerActivity}
       onPointerDown={onPointerActivity}
     >
@@ -208,7 +210,7 @@ export default function SimulationViewer({
           <div
             className={`shrink-0 border-b border-amber-500/30 bg-amber-500/10 text-center leading-tight text-amber-200 ${
               phoneScale
-                ? 'px-2 py-0.5 text-[9px]'
+                ? 'px-2 py-0.5 text-[10px]'
                 : 'px-2 py-1 text-[10px] sm:text-[11px]'
             }`}
             role="status"
@@ -217,10 +219,10 @@ export default function SimulationViewer({
           </div>
         ) : null}
 
-        {/* Header */}
+        {/* Header — hidden under endcard overlay when that beat is active */}
         <header
           className={`relative z-10 shrink-0 border-b border-slate-800/80 ${
-            phoneScale ? 'px-3 py-2' : 'px-3 py-1.5 sm:px-4 sm:py-2'
+            phoneScale ? 'px-4 py-3' : 'px-3 py-1.5 sm:px-4 sm:py-2'
           }`}
         >
           <div className="flex items-center gap-2">
@@ -228,24 +230,24 @@ export default function SimulationViewer({
             <img
               src="/images/logo-small.png"
               alt="Crowd Conscious"
-              width={22}
-              height={22}
+              width={28}
+              height={28}
               className={`shrink-0 rounded-full ${
-                phoneScale ? 'h-6 w-6' : 'h-5 w-5 sm:h-6 sm:w-6'
+                phoneScale ? 'h-7 w-7' : 'h-5 w-5 sm:h-6 sm:w-6'
               }`}
             />
             <p
               className={`min-w-0 truncate text-slate-500 ${
-                phoneScale ? 'text-[11px]' : 'text-[10px] sm:text-[11px]'
+                phoneScale ? 'text-xs' : 'text-[10px] sm:text-[11px]'
               }`}
             >
               {metaLine}
             </p>
           </div>
           <h1
-            className={`mt-0.5 text-balance font-semibold leading-snug tracking-tight text-emerald-300 ${
+            className={`mt-1 text-balance font-semibold leading-snug tracking-tight text-emerald-300 ${
               phoneScale
-                ? 'text-lg sm:text-xl'
+                ? 'text-2xl leading-tight sm:text-3xl'
                 : isPortrait
                   ? 'text-sm sm:text-base'
                   : 'text-base sm:text-lg md:text-xl lg:text-2xl'
@@ -259,7 +261,7 @@ export default function SimulationViewer({
         <div
           className={`relative flex h-full min-h-0 flex-1 items-stretch overflow-hidden ${
             phoneScale
-              ? 'flex-col gap-2 p-2'
+              ? 'flex-col gap-2.5 p-2.5'
               : isPortrait
                 ? 'flex-col gap-2 p-2'
                 : 'flex-row gap-2 p-2 sm:gap-3 sm:p-3'
@@ -267,7 +269,11 @@ export default function SimulationViewer({
         >
           <div
             className={`flex h-full min-h-0 min-w-0 flex-col ${
-              isPortrait || isSquare ? 'min-h-0 flex-[1.35]' : 'min-h-0 flex-[1.6]'
+              phoneScale
+                ? 'min-h-0 flex-[1.55]'
+                : isPortrait || isSquare
+                  ? 'min-h-0 flex-[1.2]'
+                  : 'min-h-0 flex-[1.6]'
             }`}
           >
             {viewMode === 'map' ? (
@@ -291,9 +297,11 @@ export default function SimulationViewer({
           </div>
           <div
             className={`flex h-full min-h-0 min-w-0 flex-col ${
-              isPortrait || isSquare
-                ? 'min-h-0 flex-1'
-                : 'w-[min(32%,320px)] shrink-0'
+              phoneScale
+                ? 'min-h-0 flex-[0.75]'
+                : isPortrait || isSquare
+                  ? 'min-h-0 flex-[0.9]'
+                  : 'w-[min(32%,320px)] shrink-0'
             }`}
           >
             <SimReasoningFeed
@@ -303,27 +311,23 @@ export default function SimulationViewer({
               phoneScale={phoneScale}
             />
           </div>
-
-          <SimEndcard
-            question={data.pulse.question}
-            divergence={playback.displayedDivergence}
-            visible={showEndcard && playback.beat !== 'populate'}
-          />
         </div>
 
-        {/* Footer — transport fades in capture; readouts stay */}
+        {/* Footer — transport fades in capture; readouts stay (hidden under endcard) */}
         <footer
           className={`sim-viewer-chrome shrink-0 border-t border-slate-800/80 ${
-            phoneScale ? 'space-y-1.5 px-2.5 py-2' : 'space-y-1.5 px-2 py-1.5 sm:space-y-2 sm:px-3 sm:py-2'
+            phoneScale
+              ? 'space-y-2 px-3 py-2.5'
+              : 'space-y-1.5 px-2 py-1.5 sm:space-y-2 sm:px-3 sm:py-2'
           }`}
         >
           <div
             className={`sim-viewer-transport transition-opacity duration-500 ${
-              captureMode && !controlsVisible
+              captureMode && (!controlsVisible || showEndcard)
                 ? 'pointer-events-none opacity-0'
                 : 'opacity-100'
             }`}
-            aria-hidden={captureMode && !controlsVisible}
+            aria-hidden={captureMode && (!controlsVisible || showEndcard)}
           >
             <SimTransport
               playing={playback.playing}
@@ -354,6 +358,14 @@ export default function SimulationViewer({
             phoneScale={phoneScale}
           />
         </footer>
+
+        {/* Full-stage endcard — covers chrome so the clip needs no edit */}
+        <SimEndcard
+          question={data.pulse.question}
+          divergence={playback.displayedDivergence}
+          visible={showEndcard}
+          phoneScale={phoneScale}
+        />
       </div>
     </div>
   )

@@ -30,14 +30,14 @@ function Readout({
       <div className="flex min-w-0 items-baseline gap-1.5 sm:gap-2">
         <span
           className={`shrink-0 uppercase tracking-wide text-slate-500 ${
-            phoneScale ? 'text-[11px] sm:text-xs' : 'text-[9px] sm:text-[10px]'
+            phoneScale ? 'text-xs' : 'text-[9px] sm:text-[10px]'
           }`}
         >
           {label}
         </span>
         <span
           className={`font-semibold tabular-nums text-slate-100 ${
-            phoneScale ? 'text-lg sm:text-xl' : 'text-base sm:text-lg'
+            phoneScale ? 'text-xl' : 'text-base sm:text-lg'
           }`}
         >
           {value}
@@ -51,7 +51,7 @@ function Readout({
       <div
         className={`uppercase tracking-wide text-slate-500 ${
           phoneScale
-            ? 'text-[11px] sm:text-xs'
+            ? 'text-xs'
             : compact
               ? 'text-[9px]'
               : 'text-[10px] sm:text-[11px]'
@@ -62,7 +62,7 @@ function Readout({
       <div
         className={`mt-0.5 font-semibold tabular-nums text-slate-100 ${
           phoneScale
-            ? 'text-xl sm:text-2xl'
+            ? 'text-2xl'
             : compact
               ? 'text-base sm:text-lg'
               : 'text-xl sm:text-2xl'

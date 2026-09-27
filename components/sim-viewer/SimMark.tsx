@@ -20,7 +20,7 @@ export function SimMark({
     <div
       className={`pointer-events-none absolute z-20 rounded border border-dashed border-amber-400/70 bg-[#0f1419]/85 text-center shadow-sm backdrop-blur-sm ${
         phoneScale
-          ? 'right-2 top-2 px-2.5 py-1.5'
+          ? 'right-2.5 top-2.5 px-3 py-1.5'
           : compact
             ? 'right-1.5 top-1.5 px-1.5 py-0.5'
             : 'right-2 top-2 px-2 py-1 sm:right-3 sm:top-3 sm:px-2.5 sm:py-1.5'
@@ -31,7 +31,7 @@ export function SimMark({
       <div
         className={`font-bold uppercase tracking-[0.12em] text-amber-300 ${
           phoneScale
-            ? 'text-[11px] sm:text-xs'
+            ? 'text-xs'
             : compact
               ? 'text-[8px]'
               : 'text-[9px] sm:text-[10px]'
@@ -43,7 +43,7 @@ export function SimMark({
         <div
           className={`font-medium lowercase tracking-wide text-amber-200/70 ${
             phoneScale
-              ? 'mt-0.5 text-[10px]'
+              ? 'mt-0.5 text-[11px]'
               : compact
                 ? 'text-[7px]'
                 : 'mt-0.5 text-[8px] sm:text-[9px]'

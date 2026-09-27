@@ -105,25 +105,25 @@ export function SimCanvas({
   const showPercents = beat === 'settle' || beat === 'reveal' || beat === 'endcard' || beat === 'done'
   const showReveal = beat === 'reveal' || beat === 'endcard' || beat === 'done'
   const options = data.pulse.options
-  const footerH = phoneScale ? '3.75rem' : compact ? '2.75rem' : '3.25rem'
-  const axisW = phoneScale ? 'w-11' : compact ? 'w-8' : 'w-10 sm:w-12'
+  const footerH = phoneScale ? '4.5rem' : compact ? '2.75rem' : '3.25rem'
+  const axisW = phoneScale ? 'w-12' : compact ? 'w-8' : 'w-10 sm:w-12'
   const axisLabelCls = phoneScale
-    ? 'text-[11px]'
+    ? 'text-xs'
     : compact
       ? 'text-[8px]'
       : 'text-[9px] sm:text-[10px]'
   const tickCls = phoneScale
-    ? 'text-[11px]'
+    ? 'text-xs'
     : compact
       ? 'text-[8px]'
       : 'text-[9px] sm:text-[10px]'
   const dotCls = phoneScale
-    ? 'h-3.5 w-3.5 sm:h-4 sm:w-4'
+    ? 'h-6 w-6'
     : compact
       ? 'h-2 w-2'
       : 'h-2.5 w-2.5 sm:h-3 sm:w-3'
   const padCls = phoneScale
-    ? 'px-2 pb-2 pt-10'
+    ? 'px-2.5 pb-2.5 pt-12'
     : compact
       ? 'px-1.5 pb-1.5 pt-8'
       : 'px-2 pb-2 pt-9 sm:px-3 sm:pt-10'
@@ -223,7 +223,7 @@ export function SimCanvas({
                             <div
                               className={`mt-0.5 text-center font-mono font-semibold text-emerald-300 ${
                                 phoneScale
-                                  ? 'text-[11px] sm:text-xs'
+                                  ? 'text-xs'
                                   : compact
                                     ? 'text-[8px]'
                                     : 'text-[9px] sm:text-[10px]'
@@ -308,7 +308,7 @@ function ColumnFooter({
           showPercents ? 'opacity-100' : 'opacity-0'
         } ${
           phoneScale
-            ? 'text-xl sm:text-2xl'
+            ? 'text-2xl sm:text-3xl'
             : compact
               ? 'text-sm'
               : 'text-base sm:text-xl'
@@ -317,12 +317,12 @@ function ColumnFooter({
         {sim ? pctLabel(sim.share) : '—'}
       </div>
       <div
-        className={`max-w-full text-balance leading-tight text-slate-400 ${
+        className={`max-w-full text-balance leading-tight text-slate-300 ${
           phoneScale
-            ? 'text-xs sm:text-sm'
+            ? 'text-sm font-medium'
             : compact
-              ? 'text-[9px]'
-              : 'text-[10px] sm:text-xs'
+              ? 'text-[9px] text-slate-400'
+              : 'text-[10px] text-slate-400 sm:text-xs'
         }`}
       >
         {option.label}
