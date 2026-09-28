@@ -40,14 +40,13 @@ export function SimReasoningFeed({ votes, optionsById, compact = false }: Props)
                     }`}
                   >
                     <span className="font-medium text-slate-200">
-                      {vote.persona.displayName}
+                      {vote.persona.displayName ?? vote.persona.personaKey}
                     </span>
                     {', '}
                     {vote.persona.age}
                     {' · '}
                     {colonia}
-                    {' · NSE '}
-                    {vote.persona.nseBand}
+                    {vote.persona.nseBand ? ` · NSE ${vote.persona.nseBand}` : ''}
                   </p>
                   <span className="shrink-0 font-mono text-[10px] text-slate-500 sm:text-[11px]">
                     {vote.confidence.toFixed(1)}
@@ -61,7 +60,7 @@ export function SimReasoningFeed({ votes, optionsById, compact = false }: Props)
                   }`}
                 >
                   <span className="font-semibold text-amber-200">{label}.</span>{' '}
-                  {vote.reasoning}
+                  {vote.reasoning ?? ''}
                 </p>
               </li>
             )

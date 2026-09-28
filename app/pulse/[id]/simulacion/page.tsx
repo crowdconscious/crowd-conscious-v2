@@ -4,7 +4,7 @@ import { AuthSessionExpiredError, getCurrentUser } from '@/lib/auth-server'
 import { isAdminUser } from '@/lib/auth/is-admin'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { decideReplayAccess } from '@/lib/sim-viewer/access'
-import { isSimViewerEnabled } from '@/lib/sim-viewer/is-enabled'
+import { isSimViewerEnabled } from '@/lib/sim-viewer-flag'
 import { isSimViewerPublicClosedEnabled } from '@/lib/sim-viewer/public-closed-flag'
 import SimulationViewerLoader from '@/components/sim-viewer/SimulationViewerLoader'
 
@@ -45,10 +45,9 @@ async function resolveIsAdmin(): Promise<boolean> {
 /**
  * /pulse/[id]/simulacion — Visor de simulación (Task 3).
  *
- * Access gate mirrors Task 2 (`decideReplayAccess` from PR #19), copied
- * into this branch as `lib/sim-viewer/access.ts` so we do not hard-depend
- * on unmerged code. Denied callers always get Next.js `notFound()` → HTTP
- * 404 (never 403).
+ * Access gate uses shared `decideReplayAccess` (`lib/sim-viewer/access.ts`,
+ * same module as the replay API). Denied callers always get Next.js
+ * `notFound()` → HTTP 404 (never 403).
  *
  *   - Feature flag off → 404
  *   - No complete run → 404

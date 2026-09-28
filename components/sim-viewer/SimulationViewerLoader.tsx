@@ -62,7 +62,7 @@ export default function SimulationViewerLoader({
         <p className="mt-2 text-xs text-slate-500">
           {result.error}
           {result.status === 404
-            ? ' — el endpoint de replay (Task 2) aún no existe, o no hay corrida para este Pulse.'
+            ? ' — no hay corrida disponible para este Pulse, o no tienes acceso.'
             : ''}
         </p>
         <p className="mt-4 text-xs text-amber-200/80">

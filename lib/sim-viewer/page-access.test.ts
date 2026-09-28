@@ -1,9 +1,9 @@
 /**
  * Page-gate contract for `/pulse/[id]/simulacion` (Task 3).
  *
- * The page calls `decideReplayAccess` (copied from Task 2 / PR #19) and
- * maps `allow: false` → Next.js `notFound()` (HTTP 404). These tests lock
- * that contract: denied callers must see 404, never 403.
+ * The page calls shared `decideReplayAccess` from `./access.ts` and maps
+ * `allow: false` → Next.js `notFound()` (HTTP 404). These tests lock that
+ * contract: denied callers must see 404, never 403.
  */
 
 import { test } from 'node:test'

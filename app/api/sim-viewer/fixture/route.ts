@@ -9,7 +9,7 @@ import { isAdminUser } from '@/lib/auth/is-admin'
 import {
   isSimViewerEnabled,
   isSimViewerFixtureOpen,
-} from '@/lib/sim-viewer/is-enabled'
+} from '@/lib/sim-viewer-flag'
 import { loadSimulationFixture } from '@/lib/sim-viewer/load-fixture'
 
 export const dynamic = 'force-dynamic'

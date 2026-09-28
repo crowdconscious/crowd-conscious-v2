@@ -2467,6 +2467,8 @@ export interface Database {
         Relationships: []
       }
       simulation_personas: {
+        // Migrations 252 + 266 (visor data layer). AGEB / persona_key / active
+        // columns are additive for the simulation viewer; older rows may null them.
         Row: {
           age: number
           alcaldia: string
@@ -2483,6 +2485,21 @@ export interface Database {
           transport_mode: string | null
           values_profile: Json | null
           version: string
+          /** Stable slug for viewer deep-links. Migration 266. */
+          persona_key: string | null
+          /** INEGI AGEB identifier. Migration 266. */
+          ageb_code: string | null
+          centroid_lat: number | null
+          centroid_lng: number | null
+          /** AMAI NSE band when set; else fall back to income_band. Migration 266. */
+          nse_band: string | null
+          household_size: number | null
+          active: boolean
+          /**
+           * Per-persona source data for the viewer inspector.
+           * Shape: PersonaGrounding in types/simulation.ts. Migration 266.
+           */
+          grounding: Json | null
         }
         Insert: {
           age: number
@@ -2500,6 +2517,14 @@ export interface Database {
           transport_mode?: string | null
           values_profile?: Json | null
           version: string
+          persona_key?: string | null
+          ageb_code?: string | null
+          centroid_lat?: number | null
+          centroid_lng?: number | null
+          nse_band?: string | null
+          household_size?: number | null
+          active?: boolean
+          grounding?: Json | null
         }
         Update: {
           age?: number
@@ -2517,10 +2542,19 @@ export interface Database {
           transport_mode?: string | null
           values_profile?: Json | null
           version?: string
+          persona_key?: string | null
+          ageb_code?: string | null
+          centroid_lat?: number | null
+          centroid_lng?: number | null
+          nse_band?: string | null
+          household_size?: number | null
+          active?: boolean
+          grounding?: Json | null
         }
         Relationships: []
       }
       simulation_runs: {
+        // Migrations 253 + 266. market_id ≡ pack pulse_id; n_agents ≡ persona_count.
         Row: {
           aggregates: Json | null
           batch_id: string | null
@@ -2536,6 +2570,17 @@ export interface Database {
           question_override: string | null
           revealed_at: string | null
           status: string
+          /** batch | live. Migration 266. */
+          mode: string
+          temperature: number | null
+          started_at: string | null
+          completed_at: string | null
+          /** 0–100 Divergence Index. Migration 266. */
+          divergence_index: number | null
+          divergence_meta: Json | null
+          notes: string | null
+          /** True for seed/fixture runs — not real calibration. Migration 266. */
+          is_fixture: boolean
         }
         Insert: {
           aggregates?: Json | null
@@ -2552,6 +2597,14 @@ export interface Database {
           question_override?: string | null
           revealed_at?: string | null
           status?: string
+          mode?: string
+          temperature?: number | null
+          started_at?: string | null
+          completed_at?: string | null
+          divergence_index?: number | null
+          divergence_meta?: Json | null
+          notes?: string | null
+          is_fixture?: boolean
         }
         Update: {
           aggregates?: Json | null
@@ -2568,6 +2621,14 @@ export interface Database {
           question_override?: string | null
           revealed_at?: string | null
           status?: string
+          mode?: string
+          temperature?: number | null
+          started_at?: string | null
+          completed_at?: string | null
+          divergence_index?: number | null
+          divergence_meta?: Json | null
+          notes?: string | null
+          is_fixture?: boolean
         }
         Relationships: [
           {
@@ -2580,6 +2641,7 @@ export interface Database {
         ]
       }
       simulation_votes: {
+        // Migrations 254 + 266. option_id + sequence_index enable visual replay.
         Row: {
           confidence: number
           created_at: string | null
@@ -2589,6 +2651,12 @@ export interface Database {
           raw_response: Json | null
           reasoning_es: string | null
           run_id: string | null
+          /** FK → market_outcomes. Nullable on pre-viewer pipeline rows. Migration 266. */
+          option_id: string | null
+          /** 0..n-1 replay order (shuffled at write). Migration 266. */
+          sequence_index: number | null
+          latency_ms: number | null
+          reasoning: string | null
         }
         Insert: {
           confidence: number
@@ -2599,6 +2667,10 @@ export interface Database {
           raw_response?: Json | null
           reasoning_es?: string | null
           run_id?: string | null
+          option_id?: string | null
+          sequence_index?: number | null
+          latency_ms?: number | null
+          reasoning?: string | null
         }
         Update: {
           confidence?: number
@@ -2609,6 +2681,10 @@ export interface Database {
           raw_response?: Json | null
           reasoning_es?: string | null
           run_id?: string | null
+          option_id?: string | null
+          sequence_index?: number | null
+          latency_ms?: number | null
+          reasoning?: string | null
         }
         Relationships: [
           {
@@ -2632,10 +2708,166 @@ export interface Database {
             referencedRelation: "simulation_runs"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "simulation_votes_option_id_fkey"
+            columns: ["option_id"]
+            isOneToOne: false
+            referencedRelation: "market_outcomes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      /**
+       * Reconocimientos intake rows. Public reads must use
+       * `recognitions_public` so `contact` / `user_id` never leak.
+       * Source: supabase/migrations/263_recognitions.sql
+       */
+      recognitions: {
+        Row: {
+          id: string
+          created_at: string
+          user_id: string | null
+          photo_path: string
+          what: string
+          where_text: string
+          who_type: string
+          how_known: string
+          credit_handle: string | null
+          contact: string | null
+          consent_at: string
+          consent_version: string
+          src: string
+          status: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reject_reason: string | null
+          reject_detail: string | null
+          admin_notes: string | null
+          share_slug: string
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          user_id?: string | null
+          photo_path: string
+          what: string
+          where_text: string
+          who_type: string
+          how_known: string
+          credit_handle?: string | null
+          contact?: string | null
+          consent_at: string
+          consent_version: string
+          src?: string
+          status?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reject_reason?: string | null
+          reject_detail?: string | null
+          admin_notes?: string | null
+          share_slug: string
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          user_id?: string | null
+          photo_path?: string
+          what?: string
+          where_text?: string
+          who_type?: string
+          how_known?: string
+          credit_handle?: string | null
+          contact?: string | null
+          consent_at?: string
+          consent_version?: string
+          src?: string
+          status?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reject_reason?: string | null
+          reject_detail?: string | null
+          admin_notes?: string | null
+          share_slug?: string
+        }
+        Relationships: []
+      }
+      /**
+       * Internal share/download events for Reconocimientos.
+       * Source: supabase/migrations/264_recognition_events.sql
+       * No anon read — service-role inserts + admin SELECT policy.
+       */
+      recognition_events: {
+        Row: {
+          id: string
+          recognition_id: string | null
+          event_type: string
+          created_at: string
+          src: string | null
+        }
+        Insert: {
+          id?: string
+          recognition_id?: string | null
+          event_type: string
+          created_at?: string
+          src?: string | null
+        }
+        Update: {
+          id?: string
+          recognition_id?: string | null
+          event_type?: string
+          created_at?: string
+          src?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recognition_events_recognition_id_fkey"
+            columns: ["recognition_id"]
+            isOneToOne: false
+            referencedRelation: "recognitions"
+            referencedColumns: ["id"]
+          },
         ]
       }
     }
     Views: {
+      /**
+       * Approved recognitions only — no contact / user_id / reject fields.
+       * Source: supabase/migrations/263_recognitions.sql
+       */
+      recognitions_public: {
+        Row: {
+          id: string
+          created_at: string
+          photo_path: string
+          what: string
+          where_text: string
+          who_type: string
+          how_known: string
+          credit_handle: string | null
+          src: string
+          share_slug: string
+          reviewed_at: string | null
+        }
+        Relationships: []
+      }
+      /**
+       * Admin/service-role weekly funnel + share metrics.
+       * Source: supabase/migrations/264_recognition_events.sql
+       */
+      recognitions_weekly_stats: {
+        Row: {
+          week_start: string | null
+          src: string | null
+          status: string | null
+          submissions: number | null
+          reject_reason: string | null
+          rejects: number | null
+          event_type: string | null
+          event_src: string | null
+          events: number | null
+        }
+        Relationships: []
+      }
       citizen_signals_public: {
         // Anon-safe projection of citizen_signals where publication_status =
         // 'published'. Source: supabase/migrations/219_citizen_signals_mvp.sql

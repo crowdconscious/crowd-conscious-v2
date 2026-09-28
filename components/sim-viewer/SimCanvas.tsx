@@ -234,7 +234,7 @@ export function SimCanvas({
                   }}
                   data-persona-key={vote.persona.personaKey}
                   data-sequence={vote.sequenceIndex}
-                  aria-label={`${vote.persona.displayName}, ${vote.persona.colonia ?? vote.persona.alcaldia}`}
+                  aria-label={`${vote.persona.displayName ?? vote.persona.personaKey}, ${vote.persona.colonia ?? vote.persona.alcaldia}`}
                   className={`sim-dot absolute left-0 top-0 -translate-x-1/2 -translate-y-1/2 rounded-full border border-amber-300/60 bg-transparent opacity-70 transition-[left,top,opacity,box-shadow] duration-500 ease-out will-change-[left,top] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400 ${
                     compact ? 'h-2 w-2' : 'h-2.5 w-2.5 sm:h-3 sm:w-3'
                   }`}
