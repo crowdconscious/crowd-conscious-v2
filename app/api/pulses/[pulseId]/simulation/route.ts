@@ -113,18 +113,22 @@ export async function GET(req: Request, ctx: Ctx) {
   }
 
   // Most recent complete run, or explicit runId. Service-role read only.
+  // `divergence` is the pre-266 B-pipeline jsonb; used when divergence_index /
+  // divergence_meta are null (legacy read-time path).
   let runQuery = admin
     .from('simulation_runs')
     .select(
-      'id, market_id, status, mode, model, n_agents, completed_at, divergence_index, divergence_meta, is_fixture, revealed_at, created_at',
+      'id, market_id, status, mode, model, n_agents, completed_at, divergence_index, divergence_meta, divergence, is_fixture, revealed_at, created_at, is_brand_pretest',
     )
     .eq('market_id', pulseId)
 
   if (runIdParam) {
     runQuery = runQuery.eq('id', runIdParam)
   } else {
+    // Public / default path: never surface brand-pretest runs.
     runQuery = runQuery
       .eq('status', 'complete')
+      .or('is_brand_pretest.eq.false,is_brand_pretest.is.null')
       .order('created_at', { ascending: false })
       .limit(1)
   }
@@ -173,17 +177,22 @@ export async function GET(req: Request, ctx: Ctx) {
 
   const outcomes = outcomesRaw as ReplayOutcomeRow[]
 
-  // Single joined query for votes + personas — no N+1. Ordered by sequence.
+  // Single joined query for votes + personas — no N+1.
+  // option_chosen / created_at / persona.id+household support legacy rows
+  // (null option_id / sequence_index) via lib/sim-viewer/legacy.ts.
   const { data: votesRaw, error: votesErr } = await admin
     .from('simulation_votes')
     .select(
       `
       sequence_index,
       option_id,
+      option_chosen,
       confidence,
       reasoning,
       reasoning_es,
+      created_at,
       persona:simulation_personas (
+        id,
         persona_key,
         alcaldia,
         colonia,
@@ -197,13 +206,14 @@ export async function GET(req: Request, ctx: Ctx) {
         education,
         occupation,
         household_size,
+        household,
         persona_narrative,
         grounding
       )
     `,
     )
     .eq('run_id', run.id)
-    .order('sequence_index', { ascending: true })
+    .order('created_at', { ascending: true })
 
   if (votesErr) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
@@ -213,9 +223,11 @@ export async function GET(req: Request, ctx: Ctx) {
     const r = row as {
       sequence_index: number | null
       option_id: string | null
+      option_chosen: string | null
       confidence: number
       reasoning: string | null
       reasoning_es: string | null
+      created_at: string | null
       persona: ReplayPersonaRow | ReplayPersonaRow[] | null
     }
     // Supabase may return the embed as object or single-element array
@@ -224,9 +236,11 @@ export async function GET(req: Request, ctx: Ctx) {
     return {
       sequence_index: r.sequence_index,
       option_id: r.option_id,
+      option_chosen: r.option_chosen,
       confidence: r.confidence,
       reasoning: r.reasoning,
       reasoning_es: r.reasoning_es,
+      created_at: r.created_at,
       persona,
     }
   })

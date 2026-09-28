@@ -34,6 +34,11 @@ export type PulseSimReveal = {
   adminPreview?: boolean
   pulseOpen?: boolean
   unpublished?: boolean
+  /**
+   * When set, show "Ver la simulación" linking to the Visor replay
+   * (`/pulse/[id]/simulacion`). Gated by the page (flag + access).
+   */
+  simulationViewerHref?: string | null
 }
 
 const SIM_BADGE_CLASS =
@@ -205,6 +210,18 @@ export default function PulseSimRevealModule({
           </>
         )}
       </p>
+
+      {reveal.simulationViewerHref ? (
+        <div className="mt-4">
+          <Link
+            href={reveal.simulationViewerHref}
+            className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-amber-400/40 bg-amber-500/15 px-5 py-2.5 text-sm font-semibold text-amber-100 transition hover:border-amber-300/70 hover:bg-amber-500/25"
+            data-sim-viewer-entry="1"
+          >
+            {locale === 'es' ? 'Ver la simulación' : 'Watch the simulation'}
+          </Link>
+        </div>
+      ) : null}
     </section>
   )
 }

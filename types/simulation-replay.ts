@@ -12,6 +12,7 @@ export type {
   OptionAgg,
   PersonaGrounding,
   SimulationPulseStatus,
+  SimulationReplayMeta,
   SimulationReplayOption,
   SimulationReplayPayload,
   SimulationReplayPersona,

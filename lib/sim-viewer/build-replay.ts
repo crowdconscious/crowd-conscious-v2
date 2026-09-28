@@ -3,12 +3,17 @@
  *
  * Takes already-fetched DB rows and returns the Task 2/3 wire payload.
  * No Supabase / Next imports — unit-testable, no `any`.
+ *
+ * Legacy (pre-migration-266) rows are supported at read time: option_id is
+ * resolved from option_chosen→label, sequence_index via seeded shuffle, and
+ * persona fields fall back to the cdmx-v1 columns. See lib/sim-viewer/legacy.ts.
  */
 
 import type {
   DivergenceMeta,
   OptionAgg,
   PersonaGrounding,
+  SimulationReplayMeta,
   SimulationReplayOption,
   SimulationReplayPayload,
   SimulationReplayPersona,
@@ -19,12 +24,23 @@ import type {
   SimulationRunStatus,
 } from '../../types/simulation.ts'
 import { toSimulationPulseStatus } from './access.ts'
+import {
+  assignLegacySequenceIndices,
+  buildOptionLabelIndex,
+  householdSizeFromText,
+  latestVoteCreatedAt,
+  normalizeNseBand,
+  parseDivergenceMeta,
+  resolveOptionId,
+} from './legacy.ts'
 
 // ---------------------------------------------------------------------------
 // Input row shapes (narrow projections the route selects)
 // ---------------------------------------------------------------------------
 
 export type ReplayPersonaRow = {
+  /** UUID — used as personaKey fallback for pre-266 rows. */
+  id?: string | null
   persona_key: string | null
   alcaldia: string
   colonia: string | null
@@ -38,6 +54,8 @@ export type ReplayPersonaRow = {
   education: string
   occupation: string
   household_size: number | null
+  /** Free-text household (cdmx-v1); used only when household_size is null. */
+  household?: string | null
   persona_narrative: string
   /**
    * Nullable jsonb from migration 266. Null/absent → omit on the wire.
@@ -49,9 +67,12 @@ export type ReplayPersonaRow = {
 export type ReplayVoteRow = {
   sequence_index: number | null
   option_id: string | null
+  /** Pre-viewer pipeline stores the outcome LABEL here. */
+  option_chosen?: string | null
   confidence: number
   reasoning: string | null
   reasoning_es: string | null
+  created_at?: string | null
   persona: ReplayPersonaRow | null
 }
 
@@ -65,6 +86,11 @@ export type ReplayRunRow = {
   completed_at: string | null
   divergence_index: number | null
   divergence_meta: unknown
+  /**
+   * Pre-266 B-pipeline column (`{ id, delta_shares, … }`).
+   * Used when divergence_index / divergence_meta are null.
+   */
+  divergence?: unknown
   is_fixture: boolean
   revealed_at: string | null
 }
@@ -107,29 +133,6 @@ function asRunMode(raw: string): SimulationRunMode {
   return raw === 'live' ? 'live' : 'batch'
 }
 
-function parseDivergenceMeta(raw: unknown): DivergenceMeta | null {
-  if (!raw || typeof raw !== 'object') return null
-  const o = raw as Record<string, unknown>
-  const index = typeof o.index === 'number' ? o.index : null
-  const shareScore = typeof o.shareScore === 'number' ? o.shareScore : null
-  const confScore = typeof o.confScore === 'number' ? o.confScore : null
-  const computedAt =
-    typeof o.computedAt === 'string'
-      ? o.computedAt
-      : typeof o.computed_at === 'string'
-        ? o.computed_at
-        : null
-  if (
-    index === null ||
-    shareScore === null ||
-    confScore === null ||
-    computedAt === null
-  ) {
-    return null
-  }
-  return { index, shareScore, confScore, computedAt }
-}
-
 /**
  * Same formula as `outcomeAvgConfidenceFromTotals` in pulse-vote-aggregates:
  * total_confidence / confident_pick_count. Inlined so unit tests under
@@ -156,6 +159,9 @@ export function abstractPersonaDisplayName(
   if (persona.persona_key && persona.persona_key.trim().length > 0) {
     return persona.persona_key
   }
+  if (persona.id && persona.id.trim().length > 0) {
+    return persona.id
+  }
   return `agente-${sequenceIndex}`
 }
 
@@ -175,20 +181,31 @@ export function mapPersona(
   persona: ReplayPersonaRow,
   sequenceIndex: number,
 ): SimulationReplayPersona {
+  const personaKey =
+    (persona.persona_key && persona.persona_key.trim().length > 0
+      ? persona.persona_key
+      : null) ??
+    (persona.id && persona.id.trim().length > 0 ? persona.id : null) ??
+    `persona-${sequenceIndex}`
+
+  const householdSize =
+    persona.household_size ??
+    householdSizeFromText(persona.household ?? null)
+
   const mapped: SimulationReplayPersona = {
-    personaKey: persona.persona_key ?? `persona-${sequenceIndex}`,
+    personaKey,
     displayName: abstractPersonaDisplayName(persona, sequenceIndex),
     alcaldia: persona.alcaldia,
     colonia: persona.colonia,
     agebCode: persona.ageb_code,
     centroidLat: persona.centroid_lat,
     centroidLng: persona.centroid_lng,
-    nseBand: persona.nse_band ?? persona.income_band,
+    nseBand: normalizeNseBand(persona.nse_band ?? persona.income_band),
     age: persona.age,
     sex: persona.gender,
     education: persona.education,
     occupation: persona.occupation,
-    householdSize: persona.household_size,
+    householdSize,
     personaSummary: persona.persona_narrative,
   }
   const grounding = passThroughGrounding(persona.grounding)
@@ -198,26 +215,79 @@ export function mapPersona(
   return mapped
 }
 
+export type MapVotesResult = {
+  votes: SimulationReplayVote[]
+  /** Votes dropped because option_chosen did not match any outcome label. */
+  unmatchedCount: number
+  /** Rows that had no persona join. */
+  missingPersonaCount: number
+  /** Total rows fed in (before filtering). */
+  totalCount: number
+}
+
 /**
- * Sort + map votes. Votes without sequence_index or option_id are dropped
- * (pre-viewer pipeline rows cannot be replayed). Output is strictly
- * ascending by sequenceIndex.
+ * Sort + map votes for replay.
+ *
+ * Legacy support (no SQL required):
+ *   - option_id null → resolve via option_chosen ↔ market_outcomes.label
+ *   - sequence_index null → deterministic shuffle seeded by runId
+ *   - unmatched labels are dropped, counted, and logged by the caller
+ *
+ * Output is strictly ascending by sequenceIndex.
  */
-export function mapVotesOrdered(rows: ReplayVoteRow[]): SimulationReplayVote[] {
-  const mapped: SimulationReplayVote[] = []
+export function mapVotesOrdered(
+  rows: ReplayVoteRow[],
+  opts: {
+    outcomes: readonly ReplayOutcomeRow[]
+    runId: string
+  },
+): MapVotesResult {
+  const labelIndex = buildOptionLabelIndex(opts.outcomes)
+  const resolvable: {
+    row: ReplayVoteRow
+    optionId: string
+  }[] = []
+  let unmatchedCount = 0
+  let missingPersonaCount = 0
+
   for (const row of rows) {
-    if (row.sequence_index === null || row.option_id === null) continue
-    if (!row.persona) continue
-    mapped.push({
-      sequenceIndex: row.sequence_index,
-      optionId: row.option_id,
-      confidence: row.confidence,
-      reasoning: row.reasoning ?? row.reasoning_es,
-      persona: mapPersona(row.persona, row.sequence_index),
-    })
+    if (!row.persona) {
+      missingPersonaCount += 1
+      continue
+    }
+    const optionId = resolveOptionId(row, labelIndex)
+    if (!optionId) {
+      unmatchedCount += 1
+      const label = row.option_chosen ?? '(null)'
+      console.warn(
+        `[sim-viewer] unmatched vote option_chosen=${JSON.stringify(label)} run=${opts.runId}`,
+      )
+      continue
+    }
+    resolvable.push({ row, optionId })
   }
+
+  const sequences = resolvable.map((r) => r.row.sequence_index)
+  const assigned = assignLegacySequenceIndices(sequences, opts.runId)
+
+  const mapped: SimulationReplayVote[] = resolvable.map((r, i) => {
+    const sequenceIndex = assigned[i]!
+    return {
+      sequenceIndex,
+      optionId: r.optionId,
+      confidence: r.row.confidence,
+      reasoning: r.row.reasoning ?? r.row.reasoning_es,
+      persona: mapPersona(r.row.persona!, sequenceIndex),
+    }
+  })
+
   mapped.sort((a, b) => a.sequenceIndex - b.sequenceIndex)
-  return mapped
+  return {
+    votes: mapped,
+    unmatchedCount,
+    missingPersonaCount,
+    totalCount: rows.length,
+  }
 }
 
 export function computeSimAggregates(
@@ -287,6 +357,21 @@ function locationLabelFromVotes(votes: SimulationReplayVote[]): string | null {
   return [...seen].join(' · ')
 }
 
+function resolveDivergence(
+  run: ReplayRunRow,
+): { index: number | null; meta: DivergenceMeta | null } {
+  const meta =
+    parseDivergenceMeta(run.divergence_meta) ??
+    parseDivergenceMeta(run.divergence)
+
+  const index =
+    typeof run.divergence_index === 'number'
+      ? run.divergence_index
+      : meta?.index ?? null
+
+  return { index, meta }
+}
+
 export type BuildReplayArgs = {
   run: ReplayRunRow
   pulse: ReplayPulseRow
@@ -302,11 +387,23 @@ export type BuildReplayArgs = {
  */
 export function buildReplayPayload(args: BuildReplayArgs): SimulationReplayPayload {
   const options = mapOptions(args.outcomes)
-  const votes = mapVotesOrdered(args.voteRows)
+  const mapped = mapVotesOrdered(args.voteRows, {
+    outcomes: args.outcomes,
+    runId: args.run.id,
+  })
+  const votes = mapped.votes
   const simAggregates = computeSimAggregates(votes, options)
   const realAggregates = args.includeRealAggregates
     ? realAggregatesFromOutcomes(args.outcomes, args.totalVotes)
     : null
+
+  const { index: divergenceIndex, meta: divergenceMeta } = resolveDivergence(
+    args.run,
+  )
+
+  const completedAt =
+    args.run.completed_at ??
+    latestVoteCreatedAt(args.voteRows.map((v) => v.created_at))
 
   const run: SimulationReplayRun = {
     id: args.run.id,
@@ -315,9 +412,9 @@ export function buildReplayPayload(args: BuildReplayArgs): SimulationReplayPaylo
     mode: asRunMode(args.run.mode),
     model: args.run.model,
     personaCount: args.run.n_agents,
-    completedAt: args.run.completed_at,
-    divergenceIndex: args.run.divergence_index,
-    divergenceMeta: parseDivergenceMeta(args.run.divergence_meta),
+    completedAt,
+    divergenceIndex,
+    divergenceMeta,
     isFixture: args.run.is_fixture,
   }
 
@@ -330,6 +427,13 @@ export function buildReplayPayload(args: BuildReplayArgs): SimulationReplayPaylo
     options,
   }
 
+  const meta: SimulationReplayMeta = {
+    votesResolved: votes.length,
+    votesTotal: mapped.totalCount,
+    votesUnmatched: mapped.unmatchedCount,
+    votesMissingPersona: mapped.missingPersonaCount,
+  }
+
   return {
     // Top-level flag so Task 3's isPayload() accepts the live API response.
     isFixture: args.run.is_fixture,
@@ -338,5 +442,17 @@ export function buildReplayPayload(args: BuildReplayArgs): SimulationReplayPaylo
     votes,
     simAggregates,
     realAggregates,
+    meta,
   }
 }
+
+// Re-export legacy helpers tests may want through this module.
+export {
+  normalizeLabelKey,
+  normalizeNseBand,
+  householdSizeFromText,
+  assignLegacySequenceIndices,
+  parseDivergenceMeta,
+  resolveOptionId,
+  buildOptionLabelIndex,
+} from './legacy.ts'

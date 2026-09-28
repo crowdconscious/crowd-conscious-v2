@@ -10,12 +10,22 @@ type Props = {
   phoneScale?: boolean
   /** Affects logo / URL sizing across 16:9, 9:16, and 1:1 presets. */
   aspectRatio?: SimulationAspectRatio
+  /**
+   * Capture mode: keep the endcard clean for recording. Click / R dismisses.
+   * Normal mode: show Ver de nuevo + Explorar personas.
+   */
+  captureMode?: boolean
+  onRestart?: () => void
+  /** Leave endcard → paused scrubbable view where dots are clickable. */
+  onExplore?: () => void
+  /** Capture: any click / R key returns from the endcard. */
+  onCaptureDismiss?: () => void
 }
 
 /**
- * Capture-mode endcard: logo + question + divergence + crowdconscious.app.
- * Held 3s. Full-stage overlay so a crop still shows the SIMULACIÓN mark.
- * White logo + large bright URL so clips feel postable (not sparse).
+ * Endcard: logo + question + divergence + crowdconscious.app.
+ * Capture mode holds a clean frame for recording; normal mode offers
+ * restart / explore actions so the owner is never stuck on the index.
  */
 export function SimEndcard({
   question,
@@ -23,6 +33,10 @@ export function SimEndcard({
   visible,
   phoneScale = false,
   aspectRatio = '16:9',
+  captureMode = false,
+  onRestart,
+  onExplore,
+  onCaptureDismiss,
 }: Props) {
   const isPortrait = aspectRatio === '9:16'
   const isSquare = aspectRatio === '1:1'
@@ -44,7 +58,32 @@ export function SimEndcard({
         visible ? 'opacity-100' : 'pointer-events-none opacity-0'
       } ${phoneScale && isPortrait ? 'px-5 py-5' : 'px-6'}`}
       data-sim-endcard={visible ? '1' : '0'}
+      data-capture={captureMode ? '1' : '0'}
       aria-hidden={!visible}
+      role={visible && captureMode ? 'button' : undefined}
+      tabIndex={visible && captureMode ? 0 : undefined}
+      onClick={
+        visible && captureMode
+          ? () => {
+              onCaptureDismiss?.()
+            }
+          : undefined
+      }
+      onKeyDown={
+        visible && captureMode
+          ? (e) => {
+              if (e.key === 'r' || e.key === 'R' || e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                onCaptureDismiss?.()
+              }
+            }
+          : undefined
+      }
+      aria-label={
+        visible && captureMode
+          ? 'Fin de la simulación. Pulsa R o haz clic para continuar.'
+          : undefined
+      }
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
@@ -104,6 +143,36 @@ export function SimEndcard({
       <p className={urlCls} data-sim-endcard-url="1">
         crowdconscious.app
       </p>
+
+      {!captureMode && visible ? (
+        <div
+          className={`flex flex-wrap items-center justify-center gap-3 ${
+            phoneScale && isPortrait ? 'mt-5' : 'mt-8'
+          }`}
+          data-sim-endcard-actions="1"
+        >
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              onRestart?.()
+            }}
+            className="rounded-md border border-amber-400/50 bg-amber-500/15 px-4 py-2 text-sm font-semibold text-amber-100 hover:border-amber-300 hover:bg-amber-500/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400"
+          >
+            Ver de nuevo
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              onExplore?.()
+            }}
+            className="rounded-md border border-slate-500 bg-slate-800/80 px-4 py-2 text-sm font-semibold text-slate-100 hover:border-slate-400 hover:bg-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400"
+          >
+            Explorar personas
+          </button>
+        </div>
+      ) : null}
     </div>
   )
 }

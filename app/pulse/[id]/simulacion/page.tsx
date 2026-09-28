@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic'
 
 type Props = {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ captura?: string; persona?: string }>
+  searchParams: Promise<{ captura?: string; persona?: string; runId?: string }>
 }
 
 /** Minimal run row for the page gate (mirrors Task 2 / PR #19). */
@@ -87,34 +87,48 @@ export default async function PulseSimulacionPage({ params, searchParams }: Prop
     notFound()
   }
 
-  // Most recent complete run — same default as Task 2's API.
+  // Most recent complete non-brand-pretest run — or explicit ?runId=.
   // `is_fixture` lands with Task 1; selecting it keeps the page gate correct
   // once that column exists. On older DBs without the column the query may
   // error — fall back to a revealed_at-only select below.
   let run: RunGateRow | null = null
   {
-    const withFixture = await admin
+    const runIdParam = typeof sp.runId === 'string' ? sp.runId : null
+    let withFixture = admin
       .from('simulation_runs')
-      .select('id, status, revealed_at, is_fixture')
+      .select('id, status, revealed_at, is_fixture, is_brand_pretest')
       .eq('market_id', id)
-      .eq('status', 'complete')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
 
-    if (!withFixture.error && withFixture.data) {
-      run = withFixture.data as RunGateRow
+    if (runIdParam) {
+      withFixture = withFixture.eq('id', runIdParam)
     } else {
-      const legacy = await admin
+      withFixture = withFixture
+        .eq('status', 'complete')
+        .or('is_brand_pretest.eq.false,is_brand_pretest.is.null')
+        .order('created_at', { ascending: false })
+        .limit(1)
+    }
+
+    const withFixtureResult = await withFixture.maybeSingle()
+
+    if (!withFixtureResult.error && withFixtureResult.data) {
+      run = withFixtureResult.data as RunGateRow
+    } else {
+      let legacy = admin
         .from('simulation_runs')
         .select('id, status, revealed_at')
         .eq('market_id', id)
-        .eq('status', 'complete')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-      if (legacy.data) {
-        run = { ...(legacy.data as RunGateRow), is_fixture: false }
+      if (runIdParam) {
+        legacy = legacy.eq('id', runIdParam)
+      } else {
+        legacy = legacy
+          .eq('status', 'complete')
+          .order('created_at', { ascending: false })
+          .limit(1)
+      }
+      const legacyResult = await legacy.maybeSingle()
+      if (legacyResult.data) {
+        run = { ...(legacyResult.data as RunGateRow), is_fixture: false }
       }
     }
   }
@@ -124,6 +138,12 @@ export default async function PulseSimulacionPage({ params, searchParams }: Prop
   }
 
   const isAdmin = await resolveIsAdmin()
+
+  // Explicit runId must be complete for non-admins (mirrors API).
+  if (run.status !== 'complete' && !isAdmin) {
+    notFound()
+  }
+
   const decision = decideReplayAccess({
     isAdmin,
     includeRealParam: false,
@@ -142,6 +162,7 @@ export default async function PulseSimulacionPage({ params, searchParams }: Prop
     <div className="h-dvh max-h-dvh overflow-hidden bg-[#0a0f14]">
       <SimulationViewerLoader
         pulseId={id}
+        runId={typeof sp.runId === 'string' ? sp.runId : null}
         captureMode={sp.captura === '1'}
         initialPersonaKey={sp.persona ?? null}
       />

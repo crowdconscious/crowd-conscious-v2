@@ -11,6 +11,8 @@ import type { SimulationReplayPayload } from '@/types/simulation-replay'
 
 type Props = {
   pulseId: string
+  /** Optional explicit run (admin list deep-link). */
+  runId?: string | null
   /** When set, skip the fetch and render this payload (fixture routes). */
   initialData?: SimulationReplayPayload
   captureMode?: boolean
@@ -42,6 +44,7 @@ export default function SimulationViewerLoader(props: Props) {
 
 function SimulationViewerLoaderInner({
   pulseId,
+  runId = null,
   initialData,
   captureMode = false,
   initialPersonaKey: _initialPersonaKey = null,
@@ -60,13 +63,15 @@ function SimulationViewerLoaderInner({
     if (initialData) return
     let cancelled = false
     void (async () => {
-      const res = await fetchSimulationReplay(pulseId)
+      const res = await fetchSimulationReplay(pulseId, {
+        runId: runId ?? undefined,
+      })
       if (!cancelled) setResult(res)
     })()
     return () => {
       cancelled = true
     }
-  }, [pulseId, initialData])
+  }, [pulseId, runId, initialData])
 
   if (!result) {
     return (

@@ -83,6 +83,11 @@ export type UseSimulationPlaybackResult = PlaybackSnapshot & {
   play: () => void
   pause: () => void
   restart: () => void
+  /**
+   * Leave the endcard for a paused, fully-landed view where persona dots
+   * are clickable (Explorar personas / capture dismiss).
+   */
+  explore: () => void
   setSpeed: (speed: SimulationPlaybackSpeed) => void
   /** Latest landed votes for the reasoning feed (capped). */
   feedVotes: SimulationReplayVote[]
@@ -209,6 +214,20 @@ export function useSimulationPlayback({
     setPlaying(true)
   }, [data.votes, feedLimit, targetDivergence, total])
 
+  /** Endcard → paused landed view (dots clickable). */
+  const explore = useCallback(() => {
+    lastTsRef.current = null
+    accMsRef.current = 0
+    beatRef.current = 'done'
+    votedCountRef.current = total
+    playingRef.current = false
+    setBeat('done')
+    setVotedCount(total)
+    setDisplayedDivergence(targetDivergence)
+    setFeedVotes(data.votes.slice().reverse().slice(0, feedLimit))
+    setPlaying(false)
+  }, [data.votes, feedLimit, targetDivergence, total])
+
   const play = useCallback(() => {
     if (beatRef.current === 'done' || beatRef.current === 'endcard') {
       restart()
@@ -285,20 +304,19 @@ export function useSimulationPlayback({
         setDisplayedDivergence(Math.round(target * eased))
         if (t >= 1) {
           setDisplayedDivergence(target)
-          if (captureRef.current) {
-            accMsRef.current = 0
-            setBeat('endcard')
-          } else {
-            setBeat('done')
-            setPlaying(false)
-          }
+          accMsRef.current = 0
+          // Both modes land on the endcard. Capture holds a clean frame;
+          // normal mode shows Ver de nuevo / Explorar personas.
+          setBeat('endcard')
         }
         return
       }
 
       if (currentBeat === 'endcard') {
-        if (accMsRef.current >= ENDCARD_HOLD_MS) {
-          setBeat('done')
+        // Capture: hold ENDCARD_HOLD_MS for a clean recording frame, then
+        // pause while staying on endcard (dismiss via click / R).
+        // Normal: pause immediately — buttons drive restart / explore.
+        if (!captureRef.current || accMsRef.current >= ENDCARD_HOLD_MS) {
           setPlaying(false)
         }
       }
@@ -328,6 +346,7 @@ export function useSimulationPlayback({
     play,
     pause,
     restart,
+    explore,
     setSpeed,
     feedVotes,
     meanConfidence,

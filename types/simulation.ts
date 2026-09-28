@@ -151,6 +151,21 @@ export interface SimulationReplayRun {
 }
 
 /**
+ * Admin-facing counters for legacy vote resolution (pre-266 rows).
+ * Present on every payload; zeros for fully-migrated / fixture runs.
+ */
+export interface SimulationReplayMeta {
+  /** Votes that made it into the replay (option resolved + persona present). */
+  votesResolved: number
+  /** Rows read from simulation_votes for this run. */
+  votesTotal: number
+  /** Dropped: option_chosen did not match any market_outcomes.label. */
+  votesUnmatched: number
+  /** Dropped: persona join was null. */
+  votesMissingPersona: number
+}
+
+/**
  * GET /api/pulses/[pulseId]/simulation response (Task 2).
  * `votes` MUST be ordered by sequenceIndex ascending.
  * `realAggregates` is null while the Pulse is open (unless admin ?includeReal=1).
@@ -166,4 +181,6 @@ export interface SimulationReplayPayload {
   votes: SimulationReplayVote[]
   simAggregates: OptionAgg[]
   realAggregates: OptionAgg[] | null
+  /** Legacy resolution counters — useful on the admin run list. */
+  meta?: SimulationReplayMeta
 }
