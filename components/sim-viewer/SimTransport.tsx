@@ -18,10 +18,20 @@ type Props = {
   onViewModeChange?: (mode: 'columns' | 'map') => void
   showMapToggle?: boolean
   compact?: boolean
+  captureMode?: boolean
+  onCaptureModeChange?: (on: boolean) => void
+  /** When true, hide the capture toggle (already in capture URL). */
+  hideCaptureToggle?: boolean
 }
 
-const SPEEDS: SimulationPlaybackSpeed[] = [1, 2, 4]
-const RATIOS: SimulationAspectRatio[] = ['16:9', '9:16']
+const SPEEDS: Array<{ value: SimulationPlaybackSpeed; label: string }> = [
+  { value: 1, label: '1×' },
+  { value: 2, label: '2×' },
+  { value: 4, label: '4×' },
+  { value: 'cinematic', label: 'Cinemático' },
+]
+
+const RATIOS: SimulationAspectRatio[] = ['16:9', '9:16', '1:1']
 
 export function SimTransport({
   playing,
@@ -36,6 +46,9 @@ export function SimTransport({
   onViewModeChange,
   showMapToggle = false,
   compact = false,
+  captureMode = false,
+  onCaptureModeChange,
+  hideCaptureToggle = false,
 }: Props) {
   const btnBase = compact
     ? 'inline-flex min-h-[32px] items-center justify-center rounded-md px-2.5 text-xs font-medium transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400'
@@ -64,15 +77,15 @@ export function SimTransport({
       </button>
 
       <div className={segWrap} role="group" aria-label="Velocidad">
-        {SPEEDS.map((s) => (
+        {SPEEDS.map(({ value, label }) => (
           <button
-            key={s}
+            key={String(value)}
             type="button"
-            className={`${segBtn} ${speed === s ? segActive : ''}`}
-            aria-pressed={speed === s}
-            onClick={() => onSpeed(s)}
+            className={`${segBtn} ${speed === value ? segActive : ''}`}
+            aria-pressed={speed === value}
+            onClick={() => onSpeed(value)}
           >
-            {s}×
+            {label}
           </button>
         ))}
       </div>
@@ -90,6 +103,17 @@ export function SimTransport({
           </button>
         ))}
       </div>
+
+      {!hideCaptureToggle && onCaptureModeChange ? (
+        <button
+          type="button"
+          className={`${btnGhost} ${captureMode ? 'border-amber-400/60 text-amber-200' : ''}`}
+          aria-pressed={captureMode}
+          onClick={() => onCaptureModeChange(!captureMode)}
+        >
+          Modo captura
+        </button>
+      ) : null}
 
       {showMapToggle && onViewModeChange ? (
         <div className={segWrap} role="group" aria-label="Vista">

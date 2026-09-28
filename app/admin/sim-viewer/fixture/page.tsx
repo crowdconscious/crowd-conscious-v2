@@ -11,24 +11,35 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 }
 
+type Props = {
+  searchParams: Promise<{ captura?: string; persona?: string }>
+}
+
 /**
  * Admin fixture preview for the Visor de simulación.
  *
  * Auth: gated by app/admin/layout.tsx (admin only).
  * Flag: NEXT_PUBLIC_SIM_VIEWER_ENABLED=true required, else 404.
+ * Capture: /admin/sim-viewer/fixture?captura=1 (admin chrome hides via CSS).
  *
  * Preview path on Vercel: /admin/sim-viewer/fixture
  */
-export default function AdminSimViewerFixturePage() {
+export default async function AdminSimViewerFixturePage({ searchParams }: Props) {
   if (!isSimViewerEnabled()) {
     notFound()
   }
 
+  const sp = await searchParams
   const data = loadSimulationFixture()
 
   return (
     <div className="h-dvh max-h-dvh overflow-hidden bg-[#0a0f14]">
-      <SimulationViewerLoader pulseId="fixture" initialData={data} />
+      <SimulationViewerLoader
+        pulseId="fixture"
+        initialData={data}
+        captureMode={sp.captura === '1'}
+        initialPersonaKey={sp.persona ?? null}
+      />
     </div>
   )
 }

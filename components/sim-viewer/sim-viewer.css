@@ -25,11 +25,48 @@
   }
 }
 
+/* Capture mode — hide site chrome so recordings are frame-clean */
+html[data-sim-capture='1'] nav,
+html[data-sim-capture='1'] [data-site-chrome],
+html[data-sim-capture='1'] footer[data-site-footer] {
+  display: none !important;
+}
+
+html[data-sim-capture='1'] .sim-pulse-chrome-pad {
+  padding-top: 0 !important;
+  margin: 0 !important;
+}
+
+html[data-sim-capture='1'] .sim-admin-chrome {
+  display: none !important;
+}
+
+html[data-sim-capture='1'] .sim-admin-chrome-pad {
+  max-width: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+html[data-sim-capture='1'] body {
+  background: #000 !important;
+}
+
+.sim-viewer--capture {
+  /* Letterbox surround is pure black — stage is the only lit surface */
+  background: #000;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .sim-dot {
     transition: none !important;
   }
   .sim-feed-item {
     animation: none !important;
+  }
+  .sim-viewer-transport {
+    transition: none !important;
+  }
+  .sim-endcard {
+    transition: none !important;
   }
 }

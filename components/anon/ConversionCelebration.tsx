@@ -65,6 +65,7 @@ export function ConversionCelebration() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -24 }}
           className="pointer-events-none fixed inset-x-0 top-4 z-[80] flex justify-center px-4"
+          data-site-chrome="celebration"
         >
           <div className="pointer-events-auto flex max-w-md items-start gap-3 rounded-2xl border border-emerald-500/40 bg-[#0f1419] px-4 py-3 shadow-xl shadow-emerald-500/20">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-300">

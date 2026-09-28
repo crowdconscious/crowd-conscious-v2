@@ -14,20 +14,30 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 }
 
+type Props = {
+  searchParams: Promise<{ captura?: string; persona?: string }>
+}
+
 /**
  * Standalone fixture preview — no LandingNav / Supabase chrome.
- * Fills the viewport for screen-recording frames.
+ * Capture URL: /sim-viewer/fixture?captura=1
  */
-export default function SimViewerFixturePage() {
+export default async function SimViewerFixturePage({ searchParams }: Props) {
   if (!isSimViewerEnabled() || !isSimViewerFixtureOpen()) {
     notFound()
   }
 
+  const sp = await searchParams
   const data = loadSimulationFixture()
 
   return (
     <div className="h-dvh max-h-dvh overflow-hidden bg-[#0a0f14] font-sans">
-      <SimulationViewerLoader pulseId="fixture" initialData={data} />
+      <SimulationViewerLoader
+        pulseId="fixture"
+        initialData={data}
+        captureMode={sp.captura === '1'}
+        initialPersonaKey={sp.persona ?? null}
+      />
     </div>
   )
 }
