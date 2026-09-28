@@ -27,6 +27,10 @@ import {
   type ReplayRunRow,
   type ReplayVoteRow,
 } from '@/lib/sim-viewer/build-replay'
+import {
+  pickDefaultSimulationRun,
+  simulationReplayCacheControl,
+} from '@/lib/sim-viewer/pick-default-run'
 import { isSimViewerPublicClosedEnabled } from '@/lib/sim-viewer/public-closed-flag'
 import { createAdminClient } from '@/lib/supabase-admin'
 
@@ -37,9 +41,8 @@ type Ctx = { params: Promise<{ pulseId: string }> }
 
 const NOT_FOUND = NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-const PUBLIC_CACHE =
-  'public, s-maxage=86400, stale-while-revalidate=604800, max-age=0'
-const PRIVATE_NO_STORE = 'private, no-store'
+/** How many recent complete runs to scan when choosing the default (scored preferred). */
+const DEFAULT_RUN_CANDIDATE_LIMIT = 50
 
 function isUuid(value: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
@@ -112,34 +115,47 @@ export async function GET(req: Request, ctx: Ctx) {
     return NOT_FOUND
   }
 
-  // Most recent complete run, or explicit runId. Service-role read only.
-  // `divergence` is the pre-266 B-pipeline jsonb; used when divergence_index /
-  // divergence_meta are null (legacy read-time path).
-  let runQuery = admin
-    .from('simulation_runs')
-    .select(
-      'id, market_id, status, mode, model, n_agents, completed_at, divergence_index, divergence_meta, divergence, is_fixture, revealed_at, created_at, is_brand_pretest',
-    )
-    .eq('market_id', pulseId)
+  // Explicit runId, or default: most recent complete non-fixture non-pretest
+  // run with a stored divergence score (else newest complete). Service-role
+  // only. `divergence` is the pre-266 B-pipeline jsonb; used when
+  // divergence_index / divergence_meta are null (legacy read-time path).
+  const runSelect =
+    'id, market_id, status, mode, model, n_agents, completed_at, divergence_index, divergence_meta, divergence, is_fixture, revealed_at, created_at, is_brand_pretest'
+
+  let run: ReplayRunRow | null = null
 
   if (runIdParam) {
-    runQuery = runQuery.eq('id', runIdParam)
+    const { data: runRaw, error: runErr } = await admin
+      .from('simulation_runs')
+      .select(runSelect)
+      .eq('market_id', pulseId)
+      .eq('id', runIdParam)
+      .maybeSingle()
+
+    if (runErr || !runRaw) {
+      return NOT_FOUND
+    }
+    run = runRaw as ReplayRunRow
   } else {
-    // Public / default path: never surface brand-pretest runs.
-    runQuery = runQuery
+    const { data: candidates, error: runErr } = await admin
+      .from('simulation_runs')
+      .select(runSelect)
+      .eq('market_id', pulseId)
       .eq('status', 'complete')
       .or('is_brand_pretest.eq.false,is_brand_pretest.is.null')
       .order('created_at', { ascending: false })
-      .limit(1)
+      .limit(DEFAULT_RUN_CANDIDATE_LIMIT)
+
+    if (runErr || !candidates || candidates.length === 0) {
+      return NOT_FOUND
+    }
+    run = pickDefaultSimulationRun(
+      candidates as Array<ReplayRunRow & { created_at: string; is_brand_pretest?: boolean | null }>,
+    )
+    if (!run) {
+      return NOT_FOUND
+    }
   }
-
-  const { data: runRaw, error: runErr } = await runQuery.maybeSingle()
-
-  if (runErr || !runRaw) {
-    return NOT_FOUND
-  }
-
-  const run = runRaw as ReplayRunRow
 
   // Explicit runId must belong to this pulse and be complete (or admin peek).
   if (run.market_id !== pulseId) {
@@ -262,7 +278,19 @@ export async function GET(req: Request, ctx: Ctx) {
   })
 
   const headers: Record<string, string> = {
-    'Cache-Control': decision.cachePublic ? PUBLIC_CACHE : PRIVATE_NO_STORE,
+    'Cache-Control': simulationReplayCacheControl({
+      cachePublic: decision.cachePublic,
+      hasExplicitRunId: Boolean(runIdParam),
+      divergenceIndex: payload.run.divergenceIndex,
+    }),
+  }
+  // Helps operators / future CDN keys see which run the default path chose.
+  headers['X-Sim-Run-Id'] = run.id
+  if (
+    typeof payload.run.divergenceIndex === 'number' &&
+    Number.isFinite(payload.run.divergenceIndex)
+  ) {
+    headers['X-Sim-Divergence-Index'] = String(payload.run.divergenceIndex)
   }
 
   return NextResponse.json(payload, { status: 200, headers })
