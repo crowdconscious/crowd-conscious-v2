@@ -1,3 +1,9 @@
+.sim-dot {
+  position: absolute;
+  /* Visual size comes from --sim-dot-size (set on .sim-canvas). */
+  box-sizing: border-box;
+}
+
 .sim-dot--landed {
   background-color: rgba(251, 191, 36, 0.85);
   border-color: rgb(252, 211, 77);
@@ -20,10 +26,31 @@
   z-index: 5;
 }
 
-/* Larger hit targets on touch / narrow viewports */
-.sim-viewer--mobile .sim-dot {
-  min-width: 1.75rem;
-  min-height: 1.75rem;
+/*
+ * Mobile viewing (not capture): keep the painted disc small; expand the tap
+ * target with an invisible ::after so dots no longer merge into blobs.
+ */
+.sim-viewer--mobile:not(.sim-viewer--capture) .sim-dot {
+  min-width: 0;
+  min-height: 0;
+}
+
+.sim-viewer--mobile:not(.sim-viewer--capture) .sim-dot::after {
+  content: '';
+  position: absolute;
+  inset: -11px;
+}
+
+.sim-viewer--mobile:not(.sim-viewer--capture) .sim-dot--glow {
+  box-shadow:
+    0 0 0 1px rgba(251, 191, 36, 0.3),
+    0 0 6px 1px rgba(251, 191, 36, 0.28);
+}
+
+.sim-viewer--mobile:not(.sim-viewer--capture) .sim-dot--selected {
+  box-shadow:
+    0 0 0 2px rgba(251, 191, 36, 0.4),
+    0 0 8px 2px rgba(251, 191, 36, 0.35);
 }
 
 .sim-viewer--mobile .sim-canvas {
@@ -37,6 +64,10 @@
   height: min(70dvh, 70vh);
   max-height: min(70dvh, 70vh);
   padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.sim-persona-sheet-body {
+  -webkit-overflow-scrolling: touch;
 }
 
 @media (min-width: 640px) {
@@ -110,6 +141,18 @@ html[data-sim-app='1'] .sim-pulse-chrome-pad {
 
 html[data-sim-app='1'] body {
   background: #0a0f14 !important;
+}
+
+/*
+ * SFSafariViewController bottom toolbar is not always reflected in
+ * env(safe-area-inset-bottom). Add ~72px so readouts / sheet footers clear it.
+ */
+html[data-sim-app='1'] .sim-viewer-chrome {
+  padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)) !important;
+}
+
+html[data-sim-app='1'] .sim-persona-sheet {
+  padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
 }
 
 .sim-viewer--capture {

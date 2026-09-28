@@ -553,7 +553,9 @@ export default function SimulationViewer({
         <footer
           className={`sim-viewer-chrome shrink-0 border-t border-slate-800/80 ${
             mobileLayout
-              ? 'space-y-1 px-2 py-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))]'
+              ? fromApp
+                ? 'space-y-1 px-2 py-1.5 pb-[max(0.375rem,calc(72px+env(safe-area-inset-bottom,0px)))]'
+                : 'space-y-1 px-2 py-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))]'
               : phoneScale
                 ? 'space-y-2 px-3 py-2.5'
                 : 'space-y-1.5 px-2 py-1.5 sm:space-y-2 sm:px-3 sm:py-2'

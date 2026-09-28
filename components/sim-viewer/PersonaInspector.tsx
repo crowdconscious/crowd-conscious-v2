@@ -8,6 +8,7 @@ import type {
 import { PersonaAbstractMark } from '@/components/sim-viewer/PersonaAbstractMark'
 import { PERSONA_GROUNDING_LINE } from '@/lib/sim-viewer/persona-mark'
 import { LEGACY_PERSONA_BASIS_LINE } from '@/lib/sim-viewer/legacy'
+import { personaDisplayLabel } from '@/lib/sim-viewer/persona-label'
 
 export { PERSONA_GROUNDING_LINE }
 
@@ -59,6 +60,10 @@ export function PersonaInspector({
   const hasCoords =
     typeof persona.centroidLat === 'number' &&
     typeof persona.centroidLng === 'number'
+  const displayLabel = personaDisplayLabel(
+    persona.displayName ?? persona.personaKey,
+    vote.sequenceIndex,
+  )
 
   return (
     <div
@@ -100,24 +105,32 @@ export function PersonaInspector({
             <h2
               id={titleId}
               className="mt-0.5 text-base font-semibold leading-snug text-slate-100 sm:text-lg"
+              title={persona.personaKey}
             >
-              {persona.alcaldia}
+              {displayLabel}
               {persona.colonia ? (
                 <span className="font-normal text-slate-400">
                   {' '}
                   · {persona.colonia}
                 </span>
+              ) : persona.alcaldia ? (
+                <span className="font-normal text-slate-400">
+                  {' '}
+                  · {persona.alcaldia}
+                </span>
+              ) : null}
+              {persona.nseBand ? (
+                <span className="font-normal text-slate-500">
+                  {' '}
+                  · NSE {persona.nseBand}
+                </span>
               ) : null}
             </h2>
-            <p className="mt-1 font-mono text-[11px] text-slate-500">
-              {hasAgeb ? (
-                <>
-                  AGEB {persona.agebCode}
-                  <span className="text-slate-600"> · </span>
-                </>
-              ) : null}
-              {persona.personaKey}
-            </p>
+            {hasAgeb ? (
+              <p className="mt-1 font-mono text-[11px] text-slate-500">
+                AGEB {persona.agebCode}
+              </p>
+            ) : null}
           </div>
           <button
             ref={closeRef}
@@ -130,7 +143,7 @@ export function PersonaInspector({
           </button>
         </header>
 
-        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-4 py-4 sm:px-5">
+        <div className="sim-persona-sheet-body min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-4 py-4 sm:px-5">
           <section aria-label="Perfil demográfico">
             <dl className="grid grid-cols-2 gap-x-3 gap-y-2.5 text-sm">
               <Field label="Edad" value={String(persona.age)} />
@@ -218,16 +231,15 @@ export function PersonaInspector({
             showAgeb={hasAgeb || Boolean(persona.grounding?.ageb?.code)}
             showMapHint={hasCoords}
           />
+          <p
+            className="border-t border-slate-800 pt-3 text-[11px] leading-relaxed text-slate-500"
+            data-persona-grounding="1"
+          >
+            {persona.grounding
+              ? PERSONA_GROUNDING_LINE
+              : LEGACY_PERSONA_BASIS_LINE}
+          </p>
         </div>
-
-        <p
-          className="shrink-0 border-t border-slate-800 px-4 py-3 text-[11px] leading-relaxed text-slate-500 sm:px-5"
-          data-persona-grounding="1"
-        >
-          {persona.grounding
-            ? PERSONA_GROUNDING_LINE
-            : LEGACY_PERSONA_BASIS_LINE}
-        </p>
       </div>
     </div>
   )

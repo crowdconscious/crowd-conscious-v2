@@ -33,6 +33,7 @@ import {
   effectiveDeltaMs,
   settleDurationMs,
 } from '@/lib/sim-viewer/pacing'
+import { roundDivergence } from '@/lib/sim-viewer/format-divergence'
 
 export type PlaybackSnapshot = {
   beat: SimulationViewerBeat
@@ -116,7 +117,7 @@ export function useSimulationPlayback({
   const [playing, setPlaying] = useState(!reducedMotion && autoplay)
   const [speed, setSpeed] = useState<SimulationPlaybackSpeed>(defaultSpeed)
   const [displayedDivergence, setDisplayedDivergence] = useState<number | null>(
-    reducedMotion ? targetDivergence : null
+    reducedMotion ? roundDivergence(targetDivergence) : null
   )
   const [feedVotes, setFeedVotes] = useState<SimulationReplayVote[]>(
     reducedMotion ? data.votes.slice().reverse().slice(0, feedLimit) : []
@@ -160,7 +161,7 @@ export function useSimulationPlayback({
     playingRef.current = false
     setBeat('done')
     setVotedCount(total)
-    setDisplayedDivergence(targetDivergence)
+    setDisplayedDivergence(roundDivergence(targetDivergence))
     setFeedVotes(data.votes.slice().reverse().slice(0, feedLimit))
     setPlaying(false)
   }, [reducedMotion, total, targetDivergence, data.votes, feedLimit])
@@ -196,7 +197,7 @@ export function useSimulationPlayback({
     if (prefersReducedMotion()) {
       setBeat('done')
       setVotedCount(total)
-      setDisplayedDivergence(targetDivergence)
+      setDisplayedDivergence(roundDivergence(targetDivergence))
       setFeedVotes(data.votes.slice().reverse().slice(0, feedLimit))
       setPlaying(false)
       return
@@ -223,7 +224,7 @@ export function useSimulationPlayback({
     playingRef.current = false
     setBeat('done')
     setVotedCount(total)
-    setDisplayedDivergence(targetDivergence)
+    setDisplayedDivergence(roundDivergence(targetDivergence))
     setFeedVotes(data.votes.slice().reverse().slice(0, feedLimit))
     setPlaying(false)
   }, [data.votes, feedLimit, targetDivergence, total])
@@ -311,12 +312,13 @@ export function useSimulationPlayback({
           return
         }
         const target = targetDivergence
+        const roundedTarget = roundDivergence(target) ?? 0
         const t = Math.min(1, accMsRef.current / BASE_REVEAL_COUNT_MS)
-        // ease-out
+        // ease-out — always integer frames so the count-up never shows decimals
         const eased = 1 - Math.pow(1 - t, 3)
-        setDisplayedDivergence(Math.round(target * eased))
+        setDisplayedDivergence(Math.round(roundedTarget * eased))
         if (t >= 1) {
-          setDisplayedDivergence(target)
+          setDisplayedDivergence(roundedTarget)
           accMsRef.current = 0
           // Both modes land on the endcard. Capture holds a clean frame;
           // normal mode shows Ver de nuevo / Explorar personas.

@@ -33,6 +33,7 @@ import {
   parseDivergenceMeta,
   resolveOptionId,
 } from './legacy.ts'
+import { personaDisplayLabel } from './persona-label.ts'
 
 // ---------------------------------------------------------------------------
 // Input row shapes (narrow projections the route selects)
@@ -149,20 +150,14 @@ function meanConfidenceFromTotals(
 }
 
 /**
- * Abstract display label for the reasoning feed (Task 3).
- * Not a real person name — keyed off persona_key / alcaldia.
+ * Abstract display label for the reasoning feed / inspector.
+ * Never surfaces raw UUIDs — human persona_key, else "Persona N".
  */
 export function abstractPersonaDisplayName(
   persona: ReplayPersonaRow,
   sequenceIndex: number,
 ): string {
-  if (persona.persona_key && persona.persona_key.trim().length > 0) {
-    return persona.persona_key
-  }
-  if (persona.id && persona.id.trim().length > 0) {
-    return persona.id
-  }
-  return `agente-${sequenceIndex}`
+  return personaDisplayLabel(persona.persona_key, sequenceIndex)
 }
 
 /**

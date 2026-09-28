@@ -2,6 +2,7 @@
 
 import { SIM_MARK_LABEL } from '@/components/sim-viewer/SimMark'
 import { DIVERGENCE_UNAVAILABLE_HINT } from '@/lib/sim-viewer/legacy'
+import { formatDivergence } from '@/lib/sim-viewer/format-divergence'
 import type { SimulationAspectRatio } from '@/types/simulation-replay'
 
 type Props = {
@@ -161,7 +162,7 @@ export function SimEndcard({
             }`}
             data-sim-endcard-divergence="1"
           >
-            {divergence === null ? '—' : divergence}
+            {formatDivergence(divergence)}
           </div>
           {divergence === null ? (
             <p
