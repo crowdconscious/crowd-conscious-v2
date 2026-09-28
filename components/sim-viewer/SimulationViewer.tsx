@@ -169,7 +169,9 @@ export default function SimulationViewer({
     [captureMode, selectPersona]
   )
 
-  // Pause while inspector is open; resume on close (spec behaviour).
+  // Pause while inspector is open; resume on close only if still mid-replay.
+  // After Explorar personas (beat === 'done') stay paused so dots stay clickable
+  // and we don't restart() back into the endcard.
   useEffect(() => {
     if (activePersonaKey) {
       pausedByInspectorRef.current = true
@@ -178,7 +180,9 @@ export default function SimulationViewer({
     }
     if (pausedByInspectorRef.current) {
       pausedByInspectorRef.current = false
-      playback.play()
+      if (playback.beat !== 'done' && playback.beat !== 'endcard') {
+        playback.play()
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- drive off selection only
   }, [activePersonaKey])
