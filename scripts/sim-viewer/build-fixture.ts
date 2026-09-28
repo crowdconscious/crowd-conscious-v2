@@ -18,6 +18,7 @@ import type {
   SimulationReplayPayload,
   SimulationReplayVote,
 } from '../../types/simulation-replay'
+import type { PersonaGrounding } from '../../types/simulation'
 
 type SourcePersona = {
   alcaldia: string
@@ -27,6 +28,7 @@ type SourcePersona = {
   education: string
   occupation: string
   income_band: string
+  household: string | null
   persona_narrative: string
 }
 
@@ -107,6 +109,121 @@ const COLONIAS_CQ = [
 function normalizeNse(band: string): string {
   if (band === 'D/E' || band === 'E') return 'D'
   return band
+}
+
+/**
+ * Derive a household size (1–7) from the free-text household field, with a
+ * seeded fallback so every fixture persona has a count for the inspector.
+ */
+function householdSizeFromText(
+  household: string | null,
+  rng: ReturnType<typeof createSeededRng>
+): number {
+  if (household) {
+    const lower = household.toLowerCase()
+    const nums = lower.match(/\b([1-9]|1[0-2])\b/g)
+    if (nums && nums.length > 0) {
+      // Prefer counts of children / roommates mentioned, + self/partner heuristics.
+      const mentioned = nums.map(Number)
+      const maxMentioned = Math.max(...mentioned)
+      if (/solo|sola/.test(lower)) return 1
+      if (/pareja|espos[oa]|compañer/.test(lower)) {
+        return Math.min(7, Math.max(2, maxMentioned + 1))
+      }
+      if (/roommate|compañer|amigo|prima|primo/.test(lower)) {
+        return Math.min(7, maxMentioned + 1)
+      }
+      return Math.min(7, Math.max(1, maxMentioned))
+    }
+    if (/solo|sola/.test(lower)) return 1
+    if (/pareja|espos[oa]/.test(lower)) return 2
+  }
+  return Math.round(rng.nextFloat(1, 5))
+}
+
+/**
+ * Fixture-only grounding. Real source names/URLs are fine; every numeric
+ * marginal is invented and marked `isExample: true` so the inspector never
+ * presents these as real INEGI figures.
+ */
+function buildExampleGrounding(args: {
+  agebCode: string
+  age: number
+  education: string
+  householdSize: number
+  nseBand: string
+  sex: string
+  rng: ReturnType<typeof createSeededRng>
+}): PersonaGrounding {
+  const { agebCode, age, education, householdSize, nseBand, sex, rng } = args
+  const ageBand =
+    age < 30 ? '18–29' : age < 45 ? '30–44' : age < 60 ? '45–59' : '60+'
+  const ageShare = Math.round(rng.nextFloat(0.14, 0.32) * 100) / 100
+  const eduShare = Math.round(rng.nextFloat(0.18, 0.42) * 100) / 100
+  const nseShare = Math.round(rng.nextFloat(0.12, 0.38) * 100) / 100
+  const sexShare = Math.round(rng.nextFloat(0.45, 0.55) * 100) / 100
+  const meanHh = Math.round(rng.nextFloat(2.1, 4.2) * 10) / 10
+  const population = Math.round(rng.nextFloat(1800, 6200))
+
+  return {
+    isExample: true,
+    sources: [
+      {
+        name: 'INEGI Censo de Población y Vivienda',
+        year: 2020,
+        url: 'https://www.inegi.org.mx/programas/ccpv/2020/',
+        table: 'AGEB urbana',
+      },
+      {
+        name: 'INEGI ENIGH',
+        year: 2022,
+        url: 'https://www.inegi.org.mx/programas/enigh/nc/2022/',
+        table: 'Ingresos del hogar',
+      },
+      {
+        name: 'AMAI NSE',
+        year: 2022,
+        url: 'https://www.amai.org/NSE/',
+        table: 'Regla de asignación',
+      },
+    ],
+    ageb: {
+      code: agebCode,
+      population,
+      marginals: [
+        {
+          label: `Grupo de edad ${ageBand}`,
+          value: `${Math.round(ageShare * 100)}%`,
+          share: ageShare,
+        },
+        {
+          label: `Sexo (${sex})`,
+          value: `${Math.round(sexShare * 100)}%`,
+          share: sexShare,
+        },
+        {
+          label: `Escolaridad (${education})`,
+          value: `${Math.round(eduShare * 100)}%`,
+          share: eduShare,
+        },
+        {
+          label: 'Tamaño medio del hogar',
+          value: `${meanHh} pers.`,
+        },
+        {
+          label: `NSE ${nseBand} (AMAI)`,
+          value: `${Math.round(nseShare * 100)}%`,
+          share: nseShare,
+        },
+        {
+          label: 'Hogar de esta persona',
+          value: `${householdSize} pers.`,
+        },
+      ],
+    },
+    method:
+      'Se muestreó una celda demográfica a partir de las marginales del AGEB (edad × sexo × escolaridad) y se asignó NSE con la regla AMAI; el resumen narrativo se redactó para esa celda, no para un individuo real.',
+  }
 }
 
 /**
@@ -395,6 +512,8 @@ function main(): void {
     reasonSeen.add(reasoning)
 
     const confidence = Math.round(rng.nextFloat(4.5, 9.8) * 10) / 10
+    const agebCode = `09${String(1000 + (i % 80)).padStart(4, '0')}`
+    const householdSize = householdSizeFromText(p.household, rng)
 
     return {
       sequenceIndex: i,
@@ -406,16 +525,25 @@ function main(): void {
         displayName: feedName,
         alcaldia: p.alcaldia,
         colonia,
-        agebCode: `09${String(1000 + (i % 80)).padStart(4, '0')}`,
+        agebCode,
         centroidLat: 19.4 + rng.nextFloat(-0.05, 0.05),
         centroidLng: -99.18 + rng.nextFloat(-0.05, 0.05),
         nseBand: nse,
         age,
         sex: p.gender,
         education: p.education,
+        householdSize,
         occupation: p.occupation,
-        householdSize: null,
         personaSummary: p.persona_narrative,
+        grounding: buildExampleGrounding({
+          agebCode,
+          age,
+          education: p.education,
+          householdSize,
+          nseBand: nse,
+          sex: p.gender,
+          rng,
+        }),
       },
     }
   })
