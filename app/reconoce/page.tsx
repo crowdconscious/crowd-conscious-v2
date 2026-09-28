@@ -10,10 +10,22 @@ import ReconoceForm from '@/components/reconocimientos/ReconoceForm'
 
 export const dynamic = 'force-dynamic'
 
+const PAGE_TITLE = 'Reconoce algo bueno'
+const PAGE_DESCRIPTION =
+  'Envía una foto de algo positivo que viste en tu colonia. Lo revisamos y, si cumple, lo compartimos.'
+
+// Root layout template is "%s | Crowd Conscious" — page title must NOT include the brand.
 export const metadata: Metadata = {
-  title: 'Reconoce algo bueno | Crowd Conscious',
-  description:
-    'Envía una foto de algo positivo que viste en tu colonia. Lo revisamos y, si cumple, lo compartimos.',
+  title: PAGE_TITLE,
+  description: PAGE_DESCRIPTION,
+  openGraph: {
+    title: `${PAGE_TITLE} | Crowd Conscious`,
+    description: PAGE_DESCRIPTION,
+  },
+  twitter: {
+    title: `${PAGE_TITLE} | Crowd Conscious`,
+    description: PAGE_DESCRIPTION,
+  },
 }
 
 type PageProps = {

@@ -38,6 +38,8 @@ type WeeklyRow = {
   events: number
 }
 
+type Toast = { type: 'ok' | 'err'; message: string }
+
 export default function ReconocimientosTriage() {
   const [status, setStatus] = useState<RecognitionStatus | 'all'>('pending')
   const [src, setSrc] = useState('')
@@ -46,12 +48,23 @@ export default function ReconocimientosTriage() {
   const [weekly, setWeekly] = useState<WeeklyRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [toast, setToast] = useState<Toast | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [rejectReasons, setRejectReasons] = useState<Record<string, string>>({})
   const [rejectDetails, setRejectDetails] = useState<Record<string, string>>({})
   const [adminNotesDraft, setAdminNotesDraft] = useState<Record<string, string>>(
     {}
   )
+
+  useEffect(() => {
+    if (!toast) return
+    const t = window.setTimeout(() => setToast(null), 3500)
+    return () => window.clearTimeout(t)
+  }, [toast])
+
+  function showToast(type: Toast['type'], message: string) {
+    setToast({ type, message })
+  }
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -141,7 +154,9 @@ export default function ReconocimientosTriage() {
       if (action === 'reject') {
         const reason = rejectReasons[id]?.trim()
         if (!reason) {
-          setError('Elige un motivo de rechazo')
+          const msg = 'Elige un motivo de rechazo'
+          setError(msg)
+          showToast('err', msg)
           setBusyId(null)
           return
         }
@@ -158,12 +173,20 @@ export default function ReconocimientosTriage() {
         const data = (await res.json().catch(() => null)) as {
           error?: string
         } | null
-        setError(data?.error ?? 'No se pudo actualizar')
+        const msg = data?.error ?? 'No se pudo actualizar'
+        setError(msg)
+        showToast('err', msg)
         return
       }
+      showToast(
+        'ok',
+        action === 'approve' ? 'Aprobado' : 'Rechazado'
+      )
       await load()
     } catch {
-      setError('Error de red')
+      const msg = 'Error de red'
+      setError(msg)
+      showToast('err', msg)
     } finally {
       setBusyId(null)
     }
@@ -185,12 +208,17 @@ export default function ReconocimientosTriage() {
         const data = (await res.json().catch(() => null)) as {
           error?: string
         } | null
-        setError(data?.error ?? 'No se pudieron guardar las notas')
+        const msg = data?.error ?? 'No se pudieron guardar las notas'
+        setError(msg)
+        showToast('err', msg)
         return
       }
+      showToast('ok', 'Notas guardadas')
       await load()
     } catch {
-      setError('Error de red')
+      const msg = 'Error de red'
+      setError(msg)
+      showToast('err', msg)
     } finally {
       setBusyId(null)
     }
@@ -204,6 +232,19 @@ export default function ReconocimientosTriage() {
 
   return (
     <div>
+      {toast && (
+        <div
+          role="status"
+          className={`fixed bottom-4 right-4 z-50 max-w-sm rounded-xl border px-4 py-3 text-sm shadow-lg ${
+            toast.type === 'ok'
+              ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-200'
+              : 'border-red-500/40 bg-red-500/15 text-red-200'
+          }`}
+        >
+          {toast.message}
+        </div>
+      )}
+
       {weekly.length > 0 && (
         <div className="mb-6 space-y-4">
           {conversionRows.length > 0 && (
@@ -447,24 +488,44 @@ export default function ReconocimientosTriage() {
                         </button>
                       )}
                       {item.status !== 'rejected' && (
-                        <>
-                          <select
-                            value={rejectReasons[item.id] ?? ''}
-                            onChange={(e) =>
-                              setRejectReasons((prev) => ({
-                                ...prev,
-                                [item.id]: e.target.value,
-                              }))
-                            }
-                            className="rounded-lg border border-slate-700 bg-[#0f1419] px-2 py-1.5 text-xs text-slate-200"
-                          >
-                            <option value="">Motivo…</option>
-                            {REJECT_REASONS.map((reason) => (
-                              <option key={reason} value={reason}>
-                                {REJECT_REASON_LABELS_ES[reason]}
-                              </option>
-                            ))}
-                          </select>
+                        <div className="flex w-full flex-wrap items-end gap-2">
+                          <div>
+                            <label
+                              htmlFor={`reject-reason-${item.id}`}
+                              className="mb-1 block text-[10px] font-medium uppercase tracking-wide text-slate-500"
+                            >
+                              Motivo{' '}
+                              <span className="text-red-400" aria-hidden="true">
+                                *
+                              </span>
+                              <span className="sr-only">(requerido)</span>
+                            </label>
+                            <select
+                              id={`reject-reason-${item.id}`}
+                              required
+                              aria-required="true"
+                              value={rejectReasons[item.id] ?? ''}
+                              onChange={(e) =>
+                                setRejectReasons((prev) => ({
+                                  ...prev,
+                                  [item.id]: e.target.value,
+                                }))
+                              }
+                              className="rounded-lg border border-slate-700 bg-[#0f1419] px-2 py-1.5 text-xs text-slate-200"
+                            >
+                              <option value="">Selecciona motivo…</option>
+                              {REJECT_REASONS.map((reason) => (
+                                <option key={reason} value={reason}>
+                                  {REJECT_REASON_LABELS_ES[reason]}
+                                </option>
+                              ))}
+                            </select>
+                            {!rejectReasons[item.id] && (
+                              <p className="mt-1 text-[10px] text-amber-400/90">
+                                Requerido para rechazar
+                              </p>
+                            )}
+                          </div>
                           <input
                             type="text"
                             value={rejectDetails[item.id] ?? ''}
@@ -479,13 +540,18 @@ export default function ReconocimientosTriage() {
                           />
                           <button
                             type="button"
-                            disabled={busy}
+                            disabled={busy || !rejectReasons[item.id]?.trim()}
+                            title={
+                              !rejectReasons[item.id]?.trim()
+                                ? 'Selecciona un motivo primero'
+                                : undefined
+                            }
                             onClick={() => void act(item.id, 'reject')}
-                            className="rounded-lg border border-red-500/40 px-3 py-1.5 text-xs font-medium text-red-300 hover:bg-red-500/10 disabled:opacity-50"
+                            className="rounded-lg border border-red-500/40 px-3 py-1.5 text-xs font-medium text-red-300 hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             Rechazar
                           </button>
-                        </>
+                        </div>
                       )}
                       {item.status === 'approved' && (
                         <>

@@ -22,26 +22,28 @@ export async function generateMetadata({
 }: PageProps): Promise<Metadata> {
   const { slug } = await params
   const row = await getPublicRecognitionBySlug(slug)
-  if (!row) return { title: 'Reconocimiento | Crowd Conscious' }
+  // Root layout template is "%s | Crowd Conscious" — do not append the brand again.
+  if (!row) return { title: 'Reconocimiento' }
 
   const title = row.what.length > 80 ? `${row.what.slice(0, 77)}…` : row.what
   const description = `${row.where_text} · Crowd Conscious`
   const pageUrl = withShareSrc(
     `${SITE_URL.replace(/\/$/, '')}/reconocimientos/${row.share_slug}`
   )
+  const branded = `${title} | Crowd Conscious`
 
   return {
-    title: `${title} | Crowd Conscious`,
+    title,
     description,
     openGraph: {
-      title,
+      title: branded,
       description,
       type: 'article',
       url: pageUrl,
     },
     twitter: {
       card: 'summary_large_image',
-      title,
+      title: branded,
       description,
     },
   }

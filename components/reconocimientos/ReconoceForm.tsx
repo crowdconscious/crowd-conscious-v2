@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import Link from 'next/link'
 import {
   CONSENT_TEXT_ES,
@@ -15,12 +15,20 @@ import {
   type HowKnown,
   type WhoType,
 } from '@/lib/reconocimientos/constants'
+import { resolveIntakeSrc } from '@/lib/reconocimientos/config'
+import {
+  clearPersistedIntakeSrc,
+  persistIntakeSrc,
+  readPersistedIntakeSrc,
+} from '@/lib/reconocimientos/src'
 
 type Props = {
+  /** Server-resolved src from the landing URL (?src=…). */
   src: string
 }
 
-export default function ReconoceForm({ src }: Props) {
+export default function ReconoceForm({ src: landingSrc }: Props) {
+  const [src, setSrc] = useState(() => resolveIntakeSrc(landingSrc))
   const [what, setWhat] = useState('')
   const [whereText, setWhereText] = useState('')
   const [whoType, setWhoType] = useState<WhoType | ''>('')
@@ -33,6 +41,27 @@ export default function ReconoceForm({ src }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
   const photoRef = useRef<HTMLInputElement>(null)
+
+  // Persist landing src so photo-picker remounts / soft navigations keep attribution.
+  // Prefer the live URL param; if stripped mid-flow, restore from sessionStorage.
+  // Never invent src=app on the web path.
+  useEffect(() => {
+    const urlParam =
+      typeof window !== 'undefined'
+        ? new URLSearchParams(window.location.search).get('src')
+        : null
+
+    let resolved: string
+    if (urlParam && urlParam.trim()) {
+      resolved = resolveIntakeSrc(urlParam)
+      persistIntakeSrc(resolved)
+    } else {
+      const stored = readPersistedIntakeSrc()
+      resolved = stored ?? resolveIntakeSrc(landingSrc)
+      if (!stored) persistIntakeSrc(resolved)
+    }
+    setSrc(resolved)
+  }, [landingSrc])
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
@@ -52,6 +81,8 @@ export default function ReconoceForm({ src }: Props) {
       return
     }
 
+    const effectiveSrc = resolveIntakeSrc(src, readPersistedIntakeSrc())
+
     setSubmitting(true)
     try {
       const form = new FormData()
@@ -63,7 +94,7 @@ export default function ReconoceForm({ src }: Props) {
       if (creditHandle.trim()) form.set('credit_handle', creditHandle.trim())
       if (contact.trim()) form.set('contact', contact.trim())
       form.set('consent', 'true')
-      form.set('src', src)
+      form.set('src', effectiveSrc)
       // Honeypot — leave empty
       form.set('website', '')
 
@@ -80,6 +111,7 @@ export default function ReconoceForm({ src }: Props) {
         setError(data?.error ?? 'No se pudo enviar. Intenta de nuevo.')
         return
       }
+      clearPersistedIntakeSrc()
       setDone(true)
     } catch {
       setError('Error de red. Intenta de nuevo.')
@@ -127,6 +159,9 @@ export default function ReconoceForm({ src }: Props) {
           <input type="text" name="website" tabIndex={-1} autoComplete="off" />
         </label>
       </div>
+
+      {/* Hidden src so attribution survives even if React state is remounted mid-flow */}
+      <input type="hidden" name="src" value={src} readOnly />
 
       <div>
         <label className={labelClass}>

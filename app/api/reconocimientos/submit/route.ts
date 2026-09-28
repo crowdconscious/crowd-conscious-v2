@@ -7,23 +7,17 @@ import {
   reconocimientosSubmitRateLimit,
 } from '@/lib/rate-limit'
 import {
-  ALLOWED_IMAGE_TYPES,
-  CONSENT_VERSION,
   HOW_KNOWN,
   MAX_CONTACT_LEN,
   MAX_CREDIT_LEN,
-  MAX_PHOTO_BYTES,
   MAX_WHAT_LEN,
   MAX_WHERE_LEN,
   WHO_TYPES,
   clampText,
-  generateShareSlug,
-  insertRecognition,
+  createRecognitionSubmission,
   isNonEmptyString,
   isReconocimientosEnabled,
-  processRecognitionPhoto,
-  sanitizeSrc,
-  uploadRecognitionPhoto,
+  resolveIntakeSrc,
   type HowKnown,
   type WhoType,
 } from '@/lib/reconocimientos'
@@ -38,6 +32,9 @@ export const dynamic = 'force-dynamic'
  *
  * Consent + text fields are validated BEFORE any image processing or storage
  * write so rejected requests never leave bytes in the bucket.
+ *
+ * src: missing/empty → `unknown` (never `app`). App submissions use
+ * POST /api/reconocimientos/app.
  */
 export async function POST(request: NextRequest) {
   if (!isReconocimientosEnabled()) {
@@ -103,60 +100,35 @@ export async function POST(request: NextRequest) {
     const contact = isNonEmptyString(contactRaw)
       ? clampText(contactRaw, MAX_CONTACT_LEN)
       : null
-    const src = sanitizeSrc(srcRaw)
+    // Web path: never invent src=app. Missing → unknown.
+    const src = resolveIntakeSrc(srcRaw)
 
-    // --- Photo checks only after consent/fields pass ---
     const photo = form.get('photo')
     if (!(photo instanceof File)) {
       return NextResponse.json({ error: 'La foto es obligatoria' }, { status: 400 })
     }
-    if (!(ALLOWED_IMAGE_TYPES as readonly string[]).includes(photo.type)) {
-      return NextResponse.json(
-        { error: 'Formato no válido (JPG, PNG, WebP o HEIC)' },
-        { status: 400 }
-      )
-    }
-    if (photo.size > MAX_PHOTO_BYTES) {
-      return NextResponse.json({ error: 'La foto supera 10 MB' }, { status: 400 })
-    }
 
-    let processed
-    try {
-      processed = await processRecognitionPhoto(
-        Buffer.from(await photo.arrayBuffer())
-      )
-    } catch (err) {
-      console.error('[reconocimientos/submit] image', err)
-      return NextResponse.json(
-        {
-          error:
-            'No pudimos procesar la imagen. Prueba JPG o PNG (HEIC a veces falla).',
-        },
-        { status: 400 }
-      )
-    }
-
-    const shareSlug = generateShareSlug()
-    const photoPath = `originals/${shareSlug}-${Date.now()}.jpg`
-    await uploadRecognitionPhoto(photoPath, processed.buffer, processed.contentType)
-
-    const row = await insertRecognition({
-      user_id: user?.id ?? null,
-      photo_path: photoPath,
+    const result = await createRecognitionSubmission({
       what,
       where_text: whereText,
       who_type: whoRaw as WhoType,
       how_known: howRaw as HowKnown,
       credit_handle: creditHandle,
       contact,
-      consent_at: new Date().toISOString(),
-      consent_version: CONSENT_VERSION,
       src,
-      status: 'pending',
-      share_slug: shareSlug,
+      user_id: user?.id ?? null,
+      photo: {
+        buffer: Buffer.from(await photo.arrayBuffer()),
+        contentType: photo.type,
+        size: photo.size,
+      },
     })
 
-    return NextResponse.json({ ok: true, id: row.id, status: row.status })
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: 400 })
+    }
+
+    return NextResponse.json({ ok: true, id: result.id, status: result.status })
   } catch (err) {
     console.error('[reconocimientos/submit]', err)
     return NextResponse.json({ error: 'Error interno' }, { status: 500 })
