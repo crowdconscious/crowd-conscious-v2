@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import type {
   SimulationOptionAggregate,
   SimulationReplayOption,
@@ -12,6 +12,7 @@ import {
   computeAgentPositions,
   confidenceToTopFraction,
 } from '@/lib/sim-viewer/positions'
+import { personaDisplayLabel } from '@/lib/sim-viewer/persona-label'
 import { SimMark } from '@/components/sim-viewer/SimMark'
 
 type Props = {
@@ -34,6 +35,13 @@ type Props = {
 }
 
 const AXIS_TICKS = [10, 8, 6, 4, 2] as const
+
+/** Desktop reference width where current dot radii were tuned. */
+const DESKTOP_DOT_REF_PX = 900
+/** Phone (~390 CSS px) should land near half the prior mobile blob size. */
+const MOBILE_DOT_PX = 7
+const DESKTOP_DOT_PX = 11
+const CAPTURE_DOT_PX = 22
 
 function pctLabel(share: number): string {
   return `${Math.round(share * 100)}%`
@@ -70,8 +78,49 @@ export function SimCanvas({
     return map
   }, [data.pulse.options])
 
+  const plotRef = useRef<HTMLDivElement | null>(null)
+  const [plotWidth, setPlotWidth] = useState(0)
   const dotRefs = useRef<(HTMLButtonElement | null)[]>([])
   const prevVoted = useRef(0)
+  const mobileLayoutRef = useRef(mobileLayout)
+  mobileLayoutRef.current = mobileLayout
+
+  useEffect(() => {
+    const el = plotRef.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver((entries) => {
+      const w = entries[0]?.contentRect.width ?? 0
+      setPlotWidth(w)
+    })
+    ro.observe(el)
+    setPlotWidth(el.getBoundingClientRect().width)
+    return () => ro.disconnect()
+  }, [])
+
+  const colCount = Math.max(1, data.pulse.options.length)
+  const colWidthPx = plotWidth > 0 ? plotWidth / colCount : 0
+  // Scale to column width on phones; keep capture intentionally larger for Reels.
+  const dotPx = phoneScale
+    ? CAPTURE_DOT_PX
+    : mobileLayout
+      ? Math.max(
+          5,
+          Math.min(
+            MOBILE_DOT_PX,
+            colWidthPx > 0 ? colWidthPx * 0.22 : MOBILE_DOT_PX,
+          ),
+        )
+      : compact
+        ? 8
+        : Math.max(
+            8,
+            Math.min(
+              DESKTOP_DOT_PX,
+              plotWidth > 0
+                ? DESKTOP_DOT_PX * (plotWidth / DESKTOP_DOT_REF_PX)
+                : DESKTOP_DOT_PX,
+            ),
+          )
 
   useEffect(() => {
     const prev = prevVoted.current
@@ -81,7 +130,7 @@ export function SimCanvas({
         if (!el) continue
         el.dataset.state = 'lattice'
         el.classList.remove('sim-dot--landed', 'sim-dot--glow')
-        applyLatticeTransform(el, positions[i]!)
+        applyLatticeTransform(el, positions[i]!, mobileLayoutRef.current)
       }
     } else {
       for (let i = prev; i < votedCount; i++) {
@@ -107,10 +156,10 @@ export function SimCanvas({
       const pos = positions[i]
       if (!el || !pos) continue
       if (votedCount > i) continue
-      applyLatticeTransform(el, pos)
+      applyLatticeTransform(el, pos, mobileLayout)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount / data identity
-  }, [data.run.id])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount / layout / data identity
+  }, [data.run.id, mobileLayout])
 
   const showPercents = beat === 'settle' || beat === 'reveal' || beat === 'endcard' || beat === 'done'
   const showReveal = beat === 'reveal' || beat === 'endcard' || beat === 'done'
@@ -131,14 +180,6 @@ export function SimCanvas({
       : compact
         ? 'text-[8px]'
         : 'text-[9px] sm:text-[10px]'
-  // Mobile: visible size stays modest; CSS min hit target expands tap area.
-  const dotCls = phoneScale
-    ? 'h-6 w-6'
-    : mobileLayout
-      ? 'h-3.5 w-3.5'
-      : compact
-        ? 'h-2 w-2'
-        : 'h-2.5 w-2.5 sm:h-3 sm:w-3'
   const padCls = phoneScale
     ? 'px-2.5 pb-2.5 pt-12'
     : mobileLayout
@@ -151,6 +192,12 @@ export function SimCanvas({
     <div
       className="sim-canvas relative flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-amber-500/25 bg-gradient-to-b from-[#121820] via-[#0f1419] to-[#0c1015]"
       data-sim-canvas="true"
+      data-mobile={mobileLayout ? '1' : '0'}
+      style={
+        {
+          '--sim-dot-size': `${dotPx}px`,
+        } as CSSProperties
+      }
     >
       <SimMark subtitle="reproducción" compact={compact} phoneScale={phoneScale} />
 
@@ -183,7 +230,7 @@ export function SimCanvas({
         </div>
 
         {/* Plot — reserve bottom band for % + labels so dots don't collide */}
-        <div className="relative min-h-0 flex-1">
+        <div className="relative min-h-0 flex-1" ref={plotRef}>
           <div
             className="absolute inset-x-0 top-0"
             style={{ bottom: footerH }}
@@ -265,6 +312,10 @@ export function SimCanvas({
               {data.votes.map((vote, i) => {
                 const selected =
                   selectedPersonaKey === vote.persona.personaKey
+                const label = personaDisplayLabel(
+                  vote.persona.displayName ?? vote.persona.personaKey,
+                  vote.sequenceIndex,
+                )
                 return (
                   <button
                     key={vote.persona.personaKey}
@@ -275,12 +326,16 @@ export function SimCanvas({
                     data-persona-key={vote.persona.personaKey}
                     data-sequence={vote.sequenceIndex}
                     data-selected={selected ? '1' : undefined}
-                    aria-label={`Inspeccionar persona ${vote.persona.displayName ?? vote.persona.personaKey}, ${vote.persona.colonia ?? vote.persona.alcaldia}`}
+                    aria-label={`Inspeccionar persona ${label}, ${vote.persona.colonia ?? vote.persona.alcaldia}`}
                     aria-pressed={selected}
-                    className={`sim-dot absolute left-0 top-0 -translate-x-1/2 -translate-y-1/2 rounded-full border border-amber-300/60 bg-transparent opacity-70 transition-[left,top,opacity,box-shadow] duration-500 ease-out will-change-[left,top] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400 ${dotCls}${
+                    className={`sim-dot absolute left-0 top-0 rounded-full border border-amber-300/60 bg-transparent opacity-70 transition-[left,top,opacity,box-shadow,width,height] duration-500 ease-out will-change-[left,top] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400${
                       selected ? ' sim-dot--selected' : ''
                     }`}
-                    style={{ transform: 'translate(-50%, -50%)' }}
+                    style={{
+                      width: 'var(--sim-dot-size)',
+                      height: 'var(--sim-dot-size)',
+                      transform: 'translate(-50%, -50%)',
+                    }}
                     onClick={(e) => {
                       e.stopPropagation()
                       onDotActivate?.(vote.persona.personaKey)
@@ -379,9 +434,18 @@ function ColumnFooter({
 
 type Pos = ReturnType<typeof computeAgentPositions>[number]
 
-function applyLatticeTransform(el: HTMLElement, pos: Pos): void {
-  const x = 4 + pos.latticeX * 14
-  const y = 8 + pos.latticeY * 70
+function applyLatticeTransform(
+  el: HTMLElement,
+  pos: Pos,
+  mobileLayout: boolean,
+): void {
+  // Phones: spread the waiting bay so seeded jitter still fits without rings.
+  const xSpan = mobileLayout ? 36 : 14
+  const ySpan = mobileLayout ? 78 : 70
+  const x0 = mobileLayout ? 2 : 4
+  const y0 = mobileLayout ? 6 : 8
+  const x = x0 + pos.latticeX * xSpan
+  const y = y0 + pos.latticeY * ySpan
   el.style.left = `${x}%`
   el.style.top = `${y}%`
   el.style.transform = 'translate(-50%, -50%)'

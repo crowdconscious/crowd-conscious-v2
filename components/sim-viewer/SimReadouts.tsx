@@ -1,6 +1,7 @@
 'use client'
 
 import { DIVERGENCE_UNAVAILABLE_HINT } from '@/lib/sim-viewer/legacy'
+import { formatDivergence } from '@/lib/sim-viewer/format-divergence'
 
 type Props = {
   votedCount: number
@@ -119,7 +120,7 @@ export function SimReadouts({
         />
         <Readout
           label={mobileLayout ? 'Divergencia' : 'Índice de divergencia'}
-          value={divergence === null ? '—' : String(divergence)}
+          value={formatDivergence(divergence)}
           compact={compact || mobileLayout}
           phoneScale={scale}
           inline={inline}

@@ -2,6 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 
 import {
+  abstractPersonaDisplayName,
   buildReplayPayload,
   computeSimAggregates,
   mapVotesOrdered,
@@ -603,4 +604,25 @@ test('buildReplayPayload leaves divergenceIndex null when run has no score', () 
   })
   assert.equal(payload.run.divergenceIndex, null)
   assert.equal(payload.run.divergenceMeta, null)
+})
+
+test('abstractPersonaDisplayName never returns UUIDs', () => {
+  assert.equal(
+    abstractPersonaDisplayName(
+      persona({
+        persona_key: '14850982-416b-4160-8f13-34e9ddd96fd7',
+        id: '14850982-416b-4160-8f13-34e9ddd96fd7',
+      }),
+      33,
+    ),
+    'Persona 34',
+  )
+  assert.equal(
+    abstractPersonaDisplayName(persona({ persona_key: null, id: 'uuid-x' }), 0),
+    'Persona 1',
+  )
+  assert.equal(
+    abstractPersonaDisplayName(persona({ persona_key: 'mh-fixture-c-001' }), 9),
+    'mh-fixture-c-001',
+  )
 })

@@ -57,9 +57,24 @@ export function useAppEmbedChrome(active: boolean): void {
       }
     `
     document.head.appendChild(style)
+
+    // Defensive: strip any apple-itunes-app meta so the Smart App Banner
+    // cannot appear inside the app's own SFSafariViewController.
+    const removed: HTMLMetaElement[] = []
+    document
+      .querySelectorAll('meta[name="apple-itunes-app"]')
+      .forEach((node) => {
+        const meta = node as HTMLMetaElement
+        removed.push(meta)
+        meta.remove()
+      })
+
     return () => {
       delete root.dataset.simApp
       style.remove()
+      for (const meta of removed) {
+        if (!document.head.contains(meta)) document.head.appendChild(meta)
+      }
     }
   }, [active])
 }

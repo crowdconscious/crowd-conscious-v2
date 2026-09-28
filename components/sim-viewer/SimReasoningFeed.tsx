@@ -1,6 +1,7 @@
 'use client'
 
 import type { SimulationReplayVote } from '@/types/simulation-replay'
+import { personaDisplayLabel } from '@/lib/sim-viewer/persona-label'
 
 type Props = {
   votes: SimulationReplayVote[]
@@ -56,6 +57,10 @@ export function SimReasoningFeed({
           votes.map((vote) => {
             const label = optionsById.get(vote.optionId) ?? '—'
             const colonia = vote.persona.colonia ?? vote.persona.alcaldia
+            const name = personaDisplayLabel(
+              vote.persona.displayName ?? vote.persona.personaKey,
+              vote.sequenceIndex,
+            )
             return (
               <li
                 key={`feed-${vote.sequenceIndex}`}
@@ -76,7 +81,7 @@ export function SimReasoningFeed({
                     }`}
                   >
                     <span className="font-medium text-slate-200">
-                      {vote.persona.displayName ?? vote.persona.personaKey}
+                      {name}
                     </span>
                     {', '}
                     {vote.persona.age}

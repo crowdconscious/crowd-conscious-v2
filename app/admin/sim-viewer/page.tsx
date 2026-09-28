@@ -7,6 +7,7 @@ import {
   buildOptionLabelIndex,
   resolveOptionId,
 } from '@/lib/sim-viewer/legacy'
+import { formatDivergence } from '@/lib/sim-viewer/format-divergence'
 
 export const dynamic = 'force-dynamic'
 
@@ -225,9 +226,7 @@ export default async function AdminSimViewerIndexPage() {
                       ) : null}
                     </td>
                     <td className="px-3 py-2.5 font-mono tabular-nums text-amber-200">
-                      {run.divergence_index == null
-                        ? '—'
-                        : Math.round(Number(run.divergence_index))}
+                      {formatDivergence(run.divergence_index)}
                     </td>
                     <td className="px-3 py-2.5 text-slate-400">
                       {run.revealed_at ? 'revelada' : 'sin revelar'}

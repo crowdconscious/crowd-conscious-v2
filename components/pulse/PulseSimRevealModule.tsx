@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { formatDivergence } from '@/lib/sim-viewer/format-divergence'
 
 /**
  * "IA vs. Realidad" reveal module (§5.7) — the post-close comparison of a real
@@ -58,7 +59,7 @@ export default function PulseSimRevealModule({
 }) {
   const hasIndex =
     reveal.divergenceIndex !== null && Number.isFinite(reveal.divergenceIndex)
-  const index = hasIndex ? Math.round(reveal.divergenceIndex as number) : null
+  const indexLabel = formatDivergence(reveal.divergenceIndex)
   const adminPreview = reveal.adminPreview === true
 
   return (
@@ -104,14 +105,14 @@ export default function PulseSimRevealModule({
             {locale === 'es' ? 'Índice de Divergencia' : 'Divergence Index'}
           </p>
           <p className="mt-0.5 text-3xl font-bold tabular-nums text-amber-300">
-            {index === null ? '—' : index}
-            {index !== null ? (
+            {indexLabel}
+            {hasIndex ? (
               <span className="text-lg text-amber-400/60">/100</span>
             ) : null}
           </p>
         </div>
         <p className="max-w-xs text-xs leading-relaxed text-amber-200/70">
-          {index === null
+          {!hasIndex
             ? locale === 'es'
               ? 'Aún no hay votos reales para comparar. Se muestran solo las participaciones simuladas.'
               : 'No real votes to compare yet. Showing simulated shares only.'

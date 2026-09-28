@@ -6,6 +6,7 @@ import "../src/app/globals.css";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { SITE_URL } from "@/lib/seo/site";
 import { ConversionCelebration } from "@/components/anon/ConversionCelebration";
+import { APP_STORE_ID } from "@/lib/app-store";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -110,6 +111,13 @@ export const metadata: Metadata = {
   icons: {
     icon: "/images/favicon-512.png",
     apple: "/images/apple-touch-icon.png",
+  },
+
+  // Smart App Banner for normal Safari visitors. Pages opened from the
+  // native app (?src=app) null this out so the banner does not reappear
+  // inside SFSafariViewController.
+  itunes: {
+    appId: APP_STORE_ID,
   },
 
   manifest: "/manifest.json",
