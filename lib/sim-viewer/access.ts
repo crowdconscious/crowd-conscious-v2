@@ -8,7 +8,8 @@
  * CTO decisions (reversible) applied here:
  *   - Non-admin only when prediction_markets.status === 'resolved'
  *   - revealed_at (on the run) and status must BOTH allow (stricter wins)
- *   - SIM_VIEWER_PUBLIC_CLOSED must be true (default false → sales-only)
+ *   - SIM_VIEWER_PUBLIC_CLOSED defaults ON (public on closed); set to
+ *     the string `'false'` for sales-only
  *   - is_fixture runs are admin-only
  */
 
