@@ -128,6 +128,12 @@ type Props = {
    * No sim numbers ever ride along with it.
    */
   simTeaser?: boolean
+  /**
+   * Visor de simulación entry. Set when a complete non-brand-pretest run
+   * exists, NEXT_PUBLIC_SIM_VIEWER_ENABLED is on, and access allows
+   * (admin always; public only on resolved + revealed).
+   */
+  simulationViewerHref?: string | null
   /** Full market row for inline VotePanel on shared links (Phase 1). */
   voteMarket?: Database['public']['Tables']['prediction_markets']['Row'] | null
   isAuthenticated?: boolean
@@ -158,6 +164,7 @@ export default function PulseResultClient({
   featuredReasonings = [],
   simReveal = null,
   simTeaser = false,
+  simulationViewerHref = null,
   voteMarket = null,
   isAuthenticated = false,
 }: Props) {
@@ -883,7 +890,24 @@ export default function PulseResultClient({
             {/* "IA vs. Realidad" reveal module (§5.7). Public: only after close
                 + revealed run. Admin: live preview payload even while open. */}
             {showFullCommunityResults && simReveal ? (
-              <PulseSimRevealModule locale={locale} reveal={simReveal} />
+              <PulseSimRevealModule
+                locale={locale}
+                reveal={{
+                  ...simReveal,
+                  simulationViewerHref:
+                    simReveal.simulationViewerHref ?? simulationViewerHref,
+                }}
+              />
+            ) : showFullCommunityResults && simulationViewerHref ? (
+              <div className="pulse-section mt-6">
+                <a
+                  href={simulationViewerHref}
+                  className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-amber-400/40 bg-amber-500/15 px-5 py-2.5 text-sm font-semibold text-amber-100 transition hover:border-amber-300/70 hover:bg-amber-500/25"
+                  data-sim-viewer-entry="1"
+                >
+                  {locale === 'es' ? 'Ver la simulación' : 'Watch the simulation'}
+                </a>
+              </div>
             ) : null}
 
             <div className="pulse-no-print mt-10 flex flex-col gap-3 sm:flex-row">

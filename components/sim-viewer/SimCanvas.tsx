@@ -247,8 +247,9 @@ export function SimCanvas({
               ))}
             </div>
 
-            {/* Dots layer — only over the plot band, not the footer labels */}
-            <div className="absolute inset-0">
+            {/* Dots layer — only over the plot band, not the footer labels.
+                z-20 keeps hit targets above reveal bars / grid decoration. */}
+            <div className="absolute inset-0 z-20">
               {data.votes.map((vote, i) => {
                 const selected =
                   selectedPersonaKey === vote.persona.personaKey
@@ -268,7 +269,10 @@ export function SimCanvas({
                       selected ? ' sim-dot--selected' : ''
                     }`}
                     style={{ transform: 'translate(-50%, -50%)' }}
-                    onClick={() => onDotActivate?.(vote.persona.personaKey)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onDotActivate?.(vote.persona.personaKey)
+                    }}
                     onKeyDown={(e) => {
                       // Enter / Space already activate buttons; keep Escape
                       // bubbling so the inspector can close when focused here.

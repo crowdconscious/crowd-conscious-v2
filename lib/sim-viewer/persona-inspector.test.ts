@@ -14,6 +14,14 @@ describe('persona inspector grounding', () => {
       'Persona sintetica generada a partir de marginales del Censo INEGI 2020 a nivel AGEB. No representa a una persona real.'
     )
   })
+
+  it('exports the legacy alcaldía-calibration basis line', async () => {
+    const { LEGACY_PERSONA_BASIS_LINE } = await import('./legacy.ts')
+    assert.equal(
+      LEGACY_PERSONA_BASIS_LINE,
+      'Perfil sintético calibrado con pesos por alcaldía (INEGI)'
+    )
+  })
 })
 
 describe('persona abstract mark keys', () => {

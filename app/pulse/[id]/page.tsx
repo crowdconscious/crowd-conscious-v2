@@ -29,6 +29,9 @@ import {
   outcomeAvgConfidence,
   type PulseVoteAggregates,
 } from '@/lib/pulse-vote-aggregates'
+import { isSimViewerEnabled } from '@/lib/sim-viewer-flag'
+import { decideReplayAccess } from '@/lib/sim-viewer/access'
+import { isSimViewerPublicClosedEnabled } from '@/lib/sim-viewer/public-closed-flag'
 
 type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ token?: string }> }
 
@@ -345,6 +348,45 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
     }
   }
 
+  // Visor de simulación entry — independent of SIM_REVEAL_ENABLED.
+  // Complete non-brand-pretest run + flag + access (closed=public; admin always).
+  let simulationViewerHref: string | null = null
+  if (isSimViewerEnabled()) {
+    try {
+      const { data: viewerRun } = await admin
+        .from('simulation_runs')
+        .select('id, revealed_at, is_fixture, status')
+        .eq('market_id', id)
+        .eq('status', 'complete')
+        .or('is_brand_pretest.eq.false,is_brand_pretest.is.null')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (viewerRun) {
+        const decision = decideReplayAccess({
+          isAdmin,
+          includeRealParam: false,
+          pulseStatus: market.status,
+          runRevealedAt: viewerRun.revealed_at,
+          runIsFixture: viewerRun.is_fixture === true,
+          publicClosedEnabled: isSimViewerPublicClosedEnabled(),
+        })
+        if (decision.allow) {
+          simulationViewerHref = `/pulse/${id}/simulacion`
+          if (simReveal) {
+            simReveal = {
+              ...simReveal,
+              simulationViewerHref,
+            }
+          }
+        }
+      }
+    } catch {
+      simulationViewerHref = null
+    }
+  }
+
   return (
     <>
       {isDraft && <DraftBanner marketId={market.id} />}
@@ -384,6 +426,7 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
         featuredReasonings={featuredReasonings}
         simReveal={simReveal}
         simTeaser={simTeaser}
+        simulationViewerHref={simulationViewerHref}
         voteMarket={market as unknown as import('@/types/database').Database['public']['Tables']['prediction_markets']['Row']}
         isAuthenticated={!!user}
       />

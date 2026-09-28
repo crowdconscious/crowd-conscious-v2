@@ -207,11 +207,31 @@ export default function SimulationViewer({
     `panel sintético ${data.run.personaCount} agentes`,
   ].join(' · ')
 
-  const showEndcard =
-    playback.beat === 'endcard' ||
-    (playback.beat === 'done' &&
-      captureMode &&
-      playback.displayedDivergence !== null)
+  const showEndcard = playback.beat === 'endcard'
+
+  // Capture mode: R anywhere dismisses the endcard (in addition to click).
+  useEffect(() => {
+    if (!captureMode || !showEndcard) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'r' || e.key === 'R') {
+        e.preventDefault()
+        playback.explore()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- explore identity stable enough
+  }, [captureMode, showEndcard, playback.explore])
+
+  const hasMapCoordinates = useMemo(
+    () =>
+      data.votes.some(
+        (v) =>
+          typeof v.persona.centroidLat === 'number' &&
+          typeof v.persona.centroidLng === 'number'
+      ),
+    [data.votes]
+  )
 
   const shellRef = useRef<HTMLDivElement>(null)
   const [stagePx, setStagePx] = useState<{ width: number; height: number } | null>(
@@ -346,7 +366,7 @@ export default function SimulationViewer({
                   : 'min-h-0 flex-[1.6]'
             }`}
           >
-            {viewMode === 'map' ? (
+            {viewMode === 'map' && hasMapCoordinates ? (
               <div
                 className="flex h-full flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-slate-600 bg-[#121820] p-4 text-center text-xs text-slate-400"
                 data-sim-map-hook="1"
@@ -361,14 +381,23 @@ export default function SimulationViewer({
                   <code className="text-slate-400">selectedPersonaKey</code>{' '}
                   a cada punto AGEB (misma selección que columnas).
                 </p>
-                {/*
-                  Task 4 map dots should call:
-                  onPersonaActivateFromView(personaKey)
-                  and highlight when selectedPersonaKey matches.
-                */}
                 <span className="sr-only" data-on-persona-activate="ready">
                   ready
                 </span>
+              </div>
+            ) : viewMode === 'map' && !hasMapCoordinates ? (
+              <div
+                className="flex h-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-600 bg-[#121820] p-4 text-center text-xs text-slate-400"
+                data-sim-map-unavailable="1"
+              >
+                <p>Mapa no disponible — esta corrida no tiene coordenadas AGEB.</p>
+                <button
+                  type="button"
+                  className="mt-1 rounded border border-slate-600 px-3 py-1 text-slate-200 hover:border-slate-400"
+                  onClick={() => setViewMode('columns')}
+                >
+                  Volver a columnas
+                </button>
               </div>
             ) : (
               <SimCanvas
@@ -431,7 +460,8 @@ export default function SimulationViewer({
               viewMode={viewMode}
               onViewModeChange={setViewMode}
               showMapToggle={
-                Boolean(onViewModeChange) || viewModeProp !== undefined
+                hasMapCoordinates &&
+                (Boolean(onViewModeChange) || viewModeProp !== undefined)
               }
               compact
               captureMode={captureMode}
@@ -456,6 +486,10 @@ export default function SimulationViewer({
           visible={showEndcard}
           phoneScale={phoneScale}
           aspectRatio={aspectRatio}
+          captureMode={captureMode}
+          onRestart={playback.restart}
+          onExplore={playback.explore}
+          onCaptureDismiss={playback.explore}
         />
       </div>
 
