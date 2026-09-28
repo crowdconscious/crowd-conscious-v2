@@ -414,6 +414,7 @@ function main(): void {
         sex: p.gender,
         education: p.education,
         occupation: p.occupation,
+        householdSize: null,
         personaSummary: p.persona_narrative,
       },
     }
@@ -466,10 +467,12 @@ function main(): void {
       completedAt: '2026-09-01T12:00:00.000Z',
       divergenceIndex,
       divergenceMeta: {
+        index: divergenceIndex,
         shareScore,
         confScore,
         computedAt: '2026-09-01T12:05:00.000Z',
       },
+      isFixture: true,
     },
     pulse: {
       id: 'fixture-pulse-00000000-0000-4000-8000-000000000014',

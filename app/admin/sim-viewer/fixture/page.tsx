@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { isSimViewerEnabled } from '@/lib/sim-viewer/is-enabled'
+import { isSimViewerEnabled } from '@/lib/sim-viewer-flag'
 import { loadSimulationFixture } from '@/lib/sim-viewer/load-fixture'
 import SimulationViewerLoader from '@/components/sim-viewer/SimulationViewerLoader'
 
@@ -21,6 +21,8 @@ type Props = {
  * Auth: gated by app/admin/layout.tsx (admin only).
  * Flag: NEXT_PUBLIC_SIM_VIEWER_ENABLED=true required, else 404.
  * Capture: /admin/sim-viewer/fixture?captura=1 (admin chrome hides via CSS).
+ *
+ * Preview path on Vercel: /admin/sim-viewer/fixture
  */
 export default async function AdminSimViewerFixturePage({ searchParams }: Props) {
   if (!isSimViewerEnabled()) {

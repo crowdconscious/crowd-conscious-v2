@@ -67,14 +67,13 @@ export function SimReasoningFeed({
                     }`}
                   >
                     <span className="font-medium text-slate-200">
-                      {vote.persona.displayName}
+                      {vote.persona.displayName ?? vote.persona.personaKey}
                     </span>
                     {', '}
                     {vote.persona.age}
                     {' · '}
                     {colonia}
-                    {' · NSE '}
-                    {vote.persona.nseBand}
+                    {vote.persona.nseBand ? ` · NSE ${vote.persona.nseBand}` : ''}
                   </p>
                   <span
                     className={`shrink-0 font-mono text-slate-400 ${
@@ -94,7 +93,7 @@ export function SimReasoningFeed({
                   }`}
                 >
                   <span className="font-semibold text-amber-200">{label}.</span>{' '}
-                  {vote.reasoning}
+                  {vote.reasoning ?? ''}
                 </p>
               </li>
             )
