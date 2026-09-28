@@ -10,10 +10,12 @@
     "completedAt": "2026-09-01T12:00:00.000Z",
     "divergenceIndex": 16,
     "divergenceMeta": {
+      "index": 16,
       "shareScore": 18.4,
       "confScore": 12.1,
       "computedAt": "2026-09-01T12:05:00.000Z"
-    }
+    },
+    "isFixture": true
   },
   "pulse": {
     "id": "fixture-pulse-00000000-0000-4000-8000-000000000014",

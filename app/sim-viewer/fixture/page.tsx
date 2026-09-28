@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import {
   isSimViewerEnabled,
   isSimViewerFixtureOpen,
-} from '@/lib/sim-viewer/is-enabled'
+} from '@/lib/sim-viewer-flag'
 import { loadSimulationFixture } from '@/lib/sim-viewer/load-fixture'
 import SimulationViewerLoader from '@/components/sim-viewer/SimulationViewerLoader'
 

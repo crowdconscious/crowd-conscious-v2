@@ -2,7 +2,7 @@ import { redirect, notFound } from 'next/navigation'
 import {
   isSimViewerEnabled,
   isSimViewerFixtureOpen,
-} from '@/lib/sim-viewer/is-enabled'
+} from '@/lib/sim-viewer-flag'
 
 export const dynamic = 'force-dynamic'
 

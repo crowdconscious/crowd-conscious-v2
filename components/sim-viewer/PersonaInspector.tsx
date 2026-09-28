@@ -140,7 +140,7 @@ export function PersonaInspector({
               />
               <Field
                 label="NSE (AMAI)"
-                value={persona.nseBand}
+                value={persona.nseBand ?? '—'}
                 className="col-span-2"
               />
             </dl>

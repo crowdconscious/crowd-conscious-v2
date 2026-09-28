@@ -10,7 +10,7 @@ import {
 } from '@/lib/sim-viewer/persona-mark'
 
 export type PersonaAbstractMarkProps = {
-  nseBand: string
+  nseBand: string | null
   alcaldia: string
   size?: number
   className?: string
@@ -26,7 +26,7 @@ export function PersonaAbstractMark({
 }: PersonaAbstractMarkProps) {
   const fill = nseBandColor(nseBand)
   const glyph = alcaldiaGlyph(alcaldia)
-  const label = `Marca abstracta · NSE ${nseBand} · ${alcaldia}`
+  const label = `Marca abstracta · NSE ${nseBand ?? '—'} · ${alcaldia}`
 
   return (
     <svg
@@ -92,7 +92,7 @@ export function PersonaAbstractMark({
         fontFamily="ui-sans-serif, system-ui, sans-serif"
         fontWeight="700"
       >
-        {nseBand.length > 3 ? nseBand.slice(0, 3) : nseBand}
+        {(nseBand ?? '—').length > 3 ? (nseBand ?? '—').slice(0, 3) : (nseBand ?? '—')}
       </text>
     </svg>
   )

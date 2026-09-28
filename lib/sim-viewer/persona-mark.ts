@@ -8,8 +8,8 @@ export const PERSONA_GROUNDING_LINE =
   'Persona sintetica generada a partir de marginales del Censo INEGI 2020 a nivel AGEB. No representa a una persona real.'
 
 /** AMAI NSE → fill colour (simulated palette, amber-adjacent). */
-export function nseBandColor(nseBand: string): string {
-  switch (nseBand.trim().toUpperCase()) {
+export function nseBandColor(nseBand: string | null | undefined): string {
+  switch ((nseBand ?? '').trim().toUpperCase()) {
     case 'A/B':
     case 'AB':
       return '#5eead4' // teal
