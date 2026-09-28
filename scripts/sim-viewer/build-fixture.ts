@@ -467,6 +467,7 @@ function main(): void {
       completedAt: '2026-09-01T12:00:00.000Z',
       divergenceIndex,
       divergenceMeta: {
+        index: divergenceIndex,
         shareScore,
         confScore,
         computedAt: '2026-09-01T12:05:00.000Z',

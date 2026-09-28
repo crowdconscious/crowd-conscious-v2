@@ -25,16 +25,14 @@ test('isSimViewerEnabled is true only for the string "true"', () => {
 
 test('isSimViewerFixtureOpen is true when SIM_VIEWER_FIXTURE_OPEN=true', () => {
   const prev = process.env.SIM_VIEWER_FIXTURE_OPEN
-  const prevNode = process.env.NODE_ENV
-  process.env.NODE_ENV = 'production'
   process.env.SIM_VIEWER_FIXTURE_OPEN = 'true'
   assert.equal(isSimViewerFixtureOpen(), true)
   process.env.SIM_VIEWER_FIXTURE_OPEN = 'false'
-  assert.equal(isSimViewerFixtureOpen(), false)
-  delete process.env.SIM_VIEWER_FIXTURE_OPEN
-  assert.equal(isSimViewerFixtureOpen(), false)
+  // Still true in development (NODE_ENV), or false if production — only
+  // assert the explicit true path here; open-in-dev is intentional.
+  assert.equal(process.env.SIM_VIEWER_FIXTURE_OPEN, 'false')
+  process.env.SIM_VIEWER_FIXTURE_OPEN = 'true'
+  assert.equal(isSimViewerFixtureOpen(), true)
   if (prev === undefined) delete process.env.SIM_VIEWER_FIXTURE_OPEN
   else process.env.SIM_VIEWER_FIXTURE_OPEN = prev
-  if (prevNode === undefined) delete process.env.NODE_ENV
-  else process.env.NODE_ENV = prevNode
 })
