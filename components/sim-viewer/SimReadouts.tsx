@@ -12,8 +12,10 @@ type Props = {
   singleRow?: boolean
   /** Phone-legible scale for capture presets. */
   phoneScale?: boolean
-  /** Narrow viewport — denser single row + unavailable hint. */
+  /** Narrow viewport — denser single row. */
   mobileLayout?: boolean
+  /** Show the "Sin índice…" line (after reveal when score is null). */
+  showUnavailableHint?: boolean
 }
 
 function Readout({
@@ -31,7 +33,7 @@ function Readout({
 }) {
   if (inline) {
     return (
-      <div className="flex min-w-0 items-baseline gap-1.5 sm:gap-2">
+      <div className="flex min-w-0 flex-1 items-baseline gap-1 overflow-hidden sm:gap-1.5">
         <span
           className={`shrink-0 uppercase tracking-wide text-slate-500 ${
             phoneScale ? 'text-xs' : 'text-[9px] sm:text-[10px]'
@@ -40,8 +42,8 @@ function Readout({
           {label}
         </span>
         <span
-          className={`font-semibold tabular-nums text-slate-100 ${
-            phoneScale ? 'text-xl' : 'text-base sm:text-lg'
+          className={`min-w-0 truncate font-semibold tabular-nums text-slate-100 ${
+            phoneScale ? 'text-xl' : 'text-sm sm:text-lg'
           }`}
         >
           {value}
@@ -87,6 +89,7 @@ export function SimReadouts({
   singleRow = false,
   phoneScale = false,
   mobileLayout = false,
+  showUnavailableHint = false,
 }: Props) {
   const inline = singleRow || mobileLayout
   const scale = phoneScale && !mobileLayout
@@ -122,9 +125,9 @@ export function SimReadouts({
           inline={inline}
         />
       </div>
-      {divergence === null ? (
+      {showUnavailableHint && divergence === null ? (
         <p
-          className={`text-slate-500 ${mobileLayout ? 'text-[10px] leading-snug' : 'text-[11px]'}`}
+          className={`truncate text-slate-500 ${mobileLayout ? 'text-[10px] leading-snug' : 'text-[11px]'}`}
           data-sim-divergence-hint="1"
         >
           {DIVERGENCE_UNAVAILABLE_HINT}

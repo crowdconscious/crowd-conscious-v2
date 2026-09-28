@@ -89,7 +89,8 @@ export default function SimulationViewer({
   const [internalPersona, setInternalPersona] = useState<string | null>(
     () => selectedPersonaKey ?? urlPersona ?? null
   )
-  const [feedCollapsed, setFeedCollapsed] = useState(false)
+  const [feedCollapsed, setFeedCollapsed] = useState(true)
+  const feedTouchedRef = useRef(false)
 
   const aspectRatio = aspectRatioProp ?? internalAspect
   const viewMode = viewModeProp ?? internalViewMode
@@ -168,6 +169,13 @@ export default function SimulationViewer({
     feedCap,
   })
 
+  // Auto-expand the reasoning drawer once the first vote lands (unless the
+  // user already toggled it).
+  useEffect(() => {
+    if (!mobileLayout) return
+    if (feedTouchedRef.current) return
+    if (playback.feedVotes.length > 0) setFeedCollapsed(false)
+  }, [mobileLayout, playback.feedVotes.length])
   const pausedByInspectorRef = useRef(false)
 
   const selectPersona = useCallback(
@@ -506,7 +514,10 @@ export default function SimulationViewer({
                   type="button"
                   className="flex shrink-0 items-center justify-between gap-2 border-b border-slate-700/60 bg-slate-800/40 px-2.5 py-1.5 text-left"
                   aria-expanded={!feedCollapsed}
-                  onClick={() => setFeedCollapsed((c) => !c)}
+                  onClick={() => {
+                    feedTouchedRef.current = true
+                    setFeedCollapsed((c) => !c)
+                  }}
                 >
                   <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-300">
                     Razonamiento de los agentes
@@ -586,6 +597,12 @@ export default function SimulationViewer({
             singleRow={phoneScale || (captureMode && (isPortrait || isSquare))}
             phoneScale={phoneScale}
             mobileLayout={mobileLayout}
+            showUnavailableHint={
+              playback.displayedDivergence === null &&
+              (playback.beat === 'reveal' ||
+                playback.beat === 'endcard' ||
+                playback.beat === 'done')
+            }
           />
         </footer>
 
