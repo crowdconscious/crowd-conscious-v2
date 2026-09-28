@@ -2,6 +2,7 @@
   "_comment": "FIXTURE — Visor de simulación Task 1. Not real citizen or model output. AGEB codes use FIX- prefix. Safe for Task 3 viewer work before the live API exists.",
   "_fixture": true,
   "_version": "fixture-v1",
+  "isFixture": true,
   "run": {
     "id": "00000000-0000-4000-8000-00000000f002",
     "pulseId": "00000000-0000-4000-8000-00000000f001",
