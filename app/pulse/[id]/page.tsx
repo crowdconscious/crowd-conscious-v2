@@ -31,6 +31,10 @@ import {
 } from '@/lib/pulse-vote-aggregates'
 import { isSimViewerEnabled } from '@/lib/sim-viewer-flag'
 import { decideReplayAccess } from '@/lib/sim-viewer/access'
+import {
+  buildSimulationViewerHref,
+  pickDefaultSimulationRun,
+} from '@/lib/sim-viewer/pick-default-run'
 import { isSimViewerPublicClosedEnabled } from '@/lib/sim-viewer/public-closed-flag'
 
 type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ token?: string }> }
@@ -349,19 +353,23 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
   }
 
   // Visor de simulación entry — independent of SIM_REVEAL_ENABLED.
-  // Complete non-brand-pretest run + flag + access (closed=public; admin always).
+  // Same default pick as the API/page: prefer a scored complete non-fixture
+  // non-pretest run; fall back to newest complete. Link pins runId.
   let simulationViewerHref: string | null = null
   if (isSimViewerEnabled()) {
     try {
-      const { data: viewerRun } = await admin
+      const { data: viewerCandidates } = await admin
         .from('simulation_runs')
-        .select('id, revealed_at, is_fixture, status')
+        .select(
+          'id, revealed_at, is_fixture, status, created_at, divergence_index, divergence_meta, divergence, is_brand_pretest',
+        )
         .eq('market_id', id)
         .eq('status', 'complete')
         .or('is_brand_pretest.eq.false,is_brand_pretest.is.null')
         .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
+        .limit(50)
+
+      const viewerRun = pickDefaultSimulationRun(viewerCandidates ?? [])
 
       if (viewerRun) {
         const decision = decideReplayAccess({
@@ -373,7 +381,7 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
           publicClosedEnabled: isSimViewerPublicClosedEnabled(),
         })
         if (decision.allow) {
-          simulationViewerHref = `/pulse/${id}/simulacion`
+          simulationViewerHref = buildSimulationViewerHref(id, viewerRun.id)
           if (simReveal) {
             simReveal = {
               ...simReveal,

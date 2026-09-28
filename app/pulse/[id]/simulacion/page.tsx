@@ -4,6 +4,10 @@ import { AuthSessionExpiredError, getCurrentUser } from '@/lib/auth-server'
 import { isAdminUser } from '@/lib/auth/is-admin'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { decideReplayAccess } from '@/lib/sim-viewer/access'
+import {
+  pickDefaultSimulationRun,
+  type DefaultRunCandidate,
+} from '@/lib/sim-viewer/pick-default-run'
 import { isSimViewerEnabled } from '@/lib/sim-viewer-flag'
 import { isSimViewerPublicClosedEnabled } from '@/lib/sim-viewer/public-closed-flag'
 import SimulationViewerLoader from '@/components/sim-viewer/SimulationViewerLoader'
@@ -20,14 +24,13 @@ type Props = {
   }>
 }
 
-/** Minimal run row for the page gate (mirrors Task 2 / PR #19). */
-type RunGateRow = {
-  id: string
-  status: string
+/** Minimal run row for the page gate + default pick (mirrors Task 2 / PR #19). */
+type RunGateRow = DefaultRunCandidate & {
   revealed_at: string | null
-  /** Task 1 column — absent on older schemas; treat missing as false. */
-  is_fixture?: boolean | null
 }
+
+/** How many recent complete runs to scan when choosing the default (scored preferred). */
+const DEFAULT_RUN_CANDIDATE_LIMIT = 50
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
@@ -92,48 +95,72 @@ export default async function PulseSimulacionPage({ params, searchParams }: Prop
     notFound()
   }
 
-  // Most recent complete non-brand-pretest run — or explicit ?runId=.
-  // `is_fixture` lands with Task 1; selecting it keeps the page gate correct
-  // once that column exists. On older DBs without the column the query may
-  // error — fall back to a revealed_at-only select below.
+  // Explicit ?runId=, or default: most recent complete non-fixture
+  // non-brand-pretest run with a stored divergence score (else newest
+  // complete). `is_fixture` lands with Task 1; selecting it keeps the page
+  // gate correct once that column exists. On older DBs without the column
+  // the query may error — fall back to a revealed_at-only select below.
   let run: RunGateRow | null = null
   {
     const runIdParam = typeof sp.runId === 'string' ? sp.runId : null
-    let withFixture = admin
-      .from('simulation_runs')
-      .select('id, status, revealed_at, is_fixture, is_brand_pretest')
-      .eq('market_id', id)
+    const gateSelect =
+      'id, status, revealed_at, is_fixture, is_brand_pretest, created_at, divergence_index, divergence_meta, divergence'
 
     if (runIdParam) {
-      withFixture = withFixture.eq('id', runIdParam)
+      const withFixtureResult = await admin
+        .from('simulation_runs')
+        .select(gateSelect)
+        .eq('market_id', id)
+        .eq('id', runIdParam)
+        .maybeSingle()
+
+      if (!withFixtureResult.error && withFixtureResult.data) {
+        run = withFixtureResult.data as RunGateRow
+      } else {
+        const legacyResult = await admin
+          .from('simulation_runs')
+          .select('id, status, revealed_at, created_at, divergence_index')
+          .eq('market_id', id)
+          .eq('id', runIdParam)
+          .maybeSingle()
+        if (legacyResult.data) {
+          run = {
+            ...(legacyResult.data as RunGateRow),
+            is_fixture: false,
+            is_brand_pretest: false,
+          }
+        }
+      }
     } else {
-      withFixture = withFixture
+      const withFixtureResult = await admin
+        .from('simulation_runs')
+        .select(gateSelect)
+        .eq('market_id', id)
         .eq('status', 'complete')
         .or('is_brand_pretest.eq.false,is_brand_pretest.is.null')
         .order('created_at', { ascending: false })
-        .limit(1)
-    }
+        .limit(DEFAULT_RUN_CANDIDATE_LIMIT)
 
-    const withFixtureResult = await withFixture.maybeSingle()
-
-    if (!withFixtureResult.error && withFixtureResult.data) {
-      run = withFixtureResult.data as RunGateRow
-    } else {
-      let legacy = admin
-        .from('simulation_runs')
-        .select('id, status, revealed_at')
-        .eq('market_id', id)
-      if (runIdParam) {
-        legacy = legacy.eq('id', runIdParam)
+      if (!withFixtureResult.error && withFixtureResult.data) {
+        run = pickDefaultSimulationRun(
+          withFixtureResult.data as RunGateRow[],
+        )
       } else {
-        legacy = legacy
+        const legacyResult = await admin
+          .from('simulation_runs')
+          .select('id, status, revealed_at, created_at, divergence_index')
+          .eq('market_id', id)
           .eq('status', 'complete')
           .order('created_at', { ascending: false })
-          .limit(1)
-      }
-      const legacyResult = await legacy.maybeSingle()
-      if (legacyResult.data) {
-        run = { ...(legacyResult.data as RunGateRow), is_fixture: false }
+          .limit(DEFAULT_RUN_CANDIDATE_LIMIT)
+        if (legacyResult.data) {
+          const candidates = (legacyResult.data as RunGateRow[]).map((r) => ({
+            ...r,
+            is_fixture: false as boolean | null,
+            is_brand_pretest: false as boolean | null,
+          }))
+          run = pickDefaultSimulationRun(candidates)
+        }
       }
     }
   }
@@ -178,7 +205,9 @@ export default async function PulseSimulacionPage({ params, searchParams }: Prop
     >
       <SimulationViewerLoader
         pulseId={id}
-        runId={typeof sp.runId === 'string' ? sp.runId : null}
+        // Always pin the gate-selected run so the client API fetch matches
+        // the page gate (and prefers the scored default when URL omitted runId).
+        runId={run.id}
         captureMode={captureMode}
         initialPersonaKey={sp.persona ?? null}
       />
