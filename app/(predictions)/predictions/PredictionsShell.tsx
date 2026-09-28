@@ -312,6 +312,18 @@ export default function PredictionsShell({
               </Link>
             )}
             <Link
+              href="/admin/reconocimientos"
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                pathname === '/admin/reconocimientos' ||
+                pathname.startsWith('/admin/reconocimientos/')
+                  ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
+                  : 'text-cc-text-secondary hover:bg-gray-800/50 hover:text-amber-400'
+              }`}
+            >
+              <Trophy className="w-4 h-4" />
+              {language === 'es' ? 'Reconocimientos' : 'Recognitions'}
+            </Link>
+            <Link
               href="/predictions/admin/causes"
               className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                 pathname === '/predictions/admin/causes'
@@ -626,6 +638,19 @@ export default function PredictionsShell({
                       </span>
                     </Link>
                   )}
+                  <Link
+                    href="/admin/reconocimientos"
+                    onClick={closeMobileMenu}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                      pathname === '/admin/reconocimientos' ||
+                      pathname.startsWith('/admin/reconocimientos/')
+                        ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
+                        : 'text-cc-text-secondary hover:bg-gray-800/50 hover:text-amber-400'
+                    }`}
+                  >
+                    <Trophy className="w-4 h-4" />
+                    {language === 'es' ? 'Reconocimientos' : 'Recognitions'}
+                  </Link>
                   <Link
                     href="/predictions/admin/causes"
                     onClick={closeMobileMenu}
