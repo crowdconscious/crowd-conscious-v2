@@ -130,6 +130,9 @@ COMMENT ON TABLE public.recognition_events IS
 -- 4. Weekly stats view — submissions, rejects by reason, events (incl. views)
 -- =============================================================================
 
+-- 264's view has a different column layout; CREATE OR REPLACE cannot rename view columns (42P16).
+DROP VIEW IF EXISTS public.recognitions_weekly_stats;
+
 CREATE OR REPLACE VIEW public.recognitions_weekly_stats
 WITH (security_invoker = true)
 AS
