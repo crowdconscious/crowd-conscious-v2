@@ -77,7 +77,7 @@ export function PersonaInspector({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="sim-persona-sheet relative z-10 flex max-h-[92dvh] w-full flex-col overflow-hidden border-slate-700/80 bg-[#121820] shadow-2xl sm:max-h-none sm:w-[min(100%,400px)] sm:border-l"
+        className="sim-persona-sheet relative z-10 flex w-full flex-col overflow-hidden border-slate-700/80 bg-[#121820] shadow-2xl sm:w-[min(100%,400px)] sm:border-l"
         data-persona-key={persona.personaKey}
       >
         {/* Mobile drag affordance */}
@@ -123,7 +123,8 @@ export function PersonaInspector({
             ref={closeRef}
             type="button"
             onClick={onClose}
-            className="shrink-0 rounded-md border border-slate-600 px-2.5 py-1 text-xs font-medium text-slate-300 hover:border-slate-400 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400"
+            aria-label="Cerrar inspector de persona"
+            className="shrink-0 rounded-md border border-slate-600 px-3 py-2 text-sm font-medium text-slate-200 hover:border-slate-400 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400 sm:px-2.5 sm:py-1 sm:text-xs sm:text-slate-300"
           >
             Cerrar
           </button>

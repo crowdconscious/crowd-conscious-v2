@@ -1,5 +1,7 @@
 'use client'
 
+import { DIVERGENCE_UNAVAILABLE_HINT } from '@/lib/sim-viewer/legacy'
+
 type Props = {
   votedCount: number
   total: number
@@ -10,6 +12,8 @@ type Props = {
   singleRow?: boolean
   /** Phone-legible scale for capture presets. */
   phoneScale?: boolean
+  /** Narrow viewport — denser single row + unavailable hint. */
+  mobileLayout?: boolean
 }
 
 function Readout({
@@ -82,36 +86,50 @@ export function SimReadouts({
   compact = false,
   singleRow = false,
   phoneScale = false,
+  mobileLayout = false,
 }: Props) {
+  const inline = singleRow || mobileLayout
+  const scale = phoneScale && !mobileLayout
+
   return (
-    <div
-      className={
-        singleRow
-          ? 'flex flex-nowrap items-baseline justify-between gap-3 overflow-hidden'
-          : `flex flex-wrap items-end ${compact ? 'gap-4 sm:gap-6' : 'gap-6 sm:gap-10'}`
-      }
-    >
-      <Readout
-        label="Votos emitidos"
-        value={`${votedCount}/${total}`}
-        compact={compact}
-        phoneScale={phoneScale}
-        inline={singleRow}
-      />
-      <Readout
-        label="Certeza media IA"
-        value={meanConfidence === null ? '—' : meanConfidence.toFixed(1)}
-        compact={compact}
-        phoneScale={phoneScale}
-        inline={singleRow}
-      />
-      <Readout
-        label="Índice de divergencia"
-        value={divergence === null ? '—' : String(divergence)}
-        compact={compact}
-        phoneScale={phoneScale}
-        inline={singleRow}
-      />
+    <div className="space-y-1">
+      <div
+        className={
+          inline
+            ? 'flex flex-nowrap items-baseline justify-between gap-2 overflow-hidden sm:gap-3'
+            : `flex flex-wrap items-end ${compact ? 'gap-4 sm:gap-6' : 'gap-6 sm:gap-10'}`
+        }
+      >
+        <Readout
+          label={mobileLayout ? 'Votos' : 'Votos emitidos'}
+          value={`${votedCount}/${total}`}
+          compact={compact || mobileLayout}
+          phoneScale={scale}
+          inline={inline}
+        />
+        <Readout
+          label={mobileLayout ? 'Certeza' : 'Certeza media IA'}
+          value={meanConfidence === null ? '—' : meanConfidence.toFixed(1)}
+          compact={compact || mobileLayout}
+          phoneScale={scale}
+          inline={inline}
+        />
+        <Readout
+          label={mobileLayout ? 'Divergencia' : 'Índice de divergencia'}
+          value={divergence === null ? '—' : String(divergence)}
+          compact={compact || mobileLayout}
+          phoneScale={scale}
+          inline={inline}
+        />
+      </div>
+      {divergence === null ? (
+        <p
+          className={`text-slate-500 ${mobileLayout ? 'text-[10px] leading-snug' : 'text-[11px]'}`}
+          data-sim-divergence-hint="1"
+        >
+          {DIVERGENCE_UNAVAILABLE_HINT}
+        </p>
+      ) : null}
     </div>
   )
 }

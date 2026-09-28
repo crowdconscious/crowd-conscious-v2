@@ -357,17 +357,29 @@ function locationLabelFromVotes(votes: SimulationReplayVote[]): string | null {
   return [...seen].join(' · ')
 }
 
-function resolveDivergence(
+/**
+ * Resolve viewer divergence from new columns, then legacy jsonb.
+ *
+ * Returns null index when nothing was stored (pipeline skips write when the
+ * Pulse has no real votes — a synthetic 0 would read as "perfect match").
+ * A genuine computed 0 (identical real vs sim) still comes through as 0.
+ */
+export function resolveDivergence(
   run: ReplayRunRow,
 ): { index: number | null; meta: DivergenceMeta | null } {
   const meta =
     parseDivergenceMeta(run.divergence_meta) ??
     parseDivergenceMeta(run.divergence)
 
-  const index =
-    typeof run.divergence_index === 'number'
+  // Prefer denormalized column only when it is a finite number. Do not treat
+  // absent/NaN as 0 — missing divergence must stay null for the UI "—".
+  const fromColumn =
+    typeof run.divergence_index === 'number' &&
+    Number.isFinite(run.divergence_index)
       ? run.divergence_index
-      : meta?.index ?? null
+      : null
+
+  const index = fromColumn ?? meta?.index ?? null
 
   return { index, meta }
 }
@@ -455,4 +467,5 @@ export {
   parseDivergenceMeta,
   resolveOptionId,
   buildOptionLabelIndex,
+  DIVERGENCE_UNAVAILABLE_HINT,
 } from './legacy.ts'

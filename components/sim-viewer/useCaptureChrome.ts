@@ -1,9 +1,10 @@
 'use client'
 
 /**
- * Capture-mode side effects:
+ * Capture-mode / in-app embed side effects:
  * - Tag <html> so CSS can hide site chrome (nav, toasts, Next overlay).
  * - Fade transport controls after 2s of idle pointer movement.
+ * - ?src=app: hide landing nav (app already has chrome) without capture letterbox.
  */
 
 import { useEffect, useRef, useState } from 'react'
@@ -32,6 +33,18 @@ export function useCaptureChrome(active: boolean): void {
     return () => {
       delete root.dataset.simCapture
       style.remove()
+    }
+  }, [active])
+}
+
+/** Hide site nav/padding when the viewer is opened from the native app (?src=app). */
+export function useAppEmbedChrome(active: boolean): void {
+  useEffect(() => {
+    if (!active) return
+    const root = document.documentElement
+    root.dataset.simApp = '1'
+    return () => {
+      delete root.dataset.simApp
     }
   }, [active])
 }

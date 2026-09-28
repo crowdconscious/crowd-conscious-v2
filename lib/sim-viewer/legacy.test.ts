@@ -4,6 +4,7 @@ import assert from 'node:assert/strict'
 import {
   assignLegacySequenceIndices,
   buildOptionLabelIndex,
+  DIVERGENCE_UNAVAILABLE_HINT,
   householdSizeFromText,
   LEGACY_PERSONA_BASIS_LINE,
   normalizeLabelKey,
@@ -59,4 +60,50 @@ test('legacy divergence jsonb maps to viewer meta', () => {
     confScore: 20,
     computedAt: '2026-03-01T00:00:00.000Z',
   })
+})
+
+test('parseDivergenceMeta returns null for missing / partial legacy rows', () => {
+  assert.equal(parseDivergenceMeta(null), null)
+  assert.equal(parseDivergenceMeta(undefined), null)
+  assert.equal(parseDivergenceMeta({}), null)
+  // id alone (including 0) without deltas is not a computed score
+  assert.equal(parseDivergenceMeta({ id: 0 }), null)
+  assert.equal(
+    parseDivergenceMeta({
+      id: 0,
+      delta_shares: 0,
+      // missing delta_confidence + computed_at
+    }),
+    null,
+  )
+  assert.equal(
+    parseDivergenceMeta({
+      id: 'not-a-number',
+      delta_shares: 0.1,
+      delta_confidence: 0.1,
+      computed_at: '2026-01-01T00:00:00.000Z',
+    }),
+    null,
+  )
+})
+
+test('parseDivergenceMeta keeps a genuine computed 0', () => {
+  const meta = parseDivergenceMeta({
+    id: 0,
+    delta_shares: 0,
+    delta_confidence: 0,
+    per_option: [],
+    computed_at: '2026-03-01T00:00:00.000Z',
+  })
+  assert.deepEqual(meta, {
+    index: 0,
+    shareScore: 0,
+    confScore: 0,
+    computedAt: '2026-03-01T00:00:00.000Z',
+  })
+})
+
+test('DIVERGENCE_UNAVAILABLE_HINT is Spanish copy', () => {
+  assert.match(DIVERGENCE_UNAVAILABLE_HINT, /Sin índice/)
+  assert.match(DIVERGENCE_UNAVAILABLE_HINT, /votos reales/)
 })
