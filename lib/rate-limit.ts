@@ -90,6 +90,19 @@ export const senalExpressDraftRateLimit = redis
   : null
 
 /**
+ * Reconocimientos guest submit: 5 per hour per IP (anti-abuse for anonymous
+ * photo uploads). Sliding window so bursts still count against the hour.
+ */
+export const reconocimientosSubmitRateLimit = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(5, '1 h'),
+      analytics: true,
+      prefix: '@ratelimit/reconocimientos-submit',
+    })
+  : null
+
+/**
  * Rate-limit identity for Señal Express: prefer the authenticated user id, then
  * the web guest device id (localStorage `cc_guest_id`), and finally the request
  * IP as a backstop when neither is present.
