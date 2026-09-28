@@ -4,10 +4,22 @@ import { listApprovedPublic } from '@/lib/reconocimientos'
 
 export const dynamic = 'force-dynamic'
 
+const PAGE_TITLE = 'Reconocimientos'
+const PAGE_DESCRIPTION =
+  'Lo bueno que la gente reporta en su colonia. Fotos y historias aprobadas por Crowd Conscious.'
+
+// Root layout template is "%s | Crowd Conscious" — page title must NOT include the brand.
 export const metadata: Metadata = {
-  title: 'Reconocimientos | Crowd Conscious',
-  description:
-    'Lo bueno que la gente reporta en su colonia. Fotos y historias aprobadas por Crowd Conscious.',
+  title: PAGE_TITLE,
+  description: PAGE_DESCRIPTION,
+  openGraph: {
+    title: `${PAGE_TITLE} | Crowd Conscious`,
+    description: PAGE_DESCRIPTION,
+  },
+  twitter: {
+    title: `${PAGE_TITLE} | Crowd Conscious`,
+    description: PAGE_DESCRIPTION,
+  },
 }
 
 export default async function ReconocimientosIndexPage() {

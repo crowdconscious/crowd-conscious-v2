@@ -35,6 +35,8 @@ export {
   getReconocimientosConfig,
   withReconocimientosSrc,
   sanitizeSrc,
+  resolveIntakeSrc,
+  composeAppWhereText,
   type ReconocimientosConfig,
 } from './config'
 
@@ -60,6 +62,22 @@ export {
   getWeeklyRecognitionStats,
   getRecognitionEventCounts,
 } from './db'
+export {
+  createRecognitionSubmission,
+  APP_CAPTION_MIN,
+  APP_CAPTION_MAX,
+  APP_DEFAULT_WHO_TYPE,
+  APP_DEFAULT_HOW_KNOWN,
+  type CreateRecognitionFields,
+  type CreateRecognitionOk,
+  type CreateRecognitionErr,
+} from './intake'
+export {
+  RECONOCE_SRC_STORAGE_KEY,
+  persistIntakeSrc,
+  readPersistedIntakeSrc,
+  clearPersistedIntakeSrc,
+} from './src'
 
 /** Ensure a public URL carries src=share (for share buttons / OG landings). */
 export function withShareSrc(url: string): string {
