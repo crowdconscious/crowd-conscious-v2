@@ -29,18 +29,10 @@ type RunGateRow = {
   is_fixture?: boolean | null
 }
 
-export async function generateMetadata({
-  searchParams,
-}: Props): Promise<Metadata> {
-  const sp = await searchParams
-  const fromApp = sp.src === 'app'
+export async function generateMetadata(): Promise<Metadata> {
   return {
     title: 'Visor de simulación',
     robots: { index: false, follow: false },
-    // Inside the native in-app browser the Smart App Banner is noise —
-    // suppress apple-itunes-app while keeping it for normal web visitors
-    // (inherited from root layout).
-    ...(fromApp ? { itunes: null } : {}),
   }
 }
 

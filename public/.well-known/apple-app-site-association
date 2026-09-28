@@ -6,6 +6,7 @@
         "appID": "263M25R887.app.crowdconscious.mobile",
         "paths": [
           "/signals/*",
+          "NOT /pulse/*/simulacion",
           "/pulse/*",
           "/blog/*",
           "/locations/*",
