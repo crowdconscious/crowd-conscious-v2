@@ -156,15 +156,26 @@ export function assignLegacySequenceIndices(
  *   { id, delta_shares, delta_confidence, per_option, computed_at }
  * New shape (migration 266 / viewer):
  *   { index, shareScore, confScore, computedAt }
+ *
+ * Incomplete / empty objects return null — never invent an index of 0.
+ * A real computed 0 (identical distributions) is only returned when the
+ * full score payload is present.
  */
 export function parseDivergenceMeta(raw: unknown): DivergenceMeta | null {
-  if (!raw || typeof raw !== 'object') return null
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null
   const o = raw as Record<string, unknown>
 
   // New viewer shape
-  const indexNew = typeof o.index === 'number' ? o.index : null
-  const shareNew = typeof o.shareScore === 'number' ? o.shareScore : null
-  const confNew = typeof o.confScore === 'number' ? o.confScore : null
+  const indexNew =
+    typeof o.index === 'number' && Number.isFinite(o.index) ? o.index : null
+  const shareNew =
+    typeof o.shareScore === 'number' && Number.isFinite(o.shareScore)
+      ? o.shareScore
+      : null
+  const confNew =
+    typeof o.confScore === 'number' && Number.isFinite(o.confScore)
+      ? o.confScore
+      : null
   const computedNew =
     typeof o.computedAt === 'string'
       ? o.computedAt
@@ -187,10 +198,19 @@ export function parseDivergenceMeta(raw: unknown): DivergenceMeta | null {
   }
 
   // Legacy B-pipeline shape: id + delta_* in 0–1
-  const indexLegacy = typeof o.id === 'number' ? o.id : null
-  const deltaShares = typeof o.delta_shares === 'number' ? o.delta_shares : null
+  // `id` is the 0–100 index (not a UUID). Partial rows (e.g. only `id: 0`
+  // without deltas) are treated as missing — common before compute ran.
+  const indexLegacy =
+    typeof o.id === 'number' && Number.isFinite(o.id) ? o.id : null
+  const deltaShares =
+    typeof o.delta_shares === 'number' && Number.isFinite(o.delta_shares)
+      ? o.delta_shares
+      : null
   const deltaConf =
-    typeof o.delta_confidence === 'number' ? o.delta_confidence : null
+    typeof o.delta_confidence === 'number' &&
+    Number.isFinite(o.delta_confidence)
+      ? o.delta_confidence
+      : null
   const computedLegacy =
     typeof o.computed_at === 'string'
       ? o.computed_at
@@ -214,6 +234,10 @@ export function parseDivergenceMeta(raw: unknown): DivergenceMeta | null {
 
   return null
 }
+
+/** Short ES copy when the index is unavailable (null, not a scored 0). */
+export const DIVERGENCE_UNAVAILABLE_HINT =
+  'Sin índice — no hay comparación con votos reales'
 
 /** Latest ISO timestamp among vote created_at values (for completedAt fallback). */
 export function latestVoteCreatedAt(

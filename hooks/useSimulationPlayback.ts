@@ -291,13 +291,26 @@ export function useSimulationPlayback({
         if (accMsRef.current >= settleMs) {
           accMsRef.current = 0
           setBeat('reveal')
-          setDisplayedDivergence(0)
+          // Keep null when the run has no stored index — never coerce to 0
+          // (0 means "IA nos leyó perfecto", which is a real score).
+          setDisplayedDivergence(
+            targetDivergence === null ? null : 0
+          )
         }
         return
       }
 
       if (currentBeat === 'reveal') {
-        const target = targetDivergence ?? 0
+        // Missing divergence stays "—" through reveal + endcard.
+        if (targetDivergence === null) {
+          setDisplayedDivergence(null)
+          if (accMsRef.current >= BASE_REVEAL_COUNT_MS) {
+            accMsRef.current = 0
+            setBeat('endcard')
+          }
+          return
+        }
+        const target = targetDivergence
         const t = Math.min(1, accMsRef.current / BASE_REVEAL_COUNT_MS)
         // ease-out
         const eased = 1 - Math.pow(1 - t, 3)

@@ -6,6 +6,7 @@ import {
   computeSimAggregates,
   mapVotesOrdered,
   realAggregatesFromOutcomes,
+  resolveDivergence,
   type ReplayOutcomeRow,
   type ReplayPersonaRow,
   type ReplayVoteRow,
@@ -509,4 +510,97 @@ test('parseDivergenceMeta accepts legacy and new shapes', () => {
   )
   assert.equal(parseDivergenceMeta(null), null)
   assert.equal(parseDivergenceMeta({ id: 1 }), null)
+})
+
+test('resolveDivergence stays null when nothing was stored (no fake 0)', () => {
+  const empty = resolveDivergence({
+    id: 'run-x',
+    market_id: 'pulse-1',
+    status: 'complete',
+    mode: 'batch',
+    model: 'm',
+    n_agents: 2,
+    completed_at: null,
+    divergence_index: null,
+    divergence_meta: null,
+    divergence: null,
+    is_fixture: false,
+    revealed_at: null,
+  })
+  assert.equal(empty.index, null)
+  assert.equal(empty.meta, null)
+
+  const partialLegacy = resolveDivergence({
+    id: 'run-y',
+    market_id: 'pulse-1',
+    status: 'complete',
+    mode: 'batch',
+    model: 'm',
+    n_agents: 2,
+    completed_at: null,
+    divergence_index: null,
+    divergence_meta: null,
+    // Partial jsonb — pipeline never finished; must NOT become index 0
+    divergence: { id: 0 },
+    is_fixture: false,
+    revealed_at: null,
+  })
+  assert.equal(partialLegacy.index, null)
+  assert.equal(partialLegacy.meta, null)
+})
+
+test('resolveDivergence keeps a genuine computed 0 from legacy jsonb', () => {
+  const scored = resolveDivergence({
+    id: 'run-z',
+    market_id: 'pulse-1',
+    status: 'complete',
+    mode: 'batch',
+    model: 'm',
+    n_agents: 2,
+    completed_at: null,
+    divergence_index: null,
+    divergence_meta: null,
+    divergence: {
+      id: 0,
+      delta_shares: 0,
+      delta_confidence: 0,
+      per_option: [],
+      computed_at: '2026-03-01T00:00:00.000Z',
+    },
+    is_fixture: false,
+    revealed_at: null,
+  })
+  assert.equal(scored.index, 0)
+  assert.equal(scored.meta?.index, 0)
+})
+
+test('buildReplayPayload leaves divergenceIndex null when run has no score', () => {
+  const payload = buildReplayPayload({
+    run: {
+      id: 'run-no-div',
+      market_id: 'pulse-1',
+      status: 'complete',
+      mode: 'batch',
+      model: 'm',
+      n_agents: 2,
+      completed_at: '2026-09-01T12:00:00.000Z',
+      divergence_index: null,
+      divergence_meta: null,
+      divergence: null,
+      is_fixture: false,
+      revealed_at: '2026-09-01T12:00:00.000Z',
+    },
+    pulse: {
+      id: 'pulse-1',
+      title: 'Q',
+      resolution_date: null,
+      status: 'resolved',
+    },
+    voteRows: [vote(0, 'opt-a'), vote(1, 'opt-b')],
+    outcomes,
+    totalVotes: 0,
+    includeRealAggregates: true,
+  })
+  assert.equal(payload.run.divergenceIndex, null)
+  assert.equal(payload.run.divergenceMeta, null)
 })

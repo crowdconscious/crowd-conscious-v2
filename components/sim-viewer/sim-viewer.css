@@ -20,10 +20,23 @@
   z-index: 5;
 }
 
+/* Larger hit targets on touch / narrow viewports */
+.sim-viewer--mobile .sim-dot {
+  min-width: 1.75rem;
+  min-height: 1.75rem;
+}
+
+.sim-viewer--mobile .sim-canvas {
+  min-height: min(48dvh, 22rem);
+}
+
 /* Persona inspector — bottom sheet on narrow, side sheet from sm up */
 .sim-persona-sheet {
   border-radius: 1rem 1rem 0 0;
   margin-top: auto;
+  height: min(70dvh, 70vh);
+  max-height: min(70dvh, 70vh);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 @media (min-width: 640px) {
@@ -31,6 +44,8 @@
     border-radius: 0;
     margin-top: 0;
     height: 100%;
+    max-height: none;
+    padding-bottom: 0;
   }
 }
 
@@ -75,9 +90,59 @@ html[data-sim-capture='1'] body {
   background: #000 !important;
 }
 
+html[data-sim-capture='1'] [data-sim-page],
+html[data-sim-app='1'] [data-sim-page] {
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+}
+
+/* In-app embed (?src=app) — app already has chrome; reclaim vertical space */
+html[data-sim-app='1'] nav,
+html[data-sim-app='1'] [data-site-chrome],
+html[data-sim-app='1'] footer[data-site-footer] {
+  display: none !important;
+}
+
+html[data-sim-app='1'] .sim-pulse-chrome-pad {
+  padding-top: 0 !important;
+  margin: 0 !important;
+}
+
+html[data-sim-app='1'] body {
+  background: #0a0f14 !important;
+}
+
 .sim-viewer--capture {
   /* Letterbox surround is pure black — stage is the only lit surface */
   background: #000;
+}
+
+/* Mobile stage fills the shell (no 16:9 letterbox collapse) */
+.sim-viewer--mobile:not(.sim-viewer--capture) .sim-viewer-stage {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100%;
+  max-height: 100%;
+  aspect-ratio: auto !important;
+  border-radius: 0;
+}
+
+.sim-viewer--mobile .sim-viewer-feed-mobile {
+  max-height: min(22dvh, 9rem);
+}
+
+.sim-viewer--mobile .sim-viewer-chrome {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
+}
+
+.sim-viewer--mobile .sim-endcard {
+  justify-content: safe center;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-top: max(0.75rem, env(safe-area-inset-top, 0px));
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+  padding-left: max(1rem, env(safe-area-inset-left, 0px));
+  padding-right: max(1rem, env(safe-area-inset-right, 0px));
 }
 
 @media (prefers-reduced-motion: reduce) {

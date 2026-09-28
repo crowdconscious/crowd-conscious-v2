@@ -12,7 +12,12 @@ export const dynamic = 'force-dynamic'
 
 type Props = {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ captura?: string; persona?: string; runId?: string }>
+  searchParams: Promise<{
+    captura?: string
+    persona?: string
+    runId?: string
+    src?: string
+  }>
 }
 
 /** Minimal run row for the page gate (mirrors Task 2 / PR #19). */
@@ -158,12 +163,23 @@ export default async function PulseSimulacionPage({ params, searchParams }: Prop
     notFound()
   }
 
+  const fromApp = sp.src === 'app'
+  const captureMode = sp.captura === '1'
+  const fullBleed = fromApp || captureMode
+
   return (
-    <div className="h-dvh max-h-dvh overflow-hidden bg-[#0a0f14]">
+    <div
+      className={`overflow-hidden bg-[#0a0f14] ${
+        fullBleed
+          ? 'h-dvh max-h-dvh'
+          : 'h-[calc(100dvh-5rem)] max-h-[calc(100dvh-5rem)]'
+      }`}
+      data-sim-page={fromApp ? 'app' : 'web'}
+    >
       <SimulationViewerLoader
         pulseId={id}
         runId={typeof sp.runId === 'string' ? sp.runId : null}
-        captureMode={sp.captura === '1'}
+        captureMode={captureMode}
         initialPersonaKey={sp.persona ?? null}
       />
     </div>

@@ -22,6 +22,8 @@ type Props = {
   compact?: boolean
   /** Capture 9:16 / 1:1 — larger dots + labels for phone Reels. */
   phoneScale?: boolean
+  /** Narrow viewport viewing — larger touch targets without capture typography. */
+  mobileLayout?: boolean
   /** Task 5 — highlighted while the persona inspector is open. */
   selectedPersonaKey?: string | null
   /**
@@ -54,6 +56,7 @@ export function SimCanvas({
   votedCount,
   compact = false,
   phoneScale = false,
+  mobileLayout = false,
   selectedPersonaKey = null,
   onDotActivate,
 }: Props) {
@@ -112,28 +115,37 @@ export function SimCanvas({
   const showPercents = beat === 'settle' || beat === 'reveal' || beat === 'endcard' || beat === 'done'
   const showReveal = beat === 'reveal' || beat === 'endcard' || beat === 'done'
   const options = data.pulse.options
-  const footerH = phoneScale ? '4.5rem' : compact ? '2.75rem' : '3.25rem'
-  const axisW = phoneScale ? 'w-12' : compact ? 'w-8' : 'w-10 sm:w-12'
+  const footerH = phoneScale ? '4.5rem' : mobileLayout ? '3.5rem' : compact ? '2.75rem' : '3.25rem'
+  const axisW = phoneScale ? 'w-12' : mobileLayout ? 'w-9' : compact ? 'w-8' : 'w-10 sm:w-12'
   const axisLabelCls = phoneScale
     ? 'text-xs'
-    : compact
-      ? 'text-[8px]'
-      : 'text-[9px] sm:text-[10px]'
+    : mobileLayout
+      ? 'text-[9px]'
+      : compact
+        ? 'text-[8px]'
+        : 'text-[9px] sm:text-[10px]'
   const tickCls = phoneScale
     ? 'text-xs'
-    : compact
-      ? 'text-[8px]'
-      : 'text-[9px] sm:text-[10px]'
+    : mobileLayout
+      ? 'text-[9px]'
+      : compact
+        ? 'text-[8px]'
+        : 'text-[9px] sm:text-[10px]'
+  // Mobile: visible size stays modest; CSS min hit target expands tap area.
   const dotCls = phoneScale
     ? 'h-6 w-6'
-    : compact
-      ? 'h-2 w-2'
-      : 'h-2.5 w-2.5 sm:h-3 sm:w-3'
+    : mobileLayout
+      ? 'h-3.5 w-3.5'
+      : compact
+        ? 'h-2 w-2'
+        : 'h-2.5 w-2.5 sm:h-3 sm:w-3'
   const padCls = phoneScale
     ? 'px-2.5 pb-2.5 pt-12'
-    : compact
-      ? 'px-1.5 pb-1.5 pt-8'
-      : 'px-2 pb-2 pt-9 sm:px-3 sm:pt-10'
+    : mobileLayout
+      ? 'px-1.5 pb-1.5 pt-9'
+      : compact
+        ? 'px-1.5 pb-1.5 pt-8'
+        : 'px-2 pb-2 pt-9 sm:px-3 sm:pt-10'
 
   return (
     <div
@@ -305,6 +317,7 @@ export function SimCanvas({
                   showPercents={showPercents}
                   compact={compact}
                   phoneScale={phoneScale}
+                  mobileLayout={mobileLayout}
                 />
               )
             })}
@@ -321,12 +334,14 @@ function ColumnFooter({
   showPercents,
   compact,
   phoneScale,
+  mobileLayout = false,
 }: {
   option: SimulationReplayOption
   sim: SimulationOptionAggregate | undefined
   showPercents: boolean
   compact: boolean
   phoneScale: boolean
+  mobileLayout?: boolean
 }) {
   return (
     <div className="flex flex-col items-center justify-end px-0.5 pb-0.5 text-center">
@@ -336,9 +351,11 @@ function ColumnFooter({
         } ${
           phoneScale
             ? 'text-2xl sm:text-3xl'
-            : compact
+            : mobileLayout
               ? 'text-sm'
-              : 'text-base sm:text-xl'
+              : compact
+                ? 'text-sm'
+                : 'text-base sm:text-xl'
         }`}
       >
         {sim ? pctLabel(sim.share) : '—'}
@@ -347,9 +364,11 @@ function ColumnFooter({
         className={`max-w-full text-balance leading-tight text-slate-300 ${
           phoneScale
             ? 'text-sm font-medium'
-            : compact
+            : mobileLayout
               ? 'text-[9px] text-slate-400'
-              : 'text-[10px] text-slate-400 sm:text-xs'
+              : compact
+                ? 'text-[9px] text-slate-400'
+                : 'text-[10px] text-slate-400 sm:text-xs'
         }`}
       >
         {option.label}

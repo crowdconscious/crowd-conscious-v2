@@ -8,6 +8,8 @@ type Props = {
   compact?: boolean
   /** Phone-legible capture scale (9:16 / 1:1). Fewer, larger rows. */
   phoneScale?: boolean
+  /** Parent already rendered the section title (mobile collapsible). */
+  hideHeader?: boolean
 }
 
 export function SimReasoningFeed({
@@ -15,25 +17,32 @@ export function SimReasoningFeed({
   optionsById,
   compact = false,
   phoneScale = false,
+  hideHeader = false,
 }: Props) {
   return (
     <section
-      className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-slate-700/60 bg-[#141a22]"
+      className={`flex h-full min-h-0 flex-col overflow-hidden ${
+        hideHeader
+          ? ''
+          : 'rounded-xl border border-slate-700/60 bg-[#141a22]'
+      }`}
       aria-label="Razonamiento de los agentes"
     >
-      <header
-        className={`shrink-0 border-b border-slate-700/60 bg-slate-800/40 ${
-          phoneScale ? 'px-3.5 py-2.5' : 'px-2.5 py-1.5 sm:px-3'
-        }`}
-      >
-        <h2
-          className={`font-semibold uppercase tracking-wide text-slate-300 ${
-            phoneScale ? 'text-sm' : 'text-[10px] sm:text-xs'
+      {!hideHeader ? (
+        <header
+          className={`shrink-0 border-b border-slate-700/60 bg-slate-800/40 ${
+            phoneScale ? 'px-3.5 py-2.5' : 'px-2.5 py-1.5 sm:px-3'
           }`}
         >
-          Razonamiento de los agentes
-        </h2>
-      </header>
+          <h2
+            className={`font-semibold uppercase tracking-wide text-slate-300 ${
+              phoneScale ? 'text-sm' : 'text-[10px] sm:text-xs'
+            }`}
+          >
+            Razonamiento de los agentes
+          </h2>
+        </header>
+      ) : null}
       <ul className="min-h-0 flex-1 space-y-0 overflow-y-auto overscroll-contain">
         {votes.length === 0 ? (
           <li

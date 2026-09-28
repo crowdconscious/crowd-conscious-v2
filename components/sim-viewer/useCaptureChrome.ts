@@ -1,9 +1,10 @@
 'use client'
 
 /**
- * Capture-mode side effects:
+ * Capture-mode / in-app embed side effects:
  * - Tag <html> so CSS can hide site chrome (nav, toasts, Next overlay).
  * - Fade transport controls after 2s of idle pointer movement.
+ * - ?src=app: hide landing nav (app already has chrome) without capture letterbox.
  */
 
 import { useEffect, useRef, useState } from 'react'
@@ -31,6 +32,33 @@ export function useCaptureChrome(active: boolean): void {
     document.head.appendChild(style)
     return () => {
       delete root.dataset.simCapture
+      style.remove()
+    }
+  }, [active])
+}
+
+/** Hide site nav/padding when the viewer is opened from the native app (?src=app). */
+export function useAppEmbedChrome(active: boolean): void {
+  useEffect(() => {
+    if (!active) return
+    const root = document.documentElement
+    root.dataset.simApp = '1'
+    // Same Next overlay hygiene as capture — in-app WebViews shouldn't show it.
+    const style = document.createElement('style')
+    style.setAttribute('data-sim-app-overlay-hide', '1')
+    style.textContent = `
+      html[data-sim-app="1"] nextjs-portal,
+      html[data-sim-app="1"] [data-nextjs-dialog-overlay],
+      html[data-sim-app="1"] [data-nextjs-toast],
+      html[data-sim-app="1"] #__next-build-watcher {
+        display: none !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+      }
+    `
+    document.head.appendChild(style)
+    return () => {
+      delete root.dataset.simApp
       style.remove()
     }
   }, [active])
