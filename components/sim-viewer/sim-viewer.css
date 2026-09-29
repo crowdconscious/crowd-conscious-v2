@@ -24,7 +24,7 @@
 }
 
 .sim-viewer--mobile .sim-map {
-  min-height: min(48dvh, 22rem);
+  min-height: min(58dvh, 28rem);
 }
 
 @media (prefers-reduced-motion: reduce) {

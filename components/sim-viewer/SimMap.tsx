@@ -1,11 +1,13 @@
 'use client'
 
 /**
- * Mapa (AGEB) canvas for the simulation replay viewer — Task 4b.
+ * Mapa canvas for the simulation replay viewer — Tasks 4b / 4c.
  *
- * Static INEGI polygons as SVG (d3-geo mercator, no tiles). Agent dots share
- * the playback clock with Columnas via votedCount / beat. Imperative circle
- * updates avoid re-rendering 150 React nodes per vote.
+ * Full-CDMX alcaldía outlines (INEGI 09mun) frame the view; Cuauhtémoc +
+ * Miguel Hidalgo keep AGEB detail and a stronger fill so they read as the
+ * active sample. Agent dots share the playback clock with Columnas via
+ * votedCount / beat. Imperative circle updates avoid re-rendering 150 React
+ * nodes per vote.
  *
  * Real-vote AGEB shading is intentionally omitted: market_votes carry no
  * location, so we never invent local real results.
@@ -24,11 +26,15 @@ import type {
 } from '@/types/simulation-replay'
 import {
   AGEB_GEOJSON_PUBLIC_PATH,
-  alcaldiaLabelAnchor,
-  buildAgebCodeSet,
   INEGI_AGEB_ATTRIBUTION_ES,
   type AgebFeatureCollection,
 } from '@/lib/sim-viewer/ageb-geo'
+import {
+  CDMX_ALCALDIAS_GEOJSON_PUBLIC_PATH,
+  CDMX_SAMPLE_CAPTION_ES,
+  isActiveAlcaldia,
+  type CdmxAlcaldiaFeatureCollection,
+} from '@/lib/sim-viewer/cdmx-alcaldias'
 import { isPersonaMappable } from '@/lib/sim-viewer/map-availability'
 import {
   jitteredMapPoint,
@@ -38,7 +44,7 @@ import {
   neutralDotStyle,
   votedDotStyle,
 } from '@/lib/sim-viewer/map-option-color'
-import { createAgebProjection } from '@/lib/sim-viewer/map-projection'
+import { createCdmxProjection } from '@/lib/sim-viewer/map-projection'
 import { personaDisplayLabel } from '@/lib/sim-viewer/persona-label'
 import { SimMark } from '@/components/sim-viewer/SimMark'
 
@@ -67,26 +73,45 @@ type ProjectedDot = {
 
 /** Desktop reference width where map dots were tuned. */
 const DESKTOP_DOT_REF_PX = 900
-const MOBILE_DOT_PX = 5
+/** Zoomed-out CDMX framing: keep a readable floor on phone. */
+const MOBILE_DOT_PX = 6.5
 const DESKTOP_DOT_PX = 7
+const DESKTOP_DOT_MIN_PX = 5.5
 const CAPTURE_DOT_PX = 12
 
-let cachedGeo: AgebFeatureCollection | null = null
-let geoLoadPromise: Promise<AgebFeatureCollection> | null = null
+let cachedAgeb: AgebFeatureCollection | null = null
+let cachedCdmx: CdmxAlcaldiaFeatureCollection | null = null
+let geoLoadPromise: Promise<{
+  ageb: AgebFeatureCollection
+  cdmx: CdmxAlcaldiaFeatureCollection
+}> | null = null
 
-function loadAgebGeojson(): Promise<AgebFeatureCollection> {
-  if (cachedGeo) return Promise.resolve(cachedGeo)
+function loadMapGeojson(): Promise<{
+  ageb: AgebFeatureCollection
+  cdmx: CdmxAlcaldiaFeatureCollection
+}> {
+  if (cachedAgeb && cachedCdmx) {
+    return Promise.resolve({ ageb: cachedAgeb, cdmx: cachedCdmx })
+  }
   if (!geoLoadPromise) {
-    geoLoadPromise = fetch(AGEB_GEOJSON_PUBLIC_PATH)
-      .then((res) => {
+    geoLoadPromise = Promise.all([
+      fetch(AGEB_GEOJSON_PUBLIC_PATH).then(async (res) => {
         if (!res.ok) {
           throw new Error(`Failed to load AGEB GeoJSON (${res.status})`)
         }
         return res.json() as Promise<AgebFeatureCollection>
-      })
-      .then((geo) => {
-        cachedGeo = geo
-        return geo
+      }),
+      fetch(CDMX_ALCALDIAS_GEOJSON_PUBLIC_PATH).then(async (res) => {
+        if (!res.ok) {
+          throw new Error(`Failed to load CDMX alcaldías GeoJSON (${res.status})`)
+        }
+        return res.json() as Promise<CdmxAlcaldiaFeatureCollection>
+      }),
+    ])
+      .then(([ageb, cdmx]) => {
+        cachedAgeb = ageb
+        cachedCdmx = cdmx
+        return { ageb, cdmx }
       })
       .catch((err) => {
         geoLoadPromise = null
@@ -94,6 +119,15 @@ function loadAgebGeojson(): Promise<AgebFeatureCollection> {
       })
   }
   return geoLoadPromise
+}
+
+function shortAlcaldiaLabel(nombre: string): string {
+  // Keep accents; only shorten the longest official names for phone density.
+  if (nombre === 'Cuajimalpa de Morelos') return 'Cuajimalpa'
+  if (nombre === 'La Magdalena Contreras') return 'Magdalena C.'
+  if (nombre === 'Venustiano Carranza') return 'V. Carranza'
+  if (nombre === 'Gustavo A. Madero') return 'G. A. Madero'
+  return nombre
 }
 
 export function SimMap({
@@ -109,29 +143,40 @@ export function SimMap({
 }: Props) {
   const wrapRef = useRef<HTMLDivElement | null>(null)
   const [size, setSize] = useState({ width: 0, height: 0 })
-  const [geo, setGeo] = useState<AgebFeatureCollection | null>(cachedGeo)
+  const [ageb, setAgeb] = useState<AgebFeatureCollection | null>(cachedAgeb)
+  const [cdmx, setCdmx] = useState<CdmxAlcaldiaFeatureCollection | null>(
+    cachedCdmx,
+  )
   const [geoError, setGeoError] = useState<string | null>(null)
   const circleRefs = useRef<(SVGCircleElement | null)[]>([])
   const prevVoted = useRef(0)
 
   useEffect(() => {
     let cancelled = false
-    void loadAgebGeojson()
-      .then((g) => {
-        if (!cancelled) setGeo(g)
+    void loadMapGeojson()
+      .then(({ ageb: a, cdmx: c }) => {
+        if (!cancelled) {
+          setAgeb(a)
+          setCdmx(c)
+        }
       })
       .catch(() => {
-        if (!cancelled) setGeoError('No se pudo cargar el mapa AGEB.')
+        if (!cancelled) setGeoError('No se pudo cargar el mapa.')
       })
     return () => {
       cancelled = true
     }
   }, [])
 
-  const geoCodes = useMemo(
-    () => (geo ? buildAgebCodeSet(geo.features) : new Set<string>()),
-    [geo],
-  )
+  const geoCodes = useMemo(() => {
+    if (!ageb) return new Set<string>()
+    const set = new Set<string>()
+    for (const f of ageb.features) {
+      const code = f.properties?.ageb_code
+      if (typeof code === 'string' && code.length > 0) set.add(code)
+    }
+    return set
+  }, [ageb])
 
   const optionIndex = useMemo(() => {
     const map = new Map<string, number>()
@@ -159,38 +204,86 @@ export function SimMap({
     return () => ro.disconnect()
   }, [])
 
+  // Fit to whole CDMX so the sample alcaldías read inside city context.
   const projection = useMemo(() => {
-    if (!geo || size.width < 8 || size.height < 8) return null
-    return createAgebProjection(geo, size.width, size.height, mobileLayout ? 8 : 14)
-  }, [geo, size.width, size.height, mobileLayout])
+    if (!cdmx || size.width < 8 || size.height < 8) return null
+    // Phone portrait: CDMX is tall — tighter side padding, keep vertical room.
+    const pad = mobileLayout ? (phoneScale ? 6 : 4) : 12
+    return createCdmxProjection(cdmx, size.width, size.height, pad)
+  }, [cdmx, size.width, size.height, mobileLayout, phoneScale])
 
-  const polygonPaths = useMemo(() => {
-    if (!projection || !geo) return [] as { key: string; d: string; alcaldia: string }[]
-    const out: { key: string; d: string; alcaldia: string }[] = []
-    for (const f of geo.features) {
+  const alcaldiaPaths = useMemo(() => {
+    if (!projection || !cdmx) {
+      return [] as {
+        key: string
+        d: string
+        nombre: string
+        active: boolean
+      }[]
+    }
+    const out: {
+      key: string
+      d: string
+      nombre: string
+      active: boolean
+    }[] = []
+    for (const f of cdmx.features) {
       const d = projection.path(f as never)
       if (!d) continue
+      const nombre = f.properties.nombre
       out.push({
-        key: f.properties.ageb_code,
+        key: f.properties.cvegeo,
         d,
-        alcaldia: f.properties.alcaldia,
+        nombre,
+        active: isActiveAlcaldia(f.properties.cvegeo),
       })
     }
     return out
-  }, [projection, geo])
+  }, [projection, cdmx])
+
+  const agebPaths = useMemo(() => {
+    if (!projection || !ageb) return [] as { key: string; d: string }[]
+    const out: { key: string; d: string }[] = []
+    for (const f of ageb.features) {
+      const d = projection.path(f as never)
+      if (!d) continue
+      out.push({ key: f.properties.ageb_code, d })
+    }
+    return out
+  }, [projection, ageb])
 
   const alcaldiaLabels = useMemo(() => {
-    if (!projection || !geo) return [] as { key: string; x: number; y: number; label: string }[]
-    const labels: { key: string; x: number; y: number; label: string }[] = []
-    for (const name of ['Cuauhtémoc', 'Miguel Hidalgo'] as const) {
-      const anchor = alcaldiaLabelAnchor(geo.features, name)
-      if (!anchor) continue
-      const xy = projection.project(anchor.lng, anchor.lat)
+    if (!projection || !cdmx) {
+      return [] as {
+        key: string
+        x: number
+        y: number
+        label: string
+        active: boolean
+      }[]
+    }
+    const labels: {
+      key: string
+      x: number
+      y: number
+      label: string
+      active: boolean
+    }[] = []
+    for (const f of cdmx.features) {
+      const { label_lat: lat, label_lng: lng, nombre, cvegeo } = f.properties
+      const xy = projection.project(lng, lat)
       if (!xy) continue
-      labels.push({ key: name, x: xy[0], y: xy[1], label: name })
+      const active = isActiveAlcaldia(cvegeo)
+      labels.push({
+        key: cvegeo,
+        x: xy[0],
+        y: xy[1],
+        label: mobileLayout && !active ? shortAlcaldiaLabel(nombre) : nombre,
+        active,
+      })
     }
     return labels
-  }, [projection, geo])
+  }, [projection, cdmx, mobileLayout])
 
   const dots = useMemo(() => {
     if (!projection) return [] as ProjectedDot[]
@@ -230,7 +323,7 @@ export function SimMap({
       : compact
         ? 6
         : Math.max(
-            5,
+            DESKTOP_DOT_MIN_PX,
             Math.min(
               DESKTOP_DOT_PX,
               size.width > 0
@@ -299,12 +392,15 @@ export function SimMap({
   const padCls = phoneScale
     ? 'px-2.5 pb-2 pt-11'
     : mobileLayout
-      ? 'px-1.5 pb-1.5 pt-9'
+      ? 'px-1 pb-1 pt-8'
       : compact
         ? 'px-1.5 pb-1.5 pt-8'
         : 'px-2 pb-2 pt-9 sm:px-3 sm:pt-10'
 
   void beat // reserved for future settle/reveal map chrome
+
+  const contextLabelSize = phoneScale ? 8 : mobileLayout ? 6.5 : 8
+  const activeLabelSize = phoneScale ? 11 : mobileLayout ? 8 : 10
 
   return (
     <div
@@ -332,18 +428,45 @@ export function SimMap({
               width={size.width}
               height={size.height}
               role="img"
-              aria-label="Mapa AGEB de la simulación — Cuauhtémoc y Miguel Hidalgo"
+              aria-label="Mapa de la simulación — Ciudad de México, muestra Cuauhtémoc y Miguel Hidalgo"
             >
-              <g className="sim-map-polygons" aria-hidden="true">
-                {polygonPaths.map((p) => (
+              <g className="sim-map-alcaldias" aria-hidden="true">
+                {alcaldiaPaths.map((p) =>
+                  p.active ? (
+                    <path
+                      key={p.key}
+                      d={p.d}
+                      fill="rgba(148, 163, 184, 0.12)"
+                      stroke="rgba(203, 213, 225, 0.7)"
+                      strokeWidth={mobileLayout ? 1.1 : 1.4}
+                      vectorEffect="non-scaling-stroke"
+                      data-alcaldia={p.nombre}
+                      data-active="1"
+                    />
+                  ) : (
+                    <path
+                      key={p.key}
+                      d={p.d}
+                      fill="rgba(148, 163, 184, 0.03)"
+                      stroke="rgba(100, 116, 139, 0.35)"
+                      strokeWidth={mobileLayout ? 0.55 : 0.7}
+                      vectorEffect="non-scaling-stroke"
+                      data-alcaldia={p.nombre}
+                      data-active="0"
+                    />
+                  ),
+                )}
+              </g>
+
+              <g className="sim-map-agebs" aria-hidden="true">
+                {agebPaths.map((p) => (
                   <path
                     key={p.key}
                     d={p.d}
                     fill="none"
-                    stroke="rgba(148, 163, 184, 0.35)"
-                    strokeWidth={mobileLayout ? 0.6 : 0.8}
+                    stroke="rgba(148, 163, 184, 0.28)"
+                    strokeWidth={mobileLayout ? 0.35 : 0.45}
                     vectorEffect="non-scaling-stroke"
-                    data-alcaldia={p.alcaldia}
                   />
                 ))}
               </g>
@@ -356,13 +479,13 @@ export function SimMap({
                     y={l.y}
                     textAnchor="middle"
                     dominantBaseline="middle"
-                    className="fill-slate-500"
+                    className={l.active ? 'fill-slate-300' : 'fill-slate-600'}
                     style={{
-                      fontSize: phoneScale ? 13 : mobileLayout ? 9 : 11,
-                      fontWeight: 600,
-                      letterSpacing: '0.04em',
+                      fontSize: l.active ? activeLabelSize : contextLabelSize,
+                      fontWeight: l.active ? 600 : 500,
+                      letterSpacing: l.active ? '0.04em' : '0.02em',
                       textTransform: 'uppercase',
-                      opacity: 0.55,
+                      opacity: l.active ? 0.72 : 0.42,
                       pointerEvents: 'none',
                     }}
                   >
@@ -427,7 +550,7 @@ export function SimMap({
         </div>
 
         <div
-          className={`mt-1 flex shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-0.5 text-slate-500 ${
+          className={`mt-1 flex shrink-0 flex-col gap-0.5 text-slate-500 ${
             phoneScale
               ? 'text-[10px]'
               : mobileLayout
@@ -435,13 +558,21 @@ export function SimMap({
                 : 'text-[9px] sm:text-[10px]'
           }`}
         >
-          <p className="min-w-0 leading-tight">{INEGI_AGEB_ATTRIBUTION_ES}</p>
-          {missingLocationCount > 0 ? (
-            <p className="shrink-0 leading-tight text-slate-500">
-              {missingLocationCount} agente
-              {missingLocationCount === 1 ? '' : 's'} sin ubicación
-            </p>
-          ) : null}
+          <p
+            className="leading-tight text-slate-400"
+            data-sim-map-sample-caption="1"
+          >
+            {CDMX_SAMPLE_CAPTION_ES}
+          </p>
+          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5">
+            <p className="min-w-0 leading-tight">{INEGI_AGEB_ATTRIBUTION_ES}</p>
+            {missingLocationCount > 0 ? (
+              <p className="shrink-0 leading-tight text-slate-500">
+                {missingLocationCount} agente
+                {missingLocationCount === 1 ? '' : 's'} sin ubicación
+              </p>
+            ) : null}
+          </div>
         </div>
       </div>
     </div>

@@ -68,6 +68,11 @@ export type UseSimulationPlaybackOptions = {
   data: SimulationReplayPayload
   /** Called when a new vote lands (for imperative dot updates + feed). */
   onVoteLand?: (vote: SimulationReplayVote, index: number) => void
+  /**
+   * When true, start the replay clock on mount. Default false (Task 4c —
+   * choose Columnas/Mapa, then click Iniciar). Pass true for `?autoplay=1`
+   * or capture mode (`?captura=1`).
+   */
   autoplay?: boolean
   /**
    * When true (capture mode), default speed is cinemático and the endcard
@@ -98,7 +103,9 @@ export type UseSimulationPlaybackResult = PlaybackSnapshot & {
 export function useSimulationPlayback({
   data,
   onVoteLand,
-  autoplay = true,
+  // Task 4c: choose format first — do not start until the user clicks
+  // "Iniciar simulación" (or ?autoplay=1 / ?captura=1 opts in).
+  autoplay = false,
   captureMode = false,
   feedCap = 16,
   initialSpeed,
