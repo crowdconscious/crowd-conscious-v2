@@ -62,6 +62,18 @@ test('matchOfficialColonias expands Polanco sections; does not fuzzy-match Conde
   assert.equal(bogus.length, 0)
 })
 
+test('Popo matches only exact Popo — never Popotla or Ampliacion Popo', () => {
+  const colonias = loadColonias()
+  const popo = matchOfficialColonias('Popo', 'Miguel Hidalgo', colonias)
+  assert.equal(popo.length, 1)
+  assert.equal(popo[0]!.properties.colonia, 'Popo')
+  assert.ok(!popo.some((c) => /popotla|ampliacion/i.test(c.properties.colonia)))
+
+  const popotla = matchOfficialColonias('Popotla', 'Miguel Hidalgo', colonias)
+  assert.equal(popotla.length, 1)
+  assert.equal(popotla[0]!.properties.colonia, 'Popotla')
+})
+
 test('pickWeightedDeterministic is stable for the same persona id', () => {
   const candidates = [
     { code: 'A', weight: 10 },

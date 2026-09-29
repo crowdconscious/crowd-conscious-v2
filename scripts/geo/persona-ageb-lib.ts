@@ -128,9 +128,16 @@ export function coloniaBaseAndSection(
 
 /**
  * Match a persona colonia string to official colonia features in the same
- * alcaldía. Exact normalized match, or official sectional names whose base
- * equals the persona name (e.g. "Polanco" → "Polanco I Seccion" …).
- * Never fuzzy-guesses.
+ * alcaldía.
+ *
+ * Rules (never fuzzy-guess):
+ *   1. Exact normalized equality (e.g. "Popo" → "Popo" only — never Popotla,
+ *      never "Ampliacion Popo").
+ *   2. Official sectional names whose *entire* base equals the persona name
+ *      (e.g. "Polanco" → "Polanco I Seccion" … "Polanco V Seccion").
+ *      The official name must match `^<base> <roman|digit> seccion$` after
+ *      normalize; a longer compound name that merely *contains* the persona
+ *      string does not qualify.
  */
 export function matchOfficialColonias(
   personaColonia: string,
@@ -147,6 +154,9 @@ export function matchOfficialColonias(
       continue
     }
     const { base, section } = coloniaBaseAndSection(on)
+    // Sectional expansion only when the official name is exactly
+    // "<personaBase> <section> seccion". Rejects Popotla / Ampliacion Popo
+    // for persona "Popo".
     if (section != null && base === pn) out.push(o)
   }
   return out

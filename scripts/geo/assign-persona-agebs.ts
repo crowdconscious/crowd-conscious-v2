@@ -150,21 +150,29 @@ function splitCsvLine(line: string): string[] {
   return out.map((s) => s.trim())
 }
 
+function csvNull(v: string | undefined): string | null {
+  if (v == null) return null
+  const t = v.trim()
+  if (t === '' || t.toLowerCase() === 'null') return null
+  return t
+}
+
 function loadPersonasFromCsv(path: string): PersonaInput[] {
   const rows = parseCsv(readFileSync(path, 'utf8'))
   return rows.map((r) => {
-    const id = r.id || r.ID
+    const id = csvNull(r.id || r.ID)
     if (!id) throw new Error(`CSV row missing id: ${JSON.stringify(r)}`)
-    const alcaldia = r.alcaldia || r.Alcaldia
+    const alcaldia = csvNull(r.alcaldia || r.Alcaldia)
     if (!alcaldia) throw new Error(`CSV row ${id} missing alcaldia`)
+    const ageRaw = csvNull(r.age)
     return {
       id,
       alcaldia,
-      colonia: r.colonia || r.Colonia || null,
-      income_band: r.income_band || r.nse_band || null,
-      nse_band: r.nse_band || null,
-      age: r.age ? Number(r.age) : null,
-      gender: r.gender || null,
+      colonia: csvNull(r.colonia || r.Colonia),
+      income_band: csvNull(r.income_band),
+      nse_band: csvNull(r.nse_band),
+      age: ageRaw != null && Number.isFinite(Number(ageRaw)) ? Number(ageRaw) : null,
+      gender: csvNull(r.gender),
     }
   })
 }
@@ -334,6 +342,22 @@ function emitSql(
 
   lines.push(`commit;`)
   lines.push(``)
+  lines.push(`-- Verification (read-only; run after the transaction)`)
+  lines.push(`select`)
+  lines.push(`  ageb_assignment_method,`)
+  lines.push(`  count(*) as n`)
+  lines.push(`from simulation_personas`)
+  lines.push(`where version = 'cdmx-v1'`)
+  lines.push(`group by ageb_assignment_method`)
+  lines.push(`order by ageb_assignment_method nulls first;`)
+  lines.push(``)
+  lines.push(`select`)
+  lines.push(`  count(*) filter (where ageb_code is null) as null_ageb_code,`)
+  lines.push(`  count(*) filter (where ageb_code is not null) as assigned_ageb_code,`)
+  lines.push(`  count(*) as total`)
+  lines.push(`from simulation_personas`)
+  lines.push(`where version = 'cdmx-v1';`)
+  lines.push(``)
   return lines.join('\n')
 }
 
@@ -442,6 +466,67 @@ function buildReport(args: {
     lines.push(`| \`${code}\` | ${n} |`)
   }
   lines.push(``)
+
+  // Colonia match table: persona colonia → official name(s) → candidate AGEBs → persona count
+  type ColoniaRow = {
+    alcaldia: string
+    colonia: string
+    official: string[]
+    candidates: number
+    personas: number
+    method: string
+  }
+  const coloniaAgg = new Map<string, ColoniaRow>()
+  for (const a of assignments) {
+    const col = a.colonia ?? '(null)'
+    const key = `${a.alcaldia}||${col}`
+    const existing = coloniaAgg.get(key)
+    if (existing) {
+      existing.personas += 1
+      // Prefer the colonia-weighted candidate_count when mixed (should not mix).
+      if (a.method === 'colonia_census_weighted') {
+        existing.candidates = a.candidate_count
+        existing.official = a.official_colonia_names
+        existing.method = a.method
+      }
+    } else {
+      coloniaAgg.set(key, {
+        alcaldia: a.alcaldia,
+        colonia: col,
+        official: [...a.official_colonia_names],
+        candidates: a.candidate_count,
+        personas: 1,
+        method: a.method,
+      })
+    }
+  }
+  const coloniaRows = [...coloniaAgg.values()].sort(
+    (a, b) =>
+      a.alcaldia.localeCompare(b.alcaldia) ||
+      a.colonia.localeCompare(b.colonia)
+  )
+
+  lines.push(`## Colonia → official match → candidate AGEBs`)
+  lines.push(``)
+  lines.push(
+    `| Alcaldía | Persona colonia | Official colonia name(s) | Candidate AGEBs | Personas | Method |`
+  )
+  lines.push(`| --- | --- | --- | ---: | ---: | --- |`)
+  for (const r of coloniaRows) {
+    const official =
+      r.official.length > 0
+        ? r.official.map((n) => `\`${n}\``).join(', ')
+        : '*(none — alcaldía fallback)*'
+    lines.push(
+      `| ${r.alcaldia} | ${r.colonia} | ${official} | ${r.candidates} | ${r.personas} | \`${r.method}\` |`
+    )
+  }
+  lines.push(``)
+  lines.push(
+    `Note: persona **"Popo"** matches only the official colonia named exactly \`Popo\` (Miguel Hidalgo). It is never mapped to \`Popotla\` or \`Ampliacion Popo\`.`
+  )
+  lines.push(``)
+
   lines.push(`## Unmatched colonias`)
   lines.push(``)
   if (unmatchedColonias.length === 0) {
@@ -459,7 +544,7 @@ function buildReport(args: {
   lines.push(`## Method`)
   lines.push(``)
   lines.push(`1. **Alcaldía filter.** Only Cuauhtémoc and Miguel Hidalgo are in scope (AGEB GeoJSON). Others stay unassigned.`)
-  lines.push(`2. **Colonia → AGEB candidates.** An AGEB is a candidate if its polygon spatially intersects an official colonia polygon that matches the persona's colonia string (normalized exact match, or official \`… N Sección\` whose base equals the persona name — e.g. Polanco → Polanco I–V Sección). No fuzzy guessing.`)
+  lines.push(`2. **Colonia → AGEB candidates.** An AGEB is a candidate if its polygon spatially intersects an official colonia polygon that matches the persona's colonia string (normalized exact match, or official \`… N Sección\` whose base equals the persona name — e.g. Polanco → Polanco I–V Sección). No fuzzy guessing. **"Popo" matches only "Popo"**, never Popotla / Ampliación Popo.`)
   lines.push(`3. **Fallback.** If the colonia string matches no official name, or intersection yields zero AGEBs, candidates = all AGEBs in the persona's alcaldía (\`alcaldia_fallback\`).`)
   lines.push(`4. **Weights.** Probability ∝ INEGI Censo 2020 \`P_18YMAS\` (population 18+). If missing/zero, \`POBTOT\`. If both missing/zero, uniform weight 1. No NSE/housing secondary proxy — AMAI bands do not map cleanly onto a single AGEB census indicator without inventing a model we cannot defend.`)
   lines.push(`5. **Determinism.** Pick seeded by \`hash(persona.id)\` (\`ageb-pick:<id>\`). Re-runs with the same ids yield identical AGEBs.`)
@@ -498,7 +583,9 @@ function buildReport(args: {
       `Then paste the regenerated \`supabase/sql-manual/268_persona_ageb_assign.sql\` into the Supabase SQL editor (after migration 268).`
     )
   } else {
-    lines.push(`Personas loaded from owner CSV (\`--in\`).`)
+    lines.push(
+      `Personas loaded from owner CSV (\`--in\`) with **production UUIDs**. UPDATE SQL in \`supabase/sql-manual/268_persona_ageb_assign.sql\` is ready to paste (after migration 268).`
+    )
   }
   lines.push(``)
   lines.push(`## Validation`)
