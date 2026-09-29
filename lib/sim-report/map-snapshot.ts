@@ -311,11 +311,12 @@ export async function renderSimMapSnapshotPng(
 
   // Legend sits above a dedicated source band so labels never collide with
   // the INEGI attribution line.
-  const SOURCE_BAND_H = 22
+  const SOURCE_BAND_H = 26
   const legendItems = input.options.slice(0, 6)
-  const legendLineH = 14
+  const legendLineH = 15
+  const legendGapAboveSource = 14
   const legendBlockH = Math.max(legendLineH, legendItems.length * legendLineH)
-  const legendBottom = MAP_H - SOURCE_BAND_H - 10
+  const legendBottom = MAP_H - SOURCE_BAND_H - legendGapAboveSource
   const legendTop = legendBottom - legendBlockH + legendLineH / 2
   const legend = legendItems
     .map((o, i) => {
@@ -344,7 +345,7 @@ export async function renderSimMapSnapshotPng(
   <g>${legend}</g>
   ${inset}
   <rect x="0" y="${MAP_H - SOURCE_BAND_H}" width="${MAP_W}" height="${SOURCE_BAND_H}" fill="#020617"/>
-  <text x="${MAIN_PAD}" y="${MAP_H - 7}" fill="#94a3b8" font-size="10" font-family="Helvetica, Arial, sans-serif">Fuente: INEGI. Marco Geoestadístico, Censo de Población y Vivienda 2020. · Muestra: Cuauhtémoc y Miguel Hidalgo</text>
+  <text x="${MAIN_PAD}" y="${MAP_H - 9}" fill="#94a3b8" font-size="10" font-family="Helvetica, Arial, sans-serif">Fuente: INEGI. Marco Geoestadístico, Censo de Población y Vivienda 2020. · Muestra: Cuauhtémoc y Miguel Hidalgo</text>
 </svg>`
 
   try {
