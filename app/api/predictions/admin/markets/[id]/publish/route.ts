@@ -38,7 +38,14 @@ export async function POST(
     }
 
     if (!market.is_draft) {
-      // Idempotent: already published.
+      // Idempotent: already published. Still try to enqueue sim (no-op if
+      // a job row already exists, or if SIM_AUTORUN_ENABLED is off).
+      if (market.is_pulse) {
+        const { enqueueAutorunJobFireAndForget } = await import(
+          '@/lib/simulation/autorun'
+        )
+        enqueueAutorunJobFireAndForget(admin, id, 'auto')
+      }
       return NextResponse.json({ success: true, already_published: true })
     }
 
@@ -65,6 +72,12 @@ export async function POST(
       } catch (err) {
         console.warn('[publish-market] pulse push error:', err)
       }
+
+      // Queue an agent simulation — fire-and-forget; never slows publish.
+      const { enqueueAutorunJobFireAndForget } = await import(
+        '@/lib/simulation/autorun'
+      )
+      enqueueAutorunJobFireAndForget(admin, id, 'auto')
     }
 
     return NextResponse.json({ success: true })

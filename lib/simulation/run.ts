@@ -644,6 +644,9 @@ export interface CheckRunResult {
   attempted?: number
   aggregates?: RunAggregates
   cost?: CostAssessment
+  /** Observed token totals once the batch ends (for autorun cost logging). */
+  inputTokens?: number
+  outputTokens?: number
 }
 
 export interface CheckRunOptions {
@@ -805,6 +808,8 @@ export async function checkRun(
     attempted: attempted || run.n_agents,
     aggregates,
     cost: assessment,
+    inputTokens,
+    outputTokens,
   }
 }
 

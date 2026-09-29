@@ -367,6 +367,12 @@ export async function POST(request: NextRequest) {
       } catch (err) {
         console.warn('[create-market] pulse push error:', err)
       }
+
+      // Queue an agent simulation — fire-and-forget; never slows create.
+      const { enqueueAutorunJobFireAndForget } = await import(
+        '@/lib/simulation/autorun'
+      )
+      enqueueAutorunJobFireAndForget(admin, marketId as string, 'auto')
     }
 
     return Response.json({

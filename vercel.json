@@ -15,6 +15,7 @@
     "app/api/cron/live-auto-end/route.ts": { "maxDuration": 120 },
     "app/api/cron/monthly-impact/route.ts": { "maxDuration": 120 },
     "app/api/cron/pulse-auto-resolve/route.ts": { "maxDuration": 120 },
+    "app/api/cron/simulation-autorun/route.ts": { "maxDuration": 300 },
     "app/api/cron/signal-threshold-check/route.ts": { "maxDuration": 60 },
     "app/api/cron/signal-silence-30d/route.ts": { "maxDuration": 60 },
     "app/api/cron/push-receipts/route.ts": { "maxDuration": 60 },
@@ -47,6 +48,10 @@
     {
       "path": "/api/cron/pulse-auto-resolve",
       "schedule": "5 * * * *"
+    },
+    {
+      "path": "/api/cron/simulation-autorun",
+      "schedule": "*/5 * * * *"
     },
     {
       "path": "/api/cron/monthly-impact",

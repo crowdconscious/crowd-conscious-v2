@@ -32,6 +32,7 @@ import {
   MessageSquareWarning,
   Users,
   Shield,
+  FlaskConical,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
@@ -355,6 +356,17 @@ export default function PredictionsShell({
             >
               <Bot className="w-4 h-4" />
               {language === 'es' ? 'Panel de Agentes' : 'Agent Dashboard'}
+            </Link>
+            <Link
+              href="/predictions/admin/simulation-autorun"
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                pathname === '/predictions/admin/simulation-autorun'
+                  ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
+                  : 'text-cc-text-secondary hover:bg-gray-800/50 hover:text-amber-400'
+              }`}
+            >
+              <FlaskConical className="w-4 h-4" />
+              {language === 'es' ? 'Sim auto-run' : 'Sim auto-run'}
             </Link>
             <Link
               href="/predictions/admin/blog"
@@ -686,6 +698,18 @@ export default function PredictionsShell({
                   >
                     <Bot className="w-4 h-4" />
                     {language === 'es' ? 'Panel de Agentes' : 'Agent Dashboard'}
+                  </Link>
+                  <Link
+                    href="/predictions/admin/simulation-autorun"
+                    onClick={closeMobileMenu}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                      pathname === '/predictions/admin/simulation-autorun'
+                        ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
+                        : 'text-cc-text-secondary hover:bg-gray-800/50 hover:text-amber-400'
+                    }`}
+                  >
+                    <FlaskConical className="w-4 h-4" />
+                    {language === 'es' ? 'Sim auto-run' : 'Sim auto-run'}
                   </Link>
                   <Link
                     href="/predictions/admin/blog/create"

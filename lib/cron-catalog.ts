@@ -49,6 +49,14 @@ export const CRON_CATALOG: readonly CronJobMeta[] = [
     routePath: 'app/api/cron/pulse-auto-resolve/route',
     description: 'Resolves Pulse markets whose resolve_at has passed.',
   },
+  {
+    name: 'simulation-autorun',
+    schedule: '*/5 * * * *',
+    kind: 'operational',
+    routePath: 'app/api/cron/simulation-autorun/route',
+    description:
+      'Queues/starts/polls automatic Pulse agent simulations (SIM_AUTORUN_ENABLED).',
+  },
   // ── Agents (Anthropic-backed, cost-bearing) ──
   // Only agents with an active Vercel cron belong here; it powers the
   // Cron Health tile. Manual-only agents (content-creator, inbox-curator)
