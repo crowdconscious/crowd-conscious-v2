@@ -35,6 +35,7 @@ import {
   parseSimAutoplayParam,
   shouldSimAutoplay,
 } from '@/lib/sim-viewer/autoplay'
+import type { MapCamera } from '@/lib/sim-viewer/map-camera'
 import { evaluateMapAvailability } from '@/lib/sim-viewer/map-availability'
 import {
   parseSimViewModeParam,
@@ -245,6 +246,17 @@ export default function SimulationViewer({
     playback.beat === 'populate' &&
     playback.votedCount === 0 &&
     !playback.reducedMotion
+
+  /**
+   * Map camera: full CDMX on intro / endcard / done; zoom to Cuau+MH once
+   * the replay is running (including capture autoplay).
+   */
+  const mapCameraIntent: MapCamera =
+    showIntro ||
+    playback.beat === 'endcard' ||
+    playback.beat === 'done'
+      ? 'overview'
+      : 'detail'
 
   // Auto-expand the reasoning drawer once the first vote lands (unless the
   // user already toggled it).
@@ -541,6 +553,8 @@ export default function SimulationViewer({
                 data={data}
                 beat={playback.beat}
                 votedCount={playback.votedCount}
+                cameraIntent={mapCameraIntent}
+                hideCameraControl={showIntro}
                 compact={isPortrait && !phoneScale && !mobileLayout}
                 phoneScale={phoneScale}
                 mobileLayout={mobileLayout}
@@ -637,6 +651,9 @@ export default function SimulationViewer({
             visible={showIntro}
             mobileLayout={mobileLayout}
             phoneScale={phoneScale}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            showMapToggle={mapAvailability.available}
             onStart={handleStart}
             onExplore={handleExploreFromIntro}
           />

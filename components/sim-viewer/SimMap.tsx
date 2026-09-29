@@ -3,11 +3,9 @@
 /**
  * Mapa canvas for the simulation replay viewer — Tasks 4b / 4c.
  *
- * Full-CDMX alcaldía outlines (INEGI 09mun) frame the view; Cuauhtémoc +
- * Miguel Hidalgo keep AGEB detail and a stronger fill so they read as the
- * active sample. Agent dots share the playback clock with Columnas via
- * votedCount / beat. Imperative circle updates avoid re-rendering 150 React
- * nodes per vote.
+ * Overview frames all 16 INEGI alcaldías (growth context). On play, the SVG
+ * viewBox animates (~1.2s) to Cuauhtémoc + Miguel Hidalgo so the 150 dots
+ * stay distinguishable. Neighbouring alcaldías remain faintly visible.
  *
  * Real-vote AGEB shading is intentionally omitted: market_votes carry no
  * location, so we never invent local real results.
@@ -37,6 +35,16 @@ import {
 } from '@/lib/sim-viewer/cdmx-alcaldias'
 import { isPersonaMappable } from '@/lib/sim-viewer/map-availability'
 import {
+  detailViewBoxFromPoints,
+  interpolateViewBox,
+  MAP_CAMERA_ZOOM_MS,
+  overviewViewBox,
+  userSpaceDotRadius,
+  viewBoxToString,
+  type MapCamera,
+  type SvgViewBox,
+} from '@/lib/sim-viewer/map-camera'
+import {
   jitteredMapPoint,
   mapDotSeed,
 } from '@/lib/sim-viewer/map-jitter'
@@ -46,12 +54,15 @@ import {
 } from '@/lib/sim-viewer/map-option-color'
 import { createCdmxProjection } from '@/lib/sim-viewer/map-projection'
 import { personaDisplayLabel } from '@/lib/sim-viewer/persona-label'
+import { useReducedMotion } from '@/hooks/useSimulationPlayback'
 import { SimMark } from '@/components/sim-viewer/SimMark'
 
 type Props = {
   data: SimulationReplayPayload
   beat: SimulationViewerBeat
   votedCount: number
+  /** Desired framing — parent drives intro/start/endcard; user can override. */
+  cameraIntent?: MapCamera
   compact?: boolean
   phoneScale?: boolean
   mobileLayout?: boolean
@@ -59,6 +70,8 @@ type Props = {
   onDotActivate?: (personaKey: string) => void
   /** Personas omitted from the map (no mappable AGEB / coords). */
   missingLocationCount?: number
+  /** Hide the zoom control (e.g. while intro covers the stage). */
+  hideCameraControl?: boolean
 }
 
 type ProjectedDot = {
@@ -71,13 +84,16 @@ type ProjectedDot = {
   label: string
 }
 
-/** Desktop reference width where map dots were tuned. */
 const DESKTOP_DOT_REF_PX = 900
-/** Zoomed-out CDMX framing: keep a readable floor on phone. */
-const MOBILE_DOT_PX = 6.5
+/** Detail (zoomed) on-screen diameters. */
+const MOBILE_DOT_PX = 6
 const DESKTOP_DOT_PX = 7
 const DESKTOP_DOT_MIN_PX = 5.5
-const CAPTURE_DOT_PX = 12
+const CAPTURE_DOT_PX = 11
+/** Overview (full CDMX): keep the cluster from becoming a solid blob. */
+const OVERVIEW_DOT_PX_MOBILE = 2.25
+const OVERVIEW_DOT_PX_DESKTOP = 2.75
+const OVERVIEW_DOT_PX_CAPTURE = 3.5
 
 let cachedAgeb: AgebFeatureCollection | null = null
 let cachedCdmx: CdmxAlcaldiaFeatureCollection | null = null
@@ -122,7 +138,6 @@ function loadMapGeojson(): Promise<{
 }
 
 function shortAlcaldiaLabel(nombre: string): string {
-  // Keep accents; only shorten the longest official names for phone density.
   if (nombre === 'Cuajimalpa de Morelos') return 'Cuajimalpa'
   if (nombre === 'La Magdalena Contreras') return 'Magdalena C.'
   if (nombre === 'Venustiano Carranza') return 'V. Carranza'
@@ -130,16 +145,32 @@ function shortAlcaldiaLabel(nombre: string): string {
   return nombre
 }
 
+function walkCoords(
+  coords: unknown,
+  project: (lng: number, lat: number) => [number, number] | null,
+  out: [number, number][],
+): void {
+  if (!Array.isArray(coords)) return
+  if (typeof coords[0] === 'number' && typeof coords[1] === 'number') {
+    const p = project(coords[0] as number, coords[1] as number)
+    if (p) out.push(p)
+    return
+  }
+  for (const c of coords) walkCoords(c, project, out)
+}
+
 export function SimMap({
   data,
   beat,
   votedCount,
+  cameraIntent = 'overview',
   compact = false,
   phoneScale = false,
   mobileLayout = false,
   selectedPersonaKey = null,
   onDotActivate,
   missingLocationCount = 0,
+  hideCameraControl = false,
 }: Props) {
   const wrapRef = useRef<HTMLDivElement | null>(null)
   const [size, setSize] = useState({ width: 0, height: 0 })
@@ -150,6 +181,15 @@ export function SimMap({
   const [geoError, setGeoError] = useState<string | null>(null)
   const circleRefs = useRef<(SVGCircleElement | null)[]>([])
   const prevVoted = useRef(0)
+  const reducedMotion = useReducedMotion()
+
+  const [userCamera, setUserCamera] = useState<MapCamera | null>(null)
+  const camera: MapCamera = userCamera ?? cameraIntent
+
+  // When parent intent changes (start / endcard), drop manual override.
+  useEffect(() => {
+    setUserCamera(null)
+  }, [cameraIntent])
 
   useEffect(() => {
     let cancelled = false
@@ -204,13 +244,85 @@ export function SimMap({
     return () => ro.disconnect()
   }, [])
 
-  // Fit to whole CDMX so the sample alcaldías read inside city context.
+  // Always project in full-CDMX SVG space; camera zooms via viewBox.
   const projection = useMemo(() => {
     if (!cdmx || size.width < 8 || size.height < 8) return null
-    // Phone portrait: CDMX is tall — tighter side padding, keep vertical room.
     const pad = mobileLayout ? (phoneScale ? 6 : 4) : 12
     return createCdmxProjection(cdmx, size.width, size.height, pad)
   }, [cdmx, size.width, size.height, mobileLayout, phoneScale])
+
+  const overviewVb = useMemo(
+    () => overviewViewBox(size.width, size.height),
+    [size.width, size.height],
+  )
+
+  const detailVb = useMemo(() => {
+    if (!projection || !cdmx || size.width < 8) return overviewVb
+    const pts: [number, number][] = []
+    for (const f of cdmx.features) {
+      if (!isActiveAlcaldia(f.properties.cvegeo)) continue
+      walkCoords(f.geometry.coordinates, projection.project, pts)
+    }
+    const pad = mobileLayout ? 22 : 32
+    return detailViewBoxFromPoints(pts, size.width, size.height, pad)
+  }, [projection, cdmx, size.width, size.height, mobileLayout, overviewVb])
+
+  const targetVb = camera === 'detail' ? detailVb : overviewVb
+  const [viewBox, setViewBox] = useState<SvgViewBox>(() =>
+    overviewViewBox(0, 0),
+  )
+  const viewBoxRef = useRef(viewBox)
+  viewBoxRef.current = viewBox
+  const viewBoxSeededRef = useRef(false)
+
+  // Seed the viewBox once the SVG has a real size. Start at overview so a
+  // detail intent can animate the zoom-in (capture autoplay included).
+  useEffect(() => {
+    if (size.width < 8 || size.height < 8) return
+    if (viewBoxSeededRef.current) return
+    viewBoxSeededRef.current = true
+    const start = overviewViewBox(size.width, size.height)
+    setViewBox(start)
+    viewBoxRef.current = start
+  }, [size.width, size.height])
+
+  // Keep overview framing aligned with viewport resizes.
+  useEffect(() => {
+    if (!viewBoxSeededRef.current) return
+    if (camera !== 'overview') return
+    setViewBox(overviewVb)
+    viewBoxRef.current = overviewVb
+  }, [overviewVb, camera])
+
+  useEffect(() => {
+    if (!viewBoxSeededRef.current) return
+    const from = viewBoxRef.current
+    const to = targetVb
+    if (
+      from.x === to.x &&
+      from.y === to.y &&
+      from.width === to.width &&
+      from.height === to.height
+    ) {
+      return
+    }
+    if (reducedMotion || MAP_CAMERA_ZOOM_MS <= 0) {
+      setViewBox(to)
+      viewBoxRef.current = to
+      return
+    }
+    let raf = 0
+    const start = performance.now()
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / MAP_CAMERA_ZOOM_MS)
+      const next = interpolateViewBox(from, to, t)
+      setViewBox(next)
+      viewBoxRef.current = next
+      if (t < 1) raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [targetVb, reducedMotion])
 
   const alcaldiaPaths = useMemo(() => {
     if (!projection || !cdmx) {
@@ -243,6 +355,8 @@ export function SimMap({
 
   const agebPaths = useMemo(() => {
     if (!projection || !ageb) return [] as { key: string; d: string }[]
+    // AGEB mesh only when zoomed — at full CDMX it densifies the yellow blob.
+    if (camera !== 'detail') return []
     const out: { key: string; d: string }[] = []
     for (const f of ageb.features) {
       const d = projection.path(f as never)
@@ -250,7 +364,7 @@ export function SimMap({
       out.push({ key: f.properties.ageb_code, d })
     }
     return out
-  }, [projection, ageb])
+  }, [projection, ageb, camera])
 
   const alcaldiaLabels = useMemo(() => {
     if (!projection || !cdmx) {
@@ -271,19 +385,27 @@ export function SimMap({
     }[] = []
     for (const f of cdmx.features) {
       const { label_lat: lat, label_lng: lng, nombre, cvegeo } = f.properties
+      const active = isActiveAlcaldia(cvegeo)
+      // Overview: hide Cuau/MH labels (they collide). Detail: show only those two.
+      if (camera === 'overview' && active) continue
+      if (camera === 'detail' && !active) continue
       const xy = projection.project(lng, lat)
       if (!xy) continue
-      const active = isActiveAlcaldia(cvegeo)
+      let x = xy[0]
+      let y = xy[1]
+      // Slight offsets so the two active labels never sit on top of each other.
+      if (camera === 'detail' && cvegeo === '09016') y -= mobileLayout ? 10 : 14
+      if (camera === 'detail' && cvegeo === '09015') y += mobileLayout ? 10 : 14
       labels.push({
         key: cvegeo,
-        x: xy[0],
-        y: xy[1],
+        x,
+        y,
         label: mobileLayout && !active ? shortAlcaldiaLabel(nombre) : nombre,
         active,
       })
     }
     return labels
-  }, [projection, cdmx, mobileLayout])
+  }, [projection, cdmx, mobileLayout, camera])
 
   const dots = useMemo(() => {
     if (!projection) return [] as ProjectedDot[]
@@ -316,7 +438,7 @@ export function SimMap({
     return out
   }, [projection, data.votes, data.run.id, geoCodes])
 
-  const dotPx = phoneScale
+  const detailScreenDotPx = phoneScale
     ? CAPTURE_DOT_PX
     : mobileLayout
       ? MOBILE_DOT_PX
@@ -331,6 +453,28 @@ export function SimMap({
                 : DESKTOP_DOT_PX,
             ),
           )
+
+  const overviewScreenDotPx = phoneScale
+    ? OVERVIEW_DOT_PX_CAPTURE
+    : mobileLayout
+      ? OVERVIEW_DOT_PX_MOBILE
+      : OVERVIEW_DOT_PX_DESKTOP
+
+  // Blend screen diameter with camera animation progress (viewBox zoom ratio).
+  const zoomT =
+    overviewVb.width <= 0
+      ? 0
+      : Math.min(
+          1,
+          Math.max(
+            0,
+            (overviewVb.width - viewBox.width) /
+              Math.max(1, overviewVb.width - detailVb.width),
+          ),
+        )
+  const screenDotPx =
+    overviewScreenDotPx + (detailScreenDotPx - overviewScreenDotPx) * zoomT
+  const dotR = userSpaceDotRadius(screenDotPx, viewBox, size.width)
 
   // Imperative land / reset — mirrors SimCanvas votedCount handling.
   useEffect(() => {
@@ -350,23 +494,26 @@ export function SimMap({
         const vote = data.votes[i]
         const el = circleRefs.current[i]
         if (!el || !vote) continue
-        // Skip circles that were never mounted (unmappable personas).
         if (el.dataset.mappable !== '1') continue
         const oi = optionIndex.get(vote.optionId) ?? 0
         const style = votedDotStyle(oi)
         el.setAttribute('fill', style.fill)
         el.setAttribute('stroke', style.stroke)
         el.dataset.state = 'voted'
-        el.classList.add('sim-map-dot--landed', 'sim-map-dot--glow')
-        window.setTimeout(() => {
-          el.classList.remove('sim-map-dot--glow')
-        }, 450)
+        // Glow only when zoomed — overview glow merges into a blob.
+        if (camera === 'detail') {
+          el.classList.add('sim-map-dot--landed', 'sim-map-dot--glow')
+          window.setTimeout(() => {
+            el.classList.remove('sim-map-dot--glow')
+          }, 450)
+        } else {
+          el.classList.add('sim-map-dot--landed')
+        }
       }
     }
     prevVoted.current = votedCount
-  }, [votedCount, data.votes, dots, optionIndex])
+  }, [votedCount, data.votes, dots, optionIndex, camera])
 
-  // Re-apply landed styles after remount / projection resize.
   useEffect(() => {
     for (const dot of dots) {
       const el = circleRefs.current[dot.index]
@@ -389,6 +536,15 @@ export function SimMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- sync on geometry identity
   }, [dots, data.run.id])
 
+  // Keep circle radii in sync with camera without remounting.
+  useEffect(() => {
+    for (const dot of dots) {
+      const el = circleRefs.current[dot.index]
+      if (!el) continue
+      el.setAttribute('r', String(dotR))
+    }
+  }, [dotR, dots])
+
   const padCls = phoneScale
     ? 'px-2.5 pb-2 pt-11'
     : mobileLayout
@@ -397,23 +553,49 @@ export function SimMap({
         ? 'px-1.5 pb-1.5 pt-8'
         : 'px-2 pb-2 pt-9 sm:px-3 sm:pt-10'
 
-  void beat // reserved for future settle/reveal map chrome
+  void beat
 
   const contextLabelSize = phoneScale ? 8 : mobileLayout ? 6.5 : 8
-  const activeLabelSize = phoneScale ? 11 : mobileLayout ? 8 : 10
+  const activeLabelSize = phoneScale ? 12 : mobileLayout ? 10 : 12
+
+  const showCameraControl = !hideCameraControl
+  const cameraBtnLabel =
+    camera === 'detail' ? 'Ver toda la CDMX' : 'Acercar'
 
   return (
     <div
-      className="sim-map relative flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-amber-500/25 bg-gradient-to-b from-[#121820] via-[#0f1419] to-[#0c1015]"
+      className={`sim-map relative flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-amber-500/25 bg-gradient-to-b from-[#121820] via-[#0f1419] to-[#0c1015]${
+        camera === 'overview' ? ' sim-map--overview' : ' sim-map--detail'
+      }`}
       data-sim-map="true"
+      data-camera={camera}
       data-mobile={mobileLayout ? '1' : '0'}
       style={
         {
-          '--sim-map-dot-size': `${dotPx}px`,
+          '--sim-map-dot-size': `${screenDotPx}px`,
         } as CSSProperties
       }
     >
       <SimMark subtitle="reproducción" compact={compact} phoneScale={phoneScale} />
+
+      {showCameraControl ? (
+        <button
+          type="button"
+          data-sim-map-camera="1"
+          className={`absolute z-20 rounded border border-slate-500/70 bg-[#0f1419]/90 font-medium text-slate-200 hover:border-slate-400 hover:bg-slate-800/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 ${
+            phoneScale
+              ? 'left-2.5 top-2.5 px-2 py-1 text-[10px]'
+              : mobileLayout
+                ? 'left-1.5 top-1.5 px-1.5 py-0.5 text-[9px]'
+                : 'left-2 top-2 px-2 py-1 text-[10px] sm:left-3 sm:top-3'
+          }`}
+          onClick={() =>
+            setUserCamera(camera === 'detail' ? 'overview' : 'detail')
+          }
+        >
+          {cameraBtnLabel}
+        </button>
+      ) : null}
 
       <div className={`relative flex min-h-0 flex-1 flex-col ${padCls}`}>
         <div ref={wrapRef} className="relative min-h-0 flex-1">
@@ -424,7 +606,7 @@ export function SimMap({
           ) : projection && size.width > 0 && size.height > 0 ? (
             <svg
               className="absolute inset-0 h-full w-full"
-              viewBox={`0 0 ${size.width} ${size.height}`}
+              viewBox={viewBoxToString(viewBox)}
               width={size.width}
               height={size.height}
               role="img"
@@ -436,8 +618,8 @@ export function SimMap({
                     <path
                       key={p.key}
                       d={p.d}
-                      fill="rgba(148, 163, 184, 0.12)"
-                      stroke="rgba(203, 213, 225, 0.7)"
+                      fill="rgba(148, 163, 184, 0.14)"
+                      stroke="rgba(203, 213, 225, 0.75)"
                       strokeWidth={mobileLayout ? 1.1 : 1.4}
                       vectorEffect="non-scaling-stroke"
                       data-alcaldia={p.nombre}
@@ -464,8 +646,8 @@ export function SimMap({
                     key={p.key}
                     d={p.d}
                     fill="none"
-                    stroke="rgba(148, 163, 184, 0.28)"
-                    strokeWidth={mobileLayout ? 0.35 : 0.45}
+                    stroke="rgba(148, 163, 184, 0.32)"
+                    strokeWidth={mobileLayout ? 0.4 : 0.5}
                     vectorEffect="non-scaling-stroke"
                   />
                 ))}
@@ -479,13 +661,13 @@ export function SimMap({
                     y={l.y}
                     textAnchor="middle"
                     dominantBaseline="middle"
-                    className={l.active ? 'fill-slate-300' : 'fill-slate-600'}
+                    className={l.active ? 'fill-slate-200' : 'fill-slate-600'}
                     style={{
                       fontSize: l.active ? activeLabelSize : contextLabelSize,
                       fontWeight: l.active ? 600 : 500,
                       letterSpacing: l.active ? '0.04em' : '0.02em',
                       textTransform: 'uppercase',
-                      opacity: l.active ? 0.72 : 0.42,
+                      opacity: l.active ? 0.8 : 0.42,
                       pointerEvents: 'none',
                     }}
                   >
@@ -510,10 +692,11 @@ export function SimMap({
                       }}
                       cx={dot.x}
                       cy={dot.y}
-                      r={dotPx / 2}
+                      r={dotR}
                       fill={style.fill}
                       stroke={style.stroke}
-                      strokeWidth={mobileLayout ? 1 : 1.25}
+                      strokeWidth={mobileLayout ? 0.9 : 1.1}
+                      vectorEffect="non-scaling-stroke"
                       className={`sim-map-dot${landed ? ' sim-map-dot--landed' : ''}${
                         selected ? ' sim-map-dot--selected' : ''
                       }`}
