@@ -189,12 +189,30 @@ export default function SimulationAutorunAdminClient() {
                       {row.category ?? '—'} · {row.pulseStatus ?? '—'}
                     </div>
                     {row.simulationRunId ? (
-                      <Link
-                        href={`/pulse/${row.marketId}/simulacion?runId=${row.simulationRunId}`}
-                        className="mt-1 inline-block text-xs text-amber-400 hover:underline"
-                      >
-                        Ver simulación
-                      </Link>
+                      <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
+                        <Link
+                          href={`/pulse/${row.marketId}/simulacion?runId=${row.simulationRunId}`}
+                          className="inline-block text-xs text-amber-400 hover:underline"
+                        >
+                          Ver simulación
+                        </Link>
+                        {row.pulseStatus === 'resolved' ? (
+                          <>
+                            <a
+                              href={`/api/pulses/${row.marketId}/simulation/report?tier=summary&runId=${row.simulationRunId}`}
+                              className="inline-block text-xs text-emerald-400 hover:underline"
+                            >
+                              Descargar reporte
+                            </a>
+                            <a
+                              href={`/api/pulses/${row.marketId}/simulation/report?tier=full&runId=${row.simulationRunId}`}
+                              className="inline-block text-xs text-emerald-400/80 hover:underline"
+                            >
+                              Completo
+                            </a>
+                          </>
+                        ) : null}
+                      </div>
                     ) : null}
                     {row.lastError && row.status === 'failed' ? (
                       <div className="mt-1 max-w-xs truncate text-xs text-red-400">

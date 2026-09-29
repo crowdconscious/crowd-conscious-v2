@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from 'react'
 import SimulationViewer from '@/components/sim-viewer/SimulationViewer'
+import { SimReportDownload } from '@/components/sim-viewer/SimReportDownload'
 import '@/components/sim-viewer/sim-viewer.css'
 import {
   fetchSimulationReplay,
@@ -107,9 +108,16 @@ function SimulationViewerLoaderInner({
   }
 
   return (
-    <SimulationViewer
-      data={result.data}
-      captureMode={captureMode}
-    />
+    <div className="flex min-h-0 flex-col">
+      <SimReportDownload
+        pulseId={pulseId}
+        runId={runId ?? result.data.run.id}
+        captureMode={captureMode}
+      />
+      <SimulationViewer
+        data={result.data}
+        captureMode={captureMode}
+      />
+    </div>
   )
 }
