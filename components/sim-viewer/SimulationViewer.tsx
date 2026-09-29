@@ -23,6 +23,7 @@ import { SimReasoningFeed } from '@/components/sim-viewer/SimReasoningFeed'
 import { SimTransport } from '@/components/sim-viewer/SimTransport'
 import { SimReadouts } from '@/components/sim-viewer/SimReadouts'
 import { SimEndcard } from '@/components/sim-viewer/SimEndcard'
+import { SimIntro } from '@/components/sim-viewer/SimIntro'
 import { PersonaInspector } from '@/components/sim-viewer/PersonaInspector'
 import {
   useAppEmbedChrome,
@@ -30,6 +31,11 @@ import {
   useCaptureControlsVisibility,
 } from '@/components/sim-viewer/useCaptureChrome'
 import { agebGeoCodeSet } from '@/lib/sim-viewer/ageb-codes'
+import {
+  parseSimAutoplayParam,
+  shouldSimAutoplay,
+} from '@/lib/sim-viewer/autoplay'
+import type { MapCamera } from '@/lib/sim-viewer/map-camera'
 import { evaluateMapAvailability } from '@/lib/sim-viewer/map-availability'
 import {
   parseSimViewModeParam,
@@ -78,6 +84,7 @@ export default function SimulationViewer({
   const fromApp = searchParams.get('src') === 'app'
   const urlPersona = searchParams.get('persona')
   const urlViewMode = parseSimViewModeParam(searchParams.get('mode'))
+  const urlAutoplay = parseSimAutoplayParam(searchParams.get('autoplay'))
   const isNarrow = useMediaQuery('(max-width: 767px)')
   /** Stacked phone layout — also forced for in-app browser. */
   const mobileLayout = isNarrow || fromApp
@@ -105,6 +112,14 @@ export default function SimulationViewer({
   const viewMode = viewModeProp ?? internalViewMode
   const activePersonaKey =
     selectedPersonaKey !== undefined ? selectedPersonaKey : internalPersona
+
+  const autoplayOnMount = shouldSimAutoplay({
+    autoplayParam: urlAutoplay,
+    captureMode,
+    personaSelected: Boolean(activePersonaKey),
+  })
+  /** Intro dismissed once the user starts, explores, or autoplay opts in. */
+  const [introDismissed, setIntroDismissed] = useState(() => autoplayOnMount)
 
   const setAspect = (r: SimulationAspectRatio) => {
     aspectTouchedRef.current = true
@@ -191,10 +206,57 @@ export default function SimulationViewer({
 
   const playback = useSimulationPlayback({
     data,
-    autoplay: !activePersonaKey,
+    autoplay: autoplayOnMount,
     captureMode,
     feedCap,
   })
+
+  const dismissIntro = useCallback(() => {
+    setIntroDismissed(true)
+  }, [])
+
+  const handleStart = useCallback(() => {
+    dismissIntro()
+    playback.play()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- play identity from hook
+  }, [dismissIntro, playback.play])
+
+  const handleExploreFromIntro = useCallback(() => {
+    dismissIntro()
+    playback.explore()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- explore identity from hook
+  }, [dismissIntro, playback.explore])
+
+  const handleRestart = useCallback(() => {
+    dismissIntro()
+    playback.restart()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- restart identity from hook
+  }, [dismissIntro, playback.restart])
+
+  const handlePlay = useCallback(() => {
+    dismissIntro()
+    playback.play()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- play identity from hook
+  }, [dismissIntro, playback.play])
+
+  const showIntro =
+    !introDismissed &&
+    !activePersonaKey &&
+    !playback.playing &&
+    playback.beat === 'populate' &&
+    playback.votedCount === 0 &&
+    !playback.reducedMotion
+
+  /**
+   * Map camera: full CDMX on intro / endcard / done; zoom to Cuau+MH once
+   * the replay is running (including capture autoplay).
+   */
+  const mapCameraIntent: MapCamera =
+    showIntro ||
+    playback.beat === 'endcard' ||
+    playback.beat === 'done'
+      ? 'overview'
+      : 'detail'
 
   // Auto-expand the reasoning drawer once the first vote lands (unless the
   // user already toggled it).
@@ -379,6 +441,8 @@ export default function SimulationViewer({
       data-phone-scale={phoneScale ? '1' : '0'}
       data-beat={playback.beat}
       data-voted={String(playback.votedCount)}
+      data-intro={showIntro ? '1' : '0'}
+      data-autoplay={autoplayOnMount ? '1' : '0'}
       onPointerMove={onPointerActivity}
       onPointerDown={onPointerActivity}
     >
@@ -474,7 +538,9 @@ export default function SimulationViewer({
           <div
             className={`flex min-h-0 min-w-0 flex-col ${
               mobileLayout
-                ? 'min-h-[min(48dvh,22rem)] flex-[1.4]'
+                ? viewMode === 'map'
+                  ? 'min-h-[min(58dvh,28rem)] flex-[1.65]'
+                  : 'min-h-[min(48dvh,22rem)] flex-[1.4]'
                 : phoneScale
                   ? 'h-full min-h-0 flex-[1.55]'
                   : isPortrait || isSquare
@@ -487,6 +553,8 @@ export default function SimulationViewer({
                 data={data}
                 beat={playback.beat}
                 votedCount={playback.votedCount}
+                cameraIntent={mapCameraIntent}
+                hideCameraControl={showIntro}
                 compact={isPortrait && !phoneScale && !mobileLayout}
                 phoneScale={phoneScale}
                 mobileLayout={mobileLayout}
@@ -576,6 +644,19 @@ export default function SimulationViewer({
               />
             )}
           </div>
+
+          {/* Intro overlays the canvas/feed only — header question + footer
+              Columnas/Mapa toggle stay visible so the user can choose format. */}
+          <SimIntro
+            visible={showIntro}
+            mobileLayout={mobileLayout}
+            phoneScale={phoneScale}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            showMapToggle={mapAvailability.available}
+            onStart={handleStart}
+            onExplore={handleExploreFromIntro}
+          />
         </div>
 
         {/* Footer — transport fades in capture; readouts stay (hidden under endcard) */}
@@ -602,9 +683,9 @@ export default function SimulationViewer({
               playing={playback.playing}
               speed={playback.speed}
               aspectRatio={aspectRatio}
-              onPlay={playback.play}
+              onPlay={handlePlay}
               onPause={playback.pause}
-              onRestart={playback.restart}
+              onRestart={handleRestart}
               onSpeed={playback.setSpeed}
               onAspectRatio={setAspect}
               viewMode={viewMode}
@@ -643,7 +724,7 @@ export default function SimulationViewer({
           mobileLayout={mobileLayout}
           aspectRatio={aspectRatio}
           captureMode={captureMode}
-          onRestart={playback.restart}
+          onRestart={handleRestart}
           onExplore={playback.explore}
           onCaptureDismiss={playback.explore}
         />

@@ -13,6 +13,14 @@
   filter: drop-shadow(0 0 4px rgba(251, 191, 36, 0.45));
 }
 
+.sim-map--overview .sim-map-dot--glow {
+  filter: none;
+}
+
+.sim-map--overview .sim-map-dot--landed {
+  filter: none;
+}
+
 .sim-map-dot--selected {
   stroke: rgb(252, 211, 77) !important;
   stroke-width: 2.25px;
@@ -23,8 +31,12 @@
   filter: drop-shadow(0 0 2px rgba(251, 191, 36, 0.3));
 }
 
+.sim-viewer--mobile .sim-map--overview .sim-map-dot--glow {
+  filter: none;
+}
+
 .sim-viewer--mobile .sim-map {
-  min-height: min(48dvh, 22rem);
+  min-height: min(58dvh, 28rem);
 }
 
 @media (prefers-reduced-motion: reduce) {

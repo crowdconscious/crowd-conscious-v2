@@ -39,8 +39,29 @@ English equivalent for bilingual UI copy:
 
 | Artifact | Path |
 | --- | --- |
-| FeatureCollection | `public/geo/ageb-cuauhtemoc-mh.geojson` |
+| FeatureCollection (AGEB) | `public/geo/ageb-cuauhtemoc-mh.geojson` |
+| FeatureCollection (alcaldías) | `public/geo/cdmx-alcaldias.geojson` |
 | Preview | `public/geo/preview.png` |
+
+## CDMX alcaldías context layer (Task 4c)
+
+| Field | Value |
+| --- | --- |
+| Same archive | `09_ciudaddemexico.zip` (sha256 above) |
+| Layer used | `conjunto_de_datos/09mun.*` — municipal / alcaldía outlines |
+| Filter | `CVE_ENT=09` (all 16 CDMX municipios) |
+| Properties | `cvegeo`, `nombre` (official `NOMGEO` with accents), plus derived `label_lat` / `label_lng` (point-on-surface of the unsimplified polygon) |
+| Simplify | `0.0003°` (~33 m) Douglas-Peucker, coords rounded to 5 decimals |
+| Output size | ~35 KB (target well under ~150 KB) |
+| Builder | `./scripts/geo/build-cdmx-alcaldias.sh` → `scripts/geo/build_cdmx_alcaldias_geojson.py` |
+
+```bash
+./scripts/geo/build-cdmx-alcaldias.sh
+# or, if the verified archive is already cached:
+AGEB_WORK_DIR=/tmp/inegi-ageb-build ./scripts/geo/build-cdmx-alcaldias.sh --skip-download
+```
+
+Requires `python3` + `pyshp` + `pyproj` + `shapely` (same official geometry; pure-Python path when GDAL bindings are unavailable).
 
 Feature properties (and nothing else):
 

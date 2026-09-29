@@ -1,10 +1,14 @@
 /**
- * SVG projection helpers for AGEB polygons (Task 4b).
+ * SVG projection helpers for sim-viewer Mapa mode (Tasks 4b / 4c).
  * d3-geo geoMercator fitted to the FeatureCollection bounds — no tiles.
+ *
+ * Task 4c fits to the full CDMX alcaldías extent so Cuauhtémoc + Miguel
+ * Hidalgo read as an active sample inside the whole city.
  */
 
 import { geoMercator, geoPath, type GeoPermissibleObjects } from 'd3-geo'
 import type { AgebFeature, AgebFeatureCollection } from './ageb-geo.ts'
+import type { CdmxAlcaldiaFeatureCollection } from './cdmx-alcaldias.ts'
 
 export type MapProjection = {
   /** Project [lng, lat] → [x, y] in SVG space. */
@@ -15,11 +19,17 @@ export type MapProjection = {
   height: number
 }
 
+type FitCollection =
+  | AgebFeatureCollection
+  | CdmxAlcaldiaFeatureCollection
+  | { type: 'FeatureCollection'; features: AgebFeature[] }
+  | GeoPermissibleObjects
+
 /**
  * Fit a Mercator projection to the collection inside a viewport with padding.
  */
 export function createAgebProjection(
-  collection: AgebFeatureCollection | { type: 'FeatureCollection'; features: AgebFeature[] },
+  collection: FitCollection,
   width: number,
   height: number,
   padding = 12,
@@ -48,3 +58,6 @@ export function createAgebProjection(
     },
   }
 }
+
+/** Alias — Task 4c fits the same helper to the CDMX alcaldías collection. */
+export const createCdmxProjection = createAgebProjection
