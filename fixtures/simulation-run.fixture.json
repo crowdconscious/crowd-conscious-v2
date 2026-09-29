@@ -57,9 +57,9 @@
         "displayName": "Magdalena A.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Verónica Anzures",
-        "agebCode": "091000",
-        "centroidLat": 19.390664073522203,
-        "centroidLng": -99.22353203079663,
+        "agebCode": "0901600010016",
+        "centroidLat": 19.468578047529906,
+        "centroidLng": -99.19771414540604,
         "nseBand": "C",
         "age": 18,
         "sex": "femenino",
@@ -90,7 +90,7 @@
             }
           ],
           "ageb": {
-            "code": "091000",
+            "code": "0901600010016",
             "population": 5479,
             "marginals": [
               {
@@ -137,9 +137,9 @@
         "displayName": "Cecilia C.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "San Miguel Chapultepec",
-        "agebCode": "091001",
-        "centroidLat": 19.42674693285953,
-        "centroidLng": -99.13894554294646,
+        "agebCode": "0901600010020",
+        "centroidLat": 19.466027383927255,
+        "centroidLng": -99.20430117742703,
         "nseBand": "D+",
         "age": 80,
         "sex": "femenino",
@@ -170,7 +170,7 @@
             }
           ],
           "ageb": {
-            "code": "091001",
+            "code": "0901600010020",
             "population": 4868,
             "marginals": [
               {
@@ -217,9 +217,9 @@
         "displayName": "Dario R.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Tacuba",
-        "agebCode": "091002",
-        "centroidLat": 19.423834266653284,
-        "centroidLng": -99.18915047295857,
+        "agebCode": "0901600010035",
+        "centroidLat": 19.461680833155665,
+        "centroidLng": -99.20668261865795,
         "nseBand": "C",
         "age": 39,
         "sex": "masculino",
@@ -250,7 +250,7 @@
             }
           ],
           "ageb": {
-            "code": "091002",
+            "code": "0901600010035",
             "population": 3913,
             "marginals": [
               {
@@ -297,9 +297,9 @@
         "displayName": "Yesenia G.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Roma Norte",
-        "agebCode": "091003",
-        "centroidLat": 19.415936304139905,
-        "centroidLng": -99.17816128602252,
+        "agebCode": "0901500010019",
+        "centroidLat": 19.463138498112112,
+        "centroidLng": -99.13688153402775,
         "nseBand": "A/B",
         "age": 57,
         "sex": "femenino",
@@ -330,7 +330,7 @@
             }
           ],
           "ageb": {
-            "code": "091003",
+            "code": "0901500010019",
             "population": 5319,
             "marginals": [
               {
@@ -377,9 +377,9 @@
         "displayName": "Renata E.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Tacuba",
-        "agebCode": "091004",
-        "centroidLat": 19.370487039303406,
-        "centroidLng": -99.22505049190485,
+        "agebCode": "090160001004A",
+        "centroidLat": 19.461872425946744,
+        "centroidLng": -99.19480647792845,
         "nseBand": "D",
         "age": 55,
         "sex": "femenino",
@@ -410,7 +410,7 @@
             }
           ],
           "ageb": {
-            "code": "091004",
+            "code": "090160001004A",
             "population": 5958,
             "marginals": [
               {
@@ -457,9 +457,9 @@
         "displayName": "Raúl M.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Obrera",
-        "agebCode": "091005",
-        "centroidLat": 19.399438218283464,
-        "centroidLng": -99.13682582238224,
+        "agebCode": "0901500010023",
+        "centroidLat": 19.46284674390763,
+        "centroidLng": -99.132886537731,
         "nseBand": "C",
         "age": 21,
         "sex": "masculino",
@@ -490,7 +490,7 @@
             }
           ],
           "ageb": {
-            "code": "091005",
+            "code": "0901500010023",
             "population": 4176,
             "marginals": [
               {
@@ -537,9 +537,9 @@
         "displayName": "José T.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Tacuba",
-        "agebCode": "091006",
-        "centroidLat": 19.392852467810734,
-        "centroidLng": -99.21826185108628,
+        "agebCode": "0901600010054",
+        "centroidLat": 19.46049355006218,
+        "centroidLng": -99.18863842910066,
         "nseBand": "C+",
         "age": 77,
         "sex": "masculino",
@@ -570,7 +570,7 @@
             }
           ],
           "ageb": {
-            "code": "091006",
+            "code": "0901600010054",
             "population": 2674,
             "marginals": [
               {
@@ -617,9 +617,9 @@
         "displayName": "María R.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Roma Norte",
-        "agebCode": "091007",
-        "centroidLat": 19.428855804167686,
-        "centroidLng": -99.21995801035781,
+        "agebCode": "0901500010038",
+        "centroidLat": 19.461265600872487,
+        "centroidLng": -99.12922653946295,
         "nseBand": "C+",
         "age": 36,
         "sex": "femenino",
@@ -650,7 +650,7 @@
             }
           ],
           "ageb": {
-            "code": "091007",
+            "code": "0901500010038",
             "population": 3270,
             "marginals": [
               {
@@ -697,9 +697,9 @@
         "displayName": "Eduardo P.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Verónica Anzures",
-        "agebCode": "091008",
-        "centroidLat": 19.372796918731183,
-        "centroidLng": -99.19097341037822,
+        "agebCode": "0901600010069",
+        "centroidLat": 19.45528959542796,
+        "centroidLng": -99.17598635114179,
         "nseBand": "D+",
         "age": 58,
         "sex": "masculino",
@@ -730,7 +730,7 @@
             }
           ],
           "ageb": {
-            "code": "091008",
+            "code": "0901600010069",
             "population": 3021,
             "marginals": [
               {
@@ -777,9 +777,9 @@
         "displayName": "Carmen A.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Daniel Garza",
-        "agebCode": "091009",
-        "centroidLat": 19.42059685422573,
-        "centroidLng": -99.14282638339327,
+        "agebCode": "0901600010073",
+        "centroidLat": 19.455276651641725,
+        "centroidLng": -99.17080345509098,
         "nseBand": "A/B",
         "age": 55,
         "sex": "femenino",
@@ -810,7 +810,7 @@
             }
           ],
           "ageb": {
-            "code": "091009",
+            "code": "0901600010073",
             "population": 1935,
             "marginals": [
               {
@@ -857,9 +857,9 @@
         "displayName": "Samuel R.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Doctores",
-        "agebCode": "091010",
-        "centroidLat": 19.357853697356767,
-        "centroidLng": -99.18116006939206,
+        "agebCode": "0901500010042",
+        "centroidLat": 19.459207745060027,
+        "centroidLng": -99.15775146097674,
         "nseBand": "C-",
         "age": 75,
         "sex": "masculino",
@@ -890,7 +890,7 @@
             }
           ],
           "ageb": {
-            "code": "091010",
+            "code": "0901500010042",
             "population": 2452,
             "marginals": [
               {
@@ -937,9 +937,9 @@
         "displayName": "Camila T.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Condesa",
-        "agebCode": "091011",
-        "centroidLat": 19.430512840137816,
-        "centroidLng": -99.17815745456144,
+        "agebCode": "0901500010057",
+        "centroidLat": 19.461221915553658,
+        "centroidLng": -99.1510344760497,
         "nseBand": "A/B",
         "age": 57,
         "sex": "femenino",
@@ -970,7 +970,7 @@
             }
           ],
           "ageb": {
-            "code": "091011",
+            "code": "0901500010057",
             "population": 5777,
             "marginals": [
               {
@@ -1017,9 +1017,9 @@
         "displayName": "Carlos M.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Cuauhtémoc",
-        "agebCode": "091012",
-        "centroidLat": 19.449957705754784,
-        "centroidLng": -99.15377020602581,
+        "agebCode": "0901500010061",
+        "centroidLat": 19.462203482620865,
+        "centroidLng": -99.14652337011427,
         "nseBand": "C-",
         "age": 39,
         "sex": "masculino",
@@ -1050,7 +1050,7 @@
             }
           ],
           "ageb": {
-            "code": "091012",
+            "code": "0901500010061",
             "population": 3425,
             "marginals": [
               {
@@ -1097,9 +1097,9 @@
         "displayName": "Violeta A.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Morelos",
-        "agebCode": "091013",
-        "centroidLat": 19.43988780931104,
-        "centroidLng": -99.18364400327673,
+        "agebCode": "0901500010076",
+        "centroidLat": 19.459805033491403,
+        "centroidLng": -99.14460434186161,
         "nseBand": "D",
         "age": 21,
         "sex": "femenino",
@@ -1130,7 +1130,7 @@
             }
           ],
           "ageb": {
-            "code": "091013",
+            "code": "0901500010076",
             "population": 2158,
             "marginals": [
               {
@@ -1177,9 +1177,9 @@
         "displayName": "Sergio C.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Centro",
-        "agebCode": "091014",
-        "centroidLat": 19.432551192236133,
-        "centroidLng": -99.22082085688133,
+        "agebCode": "0901500010080",
+        "centroidLat": 19.460257876225707,
+        "centroidLng": -99.1406234609729,
         "nseBand": "D+",
         "age": 22,
         "sex": "masculino",
@@ -1210,7 +1210,7 @@
             }
           ],
           "ageb": {
-            "code": "091014",
+            "code": "0901500010080",
             "population": 2123,
             "marginals": [
               {
@@ -1257,9 +1257,9 @@
         "displayName": "Elena R.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Roma Norte",
-        "agebCode": "091015",
-        "centroidLat": 19.36874546834733,
-        "centroidLng": -99.20080557653681,
+        "agebCode": "0901500010095",
+        "centroidLat": 19.458756535265895,
+        "centroidLng": -99.13721887387379,
         "nseBand": "C",
         "age": 23,
         "sex": "femenino",
@@ -1290,7 +1290,7 @@
             }
           ],
           "ageb": {
-            "code": "091015",
+            "code": "0901500010095",
             "population": 5101,
             "marginals": [
               {
@@ -1337,9 +1337,9 @@
         "displayName": "Saúl B.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Cuauhtémoc",
-        "agebCode": "091016",
-        "centroidLat": 19.351744969468562,
-        "centroidLng": -99.1478998178104,
+        "agebCode": "0901500010108",
+        "centroidLat": 19.459564517365994,
+        "centroidLng": -99.13376347185284,
         "nseBand": "D",
         "age": 36,
         "sex": "masculino",
@@ -1370,7 +1370,7 @@
             }
           ],
           "ageb": {
-            "code": "091016",
+            "code": "0901500010108",
             "population": 3049,
             "marginals": [
               {
@@ -1417,9 +1417,9 @@
         "displayName": "Alberto H.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Condesa",
-        "agebCode": "091017",
-        "centroidLat": 19.44198650238104,
-        "centroidLng": -99.22383420939558,
+        "agebCode": "0901500010112",
+        "centroidLat": 19.458445263896134,
+        "centroidLng": -99.13055873060242,
         "nseBand": "A/B",
         "age": 23,
         "sex": "masculino",
@@ -1450,7 +1450,7 @@
             }
           ],
           "ageb": {
-            "code": "091017",
+            "code": "0901500010112",
             "population": 3872,
             "marginals": [
               {
@@ -1497,9 +1497,9 @@
         "displayName": "Concepción P.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Roma Norte",
-        "agebCode": "091018",
-        "centroidLat": 19.353403019928372,
-        "centroidLng": -99.16043267626782,
+        "agebCode": "0901500010127",
+        "centroidLat": 19.45912180666879,
+        "centroidLng": -99.12589556803331,
         "nseBand": "C",
         "age": 58,
         "sex": "femenino",
@@ -1530,7 +1530,7 @@
             }
           ],
           "ageb": {
-            "code": "091018",
+            "code": "0901500010127",
             "population": 4635,
             "marginals": [
               {
@@ -1577,9 +1577,9 @@
         "displayName": "Fátima L.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Centro",
-        "agebCode": "091019",
-        "centroidLat": 19.4338218010962,
-        "centroidLng": -99.18205310175662,
+        "agebCode": "0901500010131",
+        "centroidLat": 19.454876959492413,
+        "centroidLng": -99.13654406658172,
         "nseBand": "C-",
         "age": 56,
         "sex": "femenino",
@@ -1610,7 +1610,7 @@
             }
           ],
           "ageb": {
-            "code": "091019",
+            "code": "0901500010131",
             "population": 4460,
             "marginals": [
               {
@@ -1657,9 +1657,9 @@
         "displayName": "Verónica M.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Peralvillo",
-        "agebCode": "091020",
-        "centroidLat": 19.44471183205023,
-        "centroidLng": -99.13953215030023,
+        "agebCode": "0901500010146",
+        "centroidLat": 19.456146786616145,
+        "centroidLng": -99.13440382356346,
         "nseBand": "C-",
         "age": 39,
         "sex": "femenino",
@@ -1690,7 +1690,7 @@
             }
           ],
           "ageb": {
-            "code": "091020",
+            "code": "0901500010146",
             "population": 2586,
             "marginals": [
               {
@@ -1737,9 +1737,9 @@
         "displayName": "Santiago V.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Hipódromo",
-        "agebCode": "091021",
-        "centroidLat": 19.389145078812724,
-        "centroidLng": -99.14230802724605,
+        "agebCode": "0901500010150",
+        "centroidLat": 19.454710017486065,
+        "centroidLng": -99.13191916231692,
         "nseBand": "A/B",
         "age": 56,
         "sex": "masculino",
@@ -1770,7 +1770,7 @@
             }
           ],
           "ageb": {
-            "code": "091021",
+            "code": "0901500010150",
             "population": 4936,
             "marginals": [
               {
@@ -1817,9 +1817,9 @@
         "displayName": "Karla Q.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "San Rafael",
-        "agebCode": "091022",
-        "centroidLat": 19.4276529812254,
-        "centroidLng": -99.17541417194997,
+        "agebCode": "0901500010165",
+        "centroidLat": 19.454554058217408,
+        "centroidLng": -99.12752789005354,
         "nseBand": "D",
         "age": 76,
         "sex": "femenino",
@@ -1850,7 +1850,7 @@
             }
           ],
           "ageb": {
-            "code": "091022",
+            "code": "0901500010165",
             "population": 3178,
             "marginals": [
               {
@@ -1897,9 +1897,9 @@
         "displayName": "Victoria S.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Tacuba",
-        "agebCode": "091023",
-        "centroidLat": 19.438825463782994,
-        "centroidLng": -99.19764483395964,
+        "agebCode": "0901600010088",
+        "centroidLat": 19.450857071192562,
+        "centroidLng": -99.16761548242286,
         "nseBand": "C-",
         "age": 76,
         "sex": "femenino",
@@ -1930,7 +1930,7 @@
             }
           ],
           "ageb": {
-            "code": "091023",
+            "code": "0901600010088",
             "population": 5567,
             "marginals": [
               {
@@ -1977,9 +1977,9 @@
         "displayName": "Nicolás I.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Vista Alegre",
-        "agebCode": "091024",
-        "centroidLat": 19.43818987146951,
-        "centroidLng": -99.21963213870302,
+        "agebCode": "090150001017A",
+        "centroidLat": 19.457602093944697,
+        "centroidLng": -99.16013880233943,
         "nseBand": "C+",
         "age": 38,
         "sex": "masculino",
@@ -2010,7 +2010,7 @@
             }
           ],
           "ageb": {
-            "code": "091024",
+            "code": "090150001017A",
             "population": 4533,
             "marginals": [
               {
@@ -2057,9 +2057,9 @@
         "displayName": "Haydeé D.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Doctores",
-        "agebCode": "091025",
-        "centroidLat": 19.443513911543413,
-        "centroidLng": -99.15846255514306,
+        "agebCode": "0901500010184",
+        "centroidLat": 19.45678553295657,
+        "centroidLng": -99.15192459566534,
         "nseBand": "D",
         "age": 75,
         "sex": "femenino",
@@ -2090,7 +2090,7 @@
             }
           ],
           "ageb": {
-            "code": "091025",
+            "code": "0901500010184",
             "population": 3928,
             "marginals": [
               {
@@ -2137,9 +2137,9 @@
         "displayName": "Flor V.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Roma Norte",
-        "agebCode": "091026",
-        "centroidLat": 19.397323199012316,
-        "centroidLng": -99.21782696092967,
+        "agebCode": "0901500010199",
+        "centroidLat": 19.455312540491523,
+        "centroidLng": -99.15054534952581,
         "nseBand": "C",
         "age": 37,
         "sex": "femenino",
@@ -2170,7 +2170,7 @@
             }
           ],
           "ageb": {
-            "code": "091026",
+            "code": "0901500010199",
             "population": 5548,
             "marginals": [
               {
@@ -2217,9 +2217,9 @@
         "displayName": "Beatriz S.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Algarín",
-        "agebCode": "091027",
-        "centroidLat": 19.433188521582633,
-        "centroidLng": -99.21548443478068,
+        "agebCode": "0901500010201",
+        "centroidLat": 19.454903037893473,
+        "centroidLng": -99.1489884251073,
         "nseBand": "C",
         "age": 76,
         "sex": "femenino",
@@ -2250,7 +2250,7 @@
             }
           ],
           "ageb": {
-            "code": "091027",
+            "code": "0901500010201",
             "population": 5404,
             "marginals": [
               {
@@ -2297,9 +2297,9 @@
         "displayName": "Regina R.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Doctores",
-        "agebCode": "091028",
-        "centroidLat": 19.354338073707183,
-        "centroidLng": -99.19327000723686,
+        "agebCode": "0901500010216",
+        "centroidLat": 19.45567989995688,
+        "centroidLng": -99.14851863233135,
         "nseBand": "C-",
         "age": 77,
         "sex": "femenino",
@@ -2330,7 +2330,7 @@
             }
           ],
           "ageb": {
-            "code": "091028",
+            "code": "0901500010216",
             "population": 4038,
             "marginals": [
               {
@@ -2377,9 +2377,9 @@
         "displayName": "Jessica M.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Doctores",
-        "agebCode": "091029",
-        "centroidLat": 19.39039724720642,
-        "centroidLng": -99.13323599181139,
+        "agebCode": "0901500010220",
+        "centroidLat": 19.455866905617118,
+        "centroidLng": -99.14686154127627,
         "nseBand": "C+",
         "age": 38,
         "sex": "femenino",
@@ -2410,7 +2410,7 @@
             }
           ],
           "ageb": {
-            "code": "091029",
+            "code": "0901500010220",
             "population": 1954,
             "marginals": [
               {
@@ -2457,9 +2457,9 @@
         "displayName": "Dolores C.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Guerrero",
-        "agebCode": "091030",
-        "centroidLat": 19.361183960665947,
-        "centroidLng": -99.13516077557114,
+        "agebCode": "0901500010235",
+        "centroidLat": 19.45548591630161,
+        "centroidLng": -99.14579789081021,
         "nseBand": "A/B",
         "age": 36,
         "sex": "femenino",
@@ -2490,7 +2490,7 @@
             }
           ],
           "ageb": {
-            "code": "091030",
+            "code": "0901500010235",
             "population": 5377,
             "marginals": [
               {
@@ -2537,9 +2537,9 @@
         "displayName": "Federico C.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Tacuba",
-        "agebCode": "091031",
-        "centroidLat": 19.356414123717695,
-        "centroidLng": -99.21920315683354,
+        "agebCode": "0901600010092",
+        "centroidLat": 19.45883217626035,
+        "centroidLng": -99.21251116304339,
         "nseBand": "C",
         "age": 57,
         "sex": "masculino",
@@ -2570,7 +2570,7 @@
             }
           ],
           "ageb": {
-            "code": "091031",
+            "code": "0901600010092",
             "population": 5323,
             "marginals": [
               {
@@ -2617,9 +2617,9 @@
         "displayName": "Guadalupe E.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Verónica Anzures",
-        "agebCode": "091032",
-        "centroidLat": 19.41221192462835,
-        "centroidLng": -99.13040866667406,
+        "agebCode": "0901600010105",
+        "centroidLat": 19.458409770878404,
+        "centroidLng": -99.2070324623932,
         "nseBand": "C+",
         "age": 36,
         "sex": "femenino",
@@ -2650,7 +2650,7 @@
             }
           ],
           "ageb": {
-            "code": "091032",
+            "code": "0901600010105",
             "population": 4507,
             "marginals": [
               {
@@ -2697,9 +2697,9 @@
         "displayName": "Adriana V.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Roma Sur",
-        "agebCode": "091033",
-        "centroidLat": 19.439891003933734,
-        "centroidLng": -99.16534811360296,
+        "agebCode": "090150001024A",
+        "centroidLat": 19.45494285535142,
+        "centroidLng": -99.14462221481398,
         "nseBand": "D",
         "age": 58,
         "sex": "femenino",
@@ -2730,7 +2730,7 @@
             }
           ],
           "ageb": {
-            "code": "091033",
+            "code": "090150001024A",
             "population": 5442,
             "marginals": [
               {
@@ -2777,9 +2777,9 @@
         "displayName": "Wendy L.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Roma Norte",
-        "agebCode": "091034",
-        "centroidLat": 19.36607418314088,
-        "centroidLng": -99.13415509846062,
+        "agebCode": "0901500010254",
+        "centroidLat": 19.45451902938604,
+        "centroidLng": -99.14319626125112,
         "nseBand": "C+",
         "age": 39,
         "sex": "femenino",
@@ -2810,7 +2810,7 @@
             }
           ],
           "ageb": {
-            "code": "091034",
+            "code": "0901500010254",
             "population": 5935,
             "marginals": [
               {
@@ -2857,9 +2857,9 @@
         "displayName": "Andrea B.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Observatorio",
-        "agebCode": "091035",
-        "centroidLat": 19.356744439876636,
-        "centroidLng": -99.15436797204428,
+        "agebCode": "090160001011A",
+        "centroidLat": 19.455896831644328,
+        "centroidLng": -99.20292002652735,
         "nseBand": "C",
         "age": 23,
         "sex": "femenino",
@@ -2890,7 +2890,7 @@
             }
           ],
           "ageb": {
-            "code": "091035",
+            "code": "090160001011A",
             "population": 5437,
             "marginals": [
               {
@@ -2937,9 +2937,9 @@
         "displayName": "Esperanza O.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Doctores",
-        "agebCode": "091036",
-        "centroidLat": 19.43607571136672,
-        "centroidLng": -99.20033634565306,
+        "agebCode": "0901500010269",
+        "centroidLat": 19.454369523044228,
+        "centroidLng": -99.14154538361191,
         "nseBand": "D+",
         "age": 19,
         "sex": "femenino",
@@ -2970,7 +2970,7 @@
             }
           ],
           "ageb": {
-            "code": "091036",
+            "code": "0901500010269",
             "population": 2394,
             "marginals": [
               {
@@ -3017,9 +3017,9 @@
         "displayName": "Gael C.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Polanco",
-        "agebCode": "091037",
-        "centroidLat": 19.39528267914429,
-        "centroidLng": -99.2186548440205,
+        "agebCode": "0901600010124",
+        "centroidLat": 19.455670299311578,
+        "centroidLng": -99.19932985557452,
         "nseBand": "C+",
         "age": 22,
         "sex": "masculino",
@@ -3050,7 +3050,7 @@
             }
           ],
           "ageb": {
-            "code": "091037",
+            "code": "0901600010124",
             "population": 2179,
             "marginals": [
               {
@@ -3097,9 +3097,9 @@
         "displayName": "Úrsula D.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Cuauhtémoc",
-        "agebCode": "091038",
-        "centroidLat": 19.410305739264004,
-        "centroidLng": -99.14899040127173,
+        "agebCode": "0901500010273",
+        "centroidLat": 19.45419079378188,
+        "centroidLng": -99.13947838130758,
         "nseBand": "C",
         "age": 77,
         "sex": "femenino",
@@ -3130,7 +3130,7 @@
             }
           ],
           "ageb": {
-            "code": "091038",
+            "code": "0901500010273",
             "population": 2172,
             "marginals": [
               {
@@ -3177,9 +3177,9 @@
         "displayName": "Itzel M.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Centro",
-        "agebCode": "091039",
-        "centroidLat": 19.393852714449167,
-        "centroidLng": -99.20461914964952,
+        "agebCode": "0901500010288",
+        "centroidLat": 19.45383004686743,
+        "centroidLng": -99.13785886925608,
         "nseBand": "C-",
         "age": 22,
         "sex": "femenino",
@@ -3210,7 +3210,7 @@
             }
           ],
           "ageb": {
-            "code": "091039",
+            "code": "0901500010288",
             "population": 5030,
             "marginals": [
               {
@@ -3257,9 +3257,9 @@
         "displayName": "Denise D.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Roma Norte",
-        "agebCode": "091040",
-        "centroidLat": 19.40016453650314,
-        "centroidLng": -99.16555035416503,
+        "agebCode": "0901500010292",
+        "centroidLat": 19.45304043720886,
+        "centroidLng": -99.13575699337437,
         "nseBand": "D+",
         "age": 58,
         "sex": "femenino",
@@ -3290,7 +3290,7 @@
             }
           ],
           "ageb": {
-            "code": "091040",
+            "code": "0901500010292",
             "population": 1996,
             "marginals": [
               {
@@ -3337,9 +3337,9 @@
         "displayName": "Martín S.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Doctores",
-        "agebCode": "091041",
-        "centroidLat": 19.423206865624522,
-        "centroidLng": -99.2021280670492,
+        "agebCode": "0901500010305",
+        "centroidLat": 19.45310016289845,
+        "centroidLng": -99.13442196111798,
         "nseBand": "C",
         "age": 37,
         "sex": "masculino",
@@ -3370,7 +3370,7 @@
             }
           ],
           "ageb": {
-            "code": "091041",
+            "code": "0901500010305",
             "population": 2251,
             "marginals": [
               {
@@ -3417,9 +3417,9 @@
         "displayName": "Valentina V.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Polanco",
-        "agebCode": "091042",
-        "centroidLat": 19.350700462562962,
-        "centroidLng": -99.1424953354476,
+        "agebCode": "0901600010139",
+        "centroidLat": 19.457137187492847,
+        "centroidLng": -99.19504731233701,
         "nseBand": "A/B",
         "age": 75,
         "sex": "femenino",
@@ -3450,7 +3450,7 @@
             }
           ],
           "ageb": {
-            "code": "091042",
+            "code": "0901600010139",
             "population": 5148,
             "marginals": [
               {
@@ -3497,9 +3497,9 @@
         "displayName": "Paloma J.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Centro",
-        "agebCode": "091043",
-        "centroidLat": 19.396289932844226,
-        "centroidLng": -99.20957374455874,
+        "agebCode": "090150001031A",
+        "centroidLat": 19.45193599071264,
+        "centroidLng": -99.13320531628146,
         "nseBand": "C+",
         "age": 57,
         "sex": "femenino",
@@ -3530,7 +3530,7 @@
             }
           ],
           "ageb": {
-            "code": "091043",
+            "code": "090150001031A",
             "population": 3809,
             "marginals": [
               {
@@ -3577,9 +3577,9 @@
         "displayName": "Jimena C.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Vista Alegre",
-        "agebCode": "091044",
-        "centroidLat": 19.426257452066054,
-        "centroidLng": -99.22504997804762,
+        "agebCode": "0901500010324",
+        "centroidLat": 19.452641955834032,
+        "centroidLng": -99.1317066298604,
         "nseBand": "A/B",
         "age": 24,
         "sex": "femenino",
@@ -3610,7 +3610,7 @@
             }
           ],
           "ageb": {
-            "code": "091044",
+            "code": "0901500010324",
             "population": 5626,
             "marginals": [
               {
@@ -3657,9 +3657,9 @@
         "displayName": "Ramiro C.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Condesa",
-        "agebCode": "091045",
-        "centroidLat": 19.37062807739712,
-        "centroidLng": -99.15386741335504,
+        "agebCode": "0901500010339",
+        "centroidLat": 19.45051570751533,
+        "centroidLng": -99.13165082927898,
         "nseBand": "C",
         "age": 75,
         "sex": "masculino",
@@ -3690,7 +3690,7 @@
             }
           ],
           "ageb": {
-            "code": "091045",
+            "code": "0901500010339",
             "population": 3639,
             "marginals": [
               {
@@ -3737,9 +3737,9 @@
         "displayName": "Mauricio M.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Roma Norte",
-        "agebCode": "091046",
-        "centroidLat": 19.362117106607183,
-        "centroidLng": -99.22519183014055,
+        "agebCode": "0901500010343",
+        "centroidLat": 19.44781851051122,
+        "centroidLng": -99.12923187626376,
         "nseBand": "A/B",
         "age": 37,
         "sex": "masculino",
@@ -3770,7 +3770,7 @@
             }
           ],
           "ageb": {
-            "code": "091046",
+            "code": "0901500010343",
             "population": 4836,
             "marginals": [
               {
@@ -3817,9 +3817,9 @@
         "displayName": "Mónica F.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Centro",
-        "agebCode": "091047",
-        "centroidLat": 19.430806804774328,
-        "centroidLng": -99.15030841778034,
+        "agebCode": "0901500010358",
+        "centroidLat": 19.447634576385024,
+        "centroidLng": -99.12705020588517,
         "nseBand": "D+",
         "age": 76,
         "sex": "femenino",
@@ -3850,7 +3850,7 @@
             }
           ],
           "ageb": {
-            "code": "091047",
+            "code": "0901500010358",
             "population": 6043,
             "marginals": [
               {
@@ -3897,9 +3897,9 @@
         "displayName": "Enrique Z.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Morelos",
-        "agebCode": "091048",
-        "centroidLat": 19.437621853128075,
-        "centroidLng": -99.22144725298975,
+        "agebCode": "0901500010362",
+        "centroidLat": 19.453816901371034,
+        "centroidLng": -99.14762379046708,
         "nseBand": "C-",
         "age": 56,
         "sex": "masculino",
@@ -3930,7 +3930,7 @@
             }
           ],
           "ageb": {
-            "code": "091048",
+            "code": "0901500010362",
             "population": 2800,
             "marginals": [
               {
@@ -3977,9 +3977,9 @@
         "displayName": "Julia N.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Irrigación",
-        "agebCode": "091049",
-        "centroidLat": 19.354595096386035,
-        "centroidLng": -99.16397257605102,
+        "agebCode": "0901600010143",
+        "centroidLat": 19.45554771871611,
+        "centroidLng": -99.19292479100064,
         "nseBand": "C+",
         "age": 78,
         "sex": "femenino",
@@ -4010,7 +4010,7 @@
             }
           ],
           "ageb": {
-            "code": "091049",
+            "code": "0901600010143",
             "population": 4173,
             "marginals": [
               {
@@ -4057,9 +4057,9 @@
         "displayName": "Ofelia G.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Santa María la Ribera",
-        "agebCode": "091050",
-        "centroidLat": 19.37261060832534,
-        "centroidLng": -99.19649254963268,
+        "agebCode": "0901500010377",
+        "centroidLat": 19.453683294725117,
+        "centroidLng": -99.14602596211091,
         "nseBand": "A/B",
         "age": 37,
         "sex": "femenino",
@@ -4090,7 +4090,7 @@
             }
           ],
           "ageb": {
-            "code": "091050",
+            "code": "0901500010377",
             "population": 3749,
             "marginals": [
               {
@@ -4137,9 +4137,9 @@
         "displayName": "Joaquín S.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "San Rafael",
-        "agebCode": "091051",
-        "centroidLat": 19.42554052218329,
-        "centroidLng": -99.13601605915,
+        "agebCode": "0901500010381",
+        "centroidLat": 19.45276301206827,
+        "centroidLng": -99.14466185883657,
         "nseBand": "C-",
         "age": 56,
         "sex": "masculino",
@@ -4170,7 +4170,7 @@
             }
           ],
           "ageb": {
-            "code": "091051",
+            "code": "0901500010381",
             "population": 6199,
             "marginals": [
               {
@@ -4217,9 +4217,9 @@
         "displayName": "Fernando G.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Polanco",
-        "agebCode": "091052",
-        "centroidLat": 19.42299666625913,
-        "centroidLng": -99.2090940563893,
+        "agebCode": "0901600010158",
+        "centroidLat": 19.456921991250514,
+        "centroidLng": -99.18844523083672,
         "nseBand": "C-",
         "age": 55,
         "sex": "masculino",
@@ -4250,7 +4250,7 @@
             }
           ],
           "ageb": {
-            "code": "091052",
+            "code": "0901600010158",
             "population": 2020,
             "marginals": [
               {
@@ -4297,9 +4297,9 @@
         "displayName": "Esteban M.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Asturias",
-        "agebCode": "091053",
-        "centroidLat": 19.377301902277395,
-        "centroidLng": -99.15949017812498,
+        "agebCode": "0901500010396",
+        "centroidLat": 19.452766645290403,
+        "centroidLng": -99.14362379104064,
         "nseBand": "C-",
         "age": 36,
         "sex": "masculino",
@@ -4330,7 +4330,7 @@
             }
           ],
           "ageb": {
-            "code": "091053",
+            "code": "0901500010396",
             "population": 4757,
             "marginals": [
               {
@@ -4377,9 +4377,9 @@
         "displayName": "Zoe N.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Hipódromo",
-        "agebCode": "091054",
-        "centroidLat": 19.43265169810038,
-        "centroidLng": -99.21160749094096,
+        "agebCode": "0901500010409",
+        "centroidLat": 19.452575357187836,
+        "centroidLng": -99.14173948906257,
         "nseBand": "D",
         "age": 37,
         "sex": "femenino",
@@ -4410,7 +4410,7 @@
             }
           ],
           "ageb": {
-            "code": "091054",
+            "code": "0901500010409",
             "population": 2776,
             "marginals": [
               {
@@ -4457,9 +4457,9 @@
         "displayName": "Óscar R.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Irrigación",
-        "agebCode": "091055",
-        "centroidLat": 19.364074005396105,
-        "centroidLng": -99.2279989737738,
+        "agebCode": "0901600010162",
+        "centroidLat": 19.455622943755834,
+        "centroidLng": -99.18514283460647,
         "nseBand": "C+",
         "age": 56,
         "sex": "masculino",
@@ -4490,7 +4490,7 @@
             }
           ],
           "ageb": {
-            "code": "091055",
+            "code": "0901600010162",
             "population": 2215,
             "marginals": [
               {
@@ -4537,9 +4537,9 @@
         "displayName": "Vicente P.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Doctores",
-        "agebCode": "091056",
-        "centroidLat": 19.43750840493012,
-        "centroidLng": -99.18723393023946,
+        "agebCode": "0901500010413",
+        "centroidLat": 19.452543767174333,
+        "centroidLng": -99.14077203812822,
         "nseBand": "D+",
         "age": 21,
         "sex": "masculino",
@@ -4570,7 +4570,7 @@
             }
           ],
           "ageb": {
-            "code": "091056",
+            "code": "0901500010413",
             "population": 2307,
             "marginals": [
               {
@@ -4617,9 +4617,9 @@
         "displayName": "Bárbara C.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Centro",
-        "agebCode": "091057",
-        "centroidLat": 19.416901166806927,
-        "centroidLng": -99.15015329888091,
+        "agebCode": "0901500010428",
+        "centroidLat": 19.451584095809757,
+        "centroidLng": -99.13924408883304,
         "nseBand": "C-",
         "age": 57,
         "sex": "femenino",
@@ -4650,7 +4650,7 @@
             }
           ],
           "ageb": {
-            "code": "091057",
+            "code": "0901500010428",
             "population": 5137,
             "marginals": [
               {
@@ -4697,9 +4697,9 @@
         "displayName": "Wilfredo C.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Polanco",
-        "agebCode": "091058",
-        "centroidLat": 19.356625260668807,
-        "centroidLng": -99.15472411415075,
+        "agebCode": "0901600010177",
+        "centroidLat": 19.452244597214758,
+        "centroidLng": -99.18181756159976,
         "nseBand": "A/B",
         "age": 58,
         "sex": "masculino",
@@ -4730,7 +4730,7 @@
             }
           ],
           "ageb": {
-            "code": "091058",
+            "code": "0901600010177",
             "population": 2581,
             "marginals": [
               {
@@ -4777,9 +4777,9 @@
         "displayName": "Laura R.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Morelos",
-        "agebCode": "091059",
-        "centroidLat": 19.427347378013653,
-        "centroidLng": -99.16583195633255,
+        "agebCode": "0901500010432",
+        "centroidLat": 19.4516081239222,
+        "centroidLng": -99.13720789775341,
         "nseBand": "C+",
         "age": 24,
         "sex": "femenino",
@@ -4810,7 +4810,7 @@
             }
           ],
           "ageb": {
-            "code": "091059",
+            "code": "0901500010432",
             "population": 4410,
             "marginals": [
               {
@@ -4857,9 +4857,9 @@
         "displayName": "Omar M.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Polanco",
-        "agebCode": "091060",
-        "centroidLat": 19.44277790884953,
-        "centroidLng": -99.14383998380043,
+        "agebCode": "0901600010181",
+        "centroidLat": 19.449985288283077,
+        "centroidLng": -99.17915836201341,
         "nseBand": "A/B",
         "age": 56,
         "sex": "masculino",
@@ -4890,7 +4890,7 @@
             }
           ],
           "ageb": {
-            "code": "091060",
+            "code": "0901600010181",
             "population": 4356,
             "marginals": [
               {
@@ -4937,9 +4937,9 @@
         "displayName": "Nadia G.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Cuauhtémoc",
-        "agebCode": "091061",
-        "centroidLat": 19.378938099392688,
-        "centroidLng": -99.1897329059383,
+        "agebCode": "0901500010447",
+        "centroidLat": 19.45090264508277,
+        "centroidLng": -99.1353063299422,
         "nseBand": "A/B",
         "age": 75,
         "sex": "femenino",
@@ -4970,7 +4970,7 @@
             }
           ],
           "ageb": {
-            "code": "091061",
+            "code": "0901500010447",
             "population": 3165,
             "marginals": [
               {
@@ -5017,9 +5017,9 @@
         "displayName": "Antonio S.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Doctores",
-        "agebCode": "091062",
-        "centroidLat": 19.355101539636962,
-        "centroidLng": -99.21512662267313,
+        "agebCode": "0901500010451",
+        "centroidLat": 19.449716918660254,
+        "centroidLng": -99.13476690750032,
         "nseBand": "C-",
         "age": 36,
         "sex": "masculino",
@@ -5050,7 +5050,7 @@
             }
           ],
           "ageb": {
-            "code": "091062",
+            "code": "0901500010451",
             "population": 3479,
             "marginals": [
               {
@@ -5097,9 +5097,9 @@
         "displayName": "Gustavo C.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "San Rafael",
-        "agebCode": "091063",
-        "centroidLat": 19.414572864049113,
-        "centroidLng": -99.22075079336763,
+        "agebCode": "0901500010466",
+        "centroidLat": 19.452168140265048,
+        "centroidLng": -99.16066744697764,
         "nseBand": "C-",
         "age": 25,
         "sex": "masculino",
@@ -5130,7 +5130,7 @@
             }
           ],
           "ageb": {
-            "code": "091063",
+            "code": "0901500010466",
             "population": 4803,
             "marginals": [
               {
@@ -5177,9 +5177,9 @@
         "displayName": "Ana G.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "San Rafael",
-        "agebCode": "091064",
-        "centroidLat": 19.383708791830575,
-        "centroidLng": -99.21494498538786,
+        "agebCode": "0901500010470",
+        "centroidLat": 19.453716618309617,
+        "centroidLng": -99.1566790070346,
         "nseBand": "A/B",
         "age": 78,
         "sex": "femenino",
@@ -5210,7 +5210,7 @@
             }
           ],
           "ageb": {
-            "code": "091064",
+            "code": "0901500010470",
             "population": 3273,
             "marginals": [
               {
@@ -5257,9 +5257,9 @@
         "displayName": "Silvia H.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Anáhuac",
-        "agebCode": "091065",
-        "centroidLat": 19.41093621025793,
-        "centroidLng": -99.17427967136726,
+        "agebCode": "0901600010196",
+        "centroidLat": 19.450523461269736,
+        "centroidLng": -99.1747113600485,
         "nseBand": "D+",
         "age": 36,
         "sex": "femenino",
@@ -5290,7 +5290,7 @@
             }
           ],
           "ageb": {
-            "code": "091065",
+            "code": "0901600010196",
             "population": 2220,
             "marginals": [
               {
@@ -5337,9 +5337,9 @@
         "displayName": "Jorge A.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Cuauhtémoc",
-        "agebCode": "091066",
-        "centroidLat": 19.354638178343883,
-        "centroidLng": -99.18698726573028,
+        "agebCode": "0901500010485",
+        "centroidLat": 19.448581671899408,
+        "centroidLng": -99.1555267645842,
         "nseBand": "D",
         "age": 56,
         "sex": "masculino",
@@ -5370,7 +5370,7 @@
             }
           ],
           "ageb": {
-            "code": "091066",
+            "code": "0901500010485",
             "population": 4126,
             "marginals": [
               {
@@ -5417,9 +5417,9 @@
         "displayName": "Pablo P.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Guerrero",
-        "agebCode": "091067",
-        "centroidLat": 19.38192086680792,
-        "centroidLng": -99.15876638737508,
+        "agebCode": "090150001049A",
+        "centroidLat": 19.446541529964357,
+        "centroidLng": -99.15207086001128,
         "nseBand": "D+",
         "age": 37,
         "sex": "masculino",
@@ -5450,7 +5450,7 @@
             }
           ],
           "ageb": {
-            "code": "091067",
+            "code": "090150001049A",
             "population": 5340,
             "marginals": [
               {
@@ -5497,9 +5497,9 @@
         "displayName": "Lorena R.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Polanco",
-        "agebCode": "091068",
-        "centroidLat": 19.38746035096701,
-        "centroidLng": -99.22274621186779,
+        "agebCode": "0901600010209",
+        "centroidLat": 19.450550224766136,
+        "centroidLng": -99.17103661531866,
         "nseBand": "A/B",
         "age": 38,
         "sex": "femenino",
@@ -5530,7 +5530,7 @@
             }
           ],
           "ageb": {
-            "code": "091068",
+            "code": "0901600010209",
             "population": 5259,
             "marginals": [
               {
@@ -5577,9 +5577,9 @@
         "displayName": "Rebeca O.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Tacuba",
-        "agebCode": "091069",
-        "centroidLat": 19.395592047087845,
-        "centroidLng": -99.2070559888566,
+        "agebCode": "0901600010213",
+        "centroidLat": 19.446048084573896,
+        "centroidLng": -99.16615806495831,
         "nseBand": "D",
         "age": 37,
         "sex": "femenino",
@@ -5610,7 +5610,7 @@
             }
           ],
           "ageb": {
-            "code": "091069",
+            "code": "0901600010213",
             "population": 2343,
             "marginals": [
               {
@@ -5657,9 +5657,9 @@
         "displayName": "Alicia G.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Tacuba",
-        "agebCode": "091070",
-        "centroidLat": 19.43333843555301,
-        "centroidLng": -99.14118880568539,
+        "agebCode": "0901600010228",
+        "centroidLat": 19.45195618640676,
+        "centroidLng": -99.21320183031962,
         "nseBand": "D",
         "age": 76,
         "sex": "femenino",
@@ -5690,7 +5690,7 @@
             }
           ],
           "ageb": {
-            "code": "091070",
+            "code": "0901600010228",
             "population": 2102,
             "marginals": [
               {
@@ -5737,9 +5737,9 @@
         "displayName": "Amparo M.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Santa María la Ribera",
-        "agebCode": "091071",
-        "centroidLat": 19.379580613132564,
-        "centroidLng": -99.20953314515762,
+        "agebCode": "0901500010502",
+        "centroidLat": 19.447981858830154,
+        "centroidLng": -99.14880883287519,
         "nseBand": "C",
         "age": 20,
         "sex": "femenino",
@@ -5770,7 +5770,7 @@
             }
           ],
           "ageb": {
-            "code": "091071",
+            "code": "0901500010502",
             "population": 5017,
             "marginals": [
               {
@@ -5817,9 +5817,9 @@
         "displayName": "Rosa L.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Polanco",
-        "agebCode": "091072",
-        "centroidLat": 19.357715704664585,
-        "centroidLng": -99.16244636231103,
+        "agebCode": "0901600010232",
+        "centroidLat": 19.45248678577438,
+        "centroidLng": -99.21012663087204,
         "nseBand": "C+",
         "age": 23,
         "sex": "femenino",
@@ -5850,7 +5850,7 @@
             }
           ],
           "ageb": {
-            "code": "091072",
+            "code": "0901600010232",
             "population": 1984,
             "marginals": [
               {
@@ -5897,9 +5897,9 @@
         "displayName": "Mateo S.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Morelos",
-        "agebCode": "091073",
-        "centroidLat": 19.39319623215124,
-        "centroidLng": -99.18930772956926,
+        "agebCode": "0901500010517",
+        "centroidLat": 19.449460249950885,
+        "centroidLng": -99.14400443626047,
         "nseBand": "C",
         "age": 24,
         "sex": "masculino",
@@ -5930,7 +5930,7 @@
             }
           ],
           "ageb": {
-            "code": "091073",
+            "code": "0901500010517",
             "population": 5792,
             "marginals": [
               {
@@ -5977,9 +5977,9 @@
         "displayName": "Adrián R.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Irrigación",
-        "agebCode": "091074",
-        "centroidLat": 19.369216284085994,
-        "centroidLng": -99.15385054144544,
+        "agebCode": "0901600010247",
+        "centroidLat": 19.453048713222294,
+        "centroidLng": -99.20580961333752,
         "nseBand": "C-",
         "age": 76,
         "sex": "masculino",
@@ -6010,7 +6010,7 @@
             }
           ],
           "ageb": {
-            "code": "091074",
+            "code": "0901600010247",
             "population": 3490,
             "marginals": [
               {
@@ -6057,9 +6057,9 @@
         "displayName": "Ricardo F.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Roma Norte",
-        "agebCode": "091075",
-        "centroidLat": 19.39785148941446,
-        "centroidLng": -99.19589931859636,
+        "agebCode": "0901500010521",
+        "centroidLat": 19.447504989622235,
+        "centroidLng": -99.13856795500398,
         "nseBand": "C",
         "age": 55,
         "sex": "masculino",
@@ -6090,7 +6090,7 @@
             }
           ],
           "ageb": {
-            "code": "091075",
+            "code": "0901500010521",
             "population": 5488,
             "marginals": [
               {
@@ -6137,9 +6137,9 @@
         "displayName": "Abril P.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Doctores",
-        "agebCode": "091076",
-        "centroidLat": 19.424212142755277,
-        "centroidLng": -99.181326549612,
+        "agebCode": "0901500010536",
+        "centroidLat": 19.44436000001684,
+        "centroidLng": -99.13728829887093,
         "nseBand": "D",
         "age": 55,
         "sex": "femenino",
@@ -6170,7 +6170,7 @@
             }
           ],
           "ageb": {
-            "code": "091076",
+            "code": "0901500010536",
             "population": 5570,
             "marginals": [
               {
@@ -6217,9 +6217,9 @@
         "displayName": "Dulce M.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Roma Norte",
-        "agebCode": "091077",
-        "centroidLat": 19.421103695710187,
-        "centroidLng": -99.17093991469127,
+        "agebCode": "0901500010540",
+        "centroidLat": 19.444995980085285,
+        "centroidLng": -99.13314788198917,
         "nseBand": "A/B",
         "age": 22,
         "sex": "femenino",
@@ -6250,7 +6250,7 @@
             }
           ],
           "ageb": {
-            "code": "091077",
+            "code": "0901500010540",
             "population": 2828,
             "marginals": [
               {
@@ -6297,9 +6297,9 @@
         "displayName": "Fabián R.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Doctores",
-        "agebCode": "091078",
-        "centroidLat": 19.355569006549192,
-        "centroidLng": -99.2169346084539,
+        "agebCode": "0901500010555",
+        "centroidLat": 19.447446784118114,
+        "centroidLng": -99.16143099147871,
         "nseBand": "C-",
         "age": 21,
         "sex": "masculino",
@@ -6330,7 +6330,7 @@
             }
           ],
           "ageb": {
-            "code": "091078",
+            "code": "0901500010555",
             "population": 4329,
             "marginals": [
               {
@@ -6377,9 +6377,9 @@
         "displayName": "Diego A.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Condesa",
-        "agebCode": "091079",
-        "centroidLat": 19.419329349626786,
-        "centroidLng": -99.2294196093874,
+        "agebCode": "090150001056A",
+        "centroidLat": 19.44517016860783,
+        "centroidLng": -99.14530560230791,
         "nseBand": "A/B",
         "age": 37,
         "sex": "masculino",
@@ -6410,7 +6410,7 @@
             }
           ],
           "ageb": {
-            "code": "091079",
+            "code": "090150001056A",
             "population": 1804,
             "marginals": [
               {
@@ -6457,9 +6457,9 @@
         "displayName": "Patricia C.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Tacuba",
-        "agebCode": "091000",
-        "centroidLat": 19.43572227938566,
-        "centroidLng": -99.13874788635411,
+        "agebCode": "0901600010251",
+        "centroidLat": 19.45199591265455,
+        "centroidLng": -99.19733706896767,
         "nseBand": "C",
         "age": 57,
         "sex": "femenino",
@@ -6490,7 +6490,7 @@
             }
           ],
           "ageb": {
-            "code": "091000",
+            "code": "0901600010251",
             "population": 2327,
             "marginals": [
               {
@@ -6537,9 +6537,9 @@
         "displayName": "Pedro R.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Doctores",
-        "agebCode": "091001",
-        "centroidLat": 19.362066267919726,
-        "centroidLng": -99.17303229472135,
+        "agebCode": "0901500010574",
+        "centroidLat": 19.444025184326915,
+        "centroidLng": -99.1421052524975,
         "nseBand": "C-",
         "age": 75,
         "sex": "masculino",
@@ -6570,7 +6570,7 @@
             }
           ],
           "ageb": {
-            "code": "091001",
+            "code": "0901500010574",
             "population": 5550,
             "marginals": [
               {
@@ -6617,9 +6617,9 @@
         "displayName": "Francisca G.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Polanco",
-        "agebCode": "091002",
-        "centroidLat": 19.37378344067838,
-        "centroidLng": -99.13266897960101,
+        "agebCode": "0901600010270",
+        "centroidLat": 19.45088827906236,
+        "centroidLng": -99.18772188972756,
         "nseBand": "A/B",
         "age": 22,
         "sex": "femenino",
@@ -6650,7 +6650,7 @@
             }
           ],
           "ageb": {
-            "code": "091002",
+            "code": "0901600010270",
             "population": 4309,
             "marginals": [
               {
@@ -6697,9 +6697,9 @@
         "displayName": "Zacarías E.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Morelos",
-        "agebCode": "091003",
-        "centroidLat": 19.401304157171396,
-        "centroidLng": -99.19549855407794,
+        "agebCode": "0901500010589",
+        "centroidLat": 19.440262695537953,
+        "centroidLng": -99.12542438223674,
         "nseBand": "D",
         "age": 38,
         "sex": "masculino",
@@ -6730,7 +6730,7 @@
             }
           ],
           "ageb": {
-            "code": "091003",
+            "code": "0901500010589",
             "population": 2778,
             "marginals": [
               {
@@ -6777,9 +6777,9 @@
         "displayName": "Olga M.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Roma Norte",
-        "agebCode": "091004",
-        "centroidLat": 19.38575333377812,
-        "centroidLng": -99.16032253717539,
+        "agebCode": "0901500010593",
+        "centroidLat": 19.444257083912937,
+        "centroidLng": -99.16237495206222,
         "nseBand": "C+",
         "age": 75,
         "sex": "femenino",
@@ -6810,7 +6810,7 @@
             }
           ],
           "ageb": {
-            "code": "091004",
+            "code": "0901500010593",
             "population": 5808,
             "marginals": [
               {
@@ -6857,9 +6857,9 @@
         "displayName": "Fernanda T.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Tacuba",
-        "agebCode": "091005",
-        "centroidLat": 19.37972166191321,
-        "centroidLng": -99.17199735948351,
+        "agebCode": "0901600010285",
+        "centroidLat": 19.444722375350594,
+        "centroidLng": -99.17641955414712,
         "nseBand": "C+",
         "age": 39,
         "sex": "femenino",
@@ -6890,7 +6890,7 @@
             }
           ],
           "ageb": {
-            "code": "091005",
+            "code": "0901600010285",
             "population": 2335,
             "marginals": [
               {
@@ -6937,9 +6937,9 @@
         "displayName": "Tania R.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Doctores",
-        "agebCode": "091006",
-        "centroidLat": 19.393555558496153,
-        "centroidLng": -99.15665874289814,
+        "agebCode": "0901500010606",
+        "centroidLat": 19.442324081789852,
+        "centroidLng": -99.15714067608594,
         "nseBand": "C-",
         "age": 24,
         "sex": "femenino",
@@ -6970,7 +6970,7 @@
             }
           ],
           "ageb": {
-            "code": "091006",
+            "code": "0901500010606",
             "population": 5138,
             "marginals": [
               {
@@ -7017,9 +7017,9 @@
         "displayName": "Rocío P.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Doctores",
-        "agebCode": "091007",
-        "centroidLat": 19.425116462958975,
-        "centroidLng": -99.16704567935784,
+        "agebCode": "0901500010610",
+        "centroidLat": 19.440975221149774,
+        "centroidLng": -99.14891762630924,
         "nseBand": "C-",
         "age": 38,
         "sex": "femenino",
@@ -7050,7 +7050,7 @@
             }
           ],
           "ageb": {
-            "code": "091007",
+            "code": "0901500010610",
             "population": 2934,
             "marginals": [
               {
@@ -7097,9 +7097,9 @@
         "displayName": "Octavio A.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Anáhuac",
-        "agebCode": "091008",
-        "centroidLat": 19.36649979718495,
-        "centroidLng": -99.16956812990364,
+        "agebCode": "090160001029A",
+        "centroidLat": 19.447310478651524,
+        "centroidLng": -99.17185165833622,
         "nseBand": "A/B",
         "age": 77,
         "sex": "masculino",
@@ -7130,7 +7130,7 @@
             }
           ],
           "ageb": {
-            "code": "091008",
+            "code": "090160001029A",
             "population": 5865,
             "marginals": [
               {
@@ -7177,9 +7177,9 @@
         "displayName": "Rodrigo R.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Argentina",
-        "agebCode": "091009",
-        "centroidLat": 19.43676613634452,
-        "centroidLng": -99.18528631857598,
+        "agebCode": "0901600010302",
+        "centroidLat": 19.45100848733604,
+        "centroidLng": -99.21874796630293,
         "nseBand": "C",
         "age": 22,
         "sex": "masculino",
@@ -7210,7 +7210,7 @@
             }
           ],
           "ageb": {
-            "code": "091009",
+            "code": "0901600010302",
             "population": 4693,
             "marginals": [
               {
@@ -7257,9 +7257,9 @@
         "displayName": "Pilar T.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Doctores",
-        "agebCode": "091010",
-        "centroidLat": 19.37139018620364,
-        "centroidLng": -99.15620590650477,
+        "agebCode": "0901500010625",
+        "centroidLat": 19.439141316401063,
+        "centroidLng": -99.14517654666365,
         "nseBand": "D+",
         "age": 57,
         "sex": "femenino",
@@ -7290,7 +7290,7 @@
             }
           ],
           "ageb": {
-            "code": "091010",
+            "code": "0901500010625",
             "population": 5906,
             "marginals": [
               {
@@ -7337,9 +7337,9 @@
         "displayName": "Ximena M.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Polanco",
-        "agebCode": "091011",
-        "centroidLat": 19.385311523266136,
-        "centroidLng": -99.20919366694987,
+        "agebCode": "0901600010317",
+        "centroidLat": 19.45100355956137,
+        "centroidLng": -99.2146396332346,
         "nseBand": "A/B",
         "age": 24,
         "sex": "femenino",
@@ -7370,7 +7370,7 @@
             }
           ],
           "ageb": {
-            "code": "091011",
+            "code": "0901600010317",
             "population": 2452,
             "marginals": [
               {
@@ -7417,9 +7417,9 @@
         "displayName": "Roberto A.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Roma Norte",
-        "agebCode": "091012",
-        "centroidLat": 19.413769222795963,
-        "centroidLng": -99.14351943179034,
+        "agebCode": "090150001063A",
+        "centroidLat": 19.438990246303828,
+        "centroidLng": -99.14172159550503,
         "nseBand": "C+",
         "age": 58,
         "sex": "masculino",
@@ -7450,7 +7450,7 @@
             }
           ],
           "ageb": {
-            "code": "091012",
+            "code": "090150001063A",
             "population": 2678,
             "marginals": [
               {
@@ -7497,9 +7497,9 @@
         "displayName": "Leticia C.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Ampliación Granada",
-        "agebCode": "091013",
-        "centroidLat": 19.419193863729014,
-        "centroidLng": -99.13277858495248,
+        "agebCode": "0901600010321",
+        "centroidLat": 19.447758874177786,
+        "centroidLng": -99.2155558116962,
         "nseBand": "C-",
         "age": 37,
         "sex": "femenino",
@@ -7530,7 +7530,7 @@
             }
           ],
           "ageb": {
-            "code": "091013",
+            "code": "0901600010321",
             "population": 5510,
             "marginals": [
               {
@@ -7577,9 +7577,9 @@
         "displayName": "Ezequiel R.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Cuauhtémoc",
-        "agebCode": "091014",
-        "centroidLat": 19.442724885907953,
-        "centroidLng": -99.17983712786344,
+        "agebCode": "0901500010644",
+        "centroidLat": 19.439302567745745,
+        "centroidLng": -99.13577564088509,
         "nseBand": "D",
         "age": 20,
         "sex": "masculino",
@@ -7610,7 +7610,7 @@
             }
           ],
           "ageb": {
-            "code": "091014",
+            "code": "0901500010644",
             "population": 3169,
             "marginals": [
               {
@@ -7657,9 +7657,9 @@
         "displayName": "Carolina B.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Doctores",
-        "agebCode": "091015",
-        "centroidLat": 19.40432265975978,
-        "centroidLng": -99.1957752495492,
+        "agebCode": "0901500010659",
+        "centroidLat": 19.439340859329253,
+        "centroidLng": -99.12831027981012,
         "nseBand": "C-",
         "age": 36,
         "sex": "femenino",
@@ -7690,7 +7690,7 @@
             }
           ],
           "ageb": {
-            "code": "091015",
+            "code": "0901500010659",
             "population": 4238,
             "marginals": [
               {
@@ -7737,9 +7737,9 @@
         "displayName": "René H.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Irrigación",
-        "agebCode": "091016",
-        "centroidLat": 19.41431814166717,
-        "centroidLng": -99.16796163767111,
+        "agebCode": "0901600010336",
+        "centroidLat": 19.44910971783042,
+        "centroidLng": -99.21251220775306,
         "nseBand": "C-",
         "age": 37,
         "sex": "masculino",
@@ -7770,7 +7770,7 @@
             }
           ],
           "ageb": {
-            "code": "091016",
+            "code": "0901600010336",
             "population": 3230,
             "marginals": [
               {
@@ -7817,9 +7817,9 @@
         "displayName": "Axel P.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Santa María la Ribera",
-        "agebCode": "091017",
-        "centroidLat": 19.41764497957192,
-        "centroidLng": -99.15848404264078,
+        "agebCode": "0901500010663",
+        "centroidLat": 19.435705354830326,
+        "centroidLng": -99.12575396499753,
         "nseBand": "C",
         "age": 58,
         "sex": "masculino",
@@ -7850,7 +7850,7 @@
             }
           ],
           "ageb": {
-            "code": "091017",
+            "code": "0901500010663",
             "population": 2350,
             "marginals": [
               {
@@ -7897,9 +7897,9 @@
         "displayName": "Gerardo L.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Observatorio",
-        "agebCode": "091018",
-        "centroidLat": 19.387289005867203,
-        "centroidLng": -99.21080955364276,
+        "agebCode": "0901600010340",
+        "centroidLat": 19.447214502058923,
+        "centroidLng": -99.20868736282573,
         "nseBand": "D+",
         "age": 37,
         "sex": "masculino",
@@ -7930,7 +7930,7 @@
             }
           ],
           "ageb": {
-            "code": "091018",
+            "code": "0901600010340",
             "population": 3698,
             "marginals": [
               {
@@ -7977,9 +7977,9 @@
         "displayName": "Tadeo M.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "San Rafael",
-        "agebCode": "091019",
-        "centroidLat": 19.443978881277143,
-        "centroidLng": -99.14529796232935,
+        "agebCode": "0901500010678",
+        "centroidLat": 19.439132025241552,
+        "centroidLng": -99.16570812297955,
         "nseBand": "C+",
         "age": 76,
         "sex": "masculino",
@@ -8010,7 +8010,7 @@
             }
           ],
           "ageb": {
-            "code": "091019",
+            "code": "0901500010678",
             "population": 3227,
             "marginals": [
               {
@@ -8057,9 +8057,9 @@
         "displayName": "Diana V.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Daniel Garza",
-        "agebCode": "091020",
-        "centroidLat": 19.442730467556974,
-        "centroidLng": -99.18718487056438,
+        "agebCode": "090160001036A",
+        "centroidLat": 19.447322722072453,
+        "centroidLng": -99.20268396409989,
         "nseBand": "A/B",
         "age": 58,
         "sex": "femenino",
@@ -8090,7 +8090,7 @@
             }
           ],
           "ageb": {
-            "code": "091020",
+            "code": "090160001036A",
             "population": 4615,
             "marginals": [
               {
@@ -8137,9 +8137,9 @@
         "displayName": "Estefanía Q.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Tacuba",
-        "agebCode": "091021",
-        "centroidLat": 19.363917007064444,
-        "centroidLng": -99.22856547338424,
+        "agebCode": "0901600010374",
+        "centroidLat": 19.449213533204198,
+        "centroidLng": -99.19749617108941,
         "nseBand": "C+",
         "age": 76,
         "sex": "femenino",
@@ -8170,7 +8170,7 @@
             }
           ],
           "ageb": {
-            "code": "091021",
+            "code": "0901600010374",
             "population": 1974,
             "marginals": [
               {
@@ -8217,9 +8217,9 @@
         "displayName": "Claudia S.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Doctores",
-        "agebCode": "091022",
-        "centroidLat": 19.361033507832325,
-        "centroidLng": -99.15190836586524,
+        "agebCode": "0901500010682",
+        "centroidLat": 19.437806668202725,
+        "centroidLng": -99.1624737523888,
         "nseBand": "D+",
         "age": 75,
         "sex": "femenino",
@@ -8250,7 +8250,7 @@
             }
           ],
           "ageb": {
-            "code": "091022",
+            "code": "0901500010682",
             "population": 4408,
             "marginals": [
               {
@@ -8297,9 +8297,9 @@
         "displayName": "Inés I.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Doctores",
-        "agebCode": "091023",
-        "centroidLat": 19.44312679702416,
-        "centroidLng": -99.17888718626463,
+        "agebCode": "0901500010697",
+        "centroidLat": 19.436851640046836,
+        "centroidLng": -99.15923540527389,
         "nseBand": "D+",
         "age": 21,
         "sex": "femenino",
@@ -8330,7 +8330,7 @@
             }
           ],
           "ageb": {
-            "code": "091023",
+            "code": "0901500010697",
             "population": 3702,
             "marginals": [
               {
@@ -8377,9 +8377,9 @@
         "displayName": "Irene D.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Santa María la Ribera",
-        "agebCode": "091024",
-        "centroidLat": 19.40945377058815,
-        "centroidLng": -99.2090431756992,
+        "agebCode": "090150001070A",
+        "centroidLat": 19.43601759741366,
+        "centroidLng": -99.1551106233345,
         "nseBand": "D+",
         "age": 36,
         "sex": "femenino",
@@ -8410,7 +8410,7 @@
             }
           ],
           "ageb": {
-            "code": "091024",
+            "code": "090150001070A",
             "population": 2176,
             "marginals": [
               {
@@ -8457,9 +8457,9 @@
         "displayName": "Xóchitl V.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "San Miguel Chapultepec",
-        "agebCode": "091025",
-        "centroidLat": 19.372144663962533,
-        "centroidLng": -99.14934388608206,
+        "agebCode": "0901600010389",
+        "centroidLat": 19.44672294586703,
+        "centroidLng": -99.19736907484635,
         "nseBand": "D+",
         "age": 75,
         "sex": "femenino",
@@ -8490,7 +8490,7 @@
             }
           ],
           "ageb": {
-            "code": "091025",
+            "code": "0901600010389",
             "population": 3639,
             "marginals": [
               {
@@ -8537,9 +8537,9 @@
         "displayName": "Yolanda S.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Algarín",
-        "agebCode": "091026",
-        "centroidLat": 19.446308783232233,
-        "centroidLng": -99.15081471353304,
+        "agebCode": "0901500010714",
+        "centroidLat": 19.437754736782313,
+        "centroidLng": -99.15163065790891,
         "nseBand": "C-",
         "age": 75,
         "sex": "femenino",
@@ -8570,7 +8570,7 @@
             }
           ],
           "ageb": {
-            "code": "091026",
+            "code": "0901500010714",
             "population": 4941,
             "marginals": [
               {
@@ -8617,9 +8617,9 @@
         "displayName": "Hilda R.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Anáhuac",
-        "agebCode": "091027",
-        "centroidLat": 19.4468886756571,
-        "centroidLng": -99.1551909566112,
+        "agebCode": "0901600010393",
+        "centroidLat": 19.44706475314021,
+        "centroidLng": -99.18660995986014,
         "nseBand": "C-",
         "age": 22,
         "sex": "femenino",
@@ -8650,7 +8650,7 @@
             }
           ],
           "ageb": {
-            "code": "091027",
+            "code": "0901600010393",
             "population": 3632,
             "marginals": [
               {
@@ -8697,9 +8697,9 @@
         "displayName": "Guillermo M.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Buenavista",
-        "agebCode": "091028",
-        "centroidLat": 19.38502178073395,
-        "centroidLng": -99.13452507135925,
+        "agebCode": "0901500010729",
+        "centroidLat": 19.434396362241657,
+        "centroidLng": -99.15367672573612,
         "nseBand": "A/B",
         "age": 57,
         "sex": "masculino",
@@ -8730,7 +8730,7 @@
             }
           ],
           "ageb": {
-            "code": "091028",
+            "code": "0901500010729",
             "population": 2533,
             "marginals": [
               {
@@ -8777,9 +8777,9 @@
         "displayName": "Maximiliano C.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Cuauhtémoc",
-        "agebCode": "091029",
-        "centroidLat": 19.411595259443857,
-        "centroidLng": -99.14097776801326,
+        "agebCode": "0901500010733",
+        "centroidLat": 19.43550492051035,
+        "centroidLng": -99.14385988124744,
         "nseBand": "D+",
         "age": 55,
         "sex": "masculino",
@@ -8810,7 +8810,7 @@
             }
           ],
           "ageb": {
-            "code": "091029",
+            "code": "0901500010733",
             "population": 6118,
             "marginals": [
               {
@@ -8857,9 +8857,9 @@
         "displayName": "Graciela C.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Ampliación Granada",
-        "agebCode": "091030",
-        "centroidLat": 19.378169368463567,
-        "centroidLng": -99.21562144224998,
+        "agebCode": "0901600010410",
+        "centroidLat": 19.445361524588765,
+        "centroidLng": -99.21837670108825,
         "nseBand": "C-",
         "age": 57,
         "sex": "femenino",
@@ -8890,7 +8890,7 @@
             }
           ],
           "ageb": {
-            "code": "091030",
+            "code": "0901600010410",
             "population": 2517,
             "marginals": [
               {
@@ -8937,9 +8937,9 @@
         "displayName": "Francisco E.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Morelos",
-        "agebCode": "091031",
-        "centroidLat": 19.381495628063565,
-        "centroidLng": -99.15090893418063,
+        "agebCode": "0901500010748",
+        "centroidLat": 19.43344097986445,
+        "centroidLng": -99.14423645329192,
         "nseBand": "D",
         "age": 22,
         "sex": "masculino",
@@ -8970,7 +8970,7 @@
             }
           ],
           "ageb": {
-            "code": "091031",
+            "code": "0901500010748",
             "population": 6007,
             "marginals": [
               {
@@ -9017,9 +9017,9 @@
         "displayName": "Helena V.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Asturias",
-        "agebCode": "091032",
-        "centroidLat": 19.421988960658197,
-        "centroidLng": -99.13346981547774,
+        "agebCode": "0901500010752",
+        "centroidLat": 19.435875282559692,
+        "centroidLng": -99.13384879598007,
         "nseBand": "C",
         "age": 56,
         "sex": "femenino",
@@ -9050,7 +9050,7 @@
             }
           ],
           "ageb": {
-            "code": "091032",
+            "code": "0901500010752",
             "population": 1853,
             "marginals": [
               {
@@ -9097,9 +9097,9 @@
         "displayName": "Susana L.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Argentina",
-        "agebCode": "091033",
-        "centroidLat": 19.439160330523734,
-        "centroidLng": -99.19584100057372,
+        "agebCode": "0901600010425",
+        "centroidLat": 19.445810841297657,
+        "centroidLng": -99.21471737346799,
         "nseBand": "C",
         "age": 75,
         "sex": "femenino",
@@ -9130,7 +9130,7 @@
             }
           ],
           "ageb": {
-            "code": "091033",
+            "code": "0901600010425",
             "population": 4755,
             "marginals": [
               {
@@ -9177,9 +9177,9 @@
         "displayName": "Andrés B.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Roma Sur",
-        "agebCode": "091034",
-        "centroidLat": 19.43038910445757,
-        "centroidLng": -99.14952127246187,
+        "agebCode": "0901500010767",
+        "centroidLat": 19.434186405211687,
+        "centroidLng": -99.13855042816236,
         "nseBand": "C+",
         "age": 39,
         "sex": "masculino",
@@ -9210,7 +9210,7 @@
             }
           ],
           "ageb": {
-            "code": "091034",
+            "code": "0901500010767",
             "population": 2932,
             "marginals": [
               {
@@ -9257,9 +9257,9 @@
         "displayName": "Xavier O.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Doctores",
-        "agebCode": "091035",
-        "centroidLat": 19.404120227228848,
-        "centroidLng": -99.20732624358033,
+        "agebCode": "0901500010771",
+        "centroidLat": 19.432946471909133,
+        "centroidLng": -99.13224466799618,
         "nseBand": "C+",
         "age": 76,
         "sex": "masculino",
@@ -9290,7 +9290,7 @@
             }
           ],
           "ageb": {
-            "code": "091035",
+            "code": "0901500010771",
             "population": 5450,
             "marginals": [
               {
@@ -9337,9 +9337,9 @@
         "displayName": "Daniela C.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Morelos",
-        "agebCode": "091036",
-        "centroidLat": 19.44355041729286,
-        "centroidLng": -99.15142933828291,
+        "agebCode": "0901500010786",
+        "centroidLat": 19.431873048244565,
+        "centroidLng": -99.12639666080759,
         "nseBand": "C",
         "age": 57,
         "sex": "femenino",
@@ -9370,7 +9370,7 @@
             }
           ],
           "ageb": {
-            "code": "091036",
+            "code": "0901500010786",
             "population": 2439,
             "marginals": [
               {
@@ -9417,9 +9417,9 @@
         "displayName": "Iker D.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Doctores",
-        "agebCode": "091037",
-        "centroidLat": 19.358347486448473,
-        "centroidLng": -99.17212109223009,
+        "agebCode": "0901500010790",
+        "centroidLat": 19.433193927364798,
+        "centroidLng": -99.16419437374115,
         "nseBand": "D+",
         "age": 56,
         "sex": "masculino",
@@ -9450,7 +9450,7 @@
             }
           ],
           "ageb": {
-            "code": "091037",
+            "code": "0901500010790",
             "population": 4628,
             "marginals": [
               {
@@ -9497,9 +9497,9 @@
         "displayName": "Elias M.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Santa María la Ribera",
-        "agebCode": "091038",
-        "centroidLat": 19.406775494059545,
-        "centroidLng": -99.13601451257244,
+        "agebCode": "0901500010803",
+        "centroidLat": 19.430816888332814,
+        "centroidLng": -99.15832277437046,
         "nseBand": "D+",
         "age": 76,
         "sex": "masculino",
@@ -9530,7 +9530,7 @@
             }
           ],
           "ageb": {
-            "code": "091038",
+            "code": "0901500010803",
             "population": 2217,
             "marginals": [
               {
@@ -9577,9 +9577,9 @@
         "displayName": "Ernesto D.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Juárez",
-        "agebCode": "091039",
-        "centroidLat": 19.382784914202055,
-        "centroidLng": -99.22333953727038,
+        "agebCode": "0901500010818",
+        "centroidLat": 19.431003323153256,
+        "centroidLng": -99.13677296144247,
         "nseBand": "D",
         "age": 75,
         "sex": "masculino",
@@ -9610,7 +9610,7 @@
             }
           ],
           "ageb": {
-            "code": "091039",
+            "code": "0901500010818",
             "population": 4904,
             "marginals": [
               {
@@ -9657,9 +9657,9 @@
         "displayName": "Lucía S.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Doctores",
-        "agebCode": "091040",
-        "centroidLat": 19.41893518785946,
-        "centroidLng": -99.15593671637588,
+        "agebCode": "0901500010822",
+        "centroidLat": 19.431543543517886,
+        "centroidLng": -99.16932131645338,
         "nseBand": "C",
         "age": 36,
         "sex": "femenino",
@@ -9690,7 +9690,7 @@
             }
           ],
           "ageb": {
-            "code": "091040",
+            "code": "0901500010822",
             "population": 2135,
             "marginals": [
               {
@@ -9737,9 +9737,9 @@
         "displayName": "Teresa V.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Roma Sur",
-        "agebCode": "091041",
-        "centroidLat": 19.35474411556497,
-        "centroidLng": -99.1708575560432,
+        "agebCode": "0901500010837",
+        "centroidLat": 19.430370906909705,
+        "centroidLng": -99.16354704641924,
         "nseBand": "C+",
         "age": 76,
         "sex": "femenino",
@@ -9770,7 +9770,7 @@
             }
           ],
           "ageb": {
-            "code": "091041",
+            "code": "0901500010837",
             "population": 5236,
             "marginals": [
               {
@@ -9817,9 +9817,9 @@
         "displayName": "Emiliano J.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Algarín",
-        "agebCode": "091042",
-        "centroidLat": 19.443934492487458,
-        "centroidLng": -99.16417794809212,
+        "agebCode": "0901500010841",
+        "centroidLat": 19.427012189989835,
+        "centroidLng": -99.15865820805386,
         "nseBand": "C+",
         "age": 37,
         "sex": "masculino",
@@ -9850,7 +9850,7 @@
             }
           ],
           "ageb": {
-            "code": "091042",
+            "code": "0901500010841",
             "population": 5189,
             "marginals": [
               {
@@ -9897,9 +9897,9 @@
         "displayName": "Felipe C.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Polanco",
-        "agebCode": "091043",
-        "centroidLat": 19.38466106916312,
-        "centroidLng": -99.20976338451263,
+        "agebCode": "090160001043A",
+        "centroidLat": 19.445634496666788,
+        "centroidLng": -99.21172104301394,
         "nseBand": "C+",
         "age": 38,
         "sex": "masculino",
@@ -9930,7 +9930,7 @@
             }
           ],
           "ageb": {
-            "code": "091043",
+            "code": "090160001043A",
             "population": 2747,
             "marginals": [
               {
@@ -9977,9 +9977,9 @@
         "displayName": "Julián C.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Condesa",
-        "agebCode": "091044",
-        "centroidLat": 19.38154755302239,
-        "centroidLng": -99.22553758706898,
+        "agebCode": "0901500010856",
+        "centroidLat": 19.429270853679327,
+        "centroidLng": -99.15517596635357,
         "nseBand": "A/B",
         "age": 22,
         "sex": "masculino",
@@ -10010,7 +10010,7 @@
             }
           ],
           "ageb": {
-            "code": "091044",
+            "code": "0901500010856",
             "population": 4481,
             "marginals": [
               {
@@ -10057,9 +10057,9 @@
         "displayName": "Brenda M.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Doctores",
-        "agebCode": "091045",
-        "centroidLat": 19.40638462761417,
-        "centroidLng": -99.1898709590966,
+        "agebCode": "0901500010860",
+        "centroidLat": 19.429279463166594,
+        "centroidLng": -99.1505569994019,
         "nseBand": "D",
         "age": 22,
         "sex": "femenino",
@@ -10090,7 +10090,7 @@
             }
           ],
           "ageb": {
-            "code": "091045",
+            "code": "0901500010860",
             "population": 4178,
             "marginals": [
               {
@@ -10137,9 +10137,9 @@
         "displayName": "Javier F.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Hipódromo Condesa",
-        "agebCode": "091046",
-        "centroidLat": 19.43162617490161,
-        "centroidLng": -99.17571464101319,
+        "agebCode": "0901500010875",
+        "centroidLat": 19.428314194779844,
+        "centroidLng": -99.14501239609763,
         "nseBand": "A/B",
         "age": 76,
         "sex": "masculino",
@@ -10170,7 +10170,7 @@
             }
           ],
           "ageb": {
-            "code": "091046",
+            "code": "0901500010875",
             "population": 5814,
             "marginals": [
               {
@@ -10217,9 +10217,9 @@
         "displayName": "Elisa Z.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Polanco",
-        "agebCode": "091047",
-        "centroidLat": 19.36337818109896,
-        "centroidLng": -99.20261969018728,
+        "agebCode": "0901600010444",
+        "centroidLat": 19.441639834480288,
+        "centroidLng": -99.20402192323118,
         "nseBand": "A/B",
         "age": 39,
         "sex": "femenino",
@@ -10250,7 +10250,7 @@
             }
           ],
           "ageb": {
-            "code": "091047",
+            "code": "0901600010444",
             "population": 3488,
             "marginals": [
               {
@@ -10297,9 +10297,9 @@
         "displayName": "Héctor N.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Doctores",
-        "agebCode": "091048",
-        "centroidLat": 19.379582016705534,
-        "centroidLng": -99.13480742077344,
+        "agebCode": "090150001088A",
+        "centroidLat": 19.428456987541466,
+        "centroidLng": -99.13932317896843,
         "nseBand": "D+",
         "age": 36,
         "sex": "masculino",
@@ -10330,7 +10330,7 @@
             }
           ],
           "ageb": {
-            "code": "091048",
+            "code": "090150001088A",
             "population": 3500,
             "marginals": [
               {
@@ -10377,9 +10377,9 @@
         "displayName": "Damián G.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Anáhuac",
-        "agebCode": "091049",
-        "centroidLat": 19.415721634542567,
-        "centroidLng": -99.16056941819377,
+        "agebCode": "0901600010459",
+        "centroidLat": 19.443166869047733,
+        "centroidLng": -99.19756512060137,
         "nseBand": "C-",
         "age": 24,
         "sex": "masculino",
@@ -10410,7 +10410,7 @@
             }
           ],
           "ageb": {
-            "code": "091049",
+            "code": "0901600010459",
             "population": 3324,
             "marginals": [
               {
@@ -10457,9 +10457,9 @@
         "displayName": "Camilo S.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Popotla",
-        "agebCode": "091050",
-        "centroidLat": 19.39529333731625,
-        "centroidLng": -99.20359894593247,
+        "agebCode": "0901600010463",
+        "centroidLat": 19.444081257016958,
+        "centroidLng": -99.19221246061699,
         "nseBand": "D",
         "age": 36,
         "sex": "masculino",
@@ -10490,7 +10490,7 @@
             }
           ],
           "ageb": {
-            "code": "091050",
+            "code": "0901600010463",
             "population": 5276,
             "marginals": [
               {
@@ -10537,9 +10537,9 @@
         "displayName": "Paulina G.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Santa María la Ribera",
-        "agebCode": "091051",
-        "centroidLat": 19.441548838373272,
-        "centroidLng": -99.13671878478024,
+        "agebCode": "0901500010894",
+        "centroidLat": 19.427353194139897,
+        "centroidLng": -99.13473388732449,
         "nseBand": "C+",
         "age": 58,
         "sex": "femenino",
@@ -10570,7 +10570,7 @@
             }
           ],
           "ageb": {
-            "code": "091051",
+            "code": "0901500010894",
             "population": 1938,
             "marginals": [
               {
@@ -10617,9 +10617,9 @@
         "displayName": "Tamara M.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Doctores",
-        "agebCode": "091052",
-        "centroidLat": 19.428612731653264,
-        "centroidLng": -99.20065862449817,
+        "agebCode": "0901500010907",
+        "centroidLat": 19.428526771864146,
+        "centroidLng": -99.13061531559646,
         "nseBand": "D+",
         "age": 36,
         "sex": "femenino",
@@ -10650,7 +10650,7 @@
             }
           ],
           "ageb": {
-            "code": "091052",
+            "code": "0901500010907",
             "population": 1976,
             "marginals": [
               {
@@ -10697,9 +10697,9 @@
         "displayName": "Benítez N.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Polanco",
-        "agebCode": "091053",
-        "centroidLat": 19.393647698778658,
-        "centroidLng": -99.22624463866931,
+        "agebCode": "0901600010478",
+        "centroidLat": 19.44246332919553,
+        "centroidLng": -99.18591813508064,
         "nseBand": "A/B",
         "age": 24,
         "sex": "masculino",
@@ -10730,7 +10730,7 @@
             }
           ],
           "ageb": {
-            "code": "091053",
+            "code": "0901600010478",
             "population": 4082,
             "marginals": [
               {
@@ -10777,9 +10777,9 @@
         "displayName": "Paula R.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Roma Norte",
-        "agebCode": "091054",
-        "centroidLat": 19.441373025951904,
-        "centroidLng": -99.13840904801154,
+        "agebCode": "0901500010911",
+        "centroidLat": 19.42785514537677,
+        "centroidLng": -99.12668786611319,
         "nseBand": "C+",
         "age": 24,
         "sex": "femenino",
@@ -10810,7 +10810,7 @@
             }
           ],
           "ageb": {
-            "code": "091054",
+            "code": "0901500010911",
             "population": 4036,
             "marginals": [
               {
@@ -10857,9 +10857,9 @@
         "displayName": "Mariana P.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Polanco",
-        "agebCode": "091055",
-        "centroidLat": 19.389419155870563,
-        "centroidLng": -99.1380948980758,
+        "agebCode": "0901600010482",
+        "centroidLat": 19.441433721292466,
+        "centroidLng": -99.17965583312959,
         "nseBand": "A/B",
         "age": 77,
         "sex": "femenino",
@@ -10890,7 +10890,7 @@
             }
           ],
           "ageb": {
-            "code": "091055",
+            "code": "0901600010482",
             "population": 5783,
             "marginals": [
               {
@@ -10937,9 +10937,9 @@
         "displayName": "Daniel C.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Vista Alegre",
-        "agebCode": "091056",
-        "centroidLat": 19.35043931829277,
-        "centroidLng": -99.22740615077318,
+        "agebCode": "0901500010926",
+        "centroidLat": 19.428445084521027,
+        "centroidLng": -99.17213354136555,
         "nseBand": "C+",
         "age": 55,
         "sex": "masculino",
@@ -10970,7 +10970,7 @@
             }
           ],
           "ageb": {
-            "code": "091056",
+            "code": "0901500010926",
             "population": 2528,
             "marginals": [
               {
@@ -11017,9 +11017,9 @@
         "displayName": "Alejandra C.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Lomas de Sotelo",
-        "agebCode": "091057",
-        "centroidLat": 19.383744261763056,
-        "centroidLng": -99.13665472268593,
+        "agebCode": "0901600010497",
+        "centroidLat": 19.441374665401874,
+        "centroidLng": -99.17306684074475,
         "nseBand": "D+",
         "age": 20,
         "sex": "femenino",
@@ -11050,7 +11050,7 @@
             }
           ],
           "ageb": {
-            "code": "091057",
+            "code": "0901600010497",
             "population": 5021,
             "marginals": [
               {
@@ -11097,9 +11097,9 @@
         "displayName": "Sebastián R.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Verónica Anzures",
-        "agebCode": "091058",
-        "centroidLat": 19.43566431775689,
-        "centroidLng": -99.18308226675262,
+        "agebCode": "090160001050A",
+        "centroidLat": 19.43890050714657,
+        "centroidLng": -99.17025510827183,
         "nseBand": "A/B",
         "age": 37,
         "sex": "masculino",
@@ -11130,7 +11130,7 @@
             }
           ],
           "ageb": {
-            "code": "091058",
+            "code": "090160001050A",
             "population": 3233,
             "marginals": [
               {
@@ -11177,9 +11177,9 @@
         "displayName": "Katia M.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Roma Sur",
-        "agebCode": "091059",
-        "centroidLat": 19.411387431155887,
-        "centroidLng": -99.20710788133555,
+        "agebCode": "0901500010930",
+        "centroidLat": 19.42645737300277,
+        "centroidLng": -99.17100223838001,
         "nseBand": "D",
         "age": 36,
         "sex": "femenino",
@@ -11210,7 +11210,7 @@
             }
           ],
           "ageb": {
-            "code": "091059",
+            "code": "0901500010930",
             "population": 2943,
             "marginals": [
               {
@@ -11257,9 +11257,9 @@
         "displayName": "Gabriela G.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Doctores",
-        "agebCode": "091060",
-        "centroidLat": 19.35016652997583,
-        "centroidLng": -99.20424827616196,
+        "agebCode": "0901500010945",
+        "centroidLat": 19.425143342416437,
+        "centroidLng": -99.16949795944988,
         "nseBand": "C",
         "age": 39,
         "sex": "femenino",
@@ -11290,7 +11290,7 @@
             }
           ],
           "ageb": {
-            "code": "091060",
+            "code": "0901500010945",
             "population": 2213,
             "marginals": [
               {
@@ -11337,9 +11337,9 @@
         "displayName": "Manuel S.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Roma Norte",
-        "agebCode": "091061",
-        "centroidLat": 19.38237536603119,
-        "centroidLng": -99.22586779098027,
+        "agebCode": "090150001095A",
+        "centroidLat": 19.42497404408008,
+        "centroidLng": -99.16376929575667,
         "nseBand": "C+",
         "age": 23,
         "sex": "masculino",
@@ -11370,7 +11370,7 @@
             }
           ],
           "ageb": {
-            "code": "091061",
+            "code": "090150001095A",
             "population": 3522,
             "marginals": [
               {
@@ -11417,9 +11417,9 @@
         "displayName": "Teodoro C.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Roma Norte",
-        "agebCode": "091062",
-        "centroidLat": 19.38982728444971,
-        "centroidLng": -99.19846035390627,
+        "agebCode": "0901500010964",
+        "centroidLat": 19.425343521353454,
+        "centroidLng": -99.13772107581885,
         "nseBand": "C+",
         "age": 23,
         "sex": "masculino",
@@ -11450,7 +11450,7 @@
             }
           ],
           "ageb": {
-            "code": "091062",
+            "code": "0901500010964",
             "population": 3516,
             "marginals": [
               {
@@ -11497,9 +11497,9 @@
         "displayName": "Martina G.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Centro",
-        "agebCode": "091063",
-        "centroidLat": 19.409315044782122,
-        "centroidLng": -99.22215229330585,
+        "agebCode": "0901500010979",
+        "centroidLat": 19.424640688723922,
+        "centroidLng": -99.12969621129066,
         "nseBand": "C",
         "age": 75,
         "sex": "femenino",
@@ -11530,7 +11530,7 @@
             }
           ],
           "ageb": {
-            "code": "091063",
+            "code": "0901500010979",
             "population": 6033,
             "marginals": [
               {
@@ -11577,9 +11577,9 @@
         "displayName": "Bruno H.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Doctores",
-        "agebCode": "091064",
-        "centroidLat": 19.437216926435937,
-        "centroidLng": -99.15311558576767,
+        "agebCode": "0901500010983",
+        "centroidLat": 19.42266006500885,
+        "centroidLng": -99.16997929824322,
         "nseBand": "C",
         "age": 76,
         "sex": "masculino",
@@ -11610,7 +11610,7 @@
             }
           ],
           "ageb": {
-            "code": "091064",
+            "code": "0901500010983",
             "population": 5455,
             "marginals": [
               {
@@ -11657,9 +11657,9 @@
         "displayName": "Isabella A.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Popotla",
-        "agebCode": "091065",
-        "centroidLat": 19.411124141560865,
-        "centroidLng": -99.14784632652999,
+        "agebCode": "0901600010514",
+        "centroidLat": 19.437702059769776,
+        "centroidLng": -99.22446995968983,
         "nseBand": "C+",
         "age": 57,
         "sex": "femenino",
@@ -11690,7 +11690,7 @@
             }
           ],
           "ageb": {
-            "code": "091065",
+            "code": "0901600010514",
             "population": 3795,
             "marginals": [
               {
@@ -11737,9 +11737,9 @@
         "displayName": "Miguel P.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Guerrero",
-        "agebCode": "091066",
-        "centroidLat": 19.38335319433827,
-        "centroidLng": -99.21557824743913,
+        "agebCode": "0901500010998",
+        "centroidLat": 19.42134594106242,
+        "centroidLng": -99.16764886176333,
         "nseBand": "C",
         "age": 38,
         "sex": "masculino",
@@ -11770,7 +11770,7 @@
             }
           ],
           "ageb": {
-            "code": "091066",
+            "code": "0901500010998",
             "population": 1995,
             "marginals": [
               {
@@ -11817,9 +11817,9 @@
         "displayName": "Ángel R.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Tacuba",
-        "agebCode": "091067",
-        "centroidLat": 19.36358077866025,
-        "centroidLng": -99.16843365390785,
+        "agebCode": "0901600010529",
+        "centroidLat": 19.440236978333296,
+        "centroidLng": -99.21610778795481,
         "nseBand": "C",
         "age": 75,
         "sex": "masculino",
@@ -11850,7 +11850,7 @@
             }
           ],
           "ageb": {
-            "code": "091067",
+            "code": "0901600010529",
             "population": 2211,
             "marginals": [
               {
@@ -11897,9 +11897,9 @@
         "displayName": "Cristian O.",
         "alcaldia": "Miguel Hidalgo",
         "colonia": "Polanco",
-        "agebCode": "091068",
-        "centroidLat": 19.449264382408,
-        "centroidLng": -99.17780467667151,
+        "agebCode": "0901600010533",
+        "centroidLat": 19.440571433661727,
+        "centroidLng": -99.21220399355457,
         "nseBand": "A/B",
         "age": 39,
         "sex": "masculino",
@@ -11930,7 +11930,7 @@
             }
           ],
           "ageb": {
-            "code": "091068",
+            "code": "0901600010533",
             "population": 2562,
             "marginals": [
               {
@@ -11977,9 +11977,9 @@
         "displayName": "César G.",
         "alcaldia": "Cuauhtémoc",
         "colonia": "Roma Norte",
-        "agebCode": "091069",
-        "centroidLat": 19.389122560410758,
-        "centroidLng": -99.22204942395446,
+        "agebCode": "0901500011002",
+        "centroidLat": 19.420607269484847,
+        "centroidLng": -99.16154412006438,
         "nseBand": "C",
         "age": 39,
         "sex": "masculino",
@@ -12010,7 +12010,7 @@
             }
           ],
           "ageb": {
-            "code": "091069",
+            "code": "0901500011002",
             "population": 6161,
             "marginals": [
               {
@@ -12099,5 +12099,6 @@
       "meanConfidence": 7.1,
       "count": 29
     }
-  ]
+  ],
+  "_mapFixtureNote": "Task 4b: agebCode + centroids taken from public/geo/ageb-cuauhtemoc-mh.geojson (INEGI MG CPV 2020) with deterministic map-jitter offsets. Fixture / isExample data — not real census microdata or real Pulse locations."
 }

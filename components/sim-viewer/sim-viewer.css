@@ -4,6 +4,35 @@
   box-sizing: border-box;
 }
 
+/* Mapa mode dots — low glow on phone; amber selection ring matches columns. */
+.sim-map-dot {
+  transition: fill 320ms ease, stroke 320ms ease, filter 320ms ease;
+}
+
+.sim-map-dot--glow {
+  filter: drop-shadow(0 0 4px rgba(251, 191, 36, 0.45));
+}
+
+.sim-map-dot--selected {
+  stroke: rgb(252, 211, 77) !important;
+  stroke-width: 2.25px;
+  filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.55));
+}
+
+.sim-viewer--mobile:not(.sim-viewer--capture) .sim-map-dot--glow {
+  filter: drop-shadow(0 0 2px rgba(251, 191, 36, 0.3));
+}
+
+.sim-viewer--mobile .sim-map {
+  min-height: min(48dvh, 22rem);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sim-map-dot {
+    transition: none !important;
+  }
+}
+
 .sim-dot--landed {
   background-color: rgba(251, 191, 36, 0.85);
   border-color: rgb(252, 211, 77);

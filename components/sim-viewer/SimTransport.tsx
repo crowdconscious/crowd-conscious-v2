@@ -191,6 +191,27 @@ export function SimTransport({
         ) : null}
       </div>
 
+      {showMapToggle && onViewModeChange ? (
+        <div className={segWrap} role="group" aria-label="Vista">
+          <button
+            type="button"
+            className={`${segBtn} ${viewMode === 'columns' ? segActive : ''}`}
+            aria-pressed={viewMode === 'columns'}
+            onClick={() => onViewModeChange('columns')}
+          >
+            {mobileLayout ? 'Col.' : 'Columnas'}
+          </button>
+          <button
+            type="button"
+            className={`${segBtn} ${viewMode === 'map' ? segActive : ''}`}
+            aria-pressed={viewMode === 'map'}
+            onClick={() => onViewModeChange('map')}
+          >
+            Mapa
+          </button>
+        </div>
+      ) : null}
+
       {mobileLayout ? (
         <div className="relative ml-auto shrink-0" ref={moreWrapRef}>
           <button
@@ -214,29 +235,7 @@ export function SimTransport({
           ) : null}
         </div>
       ) : (
-        <>
-          {adminTools}
-          {showMapToggle && onViewModeChange ? (
-            <div className={segWrap} role="group" aria-label="Vista">
-              <button
-                type="button"
-                className={`${segBtn} ${viewMode === 'columns' ? segActive : ''}`}
-                aria-pressed={viewMode === 'columns'}
-                onClick={() => onViewModeChange('columns')}
-              >
-                Columnas
-              </button>
-              <button
-                type="button"
-                className={`${segBtn} ${viewMode === 'map' ? segActive : ''}`}
-                aria-pressed={viewMode === 'map'}
-                onClick={() => onViewModeChange('map')}
-              >
-                Mapa
-              </button>
-            </div>
-          ) : null}
-        </>
+        <>{adminTools}</>
       )}
     </div>
   )
