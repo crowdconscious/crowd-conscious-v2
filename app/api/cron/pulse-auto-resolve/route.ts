@@ -4,7 +4,6 @@ import { notifyMarketResolutionVoters } from '@/lib/market-resolution-notificati
 import { runCaseStudyDraft } from '@/lib/agents/content-creator'
 import { cronHealthCheck, cronHealthComplete } from '@/lib/cron-health'
 import { generateSponsorReportAndMaybeEmail } from '@/lib/sponsor-pulse-report-pipeline'
-import type { Database } from '@/types/database'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120
@@ -108,47 +107,16 @@ export async function GET(request: NextRequest) {
       console.error('[cron/pulse-auto-resolve] sponsor-pulse-report', err)
     )
 
-    // On real Pulse close (§5.5 item 3): ALWAYS recompute + store the Divergence
-    // Index (§5.6) for COMPLETE simulation runs tied to this market, now that
-    // the real mix is final. Admins may have stored a mid-flight snapshot while
-    // the Pulse was still live; public reveal must use the closing mix. Pure
-    // math over stored sim aggregates + real votes (no model call); the only
-    // write is `simulation_runs.divergence` via `computeAndStoreDivergence` —
-    // real vote data stays untouched (§1). The common case is ZERO sim runs →
-    // clean no-op. Isolated in try/catch so a divergence failure for one run
-    // never breaks resolution/push/archive or any other pulse.
+    // On real Pulse close (§5.5 item 3 + autorun track record): recompute the
+    // Divergence Index on the preferred complete sim run AND upsert the durable
+    // `pulse_simulation_divergence` row (category, distributions, n, score).
+    // Zero real votes → outcome='no_real_data', score NULL (never a fake 0).
+    // Isolated so a divergence failure never breaks resolve/notify.
     try {
-      const { data: simRuns, error: simErr } = await admin
-        .from('simulation_runs')
-        .select('id')
-        .eq('market_id', row.id)
-        .eq('status', 'complete')
-        .eq('is_brand_pretest', false)
-      if (simErr) {
-        console.warn('[cron/pulse-auto-resolve] divergence query', row.id, simErr.message)
-      } else if (simRuns && simRuns.length > 0) {
-        // `admin` is the untyped service-role client here (the route also issues
-        // RPCs not modeled in the generated types), so annotate the eligible rows
-        // with the generated `simulation_runs` shape instead of typing the client.
-        const eligible: Pick<
-          Database['public']['Tables']['simulation_runs']['Row'],
-          'id'
-        >[] = simRuns
-        // Lazy import so the cron's cold path isn't burdened by the heavy
-        // server-only simulation module (matches the repo convention).
-        const { computeAndStoreDivergence } = await import('@/lib/simulation/run')
-        for (const simRun of eligible) {
-          try {
-            await computeAndStoreDivergence(simRun.id, { adminClient: admin })
-          } catch (err) {
-            console.warn(
-              '[cron/pulse-auto-resolve] divergence run',
-              simRun.id,
-              err instanceof Error ? err.message : String(err),
-            )
-          }
-        }
-      }
+      const { persistDivergenceOnPulseClose } = await import(
+        '@/lib/simulation/persist-divergence'
+      )
+      await persistDivergenceOnPulseClose(admin, row.id)
     } catch (err) {
       console.warn(
         '[cron/pulse-auto-resolve] divergence',

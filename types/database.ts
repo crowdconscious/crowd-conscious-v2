@@ -2725,6 +2725,159 @@ export interface Database {
         ]
       }
       /**
+       * Auto-run queue: one row per Pulse. Re-run resets in place.
+       * Source: supabase/migrations/269_simulation_autorun_and_divergence_track.sql
+       */
+      simulation_autorun_jobs: {
+        Row: {
+          id: string
+          market_id: string
+          status: 'queued' | 'running' | 'complete' | 'failed'
+          simulation_run_id: string | null
+          source: 'auto' | 'backfill' | 'rerun'
+          attempts: number
+          max_attempts: number
+          last_error: string | null
+          next_attempt_at: string
+          cost_usd: number | null
+          input_tokens: number | null
+          output_tokens: number | null
+          started_at: string | null
+          completed_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          market_id: string
+          status?: 'queued' | 'running' | 'complete' | 'failed'
+          simulation_run_id?: string | null
+          source?: 'auto' | 'backfill' | 'rerun'
+          attempts?: number
+          max_attempts?: number
+          last_error?: string | null
+          next_attempt_at?: string
+          cost_usd?: number | null
+          input_tokens?: number | null
+          output_tokens?: number | null
+          started_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          market_id?: string
+          status?: 'queued' | 'running' | 'complete' | 'failed'
+          simulation_run_id?: string | null
+          source?: 'auto' | 'backfill' | 'rerun'
+          attempts?: number
+          max_attempts?: number
+          last_error?: string | null
+          next_attempt_at?: string
+          cost_usd?: number | null
+          input_tokens?: number | null
+          output_tokens?: number | null
+          started_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'simulation_autorun_jobs_market_id_fkey'
+            columns: ['market_id']
+            isOneToOne: true
+            referencedRelation: 'prediction_markets'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'simulation_autorun_jobs_simulation_run_id_fkey'
+            columns: ['simulation_run_id']
+            isOneToOne: false
+            referencedRelation: 'simulation_runs'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      /**
+       * Durable simulated-vs-real divergence track record (one per Pulse).
+       * Score is NULL when outcome='no_real_data' — never a fake 0.
+       * Source: supabase/migrations/269_simulation_autorun_and_divergence_track.sql
+       */
+      pulse_simulation_divergence: {
+        Row: {
+          id: string
+          market_id: string
+          simulation_run_id: string | null
+          category: string | null
+          subcategory: string | null
+          simulated_distribution: Json | null
+          real_distribution: Json | null
+          real_vote_count: number
+          divergence_score: number | null
+          has_real_data: boolean
+          outcome:
+            | 'scored'
+            | 'no_real_data'
+            | 'multi_select_unsupported'
+            | 'no_sim_run'
+          computed_at: string
+        }
+        Insert: {
+          id?: string
+          market_id: string
+          simulation_run_id?: string | null
+          category?: string | null
+          subcategory?: string | null
+          simulated_distribution?: Json | null
+          real_distribution?: Json | null
+          real_vote_count?: number
+          divergence_score?: number | null
+          has_real_data?: boolean
+          outcome:
+            | 'scored'
+            | 'no_real_data'
+            | 'multi_select_unsupported'
+            | 'no_sim_run'
+          computed_at?: string
+        }
+        Update: {
+          id?: string
+          market_id?: string
+          simulation_run_id?: string | null
+          category?: string | null
+          subcategory?: string | null
+          simulated_distribution?: Json | null
+          real_distribution?: Json | null
+          real_vote_count?: number
+          divergence_score?: number | null
+          has_real_data?: boolean
+          outcome?:
+            | 'scored'
+            | 'no_real_data'
+            | 'multi_select_unsupported'
+            | 'no_sim_run'
+          computed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'pulse_simulation_divergence_market_id_fkey'
+            columns: ['market_id']
+            isOneToOne: true
+            referencedRelation: 'prediction_markets'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'pulse_simulation_divergence_simulation_run_id_fkey'
+            columns: ['simulation_run_id']
+            isOneToOne: false
+            referencedRelation: 'simulation_runs'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      /**
        * Reconocimientos intake rows. Public reads must use
        * `recognitions_public` so `contact` / `user_id` never leak.
        * Source: supabase/migrations/263_recognitions.sql
