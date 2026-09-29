@@ -2491,6 +2491,11 @@ export interface Database {
           ageb_code: string | null
           centroid_lat: number | null
           centroid_lng: number | null
+          /**
+           * How ageb_code was chosen (Task 4a.2). Migration 268.
+           * 'colonia_census_weighted' | 'alcaldia_fallback' | null
+           */
+          ageb_assignment_method: string | null
           /** AMAI NSE band when set; else fall back to income_band. Migration 266. */
           nse_band: string | null
           household_size: number | null
@@ -2521,6 +2526,7 @@ export interface Database {
           ageb_code?: string | null
           centroid_lat?: number | null
           centroid_lng?: number | null
+          ageb_assignment_method?: string | null
           nse_band?: string | null
           household_size?: number | null
           active?: boolean
@@ -2546,6 +2552,7 @@ export interface Database {
           ageb_code?: string | null
           centroid_lat?: number | null
           centroid_lng?: number | null
+          ageb_assignment_method?: string | null
           nse_band?: string | null
           household_size?: number | null
           active?: boolean

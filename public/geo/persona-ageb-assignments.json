@@ -1,0 +1,2491 @@
+{
+  "generated_at": "2026-09-29T17:18:54.001Z",
+  "run_id": "1ace1e55-e37a-4f0f-9c2d-2c31a13a1291",
+  "synthetic_ids": false,
+  "prod_read": false,
+  "count": 150,
+  "assignments": [
+    {
+      "id": "010cbf28-86b4-488c-a90b-175b9117a611",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Tacuba",
+      "official_colonia_names": [
+        "Tacuba"
+      ],
+      "candidate_count": 5,
+      "candidates_before": 6,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.45089,
+      "ageb_code": "0901600010054",
+      "centroid_lat": 19.461343,
+      "centroid_lng": -99.189341,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "02b51dd0-b4d0-4428-96ea-5bfebd6ba4dd",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Condesa",
+      "official_colonia_names": [
+        "Condesa"
+      ],
+      "candidate_count": 6,
+      "candidates_before": 10,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.892619,
+      "ageb_code": "0901500011303",
+      "centroid_lat": 19.413339,
+      "centroid_lng": -99.179365,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "03bf61bb-febc-47d9-a16c-115bdc948f60",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "official_colonia_names": [
+        "Roma Norte"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 21,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.997161,
+      "ageb_code": "0901500011110",
+      "centroid_lat": 19.414175,
+      "centroid_lng": -99.156444,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "03c2eecc-d1fd-4560-ada6-51d049139fe9",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Tacuba",
+      "official_colonia_names": [
+        "Tacuba"
+      ],
+      "candidate_count": 5,
+      "candidates_before": 6,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.993857,
+      "ageb_code": "0901600010158",
+      "centroid_lat": 19.456891,
+      "centroid_lng": -99.187795,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "0822e27b-c7a2-43f3-9f0c-e16849424cce",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 1,
+      "ageb_code": "090150001113A",
+      "centroid_lat": 19.416979,
+      "centroid_lng": -99.146601,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "08df5b3d-aaf8-43ba-89f8-1f6847e8d59d",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.994758,
+      "ageb_code": "0901500011549",
+      "centroid_lat": 19.420837,
+      "centroid_lng": -99.152445,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "0b9bc6ee-cb99-4882-bfbe-27674534766c",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Condesa",
+      "official_colonia_names": [
+        "Condesa"
+      ],
+      "candidate_count": 6,
+      "candidates_before": 10,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.892619,
+      "ageb_code": "0901500011303",
+      "centroid_lat": 19.413052,
+      "centroid_lng": -99.179255,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "0caed288-d975-41b0-a097-7c58582eaa41",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Santa María la Ribera",
+      "official_colonia_names": [
+        "Santa Maria La Ribera"
+      ],
+      "candidate_count": 6,
+      "candidates_before": 14,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.994433,
+      "ageb_code": "0901500010466",
+      "centroid_lat": 19.452651,
+      "centroid_lng": -99.160525,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "0f787c0e-1333-40bb-8aa0-808d3b04c927",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Tacuba",
+      "official_colonia_names": [
+        "Tacuba"
+      ],
+      "candidate_count": 5,
+      "candidates_before": 6,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.993857,
+      "ageb_code": "0901600010158",
+      "centroid_lat": 19.456353,
+      "centroid_lng": -99.188002,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "0fe51b43-25a6-4b85-9ccb-938be299c9c9",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Morelos",
+      "official_colonia_names": [
+        "Morelos"
+      ],
+      "candidate_count": 6,
+      "candidates_before": 7,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.774311,
+      "ageb_code": "0901500010540",
+      "centroid_lat": 19.445117,
+      "centroid_lng": -99.132576,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "104f774f-69be-4b5a-a7fd-442a543a2bc8",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Santa María la Ribera",
+      "official_colonia_names": [
+        "Santa Maria La Ribera"
+      ],
+      "candidate_count": 6,
+      "candidates_before": 14,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.983267,
+      "ageb_code": "0901500010593",
+      "centroid_lat": 19.444664,
+      "centroid_lng": -99.161937,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "145a052c-1b94-44a4-bf52-e08b0b77eae1",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.997526,
+      "ageb_code": "0901500011036",
+      "centroid_lat": 19.421092,
+      "centroid_lng": -99.146076,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "14850982-416b-4160-8f13-34e9ddd96fd7",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "official_colonia_names": [
+        "Roma Norte"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 21,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.967265,
+      "ageb_code": "0901500010998",
+      "centroid_lat": 19.420748,
+      "centroid_lng": -99.167299,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "169d3d63-e2d7-4d87-a981-f4754c8abe45",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Polanco",
+      "official_colonia_names": [
+        "Polanco I Seccion",
+        "Polanco Ii Seccion",
+        "Polanco Iii Seccion",
+        "Polanco Iv Seccion",
+        "Polanco V Seccion"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 23,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.990247,
+      "ageb_code": "0901600010779",
+      "centroid_lat": 19.427845,
+      "centroid_lng": -99.193736,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "17e0489e-ac16-40c4-b77b-11eddebef453",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Tacuba",
+      "official_colonia_names": [
+        "Tacuba"
+      ],
+      "candidate_count": 5,
+      "candidates_before": 6,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.561842,
+      "ageb_code": "0901600010143",
+      "centroid_lat": 19.454931,
+      "centroid_lng": -99.191813,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "18515a15-d2c0-4535-91ff-928231786a31",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Tacuba",
+      "official_colonia_names": [
+        "Tacuba"
+      ],
+      "candidate_count": 5,
+      "candidates_before": 6,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.561842,
+      "ageb_code": "0901600010143",
+      "centroid_lat": 19.455267,
+      "centroid_lng": -99.191547,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "1976e109-0034-4567-a785-c717b6fdf855",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "San Miguel Chapultepec",
+      "official_colonia_names": [
+        "San Miguel Chapultepec I Seccion",
+        "San Miguel Chapultepec Ii Seccion"
+      ],
+      "candidate_count": 4,
+      "candidates_before": 8,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.999422,
+      "ageb_code": "0901600010891",
+      "centroid_lat": 19.415433,
+      "centroid_lng": -99.182166,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "1af3c2e5-5aeb-464e-87fe-7da422d26db6",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Polanco",
+      "official_colonia_names": [
+        "Polanco I Seccion",
+        "Polanco Ii Seccion",
+        "Polanco Iii Seccion",
+        "Polanco Iv Seccion",
+        "Polanco V Seccion"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 23,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.997895,
+      "ageb_code": "0901600010637",
+      "centroid_lat": 19.434727,
+      "centroid_lng": -99.204335,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "1b6ca2f6-0128-4b47-8aa4-6580665062aa",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Tacuba",
+      "official_colonia_names": [
+        "Tacuba"
+      ],
+      "candidate_count": 5,
+      "candidates_before": 6,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.993857,
+      "ageb_code": "0901600010158",
+      "centroid_lat": 19.456478,
+      "centroid_lng": -99.187917,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "1c106c1a-1595-4816-a8a6-e5ad63a8fb8c",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.730851,
+      "ageb_code": "0901500011229",
+      "centroid_lat": 19.410646,
+      "centroid_lng": -99.152888,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "1f8a5ee9-c587-40e6-806d-28bf65445993",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.991638,
+      "ageb_code": "0901500011233",
+      "centroid_lat": 19.412367,
+      "centroid_lng": -99.147233,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "1fa0e082-9b35-4e65-9256-28c5cb34db7d",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "official_colonia_names": [
+        "Roma Norte"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 21,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.999912,
+      "ageb_code": "0901500011093",
+      "centroid_lat": 19.418318,
+      "centroid_lng": -99.167661,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "20acdd2c-615a-46c7-9095-740875d12c70",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Buenos Aires",
+      "official_colonia_names": [
+        "Buenos Aires"
+      ],
+      "candidate_count": 2,
+      "candidates_before": 3,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.99264,
+      "ageb_code": "0901500011483",
+      "centroid_lat": 19.405528,
+      "centroid_lng": -99.147759,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "22dda38a-99a8-44a6-b2a2-507c106b6505",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "official_colonia_names": [
+        "Roma Norte"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 21,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.999912,
+      "ageb_code": "0901500011093",
+      "centroid_lat": 19.417831,
+      "centroid_lng": -99.167697,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "277ca9cd-0409-4f99-a913-c8d0316471fd",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Anáhuac",
+      "official_colonia_names": [
+        "Anahuac I Seccion",
+        "Anahuac Ii Seccion"
+      ],
+      "candidate_count": 7,
+      "candidates_before": 18,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.990542,
+      "ageb_code": "0901600010497",
+      "centroid_lat": 19.441488,
+      "centroid_lng": -99.173665,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "27d99059-6823-4343-ab7d-f5056d39cd39",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.994551,
+      "ageb_code": "0901500011125",
+      "centroid_lat": 19.41593,
+      "centroid_lng": -99.152316,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "2ca719f9-5f91-425c-ab3b-938c1fe7544e",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Morelos",
+      "official_colonia_names": [
+        "Morelos"
+      ],
+      "candidate_count": 6,
+      "candidates_before": 7,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.995148,
+      "ageb_code": "0901500010358",
+      "centroid_lat": 19.44763,
+      "centroid_lng": -99.126863,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "2ccc121f-f298-4dc2-b5d6-8b2d24dad280",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "official_colonia_names": [
+        "Roma Norte"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 21,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.996448,
+      "ageb_code": "0901500011017",
+      "centroid_lat": 19.421944,
+      "centroid_lng": -99.15666,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "2dad7ecb-4c4e-47e8-92e9-d4574b9791a6",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "official_colonia_names": [
+        "Roma Norte"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 21,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.997161,
+      "ageb_code": "0901500011110",
+      "centroid_lat": 19.413504,
+      "centroid_lng": -99.156756,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "2e5348c2-380d-4425-8f92-0a7606634096",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Polanco",
+      "official_colonia_names": [
+        "Polanco I Seccion",
+        "Polanco Ii Seccion",
+        "Polanco Iii Seccion",
+        "Polanco Iv Seccion",
+        "Polanco V Seccion"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 23,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.999864,
+      "ageb_code": "0901600010622",
+      "centroid_lat": 19.436303,
+      "centroid_lng": -99.210051,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "2ff926fd-6197-49c4-a470-a5fb1ef59366",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Hipódromo Condesa",
+      "official_colonia_names": [
+        "Hipodromo Condesa"
+      ],
+      "candidate_count": 2,
+      "candidates_before": 3,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.536281,
+      "ageb_code": "0901500011318",
+      "centroid_lat": 19.410019,
+      "centroid_lng": -99.177161,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "352cbf6b-2c15-46f7-92dd-3eea10ce3c44",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Santa María la Ribera",
+      "official_colonia_names": [
+        "Santa Maria La Ribera"
+      ],
+      "candidate_count": 6,
+      "candidates_before": 14,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.999992,
+      "ageb_code": "0901500010470",
+      "centroid_lat": 19.4534,
+      "centroid_lng": -99.156347,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "35e434b8-ea50-4209-b131-665e00fa6d24",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Condesa",
+      "official_colonia_names": [
+        "Condesa"
+      ],
+      "candidate_count": 6,
+      "candidates_before": 10,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.98768,
+      "ageb_code": "0901500011178",
+      "centroid_lat": 19.416925,
+      "centroid_lng": -99.177041,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "360a5eae-8737-45b6-8ee1-d3fbf47a1aa7",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Polanco",
+      "official_colonia_names": [
+        "Polanco I Seccion",
+        "Polanco Ii Seccion",
+        "Polanco Iii Seccion",
+        "Polanco Iv Seccion",
+        "Polanco V Seccion"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 23,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 1,
+      "ageb_code": "0901600010675",
+      "centroid_lat": 19.433936,
+      "centroid_lng": -99.186185,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "3783d8e5-116d-437a-85fb-bf728b78a469",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "official_colonia_names": [
+        "Roma Norte"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 21,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.997161,
+      "ageb_code": "0901500011110",
+      "centroid_lat": 19.41408,
+      "centroid_lng": -99.156639,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "3a1878ed-655b-442a-93f8-aa9d98939351",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.991638,
+      "ageb_code": "0901500011233",
+      "centroid_lat": 19.412708,
+      "centroid_lng": -99.147024,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "3c1f1ade-663f-4aff-a0bf-a6c0aa707622",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 1,
+      "ageb_code": "090150001113A",
+      "centroid_lat": 19.416991,
+      "centroid_lng": -99.14648,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "3c71d83b-6d44-483b-809d-ca063969be26",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "official_colonia_names": [
+        "Roma Norte"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 21,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.997161,
+      "ageb_code": "0901500011110",
+      "centroid_lat": 19.413493,
+      "centroid_lng": -99.156332,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "3e080c61-269c-4e90-a128-28329b277fea",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "official_colonia_names": [
+        "Roma Norte"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 21,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.996448,
+      "ageb_code": "0901500011017",
+      "centroid_lat": 19.421882,
+      "centroid_lng": -99.156925,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "40716ff6-ae2f-45df-9d5b-0f4f6a39a7ac",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 1,
+      "ageb_code": "090150001113A",
+      "centroid_lat": 19.416972,
+      "centroid_lng": -99.146441,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "408e4973-8d61-4fb3-8e58-49b70c0020ab",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Polanco",
+      "official_colonia_names": [
+        "Polanco I Seccion",
+        "Polanco Ii Seccion",
+        "Polanco Iii Seccion",
+        "Polanco Iv Seccion",
+        "Polanco V Seccion"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 23,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.527011,
+      "ageb_code": "090160001068A",
+      "centroid_lat": 19.432595,
+      "centroid_lng": -99.182772,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "432aef30-68b4-4eff-868b-8b4d4863245a",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Polanco",
+      "official_colonia_names": [
+        "Polanco I Seccion",
+        "Polanco Ii Seccion",
+        "Polanco Iii Seccion",
+        "Polanco Iv Seccion",
+        "Polanco V Seccion"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 23,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.969958,
+      "ageb_code": "0901600010745",
+      "centroid_lat": 19.43038,
+      "centroid_lng": -99.202546,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "43e5eeae-b0e3-4b8c-bd0a-2106c7c94ad8",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "official_colonia_names": [
+        "Roma Norte"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 21,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.996448,
+      "ageb_code": "0901500011017",
+      "centroid_lat": 19.421723,
+      "centroid_lng": -99.156569,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "4473e59d-6b76-4b6e-8329-a82bd8215e4b",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "official_colonia_names": [
+        "Roma Norte"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 21,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.997375,
+      "ageb_code": "0901500011214",
+      "centroid_lat": 19.413471,
+      "centroid_lng": -99.162305,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "46b48204-b678-4133-8ea2-533c17d33e5e",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "official_colonia_names": [
+        "Roma Norte"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 21,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.996448,
+      "ageb_code": "0901500011017",
+      "centroid_lat": 19.421955,
+      "centroid_lng": -99.156537,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "476a73ac-9fbf-4664-9d95-0492309d5b33",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 1,
+      "ageb_code": "090150001113A",
+      "centroid_lat": 19.416639,
+      "centroid_lng": -99.146748,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "4924766a-b172-46c7-ae39-ce1a0a195275",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.997526,
+      "ageb_code": "0901500011036",
+      "centroid_lat": 19.421135,
+      "centroid_lng": -99.146224,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "495eab1e-30ba-45b5-9765-e2c0930eeb2f",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Tacuba",
+      "official_colonia_names": [
+        "Tacuba"
+      ],
+      "candidate_count": 5,
+      "candidates_before": 6,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.45089,
+      "ageb_code": "0901600010054",
+      "centroid_lat": 19.461263,
+      "centroid_lng": -99.189376,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "49f49d03-7fd9-4046-9850-5ba8bce7f36f",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "official_colonia_names": [
+        "Roma Norte"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 21,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.997161,
+      "ageb_code": "0901500011110",
+      "centroid_lat": 19.413793,
+      "centroid_lng": -99.156888,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "4b76e86b-8f52-4e19-a84f-e1313aec69c8",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Santa María la Ribera",
+      "official_colonia_names": [
+        "Santa Maria La Ribera"
+      ],
+      "candidate_count": 6,
+      "candidates_before": 14,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.994433,
+      "ageb_code": "0901500010466",
+      "centroid_lat": 19.452257,
+      "centroid_lng": -99.16068,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "4d7c095a-97ce-4879-8ffd-f15788e9e4c4",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Condesa",
+      "official_colonia_names": [
+        "Condesa"
+      ],
+      "candidate_count": 6,
+      "candidates_before": 10,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.162079,
+      "ageb_code": "0901500011197",
+      "centroid_lat": 19.414711,
+      "centroid_lng": -99.171584,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "5032c35c-2f90-4799-9842-195d2882782b",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.988913,
+      "ageb_code": "0901500011394",
+      "centroid_lat": 19.407943,
+      "centroid_lng": -99.147902,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "5064a852-d2af-4519-9f33-db92dbc66ba2",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Polanco",
+      "official_colonia_names": [
+        "Polanco I Seccion",
+        "Polanco Ii Seccion",
+        "Polanco Iii Seccion",
+        "Polanco Iv Seccion",
+        "Polanco V Seccion"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 23,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.986583,
+      "ageb_code": "0901600010783",
+      "centroid_lat": 19.428524,
+      "centroid_lng": -99.188226,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "51ecd97f-b4a4-4b5a-8cdd-3575cae5620a",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Morelos",
+      "official_colonia_names": [
+        "Morelos"
+      ],
+      "candidate_count": 6,
+      "candidates_before": 7,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.999995,
+      "ageb_code": "0901500010343",
+      "centroid_lat": 19.449018,
+      "centroid_lng": -99.128705,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "52755f81-f930-475b-a94f-ebadeb667fd5",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "official_colonia_names": [
+        "Roma Norte"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 21,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.997161,
+      "ageb_code": "0901500011110",
+      "centroid_lat": 19.414184,
+      "centroid_lng": -99.156532,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "52c4fdc2-cc27-4c9c-a805-c628f9ff1aa9",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.991638,
+      "ageb_code": "0901500011233",
+      "centroid_lat": 19.412658,
+      "centroid_lng": -99.147119,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "54b3d3ce-455a-4af2-872f-85e2069b0737",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.991638,
+      "ageb_code": "0901500011233",
+      "centroid_lat": 19.412726,
+      "centroid_lng": -99.147484,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "55284a8a-bfc2-4d24-8010-5a54a1e664f1",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Polanco",
+      "official_colonia_names": [
+        "Polanco I Seccion",
+        "Polanco Ii Seccion",
+        "Polanco Iii Seccion",
+        "Polanco Iv Seccion",
+        "Polanco V Seccion"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 23,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 1,
+      "ageb_code": "0901600010656",
+      "centroid_lat": 19.43521,
+      "centroid_lng": -99.193267,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "55857cd6-17ea-4867-b904-85f8435696ab",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.988913,
+      "ageb_code": "0901500011394",
+      "centroid_lat": 19.407972,
+      "centroid_lng": -99.14789,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "574a6e98-e3a0-4002-82dd-b28634a7e81e",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.991638,
+      "ageb_code": "0901500011233",
+      "centroid_lat": 19.412519,
+      "centroid_lng": -99.147173,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "5cbc7e57-1b88-4e13-992b-f96981593218",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Popotla",
+      "official_colonia_names": [
+        "Popotla"
+      ],
+      "candidate_count": 6,
+      "candidates_before": 7,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.418928,
+      "ageb_code": "0901600010054",
+      "centroid_lat": 19.457147,
+      "centroid_lng": -99.179691,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "5f86fb1d-f622-442c-a4e8-85ab80586f06",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Condesa",
+      "official_colonia_names": [
+        "Condesa"
+      ],
+      "candidate_count": 6,
+      "candidates_before": 10,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.98768,
+      "ageb_code": "0901500011178",
+      "centroid_lat": 19.416927,
+      "centroid_lng": -99.17748,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "6315b4a3-b386-4f11-a554-6178d66f33b2",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.994551,
+      "ageb_code": "0901500011125",
+      "centroid_lat": 19.41642,
+      "centroid_lng": -99.151715,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "64aeed2c-98fa-470d-8394-ae2142809080",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Santa María la Ribera",
+      "official_colonia_names": [
+        "Santa Maria La Ribera"
+      ],
+      "candidate_count": 6,
+      "candidates_before": 14,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.992748,
+      "ageb_code": "0901500010555",
+      "centroid_lat": 19.447494,
+      "centroid_lng": -99.16132,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "65eb68f2-5627-4ae4-90db-a53e661e71d4",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Morelos",
+      "official_colonia_names": [
+        "Morelos"
+      ],
+      "candidate_count": 6,
+      "candidates_before": 7,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.999995,
+      "ageb_code": "0901500010343",
+      "centroid_lat": 19.449342,
+      "centroid_lng": -99.128438,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "6898d5c2-84fa-4029-99b0-e16b1a9c78f3",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Santa María la Ribera",
+      "official_colonia_names": [
+        "Santa Maria La Ribera"
+      ],
+      "candidate_count": 6,
+      "candidates_before": 14,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.994433,
+      "ageb_code": "0901500010466",
+      "centroid_lat": 19.452279,
+      "centroid_lng": -99.160314,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "6c5bda1f-eca2-48a9-8db7-7dbbecb40c1a",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "official_colonia_names": [
+        "Roma Norte"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 21,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.996448,
+      "ageb_code": "0901500011017",
+      "centroid_lat": 19.421812,
+      "centroid_lng": -99.156945,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "6de63df0-7520-4f28-8645-876af8fa85dc",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Tacuba",
+      "official_colonia_names": [
+        "Tacuba"
+      ],
+      "candidate_count": 5,
+      "candidates_before": 6,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.993857,
+      "ageb_code": "0901600010158",
+      "centroid_lat": 19.456932,
+      "centroid_lng": -99.188406,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "6efef3e1-8df5-44cd-b239-e3472a0ad726",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Hipódromo Condesa",
+      "official_colonia_names": [
+        "Hipodromo Condesa"
+      ],
+      "candidate_count": 2,
+      "candidates_before": 3,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.752778,
+      "ageb_code": "0901500011411",
+      "centroid_lat": 19.409062,
+      "centroid_lng": -99.180384,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "70ed84c1-c1e6-4246-868c-40223403a8ae",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Popo",
+      "official_colonia_names": [
+        "Popo"
+      ],
+      "candidate_count": 3,
+      "candidates_before": 6,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.153149,
+      "ageb_code": "0901600010459",
+      "centroid_lat": 19.444667,
+      "centroid_lng": -99.199207,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "73273333-beab-4f1c-a698-4c08c9a72ac8",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 1,
+      "ageb_code": "090150001113A",
+      "centroid_lat": 19.416936,
+      "centroid_lng": -99.146714,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "73822f8a-efba-4d88-8ab5-f3247852054e",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Polanco",
+      "official_colonia_names": [
+        "Polanco I Seccion",
+        "Polanco Ii Seccion",
+        "Polanco Iii Seccion",
+        "Polanco Iv Seccion",
+        "Polanco V Seccion"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 23,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.999864,
+      "ageb_code": "0901600010622",
+      "centroid_lat": 19.435863,
+      "centroid_lng": -99.210139,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "74d5a04a-6207-4275-8779-a40a705d85e8",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Popotla",
+      "official_colonia_names": [
+        "Popotla"
+      ],
+      "candidate_count": 6,
+      "candidates_before": 7,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.418928,
+      "ageb_code": "0901600010054",
+      "centroid_lat": 19.457078,
+      "centroid_lng": -99.179588,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "77bad0e9-9feb-42cf-b336-ae6fe288ceef",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Ampliación Granada",
+      "official_colonia_names": [
+        "Ampliacion Granada"
+      ],
+      "candidate_count": 2,
+      "candidates_before": 5,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.410667,
+      "ageb_code": "0901600010444",
+      "centroid_lat": 19.442522,
+      "centroid_lng": -99.202558,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "7c0e97eb-c971-45f9-9fb1-8d51a54228bb",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.997526,
+      "ageb_code": "0901500011036",
+      "centroid_lat": 19.420496,
+      "centroid_lng": -99.146001,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "7d5f1f79-a4ac-44c1-a40f-422b8c1c7b42",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Morelos",
+      "official_colonia_names": [
+        "Morelos"
+      ],
+      "candidate_count": 6,
+      "candidates_before": 7,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.774311,
+      "ageb_code": "0901500010540",
+      "centroid_lat": 19.445453,
+      "centroid_lng": -99.132907,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "8029f0e3-1af2-4586-9825-f5aeab9f50cf",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Tacuba",
+      "official_colonia_names": [
+        "Tacuba"
+      ],
+      "candidate_count": 5,
+      "candidates_before": 6,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.169728,
+      "ageb_code": "0901600010270",
+      "centroid_lat": 19.453214,
+      "centroid_lng": -99.188222,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "8035934b-679d-4ab2-a522-c196c57f8b8a",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.997526,
+      "ageb_code": "0901500011036",
+      "centroid_lat": 19.420957,
+      "centroid_lng": -99.145911,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "817c500c-8db7-4c63-b738-026eb7251ab8",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 1,
+      "ageb_code": "090150001113A",
+      "centroid_lat": 19.416927,
+      "centroid_lng": -99.146403,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "81ee9c0d-c3fd-4351-a24b-3f9f2d9aa84b",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Popotla",
+      "official_colonia_names": [
+        "Popotla"
+      ],
+      "candidate_count": 6,
+      "candidates_before": 7,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.56543,
+      "ageb_code": "0901600010069",
+      "centroid_lat": 19.455947,
+      "centroid_lng": -99.176858,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "82facb58-7367-49ed-ab4c-4b9b6669ec6b",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Ampliación Granada",
+      "official_colonia_names": [
+        "Ampliacion Granada"
+      ],
+      "candidate_count": 2,
+      "candidates_before": 5,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.410667,
+      "ageb_code": "0901600010444",
+      "centroid_lat": 19.442375,
+      "centroid_lng": -99.202853,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "876809bd-63e6-4915-a1fd-c9fd8ac9d2a2",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Polanco",
+      "official_colonia_names": [
+        "Polanco I Seccion",
+        "Polanco Ii Seccion",
+        "Polanco Iii Seccion",
+        "Polanco Iv Seccion",
+        "Polanco V Seccion"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 23,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 1,
+      "ageb_code": "0901600010660",
+      "centroid_lat": 19.434075,
+      "centroid_lng": -99.189051,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "87c434f5-09f8-49f4-9d5d-2d8681dc54ab",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.988913,
+      "ageb_code": "0901500011394",
+      "centroid_lat": 19.408483,
+      "centroid_lng": -99.147937,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "8d0e5df2-2fbf-4c9d-aa98-a084f795aa69",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "official_colonia_names": [
+        "Roma Norte"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 21,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.999912,
+      "ageb_code": "0901500011093",
+      "centroid_lat": 19.418355,
+      "centroid_lng": -99.167434,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "8f7587cf-1d8d-4b9a-8a07-8cbc6b8906fb",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Polanco",
+      "official_colonia_names": [
+        "Polanco I Seccion",
+        "Polanco Ii Seccion",
+        "Polanco Iii Seccion",
+        "Polanco Iv Seccion",
+        "Polanco V Seccion"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 23,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 1,
+      "ageb_code": "0901600010660",
+      "centroid_lat": 19.434107,
+      "centroid_lng": -99.189445,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "906bcd83-5d6f-40f0-83a8-e3ab1660333a",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Polanco",
+      "official_colonia_names": [
+        "Polanco I Seccion",
+        "Polanco Ii Seccion",
+        "Polanco Iii Seccion",
+        "Polanco Iv Seccion",
+        "Polanco V Seccion"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 23,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.986583,
+      "ageb_code": "0901600010783",
+      "centroid_lat": 19.4286,
+      "centroid_lng": -99.188385,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "929779b3-87ad-433d-9069-0cdd970a6a5d",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.994758,
+      "ageb_code": "0901500011549",
+      "centroid_lat": 19.420729,
+      "centroid_lng": -99.152278,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "92fec117-ac14-4291-9b6b-30e809f47ce2",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 1,
+      "ageb_code": "090150001113A",
+      "centroid_lat": 19.416551,
+      "centroid_lng": -99.146674,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "94a007a4-e22f-454c-9deb-479b1ae11cd8",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.991638,
+      "ageb_code": "0901500011233",
+      "centroid_lat": 19.412516,
+      "centroid_lng": -99.147432,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "94faaf43-efb6-4dde-b540-3ebcb9ff74e4",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Hipódromo Condesa",
+      "official_colonia_names": [
+        "Hipodromo Condesa"
+      ],
+      "candidate_count": 2,
+      "candidates_before": 3,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.536281,
+      "ageb_code": "0901500011318",
+      "centroid_lat": 19.410169,
+      "centroid_lng": -99.177343,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "9575568d-dc07-4ba6-8cc2-e25aa74a048d",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Popotla",
+      "official_colonia_names": [
+        "Popotla"
+      ],
+      "candidate_count": 6,
+      "candidates_before": 7,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.418928,
+      "ageb_code": "0901600010054",
+      "centroid_lat": 19.457249,
+      "centroid_lng": -99.179659,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "972012b3-e54b-4fe9-9724-ea2e348b71ce",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.994758,
+      "ageb_code": "0901500011549",
+      "centroid_lat": 19.421055,
+      "centroid_lng": -99.151967,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "9af187aa-91b2-4e32-b2fd-68083e200ec4",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Tacuba",
+      "official_colonia_names": [
+        "Tacuba"
+      ],
+      "candidate_count": 5,
+      "candidates_before": 6,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.169728,
+      "ageb_code": "0901600010270",
+      "centroid_lat": 19.4533,
+      "centroid_lng": -99.188466,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "9d79f6f4-f32f-42af-8153-06ca98b88124",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.997526,
+      "ageb_code": "0901500011036",
+      "centroid_lat": 19.421127,
+      "centroid_lng": -99.146096,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "9f656431-f6d0-4d39-9db8-96c374a0df70",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "official_colonia_names": [
+        "Roma Norte"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 21,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.997454,
+      "ageb_code": "0901500011002",
+      "centroid_lat": 19.420438,
+      "centroid_lng": -99.161312,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "a133091f-38b2-4384-b56d-2a7d4a1451dd",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.994758,
+      "ageb_code": "0901500011549",
+      "centroid_lat": 19.420648,
+      "centroid_lng": -99.152378,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "a25c113c-6383-4b9a-8966-fbff3ffcfe3b",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Morelos",
+      "official_colonia_names": [
+        "Morelos"
+      ],
+      "candidate_count": 6,
+      "candidates_before": 7,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.414573,
+      "ageb_code": "0901500010536",
+      "centroid_lat": 19.446181,
+      "centroid_lng": -99.136153,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "a26238dc-451a-45b1-b5a2-c90d94340a05",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.998638,
+      "ageb_code": "0901500011534",
+      "centroid_lat": 19.422746,
+      "centroid_lng": -99.151398,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "a3e28c26-1e34-41cf-b388-8af147115550",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.997526,
+      "ageb_code": "0901500011036",
+      "centroid_lat": 19.420719,
+      "centroid_lng": -99.145684,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "a3ea3c5d-40be-4ddf-9529-2d4d69a9149d",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Popo",
+      "official_colonia_names": [
+        "Popo"
+      ],
+      "candidate_count": 3,
+      "candidates_before": 6,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.049563,
+      "ageb_code": "0901600010463",
+      "centroid_lat": 19.445156,
+      "centroid_lng": -99.198263,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "a49c0a19-d81e-4633-b524-fe5628ee18ef",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.991638,
+      "ageb_code": "0901500011233",
+      "centroid_lat": 19.412695,
+      "centroid_lng": -99.147137,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "aaa7cf1d-d691-4bd3-9db2-5c638984efcd",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Morelos",
+      "official_colonia_names": [
+        "Morelos"
+      ],
+      "candidate_count": 6,
+      "candidates_before": 7,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.999995,
+      "ageb_code": "0901500010343",
+      "centroid_lat": 19.449041,
+      "centroid_lng": -99.128701,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "abb9d106-1084-411a-a57e-bf3667bc1e65",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.994758,
+      "ageb_code": "0901500011549",
+      "centroid_lat": 19.420969,
+      "centroid_lng": -99.152073,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "ad32b1c1-ce3c-4847-b05a-1b4c9b6faaa2",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.997526,
+      "ageb_code": "0901500011036",
+      "centroid_lat": 19.420839,
+      "centroid_lng": -99.145852,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "b14f580a-d514-41d7-9a74-e226eade5468",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Tacuba",
+      "official_colonia_names": [
+        "Tacuba"
+      ],
+      "candidate_count": 5,
+      "candidates_before": 6,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.649863,
+      "ageb_code": "0901600010162",
+      "centroid_lat": 19.455606,
+      "centroid_lng": -99.185774,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "b360b50c-3d90-413f-93ff-416c5c7c5973",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Polanco",
+      "official_colonia_names": [
+        "Polanco I Seccion",
+        "Polanco Ii Seccion",
+        "Polanco Iii Seccion",
+        "Polanco Iv Seccion",
+        "Polanco V Seccion"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 23,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.986583,
+      "ageb_code": "0901600010783",
+      "centroid_lat": 19.428276,
+      "centroid_lng": -99.188582,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "b4fc7711-da7e-42b4-b706-084bc5757175",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Anáhuac",
+      "official_colonia_names": [
+        "Anahuac I Seccion",
+        "Anahuac Ii Seccion"
+      ],
+      "candidate_count": 7,
+      "candidates_before": 18,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.99994,
+      "ageb_code": "0901600010285",
+      "centroid_lat": 19.444464,
+      "centroid_lng": -99.176524,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "b56e4a79-8d12-4258-8ffc-2eb54309093d",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Polanco",
+      "official_colonia_names": [
+        "Polanco I Seccion",
+        "Polanco Ii Seccion",
+        "Polanco Iii Seccion",
+        "Polanco Iv Seccion",
+        "Polanco V Seccion"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 23,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 1,
+      "ageb_code": "0901600010660",
+      "centroid_lat": 19.434688,
+      "centroid_lng": -99.189013,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "b59309a1-2902-4911-a853-9f1b34145a17",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.282837,
+      "ageb_code": "0901500010875",
+      "centroid_lat": 19.425767,
+      "centroid_lng": -99.145133,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "bb644e38-0f8a-49fd-905c-15d90bd1b91a",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Popotla",
+      "official_colonia_names": [
+        "Popotla"
+      ],
+      "candidate_count": 6,
+      "candidates_before": 7,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.56543,
+      "ageb_code": "0901600010069",
+      "centroid_lat": 19.456172,
+      "centroid_lng": -99.176982,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "bc9af880-cf99-4d26-b404-3c2700c55d01",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "official_colonia_names": [
+        "Roma Norte"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 21,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.997161,
+      "ageb_code": "0901500011110",
+      "centroid_lat": 19.413998,
+      "centroid_lng": -99.156575,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "bdae26f2-5bda-45f9-b9b4-5c23e799e4d6",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Escandón",
+      "official_colonia_names": [
+        "Escandon I Seccion",
+        "Escandon Ii Seccion"
+      ],
+      "candidate_count": 6,
+      "candidates_before": 7,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.997654,
+      "ageb_code": "0901600011207",
+      "centroid_lat": 19.400817,
+      "centroid_lng": -99.179641,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "be2359f1-7b36-44d8-91fc-57c6498e4455",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Polanco",
+      "official_colonia_names": [
+        "Polanco I Seccion",
+        "Polanco Ii Seccion",
+        "Polanco Iii Seccion",
+        "Polanco Iv Seccion",
+        "Polanco V Seccion"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 23,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.986583,
+      "ageb_code": "0901600010783",
+      "centroid_lat": 19.428921,
+      "centroid_lng": -99.188131,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "bf908645-102a-4b7a-839d-f9e8673f2007",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.994551,
+      "ageb_code": "0901500011125",
+      "centroid_lat": 19.416484,
+      "centroid_lng": -99.152322,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "c1f1bf4e-5eb1-4dba-b6e7-d157da7f9f14",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "official_colonia_names": [
+        "Roma Norte"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 21,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.997161,
+      "ageb_code": "0901500011110",
+      "centroid_lat": 19.413653,
+      "centroid_lng": -99.156904,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "c32fd288-5056-435d-a44c-0375a3e2c39c",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.994758,
+      "ageb_code": "0901500011549",
+      "centroid_lat": 19.420752,
+      "centroid_lng": -99.152275,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "c3f498d1-ccda-44a4-a749-cdce42ed8621",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Tacuba",
+      "official_colonia_names": [
+        "Tacuba"
+      ],
+      "candidate_count": 5,
+      "candidates_before": 6,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.993857,
+      "ageb_code": "0901600010158",
+      "centroid_lat": 19.45645,
+      "centroid_lng": -99.188318,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "c57ffe4f-bba7-4e51-b30f-524ce80effd7",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "San Rafael",
+      "official_colonia_names": [
+        "San Rafael"
+      ],
+      "candidate_count": 3,
+      "candidates_before": 8,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.962665,
+      "ageb_code": "0901500010682",
+      "centroid_lat": 19.436361,
+      "centroid_lng": -99.163,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "ce1dc5d2-d9ec-4aad-9904-cc58d65ee108",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.994551,
+      "ageb_code": "0901500011125",
+      "centroid_lat": 19.416532,
+      "centroid_lng": -99.151669,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "cf48e269-128e-42e7-b0a8-18625b9843ec",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.997526,
+      "ageb_code": "0901500011036",
+      "centroid_lat": 19.421061,
+      "centroid_lng": -99.145821,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "cfa7c8e4-1550-4a92-bac9-d85fcf57e986",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "official_colonia_names": [
+        "Roma Norte"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 21,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.997161,
+      "ageb_code": "0901500011110",
+      "centroid_lat": 19.414078,
+      "centroid_lng": -99.156342,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "d0eda7a9-92f8-401e-b665-ca1d17175451",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Polanco",
+      "official_colonia_names": [
+        "Polanco I Seccion",
+        "Polanco Ii Seccion",
+        "Polanco Iii Seccion",
+        "Polanco Iv Seccion",
+        "Polanco V Seccion"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 23,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.986583,
+      "ageb_code": "0901600010783",
+      "centroid_lat": 19.428269,
+      "centroid_lng": -99.188132,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "d106b5bd-dbd0-4224-a552-85c3154bcc12",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "official_colonia_names": [
+        "Roma Norte"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 21,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.967265,
+      "ageb_code": "0901500010998",
+      "centroid_lat": 19.420778,
+      "centroid_lng": -99.167667,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "d1a6fa70-a084-4dc8-889c-491b9f61c107",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 1,
+      "ageb_code": "090150001113A",
+      "centroid_lat": 19.416879,
+      "centroid_lng": -99.146691,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "d1edce80-80bf-4e75-b85c-7f21abe4fdd7",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Anáhuac",
+      "official_colonia_names": [
+        "Anahuac I Seccion",
+        "Anahuac Ii Seccion"
+      ],
+      "candidate_count": 7,
+      "candidates_before": 18,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.998346,
+      "ageb_code": "090160001029A",
+      "centroid_lat": 19.446904,
+      "centroid_lng": -99.171701,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "d302c956-10c9-4113-93a3-96bf40be4f40",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "official_colonia_names": [
+        "Roma Norte"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 21,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.932516,
+      "ageb_code": "0901500011089",
+      "centroid_lat": 19.419828,
+      "centroid_lng": -99.173587,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "d545a987-786a-4053-8c73-3f240fc14b08",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "official_colonia_names": [
+        "Roma Norte"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 21,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.997161,
+      "ageb_code": "0901500011110",
+      "centroid_lat": 19.413799,
+      "centroid_lng": -99.156788,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "d78b6369-4a42-4628-a42b-8c15ecdefd48",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Condesa",
+      "official_colonia_names": [
+        "Condesa"
+      ],
+      "candidate_count": 6,
+      "candidates_before": 10,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.656557,
+      "ageb_code": "0901500011322",
+      "centroid_lat": 19.413835,
+      "centroid_lng": -99.174827,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "d7e55280-db4b-4fdf-a1ef-8a85e48fb5a7",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Polanco",
+      "official_colonia_names": [
+        "Polanco I Seccion",
+        "Polanco Ii Seccion",
+        "Polanco Iii Seccion",
+        "Polanco Iv Seccion",
+        "Polanco V Seccion"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 23,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.997895,
+      "ageb_code": "0901600010637",
+      "centroid_lat": 19.43486,
+      "centroid_lng": -99.20435,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "da6f91d9-3585-439a-8cf2-b016e1305c95",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.991638,
+      "ageb_code": "0901500011233",
+      "centroid_lat": 19.412708,
+      "centroid_lng": -99.147034,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "dcd39767-6cb3-474c-8e10-21b314844ca0",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "official_colonia_names": [
+        "Roma Norte"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 21,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.932516,
+      "ageb_code": "0901500011089",
+      "centroid_lat": 19.419609,
+      "centroid_lng": -99.173539,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "ddaccac4-d8fd-4862-979b-bad3b27ae941",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Condesa",
+      "official_colonia_names": [
+        "Condesa"
+      ],
+      "candidate_count": 6,
+      "candidates_before": 10,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.98768,
+      "ageb_code": "0901500011178",
+      "centroid_lat": 19.41685,
+      "centroid_lng": -99.17723,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "ddd60b82-4e87-459f-af9a-9fabca372be8",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Popotla",
+      "official_colonia_names": [
+        "Popotla"
+      ],
+      "candidate_count": 6,
+      "candidates_before": 7,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.516097,
+      "ageb_code": "0901600010181",
+      "centroid_lat": 19.452971,
+      "centroid_lng": -99.177764,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "df54e86f-7a2b-4dd5-b11c-85fbb473e4bb",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.988913,
+      "ageb_code": "0901500011394",
+      "centroid_lat": 19.408524,
+      "centroid_lng": -99.147993,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "e1173d15-b89b-4367-b301-43d95315178c",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Tacuba",
+      "official_colonia_names": [
+        "Tacuba"
+      ],
+      "candidate_count": 5,
+      "candidates_before": 6,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.169728,
+      "ageb_code": "0901600010270",
+      "centroid_lat": 19.453399,
+      "centroid_lng": -99.187962,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "e2844454-fb14-4cae-9a43-570fece44d1e",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Polanco",
+      "official_colonia_names": [
+        "Polanco I Seccion",
+        "Polanco Ii Seccion",
+        "Polanco Iii Seccion",
+        "Polanco Iv Seccion",
+        "Polanco V Seccion"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 23,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.997895,
+      "ageb_code": "0901600010637",
+      "centroid_lat": 19.43497,
+      "centroid_lng": -99.204472,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "ead2bebf-1b2c-41be-9586-60d26fbb96c9",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Anáhuac",
+      "official_colonia_names": [
+        "Anahuac I Seccion",
+        "Anahuac Ii Seccion"
+      ],
+      "candidate_count": 7,
+      "candidates_before": 18,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.729456,
+      "ageb_code": "0901600010482",
+      "centroid_lat": 19.440348,
+      "centroid_lng": -99.180172,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "ecf68464-1802-49b4-9816-89198f4ea397",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.998638,
+      "ageb_code": "0901500011534",
+      "centroid_lat": 19.422856,
+      "centroid_lng": -99.150818,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "efdb2bdc-435e-4104-b4a2-9f0c2b83f724",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Tacuba",
+      "official_colonia_names": [
+        "Tacuba"
+      ],
+      "candidate_count": 5,
+      "candidates_before": 6,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.561842,
+      "ageb_code": "0901600010143",
+      "centroid_lat": 19.455264,
+      "centroid_lng": -99.191847,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "f0ce23ea-f580-4546-8ba3-c8f14ca345d0",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Morelos",
+      "official_colonia_names": [
+        "Morelos"
+      ],
+      "candidate_count": 6,
+      "candidates_before": 7,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.995148,
+      "ageb_code": "0901500010358",
+      "centroid_lat": 19.447369,
+      "centroid_lng": -99.126509,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "f0dcb02b-5250-459a-969d-b244ecb1962d",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 1,
+      "ageb_code": "090150001113A",
+      "centroid_lat": 19.416948,
+      "centroid_lng": -99.146872,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "f1163ba3-cc8b-423b-a5ba-b6e00fa316a7",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Polanco",
+      "official_colonia_names": [
+        "Polanco I Seccion",
+        "Polanco Ii Seccion",
+        "Polanco Iii Seccion",
+        "Polanco Iv Seccion",
+        "Polanco V Seccion"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 23,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 1,
+      "ageb_code": "0901600010660",
+      "centroid_lat": 19.434176,
+      "centroid_lng": -99.188959,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "f16417af-27a1-48c0-bb1a-35a1075f5227",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.988913,
+      "ageb_code": "0901500011394",
+      "centroid_lat": 19.407848,
+      "centroid_lng": -99.147784,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "f242cb21-158b-4fba-8e07-ae247aa3441b",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.991638,
+      "ageb_code": "0901500011233",
+      "centroid_lat": 19.412477,
+      "centroid_lng": -99.14707,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "f41f07af-0737-4584-bb17-c64536accae9",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Roma Norte",
+      "official_colonia_names": [
+        "Roma Norte"
+      ],
+      "candidate_count": 13,
+      "candidates_before": 21,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.996448,
+      "ageb_code": "0901500011017",
+      "centroid_lat": 19.421928,
+      "centroid_lng": -99.156331,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "f570c4d7-81de-4325-b004-70a2037d6ad2",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Morelos",
+      "official_colonia_names": [
+        "Morelos"
+      ],
+      "candidate_count": 6,
+      "candidates_before": 7,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.999995,
+      "ageb_code": "0901500010343",
+      "centroid_lat": 19.449065,
+      "centroid_lng": -99.128814,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "f9635958-70d8-4d8e-b20c-3d6196af8588",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.988913,
+      "ageb_code": "0901500011394",
+      "centroid_lat": 19.408375,
+      "centroid_lng": -99.147945,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "fa58a4ee-f445-4fe2-80bc-32b14147967c",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 1,
+      "ageb_code": "090150001113A",
+      "centroid_lat": 19.416934,
+      "centroid_lng": -99.146222,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "fdb09081-d302-45f6-958a-83f97e1248ad",
+      "alcaldia": "Miguel Hidalgo",
+      "colonia": "Ampliación Granada",
+      "official_colonia_names": [
+        "Ampliacion Granada"
+      ],
+      "candidate_count": 2,
+      "candidates_before": 5,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.410667,
+      "ageb_code": "0901600010444",
+      "centroid_lat": 19.44263,
+      "centroid_lng": -99.202685,
+      "method": "colonia_census_weighted"
+    },
+    {
+      "id": "ff258f97-955a-4af4-8369-27f52a4e1b52",
+      "alcaldia": "Cuauhtémoc",
+      "colonia": "Doctores",
+      "official_colonia_names": [
+        "Doctores"
+      ],
+      "candidate_count": 10,
+      "candidates_before": 16,
+      "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.994758,
+      "ageb_code": "0901500011549",
+      "centroid_lat": 19.420832,
+      "centroid_lng": -99.152309,
+      "method": "colonia_census_weighted"
+    }
+  ]
+}
