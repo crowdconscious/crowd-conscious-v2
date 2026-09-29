@@ -86,14 +86,14 @@ type ProjectedDot = {
 
 const DESKTOP_DOT_REF_PX = 900
 /** Detail (zoomed) on-screen diameters. */
-const MOBILE_DOT_PX = 6
-const DESKTOP_DOT_PX = 7
-const DESKTOP_DOT_MIN_PX = 5.5
-const CAPTURE_DOT_PX = 11
+const MOBILE_DOT_PX = 5.5
+const DESKTOP_DOT_PX = 6.5
+const DESKTOP_DOT_MIN_PX = 5
+const CAPTURE_DOT_PX = 10
 /** Overview (full CDMX): keep the cluster from becoming a solid blob. */
-const OVERVIEW_DOT_PX_MOBILE = 2.25
-const OVERVIEW_DOT_PX_DESKTOP = 2.75
-const OVERVIEW_DOT_PX_CAPTURE = 3.5
+const OVERVIEW_DOT_PX_MOBILE = 1.75
+const OVERVIEW_DOT_PX_DESKTOP = 2.25
+const OVERVIEW_DOT_PX_CAPTURE = 2.75
 
 let cachedAgeb: AgebFeatureCollection | null = null
 let cachedCdmx: CdmxAlcaldiaFeatureCollection | null = null
@@ -257,15 +257,49 @@ export function SimMap({
   )
 
   const detailVb = useMemo(() => {
-    if (!projection || !cdmx || size.width < 8) return overviewVb
+    if (!projection || size.width < 8) return overviewVb
     const pts: [number, number][] = []
-    for (const f of cdmx.features) {
-      if (!isActiveAlcaldia(f.properties.cvegeo)) continue
-      walkCoords(f.geometry.coordinates, projection.project, pts)
+    // Fit the camera to persona placements so the 150 dots spread across the
+    // frame; padding keeps neighbouring alcaldía outlines faintly visible.
+    for (const vote of data.votes) {
+      const persona = vote.persona
+      if (!isPersonaMappable(persona, geoCodes)) continue
+      const seed = mapDotSeed(data.run.id, persona.personaKey, vote.sequenceIndex)
+      const pt = jitteredMapPoint(
+        seed,
+        persona.centroidLat as number,
+        persona.centroidLng as number,
+      )
+      const xy = projection.project(pt.lng, pt.lat)
+      if (xy) pts.push(xy)
     }
-    const pad = mobileLayout ? 22 : 32
-    return detailViewBoxFromPoints(pts, size.width, size.height, pad)
-  }, [projection, cdmx, size.width, size.height, mobileLayout, overviewVb])
+    if (pts.length < 8 && cdmx) {
+      for (const f of cdmx.features) {
+        if (!isActiveAlcaldia(f.properties.cvegeo)) continue
+        walkCoords(f.geometry.coordinates, projection.project, pts)
+      }
+    }
+    // Padding keeps neighbouring alcaldía outlines faintly in frame; don't
+    // force the tall phone aspect or the dots collapse into a thin band.
+    const pad = mobileLayout ? 28 : 36
+    return detailViewBoxFromPoints(
+      pts,
+      size.width,
+      size.height,
+      pad,
+      !mobileLayout,
+    )
+  }, [
+    projection,
+    cdmx,
+    data.votes,
+    data.run.id,
+    geoCodes,
+    size.width,
+    size.height,
+    mobileLayout,
+    overviewVb,
+  ])
 
   const targetVb = camera === 'detail' ? detailVb : overviewVb
   const [viewBox, setViewBox] = useState<SvgViewBox>(() =>
@@ -383,29 +417,48 @@ export function SimMap({
       label: string
       active: boolean
     }[] = []
-    for (const f of cdmx.features) {
-      const { label_lat: lat, label_lng: lng, nombre, cvegeo } = f.properties
-      const active = isActiveAlcaldia(cvegeo)
-      // Overview: hide Cuau/MH labels (they collide). Detail: show only those two.
-      if (camera === 'overview' && active) continue
-      if (camera === 'detail' && !active) continue
-      const xy = projection.project(lng, lat)
-      if (!xy) continue
-      let x = xy[0]
-      let y = xy[1]
-      // Slight offsets so the two active labels never sit on top of each other.
-      if (camera === 'detail' && cvegeo === '09016') y -= mobileLayout ? 10 : 14
-      if (camera === 'detail' && cvegeo === '09015') y += mobileLayout ? 10 : 14
-      labels.push({
-        key: cvegeo,
-        x,
-        y,
-        label: mobileLayout && !active ? shortAlcaldiaLabel(nombre) : nombre,
-        active,
-      })
+
+    if (camera === 'overview') {
+      // Context names only — Cuau/MH labels collide at full-CDMX scale.
+      for (const f of cdmx.features) {
+        if (isActiveAlcaldia(f.properties.cvegeo)) continue
+        const { label_lat: lat, label_lng: lng, nombre, cvegeo } = f.properties
+        const xy = projection.project(lng, lat)
+        if (!xy) continue
+        labels.push({
+          key: cvegeo,
+          x: xy[0],
+          y: xy[1],
+          label: mobileLayout ? shortAlcaldiaLabel(nombre) : nombre,
+          active: false,
+        })
+      }
+      return labels
     }
+
+    // Detail: park labels inside the target camera frame so they never
+    // clip or collide — MH toward the top, Cuauhtémoc toward the bottom.
+    const frame = targetVb
+    const topY = frame.y + frame.height * 0.14
+    const botY = frame.y + frame.height * 0.86
+    const midX = frame.x + frame.width * 0.5
+    // Slight horizontal separation mirrors the real geography (MH west, Cuau east).
+    labels.push({
+      key: '09016',
+      x: midX - frame.width * 0.12,
+      y: topY,
+      label: 'Miguel Hidalgo',
+      active: true,
+    })
+    labels.push({
+      key: '09015',
+      x: midX + frame.width * 0.12,
+      y: botY,
+      label: 'Cuauhtémoc',
+      active: true,
+    })
     return labels
-  }, [projection, cdmx, mobileLayout, camera])
+  }, [projection, cdmx, mobileLayout, camera, targetVb])
 
   const dots = useMemo(() => {
     if (!projection) return [] as ProjectedDot[]
@@ -474,7 +527,12 @@ export function SimMap({
         )
   const screenDotPx =
     overviewScreenDotPx + (detailScreenDotPx - overviewScreenDotPx) * zoomT
-  const dotR = userSpaceDotRadius(screenDotPx, viewBox, size.width)
+  const dotR = userSpaceDotRadius(
+    screenDotPx,
+    viewBox,
+    size.width,
+    size.height,
+  )
 
   // Imperative land / reset — mirrors SimCanvas votedCount handling.
   useEffect(() => {
@@ -609,6 +667,7 @@ export function SimMap({
               viewBox={viewBoxToString(viewBox)}
               width={size.width}
               height={size.height}
+              preserveAspectRatio="xMidYMid meet"
               role="img"
               aria-label="Mapa de la simulación — Ciudad de México, muestra Cuauhtémoc y Miguel Hidalgo"
             >
