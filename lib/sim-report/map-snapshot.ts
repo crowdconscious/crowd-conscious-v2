@@ -35,7 +35,7 @@ import type { SimReportOptionShare, SimReportPersonaSample } from './types.ts'
 
 const MAP_W = 900
 const MAP_H = 720
-const MAIN_PAD = 28
+const MAIN_PAD = 18
 const INSET_W = 200
 const INSET_H = 160
 const INSET_MARGIN = 16
