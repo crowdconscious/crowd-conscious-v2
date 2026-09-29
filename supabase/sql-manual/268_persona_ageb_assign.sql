@@ -1,0 +1,11 @@
+-- 268_persona_ageb_assign.sql
+-- NOT YET GENERATED with production persona ids.
+-- Owner flow:
+--   1. Run supabase/sql-manual/SELECT_personas_for_ageb_assign.sql in Supabase.
+--   2. Save result as personas.csv
+--   3. node --experimental-strip-types scripts/geo/assign-persona-agebs.ts --in personas.csv
+--   4. Paste the regenerated SQL (after migration 268).
+--
+-- Algorithm validation for this commit used synthetic ids from
+-- data/personas.cdmx-v1.generated.json — see public/geo/PERSONA-AGEB-REPORT.md
+-- and public/geo/persona-ageb-assignments.json

@@ -12,6 +12,8 @@
  *
  * Usage (from repo root):
  *   node --experimental-strip-types scripts/geo/check-ageb-match.ts
+ *   # validate Task 4a.2 assignment output:
+ *   node --experimental-strip-types scripts/geo/check-ageb-match.ts --assignments
  *   # optional READ-ONLY prod check when env is set:
  *   SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... \
  *     node --experimental-strip-types scripts/geo/check-ageb-match.ts --prod
@@ -48,6 +50,7 @@ type PersonaHit = {
 
 const ROOT = process.cwd()
 const GEOJSON_PATH = join(ROOT, 'public/geo/ageb-cuauhtemoc-mh.geojson')
+const ASSIGNMENTS_PATH = join(ROOT, 'public/geo/persona-ageb-assignments.json')
 
 const SKIP_DIRS = new Set([
   'node_modules',
@@ -296,8 +299,33 @@ function summarize(label: string, personas: PersonaHit[], byCode: Map<string, Ge
   }
 }
 
+function loadAssignmentHits(): PersonaHit[] {
+  if (!existsSync(ASSIGNMENTS_PATH)) {
+    throw new Error(
+      `Missing ${ASSIGNMENTS_PATH}. Run scripts/geo/assign-persona-agebs.ts first.`
+    )
+  }
+  const data = JSON.parse(readFileSync(ASSIGNMENTS_PATH, 'utf8')) as {
+    assignments: Array<{
+      ageb_code: string | null
+      centroid_lat: number | null
+      centroid_lng: number | null
+    }>
+  }
+  return data.assignments
+    .filter((a) => a.ageb_code)
+    .map((a) => ({
+      source: 'public/geo/persona-ageb-assignments.json',
+      agebCode: a.ageb_code!,
+      centroidLat: a.centroid_lat,
+      centroidLng: a.centroid_lng,
+      kind: classifyCode(a.ageb_code!),
+    }))
+}
+
 async function main() {
   const wantProd = process.argv.includes('--prod')
+  const wantAssignments = process.argv.includes('--assignments')
 
   if (!existsSync(GEOJSON_PATH)) {
     console.error(`Missing ${GEOJSON_PATH}. Run scripts/geo/build-ageb-geojson.sh first.`)
@@ -311,6 +339,25 @@ async function main() {
   for (const f of geo.features) {
     byCode.set(f.properties.ageb_code, f)
     byCode.set(f.properties.cvegeo, f)
+  }
+
+  if (wantAssignments) {
+    const hits = loadAssignmentHits()
+    const summary = summarize('assignments', hits, byCode)
+    console.log('=== Task 4a.2 assignment validation ===')
+    console.log(JSON.stringify(summary, null, 2))
+    const allMatched = summary.unmatched_unique === 0
+    const allInside = summary.centroid_outside === 0
+    if (!allMatched || !allInside) {
+      console.error(
+        `\nFAIL: assigned codes must all exist in GeoJSON and centroids must be inside polygons.`
+      )
+      process.exit(1)
+    }
+    console.log(
+      `\nPASS: ${summary.persona_rows} assigned personas — every ageb_code is in the GeoJSON and every centroid is inside its polygon.`
+    )
+    return
   }
 
   const repoPersonas = collectRepoPersonas()

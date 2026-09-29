@@ -81,13 +81,47 @@ The raw INEGI archive is **not** committed.
 
 ## Persona AGEB matching
 
-See `scripts/geo/check-ageb-match.ts`.
+See `scripts/geo/check-ageb-match.ts` and Task 4a.2 assigner `scripts/geo/assign-persona-agebs.ts`.
 
 ```bash
-node --experimental-strip-types scripts/geo/check-ageb-match.ts
+node --experimental-strip-types scripts/geo/assign-persona-agebs.ts --from-generated
+node --experimental-strip-types scripts/geo/check-ageb-match.ts --assignments
 # optional READ-ONLY prod:
 SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... \
   node --experimental-strip-types scripts/geo/check-ageb-match.ts --prod
 ```
 
-**Repo status (Task 4a):** personas in-repo do **not** carry real INEGI AGEB codes. Viewer fixtures use `FIX-*` prefixes; an older fixture file uses synthetic six-digit codes (`091xxx`); `data/personas.cdmx-v1.generated.json` is colonia-based with no `ageb_code`. The GeoJSON therefore defines `ageb_code = CVEGEO` as the canonical format for when real AGEB-grounded personas are loaded — it does not invent fixture codes to force a match.
+**Repo status (Task 4a.2):** `public/geo/persona-ageb-assignments.json` holds deterministic assignments validated against this GeoJSON (full CVEGEO). Production `UPDATE` SQL still requires the owner CSV of persona UUIDs — see `public/geo/PERSONA-AGEB-REPORT.md` and `supabase/sql-manual/`. Fixture `FIX-*` / synthetic six-digit codes remain unmatched by design.
+
+
+## Colonia geometry (Task 4a.2)
+
+| Field | Value |
+| --- | --- |
+| Product | Catálogo de Colonias CDMX (ADIP / Sistema Ajolote) |
+| Publisher | Agencia Digital de Innovación Pública (ADIP), Ciudad de México |
+| Hosted layer | `Catalogo_Colonias_CDMX` FeatureServer (SGIRPC atlas) |
+| Download / query URL | https://serviciosatlas.sgirpc.cdmx.gob.mx/arcgis/rest/services/Hosted/Catalogo_Colonias_CDMX/FeatureServer/0 |
+| Portal dataset (TLS unreachable from agent) | https://datos.cdmx.gob.mx/dataset/catalogo-de-colonias-datos-abiertos |
+| Filter | `cve_alc IN ('015','016')` (Cuauhtémoc, Miguel Hidalgo) |
+| Retrieval date | 2026-09-29 |
+| Output | `public/geo/colonias-cuau-mh.geojson` (119 features) |
+| sha256 | `7cac73a58018c44d2d8c4812d06445900f1477111867424e0b66c2cd9155743c` |
+| Native CRS served | WGS84 / EPSG:4326 (`outSR=4326`) |
+
+**Note:** `datos.cdmx.gob.mx` TLS handshakes timed out from the cloud agent. The FeatureServer above is the official CDMX-hosted Catálogo de Colonias layer (same catalog). IECM 2019 colonias on the same portal were not separately fetched for the same reason.
+
+## AGEB population weights (Task 4a.2)
+
+| Field | Value |
+| --- | --- |
+| Product | Principales resultados por AGEB y manzana urbana — Censo de Población y Vivienda 2020 |
+| Publisher | INEGI |
+| State package | Ciudad de México (`ageb_mza_urbana_09_cpv2020_csv.zip`) |
+| Download URL | https://www.inegi.org.mx/contenidos/programas/ccpv/2020/datosabiertos/ageb_manzana/ageb_mza_urbana_09_cpv2020_csv.zip |
+| Rows used | `MUN IN ('015','016')`, `MZA = '000'`, `NOM_LOC` contains `Total AGEB urbana` |
+| Weight field | `P_18YMAS` (fallback `POBTOT` if P_18YMAS missing/zero) |
+| Retrieval date | 2026-09-29 |
+| Archive sha256 | `1f5f123b8e9a50991d1847271b5a2bf321e813e924e5bcf958cab612311c765a` |
+| Derived JSON | `public/geo/ageb-population-cuau-mh.json` |
+| Derived sha256 | `b4528064aa93d81a7e6ceb56b63ea5f5bc6ba50f4267114266ba1e46d1dbb840` |

@@ -8,7 +8,7 @@
     "start": "next start",
     "seed:predictions": "tsx scripts/seed-prediction-markets.ts",
     "seed:simulation-fixture": "tsx scripts/seed-simulation-fixture.ts",
-    "test": "node --experimental-strip-types --test \"lib/**/*.test.ts\""
+    "test": "node --experimental-strip-types --test \"lib/**/*.test.ts\" \"scripts/geo/**/*.test.ts\""
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
