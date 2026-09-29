@@ -1,6 +1,13 @@
 /**
  * Pure helpers for Task 4a.2 — assign real INEGI AGEBs to simulation personas.
  * No I/O. Deterministic picks + inside-polygon jitter.
+ *
+ * Candidate selection (sliver-aware) is precomputed in
+ * scripts/geo/build-colonia-ageb-intersections.py → colonia-ageb-candidates.json:
+ *   - metric intersection areas in EPSG:32614
+ *   - drop if intersection < 10% of AGEB area AND < 10% of colonia area
+ *   - weight factor = frac_of_ageb (= intersection / AGEB area)
+ *   - placement polygon = colonia ∩ AGEB intersection
  */
 
 export type AssignmentMethod = 'colonia_census_weighted' | 'alcaldia_fallback'
@@ -46,6 +53,33 @@ export type PersonaInput = {
 
 export type PopRow = { POBTOT: number | null; P_18YMAS: number | null }
 
+export type IntersectionCandidate = {
+  ageb_code: string
+  ageb_area_m2: number
+  colonia_area_m2: number
+  intersection_area_m2: number
+  frac_of_ageb: number
+  frac_of_colonia: number
+  point_on_surface: { lat: number; lng: number }
+  intersection: Geom
+}
+
+export type ColoniaCandidateEntry = {
+  alcaldia: string
+  persona_colonia: string
+  official_names: string[]
+  candidates_before: number
+  candidates_after: number
+  dropped_slivers?: string[]
+  candidates: IntersectionCandidate[]
+}
+
+export type ColoniaCandidateIndex = {
+  crs_metric: string
+  sliver_threshold: number
+  entries: Record<string, ColoniaCandidateEntry>
+}
+
 export type Assignment = {
   id: string
   alcaldia: string
@@ -56,7 +90,9 @@ export type Assignment = {
   method: AssignmentMethod | 'unassigned_outside_scope' | 'unassigned_no_candidates'
   official_colonia_names: string[]
   candidate_count: number
+  candidates_before: number | null
   weight_source: 'P_18YMAS' | 'POBTOT' | 'uniform' | null
+  frac_of_ageb: number | null
 }
 
 const ALLOWED_ALCALDIAS = new Set(['Cuauhtémoc', 'Miguel Hidalgo'])
@@ -106,7 +142,6 @@ export function normalizeColoniaName(raw: string): string {
   let s = stripAccents(raw || '')
     .toLowerCase()
     .trim()
-  // "Col." / "Col " / "colonia " prefixes — drop without leaving a stray "."
   s = s.replace(/\bcol(?:onia)?\.?\s+/g, ' ')
   s = s.replace(/\bampl\.\s*/g, 'ampliacion ')
   s = s.replace(/ª/g, 'a').replace(/º/g, 'o')
@@ -135,9 +170,6 @@ export function coloniaBaseAndSection(
  *      never "Ampliacion Popo").
  *   2. Official sectional names whose *entire* base equals the persona name
  *      (e.g. "Polanco" → "Polanco I Seccion" … "Polanco V Seccion").
- *      The official name must match `^<base> <roman|digit> seccion$` after
- *      normalize; a longer compound name that merely *contains* the persona
- *      string does not qualify.
  */
 export function matchOfficialColonias(
   personaColonia: string,
@@ -154,9 +186,6 @@ export function matchOfficialColonias(
       continue
     }
     const { base, section } = coloniaBaseAndSection(on)
-    // Sectional expansion only when the official name is exactly
-    // "<personaBase> <section> seccion". Rejects Popotla / Ampliacion Popo
-    // for persona "Popo".
     if (section != null && base === pn) out.push(o)
   }
   return out
@@ -282,6 +311,20 @@ export function geometriesIntersect(g1: Geom, g2: Geom): boolean {
   return false
 }
 
+/**
+ * Sliver filter (same rule as the Python builder).
+ * Drop when intersection is < threshold of BOTH the AGEB and the colonia.
+ * Keep big AGEBs that fully contain a small colonia (frac_of_ageb small but
+ * frac_of_colonia large) and vice versa.
+ */
+export function isSliverIntersection(
+  fracOfAgeb: number,
+  fracOfColonia: number,
+  threshold = 0.1
+): boolean {
+  return fracOfAgeb < threshold && fracOfColonia < threshold
+}
+
 export function populationWeight(row: PopRow | undefined): {
   weight: number
   source: 'P_18YMAS' | 'POBTOT' | 'uniform'
@@ -295,6 +338,19 @@ export function populationWeight(row: PopRow | undefined): {
     }
   }
   return { weight: 1, source: 'uniform' }
+}
+
+/**
+ * Expected adults of AGEB living inside the colonia:
+ *   weight = P_18YMAS × (intersection_area / AGEB_area)
+ */
+export function intersectionPopulationWeight(
+  row: PopRow | undefined,
+  fracOfAgeb: number
+): { weight: number; source: 'P_18YMAS' | 'POBTOT' | 'uniform' } {
+  const base = populationWeight(row)
+  const frac = Number.isFinite(fracOfAgeb) && fracOfAgeb > 0 ? fracOfAgeb : 0
+  return { weight: base.weight * frac, source: base.source }
 }
 
 /**
@@ -324,8 +380,9 @@ export function pickWeightedDeterministic(
 }
 
 /**
- * Small deterministic jitter around the AGEB inside-point, guaranteed inside
- * the polygon via PIP retries. Seeded by persona id.
+ * Small deterministic jitter around a base inside-point, guaranteed inside
+ * the given polygon (colonia∩AGEB intersection, or AGEB for fallback).
+ * Seeded by persona id.
  */
 export function jitterInsidePolygon(
   personaId: string,
@@ -338,14 +395,7 @@ export function jitterInsidePolygon(
   const maxAttempts = opts?.maxAttempts ?? 64
   const rng = createSeededRng(`ageb-jitter:${personaId}`)
 
-  if (pointInGeometry(baseLng, baseLat, geometry)) {
-    // try jittered points; fall back to base if none land inside
-  } else {
-    // Base should be point-on-surface from GeoJSON; if somehow outside, search.
-  }
-
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    // Shrink radius over attempts so we eventually land near the base.
     const scale = 1 - attempt / (maxAttempts * 1.25)
     const dLat = rng.nextFloat(-maxOffset, maxOffset) * scale
     const dLng = rng.nextFloat(-maxOffset, maxOffset) * scale
@@ -359,7 +409,6 @@ export function jitterInsidePolygon(
     }
   }
 
-  // Guaranteed fallback: the GeoJSON centroid is an inside point.
   if (pointInGeometry(baseLng, baseLat, geometry)) {
     return {
       lat: Math.round(baseLat * 1e6) / 1e6,
@@ -371,25 +420,8 @@ export function jitterInsidePolygon(
   )
 }
 
-export function agebsIntersectingColonias(
-  colonias: ColoniaFeature[],
-  agebs: AgebFeature[],
-  alcaldia: string
-): AgebFeature[] {
-  const pool = agebs.filter((a) => a.properties.alcaldia === alcaldia)
-  const hits: AgebFeature[] = []
-  const seen = new Set<string>()
-  for (const col of colonias) {
-    for (const ageb of pool) {
-      const code = ageb.properties.ageb_code
-      if (seen.has(code)) continue
-      if (geometriesIntersect(col.geometry, ageb.geometry)) {
-        seen.add(code)
-        hits.push(ageb)
-      }
-    }
-  }
-  return hits
+export function candidateKey(alcaldia: string, colonia: string): string {
+  return `${alcaldia}||${colonia}`
 }
 
 export function assignPersona(args: {
@@ -397,15 +429,18 @@ export function assignPersona(args: {
   agebs: AgebFeature[]
   colonias: ColoniaFeature[]
   population: Record<string, PopRow>
+  candidateIndex: ColoniaCandidateIndex
 }): Assignment {
-  const { persona, agebs, colonias, population } = args
+  const { persona, agebs, colonias, population, candidateIndex } = args
   const base = {
     id: persona.id,
     alcaldia: persona.alcaldia,
     colonia: persona.colonia,
     official_colonia_names: [] as string[],
     candidate_count: 0,
+    candidates_before: null as number | null,
     weight_source: null as Assignment['weight_source'],
+    frac_of_ageb: null as number | null,
   }
 
   if (!ALLOWED_ALCALDIAS.has(persona.alcaldia)) {
@@ -418,31 +453,66 @@ export function assignPersona(args: {
     }
   }
 
-  let method: AssignmentMethod = 'colonia_census_weighted'
-  let candidates: AgebFeature[] = []
-
+  // Prefer precomputed sliver-filtered intersection candidates.
   if (persona.colonia) {
-    const matched = matchOfficialColonias(
-      persona.colonia,
-      persona.alcaldia,
-      colonias
-    )
-    base.official_colonia_names = matched.map((m) => m.properties.colonia)
-    if (matched.length > 0) {
-      candidates = agebsIntersectingColonias(
-        matched,
-        agebs,
-        persona.alcaldia
+    const entry =
+      candidateIndex.entries[candidateKey(persona.alcaldia, persona.colonia)]
+    if (entry && entry.official_names.length > 0) {
+      base.official_colonia_names = [...entry.official_names]
+      base.candidates_before = entry.candidates_before
+      const kept = entry.candidates
+      if (kept.length > 0) {
+        const weighted = kept.map((c) => {
+          const { weight, source } = intersectionPopulationWeight(
+            population[c.ageb_code],
+            c.frac_of_ageb
+          )
+          return { code: c.ageb_code, weight, source, candidate: c }
+        })
+        const sourceCounts = new Map<string, number>()
+        for (const w of weighted) {
+          sourceCounts.set(w.source, (sourceCounts.get(w.source) ?? 0) + 1)
+        }
+        const weight_source = [...sourceCounts.entries()].sort(
+          (a, b) => b[1] - a[1]
+        )[0]![0] as Assignment['weight_source']
+
+        const pickedCode = pickWeightedDeterministic(
+          persona.id,
+          weighted.map((w) => ({ code: w.code, weight: w.weight }))
+        )
+        const cand = kept.find((c) => c.ageb_code === pickedCode)!
+        const jittered = jitterInsidePolygon(
+          persona.id,
+          cand.intersection,
+          cand.point_on_surface.lat,
+          cand.point_on_surface.lng
+        )
+        return {
+          ...base,
+          ageb_code: pickedCode,
+          centroid_lat: jittered.lat,
+          centroid_lng: jittered.lng,
+          method: 'colonia_census_weighted',
+          candidate_count: kept.length,
+          weight_source,
+          frac_of_ageb: cand.frac_of_ageb,
+        }
+      }
+    } else {
+      // Index miss: still report official name match for the report.
+      const matched = matchOfficialColonias(
+        persona.colonia,
+        persona.alcaldia,
+        colonias
       )
+      base.official_colonia_names = matched.map((m) => m.properties.colonia)
     }
   }
 
-  if (candidates.length === 0) {
-    method = 'alcaldia_fallback'
-    candidates = agebs.filter((a) => a.properties.alcaldia === persona.alcaldia)
-  }
-
-  if (candidates.length === 0) {
+  // Alcaldía fallback — no colonia intersection available.
+  const fallback = agebs.filter((a) => a.properties.alcaldia === persona.alcaldia)
+  if (fallback.length === 0) {
     return {
       ...base,
       ageb_code: null,
@@ -452,11 +522,10 @@ export function assignPersona(args: {
     }
   }
 
-  const weighted = candidates.map((c) => {
+  const weighted = fallback.map((c) => {
     const { weight, source } = populationWeight(population[c.properties.ageb_code])
     return { code: c.properties.ageb_code, weight, source, feature: c }
   })
-  // Prefer documenting the dominant weight source among candidates.
   const sourceCounts = new Map<string, number>()
   for (const w of weighted) {
     sourceCounts.set(w.source, (sourceCounts.get(w.source) ?? 0) + 1)
@@ -469,7 +538,7 @@ export function assignPersona(args: {
     persona.id,
     weighted.map((w) => ({ code: w.code, weight: w.weight }))
   )
-  const feat = candidates.find((c) => c.properties.ageb_code === pickedCode)!
+  const feat = fallback.find((c) => c.properties.ageb_code === pickedCode)!
   const jittered = jitterInsidePolygon(
     persona.id,
     feat.geometry,
@@ -482,9 +551,10 @@ export function assignPersona(args: {
     ageb_code: pickedCode,
     centroid_lat: jittered.lat,
     centroid_lng: jittered.lng,
-    method,
-    candidate_count: candidates.length,
+    method: 'alcaldia_fallback',
+    candidate_count: fallback.length,
     weight_source,
+    frac_of_ageb: null,
   }
 }
 

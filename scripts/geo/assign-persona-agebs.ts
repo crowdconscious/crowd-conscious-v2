@@ -46,6 +46,7 @@ import {
   assignPersona,
   type AgebFeature,
   type Assignment,
+  type ColoniaCandidateIndex,
   type ColoniaFeature,
   type PersonaInput,
   type PopRow,
@@ -55,6 +56,7 @@ const ROOT = process.cwd()
 const GEOJSON_PATH = join(ROOT, 'public/geo/ageb-cuauhtemoc-mh.geojson')
 const COLONIAS_PATH = join(ROOT, 'public/geo/colonias-cuau-mh.geojson')
 const POP_PATH = join(ROOT, 'public/geo/ageb-population-cuau-mh.json')
+const CANDIDATES_PATH = join(ROOT, 'public/geo/colonia-ageb-candidates.json')
 const SOURCE_MD = join(ROOT, 'public/geo/SOURCE.md')
 const REPORT_PATH = join(ROOT, 'public/geo/PERSONA-AGEB-REPORT.md')
 const ASSIGNMENTS_JSON = join(ROOT, 'public/geo/persona-ageb-assignments.json')
@@ -261,10 +263,16 @@ function loadGeo(): {
   agebs: AgebFeature[]
   colonias: ColoniaFeature[]
   population: Record<string, PopRow>
+  candidateIndex: ColoniaCandidateIndex
 } {
-  for (const p of [GEOJSON_PATH, COLONIAS_PATH, POP_PATH]) {
+  for (const p of [GEOJSON_PATH, COLONIAS_PATH, POP_PATH, CANDIDATES_PATH]) {
     if (!existsSync(p)) {
-      throw new Error(`Missing required geo artifact: ${p}`)
+      throw new Error(
+        `Missing required geo artifact: ${p}` +
+          (p === CANDIDATES_PATH
+            ? ' — run scripts/geo/build-colonia-ageb-intersections.py first'
+            : '')
+      )
     }
   }
   const agebFc = JSON.parse(readFileSync(GEOJSON_PATH, 'utf8')) as {
@@ -277,10 +285,14 @@ function loadGeo(): {
     string,
     PopRow
   >
+  const candidateIndex = JSON.parse(
+    readFileSync(CANDIDATES_PATH, 'utf8')
+  ) as ColoniaCandidateIndex
   return {
     agebs: agebFc.features,
     colonias: colFc.features,
     population,
+    candidateIndex,
   }
 }
 
@@ -472,7 +484,8 @@ function buildReport(args: {
     alcaldia: string
     colonia: string
     official: string[]
-    candidates: number
+    candidatesBefore: number | null
+    candidatesAfter: number
     personas: number
     method: string
   }
@@ -483,9 +496,9 @@ function buildReport(args: {
     const existing = coloniaAgg.get(key)
     if (existing) {
       existing.personas += 1
-      // Prefer the colonia-weighted candidate_count when mixed (should not mix).
       if (a.method === 'colonia_census_weighted') {
-        existing.candidates = a.candidate_count
+        existing.candidatesAfter = a.candidate_count
+        existing.candidatesBefore = a.candidates_before
         existing.official = a.official_colonia_names
         existing.method = a.method
       }
@@ -494,7 +507,8 @@ function buildReport(args: {
         alcaldia: a.alcaldia,
         colonia: col,
         official: [...a.official_colonia_names],
-        candidates: a.candidate_count,
+        candidatesBefore: a.candidates_before,
+        candidatesAfter: a.candidate_count,
         personas: 1,
         method: a.method,
       })
@@ -509,16 +523,21 @@ function buildReport(args: {
   lines.push(`## Colonia → official match → candidate AGEBs`)
   lines.push(``)
   lines.push(
-    `| Alcaldía | Persona colonia | Official colonia name(s) | Candidate AGEBs | Personas | Method |`
+    `Sliver filter: drop AGEB if intersection area &lt; 10% of AGEB **and** &lt; 10% of colonia (metric EPSG:32614). Weight = \`P_18YMAS × (intersection / AGEB area)\`. Point placed inside colonia∩AGEB intersection.`
   )
-  lines.push(`| --- | --- | --- | ---: | ---: | --- |`)
+  lines.push(``)
+  lines.push(
+    `| Alcaldía | Persona colonia | Official colonia name(s) | Candidates before | Candidates after | Personas | Method |`
+  )
+  lines.push(`| --- | --- | --- | ---: | ---: | ---: | --- |`)
   for (const r of coloniaRows) {
     const official =
       r.official.length > 0
         ? r.official.map((n) => `\`${n}\``).join(', ')
         : '*(none — alcaldía fallback)*'
+    const before = r.candidatesBefore == null ? '—' : String(r.candidatesBefore)
     lines.push(
-      `| ${r.alcaldia} | ${r.colonia} | ${official} | ${r.candidates} | ${r.personas} | \`${r.method}\` |`
+      `| ${r.alcaldia} | ${r.colonia} | ${official} | ${before} | ${r.candidatesAfter} | ${r.personas} | \`${r.method}\` |`
     )
   }
   lines.push(``)
@@ -544,11 +563,11 @@ function buildReport(args: {
   lines.push(`## Method`)
   lines.push(``)
   lines.push(`1. **Alcaldía filter.** Only Cuauhtémoc and Miguel Hidalgo are in scope (AGEB GeoJSON). Others stay unassigned.`)
-  lines.push(`2. **Colonia → AGEB candidates.** An AGEB is a candidate if its polygon spatially intersects an official colonia polygon that matches the persona's colonia string (normalized exact match, or official \`… N Sección\` whose base equals the persona name — e.g. Polanco → Polanco I–V Sección). No fuzzy guessing. **"Popo" matches only "Popo"**, never Popotla / Ampliación Popo.`)
-  lines.push(`3. **Fallback.** If the colonia string matches no official name, or intersection yields zero AGEBs, candidates = all AGEBs in the persona's alcaldía (\`alcaldia_fallback\`).`)
-  lines.push(`4. **Weights.** Probability ∝ INEGI Censo 2020 \`P_18YMAS\` (population 18+). If missing/zero, \`POBTOT\`. If both missing/zero, uniform weight 1. No NSE/housing secondary proxy — AMAI bands do not map cleanly onto a single AGEB census indicator without inventing a model we cannot defend.`)
+  lines.push(`2. **Colonia → AGEB candidates.** Intersect official colonia polygon(s) with each AGEB in the alcaldía (metric EPSG:32614). Drop **slivers** where intersection &lt; 10% of AGEB area **and** &lt; 10% of colonia area. **"Popo" matches only "Popo"**, never Popotla / Ampliación Popo.`)
+  lines.push(`3. **Fallback.** If the colonia string matches no official name, or no candidates survive the sliver filter, candidates = all AGEBs in the persona's alcaldía (\`alcaldia_fallback\`).`)
+  lines.push(`4. **Weights.** \`P_18YMAS × (intersection_area / AGEB_area)\` — expected adults of that AGEB living inside the colonia. Fallback to \`POBTOT\` fraction if P_18YMAS missing/zero. No NSE secondary proxy.`)
   lines.push(`5. **Determinism.** Pick seeded by \`hash(persona.id)\` (\`ageb-pick:<id>\`). Re-runs with the same ids yield identical AGEBs.`)
-  lines.push(`6. **Centroid jitter.** Start from the GeoJSON point-on-surface; add a small seeded offset (\`ageb-jitter:<id>\`); accept only points that pass point-in-polygon; retry deterministically; fall back to the inside point.`)
+  lines.push(`6. **Placement.** Point-on-surface of the **colonia∩AGEB intersection** polygon, plus deterministic jitter (\`ageb-jitter:<id>\`) kept inside that intersection (not the raw AGEB centroid).`)
   lines.push(``)
   lines.push(`## Sources (URL, edition, sha256)`)
   lines.push(``)
@@ -641,7 +660,7 @@ async function main() {
     throw new Error('No personas loaded')
   }
 
-  const { agebs, colonias, population } = loadGeo()
+  const { agebs, colonias, population, candidateIndex } = loadGeo()
 
   // Verify every population key exists in GeoJSON (no fabricated codes).
   const agebCodes = new Set(agebs.map((a) => a.properties.ageb_code))
@@ -652,7 +671,13 @@ async function main() {
   }
 
   const assignments: Assignment[] = personas.map((p) =>
-    assignPersona({ persona: p, agebs, colonias, population })
+    assignPersona({
+      persona: p,
+      agebs,
+      colonias,
+      population,
+      candidateIndex,
+    })
   )
 
   const runId = randomUUID()

@@ -125,3 +125,15 @@ SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... \
 | Archive sha256 | `1f5f123b8e9a50991d1847271b5a2bf321e813e924e5bcf958cab612311c765a` |
 | Derived JSON | `public/geo/ageb-population-cuau-mh.json` |
 | Derived sha256 | `b4528064aa93d81a7e6ceb56b63ea5f5bc6ba50f4267114266ba1e46d1dbb840` |
+
+## Colonia∩AGEB candidates (Task 4a.2 sliver filter)
+
+| Field | Value |
+| --- | --- |
+| Builder | `scripts/geo/build-colonia-ageb-intersections.py` |
+| Metric CRS | EPSG:32614 (UTM 14N) |
+| Sliver rule | Drop if intersection &lt; 10% of AGEB area **and** &lt; 10% of colonia area |
+| Weight | `P_18YMAS × (intersection / AGEB area)` |
+| Placement | Point-on-surface of intersection + seeded jitter inside intersection |
+| Output | `public/geo/colonia-ageb-candidates.json` |
+| Preview | `public/geo/persona-placement-preview.png` |

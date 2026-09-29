@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-09-29T17:15:12.575Z",
-  "run_id": "22de7536-3db5-4319-b69b-59137e4b972f",
+  "generated_at": "2026-09-29T17:18:54.001Z",
+  "run_id": "1ace1e55-e37a-4f0f-9c2d-2c31a13a1291",
   "synthetic_ids": false,
   "prod_read": false,
   "count": 150,
@@ -12,11 +12,13 @@
       "official_colonia_names": [
         "Tacuba"
       ],
-      "candidate_count": 6,
+      "candidate_count": 5,
+      "candidates_before": 6,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.45089,
       "ageb_code": "0901600010054",
-      "centroid_lat": 19.460142,
-      "centroid_lng": -99.188807,
+      "centroid_lat": 19.461343,
+      "centroid_lng": -99.189341,
       "method": "colonia_census_weighted"
     },
     {
@@ -26,11 +28,13 @@
       "official_colonia_names": [
         "Condesa"
       ],
-      "candidate_count": 10,
+      "candidate_count": 6,
+      "candidates_before": 10,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011318",
-      "centroid_lat": 19.411637,
-      "centroid_lng": -99.176286,
+      "frac_of_ageb": 0.892619,
+      "ageb_code": "0901500011303",
+      "centroid_lat": 19.413339,
+      "centroid_lng": -99.179365,
       "method": "colonia_census_weighted"
     },
     {
@@ -40,11 +44,13 @@
       "official_colonia_names": [
         "Roma Norte"
       ],
-      "candidate_count": 21,
+      "candidate_count": 13,
+      "candidates_before": 21,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011182",
-      "centroid_lat": 19.416554,
-      "centroid_lng": -99.173052,
+      "frac_of_ageb": 0.997161,
+      "ageb_code": "0901500011110",
+      "centroid_lat": 19.414175,
+      "centroid_lng": -99.156444,
       "method": "colonia_census_weighted"
     },
     {
@@ -54,11 +60,13 @@
       "official_colonia_names": [
         "Tacuba"
       ],
-      "candidate_count": 6,
+      "candidate_count": 5,
+      "candidates_before": 6,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.993857,
       "ageb_code": "0901600010158",
-      "centroid_lat": 19.456886,
-      "centroid_lng": -99.187797,
+      "centroid_lat": 19.456891,
+      "centroid_lng": -99.187795,
       "method": "colonia_census_weighted"
     },
     {
@@ -68,11 +76,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 1,
       "ageb_code": "090150001113A",
-      "centroid_lat": 19.416864,
-      "centroid_lng": -99.146608,
+      "centroid_lat": 19.416979,
+      "centroid_lng": -99.146601,
       "method": "colonia_census_weighted"
     },
     {
@@ -82,11 +92,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.994758,
       "ageb_code": "0901500011549",
-      "centroid_lat": 19.42112,
-      "centroid_lng": -99.15242,
+      "centroid_lat": 19.420837,
+      "centroid_lng": -99.152445,
       "method": "colonia_census_weighted"
     },
     {
@@ -96,11 +108,13 @@
       "official_colonia_names": [
         "Condesa"
       ],
-      "candidate_count": 10,
+      "candidate_count": 6,
+      "candidates_before": 10,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011318",
-      "centroid_lat": 19.41135,
-      "centroid_lng": -99.176176,
+      "frac_of_ageb": 0.892619,
+      "ageb_code": "0901500011303",
+      "centroid_lat": 19.413052,
+      "centroid_lng": -99.179255,
       "method": "colonia_census_weighted"
     },
     {
@@ -110,11 +124,13 @@
       "official_colonia_names": [
         "Santa Maria La Ribera"
       ],
-      "candidate_count": 14,
+      "candidate_count": 6,
+      "candidates_before": 14,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500010184",
-      "centroid_lat": 19.457157,
-      "centroid_lng": -99.151913,
+      "frac_of_ageb": 0.994433,
+      "ageb_code": "0901500010466",
+      "centroid_lat": 19.452651,
+      "centroid_lng": -99.160525,
       "method": "colonia_census_weighted"
     },
     {
@@ -124,11 +140,13 @@
       "official_colonia_names": [
         "Tacuba"
       ],
-      "candidate_count": 6,
+      "candidate_count": 5,
+      "candidates_before": 6,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901600010143",
-      "centroid_lat": 19.454978,
-      "centroid_lng": -99.192934,
+      "frac_of_ageb": 0.993857,
+      "ageb_code": "0901600010158",
+      "centroid_lat": 19.456353,
+      "centroid_lng": -99.188002,
       "method": "colonia_census_weighted"
     },
     {
@@ -138,11 +156,13 @@
       "official_colonia_names": [
         "Morelos"
       ],
-      "candidate_count": 7,
+      "candidate_count": 6,
+      "candidates_before": 7,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500010589",
-      "centroid_lat": 19.440246,
-      "centroid_lng": -99.125247,
+      "frac_of_ageb": 0.774311,
+      "ageb_code": "0901500010540",
+      "centroid_lat": 19.445117,
+      "centroid_lng": -99.132576,
       "method": "colonia_census_weighted"
     },
     {
@@ -152,11 +172,13 @@
       "official_colonia_names": [
         "Santa Maria La Ribera"
       ],
-      "candidate_count": 14,
+      "candidate_count": 6,
+      "candidates_before": 14,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500010678",
-      "centroid_lat": 19.439193,
-      "centroid_lng": -99.165664,
+      "frac_of_ageb": 0.983267,
+      "ageb_code": "0901500010593",
+      "centroid_lat": 19.444664,
+      "centroid_lng": -99.161937,
       "method": "colonia_census_weighted"
     },
     {
@@ -166,11 +188,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500010875",
-      "centroid_lat": 19.428742,
-      "centroid_lng": -99.145376,
+      "frac_of_ageb": 0.997526,
+      "ageb_code": "0901500011036",
+      "centroid_lat": 19.421092,
+      "centroid_lng": -99.146076,
       "method": "colonia_census_weighted"
     },
     {
@@ -180,11 +204,13 @@
       "official_colonia_names": [
         "Roma Norte"
       ],
-      "candidate_count": 21,
+      "candidate_count": 13,
+      "candidates_before": 21,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500010856",
-      "centroid_lat": 19.429083,
-      "centroid_lng": -99.154627,
+      "frac_of_ageb": 0.967265,
+      "ageb_code": "0901500010998",
+      "centroid_lat": 19.420748,
+      "centroid_lng": -99.167299,
       "method": "colonia_census_weighted"
     },
     {
@@ -198,11 +224,13 @@
         "Polanco Iv Seccion",
         "Polanco V Seccion"
       ],
-      "candidate_count": 23,
+      "candidate_count": 13,
+      "candidates_before": 23,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901600010745",
-      "centroid_lat": 19.43033,
-      "centroid_lng": -99.202094,
+      "frac_of_ageb": 0.990247,
+      "ageb_code": "0901600010779",
+      "centroid_lat": 19.427845,
+      "centroid_lng": -99.193736,
       "method": "colonia_census_weighted"
     },
     {
@@ -212,11 +240,13 @@
       "official_colonia_names": [
         "Tacuba"
       ],
-      "candidate_count": 6,
+      "candidate_count": 5,
+      "candidates_before": 6,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901600010139",
-      "centroid_lat": 19.456962,
-      "centroid_lng": -99.19497,
+      "frac_of_ageb": 0.561842,
+      "ageb_code": "0901600010143",
+      "centroid_lat": 19.454931,
+      "centroid_lng": -99.191813,
       "method": "colonia_census_weighted"
     },
     {
@@ -226,11 +256,13 @@
       "official_colonia_names": [
         "Tacuba"
       ],
-      "candidate_count": 6,
+      "candidate_count": 5,
+      "candidates_before": 6,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.561842,
       "ageb_code": "0901600010143",
-      "centroid_lat": 19.455358,
-      "centroid_lng": -99.192954,
+      "centroid_lat": 19.455267,
+      "centroid_lng": -99.191547,
       "method": "colonia_census_weighted"
     },
     {
@@ -241,11 +273,13 @@
         "San Miguel Chapultepec I Seccion",
         "San Miguel Chapultepec Ii Seccion"
       ],
-      "candidate_count": 8,
+      "candidate_count": 4,
+      "candidates_before": 8,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901600011029",
-      "centroid_lat": 19.411643,
-      "centroid_lng": -99.18489,
+      "frac_of_ageb": 0.999422,
+      "ageb_code": "0901600010891",
+      "centroid_lat": 19.415433,
+      "centroid_lng": -99.182166,
       "method": "colonia_census_weighted"
     },
     {
@@ -259,11 +293,13 @@
         "Polanco Iv Seccion",
         "Polanco V Seccion"
       ],
-      "candidate_count": 23,
+      "candidate_count": 13,
+      "candidates_before": 23,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901600010444",
-      "centroid_lat": 19.441932,
-      "centroid_lng": -99.203817,
+      "frac_of_ageb": 0.997895,
+      "ageb_code": "0901600010637",
+      "centroid_lat": 19.434727,
+      "centroid_lng": -99.204335,
       "method": "colonia_census_weighted"
     },
     {
@@ -273,11 +309,13 @@
       "official_colonia_names": [
         "Tacuba"
       ],
-      "candidate_count": 6,
+      "candidate_count": 5,
+      "candidates_before": 6,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901600010143",
-      "centroid_lat": 19.455103,
-      "centroid_lng": -99.192849,
+      "frac_of_ageb": 0.993857,
+      "ageb_code": "0901600010158",
+      "centroid_lat": 19.456478,
+      "centroid_lng": -99.187917,
       "method": "colonia_census_weighted"
     },
     {
@@ -287,11 +325,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
-      "ageb_code": "090150001113A",
-      "centroid_lat": 19.416799,
-      "centroid_lng": -99.146648,
+      "frac_of_ageb": 0.730851,
+      "ageb_code": "0901500011229",
+      "centroid_lat": 19.410646,
+      "centroid_lng": -99.152888,
       "method": "colonia_census_weighted"
     },
     {
@@ -301,11 +341,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
-      "ageb_code": "090150001113A",
-      "centroid_lat": 19.416322,
-      "centroid_lng": -99.146621,
+      "frac_of_ageb": 0.991638,
+      "ageb_code": "0901500011233",
+      "centroid_lat": 19.412367,
+      "centroid_lng": -99.147233,
       "method": "colonia_census_weighted"
     },
     {
@@ -315,11 +357,13 @@
       "official_colonia_names": [
         "Roma Norte"
       ],
-      "candidate_count": 21,
+      "candidate_count": 13,
+      "candidates_before": 21,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011125",
-      "centroid_lat": 19.416403,
-      "centroid_lng": -99.151993,
+      "frac_of_ageb": 0.999912,
+      "ageb_code": "0901500011093",
+      "centroid_lat": 19.418318,
+      "centroid_lng": -99.167661,
       "method": "colonia_census_weighted"
     },
     {
@@ -329,11 +373,13 @@
       "official_colonia_names": [
         "Buenos Aires"
       ],
-      "candidate_count": 3,
+      "candidate_count": 2,
+      "candidates_before": 3,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.99264,
       "ageb_code": "0901500011483",
-      "centroid_lat": 19.405762,
-      "centroid_lng": -99.147738,
+      "centroid_lat": 19.405528,
+      "centroid_lng": -99.147759,
       "method": "colonia_census_weighted"
     },
     {
@@ -343,11 +389,13 @@
       "official_colonia_names": [
         "Roma Norte"
       ],
-      "candidate_count": 21,
+      "candidate_count": 13,
+      "candidates_before": 21,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011125",
-      "centroid_lat": 19.415916,
-      "centroid_lng": -99.152029,
+      "frac_of_ageb": 0.999912,
+      "ageb_code": "0901500011093",
+      "centroid_lat": 19.417831,
+      "centroid_lng": -99.167697,
       "method": "colonia_census_weighted"
     },
     {
@@ -358,11 +406,13 @@
         "Anahuac I Seccion",
         "Anahuac Ii Seccion"
       ],
-      "candidate_count": 18,
+      "candidate_count": 7,
+      "candidates_before": 18,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901600010603",
-      "centroid_lat": 19.435486,
-      "centroid_lng": -99.174403,
+      "frac_of_ageb": 0.990542,
+      "ageb_code": "0901600010497",
+      "centroid_lat": 19.441488,
+      "centroid_lng": -99.173665,
       "method": "colonia_census_weighted"
     },
     {
@@ -372,11 +422,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011036",
-      "centroid_lat": 19.421815,
-      "centroid_lng": -99.146058,
+      "frac_of_ageb": 0.994551,
+      "ageb_code": "0901500011125",
+      "centroid_lat": 19.41593,
+      "centroid_lng": -99.152316,
       "method": "colonia_census_weighted"
     },
     {
@@ -386,11 +438,13 @@
       "official_colonia_names": [
         "Morelos"
       ],
-      "candidate_count": 7,
+      "candidate_count": 6,
+      "candidates_before": 7,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.995148,
       "ageb_code": "0901500010358",
-      "centroid_lat": 19.447633,
-      "centroid_lng": -99.126881,
+      "centroid_lat": 19.44763,
+      "centroid_lng": -99.126863,
       "method": "colonia_census_weighted"
     },
     {
@@ -400,11 +454,13 @@
       "official_colonia_names": [
         "Roma Norte"
       ],
-      "candidate_count": 21,
+      "candidate_count": 13,
+      "candidates_before": 21,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011089",
-      "centroid_lat": 19.420009,
-      "centroid_lng": -99.17388,
+      "frac_of_ageb": 0.996448,
+      "ageb_code": "0901500011017",
+      "centroid_lat": 19.421944,
+      "centroid_lng": -99.15666,
       "method": "colonia_census_weighted"
     },
     {
@@ -414,11 +470,13 @@
       "official_colonia_names": [
         "Roma Norte"
       ],
-      "candidate_count": 21,
+      "candidate_count": 13,
+      "candidates_before": 21,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011229",
-      "centroid_lat": 19.408653,
-      "centroid_lng": -99.153134,
+      "frac_of_ageb": 0.997161,
+      "ageb_code": "0901500011110",
+      "centroid_lat": 19.413504,
+      "centroid_lng": -99.156756,
       "method": "colonia_census_weighted"
     },
     {
@@ -432,11 +490,13 @@
         "Polanco Iv Seccion",
         "Polanco V Seccion"
       ],
-      "candidate_count": 23,
+      "candidate_count": 13,
+      "candidates_before": 23,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901600010444",
-      "centroid_lat": 19.442087,
-      "centroid_lng": -99.204177,
+      "frac_of_ageb": 0.999864,
+      "ageb_code": "0901600010622",
+      "centroid_lat": 19.436303,
+      "centroid_lng": -99.210051,
       "method": "colonia_census_weighted"
     },
     {
@@ -446,11 +506,13 @@
       "official_colonia_names": [
         "Hipodromo Condesa"
       ],
-      "candidate_count": 3,
+      "candidate_count": 2,
+      "candidates_before": 3,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011303",
-      "centroid_lat": 19.412664,
-      "centroid_lng": -99.179457,
+      "frac_of_ageb": 0.536281,
+      "ageb_code": "0901500011318",
+      "centroid_lat": 19.410019,
+      "centroid_lng": -99.177161,
       "method": "colonia_census_weighted"
     },
     {
@@ -460,11 +522,13 @@
       "official_colonia_names": [
         "Santa Maria La Ribera"
       ],
-      "candidate_count": 14,
+      "candidate_count": 6,
+      "candidates_before": 14,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500010466",
-      "centroid_lat": 19.451925,
-      "centroid_lng": -99.16037,
+      "frac_of_ageb": 0.999992,
+      "ageb_code": "0901500010470",
+      "centroid_lat": 19.4534,
+      "centroid_lng": -99.156347,
       "method": "colonia_census_weighted"
     },
     {
@@ -474,11 +538,13 @@
       "official_colonia_names": [
         "Condesa"
       ],
-      "candidate_count": 10,
+      "candidate_count": 6,
+      "candidates_before": 10,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011182",
-      "centroid_lat": 19.41608,
-      "centroid_lng": -99.1731,
+      "frac_of_ageb": 0.98768,
+      "ageb_code": "0901500011178",
+      "centroid_lat": 19.416925,
+      "centroid_lng": -99.177041,
       "method": "colonia_census_weighted"
     },
     {
@@ -492,11 +558,13 @@
         "Polanco Iv Seccion",
         "Polanco V Seccion"
       ],
-      "candidate_count": 23,
+      "candidate_count": 13,
+      "candidates_before": 23,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901600010660",
-      "centroid_lat": 19.434431,
-      "centroid_lng": -99.188846,
+      "frac_of_ageb": 1,
+      "ageb_code": "0901600010675",
+      "centroid_lat": 19.433936,
+      "centroid_lng": -99.186185,
       "method": "colonia_census_weighted"
     },
     {
@@ -506,11 +574,13 @@
       "official_colonia_names": [
         "Roma Norte"
       ],
-      "candidate_count": 21,
+      "candidate_count": 13,
+      "candidates_before": 21,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011214",
-      "centroid_lat": 19.414179,
-      "centroid_lng": -99.162267,
+      "frac_of_ageb": 0.997161,
+      "ageb_code": "0901500011110",
+      "centroid_lat": 19.41408,
+      "centroid_lng": -99.156639,
       "method": "colonia_census_weighted"
     },
     {
@@ -520,11 +590,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011144",
-      "centroid_lat": 19.416223,
-      "centroid_lng": -99.140992,
+      "frac_of_ageb": 0.991638,
+      "ageb_code": "0901500011233",
+      "centroid_lat": 19.412708,
+      "centroid_lng": -99.147024,
       "method": "colonia_census_weighted"
     },
     {
@@ -534,11 +606,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 1,
       "ageb_code": "090150001113A",
-      "centroid_lat": 19.416876,
-      "centroid_lng": -99.146487,
+      "centroid_lat": 19.416991,
+      "centroid_lng": -99.14648,
       "method": "colonia_census_weighted"
     },
     {
@@ -548,11 +622,13 @@
       "official_colonia_names": [
         "Roma Norte"
       ],
-      "candidate_count": 21,
+      "candidate_count": 13,
+      "candidates_before": 21,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011214",
-      "centroid_lat": 19.413592,
-      "centroid_lng": -99.16196,
+      "frac_of_ageb": 0.997161,
+      "ageb_code": "0901500011110",
+      "centroid_lat": 19.413493,
+      "centroid_lng": -99.156332,
       "method": "colonia_census_weighted"
     },
     {
@@ -562,11 +638,13 @@
       "official_colonia_names": [
         "Roma Norte"
       ],
-      "candidate_count": 21,
+      "candidate_count": 13,
+      "candidates_before": 21,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011110",
-      "centroid_lat": 19.415407,
-      "centroid_lng": -99.157035,
+      "frac_of_ageb": 0.996448,
+      "ageb_code": "0901500011017",
+      "centroid_lat": 19.421882,
+      "centroid_lng": -99.156925,
       "method": "colonia_census_weighted"
     },
     {
@@ -576,11 +654,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011125",
-      "centroid_lat": 19.416387,
-      "centroid_lng": -99.151878,
+      "frac_of_ageb": 1,
+      "ageb_code": "090150001113A",
+      "centroid_lat": 19.416972,
+      "centroid_lng": -99.146441,
       "method": "colonia_census_weighted"
     },
     {
@@ -594,11 +674,13 @@
         "Polanco Iv Seccion",
         "Polanco V Seccion"
       ],
-      "candidate_count": 23,
+      "candidate_count": 13,
+      "candidates_before": 23,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901600010675",
-      "centroid_lat": 19.434328,
-      "centroid_lng": -99.186155,
+      "frac_of_ageb": 0.527011,
+      "ageb_code": "090160001068A",
+      "centroid_lat": 19.432595,
+      "centroid_lng": -99.182772,
       "method": "colonia_census_weighted"
     },
     {
@@ -612,11 +694,13 @@
         "Polanco Iv Seccion",
         "Polanco V Seccion"
       ],
-      "candidate_count": 23,
+      "candidate_count": 13,
+      "candidates_before": 23,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901600010675",
-      "centroid_lat": 19.43427,
-      "centroid_lng": -99.186316,
+      "frac_of_ageb": 0.969958,
+      "ageb_code": "0901600010745",
+      "centroid_lat": 19.43038,
+      "centroid_lng": -99.202546,
       "method": "colonia_census_weighted"
     },
     {
@@ -626,11 +710,13 @@
       "official_colonia_names": [
         "Roma Norte"
       ],
-      "candidate_count": 21,
+      "candidate_count": 13,
+      "candidates_before": 21,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011089",
-      "centroid_lat": 19.419788,
-      "centroid_lng": -99.173789,
+      "frac_of_ageb": 0.996448,
+      "ageb_code": "0901500011017",
+      "centroid_lat": 19.421723,
+      "centroid_lng": -99.156569,
       "method": "colonia_census_weighted"
     },
     {
@@ -640,11 +726,13 @@
       "official_colonia_names": [
         "Roma Norte"
       ],
-      "candidate_count": 21,
+      "candidate_count": 13,
+      "candidates_before": 21,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011375",
-      "centroid_lat": 19.409236,
-      "centroid_lng": -99.160984,
+      "frac_of_ageb": 0.997375,
+      "ageb_code": "0901500011214",
+      "centroid_lat": 19.413471,
+      "centroid_lng": -99.162305,
       "method": "colonia_census_weighted"
     },
     {
@@ -654,11 +742,13 @@
       "official_colonia_names": [
         "Roma Norte"
       ],
-      "candidate_count": 21,
+      "candidate_count": 13,
+      "candidates_before": 21,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011106",
-      "centroid_lat": 19.41658,
-      "centroid_lng": -99.161907,
+      "frac_of_ageb": 0.996448,
+      "ageb_code": "0901500011017",
+      "centroid_lat": 19.421955,
+      "centroid_lng": -99.156537,
       "method": "colonia_census_weighted"
     },
     {
@@ -668,11 +758,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011125",
-      "centroid_lat": 19.416054,
-      "centroid_lng": -99.152185,
+      "frac_of_ageb": 1,
+      "ageb_code": "090150001113A",
+      "centroid_lat": 19.416639,
+      "centroid_lng": -99.146748,
       "method": "colonia_census_weighted"
     },
     {
@@ -682,11 +774,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500010875",
-      "centroid_lat": 19.428785,
-      "centroid_lng": -99.145524,
+      "frac_of_ageb": 0.997526,
+      "ageb_code": "0901500011036",
+      "centroid_lat": 19.421135,
+      "centroid_lng": -99.146224,
       "method": "colonia_census_weighted"
     },
     {
@@ -696,11 +790,13 @@
       "official_colonia_names": [
         "Tacuba"
       ],
-      "candidate_count": 6,
+      "candidate_count": 5,
+      "candidates_before": 6,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.45089,
       "ageb_code": "0901600010054",
-      "centroid_lat": 19.460062,
-      "centroid_lng": -99.188842,
+      "centroid_lat": 19.461263,
+      "centroid_lng": -99.189376,
       "method": "colonia_census_weighted"
     },
     {
@@ -710,11 +806,13 @@
       "official_colonia_names": [
         "Roma Norte"
       ],
-      "candidate_count": 21,
+      "candidate_count": 13,
+      "candidates_before": 21,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011214",
-      "centroid_lat": 19.413892,
-      "centroid_lng": -99.162516,
+      "frac_of_ageb": 0.997161,
+      "ageb_code": "0901500011110",
+      "centroid_lat": 19.413793,
+      "centroid_lng": -99.156888,
       "method": "colonia_census_weighted"
     },
     {
@@ -724,11 +822,13 @@
       "official_colonia_names": [
         "Santa Maria La Ribera"
       ],
-      "candidate_count": 14,
+      "candidate_count": 6,
+      "candidates_before": 14,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500010042",
-      "centroid_lat": 19.459243,
-      "centroid_lng": -99.157898,
+      "frac_of_ageb": 0.994433,
+      "ageb_code": "0901500010466",
+      "centroid_lat": 19.452257,
+      "centroid_lng": -99.16068,
       "method": "colonia_census_weighted"
     },
     {
@@ -738,11 +838,13 @@
       "official_colonia_names": [
         "Condesa"
       ],
-      "candidate_count": 10,
+      "candidate_count": 6,
+      "candidates_before": 10,
       "weight_source": "P_18YMAS",
-      "ageb_code": "090150001120A",
-      "centroid_lat": 19.414179,
-      "centroid_lng": -99.167571,
+      "frac_of_ageb": 0.162079,
+      "ageb_code": "0901500011197",
+      "centroid_lat": 19.414711,
+      "centroid_lng": -99.171584,
       "method": "colonia_census_weighted"
     },
     {
@@ -752,11 +854,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011233",
-      "centroid_lat": 19.411902,
-      "centroid_lng": -99.147292,
+      "frac_of_ageb": 0.988913,
+      "ageb_code": "0901500011394",
+      "centroid_lat": 19.407943,
+      "centroid_lng": -99.147902,
       "method": "colonia_census_weighted"
     },
     {
@@ -770,11 +874,13 @@
         "Polanco Iv Seccion",
         "Polanco V Seccion"
       ],
-      "candidate_count": 23,
+      "candidate_count": 13,
+      "candidates_before": 23,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.986583,
       "ageb_code": "0901600010783",
-      "centroid_lat": 19.428749,
-      "centroid_lng": -99.187941,
+      "centroid_lat": 19.428524,
+      "centroid_lng": -99.188226,
       "method": "colonia_census_weighted"
     },
     {
@@ -784,11 +890,13 @@
       "official_colonia_names": [
         "Morelos"
       ],
-      "candidate_count": 7,
+      "candidate_count": 6,
+      "candidates_before": 7,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.999995,
       "ageb_code": "0901500010343",
-      "centroid_lat": 19.447858,
-      "centroid_lng": -99.128926,
+      "centroid_lat": 19.449018,
+      "centroid_lng": -99.128705,
       "method": "colonia_census_weighted"
     },
     {
@@ -798,11 +906,13 @@
       "official_colonia_names": [
         "Roma Norte"
       ],
-      "candidate_count": 21,
+      "candidate_count": 13,
+      "candidates_before": 21,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011341",
-      "centroid_lat": 19.409203,
-      "centroid_lng": -99.16992,
+      "frac_of_ageb": 0.997161,
+      "ageb_code": "0901500011110",
+      "centroid_lat": 19.414184,
+      "centroid_lng": -99.156532,
       "method": "colonia_census_weighted"
     },
     {
@@ -812,11 +922,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.991638,
       "ageb_code": "0901500011233",
-      "centroid_lat": 19.412113,
-      "centroid_lng": -99.147197,
+      "centroid_lat": 19.412658,
+      "centroid_lng": -99.147119,
       "method": "colonia_census_weighted"
     },
     {
@@ -826,11 +938,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.991638,
       "ageb_code": "0901500011233",
-      "centroid_lat": 19.412181,
-      "centroid_lng": -99.147562,
+      "centroid_lat": 19.412726,
+      "centroid_lng": -99.147484,
       "method": "colonia_census_weighted"
     },
     {
@@ -844,11 +958,13 @@
         "Polanco Iv Seccion",
         "Polanco V Seccion"
       ],
-      "candidate_count": 23,
+      "candidate_count": 13,
+      "candidates_before": 23,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901600010571",
-      "centroid_lat": 19.44043,
-      "centroid_lng": -99.191839,
+      "frac_of_ageb": 1,
+      "ageb_code": "0901600010656",
+      "centroid_lat": 19.43521,
+      "centroid_lng": -99.193267,
       "method": "colonia_census_weighted"
     },
     {
@@ -858,11 +974,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011233",
-      "centroid_lat": 19.411931,
-      "centroid_lng": -99.14728,
+      "frac_of_ageb": 0.988913,
+      "ageb_code": "0901500011394",
+      "centroid_lat": 19.407972,
+      "centroid_lng": -99.14789,
       "method": "colonia_census_weighted"
     },
     {
@@ -872,11 +990,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011144",
-      "centroid_lat": 19.416034,
-      "centroid_lng": -99.141141,
+      "frac_of_ageb": 0.991638,
+      "ageb_code": "0901500011233",
+      "centroid_lat": 19.412519,
+      "centroid_lng": -99.147173,
       "method": "colonia_census_weighted"
     },
     {
@@ -886,11 +1006,13 @@
       "official_colonia_names": [
         "Popotla"
       ],
-      "candidate_count": 7,
+      "candidate_count": 6,
+      "candidates_before": 7,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.418928,
       "ageb_code": "0901600010054",
-      "centroid_lat": 19.460257,
-      "centroid_lng": -99.188508,
+      "centroid_lat": 19.457147,
+      "centroid_lng": -99.179691,
       "method": "colonia_census_weighted"
     },
     {
@@ -900,11 +1022,13 @@
       "official_colonia_names": [
         "Condesa"
       ],
-      "candidate_count": 10,
+      "candidate_count": 6,
+      "candidates_before": 10,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011089",
-      "centroid_lat": 19.419892,
-      "centroid_lng": -99.174179,
+      "frac_of_ageb": 0.98768,
+      "ageb_code": "0901500011178",
+      "centroid_lat": 19.416927,
+      "centroid_lng": -99.17748,
       "method": "colonia_census_weighted"
     },
     {
@@ -914,11 +1038,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011017",
-      "centroid_lat": 19.422165,
-      "centroid_lng": -99.156437,
+      "frac_of_ageb": 0.994551,
+      "ageb_code": "0901500011125",
+      "centroid_lat": 19.41642,
+      "centroid_lng": -99.151715,
       "method": "colonia_census_weighted"
     },
     {
@@ -928,11 +1054,13 @@
       "official_colonia_names": [
         "Santa Maria La Ribera"
       ],
-      "candidate_count": 14,
+      "candidate_count": 6,
+      "candidates_before": 14,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500010606",
-      "centroid_lat": 19.442416,
-      "centroid_lng": -99.156851,
+      "frac_of_ageb": 0.992748,
+      "ageb_code": "0901500010555",
+      "centroid_lat": 19.447494,
+      "centroid_lng": -99.16132,
       "method": "colonia_census_weighted"
     },
     {
@@ -942,11 +1070,13 @@
       "official_colonia_names": [
         "Morelos"
       ],
-      "candidate_count": 7,
+      "candidate_count": 6,
+      "candidates_before": 7,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.999995,
       "ageb_code": "0901500010343",
-      "centroid_lat": 19.448182,
-      "centroid_lng": -99.128659,
+      "centroid_lat": 19.449342,
+      "centroid_lng": -99.128438,
       "method": "colonia_census_weighted"
     },
     {
@@ -956,11 +1086,13 @@
       "official_colonia_names": [
         "Santa Maria La Ribera"
       ],
-      "candidate_count": 14,
+      "candidate_count": 6,
+      "candidates_before": 14,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500010184",
-      "centroid_lat": 19.456785,
-      "centroid_lng": -99.151702,
+      "frac_of_ageb": 0.994433,
+      "ageb_code": "0901500010466",
+      "centroid_lat": 19.452279,
+      "centroid_lng": -99.160314,
       "method": "colonia_census_weighted"
     },
     {
@@ -970,11 +1102,13 @@
       "official_colonia_names": [
         "Roma Norte"
       ],
-      "candidate_count": 21,
+      "candidate_count": 13,
+      "candidates_before": 21,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011089",
-      "centroid_lat": 19.419877,
-      "centroid_lng": -99.174165,
+      "frac_of_ageb": 0.996448,
+      "ageb_code": "0901500011017",
+      "centroid_lat": 19.421812,
+      "centroid_lng": -99.156945,
       "method": "colonia_census_weighted"
     },
     {
@@ -984,11 +1118,13 @@
       "official_colonia_names": [
         "Tacuba"
       ],
-      "candidate_count": 6,
+      "candidate_count": 5,
+      "candidates_before": 6,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.993857,
       "ageb_code": "0901600010158",
-      "centroid_lat": 19.456927,
-      "centroid_lng": -99.188408,
+      "centroid_lat": 19.456932,
+      "centroid_lng": -99.188406,
       "method": "colonia_census_weighted"
     },
     {
@@ -998,11 +1134,13 @@
       "official_colonia_names": [
         "Hipodromo Condesa"
       ],
-      "candidate_count": 3,
+      "candidate_count": 2,
+      "candidates_before": 3,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.752778,
       "ageb_code": "0901500011411",
-      "centroid_lat": 19.408469,
-      "centroid_lng": -99.179994,
+      "centroid_lat": 19.409062,
+      "centroid_lng": -99.180384,
       "method": "colonia_census_weighted"
     },
     {
@@ -1012,11 +1150,13 @@
       "official_colonia_names": [
         "Popo"
       ],
-      "candidate_count": 6,
+      "candidate_count": 3,
+      "candidates_before": 6,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901600010463",
-      "centroid_lat": 19.443762,
-      "centroid_lng": -99.192096,
+      "frac_of_ageb": 0.153149,
+      "ageb_code": "0901600010459",
+      "centroid_lat": 19.444667,
+      "centroid_lng": -99.199207,
       "method": "colonia_census_weighted"
     },
     {
@@ -1026,11 +1166,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 1,
       "ageb_code": "090150001113A",
-      "centroid_lat": 19.416821,
-      "centroid_lng": -99.146721,
+      "centroid_lat": 19.416936,
+      "centroid_lng": -99.146714,
       "method": "colonia_census_weighted"
     },
     {
@@ -1044,11 +1186,13 @@
         "Polanco Iv Seccion",
         "Polanco V Seccion"
       ],
-      "candidate_count": 23,
+      "candidate_count": 13,
+      "candidates_before": 23,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901600010444",
-      "centroid_lat": 19.441647,
-      "centroid_lng": -99.204265,
+      "frac_of_ageb": 0.999864,
+      "ageb_code": "0901600010622",
+      "centroid_lat": 19.435863,
+      "centroid_lng": -99.210139,
       "method": "colonia_census_weighted"
     },
     {
@@ -1058,11 +1202,13 @@
       "official_colonia_names": [
         "Popotla"
       ],
-      "candidate_count": 7,
+      "candidate_count": 6,
+      "candidates_before": 7,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.418928,
       "ageb_code": "0901600010054",
-      "centroid_lat": 19.460188,
-      "centroid_lng": -99.188405,
+      "centroid_lat": 19.457078,
+      "centroid_lng": -99.179588,
       "method": "colonia_census_weighted"
     },
     {
@@ -1072,11 +1218,13 @@
       "official_colonia_names": [
         "Ampliacion Granada"
       ],
-      "candidate_count": 5,
+      "candidate_count": 2,
+      "candidates_before": 5,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.410667,
       "ageb_code": "0901600010444",
-      "centroid_lat": 19.441979,
-      "centroid_lng": -99.203977,
+      "centroid_lat": 19.442522,
+      "centroid_lng": -99.202558,
       "method": "colonia_census_weighted"
     },
     {
@@ -1086,11 +1234,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500010875",
-      "centroid_lat": 19.428146,
-      "centroid_lng": -99.145301,
+      "frac_of_ageb": 0.997526,
+      "ageb_code": "0901500011036",
+      "centroid_lat": 19.420496,
+      "centroid_lng": -99.146001,
       "method": "colonia_census_weighted"
     },
     {
@@ -1100,11 +1250,13 @@
       "official_colonia_names": [
         "Morelos"
       ],
-      "candidate_count": 7,
+      "candidate_count": 6,
+      "candidates_before": 7,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.774311,
       "ageb_code": "0901500010540",
-      "centroid_lat": 19.444772,
-      "centroid_lng": -99.133008,
+      "centroid_lat": 19.445453,
+      "centroid_lng": -99.132907,
       "method": "colonia_census_weighted"
     },
     {
@@ -1114,11 +1266,13 @@
       "official_colonia_names": [
         "Tacuba"
       ],
-      "candidate_count": 6,
+      "candidate_count": 5,
+      "candidates_before": 6,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.169728,
       "ageb_code": "0901600010270",
-      "centroid_lat": 19.450758,
-      "centroid_lng": -99.188024,
+      "centroid_lat": 19.453214,
+      "centroid_lng": -99.188222,
       "method": "colonia_census_weighted"
     },
     {
@@ -1128,11 +1282,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500010875",
-      "centroid_lat": 19.428607,
-      "centroid_lng": -99.145211,
+      "frac_of_ageb": 0.997526,
+      "ageb_code": "0901500011036",
+      "centroid_lat": 19.420957,
+      "centroid_lng": -99.145911,
       "method": "colonia_census_weighted"
     },
     {
@@ -1142,11 +1298,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 1,
       "ageb_code": "090150001113A",
-      "centroid_lat": 19.416812,
-      "centroid_lng": -99.14641,
+      "centroid_lat": 19.416927,
+      "centroid_lng": -99.146403,
       "method": "colonia_census_weighted"
     },
     {
@@ -1156,11 +1314,13 @@
       "official_colonia_names": [
         "Popotla"
       ],
-      "candidate_count": 7,
+      "candidate_count": 6,
+      "candidates_before": 7,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.56543,
       "ageb_code": "0901600010069",
-      "centroid_lat": 19.455132,
-      "centroid_lng": -99.175962,
+      "centroid_lat": 19.455947,
+      "centroid_lng": -99.176858,
       "method": "colonia_census_weighted"
     },
     {
@@ -1170,11 +1330,13 @@
       "official_colonia_names": [
         "Ampliacion Granada"
       ],
-      "candidate_count": 5,
+      "candidate_count": 2,
+      "candidates_before": 5,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.410667,
       "ageb_code": "0901600010444",
-      "centroid_lat": 19.441832,
-      "centroid_lng": -99.204272,
+      "centroid_lat": 19.442375,
+      "centroid_lng": -99.202853,
       "method": "colonia_census_weighted"
     },
     {
@@ -1188,11 +1350,13 @@
         "Polanco Iv Seccion",
         "Polanco V Seccion"
       ],
-      "candidate_count": 23,
+      "candidate_count": 13,
+      "candidates_before": 23,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901600010641",
-      "centroid_lat": 19.434825,
-      "centroid_lng": -99.198673,
+      "frac_of_ageb": 1,
+      "ageb_code": "0901600010660",
+      "centroid_lat": 19.434075,
+      "centroid_lng": -99.189051,
       "method": "colonia_census_weighted"
     },
     {
@@ -1202,11 +1366,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011233",
-      "centroid_lat": 19.412442,
-      "centroid_lng": -99.147327,
+      "frac_of_ageb": 0.988913,
+      "ageb_code": "0901500011394",
+      "centroid_lat": 19.408483,
+      "centroid_lng": -99.147937,
       "method": "colonia_census_weighted"
     },
     {
@@ -1216,11 +1382,13 @@
       "official_colonia_names": [
         "Roma Norte"
       ],
-      "candidate_count": 21,
+      "candidate_count": 13,
+      "candidates_before": 21,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011125",
-      "centroid_lat": 19.41644,
-      "centroid_lng": -99.151766,
+      "frac_of_ageb": 0.999912,
+      "ageb_code": "0901500011093",
+      "centroid_lat": 19.418355,
+      "centroid_lng": -99.167434,
       "method": "colonia_census_weighted"
     },
     {
@@ -1234,11 +1402,13 @@
         "Polanco Iv Seccion",
         "Polanco V Seccion"
       ],
-      "candidate_count": 23,
+      "candidate_count": 13,
+      "candidates_before": 23,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901600010641",
-      "centroid_lat": 19.434857,
-      "centroid_lng": -99.199067,
+      "frac_of_ageb": 1,
+      "ageb_code": "0901600010660",
+      "centroid_lat": 19.434107,
+      "centroid_lng": -99.189445,
       "method": "colonia_census_weighted"
     },
     {
@@ -1252,11 +1422,13 @@
         "Polanco Iv Seccion",
         "Polanco V Seccion"
       ],
-      "candidate_count": 23,
+      "candidate_count": 13,
+      "candidates_before": 23,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901600010779",
-      "centroid_lat": 19.428585,
-      "centroid_lng": -99.1939,
+      "frac_of_ageb": 0.986583,
+      "ageb_code": "0901600010783",
+      "centroid_lat": 19.4286,
+      "centroid_lng": -99.188385,
       "method": "colonia_census_weighted"
     },
     {
@@ -1266,11 +1438,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011394",
-      "centroid_lat": 19.408202,
-      "centroid_lng": -99.147993,
+      "frac_of_ageb": 0.994758,
+      "ageb_code": "0901500011549",
+      "centroid_lat": 19.420729,
+      "centroid_lng": -99.152278,
       "method": "colonia_census_weighted"
     },
     {
@@ -1280,11 +1454,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 1,
       "ageb_code": "090150001113A",
-      "centroid_lat": 19.416436,
-      "centroid_lng": -99.146681,
+      "centroid_lat": 19.416551,
+      "centroid_lng": -99.146674,
       "method": "colonia_census_weighted"
     },
     {
@@ -1294,11 +1470,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011144",
-      "centroid_lat": 19.416031,
-      "centroid_lng": -99.1414,
+      "frac_of_ageb": 0.991638,
+      "ageb_code": "0901500011233",
+      "centroid_lat": 19.412516,
+      "centroid_lng": -99.147432,
       "method": "colonia_census_weighted"
     },
     {
@@ -1308,11 +1486,13 @@
       "official_colonia_names": [
         "Hipodromo Condesa"
       ],
-      "candidate_count": 3,
+      "candidate_count": 2,
+      "candidates_before": 3,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011303",
-      "centroid_lat": 19.412814,
-      "centroid_lng": -99.179639,
+      "frac_of_ageb": 0.536281,
+      "ageb_code": "0901500011318",
+      "centroid_lat": 19.410169,
+      "centroid_lng": -99.177343,
       "method": "colonia_census_weighted"
     },
     {
@@ -1322,11 +1502,13 @@
       "official_colonia_names": [
         "Popotla"
       ],
-      "candidate_count": 7,
+      "candidate_count": 6,
+      "candidates_before": 7,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.418928,
       "ageb_code": "0901600010054",
-      "centroid_lat": 19.460359,
-      "centroid_lng": -99.188476,
+      "centroid_lat": 19.457249,
+      "centroid_lng": -99.179659,
       "method": "colonia_census_weighted"
     },
     {
@@ -1336,11 +1518,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011534",
-      "centroid_lat": 19.423388,
-      "centroid_lng": -99.150832,
+      "frac_of_ageb": 0.994758,
+      "ageb_code": "0901500011549",
+      "centroid_lat": 19.421055,
+      "centroid_lng": -99.151967,
       "method": "colonia_census_weighted"
     },
     {
@@ -1350,11 +1534,13 @@
       "official_colonia_names": [
         "Tacuba"
       ],
-      "candidate_count": 6,
+      "candidate_count": 5,
+      "candidates_before": 6,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.169728,
       "ageb_code": "0901600010270",
-      "centroid_lat": 19.450844,
-      "centroid_lng": -99.188268,
+      "centroid_lat": 19.4533,
+      "centroid_lng": -99.188466,
       "method": "colonia_census_weighted"
     },
     {
@@ -1364,11 +1550,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500010860",
-      "centroid_lat": 19.429777,
-      "centroid_lng": -99.150506,
+      "frac_of_ageb": 0.997526,
+      "ageb_code": "0901500011036",
+      "centroid_lat": 19.421127,
+      "centroid_lng": -99.146096,
       "method": "colonia_census_weighted"
     },
     {
@@ -1378,11 +1566,13 @@
       "official_colonia_names": [
         "Roma Norte"
       ],
-      "candidate_count": 21,
+      "candidate_count": 13,
+      "candidates_before": 21,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.997454,
       "ageb_code": "0901500011002",
-      "centroid_lat": 19.420453,
-      "centroid_lng": -99.161308,
+      "centroid_lat": 19.420438,
+      "centroid_lng": -99.161312,
       "method": "colonia_census_weighted"
     },
     {
@@ -1392,11 +1582,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011534",
-      "centroid_lat": 19.422981,
-      "centroid_lng": -99.151243,
+      "frac_of_ageb": 0.994758,
+      "ageb_code": "0901500011549",
+      "centroid_lat": 19.420648,
+      "centroid_lng": -99.152378,
       "method": "colonia_census_weighted"
     },
     {
@@ -1406,11 +1598,13 @@
       "official_colonia_names": [
         "Morelos"
       ],
-      "candidate_count": 7,
+      "candidate_count": 6,
+      "candidates_before": 7,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500010540",
-      "centroid_lat": 19.445026,
-      "centroid_lng": -99.132887,
+      "frac_of_ageb": 0.414573,
+      "ageb_code": "0901500010536",
+      "centroid_lat": 19.446181,
+      "centroid_lng": -99.136153,
       "method": "colonia_census_weighted"
     },
     {
@@ -1420,11 +1614,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011394",
-      "centroid_lat": 19.408351,
-      "centroid_lng": -99.148189,
+      "frac_of_ageb": 0.998638,
+      "ageb_code": "0901500011534",
+      "centroid_lat": 19.422746,
+      "centroid_lng": -99.151398,
       "method": "colonia_census_weighted"
     },
     {
@@ -1434,11 +1630,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500010875",
-      "centroid_lat": 19.428369,
-      "centroid_lng": -99.144984,
+      "frac_of_ageb": 0.997526,
+      "ageb_code": "0901500011036",
+      "centroid_lat": 19.420719,
+      "centroid_lng": -99.145684,
       "method": "colonia_census_weighted"
     },
     {
@@ -1448,11 +1646,13 @@
       "official_colonia_names": [
         "Popo"
       ],
-      "candidate_count": 6,
+      "candidate_count": 3,
+      "candidates_before": 6,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.049563,
       "ageb_code": "0901600010463",
-      "centroid_lat": 19.444068,
-      "centroid_lng": -99.192543,
+      "centroid_lat": 19.445156,
+      "centroid_lng": -99.198263,
       "method": "colonia_census_weighted"
     },
     {
@@ -1462,11 +1662,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011144",
-      "centroid_lat": 19.41621,
-      "centroid_lng": -99.141105,
+      "frac_of_ageb": 0.991638,
+      "ageb_code": "0901500011233",
+      "centroid_lat": 19.412695,
+      "centroid_lng": -99.147137,
       "method": "colonia_census_weighted"
     },
     {
@@ -1476,11 +1678,13 @@
       "official_colonia_names": [
         "Morelos"
       ],
-      "candidate_count": 7,
+      "candidate_count": 6,
+      "candidates_before": 7,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.999995,
       "ageb_code": "0901500010343",
-      "centroid_lat": 19.447881,
-      "centroid_lng": -99.128922,
+      "centroid_lat": 19.449041,
+      "centroid_lng": -99.128701,
       "method": "colonia_census_weighted"
     },
     {
@@ -1490,11 +1694,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011394",
-      "centroid_lat": 19.408442,
-      "centroid_lng": -99.147788,
+      "frac_of_ageb": 0.994758,
+      "ageb_code": "0901500011549",
+      "centroid_lat": 19.420969,
+      "centroid_lng": -99.152073,
       "method": "colonia_census_weighted"
     },
     {
@@ -1504,11 +1710,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500010875",
-      "centroid_lat": 19.428489,
-      "centroid_lng": -99.145152,
+      "frac_of_ageb": 0.997526,
+      "ageb_code": "0901500011036",
+      "centroid_lat": 19.420839,
+      "centroid_lng": -99.145852,
       "method": "colonia_census_weighted"
     },
     {
@@ -1518,11 +1726,13 @@
       "official_colonia_names": [
         "Tacuba"
       ],
-      "candidate_count": 6,
+      "candidate_count": 5,
+      "candidates_before": 6,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901600010270",
-      "centroid_lat": 19.451036,
-      "centroid_lng": -99.187872,
+      "frac_of_ageb": 0.649863,
+      "ageb_code": "0901600010162",
+      "centroid_lat": 19.455606,
+      "centroid_lng": -99.185774,
       "method": "colonia_census_weighted"
     },
     {
@@ -1536,11 +1746,13 @@
         "Polanco Iv Seccion",
         "Polanco V Seccion"
       ],
-      "candidate_count": 23,
+      "candidate_count": 13,
+      "candidates_before": 23,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901600010779",
-      "centroid_lat": 19.428261,
-      "centroid_lng": -99.194097,
+      "frac_of_ageb": 0.986583,
+      "ageb_code": "0901600010783",
+      "centroid_lat": 19.428276,
+      "centroid_lng": -99.188582,
       "method": "colonia_census_weighted"
     },
     {
@@ -1551,11 +1763,13 @@
         "Anahuac I Seccion",
         "Anahuac Ii Seccion"
       ],
-      "candidate_count": 18,
+      "candidate_count": 7,
+      "candidates_before": 18,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901600010181",
-      "centroid_lat": 19.449894,
-      "centroid_lng": -99.17929,
+      "frac_of_ageb": 0.99994,
+      "ageb_code": "0901600010285",
+      "centroid_lat": 19.444464,
+      "centroid_lng": -99.176524,
       "method": "colonia_census_weighted"
     },
     {
@@ -1569,11 +1783,13 @@
         "Polanco Iv Seccion",
         "Polanco V Seccion"
       ],
-      "candidate_count": 23,
+      "candidate_count": 13,
+      "candidates_before": 23,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901600010637",
-      "centroid_lat": 19.435088,
-      "centroid_lng": -99.204295,
+      "frac_of_ageb": 1,
+      "ageb_code": "0901600010660",
+      "centroid_lat": 19.434688,
+      "centroid_lng": -99.189013,
       "method": "colonia_census_weighted"
     },
     {
@@ -1583,11 +1799,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500010860",
-      "centroid_lat": 19.429226,
-      "centroid_lng": -99.150677,
+      "frac_of_ageb": 0.282837,
+      "ageb_code": "0901500010875",
+      "centroid_lat": 19.425767,
+      "centroid_lng": -99.145133,
       "method": "colonia_census_weighted"
     },
     {
@@ -1597,11 +1815,13 @@
       "official_colonia_names": [
         "Popotla"
       ],
-      "candidate_count": 7,
+      "candidate_count": 6,
+      "candidates_before": 7,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.56543,
       "ageb_code": "0901600010069",
-      "centroid_lat": 19.455357,
-      "centroid_lng": -99.176086,
+      "centroid_lat": 19.456172,
+      "centroid_lng": -99.176982,
       "method": "colonia_census_weighted"
     },
     {
@@ -1611,11 +1831,13 @@
       "official_colonia_names": [
         "Roma Norte"
       ],
-      "candidate_count": 21,
+      "candidate_count": 13,
+      "candidates_before": 21,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011341",
-      "centroid_lat": 19.409017,
-      "centroid_lng": -99.169963,
+      "frac_of_ageb": 0.997161,
+      "ageb_code": "0901500011110",
+      "centroid_lat": 19.413998,
+      "centroid_lng": -99.156575,
       "method": "colonia_census_weighted"
     },
     {
@@ -1626,11 +1848,13 @@
         "Escandon I Seccion",
         "Escandon Ii Seccion"
       ],
-      "candidate_count": 7,
+      "candidate_count": 6,
+      "candidates_before": 7,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.997654,
       "ageb_code": "0901600011207",
-      "centroid_lat": 19.40078,
-      "centroid_lng": -99.179673,
+      "centroid_lat": 19.400817,
+      "centroid_lng": -99.179641,
       "method": "colonia_census_weighted"
     },
     {
@@ -1644,11 +1868,13 @@
         "Polanco Iv Seccion",
         "Polanco V Seccion"
       ],
-      "candidate_count": 23,
+      "candidate_count": 13,
+      "candidates_before": 23,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.986583,
       "ageb_code": "0901600010783",
-      "centroid_lat": 19.429146,
-      "centroid_lng": -99.187846,
+      "centroid_lat": 19.428921,
+      "centroid_lng": -99.188131,
       "method": "colonia_census_weighted"
     },
     {
@@ -1658,11 +1884,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011036",
-      "centroid_lat": 19.422369,
-      "centroid_lng": -99.146064,
+      "frac_of_ageb": 0.994551,
+      "ageb_code": "0901500011125",
+      "centroid_lat": 19.416484,
+      "centroid_lng": -99.152322,
       "method": "colonia_census_weighted"
     },
     {
@@ -1672,11 +1900,13 @@
       "official_colonia_names": [
         "Roma Norte"
       ],
-      "candidate_count": 21,
+      "candidate_count": 13,
+      "candidates_before": 21,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011341",
-      "centroid_lat": 19.408672,
-      "centroid_lng": -99.170292,
+      "frac_of_ageb": 0.997161,
+      "ageb_code": "0901500011110",
+      "centroid_lat": 19.413653,
+      "centroid_lng": -99.156904,
       "method": "colonia_census_weighted"
     },
     {
@@ -1686,11 +1916,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011534",
-      "centroid_lat": 19.423085,
-      "centroid_lng": -99.15114,
+      "frac_of_ageb": 0.994758,
+      "ageb_code": "0901500011549",
+      "centroid_lat": 19.420752,
+      "centroid_lng": -99.152275,
       "method": "colonia_census_weighted"
     },
     {
@@ -1700,11 +1932,13 @@
       "official_colonia_names": [
         "Tacuba"
       ],
-      "candidate_count": 6,
+      "candidate_count": 5,
+      "candidates_before": 6,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901600010143",
-      "centroid_lat": 19.455075,
-      "centroid_lng": -99.19325,
+      "frac_of_ageb": 0.993857,
+      "ageb_code": "0901600010158",
+      "centroid_lat": 19.45645,
+      "centroid_lng": -99.188318,
       "method": "colonia_census_weighted"
     },
     {
@@ -1714,11 +1948,13 @@
       "official_colonia_names": [
         "San Rafael"
       ],
-      "candidate_count": 8,
+      "candidate_count": 3,
+      "candidates_before": 8,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.962665,
       "ageb_code": "0901500010682",
-      "centroid_lat": 19.437973,
-      "centroid_lng": -99.162577,
+      "centroid_lat": 19.436361,
+      "centroid_lng": -99.163,
       "method": "colonia_census_weighted"
     },
     {
@@ -1728,11 +1964,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011040",
-      "centroid_lat": 19.422167,
-      "centroid_lng": -99.140181,
+      "frac_of_ageb": 0.994551,
+      "ageb_code": "0901500011125",
+      "centroid_lat": 19.416532,
+      "centroid_lng": -99.151669,
       "method": "colonia_census_weighted"
     },
     {
@@ -1742,11 +1980,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500010964",
-      "centroid_lat": 19.425371,
-      "centroid_lng": -99.137661,
+      "frac_of_ageb": 0.997526,
+      "ageb_code": "0901500011036",
+      "centroid_lat": 19.421061,
+      "centroid_lng": -99.145821,
       "method": "colonia_census_weighted"
     },
     {
@@ -1756,11 +1996,13 @@
       "official_colonia_names": [
         "Roma Norte"
       ],
-      "candidate_count": 21,
+      "candidate_count": 13,
+      "candidates_before": 21,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011356",
-      "centroid_lat": 19.409317,
-      "centroid_lng": -99.16539,
+      "frac_of_ageb": 0.997161,
+      "ageb_code": "0901500011110",
+      "centroid_lat": 19.414078,
+      "centroid_lng": -99.156342,
       "method": "colonia_census_weighted"
     },
     {
@@ -1774,11 +2016,13 @@
         "Polanco Iv Seccion",
         "Polanco V Seccion"
       ],
-      "candidate_count": 23,
+      "candidate_count": 13,
+      "candidates_before": 23,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.986583,
       "ageb_code": "0901600010783",
-      "centroid_lat": 19.428494,
-      "centroid_lng": -99.187847,
+      "centroid_lat": 19.428269,
+      "centroid_lng": -99.188132,
       "method": "colonia_census_weighted"
     },
     {
@@ -1788,11 +2032,13 @@
       "official_colonia_names": [
         "Roma Norte"
       ],
-      "candidate_count": 21,
+      "candidate_count": 13,
+      "candidates_before": 21,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500010856",
-      "centroid_lat": 19.429113,
-      "centroid_lng": -99.154995,
+      "frac_of_ageb": 0.967265,
+      "ageb_code": "0901500010998",
+      "centroid_lat": 19.420778,
+      "centroid_lng": -99.167667,
       "method": "colonia_census_weighted"
     },
     {
@@ -1802,11 +2048,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 1,
       "ageb_code": "090150001113A",
-      "centroid_lat": 19.416764,
-      "centroid_lng": -99.146698,
+      "centroid_lat": 19.416879,
+      "centroid_lng": -99.146691,
       "method": "colonia_census_weighted"
     },
     {
@@ -1817,11 +2065,13 @@
         "Anahuac I Seccion",
         "Anahuac Ii Seccion"
       ],
-      "candidate_count": 18,
+      "candidate_count": 7,
+      "candidates_before": 18,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901600010478",
-      "centroid_lat": 19.442819,
-      "centroid_lng": -99.185768,
+      "frac_of_ageb": 0.998346,
+      "ageb_code": "090160001029A",
+      "centroid_lat": 19.446904,
+      "centroid_lng": -99.171701,
       "method": "colonia_census_weighted"
     },
     {
@@ -1831,11 +2081,13 @@
       "official_colonia_names": [
         "Roma Norte"
       ],
-      "candidate_count": 21,
+      "candidate_count": 13,
+      "candidates_before": 21,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011110",
-      "centroid_lat": 19.415477,
-      "centroid_lng": -99.156617,
+      "frac_of_ageb": 0.932516,
+      "ageb_code": "0901500011089",
+      "centroid_lat": 19.419828,
+      "centroid_lng": -99.173587,
       "method": "colonia_census_weighted"
     },
     {
@@ -1845,11 +2097,13 @@
       "official_colonia_names": [
         "Roma Norte"
       ],
-      "candidate_count": 21,
+      "candidate_count": 13,
+      "candidates_before": 21,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011341",
-      "centroid_lat": 19.408818,
-      "centroid_lng": -99.170176,
+      "frac_of_ageb": 0.997161,
+      "ageb_code": "0901500011110",
+      "centroid_lat": 19.413799,
+      "centroid_lng": -99.156788,
       "method": "colonia_census_weighted"
     },
     {
@@ -1859,11 +2113,13 @@
       "official_colonia_names": [
         "Condesa"
       ],
-      "candidate_count": 10,
+      "candidate_count": 6,
+      "candidates_before": 10,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011411",
-      "centroid_lat": 19.40846,
-      "centroid_lng": -99.180255,
+      "frac_of_ageb": 0.656557,
+      "ageb_code": "0901500011322",
+      "centroid_lat": 19.413835,
+      "centroid_lng": -99.174827,
       "method": "colonia_census_weighted"
     },
     {
@@ -1877,11 +2133,13 @@
         "Polanco Iv Seccion",
         "Polanco V Seccion"
       ],
-      "candidate_count": 23,
+      "candidate_count": 13,
+      "candidates_before": 23,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901600010444",
-      "centroid_lat": 19.442065,
-      "centroid_lng": -99.203832,
+      "frac_of_ageb": 0.997895,
+      "ageb_code": "0901600010637",
+      "centroid_lat": 19.43486,
+      "centroid_lng": -99.20435,
       "method": "colonia_census_weighted"
     },
     {
@@ -1891,11 +2149,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011144",
-      "centroid_lat": 19.416223,
-      "centroid_lng": -99.141002,
+      "frac_of_ageb": 0.991638,
+      "ageb_code": "0901500011233",
+      "centroid_lat": 19.412708,
+      "centroid_lng": -99.147034,
       "method": "colonia_census_weighted"
     },
     {
@@ -1905,11 +2165,13 @@
       "official_colonia_names": [
         "Roma Norte"
       ],
-      "candidate_count": 21,
+      "candidate_count": 13,
+      "candidates_before": 21,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011125",
-      "centroid_lat": 19.415948,
-      "centroid_lng": -99.151769,
+      "frac_of_ageb": 0.932516,
+      "ageb_code": "0901500011089",
+      "centroid_lat": 19.419609,
+      "centroid_lng": -99.173539,
       "method": "colonia_census_weighted"
     },
     {
@@ -1919,11 +2181,13 @@
       "official_colonia_names": [
         "Condesa"
       ],
-      "candidate_count": 10,
+      "candidate_count": 6,
+      "candidates_before": 10,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011089",
-      "centroid_lat": 19.419815,
-      "centroid_lng": -99.173929,
+      "frac_of_ageb": 0.98768,
+      "ageb_code": "0901500011178",
+      "centroid_lat": 19.41685,
+      "centroid_lng": -99.17723,
       "method": "colonia_census_weighted"
     },
     {
@@ -1933,11 +2197,13 @@
       "official_colonia_names": [
         "Popotla"
       ],
-      "candidate_count": 7,
+      "candidate_count": 6,
+      "candidates_before": 7,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.516097,
       "ageb_code": "0901600010181",
-      "centroid_lat": 19.450098,
-      "centroid_lng": -99.179142,
+      "centroid_lat": 19.452971,
+      "centroid_lng": -99.177764,
       "method": "colonia_census_weighted"
     },
     {
@@ -1947,11 +2213,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011248",
-      "centroid_lat": 19.411033,
-      "centroid_lng": -99.142953,
+      "frac_of_ageb": 0.988913,
+      "ageb_code": "0901500011394",
+      "centroid_lat": 19.408524,
+      "centroid_lng": -99.147993,
       "method": "colonia_census_weighted"
     },
     {
@@ -1961,11 +2229,13 @@
       "official_colonia_names": [
         "Tacuba"
       ],
-      "candidate_count": 6,
+      "candidate_count": 5,
+      "candidates_before": 6,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.169728,
       "ageb_code": "0901600010270",
-      "centroid_lat": 19.450943,
-      "centroid_lng": -99.187764,
+      "centroid_lat": 19.453399,
+      "centroid_lng": -99.187962,
       "method": "colonia_census_weighted"
     },
     {
@@ -1979,11 +2249,13 @@
         "Polanco Iv Seccion",
         "Polanco V Seccion"
       ],
-      "candidate_count": 23,
+      "candidate_count": 13,
+      "candidates_before": 23,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901600010444",
-      "centroid_lat": 19.442175,
-      "centroid_lng": -99.203954,
+      "frac_of_ageb": 0.997895,
+      "ageb_code": "0901600010637",
+      "centroid_lat": 19.43497,
+      "centroid_lng": -99.204472,
       "method": "colonia_census_weighted"
     },
     {
@@ -1994,11 +2266,13 @@
         "Anahuac I Seccion",
         "Anahuac Ii Seccion"
       ],
-      "candidate_count": 18,
+      "candidate_count": 7,
+      "candidates_before": 18,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901600010497",
-      "centroid_lat": 19.441667,
-      "centroid_lng": -99.173546,
+      "frac_of_ageb": 0.729456,
+      "ageb_code": "0901600010482",
+      "centroid_lat": 19.440348,
+      "centroid_lng": -99.180172,
       "method": "colonia_census_weighted"
     },
     {
@@ -2008,11 +2282,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011394",
-      "centroid_lat": 19.408461,
-      "centroid_lng": -99.147609,
+      "frac_of_ageb": 0.998638,
+      "ageb_code": "0901500011534",
+      "centroid_lat": 19.422856,
+      "centroid_lng": -99.150818,
       "method": "colonia_census_weighted"
     },
     {
@@ -2022,11 +2298,13 @@
       "official_colonia_names": [
         "Tacuba"
       ],
-      "candidate_count": 6,
+      "candidate_count": 5,
+      "candidates_before": 6,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901600010139",
-      "centroid_lat": 19.457295,
-      "centroid_lng": -99.195004,
+      "frac_of_ageb": 0.561842,
+      "ageb_code": "0901600010143",
+      "centroid_lat": 19.455264,
+      "centroid_lng": -99.191847,
       "method": "colonia_census_weighted"
     },
     {
@@ -2036,11 +2314,13 @@
       "official_colonia_names": [
         "Morelos"
       ],
-      "candidate_count": 7,
+      "candidate_count": 6,
+      "candidates_before": 7,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.995148,
       "ageb_code": "0901500010358",
-      "centroid_lat": 19.447372,
-      "centroid_lng": -99.126527,
+      "centroid_lat": 19.447369,
+      "centroid_lng": -99.126509,
       "method": "colonia_census_weighted"
     },
     {
@@ -2050,11 +2330,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 1,
       "ageb_code": "090150001113A",
-      "centroid_lat": 19.416833,
-      "centroid_lng": -99.146879,
+      "centroid_lat": 19.416948,
+      "centroid_lng": -99.146872,
       "method": "colonia_census_weighted"
     },
     {
@@ -2068,11 +2350,13 @@
         "Polanco Iv Seccion",
         "Polanco V Seccion"
       ],
-      "candidate_count": 23,
+      "candidate_count": 13,
+      "candidates_before": 23,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901600010656",
-      "centroid_lat": 19.434976,
-      "centroid_lng": -99.193241,
+      "frac_of_ageb": 1,
+      "ageb_code": "0901600010660",
+      "centroid_lat": 19.434176,
+      "centroid_lng": -99.188959,
       "method": "colonia_census_weighted"
     },
     {
@@ -2082,11 +2366,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011248",
-      "centroid_lat": 19.410357,
-      "centroid_lng": -99.142744,
+      "frac_of_ageb": 0.988913,
+      "ageb_code": "0901500011394",
+      "centroid_lat": 19.407848,
+      "centroid_lng": -99.147784,
       "method": "colonia_census_weighted"
     },
     {
@@ -2096,11 +2382,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011144",
-      "centroid_lat": 19.415992,
-      "centroid_lng": -99.141038,
+      "frac_of_ageb": 0.991638,
+      "ageb_code": "0901500011233",
+      "centroid_lat": 19.412477,
+      "centroid_lng": -99.14707,
       "method": "colonia_census_weighted"
     },
     {
@@ -2110,11 +2398,13 @@
       "official_colonia_names": [
         "Roma Norte"
       ],
-      "candidate_count": 21,
+      "candidate_count": 13,
+      "candidates_before": 21,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011106",
-      "centroid_lat": 19.416553,
-      "centroid_lng": -99.161701,
+      "frac_of_ageb": 0.996448,
+      "ageb_code": "0901500011017",
+      "centroid_lat": 19.421928,
+      "centroid_lng": -99.156331,
       "method": "colonia_census_weighted"
     },
     {
@@ -2124,11 +2414,13 @@
       "official_colonia_names": [
         "Morelos"
       ],
-      "candidate_count": 7,
+      "candidate_count": 6,
+      "candidates_before": 7,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500010339",
-      "centroid_lat": 19.450285,
-      "centroid_lng": -99.131665,
+      "frac_of_ageb": 0.999995,
+      "ageb_code": "0901500010343",
+      "centroid_lat": 19.449065,
+      "centroid_lng": -99.128814,
       "method": "colonia_census_weighted"
     },
     {
@@ -2138,11 +2430,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011248",
-      "centroid_lat": 19.410884,
-      "centroid_lng": -99.142905,
+      "frac_of_ageb": 0.988913,
+      "ageb_code": "0901500011394",
+      "centroid_lat": 19.408375,
+      "centroid_lng": -99.147945,
       "method": "colonia_census_weighted"
     },
     {
@@ -2152,11 +2446,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011125",
-      "centroid_lat": 19.416349,
-      "centroid_lng": -99.151659,
+      "frac_of_ageb": 1,
+      "ageb_code": "090150001113A",
+      "centroid_lat": 19.416934,
+      "centroid_lng": -99.146222,
       "method": "colonia_census_weighted"
     },
     {
@@ -2166,11 +2462,13 @@
       "official_colonia_names": [
         "Ampliacion Granada"
       ],
-      "candidate_count": 5,
+      "candidate_count": 2,
+      "candidates_before": 5,
       "weight_source": "P_18YMAS",
+      "frac_of_ageb": 0.410667,
       "ageb_code": "0901600010444",
-      "centroid_lat": 19.442087,
-      "centroid_lng": -99.204104,
+      "centroid_lat": 19.44263,
+      "centroid_lng": -99.202685,
       "method": "colonia_census_weighted"
     },
     {
@@ -2180,11 +2478,13 @@
       "official_colonia_names": [
         "Doctores"
       ],
-      "candidate_count": 16,
+      "candidate_count": 10,
+      "candidates_before": 16,
       "weight_source": "P_18YMAS",
-      "ageb_code": "0901500011394",
-      "centroid_lat": 19.408305,
-      "centroid_lng": -99.148024,
+      "frac_of_ageb": 0.994758,
+      "ageb_code": "0901500011549",
+      "centroid_lat": 19.420832,
+      "centroid_lng": -99.152309,
       "method": "colonia_census_weighted"
     }
   ]
