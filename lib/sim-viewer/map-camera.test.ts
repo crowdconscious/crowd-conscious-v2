@@ -41,14 +41,14 @@ test('detailViewBoxFromPoints preserves aspect and pads', () => {
   assert.ok(vb.x < 100)
 })
 
-test('userSpaceDotRadius shrinks in user-space as viewBox zooms in', () => {
+test('userSpaceDotRadius accounts for meet scaling', () => {
   const overview = overviewViewBox(400, 800)
   const detail = { x: 100, y: 200, width: 100, height: 200 }
-  const rOverview = userSpaceDotRadius(6, overview, 400)
-  const rDetail = userSpaceDotRadius(6, detail, 400)
+  const rOverview = userSpaceDotRadius(6, overview, 400, 800)
+  const rDetail = userSpaceDotRadius(6, detail, 400, 800)
   assert.equal(rOverview, 3)
-  // Smaller viewBox → each user unit maps to more screen px, so radius
-  // in user-space must shrink to keep the same on-screen diameter.
+  // Zoomed-in viewBox → larger on-screen scale → smaller user-space radius
+  // for the same on-screen diameter.
   assert.ok(rDetail < rOverview)
   assert.equal(rDetail, 0.75)
 })
