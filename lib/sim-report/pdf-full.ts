@@ -235,37 +235,56 @@ export async function generateSimFullPdf(data: SimReportData): Promise<Buffer> {
     drawParagraph(ctx, para, 9)
   }
 
-  // Map snapshot
-  drawSection(ctx, 'Mapa de la muestra (AGEB)')
-  if (data.mapPng && data.mapPng.length > 0) {
-    ensureSpace(ctx, 110)
-    try {
-      const imgW = CONTENT_W
-      const imgH = (imgW * 720) / 900
-      const jpeg = await sharp(data.mapPng)
-        .jpeg({ quality: 80, mozjpeg: true })
-        .toBuffer()
-      doc.addImage(
-        `data:image/jpeg;base64,${jpeg.toString('base64')}`,
-        'JPEG',
-        MARGIN_X,
-        ctx.y,
-        imgW,
-        imgH,
-      )
-      ctx.y += imgH + 4
+  // Map snapshot — reserve heading + image + caption so the title never
+  // orphans at the bottom of a page while the PNG starts on the next.
+  {
+    const imgW = CONTENT_W
+    const imgH =
+      data.mapPng && data.mapPng.length > 0 ? (imgW * 720) / 900 : 0
+    const blockH =
+      data.mapPng && data.mapPng.length > 0
+        ? 12 /* section title */ + imgH + 10 /* caption */
+        : 20
+    ensureSpace(ctx, blockH)
+    // Inline section title (skip drawSection's own ensureSpace — we already
+    // reserved the full block).
+    ctx.doc.setFont('helvetica', 'bold')
+    ctx.doc.setFontSize(10)
+    ctx.doc.setTextColor(...COLOR_TEAL)
+    ctx.doc.text('MAPA DE LA MUESTRA (AGEB)', MARGIN_X, ctx.y)
+    ctx.y += 6
+    ctx.doc.setDrawColor(...COLOR_TEAL)
+    ctx.doc.setLineWidth(0.3)
+    ctx.doc.line(MARGIN_X, ctx.y, MARGIN_X + CONTENT_W, ctx.y)
+    ctx.y += 5
+
+    if (data.mapPng && data.mapPng.length > 0) {
+      try {
+        const jpeg = await sharp(data.mapPng)
+          .jpeg({ quality: 80, mozjpeg: true })
+          .toBuffer()
+        doc.addImage(
+          `data:image/jpeg;base64,${jpeg.toString('base64')}`,
+          'JPEG',
+          MARGIN_X,
+          ctx.y,
+          imgW,
+          imgH,
+        )
+        ctx.y += imgH + 4
+        drawMuted(
+          ctx,
+          'Puntos = personas sintéticas en su AGEB (INEGI). Color = opción votada. Inset: CDMX con la muestra resaltada.',
+        )
+      } catch {
+        drawMuted(ctx, 'No se pudo incrustar el mapa.')
+      }
+    } else {
       drawMuted(
         ctx,
-        'Puntos = personas sintéticas colocadas en AGEB (INEGI). Color = opción votada en la simulación.',
+        'Mapa no disponible — faltan coordenadas AGEB mapeables para esta corrida.',
       )
-    } catch {
-      drawMuted(ctx, 'No se pudo incrustar el mapa.')
     }
-  } else {
-    drawMuted(
-      ctx,
-      'Mapa no disponible — faltan coordenadas AGEB mapeables para esta corrida.',
-    )
   }
 
   drawSection(ctx, 'Ver el Pulse')

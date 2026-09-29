@@ -3,6 +3,10 @@
  *
  *   SIM_REPORT_ENABLED=true npx tsx scripts/sim-report/generate-samples.ts
  *
+ * Persona lat/lng are snapped to AGEB property centroids from
+ * `public/geo/ageb-cuauhtemoc-mh.geojson` (on-surface; preferred over d3
+ * geoCentroid which can fall outside concave blocks).
+ *
  * Writes:
  *   docs/samples/sim-report-summary.pdf
  *   docs/samples/sim-report-full.pdf
@@ -13,9 +17,14 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 
 import { assembleSimReportData } from '../../lib/sim-report/assemble.ts'
-import { renderSimMapSnapshotPng } from '../../lib/sim-report/map-snapshot.ts'
+import {
+  indexAgebCentroids,
+  renderSimMapSnapshotPng,
+  snapPersonasToAgebCentroids,
+} from '../../lib/sim-report/map-snapshot.ts'
 import { generateSimFullPdf } from '../../lib/sim-report/pdf-full.ts'
 import { generateSimSummaryPdf } from '../../lib/sim-report/pdf-summary.ts'
+import type { AgebFeatureCollection } from '../../lib/sim-viewer/ageb-geo.ts'
 import type { SimulationReplayPayload } from '../../types/simulation.ts'
 
 async function main() {
@@ -28,6 +37,14 @@ async function main() {
     'utf8',
   )
   const payload = JSON.parse(raw) as SimulationReplayPayload
+
+  const ageb = JSON.parse(
+    await readFile(
+      path.join(root, 'public/geo/ageb-cuauhtemoc-mh.geojson'),
+      'utf8',
+    ),
+  ) as AgebFeatureCollection
+  const agebByCode = indexAgebCentroids(ageb.features)
 
   // Demo track row: fixture has real aggregates — treat as scored.
   const realN =
@@ -51,11 +68,18 @@ async function main() {
     generatedAt: '2026-09-29T12:00:00.000Z',
   })
   base.run.revealedAt = '2026-09-01T12:00:00.000Z'
+  // Snap demo personas onto true AGEB centroids for the sample artifacts.
+  base = {
+    ...base,
+    personas: snapPersonasToAgebCentroids(base.personas, agebByCode),
+  }
 
   const mapPng = await renderSimMapSnapshotPng({
     runId: payload.run.id,
     personas: base.personas,
     options: base.simulated,
+    // Personas already snapped to GeoJSON property centroids above.
+    snapToAgebCentroid: true,
   })
 
   if (mapPng) {
