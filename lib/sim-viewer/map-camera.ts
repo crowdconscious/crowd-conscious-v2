@@ -45,13 +45,17 @@ export function overviewViewBox(width: number, height: number): SvgViewBox {
 
 /**
  * Fit a viewBox around projected points (e.g. active alcaldía vertices)
- * preserving the viewport aspect ratio and adding padding.
+ * with padding. When `matchViewportAspect` is true (default), expand the box
+ * so it matches the viewport aspect (no SVG letterboxing). When false, keep
+ * the content aspect — better when the content is much wider/shorter than a
+ * tall phone map pane.
  */
 export function detailViewBoxFromPoints(
   points: readonly [number, number][],
   viewportWidth: number,
   viewportHeight: number,
   paddingPx = 28,
+  matchViewportAspect = true,
 ): SvgViewBox {
   if (
     points.length === 0 ||
@@ -79,15 +83,16 @@ export function detailViewBoxFromPoints(
   const pad = Math.max(8, paddingPx)
   const contentW = Math.max(1, maxX - minX)
   const contentH = Math.max(1, maxY - minY)
-  const aspect = viewportWidth / viewportHeight
-
-  // Grow the content box with padding, then expand to match viewport aspect.
   let boxW = contentW + pad * 2
   let boxH = contentH + pad * 2
-  if (boxW / boxH > aspect) {
-    boxH = boxW / aspect
-  } else {
-    boxW = boxH * aspect
+
+  if (matchViewportAspect) {
+    const aspect = viewportWidth / viewportHeight
+    if (boxW / boxH > aspect) {
+      boxH = boxW / aspect
+    } else {
+      boxW = boxH * aspect
+    }
   }
 
   const cx = (minX + maxX) / 2
@@ -102,14 +107,21 @@ export function detailViewBoxFromPoints(
 
 /**
  * Convert a desired on-screen dot diameter (px) into SVG user-space radius
- * given the current viewBox vs viewport.
+ * given the current viewBox vs viewport (assumes preserveAspectRatio meet).
  */
 export function userSpaceDotRadius(
   screenDiameterPx: number,
   viewBox: SvgViewBox,
   viewportWidth: number,
+  viewportHeight = 0,
 ): number {
   if (viewportWidth <= 0 || viewBox.width <= 0) return screenDiameterPx / 2
-  const scale = viewBox.width / viewportWidth
-  return (screenDiameterPx / 2) * scale
+  const scaleX = viewportWidth / viewBox.width
+  const scaleY =
+    viewportHeight > 0 && viewBox.height > 0
+      ? viewportHeight / viewBox.height
+      : scaleX
+  const scale = Math.min(scaleX, scaleY)
+  if (scale <= 0) return screenDiameterPx / 2
+  return screenDiameterPx / 2 / scale
 }
