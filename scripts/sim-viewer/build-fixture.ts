@@ -13,12 +13,24 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { createSeededRng, seededShuffle } from '../../lib/sim-viewer/prng'
+import type { AgebFeature, AgebFeatureCollection } from '../../lib/sim-viewer/ageb-geo'
+import { featuresByAlcaldia } from '../../lib/sim-viewer/ageb-geo'
+import { jitteredMapPoint, mapDotSeed } from '../../lib/sim-viewer/map-jitter'
 import type {
   SimulationOptionAggregate,
   SimulationReplayPayload,
   SimulationReplayVote,
 } from '../../types/simulation-replay'
 import type { PersonaGrounding } from '../../types/simulation'
+
+function loadAgebPools(): Record<'Cuauhtémoc' | 'Miguel Hidalgo', AgebFeature[]> {
+  const geoPath = resolve(process.cwd(), 'public/geo/ageb-cuauhtemoc-mh.geojson')
+  const geo = JSON.parse(readFileSync(geoPath, 'utf8')) as AgebFeatureCollection
+  return {
+    Cuauhtémoc: featuresByAlcaldia(geo.features, 'Cuauhtémoc'),
+    'Miguel Hidalgo': featuresByAlcaldia(geo.features, 'Miguel Hidalgo'),
+  }
+}
 
 type SourcePersona = {
   alcaldia: string
@@ -473,6 +485,9 @@ function main(): void {
   })
   const shuffledOptions = seededShuffle(optionBag, rng)
 
+  const agebPools = loadAgebPools()
+  const RUN_ID = 'fixture-run-00000000-0000-4000-8000-000000000001'
+
   const reasonSeen = new Set<string>()
   const votes: SimulationReplayVote[] = panel.map((p, i) => {
     const optionId = shuffledOptions[i]!
@@ -512,8 +527,22 @@ function main(): void {
     reasonSeen.add(reasoning)
 
     const confidence = Math.round(rng.nextFloat(4.5, 9.8) * 10) / 10
-    const agebCode = `09${String(1000 + (i % 80)).padStart(4, '0')}`
+    // Consume the historical random draws so reasoning/confidence stay stable
+    // after switching from synthetic AGEB coords to verified GeoJSON.
+    void rng.nextFloat(-0.05, 0.05)
+    void rng.nextFloat(-0.05, 0.05)
     const householdSize = householdSizeFromText(p.household, rng)
+
+    const alcKey =
+      p.alcaldia.includes('Miguel') ? 'Miguel Hidalgo' : 'Cuauhtémoc'
+    const pool = agebPools[alcKey]
+    const feature = pool[i % pool.length]!
+    const agebCode = feature.properties.ageb_code
+    const pt = jitteredMapPoint(
+      mapDotSeed(RUN_ID, personaKey, i),
+      feature.properties.centroid_lat,
+      feature.properties.centroid_lng,
+    )
 
     return {
       sequenceIndex: i,
@@ -526,8 +555,8 @@ function main(): void {
         alcaldia: p.alcaldia,
         colonia,
         agebCode,
-        centroidLat: 19.4 + rng.nextFloat(-0.05, 0.05),
-        centroidLng: -99.18 + rng.nextFloat(-0.05, 0.05),
+        centroidLat: pt.lat,
+        centroidLng: pt.lng,
         nseBand: nse,
         age,
         sex: p.gender,

@@ -17,12 +17,17 @@
  * GUARDRAILS:
  *   - is_fixture = true, notes start with "FIXTURE"
  *   - sequence_index is a shuffled 0..n-1 (not grouped by option)
- *   - AGEB codes use the FIX- prefix so they can never be mistaken for INEGI
+ *   - AGEB codes + centroids come from public/geo/ageb-cuauhtemoc-mh.geojson
+ *     (real INEGI CVEGEO) with deterministic map-jitter — never invented.
  */
 
 import { randomUUID } from 'node:crypto'
-import { writeFileSync, mkdirSync, existsSync } from 'node:fs'
+import { writeFileSync, mkdirSync, existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
+
+import type { AgebFeature, AgebFeatureCollection } from '../lib/sim-viewer/ageb-geo.ts'
+import { featuresByAlcaldia } from '../lib/sim-viewer/ageb-geo.ts'
+import { jitteredMapPoint, mapDotSeed } from '../lib/sim-viewer/map-jitter.ts'
 
 import { computeDivergence } from '../lib/divergence.ts'
 import type {
@@ -133,28 +138,53 @@ function buildFixtureGrounding(agebCode: string, nse: string): PersonaGrounding 
   }
 }
 
+function loadAgebPools(): Record<'Cuauhtémoc' | 'Miguel Hidalgo', AgebFeature[]> {
+  const geoPath = resolve(process.cwd(), 'public/geo/ageb-cuauhtemoc-mh.geojson')
+  const geo = JSON.parse(readFileSync(geoPath, 'utf8')) as AgebFeatureCollection
+  const cu = featuresByAlcaldia(geo.features, 'Cuauhtémoc')
+  const mh = featuresByAlcaldia(geo.features, 'Miguel Hidalgo')
+  if (cu.length === 0 || mh.length === 0) {
+    throw new Error('AGEB GeoJSON missing Cuauhtémoc or Miguel Hidalgo features')
+  }
+  return { Cuauhtémoc: cu, 'Miguel Hidalgo': mh }
+}
+
 function buildFixturePersonas(rand: () => number): BuiltPersona[] {
+  // Consume the same rand() draws the old jitter used so vote shuffle
+  // downstream stays stable; location itself comes from GeoJSON + map-jitter.
+  void rand
+  const pools = loadAgebPools()
   const out: BuiltPersona[] = []
   let idx = 0
   for (const alc of ALCALDIAS) {
     const slug = alc.name === 'Cuauhtémoc' ? 'cuau' : 'mh'
+    const pool = pools[alc.name]
     for (let i = 0; i < alc.count; i++) {
+      // Keep historical rand consumption (2 floats per persona).
+      void rand()
+      void rand()
       const n = String(i + 1).padStart(3, '0')
       const nse = NSE_BANDS[i % NSE_BANDS.length]!
       const sex = SEXES[i % SEXES.length]!
       const edu = EDUCATION[i % EDUCATION.length]!
-      // FIX- prefix: never a real INEGI AGEB code.
-      const agebCode = `FIX-${slug.toUpperCase()}-${String((i % 20) + 1).padStart(3, '0')}`
-      const jitterLat = (rand() - 0.5) * 0.02
-      const jitterLng = (rand() - 0.5) * 0.02
+      const feature = pool[i % pool.length]!
+      const agebCode = feature.properties.ageb_code
+      const personaKey = `${slug}-fixture-${nse.toLowerCase().replace('/', '')}-${n}`
+      // Sequence for seed is the build order index; rematch script may
+      // re-jitter after vote shuffle — both stay inside the AGEB.
+      const pt = jitteredMapPoint(
+        mapDotSeed('fixture-seed-v1', personaKey, idx),
+        feature.properties.centroid_lat,
+        feature.properties.centroid_lng,
+      )
       out.push({
         id: randomUUID(),
-        personaKey: `${slug}-fixture-${nse.toLowerCase().replace('/', '')}-${n}`,
+        personaKey,
         alcaldia: alc.name,
         colonia: `FIXTURE colonia ${idx + 1}`,
         agebCode,
-        centroidLat: alc.lat + jitterLat,
-        centroidLng: alc.lng + jitterLng,
+        centroidLat: pt.lat,
+        centroidLng: pt.lng,
         nseBand: nse,
         age: 18 + (i % 50),
         sex,
@@ -348,7 +378,7 @@ function writeFixture(outPath: string): void {
   mkdirSync(resolve(outPath, '..'), { recursive: true })
   const doc = {
     _comment:
-      'FIXTURE — Visor de simulación Task 1. Not real citizen or model output. AGEB codes use FIX- prefix. Safe for Task 3 viewer work before the live API exists.',
+      'FIXTURE — Visor de simulación Task 1. Not real citizen or model output. AGEB codes + centroids from public/geo/ageb-cuauhtemoc-mh.geojson (INEGI) with deterministic jitter. Safe for Task 3/4b viewer work.',
     _fixture: true,
     _version: FIXTURE_VERSION,
     ...payload,

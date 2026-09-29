@@ -18,6 +18,7 @@ import { useSimulationPlayback } from '@/hooks/useSimulationPlayback'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { fitLetterbox } from '@/lib/sim-viewer/letterbox'
 import { SimCanvas } from '@/components/sim-viewer/SimCanvas'
+import { SimMap } from '@/components/sim-viewer/SimMap'
 import { SimReasoningFeed } from '@/components/sim-viewer/SimReasoningFeed'
 import { SimTransport } from '@/components/sim-viewer/SimTransport'
 import { SimReadouts } from '@/components/sim-viewer/SimReadouts'
@@ -28,6 +29,13 @@ import {
   useCaptureChrome,
   useCaptureControlsVisibility,
 } from '@/components/sim-viewer/useCaptureChrome'
+import { agebGeoCodeSet } from '@/lib/sim-viewer/ageb-codes'
+import { evaluateMapAvailability } from '@/lib/sim-viewer/map-availability'
+import {
+  parseSimViewModeParam,
+  simViewModeToParam,
+  type SimViewMode,
+} from '@/lib/sim-viewer/view-mode'
 
 export type SimulationViewerProps = {
   data: SimulationReplayPayload
@@ -69,6 +77,7 @@ export default function SimulationViewer({
   const urlCapture = searchParams.get('captura') === '1'
   const fromApp = searchParams.get('src') === 'app'
   const urlPersona = searchParams.get('persona')
+  const urlViewMode = parseSimViewModeParam(searchParams.get('mode'))
   const isNarrow = useMediaQuery('(max-width: 767px)')
   /** Stacked phone layout — also forced for in-app browser. */
   const mobileLayout = isNarrow || fromApp
@@ -83,8 +92,8 @@ export default function SimulationViewer({
   const [internalAspect, setInternalAspect] = useState<SimulationAspectRatio>(
     () => (fromApp ? '9:16' : '16:9')
   )
-  const [internalViewMode, setInternalViewMode] = useState<'columns' | 'map'>(
-    'columns'
+  const [internalViewMode, setInternalViewMode] = useState<SimViewMode>(
+    () => viewModeProp ?? urlViewMode ?? 'columns'
   )
   const [internalPersona, setInternalPersona] = useState<string | null>(
     () => selectedPersonaKey ?? urlPersona ?? null
@@ -101,10 +110,6 @@ export default function SimulationViewer({
     aspectTouchedRef.current = true
     onAspectRatioChange?.(r)
     if (aspectRatioProp === undefined) setInternalAspect(r)
-  }
-  const setViewMode = (m: 'columns' | 'map') => {
-    onViewModeChange?.(m)
-    if (viewModeProp === undefined) setInternalViewMode(m)
   }
 
   // Default to 9:16 on narrow / in-app unless the user (or prop) chose otherwise.
@@ -136,6 +141,23 @@ export default function SimulationViewer({
     [pathname, router, searchParams]
   )
 
+  const syncViewModeUrl = useCallback(
+    (mode: SimViewMode) => {
+      const params = new URLSearchParams(searchParams.toString())
+      if (mode === 'map') params.set('mode', simViewModeToParam(mode))
+      else params.delete('mode')
+      const qs = params.toString()
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+    },
+    [pathname, router, searchParams]
+  )
+
+  const setViewMode = (m: SimViewMode) => {
+    onViewModeChange?.(m)
+    if (viewModeProp === undefined) setInternalViewMode(m)
+    syncViewModeUrl(m)
+  }
+
   const setCaptureMode = (on: boolean) => {
     setInternalCapture(on)
     syncCaptureUrl(on)
@@ -150,6 +172,11 @@ export default function SimulationViewer({
     if (selectedPersonaKey !== undefined) return
     if (urlPersona) setInternalPersona(urlPersona)
   }, [urlPersona, selectedPersonaKey])
+
+  useEffect(() => {
+    if (viewModeProp !== undefined) return
+    if (urlViewMode) setInternalViewMode(urlViewMode)
+  }, [urlViewMode, viewModeProp])
 
   useCaptureChrome(captureMode)
   useAppEmbedChrome(fromApp && !captureMode)
@@ -257,15 +284,24 @@ export default function SimulationViewer({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- explore identity stable enough
   }, [captureMode, showEndcard, playback.explore])
 
-  const hasMapCoordinates = useMemo(
+  const agebCodes = useMemo(() => agebGeoCodeSet(), [])
+
+  const mapAvailability = useMemo(
     () =>
-      data.votes.some(
-        (v) =>
-          typeof v.persona.centroidLat === 'number' &&
-          typeof v.persona.centroidLng === 'number'
+      evaluateMapAvailability(
+        data.votes.map((v) => v.persona),
+        agebCodes,
       ),
-    [data.votes]
+    [data.votes, agebCodes],
   )
+
+  // If map is requested but the run fails the 90% gate, fall back to columns.
+  useEffect(() => {
+    if (mapAvailability.available) return
+    if (viewMode !== 'map') return
+    setViewMode('columns')
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- gate only
+  }, [mapAvailability.available, viewMode])
 
   const shellRef = useRef<HTMLDivElement>(null)
   const [stagePx, setStagePx] = useState<{ width: number; height: number } | null>(
@@ -446,31 +482,24 @@ export default function SimulationViewer({
                     : 'h-full min-h-0 flex-[1.6]'
             }`}
           >
-            {viewMode === 'map' && hasMapCoordinates ? (
-              <div
-                className="flex h-full flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-slate-600 bg-[#121820] p-4 text-center text-xs text-slate-400"
-                data-sim-map-hook="1"
-              >
-                <p>
-                  Vista mapa (Task 4) — el reloj de reproducción se conserva al
-                  cambiar de modo.
-                </p>
-                <p className="max-w-xs text-[11px] text-slate-500">
-                  Hook Task 5: al montar el mapa, pasar{' '}
-                  <code className="text-slate-400">onPersonaActivate</code> y{' '}
-                  <code className="text-slate-400">selectedPersonaKey</code>{' '}
-                  a cada punto AGEB (misma selección que columnas).
-                </p>
-                <span className="sr-only" data-on-persona-activate="ready">
-                  ready
-                </span>
-              </div>
-            ) : viewMode === 'map' && !hasMapCoordinates ? (
+            {viewMode === 'map' && mapAvailability.available ? (
+              <SimMap
+                data={data}
+                beat={playback.beat}
+                votedCount={playback.votedCount}
+                compact={isPortrait && !phoneScale && !mobileLayout}
+                phoneScale={phoneScale}
+                mobileLayout={mobileLayout}
+                selectedPersonaKey={activePersonaKey}
+                onDotActivate={onPersonaActivateFromView}
+                missingLocationCount={mapAvailability.missingLocation}
+              />
+            ) : viewMode === 'map' && !mapAvailability.available ? (
               <div
                 className="flex h-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-600 bg-[#121820] p-4 text-center text-xs text-slate-400"
                 data-sim-map-unavailable="1"
               >
-                <p>Mapa no disponible — esta corrida no tiene coordenadas AGEB.</p>
+                <p>Mapa no disponible — esta corrida no tiene coordenadas AGEB suficientes.</p>
                 <button
                   type="button"
                   className="mt-1 rounded border border-slate-600 px-3 py-1 text-slate-200 hover:border-slate-400"
@@ -580,10 +609,7 @@ export default function SimulationViewer({
               onAspectRatio={setAspect}
               viewMode={viewMode}
               onViewModeChange={setViewMode}
-              showMapToggle={
-                hasMapCoordinates &&
-                (Boolean(onViewModeChange) || viewModeProp !== undefined)
-              }
+              showMapToggle={mapAvailability.available}
               compact
               mobileLayout={mobileLayout}
               captureMode={captureMode}
