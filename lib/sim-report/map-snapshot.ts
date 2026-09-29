@@ -309,11 +309,18 @@ export async function renderSimMapSnapshotPng(
     )
   }
 
-  const legend = input.options
-    .slice(0, 6)
+  // Legend sits above a dedicated source band so labels never collide with
+  // the INEGI attribution line.
+  const SOURCE_BAND_H = 22
+  const legendItems = input.options.slice(0, 6)
+  const legendLineH = 14
+  const legendBlockH = Math.max(legendLineH, legendItems.length * legendLineH)
+  const legendBottom = MAP_H - SOURCE_BAND_H - 10
+  const legendTop = legendBottom - legendBlockH + legendLineH / 2
+  const legend = legendItems
     .map((o, i) => {
       const fill = optionDotFill(i)
-      const y = MAP_H - 52 + i * 14
+      const y = legendTop + i * legendLineH
       return `<circle cx="22" cy="${y}" r="4" fill="${fill}" stroke="#fef3c7" stroke-width="0.5"/><text x="32" y="${
         y + 3.5
       }" fill="#e2e8f0" font-size="11" font-family="Helvetica, Arial, sans-serif">${escapeXml(
@@ -336,7 +343,8 @@ export async function renderSimMapSnapshotPng(
   <g>${dots.join('')}</g>
   <g>${legend}</g>
   ${inset}
-  <text x="${MAIN_PAD}" y="${MAP_H - 12}" fill="#94a3b8" font-size="10" font-family="Helvetica, Arial, sans-serif">Fuente: INEGI. Marco Geoestadístico, Censo de Población y Vivienda 2020. · Muestra: Cuauhtémoc y Miguel Hidalgo</text>
+  <rect x="0" y="${MAP_H - SOURCE_BAND_H}" width="${MAP_W}" height="${SOURCE_BAND_H}" fill="#020617"/>
+  <text x="${MAIN_PAD}" y="${MAP_H - 7}" fill="#94a3b8" font-size="10" font-family="Helvetica, Arial, sans-serif">Fuente: INEGI. Marco Geoestadístico, Censo de Población y Vivienda 2020. · Muestra: Cuauhtémoc y Miguel Hidalgo</text>
 </svg>`
 
   try {
