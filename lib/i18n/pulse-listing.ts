@@ -40,6 +40,7 @@ export function getPulseListingCopy(locale: PulseListingLocale) {
     disputed: isEs ? 'Disputado' : 'Disputed',
     cancelled: isEs ? 'Cancelado' : 'Cancelled',
     closes: isEs ? 'Cierra' : 'Closes',
+    closedOn: isEs ? 'Cerró' : 'Closed',
     emptyTitle: isEs ? 'Aún no hay consultas Pulse activas.' : 'No active Pulse consultations yet.',
     emptySubtitle: isEs
       ? 'Vuelve pronto o explora más consultas en la plataforma.'
@@ -69,6 +70,8 @@ export function getPulseListingCopy(locale: PulseListingLocale) {
     resultsEmptySubtitle: isEs
       ? 'Cuando una consulta Pulse cierra, su resultado aparece aquí.'
       : 'When a Pulse consultation closes, its result shows up here.',
+    watchSimulation: isEs ? 'Ver la simulación →' : 'Watch the simulation →',
+    downloadReport: isEs ? 'Descargar reporte' : 'Download report',
   }
 }
 

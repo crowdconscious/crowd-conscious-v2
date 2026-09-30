@@ -57,13 +57,18 @@ export function shouldRevealCount(count: number): boolean {
  * `withUnit` (default true) appends the "voto(s)"/"vote(s)" word for inline
  * copy like "128 votos"; pass false when the surface shows the number on its
  * own (e.g. a stat tile with its own label).
+ *
+ * `votingClosed` (default false): once a Pulse is resolved/past close, never
+ * say "Votación abierta" — show the real count even below the threshold.
+ * Density honesty exists to avoid thin counts next to a vote CTA; closed
+ * surfaces have no vote CTA and must stay honest about the final tally.
  */
 export function formatParticipationCount(
   count: number,
   lang: ParticipationLang,
-  options: { withUnit?: boolean } = {}
+  options: { withUnit?: boolean; votingClosed?: boolean } = {}
 ): string {
-  if (!shouldRevealCount(count)) return VOTING_OPEN[lang]
+  if (!options.votingClosed && !shouldRevealCount(count)) return VOTING_OPEN[lang]
 
   const n = count.toLocaleString(lang === 'es' ? 'es-MX' : 'en-US')
   if (options.withUnit === false) return n

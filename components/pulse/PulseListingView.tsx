@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { BarChart3 } from 'lucide-react'
 import { CouponRedeemSection } from '@/components/coupon/CouponRedeemSection'
+import PulseSimAccessLinks from '@/components/pulse/PulseSimAccessLinks'
 import { getMarketText } from '@/lib/i18n/market-translations'
 import { getPulseListingCopy, statusLabelPulse } from '@/lib/i18n/pulse-listing'
 import type { PulseListingLocale } from '@/lib/i18n/pulse-listing'
@@ -91,6 +92,7 @@ export default function PulseListingView({
                   const votes = m.total_votes ?? 0
                   const isOpen =
                     m.status === 'active' || m.status === 'trading'
+                  const isResolved = m.status === 'resolved' || m.status === 'closed'
                   const closeDate = m.resolution_date
                     ? new Date(m.resolution_date).toLocaleDateString(dateLocale, {
                         month: 'short',
@@ -106,6 +108,9 @@ export default function PulseListingView({
                   const byLine =
                     m.pulse_client_name?.trim() &&
                     `${locale === 'es' ? 'Por' : 'By'} ${m.pulse_client_name.trim()} · `
+                  const showSimAccess =
+                    isResolved &&
+                    (!!m.simulationViewerHref || m.reportEligible === true)
                   return (
                     <li key={m.id} className="relative">
                       {isAdmin && (
@@ -116,38 +121,53 @@ export default function PulseListingView({
                           Edit
                         </Link>
                       )}
-                      <Link
-                        href={`/pulse/${m.id}`}
-                        className="group block overflow-hidden rounded-xl border border-[#2d3748] bg-[#1a2029] transition-colors hover:border-emerald-500/30"
-                      >
-                        {cover ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={cover}
-                            alt=""
-                            className="h-36 w-full object-cover"
-                          />
-                        ) : (
-                          <div className="flex h-36 w-full items-center justify-center bg-gradient-to-br from-amber-900/20 to-[#1a2029]">
-                            <BarChart3 className="h-12 w-12 text-emerald-500/35" aria-hidden />
+                      <div className="overflow-hidden rounded-xl border border-[#2d3748] bg-[#1a2029] transition-colors hover:border-emerald-500/30">
+                        <Link href={`/pulse/${m.id}`} className="group block">
+                          {cover ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={cover}
+                              alt=""
+                              className="h-36 w-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-36 w-full items-center justify-center bg-gradient-to-br from-amber-900/20 to-[#1a2029]">
+                              <BarChart3 className="h-12 w-12 text-emerald-500/35" aria-hidden />
+                            </div>
+                          )}
+                          <div className="p-4 pb-2">
+                            <h3 className="text-sm font-bold leading-snug text-white group-hover:text-emerald-200">
+                              {title}
+                            </h3>
+                            <p className="mt-1 text-xs text-slate-500">
+                              {byLine}
+                              {formatParticipationCount(votes, locale, {
+                                votingClosed: isResolved,
+                              })}
+                            </p>
+                            <p className="mt-2 text-xs text-slate-400">
+                              {statusLabelPulse(m.status, locale)} ·{' '}
+                              {isResolved ? t.closedOn : t.closes} {closeDate}
+                            </p>
+                            <span className="mt-2 inline-block text-xs font-medium text-emerald-400">
+                              {isOpen ? t.voteCta : t.viewResults}
+                            </span>
                           </div>
-                        )}
-                        <div className="p-4">
-                          <h3 className="text-sm font-bold leading-snug text-white group-hover:text-emerald-200">
-                            {title}
-                          </h3>
-                          <p className="mt-1 text-xs text-slate-500">
-                            {byLine}
-                            {formatParticipationCount(votes, locale)}
-                          </p>
-                          <p className="mt-2 text-xs text-slate-400">
-                            {statusLabelPulse(m.status, locale)} · {t.closes} {closeDate}
-                          </p>
-                          <span className="mt-2 inline-block text-xs font-medium text-emerald-400">
-                            {isOpen ? t.voteCta : t.viewResults}
-                          </span>
-                        </div>
-                      </Link>
+                        </Link>
+                        {showSimAccess ? (
+                          <div className="border-t border-white/5 px-4 pb-3 pt-1">
+                            <PulseSimAccessLinks
+                              compact
+                              locale={locale}
+                              pulseId={m.id}
+                              simulationViewerHref={m.simulationViewerHref}
+                              simulationRunId={m.simulationRunId}
+                              reportEligible={m.reportEligible === true}
+                              reportCanFull={m.reportCanFull === true}
+                            />
+                          </div>
+                        ) : null}
+                      </div>
                     </li>
                   )
                 })}

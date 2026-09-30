@@ -44,7 +44,11 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function PulseResultsPage() {
   const ctx = await getPulseListingContext()
-  const markets = await fetchResolvedPulseMarketsForListing()
+  const markets = await fetchResolvedPulseMarketsForListing({
+    isAdmin: ctx.isAdmin,
+    sponsorAccount: ctx.sponsorAccount,
+    userEmail: ctx.userEmail,
+  })
   const t = getPulseListingCopy(ctx.locale)
 
   return (

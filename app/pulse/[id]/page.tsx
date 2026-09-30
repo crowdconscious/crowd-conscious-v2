@@ -36,6 +36,11 @@ import {
   pickDefaultSimulationRun,
 } from '@/lib/sim-viewer/pick-default-run'
 import { isSimViewerPublicClosedEnabled } from '@/lib/sim-viewer/public-closed-flag'
+import {
+  canDownloadFullReport,
+  isReportEligible,
+} from '@/lib/sim-report/access'
+import { isSimReportEnabled } from '@/lib/sim-report/flag'
 
 type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ token?: string }> }
 
@@ -356,7 +361,10 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
   // Same default pick as the API/page: prefer a scored complete non-fixture
   // non-pretest run; fall back to newest complete. Link pins runId.
   let simulationViewerHref: string | null = null
-  if (isSimViewerEnabled()) {
+  let simulationRunId: string | null = null
+  let reportEligible = false
+  let reportCanFull = false
+  if (isSimViewerEnabled() || isSimReportEnabled()) {
     try {
       const { data: viewerCandidates } = await admin
         .from('simulation_runs')
@@ -369,29 +377,92 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
         .order('created_at', { ascending: false })
         .limit(50)
 
-      const viewerRun = pickDefaultSimulationRun(viewerCandidates ?? [])
+      let candidates = viewerCandidates ?? []
+
+      // Fallback: public revealed view (same rows the IA-vs-Realidad module uses).
+      if (candidates.length === 0) {
+        const { data: revealedRows } = await admin
+          .from('revealed_simulation_runs')
+          .select('id, revealed_at, divergence')
+          .eq('market_id', id)
+          .order('revealed_at', { ascending: false })
+          .limit(5)
+        candidates = (revealedRows ?? []).map((row) => {
+          const div = row.divergence as { id?: number } | null
+          return {
+            id: row.id,
+            revealed_at: row.revealed_at,
+            is_fixture: false,
+            status: 'complete',
+            created_at: row.revealed_at ?? new Date(0).toISOString(),
+            divergence_index:
+              typeof div?.id === 'number' && Number.isFinite(div.id)
+                ? div.id
+                : null,
+            divergence_meta: null,
+            divergence: row.divergence,
+            is_brand_pretest: false,
+          }
+        })
+      }
+
+      const viewerRun = pickDefaultSimulationRun(candidates)
 
       if (viewerRun) {
-        const decision = decideReplayAccess({
-          isAdmin,
-          includeRealParam: false,
-          pulseStatus: market.status,
-          runRevealedAt: viewerRun.revealed_at,
-          runIsFixture: viewerRun.is_fixture === true,
-          publicClosedEnabled: isSimViewerPublicClosedEnabled(),
-        })
-        if (decision.allow) {
-          simulationViewerHref = buildSimulationViewerHref(id, viewerRun.id)
-          if (simReveal) {
-            simReveal = {
-              ...simReveal,
-              simulationViewerHref,
+        simulationRunId = viewerRun.id
+        if (isSimViewerEnabled()) {
+          const decision = decideReplayAccess({
+            isAdmin,
+            includeRealParam: false,
+            pulseStatus: market.status,
+            runRevealedAt: viewerRun.revealed_at,
+            runIsFixture: viewerRun.is_fixture === true,
+            publicClosedEnabled: isSimViewerPublicClosedEnabled(),
+          })
+          if (decision.allow) {
+            simulationViewerHref = buildSimulationViewerHref(id, viewerRun.id)
+            if (simReveal) {
+              simReveal = {
+                ...simReveal,
+                simulationViewerHref,
+              }
             }
+          }
+        }
+
+        if (isSimReportEnabled()) {
+          reportEligible = isReportEligible({
+            pulseStatus: market.status,
+            runRevealedAt: viewerRun.revealed_at,
+            runIsFixture: viewerRun.is_fixture === true,
+            isAdmin,
+          })
+          if (reportEligible) {
+            let isPulseClient = false
+            if (!isAdmin && user?.email) {
+              const email = user.email.trim()
+              const { data: sa } = await admin
+                .from('sponsor_accounts')
+                .select('id')
+                .eq('is_pulse_client', true)
+                .eq('status', 'active')
+                .ilike('contact_email', email)
+                .limit(1)
+              isPulseClient = (sa?.length ?? 0) > 0
+            }
+            reportCanFull = canDownloadFullReport({
+              isAdmin,
+              isPulseClient,
+              userEmail: user?.email ?? null,
+            })
           }
         }
       }
     } catch {
       simulationViewerHref = null
+      simulationRunId = null
+      reportEligible = false
+      reportCanFull = false
     }
   }
 
@@ -435,6 +506,9 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
         simReveal={simReveal}
         simTeaser={simTeaser}
         simulationViewerHref={simulationViewerHref}
+        simulationRunId={simulationRunId}
+        reportEligible={reportEligible}
+        reportCanFull={reportCanFull}
         voteMarket={market as unknown as import('@/types/database').Database['public']['Tables']['prediction_markets']['Row']}
         isAuthenticated={!!user}
       />
