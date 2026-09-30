@@ -38,11 +38,23 @@ export function ensureSpace(ctx: PdfCtx, needed: number): void {
 }
 
 /**
- * Section heading with consistent top breathing room so titles never sit
- * flush against the previous section's last row.
+ * Approximate height of a section heading (top pad + title + rule + bottom pad).
+ * Callers that pass `minContentBelow` should reserve headingH + first content.
  */
-export function drawSection(ctx: PdfCtx, title: string): void {
-  ensureSpace(ctx, 18)
+export const SECTION_HEADING_H = 16
+
+/**
+ * Section heading with consistent top breathing room.
+ * Reserves space for the heading PLUS at least the first content block so the
+ * title never orphans alone at the bottom of a page.
+ */
+export function drawSection(
+  ctx: PdfCtx,
+  title: string,
+  opts?: { minContentBelow?: number },
+): void {
+  const minContentBelow = opts?.minContentBelow ?? 14
+  ensureSpace(ctx, SECTION_HEADING_H + minContentBelow)
   ctx.y += 5
   ctx.doc.setFont('helvetica', 'bold')
   ctx.doc.setFontSize(10)

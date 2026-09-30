@@ -94,7 +94,8 @@ function drawShareBars(
   title: string,
   rows: { label: string; share: number | null; count: number | null }[],
 ): void {
-  drawSection(ctx, title)
+  // First bar row ≈ 14mm (label + bar + gap).
+  drawSection(ctx, title, { minContentBelow: rows.length === 0 ? 8 : 14 })
   if (rows.length === 0) {
     drawMuted(ctx, '—')
     return
@@ -166,7 +167,21 @@ function drawSegmentTable(
   segments: SimReportSegmentRow[],
   optionLabels: Record<string, string>,
 ): void {
-  drawSection(ctx, title)
+  // Prefetch first row height so the section title never orphans alone.
+  let firstBlockH = 8
+  if (segments.length > 0) {
+    const seg0 = segments[0]!
+    const parts: string[] = []
+    for (const [optId, count] of Object.entries(seg0.optionCounts)) {
+      const label = optionLabels[optId] ?? optId
+      const pct = seg0.count > 0 ? Math.round((count / seg0.count) * 100) : null
+      parts.push(`${label}: ${pct == null ? '—' : `${pct}%`}`)
+    }
+    const breakdown = parts.length > 0 ? parts.join(' · ') : '—'
+    const breakdownLines = ctx.doc.splitTextToSize(breakdown, CONTENT_W) as string[]
+    firstBlockH = 4.5 + breakdownLines.length * 3.6 + 3
+  }
+  drawSection(ctx, title, { minContentBelow: firstBlockH })
   if (segments.length === 0) {
     drawMuted(ctx, '—')
     return
@@ -211,8 +226,8 @@ export async function generateSimFullPdf(data: SimReportData): Promise<Buffer> {
   doc.text(titleLines, MARGIN_X, ctx.y)
   ctx.y += titleLines.length * 6 + 6
 
-  // Meta
-  drawSection(ctx, 'Datos de la corrida')
+  // Meta — keep heading with first key/value row.
+  drawSection(ctx, 'Datos de la corrida', { minContentBelow: 8 })
   drawKeyValue(ctx, 'Modelo', dash(data.run.model))
   drawKeyValue(ctx, 'Versión de personas', dash(data.run.personaVersion))
   drawKeyValue(ctx, 'Agentes', formatCount(data.run.personaCount))
@@ -222,10 +237,9 @@ export async function generateSimFullPdf(data: SimReportData): Promise<Buffer> {
     drawMuted(ctx, 'FIXTURE — datos de demostración, no una corrida real.')
   }
 
-  // Divergence
-  drawSection(ctx, 'Divergencia simulado vs real')
+  // Divergence — keep heading with the amber score box.
+  drawSection(ctx, 'Divergencia simulado vs real', { minContentBelow: 20 })
   doc.setFillColor(...COLOR_BG_AMBER)
-  ensureSpace(ctx, 20)
   doc.roundedRect(MARGIN_X, ctx.y, CONTENT_W, 16, 2, 2, 'F')
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(11)
@@ -285,24 +299,31 @@ export async function generateSimFullPdf(data: SimReportData): Promise<Buffer> {
   drawSegmentTable(ctx, 'Muestra por edad', data.segments.byAgeBand, optionLabels)
   drawSegmentTable(ctx, 'Muestra por NSE', data.segments.byNse, optionLabels)
 
-  drawSection(ctx, 'Metodología')
+  // Metodología — keep heading with the first paragraph.
+  {
+    const first = data.methodologyFull[0] ?? '—'
+    const lines = doc.splitTextToSize(first, CONTENT_W) as string[]
+    const firstParaH = Math.min(lines.length, 4) * (9 * 0.42) + 3
+    drawSection(ctx, 'Metodología', { minContentBelow: firstParaH })
+  }
   for (const para of data.methodologyFull) {
     drawParagraph(ctx, para, 9)
   }
 
-  // Map snapshot — reserve heading + image + legend + caption so the title
-  // never orphans at the bottom of a page while the PNG starts on the next.
+  // Map snapshot — reserve heading + image start (or full block when short)
+  // so the title never orphans while the PNG starts on the next page.
   {
     const imgW = CONTENT_W
     const imgH =
       data.mapPng && data.mapPng.length > 0 ? (imgW * 720) / 900 : 0
     const legendLines = Math.max(1, data.simulated.length)
     const legendBlock = 14 + legendLines * 5.5
-    const blockH =
+    const headingH = 16
+    const contentBelow =
       data.mapPng && data.mapPng.length > 0
-        ? 12 /* section title */ + imgH + legendBlock + 8
-        : 20
-    ensureSpace(ctx, Math.min(blockH, PAGE_H - 40))
+        ? Math.min(imgH + legendBlock, PAGE_H - 50)
+        : 12
+    ensureSpace(ctx, headingH + contentBelow)
     ctx.y += 5
     ctx.doc.setFont('helvetica', 'bold')
     ctx.doc.setFontSize(10)
@@ -316,8 +337,8 @@ export async function generateSimFullPdf(data: SimReportData): Promise<Buffer> {
 
     if (data.mapPng && data.mapPng.length > 0) {
       try {
-        // Ensure image fits remaining page; if not, bump to next page first.
-        ensureSpace(ctx, imgH + legendBlock)
+        // If the image still doesn't fit after the heading (oversized), bump.
+        ensureSpace(ctx, Math.min(imgH + 4, PAGE_H - 40))
         const jpeg = await sharp(data.mapPng)
           .jpeg({ quality: 80, mozjpeg: true })
           .toBuffer()
@@ -346,7 +367,7 @@ export async function generateSimFullPdf(data: SimReportData): Promise<Buffer> {
     }
   }
 
-  drawSection(ctx, 'Ver el Pulse')
+  drawSection(ctx, 'Ver el Pulse', { minContentBelow: qr ? 36 : 10 })
   drawMuted(ctx, dash(data.pulseUrl))
   if (qr) {
     try {

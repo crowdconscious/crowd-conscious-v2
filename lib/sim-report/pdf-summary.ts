@@ -79,7 +79,8 @@ function drawDistTable(
   title: string,
   rows: { label: string; share: string; count: string }[],
 ): void {
-  drawSection(ctx, title)
+  // Column header (~7mm) + first data row (~6mm).
+  drawSection(ctx, title, { minContentBelow: rows.length === 0 ? 8 : 14 })
   if (rows.length === 0) {
     drawMuted(ctx, '—')
     return
@@ -189,11 +190,15 @@ export async function generateSimSummaryPdf(
     )
   }
 
-  drawSection(ctx, 'Metodología (resumen)')
+  {
+    const lines = doc.splitTextToSize(data.methodologyShort, CONTENT_W) as string[]
+    const firstParaH = Math.min(lines.length, 4) * (9 * 0.42) + 3
+    drawSection(ctx, 'Metodología (resumen)', { minContentBelow: firstParaH })
+  }
   drawParagraph(ctx, data.methodologyShort, 9)
 
   // QR + link
-  drawSection(ctx, 'Ver el Pulse')
+  drawSection(ctx, 'Ver el Pulse', { minContentBelow: qr ? 36 : 10 })
   drawMuted(ctx, dash(data.pulseUrl))
   if (qr) {
     try {
