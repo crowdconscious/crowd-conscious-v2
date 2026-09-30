@@ -3,10 +3,9 @@
  * Matches sponsor Pulse PDF brand colors (teal header).
  */
 
-import { readFile } from 'node:fs/promises'
-import path from 'node:path'
 import { jsPDF } from 'jspdf'
 import sharp from 'sharp'
+import { BRAND_LOGO_DATA_URL } from './brand-logo.ts'
 import { EM_DASH } from './format.ts'
 
 export const PAGE_W = 210
@@ -127,43 +126,24 @@ async function toJpegDataUrl(
       .jpeg({ quality: 82, mozjpeg: true })
       .toBuffer()
     return `data:image/jpeg;base64,${jpeg.toString('base64')}`
-  } catch {
+  } catch (err) {
+    console.error('[sim-report] QR JPEG conversion failed:', err)
     return null
   }
 }
 
-let cachedLogo: string | null | undefined
-
 /**
- * New Crowd Conscious mark (fingerprint pin + wordmark). Designed for a white
- * ground — callers should place it on a white chip when the header is teal.
- * Kept as PNG so transparency survives.
- *
- * ~229×233 source; we ship a moderately sized data-URL for jsPDF.
+ * Brand mark for the teal header. Comes from the embedded module — never
+ * reads `public/` at runtime (Vercel serverless has no public/ on disk).
  */
 export async function loadBrandLogoDataUrl(): Promise<string | null> {
-  if (cachedLogo !== undefined) return cachedLogo
-  const candidates = [
-    'public/brand/logo-crowd-conscious.png',
-    'public/images/logo white.png',
-    'public/images/logo-small.png',
-  ]
-  for (const rel of candidates) {
-    try {
-      const buf = await readFile(path.join(process.cwd(), rel))
-      // Keep alpha; ~180px wide ≈ readable 90–120px-tall mark in the PDF header.
-      const png = await sharp(buf)
-        .resize({ width: 180, withoutEnlargement: true })
-        .png()
-        .toBuffer()
-      cachedLogo = `data:image/png;base64,${png.toString('base64')}`
-      return cachedLogo
-    } catch {
-      // try next candidate
-    }
+  if (!BRAND_LOGO_DATA_URL || !BRAND_LOGO_DATA_URL.startsWith('data:image/png')) {
+    console.error(
+      '[sim-report] brand logo data URL missing or malformed — header will be text-only',
+    )
+    return null
   }
-  cachedLogo = null
-  return null
+  return BRAND_LOGO_DATA_URL
 }
 
 /** Fetch a QR JPEG for the Pulse URL (same public QR service used elsewhere). */
@@ -171,10 +151,14 @@ export async function fetchQrPngDataUrl(url: string): Promise<string | null> {
   try {
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=6&data=${encodeURIComponent(url)}`
     const res = await fetch(qrUrl, { signal: AbortSignal.timeout(8000) })
-    if (!res.ok) return null
+    if (!res.ok) {
+      console.error('[sim-report] QR fetch failed:', res.status, res.statusText)
+      return null
+    }
     const ab = await res.arrayBuffer()
     return await toJpegDataUrl(Buffer.from(ab), 180)
-  } catch {
+  } catch (err) {
+    console.error('[sim-report] QR fetch error:', err)
     return null
   }
 }

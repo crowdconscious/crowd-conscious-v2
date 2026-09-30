@@ -61,6 +61,11 @@ export type SimReportData = {
   }
   simulated: SimReportOptionShare[]
   real: SimReportOptionShare[] | null
+  /**
+   * When n real > 0 but option bars cannot be shown honestly (all-zero
+   * outcomes, multi-select, etc.), explain instead of inventing shares.
+   */
+  realResultsNote: string | null
   methodologyShort: string
   methodologyFull: string[]
   /** Full-report only inputs (may be empty for summary). */
