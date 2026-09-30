@@ -113,7 +113,8 @@ function categoryDisplay(config: CategoryConfig, locale: string): string {
   return locale === 'es' ? config.labelEs : config.label
 }
 
-function formatDate(d: string, locale: string = 'es'): string {
+function formatDate(d: string | null, locale: string = 'es'): string {
+  if (!d) return '—'
   const tag = locale === 'es' ? 'es-MX' : 'en-US'
   return new Date(d).toLocaleDateString(tag, {
     month: 'short',

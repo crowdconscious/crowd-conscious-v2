@@ -52,7 +52,8 @@ const TEMPLATES: {
   },
 ]
 
-function timeLeftLabel(resolutionDate: string): string {
+function timeLeftLabel(resolutionDate: string | null): string {
+  if (!resolutionDate) return '—'
   const ms = new Date(resolutionDate).getTime() - Date.now()
   if (ms <= 0) return '0:00'
   const m = Math.floor(ms / 60000)

@@ -43,7 +43,8 @@ export interface MicroMarketCardProps {
   onVoteSuccess?: () => void
 }
 
-function toMs(iso: string): number {
+function toMs(iso: string | null): number {
+  if (!iso) return 0
   const t = new Date(iso).getTime()
   return Number.isNaN(t) ? 0 : t
 }
