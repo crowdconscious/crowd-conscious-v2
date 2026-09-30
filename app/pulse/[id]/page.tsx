@@ -377,7 +377,36 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
         .order('created_at', { ascending: false })
         .limit(50)
 
-      const viewerRun = pickDefaultSimulationRun(viewerCandidates ?? [])
+      let candidates = viewerCandidates ?? []
+
+      // Fallback: public revealed view (same rows the IA-vs-Realidad module uses).
+      if (candidates.length === 0) {
+        const { data: revealedRows } = await admin
+          .from('revealed_simulation_runs')
+          .select('id, revealed_at, divergence')
+          .eq('market_id', id)
+          .order('revealed_at', { ascending: false })
+          .limit(5)
+        candidates = (revealedRows ?? []).map((row) => {
+          const div = row.divergence as { id?: number } | null
+          return {
+            id: row.id,
+            revealed_at: row.revealed_at,
+            is_fixture: false,
+            status: 'complete',
+            created_at: row.revealed_at ?? new Date(0).toISOString(),
+            divergence_index:
+              typeof div?.id === 'number' && Number.isFinite(div.id)
+                ? div.id
+                : null,
+            divergence_meta: null,
+            divergence: row.divergence,
+            is_brand_pretest: false,
+          }
+        })
+      }
+
+      const viewerRun = pickDefaultSimulationRun(candidates)
 
       if (viewerRun) {
         simulationRunId = viewerRun.id

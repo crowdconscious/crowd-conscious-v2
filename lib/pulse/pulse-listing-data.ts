@@ -158,22 +158,52 @@ async function attachClosedPulseSimAccess(
 
   const admin = createAdminClient()
   const ids = markets.map((m) => m.id)
-  const { data: runs } = await admin
-    .from('simulation_runs')
-    .select(
-      'id, market_id, revealed_at, is_fixture, status, created_at, divergence_index, divergence_meta, divergence, is_brand_pretest',
-    )
-    .in('market_id', ids)
-    .eq('status', 'complete')
-    .or('is_brand_pretest.eq.false,is_brand_pretest.is.null')
-    .order('created_at', { ascending: false })
-    .limit(Math.min(500, ids.length * 10))
+  const [{ data: runs }, { data: revealed }] = await Promise.all([
+    admin
+      .from('simulation_runs')
+      .select(
+        'id, market_id, revealed_at, is_fixture, status, created_at, divergence_index, divergence_meta, divergence, is_brand_pretest',
+      )
+      .in('market_id', ids)
+      .eq('status', 'complete')
+      .or('is_brand_pretest.eq.false,is_brand_pretest.is.null')
+      .order('created_at', { ascending: false })
+      .limit(Math.min(500, ids.length * 10)),
+    // Public revealed view — same contract as /pulse/[id] sim reveal. Lets
+    // entry points resolve when simulation_runs is RLS-blocked for the caller.
+    admin
+      .from('revealed_simulation_runs')
+      .select('id, market_id, revealed_at, divergence')
+      .in('market_id', ids)
+      .order('revealed_at', { ascending: false })
+      .limit(Math.min(200, ids.length * 3)),
+  ])
 
   const byMarket = new Map<string, SimRunRow[]>()
   for (const run of (runs ?? []) as SimRunRow[]) {
     const list = byMarket.get(run.market_id) ?? []
     list.push(run)
     byMarket.set(run.market_id, list)
+  }
+  for (const row of revealed ?? []) {
+    const marketId = row.market_id as string
+    const existing = byMarket.get(marketId) ?? []
+    if (existing.some((r) => r.id === row.id)) continue
+    const div = row.divergence as { id?: number } | null
+    existing.push({
+      id: row.id as string,
+      market_id: marketId,
+      revealed_at: (row.revealed_at as string | null) ?? null,
+      is_fixture: false,
+      status: 'complete',
+      created_at: (row.revealed_at as string) ?? new Date(0).toISOString(),
+      divergence_index:
+        typeof div?.id === 'number' && Number.isFinite(div.id) ? div.id : null,
+      divergence_meta: null,
+      divergence: row.divergence,
+      is_brand_pretest: false,
+    })
+    byMarket.set(marketId, existing)
   }
 
   const publicClosedEnabled = isSimViewerPublicClosedEnabled()
