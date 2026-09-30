@@ -36,6 +36,7 @@ import {
   Trophy,
   ArrowRight,
   Share2,
+  FlaskConical,
 } from 'lucide-react'
 import { METRIC_LABELS } from '@/lib/i18n/metrics'
 import MetricTooltip from '@/components/ui/MetricTooltip'
@@ -499,6 +500,24 @@ export default function IntelligenceClient({
       )}
 
       <SnapshotHero data={data} />
+
+      <Link
+        href="/predictions/admin/simulation-autorun"
+        className={`${CARD} flex items-center gap-4 px-4 py-4 transition-colors hover:border-amber-500/30 hover:bg-amber-500/[0.04] group`}
+      >
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-amber-500/25 bg-amber-500/10 text-amber-400">
+          <FlaskConical className="w-5 h-5" aria-hidden />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-medium text-[#e8e6df] group-hover:text-amber-300">
+            Simulación auto-run
+          </span>
+          <span className="block text-xs text-slate-500 mt-0.5">
+            Estado de jobs automáticos, divergencia simulada vs real, y re-ejecutar.
+          </span>
+        </span>
+        <ArrowRight className="w-4 h-4 shrink-0 text-slate-600 group-hover:text-amber-400" aria-hidden />
+      </Link>
 
       <CronHealthStrip />
 

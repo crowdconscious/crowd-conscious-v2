@@ -164,7 +164,7 @@ export default function PredictionsShell({
           <Logo size="sidebar" linkTo="/predictions" />
         </div>
 
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="flex-1 overflow-y-auto p-4 space-y-1">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon
             const isActive =
@@ -366,7 +366,7 @@ export default function PredictionsShell({
               }`}
             >
               <FlaskConical className="w-4 h-4" />
-              {language === 'es' ? 'Sim auto-run' : 'Sim auto-run'}
+              {language === 'es' ? 'Simulación auto-run' : 'Sim auto-run'}
             </Link>
             <Link
               href="/predictions/admin/blog"
@@ -709,7 +709,7 @@ export default function PredictionsShell({
                     }`}
                   >
                     <FlaskConical className="w-4 h-4" />
-                    {language === 'es' ? 'Sim auto-run' : 'Sim auto-run'}
+                    {language === 'es' ? 'Simulación auto-run' : 'Sim auto-run'}
                   </Link>
                   <Link
                     href="/predictions/admin/blog/create"
