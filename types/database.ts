@@ -696,7 +696,8 @@ export interface Database {
             | 'entertainment'
           subcategory: string | null
           resolution_criteria: string
-          resolution_date: string
+          /** Nullable after migration 271 — NULL means no close (location voting). */
+          resolution_date: string | null
           created_by: string
           verification_sources: string[]
           status: 'proposed' | 'approved' | 'active' | 'trading' | 'resolved' | 'disputed' | 'cancelled'
@@ -774,7 +775,8 @@ export interface Database {
             | 'entertainment'
           subcategory?: string | null
           resolution_criteria: string
-          resolution_date: string
+          /** Required for Pulses; NULL allowed for always-open location markets (migration 271). */
+          resolution_date?: string | null
           created_by: string
           verification_sources?: string[]
           status?: 'proposed' | 'approved' | 'active' | 'trading' | 'resolved' | 'disputed' | 'cancelled'
@@ -836,7 +838,8 @@ export interface Database {
             | 'entertainment'
           subcategory?: string | null
           resolution_criteria?: string
-          resolution_date?: string
+          // Nullable after migration 271 — location/creator voting markets stay open.
+          resolution_date?: string | null
           created_by?: string
           verification_sources?: string[]
           status?: 'proposed' | 'approved' | 'active' | 'trading' | 'resolved' | 'disputed' | 'cancelled'

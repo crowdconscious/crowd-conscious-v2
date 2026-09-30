@@ -2,6 +2,11 @@ import { createAdminClient } from '@/lib/supabase-admin'
 
 /**
  * Creates a community multi-outcome market (two Spanish labels) for Conscious Location voting.
+ *
+ * Location markets stay open for continuous community evaluation. Review cadence
+ * lives on conscious_locations.next_review_date — not prediction_markets.resolution_date.
+ * create_multi_market still requires p_end_date (stamps resolution_date); we clear it
+ * immediately after so vote RPCs never treat the location market as closed.
  */
 export async function createConsciousLocationVotingMarket(
   admin: ReturnType<typeof createAdminClient>,
@@ -12,6 +17,7 @@ export async function createConsciousLocationVotingMarket(
   const description = `La comunidad decide si ${locationName} merece mantener el sello Consciente de Crowd Conscious. Vota y califica tu nivel de certeza (1-10).`
   const resolution_criteria =
     'Votación comunitaria. El Conscious Score se calcula con aprobación ponderada por certeza.'
+  // RPC requires a non-null p_end_date; value is cleared in the update below.
   const endDate = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString()
 
   const { data: marketId, error } = await admin.rpc(
@@ -36,10 +42,13 @@ export async function createConsciousLocationVotingMarket(
 
   const id = marketId as string
 
+  // Clear the close date stamped by create_multi_market. Migration 271 makes
+  // resolution_date nullable and scopes the vote close-guard to is_pulse.
   const { error: upErr } = await admin
     .from('prediction_markets')
     .update({
       is_pulse: false,
+      resolution_date: null,
       metadata: {
         title_en: `Is ${locationName} a Conscious Location?`,
         description_en: `The community decides whether ${locationName} deserves to keep the Crowd Conscious seal. Vote and rate your confidence (1-10).`,
