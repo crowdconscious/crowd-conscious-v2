@@ -14,6 +14,22 @@ import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { geoBounds, type GeoPermissibleObjects } from 'd3-geo'
 import sharp from 'sharp'
+
+/** Bundled Latin-capable face — Vercel has no system fonts for sharp/librsvg. */
+const MAP_FONT_FAMILY = 'SimReportSans'
+let cachedFontFaceCss: string | null = null
+
+async function mapFontFaceCss(): Promise<string> {
+  if (cachedFontFaceCss) return cachedFontFaceCss
+  const fontPath = path.join(
+    process.cwd(),
+    'lib/sim-report/fonts/DejaVuSans.ttf',
+  )
+  const buf = await readFile(fontPath)
+  const b64 = buf.toString('base64')
+  cachedFontFaceCss = `@font-face{font-family:'${MAP_FONT_FAMILY}';src:url('data:font/ttf;base64,${b64}') format('truetype');font-weight:400;font-style:normal;}`
+  return cachedFontFaceCss
+}
 import {
   buildAgebCodeSet,
   type AgebFeature,
@@ -206,7 +222,7 @@ function renderInset(
     <rect x="0" y="0" width="${INSET_W}" height="${INSET_H}" fill="#0a0f14"/>
     ${alcaldiaPaths.join('')}
     ${box}
-    <text x="4" y="${INSET_H + 12}" fill="#94a3b8" font-size="9" font-family="Helvetica, Arial, sans-serif">CDMX · muestra resaltada</text>
+    <text x="4" y="${INSET_H + 12}" fill="#94a3b8" font-size="9" font-family="${MAP_FONT_FAMILY}, DejaVu Sans, sans-serif">CDMX · muestra resaltada</text>
   </g>`
 }
 
@@ -324,7 +340,7 @@ export async function renderSimMapSnapshotPng(
       const y = legendTop + i * legendLineH
       return `<circle cx="22" cy="${y}" r="4" fill="${fill}" stroke="#fef3c7" stroke-width="0.5"/><text x="32" y="${
         y + 3.5
-      }" fill="#e2e8f0" font-size="11" font-family="Helvetica, Arial, sans-serif">${escapeXml(
+      }" fill="#e2e8f0" font-size="11" font-family="${MAP_FONT_FAMILY}, DejaVu Sans, sans-serif">${escapeXml(
         o.label,
       )}</text>`
     })
@@ -336,8 +352,16 @@ export async function renderSimMapSnapshotPng(
   ]
   const inset = renderInset(cdmx, sampleBounds)
 
+  let fontCss = ''
+  try {
+    fontCss = await mapFontFaceCss()
+  } catch (err) {
+    console.warn('[sim-report] map font load failed:', err)
+  }
+
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${MAP_W}" height="${MAP_H}" viewBox="0 0 ${MAP_W} ${MAP_H}">
+  <defs><style type="text/css">${fontCss}</style></defs>
   <rect width="100%" height="100%" fill="#0a0f14"/>
   <g>${alcaldiaPaths.join('')}</g>
   <g>${agebPaths.join('')}</g>
@@ -345,7 +369,7 @@ export async function renderSimMapSnapshotPng(
   <g>${legend}</g>
   ${inset}
   <rect x="0" y="${MAP_H - SOURCE_BAND_H}" width="${MAP_W}" height="${SOURCE_BAND_H}" fill="#020617"/>
-  <text x="${MAIN_PAD}" y="${MAP_H - 9}" fill="#94a3b8" font-size="10" font-family="Helvetica, Arial, sans-serif">Fuente: INEGI. Marco Geoestadístico, Censo de Población y Vivienda 2020. · Muestra: Cuauhtémoc y Miguel Hidalgo</text>
+  <text x="${MAIN_PAD}" y="${MAP_H - 9}" fill="#94a3b8" font-size="10" font-family="${MAP_FONT_FAMILY}, DejaVu Sans, sans-serif">Fuente: INEGI. Marco Geoestadístico, Censo de Población y Vivienda 2020. · Muestra: Cuauhtémoc y Miguel Hidalgo</text>
 </svg>`
 
   try {

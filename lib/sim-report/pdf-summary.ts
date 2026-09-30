@@ -35,11 +35,27 @@ import {
 
 function drawHeader(ctx: PdfCtx, logo: string | null, generatedAt: string): void {
   const { doc } = ctx
+  const HEADER_H = 34
+  const LOGO_H_MM = 26
+  const LOGO_W_MM = (229 / 233) * LOGO_H_MM
   doc.setFillColor(...COLOR_TEAL)
-  doc.rect(0, 0, PAGE_W, 30, 'F')
+  doc.rect(0, 0, PAGE_W, HEADER_H, 'F')
   if (logo) {
     try {
-      doc.addImage(logo, 'JPEG', MARGIN_X, 7, 22, 14)
+      const pad = 1.5
+      const boxX = MARGIN_X
+      const boxY = (HEADER_H - LOGO_H_MM) / 2 - pad
+      doc.setFillColor(255, 255, 255)
+      doc.roundedRect(
+        boxX,
+        boxY,
+        LOGO_W_MM + pad * 2,
+        LOGO_H_MM + pad * 2,
+        1.5,
+        1.5,
+        'F',
+      )
+      doc.addImage(logo, 'PNG', boxX + pad, boxY + pad, LOGO_W_MM, LOGO_H_MM)
     } catch {
       // text-only fallback
     }
@@ -102,7 +118,7 @@ export async function generateSimSummaryPdf(
   ])
 
   drawHeader(ctx, logo, data.generatedAt)
-  ctx.y = 40
+  ctx.y = 44
 
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(14)

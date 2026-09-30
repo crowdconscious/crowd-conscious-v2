@@ -37,8 +37,13 @@ export function ensureSpace(ctx: PdfCtx, needed: number): void {
   }
 }
 
+/**
+ * Section heading with consistent top breathing room so titles never sit
+ * flush against the previous section's last row.
+ */
 export function drawSection(ctx: PdfCtx, title: string): void {
-  ensureSpace(ctx, 14)
+  ensureSpace(ctx, 18)
+  ctx.y += 5
   ctx.doc.setFont('helvetica', 'bold')
   ctx.doc.setFontSize(10)
   ctx.doc.setTextColor(...COLOR_TEAL)
@@ -61,13 +66,20 @@ export function drawParagraph(ctx: PdfCtx, text: string, size = 9.5): void {
   ctx.y += lines.length * lineH + 3
 }
 
-export function drawMuted(ctx: PdfCtx, text: string, size = 8.5): void {
+export function drawMuted(
+  ctx: PdfCtx,
+  text: string,
+  size = 8.5,
+  opts?: { skipEnsure?: boolean },
+): void {
   ctx.doc.setFont('helvetica', 'normal')
   ctx.doc.setFontSize(size)
   ctx.doc.setTextColor(...COLOR_MUTED)
   const lines = ctx.doc.splitTextToSize(text, CONTENT_W) as string[]
   const lineH = size * 0.42
-  ensureSpace(ctx, lines.length * lineH + 2)
+  if (!opts?.skipEnsure) {
+    ensureSpace(ctx, lines.length * lineH + 2)
+  }
   ctx.doc.text(lines, MARGIN_X, ctx.y)
   ctx.y += lines.length * lineH + 2
 }
@@ -110,19 +122,36 @@ async function toJpegDataUrl(
 
 let cachedLogo: string | null | undefined
 
-/** Compressed JPEG data-URL of the Crowd Conscious mark, or null if missing. */
+/**
+ * New Crowd Conscious mark (fingerprint pin + wordmark). Designed for a white
+ * ground — callers should place it on a white chip when the header is teal.
+ * Kept as PNG so transparency survives.
+ *
+ * ~229×233 source; we ship a moderately sized data-URL for jsPDF.
+ */
 export async function loadBrandLogoDataUrl(): Promise<string | null> {
   if (cachedLogo !== undefined) return cachedLogo
-  try {
-    const buf = await readFile(
-      path.join(process.cwd(), 'public/images/logo-small.png'),
-    )
-    cachedLogo = await toJpegDataUrl(buf, 220)
-    return cachedLogo
-  } catch {
-    cachedLogo = null
-    return null
+  const candidates = [
+    'public/brand/logo-crowd-conscious.png',
+    'public/images/logo white.png',
+    'public/images/logo-small.png',
+  ]
+  for (const rel of candidates) {
+    try {
+      const buf = await readFile(path.join(process.cwd(), rel))
+      // Keep alpha; ~180px wide ≈ readable 90–120px-tall mark in the PDF header.
+      const png = await sharp(buf)
+        .resize({ width: 180, withoutEnlargement: true })
+        .png()
+        .toBuffer()
+      cachedLogo = `data:image/png;base64,${png.toString('base64')}`
+      return cachedLogo
+    } catch {
+      // try next candidate
+    }
   }
+  cachedLogo = null
+  return null
 }
 
 /** Fetch a QR JPEG for the Pulse URL (same public QR service used elsewhere). */

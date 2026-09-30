@@ -3,8 +3,12 @@
  * shape) plus optional durable divergence track row.
  */
 
-import type { OptionAgg, SimulationReplayPayload } from '@/types/simulation'
-import { divergenceUnavailableLabel } from './format.ts'
+import { computeDivergence } from '../divergence.ts'
+import type { OptionAgg, SimulationReplayPayload } from '../../types/simulation.ts'
+import {
+  divergenceUnavailableLabel,
+  formatDateEs,
+} from './format.ts'
 import type {
   SimReportData,
   SimReportOptionShare,
@@ -122,6 +126,31 @@ function readTrackShares(
   return shares
 }
 
+function finiteScore(value: number | null | undefined): number | null {
+  return value != null && Number.isFinite(value) ? value : null
+}
+
+/**
+ * Prefer a stored score; when older/manual runs have real + sim distributions
+ * but no durable row / run.divergence_index, compute with the same viewer
+ * formula (`lib/divergence.computeDivergence`).
+ */
+export function resolveReportDivergenceScore(args: {
+  storedScore: number | null | undefined
+  hasRealData: boolean
+  simAggregates: OptionAgg[] | null | undefined
+  realAggregates: OptionAgg[] | null | undefined
+}): number | null {
+  const stored = finiteScore(args.storedScore)
+  if (stored != null) return stored
+  if (!args.hasRealData) return null
+  const sim = args.simAggregates ?? []
+  const real = args.realAggregates ?? []
+  const realN = real.reduce((s, a) => s + (a.count || 0), 0)
+  if (realN <= 0 || sim.length === 0) return null
+  return computeDivergence(sim, real).index
+}
+
 const METHODOLOGY_SHORT =
   'Personas sintéticas basadas en el Censo INEGI (AGEB), ponderadas por población y colocadas en manzanas censales de CDMX. Un modelo de lenguaje vota como cada persona ante la pregunta del Pulse. El índice de divergencia compara esa distribución con los votos reales de la consulta (cuando hay datos suficientes).'
 
@@ -135,7 +164,7 @@ function methodologyFull(args: {
   const lines = [
     'Esta simulación no es una encuesta probabilística ni un pronóstico oficial. Es un experimento de opinión sintética: un panel de personas ficticias construido a partir de estadísticas públicas del Censo de Población y Vivienda (INEGI) y del marco geoestadístico (AGEB).',
     'Cada persona tiene atributos demográficos (alcaldía/colonia, edad, sexo, educación, ocupación, NSE AMAI) y una narrativa concreta. Su ubicación en el mapa usa centroides de AGEB con un jitter determinista pequeño para que los puntos no se solapen; no inventamos coordenadas fuera del AGEB asignado.',
-    `Versión del panel: ${args.personaVersion ?? '—'}. Modelo: ${args.model ?? '—'}. Agentes en esta corrida: ${args.personaCount ?? '—'}. Fecha de corrida: ${args.completedAt ?? '—'}.`,
+    `Versión del panel: ${args.personaVersion ?? '—'}. Modelo: ${args.model ?? '—'}. Agentes en esta corrida: ${args.personaCount ?? '—'}. Fecha de corrida: ${formatDateEs(args.completedAt)}.`,
     'El índice de divergencia (0–100) mide la distancia entre la distribución simulada y la de votos reales del Pulse. Si no hay votos reales suficientes, el índice se muestra como "—" (nunca como 0 falso).',
   ]
   if (args.isFixture) {
@@ -197,15 +226,25 @@ export function assembleSimReportData(input: AssembleReportInput): SimReportData
     optionLabel: optionLabel.get(v.optionId) ?? null,
   }))
 
+  // Prefer track.has_real_data when a row exists; otherwise infer from
+  // replay aggregates (older/manual runs may lack pulse_simulation_divergence).
   const hasRealData = track
     ? track.has_real_data
-    : payload.realAggregates != null && payload.realAggregates.length > 0
+    : payload.realAggregates != null &&
+      payload.realAggregates.some((a) => (a.count || 0) > 0)
 
-  const score = track
+  const storedScore = track
     ? track.has_real_data
       ? track.divergence_score
       : null
     : payload.run.divergenceIndex
+
+  const score = resolveReportDivergenceScore({
+    storedScore,
+    hasRealData,
+    simAggregates: payload.simAggregates,
+    realAggregates: payload.realAggregates,
+  })
 
   const realVoteCount = track
     ? track.real_vote_count
@@ -213,8 +252,10 @@ export function assembleSimReportData(input: AssembleReportInput): SimReportData
       ? payload.realAggregates.reduce((s, a) => s + (a.count || 0), 0)
       : 0
 
+  // "sin datos…" only when there truly is no real comparison — not when the
+  // score was simply never persisted for an older run.
   const unavailableReason =
-    score == null || !hasRealData ? divergenceUnavailableLabel() : null
+    !hasRealData || realVoteCount <= 0 ? divergenceUnavailableLabel() : null
 
   const personaVersion = input.runExtras?.personaVersion ?? null
   const model = input.runExtras?.model ?? payload.run.model

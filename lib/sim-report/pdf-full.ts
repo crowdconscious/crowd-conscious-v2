@@ -3,7 +3,7 @@
  * Includes sample breakdown, full methodology, divergence caveat, map snapshot.
  */
 
-import type { SimReportData, SimReportSegmentRow } from './types.ts'
+import type { SimReportData, SimReportOptionShare, SimReportSegmentRow } from './types.ts'
 import {
   divergenceUnavailableLabel,
   formatCount,
@@ -13,6 +13,7 @@ import {
   formatPctShare,
   isSmallRealSample,
 } from './format.ts'
+import { optionFillRgb } from '../sim-viewer/map-option-color.ts'
 import {
   COLOR_BG_AMBER,
   COLOR_BG_LIGHT,
@@ -21,6 +22,7 @@ import {
   COLOR_TEXT,
   CONTENT_W,
   MARGIN_X,
+  PAGE_H,
   PAGE_W,
   dash,
   docToBuffer,
@@ -36,13 +38,26 @@ import {
 } from './pdf-shared.ts'
 import sharp from 'sharp'
 
+/** Logo box: ~100px tall at 96dpi ≈ 26.5mm; keep square aspect of the mark. */
+const LOGO_H_MM = 26
+const LOGO_W_MM = (229 / 233) * LOGO_H_MM
+const HEADER_H = 34
+
 function drawHeader(ctx: PdfCtx, logo: string | null, generatedAt: string): void {
   const { doc } = ctx
   doc.setFillColor(...COLOR_TEAL)
-  doc.rect(0, 0, PAGE_W, 30, 'F')
+  doc.rect(0, 0, PAGE_W, HEADER_H, 'F')
   if (logo) {
     try {
-      doc.addImage(logo, 'JPEG', MARGIN_X, 7, 22, 14)
+      // White chip — mark is designed for light backgrounds.
+      const pad = 1.5
+      const boxX = MARGIN_X
+      const boxY = (HEADER_H - LOGO_H_MM) / 2 - pad
+      const boxW = LOGO_W_MM + pad * 2
+      const boxH = LOGO_H_MM + pad * 2
+      doc.setFillColor(255, 255, 255)
+      doc.roundedRect(boxX, boxY, boxW, boxH, 1.5, 1.5, 'F')
+      doc.addImage(logo, 'PNG', boxX + pad, boxY + pad, LOGO_W_MM, LOGO_H_MM)
     } catch {
       // ignore
     }
@@ -84,8 +99,10 @@ function drawShareBars(
     drawMuted(ctx, '—')
     return
   }
-  for (const row of rows) {
-    ensureSpace(ctx, 10)
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i]!
+    // Label + bar stay together; leave breathing room before the next option.
+    ensureSpace(ctx, 14)
     ctx.doc.setFont('helvetica', 'normal')
     ctx.doc.setFontSize(9)
     ctx.doc.setTextColor(...COLOR_TEXT)
@@ -97,16 +114,50 @@ function drawShareBars(
       ctx.y,
       { align: 'right' },
     )
-    ctx.y += 3
+    // Tight under its own label
+    ctx.y += 2.2
     const barW = CONTENT_W
     ctx.doc.setFillColor(...COLOR_BG_LIGHT)
     ctx.doc.rect(MARGIN_X, ctx.y, barW, 3.5, 'F')
     if (row.share != null && Number.isFinite(row.share) && row.share > 0) {
-      ctx.doc.setFillColor(...COLOR_TEAL)
+      const rgb = optionFillRgb(i)
+      ctx.doc.setFillColor(rgb[0], rgb[1], rgb[2])
       ctx.doc.rect(MARGIN_X, ctx.y, barW * Math.min(1, row.share), 3.5, 'F')
     }
-    ctx.y += 7
+    // Extra gap before the next label so bars don't look shared
+    ctx.y += 11
   }
+}
+
+/**
+ * Colour legend for the map: each swatch = optionDotFill index, label =
+ * Spanish option text from the Pulse. Drawn with jsPDF Helvetica (no tofu).
+ */
+function drawMapOptionLegend(
+  ctx: PdfCtx,
+  options: SimReportOptionShare[],
+): void {
+  const caption =
+    'Cada punto es una persona sintética de la corrida; el color indica la opción que eligió.'
+  const lineH = 5.5
+  const legendH = Math.max(1, options.length) * lineH + 8
+  ensureSpace(ctx, legendH + 10)
+  drawMuted(ctx, caption, 8.5)
+  ctx.y += 1
+  for (let i = 0; i < options.length; i++) {
+    const o = options[i]!
+    const rgb = optionFillRgb(i)
+    ensureSpace(ctx, lineH + 1)
+    ctx.doc.setFillColor(rgb[0], rgb[1], rgb[2])
+    ctx.doc.circle(MARGIN_X + 2.2, ctx.y - 1.1, 2.0, 'F')
+    ctx.doc.setFont('helvetica', 'normal')
+    ctx.doc.setFontSize(9)
+    ctx.doc.setTextColor(...COLOR_TEXT)
+    const label = o.label?.trim() ? o.label : `Opción ${i + 1}`
+    ctx.doc.text(label, MARGIN_X + 7, ctx.y)
+    ctx.y += lineH
+  }
+  ctx.y += 2
 }
 
 function drawSegmentTable(
@@ -121,19 +172,23 @@ function drawSegmentTable(
     return
   }
   for (const seg of segments.slice(0, 24)) {
-    ensureSpace(ctx, 8)
-    ctx.doc.setFont('helvetica', 'bold')
-    ctx.doc.setFontSize(9)
-    ctx.doc.setTextColor(...COLOR_TEXT)
-    ctx.doc.text(`${seg.label}  (n=${seg.count})`, MARGIN_X, ctx.y)
-    ctx.y += 4.5
     const parts: string[] = []
     for (const [optId, count] of Object.entries(seg.optionCounts)) {
       const label = optionLabels[optId] ?? optId
       const pct = seg.count > 0 ? Math.round((count / seg.count) * 100) : null
       parts.push(`${label}: ${pct == null ? '—' : `${pct}%`}`)
     }
-    drawMuted(ctx, parts.length > 0 ? parts.join(' · ') : '—', 8)
+    const breakdown = parts.length > 0 ? parts.join(' · ') : '—'
+    const breakdownLines = ctx.doc.splitTextToSize(breakdown, CONTENT_W) as string[]
+    const blockH = 4.5 + breakdownLines.length * 3.6 + 3
+    // Keep alcaldía/age/NSE header with its breakdown across page breaks.
+    ensureSpace(ctx, blockH)
+    ctx.doc.setFont('helvetica', 'bold')
+    ctx.doc.setFontSize(9)
+    ctx.doc.setTextColor(...COLOR_TEXT)
+    ctx.doc.text(`${seg.label}  (n=${seg.count})`, MARGIN_X, ctx.y)
+    ctx.y += 4.5
+    drawMuted(ctx, breakdown, 8, { skipEnsure: true })
   }
 }
 
@@ -147,7 +202,7 @@ export async function generateSimFullPdf(data: SimReportData): Promise<Buffer> {
   ])
 
   drawHeader(ctx, logo, data.generatedAt)
-  ctx.y = 40
+  ctx.y = HEADER_H + 10
 
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(14)
@@ -235,19 +290,20 @@ export async function generateSimFullPdf(data: SimReportData): Promise<Buffer> {
     drawParagraph(ctx, para, 9)
   }
 
-  // Map snapshot — reserve heading + image + caption so the title never
-  // orphans at the bottom of a page while the PNG starts on the next.
+  // Map snapshot — reserve heading + image + legend + caption so the title
+  // never orphans at the bottom of a page while the PNG starts on the next.
   {
     const imgW = CONTENT_W
     const imgH =
       data.mapPng && data.mapPng.length > 0 ? (imgW * 720) / 900 : 0
+    const legendLines = Math.max(1, data.simulated.length)
+    const legendBlock = 14 + legendLines * 5.5
     const blockH =
       data.mapPng && data.mapPng.length > 0
-        ? 12 /* section title */ + imgH + 10 /* caption */
+        ? 12 /* section title */ + imgH + legendBlock + 8
         : 20
-    ensureSpace(ctx, blockH)
-    // Inline section title (skip drawSection's own ensureSpace — we already
-    // reserved the full block).
+    ensureSpace(ctx, Math.min(blockH, PAGE_H - 40))
+    ctx.y += 5
     ctx.doc.setFont('helvetica', 'bold')
     ctx.doc.setFontSize(10)
     ctx.doc.setTextColor(...COLOR_TEAL)
@@ -260,6 +316,8 @@ export async function generateSimFullPdf(data: SimReportData): Promise<Buffer> {
 
     if (data.mapPng && data.mapPng.length > 0) {
       try {
+        // Ensure image fits remaining page; if not, bump to next page first.
+        ensureSpace(ctx, imgH + legendBlock)
         const jpeg = await sharp(data.mapPng)
           .jpeg({ quality: 80, mozjpeg: true })
           .toBuffer()
@@ -272,9 +330,10 @@ export async function generateSimFullPdf(data: SimReportData): Promise<Buffer> {
           imgH,
         )
         ctx.y += imgH + 4
+        drawMapOptionLegend(ctx, data.simulated)
         drawMuted(
           ctx,
-          'Puntos = personas sintéticas en su AGEB (INEGI). Color = opción votada. Inset: CDMX con la muestra resaltada.',
+          'Inset: CDMX con la muestra resaltada. Fuente cartográfica: INEGI (AGEB / marco geoestadístico).',
         )
       } catch {
         drawMuted(ctx, 'No se pudo incrustar el mapa.')
