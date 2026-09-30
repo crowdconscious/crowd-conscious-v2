@@ -4,6 +4,15 @@
  * Design: enqueue on publish/create (never blocks the user), process via
  * Vercel cron. One job row per Pulse (UNIQUE market_id); re-run resets it.
  * Gated by SIM_AUTORUN_ENABLED; concurrency + hourly start caps protect cost.
+ *
+ * Reliability (post-PR #31):
+ * - Reclaim jobs stuck in `running` (orphans without a run id, or stale with
+ *   a run id past the lease) so they never permanently fill the concurrent cap.
+ * - Claim at most one new start per tick, and only after startRun succeeds —
+ *   never leave `running` without `simulation_run_id`.
+ * - Poll with a wall-clock budget so checkRun finalization cannot kill the
+ *   whole cron invocation mid-flight without a chance to reclaim next tick.
+ * - Hourly cap counts successful starts (simulation_run_id set), not bare claims.
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js'
@@ -43,6 +52,22 @@ const DEFAULT_MAX_ATTEMPTS = 3
 /** Backoff base (seconds) × 2^(attempts-1), capped. */
 const RETRY_BASE_SECONDS = 60
 const RETRY_MAX_SECONDS = 30 * 60
+
+/**
+ * Orphan claim: running with no simulation_run_id longer than this → reclaim.
+ * startRun usually finishes in seconds; 3 min covers slow Anthropic batch create.
+ */
+export const STALE_ORPHAN_MS = 3 * 60 * 1000
+/**
+ * Running with a run id past this lease → reclaim (batch should have ended or
+ * checkRun should have completed across several 5-min cron ticks).
+ * Vercel maxDuration is 300s; 25 min ≈ 5 ticks of failed finalization.
+ */
+export const STALE_RUNNING_MS = 25 * 60 * 1000
+/** Leave headroom under Vercel maxDuration=300s for reclaim + health writes. */
+export const CRON_TIME_BUDGET_MS = 250 * 1000
+/** Start at most this many new Anthropic batches per cron tick. */
+export const MAX_STARTS_PER_TICK = 1
 
 export function isSimAutorunEnabled(): boolean {
   return process.env.SIM_AUTORUN_ENABLED === 'true'
@@ -268,7 +293,11 @@ export async function countRunningAutorunJobs(
   return count ?? 0
 }
 
-/** Jobs that transitioned to running (started) in the last hour. */
+/**
+ * Successful starts in the last hour.
+ * Only rows that actually got a simulation_run_id count — bare claims that
+ * never attached a run must not burn the hourly budget forever.
+ */
 export async function countStartsInLastHour(
   admin: AdminClient,
 ): Promise<number> {
@@ -277,10 +306,38 @@ export async function countStartsInLastHour(
     .from('simulation_autorun_jobs')
     .select('id', { count: 'exact', head: true })
     .gte('started_at', since)
+    .not('simulation_run_id', 'is', null)
   if (error) throw new Error(`countStartsInLastHour: ${error.message}`)
   return count ?? 0
 }
 
+/**
+ * Peek at queued candidates without flipping them to running.
+ * Start succeeds first; then we atomically claim queued→running with run id.
+ */
+export async function listClaimableQueuedJobs(
+  admin: AdminClient,
+  limit: number,
+): Promise<AutorunJobRow[]> {
+  if (limit <= 0) return []
+  const now = new Date().toISOString()
+
+  const { data, error } = await admin
+    .from('simulation_autorun_jobs')
+    .select('*')
+    .eq('status', 'queued')
+    .lte('next_attempt_at', now)
+    .order('next_attempt_at', { ascending: true })
+    .limit(limit)
+
+  if (error) throw new Error(`listClaimableQueuedJobs: ${error.message}`)
+  return (data ?? []) as unknown as AutorunJobRow[]
+}
+
+/**
+ * @deprecated Prefer listClaimableQueuedJobs + attachRunToQueuedJob.
+ * Kept for any callers/tests that still claim-then-start.
+ */
 export async function claimQueuedAutorunJobs(
   admin: AdminClient,
   limit: number,
@@ -302,7 +359,6 @@ export async function claimQueuedAutorunJobs(
   const claimed: AutorunJobRow[] = []
   for (const row of candidates) {
     const job = row as unknown as AutorunJobRow
-    // Optimistic claim: only transition if still queued.
     const { data: updated, error: upErr } = await admin
       .from('simulation_autorun_jobs')
       .update({
@@ -325,6 +381,36 @@ export async function claimQueuedAutorunJobs(
   return claimed
 }
 
+/**
+ * After startRun succeeds: flip queued → running with the run id in one update.
+ * Returns null if another worker already claimed the row.
+ */
+export async function attachRunToQueuedJob(
+  admin: AdminClient,
+  jobId: string,
+  simulationRunId: string,
+  previousAttempts: number,
+): Promise<AutorunJobRow | null> {
+  const now = new Date().toISOString()
+  const { data, error } = await admin
+    .from('simulation_autorun_jobs')
+    .update({
+      status: 'running',
+      simulation_run_id: simulationRunId,
+      attempts: previousAttempts + 1,
+      started_at: now,
+      updated_at: now,
+      last_error: null,
+    })
+    .eq('id', jobId)
+    .eq('status', 'queued')
+    .select('*')
+    .maybeSingle()
+
+  if (error) throw new Error(`attachRunToQueuedJob: ${error.message}`)
+  return data ? (data as unknown as AutorunJobRow) : null
+}
+
 export async function listPollableRunningJobs(
   admin: AdminClient,
   limit = 20,
@@ -339,6 +425,68 @@ export async function listPollableRunningJobs(
 
   if (error) throw new Error(`listPollableRunningJobs: ${error.message}`)
   return (data ?? []) as unknown as AutorunJobRow[]
+}
+
+/**
+ * Jobs stuck in `running` that the poller cannot (or should no longer) advance.
+ * - Orphan: no simulation_run_id and started_at older than STALE_ORPHAN_MS
+ * - Stale: has run id but started_at older than STALE_RUNNING_MS
+ *
+ * Also catches orphans with null started_at (defensive).
+ */
+export async function listStaleRunningJobs(
+  admin: AdminClient,
+  nowMs: number = Date.now(),
+): Promise<AutorunJobRow[]> {
+  const { data, error } = await admin
+    .from('simulation_autorun_jobs')
+    .select('*')
+    .eq('status', 'running')
+    .order('started_at', { ascending: true })
+    .limit(50)
+
+  if (error) throw new Error(`listStaleRunningJobs: ${error.message}`)
+
+  const stale: AutorunJobRow[] = []
+  for (const row of data ?? []) {
+    const job = row as unknown as AutorunJobRow
+    const startedMs = job.started_at
+      ? Date.parse(job.started_at)
+      : Number.NaN
+    const ageMs = Number.isFinite(startedMs) ? nowMs - startedMs : Infinity
+
+    if (!job.simulation_run_id) {
+      if (ageMs >= STALE_ORPHAN_MS) stale.push(job)
+      continue
+    }
+    if (ageMs >= STALE_RUNNING_MS) stale.push(job)
+  }
+  return stale
+}
+
+/**
+ * Reclaim one stale running job: bump attempts, then requeue or fail.
+ * Saves the reclaim reason on last_error so the admin table can show it.
+ */
+export async function reclaimStaleRunningJob(
+  admin: AdminClient,
+  job: AutorunJobRow,
+): Promise<'queued' | 'failed'> {
+  const reason = !job.simulation_run_id
+    ? `stale reclaim: running without simulation_run_id for >${Math.round(STALE_ORPHAN_MS / 60000)}m (likely Vercel timeout mid-start)`
+    : `stale reclaim: running >${Math.round(STALE_RUNNING_MS / 60000)}m without completing (batch/checkRun exceeded cron budget)`
+
+  const attempts = job.attempts + 1
+  await admin
+    .from('simulation_autorun_jobs')
+    .update({ attempts, updated_at: new Date().toISOString() })
+    .eq('id', job.id)
+
+  return markJobFailedOrRetry(
+    admin,
+    { id: job.id, attempts, max_attempts: job.max_attempts },
+    reason,
+  )
 }
 
 export async function markJobStartedWithRun(
@@ -439,8 +587,27 @@ export async function markJobFailedOrRetry(
 }
 
 /**
- * Start a simulation for a claimed job. Returns the new run id.
- * Caller must have already claimed the job (status=running).
+ * Record a non-terminal error on a still-running/queued job so the admin UI
+ * can show it (poll timeout, transient Anthropic errors, etc.).
+ */
+export async function recordJobError(
+  admin: AdminClient,
+  jobId: string,
+  errorMessage: string,
+): Promise<void> {
+  const { error } = await admin
+    .from('simulation_autorun_jobs')
+    .update({
+      last_error: errorMessage.slice(0, 2000),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', jobId)
+  if (error) throw new Error(`recordJobError: ${error.message}`)
+}
+
+/**
+ * Start a simulation for a market. Returns the new run id.
+ * Prefer calling while the job is still `queued`, then attachRunToQueuedJob.
  */
 export async function startAutorunSimulation(
   admin: AdminClient,
@@ -461,7 +628,11 @@ export async function startAutorunSimulation(
 }
 
 /**
- * Poll a running autorun job's Anthropic batch. Returns the check status.
+ * Poll a running autorun job's Anthropic batch.
+ *
+ * Autorun skips the sequential per-agent retry loop (`retryFailed: false`) so
+ * finalization fits inside the cron time budget. Batch success rates are high
+ * enough; remaining gaps show up in completion_rate on the run aggregates.
  */
 export async function pollAutorunSimulation(
   admin: AdminClient,
@@ -473,7 +644,10 @@ export async function pollAutorunSimulation(
   outputTokens?: number
 }> {
   const { checkRun } = await import('@/lib/simulation/run')
-  const result = await checkRun(runId, { adminClient: admin })
+  const result = await checkRun(runId, {
+    adminClient: admin,
+    retryFailed: false,
+  })
   if (result.status === 'running') return { status: 'running' }
 
   return {
@@ -484,10 +658,15 @@ export async function pollAutorunSimulation(
   }
 }
 
+function budgetRemaining(deadlineMs: number): number {
+  return deadlineMs - Date.now()
+}
+
 /** Process one cron tick. Returns a summary for cron_job_runs. */
 export async function processAutorunCronTick(admin: AdminClient): Promise<{
   enabled: boolean
   backfillEnqueued: number
+  reclaimed: number
   polled: number
   completed: number
   started: number
@@ -499,6 +678,7 @@ export async function processAutorunCronTick(admin: AdminClient): Promise<{
     return {
       enabled: false,
       backfillEnqueued: 0,
+      reclaimed: 0,
       polled: 0,
       completed: 0,
       started: 0,
@@ -508,17 +688,38 @@ export async function processAutorunCronTick(admin: AdminClient): Promise<{
     }
   }
 
+  const deadlineMs = Date.now() + CRON_TIME_BUDGET_MS
+
   const backfill = await backfillOpenPulseAutorunJobs(admin, 50)
 
+  let reclaimed = 0
   let polled = 0
   let completed = 0
   let started = 0
   let failed = 0
   let retried = 0
 
-  // 1) Poll in-flight runs.
+  // 0) Reclaim stale running jobs BEFORE counting concurrency — otherwise two
+  // orphans permanently freeze the queue under MAX_CONCURRENT=2.
+  const stale = await listStaleRunningJobs(admin)
+  for (const job of stale) {
+    if (budgetRemaining(deadlineMs) < 5_000) break
+    try {
+      const outcome = await reclaimStaleRunningJob(admin, job)
+      reclaimed++
+      if (outcome === 'failed') failed++
+      else retried++
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      console.warn('[sim-autorun] reclaim failed', job.id, msg)
+    }
+  }
+
+  // 1) Poll in-flight runs (those with a simulation_run_id).
   const running = await listPollableRunningJobs(admin)
   for (const job of running) {
+    // Need ~60s headroom for streaming batch results + vote insert.
+    if (budgetRemaining(deadlineMs) < 60_000) break
     if (!job.simulation_run_id) continue
     polled++
     try {
@@ -534,6 +735,12 @@ export async function processAutorunCronTick(admin: AdminClient): Promise<{
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       console.warn('[sim-autorun] poll failed', job.id, msg)
+      // Persist the error even if we still retry — admin table shows it.
+      try {
+        await recordJobError(admin, job.id, msg)
+      } catch {
+        /* ignore */
+      }
       const attempts = job.attempts + 1
       await admin
         .from('simulation_autorun_jobs')
@@ -549,27 +756,48 @@ export async function processAutorunCronTick(admin: AdminClient): Promise<{
     }
   }
 
-  // 2) Start new queued jobs within caps.
+  // 2) Start new queued jobs within caps — at most one per tick, and only
+  // attach running+run_id AFTER startRun succeeds (no orphan claims).
   const maxConcurrent = simAutorunMaxConcurrent()
   const maxPerHour = simAutorunMaxPerHour()
   const currentlyRunning = await countRunningAutorunJobs(admin)
   const startedLastHour = await countStartsInLastHour(admin)
   const concurrentSlots = Math.max(0, maxConcurrent - currentlyRunning)
   const hourlySlots = Math.max(0, maxPerHour - startedLastHour)
-  const slots = Math.min(concurrentSlots, hourlySlots)
-  const skippedCap = slots === 0 && concurrentSlots + hourlySlots === 0
+  const slots = Math.min(
+    concurrentSlots,
+    hourlySlots,
+    MAX_STARTS_PER_TICK,
+  )
+  const skippedCap =
+    (concurrentSlots === 0 || hourlySlots === 0) && slots === 0
 
-  if (slots > 0) {
-    const claimed = await claimQueuedAutorunJobs(admin, slots)
-    for (const job of claimed) {
+  if (slots > 0 && budgetRemaining(deadlineMs) >= 90_000) {
+    const candidates = await listClaimableQueuedJobs(admin, slots)
+    for (const job of candidates) {
+      if (budgetRemaining(deadlineMs) < 90_000) break
       try {
         const { runId } = await startAutorunSimulation(admin, job.market_id)
-        await markJobStartedWithRun(admin, job.id, runId)
+        const attached = await attachRunToQueuedJob(
+          admin,
+          job.id,
+          runId,
+          job.attempts,
+        )
+        if (!attached) {
+          // Race: another tick claimed it. The Anthropic batch still exists;
+          // log and move on — orphaned batches are cheaper than stuck locks.
+          console.warn(
+            '[sim-autorun] start succeeded but job no longer queued',
+            job.id,
+            runId,
+          )
+          continue
+        }
         started++
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err)
         console.warn('[sim-autorun] start failed', job.id, msg)
-        // attempts was not incremented yet — bump then decide retry.
         const attempts = job.attempts + 1
         await admin
           .from('simulation_autorun_jobs')
@@ -589,6 +817,7 @@ export async function processAutorunCronTick(admin: AdminClient): Promise<{
   return {
     enabled: true,
     backfillEnqueued: backfill.enqueued,
+    reclaimed,
     polled,
     completed,
     started,

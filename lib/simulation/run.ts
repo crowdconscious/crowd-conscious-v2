@@ -682,6 +682,11 @@ export async function checkRun(
       aggregates: run.aggregates ?? undefined,
     }
   }
+  if (run.status === 'failed') {
+    throw new Error(
+      `checkRun: run ${runId} already failed (cost envelope or prior error)`,
+    )
+  }
   if (!run.batch_id) {
     throw new Error(`checkRun: run ${runId} has no batch_id`)
   }
@@ -771,6 +776,19 @@ export async function checkRun(
   }
 
   // Persist valid votes (audit trail includes the raw model response).
+  // Delete-then-insert so a timed-out prior checkRun that partially wrote
+  // votes cannot duplicate rows on the next cron tick.
+  {
+    const { error: delErr } = await admin
+      .from('simulation_votes')
+      .delete()
+      .eq('run_id', runId)
+    if (delErr) {
+      throw new Error(
+        `checkRun: failed to clear prior simulation_votes: ${delErr.message}`,
+      )
+    }
+  }
   if (validVotes.length > 0) {
     const voteRows: SimulationVoteInsert[] = validVotes.map((v) => ({
       run_id: runId,

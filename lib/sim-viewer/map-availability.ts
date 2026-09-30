@@ -1,48 +1,44 @@
 /**
- * Mapa mode availability — Task 4b.
+ * Mapa mode availability.
  *
- * Show the Columnas / Mapa toggle only when ≥90% of the run's personas have
- * agebCode + centroid coordinates that exist in the committed AGEB GeoJSON.
- * Personas without a mappable location are simply omitted from the map dots;
- * the UI notes "N agentes sin ubicación".
+ * Show the Columnas / Mapa toggle when ≥90% of the run's personas can be
+ * placed on the map — via AGEB centroids when present, otherwise via colonia
+ * or alcaldía fallbacks (see persona-map-location.ts).
+ *
+ * Empty vote lists (in-progress runs) are treated as "pending" rather than
+ * unavailable so the format choice can still appear; the viewer shows a
+ * running banner separately.
  */
+
+import {
+  isPersonaPlaceable,
+  type PersonaForMapLocation,
+} from './persona-map-location.ts'
 
 export const MAP_AVAILABILITY_THRESHOLD = 0.9
 
-export type MapPersonaLocation = {
-  agebCode: string | null
-  centroidLat: number | null
-  centroidLng: number | null
-}
+/** @deprecated Prefer PersonaForMapLocation — kept for existing call sites. */
+export type MapPersonaLocation = PersonaForMapLocation
 
 export type MapAvailability = {
-  /** True when mappable / total ≥ MAP_AVAILABILITY_THRESHOLD. */
+  /** True when placeable / total ≥ MAP_AVAILABILITY_THRESHOLD. */
   available: boolean
   total: number
   mappable: number
-  /** Personas missing code, coords, or a GeoJSON match. */
+  /** Personas that could not be placed even with colonia/alcaldía fallback. */
   missingLocation: number
   ratio: number
+  /**
+   * True when the vote list is empty so placement cannot be scored yet
+   * (typical of an in-flight auto-run). Callers may still show the toggle.
+   */
+  pending: boolean
 }
 
-export function isPersonaMappable(
-  persona: MapPersonaLocation,
-  geoCodes: ReadonlySet<string>,
-): boolean {
-  const code = persona.agebCode
-  if (typeof code !== 'string' || code.trim().length === 0) return false
-  if (!geoCodes.has(code)) return false
-  if (typeof persona.centroidLat !== 'number' || !Number.isFinite(persona.centroidLat)) {
-    return false
-  }
-  if (typeof persona.centroidLng !== 'number' || !Number.isFinite(persona.centroidLng)) {
-    return false
-  }
-  return true
-}
+export { isPersonaMappable } from './map-availability-ageb.ts'
 
 export function evaluateMapAvailability(
-  personas: readonly MapPersonaLocation[],
+  personas: readonly PersonaForMapLocation[],
   geoCodes: ReadonlySet<string>,
 ): MapAvailability {
   const total = personas.length
@@ -53,12 +49,13 @@ export function evaluateMapAvailability(
       mappable: 0,
       missingLocation: 0,
       ratio: 0,
+      pending: true,
     }
   }
 
   let mappable = 0
   for (const p of personas) {
-    if (isPersonaMappable(p, geoCodes)) mappable += 1
+    if (isPersonaPlaceable(p, geoCodes)) mappable += 1
   }
   const missingLocation = total - mappable
   const ratio = mappable / total
@@ -68,5 +65,6 @@ export function evaluateMapAvailability(
     mappable,
     missingLocation,
     ratio,
+    pending: false,
   }
 }

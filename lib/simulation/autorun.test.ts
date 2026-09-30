@@ -12,6 +12,10 @@ import {
   simAutorunMaxPerHour,
   simAutorunNAgents,
   simAutorunPersonaVersion,
+  STALE_ORPHAN_MS,
+  STALE_RUNNING_MS,
+  CRON_TIME_BUDGET_MS,
+  MAX_STARTS_PER_TICK,
 } from './autorun.ts'
 
 const ENV_KEYS = [
@@ -90,5 +94,19 @@ describe('retryDelaySeconds', () => {
     assert.equal(retryDelaySeconds(2), 120)
     assert.equal(retryDelaySeconds(3), 240)
     assert.equal(retryDelaySeconds(10), 30 * 60)
+  })
+})
+
+describe('stale reclaim + cron budget constants', () => {
+  it('orphan lease is a few minutes; running lease under half an hour', () => {
+    assert.equal(STALE_ORPHAN_MS, 3 * 60 * 1000)
+    assert.equal(STALE_RUNNING_MS, 25 * 60 * 1000)
+    assert.ok(STALE_ORPHAN_MS < STALE_RUNNING_MS)
+  })
+
+  it('cron budget fits under Vercel maxDuration 300s', () => {
+    assert.equal(CRON_TIME_BUDGET_MS, 250 * 1000)
+    assert.ok(CRON_TIME_BUDGET_MS < 300 * 1000)
+    assert.equal(MAX_STARTS_PER_TICK, 1)
   })
 })
