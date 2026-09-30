@@ -9,6 +9,7 @@
  * persona fields fall back to the cdmx-v1 columns. See lib/sim-viewer/legacy.ts.
  */
 
+import { computeDivergence } from '../divergence.ts'
 import type {
   DivergenceMeta,
   OptionAgg,
@@ -404,9 +405,28 @@ export function buildReplayPayload(args: BuildReplayArgs): SimulationReplayPaylo
     ? realAggregatesFromOutcomes(args.outcomes, args.totalVotes)
     : null
 
-  const { index: divergenceIndex, meta: divergenceMeta } = resolveDivergence(
-    args.run,
-  )
+  const resolved = resolveDivergence(args.run)
+  let divergenceIndex = resolved.index
+  let divergenceMeta = resolved.meta
+
+  // Older/manual runs may never have persisted divergence_index. When real
+  // votes exist, compute on the fly so the viewer matches the PDF report.
+  if (
+    divergenceIndex == null &&
+    args.totalVotes > 0 &&
+    realAggregates != null &&
+    realAggregates.some((a) => (a.count || 0) > 0) &&
+    simAggregates.length > 0
+  ) {
+    const scores = computeDivergence(simAggregates, realAggregates)
+    divergenceIndex = scores.index
+    divergenceMeta = {
+      index: scores.index,
+      shareScore: scores.shareScore,
+      confScore: scores.confScore,
+      computedAt: new Date().toISOString(),
+    }
+  }
 
   const completedAt =
     args.run.completed_at ??

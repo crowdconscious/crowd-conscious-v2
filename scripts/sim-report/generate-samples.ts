@@ -47,10 +47,11 @@ async function main() {
   const agebByCode = indexAgebCentroids(ageb.features)
 
   // Demo track row: fixture has real aggregates — treat as scored.
+  // Also exercise on-the-fly compute: leave divergence_score null (older runs).
   const realN =
     payload.realAggregates?.reduce((s, a) => s + (a.count || 0), 0) ?? 0
   const track = {
-    divergence_score: payload.run.divergenceIndex,
+    divergence_score: null as number | null,
     has_real_data: realN > 0,
     real_vote_count: realN,
     outcome: realN > 0 ? 'scored' : 'no_real_data',

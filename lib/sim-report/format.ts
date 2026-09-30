@@ -2,6 +2,9 @@
 
 export const EM_DASH = '—'
 
+/** Report timestamps always use Mexico City civil time. */
+export const REPORT_TZ = 'America/Mexico_City'
+
 /** Round a Divergence Index for PDF text. Null/NaN → em dash. */
 export function formatDivergenceScore(
   value: number | null | undefined,
@@ -30,6 +33,7 @@ export function formatDateEs(iso: string | null | undefined): string {
   const d = new Date(iso)
   if (!Number.isFinite(d.getTime())) return EM_DASH
   return d.toLocaleDateString('es-MX', {
+    timeZone: REPORT_TZ,
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -41,6 +45,7 @@ export function formatDateTimeEs(iso: string | null | undefined): string {
   const d = new Date(iso)
   if (!Number.isFinite(d.getTime())) return EM_DASH
   return d.toLocaleString('es-MX', {
+    timeZone: REPORT_TZ,
     year: 'numeric',
     month: 'short',
     day: '2-digit',

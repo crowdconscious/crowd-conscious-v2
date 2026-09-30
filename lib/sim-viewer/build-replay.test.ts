@@ -606,6 +606,41 @@ test('buildReplayPayload leaves divergenceIndex null when run has no score', () 
   assert.equal(payload.run.divergenceMeta, null)
 })
 
+test('buildReplayPayload computes divergence on the fly when real votes exist but score was never stored', () => {
+  const payload = buildReplayPayload({
+    run: {
+      id: 'run-no-div-with-real',
+      market_id: 'pulse-1',
+      status: 'complete',
+      mode: 'batch',
+      model: 'm',
+      n_agents: 2,
+      completed_at: '2026-09-01T12:00:00.000Z',
+      divergence_index: null,
+      divergence_meta: null,
+      divergence: null,
+      is_fixture: false,
+      revealed_at: '2026-09-01T12:00:00.000Z',
+    },
+    pulse: {
+      id: 'pulse-1',
+      title: 'Q',
+      resolution_date: null,
+      status: 'resolved',
+    },
+    voteRows: [vote(0, 'opt-a'), vote(1, 'opt-b')],
+    outcomes,
+    totalVotes: 71,
+    includeRealAggregates: true,
+  })
+  assert.ok(
+    payload.run.divergenceIndex != null &&
+      Number.isFinite(payload.run.divergenceIndex),
+  )
+  assert.ok(payload.run.divergenceMeta != null)
+  assert.equal(payload.run.divergenceMeta?.index, payload.run.divergenceIndex)
+})
+
 test('abstractPersonaDisplayName never returns UUIDs', () => {
   assert.equal(
     abstractPersonaDisplayName(

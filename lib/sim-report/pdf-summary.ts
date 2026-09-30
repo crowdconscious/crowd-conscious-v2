@@ -35,11 +35,27 @@ import {
 
 function drawHeader(ctx: PdfCtx, logo: string | null, generatedAt: string): void {
   const { doc } = ctx
+  const HEADER_H = 34
+  const LOGO_H_MM = 26
+  const LOGO_W_MM = (229 / 233) * LOGO_H_MM
   doc.setFillColor(...COLOR_TEAL)
-  doc.rect(0, 0, PAGE_W, 30, 'F')
+  doc.rect(0, 0, PAGE_W, HEADER_H, 'F')
   if (logo) {
     try {
-      doc.addImage(logo, 'JPEG', MARGIN_X, 7, 22, 14)
+      const pad = 1.5
+      const boxX = MARGIN_X
+      const boxY = (HEADER_H - LOGO_H_MM) / 2 - pad
+      doc.setFillColor(255, 255, 255)
+      doc.roundedRect(
+        boxX,
+        boxY,
+        LOGO_W_MM + pad * 2,
+        LOGO_H_MM + pad * 2,
+        1.5,
+        1.5,
+        'F',
+      )
+      doc.addImage(logo, 'PNG', boxX + pad, boxY + pad, LOGO_W_MM, LOGO_H_MM)
     } catch {
       // text-only fallback
     }
@@ -63,7 +79,8 @@ function drawDistTable(
   title: string,
   rows: { label: string; share: string; count: string }[],
 ): void {
-  drawSection(ctx, title)
+  // Column header (~7mm) + first data row (~6mm).
+  drawSection(ctx, title, { minContentBelow: rows.length === 0 ? 8 : 14 })
   if (rows.length === 0) {
     drawMuted(ctx, '—')
     return
@@ -102,7 +119,7 @@ export async function generateSimSummaryPdf(
   ])
 
   drawHeader(ctx, logo, data.generatedAt)
-  ctx.y = 40
+  ctx.y = 44
 
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(14)
@@ -173,11 +190,15 @@ export async function generateSimSummaryPdf(
     )
   }
 
-  drawSection(ctx, 'Metodología (resumen)')
+  {
+    const lines = doc.splitTextToSize(data.methodologyShort, CONTENT_W) as string[]
+    const firstParaH = Math.min(lines.length, 4) * (9 * 0.42) + 3
+    drawSection(ctx, 'Metodología (resumen)', { minContentBelow: firstParaH })
+  }
   drawParagraph(ctx, data.methodologyShort, 9)
 
   // QR + link
-  drawSection(ctx, 'Ver el Pulse')
+  drawSection(ctx, 'Ver el Pulse', { minContentBelow: qr ? 36 : 10 })
   drawMuted(ctx, dash(data.pulseUrl))
   if (qr) {
     try {
