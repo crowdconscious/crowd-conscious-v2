@@ -3,12 +3,23 @@ import { createAdminClient } from '@/lib/supabase-admin';
 
 // --- Model Selection ---
 // Haiku 4.5: Fast, cheap ($1/$5 per MTok) — use for data digestion, summarization, ranking
-// Sonnet 4.5: Balanced, creative ($3/$15 per MTok) — use for content creation, social media copy
+// Sonnet 5: Balanced, creative ($2/$10 per MTok) — use for content creation, social media copy
+//   API id: https://platform.claude.com/docs/en/models/sonnet-5/overview
+//   Migration: https://platform.claude.com/docs/en/models/sonnet-5/migration-guide
+//   What's new: https://platform.claude.com/docs/en/models/sonnet-5/whats-new-sonnet-5
 // Verified via /api/test-anthropic: claude-haiku-4-5-20251001 works. Claude 3.5 models return 404.
 export const MODELS = {
-  FAST: 'claude-haiku-4-5-20251001',     // Verified working
-  CREATIVE: 'claude-sonnet-4-5-20250929', // Sonnet 4.5 (same family as Haiku 4.5)
+  FAST: 'claude-haiku-4-5-20251001', // Verified working
+  CREATIVE: 'claude-sonnet-5', // Claude Sonnet 5 (replaces retired Sonnet 4.5)
 } as const;
+
+/**
+ * Sonnet 5 turns adaptive thinking on by default. Our CREATIVE workloads are
+ * structured JSON / drafting that previously ran without thinking on Sonnet 4.5;
+ * leaving thinking on would consume max_tokens and can insert thinking blocks
+ * before text. Disable explicitly. See prompting-claude-sonnet-5 docs.
+ */
+export const CREATIVE_THINKING_OFF = { type: 'disabled' as const };
 
 // --- Token Limits ---
 // These cap how much Claude can write back. Output tokens are 5x more expensive than input.
@@ -57,11 +68,11 @@ export async function logAgentRun(params: {
   const supabase = getSupabaseAdmin();
   
   // Cost estimation based on model
-  // Haiku: $1/$5 per MTok → $0.000001 per input token, $0.000005 per output token
-  // Sonnet: $3/$15 per MTok → $0.000003 per input token, $0.000015 per output token
+  // Haiku 4.5: $1/$5 per MTok → $0.000001 per input token, $0.000005 per output token
+  // Sonnet 5: $2/$10 per MTok → $0.000002 per input token, $0.00001 per output token
   const isCreative = params.agentName === 'content-creator' || params.agentName === 'ceo-digest';
-  const inputRate = isCreative ? 0.000003 : 0.000001;
-  const outputRate = isCreative ? 0.000015 : 0.000005;
+  const inputRate = isCreative ? 0.000002 : 0.000001;
+  const outputRate = isCreative ? 0.00001 : 0.000005;
   const costEstimate = 
     ((params.tokensInput || 0) * inputRate) + 
     ((params.tokensOutput || 0) * outputRate);

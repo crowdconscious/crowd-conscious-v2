@@ -447,10 +447,15 @@ const MAX_SYNTHESIS_REASONINGS = 30
 async function loadConfig(): Promise<{
   getAnthropicClient: () => AnthropicClient
   MODELS: { FAST: string; CREATIVE: string }
+  CREATIVE_THINKING_OFF: { type: 'disabled' }
 }> {
   // Dynamic so the pure-function tests never resolve the `@/` alias (see header).
   const mod = await import('@/lib/agents/config')
-  return { getAnthropicClient: mod.getAnthropicClient, MODELS: mod.MODELS }
+  return {
+    getAnthropicClient: mod.getAnthropicClient,
+    MODELS: mod.MODELS,
+    CREATIVE_THINKING_OFF: mod.CREATIVE_THINKING_OFF,
+  }
 }
 
 async function loadAdmin(): Promise<AdminClient> {
@@ -946,7 +951,7 @@ export async function runSynthesis(
   options: RunSynthesisOptions = {},
 ): Promise<SynthesisResult> {
   const admin = options.adminClient ?? (await loadAdmin())
-  const { getAnthropicClient, MODELS } = await loadConfig()
+  const { getAnthropicClient, MODELS, CREATIVE_THINKING_OFF } = await loadConfig()
 
   const run = await readRun(admin, runId)
   if (!run.aggregates) {
@@ -989,6 +994,7 @@ export async function runSynthesis(
   const message = await client.messages.create({
     model: MODELS.CREATIVE,
     max_tokens: SYNTHESIS_MAX_TOKENS,
+    thinking: CREATIVE_THINKING_OFF,
     system: SYNTHESIS_SYSTEM_PROMPT,
     messages: [{ role: 'user', content: userPrompt }],
   })

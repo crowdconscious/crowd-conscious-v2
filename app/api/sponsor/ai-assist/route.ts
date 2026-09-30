@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase-admin'
-import { getAnthropicClient, MODELS, TOKEN_LIMITS, parseAgentJSON } from '@/lib/agents/config'
+import { getAnthropicClient, MODELS, CREATIVE_THINKING_OFF, TOKEN_LIMITS, parseAgentJSON } from '@/lib/agents/config'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -71,11 +71,12 @@ Rules:
     const message = await anthropic.messages.create({
       model: MODELS.CREATIVE,
       max_tokens: TOKEN_LIMITS.NEWS_BRIEF,
+      thinking: CREATIVE_THINKING_OFF,
       messages: [{ role: 'user', content: prompt }],
     })
 
-    const block = message.content[0]
-    const responseText = block && block.type === 'text' ? block.text : ''
+    const textBlock = message.content.find((b) => b.type === 'text')
+    const responseText = textBlock && 'text' in textBlock ? textBlock.text : ''
     const parsed = parseAgentJSON(responseText) as Record<string, unknown>
 
     const context = String(parsed.context ?? '').trim()

@@ -28,6 +28,7 @@ import {
   getSupabaseAdmin,
   logAgentRun,
   MODELS,
+  CREATIVE_THINKING_OFF,
   TOKEN_LIMITS,
   parseAgentJSON,
 } from '@/lib/agents/config'
@@ -377,6 +378,7 @@ export async function runSponsorPulseReport(
     const response = await anthropic.messages.create({
       model: MODELS.CREATIVE,
       max_tokens: TOKEN_LIMITS.SOCIAL_CONTENT,
+      thinking: CREATIVE_THINKING_OFF,
       messages: [{ role: 'user', content: prompt }],
     })
     const usage = response.usage ?? { input_tokens: 0, output_tokens: 0 }
@@ -406,9 +408,9 @@ export async function runSponsorPulseReport(
       throw new Error('Agent response missing required fields')
     }
 
-    // Cost tracking: Sonnet rates per config.ts comments.
+    // Cost tracking: Sonnet 5 rates ($2/$10 per MTok) per config.ts.
     const cost =
-      usage.input_tokens * 0.000003 + usage.output_tokens * 0.000015
+      usage.input_tokens * 0.000002 + usage.output_tokens * 0.00001
 
     const upsertPayload = {
       market_id: market.id,

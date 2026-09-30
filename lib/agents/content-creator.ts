@@ -2,7 +2,7 @@
  * Content Creator v4 + Case Study Draft.
  *
  * - runContentPackageV4({ topic?, marketId?, source? }):
- *   Manual-only. Single Sonnet 4.5 call producing the full Crowd Conscious v4
+ *   Manual-only. Single Sonnet 5 call producing the full Crowd Conscious v4
  *   content package: ES + EN blog, IG carousel, IG reel script, 5 social
  *   variants, optional Pulse market proposal. Persists as agent_content
  *   (metadata.package_v4) and also drops the ES blog as a draft blog_post.
@@ -15,6 +15,7 @@ import {
   getSupabaseAdmin,
   logAgentRun,
   MODELS,
+  CREATIVE_THINKING_OFF,
   TOKEN_LIMITS,
   parseAgentJSON,
   formatDateMX,
@@ -73,7 +74,7 @@ async function uniqueSlug(
 // CONTENT PACKAGE v4 — runContentPackageV4({ topic?, marketId?, source? })
 // ─────────────────────────────────────────────────────────────────────────────
 //
-// One Sonnet 4.5 call. The model gets:
+// One Sonnet 5 call. The model gets:
 //   - The seed topic (free-text or derived from a marketId)
 //   - A short list of related/active markets (for in-text linking)
 //   - The brand voice + structural rules from the v4 template
@@ -347,6 +348,7 @@ Devuelve EXCLUSIVAMENTE el objeto JSON descrito en tus instrucciones de sistema,
     const response = await anthropic.messages.create({
       model: MODELS.CREATIVE,
       max_tokens: TOKEN_LIMITS.PACKAGE_V4,
+      thinking: CREATIVE_THINKING_OFF,
       system: V4_SYSTEM,
       messages: [{ role: 'user', content: userMessage }],
     })
@@ -912,6 +914,7 @@ export async function runCaseStudyDraft(marketId: string): Promise<{
     const response = await anthropic.messages.create({
       model: MODELS.CREATIVE,
       max_tokens: TOKEN_LIMITS.BLOG,
+      thinking: CREATIVE_THINKING_OFF,
       system: CASE_STUDY_SYSTEM,
       messages: [{ role: 'user', content: userMessage }],
     })
