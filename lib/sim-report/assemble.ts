@@ -49,13 +49,16 @@ function optionSharesFromAggs(
 /**
  * Prefer durable track distributions when present (keyed by option label).
  * Falls back to replay aggregates (keyed by optionId).
+ * When track has shares but outcome counts are 0/missing, derive counts from
+ * share × realVoteCount so bars sum to n real.
  */
 function sharesFromTrackOrAggs(args: {
   options: { id: string; label: string }[]
   trackShares: Record<string, number> | null | undefined
   aggs: OptionAgg[] | null | undefined
+  realVoteCount?: number | null
 }): SimReportOptionShare[] {
-  const { options, trackShares, aggs } = args
+  const { options, trackShares, aggs, realVoteCount } = args
   if (trackShares && Object.keys(trackShares).length > 0) {
     const byLabel = new Map(
       Object.entries(trackShares).map(([k, v]) => [k.trim().toLowerCase(), v]),
@@ -67,15 +70,58 @@ function sharesFromTrackOrAggs(args: {
         byLabel.get(o.id.trim().toLowerCase()) ??
         null
       const agg = aggById.get(o.id)
+      let count: number | null =
+        agg != null && Number.isFinite(agg.count) ? agg.count : null
+      if (
+        (count == null || count === 0) &&
+        share != null &&
+        Number.isFinite(share) &&
+        realVoteCount != null &&
+        realVoteCount > 0
+      ) {
+        count = Math.round(share * realVoteCount)
+      }
       return {
         optionId: o.id,
         label: o.label,
         share: share != null && Number.isFinite(share) ? share : null,
-        count: agg != null && Number.isFinite(agg.count) ? agg.count : null,
+        count,
       }
     })
   }
   return optionSharesFromAggs(aggs, options)
+}
+
+function distributionHasSignal(
+  rows: SimReportOptionShare[] | null | undefined,
+): boolean {
+  if (!rows || rows.length === 0) return false
+  return rows.some(
+    (r) =>
+      (r.count != null && r.count > 0) ||
+      (r.share != null && Number.isFinite(r.share) && r.share > 0),
+  )
+}
+
+function readTrackShares(
+  dist: unknown,
+): Record<string, number> | null {
+  if (!dist || typeof dist !== 'object') return null
+  const obj = dist as {
+    option_shares?: Record<string, number>
+    confidence_weighted_shares?: Record<string, number>
+  }
+  const pick = (shares: Record<string, number> | undefined) => {
+    if (!shares || typeof shares !== 'object') return null
+    const entries = Object.entries(shares).filter(
+      ([, v]) => typeof v === 'number' && Number.isFinite(v),
+    )
+    if (entries.length === 0) return null
+    const sum = entries.reduce((s, [, v]) => s + v, 0)
+    if (sum <= 0) return null
+    return Object.fromEntries(entries)
+  }
+  return pick(obj.option_shares) ?? pick(obj.confidence_weighted_shares)
 }
 
 function buildSegments(
@@ -114,16 +160,6 @@ export type TrackDivergenceRow = {
   outcome: string
   simulated_distribution: unknown
   real_distribution: unknown
-}
-
-function readTrackShares(
-  dist: unknown,
-): Record<string, number> | null {
-  if (!dist || typeof dist !== 'object') return null
-  const shares = (dist as { option_shares?: Record<string, number> })
-    .option_shares
-  if (!shares || typeof shares !== 'object') return null
-  return shares
 }
 
 function finiteScore(value: number | null | undefined): number | null {
@@ -196,19 +232,47 @@ export function assembleSimReportData(input: AssembleReportInput): SimReportData
   const simTrack = readTrackShares(track?.simulated_distribution)
   const realTrack = readTrackShares(track?.real_distribution)
 
+  // Prefer track.has_real_data when a row exists; otherwise infer from
+  // replay aggregates (older/manual runs may lack pulse_simulation_divergence).
+  const hasRealData = track
+    ? track.has_real_data
+    : payload.realAggregates != null &&
+      payload.realAggregates.some((a) => (a.count || 0) > 0)
+
+  const realVoteCount = track
+    ? track.real_vote_count
+    : payload.realAggregates
+      ? payload.realAggregates.reduce((s, a) => s + (a.count || 0), 0)
+      : 0
+
   const simulated = sharesFromTrackOrAggs({
     options,
     trackShares: simTrack,
     aggs: payload.simAggregates,
   })
-  const real =
+
+  let real: SimReportOptionShare[] | null =
     track && !track.has_real_data
       ? null
       : sharesFromTrackOrAggs({
           options,
           trackShares: realTrack,
           aggs: payload.realAggregates,
+          realVoteCount,
         })
+
+  let realResultsNote: string | null = null
+  const outcome = track?.outcome ?? (hasRealData ? 'scored' : 'no_real_data')
+  if (outcome === 'multi_select_unsupported') {
+    realResultsNote =
+      'Votación multi-opción: el desglose simulado-vs-real por opción no aplica a este modo.'
+    real = null
+  } else if (hasRealData && realVoteCount > 0 && !distributionHasSignal(real)) {
+    // n real > 0 but outcomes/track gave all-zero bars — don't show fake zeros.
+    realResultsNote =
+      `Hay ${realVoteCount} voto${realVoteCount === 1 ? '' : 's'} real${realVoteCount === 1 ? '' : 'es'}, pero el desglose por opción no está disponible (conteos de outcomes vacíos o no sincronizados; puede deberse a ponderación por certeza).`
+    real = null
+  }
 
   const personas: SimReportPersonaSample[] = payload.votes.map((v) => ({
     personaKey: v.persona.personaKey,
@@ -226,13 +290,6 @@ export function assembleSimReportData(input: AssembleReportInput): SimReportData
     optionLabel: optionLabel.get(v.optionId) ?? null,
   }))
 
-  // Prefer track.has_real_data when a row exists; otherwise infer from
-  // replay aggregates (older/manual runs may lack pulse_simulation_divergence).
-  const hasRealData = track
-    ? track.has_real_data
-    : payload.realAggregates != null &&
-      payload.realAggregates.some((a) => (a.count || 0) > 0)
-
   const storedScore = track
     ? track.has_real_data
       ? track.divergence_score
@@ -245,12 +302,6 @@ export function assembleSimReportData(input: AssembleReportInput): SimReportData
     simAggregates: payload.simAggregates,
     realAggregates: payload.realAggregates,
   })
-
-  const realVoteCount = track
-    ? track.real_vote_count
-    : payload.realAggregates
-      ? payload.realAggregates.reduce((s, a) => s + (a.count || 0), 0)
-      : 0
 
   // "sin datos…" only when there truly is no real comparison — not when the
   // score was simply never persisted for an older run.
@@ -278,12 +329,13 @@ export function assembleSimReportData(input: AssembleReportInput): SimReportData
     divergence: {
       score: hasRealData ? score : null,
       hasRealData,
-      outcome: track?.outcome ?? (hasRealData ? 'scored' : 'no_real_data'),
+      outcome,
       realVoteCount,
       unavailableReason,
     },
     simulated,
     real: hasRealData ? real : null,
+    realResultsNote,
     methodologyShort: METHODOLOGY_SHORT,
     methodologyFull: methodologyFull({
       personaVersion,

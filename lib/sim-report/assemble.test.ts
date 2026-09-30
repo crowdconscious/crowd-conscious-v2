@@ -159,6 +159,69 @@ test('assemble keeps unavailable label when there is no real data', () => {
   assert.equal(data.divergence.hasRealData, false)
   assert.equal(data.divergence.score, null)
   assert.equal(data.divergence.unavailableReason, divergenceUnavailableLabel())
+  assert.equal(data.realResultsNote, null)
+})
+
+test('assemble does not show all-zero real bars when n real > 0', () => {
+  const payload = fixturePayload({ divergenceIndex: null, realCounts: [0, 0, 0, 0, 0] })
+  payload.realAggregates = payload.realAggregates!.map((a) => ({
+    ...a,
+    share: 0,
+    count: 0,
+  }))
+  const data = assembleSimReportData({
+    payload,
+    track: {
+      divergence_score: null,
+      has_real_data: true,
+      real_vote_count: 2,
+      outcome: 'scored',
+      simulated_distribution: null,
+      real_distribution: null,
+    },
+  })
+  assert.equal(data.divergence.realVoteCount, 2)
+  assert.equal(data.real, null)
+  assert.ok(data.realResultsNote)
+  assert.match(data.realResultsNote!, /2 voto/)
+})
+
+test('assemble derives real counts from track shares × n when outcomes are empty', () => {
+  const payload = fixturePayload({ divergenceIndex: null, realCounts: [0, 0, 0, 0, 0] })
+  payload.realAggregates = payload.realAggregates!.map((a) => ({
+    ...a,
+    share: 0,
+    count: 0,
+  }))
+  const data = assembleSimReportData({
+    payload,
+    track: {
+      divergence_score: 40,
+      has_real_data: true,
+      real_vote_count: 2,
+      outcome: 'scored',
+      simulated_distribution: null,
+      real_distribution: {
+        option_shares: {
+          Seguridad: 0.5,
+          Movilidad: 0.5,
+          'Espacio público': 0,
+          'Servicios urbanos': 0,
+          Turista: 0,
+        },
+        avg_confidence_by_option: {},
+      },
+    },
+  })
+  assert.equal(data.realResultsNote, null)
+  assert.ok(data.real)
+  const seg = data.real!.find((r) => r.label === 'Seguridad')
+  const mov = data.real!.find((r) => r.label === 'Movilidad')
+  assert.equal(seg?.share, 0.5)
+  assert.equal(seg?.count, 1)
+  assert.equal(mov?.count, 1)
+  const sum = data.real!.reduce((s, r) => s + (r.count || 0), 0)
+  assert.equal(sum, 2)
 })
 
 test('formatDateTimeEs uses America/Mexico_City', () => {

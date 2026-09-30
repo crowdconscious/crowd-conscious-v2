@@ -183,7 +183,9 @@ export async function generateSimSummaryPdf(
           count: formatCount(o.count),
         })),
   )
-  if (data.real == null || !data.divergence.hasRealData) {
+  if (data.realResultsNote) {
+    drawMuted(ctx, data.realResultsNote)
+  } else if (data.real == null || !data.divergence.hasRealData) {
     drawMuted(
       ctx,
       data.divergence.unavailableReason ?? divergenceUnavailableLabel(),
