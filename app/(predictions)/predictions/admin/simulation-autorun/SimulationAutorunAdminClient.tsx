@@ -24,6 +24,7 @@ type AutorunRow = {
   maxAttempts: number
   lastError: string | null
   costUsd: number | null
+  startedAt: string | null
   updatedAt: string
   divergence: DivergenceCell | null
 }
@@ -214,8 +215,15 @@ export default function SimulationAutorunAdminClient() {
                         ) : null}
                       </div>
                     ) : null}
-                    {row.lastError && row.status === 'failed' ? (
-                      <div className="mt-1 max-w-xs truncate text-xs text-red-400">
+                    {row.lastError ? (
+                      <div
+                        className={`mt-1 max-w-xs truncate text-xs ${
+                          row.status === 'failed'
+                            ? 'text-red-400'
+                            : 'text-amber-400/90'
+                        }`}
+                        title={row.lastError}
+                      >
                         {row.lastError}
                       </div>
                     ) : null}
@@ -227,6 +235,16 @@ export default function SimulationAutorunAdminClient() {
                     <div className="text-xs text-slate-500">
                       {row.attempts}/{row.maxAttempts}
                     </div>
+                    {row.status === 'running' && !row.simulationRunId ? (
+                      <div className="mt-0.5 text-xs text-amber-400">
+                        huérfano (sin run id)
+                      </div>
+                    ) : null}
+                    {row.status === 'running' && row.startedAt ? (
+                      <div className="mt-0.5 text-xs text-slate-500">
+                        desde {new Date(row.startedAt).toLocaleString('es-MX')}
+                      </div>
+                    ) : null}
                   </td>
                   <td className="px-3 py-2 text-slate-400">{row.source}</td>
                   <td className="px-3 py-2 font-mono text-slate-200">

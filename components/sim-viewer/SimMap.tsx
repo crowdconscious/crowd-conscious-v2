@@ -33,7 +33,7 @@ import {
   isActiveAlcaldia,
   type CdmxAlcaldiaFeatureCollection,
 } from '@/lib/sim-viewer/cdmx-alcaldias'
-import { isPersonaMappable } from '@/lib/sim-viewer/map-availability'
+import { resolvePersonaMapLocation } from '@/lib/sim-viewer/persona-map-location'
 import {
   detailViewBoxFromPoints,
   interpolateViewBox,
@@ -68,8 +68,10 @@ type Props = {
   mobileLayout?: boolean
   selectedPersonaKey?: string | null
   onDotActivate?: (personaKey: string) => void
-  /** Personas omitted from the map (no mappable AGEB / coords). */
+  /** Personas omitted from the map (no placeable coords even with fallback). */
   missingLocationCount?: number
+  /** When AGEB columns are missing, note that dots use colonia/alcaldía approx. */
+  usingLocationFallback?: boolean
   /** Hide the zoom control (e.g. while intro covers the stage). */
   hideCameraControl?: boolean
 }
@@ -170,6 +172,7 @@ export function SimMap({
   selectedPersonaKey = null,
   onDotActivate,
   missingLocationCount = 0,
+  usingLocationFallback = false,
   hideCameraControl = false,
 }: Props) {
   const wrapRef = useRef<HTMLDivElement | null>(null)
@@ -263,13 +266,10 @@ export function SimMap({
     // frame; padding keeps neighbouring alcaldía outlines faintly visible.
     for (const vote of data.votes) {
       const persona = vote.persona
-      if (!isPersonaMappable(persona, geoCodes)) continue
+      const loc = resolvePersonaMapLocation(persona, geoCodes)
+      if (!loc) continue
       const seed = mapDotSeed(data.run.id, persona.personaKey, vote.sequenceIndex)
-      const pt = jitteredMapPoint(
-        seed,
-        persona.centroidLat as number,
-        persona.centroidLng as number,
-      )
+      const pt = jitteredMapPoint(seed, loc.lat, loc.lng)
       const xy = projection.project(pt.lng, pt.lat)
       if (xy) pts.push(xy)
     }
@@ -466,13 +466,10 @@ export function SimMap({
     for (let i = 0; i < data.votes.length; i++) {
       const vote = data.votes[i]!
       const persona = vote.persona
-      if (!isPersonaMappable(persona, geoCodes)) continue
+      const loc = resolvePersonaMapLocation(persona, geoCodes)
+      if (!loc) continue
       const seed = mapDotSeed(data.run.id, persona.personaKey, vote.sequenceIndex)
-      const pt = jitteredMapPoint(
-        seed,
-        persona.centroidLat as number,
-        persona.centroidLng as number,
-      )
+      const pt = jitteredMapPoint(seed, loc.lat, loc.lng)
       const xy = projection.project(pt.lng, pt.lat)
       if (!xy) continue
       out.push({
@@ -812,6 +809,13 @@ export function SimMap({
               <p className="shrink-0 leading-tight text-slate-500">
                 {missingLocationCount} agente
                 {missingLocationCount === 1 ? '' : 's'} sin ubicación
+              </p>
+            ) : usingLocationFallback ? (
+              <p
+                className="shrink-0 leading-tight text-amber-200/80"
+                data-sim-map-fallback="1"
+              >
+                Ubicaciones aproximadas (colonia/alcaldía)
               </p>
             ) : null}
           </div>

@@ -67,7 +67,9 @@ export function SimIntro({
             compact ? 'text-sm leading-snug' : 'text-base'
           }`}
         >
-          Elige el formato y luego inicia la simulación.
+          {showMapToggle
+            ? 'Elige el formato y luego inicia la simulación.'
+            : 'Inicia la simulación cuando quieras.'}
         </p>
 
         {showMapToggle ? (

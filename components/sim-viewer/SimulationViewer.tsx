@@ -37,6 +37,7 @@ import {
 } from '@/lib/sim-viewer/autoplay'
 import type { MapCamera } from '@/lib/sim-viewer/map-camera'
 import { evaluateMapAvailability } from '@/lib/sim-viewer/map-availability'
+import { isPersonaMappable } from '@/lib/sim-viewer/map-availability-ageb'
 import {
   parseSimViewModeParam,
   simViewModeToParam,
@@ -357,13 +358,34 @@ export default function SimulationViewer({
     [data.votes, agebCodes],
   )
 
-  // If map is requested but the run fails the 90% gate, fall back to columns.
+  const usingLocationFallback = useMemo(() => {
+    if (data.votes.length === 0) return false
+    let agebHits = 0
+    for (const v of data.votes) {
+      if (isPersonaMappable(v.persona, agebCodes)) agebHits += 1
+    }
+    // Fallback note when fewer than half the placeable votes have real AGEBs.
+    return agebHits < data.votes.length * 0.5
+  }, [data.votes, agebCodes])
+
+  const runIncomplete =
+    data.run.status === 'running' || data.run.status === 'pending'
+  const runEmpty = data.votes.length === 0
+  // Show Columnas/Mapa whenever we can place agents, OR while the run is
+  // still in flight (empty votes) so the format choice is not gated on
+  // AGEB SQL / completion.
+  const showMapToggle =
+    mapAvailability.available ||
+    (runEmpty && (runIncomplete || data.run.personaCount > 0))
+
+  // If map is requested but the run fails the placement gate, fall back to columns.
+  // Keep map selected while pending (empty in-flight run) so the choice sticks.
   useEffect(() => {
-    if (mapAvailability.available) return
+    if (showMapToggle) return
     if (viewMode !== 'map') return
     setViewMode('columns')
     // eslint-disable-next-line react-hooks/exhaustive-deps -- gate only
-  }, [mapAvailability.available, viewMode])
+  }, [showMapToggle, viewMode])
 
   const shellRef = useRef<HTMLDivElement>(null)
   const [stagePx, setStagePx] = useState<{ width: number; height: number } | null>(
@@ -471,6 +493,25 @@ export default function SimulationViewer({
           </div>
         ) : null}
 
+        {/* In-flight / empty run — admin deep-link from auto-run admin */}
+        {!data.isFixture && (runIncomplete || runEmpty) ? (
+          <div
+            className={`shrink-0 border-b border-sky-500/30 bg-sky-500/10 text-center leading-tight text-sky-100 ${
+              phoneScale || mobileLayout
+                ? 'px-2 py-0.5 text-[10px]'
+                : 'px-2 py-1 text-[10px] sm:text-[11px]'
+            }`}
+            role="status"
+            data-sim-run-pending="1"
+          >
+            {runIncomplete
+              ? runEmpty
+                ? 'Simulación en curso — los votos del panel sintético aparecerán cuando termine la corrida.'
+                : 'Simulación en curso — mostrando votos parciales; actualiza al terminar.'
+              : 'Esta corrida aún no tiene votos guardados.'}
+          </div>
+        ) : null}
+
         {/* Header — hidden under endcard overlay when that beat is active */}
         <header
           className={`relative z-10 shrink-0 border-b border-slate-800/80 ${
@@ -548,7 +589,7 @@ export default function SimulationViewer({
                     : 'h-full min-h-0 flex-[1.6]'
             }`}
           >
-            {viewMode === 'map' && mapAvailability.available ? (
+            {viewMode === 'map' && showMapToggle ? (
               <SimMap
                 data={data}
                 beat={playback.beat}
@@ -561,13 +602,14 @@ export default function SimulationViewer({
                 selectedPersonaKey={activePersonaKey}
                 onDotActivate={onPersonaActivateFromView}
                 missingLocationCount={mapAvailability.missingLocation}
+                usingLocationFallback={usingLocationFallback}
               />
-            ) : viewMode === 'map' && !mapAvailability.available ? (
+            ) : viewMode === 'map' && !showMapToggle ? (
               <div
                 className="flex h-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-600 bg-[#121820] p-4 text-center text-xs text-slate-400"
                 data-sim-map-unavailable="1"
               >
-                <p>Mapa no disponible — esta corrida no tiene coordenadas AGEB suficientes.</p>
+                <p>Mapa no disponible — esta corrida no tiene ubicaciones suficientes.</p>
                 <button
                   type="button"
                   className="mt-1 rounded border border-slate-600 px-3 py-1 text-slate-200 hover:border-slate-400"
@@ -653,7 +695,7 @@ export default function SimulationViewer({
             phoneScale={phoneScale}
             viewMode={viewMode}
             onViewModeChange={setViewMode}
-            showMapToggle={mapAvailability.available}
+            showMapToggle={showMapToggle}
             onStart={handleStart}
             onExplore={handleExploreFromIntro}
           />
@@ -690,7 +732,7 @@ export default function SimulationViewer({
               onAspectRatio={setAspect}
               viewMode={viewMode}
               onViewModeChange={setViewMode}
-              showMapToggle={mapAvailability.available}
+              showMapToggle={showMapToggle}
               compact
               mobileLayout={mobileLayout}
               captureMode={captureMode}
