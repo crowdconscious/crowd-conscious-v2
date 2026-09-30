@@ -22,6 +22,7 @@ import {
 } from '@/lib/display/participation'
 import { lowNRevealCopy } from '@/lib/post-vote-reveal'
 import ShareButton from '@/components/ShareButton'
+import PulseSimAccessLinks from '@/components/pulse/PulseSimAccessLinks'
 import {
   aggregatePulseVotes,
   histogramConfidenceSum,
@@ -134,6 +135,12 @@ type Props = {
    * (admin always; public only on resolved + revealed).
    */
   simulationViewerHref?: string | null
+  /** Run id paired with simulationViewerHref / report download. */
+  simulationRunId?: string | null
+  /** SIM_REPORT_ENABLED + isReportEligible for this Pulse/run. */
+  reportEligible?: boolean
+  /** Admin / Pulse client / allowlist — full PDF vs soft upsell. */
+  reportCanFull?: boolean
   /** Full market row for inline VotePanel on shared links (Phase 1). */
   voteMarket?: Database['public']['Tables']['prediction_markets']['Row'] | null
   isAuthenticated?: boolean
@@ -165,6 +172,9 @@ export default function PulseResultClient({
   simReveal = null,
   simTeaser = false,
   simulationViewerHref = null,
+  simulationRunId = null,
+  reportEligible = false,
+  reportCanFull = false,
   voteMarket = null,
   isAuthenticated = false,
 }: Props) {
@@ -278,10 +288,13 @@ export default function PulseResultClient({
   const hasVoted = authedHasVoted || guestHasVoted
   const shouldRevealResults = isEnhancedView || isClosedOrResolved || hasVoted
   // Density honesty: below PARTICIPATION_REVEAL_THRESHOLD never show raw
-  // counts, option %, or majority copy — first-voices / "Votación abierta".
+  // counts / option % while voting is still open. Closed/resolved Pulses
+  // always show the certainty-weighted final result (results page promise).
   const densityRevealed = shouldRevealCount(totalVotes)
-  const showFullCommunityResults = shouldRevealResults && densityRevealed
-  const showLowNPostVote = shouldRevealResults && !densityRevealed && !isEnhancedView
+  const showFullCommunityResults =
+    shouldRevealResults && (densityRevealed || isClosedOrResolved || isEnhancedView)
+  const showLowNPostVote =
+    shouldRevealResults && !densityRevealed && !isEnhancedView && !isClosedOrResolved
   const lowNCopy = lowNRevealCopy(locale)
 
   const strongCount = histogramCountAtLeast(aggregates.confidenceHistogram, 8)
@@ -465,9 +478,30 @@ export default function PulseResultClient({
             ) : null}
 
             <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-500">
-              <span className="rounded-full bg-white/5 px-2 py-0.5 capitalize">{status}</span>
+              <span className="rounded-full bg-white/5 px-2 py-0.5 capitalize">
+                {status === 'resolved'
+                  ? locale === 'es'
+                    ? 'Resuelto'
+                    : 'Resolved'
+                  : status === 'closed'
+                    ? locale === 'es'
+                      ? 'Cerrado'
+                      : 'Closed'
+                    : isClosedOrResolved
+                      ? locale === 'es'
+                        ? 'Cerrado'
+                        : 'Closed'
+                      : status}
+              </span>
               <span>
-                {locale === 'es' ? 'Cierra' : 'Closes'} {closeDate}
+                {isClosedOrResolved
+                  ? locale === 'es'
+                    ? 'Cerró'
+                    : 'Closed'
+                  : locale === 'es'
+                    ? 'Cierra'
+                    : 'Closes'}{' '}
+                {closeDate}
               </span>
             </div>
 
@@ -528,6 +562,7 @@ export default function PulseResultClient({
                   locale={locale}
                   voteMode={voteMode}
                   byOutcome={aggregates.byOutcome}
+                  finalResults={isClosedOrResolved}
                   className="animate-[fade-in_300ms_ease-out]"
                 />
                 {voteMode === 'ranked' &&
@@ -898,15 +933,21 @@ export default function PulseResultClient({
                     simReveal.simulationViewerHref ?? simulationViewerHref,
                 }}
               />
-            ) : showFullCommunityResults && simulationViewerHref ? (
+            ) : null}
+
+            {/* Simulation replay + report — independent of vote-count density.
+                Gates live in the page loader (decideReplayAccess / isReportEligible). */}
+            {isClosedOrResolved && (simulationViewerHref || reportEligible) ? (
               <div className="pulse-section mt-6">
-                <Link
-                  href={simulationViewerHref}
-                  className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-amber-400/40 bg-amber-500/15 px-5 py-2.5 text-sm font-semibold text-amber-100 transition hover:border-amber-300/70 hover:bg-amber-500/25"
-                  data-sim-viewer-entry="1"
-                >
-                  {locale === 'es' ? 'Ver la simulación' : 'Watch the simulation'}
-                </Link>
+                <PulseSimAccessLinks
+                  locale={locale}
+                  pulseId={marketId}
+                  // PulseSimRevealModule already renders the sim CTA when present.
+                  simulationViewerHref={simReveal ? null : simulationViewerHref}
+                  simulationRunId={simulationRunId}
+                  reportEligible={reportEligible}
+                  reportCanFull={reportCanFull}
+                />
               </div>
             ) : null}
 

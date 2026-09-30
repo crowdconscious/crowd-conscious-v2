@@ -24,8 +24,10 @@ import type { VoteMode } from '@/lib/pulse-vote-ranking'
  * trio of "Probabilidad de la comunidad" headline + donut + horizontal
  * stacked bar that used to live on MarketDetailClient and PulseResultClient.
  *
- * Below PARTICIPATION_REVEAL_THRESHOLD: first-voices / "Votación abierta"
- * only — never option %, bars, or a thin raw count (density honesty §3.3).
+ * Below PARTICIPATION_REVEAL_THRESHOLD (while voting is still open):
+ * first-voices / "Votación abierta" only — never option %, bars, or a thin
+ * raw count (density honesty §3.3). Pass `finalResults` for closed/resolved
+ * Pulses so the certainty-weighted final outcome always shows.
  *
  * Multi mode: headline % = share of people who chose the option (does NOT
  * sum to 100). Labelled "eligieron". Options with 0 pickers are omitted.
@@ -51,12 +53,15 @@ function hasUnclosedParen(label: string): boolean {
 function formatSubtitle(
   totalVotes: number,
   avgConfidence: number | null | undefined,
-  locale: 'es' | 'en'
+  locale: 'es' | 'en',
+  finalResults: boolean
 ): string {
-  if (!shouldRevealCount(totalVotes)) {
+  if (!finalResults && !shouldRevealCount(totalVotes)) {
     return formatParticipationCount(totalVotes, locale)
   }
-  const countStr = formatParticipationCount(totalVotes, locale)
+  const countStr = formatParticipationCount(totalVotes, locale, {
+    votingClosed: finalResults,
+  })
   const confLabel = locale === 'es' ? 'confianza promedio' : 'avg confidence'
   if (typeof avgConfidence === 'number' && Number.isFinite(avgConfidence)) {
     return `${countStr} · ${confLabel} ${avgConfidence.toFixed(1)}/10`
@@ -72,6 +77,8 @@ export default function PulseResultsCard({
   className = '',
   voteMode = 'single',
   byOutcome,
+  /** Closed/resolved Pulse: always show certainty-weighted final bars. */
+  finalResults = false,
 }: {
   outcomes: PulseResultsCardOutcome[]
   totalVotes: number
@@ -80,8 +87,9 @@ export default function PulseResultsCard({
   className?: string
   voteMode?: VoteMode
   byOutcome?: Record<string, PulseOutcomeVoteStats>
+  finalResults?: boolean
 }) {
-  const lowN = !shouldRevealCount(totalVotes)
+  const lowN = !finalResults && !shouldRevealCount(totalVotes)
   const lowNCopy = lowNRevealCopy(locale)
   const isMulti = voteMode === 'multi'
 
@@ -155,7 +163,7 @@ export default function PulseResultsCard({
   const tied = rows.length >= 2 && maxKey === minKey
   const winnerId = !tied && rows.length ? rows[0].id : null
 
-  const subtitleLine = formatSubtitle(totalVotes, avgConfidence, locale)
+  const subtitleLine = formatSubtitle(totalVotes, avgConfidence, locale, finalResults)
   const heading = locale === 'es' ? 'Resultados' : 'Results'
   const multiHint =
     locale === 'es'
