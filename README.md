@@ -74,7 +74,7 @@ re-prompting pass (Apr 2026), schedules and ownership look like this:
 | Agent | Trigger | Output |
 |-------|---------|--------|
 | **News Monitor** | Manual (admin "Run Now") | 3-bucket: pulse opportunities, blog topic ideas, skip summary. Surfaces "✨ Generate v4 content" buttons in the dashboard. |
-| **Content Creator v4** | Manual, per-topic or per-marketId | Single Sonnet 4.5 call → ES + EN blog draft, IG carousel ES/EN, reel script, 5 social posts, optional Pulse market proposal, image prompts. Saved as `agent_content` (`metadata.package_v4`) + draft `blog_post`. |
+| **Content Creator v4** | Manual, per-topic or per-marketId | Single Sonnet 5 call → ES + EN blog draft, IG carousel ES/EN, reel script, 5 social posts, optional Pulse market proposal, image prompts. Saved as `agent_content` (`metadata.package_v4`) + draft `blog_post`. |
 | **Inbox Curator** | Manual | 3-bucket triage of public submissions: respond_today / park / archive, with reasons and suggested-market hooks. |
 | **CEO Digest** | Cron Mon 10:00 CDMX | JSON dashboard email: key metrics, do-this-week actions with deadlines, watch item, sponsor outreach with WhatsApp message. |
 | **Newsletter** | Cron M/W/F 08:00 CDMX | Featured blog + Pulses + markets, with a Haiku polish step generating intro + rotating subject candidates. |
@@ -131,7 +131,7 @@ Currently archived:
 - **Database**: Supabase (Postgres + RLS)
 - **Payments**: Stripe
 - **Email**: Resend
-- **AI**: Anthropic (Claude — Haiku 4.5 for batch, Sonnet 4.5 for content packages)
+- **AI**: Anthropic (Claude — Haiku 4.5 for batch, Sonnet 5 for content packages)
 - **Hosting**: Vercel
 
 ## Deploy

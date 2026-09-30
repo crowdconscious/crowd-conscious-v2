@@ -15,8 +15,11 @@ import type { LaunchAlcaldia } from '@/lib/geo/cdmx'
 
 export const PROMPT_VERSION = 'senal-express-oficio-v1'
 
-/** Low temperature: this is formal drafting, not creative writing. */
-export const DRAFT_TEMPERATURE = 0.3
+/**
+ * Sonnet 5 rejects non-default temperature/top_p/top_k (400). Formality is
+ * enforced via the system prompt + validator, not sampling params.
+ * @see https://platform.claude.com/docs/en/models/sonnet-5/whats-new-sonnet-5
+ */
 export const DRAFT_MAX_TOKENS = 1200
 
 /**

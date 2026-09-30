@@ -16,6 +16,7 @@ import {
   getSupabaseAdmin,
   logAgentRun,
   MODELS,
+  CREATIVE_THINKING_OFF,
   TOKEN_LIMITS,
   formatDateMX,
   mexicoCityNow,
@@ -608,6 +609,7 @@ Produce the JSON dashboard exactly per system instructions.`
     const response = await anthropic.messages.create({
       model: MODELS.CREATIVE,
       max_tokens: TOKEN_LIMITS.DIGEST,
+      thinking: CREATIVE_THINKING_OFF,
       system: systemMessage,
       messages: [{ role: 'user', content: userMessage }],
     })

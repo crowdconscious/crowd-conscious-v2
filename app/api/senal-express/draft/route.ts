@@ -8,6 +8,7 @@ import { getCurrentUserFromRequest } from '@/lib/auth-server'
 import {
   getAnthropicClient,
   MODELS,
+  CREATIVE_THINKING_OFF,
   parseAgentJSON,
   logAgentRun,
 } from '@/lib/agents/config'
@@ -21,7 +22,6 @@ import {
   OFICIO_SYSTEM_PROMPT,
   OFICIO_RETRY_REMINDER,
   buildOficioUserPrompt,
-  DRAFT_TEMPERATURE,
   DRAFT_MAX_TOKENS,
 } from '@/lib/senal-express/prompt'
 import { validateOficioDraft } from '@/lib/senal-express/validator'
@@ -41,7 +41,7 @@ export const dynamic = 'force-dynamic'
  * error state — the /queja page shows a coming-soon screen).
  *
  * Turns a citizen's sentence + location + category into a formal Mexican-Spanish
- * oficio via MODELS.CREATIVE (low temperature), returned as strict JSON. The
+ * oficio via MODELS.CREATIVE (Sonnet 5), returned as strict JSON. The
  * no-laws / no-named-individuals guardrail is enforced BOTH in the system prompt
  * AND by a deterministic post-parse validator (lib/senal-express/validator.ts):
  * on any violation we retry ONCE with a stricter reminder, then fail. Persists a
@@ -176,7 +176,7 @@ export async function POST(request: NextRequest) {
       const message = await client.messages.create({
         model: MODELS.CREATIVE,
         max_tokens: DRAFT_MAX_TOKENS,
-        temperature: DRAFT_TEMPERATURE,
+        thinking: CREATIVE_THINKING_OFF,
         system: OFICIO_SYSTEM_PROMPT,
         messages,
       })

@@ -42,7 +42,7 @@ import {
 } from '../lib/simulation/persona-allocation.ts';
 // Model id + Anthropic client come from the repo's single source of truth
 // (lib/agents/config.ts) — never hardcode a model id in a second place (§1).
-import { MODELS, getAnthropicClient, parseAgentJSON } from '../lib/agents/config.ts';
+import { MODELS, CREATIVE_THINKING_OFF, getAnthropicClient, parseAgentJSON } from '../lib/agents/config.ts';
 
 loadEnv({ path: resolve(process.cwd(), '.env.local'), override: true });
 
@@ -438,7 +438,9 @@ async function callModel(
   const resp = await client.messages.create({
     model: MODELS.CREATIVE,
     max_tokens: 700,
-    temperature: 1, // variety across the panel (§5.4 uses 1.0 for diversity)
+    // Sonnet 5 rejects non-default temperature (400). Variety comes from
+    // per-cell prompts + stratified education draws, not sampling params.
+    thinking: CREATIVE_THINKING_OFF,
     system: GEN_SYSTEM,
     messages: [{ role: 'user', content: buildUserPrompt(cell, education) }],
   });
