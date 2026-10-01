@@ -6,6 +6,8 @@ import { createConsciousLocationVotingMarket } from '@/lib/locations/create-voti
 import { isAdminUser } from '@/lib/auth/is-admin'
 import { scheduleNotifyLocationPublished } from '@/lib/expo-push'
 import { notifyLocationCertifiedEvaluators } from '@/lib/resolution-notify'
+import { normalizeInstagramHandle } from '@/lib/locations/instagram-handle'
+import { normalizePlaceText } from '@/lib/locations/place-text'
 
 async function requireAdmin() {
   const user = await getCurrentUser()
@@ -81,7 +83,18 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   for (const f of stringFields) {
     if (f in body && body[f] !== undefined) {
-      patch[f] = body[f] === null || body[f] === '' ? null : String(body[f])
+      if (body[f] === null || body[f] === '') {
+        patch[f] = null
+        continue
+      }
+      const asString = String(body[f])
+      if (f === 'instagram_handle') {
+        patch[f] = normalizeInstagramHandle(asString)
+      } else if (f === 'neighborhood' || f === 'address') {
+        patch[f] = normalizePlaceText(asString)
+      } else {
+        patch[f] = asString
+      }
     }
   }
 

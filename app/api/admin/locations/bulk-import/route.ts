@@ -6,6 +6,8 @@ import { createClient } from '@/lib/supabase-server'
 import { LOCATION_CATEGORY_FORM_OPTIONS } from '@/lib/locations/categories'
 import { slugifyLocationName } from '@/lib/locations/slug'
 import { isAdminUser } from '@/lib/auth/is-admin'
+import { normalizeInstagramHandle } from '@/lib/locations/instagram-handle'
+import { normalizePlaceText } from '@/lib/locations/place-text'
 
 export const dynamic = 'force-dynamic'
 
@@ -194,17 +196,16 @@ export async function POST(request: Request) {
 
   let inserted = 0
   for (const v of validated) {
-    const ig = v.row.instagram_handle?.trim() || null
     const insertRow = {
       name: v.row.name.trim(),
       slug: v.slug,
       category: v.row.category as 'restaurant',
       city: v.row.city?.trim() || 'CDMX',
-      neighborhood: v.row.neighborhood?.trim() || null,
-      address: v.row.address?.trim() || null,
+      neighborhood: normalizePlaceText(v.row.neighborhood),
+      address: normalizePlaceText(v.row.address),
       latitude: typeof v.row.latitude === 'number' ? v.row.latitude : null,
       longitude: typeof v.row.longitude === 'number' ? v.row.longitude : null,
-      instagram_handle: ig ? (ig.startsWith('@') ? ig.slice(1) : ig) : null,
+      instagram_handle: normalizeInstagramHandle(v.row.instagram_handle),
       website_url: v.row.website?.trim() || null,
       contact_email: v.row.contact_email?.trim() || null,
       description: v.row.description_es?.trim() || null,
