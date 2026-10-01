@@ -10,6 +10,8 @@ import {
 } from '@/lib/locations/categories'
 import { CONSCIOUS_VALUE_OPTIONS, parseMetadataValues, type ConsciousValueKey } from '@/lib/locations/conscious-values'
 import { slugifyLocationName } from '@/lib/locations/slug'
+import { normalizeInstagramHandle } from '@/lib/locations/instagram-handle'
+import { normalizePlaceText } from '@/lib/locations/place-text'
 import type { Json } from '@/types/database'
 import { LocationCreatedShareCard } from './LocationCreatedShareCard'
 
@@ -165,15 +167,15 @@ export default function LocationFormClient({ action }: { action: string }) {
         slug: slug.trim(),
         category,
         city,
-        neighborhood: neighborhood || null,
-        address: address || null,
+        neighborhood: normalizePlaceText(neighborhood),
+        address: normalizePlaceText(address),
         why_conscious: whyConscious.trim(),
         why_conscious_en: whyConsciousEn || null,
         description: description || null,
         description_en: descriptionEn || null,
         user_benefits: userBenefits || null,
         user_benefits_en: userBenefitsEn || null,
-        instagram_handle: instagram || null,
+        instagram_handle: normalizeInstagramHandle(instagram),
         website_url: website || null,
         contact_email: email || null,
         cover_image_url: coverUrl,

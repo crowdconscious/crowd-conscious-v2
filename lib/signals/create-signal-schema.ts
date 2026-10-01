@@ -279,5 +279,20 @@ export function normalizeLocality(
 ): string | null {
   if (raw === undefined || raw === null) return null
   const trimmed = raw.trim()
-  return trimmed.length > 0 ? trimmed : null
+  if (!trimmed) return null
+  // Mirror civic-reputation place placeholders so '-' never becomes locality:-
+  const lower = trimmed.toLowerCase()
+  if (
+    lower === '-' ||
+    lower === '—' ||
+    lower === '–' ||
+    lower === 's/n' ||
+    lower === 'sn' ||
+    lower === 'n/a' ||
+    lower === 'na' ||
+    /^[\s\-–—._/\\|,;:]+$/u.test(trimmed)
+  ) {
+    return null
+  }
+  return trimmed
 }

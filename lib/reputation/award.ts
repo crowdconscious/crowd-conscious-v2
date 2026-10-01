@@ -16,6 +16,9 @@ import {
   type CivicReputationActionType,
   type CivicReputationDomain,
 } from '@/lib/reputation/domains'
+import {
+  isPlaceholderPlaceText,
+} from '@/lib/locations/place-text'
 
 export type AwardCivicReputationResult = {
   success: boolean
@@ -55,7 +58,19 @@ export async function awardCivicReputation(
     return { success: false, error: 'invalid_points' }
   }
 
-  const alcaldiaSlug = args.alcaldiaSlug.trim() || 'cdmx'
+  const rawSlug = args.alcaldiaSlug.trim()
+  const alcaldiaSlug =
+    !rawSlug ||
+    rawSlug === '-' ||
+    rawSlug === 'locality:-' ||
+    rawSlug === 'locality:' ||
+    isPlaceholderPlaceText(rawSlug)
+      ? 'cdmx'
+      : rawSlug
+
+  const rawLabel = args.alcaldiaLabel?.trim() ?? null
+  const alcaldiaLabel =
+    rawLabel && !isPlaceholderPlaceText(rawLabel) ? rawLabel : null
 
   const { data, error } = await admin.rpc('award_civic_reputation', {
     p_user_id: args.userId,
@@ -64,7 +79,7 @@ export async function awardCivicReputation(
     p_points: points,
     p_domain: args.domain,
     p_alcaldia_slug: alcaldiaSlug,
-    p_alcaldia_label: args.alcaldiaLabel ?? null,
+    p_alcaldia_label: alcaldiaLabel,
     p_object_id: args.objectId ?? null,
     p_metadata: args.metadata ?? {},
   })
@@ -159,6 +174,7 @@ export type CivicReputationSnapshot = {
     id: string
     domain: CivicReputationDomain
     alcaldia: string
+    alcaldiaSlug: string
     actionType: CivicReputationActionType
     points: number
     created_at: string
@@ -200,7 +216,8 @@ export async function fetchOwnCivicReputation(
       }
       return {
         alcaldiaSlug: r.alcaldia_slug,
-        alcaldia: r.alcaldia_label?.trim() || r.alcaldia_slug,
+        // Raw DB label (may be placeholder/null); UI formats via formatAlcaldiaLabel.
+        alcaldia: r.alcaldia_label?.trim() ?? '',
         domain: r.domain as CivicReputationDomain,
         points: Number(r.points) || 0,
         eventCount: Number(r.event_count) || 0,
@@ -219,10 +236,7 @@ export async function fetchOwnCivicReputation(
 
     breakdown = (scores ?? []).map((row) => ({
       alcaldiaSlug: row.alcaldia_slug as string,
-      alcaldia:
-        ((row.alcaldia_label as string | null)?.trim() ||
-          (row.alcaldia_slug as string)) ??
-        'cdmx',
+      alcaldia: ((row.alcaldia_label as string | null)?.trim() ?? '') as string,
       domain: row.domain as CivicReputationDomain,
       points: Number(row.points) || 0,
       eventCount: Number(row.event_count) || 0,
@@ -262,7 +276,8 @@ export async function fetchOwnCivicReputation(
       return {
         id: e.id,
         domain: e.domain as CivicReputationDomain,
-        alcaldia: e.alcaldia_label?.trim() || e.alcaldia_slug,
+        alcaldia: e.alcaldia_label?.trim() ?? '',
+        alcaldiaSlug: e.alcaldia_slug,
         actionType: e.action_type as CivicReputationActionType,
         points: Number(e.points) || 0,
         created_at: e.created_at,

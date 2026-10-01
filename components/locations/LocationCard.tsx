@@ -10,6 +10,13 @@ import { parseMetadataValues } from '@/lib/locations/conscious-values'
 import { ValueBadgeRow } from '@/components/locations/ValueBadge'
 import { trackShare } from '@/lib/share-utils'
 import { scoreInVotingLabel } from '@/lib/display/participation'
+import {
+  formatInstagramHandle,
+  instagramProfileUrl,
+  normalizeInstagramHandle,
+} from '@/lib/locations/instagram-handle'
+import { normalizePlaceText } from '@/lib/locations/place-text'
+import { pickLocalizedText } from '@/lib/locations/localized-text'
 
 export type LocationCardRow = {
   id: string
@@ -55,20 +62,24 @@ export function LocationCard({
   locale: 'es' | 'en'
   linkPrefix?: string
 }) {
-  const why =
-    locale === 'es'
-      ? location.why_conscious || location.why_conscious_en
-      : location.why_conscious_en || location.why_conscious
-  const benefits =
-    locale === 'es'
-      ? location.user_benefits || location.user_benefits_en
-      : location.user_benefits_en || location.user_benefits
+  const why = pickLocalizedText(
+    locale,
+    location.why_conscious,
+    location.why_conscious_en
+  )
+  const benefits = pickLocalizedText(
+    locale,
+    location.user_benefits,
+    location.user_benefits_en
+  )
   const catLabel = locationCategoryLabel(location.category, locale)
-  const neighborhood = location.neighborhood
+  const neighborhood = normalizePlaceText(location.neighborhood)
   const placeLine = [neighborhood, location.city].filter(Boolean).join(', ')
   const score = location.conscious_score
   const votes = location.total_votes ?? 0
-  const ig = location.instagram_handle?.replace(/^@/, '') ?? ''
+  const igHandle = normalizeInstagramHandle(location.instagram_handle)
+  const igLabel = formatInstagramHandle(location.instagram_handle)
+  const igUrl = instagramProfileUrl(location.instagram_handle)
   const valueKeys = parseMetadataValues(location.metadata)
   const [copied, setCopied] = useState(false)
 
@@ -166,16 +177,16 @@ export function LocationCard({
           </p>
         ) : null}
 
-        {ig ? (
+        {igHandle && igUrl ? (
           <a
-            href={`https://instagram.com/${ig}`}
+            href={igUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 text-sm font-medium text-emerald-400 hover:text-emerald-300"
           >
             <Instagram className="h-4 w-4" />
             <span>
-              @{ig} ·{' '}
+              {igLabel} ·{' '}
               <span className="font-normal text-slate-400 hover:text-emerald-300">
                 {locale === 'es' ? 'Síguelos en Instagram' : 'Follow on Instagram'}
               </span>
@@ -213,9 +224,9 @@ export function LocationCard({
           >
             {locale === 'es' ? 'Votar ↗' : 'Vote ↗'}
           </Link>
-          {ig ? (
+          {igHandle && igUrl ? (
             <a
-              href={`https://instagram.com/${ig}`}
+              href={igUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex min-h-[44px] items-center rounded-lg border border-[#2d3748] px-4 py-2 text-sm text-slate-300 hover:border-emerald-500/40"

@@ -8,9 +8,11 @@ import {
   type CivicReputationActionType,
   type CivicReputationDomain,
 } from '@/lib/reputation/domains'
+import { formatAlcaldiaLabel } from '@/lib/locations/place-text'
 
 type BreakdownRow = {
   alcaldia: string
+  alcaldiaSlug: string
   domain: CivicReputationDomain
   points: number
   updated_at: string
@@ -20,6 +22,7 @@ type RecentRow = {
   id: string
   domain: CivicReputationDomain
   alcaldia: string
+  alcaldiaSlug: string
   actionType: CivicReputationActionType
   points: number
   created_at: string
@@ -47,12 +50,13 @@ export function ReputacionClient({
 }: Props) {
   const isEs = locale === 'es'
 
-  // Group by alcaldía for the private breakdown.
+  // Group by display label (localized) for the private breakdown.
   const byAlcaldia = new Map<string, BreakdownRow[]>()
   for (const row of breakdown) {
-    const list = byAlcaldia.get(row.alcaldia) ?? []
-    list.push(row)
-    byAlcaldia.set(row.alcaldia, list)
+    const label = formatAlcaldiaLabel(row.alcaldia, row.alcaldiaSlug, locale)
+    const list = byAlcaldia.get(label) ?? []
+    list.push({ ...row, alcaldia: label })
+    byAlcaldia.set(label, list)
   }
 
   return (
@@ -126,7 +130,7 @@ export function ReputacionClient({
               <ul className="space-y-2">
                 {rows.map((row) => (
                   <li
-                    key={`${row.alcaldia}-${row.domain}`}
+                    key={`${row.alcaldiaSlug}-${row.domain}`}
                     className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-900/40 px-4 py-3"
                   >
                     <span className="text-sm text-slate-200">
@@ -158,7 +162,7 @@ export function ReputacionClient({
                   {civicReputationActionLabel(ev.actionType, locale)}
                 </p>
                 <p className="mt-1 text-sm text-slate-300">
-                  {ev.alcaldia} ·{' '}
+                  {formatAlcaldiaLabel(ev.alcaldia, ev.alcaldiaSlug, locale)} ·{' '}
                   {civicReputationDomainLabel(ev.domain, locale)} · +{ev.points}
                 </p>
                 <p className="mt-2 text-xs text-slate-500">

@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { readFile } from 'fs/promises'
 import { join } from 'path'
 import { locationCategoryLabel } from '@/lib/locations/categories'
+import { formatInstagramHandle, normalizeInstagramHandle } from '@/lib/locations/instagram-handle'
 
 // Mirrors /api/og/market — runs in Node runtime so we can read the
 // local logo file and fetch the location cover image with a buffer.
@@ -89,7 +90,8 @@ export async function GET(
           ? rawScore
           : Number(rawScore)
     const scoreRevealed = score != null && votes >= REVEAL_THRESHOLD
-    const ig = (location.instagram_handle as string | null)?.replace(/^@/, '') ?? ''
+    const ig = normalizeInstagramHandle(location.instagram_handle as string | null) ?? ''
+    const igLabel = formatInstagramHandle(location.instagram_handle as string | null)
     const why =
       locale === 'es'
         ? (location.why_conscious as string | null) ||
@@ -298,7 +300,7 @@ export async function GET(
                     color: '#94a3b8',
                   }}
                 >
-                  @{ig}
+                  {igLabel}
                 </div>
               ) : null}
             </div>

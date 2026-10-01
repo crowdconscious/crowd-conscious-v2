@@ -14,6 +14,16 @@ import { ValueBadgeRow } from '@/components/locations/ValueBadge'
 import { LocationCoverImage, LocationLogoImage } from '@/components/locations/LocationRemoteImage'
 import LocationOffersSection from '@/components/perks/LocationOffersSection'
 import { scoreInVotingLabel } from '@/lib/display/participation'
+import {
+  formatInstagramHandle,
+  instagramProfileUrl,
+  normalizeInstagramHandle,
+} from '@/lib/locations/instagram-handle'
+import { normalizePlaceText } from '@/lib/locations/place-text'
+import {
+  pickLocalizedText,
+  textsEqualIgnoreCase,
+} from '@/lib/locations/localized-text'
 
 type OutcomeRow = {
   id: string
@@ -80,18 +90,24 @@ export default function LocationDetailClient({
   const yesId = outcomes[0]?.id
   const noId = outcomes[1]?.id
 
-  const desc =
-    locale === 'es'
-      ? location.description || location.description_en
-      : location.description_en || location.description
-  const benefits =
-    locale === 'es'
-      ? location.user_benefits || location.user_benefits_en
-      : location.user_benefits_en || location.user_benefits
+  const desc = pickLocalizedText(
+    locale,
+    location.description,
+    location.description_en
+  )
+  const benefits = pickLocalizedText(
+    locale,
+    location.user_benefits,
+    location.user_benefits_en
+  )
+  const whyRaw = pickLocalizedText(
+    locale,
+    location.why_conscious,
+    location.why_conscious_en
+  )
+  // Hide "Por qué es Consciente" when it duplicates the description.
   const why =
-    locale === 'es'
-      ? location.why_conscious || location.why_conscious_en
-      : location.why_conscious_en || location.why_conscious
+    whyRaw && !textsEqualIgnoreCase(whyRaw, desc) ? whyRaw : null
 
   const submit = async () => {
     if (!location.current_market_id) return
@@ -165,7 +181,11 @@ export default function LocationDetailClient({
 
   const score = location.conscious_score
   const votes = location.total_votes ?? 0
-  const ig = location.instagram_handle?.replace(/^@/, '') ?? ''
+  const igHandle = normalizeInstagramHandle(location.instagram_handle)
+  const igLabel = formatInstagramHandle(location.instagram_handle)
+  const igUrl = instagramProfileUrl(location.instagram_handle)
+  const neighborhood = normalizePlaceText(location.neighborhood)
+  const address = normalizePlaceText(location.address)
   const valueKeys = parseMetadataValues(location.metadata)
 
   const badgeClass =
@@ -225,7 +245,7 @@ export default function LocationDetailClient({
           <div>
             <h1 className="text-2xl font-bold text-white">{location.name}</h1>
             <p className="text-slate-400">
-              {location.neighborhood ? `${location.neighborhood}, ` : ''}
+              {neighborhood ? `${neighborhood}, ` : ''}
               {location.city} · {locationCategoryLabel(location.category, locale)}
             </p>
             {location.certified_at && (
@@ -237,7 +257,14 @@ export default function LocationDetailClient({
           </div>
         </div>
 
-        {why ? <p className="mb-4 text-lg leading-relaxed text-slate-200">{why}</p> : null}
+        {why ? (
+          <div className="mb-4">
+            <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-slate-400">
+              {locale === 'es' ? 'Por qué es Consciente' : 'Why it is Conscious'}
+            </h2>
+            <p className="text-lg leading-relaxed text-slate-200">{why}</p>
+          </div>
+        ) : null}
         {valueKeys.length > 0 ? (
           <ValueBadgeRow values={valueKeys} locale={locale} size="sm" className="mb-4" />
         ) : null}
@@ -253,10 +280,10 @@ export default function LocationDetailClient({
           </p>
         ) : null}
 
-        {location.address ? (
+        {address ? (
           <p className="mb-2 flex items-start gap-2 text-slate-400">
             <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
-            {location.address}
+            {address}
           </p>
         ) : null}
         {location.website_url ? (
@@ -270,14 +297,15 @@ export default function LocationDetailClient({
             {location.website_url.replace(/^https?:\/\//, '')}
           </a>
         ) : null}
-        {ig ? (
+        {igHandle && igUrl ? (
           <a
-            href={`https://instagram.com/${ig}`}
+            href={igUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="mb-8 flex items-center gap-2 text-slate-400 hover:text-emerald-400"
           >
-            <Instagram className="h-4 w-4" />@{ig}
+            <Instagram className="h-4 w-4" />
+            {igLabel}
           </a>
         ) : (
           <div className="mb-8" />

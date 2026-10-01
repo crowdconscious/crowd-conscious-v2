@@ -4,6 +4,8 @@ import { getCurrentUser } from '@/lib/auth-server'
 import { createClient } from '@/lib/supabase-server'
 import { createConsciousLocationVotingMarket } from '@/lib/locations/create-voting-market'
 import { isAdminUser } from '@/lib/auth/is-admin'
+import { normalizeInstagramHandle } from '@/lib/locations/instagram-handle'
+import { normalizePlaceText } from '@/lib/locations/place-text'
 
 async function requireAdmin() {
   const user = await getCurrentUser()
@@ -78,8 +80,12 @@ export async function POST(request: Request) {
     slug,
     category: (body.category as string) || 'restaurant',
     city: (body.city as string) || 'CDMX',
-    neighborhood: (body.neighborhood as string) || null,
-    address: (body.address as string) || null,
+    neighborhood: normalizePlaceText(
+      typeof body.neighborhood === 'string' ? body.neighborhood : null
+    ),
+    address: normalizePlaceText(
+      typeof body.address === 'string' ? body.address : null
+    ),
     latitude: lat,
     longitude: lng,
     description: (body.description as string) || null,
@@ -88,7 +94,9 @@ export async function POST(request: Request) {
     why_conscious_en: (body.why_conscious_en as string) || null,
     user_benefits: (body.user_benefits as string) || null,
     user_benefits_en: (body.user_benefits_en as string) || null,
-    instagram_handle: (body.instagram_handle as string) || null,
+    instagram_handle: normalizeInstagramHandle(
+      typeof body.instagram_handle === 'string' ? body.instagram_handle : null
+    ),
     website_url: (body.website_url as string) || null,
     contact_email: (body.contact_email as string) || null,
     phone: (body.phone as string) || null,
