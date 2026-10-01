@@ -5,10 +5,13 @@
 --   - CREATE OR REPLACE functions
 --   - UPDATEs guarded by WHERE predicates
 --   - Scores rebuilt from the events ledger (no re-award / no double-count)
+--   - Wrapped in a single transaction (BEGIN…COMMIT) so a failure rolls back
 --
 -- Francisco: apply this file in the Supabase SQL editor (shared project).
 -- Do NOT apply from CI. Mobile app continues to read the same tables/RPCs;
 -- slug/label cleanup is backward compatible (locality:- → cdmx).
+
+BEGIN;
 
 -- ---------------------------------------------------------------------------
 -- 1. Place-text normalizer ( '-', 'S/N', punctuation-only → NULL )
@@ -570,12 +573,16 @@ WHERE slug = 'acapulco-vintage-store'
 --    Then rebuild scores from the ledger (merge keys without double-count).
 -- ---------------------------------------------------------------------------
 
--- Location-evaluation events: re-resolve from object_id → conscious_locations
+-- Location-evaluation events: re-resolve from object_id → conscious_locations.
+-- Must be a correlated subquery — UPDATE … FROM cannot reference the target
+-- row (Postgres 42P10: invalid reference to FROM-clause entry for table "e").
 UPDATE public.civic_reputation_events e
-SET
-  alcaldia_slug = coalesce(g.alcaldia_slug, 'cdmx'),
-  alcaldia_label = g.alcaldia_label
-FROM public.civic_reputation_resolve_location_geo(e.object_id) AS g
+SET (alcaldia_slug, alcaldia_label) = (
+  SELECT
+    coalesce(g.alcaldia_slug, 'cdmx'),
+    g.alcaldia_label
+  FROM public.civic_reputation_resolve_location_geo(e.object_id) AS g
+)
 WHERE e.action_type = 'location_evaluation'
   AND e.object_id IS NOT NULL
   AND (
@@ -611,3 +618,5 @@ SELECT
   max(created_at)
 FROM public.civic_reputation_events
 GROUP BY user_id, alcaldia_slug, domain;
+
+COMMIT;
