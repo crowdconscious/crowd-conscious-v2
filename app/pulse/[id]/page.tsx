@@ -42,8 +42,12 @@ import {
 } from '@/lib/sim-report/access'
 import { isSimReportEnabled } from '@/lib/sim-report/flag'
 import { isStandOnly } from '@/lib/pulse/discovery-filters'
+import {
+  buildPulseRedirectPath,
+  parseVoteAttribution,
+} from '@/lib/pulse/vote-attribution'
 
-type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ token?: string }> }
+type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ token?: string; via?: string; src?: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params
@@ -136,7 +140,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function PulseResultPage({ params, searchParams }: Props) {
   const { id } = await params
-  const { token } = await searchParams
+  const { token, via: viaParam, src: srcParam } = await searchParams
+  const landingAttr = parseVoteAttribution({ via: viaParam, src: srcParam })
   const admin = createAdminClient()
 
   const { data: market, error } = await admin
@@ -212,7 +217,11 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
     !!user && (market as { created_by?: string | null }).created_by === user.id
   if (isDraft && !isAdmin && !isCreator) {
     if (!user) {
-      redirect(`/login?redirect=${encodeURIComponent(`/pulse/${id}`)}`)
+      redirect(
+        `/login?redirect=${encodeURIComponent(
+          buildPulseRedirectPath(id, landingAttr)
+        )}`
+      )
     }
     notFound()
   }

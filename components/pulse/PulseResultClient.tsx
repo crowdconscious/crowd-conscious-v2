@@ -33,6 +33,7 @@ import {
   type PulseVoteAggregates,
 } from '@/lib/pulse-vote-aggregates'
 import type { Database } from '@/types/database'
+import { captureVoteAttributionFromSearchParams } from '@/lib/pulse/vote-attribution'
 
 export type PulseVoteRow = {
   id: string
@@ -193,6 +194,13 @@ export default function PulseResultClient({
   useEffect(() => {
     if (typeof window === 'undefined') return
     setGuestHasVoted(!!getVotedGuestIdForMarket(marketId))
+  }, [marketId])
+
+  // Capture via/src from the landing URL (forwarded by /stand) so votes can
+  // attribute QR vs Instagram even if the user navigates within the tab.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    captureVoteAttributionFromSearchParams(new URLSearchParams(window.location.search))
   }, [marketId])
 
   const supabase = useMemo(() => createClient(), [])

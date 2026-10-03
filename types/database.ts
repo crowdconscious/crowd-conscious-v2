@@ -607,6 +607,10 @@ export interface Database {
           rankings?: Json | null
           /** Required when a selected/ranked outcome has is_other. Max 120. Migration 256. */
           other_text?: string | null
+          /** Optional landing attribution (e.g. semana-accion). Migration 275. */
+          via?: string | null
+          /** Optional landing source (e.g. qr, social_ig). Migration 275. */
+          src?: string | null
         }
         Insert: {
           id?: string
@@ -624,6 +628,8 @@ export interface Database {
           reasoning?: string | null
           rankings?: Json | null
           other_text?: string | null
+          via?: string | null
+          src?: string | null
         }
         Update: {
           id?: string
@@ -641,6 +647,8 @@ export interface Database {
           reasoning?: string | null
           rankings?: Json | null
           other_text?: string | null
+          via?: string | null
+          src?: string | null
         }
         Relationships: []
       }

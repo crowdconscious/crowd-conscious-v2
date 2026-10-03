@@ -43,6 +43,10 @@ import {
   formatParticipationCount,
   shouldRevealCount,
 } from '@/lib/display/participation'
+import {
+  buildPulseRedirectPath,
+  readStoredVoteAttribution,
+} from '@/lib/pulse/vote-attribution'
 
 // All three fields are now first-class columns on prediction_markets (see
 // migrations 126/129/140 + types/database.ts). Re-declaring them here as
@@ -428,6 +432,7 @@ export function VotePanel({
           selections: selectionsPayload,
           otherText: otherPayload ?? null,
         }
+        const attribution = readStoredVoteAttribution()
         const res = await fetch('/api/votes/anonymous', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -440,6 +445,8 @@ export function VotePanel({
             rankings: rankingsPayload,
             selections: selectionsPayload,
             other_text: otherPayload,
+            ...(attribution?.via ? { via: attribution.via } : {}),
+            ...(attribution?.src ? { src: attribution.src } : {}),
           }),
         })
         const data = await res.json()
@@ -458,6 +465,7 @@ export function VotePanel({
         return
       }
 
+      const attribution = readStoredVoteAttribution()
       const res = await fetch('/api/predictions/vote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -469,6 +477,8 @@ export function VotePanel({
           rankings: rankingsPayload,
           selections: selectionsPayload,
           other_text: otherPayload,
+          ...(attribution?.via ? { via: attribution.via } : {}),
+          ...(attribution?.src ? { src: attribution.src } : {}),
         }),
       })
 
@@ -1068,7 +1078,12 @@ export function VotePanel({
               </p>
               <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
                 <Link
-                  href={`/signup?redirect=${encodeURIComponent(`/predictions/markets/${market.id}`)}`}
+                  href={`/signup?redirect=${encodeURIComponent(
+                    buildPulseRedirectPath(
+                      market.id,
+                      readStoredVoteAttribution()
+                    )
+                  )}`}
                   className="inline-flex items-center justify-center rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-400"
                 >
                   {locale === 'es' ? 'Crear cuenta →' : 'Create account →'}
