@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { PredictionsDashboardClient } from './components/PredictionsDashboardClient'
 import { lookupSponsorAccountsForUser } from '@/lib/sponsor-account-lookup'
 import { isAdminUser } from '@/lib/auth/is-admin'
+import { excludeStandOnly } from '@/lib/pulse/discovery-filters'
 import type { Database } from '@/types/database'
 
 type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row']
@@ -40,13 +41,14 @@ async function getDashboardData(userId: string, isAdmin: boolean) {
       .select('id, market_id, outcome_id, confidence, xp_earned, is_correct, bonus_xp, created_at')
       .eq('user_id', userId)
       .order('created_at', { ascending: false }),
-    supabase
-      .from('prediction_markets')
-      .select('*')
-      .in('status', ['active', 'trading', 'resolved'])
-      .is('archived_at', null)
-      .eq('is_draft', false)
-      .order('total_votes', { ascending: false, nullsFirst: false }),
+    excludeStandOnly(
+      supabase
+        .from('prediction_markets')
+        .select('*')
+        .in('status', ['active', 'trading', 'resolved'])
+        .is('archived_at', null)
+        .eq('is_draft', false)
+    ).order('total_votes', { ascending: false, nullsFirst: false }),
     supabase
       .from('prediction_market_history')
       .select('market_id, probability, recorded_at')

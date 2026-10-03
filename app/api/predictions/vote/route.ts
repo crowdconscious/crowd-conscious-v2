@@ -11,6 +11,8 @@ import {
   voteReasoningMaxForMarket,
 } from '@/lib/vote-reasoning'
 import { persistVoteReasoning } from '@/lib/persist-vote-reasoning'
+import { persistVoteAttribution } from '@/lib/persist-vote-attribution'
+import { parseVoteAttribution } from '@/lib/pulse/vote-attribution'
 import {
   normalizeOtherText,
   parseRankings,
@@ -87,6 +89,7 @@ export async function POST(request: Request) {
 
     const body = await request.json()
     const { market_id, reasoning: rawReasoning } = body
+    const attribution = parseVoteAttribution(body)
     const rankings = parseRankings(body.rankings)
     const otherNorm = normalizeOtherText(body.other_text ?? body.otherText)
     if (!otherNorm.ok) {
@@ -266,6 +269,10 @@ export async function POST(request: Request) {
         marketId: market_id,
         voteId: result.vote_id,
       })
+      await persistVoteAttribution(admin, {
+        voteId: result.vote_id,
+        attribution,
+      })
 
       if (result.no_change !== true) {
         await recalculateLocationScoreByMarketId(market_id).catch((e) =>
@@ -356,6 +363,10 @@ export async function POST(request: Request) {
       voteId: result.vote_id,
       userId: user.id,
       noChange: result.no_change === true,
+    })
+    await persistVoteAttribution(admin, {
+      voteId: result.vote_id,
+      attribution,
     })
 
     if (result.no_change !== true) {

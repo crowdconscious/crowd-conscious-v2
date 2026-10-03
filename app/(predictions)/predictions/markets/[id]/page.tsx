@@ -11,6 +11,7 @@ import { getMarketText } from '@/lib/i18n/market-translations'
 import { SITE_URL } from '@/lib/seo/site'
 import { isAdminUser } from '@/lib/auth/is-admin'
 import { parseRankings } from '@/lib/pulse-vote-ranking'
+import { excludeStandOnly } from '@/lib/pulse/discovery-filters'
 
 export const dynamic = 'force-dynamic'
 
@@ -226,13 +227,15 @@ export default async function MarketDetailPage({
     showPulseDashboardLink = isAdmin || isSponsorOwner
   }
 
-  const { data: relatedRows } = await supabase
-    .from('prediction_markets')
-    .select('id, title, translations, total_votes, is_pulse, category')
-    .in('status', ['active', 'trading'])
-    .is('archived_at', null)
-    .eq('is_draft', false)
-    .neq('id', id)
+  const { data: relatedRows } = await excludeStandOnly(
+    supabase
+      .from('prediction_markets')
+      .select('id, title, translations, total_votes, is_pulse, category')
+      .in('status', ['active', 'trading'])
+      .is('archived_at', null)
+      .eq('is_draft', false)
+      .neq('id', id)
+  )
     .order('total_votes', { ascending: false })
     .limit(3)
 

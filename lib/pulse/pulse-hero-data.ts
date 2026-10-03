@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase-server'
+import { excludeStandOnly } from '@/lib/pulse/discovery-filters'
 
 export type PulseHeroMarket = {
   id: string
@@ -16,13 +17,15 @@ export async function fetchPulseHeroHighlight(): Promise<{
   strongOpinions: number
 }> {
   const supabase = await createClient()
-  const { data: pulseRow } = await supabase
-    .from('prediction_markets')
-    .select('id, title, translations, total_votes, cover_image_url, image_url')
-    .in('status', ['active', 'trading'])
-    .is('archived_at', null)
-    .eq('is_draft', false)
-    .or('is_pulse.eq.true,category.eq.pulse')
+  const { data: pulseRow } = await excludeStandOnly(
+    supabase
+      .from('prediction_markets')
+      .select('id, title, translations, total_votes, cover_image_url, image_url')
+      .in('status', ['active', 'trading'])
+      .is('archived_at', null)
+      .eq('is_draft', false)
+      .or('is_pulse.eq.true,category.eq.pulse')
+  )
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle()

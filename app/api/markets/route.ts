@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import type { Database } from '@/types/database'
 import { isValidMarketCategory } from '@/lib/market-categories'
+import { excludeStandOnly } from '@/lib/pulse/discovery-filters'
 
 type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row']
 
@@ -23,14 +24,16 @@ export async function GET(request: Request) {
     const search = searchParams.get('search')?.trim()
     const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10), 100)
 
-    let query = supabase
-      .from('prediction_markets')
-      .select('*')
-      .in('status', ['active', 'trading'])
-      .is('archived_at', null)
-      .eq('is_draft', false)
-      .order('total_votes', { ascending: false, nullsFirst: false })
-      .limit(limit)
+    let query = excludeStandOnly(
+      supabase
+        .from('prediction_markets')
+        .select('*')
+        .in('status', ['active', 'trading'])
+        .is('archived_at', null)
+        .eq('is_draft', false)
+        .order('total_votes', { ascending: false, nullsFirst: false })
+        .limit(limit)
+    )
 
     if (category && category !== 'all' && isValidMarketCategory(category)) {
       query = query.eq('category', category)

@@ -24,6 +24,7 @@ import { CONSCIOUS_FUND_GOAL_MXN } from '@/lib/predictions/fund-goal'
 import { FundThermometer } from '@/components/fund/FundThermometer'
 import { formatParticipationCount } from '@/lib/display/participation'
 import { getMarketText } from '@/lib/i18n/market-translations'
+import { excludeStandOnly } from '@/lib/pulse/discovery-filters'
 
 const Footer = dynamic(() => import('../components/Footer'))
 const CookieConsent = dynamic(() => import('../components/CookieConsent'))
@@ -126,27 +127,32 @@ async function getLandingData() {
     // Consultas activas: newest open Pulses first. Do not hide below
     // PUBLIC_MARKET_MIN_VOTES — MarketCard uses first-voices UI for low-n.
     // Pulse-only so Conscious Location polls don't crowd the strip.
-    supabase
-      .from('prediction_markets')
-      .select(
-        'id, title, description_short, category, current_probability, total_votes, cover_image_url, image_url, sponsor_name, sponsor_logo_url, sponsor_url, translations, resolution_date, market_type, status, is_pulse, created_at'
-      )
-      .in('status', ['active', 'trading'])
-      .is('archived_at', null)
-      .eq('is_draft', false)
-      .or('is_pulse.eq.true,category.eq.pulse')
+    // Stand-only (QR/event) Pulses stay off public discovery.
+    excludeStandOnly(
+      supabase
+        .from('prediction_markets')
+        .select(
+          'id, title, description_short, category, current_probability, total_votes, cover_image_url, image_url, sponsor_name, sponsor_logo_url, sponsor_url, translations, resolution_date, market_type, status, is_pulse, created_at'
+        )
+        .in('status', ['active', 'trading'])
+        .is('archived_at', null)
+        .eq('is_draft', false)
+        .or('is_pulse.eq.true,category.eq.pulse')
+    )
       .order('created_at', { ascending: false })
       .limit(6),
     // Phase 1 ATF live action card — newest open Pulse (first-voices on low-n).
-    supabase
-      .from('prediction_markets')
-      .select(
-        'id, title, total_votes, cover_image_url, image_url, sponsor_name, sponsor_logo_url, translations, is_pulse, category, market_type'
-      )
-      .in('status', ['active', 'trading'])
-      .is('archived_at', null)
-      .eq('is_draft', false)
-      .or('is_pulse.eq.true,category.eq.pulse')
+    excludeStandOnly(
+      supabase
+        .from('prediction_markets')
+        .select(
+          'id, title, total_votes, cover_image_url, image_url, sponsor_name, sponsor_logo_url, translations, is_pulse, category, market_type'
+        )
+        .in('status', ['active', 'trading'])
+        .is('archived_at', null)
+        .eq('is_draft', false)
+        .or('is_pulse.eq.true,category.eq.pulse')
+    )
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle(),
@@ -179,12 +185,14 @@ async function getLandingData() {
       .order('match_date', { ascending: false })
       .limit(1)
       .maybeSingle(),
-    supabase
-      .from('prediction_markets')
-      .select('id', { count: 'exact', head: true })
-      .in('status', ['active', 'trading'])
-      .is('archived_at', null)
-      .eq('is_draft', false),
+    excludeStandOnly(
+      supabase
+        .from('prediction_markets')
+        .select('id', { count: 'exact', head: true })
+        .in('status', ['active', 'trading'])
+        .is('archived_at', null)
+        .eq('is_draft', false)
+    ),
     supabase.from('profiles').select('id', { count: 'exact', head: true }),
     supabase
       .from('conscious_locations')
@@ -204,6 +212,8 @@ async function getLandingData() {
       .order('is_featured', { ascending: false })
       .order('sort_order', { ascending: true })
       .limit(3),
+    // Aggregate vote totals keep stand-only rows (real participation);
+    // listing surfaces above already exclude them.
     supabase.from('prediction_markets').select('total_votes, engagement_count').is('archived_at', null),
     supabase
       .from('sponsorships')

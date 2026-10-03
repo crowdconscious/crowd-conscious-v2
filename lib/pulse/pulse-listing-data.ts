@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase-server'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { getCurrentUser } from '@/lib/auth-server'
 import { isAdminUser } from '@/lib/auth/is-admin'
+import { excludeStandOnly } from '@/lib/pulse/discovery-filters'
 import type { PulseListingLocale } from '@/lib/i18n/pulse-listing'
 import { decideReplayAccess } from '@/lib/sim-viewer/access'
 import { isSimViewerEnabled } from '@/lib/sim-viewer-flag'
@@ -116,14 +117,15 @@ export async function fetchPulseMarketsForListing(ctx: PulseListingContext): Pro
     return (rows ?? []) as PulseListingMarketRow[]
   }
 
-  const { data: rows } = await publicClient
-    .from('prediction_markets')
-    .select(PULSE_SELECT)
-    .is('archived_at', null)
-    .in('status', ['active', 'trading'])
-    .eq('is_draft', false)
-    .or(PULSE_OR)
-    .order('created_at', { ascending: false })
+  const { data: rows } = await excludeStandOnly(
+    publicClient
+      .from('prediction_markets')
+      .select(PULSE_SELECT)
+      .is('archived_at', null)
+      .in('status', ['active', 'trading'])
+      .eq('is_draft', false)
+      .or(PULSE_OR)
+  ).order('created_at', { ascending: false })
 
   return (rows ?? []) as PulseListingMarketRow[]
 }
@@ -280,13 +282,15 @@ export async function fetchResolvedPulseMarketsForListing(
   },
 ): Promise<PulseListingMarketRow[]> {
   const admin = createAdminClient()
-  const { data: rows } = await admin
-    .from('prediction_markets')
-    .select(PULSE_SELECT)
-    .eq('status', 'resolved')
-    .eq('is_draft', false)
-    .or(PULSE_OR)
-    .order('resolved_at', { ascending: false, nullsFirst: false })
+  // Public Resultados archive — hide stand-only (QR/event) Pulses.
+  const { data: rows } = await excludeStandOnly(
+    admin
+      .from('prediction_markets')
+      .select(PULSE_SELECT)
+      .eq('status', 'resolved')
+      .eq('is_draft', false)
+      .or(PULSE_OR)
+  ).order('resolved_at', { ascending: false, nullsFirst: false })
 
   const markets = (rows ?? []) as PulseListingMarketRow[]
   return attachClosedPulseSimAccess(markets, ctx)

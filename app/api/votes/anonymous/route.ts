@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { normalizeVoteReasoning, voteReasoningMaxForMarket } from '@/lib/vote-reasoning'
 import { persistVoteReasoning } from '@/lib/persist-vote-reasoning'
+import { persistVoteAttribution } from '@/lib/persist-vote-attribution'
+import { parseVoteAttribution } from '@/lib/pulse/vote-attribution'
 import {
   normalizeOtherText,
   parseRankings,
@@ -40,6 +42,7 @@ export async function POST(request: Request) {
 
     const body = await request.json()
     const { market_id, guest_id, reasoning: rawReasoning } = body
+    const attribution = parseVoteAttribution(body)
     const rankings = parseRankings(body.rankings)
     const otherNorm = normalizeOtherText(body.other_text ?? body.otherText)
     if (!otherNorm.ok) {
@@ -159,6 +162,10 @@ export async function POST(request: Request) {
       reasoning: reasoningNorm,
       marketId: market_id,
       voteId,
+    })
+    await persistVoteAttribution(admin, {
+      voteId,
+      attribution,
     })
 
     const [{ data: outcomes }, { data: updatedMarket }, { count: registeredOnly }] = await Promise.all([

@@ -24,6 +24,7 @@ import {
 } from '@/lib/agents/config'
 import { sendEmail } from '@/lib/resend'
 import { CONSCIOUS_FUND_PERCENT } from '@/lib/fund-allocation'
+import { excludeStandOnly } from '@/lib/pulse/discovery-filters'
 
 const APP_URL = (process.env.NEXT_PUBLIC_APP_URL ?? 'https://crowdconscious.app').replace(/\/$/, '')
 
@@ -219,12 +220,14 @@ export async function runCeoDigest(): Promise<{
     // c. PULSE HEALTH — Pulses measure public sentiment; they do NOT resolve
     // or close on a date, so there is no "approaching resolution" metric.
     try {
-      const { count: active } = await supabase
-        .from('prediction_markets')
-        .select('id', { count: 'exact', head: true })
-        .eq('is_pulse', true)
-        .in('status', ['active', 'trading'])
-        .is('archived_at', null)
+      const { count: active } = await excludeStandOnly(
+        supabase
+          .from('prediction_markets')
+          .select('id', { count: 'exact', head: true })
+          .eq('is_pulse', true)
+          .in('status', ['active', 'trading'])
+          .is('archived_at', null)
+      )
       metrics.active_pulses = active ?? 0
     } catch {
       metrics.active_pulses = 0
@@ -233,13 +236,15 @@ export async function runCeoDigest(): Promise<{
     // Low-engagement Pulses worth PROMOTING (zero votes) — listed by title so
     // actions can name them. (Replaces the old resolve/close action items.)
     try {
-      const { data: zeroVotePulses } = await supabase
-        .from('prediction_markets')
-        .select('id, title')
-        .eq('is_pulse', true)
-        .in('status', ['active', 'trading'])
-        .is('archived_at', null)
-        .or('total_votes.is.null,total_votes.eq.0')
+      const { data: zeroVotePulses } = await excludeStandOnly(
+        supabase
+          .from('prediction_markets')
+          .select('id, title')
+          .eq('is_pulse', true)
+          .in('status', ['active', 'trading'])
+          .is('archived_at', null)
+          .or('total_votes.is.null,total_votes.eq.0')
+      )
         .order('created_at', { ascending: false, nullsFirst: false })
         .limit(8)
       metrics.pulses_with_zero_votes = (zeroVotePulses ?? []).length

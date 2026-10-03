@@ -4,6 +4,7 @@
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { excludeStandOnly } from '@/lib/pulse/discovery-filters'
 
 export type DigestMarketRow = {
   id: string
@@ -41,13 +42,15 @@ export async function prefetchDailyDigestData(admin: SupabaseClient): Promise<Da
     votes24hByMarket.set(mid, (votes24hByMarket.get(mid) ?? 0) + 1)
   }
 
-  const { data: markets } = await admin
-    .from('prediction_markets')
-    .select('id, title, current_probability, market_type, total_votes, created_at')
-    .in('status', ['active', 'trading'])
-    .is('archived_at', null)
-    .eq('is_draft', false)
-    .gt('total_votes', 0)
+  const { data: markets } = await excludeStandOnly(
+    admin
+      .from('prediction_markets')
+      .select('id, title, current_probability, market_type, total_votes, created_at')
+      .in('status', ['active', 'trading'])
+      .is('archived_at', null)
+      .eq('is_draft', false)
+      .gt('total_votes', 0)
+  )
 
   return {
     markets: (markets ?? []) as DigestMarketRow[],

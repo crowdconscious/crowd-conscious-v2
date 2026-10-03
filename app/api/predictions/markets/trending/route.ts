@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { getCurrentUser } from '@/lib/auth-server'
+import { excludeStandOnly } from '@/lib/pulse/discovery-filters'
 import type { Database } from '@/types/database'
 
 type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row'] & {
@@ -18,13 +19,14 @@ export async function GET() {
 
     const supabase = await createClient()
 
-    const { data: markets } = await supabase
-      .from('prediction_markets')
-      .select('*')
-      .in('status', ['active', 'trading'])
-      .is('archived_at', null)
-      .eq('is_draft', false)
-      .limit(50)
+    const { data: markets } = await excludeStandOnly(
+      supabase
+        .from('prediction_markets')
+        .select('*')
+        .in('status', ['active', 'trading'])
+        .is('archived_at', null)
+        .eq('is_draft', false)
+    ).limit(50)
 
     if (!markets?.length) {
       return NextResponse.json({ markets: [] })

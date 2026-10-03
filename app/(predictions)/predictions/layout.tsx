@@ -9,6 +9,7 @@ import LandingNav from '@/app/components/landing/LandingNav'
 import { lookupSponsorAccountsForUser } from '@/lib/sponsor-account-lookup'
 import { isAdminUser } from '@/lib/auth/is-admin'
 import { isBlogEditorUser } from '@/lib/auth/is-blog-editor'
+import { excludeStandOnly } from '@/lib/pulse/discovery-filters'
 
 const Footer = dynamic(() => import('@/components/Footer'))
 
@@ -42,12 +43,14 @@ async function getNavCounts(supabase: Awaited<ReturnType<typeof createClient>>) 
       .select('id', { count: 'exact', head: true })
       .eq('status', 'pending')
       .is('archived_at', null),
-    supabase
-      .from('prediction_markets')
-      .select('id', { count: 'exact', head: true })
-      .in('status', ['active', 'trading'])
-      .is('archived_at', null)
-      .eq('is_draft', false),
+    excludeStandOnly(
+      supabase
+        .from('prediction_markets')
+        .select('id', { count: 'exact', head: true })
+        .in('status', ['active', 'trading'])
+        .is('archived_at', null)
+        .eq('is_draft', false)
+    ),
     supabase
       .from('live_events')
       .select('id', { count: 'exact', head: true })
