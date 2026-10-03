@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { getCurrentUser } from '@/lib/auth-server'
 import { isValidMarketCategory } from '@/lib/market-categories'
+import { excludeStandOnly } from '@/lib/pulse/discovery-filters'
 import type { Database } from '@/types/database'
 
 type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row']
@@ -25,11 +26,13 @@ export async function GET(request: Request) {
     const offset = Math.max(0, parseInt(searchParams.get('offset') || '0', 10))
     const includeArchived = searchParams.get('includeArchived') === '1'
 
-    let query = supabase
-      .from('prediction_markets')
-      .select('*', { count: 'exact' })
-      .eq('is_draft', false)
-      .range(offset, offset + limit - 1)
+    let query = excludeStandOnly(
+      supabase
+        .from('prediction_markets')
+        .select('*', { count: 'exact' })
+        .eq('is_draft', false)
+        .range(offset, offset + limit - 1)
+    )
 
     if (!includeArchived) {
       query = query.is('archived_at', null)

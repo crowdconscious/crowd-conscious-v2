@@ -28,6 +28,7 @@ import {
 import { fetchRSSSignals } from '@/lib/agents/fetchers/rss-fetcher'
 import { fetchSocialSignals } from '@/lib/agents/fetchers/social-fetcher'
 import { Signal } from '@/lib/agents/sources-config'
+import { excludeStandOnly } from '@/lib/pulse/discovery-filters'
 import {
   emptyPlatformIntelligence,
   formatNewsMonitorPlatformContext,
@@ -309,12 +310,14 @@ export async function runNewsMonitor(options?: { includeSocial?: boolean }): Pro
       }
     }
 
-    const { data: activeMarkets } = await supabase
-      .from('prediction_markets')
-      .select('id, title, category, is_pulse')
-      .in('status', ['active', 'trading'])
-      .is('archived_at', null)
-      .eq('is_draft', false)
+    const { data: activeMarkets } = await excludeStandOnly(
+      supabase
+        .from('prediction_markets')
+        .select('id, title, category, is_pulse')
+        .in('status', ['active', 'trading'])
+        .is('archived_at', null)
+        .eq('is_draft', false)
+    )
       .order('total_votes', { ascending: false })
       .limit(15)
 

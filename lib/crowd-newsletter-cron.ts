@@ -25,6 +25,7 @@ import {
 } from '@/lib/email-unsubscribe'
 import { cronHealthCheck, cronHealthComplete } from '@/lib/cron-health'
 import { consciousFundBalanceMxn } from '@/lib/conscious-fund-balance'
+import { excludeStandOnly } from '@/lib/pulse/discovery-filters'
 import {
   generateNewsletterIntroAndSubject,
   resolveNewsletterSubject,
@@ -219,13 +220,15 @@ export async function runCrowdNewsletterCron(
     const PULSE_RECENCY_MS = 30 * 86400000
     const pulseRecencyThreshold = new Date(Date.now() - PULSE_RECENCY_MS).toISOString()
 
-    const { data: pulseRows } = await admin
-      .from('prediction_markets')
-      .select('id, title, total_votes, category, created_at')
-      .eq('is_pulse', true)
-      .in('status', ['active', 'trading'])
-      .is('archived_at', null)
-      .eq('is_draft', false)
+    const { data: pulseRows } = await excludeStandOnly(
+      admin
+        .from('prediction_markets')
+        .select('id, title, total_votes, category, created_at')
+        .eq('is_pulse', true)
+        .in('status', ['active', 'trading'])
+        .is('archived_at', null)
+        .eq('is_draft', false)
+    )
       .order('created_at', { ascending: false, nullsFirst: false })
       .limit(12)
 

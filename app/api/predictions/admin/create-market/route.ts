@@ -9,6 +9,7 @@ import {
 } from '@/lib/market-categories'
 import { isAdminUser } from '@/lib/auth/is-admin'
 import { notifyPulsePublished } from '@/lib/expo-push'
+import { isStandOnly } from '@/lib/pulse/discovery-filters'
 import {
   normalizePulseOutcomes,
   outcomeTranslationsPayload,
@@ -358,14 +359,17 @@ export async function POST(request: NextRequest) {
     }
 
     if (!wantsDraft) {
-      try {
-        await notifyPulsePublished(admin, {
-          marketId: marketId as string,
-          title: title.trim(),
-          mode: 'announce',
-        })
-      } catch (err) {
-        console.warn('[create-market] pulse push error:', err)
+      // Stand-only: skip mass push; keep simulation enqueue.
+      if (!isStandOnly(tagArray)) {
+        try {
+          await notifyPulsePublished(admin, {
+            marketId: marketId as string,
+            title: title.trim(),
+            mode: 'announce',
+          })
+        } catch (err) {
+          console.warn('[create-market] pulse push error:', err)
+        }
       }
 
       // Queue an agent simulation — fire-and-forget; never slows create.

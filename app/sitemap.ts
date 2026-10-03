@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next'
 import { createClient } from '@/lib/supabase-server'
 import { SITE_URL } from '@/lib/seo/site'
+import { excludeStandOnly } from '@/lib/pulse/discovery-filters'
 
 /**
  * Sitemap emits canonical URLs only.
@@ -21,13 +22,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const supabase = await createClient()
 
   const [{ data: markets }, { data: events }, { data: posts }] = await Promise.all([
-    supabase
-      .from('prediction_markets')
-      .select('id, updated_at, is_pulse')
-      .in('status', ['active', 'trading'])
-      .is('archived_at', null)
-      .eq('is_draft', false)
-      .order('created_at', { ascending: false }),
+    excludeStandOnly(
+      supabase
+        .from('prediction_markets')
+        .select('id, updated_at, is_pulse')
+        .in('status', ['active', 'trading'])
+        .is('archived_at', null)
+        .eq('is_draft', false)
+    ).order('created_at', { ascending: false }),
     supabase
       .from('live_events')
       .select('id, updated_at')

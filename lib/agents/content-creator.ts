@@ -23,6 +23,7 @@ import {
 } from '@/lib/agents/config'
 import { loadMarketVoteReasoningsWithAuthors } from '@/lib/market-vote-reasonings'
 import { DEFAULT_PULSE_EMBED_COMPONENTS } from '@/lib/pulse-embed-constants'
+import { excludeStandOnly } from '@/lib/pulse/discovery-filters'
 
 const ALLOWED_CATEGORIES = new Set([
   'pulse_analysis',
@@ -238,11 +239,13 @@ async function buildV4ContextBlock(
     }
   }
 
-  const { data: activeRows } = await supabase
-    .from('prediction_markets')
-    .select('id, title, description_short, is_pulse, total_votes, category, status, resolution_date')
-    .in('status', ['active', 'trading'])
-    .is('archived_at', null)
+  const { data: activeRows } = await excludeStandOnly(
+    supabase
+      .from('prediction_markets')
+      .select('id, title, description_short, is_pulse, total_votes, category, status, resolution_date')
+      .in('status', ['active', 'trading'])
+      .is('archived_at', null)
+  )
     .order('total_votes', { ascending: false, nullsFirst: false })
     .limit(8)
 

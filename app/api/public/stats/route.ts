@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase-server'
 import { consciousFundBalanceMxn } from '@/lib/conscious-fund-balance'
+import { excludeStandOnly } from '@/lib/pulse/discovery-filters'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 300
@@ -13,12 +14,14 @@ export async function GET() {
       { data: fund },
       { count: profilesCount },
     ] = await Promise.all([
-      supabase
-        .from('prediction_markets')
-        .select('total_votes', { count: 'exact' })
-        .in('status', ['active', 'trading'])
-        .is('archived_at', null)
-        .eq('is_draft', false),
+      excludeStandOnly(
+        supabase
+          .from('prediction_markets')
+          .select('total_votes', { count: 'exact' })
+          .in('status', ['active', 'trading'])
+          .is('archived_at', null)
+          .eq('is_draft', false)
+      ),
       supabase.from('conscious_fund').select('current_balance, total_collected, total_disbursed').limit(1).single(),
       supabase.from('profiles').select('id', { count: 'exact', head: true }),
     ])

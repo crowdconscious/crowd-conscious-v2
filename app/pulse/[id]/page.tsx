@@ -41,6 +41,7 @@ import {
   isReportEligible,
 } from '@/lib/sim-report/access'
 import { isSimReportEnabled } from '@/lib/sim-report/flag'
+import { isStandOnly } from '@/lib/pulse/discovery-filters'
 
 type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ token?: string }> }
 
@@ -53,7 +54,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { data: market } = await admin
     .from('prediction_markets')
     .select(
-      'title, translations, description_short, pulse_client_name, is_pulse, market_type, category, is_draft, cover_image_url'
+      'title, translations, description_short, pulse_client_name, is_pulse, market_type, category, is_draft, cover_image_url, tags'
     )
     .eq('id', id)
     .maybeSingle()
@@ -109,9 +110,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const shortBlurb = shortEs || trShort?.trim() || `Resultados en vivo — ${title}`
 
   const fullTitle = `${pageTitle} | Pulse Crowd Conscious`
+  const standOnly = isStandOnly(
+    (market as { tags?: string[] | null }).tags
+  )
   return {
     title: fullTitle,
     description: shortBlurb,
+    ...(standOnly ? { robots: { index: false, follow: false } } : {}),
     openGraph: {
       title: fullTitle,
       description: shortBlurb,

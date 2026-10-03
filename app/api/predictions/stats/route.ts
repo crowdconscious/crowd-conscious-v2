@@ -1,17 +1,20 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { excludeStandOnly } from '@/lib/pulse/discovery-filters'
 
 export async function GET() {
   try {
     const supabase = await createClient()
 
     const [marketsRes, fundRes] = await Promise.all([
-      supabase
-        .from('prediction_markets')
-        .select('id, total_volume, category')
-        .in('status', ['active', 'trading'])
-        .is('archived_at', null)
-        .eq('is_draft', false),
+      excludeStandOnly(
+        supabase
+          .from('prediction_markets')
+          .select('id, total_volume, category')
+          .in('status', ['active', 'trading'])
+          .is('archived_at', null)
+          .eq('is_draft', false)
+      ),
       supabase
         .from('conscious_fund')
         .select('current_balance, total_disbursed')

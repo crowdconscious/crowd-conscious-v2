@@ -1,16 +1,19 @@
 import { createClient } from '@/lib/supabase-server'
+import { excludeStandOnly } from '@/lib/pulse/discovery-filters'
 
 /** Public: count of open Pulse markets (for nav badge). */
 export async function GET() {
   try {
     const supabase = await createClient()
-    const { count, error } = await supabase
-      .from('prediction_markets')
-      .select('id', { count: 'exact', head: true })
-      .is('archived_at', null)
-      .in('status', ['active', 'trading'])
-      .eq('is_draft', false)
-      .or('is_pulse.eq.true,category.eq.pulse')
+    const { count, error } = await excludeStandOnly(
+      supabase
+        .from('prediction_markets')
+        .select('id', { count: 'exact', head: true })
+        .is('archived_at', null)
+        .in('status', ['active', 'trading'])
+        .eq('is_draft', false)
+        .or('is_pulse.eq.true,category.eq.pulse')
+    )
 
     if (error) {
       console.error('[GET /api/pulse/active-count]', error)

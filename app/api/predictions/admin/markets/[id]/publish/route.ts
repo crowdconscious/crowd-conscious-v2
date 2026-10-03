@@ -3,6 +3,7 @@ import { getCurrentUser } from '@/lib/auth-server'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { isAdminUser } from '@/lib/auth/is-admin'
 import { notifyPulsePublished } from '@/lib/expo-push'
+import { isStandOnly } from '@/lib/pulse/discovery-filters'
 
 export async function POST(
   _request: NextRequest,
@@ -19,7 +20,7 @@ export async function POST(
 
     const { data: market, error: fetchErr } = await admin
       .from('prediction_markets')
-      .select('id, is_draft, created_by, is_pulse, title')
+      .select('id, is_draft, created_by, is_pulse, title, tags')
       .eq('id', id)
       .maybeSingle()
 
@@ -63,14 +64,18 @@ export async function POST(
     }
 
     if (market.is_pulse) {
-      try {
-        await notifyPulsePublished(admin, {
-          marketId: id,
-          title: market.title ?? 'Pulse',
-          mode: 'announce',
-        })
-      } catch (err) {
-        console.warn('[publish-market] pulse push error:', err)
+      // Stand-only Pulses are QR/event-only — skip the mass "new Pulse" push
+      // to every push-enabled mobile user. Simulation enqueue still runs.
+      if (!isStandOnly(market.tags as string[] | null)) {
+        try {
+          await notifyPulsePublished(admin, {
+            marketId: id,
+            title: market.title ?? 'Pulse',
+            mode: 'announce',
+          })
+        } catch (err) {
+          console.warn('[publish-market] pulse push error:', err)
+        }
       }
 
       // Queue an agent simulation — fire-and-forget; never slows publish.
