@@ -17,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const cookieStore = await cookies()
   const locale = cookieStore.get('preferred-language')?.value === 'en' ? 'en' : 'es'
   const copy = getPodcastCopy(locale)
-  const latest = getLatestPodcastEpisode()
+  const latest = await getLatestPodcastEpisode()
   const latestTitle = latest ? episodeTitle(latest, locale) : null
   const description = latestTitle
     ? locale === 'es'
@@ -60,7 +60,7 @@ export default async function PodcastPage() {
   const cookieStore = await cookies()
   const locale = cookieStore.get('preferred-language')?.value === 'en' ? 'en' : 'es'
   const copy = getPodcastCopy(locale)
-  const episodes = getPodcastEpisodes()
+  const episodes = await getPodcastEpisodes()
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-12">
@@ -87,6 +87,8 @@ export default async function PodcastPage() {
         {episodes.map((ep, index) => {
           const title = episodeTitle(ep, locale)
           const blurb = episodeBlurb(ep, locale)
+          const aspect = ep.coverAspectRatio ?? 1
+          const isWide = aspect >= 1.4
           return (
             <li
               key={ep.slug}
@@ -95,13 +97,20 @@ export default async function PodcastPage() {
             >
               <div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-start sm:p-6">
                 {ep.coverImageUrl ? (
-                  <div className="relative mx-auto h-40 w-40 shrink-0 overflow-hidden rounded-lg sm:mx-0">
+                  <div
+                    className={
+                      isWide
+                        ? 'relative mx-auto w-full max-w-sm shrink-0 overflow-hidden rounded-lg sm:mx-0 sm:w-56'
+                        : 'relative mx-auto h-40 w-40 shrink-0 overflow-hidden rounded-lg sm:mx-0'
+                    }
+                    style={{ aspectRatio: String(aspect) }}
+                  >
                     <Image
                       src={ep.coverImageUrl}
                       alt=""
                       fill
                       className="object-cover"
-                      sizes="160px"
+                      sizes={isWide ? '(max-width: 640px) 100vw, 224px' : '160px'}
                       priority={index === 0}
                     />
                   </div>
@@ -112,49 +121,61 @@ export default async function PodcastPage() {
                   </p>
                   <h2 className="mt-2 text-xl font-bold text-white md:text-2xl">{title}</h2>
                   <p className="mt-2 text-sm leading-relaxed text-slate-400">{blurb}</p>
-                  <div className="mt-4 flex flex-wrap justify-center gap-3 sm:justify-start">
-                    <a
-                      href={ep.youtube.shareUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex min-h-[44px] items-center rounded-lg border border-[#2d3748] px-3 py-2 text-sm font-medium text-slate-300 transition-colors hover:border-emerald-500/40 hover:text-white"
-                    >
-                      {copy.listenYoutube}
-                    </a>
-                    <a
-                      href={ep.spotify.shareUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex min-h-[44px] items-center rounded-lg border border-[#2d3748] px-3 py-2 text-sm font-medium text-slate-300 transition-colors hover:border-emerald-500/40 hover:text-white"
-                    >
-                      {copy.listenSpotify}
-                    </a>
-                  </div>
+                  {(ep.youtube?.videoId || ep.spotify?.episodeId) && (
+                    <div className="mt-4 flex flex-wrap justify-center gap-3 sm:justify-start">
+                      {ep.youtube?.videoId ? (
+                        <a
+                          href={ep.youtube.shareUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex min-h-[44px] items-center rounded-lg border border-[#2d3748] px-3 py-2 text-sm font-medium text-slate-300 transition-colors hover:border-emerald-500/40 hover:text-white"
+                        >
+                          {copy.listenYoutube}
+                        </a>
+                      ) : null}
+                      {ep.spotify?.episodeId ? (
+                        <a
+                          href={ep.spotify.shareUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex min-h-[44px] items-center rounded-lg border border-[#2d3748] px-3 py-2 text-sm font-medium text-slate-300 transition-colors hover:border-emerald-500/40 hover:text-white"
+                        >
+                          {copy.listenSpotify}
+                        </a>
+                      ) : null}
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <div className="space-y-4 border-t border-[#2d3748] px-5 py-5 sm:px-6">
-                <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black ring-1 ring-white/10">
-                  <iframe
-                    title={`${copy.youtubeEmbedTitle}: ${title}`}
-                    src={youtubeEmbedUrl(ep.youtube.videoId)}
-                    className="absolute inset-0 h-full w-full border-0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowFullScreen
-                    loading="lazy"
-                    referrerPolicy="strict-origin-when-cross-origin"
-                  />
+              {(ep.youtube?.videoId || ep.spotify?.episodeId) && (
+                <div className="space-y-4 border-t border-[#2d3748] px-5 py-5 sm:px-6">
+                  {ep.youtube?.videoId ? (
+                    <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black ring-1 ring-white/10">
+                      <iframe
+                        title={`${copy.youtubeEmbedTitle}: ${title}`}
+                        src={youtubeEmbedUrl(ep.youtube.videoId)}
+                        className="absolute inset-0 h-full w-full border-0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                        loading="lazy"
+                        referrerPolicy="strict-origin-when-cross-origin"
+                      />
+                    </div>
+                  ) : null}
+                  {ep.spotify?.episodeId ? (
+                    <div className="overflow-hidden rounded-xl ring-1 ring-white/10">
+                      <iframe
+                        title={`${copy.spotifyEmbedTitle}: ${title}`}
+                        src={spotifyEmbedUrl(ep.spotify.episodeId)}
+                        className="h-[152px] w-full border-0"
+                        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                        loading="lazy"
+                      />
+                    </div>
+                  ) : null}
                 </div>
-                <div className="overflow-hidden rounded-xl ring-1 ring-white/10">
-                  <iframe
-                    title={`${copy.spotifyEmbedTitle}: ${title}`}
-                    src={spotifyEmbedUrl(ep.spotify.episodeId)}
-                    className="h-[152px] w-full border-0"
-                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                    loading="lazy"
-                  />
-                </div>
-              </div>
+              )}
             </li>
           )
         })}
