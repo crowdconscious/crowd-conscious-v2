@@ -35,4 +35,4 @@ CREATE TRIGGER trg_pulses_always_multi
   EXECUTE FUNCTION public.enforce_pulse_always_multi();
 
 COMMENT ON FUNCTION public.enforce_pulse_always_multi() IS
-  'Migration 278: Pulses are always multi-select (vote_mode multi, max_selections 3).'
+  'Migration 278: Pulses are always multi-select (vote_mode multi, max_selections 3).';
