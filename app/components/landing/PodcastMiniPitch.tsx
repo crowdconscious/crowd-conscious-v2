@@ -12,10 +12,11 @@ type Props = {
  * BrandsMiniPitch so the homepage also surfaces /podcast (primary nav
  * already has a Podcast item; this is a second, branded TOCAYOS pitch).
  * Title always tracks the latest catalog entry (newest-first).
+ * Async server component — parent `app/page.tsx` is also a server component.
  */
-export function PodcastMiniPitch({ locale }: Props) {
+export async function PodcastMiniPitch({ locale }: Props) {
   const copy = getPodcastCopy(locale)
-  const latest = getLatestPodcastEpisode()
+  const latest = await getLatestPodcastEpisode()
   const teaserTitle = latest ? episodeTitle(latest, locale) : copy.hubTitle
 
   return (

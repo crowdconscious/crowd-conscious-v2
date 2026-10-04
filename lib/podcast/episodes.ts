@@ -1,9 +1,13 @@
 /**
- * Static podcast episode catalog (Phase 1).
- *
- * Add episode 2+ here — no CMS yet. Keep share URLs clean (no tracking
- * params); embed helpers strip them if a future entry includes any.
+ * Podcast episode catalog. Prefers live rows from `podcast_episodes`
+ * (migration 279); falls back to the static array when the query fails
+ * or returns nothing. Caching lives here because `/podcast` reads
+ * cookies() and is therefore dynamic — `export const revalidate` alone
+ * would not help.
  */
+
+import { unstable_cache } from 'next/cache'
+import { createClient } from '@supabase/supabase-js'
 
 export type PodcastLocale = 'es' | 'en'
 
@@ -19,18 +23,35 @@ export type PodcastEpisode = {
   blurb: { es: string; en: string }
   /** Cover art URL (Spotify/YouTube CDN or /public path). Optional. */
   coverImageUrl?: string
-  youtube: {
+  /** Width/height ratio from DB (e.g. 16/9). Defaults to square when omitted. */
+  coverAspectRatio?: number
+  youtube?: {
     /** youtu.be / watch share URL without tracking params */
     shareUrl: string
     videoId: string
   }
-  spotify: {
+  spotify?: {
     /** open.spotify.com/episode share URL without tracking params */
     shareUrl: string
     episodeId: string
   }
 }
 
+type PodcastEpisodeRow = {
+  slug: string
+  number: number | null
+  published_at: string
+  title_es: string | null
+  title_en: string | null
+  blurb_es: string | null
+  blurb_en: string | null
+  cover_image_url: string | null
+  cover_aspect_ratio: number | string | null
+  youtube_video_id: string | null
+  spotify_episode_id: string | null
+}
+
+/** Static fallback — keep in sync with migration 279 seed rows. Newest first. */
 export const PODCAST_EPISODES: PodcastEpisode[] = [
   {
     slug: 'tocayos-ep-2-mexico-por-el-clima',
@@ -46,6 +67,7 @@ export const PODCAST_EPISODES: PodcastEpisode[] = [
     },
     coverImageUrl:
       'https://image-cdn-fa.spotifycdn.com/image/ab6772ab000015beb2b9afa64b2d2abaaf7a2e82',
+    coverAspectRatio: 16 / 9,
     youtube: {
       shareUrl: 'https://youtu.be/Npgi-e5HEWY',
       videoId: 'Npgi-e5HEWY',
@@ -69,6 +91,7 @@ export const PODCAST_EPISODES: PodcastEpisode[] = [
     },
     coverImageUrl:
       'https://image-cdn-ak.spotifycdn.com/image/ab6772ab000015be4e6ca9686b4184e40520f56a',
+    coverAspectRatio: 1,
     youtube: {
       shareUrl: 'https://youtu.be/wtsLEEY43wY',
       videoId: 'wtsLEEY43wY',
@@ -80,12 +103,84 @@ export const PODCAST_EPISODES: PodcastEpisode[] = [
   },
 ]
 
-export function getPodcastEpisodes(): PodcastEpisode[] {
-  return PODCAST_EPISODES
+function mapRow(row: PodcastEpisodeRow): PodcastEpisode {
+  const titleEs = row.title_es ?? ''
+  const blurbEs = row.blurb_es ?? ''
+  const youtubeId = row.youtube_video_id
+  const spotifyId = row.spotify_episode_id
+  const aspect =
+    row.cover_aspect_ratio == null || row.cover_aspect_ratio === ''
+      ? undefined
+      : Number(row.cover_aspect_ratio)
+
+  return {
+    slug: row.slug,
+    number: row.number ?? 0,
+    publishedAt: row.published_at,
+    title: {
+      es: titleEs,
+      en: row.title_en ?? titleEs,
+    },
+    blurb: {
+      es: blurbEs,
+      en: row.blurb_en ?? blurbEs,
+    },
+    ...(row.cover_image_url ? { coverImageUrl: row.cover_image_url } : {}),
+    ...(aspect != null && Number.isFinite(aspect) ? { coverAspectRatio: aspect } : {}),
+    ...(youtubeId
+      ? {
+          youtube: {
+            shareUrl: `https://youtu.be/${youtubeId}`,
+            videoId: youtubeId,
+          },
+        }
+      : {}),
+    ...(spotifyId
+      ? {
+          spotify: {
+            shareUrl: `https://open.spotify.com/episode/${spotifyId}`,
+            episodeId: spotifyId,
+          },
+        }
+      : {}),
+  }
 }
 
-export function getLatestPodcastEpisode(): PodcastEpisode | undefined {
-  return PODCAST_EPISODES[0]
+async function fetchPublishedEpisodes(): Promise<PodcastEpisode[]> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!url || !anonKey) return PODCAST_EPISODES
+
+  // Cookie-less anon client — safe inside unstable_cache (no request cookies).
+  const supabase = createClient(url, anonKey)
+  const { data, error } = await supabase
+    .from('podcast_episodes')
+    .select(
+      'slug, number, published_at, title_es, title_en, blurb_es, blurb_en, cover_image_url, cover_aspect_ratio, youtube_video_id, spotify_episode_id'
+    )
+    .eq('is_published', true)
+    .order('published_at', { ascending: false })
+    .order('number', { ascending: false })
+
+  if (error || !data || data.length === 0) return PODCAST_EPISODES
+  return (data as PodcastEpisodeRow[]).map(mapRow)
+}
+
+export const getPodcastEpisodes = unstable_cache(
+  async (): Promise<PodcastEpisode[]> => {
+    try {
+      return await fetchPublishedEpisodes()
+    } catch {
+      return PODCAST_EPISODES
+    }
+  },
+  ['podcast-episodes'],
+  { revalidate: 300, tags: ['podcast-episodes'] }
+)
+
+export async function getLatestPodcastEpisode(): Promise<PodcastEpisode | undefined> {
+  const episodes = await getPodcastEpisodes()
+  return episodes[0]
 }
 
 /** Prefer privacy-enhanced domain; same videoId as youtube.com/embed. */
