@@ -104,29 +104,34 @@ export async function GET(
     if (market) {
       const { data: outcomes } = await supabase
         .from('market_outcomes')
-        .select('label, probability, translations')
+        .select('label, probability, vote_count, translations')
         .eq('market_id', post.pulse_market_id)
-        .order('probability', { ascending: false })
+        .order('vote_count', { ascending: false })
 
-      const outcomeRows = (outcomes ?? []) as OutcomeRow[]
-      const sorted = [...outcomeRows].sort(
-        (a, b) => Number(b.probability) - Number(a.probability)
-      )
-      const a = sorted[0]
-      const b = sorted[1]
-      const p1 = a
-        ? Math.min(100, Math.max(0, Math.round(Number(a.probability) * 100)))
-        : 0
-      const p2 = b
-        ? Math.min(100, Math.max(0, Math.round(Number(b.probability) * 100)))
-        : 0
-      const l1 = a ? getOutcomeLabel(a, locale) : '—'
-      const l2 = b ? getOutcomeLabel(b, locale) : '—'
-
+      const outcomeRows = (outcomes ?? []) as (OutcomeRow & {
+        vote_count?: number | null
+      })[]
       const voteCount =
         Number((market as { total_votes?: number | null }).total_votes) ||
         Number((market as { engagement_count?: number | null }).engagement_count) ||
         0
+      const sorted = [...outcomeRows].sort(
+        (a, b) => Number(b.vote_count ?? 0) - Number(a.vote_count ?? 0)
+      )
+      const a = sorted[0]
+      const b = sorted[1]
+      const pctOf = (o: OutcomeRow & { vote_count?: number | null } | undefined) => {
+        if (!o) return 0
+        if (voteCount > 0 && typeof o.vote_count === 'number') {
+          return Math.min(100, Math.max(0, Math.round((o.vote_count / voteCount) * 100)))
+        }
+        return Math.min(100, Math.max(0, Math.round(Number(o.probability) * 100)))
+      }
+      const p1 = pctOf(a)
+      const p2 = pctOf(b)
+      const l1 = a ? getOutcomeLabel(a, locale) : '—'
+      const l2 = b ? getOutcomeLabel(b, locale) : '—'
+
       const displayTitle = getMarketText(market, 'title', locale)
 
       return new ImageResponse(

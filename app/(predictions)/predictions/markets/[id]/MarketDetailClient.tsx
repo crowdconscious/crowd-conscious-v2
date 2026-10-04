@@ -71,6 +71,8 @@ import {
   userContributionLine,
   voteUpdatedToast,
 } from '@/lib/i18n/pulse-market-copy'
+import { parseVoteMode } from '@/lib/pulse-vote-ranking'
+import { resolveOutcomeAvgConfidence } from '@/lib/pulse-vote-aggregates'
 import type { Database } from '@/types/database'
 
 type PredictionMarket = Database['public']['Tables']['prediction_markets']['Row']
@@ -125,15 +127,18 @@ function formatDate(d: string | null, locale: string = 'es'): string {
 
 function marketAvgConfidenceFromOutcomes(outcomes: Outcome[]): number | null {
   let sum = 0
-  let votes = 0
+  let picks = 0
   for (const o of outcomes) {
-    const vc = o.vote_count ?? 0
-    if (vc <= 0) continue
+    const n =
+      typeof o.confident_pick_count === 'number' && o.confident_pick_count > 0
+        ? o.confident_pick_count
+        : 0
+    if (n <= 0) continue
     sum += Number(o.total_confidence ?? 0)
-    votes += vc
+    picks += n
   }
-  if (votes === 0) return null
-  return Math.round((sum / votes) * 10) / 10
+  if (picks === 0) return null
+  return Math.round((sum / picks) * 10) / 10
 }
 
 function formatRelativeTime(d: string): string {
@@ -173,6 +178,8 @@ type Outcome = {
   probability: number
   vote_count: number
   total_confidence: number
+  /** Picks with confidence >= 1. Migration 262. */
+  confident_pick_count?: number | null
   is_winner: boolean | null
   /** Migration 214 — per-locale {label,subtitle} overrides. Shape matches
       what VotePanel expects so the same array can flow into both. */
@@ -459,44 +466,61 @@ export function MarketDetailClient({
   const categoryLabel = categoryDisplay(config, locale)
   const avgConfidenceHero = marketAvgConfidenceFromOutcomes(outcomes)
   const densityRevealed = shouldRevealCount(engagementCount)
+  const voteMode = parseVoteMode((market as { vote_mode?: string }).vote_mode)
+  const isMulti = voteMode === 'multi'
+  const isClosedOrResolved =
+    isResolved || (market.status as string) === 'closed'
 
   // Stats fed into PostVoteScreen. We snapshot the outcome the user just
   // voted for so the post-vote validation copy can echo the choice ("Votaste:
   // X · 59% coincide contigo") without re-fetching. Numbers are pre-vote
   // because router.refresh() runs after the modal opens; that's fine — the
   // post-vote screen reflects the community state the user joined.
+  // Multi: bars use people-share (vote_count / people), matching Results.
+  const peopleDenom = engagementCount
+  const outcomeDisplayShare = (o: Outcome): number => {
+    if (isMulti && peopleDenom > 0) return (o.vote_count ?? 0) / peopleDenom
+    return Number(o.probability ?? 0)
+  }
   const postVoteOutcomeStat: PostVoteOutcomeStat | null = celebration.outcomeId
     ? (() => {
         const o = outcomes.find((x) => x.id === celebration.outcomeId)
         if (!o) return null
-        const vc = o.vote_count ?? 0
-        const tc = Number(o.total_confidence ?? 0)
-        // Avg over votes that contributed weight (0-confidence "No lo sé" add 0).
-        const avg = tc > 0 && vc > 0 ? Math.round((tc / vc) * 10) / 10 : null
         return {
           outcomeId: o.id,
           label: getOutcomeLabel(o, locale),
           subtitle: getOutcomeSubtitle(o, locale),
-          probability: Number(o.probability ?? 0),
-          avgConfidence: avg,
+          probability: outcomeDisplayShare(o),
+          avgConfidence: resolveOutcomeAvgConfidence({
+            totalConfidence: o.total_confidence,
+            confidentPickCount: o.confident_pick_count,
+          }),
         }
       })()
     : null
-  const postVoteTotalVotes = Math.max(
-    outcomes.reduce((sum, o) => sum + (o.vote_count ?? 0), 0),
-    engagementCount
-  ) + (celebration.open ? 1 : 0)
-  const postVoteAllOutcomes: PostVoteOutcomeStat[] = outcomes.map((o) => {
-    const vc = o.vote_count ?? 0
-    const tc = Number(o.total_confidence ?? 0)
-    return {
-      outcomeId: o.id,
-      label: getOutcomeLabel(o, locale),
-      subtitle: getOutcomeSubtitle(o, locale),
-      probability: Number(o.probability ?? 0),
-      avgConfidence: tc > 0 && vc > 0 ? Math.round((tc / vc) * 10) / 10 : null,
-    }
-  })
+  // People only — never sum vote_count (multi pickers overcount people).
+  const postVoteTotalVotes = peopleDenom + (celebration.open ? 1 : 0)
+  const postVoteAllOutcomes: PostVoteOutcomeStat[] = outcomes.map((o) => ({
+    outcomeId: o.id,
+    label: getOutcomeLabel(o, locale),
+    subtitle: getOutcomeSubtitle(o, locale),
+    probability: outcomeDisplayShare(o),
+    avgConfidence: resolveOutcomeAvgConfidence({
+      totalConfidence: o.total_confidence,
+      confidentPickCount: o.confident_pick_count,
+    }),
+  }))
+  const byOutcomeForResults = Object.fromEntries(
+    outcomes.map((o) => [
+      o.id,
+      {
+        count: o.vote_count ?? 0,
+        confidenceSum: Number(o.total_confidence ?? 0),
+        confidenceCount:
+          typeof o.confident_pick_count === 'number' ? o.confident_pick_count : 0,
+      },
+    ])
+  )
 
   return (
     <div className="space-y-6 pb-8">
@@ -747,6 +771,9 @@ export function MarketDetailClient({
               totalVotes={engagementCount}
               avgConfidence={densityRevealed ? avgConfidenceHero : null}
               locale={loc}
+              voteMode={voteMode}
+              byOutcome={byOutcomeForResults}
+              finalResults={isClosedOrResolved}
               className="animate-[fade-in_300ms_ease-out]"
             />
           )}

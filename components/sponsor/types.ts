@@ -1,8 +1,11 @@
 export type SponsorOutcomeRow = {
   id: string
   label: string
+  /** For Pulses: people-share (vote_count / total people). Else certainty share. */
   probability: number
   vote_count?: number | null
+  total_confidence?: number | null
+  confident_pick_count?: number | null
 }
 
 export type SponsorDashboardMarketRow = {

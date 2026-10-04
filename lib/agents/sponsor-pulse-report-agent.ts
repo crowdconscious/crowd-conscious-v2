@@ -46,7 +46,7 @@ export interface SponsorPulseReportSnapshot {
     label: string
     subtitle: string | null
     votes: number
-    /** 0..1 share of total votes. */
+    /** 0..1 share of voters who chose this option (multi: may sum > 1). */
     pct: number
     avgConfidence: number | null
   }>
@@ -107,8 +107,11 @@ type MarketRow = {
     label: string
     subtitle: string | null
     sort_order: number | null
+    /** People who picked this option (multi: any pick; single: primary). */
     vote_count: number | null
     total_confidence: number | null
+    /** Picks with confidence 1–10. Avg = total_confidence / confident_pick_count. */
+    confident_pick_count: number | null
   }>
 }
 
@@ -148,35 +151,45 @@ function fmtDateMx(iso: string): string {
 }
 
 function buildSnapshot(market: MarketRow, votes: VoteRow[]): SponsorPulseReportSnapshot {
+  // People = market_votes rows. Multi picks live in market_vote_selections;
+  // maintained outcome.vote_count already counts people who picked each option.
   const totalVotes = votes.length
   const registeredVotes = votes.filter((v) => v.user_id).length
   const guestVotes = totalVotes - registeredVotes
 
-  const confSum = votes.reduce((s, v) => s + (typeof v.confidence === 'number' ? v.confidence : 0), 0)
-  const avgConfidence =
-    totalVotes > 0 ? Math.round((confSum / totalVotes) * 10) / 10 : null
-
   const outcomeOrder = [...market.market_outcomes].sort(
     (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
   )
+
+  let confSumAll = 0
+  let confNAll = 0
   const outcomes = outcomeOrder.map((o) => {
-    const filtered = votes.filter((v) => v.outcome_id === o.id)
-    const oVotes = filtered.length
-    const oConfSum = filtered.reduce(
-      (s, v) => s + (typeof v.confidence === 'number' ? v.confidence : 0),
-      0
-    )
+    const oVotes = Number(o.vote_count ?? 0)
+    const confSum = Number(o.total_confidence ?? 0)
+    const confN =
+      typeof o.confident_pick_count === 'number' && o.confident_pick_count > 0
+        ? o.confident_pick_count
+        : 0
+    if (confN > 0) {
+      confSumAll += confSum
+      confNAll += confN
+    }
     return {
       id: o.id,
       label: o.label,
       subtitle: o.subtitle ?? null,
       votes: oVotes,
+      // Share of voters who chose this option (multi: does NOT sum to 1).
       pct: totalVotes > 0 ? oVotes / totalVotes : 0,
-      avgConfidence: oVotes > 0 ? Math.round((oConfSum / oVotes) * 10) / 10 : null,
+      avgConfidence:
+        confN > 0 ? Math.round((confSum / confN) * 10) / 10 : null,
     }
   })
 
-  // Sort by vote share desc — driver of the headline ordering in both
+  const avgConfidence =
+    confNAll > 0 ? Math.round((confSumAll / confNAll) * 10) / 10 : null
+
+  // Sort by people-share desc — driver of the headline ordering in both
   // dashboard and PDF. We don't sort by confidence here; the conviction
   // analysis section calls that out separately.
   outcomes.sort((a, b) => b.pct - a.pct)
@@ -246,7 +259,7 @@ function buildPrompt(market: MarketRow, snap: SponsorPulseReportSnapshot): strin
       const conf =
         typeof o.avgConfidence === 'number' ? `${o.avgConfidence.toFixed(1)}/10` : 'sin confianza registrada'
       const sub = o.subtitle ? ` — ${o.subtitle}` : ''
-      return `${i + 1}. "${o.label}"${sub} · ${pct}% (${o.votes} votos) · confianza promedio ${conf}`
+      return `${i + 1}. "${o.label}"${sub} · ${pct}% de personas lo eligieron (${o.votes} personas) · certeza promedio ${conf}`
     })
     .join('\n')
 
@@ -288,10 +301,10 @@ CONTEXTO DEL PULSE
 Título: ${market.title}
 Descripción corta: ${market.description_short ?? '—'}
 Estado: ${market.status ?? '—'} · Cierra: ${market.resolution_date ? fmtDateMx(market.resolution_date) : '—'}
-Total de votos: ${snap.totalVotes} (${snap.registeredVotes} registrados · ${snap.guestVotes} invitados)
-Confianza promedio: ${snap.avgConfidence != null ? `${snap.avgConfidence.toFixed(1)}/10` : '—'}
+Total de personas que votaron: ${snap.totalVotes} (${snap.registeredVotes} registrados · ${snap.guestVotes} invitados)
+Certeza promedio (sobre picks con certeza 1–10): ${snap.avgConfidence != null ? `${snap.avgConfidence.toFixed(1)}/10` : '—'}
 
-OPCIONES Y RESULTADOS
+OPCIONES Y RESULTADOS (multi-opción: el % es "personas que eligieron esta opción / total de personas"; puede sumar más de 100%)
 ${outcomeBlock}
 
 ${divergence}
@@ -331,7 +344,7 @@ export async function runSponsorPulseReport(
         id, title, description_short, description, is_pulse, status,
         created_at, resolution_date, resolved_at,
         sponsor_account_id, sponsor_name, pulse_client_email, total_votes,
-        market_outcomes(id, label, subtitle, sort_order, vote_count, total_confidence)
+        market_outcomes(id, label, subtitle, sort_order, vote_count, total_confidence, confident_pick_count)
       `
       )
       .eq('id', marketId)

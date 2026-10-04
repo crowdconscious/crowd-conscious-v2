@@ -57,12 +57,26 @@ export default function PulseEmbed({ data, locale, components, showOwnHeading }:
   // their props); the blog embed receives identity-free vote rows, so
   // convert here.
   const voteAggregates = useMemo(() => aggregatePulseVotes(votes), [votes])
-  const totalVotes = votes.length
+  const totalVotes = voteAggregates.totalVotes
+  const statedConfN = voteAggregates.confidenceHistogram.reduce((s, n) => s + n, 0)
   const avgConfidence =
-    totalVotes > 0
-      ? votes.reduce((sum, v) => sum + (typeof v.confidence === 'number' ? v.confidence : 0), 0) /
-        totalVotes
+    statedConfN > 0
+      ? voteAggregates.confidenceHistogram.reduce((sum, n, i) => sum + n * (i + 1), 0) /
+        statedConfN
       : 0
+
+  // Multi headline: remap probability → people-share so PulseOutcomeBars
+  // (which reads probability) matches Results "eligieron" math.
+  const displayOutcomes = useMemo(() => {
+    const people = totalVotes
+    if (people <= 0) return outcomes
+    const hasVoteCounts = outcomes.some((o) => typeof o.vote_count === 'number')
+    if (!hasVoteCounts) return outcomes
+    return outcomes.map((o) => {
+      const count = voteAggregates.byOutcome[o.id]?.count ?? o.vote_count ?? 0
+      return { ...o, probability: count / people }
+    })
+  }, [outcomes, totalVotes, voteAggregates.byOutcome])
 
   // Hide community % / charts / insights from blog readers who haven't voted
   // yet. We can only check guest vote status from the browser (no server
@@ -139,17 +153,17 @@ export default function PulseEmbed({ data, locale, components, showOwnHeading }:
           </div>
         </div>
 
-        {show('results_bars') && outcomes.length > 0 ? (
+        {show('results_bars') && displayOutcomes.length > 0 ? (
           <div className="mt-8">
             <PulseOutcomeBars
-              outcomes={outcomes}
+              outcomes={displayOutcomes}
               locale={locale}
               revealResults={shouldRevealResults}
             />
           </div>
         ) : null}
 
-        {!shouldRevealResults && outcomes.length > 0 && (
+        {!shouldRevealResults && displayOutcomes.length > 0 && (
           <div className="mt-6 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.05] p-5 text-center">
             <p className="text-sm font-medium text-emerald-300">
               {locale === 'es'

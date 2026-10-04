@@ -29,6 +29,7 @@ import {
   histogramCountAtLeast,
   histogramCountAtMost,
   histogramValidCount,
+  outcomeChooserShare,
   resolveOutcomeAvgConfidence,
   type PulseVoteAggregates,
 } from '@/lib/pulse-vote-aggregates'
@@ -345,15 +346,33 @@ export default function PulseResultClient({
 
   const leadingOutcome = useMemo(() => {
     if (outcomes.length === 0) return null
+    if (voteMode === 'multi' && totalVotes > 0) {
+      return [...outcomes].sort((a, b) => {
+        const ca = aggregates.byOutcome[a.id]?.count ?? a.vote_count ?? 0
+        const cb = aggregates.byOutcome[b.id]?.count ?? b.vote_count ?? 0
+        return cb - ca
+      })[0]
+    }
     return [...outcomes].sort((a, b) => b.probability - a.probability)[0]
-  }, [outcomes])
+  }, [outcomes, voteMode, totalVotes, aggregates.byOutcome])
 
   const pulseInsights = useMemo(() => {
     if (totalVotes === 0 || outcomes.length === 0) return null
-    const sorted = [...outcomes].sort((a, b) => b.probability - a.probability)
+    const isMulti = voteMode === 'multi'
+    const sorted = [...outcomes].sort((a, b) => {
+      if (isMulti) {
+        const ca = aggregates.byOutcome[a.id]?.count ?? a.vote_count ?? 0
+        const cb = aggregates.byOutcome[b.id]?.count ?? b.vote_count ?? 0
+        return cb - ca
+      }
+      return b.probability - a.probability
+    })
     const lead = sorted[0]
     const second = sorted[1]
-    const leadingPct = Math.round(lead.probability * 100)
+    const leadStats = aggregates.byOutcome[lead.id]
+    const leadingPct = isMulti
+      ? Math.round((outcomeChooserShare(leadStats, totalVotes) ?? 0) * 100)
+      : Math.round(lead.probability * 100)
     const avgForOutcome = (oid: string) => {
       const o = outcomes.find((x) => x.id === oid)
       return resolveOutcomeAvgConfidence({
@@ -366,7 +385,9 @@ export default function PulseResultClient({
     const secondConf = second ? avgForOutcome(second.id) : null
     const leadingLabel = getOutcomeLabel(lead, locale).split(' / ')[0]
     const secondLabel = second ? getOutcomeLabel(second, locale).split(' / ')[0] : null
+    // Histogram is per-pick (multi); compare strong picks to stated picks, not people.
     const strongOpinions = histogramCountAtLeast(aggregates.confidenceHistogram, 8)
+    const statedPicks = histogramValidCount(aggregates.confidenceHistogram)
     let lowest: { label: string; conf: number } | null = null
     for (const o of outcomes) {
       const a = avgForOutcome(o.id)
@@ -382,15 +403,20 @@ export default function PulseResultClient({
       secondLabel,
       secondConf,
       strongOpinions,
+      statedPicks,
       lowestLabel: lowest?.label ?? null,
       lowestConf: lowest?.conf ?? null,
     }
-  }, [outcomes, aggregates, locale, totalVotes])
+  }, [outcomes, aggregates, locale, totalVotes, voteMode])
 
   const executiveSummary = useMemo(() => {
     if (!leadingOutcome || totalVotes === 0) return null
     const avgConfStr = avgConfidence.toFixed(1)
-    const pct = Math.round(leadingOutcome.probability * 100)
+    const isMulti = voteMode === 'multi'
+    const leadStats = aggregates.byOutcome[leadingOutcome.id]
+    const pct = isMulti
+      ? Math.round((outcomeChooserShare(leadStats, totalVotes) ?? 0) * 100)
+      : Math.round(leadingOutcome.probability * 100)
     const shortLabel = getOutcomeLabel(leadingOutcome, locale).split(' / ')[0]
     const leadingConf = (
       resolveOutcomeAvgConfidence({
@@ -407,10 +433,16 @@ export default function PulseResultClient({
       parseFloat(leadingConf) >= 7
         ? 'This indicates a strong, clear community preference.'
         : 'However, the certainty level suggests the opinion is not definitive.'
-    const summaryEs = `Con ${totalVotes} participaciones y una confianza promedio de ${avgConfStr}/10, "${shortLabel}" lidera con ${pct}% de los votos y una certeza de ${leadingConf}/10. ${strongPhraseEs}`
-    const summaryEn = `With ${totalVotes} participation${totalVotes !== 1 ? 's' : ''} and an average confidence of ${avgConfStr}/10, "${shortLabel}" leads with ${pct}% of the vote and an average certainty of ${leadingConf}/10. ${strongPhraseEn}`
+    const sharePhraseEs = isMulti
+      ? `${pct}% de las personas lo eligieron`
+      : `${pct}% de los votos`
+    const sharePhraseEn = isMulti
+      ? `${pct}% of people chose it`
+      : `${pct}% of the vote`
+    const summaryEs = `Con ${totalVotes} participaciones y una confianza promedio de ${avgConfStr}/10, "${shortLabel}" lidera con ${sharePhraseEs} y una certeza de ${leadingConf}/10. ${strongPhraseEs}`
+    const summaryEn = `With ${totalVotes} participation${totalVotes !== 1 ? 's' : ''} and an average confidence of ${avgConfStr}/10, "${shortLabel}" leads with ${sharePhraseEn} and an average certainty of ${leadingConf}/10. ${strongPhraseEn}`
     return { summaryEs, summaryEn }
-  }, [avgConfidence, leadingOutcome, locale, totalVotes, aggregates])
+  }, [avgConfidence, leadingOutcome, locale, totalVotes, aggregates, voteMode])
 
   const handleExport = () => {
     exportPulseVotesCsv(csvRows, question)
@@ -777,13 +809,25 @@ export default function PulseResultClient({
                     )}
                   <li>
                     •{' '}
-                    {pulseInsights.strongOpinions > totalVotes * 0.6
-                      ? locale === 'es'
-                        ? `${pulseInsights.strongOpinions} de ${totalVotes} votantes (${Math.round((pulseInsights.strongOpinions / totalVotes) * 100)}%) tienen opiniones fuertes — hay consenso claro.`
-                        : `${pulseInsights.strongOpinions} of ${totalVotes} voters (${Math.round((pulseInsights.strongOpinions / totalVotes) * 100)}%) have strong opinions — clear consensus.`
-                      : locale === 'es'
-                        ? `Solo ${pulseInsights.strongOpinions} de ${totalVotes} tienen opiniones fuertes — el tema aún está en debate.`
-                        : `Only ${pulseInsights.strongOpinions} of ${totalVotes} have strong opinions — the topic is still debated.`}
+                    {(() => {
+                      const denom =
+                        pulseInsights.statedPicks > 0
+                          ? pulseInsights.statedPicks
+                          : totalVotes
+                      const pct =
+                        denom > 0
+                          ? Math.round((pulseInsights.strongOpinions / denom) * 100)
+                          : 0
+                      const strong = pulseInsights.strongOpinions > denom * 0.6
+                      if (locale === 'es') {
+                        return strong
+                          ? `${pulseInsights.strongOpinions} de ${denom} certezas registradas (${pct}%) son fuertes (≥8/10) — hay consenso claro.`
+                          : `Solo ${pulseInsights.strongOpinions} de ${denom} certezas registradas (${pct}%) son fuertes (≥8/10) — el tema aún está en debate.`
+                      }
+                      return strong
+                        ? `${pulseInsights.strongOpinions} of ${denom} stated certainties (${pct}%) are strong (≥8/10) — clear consensus.`
+                        : `Only ${pulseInsights.strongOpinions} of ${denom} stated certainties (${pct}%) are strong (≥8/10) — the topic is still debated.`
+                    })()}
                   </li>
                   {pulseInsights.lowestLabel != null &&
                     pulseInsights.lowestConf != null &&

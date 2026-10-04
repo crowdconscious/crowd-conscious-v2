@@ -47,6 +47,32 @@ function optionSharesFromAggs(
 }
 
 /**
+ * Recover people (market_votes rows) from real aggregates.
+ * Multi chooser-shares: count / share ≈ people. Exclusive single: sum(count).
+ * Never sum pickers blindly — that overcounts multi.
+ */
+function peopleFromRealAggregates(
+  aggs: OptionAgg[] | null | undefined
+): number {
+  if (!aggs || aggs.length === 0) return 0
+  for (const a of aggs) {
+    const share = a.share
+    const count = a.count
+    if (
+      typeof share === 'number' &&
+      share > 0 &&
+      Number.isFinite(share) &&
+      typeof count === 'number' &&
+      count > 0 &&
+      Number.isFinite(count)
+    ) {
+      return Math.round(count / share)
+    }
+  }
+  return aggs.reduce((s, a) => s + (a.count || 0), 0)
+}
+
+/**
  * Prefer durable track distributions when present (keyed by option label).
  * Falls back to replay aggregates (keyed by optionId).
  * When track has shares but outcome counts are 0/missing, derive counts from
@@ -182,7 +208,7 @@ export function resolveReportDivergenceScore(args: {
   if (!args.hasRealData) return null
   const sim = args.simAggregates ?? []
   const real = args.realAggregates ?? []
-  const realN = real.reduce((s, a) => s + (a.count || 0), 0)
+  const realN = peopleFromRealAggregates(real)
   if (realN <= 0 || sim.length === 0) return null
   return computeDivergence(sim, real).index
 }
@@ -239,11 +265,11 @@ export function assembleSimReportData(input: AssembleReportInput): SimReportData
     : payload.realAggregates != null &&
       payload.realAggregates.some((a) => (a.count || 0) > 0)
 
+  // People count — never sum outcome pickers (multi overcounts). Prefer track;
+  // else recover people from count/share when shares are chooser-shares.
   const realVoteCount = track
     ? track.real_vote_count
-    : payload.realAggregates
-      ? payload.realAggregates.reduce((s, a) => s + (a.count || 0), 0)
-      : 0
+    : peopleFromRealAggregates(payload.realAggregates)
 
   const simulated = sharesFromTrackOrAggs({
     options,
