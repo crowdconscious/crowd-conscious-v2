@@ -18,17 +18,23 @@ export async function generateMetadata(): Promise<Metadata> {
   const locale = cookieStore.get('preferred-language')?.value === 'en' ? 'en' : 'es'
   const copy = getPodcastCopy(locale)
   const latest = getLatestPodcastEpisode()
+  const latestTitle = latest ? episodeTitle(latest, locale) : null
+  const description = latestTitle
+    ? locale === 'es'
+      ? `Escucha TOCAYOS: ${latestTitle}. Gratis en YouTube y Spotify — escuchar apoya causas vía el Fondo Consciente.`
+      : `Listen to TOCAYOS: ${latestTitle}. Free on YouTube and Spotify — listening supports causes via the Conscious Fund.`
+    : copy.metaDescription
   const ogImages = latest?.coverImageUrl
-    ? [{ url: latest.coverImageUrl, alt: episodeTitle(latest, locale) }]
+    ? [{ url: latest.coverImageUrl, alt: latestTitle ?? copy.hubTitle }]
     : undefined
 
   return {
     title: copy.metaTitle,
-    description: copy.metaDescription,
+    description,
     alternates: { canonical: `${SITE_URL}/podcast` },
     openGraph: {
       title: copy.ogTitle,
-      description: copy.metaDescription,
+      description,
       url: `${SITE_URL}/podcast`,
       type: 'website',
       ...(ogImages ? { images: ogImages } : {}),
@@ -36,7 +42,7 @@ export async function generateMetadata(): Promise<Metadata> {
     twitter: {
       card: 'summary_large_image',
       title: copy.ogTitle,
-      description: copy.metaDescription,
+      description,
       ...(latest?.coverImageUrl ? { images: [latest.coverImageUrl] } : {}),
     },
   }
@@ -78,7 +84,7 @@ export default async function PodcastPage() {
       </header>
 
       <ul className="space-y-10">
-        {episodes.map((ep) => {
+        {episodes.map((ep, index) => {
           const title = episodeTitle(ep, locale)
           const blurb = episodeBlurb(ep, locale)
           return (
@@ -96,7 +102,7 @@ export default async function PodcastPage() {
                       fill
                       className="object-cover"
                       sizes="160px"
-                      priority={ep.number === 1}
+                      priority={index === 0}
                     />
                   </div>
                 ) : null}

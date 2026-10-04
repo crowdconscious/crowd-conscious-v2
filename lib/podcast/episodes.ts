@@ -33,6 +33,29 @@ export type PodcastEpisode = {
 
 export const PODCAST_EPISODES: PodcastEpisode[] = [
   {
+    slug: 'tocayos-ep-2-mexico-por-el-clima',
+    number: 2,
+    publishedAt: '2026-09-29',
+    title: {
+      es: 'México por el Clima, con Álvaro Zavala y Juan Pablo Beltrán — TOCAYOS Ep. 2',
+      en: 'México por el Clima, with Álvaro Zavala and Juan Pablo Beltrán — TOCAYOS Ep. 2',
+    },
+    blurb: {
+      es: 'Conversamos con Álvaro Zavala, cofundador de México por el Clima, y Juan Pablo Beltrán, concejal de Miguel Hidalgo: qué pueden hacer las alcaldías frente al clima, la Semana de Acción (5–9 oct) y los Pulsos de agua y basura.',
+      en: 'We talk with Álvaro Zavala, co-founder of México por el Clima, and Juan Pablo Beltrán, Miguel Hidalgo councilor: what city halls can do about climate, Climate Action Week (Oct 5–9), and the water and waste Pulses.',
+    },
+    coverImageUrl:
+      'https://image-cdn-fa.spotifycdn.com/image/ab6772ab000015beb2b9afa64b2d2abaaf7a2e82',
+    youtube: {
+      shareUrl: 'https://youtu.be/Npgi-e5HEWY',
+      videoId: 'Npgi-e5HEWY',
+    },
+    spotify: {
+      shareUrl: 'https://open.spotify.com/episode/7jUYMUtn3PWu8pDUQ5YYPG',
+      episodeId: '7jUYMUtn3PWu8pDUQ5YYPG',
+    },
+  },
+  {
     slug: 'tocayos-ep-1-la-ia-nos-conoce',
     number: 1,
     publishedAt: '2026-09-15',
