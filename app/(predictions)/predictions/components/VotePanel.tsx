@@ -307,7 +307,9 @@ export function VotePanel({
         setMultiConf(conf)
         setMultiTouched(touched)
         setMultiUnknown(unknown)
-      } else if (isMulti) {
+      } else if (isMulti && myVote.outcome_id) {
+        // Legacy single vote on a Pulse later switched to multi: one pick,
+        // no crash, no second ballot — hydrate from the vote row itself.
         setMultiIds([myVote.outcome_id])
         setMultiConf({ [myVote.outcome_id]: known ? myVote.confidence : 5 })
         setMultiTouched({ [myVote.outcome_id]: known })
@@ -974,8 +976,17 @@ export function VotePanel({
   }
 
   if (guestHasVoted) {
-    const displayOutcomeId = guestVoteRecord?.outcomeId
-    const displayConfidence = guestVoteRecord?.confidence
+    const guestSelections = guestVoteRecord?.selections
+    const displayOutcomeIds =
+      guestSelections && guestSelections.length > 0
+        ? guestSelections.map((s) => s.outcome_id)
+        : guestVoteRecord?.outcomeId
+          ? [guestVoteRecord.outcomeId]
+          : []
+    const displayConfidence =
+      guestSelections && guestSelections.length > 0
+        ? Math.max(...guestSelections.map((s) => s.confidence))
+        : guestVoteRecord?.confidence
     const sorted = [...outcomes].sort(
       (a, b) => toDecimal(b.probability || 0) - toDecimal(a.probability || 0)
     )
@@ -1008,7 +1019,7 @@ export function VotePanel({
             <div className="space-y-3">
               {sorted.map((o) => {
                 const pct = Math.round(toDisplayPercent(o.probability || 0))
-                const isYours = o.id === displayOutcomeId
+                const isYours = displayOutcomeIds.includes(o.id)
                 const subtitle = getOutcomeSubtitle(o, locale)
                 return (
                   <div key={o.id} className="space-y-1">

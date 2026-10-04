@@ -188,6 +188,7 @@ type MyVote = {
   bonus_xp: number
   rankings?: { outcome_id: string; rank: number }[] | null
   other_text?: string | null
+  selections?: { outcome_id: string; confidence: number }[] | null
 } | null
 
 export type RelatedMarketSummary = {

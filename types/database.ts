@@ -722,7 +722,7 @@ export interface Database {
           sponsor_label: string | null
           expires_in_minutes: number | null
           is_pulse: boolean
-          /** single (default) | ranked | multi. Migrations 256/262. Existing Pulses stay single. */
+          /** single (default for non-Pulse) | ranked | multi. Pulses always multi (migration 278). */
           vote_mode?: 'single' | 'ranked' | 'multi'
           /** For vote_mode=multi: max picks per voter (2–5, default 3). Migration 262. */
           max_selections?: number

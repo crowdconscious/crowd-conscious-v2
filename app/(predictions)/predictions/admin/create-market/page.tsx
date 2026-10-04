@@ -60,9 +60,6 @@ export default function CreatePulsePage() {
   const [customDate, setCustomDate] = useState('')
   const [durationMode, setDurationMode] = useState<'preset' | 'custom'>('preset')
   const [outcomes, setOutcomes] = useState<OutcomeDraft[]>([EMPTY_OUTCOME(), EMPTY_OUTCOME()])
-  const [voteModeRanked, setVoteModeRanked] = useState(false)
-  const [voteModeMulti, setVoteModeMulti] = useState(false)
-  const [maxSelections, setMaxSelections] = useState(3)
   const [allowOther, setAllowOther] = useState(false)
   const OUTCOME_TITLE_MAX = 80
   const OUTCOME_SUBTITLE_MAX = 200
@@ -424,9 +421,10 @@ export default function CreatePulsePage() {
           pulse_client_email: pulseClientEmail.trim() || null,
           sponsor_account_id: sponsorAccountId || null,
           cover_image_url: pulseCoverUrl.trim() || sponsorLogoUrl.trim() || null,
-          vote_mode: voteModeMulti ? 'multi' : voteModeRanked ? 'ranked' : 'single',
+          // Server forces multi; send explicitly so drafts/logs match product rule.
+          vote_mode: 'multi',
+          max_selections: 3,
           allow_other: allowOther,
-          ...(voteModeMulti ? { max_selections: maxSelections } : {}),
         }),
       })
       const data = await res.json()
@@ -830,73 +828,11 @@ export default function CreatePulsePage() {
                     : 'Other (the voter types their answer)'}
                 </p>
               ) : null}
-              <label className="mt-4 flex cursor-pointer items-start gap-3">
-                <input
-                  type="checkbox"
-                  checked={voteModeRanked}
-                  onChange={(e) => {
-                    setVoteModeRanked(e.target.checked)
-                    if (e.target.checked) setVoteModeMulti(false)
-                  }}
-                  className="mt-1 h-4 w-4 rounded border-white/20 bg-transparent text-emerald-500"
-                />
-                <span>
-                  <span className="block text-sm font-medium text-gray-200">
-                    {language === 'es'
-                      ? 'Voto ordenado (hasta 3 opciones)'
-                      : 'Ranked vote (up to 3 options)'}
-                  </span>
-                  <span className="mt-1 block text-xs text-gray-500">
-                    {language === 'es'
-                      ? 'Solo la primera opción recibe el peso de confianza; la 2 y 3 son señal de preferencia.'
-                      : 'Only first choice gets the confidence weight; 2nd and 3rd are preference signal.'}
-                  </span>
-                </span>
-              </label>
-              {process.env.NEXT_PUBLIC_MULTI_SELECT_PULSES_ENABLED === 'true' ? (
-                <>
-                  <label className="mt-3 flex cursor-pointer items-start gap-3">
-                    <input
-                      type="checkbox"
-                      checked={voteModeMulti}
-                      onChange={(e) => {
-                        setVoteModeMulti(e.target.checked)
-                        if (e.target.checked) setVoteModeRanked(false)
-                      }}
-                      className="mt-1 h-4 w-4 rounded border-white/20 bg-transparent text-emerald-500"
-                    />
-                    <span>
-                      <span className="block text-sm font-medium text-gray-200">
-                        {language === 'es'
-                          ? 'Selección múltiple (con certeza por opción)'
-                          : 'Multi-select (certainty per option)'}
-                      </span>
-                      <span className="mt-1 block text-xs text-gray-500">
-                        {language === 'es'
-                          ? 'Quien vote podrá elegir varias opciones y marcar la certeza de cada una (incluye “No lo sé”). No se combina con voto ordenado.'
-                          : 'Voters can pick several options and set certainty on each (including “I don’t know”). Cannot combine with ranked.'}
-                      </span>
-                    </span>
-                  </label>
-                  {voteModeMulti ? (
-                    <label className="mt-3 block pl-7">
-                      <span className="text-sm text-gray-300">
-                        {language === 'es' ? 'Máximo de opciones' : 'Max selections'}:{' '}
-                        {maxSelections}
-                      </span>
-                      <input
-                        type="range"
-                        min={2}
-                        max={5}
-                        step={1}
-                        value={maxSelections}
-                        onChange={(e) => setMaxSelections(parseInt(e.target.value, 10))}
-                        className="cc-range-slider mt-2 w-full max-w-xs min-h-[44px]"
-                      />
-                    </label>
-                  ) : null}
-                </>
-              ) : null}
+              <p className="mt-4 text-xs text-gray-500">
+                {language === 'es'
+                  ? 'Puedes elegir hasta 3 opciones y marcar la certeza de cada una (incluye “No lo sé”).'
+                  : 'Voters can pick up to 3 options and set certainty on each (including “I don’t know”).'}
+              </p>
               <label className="mt-3 flex cursor-pointer items-start gap-3">
                 <input
                   type="checkbox"
