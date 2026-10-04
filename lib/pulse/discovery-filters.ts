@@ -6,14 +6,17 @@
  * apply this filter.
  *
  * PostgREST note: a plain `.not('tags', 'cs', '{stand-only}')` drops rows
- * where `tags` is NULL. The null-safe form keeps those rows:
+ * where `tags` is NULL. The null-safe `or=` form keeps those rows:
  *   tags IS NULL OR tags does not contain stand-only
+ *
+ * Negation inside `or()` must be `column.not.op.value` (e.g. `tags.not.cs.{…}`).
+ * Prefix form `not.tags.cs.{…}` is invalid (PGRST100) and empties every list.
  */
 
 export const STAND_ONLY_TAG = 'stand-only'
 
 /** PostgREST `or=` filter value for excludeStandOnly. */
-export const STAND_ONLY_EXCLUDE_OR = `tags.is.null,not.tags.cs.{${STAND_ONLY_TAG}}`
+export const STAND_ONLY_EXCLUDE_OR = `tags.is.null,tags.not.cs.{${STAND_ONLY_TAG}}`
 
 /**
  * Apply the null-safe stand-only exclusion to a Supabase query builder.

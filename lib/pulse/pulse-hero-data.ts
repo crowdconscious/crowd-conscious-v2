@@ -17,7 +17,7 @@ export async function fetchPulseHeroHighlight(): Promise<{
   strongOpinions: number
 }> {
   const supabase = await createClient()
-  const { data: pulseRow } = await excludeStandOnly(
+  const { data: pulseRow, error } = await excludeStandOnly(
     supabase
       .from('prediction_markets')
       .select('id, title, translations, total_votes, cover_image_url, image_url')
@@ -30,6 +30,9 @@ export async function fetchPulseHeroHighlight(): Promise<{
     .limit(1)
     .maybeSingle()
 
+  if (error) {
+    console.error('[fetchPulseHeroHighlight] discovery query failed', error)
+  }
   const row = pulseRow as {
     id: string
     title: string
