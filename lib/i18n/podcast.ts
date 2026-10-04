@@ -2,15 +2,17 @@ import type { PodcastLocale } from '@/lib/podcast/episodes'
 
 /**
  * Hub UI copy for /podcast. Episode titles/blurbs live in
- * lib/podcast/episodes.ts so adding Ep. 2 does not touch this module.
+ * lib/podcast/episodes.ts — teasers/meta pull the latest episode from
+ * that catalog so adding Ep. N does not require hard-coded titles here.
  */
 export function getPodcastCopy(locale: PodcastLocale) {
   const es = locale === 'es'
   return {
     metaTitle: es ? 'Podcast | TOCAYOS' : 'Podcast | TOCAYOS',
+    /** Fallback when the catalog is empty; prefer latest-episode meta in page.tsx. */
     metaDescription: es
-      ? 'Escucha TOCAYOS, el podcast de Crowd Conscious. Episodio 1 gratis en YouTube y Spotify — escuchar apoya causas vía el Fondo Consciente.'
-      : 'Listen to TOCAYOS, the Crowd Conscious podcast. Episode 1 free on YouTube and Spotify — listening supports causes via the Conscious Fund.',
+      ? 'Escucha TOCAYOS, el podcast de Crowd Conscious. Episodios gratis en YouTube y Spotify — escuchar apoya causas vía el Fondo Consciente.'
+      : 'Listen to TOCAYOS, the Crowd Conscious podcast. Free episodes on YouTube and Spotify — listening supports causes via the Conscious Fund.',
     /** OG/twitter titles include brand (no layout title template). */
     ogTitle: es
       ? 'Podcast | TOCAYOS — Crowd Conscious'
@@ -29,16 +31,13 @@ export function getPodcastCopy(locale: PodcastLocale) {
       ? 'Escuchar apoya causas reales a través del Fondo Consciente.'
       : 'Listening supports real causes through the Conscious Fund.',
     fundCta: es ? 'Conoce el Fondo' : 'About the Fund',
-    // Landing teaser
+    // Landing teaser — title comes from getLatestPodcastEpisode(); body stays generic.
     /** Primary-nav + footer label. Keep "Podcast" (findable), not TOCAYOS. */
     navLabel: es ? 'Podcast' : 'Podcast',
     teaserEyebrow: es ? 'Podcast' : 'Podcast',
-    teaserTitle: es
-      ? 'TOCAYOS Ep. 1 — ¿La IA nos conoce?'
-      : 'TOCAYOS Ep. 1 — Does AI know us?',
     teaserBody: es
-      ? 'Escucha el piloto gratis en YouTube o Spotify. Escuchar apoya causas vía el Fondo Consciente.'
-      : 'Listen to the pilot free on YouTube or Spotify. Listening supports causes via the Conscious Fund.',
+      ? 'Escucha el episodio más reciente gratis en YouTube o Spotify. Escuchar apoya causas vía el Fondo Consciente.'
+      : 'Listen to the latest episode free on YouTube or Spotify. Listening supports causes via the Conscious Fund.',
     teaserCta: es ? 'Ir al podcast' : 'Go to podcast',
   }
 }
