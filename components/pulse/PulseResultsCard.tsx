@@ -124,9 +124,15 @@ export default function PulseResultsCard({
     .map((o) => {
       const stats = byOutcome?.[o.id]
       if (isMulti) {
-        const count = stats?.count ?? 0
+        // Prefer live byOutcome; fall back to maintained vote_count when the
+        // caller only has DB outcome columns (e.g. MarketDetailClient).
+        const count = stats?.count ?? (typeof o.vote_count === 'number' ? o.vote_count : 0)
         if (count <= 0) return null
-        const share = outcomeChooserShare(stats, totalVotes) ?? 0
+        const share =
+          outcomeChooserShare(
+            stats ?? { count, confidenceSum: 0, confidenceCount: 0 },
+            totalVotes
+          ) ?? (totalVotes > 0 ? count / totalVotes : 0)
         const pct = Math.round(share * 100)
         return {
           id: o.id,

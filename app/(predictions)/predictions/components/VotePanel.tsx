@@ -924,9 +924,11 @@ export function VotePanel({
   }
 
   if (isPastCloseDate) {
-    const sorted = [...outcomes].sort(
-      (a, b) => toDecimal(b.probability || 0) - toDecimal(a.probability || 0)
-    )
+    const peopleN = Number(market.total_votes ?? 0)
+    const sorted = [...outcomes].sort((a, b) => {
+      if (isMulti) return (b.vote_count ?? 0) - (a.vote_count ?? 0)
+      return toDecimal(b.probability || 0) - toDecimal(a.probability || 0)
+    })
     return (
       <div className="bg-cc-card border border-cc-border rounded-xl p-6">
         <h3 className="font-semibold text-white mb-2">
@@ -939,7 +941,10 @@ export function VotePanel({
         </p>
         <div className="space-y-3">
           {sorted.map((o) => {
-            const pct = Math.round(toDisplayPercent(o.probability || 0))
+            const pct =
+              isMulti && peopleN > 0
+                ? Math.min(100, Math.round(((o.vote_count ?? 0) / peopleN) * 100))
+                : Math.round(toDisplayPercent(o.probability || 0))
             const subtitle = getOutcomeSubtitle(o, locale)
             const isYours = myVote?.outcome_id === o.id
             return (
@@ -987,15 +992,14 @@ export function VotePanel({
       guestSelections && guestSelections.length > 0
         ? Math.max(...guestSelections.map((s) => s.confidence))
         : guestVoteRecord?.confidence
-    const sorted = [...outcomes].sort(
-      (a, b) => toDecimal(b.probability || 0) - toDecimal(a.probability || 0)
-    )
+    const sorted = [...outcomes].sort((a, b) => {
+      if (isMulti) return (b.vote_count ?? 0) - (a.vote_count ?? 0)
+      return toDecimal(b.probability || 0) - toDecimal(a.probability || 0)
+    })
     const shareTitle = getMarketText(market, 'title', locale)
     const sponsorName = (market as { sponsor_name?: string | null }).sponsor_name
-    const voteN = Math.max(
-      Number(market.total_votes ?? 0),
-      outcomes.reduce((s, o) => s + (o.vote_count ?? 0), 0)
-    )
+    // People only — never sum vote_count (multi pickers overcount people).
+    const voteN = Number(market.total_votes ?? 0)
     const showBars = shouldRevealCount(voteN)
 
     return (
@@ -1018,7 +1022,9 @@ export function VotePanel({
           {showBars ? (
             <div className="space-y-3">
               {sorted.map((o) => {
-                const pct = Math.round(toDisplayPercent(o.probability || 0))
+                const pct = isMulti && voteN > 0
+                  ? Math.min(100, Math.round(((o.vote_count ?? 0) / voteN) * 100))
+                  : Math.round(toDisplayPercent(o.probability || 0))
                 const isYours = displayOutcomeIds.includes(o.id)
                 const subtitle = getOutcomeSubtitle(o, locale)
                 return (

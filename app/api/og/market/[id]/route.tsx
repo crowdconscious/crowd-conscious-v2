@@ -50,8 +50,9 @@ function getCategoryDisplay(category: string | null | undefined, isPulse?: boole
 
 function getVoteSplit(
   market: { current_probability: number | string | null },
-  outcomes: OutcomeRow[] | null | undefined,
-  locale: string
+  outcomes: (OutcomeRow & { vote_count?: number | null })[] | null | undefined,
+  locale: string,
+  opts?: { isMulti?: boolean; totalVoters?: number }
 ): {
   line: string
   leftPct: number
@@ -62,14 +63,29 @@ function getVoteSplit(
   barLeftWidth: number
 } {
   const outs = outcomes ?? []
+  const isMulti = opts?.isMulti === true
+  const totalVoters = opts?.totalVoters ?? 0
   if (outs.length >= 2) {
-    const sorted = [...outs].sort((a, b) => Number(b.probability) - Number(a.probability))
+    const sorted = [...outs].sort((a, b) => {
+      if (isMulti) return Number(b.vote_count ?? 0) - Number(a.vote_count ?? 0)
+      return Number(b.probability) - Number(a.probability)
+    })
     const a = sorted[0]
     const b = sorted[1]
-    const p1 = Math.min(100, Math.max(0, Math.round(Number(a.probability) * 100)))
-    const p2 = Math.min(100, Math.max(0, Math.round(Number(b.probability) * 100)))
+    const pctOf = (o: OutcomeRow & { vote_count?: number | null }) => {
+      if (isMulti && totalVoters > 0) {
+        return Math.min(
+          100,
+          Math.max(0, Math.round((Number(o.vote_count ?? 0) / totalVoters) * 100))
+        )
+      }
+      return Math.min(100, Math.max(0, Math.round(Number(o.probability) * 100)))
+    }
+    const p1 = pctOf(a)
+    const p2 = pctOf(b)
     const l1 = getOutcomeLabel(a, locale)
     const l2 = getOutcomeLabel(b, locale)
+    // Multi people-shares need not sum to 100 — bar width uses relative mass.
     const sum = p1 + p2
     const barLeftWidth = sum > 0 ? Math.round((p1 / sum) * 1000) / 10 : 50
     return {
@@ -151,35 +167,55 @@ export async function GET(
 
     const { data: outcomes } = await supabase
       .from('market_outcomes')
-      .select('label, probability, vote_count, translations')
+      .select('label, probability, vote_count, total_confidence, confident_pick_count, translations')
       .eq('market_id', marketId)
       .order(isMultiVote ? 'vote_count' : 'probability', { ascending: false })
 
-    // Avg confidence (Pulse signature stat). Fast for typical Pulses
-    // (≤ ~1k votes). Exclude confidence 0 ("No lo sé").
+    // Avg confidence from maintained pick-level totals (multi-correct).
+    // Fallback: primary market_votes.confidence excluding 0 ("No lo sé").
     const isPulseQuery =
       Boolean((market as { is_pulse?: boolean }).is_pulse) || market.category === 'pulse'
     let avgConfidence: number | null = null
     let voteCount: number | null = null
+    const outcomeRows = (outcomes ?? []) as (OutcomeRow & {
+      vote_count?: number | null
+      total_confidence?: number | null
+      confident_pick_count?: number | null
+    })[]
     if (isPulseQuery) {
-      const { data: voteRows } = await supabase
-        .from('market_votes')
-        .select('confidence')
-        .eq('market_id', marketId)
-        .limit(5000)
-      if (voteRows && voteRows.length > 0) {
-        const stated = voteRows.filter(
-          (v) => typeof v.confidence === 'number' && v.confidence >= 1 && v.confidence <= 10
-        )
-        if (stated.length > 0) {
-          const total = stated.reduce((sum, v) => sum + (v.confidence as number), 0)
-          avgConfidence = total / stated.length
+      let confSum = 0
+      let confN = 0
+      for (const o of outcomeRows) {
+        const n = Number(o.confident_pick_count ?? 0)
+        if (n > 0) {
+          confSum += Number(o.total_confidence ?? 0)
+          confN += n
         }
-        voteCount = voteRows.length
+      }
+      if (confN > 0) {
+        avgConfidence = confSum / confN
+      } else {
+        const { data: voteRows } = await supabase
+          .from('market_votes')
+          .select('confidence')
+          .eq('market_id', marketId)
+          .limit(5000)
+        if (voteRows && voteRows.length > 0) {
+          const stated = voteRows.filter(
+            (v) => typeof v.confidence === 'number' && v.confidence >= 1 && v.confidence <= 10
+          )
+          if (stated.length > 0) {
+            const total = stated.reduce((sum, v) => sum + (v.confidence as number), 0)
+            avgConfidence = total / stated.length
+          }
+          voteCount = voteRows.length
+        }
+      }
+      if (voteCount == null) {
+        voteCount =
+          typeof market.total_votes === 'number' ? market.total_votes : null
       }
     }
-
-    const outcomeRows = (outcomes ?? []) as (OutcomeRow & { vote_count?: number | null })[]
     const totalVoters =
       typeof market.total_votes === 'number' && market.total_votes > 0
         ? market.total_votes
@@ -265,7 +301,10 @@ export async function GET(
     const displayTitle = getMarketText(market, 'title', locale)
     const titleLength = displayTitle.length
     const categoryDisplay = getCategoryDisplay(market.category, isPulseMarket)
-    const split = getVoteSplit(market, outcomeRows, locale)
+    const split = getVoteSplit(market, outcomeRows, locale, {
+      isMulti: isMultiVote,
+      totalVoters,
+    })
     const topThreeOutcomes = sortedByProb.slice(0, 3)
 
     let logoBase64 = ''

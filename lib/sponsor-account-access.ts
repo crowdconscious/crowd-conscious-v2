@@ -39,7 +39,7 @@ const marketSelect = `
   sponsor_account_id,
   sponsor_name,
   pulse_client_email,
-  market_outcomes(id, label, probability, vote_count)
+  market_outcomes(id, label, probability, vote_count, total_confidence, confident_pick_count)
 `
 
 /** True if this market should appear on the sponsor dashboard for this account. */

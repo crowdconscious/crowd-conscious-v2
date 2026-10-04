@@ -1142,18 +1142,40 @@ async function readRealAggregateSnapshot(
 
   const { data: votes, error: vErr } = await admin
     .from('market_votes')
-    .select('outcome_id, confidence, created_at')
+    .select('id, outcome_id, confidence, created_at')
     .eq('market_id', marketId)
   if (vErr) throw new Error(`readRealAggregateSnapshot: votes: ${vErr.message}`)
 
-  const pulseVotes: PulseVoteLike[] = (votes ?? []).map((v) => {
-    const row = v as { outcome_id: string; confidence: number | null; created_at: string }
-    return {
-      outcome_id: labelById.get(row.outcome_id) ?? row.outcome_id,
-      confidence: row.confidence,
-      created_at: row.created_at,
+  const voteRows = (votes ?? []) as Array<{
+    id: string
+    outcome_id: string
+    confidence: number | null
+    created_at: string
+  }>
+  const selectionsByVote = new Map<string, { outcome_id: string; confidence: number }[]>()
+  const voteIds = voteRows.map((v) => v.id)
+  if (voteIds.length > 0) {
+    const { data: sels } = await admin
+      .from('market_vote_selections')
+      .select('vote_id, outcome_id, confidence')
+      .in('vote_id', voteIds)
+    for (const row of sels ?? []) {
+      const r = row as { vote_id: string; outcome_id: string; confidence: number }
+      const list = selectionsByVote.get(r.vote_id) ?? []
+      list.push({
+        outcome_id: labelById.get(r.outcome_id) ?? r.outcome_id,
+        confidence: r.confidence,
+      })
+      selectionsByVote.set(r.vote_id, list)
     }
-  })
+  }
+
+  const pulseVotes: PulseVoteLike[] = voteRows.map((row) => ({
+    outcome_id: labelById.get(row.outcome_id) ?? row.outcome_id,
+    confidence: row.confidence,
+    created_at: row.created_at,
+    selections: selectionsByVote.get(row.id) ?? null,
+  }))
   return computeAggregateSnapshot(pulseVotes)
 }
 

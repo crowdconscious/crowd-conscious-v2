@@ -315,17 +315,42 @@ async function readRealDistribution(
 
   const { data: votes, error: vErr } = await admin
     .from('market_votes')
-    .select('outcome_id, confidence, created_at')
+    .select('id, outcome_id, confidence, created_at')
     .eq('market_id', marketId)
   if (vErr) throw new Error(`readRealDistribution votes: ${vErr.message}`)
 
   if (!votes || votes.length === 0) return null
 
+  const voteRows = votes as Array<{
+    id: string
+    outcome_id: string
+    confidence: number | null
+    created_at: string
+  }>
+  const selectionsByVote = new Map<string, { outcome_id: string; confidence: number }[]>()
+  const voteIds = voteRows.map((v) => v.id)
+  if (voteIds.length > 0) {
+    const { data: sels } = await admin
+      .from('market_vote_selections')
+      .select('vote_id, outcome_id, confidence')
+      .in('vote_id', voteIds)
+    for (const row of sels ?? []) {
+      const r = row as { vote_id: string; outcome_id: string; confidence: number }
+      const list = selectionsByVote.get(r.vote_id) ?? []
+      list.push({
+        outcome_id: labelById.get(r.outcome_id) ?? r.outcome_id,
+        confidence: r.confidence,
+      })
+      selectionsByVote.set(r.vote_id, list)
+    }
+  }
+
   const snapshot = computeAggregateSnapshot(
-    votes.map((v) => ({
-      outcome_id: labelById.get(v.outcome_id as string) ?? (v.outcome_id as string),
-      confidence: (v.confidence as number | null) ?? null,
-      created_at: v.created_at as string,
+    voteRows.map((v) => ({
+      outcome_id: labelById.get(v.outcome_id) ?? v.outcome_id,
+      confidence: v.confidence ?? null,
+      created_at: v.created_at,
+      selections: selectionsByVote.get(v.id) ?? null,
     })),
   )
 

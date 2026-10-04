@@ -141,7 +141,7 @@ export default async function MarketDetailPage({
       .single(),
     supabase
       .from('market_outcomes')
-      .select('id, label, subtitle, probability, vote_count, total_confidence, is_winner, sort_order, translations, is_other')
+      .select('id, label, subtitle, probability, vote_count, total_confidence, confident_pick_count, is_winner, sort_order, translations, is_other')
       .eq('market_id', id)
       .order('sort_order', { ascending: true }),
     user
@@ -170,6 +170,8 @@ export default async function MarketDetailPage({
     probability: Number(o.probability),
     vote_count: o.vote_count ?? 0,
     total_confidence: o.total_confidence ?? 0,
+    confident_pick_count:
+      (o as { confident_pick_count?: number | null }).confident_pick_count ?? null,
     is_winner: o.is_winner,
     is_other: (o as { is_other?: boolean | null }).is_other === true,
     translations: (o as { translations?: unknown }).translations as

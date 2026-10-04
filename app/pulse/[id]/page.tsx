@@ -597,6 +597,13 @@ function labeledRealSnapshot(
     outcome_id: labelById.get(v.outcome_id) ?? v.outcome_id,
     confidence: v.confidence,
     created_at: v.created_at,
+    // Remap multi picks to labels so aggregatePulseVotes sees all selections.
+    selections: Array.isArray(v.selections)
+      ? v.selections.map((s) => ({
+          outcome_id: labelById.get(s.outcome_id) ?? s.outcome_id,
+          confidence: s.confidence,
+        }))
+      : null,
   }))
   const agg: PulseVoteAggregates = aggregatePulseVotes(labeled)
   const option_shares: Record<string, number> = {}

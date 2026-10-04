@@ -140,21 +140,28 @@ export default function PulseInlineVote({
 
   const hasVoted = isAuthenticated ? !!myVote : !!guestVoteRecord
 
-  const allOutcomes: PostVoteOutcomeStat[] = useMemo(
-    () =>
-      outcomes.map((o) => ({
+  const allOutcomes: PostVoteOutcomeStat[] = useMemo(() => {
+    const people = Math.max(aggregates.totalVotes, 1)
+    const isMulti = (market as { vote_mode?: string }).vote_mode === 'multi'
+    return outcomes.map((o) => {
+      const stats = aggregates.byOutcome[o.id]
+      const peopleShare =
+        isMulti && people > 0
+          ? (stats?.count ?? o.vote_count ?? 0) / people
+          : Number(o.probability ?? 0)
+      return {
         outcomeId: o.id,
         label: getOutcomeLabel(o, locale),
         subtitle: getOutcomeSubtitle(o, locale),
-        probability: Number(o.probability ?? 0),
+        probability: peopleShare,
         avgConfidence: resolveOutcomeAvgConfidence({
           totalConfidence: o.total_confidence,
           confidentPickCount: o.confident_pick_count,
-          stats: aggregates.byOutcome[o.id],
+          stats,
         }),
-      })),
-    [outcomes, locale, aggregates]
-  )
+      }
+    })
+  }, [outcomes, locale, aggregates, market])
 
   const votedOutcome: PostVoteOutcomeStat | null = celebration.outcomeId
     ? allOutcomes.find((o) => o.outcomeId === celebration.outcomeId) ?? null
