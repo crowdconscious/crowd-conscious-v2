@@ -117,7 +117,7 @@ export async function fetchPulseMarketsForListing(ctx: PulseListingContext): Pro
     return (rows ?? []) as PulseListingMarketRow[]
   }
 
-  const { data: rows } = await excludeStandOnly(
+  const { data: rows, error } = await excludeStandOnly(
     publicClient
       .from('prediction_markets')
       .select(PULSE_SELECT)
@@ -126,6 +126,10 @@ export async function fetchPulseMarketsForListing(ctx: PulseListingContext): Pro
       .eq('is_draft', false)
       .or(PULSE_OR)
   ).order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('[fetchPulseMarketsForListing] public discovery query failed', error)
+  }
 
   return (rows ?? []) as PulseListingMarketRow[]
 }
@@ -283,7 +287,7 @@ export async function fetchResolvedPulseMarketsForListing(
 ): Promise<PulseListingMarketRow[]> {
   const admin = createAdminClient()
   // Public Resultados archive — hide stand-only (QR/event) Pulses.
-  const { data: rows } = await excludeStandOnly(
+  const { data: rows, error } = await excludeStandOnly(
     admin
       .from('prediction_markets')
       .select(PULSE_SELECT)
@@ -291,6 +295,10 @@ export async function fetchResolvedPulseMarketsForListing(
       .eq('is_draft', false)
       .or(PULSE_OR)
   ).order('resolved_at', { ascending: false, nullsFirst: false })
+
+  if (error) {
+    console.error('[fetchResolvedPulseMarketsForListing] query failed', error)
+  }
 
   const markets = (rows ?? []) as PulseListingMarketRow[]
   return attachClosedPulseSimAccess(markets, ctx)

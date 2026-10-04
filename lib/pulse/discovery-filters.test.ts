@@ -10,7 +10,7 @@ import {
 describe('discovery-filters', () => {
   it('exports the stand-only tag and null-safe or-filter', () => {
     assert.equal(STAND_ONLY_TAG, 'stand-only')
-    assert.equal(STAND_ONLY_EXCLUDE_OR, 'tags.is.null,not.tags.cs.{stand-only}')
+    assert.equal(STAND_ONLY_EXCLUDE_OR, 'tags.is.null,tags.not.cs.{stand-only}')
   })
 
   it('isStandOnly is null-safe', () => {

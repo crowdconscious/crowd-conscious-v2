@@ -21,7 +21,7 @@ import { excludeStandOnly } from '@/lib/pulse/discovery-filters'
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const supabase = await createClient()
 
-  const [{ data: markets }, { data: events }, { data: posts }] = await Promise.all([
+  const [{ data: markets, error: marketsError }, { data: events }, { data: posts }] = await Promise.all([
     excludeStandOnly(
       supabase
         .from('prediction_markets')
@@ -42,6 +42,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .order('published_at', { ascending: false }),
   ])
 
+  if (marketsError) {
+    console.error('[sitemap] markets discovery query failed', marketsError)
+  }
   const now = new Date()
 
   const staticPages: MetadataRoute.Sitemap = [

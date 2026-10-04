@@ -229,6 +229,16 @@ async function getLandingData() {
       .gte('created_at', cycleStartIso()),
   ])
 
+  if (marketsRes.error) {
+    console.error('[home] active Pulse discovery query failed', marketsRes.error)
+  }
+  if (liveActionRes.error) {
+    console.error('[home] live-action Pulse query failed', liveActionRes.error)
+  }
+  if (activeMarketsCountRes.error) {
+    console.error('[home] active markets count query failed', activeMarketsCountRes.error)
+  }
+
   const markets = (marketsRes.data || []) as MarketCardMarket[]
 
   const liveActionMarket = (liveActionRes.data ?? null) as {
