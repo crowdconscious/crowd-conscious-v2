@@ -147,7 +147,7 @@ export default async function MarketDetailPage({
     user
       ? supabase
           .from('market_votes')
-          .select('outcome_id, confidence, xp_earned, is_correct, bonus_xp, rankings, other_text')
+          .select('id, outcome_id, confidence, xp_earned, is_correct, bonus_xp, rankings, other_text')
           .eq('market_id', id)
           .eq('user_id', user.id)
           .single()
@@ -187,9 +187,28 @@ export default async function MarketDetailPage({
     bonus_xp: number
     rankings?: { outcome_id: string; rank: number }[] | null
     other_text?: string | null
+    selections?: { outcome_id: string; confidence: number }[] | null
   } | null = null
   if (myVoteRow) {
     const outcomeLabel = (outcomes || []).find((o) => o.id === myVoteRow.outcome_id)?.label ?? null
+    // Load multi-select picks when present. Legacy single votes (Pulse switched
+    // from single→multi) may have zero/one selection rows — VotePanel falls
+    // back to outcome_id + confidence so the UI still shows the existing pick.
+    let selections: { outcome_id: string; confidence: number }[] | null = null
+    const voteId = (myVoteRow as { id?: string }).id
+    if (voteId) {
+      const { data: selRows } = await supabase
+        .from('market_vote_selections')
+        .select('outcome_id, confidence')
+        .eq('vote_id', voteId)
+        .order('created_at', { ascending: true })
+      if (selRows && selRows.length > 0) {
+        selections = selRows.map((s) => ({
+          outcome_id: s.outcome_id,
+          confidence: s.confidence,
+        }))
+      }
+    }
     myVote = {
       outcome_id: myVoteRow.outcome_id,
       outcome_label: outcomeLabel ?? 'Unknown',
@@ -199,6 +218,7 @@ export default async function MarketDetailPage({
       bonus_xp: myVoteRow.bonus_xp ?? 0,
       rankings: parseRankings(myVoteRow.rankings),
       other_text: myVoteRow.other_text ?? null,
+      selections,
     }
   }
 

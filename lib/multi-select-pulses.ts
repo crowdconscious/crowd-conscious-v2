@@ -1,23 +1,39 @@
 /**
- * Multi-select Pulse feature flag + selection helpers.
+ * Multi-select Pulse helpers.
  *
- * Flag default OFF. Owner enables after applying migration 262.
- * Creation UI/API gated by the flag; vote casting for vote_mode=multi
- * still works when the DB row says multi (DB is source of truth).
+ * Product rule (2026-10-04): every Crowd Conscious Pulse is multi-select
+ * (vote_mode='multi', max_selections=3). Create/edit paths force these
+ * fields for is_pulse rows; migration 278 adds a BEFORE INSERT DB guard.
+ * Non-Pulse markets keep the column default of 'single'.
  */
 
 export const MAX_MULTI_SELECTIONS = 5
 export const MIN_MULTI_SELECTIONS = 2
 export const DEFAULT_MAX_SELECTIONS = 3
 
+/** Canonical Pulse vote fields — always multi with up to 3 picks. */
+export const PULSE_VOTE_MODE = 'multi' as const
+export const PULSE_MAX_SELECTIONS = DEFAULT_MAX_SELECTIONS
+
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-/** Server + client: true only when explicitly enabled. */
+/**
+ * Fields to stamp on every is_pulse create/update, ignoring client input.
+ * Ranked/single are not allowed for new Pulses.
+ */
+export function pulseMultiVoteFields(): {
+  vote_mode: typeof PULSE_VOTE_MODE
+  max_selections: number
+} {
+  return { vote_mode: PULSE_VOTE_MODE, max_selections: PULSE_MAX_SELECTIONS }
+}
+
+/**
+ * @deprecated Pulses are always multi (2026-10-04). Kept so old env checks
+ * do not break callers; always returns true.
+ */
 export function isMultiSelectPulsesEnabled(): boolean {
-  if (typeof process === 'undefined') return false
-  const server = process.env.MULTI_SELECT_PULSES_ENABLED
-  const pub = process.env.NEXT_PUBLIC_MULTI_SELECT_PULSES_ENABLED
-  return server === 'true' || pub === 'true'
+  return true
 }
 
 export type VoteSelection = {

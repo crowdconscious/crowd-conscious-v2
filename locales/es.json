@@ -376,6 +376,7 @@
       "field_ranked_help": "Si está apagado, cada persona elige una sola opción (como hoy).",
       "field_multi_label": "Selección múltiple (certeza por opción)",
       "field_multi_help": "Quien vote podrá elegir varias opciones y marcar la certeza de cada una (incluye “No lo sé”).",
+      "field_multi_info": "Puedes elegir hasta 3 opciones y marcar la certeza de cada una (incluye “No lo sé”).",
       "field_multi_max_label": "Máximo de opciones",
       "field_allow_other_label": "Incluir opción \"Otro\"",
       "field_allow_other_tip": "Agrega una opción extra donde la gente escribe su propia respuesta (máx. 120 caracteres). No cuenta dentro del límite de 2 a 6 opciones listadas.",

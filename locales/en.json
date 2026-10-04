@@ -376,6 +376,7 @@
       "field_ranked_help": "If off, each person picks a single option (as today).",
       "field_multi_label": "Multi-select (certainty per option)",
       "field_multi_help": "Voters can pick several options and set certainty on each one (including “I don’t know”).",
+      "field_multi_info": "You can pick up to 3 options and set certainty on each one (including “I don’t know”).",
       "field_multi_max_label": "Max selections",
       "field_allow_other_label": "Include an \"Other\" option",
       "field_allow_other_tip": "Adds an extra option where people type their own answer (max 120 characters). Does not count toward the 2–6 listed-option cap.",

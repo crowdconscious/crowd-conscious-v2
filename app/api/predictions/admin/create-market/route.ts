@@ -19,8 +19,8 @@ import {
   LISTED_OUTCOMES_MAX,
   otherOutcomeInsertRow,
   parseAllowOther,
-  parseVoteMode,
 } from '@/lib/pulse-vote-ranking'
+import { pulseMultiVoteFields } from '@/lib/multi-select-pulses'
 
 export async function POST(request: NextRequest) {
   try {
@@ -66,19 +66,9 @@ export async function POST(request: NextRequest) {
       duration_days,
     } = body
 
-    const voteMode = parseVoteMode(body.vote_mode ?? body.voteMode)
+    // Pulses are always multi-select (owner rule 2026-10-04); ignore client vote_mode.
     const allowOther = parseAllowOther(body.allow_other ?? body.allowOther)
-    const { parseMaxSelections, isMultiSelectPulsesEnabled } = await import(
-      '@/lib/multi-select-pulses'
-    )
-    const maxSelections = parseMaxSelections(body.max_selections ?? body.maxSelections)
-
-    if (voteMode === 'multi' && !isMultiSelectPulsesEnabled()) {
-      return Response.json(
-        { error: 'Multi-select Pulses are not enabled' },
-        { status: 400 }
-      )
-    }
+    const pulseVote = pulseMultiVoteFields()
 
     const wantsDraft = Boolean(is_draft)
 
@@ -246,9 +236,9 @@ export async function POST(request: NextRequest) {
         description: resolvedDescription,
         description_short: resolvedDescriptionShort,
         resolution_criteria: PULSE_DEFAULT_RESOLUTION_CRITERIA,
-        vote_mode: voteMode,
+        vote_mode: pulseVote.vote_mode,
+        max_selections: pulseVote.max_selections,
         allow_other: allowOther,
-        ...(voteMode === 'multi' ? { max_selections: maxSelections } : {}),
       })
       .eq('id', marketId)
 
