@@ -219,10 +219,21 @@ html[data-sim-app='1'] .sim-persona-sheet {
   padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
 }
 
-.sim-viewer--mobile .sim-endcard {
+/*
+ * Endcard sits in an absolute inset-0 layer inside overflow-hidden ancestors
+ * (page shell + stage). Tall question + divergence + actions easily exceed
+ * the letterboxed stage on desktop; without overflow-y the Ver de nuevo /
+ * Explorar personas buttons are clipped with no page scrollbar. Mobile
+ * already scrolled; extend the same behavior to every endcard.
+ * Higher specificity than Tailwind justify-* utilities on the element.
+ */
+.sim-viewer .sim-endcard {
   justify-content: safe center;
   overflow-y: auto;
   overscroll-behavior: contain;
+}
+
+.sim-viewer--mobile .sim-endcard {
   padding-top: max(0.75rem, env(safe-area-inset-top, 0px));
   padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
   padding-left: max(1rem, env(safe-area-inset-left, 0px));

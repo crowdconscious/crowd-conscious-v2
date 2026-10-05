@@ -108,16 +108,21 @@ function SimulationViewerLoaderInner({
   }
 
   return (
-    <div className="flex min-h-0 flex-col">
+    <div className="flex h-full min-h-0 flex-col">
       <SimReportDownload
         pulseId={pulseId}
         runId={runId ?? result.data.run.id}
         captureMode={captureMode}
       />
-      <SimulationViewer
-        data={result.data}
-        captureMode={captureMode}
-      />
+      {/* flex-1 + min-h-0: desktop shell must fill leftover height under the
+          report chrome — a nested h-dvh was taller than the page and got
+          clipped by the page's overflow-hidden (endcard actions unreachable). */}
+      <div className="flex min-h-0 flex-1 flex-col">
+        <SimulationViewer
+          data={result.data}
+          captureMode={captureMode}
+        />
+      </div>
     </div>
   )
 }

@@ -439,10 +439,13 @@ export default function SimulationViewer({
   /** Shared activate hook for columns now; map (Task 4) should call the same. */
   const onPersonaActivateFromView = handleDotActivate
 
+  // App / capture / mobile: lock to the visual viewport. Desktop web sits
+  // under report chrome inside a calc(100dvh-5rem) page — fill that parent
+  // instead of forcing another 100dvh (which overflow-hidden would clip).
   const shellHeightCls =
     fromApp || captureMode || mobileLayout
       ? 'h-dvh max-h-dvh'
-      : 'h-dvh max-h-dvh'
+      : 'h-full max-h-full min-h-0'
 
   return (
     <div
