@@ -100,7 +100,7 @@ export function SimReportDownload({
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-3 pb-3 pt-2 sm:px-4">
+    <div className="mx-auto w-full max-w-6xl shrink-0 px-3 pb-3 pt-2 sm:px-4">
       <div className="flex flex-col gap-2 rounded-lg border border-slate-700/80 bg-[#121820] px-3 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3">
         <div className="min-w-0">
           <p className="text-sm font-medium text-slate-100">Descargar reporte</p>

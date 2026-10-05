@@ -196,7 +196,7 @@ export default async function PulseSimulacionPage({ params, searchParams }: Prop
 
   return (
     <div
-      className={`overflow-hidden bg-[#0a0f14] ${
+      className={`flex flex-col overflow-hidden bg-[#0a0f14] ${
         fullBleed
           ? 'h-dvh max-h-dvh'
           : 'h-[calc(100dvh-5rem)] max-h-[calc(100dvh-5rem)]'
