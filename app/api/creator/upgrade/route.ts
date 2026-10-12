@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
 
     // Never convert admins (would downgrade their role) or corporate accounts.
     if (!alreadyCreator) {
-      if (isAdminUser(user) || user.is_corporate_user === true) {
+      if (isAdminUser(user) || user.user_type === 'admin' || user.is_corporate_user === true) {
         return NextResponse.json({ error: 'forbidden_role' }, { status: 403 })
       }
     }
