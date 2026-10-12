@@ -61,6 +61,8 @@ export {
   getRecognitionIdByShareSlug,
   getWeeklyRecognitionStats,
   getRecognitionEventCounts,
+  removeRecognitionPhoto,
+  isApprovedRecognitionId,
 } from './db'
 export {
   createRecognitionSubmission,

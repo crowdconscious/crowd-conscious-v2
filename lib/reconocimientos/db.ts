@@ -97,6 +97,23 @@ export async function uploadRecognitionPhoto(
   if (error) throw error
 }
 
+/** Best-effort cleanup when the row insert fails after upload. */
+export async function removeRecognitionPhoto(path: string) {
+  const { error } = await db().storage.from(STORAGE_BUCKET).remove([path])
+  if (error) throw error
+}
+
+/** True only for approved (publicly visible) recognitions. */
+export async function isApprovedRecognitionId(id: string): Promise<boolean> {
+  const { data, error } = await db()
+    .from('recognitions_public')
+    .select('id')
+    .eq('id', id)
+    .maybeSingle()
+  if (error) throw error
+  return Boolean(data)
+}
+
 export async function downloadRecognitionPhoto(
   path: string
 ): Promise<{ buffer: Buffer; contentType: string }> {
