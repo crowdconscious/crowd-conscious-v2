@@ -60,11 +60,19 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Never downgrade an admin: keep user_type='admin' as is.
+    const { data: existing } = await admin
+      .from('profiles')
+      .select('user_type')
+      .eq('id', userId)
+      .maybeSingle()
+    const userType = existing?.user_type === 'admin' ? 'admin' : 'influencer'
+
     const upsertRow: Record<string, unknown> = {
       id: userId,
       email,
       full_name: resolvedName,
-      user_type: 'influencer',
+      user_type: userType,
     }
     if (normalizedHandle) upsertRow.handle = normalizedHandle
 
