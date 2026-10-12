@@ -7,7 +7,12 @@ import {
 } from './constants'
 import { processRecognitionPhoto } from './image'
 import { generateShareSlug } from './slug'
-import { insertRecognition, uploadRecognitionPhoto } from './db'
+import {
+  insertRecognition,
+  removeRecognitionPhoto,
+  uploadRecognitionPhoto,
+} from './db'
+import { notifyAdminsNewRecognition } from './notify'
 import type { RecognitionStatus } from './constants'
 
 export type IntakePhotoInput = {
@@ -87,7 +92,9 @@ export async function createRecognitionSubmission(
   const photoPath = `originals/${shareSlug}-${Date.now()}.jpg`
   await uploadRecognitionPhoto(photoPath, processed.buffer, processed.contentType)
 
-  const row = await insertRecognition({
+  let row
+  try {
+    row = await insertRecognition({
     user_id: fields.user_id ?? null,
     photo_path: photoPath,
     what: fields.what,
@@ -102,6 +109,21 @@ export async function createRecognitionSubmission(
     status: 'pending',
     share_slug: shareSlug,
   })
+  } catch (err) {
+    // Don't leave orphaned bytes in the private bucket.
+    await removeRecognitionPhoto(photoPath).catch((e) =>
+      console.error('[reconocimientos/intake] orphan cleanup failed', e)
+    )
+    throw err
+  }
+
+  // Fire-and-forget moderator heads-up; never blocks or fails the submit.
+  void notifyAdminsNewRecognition({
+    id: row.id,
+    what: fields.what,
+    where_text: fields.where_text,
+    src: fields.src,
+  }).catch((e) => console.error('[reconocimientos/intake] notify failed', e))
 
   return {
     ok: true,

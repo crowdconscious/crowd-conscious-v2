@@ -8,6 +8,7 @@ import {
 import {
   RECOGNITION_EVENT_TYPES,
   insertRecognitionEvent,
+  isApprovedRecognitionId,
   sanitizeSrc,
   type RecognitionEventType,
 } from '@/lib/reconocimientos'
@@ -56,6 +57,12 @@ export async function POST(request: NextRequest) {
       eventType !== 'share_native' &&
       eventType !== 'share_copy'
     ) {
+      return new NextResponse(null, { status: 204 })
+    }
+
+    // Only count shares for publicly visible (approved) recognitions so the
+    // beacon can't be used to pad metrics on pending/rejected/unknown ids.
+    if (!(await isApprovedRecognitionId(recognitionId))) {
       return new NextResponse(null, { status: 204 })
     }
 

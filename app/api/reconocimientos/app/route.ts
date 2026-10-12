@@ -167,8 +167,12 @@ export async function POST(request: NextRequest) {
         ? sanitizeSrc(srcRaw)
         : 'app'
 
-    const creditHandle = profile.full_name
-      ? clampText(profile.full_name.replace(/^@+/, ''), MAX_CREDIT_LEN)
+    // Public credit is opt-in only (consent copy: "con crédito a tu usuario
+    // si lo das"). Never auto-publish the account's full name. Optional
+    // `credit_handle` field is additive to the locked mobile contract.
+    const creditRaw = form.get('credit_handle')
+    const creditHandle = isNonEmptyString(creditRaw)
+      ? clampText(String(creditRaw).replace(/^@+/, ''), MAX_CREDIT_LEN)
       : null
     const contact = profile.email
       ? clampText(profile.email, MAX_CONTACT_LEN)
@@ -202,8 +206,6 @@ export async function POST(request: NextRequest) {
     if (!result.ok) {
       return fieldError(result.error, result.field ?? 'photo')
     }
-
-    // Web intake has no admin email/push notification today — nothing to mirror.
 
     return NextResponse.json(
       { id: result.id, status: 'pending' as const },

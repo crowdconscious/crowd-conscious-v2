@@ -99,5 +99,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }))
 
-  return [...staticPages, ...marketPages, ...eventPages, ...blogPostPages]
+  // Reconocimientos: public index + approved items (public view only).
+  const { data: recognitions } = await supabase
+    .from('recognitions_public')
+    .select('share_slug, reviewed_at, created_at')
+    .order('created_at', { ascending: false })
+    .limit(500)
+  const recognitionPages: MetadataRoute.Sitemap = [
+    { url: `${SITE_URL}/reconocimientos`, lastModified: now, changeFrequency: 'daily', priority: 0.6 },
+    ...(recognitions ?? []).map((r) => ({
+      url: `${SITE_URL}/reconocimientos/${r.share_slug}`,
+      lastModified: new Date(r.reviewed_at ?? r.created_at),
+      changeFrequency: 'monthly' as const,
+      priority: 0.5,
+    })),
+  ]
+
+  return [...staticPages, ...marketPages, ...eventPages, ...blogPostPages, ...recognitionPages]
 }
