@@ -138,7 +138,7 @@ export async function GET(req: Request, ctx: Ctx) {
       eligible,
       canFull,
       runId: loaded.runId,
-      upsellUrl: '/para-marcas',
+      upsellUrl: '/patrocinio',
     })
   }
 
@@ -174,7 +174,7 @@ export async function GET(req: Request, ctx: Ctx) {
         {
           error: 'forbidden',
           message: 'Reporte completo para clientes',
-          upsellUrl: '/para-marcas',
+          upsellUrl: '/patrocinio',
         },
         { status: 403 },
       )

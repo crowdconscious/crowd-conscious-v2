@@ -6,7 +6,7 @@ type Props = {
 }
 
 /**
- * Compact "Para Marcas" below-the-fold block. Replaces the heavier
+ * Compact "Para organizaciones" below-the-fold block (links to /organizaciones). Replaces the heavier
  * LandingPulseSection + SponsorCTA combo so the homepage stays focused.
  */
 export function BrandsMiniPitch({ locale }: Props) {
@@ -21,25 +21,25 @@ export function BrandsMiniPitch({ locale }: Props) {
             </span>
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
-                {es ? 'Para marcas' : 'For brands'}
+                {es ? 'Para organizaciones' : 'For organizations'}
               </p>
               <h2 className="mt-1 text-xl font-bold text-white sm:text-2xl">
                 {es
-                  ? 'Mide lo que tu comunidad realmente piensa.'
-                  : 'Measure what your community actually thinks.'}
+                  ? 'Sepa qué tan seguros están sus usuarios.'
+                  : 'Know how sure your users really are.'}
               </h2>
               <p className="mt-1 text-sm text-slate-400">
                 {es
-                  ? 'Encuestas con confianza medida, no likes. Desde $5,000 MXN.'
-                  : 'Surveys with measured confidence, not likes. From $5,000 MXN.'}
+                  ? 'Lecturas de satisfacción con certeza de 1 a 10 y resultados que nadie edita.'
+                  : 'Satisfaction readings with 1-10 certainty and results nobody edits.'}
               </p>
             </div>
           </div>
           <Link
-            href="/pulse"
+            href="/organizaciones"
             className="inline-flex min-h-[48px] shrink-0 items-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-400"
           >
-            {es ? 'Ver Conscious Pulse' : 'See Conscious Pulse'}
+            {es ? 'Ver organizaciones' : 'See organizations'}
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>

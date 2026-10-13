@@ -73,6 +73,14 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
 
+      // B2B now lives at /organizaciones (Oct 2026). Exact path only:
+      // /para-marcas/pilot and /para-marcas/welcome stay live because the
+      // Pulse checkout success_url and existing sponsor emails point there.
+      {
+        source: '/para-marcas',
+        destination: '/organizaciones',
+        permanent: true,
+      },
       // The B2B landing moved from /pulse to /para-marcas to clear the
       // /pulse namespace for consumers. Existing emails, receipts, ad
       // utm-tagged links continue to work (query string is preserved).

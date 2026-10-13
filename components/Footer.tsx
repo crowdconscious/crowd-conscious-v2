@@ -24,7 +24,8 @@ export default function Footer() {
       live: 'En Vivo',
       leaderboard: 'Leaderboard',
       consciousFund: 'Decidir',
-      forBrands: 'Para marcas',
+      forBrands: 'Organizaciones',
+      communitySponsor: 'Patrocinio comunitario',
       forCreators: 'Para creadores',
       about: 'Acerca de',
       blog: 'Blog',
@@ -50,7 +51,8 @@ export default function Footer() {
       live: 'Live',
       leaderboard: 'Leaderboard',
       consciousFund: 'Decide',
-      forBrands: 'For brands',
+      forBrands: 'Organizations',
+      communitySponsor: 'Community sponsorship',
       forCreators: 'For creators',
       about: 'About',
       blog: 'Blog',
@@ -229,8 +231,13 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/para-marcas" className="text-slate-300 transition-colors hover:text-teal-400">
+                <Link href="/organizaciones" className="text-slate-300 transition-colors hover:text-teal-400">
                   {t.forBrands}
+                </Link>
+              </li>
+              <li>
+                <Link href="/patrocinio" className="text-slate-300 transition-colors hover:text-teal-400">
+                  {t.communitySponsor}
                 </Link>
               </li>
               <li>

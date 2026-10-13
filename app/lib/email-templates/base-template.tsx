@@ -201,8 +201,8 @@ export const BaseEmailTemplate = ({
                     Pulse
                   </Link>
                   •
-                  <Link href={`${APP_URL}/para-marcas`} style={{ color: '#14b8a6', textDecoration: 'none', margin: '0 8px' }}>
-                    For Brands
+                  <Link href={`${APP_URL}/organizaciones`} style={{ color: '#14b8a6', textDecoration: 'none', margin: '0 8px' }}>
+                    Organizations
                   </Link>
                   •
                   <Link href={`${APP_URL}/about`} style={{ color: '#14b8a6', textDecoration: 'none', margin: '0 8px' }}>
