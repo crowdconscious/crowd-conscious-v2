@@ -6,10 +6,16 @@
 import { sendEmail } from '@/lib/resend'
 import { REGIMENES_FISCALES, USOS_CFDI } from './fiscal'
 import { formatMxn } from './pricing'
+import { BASE_SIZES, ORG_TYPES, VISIBILITY_PREFS, labelOf } from './lead-options'
 
 export type OrgPilotEmailRow = {
   id: string
-  kind: 'pilot' | 'proposal'
+  kind: 'pilot' | 'proposal' | 'call'
+  cargo?: string | null
+  org_type?: string | null
+  current_reporting?: string | null
+  base_size?: string | null
+  visibility_pref?: string | null
   plan: string
   company_name: string
   contact_name: string
@@ -97,15 +103,24 @@ export function buildClientReceiptEmail(r: OrgPilotEmailRow) {
 
 export function buildAdminAlertEmail(r: OrgPilotEmailRow) {
   const isPilot = r.kind === 'pilot'
-  const title = isPilot ? 'PILOTO PAGADO: emitir CFDI' : `Solicitud de propuesta (${r.plan})`
+  const title = isPilot
+    ? 'PILOTO PAGADO: emitir CFDI'
+    : r.kind === 'call'
+      ? 'Solicitud de llamada de 20 min'
+      : `Solicitud de propuesta (${r.plan})`
   const html = shell(`
   <h1 style="color:#10b981;font-size:18px;margin:0 0 14px;">${esc(title)}</h1>
   <table style="width:100%;border-collapse:collapse;">
     ${row('Empresa', esc(r.company_name), true)}
     ${row('Contacto', esc(r.contact_name))}
+    ${row('Cargo', esc(r.cargo))}
     ${row('Correo', esc(r.email))}
     ${row('Teléfono', esc(r.phone))}
     ${row('Plan', esc(r.plan))}
+    ${row('Tipo de organización', esc(labelOf(ORG_TYPES, r.org_type)))}
+    ${row('Tamaño de base', esc(labelOf(BASE_SIZES, r.base_size)))}
+    ${row('Visibilidad preferida', esc(labelOf(VISIBILITY_PREFS, r.visibility_pref)))}
+    ${row('Qué reportan hoy', esc(r.current_reporting))}
     ${row('Origen', esc(r.source))}
     ${row('Idioma', esc(r.locale))}
     ${row('ID solicitud', esc(r.id))}

@@ -1,12 +1,11 @@
-import LandingNav from '@/app/components/landing/LandingNav'
+import OrgShell from '@/components/org/OrgShell'
+import { ORG_CONTACT_EMAIL, callHref } from '@/lib/org/config'
 
+/** B2B shell: no civic nav, app prompts or citizen sign-up (rule 6 / Prompt 1A). */
 export default function OrganizacionesLayout({ children }: { children: React.ReactNode }) {
   return (
-    <>
-      <div className="print:hidden">
-        <LandingNav />
-      </div>
-      <div className="pt-20 print:pt-0">{children}</div>
-    </>
+    <OrgShell callHref={callHref()} contactEmail={ORG_CONTACT_EMAIL}>
+      {children}
+    </OrgShell>
   )
 }

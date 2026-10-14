@@ -11,6 +11,8 @@ export const ORG_PRICES = {
   annual: 65_000,
   continuousMonthly: 14_500,
   selloMonthlyAddon: 10_000,
+  /** Escucha continua + Sello = what the client pays per month with the Sello. */
+  selloMonthlyTotal: 24_500,
 } as const
 
 export const PILOT_CREDIT_WINDOW_DAYS = 90

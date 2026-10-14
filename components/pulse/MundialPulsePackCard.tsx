@@ -46,7 +46,6 @@ export function MundialPulsePackCard({ locale }: Props) {
   const regular = PULSE_TIERS.mundial_pack
   const founding = PULSE_TIERS.mundial_pack_founding
   const remaining = spots?.founding_remaining ?? 5
-  const total = spots?.founding_total ?? 5
   const soldOut = remaining <= 0
   const lastFew = remaining > 0 && remaining <= 4
 
@@ -144,9 +143,6 @@ export function MundialPulsePackCard({ locale }: Props) {
                   {es
                     ? `Solo quedan ${remaining} espacios Fundadores`
                     : `Only ${remaining} Founding spots left`}
-                  <span className="text-xs font-normal text-slate-500">
-                    ({remaining}/{total})
-                  </span>
                 </p>
               )}
 

@@ -179,9 +179,6 @@ export default function PulseListingView({
 
       <div className="mt-12 rounded-2xl border border-white/10 bg-[#1a2029] px-6 py-8 text-center">
         <p className="text-slate-300">{t.ctaQuestion}</p>
-        {listOnly && (
-          <p className="mt-2 text-sm text-slate-500">{t.ctaFirstFree}</p>
-        )}
         <Link
           href={listOnly ? '/patrocinio#pulse-pricing' : '/patrocinio'}
           className="mt-4 inline-flex min-h-[44px] items-center justify-center rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-500"

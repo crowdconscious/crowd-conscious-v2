@@ -1,12 +1,13 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import dynamic from 'next/dynamic'
-import { ArrowRight, Check, ShieldCheck } from 'lucide-react'
+import { Check, X } from 'lucide-react'
+import TryIt from '@/components/org/TryIt'
+import { SplitBar, SplitLegend } from '@/components/org/SplitBar'
 import { getOrgCopy } from '@/lib/i18n/organizaciones'
-import { ORG_CONTACT_EMAIL, ORG_PRICES, formatMxn } from '@/lib/organizaciones/pricing'
+import { SAMPLE_PDF_HREF, callHref } from '@/lib/org/config'
+import { ILLUSTRATIVE_PAIR } from '@/lib/org/demo-data'
+import { questionStats } from '@/lib/org/firmness'
 import { getOrgLocale } from './locale'
-
-const Footer = dynamic(() => import('@/components/Footer'))
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = getOrgCopy(await getOrgLocale())
@@ -14,275 +15,223 @@ export async function generateMetadata(): Promise<Metadata> {
     title: t.metaTitle,
     description: t.metaDescription,
     alternates: { canonical: '/organizaciones' },
-    openGraph: {
-      title: t.metaTitle,
-      description: t.metaDescription,
-      url: '/organizaciones',
-      type: 'website',
-    },
+    openGraph: { title: t.metaTitle, description: t.metaDescription, url: '/organizaciones', type: 'website' },
     twitter: { card: 'summary_large_image', title: t.metaTitle, description: t.metaDescription },
   }
 }
 
 const card = 'rounded-2xl border border-[#2d3748] bg-[#1a2029]'
 const btnPrimary =
-  'inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-emerald-500 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-400'
+  'inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 py-3 text-sm font-semibold text-[#0f1419] transition-colors hover:bg-emerald-300'
 const btnGhost =
-  'inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl border border-emerald-500/50 bg-emerald-500/10 px-6 py-3 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/20'
+  'inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl border border-slate-400 px-6 py-3 text-sm font-semibold text-slate-100 transition-colors hover:border-emerald-300'
 
-function CertaintyBar({ label, pct, certainty, tone }: { label: string; pct: number; certainty: number; tone: string }) {
+function Bullets({ items }: { items: string[] }) {
   return (
-    <div>
-      <div className="mb-1 flex items-baseline justify-between text-sm">
-        <span className="font-semibold text-white">{label}</span>
-        <span className="text-slate-400">
-          {pct}% · <span className="font-semibold text-white">{certainty.toFixed(1)}</span>
-        </span>
-      </div>
-      <div className="h-3 overflow-hidden rounded-full bg-white/5">
-        <div className={`h-full rounded-full ${tone}`} style={{ width: `${certainty * 10}%` }} />
-      </div>
-    </div>
+    <ul className="mt-4 space-y-2">
+      {items.map((b) => (
+        <li key={b} className="flex gap-2 text-sm text-slate-200">
+          <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" /> {b}
+        </li>
+      ))}
+    </ul>
   )
 }
 
 export default async function OrganizacionesPage() {
   const locale = await getOrgLocale()
   const t = getOrgCopy(locale)
-  const fmt = (n: number) => formatMxn(n, locale)
-  const mailto = `mailto:${ORG_CONTACT_EMAIL}?subject=${encodeURIComponent(t.callSubject)}`
+  const call = callHref()
+  const ext = /^https?:/.test(call) ? { target: '_blank', rel: 'noopener noreferrer' } : {}
   const proposal = (plan: string) => `/organizaciones/contratar?modo=propuesta&plan=${plan}`
+  const pair = ILLUSTRATIVE_PAIR.map((p) => ({ name: p.name[locale], stats: questionStats(p.counts) }))
 
   return (
-    <div className="min-h-screen bg-[#0f1419] text-slate-100">
-      {/* Hero */}
-      <section className="px-4 pb-14 pt-14 sm:pt-20">
+    <div>
+      {/* 1. Hero */}
+      <section className="px-4 pb-12 pt-12 sm:pt-20">
         <div className="mx-auto max-w-4xl text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-400">{t.eyebrow}</p>
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-300">{t.eyebrow}</p>
           <h1 className="mt-4 text-3xl font-bold leading-tight text-white sm:text-5xl">{t.heroTitle}</h1>
-          <p className="mx-auto mt-5 max-w-2xl text-base text-slate-300 sm:text-lg">{t.heroSub}</p>
-          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link href="/organizaciones/contratar" className={btnPrimary}>
-              {t.ctaPilot} <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link href="/organizaciones/demo" className={btnGhost}>
+          <p className="mx-auto mt-5 max-w-2xl text-lg text-slate-200">{t.heroSub}</p>
+          <div className="mt-8 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
+            <Link href="/organizaciones/demo" className={btnPrimary}>
               {t.ctaDemo}
             </Link>
-            <a href={mailto} className="inline-flex min-h-[48px] items-center px-4 text-sm font-semibold text-slate-300 hover:text-white">
+            <a href={call} {...ext} className={btnGhost}>
               {t.ctaCall}
             </a>
           </div>
         </div>
       </section>
 
-      {/* Problem */}
-      <section className="border-t border-white/10 px-4 py-14">
-        <div className="mx-auto grid max-w-5xl items-center gap-10 md:grid-cols-2">
+      {/* 2. Try it */}
+      <section className="border-t border-white/10 px-4 py-12">
+        <div className="mx-auto grid max-w-5xl gap-8 md:grid-cols-[1fr_1.2fr] md:items-center">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-emerald-400">{t.problemTitle}</p>
-            <h2 className="mt-3 text-2xl font-bold text-white sm:text-3xl">{t.problemHeadline}</h2>
-            <p className="mt-4 text-slate-300">{t.problemFoot}</p>
+            <h2 className="text-2xl font-bold text-white sm:text-3xl">{t.tryTitle}</h2>
+            <p className="mt-2 text-slate-200">{t.trySub}</p>
           </div>
-          <div className={`${card} p-6`}>
-            <p className="mb-5 inline-block rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-300">
-              {t.fictitious}
-            </p>
-            <div className="space-y-5">
-              <CertaintyBar label={`${t.companyA} · 98% ${t.saidYes}`} pct={98} certainty={9.1} tone="bg-emerald-400" />
-              <CertaintyBar label={`${t.companyB} · 98% ${t.saidYes}`} pct={98} certainty={5.8} tone="bg-amber-400" />
-            </div>
-            <p className="mt-4 text-xs text-slate-500">{t.avgCertainty} (1-10)</p>
+          <TryIt locale={locale} />
+        </div>
+      </section>
+
+      {/* 3. Same number, two readings */}
+      <section className="border-t border-white/10 px-4 py-12">
+        <div className="mx-auto max-w-4xl">
+          <div className="flex flex-wrap items-center gap-3">
+            <h2 className="text-2xl font-bold text-white sm:text-3xl">{t.pairTitle}</h2>
+            <span className="rounded-full border border-amber-300/60 px-3 py-1 text-xs font-semibold text-amber-200">{t.illustrative}</span>
+          </div>
+          <p className="mt-2 text-slate-200">{t.pairSub}</p>
+          <div className={`${card} mt-6 space-y-6 p-5 sm:p-6`}>
+            {pair.map((p) => (
+              <div key={p.name}>
+                <p className="mb-2 flex flex-wrap items-baseline justify-between gap-2 text-sm">
+                  <span className="font-semibold text-white">
+                    {p.name} · {p.stats.pctYes}% «sí»
+                  </span>
+                  <span className="text-slate-200">{t.firmOfYes(p.stats.pctFirmOfYes)}</span>
+                </p>
+                <SplitBar split={p.stats.split} locale={locale} />
+              </div>
+            ))}
+            <SplitLegend locale={locale} />
           </div>
         </div>
       </section>
 
-      {/* How it works */}
-      <section className="border-t border-white/10 px-4 py-14">
+      {/* 4. How it works */}
+      <section id="como-funciona" className="scroll-mt-20 border-t border-white/10 px-4 py-12">
         <div className="mx-auto max-w-5xl">
-          <h2 className="text-center text-2xl font-bold text-white sm:text-3xl">{t.howTitle}</h2>
-          <p className="mt-2 text-center text-slate-400">{t.howSub}</p>
-          <ol className="mt-10 grid gap-5 md:grid-cols-4">
+          <h2 className="text-2xl font-bold text-white sm:text-3xl">{t.howTitle}</h2>
+          <p className="mt-2 text-slate-200">{t.howSub}</p>
+          <ol className="mt-8 grid gap-4 md:grid-cols-4">
             {t.steps.map((s, i) => (
-              <li key={s.t} className={`${card} p-5 ${i === 1 ? 'border-emerald-500/50' : ''}`}>
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/15 text-sm font-bold text-emerald-400">
-                  {i + 1}
-                </span>
+              <li key={s.t} className={`${card} p-5`}>
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-400 text-sm font-bold text-[#0f1419]">{i + 1}</span>
                 <h3 className="mt-3 font-semibold text-white">{s.t}</h3>
-                <p className="mt-2 text-sm text-slate-400">{s.d}</p>
+                <p className="mt-2 text-sm leading-relaxed text-slate-200">{s.d}</p>
               </li>
             ))}
           </ol>
         </div>
       </section>
 
-      {/* Why */}
-      <section className="border-t border-white/10 px-4 py-14">
-        <div className="mx-auto max-w-5xl">
-          <h2 className="text-center text-2xl font-bold text-white sm:text-3xl">{t.whyTitle}</h2>
-          <div className="mt-10 grid gap-5 sm:grid-cols-2">
-            {t.why.map((w) => (
-              <div key={w.t} className={`${card} flex gap-4 p-5`}>
-                <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400" />
-                <div>
-                  <h3 className="font-semibold text-white">{w.t}</h3>
-                  <p className="mt-1 text-sm text-slate-400">{w.d}</p>
-                </div>
-              </div>
-            ))}
+      {/* 5. You decide / you do not decide */}
+      <section className="border-t border-white/10 px-4 py-12">
+        <div className="mx-auto max-w-4xl">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className={`${card} p-6`}>
+              <h2 className="text-xl font-bold text-white">{t.decideTitle}</h2>
+              <ul className="mt-4 space-y-3">
+                {t.decide.map((d) => (
+                  <li key={d} className="flex gap-2 text-base text-slate-100">
+                    <Check className="mt-1 h-4 w-4 shrink-0 text-emerald-300" /> {d}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className={`${card} border-[#f0a35e]/40 p-6`}>
+              <h2 className="text-xl font-bold text-white">{t.notDecideTitle}</h2>
+              <ul className="mt-4 space-y-3">
+                {t.notDecide.map((d) => (
+                  <li key={d} className="flex gap-2 text-base text-slate-100">
+                    <X className="mt-1 h-4 w-4 shrink-0 text-[#f0a35e]" /> {d}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
+          <p className="mt-4 text-center text-slate-200">{t.decideFoot}</p>
         </div>
       </section>
 
-      {/* Pricing */}
-      <section id="precios" className="scroll-mt-24 border-t border-white/10 px-4 py-16">
+      {/* 6. Packages */}
+      <section id="precios" className="scroll-mt-20 border-t border-white/10 px-4 py-12">
         <div className="mx-auto max-w-5xl">
-          <h2 className="text-center text-2xl font-bold text-white sm:text-3xl">{t.pricingTitle}</h2>
-          <p className="mx-auto mt-3 max-w-2xl text-center text-slate-400">{t.pricingSub}</p>
+          <h2 className="text-2xl font-bold text-white sm:text-3xl">{t.pricingTitle}</h2>
+          <p className="mt-2 text-slate-200">{t.pricingSub}</p>
 
-          <p className="mt-10 text-sm font-semibold uppercase tracking-wider text-emerald-400">{t.step1}</p>
-          <div className={`${card} mt-3 border-emerald-500/60 p-6 sm:p-8`}>
-            <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
-              <div className="flex-1">
+          <div className={`${card} mt-8 border-emerald-400/70 p-6 sm:p-8`}>
+            <span className="rounded-full bg-emerald-400 px-3 py-1 text-xs font-bold uppercase tracking-wide text-[#0f1419]">{t.startHere}</span>
+            <div className="mt-4 flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+              <div>
                 <h3 className="text-xl font-bold text-white">{t.pilotName}</h3>
-                <p className="mt-2">
-                  <span className="text-4xl font-bold text-emerald-400">{fmt(ORG_PRICES.pilot)}</span>{' '}
-                  <span className="text-sm text-slate-400">{t.pilotUnit}</span>
-                </p>
-                <ul className="mt-5 space-y-2">
-                  {t.pilotBullets.map((b) => (
-                    <li key={b} className="flex gap-2 text-sm text-slate-300">
-                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" /> {b}
-                    </li>
-                  ))}
-                </ul>
+                <p className="mt-1 text-3xl font-bold text-emerald-300">{t.pilotPrice}</p>
+                <p className="mt-1 text-sm text-slate-200">{t.pilotNote}</p>
+                <Bullets items={t.pilotBullets} />
               </div>
               <div className="flex shrink-0 flex-col gap-3 md:w-56">
                 <Link href="/organizaciones/contratar" className={btnPrimary}>
-                  {t.ctaPilot}
+                  {t.pilotCta}
                 </Link>
-                <a href={mailto} className={btnGhost}>
-                  {t.ctaCall}
-                </a>
+                <Link href="/organizaciones/contratar?modo=propuesta&plan=pilot" className={btnGhost}>
+                  {t.requestProposal}
+                </Link>
               </div>
             </div>
           </div>
 
-          <p className="mt-10 text-sm font-semibold uppercase tracking-wider text-emerald-400">{t.step2}</p>
-          <div className="mt-3 grid gap-5 md:grid-cols-2">
+          <div className="mt-4 grid gap-4 md:grid-cols-3">
             {[
-              { id: 'anual', name: t.annualName, price: ORG_PRICES.annual, unit: t.annualUnit, note: '', bullets: t.annualBullets },
-              { id: 'continua', name: t.contName, price: ORG_PRICES.continuousMonthly, unit: t.contUnit, note: t.contNote, bullets: t.contBullets },
-            ].map((p) => (
-              <div key={p.id} className={`${card} flex flex-col p-6`}>
-                <h3 className="text-lg font-bold text-white">{p.name}</h3>
-                <p className="mt-2">
-                  <span className="text-3xl font-bold text-white">{fmt(p.price)}</span>{' '}
-                  <span className="text-sm text-slate-400">{p.unit}</span>
-                </p>
-                {p.note ? <p className="text-xs text-slate-500">{p.note}</p> : null}
-                <ul className="mt-4 flex-1 space-y-2">
-                  {p.bullets.map((b) => (
-                    <li key={b} className="flex gap-2 text-sm text-slate-300">
-                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" /> {b}
-                    </li>
-                  ))}
-                </ul>
-                <Link href={proposal(p.id)} className={`${btnGhost} mt-6`}>
+              { id: 'anual', n: t.annualName, p: t.annualPrice, note: t.annualNote, b: t.annualBullets },
+              { id: 'continua', n: t.contName, p: t.contPrice, note: t.contNote, b: t.contBullets },
+              { id: 'sello', n: t.selloName, p: t.selloPrice, note: t.selloNote, b: t.selloBullets },
+            ].map((x) => (
+              <div key={x.id} className={`${card} flex flex-col p-6`}>
+                <h3 className="text-lg font-bold text-white">{x.n}</h3>
+                <p className="mt-1 text-xl font-bold text-white">{x.p}</p>
+                <p className="mt-1 text-sm text-slate-200">{x.note}</p>
+                <div className="flex-1">
+                  <Bullets items={x.b} />
+                </div>
+                <Link href={proposal(x.id)} className={`${btnGhost} mt-6`}>
                   {t.requestProposal}
                 </Link>
               </div>
             ))}
           </div>
-
-          <p className="mt-10 text-sm font-semibold uppercase tracking-wider text-emerald-400">{t.step3}</p>
-          <div className={`${card} mt-3 flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between`}>
-            <div className="flex-1">
-              <h3 className="text-lg font-bold text-white">{t.selloName}</h3>
-              <p className="mt-1">
-                <span className="text-2xl font-bold text-white">+{fmt(ORG_PRICES.selloMonthlyAddon)}</span>{' '}
-                <span className="text-sm text-slate-400">{t.selloUnit}</span>
-              </p>
-              <p className="mt-2 text-sm text-slate-400">{t.selloDesc}</p>
-            </div>
-            <Link href={proposal('sello')} className={`${btnGhost} shrink-0`}>
-              {t.requestProposal}
-            </Link>
-          </div>
-          <p className="mt-6 text-center text-xs text-slate-500">{t.cfdiNote}</p>
+          <p className="mt-5 text-center text-sm text-slate-200">{t.cfdiNote}</p>
         </div>
       </section>
 
-      {/* Public vs private + who */}
-      <section className="border-t border-white/10 px-4 py-14">
-        <div className="mx-auto grid max-w-5xl gap-6 md:grid-cols-2">
-          <div className={`${card} p-6`}>
-            <h2 className="text-xl font-bold text-white">{t.publicTitle}</h2>
-            <p className="mt-3 text-sm leading-relaxed text-slate-300">{t.publicBody}</p>
-          </div>
-          <div className={`${card} p-6`}>
-            <h2 className="text-xl font-bold text-white">{t.whoTitle}</h2>
-            <p className="mt-3 text-sm text-slate-300">{t.whoBody}</p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {t.sectors.map((s) => (
-                <span key={s} className="rounded-full border border-[#2d3748] px-3 py-1 text-xs text-slate-300">
-                  {s}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Methodology */}
-      <section className="border-t border-white/10 px-4 py-14">
-        <div className="mx-auto max-w-4xl">
-          <h2 className="text-center text-2xl font-bold text-white sm:text-3xl">{t.methodTitle}</h2>
-          <dl className="mt-8 space-y-4">
-            {t.method.map((m) => (
-              <div key={m.t} className="border-l-2 border-emerald-500/50 pl-4">
-                <dt className="font-semibold text-white">{m.t}</dt>
-                <dd className="mt-1 text-sm text-slate-400">{m.d}</dd>
-              </div>
+      {/* 7. FAQ + methodology */}
+      <section id="metodologia" className="scroll-mt-20 border-t border-white/10 px-4 py-12">
+        <div className="mx-auto max-w-3xl">
+          <h2 className="text-2xl font-bold text-white sm:text-3xl">{t.faqTitle}</h2>
+          <div className="mt-6 divide-y divide-[#2d3748] rounded-2xl border border-[#2d3748] bg-[#1a2029]">
+            {t.faq.map((f) => (
+              <details key={f.q} className="group p-5">
+                <summary className="cursor-pointer list-none text-base font-semibold text-white marker:hidden">
+                  <span className="mr-2 inline-block text-emerald-300 transition-transform group-open:rotate-90">›</span>
+                  {f.q}
+                </summary>
+                <p className="mt-3 text-sm leading-relaxed text-slate-200">{f.a}</p>
+              </details>
             ))}
-          </dl>
+          </div>
         </div>
       </section>
 
-      {/* Fund */}
-      <section className="border-t border-white/10 px-4 py-14">
-        <div className="mx-auto max-w-4xl rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 via-[#1a2029] to-[#1a2029] p-8 text-center">
-          <h2 className="text-2xl font-bold text-white">{t.fundTitle}</h2>
-          <p className="mx-auto mt-3 max-w-2xl text-slate-300">{t.fundBody}</p>
-          <p className="mt-2 text-sm text-emerald-300">{t.fundExample}</p>
-          <Link href="/predictions/fund" className="mt-4 inline-block text-sm font-semibold text-emerald-400 hover:underline">
-            {t.fundLink} →
-          </Link>
-        </div>
-      </section>
-
-      {/* Final CTA */}
-      <section className="border-t border-white/10 px-4 py-16 text-center">
+      {/* 8. Closing CTA */}
+      <section className="border-t border-white/10 px-4 py-14 text-center">
         <h2 className="text-2xl font-bold text-white sm:text-3xl">{t.finalTitle}</h2>
-        <p className="mt-2 text-sm text-slate-400">{t.finalSub}</p>
-        <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Link href="/organizaciones/contratar" className={btnPrimary}>
-            {t.ctaPilot} <ArrowRight className="h-4 w-4" />
-          </Link>
-          <Link href="/organizaciones/demo" className={btnGhost}>
-            {t.ctaDemo}
-          </Link>
-          <a href={mailto} className={btnGhost}>
+        <p className="mt-2 text-sm text-slate-200">{t.finalSub}</p>
+        <div className="mt-8 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
+          <a href={call} {...ext} className={btnPrimary}>
             {t.ctaCall}
           </a>
+          <a href={`${SAMPLE_PDF_HREF}?lang=${locale}`} className={btnGhost}>
+            {t.ctaPdf}
+          </a>
         </div>
-        <p className="mt-10 text-xs text-slate-500">
-          <Link href="/patrocinio" className="hover:text-emerald-400 hover:underline">
+        <p className="mt-10 text-sm">
+          <Link href="/patrocinio" className="text-slate-200 underline-offset-2 hover:text-white hover:underline">
             {t.communityLink}
           </Link>
         </p>
       </section>
-
-      <Footer />
     </div>
   )
 }
