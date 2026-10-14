@@ -1,7 +1,7 @@
 import { SplitBar, SplitLegend } from '@/components/org/SplitBar'
 import { FIRM_THRESHOLD } from '@/lib/org/firmness'
 import { readingHeadline } from '@/lib/org/headline-copy'
-import { responseRate, type ClientReading } from '@/lib/org/readings'
+import { countTiles, hasInvited, type ClientReading } from '@/lib/org/readings'
 
 type Locale = 'es' | 'en'
 
@@ -65,12 +65,8 @@ export default function ExecutiveSummary({
         </section>
       ) : null}
 
-      <section className={`mt-5 ${preview ? 'hidden' : 'grid'} grid-cols-1 gap-3 text-center sm:grid sm:grid-cols-3`}>
-        {[
-          [es ? 'Invitados' : 'Invited', nf(r.invited)],
-          [es ? 'Respuestas' : 'Responses', nf(r.responded)],
-          [es ? 'Tasa de respuesta' : 'Response rate', `${responseRate(r)}%`],
-        ].map(([k, v]) => (
+      <section className={`mt-5 ${preview ? 'hidden' : 'grid'} grid-cols-1 gap-3 text-center sm:grid ${hasInvited(r) ? 'sm:grid-cols-3' : ''}`}>
+        {countTiles(r, { invited: es ? 'Invitados' : 'Invited', responded: es ? 'Respuestas' : 'Responses', rate: es ? 'Tasa de respuesta' : 'Response rate' }, nf).map(([k, v]) => (
           <div key={k} className="rounded-lg border border-slate-300 p-3">
             <p className="text-xs text-slate-700">{k}</p>
             <p className="text-xl font-bold">{v}</p>

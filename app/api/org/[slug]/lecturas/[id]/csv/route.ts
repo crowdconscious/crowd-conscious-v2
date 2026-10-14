@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server'
+import { downloadName, reportLocale } from '@/lib/org/locale-pref'
 import { ORG_PORTAL_V2 } from '@/lib/org/config'
 import { aggregateCsv, answersCsv } from '@/lib/org/csv'
 import { clientReading, denied, orgContext, rawAnswers } from '@/lib/org/server-reading'
@@ -14,7 +15,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   if (!c.ok) return denied(c.access)
   const found = await clientReading(c.ctx, id)
   if (!found || found.reading.status !== 'closed') return new Response('Not found', { status: 404 })
-  const locale = request.nextUrl.searchParams.get('lang') === 'en' ? 'en' : 'es'
+  const locale = reportLocale(request.nextUrl.searchParams.get('lang'), c.ctx.org?.locale)
   const tipo = request.nextUrl.searchParams.get('tipo') === 'respuestas' ? 'respuestas' : 'agregado'
   let csv: string
   if (tipo === 'agregado') csv = aggregateCsv(found.reading, locale)
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   return new Response(csv, {
     headers: {
       'Content-Type': 'text/csv; charset=utf-8',
-      'Content-Disposition': `attachment; filename="crowd-conscious-${tipo}-${c.ctx.slug}-${id.slice(0, 24)}.csv"`,
+      'Content-Disposition': `attachment; filename="${downloadName(tipo, c.ctx.slug, id, locale, 'csv')}"`,
       'Cache-Control': 'private, no-store',
     },
   })

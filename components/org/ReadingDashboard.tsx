@@ -7,7 +7,7 @@ import { BarChart3, Download, FileText, Globe, Lock, ShieldCheck, X } from 'luci
 import { CertaintyHistogram, SplitBar, SplitLegend } from '@/components/org/SplitBar'
 import { FIRM_THRESHOLD, MIN_GROUP, orderByFirmYes } from '@/lib/org/firmness'
 import { readingHeadline } from '@/lib/org/headline-copy'
-import { questionTrend, responseRate, type ClientQuestion, type ClientReading } from '@/lib/org/readings'
+import { countTiles, hasInvited, questionTrend, responseRate, type ClientQuestion, type ClientReading } from '@/lib/org/readings'
 import { PILOT_CREDIT_WINDOW_DAYS } from '@/lib/organizaciones/pricing'
 
 type Locale = 'es' | 'en'
@@ -266,24 +266,20 @@ export default function ReadingDashboard({
           ) : null}
 
           {/* 3. Three numbers */}
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            {[
-              [c.invited, nf(r.invited)],
-              [c.responded, nf(r.responded)],
-              [c.rate, `${rate}%`],
-            ].map(([k, v]) => (
+          <div className={`grid grid-cols-1 gap-3 ${hasInvited(r) ? 'sm:grid-cols-3' : ''}`}>
+            {countTiles(r, { invited: c.invited, responded: c.responded, rate: c.rate }, nf).map(([k, v]) => (
               <div key={k} className="rounded-xl border border-[#2d3748] bg-[#1a2029] p-3 sm:p-4">
                 <p className="text-xs text-slate-300">{k}</p>
                 <p className="mt-1 text-xl font-bold text-white sm:text-2xl">{v}</p>
               </div>
             ))}
           </div>
-          <div>
+          {hasInvited(r) ? <div>
             <div className="h-2 overflow-hidden rounded-full bg-white/10" aria-hidden>
               <div className="h-full bg-emerald-400" style={{ width: `${rate}%` }} />
             </div>
             <p className="mt-1 text-xs text-slate-300">{c.respondedOf(nf(r.responded), nf(r.invited))}</p>
-          </div>
+          </div> : null}
 
           {r.status === 'field' ? (
             <div className="rounded-2xl border border-amber-300/40 bg-amber-300/[0.07] p-5 text-base text-amber-100">
