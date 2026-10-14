@@ -1,4 +1,4 @@
--- 280_community_donations.sql
+-- 285_community_donations.sql
 -- Patrocinio comunitario: card donations to the Fondo Consciente via Stripe Checkout.
 -- One row per Checkout Session (idempotency key = stripe_checkout_session_id).
 -- The Fondo is credited NET of Stripe card fees (from the charge's balance_transaction).

@@ -36,7 +36,7 @@ export async function handleCommunityDonation(session: Stripe.Checkout.Session) 
     console.log('[community-donation] session not paid; ignoring', { sessionId: session.id })
     return
   }
-  // Table/RPC are not in generated types until migration 280 is applied.
+  // Table/RPC are not in generated types until migration 285 is applied.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = createAdminClient() as any
   const table = () => db.from('community_donations')
@@ -59,7 +59,7 @@ export async function handleCommunityDonation(session: Stripe.Checkout.Session) 
       donor_email: email,
       is_anonymous: anonymous,
       locale: md.locale === 'en' ? 'en' : 'es',
-      receipt_number: `CC-DON-${nowIso.slice(0, 10).replace(/-/g, '')}-${session.id.slice(-6).toUpperCase()}`,
+      receipt_number: `CC-DON-${nowIso.slice(0, 10).replace(/-/g, '')}-${session.id.slice(-12).toUpperCase()}`,
       paid_at: nowIso,
     },
     { onConflict: 'stripe_checkout_session_id', ignoreDuplicates: true }

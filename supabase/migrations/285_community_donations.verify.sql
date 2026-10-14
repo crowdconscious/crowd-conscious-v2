@@ -1,4 +1,4 @@
--- Verify 280_community_donations (read-only)
+-- Verify 285_community_donations (read-only)
 SELECT relname, relrowsecurity FROM pg_class WHERE relname = 'community_donations';           -- expect relrowsecurity = true
 SELECT count(*) AS policies FROM pg_policies WHERE tablename = 'community_donations';          -- expect 0 (service_role only)
 SELECT grantee, privilege_type FROM information_schema.role_table_grants
