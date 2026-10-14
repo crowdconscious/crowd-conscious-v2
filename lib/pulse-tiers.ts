@@ -142,8 +142,10 @@ export const PULSE_TIERS = {
   },
   mundial_pack_founding: {
     id: 'mundial_pack_founding' as const,
-    name: 'Paquete Fundador',
-    nameEn: 'Founding Pack',
+    // Legacy tier: kept only so existing sponsorship rows/webhooks resolve.
+    // Not purchasable (removed from /api/pulse/checkout) and not shown anywhere.
+    name: 'Paquete Mundial',
+    nameEn: 'Mundial Pack',
     priceMXN: 25000,
     fundPercent: 0.2,
     platformPercent: 0.8,
@@ -153,20 +155,14 @@ export const PULSE_TIERS = {
     contactOnly: false,
     featuresEs: [
       'Todo lo del Paquete Pulse (5 Pulses)',
-      'Logo permanente en homepage "Marcas Conscientes"',
-      'Reconocimiento de por vida en /about',
-      'Solo 5 espacios — 50% de descuento',
-      '20% → Fondo Consciente',
+            '20% → Fondo Consciente',
     ],
     featuresEn: [
       'Everything in the Pulse Pack (5 Pulses)',
-      'Permanent logo on homepage "Trusted Brands" row',
-      'Lifetime recognition on /about',
-      'Only 5 spots — 50% off',
-      '20% → Conscious Fund',
+            '20% → Conscious Fund',
     ],
-    bestForEs: 'Las primeras 5 marcas fundadoras',
-    bestForEn: 'The first 5 founding brands',
+    bestForEs: 'Paquete Mundial (legado)',
+    bestForEn: 'Mundial Pack (legacy)',
     sponsorshipMonths: 3,
   },
   enterprise: {

@@ -123,8 +123,10 @@ export function upgradePathFor(tier: SponsorUpgradeTier): UpgradeCard[] {
       ]
     case 'mundial_pack':
     case 'mundial_pack_founding':
+      // Founding pricing is retired: legacy founding sponsors renew at the
+      // regular Mundial Pack price.
       return [
-        { target: tier, role: 'current' },
+        { target: 'mundial_pack', role: 'current' },
         { target: 'suscripcion', role: 'upgrade', highlighted: true },
         { target: 'enterprise', role: 'enterprise' },
       ]

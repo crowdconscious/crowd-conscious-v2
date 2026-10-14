@@ -29,7 +29,7 @@ const TIER_LABELS: Record<string, { es: string; en: string; color: string }> = {
   starter: { es: 'Patrocinador de Pulse', en: 'Pulse Sponsor', color: 'text-slate-300' },
   growth: { es: 'Patrocinador de Categoría', en: 'Category Sponsor', color: 'text-emerald-400' },
   champion: { es: 'Socio de Impacto', en: 'Impact Partner', color: 'text-amber-400' },
-  anchor: { es: 'Patrocinador Fundador', en: 'Founding Sponsor', color: 'text-purple-400' },
+  anchor: { es: 'Patrocinador', en: 'Sponsor', color: 'text-purple-400' },
   pilot: { es: 'Pilot Pulse', en: 'Pulse Pilot', color: 'text-cyan-400' },
   pulse_unico: { es: 'Pulse Único', en: 'Pulse Single', color: 'text-emerald-400' },
   pulse_pack: { es: 'Pulse Pack', en: 'Pulse Pack', color: 'text-emerald-400' },

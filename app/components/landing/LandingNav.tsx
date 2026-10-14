@@ -7,7 +7,6 @@ import Logo from '@/components/Logo'
 import LanguageSwitcherSimple from '@/components/LanguageSwitcherSimple'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useLiveNavBadge } from '@/hooks/useLiveNavBadge'
-import { CompactFundThermometer } from '@/components/fund/FundThermometer'
 import { getPodcastCopy } from '@/lib/i18n/podcast'
 
 /**
@@ -230,7 +229,6 @@ export default function LandingNav() {
 
           <div className="ml-auto hidden shrink-0 items-center gap-2.5 lg:gap-3 md:flex">
             <LiveBadge liveCount={liveCount} label={nav.live} />
-            <CompactFundThermometer locale={language} />
             <LanguageSwitcherSimple />
             <a
               href="/app"
@@ -271,7 +269,6 @@ export default function LandingNav() {
             <div className="flex items-center justify-between gap-2 py-2">
               <LanguageSwitcherSimple />
               <div className="flex items-center gap-2">
-                <CompactFundThermometer locale={language} />
                 <LiveBadge liveCount={liveCount} label={nav.live} />
               </div>
             </div>

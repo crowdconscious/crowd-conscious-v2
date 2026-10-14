@@ -9,7 +9,6 @@ import { XPBadge } from '@/components/gamification/XPBadge'
 import { NotificationsBell } from '@/app/(predictions)/predictions/components/NotificationsBell'
 import { useLiveNavBadge } from '@/hooks/useLiveNavBadge'
 import { useLanguage } from '@/contexts/LanguageContext'
-import { CompactFundThermometer } from '@/components/fund/FundThermometer'
 import { getCitizenSignalsCopy } from '@/lib/i18n/citizen-signals'
 
 // Mirrors LandingNav: build-time flag, read at module scope so the link
@@ -161,7 +160,6 @@ export default function HeaderClient({ user, hasSponsorAccounts = false }: Heade
               <XPBadge variant="compact" animated={false} />
             </div>
 
-            <CompactFundThermometer locale={language} />
 
             <NotificationsBell />
 

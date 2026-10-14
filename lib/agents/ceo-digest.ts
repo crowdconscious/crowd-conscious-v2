@@ -452,7 +452,7 @@ export async function runCeoDigest(): Promise<{
         conscious_score: l.conscious_score,
         instagram_handle: l.instagram_handle,
         contact_email: l.contact_email,
-        pilot_pulse_link: `${APP_URL}/para-marcas/pilot?business=${encodeURIComponent(l.name as string)}&source=ceo_digest`,
+        pilot_pulse_link: `${APP_URL}/organizaciones/contratar?business=${encodeURIComponent(l.name as string)}&source=ceo_digest`,
         insights_link: `${APP_URL}/locations/${l.slug}/insights`,
       }))
     } catch {

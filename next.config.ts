@@ -74,8 +74,8 @@ const nextConfig: NextConfig = {
       },
 
       // B2B now lives at /organizaciones (Oct 2026). Exact path only:
-      // /para-marcas/pilot and /para-marcas/welcome stay live because the
-      // Pulse checkout success_url and existing sponsor emails point there.
+      // /para-marcas/welcome stays live because the Pulse checkout
+      // success_url and existing sponsor emails point there.
       {
         source: '/para-marcas',
         destination: '/organizaciones',
@@ -91,7 +91,19 @@ const nextConfig: NextConfig = {
       },
       {
         source: '/pulse/pilot',
-        destination: '/para-marcas/pilot',
+        destination: '/organizaciones/contratar',
+        permanent: true,
+      },
+      // Pilot checkout (and its founder-price offer) retired Oct 2026:
+      // all pilot traffic goes to the Organizaciones hiring form.
+      {
+        source: '/para-marcas/pilot',
+        destination: '/organizaciones/contratar',
+        permanent: true,
+      },
+      {
+        source: '/para-marcas/pilot/:path*',
+        destination: '/organizaciones/contratar',
         permanent: true,
       },
 

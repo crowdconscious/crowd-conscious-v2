@@ -12,7 +12,7 @@ type Props = {
  * Owner CTA on the Location Insights page. Points companies to
  * /organizaciones (B2B readings) and community supporters to /patrocinio.
  * The old "$1,500 Pilot Pulse" price is no longer advertised here; the
- * /para-marcas/pilot checkout stays reachable from /patrocinio.
+ * Pilot checkout retired; /para-marcas/pilot redirects to /organizaciones/contratar.
  */
 export function LocationInsightsCta({ locationName, locale }: Props) {
   const href = '/organizaciones?source=location_insights'

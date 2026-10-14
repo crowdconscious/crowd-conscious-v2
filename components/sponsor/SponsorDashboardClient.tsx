@@ -34,13 +34,13 @@ const TIER_LABELS: Record<string, { label: { es: string; en: string }; color: st
   starter: { label: { es: 'Patrocinador de Pulse', en: 'Pulse Sponsor' }, color: 'text-slate-400' },
   growth: { label: { es: 'Patrocinador de Categoría', en: 'Category Sponsor' }, color: 'text-emerald-400' },
   champion: { label: { es: 'Socio de Impacto', en: 'Impact Partner' }, color: 'text-amber-400' },
-  anchor: { label: { es: 'Patrocinador Fundador', en: 'Founding Sponsor' }, color: 'text-purple-400' },
+  anchor: { label: { es: 'Patrocinador', en: 'Sponsor' }, color: 'text-purple-400' },
   pilot: { label: { es: 'Pilot Pulse', en: 'Pulse Pilot' }, color: 'text-cyan-400' },
   pulse_unico: { label: { es: 'Pulse Único', en: 'Pulse Single' }, color: 'text-emerald-400' },
   pulse_pack: { label: { es: 'Pulse Pack (3)', en: 'Pulse Pack (3)' }, color: 'text-emerald-400' },
   suscripcion: { label: { es: 'Suscripción Pulse', en: 'Pulse Subscription' }, color: 'text-amber-400' },
   mundial_pack: { label: { es: 'Mundial Pulse Pack', en: 'Mundial Pulse Pack' }, color: 'text-amber-400' },
-  mundial_pack_founding: { label: { es: 'Mundial Pack · Fundador', en: 'Mundial Pack · Founder' }, color: 'text-fuchsia-400' },
+  mundial_pack_founding: { label: { es: 'Mundial Pack', en: 'Mundial Pack' }, color: 'text-fuchsia-400' },
   enterprise: { label: { es: 'Enterprise', en: 'Enterprise' }, color: 'text-purple-400' },
 }
 

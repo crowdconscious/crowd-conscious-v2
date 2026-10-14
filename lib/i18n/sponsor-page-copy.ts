@@ -61,7 +61,6 @@ export const sponsorPageCopy = {
   toConsciousFund: { es: 'al Fondo Consciente', en: 'to Conscious Fund' },
   sponsorNow: { es: 'Patrocinar ahora', en: 'Sponsor Now' },
   mostPopular: { es: 'Más Popular', en: 'Most Popular' },
-  limitedPatrons: { es: 'Limitado a 5 patrones fundadores', en: 'Limited to 5 founding patrons' },
   tierStarterBest: {
     es: 'Ideal para negocios locales y primeros patrocinadores',
     en: 'Perfect for local businesses and first-time sponsors',
@@ -219,7 +218,7 @@ export const sponsorPageCopy = {
     starter: { es: 'Patrocinador de Pulse (Starter)', en: 'Pulse Sponsor (Starter)' },
     growth: { es: 'Patrocinador de Categoría', en: 'Category Sponsor' },
     champion: { es: 'Socio de Impacto', en: 'Impact Partner' },
-    anchor: { es: 'Patrón Fundador', en: 'Founding Patron' },
+    anchor: { es: 'Patrón', en: 'Patron' },
   },
   approxUsd: { es: 'aprox.', en: '~' },
   availableTitle: { es: 'Pulses disponibles para patrocinar', en: 'Available Pulses to Sponsor' },
@@ -238,8 +237,8 @@ export const sponsorPageCopy = {
   },
   currentSponsorsTitle: { es: 'Patrocinadores actuales', en: 'Current Sponsors' },
   emptySponsored: {
-    es: 'Sé la primera marca en patrocinar un Pulse en Crowd Conscious. Los primeros patrocinadores obtienen reconocimiento de socio fundador.',
-    en: 'Be the first brand to sponsor a Pulse on Crowd Conscious. Early sponsors get founding partner recognition.',
+    es: 'Sé la primera marca en patrocinar un Pulse en Crowd Conscious.',
+    en: 'Be the first brand to sponsor a Pulse on Crowd Conscious.',
   },
   visit: { es: 'Visitar', en: 'Visit' },
   faqTitle: { es: 'Preguntas frecuentes', en: 'Frequently Asked Questions' },

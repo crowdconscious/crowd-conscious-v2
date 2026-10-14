@@ -73,8 +73,8 @@ export default function SoportePage() {
       q: '¿Para qué sirve el Fondo Consciente?',
       a: (
         <>
-          Cada mes, todas las donaciones se asignan a la causa que más votos reciba de la comunidad. Los patrocinios
-          corporativos también aportan al fondo. Ver la distribución en{' '}
+          Cada mes, todas las donaciones se asignan a la causa que más votos reciba de la comunidad. El 20% de cada contrato de
+          Organizaciones y de cada Patrocinio comunitario (antes de IVA) también va al fondo. Ver la distribución en{' '}
           <Link href="/fund" className="text-teal-700 hover:underline">
             crowdconscious.app/fund
           </Link>
@@ -141,8 +141,8 @@ export default function SoportePage() {
       q: 'What is the Conscious Fund for?',
       a: (
         <>
-          Each month, every donation is allocated to the cause that receives the most community votes. Corporate
-          sponsorships also contribute to the fund. See the distribution at{' '}
+          Each month, every donation is allocated to the cause that receives the most community votes. 20% of every
+          Organizations contract and every Community Sponsorship (before VAT) also goes to the fund. See the distribution at{' '}
           <Link href="/fund" className="text-teal-700 hover:underline">
             crowdconscious.app/fund
           </Link>

@@ -10,15 +10,15 @@ export default function TermsPage() {
   const content = {
     es: {
       title: "Términos y Condiciones de Uso",
-      lastUpdated: "Última actualización: 10 de junio de 2026",
+      lastUpdated: "Última actualización: 13 de octubre de 2026",
       sections: [
         {
           title: "1. Aceptación de los Términos",
-          content: "Al acceder y utilizar Crowd Conscious (\"la Plataforma\"), usted acepta estar sujeto a estos Términos y Condiciones de Uso. Si no está de acuerdo con alguna parte de estos términos, no debe utilizar la Plataforma."
+          content: "Crowd Conscious (\"la Plataforma\") es operada por Francisco A. Blockstrand (persona física), operando bajo el nombre comercial Crowd Conscious, con domicilio en Hegel 406, Polanco, C.P. 11560, Ciudad de México, México. Al acceder y utilizar la Plataforma, usted acepta estar sujeto a estos Términos y Condiciones de Uso. Si no está de acuerdo con alguna parte de estos términos, no debe utilizar la Plataforma."
         },
         {
           title: "2. Descripción del Servicio",
-          content: "Crowd Conscious es una plataforma de consulta pública gratuita (free-to-play) que canaliza la inteligencia colectiva hacia el impacto social. La Plataforma permite a los usuarios: (a) Participar en Pulses (consultas ponderadas por confianza) sobre temas como Copa Mundial, economía, política, sostenibilidad y más, sin arriesgar dinero; (b) Ganar XP y logros por sus votos; (c) Votar democráticamente sobre qué causas comunitarias reciben fondos del Fondo Consciente; (d) Sugerir ideas de Pulses en el Buzón Consciente. Las marcas pueden patrocinar Pulses; el 20% del neto estimado de cada patrocinio se destina al Fondo Consciente para causas elegidas por la comunidad."
+          content: "Crowd Conscious es una plataforma de consulta pública gratuita (free-to-play) que canaliza la inteligencia colectiva hacia el impacto social. La Plataforma permite a los usuarios: (a) Participar en Pulses (consultas ponderadas por confianza) sobre temas como Copa Mundial, economía, política, sostenibilidad y más, sin arriesgar dinero; (b) Ganar XP y logros por sus votos; (c) Votar democráticamente sobre qué causas comunitarias reciben fondos del Fondo Consciente; (d) Sugerir ideas de Pulses en el Buzón Consciente. Además, Crowd Conscious ofrece: (e) Organizaciones, un servicio para empresas e instituciones descrito en la sección 7; y (f) Patrocinio comunitario en /patrocinio, un apoyo directo al Fondo Consciente descrito en la sección 8."
         },
         {
           title: "3. Registro y Cuentas de Usuario",
@@ -26,7 +26,7 @@ export default function TermsPage() {
         },
         {
           title: "4. Tipos de Usuario",
-          content: "La Plataforma admite varios tipos de usuarios: (a) Participantes: individuos que votan en Pulses, ganan XP y votan en causas; (b) Marcas/Patrocinadores: empresas que patrocinan Pulses y reciben reportes de impacto; (c) Usuarios Corporativos: empleados invitados que acceden a módulos de aprendizaje y certificaciones; (d) Administradores: personal autorizado que gestiona Pulses, agentes y configuraciones de la Plataforma."
+          content: "La Plataforma admite varios tipos de usuarios: (a) Participantes: individuos que votan en Pulses, ganan XP y votan en causas; (b) Organizaciones: empresas e instituciones que contratan Lecturas o Escucha continua; (c) Patrocinadores comunitarios: personas o marcas que apoyan el Fondo Consciente desde /patrocinio; (d) Usuarios Corporativos: empleados invitados que acceden a módulos de aprendizaje y certificaciones; (e) Administradores: personal autorizado que gestiona Pulses, agentes y configuraciones de la Plataforma."
         },
         {
           title: "5. Participación Free-to-Play y XP",
@@ -34,49 +34,61 @@ export default function TermsPage() {
         },
         {
           title: "6. Fondo Consciente y Patrocinios",
-          content: "El 20% del neto estimado de cada transacción de patrocinio procesada a través de la Plataforma se destina al Fondo Consciente; el resto del neto estimado financia las operaciones de la Plataforma (tras deducir comisiones de procesamiento de pago). Los usuarios votan democráticamente sobre qué causas comunitarias reciben las asignaciones mensuales del Fondo. Esta estructura es transparente y se comunica claramente a patrocinadores y usuarios."
+          content: "El 20% del monto de cada contrato de Organizaciones y de cada Patrocinio comunitario, calculado antes de IVA, se destina al Fondo Consciente; el resto financia las operaciones de la Plataforma. Los usuarios votan democráticamente sobre qué causas comunitarias reciben las asignaciones del Fondo. Esta estructura es transparente y se comunica a clientes, patrocinadores y usuarios."
         },
         {
-          title: "7. Pagos y Transacciones",
-          content: "Los pagos de patrocinio se procesan a través de Stripe. La Plataforma no almacena información de tarjetas de crédito. Los reembolsos están sujetos a las políticas de Stripe y la legislación aplicable. Los votos de usuarios no implican pagos; son gratuitos."
+          title: "7. Organizaciones (servicio para empresas e instituciones)",
+          content: "Organizaciones ofrece Lecturas (mediciones puntuales) y Escucha continua (mediciones recurrentes) de la opinión de los usuarios, clientes o públicos de la organización contratante, además del Sello como complemento opcional de +$10,000 MXN al mes (más IVA) sobre el plan contratado. Cada respuesta incluye un nivel de certeza de 1 a 10. La organización contratante no puede editar, ocultar ni alterar los resultados; Crowd Conscious tampoco los modifica. No se solicitan datos personales a las personas que responden: la organización recibe resultados agregados, nunca identidades. Los alcances, precios y plazos específicos se establecen en la propuesta o en la página de contratación aceptada por el cliente."
         },
         {
-          title: "8. Contenido del Usuario",
+          title: "8. Patrocinio comunitario",
+          content: "El Patrocinio comunitario disponible en /patrocinio es un apoyo directo al Fondo Consciente. No constituye la contratación de un servicio de medición ni otorga control sobre consultas, resultados o causas; las causas que reciben recursos se eligen por votación de la comunidad."
+        },
+        {
+          title: "9. Pagos, comprobantes y facturación",
+          content: "Los pagos pueden realizarse con tarjeta en el sitio (procesados por Stripe; la Plataforma no almacena datos de tarjeta) o mediante propuesta y llamada, según se acuerde con el cliente. Tras el pago, enviamos por correo un recibo de pago emitido por Crowd Conscious; este recibo NO es una factura ni un comprobante fiscal. El CFDI se emite posteriormente por nuestro contador con los datos de facturación que nos proporcione el cliente. Los precios se expresan en pesos mexicanos más IVA, salvo que se indique otra cosa. Los votos de los usuarios son gratuitos y no implican pagos."
+        },
+        {
+          title: "10. Cancelaciones y reembolsos",
+          content: "Las cancelaciones de planes recurrentes (Escucha continua y Sello) y las solicitudes de reembolso se atienden conforme a lo pactado en la propuesta o contratación aceptada por el cliente y a la legislación aplicable, incluida la Ley Federal de Protección al Consumidor cuando corresponda. Para solicitar una cancelación o reembolso escriba a comunidad@crowdconscious.app."
+        },
+        {
+          title: "11. Contenido del Usuario",
           content: "Los usuarios son responsables del contenido que publican (comentarios, ideas en el Buzón Consciente, etc.). Al publicar contenido, otorga a Crowd Conscious una licencia no exclusiva para usar, mostrar y distribuir dicho contenido en la Plataforma. El contenido debe cumplir con las leyes aplicables y no debe ser ofensivo, ilegal o infringir derechos de terceros."
         },
         {
-          title: "9. Prohibiciones",
-          content: "Está prohibido: (a) Usar la Plataforma para actividades ilegales; (b) Publicar contenido falso o engañoso; (c) Intentar comprometer la seguridad de la Plataforma; (d) Usar la Plataforma para spam o actividades comerciales no autorizadas; (e) Manipular Pulses o votaciones de causas de forma fraudulenta."
+          title: "12. Prohibiciones",
+          content: "Está prohibido: (a) Usar la Plataforma para actividades ilegales; (b) Publicar contenido falso o engañoso; (c) Intentar comprometer la seguridad de la Plataforma; (d) Usar la Plataforma para spam o actividades comerciales no autorizadas; (e) Manipular consultas o votaciones de causas de forma fraudulenta."
         },
         {
-          title: "10. Privacidad y Protección de Datos",
+          title: "13. Privacidad y Protección de Datos",
           content: "El manejo de datos personales se rige por nuestra Política de Privacidad y cumple con la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP) de México y el RGPD cuando aplique."
         },
         {
-          title: "11. Ley Aplicable y Jurisdicción",
+          title: "14. Ley Aplicable y Jurisdicción",
           content: "Estos términos se rigen por las leyes de los Estados Unidos Mexicanos. Cualquier disputa será resuelta por los tribunales competentes de la Ciudad de México, México."
         },
         {
-          title: "12. Modificaciones",
+          title: "15. Modificaciones",
           content: "Nos reservamos el derecho de modificar estos términos en cualquier momento. Los cambios entrarán en vigor tras su publicación en la Plataforma. Le recomendamos revisar estos términos periódicamente."
         },
         {
-          title: "13. Contacto",
+          title: "16. Contacto",
           content: "Para preguntas sobre estos términos, contáctanos en: comunidad@crowdconscious.app"
         }
       ]
     },
     en: {
       title: "Terms and Conditions of Use",
-      lastUpdated: "Last updated: June 10, 2026",
+      lastUpdated: "Last updated: October 13, 2026",
       sections: [
         {
           title: "1. Acceptance of Terms",
-          content: "By accessing and using Crowd Conscious (\"the Platform\"), you agree to be bound by these Terms and Conditions of Use. If you do not agree with any part of these terms, you must not use the Platform."
+          content: "Crowd Conscious (\"the Platform\") is operated by Francisco A. Blockstrand (individual, persona física), operating under the trade name Crowd Conscious, with address at Hegel 406, Polanco, Postal Code 11560, Mexico City, Mexico. By accessing and using the Platform, you agree to be bound by these Terms and Conditions of Use. If you do not agree with any part of these terms, you must not use the Platform."
         },
         {
           title: "2. Service Description",
-          content: "Crowd Conscious is a free-to-play public consultation platform that channels collective intelligence toward social impact. The Platform enables users to: (a) Participate in Pulses (confidence-weighted consultations) on topics such as World Cup, economy, policy, sustainability, and more, without risking money; (b) Earn XP and achievements for their votes; (c) Vote democratically on which community causes receive grants from the Conscious Fund; (d) Suggest Pulse ideas in the Conscious Inbox. Brands may sponsor Pulses; 20% of estimated net proceeds from each sponsorship goes to the Conscious Fund for causes chosen by the community."
+          content: "Crowd Conscious is a free-to-play public consultation platform that channels collective intelligence toward social impact. The Platform enables users to: (a) Participate in Pulses (confidence-weighted consultations) on topics such as World Cup, economy, policy, sustainability, and more, without risking money; (b) Earn XP and achievements for their votes; (c) Vote democratically on which community causes receive grants from the Conscious Fund; (d) Suggest Pulse ideas in the Conscious Inbox. Crowd Conscious also offers: (e) Organizations, a service for companies and institutions described in section 7; and (f) Community Sponsorship at /patrocinio, direct support for the Conscious Fund described in section 8."
         },
         {
           title: "3. User Registration and Accounts",
@@ -84,7 +96,7 @@ export default function TermsPage() {
         },
         {
           title: "4. User Types",
-          content: "The Platform supports several user types: (a) Participants: individuals who vote in Pulses, co-sign Señales, evaluate Conscious Locations, and vote on fund causes; (b) Brands/Sponsors: companies that sponsor Pulses and receive impact reports; (c) Corporate Users: invited employees who access learning modules and certifications; (d) Administrators: authorized personnel who manage Pulses, agents, and Platform settings. Opinion votes do not earn points or levels. Civic reputation, when enabled, is private to each participant."
+          content: "The Platform supports several user types: (a) Participants: individuals who vote in Pulses, co-sign Señales, evaluate Conscious Locations, and vote on fund causes; (b) Organizations: companies and institutions that hire Readings or Continuous Listening; (c) Community sponsors: people or brands that support the Conscious Fund from /patrocinio; (d) Corporate Users: invited employees who access learning modules and certifications; (e) Administrators: authorized personnel who manage Pulses, agents, and Platform settings. Opinion votes do not earn points or levels. Civic reputation, when enabled, is private to each participant."
         },
         {
           title: "5. Free-to-Play Participation and XP",
@@ -92,34 +104,46 @@ export default function TermsPage() {
         },
         {
           title: "6. Conscious Fund and Sponsorships",
-          content: "20% of estimated net proceeds from each transaction processed through the Platform goes to the Conscious Fund; the remainder of estimated net proceeds funds Platform operations (after payment processing fees). Users vote democratically on which community causes receive the Fund's monthly allocations. This structure is transparent and clearly communicated to sponsors and users."
+          content: "20% of the amount of every Organizations contract and every Community Sponsorship, calculated before VAT (IVA), goes to the Conscious Fund; the remainder funds Platform operations. Users vote democratically on which community causes receive the Fund's allocations. This structure is transparent and communicated to clients, sponsors and users."
         },
         {
-          title: "7. Payments and Transactions",
-          content: "Sponsorship payments are processed through Stripe. The Platform does not store credit card information. Refunds are subject to Stripe's policies and applicable legislation. User votes do not involve payments; they are free."
+          title: "7. Organizations (service for companies and institutions)",
+          content: "Organizations offers Readings (one-off measurements) and Continuous Listening (recurring measurements) of the opinion of the hiring organization's users, customers or audiences, plus the Seal as an optional add-on of +$10,000 MXN per month (plus VAT) on top of the contracted plan. Every answer includes a certainty level from 1 to 10. The hiring organization cannot edit, hide or alter results; Crowd Conscious does not modify them either. No personal data is requested from respondents: the organization receives aggregate results, never identities. Specific scope, prices and timelines are set out in the proposal or hiring page accepted by the client."
         },
         {
-          title: "8. User Content",
+          title: "8. Community Sponsorship",
+          content: "Community Sponsorship, available at /patrocinio, is direct support for the Conscious Fund. It is not the purchase of a measurement service and grants no control over consultations, results or causes; the causes that receive funds are chosen by community vote."
+        },
+        {
+          title: "9. Payments, receipts and invoicing",
+          content: "Payments can be made by card on the site (processed by Stripe; the Platform does not store card data) or by proposal and call, as agreed with the client. After payment we email a payment receipt issued by Crowd Conscious; this receipt is NOT a tax invoice. The CFDI (Mexican tax invoice) is issued afterwards by our accountant using the invoicing details the client provides. Prices are in Mexican pesos plus VAT (IVA) unless stated otherwise. User votes are free and involve no payment."
+        },
+        {
+          title: "10. Cancellations and refunds",
+          content: "Cancellations of recurring plans (Continuous Listening and the Seal) and refund requests are handled according to the proposal or hiring terms accepted by the client and applicable law, including Mexico's Federal Consumer Protection Law where it applies. To request a cancellation or refund, write to comunidad@crowdconscious.app."
+        },
+        {
+          title: "11. User Content",
           content: "Users are responsible for the content they post (comments, Conscious Inbox ideas, etc.). By posting content, you grant Crowd Conscious a non-exclusive license to use, display, and distribute such content on the Platform. Content must comply with applicable laws and must not be offensive, illegal, or infringe third-party rights."
         },
         {
-          title: "9. Prohibitions",
-          content: "It is prohibited to: (a) Use the Platform for illegal activities; (b) Post false or misleading content; (c) Attempt to compromise the Platform's security; (d) Use the Platform for spam or unauthorized commercial activities; (e) Fraudulently manipulate Pulses or cause voting."
+          title: "12. Prohibitions",
+          content: "It is prohibited to: (a) Use the Platform for illegal activities; (b) Post false or misleading content; (c) Attempt to compromise the Platform's security; (d) Use the Platform for spam or unauthorized commercial activities; (e) Fraudulently manipulate consultations or cause voting."
         },
         {
-          title: "10. Privacy and Data Protection",
+          title: "13. Privacy and Data Protection",
           content: "The handling of personal data is governed by our Privacy Policy and complies with Mexico's Federal Law on Protection of Personal Data Held by Private Parties (LFPDPPP) and GDPR where applicable."
         },
         {
-          title: "11. Applicable Law and Jurisdiction",
+          title: "14. Applicable Law and Jurisdiction",
           content: "These terms are governed by the laws of the United Mexican States. Any disputes will be resolved by the competent courts of Mexico City, Mexico."
         },
         {
-          title: "12. Modifications",
+          title: "15. Modifications",
           content: "We reserve the right to modify these terms at any time. Changes will take effect upon publication on the Platform. We recommend reviewing these terms periodically."
         },
         {
-          title: "13. Contact",
+          title: "16. Contact",
           content: "For questions about these terms, contact us at: comunidad@crowdconscious.app"
         }
       ]

@@ -62,8 +62,8 @@ export const SPONSOR_TIERS = {
   },
   anchor: {
     id: 'anchor' as const,
-    name: 'Founding Patron',
-    nameEs: 'Patrón Fundador',
+    name: 'Patron',
+    nameEs: 'Patrón',
     price: 60000,
     fundPercent: 0.2,
     platformPercent: 0.8,

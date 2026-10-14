@@ -105,7 +105,7 @@ const tierEnum = z.enum([
   'pulse_pack',
   'suscripcion',
   'mundial_pack',
-  'mundial_pack_founding',
+  // 'mundial_pack_founding' retired Oct 2026 — no longer purchasable.
 ])
 
 const schema = z
@@ -127,7 +127,7 @@ const schema = z
     // Mundial Pack tiers warrant a real contact name + a one-sentence pitch
     // because the founder follows up personally within 24h. Other tiers stay
     // optional so the cheap SKUs keep their frictionless checkout.
-    const isMundial = data.tier === 'mundial_pack' || data.tier === 'mundial_pack_founding'
+    const isMundial = data.tier === 'mundial_pack'
     if (!isMundial) return
     if (!data.contact_name || !data.contact_name.trim()) {
       ctx.addIssue({
@@ -151,7 +151,7 @@ const TIER_LABELS: Record<PulseTierId, string> = {
   pulse_pack: 'Pulse Pack (3)',
   suscripcion: 'Suscripción Pulse',
   mundial_pack: 'Mundial Pulse Pack',
-  mundial_pack_founding: 'Mundial Pulse Pack — Founding',
+  mundial_pack_founding: 'Mundial Pulse Pack (legacy)',
   enterprise: 'Enterprise',
 }
 

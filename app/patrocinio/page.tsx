@@ -19,7 +19,7 @@ const Footer = dynamic(() => import('@/components/Footer'))
  * sponsor offers that used to live on /para-marcas, reframed as direct
  * support for the Fondo Consciente. Companies measuring their own users go
  * to /organizaciones instead. Checkouts (api/pulse/checkout,
- * /para-marcas/pilot, sponsor webhooks) are unchanged.
+ * sponsor webhooks) are unchanged.
  *
  * TODO(patrocinio): consider a GoFundMe-style campaign feature here
  * (public goal, progress bar, many small backers per cause) on top of the
@@ -86,8 +86,8 @@ export default async function PatrocinioPage() {
             <Link href="/predictions/fund" className="text-emerald-400 hover:underline">
               {es ? 'Ver el Fondo Consciente' : 'See the Conscious Fund'}
             </Link>
-            <Link href="/para-marcas/pilot?source=patrocinio" className="text-slate-300 hover:text-emerald-400 hover:underline">
-              {es ? 'Pulse de prueba para negocios locales' : 'Trial Pulse for local businesses'}
+            <Link href="/organizaciones/contratar?source=patrocinio" className="text-slate-300 hover:text-emerald-400 hover:underline">
+              {es ? 'Lecturas para organizaciones' : 'Readings for organizations'}
             </Link>
           </div>
         </div>

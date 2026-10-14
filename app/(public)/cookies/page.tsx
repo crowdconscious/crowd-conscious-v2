@@ -26,7 +26,7 @@ export default function CookiesPage() {
         },
         {
           title: "4. Cookies de Terceros",
-          content: "Utilizamos cookies de servicios de terceros: (a) Supabase: autenticación y persistencia de sesión; (b) Stripe: procesamiento seguro de pagos de patrocinio (cuando aplica); (c) Vercel: alojamiento y análisis de rendimiento; (d) Resend: envío de correos transaccionales (confirmación, notificaciones). No almacenamos datos de tarjetas de crédito; Stripe gestiona el pago de forma segura."
+          content: "Utilizamos cookies de servicios de terceros: (a) Supabase: autenticación y persistencia de sesión; (b) Stripe: procesamiento seguro de pagos con tarjeta de Organizaciones y Patrocinio comunitario (cuando aplica); (c) Vercel: alojamiento y análisis de rendimiento; (d) Resend: envío de correos transaccionales (confirmación, notificaciones). No almacenamos datos de tarjetas de crédito; Stripe gestiona el pago de forma segura."
         },
         {
           title: "5. Gestión de Cookies",
@@ -72,7 +72,7 @@ export default function CookiesPage() {
         },
         {
           title: "4. Third-Party Cookies",
-          content: "We use cookies from third-party services: (a) Supabase: authentication and session persistence; (b) Stripe: secure sponsorship payment processing (when applicable); (c) Vercel: hosting and performance analytics; (d) Resend: transactional email delivery (confirmation, notifications). We do not store credit card data; Stripe handles payment securely."
+          content: "We use cookies from third-party services: (a) Supabase: authentication and session persistence; (b) Stripe: secure card payment processing for Organizations and Community Sponsorship (when applicable); (c) Vercel: hosting and performance analytics; (d) Resend: transactional email delivery (confirmation, notifications). We do not store credit card data; Stripe handles payment securely."
         },
         {
           title: "5. Cookie Management",
