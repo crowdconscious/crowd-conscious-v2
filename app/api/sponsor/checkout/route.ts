@@ -107,7 +107,7 @@ const TIER_LABELS: Record<SponsorTierId, string> = {
   starter: 'Pulse Sponsor',
   growth: 'Category Sponsor',
   champion: 'Impact Partner',
-  anchor: 'Founding Patron',
+  anchor: 'Patron',
 }
 
 const schema = z.object({

@@ -34,7 +34,7 @@ export default function Footer() {
       privacyShort: 'Privacidad',
       cookiesShort: 'Cookies',
       description:
-        'Consultas con confianza ponderada sobre tu ciudad y lo que te importa. Las marcas patrocinan el impacto.',
+        'Consultas con confianza ponderada sobre tu ciudad y lo que te importa. El 20% de cada contrato de organizaciones va al Fondo Consciente.',
       tagline: 'Consultas con propósito.',
       madeIn: 'Hecho con ❤️ en México',
       downloadApp: 'Descargar la app',
@@ -61,7 +61,7 @@ export default function Footer() {
       privacyShort: 'Privacy',
       cookiesShort: 'Cookies',
       description:
-        'Confidence-weighted consultations on your city and what matters. Brands sponsor the impact.',
+        'Confidence-weighted consultations on your city and what matters. 20% of every organizations contract goes to the Conscious Fund.',
       tagline: 'Consultations with purpose.',
       madeIn: 'Made with ❤️ in Mexico',
       downloadApp: 'Download the app',

@@ -7,7 +7,7 @@ type Props = {
 /**
  * Top-of-page hero on /patrocinio. Anchors the page to the evergreen
  * value proposition — confidence-weighted community intelligence — and
- * routes prospects to the pricing block where the Founding Pack lives.
+ * routes prospects to the pricing block where the Mundial Pack lives.
  */
 export function MundialPulseHero({ locale }: Props) {
   const es = locale === 'es'
@@ -41,7 +41,7 @@ export function MundialPulseHero({ locale }: Props) {
             onClick={onClick}
             className="rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-500"
           >
-            {es ? 'Ver el Paquete Fundador' : 'See the Founding Pack'}
+            {es ? 'Ver el Paquete Mundial' : 'See the Mundial Pack'}
           </button>
           <a
             href="#pulse-pricing"

@@ -357,7 +357,6 @@ export function SponsorPageClient({
                     ? `Incluye ${Math.round(SPONSOR_TIERS.anchor.fundPercent * 100)}% al Fondo Consciente`
                     : `Includes ${Math.round(SPONSOR_TIERS.anchor.fundPercent * 100)}% to Conscious Fund`}
                 </span>
-                <p className="text-amber-400/90 text-xs font-medium mb-2">{t.limitedPatrons[lang]}</p>
                 <ul className="text-gray-300 text-sm space-y-2 mb-4 flex-1">
                   {t.anchorFeatures[lang].map((line) => (
                     <li key={line} className="flex items-start gap-2">

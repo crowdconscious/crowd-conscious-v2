@@ -121,7 +121,6 @@ async function getLandingData() {
     locActiveCountRes,
     locTopRes,
     allTimeVotesRes,
-    mundialFoundingTakenRes,
     cycleOpinionsRes,
   ] = await Promise.all([
     // Consultas activas: newest open Pulses first. Do not hide below
@@ -215,11 +214,6 @@ async function getLandingData() {
     // Aggregate vote totals keep stand-only rows (real participation);
     // listing surfaces above already exclude them.
     supabase.from('prediction_markets').select('total_votes, engagement_count').is('archived_at', null),
-    supabase
-      .from('sponsorships')
-      .select('id', { count: 'exact', head: true })
-      .eq('tier', 'mundial_pack_founding')
-      .in('status', ['active', 'completed']),
     // cycle_opinions — market_votes cast during the current calendar month.
     // Pairs with the ticker narrative "→ $X for [cause]" which is itself
     // cycle-scoped via `fund_votes.cycle`. See `docs/METRICS-CATALOG.md`.
@@ -309,15 +303,6 @@ async function getLandingData() {
   const locActiveCount = locActiveCountRes.count ?? 0
   const showLocationsSection = locFeaturedCount >= 1 || locActiveCount >= 3
 
-  const MUNDIAL_FOUNDING_TOTAL = 5
-  const mundialFoundingTaken = Math.min(
-    MUNDIAL_FOUNDING_TOTAL,
-    mundialFoundingTakenRes.count ?? 0
-  )
-  const mundialFoundingRemaining = Math.max(
-    0,
-    MUNDIAL_FOUNDING_TOTAL - mundialFoundingTaken
-  )
   const landingLocationCards = (locTopRes.data ?? []) as Array<{
     id: string
     name: string
@@ -354,7 +339,6 @@ async function getLandingData() {
     profileCount,
     showLocationsSection,
     landingLocationCards,
-    mundialFoundingRemaining,
   }
 }
 
