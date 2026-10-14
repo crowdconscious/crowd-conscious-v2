@@ -203,12 +203,12 @@ export function FundClient({
       <div>
         <h1 className="text-3xl font-bold text-white">Fondo Consciente</h1>
         <p className="text-cc-text-secondary mt-2 text-lg">
-          Impulsado por patrocinadores. Dirigido por ti.
+          Impulsado por organizaciones y la comunidad. Dirigido por ti.
         </p>
         <p className="text-cc-text-muted mt-2 text-sm max-w-2xl">
-          Cuando las marcas patrocinan Pulses en Crowd Conscious, el 20% de la parte
-          neta de cada patrocinio va al Fondo Consciente, además de las aportaciones por comisiones de
-          operación. Los usuarios votan qué causas comunitarias reciben apoyos cada mes.
+          El 20% de cada contrato de organizaciones, antes de IVA, va al Fondo Consciente, junto con las
+          aportaciones de Patrocinio comunitario (se descuentan las comisiones de la tarjeta). Los usuarios
+          votan qué causas comunitarias reciben apoyos.
         </p>
         {!isAuthenticated && (
           <div className="mt-4 flex flex-wrap items-center gap-3">

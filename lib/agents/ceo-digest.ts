@@ -7,7 +7,7 @@
  *   - key_metrics[]      5 numbers with non-zero deltas only (silence = signal)
  *   - do_this_week[]     3 dated, actionable next steps with cta_url
  *   - watch              0-1 risk/surprise to flag
- *   - sponsor_outreach   0-1 warm-lead pitch (Pulse Pilot / Single / Pack)
+ *   - sponsor_outreach   0-1 warm-lead pitch (Organizaciones / Patrocinio comunitario)
  *
  * Cron: weekly Mon 16:00 UTC (10:00 CDMX) per vercel.json.
  */
@@ -25,6 +25,16 @@ import {
 import { sendEmail } from '@/lib/resend'
 import { CONSCIOUS_FUND_PERCENT } from '@/lib/fund-allocation'
 import { excludeStandOnly } from '@/lib/pulse/discovery-filters'
+import { ORG_PRICES, PILOT_BREAKDOWN, formatMxn } from '@/lib/organizaciones/pricing'
+/** Product lines the agents may suggest — prices read from lib/organizaciones/pricing (never hard-coded). */
+const ORG_PRODUCT_LIST = [
+  `Lectura piloto privada (${formatMxn(PILOT_BREAKDOWN.subtotal)} MXN + IVA = ${formatMxn(PILOT_BREAKDOWN.total)} MXN con tarjeta)`,
+  `Lectura anual (${formatMxn(ORG_PRICES.annual)} MXN + IVA al año)`,
+  `Escucha continua (${formatMxn(ORG_PRICES.continuousMonthly)} MXN + IVA al mes)`,
+  `Sello verificado (+${formatMxn(ORG_PRICES.selloMonthlyAddon)} MXN + IVA al mes sobre Escucha continua)`,
+]
+const COMMUNITY_DONATION_PRODUCT = 'Patrocinio comunitario (aportación con tarjeta al Fondo Consciente, monto libre)'
+
 
 const APP_URL = (process.env.NEXT_PUBLIC_APP_URL ?? 'https://crowdconscious.app').replace(/\/$/, '')
 
@@ -583,9 +593,9 @@ OUTPUT FORMAT — respond with ONLY a single JSON object, no markdown fences, no
     "segment": "<who the lead segment is, ES>",
     "specific_target": "<exact name from data, e.g. 'Bar Bikina' OR null>",
     "rationale": "<1 ES sentence: why now>",
-    "product": "<one of: 'Pulse Pilot ($1,500 MXN)' | 'Pulse Single ($5,000 MXN)' | 'Mundial Pulse Pack — Founding ($25,000 MXN)' | 'Mundial Pulse Pack ($50,000 MXN)'>",
-    "whatsapp_message": "<3 ES sentences max, casual-pro, includes a Pulse question, ready to copy-send>",
-    "cta_url": "<optional: pilot_pulse_link from hot_locations OR null>"
+    "product": "<one of: ${[...ORG_PRODUCT_LIST, COMMUNITY_DONATION_PRODUCT].map((p) => `'${p}'`).join(' | ')}>",
+    "whatsapp_message": "<3 ES sentences max, casual-pro, ready to copy-send. For Organizaciones: offer to measure their own users with certainty 1-10 and results nobody edits. For Patrocinio comunitario: invite a card contribution at /patrocinio>",
+    "cta_url": "<optional: pilot_pulse_link from hot_locations (Organizaciones) OR ${APP_URL}/patrocinio (Patrocinio comunitario) OR null>"
   } | null
 }
 
@@ -599,7 +609,7 @@ HARD RULES
 - Exactly 3 do_this_week items MAX. Each must reference a SPECIFIC datum from the JSON below. NEVER write "considera revisar" or "mantén el momentum". If you don't have 3 concrete actions, return fewer. Good action shapes: promover un Pulse con pocos/cero votos (use 'low_engagement_pulses' — name it + use its url as cta_url), publicar contenido para llenar un vacío, dar seguimiento a un lead de sponsor, revisar el buzón. NEVER an action about resolving/closing a Pulse.
 - 'cta_url' for actions: use a low_engagement_pulses[].url to promote a Pulse, ${APP_URL}/predictions/admin/inbox to review inbox, ${APP_URL}/predictions/admin/agents for content, ${APP_URL}/dashboard/sponsor/<token> if known. If unsure, omit.
 - 'watch' is null if everything is fine. Don't invent risks. A drop in engagement (votos/votantes vs la semana pasada, using 'week_over_week') is a good thing to flag here.
-- 'sponsor_outreach': if 'hot_locations_last_7d' has items, AT LEAST ONE outreach must target a specific location from it (use its name + pilot_pulse_link as cta_url). Default product for warm Conscious Locations: 'Pulse Pilot ($1,500 MXN)'. Use Mundial Pulse Pack only when there's a World Cup activation angle. Set to null if no warm leads exist AND no plausible cold pitch from the data.
+- 'sponsor_outreach': if 'hot_locations_last_7d' has items, AT LEAST ONE outreach must target a specific location from it (use its name + pilot_pulse_link as cta_url). Default product for organizations (companies, hospitals, institutions, venues with many users): '${ORG_PRODUCT_LIST[0]}'. Suggest Escucha continua or Sello only for an organization that already ran a reading. Suggest '${COMMUNITY_DONATION_PRODUCT}' only for individuals or community groups. NEVER suggest Pulse sponsorship, Pulse packs, Pilot Pulses, Mundial packs or founder discounts — they no longer exist. Set to null if no warm leads exist AND no plausible cold pitch from the data.
 - All Spanish. No English. No emojis.
 - DO NOT comment on agent runs, costs, or platform internals — those have their own dashboard.`
 

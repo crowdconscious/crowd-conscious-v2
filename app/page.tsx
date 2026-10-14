@@ -48,7 +48,7 @@ export const metadata: Metadata = {
     absolute: 'Crowd Conscious — Consultas con confianza ponderada',
   },
   description:
-    'Vota en consultas públicas sobre tu ciudad y lo que te importa. Tu certeza pondera el resultado. Las marcas patrocinan el impacto.',
+    'Vota en consultas públicas sobre tu ciudad y lo que te importa. Tu certeza pondera el resultado. El 20% de cada contrato de organizaciones va al Fondo Consciente.',
   alternates: {
     canonical: SITE_URL,
     languages: {
@@ -59,7 +59,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Crowd Conscious — Consultas con confianza ponderada',
     description:
-      'Vota en consultas públicas sobre tu ciudad y lo que te importa. Tu certeza pondera el resultado. Las marcas patrocinan el impacto.',
+      'Vota en consultas públicas sobre tu ciudad y lo que te importa. Tu certeza pondera el resultado. El 20% de cada contrato de organizaciones va al Fondo Consciente.',
     url: SITE_URL,
   },
 }
