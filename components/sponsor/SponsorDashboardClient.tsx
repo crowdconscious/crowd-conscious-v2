@@ -137,10 +137,8 @@ export default function SponsorDashboardClient({
   // - Everything else: "Expandir plan" (active upsell).
   const normalizedTier = normalizeSponsorUpgradeTier(account.tier)
   const hideUpgradeCta = normalizedTier === 'enterprise'
-  const upgradeCtaLabel =
-    normalizedTier === 'suscripcion'
-      ? t('plan.manage_plan_cta_subscription')
-      : t('plan.manage_plan_cta')
+  // Pulse plan upgrades/add-ons are retired (Oct 2026): point to Organizaciones.
+  const upgradeCtaLabel = language === 'en' ? 'See Organizations' : 'Ver Organizaciones'
   const enterpriseMailto = (() => {
     const subject = encodeURIComponent(
       language === 'en'
@@ -302,7 +300,7 @@ export default function SponsorDashboardClient({
                   </a>
                 ) : (
                   <Link
-                    href={`/dashboard/sponsor/${token}/upgrade`}
+                    href="/organizaciones"
                     className="font-medium text-emerald-400 underline hover:text-emerald-300"
                   >
                     {upgradeCtaLabel} →
@@ -329,7 +327,7 @@ export default function SponsorDashboardClient({
                 </a>
               ) : (
                 <Link
-                  href={`/dashboard/sponsor/${token}/upgrade`}
+                  href="/organizaciones"
                   className="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-5 py-2.5 text-sm font-semibold text-emerald-300 hover:bg-emerald-500/20"
                 >
                   {upgradeCtaLabel} →

@@ -1,3 +1,4 @@
+import { LEGACY_SPONSOR_SALES_CLOSED, legacySponsorSalesClosedResponse } from '@/lib/sponsor/legacy-sales'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getStripe } from '@/app/api/webhooks/stripe/lib/stripe-webhook-utils'
@@ -32,6 +33,8 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ token?: string }> }
 ) {
+  // Retired Oct 2026: reject new purchases (see lib/sponsor/legacy-sales.ts).
+  if (LEGACY_SPONSOR_SALES_CLOSED) return legacySponsorSalesClosedResponse()
   // This route is registered at /api/sponsor/upgrade — the token is passed
   // in the body rather than the URL so we don't leak it in server logs
   // beyond what the token-URL dashboard already does.

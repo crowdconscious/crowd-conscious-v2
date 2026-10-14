@@ -355,7 +355,7 @@ export default function AdminResolvePage() {
               Resolve {modal.type === 'resolve_yes' ? 'YES' : 'NO'} — {modal.market.title.slice(0, 50)}...
             </h3>
             <p className="text-emerald-400 mb-4">
-              20% of estimated net sponsor contributions go to the Conscious Fund. Are you sure?
+              20% of every organizations contract (before VAT) goes to the Conscious Fund. Are you sure?
             </p>
             <div className="space-y-4">
               <div>

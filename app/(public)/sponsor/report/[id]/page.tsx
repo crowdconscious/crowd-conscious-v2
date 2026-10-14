@@ -150,7 +150,7 @@ export default async function SponsorReportPage({
                 </div>
                 <p className="text-2xl font-bold text-emerald-400">{formatCurrency(fundAmount)}</p>
                 <p className="text-slate-500 text-xs mt-1">
-                  {fundPercentLabel}% of estimated net allocated to community causes
+                  {fundPercentLabel}% of the sponsorship allocated to community causes
                 </p>
               </div>
             </div>
