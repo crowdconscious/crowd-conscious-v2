@@ -23,7 +23,7 @@ export function headlineSentence(h: Headline | null, locale: Locale): { main: st
 /**
  * Line one names the question it comes from when a headline phrase exists
  * («De su 91% que recomendaría el hospital, 58% lo dijo con firmeza.»);
- * otherwise the generic «de «sí»» sentence.
+ * otherwise the quoted question (see phraseFor), so every headline names its question.
  */
 export function mainSentence(pctYes: number, pctFirmOfYes: number, phrase: string | null | undefined, locale: Locale): string {
   if (phrase) {
@@ -41,7 +41,17 @@ type QLike = { text: { es: string; en: string }; headlinePhrase?: { es: string; 
 /** One entry point for dashboard, Resumen, PDF and landing preview. */
 export function readingHeadline(qs: QLike[], locale: Locale) {
   return headlineSentence(
-    computeHeadline(qs.map((q) => ({ text: q.text[locale], stats: q.stats, phrase: q.headlinePhrase?.[locale] ?? null }))),
+    computeHeadline(qs.map((q) => ({ text: q.text[locale], stats: q.stats, phrase: phraseFor(q, locale) }))),
     locale
   )
+}
+
+/**
+ * Every headline names its question. Readings stored in the DB always carry a
+ * phrase (NOT NULL); the fallback quotes the question itself.
+ */
+export function phraseFor(q: { text: { es: string; en: string }; headlinePhrase?: { es: string; en: string } }, locale: Locale): string {
+  const p = q.headlinePhrase?.[locale]?.trim()
+  if (p) return p
+  return locale === 'es' ? `que respondió «sí» a «${q.text.es}»` : `who answered "yes" to "${q.text.en}"`
 }

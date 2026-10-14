@@ -8,12 +8,6 @@ const out = process.argv[2] ?? 'sample-report.pdf'
 const locale = process.argv[3] === 'en' ? 'en' : 'es'
 const raw = DEMO_READINGS.find((r) => r.id === DEMO_DEFAULT_READING_ID)!
 const prev = previousClosed(raw.id)
-const pdf = generateReadingReportPdf(toClientReading(raw), {
-  orgName: DEMO_ORG.name,
-  locale,
-  demo: true,
-  earlier: prev ? toClientReading(prev) : null,
-  dataCut: '10 oct 2026, 23:59 h (CDMX)',
-})
+const pdf = generateReadingReportPdf(toClientReading(raw), { orgName: DEMO_ORG.name, locale, demo: true, earlier: prev ? toClientReading(prev) : null })
 writeFileSync(out, pdf)
 console.log('wrote', out, pdf.length, 'bytes')

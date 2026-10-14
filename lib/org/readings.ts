@@ -19,7 +19,7 @@ export type ReadingQuestion = {
   /**
    * Short phrase naming who said yes, used in the headline, e.g.
    * es 'que recomendaría el hospital' -> «De su 91% que recomendaría el hospital, …».
-   * Optional: without it the headline falls back to the generic «de «sí»» sentence.
+   * Optional in the demo model: without it the headline quotes the question (phraseFor). Required (NOT NULL) in the DB.
    */
   headlinePhrase?: L
   counts: QuestionCounts

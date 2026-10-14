@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
+import ReadingControls, { type ControlsModel } from './ReadingControls'
 import { BarChart3, Download, FileText, Globe, Lock, ShieldCheck, X } from 'lucide-react'
 import { CertaintyHistogram, SplitBar, SplitLegend } from '@/components/org/SplitBar'
 import { FIRM_THRESHOLD, MIN_GROUP, orderByFirmYes } from '@/lib/org/firmness'
@@ -140,6 +141,8 @@ function FictLabel({ show, text }: { show: boolean; text: string }) {
   return <span className="rounded border border-amber-300/50 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-200">{text}</span>
 }
 
+export type ReadingExtras = { links: { href: string | null; label: string }[]; controls: ControlsModel | null }
+
 export default function ReadingDashboard({
   orgName,
   readings,
@@ -149,6 +152,7 @@ export default function ReadingDashboard({
   resumenHrefs,
   pdfHrefs,
   escuchaHref,
+  extras = {},
   initialDrawerOpen = false,
 }: {
   orgName: string
@@ -161,6 +165,8 @@ export default function ReadingDashboard({
   resumenHrefs: Record<string, string>
   pdfHrefs: Record<string, string>
   escuchaHref: string
+  /** Downloads + owner controls per reading id, built on the server. */
+  extras?: Record<string, ReadingExtras>
   /** Deep link `?metodologia=1` opens the methodology drawer. */
   initialDrawerOpen?: boolean
 }) {
@@ -322,6 +328,23 @@ export default function ReadingDashboard({
               ) : null}
             </div>
           ) : null}
+
+          {extras[r.id]?.links.length ? (
+            <ul className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+              {extras[r.id].links.map((l) => (
+                <li key={l.label}>
+                  {l.href ? (
+                    <a href={l.href} className="inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-slate-500 px-4 text-sm font-semibold text-slate-100 hover:border-emerald-400">
+                      <Download className="h-4 w-4" /> {l.label}
+                    </a>
+                  ) : (
+                    <span className="inline-flex min-h-[44px] items-center rounded-lg border border-dashed border-slate-600 px-4 text-sm text-slate-300">{l.label}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {extras[r.id]?.controls ? <ReadingControls m={extras[r.id].controls!} locale={locale} /> : null}
 
           {showQuarterly ? (
             <div className="rounded-2xl border border-[#2d3748] bg-[#1a2029] p-5">

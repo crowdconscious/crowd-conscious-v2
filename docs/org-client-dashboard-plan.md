@@ -1,6 +1,6 @@
 # Organizaciones client dashboard + full report: Phase 1 plan
 
-_Last updated: 13 Oct 2026. Branch `feat/org-report-v2`. Sample PDF: `/workspace/client-dash/sample-report.pdf` (ES, 12 pp.) and `sample-report-en.pdf`. Page PNGs are in `sample-png/` and the reference renders are in `ref/`._
+_Last updated: 14 Oct 2026 (v1 built on PR #56 per Francisco's decisions; see §6)._ _Originally 13 Oct 2026. Branch `feat/org-report-v2`. Sample PDF: `/workspace/client-dash/sample-report.pdf` (ES, 12 pp.) and `sample-report-en.pdf`. Page PNGs are in `sample-png/` and the reference renders are in `ref/`._
 
 ## 1. Audit: what exists today (main @ post-#54)
 
@@ -47,7 +47,7 @@ It mirrors the depth of the reference report (cover → letter → at a glance +
 5. **Lo que escribieron** per question: two columns, "Por qué dudan (sí tibio)" and "Por qué no". Reasons pass through `redactReason` and `reasonGroup`. Groups under 10 show an anonymity note instead.
 6. **Para conversar**: open questions derived from the data, not advice.
 7. **Cómo se hizo**: sample, single-use links, field dates, the firm definition, how % are calculated, the 30/10 thresholds, the visibility lock, "nadie editó" and response rate rather than a margin of error. Includes a numbers table.
-8. **About**: product line, 20% before IVA to the Fondo Consciente, and **only** the Hecho en México and RAE Leaders in Innovation Fellowship credentials.
+8. **About**: product line and 20% before IVA to the Fondo Consciente. **No credentials** (removed everywhere on 14 Oct, PR #57).
 
 Accessibility: small grey text is #4b5563 on white (7.6:1) and #cbd5e1 on #0f1419 (~12:1). The smallest text is 7.5–8 pt. Mobile: the PDF is A4 with a single column per block and large type. It is readable on a phone, but the **mobile-first view is the HTML dashboard and resumen**. Proposal: also add `/org/[slug]/lecturas/[id]/reporte` as a responsive HTML version of the same sections. It would reuse the same computed copy so the two never diverge.
 
@@ -82,3 +82,18 @@ The demo route is `/api/org/hospital-ejemplo/lecturas/hospitalizacion-2026-q4/re
 - **D8** Report language: client picks ES/EN at download (proposed), or fixed per org?
 - **D9** Raw response retention period and deletion after close (privacy notice alignment).
 - **D10** HTML report page in scope for v1, or PDF + dashboard only?
+
+## 6. v1 built (14 Oct 2026, PR #56, flag-gated)
+
+Francisco's decisions, as implemented:
+1. **Accounts**: the org and owner seat are auto-created when a card payment is marked paid (`handlers/org-pilot.ts` → `lib/org/provision.ts`, idempotent through `orgs.source_request_id`). Proposals and calls are converted by an admin with `POST /api/admin/org/convert {request_id}`.
+2. **Survey link**: the client distributes `/e/[token]` (one link per reading). Respondents are deduplicated by an HMAC of an anonymous httpOnly cookie (`ORG_RESPONDENT_SECRET`). There's no personal data.
+3. **Extend / early close**: per-client admin settings (`POST /api/admin/org/[slug]/settings`). Defaults are no extension and early close allowed; closing early under 30 responses is marked preliminary. Every rule is re-checked server-side (`lib/org/rules.ts`) and audited in `org_reading_events`.
+4. **Letter**: automated and personalised with the client name, signed «Con cariño, el equipo de Crowd Conscious».
+5. **Downloads**: full PDF, a responsive web report, an aggregate CSV, and an individual-answers CSV. The answers CSV has no IDs or timestamps, redacts reasons, and shuffles rows within each question. It drops segments under 10 and refuses readings under 30 (`lib/org/csv.ts`).
+6. **Seats**: 10 by default (`orgs.seat_limit`), owner/viewer. Owners invite and remove; the last owner can't be removed.
+7. **Web report**: `/org/[slug]/lecturas/[id]/reporte`. It uses the same words as the PDF (`lib/org/report-content.ts`), with no overflow at 360/390 px.
+- **Sello**: earned automatically when `orgs.billing_status = 'active'` AND a closed reading is public. There are no other criteria (`selloEarned`). Admin sets billing_status.
+- **Fixes**: every deep-dive headline names its question (DB `headline_phrase_*` NOT NULL; fallback quotes the question). Inter is embedded in the PDF (em dashes, curly quotes, «»). Dates are written out (es-MX / en-US, CDMX time).
+
+Still open: an admin UI (there's a JSON API only), billing_status automation from Stripe/renewals, the respondent page design pass, and moving the public demo sample PDF (`/api/organizaciones/demo/pdf`) to the full report.

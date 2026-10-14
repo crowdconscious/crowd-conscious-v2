@@ -57,12 +57,12 @@ test('Q4 Q3 firm share of «sí» comes from raw counts with one rounding step',
   assert.equal(s.pctYes, 62)
 })
 
-test('headline names the lead question when a phrase exists, generic otherwise', async () => {
+test('headline always names the lead question (phrase, or the quoted question as fallback)', async () => {
   const { readingHeadline } = await import('./headline-copy.ts')
   const { toClientReading } = await import('./readings.ts')
   const r = toClientReading(DEMO_READINGS.find((x) => x.id === 'hospitalizacion-2026-q4')!)
   assert.equal(readingHeadline(r.questions, 'es')!.main, 'De su 91% que recomendaría el hospital, 58% lo dijo con firmeza.')
   assert.equal(readingHeadline(r.questions, 'en')!.main, 'Of the 91% who would recommend the hospital, 58% said it firmly.')
   const noPhrase = r.questions.map(({ headlinePhrase, ...q }) => q)
-  assert.equal(readingHeadline(noPhrase, 'es')!.main, 'De su 91% de «sí», 58% lo dijo con firmeza.')
+  assert.equal(readingHeadline(noPhrase, 'es')!.main, 'De su 91% que respondió «sí» a «¿Recomendaría este hospital a un familiar?», 58% lo dijo con firmeza.')
 })

@@ -17,6 +17,11 @@ const Q_RECOMIENDA = {
   en: 'Would you recommend this hospital to a relative?',
 }
 const PHRASE_RECOMIENDA = { es: 'que recomendaría el hospital', en: 'who would recommend the hospital' }
+const PHRASE_EXPLICARON = {
+  es: 'que dijo que le explicaron con claridad su tratamiento',
+  en: 'who said their treatment was explained clearly',
+}
+const PHRASE_ESPERA = { es: 'que consideró razonable el tiempo de espera', en: 'who found the waiting time reasonable' }
 const Q_EXPLICARON = {
   es: '¿Le explicaron con claridad su tratamiento?',
   en: 'Was your treatment explained clearly?',
@@ -110,6 +115,7 @@ export const DEMO_READINGS: Reading[] = [
       {
         id: 'q2',
         text: Q_EXPLICARON,
+        headlinePhrase: PHRASE_EXPLICARON,
         counts: { yes: [6, 6, 13, 19, 31, 44, 57, 71, 57, 42], no: [4, 6, 8, 11, 11, 8, 6, 3, 4, 5] },
         reasons: REASONS_EXPLICARON,
       },
@@ -117,6 +123,7 @@ export const DEMO_READINGS: Reading[] = [
         id: 'q3',
         // Wording changed vs Q3 ("en admisión" added): no trend comparison.
         text: { es: '¿El tiempo de espera en admisión fue razonable?', en: 'Was the waiting time at admission reasonable?' },
+        headlinePhrase: PHRASE_ESPERA,
         counts: { yes: [6, 6, 11, 17, 28, 40, 51, 40, 32, 24], no: [7, 11, 15, 19, 18, 15, 11, 16, 20, 25] },
         reasons: REASONS_ESPERA,
       },
@@ -146,12 +153,14 @@ export const DEMO_READINGS: Reading[] = [
       {
         id: 'q2',
         text: Q_EXPLICARON,
+        headlinePhrase: PHRASE_EXPLICARON,
         counts: { yes: [6, 6, 12, 19, 31, 43, 55, 61, 49, 37], no: [4, 6, 9, 11, 11, 8, 6, 4, 5, 6] },
         reasons: REASONS_EXPLICARON,
       },
       {
         id: 'q3',
         text: { es: '¿El tiempo de espera fue razonable?', en: 'Was the waiting time reasonable?' },
+        headlinePhrase: PHRASE_ESPERA,
         counts: { yes: [6, 6, 11, 17, 28, 39, 50, 37, 29, 22], no: [7, 10, 14, 17, 17, 13, 10, 15, 19, 22] },
         reasons: REASONS_ESPERA,
       },
@@ -181,12 +190,14 @@ export const DEMO_READINGS: Reading[] = [
       {
         id: 'q2',
         text: Q_EXPLICARON,
+        headlinePhrase: PHRASE_EXPLICARON,
         counts: { yes: [3, 3, 6, 9, 15, 21, 28, 29, 23, 18], no: [3, 4, 5, 7, 6, 5, 4, 2, 3, 4] },
         reasons: REASONS_EXPLICARON,
       },
       {
         id: 'q3',
         text: { es: '¿Volvería a atenderse aquí?', en: 'Would you come back here for care?' },
+        headlinePhrase: { es: 'que volvería a atenderse aquí', en: 'who would come back for care' },
         counts: { yes: [3, 3, 5, 7, 12, 17, 22, 51, 40, 30], no: [0, 1, 1, 1, 1, 1, 0, 1, 1, 1] },
         reasons: {
           tentativeYes: [

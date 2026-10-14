@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import ExecutiveSummary from '@/components/org/ExecutiveSummary'
 import PrintButton from '@/components/org/PrintButton'
 import { ORG_PORTAL_V2 } from '@/lib/org/config'
-import { getOrgView } from '@/lib/org/data'
+import { readingForShare } from '@/lib/org/server-reading'
 import { verifyShareToken } from '@/lib/org/share-token'
 import { getOrgLocale } from '@/app/organizaciones/locale'
 
@@ -28,9 +28,9 @@ export default async function OrgResumenPage({
       </div>
     )
   }
-  const org = await getOrgView(slug)
-  const reading = org?.readings.find((r) => r.id === id && r.status === 'closed')
-  if (!org || !reading) notFound()
+  const org = await readingForShare(slug, id)
+  const reading = org?.reading
+  if (!org || !reading || reading.status !== 'closed') notFound()
   const exp = new Date(v.exp).toLocaleDateString(locale === 'es' ? 'es-MX' : 'en-US', { timeZone: 'America/Mexico_City' })
   return (
     <div className="pb-10">

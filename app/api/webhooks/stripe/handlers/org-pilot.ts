@@ -1,3 +1,5 @@
+import { ORG_PORTAL_V2 } from '@/lib/org/config'
+import { provisionOrgFromRequest } from '@/lib/org/provision'
 import Stripe from 'stripe'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { PILOT_BREAKDOWN } from '@/lib/organizaciones/pricing'
@@ -82,6 +84,16 @@ export async function handleOrgPilotCheckout(session: Stripe.Checkout.Session) {
     const a = await sendOrgAdminAlert(row)
     if (a.success) await table().update({ admin_alert_sent_at: new Date().toISOString() }).eq('id', requestId)
     else failures.push(`admin: ${a.error}`)
+  }
+
+  // Auto-create the client's org + owner seat (idempotent; behind the portal flag until 286 is applied).
+  if (ORG_PORTAL_V2) {
+    try {
+      const p = await provisionOrgFromRequest(requestId, { requirePaid: true })
+      if (!p.ok) console.error('[org-pilot] provisioning failed', { requestId, error: p.error })
+    } catch (e) {
+      console.error('[org-pilot] provisioning threw', { requestId, error: e instanceof Error ? e.message : e })
+    }
   }
 
   if (failures.length) {
