@@ -58,7 +58,6 @@ export default async function OrganizacionesPage() {
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-300">{t.eyebrow}</p>
           <h1 className="mt-4 text-3xl font-bold leading-tight text-white sm:text-5xl">{t.heroTitle}</h1>
           <p className="mx-auto mt-5 max-w-2xl text-lg text-slate-200">{t.heroSub}</p>
-          <p className="mx-auto mt-4 max-w-2xl text-sm text-slate-300">{t.credentials}</p>
           <div className="mt-8 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
             <Link href="/organizaciones/demo" className={btnPrimary}>
               {t.ctaDemo}

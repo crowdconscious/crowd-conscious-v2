@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowRight, BadgeCheck, Building2, Gauge, Lock, ShieldCheck } from 'lucide-react'
+import { ArrowRight, Building2, Gauge, Lock, ShieldCheck } from 'lucide-react'
 
 type Props = {
   locale: 'es' | 'en'
@@ -82,15 +82,6 @@ export function BrandsMiniPitch({ locale }: Props) {
                 {es ? 'Ver organizaciones' : 'See organizations'}
               </Link>
             </div>
-
-            <p className="mt-6 flex items-start gap-2 text-xs leading-relaxed text-[#a3b1c2]">
-              <BadgeCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#6ee7b7]" />
-              <span>
-                {es
-                  ? 'Certificación Hecho en México · Fundador con Leaders in Innovation Fellowship de la Royal Academy of Engineering'
-                  : 'Hecho en México certified · Founder holds a Royal Academy of Engineering Leaders in Innovation Fellowship'}
-              </span>
-            </p>
           </div>
 
           {/* Demo reading card — illustrative example, not client data. */}
