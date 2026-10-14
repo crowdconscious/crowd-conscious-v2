@@ -2,9 +2,9 @@
 -- anonymous responses). RLS is on with no policies: only service_role
 -- (server routes that check membership first) reads or writes. Respondents
 -- are identified only by an anonymous hash; no personal data is stored.
--- NOT APPLIED. Needs approval.
+-- Idempotent: safe to re-run (IF NOT EXISTS / CREATE OR REPLACE). RLS enabled AND forced.
 
-CREATE TABLE public.orgs (
+CREATE TABLE IF NOT EXISTS public.orgs (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   slug text NOT NULL UNIQUE CHECK (slug ~ '^[a-z0-9][a-z0-9-]{1,62}$'),
   name text NOT NULL CHECK (char_length(name) BETWEEN 1 AND 200),
@@ -22,7 +22,7 @@ CREATE TABLE public.orgs (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE TABLE public.org_members (
+CREATE TABLE IF NOT EXISTS public.org_members (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   org_id uuid NOT NULL REFERENCES public.orgs(id) ON DELETE CASCADE,
   email text NOT NULL CHECK (email = lower(email) AND char_length(email) BETWEEN 3 AND 320),
@@ -33,10 +33,10 @@ CREATE TABLE public.org_members (
   accepted_at timestamptz,
   UNIQUE (org_id, email)
 );
-CREATE INDEX org_members_user_idx ON public.org_members (user_id);
-CREATE INDEX org_members_email_idx ON public.org_members (email);
+CREATE INDEX IF NOT EXISTS org_members_user_idx ON public.org_members (user_id);
+CREATE INDEX IF NOT EXISTS org_members_email_idx ON public.org_members (email);
 
-CREATE TABLE public.org_readings (
+CREATE TABLE IF NOT EXISTS public.org_readings (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   org_id uuid NOT NULL REFERENCES public.orgs(id) ON DELETE CASCADE,
   title_es text NOT NULL, title_en text NOT NULL,
@@ -58,9 +58,9 @@ CREATE TABLE public.org_readings (
   updated_at timestamptz NOT NULL DEFAULT now(),
   CHECK (status = 'design' OR visibility_locked_at IS NOT NULL)
 );
-CREATE INDEX org_readings_org_idx ON public.org_readings (org_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS org_readings_org_idx ON public.org_readings (org_id, created_at DESC);
 
-CREATE TABLE public.org_questions (
+CREATE TABLE IF NOT EXISTS public.org_questions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   reading_id uuid NOT NULL REFERENCES public.org_readings(id) ON DELETE CASCADE,
   position int NOT NULL CHECK (position >= 1),
@@ -70,7 +70,7 @@ CREATE TABLE public.org_questions (
   UNIQUE (reading_id, position)
 );
 
-CREATE TABLE public.org_responses (
+CREATE TABLE IF NOT EXISTS public.org_responses (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   reading_id uuid NOT NULL REFERENCES public.org_readings(id) ON DELETE CASCADE,
   -- HMAC of an anonymous browser cookie; dedupes without identifying anyone.
@@ -79,7 +79,7 @@ CREATE TABLE public.org_responses (
   UNIQUE (reading_id, respondent_hash)
 );
 
-CREATE TABLE public.org_answers (
+CREATE TABLE IF NOT EXISTS public.org_answers (
   response_id uuid NOT NULL REFERENCES public.org_responses(id) ON DELETE CASCADE,
   question_id uuid NOT NULL REFERENCES public.org_questions(id) ON DELETE CASCADE,
   answer boolean NOT NULL,
@@ -87,9 +87,9 @@ CREATE TABLE public.org_answers (
   reason text CHECK (reason IS NULL OR char_length(reason) <= 1000),
   PRIMARY KEY (response_id, question_id)
 );
-CREATE INDEX org_answers_question_idx ON public.org_answers (question_id);
+CREATE INDEX IF NOT EXISTS org_answers_question_idx ON public.org_answers (question_id);
 
-CREATE TABLE public.org_reading_events (
+CREATE TABLE IF NOT EXISTS public.org_reading_events (
   id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   reading_id uuid NOT NULL REFERENCES public.org_readings(id) ON DELETE CASCADE,
   actor_user_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
@@ -97,7 +97,7 @@ CREATE TABLE public.org_reading_events (
   detail jsonb NOT NULL DEFAULT '{}'::jsonb,
   created_at timestamptz NOT NULL DEFAULT now()
 );
-CREATE INDEX org_reading_events_reading_idx ON public.org_reading_events (reading_id, created_at);
+CREATE INDEX IF NOT EXISTS org_reading_events_reading_idx ON public.org_reading_events (reading_id, created_at);
 
 -- Aggregates: histogram per question (certainty 1..10 x yes/no). Service role only.
 CREATE OR REPLACE FUNCTION public.org_question_histograms(p_reading_id uuid)
@@ -114,10 +114,12 @@ DECLARE t text;
 BEGIN
   FOREACH t IN ARRAY ARRAY['orgs','org_members','org_readings','org_questions','org_responses','org_answers','org_reading_events'] LOOP
     EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', t);
+    EXECUTE format('ALTER TABLE public.%I FORCE ROW LEVEL SECURITY', t);
     EXECUTE format('REVOKE ALL ON public.%I FROM anon, authenticated', t);
     EXECUTE format('GRANT ALL ON public.%I TO service_role', t);
   END LOOP;
 END $$;
 GRANT USAGE ON SEQUENCE public.org_reading_events_id_seq TO service_role;
 REVOKE ALL ON FUNCTION public.org_question_histograms(uuid) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON SEQUENCE public.org_reading_events_id_seq FROM anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.org_question_histograms(uuid) TO service_role;

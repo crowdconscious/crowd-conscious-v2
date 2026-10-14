@@ -1,5 +1,5 @@
--- Expect 7 rows, all rls = true, no policies, no anon/authenticated grants.
-SELECT c.relname, c.relrowsecurity AS rls,
+-- Expect 7 rows, all rls = true and rls_forced = true, no policies, no anon/authenticated grants.
+SELECT c.relname, c.relrowsecurity AS rls, c.relforcerowsecurity AS rls_forced,
   (SELECT count(*) FROM pg_policies p WHERE p.tablename = c.relname) AS policies,
   (SELECT string_agg(DISTINCT grantee, ',') FROM information_schema.role_table_grants g
      WHERE g.table_name = c.relname AND grantee IN ('anon','authenticated')) AS public_grants
@@ -11,3 +11,6 @@ SELECT grantee FROM information_schema.routine_privileges WHERE routine_name = '
 -- Defaults: seat_limit 10, max_extension_days 0, allow_early_close true.
 SELECT column_name, column_default FROM information_schema.columns
 WHERE table_name = 'orgs' AND column_name IN ('seat_limit','max_extension_days','allow_early_close','billing_status');
+-- Expect anon/authenticated have no EXECUTE on the RPC (both false).
+SELECT has_function_privilege('anon','public.org_question_histograms(uuid)','EXECUTE') AS anon_exec,
+       has_function_privilege('authenticated','public.org_question_histograms(uuid)','EXECUTE') AS auth_exec;
