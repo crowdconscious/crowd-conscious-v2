@@ -379,7 +379,6 @@ export default async function LandingPage() {
   let activeCauseSlug: string | null = null
   let showLocationsSection = false
   let landingLocationCards: Awaited<ReturnType<typeof getLandingData>>['landingLocationCards'] = []
-  let mundialFoundingRemaining = 0
   let landingSignals: LandingSignal[] = []
 
   try {
@@ -396,7 +395,6 @@ export default async function LandingPage() {
     activeCauseSlug = data.activeCauseSlug
     showLocationsSection = data.showLocationsSection
     landingLocationCards = data.landingLocationCards
-    mundialFoundingRemaining = data.mundialFoundingRemaining
   } catch (e) {
     console.error('Landing data fetch error:', e)
   }
@@ -555,43 +553,6 @@ export default async function LandingPage() {
         {/* ─────────── BLOCK 2.25 — Citizen Signals teaser ─────────── */}
         {process.env.NEXT_PUBLIC_SIGNALS_ENABLED === 'true' ? (
           <SignalsTeaser locale={localeShort} />
-        ) : null}
-
-        {/* ─────────── BLOCK 2.5 — Mundial Founding scarcity tile ─────────── */}
-        {mundialFoundingRemaining > 0 ? (
-          <section className="mx-auto max-w-6xl px-4 pb-6 md:px-8">
-            <Link
-              href="/patrocinio#pulse-mundial-pack"
-              className="group block overflow-hidden rounded-2xl border border-amber-500/40 bg-gradient-to-r from-amber-500/15 via-emerald-500/10 to-amber-500/15 p-6 transition-all hover:border-amber-400/60 hover:from-amber-500/20 hover:to-amber-500/20 md:p-8"
-            >
-              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div className="flex-1">
-                  <div className="mb-2 flex items-center gap-2">
-                    <span className="inline-flex h-2 w-2 animate-pulse rounded-full bg-red-500" />
-                    <p className="text-xs font-semibold uppercase tracking-wider text-amber-300">
-                      {locale === 'es'
-                        ? `Solo ${mundialFoundingRemaining} ${mundialFoundingRemaining === 1 ? 'marca Fundadora' : 'marcas Fundadoras'} restantes`
-                        : `Only ${mundialFoundingRemaining} Founding ${mundialFoundingRemaining === 1 ? 'brand' : 'brands'} left`}
-                    </p>
-                  </div>
-                  <h2 className="mb-2 text-xl font-bold text-white md:text-2xl">
-                    {locale === 'es'
-                      ? 'Paquete Fundador — Solo 5 marcas'
-                      : 'Founding Pack — Only 5 brands'}
-                  </h2>
-                  <p className="max-w-xl text-sm text-gray-300 md:text-base">
-                    {locale === 'es'
-                      ? 'Apoya la inteligencia colectiva desde el inicio. 50% de descuento permanente, logo en homepage y reconocimiento de por vida.'
-                      : 'Back collective intelligence from day one. 50% permanent discount, homepage logo, and lifetime recognition.'}
-                  </p>
-                </div>
-                <span className="inline-flex min-h-[44px] shrink-0 items-center gap-2 rounded-xl bg-amber-500 px-5 py-3 text-sm font-semibold text-gray-900 shadow-lg shadow-amber-500/20 transition-all group-hover:bg-amber-400">
-                  {locale === 'es' ? 'Ver plan' : 'See plan'}
-                  <ChevronRight className="h-4 w-4" />
-                </span>
-              </div>
-            </Link>
-          </section>
         ) : null}
 
         {/* ─────────── BLOCK 3 — Conscious Locations ─────────── */}

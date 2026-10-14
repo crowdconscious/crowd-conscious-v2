@@ -97,7 +97,7 @@ Retired agents: see [`.deprecated/legacy-agents/README.md`](.deprecated/legacy-a
 | `/markets` | `/pulse` | Consumer market list lives at `/pulse` now. |
 | `/markets/:id` | `/pulse/:id` | Legacy share alias. Loop-safe because `/pulse/[id]` internally re-routes non-Pulse rows back to `/predictions/markets/${id}`. |
 | `/pulse/welcome` | `/para-marcas/welcome` | B2B landing moved to clear the `/pulse` namespace. |
-| `/pulse/pilot` | `/para-marcas/pilot` | Same. |
+| `/pulse/pilot`, `/para-marcas/pilot/*` | `/organizaciones/contratar` | Pilot checkout retired. |
 | `/terms-and-conditions` | `/terms` | Vercel-config redirect (older). |
 | `/privacy-policy` | `/privacy` | Vercel-config redirect (older). |
 
