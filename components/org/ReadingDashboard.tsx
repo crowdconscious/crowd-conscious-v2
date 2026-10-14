@@ -4,8 +4,8 @@ import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { BarChart3, Download, FileText, Globe, Lock, ShieldCheck, X } from 'lucide-react'
 import { CertaintyHistogram, SplitBar, SplitLegend } from '@/components/org/SplitBar'
-import { FIRM_THRESHOLD, MIN_GROUP, computeHeadline, orderByFirmYes } from '@/lib/org/firmness'
-import { headlineSentence } from '@/lib/org/headline-copy'
+import { FIRM_THRESHOLD, MIN_GROUP, orderByFirmYes } from '@/lib/org/firmness'
+import { readingHeadline } from '@/lib/org/headline-copy'
 import { questionTrend, responseRate, type ClientQuestion, type ClientReading } from '@/lib/org/readings'
 import { PILOT_CREDIT_WINDOW_DAYS } from '@/lib/organizaciones/pricing'
 
@@ -174,7 +174,7 @@ export default function ReadingDashboard({
   const earlier = useMemo(() => readings.slice(idx + 1).find((x) => x.status === 'closed') ?? null, [readings, idx])
 
   const qs = r.questions.map((q) => ({ ...q, label: q.text[locale] }))
-  const headline = headlineSentence(computeHeadline(qs.map((q) => ({ text: q.label, stats: q.stats }))), locale)
+  const headline = readingHeadline(r.questions, locale)
   const ordered = orderByFirmYes(qs)
   const rate = responseRate(r)
   const visLabel = r.visibility === 'public' ? c.publicL : c.privateL

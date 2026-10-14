@@ -1,4 +1,4 @@
-import type { Headline } from './firmness'
+import { computeHeadline, type Headline, type QuestionStats } from './firmness'
 
 type Locale = 'es' | 'en'
 
@@ -11,14 +11,37 @@ export function headlineSentence(h: Headline | null, locale: Locale): { main: st
       sub: null,
     }
   }
-  const main =
-    locale === 'es'
-      ? `De su ${h.pctYes}% de «sí», ${h.pctFirmOfYes}% lo dijo con firmeza.`
-      : `Of your ${h.pctYes}% "yes", ${h.pctFirmOfYes}% said it firmly.`
+  const main = mainSentence(h.pctYes, h.pctFirmOfYes, h.leadPhrase, locale)
   const sub = h.weakest
     ? locale === 'es'
       ? `Donde más dudan: ${h.weakest.text} — ${h.weakest.pctFirmOfYes}% de sus «sí» son firmes.`
       : `Where they hesitate most: ${h.weakest.text} — ${h.weakest.pctFirmOfYes}% of their "yes" answers are firm.`
     : null
   return { main, sub }
+}
+
+/**
+ * Line one names the question it comes from when a headline phrase exists
+ * («De su 91% que recomendaría el hospital, 58% lo dijo con firmeza.»);
+ * otherwise the generic «de «sí»» sentence.
+ */
+export function mainSentence(pctYes: number, pctFirmOfYes: number, phrase: string | null | undefined, locale: Locale): string {
+  if (phrase) {
+    return locale === 'es'
+      ? `De su ${pctYes}% ${phrase}, ${pctFirmOfYes}% lo dijo con firmeza.`
+      : `Of the ${pctYes}% ${phrase}, ${pctFirmOfYes}% said it firmly.`
+  }
+  return locale === 'es'
+    ? `De su ${pctYes}% de «sí», ${pctFirmOfYes}% lo dijo con firmeza.`
+    : `Of your ${pctYes}% "yes", ${pctFirmOfYes}% said it firmly.`
+}
+
+type QLike = { text: { es: string; en: string }; headlinePhrase?: { es: string; en: string }; stats: QuestionStats }
+
+/** One entry point for dashboard, Resumen, PDF and landing preview. */
+export function readingHeadline(qs: QLike[], locale: Locale) {
+  return headlineSentence(
+    computeHeadline(qs.map((q) => ({ text: q.text[locale], stats: q.stats, phrase: q.headlinePhrase?.[locale] ?? null }))),
+    locale
+  )
 }

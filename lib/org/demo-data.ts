@@ -16,6 +16,7 @@ const Q_RECOMIENDA = {
   es: '¿Recomendaría este hospital a un familiar?',
   en: 'Would you recommend this hospital to a relative?',
 }
+const PHRASE_RECOMIENDA = { es: 'que recomendaría el hospital', en: 'who would recommend the hospital' }
 const Q_EXPLICARON = {
   es: '¿Le explicaron con claridad su tratamiento?',
   en: 'Was your treatment explained clearly?',
@@ -102,6 +103,7 @@ export const DEMO_READINGS: Reading[] = [
       {
         id: 'q1',
         text: Q_RECOMIENDA,
+        headlinePhrase: PHRASE_RECOMIENDA,
         counts: { yes: [6, 6, 11, 17, 28, 39, 50, 91, 73, 54], no: [2, 3, 4, 4, 4, 3, 3, 4, 5, 5] },
         reasons: REASONS_RECOMIENDA,
       },
@@ -137,6 +139,7 @@ export const DEMO_READINGS: Reading[] = [
       {
         id: 'q1',
         text: Q_RECOMIENDA,
+        headlinePhrase: PHRASE_RECOMIENDA,
         counts: { yes: [6, 6, 11, 17, 29, 40, 52, 79, 63, 47], no: [2, 3, 4, 5, 5, 4, 3, 4, 4, 5] },
         reasons: REASONS_RECOMIENDA,
       },
@@ -171,6 +174,7 @@ export const DEMO_READINGS: Reading[] = [
       {
         id: 'q1',
         text: Q_RECOMIENDA,
+        headlinePhrase: PHRASE_RECOMIENDA,
         counts: { yes: [3, 3, 6, 9, 15, 20, 26, 38, 31, 23], no: [1, 2, 3, 3, 3, 3, 2, 2, 2, 3] },
         reasons: REASONS_RECOMIENDA,
       },

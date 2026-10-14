@@ -2,8 +2,9 @@
 
 import { useState } from 'react'
 import { SplitBar, SplitLegend, type SegmentKey } from '@/components/org/SplitBar'
-import { isFirm, questionStats } from '@/lib/org/firmness'
+import { questionStats, segmentFor } from '@/lib/org/firmness'
 import { TRY_IT_BASE } from '@/lib/org/demo-data'
+import { mainSentence } from '@/lib/org/headline-copy'
 
 type Locale = 'es' | 'en'
 
@@ -19,7 +20,7 @@ const C = {
     again: 'Probar otra respuesta',
     yours: 'Su respuesta está resaltada',
     fict: 'Lectura ficticia de ejemplo · no guardamos su respuesta',
-    sentence: (y: number, f: number) => `De su ${y}% de «sí», ${f}% lo dijo con firmeza.`,
+    phrase: 'que recomendaría el servicio',
     pick: 'Elija sí o no',
   },
   en: {
@@ -33,7 +34,7 @@ const C = {
     again: 'Try another answer',
     yours: 'Your answer is highlighted',
     fict: 'Fictitious example reading · we do not store your answer',
-    sentence: (y: number, f: number) => `Of your ${y}% "yes", ${f}% said it firmly.`,
+    phrase: 'who would recommend the service',
     pick: 'Choose yes or no',
   },
 } as const
@@ -47,11 +48,7 @@ export default function TryIt({ locale }: { locale: Locale }) {
   const counts = { yes: [...TRY_IT_BASE.yes], no: [...TRY_IT_BASE.no] }
   if (done && answer) counts[answer][certainty - 1] += 1
   const stats = questionStats(counts)
-  const hl: SegmentKey | null = !answer
-    ? null
-    : answer === 'yes'
-      ? isFirm(certainty) ? 'firmYes' : 'tentativeYes'
-      : isFirm(certainty) ? 'firmNo' : 'tentativeNo'
+  const hl: SegmentKey | null = answer ? segmentFor(answer, certainty) : null
 
   function submit() {
     if (!answer) return
@@ -109,7 +106,7 @@ export default function TryIt({ locale }: { locale: Locale }) {
         </div>
       ) : (
         <div className="mt-4 space-y-3">
-          <p className="text-xl font-bold text-white">{c.sentence(stats.pctYes, stats.pctFirmOfYes)}</p>
+          <p className="text-xl font-bold text-white">{mainSentence(stats.pctYes, stats.pctFirmOfYes, c.phrase, locale)}</p>
           <SplitBar split={stats.split} locale={locale} highlight={hl} />
           <SplitLegend locale={locale} split={stats.split} />
           <p className="text-sm text-slate-300">

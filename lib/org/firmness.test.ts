@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { FIRM_THRESHOLD, MIN_GROUP, computeHeadline, orderByFirmYes, percentagesSummingTo100, questionStats } from './firmness.ts'
+import { FIRM_THRESHOLD, MIN_GROUP, computeHeadline, orderByFirmYes, segmentFor, percentagesSummingTo100, questionStats } from './firmness.ts'
 import { reasonGroup, redactReason } from './redact.ts'
 
 test('threshold defaults', () => {
@@ -65,4 +65,12 @@ test('order is weakest-first by firm-of-yes', () => {
   const mk = (firm: number, tent: number) => questionStats({ yes: [0, 0, 0, 0, tent, 0, 0, 0, 0, firm], no: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0] })
   const o = orderByFirmYes([{ id: 1, stats: mk(90, 10) }, { id: 2, stats: mk(40, 60) }, { id: 3, stats: mk(70, 30) }])
   assert.deepEqual(o.map((x) => x.id), [2, 3, 1])
+})
+
+test('segmentFor: tryit highlight uses FIRM_THRESHOLD', () => {
+  assert.equal(segmentFor('yes', 6), 'tentativeYes')
+  assert.equal(segmentFor('yes', FIRM_THRESHOLD - 1), 'tentativeYes')
+  assert.equal(segmentFor('yes', FIRM_THRESHOLD), 'firmYes')
+  assert.equal(segmentFor('no', 9), 'firmNo')
+  assert.equal(segmentFor('no', 3), 'tentativeNo')
 })

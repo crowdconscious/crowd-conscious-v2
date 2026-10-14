@@ -1,6 +1,6 @@
 import { SplitBar, SplitLegend } from '@/components/org/SplitBar'
-import { FIRM_THRESHOLD, computeHeadline } from '@/lib/org/firmness'
-import { headlineSentence } from '@/lib/org/headline-copy'
+import { FIRM_THRESHOLD } from '@/lib/org/firmness'
+import { readingHeadline } from '@/lib/org/headline-copy'
 import { responseRate, type ClientReading } from '@/lib/org/readings'
 
 type Locale = 'es' | 'en'
@@ -15,17 +15,20 @@ export default function ExecutiveSummary({
   locale,
   demo,
   expiresAt,
+  preview = false,
 }: {
   reading: ClientReading
   orgName: string
   locale: Locale
   demo: boolean
   expiresAt?: string | null
+  /** Landing preview: on phones hide the stats row so the first bar shows above the fade. */
+  preview?: boolean
 }) {
   const es = locale === 'es'
   const nf = (n: number) => n.toLocaleString(es ? 'es-MX' : 'en-US')
   const qs = r.questions.map((q) => ({ ...q, label: q.text[locale] }))
-  const h = headlineSentence(computeHeadline(qs.map((q) => ({ text: q.label, stats: q.stats }))), locale)
+  const h = readingHeadline(r.questions, locale)
   const sample =
     r.sample.mode === 'all'
       ? es
@@ -62,7 +65,7 @@ export default function ExecutiveSummary({
         </section>
       ) : null}
 
-      <section className="mt-5 grid grid-cols-1 gap-3 text-center sm:grid-cols-3">
+      <section className={`mt-5 ${preview ? 'hidden' : 'grid'} grid-cols-1 gap-3 text-center sm:grid sm:grid-cols-3`}>
         {[
           [es ? 'Invitados' : 'Invited', nf(r.invited)],
           [es ? 'Respuestas' : 'Responses', nf(r.responded)],

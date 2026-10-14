@@ -96,7 +96,7 @@ export function questionStats(c: QuestionCounts): QuestionStats {
   }
 }
 
-export type HeadlineInput = { text: string; stats: QuestionStats }
+export type HeadlineInput = { text: string; stats: QuestionStats; phrase?: string | null }
 
 export type Headline =
   | { kind: 'preliminary' }
@@ -104,6 +104,8 @@ export type Headline =
       kind: 'answer'
       pctYes: number
       pctFirmOfYes: number
+      /** Headline phrase of the lead question, if the data has one. */
+      leadPhrase: string | null
       weakest: { text: string; pctFirmOfYes: number } | null
     }
 
@@ -120,6 +122,7 @@ export function computeHeadline(questions: HeadlineInput[]): Headline | null {
     kind: 'answer',
     pctYes: lead.pctYes,
     pctFirmOfYes: lead.pctFirmOfYes,
+    leadPhrase: questions[0].phrase ?? null,
     weakest: weakest ? { text: weakest.text, pctFirmOfYes: weakest.stats.pctFirmOfYes } : null,
   }
 }
@@ -127,4 +130,12 @@ export function computeHeadline(questions: HeadlineInput[]): Headline | null {
 /** Questions ordered by firm share of «sí», lowest first (same base as the headline). */
 export function orderByFirmYes<T extends { stats: QuestionStats }>(qs: T[]): T[] {
   return [...qs].sort((a, b) => a.stats.pctFirmOfYes - b.stats.pctFirmOfYes)
+}
+
+export type SegmentKey = keyof Split
+
+/** Which of the four segments a single answer falls in (same threshold as everything else). */
+export function segmentFor(answer: 'yes' | 'no', certainty: number): SegmentKey {
+  if (answer === 'yes') return isFirm(certainty) ? 'firmYes' : 'tentativeYes'
+  return isFirm(certainty) ? 'firmNo' : 'tentativeNo'
 }

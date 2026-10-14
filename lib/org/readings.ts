@@ -16,6 +16,12 @@ export type ReadingQuestion = {
   id: string
   /** Exact wording respondents saw (Spanish; en is a translation for display). */
   text: L
+  /**
+   * Short phrase naming who said yes, used in the headline, e.g.
+   * es 'que recomendaría el hospital' -> «De su 91% que recomendaría el hospital, …».
+   * Optional: without it the headline falls back to the generic «de «sí»» sentence.
+   */
+  headlinePhrase?: L
   counts: QuestionCounts
   reasons: { tentativeYes: Reason[]; no: Reason[] }
 }
@@ -65,6 +71,7 @@ export function toClientReading(r: Reading): ClientReading {
       return {
         id: q.id,
         text: q.text,
+        ...(q.headlinePhrase ? { headlinePhrase: q.headlinePhrase } : {}),
         counts: q.counts,
         stats,
         reasons: {

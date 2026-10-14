@@ -5,8 +5,8 @@
  * "Ficticio" label on every page header and question block.
  */
 import { jsPDF } from 'jspdf'
-import { FIRM_THRESHOLD, computeHeadline, orderByFirmYes } from './firmness'
-import { headlineSentence } from './headline-copy'
+import { FIRM_THRESHOLD, orderByFirmYes } from './firmness'
+import { readingHeadline } from './headline-copy'
 import { responseRate, type ClientReading } from './readings'
 
 type RGB = [number, number, number]
@@ -59,7 +59,7 @@ export function generateReadingPdf(r: ClientReading, orgName: string, locale: 'e
   y += 10
 
   const qs = r.questions.map((q) => ({ ...q, label: q.text[locale] }))
-  const h0 = headlineSentence(computeHeadline(qs.map((q) => ({ text: q.label, stats: q.stats }))), locale)
+  const h0 = readingHeadline(r.questions, locale)
   // Core PDF fonts lack the em dash; keep the sentence readable.
   const h = h0 ? { main: h0.main.replace(/—/g, '-'), sub: h0.sub ? h0.sub.replace(/—/g, '-') : null } : null
   if (h) {

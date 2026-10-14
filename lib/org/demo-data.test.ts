@@ -42,3 +42,27 @@ test('no partial results while in field (rule 5)', () => {
   assert.equal(view.questions.length, 0)
   assert.ok(!JSON.stringify(view).includes('"yes"'))
 })
+
+test('Q4 Q3 firm share of «sí» comes from raw counts with one rounding step', async () => {
+  const { questionStats } = await import('./firmness.ts')
+  const q3 = DEMO_READINGS.find((r) => r.id === 'hospitalizacion-2026-q4')!.questions[2]
+  const yes = q3.counts.yes.reduce((a, b) => a + b, 0)
+  const firm = q3.counts.yes.slice(7).reduce((a, b) => a + b, 0)
+  assert.equal(yes, 255)
+  assert.equal(firm, 96)
+  const s = questionStats(q3.counts)
+  assert.equal(s.pctFirmOfYes, Math.round((96 / 255) * 100)) // 37.6 -> 38, not 23/62 from rounded segments
+  assert.equal(s.pctFirmOfYes, 38)
+  assert.equal(s.split.firmYes, 23)
+  assert.equal(s.pctYes, 62)
+})
+
+test('headline names the lead question when a phrase exists, generic otherwise', async () => {
+  const { readingHeadline } = await import('./headline-copy.ts')
+  const { toClientReading } = await import('./readings.ts')
+  const r = toClientReading(DEMO_READINGS.find((x) => x.id === 'hospitalizacion-2026-q4')!)
+  assert.equal(readingHeadline(r.questions, 'es')!.main, 'De su 91% que recomendaría el hospital, 58% lo dijo con firmeza.')
+  assert.equal(readingHeadline(r.questions, 'en')!.main, 'Of the 91% who would recommend the hospital, 58% said it firmly.')
+  const noPhrase = r.questions.map(({ headlinePhrase, ...q }) => q)
+  assert.equal(readingHeadline(noPhrase, 'es')!.main, 'De su 91% de «sí», 58% lo dijo con firmeza.')
+})

@@ -10,9 +10,9 @@ export type OrgLocale = 'es' | 'en'
 const es = {
   metaTitle: 'Crowd Conscious para organizaciones | Satisfacción con certeza',
   metaDescription:
-    '98% dijo que sí. ¿Cuántos lo dirían con certeza 9? Medimos la satisfacción de sus usuarios con certeza de 1 a 10, y nunca editamos el resultado. Piloto privado $39,000 MXN + IVA.',
+    `98% dijo que sí. ¿Cuántos lo dirían con certeza de ${FIRM_THRESHOLD} o más? Medimos la satisfacción de sus usuarios con certeza de 1 a 10, y nunca editamos el resultado. Piloto privado $39,000 MXN + IVA.`,
   eyebrow: 'Para organizaciones',
-  heroTitle: '98% dijo que sí. ¿Cuántos lo dirían con certeza 9?',
+  heroTitle: `98% dijo que sí. ¿Cuántos lo dirían con certeza de ${FIRM_THRESHOLD} o más?`,
   heroSub: 'Medimos la satisfacción de sus usuarios con certeza, y nunca editamos el resultado.',
   credentials: 'Certificación Hecho en México · Fundador con Leaders in Innovation Fellowship de la Royal Academy of Engineering.',
   previewTitle: 'Lo que recibe su dirección',
@@ -97,9 +97,9 @@ type Copy = typeof es
 const en: Copy = {
   metaTitle: 'Crowd Conscious for organizations | Satisfaction with certainty',
   metaDescription:
-    '98% said yes. How many would say it with certainty 9? We measure your users’ satisfaction with 1-10 certainty and never edit the result. Private pilot $39,000 MXN + VAT.',
+    `98% said yes. How many would say it with certainty of ${FIRM_THRESHOLD} or more? We measure your users’ satisfaction with 1-10 certainty and never edit the result. Private pilot $39,000 MXN + VAT.`,
   eyebrow: 'For organizations',
-  heroTitle: '98% said yes. How many would say it with certainty 9?',
+  heroTitle: `98% said yes. How many would say it with certainty of ${FIRM_THRESHOLD} or more?`,
   heroSub: 'We measure your users’ satisfaction with certainty, and we never edit the result.',
   credentials: 'Hecho en México certified · Founder holds a Royal Academy of Engineering Leaders in Innovation Fellowship.',
   previewTitle: 'What your leadership receives',

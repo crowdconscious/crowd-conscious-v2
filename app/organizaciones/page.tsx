@@ -115,7 +115,7 @@ export default async function OrganizacionesPage() {
           <Link href="/organizaciones/demo" aria-label={t.previewCta} className="group mt-6 block">
             <div className="relative max-h-[560px] overflow-hidden rounded-xl ring-1 ring-white/10" inert aria-hidden="true">
               <div className="pointer-events-none select-none">
-                <ExecutiveSummary reading={previewReading} orgName={DEMO_ORG.name} locale={locale} demo />
+                <ExecutiveSummary reading={previewReading} orgName={DEMO_ORG.name} locale={locale} demo preview />
               </div>
               <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#0f1419] to-transparent" />
             </div>
