@@ -14,7 +14,7 @@ export default function TermsPage() {
       sections: [
         {
           title: "1. Aceptación de los Términos",
-          content: "Al acceder y utilizar Crowd Conscious (\"la Plataforma\"), usted acepta estar sujeto a estos Términos y Condiciones de Uso. Si no está de acuerdo con alguna parte de estos términos, no debe utilizar la Plataforma."
+          content: "Crowd Conscious (\"la Plataforma\") es operada por Francisco A. Blockstrand (persona física), operando bajo el nombre comercial Crowd Conscious, con domicilio en Hegel 406, Polanco, C.P. 11560, Ciudad de México, México. Al acceder y utilizar la Plataforma, usted acepta estar sujeto a estos Términos y Condiciones de Uso. Si no está de acuerdo con alguna parte de estos términos, no debe utilizar la Plataforma."
         },
         {
           title: "2. Descripción del Servicio",
@@ -84,7 +84,7 @@ export default function TermsPage() {
       sections: [
         {
           title: "1. Acceptance of Terms",
-          content: "By accessing and using Crowd Conscious (\"the Platform\"), you agree to be bound by these Terms and Conditions of Use. If you do not agree with any part of these terms, you must not use the Platform."
+          content: "Crowd Conscious (\"the Platform\") is operated by Francisco A. Blockstrand (individual, persona física), operating under the trade name Crowd Conscious, with address at Hegel 406, Polanco, Postal Code 11560, Mexico City, Mexico. By accessing and using the Platform, you agree to be bound by these Terms and Conditions of Use. If you do not agree with any part of these terms, you must not use the Platform."
         },
         {
           title: "2. Service Description",

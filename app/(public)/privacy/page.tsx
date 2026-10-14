@@ -14,7 +14,7 @@ export default function PrivacyPage() {
       sections: [
         {
           title: "1. Responsable del Tratamiento",
-          content: "Crowd Conscious, con domicilio en México, es responsable del tratamiento de sus datos personales conforme a la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP) y el RGPD cuando aplique. Crowd Conscious opera tanto una plataforma web (crowdconscious.app) como aplicaciones móviles nativas para iOS y Android, y el presente Aviso de Privacidad aplica por igual a ambos canales."
+          content: "Francisco A. Blockstrand (persona física), operando bajo el nombre comercial Crowd Conscious, con domicilio en Hegel 406, Polanco, C.P. 11560, Ciudad de México, México, es el responsable del tratamiento de sus datos personales conforme a la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP) y el RGPD cuando aplique. Crowd Conscious opera tanto una plataforma web (crowdconscious.app) como aplicaciones móviles nativas para iOS y Android, y el presente Aviso de Privacidad aplica por igual a ambos canales."
         },
         {
           title: "2. Datos Personales Recabados",
@@ -72,7 +72,7 @@ export default function PrivacyPage() {
       sections: [
         {
           title: "1. Data Controller",
-          content: "Crowd Conscious, domiciled in Mexico, is responsible for the processing of your personal data in accordance with Mexico's Federal Law on Protection of Personal Data Held by Private Parties (LFPDPPP) and GDPR where applicable. Crowd Conscious operates both a web platform (crowdconscious.app) and native mobile applications for iOS and Android, and this Privacy Notice applies equally to both channels."
+          content: "Francisco A. Blockstrand (individual, persona física), operating under the trade name Crowd Conscious, with address at Hegel 406, Polanco, Postal Code 11560, Mexico City, Mexico, is the party responsible for the processing of your personal data in accordance with Mexico's Federal Law on Protection of Personal Data Held by Private Parties (LFPDPPP) and GDPR where applicable. Crowd Conscious operates both a web platform (crowdconscious.app) and native mobile applications for iOS and Android, and this Privacy Notice applies equally to both channels."
         },
         {
           title: "2. Personal Data Collected",
