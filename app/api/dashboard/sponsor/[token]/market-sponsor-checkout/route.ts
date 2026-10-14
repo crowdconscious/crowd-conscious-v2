@@ -1,3 +1,4 @@
+import { LEGACY_SPONSOR_SALES_CLOSED, legacySponsorSalesClosedResponse } from '@/lib/sponsor/legacy-sales'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getStripe } from '@/app/api/webhooks/stripe/lib/stripe-webhook-utils'
@@ -23,6 +24,8 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ token: string }> }
 ) {
+  // Retired Oct 2026: reject new purchases (see lib/sponsor/legacy-sales.ts).
+  if (LEGACY_SPONSOR_SALES_CLOSED) return legacySponsorSalesClosedResponse()
   try {
     const { token } = await params
     const json = await request.json().catch(() => ({}))

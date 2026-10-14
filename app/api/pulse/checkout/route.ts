@@ -1,3 +1,4 @@
+import { LEGACY_SPONSOR_SALES_CLOSED, legacySponsorSalesClosedResponse } from '@/lib/sponsor/legacy-sales'
 import { NextRequest } from 'next/server'
 import Stripe from 'stripe'
 import { z } from 'zod'
@@ -156,6 +157,8 @@ const TIER_LABELS: Record<PulseTierId, string> = {
 }
 
 export async function POST(request: NextRequest) {
+  // Retired Oct 2026: reject new purchases (see lib/sponsor/legacy-sales.ts).
+  if (LEGACY_SPONSOR_SALES_CLOSED) return legacySponsorSalesClosedResponse()
   try {
     const body = await request.json()
     const parsed = schema.safeParse(body)

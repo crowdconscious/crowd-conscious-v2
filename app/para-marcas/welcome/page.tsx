@@ -12,7 +12,7 @@ const Footer = dynamic(() => import('@/components/Footer'))
  *
  * Functionally identical to the previous /pulse/welcome (which is now
  * permanently redirected here via next.config.ts). The only behavioural
- * change is that the "back to product" CTA now points at /para-marcas
+ * change is that the "back to product" CTA now points at /organizaciones
  * (the new B2B home) and the "browse Pulses" CTA points at the consumer
  * /pulse listing.
  */
@@ -94,7 +94,7 @@ export default async function ParaMarcasWelcomePage({
       ? 'Save your private dashboard link — bookmark it for quick access.'
       : 'Guarda este enlace — es tu acceso privado al panel.',
     ctaDash: en ? 'Open your dashboard →' : 'Accede a tu panel →',
-    ctaPulse: en ? 'Back to Para marcas' : 'Volver a Para marcas',
+    ctaPulse: en ? 'See Organizations' : 'Ver Organizaciones',
     ctaMarkets: en ? 'Browse Pulses' : 'Ver Pulses',
     next: en ? 'What happens next' : 'Qué sigue',
     emailLine: en
@@ -103,8 +103,8 @@ export default async function ParaMarcasWelcomePage({
     fundLine:
       data && 'fundPct' in data && data.fundPct != null
         ? en
-          ? `${data.fundPct}% of estimated net from your payment supports the Conscious Fund.`
-          : `El ${data.fundPct}% estimado del neto de tu pago apoya al Fondo Consciente.`
+          ? `${data.fundPct}% of your payment is allocated to the Conscious Fund.`
+          : `El ${data.fundPct}% de tu pago se asigna al Fondo Consciente.`
         : en
           ? '20% of your payment supports the Conscious Fund.'
           : 'El 20% de tu pago apoya al Fondo Consciente.',
@@ -169,7 +169,7 @@ export default async function ParaMarcasWelcomePage({
 
           <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
             <Link
-              href="/para-marcas"
+              href="/organizaciones"
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 font-medium text-white transition-colors hover:bg-emerald-500"
             >
               {t.ctaPulse}

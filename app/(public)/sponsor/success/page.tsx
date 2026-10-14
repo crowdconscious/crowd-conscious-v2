@@ -63,13 +63,13 @@ export default async function SponsorSuccessPage({
   const linkedInShare = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`
 
   let fundBullet =
-    '20% of estimated net from your sponsorship has been allocated to the Conscious Fund.'
+    '20% of your sponsorship has been allocated to the Conscious Fund.'
   if (session?.amountMXN != null) {
     const alloc = calculateFundAllocationRounded(
       session.amountMXN,
       normalizeSponsorTierId(session?.tier)
     )
-    fundBullet = `${Math.round(alloc.fundPercent * 100)}% of estimated net from your sponsorship has been allocated to the Conscious Fund.`
+    fundBullet = `${Math.round(alloc.fundPercent * 100)}% of your sponsorship has been allocated to the Conscious Fund.`
   }
 
   return (
