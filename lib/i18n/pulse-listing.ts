@@ -51,8 +51,7 @@ export function getPulseListingCopy(locale: PulseListingLocale) {
     ctaFirstFree: isEs
       ? 'Primera consulta gratuita para nuevos clientes.'
       : 'First consultation free for new clients.',
-    ctaViewPlans: isEs ? 'Ver planes →' : 'View plans →',
-    ctaLearnMore: isEs ? 'Medir con Pulse →' : 'Measure with Pulse →',
+    ctaLearnMore: isEs ? 'Ver organizaciones →' : 'See organizations →',
     home: isEs ? 'Inicio' : 'Home',
     consciousFund: isEs ? 'Fondo Consciente' : 'Conscious Fund',
     resultsMetaTitle: isEs

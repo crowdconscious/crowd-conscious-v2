@@ -2,37 +2,65 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { cookies } from 'next/headers'
-import { HeartHandshake } from 'lucide-react'
-import PulseListingView from '@/components/pulse/PulseListingView'
-import { PulseLandingExplainer } from '@/components/pulse/PulseLandingExplainer'
-import { PulsePricingSection } from '@/components/pulse/PulsePricingSection'
-import { MundialPulseHero } from '@/components/pulse/MundialPulseHero'
-import { MundialPulsePackCard } from '@/components/pulse/MundialPulsePackCard'
-import { ClubResetCaseStudyCard } from '@/components/pulse/ClubResetCaseStudyCard'
-import { fetchPulseMarketsForListing, getPulseListingContext } from '@/lib/pulse/pulse-listing-data'
-import { fetchPulseHeroHighlight } from '@/lib/pulse/pulse-hero-data'
+import { ArrowRight, Building2, Eye, HandHeart, HeartHandshake, Mail, Vote } from 'lucide-react'
+import { fetchConsciousFundBalanceMxn } from '@/lib/conscious-fund-balance'
+import { createAdminClient } from '@/lib/supabase-admin'
 
 const Footer = dynamic(() => import('@/components/Footer'))
 
+export const revalidate = 300
+
 /**
- * /patrocinio — Patrocinio comunitario (B2C). Hosts the community Pulse and
- * sponsor offers that used to live on /para-marcas, reframed as direct
- * support for the Fondo Consciente. Companies measuring their own users go
- * to /organizaciones instead. Checkouts (api/pulse/checkout,
- * sponsor webhooks) are unchanged.
+ * /patrocinio — Patrocinio comunitario (B2C): direct support for the Fondo
+ * Consciente by individuals and the community. No brand Pulse sponsorship,
+ * Pulse packs or Mundial pricing here (retired Oct 2026); companies go to
+ * /organizaciones. Legacy sponsor checkout endpoints and webhooks are kept
+ * server-side for existing records but are no longer linked from marketing.
  *
- * TODO(patrocinio): consider a GoFundMe-style campaign feature here
- * (public goal, progress bar, many small backers per cause) on top of the
- * Fondo Consciente, instead of fixed sponsor tiers.
+ * There is no dedicated one-off donation checkout yet, so the primary CTA is
+ * a contact email. Numbers shown are live (fund balance, verified causes);
+ * nothing is invented — sections hide when data is empty.
  */
 
-export async function generateMetadata(): Promise<Metadata> {
+const CONTACT_EMAIL = 'comunidad@crowdconscious.app'
+
+type CauseRow = {
+  id: string
+  slug: string | null
+  name: string
+  organization: string | null
+  category: string | null
+  short_description: string | null
+  city: string | null
+}
+
+async function fetchVerifiedCauses(): Promise<CauseRow[]> {
+  try {
+    const admin = createAdminClient()
+    const { data } = await admin
+      .from('fund_causes')
+      .select('id, slug, name, organization, category, short_description, city')
+      .eq('active', true)
+      .eq('verified', true)
+      .order('created_at', { ascending: false })
+      .limit(3)
+    return (data as CauseRow[] | null) ?? []
+  } catch {
+    return []
+  }
+}
+
+async function getLocale(): Promise<'es' | 'en'> {
   const store = await cookies()
-  const es = store.get('preferred-language')?.value !== 'en'
+  return store.get('preferred-language')?.value === 'en' ? 'en' : 'es'
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const es = (await getLocale()) === 'es'
   const title = es ? 'Patrocinio comunitario | Crowd Conscious' : 'Community sponsorship | Crowd Conscious'
   const description = es
-    ? 'Patrocina consultas comunitarias y apoya directamente al Fondo Consciente, que financia causas que vota la comunidad.'
-    : 'Sponsor community consultations and directly support the Conscious Fund, which finances causes the community votes on.'
+    ? 'Apoya directamente al Fondo Consciente. La comunidad vota qué causas reciben los recursos.'
+    : 'Directly support the Conscious Fund. The community votes on which causes receive the funds.'
   return {
     title,
     description,
@@ -43,82 +71,199 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function PatrocinioPage() {
-  const ctx = await getPulseListingContext()
-  const locale: 'es' | 'en' = ctx.locale === 'en' ? 'en' : 'es'
+  const locale = await getLocale()
   const es = locale === 'es'
-  const [markets, heroData] = await Promise.all([fetchPulseMarketsForListing(ctx), fetchPulseHeroHighlight()])
-  const { market: heroMarket, avgConfidence, strongOpinions } = heroData
+  const [balance, causes] = await Promise.all([fetchConsciousFundBalanceMxn(), fetchVerifiedCauses()])
+
+  const mailto = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(
+    es ? 'Quiero apoyar el Fondo Consciente' : 'I want to support the Conscious Fund'
+  )}`
+  const fmt = new Intl.NumberFormat(es ? 'es-MX' : 'en-US', { maximumFractionDigits: 0 })
+
+  const steps = es
+    ? [
+        { icon: HandHeart, title: 'Tú apoyas', body: 'Tu aportación va directo al Fondo Consciente. No compras publicidad ni consultas.' },
+        { icon: Vote, title: 'La comunidad vota', body: 'Quienes participan en Crowd Conscious eligen qué causas verificadas reciben los recursos.' },
+        { icon: Eye, title: 'Todo a la vista', body: 'El saldo del fondo y su distribución se publican en la página del Fondo Consciente.' },
+      ]
+    : [
+        { icon: HandHeart, title: 'You give', body: 'Your contribution goes straight to the Conscious Fund. You are not buying ads or consultations.' },
+        { icon: Vote, title: 'The community votes', body: 'People who take part in Crowd Conscious choose which verified causes receive the funds.' },
+        { icon: Eye, title: 'Everything in the open', body: 'The fund balance and its distribution are published on the Conscious Fund page.' },
+      ]
 
   return (
-    <div className="min-h-screen bg-[#0f1419] text-slate-100">
-      {/* Full-width B2B card (UX pack 1C): companies measuring their own users go to /organizaciones. */}
-      <section className="border-b border-emerald-400/30 bg-emerald-400/10 px-4 py-6">
-        <div className="mx-auto flex max-w-5xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-lg font-semibold text-white sm:text-xl">
-            {es ? '¿Quiere medir la satisfacción de sus propios usuarios?' : 'Want to measure your own users’ satisfaction?'}
-          </p>
-          <Link
-            href="/organizaciones"
-            className="inline-flex min-h-[48px] shrink-0 items-center justify-center rounded-xl bg-emerald-400 px-6 text-sm font-semibold text-[#0f1419] hover:bg-emerald-300"
-          >
-            {es ? 'Para organizaciones' : 'For organizations'}
-          </Link>
+    <div className="min-h-screen bg-[#0f1419] text-[#e2e8f0]">
+      {/* Hero */}
+      <section className="px-4 pb-10 pt-10 md:px-8 md:pt-14">
+        <div className="mx-auto max-w-6xl overflow-hidden rounded-3xl border border-[#047857]/50 bg-[#111821] shadow-2xl shadow-emerald-900/30">
+          <div className="grid grid-cols-1 gap-10 p-5 sm:p-8 md:p-12 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:items-center lg:gap-14">
+            <div className="min-w-0">
+              <p className="inline-flex items-center gap-2 rounded-full border border-emerald-400/40 bg-emerald-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[#6ee7b7]">
+                <HeartHandshake className="h-3.5 w-3.5" />
+                {es ? 'Patrocinio comunitario' : 'Community sponsorship'}
+              </p>
+              <h1 className="mt-5 text-3xl font-bold leading-tight text-[#ffffff] sm:text-4xl md:text-5xl">
+                {es ? 'Apoya causas reales. La comunidad decide a cuáles.' : 'Back real causes. The community decides which.'}
+              </h1>
+              <p className="mt-4 max-w-xl text-base leading-relaxed text-[#cbd5e1] sm:text-lg">
+                {es
+                  ? 'El Patrocinio comunitario es un apoyo directo al Fondo Consciente: un fondo común que financia causas verificadas elegidas por votación de la comunidad.'
+                  : 'Community sponsorship is direct support for the Conscious Fund: a shared fund that finances verified causes chosen by community vote.'}
+              </p>
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <a
+                  href={mailto}
+                  className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-[#047857] px-6 py-3 text-base font-semibold text-[#ffffff] shadow-lg shadow-emerald-900/40 transition-colors hover:bg-[#065f46]"
+                >
+                  <Mail className="h-4 w-4" />
+                  {es ? 'Quiero apoyar' : 'I want to support'}
+                </a>
+                <Link
+                  href="/predictions/fund"
+                  className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl border border-[#3b4757] bg-[#1a2029] px-6 py-3 text-base font-medium text-[#e2e8f0] transition-colors hover:border-emerald-400/60"
+                >
+                  {es ? 'Ver el Fondo Consciente' : 'See the Conscious Fund'}
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+              <p className="mt-4 text-sm text-[#a3b1c2]">
+                {es
+                  ? `Escríbenos a ${CONTACT_EMAIL} y te respondemos con los datos para tu aportación.`
+                  : `Write to ${CONTACT_EMAIL} and we will reply with the details for your contribution.`}
+              </p>
+            </div>
+
+            {/* Live fund card — real balance only. */}
+            <div className="min-w-0">
+              <div className="rounded-2xl border border-[#2d3748] bg-[#0b1016] p-5 sm:p-6">
+                <p className="text-xs font-semibold uppercase tracking-wider text-[#a3b1c2]">
+                  {es ? 'Fondo Consciente · saldo actual' : 'Conscious Fund · current balance'}
+                </p>
+                {balance > 0 ? (
+                  <p className="mt-2 text-4xl font-bold text-[#ffffff] sm:text-5xl">
+                    ${fmt.format(balance)} <span className="text-lg font-semibold text-[#a3b1c2]">MXN</span>
+                  </p>
+                ) : (
+                  <p className="mt-2 text-2xl font-bold leading-snug text-[#ffffff]">
+                    {es ? 'Tu apoyo puede ser de los primeros.' : 'Your support can be among the first.'}
+                  </p>
+                )}
+                <div className="mt-5 space-y-3 border-t border-[#2d3748] pt-5">
+                  <div className="flex items-start gap-3">
+                    <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[#34d399]" />
+                    <p className="text-sm text-[#cbd5e1]">
+                      {es ? 'Patrocinio comunitario: tu aportación entra al fondo.' : 'Community sponsorship: your contribution goes into the fund.'}
+                    </p>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[#6ee7b7]" />
+                    <p className="text-sm text-[#cbd5e1]">
+                      {es
+                        ? 'Organizaciones: el 20% de cada contrato, antes de IVA, también entra al fondo.'
+                        : 'Organizations: 20% of every contract, before VAT, also goes into the fund.'}
+                    </p>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[#fcd34d]" />
+                    <p className="text-sm text-[#cbd5e1]">
+                      {es ? 'La comunidad vota qué causas lo reciben.' : 'The community votes on which causes receive it.'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section className="px-4 pt-10">
-        <div className="mx-auto max-w-4xl rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 via-[#1a2029] to-[#1a2029] p-6 sm:p-8">
-          <div className="flex items-center gap-2">
-            <HeartHandshake className="h-5 w-5 text-emerald-400" />
-            <p className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
-              {es ? 'Patrocinio comunitario' : 'Community sponsorship'}
-            </p>
-          </div>
-          <h1 className="mt-3 text-2xl font-bold text-white sm:text-4xl">
-            {es ? 'Apoya a la comunidad y al Fondo Consciente.' : 'Support the community and the Conscious Fund.'}
-          </h1>
-          <p className="mt-3 max-w-2xl text-slate-300">
-            {es
-              ? 'Patrocina una consulta pública de la comunidad. Tu marca aparece junto a la pregunta y una parte de cada patrocinio va directo al Fondo Consciente, que financia causas que la comunidad vota.'
-              : 'Sponsor a public community consultation. Your brand appears next to the question and part of every sponsorship goes straight to the Conscious Fund, which finances causes the community votes on.'}
-          </p>
-          <div className="mt-4 flex flex-wrap gap-4 text-sm">
-            <Link href="/predictions/fund" className="text-emerald-400 hover:underline">
-              {es ? 'Ver el Fondo Consciente' : 'See the Conscious Fund'}
-            </Link>
-            <Link href="/organizaciones/contratar?source=patrocinio" className="text-slate-300 hover:text-emerald-400 hover:underline">
-              {es ? 'Lecturas para organizaciones' : 'Readings for organizations'}
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      <MundialPulseHero locale={locale} />
-
-      {/* No empty-state on a sales page: hide the list when no Pulse is open.
-          TODO(patrocinio): show the 3 most recent closed sponsored Pulses here instead. */}
-      {markets.length > 0 ? (
-      <section id="pulse-consultations" className="scroll-mt-24 px-4 pb-8 pt-10">
-        <div className="mx-auto max-w-4xl">
-          <h2 className="mb-6 text-center text-xl font-bold text-white sm:text-2xl">
-            {es ? 'Consultas de la comunidad' : 'Community consultations'}
+      {/* How it works */}
+      <section className="px-4 py-10 md:px-8">
+        <div className="mx-auto max-w-6xl">
+          <h2 className="text-center text-2xl font-bold text-[#ffffff] sm:text-3xl">
+            {es ? 'Cómo funciona' : 'How it works'}
           </h2>
-          <PulseListingView
-            variant="public"
-            listOnly
-            locale={ctx.locale}
-            markets={markets}
-            isAdmin={ctx.isAdmin}
-            sponsorCompanyName={ctx.sponsorAccount?.company_name ?? null}
-          />
+          <ol className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-3">
+            {steps.map(({ icon: Icon, title, body }, i) => (
+              <li key={title} className="rounded-2xl border border-[#2d3748] bg-[#151b23] p-6">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#047857]/25 text-[#6ee7b7]">
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  <span className="text-sm font-semibold text-[#a3b1c2]">{i + 1}</span>
+                </div>
+                <h3 className="mt-4 text-lg font-semibold text-[#ffffff]">{title}</h3>
+                <p className="mt-1 text-sm leading-relaxed text-[#cbd5e1]">{body}</p>
+              </li>
+            ))}
+          </ol>
         </div>
       </section>
+
+      {/* Verified causes — live, hidden when empty */}
+      {causes.length > 0 ? (
+        <section className="px-4 py-10 md:px-8">
+          <div className="mx-auto max-w-6xl">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <h2 className="text-2xl font-bold text-[#ffffff] sm:text-3xl">
+                {es ? 'Causas verificadas' : 'Verified causes'}
+              </h2>
+              <Link href="/predictions/fund" className="text-sm font-semibold text-[#6ee7b7] hover:underline">
+                {es ? 'Ver todas y votar →' : 'See all and vote →'}
+              </Link>
+            </div>
+            <ul className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+              {causes.map((c) => (
+                <li key={c.id} className="min-w-0 rounded-2xl border border-[#2d3748] bg-[#151b23] p-5">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-[#6ee7b7]">
+                    {[c.category, c.city].filter(Boolean).join(' · ') || (es ? 'Causa' : 'Cause')}
+                  </p>
+                  <h3 className="mt-2 break-words text-base font-semibold text-[#ffffff]">{c.name}</h3>
+                  {c.organization ? <p className="mt-0.5 text-sm text-[#a3b1c2]">{c.organization}</p> : null}
+                  {c.short_description ? (
+                    <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-[#cbd5e1]">{c.short_description}</p>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
       ) : null}
 
-      <MundialPulsePackCard locale={locale} />
-      <ClubResetCaseStudyCard locale={locale} />
-      <PulseLandingExplainer locale={locale} heroMarket={heroMarket} avgConfidence={avgConfidence} strongOpinions={strongOpinions} />
-      <PulsePricingSection locale={locale} />
+      {/* Final CTA */}
+      <section className="px-4 py-10 md:px-8">
+        <div className="mx-auto max-w-4xl rounded-2xl border border-[#047857]/50 bg-gradient-to-br from-[#047857]/20 via-[#111821] to-[#111821] p-6 text-center sm:p-10">
+          <h2 className="text-2xl font-bold text-[#ffffff] sm:text-3xl">
+            {es ? '¿Te sumas?' : 'Will you join?'}
+          </h2>
+          <p className="mx-auto mt-3 max-w-xl text-[#cbd5e1]">
+            {es
+              ? 'Cualquier aportación cuenta. Escríbenos y te contamos cómo apoyar al Fondo Consciente.'
+              : 'Every contribution counts. Write to us and we will tell you how to support the Conscious Fund.'}
+          </p>
+          <a
+            href={mailto}
+            className="mt-6 inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-[#047857] px-6 py-3 text-base font-semibold text-[#ffffff] transition-colors hover:bg-[#065f46]"
+          >
+            <Mail className="h-4 w-4" />
+            {es ? 'Quiero apoyar' : 'I want to support'}
+          </a>
+        </div>
+      </section>
+
+      {/* One clear line for companies */}
+      <section className="px-4 pb-16 pt-4 md:px-8">
+        <p className="mx-auto flex max-w-4xl flex-col items-center justify-center gap-2 text-center text-sm text-[#cbd5e1] sm:flex-row">
+          <Building2 className="h-4 w-4 shrink-0 text-[#6ee7b7]" />
+          <span>
+            {es ? '¿Eres una empresa o institución? ' : 'Are you a company or institution? '}
+            <Link href="/organizaciones" className="font-semibold text-[#6ee7b7] underline-offset-2 hover:underline">
+              {es ? 'Conoce Organizaciones →' : 'See Organizations →'}
+            </Link>
+          </span>
+        </p>
+      </section>
+
       <Footer />
     </div>
   )
