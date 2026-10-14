@@ -12,10 +12,11 @@ import { responseRate, type ClientReading } from './readings'
 type RGB = [number, number, number]
 const DARK: RGB = [15, 20, 25]
 const SEG: { key: 'firmYes' | 'tentativeYes' | 'tentativeNo' | 'firmNo'; rgb: RGB; text: RGB; es: string; en: string }[] = [
-  { key: 'firmYes', rgb: [52, 211, 153], text: [6, 43, 31], es: 'Sí firme', en: 'Firm yes' },
-  { key: 'tentativeYes', rgb: [29, 107, 82], text: [255, 255, 255], es: 'Sí tibio', en: 'Tentative yes' },
-  { key: 'tentativeNo', rgb: [107, 74, 46], text: [255, 255, 255], es: 'No tibio', en: 'Tentative no' },
-  { key: 'firmNo', rgb: [240, 163, 94], text: [42, 22, 6], es: 'No firme', en: 'Firm no' },
+  // Light theme (white page), same values as SEGMENT_COLORS.light: firm = saturated dark, tentative = tint.
+  { key: 'firmYes', rgb: [4, 120, 87], text: [255, 255, 255], es: 'Sí firme', en: 'Firm yes' },
+  { key: 'tentativeYes', rgb: [187, 247, 208], text: [6, 78, 59], es: 'Sí tibio', en: 'Tentative yes' },
+  { key: 'tentativeNo', rgb: [254, 215, 170], text: [124, 45, 18], es: 'No tibio', en: 'Tentative no' },
+  { key: 'firmNo', rgb: [194, 65, 12], text: [255, 255, 255], es: 'No firme', en: 'Firm no' },
 ]
 
 export function generateReadingPdf(r: ClientReading, orgName: string, locale: 'es' | 'en', demo: boolean): Buffer {
@@ -87,9 +88,15 @@ export function generateReadingPdf(r: ClientReading, orgName: string, locale: 'e
     `${es ? 'Tasa de respuesta' : 'Response rate'}: ${responseRate(r)}%`,
   ]
   nums.forEach((t, i) => doc.text(t, M + i * (CW / 3), y))
-  y += 10
+  y += 8
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(8.5)
+  doc.setTextColor(60, 60, 60)
+  doc.text(es ? 'Ordenadas de menor a mayor firmeza.' : 'Ordered from least to most firm.', M, y)
+  y += 6
 
   for (const q of orderByFirmYes(qs)) {
+    const num = qs.findIndex((x) => x.id === q.id) + 1
     if (y > H - 50) {
       doc.addPage()
       header()
@@ -98,7 +105,7 @@ export function generateReadingPdf(r: ClientReading, orgName: string, locale: 'e
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(10.5)
     doc.setTextColor(...DARK)
-    const ql = doc.splitTextToSize(`«${q.label}»`, CW - 30)
+    const ql = doc.splitTextToSize(`${es ? 'P' : 'Q'}${num}. «${q.label}»`, CW - 30)
     doc.text(ql, M, y)
     if (demo) {
       doc.setFontSize(7.5)
@@ -110,7 +117,7 @@ export function generateReadingPdf(r: ClientReading, orgName: string, locale: 'e
     doc.setFontSize(9)
     doc.setTextColor(50, 50, 50)
     doc.text(
-      `${q.stats.pctYes}% ${es ? 'sí' : 'yes'} · ${es ? 'certeza promedio' : 'average certainty'} ${q.stats.avgCertainty.toFixed(1)} · ${q.stats.pctFirmOfYes}% ${es ? 'de los «sí», firmes' : 'of yes answers firm'}`,
+      `${q.stats.pctYes}% ${es ? 'sí' : 'yes'} · ${es ? 'certeza de los «sí»' : 'certainty of yes answers'} ${q.stats.yesCertainty.toFixed(1)} · ${q.stats.pctFirmOfYes}% ${es ? 'de los «sí», firmes' : 'of yes answers firm'}`,
       M,
       y
     )

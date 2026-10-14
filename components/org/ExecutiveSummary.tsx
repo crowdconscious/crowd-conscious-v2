@@ -37,13 +37,13 @@ export default function ExecutiveSummary({
   const vis = r.visibility === 'public' ? (es ? 'pública' : 'public') : es ? 'privada' : 'private'
 
   return (
-    <div className="mx-auto max-w-[800px] bg-white px-8 py-8 text-slate-900 print:max-w-none print:p-0 sm:my-8 sm:rounded-xl">
+    <div className="mx-auto max-w-[800px] overflow-hidden bg-white px-5 py-6 sm:px-8 sm:py-8 text-slate-900 print:max-w-none print:p-0 sm:my-8 sm:rounded-xl">
       <header className="flex items-start justify-between gap-4 border-b border-slate-300 pb-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-emerald-800">
             Crowd Conscious · {es ? 'Resumen para dirección' : 'Executive summary'}
           </p>
-          <h1 className="mt-1 text-2xl font-bold">{r.title[locale]}</h1>
+          <h1 className="mt-1 break-words text-2xl font-bold">{r.title[locale]}</h1>
           <p className="text-sm text-slate-700">
             {orgName} · {r.period[locale]}
           </p>
@@ -57,12 +57,12 @@ export default function ExecutiveSummary({
 
       {h ? (
         <section className="mt-5">
-          <p className="text-2xl font-bold leading-snug">{h.main}</p>
-          {h.sub ? <p className="mt-1 text-base text-slate-800">{h.sub}</p> : null}
+          <p className="break-words text-xl font-bold leading-snug sm:text-2xl">{h.main}</p>
+          {h.sub ? <p className="mt-1 break-words text-base text-slate-800">{h.sub}</p> : null}
         </section>
       ) : null}
 
-      <section className="mt-5 grid grid-cols-3 gap-3 text-center">
+      <section className="mt-5 grid grid-cols-1 gap-3 text-center sm:grid-cols-3">
         {[
           [es ? 'Invitados' : 'Invited', nf(r.invited)],
           [es ? 'Respuestas' : 'Responses', nf(r.responded)],
@@ -76,20 +76,21 @@ export default function ExecutiveSummary({
       </section>
 
       <section className="mt-6 space-y-4">
-        {qs.map((q) => (
+        {qs.map((q, i) => (
           <div key={q.id}>
-            <div className="mb-1 flex items-baseline justify-between gap-3 text-sm">
-              <span className="font-semibold">«{q.label}»</span>
+            <div className="mb-1 flex flex-col gap-0.5 text-sm sm:flex-row sm:items-baseline sm:justify-between sm:gap-3">
+              <span className="min-w-0 break-words font-semibold">
+                {es ? 'P' : 'Q'}
+                {i + 1}. «{q.label}»
+              </span>
               <span className="shrink-0 text-slate-800">
-                {q.stats.pctYes}% {es ? 'sí' : 'yes'} · {es ? 'certeza' : 'certainty'} {q.stats.avgCertainty.toFixed(1)}
+                {q.stats.pctYes}% {es ? 'sí' : 'yes'} · {es ? 'certeza de los «sí»' : 'certainty of «yes»'} {q.stats.yesCertainty.toFixed(1)}
               </span>
             </div>
-            <SplitBar split={q.stats.split} locale={locale} height="h-8" />
+            <SplitBar split={q.stats.split} locale={locale} height="h-8" theme="light" />
           </div>
         ))}
-        <div className="rounded bg-slate-900 p-2 print:bg-slate-900">
-          <SplitLegend locale={locale} />
-        </div>
+        <SplitLegend locale={locale} theme="light" />
       </section>
 
       <footer className="mt-6 border-t border-slate-300 pt-3 text-xs leading-relaxed text-slate-700">

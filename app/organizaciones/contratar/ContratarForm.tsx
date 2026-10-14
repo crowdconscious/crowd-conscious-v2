@@ -22,6 +22,7 @@ const C = {
       pilot: { t: 'Pagar el piloto ahora con tarjeta', d: 'Para organizaciones pequeñas listas para empezar.' },
     },
     booking: 'Elegir horario',
+    bookingTitle: 'Elija un horario en el calendario',
     bookingOr: 'O déjenos sus datos y le proponemos horarios:',
     mailto: 'También puede escribir a',
     defineTitle: 'Lo que define su piloto',
@@ -112,6 +113,7 @@ const C = {
     phone: 'Phone',
     optional: '(optional)',
     callMsg: 'Times that work for you (optional)',
+    bookingTitle: 'Pick a time on the calendar',
     callMsgPh: 'E.g. Tuesday or Thursday morning',
     message: 'Anything else we should know (optional)',
     fiscal: 'Tax data for your CFDI invoice',
@@ -220,7 +222,7 @@ export default function ContratarForm(props: {
     // Fiscal fields are only ever sent for card payments.
     const payload: Record<string, string | undefined> = { ...f }
     if (mode !== 'pilot') for (const k of FISCAL) delete payload[k]
-    if (mode === 'call') for (const k of ['org_type', 'base_size', 'visibility_pref', 'current_reporting'] as const) delete payload[k]
+    if (mode === 'call') for (const k of ['org_type', 'base_size', 'visibility_pref'] as const) delete payload[k]
     for (const k of Object.keys(payload)) if (payload[k] === '') delete payload[k]
     try {
       const res = await fetch('/api/organizaciones/contratar', {
@@ -335,14 +337,15 @@ export default function ContratarForm(props: {
               </div>
 
               {mode === 'call' && props.bookingUrl ? (
-                <div className="mt-6">
+                <div className="mt-6 rounded-2xl border border-emerald-400/50 bg-emerald-400/[0.07] p-5">
+                  <p className="text-base font-semibold text-white">{c.bookingTitle}</p>
                   <a
                     href={props.bookingUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex min-h-[48px] items-center rounded-xl bg-emerald-400 px-6 font-semibold text-[#0f1419]"
+                    className="mt-3 inline-flex min-h-[52px] w-full items-center justify-center rounded-xl bg-emerald-400 px-6 text-base font-semibold text-[#0f1419] hover:bg-emerald-300 sm:w-auto"
                   >
-                    {c.booking}
+                    {c.booking} →
                   </a>
                   <p className="mt-4 text-sm text-slate-200">{c.bookingOr}</p>
                 </div>
@@ -409,6 +412,14 @@ export default function ContratarForm(props: {
                     {text('email', c.email, { type: 'email', max: 320, auto: 'email' })}
                     {text('phone', mode === 'pilot' ? c.phone : `${c.phone} ${c.optional}`, { type: 'tel', max: 40, auto: 'tel' })}
                   </div>
+                  {mode === 'call' ? (
+                    <label className={labelCls}>
+                      {c.reporting} <span className="font-normal text-slate-300">{c.optional}</span>
+                      <input className={input} value={f.current_reporting} onChange={set('current_reporting')} maxLength={500} placeholder={c.reportingPh} />
+                    </label>
+                  ) : null}
+                  {/* With a calendar, the free-text "times" field is replaced by the booking link above. */}
+                  {mode === 'call' && props.bookingUrl ? null : (
                   <label className={labelCls}>
                     {mode === 'call' ? c.callMsg : c.message}
                     <textarea
@@ -419,6 +430,7 @@ export default function ContratarForm(props: {
                       placeholder={mode === 'call' ? c.callMsgPh : undefined}
                     />
                   </label>
+                  )}
                 </fieldset>
 
                 {mode === 'pilot' ? (

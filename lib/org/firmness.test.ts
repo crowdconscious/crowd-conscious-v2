@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { FIRM_THRESHOLD, MIN_GROUP, computeHeadline, percentagesSummingTo100, questionStats } from './firmness.ts'
+import { FIRM_THRESHOLD, MIN_GROUP, computeHeadline, orderByFirmYes, percentagesSummingTo100, questionStats } from './firmness.ts'
 import { reasonGroup, redactReason } from './redact.ts'
 
 test('threshold defaults', () => {
@@ -41,4 +41,28 @@ test('reasons hidden under MIN_GROUP', () => {
   assert.deepEqual(reasonGroup(MIN_GROUP - 1, [{ text: 'x', certainty: 3 }]), { hidden: true, groupSize: MIN_GROUP - 1 })
   const g = reasonGroup(MIN_GROUP, [{ text: 'x', certainty: 3 }])
   assert.equal(g.hidden, false)
+})
+
+test('yesCertainty averages only the «sí» answers', () => {
+  const s = questionStats({ yes: [0, 0, 0, 0, 0, 0, 0, 0, 0, 30], no: [30, 0, 0, 0, 0, 0, 0, 0, 0, 0] })
+  assert.equal(s.yesCertainty, 10)
+})
+
+test('headline: both lines use share of «sí»; weakest ranked by firm-of-yes', () => {
+  // A: 50% yes, all firm (firmYes 50 of total, firm-of-yes 100)
+  const a = questionStats({ yes: [0, 0, 0, 0, 0, 0, 0, 0, 0, 50], no: [0, 0, 0, 0, 0, 0, 0, 0, 0, 50] })
+  // B: 100% yes, 60% firm (firmYes 60 of total but firm-of-yes 60) -> weakest by firm-of-yes
+  const b = questionStats({ yes: [0, 0, 0, 0, 0, 40, 0, 0, 0, 60], no: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0] })
+  // C: 40% yes, 75% firm (firmYes 30 of total = lowest by old base, firm-of-yes 75)
+  const c = questionStats({ yes: [0, 0, 0, 0, 10, 0, 0, 0, 0, 30], no: [0, 0, 0, 0, 0, 0, 0, 0, 0, 60] })
+  const h = computeHeadline([{ text: 'A', stats: a }, { text: 'B', stats: b }, { text: 'C', stats: c }])
+  assert.ok(h && h.kind === 'answer')
+  assert.equal(h.pctFirmOfYes, 100)
+  assert.deepEqual(h.weakest, { text: 'B', pctFirmOfYes: 60 })
+})
+
+test('order is weakest-first by firm-of-yes', () => {
+  const mk = (firm: number, tent: number) => questionStats({ yes: [0, 0, 0, 0, tent, 0, 0, 0, 0, firm], no: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0] })
+  const o = orderByFirmYes([{ id: 1, stats: mk(90, 10) }, { id: 2, stats: mk(40, 60) }, { id: 3, stats: mk(70, 30) }])
+  assert.deepEqual(o.map((x) => x.id), [2, 3, 1])
 })

@@ -7,6 +7,9 @@ import { getOrgCopy } from '@/lib/i18n/organizaciones'
 import { SAMPLE_PDF_HREF, callHref } from '@/lib/org/config'
 import { ILLUSTRATIVE_PAIR } from '@/lib/org/demo-data'
 import { questionStats } from '@/lib/org/firmness'
+import ExecutiveSummary from '@/components/org/ExecutiveSummary'
+import { DEMO_DEFAULT_READING_ID, DEMO_ORG, DEMO_READINGS } from '@/lib/org/demo-data'
+import { toClientReading } from '@/lib/org/readings'
 import { getOrgLocale } from './locale'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -44,6 +47,7 @@ export default async function OrganizacionesPage() {
   const call = callHref()
   const ext = /^https?:/.test(call) ? { target: '_blank', rel: 'noopener noreferrer' } : {}
   const proposal = (plan: string) => `/organizaciones/contratar?modo=propuesta&plan=${plan}`
+  const previewReading = toClientReading(DEMO_READINGS.find((r) => r.id === DEMO_DEFAULT_READING_ID)!)
   const pair = ILLUSTRATIVE_PAIR.map((p) => ({ name: p.name[locale], stats: questionStats(p.counts) }))
 
   return (
@@ -54,6 +58,7 @@ export default async function OrganizacionesPage() {
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-300">{t.eyebrow}</p>
           <h1 className="mt-4 text-3xl font-bold leading-tight text-white sm:text-5xl">{t.heroTitle}</h1>
           <p className="mx-auto mt-5 max-w-2xl text-lg text-slate-200">{t.heroSub}</p>
+          <p className="mx-auto mt-4 max-w-2xl text-sm text-slate-300">{t.credentials}</p>
           <div className="mt-8 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
             <Link href="/organizaciones/demo" className={btnPrimary}>
               {t.ctaDemo}
@@ -102,6 +107,23 @@ export default async function OrganizacionesPage() {
       </section>
 
       {/* 4. How it works */}
+      {/* 3b. Non-interactive preview of the executive summary (fictitious demo data) */}
+      <section className="border-t border-white/10 px-4 py-12">
+        <div className="mx-auto max-w-5xl">
+          <h2 className="text-2xl font-bold text-white sm:text-3xl">{t.previewTitle}</h2>
+          <p className="mt-2 text-slate-200">{t.previewSub}</p>
+          <Link href="/organizaciones/demo" aria-label={t.previewCta} className="group mt-6 block">
+            <div className="relative max-h-[560px] overflow-hidden rounded-xl ring-1 ring-white/10" inert aria-hidden="true">
+              <div className="pointer-events-none select-none">
+                <ExecutiveSummary reading={previewReading} orgName={DEMO_ORG.name} locale={locale} demo />
+              </div>
+              <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#0f1419] to-transparent" />
+            </div>
+            <span className="mt-4 inline-block text-sm font-semibold text-emerald-300 group-hover:underline">{t.previewCta} →</span>
+          </Link>
+        </div>
+      </section>
+
       <section id="como-funciona" className="scroll-mt-20 border-t border-white/10 px-4 py-12">
         <div className="mx-auto max-w-5xl">
           <h2 className="text-2xl font-bold text-white sm:text-3xl">{t.howTitle}</h2>

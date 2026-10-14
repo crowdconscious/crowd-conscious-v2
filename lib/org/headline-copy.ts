@@ -17,8 +17,8 @@ export function headlineSentence(h: Headline | null, locale: Locale): { main: st
       : `Of your ${h.pctYes}% "yes", ${h.pctFirmOfYes}% said it firmly.`
   const sub = h.weakest
     ? locale === 'es'
-      ? `Donde más dudan: ${h.weakest.text} — ${h.weakest.pctFirmYes}% de «sí» firme.`
-      : `Where they hesitate most: ${h.weakest.text} — ${h.weakest.pctFirmYes}% firm "yes".`
+      ? `Donde más dudan: ${h.weakest.text} — ${h.weakest.pctFirmOfYes}% de sus «sí» son firmes.`
+      : `Where they hesitate most: ${h.weakest.text} — ${h.weakest.pctFirmOfYes}% of their "yes" answers are firm.`
     : null
   return { main, sub }
 }

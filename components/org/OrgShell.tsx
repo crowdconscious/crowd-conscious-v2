@@ -63,7 +63,7 @@ export default function OrgShell({
 
   return (
     <div
-      className="min-h-screen bg-[#0f1419] text-slate-100"
+      className="cc-dark-surface min-h-screen bg-[#0f1419] text-slate-100"
       style={
         {
           '--input-background': '#1e2632',

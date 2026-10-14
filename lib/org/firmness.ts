@@ -67,7 +67,8 @@ export type QuestionStats = {
   pctFirmOfYes: number
   /** Four segments over all responses, integers summing to 100. */
   split: Split
-  avgCertainty: number
+  /** Mean certainty (1-10) among the «sí» answers only. */
+  yesCertainty: number
   tentativeYesCount: number
   preliminary: boolean
 }
@@ -81,7 +82,7 @@ export function questionStats(c: QuestionCounts): QuestionStats {
   const firmYes = firmCount(c.yes)
   const firmNo = firmCount(c.no)
   const [fy, ty, tn, fn] = percentagesSummingTo100([firmYes, yesCount - firmYes, noCount - firmNo, firmNo])
-  const weighted = [...c.yes, ...c.no].reduce((a, v, i) => a + v * ((i % 10) + 1), 0)
+  const yesWeighted = c.yes.reduce((a, v, i) => a + v * (i + 1), 0)
   return {
     responses,
     yesCount,
@@ -89,7 +90,7 @@ export function questionStats(c: QuestionCounts): QuestionStats {
     pctYes: responses ? Math.round((yesCount / responses) * 100) : 0,
     pctFirmOfYes: yesCount ? Math.round((firmYes / yesCount) * 100) : 0,
     split: { firmYes: fy, tentativeYes: ty, tentativeNo: tn, firmNo: fn },
-    avgCertainty: responses ? Math.round((weighted / responses) * 10) / 10 : 0,
+    yesCertainty: yesCount ? Math.round((yesWeighted / yesCount) * 10) / 10 : 0,
     tentativeYesCount: yesCount - firmYes,
     preliminary: responses < MIN_RESPONSES_FOR_HEADLINE,
   }
@@ -103,27 +104,27 @@ export type Headline =
       kind: 'answer'
       pctYes: number
       pctFirmOfYes: number
-      weakest: { text: string; pctFirmYes: number } | null
+      weakest: { text: string; pctFirmOfYes: number } | null
     }
 
 /**
  * Facts only, computed from the data. The lead question (index 0) drives the
- * sentence; "donde mas dudan" is the question with the lowest firm-yes share.
+ * sentence; "donde mas dudan" is the question with the lowest firm share of its «sí» (same base as line one).
  */
 export function computeHeadline(questions: HeadlineInput[]): Headline | null {
   if (!questions.length) return null
   if (questions.some((q) => q.stats.preliminary)) return { kind: 'preliminary' }
   const lead = questions[0].stats
-  const weakest = questions.length > 1 ? [...questions].sort((a, b) => a.stats.split.firmYes - b.stats.split.firmYes)[0] : null
+  const weakest = questions.length > 1 ? [...questions].sort((a, b) => a.stats.pctFirmOfYes - b.stats.pctFirmOfYes)[0] : null
   return {
     kind: 'answer',
     pctYes: lead.pctYes,
     pctFirmOfYes: lead.pctFirmOfYes,
-    weakest: weakest ? { text: weakest.text, pctFirmYes: weakest.stats.split.firmYes } : null,
+    weakest: weakest ? { text: weakest.text, pctFirmOfYes: weakest.stats.pctFirmOfYes } : null,
   }
 }
 
-/** Questions ordered by firm-yes share, lowest first (where to act first). */
+/** Questions ordered by firm share of «sí», lowest first (same base as the headline). */
 export function orderByFirmYes<T extends { stats: QuestionStats }>(qs: T[]): T[] {
-  return [...qs].sort((a, b) => a.stats.split.firmYes - b.stats.split.firmYes)
+  return [...qs].sort((a, b) => a.stats.pctFirmOfYes - b.stats.pctFirmOfYes)
 }

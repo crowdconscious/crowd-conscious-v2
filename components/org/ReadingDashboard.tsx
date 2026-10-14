@@ -26,7 +26,8 @@ const C = {
     fieldLock: 'Los resultados se abren al cierre. Nadie, incluida su organización, los ve antes.',
     designNote: 'Esta lectura está en diseño. Todavía no hay invitaciones ni respuestas.',
     pctYes: '% sí',
-    avg: 'certeza promedio',
+    avg: 'certeza de los «sí»',
+    orderNote: 'Ordenadas de menor a mayor firmeza.',
     showDist: 'Ver distribución',
     hideDist: 'Ocultar distribución',
     trendDelta: (dy: number, df: number, p: string) =>
@@ -77,7 +78,8 @@ const C = {
     fieldLock: 'Results open at close. Nobody, including your organization, sees them before.',
     designNote: 'This reading is in design. There are no invitations or responses yet.',
     pctYes: '% yes',
-    avg: 'average certainty',
+    avg: 'certainty of the «yes»',
+    orderNote: 'Ordered from least to most firm.',
     showDist: 'Show distribution',
     hideDist: 'Hide distribution',
     trendDelta: (dy: number, df: number, p: string) =>
@@ -182,12 +184,27 @@ export default function ReadingDashboard({
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 sm:py-8">
-      <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
-        <aside>
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-300">{c.readings}</p>
-          <ul className="flex gap-2 overflow-x-auto pb-2 lg:block lg:space-y-2 lg:overflow-visible lg:pb-0">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
+        <aside className="min-w-0">
+          <label htmlFor="reading-select" className="mb-3 block text-xs font-semibold uppercase tracking-wider text-slate-300">
+            {c.readings}
+          </label>
+          {/* Phones: a native select (never wider than the screen). Desktop: the list. */}
+          <select
+            id="reading-select"
+            value={r.id}
+            onChange={(e) => setSelectedId(e.target.value)}
+            className="block w-full min-h-[48px] rounded-xl border border-[#2d3748] px-3 text-sm text-white lg:hidden"
+          >
             {readings.map((x) => (
-              <li key={x.id} className="min-w-[240px] lg:min-w-0">
+              <option key={x.id} value={x.id}>
+                {x.title[locale]} · {x.period[locale]} · {x.status === 'field' ? c.inField(nf(x.responded), x.closesInDays ?? 0) : c.status[x.status]}
+              </option>
+            ))}
+          </select>
+          <ul className="hidden space-y-2 lg:block">
+            {readings.map((x) => (
+              <li key={x.id}>
                 <button
                   type="button"
                   onClick={() => setSelectedId(x.id)}
@@ -212,9 +229,9 @@ export default function ReadingDashboard({
         <section className="min-w-0 space-y-5">
           {/* 1. Header */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
+            <div className="min-w-0">
               <p className="text-sm text-slate-300">{orgName}</p>
-              <h1 className="text-2xl font-bold text-white">{r.title[locale]}</h1>
+              <h1 className="break-words text-2xl font-bold text-white">{r.title[locale]}</h1>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <span className="text-sm text-slate-300">{r.period[locale]}</span>
                 <Badge tone={r.status === 'closed' ? 'slate' : 'amber'}>{c.status[r.status]}</Badge>
@@ -237,13 +254,13 @@ export default function ReadingDashboard({
           {/* 2. Headline */}
           {r.status === 'closed' && headline ? (
             <div className="rounded-2xl border border-emerald-400/40 bg-emerald-400/[0.07] p-5 sm:p-6">
-              <p className="text-2xl font-bold leading-snug text-white sm:text-3xl">{headline.main}</p>
-              {headline.sub ? <p className="mt-2 text-base text-slate-200">{headline.sub}</p> : null}
+              <p className="break-words text-xl font-bold leading-snug text-white sm:text-3xl">{headline.main}</p>
+              {headline.sub ? <p className="mt-2 break-words text-base text-slate-200">{headline.sub}</p> : null}
             </div>
           ) : null}
 
           {/* 3. Three numbers */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             {[
               [c.invited, nf(r.invited)],
               [c.responded, nf(r.responded)],
@@ -271,7 +288,8 @@ export default function ReadingDashboard({
             <div className="rounded-2xl border border-[#2d3748] bg-[#1a2029] p-5 text-slate-200">{c.designNote}</div>
           ) : null}
 
-          {/* 4. Question cards, lowest firm-yes first */}
+          {/* 4. Question cards, lowest firm-of-yes first; original numbers kept */}
+          {ordered.length && r.status === 'closed' ? <p className="text-sm text-slate-300">{c.orderNote}</p> : null}
           {ordered.map((q) => (
             <QuestionCard
               key={q.id}
@@ -400,28 +418,28 @@ function QuestionCard({
   const no = q.reasons.no
 
   return (
-    <article className="rounded-2xl border border-[#2d3748] bg-[#1a2029] p-5">
+    <article className="min-w-0 overflow-hidden rounded-2xl border border-[#2d3748] bg-[#1a2029] p-4 sm:p-5">
       <div className="flex items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <p className="text-xs font-semibold text-slate-300">
             {c.q} {index + 1}
           </p>
-          <h3 className="mt-1 text-lg font-semibold text-white">«{q.label}»</h3>
+          <h3 className="mt-1 break-words text-lg font-semibold text-white">«{q.label}»</h3>
         </div>
         <FictLabel show={demo} text={c.ficticio} />
       </div>
 
-      <div className="mt-4 grid gap-4 md:grid-cols-[1fr_160px] md:items-center">
+      <div className="mt-4 grid gap-4 grid-cols-[minmax(0,1fr)] md:grid-cols-[minmax(0,1fr)_170px] md:items-center">
         <div className="space-y-2">
           <SplitBar split={s.split} locale={locale} />
           <SplitLegend locale={locale} split={s.split} />
         </div>
-        <div className="flex gap-6 md:block md:space-y-2 md:text-right">
+        <div className="flex flex-wrap gap-x-6 gap-y-1 md:block md:space-y-2 md:text-right">
           <p>
             <span className="text-2xl font-bold text-white">{s.pctYes}%</span> <span className="text-sm text-slate-300">{c.pctYes}</span>
           </p>
           <p>
-            <span className="text-2xl font-bold text-emerald-300">{s.avgCertainty.toFixed(1)}</span>{' '}
+            <span className="text-2xl font-bold text-emerald-300">{s.yesCertainty.toFixed(1)}</span>{' '}
             <span className="text-sm text-slate-300">{c.avg}</span>
           </p>
         </div>
@@ -442,12 +460,12 @@ function QuestionCard({
         </div>
       ) : null}
 
-      <div className="mt-5 grid gap-4 md:grid-cols-2">
+      <div className="mt-5 grid grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-2">
         {[
           { title: c.whyDoubt, g: doubt },
           { title: c.whyNo, g: no },
         ].map(({ title, g }) => (
-          <div key={title} className="rounded-xl bg-[#0f1419] p-4">
+          <div key={title} className="min-w-0 rounded-xl bg-[#0f1419] p-4">
             <p className="text-sm font-semibold text-white">{title}</p>
             {g.hidden ? (
               <p className="mt-2 text-sm text-slate-300">{c.tooSmall}</p>
@@ -456,7 +474,7 @@ function QuestionCard({
             ) : (
               <ul className="mt-2 space-y-2">
                 {g.reasons.map((x, i) => (
-                  <li key={i} className="text-sm text-slate-200">
+                  <li key={i} className="break-words text-sm text-slate-200">
                     «{x.text}» <span className="whitespace-nowrap text-xs text-slate-300">· {c.certainty} {x.certainty}</span>
                   </li>
                 ))}

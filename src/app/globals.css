@@ -595,3 +595,27 @@ input:focus, textarea:focus, select:focus {
 .pulse-print-only {
   display: none;
 }
+
+/*
+ * Dark surfaces (Organizaciones shell, /patrocinio). The global overrides above
+ * darken muted text for light pages, which drops it to ~2.2:1 on our dark cards.
+ * Inside .cc-dark-surface, muted text is a light slate that clears 4.5:1 on
+ * #0a0f14 / #0f1419 / #1a2029, and white-on-green buttons use emerald-700 (5.5:1).
+ * Verified by /workspace/orgs/qa/qa.mjs (WCAG relative-luminance check).
+ */
+.cc-dark-surface .text-slate-400,
+.cc-dark-surface .text-gray-400 {
+  color: #a3b1c2 !important;
+}
+.cc-dark-surface .text-slate-500,
+.cc-dark-surface .text-gray-500,
+.cc-dark-surface .text-slate-600,
+.cc-dark-surface .text-gray-600 {
+  color: #94a3b8 !important;
+}
+.cc-dark-surface .bg-emerald-600 {
+  background-color: #047857 !important;
+}
+.cc-dark-surface .hover\:bg-emerald-500:hover {
+  background-color: #065f46 !important;
+}
