@@ -17,6 +17,8 @@ import {
   handleSponsorshipDispute,
 } from './handlers/sponsorship-refund'
 import { SPONSORSHIP_KIND } from './lib/sponsorship-money'
+import { handleOrgPilotCheckout, handleOrgPilotAsyncFailed } from './handlers/org-pilot'
+import { ORG_PILOT_PRODUCT_TYPE } from '@/lib/organizaciones/pricing'
 
 /**
  * Stripe Webhook Handler
@@ -72,6 +74,19 @@ export async function POST(request: NextRequest) {
           event.id
         )
         break
+
+      // B2B pilot paid by bank transfer (SPEI / customer_balance).
+      case 'checkout.session.async_payment_succeeded': {
+        const s = event.data.object as Stripe.Checkout.Session
+        if (s.metadata?.product_type === ORG_PILOT_PRODUCT_TYPE) await handleOrgPilotCheckout(s)
+        break
+      }
+
+      case 'checkout.session.async_payment_failed': {
+        const s = event.data.object as Stripe.Checkout.Session
+        if (s.metadata?.product_type === ORG_PILOT_PRODUCT_TYPE) await handleOrgPilotAsyncFailed(s)
+        break
+      }
 
       case 'payment_intent.succeeded':
         await handlePaymentSucceeded(event.data.object as Stripe.PaymentIntent)
@@ -131,6 +146,11 @@ async function handleCheckoutSessionCompleted(
       ...session,
       metadata: { ...metadata, stripe_event_id: eventId },
     })
+    return
+  }
+
+  if (metadata.product_type === ORG_PILOT_PRODUCT_TYPE) {
+    await handleOrgPilotCheckout(session)
     return
   }
 

@@ -9,12 +9,13 @@ type Props = {
 }
 
 /**
- * Conversion CTA on the Location Insights page. Deep-links into the
- * /para-marcas/pilot checkout with `business` prefilled from the location
- * name so the owner doesn't have to retype it.
+ * Owner CTA on the Location Insights page. Points companies to
+ * /organizaciones (B2B readings) and community supporters to /patrocinio.
+ * The old "$1,500 Pilot Pulse" price is no longer advertised here; the
+ * /para-marcas/pilot checkout stays reachable from /patrocinio.
  */
 export function LocationInsightsCta({ locationName, locale }: Props) {
-  const href = `/para-marcas/pilot?business=${encodeURIComponent(locationName)}&source=location_insights`
+  const href = '/organizaciones?source=location_insights'
 
   return (
     <section className="overflow-hidden rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 via-[#1a2029] to-[#1a2029] p-6 sm:p-8">
@@ -31,22 +32,22 @@ export function LocationInsightsCta({ locationName, locale }: Props) {
       </h2>
       <p className="mt-2 text-sm text-slate-300">
         {locale === 'es'
-          ? `La comunidad ya está votando por ${locationName}. Con Pulse puedes hacerles una pregunta específica y obtener respuestas con certeza medida — no solo un "me gusta".`
-          : `The community is already voting for ${locationName}. With Pulse you can ask them a specific question and get answers with measured confidence — not just a "like".`}
+          ? `La comunidad ya está votando por ${locationName}. Con una lectura puedes preguntar a tus propios clientes y obtener respuestas con certeza medida, no solo un "me gusta".`
+          : `The community is already voting for ${locationName}. With a reading you can ask your own customers and get answers with measured confidence, not just a "like".`}
       </p>
       <Link
         href={href}
         className="mt-5 inline-flex min-h-[48px] items-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-400"
       >
         {locale === 'es'
-          ? `Activa un Pulse para ${locationName} · $1,500 MXN`
-          : `Activate a Pulse for ${locationName} · $1,500 MXN`}
+          ? 'Conoce Crowd Conscious para organizaciones'
+          : 'See Crowd Conscious for organizations'}
         <ArrowRight className="h-4 w-4" />
       </Link>
       <p className="mt-3 text-xs text-slate-500">
         {locale === 'es'
-          ? 'Tier piloto · 7 días · 1 pregunta · 0% al Fondo (prueba sin compromiso)'
-          : 'Pilot tier · 7 days · 1 question · 0% to the Fund (no-commitment trial)'}
+          ? <>¿Quieres apoyar a tu comunidad? <Link href="/patrocinio" className="text-emerald-400 hover:underline">Patrocinio comunitario</Link></>
+          : <>Want to support your community? <Link href="/patrocinio" className="text-emerald-400 hover:underline">Community sponsorship</Link></>}
       </p>
     </section>
   )

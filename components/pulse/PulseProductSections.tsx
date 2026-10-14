@@ -35,8 +35,8 @@ const copy = {
   /** Anchor on /pulse → #pulse-consultations */
   exploreHash: '#pulse-consultations',
   pricing: {
-    es: 'Desde $5,000 MXN · Primera consulta gratuita',
-    en: 'From $5,000 MXN · First consultation free',
+    es: 'Patrocinio comunitario · apoya al Fondo Consciente',
+    en: 'Community sponsorship · supports the Conscious Fund',
   },
   audience: [
     { emoji: '🏛️', es: 'Municipios', en: 'Municipalities' },

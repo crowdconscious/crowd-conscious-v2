@@ -5,7 +5,7 @@ type Props = {
 }
 
 /**
- * Top-of-page hero on /para-marcas. Anchors the page to the evergreen
+ * Top-of-page hero on /patrocinio. Anchors the page to the evergreen
  * value proposition — confidence-weighted community intelligence — and
  * routes prospects to the pricing block where the Founding Pack lives.
  */
@@ -22,13 +22,13 @@ export function MundialPulseHero({ locale }: Props) {
     <section className="border-b border-white/10 bg-gradient-to-br from-emerald-900/20 via-[#0f1419] to-amber-900/10 px-4 py-10 sm:py-14">
       <div className="mx-auto max-w-4xl text-center">
         <span className="inline-block rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-emerald-400">
-          {es ? 'Conscious Pulse · Para marcas' : 'Conscious Pulse · For brands'}
+          {es ? 'Conscious Pulse · Patrocinio comunitario' : 'Conscious Pulse · Community sponsorship'}
         </span>
-        <h1 className="mt-4 text-3xl font-bold leading-tight text-white sm:text-4xl">
+        <h2 className="mt-4 text-3xl font-bold leading-tight text-white sm:text-4xl">
           {es
             ? 'Mide lo que tu comunidad realmente piensa.'
             : 'Measure what your community actually thinks.'}
-        </h1>
+        </h2>
         <p className="mx-auto mt-4 max-w-2xl text-base text-slate-300 sm:text-lg">
           {es
             ? 'Mide el sentimiento real con Conscious Pulse. Sin bots. Sin encuestas aburridas. Confianza real.'

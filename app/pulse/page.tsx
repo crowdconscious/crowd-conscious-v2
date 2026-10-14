@@ -12,7 +12,7 @@ const Footer = nextDynamic(() => import('@/components/Footer'))
 /**
  * /pulse — consumer Pulse listing (formerly the B2B landing).
  *
- * The B2B landing moved to /para-marcas. /pulse is now the public, consumer-
+ * The B2B landing moved to /organizaciones (community Pulse offers: /patrocinio). /pulse is now the public, consumer-
  * facing list of every active and recent Pulse: voters land here from the
  * nav, from a Pulse share link with the back-button, from /markets (legacy
  * alias), and from the marketing pages. Pulse share URLs (/pulse/[id]) are

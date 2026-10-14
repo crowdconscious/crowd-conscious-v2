@@ -128,7 +128,7 @@ export function SimReportDownload({
             </button>
           ) : (
             <Link
-              href={meta.upsellUrl ?? '/para-marcas'}
+              href={meta.upsellUrl ?? '/patrocinio'}
               className="rounded-md border border-slate-600 px-3 py-2 text-sm text-slate-300 hover:bg-slate-800"
             >
               Reporte completo para clientes

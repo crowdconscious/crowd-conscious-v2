@@ -63,8 +63,8 @@ export default function PulseListingView({
 
       {markets.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-white/15 bg-[#1a2029] px-6 py-16 text-center">
-          <p className="text-lg text-slate-400">{t.emptyTitle}</p>
-          <p className="mt-2 text-sm text-slate-500">{t.emptySubtitle}</p>
+          <p className="text-lg text-slate-200">{t.emptyTitle}</p>
+          <p className="mt-2 text-sm text-slate-300">{t.emptySubtitle}</p>
           <Link
             href="/pulse"
             className="mt-6 inline-flex min-h-[44px] items-center justify-center rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-500"
@@ -179,11 +179,8 @@ export default function PulseListingView({
 
       <div className="mt-12 rounded-2xl border border-white/10 bg-[#1a2029] px-6 py-8 text-center">
         <p className="text-slate-300">{t.ctaQuestion}</p>
-        {listOnly && (
-          <p className="mt-2 text-sm text-slate-500">{t.ctaFirstFree}</p>
-        )}
         <Link
-          href={listOnly ? '/para-marcas#pulse-pricing' : '/para-marcas'}
+          href={listOnly ? '/patrocinio#pulse-pricing' : '/patrocinio'}
           className="mt-4 inline-flex min-h-[44px] items-center justify-center rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-500"
         >
           {listOnly ? t.ctaViewPlans : t.ctaLearnMore}

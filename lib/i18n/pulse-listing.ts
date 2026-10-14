@@ -41,7 +41,7 @@ export function getPulseListingCopy(locale: PulseListingLocale) {
     cancelled: isEs ? 'Cancelado' : 'Cancelled',
     closes: isEs ? 'Cierra' : 'Closes',
     closedOn: isEs ? 'Cerró' : 'Closed',
-    emptyTitle: isEs ? 'Aún no hay consultas Pulse activas.' : 'No active Pulse consultations yet.',
+    emptyTitle: isEs ? 'Las nuevas consultas Pulse aparecen aquí en cuanto abren.' : 'New Pulse consultations appear here as soon as they open.',
     emptySubtitle: isEs
       ? 'Vuelve pronto o explora más consultas en la plataforma.'
       : 'Check back soon or explore more consultations on the platform.',

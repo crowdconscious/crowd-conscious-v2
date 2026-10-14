@@ -141,7 +141,7 @@ export default function PulseSimAccessLinks({
                   : 'Full report'}
             </button>
           ) : (
-            <Link href="/para-marcas" className={upsellClass} data-sim-report-upsell="1">
+            <Link href="/patrocinio" className={upsellClass} data-sim-report-upsell="1">
               {es ? 'Reporte completo para clientes' : 'Full report for clients'}
             </Link>
           )}

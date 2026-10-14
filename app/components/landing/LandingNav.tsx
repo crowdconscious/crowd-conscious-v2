@@ -17,7 +17,7 @@ import { getPodcastCopy } from '@/lib/i18n/podcast'
  *
  * Verb-first chrome (Phase 0): primary action labels lead with verbs;
  * product nouns (Pulse, Señales, Lugares) stay on secondary taxonomy / after
- * first action. Routes stay `/pulse`, `/signals`, `/locations`, `/para-marcas`.
+ * first action. Routes stay `/pulse`, `/signals`, `/locations`, `/organizaciones`, `/patrocinio`.
  */
 const NAV = {
   es: {
@@ -26,7 +26,8 @@ const NAV = {
     signals: 'Reportar',
     signalsBeta: 'Beta',
     evaluar: 'Evaluar',
-    paraMarcas: 'Para marcas',
+    organizaciones: 'Organizaciones',
+    patrocinio: 'Patrocinio comunitario',
     creators: 'Para creadores',
     blog: 'Blog',
     about: 'Acerca',
@@ -43,7 +44,8 @@ const NAV = {
     signals: 'Report',
     signalsBeta: 'Beta',
     evaluar: 'Evaluate',
-    paraMarcas: 'For brands',
+    organizaciones: 'Organizations',
+    patrocinio: 'Community sponsorship',
     creators: 'For creators',
     blog: 'Blog',
     about: 'About',
@@ -205,7 +207,8 @@ export default function LandingNav() {
   ]
 
   const secondary: NavItem[] = [
-    { href: '/para-marcas', label: nav.paraMarcas },
+    { href: '/organizaciones', label: nav.organizaciones },
+    { href: '/patrocinio', label: nav.patrocinio },
     { href: '/creators', label: nav.creators },
     { href: '/blog', label: nav.blog },
     { href: '/podcast', label: getPodcastCopy(language).navLabel },
