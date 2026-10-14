@@ -18,6 +18,8 @@ import {
 } from './handlers/sponsorship-refund'
 import { SPONSORSHIP_KIND } from './lib/sponsorship-money'
 import { handleOrgPilotCheckout, handleOrgPilotAsyncFailed } from './handlers/org-pilot'
+import { handleCommunityDonation } from './handlers/community-donation'
+import { DONATION_PRODUCT_TYPE } from '@/lib/patrocinio/donations'
 import { ORG_PILOT_PRODUCT_TYPE } from '@/lib/organizaciones/pricing'
 
 /**
@@ -146,6 +148,11 @@ async function handleCheckoutSessionCompleted(
       ...session,
       metadata: { ...metadata, stripe_event_id: eventId },
     })
+    return
+  }
+
+  if (metadata.product_type === DONATION_PRODUCT_TYPE) {
+    await handleCommunityDonation(session)
     return
   }
 

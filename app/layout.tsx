@@ -24,7 +24,7 @@ const organizationJsonLd = {
   url: SITE_URL,
   logo: `${SITE_URL}/images/logo-small.png`,
   description:
-    "Consultas públicas con confianza ponderada — tu voto y tu certeza importan. Las marcas patrocinan el impacto.",
+    "Consultas públicas con confianza ponderada — tu voto y tu certeza importan. El 20% de cada contrato de organizaciones va al Fondo Consciente.",
   sameAs: [
     "https://twitter.com/crowdconscious",
     "https://instagram.com/crowdconscious",
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
     template: "%s | Crowd Conscious",
   },
   description:
-    "Vota en consultas públicas sobre tu ciudad y lo que te importa. Tu certeza pondera el resultado. Las marcas patrocinan el impacto.",
+    "Vota en consultas públicas sobre tu ciudad y lo que te importa. Tu certeza pondera el resultado. El 20% de cada contrato de organizaciones va al Fondo Consciente.",
   keywords: [
     "consultas públicas",
     "conscious pulse",
@@ -89,7 +89,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Crowd Conscious — Consultas con confianza ponderada",
     description:
-      "Vota en consultas públicas. Tu certeza pondera el resultado. Las marcas patrocinan el impacto.",
+      "Vota en consultas públicas. Tu certeza pondera el resultado. El 20% de cada contrato de organizaciones va al Fondo Consciente.",
     images: ["/opengraph-image"],
     creator: "@crowdconscious",
     site: "@crowdconscious",
