@@ -110,10 +110,6 @@ export function getCreatorCopy(locale: CreatorLocale) {
             body: 'Tu pieza vive junto a Pulses, Señales y una app móvil.',
           },
           {
-            title: 'Credibilidad real.',
-            body: 'Primera plataforma de inteligencia colectiva con certificación Hecho en México.',
-          },
-          {
             title: 'Impacto que se ve.',
             body: 'Cada patrocinio financia causas votadas por la comunidad.',
           },
@@ -126,10 +122,6 @@ export function getCreatorCopy(locale: CreatorLocale) {
           {
             title: 'Distribution, done.',
             body: 'Your piece lives next to Pulses, Signals, and a mobile app.',
-          },
-          {
-            title: 'Real credibility.',
-            body: 'The first collective-intelligence platform with the Hecho en México certification.',
           },
           {
             title: 'Visible impact.',
