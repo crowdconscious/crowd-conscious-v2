@@ -1,42 +1,67 @@
-import { notFound } from 'next/navigation'
-import ReadingDashboard from '@/components/org/ReadingDashboard'
+import { notFound, redirect } from 'next/navigation'
+import ReadingDashboard, { type ReadingExtras } from '@/components/org/ReadingDashboard'
 import { DEMO_BANNER } from '@/lib/org/demo-data'
 import { ORG_PORTAL_V2 } from '@/lib/org/config'
-import { getOrgView } from '@/lib/org/data'
+import { MIN_RESPONSES_FOR_HEADLINE } from '@/lib/org/firmness'
+import { clientReadings, controlsFor, orgContext } from '@/lib/org/server-reading'
 import { createShareToken } from '@/lib/org/share-token'
 import { getOrgLocale } from '@/app/organizaciones/locale'
+
+export const dynamic = 'force-dynamic'
 
 export default async function OrgReadingPage({ params }: { params: Promise<{ slug: string; id: string }> }) {
   if (!ORG_PORTAL_V2) notFound()
   const { slug, id } = await params
-  const org = await getOrgView(slug)
-  if (!org || !org.readings.some((r) => r.id === id)) notFound()
+  const c = await orgContext(slug)
+  if (!c.ok) {
+    if (c.access.kind === 'login') redirect(`/login?redirect=${encodeURIComponent(`/org/${slug}/lecturas/${id}`)}`)
+    notFound()
+  }
+  const ctx = c.ctx
+  const readings = await clientReadings(ctx)
+  if (!readings.some((r) => r.id === id)) notFound()
   const locale = await getOrgLocale()
+  const es = locale === 'es'
   const resumenHrefs: Record<string, string> = {}
   const pdfHrefs: Record<string, string> = {}
-  for (const r of org.readings.filter((x) => x.status === 'closed')) {
-    const token = createShareToken(slug, r.id)
-    // Without ORG_SHARE_SECRET there is no share link; the demo falls back to its public resumen.
-    if (token) resumenHrefs[r.id] = `/org/${slug}/lecturas/${r.id}/resumen?t=${encodeURIComponent(token)}`
-    else if (org.demo) resumenHrefs[r.id] = `/organizaciones/demo/resumen?lectura=${r.id}`
-    // Real-client PDF export arrives with reading storage (Prompt 4); demo uses the sample route.
-    if (org.demo) pdfHrefs[r.id] = `/api/organizaciones/demo/pdf?reading=${r.id}&lang=${locale}`
+  const extras: Record<string, ReadingExtras> = {}
+  for (const r of readings) {
+    const base = `/api/org/${slug}/lecturas/${r.id}`
+    const controls = await controlsFor(ctx, r.id, r.responded)
+    const links: ReadingExtras['links'] = []
+    if (r.status === 'closed') {
+      const token = createShareToken(slug, r.id)
+      if (token) resumenHrefs[r.id] = `/org/${slug}/lecturas/${r.id}/resumen?t=${encodeURIComponent(token)}`
+      else if (ctx.demo) resumenHrefs[r.id] = `/organizaciones/demo/resumen?lectura=${r.id}`
+      links.push(
+        { href: `${base}/reporte?lang=${locale}`, label: es ? 'Reporte completo (PDF)' : 'Full report (PDF)' },
+        { href: `/org/${slug}/lecturas/${r.id}/reporte`, label: es ? 'Reporte completo (web)' : 'Full report (web)' },
+        { href: `${base}/csv?tipo=agregado&lang=${locale}`, label: es ? 'CSV agregado' : 'Aggregate CSV' },
+        r.responded >= MIN_RESPONSES_FOR_HEADLINE
+          ? { href: `${base}/csv?tipo=respuestas&lang=${locale}`, label: es ? 'CSV de respuestas (anónimas)' : 'Answers CSV (anonymous)' }
+          : { href: null, label: es ? `CSV de respuestas: requiere ${MIN_RESPONSES_FOR_HEADLINE} respuestas` : `Answers CSV: needs ${MIN_RESPONSES_FOR_HEADLINE} responses` }
+      )
+    } else if (controls && r.status === 'field') {
+      links.push({ href: controls.surveyPath, label: es ? 'Enlace de la consulta (para compartir)' : 'Survey link (to share)' })
+    }
+    extras[r.id] = { links, controls }
   }
   return (
     <div>
-      {org.demo ? (
+      {ctx.demo ? (
         <div className="border-b border-amber-300/40 bg-amber-300/10 px-4 py-2 text-center text-sm font-semibold text-amber-100">
-          {DEMO_BANNER[locale]} · {org.name}
+          {DEMO_BANNER[locale]} · {ctx.name}
         </div>
       ) : null}
       <ReadingDashboard
-        orgName={org.name}
-        readings={org.readings}
+        orgName={ctx.name}
+        readings={readings}
         defaultId={id}
         locale={locale}
-        demo={org.demo}
+        demo={ctx.demo}
         resumenHrefs={resumenHrefs}
         pdfHrefs={pdfHrefs}
+        extras={extras}
         escuchaHref="/organizaciones#precios"
       />
     </div>
