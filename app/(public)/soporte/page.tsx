@@ -74,7 +74,7 @@ export default function SoportePage() {
       a: (
         <>
           Cada mes, todas las donaciones se asignan a la causa que más votos reciba de la comunidad. El 20% de cada contrato de
-          Organizaciones y de cada Patrocinio comunitario (antes de IVA) también va al fondo. Ver la distribución en{' '}
+          Organizaciones (antes de IVA) y las aportaciones de Patrocinio comunitario también van al fondo. Ver la distribución en{' '}
           <Link href="/fund" className="text-teal-700 hover:underline">
             crowdconscious.app/fund
           </Link>
@@ -142,7 +142,7 @@ export default function SoportePage() {
       a: (
         <>
           Each month, every donation is allocated to the cause that receives the most community votes. 20% of every
-          Organizations contract and every Community Sponsorship (before VAT) also goes to the fund. See the distribution at{' '}
+          Organizations contract (before VAT) and Community Sponsorship contributions also go to the fund. See the distribution at{' '}
           <Link href="/fund" className="text-teal-700 hover:underline">
             crowdconscious.app/fund
           </Link>

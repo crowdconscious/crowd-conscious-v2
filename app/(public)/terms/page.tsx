@@ -34,7 +34,7 @@ export default function TermsPage() {
         },
         {
           title: "6. Fondo Consciente y Patrocinios",
-          content: "El 20% del monto de cada contrato de Organizaciones y de cada Patrocinio comunitario, calculado antes de IVA, se destina al Fondo Consciente; el resto financia las operaciones de la Plataforma. Los usuarios votan democráticamente sobre qué causas comunitarias reciben las asignaciones del Fondo. Esta estructura es transparente y se comunica a clientes, patrocinadores y usuarios."
+          content: "El 20% del monto de cada contrato de Organizaciones, calculado antes de IVA, se destina al Fondo Consciente; el resto financia las operaciones de la Plataforma. Las aportaciones de Patrocinio comunitario se destinan al Fondo Consciente (ver sección 8). Los usuarios votan democráticamente sobre qué causas comunitarias reciben las asignaciones del Fondo. Esta estructura es transparente y se comunica a clientes, patrocinadores y usuarios."
         },
         {
           title: "7. Organizaciones (servicio para empresas e instituciones)",
@@ -42,7 +42,7 @@ export default function TermsPage() {
         },
         {
           title: "8. Patrocinio comunitario",
-          content: "El Patrocinio comunitario disponible en /patrocinio es un apoyo directo al Fondo Consciente. No constituye la contratación de un servicio de medición ni otorga control sobre consultas, resultados o causas; las causas que reciben recursos se eligen por votación de la comunidad."
+          content: "El Patrocinio comunitario disponible en /patrocinio es un apoyo directo al Fondo Consciente. Las aportaciones se coordinan escribiendo a comunidad@crowdconscious.app. No constituye la contratación de un servicio de medición ni de publicidad, ni otorga control sobre consultas, resultados o causas; las causas que reciben recursos se eligen por votación de la comunidad."
         },
         {
           title: "9. Pagos, comprobantes y facturación",
@@ -104,7 +104,7 @@ export default function TermsPage() {
         },
         {
           title: "6. Conscious Fund and Sponsorships",
-          content: "20% of the amount of every Organizations contract and every Community Sponsorship, calculated before VAT (IVA), goes to the Conscious Fund; the remainder funds Platform operations. Users vote democratically on which community causes receive the Fund's allocations. This structure is transparent and communicated to clients, sponsors and users."
+          content: "20% of the amount of every Organizations contract, calculated before VAT (IVA), goes to the Conscious Fund; the remainder funds Platform operations. Community Sponsorship contributions go to the Conscious Fund (see section 8). Users vote democratically on which community causes receive the Fund's allocations. This structure is transparent and communicated to clients, sponsors and users."
         },
         {
           title: "7. Organizations (service for companies and institutions)",
@@ -112,7 +112,7 @@ export default function TermsPage() {
         },
         {
           title: "8. Community Sponsorship",
-          content: "Community Sponsorship, available at /patrocinio, is direct support for the Conscious Fund. It is not the purchase of a measurement service and grants no control over consultations, results or causes; the causes that receive funds are chosen by community vote."
+          content: "Community Sponsorship, available at /patrocinio, is direct support for the Conscious Fund. Contributions are arranged by writing to comunidad@crowdconscious.app. It is not the purchase of a measurement or advertising service and grants no control over consultations, results or causes; the causes that receive funds are chosen by community vote."
         },
         {
           title: "9. Payments, receipts and invoicing",

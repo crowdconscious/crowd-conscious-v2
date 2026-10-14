@@ -666,7 +666,7 @@ ES:
 [1 sentence on what the next Pulse could measure for them.]
 
 [→ Pulse: Ver resultados completos](BASE_URL/pulse/PULSE_ID)
-[→ Lanzar mi propio Pulse](BASE_URL/patrocinio#pulse-mundial-pack)
+[→ Medir a mis usuarios](BASE_URL/organizaciones)
 
 EN:
 **Want this level of insight for your brand?**
@@ -674,7 +674,7 @@ EN:
 [1 sentence English equivalent.]
 
 [→ Pulse: See full results](BASE_URL/pulse/PULSE_ID)
-[→ Launch my own Pulse](BASE_URL/patrocinio#pulse-mundial-pack)
+[→ Measure my users](BASE_URL/organizaciones)
 
 LENGTH: ~500–700 words in Spanish body before the CTA. English a parallel translation, similar length.
 

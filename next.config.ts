@@ -94,6 +94,15 @@ const nextConfig: NextConfig = {
         destination: '/organizaciones/contratar',
         permanent: true,
       },
+      // Brand Pulse sponsorship landing retired Oct 2026: /sponsor (exact)
+      // now points to Patrocinio comunitario. Sub-routes (/sponsor/success,
+      // /sponsor/login, /sponsor/report, /sponsor/blog…) stay live for legacy
+      // sponsors and creator sponsorships.
+      {
+        source: '/sponsor',
+        destination: '/patrocinio',
+        permanent: true,
+      },
       // Pilot checkout (and its founder-price offer) retired Oct 2026:
       // all pilot traffic goes to the Organizaciones hiring form.
       {
