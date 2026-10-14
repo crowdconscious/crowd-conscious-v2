@@ -14,7 +14,7 @@ import {
 export const metadata: Metadata = {
   title: { absolute: 'Fondo Consciente | Crowd Conscious' },
   description:
-    'El 20% del neto estimado de patrocinios alimenta el Fondo Consciente. Los usuarios eligen a qué causas va el impacto. Transparente y gratuito.',
+    'El 20% de cada contrato de organizaciones (antes de IVA) y las aportaciones de Patrocinio comunitario alimentan el Fondo Consciente. Los usuarios eligen a qué causas va el impacto.',
   alternates: {
     canonical: `${SITE_URL}/predictions/fund`,
     languages: {

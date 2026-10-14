@@ -34,6 +34,16 @@ import {
   formatNewsMonitorPlatformContext,
   getPlatformIntelligence,
 } from '@/lib/agents/intelligence-bridge'
+import { ORG_PRICES, PILOT_BREAKDOWN, formatMxn } from '@/lib/organizaciones/pricing'
+/** Product lines the agents may suggest — prices read from lib/organizaciones/pricing (never hard-coded). */
+const ORG_PRODUCT_LIST = [
+  `Lectura piloto privada (${formatMxn(PILOT_BREAKDOWN.subtotal)} MXN + IVA = ${formatMxn(PILOT_BREAKDOWN.total)} MXN con tarjeta)`,
+  `Lectura anual (${formatMxn(ORG_PRICES.annual)} MXN + IVA al año)`,
+  `Escucha continua (${formatMxn(ORG_PRICES.continuousMonthly)} MXN + IVA al mes)`,
+  `Sello verificado (+${formatMxn(ORG_PRICES.selloMonthlyAddon)} MXN + IVA al mes sobre Escucha continua)`,
+]
+const COMMUNITY_DONATION_PRODUCT = 'Patrocinio comunitario (aportación con tarjeta al Fondo Consciente, monto libre)'
+
 
 type NewsArticle = {
   title: string
@@ -183,12 +193,12 @@ OUTPUT FORMAT — respond with ONLY a single JSON object, no markdown fences, no
     {
       "title": "Short ES title (~12 words). The Pulse question someone could ask.",
       "category": "world_cup | government | sustainability | corporate | community | cause | culture",
-      "target_segment": "Who would sponsor this Pulse — be specific. e.g. 'Bares deportivos en CDMX', 'Alcaldía Cuauhtémoc', 'Fintech mexicanas'.",
+      "target_segment": "Which organization would buy a reading on this, or which community would back the Fondo — be specific. e.g. 'Bares deportivos en CDMX', 'Alcaldía Cuauhtémoc', 'Fintech mexicanas'.",
       "urgency": "high | medium | low",
       "rationale": "1-2 ES sentences: why now, what makes the segment care.",
-      "suggested_product": "Pulse Single | Pulse Pilot | Mundial Pulse Pack",
+      "suggested_product": "${[...ORG_PRODUCT_LIST, COMMUNITY_DONATION_PRODUCT].join(' | ')}",
       "source_url": "Primary source URL from the signals provided.",
-      "draft_whatsapp_message": "3 sentences max in Spanish, casual-professional, includes one Pulse question. Sponsor outreach copy ready to send."
+      "draft_whatsapp_message": "3 sentences max in Spanish, casual-professional, includes one concrete question their users could answer with certainty 1-10. Outreach copy ready to send."
     }
   ],
   "blog_topic_ideas": [
@@ -220,10 +230,11 @@ HARD RULES
 - Skip US politics, Trump quotes, foreign-only news.
 - "summary" + "skip_reason" must reflect what you ACTUALLY did — if you returned 0 items, say so.
 
-PLATFORM PRICING (use suggested_product field):
-- Pulse Pilot — $1,500 MXN — for cold prospects / first-time buyers (cafés, bars, small NGOs).
-- Pulse Single — $5,000 MXN — single-question survey for medium brands or institutions.
-- Mundial Pulse Pack — $25,000-50,000 MXN — for brands with World Cup activation.`
+PLATFORM PRODUCTS (use suggested_product field):
+- Organizaciones — measure an organization's own users with certainty 1-10; results nobody edits; no personal data from respondents. 20% of every contract, before IVA, goes to the Fondo Consciente.
+${ORG_PRODUCT_LIST.map((p) => `  - ${p}`).join('\n')}
+- ${COMMUNITY_DONATION_PRODUCT} — for individuals and community groups, at /patrocinio.
+- NEVER suggest Pulse sponsorship, Pulse packs, Pilot Pulses, Mundial packs or founder discounts — they no longer exist.`
 
 export interface NewsMonitorOutput {
   summary: string

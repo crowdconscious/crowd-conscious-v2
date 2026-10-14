@@ -154,12 +154,12 @@ export default function AboutContent({
                 <Building2 className="w-7 h-7 text-emerald-400" />
               </div>
               <h3 className="text-lg font-semibold text-white mb-2">
-                {locale === 'es' ? 'Las marcas patrocinan Pulses' : 'Brands sponsor Pulses'}
+                {locale === 'es' ? 'Organizaciones y comunidad financian el Fondo' : 'Organizations and the community fund it'}
               </h3>
               <p className="text-slate-400 text-sm">
                 {locale === 'es'
-                  ? 'Los patrocinadores financian Pulses — sus logos aparecen en las tarjetas. Un porcentaje va al Fondo Consciente.'
-                  : 'Sponsors fund Pulses — their logos appear on Pulse cards. A percentage goes to the Conscious Fund.'}
+                  ? 'El 20% de cada contrato de organizaciones, antes de IVA, y las aportaciones de Patrocinio comunitario (menos comisiones de tarjeta) van al Fondo Consciente.'
+                  : '20% of every organizations contract, before VAT, and Community Sponsorship contributions (minus card fees) go to the Conscious Fund.'}
               </p>
             </div>
             <div className="border border-cc-border bg-cc-card/90 rounded-xl p-6 hover:border-emerald-500/30 transition-colors md:col-span-2 lg:col-span-1">
@@ -197,8 +197,8 @@ export default function AboutContent({
           </h2>
           <p className="text-slate-400 text-lg leading-relaxed text-center mb-12 max-w-2xl mx-auto">
             {locale === 'es'
-              ? 'Las marcas patrocinan Pulses → el 20% de cada patrocinio va directamente a causas comunitarias — hasta 10× el promedio de la industria en causa marketing → los usuarios votan qué causas reciben apoyos → impacto comunitario. Un ciclo virtuoso.'
-              : 'Brands sponsor Pulses → 20% of every sponsorship goes directly to community causes — up to 10× the industry average for cause marketing → Users vote on which causes receive grants → Community impact. It&apos;s a virtuous cycle.'}
+              ? 'Las organizaciones miden a sus usuarios → el 20% de cada contrato, antes de IVA, va al Fondo Consciente → la comunidad también aporta con Patrocinio comunitario → los usuarios votan qué causas reciben apoyos → impacto comunitario.'
+              : 'Organizations measure their users → 20% of every contract, before VAT, goes to the Conscious Fund → the community also contributes through Community Sponsorship → users vote on which causes receive grants → community impact.'}
           </p>
           <div className="mb-8 rounded-2xl border border-cc-border bg-cc-card/80 p-6 md:p-8">
             <FundThermometer

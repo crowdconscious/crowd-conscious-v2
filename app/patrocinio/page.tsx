@@ -2,7 +2,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { cookies } from 'next/headers'
-import { ArrowRight, Building2, Eye, HandHeart, HeartHandshake, Mail, Vote } from 'lucide-react'
+import { ArrowRight, Building2, Eye, HandHeart, HeartHandshake, Vote } from 'lucide-react'
+import { DonationForm } from './DonationForm'
 import { fetchConsciousFundBalanceMxn } from '@/lib/conscious-fund-balance'
 import { createAdminClient } from '@/lib/supabase-admin'
 
@@ -17,12 +18,10 @@ export const revalidate = 300
  * /organizaciones. Legacy sponsor checkout endpoints and webhooks are kept
  * server-side for existing records but are no longer linked from marketing.
  *
- * There is no dedicated one-off donation checkout yet, so the primary CTA is
- * a contact email. Numbers shown are live (fund balance, verified causes);
+ * Donations: card checkout via /api/patrocinio/checkout (Stripe Checkout);
+ * the webhook records them and credits the Fondo net of card fees. Numbers shown are live (fund balance, verified causes);
  * nothing is invented — sections hide when data is empty.
  */
-
-const CONTACT_EMAIL = 'comunidad@crowdconscious.app'
 
 type CauseRow = {
   id: string
@@ -70,24 +69,26 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-export default async function PatrocinioPage() {
+export default async function PatrocinioPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ cancelado?: string }>
+}) {
+  const sp = await searchParams
   const locale = await getLocale()
   const es = locale === 'es'
   const [balance, causes] = await Promise.all([fetchConsciousFundBalanceMxn(), fetchVerifiedCauses()])
 
-  const mailto = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(
-    es ? 'Quiero apoyar el Fondo Consciente' : 'I want to support the Conscious Fund'
-  )}`
   const fmt = new Intl.NumberFormat(es ? 'es-MX' : 'en-US', { maximumFractionDigits: 0 })
 
   const steps = es
     ? [
-        { icon: HandHeart, title: 'Tú apoyas', body: 'Tu aportación va directo al Fondo Consciente. No compras publicidad ni consultas.' },
+        { icon: HandHeart, title: 'Tú apoyas', body: 'Aportas con tarjeta. Se descuentan las comisiones de la tarjeta; el resto va al Fondo Consciente. No compras publicidad ni consultas.' },
         { icon: Vote, title: 'La comunidad vota', body: 'Quienes participan en Crowd Conscious eligen qué causas verificadas reciben los recursos.' },
         { icon: Eye, title: 'Todo a la vista', body: 'El saldo del fondo y su distribución se publican en la página del Fondo Consciente.' },
       ]
     : [
-        { icon: HandHeart, title: 'You give', body: 'Your contribution goes straight to the Conscious Fund. You are not buying ads or consultations.' },
+        { icon: HandHeart, title: 'You give', body: 'You give by card. Card fees are deducted; the rest goes to the Conscious Fund. You are not buying ads or consultations.' },
         { icon: Vote, title: 'The community votes', body: 'People who take part in Crowd Conscious choose which verified causes receive the funds.' },
         { icon: Eye, title: 'Everything in the open', body: 'The fund balance and its distribution are published on the Conscious Fund page.' },
       ]
@@ -113,11 +114,11 @@ export default async function PatrocinioPage() {
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <a
-                  href={mailto}
-                  className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-[#047857] px-6 py-3 text-base font-semibold text-[#ffffff] shadow-lg shadow-emerald-900/40 transition-colors hover:bg-[#065f46]"
+                  href="#apoyar"
+                  className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-[#047857] px-6 py-3 text-base font-semibold text-[#ffffff] shadow-lg shadow-emerald-900/40 transition-colors hover:bg-[#065f46] lg:hidden"
                 >
-                  <Mail className="h-4 w-4" />
-                  {es ? 'Quiero apoyar' : 'I want to support'}
+                  <HandHeart className="h-4 w-4" />
+                  {es ? 'Aportar ahora' : 'Give now'}
                 </a>
                 <Link
                   href="/predictions/fund"
@@ -127,51 +128,10 @@ export default async function PatrocinioPage() {
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
-              <p className="mt-4 text-sm text-[#a3b1c2]">
-                {es
-                  ? `Escríbenos a ${CONTACT_EMAIL} y te respondemos con los datos para tu aportación.`
-                  : `Write to ${CONTACT_EMAIL} and we will reply with the details for your contribution.`}
-              </p>
             </div>
 
-            {/* Live fund card — real balance only. */}
             <div className="min-w-0">
-              <div className="rounded-2xl border border-[#2d3748] bg-[#0b1016] p-5 sm:p-6">
-                <p className="text-xs font-semibold uppercase tracking-wider text-[#a3b1c2]">
-                  {es ? 'Fondo Consciente · saldo actual' : 'Conscious Fund · current balance'}
-                </p>
-                {balance > 0 ? (
-                  <p className="mt-2 text-4xl font-bold text-[#ffffff] sm:text-5xl">
-                    ${fmt.format(balance)} <span className="text-lg font-semibold text-[#a3b1c2]">MXN</span>
-                  </p>
-                ) : (
-                  <p className="mt-2 text-2xl font-bold leading-snug text-[#ffffff]">
-                    {es ? 'Tu apoyo puede ser de los primeros.' : 'Your support can be among the first.'}
-                  </p>
-                )}
-                <div className="mt-5 space-y-3 border-t border-[#2d3748] pt-5">
-                  <div className="flex items-start gap-3">
-                    <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[#34d399]" />
-                    <p className="text-sm text-[#cbd5e1]">
-                      {es ? 'Patrocinio comunitario: tu aportación entra al fondo.' : 'Community sponsorship: your contribution goes into the fund.'}
-                    </p>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[#6ee7b7]" />
-                    <p className="text-sm text-[#cbd5e1]">
-                      {es
-                        ? 'Organizaciones: el 20% de cada contrato, antes de IVA, también entra al fondo.'
-                        : 'Organizations: 20% of every contract, before VAT, also goes into the fund.'}
-                    </p>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[#fcd34d]" />
-                    <p className="text-sm text-[#cbd5e1]">
-                      {es ? 'La comunidad vota qué causas lo reciben.' : 'The community votes on which causes receive it.'}
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <DonationForm locale={locale} cancelled={sp?.cancelado === '1'} />
             </div>
           </div>
         </div>
@@ -198,6 +158,48 @@ export default async function PatrocinioPage() {
             ))}
           </ol>
         </div>
+      </section>
+
+      {/* Live fund card — real balance only. */}
+      <section className="px-4 py-6 md:px-8">
+        <div className="mx-auto max-w-3xl">
+              <div className="rounded-2xl border border-[#2d3748] bg-[#0b1016] p-5 sm:p-6">
+                <p className="text-xs font-semibold uppercase tracking-wider text-[#a3b1c2]">
+                  {es ? 'Fondo Consciente · saldo actual' : 'Conscious Fund · current balance'}
+                </p>
+                {balance > 0 ? (
+                  <p className="mt-2 text-4xl font-bold text-[#ffffff] sm:text-5xl">
+                    ${fmt.format(balance)} <span className="text-lg font-semibold text-[#a3b1c2]">MXN</span>
+                  </p>
+                ) : (
+                  <p className="mt-2 text-2xl font-bold leading-snug text-[#ffffff]">
+                    {es ? 'Tu apoyo puede ser de los primeros.' : 'Your support can be among the first.'}
+                  </p>
+                )}
+                <div className="mt-5 space-y-3 border-t border-[#2d3748] pt-5">
+                  <div className="flex items-start gap-3">
+                    <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[#34d399]" />
+                    <p className="text-sm text-[#cbd5e1]">
+                      {es ? 'Patrocinio comunitario: tu aportación, menos comisiones de tarjeta, entra al fondo.' : 'Community sponsorship: your contribution, minus card fees, goes into the fund.'}
+                    </p>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[#6ee7b7]" />
+                    <p className="text-sm text-[#cbd5e1]">
+                      {es
+                        ? 'Organizaciones: el 20% de cada contrato, antes de IVA, también entra al fondo.'
+                        : 'Organizations: 20% of every contract, before VAT, also goes into the fund.'}
+                    </p>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[#fcd34d]" />
+                    <p className="text-sm text-[#cbd5e1]">
+                      {es ? 'La comunidad vota qué causas lo reciben.' : 'The community votes on which causes receive it.'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
       </section>
 
       {/* Verified causes — live, hidden when empty */}
@@ -238,15 +240,15 @@ export default async function PatrocinioPage() {
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-[#cbd5e1]">
             {es
-              ? 'Cualquier aportación cuenta. Escríbenos y te contamos cómo apoyar al Fondo Consciente.'
-              : 'Every contribution counts. Write to us and we will tell you how to support the Conscious Fund.'}
+              ? 'Cualquier aportación cuenta. Paga con tarjeta en un minuto; se descuentan las comisiones de la tarjeta y el resto va al Fondo Consciente.'
+              : 'Every contribution counts. Pay by card in a minute; card fees are deducted and the rest goes to the Conscious Fund.'}
           </p>
           <a
-            href={mailto}
+            href="#apoyar"
             className="mt-6 inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-[#047857] px-6 py-3 text-base font-semibold text-[#ffffff] transition-colors hover:bg-[#065f46]"
           >
-            <Mail className="h-4 w-4" />
-            {es ? 'Quiero apoyar' : 'I want to support'}
+            <HandHeart className="h-4 w-4" />
+            {es ? 'Aportar ahora' : 'Give now'}
           </a>
         </div>
       </section>
