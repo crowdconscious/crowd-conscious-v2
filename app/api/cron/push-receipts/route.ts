@@ -5,6 +5,7 @@ import {
   chunkPushNotificationReceiptIds,
   getPushNotificationReceiptsAsync,
 } from '@/lib/expo-push'
+import { runPulsePublishPushBackstop } from '@/lib/pulse/publish-push-backstop'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -24,6 +25,8 @@ const JOB_NAME = 'push-receipts'
  *                     in lib/expo-push.ts)
  *   - no receipt yet → left pending for the next run
  *   - pending > 36h  → marked error (Expo discards receipts after ~24h)
+ *
+ * Also runs the Pulse publish-push backstop (lib/pulse/publish-push-backstop).
  *
  * Auth: Bearer `process.env.CRON_SECRET` (mirrors pulse-auto-resolve).
  */
@@ -164,9 +167,19 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  // Backstop: announce Pulses published outside the app routes (migration 288).
+  let backstopNotified = 0
+  try {
+    const bs = await runPulsePublishPushBackstop(admin)
+    backstopNotified = bs.notified.length
+    if (bs.error) errors.push(`publish backstop: ${bs.error}`)
+  } catch (err) {
+    errors.push(`publish backstop: ${err instanceof Error ? err.message : String(err)}`)
+  }
+
   await cronHealthComplete(runId, JOB_NAME, admin, {
     success: errors.length === 0,
-    summary: `checked=${pending.length} ok=${resolvedOk} error=${resolvedError} expired=${expired} pruned=${prunedTokens}`,
+    summary: `checked=${pending.length} ok=${resolvedOk} error=${resolvedError} expired=${expired} pruned=${prunedTokens} backstop_notified=${backstopNotified}`,
     error: errors.length ? errors.join('; ') : undefined,
   })
 
@@ -177,6 +190,7 @@ export async function GET(request: NextRequest) {
     resolved_error: resolvedError,
     expired,
     pruned_tokens: prunedTokens,
+    backstop_notified: backstopNotified,
     errors: errors.length ? errors : undefined,
   })
 }

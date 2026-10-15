@@ -95,6 +95,7 @@ export default function PulseListingView({
                   const isResolved = m.status === 'resolved' || m.status === 'closed'
                   const closeDate = m.resolution_date
                     ? new Date(m.resolution_date).toLocaleDateString(dateLocale, {
+                        timeZone: 'America/Mexico_City',
                         month: 'short',
                         day: 'numeric',
                         year: 'numeric',
