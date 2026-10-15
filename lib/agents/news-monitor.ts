@@ -40,7 +40,7 @@ const ORG_PRODUCT_LIST = [
   `Lectura piloto privada (${formatMxn(PILOT_BREAKDOWN.subtotal)} MXN + IVA = ${formatMxn(PILOT_BREAKDOWN.total)} MXN con tarjeta)`,
   `Lectura anual (${formatMxn(ORG_PRICES.annual)} MXN + IVA al año)`,
   `Escucha continua (${formatMxn(ORG_PRICES.continuousMonthly)} MXN + IVA al mes)`,
-  `Sello verificado (+${formatMxn(ORG_PRICES.selloMonthlyAddon)} MXN + IVA al mes sobre Escucha continua)`,
+  `Sello Empresa Consciente (empresas) / Esfuerzo Consciente (otras organizaciones) (+${formatMxn(ORG_PRICES.selloMonthlyAddon)} MXN + IVA al mes sobre Escucha continua)`,
 ]
 const COMMUNITY_DONATION_PRODUCT = 'Patrocinio comunitario (aportación con tarjeta al Fondo Consciente, monto libre)'
 
