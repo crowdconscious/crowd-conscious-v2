@@ -3,7 +3,8 @@
  * The client receipt is explicitly NOT a CFDI; the CFDI is issued separately
  * by Francisco's accountant from the data in the admin alert.
  */
-import { sendEmail } from '@/lib/resend'
+import { sendEmail, type EmailAttachment } from '@/lib/resend'
+import { selloPng } from '@/lib/org/sello-png'
 import { REGIMENES_FISCALES, USOS_CFDI } from './fiscal'
 import { formatMxn } from './pricing'
 import { BASE_SIZES, ORG_TYPES, VISIBILITY_PREFS, labelOf } from './lead-options'
@@ -71,7 +72,7 @@ function row(label: string, value: string, bold = false) {
   return `<tr><td style="padding:6px 0;color:#9ca3af;font-size:13px;">${label}</td><td style="padding:6px 0;text-align:right;font-size:13px;color:#e5e7eb;${bold ? 'font-weight:bold;' : ''}">${value}</td></tr>`
 }
 
-export function buildClientReceiptEmail(r: OrgPilotEmailRow) {
+export function buildClientReceiptEmail(r: OrgPilotEmailRow, withSello = false) {
   const paid = r.paid_at ? new Date(r.paid_at).toLocaleDateString('es-MX', { timeZone: 'America/Mexico_City' }) : ''
   const html = shell(`
   <h1 style="color:#10b981;font-size:20px;margin:0 0 6px;">Recibo de pago · Payment receipt</h1>
@@ -97,7 +98,10 @@ export function buildClientReceiptEmail(r: OrgPilotEmailRow) {
     ${row('C.P. fiscal', esc(r.cp_fiscal))}
     ${row('Uso de CFDI', esc(usoLabel(r.uso_cfdi)))}
   </table>
-  <p style="font-size:12px;color:#9ca3af;margin:14px 0 0;">Si algún dato es incorrecto, responda a este correo antes de que emitamos el CFDI. · If any detail is wrong, reply before we issue the CFDI.</p>`)
+  <p style="font-size:12px;color:#9ca3af;margin:14px 0 0;">Si algún dato es incorrecto, responda a este correo antes de que emitamos el CFDI. · If any detail is wrong, reply before we issue the CFDI.</p>${withSello ? `
+  <h2 style="font-size:14px;color:#e5e7eb;margin:20px 0 6px;">Sello Esfuerzo Consciente · Seal</h2>
+  <p style="font-size:13px;line-height:1.6;margin:0 0 6px;">Adjuntamos el Sello (PNG transparente). Se activa cuando su organización tiene el servicio vigente y resultados públicos, y se mantiene mientras ambas cosas sigan así. Mientras esté activo, puede usarlo en su sitio web, redes sociales y otras plataformas. También puede descargarlo desde su panel.</p>
+  <p style="font-size:12px;line-height:1.6;color:#9ca3af;margin:0;">The Seal is attached (transparent PNG). It is active while your service is active and your results are public. While active, you may use it on your website, social media and other platforms. You can also download it from your dashboard.</p>` : ''}`)
   return { subject: `Recibo ${r.receipt_number} · Lectura piloto · Crowd Conscious`, html }
 }
 
@@ -161,8 +165,19 @@ export function adminEmail() {
   return process.env.ADMIN_EMAIL || 'francisco@crowdconscious.app'
 }
 
+/**
+ * Card-payment receipt (the only client email after Stripe checkout; there is
+ * no separate invoice email, the CFDI is sent by the accountant). Carries the
+ * Sello badge PNG. If rendering fails the receipt still goes out without it.
+ */
 export async function sendOrgClientReceipt(r: OrgPilotEmailRow) {
-  return sendEmail(r.email, buildClientReceiptEmail(r))
+  let attachments: EmailAttachment[] | undefined
+  try {
+    attachments = [{ filename: 'sello-esfuerzo-consciente-1024.png', content: await selloPng(1024), contentType: 'image/png' }]
+  } catch (e) {
+    console.error('[org-pilot] sello png render failed; sending receipt without it', e instanceof Error ? e.message : e)
+  }
+  return sendEmail(r.email, buildClientReceiptEmail(r, Boolean(attachments)), undefined, attachments)
 }
 
 export async function sendOrgAdminAlert(r: OrgPilotEmailRow) {

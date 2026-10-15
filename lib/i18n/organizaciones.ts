@@ -32,7 +32,7 @@ const es = {
   howTitle: 'Cómo funciona',
   howSub: '4 a 6 semanas, de la llamada a la lectura',
   steps: [
-    { t: 'Diseñamos', d: 'Hasta 3 preguntas de sí o no, revisadas para que ninguna empuje la respuesta. Usted decide si el resultado será privado o público, y lo registramos antes de abrir.' },
+    { t: 'Diseñamos', d: 'Hasta 3 preguntas de sí o no, revisadas para que ninguna empuje la respuesta. Usted decide si el resultado es privado o público, y puede cambiarlo cuando quiera.' },
     { t: 'Enviamos', d: 'Usted nos da identificadores anónimos. Nosotros sorteamos la muestra (o invitamos a toda la base) y le damos enlaces de un solo uso para sus propios canales.' },
     { t: 'Responden', d: 'Cada persona contesta sí o no, su certeza de 1 a 10 y, si quiere, una razón en una frase. Usted ve solo la tasa de respuesta mientras está abierta.' },
     { t: 'Entregamos', d: 'La lectura con la respuesta primero, cada «sí» separado por firmeza, las razones redactadas, el PDF y una sesión de resultados de 45 min.' },
@@ -82,7 +82,7 @@ const es = {
     { q: '¿Qué pasa si el resultado es malo?', a: 'Si la lectura es privada, solo la ve usted. Si es pública, la publicamos tal cual: no la editamos, ocultamos ni retrasamos. Eso es lo que hace que un resultado bueno valga algo.' },
     { q: '¿Cómo eligen a quién invitar?', a: 'Usted elige entre invitar a toda su base o a una muestra aleatoria que sorteamos nosotros en el servidor, con fecha y semilla registradas. Usted no elige personas.' },
     { q: '¿Cuánto tarda?', a: 'De 4 a 6 semanas: llamada de arranque, una semana para preguntas y población, 2 a 3 semanas de consulta abierta y la sesión de resultados.' },
-    { q: '¿Puedo cambiar de privada a pública después?', a: 'No. La visibilidad se decide y se registra antes de abrir la consulta, y no cambia después de ver el resultado.' },
+    { q: '¿Puedo cambiar de privada a pública después?', a: 'Sí. Su organización puede cambiar entre privada y pública en cualquier momento desde su panel; cada cambio queda registrado. Lo que nunca cambia es el resultado: no lo editamos ni lo ocultamos parcialmente.' },
     { q: '¿Qué significa «firme»?', a: `Una certeza de ${FIRM_THRESHOLD} a 10. Por debajo, el «sí» o el «no» es tibio. Es una lectura de población cerrada: reportamos tasa de respuesta, no margen de error.` },
   ],
 
@@ -118,7 +118,7 @@ const en: Copy = {
   howTitle: 'How it works',
   howSub: '4 to 6 weeks, from the call to the reading',
   steps: [
-    { t: 'We design', d: 'Up to 3 yes/no questions, checked so none pushes the answer. You decide whether the result is private or public, and we record it before opening.' },
+    { t: 'We design', d: 'Up to 3 yes/no questions, checked so none pushes the answer. You decide whether the result is private or public, and you can change it whenever you want.' },
     { t: 'We send', d: 'You give us anonymous identifiers. We draw the sample (or invite your whole base) and give you single-use links for your own channels.' },
     { t: 'They answer', d: 'Each person answers yes or no, their certainty from 1 to 10 and, optionally, a one-line reason. While it is open you only see the response rate.' },
     { t: 'We deliver', d: 'The reading with the answer first, every "yes" split by firmness, redacted reasons, the PDF and a 45-min results session.' },
@@ -168,7 +168,7 @@ const en: Copy = {
     { q: 'What if the result is bad?', a: 'If the reading is private, only you see it. If it is public, we publish it as is: we do not edit, hide or delay it. That is what makes a good result worth something.' },
     { q: 'How do you choose who to invite?', a: 'You choose between inviting your whole base or a random sample we draw on the server, with date and seed recorded. You never pick people.' },
     { q: 'How long does it take?', a: '4 to 6 weeks: kickoff call, one week for questions and population, 2 to 3 weeks of open consultation and the results session.' },
-    { q: 'Can I switch from private to public afterwards?', a: 'No. Visibility is decided and recorded before the consultation opens, and it does not change after you see the result.' },
+    { q: 'Can I switch from private to public afterwards?', a: 'Yes. Your organization can switch between private and public at any time from its dashboard; every change is logged. What never changes is the result itself: we do not edit it or partially hide it.' },
     { q: 'What does "firm" mean?', a: `A certainty of ${FIRM_THRESHOLD} to 10. Below that, the "yes" or "no" is tentative. It is a closed-population reading: we report response rate, not a margin of error.` },
   ],
 

@@ -1,7 +1,9 @@
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { BadgeCheck } from 'lucide-react'
+import SelloBadge from '@/components/org/SelloBadge'
 import TeamPanel from '@/components/org/TeamPanel'
+import { SELLO_ASSETS, selloVerifyPath } from '@/lib/org/sello-badge'
 import { ORG_PORTAL_V2 } from '@/lib/org/config'
 import { DEMO_BANNER } from '@/lib/org/demo-data'
 import { readingHeadline } from '@/lib/org/headline-copy'
@@ -20,6 +22,9 @@ const T = {
     sello: 'Sello verificado', selloOn: 'Activo: su organización paga el servicio y tiene resultados públicos.',
     selloOff: 'Se activa solo mientras su servicio esté activo y una lectura cerrada sea pública. Desaparece si deja de pagar o si sus resultados son privados.',
     billingOff: 'Su servicio no está activo.',
+    dl: 'Descargar el Sello', png1024: 'PNG 1024 px', png512: 'PNG 512 px', svg: 'SVG',
+    usage: 'Puede usarlo en su sitio web, redes sociales y otras plataformas. Es válido mientras su servicio esté activo y sus resultados sean públicos. Enlácelo a su página de verificación:',
+    verify: 'Página pública de verificación',
   },
   en: {
     readings: 'Your readings', empty: 'No readings yet. We will reach out to design the first one.',
@@ -29,6 +34,9 @@ const T = {
     sello: 'Verified Seal', selloOn: 'Active: your organization is a paying client with public results.',
     selloOff: 'It turns on only while your service is active and a closed reading is public. It disappears if payment stops or results are private.',
     billingOff: 'Your service is not active.',
+    dl: 'Download the Seal', png1024: 'PNG 1024 px', png512: 'PNG 512 px', svg: 'SVG',
+    usage: 'You may use it on your website, social media and other platforms. It is valid while your service is active and your results are public. Link it to your verification page:',
+    verify: 'Public verification page',
   },
 }
 
@@ -87,6 +95,19 @@ export default async function OrgHome({ params }: { params: Promise<{ slug: stri
             </p>
             <p className="mt-2 text-sm text-slate-200">{ctx.sello ? t.selloOn : t.selloOff}</p>
             {!ctx.billingActive ? <p className="mt-1 text-sm text-amber-200">{t.billingOff}</p> : null}
+            {ctx.sello ? (
+              <div className="mt-4">
+                <div className="flex justify-center"><SelloBadge size={140} id="sello-dash" slug={slug} /></div>
+                <p className="mt-4 text-sm font-semibold text-white">{t.dl}</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {([[SELLO_ASSETS.png1024, t.png1024], [SELLO_ASSETS.png512, t.png512], [SELLO_ASSETS.svg, t.svg]] as const).map(([href, label]) => (
+                    <a key={href} href={href} download className="min-h-[44px] rounded-lg border border-emerald-300 px-3 py-2 text-sm font-semibold text-emerald-100 hover:bg-emerald-400/10">{label}</a>
+                  ))}
+                </div>
+                <p className="mt-3 text-xs text-slate-200">{t.usage}</p>
+                <Link href={selloVerifyPath(slug)} className="mt-1 inline-block break-all text-xs font-semibold text-emerald-300 underline">{t.verify}: {selloVerifyPath(slug)}</Link>
+              </div>
+            ) : null}
           </div>
           {!ctx.demo ? <TeamPanel slug={slug} locale={locale} canEdit={ctx.role === 'owner'} /> : null}
         </aside>
