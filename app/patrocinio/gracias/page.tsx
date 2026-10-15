@@ -12,9 +12,15 @@ export const metadata: Metadata = {
 }
 
 /** Success page after a Patrocinio comunitario card donation (Stripe Checkout). */
-export default async function DonationThanksPage() {
+export default async function DonationThanksPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ lang?: string }>
+}) {
+  // Locale chosen on the donation form travels in success_url (?lang=); cookie is the fallback.
+  const { lang } = await searchParams
   const store = await cookies()
-  const es = store.get('preferred-language')?.value !== 'en'
+  const es = lang === 'en' ? false : lang === 'es' ? true : store.get('preferred-language')?.value !== 'en'
   return (
     <div className="min-h-screen bg-[#0f1419] text-[#e2e8f0]">
       <section className="px-4 py-14 md:px-8 md:py-20">

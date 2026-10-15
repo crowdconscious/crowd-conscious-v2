@@ -18,7 +18,7 @@ import {
 } from './handlers/sponsorship-refund'
 import { SPONSORSHIP_KIND } from './lib/sponsorship-money'
 import { handleOrgPilotCheckout, handleOrgPilotAsyncFailed } from './handlers/org-pilot'
-import { handleCommunityDonation } from './handlers/community-donation'
+import { handleCommunityDonation, handleCommunityDonationCharge } from './handlers/community-donation'
 import { DONATION_PRODUCT_TYPE } from '@/lib/patrocinio/donations'
 import { ORG_PILOT_PRODUCT_TYPE } from '@/lib/organizaciones/pricing'
 
@@ -96,6 +96,13 @@ export async function POST(request: NextRequest) {
 
       case 'payment_intent.payment_failed':
         await handlePaymentFailed(event.data.object as Stripe.PaymentIntent)
+        break
+
+      // Community donations: balance_transaction is attached asynchronously; backfill
+      // Stripe fee / net and credit the Fondo once it exists.
+      case 'charge.succeeded':
+      case 'charge.updated':
+        await handleCommunityDonationCharge(event.data.object as Stripe.Charge)
         break
 
       // Creator-market sponsorship reversals (Prompt 3).
