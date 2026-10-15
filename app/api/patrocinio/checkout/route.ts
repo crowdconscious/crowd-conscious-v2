@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { getStripe } from '@/app/api/webhooks/stripe/lib/stripe-webhook-utils'
 import { ApiResponse } from '@/lib/api-responses'
 import { checkRateLimit, getRateLimitIdentifier, rateLimitResponse, strictRateLimit } from '@/lib/rate-limit'
+import { resolveDonationOrigin } from '@/lib/patrocinio/origin'
 import { DONATION_MAX_MXN, DONATION_MIN_MXN, DONATION_PRODUCT_TYPE } from '@/lib/patrocinio/donations'
 
 /**
@@ -35,7 +36,8 @@ export async function POST(request: NextRequest) {
   }
   const d = parsed.data
   const es = d.locale === 'es'
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://crowdconscious.app'
+  // Return the donor to the site they started on (prod / preview), validated against an allow-list.
+  const baseUrl = resolveDonationOrigin(request.headers)
   const metadata: Record<string, string> = {
     product_type: DONATION_PRODUCT_TYPE,
     amount_mxn: String(d.amount_mxn),
@@ -68,8 +70,8 @@ export async function POST(request: NextRequest) {
       locale: es ? 'es' : 'en',
       metadata,
       payment_intent_data: { metadata },
-      success_url: `${baseUrl}/patrocinio/gracias?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${baseUrl}/patrocinio?cancelado=1#apoyar`,
+      success_url: `${baseUrl}/patrocinio/gracias?session_id={CHECKOUT_SESSION_ID}&lang=${d.locale}`,
+      cancel_url: `${baseUrl}/patrocinio?cancelado=1&lang=${d.locale}#apoyar`,
     })
     return ApiResponse.ok({ url: session.url })
   } catch (err) {

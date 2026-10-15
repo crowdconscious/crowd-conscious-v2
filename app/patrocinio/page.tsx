@@ -72,10 +72,10 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function PatrocinioPage({
   searchParams,
 }: {
-  searchParams: Promise<{ cancelado?: string }>
+  searchParams: Promise<{ cancelado?: string; lang?: string }>
 }) {
   const sp = await searchParams
-  const locale = await getLocale()
+  const locale = sp?.lang === 'en' || sp?.lang === 'es' ? sp.lang : await getLocale()
   const es = locale === 'es'
   const [balance, causes] = await Promise.all([fetchConsciousFundBalanceMxn(), fetchVerifiedCauses()])
 
