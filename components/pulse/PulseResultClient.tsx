@@ -467,6 +467,7 @@ export default function PulseResultClient({
   const sponsorLogo = sponsorLogoUrl?.trim()
 
   const closeDate = new Date(resolutionDate).toLocaleDateString(locale === 'es' ? 'es-MX' : 'en-US', {
+    timeZone: 'America/Mexico_City',
     month: 'short',
     day: 'numeric',
     year: 'numeric',

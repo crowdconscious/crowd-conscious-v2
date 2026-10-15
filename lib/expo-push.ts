@@ -851,11 +851,52 @@ export function buildLocationCertifiedPush(params: {
   }
 }
 
+/**
+ * Atomically mark a market's publish announce as sent. Returns true only for
+ * the single caller that flipped publish_notified_at from NULL. If the column
+ * does not exist yet (code deployed before migration 288), fall back to the
+ * legacy behaviour of sending.
+ */
+export async function claimPulsePublishNotification(
+  admin: SupabaseClient,
+  marketId: string
+): Promise<boolean> {
+  const { data, error } = await admin
+    .from('prediction_markets')
+    .update({ publish_notified_at: new Date().toISOString() })
+    .eq('id', marketId)
+    .is('publish_notified_at', null)
+    .select('id')
+
+  if (error) {
+    if (error.code === '42703' || /publish_notified_at/.test(error.message)) {
+      console.warn('[expo-push] publish_notified_at missing; sending without claim')
+      return true
+    }
+    console.warn('[expo-push] publish claim error; skipping to avoid double-send:', error.message)
+    return false
+  }
+  if (!data || data.length === 0) {
+    console.info('[expo-push] pulse publish push already sent; skipping', { marketId })
+    return false
+  }
+  return true
+}
+
 export async function notifyPulsePublished(
   admin: SupabaseClient,
   params: { marketId: string; title: string; mode: 'announce' | 'vote_invite' }
 ): Promise<void> {
   const { marketId, title, mode } = params
+
+  // Idempotency (migration 288): the one-time "new Pulse" announce is claimed
+  // atomically via prediction_markets.publish_notified_at BEFORE sending, so
+  // the publish routes and the push-receipts backstop can never double-send.
+  // Claim-before-send means a crash mid-send drops (never duplicates) a push.
+  if (mode === 'announce') {
+    const claimed = await claimPulsePublishNotification(admin, marketId)
+    if (!claimed) return
+  }
 
   let recipients = await fetchPushEnabledRecipients(admin)
 

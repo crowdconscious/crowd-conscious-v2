@@ -29,6 +29,7 @@ function formatPct(n: number) {
 function fmtDate(iso: string) {
   try {
     return new Date(iso).toLocaleDateString('es-MX', {
+      timeZone: 'America/Mexico_City',
       month: 'short',
       day: 'numeric',
       year: 'numeric',

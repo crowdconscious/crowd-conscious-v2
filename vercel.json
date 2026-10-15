@@ -72,7 +72,7 @@
     },
     {
       "path": "/api/cron/push-receipts",
-      "schedule": "*/30 * * * *"
+      "schedule": "*/10 * * * *"
     }
   ],
   "headers": [
