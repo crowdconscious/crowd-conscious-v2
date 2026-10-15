@@ -17,7 +17,8 @@ test('defaults: no extension, early close allowed and preliminary under 30', () 
   assert.equal(canExtend({ ...DEFAULT_RULES, maxExtensionDays: 7 }, { ...s, extendedDays: 3 }, 5).ok, false)
   assert.equal(canCloseEarly({ ...DEFAULT_RULES, allowEarlyClose: false }, s).ok, false)
   assert.equal(canSetVisibility('design'), true)
-  assert.equal(canSetVisibility('field'), false)
+  assert.equal(canSetVisibility('field'), true)
+  assert.equal(canSetVisibility('closed'), true)
 })
 
 test('sello: paying AND a closed public reading, nothing else', () => {

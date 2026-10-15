@@ -716,10 +716,13 @@ async function sendEmailWithRetry(
 }
 
 // Send email function with error handling
+export type EmailAttachment = { filename: string; content: Buffer; contentType?: string }
+
 export async function sendEmail(
   to: string,
   template: { subject: string; html: string },
-  from: string = FROM_EMAIL
+  from: string = FROM_EMAIL,
+  attachments?: EmailAttachment[]
 ): Promise<{ success: boolean; error?: string }> {
   try {
     if (!resend) {
@@ -732,6 +735,7 @@ export async function sendEmail(
       to: [to],
       subject: template.subject,
       html: template.html,
+      ...(attachments?.length ? { attachments } : {}),
     })
 
     if (error) {

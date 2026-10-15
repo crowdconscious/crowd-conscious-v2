@@ -158,8 +158,8 @@ export function generateReadingPdf(r: ClientReading, orgName: string, locale: 'e
         ? `muestra aleatoria de ${r.sample.n} sorteada por Crowd Conscious el ${r.sample.drawnAt}`
         : `random sample of ${r.sample.n} drawn by Crowd Conscious on ${r.sample.drawnAt}`
   const note = es
-    ? `Metodología: ${sample}; enlaces de un solo uso; visibilidad decidida el ${r.visibilityLockedAt.slice(0, 10)}, antes de abrir la consulta; reportamos tasa de respuesta, no margen de error; quien no responde puede pensar distinto. El cliente no editó estos resultados.`
-    : `Methodology: ${sample}; single-use links; visibility decided on ${r.visibilityLockedAt.slice(0, 10)}, before opening; we report response rate, not a margin of error; non-respondents may think differently. The client did not edit these results.`
+    ? `Metodología: ${sample}; enlaces de un solo uso; visibilidad actual: ${r.visibility === 'public' ? 'pública' : 'privada'} (la elige el cliente y puede cambiarla); reportamos tasa de respuesta, no margen de error; quien no responde puede pensar distinto. El cliente no editó estos resultados.`
+    : `Methodology: ${sample}; single-use links; current visibility: ${r.visibility} (chosen by the client, who may change it); we report response rate, not a margin of error; non-respondents may think differently. The client did not edit these results.`
   doc.setFontSize(8)
   doc.setTextColor(70, 70, 70)
   doc.text(doc.splitTextToSize(note + (demo ? ` ${fict}.` : ''), CW), M, Math.min(y, H - 22))
