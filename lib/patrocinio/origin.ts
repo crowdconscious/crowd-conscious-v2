@@ -5,8 +5,8 @@
  */
 const CANONICAL = 'https://www.crowdconscious.app'
 const STATIC_HOSTS = new Set(['crowdconscious.app', 'www.crowdconscious.app'])
-// Vercel preview URLs for this project, e.g. crowd-conscious-v2-git-branch-team.vercel.app
-const PREVIEW_RE = /^crowd-conscious-v2(-[a-z0-9-]+)?\.vercel\.app$/
+// Vercel preview URLs for this project, e.g. crowd-conscious-v2-git-<branch>-<team>.vercel.app or crowd-conscious-platform-*.vercel.app
+const PREVIEW_RE = /^crowd-conscious-(v2|platform)(-[a-z0-9-]+)?\.vercel\.app$/
 
 function hostOf(url: string | undefined | null): string | null {
   if (!url) return null
