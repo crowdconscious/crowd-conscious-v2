@@ -4,7 +4,7 @@ import { DEMO_BANNER } from '@/lib/org/demo-data'
 import { readingHeadline } from '@/lib/org/headline-copy'
 import { responseRate } from '@/lib/org/readings'
 import { publicOrg } from '@/lib/org/sello-public'
-import { SELLO_TEXT } from '@/lib/org/sello-badge'
+import { SELLO_NAMES } from '@/lib/org/sello-badge'
 import { getOrgLocale } from '@/app/organizaciones/locale'
 
 export const dynamic = 'force-dynamic'
@@ -28,7 +28,7 @@ const T = {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const o = await publicOrg((await params).slug)
-  return { title: o ? `${o.name} · Sello ${SELLO_TEXT}` : `Sello ${SELLO_TEXT}`, robots: o ? undefined : { index: false } }
+  return { title: o ? `${o.name} · ${SELLO_NAMES[o.variant].es}` : 'Sello · Crowd Conscious', robots: o ? undefined : { index: false } }
 }
 
 /** Public results + Sello verify page. The badge links here. */
@@ -51,11 +51,11 @@ export default async function SelloVerify({ params }: { params: Promise<{ slug: 
       {o.demo ? <div className="border-b border-amber-300/40 bg-amber-300/10 px-4 py-2 text-center text-sm font-semibold text-amber-100">{DEMO_BANNER[locale]}</div> : null}
       <div className="mx-auto max-w-4xl px-4 py-10">
         <div className="flex flex-col items-start gap-6 sm:flex-row sm:items-center">
-          {o.sello ? <SelloBadge size={150} id="sello-verify" /> : null}
+          {o.sello ? <SelloBadge variant={o.variant} size={150} id="sello-verify" /> : null}
           <div className="min-w-0">
             <h1 className="break-words text-2xl font-bold text-white">{o.name}</h1>
             <p className={`mt-2 flex items-center gap-2 font-semibold ${o.sello ? 'text-emerald-300' : 'text-slate-300'}`}>
-              {o.sello ? <CheckCircle2 className="h-5 w-5" aria-hidden /> : <XCircle className="h-5 w-5" aria-hidden />} {o.sello ? t.on : t.off}
+              {o.sello ? <CheckCircle2 className="h-5 w-5" aria-hidden /> : <XCircle className="h-5 w-5" aria-hidden />} {SELLO_NAMES[o.variant][locale]}: {o.sello ? t.on : t.off}
             </p>
             <p className="mt-1 max-w-2xl text-sm text-slate-200">{o.sello ? t.onP : t.offP}</p>
             <p className="mt-1 text-xs text-slate-400">{t.checked}: {now} (CDMX)</p>

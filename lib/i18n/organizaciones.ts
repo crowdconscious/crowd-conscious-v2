@@ -66,7 +66,7 @@ const es = {
   contPrice: '$14,500 MXN + IVA al mes',
   contNote: '$2,900 al mes al Fondo Consciente',
   contBullets: ['4 lecturas al año, con tendencia trimestre a trimestre', 'Tablero en vivo de solo lectura y 4 sesiones', 'Para Experiencia del Cliente con alto volumen'],
-  selloName: 'Escucha continua + Sello verificado',
+  selloName: 'Escucha continua + Sello Empresa / Esfuerzo Consciente',
   selloPrice: '$24,500 MXN + IVA al mes',
   selloNote: 'Escucha $14,500 + Sello $10,000 · $4,900 al mes al Fondo Consciente',
   selloBullets: [
@@ -153,7 +153,7 @@ const en: Copy = {
   contPrice: '$14,500 MXN + VAT per month',
   contNote: '$2,900 per month to the Conscious Fund',
   contBullets: ['4 readings a year, with quarter-over-quarter trends', 'Read-only live dashboard and 4 sessions', 'For high-volume Customer Experience teams'],
-  selloName: 'Continuous listening + Verified Seal',
+  selloName: 'Continuous listening + Empresa / Esfuerzo Consciente seal',
   selloPrice: '$24,500 MXN + VAT per month',
   selloNote: 'Listening $14,500 + Seal $10,000 · $4,900 per month to the Conscious Fund',
   selloBullets: [

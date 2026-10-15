@@ -27,6 +27,7 @@ export type OrgRow = {
   max_extension_days: number
   allow_early_close: boolean
   seat_limit: number
+  source_request_id?: string | null
 }
 
 export const rulesOf = (o: OrgRow): OrgRules => ({
@@ -34,6 +35,13 @@ export const rulesOf = (o: OrgRow): OrgRules => ({
   allowEarlyClose: o.allow_early_close ?? DEFAULT_RULES.allowEarlyClose,
   seatLimit: o.seat_limit ?? DEFAULT_RULES.seatLimit,
 })
+
+/** Org type from the originating request (org_pilot_requests.org_type); null if unknown. */
+export async function orgTypeOf(o: Pick<OrgRow, 'source_request_id'>): Promise<string | null> {
+  if (!o.source_request_id) return null
+  const { data } = await db().from('org_pilot_requests').select('org_type').eq('id', o.source_request_id).maybeSingle()
+  return (data as { org_type?: string | null } | null)?.org_type ?? null
+}
 
 export async function getOrgBySlug(slug: string): Promise<OrgRow | null> {
   const { data } = await db().from('orgs').select('*').eq('slug', slug).maybeSingle()

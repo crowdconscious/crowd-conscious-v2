@@ -8,10 +8,14 @@ import { NextResponse } from 'next/server'
 import { orgAccess, type OrgAccess, type Role } from './access'
 import { DEMO_ORG, DEMO_READINGS, previousClosed } from './demo-data'
 import { toClientReading, withoutContraste, type ClientReading } from './readings'
-import { getOrgBySlug, getReadingRow, listReadingRows, loadRawAnswers, loadReading, rulesOf, type OrgRow } from './repo'
+import { orgTypeOf, getOrgBySlug, getReadingRow, listReadingRows, loadRawAnswers, loadReading, rulesOf, type OrgRow } from './repo'
 import { MIN_RESPONSES_FOR_HEADLINE, segmentFor } from './firmness'
 import type { RawAnswer } from './csv'
 import { DEFAULT_RULES, selloEarned, type OrgRules } from './rules'
+import { selloVariantFor, type SelloVariant } from './sello-badge'
+
+/** The fictitious demo org is a hospital (company). */
+export const DEMO_SELLO_VARIANT: SelloVariant = 'empresa'
 
 export type OrgContext = {
   demo: boolean
@@ -23,13 +27,14 @@ export type OrgContext = {
   rules: OrgRules
   billingActive: boolean
   sello: boolean
+  selloVariant: SelloVariant
 }
 
 export async function orgContext(slug: string): Promise<{ ok: true; ctx: OrgContext; access: OrgAccess } | { ok: false; access: OrgAccess }> {
   const access = await orgAccess(slug)
   if (access.kind === 'demo') {
     const sello = selloEarned('active', DEMO_READINGS)
-    return { ok: true, access, ctx: { demo: true, slug, name: DEMO_ORG.name, role: 'viewer', userId: null, org: null, rules: DEFAULT_RULES, billingActive: true, sello } }
+    return { ok: true, access, ctx: { demo: true, slug, name: DEMO_ORG.name, role: 'viewer', userId: null, org: null, rules: DEFAULT_RULES, billingActive: true, sello, selloVariant: DEMO_SELLO_VARIANT } }
   }
   if (access.kind !== 'member') return { ok: false, access }
   const rows = await listReadingRows(access.org.id)
@@ -46,6 +51,7 @@ export async function orgContext(slug: string): Promise<{ ok: true; ctx: OrgCont
       rules: rulesOf(access.org),
       billingActive: access.org.billing_status === 'active',
       sello: selloEarned(access.org.billing_status, rows),
+      selloVariant: selloVariantFor(await orgTypeOf(access.org)),
     },
   }
 }
