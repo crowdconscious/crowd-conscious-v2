@@ -5,11 +5,11 @@ import { ORG_PORTAL_V2 } from '@/lib/org/config'
 import { MIN_RESPONSES_FOR_HEADLINE } from '@/lib/org/firmness'
 import { clientReadings, controlsFor, orgContext } from '@/lib/org/server-reading'
 import { createShareToken } from '@/lib/org/share-token'
-import { getOrgLocale } from '@/app/organizaciones/locale'
+import { reportLocale } from '@/lib/org/locale-pref'
 
 export const dynamic = 'force-dynamic'
 
-export default async function OrgReadingPage({ params }: { params: Promise<{ slug: string; id: string }> }) {
+export default async function OrgReadingPage({ params, searchParams }: { params: Promise<{ slug: string; id: string }>; searchParams?: Promise<{ lang?: string }> }) {
   if (!ORG_PORTAL_V2) notFound()
   const { slug, id } = await params
   const c = await orgContext(slug)
@@ -20,7 +20,7 @@ export default async function OrgReadingPage({ params }: { params: Promise<{ slu
   const ctx = c.ctx
   const readings = await clientReadings(ctx)
   if (!readings.some((r) => r.id === id)) notFound()
-  const locale = await getOrgLocale()
+  const locale = reportLocale((await searchParams)?.lang, c.ok ? c.ctx.org?.locale : null)
   const es = locale === 'es'
   const resumenHrefs: Record<string, string> = {}
   const pdfHrefs: Record<string, string> = {}

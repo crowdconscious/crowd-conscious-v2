@@ -83,6 +83,16 @@ export function toClientReading(r: Reading): ClientReading {
   }
 }
 
+/** Response rate is only meaningful when the client declared how many people got the link. */
+export function hasInvited(r: Pick<Reading, 'invited'>) {
+  return r.invited > 0
+}
+
+/** Count tiles: invited/responses/rate, or just responses when invited is unknown (0). */
+export function countTiles(r: Pick<Reading, 'invited' | 'responded'>, l: { invited: string; responded: string; rate: string }, nf: (n: number) => string = String): [string, string][] {
+  return hasInvited(r) ? [[l.invited, nf(r.invited)], [l.responded, nf(r.responded)], [l.rate, `${responseRate(r)}%`]] : [[l.responded, nf(r.responded)]]
+}
+
 export function responseRate(r: Pick<Reading, 'invited' | 'responded'>) {
   return r.invited > 0 ? Math.round((r.responded / r.invited) * 1000) / 10 : 0
 }

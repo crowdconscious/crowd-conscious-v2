@@ -7,7 +7,7 @@
 import { jsPDF } from 'jspdf'
 import { FIRM_THRESHOLD, orderByFirmYes } from './firmness'
 import { readingHeadline } from './headline-copy'
-import { responseRate, type ClientReading } from './readings'
+import { countTiles, type ClientReading } from './readings'
 
 type RGB = [number, number, number]
 const DARK: RGB = [15, 20, 25]
@@ -82,11 +82,7 @@ export function generateReadingPdf(r: ClientReading, orgName: string, locale: 'e
   doc.setFontSize(10)
   doc.setFont('helvetica', 'bold')
   doc.setTextColor(...DARK)
-  const nums = [
-    `${es ? 'Invitados' : 'Invited'}: ${r.invited}`,
-    `${es ? 'Respuestas' : 'Responses'}: ${r.responded}`,
-    `${es ? 'Tasa de respuesta' : 'Response rate'}: ${responseRate(r)}%`,
-  ]
+  const nums = countTiles(r, { invited: es ? 'Invitados' : 'Invited', responded: es ? 'Respuestas' : 'Responses', rate: es ? 'Tasa de respuesta' : 'Response rate' }).map(([k, v]) => `${k}: ${v}`)
   nums.forEach((t, i) => doc.text(t, M + i * (CW / 3), y))
   y += 8
   doc.setFont('helvetica', 'normal')

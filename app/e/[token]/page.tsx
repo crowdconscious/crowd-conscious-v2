@@ -1,7 +1,8 @@
 import { notFound } from 'next/navigation'
 import SurveyForm from '@/components/org/SurveyForm'
 import { ORG_PORTAL_V2 } from '@/lib/org/config'
-import { surveyByToken } from '@/lib/org/survey'
+import { guardSecret, surveyByToken } from '@/lib/org/survey'
+import { issueNonce } from '@/lib/org/survey-guard'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { robots: { index: false, follow: false } }
@@ -18,7 +19,7 @@ export default async function SurveyPage({ params }: { params: Promise<{ token: 
         <p className="text-sm font-semibold text-emerald-300">{s.orgName}</p>
         <h1 className="mt-1 text-2xl font-bold text-white">{s.title[s.locale]}</h1>
         {s.open ? (
-          <SurveyForm token={token} locale={s.locale} questions={s.questions.map((q) => ({ id: q.id, text: q.text[s.locale] }))} />
+          <SurveyForm token={token} nonce={issueNonce(guardSecret(), s.readingId)} locale={s.locale} questions={s.questions.map((q) => ({ id: q.id, text: q.text[s.locale] }))} />
         ) : (
           <p className="mt-6 rounded-xl border border-slate-600 p-4 text-slate-200">
             {s.locale === 'es' ? 'Esta consulta ya cerró. Gracias.' : 'This survey is closed. Thank you.'}

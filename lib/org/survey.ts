@@ -9,9 +9,14 @@ export function newAnonId() {
 }
 
 /** Per-reading anonymous hash: dedupes one browser per reading, identifies no one. */
-export function respondentHash(surveyToken: string, anonId: string) {
+export function guardSecret() {
   const key = process.env.ORG_RESPONDENT_SECRET || process.env.ORG_SHARE_SECRET
   if (!key || key.length < 32) throw new Error('ORG_RESPONDENT_SECRET (>=32 chars) is not configured')
+  return key
+}
+
+export function respondentHash(surveyToken: string, anonId: string) {
+  const key = guardSecret()
   return createHmac('sha256', key).update(`${surveyToken}:${anonId}`).digest('base64url')
 }
 

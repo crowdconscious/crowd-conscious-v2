@@ -9,17 +9,17 @@ const T = {
     intro: 'Responda sí o no y diga qué tan seguro está, de 1 (nada) a 10 (totalmente). Es anónimo: no pedimos nombre, correo ni teléfono.',
     yes: 'Sí', no: 'No', cert: '¿Qué tan seguro está?', reason: '¿Por qué? (opcional, no escriba nombres ni datos personales)',
     send: 'Enviar respuestas', sending: 'Enviando…', done: 'Gracias. Su respuesta quedó registrada de forma anónima.',
-    missing: 'Responda todas las preguntas y su certeza.', already: 'Ya respondió esta consulta desde este navegador.', closed: 'Esta consulta ya cerró.', error: 'No pudimos enviar. Intente de nuevo.',
+    missing: 'Responda todas las preguntas y su certeza.', already: 'Ya respondió esta consulta desde este navegador.', closed: 'Esta consulta ya cerró.', reload: 'La página expiró. Recárguela e intente de nuevo.', wait: 'Demasiados envíos. Espere unos minutos e intente de nuevo.', error: 'No pudimos enviar. Intente de nuevo.',
   },
   en: {
     intro: 'Answer yes or no and say how sure you are, from 1 (not at all) to 10 (completely). Anonymous: we ask for no name, email or phone.',
     yes: 'Yes', no: 'No', cert: 'How sure are you?', reason: 'Why? (optional; no names or personal details)',
     send: 'Send answers', sending: 'Sending…', done: 'Thank you. Your answer was recorded anonymously.',
-    missing: 'Answer every question and its certainty.', already: 'You already answered from this browser.', closed: 'This survey is closed.', error: 'Could not send. Please try again.',
+    missing: 'Answer every question and its certainty.', already: 'You already answered from this browser.', closed: 'This survey is closed.', reload: 'This page expired. Reload it and try again.', wait: 'Too many submissions. Wait a few minutes and try again.', error: 'Could not send. Please try again.',
   },
 }
 
-export default function SurveyForm({ token, locale, questions }: { token: string; locale: 'es' | 'en'; questions: { id: string; text: string }[] }) {
+export default function SurveyForm({ token, nonce, locale, questions }: { token: string; nonce: string; locale: 'es' | 'en'; questions: { id: string; text: string }[] }) {
   const t = T[locale]
   const [a, setA] = useState<Record<string, A>>(Object.fromEntries(questions.map((q) => [q.id, { answer: null, certainty: null, reason: '' }])))
   const [state, setState] = useState<'idle' | 'sending' | 'done'>('idle')
@@ -34,12 +34,12 @@ export default function SurveyForm({ token, locale, questions }: { token: string
     const res = await fetch(`/api/org/encuesta/${token}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ answers: questions.map((q) => ({ question_id: q.id, answer: a[q.id].answer, certainty: a[q.id].certainty, reason: a[q.id].reason || undefined })) }),
+      body: JSON.stringify({ nonce, answers: questions.map((q) => ({ question_id: q.id, answer: a[q.id].answer, certainty: a[q.id].certainty, reason: a[q.id].reason || undefined })) }),
     })
     if (res.ok) return setState('done')
     const j = await res.json().catch(() => ({}))
     setState('idle')
-    setErr(j.error === 'already_answered' ? t.already : j.error === 'closed' ? t.closed : t.error)
+    setErr(j.error === 'already_answered' ? t.already : j.error === 'closed' ? t.closed : j.error === 'reload' ? t.reload : j.error === 'rate_limited' || j.error === 'too_fast' ? t.wait : t.error)
   }
 
   if (state === 'done') return <p className="mt-6 rounded-xl border border-emerald-400/50 bg-emerald-400/10 p-4 text-emerald-100" role="status">{t.done}</p>
