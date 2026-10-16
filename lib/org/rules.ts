@@ -28,16 +28,16 @@ export function canCloseEarly(rules: OrgRules, s: FieldState) {
  * Visibility (public/private) is the client's choice and can change at any
  * time, in any status (Francisco, 14 Oct 2026). Every change is logged in
  * org_reading_events ('visibility_set' with from/to). The Sello follows it
- * immediately because selloEarned() is computed on every request.
+ * immediately because selloVerificadoEarned() is computed on every request.
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const canSetVisibility = (_status: FieldState['status']) => true
 
 /**
- * Sello: earned automatically while the client is paying (billing active) and
+ * Sello verificado (paid B2B, NOT Lugar Consciente): earned automatically while the client is paying (billing active) and
  * at least one closed reading is public. No other criteria. It disappears as
  * soon as billing stops or no closed reading is public.
  */
-export function selloEarned(billingStatus: 'active' | 'inactive', readings: { status: string; visibility: string }[]) {
+export function selloVerificadoEarned(billingStatus: 'active' | 'inactive', readings: { status: string; visibility: string }[]) {
   return billingStatus === 'active' && readings.some((r) => r.status === 'closed' && r.visibility === 'public')
 }

@@ -31,6 +31,10 @@
   },
   "crons": [
     {
+      "path": "/api/cron/lugar-consciente",
+      "schedule": "0 13 * * *"
+    },
+    {
       "path": "/api/cron/newsletter",
       "schedule": "0 14 * * 1,3,5"
     },

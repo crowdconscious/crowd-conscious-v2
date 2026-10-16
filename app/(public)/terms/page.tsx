@@ -10,7 +10,7 @@ export default function TermsPage() {
   const content = {
     es: {
       title: "Términos y Condiciones de Uso",
-      lastUpdated: "Última actualización: 13 de octubre de 2026",
+      lastUpdated: "Última actualización: 16 de octubre de 2026",
       sections: [
         {
           title: "1. Aceptación de los Términos",
@@ -18,7 +18,7 @@ export default function TermsPage() {
         },
         {
           title: "2. Descripción del Servicio",
-          content: "Crowd Conscious es una plataforma de consulta pública gratuita (free-to-play) que canaliza la inteligencia colectiva hacia el impacto social. La Plataforma permite a los usuarios: (a) Participar en Pulses (consultas ponderadas por confianza) sobre temas como Copa Mundial, economía, política, sostenibilidad y más, sin arriesgar dinero; (b) Ganar XP y logros por sus votos; (c) Votar democráticamente sobre qué causas comunitarias reciben fondos del Fondo Consciente; (d) Sugerir ideas de Pulses en el Buzón Consciente. Además, Crowd Conscious ofrece: (e) Organizaciones, un servicio para empresas e instituciones descrito en la sección 7; y (f) Patrocinio comunitario en /patrocinio, un apoyo directo al Fondo Consciente descrito en la sección 8."
+          content: "Crowd Conscious es una plataforma de consulta pública gratuita (free-to-play) que canaliza la inteligencia colectiva hacia el impacto social. La Plataforma permite a los usuarios: (a) Participar en Pulses (consultas ponderadas por confianza) sobre temas como Copa Mundial, economía, política, sostenibilidad y más, sin arriesgar dinero; (b) Ganar XP y logros por sus votos; (c) Votar democráticamente sobre qué causas comunitarias reciben fondos del Fondo Consciente; (d) Sugerir ideas de Pulses en el Buzón Consciente. Además, Crowd Conscious ofrece: (e) Organizaciones, un servicio para empresas e instituciones descrito en la sección 7; (f) Patrocinio comunitario en /patrocinio, un apoyo directo al Fondo Consciente descrito en la sección 8; y (g) los sellos Lugar Consciente (gratuito) y Sello verificado (de pago), descritos en la sección 8 bis."
         },
         {
           title: "3. Registro y Cuentas de Usuario",
@@ -38,11 +38,15 @@ export default function TermsPage() {
         },
         {
           title: "7. Organizaciones (servicio para empresas e instituciones)",
-          content: "Organizaciones ofrece Lecturas (mediciones puntuales) y Escucha continua (mediciones recurrentes) de la opinión de los usuarios, clientes o públicos de la organización contratante, además del Sello como complemento opcional de +$10,000 MXN al mes (más IVA) sobre el plan contratado. Cada respuesta incluye un nivel de certeza de 1 a 10. La organización contratante no puede editar, ocultar ni alterar los resultados; Crowd Conscious tampoco los modifica. No se solicitan datos personales a las personas que responden: la organización recibe resultados agregados, nunca identidades. Los alcances, precios y plazos específicos se establecen en la propuesta o en la página de contratación aceptada por el cliente."
+          content: "Organizaciones ofrece Lecturas (mediciones puntuales) y Escucha continua (mediciones recurrentes) de la opinión de los usuarios, clientes o públicos de la organización contratante, además del Sello verificado como complemento opcional de +$10,000 MXN al mes (más IVA) sobre el plan contratado, basado en una lectura medida con resultados públicos (ver sección 8 bis). Cada respuesta incluye un nivel de certeza de 1 a 10. La organización contratante no puede editar, ocultar ni alterar los resultados; Crowd Conscious tampoco los modifica. No se solicitan datos personales a las personas que responden: la organización recibe resultados agregados, nunca identidades. Los alcances, precios y plazos específicos se establecen en la propuesta o en la página de contratación aceptada por el cliente."
         },
         {
           title: "8. Patrocinio comunitario",
           content: "El Patrocinio comunitario disponible en /patrocinio es un apoyo directo al Fondo Consciente. Las aportaciones se pagan con tarjeta en el sitio a través de Stripe. Se descuentan las comisiones de la tarjeta; el resto va al Fondo Consciente. Tras el pago enviamos por correo (si lo proporcionó) una confirmación de aportación, que no es factura ni comprobante fiscal (CFDI) y no es un recibo de donativo deducible de impuestos. No constituye la contratación de un servicio de medición ni de publicidad, ni otorga control sobre consultas, resultados o causas; las causas que reciben recursos se eligen por votación de la comunidad."
+        },
+        {
+          title: "8 bis. Sellos: Lugar Consciente y Sello verificado",
+          content: "Crowd Conscious otorga dos sellos distintos, con nombres y requisitos diferentes. (a) Lugar Consciente es gratuito y se gana; no se compra. Pueden obtenerlo los lugares que entran por Conscious Locations (nominados o aprobados) cuando: (i) durante al menos 4 semanas distintas dentro de un periodo móvil de 8 semanas, al menos 3 personas distintas por semana votan en Pulses a través del QR o enlace propio del lugar, sumando al menos 25 personas distintas; y (ii) una persona autorizada acepta, en nombre del lugar, nuestros 7 valores (Escucha, Transparencia, Acción, Cuidado del entorno, Comunidad local, Inclusión y Difusión). Los valores son un compromiso de buena fe para vivir por ellos; no son reglas auditadas ni una certificación de cumplimiento, y Crowd Conscious no garantiza ni respalda las prácticas, productos o servicios del lugar. No cuentan los votos del propio dueño ni los votos en exceso desde una misma red; los casos con señales de manipulación pasan a revisión manual. El sello es válido 12 meses y se renueva si el lugar vuelve a cumplir los requisitos con la versión vigente de los valores; de lo contrario, vence. Crowd Conscious puede revocarlo en cualquier momento si hay manipulación, información falsa, uso indebido del distintivo o conductas contrarias a los valores. Mientras esté vigente, el lugar puede mostrar el distintivo sin modificarlo y enlazado a su página pública de verificación; al vencer o ser revocado debe dejar de usarlo. (b) Sello verificado es parte del servicio de pago de Organizaciones (sección 7): se basa en una lectura medida con resultados públicos y está activo sólo mientras el servicio está vigente y al menos una lectura cerrada es pública. Las organizaciones con Sello verificado reciben también Lugar Consciente, sin cumplir el requisito de difusión, una vez que aceptan nuestros valores; ese Lugar Consciente se mantiene mientras el servicio siga vigente. Los nombres anteriores \"Empresa Consciente\" y \"Esfuerzo Consciente\" quedan sustituidos por \"Sello verificado\"."
         },
         {
           title: "9. Pagos, comprobantes y facturación",
@@ -50,7 +54,7 @@ export default function TermsPage() {
         },
         {
           title: "10. Cancelaciones y reembolsos",
-          content: "Las cancelaciones de planes recurrentes (Escucha continua y Sello) y las solicitudes de reembolso se atienden conforme a lo pactado en la propuesta o contratación aceptada por el cliente y a la legislación aplicable, incluida la Ley Federal de Protección al Consumidor cuando corresponda. Para solicitar una cancelación o reembolso escriba a comunidad@crowdconscious.app."
+          content: "Las cancelaciones de planes recurrentes (Escucha continua y Sello verificado) y las solicitudes de reembolso se atienden conforme a lo pactado en la propuesta o contratación aceptada por el cliente y a la legislación aplicable, incluida la Ley Federal de Protección al Consumidor cuando corresponda. Para solicitar una cancelación o reembolso escriba a comunidad@crowdconscious.app."
         },
         {
           title: "11. Contenido del Usuario",
@@ -58,7 +62,7 @@ export default function TermsPage() {
         },
         {
           title: "12. Prohibiciones",
-          content: "Está prohibido: (a) Usar la Plataforma para actividades ilegales; (b) Publicar contenido falso o engañoso; (c) Intentar comprometer la seguridad de la Plataforma; (d) Usar la Plataforma para spam o actividades comerciales no autorizadas; (e) Manipular consultas o votaciones de causas de forma fraudulenta."
+          content: "Está prohibido: (a) Usar la Plataforma para actividades ilegales; (b) Publicar contenido falso o engañoso; (c) Intentar comprometer la seguridad de la Plataforma; (d) Usar la Plataforma para spam o actividades comerciales no autorizadas; (e) Manipular consultas o votaciones de causas de forma fraudulenta; (f) Inflar artificialmente los votos atribuidos a un lugar (por ejemplo, votar uno mismo, usar múltiples cuentas o dispositivos, o pagar o condicionar beneficios a cambio de votos) para obtener o conservar el sello Lugar Consciente."
         },
         {
           title: "13. Privacidad y Protección de Datos",
@@ -80,7 +84,7 @@ export default function TermsPage() {
     },
     en: {
       title: "Terms and Conditions of Use",
-      lastUpdated: "Last updated: October 13, 2026",
+      lastUpdated: "Last updated: October 16, 2026",
       sections: [
         {
           title: "1. Acceptance of Terms",
@@ -88,7 +92,7 @@ export default function TermsPage() {
         },
         {
           title: "2. Service Description",
-          content: "Crowd Conscious is a free-to-play public consultation platform that channels collective intelligence toward social impact. The Platform enables users to: (a) Participate in Pulses (confidence-weighted consultations) on topics such as World Cup, economy, policy, sustainability, and more, without risking money; (b) Earn XP and achievements for their votes; (c) Vote democratically on which community causes receive grants from the Conscious Fund; (d) Suggest Pulse ideas in the Conscious Inbox. Crowd Conscious also offers: (e) Organizations, a service for companies and institutions described in section 7; and (f) Community Sponsorship at /patrocinio, direct support for the Conscious Fund described in section 8."
+          content: "Crowd Conscious is a free-to-play public consultation platform that channels collective intelligence toward social impact. The Platform enables users to: (a) Participate in Pulses (confidence-weighted consultations) on topics such as World Cup, economy, policy, sustainability, and more, without risking money; (b) Earn XP and achievements for their votes; (c) Vote democratically on which community causes receive grants from the Conscious Fund; (d) Suggest Pulse ideas in the Conscious Inbox. Crowd Conscious also offers: (e) Organizations, a service for companies and institutions described in section 7; (f) Community Sponsorship at /patrocinio, direct support for the Conscious Fund described in section 8; and (g) the Lugar Consciente (free) and Sello verificado (paid) seals, described in section 8 bis."
         },
         {
           title: "3. User Registration and Accounts",
@@ -108,11 +112,15 @@ export default function TermsPage() {
         },
         {
           title: "7. Organizations (service for companies and institutions)",
-          content: "Organizations offers Readings (one-off measurements) and Continuous Listening (recurring measurements) of the opinion of the hiring organization's users, customers or audiences, plus the Seal as an optional add-on of +$10,000 MXN per month (plus VAT) on top of the contracted plan. Every answer includes a certainty level from 1 to 10. The hiring organization cannot edit, hide or alter results; Crowd Conscious does not modify them either. No personal data is requested from respondents: the organization receives aggregate results, never identities. Specific scope, prices and timelines are set out in the proposal or hiring page accepted by the client."
+          content: "Organizations offers Readings (one-off measurements) and Continuous Listening (recurring measurements) of the opinion of the hiring organization's users, customers or audiences, plus the Sello verificado as an optional add-on of +$10,000 MXN per month (plus VAT) on top of the contracted plan, based on a measured reading with public results (see section 8 bis). Every answer includes a certainty level from 1 to 10. The hiring organization cannot edit, hide or alter results; Crowd Conscious does not modify them either. No personal data is requested from respondents: the organization receives aggregate results, never identities. Specific scope, prices and timelines are set out in the proposal or hiring page accepted by the client."
         },
         {
           title: "8. Community Sponsorship",
           content: "Community Sponsorship, available at /patrocinio, is direct support for the Conscious Fund. Contributions are paid by card on the site through Stripe. Card fees are deducted; the rest goes to the Conscious Fund. After payment we email (if provided) a contribution confirmation, which is not a tax invoice (CFDI) and not a tax-deductible donation receipt. It is not the purchase of a measurement or advertising service and grants no control over consultations, results or causes; the causes that receive funds are chosen by community vote."
+        },
+        {
+          title: "8 bis. Seals: Lugar Consciente and Sello verificado",
+          content: "Crowd Conscious grants two different seals, with different names and requirements. (a) Lugar Consciente is free and earned; it cannot be bought. Places that join through Conscious Locations (nominated or approved) can earn it when: (i) in at least 4 distinct weeks within a rolling 8-week period, at least 3 different people per week vote in Pulses through the place's own QR or link, adding up to at least 25 different people; and (ii) an authorized person accepts, on the place's behalf, our 7 values (Listening, Transparency, Action, Care for the environment, Local community, Inclusion and Spreading the word). The values are a good-faith commitment to live by them; they are not audited rules or a compliance certification, and Crowd Conscious does not guarantee or endorse the place's practices, products or services. The owner's own votes and excess votes from a single network do not count; cases showing signs of manipulation go to manual review. The seal is valid for 12 months and renews if the place qualifies again under the current version of the values; otherwise it expires. Crowd Conscious may revoke it at any time for manipulation, false information, misuse of the badge or conduct contrary to the values. While it is valid, the place may display the badge unmodified and linked to its public verification page; once expired or revoked it must stop using it. (b) Sello verificado is part of the paid Organizations service (section 7): it is based on a measured reading with public results and is active only while the service is active and at least one closed reading is public. Organizations with Sello verificado also receive Lugar Consciente, without the distribution requirement, once they accept our values; that Lugar Consciente stays active while the service remains active. The former names \"Empresa Consciente\" and \"Esfuerzo Consciente\" are replaced by \"Sello verificado\"."
         },
         {
           title: "9. Payments, receipts and invoicing",
@@ -120,7 +128,7 @@ export default function TermsPage() {
         },
         {
           title: "10. Cancellations and refunds",
-          content: "Cancellations of recurring plans (Continuous Listening and the Seal) and refund requests are handled according to the proposal or hiring terms accepted by the client and applicable law, including Mexico's Federal Consumer Protection Law where it applies. To request a cancellation or refund, write to comunidad@crowdconscious.app."
+          content: "Cancellations of recurring plans (Continuous Listening and the Sello verificado) and refund requests are handled according to the proposal or hiring terms accepted by the client and applicable law, including Mexico's Federal Consumer Protection Law where it applies. To request a cancellation or refund, write to comunidad@crowdconscious.app."
         },
         {
           title: "11. User Content",
@@ -128,7 +136,7 @@ export default function TermsPage() {
         },
         {
           title: "12. Prohibitions",
-          content: "It is prohibited to: (a) Use the Platform for illegal activities; (b) Post false or misleading content; (c) Attempt to compromise the Platform's security; (d) Use the Platform for spam or unauthorized commercial activities; (e) Fraudulently manipulate consultations or cause voting."
+          content: "It is prohibited to: (a) Use the Platform for illegal activities; (b) Post false or misleading content; (c) Attempt to compromise the Platform's security; (d) Use the Platform for spam or unauthorized commercial activities; (e) Fraudulently manipulate consultations or cause voting; (f) Artificially inflate votes attributed to a place (for example, self-voting, using multiple accounts or devices, or paying or conditioning benefits in exchange for votes) to obtain or keep the Lugar Consciente seal."
         },
         {
           title: "13. Privacy and Data Protection",
@@ -209,7 +217,7 @@ export default function TermsPage() {
           </div>
 
           <div className="mt-8 pt-6 border-t border-gray-200 text-center">
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-600">
               {language === 'es' 
                 ? 'Al usar Crowd Conscious, acepta estos términos y condiciones.'
                 : 'By using Crowd Conscious, you agree to these terms and conditions.'
