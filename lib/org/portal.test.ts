@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { aggregateCsv, answersCsv, type RawAnswer } from './csv.ts'
 import { DEMO_READINGS } from './demo-data.ts'
 import { toClientReading } from './readings.ts'
-import { canCloseEarly, canExtend, canSetVisibility, DEFAULT_RULES, selloEarned } from './rules.ts'
+import { canCloseEarly, canExtend, canSetVisibility, DEFAULT_RULES, selloVerificadoEarned } from './rules.ts'
 import { phraseFor, readingHeadline } from './headline-copy.ts'
 import { buildReportContent } from './report-content.ts'
 
@@ -22,10 +22,10 @@ test('defaults: no extension, early close allowed and preliminary under 30', () 
 })
 
 test('sello: paying AND a closed public reading, nothing else', () => {
-  assert.equal(selloEarned('active', [{ status: 'closed', visibility: 'public' }]), true)
-  assert.equal(selloEarned('inactive', [{ status: 'closed', visibility: 'public' }]), false)
-  assert.equal(selloEarned('active', [{ status: 'closed', visibility: 'private' }]), false)
-  assert.equal(selloEarned('active', [{ status: 'field', visibility: 'public' }]), false)
+  assert.equal(selloVerificadoEarned('active', [{ status: 'closed', visibility: 'public' }]), true)
+  assert.equal(selloVerificadoEarned('inactive', [{ status: 'closed', visibility: 'public' }]), false)
+  assert.equal(selloVerificadoEarned('active', [{ status: 'closed', visibility: 'private' }]), false)
+  assert.equal(selloVerificadoEarned('active', [{ status: 'field', visibility: 'public' }]), false)
 })
 
 test('every deep-dive headline names its question', () => {

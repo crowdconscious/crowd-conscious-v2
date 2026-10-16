@@ -7,6 +7,8 @@ import { createAdminClient } from '@/lib/supabase-admin'
 import { userOwnsLocation } from '@/lib/perks/location-owner'
 import { createClient } from '@/lib/supabase-server'
 import LocationOwnerDashboardClient from '@/components/perks/LocationOwnerDashboardClient'
+import LugarConscientePanel from '@/components/lugar/LugarConscientePanel'
+import { LUGAR_CONSCIENTE_ENABLED } from '@/lib/lugar/config'
 
 export const dynamic = 'force-dynamic'
 
@@ -53,6 +55,7 @@ export default async function LocationOwnerDashboardPage({ params }: Props) {
         slug={slug}
         initialLocation={{ slug: location.slug, name: location.name, status: location.status }}
       />
+      {LUGAR_CONSCIENTE_ENABLED ? <LugarConscientePanel location={location} locale={locale} /> : null}
     </div>
   )
 }
