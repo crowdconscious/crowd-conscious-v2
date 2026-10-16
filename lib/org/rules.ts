@@ -24,8 +24,14 @@ export function canCloseEarly(rules: OrgRules, s: FieldState) {
   return { ok: true as const, preliminary: s.responded < MIN_RESPONSES_FOR_HEADLINE }
 }
 
-/** Visibility can only be chosen while the reading is in design; it locks when field opens. */
-export const canSetVisibility = (status: FieldState['status']) => status === 'design'
+/**
+ * Visibility (public/private) is the client's choice and can change at any
+ * time, in any status (Francisco, 14 Oct 2026). Every change is logged in
+ * org_reading_events ('visibility_set' with from/to). The Sello follows it
+ * immediately because selloEarned() is computed on every request.
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const canSetVisibility = (_status: FieldState['status']) => true
 
 /**
  * Sello: earned automatically while the client is paying (billing active) and

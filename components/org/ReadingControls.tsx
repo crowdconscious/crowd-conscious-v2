@@ -18,16 +18,14 @@ export type ControlsModel = {
 const T = {
   es: {
     title: 'Controles', vis: 'Visibilidad de resultados', pub: 'Pública', priv: 'Privada',
-    visLocked: 'Se decidió antes de abrir la consulta y ya no puede cambiar.',
-    visDesign: 'Puede cambiarla hasta que abra la consulta; después queda fija.',
+    visHelp: 'Puede cambiarla en cualquier momento. Si es pública, aparece en su página pública y cuenta para el Sello; el cambio aplica de inmediato y queda registrado.',
     extend: (n: number) => `Extender ${n} ${n === 1 ? 'día' : 'días'}`, noExtend: 'Su plan no incluye extender el periodo.',
     close: 'Cerrar ahora', closeWarn: (n: number) => `Con menos de ${n} respuestas, la lectura quedará como «preliminar».`,
     confirmClose: '¿Cerrar la consulta ahora? No se puede reabrir.', viewer: 'Solo las personas administradoras pueden cambiar esto.', err: 'No se pudo aplicar el cambio.',
   },
   en: {
     title: 'Controls', vis: 'Results visibility', pub: 'Public', priv: 'Private',
-    visLocked: 'Decided before the survey opened; it can no longer change.',
-    visDesign: 'You can change it until the survey opens; then it locks.',
+    visHelp: 'You can change it at any time. Public results appear on your public page and count toward the Seal; the change applies immediately and is logged.',
     extend: (n: number) => `Extend ${n} ${n === 1 ? 'day' : 'days'}`, noExtend: 'Your plan does not include extending the period.',
     close: 'Close now', closeWarn: (n: number) => `With fewer than ${n} responses, the reading will be marked "preliminary".`,
     confirmClose: 'Close the survey now? It cannot be reopened.', viewer: 'Only owners can change this.', err: 'Could not apply the change.',
@@ -59,14 +57,14 @@ export default function ReadingControls({ m, locale }: { m: ControlsModel; local
         <p className="text-sm text-slate-200">{t.vis}</p>
         <div className="mt-2 flex flex-wrap gap-2">
           {(['private', 'public'] as const).map((v) => (
-            <button key={v} type="button" disabled={!m.canEdit || busy || m.status !== 'design'} aria-pressed={m.visibility === v}
+            <button key={v} type="button" disabled={!m.canEdit || busy} aria-pressed={m.visibility === v}
               onClick={() => act({ action: 'visibility', value: v })}
               className={`${btn} ${m.visibility === v ? 'border-emerald-300 bg-emerald-400 text-[#0f1419]' : 'border-slate-500 text-slate-100'}`}>
               {v === 'public' ? t.pub : t.priv}
             </button>
           ))}
         </div>
-        <p className="mt-1 text-xs text-slate-300">{m.status === 'design' ? t.visDesign : t.visLocked}</p>
+        <p className="mt-1 text-xs text-slate-300">{t.visHelp}</p>
       </div>
       {m.status === 'field' ? (
         <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
