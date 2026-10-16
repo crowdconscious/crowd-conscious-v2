@@ -9,14 +9,14 @@ export const metadata = { title: 'Sello verificado · Crowd Conscious' }
 const T = {
   es: {
     h: 'Organizaciones con Sello verificado activo',
-    names: 'El Sello verificado es parte del servicio de pago para organizaciones: se basa en una lectura medida con resultados públicos. ¿Busca el sello gratuito para lugares? Vea Lugar Consciente.',
+    names: 'El Sello verificado es parte del servicio de pago para organizaciones: se basa en una lectura medida con resultados públicos. ¿Busca el sello gratuito para lugares? Vea',
     p: 'Está activo mientras la organización tiene el servicio vigente y publica sus resultados. Se retira automáticamente si el servicio termina o si sus resultados pasan a privados.',
     empty: 'Todavía no hay organizaciones con Sello verificado activo.',
     see: 'Ver resultados públicos',
   },
   en: {
     h: 'Organizations with an active Sello verificado',
-    names: 'The Sello verificado is part of the paid service for organizations: it is based on a measured reading with public results. Looking for the free seal for places? See Lugar Consciente.',
+    names: 'The Sello verificado is part of the paid service for organizations: it is based on a measured reading with public results. Looking for the free seal for places? See',
     p: 'It is active while the organization has an active service and publishes its results. It is removed automatically if the service ends or results become private.',
     empty: 'No organizations have an active Sello verificado yet.',
     see: 'See public results',
