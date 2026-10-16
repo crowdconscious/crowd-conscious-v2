@@ -42,7 +42,7 @@ import { recordAnonVote } from '@/lib/anon-vote-tracker'
 const LocationsMap = dynamic(() => import('./LocationsMap'), {
   ssr: false,
   loading: () => (
-    <div className="flex h-[480px] items-center justify-center rounded-2xl border border-[#2d3748] bg-[#1a2029] text-sm text-slate-500">
+    <div className="flex h-[480px] items-center justify-center rounded-2xl border border-[#2d3748] bg-[#1a2029] text-sm text-slate-400">
       Cargando mapa…
     </div>
   ),
@@ -156,7 +156,7 @@ function SwipeCard({
               <Check className="h-6 w-6" />
             </button>
           </div>
-          <p className="text-center text-xs text-slate-500">
+          <p className="text-center text-xs text-slate-400">
             {locale === 'es' ? '← Desliza o toca' : '← Swipe or tap →'}
           </p>
         </div>
@@ -500,8 +500,8 @@ export default function LocationsPage({
     nominateTitle: locale === 'es' ? 'Nominar un lugar' : 'Nominate a place',
     nominateSub:
       locale === 'es'
-        ? 'Las nominaciones son revisadas por nuestro equipo.'
-        : 'Nominations are reviewed by our team.',
+        ? 'Las nominaciones son revisadas por nuestro equipo. Los lugares nominados o aprobados pueden ganar gratis el sello Lugar Consciente: su dueño recibe un QR para difundir los Pulsos y acepta nuestros valores.'
+        : 'Nominations are reviewed by our team. Nominated or approved places can earn the free Lugar Consciente seal: the owner gets a QR to spread Pulses and accepts our values.',
     nominateSend: locale === 'es' ? 'Enviar nominación' : 'Submit nomination',
     nominateCancel: locale === 'es' ? 'Cancelar' : 'Cancel',
   }
@@ -546,7 +546,7 @@ export default function LocationsPage({
               <h3 className="text-white text-sm font-bold mb-1">
                 {locale === 'es' ? 'Aire Limpio' : 'Clean Air'}
               </h3>
-              <p className="text-gray-500 text-xs leading-snug">
+              <p className="text-slate-400 text-xs leading-snug">
                 {locale === 'es'
                   ? 'Reducción de emisiones, espacios verdes, movilidad sustentable'
                   : 'Emissions reduction, green spaces, sustainable mobility'}
@@ -559,7 +559,7 @@ export default function LocationsPage({
               <h3 className="text-white text-sm font-bold mb-1">
                 {locale === 'es' ? 'Agua Limpia' : 'Clean Water'}
               </h3>
-              <p className="text-gray-500 text-xs leading-snug">
+              <p className="text-slate-400 text-xs leading-snug">
                 {locale === 'es'
                   ? 'Uso responsable del agua, tratamiento, acceso comunitario'
                   : 'Responsible water use, treatment, community access'}
@@ -572,7 +572,7 @@ export default function LocationsPage({
               <h3 className="text-white text-sm font-bold mb-1">
                 {locale === 'es' ? 'Ciudades Seguras' : 'Safe Cities'}
               </h3>
-              <p className="text-gray-500 text-xs leading-snug">
+              <p className="text-slate-400 text-xs leading-snug">
                 {locale === 'es'
                   ? 'Inclusión, seguridad comunitaria, accesibilidad, empleo local'
                   : 'Inclusion, community safety, accessibility, local employment'}
@@ -585,7 +585,7 @@ export default function LocationsPage({
               <h3 className="text-white text-sm font-bold mb-1">
                 {locale === 'es' ? 'Cero Desperdicio' : 'Zero Waste'}
               </h3>
-              <p className="text-gray-500 text-xs leading-snug">
+              <p className="text-slate-400 text-xs leading-snug">
                 {locale === 'es'
                   ? 'Economía circular, reducción de plásticos, compostaje'
                   : 'Circular economy, plastic reduction, composting'}
@@ -598,7 +598,7 @@ export default function LocationsPage({
               <h3 className="text-white text-sm font-bold mb-1">
                 {locale === 'es' ? 'Comercio Justo' : 'Fair Trade'}
               </h3>
-              <p className="text-gray-500 text-xs leading-snug">
+              <p className="text-slate-400 text-xs leading-snug">
                 {locale === 'es'
                   ? 'Productores locales, precios justos, cadenas trazables'
                   : 'Local producers, fair prices, traceable supply chains'}
@@ -704,7 +704,7 @@ export default function LocationsPage({
                 <h4 className="text-white text-sm font-semibold mb-1">
                   {locale === 'es' ? 'Descuentos' : 'Discounts'}
                 </h4>
-                <p className="text-gray-500 text-xs">
+                <p className="text-slate-400 text-xs">
                   {locale === 'es'
                     ? 'Códigos exclusivos y promociones para miembros de la comunidad'
                     : 'Exclusive codes and promotions for community members'}
@@ -718,7 +718,7 @@ export default function LocationsPage({
                 <h4 className="text-white text-sm font-semibold mb-1">
                   {locale === 'es' ? 'Experiencias VIP' : 'VIP Experiences'}
                 </h4>
-                <p className="text-gray-500 text-xs">
+                <p className="text-slate-400 text-xs">
                   {locale === 'es'
                     ? 'Acceso a eventos, degustaciones y activaciones exclusivas'
                     : 'Access to events, tastings, and exclusive activations'}
@@ -732,7 +732,7 @@ export default function LocationsPage({
                 <h4 className="text-white text-sm font-semibold mb-1">
                   {locale === 'es' ? 'Impacto real' : 'Real impact'}
                 </h4>
-                <p className="text-gray-500 text-xs">
+                <p className="text-slate-400 text-xs">
                   {locale === 'es'
                     ? 'Al visitar un Conscious Location, apoyas negocios que invierten en su comunidad'
                     : 'By visiting a Conscious Location, you support businesses investing in their community'}
@@ -752,7 +752,7 @@ export default function LocationsPage({
 
         <section className="mb-12">
           <div className="mb-6 flex flex-wrap items-center gap-2">
-            <span className="text-sm text-slate-500">{locale === 'es' ? 'Ciudad' : 'City'}:</span>
+            <span className="text-sm text-slate-400">{locale === 'es' ? 'Ciudad' : 'City'}:</span>
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
@@ -839,7 +839,7 @@ export default function LocationsPage({
           <CausesCommunityRow locale={locale} city="Ciudad de México" />
 
           {loading ? (
-            <p className="text-center text-slate-500">{locale === 'es' ? 'Cargando…' : 'Loading…'}</p>
+            <p className="text-center text-slate-400">{locale === 'es' ? 'Cargando…' : 'Loading…'}</p>
           ) : viewMode === 'map' ? (
             <LocationsMap locations={filteredLocations} locale={locale} />
           ) : (
@@ -851,7 +851,7 @@ export default function LocationsPage({
           )}
 
           {!loading && filteredLocations.length === 0 && (
-            <p className="text-center text-slate-500">{locale === 'es' ? 'Sin resultados.' : 'No results.'}</p>
+            <p className="text-center text-slate-400">{locale === 'es' ? 'Sin resultados.' : 'No results.'}</p>
           )}
         </section>
 
@@ -888,7 +888,7 @@ export default function LocationsPage({
           </div>
 
           {!loading && allLocations.length === 0 && (
-            <p className="text-center text-sm text-slate-500">
+            <p className="text-center text-sm text-slate-400">
               {locale === 'es' ? 'No hay lugares activos aún.' : 'No active locations yet.'}
             </p>
           )}
@@ -900,13 +900,13 @@ export default function LocationsPage({
 
           <div className="mx-auto mb-8 flex max-w-xl flex-col gap-3 sm:flex-row">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
                 value={verifyQuery}
                 onChange={(e) => setVerifyQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && runVerify()}
                 placeholder={t.verifyPh}
-                className="w-full rounded-xl border border-[#2d3748] bg-[#1a2029] py-3 pl-10 pr-4 text-white placeholder:text-slate-500"
+                className="w-full rounded-xl border border-[#2d3748] bg-[#1a2029] py-3 pl-10 pr-4 text-white placeholder:text-slate-400"
               />
             </div>
             <button
@@ -1000,7 +1000,7 @@ export default function LocationsPage({
               <Award className="h-5 w-5 shrink-0 text-white/90" aria-hidden />
               {locale === 'es' ? 'Nominar un lugar' : 'Nominate a place'}
             </button>
-            <p className="mt-4 text-xs text-gray-500">
+            <p className="mt-4 text-xs text-slate-400">
               {locale === 'es'
                 ? 'Las nominaciones llegan a nuestro Buzón Consciente y son revisadas por el equipo.'
                 : 'Nominations arrive in our Conscious Inbox and are reviewed by the team.'}
@@ -1088,7 +1088,7 @@ export default function LocationsPage({
                 placeholder={t.aliasPlaceholder}
                 maxLength={20}
                 autoFocus
-                className="mb-4 w-full rounded-lg border border-[#2d3748] bg-[#0f1419] px-4 py-3 text-white placeholder:text-gray-500 focus:border-emerald-500 focus:outline-none"
+                className="mb-4 w-full rounded-lg border border-[#2d3748] bg-[#0f1419] px-4 py-3 text-white placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none"
               />
               {voteError ? <p className="mb-3 text-center text-sm text-red-400">{voteError}</p> : null}
               <div className="flex gap-3">

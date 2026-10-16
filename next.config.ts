@@ -34,6 +34,9 @@ const nextConfig: NextConfig = {
    */
   async redirects() {
     return [
+      // PR #60 published the paid seal at /sello; it is now "Sello verificado".
+      { source: '/sello', destination: '/sello-verificado', permanent: true },
+      { source: '/sello/:slug', destination: '/sello-verificado/:slug', permanent: true },
       // Legacy: /communities was deprecated in favor of /locations.
       {
         source: '/communities',

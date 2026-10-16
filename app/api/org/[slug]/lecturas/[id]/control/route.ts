@@ -37,7 +37,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (error) return NextResponse.json({ error: 'update_failed' }, { status: 500 })
     // Audit trail: who switched, from what, to what, in which status.
     await logEvent(id, c.ctx.userId, 'visibility_set', { from: row.visibility, value: a.value, status: row.status })
-    // Public pages (/sello/*) are force-dynamic, so listings and the Sello update on the next request.
+    // Public pages (/sello-verificado/*) are force-dynamic, so listings and the Sello update on the next request.
     return NextResponse.json({ ok: true })
   }
   if (a.action === 'extend') {
