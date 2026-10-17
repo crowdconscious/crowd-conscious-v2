@@ -7,7 +7,7 @@ import 'server-only'
 import { NextResponse } from 'next/server'
 import { orgAccess, type OrgAccess, type Role } from './access'
 import { DEMO_ORG, DEMO_READINGS, previousClosed } from './demo-data'
-import { toClientReading, type ClientReading } from './readings'
+import { toClientReading, withoutContraste, type ClientReading } from './readings'
 import { getOrgBySlug, getReadingRow, listReadingRows, loadRawAnswers, loadReading, rulesOf, type OrgRow } from './repo'
 import { MIN_RESPONSES_FOR_HEADLINE, segmentFor } from './firmness'
 import type { RawAnswer } from './csv'
@@ -121,11 +121,11 @@ export async function controlsFor(ctx: OrgContext, id: string, responded: number
 export async function readingForShare(slug: string, id: string): Promise<{ name: string; demo: boolean; reading: ClientReading } | null> {
   if (slug === DEMO_ORG.slug) {
     const raw = DEMO_READINGS.find((r) => r.id === id)
-    return raw ? { name: DEMO_ORG.name, demo: true, reading: toClientReading(raw) } : null
+    return raw ? { name: DEMO_ORG.name, demo: true, reading: withoutContraste(toClientReading(raw)) } : null
   }
   const org = await getOrgBySlug(slug)
   if (!org) return null
   const row = await getReadingRow(org.id, id)
   if (!row || row.status !== 'closed') return null
-  return { name: org.name, demo: false, reading: toClientReading(await loadReading(row)) }
+  return { name: org.name, demo: false, reading: withoutContraste(toClientReading(await loadReading(row))) }
 }

@@ -7,6 +7,7 @@ import {
 } from '@/lib/expo-push'
 import { runPulsePublishPushBackstop } from '@/lib/pulse/publish-push-backstop'
 import { runContrasteBackstop } from '@/lib/contraste-ia/server'
+import { runOrgContrasteBackstop } from '@/lib/contraste-ia/org-server'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120
@@ -179,6 +180,16 @@ export async function GET(request: NextRequest) {
     errors.push(`contraste-ia: ${err instanceof Error ? err.message : String(err)}`)
   }
 
+  // Contraste IA backstop for org readings (design or field without a lock). One per tick.
+  let orgContrasteLocked = 0
+  try {
+    const ob = await runOrgContrasteBackstop(admin, 1)
+    orgContrasteLocked = ob.locked.length
+    if (ob.failed.length) errors.push(`contraste-ia/org: failed ${ob.failed.join(',')}`)
+  } catch (err) {
+    errors.push(`contraste-ia/org: ${err instanceof Error ? err.message : String(err)}`)
+  }
+
   // Backstop: announce Pulses published outside the app routes (migration 288).
   let backstopNotified = 0
   try {
@@ -191,7 +202,7 @@ export async function GET(request: NextRequest) {
 
   await cronHealthComplete(runId, JOB_NAME, admin, {
     success: errors.length === 0,
-    summary: `checked=${pending.length} ok=${resolvedOk} error=${resolvedError} expired=${expired} pruned=${prunedTokens} backstop_notified=${backstopNotified} contraste_locked=${contrasteLocked}`,
+    summary: `checked=${pending.length} ok=${resolvedOk} error=${resolvedError} expired=${expired} pruned=${prunedTokens} backstop_notified=${backstopNotified} contraste_locked=${contrasteLocked} org_contraste_locked=${orgContrasteLocked}`,
     error: errors.length ? errors.join('; ') : undefined,
   })
 
@@ -204,6 +215,7 @@ export async function GET(request: NextRequest) {
     pruned_tokens: prunedTokens,
     backstop_notified: backstopNotified,
     contraste_locked: contrasteLocked,
+    org_contraste_locked: orgContrasteLocked,
     errors: errors.length ? errors : undefined,
   })
 }

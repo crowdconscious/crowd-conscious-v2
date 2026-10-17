@@ -13,6 +13,7 @@ import { INTER_BOLD, INTER_ITALIC, INTER_REGULAR } from './fonts/inter-base64'
 import { buildReportContent } from './report-content'
 import type { ClientQuestion, ClientReading } from './readings'
 import type { ReasonGroup } from './redact'
+import { fmtLockedAt, orgGap, orgGapLine, orgProvenance, ORG_EXPLAINER } from '../contraste-ia/org-core'
 
 type RGB = [number, number, number]
 const C = {
@@ -25,6 +26,9 @@ const C = {
   greenLight: [110, 231, 183] as RGB,
   amber: [146, 64, 14] as RGB,
   white: [255, 255, 255] as RGB,
+  violet: [109, 40, 217] as RGB, // 7.1:1 on white
+  violetFill: [167, 139, 250] as RGB,
+  greenFill: [52, 211, 153] as RGB,
   coverMuted: [203, 213, 225] as RGB,
 }
 export const SEG = [
@@ -291,6 +295,70 @@ export function generateReadingReportPdf(r: ClientReading, o: ReportOptions): Bu
     const y2 = col(d.noTitle, q.reasons.no, M + cw + 8, y + 8, cw)
     font(8, 'normal', C.grey)
     text(k.labels.wordsFoot, M, Math.max(y1, y2) + 6, CW, 3.8)
+  }
+
+  // 4b. Contraste IA (client report only; the prediction was locked before the field opened)
+  {
+    const L = o.locale
+    const T = L === 'es'
+      ? { eyebrow: 'Contraste IA', title: 'Lo que la IA esperaba vs lo que dijo su gente', ai: 'IA (antes de abrir)', people: 'Su gente', q: 'Pregunta', none: 'Esta lectura se abrió sin una predicción de IA bloqueada, así que no hay contraste que mostrar. Lo decimos abiertamente en lugar de calcularla después de conocer las respuestas.' }
+      : { eyebrow: 'AI Contrast', title: 'What the AI expected vs what your people said', ai: 'AI (before opening)', people: 'Your people', q: 'Question', none: 'This reading opened without a locked AI prediction, so there is no contrast to show. We say so openly rather than computing one after seeing the answers.' }
+    newPage()
+    eyebrow(T.eyebrow, M, 24, C.violet)
+    font(18, 'bold', C.ink)
+    y = text(T.title, M, 36, CW, 7) + 2
+    if (!r.questions.some((q) => q.contraste)) {
+      font(10, 'normal', C.grey)
+      text(T.none, M, y + 2, CW, 5)
+    } else {
+      const ex = ORG_EXPLAINER[L]
+      font(9.5, 'normal', C.ink)
+      const exLines = doc.splitTextToSize(ex.body, CW - 10) as string[]
+      const exH = exLines.length * 4.4 + 14
+      doc.setFillColor(...C.card)
+      doc.rect(M, y, CW, exH, 'F')
+      font(10.5, 'bold', C.ink)
+      doc.text(ex.title, M + 5, y + 7)
+      font(9.5, 'normal', C.ink)
+      doc.text(exLines, M + 5, y + 12.5)
+      y += exH + 8
+      const bar = (label: string, pct: number, fill: RGB, by: number) => {
+        font(8.5, 'bold', C.grey)
+        doc.text(label, M, by + 3)
+        doc.setFillColor(...C.rule)
+        doc.rect(M + 42, by, CW - 58, 4, 'F')
+        doc.setFillColor(...fill)
+        doc.rect(M + 42, by, ((CW - 58) * Math.max(0, Math.min(100, pct))) / 100, 4, 'F')
+        font(9, 'bold', C.ink)
+        doc.text(`${pct}%`, W - M, by + 3.3, { align: 'right' })
+      }
+      r.questions.forEach((q, i) => {
+        const c = q.contraste
+        if (!c) return
+        font(8, 'normal', C.grey)
+        const prov = doc.splitTextToSize(orgProvenance(c, L, (iso) => fmtLockedAt(iso, L)), CW) as string[]
+        font(10, 'bold', C.ink)
+        const ql = doc.splitTextToSize(`${T.q} ${i + 1}. «${q.text[L]}»`, CW) as string[]
+        const need = ql.length * 5 + 26 + prov.length * 3.8
+        if (y + need > H - 20) {
+          newPage()
+          y = 24
+        }
+        font(10, 'bold', C.ink)
+        doc.text(ql, M, y)
+        y += ql.length * 5 + 1
+        const ai = Math.round(c.aiYes * 100)
+        bar(`${T.ai} ±${Math.round(c.spread * 100)}`, ai, C.violetFill, y)
+        bar(T.people, q.stats.pctYes, C.greenFill, y + 6)
+        y += 15
+        const gap = orgGap(c.aiYes, q.stats.pctYes)
+        font(9.5, Math.abs(gap) >= 10 ? 'bold' : 'normal', Math.abs(gap) >= 10 ? C.amber : C.ink)
+        y = text(orgGapLine(c.aiYes, q.stats.pctYes, L), M, y, CW, 4.6)
+        font(8, 'normal', C.grey)
+        doc.text(prov, M, y + 0.5)
+        y += prov.length * 3.8 + 7
+      })
+    }
   }
 
   // 5. To discuss

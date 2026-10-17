@@ -5,6 +5,7 @@ import Link from 'next/link'
 import ReadingControls, { type ControlsModel } from './ReadingControls'
 import { BarChart3, Download, FileText, Globe, Lock, ShieldCheck, X } from 'lucide-react'
 import { CertaintyHistogram, SplitBar, SplitLegend } from '@/components/org/SplitBar'
+import { ContrasteExplainer, ContrasteRow } from '@/components/org/ContrasteIA'
 import { FIRM_THRESHOLD, MIN_GROUP, orderByFirmYes } from '@/lib/org/firmness'
 import { readingHeadline } from '@/lib/org/headline-copy'
 import { countTiles, hasInvited, questionTrend, responseRate, type ClientQuestion, type ClientReading } from '@/lib/org/readings'
@@ -292,6 +293,7 @@ export default function ReadingDashboard({
 
           {/* 4. Question cards, lowest firm-of-yes first; original numbers kept */}
           {ordered.length && r.status === 'closed' ? <p className="text-sm text-slate-300">{c.orderNote}</p> : null}
+          {r.status === 'closed' && r.questions.some((q) => q.contraste) ? <ContrasteExplainer locale={locale} /> : null}
           {ordered.map((q) => (
             <QuestionCard
               key={q.id}
@@ -463,6 +465,8 @@ function QuestionCard({
           </p>
         </div>
       </div>
+
+      <ContrasteRow q={q} locale={locale} />
 
       {trend.kind === 'delta' ? (
         <p className="mt-3 text-sm text-slate-200">{c.trendDelta(trend.dYes, trend.dFirmYes, trend.prevPeriod[locale])}</p>

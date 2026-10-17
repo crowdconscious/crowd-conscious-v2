@@ -1,4 +1,5 @@
 import { CertaintyHistogram, SplitBar, SplitLegend } from '@/components/org/SplitBar'
+import { ContrasteSection } from '@/components/org/ContrasteIA'
 import type { ClientReading } from '@/lib/org/readings'
 import type { ReasonGroup } from '@/lib/org/redact'
 import { buildReportContent } from '@/lib/org/report-content'
@@ -165,6 +166,8 @@ export default function WebReport({
           </div>
         </section>
       ))}
+
+      <ContrasteSection questions={reading.questions} locale={locale} />
 
       <section className="mt-14 border-t border-[#2d3748] pt-10">
         <Eyebrow>{k.labels.talkEyebrow}</Eyebrow>
