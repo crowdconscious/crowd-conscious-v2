@@ -13,6 +13,8 @@ import { jsPDF } from 'jspdf'
 import 'jspdf-autotable'
 
 import type { SponsorPulseReportSnapshot } from '@/lib/agents/sponsor-pulse-report-agent'
+import type { ContrasteData } from '@/lib/contraste-ia/server'
+import { gapHeadline } from '@/lib/contraste-ia/core'
 
 export interface SponsorPulseReportPdfInput {
   sponsor: {
@@ -44,6 +46,8 @@ export interface SponsorPulseReportPdfInput {
    *    so the sponsor knows whether to wait for more votes or for a
    *    transient retry.
    */
+  /** Contraste IA (AI prediction locked pre-vote vs people). undefined = section omitted. */
+  contraste?: ContrasteData | null
   flags?: {
     isPreliminary?: boolean
     preliminaryReason?: 'insufficient_votes' | 'agent_failed' | null
@@ -116,6 +120,7 @@ export function generateSponsorPulseReportPDF(
   const tooFewVotes = (input.report.snapshot?.totalVotes ?? 0) < 5
   if (noNarrative && tooFewVotes) {
     drawAwaitingVotesBlock(ctx, input)
+    if (input.contraste !== undefined) drawContraste(ctx, input.contraste)
     drawFooterAllPages(doc, input)
     const ab = doc.output('arraybuffer') as ArrayBuffer
     return Buffer.from(ab)
@@ -130,6 +135,8 @@ export function generateSponsorPulseReportPDF(
     drawSection(ctx, 'DISTRIBUCIÓN DE VOTOS')
     drawOutcomes(ctx, input.report.snapshot)
   }
+
+  if (input.contraste !== undefined) drawContraste(ctx, input.contraste)
 
   if (input.report.convictionAnalysis) {
     drawSection(ctx, 'ANÁLISIS DE CONVICCIÓN')
@@ -556,4 +563,78 @@ function drawFooterAllPages(
       align: 'right',
     })
   }
+}
+
+const COLOR_VIOLET: [number, number, number] = [124, 58, 237]
+
+function fmtCdmx(iso: string): string {
+  return (
+    new Date(iso).toLocaleString('es-MX', {
+      timeZone: 'America/Mexico_City',
+      day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
+    }) + ' (hora CDMX)'
+  )
+}
+
+function smallMuted(ctx: PdfCtx, text: string): void {
+  const { doc } = ctx
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(8)
+  doc.setTextColor(...COLOR_MUTED) // #64748b on white = 4.8:1
+  for (const line of doc.splitTextToSize(text, CONTENT_W) as string[]) {
+    ensureSpace(ctx, 4)
+    doc.text(line, MARGIN_X, ctx.y + 3)
+    ctx.y += 4
+  }
+}
+
+/** Contraste IA: paired bars AI vs people, certainty, explainer, lock stamp. */
+function drawContraste(ctx: PdfCtx, data: ContrasteData | null): void {
+  const { doc } = ctx
+  drawSection(ctx, 'CONTRASTE IA: LO QUE LA IA ESPERABA VS LO QUE DIJO LA GENTE')
+  const p = data?.prediction
+  if (!data || !p) {
+    drawParagraph(ctx, 'Este Pulse se abrió sin una predicción de IA bloqueada, así que este reporte no incluye contraste. Preferimos decirlo abiertamente que calcular una predicción después de conocer los votos.')
+    return
+  }
+  const headline = data.comparison ? gapHeadline(data.comparison) : 'Aún no hay votos para comparar con la predicción.'
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(11)
+  doc.setTextColor(...COLOR_TEXT)
+  for (const line of doc.splitTextToSize(headline, CONTENT_W) as string[]) {
+    ensureSpace(ctx, 6)
+    doc.text(line, MARGIN_X, ctx.y + 4)
+    ctx.y += 6
+  }
+  ctx.y += 1
+  const barX = MARGIN_X + 72
+  const barW = CONTENT_W - 72 - 18
+  for (const opt of data.options) {
+    const ai = p.optionDistribution[opt] ?? 0
+    const hu = data.human.optionShare[opt] ?? 0
+    ensureSpace(ctx, 12)
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(9)
+    doc.setTextColor(...COLOR_TEXT)
+    doc.text((doc.splitTextToSize(opt, 70) as string[]).slice(0, 2), MARGIN_X, ctx.y + 3)
+    doc.setFillColor(...COLOR_BG_LIGHT)
+    doc.rect(barX, ctx.y, barW, 3.5, 'F')
+    doc.rect(barX, ctx.y + 5, barW, 3.5, 'F')
+    doc.setFillColor(...COLOR_VIOLET)
+    doc.rect(barX, ctx.y, barW * Math.min(1, ai), 3.5, 'F')
+    doc.setFillColor(...COLOR_TEAL)
+    doc.rect(barX, ctx.y + 5, barW * Math.min(1, hu), 3.5, 'F')
+    doc.setFontSize(8)
+    doc.setTextColor(...COLOR_MUTED)
+    doc.text(`IA ${Math.round(ai * 100)}%`, barX + barW + 2, ctx.y + 3)
+    doc.text(data.human.voters ? `Gente ${Math.round(hu * 100)}%` : 'Gente —', barX + barW + 2, ctx.y + 8)
+    ctx.y += 12
+  }
+  smallMuted(ctx, `Morado: IA (${p.nRuns} corridas × ${p.nPersonas} personas sintéticas). Verde: la gente (${data.human.voters} votos). Certeza promedio: IA ${p.avgConfidence ?? '—'}/10 · gente ${data.human.avgConfidence ?? '—'}/10${data.human.unknown ? ` (${data.human.unknown} respondieron “No lo sé”)` : ''}.`)
+  ctx.y += 2
+  drawParagraph(ctx, 'Por qué importa la brecha: la IA representa lo que se esperaría de un panel típico de la CDMX ante la misma pregunta. Donde su comunidad se aleja de esa expectativa está lo que una encuesta genérica o un modelo de IA no le habría dicho. Una brecha grande es un hallazgo: indica dónde actuar distinto de lo obvio. Una brecha pequeña confirma que la intuición general aplica.')
+  smallMuted(ctx, p.status === 'locked'
+    ? `Predicción bloqueada el ${fmtCdmx(p.lockedAt)}, antes del primer voto. Sólo usó la pregunta y las opciones; no puede editarse. Modelo: ${p.model}.`
+    : `Predicción registrada el ${fmtCdmx(p.lockedAt)}, cuando ya había votos; la marcamos como tardía. Sólo usó la pregunta y las opciones. Modelo: ${p.model}.`)
+  ctx.y += 3
 }

@@ -12,6 +12,8 @@ import PulseOutcomeBars from './PulseOutcomeBars'
 import PulseResultsCard from './PulseResultsCard'
 import OutcomeConfidenceTable from './OutcomeConfidenceTable'
 import PulseSimRevealModule, { type PulseSimReveal } from './PulseSimRevealModule'
+import ContrasteIAGate from './ContrasteIAGate'
+import type { ContrasteData } from '@/lib/contraste-ia/server'
 import PulseSimTeaser from './PulseSimTeaser'
 import PulseInlineVote from './PulseInlineVote'
 import { exportPulseVotesCsv, type PulseCsvVote } from './pulse-export-csv'
@@ -125,6 +127,10 @@ type Props = {
    * Null/absent otherwise. Non-admins never receive sim aggregates on an open Pulse.
    */
   simReveal?: PulseSimReveal | null
+  /** Contraste IA payload — only present when the server allowed it (voted / closed / admin). */
+  contrasteData?: ContrasteData | null
+  /** Content-free flag: a locked prediction exists but this viewer may not see it yet. */
+  contrasteTeaser?: boolean
   /**
    * Content-free pre-vote teaser flag (§5.7). True only when the flag is on, a
    * revealed run exists, the viewer has not voted, and the Pulse is still open.
@@ -172,6 +178,8 @@ export default function PulseResultClient({
   isEnhancedView,
   featuredReasonings = [],
   simReveal = null,
+  contrasteData = null,
+  contrasteTeaser = false,
   simTeaser = false,
   simulationViewerHref = null,
   simulationRunId = null,
@@ -974,6 +982,15 @@ export default function PulseResultClient({
                 })}
               </div>
             ) : null}
+
+            {/* Contraste IA: AI prediction locked pre-vote vs people. */}
+            <ContrasteIAGate
+              marketId={marketId}
+              initial={contrasteData}
+              teaser={contrasteTeaser}
+              hasVoted={hasVoted}
+              locale={locale === 'en' ? 'en' : 'es'}
+            />
 
             {/* "IA vs. Realidad" reveal module (§5.7). Public: only after close
                 + revealed run. Admin: live preview payload even while open. */}

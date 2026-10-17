@@ -11,6 +11,8 @@ import { AuthSessionExpiredError, getCurrentUser } from '@/lib/auth-server'
 import { marketBelongsToSponsorAccount } from '@/lib/sponsor-account-access'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { isAdminUser } from '@/lib/auth/is-admin'
+import ContrasteIAChart from '@/components/pulse/ContrasteIAChart'
+import { loadContraste } from '@/lib/contraste-ia/server'
 
 export const dynamic = 'force-dynamic'
 
@@ -82,6 +84,8 @@ export default async function SponsorMarketReportPage({
   }
 
   const cached = await getSponsorPulseReport(marketId)
+  // Contraste IA: clients always see it in their report (token-gated above).
+  const contraste = await loadContraste(admin, marketId).catch(() => null)
 
   const snapshot =
     cached?.snapshot_data && typeof cached.snapshot_data === 'object'
@@ -155,6 +159,7 @@ export default async function SponsorMarketReportPage({
             regenerateUrl={regenerateUrl}
             showAdminControls={isAdminViewer}
           />
+          <ContrasteIAChart data={contraste} audience="client" />
         </div>
       </div>
     </>

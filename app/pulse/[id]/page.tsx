@@ -480,6 +480,24 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
     }
   }
 
+  // Contraste IA (lib/contraste-ia/visibility): prediction data only reaches
+  // admins, viewers who voted, or everyone once closed. Others get a
+  // content-free teaser flag, so nothing leaks in the RSC payload.
+  let contrasteData: import('@/lib/contraste-ia/server').ContrasteData | null = null
+  let contrasteTeaser = false
+  try {
+    const { loadContraste, hasPrediction } = await import('@/lib/contraste-ia/server')
+    const { canSeeContraste } = await import('@/lib/contraste-ia/visibility')
+    const contrasteAdmin = createAdminClient()
+    if (canSeeContraste({ isAdmin, isClosed: isClosedOrResolved, hasVoted: !!viewerVote })) {
+      contrasteData = await loadContraste(contrasteAdmin, market.id)
+    } else {
+      contrasteTeaser = await hasPrediction(contrasteAdmin, market.id)
+    }
+  } catch (err) {
+    console.warn('[pulse/[id]] contraste-ia load failed', err)
+  }
+
   return (
     <>
       {isDraft && <DraftBanner marketId={market.id} />}
@@ -518,6 +536,8 @@ export default async function PulseResultPage({ params, searchParams }: Props) {
         isEnhancedView={isEnhancedView}
         featuredReasonings={featuredReasonings}
         simReveal={simReveal}
+        contrasteData={contrasteData}
+        contrasteTeaser={contrasteTeaser}
         simTeaser={simTeaser}
         simulationViewerHref={simulationViewerHref}
         simulationRunId={simulationRunId}
