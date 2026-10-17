@@ -135,6 +135,28 @@ function getConfidenceLabel(n: number, locale: string): string {
   return CONFIDENCE_LABELS_EN[clamped] || 'I think so'
 }
 
+/** Scale anchors under the certainty slider (1–10). Positions match the range track. */
+function ConfidenceScaleLabels({ locale }: { locale: string }) {
+  const es = locale === 'es'
+  const marks: [number, string][] = es
+    ? [[1, 'Lo dudo'], [5, 'Más o menos'], [10, 'Muy seguro/a']]
+    : [[1, 'I doubt it'], [5, 'More or less'], [10, 'Very sure']]
+  return (
+    <div className="relative mt-1 h-8 text-[11px] text-slate-400" aria-hidden="true">
+      {marks.map(([n, label]) => {
+        const left = ((n - 1) / 9) * 100
+        const align = n === 1 ? 'left-0 text-left' : n === 10 ? 'right-0 text-right' : '-translate-x-1/2 text-center'
+        return (
+          <span key={n} className={`absolute top-0 leading-tight ${align}`} style={n === 1 || n === 10 ? undefined : { left: `${left}%` }}>
+            <span className="block font-medium text-slate-300">{n}</span>
+            {label}
+          </span>
+        )
+      })}
+    </div>
+  )
+}
+
 function getConfidenceEmoji(n: number): string {
   return CONFIDENCE_EMOJI[Math.min(10, Math.max(1, n))] || '🤷'
 }
@@ -655,6 +677,10 @@ export function VotePanel({
             setMultiTouched((prev) => ({ ...prev, [outcomeId]: true }))
             setMultiConf((prev) => ({ ...prev, [outcomeId]: next }))
           }}
+          onPointerUp={() => {
+            setMultiUnknown((prev) => ({ ...prev, [outcomeId]: false }))
+            setMultiTouched((prev) => ({ ...prev, [outcomeId]: true }))
+          }}
           className="cc-range-slider w-full min-h-[44px] disabled:opacity-40"
           style={
             {
@@ -662,10 +688,7 @@ export function VotePanel({
             } as CSSProperties
           }
         />
-        <div className="flex justify-between text-[10px] text-gray-600 mt-1">
-          <span>{locale === 'es' ? 'No estoy seguro' : 'Not sure'}</span>
-          <span>{locale === 'es' ? 'Totalmente seguro' : 'Absolutely certain'}</span>
-        </div>
+        <ConfidenceScaleLabels locale={locale} />
         {touched && !unknown ? (
           <p className="text-[11px] text-gray-500 mt-2">
             {getConfidenceLabel(conf, locale)}
@@ -807,6 +830,17 @@ export function VotePanel({
             setConfidenceTouched(true)
             setConfidence(parseInt(e.target.value, 10))
           }}
+          // Tapping the thumb at its resting value fires no change event, so
+          // 5 could never be picked without moving away and back. Count a
+          // pointer/keyboard interaction as an explicit choice.
+          onPointerUp={() => {
+            setConfidenceUnknown(false)
+            setConfidenceTouched(true)
+          }}
+          onKeyUp={() => {
+            setConfidenceUnknown(false)
+            setConfidenceTouched(true)
+          }}
           className="cc-range-slider w-full min-h-[44px] disabled:opacity-40"
           style={
             {
@@ -814,10 +848,7 @@ export function VotePanel({
             } as CSSProperties
           }
         />
-        <div className="flex justify-between text-[10px] text-gray-600 mt-1">
-          <span>{locale === 'es' ? 'No estoy seguro' : 'Not sure'}</span>
-          <span>{locale === 'es' ? 'Totalmente seguro' : 'Absolutely certain'}</span>
-        </div>
+        <ConfidenceScaleLabels locale={locale} />
         {confidenceTouched && !confidenceUnknown ? (
           <p className="text-[11px] text-gray-500 mt-2">
             {getConfidenceLabel(confidence, locale)}

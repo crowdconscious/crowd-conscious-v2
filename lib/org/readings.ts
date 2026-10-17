@@ -6,6 +6,7 @@
  */
 import { questionStats, type QuestionCounts, type QuestionStats } from './firmness'
 import { reasonGroup, type Reason, type ReasonGroup } from './redact'
+import type { QuestionContraste } from '../contraste-ia/org-core'
 
 export type Locale = 'es' | 'en'
 export type L = { es: string; en: string }
@@ -24,6 +25,11 @@ export type ReadingQuestion = {
   headlinePhrase?: L
   counts: QuestionCounts
   reasons: { tentativeYes: Reason[]; no: Reason[] }
+  /**
+   * Contraste IA: the AI yes/no prediction locked before the field opened.
+   * Only attached to CLOSED readings, for members (never the survey, never share links).
+   */
+  contraste?: QuestionContraste | null
 }
 
 export type Reading = {
@@ -73,6 +79,7 @@ export function toClientReading(r: Reading): ClientReading {
         text: q.text,
         ...(q.headlinePhrase ? { headlinePhrase: q.headlinePhrase } : {}),
         counts: q.counts,
+        ...(q.contraste ? { contraste: q.contraste } : {}),
         stats,
         reasons: {
           doubt: reasonGroup(stats.tentativeYesCount, q.reasons.tentativeYes),
@@ -81,6 +88,11 @@ export function toClientReading(r: Reading): ClientReading {
       }
     }),
   }
+}
+
+/** Share links / public summaries: the Contraste IA prediction is for the client only. */
+export function withoutContraste(r: ClientReading): ClientReading {
+  return { ...r, questions: r.questions.map(({ contraste: _c, ...q }) => q) }
 }
 
 /** Response rate is only meaningful when the client declared how many people got the link. */

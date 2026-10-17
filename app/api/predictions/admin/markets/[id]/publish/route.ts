@@ -4,6 +4,15 @@ import { createAdminClient } from '@/lib/supabase-admin'
 import { isAdminUser } from '@/lib/auth/is-admin'
 import { notifyPulsePublished } from '@/lib/expo-push'
 import { isStandOnly } from '@/lib/pulse/discovery-filters'
+import { ensurePredictionLocked, withTimeout } from '@/lib/contraste-ia/server'
+
+// Contraste IA locks the AI prediction BEFORE is_draft flips (zero votes possible).
+export const maxDuration = 120
+
+/** Max wait for the pre-publish Contraste IA lock; on timeout/failure we still
+ *  publish and the backstop cron retries (row is then marked 'late' by the DB
+ *  if a vote already landed). */
+const CONTRASTE_LOCK_TIMEOUT_MS = 75_000
 
 export async function POST(
   _request: NextRequest,
@@ -42,12 +51,26 @@ export async function POST(
       // Idempotent: already published. Still try to enqueue sim (no-op if
       // a job row already exists, or if SIM_AUTORUN_ENABLED is off).
       if (market.is_pulse) {
+        // Contraste IA: if no prediction exists yet, lock one now (DB marks it 'late' if votes exist).
+        void ensurePredictionLocked(admin, id, 'publish')
         const { enqueueAutorunJobFireAndForget } = await import(
           '@/lib/simulation/autorun'
         )
         enqueueAutorunJobFireAndForget(admin, id, 'auto')
       }
       return NextResponse.json({ success: true, already_published: true })
+    }
+
+    // Contraste IA: run + lock the AI prediction while the Pulse is still a
+    // draft, so it provably uses only the question/options and zero votes.
+    let contraste: Awaited<ReturnType<typeof ensurePredictionLocked>> | null = null
+    if (market.is_pulse) {
+      contraste = await withTimeout(
+        ensurePredictionLocked(admin, id, 'publish'),
+        CONTRASTE_LOCK_TIMEOUT_MS,
+        { ok: false, error: 'timeout' },
+      )
+      if (!contraste.ok) console.warn('[publish-market] contraste-ia not locked:', contraste.error)
     }
 
     const { error: upErr } = await admin
@@ -85,7 +108,10 @@ export async function POST(
       enqueueAutorunJobFireAndForget(admin, id, 'auto')
     }
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({
+      success: true,
+      contraste_ia: contraste ? (contraste.ok ? 'locked' : `pending: ${contraste.error}`) : null,
+    })
   } catch (err) {
     console.error('Publish market error:', err)
     return NextResponse.json({ error: 'Failed to publish market' }, { status: 500 })

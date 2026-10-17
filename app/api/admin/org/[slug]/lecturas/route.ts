@@ -3,8 +3,14 @@ import { z } from 'zod'
 import { requireAdmin } from '@/lib/admin-route-guard'
 import { ORG_PORTAL_V2 } from '@/lib/org/config'
 import { getOrgBySlug, logEvent, orgDb } from '@/lib/org/repo'
+import { ensureOrgPredictionLocked } from '@/lib/contraste-ia/org-server'
+import { withTimeout } from '@/lib/contraste-ia/server'
 
 export const runtime = 'nodejs'
+export const maxDuration = 120
+
+/** Contraste IA lock budget before the field opens; on timeout the cron backstop retries (marked late if responses exist). */
+const CONTRASTE_LOCK_TIMEOUT_MS = 75_000
 
 const L = z.object({ es: z.string().trim().min(1).max(300), en: z.string().trim().min(1).max(300) })
 const create = z.object({
@@ -30,18 +36,24 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   const o = open.safeParse(raw)
   if (o.success) {
-    const closes = new Date(now.getTime() + o.data.field_days * 86400000).toISOString()
+    // Contraste IA: lock the AI prediction while the reading is still in design (zero responses possible).
+    const { data: pre } = await orgDb().from('org_readings').select('id, status').eq('id', o.data.reading_id).eq('org_id', org.id).maybeSingle()
+    if (!pre || pre.status !== 'design') return NextResponse.json({ error: 'not_in_design' }, { status: 409 })
+    const contraste = await withTimeout(ensureOrgPredictionLocked(orgDb(), o.data.reading_id, 'open'), CONTRASTE_LOCK_TIMEOUT_MS, { ok: false as const, error: 'timeout' })
+    if (!contraste.ok) console.warn('[org-open] contraste-ia not locked:', contraste.error)
+    const opened = new Date()
+    const closes = new Date(opened.getTime() + o.data.field_days * 86400000).toISOString()
     const { data } = await orgDb()
       .from('org_readings')
-      .update({ status: 'field', field_opens: now.toISOString(), field_closes: closes, visibility_locked_at: now.toISOString(), updated_at: now.toISOString() })
+      .update({ status: 'field', field_opens: opened.toISOString(), field_closes: closes, visibility_locked_at: opened.toISOString(), updated_at: opened.toISOString() })
       .eq('id', o.data.reading_id)
       .eq('org_id', org.id)
       .eq('status', 'design')
       .select('id, survey_token, visibility')
       .maybeSingle()
     if (!data) return NextResponse.json({ error: 'not_in_design' }, { status: 409 })
-    await logEvent(data.id, gate.user.id, 'field_opened', { visibility: data.visibility, field_closes: closes })
-    return NextResponse.json({ ok: true, survey_path: `/e/${data.survey_token}`, field_closes: closes })
+    await logEvent(data.id, gate.user.id, 'field_opened', { visibility: data.visibility, field_closes: closes, contraste_ia: contraste.ok ? (contraste.skipped ? 'exists' : contraste.status) : 'pending' })
+    return NextResponse.json({ ok: true, survey_path: `/e/${data.survey_token}`, field_closes: closes, contraste_ia: contraste.ok ? 'locked' : 'pending_backstop' })
   }
 
   const c = create.safeParse(raw)

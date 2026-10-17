@@ -8,6 +8,7 @@ import {
 import { generateSponsorPulseReportPDF } from '@/lib/sponsor-pulse-report-pdf'
 import { marketBelongsToSponsorAccount } from '@/lib/sponsor-account-access'
 import { createAdminClient } from '@/lib/supabase-admin'
+import { loadContraste } from '@/lib/contraste-ia/server'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -122,7 +123,9 @@ export async function GET(
 
   const logoBase64 = await fetchLogoAsDataUrl(account.logo_url ?? null)
 
+  const contraste = await loadContraste(admin, marketId).catch(() => null)
   const buffer = generateSponsorPulseReportPDF({
+    contraste,
     sponsor: {
       companyName: account.company_name ?? 'Patrocinador',
       logoBase64,

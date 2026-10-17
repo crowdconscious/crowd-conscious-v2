@@ -111,6 +111,7 @@ export default async function OrganizacionesPage() {
         <div className="mx-auto max-w-5xl">
           <h2 className="text-2xl font-bold text-white sm:text-3xl">{t.previewTitle}</h2>
           <p className="mt-2 text-slate-200">{t.previewSub}</p>
+          <p className="mt-2 text-sm text-violet-200">{t.contrasteLine}</p>
           <Link href="/organizaciones/demo" aria-label={t.previewCta} className="group mt-6 block">
             <div className="relative max-h-[560px] overflow-hidden rounded-xl ring-1 ring-white/10" inert aria-hidden="true">
               <div className="pointer-events-none select-none">

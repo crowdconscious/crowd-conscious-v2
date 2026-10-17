@@ -9,6 +9,8 @@ import { CERTAINTY_MAX, isFirm } from './firmness'
 import type { Reading, ReadingStatus } from './readings'
 import { DEFAULT_RULES, type OrgRules } from './rules'
 import type { RawAnswer } from './csv'
+import { loadOrgContraste } from '@/lib/contraste-ia/org-server'
+import { questionHash } from '@/lib/contraste-ia/org-core'
 
 // Tables are not in the generated types until 286 is applied.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -109,6 +111,15 @@ export async function loadReading(row: ReadingRow): Promise<Reading> {
   if (row.status !== 'closed') return base
   const { data: qrows } = await db().from('org_questions').select('*').eq('reading_id', row.id).order('position')
   const { data: hist } = await db().rpc('org_question_histograms', { p_reading_id: row.id })
+  // Contraste IA (closed readings only): hash the wording in the survey's language, as locked.
+  const { data: orgRow } = await db().from('orgs').select('locale').eq('id', row.org_id).maybeSingle()
+  const lang: 'es' | 'en' = orgRow?.locale === 'en' ? 'en' : 'es'
+  const title = lang === 'en' ? row.title_en : row.title_es
+  const contraste = await loadOrgContraste(
+    db(),
+    row.id,
+    ((qrows as { id: string; text_es: string; text_en: string }[]) ?? []).map((q) => ({ id: q.id, hash: questionHash({ title, locale: lang }, lang === 'en' ? q.text_en : q.text_es) })),
+  ).catch(() => new Map())
   const questions = await Promise.all(
     ((qrows as { id: string; text_es: string; text_en: string; headline_phrase_es: string; headline_phrase_en: string }[]) ?? []).map(async (q) => {
       const yes = Array(CERTAINTY_MAX).fill(0)
@@ -129,6 +140,7 @@ export async function loadReading(row: ReadingRow): Promise<Reading> {
         text: { es: q.text_es, en: q.text_en },
         headlinePhrase: { es: q.headline_phrase_es, en: q.headline_phrase_en },
         counts: { yes, no },
+        contraste: contraste.get(q.id) ?? null,
         reasons: {
           tentativeYes: reasons.filter((x) => x.answer && !isFirm(x.certainty)).slice(0, REASONS_PER_GROUP).map((x) => ({ text: x.reason, certainty: x.certainty })),
           no: reasons.filter((x) => !x.answer).slice(0, REASONS_PER_GROUP).map((x) => ({ text: x.reason, certainty: x.certainty })),

@@ -7,6 +7,21 @@
  * question's yes + no histogram counts add up to `responded`.
  */
 import type { Reading } from './readings'
+import type { QuestionContraste } from '../contraste-ia/org-core'
+
+/** FICTITIOUS Contraste IA lock for the demo (no model was run for it). */
+const demoContraste = (aiYes: number, spread: number, avgCertainty: number): QuestionContraste => ({
+  aiYes,
+  spread,
+  avgCertainty,
+  model: 'claude-haiku-4-5-20251001',
+  nRuns: 3,
+  nPersonas: 50,
+  status: 'locked',
+  lockedAt: '2026-09-21T18:05:00-06:00',
+  firstResponseAt: null,
+  stale: false,
+})
 
 export const DEMO_ORG = { name: 'Hospital Ejemplo (ficticio)', slug: 'hospital-ejemplo' }
 export const DEMO_BANNER = { es: 'Demo · datos ficticios', en: 'Demo · fictitious data' }
@@ -111,6 +126,7 @@ export const DEMO_READINGS: Reading[] = [
         headlinePhrase: PHRASE_RECOMIENDA,
         counts: { yes: [6, 6, 11, 17, 28, 39, 50, 91, 73, 54], no: [2, 3, 4, 4, 4, 3, 3, 4, 5, 5] },
         reasons: REASONS_RECOMIENDA,
+        contraste: demoContraste(0.78, 0.03, 6.4),
       },
       {
         id: 'q2',
@@ -118,6 +134,7 @@ export const DEMO_READINGS: Reading[] = [
         headlinePhrase: PHRASE_EXPLICARON,
         counts: { yes: [6, 6, 13, 19, 31, 44, 57, 71, 57, 42], no: [4, 6, 8, 11, 11, 8, 6, 3, 4, 5] },
         reasons: REASONS_EXPLICARON,
+        contraste: demoContraste(0.66, 0.05, 6.1),
       },
       {
         id: 'q3',
@@ -126,6 +143,7 @@ export const DEMO_READINGS: Reading[] = [
         headlinePhrase: PHRASE_ESPERA,
         counts: { yes: [6, 6, 11, 17, 28, 40, 51, 40, 32, 24], no: [7, 11, 15, 19, 18, 15, 11, 16, 20, 25] },
         reasons: REASONS_ESPERA,
+        contraste: demoContraste(0.7, 0.04, 6.0),
       },
     ],
   },
