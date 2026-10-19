@@ -81,7 +81,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Failed to cast vote' }, { status: 500 })
       }
 
-      await supabase.rpc('check_achievements', {
+      await createAdminClient().rpc('check_achievements', {
         p_user_id: user.id,
         p_action_type: 'fund_vote',
         p_action_id: null,

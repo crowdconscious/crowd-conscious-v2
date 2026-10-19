@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createAdminClient } from '@/lib/supabase-admin'
 import { createClient } from '@/lib/supabase-server'
 import { ApiResponse } from '@/lib/api-responses'
 import { moderateRateLimit, getRateLimitIdentifier, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
@@ -101,7 +102,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Award XP using database function
-    const { data: result, error } = await supabase.rpc('award_xp', {
+    // award_xp / check_achievements are service-role only (migration 292).
+    const admin = createAdminClient()
+    const { data: result, error } = await admin.rpc('award_xp', {
       p_user_id: user.id,
       p_action_type: action_type,
       p_action_id: action_id || null,
@@ -114,7 +117,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check for achievements
-    const { data: achievements } = await supabase.rpc('check_achievements', {
+    const { data: achievements } = await admin.rpc('check_achievements', {
       p_user_id: user.id,
       p_action_type: action_type,
       p_action_id: action_id || null

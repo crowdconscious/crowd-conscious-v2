@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createAdminClient } from '@/lib/supabase-admin'
 import { createServerAuth } from '@/lib/auth-server'
 import { ApiResponse } from '@/lib/api-responses'
 
@@ -81,7 +82,7 @@ export async function POST(request: NextRequest) {
 
         if (!existingXP) {
           try {
-            const { data: xpResult } = await supabase.rpc('award_xp', {
+            const { data: xpResult } = await createAdminClient().rpc('award_xp', {
               p_user_id: userId,
               p_action_type: 'lesson_completed',
               p_action_id: lesson.lesson_id,
@@ -117,7 +118,7 @@ export async function POST(request: NextRequest) {
 
         if (!existingXP) {
           try {
-            const { data: xpResult } = await supabase.rpc('award_xp', {
+            const { data: xpResult } = await createAdminClient().rpc('award_xp', {
               p_user_id: userId,
               p_action_type: 'module_completed',
               p_action_id: module.module_id,

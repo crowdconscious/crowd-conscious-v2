@@ -35,7 +35,8 @@ export async function POST(request: Request) {
 
     // New flow: winning_outcome_id for free-to-play markets with outcomes
     if (winning_outcome_id) {
-      const { data, error } = await supabase.rpc('resolve_market_free', {
+      // resolve_market_free is service-role only (migration 292); admin check above.
+      const { data, error } = await createAdminClient().rpc('resolve_market_free', {
         p_market_id: market_id,
         p_winning_outcome_id: winning_outcome_id,
       })

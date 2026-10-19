@@ -116,7 +116,7 @@ export async function POST(request: Request) {
 
     const isFirstTrade = (count ?? 0) <= 1
 
-    await supabase.rpc('award_xp', {
+    await createAdminClient().rpc('award_xp', {
       p_user_id: user.id,
       p_action_type: 'prediction_trade',
       p_action_id: trade.id,
