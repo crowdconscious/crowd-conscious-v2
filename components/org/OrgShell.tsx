@@ -33,7 +33,7 @@ const T = {
 } as const
 
 /**
- * Header/footer for every B2B route (/organizaciones, /org/*; later /sello/*
+ * Header/footer for every B2B route (/organizaciones, /org/*; /sello-verificado/*
  * and /r/*). Deliberately has none of the civic navigation (Votar,
  * Resultados, Evaluar, Ciclo en curso, app download, citizen sign-in).
  * Inputs inside are forced to the dark palette via CSS variables because the

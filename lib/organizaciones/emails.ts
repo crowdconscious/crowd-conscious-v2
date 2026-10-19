@@ -4,8 +4,8 @@
  * by Francisco's accountant from the data in the admin alert.
  */
 import { sendEmail, type EmailAttachment } from '@/lib/resend'
-import { selloPng } from '@/lib/org/sello-png'
-import { SELLO_NAMES, selloVariantFor } from '@/lib/org/sello-badge'
+import { sealPng } from '@/lib/org/sello-png'
+import { SEAL_NAMES } from '@/lib/org/sello-badge'
 import { REGIMENES_FISCALES, USOS_CFDI } from './fiscal'
 import { formatMxn } from './pricing'
 import { BASE_SIZES, ORG_TYPES, VISIBILITY_PREFS, labelOf } from './lead-options'
@@ -65,7 +65,7 @@ function shell(inner: string) {
   return `<div style="font-family: Arial, Helvetica, sans-serif; max-width: 620px; margin: 0 auto; background: #0f1419; color: #e5e7eb;">
   <div style="padding: 20px 24px; border-bottom: 1px solid #2d3748;"><strong style="color:#10b981;font-size:16px;">Crowd Conscious</strong> <span style="color:#9ca3af;font-size:12px;">· Organizaciones</span></div>
   <div style="padding: 24px;">${inner}</div>
-  <div style="padding: 14px 24px; border-top: 1px solid #2d3748; color:#6b7280; font-size:11px;">Crowd Conscious · crowdconscious.app · francisco@crowdconscious.app</div>
+  <div style="padding: 14px 24px; border-top: 1px solid #2d3748; color:#9ca3af; font-size:11px;">Crowd Conscious · crowdconscious.app · francisco@crowdconscious.app</div>
 </div>`
 }
 
@@ -74,7 +74,6 @@ function row(label: string, value: string, bold = false) {
 }
 
 export function buildClientReceiptEmail(r: OrgPilotEmailRow, withSello = false) {
-  const sv = selloVariantFor(r.org_type)
   const paid = r.paid_at ? new Date(r.paid_at).toLocaleDateString('es-MX', { timeZone: 'America/Mexico_City' }) : ''
   const html = shell(`
   <h1 style="color:#10b981;font-size:20px;margin:0 0 6px;">Recibo de pago · Payment receipt</h1>
@@ -101,9 +100,9 @@ export function buildClientReceiptEmail(r: OrgPilotEmailRow, withSello = false) 
     ${row('Uso de CFDI', esc(usoLabel(r.uso_cfdi)))}
   </table>
   <p style="font-size:12px;color:#9ca3af;margin:14px 0 0;">Si algún dato es incorrecto, responda a este correo antes de que emitamos el CFDI. · If any detail is wrong, reply before we issue the CFDI.</p>${withSello ? `
-  <h2 style="font-size:14px;color:#e5e7eb;margin:20px 0 6px;">${SELLO_NAMES[sv].es} · ${SELLO_NAMES[sv].en}</h2>
-  <p style="font-size:13px;line-height:1.6;margin:0 0 6px;">Adjuntamos su ${SELLO_NAMES[sv].es} (PNG transparente). Se activa cuando su organización tiene el servicio vigente y resultados públicos, y se mantiene mientras ambas cosas sigan así. Mientras esté activo, puede usarlo en su sitio web, redes sociales y otras plataformas. También puede descargarlo desde su panel.</p>
-  <p style="font-size:12px;line-height:1.6;color:#9ca3af;margin:0;">Your ${SELLO_NAMES[sv].en} is attached (transparent PNG). It is active while your service is active and your results are public. While active, you may use it on your website, social media and other platforms. You can also download it from your dashboard.</p>` : ''}`)
+  <h2 style="font-size:14px;color:#e5e7eb;margin:20px 0 6px;">Sello verificado · Verified seal</h2>
+  <p style="font-size:13px;line-height:1.6;margin:0 0 6px;">Adjuntamos su ${SEAL_NAMES.sello_verificado.es} (PNG transparente). Se activa cuando su organización tiene el servicio vigente y una lectura medida con resultados públicos, y se mantiene mientras ambas cosas sigan así. Mientras esté activo, puede usarlo en su sitio web, redes sociales y otras plataformas. También puede descargarlo desde su panel.</p>
+  <p style="font-size:12px;line-height:1.6;color:#a3acb9;margin:0;">Your Sello verificado (verified seal) is attached (transparent PNG). It is active while your service is active and a measured reading has public results. While active, you may use it on your website, social media and other platforms. You can also download it from your dashboard.</p>` : ''}`)
   return { subject: `Recibo ${r.receipt_number} · Lectura piloto · Crowd Conscious`, html }
 }
 
@@ -170,13 +169,12 @@ export function adminEmail() {
 /**
  * Card-payment receipt (the only client email after Stripe checkout; there is
  * no separate invoice email, the CFDI is sent by the accountant). Carries the
- * Sello badge PNG. If rendering fails the receipt still goes out without it.
+ * Sello verificado badge PNG. If rendering fails the receipt still goes out without it.
  */
 export async function sendOrgClientReceipt(r: OrgPilotEmailRow) {
   let attachments: EmailAttachment[] | undefined
   try {
-    const v = selloVariantFor(r.org_type)
-    attachments = [{ filename: `sello-${v}-consciente-1024.png`, content: await selloPng(v, 1024), contentType: 'image/png' }]
+    attachments = [{ filename: 'sello-verificado-1024.png', content: await sealPng('sello_verificado', 1024), contentType: 'image/png' }]
   } catch (e) {
     console.error('[org-pilot] sello png render failed; sending receipt without it', e instanceof Error ? e.message : e)
   }

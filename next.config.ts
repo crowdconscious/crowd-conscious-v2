@@ -34,6 +34,10 @@ const nextConfig: NextConfig = {
    */
   async redirects() {
     return [
+      // PR #60 published the paid seal at /sello; it is now "Sello verificado".
+      { source: '/sello', destination: '/sello-verificado', permanent: true },
+      // Slug only (no dot), so the badge files in public/sello/*.svg|png are still served.
+      { source: '/sello/:slug([a-z0-9-]+)', destination: '/sello-verificado/:slug', permanent: true },
       // Legacy: /communities was deprecated in favor of /locations.
       {
         source: '/communities',
