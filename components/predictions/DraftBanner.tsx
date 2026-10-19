@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { CONTRASTE_OVERRIDE_LABEL_ES } from '@/lib/contraste-ia/publish-gate'
 import { useRouter } from 'next/navigation'
 
 type Props = {
@@ -22,12 +23,23 @@ export function DraftBanner({ marketId, canPublish = true }: Props) {
   const router = useRouter()
   const [publishing, setPublishing] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
+  /** Contraste IA lock failed: error shown + explicit override offered. */
+  const [lockError, setLockError] = useState<string | null>(null)
 
   useEffect(() => {
     // Parse `?draft=created` from window.location instead of useSearchParams
     // to avoid the surrounding page needing a Suspense boundary at build time.
     if (typeof window === 'undefined') return
     const params = new URLSearchParams(window.location.search)
+    if (params.get('draft') === 'lock_failed') {
+      setLockError(
+        'No se pudo bloquear la predicción de Contraste IA, así que el Pulse sigue como borrador. Vuelve a intentar o publica de todos modos.'
+      )
+      params.delete('draft')
+      const qs = params.toString()
+      window.history.replaceState({}, '', window.location.pathname + (qs ? `?${qs}` : ''))
+      return
+    }
     if (params.get('draft') === 'created') {
       setToast('Borrador creado. Solo tú puedes verlo.')
       // Strip the query so a manual refresh doesn't re-trigger the toast.
@@ -40,21 +52,39 @@ export function DraftBanner({ marketId, canPublish = true }: Props) {
     }
   }, [])
 
-  const handlePublish = async () => {
+  const handlePublish = async (force = false) => {
     if (publishing) return
+    if (
+      force &&
+      !window.confirm(
+        'Se publicará SIN predicción bloqueada. La predicción de IA se generará después, quedará marcada como "tardía" y no se usará en afirmaciones públicas. ¿Continuar?'
+      )
+    ) {
+      return
+    }
     setPublishing(true)
+    setToast(null)
     try {
       const res = await fetch(
         `/api/predictions/admin/markets/${marketId}/publish`,
-        { method: 'POST' }
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ force }),
+        }
       )
+      const data = await res.json().catch(() => ({}))
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        setToast(data?.error || 'No se pudo publicar el Pulse.')
+        if (data?.code === 'contraste_lock_failed') {
+          setLockError(data.error || 'No se pudo bloquear la predicción de Contraste IA.')
+        } else {
+          setToast(data?.error || 'No se pudo publicar el Pulse.')
+        }
         setPublishing(false)
         return
       }
-      setToast('Pulse publicado.')
+      setLockError(null)
+      setToast(data?.warning ? `Pulse publicado. ${data.warning}` : 'Pulse publicado.')
       router.refresh()
     } catch {
       setToast('No se pudo publicar el Pulse.')
@@ -77,7 +107,7 @@ export function DraftBanner({ marketId, canPublish = true }: Props) {
         {canPublish && (
           <button
             type="button"
-            onClick={handlePublish}
+            onClick={() => handlePublish(false)}
             disabled={publishing}
             className="self-start sm:self-auto px-4 py-2 bg-slate-900 text-amber-400 rounded font-semibold hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -85,6 +115,31 @@ export function DraftBanner({ marketId, canPublish = true }: Props) {
           </button>
         )}
       </div>
+      {lockError && (
+        <div role="alert" className="bg-red-700 text-white px-6 py-3 text-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <span>{lockError}</span>
+          {canPublish && (
+            <span className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => handlePublish(false)}
+                disabled={publishing}
+                className="px-3 py-1.5 rounded bg-white text-red-800 font-semibold disabled:opacity-50"
+              >
+                Reintentar
+              </button>
+              <button
+                type="button"
+                onClick={() => handlePublish(true)}
+                disabled={publishing}
+                className="px-3 py-1.5 rounded border border-white/70 font-semibold disabled:opacity-50"
+              >
+                {CONTRASTE_OVERRIDE_LABEL_ES}
+              </button>
+            </span>
+          )}
+        </div>
+      )}
       {toast && (
         <div
           role="alert"

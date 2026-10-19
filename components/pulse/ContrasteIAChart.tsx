@@ -3,6 +3,7 @@
  * Presentational only (no hooks): used on /pulse/[id] and the sponsor report.
  * Small grey text uses slate-400 on the dark card (#94a3b8 on #0f1419 ≈ 7:1).
  */
+import { isClaimEligible } from '@/lib/contraste-ia/publish-gate'
 import type { ContrasteData } from '@/lib/contraste-ia/server'
 import { gapHeadline } from '@/lib/contraste-ia/core'
 
@@ -67,7 +68,18 @@ export default function ContrasteIAChart({
   const multi = Object.values(p.optionDistribution).reduce((a, b) => a + b, 0) > 1.05
   return (
     <section className="pulse-section mt-6 rounded-xl border border-white/10 bg-white/[0.03] p-4 sm:p-5" aria-label={title}>
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-violet-300">Contraste IA</p>
+      <p className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-violet-300">
+        <span>Contraste IA</span>
+        {isClaimEligible(p) ? (
+          <span className="rounded-full border border-emerald-400/40 px-2 py-0.5 normal-case tracking-normal text-emerald-300">
+            Bloqueada antes del primer voto · {formatLockedAt(p.lockedAt)}
+          </span>
+        ) : (
+          <span className="rounded-full border border-amber-400/50 px-2 py-0.5 normal-case tracking-normal text-amber-300">
+            {p.status === 'late' ? 'Tardía' : 'Redacción cambió'} · registrada {formatLockedAt(p.lockedAt)}
+          </span>
+        )}
+      </p>
       <h3 className="mt-1 text-base font-semibold text-white sm:text-lg">Lo que la IA esperaba vs lo que dijo la gente</h3>
       {headline ? <p className="mt-2 text-sm font-medium text-emerald-300">{headline}</p> : (
         <p className="mt-2 text-sm text-slate-300">Aún no hay votos para comparar.</p>

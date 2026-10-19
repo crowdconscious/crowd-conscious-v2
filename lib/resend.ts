@@ -1,3 +1,4 @@
+import { isSendableEmail, maskEmail } from '@/lib/email-address'
 import type { ReactElement } from 'react'
 import { Resend } from 'resend'
 import { render as renderEmail } from '@react-email/render'
@@ -755,10 +756,22 @@ export async function sendEmail(
 export async function sendEmailsWithConcurrency(
   messages: Array<{ to: string; subject: string; html: string }>,
   concurrency: number = RESEND_MAX_REQUESTS_PER_SECOND
-): Promise<{ sent: number; failed: number; firstError?: string }> {
+): Promise<{ sent: number; failed: number; skipped: number; firstError?: string }> {
   let sent = 0
   let failed = 0
   let firstError: string | undefined
+  // Skip (and log, masked) addresses Resend would reject with 422 instead of
+  // letting one bad row surface as a cron error every run.
+  const invalid = messages.filter((m) => !isSendableEmail(m.to))
+  if (invalid.length) {
+    console.warn(
+      '[resend] skipping invalid recipient(s):',
+      invalid.length,
+      invalid.slice(0, 10).map((m) => maskEmail(m.to)).join(', ')
+    )
+    messages = messages.filter((m) => isSendableEmail(m.to))
+  }
+  const skipped = invalid.length
   const batchSize = Math.max(1, Math.min(concurrency, RESEND_MAX_REQUESTS_PER_SECOND))
 
   for (let i = 0; i < messages.length; i += batchSize) {
@@ -778,7 +791,7 @@ export async function sendEmailsWithConcurrency(
       await sleep(1000)
     }
   }
-  return { sent, failed, firstError }
+  return { sent, failed, skipped, firstError }
 }
 
 // Send welcome email

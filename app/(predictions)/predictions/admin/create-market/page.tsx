@@ -60,7 +60,8 @@ export default function CreatePulsePage() {
   const [customDate, setCustomDate] = useState('')
   const [durationMode, setDurationMode] = useState<'preset' | 'custom'>('preset')
   const [outcomes, setOutcomes] = useState<OutcomeDraft[]>([EMPTY_OUTCOME(), EMPTY_OUTCOME()])
-  const [allowOther, setAllowOther] = useState(false)
+  // Every Pulse has "Otro" by default (Francisco's rule); admin can still untick.
+  const [allowOther, setAllowOther] = useState(true)
   const OUTCOME_TITLE_MAX = 80
   const OUTCOME_SUBTITLE_MAX = 200
   const [verificationSources, setVerificationSources] = useState<{ name: string; url: string }[]>([
@@ -441,6 +442,13 @@ export default function CreatePulsePage() {
         } catch {
           // non-fatal
         }
+      }
+
+      if (data.kept_draft) {
+        // Contraste IA lock failed: the Pulse stays a draft. The draft banner
+        // shows the error plus the explicit "publish anyway" override.
+        router.push(`/pulse/${marketId}?draft=lock_failed`)
+        return
       }
 
       if (mode === 'draft') {

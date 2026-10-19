@@ -13,6 +13,7 @@
  */
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { sendEmailsWithConcurrency } from '@/lib/resend'
+import { isSendableEmail, maskEmail } from '@/lib/email-address'
 import {
   crowdNewsletterEmailTemplate,
   type BlogDigestMarket,
@@ -395,23 +396,36 @@ export async function runCrowdNewsletterCron(
     type Recipient = { email: string; unsubUrl: string }
     const byEmail = new Map<string, Recipient>()
 
+    const invalidRecipients: string[] = []
     for (const p of profiles ?? []) {
       if (p.email_notifications === false) continue
       const email = (p.email as string)?.trim().toLowerCase()
       if (!email) continue
+      if (!isSendableEmail(email)) {
+        invalidRecipients.push(maskEmail(email))
+        continue
+      }
       const unsub = `${APP_URL}/api/email/unsubscribe?user=${encodeURIComponent(p.id)}&token=${encodeURIComponent(createUnsubscribeToken(p.id))}`
-      byEmail.set(email, { email: p.email as string, unsubUrl: unsub })
+      byEmail.set(email, { email: (p.email as string).trim(), unsubUrl: unsub })
     }
 
     for (const row of newsletterOnly) {
       const raw = String(row.email ?? '').trim().toLowerCase()
-      if (!raw || !raw.includes('@')) continue
+      if (!raw) continue
+      if (!isSendableEmail(raw)) {
+        invalidRecipients.push(maskEmail(raw))
+        continue
+      }
       if (byEmail.has(raw)) continue
       const tok = createNewsletterListUnsubscribeToken(raw)
       const unsub = `${APP_URL}/api/newsletter/unsubscribe?email=${encodeURIComponent(raw)}&token=${encodeURIComponent(tok)}`
       byEmail.set(raw, { email: String(row.email ?? '').trim(), unsubUrl: unsub })
     }
 
+    if (invalidRecipients.length) {
+      // Skipped, never "fixed": user data is not modified here.
+      console.warn('[newsletter] skipped invalid recipient(s):', invalidRecipients.length, invalidRecipients.slice(0, 10).join(', '))
+    }
     const recipients = Array.from(byEmail.values())
     if (recipients.length === 0) {
       await cronHealthComplete(runId, healthJobName, admin, {
