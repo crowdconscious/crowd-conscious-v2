@@ -94,8 +94,8 @@ export default function ExecutiveSummary({
 
       <footer className="mt-6 border-t border-slate-300 pt-3 text-xs leading-relaxed text-slate-700">
         {es
-          ? `Metodología: ${sample}; enlaces de un solo uso; visibilidad ${vis} decidida antes de abrir; «firme» = certeza ${FIRM_THRESHOLD}-10; reportamos tasa de respuesta, no margen de error. El cliente no editó estos resultados.`
-          : `Methodology: ${sample}; single-use links; ${vis} visibility decided before opening; "firm" = certainty ${FIRM_THRESHOLD}-10; we report response rate, not a margin of error. The client did not edit these results.`}
+          ? `Metodología: ${sample}; enlaces de un solo uso; visibilidad actual: ${vis} (la elige el cliente); «firme» = certeza ${FIRM_THRESHOLD}-10; reportamos tasa de respuesta, no margen de error. El cliente no editó estos resultados.`
+          : `Methodology: ${sample}; single-use links; current visibility: ${vis} (chosen by the client); "firm" = certainty ${FIRM_THRESHOLD}-10; we report response rate, not a margin of error. The client did not edit these results.`}
         {expiresAt ? <span className="block">{es ? `Enlace privado, vence el ${expiresAt}.` : `Private link, expires ${expiresAt}.`}</span> : null}
       </footer>
     </div>

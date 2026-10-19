@@ -32,8 +32,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   if (a.action === 'visibility') {
     if (!canSetVisibility(row.status)) return NextResponse.json({ error: 'visibility_locked' }, { status: 409 })
-    await orgDb().from('org_readings').update({ visibility: a.value, updated_at: now }).eq('id', id).eq('status', 'design')
-    await logEvent(id, c.ctx.userId, 'visibility_set', { value: a.value })
+    if (row.visibility === a.value) return NextResponse.json({ ok: true, unchanged: true })
+    const { error } = await orgDb().from('org_readings').update({ visibility: a.value, updated_at: now }).eq('id', id).eq('org_id', c.ctx.org!.id)
+    if (error) return NextResponse.json({ error: 'update_failed' }, { status: 500 })
+    // Audit trail: who switched, from what, to what, in which status.
+    await logEvent(id, c.ctx.userId, 'visibility_set', { from: row.visibility, value: a.value, status: row.status })
+    // Public pages (/sello/*) are force-dynamic, so listings and the Sello update on the next request.
     return NextResponse.json({ ok: true })
   }
   if (a.action === 'extend') {
