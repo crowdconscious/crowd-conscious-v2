@@ -7,6 +7,7 @@
 // private, per alcaldía + domain. Legacy awardXP remains for non-vote paths
 // (e.g. live events) until those are retargeted.
 import { createClient } from '@/lib/supabase-server'
+import { createAdminClient } from '@/lib/supabase-admin'
 
 export interface XPReward {
   action_type: string
@@ -38,7 +39,8 @@ export async function awardXP(
   
   // Call the database function to award XP
   // ✅ FIX: Explicitly cast types to match function signature (UUID, VARCHAR, UUID, TEXT)
-  const { data, error } = await supabase.rpc('award_xp', {
+  // award_xp is service-role only (migration 292).
+  const { data, error } = await createAdminClient().rpc('award_xp', {
     p_user_id: userId as any, // UUID
     p_action_type: actionType as any, // VARCHAR(50)
     p_action_id: (actionId || null) as any, // UUID or NULL

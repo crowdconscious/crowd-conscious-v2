@@ -4,6 +4,7 @@
  */
 
 import { createClient } from '@/lib/supabase-server'
+import { createAdminClient } from '@/lib/supabase-admin'
 
 export interface Achievement {
   type: string
@@ -24,7 +25,8 @@ export async function checkAndUnlockAchievements(
   const supabase = await createClient()
 
   // Call database function to check achievements
-  const { data, error } = await supabase.rpc('check_achievements', {
+  // check_achievements is service-role only (migration 292).
+  const { data, error } = await createAdminClient().rpc('check_achievements', {
     p_user_id: userId,
     p_action_type: actionType,
     p_action_id: actionId || null
