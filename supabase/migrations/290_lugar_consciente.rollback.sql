@@ -1,4 +1,4 @@
--- Rollback for 289_lugar_consciente. Destroys pledges and awards recorded since it was applied.
+-- Rollback for 290_lugar_consciente. Destroys pledges and awards recorded since it was applied.
 BEGIN;
 DROP VIEW IF EXISTS public.lugar_consciente_progress;
 DROP TABLE IF EXISTS public.seal_award_events;

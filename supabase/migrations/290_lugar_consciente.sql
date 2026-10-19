@@ -1,6 +1,6 @@
--- 289_lugar_consciente: two distinct seals (Lugar Consciente = free/earned;
+-- 290_lugar_consciente: two distinct seals (Lugar Consciente = free/earned;
 -- Sello verificado = paid B2B), the values pledge and the progress view.
--- NOT APPLIED. Additive only: new nullable columns, new tables, new view.
+-- Additive only: new nullable columns, new tables, new view.
 -- Nothing existing is altered, renamed or dropped. Idempotent.
 -- New tables: RLS enabled + forced, no policies, service_role only (server routes).
 
