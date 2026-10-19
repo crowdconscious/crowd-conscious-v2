@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { getCurrentUser } from '@/lib/auth-server'
 import { isAdminUser } from '@/lib/auth/is-admin'
+import { createAdminClient } from '@/lib/supabase-admin'
 
 export async function GET(request: Request) {
   try {
@@ -11,7 +12,7 @@ export async function GET(request: Request) {
     }
 
     const supabase = await createClient()
-    const { data: profile } = await supabase
+    const { data: profile } = await createAdminClient()
       .from('profiles')
       .select('user_type, email')
       .eq('id', user.id)

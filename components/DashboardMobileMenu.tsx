@@ -36,7 +36,7 @@ export default function DashboardMobileMenu() {
         if (user) {
           const { data } = await supabaseClient
             .from('profiles')
-            .select('*')
+            .select('id, full_name, avatar_url, user_type')
             .eq('id', user.id)
             .single()
           setUserProfile(data)

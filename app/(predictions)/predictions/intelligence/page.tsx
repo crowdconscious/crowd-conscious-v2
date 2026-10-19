@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { fetchIntelligenceDashboard } from '@/lib/intelligence-data'
 import { isAdminUser } from '@/lib/auth/is-admin'
 import IntelligenceClient from './IntelligenceClient'
+import { createAdminClient } from '@/lib/supabase-admin'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -27,7 +28,7 @@ export default async function IntelligencePage({
     redirect('/login')
   }
 
-  const { data: profile } = await supabase
+  const { data: profile } = await createAdminClient()
     .from('profiles')
     .select('user_type, email')
     .eq('id', user.id)

@@ -7,6 +7,7 @@ import { isAdminUser } from '@/lib/auth/is-admin'
 import type { CreatorLocale } from '@/lib/i18n/creator'
 import { SITE_URL } from '@/lib/seo/site'
 import ProfileClient from './ProfileClient'
+import { createAdminClient } from '@/lib/supabase-admin'
 
 export const metadata: Metadata = {
   title: { absolute: 'Tu Perfil | Crowd Conscious' },
@@ -17,7 +18,7 @@ export const metadata: Metadata = {
 
 async function getProfile(userId: string) {
   const supabase = await createClient()
-  const { data, error } = await supabase
+  const { data, error } = await createAdminClient()
     .from('profiles')
     .select('*')
     .eq('id', userId)

@@ -10,6 +10,7 @@ import { lookupSponsorAccountsForUser } from '@/lib/sponsor-account-lookup'
 import { isAdminUser } from '@/lib/auth/is-admin'
 import { isBlogEditorUser } from '@/lib/auth/is-blog-editor'
 import { excludeStandOnly } from '@/lib/pulse/discovery-filters'
+import { createAdminClient } from '@/lib/supabase-admin'
 
 const Footer = dynamic(() => import('@/components/Footer'))
 
@@ -97,7 +98,7 @@ export default async function PredictionsLayout({
   if (user) {
     const supabase = await createClient()
     const [profileRes, counts, sponsorSummary] = await Promise.all([
-      supabase.from('profiles').select('user_type, email').eq('id', user.id).single(),
+      createAdminClient().from('profiles').select('user_type, email').eq('id', user.id).single(),
       getNavCounts(supabase),
       lookupSponsorAccountsForUser(user),
     ])

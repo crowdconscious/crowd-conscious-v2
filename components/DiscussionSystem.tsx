@@ -148,7 +148,7 @@ export function RichTextEditor({
               </div>
               <div>
                 <div className="font-medium text-slate-900">{mention.name}</div>
-                <div className="text-xs text-slate-500">{mention.email}</div>
+                
               </div>
             </button>
           ))}
@@ -300,7 +300,7 @@ export function CommentItem({
       <div className="flex gap-3">
         {/* Avatar */}
         <div className="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center text-sm font-bold text-teal-700 flex-shrink-0">
-          {comment.user.full_name?.[0]?.toUpperCase() || comment.user.email[0].toUpperCase()}
+          {comment.user.full_name?.[0]?.toUpperCase() || '?'}
         </div>
         
         {/* Comment Content */}
@@ -308,7 +308,7 @@ export function CommentItem({
           <div className="bg-slate-50 rounded-lg p-3 mb-2">
             <div className="flex items-center gap-2 mb-1">
               <span className="font-medium text-slate-900 text-sm">
-                {comment.user.full_name || comment.user.email}
+                {comment.user.full_name || 'Usuario'}
               </span>
               <span className="text-xs text-slate-500">
                 {new Date(comment.created_at).toLocaleDateString()} at{' '}
@@ -420,7 +420,7 @@ export function CommentsSection({
         .from('comments')
         .select(`
           *,
-          user:profiles(full_name, email)
+          user:profiles(full_name)
         `)
         .eq('content_id', contentId)
         .is('parent_id', null)
@@ -435,7 +435,7 @@ export function CommentsSection({
             .from('comments')
             .select(`
               *,
-              user:profiles(full_name, email)
+              user:profiles(full_name)
             `)
             .eq('parent_id', (comment as any).id)
             .order('created_at', { ascending: true })
@@ -456,14 +456,14 @@ export function CommentsSection({
     try {
       const { data, error } = await supabaseClient
         .from('profiles')
-        .select('id, full_name, email')
+        .select('id, full_name')
         .limit(20)
 
       if (!error && data) {
         setMentions(data.map((profile: any) => ({
           id: profile.id,
-          name: profile.full_name || profile.email.split('@')[0],
-          email: profile.email
+          name: profile.full_name || 'Usuario',
+          email: ''
         })))
       }
     } catch (error) {
@@ -496,7 +496,7 @@ export function CommentsSection({
         })
         .select(`
           *,
-          user:profiles(full_name, email)
+          user:profiles(full_name)
         `)
         .single() */
 
@@ -557,7 +557,7 @@ export function CommentsSection({
       })
       .select(`
         *,
-        user:profiles(full_name, email)
+        user:profiles(full_name)
       `)
       .single() */
 

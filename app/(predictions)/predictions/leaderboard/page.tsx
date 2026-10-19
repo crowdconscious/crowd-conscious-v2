@@ -94,7 +94,7 @@ async function getLeaderboardData(category: string) {
   const userIds = xpRows.map((r) => r.user_id)
 
   // Fetch profiles (with email for dedup, roles for admin exclusion)
-  const { data: profiles } = await supabase
+  const { data: profiles } = await createAdminClient()
     .from('profiles')
     .select('id, full_name, email, avatar_url, user_type, admin_level')
     .in('id', userIds)
@@ -251,7 +251,7 @@ async function getLeaderboardData(category: string) {
       rank: i + 1,
       user_id: userId,
       username: fullName,
-      email: profile?.email ?? null,
+      email: null, // never ship emails to the client
       avatar_url: profile?.avatar_url ?? null,
       total_xp: xp,
       prediction_count: stats.total,
@@ -266,7 +266,7 @@ async function getLeaderboardData(category: string) {
   if (user) {
     // Ensure current user profile is loaded (may not be in top 50)
     if (!profileMap.has(user.id)) {
-      const { data: p } = await supabase
+      const { data: p } = await createAdminClient()
         .from('profiles')
         .select('id, full_name, email, avatar_url')
         .eq('id', user.id)
@@ -306,7 +306,7 @@ async function getLeaderboardData(category: string) {
           rank,
           user_id: user.id,
           username: profile?.full_name ?? 'Anonymous',
-          email: profile?.email ?? null,
+          email: null, // never ship emails to the client
           avatar_url: profile?.avatar_url ?? null,
           total_xp: myXp,
           prediction_count: stats.total,

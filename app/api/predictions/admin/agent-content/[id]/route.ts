@@ -15,7 +15,7 @@ export async function GET(
     }
 
     const client = await createClient()
-    const { data: profile } = await client
+    const { data: profile } = await createAdminClient()
       .from('profiles')
       .select('user_type, email')
       .eq('id', user.id)
@@ -58,7 +58,7 @@ export async function PATCH(
     }
 
     const client = await createClient()
-    const { data: profile } = await client
+    const { data: profile } = await createAdminClient()
       .from('profiles')
       .select('user_type, email')
       .eq('id', user.id)

@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { ApiResponse } from '@/lib/api-responses'
 import { isAdminUser } from '@/lib/auth/is-admin'
+import { createAdminClient } from '@/lib/supabase-admin'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,7 +28,7 @@ export async function GET(request: NextRequest) {
     }
     
     // Get user profile to verify admin status
-    const { data: profile } = await supabase
+    const { data: profile } = await createAdminClient()
       .from('profiles')
       .select('user_type, email')
       .eq('id', user.id)

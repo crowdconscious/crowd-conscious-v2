@@ -69,7 +69,7 @@ export async function getPulseListingContext(): Promise<PulseListingContext> {
   const supabase = await createClient()
   const admin = createAdminClient()
 
-  const { data: prof } = await supabase
+  const { data: prof } = await createAdminClient()
     .from('profiles')
     .select('user_type, email')
     .eq('id', user.id)

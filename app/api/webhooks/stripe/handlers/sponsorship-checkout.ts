@@ -10,6 +10,7 @@ import {
 } from '../lib/sponsorship-money'
 import { signalCategoryToPillar, isFundPillar, type FundPillar } from '@/lib/fund/pillars'
 import { isSponsorshipTier, round2 } from '@/lib/sponsorship-tiers'
+import { createAdminClient } from '@/lib/supabase-admin'
 
 /**
  * Prompt 3 — the automation core.
@@ -146,7 +147,7 @@ export async function handleSponsorshipCheckout(session: Stripe.Checkout.Session
   // that creator's profile email. Holds the payout for manual review.
   let flaggedSelfSponsor = false
   if (creatorIdFromMetadata && sponsorEmail) {
-    const { data: creatorProfile } = await supabase
+    const { data: creatorProfile } = await createAdminClient()
       .from('profiles')
       .select('email')
       .eq('id', creatorIdFromMetadata)

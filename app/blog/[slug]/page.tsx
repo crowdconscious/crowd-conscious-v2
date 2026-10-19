@@ -166,7 +166,7 @@ export default async function BlogPostPage(props: Props) {
   const isBlogEditor = isBlogEditorUser(user)
   const profile = user
     ? (
-        await supabase.from('profiles').select('user_type, email').eq('id', user.id).maybeSingle()
+        await createAdminClient().from('profiles').select('user_type, email').eq('id', user.id).maybeSingle()
       ).data
     : null
 

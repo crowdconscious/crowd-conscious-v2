@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
         const userIds = statsData.map((s: any) => s.user_id)
         const { data: profilesData } = await supabase
           .from('profiles')
-          .select('id, full_name, email, avatar_url')
+          .select('id, full_name, avatar_url')
           .in('id', userIds)
         
         // Combine stats with profiles
@@ -138,7 +138,6 @@ export async function GET(request: NextRequest) {
               total_xp: totalXP,
               tier: calculatedTier,
               full_name: stat.profiles?.full_name || 'Anonymous User',
-              email: stat.profiles?.email,
               avatar_url: stat.profiles?.avatar_url
             }
           })
@@ -153,7 +152,7 @@ export async function GET(request: NextRequest) {
             user_id,
             total_xp,
             current_tier as tier,
-            profiles!inner(full_name, email, avatar_url)
+            profiles!inner(full_name, avatar_url)
           `)
           .order('total_xp', { ascending: false })
           .range(offset, offset + limit - 1)
@@ -184,7 +183,6 @@ export async function GET(request: NextRequest) {
               total_xp: entry.total_xp || 0,
               tier: entry.tier || 1,
               full_name: entry.profiles?.full_name || 'Anonymous User',
-              email: entry.profiles?.email,
               avatar_url: entry.profiles?.avatar_url
             }))
           console.log('Mapped leaderboard from user_xp:', leaderboard.length, 'entries')
@@ -200,7 +198,6 @@ export async function GET(request: NextRequest) {
         total_xp: entry.total_xp || 0,
         tier: entry.tier || 1,
         full_name: entry.full_name || 'Anonymous User',
-        email: entry.email,
         avatar_url: entry.avatar_url
       }))
       console.log('Mapped leaderboard from view:', leaderboard.length, 'entries')

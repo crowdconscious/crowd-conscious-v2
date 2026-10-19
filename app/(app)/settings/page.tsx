@@ -1,6 +1,7 @@
 import { getCurrentUser } from '../../../lib/auth-server'
 import { supabase } from '../../../lib/supabase'
 import SettingsClient from './SettingsClient'
+import { createAdminClient } from '@/lib/supabase-admin'
 
 async function getUserSettings(userId: string) {
   const { data, error } = await supabase
@@ -26,7 +27,7 @@ async function getUserSettings(userId: string) {
 }
 
 async function getProfile(userId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await createAdminClient()
     .from('profiles')
     .select('*')
     .eq('id', userId)

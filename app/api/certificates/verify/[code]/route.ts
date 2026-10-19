@@ -31,7 +31,7 @@ export async function GET(
       .from('course_enrollments')
       .select(`
         *,
-        user:profiles!user_id(full_name, email),
+        user:profiles!user_id(full_name),
         module:marketplace_modules(id, title, core_value, slug)
       `)
       .eq('completed', true)

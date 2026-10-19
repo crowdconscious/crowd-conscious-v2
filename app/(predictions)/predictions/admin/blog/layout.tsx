@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase-server'
 import { getCurrentUser } from '@/lib/auth-server'
 import { isBlogEditorUser } from '@/lib/auth/is-blog-editor'
+import { createAdminClient } from '@/lib/supabase-admin'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,7 +19,7 @@ export default async function BlogAdminLayout({
   if (!user) redirect('/predictions')
 
   const supabase = await createClient()
-  const { data: profile } = await supabase
+  const { data: profile } = await createAdminClient()
     .from('profiles')
     .select('user_type, email')
     .eq('id', user.id)

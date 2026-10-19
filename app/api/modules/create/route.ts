@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase-server'
 import { getCurrentUser } from '@/lib/auth-server'
 import { ApiResponse } from '@/lib/api-responses'
 import { Resend } from 'resend'
+import { createAdminClient } from '@/lib/supabase-admin'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -125,7 +126,7 @@ export async function POST(request: NextRequest) {
     if (status === 'review') {
       try {
         // Fetch user details
-        const { data: userProfile } = await supabase
+        const { data: userProfile } = await createAdminClient()
           .from('profiles')
           .select('full_name, email')
           .eq('id', userId)

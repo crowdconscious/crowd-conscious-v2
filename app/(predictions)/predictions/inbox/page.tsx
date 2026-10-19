@@ -5,6 +5,7 @@ import { getCurrentUser } from '@/lib/auth-server'
 import { isAdminUser } from '@/lib/auth/is-admin'
 import { InboxClient } from './InboxClient'
 import { SITE_URL } from '@/lib/seo/site'
+import { createAdminClient } from '@/lib/supabase-admin'
 
 export const metadata: Metadata = {
   title: { absolute: 'Buzón Consciente | Crowd Conscious' },
@@ -85,7 +86,7 @@ async function detectAdmin(): Promise<boolean> {
   const user = await getCurrentUser()
   if (!user) return false
   const supabase = await createClient()
-  const { data: profile } = await supabase
+  const { data: profile } = await createAdminClient()
     .from('profiles')
     .select('user_type, email')
     .eq('id', user.id)

@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     }
 
     const client = await createClient()
-    const { data: profile } = await client
+    const { data: profile } = await createAdminClient()
       .from('profiles')
       .select('user_type, email')
       .eq('id', user.id)

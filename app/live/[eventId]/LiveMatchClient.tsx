@@ -62,10 +62,10 @@ export function LiveMatchClient({
     }
     void supabase
       .from('profiles')
-      .select('user_type, email')
+      .select('user_type')
       .eq('id', user.id)
       .maybeSingle()
-      .then(({ data }) => setClientAdmin(isAdminUser(data)))
+      .then(({ data }) => setClientAdmin(isAdminUser(data ? { ...data, email: user.email ?? null } : null)))
   }, [user?.id, supabase, isAdminFromServer])
 
   useEffect(() => {
