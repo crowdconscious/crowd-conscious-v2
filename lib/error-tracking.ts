@@ -16,6 +16,7 @@
  * }
  * ```
  */
+import * as Sentry from '@sentry/nextjs'
 
 interface ErrorContext {
   endpoint?: string
@@ -46,13 +47,8 @@ export function trackError(error: Error | unknown, context?: ErrorContext) {
   // Log to console (always)
   console.error('[Error Tracked]', errorData)
 
-  // TODO: Integrate with Sentry when available
-  // if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
-  //   Sentry.captureException(error, {
-  //     tags: context,
-  //     extra: errorData,
-  //   })
-  // }
+  // Sentry: a no-op until SENTRY_DSN / NEXT_PUBLIC_SENTRY_DSN is set (see instrumentation*.ts).
+  Sentry.captureException(error, { extra: errorData })
 
   // TODO: Send to monitoring service
   // Could send to Supabase, external API, etc.
@@ -76,13 +72,7 @@ export function trackMessage(message: string, level: 'info' | 'warning' | 'error
   const logMethod = level === 'error' ? console.error : level === 'warning' ? console.warn : console.log
   logMethod(`[${level.toUpperCase()}]`, messageData)
 
-  // TODO: Integrate with Sentry when available
-  // if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
-  //   Sentry.captureMessage(message, {
-  //     level: level === 'error' ? 'error' : level === 'warning' ? 'warning' : 'info',
-  //     tags: context,
-  //   })
-  // }
+  if (level !== 'info') Sentry.captureMessage(message, { level, extra: messageData })
 }
 
 /**

@@ -5,17 +5,18 @@ import { isAdminUser } from '@/lib/auth/is-admin'
 import { notifyPulsePublished } from '@/lib/expo-push'
 import { isStandOnly } from '@/lib/pulse/discovery-filters'
 import { ensurePredictionLocked, withTimeout } from '@/lib/contraste-ia/server'
+import { decidePublish, parseForce, type PublishDecision } from '@/lib/contraste-ia/publish-gate'
 
 // Contraste IA locks the AI prediction BEFORE is_draft flips (zero votes possible).
 export const maxDuration = 120
 
-/** Max wait for the pre-publish Contraste IA lock; on timeout/failure we still
- *  publish and the backstop cron retries (row is then marked 'late' by the DB
- *  if a vote already landed). */
+/** Max wait for the pre-publish Contraste IA lock. On timeout/failure the Pulse
+ *  STAYS A DRAFT and the admin gets a 409 with the error, unless the request
+ *  carries { force: true } ("publish anyway, prediction will be late"). */
 const CONTRASTE_LOCK_TIMEOUT_MS = 75_000
 
 export async function POST(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -25,6 +26,8 @@ export async function POST(
     }
 
     const { id } = await params
+    const body = (await request.json().catch(() => ({}))) as { force?: unknown }
+    const force = parseForce(body?.force ?? request.nextUrl.searchParams.get('force'))
     const admin = createAdminClient()
 
     const { data: market, error: fetchErr } = await admin
@@ -63,14 +66,24 @@ export async function POST(
 
     // Contraste IA: run + lock the AI prediction while the Pulse is still a
     // draft, so it provably uses only the question/options and zero votes.
-    let contraste: Awaited<ReturnType<typeof ensurePredictionLocked>> | null = null
+    let decision: PublishDecision | null = null
     if (market.is_pulse) {
-      contraste = await withTimeout(
+      const lock = await withTimeout(
         ensurePredictionLocked(admin, id, 'publish'),
         CONTRASTE_LOCK_TIMEOUT_MS,
-        { ok: false, error: 'timeout' },
+        { ok: false as const, error: 'timeout' },
       )
-      if (!contraste.ok) console.warn('[publish-market] contraste-ia not locked:', contraste.error)
+      decision = decidePublish(lock, { force })
+      if (!decision.publish) {
+        console.warn('[publish-market] contraste-ia lock failed, kept as draft:', id, lock.ok ? '' : lock.error)
+        return NextResponse.json(
+          { error: decision.error, code: decision.code, can_override: true, is_draft: true },
+          { status: 409 },
+        )
+      }
+      if (decision.contraste === 'override_unlocked') {
+        console.warn('[publish-market] admin override: publishing without locked prediction', id, user.id)
+      }
     }
 
     const { error: upErr } = await admin
@@ -110,7 +123,8 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      contraste_ia: contraste ? (contraste.ok ? 'locked' : `pending: ${contraste.error}`) : null,
+      contraste_ia: decision?.publish ? decision.contraste : null,
+      warning: decision?.publish ? decision.warning ?? null : null,
     })
   } catch (err) {
     console.error('Publish market error:', err)

@@ -10,6 +10,8 @@ import {
 import { isAdminUser } from '@/lib/auth/is-admin'
 import { notifyPulsePublished } from '@/lib/expo-push'
 import { isStandOnly } from '@/lib/pulse/discovery-filters'
+import { ensurePredictionLocked, withTimeout } from '@/lib/contraste-ia/server'
+import { decidePublish, parseForce } from '@/lib/contraste-ia/publish-gate'
 import {
   normalizePulseOutcomes,
   outcomeTranslationsPayload,
@@ -21,6 +23,9 @@ import {
   parseAllowOther,
 } from '@/lib/pulse-vote-ranking'
 import { pulseMultiVoteFields } from '@/lib/multi-select-pulses'
+
+// Publishing locks the Contraste IA prediction first (can take ~30–75 s).
+export const maxDuration = 120
 
 export async function POST(request: NextRequest) {
   try {
@@ -71,6 +76,7 @@ export async function POST(request: NextRequest) {
     const pulseVote = pulseMultiVoteFields()
 
     const wantsDraft = Boolean(is_draft)
+    const forcePublish = parseForce(body.force_publish)
 
     if (!title?.trim()) {
       return Response.json({ error: 'Title is required' }, { status: 400 })
@@ -226,13 +232,14 @@ export async function POST(request: NextRequest) {
     // overflow on conscious_fund_percentage) and leave is_pulse=false while the RPC
     // row already exists. Listing feeds filter on is_pulse, so this must never be
     // bundled with optional metadata.
-    const publishedAt = wantsDraft ? null : new Date().toISOString()
+    // Contraste IA: always create as a draft first; we only flip to published
+    // after the AI prediction is locked (zero votes possible while a draft).
     const { error: identityErr } = await admin
       .from('prediction_markets')
       .update({
         is_pulse: true,
-        is_draft: wantsDraft,
-        published_at: publishedAt,
+        is_draft: true,
+        published_at: null,
         description: resolvedDescription,
         description_short: resolvedDescriptionShort,
         resolution_criteria: PULSE_DEFAULT_RESOLUTION_CRITERIA,
@@ -348,7 +355,42 @@ export async function POST(request: NextRequest) {
         .eq('id', marketId)
     }
 
+    let contrasteStatus: string | null = null
+    let publishWarning: string | null = null
     if (!wantsDraft) {
+      const lock = await withTimeout(
+        ensurePredictionLocked(admin, marketId as string, 'publish'),
+        75_000,
+        { ok: false as const, error: 'timeout' },
+      )
+      const decision = decidePublish(lock, { force: forcePublish })
+      if (!decision.publish) {
+        console.warn('[create-market] contraste-ia lock failed, kept as draft:', marketId)
+        return Response.json({
+          success: true,
+          market_id: marketId,
+          is_draft: true,
+          kept_draft: true,
+          code: decision.code,
+          error: decision.error,
+          can_override: true,
+          message: decision.error,
+        })
+      }
+      if (decision.contraste === 'override_unlocked') {
+        console.warn('[create-market] admin override: publishing without locked prediction', marketId, user.id)
+      }
+      contrasteStatus = decision.contraste
+      publishWarning = decision.warning ?? null
+      const { error: pubErr } = await admin
+        .from('prediction_markets')
+        .update({ is_draft: false, published_at: new Date().toISOString() })
+        .eq('id', marketId)
+      if (pubErr) {
+        console.error('Create pulse publish error:', pubErr)
+        return Response.json({ error: pubErr.message, market_id: marketId, is_draft: true }, { status: 500 })
+      }
+
       // Stand-only: skip mass push; keep simulation enqueue.
       if (!isStandOnly(tagArray)) {
         try {
@@ -373,6 +415,8 @@ export async function POST(request: NextRequest) {
       success: true,
       market_id: marketId,
       is_draft: wantsDraft,
+      contraste_ia: contrasteStatus,
+      warning: publishWarning,
       message: 'Pulse created successfully',
     })
   } catch (err) {

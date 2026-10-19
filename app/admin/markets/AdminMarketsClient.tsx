@@ -83,15 +83,31 @@ export default function AdminMarketsClient() {
     if (publishingId) return
     setPublishingId(id)
     try {
-      const res = await fetch(
-        `/api/predictions/admin/markets/${id}/publish`,
-        { method: 'POST' }
-      )
-      const j = await res.json().catch(() => ({}))
+      const post = (force: boolean) =>
+        fetch(`/api/predictions/admin/markets/${id}/publish`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ force }),
+        })
+      let res = await post(false)
+      let j = await res.json().catch(() => ({}))
+      if (!res.ok && j.code === 'contraste_lock_failed') {
+        // Lock failed: Pulse stays a draft unless the admin explicitly overrides.
+        const override = window.confirm(
+          `${j.error}\n\n¿Publicar de todos modos? La predicción de IA quedará como "tardía" y no se usará en afirmaciones públicas.`
+        )
+        if (!override) {
+          await load()
+          return
+        }
+        res = await post(true)
+        j = await res.json().catch(() => ({}))
+      }
       if (!res.ok) {
         alert(j.error || 'Failed to publish')
         return
       }
+      if (j.warning) alert(j.warning)
       await load()
     } finally {
       setPublishingId(null)

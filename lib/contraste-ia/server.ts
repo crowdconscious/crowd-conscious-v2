@@ -335,12 +335,22 @@ export async function viewerHasVoted(
   return false
 }
 
-/** Does any prediction row exist (for the content-free pre-vote teaser)? */
-export async function hasPrediction(admin: SupabaseClient, marketId: string): Promise<boolean> {
-  const { count } = await admin
+/**
+ * Does a prediction exist (for the content-free pre-vote teaser)?
+ * By default only LOCKED (pre-vote) rows count: the teaser ("La IA ya
+ * respondió") is a public claim, and 'late' predictions never back claims.
+ */
+export async function hasPrediction(
+  admin: SupabaseClient,
+  marketId: string,
+  opts: { lockedOnly?: boolean } = {},
+): Promise<boolean> {
+  let q = admin
     .from('pulse_ai_predictions')
     .select('id', { count: 'exact', head: true })
     .eq('market_id', marketId)
+  if (opts.lockedOnly !== false) q = q.eq('status', 'locked')
+  const { count } = await q
   return (count ?? 0) > 0
 }
 
