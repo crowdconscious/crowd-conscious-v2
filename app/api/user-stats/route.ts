@@ -1,3 +1,4 @@
+import { createAdminClient } from '@/lib/supabase-admin'
 import { NextRequest } from 'next/server'
 import { createServerAuth } from '@/lib/auth-server'
 import { ApiResponse } from '@/lib/api-responses'
@@ -36,7 +37,8 @@ export async function GET(request: NextRequest) {
         achievements_unlocked: []
       }
 
-      const { data: newStats, error: insertError } = await supabase
+      // user_stats is written server-side only (users have no write policy).
+      const { data: newStats, error: insertError } = await createAdminClient()
         .from('user_stats')
         .insert(initialStats)
         .select()
