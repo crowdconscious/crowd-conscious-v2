@@ -25,8 +25,10 @@ export async function POST(request: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    // Allow all authenticated users to calculate their own retroactive XP
-    // Or restrict to admins: if (profile?.user_type !== 'admin') { return ApiResponse.forbidden() }
+    // Admin only: this endpoint can award XP for any user.
+    if (profile?.user_type !== 'admin') {
+      return ApiResponse.forbidden('Admin access required')
+    }
 
     const { targetUserId } = await request.json()
     const userId = targetUserId || user.id

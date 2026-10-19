@@ -1,8 +1,18 @@
+import { createHash } from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { createClient } from '@/lib/supabase-server'
 import { ApiResponse } from '@/lib/api-responses'
 import { moderateRateLimit, getRateLimitIdentifier, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
+
+const CLIENT_AWARDABLE_ACTIONS = new Set(['daily_login'])
+
+function dailyActionId(userId: string, actionType: string): string {
+  const day = new Date().toISOString().slice(0, 10)
+  const h = createHash('sha256').update(`${userId}:${actionType}:${day}`).digest('hex')
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-5${h.slice(13, 16)}-a${h.slice(17, 20)}-${h.slice(20, 32)}`
+}
+
 
 /**
  * GET /api/gamification/xp
@@ -95,11 +105,20 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { action_type, action_id, description } = body
+    const { action_type } = body
 
     if (!action_type) {
       return ApiResponse.badRequest('action_type is required', 'MISSING_ACTION_TYPE')
     }
+
+    // Only actions the server can make idempotent may be self-awarded here.
+    // Everything else is awarded server-side by the route that performs the action.
+    if (!CLIENT_AWARDABLE_ACTIONS.has(action_type)) {
+      return ApiResponse.forbidden('This action cannot be awarded from the client', 'ACTION_NOT_ALLOWED')
+    }
+    // Deterministic per-user, per-day id => award_xp dedupes repeat calls.
+    const action_id = dailyActionId(user.id, action_type)
+    const description = 'Daily login'
 
     // Award XP using database function
     // award_xp / check_achievements are service-role only (migration 292).
@@ -107,8 +126,8 @@ export async function POST(request: NextRequest) {
     const { data: result, error } = await admin.rpc('award_xp', {
       p_user_id: user.id,
       p_action_type: action_type,
-      p_action_id: action_id || null,
-      p_description: description || null
+      p_action_id: action_id,
+      p_description: description
     })
 
     if (error) {
@@ -120,7 +139,7 @@ export async function POST(request: NextRequest) {
     const { data: achievements } = await admin.rpc('check_achievements', {
       p_user_id: user.id,
       p_action_type: action_type,
-      p_action_id: action_id || null
+      p_action_id: action_id
     })
 
     return ApiResponse.ok({
