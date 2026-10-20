@@ -10,7 +10,9 @@ import { LAYERS, Legend, ObsMap, type MapLayer } from './ObsMap'
 import { Kpi, NGuard, NNote, Panel, RiskChip, SimTag, WatchBadge } from './ui'
 
 export function MapHome({ commission = false }: { commission?: boolean }) {
-  const { data } = useObs()
+  const { data, tourOpen } = useObs()
+  const [tourMapH, setTourMapH] = useState(560)
+  useEffect(() => { if (tourOpen) setTourMapH(Math.max(260, Math.min(560, window.innerHeight - 400))) }, [tourOpen])
   const seed = data!
   const router = useRouter()
   const sp = useSearchParams()
@@ -36,7 +38,7 @@ export function MapHome({ commission = false }: { commission?: boolean }) {
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
       <div className="space-y-3 min-w-0">
-        <Panel className="!p-3">
+        <div data-tour="map-panel"><Panel className="!p-3">
           <div role="radiogroup" aria-label="Capa del mapa" className="flex flex-wrap gap-1.5 mb-2">
             {LAYERS.map((l) => (
               <button key={l.id} role="radio" aria-checked={layer === l.id} onClick={() => setLayer(l.id)} className="rounded-lg px-2.5 py-1 text-xs sm:text-sm font-semibold"
@@ -46,7 +48,7 @@ export function MapHome({ commission = false }: { commission?: boolean }) {
           <div className="flex flex-wrap items-center gap-2 mb-2 min-h-[28px]">
             {selAgg ? (<><button className="obs-btn !py-1 !px-2 text-xs" onClick={() => setSelected(null)}>← Toda la ciudad</button><span className="obs-h text-lg">{selAgg.nombre}</span><RiskChip risk={selAgg.risk} /><Link className="obs-btn !py-1 !px-2 text-xs ml-auto" href={`${OBS_BASE}/ficha/${selAgg.key}`}>Ficha de la alcaldía →</Link></>) : <span className="text-sm obs-muted">16 alcaldías · {seed.colonias.length} colonias en el catálogo de la demostración</span>}
           </div>
-          <ObsMap layer={layer} alcaldias={aggs} colonias={seed.colonias} selected={selected} onSelectAlcaldia={setSelected} onSelectColonia={(id) => router.push(`${OBS_BASE}/ficha/${id}`)} height={commission ? 460 : 560} compact={compact} />
+          <ObsMap layer={layer} alcaldias={aggs} colonias={seed.colonias} selected={selected} onSelectAlcaldia={setSelected} onSelectColonia={(id) => router.push(`${OBS_BASE}/ficha/${id}`)} height={tourOpen ? tourMapH : commission ? 460 : 560} compact={compact} />
           <div className="sticky bottom-0 pt-2 border-t mt-2" style={{ borderColor: '#1F2A2E', background: '#0E1416' }}><Legend layer={layer} /></div>
           {noPolys && (
             <div className="mt-3">
@@ -58,7 +60,7 @@ export function MapHome({ commission = false }: { commission?: boolean }) {
               </ul>
             </div>
           )}
-        </Panel>
+        </Panel></div>
       </div>
       <aside className="space-y-3">
         <div className="grid grid-cols-2 gap-2" data-tour="kpis">

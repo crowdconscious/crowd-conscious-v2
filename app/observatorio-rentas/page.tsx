@@ -7,7 +7,7 @@ import { fmtDate } from '@/lib/observatorio-rentas/model'
 export default function ObservatorioHome() {
   return (
     <>
-      <div className="mb-3">
+      <div className="mb-3" data-tour="intro">
         <p className="obs-label">Índice semanal · semana del {fmtDate(core.meta.last_week)}</p>
         <h1 className="obs-h text-2xl sm:text-3xl mt-1">¿Se cumple el tope a la renta en tu colonia?</h1>
         <p className="obs-muted text-sm mt-1 max-w-3xl">

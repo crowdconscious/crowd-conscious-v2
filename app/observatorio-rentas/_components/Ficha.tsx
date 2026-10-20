@@ -23,9 +23,10 @@ export function Ficha({ id }: { id: string }) {
   return (
     <div className="space-y-4" data-tour="ficha">
       <nav aria-label="Ruta" className="text-sm obs-muted"><Link href={OBS_BASE} className="underline">Mapa</Link>{col && <> / <Link className="underline" href={`${OBS_BASE}?alcaldia=${col.cvegeo}`}>{col.alcaldia}</Link></>}</nav>
+      <div className="space-y-4" data-tour="ficha-head">
       <div className="flex flex-wrap items-center gap-3">
         <div>
-          <p className="obs-label">{col ? 'Ficha de colonia' : 'Ficha de alcaldía'}</p>
+          <p className="obs-label">{col ? `Ficha de colonia · Alcaldía ${col.alcaldia}` : 'Ficha de alcaldía'}</p>
           <h1 className="obs-h text-2xl sm:text-3xl">{a.nombre}</h1>
         </div>
         <RiskChip risk={col ? coloniaRisk(col) : a.risk} />{watch && <WatchBadge />}<SimTag />
@@ -37,6 +38,7 @@ export function Ficha({ id }: { id: string }) {
         <Kpi label="Variación 12 meses" value={fmtPct(a.asking_change_12m)} sub={`4 semanas: ${fmtPct(a.asking_change_4w)} · inflación ${fmtPct(OBS_INFLATION_12M_PCT)}`} />
         <Kpi label="Mediana de aumento en renovación" value={<NGuard n={a.renewal_reports_n}>{fmtPct(a.renewal_increase_median, 2)}</NGuard>} sub={`Tope: ${fmtPct(OBS_LEGAL_CAP_PCT, 2)}`} />
         <Kpi label="Contratos registrados" value={<NGuard n={a.renewal_reports_n}>{fmtPct(a.pct_contracts_registered)}</NGuard>} sub="según los propios reportes" />
+      </div>
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
         <Panel title="Renta anunciada semanal vs inflación">{a.weekly.length ? <RentVsInflation weekly={a.weekly} inflation={OBS_INFLATION_12M_PCT} title={`Renta anunciada semanal en ${a.nombre} frente a la inflación`} /> : <div className="h-[200px] grid place-items-center obs-muted text-sm" role="status">Cargando serie semanal…</div>}<p className="text-xs obs-muted mt-2">Fuente simulada: anuncios de renta, {fmtInt(col ? col.listings_last : a.weekly[a.weekly.length - 1]?.listings ?? 0)} anuncios en la última semana.</p></Panel>

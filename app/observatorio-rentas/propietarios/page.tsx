@@ -50,7 +50,7 @@ export default function Propietarios() {
     )
   }
   return (
-    <div className="max-w-2xl mx-auto space-y-4">
+    <div className="max-w-2xl mx-auto space-y-4" data-tour="pulso">
       <div>
         <p className="obs-label">Pulso de propietarios</p>
         <h1 className="obs-h text-2xl">¿Qué planeas hacer con tu vivienda en renta?</h1>
