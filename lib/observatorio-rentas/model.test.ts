@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { allowedMax, classifyRisk, isWatch, alcaldiaAggregates, type Seed } from './model.ts'
+import { allowedMax, classifyRisk, isWatch, alcaldiaAggregates, expandCore, type SeedCore } from './model.ts'
 
 test('risk classification follows the brief thresholds', () => {
   assert.equal(classifyRisk(10, 1, 1), 'nodata')
@@ -20,10 +20,14 @@ test('calculator cap', () => {
   assert.equal(allowedMax(10000), 10369)
 })
 test('seed is complete and aggregates cover 16 alcaldías', () => {
-  const seed = JSON.parse(readFileSync('public/observatorio-rentas/seed.json', 'utf8')) as Seed
+  const seed = expandCore(JSON.parse(readFileSync('public/observatorio-rentas/data/core.json', 'utf8')) as SeedCore)
   assert.equal(seed.alcaldias.length, 16)
   const a = alcaldiaAggregates(seed)
   assert.equal(a.length, 16)
   const thin = seed.colonias.filter((c) => c.renewal_reports_n < 25).length / seed.colonias.length
   assert.ok(thin > 0.12 && thin < 0.28)
+  const mc = seed.colonias.filter((c) => c.cvegeo === '09008')
+  assert.equal(mc.length, 42)
+  assert.ok(mc.every((c) => c.has_polygon))
+  assert.ok(mc.some((c) => c.renewal_reports_n < 25))
 })

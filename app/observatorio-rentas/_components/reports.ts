@@ -246,7 +246,7 @@ const DICT: [string, string][] = [
 function openRows(seed: Seed) {
   return seed.colonias.map((c) => {
     const g = (n: number, v: number) => (n < OBS_MIN_N ? '' : v)
-    return [c.cve_col, c.nombre, c.alcaldia, c.asking_rent_median, c.asking_rent_m2, c.asking_change_12m, c.asking_change_4w, c.weekly[c.weekly.length - 1].listings ?? '',
+    return [c.cve_col, c.nombre, c.alcaldia, c.asking_rent_median, c.asking_rent_m2, c.asking_change_12m, c.asking_change_4w, c.listings_last,
       c.renewal_reports_n, g(c.renewal_reports_n, c.renewal_increase_median), g(c.renewal_reports_n, c.pct_renewals_above_cap), g(c.renewal_reports_n, c.pct_contracts_registered),
       c.landlord_reports_n, g(c.landlord_reports_n, c.pct_plan_raise_start_price), g(c.landlord_reports_n, c.pct_plan_withdraw), g(c.landlord_reports_n, c.pct_plan_short_term),
       c.short_term_listings, c.near_invi_housing ? 'sí' : 'no', RISK_LABEL[coloniaRisk(c)], isWatch(c.asking_change_12m, c.asking_change_4w) ? 'sí' : 'no']

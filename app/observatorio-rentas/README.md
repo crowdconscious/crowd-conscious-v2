@@ -10,9 +10,10 @@ Rutas: `/observatorio-rentas` (vista pública: mapa, `ficha/[id]`, `calculadora`
 | Umbrales, tope, inflación, paleta, aviso | `lib/observatorio-rentas/config.ts` (archivo único; Metodología lo lee de ahí) |
 | Clasificación y agregados | `lib/observatorio-rentas/model.ts` (+ `model.test.ts`) |
 | Generador de semilla (semilla fija `20261014`) | `scripts/observatorio-rentas/seed.mjs` |
-| Semilla generada | `public/observatorio-rentas/seed.json` |
+| Semilla generada | `public/observatorio-rentas/data/core.json` (columnar, ~59 KB / ~19 KB gzip, primer render) + `data/weekly-<cvegeo>.json` (series semanales, se cargan al abrir una ficha de colonia) |
+| Polígonos de colonia de la demo | `public/observatorio-rentas/colonias.geojson` (~94 KB), reconstruible con `scripts/observatorio-rentas/build-colonias-geo.sh` |
 | UI, mapa, recorrido, reportes PDF/XLSX/CSV/ZIP | `app/observatorio-rentas/**` |
-| Geometría | `public/geo/cdmx-alcaldias.geojson`, `public/geo/colonias-cuau-mh.geojson` (los mismos archivos del mapa de simulación existente) |
+| Geometría de alcaldías | `public/geo/cdmx-alcaldias.geojson` (mismo archivo del mapa de simulación existente) |
 
 Dependencias externas a la carpeta: `lib/sim-viewer/map-projection.ts` y `lib/sim-viewer/cdmx-alcaldias.ts` (proyección d3-geo del mapa de simulación CDMX), más `jspdf`, `jspdf-autotable`, `exceljs` y `d3-geo`, que ya estaban en el proyecto. Para pasarla a su propio sitio, copia esas tres carpetas y esos dos archivos de geo.
 
@@ -29,5 +30,14 @@ Para cambiar la calibración, edita `ALCALDIAS` (renta base y presión) en el sc
 - **Inflación INEGI/Banxico**: reemplaza `OBS_INFLATION_12M_PCT` (y el tope anual) en `config.ts` por un valor obtenido en la compilación.
 - Mientras el resultado conserve la forma de `Seed`, la UI y los reportes no cambian.
 
+## Fuentes de geometría y licencia
+- **Alcaldías**: INEGI, Marco Geoestadístico 2020 (ver `public/geo/SOURCE.md`). Términos de uso de INEGI, con atribución.
+- **Colonias (Cuauhtémoc, Miguel Hidalgo, La Magdalena Contreras)**: Catálogo de Colonias de la CDMX (ADIP), en la capa oficial `Catalogo_Colonias_CDMX` de la SGIRPC: `https://serviciosatlas.sgirpc.cdmx.gob.mx/arcgis/rest/services/Hosted/Catalogo_Colonias_CDMX/FeatureServer/0`. Es el mismo catálogo que el conjunto de `datos.cdmx.gob.mx/dataset/catalogo-de-colonias-datos-abiertos`, que no fue accesible desde nuestro entorno.
+  - La Magdalena Contreras (`cve_alc = '008'`): 42 colonias, consultadas el 19 de octubre de 2026 con simplificación del servidor (`maxAllowableOffset = 0.0007°`, unos 70 m) y redondeo a 5 decimales.
+  - Cuauhtémoc y Miguel Hidalgo: simplificadas con mapshaper al 12% (`keep-shapes`).
+  - Se restauraron acentos en los nombres de colonia (por ejemplo, «San Jeronimo Lidice» → «San Jerónimo Lídice»). «Cerro Del Judio - Av» se muestra como «Cerro del Judío».
+  - **Licencia**: la capa ArcGIS no declara una licencia. El Portal de Datos Abiertos de la CDMX publica sus conjuntos bajo términos de libre uso con atribución («Fuente: Gobierno de la Ciudad de México / ADIP»). Hay que confirmar los términos exactos antes de usarlos fuera de esta demo.
+- La simplificación es sólo visual: los límites no deben usarse para fines legales ni catastrales.
+
 ## Pendiente o abierto
-- **Catálogo completo de colonias**: hay polígonos sólo para Cuauhtémoc y Miguel Hidalgo (119 colonias, catálogo oficial de la CDMX). Las otras 14 alcaldías usan una lista parcial de nombres reales de colonias (96), sin polígonos: se muestran como lista al acercarse. El portal de datos abiertos de la CDMX no respondió desde nuestro entorno de compilación. Para completarlo, ejecuta `scripts/geo/fetch-persona-ageb-sources.sh` sin el filtro `cve_alc` desde una red en México, haz commit del GeoJSON y vuelve a generar la semilla.
+- **Polígonos de las otras 13 alcaldías**: siguen con una lista parcial de nombres reales de colonias, sin polígonos, y se muestran como lista al acercarse. Para agregarlas, ejecuta `scripts/observatorio-rentas/build-colonias-geo.sh 002 003 ...` desde una red con acceso al servidor de la SGIRPC y vuelve a generar la semilla.

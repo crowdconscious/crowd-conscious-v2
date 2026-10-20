@@ -3,7 +3,7 @@
 /**
  * Choropleth for the Observatorio demo. Reuses the CDMX simulation map's
  * committed geometry (public/geo/cdmx-alcaldias.geojson, colonias-cuau-mh.geojson)
- * and its d3-geo projection helper (lib/sim-viewer/map-projection). No tiles,
+ * plus the demo's simplified colonia polygons (public/observatorio-rentas/colonias.geojson) and its d3-geo projection helper (lib/sim-viewer/map-projection). No tiles,
  * no runtime external calls.
  */
 import { useEffect, useMemo, useState } from 'react'
@@ -31,7 +31,7 @@ function loadGeo() {
   if (geoCache) return Promise.resolve(geoCache)
   geoPromise ??= Promise.all([
     fetch(CDMX_ALCALDIAS_GEOJSON_PUBLIC_PATH).then((r) => r.json()),
-    fetch('/geo/colonias-cuau-mh.geojson').then((r) => r.json()),
+    fetch('/observatorio-rentas/colonias.geojson').then((r) => r.json()),
   ]).then(([alc, col]) => {
     // RFC 7946 rings are counter-clockwise; d3-geo expects clockwise. Rewind any feature whose spherical area is > hemisphere.
     for (const f of col.features as ColFeature[]) {

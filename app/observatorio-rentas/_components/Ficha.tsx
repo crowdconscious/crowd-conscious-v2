@@ -1,10 +1,10 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { OBS_INFLATION_12M_PCT, OBS_LEGAL_CAP_PCT, OBS_MIN_N } from '@/lib/observatorio-rentas/config'
-import { aggregate, alcaldiaAggregates, coloniaRisk, fmtInt, fmtMoney, fmtPct, isWatch, watchReason } from '@/lib/observatorio-rentas/model'
-import { OBS_BASE, useObs } from './ObsShell'
+import { aggregate, alcaldiaAggregates, expandWeekly, type WeeklyPoint, coloniaRisk, fmtInt, fmtMoney, fmtPct, isWatch, watchReason } from '@/lib/observatorio-rentas/model'
+import { OBS_BASE, loadWeekly, useObs } from './ObsShell'
 import { HBars, Kpi, NGuard, NNote, Panel, RenewalHistogram, RentVsInflation, RiskChip, SimTag, WatchBadge } from './ui'
 
 export function Ficha({ id }: { id: string }) {
@@ -12,9 +12,11 @@ export function Ficha({ id }: { id: string }) {
   const seed = data!
   const [busy, setBusy] = useState(false)
   const col = seed.colonias.find((c) => c.id === id)
+  const [colWeekly, setColWeekly] = useState<WeeklyPoint[]>([])
+  useEffect(() => { if (col) void loadWeekly(col.cvegeo).then((d) => setColWeekly(expandWeekly(d, col.id, seed.meta.weeks))) }, [col?.id]) // eslint-disable-line react-hooks/exhaustive-deps
   const alc = col ? null : alcaldiaAggregates(seed).find((a) => a.key === id)
   if (!col && !alc) return <p>No encontramos esa ficha. <Link className="underline" href={OBS_BASE}>Volver al mapa</Link></p>
-  const a = col ? aggregate(col.id, col.nombre, [col]) : alc!
+  const a = col ? aggregate(col.id, col.nombre, [col], colWeekly) : alc!
   const watch = col ? isWatch(col.asking_change_12m, col.asking_change_4w) : false
   const download = async () => { setBusy(true); try { const r = await import('./reports'); await r.downloadFicha(seed, id) } finally { setBusy(false) } }
   const landlordOk = a.landlord_reports_n >= OBS_MIN_N
@@ -37,7 +39,7 @@ export function Ficha({ id }: { id: string }) {
         <Kpi label="Contratos registrados" value={<NGuard n={a.renewal_reports_n}>{fmtPct(a.pct_contracts_registered)}</NGuard>} sub="según los propios reportes" />
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
-        <Panel title="Renta anunciada semanal vs inflación"><RentVsInflation weekly={a.weekly} inflation={OBS_INFLATION_12M_PCT} title={`Renta anunciada semanal en ${a.nombre} frente a la inflación`} /><p className="text-xs obs-muted mt-2">Fuente simulada: anuncios de renta, {fmtInt(a.weekly[a.weekly.length - 1].listings ?? 0)} anuncios en la última semana.</p></Panel>
+        <Panel title="Renta anunciada semanal vs inflación">{a.weekly.length ? <RentVsInflation weekly={a.weekly} inflation={OBS_INFLATION_12M_PCT} title={`Renta anunciada semanal en ${a.nombre} frente a la inflación`} /> : <div className="h-[200px] grid place-items-center obs-muted text-sm" role="status">Cargando serie semanal…</div>}<p className="text-xs obs-muted mt-2">Fuente simulada: anuncios de renta, {fmtInt(col ? col.listings_last : a.weekly[a.weekly.length - 1]?.listings ?? 0)} anuncios en la última semana.</p></Panel>
         <Panel title="Aumentos en renovación">
           {a.renewal_reports_n >= OBS_MIN_N ? <RenewalHistogram hist={a.renewal_hist} title={`Distribución de aumentos en renovación en ${a.nombre}`} /> : <p className="obs-muted py-10 text-center">Muestra insuficiente (n&lt;25). Tu reporte se sumará cuando haya al menos 25.</p>}
           <NNote n={a.renewal_reports_n} />

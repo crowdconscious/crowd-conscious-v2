@@ -14,13 +14,7 @@ type Tab = 'tablero' | 'ley' | 'alertas' | 'reportes' | 'invi'
 const TABS: [Tab, string][] = [['tablero', 'Tablero'], ['ley', 'Antes y después de la ley'], ['alertas', 'Alertas'], ['reportes', 'Centro de reportes'], ['invi', 'Vivienda INVI y corto plazo']]
 
 function specPerWeek(seed: Seed) {
-  return seed.meta.weeks.map((w, i) => ({
-    w,
-    count: i < 4 ? null : seed.colonias.filter((c) => {
-      const ch4 = ((c.weekly[i].rent - c.weekly[i - 4].rent) / c.weekly[i - 4].rent) * 100
-      return ch4 > T.watchChange4wPct || c.asking_change_12m > T.watchInflationMultiple * OBS_INFLATION_12M_PCT
-    }).length,
-  }))
+  return seed.meta.weeks.map((w, i) => ({ w, count: seed.spec_per_week[i] }))
 }
 
 function Bars({ rows }: { rows: { w: string; count: number | null }[] }) {

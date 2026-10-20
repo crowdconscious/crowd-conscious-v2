@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { OBS_BANNER } from '@/lib/observatorio-rentas/config'
-import type { Colonia, Seed } from '@/lib/observatorio-rentas/model'
+import { expandCore, type Colonia, type Seed, type SeedCore, type WeeklyDetail } from '@/lib/observatorio-rentas/model'
 import { Tour } from './Tour'
 
 import { OBS_BASE } from './base'
@@ -33,10 +33,11 @@ export function useObs() {
   return c
 }
 
-let seedPromise: Promise<Seed> | null = null
-function loadSeed() {
-  if (!seedPromise) seedPromise = fetch(`${OBS_BASE}/seed.json`).then((r) => r.json())
-  return seedPromise
+const weeklyCache = new Map<string, Promise<WeeklyDetail>>()
+/** Lazy per-alcaldía weekly series (only fetched when a colonia profile opens). */
+export function loadWeekly(cvegeo: string) {
+  if (!weeklyCache.has(cvegeo)) weeklyCache.set(cvegeo, fetch(`${OBS_BASE}/data/weekly-${cvegeo}.json`).then((r) => r.json()))
+  return weeklyCache.get(cvegeo)!
 }
 
 function foldRenewals(seed: Seed, subs: RenewalSubmission[]): Seed {
@@ -66,13 +67,12 @@ const NAV = [
   { href: `${OBS_BASE}/comision`, label: 'Espacio de la Comisión' },
 ]
 
-export function ObsShell({ children }: { children: React.ReactNode }) {
-  const [seed, setSeed] = useState<Seed | null>(null)
+export function ObsShell({ children, core }: { children: React.ReactNode; core: SeedCore }) {
+  const [seed] = useState<Seed | null>(() => expandCore(core))
   const [renewals, setRenewals] = useState<RenewalSubmission[]>([])
   const [landlords, setLandlords] = useState<LandlordSubmission[]>([])
   const [tourOpen, setTourOpen] = useState(false)
   const pathname = usePathname()
-  useEffect(() => { void loadSeed().then(setSeed) }, [])
   const addRenewal = useCallback((s: RenewalSubmission) => setRenewals((r) => [...r, s]), [])
   const addLandlord = useCallback((s: LandlordSubmission) => setLandlords((r) => [...r, s]), [])
   const data = useMemo(() => (seed ? foldRenewals(seed, renewals) : null), [seed, renewals])

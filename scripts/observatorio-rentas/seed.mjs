@@ -2,19 +2,19 @@
 /**
  * Observatorio de Rentas CDMX — DEMO seed generator.
  *
- * Writes public/observatorio-rentas/seed.json with SIMULATED colonia-level
+ * Writes public/observatorio-rentas/data/{core,weekly-<cvegeo>}.json with SIMULATED colonia-level
  * aggregates, calibrated to public medians (see Metodología). Deterministic:
  * fixed seed => identical output on every run.
  *
  *   node scripts/observatorio-rentas/seed.mjs
  *
  * Geography:
- *  - Cuauhtémoc + Miguel Hidalgo: real colonia catalogue + polygons
- *    (public/geo/colonias-cuau-mh.geojson, CDMX "Catálogo de Colonias").
- *  - Other 14 alcaldías: partial list of real colonia names, no polygons
+ *  - Cuauhtémoc, Miguel Hidalgo, La Magdalena Contreras: real colonia catalogue + polygons
+ *    (public/observatorio-rentas/colonias.geojson, CDMX "Catálogo de Colonias").
+ *  - Other 13 alcaldías: partial list of real colonia names, no polygons
  *    yet (see README "Pendiente: catálogo completo de colonias").
  */
-import { readFileSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -66,7 +66,6 @@ const PARTIAL = {
   '09005': ['Lindavista', 'Industrial', 'Guadalupe Tepeyac', 'Estrella', 'Vallejo', 'San Juan de Aragón', 'Martín Carrera', 'Tepeyac Insurgentes'],
   '09006': ['Agrícola Oriental', 'Granjas México', 'Viaducto Piedad', 'Militar Marte', 'Pantitlán', 'Juventino Rosas'],
   '09007': ['San Lorenzo Tezonco', 'Santa Cruz Meyehualco', 'El Sifón', 'Escuadrón 201', 'Santa María Aztahuacán', 'Paraje San Juan', 'Leyes de Reforma'],
-  '09008': ['San Jerónimo Lídice', 'San Jerónimo Aculco', 'Barranca Seca', 'El Toro', 'San Bernabé Ocotepec'],
   '09009': ['Villa Milpa Alta', 'San Antonio Tecómitl', 'San Pedro Atocpan', 'San Salvador Cuauhtenco'],
   '09010': ['San Ángel', 'Guadalupe Inn', 'Florida', 'Tlacopac', 'Olivar de los Padres', 'Santa Fe', 'Las Águilas', 'Merced Gómez'],
   '09011': ['San Francisco Tlaltenco', 'Santa Catarina Yecahuizotl', 'Del Mar', 'Los Olivos', 'Zapotitla'],
@@ -89,13 +88,14 @@ const weekDates = Array.from({ length: WEEKS }, (_, i) => {
   return d.toISOString().slice(0, 10)
 })
 
-const geo = JSON.parse(readFileSync(join(ROOT, 'public/geo/colonias-cuau-mh.geojson'), 'utf8'))
+// Combined, simplified colonia polygons used by the demo map (see README for sources).
+const geo = JSON.parse(readFileSync(join(ROOT, 'public/observatorio-rentas/colonias.geojson'), 'utf8'))
+const POLY_ALC = new Set(geo.features.map((f) => '09' + f.properties.cve_alc))
 const colonias = []
 for (const [cvegeo, nombre, base, pressure] of ALCALDIAS) {
   let names
-  if (cvegeo === '09015' || cvegeo === '09016') {
-    const alc = cvegeo === '09015' ? 'Cuauhtémoc' : 'Miguel Hidalgo'
-    names = geo.features.filter((f) => f.properties.alc === alc).map((f) => ({ name: f.properties.colonia, cve_col: f.properties.cve_col, poly: true }))
+  if (POLY_ALC.has(cvegeo)) {
+    names = geo.features.filter((f) => '09' + f.properties.cve_alc === cvegeo).map((f) => ({ name: f.properties.colonia, cve_col: f.properties.cve_col, poly: true }))
   } else {
     names = PARTIAL[cvegeo].map((n, i) => ({ name: n, cve_col: `${cvegeo.slice(2)}-p${String(i + 1).padStart(2, '0')}`, poly: false }))
   }
@@ -168,30 +168,32 @@ const shuffled = colonias.map((c) => ({ c, k: rnd() })).sort((a, b) => a.k - b.k
 shuffled.slice(0, 40).forEach(({ c }) => { c.near_invi_housing = true })
 void idx
 
-// City-wide weekly series (listing-weighted median approximation)
-const city_weekly = weekDates.map((w, i) => {
+// Weekly series (listing-weighted) for the city and each alcaldía, precomputed.
+const wseries = (cs) => weekDates.map((w, i) => {
   let s = 0, n = 0
-  for (const c of colonias) { s += c.weekly[i].rent * c.weekly[i].listings; n += c.weekly[i].listings }
-  return { w, rent: Math.round(s / n / 10) * 10 }
+  for (const c of cs) { s += c.weekly[i].rent * c.weekly[i].listings; n += c.weekly[i].listings }
+  return [Math.round(s / n / 10) * 10, n]
 })
+const city_weekly = wseries(colonias)
+const alcaldia_weekly = Object.fromEntries(ALCALDIAS.map(([cve]) => [cve, wseries(colonias.filter((c) => c.cvegeo === cve))]))
+// Speculation signal count per week (4-week change on the weekly series, or 12m > 2× inflation).
+const spec_per_week = weekDates.map((_, i) => (i < 4 ? null : colonias.filter((c) =>
+  ((c.weekly[i].rent - c.weekly[i - 4].rent) / c.weekly[i - 4].rent) * 100 > 3 || c.asking_change_12m > 2 * INFL).length))
 
-const out = {
-  meta: {
-    simulated: true,
-    seed: SEED,
-    generated_by: 'scripts/observatorio-rentas/seed.mjs',
-    last_week: LAST_WEEK,
-    weeks: weekDates,
-    inflation_12m: INFL,
-    legal_cap_2026: CAP,
-    calibration: {
-      city_avg_rent_2rec: 21900,
-      city_asking_change_12m: 9.6,
-    },
-  },
+// Compact columnar core (first paint) + per-alcaldía detail files (lazy).
+const SCALARS = Object.keys(colonias[0]).filter((k) => !['weekly', 'renewal_hist'].includes(k))
+const core = {
+  meta: { simulated: true, seed: SEED, generated_by: 'scripts/observatorio-rentas/seed.mjs', last_week: LAST_WEEK, weeks: weekDates, inflation_12m: INFL, legal_cap_2026: CAP, hist_bins: colonias[0].renewal_hist.map((b) => b.from) },
   alcaldias: ALCALDIAS.map(([cvegeo, nombre]) => ({ cvegeo, nombre })),
-  colonias,
-  city_weekly,
+  cols: [...SCALARS, 'listings_last', 'hist'],
+  rows: colonias.map((c) => [...SCALARS.map((k) => c[k]), c.weekly[WEEKS - 1].listings, c.renewal_hist.map((b) => b.count)]),
+  city_weekly, alcaldia_weekly, spec_per_week,
 }
-writeFileSync(join(ROOT, 'public/observatorio-rentas/seed.json'), JSON.stringify(out))
-console.log(`wrote ${colonias.length} colonias, thin=${colonias.filter((c) => c.renewal_reports_n < 25).length}`)
+const OUT = join(ROOT, 'public/observatorio-rentas/data')
+mkdirSync(OUT, { recursive: true })
+writeFileSync(join(OUT, 'core.json'), JSON.stringify(core))
+for (const [cve] of ALCALDIAS) {
+  const detail = Object.fromEntries(colonias.filter((c) => c.cvegeo === cve).map((c) => [c.id, [c.weekly.map((p) => p.rent), c.weekly.map((p) => p.listings)]]))
+  writeFileSync(join(OUT, `weekly-${cve}.json`), JSON.stringify(detail))
+}
+console.log(`wrote ${colonias.length} colonias, thin=${colonias.filter((c) => c.renewal_reports_n < 25).length}, poly=${colonias.filter((c) => c.has_polygon).length}`)

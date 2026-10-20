@@ -34,13 +34,6 @@ export function MapHome({ commission = false }: { commission?: boolean }) {
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
       <div className="space-y-3 min-w-0">
-        {!commission && (
-          <div>
-            <p className="obs-label">Índice semanal · semana del {seed.meta.last_week}</p>
-            <h1 className="obs-h text-2xl sm:text-3xl mt-1">¿Se cumple el tope a la renta en tu colonia?</h1>
-            <p className="obs-muted text-sm mt-1 max-w-3xl">El tope de {fmtPct(OBS_LEGAL_CAP_PCT, 2)} ya aplica a las renovaciones de 2026, pero nadie mide si se respeta. Este mapa lo mide con rentas anunciadas y reportes anónimos de renovación. <SimTag /></p>
-          </div>
-        )}
         <Panel className="!p-3">
           <div role="radiogroup" aria-label="Capa del mapa" className="flex flex-wrap gap-1.5 mb-2">
             {LAYERS.map((l) => (

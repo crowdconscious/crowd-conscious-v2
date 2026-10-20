@@ -18,7 +18,8 @@ export type Colonia = {
   asking_rent_m2: number
   asking_change_12m: number
   asking_change_4w: number
-  weekly: WeeklyPoint[]
+  /** Listings in the latest week (weight for asking-rent aggregates). */
+  listings_last: number
   renewal_reports_n: number
   renewal_increase_median: number
   pct_renewals_above_cap: number
@@ -34,11 +35,49 @@ export type Colonia = {
   prev_pct_renewals_above_cap: number
   prev_asking_change_4w: number
 }
+export type SeedMeta = { seed: number; last_week: string; weeks: string[]; inflation_12m: number; legal_cap_2026: number; hist_bins: number[] }
 export type Seed = {
-  meta: { seed: number; last_week: string; weeks: string[]; inflation_12m: number; legal_cap_2026: number }
+  meta: SeedMeta
   alcaldias: { cvegeo: string; nombre: string }[]
   colonias: Colonia[]
   city_weekly: WeeklyPoint[]
+  alcaldia_weekly: Record<string, WeeklyPoint[]>
+  spec_per_week: (number | null)[]
+}
+/** Compact columnar file written by scripts/observatorio-rentas/seed.mjs. */
+export type SeedCore = {
+  meta: SeedMeta
+  alcaldias: { cvegeo: string; nombre: string }[]
+  cols: string[]
+  rows: unknown[][]
+  city_weekly: [number, number][]
+  alcaldia_weekly: Record<string, [number, number][]>
+  spec_per_week: (number | null)[]
+}
+/** Per-alcaldía lazy file: colonia id → [weekly rents, weekly listings]. */
+export type WeeklyDetail = Record<string, [number[], number[]]>
+
+export function expandCore(core: SeedCore): Seed {
+  const { weeks, hist_bins } = core.meta
+  const toWeekly = (s: [number, number][]) => s.map(([rent, listings], i) => ({ w: weeks[i], rent, listings }))
+  const colonias = core.rows.map((r) => {
+    const o: Record<string, unknown> = {}
+    core.cols.forEach((k, i) => { o[k] = r[i] })
+    const counts = o.hist as number[]
+    delete o.hist
+    o.renewal_hist = hist_bins.map((from, j) => ({ from, to: hist_bins[j + 1] ?? null, count: counts[j] }))
+    return o as unknown as Colonia
+  })
+  return {
+    meta: core.meta, alcaldias: core.alcaldias, colonias,
+    city_weekly: toWeekly(core.city_weekly),
+    alcaldia_weekly: Object.fromEntries(Object.entries(core.alcaldia_weekly).map(([k, v]) => [k, toWeekly(v)])),
+    spec_per_week: core.spec_per_week,
+  }
+}
+export function expandWeekly(detail: WeeklyDetail, id: string, weeks: string[]): WeeklyPoint[] {
+  const d = detail[id]
+  return d ? d[0].map((rent, i) => ({ w: weeks[i], rent, listings: d[1][i] })) : []
 }
 
 export type RiskCategory = 'within' | 'near' | 'above' | 'nodata'
@@ -98,18 +137,12 @@ const r1 = (x: number) => Math.round(x * 10) / 10
 const r2 = (x: number) => Math.round(x * 100) / 100
 
 /** Weighted aggregate of colonias (weights: listings for asking, n for reports). */
-export function aggregate(key: string, nombre: string, cs: Colonia[]): Aggregate {
-  const lw = (c: Colonia) => c.weekly[c.weekly.length - 1]?.listings ?? 1
+export function aggregate(key: string, nombre: string, cs: Colonia[], weekly: WeeklyPoint[] = []): Aggregate {
+  const lw = (c: Colonia) => c.listings_last || 1
   const rn = cs.reduce((a, c) => a + c.renewal_reports_n, 0)
   const ln = cs.reduce((a, c) => a + c.landlord_reports_n, 0)
   const med = r2(wavg(cs, (c) => c.renewal_increase_median, (c) => c.renewal_reports_n))
   const above = r1(wavg(cs, (c) => c.pct_renewals_above_cap, (c) => c.renewal_reports_n))
-  const weeks = cs[0]?.weekly.length ?? 0
-  const weekly = Array.from({ length: weeks }, (_, i) => ({
-    w: cs[0].weekly[i].w,
-    rent: Math.round(wavg(cs, (c) => c.weekly[i].rent, (c) => c.weekly[i].listings ?? 1) / 10) * 10,
-    listings: cs.reduce((a, c) => a + (c.weekly[i].listings ?? 0), 0),
-  }))
   const renewal_hist = (cs[0]?.renewal_hist ?? []).map((b, j) => ({ ...b, count: cs.reduce((a, c) => a + c.renewal_hist[j].count, 0) }))
   return {
     key,
@@ -142,7 +175,7 @@ export function coloniaPrevRisk(c: Colonia): RiskCategory {
 }
 
 export function alcaldiaAggregates(seed: Seed): Aggregate[] {
-  return seed.alcaldias.map((a) => aggregate(a.cvegeo, a.nombre, seed.colonias.filter((c) => c.cvegeo === a.cvegeo)))
+  return seed.alcaldias.map((a) => aggregate(a.cvegeo, a.nombre, seed.colonias.filter((c) => c.cvegeo === a.cvegeo), seed.alcaldia_weekly[a.cvegeo]))
 }
 
 export type Alert = { colonia: Colonia; from: RiskCategory | 'watch-off'; to: RiskCategory | 'watch'; why: string }

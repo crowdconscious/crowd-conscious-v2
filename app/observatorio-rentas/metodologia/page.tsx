@@ -36,7 +36,7 @@ export default function Metodologia() {
       <S title="Lo que NO hacemos">
         <ul className="list-disc pl-5 space-y-1"><li>No hay registro ni lista de arrendadores.</li><li>No hay canal de quejas o denuncias contra personas.</li><li>No pedimos nombres, direcciones, teléfonos ni correos; la unidad mínima es la colonia.</li><li>No afirmamos representatividad estadística.</li><li>No usamos datos de portales en los que el equipo tenga interés comercial.</li></ul>
       </S>
-      <S title="Referencias públicas usadas para calibrar la simulación"><ul className="list-disc pl-5 space-y-1">{OBS_CALIBRATION_REFERENCES.map((r) => <li key={r}>{r}</li>)}</ul><p className="obs-muted">Cuauhtémoc y Miguel Hidalgo usan el catálogo de colonias de la CDMX con polígonos; en las demás alcaldías la demostración usa un catálogo parcial de colonias.</p></S>
+      <S title="Referencias públicas usadas para calibrar la simulación"><ul className="list-disc pl-5 space-y-1">{OBS_CALIBRATION_REFERENCES.map((r) => <li key={r}>{r}</li>)}</ul><p className="obs-muted">Cuauhtémoc, Miguel Hidalgo y La Magdalena Contreras usan el Catálogo de Colonias de la CDMX con polígonos; en las demás alcaldías la demostración usa un catálogo parcial de colonias.</p></S>
     </div>
   )
 }
