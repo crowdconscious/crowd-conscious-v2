@@ -11,7 +11,7 @@ export async function GET(request: Request) {
     }
 
     const supabase = await createAdminClient()
-    const { data: profile } = await supabase
+    const { data: profile } = await createAdminClient()
       .from('profiles')
       .select('user_type, email')
       .eq('id', user.id)

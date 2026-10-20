@@ -3,6 +3,7 @@ import { getCurrentUser } from '@/lib/auth-server'
 import { createClient } from '@/lib/supabase-server'
 import { getAnthropicClient, MODELS } from '@/lib/agents/config'
 import { isAdminUser } from '@/lib/auth/is-admin'
+import { createAdminClient } from '@/lib/supabase-admin'
 
 /**
  * POST /api/predictions/admin/suggest-criteria
@@ -17,7 +18,7 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = await createClient()
-    const { data: profile } = await supabase
+    const { data: profile } = await createAdminClient()
       .from('profiles')
       .select('user_type, email')
       .eq('id', user.id)

@@ -373,7 +373,7 @@ export function CommunityLeaderboard({ communityId }: { communityId?: string }) 
         .from('user_stats')
         .select(`
           *,
-          user:profiles(full_name, email)
+          user:profiles(full_name)
         `)
         .order('total_xp', { ascending: false })
         .limit(10)
@@ -463,7 +463,7 @@ export function CommunityLeaderboard({ communityId }: { communityId?: string }) 
             {/* User Info */}
             <div className="flex-1 min-w-0">
               <div className="font-medium text-slate-900 truncate">
-                {userStat.user.full_name || userStat.user.email}
+                {userStat.user.full_name || 'Usuario'}
               </div>
               <div className="text-sm text-slate-500">
                 Level {userStat.level} • {userStat.current_streak} day streak

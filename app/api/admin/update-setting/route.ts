@@ -3,6 +3,7 @@ import { getCurrentUser } from '@/lib/auth-server'
 import { ApiResponse } from '@/lib/api-responses'
 import { supabase } from '@/lib/supabase'
 import { isAdminUser } from '@/lib/auth/is-admin'
+import { createAdminClient } from '@/lib/supabase-admin'
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,7 +15,7 @@ export async function POST(request: NextRequest) {
     // Check admin status + active (non-suspended) — suspended admins are
     // explicitly locked out of mutation endpoints regardless of how they
     // obtained admin (DB user_type or ADMIN_EMAIL env).
-    const { data: profile } = await supabase
+    const { data: profile } = await createAdminClient()
       .from('profiles')
       .select('user_type, email, suspended')
       .eq('id', (user as any).id)

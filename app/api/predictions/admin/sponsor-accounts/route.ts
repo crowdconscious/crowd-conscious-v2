@@ -17,7 +17,7 @@ export async function GET() {
   if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
   const supabase = await createClient()
-  const { data: profile } = await supabase
+  const { data: profile } = await createAdminClient()
     .from('profiles')
     .select('user_type, email')
     .eq('id', user.id)
@@ -53,7 +53,7 @@ export async function PATCH(request: NextRequest) {
   if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
   const supabase = await createClient()
-  const { data: profile } = await supabase
+  const { data: profile } = await createAdminClient()
     .from('profiles')
     .select('user_type, email')
     .eq('id', user.id)

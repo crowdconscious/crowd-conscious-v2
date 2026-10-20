@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase-server'
 import { getCurrentUser } from '@/lib/auth-server'
 import { canManageBlogPost } from '@/lib/auth/blog-post-access'
 import EditBlogPostClient from './EditBlogPostClient'
+import { createAdminClient } from '@/lib/supabase-admin'
 
 type Props = { params: Promise<{ id: string }> }
 
@@ -12,7 +13,7 @@ export default async function AdminEditBlogPostPage(props: Props) {
   if (!user) notFound()
 
   const supabase = await createClient()
-  const { data: profile } = await supabase
+  const { data: profile } = await createAdminClient()
     .from('profiles')
     .select('user_type, email')
     .eq('id', user.id)

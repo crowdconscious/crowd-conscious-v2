@@ -35,7 +35,7 @@ export async function GET() {
     }
 
     // Get user's profile
-    const { data: profile, error } = await supabase
+    const { data: profile, error } = await createAdminClient()
       .from('profiles')
       .select('*')
       .eq('id', user.id)
@@ -176,12 +176,14 @@ export async function PATCH(request: NextRequest) {
       return ApiResponse.badRequest('No valid fields to update', 'EMPTY_UPDATE')
     }
 
-    const { data: profile, error: updateError } = await supabase
+    const { error: updateError } = await supabase
       .from('profiles')
       .update(update as Record<string, unknown>)
       .eq('id', user.id)
-      .select()
-      .single()
+    // Re-read own row server-side (private columns are not selectable by the session client).
+    const { data: profile } = updateError
+      ? { data: null }
+      : await createAdminClient().from('profiles').select('*').eq('id', user.id).single()
 
     if (updateError) {
       console.error('[PATCH /api/user/profile]', updateError)

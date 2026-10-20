@@ -3,6 +3,7 @@ import { getCurrentUser } from '@/lib/auth-server'
 import { createClient } from '@/lib/supabase-server'
 import { supabase } from '@/lib/supabase'
 import { isAdminUser } from '@/lib/auth/is-admin'
+import { createAdminClient } from '@/lib/supabase-admin'
 
 export async function PATCH(
   request: Request,
@@ -14,7 +15,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { data: profile } = await supabase
+    const { data: profile } = await createAdminClient()
       .from('profiles')
       .select('user_type, email')
       .eq('id', (user as any).id)

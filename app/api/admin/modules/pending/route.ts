@@ -1,5 +1,6 @@
 import { getCurrentUser } from '@/lib/auth-server'
 import { createClient } from '@/lib/supabase-server'
+import { createAdminClient } from '@/lib/supabase-admin'
 import { ApiResponse } from '@/lib/api-responses'
 import { isAdminUser } from '@/lib/auth/is-admin'
 
@@ -14,7 +15,7 @@ export async function GET() {
     const supabase = await createClient()
 
     // Fetch all modules with review status
-    const { data: modules, error } = await (supabase as any)
+    const { data: modules, error } = await (createAdminClient() as any)
       .from('marketplace_modules')
       .select(`
         *,

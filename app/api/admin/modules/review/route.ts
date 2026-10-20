@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { createAdminClient } from '@/lib/supabase-admin'
 import { ApiResponse } from '@/lib/api-responses'
 import { getCurrentUser } from '@/lib/auth-server'
 import { isAdminUser } from '@/lib/auth/is-admin'
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch module details
-    const { data: module, error: moduleError } = await (supabase as any)
+    const { data: module, error: moduleError } = await (createAdminClient() as any)
       .from('marketplace_modules')
       .select(`
         *,

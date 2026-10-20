@@ -88,7 +88,7 @@ export default function HeaderClient({ user, hasSponsorAccounts = false }: Heade
     try {
       const { data, error } = await supabaseClient
         .from('profiles')
-        .select('*')
+        .select('id, full_name, avatar_url')
         .eq('id', user.id)
         .single()
 

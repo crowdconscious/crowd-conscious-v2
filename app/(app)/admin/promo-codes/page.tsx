@@ -13,7 +13,7 @@ export default async function AdminPromoCodesPage() {
   }
 
   // Check if user is super admin (you can adjust this check)
-  const { data: profile } = await supabase
+  const { data: profile } = await createAdminClient()
     .from('profiles')
     .select('email, full_name')
     .eq('id', user.id)

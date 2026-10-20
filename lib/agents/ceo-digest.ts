@@ -191,7 +191,7 @@ export async function runCeoDigest(): Promise<{
     try {
       const { count: profileCount } = await supabase
         .from('profiles')
-        .select('*', { count: 'exact', head: true })
+        .select('id', { count: 'exact', head: true })
       metrics.total_registered_users = profileCount ?? 0
     } catch {
       metrics.total_registered_users = 0
@@ -488,8 +488,8 @@ export async function runCeoDigest(): Promise<{
         newPulsesThisWeek,
         newBlogsThisWeek,
       ] = await Promise.all([
-        supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', cutoff7d),
-        supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', cutoff14d).lt('created_at', cutoff7d),
+        supabase.from('profiles').select('id', { count: 'exact', head: true }).gte('created_at', cutoff7d),
+        supabase.from('profiles').select('id', { count: 'exact', head: true }).gte('created_at', cutoff14d).lt('created_at', cutoff7d),
         supabase.from('market_votes').select('*', { count: 'exact', head: true }).gte('created_at', cutoff7d),
         supabase.from('market_votes').select('*', { count: 'exact', head: true }).gte('created_at', cutoff14d).lt('created_at', cutoff7d),
         supabase.from('anonymous_participants').select('*', { count: 'exact', head: true }).gte('created_at', cutoff7d),

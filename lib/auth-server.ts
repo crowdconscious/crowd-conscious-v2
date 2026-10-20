@@ -2,6 +2,7 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { createClient as createSupabaseClient, type User } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import type { NextRequest } from 'next/server'
+import { createAdminClient } from '@/lib/supabase-admin'
 
 /** Thrown when session is invalid (e.g. refresh token not found). Caller should return 401. */
 export class AuthSessionExpiredError extends Error {
@@ -131,7 +132,7 @@ export async function getCurrentUser() {
     if (error || !user) return null
 
     // Get full profile
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: profileError } = await createAdminClient()
       .from('profiles')
       .select('*')
       .eq('id', user.id)

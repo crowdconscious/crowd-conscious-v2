@@ -12,7 +12,7 @@ async function requireAdmin() {
     return { user: null, error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }
   }
   const supabase = await createClient()
-  const { data: profile } = await supabase.from('profiles').select('user_type, email').eq('id', user.id).single()
+  const { data: profile } = await createAdminClient().from('profiles').select('user_type, email').eq('id', user.id).single()
   if (!isAdminUser(profile)) {
     return { user: null, error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) }
   }

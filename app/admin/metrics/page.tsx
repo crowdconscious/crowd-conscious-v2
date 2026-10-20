@@ -4,9 +4,10 @@ import { redirect } from 'next/navigation'
 import MetricsClient from './MetricsClient'
 import DashboardNavigation from '@/components/DashboardNavigation'
 import { isAdminUser } from '@/lib/auth/is-admin'
+import { createAdminClient } from '@/lib/supabase-admin'
 
 async function checkAdminAccess(userId: string) {
-  const { data: profile } = await supabase
+  const { data: profile } = await createAdminClient()
     .from('profiles')
     .select('user_type, email')
     .eq('id', userId)

@@ -11,7 +11,7 @@ export async function GET() {
     // Legacy community stats removed. Use prediction platform + profiles.
     const { count: totalUsers } = await supabase
       .from('profiles')
-      .select('*', { count: 'exact', head: true })
+      .select('id', { count: 'exact', head: true })
 
     const stats = {
       total_funds_raised: 0,

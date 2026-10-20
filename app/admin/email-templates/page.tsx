@@ -3,11 +3,12 @@ import { supabase } from '@/lib/supabase'
 import { redirect } from 'next/navigation'
 import EmailTemplatesClient from './EmailTemplatesClient'
 import { isAdminUser } from '@/lib/auth/is-admin'
+import { createAdminClient } from '@/lib/supabase-admin'
 
 export const dynamic = 'force-dynamic'
 
 async function checkAdminAccess(userId: string) {
-  const { data: profile } = await supabase
+  const { data: profile } = await createAdminClient()
     .from('profiles')
     .select('user_type, email')
     .eq('id', userId)

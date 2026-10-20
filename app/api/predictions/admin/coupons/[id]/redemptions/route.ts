@@ -12,7 +12,7 @@ export async function GET(
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const supabase = await createClient()
-  const { data: profile } = await supabase.from('profiles').select('user_type, email').eq('id', user.id).single()
+  const { data: profile } = await createAdminClient().from('profiles').select('user_type, email').eq('id', user.id).single()
   if (!isAdminUser(profile)) {
     return NextResponse.json({ error: 'Admin only' }, { status: 403 })
   }
