@@ -3,7 +3,7 @@
 Botón **Recorrido guiado** (arriba a la derecha). Avanza con «Siguiente» o con las flechas del teclado. Funciona sin conexión a servicios externos.
 
 1. **El problema (0:00–0:45).** «El tope de 3.69% ya aplica a las renovaciones de 2026. Lo que no existe es una forma de saber si se cumple. Todo lo que van a ver es una simulación, como dice la franja de arriba.»
-2. **Mapa y semáforo (0:45–1:30).** «Verde: dentro del tope. Amarillo: cerca del límite. Rojo: por encima. Gris rayado: menos de 25 reportes, y por eso no se publica la cifra. El borde turquesa marca colonias donde la renta anunciada sube más del doble de la inflación: es la señal de especulación previa a la ley.»
+2. **Mapa y semáforo (0:45–1:30).** «Verde: dentro del tope. Amarillo: cerca del límite. Rojo: por encima. Gris rayado: menos de 25 reportes, y por eso no se publica la cifra. El borde turquesa marca colonias con las alzas de renta anunciada más fuertes de la ciudad (el 10% más alto y más de 3 veces la inflación): es la señal de especulación previa a la ley.»
 3. **Cuauhtémoc (1:30–2:15).** Toca Cuauhtémoc. «El mapa baja a nivel colonia. La colonia es la unidad mínima: nunca mostramos una vivienda ni un arrendador.»
 4. **Ficha de colonia (2:15–3:00).** «Renta anunciada contra inflación, la distribución de aumentos en renovación con el tope marcado y lo que dicen los propietarios. Cada cifra trae su n y aclara que los reportes son voluntarios. Se descarga en PDF.»
 5. **Calculadora (3:00–3:45).** «Así llegan los reportes. Cualquier inquilino captura su renta y en segundos sabe si su aumento rebasa el tope. Es una herramienta informativa, no asesoría legal.»

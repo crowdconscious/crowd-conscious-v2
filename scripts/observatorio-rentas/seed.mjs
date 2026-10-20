@@ -17,6 +17,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { normalizeColoniaName } from './colonia-names.mjs'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..')
 const SEED = 20261014
@@ -95,7 +96,7 @@ const colonias = []
 for (const [cvegeo, nombre, base, pressure] of ALCALDIAS) {
   let names
   if (POLY_ALC.has(cvegeo)) {
-    names = geo.features.filter((f) => '09' + f.properties.cve_alc === cvegeo).map((f) => ({ name: f.properties.colonia, cve_col: f.properties.cve_col, poly: true }))
+    names = geo.features.filter((f) => '09' + f.properties.cve_alc === cvegeo).map((f) => ({ name: normalizeColoniaName(f.properties.colonia), cve_col: f.properties.cve_col, poly: true }))
   } else {
     names = PARTIAL[cvegeo].map((n, i) => ({ name: n, cve_col: `${cvegeo.slice(2)}-p${String(i + 1).padStart(2, '0')}`, poly: false }))
   }
@@ -117,11 +118,12 @@ for (const [cvegeo, nombre, base, pressure] of ALCALDIAS) {
     })
     series[WEEKS - 1].rent = rent
     // renewal reports: ~20% below n=25
-    const thin = rnd() < 0.2
-    const renewal_n = thin ? Math.floor(between(3, 24)) : Math.floor(between(25, 60 + 260 * p))
+    // Phase-1 scale: ~2–3k renewal reports city-wide; most colonias stay below n=25.
+    const thin = rnd() < 0.9 - 0.3 * p
+    const renewal_n = thin ? Math.floor(between(0, 9)) : Math.floor(between(25, 26 + 12 * p))
     const incMed = r2(Math.max(0, CAP * (0.4 + 0.72 * p + gauss() * 0.16)))
     const above = r1(Math.min(85, Math.max(1, 3 + 34 * p + gauss() * 7 + (incMed > CAP ? 6 : 0))))
-    const landlord_n = thin ? Math.floor(between(2, 20)) : Math.floor(between(25, 30 + 90 * p))
+    const landlord_n = thin ? Math.floor(between(0, 6)) : Math.floor(between(rnd() < 0.5 ? 25 : 6, 30))
     colonias.push({
       id: slug(`${nombre}-${c.name}-${c.cve_col}`),
       cve_col: c.cve_col,
@@ -156,9 +158,15 @@ for (const [cvegeo, nombre, base, pressure] of ALCALDIAS) {
       short_term_listings: Math.max(0, Math.round((hot ? 260 : 30) * p * (0.6 + rnd()) + (cvegeo === '09015' ? 120 : 0))),
       near_invi_housing: false,
       // category 4 weeks ago (for alerts): simulated slightly lower pressure
-      prev_renewal_increase_median: r2(Math.max(0, incMed - Math.abs(gauss()) * 0.5)),
-      prev_pct_renewals_above_cap: r1(Math.max(0, above - Math.abs(gauss()) * 6)),
-      prev_asking_change_4w: r1(ch4 - Math.abs(gauss()) * 1.2),
+      // Last 6 weekly readings (oldest → latest) of [median renewal %, % above cap, asking 4w %], for alert hysteresis.
+      recent: (() => {
+        const m0 = Math.max(0, incMed - Math.abs(gauss()) * 0.5), a0 = Math.max(0, above - Math.abs(gauss()) * 6), c0 = ch4 - Math.abs(gauss()) * 1.2
+        return Array.from({ length: 6 }, (_, i) => i === 5 ? [incMed, above, ch4] : [
+          r2(Math.max(0, m0 + (incMed - m0) * (i / 5) + gauss() * 0.08)),
+          r1(Math.max(0, a0 + (above - a0) * (i / 5) + gauss() * 1.2)),
+          r1(c0 + (ch4 - c0) * (i / 5) + gauss() * 0.25),
+        ])
+      })(),
     })
   }
 }
@@ -177,8 +185,11 @@ const wseries = (cs) => weekDates.map((w, i) => {
 const city_weekly = wseries(colonias)
 const alcaldia_weekly = Object.fromEntries(ALCALDIAS.map(([cve]) => [cve, wseries(colonias.filter((c) => c.cvegeo === cve))]))
 // Speculation signal count per week (4-week change on the weekly series, or 12m > 2× inflation).
+// Same strict rule as lib/observatorio-rentas/config.ts: 12m cutoff = max(3× inflation, top-10% boundary).
+const sorted12 = colonias.map((c) => c.asking_change_12m).sort((a, b) => b - a)
+const CUT12 = Math.max(3 * INFL, sorted12[Math.ceil(colonias.length * 0.1) - 1])
 const spec_per_week = weekDates.map((_, i) => (i < 4 ? null : colonias.filter((c) =>
-  ((c.weekly[i].rent - c.weekly[i - 4].rent) / c.weekly[i - 4].rent) * 100 > 3 || c.asking_change_12m > 2 * INFL).length))
+  ((c.weekly[i].rent - c.weekly[i - 4].rent) / c.weekly[i - 4].rent) * 100 > 3 || c.asking_change_12m > CUT12).length))
 
 // Compact columnar core (first paint) + per-alcaldía detail files (lazy).
 const SCALARS = Object.keys(colonias[0]).filter((k) => !['weekly', 'renewal_hist'].includes(k))

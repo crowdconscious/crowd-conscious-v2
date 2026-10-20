@@ -11,8 +11,8 @@ import { geoArea, type GeoPermissibleObjects } from 'd3-geo'
 import { createCdmxProjection } from '@/lib/sim-viewer/map-projection'
 import { CDMX_ALCALDIAS_GEOJSON_PUBLIC_PATH, type CdmxAlcaldiaFeatureCollection } from '@/lib/sim-viewer/cdmx-alcaldias'
 import { OBS_COLORS as C, OBS_MIN_N, OBS_THRESHOLDS } from '@/lib/observatorio-rentas/config'
-import { RISK_LABEL, coloniaRisk, fmtInt, fmtMoney, fmtPct, isWatch, type Aggregate, type Colonia } from '@/lib/observatorio-rentas/model'
-import { RISK_COLOR } from './ui'
+import { RISK_LABEL, coloniaRisk, watchRuleText, fmtInt, fmtMoney, fmtPct, isWatch, type Aggregate, type Colonia } from '@/lib/observatorio-rentas/model'
+import { RISK_COLOR, SimWatermark } from './ui'
 
 export type MapLayer = 'compliance' | 'rent' | 'change12' | 'speculation' | 'shortterm'
 export const LAYERS: { id: MapLayer; label: string }[] = [
@@ -82,15 +82,47 @@ export function Legend({ layer }: { layer: MapLayer }) {
   const [t, a, b] = labels[layer]
   return (
     <div className="text-xs" aria-label="Leyenda">
-      <div className="mb-1">{t}{layer === 'speculation' && ` (alza 12m > ${OBS_THRESHOLDS.watchInflationMultiple}× inflación o > ${OBS_THRESHOLDS.watchChange4wPct}% en 4 semanas)`}</div>
+      <div className="mb-1">{t}{layer === 'speculation' && ` (${watchRuleText()})`}</div>
       <div className="flex items-center gap-2"><span>{a}</span><span className="flex">{SEQ.map((c) => <span key={c} className="w-6 h-3 inline-block" style={{ background: c }} />)}</span><span>{b}</span></div>
     </div>
   )
 }
 
+const SHORT: Record<string, string> = {
+  'Cuajimalpa de Morelos': 'Cuajimalpa', 'La Magdalena Contreras': 'Magdalena C.', 'Gustavo A. Madero': 'G. A. Madero',
+  'Venustiano Carranza': 'V. Carranza', 'Miguel Hidalgo': 'M. Hidalgo', 'Benito Juárez': 'B. Juárez', 'Álvaro Obregón': 'Á. Obregón',
+}
+/** Hand-tuned nudges (SVG units at full-city fit) where three small alcaldías meet. */
+const NUDGE: Record<string, [number, number]> = { '09016': [-14, -4], '09015': [4, -10], '09017': [18, 6], '09014': [0, 6] }
+type Label = { key: string; x: number; y: number; text: string; size: number }
+/** Greedy collision avoidance: large alcaldías first; try offsets; drop a label if no slot fits. */
+export function placeLabels(fc: CdmxAlcaldiaFeatureCollection, proj: { project: (lng: number, lat: number) => [number, number] | null }, W: number, H: number, compact: boolean): Label[] {
+  const size = compact ? 13 : 11
+  const placed: { x0: number; y0: number; x1: number; y1: number }[] = []
+  const out: Label[] = []
+  const order = [...fc.features].sort((a, b) => (SMALL.has(a.properties.cvegeo) ? 1 : 0) - (SMALL.has(b.properties.cvegeo) ? 1 : 0))
+  for (const f of order) {
+    const p = proj.project(f.properties.label_lng, f.properties.label_lat)
+    if (!p) continue
+    const text = SHORT[f.properties.nombre] ?? f.properties.nombre
+    const w = text.length * size * 0.58, h = size * 1.2
+    const [nx, ny] = NUDGE[f.properties.cvegeo] ?? [0, 0]
+    for (const [dx, dy] of [[nx, ny], [0, 0], [0, -h], [0, h], [-w / 3, 0], [w / 3, 0]]) {
+      const x = Math.min(W - w / 2 - 4, Math.max(w / 2 + 4, p[0] + dx)), y = Math.min(H - 6, Math.max(h, p[1] + dy))
+      const box = { x0: x - w / 2, x1: x + w / 2, y0: y - h + 2, y1: y + 2 }
+      if (!placed.some((b) => b.x0 < box.x1 && box.x0 < b.x1 && b.y0 < box.y1 && box.y0 < b.y1)) {
+        placed.push(box); out.push({ key: f.properties.cvegeo, x, y, text, size }); break
+      }
+    }
+  }
+  return out
+}
+const SMALL = new Set(['09015', '09016', '09017', '09014', '09006'])
+
 export function ObsMap({
-  layer, alcaldias, colonias, selected, onSelectAlcaldia, onSelectColonia, height = 520,
+  layer, alcaldias, colonias, selected, onSelectAlcaldia, onSelectColonia, height = 520, compact = false,
 }: {
+  compact?: boolean
   layer: MapLayer
   alcaldias: Aggregate[]
   colonias: Colonia[]
@@ -129,6 +161,7 @@ export function ObsMap({
 
   return (
     <div className="relative">
+      <SimWatermark />
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ maxHeight: height }} role="group" aria-label={selected ? 'Mapa de colonias' : 'Mapa de alcaldías de la Ciudad de México'}>
         <defs>
           <pattern id="obs-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
@@ -170,12 +203,9 @@ export function ObsMap({
             />
           )
         })}
-        {!selected && geo.alc.features.map((f) => {
-          const p = proj.project(f.properties.label_lng, f.properties.label_lat)
-          if (!p) return null
-          const n = f.properties.nombre.replace('Cuajimalpa de Morelos', 'Cuajimalpa').replace('La Magdalena Contreras', 'Magdalena C.').replace('Gustavo A. Madero', 'G. A. Madero').replace('Venustiano Carranza', 'V. Carranza')
-          return <text key={f.properties.cvegeo} x={p[0]} y={p[1]} textAnchor="middle" fontSize="11" fontWeight="700" fill="#07090A" stroke="#ffffffaa" strokeWidth="3" paintOrder="stroke" pointerEvents="none">{n}</text>
-        })}
+        {!selected && placeLabels(geo.alc, proj, W, H, compact).map((l) => (
+          <text key={l.key} x={l.x} y={l.y} textAnchor="middle" fontSize={l.size} fontWeight="700" fill="#07090A" stroke="#ffffffcc" strokeWidth="3" paintOrder="stroke" pointerEvents="none">{l.text}</text>
+        ))}
       </svg>
       <div className="absolute left-2 top-2 rounded-lg px-2 py-1 text-xs pointer-events-none" style={{ background: '#0E1416ee', minHeight: 24 }} aria-live="polite">
         {hoverText ?? (selected ? 'Toca una colonia para ver su ficha · toca fuera para volver' : 'Toca una alcaldía para ver sus colonias')}

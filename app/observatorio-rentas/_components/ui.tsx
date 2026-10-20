@@ -9,9 +9,15 @@ export function SimTag({ children = 'Datos simulados' }: { children?: React.Reac
   return <span className="obs-sim inline-block rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider">{children}</span>
 }
 
-export function Panel({ title, children, className = '', right }: { title?: string; children: React.ReactNode; className?: string; right?: React.ReactNode }) {
+/** Light diagonal «SIMULACIÓN» mark so any screenshot is self-labelled. */
+export function SimWatermark() {
+  return <div className="obs-watermark" aria-hidden><span>SIMULACIÓN</span></div>
+}
+
+export function Panel({ title, children, className = '', right, watermark = true }: { title?: string; children: React.ReactNode; className?: string; right?: React.ReactNode; watermark?: boolean }) {
   return (
-    <section className={`obs-panel p-4 ${className}`}>
+    <section className={`obs-panel p-4 relative overflow-hidden ${className}`}>
+      {watermark && <SimWatermark />}
       {title && (
         <div className="flex items-center gap-2 mb-3">
           <h2 className="obs-label">{title}</h2>

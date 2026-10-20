@@ -9,7 +9,7 @@ const archivo = Archivo({ subsets: ['latin'], axes: ['wdth'], variable: '--font-
 
 export const metadata: Metadata = {
   title: { absolute: 'Observatorio de Rentas CDMX · Demostración' },
-  description: 'Demostración con datos simulados del Observatorio de Rentas CDMX.',
+  description: 'Demostración con datos simulados del Observatorio de Rentas CDMX, una herramienta de Crowd Conscious.',
   robots: { index: false, follow: false, nocache: true, googleBot: { index: false, follow: false } },
 }
 

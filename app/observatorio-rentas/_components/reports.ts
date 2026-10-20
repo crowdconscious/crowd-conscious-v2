@@ -9,11 +9,11 @@ import type { GeoPermissibleObjects } from 'd3-geo'
 import { geoMercator, geoPath } from 'd3-geo'
 import { CDMX_ALCALDIAS_GEOJSON_PUBLIC_PATH, type CdmxAlcaldiaFeatureCollection } from '@/lib/sim-viewer/cdmx-alcaldias'
 import {
-  OBS_BANNER, OBS_CALIBRATION_REFERENCES, OBS_COLORS as C, OBS_INFLATION_12M_PCT, OBS_INITIATIVE_DATE,
+  OBS_BANNER, OBS_CREDIT, OBS_CALIBRATION_REFERENCES, OBS_COLORS as C, OBS_INFLATION_12M_PCT, OBS_INITIATIVE_DATE,
   OBS_LEGAL_CAP_PCT, OBS_MIN_N, OBS_THRESHOLDS as T, OBS_VOLUNTARY_NOTE, OBS_WATERMARK,
 } from '@/lib/observatorio-rentas/config'
 import {
-  RISK_LABEL, aggregate, alcaldiaAggregates, coloniaRisk, fmtInt, fmtMoney, fmtPct, isWatch, watchReason,
+  RISK_LABEL, aggregate, fmtDate, watchRuleText, alcaldiaAggregates, coloniaRisk, fmtInt, fmtMoney, fmtPct, isWatch, watchReason,
   type Aggregate, type Colonia, type Seed,
 } from '@/lib/observatorio-rentas/model'
 import { makeZip } from './zip'
@@ -45,7 +45,7 @@ function watermarkAll(doc: JsPDF, title: string) {
     doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(140, 90, 0)
     doc.text(OBS_BANNER, W / 2, 14, { align: 'center' })
     doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(110, 120, 125)
-    doc.text(`Observatorio de Rentas CDMX · powered by Crowd Conscious · ${title}`, 40, H - 20)
+    doc.text(`Observatorio de Rentas CDMX · ${OBS_CREDIT} · ${title}`, 40, H - 20)
     doc.text(`SIMULACIÓN · pág. ${i} de ${n}`, W - 40, H - 20, { align: 'right' })
   }
 }
@@ -166,7 +166,7 @@ export async function downloadBoletin(seed: Seed) {
   const { doc, auto } = await newDoc()
   const city = aggregate('cdmx', 'CDMX', seed.colonias)
   const aggs = alcaldiaAggregates(seed)
-  let y = heading(doc, 52, `Boletín semanal · semana del ${seed.meta.last_week}`, 'Rentas en la Ciudad de México')
+  let y = heading(doc, 52, `Boletín semanal · semana del ${fmtDate(seed.meta.last_week)}`, 'Rentas en la Ciudad de México')
   y = kpis(doc, y, [
     ['Renta mediana anunciada', fmtMoney(city.asking_rent_median)],
     ['Variación 12m vs inflación', `${fmtPct(city.asking_change_12m)} / ${fmtPct(OBS_INFLATION_12M_PCT)}`],
@@ -185,7 +185,7 @@ export async function downloadBoletin(seed: Seed) {
   // @ts-expect-error lastAutoTable added by plugin
   y = (doc.lastAutoTable?.finalY ?? y + 200) + 24
   y = sub(doc, y, 'Nota metodológica')
-  y = para(doc, y, `Las categorías se calculan con reportes voluntarios de renovación: «Dentro del tope» si la mediana de aumento es <= ${Math.round(T.withinMedianShareOfCap * 100)}% del tope y menos del ${T.withinMaxPctAbove}% de renovaciones lo rebasa; «Por encima del tope» si la mediana supera el tope o más del ${T.nearMaxPctAbove}% lo rebasa; «Cerca del límite» en medio. «A vigilar» marca alzas de renta anunciada mayores a ${T.watchInflationMultiple} veces la inflación en 12 meses o a ${T.watchChange4wPct}% en 4 semanas. Ninguna cifra se publica con menos de ${OBS_MIN_N} reportes. ${OBS_VOLUNTARY_NOTE}.`, 9)
+  y = para(doc, y, `Las categorías se calculan con reportes voluntarios de renovación: «Dentro del tope» si la mediana de aumento es <= ${Math.round(T.withinMedianShareOfCap * 100)}% del tope y menos del ${T.withinMaxPctAbove}% de renovaciones lo rebasa; «Por encima del tope» si la mediana supera el tope o más del ${T.nearMaxPctAbove}% lo rebasa; «Cerca del límite» en medio. «A vigilar» marca: ${watchRuleText()}. Ninguna cifra se publica con menos de ${OBS_MIN_N} reportes. ${OBS_VOLUNTARY_NOTE}.`, 9)
   para(doc, y, 'Este boletín es una demostración: todas las cifras son simuladas.', 9)
   watermarkAll(doc, 'Boletín semanal')
   save(doc, `boletin-semanal-${seed.meta.last_week}-SIMULACION.pdf`)
@@ -198,7 +198,7 @@ export async function downloadBrief(seed: Seed) {
   const watch = seed.colonias.filter((c) => isWatch(c.asking_change_12m, c.asking_change_4w))
   let y = heading(doc, 52, 'Brief para el dictamen', 'Evidencia sobre rentas y cumplimiento del tope')
   y = sub(doc, y, '1. Contexto')
-  y = para(doc, y, `El ${OBS_INITIATIVE_DATE.split('-').reverse().join('/')} se remitió al Congreso de la Ciudad de México la iniciativa de Ley de Relaciones Inquilinarias y Rentas Justas, Razonables y Asequibles, que propone limitar los aumentos anuales a la inflación del año previo (INEGI) aun con cambio de inquilino, un registro digital obligatorio de contratos, una Defensoría inquilinaria y multas. Hoy el tope ya existe para renovaciones (Código Civil, art. 2448-D; ${fmtPct(OBS_LEGAL_CAP_PCT, 2)} para 2026), pero no existe una medición de su cumplimiento. Este documento resume la evidencia que produciría el Observatorio.`)
+  y = para(doc, y, `El ${fmtDate(OBS_INITIATIVE_DATE)} se remitió al Congreso de la Ciudad de México la iniciativa de Ley de Relaciones Inquilinarias y Rentas Justas, Razonables y Asequibles, que propone limitar los aumentos anuales a la inflación del año previo (INEGI) aun con cambio de inquilino, un registro digital obligatorio de contratos, una Defensoría inquilinaria y multas. Hoy el tope ya existe para renovaciones (Código Civil, art. 2448-D; ${fmtPct(OBS_LEGAL_CAP_PCT, 2)} para 2026), pero no existe una medición de su cumplimiento. Este documento resume la evidencia que produciría el Observatorio.`)
   y = kpis(doc, y, [
     ['Renta mediana anunciada', fmtMoney(city.asking_rent_median)],
     ['Variación 12m', fmtPct(city.asking_change_12m)],
@@ -210,7 +210,7 @@ export async function downloadBrief(seed: Seed) {
   auto(doc, { startY: y, head: [['Alcaldía', 'Mediana aumento', '% sobre tope', 'Categoría', 'n']], body: aggs.map((a) => [a.nombre, nOr(a.renewal_reports_n, fmtPct(a.renewal_increase_median, 2)), nOr(a.renewal_reports_n, fmtPct(a.pct_renewals_above_cap)), RISK_LABEL[a.risk], fmtInt(a.renewal_reports_n)]), styles: { fontSize: 8.5 }, headStyles: { fillColor: TEAL }, margin: { top: 34, bottom: 40 } })
   doc.addPage(); y = 52
   y = sub(doc, y, '3. Señal de especulación')
-  y = para(doc, y, `${watch.length} de ${seed.colonias.length} colonias muestran alzas de renta anunciada mayores a ${T.watchInflationMultiple} veces la inflación en 12 meses o a ${T.watchChange4wPct}% en 4 semanas. Las alzas de precio de entrada anteceden a la entrada en vigor de cualquier regla nueva y por eso se miden por separado del cumplimiento.`)
+  y = para(doc, y, `${watch.length} de ${seed.colonias.length} colonias están «a vigilar»: ${watchRuleText()}. Las alzas de precio de entrada anteceden a la entrada en vigor de cualquier regla nueva y por eso se miden por separado del cumplimiento.`)
   auto(doc, { startY: y, head: [['Colonia', 'Alcaldía', 'Renta', '12m', '4 sem', '% sobre tope', 'n']], body: coloniaTableRows(topWatch(seed, 12)), styles: { fontSize: 8 }, headStyles: { fillColor: TEAL }, margin: { top: 34, bottom: 40 } })
   // @ts-expect-error plugin
   y = doc.lastAutoTable.finalY + 22
@@ -267,7 +267,7 @@ export async function downloadXlsx(seed: Seed) {
     ws.mergeCells(1, 1, 1, Math.max(2, cols))
     const c = ws.getCell(1, 1); c.font = { bold: true, color: { argb: 'FF8C5A00' } }; c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF4D6' } }
     ws.headerFooter.oddHeader = '&C&"Arial,Bold"SIMULACIÓN · DATOS SIMULADOS'
-    ws.headerFooter.oddFooter = '&CSIMULACIÓN · Observatorio de Rentas CDMX'
+    ws.headerFooter.oddFooter = `&CSIMULACIÓN · Observatorio de Rentas CDMX · ${OBS_CREDIT}`
   }
   const ws = wb.addWorksheet('colonias')
   ws.addRow(DICT.map((d) => d[0])).font = { bold: true }
