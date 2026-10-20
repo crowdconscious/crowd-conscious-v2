@@ -31,9 +31,8 @@ export type Colonia = {
   pct_plan_short_term: number
   short_term_listings: number
   near_invi_housing: boolean
-  prev_renewal_increase_median: number
-  prev_pct_renewals_above_cap: number
-  prev_asking_change_4w: number
+  /** Last 6 weekly readings (oldest → latest): [median renewal %, % above cap, asking 4w %]. */
+  recent: [number, number, number][]
 }
 export type SeedMeta = { seed: number; last_week: string; weeks: string[]; inflation_12m: number; legal_cap_2026: number; hist_bins: number[] }
 export type Seed = {
@@ -68,6 +67,7 @@ export function expandCore(core: SeedCore): Seed {
     o.renewal_hist = hist_bins.map((from, j) => ({ from, to: hist_bins[j + 1] ?? null, count: counts[j] }))
     return o as unknown as Colonia
   })
+  setWatchCutoff(computeWatchCutoff(colonias.map((c) => c.asking_change_12m)))
   return {
     meta: core.meta, alcaldias: core.alcaldias, colonias,
     city_weekly: toWeekly(core.city_weekly),
@@ -95,13 +95,28 @@ export function classifyRisk(n: number, median: number, pctAbove: number, cap = 
   return 'within'
 }
 
-export function isWatch(ch12: number, ch4: number, infl = OBS_INFLATION_12M_PCT): boolean {
-  return ch12 > T.watchInflationMultiple * infl || ch4 > T.watchChange4wPct
+let watchCutoff12m = T.watchInflationMultiple * OBS_INFLATION_12M_PCT
+/** Effective 12-month cutoff: max(3× inflation, value at the top-10% boundary). Set from the seed in expandCore. */
+export function computeWatchCutoff(ch12s: number[], infl = OBS_INFLATION_12M_PCT): number {
+  const v = [...ch12s].sort((a, b) => b - a)
+  const k = Math.max(1, Math.ceil(v.length * T.watchTopShare))
+  return Math.max(T.watchInflationMultiple * infl, v[k - 1] ?? 0)
+}
+export function getWatchCutoff() { return watchCutoff12m }
+export function setWatchCutoff(v: number) { watchCutoff12m = v }
+
+export function isWatch(ch12: number, ch4: number, cutoff = watchCutoff12m): boolean {
+  return ch12 > cutoff || ch4 > T.watchChange4wPct
 }
 
-export function watchReason(ch12: number, ch4: number, infl = OBS_INFLATION_12M_PCT): string {
+/** Plain-language rule, shared by Metodología, legend and reports. */
+export function watchRuleText(cutoff = watchCutoff12m): string {
+  return `alza de la renta anunciada en 12 meses dentro del ${Math.round(T.watchTopShare * 100)}% de colonias con mayor alza y mayor a ${T.watchInflationMultiple}× la inflación (corte actual: más de ${fmtPct(cutoff)}), o alza mayor a ${T.watchChange4wPct}% en 4 semanas`
+}
+
+export function watchReason(ch12: number, ch4: number, cutoff = watchCutoff12m): string {
   const r: string[] = []
-  if (ch12 > T.watchInflationMultiple * infl) r.push(`alza 12m de ${fmtPct(ch12)} (> ${T.watchInflationMultiple}× inflación)`)
+  if (ch12 > cutoff) r.push(`alza 12m de ${fmtPct(ch12)} (10% de mayor alza y > ${T.watchInflationMultiple}× inflación)`)
   if (ch4 > T.watchChange4wPct) r.push(`alza de ${fmtPct(ch4)} en 4 semanas (> ${T.watchChange4wPct}%)`)
   return r.join(' y ')
 }
@@ -123,6 +138,10 @@ export type Aggregate = {
   pct_plan_short_term: number
   short_term_listings: number
   watch_count: number
+  /** Colonias with n ≥ 25 whose category is «Por encima del tope». */
+  above_count: number
+  /** Colonias with n ≥ 25 (enough data to classify). */
+  data_count: number
   risk: RiskCategory
   weekly: WeeklyPoint[]
   renewal_hist: HistBin[]
@@ -161,6 +180,8 @@ export function aggregate(key: string, nombre: string, cs: Colonia[], weekly: We
     pct_plan_short_term: r1(wavg(cs, (c) => c.pct_plan_short_term, (c) => c.landlord_reports_n)),
     short_term_listings: cs.reduce((a, c) => a + c.short_term_listings, 0),
     watch_count: cs.filter((c) => isWatch(c.asking_change_12m, c.asking_change_4w)).length,
+    above_count: cs.filter((c) => coloniaRisk(c) === 'above').length,
+    data_count: cs.filter((c) => c.renewal_reports_n >= OBS_MIN_N).length,
     risk: classifyRisk(rn, med, above),
     weekly,
     renewal_hist,
@@ -170,8 +191,22 @@ export function aggregate(key: string, nombre: string, cs: Colonia[], weekly: We
 export function coloniaRisk(c: Colonia): RiskCategory {
   return classifyRisk(c.renewal_reports_n, c.renewal_increase_median, c.pct_renewals_above_cap)
 }
-export function coloniaPrevRisk(c: Colonia): RiskCategory {
-  return classifyRisk(c.renewal_reports_n, c.prev_renewal_increase_median, c.prev_pct_renewals_above_cap)
+/**
+ * Hysteresis: a colonia only changes state after the raw reading has been in the
+ * new state for OBS_THRESHOLDS.hysteresisWeeks consecutive weeks. Returns the
+ * stable state after each reading.
+ */
+export function stableStates<S>(raw: S[], weeks = T.hysteresisWeeks): S[] {
+  const out: S[] = []
+  let state = raw[0]
+  let streak = 0
+  for (let i = 0; i < raw.length; i++) {
+    if (raw[i] === state) streak = 0
+    else if (i > 0 && raw[i] === raw[i - 1]) { streak++; if (streak + 1 >= weeks) { state = raw[i]; streak = 0 } }
+    else streak = 0
+    out.push(state)
+  }
+  return out
 }
 
 export function alcaldiaAggregates(seed: Seed): Aggregate[] {
@@ -179,21 +214,27 @@ export function alcaldiaAggregates(seed: Seed): Aggregate[] {
 }
 
 export type Alert = { colonia: Colonia; from: RiskCategory | 'watch-off'; to: RiskCategory | 'watch'; why: string }
+/** Category changes over the last 4 weeks, after hysteresis (2 consecutive weeks past the threshold). */
 export function alerts(seed: Seed): Alert[] {
   const out: Alert[] = []
   for (const c of seed.colonias) {
-    const now = coloniaRisk(c), prev = coloniaPrevRisk(c)
-    if (now !== prev && now !== 'nodata') {
-      const why = now === 'above'
-        ? (c.renewal_increase_median > OBS_LEGAL_CAP_PCT
-            ? `la mediana de aumento en renovación pasó a ${fmtPct(c.renewal_increase_median)} (> tope de ${fmtPct(OBS_LEGAL_CAP_PCT)})`
-            : `el ${fmtPct(c.pct_renewals_above_cap)} de las renovaciones supera el tope (> ${T.nearMaxPctAbove}%)`)
-        : `la mediana de aumento en renovación es ${fmtPct(c.renewal_increase_median)} (entre ${Math.round(T.withinMedianShareOfCap * 100)}% y 100% del tope) o ${fmtPct(c.pct_renewals_above_cap)} supera el tope`
-      out.push({ colonia: c, from: prev, to: now, why })
+    if (c.renewal_reports_n >= OBS_MIN_N) {
+      const st = stableStates(c.recent.map(([m, a]) => classifyRisk(c.renewal_reports_n, m, a)))
+      const prev = st[st.length - 5], now = st[st.length - 1]
+      if (now !== prev) {
+        const [m, a] = c.recent[c.recent.length - 1]
+        const why = now === 'above'
+          ? (m > OBS_LEGAL_CAP_PCT
+              ? `la mediana de aumento en renovación lleva ${T.hysteresisWeeks} semanas por encima del tope (${fmtPct(m, 2)} > ${fmtPct(OBS_LEGAL_CAP_PCT, 2)})`
+              : `${fmtPct(a)} de las renovaciones supera el tope (> ${T.nearMaxPctAbove}%) por ${T.hysteresisWeeks} semanas seguidas`)
+          : now === 'near'
+            ? `mediana de aumento de ${fmtPct(m, 2)} o ${fmtPct(a)} sobre el tope: zona «cerca del límite» por ${T.hysteresisWeeks} semanas seguidas`
+            : `mediana de aumento de ${fmtPct(m, 2)} y ${fmtPct(a)} sobre el tope: de vuelta «dentro del tope» por ${T.hysteresisWeeks} semanas seguidas`
+        out.push({ colonia: c, from: prev, to: now, why })
+      }
     }
-    const wasWatch = isWatch(c.asking_change_12m, c.prev_asking_change_4w)
-    const nowWatch = isWatch(c.asking_change_12m, c.asking_change_4w)
-    if (nowWatch && !wasWatch) out.push({ colonia: c, from: 'watch-off', to: 'watch', why: watchReason(c.asking_change_12m, c.asking_change_4w) })
+    const ws = stableStates(c.recent.map(([, , ch4]) => isWatch(c.asking_change_12m, ch4)))
+    if (ws[ws.length - 1] && !ws[ws.length - 5]) out.push({ colonia: c, from: 'watch-off', to: 'watch', why: watchReason(c.asking_change_12m, c.asking_change_4w) })
   }
   const rank = (a: Alert) => (a.to === 'above' ? 0 : a.to === 'watch' ? 1 : 2)
   return out.sort((a, b) => rank(a) - rank(b) || a.colonia.nombre.localeCompare(b.colonia.nombre, 'es'))
@@ -206,4 +247,5 @@ export function allowedMax(rent: number, cap = OBS_LEGAL_CAP_PCT): number {
 export const fmtMoney = (x: number) => '$' + Math.round(x).toLocaleString('es-MX')
 export const fmtPct = (x: number, d = 1) => `${x.toLocaleString('es-MX', { minimumFractionDigits: d, maximumFractionDigits: d })}%`
 export const fmtInt = (x: number) => Math.round(x).toLocaleString('es-MX')
-export const fmtWeek = (iso: string) => new Date(iso + 'T12:00:00Z').toLocaleDateString('es-MX', { day: 'numeric', month: 'short', timeZone: 'UTC' })
+export const fmtDate = (iso: string) => new Date(iso + 'T12:00:00Z').toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).replace(/\./g, '')
+export const fmtWeek = fmtDate

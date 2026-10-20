@@ -4,8 +4,8 @@ import './obs.css'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { OBS_BANNER } from '@/lib/observatorio-rentas/config'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { OBS_BANNER, OBS_CREDIT } from '@/lib/observatorio-rentas/config'
 import { expandCore, type Colonia, type Seed, type SeedCore, type WeeklyDetail } from '@/lib/observatorio-rentas/model'
 import { Tour } from './Tour'
 
@@ -73,6 +73,10 @@ export function ObsShell({ children, core }: { children: React.ReactNode; core: 
   const [landlords, setLandlords] = useState<LandlordSubmission[]>([])
   const [tourOpen, setTourOpen] = useState(false)
   const pathname = usePathname()
+  const navRef = useRef<HTMLUListElement | null>(null)
+  const [navMore, setNavMore] = useState(false)
+  const checkNav = useCallback(() => { const el = navRef.current; if (el) setNavMore(el.scrollLeft + el.clientWidth < el.scrollWidth - 4) }, [])
+  useEffect(() => { checkNav(); window.addEventListener('resize', checkNav); return () => window.removeEventListener('resize', checkNav) }, [checkNav])
   const addRenewal = useCallback((s: RenewalSubmission) => setRenewals((r) => [...r, s]), [])
   const addLandlord = useCallback((s: LandlordSubmission) => setLandlords((r) => [...r, s]), [])
   const data = useMemo(() => (seed ? foldRenewals(seed, renewals) : null), [seed, renewals])
@@ -90,15 +94,15 @@ export function ObsShell({ children, core }: { children: React.ReactNode; core: 
               <Image src={`${OBS_BASE}/logo-full.png`} alt="Crowd Conscious" width={44} height={45} priority />
               <span className="min-w-0">
                 <span className="obs-h block text-sm sm:text-lg leading-tight">Observatorio de Rentas CDMX</span>
-                <span className="block text-[11px] obs-muted tracking-[0.14em] uppercase">powered by Crowd Conscious</span>
+                <span className="block text-[11px] sm:text-xs obs-muted tracking-wide">{OBS_CREDIT}</span>
               </span>
             </Link>
             <button type="button" className="obs-btn ml-auto shrink-0" onClick={() => setTourOpen(true)} data-tour="tour-button">
               <span aria-hidden>▶</span> <span className="hidden sm:inline">Recorrido guiado</span><span className="sm:hidden">Recorrido</span>
             </button>
           </div>
-          <nav aria-label="Secciones" className="mx-auto max-w-[1400px] px-2 sm:px-4 overflow-x-auto">
-            <ul className="flex gap-1 text-sm whitespace-nowrap pb-2">
+          <nav aria-label="Secciones" className="mx-auto max-w-[1400px] px-2 sm:px-4 relative">
+            <ul ref={navRef} onScroll={checkNav} className="flex gap-1 text-sm whitespace-nowrap pb-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
               {NAV.map((n) => {
                 const active = n.href === OBS_BASE ? pathname === OBS_BASE : pathname?.startsWith(n.href)
                 return (
@@ -110,6 +114,10 @@ export function ObsShell({ children, core }: { children: React.ReactNode; core: 
                 )
               })}
             </ul>
+            {navMore && (<>
+              <div className="obs-tabfade" aria-hidden />
+              <button type="button" aria-label="Ver más secciones" onClick={() => navRef.current?.scrollBy({ left: 160, behavior: 'smooth' })} className="absolute right-1 top-0.5 w-8 h-8 rounded-full grid place-items-center font-bold" style={{ background: '#141C1F', color: '#2BB3C0', border: '1px solid #2BB3C0' }}>›</button>
+            </>)}
           </nav>
         </header>
         <main className="flex-1 mx-auto w-full max-w-[1400px] px-3 sm:px-4 py-4">
@@ -117,7 +125,7 @@ export function ObsShell({ children, core }: { children: React.ReactNode; core: 
         </main>
         <footer className="border-t text-xs obs-muted" style={{ borderColor: '#1F2A2E' }}>
           <div className="mx-auto max-w-[1400px] px-4 py-4 flex flex-wrap gap-x-6 gap-y-1">
-            <span>Observatorio de Rentas CDMX · powered by Crowd Conscious</span>
+            <span>Observatorio de Rentas CDMX · {OBS_CREDIT}</span>
             <span>Datos agregados por colonia · sin nombres ni direcciones · metodología pública</span>
           </div>
         </footer>

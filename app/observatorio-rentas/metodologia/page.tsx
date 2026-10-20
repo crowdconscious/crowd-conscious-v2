@@ -1,3 +1,5 @@
+import core from '@/public/observatorio-rentas/data/core.json'
+import { computeWatchCutoff, expandCore, watchRuleText, type SeedCore } from '@/lib/observatorio-rentas/model'
 import { OBS_BANNER, OBS_CALIBRATION_REFERENCES, OBS_INFLATION_12M_PCT, OBS_LEGAL_CAP_PCT, OBS_MIN_N, OBS_THRESHOLDS as T, OBS_VOLUNTARY_NOTE } from '@/lib/observatorio-rentas/config'
 
 const S = ({ title, children }: { title: string; children: React.ReactNode }) => (
@@ -6,6 +8,7 @@ const S = ({ title, children }: { title: string; children: React.ReactNode }) =>
 const pct = (x: number) => `${x.toLocaleString('es-MX')}%`
 
 export default function Metodologia() {
+  const seed = expandCore(core as unknown as SeedCore)
   return (
     <div className="max-w-4xl mx-auto space-y-4">
       <div><p className="obs-label">Metodología</p><h1 className="obs-h text-2xl sm:text-3xl">Cómo se construyen las cifras</h1></div>
@@ -29,7 +32,7 @@ export default function Metodologia() {
           <li><span className="inline-block w-3 h-3 rounded-sm mr-2 align-middle" style={{ background: '#E8C547' }} /><strong>Cerca del límite</strong>: mediana entre {T.withinMedianShareOfCap * 100}% y 100% del tope, o entre {T.withinMaxPctAbove}% y {T.nearMaxPctAbove}% de renovaciones por encima.</li>
           <li><span className="inline-block w-3 h-3 rounded-sm mr-2 align-middle" style={{ background: '#E5604D' }} /><strong>Por encima del tope</strong>: mediana mayor al tope o más de {T.nearMaxPctAbove}% de renovaciones por encima.</li>
           <li><span className="inline-block w-3 h-3 rounded-sm mr-2 align-middle" style={{ background: '#4A555A' }} /><strong>Sin datos suficientes</strong>: menos de {OBS_MIN_N} reportes.</li>
-          <li><span className="inline-block w-3 h-3 rounded-sm mr-2 align-middle" style={{ border: '2px solid #2BB3C0' }} /><strong>A vigilar</strong>: renta anunciada con alza mayor a {T.watchInflationMultiple}× la inflación en 12 meses o mayor a {T.watchChange4wPct}% en 4 semanas, sin importar el cumplimiento.</li>
+          <li><span className="inline-block w-3 h-3 rounded-sm mr-2 align-middle" style={{ border: '2px solid #2BB3C0' }} /><strong>A vigilar</strong>: {watchRuleText(computeWatchCutoff(seed.colonias.map((c) => c.asking_change_12m)))}, sin importar el cumplimiento. El corte se calcula sobre la semilla y se muestra en cada ficha.</li>
         </ul>
       </S>
       <S title="Reglas de n"><p>Ninguna cifra basada en reportes se publica con menos de {OBS_MIN_N}; en su lugar se muestra «Muestra insuficiente (n&lt;25)». Cada cifra muestra su n y la leyenda «{OBS_VOLUNTARY_NOTE}». No se calcula margen de error sobre reportes voluntarios.</p></S>
