@@ -23,7 +23,7 @@ export default function Calculadora() {
         <h1 className="obs-h text-2xl sm:text-3xl">¿Tu aumento de renta respeta el tope?</h1>
         <p className="obs-muted text-sm mt-1">Para renovaciones de 2026 el aumento máximo es {fmtPct(OBS_LEGAL_CAP_PCT, 2)} (Código Civil, art. 2448-D).</p>
       </div>
-      <Panel>
+      <div data-tour="calc-panel"><Panel>
         <form className="grid sm:grid-cols-3 gap-3 [&>label]:min-w-0" onSubmit={(e) => e.preventDefault()}>
           <label className="text-sm">Renta actual (MXN/mes)<input className="obs-input mt-1" inputMode="numeric" type="number" min="0" value={cur} onChange={(e) => setCur(e.target.value)} /></label>
           <label className="text-sm">Nueva renta ofrecida<input className="obs-input mt-1" inputMode="numeric" type="number" min="0" value={next} onChange={(e) => setNext(e.target.value)} /></label>
@@ -40,7 +40,7 @@ export default function Calculadora() {
           </div>
         )}
         <p className="text-xs obs-muted mt-4">Herramienta informativa, no es asesoría legal. El tope aplica a renovaciones; consulta tu contrato y, en su caso, a una persona asesora en derecho.{start && ` Contrato iniciado el ${fmtDate(start)}.`}</p>
-      </Panel>
+      </Panel></div>
       <Panel className="border-dashed">
         <h2 className="obs-h text-lg">¿Nos compartes tu caso de forma anónima?</h2>
         <p className="text-sm obs-muted mt-1">Es opcional. No pedimos nombre, dirección, teléfono, correo ni datos de quien te renta. Tu reporte sólo se suma a la cifra de tu colonia.</p>
