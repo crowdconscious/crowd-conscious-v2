@@ -1,0 +1,34 @@
+# TO ACTIVATE: copy this file to .github/workflows/ci.yml (GitHub web UI: Add file -> Create new file).
+# The bot token has no `workflow` scope, so it could not commit it there itself.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: typecheck + tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Unit tests
+        run: npm test
+      # Lint: the repo has no ESLint config/dependency yet, so there is no lint step.
+      # Add `npm run lint` here once ESLint is configured.

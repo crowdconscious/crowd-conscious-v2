@@ -98,7 +98,7 @@ export default function CreatePulseForm({
   const [durationDays, setDurationDays] = useState<number>(PULSE_DEFAULT_DURATION_DAYS)
   const [customDate, setCustomDate] = useState('')
   const [durationMode, setDurationMode] = useState<'preset' | 'custom'>('preset')
-  const [allowOther, setAllowOther] = useState(false)
+  const [allowOther, setAllowOther] = useState(true) // every Pulse has "Otro" by default
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')

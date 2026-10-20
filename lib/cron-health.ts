@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import * as Sentry from '@sentry/nextjs'
 import { sendEmail } from '@/lib/resend'
 
 /**
@@ -61,16 +62,35 @@ export async function cronHealthComplete(
     })
     .eq('id', runId)
 
-  if (!result.success && process.env.ADMIN_EMAIL && process.env.RESEND_API_KEY) {
-    await sendEmail(process.env.ADMIN_EMAIL, {
-      subject: `[CC Alert] Cron failed: ${jobName}`,
-      html: `
-        <p>The <strong>${jobName}</strong> cron job failed at ${completedAt}.</p>
-        <p><strong>Error:</strong> ${result.error ?? 'Unknown error'}</p>
-        <p>Check <code>cron_job_runs</code> in Supabase for details.</p>
+  if (!result.success) {
+    // Always leave a greppable line in Vercel logs, even without Resend.
+    console.error('[cron-alert] cron failed', jobName, runId, result.error ?? 'unknown error')
+    Sentry.captureMessage(`Cron failed: ${jobName}`, { level: 'error', extra: { runId, error: result.error } })
+    const to = cronAlertRecipient()
+    if (process.env.RESEND_API_KEY) {
+      try {
+        await sendEmail(to, {
+          subject: `[CC Alert] Cron failed: ${jobName}`,
+          html: `
+        <p>The <strong>${escapeHtml(jobName)}</strong> cron job failed at ${completedAt} (UTC).</p>
+        <p><strong>Error:</strong> ${escapeHtml(result.error ?? 'Unknown error')}</p>
+        <p>Check <code>cron_job_runs</code> (id ${escapeHtml(runId)}) in Supabase and the Vercel runtime logs for details.</p>
       `,
-    })
+        })
+      } catch (err) {
+        console.error('[cron-alert] alert email failed', jobName, err)
+      }
+    }
   }
+}
+
+/** CRON_ALERT_EMAIL, else ADMIN_EMAIL, else Francisco's address. */
+export function cronAlertRecipient(env: Record<string, string | undefined> = process.env): string {
+  return env.CRON_ALERT_EMAIL?.trim() || env.ADMIN_EMAIL?.trim() || 'francisco@crowdconscious.app'
+}
+
+function escapeHtml(s: string): string {
+  return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string)
 }
 
 /** Jobs that run monthly — "healthy" uses a longer window than daily crons. */
