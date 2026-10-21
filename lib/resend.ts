@@ -1,6 +1,7 @@
 import { isSendableEmail, maskEmail } from '@/lib/email-address'
 import type { ReactElement } from 'react'
 import { Resend } from 'resend'
+import { htmlToText } from '@/lib/email-text'
 import { render as renderEmail } from '@react-email/render'
 import { calculateFundAllocationRounded, normalizeSponsorTierId } from '@/lib/sponsor-tiers'
 import { isPredictionResolutionEmailEnabled } from '@/lib/email-flags'
@@ -44,6 +45,13 @@ export const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND
 const FROM_EMAIL =
   process.env.RESEND_FROM_EMAIL ||
   'Crowd Conscious <comunidad@crowdconscious.app>' // Using verified domain
+/**
+ * Bulk/marketing sender (newsletter, digests). Lives on a separate subdomain
+ * (news.crowdconscious.app) so its reputation is isolated from transactional
+ * mail. Falls back to FROM_EMAIL until RESEND_BULK_FROM_EMAIL is set — set it
+ * only after the subdomain is verified in Resend.
+ */
+export const BULK_FROM_EMAIL = process.env.RESEND_BULK_FROM_EMAIL || FROM_EMAIL
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
 // Email templates
@@ -701,7 +709,7 @@ function isResendRateLimitError(message?: string): boolean {
 
 async function sendEmailWithRetry(
   to: string,
-  template: { subject: string; html: string },
+  template: EmailContent,
   from: string = FROM_EMAIL
 ): Promise<{ success: boolean; error?: string }> {
   const maxAttempts = 4
@@ -719,9 +727,17 @@ async function sendEmailWithRetry(
 // Send email function with error handling
 export type EmailAttachment = { filename: string; content: Buffer; contentType?: string }
 
+/** `text` defaults to a conversion of `html`; `headers` is for bulk mail (List-Unsubscribe). */
+export type EmailContent = {
+  subject: string
+  html: string
+  text?: string
+  headers?: Record<string, string>
+}
+
 export async function sendEmail(
   to: string,
-  template: { subject: string; html: string },
+  template: EmailContent,
   from: string = FROM_EMAIL,
   attachments?: EmailAttachment[]
 ): Promise<{ success: boolean; error?: string }> {
@@ -736,6 +752,8 @@ export async function sendEmail(
       to: [to],
       subject: template.subject,
       html: template.html,
+      text: template.text ?? htmlToText(template.html),
+      ...(template.headers ? { headers: template.headers } : {}),
       ...(attachments?.length ? { attachments } : {}),
     })
 
@@ -752,10 +770,14 @@ export async function sendEmail(
   }
 }
 
-/** Newsletter sends one HTML per recipient (unsubscribe URL differs). Rate-limited for Resend (5 req/s). */
+/**
+ * Bulk fan-out (newsletter): one HTML per recipient (unsubscribe URL differs).
+ * Sent from BULK_FROM_EMAIL. Rate-limited for Resend (5 req/s).
+ */
 export async function sendEmailsWithConcurrency(
-  messages: Array<{ to: string; subject: string; html: string }>,
-  concurrency: number = RESEND_MAX_REQUESTS_PER_SECOND
+  messages: Array<{ to: string; subject: string; html: string; text?: string; headers?: Record<string, string> }>,
+  concurrency: number = RESEND_MAX_REQUESTS_PER_SECOND,
+  from: string = BULK_FROM_EMAIL
 ): Promise<{ sent: number; failed: number; skipped: number; firstError?: string }> {
   let sent = 0
   let failed = 0
@@ -777,7 +799,9 @@ export async function sendEmailsWithConcurrency(
   for (let i = 0; i < messages.length; i += batchSize) {
     const slice = messages.slice(i, i + batchSize)
     const results = await Promise.all(
-      slice.map((m) => sendEmailWithRetry(m.to, { subject: m.subject, html: m.html }))
+      slice.map((m) =>
+        sendEmailWithRetry(m.to, { subject: m.subject, html: m.html, text: m.text, headers: m.headers }, from)
+      )
     )
     for (const r of results) {
       if (r.success) sent++

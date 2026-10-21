@@ -21,9 +21,11 @@ import {
   type NewsletterConsciousLocation,
 } from '@/lib/prediction-emails'
 import {
-  createNewsletterListUnsubscribeToken,
-  createUnsubscribeToken,
+  listUnsubscribeHeaders,
+  newsletterUnsubscribeUrl,
+  userUnsubscribeUrl,
 } from '@/lib/email-unsubscribe'
+import { loadSuppressedEmails } from '@/lib/email-suppression'
 import { cronHealthCheck, cronHealthComplete } from '@/lib/cron-health'
 import { consciousFundBalanceMxn } from '@/lib/conscious-fund-balance'
 import { excludeStandOnly } from '@/lib/pulse/discovery-filters'
@@ -395,6 +397,9 @@ export async function runCrowdNewsletterCron(
 
     type Recipient = { email: string; unsubUrl: string }
     const byEmail = new Map<string, Recipient>()
+    // Hard bounces / spam complaints recorded by the Resend webhook.
+    const suppressed = await loadSuppressedEmails(admin)
+    let suppressedSkipped = 0
 
     const invalidRecipients: string[] = []
     for (const p of profiles ?? []) {
@@ -405,7 +410,11 @@ export async function runCrowdNewsletterCron(
         invalidRecipients.push(maskEmail(email))
         continue
       }
-      const unsub = `${APP_URL}/api/email/unsubscribe?user=${encodeURIComponent(p.id)}&token=${encodeURIComponent(createUnsubscribeToken(p.id))}`
+      if (suppressed.has(email)) {
+        suppressedSkipped++
+        continue
+      }
+      const unsub = userUnsubscribeUrl(p.id)
       byEmail.set(email, { email: (p.email as string).trim(), unsubUrl: unsub })
     }
 
@@ -417,14 +426,20 @@ export async function runCrowdNewsletterCron(
         continue
       }
       if (byEmail.has(raw)) continue
-      const tok = createNewsletterListUnsubscribeToken(raw)
-      const unsub = `${APP_URL}/api/newsletter/unsubscribe?email=${encodeURIComponent(raw)}&token=${encodeURIComponent(tok)}`
+      if (suppressed.has(raw)) {
+        suppressedSkipped++
+        continue
+      }
+      const unsub = newsletterUnsubscribeUrl(raw)
       byEmail.set(raw, { email: String(row.email ?? '').trim(), unsubUrl: unsub })
     }
 
     if (invalidRecipients.length) {
       // Skipped, never "fixed": user data is not modified here.
       console.warn('[newsletter] skipped invalid recipient(s):', invalidRecipients.length, invalidRecipients.slice(0, 10).join(', '))
+    }
+    if (suppressedSkipped) {
+      console.warn('[newsletter] skipped suppressed (bounced/complained) recipient(s):', suppressedSkipped)
     }
     const recipients = Array.from(byEmail.values())
     if (recipients.length === 0) {
@@ -532,7 +547,12 @@ export async function runCrowdNewsletterCron(
         subjectOverride,
       })
       subjectUsed = tpl.subject
-      return { to: rec.email, subject: tpl.subject, html: tpl.html }
+      return {
+        to: rec.email,
+        subject: tpl.subject,
+        html: tpl.html,
+        headers: listUnsubscribeHeaders(rec.unsubUrl),
+      }
     })
 
     const { sent, failed, firstError } = await sendEmailsWithConcurrency(messages)
