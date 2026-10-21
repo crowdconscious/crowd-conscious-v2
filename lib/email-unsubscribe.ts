@@ -91,3 +91,36 @@ export function verifySponsorUnsubscribeToken(
     return false
   }
 }
+
+/**
+ * RFC 8058 one-click unsubscribe.
+ *
+ * Links must hit the canonical host directly: the apex (crowdconscious.app)
+ * 307-redirects to www, and mailbox providers do not follow redirects on the
+ * one-click POST.
+ */
+export const EMAIL_LINK_BASE_URL = (
+  process.env.EMAIL_LINK_BASE_URL || 'https://www.crowdconscious.app'
+).replace(/\/$/, '')
+
+export const UNSUBSCRIBE_MAILTO_ADDRESS =
+  process.env.EMAIL_UNSUBSCRIBE_MAILTO || 'comunidad@crowdconscious.app'
+
+/** Unsubscribe URL for a registered user (profiles.email_notifications). */
+export function userUnsubscribeUrl(userId: string): string {
+  return `${EMAIL_LINK_BASE_URL}/api/email/unsubscribe?user=${encodeURIComponent(userId)}&token=${encodeURIComponent(createUnsubscribeToken(userId))}`
+}
+
+/** Unsubscribe URL for a newsletter-only subscriber (newsletter_subscribers). */
+export function newsletterUnsubscribeUrl(email: string): string {
+  const norm = newsletterNorm(email)
+  return `${EMAIL_LINK_BASE_URL}/api/newsletter/unsubscribe?email=${encodeURIComponent(norm)}&token=${encodeURIComponent(createNewsletterListUnsubscribeToken(norm))}`
+}
+
+/** Headers for bulk/marketing mail. Never attach these to transactional mail. */
+export function listUnsubscribeHeaders(unsubscribeUrl: string): Record<string, string> {
+  return {
+    'List-Unsubscribe': `<${unsubscribeUrl}>, <mailto:${UNSUBSCRIBE_MAILTO_ADDRESS}?subject=unsubscribe>`,
+    'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+  }
+}
