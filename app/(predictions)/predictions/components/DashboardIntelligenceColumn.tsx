@@ -219,8 +219,10 @@ export function DashboardIntelligenceColumn({
           </div>
           <div className="h-8 w-px bg-slate-700" />
           <div>
-            <p className="text-xs text-slate-400">{isEs ? 'Tu impacto' : 'Your impact'}</p>
-            <p className="text-lg font-bold text-white">{userImpactXp} XP</p>
+            <p className="text-xs text-slate-400">{isEs ? 'Tus acciones' : 'Your actions'}</p>
+            <Link href="/predictions/acciones" className="text-sm font-semibold text-white hover:text-emerald-300">
+              {isEs ? 'Ver resumen privado' : 'See private summary'}
+            </Link>
           </div>
         </div>
         <Link

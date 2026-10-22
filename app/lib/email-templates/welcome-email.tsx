@@ -57,54 +57,6 @@ export const WelcomeEmail = ({
         </Text>
       </Section>
 
-      {!isBrand && (
-        /* XP Progress Bar for Users */
-        <Section style={{
-          backgroundColor: '#f8fafc',
-          padding: '20px',
-          borderRadius: '12px',
-          margin: '0 0 30px'
-        }}>
-          <Text style={{
-            margin: '0 0 10px',
-            fontSize: '14px',
-            fontWeight: '500',
-            color: '#6b7280',
-            textAlign: 'center' as const
-          }}>
-            Your Impact Journey Starts Now
-          </Text>
-          
-          <Row>
-            <Column style={{ textAlign: 'center' as const }}>
-              <div style={{
-                background: 'linear-gradient(90deg, #14b8a6, #8b5cf6)',
-                height: '8px',
-                borderRadius: '4px',
-                margin: '0 0 10px',
-                position: 'relative' as const
-              }}>
-                <div style={{
-                  background: 'linear-gradient(90deg, #10b981, #7c3aed)',
-                  height: '100%',
-                  width: '25%',
-                  borderRadius: '4px',
-                  position: 'relative' as const
-                }}></div>
-              </div>
-              
-              <Text style={{
-                margin: '0',
-                fontSize: '16px',
-                fontWeight: '600',
-                color: '#14b8a6'
-              }}>
-                🎯 {initialXP} XP Earned • Level 1 Changemaker
-              </Text>
-            </Column>
-          </Row>
-        </Section>
-      )}
 
       {/* Action Cards */}
       <Section>

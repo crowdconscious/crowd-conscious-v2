@@ -57,7 +57,8 @@ export function liveMatchResultsTemplate(opts: {
   resultsUrl: string
   locale: 'en' | 'es'
 }) {
-  const { eventTitle, rank, totalXp, correctCount, voteCount, resultsUrl, locale } = opts
+  // Modelo Consciente: outcomes only — no rank or XP in emails.
+  const { eventTitle, correctCount, voteCount, resultsUrl, locale } = opts
   if (locale === 'es') {
     return {
       subject: `[Crowd Conscious] Tus resultados — ${eventTitle}`,
@@ -66,7 +67,7 @@ export function liveMatchResultsTemplate(opts: {
           <div style="background: #0f172a; padding: 24px; border-radius: 12px; color: #e2e8f0;">
             <h2 style="margin: 0 0 16px; color: #5eead4;">Resultados del partido</h2>
             <p style="margin: 0 0 8px;"><strong>${eventTitle}</strong></p>
-            <p style="margin: 0 0 16px;">Tu posición: <strong>#${rank}</strong> · +${totalXp} XP · ${correctCount}/${voteCount} aciertos</p>
+            <p style="margin: 0 0 16px;">Votaste en <strong>${voteCount}</strong> micro-mercados · ${correctCount} coincidieron con el resultado</p>
             <a href="${resultsUrl}" style="color: #2dd4bf;">Ver resumen en la app</a>
           </div>
         </div>`,
@@ -79,7 +80,7 @@ export function liveMatchResultsTemplate(opts: {
         <div style="background: #0f172a; padding: 24px; border-radius: 12px; color: #e2e8f0;">
           <h2 style="margin: 0 0 16px; color: #5eead4;">Match results</h2>
           <p style="margin: 0 0 8px;"><strong>${eventTitle}</strong></p>
-          <p style="margin: 0 0 16px;">Your rank: <strong>#${rank}</strong> · +${totalXp} XP · ${correctCount}/${voteCount} correct</p>
+          <p style="margin: 0 0 16px;">You voted on <strong>${voteCount}</strong> micro-markets · ${correctCount} matched the outcome</p>
           <a href="${resultsUrl}" style="color: #2dd4bf;">View summary in the app</a>
         </div>
       </div>`,
@@ -92,11 +93,11 @@ export async function sendLivePredictionInviteEmail(to: string, locale: 'en' | '
     locale === 'es'
       ? {
           subject: '[Crowd Conscious] ¡Te invitamos a votar en vivo!',
-          html: `<p>Prueba <a href="${APP_URL}/live">Conscious Live</a>: micro-mercados durante partidos, XP y causa consciente.</p>`,
+          html: `<p>Prueba <a href="${APP_URL}/live">Conscious Live</a>: micro-mercados durante partidos, resultados en vivo y causa consciente.</p>`,
         }
       : {
           subject: "[Crowd Conscious] You're invited to vote live!",
-          html: `<p>Try <a href="${APP_URL}/live">Conscious Live</a>: in-match micro-markets, XP, and fund impact.</p>`,
+          html: `<p>Try <a href="${APP_URL}/live">Conscious Live</a>: in-match micro-markets, live outcomes, and fund impact.</p>`,
         }
   return sendEmail(to, tpl, FROM)
 }

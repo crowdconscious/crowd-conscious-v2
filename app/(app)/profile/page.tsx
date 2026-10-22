@@ -37,53 +37,22 @@ async function getPredictionStats(userId: string) {
 
   const { data: votes, error: votesError } = await supabase
     .from('market_votes')
-    .select('id, is_correct, xp_earned, bonus_xp')
+    .select('id, is_correct')
     .eq('user_id', userId)
     .eq('is_anonymous', false)
 
   if (votesError) {
-    return { predictions: 0, accuracy: 0, totalXp: 0, rank: null }
+    return { predictions: 0, accuracy: 0 }
   }
 
   const predictions = votes?.length ?? 0
   const resolved = votes?.filter((v) => v.is_correct !== null) ?? []
   const correct = resolved.filter((v) => v.is_correct === true).length
   const accuracy = resolved.length > 0 ? Math.round((correct / resolved.length) * 100) : 0
-  const totalXp =
-    votes?.reduce((sum, v) => sum + (v.xp_earned ?? 0) + (v.bonus_xp ?? 0), 0) ?? 0
-
-  const { data: xpRow } = await supabase
-    .from('user_xp')
-    .select('total_xp')
-    .eq('user_id', userId)
-    .single()
-
-  const userTotalXp = xpRow?.total_xp ?? totalXp
-
-  const { count: rankCount } = await supabase
-    .from('user_xp')
-    .select('*', { count: 'exact', head: true })
-    .gt('total_xp', userTotalXp)
-
-  const rank = rankCount !== null ? rankCount + 1 : null
-
   return {
     predictions,
     accuracy,
-    totalXp: xpRow?.total_xp ?? totalXp,
-    rank,
   }
-}
-
-async function getTopAchievements(userId: string, limit = 3) {
-  const supabase = await createClient()
-  const { data } = await supabase
-    .from('user_achievements')
-    .select('id, achievement_type, achievement_name, achievement_description, icon_url, unlocked_at')
-    .eq('user_id', userId)
-    .order('unlocked_at', { ascending: false })
-    .limit(limit)
-  return data ?? []
 }
 
 async function getFundVotes(userId: string) {
@@ -155,12 +124,11 @@ export default async function ProfilePage() {
 
   const userId = (user as { id: string }).id
 
-  const [profile, predictionStats, recentPredictions, topAchievements, fundVotes] =
+  const [profile, predictionStats, recentPredictions, fundVotes] =
     await Promise.all([
       getProfile(userId),
       getPredictionStats(userId),
       getRecentPredictions(userId),
-      getTopAchievements(userId),
       getFundVotes(userId),
     ])
 
@@ -189,7 +157,6 @@ export default async function ProfilePage() {
       profile={profile}
       predictionStats={predictionStats}
       recentPredictions={recentPredictions}
-      topAchievements={topAchievements}
       impactVotes={impactVotes}
       locale={locale}
       isCreator={isCreator}

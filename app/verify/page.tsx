@@ -195,14 +195,6 @@ function VerifyContent() {
                 </div>
               </div>
 
-              <div className="flex items-start gap-3">
-                <Award className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm text-slate-600">XP Ganados</p>
-                  <p className="text-lg font-bold text-slate-900">{result.xpEarned || 250} XP</p>
-                </div>
-              </div>
-
               <div className="pt-4 border-t border-slate-200">
                 <p className="text-sm text-slate-600">Código de Verificación</p>
                 <p className="text-lg font-mono font-bold text-teal-600 tracking-wider">

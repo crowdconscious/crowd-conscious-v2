@@ -22,7 +22,6 @@ export default function Footer() {
       signalsBeta: 'Beta',
       locations: 'Evaluar',
       live: 'En Vivo',
-      leaderboard: 'Leaderboard',
       consciousFund: 'Decidir',
       forBrands: 'Organizaciones',
       communitySponsor: 'Patrocinio comunitario',
@@ -49,7 +48,6 @@ export default function Footer() {
       signalsBeta: 'Beta',
       locations: 'Evaluate',
       live: 'Live',
-      leaderboard: 'Leaderboard',
       consciousFund: 'Decide',
       forBrands: 'Organizations',
       communitySponsor: 'Community sponsorship',
@@ -198,11 +196,6 @@ export default function Footer() {
               <li>
                 <Link href="/live" className="text-slate-300 transition-colors hover:text-teal-400">
                   {t.live}
-                </Link>
-              </li>
-              <li>
-                <Link href="/predictions/leaderboard" className="text-slate-300 transition-colors hover:text-teal-400">
-                  {t.leaderboard}
                 </Link>
               </li>
               <li>

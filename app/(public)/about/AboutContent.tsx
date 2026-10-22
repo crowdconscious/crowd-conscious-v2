@@ -292,8 +292,8 @@ export default function AboutContent({
               </div>
               <p className="text-slate-400 text-sm leading-relaxed mb-3">
                 {locale === 'es'
-                  ? 'Durante cada partido del Mundial activamos micro-mercados en tiempo real: predice cada minuto, sube en el leaderboard y mira la transmisión junto con la multitud. Cada voto sigue alimentando el Fondo Consciente.'
-                  : 'During every World Cup match we open real-time micro-markets: predict every minute, climb the leaderboard, and watch the stream alongside the crowd. Every vote keeps feeding the Conscious Fund.'}
+                  ? 'Durante cada partido del Mundial activamos micro-mercados en tiempo real: predice cada minuto, mira los resultados y sigue la transmisión junto con la multitud. Cada voto sigue alimentando el Fondo Consciente.'
+                  : 'During every World Cup match we open real-time micro-markets: predict every minute, see the outcomes, and watch the stream alongside the crowd. Every vote keeps feeding the Conscious Fund.'}
               </p>
               <Link
                 href="/live"

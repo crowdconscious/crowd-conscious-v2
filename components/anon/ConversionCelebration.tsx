@@ -76,10 +76,10 @@ export function ConversionCelebration() {
                 {locale === 'es' ? '¡Bienvenido!' : 'Welcome!'}
               </p>
               <p className="mt-0.5 text-xs text-slate-300">
-                {xp > 0
+                {xp > 0 || alias
                   ? locale === 'es'
-                    ? `Transferimos ${xp} XP${alias ? ` de @${alias}` : ''} a tu cuenta.`
-                    : `We transferred ${xp} XP${alias ? ` from @${alias}` : ''} to your account.`
+                    ? `Tus votos${alias ? ` de @${alias}` : ''} ya están en tu cuenta.`
+                    : `Your votes${alias ? ` from @${alias}` : ''} are now in your account.`
                   : locale === 'es'
                     ? 'Tu cuenta está lista.'
                     : 'Your account is ready.'}

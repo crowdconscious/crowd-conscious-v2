@@ -88,7 +88,6 @@ export default function VerifyRedemptionClient({
         </p>
 
         <p className="mt-2 text-sm text-slate-500">
-          {data.redemption.xp_spent} XP ·{' '}
           {locale === 'es' ? 'Expira' : 'Expires'}{' '}
           {new Date(data.redemption.expires_at).toLocaleString(locale === 'es' ? 'es-MX' : 'en-US')}
         </p>

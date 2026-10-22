@@ -84,11 +84,6 @@ export default function DashboardNavigation({
             </AnimatedButton>
           </Link>
         )}
-        <Link href="/leaderboard">
-          <AnimatedButton variant="ghost" size="sm">
-            🏆 Leaderboard
-          </AnimatedButton>
-        </Link>
         <Link href="/predictions/fund">
           <AnimatedButton variant="ghost" size="sm">
             💰 Fund

@@ -3,8 +3,6 @@ import { redirect } from 'next/navigation'
 import MobileNavigation from '@/components/MobileNavigation'
 import HeaderClient from './HeaderClient'
 import Footer from '@/components/Footer'
-import StreakTracker from './StreakTracker'
-import { TierThemeProvider } from '@/components/gamification/TierThemeProvider'
 import { lookupSponsorAccountsForUser } from '@/lib/sponsor-account-lookup'
 
 export default async function AppLayout({
@@ -31,11 +29,8 @@ export default async function AppLayout({
   const hasSponsorAccounts = sponsorSummary.count > 0
 
   return (
-    <TierThemeProvider>
+    <>
       <div className="min-h-screen bg-cc-bg text-cc-text-primary transition-colors overflow-x-hidden">
-        {/* Track daily streaks and award XP */}
-        <StreakTracker />
-        
         {/* Enhanced header with notifications and search */}
         <HeaderClient user={user} hasSponsorAccounts={hasSponsorAccounts} />
 
@@ -50,6 +45,6 @@ export default async function AppLayout({
         {/* Footer */}
         <Footer />
       </div>
-    </TierThemeProvider>
+    </>
   )
 }

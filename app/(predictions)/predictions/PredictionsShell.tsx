@@ -24,6 +24,7 @@ import {
   BarChart3,
   Radio,
   Activity,
+  ListChecks,
   Ticket,
   Newspaper,
   PenLine,
@@ -45,9 +46,6 @@ const SIGNALS_ENABLED = process.env.NEXT_PUBLIC_SIGNALS_ENABLED === 'true'
 // Phase 3: civic reputation nav (private). Off until Francisco enables.
 const CIVIC_REPUTATION_ENABLED =
   process.env.NEXT_PUBLIC_CIVIC_REPUTATION_ENABLED === 'true'
-// LEADERBOARD_ENABLED stays false — public XP/accuracy ranking stays dark.
-const LEADERBOARD_ENABLED =
-  process.env.NEXT_PUBLIC_LEADERBOARD_ENABLED === 'true'
 
 type ShellNavItem = {
   href: string
@@ -63,6 +61,7 @@ const NAV_ITEMS_EN: ShellNavItem[] = [
   { href: '/live', label: 'Live', icon: Radio },
   { href: '/predictions/notifications', label: 'Notifications', icon: Bell },
   { href: '/predictions/actividad', label: 'Your activity', icon: Activity },
+  { href: '/predictions/acciones', label: 'Your actions', icon: ListChecks },
   ...(CIVIC_REPUTATION_ENABLED
     ? [{ href: '/predictions/reputacion', label: 'Your reputation', icon: Shield } as ShellNavItem]
     : []),
@@ -72,9 +71,6 @@ const NAV_ITEMS_EN: ShellNavItem[] = [
     : []),
   { href: '/locations', label: 'Evaluate', icon: MapPin },
   { href: '/predictions/trades', label: 'My Votes', icon: Receipt },
-  ...(LEADERBOARD_ENABLED
-    ? [{ href: '/predictions/leaderboard', label: 'Leaderboard', icon: Trophy } as ShellNavItem]
-    : []),
   { href: '/predictions/inbox', label: 'Conscious Inbox', icon: Lightbulb },
   { href: '/predictions/fund', label: 'Decide', icon: Heart },
   { href: '/blog', label: 'Blog', icon: Newspaper },
@@ -84,6 +80,7 @@ const NAV_ITEMS_ES: ShellNavItem[] = [
   { href: '/live', label: 'En Vivo', icon: Radio },
   { href: '/predictions/notifications', label: 'Notificaciones', icon: Bell },
   { href: '/predictions/actividad', label: 'Tu actividad', icon: Activity },
+  { href: '/predictions/acciones', label: 'Tus acciones', icon: ListChecks },
   ...(CIVIC_REPUTATION_ENABLED
     ? [{ href: '/predictions/reputacion', label: 'Tu reputación', icon: Shield } as ShellNavItem]
     : []),
@@ -93,9 +90,6 @@ const NAV_ITEMS_ES: ShellNavItem[] = [
     : []),
   { href: '/locations', label: 'Evaluar', icon: MapPin },
   { href: '/predictions/trades', label: 'Mis votos', icon: Receipt },
-  ...(LEADERBOARD_ENABLED
-    ? [{ href: '/predictions/leaderboard', label: 'Clasificación', icon: Trophy } as ShellNavItem]
-    : []),
   { href: '/predictions/inbox', label: 'Buzón Consciente', icon: Lightbulb },
   { href: '/predictions/fund', label: 'Decidir', icon: Heart },
   { href: '/blog', label: 'Blog', icon: Newspaper },

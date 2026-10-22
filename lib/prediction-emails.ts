@@ -107,7 +107,7 @@ export function dailyMarketDigestTemplate(opts: {
         </a>
       </div>
       <p style="color: #64748b; font-size: 14px; line-height: 1.5; text-align: center;">
-        Entra, emite tu voto y suma XP.
+        Entra, emite tu voto y mira qué piensa tu comunidad.
       </p>
       ${emailFooter(opts.unsubscribeUrl)}
     </div>
@@ -138,7 +138,6 @@ export function postVoteConfirmationTemplate(opts: {
         <tr><td style="padding: 8px 0;">Tu voto</td><td style="padding: 8px 0; text-align: right; font-weight: 600;">${esc(opts.outcomeLabel)}</td></tr>
         <tr><td style="padding: 8px 0;">Confianza</td><td style="padding: 8px 0; text-align: right;">${opts.confidence}/10</td></tr>
         <tr><td style="padding: 8px 0;">Comunidad</td><td style="padding: 8px 0; text-align: right;">${esc(opts.communitySplitLine)}</td></tr>
-        <tr><td style="padding: 8px 0;">XP ganados</td><td style="padding: 8px 0; text-align: right; color: #059669; font-weight: 700;">+${opts.xpEarned} XP</td></tr>
       </table>
       <div style="text-align: center; margin: 28px 0 0;">
         <a href="${esc(opts.predictionsUrl)}" style="background: #059669; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 10px; font-weight: 600; display: inline-block;">

@@ -138,7 +138,7 @@ function SignUpForm() {
           <h1 className="text-2xl font-bold text-white">Únete a Crowd Conscious</h1>
           <p className="mt-2 text-sm text-gray-400">Crea tu cuenta y empieza a votar</p>
           <p className="mt-4 text-sm font-medium text-emerald-400/90">
-            100% gratis · Sin dinero real · XP y leaderboard
+            100% gratis · Sin dinero real · Sin puntos ni rankings
           </p>
         </div>
 

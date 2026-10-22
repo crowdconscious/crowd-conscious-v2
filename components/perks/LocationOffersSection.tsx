@@ -3,19 +3,14 @@
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Gift, Loader2, Lock, Sparkles } from 'lucide-react'
+import { Gift, Loader2 } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { createClient } from '@/lib/supabase-client'
 import { offerDescription, offerTitle } from '@/lib/perks/offer-status'
 import { PERKS_COPY, spendErrorMessage } from '@/lib/perks/i18n'
 import type { PublicOfferRow } from '@/lib/perks/types'
 import type { SpendXpErrorCode } from '@/lib/perks/xp-spend'
-import { tierConfigs } from '@/lib/tier-config'
 
-type Balance = {
-  spendable: number
-  tier: number
-}
 
 export default function LocationOffersSection({ slug }: { slug: string }) {
   const { language } = useLanguage()
@@ -23,7 +18,6 @@ export default function LocationOffersSection({ slug }: { slug: string }) {
   const router = useRouter()
   const [offers, setOffers] = useState<PublicOfferRow[]>([])
   const [loading, setLoading] = useState(true)
-  const [balance, setBalance] = useState<Balance | null>(null)
   const [authed, setAuthed] = useState<boolean | null>(null)
   const [redeemingId, setRedeemingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -55,23 +49,6 @@ export default function LocationOffersSection({ slug }: { slug: string }) {
       } = await createClient().auth.getUser()
       if (cancelled) return
       setAuthed(Boolean(user))
-      if (!user) {
-        setBalance(null)
-        return
-      }
-      const res = await fetch('/api/gamification/xp', { cache: 'no-store' })
-      if (!res.ok) return
-      const json = (await res.json()) as {
-        success?: boolean
-        data?: { xp?: { total_xp?: number; total_xp_spent?: number; current_tier?: number } }
-      }
-      if (!json.success || !json.data?.xp) return
-      const total = json.data.xp.total_xp ?? 0
-      const spent = (json.data.xp as { total_xp_spent?: number }).total_xp_spent ?? 0
-      setBalance({
-        spendable: Math.max(0, total - spent),
-        tier: json.data.xp.current_tier ?? 1,
-      })
     })()
     return () => {
       cancelled = true
@@ -124,12 +101,6 @@ export default function LocationOffersSection({ slug }: { slug: string }) {
         <div>
           <h2 className="text-lg font-semibold text-white">{PERKS_COPY.sectionTitle[locale]}</h2>
           <p className="text-sm text-slate-400">{PERKS_COPY.sectionLede[locale]}</p>
-          {balance != null && (
-            <p className="mt-1 text-sm text-emerald-400/90">
-              {locale === 'es' ? 'XP disponible:' : 'Spendable XP:'}{' '}
-              <span className="font-semibold">{balance.spendable}</span>
-            </p>
-          )}
         </div>
       </div>
 
@@ -146,14 +117,11 @@ export default function LocationOffersSection({ slug }: { slug: string }) {
           {offers.map((offer) => {
             const title = offerTitle(offer, locale)
             const desc = offerDescription(offer, locale)
-            const tierOk = !offer.min_tier || (balance?.tier ?? 0) >= offer.min_tier
-            const xpOk = balance != null && balance.spendable >= offer.xp_cost
-            const canRedeem = authed && tierOk && xpOk && redeemingId !== offer.id
+            // Modelo Consciente: perks are open to everyone — no XP/tier gating shown.
+            const canRedeem = Boolean(authed) && redeemingId !== offer.id
 
             let disabledReason: string | null = null
             if (!authed) disabledReason = PERKS_COPY.loginToRedeem[locale]
-            else if (!tierOk) disabledReason = PERKS_COPY.tierLocked[locale]
-            else if (balance != null && !xpOk) disabledReason = PERKS_COPY.insufficientXp[locale]
 
             return (
               <li
@@ -165,17 +133,6 @@ export default function LocationOffersSection({ slug }: { slug: string }) {
                     <h3 className="font-semibold text-white">{title}</h3>
                     {desc ? <p className="mt-1 text-sm text-slate-400">{desc}</p> : null}
                     <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-500">
-                      <span className="inline-flex items-center gap-1 text-emerald-400">
-                        <Sparkles className="h-3.5 w-3.5" />
-                        {offer.xp_cost} {PERKS_COPY.xpCost[locale]}
-                      </span>
-                      {offer.min_tier ? (
-                        <span className="inline-flex items-center gap-1">
-                          <Lock className="h-3.5 w-3.5" />
-                          {PERKS_COPY.tierRequired[locale]}:{' '}
-                          {tierConfigs[offer.min_tier]?.name ?? offer.min_tier}
-                        </span>
-                      ) : null}
                       {offer.stock_remaining != null ? (
                         <span>
                           {offer.stock_remaining} {PERKS_COPY.stockLeft[locale]}

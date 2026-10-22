@@ -22,11 +22,11 @@ export const metadata: Metadata = {
     absolute: 'Conscious Live — Predicciones en Vivo | Mundial 2026',
   },
   description:
-    'Predice en vivo durante partidos del Mundial 2026. Votación en tiempo real, leaderboard y transmisión en vivo.',
+    'Predice en vivo durante partidos del Mundial 2026. Votación en tiempo real, resultados y transmisión en vivo.',
   openGraph: {
     title: 'Conscious Live — Predicciones en Vivo | Mundial 2026',
     description:
-      'Predice en vivo, sube en el leaderboard y genera impacto. Transmisión + votación en tiempo real.',
+      'Predice en vivo, mira los resultados y genera impacto. Transmisión + votación en tiempo real.',
     url: `${SITE_URL}/live`,
   },
   alternates: {

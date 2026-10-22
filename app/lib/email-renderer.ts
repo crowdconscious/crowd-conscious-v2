@@ -2,7 +2,6 @@ import { render } from '@react-email/render'
 import { WelcomeEmail } from './email-templates/welcome-email'
 import { MonthlyImpactReport } from './email-templates/monthly-impact-report'
 import { SponsorshipNotification } from './email-templates/sponsorship-notification'
-import { AchievementUnlocked } from './email-templates/achievement-unlocked'
 
 // Email rendering functions
 export const renderWelcomeEmail = (props: {
@@ -53,24 +52,6 @@ export const renderSponsorshipNotification = (props: {
   isApproval?: boolean
 }) => {
   return render(SponsorshipNotification(props))
-}
-
-export const renderAchievementUnlocked = (props: {
-  userName: string
-  achievementTitle: string
-  achievementDescription: string
-  achievementIcon: string
-  xpGained: number
-  currentLevel: number
-  nextAchievement?: {
-    title: string
-    description: string
-    requiredXP: number
-    currentProgress: number
-  }
-  badgeImageUrl?: string
-}) => {
-  return render(AchievementUnlocked(props))
 }
 
 // Email preview functions for testing
@@ -148,22 +129,5 @@ export const previewSponsorshipApproval = () => {
     description: 'Help us install solar panels on our community center to reduce carbon footprint and create a sustainable energy source for local programs.',
     sponsorshipId: 'sp_123456789',
     isApproval: true
-  })
-}
-
-export const previewAchievementUnlocked = () => {
-  return renderAchievementUnlocked({
-    userName: 'Alex Johnson',
-    achievementTitle: 'Community Builder',
-    achievementDescription: 'Created your first community need and gathered support from fellow members. You\'re making a real difference!',
-    achievementIcon: '🏗️',
-    xpGained: 100,
-    currentLevel: 2,
-    nextAchievement: {
-      title: 'Impact Leader',
-      description: 'Reach Level 5 and help 3 needs get fully funded',
-      requiredXP: 500,
-      currentProgress: 350
-    }
   })
 }

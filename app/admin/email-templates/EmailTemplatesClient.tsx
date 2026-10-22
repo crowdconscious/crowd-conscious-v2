@@ -44,13 +44,6 @@ export default function EmailTemplatesClient() {
       description: 'Sponsorship approval with payment request',
       previewUrl: '/api/email-previews/sponsorship?type=approval',
       testEndpoint: '/api/test/send-sponsorship-approval'
-    },
-    {
-      id: 'achievement',
-      name: 'Achievement Unlocked',
-      description: 'Gamification achievement notification',
-      previewUrl: '/api/email-previews/achievement',
-      testEndpoint: '/api/test/send-achievement'
     }
   ]
 
@@ -195,16 +188,6 @@ export default function EmailTemplatesClient() {
                     </span>
                     <span className="text-xs bg-indigo-100 text-indigo-800 px-2 py-1 rounded">
                       CTA Buttons
-                    </span>
-                  </>
-                )}
-                {template.id === 'achievement' && (
-                  <>
-                    <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">
-                      Confetti Animation
-                    </span>
-                    <span className="text-xs bg-pink-100 text-pink-800 px-2 py-1 rounded">
-                      Badge Design
                     </span>
                   </>
                 )}

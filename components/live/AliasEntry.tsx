@@ -132,7 +132,7 @@ export function AliasEntry({ eventId, onJoined }: AliasEntryProps) {
         </Link>
 
         <p className="mt-3 text-center text-xs text-gray-500">
-          Tus votos cuentan. Regístrate después para conservar tu XP permanentemente.
+          Tus votos cuentan. Regístrate después para conservar tus votos.
         </p>
       </div>
     </div>
