@@ -40,6 +40,7 @@ All long-form documentation lives in [`docs/`](docs/). Start with
 
 | Need | Where |
 |------|-------|
+| Product principle (read first) | [`docs/principles/modelo-consciente.md`](docs/principles/modelo-consciente.md) |
 | Current strategy | [`docs/REFINED-STRATEGY-2026-04-16.md`](docs/REFINED-STRATEGY-2026-04-16.md) |
 | Platform audit | [`docs/PLATFORM-FULL-AUDIT-2026-04-16.md`](docs/PLATFORM-FULL-AUDIT-2026-04-16.md) |
 | Cron schedules | [`vercel.json`](vercel.json) (source of truth) + [`docs/AGENTS-CRON-SETUP.md`](docs/AGENTS-CRON-SETUP.md) |
