@@ -14,8 +14,6 @@ interface ProfileClientProps {
   predictionStats: {
     predictions: number
     accuracy: number
-    totalXp: number
-    rank: number | null
   }
   recentPredictions: Array<{
     id: string
@@ -28,14 +26,6 @@ interface ProfileClientProps {
     is_correct: boolean | null
     created_at: string
   }>
-  topAchievements?: Array<{
-    id: string
-    achievement_type: string
-    achievement_name: string
-    achievement_description: string | null
-    icon_url: string | null
-    unlocked_at: string
-  }>
   impactVotes?: Array<{ cause_id: string; cause_name: string }>
   locale?: CreatorLocale
   isCreator?: boolean
@@ -47,7 +37,6 @@ export default function ProfileClient({
   profile,
   predictionStats,
   recentPredictions,
-  topAchievements = [],
   impactVotes = [],
   locale = 'es',
   isCreator = false,
@@ -415,44 +404,21 @@ export default function ProfileClient({
         </Link>
       )}
 
-      {/* Achievements */}
-      {topAchievements.length > 0 && (
-        <div>
-          <h2 className="text-2xl font-bold text-white mb-2">Impact Achievements</h2>
-          <p className="text-slate-400 text-sm mb-6">Milestones from Pulse votes, fund votes, and contributions</p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-            {topAchievements.map((a) => (
-              <div
-                key={a.id}
-                className="flex items-center gap-3 rounded-xl border border-cc-border bg-cc-card/80 p-4 transition-colors hover:border-cc-border-light"
-              >
-                <span className="text-2xl w-10 h-10 flex items-center justify-center rounded-lg bg-emerald-500/20">
-                  {a.icon_url && typeof a.icon_url === 'string' && !a.icon_url.startsWith('http') ? (
-                    <span>{a.icon_url}</span>
-                  ) : a.icon_url ? (
-                    <img src={a.icon_url} alt="" className="w-8 h-8 object-contain" />
-                  ) : (
-                    '🏆'
-                  )}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium text-white truncate">{a.achievement_name}</p>
-                  {a.achievement_description && (
-                    <p className="text-slate-400 text-xs truncate">{a.achievement_description}</p>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-          <Link
-            href="/achievements"
-            className="inline-flex items-center gap-2 text-emerald-400 hover:text-emerald-300 font-medium"
-          >
-            View all achievements
-            <ChevronRight className="w-4 h-4" />
-          </Link>
+      {/* Modelo Consciente: private action summary (no points, no rankings) */}
+      <Link
+        href="/predictions/acciones"
+        className="flex items-center justify-between gap-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-5 transition-colors hover:border-emerald-500/60"
+      >
+        <div className="min-w-0">
+          <p className="font-semibold text-white">{locale === 'en' ? 'Your actions' : 'Tus acciones'}</p>
+          <p className="text-sm text-slate-400">
+            {locale === 'en'
+              ? 'Private record of your votes, signals and courses. No points, no rankings.'
+              : 'Registro privado de tus votos, señales y cursos. Sin puntos ni rankings.'}
+          </p>
         </div>
-      )}
+        <ChevronRight className="h-5 w-5 shrink-0 text-emerald-400" />
+      </Link>
 
       {/* Impact */}
       <div>

@@ -418,8 +418,8 @@ export default function CreatorCertificationPanel({
                 </p>
                 <p className="text-sm text-slate-400">
                   {locale === 'es'
-                    ? 'Crea una cuenta para ganar XP y aparecer en la clasificación.'
-                    : 'Create an account to earn XP and appear on the leaderboard.'}
+                    ? 'Crea una cuenta para que tus votos queden registrados en tus acciones.'
+                    : 'Create an account so your votes are recorded in your actions.'}
                 </p>
               </div>
               <div className="flex flex-shrink-0 gap-2">

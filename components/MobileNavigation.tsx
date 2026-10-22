@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { LayoutDashboard, TrendingUp, Trophy, User, LogOut, Bell, Radio, MessageSquareWarning } from 'lucide-react'
+import { LayoutDashboard, TrendingUp, ListChecks, User, LogOut, Bell, Radio, MessageSquareWarning } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { supabaseClient } from '@/lib/supabase-client'
 import { useLiveNavBadge } from '@/hooks/useLiveNavBadge'
@@ -35,7 +35,7 @@ export default function MobileNavigation() {
       ? [{ path: '/signals', icon: MessageSquareWarning, label: es ? 'Reportar' : 'Report', beta: true } as MobileNavItem]
       : []),
     { path: '/predictions/notifications', icon: Bell, label: es ? 'Alertas' : 'Alerts' },
-    { path: '/leaderboard', icon: Trophy, label: es ? 'Clasificación' : 'Leaderboard' },
+    { path: '/predictions/acciones', icon: ListChecks, label: es ? 'Tus acciones' : 'Your actions' },
     { path: '/profile', icon: User, label: es ? 'Perfil' : 'Profile' },
   ]
 

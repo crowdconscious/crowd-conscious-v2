@@ -242,11 +242,6 @@ export function MicroMarketCard({
     return `${m}:${s < 10 ? '0' : ''}${s}`
   }
 
-  const xpWon =
-    myVote && isResolved && myVote.is_correct === true
-      ? myVote.xp_earned + (myVote.bonus_xp ?? 0)
-      : 0
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -402,7 +397,7 @@ export function MicroMarketCard({
             <p className="text-sm leading-relaxed text-slate-400">
               {locale === 'es' ? (
                 <>
-                  Crea una cuenta para ganar XP y seguir tus votos.{' '}
+                  Crea una cuenta para conservar tus votos.{' '}
                   <Link
                     href={eventId ? `/signup?redirect=${encodeURIComponent(`/live/${eventId}`)}` : '/signup'}
                     className="font-medium text-emerald-400 underline underline-offset-2 hover:text-emerald-300"
@@ -412,7 +407,7 @@ export function MicroMarketCard({
                 </>
               ) : (
                 <>
-                  Sign up to earn XP and track your predictions.{' '}
+                  Sign up to keep your votes.{' '}
                   <Link
                     href={eventId ? `/signup?redirect=${encodeURIComponent(`/live/${eventId}`)}` : '/signup'}
                     className="font-medium text-emerald-400 underline underline-offset-2 hover:text-emerald-300"
@@ -430,12 +425,12 @@ export function MicroMarketCard({
         <div className="mt-4 rounded-xl border border-white/10 bg-black/30 p-3">
           {myVote.is_correct === true && (
             <p className="text-center text-lg font-bold text-emerald-400">
-              +{xpWon} XP
+              {locale === 'es' ? 'Coincidiste con el resultado' : 'You matched the outcome'}
             </p>
           )}
           {myVote.is_correct === false && (
             <p className="text-center text-sm text-slate-400">
-              {locale === 'es' ? 'Mejor suerte la próxima vez' : 'Better luck next time'}
+              {locale === 'es' ? 'El resultado fue otro' : 'The outcome was different'}
             </p>
           )}
           {myVote.is_correct === null && (

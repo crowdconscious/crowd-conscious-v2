@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Logo from '@/components/Logo'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, X, Home, BarChart3, Trophy, Award, DollarSign, User, Settings, LogOut } from 'lucide-react'
+import { Menu, X, Home, BarChart3, ListChecks, DollarSign, User, Settings, LogOut } from 'lucide-react'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { supabaseClient } from '@/lib/supabase-client'
 import { useRouter } from 'next/navigation'
@@ -60,8 +60,7 @@ export default function DashboardMobileMenu() {
   const navItems = [
     { path: '/predictions', icon: Home, label: 'Dashboard' },
     { path: '/predictions/pulse', icon: BarChart3, label: 'Pulse' },
-    { path: '/leaderboard', icon: Trophy, label: 'Leaderboard' },
-    { path: '/achievements', icon: Award, label: 'Achievements' },
+    { path: '/predictions/acciones', icon: ListChecks, label: 'Tus acciones' },
     { path: '/predictions/fund', icon: DollarSign, label: 'Fund' },
   ]
 

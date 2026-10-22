@@ -157,16 +157,6 @@ export default function VerificationPage({ params }: { params: Promise<{ code: s
                           <div className="text-2xl font-bold text-slate-900">{certificate.employeesCompleted || 0}</div>
                         </div>
                       </div>
-
-                      <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
-                          <Award className="w-6 h-6 text-orange-600" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="text-sm text-slate-500 mb-1">Puntos de Impacto</div>
-                          <div className="text-2xl font-bold text-slate-900">{certificate.totalXP || 0} XP</div>
-                        </div>
-                      </div>
                     </div>
                   </>
                 ) : (
@@ -202,15 +192,6 @@ export default function VerificationPage({ params }: { params: Promise<{ code: s
                       </div>
                     </div>
 
-                    <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
-                        <Award className="w-6 h-6 text-orange-600" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="text-sm text-slate-500 mb-1">Puntos Ganados</div>
-                        <div className="text-2xl font-bold text-slate-900">{certificate.xpEarned || 0} XP</div>
-                      </div>
-                    </div>
                   </>
                 )}
 

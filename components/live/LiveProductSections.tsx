@@ -30,8 +30,8 @@ export function LiveProductSections({ locale, daysUntilWc }: Props) {
         </h1>
         <p className="mx-auto mt-4 max-w-2xl text-lg text-slate-400">
           {es
-            ? 'Transmisión en vivo + micro-predicciones + leaderboard + chat. La experiencia de segunda pantalla definitiva.'
-            : 'Live stream + micro-predictions + leaderboard + chat. The ultimate second-screen experience.'}
+            ? 'Transmisión en vivo + micro-predicciones + resultados + chat. La experiencia de segunda pantalla definitiva.'
+            : 'Live stream + micro-predictions + outcomes + chat. The ultimate second-screen experience.'}
         </p>
         <p className="mt-5 inline-flex items-center justify-center gap-2 text-sm text-emerald-400/95">
           <Trophy className="h-4 w-4 shrink-0" aria-hidden="true" />

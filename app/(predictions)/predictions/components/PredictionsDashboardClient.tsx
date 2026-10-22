@@ -166,7 +166,6 @@ export function PredictionsDashboardClient({ data, sponsorCta }: Props) {
     userId,
     userName,
     isAdmin,
-    totalXp,
     accuracyPct,
     correctPredictions,
     totalResolvedPredictions,
@@ -238,16 +237,8 @@ export function PredictionsDashboardClient({ data, sponsorCta }: Props) {
       }
     }
 
-    if (streakAtRisk) {
-      items.push({
-        id: 'streak',
-        kind: 'streak',
-        title: `Racha de ${currentStreak} días — vota hoy para mantenerla`,
-        href: '/predictions/pulse',
-        cta: 'Votar',
-        emphasis: 'urgent',
-      })
-    }
+    // Modelo Consciente: no streak nudges (streaks are retired from the UI).
+    void streakAtRisk
 
     if (isAdmin) {
       if (pendingMarketSuggestions > 0) {
@@ -340,20 +331,19 @@ export function PredictionsDashboardClient({ data, sponsorCta }: Props) {
 
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="rounded-[14px] border border-white/[0.07] bg-white/[0.03] p-5">
-            <p className="text-slate-400 text-sm">{isEs ? 'XP Consciente' : 'Conscious XP'}</p>
+            <p className="text-slate-400 text-sm">{isEs ? 'Tus acciones' : 'Your actions'}</p>
             <p className="text-2xl font-bold text-white mt-1">
-              {totalXp.toLocaleString()} XP
+              {userPredictions.length.toLocaleString()}{' '}
+              <span className="text-base font-medium text-slate-400">
+                {isEs ? 'votos registrados' : 'votes recorded'}
+              </span>
             </p>
-            <p
-              className="text-slate-500 text-xs mt-0.5"
-              title={
-                isEs
-                  ? `Incluye ${userImpactXp.toLocaleString()} XP ganado por votar`
-                  : `Includes ${userImpactXp.toLocaleString()} XP earned from voting`
-              }
+            <Link
+              href="/predictions/acciones"
+              className="mt-0.5 inline-block text-xs text-emerald-400 hover:text-emerald-300"
             >
-              {isEs ? 'XP total de la plataforma' : 'Total platform XP'}
-            </p>
+              {isEs ? 'Ver tu resumen privado →' : 'See your private summary →'}
+            </Link>
           </div>
           <div className="rounded-[14px] border border-white/[0.07] bg-white/[0.03] p-5">
             <p className="text-slate-400 text-sm">{isEs ? 'Coincidencia' : 'Majority match'}</p>
@@ -456,9 +446,8 @@ export function PredictionsDashboardClient({ data, sponsorCta }: Props) {
                           Votaste: {v.outcome_label} · confianza {v.confidence}
                         </p>
                         <p className="mt-1 text-sm font-medium text-emerald-400">
-                          +{v.xp_earned + v.bonus_xp} XP
                           {resolvedBadge && (
-                            <span className={`ml-2 ${resolvedBadge.tone}`}>
+                            <span className={resolvedBadge.tone}>
                               {resolvedBadge.label}
                             </span>
                           )}

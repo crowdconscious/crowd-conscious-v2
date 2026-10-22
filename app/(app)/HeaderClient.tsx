@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Logo from '@/components/Logo'
 import { supabaseClient } from '@/lib/supabase-client'
-import { XPBadge } from '@/components/gamification/XPBadge'
 import { NotificationsBell } from '@/app/(predictions)/predictions/components/NotificationsBell'
 import { useLiveNavBadge } from '@/hooks/useLiveNavBadge'
 import { useLanguage } from '@/contexts/LanguageContext'
@@ -24,7 +23,7 @@ const SIGNALS_ENABLED = process.env.NEXT_PUBLIC_SIGNALS_ENABLED === 'true'
  * notifications, fund, locations all reachable from there). Blog is in the
  * primary nav for content discoverability.
  *
- * Markets, Predicciones, Lugares, Fondo, Leaderboard, and Achievements
+ * Markets, Predicciones, Lugares, Fondo and Tus acciones
  * moved out of the primary slot — they live inside /predictions and the
  * profile menu, respectively.
  *
@@ -155,10 +154,6 @@ export default function HeaderClient({ user, hasSponsorAccounts = false }: Heade
 
           {/* User Controls */}
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* XP Badge - no animation to avoid blinking */}
-            <div className="hidden md:block">
-              <XPBadge variant="compact" animated={false} />
-            </div>
 
 
             <NotificationsBell />

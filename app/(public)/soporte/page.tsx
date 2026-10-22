@@ -47,11 +47,11 @@ export default function SoportePage() {
     },
     {
       q: '¿Cómo voto en un Pulse?',
-      a: 'Tab Pulses → selecciona un Pulse → elige tu respuesta y nivel de confianza (1-10) → toca "Votar". Ganas XP cada vez que votas.',
+      a: 'Tab Pulses → selecciona un Pulse → elige tu respuesta y nivel de confianza (1-10) → toca "Votar". Tu voto queda registrado en "Tus acciones" — no son puntos.',
     },
     {
       q: '¿Puedo cambiar mi voto?',
-      a: 'Sí. Vuelve al mismo Pulse y toca "Cambiar voto". El XP del voto original se mantiene; cambios sucesivos no acumulan XP adicional.',
+      a: 'Sí. Vuelve al mismo Pulse y toca "Cambiar voto". Se guarda tu respuesta más reciente.',
     },
     {
       q: '¿Cómo reporto contenido inapropiado?',
@@ -64,10 +64,6 @@ export default function SoportePage() {
     {
       q: '¿Cómo borro mi cuenta?',
       a: 'Desde la app: Perfil → Cuenta → Eliminar mi cuenta. Procesamos la solicitud en hasta 7 días hábiles. Tu contenido público (señales, votos) puede mantenerse en logs anonimizados por integridad histórica, conforme a la LFPDPPP.',
-    },
-    {
-      q: '¿Cuánto XP necesito para subir de tier?',
-      a: 'Tier 1 → Tier 2: 500 XP. Tier 2 → Tier 3: 1,500 XP. Tier 3 → Tier 4: 5,000 XP. Tier 4 → Tier 5: 15,000 XP.',
     },
     {
       q: '¿Para qué sirve el Fondo Consciente?',

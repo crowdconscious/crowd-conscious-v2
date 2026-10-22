@@ -39,6 +39,11 @@ const nextConfig: NextConfig = {
       // Old PR #60 badge files (embedded by orgs) -> renamed Sello verificado files.
       ...LEGACY_BADGE_REDIRECTS,
       { source: '/sello', destination: '/sello-verificado', permanent: true },
+      // Modelo Consciente: XP, leaderboards and achievements are retired.
+      // Old ranking URLs land on the private "Tus acciones" summary.
+      { source: '/leaderboard', destination: '/predictions/acciones', statusCode: 301 },
+      { source: '/achievements', destination: '/predictions/acciones', statusCode: 301 },
+      { source: '/predictions/leaderboard', destination: '/predictions/acciones', statusCode: 301 },
       // Slug only (no dot), so the badge files in public/sello/*.svg|png are still served.
       { source: '/sello/:slug([a-z0-9-]+)', destination: '/sello-verificado/:slug', permanent: true },
       // Legacy: /communities was deprecated in favor of /locations.

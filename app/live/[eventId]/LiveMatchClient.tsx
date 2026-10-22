@@ -18,7 +18,6 @@ import { usePresence } from '@/hooks/usePresence'
 import { StreamEmbed } from '@/components/live/StreamEmbed'
 import { FundImpactTicker } from '@/components/live/FundImpactTicker'
 import { LiveVotingPanel } from '@/components/live/LiveVotingPanel'
-import { LiveLeaderboard } from '@/components/live/LiveLeaderboard'
 import { ViewerCount } from '@/components/live/ViewerCount'
 import { AdminLiveControls } from '@/components/live/AdminLiveControls'
 import { LiveConnectionBanner } from '@/components/live/LiveConnectionBanner'
@@ -38,7 +37,6 @@ export function LiveMatchClient({
   const supabase = useMemo(() => createClient(), [])
   const locale = useLocale()
   const [user, setUser] = useState<User | null>(null)
-  const [lbOpen, setLbOpen] = useState(false)
   const [clientAdmin, setClientAdmin] = useState(false)
   const isAdmin = isAdminFromServer || clientAdmin
   const [leadingCauseName, setLeadingCauseName] = useState<string | null>(null)
@@ -137,12 +135,9 @@ export function LiveMatchClient({
     isLoading: mkLoading,
     refetch: refetchMarkets,
   } = useLiveMarkets(eventId)
-  const {
-    rankings,
-    currentUserEntry,
-    isLoading: lbLoading,
-    error: lbError,
-  } = useLiveLeaderboard(eventId, user?.id ?? null, aliasParticipant?.id ?? null)
+  // Modelo Consciente: live events show outcomes only — no ranking UI.
+  // The hook is kept only to count participants for the share line.
+  const { rankings } = useLiveLeaderboard(eventId, user?.id ?? null, aliasParticipant?.id ?? null)
   const { viewerCount, isConnected, showConnectionWarning, browserOffline } = usePresence(
     eventId,
     user?.id ?? null,
@@ -179,7 +174,6 @@ export function LiveMatchClient({
   const isCancelled = status === 'cancelled'
 
   const participantCount = rankings.length
-  const userScore = currentUserEntry?.total_xp ?? null
 
   const share = useCallback(async () => {
     if (!event) return
@@ -196,10 +190,8 @@ export function LiveMatchClient({
     if (isCompletedNow && participantCount > 0) {
       if (locale === 'es') {
         text = `Participé en ${t} en vivo con ${participantCount} personas.`
-        if (userScore != null) text += ` Mi score: ${userScore} pts.`
       } else {
         text = `I joined ${t} live with ${participantCount} people.`
-        if (userScore != null) text += ` My score: ${userScore} pts.`
       }
     } else {
       text =
@@ -216,7 +208,7 @@ export function LiveMatchClient({
     } catch {
       /* user cancelled or clipboard denied */
     }
-  }, [event, locale, participantCount, userScore])
+  }, [event, locale, participantCount])
 
   const refreshAfterAdmin = useCallback(() => {
     void refetchEvent()
@@ -467,27 +459,6 @@ export function LiveMatchClient({
     return Math.max(fromOutcomes, Number((m as { total_votes?: number }).total_votes ?? 0))
   }
 
-  const renderLeaderboard = (opts: { isFinal?: boolean } = {}) => (
-    <div className="space-y-2">
-      {lbError && (
-        <p className="text-sm text-red-400">
-          {locale === 'es' ? 'No se pudo cargar el leaderboard.' : 'Could not load leaderboard.'}
-        </p>
-      )}
-      {!lbLoading && !lbError && (
-        <LiveLeaderboard
-          rankings={rankings}
-          currentUserId={user?.id ?? ''}
-          currentAnonymousParticipantId={aliasParticipant?.id ?? null}
-          currentUserEntry={currentUserEntry}
-          locale={copyLocale}
-          eventType={event.event_type}
-          isFinal={opts.isFinal}
-        />
-      )}
-    </div>
-  )
-  const leaderboardBlock = renderLeaderboard()
 
   if (isCompleted) {
     const formattedDate = event.match_date
@@ -635,8 +606,6 @@ export function LiveMatchClient({
 
           <div className="mb-6">{ticker}</div>
 
-          <div className="mb-6">{renderLeaderboard({ isFinal: true })}</div>
-
           {isLiveAuction ? (
             <div className="mb-6">
               <LiveAuctionPanel
@@ -716,17 +685,6 @@ export function LiveMatchClient({
           {ticker}
           {votingPanel}
           {liveChat}
-          <div>
-            <button
-              type="button"
-              onClick={() => setLbOpen((o) => !o)}
-              className="mb-2 flex min-h-[44px] w-full items-center justify-between rounded-xl border border-white/10 bg-slate-900/50 px-4 py-3 text-left text-sm font-semibold text-white"
-            >
-              {locale === 'es' ? 'Leaderboard' : 'Leaderboard'}
-              <ChevronDown className={cn('h-4 w-4 transition', lbOpen && 'rotate-180')} />
-            </button>
-            <div className={cn(!lbOpen && 'hidden')}>{leaderboardBlock}</div>
-          </div>
         </div>
 
         {/* Desktop: two columns */}
@@ -741,7 +699,6 @@ export function LiveMatchClient({
             </div>
             {votingPanel}
             {liveChat}
-            {leaderboardBlock}
           </div>
         </div>
 

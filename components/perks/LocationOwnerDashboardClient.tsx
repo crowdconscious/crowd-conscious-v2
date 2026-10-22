@@ -18,7 +18,9 @@ const EMPTY_FORM = {
   title_en: '',
   description: '',
   description_en: '',
-  xp_cost: '100',
+  // Modelo Consciente: XP cost/tier are not shown. The DB still requires
+  // xp_cost >= 1 until phase B removes XP from redemptions.
+  xp_cost: '1',
   min_tier: '',
   stock_limit: '',
   max_redemptions_per_user: '1',
@@ -196,23 +198,6 @@ export default function LocationOwnerDashboardClient({
               type="number"
               min={1}
               className="rounded-lg border border-[#2d3748] bg-[#0f1419] px-3 py-2 text-white"
-              placeholder="XP cost"
-              value={form.xp_cost}
-              onChange={(e) => setForm((f) => ({ ...f, xp_cost: e.target.value }))}
-            />
-            <input
-              type="number"
-              min={1}
-              max={5}
-              className="rounded-lg border border-[#2d3748] bg-[#0f1419] px-3 py-2 text-white"
-              placeholder={locale === 'es' ? 'Nivel mín. (opc.)' : 'Min tier (opt.)'}
-              value={form.min_tier}
-              onChange={(e) => setForm((f) => ({ ...f, min_tier: e.target.value }))}
-            />
-            <input
-              type="number"
-              min={1}
-              className="rounded-lg border border-[#2d3748] bg-[#0f1419] px-3 py-2 text-white"
               placeholder={locale === 'es' ? 'Stock (opc.)' : 'Stock (opt.)'}
               value={form.stock_limit}
               onChange={(e) => setForm((f) => ({ ...f, stock_limit: e.target.value }))}
@@ -251,7 +236,7 @@ export default function LocationOwnerDashboardClient({
               <div>
                 <p className="font-semibold text-white">{offerTitle(offer, locale)}</p>
                 <p className="text-sm text-slate-400">
-                  {offer.xp_cost} XP · {OFFER_STATUS_LABELS[offer.status][locale]} ·{' '}
+                  {OFFER_STATUS_LABELS[offer.status][locale]} ·{' '}
                   {offer.redeemed_count}
                   {offer.stock_limit != null ? ` / ${offer.stock_limit}` : ''}
                 </p>

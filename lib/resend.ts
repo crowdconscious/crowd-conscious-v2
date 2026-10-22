@@ -324,25 +324,6 @@ export const emailTemplates = {
             Here's your monthly impact summary. Together, we're creating real change in our communities!
           </p>
           
-          <!-- Gamification Stats -->
-          <div style="background: linear-gradient(135deg, #6366f1, #8b5cf6); padding: 20px; border-radius: 8px; margin: 25px 0; text-align: center;">
-            <div style="color: white; font-size: 18px; margin-bottom: 10px;">🎮 Your Level & XP</div>
-            <div style="display: flex; justify-content: center; gap: 30px;">
-              <div>
-                <div style="font-size: 32px; font-weight: bold; color: white;">${stats.level || 1}</div>
-                <div style="color: #e0e7ff; font-size: 14px;">Level</div>
-              </div>
-              <div>
-                <div style="font-size: 32px; font-weight: bold; color: white;">${stats.totalXP || 0}</div>
-                <div style="color: #e0e7ff; font-size: 14px;">Total XP</div>
-              </div>
-              <div>
-                <div style="font-size: 32px; font-weight: bold; color: white;">${stats.currentStreak || 0}</div>
-                <div style="color: #e0e7ff; font-size: 14px;">Day Streak 🔥</div>
-              </div>
-            </div>
-          </div>
-
           <!-- Activity Stats -->
           <h3 style="color: #1e293b; margin-top: 25px;">Your Activity This Month:</h3>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0;">
@@ -371,16 +352,6 @@ export const emailTemplates = {
               <div style="color: #6b7280; font-size: 14px; margin-top: 5px;">Impact Value</div>
             </div>
           </div>
-
-          <!-- Achievements -->
-          ${stats.newAchievements && stats.newAchievements.length > 0 ? `
-          <div style="background: #fef3c7; padding: 20px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #f59e0b;">
-            <h3 style="margin-top: 0; color: #92400e;">🏆 New Achievements Unlocked!</h3>
-            <ul style="margin: 10px 0; padding-left: 20px; color: #78350f;">
-              ${stats.newAchievements.map((achievement: string) => `<li style="margin: 5px 0;">${achievement}</li>`).join('')}
-            </ul>
-          </div>
-          ` : ''}
 
           <!-- Impact Metrics -->
           ${stats.impactMetrics ? `

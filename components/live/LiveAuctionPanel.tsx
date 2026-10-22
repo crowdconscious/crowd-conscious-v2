@@ -182,8 +182,8 @@ function BidForm({
       {err && <p className="text-sm text-red-400">{err}</p>}
       <p className="text-[11px] leading-snug text-slate-600">
         {locale === 'es'
-          ? 'Sin pago en la app. El ganador se confirma en el leaderboard; el cobro es fuera de plataforma.'
-          : 'No in-app payment. Winner is shown on the leaderboard; payment is handled off-platform.'}
+          ? 'Sin pago en la app. El ganador se confirma en la transmisión; el cobro es fuera de plataforma.'
+          : 'No in-app payment. Winner is confirmed on the stream; payment is handled off-platform.'}
       </p>
     </div>
   )

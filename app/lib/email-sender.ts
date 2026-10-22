@@ -1,8 +1,7 @@
 import { 
   renderWelcomeEmail, 
   renderMonthlyImpactReport, 
-  renderSponsorshipNotification, 
-  renderAchievementUnlocked 
+  renderSponsorshipNotification
 } from './email-renderer'
 
 // Enhanced email sending with React Email templates
@@ -97,7 +96,7 @@ export async function sendMonthlyImpactReport(
   }
 ) {
   const html = await renderMonthlyImpactReport(data)
-  const subject = `📊 Your ${data.month} ${data.year} Impact Report - ${data.stats.xpEarned} XP Earned!`
+  const subject = `📊 Your ${data.month} ${data.year} Impact Report`
 
   return sendEmailWithTemplate(userEmail, subject, html)
 }
@@ -144,32 +143,6 @@ export async function sendSponsorshipApproval(
   return sendEmailWithTemplate(brandEmail, subject, html)
 }
 
-// Achievement unlocked notification
-export async function sendAchievementNotification(
-  userEmail: string,
-  data: {
-    userName: string
-    achievementTitle: string
-    achievementDescription: string
-    achievementIcon: string
-    xpGained: number
-    currentLevel: number
-    nextAchievement?: {
-      title: string
-      description: string
-      requiredXP: number
-      currentProgress: number
-    }
-    badgeImageUrl?: string
-  }
-) {
-  const html = await renderAchievementUnlocked(data)
-  const subject = `🎉 Achievement Unlocked: ${data.achievementTitle}! (+${data.xpGained} XP)`
-
-  return sendEmailWithTemplate(userEmail, subject, html)
-}
-
-// Batch email sending for notifications
 export async function sendBatchEmails(
   emails: Array<{
     to: string

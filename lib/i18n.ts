@@ -60,18 +60,6 @@ const translations: Translations = {
     'en': 'Level',
     'es': 'Nivel'
   },
-  'total_xp': {
-    'en': 'Total XP',
-    'es': 'XP Total'
-  },
-  'day_streak': {
-    'en': 'Day Streak',
-    'es': 'Racha de Días'
-  },
-  'achievements': {
-    'en': 'Achievements',
-    'es': 'Logros'
-  },
   'save_changes': {
     'en': 'Save Changes',
     'es': 'Guardar Cambios'

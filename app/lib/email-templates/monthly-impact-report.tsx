@@ -45,7 +45,7 @@ export const MonthlyImpactReport = ({
 }: MonthlyImpactReportProps) => {
   const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
   const title = `Your ${month} ${year} Impact Report`
-  const previewText = `${userName}, here's your monthly impact summary: ${stats.xpEarned} XP earned, ${stats.contentCreated} content created`
+  const previewText = `${userName}, here's your monthly impact summary: ${stats.votesCount} votes, ${stats.contentCreated} content created`
 
   const maxFunding = Math.max(...monthlyProgress.map(p => p.funding), 1)
 
@@ -102,7 +102,7 @@ export const MonthlyImpactReport = ({
                 fontWeight: '700',
                 color: '#14b8a6'
               }}>
-                {stats.xpEarned}
+                {stats.votesCount}
               </Text>
               <Text style={{
                 margin: '0',
@@ -110,7 +110,7 @@ export const MonthlyImpactReport = ({
                 color: '#064e3b',
                 fontWeight: '500'
               }}>
-                XP Earned
+                Votes recorded
               </Text>
             </div>
           </Column>
@@ -203,52 +203,6 @@ export const MonthlyImpactReport = ({
         </Row>
       </Section>
 
-      {/* Level & Leaderboard */}
-      <Section style={{
-        backgroundColor: '#f8fafc',
-        padding: '25px',
-        borderRadius: '12px',
-        marginBottom: '30px'
-      }}>
-        <Row>
-          <Column style={{ width: '50%' }}>
-            <Text style={{
-              margin: '0 0 10px',
-              fontSize: '16px',
-              fontWeight: '600',
-              color: '#1f2937'
-            }}>
-              🏆 Current Level
-            </Text>
-            <Text style={{
-              margin: '0',
-              fontSize: '24px',
-              fontWeight: '700',
-              color: '#14b8a6'
-            }}>
-              Level {stats.currentLevel} Changemaker
-            </Text>
-          </Column>
-          <Column style={{ width: '50%' }}>
-            <Text style={{
-              margin: '0 0 10px',
-              fontSize: '16px',
-              fontWeight: '600',
-              color: '#1f2937'
-            }}>
-              📈 Leaderboard Rank
-            </Text>
-            <Text style={{
-              margin: '0',
-              fontSize: '24px',
-              fontWeight: '700',
-              color: '#8b5cf6'
-            }}>
-              #{stats.leaderboardPosition}
-            </Text>
-          </Column>
-        </Row>
-      </Section>
 
       {/* Progress Chart */}
       {monthlyProgress.length > 0 && (
@@ -314,46 +268,6 @@ export const MonthlyImpactReport = ({
         </Section>
       )}
 
-      {/* Achievements */}
-      {stats.achievementsEarned.length > 0 && (
-        <Section style={{ marginBottom: '40px' }}>
-          <Heading style={{
-            margin: '0 0 20px',
-            fontSize: '20px',
-            fontWeight: '600',
-            color: '#1f2937',
-            textAlign: 'center' as const
-          }}>
-            Achievements Unlocked 🏅
-          </Heading>
-
-          <Row>
-            <Column>
-              {stats.achievementsEarned.map((achievement, index) => (
-                <div key={index} style={{
-                  backgroundColor: '#fef3c7',
-                  border: '1px solid #f59e0b',
-                  borderRadius: '8px',
-                  padding: '12px 16px',
-                  marginBottom: '8px',
-                  display: 'flex',
-                  alignItems: 'center'
-                }}>
-                  <span style={{ fontSize: '20px', marginRight: '12px' }}>🏆</span>
-                  <Text style={{
-                    margin: '0',
-                    fontSize: '14px',
-                    color: '#92400e',
-                    fontWeight: '500'
-                  }}>
-                    {achievement}
-                  </Text>
-                </div>
-              ))}
-            </Column>
-          </Row>
-        </Section>
-      )}
 
       {/* Upcoming Events */}
       {upcomingEvents.length > 0 && (

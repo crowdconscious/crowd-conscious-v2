@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Trophy, X } from 'lucide-react'
+import { ListChecks, X } from 'lucide-react'
 import { useCallback } from 'react'
 import { dismissAnonSoftGate } from '@/lib/anon-vote-tracker'
 import { createClient } from '@/lib/supabase-client'
@@ -37,7 +37,7 @@ export function AnonymousSoftGate({
   open,
   alias,
   voteCount,
-  xpTotal,
+  xpTotal: _xpTotal,
   locale,
   nextPath,
   onClose,
@@ -95,13 +95,13 @@ export function AnonymousSoftGate({
             </button>
 
             <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400">
-              <Trophy className="h-6 w-6" />
+              <ListChecks className="h-6 w-6" />
             </div>
 
             <p className="text-xs font-medium uppercase tracking-wider text-emerald-400">
               {locale === 'es'
-                ? `${voteCount} votos · ${xpTotal} XP acumulados`
-                : `${voteCount} votes · ${xpTotal} XP earned`}
+                ? `${voteCount} votos registrados`
+                : `${voteCount} votes recorded`}
             </p>
 
             <h3 className="mt-2 text-xl font-bold text-white">
@@ -110,8 +110,8 @@ export function AnonymousSoftGate({
 
             <p className="mt-2 text-sm text-slate-400">
               {locale === 'es'
-                ? 'Crea una cuenta para desbloquear la clasificación, logros y tu racha de votos.'
-                : 'Create an account to unlock the leaderboard, achievements, and your voting streak.'}
+                ? 'Crea una cuenta para conservar tus votos y ver tus acciones en un resumen privado.'
+                : 'Create an account to keep your votes and see your actions in a private summary.'}
             </p>
 
             <button

@@ -33,13 +33,15 @@ export function AnonymousVoteToast({ open, delta, xpEarned, alias, locale, onDis
         ? `Your vote moved the consensus ${deltaText}`
         : 'Vote recorded'
 
+  // Modelo Consciente: the vote is evidence, never points.
+  void xpEarned
   const subline = alias
     ? locale === 'es'
-      ? `+${xpEarned} XP guardados como @${alias}`
-      : `+${xpEarned} XP saved as @${alias}`
+      ? `Guardado como @${alias}`
+      : `Saved as @${alias}`
     : locale === 'es'
-      ? `+${xpEarned} XP guardados`
-      : `+${xpEarned} XP saved`
+      ? 'Tu voto quedó registrado'
+      : 'Your vote was recorded'
 
   return (
     <AnimatePresence>

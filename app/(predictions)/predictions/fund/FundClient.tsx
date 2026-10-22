@@ -253,11 +253,14 @@ export function FundClient({
           </p>
         </div>
         {isAuthenticated && (
-          <div className="bg-cc-card border border-emerald-500/20 rounded-xl p-6">
-            <p className="text-gray-400 text-sm mb-1">Your Impact</p>
-            <p className="text-2xl font-bold text-white">{yourImpactXp} XP</p>
-            <p className="text-cc-text-muted text-xs mt-1">From your votes</p>
-          </div>
+          <Link
+            href="/predictions/acciones"
+            className="block bg-cc-card border border-emerald-500/20 rounded-xl p-6 hover:border-emerald-500/50"
+          >
+            <p className="text-gray-400 text-sm mb-1">Tus acciones</p>
+            <p className="text-lg font-bold text-white">Ver tu resumen privado</p>
+            <p className="text-cc-text-muted text-xs mt-1">Sin puntos ni rankings</p>
+          </Link>
         )}
       </div>
 

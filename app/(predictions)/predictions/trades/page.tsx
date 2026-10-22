@@ -61,7 +61,6 @@ export default function PredictionsTradesPage() {
   const resolvedItems = items.filter((i) => i.market_status === 'resolved')
   const correctCount = resolvedItems.filter((i) => i.is_correct === true).length
   const accuracy = resolvedItems.length > 0 ? (correctCount / resolvedItems.length) * 100 : 0
-  const totalXp = items.reduce((s, i) => s + i.xp_earned + i.bonus_xp, 0)
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -97,9 +96,9 @@ export default function PredictionsTradesPage() {
         </div>
         <div className="rounded-xl border border-[#2d3748] bg-[#1a2029] p-4">
           <div className="flex items-center gap-2 text-slate-400 text-sm mb-1">
-            XP earned
+            Votes recorded
           </div>
-          <p className="text-xl font-bold text-amber-400">{totalXp} XP</p>
+          <p className="text-xl font-bold text-amber-400">{items.length}</p>
         </div>
       </div>
 
@@ -153,9 +152,6 @@ export default function PredictionsTradesPage() {
                       title={row.market_title}
                       compact
                     />
-                    <span className="text-emerald-400 font-medium">
-                      +{row.xp_earned + row.bonus_xp} XP
-                    </span>
                     {row.market_status === 'resolved' && (
                       <span className={row.is_correct ? 'text-emerald-400' : 'text-slate-500'}>
                         {row.is_correct ? <Check className="w-5 h-5" /> : <X className="w-5 h-5" />}

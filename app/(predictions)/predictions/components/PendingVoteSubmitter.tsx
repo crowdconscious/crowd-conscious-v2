@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase-client'
 import { getPendingVote, clearPendingVote, clearGuestMarketKeys } from '@/lib/guest-vote-storage'
 
 /**
- * After signup/login: claim guest market_votes row (re-attribute user_id + award XP).
+ * After signup/login: claim guest market_votes row (re-attribute user_id).
  */
 export function PendingVoteSubmitter() {
   const done = useRef(false)
@@ -44,12 +44,7 @@ export function PendingVoteSubmitter() {
         if (res.ok && data.success !== false) {
           clearPendingVote()
           clearGuestMarketKeys(pending.marketId)
-          const xp = typeof data.xp_earned === 'number' ? data.xp_earned : 0
-          setToast(
-            xp > 0
-              ? `Tu voto anterior ya tiene XP — ¡bienvenido! +${xp} XP`
-              : 'Tu voto anterior ya tiene XP — ¡bienvenido!'
-          )
+          setToast('Tu voto anterior ya está en tu cuenta — ¡bienvenido!')
           window.setTimeout(() => setToast(null), 6000)
         } else {
           done.current = false

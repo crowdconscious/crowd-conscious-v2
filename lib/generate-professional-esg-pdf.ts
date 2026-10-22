@@ -160,15 +160,13 @@ function addIndividualReportContent(doc: jsPDF, reportData: any, startY: number,
   
   // Progress indicators
   const progress = reportData.progress?.completion_percentage || 0
-  const xpEarned = reportData.progress?.xp_earned || 0
   const timeSpent = reportData.progress?.time_spent_minutes || 0
   
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(9)
   doc.setTextColor(20, 184, 166)
   doc.text(`${progress}% Completado`, 25, y + 30)
-  doc.text(`${xpEarned} XP`, 70, y + 30)
-  doc.text(`${Math.round(timeSpent / 60 * 10) / 10}h`, 100, y + 30)
+  doc.text(`${Math.round(timeSpent / 60 * 10) / 10}h`, 70, y + 30)
   
   y += 45
 
