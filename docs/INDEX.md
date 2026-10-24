@@ -7,6 +7,7 @@
 
 | File | Covers |
 |------|--------|
+| [`principles/modelo-consciente.md`](principles/modelo-consciente.md) | Product principle: conciencia como servicio, three-question filter, rules |
 | [`../vercel.json`](../vercel.json) | Cron schedules, serverless function config, regions |
 | [`../supabase/migrations/`](../supabase/migrations/) | Database schema (numbered, ordered) |
 | [`PLATFORM-FULL-AUDIT-2026-04-16.md`](PLATFORM-FULL-AUDIT-2026-04-16.md) | Full platform audit (state of each module) |

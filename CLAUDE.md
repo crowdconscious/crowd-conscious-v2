@@ -4,6 +4,8 @@ A short, opinionated guide for any AI assistant (Claude, Cursor, Codex, etc.)
 making changes to this codebase. Humans should read it too — it's how we
 keep the platform coherent.
 
+> **Principle:** every change must follow [`docs/principles/modelo-consciente.md`](docs/principles/modelo-consciente.md) (conciencia como servicio; three-question filter; no new XP/points/leaderboards).
+
 ## Mental model
 
 The product is **Pulse-first**.
