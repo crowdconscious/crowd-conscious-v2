@@ -16,7 +16,10 @@ export default function GoogleLoginButton({
   const supabase = createClientAuth()
   const locale = useLocale()
 
-  const redirect = getSafeRedirectPath(searchParams.get('redirect'), redirectTo)
+  const redirect = getSafeRedirectPath(
+    searchParams.get('redirect') ?? searchParams.get('next'),
+    redirectTo
+  )
 
   const handleGoogleLogin = async () => {
     setLoading(true)

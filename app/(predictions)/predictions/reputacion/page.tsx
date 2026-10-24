@@ -23,7 +23,7 @@ export default async function ReputacionPage() {
 
   const user = await getCurrentUser()
   if (!user) {
-    redirect('/login?next=/predictions/reputacion')
+    redirect('/login?redirect=/predictions/reputacion')
   }
 
   const cookieStore = await cookies()
