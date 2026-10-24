@@ -1,6 +1,7 @@
 import { createServerAuth } from '../../../lib/auth-server'
 import { createAdminClient } from '../../../lib/supabase-admin'
 import { NextRequest, NextResponse } from 'next/server'
+import { getSafeRedirectPath } from '@/lib/auth-redirect'
 
 function clearAnonymousAliasCookies(response: NextResponse) {
   const secure = process.env.NODE_ENV === 'production'
@@ -14,8 +15,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const code = searchParams.get('code')
   const nextParam = searchParams.get('next')
-  const safeNext =
-    nextParam && nextParam.startsWith('/') && !nextParam.startsWith('//') ? nextParam : null
+  const safeNext = nextParam ? getSafeRedirectPath(nextParam) : null
 
   if (!code) {
     return NextResponse.redirect(new URL('/login?error=missing_code', request.url))

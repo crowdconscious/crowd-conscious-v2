@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 export default async function AccionesPage() {
   const user = await getCurrentUser()
   if (!user) {
-    redirect('/login?next=/predictions/acciones')
+    redirect('/login?redirect=/predictions/acciones')
   }
 
   const cookieStore = await cookies()

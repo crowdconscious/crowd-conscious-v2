@@ -19,7 +19,8 @@ function LoginForm() {
   const supabase = createClientAuth()
   const locale = useLocale()
 
-  const redirectParam = searchParams.get('redirect')
+  // `redirect` is canonical; `next` is accepted as an alias for older links.
+  const redirectParam = searchParams.get('redirect') ?? searchParams.get('next')
   const signupHref = redirectParam
     ? `/signup?redirect=${encodeURIComponent(redirectParam)}`
     : '/signup'
