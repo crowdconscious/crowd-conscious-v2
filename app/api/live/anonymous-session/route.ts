@@ -16,7 +16,7 @@ export async function GET() {
     const supabase = await createClient()
     const { data: participant } = await supabase
       .from('anonymous_participants')
-      .select('id, session_id, alias, avatar_emoji, total_xp, total_votes')
+      .select('id, session_id, alias, avatar_emoji, total_votes')
       .eq('session_id', sessionId)
       .is('converted_to_user_id', null)
       .maybeSingle()

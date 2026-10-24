@@ -1,37 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { getTierByXP } from '@/lib/tier-config'
 import type { LocationRedemptionRow } from './types'
-
-export type SpendableBalance = {
-  total_xp: number
-  total_xp_spent: number
-  spendable: number
-  tier: number
-}
-
-export async function getSpendableBalance(
-  supabase: SupabaseClient,
-  userId: string
-): Promise<SpendableBalance> {
-  const { data, error } = await supabase
-    .from('user_xp')
-    .select('total_xp, total_xp_spent')
-    .eq('user_id', userId)
-    .maybeSingle()
-
-  if (error) throw error
-
-  const totalXp = data?.total_xp ?? 0
-  const totalSpent = (data as { total_xp_spent?: number } | null)?.total_xp_spent ?? 0
-  const spendable = Math.max(0, totalXp - totalSpent)
-
-  return {
-    total_xp: totalXp,
-    total_xp_spent: totalSpent,
-    spendable,
-    tier: getTierByXP(totalXp).id,
-  }
-}
 
 export type SpendXpErrorCode =
   | 'unauthorized'

@@ -10,6 +10,7 @@
  */
 
 import { createAdminClient } from '@/lib/supabase-admin'
+import { getTopVoterIds } from '@/lib/top-voters'
 
 export type TopMarketRow = {
   id: string
@@ -29,7 +30,6 @@ export type ConfidenceBin = { confidence: number; count: number }
 export type SignupsByDay = { date: string; signups: number }
 export type LeaderboardRow = {
   display_name: string | null
-  total_xp: number
   accuracy_pct: number | null
   votes_cast: number
 }
@@ -688,13 +688,9 @@ export async function fetchIntelligenceDashboard(
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([date, signups]) => ({ date, signups }))
 
-    // --- Leaderboard top 10 ---
-    const { data: xpRows } = await admin
-      .from('user_xp')
-      .select('user_id, total_xp')
-      .order('total_xp', { ascending: false })
-      .limit(10)
-    const uids = (xpRows ?? []).map((r: { user_id: string }) => r.user_id)
+    // --- Most active users top 10 (by market votes cast; XP retired) ---
+    const topVoters = await getTopVoterIds(admin, 10)
+    const uids = (topVoters ?? []).map((r: { user_id: string }) => r.user_id)
     const { data: nameRows } = await admin.from('profiles').select('id, full_name').in('id', uids.length ? uids : ['00000000-0000-0000-0000-000000000000'])
     const names = new Map((nameRows ?? []).map((p: { id: string; full_name: string | null }) => [p.id, p.full_name]))
     let voteRows: { user_id: string; is_correct: boolean | null }[] = []
@@ -723,24 +719,19 @@ export async function fetchIntelligenceDashboard(
         if (v.is_correct === true) s.correct += 1
       }
     }
-    out.leaderboard = (xpRows ?? []).map((r: { user_id: string; total_xp: number }) => {
+    out.leaderboard = topVoters.map((r) => {
       const s = stats.get(r.user_id) ?? { resolved: 0, correct: 0, votes: 0 }
       const accuracy_pct = s.resolved > 0 ? Math.round((s.correct / s.resolved) * 1000) / 10 : null
       return {
         display_name: names.get(r.user_id) ?? null,
-        total_xp: Number(r.total_xp ?? 0),
         accuracy_pct,
         votes_cast: s.votes,
       }
     })
 
-    // Accuracy distribution (top 50 by XP)
-    const { data: xp50 } = await admin
-      .from('user_xp')
-      .select('user_id')
-      .order('total_xp', { ascending: false })
-      .limit(50)
-    const u50 = (xp50 ?? []).map((r: { user_id: string }) => r.user_id)
+    // Accuracy distribution (top 50 most active voters)
+    const topVoters50 = await getTopVoterIds(admin, 50)
+    const u50 = (topVoters50 ?? []).map((r: { user_id: string }) => r.user_id)
     let vr50: { user_id: string; is_correct: boolean | null }[] = []
     try {
       const { data } = await admin

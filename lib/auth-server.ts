@@ -101,10 +101,6 @@ async function ensureProfileFallback(
       .upsert(
         {
           user_id: user.id,
-          total_xp: 0,
-          level: 1,
-          current_streak: 0,
-          longest_streak: 0,
           last_activity: new Date().toISOString(),
         },
         { onConflict: 'user_id', ignoreDuplicates: true }

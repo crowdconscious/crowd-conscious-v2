@@ -49,14 +49,10 @@ interface DashboardData {
   userId: string
   userName: string
   isAdmin: boolean
-  totalXp: number
   accuracyPct: number
   correctPredictions: number
   totalResolvedPredictions: number
-  userImpactXp: number
   fundBalance: number
-  currentStreak: number
-  lastActivityMs: number
   positions: EnrichedPosition[]
   userPredictions: UserPrediction[]
   recentlyResolvedForUser: UserPrediction[]
@@ -169,9 +165,6 @@ export function PredictionsDashboardClient({ data, sponsorCta }: Props) {
     accuracyPct,
     correctPredictions,
     totalResolvedPredictions,
-    userImpactXp,
-    currentStreak,
-    lastActivityMs,
     userPredictions,
     recentlyResolvedForUser,
     biggestMovers,
@@ -194,22 +187,6 @@ export function PredictionsDashboardClient({ data, sponsorCta }: Props) {
   }, [userId, userPredictions.length])
 
   const trendingForOnboarding = newMarkets.length >= 3 ? newMarkets : activeMarkets.slice(0, 3)
-
-  // Streak: considered "at risk" if last activity was yesterday or older.
-  // Show a nudge row so the user doesn't lose their streak.
-  const streakAtRisk = (() => {
-    if (currentStreak < 2) return false
-    if (!lastActivityMs) return false
-    const today = new Date()
-    const lastDay = new Date(lastActivityMs)
-    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime()
-    const lastActivityDay = new Date(
-      lastDay.getFullYear(),
-      lastDay.getMonth(),
-      lastDay.getDate()
-    ).getTime()
-    return lastActivityDay < startOfToday
-  })()
 
   const attentionItems: AttentionItem[] = useMemo(() => {
     const items: AttentionItem[] = []
@@ -237,9 +214,6 @@ export function PredictionsDashboardClient({ data, sponsorCta }: Props) {
       }
     }
 
-    // Modelo Consciente: no streak nudges (streaks are retired from the UI).
-    void streakAtRisk
-
     if (isAdmin) {
       if (pendingMarketSuggestions > 0) {
         items.push({
@@ -264,8 +238,6 @@ export function PredictionsDashboardClient({ data, sponsorCta }: Props) {
     return items
   }, [
     recentlyResolvedForUser,
-    streakAtRisk,
-    currentStreak,
     isAdmin,
     draftBlogCount,
     pendingMarketSuggestions,
@@ -551,7 +523,6 @@ export function PredictionsDashboardClient({ data, sponsorCta }: Props) {
           biggestMovers={biggestMovers}
           newMarkets={newMarkets}
           fundBalance={fundBalance}
-          userImpactXp={userImpactXp}
         />
       </section>
     </div>

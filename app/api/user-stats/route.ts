@@ -3,6 +3,10 @@ import { NextRequest } from 'next/server'
 import { createServerAuth } from '@/lib/auth-server'
 import { ApiResponse } from '@/lib/api-responses'
 
+/** XP/level/streak/achievement columns are retired and intentionally not returned. */
+const USER_STATS_COLUMNS =
+  'user_id, last_activity, votes_cast, content_created, events_attended, comments_posted, created_at, updated_at'
+
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createServerAuth()
@@ -17,7 +21,7 @@ export async function GET(request: NextRequest) {
     // Try to get existing user stats
     const { data, error } = await supabase
       .from('user_stats')
-      .select('*')
+      .select(USER_STATS_COLUMNS)
       .eq('user_id', user.id)
       .single()
 
@@ -25,23 +29,18 @@ export async function GET(request: NextRequest) {
       // No record found, create initial user stats
       const initialStats = {
         user_id: user.id,
-        total_xp: 0,
-        level: 1,
-        current_streak: 0,
-        longest_streak: 0,
         last_activity: new Date().toISOString(),
         votes_cast: 0,
         content_created: 0,
         events_attended: 0,
-        comments_posted: 0,
-        achievements_unlocked: []
+        comments_posted: 0
       }
 
       // user_stats is written server-side only (users have no write policy).
       const { data: newStats, error: insertError } = await createAdminClient()
         .from('user_stats')
         .insert(initialStats)
-        .select()
+        .select(USER_STATS_COLUMNS)
         .single()
 
       if (insertError) {
@@ -107,7 +106,7 @@ export async function GET(request: NextRequest) {
       votes_cast: votesCast ?? data?.votes_cast ?? 0,
       fund_vote_cycles: fundVoteCycles,
       correct_predictions: correctPredictions,
-      sponsorships_made: data?.sponsorships_made ?? 0,
+      sponsorships_made: 0,
     })
 
   } catch (error: any) {

@@ -819,14 +819,14 @@ export default function IntelligenceClient({
                 />
               </div>
               <div className={`h-72 ${CARD} p-5`}>
-                <h3 className="text-sm font-medium text-slate-500 mb-3">XP leaderboard (top 10)</h3>
+                <h3 className="text-sm font-medium text-slate-500 mb-3">Most active users (top 10, by votes)</h3>
                 <Bar
                   data={{
                     labels: data.leaderboard.map((_, i) => `#${i + 1}`),
                     datasets: [
                       {
-                        label: 'XP',
-                        data: data.leaderboard.map((l) => l.total_xp),
+                        label: 'Votes',
+                        data: data.leaderboard.map((l) => l.votes_cast),
                         backgroundColor: 'rgba(16,185,129,0.65)',
                         borderColor: ACCENT,
                         borderWidth: 1,
@@ -841,7 +841,7 @@ export default function IntelligenceClient({
                 />
               </div>
               <div className={`lg:col-span-2 h-64 ${CARD} p-5`}>
-                <h3 className="text-sm font-medium text-slate-500 mb-3">Accuracy distribution (top 50 users by XP)</h3>
+                <h3 className="text-sm font-medium text-slate-500 mb-3">Accuracy distribution (top 50 most active voters)</h3>
                 <Bar
                   data={{
                     labels: data.accuracyBuckets.map((b) => b.label),
@@ -862,7 +862,6 @@ export default function IntelligenceClient({
                     <tr className="border-b border-white/5 text-left text-[11px] font-medium uppercase tracking-wide text-slate-500">
                       <th className="px-5 py-3">#</th>
                       <th className="px-3 py-3">Name</th>
-                      <th className="px-3 py-3 text-right">XP</th>
                       <th className="px-3 py-3 text-right">Votes</th>
                       <th className="px-5 py-3 text-right">Accuracy</th>
                     </tr>
@@ -875,9 +874,6 @@ export default function IntelligenceClient({
                       >
                         <td className="px-5 py-2.5 text-slate-500">{i + 1}</td>
                         <td className="px-3 py-2.5 text-slate-300">{l.display_name || 'Anonymous'}</td>
-                        <td className="px-3 py-2.5 text-right tabular-nums text-emerald-400/90">
-                          {l.total_xp.toLocaleString()}
-                        </td>
                         <td className="px-3 py-2.5 text-right tabular-nums">{l.votes_cast}</td>
                         <td className="px-5 py-2.5 text-right tabular-nums">
                           {l.accuracy_pct != null ? `${l.accuracy_pct}%` : '—'}

@@ -1,170 +1,22 @@
-import { createHash } from 'crypto'
-import { NextRequest, NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase-admin'
-import { createClient } from '@/lib/supabase-server'
-import { ApiResponse } from '@/lib/api-responses'
-import { moderateRateLimit, getRateLimitIdentifier, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
-
-const CLIENT_AWARDABLE_ACTIONS = new Set(['daily_login'])
-
-function dailyActionId(userId: string, actionType: string): string {
-  const day = new Date().toISOString().slice(0, 10)
-  const h = createHash('sha256').update(`${userId}:${actionType}:${day}`).digest('hex')
-  return `${h.slice(0, 8)}-${h.slice(8, 12)}-5${h.slice(13, 16)}-a${h.slice(17, 20)}-${h.slice(20, 32)}`
-}
-
+import { NextResponse } from 'next/server'
 
 /**
- * GET /api/gamification/xp
- * Get user's current XP and tier information
+ * Retired (Modelo Consciente): XP and achievements were retired; history is archived.
+ * Kept as a 410 so old clients get a clear answer.
  */
-export async function GET(request: NextRequest) {
-  try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+export const dynamic = 'force-static'
 
-    if (!user) {
-      return ApiResponse.unauthorized('Authentication required', 'AUTHENTICATION_REQUIRED')
-    }
-
-    // Rate limiting
-    const identifier = await getRateLimitIdentifier(request, user.id)
-    const rateLimitResult = await checkRateLimit(moderateRateLimit, identifier)
-    if (rateLimitResult && !rateLimitResult.allowed) {
-      return rateLimitResponse(rateLimitResult.limit, rateLimitResult.remaining, rateLimitResult.reset)
-    }
-
-    // Get user XP data
-    const { data: userXP, error: xpError } = await supabase
-      .from('user_xp')
-      .select('*')
-      .eq('user_id', user.id)
-      .single()
-
-    if (xpError && xpError.code !== 'PGRST116') {
-      console.error('Error fetching user XP:', xpError)
-      return ApiResponse.serverError('Failed to fetch XP data', 'XP_FETCH_ERROR', { message: xpError.message })
-    }
-
-    // If no XP record exists, create one
-    if (!userXP) {
-      const { data: newXP, error: createError } = await supabase
-        .from('user_xp')
-        .insert({
-          user_id: user.id,
-          total_xp: 0,
-          current_tier: 1,
-          tier_progress: 0.0,
-          xp_to_next_tier: 500
-        })
-        .select()
-        .single()
-
-      if (createError) {
-        console.error('Error creating user XP:', createError)
-        return ApiResponse.serverError('Failed to initialize XP', 'XP_INIT_ERROR', { message: createError.message })
-      }
-
-      return ApiResponse.ok({
-        xp: newXP,
-        progress: await calculateProgress(supabase, user.id, newXP)
-      })
-    }
-
-    // Calculate progress
-    const progress = await calculateProgress(supabase, user.id, userXP)
-
-    return ApiResponse.ok({
-      xp: userXP,
-      progress
-    })
-  } catch (error: any) {
-    console.error('Error in XP API:', error)
-    return ApiResponse.serverError('Internal server error', 'XP_SERVER_ERROR', { message: error.message })
-  }
+function gone() {
+  return NextResponse.json(
+    { error: 'gone', message: 'XP and achievements were retired. See /predictions/acciones.' },
+    { status: 410 }
+  )
 }
 
-/**
- * POST /api/gamification/xp
- * Award XP to user for an action
- */
-export async function POST(request: NextRequest) {
-  try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
-      return ApiResponse.unauthorized('Authentication required', 'AUTHENTICATION_REQUIRED')
-    }
-
-    // Rate limiting (stricter for XP awards)
-    const identifier = await getRateLimitIdentifier(request, user.id)
-    const rateLimitResult = await checkRateLimit(moderateRateLimit, identifier)
-    if (rateLimitResult && !rateLimitResult.allowed) {
-      return rateLimitResponse(rateLimitResult.limit, rateLimitResult.remaining, rateLimitResult.reset)
-    }
-
-    const body = await request.json()
-    const { action_type } = body
-
-    if (!action_type) {
-      return ApiResponse.badRequest('action_type is required', 'MISSING_ACTION_TYPE')
-    }
-
-    // Only actions the server can make idempotent may be self-awarded here.
-    // Everything else is awarded server-side by the route that performs the action.
-    if (!CLIENT_AWARDABLE_ACTIONS.has(action_type)) {
-      return ApiResponse.forbidden('This action cannot be awarded from the client', 'ACTION_NOT_ALLOWED')
-    }
-    // Deterministic per-user, per-day id => award_xp dedupes repeat calls.
-    const action_id = dailyActionId(user.id, action_type)
-    const description = 'Daily login'
-
-    // Award XP using database function
-    // award_xp / check_achievements are service-role only (migration 292).
-    const admin = createAdminClient()
-    const { data: result, error } = await admin.rpc('award_xp', {
-      p_user_id: user.id,
-      p_action_type: action_type,
-      p_action_id: action_id,
-      p_description: description
-    })
-
-    if (error) {
-      console.error('Error awarding XP:', error)
-      return ApiResponse.serverError('Failed to award XP', 'XP_AWARD_ERROR', { message: error.message })
-    }
-
-    // Check for achievements
-    const { data: achievements } = await admin.rpc('check_achievements', {
-      p_user_id: user.id,
-      p_action_type: action_type,
-      p_action_id: action_id
-    })
-
-    return ApiResponse.ok({
-      ...result,
-      achievements: achievements?.unlocked || []
-    })
-  } catch (error: any) {
-    console.error('Error in XP award API:', error)
-    return ApiResponse.serverError('Internal server error', 'XP_AWARD_SERVER_ERROR', { message: error.message })
-  }
+export async function GET() {
+  return gone()
 }
 
-/**
- * Helper function to calculate tier progress
- */
-async function calculateProgress(supabase: any, userId: string, userXP: any) {
-  const { data: progress } = await supabase.rpc('calculate_tier_progress', {
-    p_user_id: userId
-  })
-
-  return progress || {
-    tier: userXP.current_tier,
-    progress: userXP.tier_progress,
-    xp_to_next: userXP.xp_to_next_tier,
-    total_xp: userXP.total_xp
-  }
+export async function POST() {
+  return gone()
 }
-
