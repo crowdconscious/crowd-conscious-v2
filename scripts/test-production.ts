@@ -272,55 +272,6 @@ class ProductionTester {
     }
   }
 
-  async testXPAccumulation(): Promise<{ success: boolean; details: string; data?: any }> {
-    try {
-      // Check if user_stats table exists and has data
-      const { data: userStats, error } = await this.supabase
-        .from('user_stats')
-        .select('*')
-        .limit(1)
-
-      if (error && error.code !== 'PGRST116') {
-        return { success: false, details: `XP system not accessible: ${error.message}` }
-      }
-
-      // Test XP transaction creation
-      const { data: profiles } = await this.supabase
-        .from('profiles')
-        .select('id')
-        .limit(1)
-
-      if (!profiles || profiles.length === 0) {
-        return { success: false, details: 'No users available for XP test' }
-      }
-
-      const xpData = {
-        user_id: profiles[0].id,
-        points: 25,
-        action_type: 'content_created',
-        description: 'Test XP transaction'
-      }
-
-      const { data, error: xpError } = await this.supabase
-        .from('xp_transactions')
-        .insert(xpData)
-        .select()
-        .single()
-
-      if (xpError && xpError.code !== '42P01') { // Table doesn't exist
-        return { success: false, details: `XP transaction failed: ${xpError.message}` }
-      }
-
-      return {
-        success: true,
-        details: 'XP system functioning correctly',
-        data: { xpTransaction: data?.id }
-      }
-    } catch (error: any) {
-      return { success: false, details: `XP system exception: ${error.message}` }
-    }
-  }
-
   // Payment Tests
   async testStripeIntegration(): Promise<{ success: boolean; details: string; data?: any }> {
     try {
@@ -802,7 +753,6 @@ class ProductionTester {
     await this.test('Community Creation', 'user-flow', () => this.testCommunityCreation())
     await this.test('Content Creation', 'user-flow', () => this.testContentCreation())
     await this.test('Voting System', 'user-flow', () => this.testVotingSystem())
-    await this.test('XP Accumulation', 'user-flow', () => this.testXPAccumulation())
 
     console.log('\n💳 PAYMENT TESTS')
     console.log('----------------')

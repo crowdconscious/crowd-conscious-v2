@@ -40,7 +40,6 @@ async function getFundData(userId: string | null) {
     { data: allVotes },
     { data: myVotes },
     { data: fund },
-    { data: userXp },
     { data: sponsorshipLogRows },
     { count: sponsorshipLogCount },
   ] = await Promise.all([
@@ -56,13 +55,6 @@ async function getFundData(userId: string | null) {
       ? supabase.from('fund_votes').select('cause_id').eq('user_id', userId).eq('cycle', cycle)
       : { data: [] },
     supabase.from('conscious_fund').select('current_balance, total_collected, total_disbursed').limit(1).single(),
-    userId
-      ? supabase
-          .from('xp_transactions')
-          .select('amount')
-          .eq('user_id', userId)
-          .in('action_type', ['prediction_vote', 'prediction_correct'])
-      : { data: [] },
     admin
       .from('sponsorship_log')
       .select(
@@ -80,7 +72,6 @@ async function getFundData(userId: string | null) {
   const causesSupported = (causes ?? []).length
   const monthlyAllocation = totalFund > 0 ? Math.floor(totalFund / 12) : 0
 
-  const yourImpactXp = (userXp ?? []).reduce((sum, t) => sum + Number(t.amount), 0)
 
   // 1 vote per user per month (free-to-play)
   const votePower = 1
@@ -142,7 +133,6 @@ async function getFundData(userId: string | null) {
     totalFund,
     causesSupported,
     monthlyAllocation,
-    yourImpactXp,
     causes: causesWithVotes,
     cycle,
     votePower,
@@ -166,7 +156,6 @@ export default async function PredictionsFundPage() {
       totalFund={data.totalFund}
       causesSupported={data.causesSupported}
       monthlyAllocation={data.monthlyAllocation}
-      yourImpactXp={data.yourImpactXp}
       causes={data.causes}
       cycle={data.cycle}
       votePower={data.votePower}

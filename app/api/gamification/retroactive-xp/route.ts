@@ -1,154 +1,18 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase-admin'
-import { createServerAuth } from '@/lib/auth-server'
-import { ApiResponse } from '@/lib/api-responses'
+import { NextResponse } from 'next/server'
 
 /**
- * POST /api/gamification/retroactive-xp
- * Calculate and award retroactive XP for existing users
- * This endpoint calculates XP based on historical actions
+ * Retired (Modelo Consciente): XP and achievements were retired; history is archived.
+ * Kept as a 410 so old clients get a clear answer.
  */
-export async function POST(request: NextRequest) {
-  try {
-    const supabase = await createServerAuth()
-    
-    // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return ApiResponse.unauthorized('Authentication required')
-    }
+export const dynamic = 'force-static'
 
-    // Check if user is admin (optional - remove if you want all users to trigger this)
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('user_type')
-      .eq('id', user.id)
-      .single()
-
-    // Admin only: this endpoint can award XP for any user.
-    if (profile?.user_type !== 'admin') {
-      return ApiResponse.forbidden('Admin access required')
-    }
-
-    const { targetUserId } = await request.json()
-    const userId = targetUserId || user.id
-
-    let totalXPAwarded = 0
-    const results: any = {
-      lessons: 0,
-      modules: 0,
-      votes: 0,
-      sponsorships: 0,
-      content: 0
-    }
-
-    // 1. Award XP for completed lessons
-    // Check both lesson_progress and course_enrollments for completed lessons
-    const { data: completedLessons } = await supabase
-      .from('lesson_progress')
-      .select('lesson_id, completed_at')
-      .eq('user_id', userId)
-      .eq('completed', true)
-    
-    // Also check course_enrollments for lesson completions
-    const { data: enrollments } = await supabase
-      .from('course_enrollments')
-      .select('module_id, lesson_responses')
-      .eq('user_id', userId)
-    
-    const allCompletedLessons = completedLessons || []
-    
-    // Extract lesson IDs from enrollments if they have lesson_responses
-    if (enrollments) {
-      for (const enrollment of enrollments) {
-        if (enrollment.lesson_responses && Array.isArray(enrollment.lesson_responses)) {
-          for (const response of enrollment.lesson_responses) {
-            if (response.lesson_id && !allCompletedLessons.find(l => l.lesson_id === response.lesson_id)) {
-              allCompletedLessons.push({ lesson_id: response.lesson_id, completed_at: new Date().toISOString() })
-            }
-          }
-        }
-      }
-    }
-
-    if (allCompletedLessons.length > 0) {
-      for (const lesson of allCompletedLessons) {
-        // Check if XP already awarded
-        const { data: existingXP } = await supabase
-          .from('xp_transactions')
-          .select('id')
-          .eq('user_id', userId)
-          .eq('action_type', 'lesson_completed')
-          .eq('action_id', lesson.lesson_id)
-          .single()
-
-        if (!existingXP) {
-          try {
-            const { data: xpResult } = await createAdminClient().rpc('award_xp', {
-              p_user_id: userId,
-              p_action_type: 'lesson_completed',
-              p_action_id: lesson.lesson_id,
-              p_description: 'Retroactive: Completed lesson'
-            })
-            if (xpResult) {
-              totalXPAwarded += (xpResult as any).xp_amount || 50
-              results.lessons++
-            }
-          } catch (error) {
-            console.error('Error awarding lesson XP:', error)
-          }
-        }
-      }
-    }
-
-    // 2. Award XP for completed modules
-    const { data: completedModules } = await supabase
-      .from('course_enrollments')
-      .select('module_id, completed_at')
-      .eq('user_id', userId)
-      .eq('completed', true)
-
-    if (completedModules) {
-      for (const module of completedModules) {
-        const { data: existingXP } = await supabase
-          .from('xp_transactions')
-          .select('id')
-          .eq('user_id', userId)
-          .eq('action_type', 'module_completed')
-          .eq('action_id', module.module_id)
-          .single()
-
-        if (!existingXP) {
-          try {
-            const { data: xpResult } = await createAdminClient().rpc('award_xp', {
-              p_user_id: userId,
-              p_action_type: 'module_completed',
-              p_action_id: module.module_id,
-              p_description: 'Retroactive: Completed module'
-            })
-            if (xpResult) {
-              totalXPAwarded += (xpResult as any).xp_amount || 200
-              results.modules++
-            }
-          } catch (error) {
-            console.error('Error awarding module XP:', error)
-          }
-        }
-      }
-    }
-
-    // Legacy: votes, sponsorships, community_content tables removed. Skip those XP sources.
-
-    return ApiResponse.ok({
-      success: true,
-      total_xp_awarded: totalXPAwarded,
-      breakdown: results,
-      message: `Retroactive XP calculation complete. ${totalXPAwarded} XP awarded.`
-    })
-
-  } catch (error: any) {
-    console.error('Error calculating retroactive XP:', error)
-    return ApiResponse.serverError('Failed to calculate retroactive XP', 'RETROACTIVE_XP_ERROR', { message: error.message })
-  }
+function gone() {
+  return NextResponse.json(
+    { error: 'gone', message: 'XP and achievements were retired. See /predictions/acciones.' },
+    { status: 410 }
+  )
 }
 
+export async function POST() {
+  return gone()
+}

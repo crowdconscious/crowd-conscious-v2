@@ -66,7 +66,6 @@ interface Props {
   totalFund: number
   causesSupported: number
   monthlyAllocation: number
-  yourImpactXp: number
   causes: Cause[]
   cycle: string
   votePower: number
@@ -85,7 +84,6 @@ export function FundClient({
   totalFund,
   causesSupported,
   monthlyAllocation,
-  yourImpactXp,
   causes = [],
   cycle = '',
   votePower = 1,

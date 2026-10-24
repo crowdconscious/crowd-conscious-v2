@@ -51,7 +51,6 @@ export interface DashboardIntelligenceColumnProps {
   biggestMovers: MoverMarket[]
   newMarkets: PredictionMarket[]
   fundBalance: number
-  userImpactXp: number
 }
 
 export function DashboardIntelligenceColumn({
@@ -60,7 +59,6 @@ export function DashboardIntelligenceColumn({
   biggestMovers,
   newMarkets,
   fundBalance,
-  userImpactXp,
 }: DashboardIntelligenceColumnProps) {
   const isEs = locale !== 'en'
 

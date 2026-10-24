@@ -26,9 +26,6 @@ async function getDashboardData(userId: string, isAdmin: boolean) {
     { data: history },
     { data: agentContent },
     { data: fund },
-    { data: userTrades },
-    { data: userXp },
-    { data: userStats },
   ] = await Promise.all([
     supabase.from('profiles').select('full_name').eq('id', userId).single(),
     supabase
@@ -63,26 +60,10 @@ async function getDashboardData(userId: string, isAdmin: boolean) {
       .order('created_at', { ascending: false })
       .limit(20),
     supabase.from('conscious_fund').select('current_balance').limit(1).single(),
-    supabase
-      .from('xp_transactions')
-      .select('amount')
-      .eq('user_id', userId)
-      .in('action_type', ['prediction_vote', 'prediction_correct']),
-    supabase.from('user_xp').select('total_xp').eq('user_id', userId).single(),
-    supabase
-      .from('user_stats')
-      .select('current_streak, last_activity')
-      .eq('user_id', userId)
-      .maybeSingle(),
   ])
 
   const userName = profile?.full_name || 'Changemaker'
-  const userImpactXp = (userTrades ?? []).reduce((s, t) => s + Number(t.amount), 0)
   const fundBalance = Number(fund?.current_balance ?? 0)
-  const totalXp = Number(userXp?.total_xp ?? 0)
-  const currentStreak = Number(userStats?.current_streak ?? 0)
-  const lastActivityAt = userStats?.last_activity as string | null
-  const lastActivityMs = lastActivityAt ? new Date(lastActivityAt).getTime() : 0
 
   const votes = (marketVotes || []) as Array<{
     id: string
@@ -266,14 +247,10 @@ async function getDashboardData(userId: string, isAdmin: boolean) {
     userId,
     userName,
     isAdmin,
-    totalXp,
     accuracyPct,
     correctPredictions: correctCount,
     totalResolvedPredictions: resolvedVotes.length,
-    userImpactXp,
     fundBalance,
-    currentStreak,
-    lastActivityMs,
     positions: enrichedPositions,
     userPredictions,
     recentlyResolvedForUser,

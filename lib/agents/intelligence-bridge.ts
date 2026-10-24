@@ -5,6 +5,7 @@
 
 import { createAdminClient } from '@/lib/supabase-admin'
 import { excludeStandOnly } from '@/lib/pulse/discovery-filters'
+import { getTopVoterIds } from '@/lib/top-voters'
 
 function normProb(p: number): number {
   if (p == null || Number.isNaN(p)) return 0.5
@@ -27,7 +28,7 @@ export interface PlatformIntelligence {
       new_pct: number
       direction: 'up' | 'down'
     }>
-    most_active_users: Array<{ username: string; xp: number; votes: number }>
+    most_active_users: Array<{ username: string; votes: number }>
   }
   engagement: {
     votes_today: number
@@ -88,7 +89,6 @@ export async function getPlatformIntelligence(): Promise<PlatformIntelligence> {
       { count: newUsersWeek },
       { data: fundRow },
       { data: histRows },
-      { data: xpRows },
     ] = await Promise.all([
       admin.from('profiles').select('*', { count: 'exact', head: true }),
       admin.from('market_votes').select('*', { count: 'exact', head: true }),
@@ -125,7 +125,6 @@ export async function getPlatformIntelligence(): Promise<PlatformIntelligence> {
         .gte('recorded_at', weekAgo)
         .order('recorded_at', { ascending: true })
         .limit(12000),
-      admin.from('user_xp').select('user_id, total_xp').order('total_xp', { ascending: false }).limit(5),
     ])
 
     out.overview.total_users = totalUsers ?? 0
@@ -201,8 +200,9 @@ export async function getPlatformIntelligence(): Promise<PlatformIntelligence> {
       direction: s.direction,
     }))
 
-    // Leaderboard + vote counts (registered votes only when column exists)
-    const uids = (xpRows ?? []).map((r: { user_id: string }) => r.user_id)
+    // Most active users by registered market votes (XP retired)
+    const topVoters = await getTopVoterIds(admin, 5)
+    const uids = (topVoters ?? []).map((r: { user_id: string }) => r.user_id)
     let nameRows: { id: string; full_name: string | null }[] = []
     if (uids.length) {
       const { data: prof } = await admin.from('profiles').select('id, full_name').in('id', uids)
@@ -228,11 +228,10 @@ export async function getPlatformIntelligence(): Promise<PlatformIntelligence> {
     for (const v of voteRows) {
       voteCount.set(v.user_id, (voteCount.get(v.user_id) ?? 0) + 1)
     }
-    out.trending.most_active_users = (xpRows ?? []).map((r: { user_id: string; total_xp: number }) => {
+    out.trending.most_active_users = topVoters.map((r) => {
       const display = names.get(r.user_id)?.trim() || 'Anonymous'
       return {
         username: display,
-        xp: Number(r.total_xp ?? 0),
         votes: voteCount.get(r.user_id) ?? 0,
       }
     })
@@ -265,10 +264,6 @@ export async function getPlatformIntelligence(): Promise<PlatformIntelligence> {
       hooks.push(
         `"${topShift.title}" se movió de ${topShift.old_pct}% a ${topShift.new_pct}% esta semana`
       )
-    }
-    const lead = out.trending.most_active_users[0]
-    if (lead && lead.xp > 0) {
-      hooks.push(`${lead.username} lidera el leaderboard con ${lead.xp} XP`)
     }
     if (out.engagement.avg_confidence >= 7) {
       hooks.push(
@@ -334,7 +329,7 @@ REGLA: No menciones usuarios del leaderboard, XP ni rankings por nombre.`
 export function formatContentCreatorPlatformContext(p: PlatformIntelligence): string {
   const hooks = p.content_worthy.map((h) => `• ${h}`).join('\n')
   const board = p.trending.most_active_users
-    .map((u, i) => `${i + 1}. ${u.username} — ${u.xp} XP (${u.votes} votos registrados)`)
+    .map((u, i) => `${i + 1}. ${u.username} — ${u.votes} votos registrados`)
     .join('\n')
   const hot = p.trending.biggest_probability_shifts
     .map((s) => `• "${s.title}": ${s.old_pct}% → ${s.new_pct}%`)

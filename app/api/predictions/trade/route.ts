@@ -109,39 +109,9 @@ export async function POST(request: Request) {
       console.error('Audit log error (non-fatal):', auditErr)
     }
 
-    const { count } = await supabase
-      .from('prediction_trades')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-
-    const isFirstTrade = (count ?? 0) <= 1
-
-    await createAdminClient().rpc('award_xp', {
-      p_user_id: user.id,
-      p_action_type: 'prediction_trade',
-      p_action_id: trade.id,
-      p_description: 'Prediction market trade',
-    })
-
-    if (isFirstTrade) {
-      try {
-        await supabase.rpc('award_xp', {
-          p_user_id: user.id,
-          p_action_type: 'prediction_first_trade',
-          p_action_id: trade.id,
-          p_description: 'First prediction trade',
-        })
-      } catch {
-        // prediction_first_trade may not exist in xp_rewards
-      }
-    }
-
-    const xpGained = isFirstTrade ? 75 : 25
-
     return NextResponse.json({
       success: true,
       trade: data,
-      xpGained,
       shares_received: sharesReceived,
       price_per_share: pricePerShare,
       new_probability: updatedMarket?.current_probability ?? null,
