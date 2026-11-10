@@ -132,6 +132,23 @@ export const copy = {
     court: 'Tribunal',
     file: 'Expediente',
   },
+
+  adminFuentes: {
+    title: 'Fuentes',
+    lead:
+      'Estado del conector del Diario Oficial (SIDOF): incidentes, ejecuciones y errores.',
+    incidents: 'Incidentes',
+    runs: 'Ejecuciones recientes',
+    noIncidents: 'No hay incidentes registrados.',
+    noRuns: 'Aún no hay ejecuciones del conector.',
+    resolved: 'resuelto',
+    colStarted: 'Inicio (UTC)',
+    colDate: 'Fecha objetivo',
+    colStatus: 'Estado',
+    colDuration: 'Duración',
+    colStats: 'Estadísticas',
+    colError: 'Error',
+  },
 } as const
 
 export type CiceronCopy = typeof copy

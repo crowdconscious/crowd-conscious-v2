@@ -17,18 +17,16 @@ describe('ciceron embeddings gateway', () => {
     const prev = process.env.OPENAI_API_KEY
     delete process.env.OPENAI_API_KEY
     try {
-      const result = await embedTexts(['hola'])
+      const result = await embedTexts(['hola mundo jurídico'], { recordRun: false })
       assert.equal(result.ok, false)
-      if (!result.ok) {
-        assert.equal(result.reason, 'missing_api_key')
-      }
+      if (!result.ok) assert.equal(result.reason, 'missing_api_key')
     } finally {
       if (prev !== undefined) process.env.OPENAI_API_KEY = prev
     }
   })
 
   it('rejects empty input without throwing', async () => {
-    const result = await embedTexts([])
+    const result = await embedTexts([], { recordRun: false })
     assert.equal(result.ok, false)
     if (!result.ok) assert.equal(result.reason, 'empty_input')
   })

@@ -93,6 +93,20 @@ Pending items need Francisco before (or as) the named prompt starts.
 - **Decision:** Additive migration `303_ciceron_function_search_path.sql` recreates those three with `SET search_path = ciceron, public`. Do not edit applied migration files.
 - **Consequences:** Apply 303 after 302 on production.
 
+### 2026-11-10 — SIDOF verified; DOF ingest live path
+- **Context:** Prompt 3 requires verifying the unofficial SIDOF JSON API before building the pipeline.
+- **Decision:** Primary `https://sidofqa.segob.gob.mx/dof/sidof`, fallback `https://sidof.segob.gob.mx/dof/sidof`. Paths `notas/{dd-mm-yyyy}` and `notas/nota/{codNota}` work (HTTP 200). Documented in `docs/ciceron/SOURCES.md` with fixtures under `docs/ciceron/fixtures/sidof/`. **Do not crawl dof.gob.mx note pages.**
+- **Consequences:** `SidofConnector` + 6-step pipeline; raw JSON in Storage bucket `ciceron` at `dof/{date}/{code}.json` (service role).
+
+### 2026-11-10 — Embeddings fail-soft until OPENAI_API_KEY
+- **Context:** Key not provisioned on Vercel yet.
+- **Decision:** Store chunks with `embedding` null and `dof_notes.ingest_status = embedding_pending`; `ai_runs` records skips (`purpose` suffix `:skipped_missing_api_key`). Later cron/backfill fills vectors. Model remains `text-embedding-3-small` @ 1536.
+- **Consequences:** Classification (Prompt 4) should accept `ready` and treat `embedding_pending` as eligible for keyword matching only until back-filled.
+
+### 2026-11-10 — Definer EXECUTE grants (304 already on prod)
+- **Context:** Manual prod change `ciceron_revoke_anon_definer`.
+- **Decision:** Repo file `304_ciceron_revoke_anon_definer.sql` mirrors prod. New SECURITY DEFINER functions must `REVOKE … FROM PUBLIC, anon` and grant only to `authenticated` / `service_role` as appropriate.
+
 ---
 
 ## Pending
