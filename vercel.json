@@ -30,9 +30,26 @@
     "app/api/admin/locations/[id]/route.ts": { "maxDuration": 120 },
     "app/api/predictions/admin/create-market/route.ts": { "maxDuration": 120 },
     "app/api/predictions/admin/markets/[id]/publish/route.ts": { "maxDuration": 120 },
+    "app/api/ciceron/cron/dof/route.ts": { "maxDuration": 300 },
     "app/api/**/*.ts": { "maxDuration": 30 }
   },
   "crons": [
+    {
+      "path": "/api/ciceron/cron/dof",
+      "schedule": "0 14 * * 1-5"
+    },
+    {
+      "path": "/api/ciceron/cron/dof",
+      "schedule": "0 19 * * 1-5"
+    },
+    {
+      "path": "/api/ciceron/cron/dof",
+      "schedule": "0 0 * * 2-6"
+    },
+    {
+      "path": "/api/ciceron/cron/dof",
+      "schedule": "0 16 * * 0,6"
+    },
     {
       "path": "/api/cron/lugar-consciente",
       "schedule": "0 13 * * *"

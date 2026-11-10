@@ -187,6 +187,64 @@ export type CiceronDatabase = {
         }
         Update: Partial<CiceronDatabase['ciceron']['Tables']['ai_runs']['Insert']>
       }
+      dof_notes: {
+        Row: {
+          id: string
+          note_code: string
+          note_date: string
+          edition: string | null
+          edition_kind: 'matutina' | 'vespertina' | 'extraordinaria' | null
+          section: string | null
+          authority: string | null
+          title: string | null
+          document_id: string | null
+          ingest_status:
+            | 'listed'
+            | 'fetched'
+            | 'normalised'
+            | 'chunked'
+            | 'embedding_pending'
+            | 'ready'
+            | 'failed'
+            | 'skipped'
+          content_hash: string | null
+          raw_storage_path: string | null
+          last_error: string | null
+          ready_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: Partial<CiceronDatabase['ciceron']['Tables']['dof_notes']['Row']> & {
+          note_code: string
+          note_date: string
+        }
+        Update: Partial<CiceronDatabase['ciceron']['Tables']['dof_notes']['Row']>
+      }
+      source_incidents: {
+        Row: {
+          id: string
+          source_key: string
+          incident_date: string
+          kind: 'zero_notes' | 'consecutive_failures' | 'other'
+          severity: 'info' | 'warning' | 'critical'
+          message: string
+          details: Record<string, unknown>
+          resolved_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          source_key: string
+          incident_date: string
+          kind: 'zero_notes' | 'consecutive_failures' | 'other'
+          severity?: 'info' | 'warning' | 'critical'
+          message: string
+          details?: Record<string, unknown>
+          resolved_at?: string | null
+          created_at?: string
+        }
+        Update: Partial<CiceronDatabase['ciceron']['Tables']['source_incidents']['Insert']>
+      }
       audit_events: {
         Row: {
           id: string

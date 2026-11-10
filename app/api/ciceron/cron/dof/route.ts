@@ -1,0 +1,87 @@
+import { NextRequest, NextResponse } from 'next/server'
+import {
+  backfillPendingEmbeddings,
+  type PipelineCursor,
+  runDofIngestDay,
+} from '@/lib/ciceron/dof/pipeline'
+import { todayInMexicoCity } from '@/lib/ciceron/dof/dates'
+
+export const runtime = 'nodejs'
+export const maxDuration = 300
+
+function authorize(req: NextRequest): boolean {
+  const secret = process.env.CRON_SECRET
+  if (!secret) return false
+  return req.headers.get('authorization') === `Bearer ${secret}`
+}
+
+/**
+ * DOF / SIDOF ingest cron.
+ * Schedules (CDMX → UTC) are registered in vercel.json.
+ * Body/query may continue a partial run: { targetDate, cursor, attempt }.
+ */
+export async function GET(req: NextRequest) {
+  return handle(req)
+}
+
+export async function POST(req: NextRequest) {
+  return handle(req)
+}
+
+async function handle(req: NextRequest) {
+  if (!authorize(req)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  let body: {
+    targetDate?: string
+    cursor?: PipelineCursor
+    attempt?: number
+    backfillEmbeddings?: boolean
+  } = {}
+  if (req.method === 'POST') {
+    try {
+      body = (await req.json()) as typeof body
+    } catch {
+      body = {}
+    }
+  }
+
+  const targetDate =
+    body.targetDate ||
+    req.nextUrl.searchParams.get('date') ||
+    todayInMexicoCity()
+
+  if (body.backfillEmbeddings || req.nextUrl.searchParams.get('backfill') === '1') {
+    const result = await backfillPendingEmbeddings(16)
+    return NextResponse.json({ ok: true, mode: 'embed_backfill', ...result })
+  }
+
+  const result = await runDofIngestDay({
+    targetDate,
+    cursor: body.cursor,
+    attempt: body.attempt ?? 1,
+  })
+
+  // Re-enqueue remainder via fire-and-forget self-call when possible
+  if (result.requeue && process.env.VERCEL_URL && process.env.CRON_SECRET) {
+    const url = `https://${process.env.VERCEL_URL}/api/ciceron/cron/dof`
+    void fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.CRON_SECRET}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        targetDate: result.targetDate,
+        cursor: result.cursor,
+        attempt: (body.attempt ?? 1) + 1,
+      }),
+    }).catch((err) => console.warn('[ciceron] dof requeue failed', err))
+  }
+
+  return NextResponse.json({
+    ok: result.status !== 'failed',
+    ...result,
+  })
+}

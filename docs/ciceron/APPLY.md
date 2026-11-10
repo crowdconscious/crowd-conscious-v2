@@ -2,17 +2,14 @@
 
 ## Production status (2026-11-10)
 
-Already on production: **298, 299, 300**.  
-**Do not apply** retired `301` (auth.users seed) — it would fire `on_auth_user_created` → Crowd Conscious `profiles`.
+Already on production: **298, 299, 300, 302, 303**, plus manual **`ciceron_revoke_anon_definer`** (repo file `304_ciceron_revoke_anon_definer.sql`). Schema `ciceron` is exposed in the Data API.  
+**Do not apply** retired `301` (auth.users seed).
 
-## Apply order (production next)
+## Apply order (production next — Prompt 3)
 
-1. `supabase/migrations/302_ciceron_seed_prod_safe.sql` — demo personas + firm/client/matter/case seed (**no** `auth.users`)
-2. `supabase/migrations/303_ciceron_function_search_path.sql` — advisor fix: `search_path` on `set_updated_at`, `audit_events_immutable`, `storage_firm_id`
-
-Then expose schema `ciceron` under Project Settings → API → Exposed schemas (if not already).
-
-Verify: run `supabase/migrations/302_ciceron.verify.sql` and confirm every `OK:` notice (including “no auth.users demo emails” and search_path pins).
+1. `304_ciceron_revoke_anon_definer.sql` — **already applied**; keep for history / fresh envs
+2. `305_ciceron_dof_pipeline.sql` — DOF ingest columns, nullable `connector_runs.firm_id`, `source_incidents`, chunk unique indexes, `dof_sidof` source row
+3. Verify: `305_ciceron_dof_pipeline.verify.sql`
 
 ## Fresh environment (branch / new project)
 
@@ -21,8 +18,10 @@ Verify: run `supabase/migrations/302_ciceron.verify.sql` and confirm every `OK:`
 3. `300_ciceron_storage.sql`
 4. `302_ciceron_seed_prod_safe.sql` ← replaces retired 301
 5. `303_ciceron_function_search_path.sql`
-6. Expose schema `ciceron`
-7. Run `302_ciceron.verify.sql`
+6. `304_ciceron_revoke_anon_definer.sql`
+7. `305_ciceron_dof_pipeline.sql`
+8. Expose schema `ciceron`
+9. Run `302_ciceron.verify.sql` then `305_ciceron_dof_pipeline.verify.sql`
 
 Rollback (branch only): `298_ciceron.rollback.sql` (drops schema; does not touch civic `auth.users` for Cicéron — none are created by 302).
 

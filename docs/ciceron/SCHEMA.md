@@ -11,7 +11,7 @@ Prompt 1 creates the foundation under schema `ciceron`. Groups below marked
 | Practice | `clients`, `matters`, `parties`, `watch_profiles` |
 | Corpus | `sources`, `documents`, `document_versions`, `chunks` |
 | Legal graph | `legal_entities`, `legal_edges` |
-| Monitoring | `dof_notes`, `classifications`, `matches`, `alerts`, `digests` |
+| Monitoring | `dof_notes` (+ ingest_status), `classifications`, `matches`, `alerts`, `digests`, `source_incidents` (305) |
 | Court | `case_files`, `case_events`, `deadlines`, `connector_runs`, `non_working_days` |
 | AI | `prompt_versions`, `ai_runs`, `ai_outputs`, `output_citations` |
 | Oversight | `review_tasks`, `review_decisions`, `deliveries`, `audit_events` |
