@@ -5,11 +5,18 @@
 Already on production: **298, 299, 300, 302, 303**, plus manual **`ciceron_revoke_anon_definer`** (repo file `304_ciceron_revoke_anon_definer.sql`). Schema `ciceron` is exposed in the Data API.  
 **Do not apply** retired `301` (auth.users seed).
 
-## Apply order (production next — Prompt 3)
+## Apply order (production next — Prompt 4)
 
-1. `304_ciceron_revoke_anon_definer.sql` — **already applied**; keep for history / fresh envs
-2. `305_ciceron_dof_pipeline.sql` — DOF ingest columns, nullable `connector_runs.firm_id`, `source_incidents`, chunk unique indexes, `dof_sidof` source row
-3. Verify: `305_ciceron_dof_pipeline.verify.sql`
+Already on prod through **305**. Next:
+
+1. `306_ciceron_classify_match.sql` — classification/match columns, enriched demo watch profiles, prompt_versions, saved_views
+2. Verify: `306_ciceron_classify_match.verify.sql`
+
+Backlog classify/match (after 306):
+
+```bash
+npx tsx scripts/ciceron-dof-classify-match.ts --all-pending --limit=8
+```
 
 ## Fresh environment (branch / new project)
 

@@ -4,6 +4,7 @@ import {
   type PipelineCursor,
   runDofIngestDay,
 } from '@/lib/ciceron/dof/pipeline'
+import { runClassifyMatchBatch } from '@/lib/ciceron/dof/classify-match'
 import { todayInMexicoCity } from '@/lib/ciceron/dof/dates'
 
 export const runtime = 'nodejs'
@@ -16,9 +17,8 @@ function authorize(req: NextRequest): boolean {
 }
 
 /**
- * DOF / SIDOF ingest cron.
+ * DOF / SIDOF ingest cron (+ optional classify/match chain).
  * Schedules (CDMX → UTC) are registered in vercel.json.
- * Body/query may continue a partial run: { targetDate, cursor, attempt }.
  */
 export async function GET(req: NextRequest) {
   return handle(req)
@@ -38,6 +38,7 @@ async function handle(req: NextRequest) {
     cursor?: PipelineCursor
     attempt?: number
     backfillEmbeddings?: boolean
+    classifyMatchOnly?: boolean
   } = {}
   if (req.method === 'POST') {
     try {
@@ -55,6 +56,15 @@ async function handle(req: NextRequest) {
   if (body.backfillEmbeddings || req.nextUrl.searchParams.get('backfill') === '1') {
     const result = await backfillPendingEmbeddings(16)
     return NextResponse.json({ ok: true, mode: 'embed_backfill', ...result })
+  }
+
+  if (body.classifyMatchOnly || req.nextUrl.searchParams.get('classify') === '1') {
+    const stats = await runClassifyMatchBatch({
+      limit: 6,
+      noteDate: targetDate,
+      onlyPending: true,
+    })
+    return NextResponse.json({ ok: true, mode: 'classify_match', ...stats })
   }
 
   const result = await runDofIngestDay({
@@ -80,8 +90,19 @@ async function handle(req: NextRequest) {
     }).catch((err) => console.warn('[ciceron] dof requeue failed', err))
   }
 
+  // After a finished ingest day, chain a classify/match batch for that date
+  let classifyMatch: Awaited<ReturnType<typeof runClassifyMatchBatch>> | null = null
+  if (!result.requeue && result.status === 'succeeded' && process.env.ANTHROPIC_API_KEY) {
+    classifyMatch = await runClassifyMatchBatch({
+      limit: 4,
+      noteDate: result.targetDate,
+      onlyPending: true,
+    })
+  }
+
   return NextResponse.json({
     ok: result.status !== 'failed',
     ...result,
+    classifyMatch,
   })
 }

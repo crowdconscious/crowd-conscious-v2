@@ -107,6 +107,15 @@ Pending items need Francisco before (or as) the named prompt starts.
 - **Context:** Manual prod change `ciceron_revoke_anon_definer`.
 - **Decision:** Repo file `304_ciceron_revoke_anon_definer.sql` mirrors prod. New SECURITY DEFINER functions must `REVOKE … FROM PUBLIC, anon` and grant only to `authenticated` / `service_role` as appropriate.
 
+### 2026-11-10 — Matching vectors fail soft (Prompt 4)
+- **Context:** Production DOF backfill stores chunks with `embedding` null until `OPENAI_API_KEY` exists.
+- **Decision:** Candidate generation uses subject-area / authority / keyword / norm overlap always; cosine similarity is applied **only** when both note chunk and watch-profile embeddings exist. Otherwise `vector_used=false` and the reason string records that vectors were skipped.
+- **Consequences:** Demo matching works on lexical+taxonomy alone; embedding back-fill later improves ranking without schema change.
+
+### 2026-11-10 — Classification + match after ingest
+- **Context:** Need a way to process already-ingested notes and to chain after cron ingest.
+- **Decision:** `scripts/ciceron-dof-classify-match.ts` for backlog; cron `/api/ciceron/cron/dof` runs a small classify/match batch when ingest finishes (`?classify=1` for classify-only). Small model = Haiku; client alert draft = Sonnet via `lib/ciceron/gateway/complete`.
+
 ---
 
 ## Pending

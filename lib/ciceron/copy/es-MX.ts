@@ -69,6 +69,9 @@ export const copy = {
     reviews: 'Revisiones a su cargo',
     deadlines: 'Plazos en los próximos 15 días',
     unopened: 'Pendientes de ayer sin abrir',
+    emptyToday:
+      'Hoy no hay novedades que afecten a sus clientes. Se revisaron las notas clasificadas del corpus.',
+    reviewedCount: 'Notas clasificadas en el corpus',
   },
 
   monitor: {
@@ -76,6 +79,20 @@ export const copy = {
     lead: 'Notas del Diario Oficial ordenadas por cliente afectado.',
     filters: 'Filtros',
     onlyMine: 'Solo lo que afecta a mis clientes',
+    relevant: 'Relevante',
+    notRelevant: 'No relevante',
+    feedbackReason: 'Motivo (opcional)',
+    prepareAlert: 'Preparar alerta para el cliente',
+    prepareAlertNote:
+      'Se guarda un borrador con citas y se abre una tarea de revisión de nivel 2. No se envía nada.',
+    filterClient: 'Cliente',
+    filterSubject: 'Materia',
+    filterAuthority: 'Autoridad',
+    filterType: 'Tipo',
+    all: 'Todos',
+    emptyFiltered: 'No hay coincidencias con estos filtros.',
+    sourceSchema: 'Datos del corpus DOF',
+    sourceFixture: 'Vista de demostración (sin coincidencias en base aún)',
   },
 
   expedientes: {
