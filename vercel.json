@@ -4,52 +4,90 @@
   "framework": "nextjs",
   "installCommand": "npm install",
   "devCommand": "npm run dev",
-  "regions": ["iad1"],
+  "regions": [
+    "iad1"
+  ],
   "functions": {
-    "app/api/cron/agents/ceo-digest/route.ts": { "maxDuration": 300 },
-    "app/api/cron/agents/inbox-curator/route.ts": { "maxDuration": 300 },
-    "app/api/cron/agents/news-monitor/route.ts": { "maxDuration": 300 },
-    "app/api/cron/newsletter/route.ts": { "maxDuration": 300 },
-    "app/api/predictions/admin/send-newsletter/route.ts": { "maxDuration": 300 },
-    "app/api/cron/live-reminders/route.ts": { "maxDuration": 120 },
-    "app/api/cron/live-auto-end/route.ts": { "maxDuration": 120 },
-    "app/api/cron/monthly-impact/route.ts": { "maxDuration": 120 },
-    "app/api/cron/pulse-auto-resolve/route.ts": { "maxDuration": 120 },
-    "app/api/cron/simulation-autorun/route.ts": { "maxDuration": 300 },
-    "app/api/cron/signal-threshold-check/route.ts": { "maxDuration": 60 },
-    "app/api/cron/signal-silence-30d/route.ts": { "maxDuration": 60 },
-    "app/api/cron/push-receipts/route.ts": { "maxDuration": 120 },
-    "app/api/cron/pulse-reveal-notify/route.ts": { "maxDuration": 60 },
-    "app/api/predictions/admin/run-agent/route.ts": { "maxDuration": 300 },
-    "app/api/dashboard/sponsor/[token]/report/[marketId]/pdf/route.ts": { "maxDuration": 120 },
-    "app/api/pulses/[pulseId]/simulation/report/route.ts": { "maxDuration": 60 },
-    "app/api/dashboard/sponsor/[token]/report/[marketId]/regenerate/route.ts": { "maxDuration": 120 },
-    "app/api/predictions/admin/blog-posts/route.ts": { "maxDuration": 120 },
-    "app/api/predictions/admin/blog-posts/[id]/route.ts": { "maxDuration": 120 },
-    "app/api/admin/blog/[id]/approve/route.ts": { "maxDuration": 120 },
-    "app/api/admin/locations/[id]/route.ts": { "maxDuration": 120 },
-    "app/api/predictions/admin/create-market/route.ts": { "maxDuration": 120 },
-    "app/api/predictions/admin/markets/[id]/publish/route.ts": { "maxDuration": 120 },
-    "app/api/ciceron/cron/dof/route.ts": { "maxDuration": 300 },
-    "app/api/**/*.ts": { "maxDuration": 30 }
+    "app/api/cron/agents/ceo-digest/route.ts": {
+      "maxDuration": 300
+    },
+    "app/api/cron/agents/inbox-curator/route.ts": {
+      "maxDuration": 300
+    },
+    "app/api/cron/agents/news-monitor/route.ts": {
+      "maxDuration": 300
+    },
+    "app/api/cron/newsletter/route.ts": {
+      "maxDuration": 300
+    },
+    "app/api/predictions/admin/send-newsletter/route.ts": {
+      "maxDuration": 300
+    },
+    "app/api/cron/live-reminders/route.ts": {
+      "maxDuration": 120
+    },
+    "app/api/cron/live-auto-end/route.ts": {
+      "maxDuration": 120
+    },
+    "app/api/cron/monthly-impact/route.ts": {
+      "maxDuration": 120
+    },
+    "app/api/cron/pulse-auto-resolve/route.ts": {
+      "maxDuration": 120
+    },
+    "app/api/cron/simulation-autorun/route.ts": {
+      "maxDuration": 300
+    },
+    "app/api/cron/signal-threshold-check/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/cron/signal-silence-30d/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/cron/push-receipts/route.ts": {
+      "maxDuration": 120
+    },
+    "app/api/cron/pulse-reveal-notify/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/predictions/admin/run-agent/route.ts": {
+      "maxDuration": 300
+    },
+    "app/api/dashboard/sponsor/[token]/report/[marketId]/pdf/route.ts": {
+      "maxDuration": 120
+    },
+    "app/api/pulses/[pulseId]/simulation/report/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/dashboard/sponsor/[token]/report/[marketId]/regenerate/route.ts": {
+      "maxDuration": 120
+    },
+    "app/api/predictions/admin/blog-posts/route.ts": {
+      "maxDuration": 120
+    },
+    "app/api/predictions/admin/blog-posts/[id]/route.ts": {
+      "maxDuration": 120
+    },
+    "app/api/admin/blog/[id]/approve/route.ts": {
+      "maxDuration": 120
+    },
+    "app/api/admin/locations/[id]/route.ts": {
+      "maxDuration": 120
+    },
+    "app/api/predictions/admin/create-market/route.ts": {
+      "maxDuration": 120
+    },
+    "app/api/predictions/admin/markets/[id]/publish/route.ts": {
+      "maxDuration": 120
+    },
+    "app/api/ciceron/cron/dof/route.ts": {
+      "maxDuration": 300
+    },
+    "app/api/**/*.ts": {
+      "maxDuration": 30
+    }
   },
   "crons": [
-    {
-      "path": "/api/ciceron/cron/dof",
-      "schedule": "0 14 * * 1-5"
-    },
-    {
-      "path": "/api/ciceron/cron/dof",
-      "schedule": "0 19 * * 1-5"
-    },
-    {
-      "path": "/api/ciceron/cron/dof",
-      "schedule": "0 0 * * 2-6"
-    },
-    {
-      "path": "/api/ciceron/cron/dof",
-      "schedule": "0 16 * * 0,6"
-    },
     {
       "path": "/api/cron/lugar-consciente",
       "schedule": "0 13 * * *"
