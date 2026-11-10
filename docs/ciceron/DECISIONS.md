@@ -28,10 +28,10 @@ Pending items need Francisco before (or as) the named prompt starts.
 - **Why not a separate secret:** Cicéron isolation is enforced by module boundaries, schema RLS, and route handlers — not by a second shared secret. One ops secret matches every other cron in this repo and avoids a second rotation path during the hosted-demo phase. On extraction to a dedicated project, introduce `CICERON_CRON_SECRET` (or a fresh `CRON_SECRET` in that project).
 - **Consequences:** Prompt 3 cron route checks `Authorization: Bearer ${CRON_SECRET}`. No `CICERON_CRON_SECRET` required for the demo.
 
-### 2026-11-10 — Fonts still open; specimen produced
-- **Context:** Prompt 2 needs a pairing; Francisco has not locked one.
-- **Decision:** None yet. Specimen with four pairings (including Source Serif 4 + IBM Plex Sans) lives at `docs/ciceron/font-specimen.html`; screenshots under `/opt/cursor/artifacts/ciceron-font-*.png`.
-- **Consequences:** Prompt 2 must not ship fonts until Francisco picks a pairing from the specimen.
+### 2026-11-10 — Fonts: Spectral + Atkinson Hyperlegible
+- **Context:** Prompt 2 needs a locked pairing; specimen compared four options.
+- **Decision:** **Spectral** (serif — headings and legal text) + **Atkinson Hyperlegible** (UI sans). Specimen retained at `docs/ciceron/font-specimen.html` / `docs/ciceron/specimens/`.
+- **Consequences:** Prompt 2 implements this pairing via `next/font`. Hold Prompt 2 until Francisco confirms the Prompt 1 gate on the Supabase test branch.
 
 ---
 
@@ -73,14 +73,6 @@ Pending items need Francisco before (or as) the named prompt starts.
 ---
 
 ## Pending
-
-### P6 — Font pairing for Prompt 2
-- **Options (see specimen):**
-  1. Source Serif 4 + IBM Plex Sans
-  2. Newsreader + Source Sans 3
-  3. Literata + Manrope
-  4. Spectral + Atkinson Hyperlegible
-- **Needed by:** Prompt 2.
 
 ### P3 — Expose schema `ciceron` to PostgREST
 - **Why:** JS `.schema('ciceron')` needs the schema on the API exposed list (branch + prod).
