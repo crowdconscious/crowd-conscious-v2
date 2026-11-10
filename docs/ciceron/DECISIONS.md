@@ -31,7 +31,12 @@ Pending items need Francisco before (or as) the named prompt starts.
 ### 2026-11-10 — Fonts: Spectral + Atkinson Hyperlegible
 - **Context:** Prompt 2 needs a locked pairing; specimen compared four options.
 - **Decision:** **Spectral** (serif — headings and legal text) + **Atkinson Hyperlegible** (UI sans). Specimen retained at `docs/ciceron/font-specimen.html` / `docs/ciceron/specimens/`.
-- **Consequences:** Prompt 2 implements this pairing via `next/font`. Hold Prompt 2 until Francisco confirms the Prompt 1 gate on the Supabase test branch.
+- **Consequences:** Prompt 2 implements this pairing via `next/font`.
+
+### 2026-11-10 — Prompt 1 gate passed (Supabase test branch)
+- **Context:** Francisco applied 298, 299, 301 on a test branch; verify checks all passed (cross-tenant, seed, pasante wall, tier-2 delivery, audit append-only, RLS on 36 tables).
+- **Decision:** Prompt 1 gate **passed**. Proceed to Prompt 2.
+- **Note:** `300_ciceron_storage.sql` failed on `COMMENT ON TABLE storage.buckets` (`42501`); that statement was removed. Re-apply fixed 300 for the bucket/policies when convenient.
 
 ---
 

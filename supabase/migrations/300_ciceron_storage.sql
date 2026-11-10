@@ -24,9 +24,9 @@ SET
   file_size_limit = EXCLUDED.file_size_limit,
   allowed_mime_types = EXCLUDED.allowed_mime_types;
 
-COMMENT ON TABLE storage.buckets IS 'Includes ciceron private bucket (firm_id-prefixed object paths).';
-
 -- Path layout: {firm_id}/...
+-- Note: do not COMMENT ON storage.buckets — that table is owned by
+-- supabase_storage_admin; postgres cannot alter its comments (42501).
 CREATE OR REPLACE FUNCTION ciceron.storage_firm_id(object_name text)
 RETURNS uuid
 LANGUAGE sql
@@ -34,6 +34,9 @@ IMMUTABLE
 AS $$
   SELECT NULLIF(split_part(object_name, '/', 1), '')::uuid;
 $$;
+
+COMMENT ON FUNCTION ciceron.storage_firm_id(text) IS
+  'Extracts firm_id from ciceron storage object paths ({firm_id}/…). Private bucket id: ciceron.';
 
 DROP POLICY IF EXISTS ciceron_storage_select ON storage.objects;
 CREATE POLICY ciceron_storage_select ON storage.objects

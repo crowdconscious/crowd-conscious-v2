@@ -13,3 +13,6 @@
 Rollback (branch only): `supabase/migrations/298_ciceron.rollback.sql`.
 
 Seed passwords (`ciceron-demo-only`) and `@ciceron.demo.invalid` emails are fictional **Datos de demostración** — not for production login UX (invite codes come in Prompt 9).
+
+### Storage note (300)
+`300_ciceron_storage.sql` creates the private Storage bucket `ciceron` with firm-prefixed object paths (`{firm_id}/…`). It does **not** run `COMMENT ON TABLE storage.buckets` — that table is owned by `supabase_storage_admin`, so `postgres` gets `42501`. Bucket purpose is documented on `ciceron.storage_firm_id` instead. If bucket insert also fails for ownership, create the `ciceron` bucket in the Storage UI (private, 50 MiB) and re-run only the function + policies section.

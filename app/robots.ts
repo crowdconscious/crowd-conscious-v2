@@ -15,6 +15,8 @@ export default function robots(): MetadataRoute.Robots {
         '/notifications/',
         // Meeting demo (simulated data): hidden from crawlers; pages also send noindex/nofollow.
         '/observatorio-rentas',
+        // Cicéron legal demo: noindex; pages also send robots noindex/nofollow.
+        '/ciceron',
       ],
     },
     sitemap: `${SITE_URL}/sitemap.xml`,
