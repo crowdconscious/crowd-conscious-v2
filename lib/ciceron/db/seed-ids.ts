@@ -1,7 +1,16 @@
-/** Fixed seed ids from 301_ciceron_seed.sql (Datos de demostración). */
+/** Fixed seed ids from 302_ciceron_seed_prod_safe.sql (Datos de demostración). */
 export const CICERON_SEED = {
   firmDemo: 'a1000000-0000-4000-8000-000000000001',
   firmContraste: 'a1000000-0000-4000-8000-000000000002',
+  personas: {
+    socio: 'b1000000-0000-4000-8000-000000000001',
+    asociado: 'b1000000-0000-4000-8000-000000000002',
+    pasante: 'b1000000-0000-4000-8000-000000000003',
+    admin: 'b1000000-0000-4000-8000-000000000004',
+    asociado2: 'b1000000-0000-4000-8000-000000000005',
+    firmB: 'b1000000-0000-4000-8000-000000000011',
+  },
+  /** @deprecated use personas — kept for isolation.test aliases */
   users: {
     socio: 'b1000000-0000-4000-8000-000000000001',
     asociado: 'b1000000-0000-4000-8000-000000000002',
@@ -9,6 +18,14 @@ export const CICERON_SEED = {
     admin: 'b1000000-0000-4000-8000-000000000004',
     asociado2: 'b1000000-0000-4000-8000-000000000005',
     firmB: 'b1000000-0000-4000-8000-000000000011',
+  },
+  inviteCodes: {
+    socio: 'DESPACHO-DEMO',
+    asociado: 'DESPACHO-ASOCIADO',
+    pasante: 'DESPACHO-PASANTE',
+    admin: 'DESPACHO-ADMIN',
+    asociado2: 'DESPACHO-ASOCIADO2',
+    firmB: 'CONTRASTE-DEMO',
   },
   clients: {
     nexora: 'c1000000-0000-4000-8000-000000000001',

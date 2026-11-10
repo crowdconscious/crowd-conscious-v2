@@ -14,8 +14,19 @@ Pending items need Francisco before (or as) the named prompt starts.
 
 ### 2026-11-10 — Demo access: invite codes (not Crowd Conscious login)
 - **Context:** Prospects must enter `/ciceron` without civic Auth chrome.
-- **Decision:** Hashed invite codes mint a demo session as a seed user of «Despacho Demo, S.C.» Separate from Crowd Conscious Google/password login.
-- **Consequences:** Prompt 2 gate UI + Prompt 9 invite system; seed memberships use dedicated demo auth users.
+- **Decision:** Invite codes mint a demo session for «Despacho Demo, S.C.» Separate from Crowd Conscious Google/password login.
+- **Consequences:** Prompt 2 gate UI + Prompt 9 hashed invites. Actors are **not** `auth.users` (see persona decision below).
+
+### 2026-11-10 — Demo personas without auth.users (prod-safe seed)
+- **Context:** Production has `on_auth_user_created` → `public.handle_new_user` inserting into `public.profiles` (cascading `user_settings`). Applying retired `301_ciceron_seed` (auth.users inserts) would create Crowd Conscious profiles for six demo emails — isolation failure. 298–300 are already on prod; 301 was **not** applied.
+- **Decision:**
+  1. Retire `301` to `.deprecated/ciceron-seed-auth-users/`.
+  2. Seed with `302_ciceron_seed_prod_safe.sql`: table `ciceron.demo_personas` (invite_code → firm + role + display_name). Same fixed UUIDs as 301 for memberships / matter_members / audit actor columns.
+  3. Drop FKs from `memberships`, `matter_members`, `audit_events`, `events`, `ai_runs` → `auth.users` so persona UUIDs can live only in Cicéron.
+  4. `ciceron.current_actor_id()` = `request.jwt.claim.sub` **or** GUC `ciceron.actor_id`. Helpers/`search_chunks`/events policies rebind from `auth.uid()` to `current_actor_id()`.
+  5. `ciceron.set_actor(uuid)` (SECURITY DEFINER, service_role) sets transaction-local JWT claim + GUC for verify / harness — **no** real Auth users required.
+  6. App invite cookie stores the invite code; server resolves persona with **service role**, then filters by `firm_id` (and pasante `matter_members`) in loaders — RLS still authoritative for authenticated JWT paths; service-role paths must mirror the same scope.
+- **Consequences:** Fresh installs use 302 (never 301). Verify is `302_ciceron.verify.sql`. Rooms read schema behind the invite gate with fixture fallback. Advisor `search_path` pins land in additive `303` (do not edit applied 298–300).
 
 ### 2026-11-10 — pgvector + schema `ciceron` approved (branch then production)
 - **Context:** Extension available but not installed on `ottixfzdytnzxquzrrcf`.
@@ -77,11 +88,14 @@ Pending items need Francisco before (or as) the named prompt starts.
 
 ---
 
-## Pending
+### 2026-11-10 — Advisor search_path pins (303)
+- **Context:** Supabase advisors flagged mutable `search_path` on `ciceron.set_updated_at`, `ciceron.audit_events_immutable`, `ciceron.storage_firm_id` from 298/300 (already applied).
+- **Decision:** Additive migration `303_ciceron_function_search_path.sql` recreates those three with `SET search_path = ciceron, public`. Do not edit applied migration files.
+- **Consequences:** Apply 303 after 302 on production.
 
-### P3 — Expose schema `ciceron` to PostgREST
-- **Why:** JS `.schema('ciceron')` needs the schema on the API exposed list (branch + prod).
-- **Needed by:** before app routes query as authenticated users (service role can still use `db.ciceron` via SQL if needed).
+---
+
+## Pending
 
 ### P7 — Accept root-layout analytics/JSON-LD leakage for hosted demo
 - **Needed by:** Prompt 2 acceptance wording.

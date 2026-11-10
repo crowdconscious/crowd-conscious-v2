@@ -1,10 +1,18 @@
+import { redirect } from 'next/navigation'
 import { DataTable } from '../../_components/DataTable'
 import { DeadlineMarker } from '../../_components/DeadlineMarker'
 import { MatterBreadcrumb } from '../../_components/MatterBreadcrumb'
+import { CICERON_BASE } from '@/lib/ciceron/config'
 import { copy } from '@/lib/ciceron/copy/es-MX'
-import { fixtureCases } from '@/lib/ciceron/demo/fixtures'
+import { loadCasesRoom } from '@/lib/ciceron/demo/data'
+import { getCiceronDemoSession } from '@/lib/ciceron/demo/session'
 
-export default function ExpedientesPage() {
+export default async function ExpedientesPage() {
+  const persona = await getCiceronDemoSession()
+  if (!persona) redirect(CICERON_BASE)
+
+  const { cases } = await loadCasesRoom(persona)
+
   return (
     <div>
       <h1 className="cic-h1">{copy.expedientes.title}</h1>
@@ -35,7 +43,7 @@ export default function ExpedientesPage() {
               ),
             },
           ]}
-          rows={fixtureCases.map((c) => ({ ...c }))}
+          rows={cases}
         />
       </section>
     </div>

@@ -62,6 +62,29 @@ export type CiceronDatabase = {
         }
         Update: Partial<CiceronDatabase['ciceron']['Tables']['memberships']['Insert']>
       }
+      demo_personas: {
+        Row: {
+          id: string
+          firm_id: string
+          role: CiceronMembershipRole
+          display_name: string
+          invite_code: string
+          is_demo: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          firm_id: string
+          role: CiceronMembershipRole
+          display_name: string
+          invite_code: string
+          is_demo?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<CiceronDatabase['ciceron']['Tables']['demo_personas']['Insert']>
+      }
       clients: {
         Row: {
           id: string

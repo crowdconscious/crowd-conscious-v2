@@ -1,16 +1,24 @@
+import { redirect } from 'next/navigation'
 import { ReviewBadge } from '../../_components/ReviewBadge'
 import { ClientTag } from '../../_components/ClientTag'
+import { CICERON_BASE } from '@/lib/ciceron/config'
 import { copy } from '@/lib/ciceron/copy/es-MX'
-import { fixtureReviews } from '@/lib/ciceron/demo/fixtures'
+import { loadReviews } from '@/lib/ciceron/demo/data'
+import { getCiceronDemoSession } from '@/lib/ciceron/demo/session'
 
-export default function RevisionPage() {
+export default async function RevisionPage() {
+  const persona = await getCiceronDemoSession()
+  if (!persona) redirect(CICERON_BASE)
+
+  const { reviews } = await loadReviews(persona)
+
   return (
     <div>
       <h1 className="cic-h1">{copy.revision.title}</h1>
       <p className="cic-lead">{copy.revision.lead}</p>
 
       <section className="cic-section cic-stack">
-        {fixtureReviews.map((r) => (
+        {reviews.map((r) => (
           <article key={r.id} className="cic-card" style={{ margin: 0 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}>
               <div>

@@ -15,7 +15,8 @@ DROP FUNCTION IF EXISTS ciceron.storage_firm_id(text);
 -- Drop schema cascade (tables, triggers, functions, policies)
 DROP SCHEMA IF EXISTS ciceron CASCADE;
 
--- Demo auth users created by 301 (safe: only our fixed UUIDs / .invalid emails)
+-- Legacy cleanup if retired 301 was ever applied on a throwaway branch.
+-- Prod-safe 302 does NOT insert auth.users — these deletes are no-ops then.
 DELETE FROM auth.identities
 WHERE user_id IN (
   'b1000000-0000-4000-8000-000000000001'::uuid,

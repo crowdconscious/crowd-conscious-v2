@@ -7,7 +7,7 @@ Prompt 1 creates the foundation under schema `ciceron`. Groups below marked
 
 | Group | Tables |
 |---|---|
-| Tenancy | `firms`, `memberships`, `matter_members` |
+| Tenancy | `firms`, `memberships`, `matter_members`, `demo_personas` (302 — invite actors, not `auth.users`) |
 | Practice | `clients`, `matters`, `parties`, `watch_profiles` |
 | Corpus | `sources`, `documents`, `document_versions`, `chunks` |
 | Legal graph | `legal_entities`, `legal_edges` |

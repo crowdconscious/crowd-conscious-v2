@@ -1,36 +1,28 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import {
-  CICERON_BASE,
-  CICERON_DEMO_COOKIE,
-  CICERON_ROOMS,
-} from '@/lib/ciceron/config'
+import { CICERON_ROOMS } from '@/lib/ciceron/config'
 import { copy } from '@/lib/ciceron/copy/es-MX'
-import { fixtureMeta } from '@/lib/ciceron/demo/fixtures'
 import { CommandPalette } from './CommandPalette'
 import './ciceron.css'
 
-function hasDemoSession() {
-  if (typeof document === 'undefined') return false
-  return document.cookie.split('; ').some((c) => c.startsWith(`${CICERON_DEMO_COOKIE}=`))
+export type ShellMeta = {
+  firmName: string
+  userName: string
+  role: string
 }
 
-export function CiceronShell({ children }: { children: React.ReactNode }) {
+export function CiceronShell({
+  children,
+  meta,
+}: {
+  children: React.ReactNode
+  meta: ShellMeta
+}) {
   const pathname = usePathname()
-  const router = useRouter()
-  const [ready, setReady] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
-
-  useEffect(() => {
-    if (!hasDemoSession()) {
-      router.replace(CICERON_BASE)
-      return
-    }
-    setReady(true)
-  }, [router])
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -43,17 +35,6 @@ export function CiceronShell({ children }: { children: React.ReactNode }) {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [])
-
-  if (!ready) {
-    return (
-      <div className="ciceron-root" lang="es">
-        <div className="cic-demo-banner">{copy.demoLabel}</div>
-        <p className="cic-muted" style={{ padding: 24 }}>
-          {copy.components.loading}
-        </p>
-      </div>
-    )
-  }
 
   return (
     <div className="ciceron-root" lang="es">
@@ -78,7 +59,7 @@ export function CiceronShell({ children }: { children: React.ReactNode }) {
         </nav>
         <div className="cic-main">
           <header className="cic-topbar">
-            <div className="cic-topbar-firm">{fixtureMeta.firmName}</div>
+            <div className="cic-topbar-firm">{meta.firmName}</div>
             <div className="cic-topbar-matter">{copy.topbar.matterContext}: licencia CNBV</div>
             <button
               type="button"
@@ -90,7 +71,7 @@ export function CiceronShell({ children }: { children: React.ReactNode }) {
               <kbd>{copy.topbar.commandShortcut}</kbd>
             </button>
             <div className="cic-user" title={copy.topbar.userMenu}>
-              {fixtureMeta.userName} · {fixtureMeta.role}
+              {meta.userName} · {meta.role}
             </div>
           </header>
           <main className="cic-content">{children}</main>

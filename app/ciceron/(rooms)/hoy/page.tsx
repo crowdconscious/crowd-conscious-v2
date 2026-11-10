@@ -1,14 +1,22 @@
+import { redirect } from 'next/navigation'
 import { DisclosureCard } from '../../_components/DisclosureCard'
 import { DeadlineMarker } from '../../_components/DeadlineMarker'
 import { ReviewBadge } from '../../_components/ReviewBadge'
+import { CICERON_BASE } from '@/lib/ciceron/config'
 import { copy } from '@/lib/ciceron/copy/es-MX'
-import {
-  fixtureDeadlines,
-  fixtureDofNotes,
-  fixtureReviews,
-} from '@/lib/ciceron/demo/fixtures'
+import { loadDeadlines, loadDofNotes, loadReviews } from '@/lib/ciceron/demo/data'
+import { getCiceronDemoSession } from '@/lib/ciceron/demo/session'
 
-export default function HoyPage() {
+export default async function HoyPage() {
+  const persona = await getCiceronDemoSession()
+  if (!persona) redirect(CICERON_BASE)
+
+  const [{ notes }, { reviews }, { deadlines }] = await Promise.all([
+    loadDofNotes(persona),
+    loadReviews(persona),
+    loadDeadlines(persona),
+  ])
+
   return (
     <div>
       <h1 className="cic-h1">{copy.hoy.title}</h1>
@@ -18,7 +26,7 @@ export default function HoyPage() {
         <h2 id="hoy-matches" className="cic-h2">
           {copy.hoy.matches}
         </h2>
-        {fixtureDofNotes.map((n) => (
+        {notes.map((n) => (
           <DisclosureCard
             key={n.id}
             title={n.title}
@@ -40,7 +48,7 @@ export default function HoyPage() {
           {copy.hoy.reviews}
         </h2>
         <ul className="cic-stack" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-          {fixtureReviews.map((r) => (
+          {reviews.map((r) => (
             <li key={r.id} className="cic-card" style={{ margin: 0 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
                 <div>
@@ -61,7 +69,7 @@ export default function HoyPage() {
           {copy.hoy.deadlines}
         </h2>
         <ul style={{ listStyle: 'none', padding: 0, margin: 0 }} className="cic-stack">
-          {fixtureDeadlines.map((d) => (
+          {deadlines.map((d) => (
             <li key={d.id}>
               <DeadlineMarker label={`${d.label} — ${d.due}`} urgency={d.urgency} />
               <span className="cic-muted" style={{ marginLeft: 8, fontSize: '0.85rem' }}>

@@ -1,10 +1,18 @@
+import { redirect } from 'next/navigation'
 import { DataTable } from '../../_components/DataTable'
 import { DisclosureCard } from '../../_components/DisclosureCard'
 import { ReviewBadge } from '../../_components/ReviewBadge'
+import { CICERON_BASE } from '@/lib/ciceron/config'
 import { copy } from '@/lib/ciceron/copy/es-MX'
-import { fixtureDofNotes } from '@/lib/ciceron/demo/fixtures'
+import { loadDofNotes } from '@/lib/ciceron/demo/data'
+import { getCiceronDemoSession } from '@/lib/ciceron/demo/session'
 
-export default function MonitorDofPage() {
+export default async function MonitorDofPage() {
+  const persona = await getCiceronDemoSession()
+  if (!persona) redirect(CICERON_BASE)
+
+  const { notes } = await loadDofNotes(persona)
+
   return (
     <div>
       <h1 className="cic-h1">{copy.monitor.title}</h1>
@@ -24,7 +32,7 @@ export default function MonitorDofPage() {
               cell: (r) => <ReviewBadge state={r.review} />,
             },
           ]}
-          rows={fixtureDofNotes.map((n) => ({ ...n }))}
+          rows={notes}
         />
       </section>
 
@@ -32,7 +40,7 @@ export default function MonitorDofPage() {
         <h2 id="monitor-detail" className="cic-h2">
           Detalle
         </h2>
-        {fixtureDofNotes.map((n) => (
+        {notes.map((n) => (
           <DisclosureCard
             key={n.id}
             title={n.title}

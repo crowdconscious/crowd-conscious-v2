@@ -319,13 +319,13 @@ Exact touch points — not implemented in Prompt 0:
 |---|---|---|
 | R1 | Embedding provider | **Locked** — OpenAI `text-embedding-3-small` @ 1536 |
 | R2 | pgvector + schema | **Locked** — branch then production; Francisco applies |
-| R3 | Expose schema `ciceron` on PostgREST | **Pending** — needed for `.schema('ciceron')` user clients |
+| R3 | Expose schema `ciceron` on PostgREST | **In progress** — being exposed; rooms use service-role + invite cookie |
 | R4 | Cron secret | **Locked** — reuse `CRON_SECRET` |
 | R5 | Root layout Analytics / JSON-LD | Still open for Prompt 2 wording |
 | R6 | Public repo | No secrets / exploit details |
 | R7 | DOF SIDOF unofficial | Prompt 3 verifies |
 | R8 | Court automation | Rule 9 stands |
-| R9 | Font pairing | **Pending** — see `docs/ciceron/font-specimen.html` + specimens |
+| R9 | Font pairing | **Locked** — Spectral + Atkinson Hyperlegible |
 | R10 | CI workflow | Optional before Prompt 10 |
 
 ### Prompt 1 apply order (Francisco)
@@ -333,9 +333,10 @@ Exact touch points — not implemented in Prompt 0:
 1. `supabase/migrations/298_ciceron_foundation.sql`
 2. `supabase/migrations/299_ciceron_security.sql`
 3. `supabase/migrations/300_ciceron_storage.sql`
-4. `supabase/migrations/301_ciceron_seed.sql`
-5. Verify: `supabase/migrations/298_ciceron.verify.sql`
-6. Rollback (if needed): `supabase/migrations/298_ciceron.rollback.sql`
+4. `supabase/migrations/302_ciceron_seed_prod_safe.sql` (replaces retired 301)
+5. `supabase/migrations/303_ciceron_function_search_path.sql`
+6. Verify: `supabase/migrations/302_ciceron.verify.sql`
+7. Rollback (if needed): `supabase/migrations/298_ciceron.rollback.sql`
 
 Also expose schema `ciceron` in Supabase API settings on the branch.
 
