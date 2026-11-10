@@ -1,10 +1,10 @@
 # Cicerón — repository plan (Prompt 0)
 
-Status: **awaiting Francisco's approval** before Prompt 1.
+Status: Prompt 0 approved with locked decisions; **Prompt 1 migrations ready (not applied by agents)**.
 Date: 2026-11-10.
 Branch: `feat/ciceron-demo`.
 Supabase project (production): `ottixfzdytnzxquzrrcf` (Crowd Conscious App, us-east-2).
-**No product code, migrations, or dependency changes in this run.**
+Francisco applies `298`→`301` on a Supabase **test branch** first, then production.
 
 ---
 
@@ -89,7 +89,7 @@ Also relevant: `/organizaciones` uses its own `OrgShell` and documents “no civ
 
 **[MODEL_PROVIDER] recommendation:** Anthropic, reused through a **new** Cicerón gateway (`lib/ciceron/gateway/`) that calls `getAnthropicClient` / `MODELS` from `lib/agents/config.ts` (shared utility — not Crowd Conscious domain). Cicerón must **not** call the Anthropic SDK outside that gateway, and must log to `ciceron.ai_runs` (not only `public.agent_runs`).
 
-**[EMBEDDING_MODEL]:** Anthropic has no embeddings API. No embedding key exists in the repo or on Vercel today. See §2.7 and Pending in `DECISIONS.md`.
+**[EMBEDDING_MODEL] (locked):** OpenAI `text-embedding-3-small` @ **1536** dims. Env: `OPENAI_API_KEY` (provision later). Gateway must fail gracefully when absent (`lib/ciceron/gateway/embeddings.ts`).
 
 ### 1.6 UI
 
@@ -243,7 +243,7 @@ Proposed schedules in **UTC**, targeting CDMX wall clock (document CST/UTC−6; 
 | Evening | 18:00 | `0 0 * * 2-6` | same (00:00 UTC Tue–Sat = Mon–Fri 18:00 CDMX) |
 | Weekend extraordinary | 10:00 Sat/Sun | `0 16 * * 0,6` | same |
 
-Auth: `Authorization: Bearer ${CICERON_CRON_SECRET}` (or reuse `CRON_SECRET` if Francisco prefers one secret — Pending).  
+Auth: `Authorization: Bearer ${CRON_SECRET}` (**locked** — reuse existing secret; see `DECISIONS.md`).  
 Handler: `maxDuration` 300; batch + re-enqueue remainder (Prompt 3).  
 Also register under `vercel.json` `functions` + `crons`.
 
@@ -266,7 +266,7 @@ lib/ciceron/gateway/
 
 ### 2.6 Demo access model
 
-**Recommendation: invite codes (hashed) → demo session as a fictional member of «Despacho Demo, S.C.»**, as specified in Prompt 9 — **not** Crowd Conscious Google/password login for prospects.
+**Locked: invite codes (hashed) → demo session as a fictional member of «Despacho Demo, S.C.»** — **not** Crowd Conscious Google/password login for prospects.
 
 Rationale:
 
@@ -280,10 +280,7 @@ Alternative (not recommended for first demo): require Crowd Conscious login + al
 
 | Variable | Purpose |
 |---|---|
-| `CICERON_CRON_SECRET` | Bearer for `/api/ciceron/cron/*` (or decide to reuse `CRON_SECRET`) |
-| `CICERON_EMBEDDING_API_KEY` | Key for chosen embedding provider |
-| `CICERON_EMBEDDING_MODEL` | e.g. `voyage-3-lite` or `text-embedding-3-small` |
-| `CICERON_EMBEDDING_DIMENSION` | e.g. `512` / `1024` / `1536` — stored on every chunk |
+| `OPENAI_API_KEY` | Embeddings (`text-embedding-3-small`); optional until provisioned — fail soft |
 | `CICERON_DOF_USER_AGENT` | Identifying UA + contact for SIDOF requests |
 | `CICERON_DOF_CONTACT_EMAIL` | Contact address embedded in UA |
 | `CICERON_INVITE_PEPPER` | Server pepper for hashing invite codes |
@@ -291,19 +288,11 @@ Alternative (not recommended for first demo): require Crowd Conscious login + al
 | `CICERON_MONTHLY_BUDGET_USD` | Per-firm AI budget default |
 | `CICERON_PUBLIC_LOOKUP_ENABLED` | Must default `false` (rule 9 / Prompt 6 stub) |
 
-Shared (already exist, not renamed): `ANTHROPIC_API_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`.
+Shared (already exist): `ANTHROPIC_API_KEY`, `CRON_SECRET` (Cicéron cron auth), `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`.
 
-### 2.8 Embedding model options (Francisco decides)
+### 2.8 Embedding model (locked)
 
-Anthropic has **no** embeddings. Repo/Vercel currently have **no** OpenAI, Voyage, or AI Gateway keys.
-
-| Option | Dim (typical) | Ballpark cost | One-line tradeoff |
-|---|---|---|---|
-| **Voyage `voyage-3-lite`** (Anthropic partner) | 512 (or 1024) | Low $/MTok; strong retrieval for the price | Best fit next to Anthropic stack; **new vendor key** |
-| **OpenAI `text-embedding-3-small`** | 1536 (or lower via `dimensions`) | Very cheap, ubiquitous | Second cloud account; excellent tooling/docs |
-| **Vercel AI Gateway** → OpenAI/Voyage behind Gateway | provider-dependent | Gateway margin + provider | One Vercel billing path; **not configured here today** |
-
-**Recommendation to decide against:** default proposal is **Voyage `voyage-3-lite` @ 512 dims** for cost/latency on daily DOF volume, unless Francisco prefers a single OpenAI key or Gateway. Leave final choice Pending.
+**OpenAI `text-embedding-3-small`, 1536 dimensions**, key `OPENAI_API_KEY` (provision later). Code path: `lib/ciceron/gateway/embeddings.ts` returns `{ ok: false, reason: 'missing_api_key' }` when unset.
 
 ### 2.9 Court files (rule 9)
 
@@ -326,21 +315,32 @@ Exact touch points — not implemented in Prompt 0:
 
 ## 4. Risks and open questions
 
-| # | Risk / question | Decision needed from Francisco |
+| # | Risk / question | Status |
 |---|---|---|
-| R1 | **Embedding provider** unset; no keys in Vercel | Choose Voyage / OpenAI / AI Gateway (+ dimension) — see §2.8 |
-| R2 | **pgvector not enabled** on production | Approve enabling `vector` on a Supabase **branch** first, then production |
-| R3 | Exposing schema `ciceron` on PostgREST | Approve API schema exposure vs RPC-only access |
-| R4 | Cron secret: new `CICERON_CRON_SECRET` vs reuse `CRON_SECRET` | Prefer dedicated secret for blast-radius |
-| R5 | Root layout still injects Analytics / CC JSON-LD / LanguageProvider | Accept for hosted demo, or approve a larger root-layout split |
-| R6 | Public repo | No secrets, real client docs, or judiciary exploit details in docs/code |
-| R7 | DOF SIDOF endpoints are unofficial (Prompt 3 will verify) | If unreachable, stop — no dof.gob.mx scrape |
-| R8 | Court automation | **Confirm** lowest-risk connector model until counsel reviews judiciary notice |
-| R9 | Font pairing | Approve first pairing in `DECISIONS.md` Pending (Prompt 2) |
-| R10 | CI workflow not active under `.github/workflows/` | Whether to activate `docs/ci/ci.yml` before Prompt 10 evaluations |
+| R1 | Embedding provider | **Locked** — OpenAI `text-embedding-3-small` @ 1536 |
+| R2 | pgvector + schema | **Locked** — branch then production; Francisco applies |
+| R3 | Expose schema `ciceron` on PostgREST | **Pending** — needed for `.schema('ciceron')` user clients |
+| R4 | Cron secret | **Locked** — reuse `CRON_SECRET` |
+| R5 | Root layout Analytics / JSON-LD | Still open for Prompt 2 wording |
+| R6 | Public repo | No secrets / exploit details |
+| R7 | DOF SIDOF unofficial | Prompt 3 verifies |
+| R8 | Court automation | Rule 9 stands |
+| R9 | Font pairing | **Pending** — see `docs/ciceron/font-specimen.html` + specimens |
+| R10 | CI workflow | Optional before Prompt 10 |
+
+### Prompt 1 apply order (Francisco)
+
+1. `supabase/migrations/298_ciceron_foundation.sql`
+2. `supabase/migrations/299_ciceron_security.sql`
+3. `supabase/migrations/300_ciceron_storage.sql`
+4. `supabase/migrations/301_ciceron_seed.sql`
+5. Verify: `supabase/migrations/298_ciceron.verify.sql`
+6. Rollback (if needed): `supabase/migrations/298_ciceron.rollback.sql`
+
+Also expose schema `ciceron` in Supabase API settings on the branch.
 
 ---
 
 ## 5. Gate
 
-Prompt 0 gate: Francisco has read and approved this plan (and Pending items in `DECISIONS.md` he wants locked before Prompt 1). No product code until then.
+Prompt 0 decisions locked (except fonts). Prompt 1 gate: run verify SQL on the Supabase branch — cross-tenant read fails; seed firm visible.
