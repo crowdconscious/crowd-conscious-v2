@@ -1,51 +1,66 @@
-/* Cicéron design tokens — scoped under .ciceron-root. No CC teal/purple leak. */
+/* Cicerón.ai design tokens — full dark mode, scoped under .ciceron-root.
+   Sampled from brand board: deep navy bg, mint/emerald accent, off-white ink.
+   No Crowd Conscious teal/purple leak. */
+
 .ciceron-root {
-  --cic-paper: #f7f4ef;
-  --cic-paper-2: #efeae2;
-  --cic-ink: #1a1a1a;
-  --cic-muted: #5c5a56;
-  --cic-rule: #d9d2c5;
-  --cic-accent: #6b4f2c;
-  --cic-accent-soft: #f1e8dc;
-  --cic-focus: #6b4f2c;
+  color-scheme: dark;
 
-  /* Review states */
-  --cic-borrador-fg: #5c4a1f;
-  --cic-borrador-bg: #f3edd9;
-  --cic-revision-fg: #3d4a63;
-  --cic-revision-bg: #e6ebf3;
-  --cic-aprobado-fg: #1f4d3a;
-  --cic-aprobado-bg: #e4f0ea;
-  --cic-corregido-fg: #3a4558;
-  --cic-corregido-bg: #e8ecf2;
-  --cic-rechazado-fg: #6b2c2c;
-  --cic-rechazado-bg: #f3e4e4;
+  /* Surfaces */
+  --cic-bg: #020612;
+  --cic-paper: #020612;
+  --cic-paper-2: #0b1220;
+  --cic-surface: #101826;
+  --cic-surface-2: #152033;
 
-  /* Deadline urgency */
-  --cic-urgent: #8a2f2f;
-  --cic-soon: #8a5a12;
-  --cic-normal: #3d5a4a;
+  /* Text — aim ≥7:1 on --cic-bg for body reading */
+  --cic-ink: #e8eef6; /* ~16.4:1 on bg */
+  --cic-muted: #94a3b8; /* ~7.9:1 on bg */
 
-  /* Dark theme tokens (defined; light is default) */
-  --cic-dark-paper: #141210;
-  --cic-dark-ink: #f2efe8;
-  --cic-dark-muted: #a39e94;
-  --cic-dark-rule: #2c2924;
-  --cic-dark-accent: #c4a574;
+  /* Borders / focus */
+  --cic-rule: #1e2a3c;
+  --cic-rule-strong: #2a3a52;
+
+  /* Accent — mint → emerald; bright mint for small text AA */
+  --cic-accent-mint: #6ee7b7; /* ~13.3:1 on bg — links / .ai / large marks */
+  --cic-accent: #3ecf9a; /* mid; prefer mint for ≤14px text */
+  --cic-accent-deep: #10b981;
+  --cic-accent-soft: #0d281f;
+  --cic-accent-gradient: linear-gradient(135deg, var(--cic-accent-mint) 0%, var(--cic-accent-deep) 100%);
+  --cic-focus: var(--cic-accent-mint);
+  --cic-on-accent: #020612; /* text on green buttons */
+
+  /* Review states (dark surfaces) */
+  --cic-borrador-fg: #f0d78c;
+  --cic-borrador-bg: #2a2414;
+  --cic-revision-fg: #a8c0e8;
+  --cic-revision-bg: #1a2438;
+  --cic-aprobado-fg: #6ee7b7;
+  --cic-aprobado-bg: #0d281f;
+  --cic-corregido-fg: #b8c4d6;
+  --cic-corregido-bg: #1a2230;
+  --cic-rechazado-fg: #f0a8a8;
+  --cic-rechazado-bg: #2a1518;
+
+  /* Deadline urgency on dark */
+  --cic-urgent: #f0a0a0;
+  --cic-soon: #e0b86a;
+  --cic-normal: #6ee7b7;
 
   --cic-sans: var(--font-ciceron-sans), 'Atkinson Hyperlegible', system-ui, sans-serif;
   --cic-serif: var(--font-ciceron-serif), Spectral, 'Times New Roman', serif;
+  --cic-brand: var(--font-ciceron-brand), var(--cic-sans);
 
   --cic-space: 8px;
   --cic-max-read: 68ch;
-  --cic-rail: 232px;
+  --cic-rail: 248px;
+  --cic-radius: 6px;
 
-  background: var(--cic-paper);
+  background: var(--cic-bg);
   color: var(--cic-ink);
   font-family: var(--cic-sans);
   font-variant-numeric: tabular-nums;
   min-height: 100vh;
-  line-height: 1.45;
+  line-height: 1.5;
 }
 
 .ciceron-root *,
@@ -57,6 +72,11 @@
 .ciceron-root a {
   color: inherit;
   text-decoration: none;
+}
+
+.ciceron-root a.cic-link,
+.ciceron-root .cic-source {
+  color: var(--cic-accent-mint);
 }
 
 .ciceron-root :focus-visible {
@@ -73,6 +93,62 @@
   }
 }
 
+/* —— Logo lockup —— */
+.cic-logo-lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: var(--cic-ink);
+  line-height: 1;
+  text-decoration: none;
+}
+
+.cic-logo-mark {
+  width: 1.75rem;
+  height: 1.75rem;
+  flex-shrink: 0;
+}
+
+.cic-logo-word {
+  font-family: var(--cic-brand);
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  display: inline-flex;
+  align-items: baseline;
+}
+
+.cic-logo-name {
+  color: var(--cic-ink);
+}
+
+.cic-logo-ai {
+  color: var(--cic-accent-mint);
+  background: var(--cic-accent-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.cic-logo-lockup-mono {
+  color: #fff;
+}
+
+.cic-logo-lockup-mono .cic-logo-name,
+.cic-logo-lockup-mono .cic-logo-ai {
+  color: #fff;
+  background: none;
+  -webkit-text-fill-color: #fff;
+}
+
+.cic-rail-brand {
+  display: flex;
+  align-items: center;
+  padding: calc(var(--cic-space) * 1) calc(var(--cic-space) * 1.5)
+    calc(var(--cic-space) * 2.5);
+  margin-bottom: calc(var(--cic-space) * 1);
+}
+
 .cic-serif {
   font-family: var(--cic-serif);
 }
@@ -81,22 +157,25 @@
   font-family: var(--cic-serif);
   font-size: 1.75rem;
   font-weight: 700;
-  line-height: 1.25;
+  line-height: 1.3;
   letter-spacing: -0.01em;
   margin: 0;
+  color: var(--cic-ink);
 }
 
 .cic-h2 {
   font-family: var(--cic-serif);
   font-size: 1.25rem;
   font-weight: 600;
-  line-height: 1.3;
+  line-height: 1.35;
   margin: 0;
+  color: var(--cic-ink);
 }
 
 .cic-lead {
   color: var(--cic-muted);
   font-size: 0.95rem;
+  line-height: 1.55;
   max-width: var(--cic-max-read);
   margin: calc(var(--cic-space) * 1) 0 0;
 }
@@ -113,7 +192,7 @@
 
 .cic-demo-banner {
   background: var(--cic-accent-soft);
-  color: var(--cic-accent);
+  color: var(--cic-accent-mint);
   border-bottom: 1px solid var(--cic-rule);
   text-align: center;
   font-size: 0.75rem;
@@ -137,25 +216,26 @@
   gap: calc(var(--cic-space) * 0.5);
 }
 
-.cic-rail a {
+.cic-rail a:not(.cic-rail-brand) {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: calc(var(--cic-space) * 1);
   padding: calc(var(--cic-space) * 1.25) calc(var(--cic-space) * 1.5);
-  border-radius: 2px;
+  border-radius: var(--cic-radius);
   font-size: 0.9rem;
   font-weight: 500;
   color: var(--cic-muted);
+  border: 1px solid transparent;
 }
 
-.cic-rail a[aria-current='page'] {
-  background: var(--cic-paper);
-  color: var(--cic-ink);
-  border: 1px solid var(--cic-rule);
+.cic-rail a:not(.cic-rail-brand)[aria-current='page'] {
+  background: rgba(110, 231, 183, 0.08);
+  color: var(--cic-accent-mint);
+  border-color: transparent;
 }
 
-.cic-rail a:hover {
+.cic-rail a:not(.cic-rail-brand):hover {
   color: var(--cic-ink);
 }
 
@@ -163,9 +243,9 @@
   min-width: 1.25rem;
   height: 1.25rem;
   padding: 0 0.35rem;
-  border-radius: 2px;
+  border-radius: var(--cic-radius);
   border: 1px solid var(--cic-rule);
-  background: var(--cic-paper);
+  background: var(--cic-surface);
   color: var(--cic-ink);
   font-size: 0.7rem;
   font-weight: 700;
@@ -173,10 +253,17 @@
   place-items: center;
 }
 
+.cic-rail a[aria-current='page'] .cic-badge {
+  border-color: rgba(110, 231, 183, 0.35);
+  color: var(--cic-accent-mint);
+  background: rgba(110, 231, 183, 0.1);
+}
+
 .cic-main {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  background: var(--cic-bg);
 }
 
 .cic-topbar {
@@ -185,11 +272,13 @@
   gap: calc(var(--cic-space) * 2);
   padding: calc(var(--cic-space) * 1.5) calc(var(--cic-space) * 3);
   border-bottom: 1px solid var(--cic-rule);
+  background: var(--cic-bg);
 }
 
 .cic-topbar-firm {
   font-weight: 600;
   font-size: 0.9rem;
+  color: var(--cic-ink);
 }
 
 .cic-topbar-matter {
@@ -207,13 +296,18 @@
   align-items: center;
   gap: calc(var(--cic-space) * 1);
   border: 1px solid var(--cic-rule);
-  background: var(--cic-paper);
+  background: var(--cic-surface);
   color: var(--cic-muted);
   padding: calc(var(--cic-space) * 0.75) calc(var(--cic-space) * 1.25);
   font: inherit;
   font-size: 0.85rem;
-  border-radius: 2px;
+  border-radius: var(--cic-radius);
   cursor: pointer;
+}
+
+.cic-cmd-btn:hover {
+  border-color: var(--cic-rule-strong);
+  color: var(--cic-ink);
 }
 
 .cic-cmd-btn kbd {
@@ -221,7 +315,8 @@
   font-size: 0.75rem;
   border: 1px solid var(--cic-rule);
   padding: 0 0.35rem;
-  border-radius: 2px;
+  border-radius: 3px;
+  color: var(--cic-muted);
 }
 
 .cic-user {
@@ -243,29 +338,34 @@
   font-weight: 600;
   padding: 0.2rem 0.55rem;
   border: 1px solid currentColor;
-  border-radius: 2px;
+  border-radius: var(--cic-radius);
   line-height: 1.3;
 }
 
 .cic-chip-borrador {
   color: var(--cic-borrador-fg);
   background: var(--cic-borrador-bg);
+  border-color: transparent;
 }
 .cic-chip-en_revision {
   color: var(--cic-revision-fg);
   background: var(--cic-revision-bg);
+  border-color: transparent;
 }
 .cic-chip-aprobado {
   color: var(--cic-aprobado-fg);
   background: var(--cic-aprobado-bg);
+  border-color: transparent;
 }
 .cic-chip-corregido {
   color: var(--cic-corregido-fg);
   background: var(--cic-corregido-bg);
+  border-color: transparent;
 }
 .cic-chip-rechazado {
   color: var(--cic-rechazado-fg);
   background: var(--cic-rechazado-bg);
+  border-color: transparent;
 }
 
 .cic-source {
@@ -273,16 +373,17 @@
   align-items: center;
   gap: 0.4rem;
   font-size: 0.8rem;
-  border-bottom: 1px solid var(--cic-rule);
-  color: var(--cic-accent);
+  border-bottom: 1px solid rgba(110, 231, 183, 0.35);
+  color: var(--cic-accent-mint);
   font-weight: 600;
 }
 
 .cic-card {
   border: 1px solid var(--cic-rule);
-  background: var(--cic-paper);
+  background: var(--cic-surface);
   padding: calc(var(--cic-space) * 2.5);
   margin-bottom: calc(var(--cic-space) * 2);
+  border-radius: var(--cic-radius);
 }
 
 .cic-card summary {
@@ -304,14 +405,16 @@
 .cic-legal {
   font-family: var(--cic-serif);
   font-size: 1.05rem;
-  line-height: 1.65;
+  line-height: 1.7;
   max-width: var(--cic-max-read);
+  color: var(--cic-ink);
 }
 
 .cic-legal mark {
-  background: var(--cic-accent-soft);
+  background: rgba(110, 231, 183, 0.16);
   color: inherit;
   padding: 0 0.15em;
+  border-radius: 2px;
 }
 
 .cic-table {
@@ -381,10 +484,12 @@
 }
 
 .cic-empty {
-  border: 1px dashed var(--cic-rule);
+  border: 1px dashed var(--cic-rule-strong);
   padding: calc(var(--cic-space) * 4);
   color: var(--cic-muted);
   max-width: var(--cic-max-read);
+  border-radius: var(--cic-radius);
+  background: var(--cic-paper-2);
 }
 
 .cic-empty h2 {
@@ -399,51 +504,132 @@
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
-  border: 1px solid var(--cic-ink);
-  background: var(--cic-ink);
-  color: var(--cic-paper);
+  border: 1px solid transparent;
+  background: var(--cic-accent-gradient);
+  color: var(--cic-on-accent);
   font: inherit;
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: 700;
   padding: calc(var(--cic-space) * 1.25) calc(var(--cic-space) * 2);
-  border-radius: 2px;
+  border-radius: var(--cic-radius);
   cursor: pointer;
+}
+
+.cic-btn:hover {
+  filter: brightness(1.06);
+}
+
+.cic-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  filter: none;
 }
 
 .cic-btn-secondary {
   background: transparent;
   color: var(--cic-ink);
+  border-color: var(--cic-rule-strong);
+  font-weight: 600;
+}
+
+.cic-btn-secondary:hover {
+  border-color: var(--cic-muted);
+  filter: none;
+  background: var(--cic-surface);
 }
 
 .cic-input {
   width: 100%;
   border: 1px solid var(--cic-rule);
-  background: #fff;
+  background: var(--cic-paper-2);
   color: var(--cic-ink);
   font: inherit;
   font-size: 1rem;
   padding: calc(var(--cic-space) * 1.25) calc(var(--cic-space) * 1.5);
-  border-radius: 2px;
+  border-radius: var(--cic-radius);
+  color-scheme: dark;
+}
+
+.cic-input:hover {
+  border-color: var(--cic-rule-strong);
+}
+
+.cic-input:focus {
+  border-color: var(--cic-accent-mint);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(110, 231, 183, 0.25);
+}
+
+.cic-input::placeholder {
+  color: var(--cic-muted);
+  opacity: 0.85;
+}
+
+.cic-input option {
+  background: var(--cic-surface);
+  color: var(--cic-ink);
+}
+
+select.cic-input,
+input[type='date'].cic-input {
+  color-scheme: dark;
 }
 
 .cic-invite {
-  min-height: 100vh;
+  min-height: calc(100vh - 34px);
   display: grid;
   place-items: center;
   padding: calc(var(--cic-space) * 4);
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(16, 185, 129, 0.12), transparent 55%),
+    var(--cic-bg);
 }
 
 .cic-invite-panel {
   width: min(520px, 100%);
   border: 1px solid var(--cic-rule);
-  background: var(--cic-paper);
+  background: var(--cic-surface);
   padding: calc(var(--cic-space) * 5) calc(var(--cic-space) * 4);
+  border-radius: calc(var(--cic-radius) + 4px);
+}
+
+.cic-invite-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: calc(var(--cic-space) * 2);
+  margin-bottom: calc(var(--cic-space) * 2);
+}
+
+.cic-invite-brand .cic-logo-mark {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
+.cic-invite-brand .cic-logo-word {
+  font-size: 1.65rem;
+}
+
+.cic-invite-tagline {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cic-muted);
+  line-height: 1.45;
 }
 
 .cic-invite-panel h1 {
-  font-family: var(--cic-serif);
-  font-size: 2.25rem;
-  margin: 0 0 calc(var(--cic-space) * 2);
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .cic-invite-panel form {
@@ -455,6 +641,7 @@
 .cic-invite-panel label {
   font-size: 0.85rem;
   font-weight: 600;
+  color: var(--cic-ink);
 }
 
 .cic-error {
@@ -462,10 +649,25 @@
   font-size: 0.85rem;
 }
 
+.cic-toast {
+  position: fixed;
+  bottom: calc(var(--cic-space) * 3);
+  right: calc(var(--cic-space) * 3);
+  z-index: 60;
+  max-width: min(360px, calc(100vw - 2rem));
+  padding: calc(var(--cic-space) * 1.5) calc(var(--cic-space) * 2);
+  background: var(--cic-surface-2);
+  border: 1px solid var(--cic-rule-strong);
+  border-radius: var(--cic-radius);
+  color: var(--cic-ink);
+  font-size: 0.875rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
 .cic-palette-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(26, 26, 26, 0.35);
+  background: rgba(2, 6, 18, 0.72);
   z-index: 50;
   display: grid;
   place-items: start center;
@@ -474,9 +676,10 @@
 
 .cic-palette {
   width: min(560px, calc(100vw - 2rem));
-  background: var(--cic-paper);
-  border: 1px solid var(--cic-rule);
-  box-shadow: 0 1px 0 var(--cic-rule);
+  background: var(--cic-surface);
+  border: 1px solid var(--cic-rule-strong);
+  border-radius: var(--cic-radius);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
 }
 
 .cic-palette input {
@@ -488,6 +691,7 @@
   font-size: 1rem;
   padding: calc(var(--cic-space) * 2);
   color: var(--cic-ink);
+  color-scheme: dark;
 }
 
 .cic-palette-list {
@@ -520,6 +724,7 @@
 .cic-palette button[data-active='true'],
 .cic-palette button:hover {
   background: var(--cic-paper-2);
+  color: var(--cic-accent-mint);
 }
 
 .cic-section {
@@ -554,7 +759,7 @@
     right: 0;
     bottom: 0;
     border-top: 1px solid var(--cic-rule);
-    background: var(--cic-paper);
+    background: var(--cic-paper-2);
     z-index: 40;
     overflow-x: auto;
   }
@@ -567,8 +772,8 @@
     color: var(--cic-muted);
   }
   .cic-mobile-nav a[aria-current='page'] {
-    color: var(--cic-ink);
-    border-top: 2px solid var(--cic-ink);
+    color: var(--cic-accent-mint);
+    border-top: 2px solid var(--cic-accent-mint);
   }
   .cic-content {
     padding: calc(var(--cic-space) * 3) calc(var(--cic-space) * 2);

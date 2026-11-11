@@ -1,6 +1,6 @@
-/** All Cicéron UI strings — formal Mexican Spanish (usted). */
+/** All Cicerón.ai UI strings — formal Mexican Spanish (usted). */
 export const copy = {
-  brand: 'Cicerón',
+  brand: 'Cicerón.ai',
   demoLabel: 'Datos de demostración',
   firmDemo: 'Despacho Demo, S.C.',
   roleSocia: 'Socia',
@@ -9,7 +9,8 @@ export const copy = {
   roleAdmin: 'Administrador',
 
   invite: {
-    title: 'Cicerón',
+    title: 'Cicerón.ai',
+    tagline: 'Inteligencia que ordena. Conocimiento que decide.',
     subtitle:
       'Inteligencia jurídica para despachos mexicanos: Diario Oficial, expedientes, investigación con citas verificadas y revisión humana antes de cualquier salida al cliente.',
     codeLabel: 'Código de invitación',

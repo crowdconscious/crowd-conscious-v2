@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Cicerón.ai">
+  <defs>
+    <linearGradient id="g" x1="16" y1="14" x2="48" y2="50" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#6EE7B7"/>
+      <stop offset="100%" stop-color="#10B981"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="#020612"/>
+  <g fill="url(#g)" fill-rule="evenodd" transform="translate(8 8)">
+    <path d="M6 18V8h10v4H10v6H6z"/>
+    <path d="M32 8h10v10h-4v-6h-6V8z"/>
+    <path d="M42 30v10H32v-4h6v-6h4z"/>
+    <path d="M16 40H6V30h4v6h6v4z"/>
+    <path d="M14 14h20v4H18v12h16v4H14V14z"/>
+    <rect x="21" y="21" width="6" height="6" rx="0.5"/>
+  </g>
+</svg>

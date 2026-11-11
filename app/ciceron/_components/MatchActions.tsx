@@ -48,8 +48,8 @@ export function MatchActions({ matchId }: { matchId: string }) {
           type="submit"
           name="verdict"
           value="no_relevante"
-          className="cic-btn"
-          style={{ fontSize: '0.85rem', padding: '8px 12px', background: 'transparent', color: 'var(--cic-ink)', border: '1px solid var(--cic-rule)' }}
+          className="cic-btn cic-btn-secondary"
+          style={{ fontSize: '0.85rem', padding: '8px 12px' }}
         >
           {copy.monitor.notRelevant}
         </button>
