@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { CICERON_ROOMS } from '@/lib/ciceron/config'
 import { copy } from '@/lib/ciceron/copy/es-MX'
+import { CiceronLockup } from './CiceronLogo'
 import { CommandPalette } from './CommandPalette'
 import './ciceron.css'
 
@@ -43,6 +44,9 @@ export function CiceronShell({
       </div>
       <div className="cic-shell">
         <nav className="cic-rail" aria-label="Salas">
+          <Link href="/ciceron/hoy" className="cic-rail-brand" aria-label={copy.brand}>
+            <CiceronLockup />
+          </Link>
           {CICERON_ROOMS.map((room) => {
             const active = pathname === room.href || pathname?.startsWith(`${room.href}/`)
             return (

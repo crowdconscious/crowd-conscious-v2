@@ -3,6 +3,7 @@
 import { useActionState } from 'react'
 import { redeemCiceronInvite } from './actions'
 import { copy } from '@/lib/ciceron/copy/es-MX'
+import { CiceronLockup } from './_components/CiceronLogo'
 import './_components/ciceron.css'
 
 export default function CiceronInvitePage() {
@@ -15,6 +16,10 @@ export default function CiceronInvitePage() {
       </div>
       <div className="cic-invite">
         <div className="cic-invite-panel">
+          <div className="cic-invite-brand">
+            <CiceronLockup />
+            <p className="cic-invite-tagline">{copy.invite.tagline}</p>
+          </div>
           <h1>{copy.invite.title}</h1>
           <p className="cic-lead" style={{ marginTop: 0 }}>
             {copy.invite.subtitle}

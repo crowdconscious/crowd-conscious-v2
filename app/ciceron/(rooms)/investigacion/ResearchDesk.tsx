@@ -166,7 +166,7 @@ export function ResearchDesk({
           </p>
         )}
         {!state.ok && state.message && (
-          <p role="alert" style={{ marginTop: 8, color: 'var(--cic-accent)' }}>
+          <p role="alert" className="cic-error" style={{ marginTop: 8 }}>
             {state.message}
           </p>
         )}
@@ -211,10 +211,10 @@ export function ResearchDesk({
                     <button type="submit" name="feedback" value="useful" className="cic-btn" style={{ fontSize: '0.8rem' }}>
                       {copy.investigacion.feedbackUseful}
                     </button>
-                    <button type="submit" name="feedback" value="incorrect" className="cic-btn" style={{ fontSize: '0.8rem', background: 'transparent', color: 'var(--cic-ink)', border: '1px solid var(--cic-rule)' }}>
+                    <button type="submit" name="feedback" value="incorrect" className="cic-btn cic-btn-secondary" style={{ fontSize: '0.8rem' }}>
                       {copy.investigacion.feedbackIncorrect}
                     </button>
-                    <button type="submit" name="feedback" value="incomplete" className="cic-btn" style={{ fontSize: '0.8rem', background: 'transparent', color: 'var(--cic-ink)', border: '1px solid var(--cic-rule)' }}>
+                    <button type="submit" name="feedback" value="incomplete" className="cic-btn cic-btn-secondary" style={{ fontSize: '0.8rem' }}>
                       {copy.investigacion.feedbackIncomplete}
                     </button>
                     <input

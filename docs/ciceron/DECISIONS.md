@@ -133,6 +133,11 @@ Pending items need Francisco before (or as) the named prompt starts.
 - **Decision:** Coverage line lists the five ingested days (2026-11-04, 05, 06, 09, 10) plus fixtures; no implication of daily scrape.
 - **Consequences:** `lib/ciceron/research/coverage.ts` is the single source for that string.
 
+### 2026-11-11 — Dark-mode Cicerón.ai brand (hosted demo)
+- **Context:** Brand board for Cicerón.ai (deep navy + mint/emerald) replaces the cream/brown Cicéron light theme on `/ciceron` only.
+- **Decision:** Full dark theme via CSS variables on `.ciceron-root`. Product name in chrome is **Cicerón.ai**. Mark redrawn as SVG (maze «C» + center square); wordmark uses Outfit for the lockup only; Spectral + Atkinson stay for reading/UI. Favicon/apple-touch + `theme-color` scoped to Cicéron layout metadata. Accent gradient allowed on primary buttons and mark despite earlier «no gradients» experience note — board is authoritative for this surface.
+- **Consequences:** No Crowd Conscious theme changes. Contrast targets: body ink ≥7:1 on navy; small green text uses mint `#6EE7B7`.
+
 ---
 
 ## Pending
