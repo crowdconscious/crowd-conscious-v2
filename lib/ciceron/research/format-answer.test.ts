@@ -95,4 +95,17 @@ describe('ciceron format-answer', () => {
       [B, A]
     )
   })
+
+  it('handles ### headings and space-joined section labels without leftover markers', () => {
+    const body = `**Conclusión breve:** Resumen con cita [chunk:${A}]. ### Lo que dicen las fuentes Detalle [chunk:${A}].`
+    const index = buildCitationIndex(body)
+    const blocks = parseAnswerBlocks(body, index)
+    const headings = blocks.filter((b) => b.kind === 'heading')
+    assert.ok(headings.some((h) => h.kind === 'heading' && /conclusión breve/i.test(h.text)))
+    assert.ok(headings.some((h) => h.kind === 'heading' && /fuentes/i.test(h.text)))
+    const flat = JSON.stringify(blocks)
+    assert.equal(flat.includes('**'), false)
+    assert.equal(flat.includes('###'), false)
+    assert.equal(flat.includes('chunk:'), false)
+  })
 })

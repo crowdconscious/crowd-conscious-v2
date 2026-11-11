@@ -82,13 +82,61 @@ export type BlockNode =
   | { kind: 'heading'; text: string }
   | { kind: 'paragraph'; children: InlineNode[] }
 
-function stripOuterBoldHeading(line: string): string | null {
+const HEADING_ALT =
+  'Conclusión breve|Conclusion breve|Lo que dicen las fuentes|Análisis|Analisis|No se pudo verificar'
+
+function matchKnownHeadingPrefix(text: string): { heading: string; rest: string } | null {
+  const trimmed = text.trim()
+  const re = new RegExp(`^(?:#{1,6}\\s+|\\*\\*)?(${HEADING_ALT}):?(?:\\*\\*)?(?:\\s+|$)`, 'i')
+  const m = trimmed.match(re)
+  if (!m || m.index !== 0) return null
+  return {
+    heading: m[1]!.trim(),
+    rest: trimmed.slice(m[0].length).trim(),
+  }
+}
+
+function stripHeadingLabel(line: string): string | null {
   const trimmed = line.trim()
-  const m = trimmed.match(/^\*\*(.+?)\*\*:?\s*$/)
-  if (m) return m[1]!.replace(/:$/, '').trim()
-  const bare = trimmed.replace(/\*+/g, '').replace(/:$/, '').trim()
+  if (!trimmed) return null
+
+  const known = matchKnownHeadingPrefix(trimmed)
+  if (known && !known.rest) return known.heading
+
+  const boldOnly = trimmed.match(/^\*\*(.+?)\*\*:?\s*$/)
+  if (boldOnly) return boldOnly[1]!.replace(/:$/, '').trim()
+
+  const atxOnly = trimmed.match(/^#{1,6}\s+(.+?)\s*$/)
+  if (atxOnly) {
+    const knownAtx = matchKnownHeadingPrefix(atxOnly[1]!)
+    if (knownAtx) return knownAtx.heading
+    return atxOnly[1]!.replace(/\*+/g, '').replace(/:$/, '').trim()
+  }
+
+  const bare = trimmed.replace(/\*+/g, '').replace(/^#+\s*/, '').replace(/:$/, '').trim()
   if (KNOWN_HEADINGS.includes(bare.toLowerCase())) return bare
   return null
+}
+
+/**
+ * When the verifier joins sentences with spaces, section markers may sit mid-string.
+ * Split those out so headings still surface.
+ */
+function splitOnInlineHeadings(text: string): string[] {
+  const pattern = new RegExp(
+    `(#{1,6}\\s+(?:${HEADING_ALT}):?|\\*\\*(?:${HEADING_ALT}):?\\*\\*|\\*\\*(?:${HEADING_ALT}):)`,
+    'gi'
+  )
+  const parts: string[] = []
+  let last = 0
+  let m: RegExpExecArray | null
+  while ((m = pattern.exec(text)) !== null) {
+    if (m.index > last) parts.push(text.slice(last, m.index).trim())
+    parts.push(m[0]!.trim())
+    last = m.index + m[0]!.length
+  }
+  if (last < text.length) parts.push(text.slice(last).trim())
+  return parts.filter(Boolean)
 }
 
 function parseInlines(text: string, index: CitationIndex): InlineNode[] {
@@ -114,7 +162,11 @@ function parseInlines(text: string, index: CitationIndex): InlineNode[] {
     }
     last = m.index + m[0].length
   }
-  if (last < text.length) nodes.push({ kind: 'text', text: text.slice(last) })
+  if (last < text.length) {
+    // Strip leftover unmatched ** used as labels
+    const rest = text.slice(last).replace(/^\*\*/, '').replace(/\*\*$/, '')
+    if (rest) nodes.push({ kind: 'text', text: rest })
+  }
   return nodes.filter((n) => n.kind !== 'text' || n.text.length > 0)
 }
 
@@ -123,32 +175,39 @@ export function parseAnswerBlocks(body: string, index: CitationIndex): BlockNode
   const normalized = body.replace(/\r\n/g, '\n').trim()
   if (!normalized) return []
 
-  const paragraphs = normalized.split(/\n{2,}/)
+  const rough = normalized.split(/\n{2,}|\n(?=#{1,6}\s)|\n(?=\*\*)/)
+  const segments = rough.flatMap((p) => splitOnInlineHeadings(p))
   const blocks: BlockNode[] = []
 
-  for (const para of paragraphs) {
+  for (const para of segments) {
     const lines = para.split('\n').map((l) => l.trimEnd())
     let buffer: string[] = []
 
     const flushBuffer = () => {
-      const text = buffer.join('\n').trim()
+      let text = buffer.join('\n').trim()
       buffer = []
       if (!text) return
+      const knownLead = matchKnownHeadingPrefix(text)
+      if (knownLead) {
+        blocks.push({ kind: 'heading', text: knownLead.heading })
+        text = knownLead.rest
+        if (!text) return
+      }
       blocks.push({ kind: 'paragraph', children: parseInlines(text, index) })
     }
 
     for (const line of lines) {
-      const heading = stripOuterBoldHeading(line)
+      const known = matchKnownHeadingPrefix(line)
+      if (known) {
+        flushBuffer()
+        blocks.push({ kind: 'heading', text: known.heading })
+        if (known.rest) buffer.push(known.rest)
+        continue
+      }
+      const heading = stripHeadingLabel(line)
       if (heading) {
         flushBuffer()
         blocks.push({ kind: 'heading', text: heading })
-        continue
-      }
-      // Inline-only bold line that looks like a section label ending with :
-      const label = line.trim().match(/^\*\*(.+?)\*\*\s*$/)
-      if (label && /:$/.test(label[1]!.trim())) {
-        flushBuffer()
-        blocks.push({ kind: 'heading', text: label[1]!.replace(/:$/, '').trim() })
         continue
       }
       buffer.push(line)
