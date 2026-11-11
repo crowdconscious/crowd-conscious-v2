@@ -67,6 +67,35 @@
 .ciceron-root *::before,
 .ciceron-root *::after {
   box-sizing: border-box;
+  /* Beat Crowd Conscious globals: `*, *::before, *::after { color-scheme: light !important }` */
+  color-scheme: dark !important;
+}
+
+/*
+ * Beat Crowd Conscious globals:
+ *   input, textarea, select { background-color: var(--input-background) !important; ... }
+ * which paint white fields into /ciceron. Keep overrides scoped to .ciceron-root only.
+ */
+.ciceron-root input,
+.ciceron-root textarea,
+.ciceron-root select {
+  background-color: var(--cic-paper-2) !important;
+  color: var(--cic-ink) !important;
+  border-color: var(--cic-rule) !important;
+  color-scheme: dark !important;
+}
+
+.ciceron-root input::placeholder,
+.ciceron-root textarea::placeholder {
+  color: var(--cic-muted) !important;
+}
+
+.ciceron-root input:focus,
+.ciceron-root textarea:focus,
+.ciceron-root select:focus {
+  outline: 2px solid var(--cic-accent-mint) !important;
+  outline-offset: 2px;
+  border-color: var(--cic-accent-mint) !important;
 }
 
 .ciceron-root a {
