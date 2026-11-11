@@ -170,3 +170,137 @@ export async function loadResearchHistory(matterId: string | null) {
     matter_id: string | null
   }>
 }
+
+/** Load a stored research_queries row + ai_outputs body for the desk renderer. */
+export async function loadPastResearchAnswer(
+  researchQueryId: string
+): Promise<AskResearchState> {
+  const persona = await getCiceronDemoSession()
+  if (!persona) return { ok: false, message: 'Sesión no válida.' }
+  if (!researchQueryId) return { ok: false, message: 'Consulta no válida.' }
+
+  const db = tryCreateCiceronAdminClient()
+  if (!db) return { ok: false, message: 'No fue posible cargar la consulta.' }
+
+  const { data: rows } = await db
+    .from('research_queries')
+    .select(
+      'id, question, degraded, coverage_note, retrieved_chunk_ids, ai_output_id, matter_id'
+    )
+    .eq('id', researchQueryId)
+    .eq('firm_id', persona.firmId)
+    .limit(1)
+
+  const row =
+    Array.isArray(rows) && rows[0]
+      ? (rows[0] as {
+          id: string
+          question: string
+          degraded: boolean
+          coverage_note: string | null
+          retrieved_chunk_ids: string[] | null
+          ai_output_id: string | null
+          matter_id: string | null
+        })
+      : null
+  if (!row) return { ok: false, message: 'Consulta no encontrada.' }
+
+  let body = ''
+  if (row.ai_output_id) {
+    const { data: outs } = await db
+      .from('ai_outputs')
+      .select('id, body, status')
+      .eq('id', row.ai_output_id)
+      .limit(1)
+    const out =
+      Array.isArray(outs) && outs[0]
+        ? (outs[0] as { id: string; body: string; status: string })
+        : null
+    body = out?.body ?? ''
+  }
+
+  const chunkIds = [...new Set((row.retrieved_chunk_ids ?? []).filter(Boolean))]
+  const sources: NonNullable<AskResearchState['sources']> = []
+
+  for (const chunkId of chunkIds.slice(0, 20)) {
+    const { data: chunks } = await db
+      .from('chunks')
+      .select('id, text, document_id')
+      .eq('id', chunkId)
+      .limit(1)
+    const chunk =
+      Array.isArray(chunks) && chunks[0]
+        ? (chunks[0] as {
+            id: string
+            text: string
+            document_id: string | null
+          })
+        : null
+    if (!chunk) continue
+
+    let authority: string | null = null
+    let noteDate: string | null = null
+    let title: string | null = null
+    let officialUrl: string | null = null
+
+    if (chunk.document_id) {
+      const { data: docs } = await db
+        .from('documents')
+        .select('id, title, official_url')
+        .eq('id', chunk.document_id)
+        .limit(1)
+      const doc =
+        Array.isArray(docs) && docs[0]
+          ? (docs[0] as {
+              id: string
+              title: string | null
+              official_url: string | null
+            })
+          : null
+      if (doc) {
+        title = doc.title
+        officialUrl = doc.official_url
+        const { data: notes } = await db
+          .from('dof_notes')
+          .select('note_date, authority, title')
+          .eq('document_id', doc.id)
+          .limit(1)
+        const note =
+          Array.isArray(notes) && notes[0]
+            ? (notes[0] as {
+                note_date: string
+                authority: string | null
+                title: string | null
+              })
+            : null
+        if (note) {
+          noteDate = note.note_date
+          authority = note.authority
+          title = title || note.title
+        }
+      }
+    }
+
+    sources.push({
+      chunkId: chunk.id,
+      title,
+      authority,
+      noteDate,
+      officialUrl,
+      passage: chunk.text.slice(0, 600),
+    })
+  }
+
+  return {
+    ok: true,
+    body,
+    degraded: row.degraded,
+    degradeReason: null,
+    coverageNote: row.coverage_note ?? undefined,
+    sources,
+    aiOutputId: row.ai_output_id,
+    researchQueryId: row.id,
+    status: 'borrador',
+    question: row.question,
+  }
+}

@@ -75,14 +75,64 @@
  * Beat Crowd Conscious globals:
  *   input, textarea, select { background-color: var(--input-background) !important; ... }
  * which paint white fields into /ciceron. Keep overrides scoped to .ciceron-root only.
+ * Native <select>/<input type=date> ignore plain backgrounds unless appearance is reset.
  */
 .ciceron-root input,
 .ciceron-root textarea,
-.ciceron-root select {
+.ciceron-root select,
+.ciceron-root option,
+.ciceron-root optgroup {
   background-color: var(--cic-paper-2) !important;
   color: var(--cic-ink) !important;
   border-color: var(--cic-rule) !important;
   color-scheme: dark !important;
+}
+
+.ciceron-root select,
+.ciceron-root select.cic-input {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  background-color: var(--cic-paper-2) !important;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path fill='%2394A3B8' d='M1.4 1.4L6 6 10.6 1.4'/></svg>") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 0.85rem center !important;
+  background-size: 12px 8px !important;
+  padding-right: 2.25rem !important;
+}
+
+.ciceron-root select option,
+.ciceron-root select optgroup,
+.ciceron-root .cic-input option {
+  background-color: var(--cic-surface) !important;
+  color: var(--cic-ink) !important;
+}
+
+.ciceron-root input[type='date'],
+.ciceron-root input[type='datetime-local'],
+.ciceron-root input[type='time'],
+.ciceron-root input[type='month'],
+.ciceron-root input[type='week'] {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  background-color: var(--cic-paper-2) !important;
+  color: var(--cic-ink) !important;
+  color-scheme: dark !important;
+}
+
+.ciceron-root input[type='date']::-webkit-calendar-picker-indicator,
+.ciceron-root input[type='datetime-local']::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.75;
+  filter: invert(0.85) sepia(0.2) saturate(2) hue-rotate(100deg);
+}
+
+.ciceron-root input[type='date']::-webkit-datetime-edit,
+.ciceron-root input[type='date']::-webkit-datetime-edit-fields-wrapper,
+.ciceron-root input[type='date']::-webkit-datetime-edit-text,
+.ciceron-root input[type='date']::-webkit-datetime-edit-month-field,
+.ciceron-root input[type='date']::-webkit-datetime-edit-day-field,
+.ciceron-root input[type='date']::-webkit-datetime-edit-year-field {
+  color: var(--cic-ink) !important;
 }
 
 .ciceron-root input::placeholder,
@@ -96,6 +146,7 @@
   outline: 2px solid var(--cic-accent-mint) !important;
   outline-offset: 2px;
   border-color: var(--cic-accent-mint) !important;
+  box-shadow: 0 0 0 2px rgba(110, 231, 183, 0.22);
 }
 
 .ciceron-root a {
@@ -624,9 +675,94 @@ select.cic-input,
 input[type='date'].cic-input,
 input[type='text'].cic-input,
 textarea.cic-input {
-  color-scheme: dark;
-  background-color: var(--cic-paper-2);
+  color-scheme: dark !important;
+  background-color: var(--cic-paper-2) !important;
+  color: var(--cic-ink) !important;
+}
+
+/* —— Investigación answer + evidence —— */
+.cic-answer {
+  margin-top: calc(var(--cic-space) * 1.5);
+  white-space: normal;
+}
+
+.cic-answer-heading {
+  font-family: var(--cic-serif);
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: calc(var(--cic-space) * 2) 0 calc(var(--cic-space) * 1);
   color: var(--cic-ink);
+  line-height: 1.35;
+}
+
+.cic-answer-heading:first-child {
+  margin-top: 0;
+}
+
+.cic-answer-p {
+  margin: 0 0 calc(var(--cic-space) * 1.5);
+  line-height: 1.7;
+}
+
+.cic-answer-p:last-child {
+  margin-bottom: 0;
+}
+
+.cic-cite-chip {
+  display: inline-flex;
+  align-items: baseline;
+  margin: 0 0.15em;
+  padding: 0 0.3em;
+  border: 1px solid rgba(110, 231, 183, 0.45);
+  border-radius: 3px;
+  background: rgba(110, 231, 183, 0.12);
+  color: var(--cic-accent-mint);
+  font: inherit;
+  font-size: 0.8em;
+  font-weight: 700;
+  font-family: var(--cic-sans);
+  line-height: 1.4;
+  cursor: pointer;
+  vertical-align: baseline;
+}
+
+.cic-cite-chip:hover,
+.cic-cite-chip-active {
+  background: rgba(110, 231, 183, 0.28);
+  border-color: var(--cic-accent-mint);
+}
+
+.cic-evidence-card {
+  padding: calc(var(--cic-space) * 1.25);
+  border-radius: var(--cic-radius);
+  border: 1px solid transparent;
+  scroll-margin-top: 88px;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.cic-evidence-card-active {
+  border-color: rgba(110, 231, 183, 0.55);
+  background: rgba(110, 231, 183, 0.08);
+}
+
+.cic-evidence-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+}
+
+.cic-evidence-num {
+  flex-shrink: 0;
+  min-width: 1.4rem;
+  height: 1.4rem;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 3px;
+  background: rgba(110, 231, 183, 0.16);
+  color: var(--cic-accent-mint);
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: var(--cic-sans);
 }
 
 .cic-invite {
