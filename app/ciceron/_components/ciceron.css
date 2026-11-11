@@ -538,16 +538,23 @@
   background: var(--cic-surface);
 }
 
+.ciceron-root input,
+.ciceron-root textarea,
+.ciceron-root select {
+  color-scheme: dark;
+}
+
 .cic-input {
   width: 100%;
   border: 1px solid var(--cic-rule);
-  background: var(--cic-paper-2);
+  background-color: var(--cic-paper-2);
   color: var(--cic-ink);
   font: inherit;
   font-size: 1rem;
   padding: calc(var(--cic-space) * 1.25) calc(var(--cic-space) * 1.5);
   border-radius: var(--cic-radius);
   color-scheme: dark;
+  caret-color: var(--cic-accent-mint);
 }
 
 .cic-input:hover {
@@ -558,6 +565,8 @@
   border-color: var(--cic-accent-mint);
   outline: none;
   box-shadow: 0 0 0 2px rgba(110, 231, 183, 0.25);
+  background-color: var(--cic-paper-2);
+  color: var(--cic-ink);
 }
 
 .cic-input::placeholder {
@@ -570,9 +579,25 @@
   color: var(--cic-ink);
 }
 
+/* Chrome/Safari paint autofill as white; keep dark surfaces */
+.ciceron-root input.cic-input:-webkit-autofill,
+.ciceron-root input.cic-input:-webkit-autofill:hover,
+.ciceron-root input.cic-input:-webkit-autofill:focus,
+.ciceron-root textarea.cic-input:-webkit-autofill {
+  -webkit-text-fill-color: var(--cic-ink);
+  caret-color: var(--cic-accent-mint);
+  box-shadow: 0 0 0 1000px var(--cic-paper-2) inset;
+  border: 1px solid var(--cic-rule);
+  transition: background-color 99999s ease-out;
+}
+
 select.cic-input,
-input[type='date'].cic-input {
+input[type='date'].cic-input,
+input[type='text'].cic-input,
+textarea.cic-input {
   color-scheme: dark;
+  background-color: var(--cic-paper-2);
+  color: var(--cic-ink);
 }
 
 .cic-invite {
