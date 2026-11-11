@@ -7,21 +7,28 @@ import {
 } from '@/lib/ciceron/db/types'
 
 describe('ciceron embeddings gateway', () => {
-  it('reports locked model and dimension', () => {
+  it('reports locked gateway model and dimension', () => {
     const cfg = embeddingConfig()
     assert.equal(cfg.model, CICERON_EMBEDDING_MODEL)
     assert.equal(cfg.dimension, CICERON_EMBEDDING_DIMENSION)
+    assert.match(cfg.model, /^openai\//)
   })
 
-  it('fails gracefully when OPENAI_API_KEY is absent', async () => {
-    const prev = process.env.OPENAI_API_KEY
-    delete process.env.OPENAI_API_KEY
+  it('fails soft when AI Gateway auth is absent locally', async () => {
+    const prevKey = process.env.AI_GATEWAY_API_KEY
+    const prevOidc = process.env.VERCEL_OIDC_TOKEN
+    const prevEnv = process.env.VERCEL_ENV
+    delete process.env.AI_GATEWAY_API_KEY
+    delete process.env.VERCEL_OIDC_TOKEN
+    delete process.env.VERCEL_ENV
     try {
       const result = await embedTexts(['hola mundo jurídico'], { recordRun: false })
       assert.equal(result.ok, false)
-      if (!result.ok) assert.equal(result.reason, 'missing_api_key')
+      if (!result.ok) assert.equal(result.reason, 'gateway_unavailable')
     } finally {
-      if (prev !== undefined) process.env.OPENAI_API_KEY = prev
+      if (prevKey !== undefined) process.env.AI_GATEWAY_API_KEY = prevKey
+      if (prevOidc !== undefined) process.env.VERCEL_OIDC_TOKEN = prevOidc
+      if (prevEnv !== undefined) process.env.VERCEL_ENV = prevEnv
     }
   })
 

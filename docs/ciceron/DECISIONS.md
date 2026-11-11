@@ -118,6 +118,23 @@ Pending items need Francisco before (or as) the named prompt starts.
 
 ---
 
+### 2026-11-11 — Embeddings via Vercel AI Gateway (Prompt 5)
+- **Context:** No direct OpenAI key on the project; Francisco locked gateway routing.
+- **Decision:** Embeddings use AI SDK `embed`/`embedMany` with model id `openai/text-embedding-3-small` @ **1536** (matches `chunks.embedding`). On Vercel, auth is the project OIDC token; locally set `AI_GATEWAY_API_KEY` when present. Fail-soft: chunks stay `embedding_pending`; Investigación shows a clear degraded message and continues with lexical retrieval.
+- **Consequences:** `lib/ciceron/gateway/embeddings.ts` no longer calls OpenAI directly. Cron `?backfill=1` and ingest use the same path. Older decision mentioning `OPENAI_API_KEY` is superseded for Cicéron embeddings (Anthropic chat keys unchanged).
+
+### 2026-11-11 — Investigación answer models (Prompt 5)
+- **Context:** Need rewrite + grounded answer with cost logging.
+- **Decision:** Query rewrite = `MODELS.FAST` (Haiku); research answer = `MODELS.CREATIVE` (`claude-sonnet-5`). Both only through `lib/ciceron/gateway/complete` → `ai_runs`. Verifier is deterministic (no model).
+- **Consequences:** Tier-1 `ai_outputs` status `borrador` + `output_citations`. Budget via `firm_ai_budgets` / `CICERON_FIRM_AI_BUDGET_USD`.
+
+### 2026-11-11 — Corpus coverage honesty (Prompt 5)
+- **Context:** Scheduled DOF scrape remains OFF (#83).
+- **Decision:** Coverage line lists the five ingested days (2026-11-04, 05, 06, 09, 10) plus fixtures; no implication of daily scrape.
+- **Consequences:** `lib/ciceron/research/coverage.ts` is the single source for that string.
+
+---
+
 ## Pending
 
 ### P7 — Accept root-layout analytics/JSON-LD leakage for hosted demo
