@@ -6,7 +6,8 @@
  *   npx tsx scripts/ciceron-dof-backfill.ts --days=30 --date=2026-11-10
  *
  * Requires NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY.
- * OPENAI_API_KEY optional (fail-soft embeddings → embedding_pending).
+ * AI Gateway optional (AI_GATEWAY_API_KEY locally / OIDC on Vercel).
+ * Fail-soft embeddings → embedding_pending when gateway unavailable.
  */
 import { lastBusinessDays, todayInMexicoCity } from '../lib/ciceron/dof/dates'
 import { runDofIngestDay, type PipelineCursor } from '../lib/ciceron/dof/pipeline'

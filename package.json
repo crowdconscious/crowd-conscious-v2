@@ -9,9 +9,11 @@
     "seed:predictions": "tsx scripts/seed-prediction-markets.ts",
     "seed:simulation-fixture": "tsx scripts/seed-simulation-fixture.ts",
     "test": "node scripts/run-tests.mjs",
-    "typecheck": "tsc --noEmit -p tsconfig.json"
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "ciceron:research-eval": "tsx scripts/ciceron-research-eval.ts"
   },
   "dependencies": {
+    "@ai-sdk/gateway": "^4.0.142",
     "@anthropic-ai/sdk": "^0.78.0",
     "@react-email/components": "^0.5.5",
     "@react-email/render": "^1.3.1",
@@ -26,6 +28,7 @@
     "@vercel/analytics": "^1.5.0",
     "@vercel/og": "^0.11.1",
     "@vercel/speed-insights": "^1.2.0",
+    "ai": "^7.0.169",
     "apify-client": "^2.22.2",
     "canvas-confetti": "^1.9.4",
     "chart.js": "^4.5.1",

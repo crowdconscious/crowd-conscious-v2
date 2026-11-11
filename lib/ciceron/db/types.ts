@@ -17,8 +17,13 @@ export type CiceronLegalEdgeType = 'amends' | 'repeals' | 'cites' | 'interprets'
 export type CiceronLegalEntityKind = 'norm' | 'article' | 'thesis' | 'authority' | 'court'
 export type CiceronDraftAuthorType = 'human' | 'model'
 
-/** OpenAI text-embedding-3-small (Francisco lock). */
-export const CICERON_EMBEDDING_MODEL = 'text-embedding-3-small' as const
+/**
+ * Embedding model id for storage + gateway.
+ * Prompt 5: Vercel AI Gateway slug `openai/text-embedding-3-small` @ 1536.
+ */
+export const CICERON_EMBEDDING_MODEL = 'openai/text-embedding-3-small' as const
+/** Short name still accepted when reading older chunk rows. */
+export const CICERON_EMBEDDING_MODEL_SHORT = 'text-embedding-3-small' as const
 export const CICERON_EMBEDDING_DIMENSION = 1536 as const
 
 export type CiceronDatabase = {
@@ -245,6 +250,52 @@ export type CiceronDatabase = {
         }
         Update: Partial<CiceronDatabase['ciceron']['Tables']['source_incidents']['Insert']>
       }
+      research_queries: {
+        Row: {
+          id: string
+          firm_id: string
+          matter_id: string | null
+          user_id: string | null
+          question: string
+          ai_output_id: string | null
+          ai_run_id: string | null
+          retrieved_chunk_ids: string[]
+          coverage_note: string | null
+          degraded: boolean
+          feedback: 'useful' | 'incorrect' | 'incomplete' | null
+          feedback_comment: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          firm_id: string
+          matter_id?: string | null
+          user_id?: string | null
+          question: string
+          ai_output_id?: string | null
+          ai_run_id?: string | null
+          retrieved_chunk_ids?: string[]
+          coverage_note?: string | null
+          degraded?: boolean
+          feedback?: 'useful' | 'incorrect' | 'incomplete' | null
+          feedback_comment?: string | null
+          created_at?: string
+        }
+        Update: Partial<CiceronDatabase['ciceron']['Tables']['research_queries']['Insert']>
+      }
+      firm_ai_budgets: {
+        Row: {
+          firm_id: string
+          monthly_budget_usd: number
+          updated_at: string
+        }
+        Insert: {
+          firm_id: string
+          monthly_budget_usd?: number
+          updated_at?: string
+        }
+        Update: Partial<CiceronDatabase['ciceron']['Tables']['firm_ai_budgets']['Insert']>
+      }
       audit_events: {
         Row: {
           id: string
@@ -272,6 +323,24 @@ export type CiceronDatabase = {
     Functions: {
       search_chunks: {
         Args: {
+          query_text: string | null
+          query_embedding: number[] | null
+          p_firm_id: string
+          p_matter_id?: string | null
+          p_limit?: number
+        }
+        Returns: {
+          chunk_id: string
+          document_id: string
+          chunk_text: string
+          fused_score: number
+          fts_rank: number
+          vector_distance: number | null
+        }[]
+      }
+      search_chunks_as_actor: {
+        Args: {
+          p_actor: string
           query_text: string | null
           query_embedding: number[] | null
           p_firm_id: string

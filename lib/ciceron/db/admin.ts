@@ -13,16 +13,21 @@ type CiceronQuery = {
   ) => CiceronQuery
   update: (values: Record<string, unknown>) => CiceronQuery
   eq: (column: string, value: string | boolean | number | null) => CiceronQuery
+  gte: (column: string, value: string | number) => CiceronQuery
   in: (column: string, values: readonly string[]) => CiceronQuery
   is: (column: string, value: null) => CiceronQuery
   order: (column: string, opts?: { ascending?: boolean }) => CiceronQuery
   limit: (count: number) => CiceronQuery
-  then: Promise<{ data: unknown; error: { message: string } | null }>["then"]
+  then: Promise<{ data: unknown; error: { message: string } | null }>['then']
 }
 
 type SchemaCapable = {
   schema: (name: 'ciceron') => {
     from: (table: string) => CiceronQuery
+    rpc: (
+      fn: string,
+      args?: Record<string, unknown>
+    ) => Promise<{ data: unknown; error: { message: string } | null }>
   }
 }
 
