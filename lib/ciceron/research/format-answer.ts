@@ -13,6 +13,9 @@ export type AnswerSource = {
   noteDate: string | null
   officialUrl: string | null
   passage: string
+  section?: string | null
+  edition?: string | null
+  noteCode?: string | null
 }
 
 export type CitationIndex = {
@@ -240,9 +243,18 @@ export function formatAnswerForCopy(
 
   const lines = ordered.map((s) => {
     const n = index.numberById.get(s.chunkId.toLowerCase())
-    const label = [s.authority, s.title, s.noteDate].filter(Boolean).join(' · ')
+    const meta = [
+      s.authority,
+      s.title,
+      s.noteDate,
+      s.section ? `Sección ${s.section}` : null,
+      s.edition,
+    ]
+      .filter(Boolean)
+      .join(' · ')
     const url = s.officialUrl ? ` — ${s.officialUrl}` : ''
-    return `[${n}] ${label || s.chunkId}${url}`
+    const passage = s.passage ? `\n    ${s.passage}` : ''
+    return `[${n}] ${meta || 'Fuente DOF'}${url}${passage}`
   })
 
   return `${text}\n\nFuentes\n${lines.join('\n')}`

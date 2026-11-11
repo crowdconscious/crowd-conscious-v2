@@ -4,6 +4,10 @@ import { revalidatePath } from 'next/cache'
 import { tryCreateCiceronAdminClient } from '@/lib/ciceron/db/admin'
 import { getCiceronDemoSession } from '@/lib/ciceron/demo/session'
 import { answerResearchQuestion } from '@/lib/ciceron/research/answer'
+import {
+  extractCitedChunkIds,
+  loadEvidenceSources,
+} from '@/lib/ciceron/research/evidence-sources'
 
 export type AskResearchState = {
   ok: boolean
@@ -21,6 +25,9 @@ export type AskResearchState = {
     noteDate: string | null
     officialUrl: string | null
     passage: string
+    section?: string | null
+    edition?: string | null
+    noteCode?: string | null
   }>
   searchedQueries?: string[]
   aiOutputId?: string | null
@@ -206,6 +213,7 @@ export async function loadPastResearchAnswer(
   if (!row) return { ok: false, message: 'Consulta no encontrada.' }
 
   let body = ''
+  let citedFromOutput: string[] = []
   if (row.ai_output_id) {
     const { data: outs } = await db
       .from('ai_outputs')
@@ -217,79 +225,33 @@ export async function loadPastResearchAnswer(
         ? (outs[0] as { id: string; body: string; status: string })
         : null
     body = out?.body ?? ''
+
+    const { data: cites } = await db
+      .from('output_citations')
+      .select('chunk_id')
+      .eq('ai_output_id', row.ai_output_id)
+    citedFromOutput = (
+      Array.isArray(cites) ? cites : []
+    ).map((c) => String((c as { chunk_id: string }).chunk_id).toLowerCase())
   }
 
-  const chunkIds = [...new Set((row.retrieved_chunk_ids ?? []).filter(Boolean))]
-  const sources: NonNullable<AskResearchState['sources']> = []
+  // Prefer ids actually cited in the stored body, then output_citations, then retrieved.
+  const fromBody = extractCitedChunkIds(body)
+  const retrieved = (row.retrieved_chunk_ids ?? []).map((id) => id.toLowerCase())
+  const chunkIds = [
+    ...new Set(
+      (fromBody.length > 0
+        ? fromBody
+        : citedFromOutput.length > 0
+          ? citedFromOutput
+          : retrieved
+      ).filter(Boolean)
+    ),
+  ].slice(0, 24)
 
-  for (const chunkId of chunkIds.slice(0, 20)) {
-    const { data: chunks } = await db
-      .from('chunks')
-      .select('id, text, document_id')
-      .eq('id', chunkId)
-      .limit(1)
-    const chunk =
-      Array.isArray(chunks) && chunks[0]
-        ? (chunks[0] as {
-            id: string
-            text: string
-            document_id: string | null
-          })
-        : null
-    if (!chunk) continue
-
-    let authority: string | null = null
-    let noteDate: string | null = null
-    let title: string | null = null
-    let officialUrl: string | null = null
-
-    if (chunk.document_id) {
-      const { data: docs } = await db
-        .from('documents')
-        .select('id, title, official_url')
-        .eq('id', chunk.document_id)
-        .limit(1)
-      const doc =
-        Array.isArray(docs) && docs[0]
-          ? (docs[0] as {
-              id: string
-              title: string | null
-              official_url: string | null
-            })
-          : null
-      if (doc) {
-        title = doc.title
-        officialUrl = doc.official_url
-        const { data: notes } = await db
-          .from('dof_notes')
-          .select('note_date, authority, title')
-          .eq('document_id', doc.id)
-          .limit(1)
-        const note =
-          Array.isArray(notes) && notes[0]
-            ? (notes[0] as {
-                note_date: string
-                authority: string | null
-                title: string | null
-              })
-            : null
-        if (note) {
-          noteDate = note.note_date
-          authority = note.authority
-          title = title || note.title
-        }
-      }
-    }
-
-    sources.push({
-      chunkId: chunk.id,
-      title,
-      authority,
-      noteDate,
-      officialUrl,
-      passage: chunk.text.slice(0, 600),
-    })
-  }
+  const sources = await loadEvidenceSources(db, chunkIds, {
+    firmId: persona.firmId,
+  })
 
   return {
     ok: true,

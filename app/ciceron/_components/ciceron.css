@@ -765,6 +765,35 @@ textarea.cic-input {
   font-family: var(--cic-sans);
 }
 
+.cic-evidence-meta {
+  min-width: 0;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.cic-evidence-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--cic-ink);
+  line-height: 1.35;
+}
+
+.cic-evidence-sub {
+  font-size: 0.75rem;
+  color: var(--cic-muted);
+  line-height: 1.4;
+}
+
+.cic-evidence-excerpt {
+  font-size: 0.92rem;
+  margin: 8px 0 0;
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .cic-invite {
   min-height: calc(100vh - 34px);
   display: grid;
