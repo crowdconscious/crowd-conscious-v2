@@ -12,6 +12,10 @@ import {
   type RetrievalHit,
 } from '@/lib/ciceron/research/retrieve'
 import {
+  extractCitedChunkIds,
+  loadEvidenceSources,
+} from '@/lib/ciceron/research/evidence-sources'
+import {
   parseCitedSentences,
   renderVerifiedAnswer,
   verifyCitations,
@@ -26,6 +30,9 @@ export type ResearchSource = {
   noteDate: string | null
   officialUrl: string | null
   passage: string
+  section?: string | null
+  edition?: string | null
+  noteCode?: string | null
 }
 
 export type ResearchAnswer = {
@@ -268,6 +275,7 @@ export async function answerResearchQuestion(opts: {
     .join('\n\n')
 
   const citedKept = [...new Set(verified.kept.flatMap((s) => s.chunkIds))]
+  const citedKeptLower = new Set(citedKept.map((id) => id.toLowerCase()))
   const stored = await storeResearchOutput({
     ...opts,
     question,
@@ -280,6 +288,34 @@ export async function answerResearchQuestion(opts: {
     costEstimateUsd: cost,
   })
 
+  // Prefer rich DOF metadata (section/edition/url) for cited chunks; fall back
+  // to retrieval hits. Match chunk ids case-insensitively — verifier lowercases.
+  const citedIdsForEvidence =
+    citedKept.length > 0 ? citedKept : extractCitedChunkIds(fullBody)
+  const db = tryCreateCiceronAdminClient()
+  let evidenceSources: ResearchSource[] = []
+  if (db && citedIdsForEvidence.length) {
+    const rich = await loadEvidenceSources(db, citedIdsForEvidence, {
+      firmId: opts.firmId,
+    })
+    evidenceSources = rich.map((s) => ({
+      chunkId: s.chunkId,
+      title: s.title,
+      authority: s.authority,
+      noteDate: s.noteDate,
+      officialUrl: s.officialUrl,
+      passage: s.passage,
+      section: s.section ?? null,
+      edition: s.edition ?? null,
+      noteCode: s.noteCode ?? null,
+    }))
+  }
+  if (evidenceSources.length === 0) {
+    evidenceSources = sources.filter(
+      (s) => citedKeptLower.size === 0 || citedKeptLower.has(s.chunkId.toLowerCase())
+    )
+  }
+
   return {
     ok: true,
     question,
@@ -289,7 +325,7 @@ export async function answerResearchQuestion(opts: {
     degraded: retrieval.degraded,
     degradeReason: retrieval.degradeReason,
     coverageNote,
-    sources: sources.filter((s) => citedKept.includes(s.chunkId) || citedKept.length === 0),
+    sources: evidenceSources,
     searchedQueries: retrieval.queries,
     aiOutputId: stored.aiOutputId,
     researchQueryId: stored.researchQueryId,

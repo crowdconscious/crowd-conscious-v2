@@ -1,11 +1,19 @@
 'use client'
 
-import { useActionState, useEffect, useState } from 'react'
+import { useActionState, useEffect, useMemo, useState, useTransition } from 'react'
 import { useFormStatus } from 'react-dom'
 import { EvidencePanel } from '../../_components/EvidencePanel'
+import { ResearchAnswerView } from '../../_components/ResearchAnswerView'
 import { copy } from '@/lib/ciceron/copy/es-MX'
 import {
+  buildCitationIndex,
+  formatAnswerForCopy,
+  orderSourcesByCitations,
+  type AnswerSource,
+} from '@/lib/ciceron/research/format-answer'
+import {
   askResearch,
+  loadPastResearchAnswer,
   saveResearchFeedback,
   sendResearchToReview,
   type AskResearchState,
@@ -40,35 +48,103 @@ export function ResearchDesk({
   history: Array<{ id: string; question: string; created_at: string }>
 }) {
   const [state, formAction] = useActionState(askResearch, initial)
+  const [past, setPast] = useState<AskResearchState | null>(null)
   const [scope, setScope] = useState('dof')
   const [matterId, setMatterId] = useState('')
   const [asOf, setAsOf] = useState('')
   const [streamHint, setStreamHint] = useState(false)
   const [historyFilter, setHistoryFilter] = useState('')
+  const [activeCite, setActiveCite] = useState<number | null>(null)
+  const [copyNote, setCopyNote] = useState(false)
+  const [historyPending, startHistoryTransition] = useTransition()
 
   useEffect(() => {
-    if (state.ok) setStreamHint(false)
-  }, [state.ok])
+    if (state.ok) {
+      setStreamHint(false)
+      setPast(null)
+      setActiveCite(null)
+    }
+  }, [state.ok, state.researchQueryId])
 
-  const evidence =
-    state.ok && state.sources
-      ? state.sources.map((s) => ({
+  const active: AskResearchState = past?.ok ? past : state
+
+  const sources: AnswerSource[] = useMemo(
+    () =>
+      (active.ok && active.sources
+        ? active.sources
+        : []
+      ).map((s) => ({
+        chunkId: s.chunkId,
+        authority: s.authority,
+        title: s.title,
+        noteDate: s.noteDate,
+        officialUrl: s.officialUrl,
+        passage: s.passage,
+        section: s.section ?? null,
+        edition: s.edition ?? null,
+        noteCode: s.noteCode ?? null,
+      })),
+    [active]
+  )
+
+  const citationIndex = useMemo(
+    () => buildCitationIndex(active.body ?? '', sources),
+    [active.body, sources]
+  )
+
+  const evidence = useMemo(() => {
+    const ordered = orderSourcesByCitations(sources, citationIndex)
+    return ordered
+      .map((s) => {
+        const n = citationIndex.numberById.get(s.chunkId.toLowerCase())
+        if (!n) return null
+        return {
           id: s.chunkId,
+          n,
           authority: s.authority || 'DOF',
+          title: s.title,
           type: 'Pasaje',
           date: s.noteDate || '—',
-          href: s.officialUrl || 'https://www.dof.gob.mx/',
+          section: s.section ?? null,
+          edition: s.edition ?? null,
+          href: s.officialUrl,
           passage: s.passage,
-        }))
-      : []
+        }
+      })
+      .filter((x): x is NonNullable<typeof x> => x !== null)
+  }, [sources, citationIndex])
 
   const filteredHistory = history.filter((h) =>
     h.question.toLowerCase().includes(historyFilter.toLowerCase())
   )
 
+  function onCiteClick(n: number) {
+    setActiveCite(n)
+    const el = document.getElementById(`cic-evidence-${n}`)
+    el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  }
+
   function copyAnswer() {
-    if (!state.body) return
-    void navigator.clipboard.writeText(state.body)
+    if (!active.body) return
+    const text = formatAnswerForCopy(active.body, sources, citationIndex)
+    void navigator.clipboard.writeText(text).then(() => {
+      setCopyNote(true)
+      window.setTimeout(() => setCopyNote(false), 2000)
+    })
+  }
+
+  function openPast(id: string) {
+    startHistoryTransition(async () => {
+      const loaded = await loadPastResearchAnswer(id)
+      if (loaded.ok) {
+        setPast(loaded)
+        setActiveCite(null)
+        document.getElementById('cic-answer-panel')?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        })
+      }
+    })
   }
 
   return (
@@ -90,6 +166,7 @@ export function ResearchDesk({
           rows={3}
           style={{ marginTop: 8, resize: 'vertical' }}
           placeholder={copy.investigacion.askPlaceholder}
+          defaultValue=""
         />
 
         <div
@@ -165,11 +242,11 @@ export function ResearchDesk({
             {copy.investigacion.streaming}
           </p>
         )}
-        {!state.ok && state.message && (
+        {!state.ok && state.message && !past?.ok ? (
           <p role="alert" className="cic-error" style={{ marginTop: 8 }}>
             {state.message}
           </p>
-        )}
+        ) : null}
       </form>
 
       <section
@@ -180,34 +257,37 @@ export function ResearchDesk({
           gridTemplateColumns: 'minmax(0,1fr) minmax(240px,320px)',
         }}
       >
-        <article className="cic-card" aria-live="polite">
+        <article className="cic-card" aria-live="polite" id="cic-answer-panel">
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'baseline' }}>
             <h2 className="cic-h2" style={{ fontSize: '1.05rem', margin: 0 }}>
               {copy.investigacion.answerTitle}
             </h2>
-            {state.ok && (
+            {active.ok && active.body ? (
               <span className="cic-muted" style={{ fontSize: '0.75rem' }}>
                 {copy.investigacion.draftBadge}
               </span>
-            )}
+            ) : null}
           </div>
-          {state.ok && state.body ? (
+          {active.ok && active.body ? (
             <>
-              {state.degraded && state.degradeReason && (
+              {active.degraded && active.degradeReason ? (
                 <p role="status" className="cic-muted" style={{ fontSize: '0.85rem' }}>
-                  {state.degradeReason}
+                  {active.degradeReason}
                 </p>
-              )}
-              <div className="cic-legal" style={{ whiteSpace: 'pre-wrap', marginTop: 12 }}>
-                {state.body}
-              </div>
+              ) : null}
+              <ResearchAnswerView
+                body={active.body}
+                sources={sources}
+                activeCite={activeCite}
+                onCiteClick={onCiteClick}
+              />
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 16 }}>
                 <button type="button" className="cic-btn" style={{ fontSize: '0.85rem' }} onClick={copyAnswer}>
                   {copy.investigacion.copy}
                 </button>
-                {state.researchQueryId && (
+                {active.researchQueryId ? (
                   <form action={saveResearchFeedback} style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                    <input type="hidden" name="researchQueryId" value={state.researchQueryId} />
+                    <input type="hidden" name="researchQueryId" value={active.researchQueryId} />
                     <button type="submit" name="feedback" value="useful" className="cic-btn" style={{ fontSize: '0.8rem' }}>
                       {copy.investigacion.feedbackUseful}
                     </button>
@@ -224,22 +304,27 @@ export function ResearchDesk({
                       style={{ minWidth: 160, fontSize: '0.85rem' }}
                     />
                   </form>
-                )}
-                {state.aiOutputId && matterId && (
+                ) : null}
+                {active.aiOutputId && matterId ? (
                   <form action={sendResearchToReview}>
-                    <input type="hidden" name="aiOutputId" value={state.aiOutputId} />
+                    <input type="hidden" name="aiOutputId" value={active.aiOutputId} />
                     <input type="hidden" name="matterId" value={matterId} />
                     <button type="submit" className="cic-btn" style={{ fontSize: '0.85rem' }}>
                       {copy.investigacion.sendReview}
                     </button>
                   </form>
-                )}
+                ) : null}
               </div>
-              {state.searchedQueries && state.searchedQueries.length > 0 && (
-                <p className="cic-muted" style={{ marginTop: 12, fontSize: '0.8rem' }}>
-                  {copy.investigacion.searched}: {state.searchedQueries.join(' · ')}
+              {copyNote ? (
+                <p className="cic-muted" role="status" style={{ marginTop: 8, fontSize: '0.8rem' }}>
+                  {copy.investigacion.copied}
                 </p>
-              )}
+              ) : null}
+              {active.searchedQueries && active.searchedQueries.length > 0 ? (
+                <p className="cic-muted" style={{ marginTop: 12, fontSize: '0.8rem' }}>
+                  {copy.investigacion.searched}: {active.searchedQueries.join(' · ')}
+                </p>
+              ) : null}
             </>
           ) : (
             <p className="cic-muted" style={{ marginTop: 12 }}>
@@ -247,7 +332,7 @@ export function ResearchDesk({
             </p>
           )}
         </article>
-        <EvidencePanel items={evidence} />
+        <EvidencePanel items={evidence} activeCite={activeCite} />
       </section>
 
       <section className="cic-section">
@@ -272,12 +357,27 @@ export function ResearchDesk({
                   padding: '8px 0',
                   borderBottom: '1px solid var(--cic-rule)',
                   fontSize: '0.9rem',
+                  display: 'flex',
+                  gap: 12,
+                  alignItems: 'baseline',
+                  justifyContent: 'space-between',
                 }}
               >
-                <span className="cic-muted" style={{ fontSize: '0.75rem', marginRight: 8 }}>
-                  {new Date(h.created_at).toLocaleString('es-MX')}
+                <span>
+                  <span className="cic-muted" style={{ fontSize: '0.75rem', marginRight: 8 }}>
+                    {new Date(h.created_at).toLocaleString('es-MX')}
+                  </span>
+                  {h.question}
                 </span>
-                {h.question}
+                <button
+                  type="button"
+                  className="cic-btn cic-btn-secondary"
+                  style={{ fontSize: '0.75rem', padding: '4px 10px', flexShrink: 0 }}
+                  disabled={historyPending}
+                  onClick={() => openPast(h.id)}
+                >
+                  {copy.investigacion.historyOpen}
+                </button>
               </li>
             ))
           )}

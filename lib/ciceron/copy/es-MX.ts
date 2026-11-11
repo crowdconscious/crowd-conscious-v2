@@ -136,6 +136,10 @@ export const copy = {
     history: 'Historial',
     historySearch: 'Buscar en el historial…',
     historyEmpty: 'Aún no hay consultas registradas.',
+    historyOpen: 'Abrir respuesta',
+    sourcesHeading: 'Fuentes',
+    evidenceEmpty: 'Sin pasajes citados todavía.',
+    copied: 'Copiado al portapapeles.',
   },
 
   revision: {

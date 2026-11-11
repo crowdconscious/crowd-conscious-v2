@@ -138,6 +138,16 @@ Pending items need Francisco before (or as) the named prompt starts.
 - **Decision:** Full dark theme via CSS variables on `.ciceron-root`. Product name in chrome is **Cicerón.ai**. Mark redrawn as SVG (maze «C» + center square); wordmark uses Outfit for the lockup only; Spectral + Atkinson stay for reading/UI. Favicon/apple-touch + `theme-color` scoped to Cicéron layout metadata. Accent gradient allowed on primary buttons and mark despite earlier «no gradients» experience note — board is authoritative for this surface.
 - **Consequences:** No Crowd Conscious theme changes. Contrast targets: body ink ≥7:1 on navy; small green text uses mint `#6EE7B7`.
 
+### 2026-11-11 — Investigación answer display (numbered cites, no raw markdown)
+- **Context:** Verified answer body still contains model `[chunk:uuid]` markers and `**bold**` for the UI to present.
+- **Decision:** Keep verifier/storage unchanged. UI layer (`format-answer` + `ResearchAnswerView`) maps unique chunks to `[1]…[n]`, renders safe bold/headings as React nodes (no HTML injection), numbers Evidencia cards to match, and formats «Copiar con citas» as clean text + Fuentes list. Past `research_queries` reopen via `loadPastResearchAnswer`.
+- **Consequences:** Display-only; citation verification and `ai_outputs.body` remain uuid-marked.
+
+### 2026-11-11 — Evidencia cards load real DOF metadata
+- **Context:** Placeholder cards (`DOF · Pasaje · —`) appeared because (1) `chunks` join used nonexistent `document_id` (real FK is `version_id` → `document_versions` → `documents` → `dof_notes`) and (2) cited-id filter compared lowercased verifier ids to mixed-case retrieval ids.
+- **Decision:** Shared `loadEvidenceSources` resolves authority/title/date/section/edition/excerpt/URL for cited chunks. Fresh answers and `loadPastResearchAnswer` both use it. Chip numbers stay per unique chunk id (repeated cites of one chunk correctly share `[1]`).
+- **Consequences:** Sales-demo Evidencia shows real note metadata; no RLS change (service-role path still firm-filtered on private docs).
+
 ---
 
 ## Pending
