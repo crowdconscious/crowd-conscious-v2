@@ -91,14 +91,26 @@ export function ResearchDesk({
 
   const evidence = useMemo(() => {
     const ordered = orderSourcesByCitations(sources, citationIndex)
-    return ordered.map((s) => ({
-      id: s.chunkId,
-      n: citationIndex.numberById.get(s.chunkId.toLowerCase()) ?? 0,
-      authority: s.authority || 'DOF',
+    if (ordered.length > 0) {
+      return ordered.map((s) => ({
+        id: s.chunkId,
+        n: citationIndex.numberById.get(s.chunkId.toLowerCase()) ?? 0,
+        authority: s.authority || 'DOF',
+        type: 'Pasaje',
+        date: s.noteDate || '—',
+        href: s.officialUrl || 'https://www.dof.gob.mx/',
+        passage: s.passage,
+      }))
+    }
+    // Body still has cites but sources metadata missing (e.g. past load gap)
+    return citationIndex.orderedIds.map((id) => ({
+      id,
+      n: citationIndex.numberById.get(id) ?? 0,
+      authority: 'DOF',
       type: 'Pasaje',
-      date: s.noteDate || '—',
-      href: s.officialUrl || 'https://www.dof.gob.mx/',
-      passage: s.passage,
+      date: '—',
+      href: 'https://www.dof.gob.mx/',
+      passage: 'Pasaje citado en la respuesta (metadatos no disponibles en esta vista).',
     }))
   }, [sources, citationIndex])
 
