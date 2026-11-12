@@ -14,6 +14,8 @@ export type ShellMeta = {
   userName: string
   role: string
   m365Status?: 'connected' | 'disconnected'
+  /** Live count for the Revisión rail badge (mine tab). */
+  reviewBadge?: number
 }
 
 export function CiceronShell({
@@ -50,6 +52,10 @@ export function CiceronShell({
           </Link>
           {CICERON_ROOMS.map((room) => {
             const active = pathname === room.href || pathname?.startsWith(`${room.href}/`)
+            const badge =
+              room.id === 'revision' && typeof meta.reviewBadge === 'number'
+                ? meta.reviewBadge
+                : room.badge
             return (
               <Link
                 key={room.id}
@@ -57,7 +63,7 @@ export function CiceronShell({
                 aria-current={active ? 'page' : undefined}
               >
                 <span>{copy.rooms[room.id]}</span>
-                {room.badge > 0 ? <span className="cic-badge">{room.badge}</span> : null}
+                {badge > 0 ? <span className="cic-badge">{badge}</span> : null}
               </Link>
             )
           })}

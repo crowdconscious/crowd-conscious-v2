@@ -166,6 +166,19 @@ Pending items need Francisco before (or as) the named prompt starts.
 
 ---
 
+### 2026-11-12 — Prompt 7 review queue, delivery gate, audit for Prompt 9
+- **Context:** Tier-2 client outputs need a lawyer review inbox, a single delivery write path, append-only audit shaped for future access-denial logging, and a learning-loop export.
+- **Decision:**
+  1. Migrations `312` (schema + RPCs) and `313` (demo seed). Additive; `deliveries_tier2_gate` made **stricter** (persona-aware `COALESCE(decided_by, decided_by_persona)` + four-eyes when `firm_settings.four_eyes_output_types` matches).
+  2. Sole delivery insert path: `ciceron.create_delivery` (service_role SECURITY DEFINER, `set_actor`, explicit `p_confirm`). Email defaults to `is_simulated`; real egress only if recipient ∈ `email_allowlist` (default empty). Authenticated clients cannot INSERT/UPDATE/DELETE `deliveries` or `review_decisions` — RPC-only.
+  3. Decisions via `decide_review` (returns jsonb; policy denials commit audit then `{ok:false,policy_id,policy_reason}` without RAISE) / `save_review_edit` / `reassign_review`. Authority trigger binds decider to `current_actor_id()`.
+  4. Audit rows gain `outcome` (`allowed`|`denied`), `policy_id`, `policy_reason`, `snapshot_ref` so Prompt 9 can log denials. App helper: `recordAuditDenial`.
+  5. Four-eyes: editor of a human draft cannot final-approve configured output types (seed: `client_alert`); gate uses `bool_or` across tasks for that output.
+  6. Seed UUIDs use valid hex `f100…101+` (case_files keep `f100…001–008`).
+- **Consequences:** UI under `/ciceron/revision`. Export: `scripts/ciceron-export-eval-candidates.ts`. Agents do not apply migrations. Verify for 312 is non-persistent (`BEGIN`/`ROLLBACK`).
+
+---
+
 ## Pending
 
 ### P7 — Accept root-layout analytics/JSON-LD leakage for hosted demo

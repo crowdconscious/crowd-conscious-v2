@@ -305,6 +305,10 @@ export type CiceronDatabase = {
           entity_type: string
           entity_id: string | null
           payload: Record<string, unknown>
+          outcome: 'allowed' | 'denied'
+          policy_id: string | null
+          policy_reason: string | null
+          snapshot_ref: Record<string, unknown>
           created_at: string
         }
         Insert: {
@@ -315,12 +319,134 @@ export type CiceronDatabase = {
           entity_type: string
           entity_id?: string | null
           payload?: Record<string, unknown>
+          outcome?: 'allowed' | 'denied'
+          policy_id?: string | null
+          policy_reason?: string | null
+          snapshot_ref?: Record<string, unknown>
           created_at?: string
         }
         Update: never
       }
+      firm_settings: {
+        Row: {
+          firm_id: string
+          four_eyes_output_types: string[]
+          email_allowlist: string[]
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          firm_id: string
+          four_eyes_output_types?: string[]
+          email_allowlist?: string[]
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<CiceronDatabase['ciceron']['Tables']['firm_settings']['Insert']>
+      }
+      evaluation_candidates: {
+        Row: {
+          id: string
+          firm_id: string
+          matter_id: string
+          review_decision_id: string
+          ai_run_id: string | null
+          ai_output_id: string | null
+          model_output: string
+          human_output: string | null
+          reason: string | null
+          decision: 'corrected' | 'rejected'
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          firm_id: string
+          matter_id: string
+          review_decision_id: string
+          ai_run_id?: string | null
+          ai_output_id?: string | null
+          model_output: string
+          human_output?: string | null
+          reason?: string | null
+          decision: 'corrected' | 'rejected'
+          created_at?: string
+        }
+        Update: Partial<CiceronDatabase['ciceron']['Tables']['evaluation_candidates']['Insert']>
+      }
+      review_tasks: {
+        Row: {
+          id: string
+          matter_id: string
+          ai_output_id: string | null
+          assignee_id: string | null
+          assignee_persona: string | null
+          status: 'pendiente' | 'en_curso' | 'cerrado'
+          due_at: string | null
+          title: string | null
+          output_type: string | null
+          draft_id: string | null
+          is_demo: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          matter_id: string
+          ai_output_id?: string | null
+          assignee_id?: string | null
+          assignee_persona?: string | null
+          status?: 'pendiente' | 'en_curso' | 'cerrado'
+          due_at?: string | null
+          title?: string | null
+          output_type?: string | null
+          draft_id?: string | null
+          is_demo?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<CiceronDatabase['ciceron']['Tables']['review_tasks']['Insert']>
+      }
     }
     Functions: {
+      decide_review: {
+        Args: {
+          p_actor: string
+          p_task_id: string
+          p_decision: string
+          p_notes?: string | null
+          p_edited_body?: string | null
+        }
+        Returns: Record<string, unknown>
+      }
+      save_review_edit: {
+        Args: {
+          p_actor: string
+          p_task_id: string
+          p_edited_body: string
+        }
+        Returns: string
+      }
+      reassign_review: {
+        Args: {
+          p_actor: string
+          p_task_id: string
+          p_new_assignee: string
+        }
+        Returns: undefined
+      }
+      create_delivery: {
+        Args: {
+          p_actor: string
+          p_ai_output_id: string
+          p_matter_id: string
+          p_channel: string
+          p_recipient: string
+          p_subject: string
+          p_body: string
+          p_confirm?: boolean
+        }
+        Returns: Record<string, unknown>
+      }
       search_chunks: {
         Args: {
           query_text: string | null

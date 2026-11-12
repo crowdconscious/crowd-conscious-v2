@@ -1,0 +1,94 @@
+-- 313_ciceron_review_seed.rollback.sql
+-- Removes Prompt 7 seed rows (f100…101+). Does not drop 312 schema.
+-- Seed audit_events rows are append-only and intentionally left in place
+-- (audit_events_immutable blocks DELETE).
+
+-- Dependents before ai_outputs (ON DELETE RESTRICT on deliveries.ai_output_id)
+DELETE FROM ciceron.deliveries
+WHERE ai_output_id IN (
+  'f1000000-0000-4000-8000-000000000111'::uuid,
+  'f1000000-0000-4000-8000-000000000112'::uuid,
+  'f1000000-0000-4000-8000-000000000113'::uuid,
+  'f1000000-0000-4000-8000-000000000114'::uuid
+);
+
+DELETE FROM ciceron.evaluation_candidates
+WHERE ai_output_id IN (
+  'f1000000-0000-4000-8000-000000000111'::uuid,
+  'f1000000-0000-4000-8000-000000000112'::uuid,
+  'f1000000-0000-4000-8000-000000000113'::uuid,
+  'f1000000-0000-4000-8000-000000000114'::uuid
+)
+OR review_decision_id IN (
+  SELECT id FROM ciceron.review_decisions
+  WHERE ai_output_id IN (
+    'f1000000-0000-4000-8000-000000000111'::uuid,
+    'f1000000-0000-4000-8000-000000000112'::uuid,
+    'f1000000-0000-4000-8000-000000000113'::uuid,
+    'f1000000-0000-4000-8000-000000000114'::uuid
+  )
+);
+
+DELETE FROM ciceron.review_decisions
+WHERE ai_output_id IN (
+  'f1000000-0000-4000-8000-000000000111'::uuid,
+  'f1000000-0000-4000-8000-000000000112'::uuid,
+  'f1000000-0000-4000-8000-000000000113'::uuid,
+  'f1000000-0000-4000-8000-000000000114'::uuid
+)
+OR review_task_id IN (
+  'f1000000-0000-4000-8000-000000000141'::uuid,
+  'f1000000-0000-4000-8000-000000000142'::uuid,
+  'f1000000-0000-4000-8000-000000000143'::uuid,
+  'f1000000-0000-4000-8000-000000000144'::uuid
+);
+
+DELETE FROM ciceron.review_tasks
+WHERE id IN (
+  'f1000000-0000-4000-8000-000000000141'::uuid,
+  'f1000000-0000-4000-8000-000000000142'::uuid,
+  'f1000000-0000-4000-8000-000000000143'::uuid,
+  'f1000000-0000-4000-8000-000000000144'::uuid
+);
+
+DELETE FROM ciceron.draft_versions
+WHERE id IN (
+  'f1000000-0000-4000-8000-000000000131'::uuid,
+  'f1000000-0000-4000-8000-000000000132'::uuid,
+  'f1000000-0000-4000-8000-000000000133'::uuid,
+  'f1000000-0000-4000-8000-000000000134'::uuid,
+  'f1000000-0000-4000-8000-000000000135'::uuid
+);
+
+DELETE FROM ciceron.drafts
+WHERE id IN (
+  'f1000000-0000-4000-8000-000000000121'::uuid,
+  'f1000000-0000-4000-8000-000000000122'::uuid,
+  'f1000000-0000-4000-8000-000000000123'::uuid,
+  'f1000000-0000-4000-8000-000000000124'::uuid
+);
+
+DELETE FROM ciceron.ai_outputs
+WHERE id IN (
+  'f1000000-0000-4000-8000-000000000111'::uuid,
+  'f1000000-0000-4000-8000-000000000112'::uuid,
+  'f1000000-0000-4000-8000-000000000113'::uuid,
+  'f1000000-0000-4000-8000-000000000114'::uuid
+);
+
+DELETE FROM ciceron.ai_runs
+WHERE id IN (
+  'f1000000-0000-4000-8000-000000000101'::uuid,
+  'f1000000-0000-4000-8000-000000000102'::uuid,
+  'f1000000-0000-4000-8000-000000000103'::uuid,
+  'f1000000-0000-4000-8000-000000000104'::uuid
+);
+
+DELETE FROM ciceron.prompt_versions
+WHERE id = 'f1000000-0000-4000-8000-000000000151'::uuid;
+
+UPDATE ciceron.firm_settings
+SET four_eyes_output_types = '{}'::text[],
+    email_allowlist = '{}'::text[],
+    updated_at = now()
+WHERE firm_id = 'a1000000-0000-4000-8000-000000000001'::uuid;

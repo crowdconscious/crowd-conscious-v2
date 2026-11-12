@@ -18,6 +18,7 @@ Prompt 1 creates the foundation under schema `ciceron`. Groups below marked
 | Oversight | `review_tasks`, `review_decisions`, `deliveries`, `audit_events` |
 | Drafting | `drafts`, `draft_versions`, `comments`, `assignments` |
 | Analytics | `events` |
+| Prompt 7 | `firm_settings`, `evaluation_candidates`, `in_app_notifications`; audit columns `outcome` / `policy_id` / `policy_reason` / `snapshot_ref` |
 
 Embeddings: `extensions.vector(1536)` on `chunks.embedding` and `watch_profiles.embedding`; store `embedding_model` (`text-embedding-3-small`).
 

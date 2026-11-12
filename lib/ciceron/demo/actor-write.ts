@@ -80,3 +80,33 @@ export function integrationConnectedByColumns(actor: ActorWrite): {
   }
   return { connected_by: null, connected_by_persona: actor.personaId }
 }
+
+export function reviewDecisionColumns(actor: ActorWrite): {
+  decided_by: string | null
+  decided_by_persona: string | null
+} {
+  if (actor.mode === 'auth') {
+    return { decided_by: actor.userId, decided_by_persona: null }
+  }
+  return { decided_by: null, decided_by_persona: actor.personaId }
+}
+
+export function deliveryDeliveredByColumns(actor: ActorWrite): {
+  delivered_by: string | null
+  delivered_by_persona: string | null
+} {
+  if (actor.mode === 'auth') {
+    return { delivered_by: actor.userId, delivered_by_persona: null }
+  }
+  return { delivered_by: null, delivered_by_persona: actor.personaId }
+}
+
+export function draftAuthorColumns(actor: ActorWrite): {
+  author_user_id: string | null
+  author_persona: string | null
+} {
+  if (actor.mode === 'auth') {
+    return { author_user_id: actor.userId, author_persona: null }
+  }
+  return { author_user_id: null, author_persona: actor.personaId }
+}
