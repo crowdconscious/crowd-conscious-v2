@@ -3,6 +3,7 @@
 ## Production status (2026-11-12)
 
 Already on production: **298–310** and **309** seed (Prompt 6).  
+**311–313** (Prompt 7) and **314–315** (Prompt 8) are next / pending CTO apply.  
 **308 / 309 / 310 forward bodies must not be edited** (applied).  
 **Do not apply** retired `301` (auth.users seed).
 
@@ -12,17 +13,21 @@ Francisco applies; agents do not:
 
 1. `311_ciceron_confirm_idempotent.sql` — if not yet applied
 2. Verify: `311_ciceron_confirm_idempotent.verify.sql`
-3. `312_ciceron_review_queue.sql` — Prompt 7 schema + RPCs (RPC-only decision/delivery writes; audit outcome/policy; four-eyes; create_delivery)
-4. Verify: `312_ciceron_review_queue.verify.sql` (wraps in `BEGIN`…`ROLLBACK` — non-persistent)
-5. `313_ciceron_review_seed.sql` — demo review tasks (Datos de demostración; fixed ids `f100…101+`)
+3. `312_ciceron_review_queue.sql` — Prompt 7 schema + RPCs
+4. Verify: `312_ciceron_review_queue.verify.sql` (`BEGIN`…`ROLLBACK`)
+5. `313_ciceron_review_seed.sql` — demo review tasks (`f100…101+`)
 6. Verify: `313_ciceron_review_seed.verify.sql`
-7. Optional: `POST /api/ciceron/cron/dof` with `{ "backfillArchiveEmbeddings": true }` (Bearer `CRON_SECRET`)
+7. **`314_ciceron_engagement.sql`** — Prompt 8 events RPC, engagement tables, metric views, budget thresholds
+8. Verify: `314_ciceron_engagement.verify.sql` (`BEGIN`…`ROLLBACK`)
+9. **`315_ciceron_engagement_seed.sql`** — demo events / cost ai_runs (`e200…`)
+10. Verify: `315_ciceron_engagement_seed.verify.sql`
+11. Optional: `POST /api/ciceron/cron/dof` with `{ "backfillArchiveEmbeddings": true }` (Bearer `CRON_SECRET`) — on-demand only; no scheduled DOF cron
 
-Rollback (branch only, reverse order): `313_…rollback.sql` then `312_…rollback.sql` (312 restores pre-Prompt-7 `deliveries_tier2_gate`).
+Rollback (branch only, reverse order): `315_…rollback.sql` → `314_…rollback.sql` → `313_…` → `312_…`.
 
 Do **not** re-apply 308 / 309 / 310 on prod.
 
-Fresh env Prompt 6–7 path: `308` → `310` → `309` → `311` → `312` → `313`.
+Fresh env Prompt 6–8 path: `308` → `310` → `309` → `311` → `312` → `313` → `314` → `315`.
 
 Embeddings need **Vercel AI Gateway** enabled for the project (OIDC on deploy). Locally optional `AI_GATEWAY_API_KEY`. Anthropic keys unchanged for rewrite/answer.
 

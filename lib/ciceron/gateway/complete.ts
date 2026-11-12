@@ -1,6 +1,7 @@
 import { CREATIVE_THINKING_OFF, getAnthropicClient, MODELS } from '@/lib/agents/config'
 import { estimateAnthropicCostUsd } from '@/lib/ciceron/gateway/costs'
 import { recordAiRun } from '@/lib/ciceron/gateway/ai-runs'
+import { assertGatewayBudget } from '@/lib/ciceron/gateway/budget'
 
 export type CompleteTier = 'fast' | 'creative'
 
@@ -30,7 +31,7 @@ export type CompleteResult =
     }
   | {
       ok: false
-      reason: 'missing_api_key' | 'provider_error' | 'empty'
+      reason: 'missing_api_key' | 'provider_error' | 'empty' | 'budget'
       message: string
       aiRunId: string | null
     }
@@ -38,9 +39,36 @@ export type CompleteResult =
 /**
  * Sole Anthropic chat entrypoint for Cicéron (rule 6).
  * Untrusted DOF/doc text must already be wrapped by the caller in delimited blocks.
+ * Research pauses at 100% firm budget; DOF monitoring purposes remain allowed.
  */
 export async function complete(args: CompleteArgs): Promise<CompleteResult> {
   const model = args.tier === 'creative' ? MODELS.CREATIVE : MODELS.FAST
+
+  const budget = await assertGatewayBudget({
+    firmId: args.firmId,
+    purpose: args.purpose,
+  })
+  if (!budget.ok) {
+    const aiRunId = await recordAiRun({
+      purpose: `${args.purpose}:skipped_budget`,
+      model,
+      promptVersionId: args.promptVersionId,
+      inputTokens: 0,
+      outputTokens: 0,
+      costEstimateUsd: 0,
+      firmId: args.firmId,
+      matterId: args.matterId,
+      userId: args.userId,
+      retrievedChunkIds: args.retrievedChunkIds,
+    })
+    return {
+      ok: false,
+      reason: 'budget',
+      message: budget.message,
+      aiRunId,
+    }
+  }
+
   if (!process.env.ANTHROPIC_API_KEY) {
     const aiRunId = await recordAiRun({
       purpose: `${args.purpose}:skipped_missing_api_key`,

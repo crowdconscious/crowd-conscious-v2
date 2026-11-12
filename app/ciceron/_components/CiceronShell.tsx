@@ -13,6 +13,7 @@ export type ShellMeta = {
   firmName: string
   userName: string
   role: string
+  roleKey?: string
   m365Status?: 'connected' | 'disconnected'
   /** Live count for the Revisión rail badge (mine tab). */
   reviewBadge?: number
@@ -68,6 +69,16 @@ export function CiceronShell({
             )
           })}
           <div className="cic-rail-footer">
+            {meta.role === copy.roleAdmin || meta.roleKey === 'admin' ? (
+              <>
+                <Link href="/ciceron/admin/metricas" className="cic-rail-m365">
+                  <span>{copy.adminMetricas.title}</span>
+                </Link>
+                <Link href="/ciceron/admin/fuentes" className="cic-rail-m365">
+                  <span>{copy.adminFuentes.title}</span>
+                </Link>
+              </>
+            ) : null}
             <Link href="/ciceron/expedientes/outlook" className="cic-rail-m365">
               <span>{copy.m365.settingsStatus}</span>
               <span className="cic-muted" style={{ fontSize: '0.75rem' }}>

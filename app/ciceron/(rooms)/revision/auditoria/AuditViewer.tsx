@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { formatPolicyCell } from '@/lib/ciceron/audit/policy-labels'
 import { copy } from '@/lib/ciceron/copy/es-MX'
 import type { AuditViewerRow } from '@/lib/ciceron/review/types'
 import { auditRowsToCsv } from '@/lib/ciceron/review/data-client'
@@ -123,8 +124,7 @@ export function AuditViewer({ rows }: { rows: AuditViewerRow[] }) {
                   </td>
                   <td>
                     <span className="cic-muted" style={{ fontSize: '0.8rem' }}>
-                      {r.policyId ?? '—'}
-                      {r.policyReason ? ` — ${r.policyReason}` : ''}
+                      {formatPolicyCell(r.policyId, r.policyReason)}
                     </span>
                   </td>
                   <td>

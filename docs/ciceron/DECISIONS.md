@@ -179,6 +179,18 @@ Pending items need Francisco before (or as) the named prompt starts.
 
 ---
 
+### 2026-11-12 — Prompt 8 engagement loops and growth instrumentation
+- **Context:** Need activation/habit/precision/turnaround/value/expansion indicators, typed product events, morning/weekly loops without DOF crons, and budget pause for research only.
+- **Decision:**
+  1. Migrations `314` (schema, RPC, indicator views with `security_invoker=true`, admin-only grants) and `315` (demo seed `e200…`). No Vercel cron; briefings are on-demand previews. Email only if `firm_settings.email_allowlist` non-empty (stays empty → simulated).
+  2. One typed helper `recordCiceronEvent` + `docs/ciceron/EVENTS.md`; forbidden keys enforced at types, Zod, and RPC.
+  3. Gateway `assertGatewayBudget` before AI calls; DOF purposes exempt at 100%. Thresholds 50/80/100 with Spanish banners.
+  4. Audit viewer maps `policy_id` → Spanish labels (append-only audit unchanged).
+  5. No points, streaks, badges, or leaderboards.
+- **Consequences:** `/ciceron/admin/metricas`, Hoy loops (briefing, onboarding, continue, feedback suggestion), `/ciceron/hoy/briefing`, `/ciceron/hoy/resumen-semanal`. Agents do not apply migrations.
+
+---
+
 ## Pending
 
 ### P7 — Accept root-layout analytics/JSON-LD leakage for hosted demo
