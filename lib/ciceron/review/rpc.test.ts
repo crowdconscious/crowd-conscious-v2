@@ -9,23 +9,6 @@ import {
   type ReviewRpcClient,
 } from '@/lib/ciceron/review/rpc'
 
-function mockRpc(
-  handler: (
-    fn: string,
-    args?: Record<string, unknown>
-  ) => { message: string } | null
-): ReviewRpcClient & { calls: Array<{ fn: string; args?: Record<string, unknown> }> } {
-  const calls: Array<{ fn: string; args?: Record<string, unknown> }> = []
-  return {
-    calls,
-    async rpc(fn, args) {
-      calls.push({ fn, args })
-      const err = handler(fn, args)
-      return { data: err ? null : 'decision-id', error: err }
-    },
-  }
-}
-
 describe('review RPC wrappers', () => {
   it('rpcDecideReview maps args and parses jsonb ok', async () => {
     const db: ReviewRpcClient & { calls: Array<{ fn: string; args?: Record<string, unknown> }> } = {
@@ -96,12 +79,52 @@ describe('review RPC wrappers', () => {
     assert.equal(db.calls[0]!.args?.p_confirm, true)
   })
 
-  it('rpcSaveReviewEdit and rpcReassignReview call expected functions', async () => {
-    const db = mockRpc(() => null)
-    await rpcSaveReviewEdit(db, { actorId: 'a', taskId: 't', editedBody: 'x' })
-    await rpcReassignReview(db, { actorId: 'a', taskId: 't', newAssigneeId: 'b' })
-    assert.equal(db.calls[0]!.fn, 'save_review_edit')
-    assert.equal(db.calls[1]!.fn, 'reassign_review')
+  it('rpcSaveReviewEdit and rpcReassignReview parse jsonb ok and denials', async () => {
+    const okDb: ReviewRpcClient & { calls: Array<{ fn: string; args?: Record<string, unknown> }> } = {
+      calls: [],
+      async rpc(fn, args) {
+        okDb.calls.push({ fn, args })
+        if (fn === 'save_review_edit') {
+          return { data: { ok: true, id: 'version-id' }, error: null }
+        }
+        return { data: { ok: true }, error: null }
+      },
+    }
+    const saveOk = await rpcSaveReviewEdit(okDb, {
+      actorId: 'a',
+      taskId: 't',
+      editedBody: 'x',
+    })
+    assert.equal(saveOk.ok, true)
+    if (saveOk.ok) assert.equal(saveOk.id, 'version-id')
+    const reassignOk = await rpcReassignReview(okDb, {
+      actorId: 'a',
+      taskId: 't',
+      newAssigneeId: 'b',
+    })
+    assert.equal(reassignOk.ok, true)
+    assert.equal(okDb.calls[0]!.fn, 'save_review_edit')
+    assert.equal(okDb.calls[1]!.fn, 'reassign_review')
+
+    const denyDb: ReviewRpcClient = {
+      async rpc() {
+        return {
+          data: {
+            ok: false,
+            policy_id: 'matter_member',
+            policy_reason: 'Actor is not a member of this matter',
+          },
+          error: null,
+        }
+      },
+    }
+    const denied = await rpcSaveReviewEdit(denyDb, {
+      actorId: 'a',
+      taskId: 't',
+      editedBody: 'x',
+    })
+    assert.equal(denied.ok, false)
+    if (!denied.ok) assert.equal(denied.policyId, 'matter_member')
   })
 })
 
@@ -125,6 +148,11 @@ describe('312 migration SQL contracts', () => {
     assert.match(sql, /already decided/)
     assert.match(sql, /'ok', false/)
     assert.match(sql, /policy_id', 'four_eyes'/)
+    assert.match(sql, /policy_id', 'role'/)
+    assert.match(sql, /policy_id', 'delivery_exists'/)
+    assert.match(sql, /DROP POLICY IF EXISTS review_decisions_select/)
+    assert.match(sql, /DROP POLICY IF EXISTS deliveries_select/)
+    assert.match(sql, /RETURNS jsonb/)
     assert.match(sql, /REVOKE INSERT, UPDATE, DELETE ON ciceron\.review_decisions/)
     assert.match(sql, /REVOKE INSERT, UPDATE, DELETE ON ciceron\.deliveries/)
   })

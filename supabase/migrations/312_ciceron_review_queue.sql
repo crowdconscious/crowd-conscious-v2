@@ -113,6 +113,7 @@ GRANT SELECT ON ciceron.review_decisions TO authenticated;
 GRANT ALL ON ciceron.review_decisions TO service_role;
 
 DROP POLICY IF EXISTS review_decisions_all ON ciceron.review_decisions;
+DROP POLICY IF EXISTS review_decisions_select ON ciceron.review_decisions;
 CREATE POLICY review_decisions_select ON ciceron.review_decisions
   FOR SELECT TO authenticated
   USING (ciceron.is_matter_member(matter_id));
@@ -198,6 +199,7 @@ GRANT SELECT ON ciceron.deliveries TO authenticated;
 GRANT ALL ON ciceron.deliveries TO service_role;
 
 DROP POLICY IF EXISTS deliveries_all ON ciceron.deliveries;
+DROP POLICY IF EXISTS deliveries_select ON ciceron.deliveries;
 CREATE POLICY deliveries_select ON ciceron.deliveries
   FOR SELECT TO authenticated
   USING (ciceron.is_matter_member(matter_id));
@@ -581,8 +583,17 @@ BEGIN
     AND ms.user_id = p_actor;
 
   IF actor_role IS NULL OR actor_role NOT IN ('socio', 'asociado', 'admin') THEN
-    RAISE EXCEPTION 'only socio, asociado, or admin may decide reviews'
-      USING ERRCODE = 'check_violation';
+    PERFORM ciceron.write_audit_event(
+      matter_firm, p_actor, 'review_decide', 'review_tasks', p_task_id,
+      jsonb_build_object('decision', p_decision, 'actor_role', actor_role),
+      'denied', 'role', 'Solo socio, asociado o admin puede decidir revisiones',
+      jsonb_build_object('entity_type', 'review_tasks', 'entity_id', p_task_id)
+    );
+    RETURN jsonb_build_object(
+      'ok', false,
+      'policy_id', 'role',
+      'policy_reason', 'Solo socio, asociado o admin puede decidir revisiones'
+    );
   END IF;
 
   IF NOT ciceron.is_matter_member(task.matter_id) THEN
@@ -798,14 +809,16 @@ GRANT EXECUTE ON FUNCTION ciceron.decide_review(uuid, uuid, text, text, text)
   TO service_role;
 
 -- ---------------------------------------------------------------------------
--- save_review_edit
+-- save_review_edit — RETURNS jsonb; matter_member denials audit + return
 -- ---------------------------------------------------------------------------
+DROP FUNCTION IF EXISTS ciceron.save_review_edit(uuid, uuid, text);
+
 CREATE OR REPLACE FUNCTION ciceron.save_review_edit(
   p_actor uuid,
   p_task_id uuid,
   p_edited_body text
 )
-RETURNS uuid
+RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = ciceron
@@ -865,8 +878,17 @@ BEGIN
   END IF;
 
   IF NOT ciceron.is_matter_member(task.matter_id) THEN
-    RAISE EXCEPTION 'not a matter member'
-      USING ERRCODE = 'check_violation';
+    PERFORM ciceron.write_audit_event(
+      matter_firm, p_actor, 'draft_edit', 'review_tasks', p_task_id,
+      jsonb_build_object('draft_id', task.draft_id),
+      'denied', 'matter_member', 'Actor is not a member of this matter',
+      jsonb_build_object('entity_type', 'review_tasks', 'entity_id', p_task_id)
+    );
+    RETURN jsonb_build_object(
+      'ok', false,
+      'policy_id', 'matter_member',
+      'policy_reason', 'Actor is not a member of this matter'
+    );
   END IF;
 
   is_persona := EXISTS (
@@ -912,12 +934,12 @@ BEGIN
     )
   );
 
-  RETURN version_id;
+  RETURN jsonb_build_object('ok', true, 'id', version_id);
 END;
 $$;
 
 COMMENT ON FUNCTION ciceron.save_review_edit(uuid, uuid, text) IS
-  'Service-role: save human draft_version without closing the review (four-eyes).';
+  'Service-role: save human draft_version without closing. Matter denials return jsonb ok:false with audit.';
 
 REVOKE ALL ON FUNCTION ciceron.save_review_edit(uuid, uuid, text)
   FROM PUBLIC, anon, authenticated;
@@ -925,14 +947,16 @@ GRANT EXECUTE ON FUNCTION ciceron.save_review_edit(uuid, uuid, text)
   TO service_role;
 
 -- ---------------------------------------------------------------------------
--- reassign_review RPC
+-- reassign_review RPC — RETURNS jsonb; matter_member denials audit + return
 -- ---------------------------------------------------------------------------
+DROP FUNCTION IF EXISTS ciceron.reassign_review(uuid, uuid, uuid);
+
 CREATE OR REPLACE FUNCTION ciceron.reassign_review(
   p_actor uuid,
   p_task_id uuid,
   p_new_assignee uuid
 )
-RETURNS void
+RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = ciceron
@@ -981,8 +1005,17 @@ BEGIN
   END IF;
 
   IF NOT ciceron.is_matter_member(task.matter_id) THEN
-    RAISE EXCEPTION 'not a matter member'
-      USING ERRCODE = 'check_violation';
+    PERFORM ciceron.write_audit_event(
+      matter_firm, p_actor, 'review_reassign', 'review_tasks', p_task_id,
+      jsonb_build_object('new_assignee', p_new_assignee),
+      'denied', 'matter_member', 'Actor is not a member of this matter',
+      jsonb_build_object('entity_type', 'review_tasks', 'entity_id', p_task_id)
+    );
+    RETURN jsonb_build_object(
+      'ok', false,
+      'policy_id', 'matter_member',
+      'policy_reason', 'Actor is not a member of this matter'
+    );
   END IF;
 
   IF NOT EXISTS (
@@ -1045,11 +1078,13 @@ BEGIN
     'allowed', 'can_review_matter', 'Review task reassigned',
     jsonb_build_object('entity_type', 'review_tasks', 'entity_id', p_task_id)
   );
+
+  RETURN jsonb_build_object('ok', true);
 END;
 $$;
 
 COMMENT ON FUNCTION ciceron.reassign_review(uuid, uuid, uuid) IS
-  'Service-role: reassign open review task and notify the new reviewer in-app.';
+  'Service-role: reassign open review task. Matter denials return jsonb ok:false with audit.';
 
 REVOKE ALL ON FUNCTION ciceron.reassign_review(uuid, uuid, uuid)
   FROM PUBLIC, anon, authenticated;
@@ -1118,8 +1153,17 @@ BEGIN
     AND ms.user_id = p_actor;
 
   IF actor_role IS NULL OR actor_role NOT IN ('socio', 'asociado', 'admin') THEN
-    RAISE EXCEPTION 'only socio, asociado, or admin may create deliveries'
-      USING ERRCODE = 'check_violation';
+    PERFORM ciceron.write_audit_event(
+      matter_firm, p_actor, 'delivery_create', 'ai_outputs', p_ai_output_id,
+      jsonb_build_object('matter_id', p_matter_id, 'actor_role', actor_role),
+      'denied', 'role', 'Solo socio, asociado o admin puede crear entregas',
+      jsonb_build_object('entity_type', 'ai_outputs', 'entity_id', p_ai_output_id)
+    );
+    RETURN jsonb_build_object(
+      'ok', false,
+      'policy_id', 'role',
+      'policy_reason', 'Solo socio, asociado o admin puede crear entregas'
+    );
   END IF;
 
   IF NOT ciceron.is_matter_member(p_matter_id) THEN
@@ -1156,6 +1200,24 @@ BEGIN
   IF v_tier = 2 AND decision_id IS NULL THEN
     RAISE EXCEPTION 'tier 2 delivery requires an approved review decision'
       USING ERRCODE = 'check_violation';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM ciceron.deliveries d
+    WHERE d.ai_output_id = p_ai_output_id
+      AND d.matter_id = p_matter_id
+  ) THEN
+    PERFORM ciceron.write_audit_event(
+      matter_firm, p_actor, 'delivery_create', 'ai_outputs', p_ai_output_id,
+      jsonb_build_object('matter_id', p_matter_id),
+      'denied', 'delivery_exists', 'A delivery already exists for this approved output',
+      jsonb_build_object('entity_type', 'ai_outputs', 'entity_id', p_ai_output_id)
+    );
+    RETURN jsonb_build_object(
+      'ok', false,
+      'policy_id', 'delivery_exists',
+      'policy_reason', 'A delivery already exists for this approved output'
+    );
   END IF;
 
   SELECT COALESCE(fs.email_allowlist, '{}'::text[])

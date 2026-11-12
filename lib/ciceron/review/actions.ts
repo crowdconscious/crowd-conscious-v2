@@ -136,6 +136,12 @@ export async function decideReviewAction(input: {
         message: 'Regla matter_member: no tiene acceso a este asunto.',
       }
     }
+    if (result.policyId === 'role') {
+      return {
+        ok: false,
+        message: 'Solo socio, asociado o admin puede decidir revisiones.',
+      }
+    }
     if (/already decided/i.test(result.message)) {
       return { ok: false, message: 'Esta tarea ya fue decidida.' }
     }
@@ -178,7 +184,15 @@ export async function saveReviewEditAction(input: {
     taskId: input.taskId,
     editedBody: input.editedBody,
   })
-  if (!result.ok) return { ok: false, message: result.message }
+  if (!result.ok) {
+    if (result.policyId === 'matter_member' || /matter member/i.test(result.message)) {
+      return {
+        ok: false,
+        message: 'Regla matter_member: no tiene acceso a este asunto.',
+      }
+    }
+    return { ok: false, message: result.message }
+  }
 
   revalidateReview(input.taskId)
   return { ok: true, id: result.id, message: 'Edición guardada. Puede reasignar para el visto bueno.' }
@@ -202,7 +216,15 @@ export async function reassignReviewAction(input: {
     taskId: input.taskId,
     newAssigneeId: input.newAssigneeId,
   })
-  if (!result.ok) return { ok: false, message: result.message }
+  if (!result.ok) {
+    if (result.policyId === 'matter_member' || /matter member/i.test(result.message)) {
+      return {
+        ok: false,
+        message: 'Regla matter_member: no tiene acceso a este asunto.',
+      }
+    }
+    return { ok: false, message: result.message }
+  }
 
   revalidateReview(input.taskId)
   return { ok: true, message: 'Tarea reasignada. Se notificó al nuevo revisor.' }
@@ -250,6 +272,18 @@ export async function createDeliveryAction(input: {
       return {
         ok: false,
         message: 'Regla matter_member: no tiene acceso a este asunto.',
+      }
+    }
+    if (result.policyId === 'role') {
+      return {
+        ok: false,
+        message: 'Solo socio, asociado o admin puede crear entregas.',
+      }
+    }
+    if (result.policyId === 'delivery_exists') {
+      return {
+        ok: false,
+        message: 'Ya existe una entrega para este resultado aprobado.',
       }
     }
     if (/tier 2|approved review/i.test(result.message)) {

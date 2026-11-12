@@ -1,6 +1,7 @@
 /**
  * Service-role RPC wrappers for Prompt 7 review / delivery gates.
- * decide_review / create_delivery return jsonb {ok, id?} | {ok:false, policy_*}.
+ * decide_review / create_delivery / save_review_edit / reassign_review return
+ * jsonb {ok, id?} | {ok:false, policy_*}.
  */
 
 export type ReviewRpcClient = {
@@ -78,17 +79,14 @@ export async function rpcSaveReviewEdit(
   if (error) {
     return { ok: false, message: error.message || 'No se pudo guardar la edición.' }
   }
-  return {
-    ok: true,
-    id: typeof data === 'string' ? data : undefined,
-  }
+  return parseJsonbResult(data, 'No se pudo guardar la edición.')
 }
 
 export async function rpcReassignReview(
   db: ReviewRpcClient,
   opts: { actorId: string; taskId: string; newAssigneeId: string }
 ): Promise<ReviewRpcResult> {
-  const { error } = await db.rpc('reassign_review', {
+  const { data, error } = await db.rpc('reassign_review', {
     p_actor: opts.actorId,
     p_task_id: opts.taskId,
     p_new_assignee: opts.newAssigneeId,
@@ -96,7 +94,7 @@ export async function rpcReassignReview(
   if (error) {
     return { ok: false, message: error.message || 'No se pudo reasignar la tarea.' }
   }
-  return { ok: true }
+  return parseJsonbResult(data, 'No se pudo reasignar la tarea.')
 }
 
 export async function rpcCreateDelivery(

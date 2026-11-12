@@ -107,46 +107,154 @@ BEGIN
       END IF;
   END;
 
-  -- 2) Pasante cannot decide (role)
-  BEGIN
-    PERFORM ciceron.decide_review(pasante, task_id, 'approved', NULL, NULL);
-    RAISE EXCEPTION 'FAIL: pasante was allowed to decide';
-  EXCEPTION
-    WHEN others THEN
-      IF SQLERRM LIKE 'FAIL:%' THEN RAISE; END IF;
-      IF SQLERRM LIKE '%socio, asociado, or admin%' THEN
-        RAISE NOTICE 'OK: pasante cannot decide reviews';
-      ELSE
-        RAISE EXCEPTION 'FAIL: unexpected pasante decide error: %', SQLERRM;
-      END IF;
-  END;
+  -- 2) Pasante / outside-firm: structured role denial + audit row persists
+  result := ciceron.decide_review(pasante, task_id, 'approved', NULL, NULL);
+  IF COALESCE((result->>'ok')::boolean, true) THEN
+    RAISE EXCEPTION 'FAIL: pasante was allowed to decide: %', result;
+  END IF;
+  IF result->>'policy_id' IS DISTINCT FROM 'role' THEN
+    RAISE EXCEPTION 'FAIL: expected role policy_id for pasante, got %', result;
+  END IF;
+  SELECT count(*) INTO audit_count
+  FROM ciceron.audit_events
+  WHERE entity_id = task_id
+    AND action = 'review_decide'
+    AND outcome = 'denied'
+    AND policy_id = 'role'
+    AND user_id = pasante;
+  IF audit_count < 1 THEN
+    RAISE EXCEPTION 'FAIL: pasante role denial audit did not persist';
+  END IF;
+  RAISE NOTICE 'OK: pasante role denial returned jsonb and audit persisted';
 
-  -- Outside-firm actor
-  BEGIN
-    PERFORM ciceron.decide_review(
-      'b1000000-0000-4000-8000-000000000011'::uuid,
-      task_id, 'approved', NULL, NULL
+  result := ciceron.decide_review(
+    'b1000000-0000-4000-8000-000000000011'::uuid,
+    task_id, 'approved', NULL, NULL
+  );
+  IF COALESCE((result->>'ok')::boolean, true) THEN
+    RAISE EXCEPTION 'FAIL: outside-firm actor decided review: %', result;
+  END IF;
+  IF result->>'policy_id' IS DISTINCT FROM 'role' THEN
+    RAISE EXCEPTION 'FAIL: expected role policy_id for outside actor, got %', result;
+  END IF;
+  SELECT count(*) INTO audit_count
+  FROM ciceron.audit_events
+  WHERE entity_id = task_id
+    AND action = 'review_decide'
+    AND outcome = 'denied'
+    AND policy_id = 'role'
+    AND user_id = 'b1000000-0000-4000-8000-000000000011'::uuid;
+  IF audit_count < 1 THEN
+    RAISE EXCEPTION 'FAIL: outside-firm role denial audit did not persist';
+  END IF;
+  RAISE NOTICE 'OK: outside actor role denial returned jsonb and audit persisted';
+
+  result := ciceron.create_delivery(
+    pasante, out_id, matter, 'email',
+    'cliente@ejemplo.demo', 'Asunto denegado',
+    'Cuerpo denegado.', true
+  );
+  IF COALESCE((result->>'ok')::boolean, true) THEN
+    RAISE EXCEPTION 'FAIL: pasante was allowed to create delivery: %', result;
+  END IF;
+  IF result->>'policy_id' IS DISTINCT FROM 'role' THEN
+    RAISE EXCEPTION 'FAIL: expected role policy_id for pasante delivery, got %', result;
+  END IF;
+  SELECT count(*) INTO audit_count
+  FROM ciceron.audit_events
+  WHERE entity_id = out_id
+    AND action = 'delivery_create'
+    AND outcome = 'denied'
+    AND policy_id = 'role'
+    AND user_id = pasante;
+  IF audit_count < 1 THEN
+    RAISE EXCEPTION 'FAIL: pasante delivery role denial audit did not persist';
+  END IF;
+  RAISE NOTICE 'OK: pasante delivery role denial returned jsonb and audit persisted';
+
+  -- 2b) matter_member denials on save_review_edit / reassign_review (force gate)
+  CREATE OR REPLACE FUNCTION ciceron.is_matter_member(p_matter_id uuid)
+  RETURNS boolean
+  LANGUAGE sql
+  STABLE
+  SECURITY DEFINER
+  SET search_path = ciceron, public
+  AS $fn$ SELECT false $fn$;
+
+  result := ciceron.save_review_edit(
+    socio, task_id,
+    'Datos de demostración. Edición denegada por matter_member.'
+  );
+  IF COALESCE((result->>'ok')::boolean, true) THEN
+    RAISE EXCEPTION 'FAIL: save_review_edit allowed non-member: %', result;
+  END IF;
+  IF result->>'policy_id' IS DISTINCT FROM 'matter_member' THEN
+    RAISE EXCEPTION 'FAIL: expected matter_member on save_review_edit, got %', result;
+  END IF;
+  SELECT count(*) INTO audit_count
+  FROM ciceron.audit_events
+  WHERE entity_id = task_id
+    AND action = 'draft_edit'
+    AND outcome = 'denied'
+    AND policy_id = 'matter_member';
+  IF audit_count < 1 THEN
+    RAISE EXCEPTION 'FAIL: save_review_edit matter_member denial audit did not persist';
+  END IF;
+  RAISE NOTICE 'OK: save_review_edit matter_member denial audited';
+
+  result := ciceron.reassign_review(socio, task_id, asociado);
+  IF COALESCE((result->>'ok')::boolean, true) THEN
+    RAISE EXCEPTION 'FAIL: reassign_review allowed non-member: %', result;
+  END IF;
+  IF result->>'policy_id' IS DISTINCT FROM 'matter_member' THEN
+    RAISE EXCEPTION 'FAIL: expected matter_member on reassign_review, got %', result;
+  END IF;
+  SELECT count(*) INTO audit_count
+  FROM ciceron.audit_events
+  WHERE entity_id = task_id
+    AND action = 'review_reassign'
+    AND outcome = 'denied'
+    AND policy_id = 'matter_member';
+  IF audit_count < 1 THEN
+    RAISE EXCEPTION 'FAIL: reassign_review matter_member denial audit did not persist';
+  END IF;
+  RAISE NOTICE 'OK: reassign_review matter_member denial audited';
+
+  -- Restore is_matter_member (302 semantics); outer ROLLBACK also undoes this DDL
+  CREATE OR REPLACE FUNCTION ciceron.is_matter_member(p_matter_id uuid)
+  RETURNS boolean
+  LANGUAGE sql
+  STABLE
+  SECURITY DEFINER
+  SET search_path = ciceron, public
+  AS $fn$
+    SELECT EXISTS (
+      SELECT 1
+      FROM ciceron.matters m
+      JOIN ciceron.memberships ms
+        ON ms.firm_id = m.firm_id AND ms.user_id = ciceron.current_actor_id()
+      WHERE m.id = p_matter_id
+        AND (
+          ms.role IN ('socio', 'asociado', 'admin')
+          OR EXISTS (
+            SELECT 1
+            FROM ciceron.matter_members mm
+            WHERE mm.matter_id = m.id AND mm.user_id = ciceron.current_actor_id()
+          )
+        )
     );
-    RAISE EXCEPTION 'FAIL: outside-firm actor decided review';
-  EXCEPTION
-    WHEN others THEN
-      IF SQLERRM LIKE 'FAIL:%' THEN RAISE; END IF;
-      IF SQLERRM LIKE '%socio, asociado, or admin%'
-         OR SQLERRM LIKE '%not a matter member%'
-         OR SQLERRM LIKE '%unknown ciceron actor%' THEN
-        RAISE NOTICE 'OK: outside actor cannot decide';
-      ELSE
-        RAISE EXCEPTION 'FAIL: unexpected outside decide error: %', SQLERRM;
-      END IF;
-  END;
+  $fn$;
 
   -- 3) Four-eyes: editor cannot final-approve; denial audit must persist in-txn
   UPDATE ciceron.review_tasks SET output_type = 'client_alert' WHERE id = task_id;
 
-  PERFORM ciceron.save_review_edit(
+  result := ciceron.save_review_edit(
     socio, task_id,
     'Datos de demostración. Texto editado por la socia (four-eyes).'
   );
+  IF NOT COALESCE((result->>'ok')::boolean, false) THEN
+    RAISE EXCEPTION 'FAIL: save_review_edit failed after membership restore: %', result;
+  END IF;
 
   result := ciceron.decide_review(socio, task_id, 'approved', NULL, NULL);
   IF COALESCE((result->>'ok')::boolean, true) THEN
@@ -195,6 +303,29 @@ BEGIN
   SELECT count(*) INTO n FROM ciceron.deliveries WHERE id = delivery_id AND is_simulated = true;
   IF n <> 1 THEN RAISE EXCEPTION 'FAIL: delivery not simulated by default'; END IF;
   RAISE NOTICE 'OK: create_delivery recorded simulated email';
+
+  -- Duplicate delivery for same approved output: structured denial + audit
+  result := ciceron.create_delivery(
+    asociado, out_id, matter, 'email',
+    'cliente@ejemplo.demo', 'Asunto duplicado',
+    'Cuerpo duplicado.', true
+  );
+  IF COALESCE((result->>'ok')::boolean, true) THEN
+    RAISE EXCEPTION 'FAIL: duplicate delivery was allowed: %', result;
+  END IF;
+  IF result->>'policy_id' IS DISTINCT FROM 'delivery_exists' THEN
+    RAISE EXCEPTION 'FAIL: expected delivery_exists policy_id, got %', result;
+  END IF;
+  SELECT count(*) INTO audit_count
+  FROM ciceron.audit_events
+  WHERE entity_id = out_id
+    AND action = 'delivery_create'
+    AND outcome = 'denied'
+    AND policy_id = 'delivery_exists';
+  IF audit_count < 1 THEN
+    RAISE EXCEPTION 'FAIL: delivery_exists denial audit did not persist';
+  END IF;
+  RAISE NOTICE 'OK: duplicate delivery denied with audit';
 
   -- Refuse already-decided
   BEGIN
