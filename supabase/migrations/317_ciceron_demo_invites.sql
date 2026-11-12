@@ -1,8 +1,12 @@
 -- 317_ciceron_demo_invites.sql
 -- Prompt 9: hashed invite codes, demo sessions, redeem RPC.
 -- Additive. Agents do not apply to production.
--- Pepper for seed hashes: ciceron-demo-pepper-v1 (must match CICERON_INVITE_PEPPER default).
 -- Depends on 302+ (demo_personas, firms).
+--
+-- Invite pepper: CICERON_INVITE_PEPPER is required at runtime (app fail-closed).
+-- Pepper value is never stored in this repository. Seeded hashes use pepper_version=1
+-- and were produced offline. Only intentionally public demo codes are seeded:
+-- DESPACHO-DEMO and DESPACHO-PASANTE. Non-public codes are never seeded here.
 
 -- ---------------------------------------------------------------------------
 -- invite_codes — hashed; never store plaintext codes
@@ -11,6 +15,7 @@ CREATE TABLE IF NOT EXISTS ciceron.invite_codes (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   code_hash text NOT NULL UNIQUE
     CHECK (char_length(code_hash) = 64 AND code_hash ~ '^[0-9a-f]{64}$'),
+  pepper_version int NOT NULL DEFAULT 1 CHECK (pepper_version >= 1),
   prospect_label text NOT NULL CHECK (char_length(prospect_label) BETWEEN 1 AND 200),
   firm_id uuid NOT NULL REFERENCES ciceron.firms(id) ON DELETE CASCADE,
   default_persona_id uuid NOT NULL REFERENCES ciceron.demo_personas(id) ON DELETE RESTRICT,
@@ -24,13 +29,20 @@ CREATE TABLE IF NOT EXISTS ciceron.invite_codes (
   CHECK (max_uses IS NULL OR use_count <= max_uses)
 );
 
+-- Existing drafts that created the table before pepper_version
+ALTER TABLE ciceron.invite_codes
+  ADD COLUMN IF NOT EXISTS pepper_version int NOT NULL DEFAULT 1;
+
 CREATE INDEX IF NOT EXISTS invite_codes_firm_id_idx ON ciceron.invite_codes (firm_id);
 CREATE INDEX IF NOT EXISTS invite_codes_prospect_label_idx ON ciceron.invite_codes (prospect_label);
+CREATE INDEX IF NOT EXISTS invite_codes_pepper_version_idx ON ciceron.invite_codes (pepper_version);
 
 COMMENT ON TABLE ciceron.invite_codes IS
   'Prompt 9: invite codes stored as sha256(pepper:CODE). Plaintext never persisted.';
 COMMENT ON COLUMN ciceron.invite_codes.code_hash IS
-  'Lowercase hex sha256 of CICERON_INVITE_PEPPER || ":" || upper(code).';
+  'Lowercase hex sha256 of CICERON_INVITE_PEPPER || ":" || upper(code). Pepper not in repo.';
+COMMENT ON COLUMN ciceron.invite_codes.pepper_version IS
+  'Which offline pepper generation produced code_hash. Public demo seeds use 1.';
 COMMENT ON COLUMN ciceron.invite_codes.prospect_label IS
   'Sales label for the prospect (e.g. firm name or contact). Not shown to the demo user.';
 
@@ -156,16 +168,18 @@ CREATE POLICY guided_story_admin_select ON ciceron.guided_story_progress
   );
 
 -- ---------------------------------------------------------------------------
--- Seed hashed invites (DESPACHO-DEMO + DESPACHO-PASANTE + other demo codes)
--- Hashes: sha256("ciceron-demo-pepper-v1:" || CODE)
+-- Seed ONLY intentionally public demo invites (pepper_version = 1).
+-- Hashes produced offline; CICERON_INVITE_PEPPER in the environment must match.
+-- Non-public invites (admin, other roles) are created at runtime by an admin action.
 -- ---------------------------------------------------------------------------
 INSERT INTO ciceron.invite_codes (
-  id, code_hash, prospect_label, firm_id, default_persona_id,
+  id, code_hash, pepper_version, prospect_label, firm_id, default_persona_id,
   expires_at, max_uses, use_count, is_active, is_demo
 ) VALUES
   (
     'e3000000-0000-4000-8000-000000000001'::uuid,
     '3e88bb2a453f689e314810c301bbf790a09d5ee1afb4e0e0147dd0727c2b7f78',
+    1,
     'Prospecto socio — Despacho Demo',
     'a1000000-0000-4000-8000-000000000001'::uuid,
     'b1000000-0000-4000-8000-000000000001'::uuid,
@@ -178,6 +192,7 @@ INSERT INTO ciceron.invite_codes (
   (
     'e3000000-0000-4000-8000-000000000002'::uuid,
     'b68b3f391c07312e458cb97345b4dd4e180f77cc823f069f5c17a4acbe70938e',
+    1,
     'Prospecto pasante — Despacho Demo',
     'a1000000-0000-4000-8000-000000000001'::uuid,
     'b1000000-0000-4000-8000-000000000003'::uuid,
@@ -186,57 +201,10 @@ INSERT INTO ciceron.invite_codes (
     0,
     true,
     true
-  ),
-  (
-    'e3000000-0000-4000-8000-000000000003'::uuid,
-    '95868f9812dc6e5aeb8c23ababc96ee53cca57197b1fcf2b83651c57efeb8a6c',
-    'Prospecto asociado — Despacho Demo',
-    'a1000000-0000-4000-8000-000000000001'::uuid,
-    'b1000000-0000-4000-8000-000000000002'::uuid,
-    now() + interval '365 days',
-    200,
-    0,
-    true,
-    true
-  ),
-  (
-    'e3000000-0000-4000-8000-000000000004'::uuid,
-    '3d7d46baf85898b9ffe7359d1c3b91db471ebe17f38650ae1cdddc2d607ee7a4',
-    'Admin interno — Despacho Demo',
-    'a1000000-0000-4000-8000-000000000001'::uuid,
-    'b1000000-0000-4000-8000-000000000004'::uuid,
-    now() + interval '365 days',
-    50,
-    0,
-    true,
-    true
-  ),
-  (
-    'e3000000-0000-4000-8000-000000000005'::uuid,
-    '66927b62bc2899dd6a6a4bb36acd949038513c3299c54e138b02cb6832af886b',
-    'Prospecto asociada 2 — Despacho Demo',
-    'a1000000-0000-4000-8000-000000000001'::uuid,
-    'b1000000-0000-4000-8000-000000000005'::uuid,
-    now() + interval '365 days',
-    200,
-    0,
-    true,
-    true
-  ),
-  (
-    'e3000000-0000-4000-8000-000000000006'::uuid,
-    '84bc7bff93e0930312188e7a38861323ec663f91c30ad57049cfd9c2a052f5a3',
-    'Aislamiento — Bufete Contraste',
-    'a1000000-0000-4000-8000-000000000002'::uuid,
-    'b1000000-0000-4000-8000-000000000011'::uuid,
-    now() + interval '365 days',
-    50,
-    0,
-    true,
-    true
   )
 ON CONFLICT (id) DO UPDATE
   SET code_hash = EXCLUDED.code_hash,
+      pepper_version = EXCLUDED.pepper_version,
       prospect_label = EXCLUDED.prospect_label,
       default_persona_id = EXCLUDED.default_persona_id,
       expires_at = EXCLUDED.expires_at,

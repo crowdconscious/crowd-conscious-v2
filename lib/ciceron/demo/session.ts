@@ -10,6 +10,7 @@ import {
   isSessionTokenShape,
   mintSessionToken,
   normalizeInviteCode,
+  requireInvitePepper,
 } from '@/lib/ciceron/demo/invite-hash'
 import {
   offlinePersonaById,
@@ -18,6 +19,8 @@ import {
   roleLabel,
   type DemoPersona,
 } from '@/lib/ciceron/demo/personas'
+
+const OFFLINE_PERSONA_COOKIE = 'ciceron_offline_persona'
 
 export type DemoSession = {
   sessionId: string | null
@@ -63,6 +66,17 @@ function mapResolved(row: ResolveRow, token: string): DemoSession | null {
   }
 }
 
+function applyOfflinePersonaOverride(
+  base: DemoPersona,
+  overrideId: string | undefined
+): DemoPersona {
+  if (!overrideId) return base
+  const override = offlinePersonaById(overrideId)
+  if (!override || override.firmId !== base.firmId) return base
+  if (!['socio', 'asociado', 'pasante'].includes(override.role)) return base
+  return override
+}
+
 /** Resolve invite code → start session (hashed redeem when DB available). */
 export async function redeemInviteCode(opts: {
   code: string
@@ -78,6 +92,16 @@ export async function redeemInviteCode(opts: {
 
   const db = tryCreateCiceronAdminClient()
   if (db) {
+    try {
+      requireInvitePepper()
+    } catch {
+      return {
+        ok: false,
+        error: 'invalid',
+        policyId: 'invite_pepper',
+        policyReason: 'Configuración de invitación incompleta.',
+      }
+    }
     try {
       const token = mintSessionToken()
       const { data, error } = await db.rpc('redeem_invite', {
@@ -112,14 +136,18 @@ export async function redeemInviteCode(opts: {
           firmId: String(row.firm_id),
           role: row.role as CiceronMembershipRole,
           displayName: 'Usuario Demo',
-          inviteCode: normalized,
+          inviteCode: '',
           firmName: CICERON_FIRM_NAME,
           firmSlug: 'despacho-demo',
         },
       }
       return { ok: true, session, token }
-    } catch {
-      // fall through to offline
+    } catch (err) {
+      return {
+        ok: false,
+        error: 'invalid',
+        policyReason: err instanceof Error ? err.message : 'invalid',
+      }
     }
   }
 
@@ -140,51 +168,58 @@ export async function redeemInviteCode(opts: {
   }
 }
 
-export async function resolveSessionByToken(token: string): Promise<DemoSession | null> {
+/**
+ * When a DB client is configured: ONLY 64-hex session tokens via resolve_demo_session.
+ * Offline invite-code fallback runs only when no DB is configured, and never yields admin.
+ */
+export async function resolveSessionByToken(
+  token: string,
+  offlinePersonaOverrideId?: string
+): Promise<DemoSession | null> {
   const raw = token.trim()
   if (!raw) return null
 
-  // Offline / legacy: cookie still holds invite code (DESPACHO-*)
-  if (raw.startsWith('offline:') || (!isSessionTokenShape(raw) && raw.includes('-'))) {
-    const code = raw.startsWith('offline:') ? raw.slice('offline:'.length) : raw
-    const persona = offlinePersonaByInvite(code)
-    if (!persona) return null
-    return {
-      sessionId: null,
-      inviteCodeId: null,
-      persona,
-      storyDismissed: false,
-      token: raw,
-      offline: true,
-    }
-  }
-
-  if (!isSessionTokenShape(raw)) return null
-
   const db = tryCreateCiceronAdminClient()
-  if (!db) {
-    return null
-  }
-
-  try {
-    const { data, error } = await db.rpc('resolve_demo_session', {
-      p_token_hash: hashSessionToken(raw),
-    })
-    if (error || !data) return null
-    const mapped = mapResolved(data as ResolveRow, raw)
-    if (mapped) {
-      // Lazy freshness at most once per day (no cron)
-      void db.rpc('touch_session_freshness', {
+  if (db) {
+    if (!isSessionTokenShape(raw)) return null
+    try {
+      const { data, error } = await db.rpc('resolve_demo_session', {
         p_token_hash: hashSessionToken(raw),
       })
+      if (error || !data) return null
+      const mapped = mapResolved(data as ResolveRow, raw)
+      if (mapped) {
+        void db.rpc('touch_session_freshness', {
+          p_token_hash: hashSessionToken(raw),
+        })
+      }
+      return mapped
+    } catch {
+      return null
     }
-    return mapped
-  } catch {
+  }
+
+  // Offline only — never admin
+  let code = raw
+  if (raw.startsWith('offline:')) {
+    code = raw.slice('offline:'.length)
+  } else if (isSessionTokenShape(raw)) {
     return null
+  }
+
+  const base = offlinePersonaByInvite(code)
+  if (!base) return null
+  const persona = applyOfflinePersonaOverride(base, offlinePersonaOverrideId)
+  return {
+    sessionId: null,
+    inviteCodeId: null,
+    persona,
+    storyDismissed: false,
+    token: raw.startsWith('offline:') ? raw : `offline:${base.inviteCode}`,
+    offline: true,
   }
 }
 
-/** Current demo session from cookie (token or legacy invite code). */
 export async function getCiceronDemoSession(): Promise<DemoPersona | null> {
   const full = await getCiceronDemoSessionFull()
   return full?.persona ?? null
@@ -194,7 +229,8 @@ export async function getCiceronDemoSessionFull(): Promise<DemoSession | null> {
   const jar = await cookies()
   const raw = jar.get(CICERON_DEMO_COOKIE)?.value
   if (!raw) return null
-  return resolveSessionByToken(raw)
+  const override = jar.get(OFFLINE_PERSONA_COOKIE)?.value
+  return resolveSessionByToken(raw, override)
 }
 
 export async function switchPersona(
@@ -215,7 +251,7 @@ export async function switchPersona(
       return { ok: false, message: 'Solo Socia, Asociado o Pasante.' }
     }
     const jar = await cookies()
-    jar.set(CICERON_DEMO_COOKIE, `offline:${persona.inviteCode}`, {
+    jar.set(OFFLINE_PERSONA_COOKIE, persona.id, {
       path: '/ciceron',
       maxAge: 60 * 60 * 24,
       sameSite: 'lax',

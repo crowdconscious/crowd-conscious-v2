@@ -70,7 +70,7 @@ export default async function AdminVentasPage() {
         </div>
       )}
 
-      {persona.role === 'admin' || persona.role === 'socio' ? (
+      {persona.role === 'admin' ? (
         <section className="cic-section" aria-labelledby="reset-demo" style={{ marginTop: 32 }}>
           <h2 id="reset-demo" className="cic-h2">
             {copy.adminVentas.resetTitle}

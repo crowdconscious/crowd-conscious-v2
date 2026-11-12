@@ -157,7 +157,7 @@ REVOKE ALL ON FUNCTION ciceron.refresh_demo_dates(uuid, boolean)
 GRANT EXECUTE ON FUNCTION ciceron.refresh_demo_dates(uuid, boolean) TO service_role;
 
 -- ---------------------------------------------------------------------------
--- reset_demo_firm — restore seed-ish demo state; never touch DOF corpus
+-- reset_demo_firm — admin-only; expire sessions (keep sales history + emails)
 -- ---------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION ciceron.reset_demo_firm(
   p_firm_id uuid,
@@ -170,32 +170,36 @@ SET search_path = ciceron
 AS $$
 DECLARE
   actor_role text;
-  sessions_cleared int := 0;
+  sessions_expired int := 0;
 BEGIN
   IF p_firm_id IS NULL OR p_actor IS NULL THEN
     RAISE EXCEPTION 'firm and actor required';
   END IF;
 
-  PERFORM ciceron.set_actor(p_actor);
-
   SELECT ms.role INTO actor_role
   FROM ciceron.memberships ms
   WHERE ms.firm_id = p_firm_id AND ms.user_id = p_actor;
 
-  IF actor_role IS NULL OR actor_role NOT IN ('admin', 'socio') THEN
+  IF actor_role IS NULL OR actor_role <> 'admin' THEN
+    -- Audit before set_actor when possible; non-members may lack membership for set_actor
+    IF actor_role IS NOT NULL THEN
+      PERFORM ciceron.set_actor(p_actor);
+    END IF;
     PERFORM ciceron.write_audit_event(
       p_firm_id, p_actor, 'demo_reset', 'firms', p_firm_id,
       jsonb_build_object('is_demo', true),
       'denied', 'rbac_role',
-      'Solo socio o administrador puede restablecer la demostración.',
+      'Solo un administrador puede restablecer la demostración.',
       jsonb_build_object('entity_type', 'firms', 'entity_id', p_firm_id)
     );
     RETURN jsonb_build_object(
       'ok', false,
       'policy_id', 'rbac_role',
-      'policy_reason', 'Solo socio o administrador puede restablecer la demostración.'
+      'policy_reason', 'Solo un administrador puede restablecer la demostración.'
     );
   END IF;
+
+  PERFORM ciceron.set_actor(p_actor);
 
   IF NOT EXISTS (
     SELECT 1 FROM ciceron.firms f WHERE f.id = p_firm_id AND f.is_demo = true
@@ -207,13 +211,12 @@ BEGIN
     );
   END IF;
 
-  -- Clear demo sessions + story for this firm (prospects start fresh)
-  DELETE FROM ciceron.guided_story_progress g
-  USING ciceron.demo_sessions s
-  WHERE g.session_id = s.id AND s.firm_id = p_firm_id;
-
-  DELETE FROM ciceron.demo_sessions WHERE firm_id = p_firm_id;
-  GET DIAGNOSTICS sessions_cleared = ROW_COUNT;
+  -- Expire sessions in place — do not delete (preserve sales history + work_email)
+  UPDATE ciceron.demo_sessions
+  SET expires_at = now(), updated_at = now()
+  WHERE firm_id = p_firm_id
+    AND expires_at > now();
+  GET DIAGNOSTICS sessions_expired = ROW_COUNT;
 
   -- Reset invite use counts for this firm
   UPDATE ciceron.invite_codes
@@ -253,7 +256,7 @@ BEGIN
     p_firm_id, p_actor, 'demo_reset', 'firms', p_firm_id,
     jsonb_build_object(
       'is_demo', true,
-      'sessions_cleared', sessions_cleared
+      'sessions_expired', sessions_expired
     ),
     'allowed', NULL, NULL,
     jsonb_build_object('entity_type', 'firms', 'entity_id', p_firm_id)
@@ -261,14 +264,14 @@ BEGIN
 
   RETURN jsonb_build_object(
     'ok', true,
-    'sessions_cleared', sessions_cleared,
+    'sessions_expired', sessions_expired,
     'firm_id', p_firm_id
   );
 END;
 $$;
 
 COMMENT ON FUNCTION ciceron.reset_demo_firm(uuid, uuid) IS
-  'Admin: reset demo firm seed state. Never deletes dof_notes or official corpus.';
+  'Admin-only: reset demo firm seed state. Expires sessions (keeps history/emails). Never deletes dof_notes.';
 
 REVOKE ALL ON FUNCTION ciceron.reset_demo_firm(uuid, uuid)
   FROM PUBLIC, anon, authenticated;

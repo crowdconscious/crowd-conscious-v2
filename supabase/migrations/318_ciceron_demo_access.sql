@@ -2,6 +2,9 @@
 -- Prompt 9: RBAC + ABAC showcase — sensitivity, conflict walls, access grants,
 -- enforcement RPCs that return Spanish policy denials + write_audit_event.
 -- Additive. Requires 312 (write_audit_event) and 317. Agents do not apply.
+--
+-- Sensitivity / conflict / expiring grants for documents are enforced in
+-- ciceron.evaluate_access (RPC), not in documents RLS. RLS remains firm-scoped.
 
 -- ---------------------------------------------------------------------------
 -- documents: sensitivity + optional matter scope (ABAC attributes)
@@ -20,9 +23,9 @@ ALTER TABLE ciceron.documents
   ADD COLUMN IF NOT EXISTS is_demo boolean NOT NULL DEFAULT false;
 
 COMMENT ON COLUMN ciceron.documents.sensitivity_level IS
-  'ABAC: publico < interno < confidencial < restringido. NULL = treat as interno for firm docs.';
+  'ABAC: publico < interno < confidencial < restringido. NULL = treat as interno for firm docs. Enforced in evaluate_access RPC (not documents RLS).';
 COMMENT ON COLUMN ciceron.documents.matter_id IS
-  'Optional matter scope for firm-private documents (ABAC matter membership).';
+  'Optional matter scope for firm-private documents (ABAC matter membership). Enforced in evaluate_access RPC.';
 
 CREATE INDEX IF NOT EXISTS documents_matter_id_idx
   ON ciceron.documents (matter_id) WHERE matter_id IS NOT NULL;
@@ -47,7 +50,7 @@ CREATE TABLE IF NOT EXISTS ciceron.client_conflicts (
 );
 
 COMMENT ON TABLE ciceron.client_conflicts IS
-  'ABAC conflict wall: actor assigned to client_id cannot access blocked_client_id materials.';
+  'ABAC conflict wall: actor assigned to client_id cannot access blocked_client_id materials. Enforced in evaluate_access.';
 
 DROP TRIGGER IF EXISTS client_conflicts_set_updated_at ON ciceron.client_conflicts;
 CREATE TRIGGER client_conflicts_set_updated_at
@@ -91,7 +94,7 @@ CREATE INDEX IF NOT EXISTS access_grants_resource_idx
   ON ciceron.access_grants (resource_type, resource_id);
 
 COMMENT ON TABLE ciceron.access_grants IS
-  'ABAC: time-bound grants. expires_at NULL = until revoked. Enforcement in evaluate_access RPC.';
+  'ABAC: time-bound grants. expires_at NULL = until revoked. Enforcement in evaluate_access RPC (not documents RLS).';
 
 DROP TRIGGER IF EXISTS access_grants_set_updated_at ON ciceron.access_grants;
 CREATE TRIGGER access_grants_set_updated_at
@@ -143,7 +146,12 @@ GRANT EXECUTE ON FUNCTION ciceron.role_rank(text) TO authenticated, service_role
 
 -- ---------------------------------------------------------------------------
 -- evaluate_access — RBAC + ABAC; writes denial audit; returns jsonb
+-- Membership denial is audited BEFORE set_actor (set_actor raises for unknown actors).
+-- p_simulated_by: when set, audit rows use that actor id and payload.simulated_by.
 -- ---------------------------------------------------------------------------
+DROP FUNCTION IF EXISTS ciceron.evaluate_access(uuid, uuid, text, text, uuid, uuid, uuid, boolean);
+DROP FUNCTION IF EXISTS ciceron.evaluate_access(uuid, uuid, text, text, uuid, uuid, uuid, boolean, uuid);
+
 CREATE OR REPLACE FUNCTION ciceron.evaluate_access(
   p_actor uuid,
   p_firm_id uuid,
@@ -152,7 +160,8 @@ CREATE OR REPLACE FUNCTION ciceron.evaluate_access(
   p_resource_id uuid DEFAULT NULL,
   p_client_id uuid DEFAULT NULL,
   p_matter_id uuid DEFAULT NULL,
-  p_log boolean DEFAULT true
+  p_log boolean DEFAULT true,
+  p_simulated_by uuid DEFAULT NULL
 )
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -168,6 +177,10 @@ DECLARE
   grant_ok boolean;
   conflict_hit boolean;
   model text; -- 'rbac' | 'abac'
+  audit_user uuid;
+  audit_payload jsonb;
+  abac_persona uuid := 'e3000000-0000-4000-8000-000000000010'::uuid;
+  matter_assigned boolean;
 BEGIN
   IF p_actor IS NULL OR p_firm_id IS NULL OR p_action IS NULL THEN
     RETURN jsonb_build_object(
@@ -177,8 +190,16 @@ BEGIN
     );
   END IF;
 
-  PERFORM ciceron.set_actor(p_actor);
+  audit_user := COALESCE(p_simulated_by, p_actor);
+  audit_payload := jsonb_build_object('action', p_action);
+  IF p_simulated_by IS NOT NULL THEN
+    audit_payload := audit_payload || jsonb_build_object(
+      'simulated_by', p_simulated_by,
+      'simulated_actor', p_actor
+    );
+  END IF;
 
+  -- Membership check BEFORE set_actor so non-members are audited (set_actor would raise).
   SELECT ms.role INTO actor_role
   FROM ciceron.memberships ms
   WHERE ms.firm_id = p_firm_id AND ms.user_id = p_actor;
@@ -189,8 +210,8 @@ BEGIN
     model := 'rbac';
     IF p_log THEN
       PERFORM ciceron.write_audit_event(
-        p_firm_id, p_actor, 'access_denied', COALESCE(p_resource_type, 'firm'), p_resource_id,
-        jsonb_build_object('action', p_action, 'model', model),
+        p_firm_id, audit_user, 'access_denied', COALESCE(p_resource_type, 'firm'), p_resource_id,
+        audit_payload || jsonb_build_object('model', model),
         'denied', policy_id, policy_reason,
         jsonb_build_object('entity_type', COALESCE(p_resource_type, 'firm'), 'entity_id', p_resource_id)
       );
@@ -199,6 +220,8 @@ BEGIN
       'ok', false, 'policy_id', policy_id, 'policy_reason', policy_reason, 'model', model
     );
   END IF;
+
+  PERFORM ciceron.set_actor(p_actor);
 
   -- ---- RBAC: role gates for approve_review / confirm_deadline ----
   IF p_action IN ('approve_review', 'confirm_deadline', 'deliver_client') THEN
@@ -215,8 +238,8 @@ BEGIN
       END;
       IF p_log THEN
         PERFORM ciceron.write_audit_event(
-          p_firm_id, p_actor, 'access_denied', COALESCE(p_resource_type, 'action'), p_resource_id,
-          jsonb_build_object('action', p_action, 'actor_role', actor_role, 'model', 'rbac'),
+          p_firm_id, audit_user, 'access_denied', COALESCE(p_resource_type, 'action'), p_resource_id,
+          audit_payload || jsonb_build_object('actor_role', actor_role, 'model', 'rbac'),
           'denied', policy_id, policy_reason,
           jsonb_build_object('entity_type', COALESCE(p_resource_type, 'action'), 'entity_id', p_resource_id)
         );
@@ -247,8 +270,8 @@ BEGIN
         'Muro de conflicto: usted está asignado a un cliente en conflicto con este cliente (ABAC: atributo de conflicto).';
       IF p_log THEN
         PERFORM ciceron.write_audit_event(
-          p_firm_id, p_actor, 'access_denied', 'client', p_client_id,
-          jsonb_build_object('action', p_action, 'model', 'abac'),
+          p_firm_id, audit_user, 'access_denied', 'client', p_client_id,
+          audit_payload || jsonb_build_object('model', 'abac'),
           'denied', policy_id, policy_reason,
           jsonb_build_object('entity_type', 'client', 'entity_id', p_client_id)
         );
@@ -260,33 +283,32 @@ BEGIN
     END IF;
   END IF;
 
-  -- ---- ABAC: matter membership for non-socio/admin when matter scoped ----
-  IF p_matter_id IS NOT NULL AND actor_role IN ('pasante', 'asociado') THEN
+  -- ---- ABAC: matter assignment for pasante + ABAC showcase persona ----
+  -- Do NOT use is_matter_member for these actors: firm-wide asociado/socio
+  -- short-circuits matter assignment and would hide the ABAC branch.
+  IF p_matter_id IS NOT NULL AND (actor_role = 'pasante' OR p_actor = abac_persona) THEN
     model := 'abac';
-    IF NOT ciceron.is_matter_member(p_matter_id) THEN
-      -- For ABAC showcase asociados: matter assignment is an attribute
-      IF actor_role = 'pasante'
-         OR EXISTS (
-           SELECT 1 FROM ciceron.demo_personas dp
-           WHERE dp.id = p_actor AND dp.display_name LIKE 'Asociada Atributos%'
-         )
-      THEN
-        policy_id := 'abac_matter_assignment';
-        policy_reason :=
-          'No tiene asignación a este asunto (ABAC: atributo de membresía del asunto).';
-        IF p_log THEN
-          PERFORM ciceron.write_audit_event(
-            p_firm_id, p_actor, 'access_denied', 'matter', p_matter_id,
-            jsonb_build_object('action', p_action, 'model', 'abac'),
-            'denied', policy_id, policy_reason,
-            jsonb_build_object('entity_type', 'matter', 'entity_id', p_matter_id)
-          );
-        END IF;
-        RETURN jsonb_build_object(
-          'ok', false, 'policy_id', policy_id, 'policy_reason', policy_reason,
-          'model', 'abac', 'actor_role', actor_role
+    SELECT EXISTS (
+      SELECT 1 FROM ciceron.matter_members mm
+      WHERE mm.matter_id = p_matter_id AND mm.user_id = p_actor
+    ) INTO matter_assigned;
+
+    IF NOT matter_assigned THEN
+      policy_id := 'abac_matter_assignment';
+      policy_reason :=
+        'No tiene asignación a este asunto (ABAC: atributo de membresía del asunto).';
+      IF p_log THEN
+        PERFORM ciceron.write_audit_event(
+          p_firm_id, audit_user, 'access_denied', 'matter', p_matter_id,
+          audit_payload || jsonb_build_object('model', 'abac'),
+          'denied', policy_id, policy_reason,
+          jsonb_build_object('entity_type', 'matter', 'entity_id', p_matter_id)
         );
       END IF;
+      RETURN jsonb_build_object(
+        'ok', false, 'policy_id', policy_id, 'policy_reason', policy_reason,
+        'model', 'abac', 'actor_role', actor_role
+      );
     END IF;
   END IF;
 
@@ -299,8 +321,8 @@ BEGIN
       policy_reason := 'El documento no existe en este despacho.';
       IF p_log THEN
         PERFORM ciceron.write_audit_event(
-          p_firm_id, p_actor, 'access_denied', 'document', p_resource_id,
-          jsonb_build_object('action', p_action, 'model', 'abac'),
+          p_firm_id, audit_user, 'access_denied', 'document', p_resource_id,
+          audit_payload || jsonb_build_object('model', 'abac'),
           'denied', policy_id, policy_reason,
           jsonb_build_object('entity_type', 'document', 'entity_id', p_resource_id)
         );
@@ -324,7 +346,6 @@ BEGIN
       ) INTO grant_ok;
 
       IF NOT grant_ok THEN
-        -- Distinguish expired vs missing
         IF EXISTS (
           SELECT 1 FROM ciceron.access_grants g
           WHERE g.firm_id = p_firm_id
@@ -346,9 +367,9 @@ BEGIN
 
         IF p_log THEN
           PERFORM ciceron.write_audit_event(
-            p_firm_id, p_actor, 'access_denied', 'document', p_resource_id,
-            jsonb_build_object(
-              'action', p_action, 'model', 'abac', 'sensitivity', sens
+            p_firm_id, audit_user, 'access_denied', 'document', p_resource_id,
+            audit_payload || jsonb_build_object(
+              'model', 'abac', 'sensitivity', sens
             ),
             'denied', policy_id, policy_reason,
             jsonb_build_object('entity_type', 'document', 'entity_id', p_resource_id)
@@ -370,8 +391,8 @@ BEGIN
 
   IF p_log THEN
     PERFORM ciceron.write_audit_event(
-      p_firm_id, p_actor, 'access_allowed', COALESCE(p_resource_type, 'action'), p_resource_id,
-      jsonb_build_object('action', p_action, 'model', model, 'actor_role', actor_role),
+      p_firm_id, audit_user, 'access_allowed', COALESCE(p_resource_type, 'action'), p_resource_id,
+      audit_payload || jsonb_build_object('model', model, 'actor_role', actor_role),
       'allowed', NULL, NULL,
       jsonb_build_object('entity_type', COALESCE(p_resource_type, 'action'), 'entity_id', p_resource_id)
     );
@@ -387,17 +408,20 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION ciceron.evaluate_access(uuid, uuid, text, text, uuid, uuid, uuid, boolean) IS
-  'Prompt 9: RBAC+ABAC evaluation. Denials commit audit via write_audit_event then return jsonb.';
+COMMENT ON FUNCTION ciceron.evaluate_access(uuid, uuid, text, text, uuid, uuid, uuid, boolean, uuid) IS
+  'Prompt 9: RBAC+ABAC evaluation. Denials commit audit via write_audit_event then return jsonb. Document sensitivity/conflict are RPC-enforced.';
 
-REVOKE ALL ON FUNCTION ciceron.evaluate_access(uuid, uuid, text, text, uuid, uuid, uuid, boolean)
+REVOKE ALL ON FUNCTION ciceron.evaluate_access(uuid, uuid, text, text, uuid, uuid, uuid, boolean, uuid)
   FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION ciceron.evaluate_access(uuid, uuid, text, text, uuid, uuid, uuid, boolean)
+GRANT EXECUTE ON FUNCTION ciceron.evaluate_access(uuid, uuid, text, text, uuid, uuid, uuid, boolean, uuid)
   TO service_role;
 
 -- ---------------------------------------------------------------------------
 -- try_access_demo — explainer panel: run allowed + denied pairs
+-- Simulated denials audit the real caller via p_simulated_by.
 -- ---------------------------------------------------------------------------
+DROP FUNCTION IF EXISTS ciceron.try_access_demo(uuid, uuid, text);
+
 CREATE OR REPLACE FUNCTION ciceron.try_access_demo(
   p_actor uuid,
   p_firm_id uuid,
@@ -417,16 +441,15 @@ DECLARE
   matter_nexora uuid := 'd1000000-0000-4000-8000-000000000001'::uuid;
   matter_viento uuid := 'd1000000-0000-4000-8000-000000000004'::uuid;
   client_farma uuid := 'c1000000-0000-4000-8000-000000000002'::uuid;
+  pasante uuid := 'b1000000-0000-4000-8000-000000000003'::uuid;
 BEGIN
   IF p_scenario = 'rbac' THEN
-    -- Allowed: socio approves review
     allowed_res := ciceron.evaluate_access(
-      p_actor, p_firm_id, 'approve_review', 'review_tasks', NULL, NULL, matter_nexora, true
+      p_actor, p_firm_id, 'approve_review', 'review_tasks', NULL, NULL, matter_nexora, true, NULL
     );
-    -- Denied: force pasante for denial side when actor is socio — call with pasante id
+    -- Denial simulated as pasante; audit attributes the real caller.
     denied_res := ciceron.evaluate_access(
-      'b1000000-0000-4000-8000-000000000003'::uuid,
-      p_firm_id, 'approve_review', 'review_tasks', NULL, NULL, matter_nexora, true
+      pasante, p_firm_id, 'approve_review', 'review_tasks', NULL, NULL, matter_nexora, true, p_actor
     );
     RETURN jsonb_build_object(
       'ok', true,
@@ -437,19 +460,17 @@ BEGIN
         'RBAC decide por rol: la socia puede aprobar; el pasante no, aunque comparta el asunto.'
     );
   ELSIF p_scenario = 'abac' THEN
-    -- Allowed: open internal doc with assignment / grant
     allowed_res := ciceron.evaluate_access(
-      p_actor, p_firm_id, 'read', 'document', doc_ok, NULL, matter_nexora, true
+      p_actor, p_firm_id, 'read', 'document', doc_ok, NULL, matter_nexora, true, NULL
     );
-    -- Denied: conflict wall or expired grant (prefer conflict if actor is ABAC persona)
     denied_res := ciceron.evaluate_access(
       p_actor, p_firm_id, 'read', 'document', doc_expired,
-      client_farma, matter_viento, true
+      client_farma, matter_viento, true, NULL
     );
     IF COALESCE(denied_res->>'ok', 'true') = 'true' THEN
       denied_res := ciceron.evaluate_access(
         p_actor, p_firm_id, 'read', 'document', doc_sens,
-        NULL, matter_nexora, true
+        NULL, matter_nexora, true, NULL
       );
     END IF;
     RETURN jsonb_build_object(
@@ -476,6 +497,7 @@ GRANT EXECUTE ON FUNCTION ciceron.try_access_demo(uuid, uuid, text) TO service_r
 
 -- ---------------------------------------------------------------------------
 -- Seed: ABAC persona + docs + conflict + grants (e3 prefix)
+-- Persona invite_code is a non-redeemable unique placeholder (no public invite seed).
 -- ---------------------------------------------------------------------------
 INSERT INTO ciceron.demo_personas (id, firm_id, role, display_name, invite_code, is_demo)
 VALUES (
@@ -483,7 +505,7 @@ VALUES (
   'a1000000-0000-4000-8000-000000000001'::uuid,
   'asociado',
   'Asociada Atributos Vega',
-  'DESPACHO-ABAC',
+  'nr-e3000000000000000000000000000010',
   true
 )
 ON CONFLICT (id) DO UPDATE
@@ -605,24 +627,4 @@ ON CONFLICT (id) DO UPDATE
   SET expires_at = EXCLUDED.expires_at,
       is_demo = true;
 
--- Hashed invite for ABAC persona (DESPACHO-ABAC)
--- sha256("ciceron-demo-pepper-v1:DESPACHO-ABAC")
-INSERT INTO ciceron.invite_codes (
-  id, code_hash, prospect_label, firm_id, default_persona_id,
-  expires_at, max_uses, use_count, is_active, is_demo
-) VALUES (
-  'e3000000-0000-4000-8000-000000000007'::uuid,
-  '22ba3b88e72cbef11371b0c556a835aeb8507cc2cd316a1b0a344d7566e8c6eb',
-  'Showcase ABAC — Asociada Atributos',
-  'a1000000-0000-4000-8000-000000000001'::uuid,
-  'e3000000-0000-4000-8000-000000000010'::uuid,
-  now() + interval '365 days',
-  200,
-  0,
-  true,
-  true
-)
-ON CONFLICT (id) DO UPDATE
-  SET default_persona_id = EXCLUDED.default_persona_id,
-      prospect_label = EXCLUDED.prospect_label,
-      is_active = true;
+-- No invite_codes row for the ABAC persona: non-public invites are not seeded.

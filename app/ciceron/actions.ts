@@ -117,6 +117,9 @@ export async function tryAccessAction(
 export async function resetDemoFirmAction(): Promise<{ ok: boolean; message?: string }> {
   const session = await getCiceronDemoSessionFull()
   if (!session) return { ok: false, message: 'Sin sesión.' }
+  if (session.persona.role !== 'admin') {
+    return { ok: false, message: 'Solo un administrador puede restablecer la demostración.' }
+  }
   const result = await resetDemoFirm(session.persona)
   revalidatePath('/ciceron/admin/ventas')
   if (!result.ok) return { ok: false, message: result.message }

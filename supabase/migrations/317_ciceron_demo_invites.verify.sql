@@ -17,6 +17,11 @@ BEGIN
   WHERE table_schema = 'ciceron' AND table_name = 'invite_codes';
   IF n <> 1 THEN RAISE EXCEPTION 'FAIL: invite_codes missing'; END IF;
 
+  SELECT count(*) INTO n FROM information_schema.columns
+  WHERE table_schema = 'ciceron' AND table_name = 'invite_codes'
+    AND column_name = 'pepper_version';
+  IF n <> 1 THEN RAISE EXCEPTION 'FAIL: invite_codes.pepper_version missing'; END IF;
+
   SELECT count(*) INTO n FROM information_schema.tables
   WHERE table_schema = 'ciceron' AND table_name = 'demo_sessions';
   IF n <> 1 THEN RAISE EXCEPTION 'FAIL: demo_sessions missing'; END IF;
@@ -25,11 +30,35 @@ BEGIN
   WHERE table_schema = 'ciceron' AND table_name = 'guided_story_progress';
   IF n <> 1 THEN RAISE EXCEPTION 'FAIL: guided_story_progress missing'; END IF;
 
-  -- DESPACHO-DEMO and DESPACHO-PASANTE migrated
+  -- Exactly the two intentionally public seeded invites
   SELECT count(*) INTO n FROM ciceron.invite_codes
-  WHERE code_hash IN (demo_hash, pasante_hash) AND is_active;
+  WHERE id IN (
+    'e3000000-0000-4000-8000-000000000001'::uuid,
+    'e3000000-0000-4000-8000-000000000002'::uuid
+  )
+    AND code_hash IN (demo_hash, pasante_hash)
+    AND pepper_version = 1
+    AND is_active;
   IF n <> 2 THEN
-    RAISE EXCEPTION 'FAIL: DESPACHO-DEMO / DESPACHO-PASANTE hashes missing (got %)', n;
+    RAISE EXCEPTION 'FAIL: public demo invite seeds missing or wrong (got %)', n;
+  END IF;
+
+  SELECT count(*) INTO n FROM ciceron.invite_codes
+  WHERE id IN (
+    'e3000000-0000-4000-8000-000000000001'::uuid,
+    'e3000000-0000-4000-8000-000000000002'::uuid
+  );
+  IF n <> 2 THEN
+    RAISE EXCEPTION 'FAIL: expected exactly two public seed invite ids (got %)', n;
+  END IF;
+
+  -- No admin (or other non-public) default persona seeded as invite
+  IF EXISTS (
+    SELECT 1 FROM ciceron.invite_codes ic
+    JOIN ciceron.demo_personas dp ON dp.id = ic.default_persona_id
+    WHERE dp.role = 'admin'
+  ) THEN
+    RAISE EXCEPTION 'FAIL: admin invite must not be seeded';
   END IF;
 
   IF NOT has_function_privilege(
@@ -48,7 +77,7 @@ BEGIN
     RAISE EXCEPTION 'FAIL: authenticated can EXECUTE redeem_invite';
   END IF;
 
-  -- Redeem DESPACHO-DEMO
+  -- Redeem public socio seed
   redeem := ciceron.redeem_invite(demo_hash, token_hash, NULL, 24);
   IF COALESCE(redeem->>'ok', 'false') <> 'true' THEN
     RAISE EXCEPTION 'FAIL: redeem_invite demo failed: %', redeem;
@@ -72,6 +101,15 @@ BEGIN
   END IF;
   IF switched->>'role' <> 'pasante' THEN
     RAISE EXCEPTION 'FAIL: switch expected pasante';
+  END IF;
+
+  -- Redeem public pasante seed
+  redeem := ciceron.redeem_invite(pasante_hash, repeat('d', 64), NULL, 24);
+  IF COALESCE(redeem->>'ok', 'false') <> 'true' THEN
+    RAISE EXCEPTION 'FAIL: redeem_invite pasante failed: %', redeem;
+  END IF;
+  IF redeem->>'role' <> 'pasante' THEN
+    RAISE EXCEPTION 'FAIL: pasante redeem role, got %', redeem->>'role';
   END IF;
 
   -- Invalid hash denied

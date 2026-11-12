@@ -101,10 +101,10 @@ export async function loadSalesInviteProgress(
 export async function resetDemoFirm(
   persona: DemoPersona
 ): Promise<{ ok: true } | { ok: false; message: string; policyId?: string }> {
-  if (persona.role !== 'admin' && persona.role !== 'socio') {
+  if (persona.role !== 'admin') {
     return {
       ok: false,
-      message: 'Solo socio o administrador puede restablecer la demostración.',
+      message: 'Solo un administrador puede restablecer la demostración.',
       policyId: 'rbac_role',
     }
   }

@@ -6,13 +6,11 @@ import { copy } from '@/lib/ciceron/copy/es-MX'
 import { formatPolicyCell } from '@/lib/ciceron/audit/policy-labels'
 
 function ResultCard({
-  title,
   ok,
   policyId,
   policyReason,
   model,
 }: {
-  title: string
   ok: boolean
   policyId?: string | null
   policyReason?: string | null
@@ -20,9 +18,7 @@ function ResultCard({
 }) {
   return (
     <div className={`cic-policy-box ${ok ? 'is-allowed' : 'is-denied'}`}>
-      <strong>
-        {title}: {ok ? copy.access.allowed : copy.access.denied}
-      </strong>
+      <strong>{ok ? copy.access.allowed : copy.access.denied}</strong>
       {model ? (
         <p className="cic-muted" style={{ margin: '6px 0 0', fontSize: '0.85rem' }}>
           {copy.access.model}: {model.toUpperCase()}
@@ -62,14 +58,12 @@ export function AccessTryPanel() {
         {state?.scenario === 'rbac' ? (
           <>
             <ResultCard
-              title={copy.access.allowed}
               ok={state.result.allowed.ok}
               policyId={state.result.allowed.policyId}
               policyReason={state.result.allowed.policyReason}
               model={state.result.allowed.model}
             />
             <ResultCard
-              title={copy.access.denied}
               ok={state.result.denied.ok}
               policyId={state.result.denied.policyId}
               policyReason={state.result.denied.policyReason}
@@ -96,14 +90,12 @@ export function AccessTryPanel() {
         {state?.scenario === 'abac' ? (
           <>
             <ResultCard
-              title={copy.access.allowed}
               ok={state.result.allowed.ok}
               policyId={state.result.allowed.policyId}
               policyReason={state.result.allowed.policyReason}
               model={state.result.allowed.model}
             />
             <ResultCard
-              title={copy.access.denied}
               ok={state.result.denied.ok}
               policyId={state.result.denied.policyId}
               policyReason={state.result.denied.policyReason}

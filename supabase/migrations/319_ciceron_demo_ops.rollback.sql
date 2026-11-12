@@ -10,7 +10,7 @@ DROP FUNCTION IF EXISTS ciceron.refresh_demo_dates(uuid, boolean);
 DROP VIEW IF EXISTS ciceron.sales_invite_progress;
 DROP TABLE IF EXISTS ciceron.demo_freshness_runs;
 
--- Restore Prompt 8 record_product_event body (314 allow-list only)
+-- Restore Prompt 8 record_product_event body exactly (from migration 314)
 CREATE OR REPLACE FUNCTION ciceron.record_product_event(
   p_name text,
   p_firm_id uuid,
@@ -34,6 +34,8 @@ BEGIN
     RAISE EXCEPTION 'invalid event name';
   END IF;
 
+  -- Allow-list mirrors lib/ciceron/events.ts ALLOWED_EVENT_PROPERTY_KEYS.
+  -- String values must be safe codes/ids (no free text / PII).
   FOR prop_key, prop_val IN
     SELECT * FROM jsonb_each(COALESCE(p_properties, '{}'::jsonb))
   LOOP

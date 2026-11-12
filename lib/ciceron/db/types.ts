@@ -94,6 +94,7 @@ export type CiceronDatabase = {
         Row: {
           id: string
           code_hash: string
+          pepper_version: number
           prospect_label: string
           firm_id: string
           default_persona_id: string
@@ -108,6 +109,7 @@ export type CiceronDatabase = {
         Insert: {
           id?: string
           code_hash: string
+          pepper_version?: number
           prospect_label: string
           firm_id: string
           default_persona_id: string

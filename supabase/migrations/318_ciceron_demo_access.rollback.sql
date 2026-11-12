@@ -3,6 +3,7 @@
 -- Does not drop demo_personas / memberships from earlier prompts.
 
 DROP FUNCTION IF EXISTS ciceron.try_access_demo(uuid, uuid, text);
+DROP FUNCTION IF EXISTS ciceron.evaluate_access(uuid, uuid, text, text, uuid, uuid, uuid, boolean, uuid);
 DROP FUNCTION IF EXISTS ciceron.evaluate_access(uuid, uuid, text, text, uuid, uuid, uuid, boolean);
 DROP FUNCTION IF EXISTS ciceron.role_rank(text);
 
@@ -22,8 +23,17 @@ WHERE id IN (
   'e3000000-0000-4000-8000-000000000023'::uuid
 );
 
+-- Any leftover non-public invite for the ABAC persona (from earlier drafts)
 DELETE FROM ciceron.invite_codes
-WHERE id = 'e3000000-0000-4000-8000-000000000007'::uuid;
+WHERE id = 'e3000000-0000-4000-8000-000000000007'::uuid
+   OR default_persona_id = 'e3000000-0000-4000-8000-000000000010'::uuid;
+
+-- Repoint or expire sessions before deleting the persona (FK ON DELETE RESTRICT)
+UPDATE ciceron.demo_sessions
+SET persona_id = 'b1000000-0000-4000-8000-000000000002'::uuid,
+    expires_at = LEAST(expires_at, now()),
+    updated_at = now()
+WHERE persona_id = 'e3000000-0000-4000-8000-000000000010'::uuid;
 
 DELETE FROM ciceron.matter_members
 WHERE user_id = 'e3000000-0000-4000-8000-000000000010'::uuid;

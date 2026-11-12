@@ -1,12 +1,14 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import {
-  CICERON_INVITE_PEPPER_DEFAULT,
   hashInviteCode,
   hashSessionToken,
+  isPublicDemoInviteCode,
   isSessionTokenShape,
   mintSessionToken,
   normalizeInviteCode,
+  PUBLIC_DEMO_INVITE_CODES,
+  requireInvitePepper,
 } from './invite-hash'
 
 describe('ciceron invite-hash', () => {
@@ -14,15 +16,29 @@ describe('ciceron invite-hash', () => {
     assert.equal(normalizeInviteCode('  despacho-demo '), 'DESPACHO-DEMO')
   })
 
-  it('matches migration seed hashes for DESPACHO-DEMO and DESPACHO-PASANTE', () => {
-    assert.equal(
-      hashInviteCode('DESPACHO-DEMO', CICERON_INVITE_PEPPER_DEFAULT),
-      '3e88bb2a453f689e314810c301bbf790a09d5ee1afb4e0e0147dd0727c2b7f78'
-    )
-    assert.equal(
-      hashInviteCode('DESPACHO-PASANTE', CICERON_INVITE_PEPPER_DEFAULT),
-      'b68b3f391c07312e458cb97345b4dd4e180f77cc823f069f5c17a4acbe70938e'
-    )
+  it('recognizes only intentionally public demo codes', () => {
+    assert.deepEqual([...PUBLIC_DEMO_INVITE_CODES], ['DESPACHO-DEMO', 'DESPACHO-PASANTE'])
+    assert.equal(isPublicDemoInviteCode('despacho-demo'), true)
+    assert.equal(isPublicDemoInviteCode('DESPACHO-PASANTE'), true)
+    assert.equal(isPublicDemoInviteCode('DESPACHO-ADMIN'), false)
+  })
+
+  it('requires CICERON_INVITE_PEPPER (fail closed)', () => {
+    const prev = process.env.CICERON_INVITE_PEPPER
+    delete process.env.CICERON_INVITE_PEPPER
+    assert.throws(() => requireInvitePepper(), /CICERON_INVITE_PEPPER/)
+    if (prev === undefined) delete process.env.CICERON_INVITE_PEPPER
+    else process.env.CICERON_INVITE_PEPPER = prev
+  })
+
+  it('hashes with an explicit pepper argument (pepper never committed)', () => {
+    const pepper = 'test-only-pepper-not-for-production'
+    const a = hashInviteCode('DESPACHO-DEMO', pepper)
+    const b = hashInviteCode('despacho-demo', pepper)
+    assert.equal(a.length, 64)
+    assert.match(a, /^[0-9a-f]{64}$/)
+    assert.equal(a, b)
+    assert.notEqual(hashInviteCode('DESPACHO-PASANTE', pepper), a)
   })
 
   it('mints opaque session tokens', () => {

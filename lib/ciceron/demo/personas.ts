@@ -2,6 +2,10 @@ import type { CiceronMembershipRole } from '@/lib/ciceron/db/types'
 import { CICERON_SEED } from '@/lib/ciceron/db/seed-ids'
 import { CICERON_FIRM_NAME } from '@/lib/ciceron/config'
 import { CICERON_P9_SEED } from '@/lib/ciceron/demo/seed-ids'
+import {
+  isPublicDemoInviteCode,
+  PUBLIC_DEMO_INVITE_CODES,
+} from '@/lib/ciceron/demo/invite-hash'
 
 /** Offline persona map — used when PostgREST/schema is unreachable. */
 export type DemoPersona = {
@@ -9,6 +13,10 @@ export type DemoPersona = {
   firmId: string
   role: CiceronMembershipRole
   displayName: string
+  /**
+   * Offline redeem key. Only intentionally public codes are redeemable offline;
+   * others use non-redeemable placeholders (never admin).
+   */
   inviteCode: string
   firmName: string
   firmSlug: string
@@ -22,7 +30,7 @@ const OFFLINE: DemoPersona[] = [
     firmId: CICERON_SEED.firmDemo,
     role: 'socio',
     displayName: 'Socia Demo Rivera',
-    inviteCode: CICERON_SEED.inviteCodes.socio,
+    inviteCode: PUBLIC_DEMO_INVITE_CODES[0],
     firmName: CICERON_FIRM_NAME,
     firmSlug: 'despacho-demo',
     accessModel: 'rbac',
@@ -32,7 +40,7 @@ const OFFLINE: DemoPersona[] = [
     firmId: CICERON_SEED.firmDemo,
     role: 'asociado',
     displayName: 'Asociado Demo Herrera',
-    inviteCode: CICERON_SEED.inviteCodes.asociado,
+    inviteCode: 'nr-asociado-b1002',
     firmName: CICERON_FIRM_NAME,
     firmSlug: 'despacho-demo',
   },
@@ -41,7 +49,7 @@ const OFFLINE: DemoPersona[] = [
     firmId: CICERON_SEED.firmDemo,
     role: 'pasante',
     displayName: 'Pasante Demo López',
-    inviteCode: CICERON_SEED.inviteCodes.pasante,
+    inviteCode: PUBLIC_DEMO_INVITE_CODES[1],
     firmName: CICERON_FIRM_NAME,
     firmSlug: 'despacho-demo',
   },
@@ -50,7 +58,7 @@ const OFFLINE: DemoPersona[] = [
     firmId: CICERON_SEED.firmDemo,
     role: 'admin',
     displayName: 'Admin Demo Ortega',
-    inviteCode: CICERON_SEED.inviteCodes.admin,
+    inviteCode: 'nr-admin-b1004',
     firmName: CICERON_FIRM_NAME,
     firmSlug: 'despacho-demo',
   },
@@ -59,7 +67,7 @@ const OFFLINE: DemoPersona[] = [
     firmId: CICERON_SEED.firmDemo,
     role: 'asociado',
     displayName: 'Asociada Demo Méndez',
-    inviteCode: CICERON_SEED.inviteCodes.asociado2,
+    inviteCode: 'nr-asociado2-b1005',
     firmName: CICERON_FIRM_NAME,
     firmSlug: 'despacho-demo',
   },
@@ -68,7 +76,7 @@ const OFFLINE: DemoPersona[] = [
     firmId: CICERON_SEED.firmDemo,
     role: 'asociado',
     displayName: 'Asociada Atributos Vega',
-    inviteCode: CICERON_P9_SEED.plaintextInvites.abac,
+    inviteCode: CICERON_P9_SEED.abacPersonaInvitePlaceholder,
     firmName: CICERON_FIRM_NAME,
     firmSlug: 'despacho-demo',
     accessModel: 'abac',
@@ -78,15 +86,21 @@ const OFFLINE: DemoPersona[] = [
     firmId: CICERON_SEED.firmContraste,
     role: 'socio',
     displayName: 'Abogado Contraste Núñez',
-    inviteCode: CICERON_SEED.inviteCodes.firmB,
+    inviteCode: 'nr-firmb-b1011',
     firmName: 'Bufete Contraste, S.C.',
     firmSlug: 'bufete-contraste',
   },
 ]
 
+/**
+ * Offline invite redeem: only intentionally public codes, never admin.
+ */
 export function offlinePersonaByInvite(code: string): DemoPersona | null {
   const normalized = code.trim().toUpperCase()
-  return OFFLINE.find((p) => p.inviteCode === normalized) ?? null
+  if (!isPublicDemoInviteCode(normalized)) return null
+  const persona = OFFLINE.find((p) => p.inviteCode === normalized) ?? null
+  if (!persona || persona.role === 'admin') return null
+  return persona
 }
 
 export function offlinePersonaById(id: string): DemoPersona | null {
@@ -100,16 +114,12 @@ export function offlineSwitchablePersonas(firmId: string): DemoPersona[] {
   for (const p of OFFLINE) {
     if (p.firmId !== firmId) continue
     if (!preferred.includes(p.role as (typeof preferred)[number])) continue
-    // Prefer the canonical showcase personas (socio / asociado Herrera / pasante)
     if (!byRole.has(p.role) || p.accessModel === 'rbac') {
       byRole.set(p.role, p)
     }
   }
-  // Prefer Asociado Demo Herrera over ABAC for the switcher middle slot
   const asociado = OFFLINE.find(
-    (p) =>
-      p.firmId === firmId &&
-      p.id === CICERON_SEED.personas.asociado
+    (p) => p.firmId === firmId && p.id === CICERON_SEED.personas.asociado
   )
   if (asociado) byRole.set('asociado', asociado)
   return preferred.map((r) => byRole.get(r)).filter(Boolean) as DemoPersona[]
