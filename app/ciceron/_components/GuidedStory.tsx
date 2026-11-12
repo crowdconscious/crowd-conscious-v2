@@ -56,9 +56,19 @@ export function GuidedStoryPanel({
           <p style={{ margin: '6px 0' }}>
             <strong>{copy.guidedStory.finale.title}.</strong> {copy.guidedStory.finale.body}
           </p>
-          <a className="cic-btn" href={copy.guidedStory.finale.ctaHref}>
-            {copy.guidedStory.finale.cta}
-          </a>
+          <div className="cic-guided-actions">
+            <form action={guidedStoryAction}>
+              <input type="hidden" name="resume" value="1" />
+              <input type="hidden" name="step" value="1" />
+              <input type="hidden" name="href" value="/ciceron/hoy" />
+              <button type="submit" className="cic-btn cic-btn-ghost">
+                {copy.guidedStory.resume}
+              </button>
+            </form>
+            <a className="cic-btn" href={copy.guidedStory.finale.ctaHref}>
+              {copy.guidedStory.finale.cta}
+            </a>
+          </div>
         </div>
       ) : current ? (
         <div className="cic-guided-slim-body">
@@ -89,12 +99,15 @@ export function GuidedStoryPanel({
 
 export function GuidedStoryResumeBar({
   dismissed,
+  completed = false,
   onResumeHref = '/ciceron/hoy',
 }: {
   dismissed: boolean
+  /** Finished tours also need a visible resume path. */
+  completed?: boolean
   onResumeHref?: string
 }) {
-  if (!dismissed) return null
+  if (!dismissed && !completed) return null
   return (
     <div className="cic-guided-resume" role="status">
       <form action={guidedStoryAction}>

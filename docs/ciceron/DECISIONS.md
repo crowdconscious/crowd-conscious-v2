@@ -245,6 +245,11 @@ Pending items need Francisco before (or as) the named prompt starts.
 - **Decision:** Restore vercel.json cron slots for `/api/ciceron/cron/dof`. Route no-ops with HTTP 200 + logged skip when `CICERON_INGESTION_ENABLED` is unset/false. Daily spend cap via `CICERON_INGESTION_DAILY_CAP_USD` (default 25). Agents do not flip the Vercel env.
 - **Consequences:** CTO turns the flag on explicitly (steps in the cron route comment).
 
+### 2026-11-12 — Guided-story resume clears completion
+- **Context:** After finishing or dismissing the six-step tour, «Reanudar recorrido» left `completed_at` set, so the finale panel stuck.
+- **Decision:** Migration `325` rewrites `update_guided_story` so a non-dismiss call to steps 1–6 after dismiss/completion clears `completed_at`, resets `completed_steps` to the resume step, and returns `restarted`. Finale UI also exposes resume; the slim resume bar shows for dismissed or completed sessions.
+- **Consequences:** CTO applies `325` after `324`. Agents do not apply.
+
 ---
 
 ## Pending

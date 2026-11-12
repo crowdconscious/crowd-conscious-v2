@@ -63,24 +63,8 @@ function parsePositiveInt(raw: string, label: string): number {
 }
 
 async function main() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()
-  if (!url || !key) {
-    console.error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')
-    process.exit(1)
-  }
-  if (!process.env.CICERON_INVITE_PEPPER_V2?.trim()) {
-    console.error('Missing CICERON_INVITE_PEPPER_V2 (required for runtime invites)')
-    process.exit(1)
-  }
-
+  // Validate CLI args before env/secrets so operators get clear errors in dry checks.
   const label = arg('label')
-  if (!label || label.length < 1 || label.length > 200) {
-    console.error('Required: --label="Prospect label" (1–200 chars)')
-    process.exit(1)
-  }
-
-  const firmId = arg('firm') === 'demo' || !arg('firm') ? DEMO_FIRM : arg('firm')!
   const personaRole = arg('persona')
   const personaIdArg = arg('persona-id')
 
@@ -99,6 +83,11 @@ async function main() {
     console.error(
       'Unknown --persona. Use socio|asociado|pasante|admin|asociado2|abac or --persona-id=<uuid>'
     )
+    process.exit(1)
+  }
+
+  if (!label || label.length < 1 || label.length > 200) {
+    console.error('Required: --label="Prospect label" (1–200 chars)')
     process.exit(1)
   }
 
@@ -121,6 +110,19 @@ async function main() {
   }
   if (expiresDays > 90) {
     console.error('--expires-days cannot exceed 90')
+    process.exit(1)
+  }
+
+  const firmId = arg('firm') === 'demo' || !arg('firm') ? DEMO_FIRM : arg('firm')!
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()
+  if (!url || !key) {
+    console.error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')
+    process.exit(1)
+  }
+  if (!process.env.CICERON_INVITE_PEPPER_V2?.trim()) {
+    console.error('Missing CICERON_INVITE_PEPPER_V2 (required for runtime invites)')
     process.exit(1)
   }
 

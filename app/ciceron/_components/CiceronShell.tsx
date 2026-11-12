@@ -153,7 +153,10 @@ function ShellInner({
             {meta.guidedStory && !meta.guidedStory.dismissed ? (
               <GuidedStoryPanel state={meta.guidedStory} compact />
             ) : (
-              <GuidedStoryResumeBar dismissed={Boolean(meta.guidedStory?.dismissed)} />
+              <GuidedStoryResumeBar
+                dismissed={Boolean(meta.guidedStory?.dismissed)}
+                completed={Boolean(meta.guidedStory?.completed)}
+              />
             )}
             {children}
           </main>
