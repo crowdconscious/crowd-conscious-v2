@@ -416,7 +416,7 @@ export type CiceronDatabase = {
           p_notes?: string | null
           p_edited_body?: string | null
         }
-        Returns: string
+        Returns: Record<string, unknown>
       }
       save_review_edit: {
         Args: {
@@ -445,7 +445,7 @@ export type CiceronDatabase = {
           p_body: string
           p_confirm?: boolean
         }
-        Returns: string
+        Returns: Record<string, unknown>
       }
       search_chunks: {
         Args: {

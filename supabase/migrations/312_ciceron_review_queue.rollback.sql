@@ -1,6 +1,6 @@
 -- 312_ciceron_review_queue.rollback.sql
--- Drops ONLY objects created by 312. Restores deliveries_tier2_gate to 299 body
--- (auth decided_by only) — intentional rollback of the stricter Prompt 7 gate.
+-- Drops ONLY objects created by 312. Restores deliveries_tier2_gate to 299 body.
+-- Does NOT rewrite decided_by from persona (would violate auth.users FK).
 
 DROP FUNCTION IF EXISTS ciceron.create_delivery(uuid, uuid, uuid, text, text, text, text, boolean);
 DROP FUNCTION IF EXISTS ciceron.reassign_review(uuid, uuid, uuid);
@@ -8,7 +8,10 @@ DROP FUNCTION IF EXISTS ciceron.save_review_edit(uuid, uuid, text);
 DROP FUNCTION IF EXISTS ciceron.decide_review(uuid, uuid, text, text, text);
 DROP FUNCTION IF EXISTS ciceron.write_audit_event(uuid, uuid, text, text, uuid, jsonb, text, text, text, jsonb);
 
--- Restore pre-312 deliveries_tier2_gate (299 shape; no persona / four-eyes)
+DROP TRIGGER IF EXISTS review_decisions_authority ON ciceron.review_decisions;
+DROP FUNCTION IF EXISTS ciceron.review_decisions_authority();
+
+-- Restore pre-312 deliveries_tier2_gate (299 shape; INSERT only)
 CREATE OR REPLACE FUNCTION ciceron.deliveries_tier2_gate()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -47,12 +50,35 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS deliveries_tier2_gate ON ciceron.deliveries;
+CREATE TRIGGER deliveries_tier2_gate
+  BEFORE INSERT ON ciceron.deliveries
+  FOR EACH ROW EXECUTE FUNCTION ciceron.deliveries_tier2_gate();
+
+-- Restore authenticated write grants + ALL policies (299 shape)
+DROP POLICY IF EXISTS review_decisions_select ON ciceron.review_decisions;
+CREATE POLICY review_decisions_all ON ciceron.review_decisions
+  FOR ALL TO authenticated
+  USING (ciceron.is_matter_member(matter_id))
+  WITH CHECK (ciceron.is_matter_member(matter_id));
+GRANT SELECT, INSERT, UPDATE, DELETE ON ciceron.review_decisions TO authenticated;
+
+DROP POLICY IF EXISTS deliveries_select ON ciceron.deliveries;
+CREATE POLICY deliveries_all ON ciceron.deliveries
+  FOR ALL TO authenticated
+  USING (ciceron.is_matter_member(matter_id))
+  WITH CHECK (ciceron.is_matter_member(matter_id));
+GRANT SELECT, INSERT, UPDATE, DELETE ON ciceron.deliveries TO authenticated;
+
 DROP POLICY IF EXISTS in_app_notifications_update ON ciceron.in_app_notifications;
 DROP POLICY IF EXISTS in_app_notifications_select ON ciceron.in_app_notifications;
 DROP TABLE IF EXISTS ciceron.in_app_notifications;
 
 DROP POLICY IF EXISTS evaluation_candidates_select ON ciceron.evaluation_candidates;
 DROP TABLE IF EXISTS ciceron.evaluation_candidates;
+
+DROP INDEX IF EXISTS ciceron.audit_events_firm_action_idx;
+DROP INDEX IF EXISTS ciceron.audit_events_firm_outcome_idx;
 
 ALTER TABLE ciceron.audit_events
   DROP COLUMN IF EXISTS snapshot_ref,
@@ -72,15 +98,13 @@ ALTER TABLE ciceron.draft_versions
   DROP COLUMN IF EXISTS author_persona;
 
 ALTER TABLE ciceron.review_decisions
+  DROP CONSTRAINT IF EXISTS review_decisions_decider_present;
+
+ALTER TABLE ciceron.review_decisions
   DROP COLUMN IF EXISTS approved_draft_version_id,
   DROP COLUMN IF EXISTS model_draft_version_id;
 
--- decided_by NOT NULL restoration: only safe if no NULL rows remain
-UPDATE ciceron.review_decisions
-SET decided_by = decided_by_persona
-WHERE decided_by IS NULL AND decided_by_persona IS NOT NULL;
-
--- Leave decided_by nullable if orphan nulls would block; prefer set NOT NULL when clean
+-- Restore NOT NULL only when no null decided_by rows remain (no persona→auth rewrite)
 DO $$
 BEGIN
   IF NOT EXISTS (

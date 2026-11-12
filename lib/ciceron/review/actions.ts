@@ -123,18 +123,21 @@ export async function decideReviewAction(input: {
   })
 
   if (!result.ok) {
-    if (/four-eyes/i.test(result.message)) {
+    if (result.policyId === 'four_eyes' || /four-eyes|cuatro ojos/i.test(result.message)) {
       return {
         ok: false,
         message:
-          'La revisión a cuatro ojos impide que quien editó el borrador dé la aprobación final.',
+          'Regla four_eyes: quien editó el borrador no puede dar la aprobación final.',
+      }
+    }
+    if (result.policyId === 'matter_member' || /matter member/i.test(result.message)) {
+      return {
+        ok: false,
+        message: 'Regla matter_member: no tiene acceso a este asunto.',
       }
     }
     if (/already decided/i.test(result.message)) {
       return { ok: false, message: 'Esta tarea ya fue decidida.' }
-    }
-    if (/matter member/i.test(result.message)) {
-      return { ok: false, message: 'No tiene acceso a este asunto.' }
     }
     return { ok: false, message: result.message }
   }
@@ -243,6 +246,12 @@ export async function createDeliveryAction(input: {
   })
 
   if (!result.ok) {
+    if (result.policyId === 'matter_member') {
+      return {
+        ok: false,
+        message: 'Regla matter_member: no tiene acceso a este asunto.',
+      }
+    }
     if (/tier 2|approved review/i.test(result.message)) {
       return {
         ok: false,

@@ -12,9 +12,9 @@ Francisco applies; agents do not:
 
 1. `311_ciceron_confirm_idempotent.sql` — if not yet applied
 2. Verify: `311_ciceron_confirm_idempotent.verify.sql`
-3. `312_ciceron_review_queue.sql` — Prompt 7 schema + RPCs (stricter delivery gate, audit outcome/policy, four-eyes, create_delivery)
-4. Verify: `312_ciceron_review_queue.verify.sql`
-5. `313_ciceron_review_seed.sql` — demo review tasks (Datos de demostración)
+3. `312_ciceron_review_queue.sql` — Prompt 7 schema + RPCs (RPC-only decision/delivery writes; audit outcome/policy; four-eyes; create_delivery)
+4. Verify: `312_ciceron_review_queue.verify.sql` (wraps in `BEGIN`…`ROLLBACK` — non-persistent)
+5. `313_ciceron_review_seed.sql` — demo review tasks (Datos de demostración; fixed ids `f100…101+`)
 6. Verify: `313_ciceron_review_seed.verify.sql`
 7. Optional: `POST /api/ciceron/cron/dof` with `{ "backfillArchiveEmbeddings": true }` (Bearer `CRON_SECRET`)
 

@@ -1,6 +1,6 @@
 /**
  * Service-role RPC wrappers for Prompt 7 review / delivery gates.
- * Mirror case-files/tier2-rpc.ts: set_actor happens inside the DB function.
+ * decide_review / create_delivery return jsonb {ok, id?} | {ok:false, policy_*}.
  */
 
 export type ReviewRpcClient = {
@@ -12,9 +12,36 @@ export type ReviewRpcClient = {
 
 export type ReviewRpcResult =
   | { ok: true; id?: string }
-  | { ok: false; message: string }
+  | { ok: false; message: string; policyId?: string; policyReason?: string }
 
 export type ReviewDecisionKind = 'approved' | 'corrected' | 'rejected' | 'returned'
+
+function parseJsonbResult(data: unknown, fallbackMessage: string): ReviewRpcResult {
+  if (data && typeof data === 'object' && !Array.isArray(data)) {
+    const row = data as Record<string, unknown>
+    if (row.ok === false) {
+      const policyId = typeof row.policy_id === 'string' ? row.policy_id : undefined
+      const policyReason =
+        typeof row.policy_reason === 'string' ? row.policy_reason : undefined
+      return {
+        ok: false,
+        message: policyReason || fallbackMessage,
+        policyId,
+        policyReason,
+      }
+    }
+    if (row.ok === true) {
+      return {
+        ok: true,
+        id: typeof row.id === 'string' ? row.id : undefined,
+      }
+    }
+  }
+  if (typeof data === 'string') {
+    return { ok: true, id: data }
+  }
+  return { ok: true }
+}
 
 export async function rpcDecideReview(
   db: ReviewRpcClient,
@@ -36,10 +63,7 @@ export async function rpcDecideReview(
   if (error) {
     return { ok: false, message: error.message || 'No se pudo registrar la decisión.' }
   }
-  return {
-    ok: true,
-    id: typeof data === 'string' ? data : undefined,
-  }
+  return parseJsonbResult(data, 'No se pudo registrar la decisión.')
 }
 
 export async function rpcSaveReviewEdit(
@@ -101,8 +125,5 @@ export async function rpcCreateDelivery(
   if (error) {
     return { ok: false, message: error.message || 'No se pudo registrar la entrega.' }
   }
-  return {
-    ok: true,
-    id: typeof data === 'string' ? data : undefined,
-  }
+  return parseJsonbResult(data, 'No se pudo registrar la entrega.')
 }

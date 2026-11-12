@@ -1,50 +1,92 @@
 -- 313_ciceron_review_seed.rollback.sql
--- Removes ONLY Prompt 7 seed rows (g1… ids). Does not drop 312 schema.
+-- Removes Prompt 7 seed rows (f100…101+). Does not drop 312 schema.
+-- Seed audit_events rows are append-only and intentionally left in place
+-- (audit_events_immutable blocks DELETE).
 
-DELETE FROM ciceron.audit_events
-WHERE payload->>'source' = '313_review_seed';
+-- Dependents before ai_outputs (ON DELETE RESTRICT on deliveries.ai_output_id)
+DELETE FROM ciceron.deliveries
+WHERE ai_output_id IN (
+  'f1000000-0000-4000-8000-000000000111'::uuid,
+  'f1000000-0000-4000-8000-000000000112'::uuid,
+  'f1000000-0000-4000-8000-000000000113'::uuid,
+  'f1000000-0000-4000-8000-000000000114'::uuid
+);
+
+DELETE FROM ciceron.evaluation_candidates
+WHERE ai_output_id IN (
+  'f1000000-0000-4000-8000-000000000111'::uuid,
+  'f1000000-0000-4000-8000-000000000112'::uuid,
+  'f1000000-0000-4000-8000-000000000113'::uuid,
+  'f1000000-0000-4000-8000-000000000114'::uuid
+)
+OR review_decision_id IN (
+  SELECT id FROM ciceron.review_decisions
+  WHERE ai_output_id IN (
+    'f1000000-0000-4000-8000-000000000111'::uuid,
+    'f1000000-0000-4000-8000-000000000112'::uuid,
+    'f1000000-0000-4000-8000-000000000113'::uuid,
+    'f1000000-0000-4000-8000-000000000114'::uuid
+  )
+);
+
+DELETE FROM ciceron.review_decisions
+WHERE ai_output_id IN (
+  'f1000000-0000-4000-8000-000000000111'::uuid,
+  'f1000000-0000-4000-8000-000000000112'::uuid,
+  'f1000000-0000-4000-8000-000000000113'::uuid,
+  'f1000000-0000-4000-8000-000000000114'::uuid
+)
+OR review_task_id IN (
+  'f1000000-0000-4000-8000-000000000141'::uuid,
+  'f1000000-0000-4000-8000-000000000142'::uuid,
+  'f1000000-0000-4000-8000-000000000143'::uuid,
+  'f1000000-0000-4000-8000-000000000144'::uuid
+);
 
 DELETE FROM ciceron.review_tasks
 WHERE id IN (
-  'g1000000-0000-4000-8000-000000000041'::uuid,
-  'g1000000-0000-4000-8000-000000000042'::uuid,
-  'g1000000-0000-4000-8000-000000000043'::uuid,
-  'g1000000-0000-4000-8000-000000000044'::uuid
+  'f1000000-0000-4000-8000-000000000141'::uuid,
+  'f1000000-0000-4000-8000-000000000142'::uuid,
+  'f1000000-0000-4000-8000-000000000143'::uuid,
+  'f1000000-0000-4000-8000-000000000144'::uuid
 );
 
 DELETE FROM ciceron.draft_versions
 WHERE id IN (
-  'g1000000-0000-4000-8000-000000000031'::uuid,
-  'g1000000-0000-4000-8000-000000000032'::uuid,
-  'g1000000-0000-4000-8000-000000000033'::uuid,
-  'g1000000-0000-4000-8000-000000000034'::uuid
+  'f1000000-0000-4000-8000-000000000131'::uuid,
+  'f1000000-0000-4000-8000-000000000132'::uuid,
+  'f1000000-0000-4000-8000-000000000133'::uuid,
+  'f1000000-0000-4000-8000-000000000134'::uuid,
+  'f1000000-0000-4000-8000-000000000135'::uuid
 );
 
 DELETE FROM ciceron.drafts
 WHERE id IN (
-  'g1000000-0000-4000-8000-000000000021'::uuid,
-  'g1000000-0000-4000-8000-000000000022'::uuid,
-  'g1000000-0000-4000-8000-000000000023'::uuid
+  'f1000000-0000-4000-8000-000000000121'::uuid,
+  'f1000000-0000-4000-8000-000000000122'::uuid,
+  'f1000000-0000-4000-8000-000000000123'::uuid,
+  'f1000000-0000-4000-8000-000000000124'::uuid
 );
 
 DELETE FROM ciceron.ai_outputs
 WHERE id IN (
-  'g1000000-0000-4000-8000-000000000011'::uuid,
-  'g1000000-0000-4000-8000-000000000012'::uuid,
-  'g1000000-0000-4000-8000-000000000013'::uuid
+  'f1000000-0000-4000-8000-000000000111'::uuid,
+  'f1000000-0000-4000-8000-000000000112'::uuid,
+  'f1000000-0000-4000-8000-000000000113'::uuid,
+  'f1000000-0000-4000-8000-000000000114'::uuid
 );
 
 DELETE FROM ciceron.ai_runs
 WHERE id IN (
-  'g1000000-0000-4000-8000-000000000001'::uuid,
-  'g1000000-0000-4000-8000-000000000002'::uuid,
-  'g1000000-0000-4000-8000-000000000003'::uuid
+  'f1000000-0000-4000-8000-000000000101'::uuid,
+  'f1000000-0000-4000-8000-000000000102'::uuid,
+  'f1000000-0000-4000-8000-000000000103'::uuid,
+  'f1000000-0000-4000-8000-000000000104'::uuid
 );
 
 DELETE FROM ciceron.prompt_versions
-WHERE id = 'g1000000-0000-4000-8000-000000000051'::uuid;
+WHERE id = 'f1000000-0000-4000-8000-000000000151'::uuid;
 
--- Leave firm_settings row (created by 312 verify / 313); clearing four_eyes is safer than drop
 UPDATE ciceron.firm_settings
 SET four_eyes_output_types = '{}'::text[],
     email_allowlist = '{}'::text[],

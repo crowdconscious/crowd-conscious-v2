@@ -1,6 +1,6 @@
 -- 312_ciceron_review_queue.sql
 -- Prompt 7: review queue, decisions, delivery gate, audit shape for Prompt 9, learning loop.
--- Additive only. Stricter deliveries_tier2_gate (persona-aware + four-eyes).
+-- Additive only. Review/delivery writes are RPC-only and strictly tighter than Prompt 1.
 -- Applied by CTO after review. Agents do not apply to production.
 
 -- ---------------------------------------------------------------------------
@@ -83,7 +83,8 @@ COMMENT ON COLUMN ciceron.review_tasks.is_demo IS
   'Datos de demostración seed rows.';
 
 -- ---------------------------------------------------------------------------
--- Review decisions: nullable decided_by (persona path), version refs
+-- Review decisions: nullable decided_by (persona path), version refs, XOR check
+-- Writes: service_role RPC only (see REVOKE below + authority trigger).
 -- ---------------------------------------------------------------------------
 ALTER TABLE ciceron.review_decisions
   ALTER COLUMN decided_by DROP NOT NULL;
@@ -94,10 +95,76 @@ ALTER TABLE ciceron.review_decisions
   ADD COLUMN IF NOT EXISTS approved_draft_version_id uuid
     REFERENCES ciceron.draft_versions(id) ON DELETE SET NULL;
 
+ALTER TABLE ciceron.review_decisions
+  DROP CONSTRAINT IF EXISTS review_decisions_decider_present;
+
+ALTER TABLE ciceron.review_decisions
+  ADD CONSTRAINT review_decisions_decider_present
+  CHECK (decided_by IS NOT NULL OR decided_by_persona IS NOT NULL);
+
 COMMENT ON COLUMN ciceron.review_decisions.model_draft_version_id IS
   'Model draft version at decision time (before human edit).';
 COMMENT ON COLUMN ciceron.review_decisions.approved_draft_version_id IS
   'Version that was approved (model or new human edit).';
+
+-- RPC-only writes: authenticated may SELECT via RLS, not mutate
+REVOKE INSERT, UPDATE, DELETE ON ciceron.review_decisions FROM PUBLIC, anon, authenticated;
+GRANT SELECT ON ciceron.review_decisions TO authenticated;
+GRANT ALL ON ciceron.review_decisions TO service_role;
+
+DROP POLICY IF EXISTS review_decisions_all ON ciceron.review_decisions;
+CREATE POLICY review_decisions_select ON ciceron.review_decisions
+  FOR SELECT TO authenticated
+  USING (ciceron.is_matter_member(matter_id));
+
+CREATE OR REPLACE FUNCTION ciceron.review_decisions_authority()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ciceron
+AS $$
+DECLARE
+  actor uuid;
+BEGIN
+  IF NEW.decided_by IS NULL AND NEW.decided_by_persona IS NULL THEN
+    RAISE EXCEPTION 'decided_by or decided_by_persona is required'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  actor := COALESCE(NEW.decided_by, NEW.decided_by_persona);
+
+  IF actor IS DISTINCT FROM ciceron.current_actor_id() THEN
+    RAISE EXCEPTION 'decision actor must match the logged-in session actor'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM ciceron.matters m
+    JOIN ciceron.memberships ms
+      ON ms.firm_id = m.firm_id
+     AND ms.user_id = actor
+     AND ms.role IN ('socio', 'asociado', 'admin')
+    WHERE m.id = NEW.matter_id
+  ) THEN
+    RAISE EXCEPTION 'only socio, asociado, or admin may decide reviews'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+COMMENT ON FUNCTION ciceron.review_decisions_authority() IS
+  'BEFORE INSERT/UPDATE: decider must equal current_actor_id and be socio|asociado|admin on the matter firm.';
+
+REVOKE ALL ON FUNCTION ciceron.review_decisions_authority() FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION ciceron.review_decisions_authority() TO service_role;
+
+DROP TRIGGER IF EXISTS review_decisions_authority ON ciceron.review_decisions;
+CREATE TRIGGER review_decisions_authority
+  BEFORE INSERT OR UPDATE ON ciceron.review_decisions
+  FOR EACH ROW EXECUTE FUNCTION ciceron.review_decisions_authority();
 
 -- ---------------------------------------------------------------------------
 -- Draft versions: persona author companion
@@ -111,6 +178,7 @@ COMMENT ON COLUMN ciceron.draft_versions.author_persona IS
 
 -- ---------------------------------------------------------------------------
 -- Deliveries: persona, decision link, message snapshot, simulation flag
+-- Writes: create_delivery RPC only
 -- ---------------------------------------------------------------------------
 ALTER TABLE ciceron.deliveries
   ADD COLUMN IF NOT EXISTS delivered_by_persona uuid
@@ -124,6 +192,15 @@ ALTER TABLE ciceron.deliveries
 
 COMMENT ON COLUMN ciceron.deliveries.is_simulated IS
   'True when channel rendered and recorded without real egress (demo default).';
+
+REVOKE INSERT, UPDATE, DELETE ON ciceron.deliveries FROM PUBLIC, anon, authenticated;
+GRANT SELECT ON ciceron.deliveries TO authenticated;
+GRANT ALL ON ciceron.deliveries TO service_role;
+
+DROP POLICY IF EXISTS deliveries_all ON ciceron.deliveries;
+CREATE POLICY deliveries_select ON ciceron.deliveries
+  FOR SELECT TO authenticated
+  USING (ciceron.is_matter_member(matter_id));
 
 -- ---------------------------------------------------------------------------
 -- Audit events: outcome + policy fields for Prompt 9 access denials
@@ -257,10 +334,8 @@ CREATE POLICY in_app_notifications_update ON ciceron.in_app_notifications
   );
 
 -- ---------------------------------------------------------------------------
--- Stricter deliveries_tier2_gate: persona-aware + four-eyes
--- Why stricter: prior gate ignored decided_by_persona (demo path) and had no
--- four-eyes. Real-user path still requires authorised reviewer; four-eyes adds
--- a second constraint when firm_settings lists the output type.
+-- deliveries_tier2_gate: persona-aware + four-eyes (bool_or across tasks)
+-- BEFORE INSERT OR UPDATE. create_delivery is the sole client write path.
 -- ---------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION ciceron.deliveries_tier2_gate()
 RETURNS trigger
@@ -272,9 +347,9 @@ DECLARE
   v_tier int;
   v_decision_id uuid;
   v_decider uuid;
-  v_output_type text;
   v_firm_id uuid;
   v_four_eyes text[];
+  v_needs_four_eyes boolean := false;
   v_edit_author uuid;
   v_approved_version uuid;
 BEGIN
@@ -316,13 +391,6 @@ BEGIN
   FROM ciceron.matters m
   WHERE m.id = NEW.matter_id;
 
-  SELECT rt.output_type INTO v_output_type
-  FROM ciceron.review_tasks rt
-  WHERE rt.ai_output_id = NEW.ai_output_id
-    AND rt.matter_id = NEW.matter_id
-  ORDER BY rt.created_at DESC
-  LIMIT 1;
-
   SELECT COALESCE(fs.four_eyes_output_types, '{}'::text[])
     INTO v_four_eyes
   FROM ciceron.firm_settings fs
@@ -332,9 +400,13 @@ BEGIN
     v_four_eyes := '{}'::text[];
   END IF;
 
-  IF v_output_type IS NOT NULL
-     AND v_output_type = ANY (v_four_eyes)
-     AND v_approved_version IS NOT NULL THEN
+  SELECT COALESCE(bool_or(rt.output_type = ANY (v_four_eyes)), false)
+    INTO v_needs_four_eyes
+  FROM ciceron.review_tasks rt
+  WHERE rt.ai_output_id = NEW.ai_output_id
+    AND rt.matter_id = NEW.matter_id;
+
+  IF v_needs_four_eyes AND v_approved_version IS NOT NULL THEN
     SELECT COALESCE(dv.author_user_id, dv.author_persona)
       INTO v_edit_author
     FROM ciceron.draft_versions dv
@@ -356,10 +428,15 @@ END;
 $$;
 
 COMMENT ON FUNCTION ciceron.deliveries_tier2_gate() IS
-  'BEFORE INSERT on deliveries: tier-2 needs approved/corrected by socio|asociado|admin (persona-aware). Four-eyes blocks editor=approver for configured output types.';
+  'BEFORE INSERT OR UPDATE on deliveries: tier-2 needs approved/corrected by socio|asociado|admin (persona-aware). Four-eyes if any linked task output_type is configured.';
 
 REVOKE ALL ON FUNCTION ciceron.deliveries_tier2_gate() FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION ciceron.deliveries_tier2_gate() TO service_role;
+
+DROP TRIGGER IF EXISTS deliveries_tier2_gate ON ciceron.deliveries;
+CREATE TRIGGER deliveries_tier2_gate
+  BEFORE INSERT OR UPDATE ON ciceron.deliveries
+  FOR EACH ROW EXECUTE FUNCTION ciceron.deliveries_tier2_gate();
 
 -- ---------------------------------------------------------------------------
 -- Helper: write audit event (used by RPCs)
@@ -415,8 +492,11 @@ GRANT EXECUTE ON FUNCTION ciceron.write_audit_event(uuid, uuid, text, text, uuid
   TO service_role;
 
 -- ---------------------------------------------------------------------------
--- decide_review RPC
+-- decide_review RPC — RETURNS jsonb {ok, id?} | {ok:false, policy_id, policy_reason}
+-- Policy denials write audit then return (no RAISE) so the denial row commits.
 -- ---------------------------------------------------------------------------
+DROP FUNCTION IF EXISTS ciceron.decide_review(uuid, uuid, text, text, text);
+
 CREATE OR REPLACE FUNCTION ciceron.decide_review(
   p_actor uuid,
   p_task_id uuid,
@@ -424,7 +504,7 @@ CREATE OR REPLACE FUNCTION ciceron.decide_review(
   p_notes text DEFAULT NULL,
   p_edited_body text DEFAULT NULL
 )
-RETURNS uuid
+RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = ciceron
@@ -443,6 +523,7 @@ DECLARE
   ai_run uuid;
   model_body text;
   eval_decision text;
+  task_status text;
 BEGIN
   IF p_actor IS NULL OR p_task_id IS NULL THEN
     RAISE EXCEPTION 'actor and task id are required'
@@ -511,8 +592,11 @@ BEGIN
       'denied', 'matter_member', 'Actor is not a member of this matter',
       jsonb_build_object('entity_type', 'review_tasks', 'entity_id', p_task_id)
     );
-    RAISE EXCEPTION 'not a matter member'
-      USING ERRCODE = 'check_violation';
+    RETURN jsonb_build_object(
+      'ok', false,
+      'policy_id', 'matter_member',
+      'policy_reason', 'Actor is not a member of this matter'
+    );
   END IF;
 
   is_persona := EXISTS (
@@ -528,7 +612,6 @@ BEGIN
     four_eyes := '{}'::text[];
   END IF;
 
-  -- Model version (latest model author for linked draft, else create from ai_output)
   IF task.draft_id IS NOT NULL THEN
     SELECT dv.id, dv.body INTO model_version_id, model_body
     FROM ciceron.draft_versions dv
@@ -554,7 +637,6 @@ BEGIN
 
   IF task.output_type IS NOT NULL
      AND task.output_type = ANY (four_eyes) THEN
-    -- Editor cannot final-approve: corrected by same actor, or approved after own edit
     IF p_decision = 'corrected' THEN
       PERFORM ciceron.write_audit_event(
         matter_firm, p_actor, 'review_decide', 'review_tasks', p_task_id,
@@ -562,8 +644,11 @@ BEGIN
         'denied', 'four_eyes', 'Editor cannot give final approval on this output type',
         jsonb_build_object('entity_type', 'review_tasks', 'entity_id', p_task_id)
       );
-      RAISE EXCEPTION 'four-eyes: editor cannot give final approval'
-        USING ERRCODE = 'check_violation';
+      RETURN jsonb_build_object(
+        'ok', false,
+        'policy_id', 'four_eyes',
+        'policy_reason', 'Editor cannot give final approval on this output type'
+      );
     END IF;
 
     IF p_decision = 'approved'
@@ -575,8 +660,11 @@ BEGIN
         'denied', 'four_eyes', 'Editor cannot give final approval on this output type',
         jsonb_build_object('entity_type', 'review_tasks', 'entity_id', p_task_id)
       );
-      RAISE EXCEPTION 'four-eyes: editor cannot give final approval'
-        USING ERRCODE = 'check_violation';
+      RETURN jsonb_build_object(
+        'ok', false,
+        'policy_id', 'four_eyes',
+        'policy_reason', 'Editor cannot give final approval on this output type'
+      );
     END IF;
   END IF;
 
@@ -639,11 +727,18 @@ BEGIN
     RETURNING id INTO decision_id;
   END IF;
 
+  -- returned keeps the queue open; terminal decisions close
+  IF p_decision = 'returned' THEN
+    task_status := 'pendiente';
+  ELSE
+    task_status := 'cerrado';
+  END IF;
+
   UPDATE ciceron.review_tasks
-  SET status = 'cerrado', updated_at = now()
+  SET status = task_status, updated_at = now()
   WHERE id = p_task_id;
 
-  IF task.ai_output_id IS NOT NULL THEN
+  IF task.ai_output_id IS NOT NULL AND p_decision <> 'returned' THEN
     UPDATE ciceron.ai_outputs
     SET status = CASE p_decision
           WHEN 'approved' THEN 'aprobado'
@@ -690,12 +785,12 @@ BEGIN
     )
   );
 
-  RETURN decision_id;
+  RETURN jsonb_build_object('ok', true, 'id', decision_id);
 END;
 $$;
 
 COMMENT ON FUNCTION ciceron.decide_review(uuid, uuid, text, text, text) IS
-  'Service-role: set_actor, refuse already-decided, enforce role/matter/four-eyes, insert decision + audit (+ eval candidate).';
+  'Service-role: set_actor, refuse already-decided. Policy denials return jsonb ok:false with audit committed; success returns {ok:true,id}.';
 
 REVOKE ALL ON FUNCTION ciceron.decide_review(uuid, uuid, text, text, text)
   FROM PUBLIC, anon, authenticated;
@@ -703,7 +798,7 @@ GRANT EXECUTE ON FUNCTION ciceron.decide_review(uuid, uuid, text, text, text)
   TO service_role;
 
 -- ---------------------------------------------------------------------------
--- save_review_edit: human draft version without final approval (four-eyes path)
+-- save_review_edit
 -- ---------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION ciceron.save_review_edit(
   p_actor uuid,
@@ -962,8 +1057,10 @@ GRANT EXECUTE ON FUNCTION ciceron.reassign_review(uuid, uuid, uuid)
   TO service_role;
 
 -- ---------------------------------------------------------------------------
--- create_delivery — sole write path for deliveries
+-- create_delivery — sole write path; RETURNS jsonb; denials commit audit
 -- ---------------------------------------------------------------------------
+DROP FUNCTION IF EXISTS ciceron.create_delivery(uuid, uuid, uuid, text, text, text, text, boolean);
+
 CREATE OR REPLACE FUNCTION ciceron.create_delivery(
   p_actor uuid,
   p_ai_output_id uuid,
@@ -974,7 +1071,7 @@ CREATE OR REPLACE FUNCTION ciceron.create_delivery(
   p_body text,
   p_confirm boolean DEFAULT false
 )
-RETURNS uuid
+RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = ciceron
@@ -1032,8 +1129,11 @@ BEGIN
       'denied', 'matter_member', 'Actor is not a member of this matter',
       jsonb_build_object('entity_type', 'ai_outputs', 'entity_id', p_ai_output_id)
     );
-    RAISE EXCEPTION 'not a matter member'
-      USING ERRCODE = 'check_violation';
+    RETURN jsonb_build_object(
+      'ok', false,
+      'policy_id', 'matter_member',
+      'policy_reason', 'Actor is not a member of this matter'
+    );
   END IF;
 
   SELECT o.tier INTO v_tier
@@ -1067,7 +1167,6 @@ BEGIN
     allowlist := '{}'::text[];
   END IF;
 
-  -- Real email only when recipient is on the allow-list (default empty → always simulated)
   IF lower(p_channel) = 'email'
      AND p_recipient IS NOT NULL
      AND p_recipient = ANY (allowlist) THEN
@@ -1119,12 +1218,12 @@ BEGIN
     jsonb_build_object('entity_type', 'deliveries', 'entity_id', delivery_id)
   );
 
-  RETURN delivery_id;
+  RETURN jsonb_build_object('ok', true, 'id', delivery_id);
 END;
 $$;
 
 COMMENT ON FUNCTION ciceron.create_delivery(uuid, uuid, uuid, text, text, text, text, boolean) IS
-  'Sole service-role path to insert deliveries. Checks role, matter, approved decision; trigger remains final guard. Default email is simulated.';
+  'Sole service-role path to insert deliveries. Policy denials return jsonb ok:false with audit committed.';
 
 REVOKE ALL ON FUNCTION ciceron.create_delivery(uuid, uuid, uuid, text, text, text, text, boolean)
   FROM PUBLIC, anon, authenticated;

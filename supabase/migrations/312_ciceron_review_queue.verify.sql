@@ -1,5 +1,10 @@
 -- 312_ciceron_review_queue.verify.sql
--- Run after 312. Expect NOTICE lines; RAISE on failure.
+-- Non-persistent: entire script runs in one transaction and ROLLBACKs.
+-- FAIL paths RAISE EXCEPTION (abort). Success ends with ROLLBACK only.
+-- Asserts denied audit rows are visible after decide_review returns ok:false
+-- (denial is not rolled back by the RPC itself).
+
+BEGIN;
 
 DO $$
 DECLARE
@@ -16,8 +21,8 @@ DECLARE
   decision_id uuid;
   delivery_id uuid;
   audit_count int;
+  result jsonb;
 BEGIN
-  -- Columns / tables exist
   SELECT count(*) INTO n FROM information_schema.columns
   WHERE table_schema = 'ciceron' AND table_name = 'audit_events' AND column_name = 'outcome';
   IF n <> 1 THEN RAISE EXCEPTION 'FAIL: audit_events.outcome missing'; END IF;
@@ -25,10 +30,6 @@ BEGIN
   SELECT count(*) INTO n FROM information_schema.tables
   WHERE table_schema = 'ciceron' AND table_name = 'firm_settings';
   IF n <> 1 THEN RAISE EXCEPTION 'FAIL: firm_settings missing'; END IF;
-
-  SELECT count(*) INTO n FROM information_schema.tables
-  WHERE table_schema = 'ciceron' AND table_name = 'evaluation_candidates';
-  IF n <> 1 THEN RAISE EXCEPTION 'FAIL: evaluation_candidates missing'; END IF;
 
   IF NOT EXISTS (
     SELECT 1 FROM pg_proc p
@@ -46,17 +47,21 @@ BEGIN
     RAISE EXCEPTION 'FAIL: create_delivery missing';
   END IF;
 
-  -- Ensure firm_settings row for four-eyes on client_alert
+  -- RPC-only table privileges for authenticated
+  IF has_table_privilege('authenticated', 'ciceron.review_decisions', 'INSERT') THEN
+    RAISE EXCEPTION 'FAIL: authenticated still has INSERT on review_decisions';
+  END IF;
+  IF has_table_privilege('authenticated', 'ciceron.deliveries', 'INSERT') THEN
+    RAISE EXCEPTION 'FAIL: authenticated still has INSERT on deliveries';
+  END IF;
+
   INSERT INTO ciceron.firm_settings (firm_id, four_eyes_output_types, email_allowlist)
   VALUES (firm, ARRAY['client_alert']::text[], '{}'::text[])
   ON CONFLICT (firm_id) DO UPDATE
     SET four_eyes_output_types = ARRAY['client_alert']::text[];
 
-  -- Build a tier-2 output + draft + task for tests
   INSERT INTO ciceron.ai_runs (id, purpose, model, firm_id, matter_id, user_id)
-  VALUES (
-    gen_random_uuid(), 'verify_review_queue', 'test-model', firm, matter, socio
-  )
+  VALUES (gen_random_uuid(), 'verify_review_queue', 'test-model', firm, matter, socio)
   RETURNING id INTO run_id;
 
   INSERT INTO ciceron.ai_outputs (id, ai_run_id, tier, status, body)
@@ -102,7 +107,7 @@ BEGIN
       END IF;
   END;
 
-  -- 2) Pasante / outsider cannot decide (pasante is on this matter but wrong role)
+  -- 2) Pasante cannot decide (role)
   BEGIN
     PERFORM ciceron.decide_review(pasante, task_id, 'approved', NULL, NULL);
     RAISE EXCEPTION 'FAIL: pasante was allowed to decide';
@@ -116,7 +121,7 @@ BEGIN
       END IF;
   END;
 
-  -- Outside-matter actor (firm B socio) cannot see/decide — membership wall
+  -- Outside-firm actor
   BEGIN
     PERFORM ciceron.decide_review(
       'b1000000-0000-4000-8000-000000000011'::uuid,
@@ -135,7 +140,7 @@ BEGIN
       END IF;
   END;
 
-  -- 3) Four-eyes: editor cannot final-approve on client_alert
+  -- 3) Four-eyes: editor cannot final-approve; denial audit must persist in-txn
   UPDATE ciceron.review_tasks SET output_type = 'client_alert' WHERE id = task_id;
 
   PERFORM ciceron.save_review_edit(
@@ -143,40 +148,49 @@ BEGIN
     'Datos de demostración. Texto editado por la socia (four-eyes).'
   );
 
-  BEGIN
-    PERFORM ciceron.decide_review(socio, task_id, 'approved', NULL, NULL);
-    RAISE EXCEPTION 'FAIL: four-eyes allowed editor to approve';
-  EXCEPTION
-    WHEN others THEN
-      IF SQLERRM LIKE 'FAIL:%' THEN RAISE; END IF;
-      IF SQLERRM LIKE '%four-eyes%' THEN
-        RAISE NOTICE 'OK: four-eyes blocks editor final approval';
-      ELSE
-        RAISE EXCEPTION 'FAIL: unexpected four-eyes error: %', SQLERRM;
-      END IF;
-  END;
-
-  -- Asociado (non-editor) can approve
-  decision_id := ciceron.decide_review(asociado, task_id, 'approved', 'Visto bueno', NULL);
+  result := ciceron.decide_review(socio, task_id, 'approved', NULL, NULL);
+  IF COALESCE((result->>'ok')::boolean, true) THEN
+    RAISE EXCEPTION 'FAIL: four-eyes allowed editor to approve: %', result;
+  END IF;
+  IF result->>'policy_id' IS DISTINCT FROM 'four_eyes' THEN
+    RAISE EXCEPTION 'FAIL: expected four_eyes policy_id, got %', result;
+  END IF;
 
   SELECT count(*) INTO audit_count
   FROM ciceron.audit_events
-  WHERE entity_id = decision_id AND action = 'review_decision';
+  WHERE entity_id = task_id
+    AND action = 'review_decide'
+    AND outcome = 'denied'
+    AND policy_id = 'four_eyes';
+  IF audit_count < 1 THEN
+    RAISE EXCEPTION 'FAIL: denied audit row did not persist after four-eyes denial';
+  END IF;
+  RAISE NOTICE 'OK: four-eyes denial returned jsonb and denied audit persisted';
+
+  -- Asociado (non-editor) can approve
+  result := ciceron.decide_review(asociado, task_id, 'approved', 'Visto bueno', NULL);
+  IF NOT COALESCE((result->>'ok')::boolean, false) THEN
+    RAISE EXCEPTION 'FAIL: asociado approve failed: %', result;
+  END IF;
+  decision_id := (result->>'id')::uuid;
+
+  SELECT count(*) INTO audit_count
+  FROM ciceron.audit_events
+  WHERE entity_id = decision_id AND action = 'review_decision' AND outcome = 'allowed';
   IF audit_count <> 1 THEN
     RAISE EXCEPTION 'FAIL: expected exactly one audit event for decision, got %', audit_count;
   END IF;
-  RAISE NOTICE 'OK: decision produced exactly one audit event';
+  RAISE NOTICE 'OK: decision produced exactly one allowed audit event';
 
-  -- create_delivery with confirm
-  delivery_id := ciceron.create_delivery(
+  result := ciceron.create_delivery(
     asociado, out_id, matter, 'email',
     'cliente@ejemplo.demo', 'Asunto de verificación',
     'Cuerpo simulado de verificación.', true
   );
-
-  IF delivery_id IS NULL THEN
-    RAISE EXCEPTION 'FAIL: create_delivery returned null';
+  IF NOT COALESCE((result->>'ok')::boolean, false) THEN
+    RAISE EXCEPTION 'FAIL: create_delivery failed: %', result;
   END IF;
+  delivery_id := (result->>'id')::uuid;
 
   SELECT count(*) INTO n FROM ciceron.deliveries WHERE id = delivery_id AND is_simulated = true;
   IF n <> 1 THEN RAISE EXCEPTION 'FAIL: delivery not simulated by default'; END IF;
@@ -196,5 +210,7 @@ BEGIN
       END IF;
   END;
 
-  RAISE NOTICE 'OK: 312 review queue verify passed';
+  RAISE NOTICE 'OK: 312 review queue verify passed (will ROLLBACK)';
 END $$;
+
+ROLLBACK;

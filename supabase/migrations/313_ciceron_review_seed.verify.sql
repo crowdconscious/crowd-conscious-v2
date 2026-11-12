@@ -8,13 +8,23 @@ BEGIN
   SELECT count(*) INTO n FROM ciceron.review_tasks
   WHERE is_demo = true
     AND id IN (
-      'g1000000-0000-4000-8000-000000000041'::uuid,
-      'g1000000-0000-4000-8000-000000000042'::uuid,
-      'g1000000-0000-4000-8000-000000000043'::uuid,
-      'g1000000-0000-4000-8000-000000000044'::uuid
+      'f1000000-0000-4000-8000-000000000141'::uuid,
+      'f1000000-0000-4000-8000-000000000142'::uuid,
+      'f1000000-0000-4000-8000-000000000143'::uuid,
+      'f1000000-0000-4000-8000-000000000144'::uuid
     );
   IF n <> 4 THEN
     RAISE EXCEPTION 'FAIL: expected 4 demo review tasks, got %', n;
+  END IF;
+
+  -- Task 144 must not share ai_output / draft with four-eyes task 141
+  SELECT count(*) INTO n FROM ciceron.review_tasks
+  WHERE id = 'f1000000-0000-4000-8000-000000000144'::uuid
+    AND ai_output_id = 'f1000000-0000-4000-8000-000000000114'::uuid
+    AND draft_id = 'f1000000-0000-4000-8000-000000000124'::uuid
+    AND output_type = 'client_notify';
+  IF n <> 1 THEN
+    RAISE EXCEPTION 'FAIL: task 144 must use its own client_notify output/draft';
   END IF;
 
   SELECT count(*) INTO n FROM ciceron.firm_settings
@@ -25,7 +35,7 @@ BEGIN
   END IF;
 
   SELECT count(*) INTO n FROM ciceron.draft_versions
-  WHERE id = 'g1000000-0000-4000-8000-000000000034'::uuid
+  WHERE id = 'f1000000-0000-4000-8000-000000000134'::uuid
     AND author_type = 'human'
     AND author_persona = 'b1000000-0000-4000-8000-000000000001'::uuid;
   IF n <> 1 THEN

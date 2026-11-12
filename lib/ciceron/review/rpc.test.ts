@@ -27,34 +27,61 @@ function mockRpc(
 }
 
 describe('review RPC wrappers', () => {
-  it('rpcDecideReview maps args', async () => {
-    const db = mockRpc(() => null)
+  it('rpcDecideReview maps args and parses jsonb ok', async () => {
+    const db: ReviewRpcClient & { calls: Array<{ fn: string; args?: Record<string, unknown> }> } = {
+      calls: [],
+      async rpc(fn, args) {
+        db.calls.push({ fn, args })
+        return { data: { ok: true, id: 'decision-id' }, error: null }
+      },
+    }
     const result = await rpcDecideReview(db, {
       actorId: 'b1000000-0000-4000-8000-000000000001',
-      taskId: 'g1000000-0000-4000-8000-000000000041',
+      taskId: 'f1000000-0000-4000-8000-000000000141',
       decision: 'approved',
     })
     assert.equal(result.ok, true)
+    if (result.ok) assert.equal(result.id, 'decision-id')
     assert.equal(db.calls[0]!.fn, 'decide_review')
     assert.equal(db.calls[0]!.args?.p_decision, 'approved')
   })
 
-  it('rpcDecideReview surfaces four-eyes errors', async () => {
-    const db = mockRpc(() => ({
-      message: 'four-eyes: editor cannot give final approval',
-    }))
+  it('rpcDecideReview surfaces four-eyes policy denial from jsonb', async () => {
+    const db: ReviewRpcClient & { calls: Array<{ fn: string; args?: Record<string, unknown> }> } = {
+      calls: [],
+      async rpc(fn, args) {
+        db.calls.push({ fn, args })
+        return {
+          data: {
+            ok: false,
+            policy_id: 'four_eyes',
+            policy_reason: 'Editor cannot give final approval on this output type',
+          },
+          error: null,
+        }
+      },
+    }
     const result = await rpcDecideReview(db, {
       actorId: 'b1000000-0000-4000-8000-000000000001',
-      taskId: 'g1000000-0000-4000-8000-000000000041',
+      taskId: 'f1000000-0000-4000-8000-000000000141',
       decision: 'approved',
     })
     assert.equal(result.ok, false)
-    if (!result.ok) assert.match(result.message, /four-eyes/i)
+    if (!result.ok) {
+      assert.equal(result.policyId, 'four_eyes')
+      assert.match(result.message, /Editor cannot give final approval/i)
+    }
   })
 
   it('rpcCreateDelivery requires confirm flag in args', async () => {
-    const db = mockRpc(() => null)
-    await rpcCreateDelivery(db, {
+    const db: ReviewRpcClient & { calls: Array<{ fn: string; args?: Record<string, unknown> }> } = {
+      calls: [],
+      async rpc(fn, args) {
+        db.calls.push({ fn, args })
+        return { data: { ok: true, id: 'delivery-id' }, error: null }
+      },
+    }
+    const result = await rpcCreateDelivery(db, {
       actorId: 'a',
       aiOutputId: 'o',
       matterId: 'm',
@@ -64,6 +91,7 @@ describe('review RPC wrappers', () => {
       body: 'b',
       confirm: true,
     })
+    assert.equal(result.ok, true)
     assert.equal(db.calls[0]!.fn, 'create_delivery')
     assert.equal(db.calls[0]!.args?.p_confirm, true)
   })
@@ -87,6 +115,7 @@ describe('312 migration SQL contracts', () => {
       'reassign_review',
       'create_delivery',
       'write_audit_event',
+      'review_decisions_authority',
     ]) {
       assert.match(sql, new RegExp(`FUNCTION ciceron\\.${name}`))
     }
@@ -94,7 +123,10 @@ describe('312 migration SQL contracts', () => {
     assert.match(sql, /GRANT EXECUTE ON FUNCTION ciceron\.decide_review[\s\S]*TO service_role/)
     assert.match(sql, /REVOKE ALL ON FUNCTION ciceron\.decide_review[\s\S]*FROM PUBLIC, anon, authenticated/)
     assert.match(sql, /already decided/)
-    assert.match(sql, /four-eyes: editor cannot give final approval/)
+    assert.match(sql, /'ok', false/)
+    assert.match(sql, /policy_id', 'four_eyes'/)
+    assert.match(sql, /REVOKE INSERT, UPDATE, DELETE ON ciceron\.review_decisions/)
+    assert.match(sql, /REVOKE INSERT, UPDATE, DELETE ON ciceron\.deliveries/)
   })
 
   it('audit shape includes outcome and policy fields for Prompt 9', () => {
@@ -104,8 +136,14 @@ describe('312 migration SQL contracts', () => {
     assert.match(sql, /snapshot_ref/)
   })
 
-  it('stricter deliveries_tier2_gate is persona-aware', () => {
+  it('stricter deliveries_tier2_gate is persona-aware and uses bool_or', () => {
     assert.match(sql, /COALESCE\(rd\.decided_by, rd\.decided_by_persona\)/)
+    assert.match(sql, /bool_or\(rt\.output_type = ANY/)
+    assert.match(sql, /BEFORE INSERT OR UPDATE ON ciceron\.deliveries/)
+  })
+
+  it('returned decisions reopen as pendiente', () => {
+    assert.match(sql, /p_decision = 'returned' THEN\s+task_status := 'pendiente'/)
   })
 })
 

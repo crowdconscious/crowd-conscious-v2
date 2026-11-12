@@ -110,22 +110,33 @@ export function fixtureTaskDetail(taskId: string): ReviewTaskDetail | null {
 
   return {
     ...item,
-    draftId: isNexora
-      ? CICERON_REVIEW_SEED.drafts.nexora
-      : taskId === CICERON_REVIEW_SEED.tasks.farmaAsociado
-        ? CICERON_REVIEW_SEED.drafts.farma
-        : CICERON_REVIEW_SEED.drafts.viento,
-    aiOutputId: isNexora
-      ? CICERON_REVIEW_SEED.outputs.nexora
-      : taskId === CICERON_REVIEW_SEED.tasks.farmaAsociado
-        ? CICERON_REVIEW_SEED.outputs.farma
-        : CICERON_REVIEW_SEED.outputs.viento,
+    draftId:
+      taskId === CICERON_REVIEW_SEED.tasks.nexoraSocio
+        ? CICERON_REVIEW_SEED.drafts.nexora
+        : taskId === CICERON_REVIEW_SEED.tasks.farmaAsociado
+          ? CICERON_REVIEW_SEED.drafts.farma
+          : taskId === CICERON_REVIEW_SEED.tasks.nexoraAsociadoFollowup
+            ? CICERON_REVIEW_SEED.drafts.nexoraFollowup
+            : CICERON_REVIEW_SEED.drafts.viento,
+    aiOutputId:
+      taskId === CICERON_REVIEW_SEED.tasks.nexoraSocio
+        ? CICERON_REVIEW_SEED.outputs.nexora
+        : taskId === CICERON_REVIEW_SEED.tasks.farmaAsociado
+          ? CICERON_REVIEW_SEED.outputs.farma
+          : taskId === CICERON_REVIEW_SEED.tasks.nexoraAsociadoFollowup
+            ? CICERON_REVIEW_SEED.outputs.nexoraFollowup
+            : CICERON_REVIEW_SEED.outputs.viento,
     modelBody,
     currentBody,
-    modelVersionId: CICERON_REVIEW_SEED.versions.nexoraModel,
+    modelVersionId:
+      taskId === CICERON_REVIEW_SEED.tasks.nexoraAsociadoFollowup
+        ? CICERON_REVIEW_SEED.versions.nexoraFollowupModel
+        : CICERON_REVIEW_SEED.versions.nexoraModel,
     currentVersionId: isNexora
       ? CICERON_REVIEW_SEED.versions.nexoraHuman
-      : CICERON_REVIEW_SEED.versions.nexoraModel,
+      : taskId === CICERON_REVIEW_SEED.tasks.nexoraAsociadoFollowup
+        ? CICERON_REVIEW_SEED.versions.nexoraFollowupModel
+        : CICERON_REVIEW_SEED.versions.nexoraModel,
     humanEditAuthorId: isNexora ? (CICERON_SEED.personas.socio as string) : null,
     fourEyesOn: item.outputType === 'client_alert',
     aiRun: {
