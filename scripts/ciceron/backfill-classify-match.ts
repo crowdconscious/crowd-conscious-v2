@@ -3,11 +3,13 @@
  * Resumable batches. Idempotent on already-classified/matched notes when --only-pending.
  *
  * Usage:
- *   npx tsx scripts/ciceron/backfill-classify-match.ts --dry-run
- *   npx tsx scripts/ciceron/backfill-classify-match.ts --limit=8
+ *   npx tsx scripts/ciceron/backfill-classify-match.ts --dry-run --since=2026-11-12
+ *   npx tsx scripts/ciceron/backfill-classify-match.ts --since=2026-11-12 --limit=8
+ *   npx tsx scripts/ciceron/backfill-classify-match.ts --since=2026-11-12 --tag=pre-demo
+ *   npx tsx scripts/ciceron/backfill-classify-match.ts --since=2026-11-12 --retry-failed
  *
- * Hard US$60 cap (code constant). Do NOT run against production without CTO review
- * of the dry-run estimate. Raising the cap requires editing _cost-cap.ts.
+ * Hard US$60 cumulative spend since --since. Pre-flight estimate over the cap
+ * warns but still starts; each batch is projected against remaining budget.
  */
 import { createClient } from '@supabase/supabase-js'
 import { runClassifyMatchBatch } from '../../lib/ciceron/dof/classify-match'
@@ -15,9 +17,13 @@ import {
   abortIfSpendAtCap,
   assertUnderCap,
   COST_CAP_USD,
-  estimateFromRates,
+  ESTIMATE_MARGIN,
+  estimateNotesUsd,
   fetchAllRows,
   parseFlags,
+  perNoteCostFromRates,
+  projectBatchAffordable,
+  sumBackfillSpendSince,
   type AiRunRate,
 } from './_cost-cap'
 
@@ -28,8 +34,16 @@ type NoteRow = {
   match_status: string
 }
 
+function pendingOr(retryFailed: boolean): string {
+  return retryFailed
+    ? 'classify_status.in.(pending,failed),match_status.in.(pending,failed)'
+    : 'classify_status.eq.pending,match_status.eq.pending'
+}
+
+/** Prefer last ~2 days of runs so the estimate tracks the current corpus. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function loadRates(sb: any): Promise<AiRunRate[]> {
+async function loadRecentRates(sb: any): Promise<AiRunRate[]> {
+  const since = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
   const rows = await fetchAllRows<{
     purpose: string
     cost_estimate_usd: number | null
@@ -38,6 +52,7 @@ async function loadRates(sb: any): Promise<AiRunRate[]> {
       .from('ai_runs')
       .select('purpose, cost_estimate_usd')
       .in('purpose', ['dof_classify', 'dof_match_relevance'])
+      .gte('created_at', since)
   )
   const by = new Map<string, number[]>()
   for (const r of rows) {
@@ -61,9 +76,20 @@ async function main() {
     console.error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')
     process.exit(1)
   }
-  const sb = createClient(url, key, { db: { schema: 'ciceron' } })
+  if (!flags.sinceIso || !flags.sinceDay) {
+    console.error(
+      JSON.stringify({
+        ok: false,
+        error: 'since_required',
+        hint: 'Pass --since=YYYY-MM-DD so the US$60 cap is cumulative across runs.',
+      })
+    )
+    process.exit(1)
+  }
 
-  // Exact counts (head) so the estimate is not capped by PostgREST's 1000-row page.
+  const sb = createClient(url, key, { db: { schema: 'ciceron' } })
+  const orFilter = pendingOr(flags.retryFailed)
+
   const [{ count: ingestedCount, error: ingestedErr }, { count: pendingCount, error: pendingErr }] =
     await Promise.all([
       sb
@@ -74,9 +100,7 @@ async function main() {
         .from('dof_notes')
         .select('id', { count: 'exact', head: true })
         .in('ingest_status', ['ready', 'embedding_pending'])
-        .or(
-          'classify_status.in.(pending,failed),match_status.in.(pending,failed)'
-        ),
+        .or(orFilter),
     ])
   if (ingestedErr || pendingErr) {
     console.error(ingestedErr?.message ?? pendingErr?.message)
@@ -87,53 +111,70 @@ async function main() {
     .from('dof_notes')
     .select('id', { count: 'exact', head: true })
     .in('ingest_status', ['ready', 'embedding_pending'])
-    .in('classify_status', ['pending', 'failed'])
+    .in(
+      'classify_status',
+      flags.retryFailed ? ['pending', 'failed'] : ['pending']
+    )
   if (classifyErr) {
     console.error(classifyErr.message)
     process.exit(1)
   }
 
-  // Page all pending rows for edition list (and pendingNotes accuracy).
   const pending = await fetchAllRows<NoteRow>(
     sb
       .from('dof_notes')
       .select('id, note_date, classify_status, match_status')
       .in('ingest_status', ['ready', 'embedding_pending'])
-      .or(
-        'classify_status.in.(pending,failed),match_status.in.(pending,failed)'
-      )
+      .or(orFilter)
       .order('note_date', { ascending: true })
   )
 
-  const rates = await loadRates(sb)
-  const needClassify = needClassifyCount ?? pending.filter((p) => p.classify_status !== 'classified').length
+  const rates = await loadRecentRates(sb)
+  const sample = perNoteCostFromRates(rates)
   const pendingNotes = pendingCount ?? pending.length
-  const classifyEst = estimateFromRates(rates, 'dof_classify', needClassify, 0.004)
-  // One relevance call per pending note × watch-profile candidate batch ≈ 2 avg
-  const matchEst = estimateFromRates(rates, 'dof_match_relevance', pendingNotes * 2, 0.006)
-  const estimateUsd = Number((classifyEst + matchEst).toFixed(4))
+  const needClassify =
+    needClassifyCount ??
+    pending.filter((p) => p.classify_status === 'pending' || (flags.retryFailed && p.classify_status === 'failed')).length
+  const estimateUsd = estimateNotesUsd({
+    pendingNotes,
+    perNoteUsd: sample.perNoteUsd,
+  })
   const editions = [...new Set(pending.map((r) => r.note_date))].sort()
+
+  const priorSpendUsd = await sumBackfillSpendSince(sb, flags.sinceIso)
+  const remainingBudgetUsd = Number((COST_CAP_USD - priorSpendUsd).toFixed(4))
 
   console.log(
     JSON.stringify({
       dryRun: flags.dryRun,
+      since: flags.sinceDay,
+      tag: flags.tag ?? null,
+      retryFailed: flags.retryFailed,
       ingestedNotes: ingestedCount ?? 0,
       pendingNotes,
       needClassify,
       editions,
       editionCount: editions.length,
+      perNoteUsd: sample.perNoteUsd,
+      matchCallsPerNote: sample.matchCallsPerNote,
+      estimateMargin: ESTIMATE_MARGIN,
       estimateUsd,
-      classifyEst,
-      matchEst,
+      priorSpendUsd: Number(priorSpendUsd.toFixed(6)),
+      remainingBudgetUsd,
+      projectedUsd: Number((priorSpendUsd + estimateUsd).toFixed(4)),
       capUsd: COST_CAP_USD,
       ratesSampled: rates,
+      note: 'Estimate = pendingNotes × measured per-note blend × 1.15 margin. Live run may start over projection and stops before a batch that would exceed the cap.',
     })
   )
 
+  // Soft for backfill: warn if over, but allow live start (hard stop is per-batch).
   assertUnderCap({
     estimateUsd,
     dryRun: flags.dryRun,
     label: 'backfill-classify-match',
+    priorSpendUsd,
+    hard: false,
   })
 
   if (flags.dryRun) {
@@ -141,31 +182,98 @@ async function main() {
     return
   }
 
-  const batchLimit = flags.limit && flags.limit > 0 ? flags.limit : 6
-  let totalCost = 0
+  if (priorSpendUsd >= COST_CAP_USD) {
+    abortIfSpendAtCap({
+      spentUsd: priorSpendUsd,
+      label: 'backfill-classify-match',
+    })
+  }
+
+  const requestedLimit = flags.limit && flags.limit > 0 ? flags.limit : 6
+  const attemptedIds = new Set<string>()
+  let sessionCost = 0
   let rounds = 0
+  let totalMatchRows = 0
+  let totalMatchedNotes = 0
+
   for (;;) {
+    const spentBefore = await sumBackfillSpendSince(sb, flags.sinceIso)
+    const projection = projectBatchAffordable({
+      spentUsd: spentBefore,
+      batchLimit: requestedLimit,
+      perNoteUsd: sample.perNoteUsd,
+      label: 'backfill-classify-match',
+    })
+    if (!projection.ok) {
+      console.log(
+        JSON.stringify({
+          ok: true,
+          stopped: projection.reason,
+          cumulativeSpendUsd: Number(spentBefore.toFixed(6)),
+          remainingBudgetUsd: projection.remainingBudgetUsd,
+          capUsd: COST_CAP_USD,
+          rounds,
+          sessionCostUsd: Number(sessionCost.toFixed(6)),
+          totalMatchRows,
+          totalMatchedNotes,
+        })
+      )
+      break
+    }
+
     rounds += 1
     const stats = await runClassifyMatchBatch({
-      limit: batchLimit,
+      limit: projection.batchLimit,
       onlyPending: true,
+      retryFailed: flags.retryFailed,
+      excludeIds: attemptedIds,
     })
-    totalCost += stats.costUsd
+    sessionCost += stats.costUsd
+    totalMatchRows += stats.matchRows
+    totalMatchedNotes += stats.matchedNotes
+    const spentUsd = await sumBackfillSpendSince(sb, flags.sinceIso)
     console.log(
       JSON.stringify({
         round: rounds,
+        tag: flags.tag ?? null,
+        batchEstUsd: projection.batchEstUsd,
         ...stats,
-        totalCostUsd: Number(totalCost.toFixed(6)),
+        sessionCostUsd: Number(sessionCost.toFixed(6)),
+        cumulativeSpendUsd: Number(spentUsd.toFixed(6)),
+        totalMatchRows,
+        totalMatchedNotes,
+        attemptedNotes: attemptedIds.size,
         capUsd: COST_CAP_USD,
       })
     )
-    abortIfSpendAtCap({ spentUsd: totalCost, label: 'backfill-classify-match' })
-    if (stats.remaining === 0 || stats.processed === 0) break
+    if (spentUsd >= COST_CAP_USD) {
+      abortIfSpendAtCap({ spentUsd, label: 'backfill-classify-match' })
+    }
+    // No new work, or every remaining pending note was already tried this run.
+    if (stats.processed === 0) break
+    if (stats.remaining === 0) break
     if (rounds > 800) {
       console.error('Stopping after 800 rounds — resume later')
       break
     }
   }
+
+  console.log(
+    JSON.stringify({
+      ok: true,
+      tag: flags.tag ?? null,
+      since: flags.sinceDay,
+      retryFailed: flags.retryFailed,
+      rounds,
+      sessionCostUsd: Number(sessionCost.toFixed(6)),
+      cumulativeSpendUsd: Number(
+        (await sumBackfillSpendSince(sb, flags.sinceIso)).toFixed(6)
+      ),
+      totalMatchRows,
+      totalMatchedNotes,
+      attemptedNotes: attemptedIds.size,
+    })
+  )
 }
 
 main().catch((err) => {

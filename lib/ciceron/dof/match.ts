@@ -171,17 +171,34 @@ async function createTier0Alerts(opts: {
 
 export async function matchDofNote(noteId: string): Promise<{
   ok: boolean
+  /** Total match rows for this note after the pass. */
   matches: number
+  /** Match rows created in this pass (not prior upserts). */
+  newMatches: number
   costUsd: number
   error?: string
 }> {
   const db = tryCreateCiceronAdminClient()
-  if (!db) return { ok: false, matches: 0, costUsd: 0, error: 'no db' }
+  if (!db) {
+    return { ok: false, matches: 0, newMatches: 0, costUsd: 0, error: 'no db' }
+  }
+
+  const { count: beforeCount } = await db
+    .from('matches')
+    .select('id', { count: 'exact', head: true })
+    .eq('dof_note_id', noteId)
+  const matchesBefore = beforeCount ?? 0
 
   const note = await loadNoteContext(noteId)
   if (!note) {
     await db.from('dof_notes').update({ match_status: 'skipped' }).eq('id', noteId)
-    return { ok: false, matches: 0, costUsd: 0, error: 'note missing' }
+    return {
+      ok: false,
+      matches: matchesBefore,
+      newMatches: 0,
+      costUsd: 0,
+      error: 'note missing',
+    }
   }
 
   const profiles = await loadDemoFirmProfiles()
@@ -193,7 +210,7 @@ export async function matchDofNote(noteId: string): Promise<{
   const candidates = scoreCandidates(note, eligibleProfiles).slice(0, 4)
   if (!candidates.length) {
     await db.from('dof_notes').update({ match_status: 'no_match' }).eq('id', noteId)
-    return { ok: true, matches: 0, costUsd: 0 }
+    return { ok: true, matches: matchesBefore, newMatches: 0, costUsd: 0 }
   }
 
   const promptVersionId = await resolvePromptVersionId(
@@ -201,7 +218,6 @@ export async function matchDofNote(noteId: string): Promise<{
     PROMPT_MATCH_V2.versionLabel
   )
 
-  let matchCount = 0
   let costUsd = 0
   const chunkIdSet = new Set(note.chunks.map((c) => c.id))
 
@@ -258,7 +274,7 @@ export async function matchDofNote(noteId: string): Promise<{
 
     const supporting = judged.supporting_chunk_ids.filter((id) => chunkIdSet.has(id))
 
-    const { data: upserted } = await db
+    const { data: upserted, error: upsertError } = await db
       .from('matches')
       .upsert(
         {
@@ -277,27 +293,54 @@ export async function matchDofNote(noteId: string): Promise<{
       .select('id')
       .limit(1)
 
-    const matchId =
+    if (upsertError) {
+      console.warn('[ciceron] match upsert failed', upsertError.message)
+      continue
+    }
+
+    let matchId =
       Array.isArray(upserted) && upserted[0]
         ? (upserted[0] as { id: string }).id
         : null
+
+    // Prefer-return can be empty even when the upsert landed; resolve by key.
+    if (!matchId) {
+      const { data: existing } = await db
+        .from('matches')
+        .select('id')
+        .eq('dof_note_id', noteId)
+        .eq('watch_profile_id', cand.profile.id)
+        .limit(1)
+      matchId =
+        Array.isArray(existing) && existing[0]
+          ? (existing[0] as { id: string }).id
+          : null
+    }
+
     if (matchId) {
       await createTier0Alerts({
         matchId,
         clientId: cand.profile.client_id,
         headline: `${note.title} — ${judged.reason}`.slice(0, 400),
       })
-      matchCount += 1
     }
   }
+
+  // Authoritative totals after this pass.
+  const { count: dbMatchCount } = await db
+    .from('matches')
+    .select('id', { count: 'exact', head: true })
+    .eq('dof_note_id', noteId)
+  const matches = dbMatchCount ?? 0
+  const newMatches = Math.max(0, matches - matchesBefore)
 
   await db
     .from('dof_notes')
     .update({
-      match_status: matchCount > 0 ? 'matched' : 'no_match',
+      match_status: matches > 0 ? 'matched' : 'no_match',
       last_error: null,
     })
     .eq('id', noteId)
 
-  return { ok: true, matches: matchCount, costUsd }
+  return { ok: true, matches, newMatches, costUsd }
 }

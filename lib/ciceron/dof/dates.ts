@@ -32,6 +32,43 @@ export function todayInMexicoCity(now = new Date()): string {
   return shifted.toISOString().slice(0, 10)
 }
 
+/** Calendar yyyy-mm-dd in America/Mexico_City for an instant (ISO or Date). */
+export function dateInMexicoCity(instant: string | Date): string | null {
+  const d = typeof instant === 'string' ? new Date(instant) : instant
+  if (Number.isNaN(d.getTime())) return null
+  return new Date(d.getTime() - CDMX_OFFSET_MS).toISOString().slice(0, 10)
+}
+
+function addCalendarDaysIso(isoDate: string, days: number): string {
+  const [y, m, d] = isoDate.split('-').map(Number)
+  const utc = new Date(Date.UTC(y!, m! - 1, d! + days))
+  return utc.toISOString().slice(0, 10)
+}
+
+/** True when the due instant falls on or after today's CDMX calendar date. */
+export function isDueOnOrAfterTodayCdmx(
+  dueAt: string,
+  todayIso = todayInMexicoCity()
+): boolean {
+  const due = dateInMexicoCity(dueAt)
+  return due !== null && due >= todayIso
+}
+
+/**
+ * True when due is on/after today CDMX and on/before today+horizonDays (inclusive).
+ * Used for «Plazos en los próximos 15 días».
+ */
+export function isDueWithinNextDaysCdmx(
+  dueAt: string,
+  horizonDays: number,
+  todayIso = todayInMexicoCity()
+): boolean {
+  const due = dateInMexicoCity(dueAt)
+  if (due === null || due < todayIso) return false
+  const endIso = addCalendarDaysIso(todayIso, horizonDays)
+  return due <= endIso
+}
+
 export function isWeekendIso(isoDate: string): boolean {
   const [y, m, d] = isoDate.split('-').map(Number)
   const utc = new Date(Date.UTC(y, m - 1, d))

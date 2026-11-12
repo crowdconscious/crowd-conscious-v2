@@ -35,8 +35,6 @@ export const TOKEN_LIMITS = {
 
 // --- Clients ---
 export function getAnthropicClient(): Anthropic {
-  console.log('[AGENT] ANTHROPIC_API_KEY exists:', !!process.env.ANTHROPIC_API_KEY);
-  console.log('[AGENT] Key starts with:', process.env.ANTHROPIC_API_KEY?.substring(0, 10) ?? 'N/A');
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     throw new Error('ANTHROPIC_API_KEY is not set. Add it to Vercel environment variables.');
@@ -47,10 +45,9 @@ export function getAnthropicClient(): Anthropic {
 /**
  * Service-role client for agents. Prefer importing `createAdminClient` from
  * `@/lib/supabase-admin` directly in new code — this wrapper keeps existing
- * agent imports stable and adds a one-line diagnostic log.
+ * agent imports stable.
  */
 export function getSupabaseAdmin() {
-  console.log('[AGENT] SUPABASE_SERVICE_ROLE_KEY exists:', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
   return createAdminClient();
 }
 

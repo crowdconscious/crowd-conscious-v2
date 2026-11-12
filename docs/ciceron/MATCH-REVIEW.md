@@ -5,16 +5,18 @@ Status: **TEMPLATE** — fill after the CTO runs the classify/match backfill on 
 ## Commands (do not run against production without cost confirmation)
 
 ```bash
-# 1) Cost estimate only (note count + USD from measured ai_runs rates)
-npx tsx scripts/ciceron/backfill-classify-match.ts --dry-run
+# 1) Cost estimate only (measured per-note blend × 1.15 margin)
+# --since binds the cumulative US$60 window across resume runs
+npx tsx scripts/ciceron/backfill-classify-match.ts --dry-run --since=2026-11-12
 
 # 2) Embed watch profiles so vector_used can be true when both sides have vectors
 npx tsx scripts/ciceron/embed-watch-profiles.ts --dry-run
 npx tsx scripts/ciceron/embed-watch-profiles.ts
 
-# 3) Backfill classify+match oldest→newest
-# Hard US$60 code cap (edit COST_CAP_USD in _cost-cap.ts only if CTO approves)
-npx tsx scripts/ciceron/backfill-classify-match.ts
+# 3) Backfill classify+match oldest→newest (skips failed unless --retry-failed)
+# Live run may start when the full estimate exceeds US$60; each batch is projected
+# against remaining budget so the cumulative cap is not overshot.
+npx tsx scripts/ciceron/backfill-classify-match.ts --since=2026-11-12 --tag=pre-demo
 ```
 
 After backfill, populate each client section with the top matches (title, date, reason naming the concrete link, official link). **Flag any client with fewer than three matches** before the law-firm demo.

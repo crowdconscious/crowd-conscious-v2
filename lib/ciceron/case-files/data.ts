@@ -21,6 +21,7 @@ import type {
   OutlookCalendarEvent,
 } from '@/lib/ciceron/m365/types'
 import type { RoomSource } from '@/lib/ciceron/demo/data'
+import { isDueOnOrAfterTodayCdmx } from '@/lib/ciceron/dof/dates'
 
 function formatEsDate(iso: string | null | undefined): string {
   if (!iso) return '—'
@@ -163,11 +164,13 @@ export async function loadCaseList(
       .in('case_file_id', caseIds)
       .in('status', ['propuesto', 'confirmado'])
       .order('due_at', { ascending: true })
-    const deadlines = (Array.isArray(deadlinesRes.data) ? deadlinesRes.data : []) as Array<{
-      case_file_id: string
-      due_at: string
-      status: string
-    }>
+    const deadlines = (
+      (Array.isArray(deadlinesRes.data) ? deadlinesRes.data : []) as Array<{
+        case_file_id: string
+        due_at: string
+        status: string
+      }>
+    ).filter((d) => isDueOnOrAfterTodayCdmx(d.due_at))
 
     const cases: CaseListRow[] = rows.map((r) => {
       const matter = matters.find((m) => m.id === r.matter_id)
@@ -366,9 +369,12 @@ export async function loadCaseDetail(
       confirmed_at?: string | null
     }>
 
+    const upcomingDlRows = dlRows.filter(
+      (d) => d.status === 'descartado' || isDueOnOrAfterTodayCdmx(d.due_at)
+    )
     const deadlines: CaseDeadlineView[] =
-      dlRows.length > 0 && !dlMissing
-        ? dlRows.map((d) => ({
+      upcomingDlRows.length > 0 && !dlMissing
+        ? upcomingDlRows.map((d) => ({
             id: d.id,
             dueLabel: formatEsDate(d.due_at),
             dueAt: d.due_at,
@@ -380,7 +386,9 @@ export async function loadCaseDetail(
             urgency: urgencyFromDue(d.due_at),
             isSample: true,
           }))
-        : fixture?.deadlines ?? []
+        : !dlMissing && dlRows.length > 0
+          ? []
+          : fixture?.deadlines ?? []
 
     return {
       source: 'schema',
@@ -613,6 +621,7 @@ export async function loadOutlookCalendar(
     }))
 
     for (const d of confirmed) {
+      if (!isDueOnOrAfterTodayCdmx(d.due_at)) continue
       events.push({
         id: `dl-${d.id}`,
         title: `Plazo confirmado — ${(d.basis_text || 'plazo').slice(0, 80)}`,

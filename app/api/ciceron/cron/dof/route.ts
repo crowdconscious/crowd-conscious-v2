@@ -38,9 +38,17 @@ function authorize(req: NextRequest): boolean {
   return req.headers.get('authorization') === `Bearer ${secret}`
 }
 
-async function spendTodayUsd(): Promise<number> {
+type SpendLookup =
+  | { ok: true; spent: number }
+  | { ok: false; reason: 'spend_lookup_failed' }
+
+/** Fail closed: unknown spend is treated as over-cap so the cron skips. */
+async function spendTodayUsd(): Promise<SpendLookup> {
   const db = tryCreateCiceronAdminClient()
-  if (!db) return 0
+  if (!db) {
+    console.warn('[ciceron] dof spend lookup failed: no admin client')
+    return { ok: false, reason: 'spend_lookup_failed' }
+  }
   // Midnight America/Mexico_City (UTC−6 year-round) as UTC instant
   const day = todayInMexicoCity()
   const startIso = `${day}T06:00:00.000Z`
@@ -50,9 +58,19 @@ async function spendTodayUsd(): Promise<number> {
   })
   if (error) {
     console.warn('[ciceron] dof_spend_since failed', error.message)
-    return 0
+    return { ok: false, reason: 'spend_lookup_failed' }
   }
-  return Number(data) || 0
+  const spent = Number(data)
+  if (!Number.isFinite(spent) || spent < 0) {
+    console.warn('[ciceron] dof_spend_since returned non-finite value')
+    return { ok: false, reason: 'spend_lookup_failed' }
+  }
+  return { ok: true, spent }
+}
+
+function shouldSkipForSpend(lookup: SpendLookup, cap: number): boolean {
+  if (!lookup.ok) return true
+  return lookup.spent >= cap
 }
 
 /**
@@ -83,17 +101,20 @@ async function handle(req: NextRequest) {
     })
   }
 
-  const spent = await spendTodayUsd()
+  const spendLookup = await spendTodayUsd()
   const cap = dailyCapUsd()
-  if (spent >= cap) {
+  if (shouldSkipForSpend(spendLookup, cap)) {
+    const reason = spendLookup.ok ? 'daily_spend_cap' : spendLookup.reason
     console.info(
-      `[ciceron] dof cron skipped: daily spend ${spent.toFixed(4)} >= cap ${cap}`
+      spendLookup.ok
+        ? `[ciceron] dof cron skipped: daily spend ${spendLookup.spent.toFixed(4)} >= cap ${cap}`
+        : `[ciceron] dof cron skipped: ${reason}`
     )
     return NextResponse.json({
       ok: true,
       skipped: true,
-      reason: 'daily_spend_cap',
-      spentUsd: spent,
+      reason,
+      spentUsd: spendLookup.ok ? spendLookup.spent : null,
       capUsd: cap,
     })
   }
@@ -138,12 +159,12 @@ async function handle(req: NextRequest) {
 
   if (body.classifyMatchOnly || req.nextUrl.searchParams.get('classify') === '1') {
     const spentBefore = await spendTodayUsd()
-    if (spentBefore >= cap) {
+    if (shouldSkipForSpend(spentBefore, cap)) {
       return NextResponse.json({
         ok: true,
         skipped: true,
-        reason: 'daily_spend_cap',
-        spentUsd: spentBefore,
+        reason: spentBefore.ok ? 'daily_spend_cap' : spentBefore.reason,
+        spentUsd: spentBefore.ok ? spentBefore.spent : null,
         capUsd: cap,
         mode: 'classify_match',
       })
@@ -152,15 +173,18 @@ async function handle(req: NextRequest) {
       limit: 6,
       noteDate: targetDate,
       onlyPending: true,
+      // Daily cron may recover failed notes once; backfill defaults off.
+      retryFailed: true,
     })
     const spentAfter = await spendTodayUsd()
     return NextResponse.json({
       ok: true,
       mode: 'classify_match',
       ...stats,
-      spentUsd: spentAfter,
+      spentUsd: spentAfter.ok ? spentAfter.spent : null,
       capUsd: cap,
-      capped: spentAfter >= cap,
+      capped: shouldSkipForSpend(spentAfter, cap),
+      ...(spentAfter.ok ? {} : { spendLookup: spentAfter.reason }),
     })
   }
 
@@ -171,15 +195,17 @@ async function handle(req: NextRequest) {
   })
 
   const spentAfterIngest = await spendTodayUsd()
-  if (spentAfterIngest >= cap) {
+  if (shouldSkipForSpend(spentAfterIngest, cap)) {
     return NextResponse.json({
       ok: result.status !== 'failed',
       ...result,
       classifyMatch: null,
-      spentUsd: spentAfterIngest,
+      spentUsd: spentAfterIngest.ok ? spentAfterIngest.spent : null,
       capUsd: cap,
       capped: true,
-      classifySkipped: 'daily_spend_cap',
+      classifySkipped: spentAfterIngest.ok
+        ? 'daily_spend_cap'
+        : spentAfterIngest.reason,
     })
   }
 
@@ -202,21 +228,24 @@ async function handle(req: NextRequest) {
   let classifyMatch: Awaited<ReturnType<typeof runClassifyMatchBatch>> | null = null
   if (!result.requeue && result.status === 'succeeded' && process.env.ANTHROPIC_API_KEY) {
     const spentBeforeClassify = await spendTodayUsd()
-    if (spentBeforeClassify >= cap) {
+    if (shouldSkipForSpend(spentBeforeClassify, cap)) {
       return NextResponse.json({
         ok: true,
         ...result,
         classifyMatch: null,
-        spentUsd: spentBeforeClassify,
+        spentUsd: spentBeforeClassify.ok ? spentBeforeClassify.spent : null,
         capUsd: cap,
         capped: true,
-        classifySkipped: 'daily_spend_cap',
+        classifySkipped: spentBeforeClassify.ok
+          ? 'daily_spend_cap'
+          : spentBeforeClassify.reason,
       })
     }
     classifyMatch = await runClassifyMatchBatch({
       limit: 4,
       noteDate: result.targetDate,
       onlyPending: true,
+      retryFailed: true,
     })
   }
 
@@ -225,8 +254,9 @@ async function handle(req: NextRequest) {
     ok: result.status !== 'failed',
     ...result,
     classifyMatch,
-    spentUsd: spentFinal,
+    spentUsd: spentFinal.ok ? spentFinal.spent : null,
     capUsd: cap,
-    capped: spentFinal >= cap,
+    capped: shouldSkipForSpend(spentFinal, cap),
+    ...(spentFinal.ok ? {} : { spendLookup: spentFinal.reason }),
   })
 }

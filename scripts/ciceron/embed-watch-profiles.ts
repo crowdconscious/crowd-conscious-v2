@@ -40,7 +40,7 @@ async function loadRates(sb: any): Promise<AiRunRate[]> {
     purpose,
     avgCostUsd: costs.reduce((a, b) => a + b, 0) / costs.length,
     sampleSize: costs.length,
-  }))
+  })) satisfies AiRunRate[]
 }
 
 async function main() {
@@ -96,6 +96,7 @@ async function main() {
     estimateUsd,
     dryRun,
     label: 'embed-watch-profiles',
+    hard: true,
   })
 
   if (dryRun) {
