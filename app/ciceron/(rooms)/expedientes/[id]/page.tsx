@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { redirect, notFound } from 'next/navigation'
 import { DeadlineMarker } from '../../../_components/DeadlineMarker'
 import { MatterBreadcrumb } from '../../../_components/MatterBreadcrumb'
+import { MatterTopbarTitle } from '../../../_components/MatterChrome'
 import { CICERON_BASE } from '@/lib/ciceron/config'
 import { copy } from '@/lib/ciceron/copy/es-MX'
 import { loadCaseDetail } from '@/lib/ciceron/case-files/data'
@@ -25,6 +26,7 @@ export default async function CaseDetailPage({
 
   return (
     <div>
+      <MatterTopbarTitle title={detail.matterTitle} />
       <p style={{ marginBottom: 8 }}>
         <Link href="/ciceron/expedientes" className="cic-muted" style={{ fontSize: '0.9rem' }}>
           ← {copy.rooms.expedientes}

@@ -1704,3 +1704,48 @@ textarea.cic-input {
   border-left: 3px solid var(--cic-accent-mint);
   padding-left: 14px;
 }
+
+/* Phone / guided-story density (~390px demos) */
+@media (max-width: 430px) {
+  .cic-persona-bar {
+    padding: 8px 12px;
+    gap: 8px;
+  }
+  .cic-persona-bar-hint {
+    display: none;
+  }
+  .cic-guided-slim {
+    padding: 10px 12px;
+  }
+  .cic-guided-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .cic-guided-actions .cic-btn,
+  .cic-guided-actions .cic-btn-ghost {
+    width: 100%;
+    text-align: center;
+  }
+  .cic-topbar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .cic-topbar-matter {
+    order: 3;
+    flex: 1 1 100%;
+    font-size: 0.8rem;
+  }
+  .cic-cmd-btn {
+    display: none;
+  }
+  .cic-content {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  .cic-card summary h3 {
+    font-size: 1rem !important;
+  }
+  .cic-mobile-nav {
+    font-size: 0.72rem;
+  }
+}
