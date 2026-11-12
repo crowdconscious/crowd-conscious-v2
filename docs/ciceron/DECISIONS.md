@@ -207,10 +207,60 @@ Pending items need Francisco before (or as) the named prompt starts.
 
 ---
 
-## Pending
 
-### P7 — Accept root-layout analytics/JSON-LD leakage for hosted demo
-- **Needed by:** Prompt 2 acceptance wording.
+### 2026-11-12 — Matching quality / procurement lane (pre-demo Group C)
+- **Context:** Tender notices polluted client regulatory matches; relevance over-fired on shared authority; watch-profile vectors unused; `legal_edges` empty; SIDOF REF stubs as titles.
+- **Decision:**
+  1. Document types `licitacion` / `fallo` / `contratacion_publica` (+ existing `convocatoria`) are procurement. Matching skips them unless `watch_profiles.include_procurement` (DEFAULT false). When on, Monitor DOF shows a separate «Contratación pública» section (never mixed with regulatory).
+  2. `PROMPT_MATCH_V2` requires a concrete client↔note regulatory link in the reason; `match.ts` uses v2.
+  3. `PROMPT_CLASSIFY_V2` adds `display_title`; store on `classifications` (+ payload) and replace weak `dof_notes.title`.
+  4. Classification writes `legal_edges` for creates/amends/repeals (`creates` added to edge_type check).
+  5. Scripts: `embed-watch-profiles.ts`, `backfill-classify-match.ts` (oldest→newest, hard US$60 code cap — no CLI override), `export-labelled-set.ts`, `score-labelled-set.ts`. Template `docs/ciceron/MATCH-REVIEW.md` filled after CTO backfill — do not invent live matches.
+- **Consequences:** Migration `321`. Agents do not apply migrations or run backfill against production.
+
+---
+
+### 2026-11-12 — No Crowd Conscious analytics / JSON-LD on `/ciceron`
+- **Context:** Pending P7 asked whether to accept root-layout Analytics, SpeedInsights, ConversionCelebration, and Organization JSON-LD leaking onto the hosted Cicéron demo.
+- **Decision:** Reject leakage. `components/CivicRootChrome.tsx` (client) uses `usePathname()` and renders nothing under `/ciceron`. Root layout must not call `headers()` for this gate (would force the whole site dynamic and miss client navigations).
+- **Consequences:** Cicéron routes stay free of civic product telemetry and schema.org org markup. P7 closed.
+
+### 2026-11-12 — Brand board overrides light-theme / no-gradients note
+- **Context:** Cicerón.ai dark navy + mint board was already accepted for `/ciceron`.
+- **Decision:** Record explicitly in `.cursor/rules/ciceron.mdc` that the brand board overrides the earlier “light theme first, no gradients” experience note for this surface only.
+- **Consequences:** Agents keep the dark theme; do not “fix” it back to cream/light.
+
+### 2026-11-12 — Client alert v2 + four-eyes demo seed
+- **Context:** Guided story step 4 told the Socia to edit and approve, which four-eyes blocks when she authored the human draft.
+- **Decision:** `PROMPT_CLIENT_ALERT_V2` (firm voice, citations on factual sentences, mark passed dates, no commercial pitch). Seeded human draft authored by Asociado so Socia only approves. Migration `322` also makes `reset_demo_firm` reopen seeded review tasks and delete simulated deliveries.
+- **Consequences:** Four-eyes rule unchanged. Step 4 copy matches the seed.
+
+### 2026-11-12 — Freshness deadlines use fixed business-day offsets
+- **Context:** Uniform event-delta left sample deadlines overdue after re-dating.
+- **Decision:** `refresh_demo_dates` (migration `324`) still shifts events, then assigns sample deadlines to ~2 / 6 / 14 business days from today. None may be overdue after a freshness run. Court spelling «Décimo» fixed; extra sample events so at most one expediente is «Sin actuaciones».
+- **Consequences:** Verify script + unit tests lock the offsets.
+
+### 2026-11-12 — Daily DOF ingestion behind CICERON_INGESTION_ENABLED
+- **Context:** Need scheduled SIDOF runs without turning them on blindly.
+- **Decision:** Restore vercel.json cron slots for `/api/ciceron/cron/dof`. Route no-ops with HTTP 200 + logged skip when `CICERON_INGESTION_ENABLED` is unset/false. Daily spend cap via `CICERON_INGESTION_DAILY_CAP_USD` (default 25). Agents do not flip the Vercel env.
+- **Consequences:** CTO turns the flag on explicitly (steps in the cron route comment).
+
+### 2026-11-12 — Guided-story resume clears completion
+- **Context:** After finishing the six-step tour, «Reanudar recorrido» left `completed_at` set, so the finale panel stuck.
+- **Decision:** Migration `325` clears `completed_at` and resets steps only when the story was **finished**. Mid-tour dismiss keeps `completed_steps`. Finale UI exposes resume; the slim resume bar shows for dismissed or completed sessions.
+- **Consequences:** CTO applies `325` after `324`. Agents do not apply.
+
+### 2026-11-12 — CTO review hardening (PR #92 follow-up)
+- **Context:** Root `headers()` made the whole site dynamic; backfill estimate paged at 1000; `--confirm-over-cap` disabled the cap; admin switch could not return to admin.
+- **Decision:**
+  1. Civic chrome gated by client `usePathname()` (`CivicRootChrome`).
+  2. Backfill uses exact counts + paged fetch; live loop aborts at US$60; no CLI override.
+  3. Migration `326`: `switch_demo_persona` allows admin only when invite `default_persona` is admin; `dof_spend_since` aggregate for cron caps.
+- **Consequences:** Agents do not apply migrations or raise the code cap.
+
+---
+
+## Pending
 
 ### P8 — Counsel clearance for any future public case-file lookup
 - **Needed by:** before enabling `PublicLookupConnector` (still required; Prompt 6 keeps the stub).

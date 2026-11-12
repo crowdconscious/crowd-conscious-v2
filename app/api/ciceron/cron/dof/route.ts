@@ -7,14 +7,52 @@ import {
 import { runClassifyMatchBatch } from '@/lib/ciceron/dof/classify-match'
 import { todayInMexicoCity } from '@/lib/ciceron/dof/dates'
 import { backfillArchiveEmbeddings } from '@/lib/ciceron/m365/archive-embeddings'
+import { tryCreateCiceronAdminClient } from '@/lib/ciceron/db/admin'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
+
+/**
+ * Daily DOF ingest is gated by CICERON_INGESTION_ENABLED (default off).
+ * To turn on (CTO only — do not change Vercel env from this PR):
+ * 1. Vercel → Project → Settings → Environment Variables
+ * 2. Add CICERON_INGESTION_ENABLED=true (Production)
+ * 3. Optional: CICERON_INGESTION_DAILY_CAP_USD=25 (default 25)
+ * 4. Redeploy so cron picks up the env
+ * 5. Confirm vercel.json schedules for /api/ciceron/cron/dof are present
+ */
+function ingestionEnabled(): boolean {
+  const raw = process.env.CICERON_INGESTION_ENABLED?.trim().toLowerCase()
+  return raw === '1' || raw === 'true' || raw === 'yes'
+}
+
+function dailyCapUsd(): number {
+  const raw = process.env.CICERON_INGESTION_DAILY_CAP_USD?.trim()
+  const n = raw ? Number(raw) : 25
+  return Number.isFinite(n) && n > 0 ? n : 25
+}
 
 function authorize(req: NextRequest): boolean {
   const secret = process.env.CRON_SECRET
   if (!secret) return false
   return req.headers.get('authorization') === `Bearer ${secret}`
+}
+
+async function spendTodayUsd(): Promise<number> {
+  const db = tryCreateCiceronAdminClient()
+  if (!db) return 0
+  // Midnight America/Mexico_City (UTC−6 year-round) as UTC instant
+  const day = todayInMexicoCity()
+  const startIso = `${day}T06:00:00.000Z`
+  // Aggregate RPC (migration 326) — avoids a capped 5000-row select.
+  const { data, error } = await db.rpc('dof_spend_since', {
+    p_since: startIso,
+  })
+  if (error) {
+    console.warn('[ciceron] dof_spend_since failed', error.message)
+    return 0
+  }
+  return Number(data) || 0
 }
 
 /**
@@ -32,6 +70,32 @@ export async function POST(req: NextRequest) {
 async function handle(req: NextRequest) {
   if (!authorize(req)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  if (!ingestionEnabled()) {
+    console.info(
+      '[ciceron] dof cron skipped: CICERON_INGESTION_ENABLED is off (default)'
+    )
+    return NextResponse.json({
+      ok: true,
+      skipped: true,
+      reason: 'CICERON_INGESTION_ENABLED_off',
+    })
+  }
+
+  const spent = await spendTodayUsd()
+  const cap = dailyCapUsd()
+  if (spent >= cap) {
+    console.info(
+      `[ciceron] dof cron skipped: daily spend ${spent.toFixed(4)} >= cap ${cap}`
+    )
+    return NextResponse.json({
+      ok: true,
+      skipped: true,
+      reason: 'daily_spend_cap',
+      spentUsd: spent,
+      capUsd: cap,
+    })
   }
 
   let body: {
@@ -73,12 +137,31 @@ async function handle(req: NextRequest) {
   }
 
   if (body.classifyMatchOnly || req.nextUrl.searchParams.get('classify') === '1') {
+    const spentBefore = await spendTodayUsd()
+    if (spentBefore >= cap) {
+      return NextResponse.json({
+        ok: true,
+        skipped: true,
+        reason: 'daily_spend_cap',
+        spentUsd: spentBefore,
+        capUsd: cap,
+        mode: 'classify_match',
+      })
+    }
     const stats = await runClassifyMatchBatch({
       limit: 6,
       noteDate: targetDate,
       onlyPending: true,
     })
-    return NextResponse.json({ ok: true, mode: 'classify_match', ...stats })
+    const spentAfter = await spendTodayUsd()
+    return NextResponse.json({
+      ok: true,
+      mode: 'classify_match',
+      ...stats,
+      spentUsd: spentAfter,
+      capUsd: cap,
+      capped: spentAfter >= cap,
+    })
   }
 
   const result = await runDofIngestDay({
@@ -87,7 +170,19 @@ async function handle(req: NextRequest) {
     attempt: body.attempt ?? 1,
   })
 
-  // Re-enqueue remainder via fire-and-forget self-call when possible
+  const spentAfterIngest = await spendTodayUsd()
+  if (spentAfterIngest >= cap) {
+    return NextResponse.json({
+      ok: result.status !== 'failed',
+      ...result,
+      classifyMatch: null,
+      spentUsd: spentAfterIngest,
+      capUsd: cap,
+      capped: true,
+      classifySkipped: 'daily_spend_cap',
+    })
+  }
+
   if (result.requeue && process.env.VERCEL_URL && process.env.CRON_SECRET) {
     const url = `https://${process.env.VERCEL_URL}/api/ciceron/cron/dof`
     void fetch(url, {
@@ -104,9 +199,20 @@ async function handle(req: NextRequest) {
     }).catch((err) => console.warn('[ciceron] dof requeue failed', err))
   }
 
-  // After a finished ingest day, chain a classify/match batch for that date
   let classifyMatch: Awaited<ReturnType<typeof runClassifyMatchBatch>> | null = null
   if (!result.requeue && result.status === 'succeeded' && process.env.ANTHROPIC_API_KEY) {
+    const spentBeforeClassify = await spendTodayUsd()
+    if (spentBeforeClassify >= cap) {
+      return NextResponse.json({
+        ok: true,
+        ...result,
+        classifyMatch: null,
+        spentUsd: spentBeforeClassify,
+        capUsd: cap,
+        capped: true,
+        classifySkipped: 'daily_spend_cap',
+      })
+    }
     classifyMatch = await runClassifyMatchBatch({
       limit: 4,
       noteDate: result.targetDate,
@@ -114,9 +220,13 @@ async function handle(req: NextRequest) {
     })
   }
 
+  const spentFinal = await spendTodayUsd()
   return NextResponse.json({
     ok: result.status !== 'failed',
     ...result,
     classifyMatch,
+    spentUsd: spentFinal,
+    capUsd: cap,
+    capped: spentFinal >= cap,
   })
 }

@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { Analytics } from "@vercel/analytics/react";
-import { SpeedInsights } from "@vercel/speed-insights/next";
 import "../src/app/globals.css";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { SITE_URL } from "@/lib/seo/site";
-import { ConversionCelebration } from "@/components/anon/ConversionCelebration";
+import { CivicRootChrome } from "@/components/CivicRootChrome";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -173,17 +171,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white text-slate-900`}
       >
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(organizationJsonLd),
-          }}
-        />
         <LanguageProvider>
           {children}
-          <ConversionCelebration />
-          <Analytics />
-          <SpeedInsights />
+          <CivicRootChrome organizationJsonLd={organizationJsonLd} />
         </LanguageProvider>
       </body>
     </html>

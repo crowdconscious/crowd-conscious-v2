@@ -1,5 +1,6 @@
 /**
- * Prompt 9 RBAC/ABAC showcase helpers — call evaluate_access / try_access_demo RPCs.
+ * Prompt 9 access showcase helpers — call evaluate_access / try_access_demo RPCs.
+ * User-facing Spanish uses «permisos por rol» / «permisos por asunto» (not RBAC/ABAC).
  */
 
 import 'server-only'
@@ -51,7 +52,7 @@ export async function evaluateAccess(opts: {
         ok: false,
         policyId: 'rbac_role',
         policyReason:
-          'Solo socio, asociado o administrador puede aprobar una revisión (RBAC: rol).',
+          'Solo socio, asociado o administrador puede aprobar una revisión (permisos por rol).',
         model: 'rbac',
         actorRole: 'pasante',
       }
@@ -64,7 +65,7 @@ export async function evaluateAccess(opts: {
         ok: false,
         policyId: 'abac_conflict_wall',
         policyReason:
-          'Muro de conflicto: usted está asignado a un cliente en conflicto con este cliente (ABAC: atributo de conflicto).',
+          'Muro de conflicto: usted está asignado a un cliente en conflicto con este cliente (permisos por asunto).',
         model: 'abac',
       }
     }
@@ -73,7 +74,7 @@ export async function evaluateAccess(opts: {
         ok: false,
         policyId: 'abac_grant_expired',
         policyReason:
-          'El permiso temporal para este documento ya expiró (ABAC: concesión con vigencia).',
+          'El permiso temporal para este documento ya expiró (permisos por asunto: concesión con vigencia).',
         model: 'abac',
       }
     }
@@ -97,9 +98,10 @@ export async function evaluateAccess(opts: {
 }
 
 /**
- * Run the RBAC/ABAC showcase. Offline fixtures only when no DB client is configured.
- * When DB is configured and the RPC fails, returns an error state (not offline examples).
- * Passes the real session persona as p_caller for simulated-denial attribution.
+ * Run the access showcase (permisos por rol / por asunto). Offline fixtures only
+ * when no DB client is configured. When DB is configured and the RPC fails,
+ * returns an error state (not offline examples). Passes the real session persona
+ * as p_caller for simulated-denial attribution.
  */
 export async function tryAccessDemo(
   persona: DemoPersona,

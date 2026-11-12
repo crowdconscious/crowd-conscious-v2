@@ -21,7 +21,12 @@ function ResultCard({
       <strong>{ok ? copy.access.allowed : copy.access.denied}</strong>
       {model ? (
         <p className="cic-muted" style={{ margin: '6px 0 0', fontSize: '0.85rem' }}>
-          {copy.access.model}: {model.toUpperCase()}
+          {copy.access.model}:{' '}
+          {model === 'abac'
+            ? copy.access.modelAbac
+            : model === 'rbac'
+              ? copy.access.modelRbac
+              : model}
         </p>
       ) : null}
       {!ok ? (
@@ -88,7 +93,9 @@ function ScenarioResults({
         model={result.denied.model}
       />
       <p className="cic-muted" style={{ marginTop: 12, fontSize: '0.9rem' }}>
-        {result.explainer}
+        {result.explainer
+          .replace(/\bRBAC\b/gi, copy.access.modelRbac)
+          .replace(/\bABAC\b/gi, copy.access.modelAbac)}
       </p>
     </>
   )
@@ -107,7 +114,7 @@ export function AccessTryPanel() {
         <form action={action}>
           <input type="hidden" name="scenario" value="rbac" />
           <button type="submit" className="cic-btn" disabled={pending}>
-            {copy.access.tryIt} RBAC
+            {copy.access.tryRbac}
           </button>
         </form>
         {state?.scenario === 'rbac' ? <ScenarioResults result={state.result} /> : null}
@@ -121,7 +128,7 @@ export function AccessTryPanel() {
         <form action={action}>
           <input type="hidden" name="scenario" value="abac" />
           <button type="submit" className="cic-btn" disabled={pending}>
-            {copy.access.tryIt} ABAC
+            {copy.access.tryAbac}
           </button>
         </form>
         {state?.scenario === 'abac' ? <ScenarioResults result={state.result} /> : null}

@@ -56,8 +56,6 @@ export function EvidencePanel({
                     {item.n}
                   </span>
                   <div className="cic-evidence-meta">
-                    <div className="cic-evidence-title">{heading}</div>
-                    {sub ? <div className="cic-evidence-sub">{sub}</div> : null}
                     {item.href ? (
                       <a
                         className="cic-source"
@@ -66,13 +64,16 @@ export function EvidencePanel({
                         rel="noopener noreferrer"
                         title={copy.components.openSource}
                       >
-                        {copy.components.openSource}
+                        {item.authority || item.type} · {item.date !== '—' ? item.date : item.type}
                       </a>
                     ) : (
-                      <span className="cic-muted" style={{ fontSize: '0.8rem' }}>
-                        {item.type}
+                      <span className="cic-source" aria-hidden="true">
+                        {item.authority || item.type}
+                        {item.date !== '—' ? ` · ${item.date}` : ''}
                       </span>
                     )}
+                    <div className="cic-evidence-title">{heading}</div>
+                    {sub ? <div className="cic-evidence-sub">{sub}</div> : null}
                   </div>
                 </div>
                 <p className="cic-legal cic-evidence-excerpt">

@@ -3,7 +3,7 @@ import { tryCreateCiceronAdminClient } from '@/lib/ciceron/db/admin'
 import { CICERON_SEED } from '@/lib/ciceron/db/seed-ids'
 import { complete } from '@/lib/ciceron/gateway/complete'
 import {
-  PROMPT_MATCH_V1,
+  PROMPT_MATCH_V2,
   wrapUntrusted,
 } from '@/lib/ciceron/gateway/prompts'
 import {
@@ -11,6 +11,7 @@ import {
   type NoteScoreInput,
   type WatchProfileScoreInput,
 } from '@/lib/ciceron/dof/match-score'
+import { isProcurementDocumentType } from '@/lib/ciceron/taxonomy'
 
 export { scoreCandidates } from '@/lib/ciceron/dof/match-score'
 
@@ -128,11 +129,17 @@ async function loadDemoFirmProfiles(): Promise<WatchProfile[]> {
   const { data: profiles } = await db
     .from('watch_profiles')
     .select(
-      'id, client_id, subject_areas, authorities, keywords, norms_of_interest, description, embedding'
+      'id, client_id, subject_areas, authorities, keywords, norms_of_interest, description, embedding, include_procurement'
     )
     .in('client_id', clientIds)
     .eq('is_demo', true)
-  return (Array.isArray(profiles) ? profiles : []) as WatchProfile[]
+  return (Array.isArray(profiles) ? profiles : []).map((p) => {
+    const row = p as WatchProfile & { include_procurement?: boolean | null }
+    return {
+      ...row,
+      include_procurement: Boolean(row.include_procurement),
+    }
+  })
 }
 
 async function createTier0Alerts(opts: {
@@ -178,15 +185,20 @@ export async function matchDofNote(noteId: string): Promise<{
   }
 
   const profiles = await loadDemoFirmProfiles()
-  const candidates = scoreCandidates(note, profiles).slice(0, 4)
+  // Procurement notices are excluded from regulatory matching unless the
+  // profile explicitly opts in (include_procurement).
+  const eligibleProfiles = isProcurementDocumentType(note.document_type)
+    ? profiles.filter((p) => p.include_procurement)
+    : profiles
+  const candidates = scoreCandidates(note, eligibleProfiles).slice(0, 4)
   if (!candidates.length) {
     await db.from('dof_notes').update({ match_status: 'no_match' }).eq('id', noteId)
     return { ok: true, matches: 0, costUsd: 0 }
   }
 
   const promptVersionId = await resolvePromptVersionId(
-    PROMPT_MATCH_V1.purpose,
-    PROMPT_MATCH_V1.versionLabel
+    PROMPT_MATCH_V2.purpose,
+    PROMPT_MATCH_V2.versionLabel
   )
 
   let matchCount = 0
@@ -224,10 +236,10 @@ export async function matchDofNote(noteId: string): Promise<{
     ].join('\n')
 
     const result = await complete({
-      purpose: PROMPT_MATCH_V1.purpose,
+      purpose: PROMPT_MATCH_V2.purpose,
       tier: 'fast',
       promptVersionId,
-      system: PROMPT_MATCH_V1.system,
+      system: PROMPT_MATCH_V2.system,
       user,
       maxTokens: 700,
       firmId: CICERON_SEED.firmDemo,

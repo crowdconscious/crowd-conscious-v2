@@ -4,9 +4,7 @@ import {
   PROMPT_RESEARCH_ANSWER_V1,
   wrapUntrusted,
 } from '@/lib/ciceron/gateway/prompts'
-import {
-  corpusCoverageLine,
-} from '@/lib/ciceron/research/coverage'
+import { loadCorpusCoverageLine } from '@/lib/ciceron/research/coverage'
 import {
   retrieveForResearch,
   type RetrievalHit,
@@ -193,7 +191,7 @@ export async function answerResearchQuestion(opts: {
   const coverageNote =
     scope === 'firm'
       ? 'Corpus: Archivo del despacho (OneDrive / SharePoint simulado). Datos de demostración.'
-      : corpusCoverageLine('es')
+      : await loadCorpusCoverageLine('es')
   const sources: ResearchSource[] = retrieval.hits.map((h) => ({
     chunkId: h.chunkId,
     title: h.title,

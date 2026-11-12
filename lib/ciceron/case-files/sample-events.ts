@@ -37,7 +37,7 @@ export const SAMPLE_CASE_EVENTS: NormalisedCaseEvent[] = [
     captureKind: 'sample',
   },
   {
-    courtName: 'Juzgado Decimo de Distrito en Materia Administrativa',
+    courtName: 'Juzgado Décimo de Distrito en Materia Administrativa',
     fileNumber: 'DEMO-JDA-220/2026',
     eventType: 'notificacion_demanda',
     occurredAt: '2026-11-05T15:00:00.000Z',

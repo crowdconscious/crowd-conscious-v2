@@ -7,11 +7,13 @@ import { ConfirmDialog } from '../../../_components/ConfirmDialog'
 import { CICERON_BASE } from '@/lib/ciceron/config'
 import { copy } from '@/lib/ciceron/copy/es-MX'
 import { CICERON_SEED } from '@/lib/ciceron/db/seed-ids'
+import { todayInMexicoCity } from '@/lib/ciceron/dof/dates'
 import {
   decideReviewAction,
   reassignReviewAction,
   saveReviewEditAction,
 } from '@/lib/ciceron/review/actions'
+import { markPassedDatesInText } from '@/lib/ciceron/review/alert-dates'
 import { diffLines } from '@/lib/ciceron/review/diff'
 import type { ReviewTaskDetail } from '@/lib/ciceron/review/types'
 
@@ -29,7 +31,13 @@ export function ReviewWorkspace({
   neighborIds: { prev: string | null; next: string | null }
 }) {
   const router = useRouter()
-  const [body, setBody] = useState(detail.currentBody)
+  // Stored body is what Approve / Edit / four-eyes compare against.
+  // Past-date annotations are display-only so opening Edit without changes
+  // does not turn the Socia into a "corrector".
+  const storedBody = detail.currentBody
+  const annotatedBody = markPassedDatesInText(storedBody, todayInMexicoCity())
+  const hasPassedDateNotes = annotatedBody !== storedBody
+  const [body, setBody] = useState(storedBody)
   const [editing, setEditing] = useState(false)
   const [showDiff, setShowDiff] = useState(false)
   const [rejectOpen, setRejectOpen] = useState(false)
@@ -55,6 +63,7 @@ export function ReviewWorkspace({
         onApprove()
       } else if (e.key === 'e' || e.key === 'E') {
         e.preventDefault()
+        setBody(detail.currentBody)
         setEditing(true)
       } else if (e.key === 'r' || e.key === 'R') {
         e.preventDefault()
@@ -84,7 +93,7 @@ export function ReviewWorkspace({
   }
 
   function onApprove() {
-    if (editing && body !== detail.currentBody) {
+    if (editing && body !== storedBody) {
       run(() =>
         decideReviewAction({
           taskId: detail.id,
@@ -100,6 +109,11 @@ export function ReviewWorkspace({
         decision: 'approved',
       })
     )
+  }
+
+  function onStartEdit() {
+    setBody(storedBody)
+    setEditing(true)
   }
 
   function onSaveEdit() {
@@ -224,8 +238,15 @@ export function ReviewWorkspace({
               aria-label={copy.revision.draftPane}
             />
           ) : (
-            <article className="cic-legal cic-review-body">{body}</article>
+            <article className="cic-legal cic-review-body">{annotatedBody}</article>
           )}
+
+          {!editing && hasPassedDateNotes ? (
+            <p className="cic-muted" role="note" style={{ fontSize: '0.85rem', marginTop: 8 }}>
+              Las marcas «fecha vencida» son informativas al abrir el borrador; no forman
+              parte del texto almacenado ni de una corrección.
+            </p>
+          ) : null}
 
           <div className="cic-review-actions">
             <button
@@ -234,7 +255,7 @@ export function ReviewWorkspace({
               disabled={pending || detail.closed}
               onClick={onApprove}
             >
-              {editing && body !== detail.modelBody
+              {editing && body !== storedBody
                 ? copy.revision.approveEdits
                 : copy.revision.approve}
             </button>
@@ -242,7 +263,14 @@ export function ReviewWorkspace({
               type="button"
               className="cic-btn cic-btn-secondary"
               disabled={pending || detail.closed}
-              onClick={() => setEditing((v) => !v)}
+              onClick={() => {
+                if (editing) {
+                  setBody(storedBody)
+                  setEditing(false)
+                } else {
+                  onStartEdit()
+                }
+              }}
             >
               {editing ? copy.components.cancel : 'Editar'}
             </button>
@@ -288,6 +316,42 @@ export function ReviewWorkspace({
 
           <div className="cic-stack">
             <div>
+              <h3 className="cic-label">{copy.revision.citedPassages}</h3>
+              {detail.evidence.length === 0 ? (
+                <p className="cic-muted" style={{ margin: 0, fontSize: '0.9rem' }}>
+                  {copy.investigacion.evidenceEmpty}
+                </p>
+              ) : (
+                detail.evidence.map((ev) => (
+                  <div key={ev.id} className="cic-evidence-card">
+                    {ev.href ? (
+                      <a
+                        className="cic-source"
+                        href={ev.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {ev.authority}
+                        {ev.title ? ` · ${ev.title}` : ''}
+                      </a>
+                    ) : (
+                      <div className="cic-evidence-sub">{ev.authority}</div>
+                    )}
+                    <div className="cic-evidence-title" style={{ marginTop: 6 }}>
+                      {ev.title || ev.authority}
+                    </div>
+                    <p className="cic-legal cic-evidence-excerpt">
+                      <mark>{ev.passage}</mark>
+                    </p>
+                    <p className="cic-muted" style={{ fontSize: '0.8rem', margin: '8px 0 0' }}>
+                      {copy.revision.matchReason}: {ev.matchReason}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div>
               <h3 className="cic-label">{copy.revision.clientContext}</h3>
               <p className="cic-muted" style={{ margin: 0, fontSize: '0.9rem' }}>
                 {detail.clientContext}
@@ -295,38 +359,19 @@ export function ReviewWorkspace({
             </div>
 
             {detail.aiRun ? (
-              <div>
-                <h3 className="cic-label">{copy.revision.modelMeta}</h3>
-                <p className="cic-muted" style={{ margin: 0, fontSize: '0.85rem' }}>
+              <details className="cic-card" style={{ padding: '10px 12px' }}>
+                <summary className="cic-secondary-summary">
+                  {copy.revision.traceability}
+                </summary>
+                <p className="cic-muted" style={{ margin: '8px 0 0', fontSize: '0.85rem' }}>
                   {detail.aiRun.model} · {detail.aiRun.promptVersion}
                   <br />
                   {detail.aiRun.purpose}
+                  <br />
+                  {copy.revision.modelMeta}
                 </p>
-              </div>
+              </details>
             ) : null}
-
-            {detail.evidence.map((ev) => (
-              <div key={ev.id} className="cic-evidence-card">
-                <div className="cic-evidence-title">{ev.title || ev.authority}</div>
-                <div className="cic-evidence-sub">{ev.authority}</div>
-                <p className="cic-legal cic-evidence-excerpt">
-                  <mark>{ev.passage}</mark>
-                </p>
-                <p className="cic-muted" style={{ fontSize: '0.8rem', margin: '8px 0 0' }}>
-                  {copy.revision.matchReason}: {ev.matchReason}
-                </p>
-                {ev.href ? (
-                  <a
-                    className="cic-source"
-                    href={ev.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {copy.components.openSource}
-                  </a>
-                ) : null}
-              </div>
-            ))}
           </div>
         </aside>
       </div>

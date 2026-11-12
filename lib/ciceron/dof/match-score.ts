@@ -7,6 +7,8 @@ export type WatchProfileScoreInput = {
   norms_of_interest: string[]
   description: string | null
   embedding: number[] | null
+  /** When true, procurement notes may match this profile. Default false. */
+  include_procurement?: boolean
 }
 
 export type NoteScoreInput = {

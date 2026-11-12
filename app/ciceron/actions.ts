@@ -69,10 +69,11 @@ export async function guidedStoryAction(formData: FormData): Promise<void> {
   if (!session) redirect('/ciceron')
 
   const dismiss = formData.get('dismiss') === '1'
+  const resume = formData.get('resume') === '1'
   const stepRaw = Number(formData.get('step') ?? '1')
   const step = (Number.isFinite(stepRaw) ? stepRaw : 1) as GuidedStoryStep
 
-  await advanceGuidedStory(session, step, { dismiss })
+  await advanceGuidedStory(session, step, { dismiss, resume })
   revalidatePath('/ciceron', 'layout')
 
   if (dismiss) {

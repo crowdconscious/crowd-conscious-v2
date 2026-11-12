@@ -10,10 +10,45 @@ import {
   loadSavedViews,
   savedViewHref,
 } from '@/lib/ciceron/case-files/saved-views'
-import { loadMonitorMatches } from '@/lib/ciceron/demo/monitor-data'
+import {
+  loadMonitorMatches,
+  type MonitorItem,
+} from '@/lib/ciceron/demo/monitor-data'
 import { getCiceronDemoSession } from '@/lib/ciceron/demo/session'
 import { CICERON_SUBJECT_AREAS } from '@/lib/ciceron/taxonomy'
 import { CICERON_DOCUMENT_TYPES } from '@/lib/ciceron/taxonomy'
+
+function MatchDetailList({
+  items,
+  source,
+}: {
+  items: MonitorItem[]
+  source: 'schema' | 'fixture'
+}) {
+  return (
+    <>
+      {items.map((n) => (
+        <div key={n.id} style={{ marginBottom: 16 }}>
+          <DisclosureCard
+            title={n.title}
+            clientName={n.clientName}
+            reason={n.reason}
+            action={n.action}
+            passage={n.passage}
+            authority={n.authority}
+            type={n.type}
+            subjectArea={n.subjectAreas[0]}
+            date={n.date}
+            officialUrl={n.officialUrl}
+            review={n.review}
+            showReviewBadge={n.hasReviewTask}
+          />
+          {source === 'schema' ? <MatchActions matchId={n.matchId} /> : null}
+        </div>
+      ))}
+    </>
+  )
+}
 
 export default async function MonitorDofPage({
   searchParams,
@@ -40,6 +75,8 @@ export default async function MonitorDofPage({
     loadSavedViews(persona, 'monitor-dof'),
   ])
 
+  const regulatory = items.filter((i) => !i.isProcurement)
+  const procurement = items.filter((i) => i.isProcurement)
   const clients = [...new Map(items.map((i) => [i.clientId, i.clientName])).entries()]
 
   return (
@@ -125,46 +162,76 @@ export default async function MonitorDofPage({
         <p className="cic-muted">{copy.monitor.emptyFiltered}</p>
       ) : (
         <>
-          <section className="cic-section">
-            <DataTable
-              caption={copy.monitor.onlyMine}
-              columns={[
-                { key: 'date', header: copy.table.date, cell: (r) => r.date },
-                { key: 'authority', header: copy.table.authority, cell: (r) => r.authority },
-                { key: 'type', header: copy.table.type, cell: (r) => r.type },
-                { key: 'client', header: copy.table.client, cell: (r) => r.clientName },
-                {
-                  key: 'status',
-                  header: copy.table.status,
-                  cell: (r) => <ReviewBadge state={r.review} />,
-                },
-              ]}
-              rows={items}
-            />
+          <section className="cic-section" aria-labelledby="monitor-regulatory">
+            <h2 id="monitor-regulatory" className="cic-h2">
+              {copy.monitor.regulatorySection}
+            </h2>
+            {regulatory.length === 0 ? (
+              <p className="cic-muted">{copy.monitor.emptyFiltered}</p>
+            ) : (
+              <>
+                <DataTable
+                  caption={copy.monitor.onlyMine}
+                  columns={[
+                    { key: 'date', header: copy.table.date, cell: (r) => r.date },
+                    {
+                      key: 'authority',
+                      header: copy.table.authority,
+                      cell: (r) => r.authority,
+                    },
+                    { key: 'type', header: copy.table.type, cell: (r) => r.type },
+                    {
+                      key: 'client',
+                      header: copy.table.client,
+                      cell: (r) => r.clientName,
+                    },
+                    {
+                      key: 'status',
+                      header: copy.table.status,
+                      cell: (r) => <ReviewBadge state={r.review} />,
+                    },
+                  ]}
+                  rows={regulatory}
+                />
+                <MatchDetailList items={regulatory} source={source} />
+              </>
+            )}
           </section>
 
-          <section className="cic-section" aria-labelledby="monitor-detail">
-            <h2 id="monitor-detail" className="cic-h2">
-              Detalle
-            </h2>
-            {items.map((n) => (
-              <div key={n.id} style={{ marginBottom: 16 }}>
-                <DisclosureCard
-                  title={n.title}
-                  clientName={n.clientName}
-                  reason={n.reason}
-                  action={n.action}
-                  passage={n.passage}
-                  authority={n.authority}
-                  type={n.type}
-                  date={n.date}
-                  officialUrl={n.officialUrl}
-                  review={n.review}
-                />
-                {source === 'schema' ? <MatchActions matchId={n.matchId} /> : null}
-              </div>
-            ))}
-          </section>
+          {procurement.length > 0 ? (
+            <section className="cic-section" aria-labelledby="monitor-procurement">
+              <h2 id="monitor-procurement" className="cic-h2">
+                {copy.monitor.procurementSection}
+              </h2>
+              <p className="cic-muted" style={{ fontSize: '0.9rem' }}>
+                {copy.monitor.procurementLead}
+              </p>
+              <DataTable
+                caption={copy.monitor.procurementSection}
+                columns={[
+                  { key: 'date', header: copy.table.date, cell: (r) => r.date },
+                  {
+                    key: 'authority',
+                    header: copy.table.authority,
+                    cell: (r) => r.authority,
+                  },
+                  { key: 'type', header: copy.table.type, cell: (r) => r.type },
+                  {
+                    key: 'client',
+                    header: copy.table.client,
+                    cell: (r) => r.clientName,
+                  },
+                  {
+                    key: 'status',
+                    header: copy.table.status,
+                    cell: (r) => <ReviewBadge state={r.review} />,
+                  },
+                ]}
+                rows={procurement}
+              />
+              <MatchDetailList items={procurement} source={source} />
+            </section>
+          ) : null}
         </>
       )}
     </div>

@@ -14,7 +14,14 @@ function stepMeta(step: number): { title: string; body: string; cta: string; hre
   return { ...s, href: guidedStepHref(key) }
 }
 
-export function GuidedStoryPanel({ state }: { state: GuidedStoryState }) {
+/** Slim dismissible bar; resume lives in the shell when dismissed. */
+export function GuidedStoryPanel({
+  state,
+  compact = false,
+}: {
+  state: GuidedStoryState
+  compact?: boolean
+}) {
   if (state.dismissed) return null
 
   const isFinale = state.currentStep >= 7 || state.completed
@@ -22,46 +29,51 @@ export function GuidedStoryPanel({ state }: { state: GuidedStoryState }) {
   const nextStep = isFinale ? 7 : Math.min(state.currentStep + 1, 7)
 
   return (
-    <aside className="cic-guided" aria-labelledby="cic-guided-title">
+    <aside
+      className={compact ? 'cic-guided cic-guided-slim' : 'cic-guided cic-guided-slim'}
+      aria-labelledby="cic-guided-title"
+    >
       <div className="cic-guided-head">
         <h2 id="cic-guided-title" className="cic-guided-title">
           {copy.guidedStory.title}
+          {!isFinale ? (
+            <span className="cic-muted" style={{ fontWeight: 400, marginLeft: 8, fontSize: '0.85rem' }}>
+              {copy.guidedStory.progress} {Math.min(state.currentStep, 6)} {copy.guidedStory.of} 6
+            </span>
+          ) : null}
         </h2>
-        {!isFinale ? (
-          <p className="cic-muted" style={{ margin: 0, fontSize: '0.85rem' }}>
-            {copy.guidedStory.progress} {Math.min(state.currentStep, 6)} {copy.guidedStory.of}{' '}
-            6
-          </p>
-        ) : null}
+        <form action={guidedStoryAction}>
+          <input type="hidden" name="dismiss" value="1" />
+          <input type="hidden" name="step" value="1" />
+          <button type="submit" className="cic-linkish" aria-label={copy.guidedStory.dismiss}>
+            {copy.guidedStory.dismiss}
+          </button>
+        </form>
       </div>
 
       {isFinale ? (
         <div className="cic-guided-finale">
-          <h3 className="cic-h2" style={{ fontSize: '1.05rem', marginTop: 8 }}>
-            {copy.guidedStory.finale.title}
-          </h3>
-          <p className="cic-lead" style={{ marginTop: 4, fontSize: '0.95rem' }}>
-            {copy.guidedStory.finale.body}
+          <p style={{ margin: '6px 0' }}>
+            <strong>{copy.guidedStory.finale.title}.</strong> {copy.guidedStory.finale.body}
           </p>
-          <p>
-            <strong>{copy.guidedStory.finale.realLabel}:</strong>{' '}
-            {copy.guidedStory.finale.realItems}
-          </p>
-          <p>
-            <strong>{copy.guidedStory.finale.sampleLabel}:</strong>{' '}
-            {copy.guidedStory.finale.sampleItems}
-          </p>
-          <a className="cic-btn" href={copy.guidedStory.finale.ctaHref}>
-            {copy.guidedStory.finale.cta}
-          </a>
+          <div className="cic-guided-actions">
+            <form action={guidedStoryAction}>
+              <input type="hidden" name="resume" value="1" />
+              <input type="hidden" name="step" value="1" />
+              <input type="hidden" name="href" value="/ciceron/hoy" />
+              <button type="submit" className="cic-btn cic-btn-ghost">
+                {copy.guidedStory.resume}
+              </button>
+            </form>
+            <a className="cic-btn" href={copy.guidedStory.finale.ctaHref}>
+              {copy.guidedStory.finale.cta}
+            </a>
+          </div>
         </div>
       ) : current ? (
-        <>
-          <h3 className="cic-h2" style={{ fontSize: '1.05rem', marginTop: 8 }}>
-            {current.title}
-          </h3>
-          <p className="cic-lead" style={{ marginTop: 4, fontSize: '0.95rem' }}>
-            {current.body}
+        <div className="cic-guided-slim-body">
+          <p style={{ margin: 0, fontSize: '0.9rem' }}>
+            <strong>{current.title}.</strong> {current.body}
           </p>
           <div className="cic-guided-actions">
             <form action={guidedStoryAction}>
@@ -79,16 +91,33 @@ export function GuidedStoryPanel({ state }: { state: GuidedStoryState }) {
               {current.cta}
             </Link>
           </div>
-        </>
+        </div>
       ) : null}
+    </aside>
+  )
+}
 
-      <form action={guidedStoryAction} style={{ marginTop: 12 }}>
-        <input type="hidden" name="dismiss" value="1" />
+export function GuidedStoryResumeBar({
+  dismissed,
+  completed = false,
+  onResumeHref = '/ciceron/hoy',
+}: {
+  dismissed: boolean
+  /** Finished tours also need a visible resume path. */
+  completed?: boolean
+  onResumeHref?: string
+}) {
+  if (!dismissed && !completed) return null
+  return (
+    <div className="cic-guided-resume" role="status">
+      <form action={guidedStoryAction}>
+        <input type="hidden" name="resume" value="1" />
         <input type="hidden" name="step" value="1" />
+        <input type="hidden" name="href" value={onResumeHref} />
         <button type="submit" className="cic-linkish">
-          {copy.guidedStory.dismiss}
+          {copy.guidedStory.resume}
         </button>
       </form>
-    </aside>
+    </div>
   )
 }

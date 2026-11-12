@@ -107,13 +107,18 @@ export function offlinePersonaById(id: string): DemoPersona | null {
   return OFFLINE.find((p) => p.id === id) ?? null
 }
 
-/** Persona switcher: Socia, Asociado, Pasante for the demo firm. */
-export function offlineSwitchablePersonas(firmId: string): DemoPersona[] {
-  const preferred = ['socio', 'asociado', 'pasante'] as const
+/** Persona switcher roles. Admin only when the opening invite was an admin mint. */
+export function offlineSwitchablePersonas(
+  firmId: string,
+  opts?: { includeAdmin?: boolean }
+): DemoPersona[] {
+  const preferred: CiceronMembershipRole[] = opts?.includeAdmin
+    ? ['socio', 'asociado', 'pasante', 'admin']
+    : ['socio', 'asociado', 'pasante']
   const byRole = new Map<string, DemoPersona>()
   for (const p of OFFLINE) {
     if (p.firmId !== firmId) continue
-    if (!preferred.includes(p.role as (typeof preferred)[number])) continue
+    if (!preferred.includes(p.role)) continue
     if (!byRole.has(p.role) || p.accessModel === 'rbac') {
       byRole.set(p.role, p)
     }

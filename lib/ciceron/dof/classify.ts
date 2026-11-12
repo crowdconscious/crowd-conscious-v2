@@ -2,9 +2,10 @@ import { z } from 'zod'
 import { tryCreateCiceronAdminClient } from '@/lib/ciceron/db/admin'
 import { complete } from '@/lib/ciceron/gateway/complete'
 import {
-  PROMPT_CLASSIFY_V1,
+  PROMPT_CLASSIFY_V2,
   wrapUntrusted,
 } from '@/lib/ciceron/gateway/prompts'
+import { isWeakDofTitle } from '@/lib/ciceron/dof/display-title'
 import {
   CICERON_DOCUMENT_TYPES,
   CICERON_SUBJECT_AREAS,
@@ -28,12 +29,14 @@ const classificationSchema = z.object({
     )
     .default([]),
   summary: z.string(),
+  display_title: z.string().optional(),
   confidence: z.number().min(0).max(1).optional(),
 })
 
 export type ClassificationResult = z.infer<typeof classificationSchema> & {
   document_type: CiceronDocumentType
   subject_areas: CiceronSubjectArea[]
+  display_title?: string
 }
 
 function parseJsonObject(text: string): unknown {
@@ -59,11 +62,13 @@ function normalizeClassification(
   if (!(CICERON_DOCUMENT_TYPES as readonly string[]).includes(document_type)) {
     document_type = inferDocumentTypeFromTitle(title)
   }
+  const display_title = (parsed.display_title ?? '').trim() || undefined
   return {
     ...parsed,
     subject_areas: areas.length ? areas : ['otros'],
     document_type,
     summary: parsed.summary.trim(),
+    display_title,
     confidence: parsed.confidence ?? 0.5,
   }
 }
@@ -85,7 +90,7 @@ async function loadNoteText(noteId: string): Promise<{
   authority: string | null
   text: string
   noteCode: string
-  firmId: string | null
+  documentId: string | null
 } | null> {
   const db = tryCreateCiceronAdminClient()
   if (!db) return null
@@ -134,7 +139,89 @@ async function loadNoteText(noteId: string): Promise<{
     authority: note.authority,
     text,
     noteCode: note.note_code,
-    firmId: null,
+    documentId: note.document_id,
+  }
+}
+
+async function ensureEntityId(
+  db: NonNullable<ReturnType<typeof tryCreateCiceronAdminClient>>,
+  opts: {
+    kind: string
+    label: string
+    externalRef?: string | null
+    metadata?: Record<string, unknown>
+  }
+): Promise<string | null> {
+  const { data: existing } = await db
+    .from('legal_entities')
+    .select('id')
+    .eq('kind', opts.kind)
+    .eq('label', opts.label.slice(0, 500))
+    .limit(1)
+  if (Array.isArray(existing) && existing[0]) {
+    return (existing[0] as { id: string }).id
+  }
+  const { data: inserted } = await db
+    .from('legal_entities')
+    .insert({
+      kind: opts.kind,
+      label: opts.label.slice(0, 500),
+      external_ref: opts.externalRef ?? null,
+      metadata: opts.metadata ?? {},
+    })
+    .select('id')
+    .limit(1)
+  return Array.isArray(inserted) && inserted[0]
+    ? (inserted[0] as { id: string }).id
+    : null
+}
+
+async function writeLegalEdges(opts: {
+  noteId: string
+  noteCode: string
+  documentId: string | null
+  norms: { label: string; action: 'creates' | 'amends' | 'repeals' | 'cites' }[]
+}) {
+  const db = tryCreateCiceronAdminClient()
+  if (!db) return
+  const sourceId = await ensureEntityId(db, {
+    kind: 'norm',
+    label: `DOF ${opts.noteCode}`,
+    externalRef: opts.noteCode,
+    metadata: { source: 'dof_note', note_id: opts.noteId },
+  })
+  if (!sourceId) return
+
+  for (const norm of opts.norms.slice(0, 12)) {
+    // Always upsert the norm entity (including cites); edges only for graph-changing actions.
+    const targetId = await ensureEntityId(db, {
+      kind: 'norm',
+      label: norm.label,
+      metadata: { source: 'dof_classify', note_id: opts.noteId, action: norm.action },
+    })
+    if (!targetId || targetId === sourceId) continue
+    if (
+      norm.action !== 'creates' &&
+      norm.action !== 'amends' &&
+      norm.action !== 'repeals'
+    ) {
+      continue
+    }
+    const edgeType = norm.action
+    const { data: existingEdge } = await db
+      .from('legal_edges')
+      .select('id')
+      .eq('from_id', sourceId)
+      .eq('to_id', targetId)
+      .eq('edge_type', edgeType)
+      .limit(1)
+    if (Array.isArray(existingEdge) && existingEdge[0]) continue
+    await db.from('legal_edges').insert({
+      from_id: sourceId,
+      to_id: targetId,
+      edge_type: edgeType,
+      source_document_id: opts.documentId,
+    })
   }
 }
 
@@ -157,8 +244,8 @@ export async function classifyDofNote(noteId: string): Promise<{
   }
 
   const promptVersionId = await resolvePromptVersionId(
-    PROMPT_CLASSIFY_V1.purpose,
-    PROMPT_CLASSIFY_V1.versionLabel
+    PROMPT_CLASSIFY_V2.purpose,
+    PROMPT_CLASSIFY_V2.versionLabel
   )
 
   const user = [
@@ -170,12 +257,12 @@ export async function classifyDofNote(noteId: string): Promise<{
   ].join('\n')
 
   const result = await complete({
-    purpose: PROMPT_CLASSIFY_V1.purpose,
+    purpose: PROMPT_CLASSIFY_V2.purpose,
     tier: 'fast',
     promptVersionId,
-    system: PROMPT_CLASSIFY_V1.system,
+    system: PROMPT_CLASSIFY_V2.system,
     user,
-    maxTokens: 1200,
+    maxTokens: 1400,
   })
 
   if (!result.ok) {
@@ -199,25 +286,19 @@ export async function classifyDofNote(noteId: string): Promise<{
     return { ok: false, error: message }
   }
 
-  // legal_entities (best-effort). Edges need distinct endpoints; store action in metadata.
-  for (const norm of classification.norms.slice(0, 12)) {
-    const label = norm.label.slice(0, 500)
-    const { data: entities } = await db
-      .from('legal_entities')
-      .select('id')
-      .eq('kind', 'norm')
-      .eq('label', label)
-      .limit(1)
-    if (!(Array.isArray(entities) && entities[0])) {
-      await db.from('legal_entities').insert({
-        kind: 'norm',
-        label,
-        metadata: { source: 'dof_classify', note_id: noteId, action: norm.action },
-      })
-    }
-  }
+  await writeLegalEdges({
+    noteId,
+    noteCode: loaded.noteCode,
+    documentId: loaded.documentId,
+    norms: classification.norms,
+  })
 
-  // Upsert note-level classification (chunk_id null)
+  const displayTitle =
+    classification.display_title?.trim() ||
+    (isWeakDofTitle(loaded.title)
+      ? classification.summary.split(/(?<=\.)\s+/)[0]?.slice(0, 160)
+      : undefined)
+
   const { data: existing } = await db
     .from('classifications')
     .select('id')
@@ -225,7 +306,12 @@ export async function classifyDofNote(noteId: string): Promise<{
     .is('chunk_id', null)
     .limit(1)
 
-  const row = {
+  const payload = {
+    ...classification,
+    display_title: displayTitle ?? classification.display_title ?? null,
+  }
+
+  const row: Record<string, unknown> = {
     dof_note_id: noteId,
     chunk_id: null,
     labels: classification.subject_areas,
@@ -235,10 +321,12 @@ export async function classifyDofNote(noteId: string): Promise<{
     summary: classification.summary,
     entry_into_force: classification.entry_into_force || null,
     compliance_deadlines: classification.compliance_deadlines,
-    payload: classification,
+    payload,
     prompt_version_id: promptVersionId,
     ai_run_id: result.aiRunId,
   }
+  // display_title column arrives with migration 321 — also keep in payload
+  if (displayTitle) row.display_title = displayTitle
 
   if (Array.isArray(existing) && existing[0]) {
     await db
@@ -249,14 +337,16 @@ export async function classifyDofNote(noteId: string): Promise<{
     await db.from('classifications').insert(row)
   }
 
-  await db
-    .from('dof_notes')
-    .update({
-      classify_status: 'classified',
-      authority: classification.authority ?? loaded.authority,
-      last_error: null,
-    })
-    .eq('id', noteId)
+  const noteUpdate: Record<string, unknown> = {
+    classify_status: 'classified',
+    authority: classification.authority ?? loaded.authority,
+    last_error: null,
+  }
+  if (displayTitle && isWeakDofTitle(loaded.title)) {
+    noteUpdate.title = displayTitle
+  }
+
+  await db.from('dof_notes').update(noteUpdate).eq('id', noteId)
 
   return { ok: true, classification, costUsd: result.costEstimateUsd }
 }

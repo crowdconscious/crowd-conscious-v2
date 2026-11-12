@@ -4,10 +4,22 @@
  * Prints the plaintext code ONCE to stdout. Only the v2 hash is stored.
  * Never commit the printed code. No admin (or other) invites in public SQL.
  *
- * Usage:
- *   npx tsx scripts/ciceron/create-invite.ts --persona=admin --label="Ops admin"
- *   npx tsx scripts/ciceron/create-invite.ts --persona=socio --label="Prospect Acme" --max-uses=5 --expires-days=30
- *   npx tsx scripts/ciceron/create-invite.ts --persona-id=<uuid> --firm=<uuid> --label="Custom"
+ * Usage (placeholder values only — do not paste real codes or peppers):
+ *   npx tsx scripts/ciceron/create-invite.ts \
+ *     --persona=socio \
+ *     --label="Prospect Example LLP" \
+ *     --max-uses=5 \
+ *     --expires-days=30
+ *
+ *   npx tsx scripts/ciceron/create-invite.ts \
+ *     --persona-id=<uuid> \
+ *     --firm=<uuid> \
+ *     --label="Custom prospect"
+ *
+ * --persona is REQUIRED (socio|asociado|pasante|admin|asociado2|abac)
+ *   unless --persona-id is provided. There is no silent admin default.
+ * --max-uses: positive integer, max 100 (default 50)
+ * --expires-days: positive number, max 90 (default 90)
  *
  * Requires:
  *   NEXT_PUBLIC_SUPABASE_URL
@@ -37,31 +49,35 @@ function arg(name: string): string | null {
   return hit ? hit.slice(name.length + 3) : null
 }
 
+function parsePositiveInt(raw: string, label: string): number {
+  if (!/^\d+$/.test(raw.trim())) {
+    console.error(`${label} must be a positive integer (no decimals)`)
+    process.exit(1)
+  }
+  const n = Number(raw)
+  if (!Number.isInteger(n) || n < 1) {
+    console.error(`${label} must be a positive integer`)
+    process.exit(1)
+  }
+  return n
+}
+
 async function main() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()
-  if (!url || !key) {
-    console.error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')
-    process.exit(1)
-  }
-  if (!process.env.CICERON_INVITE_PEPPER_V2?.trim()) {
-    console.error('Missing CICERON_INVITE_PEPPER_V2 (required for runtime invites)')
-    process.exit(1)
-  }
-
+  // Validate CLI args before env/secrets so operators get clear errors in dry checks.
   const label = arg('label')
-  if (!label || label.length < 1 || label.length > 200) {
-    console.error('Required: --label="Prospect label" (1–200 chars)')
-    process.exit(1)
-  }
-
-  const firmId = arg('firm') === 'demo' || !arg('firm') ? DEMO_FIRM : arg('firm')!
   const personaRole = arg('persona')
   const personaIdArg = arg('persona-id')
+
+  if (!personaRole && !personaIdArg) {
+    console.error(
+      'Required: --persona=socio|asociado|pasante|admin|asociado2|abac (or --persona-id=<uuid>). No default.'
+    )
+    process.exit(1)
+  }
+
   const personaId =
     personaIdArg ??
-    (personaRole ? PERSONA_BY_ROLE[personaRole] : undefined) ??
-    PERSONA_BY_ROLE.admin
+    (personaRole ? PERSONA_BY_ROLE[personaRole] : undefined)
 
   if (!personaId) {
     console.error(
@@ -70,17 +86,43 @@ async function main() {
     process.exit(1)
   }
 
+  if (!label || label.length < 1 || label.length > 200) {
+    console.error('Required: --label="Prospect label" (1–200 chars)')
+    process.exit(1)
+  }
+
   const maxUsesRaw = arg('max-uses')
-  const maxUses = maxUsesRaw ? Number(maxUsesRaw) : 50
-  if (!Number.isFinite(maxUses) || maxUses < 1) {
-    console.error('--max-uses must be a positive integer')
+  const maxUses = maxUsesRaw ? parsePositiveInt(maxUsesRaw, '--max-uses') : 50
+  if (maxUses > 100) {
+    console.error('--max-uses cannot exceed 100')
     process.exit(1)
   }
 
   const expiresDaysRaw = arg('expires-days')
-  const expiresDays = expiresDaysRaw ? Number(expiresDaysRaw) : 90
-  if (!Number.isFinite(expiresDays) || expiresDays < 1) {
-    console.error('--expires-days must be a positive number')
+  let expiresDays = 90
+  if (expiresDaysRaw) {
+    const n = Number(expiresDaysRaw)
+    if (!Number.isFinite(n) || n < 1) {
+      console.error('--expires-days must be a positive number')
+      process.exit(1)
+    }
+    expiresDays = n
+  }
+  if (expiresDays > 90) {
+    console.error('--expires-days cannot exceed 90')
+    process.exit(1)
+  }
+
+  const firmId = arg('firm') === 'demo' || !arg('firm') ? DEMO_FIRM : arg('firm')!
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()
+  if (!url || !key) {
+    console.error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')
+    process.exit(1)
+  }
+  if (!process.env.CICERON_INVITE_PEPPER_V2?.trim()) {
+    console.error('Missing CICERON_INVITE_PEPPER_V2 (required for runtime invites)')
     process.exit(1)
   }
 

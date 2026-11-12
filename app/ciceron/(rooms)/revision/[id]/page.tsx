@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { ClientTag } from '../../../_components/ClientTag'
+import { MatterTopbarTitle } from '../../../_components/MatterChrome'
 import { CICERON_BASE } from '@/lib/ciceron/config'
 import { copy } from '@/lib/ciceron/copy/es-MX'
 import { getCiceronDemoSession } from '@/lib/ciceron/demo/session'
@@ -32,6 +33,7 @@ export default async function RevisionTaskPage({
 
   return (
     <div>
+      <MatterTopbarTitle title={detail.matterTitle} />
       <p className="cic-muted" style={{ fontSize: '0.85rem', marginBottom: 8 }}>
         <Link href={`${CICERON_BASE}/revision`}>{copy.revision.title}</Link>
         {' / '}

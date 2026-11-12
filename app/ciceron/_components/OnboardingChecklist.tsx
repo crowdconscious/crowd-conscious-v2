@@ -24,18 +24,38 @@ export function OnboardingChecklist({ state }: { state: OnboardingState }) {
   ]
 
   return (
-    <section className="cic-section" aria-labelledby="hoy-onboarding">
-      <h2 id="hoy-onboarding" className="cic-h2">
-        {copy.engagement.onboardingTitle}
-      </h2>
-      <p className="cic-muted" style={{ marginTop: 0 }}>
+    <details className="cic-section cic-secondary-panel">
+      <summary className="cic-secondary-summary">
+        <span className="cic-h2" style={{ fontSize: '1rem', margin: 0 }}>
+          {copy.engagement.onboardingTitle}
+        </span>
+      </summary>
+      <p className="cic-muted" style={{ marginTop: 8 }}>
         {copy.engagement.onboardingLead}
       </p>
       <ol className="cic-onboarding-list">
         {steps.map((s) => (
           <li key={s.href} data-done={s.done ? 'true' : 'false'}>
-            <span className="cic-onboarding-mark" aria-hidden>
-              {s.done ? '[hecho]' : '[pendiente]'}
+            <span
+              className={s.done ? 'cic-onboarding-mark is-done' : 'cic-onboarding-mark is-pending'}
+              aria-label={s.done ? copy.engagement.statusDone : copy.engagement.statusPending}
+            >
+              {s.done ? (
+                <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden>
+                  <path
+                    d="M2.5 7.2 5.4 10l6-7"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              ) : (
+                <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden>
+                  <circle cx="7" cy="7" r="5.2" fill="none" stroke="currentColor" strokeWidth="1.5" />
+                </svg>
+              )}
             </span>
             {s.done ? (
               <span>{s.label}</span>
@@ -45,6 +65,6 @@ export function OnboardingChecklist({ state }: { state: OnboardingState }) {
           </li>
         ))}
       </ol>
-    </section>
+    </details>
   )
 }

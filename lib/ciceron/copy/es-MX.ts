@@ -57,7 +57,7 @@ export const copy = {
       },
       4: {
         title: 'Revisión como Socia',
-        body: 'Cambie a Socia, edite una frase, apruebe y vea el mensaje exacto y la entrada de auditoría.',
+        body: 'Cambie a Socia. El Asociado ya editó el borrador; usted aprueba, ve el mensaje exacto y la entrada de auditoría.',
         cta: 'Abrir Revisión',
       },
       5: {
@@ -73,7 +73,7 @@ export const copy = {
     },
     finale: {
       title: 'Qué fue real y qué fue muestra',
-      body: 'Real: notas del Diario Oficial del corpus ingerido. Muestra: despacho, clientes, expedientes y plazos. Solicite un piloto para su despacho.',
+      body: 'Real: notas del Diario Oficial del corpus incorporado. Muestra: despacho, clientes, expedientes y plazos. Solicite un piloto para su despacho.',
       realLabel: 'Datos reales',
       sampleLabel: 'Datos de demostración',
       realItems: 'Notas DOF del corpus; citas verificadas a esos textos.',
@@ -84,20 +84,24 @@ export const copy = {
   },
 
   access: {
-    title: 'Control de acceso: RBAC y ABAC',
-    lead: 'Compare dos modelos. Uno decide por rol; el otro por atributos (asunto, conflicto, sensibilidad, vigencia).',
-    rbacTitle: 'RBAC — por rol',
+    title: 'Control de acceso: permisos por rol y por asunto',
+    lead: 'Compare dos modelos. Uno decide por rol; el otro por atributos del asunto (asignación, conflicto, sensibilidad, vigencia).',
+    rbacTitle: 'Permisos por rol',
     rbacBody:
       'Socia Demo Rivera: el acceso a aprobar revisiones y confirmar plazos viene de su rol de socia.',
-    abacTitle: 'ABAC — por atributos',
+    abacTitle: 'Permisos por asunto',
     abacBody:
       'Asociada Atributos Vega: el acceso depende de asignación al asunto, muros de conflicto, sensibilidad del documento y concesiones con vigencia.',
     tryIt: 'Probar',
+    tryRbac: 'Probar permisos por rol',
+    tryAbac: 'Probar permisos por asunto',
     allowed: 'Permitido',
     denied: 'Denegado',
     policy: 'Regla',
     reason: 'Motivo',
     model: 'Modelo',
+    modelRbac: 'Permisos por rol',
+    modelAbac: 'Permisos por asunto',
     rpcError: 'No se pudo evaluar el acceso en este momento. Intente de nuevo.',
   },
 
@@ -128,11 +132,11 @@ export const copy = {
     sourcesBody:
       'Diario Oficial de la Federación vía SIDOF (JSON). No se consultan portales del Poder Judicial de forma automatizada.',
     sinceTitle: 'Desde cuándo',
-    sinceBody: 'Corpus de demostración con ediciones DOF ingeridas en el periodo documentado abajo.',
+    sinceBody: 'Corpus de demostración con ediciones del Diario Oficial incorporadas en el periodo documentado abajo.',
     lastUpdateTitle: 'Última actualización',
     lastUpdateFallback: 'Consulte el administrador de Fuentes para el estado del conector.',
     honesty:
-      'Sin scrapeo programado. La cobertura es la del corpus ya ingerido; no implica vigilancia diaria automática.',
+      'Sin actualización diaria automática. La cobertura es la del corpus ya incorporado; no implica vigilancia diaria.',
   },
 
   adminVentas: {
@@ -193,21 +197,23 @@ export const copy = {
   empty: {
     title: 'Sin elementos',
     hoyNone:
-      'Hoy no hay novedades que afecten a sus clientes. Se revisaron las notas del Diario Oficial disponibles en el corpus de demostración.',
+      'No hay novedades que afecten a sus clientes en la última edición procesada. Se revisaron las notas del Diario Oficial disponibles en el corpus de demostración.',
     generic: 'No hay información que mostrar en este momento.',
   },
 
   hoy: {
     title: 'Hoy',
     lead: 'Lo publicado que afecta a sus clientes, revisiones pendientes y plazos próximos.',
-    matches: 'Afectaciones de hoy',
+    matches: 'Clientes afectados',
     reviews: 'Revisiones a su cargo',
     deadlines: 'Plazos en los próximos 15 días',
-    unopened: 'Pendientes de ayer sin abrir',
+    unopened: 'Pendientes de ediciones anteriores sin abrir',
     emptyToday:
-      'Hoy no hay novedades que afecten a sus clientes. Se revisaron las notas clasificadas del corpus.',
+      'No hay novedades que afecten a sus clientes en la última edición procesada. Se revisaron las notas clasificadas del corpus.',
     reviewedCount: 'Notas clasificadas en el corpus',
     outlookCard: 'Conecte su Outlook',
+    lastEdition: 'Última edición procesada',
+    secondaryColumn: 'Herramientas y seguimiento',
   },
 
   monitor: {
@@ -229,6 +235,10 @@ export const copy = {
     emptyFiltered: 'No hay coincidencias con estos filtros.',
     sourceSchema: 'Datos del corpus DOF',
     sourceFixture: 'Vista de demostración (sin coincidencias en base aún)',
+    regulatorySection: 'Coincidencias regulatorias',
+    procurementSection: 'Contratación pública',
+    procurementLead:
+      'Licitaciones, convocatorias y fallos. Solo aparecen cuando el perfil del cliente tiene vigilancia de contratación pública activada.',
   },
 
   expedientes: {
@@ -307,6 +317,7 @@ export const copy = {
     lead: 'Respuestas fundadas en el corpus, con citas verificadas.',
     ask: 'Formule su pregunta',
     askPlaceholder: '¿Qué dispone el acuerdo respecto a…?',
+    suggested: 'Preguntas sugeridas (validadas sobre el corpus de demostración)',
     coverage: 'Corpus actual: DOF de demostración (cobertura limitada).',
     stubAnswer:
       'La investigación con citas verificadas se habilita en un paso posterior. Por ahora puede explorar el corpus desde el Monitor DOF.',
@@ -376,6 +387,9 @@ export const copy = {
     clientContext: 'Contexto del cliente',
     matchReason: 'Motivo de coincidencia',
     modelMeta: 'Modelo y versión de prompt',
+    traceability: 'Trazabilidad',
+    citedPassages: 'Pasajes citados',
+    datePassed: 'Fecha vencida',
     auditLink: 'Auditoría del despacho',
     demoSource: 'Datos de demostración',
   },
@@ -431,6 +445,7 @@ export const copy = {
     why: 'Por qué le importa',
     action: 'Acción sugerida',
     officialText: 'Texto oficial',
+    affects: 'Afecta a',
     loading: 'Cargando…',
     error: 'No fue posible cargar esta vista.',
     confirm: 'Confirmar',
@@ -507,6 +522,8 @@ export const copy = {
     onboardingAlert: 'Ver la primera alerta coincidente',
     onboardingReview: 'Enviar una alerta por revisión',
     onboardingDone: 'Lista de inicio completa.',
+    statusDone: 'Hecho',
+    statusPending: 'Pendiente',
     continueTitle: 'Continuar donde lo dejó',
     continueFallback: 'Continuar',
     savedViewsTitle: 'Vistas guardadas',
