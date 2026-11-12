@@ -10,7 +10,7 @@ Already on production: **298–307**, plus **308** (Expedientes schema) applied 
 
 Francisco applies; agents do not. Order is intentional (310 before 309):
 
-1. `310_ciceron_expedientes_fixups.sql` — `saved_views.is_sample`, room CHECK (`monitor-dof`|`expedientes`|`calendario`), session-actor bind on `deadlines_confirm_authority` + `client_notify_tier2_gate`
+1. `310_ciceron_expedientes_fixups.sql` — `saved_views.is_sample`, room CHECK (`monitor-dof`|`expedientes`|`calendario`), session-actor bind on gates, plus `confirm_deadline` / `approve_client_notify` RPCs (set_actor + update; service_role only)
 2. Verify: `310_ciceron_expedientes_fixups.verify.sql`
 3. `309_ciceron_expedientes_seed.sql` — sample rules, archive docs/chunks (`embedding`/`embedding_model` NULL), Outlook calendar, reminders, saved view
 4. Optional: `POST /api/ciceron/cron/dof` with `{ "backfillArchiveEmbeddings": true }` (Bearer `CRON_SECRET`) to embed archive chunks

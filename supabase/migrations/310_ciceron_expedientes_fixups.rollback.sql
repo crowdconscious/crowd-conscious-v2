@@ -1,6 +1,9 @@
 -- 310_ciceron_expedientes_fixups.rollback.sql (branch / non-prod only)
--- Restores 308 gate bodies and removes is_sample + room CHECK added by 310.
+-- Restores 308 gate bodies and removes is_sample + room CHECK + RPCs added by 310.
 -- Does not touch ciceron.saved_views rows or the table itself.
+
+DROP FUNCTION IF EXISTS ciceron.approve_client_notify(uuid, uuid);
+DROP FUNCTION IF EXISTS ciceron.confirm_deadline(uuid, uuid, text);
 
 -- Restore 308 deadlines_confirm_authority (persona-aware, no session-actor bind)
 CREATE OR REPLACE FUNCTION ciceron.deadlines_confirm_authority()
