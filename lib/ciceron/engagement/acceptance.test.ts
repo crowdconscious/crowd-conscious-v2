@@ -237,14 +237,17 @@ describe('Prompt 8 scripted acceptance session', () => {
     assert.ok(RATE_SAMPLE_THRESHOLD >= 3)
   })
 
-  it('migrations 314–315 exist with rollback and verify', () => {
-    for (const n of [314, 315]) {
-      const base =
-        n === 314
-          ? 'supabase/migrations/314_ciceron_engagement'
-          : 'supabase/migrations/315_ciceron_engagement_seed'
+  it('migrations 314–316 exist with rollback and verify', () => {
+    for (const base of [
+      'supabase/migrations/314_ciceron_engagement',
+      'supabase/migrations/315_ciceron_engagement_seed',
+      'supabase/migrations/316_ciceron_events_rpc_only',
+    ]) {
       assert.match(readFileSync(`${base}.sql`, 'utf8'), /ciceron/)
-      assert.match(readFileSync(`${base}.rollback.sql`, 'utf8'), /DROP|DELETE/)
+      assert.match(
+        readFileSync(`${base}.rollback.sql`, 'utf8'),
+        /DROP|DELETE|GRANT|CREATE POLICY/
+      )
       assert.match(readFileSync(`${base}.verify.sql`, 'utf8'), /BEGIN/)
       assert.match(readFileSync(`${base}.verify.sql`, 'utf8'), /ROLLBACK/)
     }
@@ -254,9 +257,29 @@ describe('Prompt 8 scripted acceptance session', () => {
     )
     assert.match(forward, /security_invoker\s*=\s*true/)
     assert.match(forward, /record_product_event/)
+    assert.match(forward, /watch_profile_id/)
+    assert.match(forward, /\^\[A-Za-z0-9_:.-\]\{1,120\}\$/)
     assert.match(forward, /metric_activation/)
     assert.match(forward, /metric_cost_weekly/)
     assert.doesNotMatch(forward, /vercel\.json/i)
     assert.doesNotMatch(forward, /CREATE.*CRON|cron\.schedule|app\/api\/ciceron\/cron/i)
+
+    const rpcOnly = readFileSync(
+      'supabase/migrations/316_ciceron_events_rpc_only.sql',
+      'utf8'
+    )
+    assert.match(
+      rpcOnly,
+      /REVOKE INSERT, UPDATE, DELETE ON ciceron\.events FROM authenticated/
+    )
+    assert.match(rpcOnly, /DROP POLICY IF EXISTS events_insert/)
+    const rpcVerify = readFileSync(
+      'supabase/migrations/316_ciceron_events_rpc_only.verify.sql',
+      'utf8'
+    )
+    assert.match(
+      rpcVerify,
+      /has_table_privilege\('authenticated', 'ciceron\.events', 'INSERT'\)/
+    )
   })
 })

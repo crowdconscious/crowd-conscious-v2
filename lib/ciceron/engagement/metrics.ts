@@ -72,7 +72,10 @@ function formatSeconds(sec: number | null, sample: number): MetricCell {
   }
 }
 
-export async function loadMetricsDashboard(): Promise<MetricsDashboard> {
+export async function loadMetricsDashboard(
+  firmId?: string
+): Promise<MetricsDashboard> {
+  const scopedFirmId = firmId ?? CICERON_SEED.firmDemo
   const db = tryCreateCiceronAdminClient()
   if (!db) return fixtureMetricsDashboard()
 
@@ -86,13 +89,13 @@ export async function loadMetricsDashboard(): Promise<MetricsDashboard> {
       expansion,
       cost,
     ] = await Promise.all([
-      db.from('metric_activation').select('*'),
-      db.from('metric_habit_weekly').select('*'),
-      db.from('metric_alert_precision_weekly').select('*'),
-      db.from('metric_review_turnaround_weekly').select('*'),
-      db.from('metric_value_moments_weekly').select('*'),
-      db.from('metric_expansion').select('*'),
-      db.from('metric_cost_weekly').select('*'),
+      db.from('metric_activation').select('*').eq('firm_id', scopedFirmId),
+      db.from('metric_habit_weekly').select('*').eq('firm_id', scopedFirmId),
+      db.from('metric_alert_precision_weekly').select('*').eq('firm_id', scopedFirmId),
+      db.from('metric_review_turnaround_weekly').select('*').eq('firm_id', scopedFirmId),
+      db.from('metric_value_moments_weekly').select('*').eq('firm_id', scopedFirmId),
+      db.from('metric_expansion').select('*').eq('firm_id', scopedFirmId),
+      db.from('metric_cost_weekly').select('*').eq('firm_id', scopedFirmId),
     ])
 
     const anyError =
@@ -166,7 +169,10 @@ export async function loadMetricsDashboard(): Promise<MetricsDashboard> {
 
     const firms = new Map<string, string>()
     for (const r of [...actRows, ...expRows, ...costRows]) {
-      firms.set(r.firm_id, r.firm_name)
+      if (r.firm_id === scopedFirmId) firms.set(r.firm_id, r.firm_name)
+    }
+    if (!firms.size) {
+      firms.set(scopedFirmId, 'Despacho Demo, S.C.')
     }
 
     const byFirm: FirmWeekRow[] = []
@@ -223,7 +229,7 @@ export async function loadMetricsDashboard(): Promise<MetricsDashboard> {
 
     const overall =
       byFirm.find(
-        (r) => r.firmId === CICERON_SEED.firmDemo && r.weekStart === primaryWeek
+        (r) => r.firmId === scopedFirmId && r.weekStart === primaryWeek
       ) ??
       byFirm[0] ??
       fixtureMetricsDashboard().overall

@@ -29,7 +29,7 @@ VALUES (
   'b1000000-0000-4000-8000-000000000001'::uuid,
   'monitor-dof',
   '/ciceron/monitor-dof',
-  'Monitor DOF — coincidencias abiertas',
+  'monitor_dof_open_matches',
   'room',
   NULL
 )

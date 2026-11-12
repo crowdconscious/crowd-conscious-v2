@@ -374,6 +374,7 @@ export const copy = {
     onboardingReview: 'Enviar una alerta por revisión',
     onboardingDone: 'Lista de inicio completa.',
     continueTitle: 'Continuar donde lo dejó',
+    continueFallback: 'Continuar',
     savedViewsTitle: 'Vistas guardadas',
     feedbackSuggestTitle: 'Ajuste sugerido al perfil de vigilancia',
     feedbackApply: 'Aplicar ajuste',

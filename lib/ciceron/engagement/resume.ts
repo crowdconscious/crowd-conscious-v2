@@ -1,5 +1,6 @@
 /**
  * «Continuar donde lo dejó» + saved views on Hoy.
+ * engagement_resume.label stores a room/label *code* only — never client/matter names.
  */
 
 import 'server-only'
@@ -7,11 +8,32 @@ import 'server-only'
 import { tryCreateCiceronAdminClient } from '@/lib/ciceron/db/admin'
 import { loadSavedViews, type SavedView } from '@/lib/ciceron/case-files/saved-views'
 import { savedViewHref } from '@/lib/ciceron/case-files/saved-view-href'
+import { copy } from '@/lib/ciceron/copy/es-MX'
 import type { DemoPersona } from '@/lib/ciceron/demo/personas'
+
+/** Stable codes stored in engagement_resume.label (not free text). */
+export const RESUME_LABEL_CODES = [
+  'monitor_dof_open_matches',
+  'revision_queue',
+  'expedientes_calendar',
+  'investigacion_desk',
+  'clientes_list',
+  'hoy',
+] as const
+
+export type ResumeLabelCode = (typeof RESUME_LABEL_CODES)[number]
+
+export type ResumeCursorStored = {
+  room: string
+  href: string
+  /** Label *code*, not display text. */
+  label: ResumeLabelCode | string
+}
 
 export type ResumeCursor = {
   room: string
   href: string
+  labelCode: string
   label: string
 }
 
@@ -20,11 +42,33 @@ export type HoyEngagement = {
   savedViews: Array<SavedView & { href: string }>
 }
 
-const FIXTURE_RESUME: ResumeCursor = {
+const RESUME_LABEL_ES: Record<string, string> = {
+  monitor_dof_open_matches: 'Monitor DOF — coincidencias abiertas',
+  revision_queue: 'Revisión — cola pendiente',
+  expedientes_calendar: 'Expedientes — calendario',
+  investigacion_desk: 'Investigación',
+  clientes_list: 'Clientes y asuntos',
+  hoy: copy.rooms.hoy,
+}
+
+export function resumeLabelEs(code: string): string {
+  return RESUME_LABEL_ES[code] ?? copy.engagement.continueFallback
+}
+
+function hydrateResume(row: ResumeCursorStored): ResumeCursor {
+  return {
+    room: row.room,
+    href: row.href,
+    labelCode: row.label,
+    label: resumeLabelEs(row.label),
+  }
+}
+
+const FIXTURE_RESUME: ResumeCursor = hydrateResume({
   room: 'monitor-dof',
   href: '/ciceron/monitor-dof',
-  label: 'Monitor DOF — coincidencias abiertas',
-}
+  label: 'monitor_dof_open_matches',
+})
 
 export async function loadHoyEngagement(
   persona: DemoPersona
@@ -41,8 +85,7 @@ export async function loadHoyEngagement(
         .eq('user_id', persona.id)
         .limit(1)
       if (Array.isArray(data) && data[0]) {
-        const row = data[0] as ResumeCursor
-        resume = row
+        resume = hydrateResume(data[0] as ResumeCursorStored)
       }
     } catch {
       resume = FIXTURE_RESUME
@@ -57,7 +100,7 @@ export async function loadHoyEngagement(
 
 export async function setResumeCursor(
   persona: DemoPersona,
-  cursor: ResumeCursor
+  cursor: { room: string; href: string; labelCode: ResumeLabelCode }
 ): Promise<void> {
   const db = tryCreateCiceronAdminClient()
   if (!db) return
@@ -67,7 +110,7 @@ export async function setResumeCursor(
       user_id: persona.id,
       room: cursor.room,
       href: cursor.href,
-      label: cursor.label,
+      label: cursor.labelCode,
       updated_at: new Date().toISOString(),
     },
     { onConflict: 'firm_id,user_id' }

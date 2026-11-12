@@ -104,7 +104,24 @@ BEGIN
     forbidden_caught := true;
   END;
   IF NOT forbidden_caught THEN
-    RAISE EXCEPTION 'FAIL: record_product_event allowed forbidden property';
+    RAISE EXCEPTION 'FAIL: record_product_event allowed non-allow-listed property';
+  END IF;
+
+  forbidden_caught := false;
+  BEGIN
+    PERFORM ciceron.record_product_event(
+      'alert_feedback',
+      firm,
+      socio,
+      '{"verdict":"not relevant with spaces"}'::jsonb,
+      now(),
+      NULL
+    );
+  EXCEPTION WHEN OTHERS THEN
+    forbidden_caught := true;
+  END;
+  IF NOT forbidden_caught THEN
+    RAISE EXCEPTION 'FAIL: record_product_event allowed unsafe string value';
   END IF;
 
   -- Onboarding row insert

@@ -17,12 +17,21 @@ describe('ciceron events allow-list', () => {
     }
   })
 
-  it('rejects forbidden property keys at type-runtime boundary', () => {
+  it('rejects forbidden and non-allow-listed property keys', () => {
     for (const key of FORBIDDEN_EVENT_PROPERTY_KEYS) {
       const r = assertNoForbiddenKeys({ [key]: 'secret', match_id: 'x' })
       assert.equal(r.ok, false)
     }
+    assert.equal(assertNoForbiddenKeys({ alert_id: 'x' }).ok, false)
     assert.equal(assertNoForbiddenKeys({ match_id: 'ok', verdict: 'relevant' }).ok, true)
+  })
+
+  it('rejects unsafe string codes', () => {
+    const bad = parseEventProperties('alert_feedback', {
+      verdict: 'not_relevant',
+      reason_code: 'has spaces and ñ',
+    })
+    assert.equal(bad.ok, false)
   })
 
   it('parses alert_feedback without free text', () => {

@@ -120,7 +120,7 @@ CREATE TABLE IF NOT EXISTS ciceron.engagement_resume (
   user_id uuid NOT NULL,
   room text NOT NULL CHECK (char_length(room) BETWEEN 1 AND 64),
   href text NOT NULL CHECK (char_length(href) BETWEEN 1 AND 400),
-  label text NOT NULL CHECK (char_length(label) BETWEEN 1 AND 200),
+  label text NOT NULL CHECK (char_length(label) BETWEEN 1 AND 64),
   entity_type text,
   entity_id uuid,
   updated_at timestamptz NOT NULL DEFAULT now(),
@@ -128,7 +128,9 @@ CREATE TABLE IF NOT EXISTS ciceron.engagement_resume (
 );
 
 COMMENT ON TABLE ciceron.engagement_resume IS
-  'Last meaningful place per user for «continuar donde lo dejó» on Hoy.';
+  'Last meaningful place per user for «continuar donde lo dejó» on Hoy. label is a stable code (not free text / client names); UI resolves display copy.';
+COMMENT ON COLUMN ciceron.engagement_resume.label IS
+  'Room/label code only (e.g. monitor_dof_open_matches). Never store client or matter names.';
 
 ALTER TABLE ciceron.engagement_resume ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ciceron.engagement_resume FORCE ROW LEVEL SECURITY;
@@ -168,22 +170,41 @@ SET search_path = ciceron
 AS $$
 DECLARE
   v_id uuid;
-  forbidden text;
+  prop_key text;
+  prop_val jsonb;
+  prop_str text;
 BEGIN
   IF p_name IS NULL OR char_length(p_name) < 1 OR char_length(p_name) > 120 THEN
     RAISE EXCEPTION 'invalid event name';
   END IF;
 
-  -- Refuse known free-text / PII property keys (defence in depth; app also allow-lists).
-  FOR forbidden IN
-    SELECT key FROM jsonb_object_keys(COALESCE(p_properties, '{}'::jsonb)) AS key
-    WHERE key IN (
-      'client_name', 'clientName', 'display_name', 'displayName',
-      'document_text', 'documentText', 'question', 'question_text', 'questionText',
-      'body', 'passage', 'content', 'text', 'headline', 'email', 'full_name', 'fullName'
-    )
+  -- Allow-list mirrors lib/ciceron/events.ts ALLOWED_EVENT_PROPERTY_KEYS.
+  -- String values must be safe codes/ids (no free text / PII).
+  FOR prop_key, prop_val IN
+    SELECT * FROM jsonb_each(COALESCE(p_properties, '{}'::jsonb))
   LOOP
-    RAISE EXCEPTION 'forbidden event property: %', forbidden;
+    IF prop_key NOT IN (
+      'room', 'surface', 'kind', 'verdict', 'reason_code', 'output_type',
+      'decision', 'simulated', 'invite_role', 'source_kind', 'source_id',
+      'match_id', 'matter_id', 'client_id', 'watch_profile_id', 'is_demo'
+    ) THEN
+      RAISE EXCEPTION 'forbidden event property: %', prop_key;
+    END IF;
+
+    IF jsonb_typeof(prop_val) = 'string' THEN
+      prop_str := prop_val #>> '{}';
+      IF prop_str IS NULL OR prop_str !~ '^[A-Za-z0-9_:.-]{1,120}$' THEN
+        RAISE EXCEPTION 'invalid event property value for %', prop_key;
+      END IF;
+    ELSIF jsonb_typeof(prop_val) = 'boolean' THEN
+      IF prop_key NOT IN ('simulated', 'is_demo') THEN
+        RAISE EXCEPTION 'boolean not allowed for event property: %', prop_key;
+      END IF;
+    ELSIF jsonb_typeof(prop_val) = 'null' THEN
+      CONTINUE;
+    ELSE
+      RAISE EXCEPTION 'invalid event property type for %', prop_key;
+    END IF;
   END LOOP;
 
   INSERT INTO ciceron.events (id, name, firm_id, user_id, properties, occurred_at)
@@ -207,7 +228,7 @@ GRANT EXECUTE ON FUNCTION ciceron.record_product_event(text, uuid, uuid, jsonb, 
   TO service_role;
 
 COMMENT ON FUNCTION ciceron.record_product_event IS
-  'Insert one product analytics event. service_role only. Rejects forbidden property keys.';
+  'Insert one product analytics event. service_role only. Allow-listed property keys; string values ^[A-Za-z0-9_:.-]{1,120}$.';
 
 -- ---------------------------------------------------------------------------
 -- Indicator views (security_invoker = true). Admin-only via grants.

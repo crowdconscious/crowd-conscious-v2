@@ -21,13 +21,15 @@ Francisco applies; agents do not:
 8. Verify: `314_ciceron_engagement.verify.sql` (`BEGIN`…`ROLLBACK`)
 9. **`315_ciceron_engagement_seed.sql`** — demo events / cost ai_runs (`e200…`)
 10. Verify: `315_ciceron_engagement_seed.verify.sql`
-11. Optional: `POST /api/ciceron/cron/dof` with `{ "backfillArchiveEmbeddings": true }` (Bearer `CRON_SECRET`) — on-demand only; no scheduled DOF cron
+11. **`316_ciceron_events_rpc_only.sql`** — revoke authenticated INSERT/UPDATE/DELETE on `ciceron.events`
+12. Verify: `316_ciceron_events_rpc_only.verify.sql` (`BEGIN`…`ROLLBACK`)
+13. Optional: `POST /api/ciceron/cron/dof` with `{ "backfillArchiveEmbeddings": true }` (Bearer `CRON_SECRET`) — on-demand only; no scheduled DOF cron
 
-Rollback (branch only, reverse order): `315_…rollback.sql` → `314_…rollback.sql` → `313_…` → `312_…`.
+Rollback (branch only, reverse order): `316_…rollback.sql` → `315_…` → `314_…` → `313_…` → `312_…`.
 
 Do **not** re-apply 308 / 309 / 310 on prod.
 
-Fresh env Prompt 6–8 path: `308` → `310` → `309` → `311` → `312` → `313` → `314` → `315`.
+Fresh env Prompt 6–8 path: `308` → `310` → `309` → `311` → `312` → `313` → `314` → `315` → `316`.
 
 Embeddings need **Vercel AI Gateway** enabled for the project (OIDC on deploy). Locally optional `AI_GATEWAY_API_KEY`. Anthropic keys unchanged for rewrite/answer.
 
