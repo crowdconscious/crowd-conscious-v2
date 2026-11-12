@@ -6,6 +6,10 @@ import { MatchActions } from '../../_components/MatchActions'
 import { ReviewBadge } from '../../_components/ReviewBadge'
 import { CICERON_BASE } from '@/lib/ciceron/config'
 import { copy } from '@/lib/ciceron/copy/es-MX'
+import {
+  loadSavedViews,
+  savedViewHref,
+} from '@/lib/ciceron/case-files/saved-views'
 import { loadMonitorMatches } from '@/lib/ciceron/demo/monitor-data'
 import { getCiceronDemoSession } from '@/lib/ciceron/demo/session'
 import { CICERON_SUBJECT_AREAS } from '@/lib/ciceron/taxonomy'
@@ -25,13 +29,16 @@ export default async function MonitorDofPage({
   const authority = typeof sp.authority === 'string' ? sp.authority : null
   const documentType = typeof sp.type === 'string' ? sp.type : null
 
-  const { items, source } = await loadMonitorMatches(persona, {
-    clientId,
-    subjectArea,
-    authority,
-    documentType,
-    onlyMine: true,
-  })
+  const [{ items, source }, saved] = await Promise.all([
+    loadMonitorMatches(persona, {
+      clientId,
+      subjectArea,
+      authority,
+      documentType,
+      onlyMine: true,
+    }),
+    loadSavedViews(persona, 'monitor-dof'),
+  ])
 
   const clients = [...new Map(items.map((i) => [i.clientId, i.clientName])).entries()]
 
@@ -101,6 +108,16 @@ export default async function MonitorDofPage({
           <Link href="/ciceron/monitor-dof" className="cic-muted" style={{ alignSelf: 'end', fontSize: '0.85rem' }}>
             {copy.monitor.all}
           </Link>
+          {saved.views.map((view) => (
+            <Link
+              key={view.id}
+              href={savedViewHref(view)}
+              className="cic-btn cic-btn-ghost"
+              style={{ alignSelf: 'end', fontSize: '0.85rem' }}
+            >
+              {view.name}
+            </Link>
+          ))}
         </form>
       </section>
 

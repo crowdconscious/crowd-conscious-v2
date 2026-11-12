@@ -59,6 +59,12 @@ export function ResearchDesk({
   const [historyPending, startHistoryTransition] = useTransition()
 
   useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('scope') === 'firm') setScope('firm')
+  }, [])
+
+  useEffect(() => {
     if (state.ok) {
       setStreamHint(false)
       setPast(null)
@@ -195,9 +201,7 @@ export function ResearchDesk({
               <option value="theses" disabled>
                 {copy.investigacion.scopeTheses}
               </option>
-              <option value="firm" disabled>
-                {copy.investigacion.scopeFirm}
-              </option>
+              <option value="firm">{copy.investigacion.scopeFirm}</option>
             </select>
           </label>
           <label>

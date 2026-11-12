@@ -148,6 +148,22 @@ Pending items need Francisco before (or as) the named prompt starts.
 - **Decision:** Shared `loadEvidenceSources` resolves authority/title/date/section/edition/excerpt/URL for cited chunks. Fresh answers and `loadPastResearchAnswer` both use it. Chip numbers stay per unique chunk id (repeated cites of one chunk correctly share `[1]`).
 - **Consequences:** Sales-demo Evidencia shows real note metadata; no RLS change (service-role path still firm-filtered on private docs).
 
+### 2026-11-12 — Demo actors use *_persona columns (keep auth.users FKs)
+- **Context:** Confirming deadlines with demo persona UUIDs would violate `deadlines.confirmed_by → auth.users` if we wrote the persona into that column or dropped the FK.
+- **Decision:** Keep all existing auth.users FKs. Add nullable companions (`confirmed_by_persona`, `proposed_by_persona`, `discarded_by_persona`, `assignee_persona`, `decided_by_persona`, `approved_by_persona`, …) referencing `ciceron.demo_personas`. Demo invite path writes the persona column and leaves the auth column NULL; real users write the auth column. Confirm/notify tier-2 gates accept either actor via `COALESCE`.
+- **Consequences:** Migration 308 must not `DROP CONSTRAINT` on those FKs. App helpers in `lib/ciceron/demo/actor-write.ts`.
+
+### 2026-11-12 — No judiciary automation (Prompt 6)
+- **Context:** The federal judiciary portal states it does not recognise or authorise external services for consulting, monitoring or accessing electronic case files.
+- **Decision:** Court-file data enters only through `CaseFileConnector`. `SampleConnector` and `ManualCaptureConnector` are enabled. `PublicLookupConnector` remains a stub that throws `not enabled: requires legal clearance` behind `CICERON_PUBLIC_LOOKUP_ENABLED` (default off). No logins, stored credentials/signatures, captcha handling, or scheduled scraping of case pages. CI test `network-guard.test.ts` fails if `lib/ciceron` / `app/ciceron` constructs requests to listed judiciary hosts.
+- **Consequences:** Manual capture stores the lawyer-supplied original; deadlines stay `propuesto` until socio/asociado confirms (DB trigger + app gate). See also P8.
+
+### 2026-11-12 — Microsoft 365 is simulated for the demo (Prompt 6)
+- **Context:** Prospects live in Outlook; the demo must show value without Entra app registration or Graph access on a public repo.
+- **Decision:** Ship a clearly labelled **simulation** inside `/ciceron` (consent screen is not Microsoft’s login and never asks for a password). No Microsoft Graph SDK, no OAuth app, no tokens, no network calls to Microsoft identity/Graph hosts (same CI network guard). Connection state is per-firm `firm_integrations.provider = microsoft365_sim` (+ cookie fallback before migrations). Archive docs are `is_sample` firm documents in the chunks pipeline; calendar and «Enviado» notify are simulated; tier 2 still required before simulated send.
+- **Real build later needs:** Entra ID app registration; admin consent; publisher verification; Graph scopes matching the consent list (mail metadata, calendar, files, send-on-approval); LFPDPPP privacy notice and DPA with the firm; encrypted token storage outside this public repo; disable simulation flags.
+- **Consequences:** Migrations `308` (schema) + `309` (seed). UI degrades to fixtures when tables are missing.
+
 ---
 
 ## Pending
@@ -156,4 +172,4 @@ Pending items need Francisco before (or as) the named prompt starts.
 - **Needed by:** Prompt 2 acceptance wording.
 
 ### P8 — Counsel clearance for any future public case-file lookup
-- **Needed by:** before enabling `PublicLookupConnector`.
+- **Needed by:** before enabling `PublicLookupConnector` (still required; Prompt 6 keeps the stub).

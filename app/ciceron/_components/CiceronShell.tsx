@@ -13,6 +13,7 @@ export type ShellMeta = {
   firmName: string
   userName: string
   role: string
+  m365Status?: 'connected' | 'disconnected'
 }
 
 export function CiceronShell({
@@ -60,6 +61,16 @@ export function CiceronShell({
               </Link>
             )
           })}
+          <div className="cic-rail-footer">
+            <Link href="/ciceron/expedientes/outlook" className="cic-rail-m365">
+              <span>{copy.m365.settingsStatus}</span>
+              <span className="cic-muted" style={{ fontSize: '0.75rem' }}>
+                {meta.m365Status === 'connected'
+                  ? copy.m365.connected
+                  : copy.m365.disconnected}
+              </span>
+            </Link>
+          </div>
         </nav>
         <div className="cic-main">
           <header className="cic-topbar">

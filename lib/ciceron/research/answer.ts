@@ -139,6 +139,8 @@ export async function answerResearchQuestion(opts: {
   actorId: string
   firmId: string
   matterId?: string | null
+  /** dof (default) | firm archive (OneDrive/SharePoint sim) */
+  scope?: 'dof' | 'firm'
 }): Promise<ResearchAnswer> {
   const question = opts.question.trim().slice(0, 4000)
   if (!question) {
@@ -161,7 +163,8 @@ export async function answerResearchQuestion(opts: {
     }
   }
 
-  const retrieval = await retrieveForResearch({
+  const scope = opts.scope === 'firm' ? 'firm' : 'dof'
+  let retrieval = await retrieveForResearch({
     question,
     actorId: opts.actorId,
     firmId: opts.firmId,
@@ -169,7 +172,28 @@ export async function answerResearchQuestion(opts: {
     limit: 10,
   })
 
-  const coverageNote = corpusCoverageLine('es')
+  if (scope === 'firm') {
+    const { retrieveFirmArchive } = await import(
+      '@/lib/ciceron/research/firm-archive-retrieve'
+    )
+    const firmHits = await retrieveFirmArchive({
+      question,
+      firmId: opts.firmId,
+      limit: 10,
+    })
+    retrieval = {
+      hits: firmHits,
+      queries: [question],
+      degraded: false,
+      degradeReason: null,
+      asOfDate: null,
+    }
+  }
+
+  const coverageNote =
+    scope === 'firm'
+      ? 'Corpus: Archivo del despacho (OneDrive / SharePoint simulado). Datos de demostración.'
+      : corpusCoverageLine('es')
   const sources: ResearchSource[] = retrieval.hits.map((h) => ({
     chunkId: h.chunkId,
     title: h.title,
@@ -177,6 +201,7 @@ export async function answerResearchQuestion(opts: {
     noteDate: h.noteDate,
     officialUrl: h.officialUrl,
     passage: h.text.slice(0, 600),
+    section: scope === 'firm' ? h.authority : undefined,
   }))
 
   if (!retrieval.hits.length) {

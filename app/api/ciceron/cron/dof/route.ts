@@ -6,6 +6,7 @@ import {
 } from '@/lib/ciceron/dof/pipeline'
 import { runClassifyMatchBatch } from '@/lib/ciceron/dof/classify-match'
 import { todayInMexicoCity } from '@/lib/ciceron/dof/dates'
+import { backfillArchiveEmbeddings } from '@/lib/ciceron/m365/archive-embeddings'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -38,6 +39,7 @@ async function handle(req: NextRequest) {
     cursor?: PipelineCursor
     attempt?: number
     backfillEmbeddings?: boolean
+    backfillArchiveEmbeddings?: boolean
     classifyMatchOnly?: boolean
   } = {}
   if (req.method === 'POST') {
@@ -52,6 +54,18 @@ async function handle(req: NextRequest) {
     body.targetDate ||
     req.nextUrl.searchParams.get('date') ||
     todayInMexicoCity()
+
+  if (
+    body.backfillArchiveEmbeddings ||
+    req.nextUrl.searchParams.get('backfillArchive') === '1'
+  ) {
+    const result = await backfillArchiveEmbeddings(16)
+    return NextResponse.json({
+      ok: true,
+      mode: 'archive_embed_backfill',
+      ...result,
+    })
+  }
 
   if (body.backfillEmbeddings || req.nextUrl.searchParams.get('backfill') === '1') {
     const result = await backfillPendingEmbeddings(16)

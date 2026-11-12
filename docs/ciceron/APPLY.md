@@ -1,17 +1,24 @@
 # Applying Cicéron migrations
 
-## Production status (2026-11-10)
+## Production status (2026-11-12)
 
-Already on production: **298, 299, 300, 302, 303**, plus manual **`ciceron_revoke_anon_definer`** (repo file `304_ciceron_revoke_anon_definer.sql`). Schema `ciceron` is exposed in the Data API.  
+Already on production: **298–310** and **309** seed (Prompt 6).  
+**308 / 309 / 310 forward bodies must not be edited** (applied).  
 **Do not apply** retired `301` (auth.users seed).
 
-## Apply order (production next — Prompt 5)
+## Apply order (production next)
 
-Already on prod through **306** (classify/match) after Prompt 4. Next (Francisco applies; agents do not):
+Francisco applies; agents do not:
 
-1. `307_ciceron_research.sql` — `research_queries`, `firm_ai_budgets`, `search_chunks_as_actor`, research prompt_versions
-2. Verify: `307_ciceron_research.verify.sql`
-3. Rollback (branch only): `307_ciceron_research.rollback.sql`
+1. `311_ciceron_confirm_idempotent.sql` — idempotent `confirm_deadline` / `approve_client_notify` (refuse already decided); new `discard_deadline` RPC (`set_actor` + tier-2 role gate; service_role only)
+2. Verify: `311_ciceron_confirm_idempotent.verify.sql`
+3. Optional (if not done): `POST /api/ciceron/cron/dof` with `{ "backfillArchiveEmbeddings": true }` (Bearer `CRON_SECRET`)
+
+Rollback (branch only): `311_…rollback.sql` (restores 310 RPC bodies; drops `discard_deadline`).
+
+Do **not** re-apply 308 / 309 / 310 on prod.
+
+Fresh env Prompt 6 path: `308` → `310` → `309` → `311`.
 
 Embeddings need **Vercel AI Gateway** enabled for the project (OIDC on deploy). Locally optional `AI_GATEWAY_API_KEY`. Anthropic keys unchanged for rewrite/answer.
 
@@ -38,6 +45,7 @@ npx tsx scripts/ciceron-research-eval.ts
 7. `305_ciceron_dof_pipeline.sql`
 8. Expose schema `ciceron`
 9. Run `302_ciceron.verify.sql` then `305_ciceron_dof_pipeline.verify.sql`
+10. `306` → `307` → `308` → `310` → `309` → `311`
 
 Rollback (branch only): `298_ciceron.rollback.sql` (drops schema; does not touch civic `auth.users` for Cicéron — none are created by 302).
 
