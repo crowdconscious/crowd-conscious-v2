@@ -207,6 +207,19 @@ Pending items need Francisco before (or as) the named prompt starts.
 
 ---
 
+
+### 2026-11-12 — Matching quality / procurement lane (pre-demo Group C)
+- **Context:** Tender notices polluted client regulatory matches; relevance over-fired on shared authority; watch-profile vectors unused; `legal_edges` empty; SIDOF REF stubs as titles.
+- **Decision:**
+  1. Document types `licitacion` / `fallo` / `contratacion_publica` (+ existing `convocatoria`) are procurement. Matching skips them unless `watch_profiles.include_procurement` (DEFAULT false). When on, Monitor DOF shows a separate «Contratación pública» section (never mixed with regulatory).
+  2. `PROMPT_MATCH_V2` requires a concrete client↔note regulatory link in the reason; `match.ts` uses v2.
+  3. `PROMPT_CLASSIFY_V2` adds `display_title`; store on `classifications` (+ payload) and replace weak `dof_notes.title`.
+  4. Classification writes `legal_edges` for creates/amends/repeals (`creates` added to edge_type check).
+  5. Scripts: `embed-watch-profiles.ts`, `backfill-classify-match.ts` (oldest→newest, US$60 hard stop unless `--confirm-over-cap`), `export-labelled-set.ts`, `score-labelled-set.ts`. Template `docs/ciceron/MATCH-REVIEW.md` filled after CTO backfill — do not invent live matches.
+- **Consequences:** Migration `321`. Agents do not apply migrations or run backfill against production.
+
+---
+
 ## Pending
 
 ### P7 — Accept root-layout analytics/JSON-LD leakage for hosted demo

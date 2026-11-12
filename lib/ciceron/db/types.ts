@@ -13,7 +13,12 @@ export type CiceronAiOutputStatus =
   | 'rechazado'
   | 'entregado'
 export type CiceronReviewDecision = 'approved' | 'corrected' | 'rejected' | 'returned'
-export type CiceronLegalEdgeType = 'amends' | 'repeals' | 'cites' | 'interprets'
+export type CiceronLegalEdgeType =
+  | 'creates'
+  | 'amends'
+  | 'repeals'
+  | 'cites'
+  | 'interprets'
 export type CiceronLegalEntityKind = 'norm' | 'article' | 'thesis' | 'authority' | 'court'
 export type CiceronDraftAuthorType = 'human' | 'model'
 

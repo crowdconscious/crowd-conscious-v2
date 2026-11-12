@@ -38,7 +38,8 @@ export async function runClassifyMatchBatch(opts?: {
     .from('dof_notes')
     .select('id, ingest_status, classify_status, match_status, note_date')
     .in('ingest_status', ['ready', 'embedding_pending'])
-    .order('note_date', { ascending: false })
+    // Oldest → newest so backfills fill the corpus chronologically for demos
+    .order('note_date', { ascending: true })
     .limit(200)
 
   if (opts?.noteDate) {

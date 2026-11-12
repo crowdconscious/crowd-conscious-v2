@@ -11,7 +11,6 @@ import {
   orderSourcesByCitations,
   type AnswerSource,
 } from '@/lib/ciceron/research/format-answer'
-import type { SuggestedQuestion } from '@/lib/ciceron/research/suggested-questions'
 import {
   askResearch,
   loadPastResearchAnswer,
@@ -43,19 +42,16 @@ export function ResearchDesk({
   coverage,
   matters,
   history,
-  suggestedQuestions = [],
 }: {
   coverage: string
   matters: Array<{ id: string; title: string }>
   history: Array<{ id: string; question: string; created_at: string }>
-  suggestedQuestions?: SuggestedQuestion[]
 }) {
   const [state, formAction] = useActionState(askResearch, initial)
   const [past, setPast] = useState<AskResearchState | null>(null)
   const [scope, setScope] = useState('dof')
   const [matterId, setMatterId] = useState('')
   const [asOf, setAsOf] = useState('')
-  const [questionDraft, setQuestionDraft] = useState('')
   const [streamHint, setStreamHint] = useState(false)
   const [historyFilter, setHistoryFilter] = useState('')
   const [activeCite, setActiveCite] = useState<number | null>(null)
@@ -168,26 +164,6 @@ export function ResearchDesk({
         <label htmlFor="cic-research-q" style={{ fontWeight: 600, fontSize: '0.9rem' }}>
           {copy.investigacion.ask}
         </label>
-        {suggestedQuestions.length > 0 ? (
-          <div className="cic-suggested-questions" style={{ marginTop: 10 }}>
-            <p className="cic-muted" style={{ fontSize: '0.8rem', margin: '0 0 8px' }}>
-              {copy.investigacion.suggested}
-            </p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {suggestedQuestions.map((q) => (
-                <button
-                  key={q.id}
-                  type="button"
-                  className="cic-btn cic-btn-secondary"
-                  style={{ fontSize: '0.8rem', textAlign: 'left', maxWidth: '100%' }}
-                  onClick={() => setQuestionDraft(q.question)}
-                >
-                  {q.question}
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : null}
         <textarea
           id="cic-research-q"
           name="question"
@@ -196,8 +172,7 @@ export function ResearchDesk({
           rows={3}
           style={{ marginTop: 8, resize: 'vertical' }}
           placeholder={copy.investigacion.askPlaceholder}
-          value={questionDraft}
-          onChange={(e) => setQuestionDraft(e.target.value)}
+          defaultValue=""
         />
 
         <div

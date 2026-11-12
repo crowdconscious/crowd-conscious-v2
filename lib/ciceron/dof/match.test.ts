@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
+import { isProcurementDocumentType } from '@/lib/ciceron/taxonomy'
 import { scoreCandidates } from './match-score'
 
 describe('ciceron DOF candidate scoring (fail-soft vectors)', () => {
@@ -48,6 +49,11 @@ describe('ciceron DOF candidate scoring (fail-soft vectors)', () => {
     assert.equal(ranked[0]!.profile.id, 'p-nexora')
     assert.equal(ranked[0]!.vectorUsed, false)
     assert.match(ranked[0]!.why, /embeddings pending/i)
+  })
+
+  it('treats procurement types as a separate lane', () => {
+    assert.equal(isProcurementDocumentType('licitacion'), true)
+    assert.equal(isProcurementDocumentType(note.document_type), false)
   })
 
   it('uses vector contribution when both embeddings exist', () => {

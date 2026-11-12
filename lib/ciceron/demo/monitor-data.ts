@@ -10,6 +10,7 @@ import {
 } from '@/lib/ciceron/demo/fixtures'
 import { officialDofUrl } from '@/lib/ciceron/dof/dates'
 import { resolveDisplayTitle } from '@/lib/ciceron/dof/display-title'
+import { isProcurementDocumentType } from '@/lib/ciceron/taxonomy'
 
 export type MonitorItem = {
   id: string
@@ -263,13 +264,6 @@ export async function loadMonitorMatches(
       .limit(500)
     const classifiedCount = Array.isArray(classifiedRows) ? classifiedRows.length : 0
 
-    const PROCUREMENT_TYPES = new Set([
-      'licitacion',
-      'convocatoria',
-      'fallo',
-      'contratacion_publica',
-    ])
-
     let items: MonitorItem[] = matchRows.map((m) => {
       const note = noteMap.get(m.dof_note_id)
       const cls = classMap.get(m.dof_note_id)
@@ -320,7 +314,7 @@ export async function loadMonitorMatches(
         subjectAreas: cls?.labels ?? [],
         feedback: m.feedback,
         hasReviewTask,
-        isProcurement: PROCUREMENT_TYPES.has(docType),
+        isProcurement: isProcurementDocumentType(docType),
       }
     })
 
